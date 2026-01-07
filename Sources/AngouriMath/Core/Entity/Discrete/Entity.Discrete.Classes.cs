@@ -177,8 +177,8 @@ namespace AngouriMath
 
             public Entity NodeSecondChild => Conclusion;
 
-            private Impliesf New(Entity left, Entity right) =>
-                ReferenceEquals(Assumption, left) && ReferenceEquals(Conclusion, right) ? this : new(left, right);
+            private Impliesf New(Entity assumption, Entity conclusion) =>
+                ReferenceEquals(Assumption, assumption) && ReferenceEquals(Conclusion, conclusion) ? this : new(assumption, conclusion);
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Assumption.Replace(func), Conclusion.Replace(func)));

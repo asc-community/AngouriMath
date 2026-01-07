@@ -80,6 +80,7 @@ namespace AngouriMath.Functions
             OppositeSigns(left, right) => False,
 
             Equalsf(Powf(var any1, var rePo), var zero) when IsRealPositive(rePo) && IsZero(zero) => any1.Equalizes(zero),
+            Equalsf(Divf(Integer(1), var expr), var zero) when IsZero(zero) => new Providedf(false, !expr.Equalizes(0)),
 
             // The following set of patterns might be simplified
 
@@ -124,6 +125,9 @@ namespace AngouriMath.Functions
             GreaterOrEqualf(Divf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 <= Integer.Zero,
             Lessf          (Divf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 > Integer.Zero,
             LessOrEqualf   (Divf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 >= Integer.Zero,
+
+            // a! = 0
+            Equalsf(Factorialf({ DomainCondition: var condition }), var zeroEnt) when IsZero(zeroEnt) => False.WithCondition(condition),
 
             Greaterf(var any1, var any1a) when any1 == any1a => false,
             Lessf(var any1, var any1a) when any1 == any1a => false,

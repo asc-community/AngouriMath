@@ -12,6 +12,60 @@ namespace AngouriMath
     partial record Entity
     {
         /// <summary>
+        /// Returns the complete condition under which this expression is defined (has a valid value).
+        /// This represents the mathematical "domain of definition" as a logical predicate.
+        /// 
+        /// For example:
+        /// - For x/y: returns "y ≠ 0"
+        /// - For sqrt(x) (over reals): returns "x ≥ 0"
+        /// - For tan(x): returns "cos(x) ≠ 0" (or equivalently "x ≠ π/2 + πn")
+        /// - For x + y: returns "true" (always defined)
+        /// - For x/y + log(z): returns "y ≠ 0 and z > 0"
+        /// 
+        /// This combines the node's own definition condition (<see cref="IntrinsicCondition"/>) with all 
+        /// its children's conditions using logical AND, propagating domain restrictions throughout the expression tree.
+        /// 
+        /// This is used by simplification patterns to preserve mathematical correctness by adding
+        /// "provided" clauses when simplifications might hide singularities or undefined regions.
+        /// For instance: (x-1)/(x-1) simplifies to "1 provided x ≠ 1", not just "1".
+        /// </summary>
+        /// <remarks>
+        /// Mathematical concepts:
+        /// - Domain of definition (the set where a function is defined)
+        /// - Singularities and poles (points where a function is undefined)
+        /// - Piecewise continuity (tracking where discontinuities occur)
+        /// </remarks>
+        public Entity DomainCondition => domainCondition.GetValue(static @this => @this.InnerSimplified.DirectChildren.Aggregate(@this.IntrinsicCondition, (accum, curr) =>
+            (accum, curr.DomainCondition) switch {
+                (Boolean(true), Boolean(true)) => Boolean.True,
+                (var l, Boolean(true)) => l,
+                (Boolean(true), var r) => r,
+                (var l, var r) => l & r,
+            }), this);
+        private LazyPropertyA<Entity> domainCondition;
+        
+        /// <summary>
+        /// Returns the intrinsic condition under which this specific operation is defined, 
+        /// not including conditions from child expressions.
+        /// 
+        /// This represents the inherent domain restrictions of the operation itself.
+        /// For example:
+        /// - For division (x/y): returns "y ≠ 0" (the divisor must be non-zero)
+        /// - For power (x^y): returns conditions for 0^0, 0^negative, etc.
+        /// - For logarithm log(b, x): returns "b > 0 and b ≠ 1 and x > 0"
+        /// - For addition (x + y): returns Boolean.True (no restrictions)
+        /// - For tan(x): returns "cos(x) ≠ 0"
+        /// 
+        /// Child expression conditions are handled separately by the <see cref="DomainCondition"/> property.
+        /// </summary>
+        /// <remarks>
+        /// This corresponds to the mathematical concept of a function's "natural domain" -
+        /// the largest set of inputs for which the function's formula makes sense,
+        /// independent of any restrictions on the input variables themselves.
+        /// </remarks>
+        private protected abstract Entity IntrinsicCondition { get; }
+        internal Entity WithCondition(Entity condition) => condition == Boolean.True ? this : new Providedf(this, condition);
+        /// <summary>
         /// This should NOT be called inside itself
         /// </summary>
         protected abstract Entity InnerSimplify();

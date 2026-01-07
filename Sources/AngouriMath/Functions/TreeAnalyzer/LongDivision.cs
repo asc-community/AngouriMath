@@ -6,6 +6,7 @@
 //
 
 using AngouriMath.Core.Exceptions;
+using Antlr4.Runtime.Misc;
 using PeterO.Numbers;
 
 namespace AngouriMath.Functions
@@ -121,12 +122,18 @@ namespace AngouriMath.Functions
             Entity rest = 0;
             foreach (var coef in monoinfoP[polyvar])
                 if (coef.Value.Simplify() is not Integer(0) and var simplified)
-                    rest += simplified * MathS.Pow(polyvar, coef.Key);
+                    if (coef.Key.IsZero) // Don't insert unnecessary x^0 because it's undefined for x=0
+                        rest += simplified;
+                    else
+                        rest += simplified * MathS.Pow(polyvar, coef.Key);
             rest /= q;
 
             Entity res = 0;
             foreach (var pair in result)
-                res += pair.Value.Simplify(5) * MathS.Pow(polyvar, pair.Key);
+                if (pair.Key.IsZero) // Don't insert unnecessary x^0 because it's undefined for x=0
+                    res += pair.Value.Simplify(5);
+                else
+                    res += pair.Value.Simplify(5) * MathS.Pow(polyvar, pair.Key);
             return (res.Substitute(replacementInfo.RevertReplacements),
                     rest.Substitute(replacementInfo.RevertReplacements));
         }

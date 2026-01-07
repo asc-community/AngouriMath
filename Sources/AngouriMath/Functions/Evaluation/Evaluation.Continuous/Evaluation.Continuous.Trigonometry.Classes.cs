@@ -38,6 +38,7 @@ namespace AngouriMath
     {
         public partial record Sinf
         {
+            private protected override Entity IntrinsicCondition => Boolean.True;
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnOneArgument(Argument.Evaled,
@@ -58,12 +59,12 @@ namespace AngouriMath
                         _ => null
                     },
                     (@this, a) => ((Sinf)@this).New(a),
-                    //false /* because we check it manually */);
                     true);
         }
 
         public partial record Cosf
         {
+            private protected override Entity IntrinsicCondition => Boolean.True;
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnOneArgument(Argument.Evaled,
@@ -89,6 +90,7 @@ namespace AngouriMath
 
         public partial record Secantf
         {
+            private protected override Entity IntrinsicCondition => !MathS.Cos(Argument).Equalizes(0); // Sec(x) = 1/cos(x) is undefined when cos(x) = 0
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnOneArgument(Argument.InnerSimplified,
@@ -114,6 +116,7 @@ namespace AngouriMath
 
         public partial record Cosecantf
         {
+            private protected override Entity IntrinsicCondition => !MathS.Sin(Argument).Equalizes(0); // Csc(x) = 1/sin(x) is undefined when sin(x) = 0
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnOneArgument(Argument.InnerSimplified,
@@ -139,6 +142,7 @@ namespace AngouriMath
 
         public partial record Arcsecantf
         {
+            private protected override Entity IntrinsicCondition => MathS.Abs(Argument) >= 1; // Arcsec is defined for |x| >= 1
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnOneArgument(Argument.Evaled,
@@ -163,6 +167,7 @@ namespace AngouriMath
 
         public partial record Arccosecantf
         {
+            private protected override Entity IntrinsicCondition => MathS.Abs(Argument) >= 1; // Arccsc is defined for |x| >= 1
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnOneArgument(Argument.Evaled,
@@ -187,6 +192,7 @@ namespace AngouriMath
 
         public partial record Tanf
         {
+            private protected override Entity IntrinsicCondition => !MathS.Cos(Argument).Equalizes(0); // Tan(x) = sin(x)/cos(x) is undefined when cos(x) = 0
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnOneArgument(Argument.InnerSimplified,
@@ -209,8 +215,10 @@ namespace AngouriMath
                     (@this, a) => ((Tanf)@this).New(a)
                     , true);
         }
+        
         public partial record Cotanf
         {
+            private protected override Entity IntrinsicCondition => !MathS.Sin(Argument).Equalizes(0); // Cotan(x) = cos(x)/sin(x) is undefined when sin(x) = 0
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnOneArgument(Argument.InnerSimplified,
@@ -236,6 +244,9 @@ namespace AngouriMath
 
         public partial record Arcsinf
         {
+            // Arcsin is defined for |x| <= 1 if we restrict to reals, but everywhere in complex
+            private protected override Entity IntrinsicCondition => Boolean.True;
+            
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnOneArgument(Argument.Evaled,
@@ -256,8 +267,12 @@ namespace AngouriMath
                 (@this, a) => ((Arcsinf)@this).New(a),
                 true);
         }
+        
         public partial record Arccosf
         {
+            // Arccos is defined for |x| <= 1 if we restrict to reals, but everywhere in complex
+            private protected override Entity IntrinsicCondition => Boolean.True;
+            
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnOneArgument(Argument.Evaled,
@@ -278,8 +293,11 @@ namespace AngouriMath
                 (@this, a) => ((Arccosf)@this).New(a),
                 true);
         }
+        
         public partial record Arctanf
         {
+            private protected override Entity IntrinsicCondition => Boolean.True;
+            
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnOneArgument(Argument.Evaled,
@@ -300,8 +318,11 @@ namespace AngouriMath
                 (@this, a) => ((Arctanf)@this).New(a)
                 , true);
         }
+        
         public partial record Arccotanf
         {
+            private protected override Entity IntrinsicCondition => Boolean.True;
+            
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnOneArgument(Argument.Evaled,

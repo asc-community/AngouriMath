@@ -15,9 +15,9 @@ namespace AngouriMath
     {
         public partial record Variable
         {
-            // TODO: When target-typed conditional expression lands, remove the explicit conversion
+            private protected override Entity IntrinsicCondition => true;
             /// <inheritdoc/>
-            protected override Entity InnerEval() => ConstantList.TryGetValue(Name, out var value) ? (Entity)value : this;
+            protected override Entity InnerEval() => ConstantList.TryGetValue(Name, out var value) ? value : this;
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() => this;

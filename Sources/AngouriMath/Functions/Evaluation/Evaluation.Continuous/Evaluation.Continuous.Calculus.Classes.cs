@@ -13,6 +13,10 @@ namespace AngouriMath
     {
         public partial record Derivativef
         {
+            // The derivative operator is always defined symbolically, even though
+            // the resulting expression may be undefined at certain points.
+            private protected override Entity IntrinsicCondition => Boolean.True;
+            
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnTwoAndTArguments(Expression.Evaled, Var.Evaled, Iterations,
@@ -20,7 +24,7 @@ namespace AngouriMath
                     {
                         (var expr, _, 0) => expr,
                         // TODO: consider Integral for negative cases
-                        // TODO: should we call InnerSimlified here?
+                        // TODO: should we call InnerSimplified here?
                         (var expr, Variable var, int asInt)
                             when expr.Differentiate(var, asInt) is var res and not Derivativef
                             => res.Evaled,
@@ -59,8 +63,13 @@ namespace AngouriMath
                     (@this, a, b, _) => ((Derivativef)@this).New(a, b)
                     );
         }
+        
         public partial record Integralf
         {
+            // The integral operator is always defined symbolically, even though
+            // the antiderivative may not exist in closed form or may be undefined at certain points.
+            private protected override Entity IntrinsicCondition => Boolean.True;
+            
             private Entity SequentialIntegrating(Entity expr, Variable var, int iterations)
             {
                 if (iterations < 0)
@@ -109,6 +118,10 @@ namespace AngouriMath
         // TODO: rewrite this part too
         public partial record Limitf
         {
+            // The limit operator is always defined symbolically, even though
+            // the limit may not exist (returns NaN/undefined) for certain functions.
+            private protected override Entity IntrinsicCondition => Boolean.True;
+            
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnTwoAndTArguments(

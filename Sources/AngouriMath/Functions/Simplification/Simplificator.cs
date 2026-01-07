@@ -84,6 +84,12 @@ namespace AngouriMath.Functions
                     2 => TreeAnalyzer.SortLevel.LOW_LEVEL,
                     _ => TreeAnalyzer.SortLevel.HIGH_LEVEL
                 };
+                if (res.Nodes.Any(child => child is Providedf))
+                {
+                    HashSet<Entity> innerPredicates = [];
+                    res = res.LiftProvided(innerPredicates);
+                    AddHistory(res = innerPredicates.Count == 0 ? res : new Providedf(res, innerPredicates.Aggregate((acc, curr) => acc & curr)));
+                }
                 res = res.Replace(Patterns.SortRules(sortLevel)).InnerSimplified;
                 if (res.Nodes.Any(child => child is Powf))
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);

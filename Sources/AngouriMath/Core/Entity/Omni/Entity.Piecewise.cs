@@ -5,9 +5,10 @@
 // Website: https://am.angouri.org.
 //
 
-using System;
 using AngouriMath.Core.HashCode;
 using AngouriMath.Extensions;
+using HonkSharp.Laziness;
+using System;
 
 namespace AngouriMath
 {
@@ -28,7 +29,7 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
-                => func(New(func(Expression), func(Predicate)));
+                => func(New(Expression.Replace(func), Predicate.Replace(func)));
 
             internal override Priority Priority => Priority.Provided;
 
@@ -82,7 +83,7 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
-                => func(New(Cases.Select(c => c.New(func(c.Expression), func(c.Predicate)))));
+                => func(New(Cases.Select(c => c.New(c.Expression.Replace(func), c.Predicate.Replace(func)))));
 
             /// <summary>
             /// Checks that two Piecewise are equal

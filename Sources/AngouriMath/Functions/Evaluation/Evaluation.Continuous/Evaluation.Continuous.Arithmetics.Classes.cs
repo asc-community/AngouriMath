@@ -14,6 +14,8 @@ namespace AngouriMath
     {
         public partial record Number
         {
+            private protected override Entity IntrinsicCondition => Boolean.True;
+            
             /// <inheritdoc/>
             protected override Entity InnerEval() => this;
             /// <inheritdoc/>
@@ -23,6 +25,7 @@ namespace AngouriMath
         // Each function and operator processing
         public partial record Sumf
         {
+            private protected override Entity IntrinsicCondition => Boolean.True;
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnTwoArguments(Augend.Evaled, Addend.Evaled,
@@ -34,7 +37,7 @@ namespace AngouriMath
                         _ => null
                     },
                     (@this, a, b) => ((Sumf)@this).New(a, b)
-                    );
+                   );
 
 
             /// <inheritdoc/>
@@ -54,6 +57,7 @@ namespace AngouriMath
         }
         public partial record Minusf
         {
+            private protected override Entity IntrinsicCondition => Boolean.True;
             /// <inheritdoc/>
             protected override Entity InnerEval() => ExpandOnTwoArguments(Subtrahend.Evaled, Minuend.Evaled,
                     (augend, addend) => (augend, addend) switch
@@ -82,6 +86,7 @@ namespace AngouriMath
         }
         public partial record Mulf
         {
+            private protected override Entity IntrinsicCondition => Boolean.True;
             /// <inheritdoc/>
             protected override Entity InnerEval() => ExpandOnTwoArguments(Multiplier.Evaled, Multiplicand.Evaled,
                 (a, b) => (a, b) switch
@@ -91,7 +96,8 @@ namespace AngouriMath
                     (Matrix m, Integer(0)) => m.With((_, _, _) => 0),
                     (Integer(0), Matrix m) => m.With((_, _, _) => 0),
                     (Complex n1, Complex n2) => n1 * n2,
-                    (_, Integer(0)) or (Integer(0), _) => 0,
+                    ({ IntrinsicCondition: var condition }, Integer(0)) => Integer.Zero.WithCondition(condition),
+                    (Integer(0), { IntrinsicCondition: var condition }) => Integer.Zero.WithCondition(condition),
                     (var n1, Integer(1)) => n1,
                     (Integer(1), var n2) => n2,
                     _ => null
@@ -108,7 +114,8 @@ namespace AngouriMath
                         (Integer minusOne, Mulf(var minusOne1, var any1)) when minusOne == Integer.MinusOne && minusOne1 == Integer.MinusOne => any1,
                         (Matrix m, Integer(0)) => m.With((_, _, _) => 0),
                         (Integer(0), Matrix m) => m.With((_, _, _) => 0),
-                        (_, Integer(0)) or (Integer(0), _) => 0,
+                        ({ IntrinsicCondition: var condition }, Integer(0)) => Integer.Zero.WithCondition(condition),
+                        (Integer(0), { IntrinsicCondition: var condition }) => Integer.Zero.WithCondition(condition),
                         (var n1, Integer(1)) => n1,
                         (Integer(1), var n2) => n2,
                         (var n1, var n2) when n1 == n2 => new Powf(n1, 2).InnerSimplified,
@@ -119,13 +126,15 @@ namespace AngouriMath
         }
         public partial record Divf
         {
+            // Division is undefined when the divisor equals zero
+            private protected override Entity IntrinsicCondition => !Divisor.Equalizes(0);
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnTwoArguments(Dividend.Evaled, Divisor.Evaled,
                     (a, b) => (a, b) switch
                     {
                         (Complex n1, Complex n2) => n1 / n2,
-                        (Integer(0), _) => 0,
+                        (Integer(0), var n0) => new Providedf(0, new Notf(new Equalsf(n0, 0))).Evaled,
                         (_, Integer(0)) => Real.NaN,
                         _ => null
                     },
@@ -136,7 +145,7 @@ namespace AngouriMath
                 ExpandOnTwoArguments(Dividend.InnerSimplified, Divisor.InnerSimplified,
                 (a, b) => (a, b) switch
                 {
-                    (Integer(0), _) => 0,
+                    (Integer(0), var n0) => new Providedf(0, new Notf(new Equalsf(n0, 0))).InnerSimplified,
                     (var n1, Integer(1)) => n1,
                     _ => null
                 },
@@ -146,6 +155,12 @@ namespace AngouriMath
         }
         public partial record Powf
         {
+            // Power is undefined in two cases:
+            // - 0^0 is indeterminate
+            // - 0^(negative) is undefined (division by zero)
+            private protected override Entity IntrinsicCondition => 
+                (!Base.Equalizes(0) | Exponent > 0);
+            
             private static bool TryPower(Matrix m, int exp, out Entity res)
             {
                 res = 0;
@@ -167,10 +182,11 @@ namespace AngouriMath
                 {
                     (Matrix m, Integer(var exp)) when exp is { } expNotNull && TryPower(m, expNotNull, out var res) => res.Evaled,
                     (Complex n1, Complex n2) => Number.Pow(n1, n2),
-                    (Integer(1), _) => 1,
-                    (Integer(0), _) => 0,
+                    (Integer(1), { IntrinsicCondition: var condition }) => Integer.One.WithCondition(condition),
+                    (Integer(0), var x) => new Providedf(0, x > 0).Evaled,
                     (var n1, Integer(-1)) => (1 / n1).Evaled,
-                    (_, Integer(0)) => 1,
+                    (var x, Integer(0)) => new Providedf(1, !x.Equalizes(0)).Evaled,
+                    (var n1, Integer(1)) => n1,
                     _ => null
                 },
                 (@this, a, b) => ((Powf)@this).New(a, b)
@@ -182,11 +198,10 @@ namespace AngouriMath
                 (a, b) => (a, b) switch
                 {
                     (Matrix m, Integer(var exp)) when exp is { } expNotNull && TryPower(m, expNotNull, out var res) => res.InnerSimplified,
-                    (Integer(1), _) => 1,
-                    (Integer(0), Integer(0)) => 1,
-                    (Integer(0), _) => 0,
+                    (Integer(1), { IntrinsicCondition: var condition }) => Integer.One.WithCondition(condition),
+                    (Integer(0), var x) => new Providedf(0, x > 0).InnerSimplified,
                     (var n1, Integer(-1)) => (1 / n1).InnerSimplified,
-                    (_, Integer(0)) => 1,
+                    (var x, Integer(0)) => new Providedf(1, !x.Equalizes(0)).InnerSimplified,
                     (var n1, Integer(1)) => n1,
                     _ => null
                 },
@@ -196,6 +211,13 @@ namespace AngouriMath
         
         public partial record Logf
         {
+            // Logarithm is undefined when:
+            // - base <= 0 or base = 1
+            // - antilogarithm <= 0
+            // For complex logarithms, we use the principal branch
+            private protected override Entity IntrinsicCondition => 
+                Base > 0 & !Base.Equalizes(1) & Antilogarithm > 0;
+            
             /// <inheritdoc/>
             protected override Entity InnerEval() => 
                 ExpandOnTwoArguments(Base.Evaled, Antilogarithm.Evaled,
@@ -212,8 +234,8 @@ namespace AngouriMath
                 ExpandOnTwoArguments(Base.InnerSimplified, Antilogarithm.InnerSimplified,
                     (a, b) => (a, b) switch
                     {
-                        (_, Integer(0)) => Real.NegativeInfinity,
-                        (_, Integer(1)) => 0,
+                        ({ IntrinsicCondition: var condition }, Integer(0)) => Real.NegativeInfinity.WithCondition(condition),
+                        ({ IntrinsicCondition: var condition }, Integer(1)) => Integer.Zero.WithCondition(condition),
                         _ => null
                     },
                     (@this, a, b) => ((Logf)@this).New(a, b),
@@ -222,6 +244,12 @@ namespace AngouriMath
         
         public partial record Factorialf
         {
+            // Factorial is defined for non-negative integers in the traditional sense,
+            // but extends to complex numbers via the gamma function: n! = Γ(n+1)
+            // The gamma function has poles at negative integers, so factorial is undefined there
+            private protected override Entity IntrinsicCondition => 
+                Argument.In(MathS.Sets.R) & (Argument >= 0 | !Argument.In(MathS.Sets.Z));
+            
             /// <inheritdoc/>
             protected override Entity InnerEval() => 
                 ExpandOnOneArgument(Argument.Evaled,
@@ -253,6 +281,10 @@ namespace AngouriMath
 
         public partial record Signumf
         {
+            // Signum is defined everywhere in the complex plane
+            // sgn(0) = 0, sgn(z) = z/|z| for z ≠ 0
+            private protected override Entity IntrinsicCondition => Boolean.True;
+            
             /// <inheritdoc/>
             protected override Entity InnerEval()
                 => ExpandOnOneArgument(Argument.Evaled,
@@ -278,6 +310,10 @@ namespace AngouriMath
 
         public partial record Absf
         {
+            // Absolute value is defined everywhere in the complex plane
+            // For complex z, |z| = sqrt(Re(z)^2 + Im(z)^2)
+            private protected override Entity IntrinsicCondition => Boolean.True;
+            
             /// <inheritdoc/>
             protected override Entity InnerEval()
                 => ExpandOnOneArgument(Argument.Evaled,

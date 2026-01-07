@@ -99,11 +99,31 @@ namespace AngouriMath.Tests.PatternsTest
         [InlineData("0 >= 2 * x", "x <= 0")]
         [InlineData("0 <= 2 * x", "x >= 0")]
         [InlineData("x ^ 2 = 0", "x = 0")]
+        [InlineData("x ^ 0 = 0", "false provided not x = 0")] // The 'provided' describes the domain where the expression is valid (it is 'undefined' outside). It is incorrect to drop the predicate.
+        [InlineData("x ^ -1 = 0", "false provided not x = 0")]
+        [InlineData("x ^ -2 = 0", "false provided not x = 0")]
         [InlineData("x > y > z -> x > z", "true")]
         [InlineData("x < y < z -> x < z", "true")]
         public void TestInequality(string expr, string expected)
         {
             var exp = expected.ToEntity();
+            var act = expr.ToEntity();
+            Assert.Equal(exp, act.Simplify());
+        }
+        [Theory]
+        // InnerSimplified patterns
+        [InlineData("false provided false", null)]
+        [InlineData("true provided true", "true")]
+        [InlineData("true provided false", null)]
+        [InlineData("false provided true", "false")]
+        [InlineData("(x provided y) provided (true provided z)", "x provided y and z")]
+        // Patterns.LiftProvided
+        [InlineData("x provided y^2 = 0", "x provided y = 0")]
+        [InlineData("x provided (y provided z) + 1 = 0", "x provided 1 + y = 0 and z")]
+        [InlineData("{ x provided (y provided z) + 1 = 0, y provided k } provided (g provided w)", "{ x provided 1 + y = 0 and z, y provided k } provided g and w")]
+        public void TestProvided(string expr, string? expected)
+        {
+            var exp = expected is { } ? expected.ToEntity() : MathS.NaN;
             var act = expr.ToEntity();
             Assert.Equal(exp, act.Simplify());
         }
