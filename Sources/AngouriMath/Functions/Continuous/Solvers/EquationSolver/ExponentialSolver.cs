@@ -18,17 +18,26 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         internal static Set? SolveLinear(Entity expr, Entity.Variable x)
         {
             var replacement = Variable.CreateTemp(expr.Vars);
-
-            Func<Entity, Entity> preparator = e => e switch
+            static Entity NonZeroPow(Entity @base, Entity exponent) => exponent == Integer.Zero ? Integer.One : MathS.Pow(@base, exponent);
+            Entity preparator(Entity e) => e switch
             {
                 Powf(var @base, var arg) when
                     TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out var b) =>
-                        MathS.Pow(@base, b) * MathS.Pow(MathS.Pow(MathS.e, x), MathS.Ln(@base) * a),
-
+                        // Transformation base^(a*x + b) = base^b * e^(ln(base)*a*x) is safe when:
+                        // - base ≠ 0 (ensures ln(base) is defined and no 0^b issues)
+                        // For complex bases, ln uses the principal branch
+                        @base.Evaled switch
+                        {
+                            Complex { IsZero: false } => NonZeroPow(@base.InnerSimplified, b) * NonZeroPow(NonZeroPow(MathS.e, x), MathS.Ln(@base.InnerSimplified) * a),
+                            // If base is definitely 0, keep original form (will likely fail to solve anyway)
+                            Complex { IsZero: true } => e,
+                            // For symbolic bases that might be zero, add condition
+                            _ => (NonZeroPow(@base, b) * NonZeroPow(NonZeroPow(MathS.e, x), MathS.Ln(@base) * a)).Provided(!@base.Equalizes(0))
+                        },
                 _ => e,
             };
 
-            Func<Entity, Entity> replacer = e => e switch
+            Entity replacer(Entity e) => e switch
             {
                 Powf(var @base, var arg)
                     when @base == MathS.e && arg == x

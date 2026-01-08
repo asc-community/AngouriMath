@@ -96,8 +96,8 @@ namespace AngouriMath
                     (Matrix m, Integer(0)) => m.With((_, _, _) => 0),
                     (Integer(0), Matrix m) => m.With((_, _, _) => 0),
                     (Complex n1, Complex n2) => n1 * n2,
-                    ({ IntrinsicCondition: var condition }, Integer(0)) => Integer.Zero.WithCondition(condition),
-                    (Integer(0), { IntrinsicCondition: var condition }) => Integer.Zero.WithCondition(condition),
+                    ({ DomainCondition: var condition }, Integer(0)) => Integer.Zero.WithCondition(condition),
+                    (Integer(0), { DomainCondition: var condition }) => Integer.Zero.WithCondition(condition),
                     (var n1, Integer(1)) => n1,
                     (Integer(1), var n2) => n2,
                     _ => null
@@ -114,8 +114,8 @@ namespace AngouriMath
                         (Integer minusOne, Mulf(var minusOne1, var any1)) when minusOne == Integer.MinusOne && minusOne1 == Integer.MinusOne => any1,
                         (Matrix m, Integer(0)) => m.With((_, _, _) => 0),
                         (Integer(0), Matrix m) => m.With((_, _, _) => 0),
-                        ({ IntrinsicCondition: var condition }, Integer(0)) => Integer.Zero.WithCondition(condition),
-                        (Integer(0), { IntrinsicCondition: var condition }) => Integer.Zero.WithCondition(condition),
+                        ({ DomainCondition: var condition }, Integer(0)) => Integer.Zero.WithCondition(condition),
+                        (Integer(0), { DomainCondition: var condition }) => Integer.Zero.WithCondition(condition),
                         (var n1, Integer(1)) => n1,
                         (Integer(1), var n2) => n2,
                         (var n1, var n2) when n1 == n2 => new Powf(n1, 2).InnerSimplified,
@@ -134,7 +134,7 @@ namespace AngouriMath
                     (a, b) => (a, b) switch
                     {
                         (Complex n1, Complex n2) => n1 / n2,
-                        (Integer(0), var n0) => new Providedf(0, new Notf(new Equalsf(n0, 0))).Evaled,
+                        (Integer(0), var n0) => n0.Evaled is Complex { IsZero: false } ? 0 : new Providedf(0, new Notf(new Equalsf(n0, 0))).Evaled,
                         (_, Integer(0)) => Real.NaN,
                         _ => null
                     },
@@ -145,7 +145,7 @@ namespace AngouriMath
                 ExpandOnTwoArguments(Dividend.InnerSimplified, Divisor.InnerSimplified,
                 (a, b) => (a, b) switch
                 {
-                    (Integer(0), var n0) => new Providedf(0, new Notf(new Equalsf(n0, 0))).InnerSimplified,
+                    (Integer(0), var n0) => n0.Evaled is Complex { IsZero: false } ? 0 : new Providedf(0, new Notf(new Equalsf(n0, 0))).InnerSimplified,
                     (var n1, Integer(1)) => n1,
                     _ => null
                 },
@@ -182,7 +182,7 @@ namespace AngouriMath
                 {
                     (Matrix m, Integer(var exp)) when exp is { } expNotNull && TryPower(m, expNotNull, out var res) => res.Evaled,
                     (Complex n1, Complex n2) => Number.Pow(n1, n2),
-                    (Integer(1), { IntrinsicCondition: var condition }) => Integer.One.WithCondition(condition),
+                    (Integer(1), { DomainCondition: var condition }) => Integer.One.WithCondition(condition),
                     (Integer(0), var x) => new Providedf(0, x > 0).Evaled,
                     (var n1, Integer(-1)) => (1 / n1).Evaled,
                     (var x, Integer(0)) => new Providedf(1, !x.Equalizes(0)).Evaled,
@@ -198,7 +198,7 @@ namespace AngouriMath
                 (a, b) => (a, b) switch
                 {
                     (Matrix m, Integer(var exp)) when exp is { } expNotNull && TryPower(m, expNotNull, out var res) => res.InnerSimplified,
-                    (Integer(1), { IntrinsicCondition: var condition }) => Integer.One.WithCondition(condition),
+                    (Integer(1), { DomainCondition: var condition }) => Integer.One.WithCondition(condition),
                     (Integer(0), var x) => new Providedf(0, x > 0).InnerSimplified,
                     (var n1, Integer(-1)) => (1 / n1).InnerSimplified,
                     (var x, Integer(0)) => new Providedf(1, !x.Equalizes(0)).InnerSimplified,
@@ -234,8 +234,8 @@ namespace AngouriMath
                 ExpandOnTwoArguments(Base.InnerSimplified, Antilogarithm.InnerSimplified,
                     (a, b) => (a, b) switch
                     {
-                        ({ IntrinsicCondition: var condition }, Integer(0)) => Real.NegativeInfinity.WithCondition(condition),
-                        ({ IntrinsicCondition: var condition }, Integer(1)) => Integer.Zero.WithCondition(condition),
+                        ({ DomainCondition: var condition }, Integer(0)) => Real.NegativeInfinity.WithCondition(condition),
+                        ({ DomainCondition: var condition }, Integer(1)) => Integer.Zero.WithCondition(condition),
                         _ => null
                     },
                     (@this, a, b) => ((Logf)@this).New(a, b),

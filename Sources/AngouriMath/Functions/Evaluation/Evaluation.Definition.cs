@@ -35,13 +35,13 @@ namespace AngouriMath
         /// - Singularities and poles (points where a function is undefined)
         /// - Piecewise continuity (tracking where discontinuities occur)
         /// </remarks>
-        public Entity DomainCondition => domainCondition.GetValue(static @this => @this.InnerSimplified.DirectChildren.Aggregate(@this.IntrinsicCondition, (accum, curr) =>
+        public Entity DomainCondition => domainCondition.GetValue(static @this => @this.DirectChildren.Aggregate(@this.IntrinsicCondition, (accum, curr) =>
             (accum, curr.DomainCondition) switch {
                 (Boolean(true), Boolean(true)) => Boolean.True,
                 (var l, Boolean(true)) => l,
                 (Boolean(true), var r) => r,
                 (var l, var r) => l & r,
-            }), this);
+            }), this).InnerSimplified;
         private LazyPropertyA<Entity> domainCondition;
         
         /// <summary>

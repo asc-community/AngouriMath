@@ -55,6 +55,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
                 Inf(var var, Set set) when var == x => set,
 
+                Providedf(var inner, var predicate) => ProvidedLifter.MergePredicateIntoSolveResult(Solve(inner, x), x, predicate),
+
                 // TODO: Although piecewise needed?
                 _ => Set.Empty
             };

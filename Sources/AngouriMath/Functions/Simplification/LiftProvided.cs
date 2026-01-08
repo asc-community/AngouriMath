@@ -8,11 +8,57 @@
 using AngouriMath.Core.Exceptions;
 using System;
 using System.Xml.Linq;
+using static AngouriMath.Entity;
+using static AngouriMath.Entity.Set;
 
+namespace AngouriMath.Functions
+{
+    internal static class ProvidedLifter
+    {
+        internal static Set MergePredicateIntoSolveResult(Set solveResult, Variable x, Entity predicate) =>
+            solveResult switch
+                {
+                    var s when predicate == Entity.Boolean.True => s,
+                    FiniteSet f => f.Apply(e => e.Provided(predicate.Substitute(x, e))),
+                    ConditionalSet c => new ConditionalSet(c.Var, c.Predicate & predicate.Substitute(x, c.Var)),
+                    var s => new ConditionalSet(x, new Inf(x, s) & predicate)
+                };
+        /// <summary>
+        /// Extracts all <see cref="Providedf"/> predicates to the top level.
+        /// </summary>
+        internal static bool ExtractProvidedPredicates(ref Entity expression, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? providedPredicate)
+        {
+            HashSet<Entity> predicates = [];
+            expression = expression.LiftProvided(predicates);
+            if (predicates.Count == 0)
+            {
+                providedPredicate = null;
+                return false;
+            }
+            else
+            {
+                providedPredicate = predicates.Aggregate((acc, curr) => acc & curr);
+                return true;
+            }
+        }
+    }
+}
 namespace AngouriMath
 {
     partial record Entity
     {
+
+        /// <summary>
+        /// Recursively lifts all <see cref="Providedf"/> nodes in the expression tree,
+        /// collecting their predicates into the provided set. This is the internal
+        /// implementation for <see cref="ProvidedLifter.ExtractProvidedPredicates"/>.
+        /// </summary>
+        /// <param name="predicates">
+        /// A set that accumulates all provided predicates encountered during traversal.
+        /// </param>
+        /// <returns>
+        /// The expression with all <see cref="Providedf"/> nodes removed.
+        /// </returns>
         internal abstract Entity LiftProvided(HashSet<Entity> predicates);
 
         public partial record Number { internal override Entity LiftProvided(HashSet<Entity> predicates) => this; }
@@ -57,19 +103,21 @@ namespace AngouriMath
         {
             partial record FiniteSet
             {
-                // Special handling for FiniteSet: only lift predicates to the set boundary, let Set InnerSimplify handle it
+                /// <summary>
+                /// For finite sets, lift provided predicates to the set boundary level.
+                /// Each element's conditions are kept with that element as a Providedf wrapper,
+                /// allowing Set.InnerSimplify to handle per-element conditions appropriately.
+                /// </summary>
                 internal override Entity LiftProvided(HashSet<Entity> predicates) =>
-                    Apply(e =>
-                    {
-                        HashSet<Entity> innerPredicates = [];
-                        var newElement = e.LiftProvided(innerPredicates);
-                        return innerPredicates.Count == 0 ? newElement : new Providedf(newElement, innerPredicates.Aggregate((acc, curr) => acc & curr));
-                    });
+                    Apply(e => ProvidedLifter.ExtractProvidedPredicates(ref e, out var predicate) ? new Providedf(e, predicate) : e);
             }
             partial record Interval { internal override Entity LiftProvided(HashSet<Entity> predicates) => New(Left.LiftProvided(predicates), LeftClosed, Right.LiftProvided(predicates), RightClosed); }
             partial record ConditionalSet
             {
-                // For ConditionalSet, merge predicates
+                /// <summary>
+                /// For conditional sets { x : P(x) }, merge any provided predicates from P(x)
+                /// into the predicate itself, since the predicate defines the set membership condition.
+                /// </summary>
                 internal override Entity LiftProvided(HashSet<Entity> predicates) {
                     HashSet<Entity> innerPredicates = [];
                     var newVar = Var.LiftProvided(innerPredicates);
@@ -86,15 +134,24 @@ namespace AngouriMath
         partial record Phif { internal override Entity LiftProvided(HashSet<Entity> predicates) => New(Argument.LiftProvided(predicates)); }
         partial record Providedf
         {
-            // Lift provided nodes to the outermost level
+            /// <summary>
+            /// The Providedf node itself lifts its predicate into the
+            /// accumulator set and returns its inner expression for continued traversal.
+            /// This is the core mechanism that extracts "expr provided P" into (expr, P).
+            /// </summary>
             internal override Entity LiftProvided(HashSet<Entity> predicates)
             {
-                predicates.Add(Predicate.LiftProvided(predicates));
+                foreach (var p in Andf.LinearChildren(Predicate.LiftProvided(predicates)))
+                    predicates.Add(p);
                 return Expression.LiftProvided(predicates);
             }
         }
         partial record Piecewise {
-            // Lift provided nodes to the the piecewise boundary
+            /// <summary>
+            /// For piecewise functions, lift provided predicates to the boundary of each case.
+            /// Each case maintains its own (expression, condition) pair as a Providedf,
+            /// allowing proper handling of per-branch validity conditions.
+            /// </summary>
             internal override Entity LiftProvided(HashSet<Entity> predicates) =>
                 Apply(provided =>
                 {
@@ -105,6 +162,14 @@ namespace AngouriMath
                 });
         }
         partial record Application { internal override Entity LiftProvided(HashSet<Entity> predicates) => New(Expression.LiftProvided(predicates), Arguments.Select(e => e.LiftProvided(predicates)).ToLList()); }
-        partial record Lambda { internal override Entity LiftProvided(HashSet<Entity> predicates) => New(Parameter, Body.LiftProvided(predicates)); }
+        partial record Lambda {
+
+            /// For lambdas, lift provided predicates to the lambdas boundary.
+            internal override Entity LiftProvided(HashSet<Entity> predicates)
+            {
+                var body = Body;
+                return New(Parameter, ProvidedLifter.ExtractProvidedPredicates(ref body, out var predicate) ? new Providedf(body, predicate) : body);
+            }
+        }
     }
 }

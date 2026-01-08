@@ -17,11 +17,8 @@ namespace AngouriMath.Functions.Algebra
         private static Entity? SimplifyAndComputeLimitToInfinity(Entity expr, Variable x)
         {
             expr = expr.Simplify();
-            return ComputeLimitToInfinity(expr, x);
-        }
+            if (expr is Providedf(var expression, _)) expr = expression; // limits operate assuming a continuous expression even though some points may be undefined.
 
-        private static Entity? ComputeLimitToInfinity(Entity expr, Variable x)
-        {
             var substitutionResult = LimitSolvers.SolveBySubstitution(expr, x);
             if (substitutionResult is { }) return substitutionResult;
 

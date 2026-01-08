@@ -50,12 +50,13 @@ namespace AngouriMath.Tests.Algebra
                 AssertRoots(expr, x, root, toSub);
         }
 
-        void TestSolver(Entity expr, int rootCount, Integer? toSub = null, bool testNewton = false)
+        void TestSolver(Entity expr, int rootCount, Integer? toSub = null, bool testNewton = false, string? verifyRoots = null)
         {
             using var _ = MathS.Settings.AllowNewton.Set(false);
             var rootsRaw = expr.SolveEquation(x);
             var roots = (Set)rootsRaw.InnerSimplified;
             VerifySetOfRoots(expr, roots, rootCount, toSub);
+            if (verifyRoots is not null) Assert.Equal(verifyRoots, roots.Stringize());
 
             if (!testNewton) return;
             // TODO: Increase Newton precision
@@ -225,13 +226,13 @@ namespace AngouriMath.Tests.Algebra
         public void Sign0RootsTest3() => SignumTest("sgn(x) + i + 1");
 
         [Theory]
-        [InlineData("4^x - a", 1, 3)]
+        [InlineData("4^x - a", 1, "{ log(4, a) }")]
         [InlineData("a^x + (a^2)^x - c", 2)]
         [InlineData("e^x + (e2)^x - 1", 2)]
         [InlineData("2 ^ (x sin(x)) + 4 ^ (x sin(x)) + c", 0)]
-        [InlineData("2^x - 4^x", 1)]
-        public void TestExponentialSolver(string equation, int rootCount, int? toSub = null)
-            => TestSolver(equation, rootCount, toSub);
+        [InlineData("2^x - 4^x", 1, "{ 0 }")]
+        public void TestExponentialSolver(string equation, int rootCount, string? verifyRoots = null)
+            => TestSolver(equation, rootCount, verifyRoots: verifyRoots);
 
         [Theory(Skip = "Exponentiation works unexpectedly")]
         [InlineData("4^x + 2^x - a", 2, 3)]

@@ -5575,6 +5575,9 @@ namespace AngouriMath
                         // Weigh provided predicates much less but nested provideds heavy
                         Providedf(var inner, var predicate) =>
                             DefaultCriteria(inner) + 0.1 * DefaultCriteria(predicate) + ExtraHeavyWeight * (inner.Nodes.Count(n => n is Providedf) + predicate.Nodes.Count(n => n is Providedf)),
+                        Entity.Piecewise { Cases: var cases } =>
+                            cases.Sum(@case =>
+                                DefaultCriteria(@case.Expression) + 0.1 * DefaultCriteria(@case.Predicate) + ExtraHeavyWeight * (@case.Expression.Nodes.Count(n => n is Providedf) + @case.Predicate.Nodes.Count(n => n is Providedf))),
                         Variable => Weight, // Number of variables
                         Divf => MinorWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of divides
                         Rational(Integer(1 or -1), _) and not Integer => Weight + expr.DirectChildren.Sum(DefaultCriteria), // Number of rationals with unit numerator

@@ -40,7 +40,8 @@ namespace AngouriMath.Functions
             var i = 0;
             while (true)
             {
-                var num = (currExpr.Substitute(exprVariable, point) * (polyVariable - point).Pow(i)).InnerSimplified;
+                var coef = currExpr.Substitute(exprVariable, point);
+                var num = (i == 0 ? coef : coef * (polyVariable - point).Pow(i)).InnerSimplified;
                 if (num != Number.Integer.Zero)
                     if (i > 1)
                         yield return num / ((Entity)i).Factorial();
@@ -137,7 +138,8 @@ namespace AngouriMath.Functions
                     for (int variableIndex = 0; variableIndex < exprToPolyVars.Length; variableIndex++)
                     {
                         var (exprVariable, polyVariable, point) = exprToPolyVars[variableIndex];
-                        pointCoefficients *= (polyVariable - point).Pow(pointCoefficientDegrees[variableIndex]);
+                        if (pointCoefficientDegrees[variableIndex] != 0) // don't produce x^0 which is undefined for x=0
+                            pointCoefficients *= (polyVariable - point).Pow(pointCoefficientDegrees[variableIndex]);
                     }
 
                     // Solve the partial derivative at the given point,

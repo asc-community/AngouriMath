@@ -49,7 +49,7 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void MultiplySimplify() => TestSimplify("{x}^{2}", x * x);
         [Fact] public void Divide() => Test(@"\frac{x}{x}", x / x);
         [Fact] public void DivideDivide() => Test(@"\frac{\frac{x}{x}}{x}", x / x / x);
-        [Fact] public void DivideSimplify() => TestSimplify(@"1", x / x);
+        [Fact] public void DivideSimplify() => TestSimplify(@"\left(1 \quad \text{for} \quad \neg{x = 0}\right)", x / x);
         [Fact] public void Greek1() => Test(@"\alpha", MathS.Var("alpha"));
         [Fact] public void Greek2() => Test(@"\beta", MathS.Var("beta"));
         [Fact] public void Greek3() => Test(@"a_{\beta}", MathS.Var("a_beta"));
@@ -555,7 +555,7 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void Artanh()
             => TestSimplify(@"\frac{\ln\left(\frac{2}{1-x}-1\right)}{2}", MathS.Hyperbolic.Artanh(x));
         [Fact] public void Arcotanh()
-            => TestSimplify(@"\frac{1}{2} \cdot \ln\left(\frac{x-1}{x+1}\right)", MathS.Hyperbolic.Arcotanh(x));
+            => TestSimplify(@"\frac{\ln\left(1+\frac{2}{x-1}\right)}{2}", MathS.Hyperbolic.Arcotanh(x));
         [Fact] public void Arsech()
             => TestSimplify(@"\ln\left(\frac{1}{x}+\sqrt{\frac{1}{{x}^{2}}-1}\right)", MathS.Hyperbolic.Arsech(x));
         [Fact] public void Arcosech()
