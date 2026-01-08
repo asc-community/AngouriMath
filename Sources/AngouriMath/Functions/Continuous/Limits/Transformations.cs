@@ -19,12 +19,17 @@ namespace AngouriMath.Functions.Algebra
                 Sinf or Tanf or Arcsinf or Arctanf => expr.DirectChildren[0],
                 _ => expr
             };
-
+        private static Entity EvalAssumingContinuous(Entity expr) =>
+            expr.Evaled switch
+            {
+                Providedf(var inner, _) => inner,
+                var x => x
+            };
         private static Entity ApplyFirstRemarkable(Entity expr, Variable x, Entity dest)
             => expr switch
             {
                 Divf(var a, var b) div
-                    when a.Limit(x, dest).Evaled == 0 && b.Limit(x, dest).Evaled == 0
+                    when EvalAssumingContinuous(a.Limit(x, dest)) == 0 && EvalAssumingContinuous(b.Limit(x, dest)) == 0
                         => div.New(EquivalenceRules(a, x, dest), EquivalenceRules(b, x, dest)),
 
                 _ => expr
@@ -38,7 +43,7 @@ namespace AngouriMath.Functions.Algebra
                 // e ^ (g(x) * (f(x) - 1))
                 Powf(var xPlusOne, var xPower) when
                 xPlusOne.ContainsNode(x) && xPower.ContainsNode(x) &&
-                (xPlusOne - 1).Limit(x, dest).Evaled == 0 && IsInfiniteNode(xPower.Limit(x, dest)) =>
+                EvalAssumingContinuous((xPlusOne - 1).Limit(x, dest)) == 0 && IsInfiniteNode(xPower.Limit(x, dest)) =>
                 MathS.e.Pow(xPower * (xPlusOne - 1)),
 
                 _ => expr
@@ -53,7 +58,7 @@ namespace AngouriMath.Functions.Algebra
         private static Entity ApplylHopitalRule(Entity expr, Variable x, Entity dest)
         {
             if (expr is Divf(var num, var den))
-                if (num.Limit(x, dest).Evaled is var numLimit && den.Limit(x, dest).Evaled is var denLimit)
+                if (EvalAssumingContinuous(num.Limit(x, dest)) is var numLimit && EvalAssumingContinuous(den.Limit(x, dest)) is var denLimit)
                     if (numLimit == 0 && denLimit == 0 ||
                             IsInfiniteNode(numLimit) && IsInfiniteNode(denLimit))
                         if (num is not Number && den is not Number)

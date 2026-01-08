@@ -43,5 +43,15 @@ namespace AngouriMath.Tests.PatternsTest
             actual = actual.Simplify();
             Assert.Equal(simplified.ToEntity(), actual);
         }
+        [Theory]
+        [InlineData("{ 0/0 }", "{}")]
+        [InlineData("{ 1 provided false }", "{}")]
+        [InlineData("{ 1 provided true, 2 provided false, 3 provided true }", "{ 1, 3 }")]
+        public void TestNaN(string unsimplified, string simplified)
+        {
+            var actual = unsimplified.ToEntity();
+            actual = actual.InnerSimplified;
+            Assert.Equal(simplified.ToEntity(), actual);
+        }
     }
 }

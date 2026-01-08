@@ -135,7 +135,9 @@ namespace AngouriMath
             // (const ^ b)' = e^b * b'
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                Exponent is Number exp
+                Exponent == Integer.One
+                ? Base.InnerDifferentiate(variable).WithCondition(Base.DomainCondition) // don't create x^0 which is undefined for x=0
+                : Exponent is Number exp
                 ? exp * Base.Pow(exp - 1) * Base.InnerDifferentiate(variable)
                 : Base is Number
                 ? Base.Pow(Exponent) * MathS.Ln(Base) * Exponent.InnerDifferentiate(variable)

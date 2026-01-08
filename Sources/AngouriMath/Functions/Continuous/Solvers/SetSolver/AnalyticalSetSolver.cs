@@ -15,6 +15,10 @@ namespace AngouriMath.Functions.Continuous.Solvers.SetSolver
     {
         internal static Set Solve(Entity left, Entity right, Variable x)
         {
+            if (ProvidedLifter.ExtractProvidedPredicates(ref left, out var predicate))
+                return ProvidedLifter.MergePredicateIntoSolveResult(Solve(left, right, x), x, predicate);
+            if (ProvidedLifter.ExtractProvidedPredicates(ref right, out predicate))
+                return ProvidedLifter.MergePredicateIntoSolveResult(Solve(left, right, x), x, predicate);
             left = left.Replace(Patterns.SetOperatorRules);
             right = right.Replace(Patterns.SetOperatorRules);
             if (left.DirectChildren.Count<Entity>(c => c == x) 

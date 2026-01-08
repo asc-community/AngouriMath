@@ -868,7 +868,7 @@ namespace AngouriMath
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Gamma_function"/></summary>
         /// <param name="a">Argument node of which gamma function will be taken</param>
-        /// <returns>Factorial node with one added to the argument</returns>
+        /// <returns>Factorial node with one subtracted from the argument</returns>
         /// <example>
         /// <code>
         /// using System;
@@ -876,7 +876,7 @@ namespace AngouriMath
         /// var expr = Factorial(5);
         /// Console.WriteLine(expr);
         /// Console.WriteLine(expr.Evaled);
-        /// var expr2 = Gamma(4);
+        /// var expr2 = Gamma(6);
         /// Console.WriteLine(expr2);
         /// Console.WriteLine(expr2.Evaled);
         /// </code>
@@ -884,12 +884,12 @@ namespace AngouriMath
         /// <code>
         /// 5!
         /// 120
-        /// (4 + 1)!
+        /// (6 - 1)!
         /// 120
         /// </code>
         /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
-        public static Entity Gamma(Entity a) => new Factorialf(a + 1);
+        public static Entity Gamma(Entity a) => new Factorialf(a - 1);
 
         /// <summary>https://en.wikipedia.org/wiki/Sign_function</summary>
         /// <param name="a">Argument node of which Signum function will be taken</param>
@@ -1533,8 +1533,8 @@ namespace AngouriMath
             /// 1/2 * ln((1 + x) / (1 - x))
             /// 10
             /// ----------------------
-            /// 1/2 * ln((x - 1) / (x + 1))
-            /// -10
+            /// 1/2 * ln((x + 1) / (x - 1))
+            /// 10
             /// ----------------------
             /// ln(1 / x + sqrt(1 / x ^ 2 - 1))
             /// 10
@@ -1585,8 +1585,8 @@ namespace AngouriMath
             /// 1/2 * ln((1 + x) / (1 - x))
             /// 10
             /// ----------------------
-            /// 1/2 * ln((x - 1) / (x + 1))
-            /// -10
+            /// 1/2 * ln((x + 1) / (x - 1))
+            /// 10
             /// ----------------------
             /// ln(1 / x + sqrt(1 / x ^ 2 - 1))
             /// 10
@@ -1637,8 +1637,8 @@ namespace AngouriMath
             /// 1/2 * ln((1 + x) / (1 - x))
             /// 10
             /// ----------------------
-            /// 1/2 * ln((x - 1) / (x + 1))
-            /// -10
+            /// 1/2 * ln((x + 1) / (x - 1))
+            /// 10
             /// ----------------------
             /// ln(1 / x + sqrt(1 / x ^ 2 - 1))
             /// 10
@@ -1689,8 +1689,8 @@ namespace AngouriMath
             /// 1/2 * ln((1 + x) / (1 - x))
             /// 10
             /// ----------------------
-            /// 1/2 * ln((x - 1) / (x + 1))
-            /// -10
+            /// 1/2 * ln((x + 1) / (x - 1))
+            /// 10
             /// ----------------------
             /// ln(1 / x + sqrt(1 / x ^ 2 - 1))
             /// 10
@@ -1700,7 +1700,7 @@ namespace AngouriMath
             /// </code>
             /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
-            public static Entity Arcotanh(Entity x) => 0.5 * Ln((x - 1) / (x + 1));
+            public static Entity Arcotanh(Entity x) => 0.5 * Ln((x + 1) / (x - 1));
 
             /// <summary>
             /// Inverse hyperbolic secant:
@@ -1741,8 +1741,8 @@ namespace AngouriMath
             /// 1/2 * ln((1 + x) / (1 - x))
             /// 10
             /// ----------------------
-            /// 1/2 * ln((x - 1) / (x + 1))
-            /// -10
+            /// 1/2 * ln((x + 1) / (x - 1))
+            /// 10
             /// ----------------------
             /// ln(1 / x + sqrt(1 / x ^ 2 - 1))
             /// 10
@@ -1793,8 +1793,8 @@ namespace AngouriMath
             /// 1/2 * ln((1 + x) / (1 - x))
             /// 10
             /// ----------------------
-            /// 1/2 * ln((x - 1) / (x + 1))
-            /// -10
+            /// 1/2 * ln((x + 1) / (x - 1))
+            /// 10
             /// ----------------------
             /// ln(1 / x + sqrt(1 / x ^ 2 - 1))
             /// 10
@@ -5564,42 +5564,31 @@ namespace AngouriMath
                 complexityCriteria ??= new Func<Entity, double>(expr =>
                 {
                     // Those are of the 2nd power to avoid problems with floating numbers
-                    static double TinyWeight(double w)  => w * 0.5;
-                    static double MinorWeight(double w) => w * 1.0;
-                    static double Weight(double w)      => w * 2.0;
-                    static double MajorWeight(double w) => w * 4.0;
-                    static double HeavyWeight(double w) => w * 8.0;
-                    static double ExtraHeavyWeight(double w) => w * 12.0;
+                    const double TinyWeight       = 0.5;
+                    const double MinorWeight      = 1.0;
+                    const double Weight           = 2.0;
+                    const double MajorWeight      = 4.0;
+                    const double HeavyWeight      = 8.0;
+                    const double ExtraHeavyWeight = 12.0;
 
-                    // Number of nodes
-                    var res = Weight(expr.Complexity);
-
-                    // Number of variables
-                    res += Weight(expr.Nodes.Count(entity => entity is Variable));
-
-                    // Number of divides
-                    res += MinorWeight(expr.Nodes.Count(entity => entity is Divf));
-
-                    // Number of rationals with unit numerator
-                    res += Weight(expr.Nodes.Count(entity => entity is Rational rat and not Integer 
-                        && (rat.Numerator == 1 || rat.Numerator == -1)));
-
-                    // Number of negative powers
-                    res += HeavyWeight(expr.Nodes.Count(entity => entity is Powf(_, Real { IsNegative: true })));
-
-                    // Number of logarithms
-                    res += TinyWeight(expr.Nodes.Count(entity => entity is Logf));
-
-                    // Number of phi functions
-                    res += ExtraHeavyWeight(expr.Nodes.Count(entity => entity is Phif));
-
-                    // Number of negative reals
-                    res += MajorWeight(expr.Nodes.Count(entity => entity is Real { IsNegative: true }));
-
-                    // 0 < x is bad. x > 0 is good.
-                    res += Weight(expr.Nodes.Count(entity => entity is ComparisonSign && entity.DirectChildren[0] == 0));
-
-                    return res;
+                    static double DefaultCriteria(Entity expr) => expr switch {
+                        // Weigh provided predicates much less but nested provideds heavy
+                        Providedf(var inner, var predicate) =>
+                            DefaultCriteria(inner) + 0.1 * DefaultCriteria(predicate) + ExtraHeavyWeight * (inner.Nodes.Count(n => n is Providedf) + predicate.Nodes.Count(n => n is Providedf)),
+                        Entity.Piecewise { Cases: var cases } =>
+                            cases.Sum(@case =>
+                                DefaultCriteria(@case.Expression) + 0.1 * DefaultCriteria(@case.Predicate) + ExtraHeavyWeight * (@case.Expression.Nodes.Count(n => n is Providedf) + @case.Predicate.Nodes.Count(n => n is Providedf))),
+                        Variable => Weight, // Number of variables
+                        Divf => MinorWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of divides
+                        Rational(Integer(1 or -1), _) and not Integer => Weight + expr.DirectChildren.Sum(DefaultCriteria), // Number of rationals with unit numerator
+                        Powf(_, Real { IsNegative: true }) => HeavyWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of negative powers
+                        Logf => TinyWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of logarithms
+                        Phif => ExtraHeavyWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of phi functions
+                        Real { IsNegative: true } => MajorWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of negative reals
+                        ComparisonSign when expr.DirectChildren[0] == 0 => Weight + expr.DirectChildren.Sum(DefaultCriteria), // 0 < x is bad. x > 0 is good.
+                        _ => expr.DirectChildren.Sum(DefaultCriteria)
+                    } + Weight; // Number of nodes
+                    return DefaultCriteria(expr);
                 });
             [ThreadStatic] private static Setting<Func<Entity, double>>? complexityCriteria;
 

@@ -80,7 +80,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("arctan(a x) / x", "a")]
         [InlineData("arctan(a x) / (a x)", "1")]
         [InlineData("(tan(a x) - sin(b x)) / (a x)", "(a - b) / a")]
-        [InlineData("sin(a^x - 1) / tan(b^x - 1)", "ln(a) / ln(b)")]
+        [InlineData("sin(a^x - 1) / tan(b^x - 1)", "ln(a) / ln(b) provided not (a = 0 or b = 0)")]
         [InlineData("(1 - cos(x)) / x2", "1/2")]
         [InlineData("((1 + x)^4 - 1) / x", "4")]
         [InlineData("((1 + x)^a - 1) / x", "a")]

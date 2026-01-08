@@ -13,6 +13,9 @@ namespace AngouriMath
     {
         partial record Boolean
         {
+            // Boolean values are always defined
+            private protected override Entity IntrinsicCondition => True;
+            
             /// <inheritdoc/>
             protected override Entity InnerEval() => this;
 
@@ -22,6 +25,8 @@ namespace AngouriMath
 
         partial record Notf
         {
+            // Logical NOT is always defined for any input
+            private protected override Entity IntrinsicCondition => True;
 
             /// <inheritdoc/>
             protected override Entity InnerEval()
@@ -40,11 +45,14 @@ namespace AngouriMath
 
         partial record Andf
         {
+            // Logical AND is always defined for any inputs
+            private protected override Entity IntrinsicCondition => True;
+            
             private static bool GoodResult(Entity left, Entity right, Entity leftEvaled, Entity rightEvaled, out Entity res)
             {
                 if (leftEvaled is Boolean leftBool && rightEvaled is Boolean rightBool)
                 {
-                    res = (bool)leftBool && (bool)rightBool; // there's no cost in casting
+                    res = (bool)leftBool && (bool)rightBool;
                     return true;
                 }
                 else if (leftEvaled == False || rightEvaled == False)
@@ -94,11 +102,14 @@ namespace AngouriMath
 
         partial record Orf
         {
+            // Logical OR is always defined for any inputs
+            private protected override Entity IntrinsicCondition => True;
+            
             private static bool GoodResult(Entity left, Entity right, Entity leftEvaled, Entity rightEvaled, out Entity res)
             {
                 if (leftEvaled is Boolean leftBool && rightEvaled is Boolean rightBool)
                 {
-                    res = (bool)leftBool || (bool)rightBool; // there's no cost in casting
+                    res = (bool)leftBool || (bool)rightBool;
                     return true;
                 }
                 else if (leftEvaled == True || rightEvaled == True)
@@ -148,11 +159,14 @@ namespace AngouriMath
 
         partial record Xorf
         {
+            // Logical XOR is always defined for any inputs
+            private protected override Entity IntrinsicCondition => True;
+            
             private static bool GoodResult(Entity left, Entity right, Entity leftEvaled, Entity rightEvaled, out Entity res)
             {
                 if (leftEvaled is Boolean leftBool && rightEvaled is Boolean rightBool)
                 {
-                    res = (bool)leftBool ^ (bool)rightBool; // there's no cost in casting
+                    res = (bool)leftBool ^ (bool)rightBool;
                     return true;
                 }
                 else if (leftEvaled is Boolean leftBoolOnly)
@@ -197,11 +211,14 @@ namespace AngouriMath
 
         partial record Impliesf
         {
+            // Logical implication is always defined for any inputs
+            private protected override Entity IntrinsicCondition => True;
+            
             private static bool GoodResult(Entity left, Entity right, Entity leftEvaled, Entity rightEvaled, out Entity res)
             {
                 if (leftEvaled is Boolean leftBool && rightEvaled is Boolean rightBool)
                 {
-                    res = !(bool)leftBool || (bool)rightBool; // there's no cost in casting
+                    res = !(bool)leftBool || (bool)rightBool;
                     return true;
                 }
                 else if (leftEvaled == False || rightEvaled == True)
@@ -251,6 +268,9 @@ namespace AngouriMath
 
         partial record Equalsf
         {
+            // Equality comparison is always defined for any inputs
+            private protected override Entity IntrinsicCondition => True;
+            
             /// <inheritdoc/>
             protected override Entity InnerEval()
                 => (Left.Evaled, Right.Evaled) switch
@@ -266,6 +286,11 @@ namespace AngouriMath
 
         partial record Greaterf
         {
+            // Inequality comparisons are only defined for real numbers.
+            // For non-real complex numbers, they evaluate to NaN.
+            private protected override Entity IntrinsicCondition => 
+                Left.In(MathS.Sets.R) & Right.In(MathS.Sets.R);
+            
             /// <inheritdoc/>
             protected override Entity InnerEval()
                 => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
@@ -294,6 +319,11 @@ namespace AngouriMath
 
         partial record GreaterOrEqualf
         {
+            // Inequality comparisons are only defined for real numbers.
+            // For non-real complex numbers, they evaluate to NaN.
+            private protected override Entity IntrinsicCondition => 
+                Left.In(MathS.Sets.R) & Right.In(MathS.Sets.R);
+            
             /// <inheritdoc/>
             protected override Entity InnerEval()
                 => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
@@ -322,6 +352,11 @@ namespace AngouriMath
 
         partial record Lessf
         {
+            // Inequality comparisons are only defined for real numbers.
+            // For non-real complex numbers, they evaluate to NaN.
+            private protected override Entity IntrinsicCondition => 
+                Left.In(MathS.Sets.R) & Right.In(MathS.Sets.R);
+            
             /// <inheritdoc/>
             protected override Entity InnerEval()
                 => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
@@ -350,6 +385,11 @@ namespace AngouriMath
 
         partial record LessOrEqualf
         {
+            // Inequality comparisons are only defined for real numbers.
+            // For non-real complex numbers, they evaluate to NaN.
+            private protected override Entity IntrinsicCondition => 
+                Left.In(MathS.Sets.R) & Right.In(MathS.Sets.R);
+            
             /// <inheritdoc/>
             protected override Entity InnerEval()
                 => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
@@ -380,6 +420,9 @@ namespace AngouriMath
         {
             partial record Inf
             {
+                // Set membership is always defined for any element and set
+                private protected override Entity IntrinsicCondition => True;
+                
                 /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => ExpandOnTwoArguments(Element.Evaled, SupSet.Evaled,
@@ -405,7 +448,12 @@ namespace AngouriMath
         }
 
         partial record Phif
-        {               
+        {
+            // Euler's totient function is defined for all integers in this library.
+            // For positive integers, it returns the standard φ(n) value.
+            // For non-positive integers, this implementation extends the definition by returning 0.
+            private protected override Entity IntrinsicCondition => True;
+            
             /// <inheritdoc/>
             protected override Entity InnerEval()
                 => ExpandOnOneArgument(Argument.Evaled,

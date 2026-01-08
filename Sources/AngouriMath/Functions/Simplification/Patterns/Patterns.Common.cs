@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using System;
 using static AngouriMath.Entity;
 
 namespace AngouriMath.Functions
@@ -165,7 +166,7 @@ namespace AngouriMath.Functions
                 when (var1, any1) == (var1a, any1a) => new Powf(var1, 2) - new Powf(any1, 2),
 
             // a / a
-            Divf(var any1, var any1a) when any1 == any1a => 1,
+            Divf(var any1, var any1a) when any1 == any1a => new Providedf(1, !any1.Equalizes(0)),
 
             // (a * c) / c
             Divf(Mulf(var any1, var any2), var any2a) when any2 == any2a => any1,
@@ -176,10 +177,10 @@ namespace AngouriMath.Functions
             Divf(Mulf(var any2, var any1), Mulf(var any3, var any2a)) when any2 == any2a => any1 / any3,
 
             // ({1} - {2}) / ({2} - {1})
-            Divf(Minusf(var any1, var any2), Minusf(var any2a, var any1a)) when (any1, any2) == (any1a, any2a) => -1,
+            Divf(Minusf(var any1, var any2), Minusf(var any2a, var any1a) denom) when (any1, any2) == (any1a, any2a) => new Providedf(-1, !denom.Equalizes(0)),
 
             // ({1} + {2}) / ({2} + {1})
-            Divf(Sumf(var any1, var any2), Sumf(var any2a, var any1a)) when (any1, any2) == (any1a, any2a) => 1,
+            Divf(Sumf(var any1, var any2), Sumf(var any2a, var any1a) denom) when (any1, any2) == (any1a, any2a) => new Providedf(1, !denom.Equalizes(0)),
 
             // a / (b * {1})
             Divf(Number const1, Mulf(Number const2, var any1)) => const1 / const2 / any1,

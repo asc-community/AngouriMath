@@ -17,6 +17,7 @@ namespace AngouriMath
             // TODO:
             partial record FiniteSet
             {
+                private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => Apply(el => el.Evaled);
@@ -28,6 +29,7 @@ namespace AngouriMath
 
             partial record Interval
             {
+                private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => ExpandOnTwoAndTArguments(Left.Evaled, Right.Evaled, (l: LeftClosed, r: RightClosed),
@@ -57,6 +59,7 @@ namespace AngouriMath
 
             partial record ConditionalSet
             {
+                private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => ExpandOnTwoAndTArguments(Var, Predicate.Evaled, this,
@@ -80,6 +83,7 @@ namespace AngouriMath
 
             partial record SpecialSet
             {
+                private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => this;
@@ -91,6 +95,7 @@ namespace AngouriMath
 
             partial record Unionf
             {
+                private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => InnerSimplified;
@@ -112,6 +117,7 @@ namespace AngouriMath
 
             partial record Intersectionf
             {
+                private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => InnerSimplified;
@@ -133,6 +139,7 @@ namespace AngouriMath
 
             partial record SetMinusf
             {
+                private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => InnerSimplified;
@@ -154,6 +161,7 @@ namespace AngouriMath
 
         partial record Providedf
         {
+            private protected override Entity IntrinsicCondition => Predicate;
             private Providedf SwitchOverChildren(Entity expression, Entity predicate)
                 => (expression, predicate) switch
                 {
@@ -193,6 +201,8 @@ namespace AngouriMath
 
         partial record Piecewise
         {
+            private protected override Entity IntrinsicCondition =>
+                Cases.Aggregate((Entity?)null, (acc, curr) => acc is { } ? acc | curr.Predicate : curr.Predicate) ?? Boolean.False;
             private Entity? ComputePiecewiseResultIfPossible()
             {
                 foreach (var oneCase in Cases)
@@ -239,6 +249,7 @@ namespace AngouriMath
 
         partial record Matrix
         {
+            private protected override Entity IntrinsicCondition => Boolean.True;
             /// <inheritdoc/>
             protected override Entity InnerEval()
                 => IsScalar ? AsScalar().Evaled :
@@ -252,6 +263,7 @@ namespace AngouriMath
 
         partial record Application
         {
+            private protected override Entity IntrinsicCondition => Boolean.True;
             private static Entity ApplyOthersIfNeeded(Entity outer, LList<Entity> arguments)
                 => arguments switch
                 {
@@ -335,6 +347,7 @@ namespace AngouriMath
 
         partial record Lambda
         {
+            private protected override Entity IntrinsicCondition => Boolean.True;
             private static LList<Entity>? ReduceArgList(LList<Entity> args, Variable toReduce)
                 => args switch
                 {

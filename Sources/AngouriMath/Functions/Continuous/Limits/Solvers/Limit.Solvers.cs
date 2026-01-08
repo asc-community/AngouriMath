@@ -41,9 +41,7 @@ namespace AngouriMath.Functions.Algebra
         [ConstantField] private static readonly Real Infinity = Real.PositiveInfinity;
         internal static Entity? SolveBySubstitution(Entity expr, Variable x)
         {
-            // For now we remove all provideds from an expression
-            // Is it a correct thing to do?
-            var res = expr.Replace(e => e is Providedf(var expr, _) ? expr : e).Substitute(x, Infinity);
+            var res = expr.Substitute(x, Infinity);
             if (res.Evaled is Complex limit)
             {
                 MultithreadingFunctional.ExitIfCancelled();

@@ -159,9 +159,11 @@ namespace AngouriMath.Tests.Common
             .ShouldBe("piecewise(1 provided a, ((-1)) / ((x) ^ (2)))");
 
         // although this one will be collapsed into 0 with #327 implemented
-        [Fact] public void PiecewiseDerivative2() =>
-            "piecewise(x provided a, 1/x)".Differentiate("y")
-            .ShouldBe("piecewise(0 provided a, 0)");
+        [Fact] public void PiecewiseDerivative2() {
+            var result = "piecewise(x provided a, 1/x)".Differentiate("y");
+            result.ShouldBe("piecewise(0 provided a, 0 provided not x^2 = 0 provided true)");
+            result.Simplify().ShouldBe("piecewise(0 provided a, 0 provided not x = 0)");
+        }
 
         [Fact] public void PiecewiseLimit1() =>
             "piecewise(sin(a x) / (b x) provided a, sin(b x) / sin(a x))".Limit("x", "0")
@@ -187,9 +189,12 @@ namespace AngouriMath.Tests.Common
             .ShouldBe("piecewise(1 provided a, ((-1)) / ((x) ^ (2)))");
 
         // although this one will be collapsed into 0 with #327 implemented
-        [Fact] public void PiecewiseDerivative2NodeEvaled() =>
-            "derivative(piecewise(x provided a, 1/x), y)".ToEntity().Evaled
-            .ShouldBe("piecewise(0 provided a, 0)");
+        [Fact] public void PiecewiseDerivative2NodeEvaled()
+        {
+            var result = "derivative(piecewise(x provided a, 1/x), y)".ToEntity().Evaled;
+            result.ShouldBe("piecewise(0 provided a, 0 provided not x^2 = 0 provided true)");
+            result.Simplify().ShouldBe("piecewise(0 provided a, 0 provided not x = 0)");
+        }
 
         [Fact] public void PiecewiseLimit1NodeEvaled() =>
             "limit(piecewise(sin(a x) / (b x) provided a, sin(b x) / sin(a x)), x, 0)".ToEntity().Evaled
@@ -215,9 +220,12 @@ namespace AngouriMath.Tests.Common
             .ShouldBe("piecewise(1 provided a, ((-1)) / ((x) ^ (2)))");
 
         // although this one will be collapsed into 0 with #327 implemented
-        [Fact] public void PiecewiseDerivative2NodeInnerSimplified() =>
-            "derivative(piecewise(x provided a, 1/x), y)".ToEntity().InnerSimplified
-            .ShouldBe("piecewise(0 provided a, 0)");
+        [Fact] public void PiecewiseDerivative2NodeInnerSimplified()
+        {
+            var result = "derivative(piecewise(x provided a, 1/x), y)".ToEntity().InnerSimplified;
+            result.ShouldBe("piecewise(0 provided a, 0 provided not x^2 = 0 provided true)");
+            result.Simplify().ShouldBe("piecewise(0 provided a, 0 provided not x = 0)");
+        }
 
         [Fact] public void PiecewiseLimit1NodeInnerSimplified() =>
             "limit(piecewise(sin(a x) / (b x) provided a, sin(b x) / sin(a x)), x, 0)".ToEntity().InnerSimplified

@@ -14,7 +14,7 @@ namespace AngouriMath
     partial record Entity
     {
         /// <summary>
-        /// Solves a <see cref="Statement"/>
+        /// Solves a <see cref="Statement"/> or <see cref="Providedf"/>
         /// Statement is an Entity such that its value is true for
         /// any x in X, where X is the result of this method.
         /// See more about <see cref="Set"/>
@@ -89,7 +89,7 @@ namespace AngouriMath
         /// </example>
         public Set Solve(Variable var)
         {
-            if (this is Statement)
+            if (this is Statement or Providedf)
             {
                 var res = StatementSolver.Solve(this, var);
                 return (Set)res.InnerSimplified;

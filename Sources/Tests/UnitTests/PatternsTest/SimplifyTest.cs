@@ -33,22 +33,22 @@ namespace AngouriMath.Tests.PatternsTest
         [Fact] public void Mul0() => AssertSimplify(x * 3 * 0, 0);
         [Fact] public void Mul1() => AssertSimplify(x * 3 * 2, 6 * x);
         [Fact] public void Pow1() => AssertSimplify(MathS.Pow(3 * x, 1), 3 * x);
-        [Fact] public void Pow0() => AssertSimplify(MathS.Pow(x * 3, 0), 1);
+        [Fact] public void Pow0() => AssertSimplify(MathS.Pow(x * 3, 0), "1 provided not x = 0");
         [Fact] public void Sum0() => AssertSimplify(x + 0, x);
         [Fact] public void Patt1() => AssertSimplify(MathS.Pow(x * 4, 3), MathS.Pow(4 * x, 3));
         [Fact] public void Patt2() => AssertSimplify(
             (MathS.Sqr(MathS.Sin(x + 2 * y)) + MathS.Sqr(MathS.Cos(x + 2 * y))) / (2 * MathS.Sin(x - y) * MathS.Cos(x - y) + 1),
             1 / (1 + MathS.Sin(2 * (x - y))));
         [Fact] public void Patt3() => AssertSimplify((x - y) * (x + y), MathS.Sqr(x) - MathS.Sqr(y));
-        [Fact] public void Patt4() => AssertSimplify((x - y) * (x + y) / (x * x - y * y), 1);
-        [Fact] public void Patt5() => AssertSimplify((x + 3) * (3 / (x + 3)), 3);
-        [Fact] public void Patt6() => AssertSimplify((x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3)), 1 + x);
+        [Fact] public void Patt4() => AssertSimplify((x - y) * (x + y) / (x * x - y * y), "1 provided not x ^ 2 - y ^ 2 = 0");
+        [Fact] public void Patt5() => AssertSimplify((x + 3) * (3 / (x + 3)), "3 provided not 3 + x = 0");
+        [Fact] public void Patt6() => AssertSimplify((x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3)), "1 + x provided not (2 + x) * (3 + x) = 0");
         [Fact] public void Patt7() => AssertSimplify(MathS.Arcsin(x * 3) + MathS.Arccos(x * 3), MathS.pi / 2);
         [Fact] public void Patt8() => AssertSimplify(MathS.Arccotan(x * 3) + MathS.Arctan(x * 3), MathS.pi / 2);
         [Fact] public void Patt9() => AssertSimplify(MathS.Arccotan(x * 3) + MathS.Arctan(x * 6), MathS.Arccotan(3 * x) + MathS.Arctan(6 * x));
         [Fact] public void Patt10() => AssertSimplify(MathS.Arcsin(x * 3) + MathS.Arccos(x * 1), MathS.Arcsin(3 * x) + MathS.Arccos(x));
         [Fact] public void Patt11() => AssertSimplify(3 + x + 4 + x, 7 + 2 * x);
-        [Fact] public void Patt12() => AssertSimplify((x * y * a * b * c) / (c * b * a * x * x), y / x, 4);
+        [Fact] public void Patt12() => AssertSimplify((x * y * a * b * c) / (c * b * a * x * x), "y / x provided not (c = 0 or a * b * c * x ^ 2 = 0)", 4);
         [Fact] public void Frac1() => AssertSimplify("x / (y / z)", "x * z / y");
         [Fact] public void Frac2() => AssertSimplify("x / y / z", "x / (y * z)");
         [Fact] public void Factorial2() => AssertSimplify(MathS.Factorial(2), 2);
@@ -98,9 +98,9 @@ namespace AngouriMath.Tests.PatternsTest
         [Fact] public void Derive1() => AssertSimplify(MathS.Derivative("x + 2", x), 1);
         [Fact] public void Derive2() => AssertSimplify(MathS.Derivative("7x2 - x + 2", x, 2), 14);
         [Fact] public void Integral1() => AssertSimplify(MathS.Integral("x + y", x, 0), "x + y");
-        [Fact] public void Divide1() => AssertSimplifyToString("(x2 + 2 x y + y2) / (x + y)", "x + y");
+        [Fact] public void Divide1() => AssertSimplifyToString("(x2 + 2 x y + y2) / (x + y)", "x + y provided not x + y = 0");
         // TODO: Smart factorizer
-        [Fact] public void Divide2() => AssertSimplifyToString("(x3 + 3 x 2 y + 3 x y 2 + y3) / (x + y)", "x ^ 2 + 2 * x * y + y ^ 2");
+        [Fact] public void Divide2() => AssertSimplifyToString("(x3 + 3 x 2 y + 3 x y 2 + y3) / (x + y)", "x ^ 2 + 2 * x * y + y ^ 2 provided not x + y = 0");
         [Fact] public void Divide3() => AssertSimplifyToString("(x2 + 2 x y + y2 + 1) / (x + y)", "x + 1 / (x + y) + y");
 
         [Fact] public void BigSimple1() => AssertSimplifyToString(
@@ -140,10 +140,10 @@ namespace AngouriMath.Tests.PatternsTest
         public void AbsTest(string input, string output) => AssertSimplifyToString(input, output);
 
         [Theory]
-        [InlineData("sin(x) * csc(x)", "1")]
-        [InlineData("cos(x) * sec(x)", "1")]
-        [InlineData("csc(x) * sin(x)", "1")]
-        [InlineData("sec(x) * cos(x)", "1")]
+        [InlineData("sin(x) * csc(x)", "1 provided not sin(x) = 0")]
+        [InlineData("cos(x) * sec(x)", "1 provided not cos(x) = 0")]
+        [InlineData("csc(x) * sin(x)", "1 provided not sin(x) = 0")]
+        [InlineData("sec(x) * cos(x)", "1 provided not cos(x) = 0")]
         [InlineData("sin(x) / cos(x)", "tan(x)")]
         [InlineData("cos(x) / sin(x)", "cotan(x)")]
         [InlineData("a / sec(x)", "cos(x) * a")]

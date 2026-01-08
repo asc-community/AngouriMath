@@ -101,6 +101,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (expr == x)
                 return new Entity[] { 0 }.ToSet();
 
+            if (ProvidedLifter.ExtractProvidedPredicates(ref expr, out var predicate))
+                return ProvidedLifter.MergePredicateIntoSolveResult(Solve(expr, x, compensateSolving), x, predicate);
+
             // Applies an attempt to downcast roots
             static Entity TryDowncast(Entity equation, Variable x, Entity root)
             {
