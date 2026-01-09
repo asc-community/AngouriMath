@@ -141,6 +141,30 @@ namespace AngouriMath.Tests.Common
         [InlineData("(|[2, 3, 6]|)", "7")]
         public void TestMatrices(string before, string after)
             => ShouldChangeTo(before, after);
+        [Fact] public void IntegralToDerivativeSimplify() =>
+            "integral(apply(f, x), x, -1)".ToEntity().InnerSimplified.ShouldBe("derivative(apply(f, x), x)");
+        [Fact] public void IntegralToDerivativeSimplify2() =>
+            "integral(apply(f, x), x, -2)".ToEntity().InnerSimplified.ShouldBe("derivative(apply(f, x), x, 2)");
+        [Fact] public void IntegralToDerivativeSimplifyMinValue() =>
+            $"integral(apply(f, x), x, {int.MinValue})".ToEntity().InnerSimplified.ShouldBe($"integral(apply(f, x), x, {int.MinValue})");
+        [Fact] public void IntegralToDerivativeEval() =>
+            "integral(apply(f, x) + (sin(3)^2 + cos(3)^2), x, -1)".ToEntity().Evaled.ShouldBe("derivative(apply(f, x), x) + 0");
+        [Fact] public void IntegralToDerivativeEval2() =>
+            "integral(apply(f, x), x, -2)".ToEntity().Evaled.ShouldBe("derivative(apply(f, x), x, 2)");
+        [Fact] public void IntegralToDerivativeEvalMinValue() =>
+            $"integral(apply(f, x) + (sin(3)^2 + cos(3)^2), x, {int.MinValue})".ToEntity().Evaled.ShouldBe($"integral(apply(f, x) + 1, x, {int.MinValue})");
+        [Fact] public void DerivativeToIntegralSimplify() =>
+            "derivative(apply(f, x), x, -1)".ToEntity().InnerSimplified.ShouldBe("integral(apply(f, x), x)");
+        [Fact] public void DerivativeToIntegralSimplify2() =>
+            "derivative(apply(f, x), x, -2)".ToEntity().InnerSimplified.ShouldBe("integral(apply(f, x), x, 2)");
+        [Fact] public void DerivativeToIntegralSimplifyMinValue() =>
+            $"derivative(apply(f, x), x, {int.MinValue})".ToEntity().InnerSimplified.ShouldBe($"derivative(apply(f, x), x, {int.MinValue})");
+        [Fact] public void DerivativeToIntegralEval() =>
+            "derivative(apply(f, x) + (sin(3)^2 + cos(3)^2), x, -1)".ToEntity().Evaled.ShouldBe("integral(apply(f, x) + 1, x)");
+        [Fact] public void DerivativeToIntegralEval2() =>
+            "derivative(apply(f, x), x, -2)".ToEntity().Evaled.ShouldBe("integral(apply(f, x), x, 2)");
+        [Fact] public void DerivativeToIntegralEvalMinValue() =>
+            $"derivative(apply(f, x) + (sin(3)^2 + cos(3)^2), x, {int.MinValue})".ToEntity().Evaled.ShouldBe($"derivative(apply(f, x) + 1, x, {int.MinValue})");
 
         [Fact] public void PiecewiseIntegrate1() =>
             "piecewise(2 provided a, 3)".Integrate("x")

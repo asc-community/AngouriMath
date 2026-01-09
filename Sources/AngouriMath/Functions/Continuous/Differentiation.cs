@@ -331,6 +331,8 @@ namespace AngouriMath
                 {
                     (Variable v, var args) when args.All(arg => arg.Nodes.Contains(variable) is false)
                         => 0,
+                    // special case f(x) to return a raw Derivativef avoid stack overflowing InnerSimplify
+                    (Variable v, { Head: Variable variable_, Tail : LEmpty<Entity> }) when variable_ == variable => MathS.Derivative(this, variable),
 
                     // d/dx_i f(g_1(x_1, x_2, ..., x_n), g_2(x_1, x_2, ..., x_n), ..., g_n(x_1, x_2, ..., x_n))
                     // becomes

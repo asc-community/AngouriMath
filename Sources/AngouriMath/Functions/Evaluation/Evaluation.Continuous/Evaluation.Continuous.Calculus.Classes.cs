@@ -23,7 +23,8 @@ namespace AngouriMath
                     (a, b, c) => (a, b, c) switch
                     {
                         (var expr, _, 0) => expr,
-                        // TODO: consider Integral for negative cases
+                        (_, _, int.MinValue) => null,
+                        (_, _, < 0) => new Integralf(a, b, -c).Evaled,
                         // TODO: should we call InnerSimplified here?
                         (var expr, Variable var, int asInt)
                             when expr.Differentiate(var, asInt) is var res and not Derivativef
@@ -46,7 +47,8 @@ namespace AngouriMath
                     (a, b, c) => (a, b, c) switch
                     {
                         (var expr, _, 0) => expr,
-                        // TODO: consider Integral for negative cases
+                        (_, _, int.MinValue) => null,
+                        (_, _, < 0) => new Integralf(a, b, -c).InnerSimplified,
                         // TODO: should we call InnerSimlified here?
                         (var expr, Variable var, int asInt)
                             when expr.Differentiate(var, asInt) is var res and not Derivativef
@@ -86,7 +88,8 @@ namespace AngouriMath
                     (a, b, c) => (a, b, c) switch
                     {
                         (var expr, _, 0) => expr,
-                        // TODO: consider Derivative for negative cases
+                        (_, _, int.MinValue) => null,
+                        (_, _, < 0) => new Derivativef(a, b, -c).Evaled,
                         (var expr, Variable var, int asInt)
                             when SequentialIntegrating(expr, var, asInt) is var res and not Integralf
                             && !res.Nodes.Any(n => n is Integralf)
@@ -102,7 +105,8 @@ namespace AngouriMath
                     (a, b, c) => (a, b, c) switch
                     {
                         (var expr, _, 0) => expr,
-                        // TODO: consider Derivative for negative cases
+                        (_, _, int.MinValue) => null,
+                        (_, _, < 0 and not int.MinValue) => new Derivativef(a, b, -c).InnerSimplified,
                         // TODO: should we apply InnerSimplified?
                         (var expr, Variable var, int asInt)
                             when SequentialIntegrating(expr, var, asInt) is var res and not Integralf
