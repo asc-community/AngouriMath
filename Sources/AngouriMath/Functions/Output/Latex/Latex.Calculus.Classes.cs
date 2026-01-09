@@ -17,16 +17,12 @@ namespace AngouriMath
             public override string Latexise()
             {
                 var powerIfNeeded = Iterations == 1 ? "" : "^{" + Iterations + "}";
-
-                var varOverDeriv =
-                    Var is Variable { Name: { Length: 1 } name }
-                    ? name
-                    : @"\left[" + Var.Latexise(false) + @"\right]";
-
+                var varOverDeriv = Var is Variable { IsLatexUprightFormatted: false } ? Var.Latexise() : @"\left(" + Var.Latexise() + @"\right)";
+                string ParenIfNeeded(string paren) => Expression.Priority < Priority.Pow ? paren : "";
                 // NOTE: \mathrm{d} is used for upright 'd' following ISO 80000-2 standard.
                 // The differential operator should be upright (roman) to distinguish it from variables, similar to sin, cos, log, etc.
-                return @"\frac{\mathrm{d}" + powerIfNeeded +
-                @"\left[" + Expression.Latexise(false) + @"\right]}{\mathrm{d}" + varOverDeriv + powerIfNeeded + "}";
+                return $$"""\frac{\mathrm{d}{{powerIfNeeded}}}{\mathrm{d}{{varOverDeriv}}{{powerIfNeeded}}}{{ParenIfNeeded(@"\left[")}}{{Expression.Latexise()}}{{ParenIfNeeded(@"\right]")}}""";
+
             }
         }
 

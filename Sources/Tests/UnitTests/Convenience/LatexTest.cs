@@ -217,16 +217,21 @@ namespace AngouriMath.Tests.Convenience
             Test(@"\begin{bmatrix}11 & 12 & 21 & 22 & 31 & 32\end{bmatrix}", MathS.Vector(11, 12, 21, 22, 31, 32).T);
         [Fact] public void VectorSingle() =>
             Test(@"\begin{bmatrix}x\end{bmatrix}", MathS.Vector(x));
-        [Fact] public void Derivative1() =>
-            Test(@"\frac{\mathrm{d}\left[x+1\right]}{\mathrm{d}x}", MathS.Derivative("x + 1", x));
-        [Fact] public void Derivative2() =>
-            Test(@"\frac{\mathrm{d}\left[x+y\right]}{\mathrm{d}\left[\mathrm{quack}\right]}", MathS.Derivative("x + y", "quack"));
-        [Fact] public void Derivative3() =>
-            Test(@"\frac{\mathrm{d}^{3}\left[x+1\right]}{\mathrm{d}x^{3}}", MathS.Derivative("x + 1", x, 3));
-        [Fact] public void Derivative4() =>
-            Test(@"\frac{\mathrm{d}\left[\frac{1}{x}\right]}{\mathrm{d}\left[\mathrm{xf}\right]}", MathS.Derivative("1/x", "xf"));
-        [Fact] public void Derivative5() =>
-            Test(@"\frac{\mathrm{d}\left[{x}^{23}-x_{\mathrm{16}}\right]}{\mathrm{d}\left[\mathrm{xf}\right]}", MathS.Derivative("x^23-x_16", "xf"));
+        [Fact] public void Derivative1() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x}x", MathS.Derivative(x, x));
+        [Fact] public void Derivative2() => Test(@"\frac{\mathrm{d}^{2}}{\mathrm{d}x^{2}}x", MathS.Derivative(x, x, 2));
+        [Fact] public void Derivative3() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\left({x}^{2}\right)}x", MathS.Derivative(x, x.Pow(2)));
+        [Fact] public void Derivative4() => Test(@"\frac{\mathrm{d}^{2}}{\mathrm{d}\left({x}^{2}\right)^{2}}x", MathS.Derivative(x, x.Pow(2), 2));
+        [Fact] public void Derivative6() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x}{x}^{2}", MathS.Derivative(x.Pow(2), x));
+        [Fact] public void Derivative7() => Test(@"\frac{\mathrm{d}^{2}}{\mathrm{d}\left({x}^{2}\right)^{2}}{x}^{2}", MathS.Derivative(x.Pow(2), x.Pow(2), 2));
+        [Fact] public void Derivative8() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\left(\mathrm{xy}\right)}\mathrm{xy}", MathS.Derivative("xy", "xy"));
+        [Fact] public void Derivative9() => Test(@"\frac{\mathrm{d}^{2}}{\mathrm{d}\left(\mathrm{xy}\right)^{2}}\mathrm{xy}", MathS.Derivative("xy", "xy", 2));
+        [Fact] public void Derivative10() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x}\left[\frac{x}{2}\right]", MathS.Derivative("x / 2", x));
+        [Fact] public void Derivative11() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\left(\mathrm{quack}\right)}\left[x+y\right]", MathS.Derivative("x + y", "quack"));
+        [Fact] public void Derivative12() => Test(@"\frac{\mathrm{d}^{3}}{\mathrm{d}x_{f}^{3}}\left[x+1\right]", MathS.Derivative("x + 1", "x_f", 3));
+        [Fact] public void Derivative13() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x_{f}}\left[\frac{1}{x}\right]", MathS.Derivative("1/x", "x_f"));
+        [Fact] public void Derivative14() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\alpha}\left[{x}^{23}-x_{\mathrm{16}}\right]", MathS.Derivative("x^23-x_16", "alpha"));
+        [Fact] public void Derivative15() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\alpha_{\beta}}\alpha", MathS.Derivative("alpha", "alpha_beta"));
+        [Fact] public void Derivative16() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\left(\mathrm{alphaa}_{\beta}\right)}\alpha", MathS.Derivative("alpha", "alphaa_beta"));
         [Fact] public void Integral1() =>
             Test(@"\int \left[x+1\right] \mathrm{d}x", MathS.Integral("x + 1", x));
         [Fact] public void Integral2() =>
@@ -326,6 +331,9 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void Pie23() => Test(@"\mathrm{\pi} \cdot \mathrm{pie} \cdot \mathrm{cake}", MathS.pi * (Entity)"pie" * "cake");
         [Fact] public void Pie24() => Test(@"\mathrm{cake} \cdot \mathrm{pie} \cdot \mathrm{\pi}", "cake" * (Entity)"pie" * MathS.pi);
         [Fact] public void Pie25() => Test(@"\mathrm{cake} \cdot \mathrm{pie} \cdot \mathrm{cake}", "cake" * (Entity)"pie" * "cake");
+        [Fact] public void Pie26() => // separate non-subscript roman-style characters with \cdot, no separator otherwise
+            Test(@"\mathrm{\pi}_{\mathrm{e}} \cdot \mathrm{ca}_{\mathrm{ke}} \cdot \mathrm{\pi} \cdot \mathrm{e} \cdot \mathrm{cake} p_{\mathrm{ie}} c_{a} k_{\mathrm{e}}", 
+                (Entity)"pi_e" * "ca_ke" * "pi" * "e" * "cake" * "p_ie" * "c_a" * "k_e");
         [Fact] public void Juxtaposition1() => Test(@"\mathrm{var} \cdot 2", (Entity)"var*2");
         [Fact] public void Juxtaposition1Rev() => Test(@"2 \mathrm{var}", (Entity)"2*var");
         [Fact] public void Juxtaposition2() => Test(@"\mathrm{ei}", (Entity)"ei");
