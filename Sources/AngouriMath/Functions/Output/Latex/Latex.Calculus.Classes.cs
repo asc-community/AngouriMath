@@ -84,15 +84,18 @@ namespace AngouriMath
             {
                 var sb = new StringBuilder();
                 sb.Append(@"\lim_{").Append(Var.Latexise())
-                    .Append(@"\to ").Append(Destination.Latexise());
+                    .Append(@"\to ");
 
                 switch (ApproachFrom)
                 {
                     case ApproachFrom.Left:
-                        sb.Append("^-");
+                        sb.Append(Destination.Latexise(Destination.Priority <= Priority.Pow)).Append("^-");
                         break;
                     case ApproachFrom.Right:
-                        sb.Append("^+");
+                        sb.Append(Destination.Latexise(Destination.Priority <= Priority.Pow)).Append("^+");
+                        break;
+                    case ApproachFrom.BothSides:
+                        sb.Append(Destination.Latexise());
                         break;
                 }
 

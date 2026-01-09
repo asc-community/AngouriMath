@@ -247,6 +247,13 @@ namespace AngouriMath.Tests.Convenience
             Test(@"\lim_{\mathrm{xf}\to 1+x} \left[\frac{1}{x}\right]", MathS.Limit("1/x", "xf", "1+x"));
         [Fact] public void Limit5() =>
             Test(@"\lim_{\mathrm{xf}\to {x_{2}}^{3}} \left[{x}^{23}-x_{\mathrm{16}}\right]", MathS.Limit("x^23-x_16", "xf", "x_2^3"));
+        [Theory, InlineData("+"), InlineData("-")] public void LimitOneSided1(string sign) =>
+            Test($$"""\lim_{x\to \left(a+2\right)^{{sign}}} \left[x+y\right]""", (Entity)$"limit{(sign == "-" ? "left" : "right")}(x + y, x, a+2)");
+        [Theory, InlineData("+"), InlineData("-")] public void LimitOneSided2(string sign) =>
+            Test($$"""\lim_{x\to \left({a}^{2}\right)^{{sign}}} \left[x+y\right]""", (Entity)$"limit{(sign == "-" ? "left" : "right")}(x + y, x, a^2)");
+        [Theory, InlineData("+"), InlineData("-")]
+        public void LimitOneSided3(string sign) =>
+            Test($$"""\lim_{x\to \left({a}^{2}\right)!^{{sign}}} \left[x+y\right]""", (Entity)$"limit{(sign == "-" ? "left" : "right")}(x + y, x, (a^2)!)");
         [Fact] public void Interval1() =>
             Test(@"\left[3, 4\right]", MathS.Sets.Interval(3, true, 4, true));
         [Fact] public void Interval2() =>
