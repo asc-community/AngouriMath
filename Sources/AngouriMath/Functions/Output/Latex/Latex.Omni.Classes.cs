@@ -79,7 +79,7 @@ namespace AngouriMath
         partial record Providedf
         {
             /// <inheritdoc/>
-            public override string Latexise() => $@"{Expression.Latexise(Expression.Priority < Priority)} \quad \text{{for}} \quad {Predicate.Latexise(Expression.Priority <= Priority)}";
+            public override string Latexise() => $@"{Expression.Latexise(Expression.Priority < Priority)} \quad \text{{for}} \quad {Predicate.Latexise(Predicate.Priority <= Priority)}";
         }
 
         partial record Piecewise
