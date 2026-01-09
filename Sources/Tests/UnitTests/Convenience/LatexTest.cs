@@ -49,7 +49,7 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void MultiplySimplify() => TestSimplify("{x}^{2}", x * x);
         [Fact] public void Divide() => Test(@"\frac{x}{x}", x / x);
         [Fact] public void DivideDivide() => Test(@"\frac{\frac{x}{x}}{x}", x / x / x);
-        [Fact] public void DivideSimplify() => TestSimplify(@"\left(1 \quad \text{for} \quad \neg{x = 0}\right)", x / x);
+        [Fact] public void DivideSimplify() => TestSimplify(@"1 \quad \text{for} \quad \neg{x = 0}", x / x);
         [Fact] public void Greek1() => Test(@"\alpha", MathS.Var("alpha"));
         [Fact] public void Greek2() => Test(@"\beta", MathS.Var("beta"));
         [Fact] public void Greek3() => Test(@"a_{\beta}", MathS.Var("a_beta"));
@@ -289,11 +289,13 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void Piecewise2()
             => Test(@"\begin{cases}a & \text{if } b\\c & \text{if } \mathrm{e}\\g & \text{otherwise}\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e"), ("g", true)));
         [Fact] public void Provided1()
-            => Test(@"\left(x \quad \text{for} \quad y\right)", MathS.Provided("x", "y"));
+            => Test(@"x \quad \text{for} \quad y", MathS.Provided("x", "y"));
         [Fact] public void Provided2()
-            => Test(@"\left(x+1 \quad \text{for} \quad y > 0\right)", MathS.Provided("x + 1", "y > 0"));
+            => Test(@"x+1 \quad \text{for} \quad y > 0", MathS.Provided("x + 1", "y > 0"));
         [Fact] public void Provided3()
-            => Test(@"\left(\left(a \quad \text{for} \quad b\right) \quad \text{for} \quad c\right)", MathS.Provided(MathS.Provided("a", "b"), "c"));
+            => Test(@"a \quad \text{for} \quad b \quad \text{for} \quad c", MathS.Provided(MathS.Provided("a", "b"), "c"));
+        [Fact] public void Provided4()
+            => Test(@"\left(a \quad \text{for} \quad b \quad \text{for} \quad \left(c \quad \text{for} \quad d\right)\right) \to \top ", MathS.Provided(MathS.Provided("a", "b"), MathS.Provided("c", "d")).Implies(Entity.Boolean.True));
         // Juxtaposition tests
         [Fact] public void M1InTheMiddle() => Test(@"x \left(-1\right) \cdot x", (x * (-1)) * x);
         [Fact] public void MultiplyNumberWithPower() => Test(@"2 \cdot {3}^{4}", 2 * ((Entity)3).Pow(4));
