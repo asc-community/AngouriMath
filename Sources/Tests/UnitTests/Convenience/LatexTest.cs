@@ -285,9 +285,11 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void Phi3()
             => Test(@"{\operatorname{\varphi}\left(x\right)}^{\operatorname{\varphi}\left({x}^{2}\right)}", MathS.Pow(MathS.NumberTheory.Phi(x), MathS.NumberTheory.Phi(MathS.Pow(x, 2))));
         [Fact] public void Piecewise1()
-            => Test(@"\begin{cases}a & \text{if } b\\c & \text{if } \mathrm{e}\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e")));
+            => Test(@"\begin{cases}a & \text{for } b\\c & \text{for } \mathrm{e}\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e")));
         [Fact] public void Piecewise2()
-            => Test(@"\begin{cases}a & \text{if } b\\c & \text{if } \mathrm{e}\\g & \text{otherwise}\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e"), ("g", true)));
+            => Test(@"\begin{cases}a & \text{for } b\\c & \text{for } \mathrm{e}\\g & \text{otherwise}\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e"), ("g", true)));
+        [Fact] public void Piecewise3()
+            => Test(@"\begin{cases}\left(x \mapsto \top \right) \quad \text{for} \quad a & \text{for } b\\\left(c \mapsto \top \right) & \text{for } \left(d \quad \text{for} \quad \mathrm{e}\right)\\g & \text{otherwise}\end{cases}", MathS.Piecewise((MathS.Provided(MathS.Lambda("x", Entity.Boolean.True), "a"), "b"), (MathS.Lambda("c", Entity.Boolean.True), MathS.Provided("d", "e")), ("g", true)));
         [Fact] public void Provided1()
             => Test(@"x \quad \text{for} \quad y", MathS.Provided("x", "y"));
         [Fact] public void Provided2()
