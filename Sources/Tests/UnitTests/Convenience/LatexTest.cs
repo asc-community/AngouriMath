@@ -49,7 +49,7 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void MultiplySimplify() => TestSimplify("{x}^{2}", x * x);
         [Fact] public void Divide() => Test(@"\frac{x}{x}", x / x);
         [Fact] public void DivideDivide() => Test(@"\frac{\frac{x}{x}}{x}", x / x / x);
-        [Fact] public void DivideSimplify() => TestSimplify(@"\left(1 \quad \text{for} \quad \neg{x = 0}\right)", x / x);
+        [Fact] public void DivideSimplify() => TestSimplify(@"1 \quad \text{for} \quad \neg{x = 0}", x / x);
         [Fact] public void Greek1() => Test(@"\alpha", MathS.Var("alpha"));
         [Fact] public void Greek2() => Test(@"\beta", MathS.Var("beta"));
         [Fact] public void Greek3() => Test(@"a_{\beta}", MathS.Var("a_beta"));
@@ -217,26 +217,36 @@ namespace AngouriMath.Tests.Convenience
             Test(@"\begin{bmatrix}11 & 12 & 21 & 22 & 31 & 32\end{bmatrix}", MathS.Vector(11, 12, 21, 22, 31, 32).T);
         [Fact] public void VectorSingle() =>
             Test(@"\begin{bmatrix}x\end{bmatrix}", MathS.Vector(x));
-        [Fact] public void Derivative1() =>
-            Test(@"\frac{\mathrm{d}\left[x+1\right]}{\mathrm{d}x}", MathS.Derivative("x + 1", x));
-        [Fact] public void Derivative2() =>
-            Test(@"\frac{\mathrm{d}\left[x+y\right]}{\mathrm{d}\left[\mathrm{quack}\right]}", MathS.Derivative("x + y", "quack"));
-        [Fact] public void Derivative3() =>
-            Test(@"\frac{\mathrm{d}^{3}\left[x+1\right]}{\mathrm{d}x^{3}}", MathS.Derivative("x + 1", x, 3));
-        [Fact] public void Derivative4() =>
-            Test(@"\frac{\mathrm{d}\left[\frac{1}{x}\right]}{\mathrm{d}\left[\mathrm{xf}\right]}", MathS.Derivative("1/x", "xf"));
-        [Fact] public void Derivative5() =>
-            Test(@"\frac{\mathrm{d}\left[{x}^{23}-x_{\mathrm{16}}\right]}{\mathrm{d}\left[\mathrm{xf}\right]}", MathS.Derivative("x^23-x_16", "xf"));
-        [Fact] public void Integral1() =>
-            Test(@"\int \left[x+1\right] \mathrm{d}x", MathS.Integral("x + 1", x));
+        [Fact] public void Derivative1() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x}x", MathS.Derivative(x, x));
+        [Fact] public void Derivative2() => Test(@"\frac{\mathrm{d}^{2}}{\mathrm{d}x^{2}}x", MathS.Derivative(x, x, 2));
+        [Fact] public void Derivative3() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\left({x}^{2}\right)}x", MathS.Derivative(x, x.Pow(2)));
+        [Fact] public void Derivative4() => Test(@"\frac{\mathrm{d}^{2}}{\mathrm{d}\left({x}^{2}\right)^{2}}x", MathS.Derivative(x, x.Pow(2), 2));
+        [Fact] public void Derivative6() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x}{x}^{2}", MathS.Derivative(x.Pow(2), x));
+        [Fact] public void Derivative7() => Test(@"\frac{\mathrm{d}^{2}}{\mathrm{d}\left({x}^{2}\right)^{2}}{x}^{2}", MathS.Derivative(x.Pow(2), x.Pow(2), 2));
+        [Fact] public void Derivative8() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\left(\mathrm{xy}\right)}\mathrm{xy}", MathS.Derivative("xy", "xy"));
+        [Fact] public void Derivative9() => Test(@"\frac{\mathrm{d}^{2}}{\mathrm{d}\left(\mathrm{xy}\right)^{2}}\mathrm{xy}", MathS.Derivative("xy", "xy", 2));
+        [Fact] public void Derivative10() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x}\left[\frac{x}{2}\right]", MathS.Derivative("x / 2", x));
+        [Fact] public void Derivative11() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\left(\mathrm{quack}\right)}\left[x+y\right]", MathS.Derivative("x + y", "quack"));
+        [Fact] public void Derivative12() => Test(@"\frac{\mathrm{d}^{3}}{\mathrm{d}x_{f}^{3}}\left[x+1\right]", MathS.Derivative("x + 1", "x_f", 3));
+        [Fact] public void Derivative13() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x_{f}}\left[\frac{1}{x}\right]", MathS.Derivative("1/x", "x_f"));
+        [Fact] public void Derivative14() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\alpha}\left[{x}^{23}-x_{\mathrm{16}}\right]", MathS.Derivative("x^23-x_16", "alpha"));
+        [Fact] public void Derivative15() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\alpha_{\beta}}\alpha", MathS.Derivative("alpha", "alpha_beta"));
+        [Fact] public void Derivative16() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\left(\mathrm{alphaa}_{\beta}\right)}\alpha", MathS.Derivative("alpha", "alphaa_beta"));
+        [Fact] public void Integral1() => Test(@"\int \left[x\right]\,\mathrm{d}x", MathS.Integral(x, x));
         [Fact] public void Integral2() =>
-            Test(@"\int \int \left[x+1\right] \mathrm{d}x\,\mathrm{d}x", MathS.Integral("x + 1", x, 2));
+            Test(@"\int \left[x+1\right]\,\mathrm{d}\left(x+1\right)", MathS.Integral("x + 1", "x+1"));
         [Fact] public void Integral3() =>
-            Test(@"\int \left[x+1\right] \mathrm{d}\left[\mathrm{xf}\right]", MathS.Integral("x + 1", "xf"));
+            Test(@"\int\int \left[x+1\right]\,\mathrm{d}x\,\mathrm{d}x", MathS.Integral("x + 1", x, 2));
         [Fact] public void Integral4() =>
-            Test(@"\int \left[\frac{1}{x}\right] \mathrm{d}\left[\mathrm{xf}\right]", MathS.Integral("1/x", "xf"));
+            Test(@"\int\int \left[x+1\right]\,\mathrm{d}\left(\mathrm{xf}\right)\,\mathrm{d}\left(\mathrm{xf}\right)", MathS.Integral("x + 1", "xf", 2));
         [Fact] public void Integral5() =>
-            Test(@"\int \left[{x}^{23}-x_{\mathrm{16}}\right] \mathrm{d}\left[\mathrm{xf}\right]", MathS.Integral("x^23-x_16", "xf"));
+            Test(@"\int \left[\frac{1}{x}\right]\,\mathrm{d}x_{f}", MathS.Integral("1/x", "x_f"));
+        [Fact] public void Integral6() =>
+            Test(@"\int\int\int \left[{x}^{23}-x_{\mathrm{16}}\right]\,\mathrm{d}\left({x_{f}}^{2}\right)\,\mathrm{d}\left({x_{f}}^{2}\right)\,\mathrm{d}\left({x_{f}}^{2}\right)", MathS.Integral("x^23-x_16", "x_f^2", 3));
+        [Fact] public void IntegralSpecialCase1() => Test(@"\frac{\mathrm{d}^{0}}{\mathrm{d}x^{0}}\left[x+1\right]+1", MathS.Integral("x+1", "x", 0) + 1);
+        [Fact] public void IntegralSpecialCase2() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x}\left[x+1\right] \cdot 2", MathS.Integral("x+1", "x", -1) * 2);
+        [Theory, CombinatorialData] public void IntegralSpecialCase3([CombinatorialRange(0, 3)] int power, [CombinatorialValues("x", "x_f", "ab", "ab_cd", "e", "alpha", "alpha_beta", "alpha_e")] string v) =>
+            Test(MathS.Derivative(Integer.One + v, v, power).Latexise(), MathS.Integral(Integer.One + v, v, -power));
         [Fact] public void Limit1() =>
             Test(@"\lim_{x\to 0^-} \left[x+y\right]", (Entity)"limitleft(x + y, x, 0)");
         [Fact] public void Limit2() =>
@@ -247,6 +257,13 @@ namespace AngouriMath.Tests.Convenience
             Test(@"\lim_{\mathrm{xf}\to 1+x} \left[\frac{1}{x}\right]", MathS.Limit("1/x", "xf", "1+x"));
         [Fact] public void Limit5() =>
             Test(@"\lim_{\mathrm{xf}\to {x_{2}}^{3}} \left[{x}^{23}-x_{\mathrm{16}}\right]", MathS.Limit("x^23-x_16", "xf", "x_2^3"));
+        [Theory, InlineData("+"), InlineData("-")] public void LimitOneSided1(string sign) =>
+            Test($$"""\lim_{x\to \left(a+2\right)^{{sign}}} \left[x+y\right]""", (Entity)$"limit{(sign == "-" ? "left" : "right")}(x + y, x, a+2)");
+        [Theory, InlineData("+"), InlineData("-")] public void LimitOneSided2(string sign) =>
+            Test($$"""\lim_{x\to \left({a}^{2}\right)^{{sign}}} \left[x+y\right]""", (Entity)$"limit{(sign == "-" ? "left" : "right")}(x + y, x, a^2)");
+        [Theory, InlineData("+"), InlineData("-")]
+        public void LimitOneSided3(string sign) =>
+            Test($$"""\lim_{x\to \left({a}^{2}\right)!^{{sign}}} \left[x+y\right]""", (Entity)$"limit{(sign == "-" ? "left" : "right")}(x + y, x, (a^2)!)");
         [Fact] public void Interval1() =>
             Test(@"\left[3, 4\right]", MathS.Sets.Interval(3, true, 4, true));
         [Fact] public void Interval2() =>
@@ -278,15 +295,19 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void Phi3()
             => Test(@"{\operatorname{\varphi}\left(x\right)}^{\operatorname{\varphi}\left({x}^{2}\right)}", MathS.Pow(MathS.NumberTheory.Phi(x), MathS.NumberTheory.Phi(MathS.Pow(x, 2))));
         [Fact] public void Piecewise1()
-            => Test(@"\begin{cases}a & \text{if } b\\c & \text{if } \mathrm{e}\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e")));
+            => Test(@"\begin{cases}a & \text{for } b\\c & \text{for } \mathrm{e}\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e")));
         [Fact] public void Piecewise2()
-            => Test(@"\begin{cases}a & \text{if } b\\c & \text{if } \mathrm{e}\\g & \text{otherwise}\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e"), ("g", true)));
+            => Test(@"\begin{cases}a & \text{for } b\\c & \text{for } \mathrm{e}\\g & \text{otherwise}\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e"), ("g", true)));
+        [Fact] public void Piecewise3()
+            => Test(@"\begin{cases}\left(x \mapsto \top \right) \quad \text{for} \quad a & \text{for } b\\\left(c \mapsto \top \right) & \text{for } \left(d \quad \text{for} \quad \mathrm{e}\right)\\g & \text{otherwise}\end{cases}", MathS.Piecewise((MathS.Provided(MathS.Lambda("x", Entity.Boolean.True), "a"), "b"), (MathS.Lambda("c", Entity.Boolean.True), MathS.Provided("d", "e")), ("g", true)));
         [Fact] public void Provided1()
-            => Test(@"\left(x \quad \text{for} \quad y\right)", MathS.Provided("x", "y"));
+            => Test(@"x \quad \text{for} \quad y", MathS.Provided("x", "y"));
         [Fact] public void Provided2()
-            => Test(@"\left(x+1 \quad \text{for} \quad y > 0\right)", MathS.Provided("x + 1", "y > 0"));
+            => Test(@"x+1 \quad \text{for} \quad y > 0", MathS.Provided("x + 1", "y > 0"));
         [Fact] public void Provided3()
-            => Test(@"\left(\left(a \quad \text{for} \quad b\right) \quad \text{for} \quad c\right)", MathS.Provided(MathS.Provided("a", "b"), "c"));
+            => Test(@"a \quad \text{for} \quad b \quad \text{for} \quad c", MathS.Provided(MathS.Provided("a", "b"), "c"));
+        [Fact] public void Provided4()
+            => Test(@"\left(a \quad \text{for} \quad b \quad \text{for} \quad \left(c \quad \text{for} \quad d\right)\right) \to \top ", MathS.Provided(MathS.Provided("a", "b"), MathS.Provided("c", "d")).Implies(Entity.Boolean.True));
         // Juxtaposition tests
         [Fact] public void M1InTheMiddle() => Test(@"x \left(-1\right) \cdot x", (x * (-1)) * x);
         [Fact] public void MultiplyNumberWithPower() => Test(@"2 \cdot {3}^{4}", 2 * ((Entity)3).Pow(4));
@@ -315,6 +336,9 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void Pie23() => Test(@"\mathrm{\pi} \cdot \mathrm{pie} \cdot \mathrm{cake}", MathS.pi * (Entity)"pie" * "cake");
         [Fact] public void Pie24() => Test(@"\mathrm{cake} \cdot \mathrm{pie} \cdot \mathrm{\pi}", "cake" * (Entity)"pie" * MathS.pi);
         [Fact] public void Pie25() => Test(@"\mathrm{cake} \cdot \mathrm{pie} \cdot \mathrm{cake}", "cake" * (Entity)"pie" * "cake");
+        [Fact] public void Pie26() => // separate non-subscript roman-style characters with \cdot, no separator otherwise
+            Test(@"\mathrm{\pi}_{\mathrm{e}} \cdot \mathrm{ca}_{\mathrm{ke}} \cdot \mathrm{\pi} \cdot \mathrm{e} \cdot \mathrm{cake} p_{\mathrm{ie}} c_{a} k_{\mathrm{e}}", 
+                (Entity)"pi_e" * "ca_ke" * "pi" * "e" * "cake" * "p_ie" * "c_a" * "k_e");
         [Fact] public void Juxtaposition1() => Test(@"\mathrm{var} \cdot 2", (Entity)"var*2");
         [Fact] public void Juxtaposition1Rev() => Test(@"2 \mathrm{var}", (Entity)"2*var");
         [Fact] public void Juxtaposition2() => Test(@"\mathrm{ei}", (Entity)"ei");

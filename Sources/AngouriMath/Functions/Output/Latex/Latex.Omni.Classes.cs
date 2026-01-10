@@ -79,7 +79,7 @@ namespace AngouriMath
         partial record Providedf
         {
             /// <inheritdoc/>
-            public override string Latexise() => $@"\left({Expression.Latexise()} \quad \text{{for}} \quad {Predicate.Latexise()}\right)";
+            public override string Latexise() => $@"{Expression.Latexise(Expression.Priority < Priority)} \quad \text{{for}} \quad {Predicate.Latexise(Predicate.Priority <= Priority)}";
         }
 
         partial record Piecewise
@@ -90,8 +90,8 @@ namespace AngouriMath
                 Cases.Select(c =>
                 {
                     if (c.Predicate == Boolean.True)
-                        return $@"{c.Expression.Latexise()} & \text{{otherwise}}";
-                    return $@"{c.Expression.Latexise()} & \text{{if }} {c.Predicate.Latexise()}";
+                        return $@"{c.Expression.Latexise(c.Expression.Priority < Priority.Provided)} & \text{{otherwise}}";
+                    return $@"{c.Expression.Latexise(c.Expression.Priority < Priority.Provided)} & \text{{for }} {c.Predicate.Latexise(c.Predicate.Priority <= Priority.Provided)}"; // "for" used in https://mathworld.wolfram.com/Derivative.html
                 }
                 ))
                 +
