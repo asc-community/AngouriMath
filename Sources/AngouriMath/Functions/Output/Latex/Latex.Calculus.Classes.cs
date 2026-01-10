@@ -13,17 +13,17 @@ namespace AngouriMath
     {
         public partial record Derivativef
         {
-            /// <inheritdoc/>
-            public override string Latexise()
+            internal static string LatexiseDerivative(Entity expression, Entity var, int iterations)
             {
-                var powerIfNeeded = Iterations == 1 ? "" : "^{" + Iterations + "}";
-                var varOverDeriv = Var is Variable { IsLatexUprightFormatted: false } ? Var.Latexise() : @"\left(" + Var.Latexise() + @"\right)";
-                string ParenIfNeeded(string paren) => Expression.Priority < Priority.Pow ? paren : "";
+                var powerIfNeeded = iterations == 1 ? "" : "^{" + iterations + "}";
+                var varOverDeriv = var is Variable { IsLatexUprightFormatted: false } ? var.Latexise() : @"\left(" + var.Latexise() + @"\right)";
+                string ParenIfNeeded(string paren) => expression.Priority < Priority.Pow ? paren : "";
                 // NOTE: \mathrm{d} is used for upright 'd' following ISO 80000-2 standard.
                 // The differential operator should be upright (roman) to distinguish it from variables, similar to sin, cos, log, etc.
-                return $$"""\frac{\mathrm{d}{{powerIfNeeded}}}{\mathrm{d}{{varOverDeriv}}{{powerIfNeeded}}}{{ParenIfNeeded(@"\left[")}}{{Expression.Latexise()}}{{ParenIfNeeded(@"\right]")}}""";
-
+                return $$"""\frac{\mathrm{d}{{powerIfNeeded}}}{\mathrm{d}{{varOverDeriv}}{{powerIfNeeded}}}{{ParenIfNeeded(@"\left[")}}{{expression.Latexise()}}{{ParenIfNeeded(@"\right]")}}""";
             }
+            /// <inheritdoc/>
+            public override string Latexise() => LatexiseDerivative(Expression, Var, Iterations);
         }
 
         public partial record Integralf
@@ -31,19 +31,16 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override string Latexise()
             {
-                // Unlike derivatives, integrals do not have "power" that would be equal
-                // to sequential applying integration to a function
-
-                if (Iterations < 0)
-                    return "Error";
-
-                if (Iterations == 0)
-                    return Expression.Latexise(false);
+                // Unlike derivatives, integrals do not have "power" that would be equal to sequentially applying integration to a function.
+                // So for non-positive iterations, we just latexise the derivative. Since we treat integrals as functions for parenthesization,
+                // we still need to latexize the 0th derivative explicitly and not just return the inner expression's latex form.
+                if (Iterations <= 0)
+                    return Derivativef.LatexiseDerivative(Expression, Var, -Iterations);
 
                 var sb = new StringBuilder();
                 for (int i = 0; i < Iterations; i++)
-                    sb.Append(@"\int ");
-                sb.Append(@"\left[");
+                    sb.Append(@"\int");
+                sb.Append(@" \left[");
                 sb.Append(Expression.Latexise(false));
                 sb.Append(@"\right]");
 
@@ -55,18 +52,15 @@ namespace AngouriMath
                 // Thin spaces (\,) are added between differentials following standard practice.
                 for (int i = 0; i < Iterations; i++)
                 {
-                    if (i > 0)
-                        sb.Append(@"\,");  // Add thin space between repeated differentials
-                    else
-                        sb.Append(' ');    // Leading space before first differential
+                    sb.Append(@"\,");// Leading space before first differential and between differentials
                     sb.Append(@"\mathrm{d}");
-                    if (Var is Variable { Name: { Length: 1 } name })
-                        sb.Append(name);
+                    if (Var is Variable { IsLatexUprightFormatted: false })
+                        sb.Append(Var.Latexise());
                     else
                     {
-                        sb.Append(@"\left[");
-                        sb.Append(Var.Latexise(false));
-                        sb.Append(@"\right]");
+                        sb.Append(@"\left(");
+                        sb.Append(Var.Latexise());
+                        sb.Append(@"\right)");
                     }
                 }
                 return sb.ToString();

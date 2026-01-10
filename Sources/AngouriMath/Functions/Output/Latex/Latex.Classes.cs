@@ -24,6 +24,8 @@ namespace AngouriMath
 
                 "Gamma", "Delta", "Theta", "Lambda", "Xi", "Pi", "Sigma", "Upsilon", "Phi", "Psi", "Omega",
             ];
+            /// <summary>An upright (multi-character or constant) variable needs separation from other upright variables for clarity.
+            /// Non-upright (only includes italic for now) variables can be written together with all other variables.</summary>
             internal bool IsLatexUprightFormatted => SplitIndex() is var (prefix, _) ? IsNameLatexUprightFormatted(prefix) : IsNameLatexUprightFormatted(Name);
             internal static bool IsNameLatexUprightFormatted(string varName) =>
                 // NOTE: Mathematical constants like "pi" and "e" are rendered upright following ISO 80000-2.

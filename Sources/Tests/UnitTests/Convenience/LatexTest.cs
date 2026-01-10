@@ -232,16 +232,21 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void Derivative14() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\alpha}\left[{x}^{23}-x_{\mathrm{16}}\right]", MathS.Derivative("x^23-x_16", "alpha"));
         [Fact] public void Derivative15() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\alpha_{\beta}}\alpha", MathS.Derivative("alpha", "alpha_beta"));
         [Fact] public void Derivative16() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\left(\mathrm{alphaa}_{\beta}\right)}\alpha", MathS.Derivative("alpha", "alphaa_beta"));
-        [Fact] public void Integral1() =>
-            Test(@"\int \left[x+1\right] \mathrm{d}x", MathS.Integral("x + 1", x));
+        [Fact] public void Integral1() => Test(@"\int \left[x\right]\,\mathrm{d}x", MathS.Integral(x, x));
         [Fact] public void Integral2() =>
-            Test(@"\int \int \left[x+1\right] \mathrm{d}x\,\mathrm{d}x", MathS.Integral("x + 1", x, 2));
+            Test(@"\int \left[x+1\right]\,\mathrm{d}\left(x+1\right)", MathS.Integral("x + 1", "x+1"));
         [Fact] public void Integral3() =>
-            Test(@"\int \left[x+1\right] \mathrm{d}\left[\mathrm{xf}\right]", MathS.Integral("x + 1", "xf"));
+            Test(@"\int\int \left[x+1\right]\,\mathrm{d}x\,\mathrm{d}x", MathS.Integral("x + 1", x, 2));
         [Fact] public void Integral4() =>
-            Test(@"\int \left[\frac{1}{x}\right] \mathrm{d}\left[\mathrm{xf}\right]", MathS.Integral("1/x", "xf"));
+            Test(@"\int\int \left[x+1\right]\,\mathrm{d}\left(\mathrm{xf}\right)\,\mathrm{d}\left(\mathrm{xf}\right)", MathS.Integral("x + 1", "xf", 2));
         [Fact] public void Integral5() =>
-            Test(@"\int \left[{x}^{23}-x_{\mathrm{16}}\right] \mathrm{d}\left[\mathrm{xf}\right]", MathS.Integral("x^23-x_16", "xf"));
+            Test(@"\int \left[\frac{1}{x}\right]\,\mathrm{d}x_{f}", MathS.Integral("1/x", "x_f"));
+        [Fact] public void Integral6() =>
+            Test(@"\int\int\int \left[{x}^{23}-x_{\mathrm{16}}\right]\,\mathrm{d}\left({x_{f}}^{2}\right)\,\mathrm{d}\left({x_{f}}^{2}\right)\,\mathrm{d}\left({x_{f}}^{2}\right)", MathS.Integral("x^23-x_16", "x_f^2", 3));
+        [Fact] public void IntegralSpecialCase1() => Test(@"\frac{\mathrm{d}^{0}}{\mathrm{d}x^{0}}\left[x+1\right]+1", MathS.Integral("x+1", "x", 0) + 1);
+        [Fact] public void IntegralSpecialCase2() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x}\left[x+1\right] \cdot 2", MathS.Integral("x+1", "x", -1) * 2);
+        [Theory, CombinatorialData] public void IntegralSpecialCase3([CombinatorialRange(0, 3)] int power, [CombinatorialValues("x", "x_f", "ab", "ab_cd", "e", "alpha", "alpha_beta", "alpha_e")] string v) =>
+            Test(MathS.Derivative(Integer.One + v, v, power).Latexise(), MathS.Integral(Integer.One + v, v, -power));
         [Fact] public void Limit1() =>
             Test(@"\lim_{x\to 0^-} \left[x+y\right]", (Entity)"limitleft(x + y, x, 0)");
         [Fact] public void Limit2() =>
