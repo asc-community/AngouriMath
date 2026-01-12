@@ -6,6 +6,7 @@
 //
 
 using AngouriMath.Extensions;
+using System.Linq;
 using Xunit;
 using static AngouriMath.Entity.Set;
 
@@ -18,15 +19,37 @@ namespace AngouriMath.Tests.Algebra
             "1 provided y > 0", "-5 provided y > 0", 
             "2 provided y = 0 and not y > 0", "-4 provided y = 0 and not y > 0",
             "3 provided y < 0 and (not y > 0 and not y = 0)", "-3 provided y < 0 and (not y > 0 and not y = 0)")]
+        [InlineData("9 = piecewise((x + 2)2 provided y > 0, (x + 1)2 provided y = 0, x2 provided y < 0)",
+            "1 provided y > 0", "-5 provided y > 0", 
+            "2 provided y = 0 and not y > 0", "-4 provided y = 0 and not y > 0",
+            "3 provided y < 0 and (not y > 0 and not y = 0)", "-3 provided y < 0 and (not y > 0 and not y = 0)")]
+        [InlineData("((x + 2)2 provided y > 0) = 9 or ((x + 1)2 provided y = 0) = 9 or (x2 provided y < 0) = 9",
+            "1 provided y > 0", "-5 provided y > 0",
+            "2 provided y = 0", "-4 provided y = 0",
+            "3 provided y < 0", "-3 provided y < 0")]
+        [InlineData("(9 = (x + 2)2 provided y > 0) or (9 = (x + 1)2 provided y = 0) or (9 = x2 provided y < 0)",
+            "1 provided y > 0", "-5 provided y > 0",
+            "2 provided y = 0", "-4 provided y = 0",
+            "3 provided y < 0", "-3 provided y < 0")]
         public void CheckIfRootWasObtained(string eq,
             string? r1 = null, string? r2 = null,
             string? r3 = null, string? r4 = null,
             string? r5 = null, string? r6 = null)
         {
-            var sols = eq.Solve("x");
-            foreach (var expectedRoot in new[] { r1, r2, r3, r4, r5, r6 })
+            var actualSols = (FiniteSet)eq.Solve("x");
+            var expected =
+                new[] { r1, r2, r3, r4, r5, r6 }
+                .Where(r => r is not null)
+                .Select(r => r!.ToEntity());
+            var expectedSols = new FiniteSet(expected);
+            foreach (var expectedRoot in expected)
                 if (expectedRoot is not null)
-                    Assert.True(((FiniteSet)sols).Contains(expectedRoot), $"Root {expectedRoot} expected to be in {sols}");
+                {
+                    Assert.True(actualSols.TryContains(expectedRoot, out var contains) && contains, $"Root {expectedRoot} expected to be in the solutions");
+                    Assert.True(actualSols.Contains(expectedRoot), $"Root {expectedRoot} expected to be in the solutions");
+                }
+            Assert.True(expectedSols.Equals(actualSols));
+            Assert.Equal(expectedSols.ToHashSet(), actualSols.ToHashSet());
         }
         [Theory]
         [InlineData("((x + a) provided a > 0) = 5", "{ -(a + -5) provided a > 0 }")] // Linear with provided, should preserve condition

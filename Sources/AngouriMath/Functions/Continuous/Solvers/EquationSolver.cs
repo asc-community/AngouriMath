@@ -103,5 +103,16 @@ namespace AngouriMath.Functions.Algebra
                 }
             return result;
         }
+        internal static Set SolvePiecewise(Piecewise piecewise, Variable x, Func<Entity, Variable, Set> solve)
+        {
+            Entity cond = true;
+            var res = new List<Set>();
+            foreach (var c in piecewise.Cases)
+            {
+                res.Add(solve(c.Expression, x).Filter(c.Predicate & cond, x));
+                cond &= !c.Predicate;
+            }
+            return res.Unite();
+        }
     }
 }

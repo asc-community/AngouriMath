@@ -178,11 +178,11 @@ namespace AngouriMath.Tests.Algebra
         public void LinearTrigRoots(string expr, int rootCount) => TestSolver(expr, rootCount);
 
         [Theory]
-        [InlineData("(x - b) / (x + a) + c", 1)]
-        [InlineData("(x - b) / (x + a) + c / (x + a)", 1)]
-        [InlineData("(x - b) / (x + a) + c / (x + a)2", 2)]
-        [InlineData("(x - b) / (x + a) + c + (x - c) / (x + d)", 2, 11)]
-        public void CDSolver(string expr, int rootCount, int? toSub = null) => TestSolver(expr, rootCount, toSub);
+        [InlineData("(x - b) / (x + a) + c", 1, "{ -(a * c + -b) / (1 + c) provided not -(a * c + -b) / (1 + c) + a = 0 }")]
+        [InlineData("(x - b) / (x + a) + c / (x + a)", 1, "{ -(c + -b) provided not a + -(c + -b) = 0 }")]
+        [InlineData("(x - b) / (x + a) + c / (x + a)2", 2, "{ (-(-b + a) - sqrt((-b + a) ^ 2 - 4 * (a * -b + c))) / 2 provided not (-(-b + a) - sqrt((-b + a) ^ 2 - 4 * (a * -b + c))) / 2 + a = 0, (-(-b + a) + sqrt((-b + a) ^ 2 - 4 * (a * -b + c))) / 2 provided not (-(-b + a) + sqrt((-b + a) ^ 2 - 4 * (a * -b + c))) / 2 + a = 0 }")]
+        [InlineData("(x - b) / (x + a) + c + (x - c) / (x + d)", 2, null)]
+        public void CDSolver(string expr, int rootCount, string? verifyRoots) => TestSolver(expr, rootCount, verifyRoots: verifyRoots);
 
         [Theory]
         [InlineData("x + sqrt(x^0.1 + a) + c", 0)]

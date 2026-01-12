@@ -3324,7 +3324,7 @@ namespace AngouriMath
 
         // Undefined
         /// <summary>
-        /// That is both undefined and indeterminite
+        /// NaN represents both "undefined" and "indeterminate".
         /// Any operation on NaN returns NaN
         /// </summary>
         /// <example>

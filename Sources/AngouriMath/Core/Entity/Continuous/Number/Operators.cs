@@ -373,6 +373,8 @@ namespace AngouriMath
                 if (@base is Real { EDecimal: { IsNegative: false } realBase } && power is Real { EDecimal: var realPower })
                     return realBase.Pow(realPower, context);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,7dc9c2ee4f99814a
+                // NOTE: System.Numerics.Complex.Pow(0, System.Numerics.Complex(-2, 1)) gives 0 + 0i despite being mathematically undefined
+                // NOTE: System.Numerics.Complex.Pow(0, 0) gives 1 + 0i despite being mathematically undefined
                 var baseReal = @base.RealPart.EDecimal;
                 var baseImaginary = @base.ImaginaryPart.EDecimal;
                 var powerReal = power.RealPart.EDecimal;

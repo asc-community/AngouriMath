@@ -48,6 +48,7 @@ namespace AngouriMath.Tests.Discrete
 
         [Theory]
         [InlineData("3 + i > 3")]
+        [InlineData("3 + sqrt(-1) > 3")]
         [InlineData("sqrt(-1) < 3")]
         [InlineData("i < 3")]
         [InlineData("i < i")]
@@ -58,10 +59,40 @@ namespace AngouriMath.Tests.Discrete
         [InlineData("1 > i")]
         [InlineData("1 <= i")]
         [InlineData("1 >= i")]
+        [InlineData("0 / 0 = 0")]
+        [InlineData("0 = 0 / 0")]
+        [InlineData("0 / 0 = 0 / 0")]
+        [InlineData("0 / 0 <= 0")]
+        [InlineData("0 <= 0 / 0")]
+        [InlineData("0 / 0 <= 0 / 0")]
+        [InlineData("0 / 0 > 0")]
+        [InlineData("0 > 0 / 0")]
+        [InlineData("0 / 0 > 0 / 0")]
+        [InlineData("0 / 0 >= 0")]
+        [InlineData("0 >= 0 / 0")]
+        [InlineData("0 / 0 >= 0 / 0")]
+        [InlineData("not 0 / 0 = 0 / 0")]
+        [InlineData("x = 0 and 0 / 0 = 0 / 0")]
+        [InlineData("0 / 0 = 0 / 0 and x = 0")]
+        [InlineData("0 / 0 = 0 / 0 and 0 / 0 = 0 / 0")]
+        [InlineData("0 / 0 = 0 / 0 or x = 0")]
+        [InlineData("x = 0 or 0 / 0 = 0 / 0")]
+        [InlineData("0 / 0 = 0 / 0 or 0 / 0 = 0 / 0")]
+        [InlineData("0 / 0 = 0 / 0 xor x = 0")]
+        [InlineData("x = 0 xor 0 / 0 = 0 / 0")]
+        [InlineData("0 / 0 = 0 / 0 xor 0 / 0 = 0 / 0")]
+        [InlineData("0 / 0 = 0 / 0 implies x = 0")]
+        [InlineData("x = 0 implies 0 / 0 = 0 / 0")]
+        [InlineData("0 / 0 = 0 / 0 implies 0 / 0 = 0 / 0")]
+        [InlineData("0 / 0 in {  }")]
+        [InlineData("0 = 0 ^ (-2 + i)")]
+        [InlineData("0 ^ 0 = 0")]
+        [InlineData("0 ^ 0 = 0 ^ (-2 + i)")]
         public void IsNaN(string expr)
         {
             var ent = expr.ToEntity();
             Assert.Equal(MathS.NaN, ent.Evaled);
+            Assert.Equal(MathS.NaN, ent.InnerSimplified);
         }
     }
 }

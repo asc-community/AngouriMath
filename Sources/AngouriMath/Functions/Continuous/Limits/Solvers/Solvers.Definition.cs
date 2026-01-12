@@ -88,7 +88,7 @@ namespace AngouriMath.Functions.Algebra
         {
             _ when !expr.ContainsNode(x) => expr,
             // avoid NaN values as non finite numbers
-            Real { IsNaN: true } => Real.NaN,
+            { IsNaN: true } => MathS.NaN,
             // if x -> -oo just make -x -> +oo
             Real { IsFinite: false, IsNegative: true } => SimplifyAndComputeLimitToInfinity(expr.Substitute(x, -x), x),
             // compute limit for x -> +oo

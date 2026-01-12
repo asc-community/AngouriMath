@@ -22,13 +22,12 @@ namespace AngouriMath
             => new Inf(this, supSet);
 
         /// <summary>
-        /// Creates a node of a expression assuming some condition
+        /// Creates a node of a expression assuming some condition. If the condition is the true node, the node itself is returned.
         /// </summary>
         /// <param name="that">
         /// A condition under which a given expression (this) is valid.
         /// </param>
         /// <returns>A node</returns>
-        public Entity Provided(Entity that)
-            => new Providedf(this, that);
+        public Entity Provided(Entity that) => that == Boolean.True ? this : new Providedf(this, that);
     }
 }

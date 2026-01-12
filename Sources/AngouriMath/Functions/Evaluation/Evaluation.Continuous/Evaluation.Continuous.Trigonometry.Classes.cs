@@ -5,6 +5,8 @@
 // Website: https://am.angouri.org.
 //
 
+using Antlr4.Runtime.Misc;
+
 namespace AngouriMath
 {
     internal static class InnerEvalZeroedSinCosConditions
@@ -40,308 +42,206 @@ namespace AngouriMath
         {
             private protected override Entity IntrinsicCondition => Boolean.True;
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.Evaled,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnOneArgument(Argument,
                     a => a switch
                     {
-                        Complex n => Number.Sin(n),
+                        Complex n when !isExact => Number.Sin(n),
+                        { Evaled: Complex n } arg when isExact && TrigonometryTableValues.PullSin(n, out var res) => res,
                         _ => null
                     },
-                    (@this, a) => ((Sinf)@this).New(a)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
-                    a => a switch
-                    {
-                        { Evaled: Complex n } arg when TrigonometryTableValues.PullSin(n, out var res) => res,
-                        _ => null
-                    },
-                    (@this, a) => ((Sinf)@this).New(a),
-                    true);
+                    (@this, a) => ((Sinf)@this).New(a), isExact);
         }
 
         public partial record Cosf
         {
             private protected override Entity IntrinsicCondition => Boolean.True;
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.Evaled,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnOneArgument(Argument,
                     a => a switch
                     {
-                        Complex n => Number.Cos(n),
+                        Complex n when !isExact => Number.Cos(n),
+                        { Evaled: Complex n } when isExact && TrigonometryTableValues.PullCos(n, out var res) => res,
                         _ => null
                     },
-                    (@this, a) => ((Cosf)@this).New(a)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
-                    a => a switch
-                    {
-                        { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => res,
-                        _ => null
-                    },
-                    (@this, a) => ((Cosf)@this).New(a),
-                    true);
+                    (@this, a) => ((Cosf)@this).New(a), isExact);
         }
 
         public partial record Secantf
         {
             private protected override Entity IntrinsicCondition => !MathS.Cos(Argument).Equalizes(0); // Sec(x) = 1/cos(x) is undefined when cos(x) = 0
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
-                    a => a switch
+            protected override Entity InnerSimplify(bool isExact) =>
+                InnerEvalZeroedSinCosConditions.IsCosDefinitelyZero(Argument.InnerSimplified) ? MathS.NaN
+                : ExpandOnOneArgument(Argument, a =>
+                    a switch
                     {
-                        var arg when InnerEvalZeroedSinCosConditions.IsCosDefinitelyZero(arg) => MathS.NaN,
-                        var n => (n.Evaled as Complex)?.Pipe(Secant)
-                    },
-                    (@this, a) => ((Secantf)@this).New(a)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
-                    a => a switch
-                    {
-                        { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => (1 / res).InnerSimplified,
+                        { Evaled: Complex n } =>
+                            isExact
+                            ? TrigonometryTableValues.PullCos(n, out var res)
+                              ? (1 / res).InnerSimplified
+                              : null
+                            : Secant(n),
                         _ => null
                     },
-                    (@this, a) => ((Secantf)@this).New(a),
-                    true);
+                    (@this, a) => ((Secantf)@this).New(a), isExact);
         }
 
         public partial record Cosecantf
         {
             private protected override Entity IntrinsicCondition => !MathS.Sin(Argument).Equalizes(0); // Csc(x) = 1/sin(x) is undefined when sin(x) = 0
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
+            protected override Entity InnerSimplify(bool isExact) =>
+                InnerEvalZeroedSinCosConditions.IsSinDefinitelyZero(Argument.InnerSimplified) ? MathS.NaN
+                : ExpandOnOneArgument(Argument,
                     a => a switch
                     {
-                        var arg when InnerEvalZeroedSinCosConditions.IsSinDefinitelyZero(arg) => MathS.NaN,
-                        var n => (n.Evaled as Complex)?.Pipe(Cosecant)
-                    },
-                    (@this, a) => ((Cosecantf)@this).New(a)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
-                    a => a switch
-                    {
-                        { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => (1 / res).InnerSimplified,
+                        { Evaled: Complex n } =>
+                            isExact
+                            ? TrigonometryTableValues.PullSin(n, out var res)
+                              ? (1 / res).InnerSimplified
+                              : null
+                            : Cosecant(n),
                         _ => null
                     },
-                    (@this, a) => ((Cosecantf)@this).New(a)
-                    , true);
+                    (@this, a) => ((Cosecantf)@this).New(a), isExact);
         }
 
         public partial record Arcsecantf
         {
-            private protected override Entity IntrinsicCondition => MathS.Abs(Argument) >= 1; // Arcsec is defined for |x| >= 1
+            private protected override Entity IntrinsicCondition =>
+                Codomain < Domain.Complex
+                ? MathS.Abs(Argument) >= 1 // Arcsec is defined for |x| >= 1 for reals
+                : !Argument.Equalizes(0); // Arcsec is undefined at 0 in complex
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.Evaled,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnOneArgument(Argument,
                     a => a switch
                     {
-                        Complex n => Number.Arcsecant(n),
+                        Complex n when !isExact => Arcsecant(n),
                         _ => null
                     },
-                    (@this, a) => ((Arcsecantf)@this).New(a)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
-                    a => a switch
-                    {
-                        _ => null
-                    },
-                    (@this, a) => ((Arcsecantf)@this).New(a),
-                    true);
+                    (@this, a) => ((Arcsecantf)@this).New(a), isExact);
         }
 
         public partial record Arccosecantf
         {
-            private protected override Entity IntrinsicCondition => MathS.Abs(Argument) >= 1; // Arccsc is defined for |x| >= 1
+            private protected override Entity IntrinsicCondition =>
+                Codomain < Domain.Complex
+                ? MathS.Abs(Argument) >= 1 // Arccsc is defined for |x| >= 1 for reals
+                : !Argument.Equalizes(0); // Arccsc is undefined at 0 in complex
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.Evaled,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnOneArgument(Argument,
                     a => a switch
                     {
-                        Complex n => Number.Arccosecant(n),
+                        Complex n when !isExact => Number.Arccosecant(n),
                         _ => null
                     },
-                    (@this, a) => ((Arccosecantf)@this).New(a)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
-                    a => a switch
-                    {
-                        _ => null
-                    },
-                    (@this, a) => ((Arccosecantf)@this).New(a),
-                    true);
+                    (@this, a) => ((Arccosecantf)@this).New(a), isExact);
         }
 
         public partial record Tanf
         {
-            private protected override Entity IntrinsicCondition => !MathS.Cos(Argument).Equalizes(0); // Tan(x) = sin(x)/cos(x) is undefined when cos(x) = 0
-            /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
-                    a => a switch
-                    {
-                        var arg when InnerEvalZeroedSinCosConditions.IsCosDefinitelyZero(arg) => MathS.NaN,
-                        var n => (n.Evaled as Complex)?.Pipe(Number.Tan)
-                    },
-                    (@this, a) => ((Tanf)@this).New(a)
-                    );
+            private protected override Entity IntrinsicCondition =>
+                !MathS.Cos(Argument).Equalizes(0); // Tan(x) = sin(x)/cos(x) is undefined when cos(x) = 0
 
             /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
+            protected override Entity InnerSimplify(bool isExact) =>
+                InnerEvalZeroedSinCosConditions.IsCosDefinitelyZero(Argument.InnerSimplified) ? MathS.NaN
+                : ExpandOnOneArgument(Argument,
                     a => a switch
                     {
-                        { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => res,
+                        { Evaled: Complex n } =>
+                            isExact
+                            ? TrigonometryTableValues.PullTan(n, out var res) ? res : null
+                            : Number.Tan(n),
                         _ => null
                     },
-                    (@this, a) => ((Tanf)@this).New(a)
-                    , true);
+                    (@this, a) => ((Tanf)@this).New(a), isExact);
         }
         
         public partial record Cotanf
         {
             private protected override Entity IntrinsicCondition => !MathS.Sin(Argument).Equalizes(0); // Cotan(x) = cos(x)/sin(x) is undefined when sin(x) = 0
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
+            protected override Entity InnerSimplify(bool isExact) =>
+                InnerEvalZeroedSinCosConditions.IsSinDefinitelyZero(Argument.InnerSimplified) ? MathS.NaN
+                : ExpandOnOneArgument(Argument,
                     a => a switch
                     {
-                        var arg when InnerEvalZeroedSinCosConditions.IsSinDefinitelyZero(arg) => MathS.NaN,
-                        var n => (n.Evaled as Complex)?.Pipe(Number.Cotan)
-                    },
-                    (@this, a) => ((Cotanf)@this).New(a)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
-                    a => a switch
-                    {
-                        { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => (1 / res).InnerSimplified,
+                        { Evaled: Complex n } =>
+                            isExact
+                            ? TrigonometryTableValues.PullTan(n, out var res) ? (1 / res).InnerSimplified : null
+                            : Number.Cotan(n),
                         _ => null
                     },
-                    (@this, a) => ((Cotanf)@this).New(a)
-                    , true);
+                    (@this, a) => ((Cotanf)@this).New(a), isExact);
         }
 
         public partial record Arcsinf
         {
             // Arcsin is defined for |x| <= 1 if we restrict to reals, but everywhere in complex
-            private protected override Entity IntrinsicCondition => Boolean.True;
-            
+            private protected override Entity IntrinsicCondition =>
+                Codomain < Domain.Complex ? MathS.Abs(Argument) <= 1 : Boolean.True;
+
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.Evaled,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnOneArgument(Argument,
                 a => a switch
                 {
-                    Complex n => Number.Arcsin(n),
+                    Complex n when !isExact => Number.Arcsin(n),
                     _ => null
                 },
-                (@this, a) => ((Arcsinf)@this).New(a)
-                );
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
-                a => a switch
-                {
-                    _ => null
-                },
-                (@this, a) => ((Arcsinf)@this).New(a),
-                true);
+                (@this, a) => ((Arcsinf)@this).New(a), isExact);
         }
         
         public partial record Arccosf
         {
             // Arccos is defined for |x| <= 1 if we restrict to reals, but everywhere in complex
-            private protected override Entity IntrinsicCondition => Boolean.True;
-            
+            private protected override Entity IntrinsicCondition =>
+                Codomain < Domain.Complex ? MathS.Abs(Argument) <= 1 : Boolean.True;
+
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.Evaled,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnOneArgument(Argument,
                 a => a switch
                 {
-                    Complex n => Number.Arccos(n),
+                    Complex n when !isExact => Number.Arccos(n),
                     _ => null
                 },
-                (@this, a) => ((Arccosf)@this).New(a)
-                );
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
-                a => a switch
-                {
-                    _ => null
-                },
-                (@this, a) => ((Arccosf)@this).New(a),
-                true);
+                (@this, a) => ((Arccosf)@this).New(a), isExact);
         }
         
         public partial record Arctanf
         {
             private protected override Entity IntrinsicCondition => Boolean.True;
-            
+
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.Evaled,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnOneArgument(Argument,
                 a => a switch
                 {
-                    Complex n => Number.Arctan(n),
+                    Complex n when !isExact => Number.Arctan(n),
                     _ => null
                 },
-                (@this, a) => ((Arctanf)@this).New(a)
-                );
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
-                a => a switch
-                {
-                    _ => null
-                },
-                (@this, a) => ((Arctanf)@this).New(a)
-                , true);
+                (@this, a) => ((Arctanf)@this).New(a), isExact);
         }
         
         public partial record Arccotanf
         {
             private protected override Entity IntrinsicCondition => Boolean.True;
-            
+
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.Evaled,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnOneArgument(Argument,
                 a => a switch
                 {
-                    Complex n => Number.Arccotan(n),
+                    Complex n when !isExact => Number.Arccotan(n),
                     _ => null
                 },
-                (@this, a) => ((Arccotanf)@this).New(a)
-                );
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
-                a => a switch
-                {
-                    _ => null
-                },
-                (@this, a) => ((Arccotanf)@this).New(a)
-                , true);
+                (@this, a) => ((Arccotanf)@this).New(a), isExact);
         }
     }
 }

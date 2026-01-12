@@ -14,8 +14,6 @@ namespace AngouriMath.Core.Sets
     {
         internal static Set IntersectFiniteSetAndSet(FiniteSet finite, Set set)
         {
-            if (set is FiniteSet another)
-                return FiniteSet.Intersect(finite, another);
             var fsb = new FiniteSetBuilder();
             var amb = new FiniteSetBuilder();
             foreach (var elem in finite)

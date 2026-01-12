@@ -14,6 +14,7 @@ using AngouriMath.Functions.Boolean;
 using HonkSharp.Laziness;
 using Complex = AngouriMath.Entity.Number.Complex;
 using System.Linq.Expressions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AngouriMath
 {
@@ -53,7 +54,7 @@ namespace AngouriMath
                         var changed = func(el);
                         if (!ReferenceEquals(changed, el))
                             hasAnythingChanged = true;
-                        newElements.Add(changed);
+                        if (changed != MathS.NaN) newElements.Add(changed);
                     }
                     if (hasAnythingChanged)
                         return newElements.ToFiniteSet();
@@ -123,31 +124,26 @@ namespace AngouriMath
                     => new FiniteSet(A.Elements.Concat(B.Elements));
 
                 // It could be written with one chain request, but readability > one line
-                internal static FiniteSet Subtract(FiniteSet A, FiniteSet B)
+                internal static bool TryFullSubtract(FiniteSet A, FiniteSet B, [NotNullWhen(true)] out FiniteSet? resultSet)
                 {
+                    var constantSets = A.Vars.Count == 0 && B.Vars.Count == 0;
                     var dict = BuildDictionaryFromElements(A.Elements, noCheck: true);
                     foreach (var el in B)
-                        dict.Remove(el.Evaled);
-                    return new FiniteSet(dict.Values, noCheck: true); // we didn't add anything
-                }
-
-                internal static FiniteSet Intersect(FiniteSet A, FiniteSet B)
-                {
-                    var dict = BuildDictionaryFromElements(A.Elements, noCheck: true);
-                    foreach (var el in A.elements)
-                        if (!B.Contains(el.Key))
-                            dict.Remove(el.Key);
-                    return new FiniteSet(dict.Values, noCheck: true); // we didn't add anything
+                        if (!dict.Remove(el.Evaled) && !constantSets) { resultSet = null; return false; }
+                    resultSet = new FiniteSet(dict.Values, noCheck: true); // we didn't add anything
+                    return true;
                 }
 
                 /// <inheritdoc/>
                 public override bool TryContains(Entity entity, out bool contains)
                 {
+                    if (IsSetEmpty) { contains = false; return true; } // a in {} is unambiguously false
                     contains = elements.ContainsKey(entity.Evaled);
-                    // a in { 2, 3 } is false
-                    // 4 in { a, 3 } is false
-                    // TODO: should we return false when there are symbolic expressions?
-                    return true;
+                    // x in { x, 2 } and 2 in { x, 2 } are both unambiguously true
+                    if (contains) return true;
+                    // however, 1 in { x, 2 }, y in { x, 2 } are both unknown
+                    // meanwhile, 2 in { 1, 3 } is unambiguously false
+                    return entity.Vars.Count == 0 && elements.Keys.All(el => el.Vars.Count == 0);
                 }
 
                 /// <inheritdoc/>
@@ -168,7 +164,7 @@ namespace AngouriMath
                     if (other.Count != Count)
                         return false;
                     foreach (var pair in elements)
-                        if (!other.Contains(pair.Key))
+                        if (!other.TryContains(pair.Key, out var contains) || !contains)
                             return false;
                     return true;
                 }
@@ -653,13 +649,9 @@ namespace AngouriMath
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;
-                    if (Left is not Set left || Right is not Set right)
-                        return false;
-                    if (left.TryContains(entity, out var leftContains) && right.TryContains(entity, out var rightContains))
-                    {
-                        contains = leftContains || rightContains;
-                        return true;
-                    }
+                    if (Left is not Set left || Right is not Set right) return false;
+                    if (left.TryContains(entity, out contains) && contains) return true;
+                    if (right.TryContains(entity, out contains)) return true;
                     return false;
                 }
 

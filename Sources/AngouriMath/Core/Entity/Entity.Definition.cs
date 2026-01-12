@@ -705,5 +705,10 @@ namespace AngouriMath
         /// </code>
         /// </example>
         public bool IsConstantLeaf => this is Boolean or Number or Set.SpecialSet;
+
+        /// <summary>
+        /// Checks whether this entity represents the undefined value (<see cref="MathS.NaN"/>).
+        /// </summary>
+        public bool IsNaN => this == Real.NaN;
     }
 }

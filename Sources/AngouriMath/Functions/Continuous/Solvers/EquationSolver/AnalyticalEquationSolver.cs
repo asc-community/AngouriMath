@@ -5,12 +5,13 @@
 // Website: https://am.angouri.org.
 //
 
-using static AngouriMath.Entity;
-using AngouriMath.Functions.Algebra;
-using AngouriMath.Extensions;
-using static AngouriMath.Entity.Set;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Multithreading;
+using AngouriMath.Extensions;
+using AngouriMath.Functions.Algebra;
+using System.Linq.Expressions;
+using static AngouriMath.Entity;
+using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
 {
@@ -76,17 +77,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
     internal static class AnalyticalEquationSolver
     {
-        private static Set PiecewiseIntoIndependentEquations(Piecewise leftPart, Variable x, Entity rightPart)
-        {
-            Entity cond = true;
-            var res = new List<Set>();
-            foreach (var c in leftPart.Cases)
-            {
-                res.Add(Solve(c.Expression - rightPart, x).Filter(c.Predicate & cond, x));
-                cond &= !c.Predicate;
-            }
-            return res.Unite();
-        }
 
         /// <summary>Equation solver</summary>
         /// <param name="compensateSolving">
@@ -98,11 +88,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <param name="x">Variable to solve over</param>
         internal static Set Solve(Entity expr, Variable x, bool compensateSolving = false)
         {
+            if (!compensateSolving) expr = expr.InnerSimplified; // don't simplify away the 0 on the right hand side of the subtraction
             if (expr == x)
                 return new Entity[] { 0 }.ToSet();
-
-            if (ProvidedLifter.ExtractProvidedPredicates(ref expr, out var predicate))
-                return ProvidedLifter.MergePredicateIntoSolveResult(Solve(expr, x, compensateSolving), x, predicate);
 
             // Applies an attempt to downcast roots
             static Entity TryDowncast(Entity equation, Variable x, Entity root)
@@ -122,17 +110,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             switch (expr)
             {
-                case Mulf(var multiplier, var multiplicand):
-                    return MathS.Union(Solve(multiplier, x), Solve(multiplicand, x));
-                case Divf(var dividend, var divisor):
-                    return MathS.SetSubtraction(Solve(dividend, x), Solve(divisor, x));
-                case Powf(var @base, _):
-                    return Solve(@base, x);
                 case Minusf(var subtrahend, var minuend) when !minuend.ContainsNode(x) && compensateSolving:
                     if (subtrahend == x)
                         return new[] { minuend }.ToSet();
-                    if (subtrahend is Piecewise piecewise)
-                        return PiecewiseIntoIndependentEquations(piecewise, x, minuend);
                     Entity? lastChild = null;
                     foreach (var child in subtrahend.DirectChildren)
                         if (child.ContainsNode(x))
@@ -145,6 +125,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     return subtrahend.Invert(minuend, lastChild).Select(result => Solve(lastChild - result, x, compensateSolving: true)).Unite();
                 case Function:
                     return expr.Invert(0, x).Select(ent => TryDowncast(expr, x, ent)).ToSet();
+                case Providedf(var expression, var predicate):
+                    return Solve(expression, x, compensateSolving).Filter(predicate, x);
+                case Piecewise p:
+                    return EquationSolver.SolvePiecewise(p, x, (e, x) => Solve(e, x, compensateSolving));
                 default:
                     break;
             }

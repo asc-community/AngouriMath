@@ -16,54 +16,29 @@ namespace AngouriMath
             // The derivative operator is always defined symbolically, even though
             // the resulting expression may be undefined at certain points.
             private protected override Entity IntrinsicCondition => Boolean.True;
-            
+
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnTwoAndTArguments(Expression.Evaled, Var.Evaled, Iterations,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnTwoAndTArguments(Expression, Var, Iterations,
                     (a, b, c) => (a, b, c) switch
                     {
                         (var expr, _, 0) => expr,
                         (_, _, int.MinValue) => null,
-                        (_, _, < 0) => new Integralf(a, b, -c).Evaled,
+                        (_, _, < 0) => new Integralf(a, b, -c).InnerSimplified(isExact),
                         // TODO: should we call InnerSimplified here?
                         (var expr, Variable var, int asInt)
                             when expr.Differentiate(var, asInt) is var res and not Derivativef
-                            => res.Evaled,
+                            => res.InnerSimplified(isExact),
                         (var expr, Variable var, int asInt) => null,
                         (Application, _, _) => null,
                         (var expr, Entity otherExpr, int asInt)
                             when Variable.CreateTemp(otherExpr.Vars) is var tempVar
                             && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
                             && tempSubstituted.Differentiate(tempVar) is var res and not Derivativef
-                            => res.Substitute(tempVar, otherExpr).Evaled,
+                            => res.Substitute(tempVar, otherExpr).InnerSimplified(isExact),
                         _ => null
                     },
-                    (@this, a, b, _) => ((Derivativef)@this).New(a, b)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnTwoAndTArguments(Expression.Evaled, Var.Evaled, Iterations,
-                    (a, b, c) => (a, b, c) switch
-                    {
-                        (var expr, _, 0) => expr,
-                        (_, _, int.MinValue) => null,
-                        (_, _, < 0) => new Integralf(a, b, -c).InnerSimplified,
-                        // TODO: should we call InnerSimlified here?
-                        (var expr, Variable var, int asInt)
-                            when expr.Differentiate(var, asInt) is var res and not Derivativef
-                            => res.InnerSimplified,
-                        (var expr, Variable var, int asInt) => null,
-                        (Application, _, _) => null,
-                        (var expr, Entity otherExpr, int asInt)
-                            when Variable.CreateTemp(otherExpr.Vars) is var tempVar
-                            && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
-                            && tempSubstituted.Differentiate(tempVar) is var res and not Derivativef
-                            => res.Substitute(tempVar, otherExpr).InnerSimplified,
-                        _ => null
-                    },
-                    (@this, a, b, _) => ((Derivativef)@this).New(a, b)
-                    );
+                    (@this, a, b, _) => ((Derivativef)@this).New(a, b), isExact);
         }
         
         public partial record Integralf
@@ -83,39 +58,21 @@ namespace AngouriMath
             }
 
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnTwoAndTArguments(Expression.Evaled, Var.Evaled, Iterations,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnTwoAndTArguments(Expression, Var, Iterations,
                     (a, b, c) => (a, b, c) switch
                     {
                         (var expr, _, 0) => expr,
                         (_, _, int.MinValue) => null,
-                        (_, _, < 0) => new Derivativef(a, b, -c).Evaled,
-                        (var expr, Variable var, int asInt)
-                            when SequentialIntegrating(expr, var, asInt) is var res and not Integralf
-                            && !res.Nodes.Any(n => n is Integralf)
-                            => res.Evaled,
-                        _ => null
-                    },
-                    (@this, a, b, _) => ((Integralf)@this).New(a, b)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnTwoAndTArguments(Expression.InnerSimplified, Var, Iterations,
-                    (a, b, c) => (a, b, c) switch
-                    {
-                        (var expr, _, 0) => expr,
-                        (_, _, int.MinValue) => null,
-                        (_, _, < 0 and not int.MinValue) => new Derivativef(a, b, -c).InnerSimplified,
+                        (_, _, < 0 and not int.MinValue) => new Derivativef(a, b, -c).InnerSimplified(isExact),
                         // TODO: should we apply InnerSimplified?
                         (var expr, Variable var, int asInt)
                             when SequentialIntegrating(expr, var, asInt) is var res and not Integralf
                             && !res.Nodes.Any(n => n is Integralf)
-                            => res.InnerSimplified,
+                            => res.InnerSimplified(isExact),
                         _ => null
                     },
-                    (@this, a, b, _) => ((Integralf)@this).New(a, b)
-                    );
+                    (@this, a, b, _) => ((Integralf)@this).New(a, b), isExact);
         }
 
 
@@ -127,31 +84,15 @@ namespace AngouriMath
             private protected override Entity IntrinsicCondition => Boolean.True;
             
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
+            protected override Entity InnerSimplify(bool isExact) =>
                 ExpandOnTwoAndTArguments(
-                    Expression.Evaled, Destination.Evaled, (v: Var, ap: ApproachFrom),
+                    Expression, Destination, (v: Var, ap: ApproachFrom),
                     (expr, dest, vap) => vap.v switch
                     {
-                        Variable v when expr.Limit(v, dest, vap.ap) is var res and not Limitf 
-                            => res.Evaled,
+                        Variable v when expr.Limit(v, dest, vap.ap) is var res and not Limitf => res.InnerSimplified(isExact),
                         _ => null
                     },
-                    (@this, expr, dest, vap) => ((Limitf)@this).New(expr, vap.v, dest, vap.ap)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnTwoAndTArguments(
-                    Expression.InnerSimplified, Destination.InnerSimplified, (v: Var, ap: ApproachFrom),
-                    (expr, dest, vap) => vap.v switch
-                    {
-                        Variable v when expr.Limit(v, dest, vap.ap) is var res and not Limitf
-                            => res.InnerSimplified,
-                        _ => null
-                    },
-                    (@this, expr, dest, vap) => ((Limitf)@this).New(expr, vap.v, dest, vap.ap)
-                    );
-
+                    (@this, expr, dest, vap) => ((Limitf)@this).New(expr, vap.v, dest, vap.ap), isExact);
         }
     }
 }

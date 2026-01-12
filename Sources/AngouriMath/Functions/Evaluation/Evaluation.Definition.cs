@@ -9,6 +9,11 @@ using HonkSharp.Laziness;
 
 namespace AngouriMath
 {
+    internal static class EntityEvaluationExtension {
+        /// <summary>Returns either <see cref="Entity.Evaled"/> or <see cref="Entity.InnerSimplified"/> based on <paramref name="isExact"/></summary>
+        internal static Entity InnerSimplified(this Entity @this, bool isExact) => isExact ? @this.InnerSimplified : @this.Evaled;
+    }
+
     partial record Entity
     {
         /// <summary>
@@ -64,14 +69,77 @@ namespace AngouriMath
         /// independent of any restrictions on the input variables themselves.
         /// </remarks>
         private protected abstract Entity IntrinsicCondition { get; }
-        internal Entity WithCondition(Entity condition) => condition == Boolean.True ? this : new Providedf(this, condition);
+
         /// <summary>
         /// This should NOT be called inside itself
         /// </summary>
-        protected abstract Entity InnerSimplify();
+        protected abstract Entity InnerSimplify(bool isExact);
+
+        private Entity InnerSimplifyWithCheck(bool isExact)
+        {
+            var innerSimplified = InnerSimplify(isExact);
+            if (innerSimplified.DirectChildren.Any(c => c == MathS.NaN))
+                return MathS.NaN;
+            if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplified, Codomain))
+                return innerSimplified;
+            else
+                return MathS.NaN;
+        }
 
         /// <summary>
-        /// This is the result of naive simplifications. In other 
+        /// Represents the evaluated value of the given expression, allowing imprecise <see cref="Real"/> values unlike <see cref="InnerSimplified"/>.
+        /// Unlike the result of <see cref="EvalNumerical"/> and
+        /// <see cref="EvalBoolean"/>
+        /// this is not constrained by any type.
+        /// 
+        /// It only performs an active operation in the first call,
+        /// next time it is free to call it in terms of CPU usage. For
+        /// consistency's sake, consider the call of this property
+        /// as free as the addressing of a field.
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var expr1 = x + y;
+        /// Console.WriteLine(expr1);
+        /// Console.WriteLine(expr1.Evaled);
+        /// Console.WriteLine(expr1.Evaled.GetType());
+        /// Console.WriteLine("-----------------------------");
+        /// var expr2 = 5 + x * i;
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Evaled);
+        /// Console.WriteLine(expr2.Substitute(x, 3).Evaled);
+        /// Console.WriteLine(expr2.Substitute(x, 3).Evaled.GetType());
+        /// Console.WriteLine("-----------------------------");
+        /// var expr3 = GreaterThan(5, 3);
+        /// Console.WriteLine(expr3);
+        /// Console.WriteLine(expr3.Evaled);
+        /// Console.WriteLine(expr3.Evaled.GetType());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x + y
+        /// x + y
+        /// AngouriMath.Entity+Sumf
+        /// -----------------------------
+        /// 5 + x * i
+        /// 5 + x * i
+        /// 5 + 3i
+        /// AngouriMath.Entity+Number+Complex
+        /// -----------------------------
+        /// 5 > 3
+        /// True
+        /// AngouriMath.Entity+Boolean
+        /// </code>
+        /// </example>
+        public Entity Evaled => evaled.GetValue(static @this => @this.InnerSimplifyWithCheck(false), this);
+        private LazyPropertyA<Entity> evaled;
+
+        /// <summary>
+        /// This is the result of naive simplifications, but not creating imprecise <see cref="Real"/> values unlike <see cref="Evaled"/>. In other 
         /// symbolic algebra systems it is called "Automatic simplification".
         /// It only performs an active operation in the first call,
         /// next time it is free to call it in terms of CPU usage. For
@@ -96,39 +164,8 @@ namespace AngouriMath
         /// 1
         /// </code>
         /// </example>
-        public Entity InnerSimplified => innerSimplified.GetValue(static @this => @this.InnerSimplifyWithCheck(), this);
+        public Entity InnerSimplified => innerSimplified.GetValue(static @this => @this.InnerSimplifyWithCheck(true), this);
         private LazyPropertyA<Entity> innerSimplified;
-
-
-        private Entity InnerActionWithCheck(IEnumerable<Entity> directChildren, Entity innerSimplifiedOrEvaled, bool returnThisIfNaN)
-        {
-            if (innerSimplifiedOrEvaled.DirectChildren.Any(c => c == MathS.NaN))
-                return MathS.NaN;
-            if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplifiedOrEvaled, Codomain))
-                return innerSimplifiedOrEvaled;
-            if (returnThisIfNaN)
-                return this;
-            else
-                return MathS.NaN;
-        }
-
-        /// <summary>
-        /// Make sure you call this function inside of <see cref="InnerSimplify"/>
-        /// </summary>
-        internal Entity InnerSimplifyWithCheck()
-            => InnerActionWithCheck(DirectChildren.Select(c => c.InnerSimplified), InnerSimplify(), true);
-
-        /// <summary>
-        /// This should NOT be called inside itself
-        /// </summary>
-        protected abstract Entity InnerEval();
-        
-        /// <summary>
-        /// Make sure you call this function inside of <see cref="InnerEval"/>
-        /// </summary>
-        protected Entity InnerEvalWithCheck()
-            => InnerActionWithCheck(DirectChildren.Select(c => c.Evaled), InnerEval(), false);
-
 
         /// <summary>
         /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
@@ -288,58 +325,6 @@ namespace AngouriMath
         /// </code>
         /// </example>
         public IEnumerable<Entity> Alternate(int level) => Simplificator.Alternate(this, level);
-
-        /// <summary>
-        /// Represents the evaluated value of the given expression
-        /// Unlike the result of <see cref="EvalNumerical"/> and
-        /// <see cref="EvalBoolean"/>
-        /// this is not constrained by any type.
-        /// 
-        /// It only performs an active operation in the first call,
-        /// next time it is free to call it in terms of CPU usage. For
-        /// consistency's sake, consider the call of this property
-        /// as free as the addressing of a field.
-        /// </summary>
-        /// <example>
-        /// <code>
-        /// using System;
-        /// using static AngouriMath.MathS;
-        /// 
-        /// var (x, y) = Var("x", "y");
-        /// var expr1 = x + y;
-        /// Console.WriteLine(expr1);
-        /// Console.WriteLine(expr1.Evaled);
-        /// Console.WriteLine(expr1.Evaled.GetType());
-        /// Console.WriteLine("-----------------------------");
-        /// var expr2 = 5 + x * i;
-        /// Console.WriteLine(expr2);
-        /// Console.WriteLine(expr2.Evaled);
-        /// Console.WriteLine(expr2.Substitute(x, 3).Evaled);
-        /// Console.WriteLine(expr2.Substitute(x, 3).Evaled.GetType());
-        /// Console.WriteLine("-----------------------------");
-        /// var expr3 = GreaterThan(5, 3);
-        /// Console.WriteLine(expr3);
-        /// Console.WriteLine(expr3.Evaled);
-        /// Console.WriteLine(expr3.Evaled.GetType());
-        /// </code>
-        /// Prints
-        /// <code>
-        /// x + y
-        /// x + y
-        /// AngouriMath.Entity+Sumf
-        /// -----------------------------
-        /// 5 + x * i
-        /// 5 + x * i
-        /// 5 + 3i
-        /// AngouriMath.Entity+Number+Complex
-        /// -----------------------------
-        /// 5 > 3
-        /// True
-        /// AngouriMath.Entity+Boolean
-        /// </code>
-        /// </example>
-        public Entity Evaled => evaled.GetValue(static @this => @this.InnerEvalWithCheck(), this);
-        private LazyPropertyA<Entity> evaled;
 
         /// <summary>
         /// Determines whether a given element can be unambiguously used as a number or boolean

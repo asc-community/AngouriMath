@@ -5,7 +5,9 @@
 // Website: https://am.angouri.org.
 //
 
+using System.Xml.Linq;
 using static AngouriMath.Entity.Boolean;
+using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
 {
@@ -17,10 +19,7 @@ namespace AngouriMath
             private protected override Entity IntrinsicCondition => True;
             
             /// <inheritdoc/>
-            protected override Entity InnerEval() => this;
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() => this;
+            protected override Entity InnerSimplify(bool isExact) => this;
         }
 
         partial record Notf
@@ -29,259 +28,99 @@ namespace AngouriMath
             private protected override Entity IntrinsicCondition => True;
 
             /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => ExpandOnOneArgument(Argument.Evaled,
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
                     a => a switch
                     {
-                        Boolean b => !(bool)b,
+                        Boolean(var b) => !b,
                         _ => null
                     },
-                    (@this, a) => ((Notf)@this).New(a)
-                    );
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => Evaled is Boolean b ? b : New(Argument.InnerSimplified);
+                    (@this, a) => ((Notf)@this).New(a), isExact);
         }
 
         partial record Andf
         {
             // Logical AND is always defined for any inputs
             private protected override Entity IntrinsicCondition => True;
-            
-            private static bool GoodResult(Entity left, Entity right, Entity leftEvaled, Entity rightEvaled, out Entity res)
-            {
-                if (leftEvaled is Boolean leftBool && rightEvaled is Boolean rightBool)
-                {
-                    res = (bool)leftBool && (bool)rightBool;
-                    return true;
-                }
-                else if (leftEvaled == False || rightEvaled == False)
-                {
-                    res = False;
-                    return true;
-                }
-                else if (leftEvaled == True)
-                {
-                    res = right;
-                    return true;
-                }
-                else if (rightEvaled == True)
-                {
-                    res = left;
-                    return true;
-                }
-                else
-                {
-                    res = False;
-                    return false;
-                }
-            }
-
             /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
-                    (a, b) => (a, b) switch
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Left, Right,
+                    (left, right) => left == right ? left : (left.Evaled, right.Evaled) switch
                     {
-                        (var left, var right) when GoodResult(left, right, left, right, out var res) => res,
+                        (Boolean(false), _) or (_, Boolean(false)) => False,
+                        (Boolean(true), _) => right,
+                        (_, Boolean(true)) => left,
                         _ => null
                     },
-                    (@this, a, b) => ((Andf)@this).New(a, b)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
-                    (a, b) => (a, b) switch
-                    {
-                        (var left, var right) when GoodResult(left, right, left.Evaled, right.Evaled, out var res) => res,
-                        _ => null
-                    },
-                    (@this, a, b) => ((Andf)@this).New(a, b)
-                    );
+                    (@this, a, b) => ((Andf)@this).New(a, b), isExact);
         }
 
         partial record Orf
         {
             // Logical OR is always defined for any inputs
             private protected override Entity IntrinsicCondition => True;
-            
-            private static bool GoodResult(Entity left, Entity right, Entity leftEvaled, Entity rightEvaled, out Entity res)
-            {
-                if (leftEvaled is Boolean leftBool && rightEvaled is Boolean rightBool)
-                {
-                    res = (bool)leftBool || (bool)rightBool;
-                    return true;
-                }
-                else if (leftEvaled == True || rightEvaled == True)
-                {
-                    res = True;
-                    return true;
-                }
-                else if (leftEvaled == False)
-                {
-                    res = right;
-                    return true;
-                }
-                else if (rightEvaled == False)
-                {
-                    res = left;
-                    return true;
-                }
-                else
-                {
-                    res = False;
-                    return false;
-                }
-            }
-
             /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
-                    (a, b) => (a, b) switch
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Left, Right,
+                    (left, right) => (left.Evaled, right.Evaled) switch
                     {
-                        (var left, var right) when GoodResult(left, right, left, right, out var res) => res,
+                        (Boolean(true), _) or (_, Boolean(true)) => True,
+                        (Boolean(false), _) => right,
+                        (_, Boolean(false)) => left,
                         _ => null
                     },
-                    (@this, a, b) => ((Orf)@this).New(a, b)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
-                    (a, b) => (a, b) switch
-                    {
-                        (var left, var right) when GoodResult(left, right, left.Evaled, right.Evaled, out var res) => res,
-                        _ => null
-                    },
-                    (@this, a, b) => ((Orf)@this).New(a, b)
-                    );
+                    (@this, a, b) => ((Orf)@this).New(a, b), isExact);
         }
 
         partial record Xorf
         {
             // Logical XOR is always defined for any inputs
             private protected override Entity IntrinsicCondition => True;
-            
-            private static bool GoodResult(Entity left, Entity right, Entity leftEvaled, Entity rightEvaled, out Entity res)
-            {
-                if (leftEvaled is Boolean leftBool && rightEvaled is Boolean rightBool)
-                {
-                    res = (bool)leftBool ^ (bool)rightBool;
-                    return true;
-                }
-                else if (leftEvaled is Boolean leftBoolOnly)
-                {
-                    res = leftBoolOnly ? !right : right;
-                    return true;
-                }
-                else if (rightEvaled is Boolean rightBoolOnly)
-                {
-                    res = rightBoolOnly ? !left : left;
-                    return true;
-                }
-                else
-                {
-                    res = False;
-                    return false;
-                }
-            }
-
             /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
-                    (a, b) => (a, b) switch
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Left, Right,
+                    (left, right) => (left.Evaled, right.Evaled) switch
                     {
-                        (var left, var right) when GoodResult(left, right, left, right, out var res) => res,
+                        (Boolean(var leftBool), Boolean(var rightBool)) => leftBool ^ rightBool,
+                        (Boolean(true), _) => !right,
+                        (Boolean(false), _) => right,
+                        (_, Boolean(true)) => !left,
+                        (_, Boolean(false)) => left,
                         _ => null
                     },
-                    (@this, a, b) => ((Xorf)@this).New(a, b)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
-                    (a, b) => (a, b) switch
-                    {
-                        (var left, var right) when GoodResult(left, right, left.Evaled, right.Evaled, out var res) => res,
-                        _ => null
-                    },
-                    (@this, a, b) => ((Xorf)@this).New(a, b)
-                    );
+                    (@this, a, b) => ((Xorf)@this).New(a, b), isExact);
         }
 
         partial record Impliesf
         {
             // Logical implication is always defined for any inputs
             private protected override Entity IntrinsicCondition => True;
-            
-            private static bool GoodResult(Entity left, Entity right, Entity leftEvaled, Entity rightEvaled, out Entity res)
-            {
-                if (leftEvaled is Boolean leftBool && rightEvaled is Boolean rightBool)
-                {
-                    res = !(bool)leftBool || (bool)rightBool;
-                    return true;
-                }
-                else if (leftEvaled == False || rightEvaled == True)
-                {
-                    res = True;
-                    return true;
-                }
-                else if (leftEvaled == True)
-                {
-                    res = right;
-                    return true;
-                }
-                else if (rightEvaled == False)
-                {
-                    res = !left;
-                    return true;
-                }
-                else
-                {
-                    res = False;
-                    return false;
-                }
-            }
-
             /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => ExpandOnTwoArguments(Assumption.Evaled, Conclusion.Evaled,
-                    (a, b) => (a, b) switch
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Assumption, Conclusion,
+                    (left, right) => (left.Evaled, right.Evaled) switch
                     {
-                        (var left, var right) when GoodResult(left, right, left, right, out var res) => res,
+                        (Boolean(var leftBool), Boolean(var rightBool)) => !leftBool || rightBool,
+                        (Boolean(false), _) => True,
+                        (Boolean(true), _) => right,
+                        (_, Boolean(true)) => True,
+                        (_, Boolean(false)) => !left,
                         _ => null
                     },
-                    (@this, a, b) => ((Impliesf)@this).New(a, b)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => ExpandOnTwoArguments(Assumption.InnerSimplified, Conclusion.InnerSimplified,
-                    (a, b) => (a, b) switch
-                    {
-                        (var left, var right) when GoodResult(left, right, left.Evaled, right.Evaled, out var res) => res,
-                        _ => null
-                    },
-                    (@this, a, b) => ((Impliesf)@this).New(a, b)
-                    );
+                    (@this, a, b) => ((Impliesf)@this).New(a, b), isExact);
         }
 
         partial record Equalsf
         {
             // Equality comparison is always defined for any inputs
             private protected override Entity IntrinsicCondition => True;
-            
             /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => (Left.Evaled, Right.Evaled) switch
-                {
-                    (var left, var right) when left == right => true,
-                    (var left, var right) when left.IsConstant && right.IsConstant => left == right,
-                    (var left, var right) => MathS.Equality(left, right)
-                };
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => Evaled is Boolean b ? b : MathS.Equality(Left.InnerSimplified, Right.InnerSimplified);
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Left, Right,
+                    (left, right) => left == right ? true
+                    : left.IsConstant && right.IsConstant ? left.Evaled == right.Evaled
+                    : null,
+                    (@this, a, b) => ((Equalsf)@this).New(a, b), isExact);
         }
 
         partial record Greaterf
@@ -290,31 +129,16 @@ namespace AngouriMath
             // For non-real complex numbers, they evaluate to NaN.
             private protected override Entity IntrinsicCondition => 
                 Left.In(MathS.Sets.R) & Right.In(MathS.Sets.R);
-            
             /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Left, Right,
                     (a, b) => (a, b) switch
                     {
-                        (Real nan, _) when nan == MathS.NaN => MathS.NaN,
-                        (_, Real nan) when nan == MathS.NaN => MathS.NaN,
                         (Real reLeft, Real reRight) => reLeft > reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
-                    (@this, a, b) => ((Greaterf)@this).New(a, b)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => Evaled is Boolean b ? b : 
-                ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
-                    (a, b) => (a, b) switch
-                    {
-                        _ => null
-                    },
-                    (@this, a, b) => ((Greaterf)@this).New(a, b)
-                    );
+                    (@this, a, b) => ((Greaterf)@this).New(a, b), isExact);
         }
 
         partial record GreaterOrEqualf
@@ -323,31 +147,17 @@ namespace AngouriMath
             // For non-real complex numbers, they evaluate to NaN.
             private protected override Entity IntrinsicCondition => 
                 Left.In(MathS.Sets.R) & Right.In(MathS.Sets.R);
-            
+
             /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Left, Right,
                     (a, b) => (a, b) switch
                     {
-                        (Real nan, _) when nan == MathS.NaN => MathS.NaN,
-                        (_, Real nan) when nan == MathS.NaN => MathS.NaN,
                         (Real reLeft, Real reRight) => reLeft >= reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
-                    (@this, a, b) => ((GreaterOrEqualf)@this).New(a, b)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() 
-                => Evaled is Boolean b ? b :
-                ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
-                    (a, b) => (a, b) switch
-                    {
-                        _ => null
-                    },
-                    (@this, a, b) => ((GreaterOrEqualf)@this).New(a, b)
-                    );
+                    (@this, a, b) => ((GreaterOrEqualf)@this).New(a, b), isExact);
         }
 
         partial record Lessf
@@ -356,31 +166,17 @@ namespace AngouriMath
             // For non-real complex numbers, they evaluate to NaN.
             private protected override Entity IntrinsicCondition => 
                 Left.In(MathS.Sets.R) & Right.In(MathS.Sets.R);
-            
+
             /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Left, Right,
                     (a, b) => (a, b) switch
                     {
-                        (Real nan, _) when nan == MathS.NaN => MathS.NaN,
-                        (_, Real nan) when nan == MathS.NaN => MathS.NaN,
                         (Real reLeft, Real reRight) => reLeft < reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
-                    (@this, a, b) => ((Lessf)@this).New(a, b)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => Evaled is Boolean b ? b :
-                ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
-                    (a, b) => (a, b) switch
-                    {
-                        _ => null
-                    },
-                    (@this, a, b) => ((Lessf)@this).New(a, b)
-                    );
+                    (@this, a, b) => ((Lessf)@this).New(a, b), isExact);
         }
 
         partial record LessOrEqualf
@@ -389,31 +185,16 @@ namespace AngouriMath
             // For non-real complex numbers, they evaluate to NaN.
             private protected override Entity IntrinsicCondition => 
                 Left.In(MathS.Sets.R) & Right.In(MathS.Sets.R);
-            
             /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Left, Right,
                     (a, b) => (a, b) switch
                     {
-                        (Real nan, _) when nan == MathS.NaN => MathS.NaN,
-                        (_, Real nan) when nan == MathS.NaN => MathS.NaN,
                         (Real reLeft, Real reRight) => reLeft <= reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
-                    (@this, a, b) => ((LessOrEqualf)@this).New(a, b)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => Evaled is Boolean b ? b :
-                ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
-                    (a, b) => (a, b) switch
-                    {
-                        _ => null
-                    },
-                    (@this, a, b) => ((LessOrEqualf)@this).New(a, b)
-                    );
+                    (@this, a, b) => ((LessOrEqualf)@this).New(a, b), isExact);
         }
 
         partial record Set
@@ -422,28 +203,15 @@ namespace AngouriMath
             {
                 // Set membership is always defined for any element and set
                 private protected override Entity IntrinsicCondition => True;
-                
                 /// <inheritdoc/>
-                protected override Entity InnerEval()
-                    => ExpandOnTwoArguments(Element.Evaled, SupSet.Evaled,
+                protected override Entity InnerSimplify(bool isExact)
+                    => ExpandOnTwoArguments(Element, SupSet,
                         (a, b) => (a, b) switch
                         {
                             (var el, Set set) when set.TryContains(el, out var contains) => contains,
                             _ => null
                         },
-                        (@this, a, b) => ((Inf)@this).New(a, b)
-                        );
-
-                /// <inheritdoc/>
-                protected override Entity InnerSimplify()
-                    => ExpandOnTwoArguments(Element.InnerSimplified, SupSet.InnerSimplified,
-                        (a, b) => (a, b) switch
-                        {
-                            (var el, Set set) when set.TryContains(el, out var contains) => contains,
-                            _ => null
-                        },
-                        (@this, a, b) => ((Inf)@this).New(a, b)
-                        );
+                        (@this, a, b) => ((Inf)@this).New(a, b), isExact, propagateSet: false);
             }
         }
 
@@ -452,29 +220,18 @@ namespace AngouriMath
             // Euler's totient function is defined for all integers in this library.
             // For positive integers, it returns the standard φ(n) value.
             // For non-positive integers, this implementation extends the definition by returning 0.
-            private protected override Entity IntrinsicCondition => True;
-            
-            /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => ExpandOnOneArgument(Argument.Evaled,
-                    a => a switch
-                    {
-                        Integer integer => integer.Phi(),
-                        _ => null
-                    },
-                    (@this, a) => ((Phif)@this).New(a)
-                    );
+            private protected override Entity IntrinsicCondition => Argument.In(MathS.Sets.Z);
 
             /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => ExpandOnOneArgument(Argument.InnerSimplified,
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
                     a => a switch
                     {
                         Integer integer => integer.Phi(),
+                        Number n => MathS.NaN,
                         _ => null
                     },
-                    (@this, a) => ((Phif)@this).New(a)
-                    );
+                    (@this, a) => ((Phif)@this).New(a), isExact);
         }
     }
 }

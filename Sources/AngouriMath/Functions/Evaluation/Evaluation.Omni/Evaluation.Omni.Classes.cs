@@ -7,6 +7,7 @@
 
 using AngouriMath.Core.Sets;
 using System;
+using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
 {
@@ -19,65 +20,40 @@ namespace AngouriMath
             {
                 private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
-                protected override Entity InnerEval()
-                    => Apply(el => el.Evaled);
-
-                /// <inheritdoc/>
-                protected override Entity InnerSimplify()
-                    => Apply(el => el.InnerSimplified);
+                protected override Entity InnerSimplify(bool isExact)
+                    => Apply(el => el.InnerSimplified(isExact));
             }
 
             partial record Interval
             {
                 private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
-                protected override Entity InnerEval()
-                    => ExpandOnTwoAndTArguments(Left.Evaled, Right.Evaled, (l: LeftClosed, r: RightClosed),
+                protected override Entity InnerSimplify(bool isExact)
+                    => ExpandOnTwoAndTArguments(Left, Right, (l: LeftClosed, r: RightClosed),
                         (a, b, lr) => (a, b, lr) switch
                         {
-                            (var left, var right, _) when left == right => lr.l && lr.r ?
-                            new FiniteSet(Simplificator.PickSimplest(a, b)) :
-                            Empty,
+                            (var left, var right, _) when (isExact ? left.Evaled == right.Evaled : left == right) =>
+                                lr.l && lr.r
+                                ? new FiniteSet(Simplificator.PickSimplest(left, right))
+                                : Empty,
                             _ => null
                         },
-                        (@this, a, b, lr) => ((Interval)@this).New(a, lr.l, b, lr.r),
-                        false);
-
-                /// <inheritdoc/>
-                protected override Entity InnerSimplify()
-                    => ExpandOnTwoAndTArguments(Left.InnerSimplified, Right.InnerSimplified, (l: LeftClosed, r: RightClosed),
-                        (a, b, lr) => (a, b, lr) switch
-                        {
-                            (var left, var right, _) when left.Evaled == right.Evaled => lr.l && lr.r ?
-                            new FiniteSet(Simplificator.PickSimplest(left, right)) :
-                            Empty,
-                            _ => null
-                        },
-                        (@this, a, b, lr) => ((Interval)@this).New(a, lr.l, b, lr.r),
-                        true);
+                        (@this, a, b, lr) => ((Interval)@this).New(a, lr.l, b, lr.r), isExact); // NOTE: Intervals propagate set unlike other set operations
             }
 
             partial record ConditionalSet
             {
                 private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
-                protected override Entity InnerEval()
-                    => ExpandOnTwoAndTArguments(Var, Predicate.Evaled, this,
-                        (@var, pred, @this) => 
-                    Simplificator.PickSimplest(@this.New(@var, pred), @this),
-                        (@this, @var, pred, _) => ((ConditionalSet)@this).New(@var, pred)
-                        );
-
-                /// <inheritdoc/>
-                protected override Entity InnerSimplify()
-                    => ExpandOnTwoAndTArguments(Var, Predicate.InnerSimplified, Codomain,
+                protected override Entity InnerSimplify(bool isExact)
+                    => ExpandOnTwoAndTArguments(Var, Predicate, Codomain,
                         (a, b, cod) => (a, b, cod) switch
                         {
-                            (var v, var pred, var codom) when pred.EvaluableBoolean && (bool)pred.EvalBoolean() => codom,
-                            (var v, var pred, var codom) when pred.EvaluableBoolean && !(bool)pred.EvalBoolean() => Empty,
+                            (_, { Evaled: Boolean(true) }, var codom) => codom,
+                            (_, { Evaled: Boolean(false) }, var codom) => Empty,
                             _ => null
                         },
-                        (@this, @var, pred, _) => ((ConditionalSet)@this).New(@var, pred)
+                        (@this, @var, pred, _) => ((ConditionalSet)@this).New(@var, pred), isExact, propagateSet: false
                         );
             }
 
@@ -85,11 +61,7 @@ namespace AngouriMath
             {
                 private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
-                protected override Entity InnerEval()
-                    => this;
-
-                /// <inheritdoc/>
-                protected override Entity InnerSimplify()
+                protected override Entity InnerSimplify(bool isExact)
                     => this;
             }
 
@@ -97,12 +69,8 @@ namespace AngouriMath
             {
                 private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
-                protected override Entity InnerEval()
-                    => InnerSimplified;
-
-                /// <inheritdoc/>
-                protected override Entity InnerSimplify()
-                    => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
+                protected override Entity InnerSimplify(bool isExact)
+                    => ExpandOnTwoArguments(Left, Right,
                         (a, b) => (a, b) switch
                         {
                             (FiniteSet setLeft, Set setRight) => SetOperators.UniteFiniteSetAndSet(setLeft, setRight),
@@ -111,20 +79,15 @@ namespace AngouriMath
                             (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.UniteCSetAndCSet(csetLeft, csetRight),
                             _ => null
                         },
-                        (@this, a, b) => ((Unionf)@this).New(a, b)
-                        );
+                        (@this, a, b) => ((Unionf)@this).New(a, b), isExact, propagateSet: false);
             }
 
             partial record Intersectionf
             {
                 private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
-                protected override Entity InnerEval()
-                    => InnerSimplified;
-
-                /// <inheritdoc/>
-                protected override Entity InnerSimplify()
-                    => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
+                protected override Entity InnerSimplify(bool isExact)
+                    => ExpandOnTwoArguments(Left, Right,
                         (a, b) => (a, b) switch
                         {
                             (FiniteSet setLeft, Set setRight) => SetOperators.IntersectFiniteSetAndSet(setLeft, setRight),
@@ -133,20 +96,15 @@ namespace AngouriMath
                             (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.IntersectCSetAndCSet(csetLeft, csetRight),
                             _ => null
                         },
-                        (@this, a, b) => ((Intersectionf)@this).New(a, b)
-                        );
+                        (@this, a, b) => ((Intersectionf)@this).New(a, b), isExact, propagateSet: false);
             }
 
             partial record SetMinusf
             {
                 private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
-                protected override Entity InnerEval()
-                    => InnerSimplified;
-
-                /// <inheritdoc/>
-                protected override Entity InnerSimplify()
-                    => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
+                protected override Entity InnerSimplify(bool isExact)
+                    => ExpandOnTwoArguments(Left, Right,
                         (a, b) => (a, b) switch
                         {
                             (Set setLeft, FiniteSet setRight) => SetOperators.SetSubtractSetAndFiniteSet(setLeft, setRight),
@@ -154,96 +112,57 @@ namespace AngouriMath
                             (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.SetSubtractCSetAndCSet(csetLeft, csetRight),
                             _ => null
                         },
-                        (@this, a, b) => ((SetMinusf)@this).New(a, b)
-                        );
+                        (@this, a, b) => ((SetMinusf)@this).New(a, b), isExact, propagateSet: false);
             }
         }
 
         partial record Providedf
         {
             private protected override Entity IntrinsicCondition => Predicate;
-            private Providedf SwitchOverChildren(Entity expression, Entity predicate)
-                => (expression, predicate) switch
-                {
-                    (Providedf exprProvided, Providedf predProvided) =>
-                        New(exprProvided.Expression, exprProvided.Predicate & predProvided.Predicate & predProvided.Expression),
-                    (var expr, Providedf predProvided) =>
-                        New(expr, predProvided.Predicate & predProvided.Expression),
-                    (Providedf exprProvided, var pred)
-                        => New(exprProvided.Expression, pred & exprProvided.Predicate),
-                    (var expr, var pred)
-                        => New(expr, pred)
-                };
-
-            private static Entity DecideWithPredicate(Providedf expr)
+            private Entity Decide(Entity expr, Entity predicate)
             {
-                if (expr.Predicate == Boolean.True)
-                    return expr.Expression;
-                if (expr.Predicate == Boolean.False)
+                if (predicate.Evaled == Boolean.True)
+                    return expr;
+                if (predicate.Evaled == Boolean.False || predicate.Evaled.IsNaN)
                     return MathS.NaN;
-                return expr;
+                return New(expr, predicate);
             }
-
             /// <inheritdoc/>
-            protected override Entity InnerEval()
-            {
-                var evaled = SwitchOverChildren(Expression.Evaled, Predicate.Evaled);
-                return DecideWithPredicate(evaled);
-            }
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-            {
-                var simplified = SwitchOverChildren(Expression.InnerSimplified, Predicate.InnerSimplified);
-                return DecideWithPredicate(simplified);
-            }
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnTwoArguments(Expression, Predicate,
+                    (a, b) => (a, b) switch
+                    {
+                        (Providedf exprProvided, Providedf predProvided) =>
+                            Decide(exprProvided.Expression, exprProvided.Predicate & predProvided.Predicate & predProvided.Expression),
+                        (var expr, Providedf predProvided) => Decide(expr, predProvided.Predicate & predProvided.Expression),
+                        (Providedf exprProvided, var pred) => Decide(exprProvided.Expression, pred & exprProvided.Predicate),
+                        (var expr, var pred) => Decide(expr, pred),
+                    },
+                    (@this, a, b) => ((Providedf)@this).New(a, b), isExact);
         }
 
         partial record Piecewise
         {
             private protected override Entity IntrinsicCondition =>
                 Cases.Aggregate((Entity?)null, (acc, curr) => acc is { } ? acc | curr.Predicate : curr.Predicate) ?? Boolean.False;
-            private Entity? ComputePiecewiseResultIfPossible()
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
             {
                 foreach (var oneCase in Cases)
                 {
-                    if (oneCase.Predicate.Evaled is not Boolean)
-                        return null;
-                    if (oneCase.Predicate.Evaled == Boolean.True)
-                        return oneCase.Expression;
+                    if (oneCase.Predicate.Evaled is not Boolean) goto notYetDecidable;
+                    if (oneCase.Predicate.Evaled == Boolean.True) return oneCase.Expression.InnerSimplified(isExact);
                 }
                 return MathS.NaN;
-            }
-
-            private IEnumerable<Providedf> ProcessPiecewise(IEnumerable<Providedf> source)
-            {
+            notYetDecidable:
                 var res = new List<Providedf>();
-                foreach (var (@case, srcCase) in (Cases, source).Zip())
-                    if (@case.Predicate.Evaled == Boolean.True)
-                    {
-                        res.Add(srcCase);
-                        break;
-                    }
-                    else if (@case.Predicate.Evaled != Boolean.False)
-                        res.Add(srcCase);
-                return res;
+                foreach (var (@case, srcCase) in (Cases, Cases.Select(c => c.New(c.Expression.InnerSimplified(isExact), c.Predicate.InnerSimplified(isExact)))).Zip()) {
+                    if (@case.Predicate.Evaled == Boolean.False) continue;
+                    res.Add(srcCase.Expression is Providedf(var inner, var pred) ? new Providedf(inner, (srcCase.Predicate & pred).InnerSimplified(isExact)) : srcCase);
+                    if (@case.Predicate.Evaled == Boolean.True) break;
+                }
+                return New(res);
             }
-
-            /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => ComputePiecewiseResultIfPossible() is { } expr
-                ?
-                expr.Evaled
-                :
-                New(ProcessPiecewise(Cases.Select(c => c.New(c.Expression.Evaled, c.Predicate.Evaled))));
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => ComputePiecewiseResultIfPossible() is { } expr 
-                ?
-                expr.InnerSimplified
-                :
-                New(ProcessPiecewise(Cases.Select(c => c.New(c.Expression.InnerSimplified, c.Predicate.InnerSimplified))));
         }
 
 
@@ -251,14 +170,9 @@ namespace AngouriMath
         {
             private protected override Entity IntrinsicCondition => Boolean.True;
             /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => IsScalar ? AsScalar().Evaled :
-                Elementwise(e => e.Evaled);
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => IsScalar ? AsScalar().InnerSimplified :
-                Elementwise(e => e.InnerSimplified);
+            protected override Entity InnerSimplify(bool isExact)
+                => IsScalar ? AsScalar().InnerSimplified(isExact) :
+                Elementwise(e => e.InnerSimplified(isExact));
         }
 
         partial record Application
@@ -272,8 +186,8 @@ namespace AngouriMath
                 };
 
             /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => ((Expression.InnerSimplified, Arguments.Map(arg => arg.InnerSimplified)) switch
+            protected override Entity InnerSimplify(bool isExact)
+                => ((Expression.InnerSimplified(isExact), Arguments.Map(arg => arg.InnerSimplified(isExact))) switch
                 {
                     (var identifier, LEmpty<Entity>) => identifier,
                     (Application(var any, var argsInner), var argsOuter) => any.Apply(argsInner.Concat(argsOuter).ToLList()),
@@ -337,12 +251,8 @@ namespace AngouriMath
                 }) switch
                 {
                     var thisAgain when ReferenceEquals(thisAgain, this) => this,
-                    var newOne => newOne.InnerSimplified
+                    var newOne => newOne.InnerSimplified(isExact)
                 };
-
-            /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => InnerSimplify();
         }
 
         partial record Lambda
@@ -362,8 +272,8 @@ namespace AngouriMath
                 };
             
             /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => (Parameter, Body.InnerSimplified) switch
+            protected override Entity InnerSimplify(bool isExact)
+                => (Parameter, Body.InnerSimplified(isExact)) switch
                 {
                     (var x1, Application(var expr, var args))
                         when !expr.FreeVariables.Contains(x1)
@@ -373,12 +283,9 @@ namespace AngouriMath
                                 LEmpty<Entity> => expr,
                                 var rest => new Application(expr, rest)
                             },
-                    (var x, var body) when body != Body => new Lambda(x, body).InnerSimplified,
+                    (var x, var body) when body != Body => new Lambda(x, body).InnerSimplified(isExact),
                     _ => this
                 };
-            /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => New(Parameter, Body.Evaled);
         }
     }
 }
