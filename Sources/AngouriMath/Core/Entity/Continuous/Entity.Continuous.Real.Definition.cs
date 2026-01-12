@@ -28,7 +28,7 @@ namespace AngouriMath
                 private protected Real(EDecimal @decimal) : base(null, null) => EDecimal = @decimal;
 
                 /// <summary>
-                /// The PeterO number representation in decimal
+                /// The PeterO number representation in <see cref="PeterO.Numbers.EDecimal"/>
                 /// </summary>
                 public EDecimal EDecimal { get; }
 

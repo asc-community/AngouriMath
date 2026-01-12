@@ -441,19 +441,19 @@ namespace AngouriMath
                     var (withX, withoutX) = Left.ContainsNode(x) ? (Left, Right) : (Right, Left);
                     if (value is FiniteSet valueFiniteSet && withoutX is FiniteSet A)
                     {
-                        if (!A.TryIsSubsetOf(valueFiniteSet, out var isSub))
-                            return withX.InvertNode(value.SetSubtract(withoutX), x);
-                        if (!isSub)
-                            return Empty;
-                        var sub = FiniteSet.Subtract(valueFiniteSet, A);
-                        var answers = new List<Entity>();
-                        foreach (var ans in A.GetPowerSet())
+                        if (A.TryIsSubsetOf(valueFiniteSet, out var isSub) && isSub &&
+                            FiniteSet.TryFullSubtract(valueFiniteSet, A, out var sub))
                         {
-                            if (ans is not FiniteSet finiteSet)
-                                throw new AngouriBugException("PowerSet must return a set of sets");
-                            answers.AddRange(withX.InvertNode(FiniteSet.Unite(sub, finiteSet), x));
+                            var answers = new List<Entity>();
+                            foreach (var ans in A.GetPowerSet())
+                            {
+                                if (ans is not FiniteSet finiteSet)
+                                    throw new AngouriBugException("PowerSet must return a set of sets");
+                                answers.AddRange(withX.InvertNode(FiniteSet.Unite(sub, finiteSet), x));
+                            }
+                            return answers;
                         }
-                        return answers;
+                        else return Empty;
                     }
                     return withX.InvertNode(value.SetSubtract(withoutX), x);
                 }

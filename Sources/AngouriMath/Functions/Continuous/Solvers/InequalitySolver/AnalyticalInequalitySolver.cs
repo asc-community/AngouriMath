@@ -18,8 +18,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// </summary>
         internal static Set Solve(Entity expr, Variable x)
         {
-            if (ProvidedLifter.ExtractProvidedPredicates(ref expr, out var predicate))
-                return ProvidedLifter.MergePredicateIntoSolveResult(Solve(expr, x), x, predicate);
+            switch (expr)
+            {
+                case Providedf(var e, var predicate): return Solve(e, x).Filter(predicate, x);
+                case Piecewise p: return EquationSolver.SolvePiecewise(p, x, Solve);
+            }
             {
                 if (MathS.Utils.TryGetPolyLinear(expr, x, out var a, out var b))
                 {

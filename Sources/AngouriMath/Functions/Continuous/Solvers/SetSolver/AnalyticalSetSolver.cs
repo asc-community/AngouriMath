@@ -6,6 +6,7 @@
 //
 
 using AngouriMath.Extensions;
+using AngouriMath.Functions.Algebra;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
 
@@ -15,10 +16,14 @@ namespace AngouriMath.Functions.Continuous.Solvers.SetSolver
     {
         internal static Set Solve(Entity left, Entity right, Variable x)
         {
-            if (ProvidedLifter.ExtractProvidedPredicates(ref left, out var predicate))
-                return ProvidedLifter.MergePredicateIntoSolveResult(Solve(left, right, x), x, predicate);
-            if (ProvidedLifter.ExtractProvidedPredicates(ref right, out predicate))
-                return ProvidedLifter.MergePredicateIntoSolveResult(Solve(left, right, x), x, predicate);
+            switch (left, right)
+            {
+                case (Providedf(var l, var predicate), _): return Solve(l, right, x).Filter(predicate, x);
+                case (_, Providedf(var r, var predicate)): return Solve(left, r, x).Filter(predicate, x);
+                case (Piecewise p, _): return EquationSolver.SolvePiecewise(p, x, (e, x) => Solve(e, right, x));
+                case (_, Piecewise p): return EquationSolver.SolvePiecewise(p, x, (e, x) => Solve(left, e, x));
+            }
+
             left = left.Replace(Patterns.SetOperatorRules);
             right = right.Replace(Patterns.SetOperatorRules);
             if (left.DirectChildren.Count<Entity>(c => c == x) 

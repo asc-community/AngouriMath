@@ -72,11 +72,6 @@ namespace AngouriMath
                 public new bool IsZero => RealPart.EDecimal.IsZero && ImaginaryPart.EDecimal.IsZero;
 
                 /// <summary>
-                /// Checks whether the given number is undefined
-                /// </summary>
-                public bool IsNaN => this == Real.NaN;
-
-                /// <summary>
                 /// Creates an instance of Complex
                 /// </summary>
                 public static Complex Create(Real real, Real imaginary) =>

@@ -157,7 +157,7 @@ namespace AngouriMath.Functions.Algebra
                     var divEvaled = div.Evaled;
                     return divEvaled switch
                     {
-                        { Evaled: Complex { IsNaN: true } } => null,
+                        { Evaled.IsNaN: true } => null,
                         { } res when res.ContainsNode("+oo") || res.ContainsNode("-oo") => div.InnerSimplified,
                         { Evaled: Complex } limit => limit,
                         _ => upperLogLimit / lowerLogLimit,

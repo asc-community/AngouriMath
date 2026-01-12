@@ -148,7 +148,7 @@ namespace AngouriMath.Tests.Common
         [Fact] public void IntegralToDerivativeSimplifyMinValue() =>
             $"integral(apply(f, x), x, {int.MinValue})".ToEntity().InnerSimplified.ShouldBe($"integral(apply(f, x), x, {int.MinValue})");
         [Fact] public void IntegralToDerivativeEval() =>
-            "integral(apply(f, x) + (sin(3)^2 + cos(3)^2), x, -1)".ToEntity().Evaled.ShouldBe("derivative(apply(f, x), x) + 0");
+            "integral(apply(f, x) + (sin(3)^2 + cos(3)^2), x, -1)".ToEntity().Evaled.ShouldBe("derivative(apply(f, x), x)");
         [Fact] public void IntegralToDerivativeEval2() =>
             "integral(apply(f, x), x, -2)".ToEntity().Evaled.ShouldBe("derivative(apply(f, x), x, 2)");
         [Fact] public void IntegralToDerivativeEvalMinValue() =>
@@ -326,8 +326,11 @@ namespace AngouriMath.Tests.Common
         [InlineData("9pi / 2")]
         [InlineData("5pi / 2")]
         public void TanShouldBeNaN(string angle)
-            => MathS.Tan(angle).Evaled.ShouldBe(MathS.NaN);
-        
+        {
+            MathS.Tan(angle).Evaled.ShouldBe(MathS.NaN);
+            MathS.Tan(angle).InnerSimplified.ShouldBe(MathS.NaN);
+        }
+
         [Theory]
         [InlineData("pi / 2")]
         [InlineData("-pi / 2")]
@@ -336,8 +339,11 @@ namespace AngouriMath.Tests.Common
         [InlineData("9pi / 2")]
         [InlineData("5pi / 2")]
         public void SecShouldBeNaN(string angle)
-            => MathS.Sec(angle).Evaled.ShouldBe(MathS.NaN);
-        
+        {
+            MathS.Sec(angle).Evaled.ShouldBe(MathS.NaN);
+            MathS.Sec(angle).InnerSimplified.ShouldBe(MathS.NaN);
+        }
+
         [Theory]
         [InlineData("pi")]
         [InlineData("-pi")]
@@ -346,8 +352,11 @@ namespace AngouriMath.Tests.Common
         [InlineData("9pi")]
         [InlineData("5pi")]
         public void CotanShouldBeNaN(string angle)
-            => MathS.Cotan(angle).Evaled.ShouldBe(MathS.NaN);
-        
+        {
+            MathS.Cotan(angle).Evaled.ShouldBe(MathS.NaN);
+            MathS.Cotan(angle).InnerSimplified.ShouldBe(MathS.NaN);
+        }
+
         [Theory]
         [InlineData("pi")]
         [InlineData("-pi")]
@@ -356,7 +365,10 @@ namespace AngouriMath.Tests.Common
         [InlineData("9pi")]
         [InlineData("5pi")]
         public void CosecShouldBeNaN(string angle)
-            => MathS.Cosec(angle).Evaled.ShouldBe(MathS.NaN);
+        {
+            MathS.Cosec(angle).Evaled.ShouldBe(MathS.NaN);
+            MathS.Cosec(angle).InnerSimplified.ShouldBe(MathS.NaN);
+        }
 
         [Theory]
         [InlineData("1 / 0 > 0")]
@@ -371,24 +383,12 @@ namespace AngouriMath.Tests.Common
         [InlineData("i < i")]
         [InlineData("i >= (i + 1)")]
         [InlineData("i <= (i + 1)")]
-        public void InequalityShouldBeNaN(string expr)
-            => expr.ToEntity().Evaled.ShouldBe(MathS.NaN);
-
-        [Theory]
-        [InlineData("1 / 0 > 0")]
-        [InlineData("1 / 0 < 0")]
-        [InlineData("1 / 0 >= 0")]
-        [InlineData("1 / 0 <= 0")]
-        [InlineData("0 < 1 / 0")]
-        [InlineData("0 > 1 / 0")]
-        [InlineData("0 <= 1 / 0")]
-        [InlineData("0 >= 1 / 0")]
-        [InlineData("i > i")]
-        [InlineData("i < i")]
         [InlineData("i >= -i")]
         [InlineData("i <= -i")]
-        public void InequalityShouldBeKeptInnerSimplify(string expr)
-            => expr.ToEntity().InnerSimplified.ShouldBe(expr);
+        public void InequalityShouldBeNaN(string expr) {
+            expr.ToEntity().Evaled.ShouldBe(MathS.NaN);
+            expr.ToEntity().InnerSimplified.ShouldBe(MathS.NaN);
+        }
     }
 }
 

@@ -17,9 +17,7 @@ namespace AngouriMath
             private protected override Entity IntrinsicCondition => Boolean.True;
             
             /// <inheritdoc/>
-            protected override Entity InnerEval() => this;
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() => this;
+            protected override Entity InnerSimplify(bool isExact) => this;
         }
 
         // Each function and operator processing
@@ -27,131 +25,80 @@ namespace AngouriMath
         {
             private protected override Entity IntrinsicCondition => Boolean.True;
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnTwoArguments(Augend.Evaled, Addend.Evaled,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnTwoArguments(Augend, Addend,
                     (augend, addend) => (augend, addend) switch
                     { 
-                        (Complex a, Complex b) => a + b,
-                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).Evaled, (inter.Right + n2).Evaled),
-                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).Evaled, (n2 + inter.Right).Evaled),
+                        (Complex a, Complex b) when !isExact => a + b,
+                        (var n1, Integer(0)) => n1,
+                        (Integer(0), var n2) => n2,
+                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).InnerSimplified(isExact), (inter.Right + n2).InnerSimplified(isExact)),
+                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).InnerSimplified(isExact), (n2 + inter.Right).InnerSimplified(isExact)),
                         _ => null
                     },
-                    (@this, a, b) => ((Sumf)@this).New(a, b)
-                   );
-
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                    ExpandOnTwoArguments(Augend.InnerSimplified, Addend.InnerSimplified,
-                        (augend, addend) => (augend, addend) switch
-                        {
-                            (Complex a, Complex b) => a + b,
-                            (var n1, Integer(0)) => n1,
-                            (Integer(0), var n2) => n2,
-                            (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).InnerSimplified, (inter.Right + n2).InnerSimplified),
-                            (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).InnerSimplified, (n2 + inter.Right).InnerSimplified),
-                            _ => null
-                        },
-                        (@this, a, b) => ((Sumf)@this).New(a, b),
-                        true);
+                    (@this, a, b) => ((Sumf)@this).New(a, b), isExact);
         }
         public partial record Minusf
         {
             private protected override Entity IntrinsicCondition => Boolean.True;
-            /// <inheritdoc/>
-            protected override Entity InnerEval() => ExpandOnTwoArguments(Subtrahend.Evaled, Minuend.Evaled,
-                    (augend, addend) => (augend, addend) switch
-                    {
-                        (Complex a, Complex b) => a - b,
-                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).Evaled, (inter.Right - n2).Evaled),
-                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).Evaled, (n2 - inter.Right).Evaled),
-                        _ => null
-                    },
-                    (@this, a, b) => ((Minusf)@this).New(a, b)
-                    );
 
             /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnTwoArguments(Subtrahend.InnerSimplified, Minuend.InnerSimplified,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnTwoArguments(Subtrahend, Minuend,
                     (augend, addend) => (augend, addend) switch
                     {
+                        (Complex a, Complex b) when !isExact => a - b,
                         (var n1, Integer(0)) => n1,
-                        (Integer(0), var n2) => (-n2),
-                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).InnerSimplified, (inter.Right - n2).InnerSimplified),
-                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).InnerSimplified, (n2 - inter.Right).InnerSimplified),
+                        (Integer(0), var n2) => -n2,
+                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).InnerSimplified(isExact), (inter.Right - n2).InnerSimplified(isExact)),
+                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).InnerSimplified(isExact), (n2 - inter.Right).InnerSimplified(isExact)),
                         _ => null
                     },
-                    (@this, a, b) => ((Minusf)@this).New(a, b),
-                    true);
+                    (@this, a, b) => ((Minusf)@this).New(a, b), isExact);
         }
         public partial record Mulf
         {
             private protected override Entity IntrinsicCondition => Boolean.True;
             /// <inheritdoc/>
-            protected override Entity InnerEval() => ExpandOnTwoArguments(Multiplier.Evaled, Multiplicand.Evaled,
-                (a, b) => (a, b) switch
-                {
-                    (Matrix m1, Matrix m2) when m1.ColumnCount == m2.RowCount => (m1 * m2).Evaled,
-                    (Matrix m1, Matrix m2) => a * b,
-                    (Matrix m, Integer(0)) => m.With((_, _, _) => 0),
-                    (Integer(0), Matrix m) => m.With((_, _, _) => 0),
-                    (Complex n1, Complex n2) => n1 * n2,
-                    ({ DomainCondition: var condition }, Integer(0)) => Integer.Zero.WithCondition(condition),
-                    (Integer(0), { DomainCondition: var condition }) => Integer.Zero.WithCondition(condition),
-                    (var n1, Integer(1)) => n1,
-                    (Integer(1), var n2) => n2,
-                    _ => null
-                },
-                (@this, a, b) => ((Mulf)@this).New(a, b)
-                );
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnTwoArguments(Multiplier.InnerSimplified, Multiplicand.InnerSimplified,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnTwoArguments(Multiplier, Multiplicand,
                     (a, b) => (a, b) switch
                     {
-                        (Matrix m1, Matrix m2) when m1.ColumnCount == m2.RowCount => (m1 * m2).InnerSimplified,
+                        (Matrix m1, Matrix m2) when m1.ColumnCount == m2.RowCount => (m1 * m2).InnerSimplified(isExact),
                         (Matrix m1, Matrix m2) => a * b,
-                        (Integer minusOne, Mulf(var minusOne1, var any1)) when minusOne == Integer.MinusOne && minusOne1 == Integer.MinusOne => any1,
+                        (Integer(-1), Mulf(Integer(-1), var any1)) => any1,
                         (Matrix m, Integer(0)) => m.With((_, _, _) => 0),
                         (Integer(0), Matrix m) => m.With((_, _, _) => 0),
-                        ({ DomainCondition: var condition }, Integer(0)) => Integer.Zero.WithCondition(condition),
-                        (Integer(0), { DomainCondition: var condition }) => Integer.Zero.WithCondition(condition),
+                        (Complex n1, Complex n2) when !isExact => n1 * n2,
+                        ({ DomainCondition: var condition }, Integer(0)) => Integer.Zero.Provided(condition),
+                        (Integer(0), { DomainCondition: var condition }) => Integer.Zero.Provided(condition),
                         (var n1, Integer(1)) => n1,
                         (Integer(1), var n2) => n2,
-                        (var n1, var n2) when n1 == n2 => new Powf(n1, 2).InnerSimplified,
+                        (var n1, var n2) when n1 == n2 => new Powf(n1, 2).InnerSimplified(isExact),
                         _ => null
                     },
-                    (@this, a, b) => ((Mulf)@this).New(a, b),
-                    true);
+                    (@this, a, b) => ((Mulf)@this).New(a, b), isExact);
         }
         public partial record Divf
         {
             // Division is undefined when the divisor equals zero
             private protected override Entity IntrinsicCondition => !Divisor.Equalizes(0);
+
             /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnTwoArguments(Dividend.Evaled, Divisor.Evaled,
-                    (a, b) => (a, b) switch
-                    {
-                        (Complex n1, Complex n2) => n1 / n2,
-                        (Integer(0), var n0) => n0.Evaled is Complex { IsZero: false } ? 0 : new Providedf(0, new Notf(new Equalsf(n0, 0))).Evaled,
-                        (_, Integer(0)) => Real.NaN,
-                        _ => null
-                    },
-                    (@this, a, b) => ((Divf)@this).New(a, b)
-                    );
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnTwoArguments(Dividend.InnerSimplified, Divisor.InnerSimplified,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnTwoArguments(Dividend, Divisor,
                 (a, b) => (a, b) switch
                 {
-                    (Integer(0), var n0) => n0.Evaled is Complex { IsZero: false } ? 0 : new Providedf(0, new Notf(new Equalsf(n0, 0))).InnerSimplified,
+                    (Integer(0), var n0) =>
+                        n0.Evaled is Complex c
+                        ? c.IsZero ? MathS.NaN : 0
+                        : new Providedf(0, new Notf(new Equalsf(n0, 0))),
+                    (_, Integer(0)) => Real.NaN,
+                    (Complex n1, Complex n2) when !isExact => n1 / n2,
                     (var n1, Integer(1)) => n1,
                     _ => null
                 },
-                (@this, a, b) => ((Divf)@this).New(a, b),
-                true,
-                allowNaNAsExact: false);
+                (@this, a, b) => ((Divf)@this).New(a, b), isExact);
         }
         public partial record Powf
         {
@@ -175,38 +122,34 @@ namespace AngouriMath
                 }
             }
 
-            /// <inheritdoc/>
-            protected override Entity InnerEval() =>
-                ExpandOnTwoArguments(Base.Evaled, Exponent.Evaled,
-                    (a, b) => (a, b) switch
-                {
-                    (Matrix m, Integer(var exp)) when exp is { } expNotNull && TryPower(m, expNotNull, out var res) => res.Evaled,
-                    (Complex n1, Complex n2) => Number.Pow(n1, n2),
-                    (Integer(1), { DomainCondition: var condition }) => Integer.One.WithCondition(condition),
-                    (Integer(0), var x) => new Providedf(0, x > 0).Evaled,
-                    (var n1, Integer(-1)) => (1 / n1).Evaled,
-                    (var x, Integer(0)) => new Providedf(1, !x.Equalizes(0)).Evaled,
-                    (var n1, Integer(1)) => n1,
-                    _ => null
-                },
-                (@this, a, b) => ((Powf)@this).New(a, b)
-                );
+            // Re(x) = x/2 * (1 + 1/sgn(x)^2)
+            internal static Entity Re(Entity x) => x / 2 * (1 + 1 / new Signumf(x).Pow(2));
 
             /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnTwoArguments(Base.InnerSimplified, Exponent.InnerSimplified,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnTwoArguments(Base, Exponent,
                 (a, b) => (a, b) switch
                 {
-                    (Matrix m, Integer(var exp)) when exp is { } expNotNull && TryPower(m, expNotNull, out var res) => res.InnerSimplified,
-                    (Integer(1), { DomainCondition: var condition }) => Integer.One.WithCondition(condition),
-                    (Integer(0), var x) => new Providedf(0, x > 0).InnerSimplified,
-                    (var n1, Integer(-1)) => (1 / n1).InnerSimplified,
-                    (var x, Integer(0)) => new Providedf(1, !x.Equalizes(0)).InnerSimplified,
+                    (Matrix m, Integer(var exp)) when exp is { } expNotNull && TryPower(m, expNotNull, out var res) => res.InnerSimplified(isExact),
+                    (Integer(0), var x) =>
+                        (isExact ? x.Evaled : x) is Complex c
+                        ? c.RealPart.IsPositive
+                          ? 0
+                          : MathS.NaN
+                        : new Providedf(0, Re(x) > 0),
+                    (Complex n1, Complex n2) when !isExact => Number.Pow(n1, n2), // returns 1 for 0^0 and 0 for 0^(negative real part), we need to handle these cases above
+                    (Integer(1), { DomainCondition: var condition }) => Integer.One.Provided(condition),
+                    (var n1, Integer(-1)) => (1 / n1).InnerSimplified(isExact),
+                    (var x, Integer(0)) =>
+                        x.Evaled is Complex c
+                        ? c.IsZero
+                          ? throw new AngouriBugException("Should have already been handled by the above case")
+                          : 1
+                        : new Providedf(1, !x.Equalizes(0)),
                     (var n1, Integer(1)) => n1,
                     _ => null
                 },
-                (@this, a, b) => ((Powf)@this).New(a, b),
-                true);
+                (@this, a, b) => ((Powf)@this).New(a, b), isExact);
         }
         
         public partial record Logf
@@ -219,27 +162,16 @@ namespace AngouriMath
                 Base > 0 & !Base.Equalizes(1) & Antilogarithm > 0;
             
             /// <inheritdoc/>
-            protected override Entity InnerEval() => 
-                ExpandOnTwoArguments(Base.Evaled, Antilogarithm.Evaled,
+            protected override Entity InnerSimplify(bool isExact) => 
+                ExpandOnTwoArguments(Base, Antilogarithm,
                     (a, b) => (a, b) switch
                     {
-                        (Complex n1, Complex n2) => Number.Log(n1, n2),
+                        (Complex n1, Complex n2) when !isExact => Number.Log(n1, n2),
+                        ({ DomainCondition: var condition }, Integer(0)) => Real.NegativeInfinity.Provided(condition),
+                        ({ DomainCondition: var condition }, Integer(1)) => Integer.Zero.Provided(condition),
                         _ => null
                     },
-                    (@this, a, b) => ((Logf)@this).New(a, b)
-                    );
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnTwoArguments(Base.InnerSimplified, Antilogarithm.InnerSimplified,
-                    (a, b) => (a, b) switch
-                    {
-                        ({ DomainCondition: var condition }, Integer(0)) => Real.NegativeInfinity.WithCondition(condition),
-                        ({ DomainCondition: var condition }, Integer(1)) => Integer.Zero.WithCondition(condition),
-                        _ => null
-                    },
-                    (@this, a, b) => ((Logf)@this).New(a, b),
-                    true);
+                    (@this, a, b) => ((Logf)@this).New(a, b), isExact);
         }
         
         public partial record Factorialf
@@ -249,22 +181,13 @@ namespace AngouriMath
             // The gamma function has poles at negative integers, so factorial is undefined there
             private protected override Entity IntrinsicCondition => 
                 Argument.In(MathS.Sets.R) & (Argument >= 0 | !Argument.In(MathS.Sets.Z));
-            
+
             /// <inheritdoc/>
-            protected override Entity InnerEval() => 
-                ExpandOnOneArgument(Argument.Evaled,
-                    a => a switch                
-                    {
-                        Complex n => Number.Factorial(n),
-                        _ => null
-                    },
-                    (@this, a) => ((Factorialf)@this).New(a)
-                    );
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() =>
-                ExpandOnOneArgument(Argument.InnerSimplified,
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnOneArgument(Argument,
                     a => a switch
                     {
+                        Complex c when !isExact => Number.Factorial(c),
                         Rational({ Numerator: var num, Denominator: var den }) when den.Equals(2) && (num + 1) / 2 is var en => (
                             en > 0
                             // (+n - 1/2)! = (2n-1)!/(2^(2n-1)(n-1)!)*sqrt(pi)
@@ -275,8 +198,7 @@ namespace AngouriMath
                         ) * MathS.Sqrt(MathS.pi),
                         _ => null
                     },
-                    (@this, a) => ((Factorialf)@this).New(a)
-                    , true);
+                    (@this, a) => ((Factorialf)@this).New(a), isExact);
         }
 
         public partial record Signumf
@@ -284,28 +206,17 @@ namespace AngouriMath
             // Signum is defined everywhere in the complex plane
             // sgn(0) = 0, sgn(z) = z/|z| for z ≠ 0
             private protected override Entity IntrinsicCondition => Boolean.True;
-            
-            /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => ExpandOnOneArgument(Argument.Evaled,
-                    a => a switch
-                    {
-                        Complex n => Number.Signum(n),
-                        _ => null
-                    },
-                    (@this, a) => ((Signumf)@this).New(a)
-                    );
 
-            // TODO: probably we can simplify it further
             /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => ExpandOnOneArgument(Argument.InnerSimplified,
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
                     a => a switch
                     {
+                        Real n => n.EDecimal.Sign,
+                        Complex n when !isExact => Number.Signum(n),
                         _ => null
                     },
-                    (@this, a) => ((Signumf)@this).New(a)
-                    , true);
+                    (@this, a) => ((Signumf)@this).New(a), isExact);
         }
 
         public partial record Absf
@@ -313,30 +224,17 @@ namespace AngouriMath
             // Absolute value is defined everywhere in the complex plane
             // For complex z, |z| = sqrt(Re(z)^2 + Im(z)^2)
             private protected override Entity IntrinsicCondition => Boolean.True;
-            
-            /// <inheritdoc/>
-            protected override Entity InnerEval()
-                => ExpandOnOneArgument(Argument.Evaled,
-                    a => a switch
-                    {
-                        Matrix m when m.IsVector => Sumf.Sum(m.Select(c => c.Pow(2))).Pow(0.5).Evaled,
-                        Complex n => Number.Abs(n),
-                        _ => null
-                    },
-                    (@this, a) => ((Absf)@this).New(a)
-                    );
 
-            // TODO: probably we can simplify it further
             /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-                => ExpandOnOneArgument(Argument.InnerSimplified,
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
                     a => a switch
                     {
                         Matrix m when m.IsVector => Sumf.Sum(m.Select(c => c.Pow(2))).Pow(0.5).InnerSimplified,
+                        Complex n when !isExact => Number.Abs(n),
                         _ => null
                     },
-                    (@this, a) => ((Absf)@this).New(a)
-                    , true);
+                    (@this, a) => ((Absf)@this).New(a), isExact);
         }
     }
 }

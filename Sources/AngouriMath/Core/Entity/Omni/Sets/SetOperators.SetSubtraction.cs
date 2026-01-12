@@ -14,8 +14,8 @@ namespace AngouriMath.Core.Sets
     {
         internal static Set SetSubtractSetAndFiniteSet(Set set, FiniteSet finite)
         {
-            if (set is FiniteSet another)
-                return FiniteSet.Subtract(another, finite);
+            if (set is FiniteSet another && FiniteSet.TryFullSubtract(another, finite, out var result))
+                return result;
             var fsb = new FiniteSetBuilder(finite);
             foreach (var el in finite)
                 if (set.TryContains(el, out var contains) && !contains)

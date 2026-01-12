@@ -127,7 +127,7 @@ namespace AngouriMath.Functions
             LessOrEqualf   (Divf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 >= Integer.Zero,
 
             // a! = 0
-            Equalsf(Factorialf({ DomainCondition: var condition }), var zeroEnt) when IsZero(zeroEnt) => False.WithCondition(condition),
+            Equalsf(Factorialf({ DomainCondition: var condition }), var zeroEnt) when IsZero(zeroEnt) => False.Provided(condition),
 
             Greaterf(var any1, var any1a) when any1 == any1a => false,
             Lessf(var any1, var any1a) when any1 == any1a => false,

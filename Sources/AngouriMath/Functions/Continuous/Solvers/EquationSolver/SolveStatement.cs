@@ -54,8 +54,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 Variable when expr == x => new FiniteSet(true),
 
                 Inf(var var, Set set) when var == x => set,
-
-                Providedf(var inner, var predicate) => ProvidedLifter.MergePredicateIntoSolveResult(Solve(inner, x), x, predicate),
+                
+                Providedf(var e, var predicate) => Solve(e, x).Filter(predicate, x),
+                Piecewise p => EquationSolver.SolvePiecewise(p, x, Solve),
 
                 // TODO: Although piecewise needed?
                 _ => Set.Empty

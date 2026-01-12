@@ -34,7 +34,15 @@ namespace AngouriMath.Tests.PatternsTest
         [InlineData("x2 in (x2 + 1/2; x2 + 1]", "false")]
         [InlineData("x2 in (x2 - 1/2; x2 + 1]", "true")]
         [InlineData("domain((-oo; +oo), RR)", "RR")]
-        [InlineData("x in {a}", "false")]
+        [InlineData("1 in {2}", "false")]
+        [InlineData("1 in {1, 2, a}", "true")]
+        [InlineData("3 in {1, 2, a}", "3 in {1, 2, a}")]
+        [InlineData("a in {1, 2, a}", "true")]
+        [InlineData("x in {a}", "x = a")]
+        [InlineData("4 in {1, 2, 3}", "false")]
+        [InlineData("{3} in {1, 2, 3}", "false")]
+        [InlineData("{3} in {1, 2, a}", "{3} in {1, 2, a}")]
+        [InlineData("{3} in {1, 2, {3}}", "true")]
         [InlineData("{ x : x in RR } in (-oo; +oo)", "false")]
         public void TestSimplify(string unsimplified, string simplified)
         {
@@ -45,6 +53,7 @@ namespace AngouriMath.Tests.PatternsTest
         }
         [Theory]
         [InlineData("{ 0/0 }", "{}")]
+        [InlineData("{ 1, -1/0, 0/0, 1/0, 2 }", "{ 1, 2 }")]
         [InlineData("{ 1 provided false }", "{}")]
         [InlineData("{ 1 provided true, 2 provided false, 3 provided true }", "{ 1, 3 }")]
         public void TestNaN(string unsimplified, string simplified)
