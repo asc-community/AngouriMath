@@ -88,7 +88,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <param name="x">Variable to solve over</param>
         internal static Set Solve(Entity expr, Variable x, bool compensateSolving = false)
         {
-            expr = expr.InnerSimplified;
+            if (!compensateSolving) expr = expr.InnerSimplified; // don't simplify away the 0 on the right hand side of the subtraction
             if (expr == x)
                 return new Entity[] { 0 }.ToSet();
 
@@ -110,12 +110,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             switch (expr)
             {
-                case Mulf(var multiplier, var multiplicand):
-                    return MathS.Union(Solve(multiplier, x), Solve(multiplicand, x));
-                case Divf(var dividend, var divisor):
-                    return MathS.SetSubtraction(Solve(dividend, x), Solve(divisor, x));
-                case Powf(var @base, _):
-                    return Solve(@base, x);
                 case Minusf(var subtrahend, var minuend) when !minuend.ContainsNode(x) && compensateSolving:
                     if (subtrahend == x)
                         return new[] { minuend }.ToSet();
