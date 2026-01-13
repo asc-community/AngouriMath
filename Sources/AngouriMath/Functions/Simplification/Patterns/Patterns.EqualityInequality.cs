@@ -5,8 +5,10 @@
 // Website: https://am.angouri.org.
 //
 
+using System;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Boolean;
+using static Antlr4.Runtime.Atn.SemanticContext;
 
 namespace AngouriMath.Functions
 {
@@ -55,12 +57,20 @@ namespace AngouriMath.Functions
             Notf(Lessf(var any1, var any2)) => any1 >= any2,
             Notf(GreaterOrEqualf(var any1, var any2)) => any1 < any2,
             Notf(LessOrEqualf(var any1, var any2)) => any1 > any2,
+            // If we have a bunch of comparison operators combined with AND/OR and NOT outside, we can push the NOT inside and flip all the operators.
+            // For complexity to not increase, maximum one AND/OR component can be something other than a comparison operator to propagate NOT into.
+            // e.g. not (a > b and b = c) becomes (a <= b or not b = c)
+            // Note that Notf(Equalsf) has the same complexity as Equalsf in ComplexityCriteria, so it can be treated as a comparison operator here.
+            Notf(Andf a) when Andf.LinearChildren(a).Count(n => n is not (ComparisonSign or Notf or Orf)) <= 1 =>
+                Andf.LinearChildren(a).Select(e => InequalityEqualityRules(e switch { Notf(var n) => n, var n => new Notf(n) })).Aggregate((a, b) => a | b),
+            Notf(Orf a) when Orf.LinearChildren(a).Count(n => n is not (ComparisonSign or Notf or Andf)) <= 1 =>
+                Orf.LinearChildren(a).Select(e => InequalityEqualityRules(e switch { Notf(var n) => n, var n => new Notf(n) })).Aggregate((a, b) => a & b),
 
             Impliesf(Andf(Greaterf(var any1, var any2), Greaterf(var any2a, var any3)), Greaterf(var any1a, var any3a))
-                when any1 == any1a && any2 == any2a && any3 == any3a => True,
+                when any1 == any1a && any2 == any2a && any3 == any3a => True.Provided(any1.DomainCondition).Provided(any2.DomainCondition).Provided(any3.DomainCondition),
 
             Impliesf(Andf(Lessf(var any1, var any2), Lessf(var any2a, var any3)), Lessf(var any1a, var any3a))
-                when any1 == any1a && any2 == any2a && any3 == any3a => True,
+                when any1 == any1a && any2 == any2a && any3 == any3a => True.Provided(any1.DomainCondition).Provided(any2.DomainCondition).Provided(any3.DomainCondition),
 
             Equalsf(var zero, var anyButZero) when IsZero(zero) && !IsZero(anyButZero) => anyButZero.Equalizes(zero),
             Greaterf(var zero, var anyButZero) when IsZero(zero) && !IsZero(anyButZero) => anyButZero < zero,
@@ -129,10 +139,10 @@ namespace AngouriMath.Functions
             // a! = 0
             Equalsf(Factorialf({ DomainCondition: var condition }), var zeroEnt) when IsZero(zeroEnt) => False.Provided(condition),
 
-            Greaterf(var any1, var any1a) when any1 == any1a => false,
-            Lessf(var any1, var any1a) when any1 == any1a => false,
-            GreaterOrEqualf(var any1, var any1a) when any1 == any1a => true,
-            LessOrEqualf(var any1, var any1a) when any1 == any1a => true,
+            Greaterf(var any1, var any1a) when any1 == any1a => False.Provided(any1.DomainCondition),
+            Lessf(var any1, var any1a) when any1 == any1a => False.Provided(any1.DomainCondition),
+            GreaterOrEqualf(var any1, var any1a) when any1 == any1a => True.Provided(any1.DomainCondition),
+            LessOrEqualf(var any1, var any1a) when any1 == any1a => True.Provided(any1.DomainCondition),
 
             _ => x
         };

@@ -48,7 +48,7 @@ namespace AngouriMath.Tests.PatternsTest
         [Fact] public void Patt9() => AssertSimplify(MathS.Arccotan(x * 3) + MathS.Arctan(x * 6), MathS.Arccotan(3 * x) + MathS.Arctan(6 * x));
         [Fact] public void Patt10() => AssertSimplify(MathS.Arcsin(x * 3) + MathS.Arccos(x * 1), MathS.Arcsin(3 * x) + MathS.Arccos(x));
         [Fact] public void Patt11() => AssertSimplify(3 + x + 4 + x, 7 + 2 * x);
-        [Fact] public void Patt12() => AssertSimplify((x * y * a * b * c) / (c * b * a * x * x), "y / x provided not (c = 0 or a * b * c * x ^ 2 = 0)", 4);
+        [Fact] public void Patt12() => AssertSimplify((x * y * a * b * c) / (c * b * a * x * x), "y / x provided not c = 0 and not a * b * c * x ^ 2 = 0", 4);
         [Fact] public void Frac1() => AssertSimplify("x / (y / z)", "x * z / y");
         [Fact] public void Frac2() => AssertSimplify("x / y / z", "x / (y * z)");
         [Fact] public void Factorial2() => AssertSimplify(MathS.Factorial(2), 2);

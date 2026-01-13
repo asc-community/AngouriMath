@@ -127,5 +127,26 @@ namespace AngouriMath.Tests.PatternsTest
             var act = expr.ToEntity();
             Assert.Equal(exp, act.Simplify());
         }
+        [Theory]
+        [InlineData("not (not x)", "x")]
+        [InlineData("not (a = b and b = c)", "not a = b or not b = c")]
+        [InlineData("not (a <= b and b < c)", "a > b or b >= c")]
+        [InlineData("not (a > b and b >= c)", "a <= b or b < c")]
+        [InlineData("not (a <= b and b <= c and 1)", "not (1 and a <= b and b <= c)")]
+        [InlineData("not (a = b or b = c)", "not a = b and not b = c")]
+        [InlineData("not (a <= b or b < c)", "a > b and b >= c")]
+        [InlineData("not (a > b or b >= c)", "a <= b and b < c")]
+        [InlineData("not (a <= b or b <= c or 1)", "not (1 or a <= b or b <= c)")]
+        [InlineData("not (a < b or c > d and e = f)", "a >= b and (c <= d or not e = f)")]
+        [InlineData("not (not (a > b and b >= c) and y)", "a > b and b >= c or not y")]
+        [InlineData("not (not (a = b and b = c) and y)", "a = b and b = c or not y")]
+        [InlineData("not (not (not a = b and not b = c) and y)", "not ((a = b or b = c) and y)")]
+        [InlineData("not (a < b and b < c and not c = d and not d and not (e and not (f or g = h)))", "a >= b or b >= c or c = d or d or e and not f and not g = h")]
+        public void NestedNot(string expr, string expected)
+        {
+            var exp = expected.ToEntity();
+            var act = expr.ToEntity();
+            Assert.Equal(exp, act.Simplify());
+        }
     }
 }
