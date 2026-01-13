@@ -20,7 +20,9 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Latexise()
-                => $@"\neg{{{Argument.Latexise(Argument.Priority < Priority)}}}";
+                => Argument is Equalsf(var left, var right)
+                   ? $@"{left.Latexise(left.Priority <= Priority.Equal)} \neq {right.Latexise(right.Priority <= Priority.Equal)}"
+                   : $@"\neg{{{Argument.Latexise(Argument.Priority < Priority)}}}";
         }
 
         partial record Andf
@@ -28,54 +30,48 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override string Latexise()
             {
-                // Detect patterns like (a < b) ∧ (b < c) ∧ (c < d) and returns the chain of comparisons
-                List<ComparisonSign>? comparisons = null;
-                void GatherComparisons(Entity e) // Recursively gather all comparisons connected by AND
+                var result = new System.Text.StringBuilder();
+                Entity? left = null;
+                bool first = true;
+                foreach (var child in LinearChildren(this))
                 {
-                    switch (e)
+                    switch (child)
                     {
-                        case Andf(var left, var right):
-                            GatherComparisons(left);
-                            GatherComparisons(right);
+                        // Detect chained comparisons like (a < b) ∧ (b < c) ∧ (c < d) and display as a < b < c < d
+                        case ComparisonSign:
+                            var renew = left != child.DirectChildren[0];
+                            if (!first && renew) result.Append(@" \land ");
+                            first = false;
+                            if (first || renew) result.Append(child.DirectChildren[0].Latexise(child.DirectChildren[0].Priority <= child.Priority));
+                            renew = false;
+                            result.Append(child switch {
+                                Equalsf => " = ",
+                                Greaterf => " > ",
+                                GreaterOrEqualf => @" \geq ",
+                                Lessf => " < ",
+                                LessOrEqualf => @" \leq ",
+                                _ => throw new Core.Exceptions.AngouriBugException("Unexpected comparison sign in Andf.Latexise")
+                            }).Append(child.DirectChildren[1].Latexise(child.DirectChildren[1].Priority <= child.Priority));
+                            left = child.DirectChildren[1];
                             break;
-                        case ComparisonSign comp:
-                            comparisons ??= [];
-                            comparisons.Add(comp);
+                        case Notf (Equalsf eq):
+                            renew = left != eq.Left;
+                            if (!first && renew) result.Append(@" \land ");
+                            first = false;
+                            if (first || renew) result.Append(eq.Left.Latexise(eq.Left.Priority <= eq.Priority));
+                            renew = false;
+                            result.Append(@" \neq ").Append(eq.Right.Latexise(eq.Right.Priority <= eq.Priority));
+                            left = eq.Right;
+                            break;
+                        default:
+                            if (!first) result.Append(" \\land ");
+                            left = null;
+                            first = false;
+                            result.Append(child.Latexise(child.Priority < Priority));
                             break;
                     }
                 }
-                GatherComparisons(this);
-
-                // Check if comparisons form a valid chain: right side of each must equal left side of next
-                if (comparisons is { Count: >= 2 })
-                    for (int i = 0; i < comparisons.Count - 1; i++)
-                        if (comparisons[i].DirectChildren[1] != comparisons[i + 1].DirectChildren[0])
-                            goto fallback; // Not a valid chain
-
-                // Try to detect chained comparisons: (a < b) ∧ (b < c) → a < b < c
-                if (comparisons is { Count: > 1 } chain)
-                {
-                    var result = new System.Text.StringBuilder(chain[0].DirectChildren[0].Latexise(chain[0].DirectChildren[0].Priority < chain[0].Priority));
-                    foreach (var comparison in chain)
-                    {
-                        var op = comparison switch
-                        {
-                            Equalsf => " = ",
-                            Greaterf => " > ",
-                            GreaterOrEqualf => @" \geq ",
-                            Lessf => " < ",
-                            LessOrEqualf => @" \leq ",
-                            _ => null
-                        };
-                        if (op is null)
-                            goto fallback;
-                        result.Append(op).Append(comparison.DirectChildren[1].Latexise(comparison.DirectChildren[1].Priority < comparison.Priority));
-                    }
-                    return result.ToString();
-                }
-
-            fallback:
-                return $@"{Left.Latexise(Left.Priority < Priority)} \land {Right.Latexise(Right.Priority < Priority)}";
+                return result.ToString();
             }
         }
 

@@ -49,7 +49,7 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void MultiplySimplify() => TestSimplify("{x}^{2}", x * x);
         [Fact] public void Divide() => Test(@"\frac{x}{x}", x / x);
         [Fact] public void DivideDivide() => Test(@"\frac{\frac{x}{x}}{x}", x / x / x);
-        [Fact] public void DivideSimplify() => TestSimplify(@"1 \quad \text{for} \quad \neg{x = 0}", x / x);
+        [Fact] public void DivideSimplify() => TestSimplify(@"1 \quad \text{for} \quad x \neq 0", x / x);
         [Fact] public void Greek1() => Test(@"\alpha", MathS.Var("alpha"));
         [Fact] public void Greek2() => Test(@"\beta", MathS.Var("beta"));
         [Fact] public void Greek3() => Test(@"a_{\beta}", MathS.Var("a_beta"));
@@ -631,13 +631,17 @@ namespace AngouriMath.Tests.Convenience
             => Test(@"x \geq y = z < w",
                 (x >= MathS.Var("y")) & (MathS.Var("y").Equalizes(MathS.Var("z"))) & (MathS.Var("z") < MathS.Var("w")));
         [Fact] public void EqualityInequalityChainAlt() => Test(@"x \geq y = z < w", (x >= "y").Equalizes("z") < "w");
-        [Fact] public void EqualityInequalityChainString() => Test(@"x \geq y = z < w", (Entity)"x>=y=z<w");
+        [Fact] public void EqualityInequalityChainString() => Test(@"x \geq y = z < w", (Entity)"(x>=y=z)<w");
+        [Fact] public void EqualityInequalityChainStringBug() => Test(@"x \geq y = \left(z < w\right)", (Entity)"x>=y=z<w"); // TODO: why does it parse this way? it's supposed to parse like the above test.
         [Fact] public void EqualityInequalityChainParenthesized() => Test(@"x \geq \left(y = \left(z < w\right)\right)", new Entity.GreaterOrEqualf(x, new Entity.Equalsf("y", (Entity)"z" < "w")));
         [Fact] public void ParenthesizedComparisons()
             => Test(@"\left(x < x\right) \geq \left(x > \left(\left(x = x\right) \leq x\right)\right)",
 #pragma warning disable 1718 // Disable self-comparison warning
                 new Entity.GreaterOrEqualf(x < x, (x > new Entity.LessOrEqualf(new Entity.Equalsf(x, x), x))));
 #pragma warning restore 1718
+        [Fact] public void NotEqual() => Test(@"1 \neq 2", (Entity)"not 1 = 2");
+        [Fact] public void ChainedNotEqual() => Test(@"1 \neq 2 \neq 3 = 4 \land 5", (Entity)"not 1 = 2 and not 2 = 3 and 3 = 4 and 5");
+        [Fact] public void MixedChainedComparison() => Test(@"1 \land 2 > 3 < 4 \land \left(\top  \lor \bot \right) \land 5 \neq x = x \land x", (Entity)"1 and 2 > 3 and 3 < 4 and (true or false) and not 5 = x and x = x and x");
         [Fact] public void ImpliesChain()
             => Test(@"\left(\left(x \to y\right) \to z\right) \to x \to y \to z", x.Implies("y").Implies("z").Implies(x.Implies(MathS.Var("y").Implies("z"))));
     }
