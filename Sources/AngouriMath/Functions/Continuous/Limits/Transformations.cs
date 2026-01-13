@@ -55,7 +55,7 @@ namespace AngouriMath.Functions.Algebra
         private static bool IsFiniteNode(Entity expr)
             => !IsInfiniteNode(expr) && expr != MathS.NaN;
 
-        private static Entity ApplylHopitalRule(Entity expr, Variable x, Entity dest)
+        private static Entity? ApplylHopitalRule(Entity expr, Variable x, Entity dest)
         {
             if (expr is Divf(var num, var den))
                 if (EvalAssumingContinuous(num.Limit(x, dest)) is var numLimit && EvalAssumingContinuous(den.Limit(x, dest)) is var denLimit)
@@ -69,7 +69,7 @@ namespace AngouriMath.Functions.Algebra
                                 if (ComputeLimit(applied, x, dest) is { } resLim)
                                     return resLim;
                             }
-            return expr;
+            return null;
         }
 
         private static Entity ApplyTrivialTransformations(Entity expr, Variable x, Entity dest, Func<Entity, Entity, Entity> transformation)

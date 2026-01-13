@@ -161,6 +161,12 @@ namespace AngouriMath.Tests.PatternsTest
         [InlineData("ln(a) - ln(b)", "ln(a / b)")]
         [InlineData("log(2, a) + ln(b)", "log(2, a) + ln(b)")]
         public void PowerRulesTest(string input, string output) => AssertSimplifyToString(input, output);
+
+        [Theory]
+        [InlineData("a/a", "1 provided not a = 0")]
+        [InlineData("(-a)/a", "-1 provided not a = 0")]
+        [InlineData("a/(-a)", "-1 provided not a = 0")]
+        public void MakeProvided(string input, string output) => AssertSimplifyToString(input, output, 1);
     }
 }
 
