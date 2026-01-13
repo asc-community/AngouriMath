@@ -64,7 +64,7 @@ There are also latest-master versions (updated on every push to master) on [MyGe
 | [![MyGet (with prereleases)](https://img.shields.io/myget/angourimath/vpre/AngouriMath?label=AngouriMath)](https://www.myget.org/feed/angourimath/package/nuget/AngouriMath) | ![MyGet](https://img.shields.io/myget/angourimath/dt/AngouriMath?label=Downloads) |
 | [![MyGet (with prereleases)](https://img.shields.io/myget/angourimath/vpre/AngouriMath.FSharp?label=AngouriMath.FSharp)](https://www.myget.org/feed/angourimath/package/nuget/AngouriMath.FSharp) | ![MyGet](https://img.shields.io/myget/angourimath/dt/AngouriMath.FSharp?label=Downloads) |
 | [![MyGet (with prereleases)](https://img.shields.io/myget/angourimath/vpre/AngouriMath.Interactive?label=AngouriMath.Interactive)](https://www.myget.org/feed/angourimath/package/nuget/AngouriMath.Interactive) | ![MyGet](https://img.shields.io/myget/angourimath/dt/AngouriMath.Interactive?label=Downloads) |
-| [![MyGet (with prereleases)](https://img.shields.io/myget/angourimath/vpre/AngouriMath.Experimental?label=AngouriMath.Experimental)](https://www.myget.org/feed/angourimath/package/nuget/AngouriMath.Experimental) | ![MyGet](https://img.shields.io/myget/angourimath/dt/AngouriMath.Experimental?label=Downloads) |
+| [![MyGet (with prereleases)](https://img.shields.io/myget/angourimath/vpre/AngouriMath.Terminal?label=AngouriMath.Terminal)](https://www.myget.org/feed/angourimath/package/nuget/AngouriMath.Terminal) | ![MyGet](https://img.shields.io/myget/angourimath/dt/AngouriMath.Terminal?label=Downloads) |
   
 Source to install from MyGet:
 ```
