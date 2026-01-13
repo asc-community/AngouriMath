@@ -130,5 +130,24 @@ namespace AngouriMath.Tests.Calculus
             Assert.NotNull(limit);
             Assert.Equal("sqrt(a / c * 3 / sin(a / c) + sin(d))", limit?.Stringize());
         }
+        [Theory]
+        [InlineData("limit(1/x,x,0)")]
+        [InlineData("limit(1/x^3,x,0)")]
+        [InlineData("limit(x^x,x,0)")]
+        public void TestNoLimit(string input) // a two-sided limit does not exist
+        {
+            var limit = input.ToEntity();
+            Assert.Equal(MathS.NaN, limit.InnerSimplified);
+            Assert.Equal(MathS.NaN, limit.Evaled);
+        }
+        [Theory]
+        [InlineData("limit(apply(f, x),x,-1)")]
+        [InlineData("limit(x!,x,-1)")]
+        public void TestCantSolve(string input) // this is different from no limit
+        {
+            var limit = input.ToEntity();
+            Assert.Equal(input, limit.InnerSimplified);
+            Assert.Equal(input, limit.Evaled);
+        }
     }
 }

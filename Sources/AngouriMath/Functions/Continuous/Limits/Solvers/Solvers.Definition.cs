@@ -72,13 +72,15 @@ namespace AngouriMath.Functions.Algebra
                         return fromLeft;
                     if (ExpressionNumerical.AreEqual(fromLeft, fromRight) && (acceptNaN || fromLeft.Evaled != MathS.NaN))
                         return fromLeft;
-                    expr = ApplylHopitalRule(expr, x, dest);
-                    return ComputeLimit(expr, x, dest, acceptNaN: true);
+                    var lhopital = ApplylHopitalRule(expr, x, dest);
+                    if (lhopital != null) return ComputeLimit(lhopital, x, dest, acceptNaN: true);
+                    else return MathS.NaN; // A two-sided limit cannot exist if the limit from left and right don't match.
                 }
                 else
                 {
-                    expr = ApplylHopitalRule(expr, x, dest);
-                    return ComputeLimit(expr, x, dest);
+                    var lhopital = ApplylHopitalRule(expr, x, dest);
+                    if (lhopital != null) return ComputeLimit(lhopital, x, dest);
+                    else return null;
                 }
             }
             throw new AngouriBugException($"Unresolved enum parameter {side}");

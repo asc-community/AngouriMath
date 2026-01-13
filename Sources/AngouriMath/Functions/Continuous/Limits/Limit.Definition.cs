@@ -60,8 +60,7 @@ namespace AngouriMath
         public Entity Limit(Variable x, Entity destination, ApproachFrom side)
         { 
             var res = ComputeLimit(this, x, destination, side); 
-            if (res is null || res == MathS.NaN)
-                return new Limitf(this, x, destination, side);
+            if (res is null) return new Limitf(this, x, destination, side);
             return res.InnerSimplified;
         }
 
