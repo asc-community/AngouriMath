@@ -5575,7 +5575,7 @@ namespace AngouriMath
                         // Weigh provided predicates much less but nested provideds heavy
                         Providedf(var inner, var predicate) =>
                             DefaultCriteria(inner) + 0.1 * DefaultCriteria(predicate) + ExtraHeavyWeight * (inner.Nodes.Count(n => n is Providedf) + predicate.Nodes.Count(n => n is Providedf)),
-                        Entity.Piecewise { Cases: var cases } =>
+                        Piecewise { Cases: var cases } =>
                             cases.Sum(@case =>
                                 DefaultCriteria(@case.Expression) + 0.1 * DefaultCriteria(@case.Predicate) + ExtraHeavyWeight * (@case.Expression.Nodes.Count(n => n is Providedf) + @case.Predicate.Nodes.Count(n => n is Providedf))),
                         Variable => Weight, // Number of variables
@@ -5586,6 +5586,7 @@ namespace AngouriMath
                         Phif => ExtraHeavyWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of phi functions
                         Real { IsNegative: true } => MajorWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of negative reals
                         ComparisonSign when expr.DirectChildren[0] == 0 => Weight + expr.DirectChildren.Sum(DefaultCriteria), // 0 < x is bad. x > 0 is good.
+                        Notf (Equalsf eq) => -Weight + DefaultCriteria(eq), // (not x = 0) is equally complex as (x = 0)
                         _ => expr.DirectChildren.Sum(DefaultCriteria)
                     } + Weight; // Number of nodes
                     return DefaultCriteria(expr);

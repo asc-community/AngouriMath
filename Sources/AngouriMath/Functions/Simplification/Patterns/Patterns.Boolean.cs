@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using HonkSharp.Functional;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Boolean;
 
@@ -13,7 +14,7 @@ namespace AngouriMath.Functions
     internal static partial class Patterns
     {
         private static bool IsLogic(Entity a)
-            => a is Statement or Variable;
+            => a is Statement or Variable or Providedf;
 
         private static bool IsLogic(Entity a, Entity b)
             => IsLogic(a) && IsLogic(b);
@@ -23,7 +24,7 @@ namespace AngouriMath.Functions
 
         internal static Entity BooleanRules(Entity x) => x switch
         {
-            Impliesf(var ass, _) when ass == False && IsLogic(ass) => True,
+            Impliesf(var ass, var other) when ass == False && IsLogic(other) => True.Provided(other.DomainCondition),
             Andf(Notf(var any1), Notf(var any2)) when IsLogic(any1, any2) => !(any1 | any2),
             Orf(Notf(var any1), Notf(var any2)) when IsLogic(any1, any2) => !(any1 & any2),
             Orf(Notf(var any1), var any1a) when any1 == any1a && IsLogic(any1) => True,
@@ -31,11 +32,11 @@ namespace AngouriMath.Functions
             Andf(var any1, var any1a) when any1 == any1a && IsLogic(any1) => any1,
             Orf(var any1, var any1a) when any1 == any1a && IsLogic(any1) => any1,
             Impliesf(var any1, var any1a) when any1 == any1a && IsLogic(any1) => True,
-            Xorf(var any1, var any1a) when any1 == any1a && IsLogic(any1) => False,
+            Xorf(var any1, var any1a) when any1 == any1a && IsLogic(any1) => False.Provided(any1.DomainCondition),
             Notf(Notf(var any1)) when IsLogic(any1) => any1,
 
-            Orf(var any1, var any2) when (any1 == True || any2 == True) && IsLogic(any1, any2) => True,
-            Andf(var any1, var any2) when (any1 == False || any2 == False) && IsLogic(any1, any2) => False,
+            Orf(var any1, var any2) when (any1 == True || any2 == True) && IsLogic(any1, any2) => True.Provided(any1.DomainCondition).Provided(any2.DomainCondition),
+            Andf(var any1, var any2) when (any1 == False || any2 == False) && IsLogic(any1, any2) => False.Provided(any1.DomainCondition).Provided(any2.DomainCondition),
 
             Orf(Andf(var any1, var any2), Andf(var any1a, var any3)) when any1 == any1a && IsLogic(any1, any2, any3) => any1 & (any2 | any3),
             Andf(Orf(var any1, var any2), Orf(var any1a, var any3)) when any1 == any1a && IsLogic(any1, any2, any3) => any1 | (any2 & any3),
