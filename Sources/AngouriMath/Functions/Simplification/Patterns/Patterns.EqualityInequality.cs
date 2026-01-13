@@ -61,9 +61,9 @@ namespace AngouriMath.Functions
             // For complexity to not increase, maximum one AND/OR component can be something other than a comparison operator to propagate NOT into.
             // e.g. not (a > b and b = c) becomes (a <= b or not b = c)
             // Note that Notf(Equalsf) has the same complexity as Equalsf in ComplexityCriteria, so it can be treated as a comparison operator here.
-            Notf(Andf a) when Andf.LinearChildren(a).Count(n => n is not (ComparisonSign or Notf(Equalsf) or Orf)) <= 1 =>
+            Notf(Andf a) when Andf.LinearChildren(a).Count(n => n is not (ComparisonSign or Notf or Orf)) <= 1 =>
                 Andf.LinearChildren(a).Select(e => InequalityEqualityRules(e switch { Notf(var n) => n, var n => new Notf(n) })).Aggregate((a, b) => a | b),
-            Notf(Orf a) when Orf.LinearChildren(a).Count(n => n is not (ComparisonSign or Notf(Equalsf) or Andf)) <= 1 =>
+            Notf(Orf a) when Orf.LinearChildren(a).Count(n => n is not (ComparisonSign or Notf or Andf)) <= 1 =>
                 Orf.LinearChildren(a).Select(e => InequalityEqualityRules(e switch { Notf(var n) => n, var n => new Notf(n) })).Aggregate((a, b) => a & b),
 
             Impliesf(Andf(Greaterf(var any1, var any2), Greaterf(var any2a, var any3)), Greaterf(var any1a, var any3a))

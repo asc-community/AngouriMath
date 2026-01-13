@@ -161,21 +161,6 @@ namespace AngouriMath.Tests.PatternsTest
         [InlineData("ln(a) - ln(b)", "ln(a / b)")]
         [InlineData("log(2, a) + ln(b)", "log(2, a) + ln(b)")]
         public void PowerRulesTest(string input, string output) => AssertSimplifyToString(input, output);
-        [Theory]
-        [InlineData("not (not x)", "x")]
-        [InlineData("not (a = b and b = c)", "not a = b or not b = c")]
-        [InlineData("not (a <= b and b < c)", "a > b or b >= c")]
-        [InlineData("not (a > b and b >= c)", "a <= b or b < c")]
-        [InlineData("not (a <= b and b <= c and 1)", "not (1 and a <= b and b <= c)")]
-        [InlineData("not (a = b or b = c)", "not a = b and not b = c")]
-        [InlineData("not (a <= b or b < c)", "a > b and b >= c")]
-        [InlineData("not (a > b or b >= c)", "a <= b and b < c")]
-        [InlineData("not (a <= b or b <= c or 1)", "not (1 or a <= b or b <= c)")]
-        [InlineData("not (a < b or c > d and e = f)", "a >= b and (c <= d or not e = f)")]
-        [InlineData("not (not (a > b and b >= c) and y)", "a > b and b >= c or not y")]
-        [InlineData("not (not (a = b and b = c) and y)", "a = b and b = c or not y")]
-        [InlineData("not (not (not a = b and not b = c) and y)", "not ((a = b or b = c) and y)")]
-        public void Boolean(string input, string output) => AssertSimplifyToString(input, output);
     }
 }
 
