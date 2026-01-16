@@ -74,7 +74,7 @@ namespace AngouriMath
                             (_, Number { LatexPriority: >= Priority.Mul } or Factorialf(Number { LatexPriority: Priority.Leaf })
                                 or Powf(Number { LatexPriority: Priority.Leaf } or Factorialf(Number { LatexPriority: Priority.Leaf }), _)) => false, // Keep the \cdot in "f(x) \cdot -2" "f(x) \cdot 2i" "f(x) \cdot -2i"
                             (var left, var right) => left.LatexPriority >= right.LatexPriority &&
-                                !(left.Priority == Priority.Div && right.LatexPriority == Priority.Div) // Without \cdot, the fraction lines may appear too closely together.
+                                !(left.LatexPriority == Priority.Div && right.LatexPriority == Priority.Div) // Without \cdot, the fraction lines may appear too closely together.
                         } ? $@"{prevOut} {currOut}" : $@"{prevOut} \cdot {currOut}";
                     });
 
