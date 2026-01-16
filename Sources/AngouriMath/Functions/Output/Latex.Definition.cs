@@ -45,6 +45,11 @@ namespace AngouriMath
         /// </code>
         /// </example>
         public abstract string Latexise();
+        /// <summary>
+        /// Calculus operators, unlike other functions, have a <see cref="LatexPriority"/> between addition/subtraction
+        /// and multiplication/division which is different from <see cref="Priority"/>.
+        /// </summary>
+        internal virtual Priority LatexPriority => Priority;
 
         /// <summary>Returns the expression in LaTeX (for example, a / b -> \frac{a}{b})</summary>
         /// <param name="parenthesesRequired">Whether to wrap it with parentheses</param>

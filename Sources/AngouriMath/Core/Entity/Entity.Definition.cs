@@ -47,12 +47,13 @@ namespace AngouriMath.Core
 
         Sum = 20       | NumericalOperation,
         Minus = 20     | NumericalOperation,
+        /// <summary>For text formats, <see cref="Func"/> is used instead.</summary>
+        LatexCalculusOperation = 30 | NumericalOperation,
         Mul = 40       | NumericalOperation,
         Div = 40       | NumericalOperation,
         Pow = 60       | NumericalOperation,
         Factorial = 70 | NumericalOperation,
         Func = 80      | NumericalOperation,
-
 
         Leaf      = 100 | NumericalOperation,
     }

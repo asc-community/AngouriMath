@@ -15,8 +15,8 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Latexise() =>
-                Augend.Latexise(Augend.Priority < Priority)
-                + (Addend.Latexise(Addend.Priority < Priority) is var addend && addend.StartsWith("-")
+                Augend.Latexise(Augend.LatexPriority < LatexPriority)
+                + (Addend.Latexise(Addend.LatexPriority < LatexPriority) is var addend && addend.StartsWith("-")
                     ? addend : "+" + addend);
         }
 
@@ -24,8 +24,8 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Latexise() =>
-                Subtrahend.Latexise(Subtrahend.Priority < Priority)
-                + "-" + Minuend.Latexise(Minuend.Priority <= Priority);
+                Subtrahend.Latexise(Subtrahend.LatexPriority < LatexPriority)
+                + "-" + Minuend.Latexise(Minuend.LatexPriority <= LatexPriority);
         }
 
         public partial record Mulf
@@ -43,16 +43,16 @@ namespace AngouriMath
                                 return currIn switch
                                 {
                                     // -1, -2, 2i, i, -i, -2i etc. in the front and not (1+i) etc.
-                                    Number { Priority: Priority.Sum } and not Complex { RealPart.IsZero: false, ImaginaryPart.IsZero: false } =>
+                                    Number { LatexPriority: Priority.Sum } and not Complex { RealPart.IsZero: false, ImaginaryPart.IsZero: false } =>
                                         currIn.Latexise(false),
-                                    _ => currIn.Latexise(currIn.Priority < Priority)
+                                    _ => currIn.Latexise(currIn.LatexPriority < LatexPriority)
                                 };
                             case 1:
                                 if (longArray[index - 1] is Integer(-1))
-                                    return $"-{currIn.Latexise(currIn.Priority < Priority)}"; // display "-1 * x * y" as "-x \cdot y", only for the first -1
+                                    return $"-{currIn.Latexise(currIn.LatexPriority < LatexPriority)}"; // display "-1 * x * y" as "-x \cdot y", only for the first -1
                                 break;
                         }
-                        var currOut = currIn.Latexise(currIn.Priority < Priority);
+                        var currOut = currIn.Latexise(currIn.LatexPriority < LatexPriority);
 
                         return (longArray[index - 1], currIn) switch // whether we use juxtaposition and omit \cdot
                         {
@@ -61,20 +61,20 @@ namespace AngouriMath
 
                             // Don't juxtapose upright variables with numbers like displaying "var2" for "var*2" since "var2" may be interpreted as one variable.
                             // Also, don't produce upright "ei" (one variable with two chars) for e*i, or "ei^2" for e*i^2.
-                            // but "e (2+i)" and "e (2+i)^2" are fine with the parentheses - so we have the priority check.
+                            // but "e (2+i)" and "e (2+i)^2" are fine with the parentheses - so we have the LatexPriority check.
                             (Variable { IsLatexUprightFormatted: true }
-                                or Complex { ImaginaryPart.IsZero: false, Priority: >= Priority.Mul } /* don't combine upright "i" with an upright variable*/,
-                             Variable { IsLatexUprightFormatted: true } or Number { Priority: >= Priority.Mul }
-                                or Factorialf(Number { Priority: Priority.Leaf } or Variable { IsLatexUprightFormatted: true })
-                                or Powf(Number { Priority: Priority.Leaf } or Variable { IsLatexUprightFormatted: true }
-                                        or Factorialf(Number { Priority: Priority.Leaf } or Variable { IsLatexUprightFormatted: true }), _)) => false,
+                                or Complex { ImaginaryPart.IsZero: false, LatexPriority: >= Priority.Mul } /* don't combine upright "i" with an upright variable*/,
+                             Variable { IsLatexUprightFormatted: true } or Number { LatexPriority: >= Priority.Mul }
+                                or Factorialf(Number { LatexPriority: Priority.Leaf } or Variable { IsLatexUprightFormatted: true })
+                                or Powf(Number { LatexPriority: Priority.Leaf } or Variable { IsLatexUprightFormatted: true }
+                                        or Factorialf(Number { LatexPriority: Priority.Leaf } or Variable { IsLatexUprightFormatted: true }), _)) => false,
                             // 2 * (3/4) instead of 2 (3/4) which is a mixed number (= 2 + 3/4)
-                            (Number { Priority: Priority.Leaf }, { Priority: Priority.Div }) => false,
-                            // 2 * 3 instead of 2 3 (= 23), 2 * 3^4 instead of 2 3^4 (= 23^4), but "(2+i) 2", "2 (2+i)" and "2 (2+i)^2" are fine with the parentheses - so we have the priority check.
-                            (_, Number { Priority: >= Priority.Mul } or Factorialf(Number { Priority: Priority.Leaf })
-                                or Powf(Number { Priority: Priority.Leaf } or Factorialf(Number { Priority: Priority.Leaf }), _)) => false, // Keep the \cdot in "f(x) \cdot -2" "f(x) \cdot 2i" "f(x) \cdot -2i"
-                            (var left, var right) => left.Priority >= right.Priority &&
-                                !(left.Priority == Priority.Div && right.Priority == Priority.Div) // Without \cdot, the fraction lines may appear too closely together.
+                            (Number { LatexPriority: Priority.Leaf }, { LatexPriority: Priority.Div }) => false,
+                            // 2 * 3 instead of 2 3 (= 23), 2 * 3^4 instead of 2 3^4 (= 23^4), but "(2+i) 2", "2 (2+i)" and "2 (2+i)^2" are fine with the parentheses - so we have the LatexPriority check.
+                            (_, Number { LatexPriority: >= Priority.Mul } or Factorialf(Number { LatexPriority: Priority.Leaf })
+                                or Powf(Number { LatexPriority: Priority.Leaf } or Factorialf(Number { LatexPriority: Priority.Leaf }), _)) => false, // Keep the \cdot in "f(x) \cdot -2" "f(x) \cdot 2i" "f(x) \cdot -2i"
+                            (var left, var right) => left.LatexPriority >= right.LatexPriority &&
+                                !(left.Priority == Priority.Div && right.LatexPriority == Priority.Div) // Without \cdot, the fraction lines may appear too closely together.
                         } ? $@"{prevOut} {currOut}" : $@"{prevOut} \cdot {currOut}";
                     });
 
@@ -125,7 +125,7 @@ namespace AngouriMath
                 }
                 else
                 {
-                    return "{" + Base.Latexise(Base.Priority <= Priority) + "}^{" + Exponent.Latexise() + "}";
+                    return "{" + Base.Latexise(Base.LatexPriority <= LatexPriority) + "}^{" + Exponent.Latexise() + "}";
                 }
             }
         }
@@ -134,7 +134,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Latexise() =>
-                Argument.Latexise(Argument.Priority <= Priority) + "!";
+                Argument.Latexise(Argument.LatexPriority <= LatexPriority) + "!";
         }
 
         partial record Signumf

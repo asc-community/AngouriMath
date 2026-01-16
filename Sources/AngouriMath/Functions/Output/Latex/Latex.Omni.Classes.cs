@@ -51,35 +51,35 @@ namespace AngouriMath
             {
                 /// <inheritdoc/>
                 public override string Latexise()
-                    => $@"{Left.Latexise(Left.Priority < Priority)} \cup {Right.Latexise(Right.Priority < Priority)}";
+                    => $@"{Left.Latexise(Left.LatexPriority < LatexPriority)} \cup {Right.Latexise(Right.LatexPriority < LatexPriority)}";
             }
 
             partial record Intersectionf
             {
                 /// <inheritdoc/>
                 public override string Latexise()
-                    => $@"{Left.Latexise(Left.Priority < Priority)} \cap {Right.Latexise(Right.Priority < Priority)}";
+                    => $@"{Left.Latexise(Left.LatexPriority < LatexPriority)} \cap {Right.Latexise(Right.LatexPriority < LatexPriority)}";
             }
 
             partial record SetMinusf
             {
                 /// <inheritdoc/>
                 public override string Latexise()
-                    => $@"{Left.Latexise(Left.Priority < Priority)} \setminus {Right.Latexise(Right.Priority < Priority)}";
+                    => $@"{Left.Latexise(Left.LatexPriority < LatexPriority)} \setminus {Right.Latexise(Right.LatexPriority < LatexPriority)}";
             }
 
             partial record Inf
             {
                 /// <inheritdoc/>
                 public override string Latexise()
-                    => $@"{Element.Latexise(Element.Priority < Priority)} \in {SupSet.Latexise(SupSet.Priority < Priority)}";
+                    => $@"{Element.Latexise(Element.LatexPriority < LatexPriority)} \in {SupSet.Latexise(SupSet.LatexPriority < LatexPriority)}";
             }
         }
 
         partial record Providedf
         {
             /// <inheritdoc/>
-            public override string Latexise() => $@"{Expression.Latexise(Expression.Priority < Priority)} \quad \text{{for}} \quad {Predicate.Latexise(Predicate.Priority <= Priority)}";
+            public override string Latexise() => $@"{Expression.Latexise(Expression.LatexPriority < LatexPriority)} \quad \text{{for}} \quad {Predicate.Latexise(Predicate.LatexPriority <= LatexPriority)}";
         }
 
         partial record Piecewise
@@ -90,8 +90,8 @@ namespace AngouriMath
                 Cases.Select(c =>
                 {
                     if (c.Predicate == Boolean.True)
-                        return $@"{c.Expression.Latexise(c.Expression.Priority < Priority.Provided)} & \text{{otherwise}}";
-                    return $@"{c.Expression.Latexise(c.Expression.Priority < Priority.Provided)} & \text{{for }} {c.Predicate.Latexise(c.Predicate.Priority <= Priority.Provided)}"; // "for" used in https://mathworld.wolfram.com/Derivative.html
+                        return $@"{c.Expression.Latexise(c.Expression.LatexPriority < Priority.Provided)} & \text{{otherwise}}";
+                    return $@"{c.Expression.Latexise(c.Expression.LatexPriority < Priority.Provided)} & \text{{for }} {c.Predicate.Latexise(c.Predicate.LatexPriority <= Priority.Provided)}"; // "for" used in https://mathworld.wolfram.com/Derivative.html
                 }
                 ))
                 +
@@ -139,7 +139,7 @@ namespace AngouriMath
             // are rendered as separate applications: f(x)(y) rather than f(x, y)
             public override string Latexise()
             {
-                var result = new StringBuilder(Expression.Latexise(Expression.Priority < Priority));
+                var result = new StringBuilder(Expression.Latexise(Expression.LatexPriority < LatexPriority));
                 foreach (var arg in Arguments)
                 {
                     result.Append(@"\left(").Append(arg.Latexise()).Append(@"\right)");
@@ -154,7 +154,7 @@ namespace AngouriMath
             // NOTE: \mapsto (↦) links the function variable with its output while
             // \rightarrow (→) links the function domain with its codomain. See https://math.stackexchange.com/a/651240, https://math.stackexchange.com/a/936591
             public override string Latexise()
-                => Parameter.Latexise() + @" \mapsto " + Body.Latexise(Body.Priority < Priority);
+                => Parameter.Latexise() + @" \mapsto " + Body.Latexise(Body.LatexPriority < LatexPriority);
         }
     }
 }
