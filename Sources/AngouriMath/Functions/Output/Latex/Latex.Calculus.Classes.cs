@@ -11,16 +11,20 @@ namespace AngouriMath
 {
     partial record Entity
     {
+        partial record CalculusOperator
+        {
+            /// <inheritdoc/>
+            internal override Priority LatexPriority => Priority.LatexCalculusOperation;
+        }
         public partial record Derivativef
         {
             internal static string LatexiseDerivative(Entity expression, Entity var, int iterations)
             {
                 var powerIfNeeded = iterations == 1 ? "" : "^{" + iterations + "}";
-                var varOverDeriv = var is Variable { IsLatexUprightFormatted: false } ? var.Latexise() : @"\left(" + var.Latexise() + @"\right)";
-                string ParenIfNeeded(string paren) => expression.Priority < Priority.Pow ? paren : "";
                 // NOTE: \mathrm{d} is used for upright 'd' following ISO 80000-2 standard.
                 // The differential operator should be upright (roman) to distinguish it from variables, similar to sin, cos, log, etc.
-                return $$"""\frac{\mathrm{d}{{powerIfNeeded}}}{\mathrm{d}{{varOverDeriv}}{{powerIfNeeded}}}{{ParenIfNeeded(@"\left[")}}{{expression.Latexise()}}{{ParenIfNeeded(@"\right]")}}""";
+                return $$"""\frac{\mathrm{d}{{powerIfNeeded}}}{\mathrm{d}{{var.Latexise(var is not Variable { IsLatexUprightFormatted: false })
+                    }}{{powerIfNeeded}}}{{expression.Latexise(expression.LatexPriority < Priority.LatexCalculusOperation)}}""";
             }
             /// <inheritdoc/>
             public override string Latexise() => LatexiseDerivative(Expression, Var, Iterations);
@@ -40,9 +44,7 @@ namespace AngouriMath
                 var sb = new StringBuilder();
                 for (int i = 0; i < Iterations; i++)
                     sb.Append(@"\int");
-                sb.Append(@" \left[");
-                sb.Append(Expression.Latexise(false));
-                sb.Append(@"\right]");
+                sb.Append(' ').Append(Expression.Latexise(Expression.LatexPriority < Priority.LatexCalculusOperation));
 
                 // NOTE: \mathrm{d} is used for upright 'd' following ISO 80000-2 standard.
                 // The differential operator should be upright (roman) to distinguish it from variables.
@@ -54,14 +56,7 @@ namespace AngouriMath
                 {
                     sb.Append(@"\,");// Leading space before first differential and between differentials
                     sb.Append(@"\mathrm{d}");
-                    if (Var is Variable { IsLatexUprightFormatted: false })
-                        sb.Append(Var.Latexise());
-                    else
-                    {
-                        sb.Append(@"\left(");
-                        sb.Append(Var.Latexise());
-                        sb.Append(@"\right)");
-                    }
+                    sb.Append(Var.Latexise(Var is not Variable { IsLatexUprightFormatted: false }));
                 }
                 return sb.ToString();
             }
@@ -79,10 +74,10 @@ namespace AngouriMath
                 switch (ApproachFrom)
                 {
                     case ApproachFrom.Left:
-                        sb.Append(Destination.Latexise(Destination.Priority <= Priority.Pow)).Append("^-");
+                        sb.Append(Destination.Latexise(Destination.LatexPriority <= Priority.Pow)).Append("^-");
                         break;
                     case ApproachFrom.Right:
-                        sb.Append(Destination.Latexise(Destination.Priority <= Priority.Pow)).Append("^+");
+                        sb.Append(Destination.Latexise(Destination.LatexPriority <= Priority.Pow)).Append("^+");
                         break;
                     case ApproachFrom.BothSides:
                         sb.Append(Destination.Latexise());
@@ -90,12 +85,7 @@ namespace AngouriMath
                 }
 
                 sb.Append("} ");
-                if (Expression.Priority < Priority.Pow)
-                    sb.Append(@"\left[");
-                sb.Append(Expression.Latexise());
-                if (Expression.Priority < Priority.Pow)
-                    sb.Append(@"\right]");
-
+                sb.Append(Expression.Latexise(Expression.LatexPriority < Priority.LatexCalculusOperation));
                 return sb.ToString();
             }
         }

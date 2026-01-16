@@ -225,45 +225,53 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void Derivative7() => Test(@"\frac{\mathrm{d}^{2}}{\mathrm{d}\left({x}^{2}\right)^{2}}{x}^{2}", MathS.Derivative(x.Pow(2), x.Pow(2), 2));
         [Fact] public void Derivative8() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\left(\mathrm{xy}\right)}\mathrm{xy}", MathS.Derivative("xy", "xy"));
         [Fact] public void Derivative9() => Test(@"\frac{\mathrm{d}^{2}}{\mathrm{d}\left(\mathrm{xy}\right)^{2}}\mathrm{xy}", MathS.Derivative("xy", "xy", 2));
-        [Fact] public void Derivative10() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x}\left[\frac{x}{2}\right]", MathS.Derivative("x / 2", x));
-        [Fact] public void Derivative11() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\left(\mathrm{quack}\right)}\left[x+y\right]", MathS.Derivative("x + y", "quack"));
-        [Fact] public void Derivative12() => Test(@"\frac{\mathrm{d}^{3}}{\mathrm{d}x_{f}^{3}}\left[x+1\right]", MathS.Derivative("x + 1", "x_f", 3));
-        [Fact] public void Derivative13() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x_{f}}\left[\frac{1}{x}\right]", MathS.Derivative("1/x", "x_f"));
-        [Fact] public void Derivative14() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\alpha}\left[{x}^{23}-x_{\mathrm{16}}\right]", MathS.Derivative("x^23-x_16", "alpha"));
+        [Fact] public void Derivative10() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x}\frac{x}{2}", MathS.Derivative("x / 2", x));
+        [Fact] public void Derivative11() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\left(\mathrm{quack}\right)}\left(x+y\right)", MathS.Derivative("x + y", "quack"));
+        [Fact] public void Derivative12() => Test(@"\frac{\mathrm{d}^{3}}{\mathrm{d}x_{f}^{3}}\left(x+1\right)", MathS.Derivative("x + 1", "x_f", 3));
+        [Fact] public void Derivative13() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x_{f}}\frac{1}{x}", MathS.Derivative("1/x", "x_f"));
+        [Fact] public void Derivative14() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\alpha}\left({x}^{23}-x_{\mathrm{16}}\right)", MathS.Derivative("x^23-x_16", "alpha"));
         [Fact] public void Derivative15() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\alpha_{\beta}}\alpha", MathS.Derivative("alpha", "alpha_beta"));
         [Fact] public void Derivative16() => Test(@"\frac{\mathrm{d}}{\mathrm{d}\left(\mathrm{alphaa}_{\beta}\right)}\alpha", MathS.Derivative("alpha", "alphaa_beta"));
-        [Fact] public void Integral1() => Test(@"\int \left[x\right]\,\mathrm{d}x", MathS.Integral(x, x));
+        [Fact] public void Integral1() => Test(@"\int x\,\mathrm{d}x", MathS.Integral(x, x));
         [Fact] public void Integral2() =>
-            Test(@"\int \left[x+1\right]\,\mathrm{d}\left(x+1\right)", MathS.Integral("x + 1", "x+1"));
+            Test(@"\int \left(x+1\right)\,\mathrm{d}\left(x+1\right)", MathS.Integral("x + 1", "x+1"));
         [Fact] public void Integral3() =>
-            Test(@"\int\int \left[x+1\right]\,\mathrm{d}x\,\mathrm{d}x", MathS.Integral("x + 1", x, 2));
+            Test(@"\int\int \left(x+1\right)\,\mathrm{d}x\,\mathrm{d}x", MathS.Integral("x + 1", x, 2));
         [Fact] public void Integral4() =>
-            Test(@"\int\int \left[x+1\right]\,\mathrm{d}\left(\mathrm{xf}\right)\,\mathrm{d}\left(\mathrm{xf}\right)", MathS.Integral("x + 1", "xf", 2));
+            Test(@"\int\int \left(x+1\right)\,\mathrm{d}\left(\mathrm{xf}\right)\,\mathrm{d}\left(\mathrm{xf}\right)", MathS.Integral("x + 1", "xf", 2));
         [Fact] public void Integral5() =>
-            Test(@"\int \left[\frac{1}{x}\right]\,\mathrm{d}x_{f}", MathS.Integral("1/x", "x_f"));
+            Test(@"\int \frac{1}{x}\,\mathrm{d}x_{f}", MathS.Integral("1/x", "x_f"));
         [Fact] public void Integral6() =>
-            Test(@"\int\int\int \left[{x}^{23}-x_{\mathrm{16}}\right]\,\mathrm{d}\left({x_{f}}^{2}\right)\,\mathrm{d}\left({x_{f}}^{2}\right)\,\mathrm{d}\left({x_{f}}^{2}\right)", MathS.Integral("x^23-x_16", "x_f^2", 3));
-        [Fact] public void IntegralSpecialCase1() => Test(@"\frac{\mathrm{d}^{0}}{\mathrm{d}x^{0}}\left[x+1\right]+1", MathS.Integral("x+1", "x", 0) + 1);
-        [Fact] public void IntegralSpecialCase2() => Test(@"\frac{\mathrm{d}}{\mathrm{d}x}\left[x+1\right] \cdot 2", MathS.Integral("x+1", "x", -1) * 2);
+            Test(@"\int\int\int \left({x}^{23}-x_{\mathrm{16}}\right)\,\mathrm{d}\left({x_{f}}^{2}\right)\,\mathrm{d}\left({x_{f}}^{2}\right)\,\mathrm{d}\left({x_{f}}^{2}\right)", MathS.Integral("x^23-x_16", "x_f^2", 3));
+        [Fact] public void IntegralSpecialCase1() => Test(@"\frac{\mathrm{d}^{0}}{\mathrm{d}x^{0}}\left(x+1\right)+1", MathS.Integral("x+1", "x", 0) + 1);
+        [Fact] public void IntegralSpecialCase2() => Test(@"\left(\frac{\mathrm{d}}{\mathrm{d}x}\left(x+1\right)\right) \cdot 2", MathS.Integral("x+1", "x", -1) * 2);
         [Theory, CombinatorialData] public void IntegralSpecialCase3([CombinatorialRange(0, 3)] int power, [CombinatorialValues("x", "x_f", "ab", "ab_cd", "e", "alpha", "alpha_beta", "alpha_e")] string v) =>
             Test(MathS.Derivative(Integer.One + v, v, power).Latexise(), MathS.Integral(Integer.One + v, v, -power));
         [Fact] public void Limit1() =>
-            Test(@"\lim_{x\to 0^-} \left[x+y\right]", (Entity)"limitleft(x + y, x, 0)");
+            Test(@"\lim_{x\to 0^-} \left(x+y\right)", (Entity)"limitleft(x + y, x, 0)");
         [Fact] public void Limit2() =>
             Test(@"\lim_{x\to 0^+} {a}^{5}", (Entity)"limitright(a^5, x, 0)");
         [Fact] public void Limit3() =>
-            Test(@"\lim_{x\to \infty } \left[x+y\right]", MathS.Limit("x + y", x, Real.PositiveInfinity));
+            Test(@"\lim_{x\to \infty } \left(x+y\right)", MathS.Limit("x + y", x, Real.PositiveInfinity));
         [Fact] public void Limit4() =>
-            Test(@"\lim_{\mathrm{xf}\to 1+x} \left[\frac{1}{x}\right]", MathS.Limit("1/x", "xf", "1+x"));
+            Test(@"\lim_{\mathrm{xf}\to 1+x} \frac{1}{x}", MathS.Limit("1/x", "xf", "1+x"));
         [Fact] public void Limit5() =>
-            Test(@"\lim_{\mathrm{xf}\to {x_{2}}^{3}} \left[{x}^{23}-x_{\mathrm{16}}\right]", MathS.Limit("x^23-x_16", "xf", "x_2^3"));
+            Test(@"\lim_{\mathrm{xf}\to {x_{2}}^{3}} \left({x}^{23}-x_{\mathrm{16}}\right)", MathS.Limit("x^23-x_16", "xf", "x_2^3"));
         [Theory, InlineData("+"), InlineData("-")] public void LimitOneSided1(string sign) =>
-            Test($$"""\lim_{x\to \left(a+2\right)^{{sign}}} \left[x+y\right]""", (Entity)$"limit{(sign == "-" ? "left" : "right")}(x + y, x, a+2)");
+            Test($$"""\lim_{x\to \left(a+2\right)^{{sign}}} \left(x+y\right)""", (Entity)$"limit{(sign == "-" ? "left" : "right")}(x + y, x, a+2)");
         [Theory, InlineData("+"), InlineData("-")] public void LimitOneSided2(string sign) =>
-            Test($$"""\lim_{x\to \left({a}^{2}\right)^{{sign}}} \left[x+y\right]""", (Entity)$"limit{(sign == "-" ? "left" : "right")}(x + y, x, a^2)");
+            Test($$"""\lim_{x\to \left({a}^{2}\right)^{{sign}}} \left(x+y\right)""", (Entity)$"limit{(sign == "-" ? "left" : "right")}(x + y, x, a^2)");
         [Theory, InlineData("+"), InlineData("-")]
         public void LimitOneSided3(string sign) =>
-            Test($$"""\lim_{x\to \left({a}^{2}\right)!^{{sign}}} \left[x+y\right]""", (Entity)$"limit{(sign == "-" ? "left" : "right")}(x + y, x, (a^2)!)");
+            Test($$"""\lim_{x\to \left({a}^{2}\right)!^{{sign}}} \left(x+y\right)""", (Entity)$"limit{(sign == "-" ? "left" : "right")}(x + y, x, (a^2)!)");
+        [Fact] public void LimitOfExponential() =>
+            Test(@"\lim_{x\to \infty } {\sin\left(x\right)}^{x} = \infty ", MathS.Limit(MathS.Pow(MathS.Sin(x), x), x, Real.PositiveInfinity).Equalizes(Real.PositiveInfinity));
+        [Fact] public void NestedLimitDerivative() =>
+            Test(@"\left(\lim_{x\to 0} \frac{\mathrm{d}^{2}}{\mathrm{d}x^{2}}\lim_{y\to \infty } \frac{x}{y}\right) \cdot x", MathS.Limit(MathS.Derivative(MathS.Limit("x / y", "y", Real.PositiveInfinity), x, 2), x, 0) * x);
+        [Fact] public void NestedDerivativeIntegral1() =>
+            Test(@"\frac{\mathrm{d}}{\mathrm{d}x}\int \frac{\mathrm{d}}{\mathrm{d}y}\int {x}^{2} \cdot y\,\mathrm{d}y\,\mathrm{d}\left(x+1\right)+1", MathS.Derivative(MathS.Integral(MathS.Derivative(MathS.Integral(MathS.Pow(x, 2) * "y", "y"), "y"), x + 1), x) + 1);
+        [Fact] public void NestedDerivativeIntegral2() =>
+            Test(@"\int \frac{\mathrm{d}}{\mathrm{d}x}\int \frac{\mathrm{d}}{\mathrm{d}y}\left(1-{x}^{2} \cdot y\right)\,\mathrm{d}y\,\mathrm{d}x+1", MathS.Integral(MathS.Derivative(MathS.Integral(MathS.Derivative(1 - MathS.Pow(x, 2) * "y", "y"), "y"), x), x) + 1);
         [Fact] public void Interval1() =>
             Test(@"\left[3, 4\right]", MathS.Sets.Interval(3, true, 4, true));
         [Fact] public void Interval2() =>

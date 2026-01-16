@@ -18,11 +18,26 @@ namespace AngouriMath
         }
 
         /// <summary>
+        /// Describes any node that is a function (e. g. sin, cos, etc.) or calculus operator (e. g. derivative, integral, limit)
+        /// but not an arithmetic operator or leaf
+        /// </summary>
+        public abstract record Function : ContinuousNode
+        {
+            internal override Priority Priority => Priority.Func;
+        }
+
+        /// <summary>
         /// Describes any function that is related to trigonometry
         /// </summary>
         public abstract record TrigonometricFunction : Function
         {
 
+        }
+        /// <summary>
+        /// Describes any calculus operator
+        /// </summary>
+        public abstract partial record CalculusOperator(Entity Expression, Entity Var) : Function
+        {
         }
 
         /// <summary>
@@ -100,14 +115,5 @@ namespace AngouriMath
         public Entity Signum() => new Signumf(this);
         /// <summary><see cref="MathS.Abs(Entity)"/></summary>
         public Entity Abs() => new Absf(this);
-
-        /// <summary>
-        /// Describes any node that is a function (e. g. sin, cos, etc.)
-        /// but not an operator or leaf
-        /// </summary>
-        public abstract record Function : ContinuousNode
-        {
-            internal override Priority Priority => Priority.Func;
-        }
     }
 }
