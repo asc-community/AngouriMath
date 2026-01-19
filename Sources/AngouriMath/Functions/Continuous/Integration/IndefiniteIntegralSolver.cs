@@ -4,7 +4,7 @@
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
 // Website: https://am.angouri.org.
 //
-
+using HonkSharp.Fluency;
 namespace AngouriMath.Functions.Algebra
 {
     internal static class IndefiniteIntegralSolver
@@ -12,28 +12,29 @@ namespace AngouriMath.Functions.Algebra
         internal static Entity? SolveBySplittingSum(Entity expr, Entity.Variable x)
         {
             var splitted = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, e => e.ContainsNode(x));
-            if (splitted is null || splitted.Count < 2) return null; // nothing to do, let other solvers do the work   
-            splitted[0] = Integration.ComputeIndefiniteIntegral(splitted[0], x); // base case for aggregate
-            var result = splitted.Aggregate((e1, e2) => e1 + Integration.ComputeIndefiniteIntegral(e2, x));
-            return result;
+            if (splitted is null || splitted.Count < 2) return null; // nothing to do, let other solvers do the work
+            return splitted.Select(e => Integration.ComputeIndefiniteIntegral(e, x)).Aggregate((e1, e2) => (e1, e2) switch {
+                (null, _) or (_, null) => null,
+                (var int1, var int2) => int1 + int2
+            });
         }
 
         internal static Entity? SolveAsPolynomialTerm(Entity expr, Entity.Variable x) => expr switch
         {
             Entity.Mulf(var m1, var m2) => 
                 !m1.ContainsNode(x) ? 
-                    m1 * Integration.ComputeIndefiniteIntegral(m2, x) : 
+                    Integration.ComputeIndefiniteIntegral(m2, x)?.Pipe(i => m1 * i) : 
                 !m2.ContainsNode(x) ?
-                    m2 * Integration.ComputeIndefiniteIntegral(m1, x) :
+                    Integration.ComputeIndefiniteIntegral(m1, x)?.Pipe(i => m2 * i) :
                 null,
 
             Entity.Divf(var div, var over) =>
                 !div.ContainsNode(x) ?
                     over is Entity.Powf(var @base, var power) ?
-                        div * Integration.ComputeIndefiniteIntegral(MathS.Pow(@base, -power), x) :
-                        div * Integration.ComputeIndefiniteIntegral(MathS.Pow(over, -1), x) :
+                        Integration.ComputeIndefiniteIntegral(MathS.Pow(@base, -power), x)?.Pipe(i => div * i) :
+                        Integration.ComputeIndefiniteIntegral(MathS.Pow(over, -1), x)?.Pipe(i => div * i) :
                 !over.ContainsNode(x) ?
-                    Integration.ComputeIndefiniteIntegral(div, x) / over :
+                    Integration.ComputeIndefiniteIntegral(div, x)?.Pipe(i => i / over) :
                 null,
 
             Entity.Powf(var @base, var power) =>
@@ -57,6 +58,7 @@ namespace AngouriMath.Functions.Algebra
                 if (currentRecursion == MathS.Settings.MaxExpansionTermCount) return null;
 
                 var integral = Integration.ComputeIndefiniteIntegral(u, x);
+                if (integral is null) return null;
                 var differential = v.Differentiate(x);
                 var result = IntegrateByParts(differential, integral, x, currentRecursion + 1);
                 return (result is null) ? null : v * integral - result;

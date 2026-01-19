@@ -46,7 +46,7 @@ namespace AngouriMath.Tests.Convenience
         [Theory]
         [InlineData("limitleft()", "limitleft should have exactly 3 arguments but 0 arguments are provided")]
         [InlineData("derivative(3)", "derivative should have exactly 3 arguments or 2 arguments but 1 argument is provided")]
-        [InlineData("integral(3)", "integral should have exactly 3 arguments or 2 arguments but 1 argument is provided")]
+        [InlineData("integral(3)", "integral should have exactly 4 arguments or 2 arguments but 1 argument is provided")]
         [InlineData("ln(3, 5)", "ln should have exactly 1 argument but 2 arguments are provided")]
         [InlineData("sin(3, 5, 8)", "sin should have exactly 1 argument but 3 arguments are provided")]
         [InlineData("log()", "log should have exactly 1 argument or 2 arguments but 0 arguments are provided")]
@@ -96,8 +96,8 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void TestFormulaSys() => Assert.Equal(Sqr(x), FromString("x2"));
         [Fact] public void TestNode28() => Assert.Equal(Derivative("x + 1", x), FromString("derivative(x + 1, x, 1)"));
         [Fact] public void TestNode29() => Assert.Equal(Derivative("x + 1", x, 5), FromString("derivative(x + 1, x, 5)"));
-        [Fact] public void TestNode30() => Assert.Equal(Integral("x + 1", x), FromString("integral(x + 1, x, 1)"));
-        [Fact] public void TestNode31() => Assert.Equal(Integral("x + y", x, 3), FromString("integral(x + y, x, 3)"));
+        [Fact] public void TestNode30() => Assert.Equal(Integral("x + 1", x), FromString("integral(x + 1, x)"));
+        [Fact] public void TestNode31() => Assert.Equal(Integral("x + y", x, 3, 4), FromString("integral(x + y, x, 3, 4)"));
         [Fact] public void TestNode32() => Assert.Equal(Limit("x + y", x, 3), FromString("limit(x + y, x, 3)"));
         [Fact] public void TestNode33() => Assert.Equal(Limit("x + y", x, 3, ApproachFrom.Left), FromString("limitleft(x + y, x, 3)"));
         [Fact] public void TestNode34() => Assert.Equal(Signum("x"), FromString("signum(x)"));
@@ -211,9 +211,8 @@ namespace AngouriMath.Tests.Convenience
 
         [Fact] public void TestInvalidArg1() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(x)"));
         [Fact] public void TestInvalidArg2() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(24)"));
-        [Fact] public void TestInvalidArg3() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(x, x, 4, x)"));
-        [Fact] public void TestInvalidArg4() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(x, x, x, x)"));
-        [Fact] public void TestInvalidArg5() => Assert.Throws<InvalidArgumentParseException>(() => FromString("integral(x, x, a)"));
+        [Fact] public void TestInvalidArg3() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(x, x, 4)"));
+        [Fact] public void TestInvalidArg4() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(x, x, x, x, x)"));
         [Fact] public void TestInvalidArg6() => Assert.Throws<FunctionArgumentCountException>(() => FromString("derivative(x)"));
         [Fact] public void TestInvalidArg7() => Assert.Throws<FunctionArgumentCountException>(() => FromString("derivative(24)"));
         [Fact] public void TestInvalidArg8() => Assert.Throws<FunctionArgumentCountException>(() => FromString("derivative(x, x, 4, x)"));

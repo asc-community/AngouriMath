@@ -28,13 +28,10 @@ namespace AngouriMath
         public partial record Integralf
         {
             /// <inheritdoc/>
-            public override string Stringize()
-            {
-                if (Iterations == 1)
-                    return $"integral({Expression.Stringize()}, {Var.Stringize()})";
-                else
-                    return $"integral({Expression.Stringize()}, {Var.Stringize()}, {Iterations})";
-            }
+            public override string Stringize() =>
+                Range is var (from, to)
+                ? $"integral({Expression.Stringize()}, {Var.Stringize()}, {from.Stringize()}, {to.Stringize()})"
+                : $"integral({Expression.Stringize()}, {Var.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }

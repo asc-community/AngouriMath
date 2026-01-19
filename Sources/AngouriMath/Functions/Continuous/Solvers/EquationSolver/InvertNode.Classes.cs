@@ -6,6 +6,7 @@
 //
 
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Functions.Algebra;
 
 namespace AngouriMath
 {
@@ -209,7 +210,7 @@ namespace AngouriMath
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 Expression.ContainsNode(x)
-                ? Expression.Invert(MathS.Integral(value, Var, Iterations), x)
+                ? Expression.Invert(MathS.Derivative(value, Var, -Iterations), x)
                 : Enumerable.Empty<Entity>();
         }
 
@@ -217,7 +218,11 @@ namespace AngouriMath
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 Expression.ContainsNode(x)
-                ? Expression.Invert(MathS.Derivative(value, Var, Iterations), x)
+                ? Range is { }
+                  ? InnerSimplified is var integrated && integrated != this
+                    ? integrated.Invert(value, x)
+                    : Enumerable.Empty<Entity>()
+                  : Expression.Invert(MathS.Derivative(value, Var), x)
                 : Enumerable.Empty<Entity>();
         }
 

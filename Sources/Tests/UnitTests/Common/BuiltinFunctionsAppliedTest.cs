@@ -130,7 +130,7 @@ namespace AngouriMath.Tests.Common
 
         [Fact] public void TestDerivativeFull() => "derivative".ToEntity().Apply("x ^ 2").Apply("x").InnerSimplified.ShouldBe("2 * x");
         [Fact] public void TestDerivativeCurried() => "derivative".ToEntity().Apply("x ^ 2").InnerSimplified.ShouldBe("derivative".ToEntity().Apply("x ^ 2"));
-        [Fact] public void TestIntegralFull() => "integral".ToEntity().Apply("1").Apply("x").InnerSimplified.ShouldBe("x");
+        [Fact] public void TestIntegralFull() => "integral".ToEntity().Apply("1").Apply("x").InnerSimplified.ShouldBe("x + C");
         [Fact] public void TestIntegralCurried() => "integral".ToEntity().Apply("x ^ 2").InnerSimplified.ShouldBe("integral".ToEntity().Apply("x ^ 2"));
         [Fact] public void TestLimitFull() => "limit".ToEntity().Apply("sin(x)").Apply("x").Apply("0").InnerSimplified.ShouldBe(0);
         [Fact] public void TestLimitCurried1() => "limit".ToEntity().Apply("x").Apply("y").InnerSimplified.ShouldBe("limit".ToEntity().Apply("x", "y"));

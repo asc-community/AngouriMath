@@ -20,13 +20,13 @@ namespace AngouriMath
         public sealed partial record Boolean(bool Value) : Statement
         {
             /// <summary>
-            /// One of the Boolean's state, which also behaves as Entity
+            /// One of the Boolean's states, which also behaves as Entity
             /// That is, hangable
             /// </summary>
             [ConstantField] public static readonly Boolean True = new Boolean(true);
 
             /// <summary>
-            /// One of the Boolean's state, which also behaves as Entity
+            /// One of the Boolean's states, which also behaves as Entity
             /// That is, hangable
             /// </summary>
             [ConstantField] public static readonly Boolean False = new Boolean(false);

@@ -1,7 +1,7 @@
 /*
 
-Remember to run the "antlr_rerun.bat" file at the project root every time you modify this file so that other
-source files under the Antlr folder can update and be reflected in other parts of AngouriMath!
+Remember to run the "antlr_rerun.bat" file in the "Sources/Utils" folder every time you modify this file so
+that other source files under the Antlr folder can update and be reflected in other parts of AngouriMath!
 It only consists of commands that are consistent across CMD and Bash so you should be able to run that file
 regardless of whether you are on Windows, Linux or Mac. You need to have an installed Java Runtime, however.
 
@@ -362,12 +362,12 @@ atom returns[Entity value]
         }
     | 'integral(' args = function_arguments ')' 
         { 
-            if (Assert("integral", (3, 2), $args.list.Count))
+            if (Assert("integral", (4, 2), $args.list.Count))
             {
-                if ($args.list[2] is Integer { EInteger: var asEInt })
-                    $value = MathS.Integral($args.list[0], $args.list[1], asEInt.ToInt32Checked());
+                if ($args.list.Count == 4)
+                    $value = MathS.Integral($args.list[0], $args.list[1], $args.list[2], $args.list[3]);
                 else
-                    throw new InvalidArgumentParseException("Expected number for the third argument of integral");
+                    $value = MathS.Integral($args.list[0], $args.list[1]);
             }
             else
                 $value = MathS.Integral($args.list[0], $args.list[1]);
