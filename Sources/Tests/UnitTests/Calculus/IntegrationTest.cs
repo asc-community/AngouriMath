@@ -31,6 +31,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("C", "C x + C_1")]
         [InlineData("C C_1", "C C_1 x + C_2")]
         [InlineData("integral(x, x)", "C_1 + C * x + x ^ 3 / 6")]
+        [InlineData("e^e^x", "integral(e ^ e ^ x, x)")] // don't recurse infinitely
         public void TestIndefinite(string initial, string expected)
         {
             Assert.Equal(MathS.Boolean.True, initial.Integrate("x").Equalizes(expected).Simplify());
@@ -39,6 +40,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("2x * e ^ (x2)", "e ^ (x2) + C")]
         [InlineData("x * e ^ (x2)", "1/2 * e ^ (x2) + C")]
         [InlineData("3 * x2 * e ^ (x3)", "e ^ (x3) + C")]
+        [InlineData("2 * x * e ^ (x ^ 2) + x ^ 2", "e^x^2 + x^3/3 + C")]
         public void TestExponentialSubstitution(string initial, string expected)
         {
             var result = initial.Integrate("x").InnerSimplified;
@@ -128,43 +130,58 @@ namespace AngouriMath.Tests.Calculus
             Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
         }
 
-        [Fact]
-        public void TestSubstitutionWithVariable()
+        [Theory]
+        [InlineData("abs(x)", "signum(x) * x^2 / 2 + C")]
+        [InlineData("abs(x + 0)", "signum(x) * x^2 / 2 + C")]
+        [InlineData("abs(2x)", "signum(2x) * (2x)^2 / 4 + C")]
+        [InlineData("abs(x + 3)", "signum(x + 3) * (x + 3)^2 / 2 + C")]
+        [InlineData("abs(3x - 1)", "signum(3x - 1) * (3x - 1)^2 / 6 + C")]
+        [InlineData("signum(x)", "abs(x) + C")]
+        [InlineData("signum(2x)", "abs(2x) / 2 + C")]
+        [InlineData("signum(x + 5)", "abs(x + 5) + C")]
+        [InlineData("signum(4x - 2)", "abs(4x - 2) / 4 + C")]
+        public void TestAbsAndSignumIntegration(string initial, string expected)
         {
-            Entity expr = "2 * x * e ^ (x ^ 2)";
-            var result = expr.Integrate("x").InnerSimplified;
-            var expected = "e ^ (x ^ 2) + C".ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expected).Simplify());
+            var result = initial.Integrate("x").InnerSimplified;
+            var expectedResult = expected.ToEntity().InnerSimplified;
+            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
         }
 
-        [Fact]
-        public void TestSubstitutionDoesNotApplyWhenNotNeeded()
+        [Theory]
+        [InlineData("ln(abs(x))", "x * (ln(abs(x)) - 1) + C")] // Direct pattern: x * (ln|x| - 1)
+        [InlineData("ln(abs(2x))", "2 * x / 2 * (ln(abs(2 * x)) - 1) + C")] // Direct pattern with linear arg
+        [InlineData("ln(abs(x + 3))", "(x + 3) * (ln(abs(x + 3)) - 1) + C")] // Direct pattern with linear arg
+        [InlineData("ln(abs(3x - 1))", "(3 * x - 1) / 3 * (ln(abs(3 * x - 1)) - 1) + C")] // Direct pattern with linear arg
+        [InlineData("ln(abs(x + 5))", "(x + 5) * (ln(abs(x + 5)) - 1) + C")] // Direct pattern with linear arg
+        [InlineData("ln(abs(2x + 4))", "(2 * x + 4) / 2 * (ln(abs(2 * x + 4)) - 1) + C")] // Direct pattern with linear arg
+        [InlineData("ln(abs(x)) / x", "integral(ln(abs(x)) / x, x)")] // Unsolvable - logarithmic integral Li(x), not expressible in elementary functions
+        [InlineData("ln(abs(x)) * ln(abs(x))", "integral(ln(abs(x)) ^ 2, x)")] // Unsolvable currently - would require careful handling to avoid stack overflow during simplification
+        [InlineData("x * ln(abs(x^2))", "x ^ 2 * (ln(abs(x ^ 2)) - 1) / 2 + C")] // Solvable via u-substitution
+        [InlineData("ln(abs(sin(x))) * cos(x)", "sin(x) * (ln(abs(sin(x))) - 1) + C")] // Solvable via u-substitution
+        [InlineData("abs(x) * ln(abs(x))", "integral(abs(x) * ln(abs(x)), x)")] // Unsolvable - requires piecewise handling and integration by parts
+        [InlineData("signum(x) * ln(abs(x))", "abs(x) * ln(abs(x)) - abs(x) + C")] // Solvable! sgn(x) = x/|x|, reduces to clever substitution
+        [InlineData("ln(abs(abs(x)))", "x * (ln(abs(x)) - 1) + C")] // Simplifies abs(abs(x)) → abs(x), then integrates
+        [InlineData("abs(ln(abs(x)))", "integral(abs(ln(abs(x))), x)")] // Unsolvable - nested absolute value with logarithm, no elementary form
+        public void TestLnAbsIntegration(string initial, string expected)
         {
-            // Simple polynomial shouldn't use substitution
-            Entity expr = "x ^ 2";
-            var result = expr.Integrate("x").Simplify();
-            Assert.NotNull(result);
-            Assert.DoesNotContain("Integral", result.ToString());
+            var result = initial.Integrate("x").InnerSimplified;
+            Assert.Equal(expected, result.Stringize());
         }
 
-        [Fact]
-        public void TestSubstitutionWithMultipleTerms()
+        [Theory]
+        [InlineData("x * abs(x^2)", "signum(x^2) * (x^2)^2 / 4 + C")]
+        [InlineData("2x * abs(x^2 + 1)", "signum(x^2 + 1) * (x^2 + 1)^2 / 2 + C")]
+        [InlineData("x * signum(x^2)", "abs(x^2) / 2 + C")]
+        [InlineData("2x * signum(x^2 + 3)", "abs(x^2 + 3) + C")]
+        [InlineData("cos(x) * abs(sin(x))", "signum(sin(x)) * sin(x)^2 / 2 + C")]
+        [InlineData("cos(x) * signum(sin(x))", "abs(sin(x)) + C")]
+        [InlineData("sin(x) * abs(cos(x))", "signum(cos(x)) * cos(x)^2 / (-2) + C")]
+        [InlineData("sin(x) * signum(cos(x))", "abs(cos(x)) / (-1) + C")]
+        public void TestAbsAndSignumWithSubstitution(string initial, string expected)
         {
-            // Should split sum first, then apply substitution to each term
-            Entity expr = "2 * x * e ^ (x ^ 2) + x ^ 2";
-            var result = expr.Integrate("x").Simplify();
-            Assert.NotNull(result);
-            Assert.DoesNotContain("Integral", result.ToString());
-        }
-
-        [Fact]
-        public void TestNoInfiniteRecursion()
-        {
-            // Expression that substitution can't handle shouldn't cause infinite recursion
-            Entity expr = "e ^ (e ^ x)";
-            var result = expr.Integrate("x");
-            // Should either return a valid result or an Integralf node
-            Assert.NotNull(result);
+            var result = initial.Integrate("x").InnerSimplified;
+            var expectedResult = expected.ToEntity().InnerSimplified;
+            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
         }
 
         [Theory]

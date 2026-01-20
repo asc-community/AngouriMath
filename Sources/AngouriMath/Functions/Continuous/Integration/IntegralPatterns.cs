@@ -43,10 +43,22 @@ namespace AngouriMath.Functions.Algebra
                 !@base.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(power, x, out var a, out _) =>
                     MathS.Pow(@base, power) / (a * MathS.Ln(@base)),
 
+            Entity.Absf(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) => // ∫ |ax + b| dx = sgn(ax + b) * (ax + b)^2 / (2a)
+                    MathS.Signum(arg) * MathS.Pow(arg, 2) / (2 * a),
+
+            Entity.Signumf(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) => // ∫ sgn(ax + b) dx = |ax + b| / a
+                    MathS.Abs(arg) / a,
+
+            // ∫ ln|ax + b| dx = ((ax + b)/a) * (ln|ax + b| - 1)
+            Entity.Logf(var @base, Entity.Absf(var arg)) when
+                @base == MathS.e && TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg / a) * (MathS.Ln(MathS.Abs(arg)) - 1),
+
             Entity.Divf(var numerator, var denominator) when
                 !numerator.ContainsNode(x) 
-                && TreeAnalyzer.TryGetPolyQuadratic(denominator, x, out var a, out var b, out var c)
-                && a is not Integer { IsZero: true } // Ensure it's actually quadratic (a != 0), not linear
+                && TreeAnalyzer.TryGetPolyQuadratic(denominator, x, out var a, out var b, out var c) // ∫ k/(ax^2 + bx + c) dx
                     => IntegrateRationalQuadratic(numerator, a, b, c, x),
 
             _ => null
@@ -54,9 +66,12 @@ namespace AngouriMath.Functions.Algebra
 
         private static Entity IntegrateRationalQuadratic(Entity numerator, Entity a, Entity b, Entity c, Entity.Variable x)
         {
-            // ∫ k/(ax^2 + bx + c) dx
-            // The formula depends on the discriminant: Δ = 4ac - b^2
+            // The formula depends on whether it's linear (a = 0) or quadratic (a ≠ 0)
+            // Case 0: a = 0 (linear, not quadratic)
+            // ∫ k/(bx + c) dx = (k/b) * ln|bx + c|
+            var linearCase = numerator * MathS.Ln(MathS.Abs(b * x + c)) / b;
             
+            // For true quadratics (a ≠ 0), discriminant Δ = 4ac - b^2 determines the form
             var discriminant = 4 * a * c - b * b;
             
             // Case 1: Δ > 0 (no real roots, use arctan)
@@ -75,8 +90,9 @@ namespace AngouriMath.Functions.Algebra
             var sqrtNegDiscriminant = MathS.Sqrt(-discriminant);
             var lnCase = numerator * MathS.Ln(MathS.Abs((twoAxPlusB - sqrtNegDiscriminant) / (twoAxPlusB + sqrtNegDiscriminant))) / sqrtNegDiscriminant;
             
-            // Return as piecewise based on discriminant
+            // Return as piecewise based on a and discriminant
             return MathS.Piecewise([
+                new Entity.Providedf(linearCase, a.Equalizes(0)),
                 new Entity.Providedf(arctanCase, discriminant > 0),
                 new Entity.Providedf(perfectSquareCase, discriminant.Equalizes(0)),
                 new Entity.Providedf(lnCase, discriminant < 0)

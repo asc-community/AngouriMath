@@ -22,7 +22,7 @@ namespace AngouriMath
         /// An integrated expression. It might remain the same or be transformed into nodes with no integrals.
         /// </returns>
         public Entity Integrate(Variable x) =>
-            Integration.ComputeIndefiniteIntegral(this, x) is { } antiderivative
+            Integration.ComputeIndefiniteIntegral(InnerSimplified, x) is { } antiderivative
             ? antiderivative + (antiderivative.VarsAndConsts.Contains("C") ? Variable.CreateUnique(antiderivative, "C") : "C")
             : new Integralf(this, x, null);
         /// <summary>
@@ -36,7 +36,7 @@ namespace AngouriMath
         /// An integrated expression. It might remain the same or be transformed into nodes with no integrals.
         /// </returns>
         public Entity Integrate(Variable x, Entity from, Entity to) =>
-            Integration.ComputeIndefiniteIntegral(this, x)?.InnerSimplified is { } antiderivative
+            Integration.ComputeIndefiniteIntegral(InnerSimplified, x)?.InnerSimplified is { } antiderivative
             ? antiderivative.Substitute(x, to) - antiderivative.Substitute(x, from)
             : new Integralf(this, x, (from, to));
     }

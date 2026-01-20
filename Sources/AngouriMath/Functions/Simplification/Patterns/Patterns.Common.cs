@@ -213,11 +213,6 @@ namespace AngouriMath.Functions
             Minusf(Minusf(var any2, var any1), var any1a) when any1 == any1a => any2 - 2 * any1,
             Minusf(Minusf(var any1, var any2), var any1a) when any1 == any1a => -any2,
 
-            Signumf(Signumf(var any1)) => new Signumf(any1),
-            Absf(Absf(var any1)) => new Absf(any1),
-            Absf(Signumf(_)) => 1,
-            Signumf(Absf(_)) => 1,
-
             Mulf(Absf(var any1), Absf(var any2)) => new Absf(any1 * any2),
             Divf(Absf(var any1), Absf(var any2)) => new Absf(any1 / any2),
             Mulf(Signumf(var any1), Absf(var any1a)) when any1 == any1a => any1,

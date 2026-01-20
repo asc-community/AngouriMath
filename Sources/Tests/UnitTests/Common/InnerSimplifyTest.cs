@@ -15,16 +15,28 @@ namespace AngouriMath.Tests.Common
 {
     public class InnerSimplifyTest
     {
+        [Theory]
+        [InlineData("ln(abs(x))")]
+        [InlineData("ln(abs(x)) + 1")]
+        [InlineData("ln(abs(x)) - 1")]
+        [InlineData("2 * ln(abs(x))")]
+        [InlineData("ln(abs(x))^2")]
+        public void ShouldNotChangeTest(string expr)
+        {
+            var expected = expr.ToEntity();
+            var actual = expected.InnerSimplified;
+            Assert.Same(expected, actual);
+        }
         [Theory(Skip = "Moved to the 1.2.2 milestone, see issue here https://github.com/asc-community/AngouriMath/issues/263")]
         [InlineData("3 ^ 100")]
         [InlineData("(-3) ^ 100")]
         [InlineData("0.01 ^ 100")]
         [InlineData("integral((4x^2+5x-4)/((5x-2)(4x^2+2)), x)")]
-        public void ShouldNotChangeTest(string expr)
+        public void ShouldNotChangeTestTodo(string expr)
         {
             var expected = expr.ToEntity();
             var actual = expr.ToEntity().InnerSimplified;
-            Assert.Equal(expected, actual);
+            Assert.Same(expected, actual);
         }
 
         [Theory]
@@ -67,6 +79,15 @@ namespace AngouriMath.Tests.Common
         [InlineData("a implies false", "not a")]
         [InlineData("true implies a", "a")]
         [InlineData("false implies a", "true")]
+
+        [InlineData("abs(abs(x))", "abs(x)")]
+        [InlineData("signum(signum(x))", "signum(x)")]
+        [InlineData("signum(abs(x))", "1")]
+        [InlineData("abs(signum(x))", "1")]
+        [InlineData("signum(abs(x/x))", "1 provided not x = 0")]
+        [InlineData("abs(signum(x/x))", "1 provided not x = 0")]
+
+        [InlineData("log(10, x) * log(10, x)", "log(10, x)^2")]
         public void ShouldChangeTo(string from, string to)
         {
             var expected = to.ToEntity().Replace(c => c == "NaN" ? MathS.NaN : c);
@@ -195,7 +216,7 @@ namespace AngouriMath.Tests.Common
 
         [Fact] public void PiecewiseIntegrate3NodeEvaled() =>
             "integral(piecewise(x provided a, 1/x), x)".ToEntity().Evaled
-            .ShouldBe("piecewise(x ^ 2 / 2 + C provided a, ln(x) + C)".ToEntity().Evaled);
+            .ShouldBe("piecewise(x ^ 2 / 2 + C provided a, ln(abs(x)) + C)".ToEntity().Evaled);
 
         [Fact] public void PiecewiseDerivative1NodeEvaled() =>
             "derivative(piecewise(x provided a, 1/x), x)".ToEntity().Evaled
@@ -226,7 +247,7 @@ namespace AngouriMath.Tests.Common
 
         [Fact] public void PiecewiseIntegrate3NodeInnerSimplified() =>
             "integral(piecewise(x provided a, 1/x), x)".ToEntity().InnerSimplified
-            .ShouldBe("piecewise(x ^ 2 / 2 + C provided a, ln(x) + C)");
+            .ShouldBe("piecewise(x ^ 2 / 2 + C provided a, ln(abs(x)) + C)");
 
         [Fact] public void PiecewiseDerivative1NodeInnerSimplified() =>
             "derivative(piecewise(x provided a, 1/x), x)".ToEntity().InnerSimplified
