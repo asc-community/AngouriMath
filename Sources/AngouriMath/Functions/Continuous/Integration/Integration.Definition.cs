@@ -56,16 +56,19 @@ namespace AngouriMath.Functions.Algebra
             answer = IntegralPatterns.TryStandardIntegrals(expr, x);
             if (answer is { }) return answer;
 
-            answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x);
+            answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x);
             if (answer is { }) return answer;
 
-            answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x);
+            answer = IndefiniteIntegralSolver.SolveLogarithmic(expr, x);
+            if (answer is { }) return answer;
+
+            answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x);
             if (answer is { }) return answer;
 
             answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x);
             if (answer is { }) return answer;
 
-            answer = IndefiniteIntegralSolver.SolveLogarithmic(expr, x);
+            answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x); // placed last because this may expand to too many terms
             if (answer is { }) return answer;
 
             return null;
