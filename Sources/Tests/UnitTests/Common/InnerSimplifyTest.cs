@@ -15,16 +15,28 @@ namespace AngouriMath.Tests.Common
 {
     public class InnerSimplifyTest
     {
+        [Theory]
+        [InlineData("ln(abs(x))")]
+        [InlineData("ln(abs(x)) + 1")]
+        [InlineData("ln(abs(x)) - 1")]
+        [InlineData("2 * ln(abs(x))")]
+        [InlineData("ln(abs(x))^2")]
+        public void ShouldNotChangeTest(string expr)
+        {
+            var expected = expr.ToEntity();
+            var actual = expected.InnerSimplified;
+            Assert.Same(expected, actual);
+        }
         [Theory(Skip = "Moved to the 1.2.2 milestone, see issue here https://github.com/asc-community/AngouriMath/issues/263")]
         [InlineData("3 ^ 100")]
         [InlineData("(-3) ^ 100")]
         [InlineData("0.01 ^ 100")]
         [InlineData("integral((4x^2+5x-4)/((5x-2)(4x^2+2)), x)")]
-        public void ShouldNotChangeTest(string expr)
+        public void ShouldNotChangeTestTodo(string expr)
         {
             var expected = expr.ToEntity();
             var actual = expr.ToEntity().InnerSimplified;
-            Assert.Equal(expected, actual);
+            Assert.Same(expected, actual);
         }
 
         [Theory]
@@ -67,6 +79,15 @@ namespace AngouriMath.Tests.Common
         [InlineData("a implies false", "not a")]
         [InlineData("true implies a", "a")]
         [InlineData("false implies a", "true")]
+
+        [InlineData("abs(abs(x))", "abs(x)")]
+        [InlineData("signum(signum(x))", "signum(x)")]
+        [InlineData("signum(abs(x))", "1")]
+        [InlineData("abs(signum(x))", "1")]
+        [InlineData("signum(abs(x/x))", "1 provided not x = 0")]
+        [InlineData("abs(signum(x/x))", "1 provided not x = 0")]
+
+        [InlineData("log(10, x) * log(10, x)", "log(10, x)^2")]
         public void ShouldChangeTo(string from, string to)
         {
             var expected = to.ToEntity().Replace(c => c == "NaN" ? MathS.NaN : c);
@@ -141,42 +162,31 @@ namespace AngouriMath.Tests.Common
         [InlineData("(|[2, 3, 6]|)", "7")]
         public void TestMatrices(string before, string after)
             => ShouldChangeTo(before, after);
-        [Fact] public void IntegralToDerivativeSimplify() =>
-            "integral(apply(f, x), x, -1)".ToEntity().InnerSimplified.ShouldBe("derivative(apply(f, x), x)");
-        [Fact] public void IntegralToDerivativeSimplify2() =>
-            "integral(apply(f, x), x, -2)".ToEntity().InnerSimplified.ShouldBe("derivative(apply(f, x), x, 2)");
-        [Fact] public void IntegralToDerivativeSimplifyMinValue() =>
-            $"integral(apply(f, x), x, {int.MinValue})".ToEntity().InnerSimplified.ShouldBe($"integral(apply(f, x), x, {int.MinValue})");
-        [Fact] public void IntegralToDerivativeEval() =>
-            "integral(apply(f, x) + (sin(3)^2 + cos(3)^2), x, -1)".ToEntity().Evaled.ShouldBe("derivative(apply(f, x), x)");
-        [Fact] public void IntegralToDerivativeEval2() =>
-            "integral(apply(f, x), x, -2)".ToEntity().Evaled.ShouldBe("derivative(apply(f, x), x, 2)");
-        [Fact] public void IntegralToDerivativeEvalMinValue() =>
-            $"integral(apply(f, x) + (sin(3)^2 + cos(3)^2), x, {int.MinValue})".ToEntity().Evaled.ShouldBe($"integral(apply(f, x) + 1, x, {int.MinValue})");
+        [Fact] public void DefiniteIntegralSimplify1() =>
+            "integral(apply(f, x), x, a, b)".ToEntity().InnerSimplified.ShouldBe("integral(apply(f, x), x, a, b)");
+        [Fact] public void DefiniteIntegralSimplify2() =>
+            "integral(sin(x), x, a, b)".ToEntity().InnerSimplified.ShouldBe("-cos(b)--cos(a)");
+        [Fact] public void DefiniteIntegralEval1() =>
+            "integral(apply(f, x), x, a, b)".ToEntity().Evaled.ShouldBe("integral(apply(f, x), x, a, b)");
+        [Fact] public void DefiniteIntegralEval2() =>
+            "integral(sin(x), x, a, b)".ToEntity().Evaled.ShouldBe("-cos(b)--cos(a)");
         [Fact] public void DerivativeToIntegralSimplify() =>
             "derivative(apply(f, x), x, -1)".ToEntity().InnerSimplified.ShouldBe("integral(apply(f, x), x)");
         [Fact] public void DerivativeToIntegralSimplify2() =>
-            "derivative(apply(f, x), x, -2)".ToEntity().InnerSimplified.ShouldBe("integral(apply(f, x), x, 2)");
-        [Fact] public void DerivativeToIntegralSimplifyMinValue() =>
-            $"derivative(apply(f, x), x, {int.MinValue})".ToEntity().InnerSimplified.ShouldBe($"derivative(apply(f, x), x, {int.MinValue})");
+            "derivative(apply(f, x), x, -2)".ToEntity().InnerSimplified.ShouldBe("integral(integral(apply(f, x), x), x)");
         [Fact] public void DerivativeToIntegralEval() =>
             "derivative(apply(f, x) + (sin(3)^2 + cos(3)^2), x, -1)".ToEntity().Evaled.ShouldBe("integral(apply(f, x) + 1, x)");
-        [Fact] public void DerivativeToIntegralEval2() =>
-            "derivative(apply(f, x), x, -2)".ToEntity().Evaled.ShouldBe("integral(apply(f, x), x, 2)");
-        [Fact] public void DerivativeToIntegralEvalMinValue() =>
-            $"derivative(apply(f, x) + (sin(3)^2 + cos(3)^2), x, {int.MinValue})".ToEntity().Evaled.ShouldBe($"derivative(apply(f, x) + 1, x, {int.MinValue})");
-
         [Fact] public void PiecewiseIntegrate1() =>
             "piecewise(2 provided a, 3)".Integrate("x")
-            .ShouldBe("piecewise(2x provided a, 3x)");
+            .ShouldBe("piecewise(2 provided a, 3) * x + C");
 
         [Fact] public void PiecewiseIntegrate2() =>
             "piecewise(2 provided a, 3)".Integrate("d")
-            .ShouldBe("piecewise(2d provided a, 3d)");
+            .ShouldBe("piecewise(2 provided a, 3) * d + C");
 
         [Fact] public void PiecewiseIntegrate3() =>
             "piecewise(x provided a, 1/x)".Integrate("x")
-            .ShouldBe("piecewise(x ^ 2 / 2 provided a, ln(x))");
+            .ShouldBe("integral(piecewise(x provided a, 1/x), x)"); // evaluation requires inner simplification!
 
         [Fact] public void PiecewiseDerivative1() =>
             "piecewise(x provided a, 1/x)".Differentiate("x")
@@ -198,15 +208,15 @@ namespace AngouriMath.Tests.Common
 
         [Fact] public void PiecewiseIntegrate1NodeEvaled() =>
             "integral(piecewise(2 provided a, 3), x)".ToEntity().Evaled
-            .ShouldBe("piecewise(2x provided a, 3x)");
+            .ShouldBe("piecewise(2x + C provided a, 3x + C)");
 
         [Fact] public void PiecewiseIntegrate2NodeEvaled() =>
             "integral(piecewise(2 provided a, 3), d)".ToEntity().Evaled
-            .ShouldBe("piecewise(2d provided a, 3d)");
+            .ShouldBe("piecewise(2d + C provided a, 3d + C)");
 
         [Fact] public void PiecewiseIntegrate3NodeEvaled() =>
             "integral(piecewise(x provided a, 1/x), x)".ToEntity().Evaled
-            .ShouldBe("piecewise(x ^ 2 / 2 provided a, ln(x))".ToEntity().Evaled);
+            .ShouldBe("piecewise(x ^ 2 / 2 + C provided a, ln(abs(x)) + C)".ToEntity().Evaled);
 
         [Fact] public void PiecewiseDerivative1NodeEvaled() =>
             "derivative(piecewise(x provided a, 1/x), x)".ToEntity().Evaled
@@ -229,15 +239,15 @@ namespace AngouriMath.Tests.Common
 
         [Fact] public void PiecewiseIntegrate1NodeInnerSimplified() =>
             "integral(piecewise(2 provided a, 3), x)".ToEntity().InnerSimplified
-            .ShouldBe("piecewise(2x provided a, 3x)");
+            .ShouldBe("piecewise(2 * x + C provided a, 3 * x + C)");
 
         [Fact] public void PiecewiseIntegrate2NodeInnerSimplified() =>
             "integral(piecewise(2 provided a, 3), d)".ToEntity().InnerSimplified
-            .ShouldBe("piecewise(2d provided a, 3d)");
+            .ShouldBe("piecewise(2 * d + C provided a, 3 * d + C)");
 
         [Fact] public void PiecewiseIntegrate3NodeInnerSimplified() =>
             "integral(piecewise(x provided a, 1/x), x)".ToEntity().InnerSimplified
-            .ShouldBe("piecewise(x ^ 2 / 2 provided a, ln(x))");
+            .ShouldBe("piecewise(x ^ 2 / 2 + C provided a, ln(abs(x)) + C)");
 
         [Fact] public void PiecewiseDerivative1NodeInnerSimplified() =>
             "derivative(piecewise(x provided a, 1/x), x)".ToEntity().InnerSimplified

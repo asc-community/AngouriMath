@@ -81,11 +81,15 @@ namespace AngouriMath
         }
 
         /// <summary>Derives over <paramref name="x"/> <paramref name="power"/> times</summary>
-        public Entity Differentiate(Variable x, EInteger power)
+        public Entity Differentiate(Variable x, int power)
         {
             var ent = this;
-            for (var _ = 0; _ < power; _++)
-                ent = ent.InnerDifferentiate(x);
+            if (power < 0)
+                for (var _ = 0; _ < -power; _++)
+                    ent = ent.Integrate(x);
+            else
+                for (var _ = 0; _ < power; _++)
+                    ent = ent.InnerDifferentiate(x);
             return ent;
         }
 
@@ -276,7 +280,11 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 Var == variable
-                ? this with { Iterations = Iterations - 1 }
+                ? Range is var (from, to)
+                  // https://math.stackexchange.com/a/139191/627798
+                  ? to.InnerDifferentiate(variable) * Expression.Substitute(variable, to) -
+                    from.InnerDifferentiate(variable) * Expression.Substitute(variable, from)
+                  : Expression
                 : MathS.Derivative(this, variable, 1);
         }
 #pragma warning restore IDE0054 // Use compound assignment
@@ -303,10 +311,9 @@ namespace AngouriMath
 
         partial record Absf
         {
-            // TODO: derivative of the absolute function?
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
-                => MathS.Signum(Argument) * Argument.InnerDifferentiate(variable);
+                => MathS.Signum(Argument).Provided(!Argument.Equalizes(Integer.Zero)) * Argument.InnerDifferentiate(variable);
         }
 
         partial record Providedf

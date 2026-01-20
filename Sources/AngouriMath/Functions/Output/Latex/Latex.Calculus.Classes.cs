@@ -18,16 +18,30 @@ namespace AngouriMath
         }
         public partial record Derivativef
         {
-            internal static string LatexiseDerivative(Entity expression, Entity var, int iterations)
+            /// <inheritdoc/>
+            public override string Latexise()
             {
-                var powerIfNeeded = iterations == 1 ? "" : "^{" + iterations + "}";
+                if (Iterations < 0)
+                {
+                    var sb = new StringBuilder();
+                    for (int i = 0; i < -Iterations; i++)
+                        sb.Append(@"\int");
+                    sb.Append(' ').Append(Expression.Latexise(Expression.LatexPriority < Priority.LatexCalculusOperation));
+
+                    for (int i = 0; i < -Iterations; i++)
+                    {
+                        sb.Append(@"\,");
+                        sb.Append(@"\mathrm{d}");
+                        sb.Append(Var.Latexise(Var is not Variable { IsLatexUprightFormatted: false }));
+                    }
+                    return sb.ToString();
+                }
+                var powerIfNeeded = Iterations == 1 ? "" : "^{" + Iterations + "}";
                 // NOTE: \mathrm{d} is used for upright 'd' following ISO 80000-2 standard.
                 // The differential operator should be upright (roman) to distinguish it from variables, similar to sin, cos, log, etc.
-                return $$"""\frac{\mathrm{d}{{powerIfNeeded}}}{\mathrm{d}{{var.Latexise(var is not Variable { IsLatexUprightFormatted: false })
-                    }}{{powerIfNeeded}}}{{expression.Latexise(expression.LatexPriority < Priority.LatexCalculusOperation)}}""";
+                return $$"""\frac{\mathrm{d}{{powerIfNeeded}}}{\mathrm{d}{{Var.Latexise(Var is not Variable { IsLatexUprightFormatted: false })
+                    }}{{powerIfNeeded}}}{{Expression.Latexise(Expression.LatexPriority < Priority.LatexCalculusOperation)}}""";
             }
-            /// <inheritdoc/>
-            public override string Latexise() => LatexiseDerivative(Expression, Var, Iterations);
         }
 
         public partial record Integralf
@@ -35,15 +49,8 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override string Latexise()
             {
-                // Unlike derivatives, integrals do not have "power" that would be equal to sequentially applying integration to a function.
-                // So for non-positive iterations, we just latexise the derivative. Since we treat integrals as functions for parenthesization,
-                // we still need to latexize the 0th derivative explicitly and not just return the inner expression's latex form.
-                if (Iterations <= 0)
-                    return Derivativef.LatexiseDerivative(Expression, Var, -Iterations);
-
-                var sb = new StringBuilder();
-                for (int i = 0; i < Iterations; i++)
-                    sb.Append(@"\int");
+                var sb = new StringBuilder(@"\int");
+                if (Range is var (from, to)) sb.Append('_').Append('{').Append(from.Latexise()).Append('}').Append('^').Append('{').Append(to.Latexise()).Append('}');
                 sb.Append(' ').Append(Expression.Latexise(Expression.LatexPriority < Priority.LatexCalculusOperation));
 
                 // NOTE: \mathrm{d} is used for upright 'd' following ISO 80000-2 standard.
@@ -52,12 +59,9 @@ namespace AngouriMath
                 // While derivatives use \mathrm{d}^n / \mathrm{d}x^n, power notation for integrals (\mathrm{d}^2 x) would be confusing
                 // as the number of \mathrm{d} is usually expected to match the number of \int.
                 // Thin spaces (\,) are added between differentials following standard practice.
-                for (int i = 0; i < Iterations; i++)
-                {
-                    sb.Append(@"\,");// Leading space before first differential and between differentials
-                    sb.Append(@"\mathrm{d}");
-                    sb.Append(Var.Latexise(Var is not Variable { IsLatexUprightFormatted: false }));
-                }
+                sb.Append(@"\,"); // Leading space before first differential and between differentials
+                sb.Append(@"\mathrm{d}");
+                sb.Append(Var.Latexise(Var is not Variable { IsLatexUprightFormatted: false }));
                 return sb.ToString();
             }
         }

@@ -17,6 +17,6 @@ let ``Limit test`` () = Assert.Equal(parsed "limit(x, y, z)", limitNode y z x)
 [<Fact>]
 let ``Differentiate test`` () = Assert.Equal(parsed "2x + 2", derivative x "x2 + 2x")
 [<Fact>]
-let ``Integrate test`` () = Assert.Equal(parsed "sin(x) + x", integral x "1 + cos(x)")
+let ``Integrate test`` () = Assert.Equal(parsed "sin(x) + x + C", integral x "1 + cos(x)")
 [<Fact>]
 let ``Limited test`` () = Assert.Equal(parsed "a", limit x 0 "a x / sin(x)")

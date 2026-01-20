@@ -25,15 +25,15 @@ namespace AngouriMath.Functions.Algebra
 
             Entity.Cosecantf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
-                    MathS.Ln(MathS.Tan(0.5 * arg)) / a,
+                    MathS.Ln(MathS.Abs(MathS.Tan(0.5 * arg))) / a,
 
             Entity.Tanf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
-                    -MathS.Ln(MathS.Cos(arg)) / a,
+                    -MathS.Ln(MathS.Abs(MathS.Cos(arg))) / a,
 
             Entity.Cotanf(var arg) when
                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
-                    MathS.Ln(MathS.Sin(arg)) / a,
+                    MathS.Ln(MathS.Abs(MathS.Sin(arg))) / a,
 
             Entity.Logf(var @base, var arg) when
                 !@base.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out var b) =>
@@ -43,7 +43,60 @@ namespace AngouriMath.Functions.Algebra
                 !@base.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(power, x, out var a, out _) =>
                     MathS.Pow(@base, power) / (a * MathS.Ln(@base)),
 
+            Entity.Absf(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) => // ∫ |ax + b| dx = sgn(ax + b) * (ax + b)^2 / (2a)
+                    MathS.Signum(arg) * MathS.Pow(arg, 2) / (2 * a),
+
+            Entity.Signumf(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) => // ∫ sgn(ax + b) dx = |ax + b| / a
+                    MathS.Abs(arg) / a,
+
+            // ∫ ln|ax + b| dx = ((ax + b)/a) * (ln|ax + b| - 1)
+            Entity.Logf(var @base, Entity.Absf(var arg)) when
+                @base == MathS.e && TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg / a) * (MathS.Ln(MathS.Abs(arg)) - 1),
+
+            Entity.Divf(var numerator, var denominator) when
+                !numerator.ContainsNode(x) 
+                && TreeAnalyzer.TryGetPolyQuadratic(denominator, x, out var a, out var b, out var c) // ∫ k/(ax^2 + bx + c) dx
+                    => IntegrateRationalQuadratic(numerator, a, b, c, x),
+
             _ => null
         };
+
+        private static Entity IntegrateRationalQuadratic(Entity numerator, Entity a, Entity b, Entity c, Entity.Variable x)
+        {
+            // The formula depends on whether it's linear (a = 0) or quadratic (a ≠ 0)
+            // Case 0: a = 0 (linear, not quadratic)
+            // ∫ k/(bx + c) dx = (k/b) * ln|bx + c|
+            var linearCase = numerator * MathS.Ln(MathS.Abs(b * x + c)) / b;
+            
+            // For true quadratics (a ≠ 0), discriminant Δ = 4ac - b^2 determines the form
+            var discriminant = 4 * a * c - b * b;
+            
+            // Case 1: Δ > 0 (no real roots, use arctan)
+            // Result: (2k/√Δ) * arctan((2ax + b)/√Δ)
+            var sqrtDiscriminant = MathS.Sqrt(discriminant);
+            var twoAxPlusB = 2 * a * x + b;
+            var arctanCase = 2 * numerator * MathS.Arctan(twoAxPlusB / sqrtDiscriminant) / sqrtDiscriminant;
+            
+            // Case 2: Δ = 0 (perfect square, one repeated root)
+            // ax^2 + bx + c = a(x + b/(2a))^2
+            // Result: -2k/(2ax + b)
+            var perfectSquareCase = -2 * numerator / twoAxPlusB;
+            
+            // Case 3: Δ < 0 (two distinct real roots, use logarithm)
+            // Result: (k/√(-Δ)) * ln|(2ax + b - √(-Δ))/(2ax + b + √(-Δ))|
+            var sqrtNegDiscriminant = MathS.Sqrt(-discriminant);
+            var lnCase = numerator * MathS.Ln(MathS.Abs((twoAxPlusB - sqrtNegDiscriminant) / (twoAxPlusB + sqrtNegDiscriminant))) / sqrtNegDiscriminant;
+            
+            // Return as piecewise based on a and discriminant
+            return MathS.Piecewise([
+                new Entity.Providedf(linearCase, a.Equalizes(0)),
+                new Entity.Providedf(arctanCase, discriminant > 0),
+                new Entity.Providedf(perfectSquareCase, discriminant.Equalizes(0)),
+                new Entity.Providedf(lnCase, discriminant < 0)
+            ]).InnerSimplified;
+        }
     }
 }

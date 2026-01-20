@@ -2968,12 +2968,12 @@ internal partial class AngouriMathParser : Parser {
 				State = 734;
 				Match(T__39);
 				 
-				            if (Assert("integral", (3, 2), _localctx.args.list.Count))
+				            if (Assert("integral", (4, 2), _localctx.args.list.Count))
 				            {
-				                if (_localctx.args.list[2] is Integer { EInteger: var asEInt })
-				                    _localctx.value =  MathS.Integral(_localctx.args.list[0], _localctx.args.list[1], asEInt.ToInt32Checked());
+				                if (_localctx.args.list.Count == 4)
+				                    _localctx.value =  MathS.Integral(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], _localctx.args.list[3]);
 				                else
-				                    throw new InvalidArgumentParseException("Expected number for the third argument of integral");
+				                    _localctx.value =  MathS.Integral(_localctx.args.list[0], _localctx.args.list[1]);
 				            }
 				            else
 				                _localctx.value =  MathS.Integral(_localctx.args.list[0], _localctx.args.list[1]);

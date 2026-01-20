@@ -372,7 +372,7 @@ namespace AngouriMath
                 // integrate(temp_1 ^ 2 + a, temp_1) -> integrate(x ^ 2 + a, temp_1)
                 var postSubs = subs.Substitute(replacement, Var);
 
-                return New(postSubs, Var);
+                return New(postSubs, Var, Range is var (from, to) ? (from.Substitute(x, value), to.Substitute(x, value)) : null);
             }
         }
 

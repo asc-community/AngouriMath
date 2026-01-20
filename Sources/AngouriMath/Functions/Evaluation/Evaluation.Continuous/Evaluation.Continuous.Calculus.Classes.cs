@@ -16,15 +16,11 @@ namespace AngouriMath
             // The derivative operator is always defined symbolically, even though
             // the resulting expression may be undefined at certain points.
             private protected override Entity IntrinsicCondition => Boolean.True;
-
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) =>
                 ExpandOnTwoAndTArguments(Expression, Var, Iterations,
                     (a, b, c) => (a, b, c) switch
                     {
-                        (var expr, _, 0) => expr,
-                        (_, _, int.MinValue) => null,
-                        (_, _, < 0) => new Integralf(a, b, -c).InnerSimplified(isExact),
                         // TODO: should we call InnerSimplified here?
                         (var expr, Variable var, int asInt)
                             when expr.Differentiate(var, asInt) is var res and not Derivativef
@@ -34,7 +30,7 @@ namespace AngouriMath
                         (var expr, Entity otherExpr, int asInt)
                             when Variable.CreateTemp(otherExpr.Vars) is var tempVar
                             && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
-                            && tempSubstituted.Differentiate(tempVar) is var res and not Derivativef
+                            && tempSubstituted.Differentiate(tempVar, asInt) is var res and not Derivativef
                             => res.Substitute(tempVar, otherExpr).InnerSimplified(isExact),
                         _ => null
                     },
@@ -46,33 +42,26 @@ namespace AngouriMath
             // The integral operator is always defined symbolically, even though
             // the antiderivative may not exist in closed form or may be undefined at certain points.
             private protected override Entity IntrinsicCondition => Boolean.True;
-            
-            private Entity SequentialIntegrating(Entity expr, Variable var, int iterations)
-            {
-                if (iterations < 0)
-                    return this;
-                var changed = expr;
-                for (int i = 0; i < iterations; i++)
-                    changed = Integration.ComputeIndefiniteIntegral(changed, var);
-                return changed;
-            }
 
+            private static Entity? ConditionallySimplified(Entity e, bool isExact) => e is Integralf ? null : e.InnerSimplified(isExact);
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) =>
-                ExpandOnTwoAndTArguments(Expression, Var, Iterations,
+                ExpandOnTwoAndTArguments(Expression, Var, Range,
                     (a, b, c) => (a, b, c) switch
                     {
-                        (var expr, _, 0) => expr,
-                        (_, _, int.MinValue) => null,
-                        (_, _, < 0 and not int.MinValue) => new Derivativef(a, b, -c).InnerSimplified(isExact),
-                        // TODO: should we apply InnerSimplified?
-                        (var expr, Variable var, int asInt)
-                            when SequentialIntegrating(expr, var, asInt) is var res and not Integralf
-                            && !res.Nodes.Any(n => n is Integralf)
-                            => res.InnerSimplified(isExact),
+                        (var expr, Variable var, var (from, to)) => ConditionallySimplified(expr.Integrate(var, from, to), isExact),
+                        (var expr, var otherExpr, var (from, to))
+                            when Variable.CreateTemp(otherExpr.Vars) is var tempVar
+                            && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
+                            && tempSubstituted.Integrate(tempVar, from, to) is var res => ConditionallySimplified(res.Substitute(tempVar, otherExpr), isExact),
+                        (var expr, Variable var, null) => ConditionallySimplified(expr.Integrate(var), isExact),
+                        (var expr, var otherExpr, null)
+                            when Variable.CreateTemp(otherExpr.Vars) is var tempVar
+                            && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
+                            && tempSubstituted.Integrate(tempVar) is var res => ConditionallySimplified(res.Substitute(tempVar, otherExpr), isExact),
                         _ => null
                     },
-                    (@this, a, b, _) => ((Integralf)@this).New(a, b), isExact);
+                    (@this, a, b, c) => ((Integralf)@this).New(a, b, c), isExact);
         }
 
 

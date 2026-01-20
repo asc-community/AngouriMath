@@ -224,6 +224,8 @@ namespace AngouriMath
                 a => a switch
                 {
                     Complex n when !isExact => Number.Arctan(n),
+                    Real r when r.EDecimal.IsPositiveInfinity() => MathS.pi / 2,
+                    Real r when r.EDecimal.IsNegativeInfinity() => -MathS.pi / 2,
                     _ => null
                 },
                 (@this, a) => ((Arctanf)@this).New(a), isExact);

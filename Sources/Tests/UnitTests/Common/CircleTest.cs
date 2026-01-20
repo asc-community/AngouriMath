@@ -104,7 +104,7 @@ namespace AngouriMath.Tests.Common
         [InlineData("derivative(y, x)")]
         [InlineData("integral(y, x)")]
         [InlineData("derivative(y, x, 2)")]
-        [InlineData("integral(y, x, 2)")]
+        [InlineData("integral(y, x, a, b)")]
         public void TestCalculus(string inputIsOutput) =>
             Assert.Equal(inputIsOutput, inputIsOutput.ToEntity().Stringize());
 

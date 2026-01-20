@@ -6338,7 +6338,7 @@ namespace AngouriMath
             /// <param name="to">The complex upper bound for integrating</param>
             [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Complex DefiniteIntegral(Entity expr, Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to) =>
-                Integration.Integrate(expr, x, from, to, 100);
+                DefiniteIntegral(expr, x, from, to, 100);
 
             /// <summary>
             /// Returns a value of a definite integral of a function. Only works for one-variable functions
@@ -6349,7 +6349,7 @@ namespace AngouriMath
             /// <param name="to">The real upper bound for integrating</param>
             [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Complex DefiniteIntegral(Entity expr, Variable x, EDecimal from, EDecimal to) =>
-                Integration.Integrate(expr, x, (from, 0), (to, 0), 100);
+                DefiniteIntegral(expr, x, (from, 0), (to, 0), 100);
 
             /// <summary>
             /// Returns a value of a definite integral of a function. Only works for one-variable functions
@@ -6361,7 +6361,7 @@ namespace AngouriMath
             /// <param name="stepCount">Accuracy (initially, amount of iterations)</param>
             [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Complex DefiniteIntegral(Entity expr, Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount) =>
-                Integration.Integrate(expr, x, from, to, stepCount);
+                Integration.IntegrateNumerically(expr, x, Complex.Create(from.Re, from.Im), Complex.Create(to.Re, to.Im), stepCount);
 
 
             /// <summary>
@@ -6626,7 +6626,7 @@ namespace AngouriMath
         /// a
         /// </code>
         /// </example>
-        public static Entity Integral(Entity expr, Entity var) => new Integralf(expr, var, 1);
+        public static Entity Integral(Entity expr, Entity var) => new Integralf(expr, var, null);
 
         /// <summary>
         /// Hangs your entity to an integral node
@@ -6634,7 +6634,8 @@ namespace AngouriMath
         /// </summary>
         /// <param name="expr">Expression to be hung</param>
         /// <param name="var">Variable over which integral is taken</param>
-        /// <param name="power">Number of times integral is taken. Only integers will be simplified or evaluated.</param>
+        /// <param name="from">The lower bound for integrating</param>
+        /// <param name="to">The upper bound for integrating</param>
         /// <example>
         /// <code>
         /// using System;
@@ -6680,7 +6681,7 @@ namespace AngouriMath
         /// a
         /// </code>
         /// </example>
-        public static Entity Integral(Entity expr, Entity var, int power) => new Integralf(expr, var, power);
+        public static Entity Integral(Entity expr, Entity var, Entity from, Entity to) => new Integralf(expr, var, (from, to));
 
         /// <summary>
         /// Hangs your entity to a limit node
@@ -6820,6 +6821,18 @@ namespace AngouriMath
             /// </summary>
             public static Entity.Boolean Create(bool b)
                 => Entity.Boolean.Create(b);
+
+            /// <summary>
+            /// One of the Boolean's states, which also behaves as Entity
+            /// That is, hangable
+            /// </summary>
+            [ConstantField] public static readonly Entity.Boolean True = Entity.Boolean.True;
+
+            /// <summary>
+            /// One of the Boolean's states, which also behaves as Entity
+            /// That is, hangable
+            /// </summary>
+            [ConstantField] public static readonly Entity.Boolean False = Entity.Boolean.False;
         }
 
         /// <summary>

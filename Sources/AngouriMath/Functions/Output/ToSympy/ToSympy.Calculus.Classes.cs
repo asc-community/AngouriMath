@@ -18,9 +18,7 @@ namespace AngouriMath
 
         public partial record Integralf
         {
-            // TODO: The 3rd parameter of sympy.integrate is not interpreted as iterations, unlike sympy.diff
-            // which allows both sympy.diff(expr, var, iterations) and sympy.diff(expr, var1, var2, var3...)
-            internal override string ToSymPy() => $"sympy.integrate({Expression.ToSymPy()}, {Var.ToSymPy()}, {Iterations})";
+            internal override string ToSymPy() => $"sympy.integrate({Expression.ToSymPy()}, {(Range is var (from, to) ? $"({Var.ToSymPy()}, {from.ToSymPy()}, {to.ToSymPy()})" : Var.ToSymPy())})";
         }
 
         public partial record Limitf

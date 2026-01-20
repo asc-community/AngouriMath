@@ -214,6 +214,8 @@ namespace AngouriMath
                     {
                         Real n => n.EDecimal.Sign,
                         Complex n when !isExact => Number.Signum(n),
+                        Absf({ DomainCondition: var condition }) => Integer.One.Provided(condition),
+                        Signumf signum => signum,
                         _ => null
                     },
                     (@this, a) => ((Signumf)@this).New(a), isExact);
@@ -232,6 +234,8 @@ namespace AngouriMath
                     {
                         Matrix m when m.IsVector => Sumf.Sum(m.Select(c => c.Pow(2))).Pow(0.5).InnerSimplified,
                         Complex n when !isExact => Number.Abs(n),
+                        Absf abs => abs,
+                        Signumf({ DomainCondition: var condition }) => Integer.One.Provided(condition),
                         _ => null
                     },
                     (@this, a) => ((Absf)@this).New(a), isExact);

@@ -265,7 +265,11 @@ namespace AngouriMath
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(New(
                     Expression.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Expression,
-                    Var.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Var),
+                    Var.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Var,
+                    Range is var (from, to)
+                    ? (from.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim3 ? lim3 : from,
+                       to.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim4 ? lim4 : to)
+                    : null),
                     x, dist, side);
         }
 

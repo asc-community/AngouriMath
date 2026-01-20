@@ -298,7 +298,7 @@ namespace AngouriMath.Extensions
         /// Finds the symbolical derivative of the given expression
         /// </summary>
         /// <param name="str">
-        /// The expresion to be parsed and differentiated
+        /// The expression to be parsed and differentiated
         /// </param>
         /// <param name="x">
         /// Over which variable to find the derivative
@@ -315,7 +315,7 @@ namespace AngouriMath.Extensions
         /// Finds the symbolical derivative of the given expression
         /// </summary>
         /// <param name="str">
-        /// The expresion to be parsed and differentiated
+        /// The expression to be parsed and differentiated
         /// </param>
         /// <param name="x">
         /// Over which variable to find the derivative
@@ -328,20 +328,34 @@ namespace AngouriMath.Extensions
             => str.ToEntity().Differentiate(x);
 
         /// <summary>
-        /// Integrates the given expression over the `x` variable, if can.
+        /// Integrates indefinitely the given expression over the `x` variable, if can.
         /// May return an unresolved <see cref="Integralf"/> node.
         /// </summary>
         /// <param name="str">
-        /// The expression to be parsed and integrated over <paramref name="x"/>
+        /// The expression to be parsed and integrated
         /// </param>
-        /// <param name="x">Over which to integrate</param>
+        /// <param name="x">Over which variable to integrate</param>
         /// <returns>
-        /// An integrated expression. It might remain the same,
-        /// it might have no integrals, and it might be transformed so that
-        /// only a few nodes have unresolved integrals.
+        /// An integrated expression. It might remain the same or be transformed into nodes with no integrals.
         /// </returns>
         public static Entity Integrate(this string str, Variable x)
             => str.ToEntity().Integrate(x);
+
+        /// <summary>
+        /// Integrates definitely the given expression over the `x` variable, if can.
+        /// May return an unresolved <see cref="Integralf"/> node.
+        /// </summary>
+        /// <param name="str">
+        /// The expression to be parsed and integrated
+        /// </param>
+        /// <param name="x">Over which variable to integrate</param>
+        /// <param name="from">The lower bound for integrating</param>
+        /// <param name="to">The upper bound for integrating</param>
+        /// <returns>
+        /// An integrated expression. It might remain the same or be transformed into nodes with no integrals.
+        /// </returns>
+        public static Entity Integrate(this string str, Variable x, Entity from, Entity to)
+            => str.ToEntity().Integrate(x, from, to);
 
         /// <summary>
         /// Finds the limit of the given expression over the given variable

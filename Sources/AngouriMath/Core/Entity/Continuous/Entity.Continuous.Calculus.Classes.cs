@@ -12,10 +12,12 @@ namespace AngouriMath
     partial record Entity
     {
 #pragma warning disable CS1591  // only while records' parameters cannot be documented
-        // Iterations should be refactored? to be int instead of Entity
         /// <summary>
         /// A node of derivative
         /// </summary>
+        /// <remarks>
+        /// Negative iterations convert to integrals.
+        /// </remarks>
         public sealed partial record Derivativef(Entity Expression, Entity Var, int Iterations) : CalculusOperator(Expression, Var)
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -32,17 +34,19 @@ namespace AngouriMath
         /// <summary>
         /// A node of integral
         /// </summary>
-        public sealed partial record Integralf(Entity Expression, Entity Var, int Iterations) : CalculusOperator(Expression, Var)
+        public sealed partial record Integralf(Entity Expression, Entity Var, (Entity from, Entity to)? Range) : CalculusOperator(Expression, Var)
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Integralf New(Entity expression, Entity var) =>
+            private Integralf New(Entity expression, Entity var, (Entity from, Entity to)? range) =>
                 ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var)
-                ? this : new(expression, var, Iterations);
+                && (range is null && Range is null || range is var (newFrom, newTo) && Range is var (oldFrom, oldTo)
+                    && ReferenceEquals(newFrom, oldFrom) && ReferenceEquals(newTo, oldTo))
+                ? this : new(expression, var, range);
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) =>
-                func(New(Expression.Replace(func), Var.Replace(func)));
+                func(New(Expression.Replace(func), Var, Range is var (from, to) ? (from.Replace(func), to.Replace(func)) : null));
             /// <inheritdoc/>
-            protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Iterations };
+            protected override Entity[] InitDirectChildren() => Range is var (from, to) ? [Expression, Var, from, to] : [Expression, Var];
         }
 
         /// <summary>

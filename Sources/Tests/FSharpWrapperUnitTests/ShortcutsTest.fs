@@ -9,7 +9,7 @@ let ``Test d/dx`` () =
     Assert.Equal(parsed "a + cos(x)", ``d/dx`` "a x + sin(x)")
 [<Fact>]
 let ``Test int [dx]`` () =
-    Assert.Equal(parsed "sin(x) + a x", ``int [dx]`` "a + cos(x)")
+    Assert.Equal(parsed "sin(x) + a x + C", ``int [dx]`` "a + cos(x)")
 [<Fact>]
 let ``Test lim x->+oo`` () =
     Assert.Equal(parsed "6", ``lim x->+oo`` "(6x6 + 3x3 + a x) / (x6 - 4x)")
