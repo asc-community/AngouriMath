@@ -43,7 +43,7 @@ namespace AngouriMath
             // the antiderivative may not exist in closed form or may be undefined at certain points.
             private protected override Entity IntrinsicCondition => Boolean.True;
 
-            private static Entity? ConditionallySimplified(Entity e, bool isExact) => e is Integralf i ? null : e.InnerSimplified(isExact);
+            private static Entity? ConditionallySimplified(Entity e, bool isExact) => e is Integralf ? null : e.InnerSimplified(isExact);
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) =>
                 ExpandOnTwoAndTArguments(Expression, Var, Range,

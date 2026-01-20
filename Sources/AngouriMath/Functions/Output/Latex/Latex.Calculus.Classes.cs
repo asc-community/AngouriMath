@@ -5,8 +5,6 @@
 // Website: https://am.angouri.org.
 //
 
-using GenericTensor.Core;
-using System.Linq.Expressions;
 using System.Text;
 
 namespace AngouriMath

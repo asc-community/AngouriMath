@@ -1,9 +1,9 @@
 /*
 
-Remember to run the "antlr_rerun.bat" file in the "Sources/Utils" folder every time you modify this file so
-that other source files under the Antlr folder can update and be reflected in other parts of AngouriMath!
-It only consists of commands that are consistent across CMD and Bash so you should be able to run that file
-regardless of whether you are on Windows, Linux or Mac. You need to have an installed Java Runtime, however.
+Remember to run the "antlr_rerun.bat" file located at "Sources/Utils/antlr_rerun.bat" (relative to the repository root)
+every time you modify this file so that the generated source files under the Antlr folder are updated and changes are
+reflected in other parts of AngouriMath. The script only consists of commands that are consistent across CMD and Bash,
+so you should be able to run it on Windows, Linux, or Mac. You need to have an installed Java Runtime, however.
 
 */
 

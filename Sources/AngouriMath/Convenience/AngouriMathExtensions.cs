@@ -298,7 +298,7 @@ namespace AngouriMath.Extensions
         /// Finds the symbolical derivative of the given expression
         /// </summary>
         /// <param name="str">
-        /// The expresion to be parsed and differentiated
+        /// The expression to be parsed and differentiated
         /// </param>
         /// <param name="x">
         /// Over which variable to find the derivative
@@ -315,7 +315,7 @@ namespace AngouriMath.Extensions
         /// Finds the symbolical derivative of the given expression
         /// </summary>
         /// <param name="str">
-        /// The expresion to be parsed and differentiated
+        /// The expression to be parsed and differentiated
         /// </param>
         /// <param name="x">
         /// Over which variable to find the derivative
@@ -332,7 +332,7 @@ namespace AngouriMath.Extensions
         /// May return an unresolved <see cref="Integralf"/> node.
         /// </summary>
         /// <param name="str">
-        /// The expresion to be parsed and integrated
+        /// The expression to be parsed and integrated
         /// </param>
         /// <param name="x">Over which variable to integrate</param>
         /// <returns>
@@ -346,7 +346,7 @@ namespace AngouriMath.Extensions
         /// May return an unresolved <see cref="Integralf"/> node.
         /// </summary>
         /// <param name="str">
-        /// The expresion to be parsed and integrated
+        /// The expression to be parsed and integrated
         /// </param>
         /// <param name="x">Over which variable to integrate</param>
         /// <param name="from">The lower bound for integrating</param>
