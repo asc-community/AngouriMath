@@ -13,11 +13,11 @@ namespace AngouriMath.Functions.Algebra
 {
     internal static class IndefiniteIntegralSolver
     {
-        internal static Entity? SolveBySplittingSum(Entity expr, Entity.Variable x)
+        internal static Entity? SolveBySplittingSum(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             var splitted = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, e => e.ContainsNode(x));
             if (splitted is null || splitted.Count < 2) return null; // nothing to do, let other solvers do the work
-            return splitted.Select(e => Integration.ComputeIndefiniteIntegral(e, x)).Aggregate((e1, e2) => (e1, e2) switch {
+            return splitted.Select(e => Integration.ComputeIndefiniteIntegral(e, x, integrateByParts)).Aggregate((e1, e2) => (e1, e2) switch {
                 (null, _) or (_, null) => null,
                 (var int1, var int2) => int1 + int2
             });
@@ -56,31 +56,61 @@ namespace AngouriMath.Functions.Algebra
 
         internal static Entity? SolveIntegratingByParts(Entity expr, Entity.Variable x)
         {
-            static Entity? IntegrateByParts(Entity v, Entity u, Entity.Variable x, int currentRecursion = 0)
+            // Standard integration by parts for polynomial × function
+            static Entity? IntegrateByPartsPolynomial(Entity polynomialToDifferentiate, Entity toIntegrate, Variable x, int currentRecursion = 0)
             {
-                if (v == 0) return 0;
+                if (polynomialToDifferentiate == 0) return 0;
                 if (currentRecursion == MathS.Settings.MaxExpansionTermCount) return null;
 
-                var integral = Integration.ComputeIndefiniteIntegral(u, x);
+                var integral = Integration.ComputeIndefiniteIntegral(toIntegrate, x, false);
                 if (integral is null) return null;
-                var differential = v.Differentiate(x);
-                var result = IntegrateByParts(differential, integral, x, currentRecursion + 1);
-                return (result is null) ? null : v * integral - result;
+                var differential = polynomialToDifferentiate.Differentiate(x);
+                var result = IntegrateByPartsPolynomial(differential, integral, x, currentRecursion + 1);
+                return (result is null) ? null : polynomialToDifferentiate * integral - result;
+            }
+
+            // Generalized integration by parts: tries once with v and u both being integrable
+            // ∫ v·u dx = v·∫u dx - ∫(v'·∫u dx) dx
+            // Only attempts if both v and u can be integrated
+            static Entity? TryIntegrateByPartsOnce(Entity v, Entity u, Variable x)
+            {
+                // Try to integrate u
+                var integralOfU = Integration.ComputeIndefiniteIntegral(u, x, false);
+                if (integralOfU is null) return null;
+
+                // Differentiate v
+                var derivativeOfV = v.Differentiate(x).InnerSimplified;
+                if (derivativeOfV is Providedf(var inner, _)) derivativeOfV = inner; // TODO: signularities ignored but not handled properly
+                if (derivativeOfV == Integer.Zero)
+                    return v * integralOfU; // If v is constant, we're done
+
+                // Try to integrate the remaining term: v' · ∫u dx
+                var remaining = (derivativeOfV * integralOfU).Simplify(1);
+                if (remaining is Providedf(var inner_, _)) remaining = inner_; // TODO: signularities ignored but not handled properly
+                var remainingIntegral = Integration.ComputeIndefiniteIntegral(remaining, x, false);
+                if (remainingIntegral is null) return null;
+
+                return v * integralOfU - remainingIntegral;
             }
 
             if (expr is Entity.Mulf(var f, var g))
             {
-                if (MathS.TryPolynomial(f, x, out var fPoly))
-                {
-                    return IntegrateByParts(fPoly, g, x);
-                }
-                if (MathS.TryPolynomial(g, x, out var gPoly))
-                {
-                    return IntegrateByParts(gPoly, f, x);
-                }
-                else return null;
+                // Case 1: One term is polynomial - use recursive polynomial integration by parts
+                if (MathS.TryPolynomial(f, x, out var fPoly)) return IntegrateByPartsPolynomial(fPoly, g, x);
+                if (MathS.TryPolynomial(g, x, out var gPoly)) return IntegrateByPartsPolynomial(gPoly, f, x);
+
+                // Case 2: Neither is polynomial - try single-step integration by parts
+                // This handles cases like ln(abs(x)) × ln(abs(x))
+                // Try both orderings: f as v, g as u OR g as v, f as u
+                if (TryIntegrateByPartsOnce(f, g, x) is { } result1) return result1;
+                if (TryIntegrateByPartsOnce(g, f, x) is { } result2) return result2;
             }
-            else return null;
+
+            // Special case for powers of integrable functions, try integration by parts on base × base
+            // e.g., ln(abs(x))^2 = ln(abs(x)) × ln(abs(x))
+            if (expr is Powf(var @base, Integer(2)) && TryIntegrateByPartsOnce(@base, @base, x) is { } result) return result;
+
+            return null;
         }
 
         internal static Entity? SolveLogarithmic(Entity expr, Entity.Variable x) => expr switch
@@ -125,7 +155,7 @@ namespace AngouriMath.Functions.Algebra
                 // Try to divide expr by duDx and check if result is independent of x
                 // Replace all occurrences of u's expression with a temporary variable
                 var integrandInU = (expr / duDx).Substitute(u, uSub).Simplify(1);
-                if (integrandInU is Providedf(var innerExpr, _)) integrandInU = innerExpr; // ignore singularities
+                if (integrandInU is Providedf(var innerExpr, _)) integrandInU = innerExpr; // TODO: singularities ignored but not handled properly
 
                 // If the result doesn't contain x anymore, we found a valid substitution
                 // and we can integrate with respect to u (treating u as a variable)

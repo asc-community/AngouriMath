@@ -134,7 +134,7 @@ namespace AngouriMath.Tests.Calculus
         {
             Entity func = "abs(x + 2)";
             var derived = func.Differentiate("x");
-            Assert.Equal(MathS.Signum("x + 2").Simplify(), derived.Simplify());
+            Assert.Equal(MathS.Signum("2 + x").Provided("not 2 + x = 0"), derived.Simplify());
         }
 
         [Fact]

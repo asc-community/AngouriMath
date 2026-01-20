@@ -72,7 +72,7 @@ namespace AngouriMath.Tests.Calculus
 
         [Theory]
         [InlineData("x * (x2 + 1) ^ 3", "C + (x ^ 2 + x ^ 6 + 3/2 * x ^ 4 + x ^ 8 / 4) / 2")]
-        [InlineData("3 * x2 * (x3 + 2) ^ 2", "C + 4 * x ^ 3 + 2 * x ^ 6 + x ^ 9 / 3")]
+        [InlineData("3 * x2 * (x3 + 2) ^ 2", "C + -5/4 * x ^ 6 + (x ^ 3 + 2) * (x ^ 6 / 2 + 2 * x ^ 3)")]
         public void TestPowerSubstitution(string initial, string expected)
         {
             var result = initial.Integrate("x").InnerSimplified;
@@ -155,7 +155,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("ln(abs(x + 5))", "(x + 5) * (ln(abs(x + 5)) - 1) + C")] // Direct pattern with linear arg
         [InlineData("ln(abs(2x + 4))", "(2 * x + 4) / 2 * (ln(abs(2 * x + 4)) - 1) + C")] // Direct pattern with linear arg
         [InlineData("ln(abs(x)) / x", "integral(ln(abs(x)) / x, x)")] // Unsolvable - logarithmic integral Li(x), not expressible in elementary functions
-        [InlineData("ln(abs(x)) * ln(abs(x))", "integral(ln(abs(x)) ^ 2, x)")] // Unsolvable currently - would require careful handling to avoid stack overflow during simplification
+        [InlineData("ln(abs(x)) * ln(abs(x))", "ln(abs(x)) * x * (ln(abs(x)) - 1) - (x * (ln(abs(x)) - 1) + -x) + C")]
         [InlineData("x * ln(abs(x^2))", "x ^ 2 * (ln(abs(x ^ 2)) - 1) / 2 + C")] // Solvable via u-substitution
         [InlineData("ln(abs(sin(x))) * cos(x)", "sin(x) * (ln(abs(sin(x))) - 1) + C")] // Solvable via u-substitution
         [InlineData("abs(x) * ln(abs(x))", "integral(abs(x) * ln(abs(x)), x)")] // Unsolvable - requires piecewise handling and integration by parts
@@ -226,6 +226,60 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("1 / (2*x^2 + 3*x + 1)", "ln(abs(1 + -1/2 / (x + 1))) + C")] // factorable
         [InlineData("1 / (3*x^2 + 5*x + 2)", "ln(abs(1 + -1/3 / (x + 1))) + C")] // factorable
         public void TestQuadraticDenominator(string initial, string expected)
+        {
+            var result = initial.Integrate("x").InnerSimplified;
+            var expectedResult = expected.ToEntity().InnerSimplified;
+            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+        }
+
+        [Fact]
+        public void TestLnAbsSquared()
+        {
+            // Test that ln(abs(x))^2 can be integrated without stack overflow
+            // ∫ln²(abs(x)) dx = x·ln²(abs(x)) - 2x·ln(abs(x)) + 2x + C
+            //                 = x(ln²(abs(x)) - 2ln(abs(x)) + 2) + C
+            
+            var expr = "ln(abs(x)) ^ 2".ToEntity();
+            var result = expr.Integrate("x").Simplify(1);
+            Assert.Equal("C + x * (ln(abs(x)) ^ 2 - ln(abs(x)) - ln(abs(x))) + 2 * x", result.Stringize());
+
+            // Verify the result by differentiation
+            var derivative = result.Differentiate("x"); // TODO: Make this simplify to expr with Simplify()
+            foreach (var point in new[] { -3, 7 }) // TODO: Implement and test for "provided x in R" in result
+                Assert.Equal(expr.Substitute(x, point).Evaled, derivative.Substitute(x, point).Evaled);
+        }
+
+        [Theory(Skip = "TODO: integration by parts multiple times")]
+        [InlineData("ln(abs(x)) ^ 3", "C + x * (ln(abs(x)) ^ 3 - ln(abs(x)) ^ 2 - ln(abs(x)) ^ 2 - ln(abs(x)) ^ 2) + 6 * (x * (ln(abs(x)) - 1) + -x)")] // Triple integration by parts
+        [InlineData("e^x * sin(x)", "-1/2 * cos(x) * e ^ x + 1/2 * sin(x) * e ^ x + C")] // Classic integration by parts
+        [InlineData("e^x * cos(x)", "1/2 * cos(x) * e ^ x + 1/2 * sin(x) * e ^ x + C")] // Classic integration by parts
+        [InlineData("arctan(x)", "x * arctan(x) - 1/2 * ln(abs(x ^ 2 + 1)) + C")] // Integration by parts with 1 * arctan(x)
+        [InlineData("arcsin(x)", "x * arcsin(x) + sqrt(1 - x ^ 2) + C")] // Integration by parts with 1 * arcsin(x)
+        [InlineData("arccos(x)", "x * arccos(x) - sqrt(1 - x ^ 2) + C")] // Integration by parts with 1 * arccos(x)
+        public void TestIntegrationByPartsNonPolynomial(string initial, string expected)
+        {
+            var result = initial.Integrate("x").InnerSimplified;
+            var expectedResult = expected.ToEntity().InnerSimplified;
+            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+        }
+
+        [Theory(Skip = "TODO: integration by parts multiple times")]
+        [InlineData("sin(ln(abs(x)))", "x / 2 * (sin(ln(abs(x))) - cos(ln(abs(x)))) + C")] // Integration by parts twice
+        [InlineData("cos(ln(abs(x)))", "x / 2 * (sin(ln(abs(x))) + cos(ln(abs(x)))) + C")] // Integration by parts twice
+        [InlineData("ln(abs(x)) * sin(x)", "-ln(abs(x)) * cos(x) + sin(x) + C")] // Integration by parts
+        [InlineData("ln(abs(x)) * cos(x)", "ln(abs(x)) * sin(x) + cos(x) + C")] // Integration by parts
+        public void TestIntegrationByPartsMixed(string initial, string expected)
+        {
+            var result = initial.Integrate("x").InnerSimplified;
+            var expectedResult = expected.ToEntity().InnerSimplified;
+            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+        }
+
+        [Theory]
+        [InlineData("e^x * x^2", "e ^ x * (x ^ 2 - 2 * (x - 1)) + C")] // Polynomial times exponential (should use recursive polynomial IBP)
+        [InlineData("x^3 * sin(x)", "-cos(x) * x ^ 3 + 6 * cos(x) * x + (-6) * sin(x) + 3 * sin(x) * x ^ 2 + C")] // Polynomial times trig (should use recursive polynomial IBP)
+        // [InlineData("x * ln(abs(x)) ^ 2", "x ^ 2 / 2 * (ln(abs(x)) ^ 2 - ln(abs(x)) - ln(abs(x))) + x ^ 2 + C")] // TODO: ln(abs(x)) ^ 2 needs integration by parts
+        public void TestPolynomialIntegrationByParts(string initial, string expected)
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;

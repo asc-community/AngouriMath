@@ -47,30 +47,16 @@ namespace AngouriMath.Functions.Algebra
     internal static partial class Integration
     {
         /// <summary>Does not add the constant of integration because this is called recursively.</summary>
-        internal static Entity? ComputeIndefiniteIntegral(Entity expr, Entity.Variable x)
+        internal static Entity? ComputeIndefiniteIntegral(Entity expr, Entity.Variable x, bool integrateByParts = true)
         {
             if (!expr.ContainsNode(x)) return expr * x; // base case, handle here
-
-            Entity? answer;
-
-            answer = IntegralPatterns.TryStandardIntegrals(expr, x);
-            if (answer is { }) return answer;
-
-            answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x);
-            if (answer is { }) return answer;
-
-            answer = IndefiniteIntegralSolver.SolveLogarithmic(expr, x);
-            if (answer is { }) return answer;
-
-            answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x);
-            if (answer is { }) return answer;
-
-            answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x);
-            if (answer is { }) return answer;
-
-            answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x); // placed last because this may expand to too many terms
-            if (answer is { }) return answer;
-
+            if ((IntegralPatterns.TryStandardIntegrals(expr, x)) is { } answer) return answer;
+            if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x)) is { }) return answer;
+            if ((answer = IndefiniteIntegralSolver.SolveLogarithmic(expr, x)) is { }) return answer;
+            if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x)) is { }) return answer;
+            if (integrateByParts && (answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x)) is { }) return answer;
+            // this may expand to too many terms
+            if ((answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { }) return answer;
             return null;
         }
         /// <summary>
