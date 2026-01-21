@@ -114,31 +114,23 @@ Sets
 
 set_operator_intersection returns[Entity value]
     : left = sum_expression { $value = $left.value; }
-    (
-    'intersect' right = sum_expression { $value = $value.Intersect($right.value); } |
-    '/\\' right = sum_expression { $value = $value.Intersect($right.value); }
+    ( 'intersect' right = sum_expression { $value = $value.Intersect($right.value); }
+    | '/\\' right = sum_expression { $value = $value.Intersect($right.value); }
     )*
     ;
 
-set_operator_union returns[Entity value]
+set_operator_union_setsubtraction returns[Entity value]
     : left = set_operator_intersection { $value = $left.value; }
-    (
-    'unite' right = set_operator_intersection { $value = $value.Unite($right.value); } |
-    '\\/' right = set_operator_intersection { $value = $value.Unite($right.value); }
-    )*
-    ;
-
-set_operator_setsubtraction returns[Entity value]
-    : left = set_operator_union { $value = $left.value; }
-    (
-    'setsubtract' right = set_operator_union { $value = $value.SetSubtract($right.value); } |
-    '\\' right = set_operator_union { $value = $value.SetSubtract($right.value); }
+    ( 'unite' right = set_operator_intersection { $value = $value.Unite($right.value); }
+    | '\\/' right = set_operator_intersection { $value = $value.Unite($right.value); }
+    | 'setsubtract' right = set_operator_intersection { $value = $value.SetSubtract($right.value); }
+    | '\\' right = set_operator_intersection { $value = $value.SetSubtract($right.value); }
     )*
     ;
 
 in_operator returns[Entity value]
-    : m1 = set_operator_setsubtraction { $value = $m1.value; }
-    ('in' m2 = set_operator_setsubtraction { $value = $value.In($m2.value); })*
+    : m1 = set_operator_union_setsubtraction { $value = $m1.value; }
+    ('in' m2 = set_operator_union_setsubtraction { $value = $value.In($m2.value); })*
     ;
 
 
@@ -148,31 +140,39 @@ Equality/inequality nodes
 
 */
 
-inequality_expression returns[Entity value]
-   : m1 = in_operator { $value = $m1.value; }
+comparison_expression returns[Entity value]
+   @init { List<Entity> terms = []; List<string> operators = []; }
+   : m1 = in_operator { terms.Add($m1.value); }
    (
-    '>=' m2 = in_operator { $value = $value >= $m2.value; } | 
-    '<=' m2 = in_operator { $value = $value <= $m2.value; } |
-    '>' m2 = in_operator { $value = $value > $m2.value; } |
-    '<' m2 = in_operator { $value = $value < $m2.value; } |
-    'equalizes' m2 = in_operator { $value = MathS.Equality($value, $m2.value); })*
+    ('>=' { operators.Add(">="); } | 
+     '<=' { operators.Add("<="); } |
+     '>'  { operators.Add(">");  } |
+     '<'  { operators.Add("<");  } |
+     '='  { operators.Add("=");  } |
+     '<>' { operators.Add("<>"); })
+    m2 = in_operator { terms.Add($m2.value); }
+   )*
+   {
+       if (terms.Count == 1)
+           $value = terms[0];
+       else
+           // Create chain: a < b = c < d becomes (a < b) and (b = c) and (c < d)
+           for (int i = 0; i < operators.Count; i++)
+           {
+               var connective = operators[i] switch
+               {   // Directly construct the nodes instead of using convenience methods to avoid built-in chained comparisons
+                   ">=" => new GreaterOrEqualf(terms[i], terms[i + 1]),
+                   "<=" => new LessOrEqualf(terms[i], terms[i + 1]),
+                   ">"  => new Greaterf(terms[i], terms[i + 1]),
+                   "<"  => new Lessf(terms[i], terms[i + 1]),
+                   "="  => new Equalsf(terms[i], terms[i + 1]),
+                   "<>" => !new Equalsf(terms[i], terms[i + 1]),
+                   _ => throw new AngouriBugException($"Unknown operator in chained comparison: {operators[i]}")
+               };
+               if (i == 0) $value = connective; else $value &= connective;
+           }
+   }
    ;
-
-terms_list returns[List<Entity> terms]
-    @init { $terms = new(); }
-    : ('=' term = inequality_expression { $terms.Add($term.value); })+
-    ;
-
-equality_expression returns[Entity value]
-    : expr = inequality_expression { $value = $expr.value; } (terms_list 
-    {
-        var list = $terms_list.terms.Prepend($value).ToArray();
-        List<Entity> eqTerms = new();
-        for (int i = 0; i < list.Length - 1; i++)
-            eqTerms.Add(list[i].Equalizes(list[i + 1]));
-        $value = eqTerms.Aggregate((eq1, eq2) => eq1 & eq2);
-    })?
-    ;
 
 /*
 
@@ -181,9 +181,9 @@ Boolean nodes
 */
 
 negate_expression returns[Entity value]
-    : 'not' op = equality_expression { $value = !$op.value; }
+    : 'not' op = comparison_expression { $value = !$op.value; }
     | 'not' opn = negate_expression { $value = !$opn.value; }
-    | op = equality_expression { $value = $op.value; }
+    | op = comparison_expression { $value = $op.value; }
     ;
 
 and_expression returns[Entity value]
@@ -200,8 +200,8 @@ xor_expression returns[Entity value]
 
 or_expression returns[Entity value]
     : m1 = xor_expression { $value = $m1.value; }
-    ('or' m2 = xor_expression { $value = $value | $m2.value; } |
-     '|' m2 = xor_expression { $value = $value | $m2.value; })*
+    ( 'or' m2 = xor_expression { $value = $value | $m2.value; }
+    | '|' m2 = xor_expression { $value = $value | $m2.value; })*
     ;
 
 implies_expression returns[Entity value]
@@ -218,7 +218,7 @@ Keyword nodes
 
 provided_expression returns[Entity value]
     : expr = implies_expression { $value = $expr.value; }
-    ('provided' pred = implies_expression { $value = $value.Provided($pred.value); })*
+    ('provided' pred = provided_expression { $value = $value.Provided($pred.value); })?
     ;
 
 /*

@@ -45,7 +45,7 @@ namespace AngouriMath.Tests.Common
         [InlineData("(a provided (b provided c)) + 1 + x + (y provided h)", "(a + 1 + x + y) provided (c and b and h)")]
         [InlineData("a provided 0 = 0", "a")]
         [InlineData("a provided 0 = 1", "NaN")]
-        [InlineData("a provided b provided c provided d", "a provided d and (c and b)")]
+        [InlineData("a provided b provided c provided d", "a provided d and c and b")]
         [InlineData(@"[ { sqrt(3), sqrt(5) }; sqrt(10) ]", @"{ [ sqrt(3); sqrt(10) ], [ sqrt(5); sqrt(10) ] }")]
         [InlineData(@"[ sqrt(3); { sqrt(5), sqrt(10) } ]", @"{ [ sqrt(3); sqrt(5) ], [ sqrt(3); sqrt(10) ] }")]
         [InlineData(@"[ { sqrt(2), sqrt(3) }; { sqrt(5), sqrt(10) } ]", @"{ [ sqrt(2); sqrt(5) ], [ sqrt(3); sqrt(5) ], [ sqrt(2); sqrt(10) ], [ sqrt(3); sqrt(10) ] }")]

@@ -92,9 +92,9 @@ namespace AngouriMath.Functions.Algebra
             
             // Return as piecewise based on a and discriminant
             return MathS.Piecewise([
-                new Entity.Providedf(linearCase, a.Equalizes(0)),
+                new Entity.Providedf(linearCase, a.EqualTo(0)),
                 new Entity.Providedf(arctanCase, discriminant > 0),
-                new Entity.Providedf(perfectSquareCase, discriminant.Equalizes(0)),
+                new Entity.Providedf(perfectSquareCase, discriminant.EqualTo(0)),
                 new Entity.Providedf(lnCase, discriminant < 0)
             ]).InnerSimplified;
         }

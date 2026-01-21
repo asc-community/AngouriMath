@@ -34,7 +34,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("e^e^x", "integral(e ^ e ^ x, x)")] // don't recurse infinitely
         public void TestIndefinite(string initial, string expected)
         {
-            Assert.Equal(MathS.Boolean.True, initial.Integrate("x").Equalizes(expected).Simplify());
+            Assert.Equal(MathS.Boolean.True, initial.Integrate("x").EqualTo(expected).Simplify());
         }
         [Theory]
         [InlineData("2x * e ^ (x2)", "e ^ (x2) + C")]
@@ -45,7 +45,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Theory]
@@ -56,7 +56,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Theory]
@@ -67,7 +67,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Theory]
@@ -77,7 +77,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Theory]
@@ -88,7 +88,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Theory]
@@ -98,7 +98,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Theory]
@@ -108,7 +108,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Theory]
@@ -117,7 +117,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Theory]
@@ -127,7 +127,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Theory]
@@ -144,7 +144,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Theory]
@@ -181,7 +181,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Theory]
@@ -191,7 +191,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").Simplify();
             var expectedResult = expected.ToEntity().Simplify();
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Theory]
@@ -229,7 +229,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Fact]
@@ -260,7 +260,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Theory(Skip = "TODO: integration by parts multiple times")]
@@ -272,7 +272,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         [Theory]
@@ -283,7 +283,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
-            Assert.Equal(MathS.Boolean.True, result.Equalizes(expectedResult).Simplify());
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
         static readonly Entity.Variable x = nameof(x);

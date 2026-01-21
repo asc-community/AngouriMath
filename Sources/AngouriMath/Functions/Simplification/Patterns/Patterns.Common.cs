@@ -166,21 +166,21 @@ namespace AngouriMath.Functions
                 when (var1, any1) == (var1a, any1a) => new Powf(var1, 2) - new Powf(any1, 2),
 
             // a / a
-            Divf(var any1, var any1a) when any1 == any1a => Integer.One.Provided(!any1.Equalizes(Integer.Zero)),
+            Divf(var any1, var any1a) when any1 == any1a => Integer.One.Provided(!any1.EqualTo(Integer.Zero)),
 
             // (a * c) / c
-            Divf(Mulf(var any1, var any2), var any2a) when any2 == any2a => any1.Provided(!any2.Equalizes(Integer.Zero)),
-            Divf(Mulf(var any2, var any1), var any2a) when any2 == any2a => any1.Provided(!any2.Equalizes(Integer.Zero)),
-            Divf(Mulf(var any1, var any2), Mulf(var any2a, var any3)) when any2 == any2a => (any1 / any3).Provided(!any2.Equalizes(Integer.Zero)),
-            Divf(Mulf(var any1, var any2), Mulf(var any3, var any2a)) when any2 == any2a => (any1 / any3).Provided(!any2.Equalizes(Integer.Zero)),
-            Divf(Mulf(var any2, var any1), Mulf(var any2a, var any3)) when any2 == any2a => (any1 / any3).Provided(!any2.Equalizes(Integer.Zero)),
-            Divf(Mulf(var any2, var any1), Mulf(var any3, var any2a)) when any2 == any2a => (any1 / any3).Provided(!any2.Equalizes(Integer.Zero)),
+            Divf(Mulf(var any1, var any2), var any2a) when any2 == any2a => any1.Provided(!any2.EqualTo(Integer.Zero)),
+            Divf(Mulf(var any2, var any1), var any2a) when any2 == any2a => any1.Provided(!any2.EqualTo(Integer.Zero)),
+            Divf(Mulf(var any1, var any2), Mulf(var any2a, var any3)) when any2 == any2a => (any1 / any3).Provided(!any2.EqualTo(Integer.Zero)),
+            Divf(Mulf(var any1, var any2), Mulf(var any3, var any2a)) when any2 == any2a => (any1 / any3).Provided(!any2.EqualTo(Integer.Zero)),
+            Divf(Mulf(var any2, var any1), Mulf(var any2a, var any3)) when any2 == any2a => (any1 / any3).Provided(!any2.EqualTo(Integer.Zero)),
+            Divf(Mulf(var any2, var any1), Mulf(var any3, var any2a)) when any2 == any2a => (any1 / any3).Provided(!any2.EqualTo(Integer.Zero)),
 
             // ({1} - {2}) / ({2} - {1})
-            Divf(Minusf(var any1, var any2), Minusf(var any2a, var any1a) denom) when (any1, any2) == (any1a, any2a) => new Providedf(-1, !denom.Equalizes(0)),
+            Divf(Minusf(var any1, var any2), Minusf(var any2a, var any1a) denom) when (any1, any2) == (any1a, any2a) => new Providedf(-1, !denom.EqualTo(0)),
 
             // ({1} + {2}) / ({2} + {1})
-            Divf(Sumf(var any1, var any2), Sumf(var any2a, var any1a) denom) when (any1, any2) == (any1a, any2a) => new Providedf(1, !denom.Equalizes(0)),
+            Divf(Sumf(var any1, var any2), Sumf(var any2a, var any1a) denom) when (any1, any2) == (any1a, any2a) => new Providedf(1, !denom.EqualTo(0)),
 
             // a / (b * {1})
             Divf(Number const1, Mulf(Number const2, var any1)) => const1 / const2 / any1,
@@ -215,7 +215,7 @@ namespace AngouriMath.Functions
 
             Mulf(Absf(var any1), Absf(var any2)) => new Absf(any1 * any2),
             Divf(Absf(var any1), Absf(var any2)) => new Absf(any1 / any2),
-            Divf(Mulf(Signumf(var any1), Mulf(var any2, var any1a)), Absf(var any1b)) when any1 == any1a && any1a == any1b => any2.Provided(!any1.Equalizes(Integer.Zero)),
+            Divf(Mulf(Signumf(var any1), Mulf(var any2, var any1a)), Absf(var any1b)) when any1 == any1a && any1a == any1b => any2.Provided(!any1.EqualTo(Integer.Zero)),
             Mulf(Signumf(var any1), Absf(var any1a)) when any1 == any1a => any1,
             Mulf(Absf(var any1a), Signumf(var any1)) when any1 == any1a => any1,
 

@@ -82,7 +82,7 @@ namespace AngouriMath
         public partial record Divf
         {
             // Division is undefined when the divisor equals zero
-            private protected override Entity IntrinsicCondition => !Divisor.Equalizes(0);
+            private protected override Entity IntrinsicCondition => !Divisor.EqualTo(0);
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) =>
@@ -106,7 +106,7 @@ namespace AngouriMath
             // - 0^0 is indeterminate
             // - 0^(negative) is undefined (division by zero)
             private protected override Entity IntrinsicCondition => 
-                (!Base.Equalizes(0) | Exponent > 0);
+                (!Base.EqualTo(0) | Exponent > 0);
             
             private static bool TryPower(Matrix m, int exp, out Entity res)
             {
@@ -145,7 +145,7 @@ namespace AngouriMath
                         ? c.IsZero
                           ? throw new AngouriBugException("Should have already been handled by the above case")
                           : 1
-                        : new Providedf(1, !x.Equalizes(0)),
+                        : new Providedf(1, !x.EqualTo(0)),
                     (var n1, Integer(1)) => n1,
                     _ => null
                 },
@@ -159,7 +159,7 @@ namespace AngouriMath
             // - antilogarithm <= 0
             // For complex logarithms, we use the principal branch
             private protected override Entity IntrinsicCondition => 
-                Base > 0 & !Base.Equalizes(1) & Antilogarithm > 0;
+                Base > 0 & !Base.EqualTo(1) & Antilogarithm > 0;
             
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) => 

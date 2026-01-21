@@ -121,8 +121,10 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void TestInequality48() => Assert.Equal(x < y, FromString("x < y"));
         [Fact] public void TestInequality49() => Assert.Equal(x >= y, FromString("x >= y"));
         [Fact] public void TestInequality50() => Assert.Equal(x <= y, FromString("x <= y"));
-        [Fact] public void TestInequality51() => Assert.Equal(x.Equalizes(y), FromString("x = y"));
-        [Fact] public void TestInequality52() => Assert.Equal((x > y).Equalizes(x < y), FromString("x > y = x < y"));
+        [Fact] public void TestInequality51() => Assert.Equal(x.EqualTo(y), FromString("x = y"));
+        [Fact] public void TestInequality52() => Assert.Equal((x > y).EqualTo(x < y), FromString("(x > y) = (x < y)"));
+        [Fact] public void TestInequality53() => Assert.Equal((x > y).Equalizes(x < y), FromString("x > y = (x < y)"));
+        [Fact] public void TestInequality54() => Assert.Equal((x > y).Equalizes(x) < y, FromString("x > y = x < y"));
         [Fact] public void TestInterval1() => Assert.Equal(new Interval(x, true, y, true), FromString("[x; y]"));
         [Fact] public void TestInterval2() => Assert.Equal(new Interval(x, false, y, true), FromString("(x; y]"));
         [Fact] public void TestInterval3() => Assert.Equal(new Interval(x, true, y, false), FromString("[x; y)"));
@@ -141,8 +143,8 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void TestPlusInfinity2() => Assert.Equal(Real.PositiveInfinity + (Entity)2, FromString("+oo + 2"));
         [Fact] public void TestMinusInfinity1() => Assert.Equal(Real.NegativeInfinity, FromString("-oo"));
         [Fact] public void TestMinusInfinity2() => Assert.Equal(Real.NegativeInfinity + (Entity)2, FromString("-oo + 2"));
-        [Fact] public void TestEquality1() => Assert.Equal(x.Equalizes(y) & y.Equalizes(x), FromString("x = y = x"));
-        [Fact] public void TestEquality2() => Assert.Equal(x.Equalizes(y).Equalizes(x), FromString("(x = y) = x"));
+        [Fact] public void TestEquality1() => Assert.Equal(x.EqualTo(y) & y.EqualTo(x), FromString("x = y = x"));
+        [Fact] public void TestEquality2() => Assert.Equal(x.EqualTo(y).EqualTo(x), FromString("(x = y) = x"));
         [Fact] public void TestDerivative2Args1() => Assert.Equal(MathS.Derivative("x + 2", "x"), FromString("derivative(x + 2, x)"));
         [Fact] public void TestIntegral2Args1() => Assert.Equal(MathS.Integral("x + 2", "x"), FromString("integral(x + 2, x)"));
         [Fact] public void TestDerivative2Args2() => Assert.Equal(2 * MathS.Derivative("x + 2", "x"), FromString("2 derivative(x + 2, x)"));
@@ -152,7 +154,8 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void TestArcsec() => Assert.Equal(MathS.Arcsec("x"), FromString("arcsec(x)"));
         [Fact] public void TestArccosec() => Assert.Equal(MathS.Arccosec("x"), FromString("arccsc(x)"));
         [Fact] public void TestProvided1() => Assert.Equal(MathS.Provided("a", "b"), FromString("a provided b"));
-        [Fact] public void TestProvided2() => Assert.Equal(MathS.Provided(MathS.Provided("a", "b"), "c"), FromString("a provided b provided c"));
+        [Fact] public void TestProvided2() => Assert.Equal(MathS.Provided("a", MathS.Provided("b", "c")), FromString("a provided b provided c"));
+        [Fact] public void TestProvided3() => Assert.Equal(MathS.Provided(MathS.Provided("a", "b"), "c"), FromString("(a provided b) provided c"));
 
         [Theory]
         [InlineData("sh", "Sinh")]

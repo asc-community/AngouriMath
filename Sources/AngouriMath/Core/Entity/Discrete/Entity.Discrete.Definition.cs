@@ -70,8 +70,39 @@ namespace AngouriMath
         /// <returns>A node</returns>
         public Entity Implies(Entity conclusion) => new Impliesf(this, conclusion);
 
+        /// <summary>
+        /// Creates an equality comparison that may chain with previous comparisons.
+        /// When used after another comparison (e.g., a &lt; b), this creates a chain: a &lt; b = c.
+        /// When used on a non-comparison expression, this creates a simple equality: x = y.
+        /// For explicit non-chained equality comparisons, use <see cref="EqualTo"/>.
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// // Chained: creates "a &lt; b and b = c"
+        /// var chained = (a &lt; b).Equalizes(c);
+        /// 
+        /// // Non-chained: creates "(a &lt; b) = (c &lt; d)"  
+        /// var direct = (a &lt; b).EqualTo(c &lt; d);
+        /// </code>
+        /// </example>
         /// <returns>A node</returns>
         public Entity Equalizes(Entity another) => HangOperator(this, another, (a, b) => new Equalsf(a, b));
+        /// <summary>
+        /// Creates an equality comparison without chaining.
+        /// Use this to directly compare two expressions, e.g., (a &lt; b).EqualTo(c &lt; d) creates (a &lt; b) = (c &lt; d).
+        /// Unlike <see cref="Equalizes"/>, this will never chain with previous comparisons.
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// // Chained: creates "a &lt; b and b = c"
+        /// var chained = (a &lt; b).Equalizes(c);
+        /// 
+        /// // Non-chained: creates "(a &lt; b) = (c &lt; d)"  
+        /// var direct = (a &lt; b).EqualTo(c &lt; d);
+        /// </code>
+        /// </example>
+        /// <returns>A node</returns>
+        public Entity EqualTo(Entity another) => new Equalsf(this, another);
 
         /// <returns>A node</returns>
         public static Entity operator >(Entity a, Entity b) => HangOperator(a, b, (a, b) => new Greaterf(a, b));

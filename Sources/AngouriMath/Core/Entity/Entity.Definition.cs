@@ -22,11 +22,11 @@ namespace AngouriMath.Core
 
         BooleanOperation = 0x1000,
 
-        Impliciation = 10 | BooleanOperation,
+        Implication  = 10 | BooleanOperation,
         Disjunction  = 30 | BooleanOperation,
-        XDisjunction = 30 | BooleanOperation,
-        Conjunction  = 50 | BooleanOperation,
-        Negation     = 70 | BooleanOperation,
+        XDisjunction = 50 | BooleanOperation,
+        Conjunction  = 70 | BooleanOperation,
+        Negation     = 90 | BooleanOperation,
 
         EqualitySignsOperation = 0x2000,
 
@@ -39,8 +39,8 @@ namespace AngouriMath.Core
         SetOperation = 0x3000,
 
         ContainsIn   = 10 | SetOperation,
+        Union        = 20 | SetOperation,
         SetMinus     = 20 | SetOperation,
-        Union        = 30 | SetOperation,
         Intersection = 40 | SetOperation,
 
         NumericalOperation = 0x4000,

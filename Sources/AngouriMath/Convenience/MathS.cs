@@ -2380,7 +2380,7 @@ namespace AngouriMath
         /// Unhandled exception. AngouriMath.Core.Exceptions.CannotEvalException
         /// </code>
         /// </example>
-        public static Entity Equality(Entity a, Entity b) => a.Equalizes(b);
+        public static Entity Equality(Entity a, Entity b) => a.EqualTo(b);
 
         /// <param name="a">Left argument node of which the greater than node will be taken</param>
         /// <param name="b">Right argument node of which the greater than node function will be taken</param>
