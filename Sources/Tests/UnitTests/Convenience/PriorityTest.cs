@@ -46,6 +46,9 @@ namespace AngouriMath.Tests.Common
         [InlineData("a provided b + c > 0", "a provided (b + c > 0)")]
         [InlineData("a + b provided b + c > 0", "(a + b) provided (b + c > 0)")]
         [InlineData("a + b provided b + c > 0 provided d", "(a + b) provided (((b + c) > 0) provided d)")]
+        [InlineData("not a = b", "a <> b")]
+        [InlineData("a = b and not b = c and c < d", "a = b <> c < d")]
+        [InlineData("not a = b and not b = c", "a <> b <> c")]
         public void Test(string normalizedForm, string alternateForm)
         {
             Assert.Equal(alternateForm.ToEntity(), normalizedForm.ToEntity());
