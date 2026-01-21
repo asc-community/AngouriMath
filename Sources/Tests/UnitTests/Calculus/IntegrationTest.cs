@@ -15,26 +15,27 @@ namespace AngouriMath.Tests.Calculus
     {
         // TODO: add more tests
         [Theory]
-        [InlineData("2x", "x2 + C")]
-        [InlineData("x2", "(1/3) * x3 + C")]
-        [InlineData("x2 + x", "(1/3) * x3 + (1/2) * x2 + C")]
-        [InlineData("x2 - x", "1/3 * x ^ 3 - 1/2 * x ^ 2 + C")]
-        [InlineData("a / x", "ln(abs(x)) * a + C")]
+        [InlineData("2x", "C + x ^ 2")]
+        [InlineData("x2", "x ^ 3 / 3 + C")]
+        [InlineData("x2 + x", "x ^ 3 / 3 + x ^ 2 / 2 + C")]
+        [InlineData("x2 - x", "x ^ 3 / 3 - x ^ 2 / 2 + C")]
+        [InlineData("a / x", "a * ln(abs(x)) + C")]
         [InlineData("x cos(x)", "cos(x) + sin(x) * x + C")]
         [InlineData("sin(x)cos(x)", "sin(x) ^ 2 / 2 + C")]
         [InlineData("ln(x)", "x * (ln(x) - 1) + C")]
-        [InlineData("log(a, x)", "x * (ln(x) - 1) / ln(a) + C")]
-        [InlineData("e ^ x", "e ^ x + C")]
+        [InlineData("log(a, x)", "C + x * (ln(x) - 1) / ln(a)")]
+        [InlineData("e ^ x", "C + e ^ x")]
         [InlineData("a ^ x", "a ^ x / ln(a) + C")]
-        [InlineData("sec(a x + b)", "1/2 * ln((1 + sin(a x + b)) / (1 - sin(a x + b))) / a + C")]
-        [InlineData("csc(a x + b)", "ln(abs(tan(1/2(a x + b)))) / a + C")]
-        [InlineData("C", "C x + C_1")]
-        [InlineData("C C_1", "C C_1 x + C_2")]
+        [InlineData("sec(a x + b)", "1/2 * ln((1 + sin(a * x + b)) / (1 - sin(a * x + b))) / a + C")]
+        [InlineData("csc(a x + b)", "ln(abs(tan((a * x + b) / 2))) / a + C")]
+        [InlineData("C", "C_1 + C * x")]
+        [InlineData("C C_1", "C_2 + C * C_1 * x")]
         [InlineData("integral(x, x)", "C_1 + C * x + x ^ 3 / 6")]
         [InlineData("e^e^x", "integral(e ^ e ^ x, x)")] // don't recurse infinitely
         public void TestIndefinite(string initial, string expected)
         {
             Assert.Equal(MathS.Boolean.True, initial.Integrate("x").EqualTo(expected).Simplify());
+            Assert.Equal(expected, MathS.Integral(initial, "x").Simplify().Stringize());
         }
         [Theory]
         [InlineData("2x * e ^ (x2)", "e ^ (x2) + C")]
@@ -200,9 +201,11 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sin(x)", "-1", "1", "0")]
         [InlineData("cos(x)", "0", "pi", "0")]
         [InlineData("1/(x^2+1)", "-oo", "+oo", "pi")]
+        [InlineData("e^e^x", "0", "1", "integral(e ^ e ^ x, x, 0, 1)")] // don't recurse infinitely
         public void TestDefinite(string initial, string from, string to, string expected)
         {
             Assert.Equal(expected, initial.Integrate("x", from, to).Simplify().Stringize());
+            Assert.Equal(expected, MathS.Integral(initial, "x", from, to).Simplify().Stringize());
         }
 
         [Theory] // TODO: Some of these results can be further simplified, e.g. (4 + 2 * x) / 2
