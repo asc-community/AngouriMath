@@ -32,7 +32,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                             // If base is definitely 0, keep original form (will likely fail to solve anyway)
                             Complex { IsZero: true } => e,
                             // For symbolic bases that might be zero, add condition
-                            _ => (NonZeroPow(@base, b) * NonZeroPow(NonZeroPow(MathS.e, x), MathS.Ln(@base) * a)).Provided(!@base.Equalizes(0))
+                            _ => (NonZeroPow(@base, b) * NonZeroPow(NonZeroPow(MathS.e, x), MathS.Ln(@base) * a)).Provided(!@base.EqualTo(0))
                         },
                 _ => e,
             };

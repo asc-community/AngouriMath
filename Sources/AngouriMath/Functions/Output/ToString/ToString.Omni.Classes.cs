@@ -127,7 +127,7 @@ namespace AngouriMath
         partial record Providedf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $@"{Expression.Stringize()} provided {Predicate.Stringize()}";
+            public override string Stringize() => $@"{Expression.Stringize(Expression.Priority <= Priority.Provided)} provided {Predicate.Stringize(Predicate.Priority < Priority.Provided)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }

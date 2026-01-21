@@ -121,29 +121,17 @@ internal partial class AngouriMathBaseListener : IAngouriMathListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitSet_operator_intersection([NotNull] AngouriMathParser.Set_operator_intersectionContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngouriMathParser.set_operator_union"/>.
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.set_operator_union_setsubtraction"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterSet_operator_union([NotNull] AngouriMathParser.Set_operator_unionContext context) { }
+	public virtual void EnterSet_operator_union_setsubtraction([NotNull] AngouriMathParser.Set_operator_union_setsubtractionContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngouriMathParser.set_operator_union"/>.
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.set_operator_union_setsubtraction"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitSet_operator_union([NotNull] AngouriMathParser.Set_operator_unionContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngouriMathParser.set_operator_setsubtraction"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterSet_operator_setsubtraction([NotNull] AngouriMathParser.Set_operator_setsubtractionContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngouriMathParser.set_operator_setsubtraction"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitSet_operator_setsubtraction([NotNull] AngouriMathParser.Set_operator_setsubtractionContext context) { }
+	public virtual void ExitSet_operator_union_setsubtraction([NotNull] AngouriMathParser.Set_operator_union_setsubtractionContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.in_operator"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -157,41 +145,17 @@ internal partial class AngouriMathBaseListener : IAngouriMathListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitIn_operator([NotNull] AngouriMathParser.In_operatorContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngouriMathParser.inequality_expression"/>.
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.comparison_expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterInequality_expression([NotNull] AngouriMathParser.Inequality_expressionContext context) { }
+	public virtual void EnterComparison_expression([NotNull] AngouriMathParser.Comparison_expressionContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngouriMathParser.inequality_expression"/>.
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.comparison_expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitInequality_expression([NotNull] AngouriMathParser.Inequality_expressionContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngouriMathParser.terms_list"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterTerms_list([NotNull] AngouriMathParser.Terms_listContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngouriMathParser.terms_list"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitTerms_list([NotNull] AngouriMathParser.Terms_listContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngouriMathParser.equality_expression"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterEquality_expression([NotNull] AngouriMathParser.Equality_expressionContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngouriMathParser.equality_expression"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitEquality_expression([NotNull] AngouriMathParser.Equality_expressionContext context) { }
+	public virtual void ExitComparison_expression([NotNull] AngouriMathParser.Comparison_expressionContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.negate_expression"/>.
 	/// <para>The default implementation does nothing.</para>

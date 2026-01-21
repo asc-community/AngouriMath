@@ -70,7 +70,7 @@ namespace AngouriMath
 
         public partial record Secantf
         {
-            private protected override Entity IntrinsicCondition => !MathS.Cos(Argument).Equalizes(0); // Sec(x) = 1/cos(x) is undefined when cos(x) = 0
+            private protected override Entity IntrinsicCondition => !MathS.Cos(Argument).EqualTo(0); // Sec(x) = 1/cos(x) is undefined when cos(x) = 0
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) =>
                 InnerEvalZeroedSinCosConditions.IsCosDefinitelyZero(Argument.InnerSimplified) ? MathS.NaN
@@ -90,7 +90,7 @@ namespace AngouriMath
 
         public partial record Cosecantf
         {
-            private protected override Entity IntrinsicCondition => !MathS.Sin(Argument).Equalizes(0); // Csc(x) = 1/sin(x) is undefined when sin(x) = 0
+            private protected override Entity IntrinsicCondition => !MathS.Sin(Argument).EqualTo(0); // Csc(x) = 1/sin(x) is undefined when sin(x) = 0
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) =>
                 InnerEvalZeroedSinCosConditions.IsSinDefinitelyZero(Argument.InnerSimplified) ? MathS.NaN
@@ -113,7 +113,7 @@ namespace AngouriMath
             private protected override Entity IntrinsicCondition =>
                 Codomain < Domain.Complex
                 ? MathS.Abs(Argument) >= 1 // Arcsec is defined for |x| >= 1 for reals
-                : !Argument.Equalizes(0); // Arcsec is undefined at 0 in complex
+                : !Argument.EqualTo(0); // Arcsec is undefined at 0 in complex
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) =>
                 ExpandOnOneArgument(Argument,
@@ -130,7 +130,7 @@ namespace AngouriMath
             private protected override Entity IntrinsicCondition =>
                 Codomain < Domain.Complex
                 ? MathS.Abs(Argument) >= 1 // Arccsc is defined for |x| >= 1 for reals
-                : !Argument.Equalizes(0); // Arccsc is undefined at 0 in complex
+                : !Argument.EqualTo(0); // Arccsc is undefined at 0 in complex
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) =>
                 ExpandOnOneArgument(Argument,
@@ -145,7 +145,7 @@ namespace AngouriMath
         public partial record Tanf
         {
             private protected override Entity IntrinsicCondition =>
-                !MathS.Cos(Argument).Equalizes(0); // Tan(x) = sin(x)/cos(x) is undefined when cos(x) = 0
+                !MathS.Cos(Argument).EqualTo(0); // Tan(x) = sin(x)/cos(x) is undefined when cos(x) = 0
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) =>
@@ -164,7 +164,7 @@ namespace AngouriMath
         
         public partial record Cotanf
         {
-            private protected override Entity IntrinsicCondition => !MathS.Sin(Argument).Equalizes(0); // Cotan(x) = cos(x)/sin(x) is undefined when sin(x) = 0
+            private protected override Entity IntrinsicCondition => !MathS.Sin(Argument).EqualTo(0); // Cotan(x) = cos(x)/sin(x) is undefined when sin(x) = 0
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) =>
                 InnerEvalZeroedSinCosConditions.IsSinDefinitelyZero(Argument.InnerSimplified) ? MathS.NaN

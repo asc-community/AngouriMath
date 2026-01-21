@@ -264,7 +264,7 @@ namespace AngouriMath.Tests.Convenience
         public void LimitOneSided3(string sign) =>
             Test($$"""\lim_{x\to \left({a}^{2}\right)!^{{sign}}} \left(x+y\right)""", (Entity)$"limit{(sign == "-" ? "left" : "right")}(x + y, x, (a^2)!)");
         [Fact] public void LimitOfExponential() =>
-            Test(@"\lim_{x\to \infty } {\sin\left(x\right)}^{x} = \infty ", MathS.Limit(MathS.Pow(MathS.Sin(x), x), x, Real.PositiveInfinity).Equalizes(Real.PositiveInfinity));
+            Test(@"\lim_{x\to \infty } {\sin\left(x\right)}^{x} = \infty ", MathS.Limit(MathS.Pow(MathS.Sin(x), x), x, Real.PositiveInfinity).EqualTo(Real.PositiveInfinity));
         [Fact] public void NestedLimitDerivative() =>
             Test(@"\left(\lim_{x\to 0} \frac{\mathrm{d}^{2}}{\mathrm{d}x^{2}}\lim_{y\to \infty } \frac{x}{y}\right) \cdot x", MathS.Limit(MathS.Derivative(MathS.Limit("x / y", "y", Real.PositiveInfinity), x, 2), x, 0) * x);
         [Fact] public void NestedDerivativeIntegral1() =>
@@ -520,7 +520,7 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void LessOrEqual()
             => Test(@"x \leq y", x <= MathS.Var("y"));
         [Fact] public void EqualsOperator()
-            => Test(@"x = y", x.Equalizes(MathS.Var("y")));
+            => Test(@"x = y", x.EqualTo(MathS.Var("y")));
             
         // Set operations
         [Fact] public void SetUnion()
@@ -616,9 +616,9 @@ namespace AngouriMath.Tests.Convenience
             
         // Priority tests for mixed boolean and comparison operations
         [Fact] public void EqualityAndBoolean()
-            => Test(@"x = y \land z = w", x.Equalizes(MathS.Var("y")) & (MathS.Var("z").Equalizes(MathS.Var("w"))));
+            => Test(@"x = y \land z = w", x.EqualTo(MathS.Var("y")) & (MathS.Var("z").EqualTo(MathS.Var("w"))));
         [Fact] public void EqualityOrBoolean()
-            => Test(@"x = y \lor z = w", x.Equalizes(MathS.Var("y")) | (MathS.Var("z").Equalizes(MathS.Var("w"))));
+            => Test(@"x = y \lor z = w", x.EqualTo(MathS.Var("y")) | (MathS.Var("z").EqualTo(MathS.Var("w"))));
         [Fact] public void InequalityChain()
             => Test(@"x < y < z < w", 
                 (x < MathS.Var("y")) & (MathS.Var("y") < MathS.Var("z")) & (MathS.Var("z") < MathS.Var("w")));
@@ -628,18 +628,19 @@ namespace AngouriMath.Tests.Convenience
             => Test(@"\left(x < y\right) < \left(z < w\right)", new Entity.Lessf(x < "y", (Entity)"z" < "w"));
         [Fact] public void EqualityChain()
             => Test(@"x = y = z = w",
-                x.Equalizes(MathS.Var("y")) & (MathS.Var("y").Equalizes(MathS.Var("z"))) & MathS.Var("z").Equalizes(MathS.Var("w")));
+                x.EqualTo(MathS.Var("y")) & (MathS.Var("y").EqualTo(MathS.Var("z"))) & MathS.Var("z").EqualTo(MathS.Var("w")));
         [Fact] public void EqualityChainAlt()
             => Test(@"x = y = z = w", x.Equalizes("y").Equalizes("z").Equalizes("w"));
         [Fact] public void EqualityChainString() => Test(@"x = y = z = w", (Entity)"x=y=z=w");
         [Fact] public void EqualityChainParenthesized()
-            => Test(@"\left(x = y\right) = \left(z = w\right)", new Entity.Equalsf(x.Equalizes("y"), ((Entity)"z").Equalizes("w")));
+            => Test(@"\left(x = y\right) = \left(z = w\right)", x.EqualTo("y").EqualTo(((Entity)"z").EqualTo("w")));
         [Fact] public void EqualityInequalityChain()
             => Test(@"x \geq y = z < w",
-                (x >= MathS.Var("y")) & (MathS.Var("y").Equalizes(MathS.Var("z"))) & (MathS.Var("z") < MathS.Var("w")));
+                (x >= MathS.Var("y")) & (MathS.Var("y").EqualTo(MathS.Var("z"))) & (MathS.Var("z") < MathS.Var("w")));
         [Fact] public void EqualityInequalityChainAlt() => Test(@"x \geq y = z < w", (x >= "y").Equalizes("z") < "w");
-        [Fact] public void EqualityInequalityChainString() => Test(@"x \geq y = z < w", (Entity)"(x>=y=z)<w");
-        [Fact] public void EqualityInequalityChainStringBug() => Test(@"x \geq y = \left(z < w\right)", (Entity)"x>=y=z<w"); // TODO: why does it parse this way? it's supposed to parse like the above test.
+        [Fact] public void EqualityInequalityChainString1() => Test(@"\left(x \geq y = z\right) < w", (Entity)"(x>=y=z)<w");
+        [Fact] public void EqualityInequalityChainString2() => Test(@"x \geq y = \left(z < w\right)", (Entity)"x>=y=(z<w)");
+        [Fact] public void EqualityInequalityChainString3() => Test(@"x \geq y = z < w", (Entity)"x>=y=z<w");
         [Fact] public void EqualityInequalityChainParenthesized() => Test(@"x \geq \left(y = \left(z < w\right)\right)", new Entity.GreaterOrEqualf(x, new Entity.Equalsf("y", (Entity)"z" < "w")));
         [Fact] public void ParenthesizedComparisons()
             => Test(@"\left(x < x\right) \geq \left(x > \left(\left(x = x\right) \leq x\right)\right)",

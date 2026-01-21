@@ -228,10 +228,10 @@ namespace AngouriMath.Functions
         {
             var leftCon = ConditionallyGreater(entity, left);
             if (leftClosed)
-                leftCon |= entity.Equalizes(left);
+                leftCon |= entity.EqualTo(left);
             var rightCon = ConditionallyGreater(right, entity);
             if (rightClosed)
-                rightCon |= entity.Equalizes(right);
+                rightCon |= entity.EqualTo(right);
             return leftCon & rightCon;
         }
 

@@ -22,7 +22,7 @@ namespace AngouriMath.Functions
             SetMinusf(var any1, var any1a) when any1 == any1a => Empty,
             ConditionalSet(var var1, Inf(var var1a, var set)) when var1 == var1a => set,
 
-            Inf(var var1, FiniteSet finite) when finite.Count == 1 => var1.Equalizes(finite.First()),
+            Inf(var var1, FiniteSet finite) when finite.Count == 1 => var1.EqualTo(finite.First()),
             Inf(not Set and not Matrix and var var, Interval(var left, var leftClosed, var right, var rightClosed)) => 
             Simplificator.ParaphraseInterval(var, left, leftClosed, right, rightClosed),
 

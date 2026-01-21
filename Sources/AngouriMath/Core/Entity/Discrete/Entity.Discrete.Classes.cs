@@ -171,7 +171,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Impliesf(Entity Assumption, Entity Conclusion) : Statement, IBinaryNode
         {
-            internal override Priority Priority => Priority.Impliciation;
+            internal override Priority Priority => Priority.Implication;
 
             public Entity NodeFirstChild => Assumption;
 

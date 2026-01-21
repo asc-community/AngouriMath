@@ -313,7 +313,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
-                => MathS.Signum(Argument).Provided(!Argument.Equalizes(Integer.Zero)) * Argument.InnerDifferentiate(variable);
+                => MathS.Signum(Argument).Provided(!Argument.EqualTo(Integer.Zero)) * Argument.InnerDifferentiate(variable);
         }
 
         partial record Providedf
