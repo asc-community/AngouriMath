@@ -314,7 +314,7 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void Provided3()
             => Test(@"a \quad \text{for} \quad b \quad \text{for} \quad c", MathS.Provided(MathS.Provided("a", "b"), "c"));
         [Fact] public void Provided4()
-            => Test(@"\left(a \quad \text{for} \quad b \quad \text{for} \quad \left(c \quad \text{for} \quad d\right)\right) \to \top ", MathS.Provided(MathS.Provided("a", "b"), MathS.Provided("c", "d")).Implies(Entity.Boolean.True));
+            => Test(@"\left(a \quad \text{for} \quad b \quad \text{for} \quad c \quad \text{for} \quad d\right) \to \top ", MathS.Provided(MathS.Provided("a", "b"), MathS.Provided("c", "d")).Implies(Entity.Boolean.True));
         // Juxtaposition tests
         [Fact] public void M1InTheMiddle() => Test(@"x \left(-1\right) \cdot x", (x * (-1)) * x);
         [Fact] public void MultiplyNumberWithPower() => Test(@"2 \cdot {3}^{4}", 2 * ((Entity)3).Pow(4));

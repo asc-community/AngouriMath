@@ -156,6 +156,7 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void TestProvided1() => Assert.Equal(MathS.Provided("a", "b"), FromString("a provided b"));
         [Fact] public void TestProvided2() => Assert.Equal(MathS.Provided("a", MathS.Provided("b", "c")), FromString("a provided b provided c"));
         [Fact] public void TestProvided3() => Assert.Equal(MathS.Provided(MathS.Provided("a", "b"), "c"), FromString("(a provided b) provided c"));
+        [Fact] public void TestProvided4() => Assert.Equal(FromString("a provided (b provided c)").Stringize(), FromString("(a provided b) provided c").Stringize());
 
         [Theory]
         [InlineData("sh", "Sinh")]
