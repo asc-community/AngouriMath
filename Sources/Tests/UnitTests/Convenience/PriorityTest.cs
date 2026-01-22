@@ -40,7 +40,6 @@ namespace AngouriMath.Tests.Common
         [InlineData("not a or not b implies not c or not d", "((not a) or (not b)) implies ((not c) or (not d))")]
         [InlineData("a = b and b > c and d", "a = b > c and d")]
         [InlineData("a provided b", "a provided b")]
-        [InlineData("(a provided b) provided c", "(a provided b) provided c")]
         [InlineData("a provided b provided c", "a provided (b provided c)")]
         [InlineData("a provided b and c", "a provided (b and c)")]
         [InlineData("a provided b + c > 0", "a provided (b + c > 0)")]

@@ -79,13 +79,13 @@ namespace AngouriMath
         partial record Providedf
         {
             /// <inheritdoc/>
-            public override string Latexise() => $@"{Expression.Latexise(Expression.LatexPriority < LatexPriority)} \quad \text{{for}} \quad {Predicate.Latexise(Predicate.LatexPriority <= LatexPriority)}";
+            public override string Latexise() => $@"{Expression.Latexise(Expression.LatexPriority < LatexPriority)} \quad \text{{for}} \quad {Predicate.Latexise(Predicate.LatexPriority < LatexPriority)}";
         }
 
         partial record Piecewise
         {
             /// <inheritdoc/>
-            public override string Latexise() => $@"\begin{{cases}}" +
+            public override string Latexise() => @"\begin{cases}" +
                 string.Join(@"\\",
                 Cases.Select(c =>
                 {

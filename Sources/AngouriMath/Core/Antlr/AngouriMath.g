@@ -1,4 +1,4 @@
-/*
+﻿/*
 
 Remember to run the "antlr_rerun.bat" file located at "Sources/Utils/antlr_rerun.bat" (relative to the repository root)
 every time you modify this file so that the generated source files under the Antlr folder are updated and changes are
@@ -219,6 +219,8 @@ Keyword nodes
 provided_expression returns[Entity value]
     : expr = implies_expression { $value = $expr.value; }
     ('provided' pred = provided_expression { $value = $value.Provided($pred.value); })?
+    // note: even though Provided is associative, we parse it right-to-left matching natural language
+    // "I'll go, provided you go, provided it's sunny" - Natural reading: I'll go ← (you go ← sunny)
     ;
 
 /*
