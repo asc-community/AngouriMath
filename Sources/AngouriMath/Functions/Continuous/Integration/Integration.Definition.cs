@@ -51,9 +51,13 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!expr.ContainsNode(x)) return expr * x; // base case, handle here
             if ((IntegralPatterns.TryStandardIntegrals(expr, x)) is { } answer) return answer;
-            if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x)) is { }) return answer;
-            if ((answer = IndefiniteIntegralSolver.SolveLogarithmic(expr, x)) is { }) return answer;
-            if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x)) is { }) return answer;
+            // The flag has to be handed on. Every one of these recurses, and a solver that
+            // dropped it re-enabled integration by parts one level below the call that
+            // switched it off -- which is a cycle, since by parts calls back into here.
+            // `x * ln(x)` went round it until the stack ran out.
+            if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x, integrateByParts)) is { }) return answer;
+            if ((answer = IndefiniteIntegralSolver.SolveLogarithmic(expr, x, integrateByParts)) is { }) return answer;
+            if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             if (integrateByParts && (answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x)) is { }) return answer;
             // this may expand to too many terms
             if ((answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { }) return answer;

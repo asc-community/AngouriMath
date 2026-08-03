@@ -244,12 +244,23 @@ namespace AngouriMath.Tests.Calculus
             
             var expr = "ln(abs(x)) ^ 2".ToEntity();
             var result = expr.Integrate("x").Simplify(1);
-            Assert.Equal("C + x * (ln(abs(x)) ^ 2 - ln(abs(x)) - ln(abs(x))) + 2 * x", result.Stringize());
+            // (ln|x| - 1)^2 + 1 = ln^2|x| - 2ln|x| + 2, so this is the antiderivative
+            // written above. Term collection used to stop short, leaving the repeated
+            // ln(abs(x)) uncombined and the 2 * x outside the bracket.
+            Assert.Equal("C + ((ln(abs(x)) - 1) ^ 2 + 1) * x", result.Stringize());
 
             // Verify the result by differentiation
             var derivative = result.Differentiate("x"); // TODO: Make this simplify to expr with Simplify()
             foreach (var point in new[] { -3, 7 }) // TODO: Implement and test for "provided x in R" in result
-                Assert.Equal(expr.Substitute(x, point).Evaled, derivative.Substitute(x, point).Evaled);
+            {
+                // Compared as a difference rather than digit for digit: the two are equal
+                // algebraically, but evaluating each to 100 digits separately need not
+                // agree in the last of them, and which form the antiderivative takes is
+                // not what this test is about.
+                var difference = (expr.Substitute(x, point) - derivative.Substitute(x, point)).EvalNumerical();
+                Assert.True(difference.Abs().EDecimal.ToDouble() < 1e-90,
+                    $"at x = {point} the derivative is off by {difference.Stringize()}");
+            }
         }
 
         [Theory(Skip = "TODO: integration by parts multiple times")]

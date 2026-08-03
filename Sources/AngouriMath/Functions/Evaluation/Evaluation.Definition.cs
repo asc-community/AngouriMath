@@ -248,8 +248,10 @@ namespace AngouriMath
         /// </code>
         /// </example>
         public Entity Factorize(int level = 2) => level <= 1
-            ? this.Replace(Patterns.FactorizeRules)
-            : this.Replace(Patterns.FactorizeRules).Factorize(level - 1);
+            // InnerSimplified, so that the factors come back finished: the rules leave
+            // x ^ 1 where they mean x, and sqrt(4) where they mean 2.
+            ? this.Replace(Patterns.FactorizeRules).InnerSimplified
+            : this.Replace(Patterns.FactorizeRules).InnerSimplified.Factorize(level - 1);
 
         /// <summary>
         /// Simplifies an equation ( e.g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x )
