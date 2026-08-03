@@ -23,22 +23,22 @@ namespace AngouriMath.Functions.Algebra
             });
         }
 
-        internal static Entity? SolveAsPolynomialTerm(Entity expr, Entity.Variable x) => expr switch
+        internal static Entity? SolveAsPolynomialTerm(Entity expr, Entity.Variable x, bool integrateByParts = true) => expr switch
         {
             Entity.Mulf(var m1, var m2) =>
                 !m1.ContainsNode(x) ?
-                    Integration.ComputeIndefiniteIntegral(m2, x)?.Pipe(i => m1 * i) :
+                    Integration.ComputeIndefiniteIntegral(m2, x, integrateByParts)?.Pipe(i => m1 * i) :
                 !m2.ContainsNode(x) ?
-                    Integration.ComputeIndefiniteIntegral(m1, x)?.Pipe(i => m2 * i) :
+                    Integration.ComputeIndefiniteIntegral(m1, x, integrateByParts)?.Pipe(i => m2 * i) :
                 null,
 
             Entity.Divf(var div, var over) =>
                 !div.ContainsNode(x) ?
                     over is Entity.Powf(var @base, var power) ?
-                        Integration.ComputeIndefiniteIntegral(MathS.Pow(@base, -power), x)?.Pipe(i => div * i) :
-                        Integration.ComputeIndefiniteIntegral(MathS.Pow(over, -1), x)?.Pipe(i => div * i) :
+                        Integration.ComputeIndefiniteIntegral(MathS.Pow(@base, -power), x, integrateByParts)?.Pipe(i => div * i) :
+                        Integration.ComputeIndefiniteIntegral(MathS.Pow(over, -1), x, integrateByParts)?.Pipe(i => div * i) :
                 !over.ContainsNode(x) ?
-                    Integration.ComputeIndefiniteIntegral(div, x)?.Pipe(i => i / over) :
+                    Integration.ComputeIndefiniteIntegral(div, x, integrateByParts)?.Pipe(i => i / over) :
                 null,
 
             Entity.Powf(var @base, var power) =>
@@ -95,6 +95,18 @@ namespace AngouriMath.Functions.Algebra
 
             if (expr is Entity.Mulf(var f, var g))
             {
+                // Case 0: a logarithm times a polynomial. Only one of the two orders
+                // terminates. Differentiating the polynomial, which is what Case 1 does,
+                // leaves the logarithm to be integrated, and the antiderivative of ln(x)
+                // holds an x*ln(x) that puts the original integral back in front of us --
+                // that is how integral(x * ln(x), x) recursed until the stack ran out.
+                // Differentiating the logarithm instead turns it into 1/x, which cancels
+                // against the integrated polynomial and ends. (The L-before-A of LIATE.)
+                if (f is Logf && MathS.TryPolynomial(g, x, out _)
+                    && TryIntegrateByPartsOnce(f, g, x) is { } logFirstF) return logFirstF;
+                if (g is Logf && MathS.TryPolynomial(f, x, out _)
+                    && TryIntegrateByPartsOnce(g, f, x) is { } logFirstG) return logFirstG;
+
                 // Case 1: One term is polynomial - use recursive polynomial integration by parts
                 if (MathS.TryPolynomial(f, x, out var fPoly)) return IntegrateByPartsPolynomial(fPoly, g, x);
                 if (MathS.TryPolynomial(g, x, out var gPoly)) return IntegrateByPartsPolynomial(gPoly, f, x);
@@ -113,23 +125,23 @@ namespace AngouriMath.Functions.Algebra
             return null;
         }
 
-        internal static Entity? SolveLogarithmic(Entity expr, Entity.Variable x) => expr switch
+        internal static Entity? SolveLogarithmic(Entity expr, Entity.Variable x, bool integrateByParts = true) => expr switch
         {
             Entity.Logf(var @base, var arg) =>
                 @base.ContainsNode(x) ?
-                    Integration.ComputeIndefiniteIntegral(MathS.Ln(arg) / MathS.Ln(@base), x) :
+                    Integration.ComputeIndefiniteIntegral(MathS.Ln(arg) / MathS.Ln(@base), x, integrateByParts) :
                 arg is Entity.Powf(var y, var pow) ? // log(b, y^p) = ln(y^p) / ln(b) = ln(p) / ln(b) * ln(y)
-                    Integration.ComputeIndefiniteIntegral(pow / MathS.Ln(@base) * MathS.Ln(y), x) :
+                    Integration.ComputeIndefiniteIntegral(pow / MathS.Ln(@base) * MathS.Ln(y), x, integrateByParts) :
                     null,
 
             _ => null
         };
 
-        internal static Entity? SolveExponential(Entity expr, Entity.Variable x) => expr switch
+        internal static Entity? SolveExponential(Entity expr, Entity.Variable x, bool integrateByParts = true) => expr switch
         {
             Entity.Powf(var @base, var pow) =>
                 @base.ContainsNode(x) ?
-                    Integration.ComputeIndefiniteIntegral(MathS.Pow(MathS.e, MathS.Ln(@base) * pow), x) :
+                    Integration.ComputeIndefiniteIntegral(MathS.Pow(MathS.e, MathS.Ln(@base) * pow), x, integrateByParts) :
                     null,
 
             _ => null
@@ -139,7 +151,7 @@ namespace AngouriMath.Functions.Algebra
         /// Attempts to solve an integral using u-substitution.
         /// Looks for patterns where f(g(x)) * g'(x) can be integrated as F(g(x)).
         /// </summary>
-        internal static Entity? SolveBySubstitution(Entity expr, Entity.Variable x)
+        internal static Entity? SolveBySubstitution(Entity expr, Entity.Variable x, bool integrateByParts = true)
         {
             // Try to find a suitable substitution u = g(x)
             // We need to identify a composite function and check if du/dx appears in the integrand
@@ -147,6 +159,14 @@ namespace AngouriMath.Functions.Algebra
             foreach (var u in candidates)
             {
                 var duDx = u.Differentiate(x).InnerSimplified;
+
+                // A candidate that does not vary with x is no substitution at all, and its
+                // derivative is zero: dividing the integrand by it gives NaN, which then
+                // contains no x and so passes the test below and is returned as the answer.
+                // `ln(e)`, picked up as a logarithm anywhere in the integrand, was enough --
+                // it is how the antiderivative of x * ln(x) came back holding a NaN.
+                if (!u.ContainsNode(x) || duDx.Evaled == 0)
+                    continue;
 
                 // Try to express expr as h(u) * du/dx
                 // If successful, integral becomes ∫h(u)du
@@ -159,7 +179,7 @@ namespace AngouriMath.Functions.Algebra
 
                 // If the result doesn't contain x anymore, we found a valid substitution
                 // and we can integrate with respect to u (treating u as a variable)
-                if (!integrandInU.ContainsNode(x) && Integration.ComputeIndefiniteIntegral(integrandInU, uSub) is { } resultInU)
+                if (!integrandInU.ContainsNode(x) && Integration.ComputeIndefiniteIntegral(integrandInU, uSub, integrateByParts) is { } resultInU)
                     // Substitute back: replace u with g(x)
                     return resultInU.Substitute(uSub, u);
             }
