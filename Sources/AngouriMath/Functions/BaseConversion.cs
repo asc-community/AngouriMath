@@ -24,6 +24,8 @@ namespace AngouriMath.Functions
         {
             if (num < 0)
                 throw new AngouriBugException("Error in IntToBaseN");
+            if (num.IsZero)
+                return "0";
             var res = new System.Text.StringBuilder();
             while (num > 0)
             {
@@ -50,15 +52,35 @@ namespace AngouriMath.Functions
             }
         }
 
+        /// <summary>
+        /// How many base-<paramref name="N"/> fractional digits carry as much information as
+        /// the currently configured decimal precision, i. e. ceil(precision / log10(N)).
+        /// Used to bound expansions that never terminate.
+        /// </summary>
+        private static int MaxFractionalDigits(int N)
+        {
+            var precision = MathS.Settings.DecimalPrecisionContext.Value.Precision;
+            // An unlimited context reports a precision of 0; fall back to the default.
+            var digits = precision.IsZero ? 100 : precision.ToInt32Checked();
+            return (int)Math.Ceiling(digits / Math.Log10(N));
+        }
+
         /// <summary>Transforms a floating number, but this number should be in [0; 1]</summary>
+        /// <remarks>
+        /// Multiplying an <see cref="EDecimal"/> by an integer is exact and never grows its
+        /// scale, so the digits are produced exactly and the sequence is eventually periodic.
+        /// A terminating expansion ends on its own; a repeating one (e. g. 0.125 in base 5,
+        /// which is 0.0303...) is cut off at <see cref="MaxFractionalDigits"/> digits.
+        /// </remarks>
         internal static string FloatToBaseN(EDecimal num /*should be < 1*/, int N)
         {
             if (num.GreaterThan(EDecimal.One) || num.IsNegative)
                 throw new AngouriBugException("Error in FloatToBaseN");
             var res = new System.Text.StringBuilder();
-            while (!num.IsZero)
+            var maxDigits = MaxFractionalDigits(N);
+            while (!num.IsZero && res.Length < maxDigits)
             {
-                num = Number.CtxMultiply(num, N);
+                num = num.Multiply(N);
 
                 EInteger intPart;
                 (intPart, num) = num.SplitDecimal();

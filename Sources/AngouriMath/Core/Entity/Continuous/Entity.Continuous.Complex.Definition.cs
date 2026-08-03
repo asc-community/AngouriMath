@@ -88,7 +88,7 @@ namespace AngouriMath
                         return Real.Create(real);
                     if (real.IsNaN() || imaginary.IsNaN())
                         return Real.NaN;
-                    if (imaginary.IsFinite && imaginary.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange))
+                    if (imaginary.IsFinite && imaginary.Abs().LessThan(MathS.Settings.DowncastingTolerance))
                         return Real.Create(real);
                     else
                         return new Complex(Real.Create(real), Real.Create(imaginary));
