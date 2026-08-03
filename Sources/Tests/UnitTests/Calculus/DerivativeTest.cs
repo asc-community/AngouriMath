@@ -121,12 +121,23 @@ namespace AngouriMath.Tests.Calculus
             Assert.Equal(0, derFunc);
         }
 
+        // sgn is flat either side of zero and has no derivative at zero, so its
+        // derivative is 0 wherever it exists, stated with the condition that says where
+        // that is. This used to come back as an unevaluated derivative node, which meant
+        // the derivative of anything containing sgn could not be evaluated at all -- the
+        // antiderivative of abs(x) is sgn(x) * x^2 / 2, and differentiating it back
+        // stopped at derivative(sgn(x), x).
+        //
+        // As a distribution the answer is 2*delta(x) rather than 0. Leaving the node
+        // unevaluated did not represent that either; whichever way that is eventually
+        // handled, it is the same question for abs, whose derivative already answers
+        // sgn(x) provided not x = 0.
         [Fact]
         public void TestSgnDer()
         {
             Entity func = "sgn(x + 2)";
             var derived = func.Differentiate("x");
-            Assert.Equal(MathS.Derivative(func, x), derived);
+            Assert.Equal("0 provided not x + 2 = 0".ToEntity(), derived);
         }
 
         [Fact]
