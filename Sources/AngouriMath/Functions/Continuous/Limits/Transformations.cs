@@ -72,8 +72,59 @@ namespace AngouriMath.Functions.Algebra
         private static bool IsFiniteNode(Entity expr)
             => !IsInfiniteNode(expr) && expr != MathS.NaN;
 
+        /// <summary>
+        /// How deep the rule may be applied to one limit. Differentiating both parts does not
+        /// always make the quotient simpler -- x / sqrt(x^2 + 1) turns into sqrt(x^2 + 1) / x,
+        /// which turns back, so the two stay indeterminate forever -- and without a bound the
+        /// recursion below would not end. The bound has to leave room for the degree of a
+        /// polynomial: x^10 / e^x takes ten steps.
+        /// </summary>
+        private const int MaxlHopitalDepth = 16;
+
+        [ThreadStatic] private static int lHopitalDepth;
+
+        /// <summary>
+        /// A product that has a reciprocal factor in it, rewritten as a quotient, or
+        /// <see langword="null"/> if it has none. The rule below only reads quotients, so
+        /// <c>lim x -&gt; +oo x^4 * e^(-x)</c> came out as NaN while the same limit written
+        /// <c>x^4 / e^x</c> gave 0 --
+        /// https://github.com/asc-community/AngouriMath/issues/596.
+        /// </summary>
+        private static Entity? AsQuotient(Entity expr)
+        {
+            if (expr is not Mulf)
+                return null;
+            Entity numerator = 1, denominator = 1;
+            var reciprocal = false;
+            foreach (var factor in Mulf.LinearChildren(expr))
+                switch (factor)
+                {
+                    case Powf(var @base, Real { IsNegative: true } power):
+                        denominator *= @base.Pow(-power);
+                        reciprocal = true;
+                        break;
+                    case Powf(var @base, Mulf(Real { IsNegative: true } coefficient, var rest)):
+                        denominator *= @base.Pow(-coefficient * rest);
+                        reciprocal = true;
+                        break;
+                    case Divf(var dividend, var divisor):
+                        numerator *= dividend;
+                        denominator *= divisor;
+                        reciprocal = true;
+                        break;
+                    default:
+                        numerator *= factor;
+                        break;
+                }
+            return reciprocal ? numerator / denominator : null;
+        }
+
         private static Entity? ApplylHopitalRule(Entity expr, Variable x, Entity dest)
         {
+            if (lHopitalDepth >= MaxlHopitalDepth)
+                return null;
+            if (expr is not Divf && AsQuotient(expr) is { } quotient)
+                expr = quotient;
             if (expr is Divf(var num, var den))
                 if (EvalAssumingContinuous(num.Limit(x, dest)) is var numLimit && EvalAssumingContinuous(den.Limit(x, dest)) is var denLimit)
                     if (numLimit == 0 && denLimit == 0 ||
@@ -81,10 +132,26 @@ namespace AngouriMath.Functions.Algebra
                         if (num is not Number && den is not Number)
                             if (num.ContainsNode(x) && den.ContainsNode(x))
                             {
-                                var applied = num.Differentiate(x) / den.Differentiate(x);
+                                // Simplified, because the shape of the quotient is what the
+                                // machinery below matches on and differentiation does not
+                                // produce it: d/dx ln(x)^2 is 2 * ln(x) * (1 / x), a product
+                                // with a quotient inside rather than the quotient
+                                // 2 * ln(x) / x, and only the second has a limit here.
+                                var applied = (num.Differentiate(x) / den.Differentiate(x)).Simplify();
+                                // The domain condition simplification leaves behind is what the
+                                // derivative of a logarithm or a root carries, and a Providedf is
+                                // not a continuous node, so the quotient would be turned away
+                                // unread. Limits already treat the expression as continuous, as
+                                // SimplifyAndComputeLimitToInfinity does with the same shape.
+                                while (applied is Providedf(var body, _)) applied = body;
                                 MultithreadingFunctional.ExitIfCancelled();
-                                if (ComputeLimit(applied, x, dest) is { } resLim)
-                                    return resLim;
+                                lHopitalDepth++;
+                                try
+                                {
+                                    if (ComputeLimit(applied, x, dest) is { } resLim)
+                                        return resLim;
+                                }
+                                finally { lHopitalDepth--; }
                             }
             return null;
         }
