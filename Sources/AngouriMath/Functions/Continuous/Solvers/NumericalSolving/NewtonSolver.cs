@@ -64,8 +64,8 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
 
             using var _ = MathS.Settings.FloatToRationalIterCount.Set(0);
             var res = new HashSet<Complex>();
-            var df = expr.Differentiate(v).Simplify().Compile(v);
-            var f = expr.Simplify().Compile(v);
+            var df = WithoutConditions(expr.Differentiate(v).Simplify()).Compile(v);
+            var f = WithoutConditions(expr.Simplify()).Compile(v);
             for (int x = 0; x < settings.StepCount.Re; x++)
                 for (int y = 0; y < settings.StepCount.Im; y++)
                 {
@@ -79,7 +79,12 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
                         MathS.Settings.PrecisionErrorCommon.Value)
                         res.Add(root);
                 }
-            return WithoutIterationNoise(res);
+            // Rounded first, then verified: rounding collapses the duplicates the grid
+            // search produces, so there is less to verify, and what gets verified is the
+            // values actually handed back.
+            var rounded = WithoutIterationNoise(res);
+            rounded.RemoveWhere(root => !Satisfies(expr, v, root));
+            return rounded;
         }
 
         /// <summary>
@@ -99,6 +104,40 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
             using var _ = MathS.Settings.PrecisionErrorZeroRange.Set(EDecimal.Create(1, -15));
             return new HashSet<Complex>(roots.Select(root =>
                 Complex.Create(root.RealPart.EDecimal, root.ImaginaryPart.EDecimal)));
+        }
+
+        /// <summary>
+        /// Strips the domain conditions off an expression. Simplification leaves them
+        /// behind -- log(a) + log(b) only collapses to log(a * b) where both are positive,
+        /// for one -- and the compiler has no way to represent an <see cref="Entity.Providedf"/>,
+        /// so <c>x + ln(x) = 0</c> used to come out of the public solver as an
+        /// <see cref="Core.Exceptions.UncompilableNodeException"/>. Newton iterates on the
+        /// unconditioned expression and <see cref="Satisfies"/> re-imposes the conditions.
+        /// </summary>
+        private static Entity WithoutConditions(Entity expr)
+            => expr.Replace(node => node is Entity.Providedf(var inner, _) ? inner : node);
+
+        /// <summary>
+        /// Whether a candidate root really is one, checked against the expression as it
+        /// was handed in rather than against the simplified form Newton iterated on.
+        /// Simplification can widen the domain: <c>ln(x) + ln(x+1)</c> becomes
+        /// <c>ln(x * (x+1))</c>, whose root -1.618... leaves the original at 2*pi*i, and
+        /// the solver reported it as a root of the original equation.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/> for anything that cannot be checked, so that a root is
+        /// only ever dropped on positive evidence that it is spurious.
+        /// </returns>
+        private static bool Satisfies(Entity expr, Entity.Variable v, Complex root)
+        {
+            try
+            {
+                return expr.Substitute(v, root).Evaled is not Complex residual
+                    || !residual.IsFinite
+                    || residual.Abs().EDecimal.LessThan(MathS.Settings.PrecisionErrorCommon);
+            }
+            catch (Core.Exceptions.AngouriBugException) { throw; }
+            catch (System.Exception) { return true; }
         }
     }
 }
