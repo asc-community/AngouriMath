@@ -73,8 +73,113 @@ namespace AngouriMath.Functions.Algebra
                 && TreeAnalyzer.TryGetPolyQuadratic(denominator, x, out var a, out var b, out var c) // ∫ k/(ax^2 + bx + c) dx
                     => IntegrateRationalQuadratic(numerator, a, b, c, x),
 
+            // The inverse trigonometric functions, each of which is integration by parts
+            // against 1 -- a shape the by-parts solver does not look for, since there is no
+            // product to split.
+            Entity.Arcsinf(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Arcsin(arg) + MathS.Sqrt(1 - arg * arg)) / a,
+
+            Entity.Arccosf(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Arccos(arg) - MathS.Sqrt(1 - arg * arg)) / a,
+
+            Entity.Arctanf(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Arctan(arg) - MathS.Ln(MathS.Abs(1 + arg * arg)) / 2) / a,
+
+            Entity.Arccotanf(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Arccotan(arg) + MathS.Ln(MathS.Abs(1 + arg * arg)) / 2) / a,
+
+            // ∫ B^(px + q) * sin(mx + n) dx and its cosine twin. Integrating by parts
+            // twice returns the integral it started from, so the usual machinery cycles
+            // rather than terminating; solving that equation for the integral once gives
+            // the closed form below, which is what goes in the table.
+            Entity.Mulf(var exponential, Entity.Sinf(var wave)) when
+                IsExponentialRate(exponential, x, out var rate)
+                && TreeAnalyzer.TryGetPolyLinear(wave, x, out var frequency, out _) =>
+                    exponential * (rate * MathS.Sin(wave) - frequency * MathS.Cos(wave))
+                        / (rate * rate + frequency * frequency),
+
+            Entity.Mulf(Entity.Sinf(var wave), var exponential) when
+                IsExponentialRate(exponential, x, out var rate)
+                && TreeAnalyzer.TryGetPolyLinear(wave, x, out var frequency, out _) =>
+                    exponential * (rate * MathS.Sin(wave) - frequency * MathS.Cos(wave))
+                        / (rate * rate + frequency * frequency),
+
+            Entity.Mulf(var exponential, Entity.Cosf(var wave)) when
+                IsExponentialRate(exponential, x, out var rate)
+                && TreeAnalyzer.TryGetPolyLinear(wave, x, out var frequency, out _) =>
+                    exponential * (rate * MathS.Cos(wave) + frequency * MathS.Sin(wave))
+                        / (rate * rate + frequency * frequency),
+
+            Entity.Mulf(Entity.Cosf(var wave), var exponential) when
+                IsExponentialRate(exponential, x, out var rate)
+                && TreeAnalyzer.TryGetPolyLinear(wave, x, out var frequency, out _) =>
+                    exponential * (rate * MathS.Cos(wave) + frequency * MathS.Sin(wave))
+                        / (rate * rate + frequency * frequency),
+
+            // ∫ k / sqrt(ax^2 + bx + c) dx -- the arcsine and logarithm forms. Without
+            // these, 1/sqrt(1 - x^2) had no antiderivative at all.
+            Entity.Divf(var numerator,
+                        Entity.Powf(var radicand, Entity.Number.Rational(Entity.Number.Integer(1), Entity.Number.Integer(2)))) when
+                !numerator.ContainsNode(x)
+                && TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var ra, out var rb, out var rc)
+                    => IntegrateOverRootOfQuadratic(numerator, ra, rb, rc, radicand, x),
+
             _ => null
         };
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> is an exponential in <paramref name="x"/>, and
+        /// at what rate: <c>B^(px + q)</c> grows as <c>e^(rate * x)</c> with
+        /// <c>rate = p * ln(B)</c>. The constant factor <c>B^q</c> needs no separating out,
+        /// because the antiderivative is written in terms of the original expression.
+        /// </summary>
+        private static bool IsExponentialRate(Entity expr, Entity.Variable x, out Entity rate)
+        {
+            rate = 0;
+            if (expr is not Entity.Powf(var @base, var exponent)
+                || @base.ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolyLinear(exponent, x, out var perX, out _))
+                return false;
+            rate = perX * MathS.Ln(@base);
+            return true;
+        }
+
+        /// <summary>
+        /// The antiderivative of <c>k / sqrt(a x^2 + b x + c)</c>, which takes one of two
+        /// forms depending on the sign of the leading coefficient:
+        /// <list type="bullet">
+        /// <item>a &lt; 0, an arc of a circle: <c>-k/sqrt(-a) * arcsin((2ax + b) / sqrt(b^2 - 4ac))</c></item>
+        /// <item>a &gt; 0, a hyperbolic arc: <c>k/sqrt(a) * ln|2ax + b + 2 sqrt(a) sqrt(a x^2 + b x + c)|</c></item>
+        /// </list>
+        /// Returned as a piecewise on that sign, the way the rational quadratic below is,
+        /// since which one applies is not known until a and the coefficients are.
+        /// </summary>
+        private static Entity IntegrateOverRootOfQuadratic(
+            Entity numerator, Entity a, Entity b, Entity c, Entity radicand, Entity.Variable x)
+        {
+            var twoAxPlusB = 2 * a * x + b;
+
+            // a < 0: the radicand is a downward parabola, positive between its roots
+            var arcsinCase =
+                -numerator * MathS.Arcsin(twoAxPlusB / MathS.Sqrt(b * b - 4 * a * c)) / MathS.Sqrt(-a);
+
+            // a > 0
+            var logarithmCase =
+                numerator * MathS.Ln(MathS.Abs(twoAxPlusB + 2 * MathS.Sqrt(a) * MathS.Sqrt(radicand))) / MathS.Sqrt(a);
+
+            // a = 0: sqrt(bx + c), which integrates as an ordinary power
+            var linearCase = 2 * numerator * MathS.Sqrt(b * x + c) / b;
+
+            return MathS.Piecewise([
+                new Entity.Providedf(linearCase, a.EqualTo(0)),
+                new Entity.Providedf(arcsinCase, a < 0),
+                new Entity.Providedf(logarithmCase, a > 0)
+            ]);
+        }
 
         private static Entity IntegrateRationalQuadratic(Entity numerator, Entity a, Entity b, Entity c, Entity.Variable x)
         {

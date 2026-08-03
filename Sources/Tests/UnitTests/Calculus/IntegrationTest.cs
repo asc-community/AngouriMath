@@ -268,14 +268,27 @@ namespace AngouriMath.Tests.Calculus
             }
         }
 
-        [Theory(Skip = "TODO: integration by parts multiple times")]
-        [InlineData("ln(abs(x)) ^ 3", "C + x * (ln(abs(x)) ^ 3 - ln(abs(x)) ^ 2 - ln(abs(x)) ^ 2 - ln(abs(x)) ^ 2) + 6 * (x * (ln(abs(x)) - 1) + -x)")] // Triple integration by parts
-        [InlineData("e^x * sin(x)", "-1/2 * cos(x) * e ^ x + 1/2 * sin(x) * e ^ x + C")] // Classic integration by parts
-        [InlineData("e^x * cos(x)", "1/2 * cos(x) * e ^ x + 1/2 * sin(x) * e ^ x + C")] // Classic integration by parts
-        [InlineData("arctan(x)", "x * arctan(x) - 1/2 * ln(abs(x ^ 2 + 1)) + C")] // Integration by parts with 1 * arctan(x)
-        [InlineData("arcsin(x)", "x * arcsin(x) + sqrt(1 - x ^ 2) + C")] // Integration by parts with 1 * arcsin(x)
-        [InlineData("arccos(x)", "x * arccos(x) - sqrt(1 - x ^ 2) + C")] // Integration by parts with 1 * arccos(x)
+        // These five no longer need integration by parts at all. e^x*sin(x) and its
+        // cosine twin cycle under by parts, so they are solved as the closed form that
+        // cycle resolves to; the inverse trigonometric ones are by parts against 1, which
+        // has no product for the by-parts solver to split, so they are table entries.
+        [Theory]
+        [InlineData("e^x * sin(x)", "-1/2 * cos(x) * e ^ x + 1/2 * sin(x) * e ^ x + C")]
+        [InlineData("e^x * cos(x)", "1/2 * cos(x) * e ^ x + 1/2 * sin(x) * e ^ x + C")]
+        [InlineData("arctan(x)", "x * arctan(x) - 1/2 * ln(abs(x ^ 2 + 1)) + C")]
+        [InlineData("arcsin(x)", "x * arcsin(x) + sqrt(1 - x ^ 2) + C")]
+        [InlineData("arccos(x)", "x * arccos(x) - sqrt(1 - x ^ 2) + C")]
         public void TestIntegrationByPartsNonPolynomial(string initial, string expected)
+        {
+            var result = initial.Integrate("x").InnerSimplified;
+            var expectedResult = expected.ToEntity().InnerSimplified;
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
+        }
+
+        // Still open: this one wants by parts applied three times over.
+        [Theory(Skip = "TODO: integration by parts multiple times")]
+        [InlineData("ln(abs(x)) ^ 3", "C + x * (ln(abs(x)) ^ 3 - ln(abs(x)) ^ 2 - ln(abs(x)) ^ 2 - ln(abs(x)) ^ 2) + 6 * (x * (ln(abs(x)) - 1) + -x)")]
+        public void TestTripleIntegrationByParts(string initial, string expected)
         {
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
