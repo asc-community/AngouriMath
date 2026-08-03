@@ -398,16 +398,59 @@ namespace AngouriMath
             /// <param name="x">The number of which we want to get its base power</param>
             public static Complex Log(Complex @base, Complex x)
             {
+                if (LostToExponentRange(x) || LostToExponentRange(@base))
+                    return Ln(x) / Ln(@base);
                 if (x is Real real && real.EDecimal.CompareTo(EDecimal.Zero) > 0 && @base is Real realBase && realBase.EDecimal.CompareTo(EDecimal.Zero) > 0)
                     return real.EDecimal.LogN(realBase.EDecimal, MathS.Settings.DecimalPrecisionContext);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
                 return Ln(x) / Ln(@base);
             }
 
+            /// <summary>
+            /// Whether a number is exactly known as a ratio, yet its
+            /// <see cref="Real.EDecimal"/> -- which is rounded into
+            /// <see cref="MathS.Settings.DecimalPrecisionContext"/> the moment the number is
+            /// built -- has lost it to the context's exponent range. <c>2 ^ (-1000)</c>
+            /// flushes to zero and <c>2 ^ 10000</c> saturates to +oo, so a logarithm taken
+            /// off the decimal answers -oo or +oo where the true answers, -693.14... and
+            /// 6931.47..., are ordinary numbers.
+            /// </summary>
+            private static bool LostToExponentRange(Complex x)
+                => x is Rational { ERational.Sign: not 0 } ratio
+                    && (!ratio.EDecimal.IsFinite || ratio.EDecimal.IsZero);
+
+            /// <summary>ln(p / q) = ln(p) - ln(q), with each half inside the exponent range.</summary>
+            private static Complex LnOfRatio(ERational ratio, EContext context)
+                => LnOfEInteger(ratio.Numerator, context)
+                    .Subtract(LnOfEInteger(ratio.Denominator, context), context);
+
+            /// <summary>
+            /// ln(n) for a whole number, kept inside the context's exponent range by
+            /// writing n = head * 10^shift and answering ln(head) + shift * ln(10).
+            /// Without the split, <c>ln(2 ^ 10000)</c> -- a 3011-digit integer, past the
+            /// context's ceiling of 10^1000 -- answers +oo instead of 6931.47...
+            /// </summary>
+            private static EDecimal LnOfEInteger(EInteger n, EContext context)
+            {
+                // Guard digits, so that dropping the tail stays well under the rounding error.
+                var keep = (context.Precision.IsZero ? EInteger.FromInt32(100) : context.Precision).Add(10);
+                var digits = n.GetDigitCountAsEInteger();
+                if (digits.CompareTo(keep) <= 0)
+                    return EDecimal.FromEInteger(n).Log(context);
+                var shift = digits.Subtract(keep);
+                // Create(n, -shift) is n with its decimal point moved, not a division:
+                // the digits are untouched, only the exponent comes back into range.
+                return EDecimal.Create(n, shift.Negate()).Log(context)
+                    .Add(EDecimal.FromInt32(10).Log(context)
+                        .Multiply(EDecimal.FromEInteger(shift), context), context);
+            }
+
             /// <summary>ln(x) = log(e, x)</summary>
             public static Complex Ln(Complex x)
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
+                if (LostToExponentRange(x) && x is Rational { ERational: { Sign: > 0 } ratio })
+                    return LnOfRatio(ratio, context);
                 if (x is Real { EDecimal: { IsNegative: false } real })
                     return real.Log(context);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
