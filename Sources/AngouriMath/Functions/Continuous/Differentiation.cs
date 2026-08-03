@@ -141,11 +141,6 @@ namespace AngouriMath
             protected override Entity InnerDifferentiate(Variable variable) =>
                 Exponent == Integer.One
                 ? Base.InnerDifferentiate(variable).Provided(Base.DomainCondition) // don't create x^0 which is undefined for x=0
-                // Evaled, not a plain type test: an exponent that is constant but written
-                // as a sum, which is how the integral table leaves them -- (x - 1)^(4 + 1)
-                // -- is still constant. Read as non-constant it fell to the logarithmic
-                // rule below, which needs a positive base, so differentiating the
-                // antiderivative of (x - 1)^4 came back undefined for x < 1.
                 : Exponent.Evaled is Number exp
                 ? exp * Base.Pow(exp - 1) * Base.InnerDifferentiate(variable)
                 : Base is Number
@@ -310,13 +305,6 @@ namespace AngouriMath
             // sgn is flat either side of zero and has no derivative at zero, so the
             // derivative is 0 wherever it exists. Saying so with a condition is the same
             // stance Absf takes just below, whose derivative is likewise undefined at zero.
-            //
-            // As a distribution this is 2*delta(x) rather than 0, which is what the note
-            // that used to be here was waiting for. But leaving the node unevaluated does
-            // not represent that either -- it only means the derivative of anything
-            // containing sgn cannot be evaluated at all, and that reached callers: the
-            // antiderivative of abs(x) is sgn(x)*x^2/2, and differentiating it back
-            // produced derivative(sgn(x), x) and stopped there.
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
                 => Integer.Zero.Provided(!Argument.EqualTo(Integer.Zero));
