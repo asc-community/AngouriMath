@@ -75,14 +75,19 @@ namespace AngouriMath
             /// </remarks>
             internal static Variable CreateUnique(Entity expr, string prefix)
             {
-                var indices = new HashSet<int>();
-                foreach (var var in expr.Vars)
-                    if (var.SplitIndex() is var (varPrefix, index)
-                        && varPrefix == prefix
-                        && int.TryParse(index, out var num))
-                        indices.Add(num);
+                // Compared against the names in use rather than against indices picked out
+                // of them. SplitIndex cuts at the *first* underscore, so for a prefix that
+                // contains one -- "u_sub", which is the one integration substitutes with --
+                // it read u_sub_1 as the prefix "u" and the index "sub_1", parsed nothing,
+                // and handed back u_sub_1 as though it were free. Substituting with a
+                // variable already in the expression is silent and produces a wrong answer:
+                // it turned the integral of x * (x^2 + 1)^2 into something whose derivative
+                // is not the integrand.
+                var taken = new HashSet<string>();
+                foreach (var variable in expr.Vars)
+                    taken.Add(variable.Name);
                 var i = 1;
-                while (indices.Contains(i))
+                while (taken.Contains(prefix + "_" + i))
                     i++;
                 return new Variable(prefix + "_" + i);
             }

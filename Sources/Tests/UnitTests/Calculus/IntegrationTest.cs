@@ -72,8 +72,11 @@ namespace AngouriMath.Tests.Calculus
         }
 
         [Theory]
-        [InlineData("x * (x2 + 1) ^ 3", "C + (x ^ 2 + x ^ 6 + 3/2 * x ^ 4 + x ^ 8 / 4) / 2")]
-        [InlineData("3 * x2 * (x3 + 2) ^ 2", "C + -5/4 * x ^ 6 + (x ^ 3 + 2) * (x ^ 6 / 2 + 2 * x ^ 3)")]
+        // Both were the expanded polynomial, or in the second case an answer that was not
+        // an antiderivative at all. u-substitution reaches the closed form now that the
+        // variable it substitutes with can no longer collide with the one being integrated.
+        [InlineData("x * (x2 + 1) ^ 3", "C + (x ^ 2 + 1) ^ 4 / 8")]
+        [InlineData("3 * x2 * (x3 + 2) ^ 2", "C + (x ^ 3 + 2) ^ 3 / 3")]
         public void TestPowerSubstitution(string initial, string expected)
         {
             var result = initial.Integrate("x").InnerSimplified;
@@ -186,7 +189,8 @@ namespace AngouriMath.Tests.Calculus
         }
 
         [Theory]
-        [InlineData("x * (x ^ 2 + 1) ^ 10", "C + (5 * (x^18 + x^4) + x^22 / 11 + x^2 + x^20 + 42 * (x^10 + x^12) + 15 * (x^16 + x^6) + 30 * (x^14 + x^8)) / 2")] // differs from C + (x^2+1)^11 / 22 by -1/22
+        // This is the closed form the old expectation's comment said it differed from.
+        [InlineData("x * (x ^ 2 + 1) ^ 10", "C + (x ^ 2 + 1) ^ 11 / 22")]
         [InlineData("x * (x ^ 2 + 1) ^ n", "1/(2(n+1)) * (x^2 + 1) ^ (n+1) + C")]
         public void TestHighPowerSubstitution(string initial, string expected)
         {
