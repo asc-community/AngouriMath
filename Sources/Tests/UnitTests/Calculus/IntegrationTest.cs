@@ -84,6 +84,7 @@ namespace AngouriMath.Tests.Calculus
             Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
+
         [Theory]
         [InlineData("sin(2x + 3)", "-1/2 * cos(2x + 3) + C")]
         [InlineData("cos(3x - 1)", "1/3 * sin(3x - 1) + C")]

@@ -74,7 +74,9 @@ namespace AngouriMath.Tests.PatternsTest
         [Fact] public void FactorialXM1OverFactorialX() => AssertSimplify(MathS.Factorial(-1 + x) / MathS.Factorial(x), 1 / x);
         [Fact] public void FactorialXM1OverFactorialXM1() => AssertSimplify(MathS.Factorial(x - 1) / MathS.Factorial(x - 1), 1);
         [Fact] public void FactorialXM1OverFactorialXM2() => AssertSimplify(MathS.Factorial(-1 + x) / MathS.Factorial(-2 + x), x - 1);
-        [Fact] public void FactorialXM1OverFactorialXM3() => AssertSimplify(MathS.Factorial(x - 1) / MathS.Factorial(-3 + x), (x - 2) * (x - 1));
+        // Same two factors, now in ascending order: the polynomial factorer offers
+        // (x - 1) * (x - 2) and the complexity metric cannot tell the two orders apart.
+        [Fact] public void FactorialXM1OverFactorialXM3() => AssertSimplify(MathS.Factorial(x - 1) / MathS.Factorial(-3 + x), (x - 1) * (x - 2));
         [Fact] public void FactorialXM0D5OverFactorialXP0D5() => AssertSimplify(MathS.Factorial(x - 0.5m) / MathS.Factorial(x + 0.5m), 1 / (0.5m + x));
         [Fact] public void FactorialXPIOverFactorialXPIM1() => AssertSimplify(MathS.Factorial(x + MathS.i) / MathS.Factorial(x + MathS.i - 1), MathS.i + x);
         [Fact] public void FactorialXP0D5IP0D5OverFactorialXP0D5IM0D5() => AssertSimplify(MathS.Factorial(x + MathS.i * 0.5m + 0.5m) / MathS.Factorial(x + MathS.i * 0.5m - 0.5m), 0.5m + MathS.i * 0.5m + x);
@@ -105,7 +107,8 @@ namespace AngouriMath.Tests.PatternsTest
 
         [Fact] public void BigSimple1() => AssertSimplifyToString(
             "1+2x*-1+2x*2+x^2+2x+2x*-4+2x*4+2x*2x*-1+2x*2x*2+2x*x^2+x^2+x^2*-4+x^2*4+x^2*2*x*-1+x^2*2x*2+x^2*x^2",
-            "1 + 6 * x ^ 2 + x ^ 4 + 4 * (x ^ 3 + x)");
+            // This is (1 + x)^4 expanded, and it now simplifies back to that.
+            "(1 + x) ^ 4");
         // NOTE: Simplify should not be called both sides since does not ensure that the simplified result
         // is acceptable - we should maintain an expected result that does not change with the implementation
         // and update it when needed. Test should be more restrictive to actually catch bugs.

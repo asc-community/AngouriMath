@@ -169,6 +169,14 @@ namespace AngouriMath.Functions
                 if (possiblePoly is { } && possiblePoly.Complexity < res.Complexity)
                     res = possiblePoly;
 
+                // The factored form is offered as one more candidate rather than taken:
+                // (x + 1)^2 is worth having over x^2 + 2x + 1, but x^100 - 1 factors into
+                // something far longer than it started, and the complexity metric is what
+                // should decide between them.
+                foreach (var var in res.Vars)
+                    if (PolynomialFactoring.TryFactor(res, var, out var factoredPoly))
+                        AddHistory(factoredPoly);
+
 
                 AddHistory(res = res.Replace(Patterns.CommonRules));
 
