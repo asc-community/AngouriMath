@@ -117,6 +117,13 @@ namespace AngouriMath.Functions.Algebra
                     exponential * (rate * MathS.Cos(wave) + frequency * MathS.Sin(wave))
                         / (rate * rate + frequency * frequency),
 
+            // ∫ sqrt(ax^2 + bx + c) dx, which is one integration by parts away from the
+            // reciprocal form below and is written in terms of it.
+            Entity.Powf(var radicand, Entity.Number.Rational(Entity.Number.Integer(1), Entity.Number.Integer(2))) when
+                TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var qa, out var qb, out var qc)
+                && qa.Evaled is Entity.Number.Complex { IsZero: false }
+                    => IntegrateRootOfQuadratic(qa, qb, qc, radicand, x),
+
             // ∫ k / sqrt(ax^2 + bx + c) dx -- the arcsine and logarithm forms. Without
             // these, 1/sqrt(1 - x^2) had no antiderivative at all.
             Entity.Divf(var numerator,
@@ -254,6 +261,22 @@ namespace AngouriMath.Functions.Algebra
             rate = perX * MathS.Ln(@base);
             return true;
         }
+
+        /// <summary>
+        /// The antiderivative of <c>sqrt(a x^2 + b x + c)</c>:
+        /// <c>(2ax + b) sqrt(Q) / (4a) + ((4ac - b^2) / (8a))</c> times the integral of
+        /// <c>1/sqrt(Q)</c> -- integration by parts once, leaving the reciprocal form that
+        /// <see cref="IntegrateOverRootOfQuadratic"/> already knows.
+        /// </summary>
+        /// <remarks>
+        /// Only where the leading coefficient is a number other than zero. With a = 0 this
+        /// is the square root of something linear, which the ordinary power rule already
+        /// integrates, and dividing by a would not be allowed anyway.
+        /// </remarks>
+        private static Entity IntegrateRootOfQuadratic(
+            Entity a, Entity b, Entity c, Entity radicand, Entity.Variable x)
+            => (2 * a * x + b) * MathS.Sqrt(radicand) / (4 * a)
+               + (4 * a * c - b * b) / (8 * a) * IntegrateOverRootOfQuadratic(1, a, b, c, radicand, x);
 
         /// <summary>
         /// The antiderivative of <c>k / sqrt(a x^2 + b x + c)</c>, which takes one of two

@@ -110,5 +110,25 @@ namespace AngouriMath.Tests.Calculus
             Assert.Equal(MathS.Boolean.True,
                 "sin(x) * cos(x)".Integrate("x").InnerSimplified
                     .EqualTo("sin(x) ^ 2 / 2 + C".ToEntity().InnerSimplified).Simplify());
+
+        // sqrt(a x^2 + b x + c), which is one integration by parts away from the
+        // reciprocal form above and is written in terms of it.
+        [Theory]
+        [InlineData("sqrt(1 - x ^ 2)", new[] { 0.31, 0.72, -0.4 })]
+        [InlineData("sqrt(4 - x ^ 2)", new[] { 0.31, 1.7, -1.2 })]
+        [InlineData("sqrt(x ^ 2 + 1)", new[] { 0.31, 2.4, -1.9 })]
+        [InlineData("sqrt(x ^ 2 - 1)", new[] { 1.4, 2.7, 5.1 })]
+        [InlineData("sqrt(2 * x ^ 2 + 3 * x + 5)", new[] { 0.31, 1.4 })]
+        public void RootOfAQuadratic(string integrand, double[] points) =>
+            AssertIsAntiderivative(integrand, points);
+
+        // With no quadratic term this is the square root of something linear, which the
+        // ordinary power rule already integrates -- and dividing by the leading
+        // coefficient would not be allowed. It must not be taken over.
+        [Theory]
+        [InlineData("sqrt(x)", new[] { 0.31, 1.4 })]
+        [InlineData("sqrt(2 * x + 3)", new[] { 0.5, 2.2 })]
+        public void RootOfSomethingLinearIsLeftToThePowerRule(string integrand, double[] points) =>
+            AssertIsAntiderivative(integrand, points);
     }
 }
