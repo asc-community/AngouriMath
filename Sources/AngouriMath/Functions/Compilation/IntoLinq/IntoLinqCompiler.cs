@@ -24,7 +24,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             // has a value that is an ordinary number -- [0, 1]T * [[a, b], [c, d]] * [1, 0]
             // is c -- and there is nothing to stop that being compiled. Nothing simplified
             // before compiling, so those failed along with the ones that genuinely cannot
-            // be compiled (#425). Only expressions that mention a matrix pay for this.
+            // be compiled (https://github.com/asc-community/AngouriMath/issues/425).
+            // Only expressions that mention a matrix pay for this.
             if (expr.Nodes.Any(node => node is Entity.Matrix))
                 expr = expr.InnerSimplified;
 

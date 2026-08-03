@@ -37,9 +37,6 @@ namespace AngouriMath.Tests.Common
             Assert.Equal(1 * 3 + 2 * 4, compiled(3, 4), 9);
         }
 
-        // What genuinely has no compiled form should say so, and say which node it was.
-        // It used to throw AngouriBugException("A node seems to be not added"), which reads
-        // as a defect in the library rather than as a limit of it.
         [Theory]
         [InlineData("[[a, b], [c, d]]")]
         [InlineData("[[a, b], [c, d]] * [1, 0]")]
