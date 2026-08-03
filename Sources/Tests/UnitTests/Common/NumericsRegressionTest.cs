@@ -185,5 +185,21 @@ namespace AngouriMath.Tests.Common
             var product = (Entity.Matrix)(matrix * matrix.Inverse).InnerSimplified;
             Assert.Equal(MathS.IdentityMatrix(4), product);
         }
+
+        // Tightening the tolerance above stops Newton's own noise from being rounded away
+        // with it. The iteration works in double precision and starts from a grid, so the
+        // same root reached from different starting points differs in the last digits;
+        // left alone, the one real root of this quintic came back as four different
+        // complex numbers with imaginary parts around 1e-19.
+        [Fact]
+        public void Issue602_NewtonRootsDoNotCarryIterationNoise()
+        {
+            var roots = "x ^ 5 + 3 * x + 1 = 0".ToEntity().Solve("x");
+            var finite = Assert.IsType<Entity.Set.FiniteSet>(roots);
+            Assert.Contains(finite, root => root is Entity.Number.Real);
+            Assert.DoesNotContain(finite, root =>
+                root is Entity.Number.Complex complex and not Entity.Number.Real
+                && complex.ImaginaryPart.EDecimal.Abs().ToDouble() < 1e-15);
+        }
     }
 }

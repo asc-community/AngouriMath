@@ -79,7 +79,26 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
                         MathS.Settings.PrecisionErrorCommon.Value)
                         res.Add(root);
                 }
-            return res;
+            return WithoutIterationNoise(res);
+        }
+
+        /// <summary>
+        /// Rounds away the part of each root that the iteration cannot have got right.
+        /// </summary>
+        /// <remarks>
+        /// The iteration works in <see cref="System.Numerics.Complex"/>, so a
+        /// component below roughly 1e-15 of the root is noise from the iteration and not
+        /// part of the answer. It matters because the search starts from a grid: the same
+        /// root reached from different starting points differs in those last digits, so
+        /// left in, the one real root of <c>x^5 + 3x + 1</c> comes back as four different
+        /// complex numbers with imaginary parts around 1e-19. Rounded, they are one root
+        /// again, and the set collapses them.
+        /// </remarks>
+        private static HashSet<Complex> WithoutIterationNoise(HashSet<Complex> roots)
+        {
+            using var _ = MathS.Settings.PrecisionErrorZeroRange.Set(EDecimal.Create(1, -15));
+            return new HashSet<Complex>(roots.Select(root =>
+                Complex.Create(root.RealPart.EDecimal, root.ImaginaryPart.EDecimal)));
         }
     }
 }
