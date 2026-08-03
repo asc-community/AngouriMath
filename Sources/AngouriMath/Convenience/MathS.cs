@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -3760,9 +3760,9 @@ namespace AngouriMath
         /// Console.WriteLine(ToBaseN(13.125m, 2));
         /// Console.WriteLine(ToBaseN(13.125m, 10));
         /// 
-        /// // uncomment when https://github.com/asc-community/AngouriMath/issues/584
-        /// // is fixed
-        /// // Console.WriteLine(ToBaseN(13.125m, 5));
+        /// // A repeating expansion is cut off at the configured decimal precision
+        /// // instead of hanging; see issue 584.
+        /// Console.WriteLine(ToBaseN(13.125m, 5).Substring(0, 12) + "...");
         /// 
         /// Console.WriteLine(ToBaseN(13.125m, 8));
         /// Console.WriteLine("-----------------------");
@@ -3778,6 +3778,7 @@ namespace AngouriMath
         /// 11.11
         /// 1101.001
         /// 13.125
+        /// 23.030303030...
         /// 15.1
         /// -----------------------
         /// 255
@@ -3806,9 +3807,9 @@ namespace AngouriMath
         /// Console.WriteLine(ToBaseN(13.125m, 2));
         /// Console.WriteLine(ToBaseN(13.125m, 10));
         /// 
-        /// // uncomment when https://github.com/asc-community/AngouriMath/issues/584
-        /// // is fixed
-        /// // Console.WriteLine(ToBaseN(13.125m, 5));
+        /// // A repeating expansion is cut off at the configured decimal precision
+        /// // instead of hanging; see issue 584.
+        /// Console.WriteLine(ToBaseN(13.125m, 5).Substring(0, 12) + "...");
         /// 
         /// Console.WriteLine(ToBaseN(13.125m, 8));
         /// Console.WriteLine("-----------------------");
@@ -3824,6 +3825,7 @@ namespace AngouriMath
         /// 11.11
         /// 1101.001
         /// 13.125
+        /// 23.030303030...
         /// 15.1
         /// -----------------------
         /// 255
