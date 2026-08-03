@@ -179,6 +179,17 @@ namespace AngouriMath.Functions.Algebra
 
                 // If the result doesn't contain x anymore, we found a valid substitution
                 // and we can integrate with respect to u (treating u as a variable)
+                // Dividing by a derivative that is zero gives NaN, and NaN contains no x,
+                // so it passes the test below and is handed back as the answer. The check
+                // on duDx above catches the cases where that is visible without work;
+                // this catches the rest, where the derivative is only zero after
+                // simplification -- d/dx (sin(x)^2 + cos(x)^2) is written as
+                // 2sin(x)cos(x) - 2cos(x)sin(x), which Evaled cannot reduce with x still
+                // symbolic. That is how the integral of sin(x)^2 + cos(x)^2 came back as
+                // NaN * (sin(x)^2 + cos(x)^2).
+                if (integrandInU.Nodes.Any(node => node == MathS.NaN))
+                    continue;
+
                 if (!integrandInU.ContainsNode(x) && Integration.ComputeIndefiniteIntegral(integrandInU, uSub, integrateByParts) is { } resultInU)
                     // Substitute back: replace u with g(x)
                     return resultInU.Substitute(uSub, u);

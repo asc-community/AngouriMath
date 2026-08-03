@@ -204,5 +204,17 @@ namespace AngouriMath.Tests.Common
             Assert.Equal(Entity.Number.Integer.Create(0), difference);
         }
 
+        // Also not in the tracker. Dividing the integrand by a derivative that is zero
+        // gives NaN, and NaN contains no x, which is exactly the test for a successful
+        // substitution -- so it was returned as the answer. The first guard caught the
+        // cases where the derivative is visibly zero; these two are only zero after
+        // simplification, since d/dx (sin(x)^2 + cos(x)^2) is written as
+        // 2sin(x)cos(x) - 2cos(x)sin(x).
+        [Theory]
+        [InlineData("sin(x) ^ 2 + cos(x) ^ 2")]
+        [InlineData("x / (x + 1) + 1 / (x + 1)")]
+        [InlineData("x * ln(x)")]
+        public void AntiderivativesNeverContainNaN(string integrand) =>
+            Assert.DoesNotContain("NaN", integrand.ToEntity().Integrate("x").Stringize());
     }
 }
