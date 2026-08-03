@@ -7,7 +7,6 @@
 
 using AngouriMath;
 using AngouriMath.Extensions;
-using PeterO.Numbers;
 using Xunit;
 
 namespace AngouriMath.Tests.Common
