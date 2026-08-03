@@ -43,7 +43,7 @@ namespace AngouriMath.Functions.Algebra
                 // e ^ (g(x) * (f(x) - 1))
                 Powf(var xPlusOne, var xPower) when
                 xPlusOne.ContainsNode(x) && xPower.ContainsNode(x) &&
-                EvalAssumingContinuous((xPlusOne - 1).Limit(x, dest)) == 0 && IsInfiniteNode(xPower.Limit(x, dest)) =>
+                EvalAssumingContinuous((xPlusOne - 1).Limit(x, dest)) == 0 && DivergesInMagnitude(xPower, x, dest) =>
                 MathS.e.Pow(xPower * (xPlusOne - 1)),
 
                 _ => expr
@@ -51,6 +51,23 @@ namespace AngouriMath.Functions.Algebra
 
         private static bool IsInfiniteNode(Entity expr)
             => expr.ContainsNode("+oo") || expr.ContainsNode("-oo"); // TODO: is it correct?
+
+        /// <summary>
+        /// Whether the exponent grows without bound, which is all the second remarkable
+        /// limit needs.
+        /// </summary>
+        /// <remarks>
+        /// Asking only for the two-sided limit is not enough: at <c>x -> 0</c> the
+        /// exponent <c>1/x</c> tends to -oo on the left and +oo on the right, so the
+        /// two-sided limit does not exist even though the magnitude diverges. That made
+        /// <c>lim x-&gt;0 (1 + x)^(1/x)</c> answer 1 rather than e. Both one-sided
+        /// limits diverging is enough, because the rewrite below only uses the product
+        /// <c>g(x) * (f(x) - 1)</c>, which is well defined from either side.
+        /// </remarks>
+        private static bool DivergesInMagnitude(Entity power, Variable x, Entity dest)
+            => IsInfiniteNode(power.Limit(x, dest))
+                || (IsInfiniteNode(power.Limit(x, dest, ApproachFrom.Left))
+                    && IsInfiniteNode(power.Limit(x, dest, ApproachFrom.Right)));
 
         private static bool IsFiniteNode(Entity expr)
             => !IsInfiniteNode(expr) && expr != MathS.NaN;
