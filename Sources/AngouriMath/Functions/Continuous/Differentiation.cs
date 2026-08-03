@@ -141,7 +141,7 @@ namespace AngouriMath
             protected override Entity InnerDifferentiate(Variable variable) =>
                 Exponent == Integer.One
                 ? Base.InnerDifferentiate(variable).Provided(Base.DomainCondition) // don't create x^0 which is undefined for x=0
-                : Exponent is Number exp
+                : Exponent.Evaled is Number exp
                 ? exp * Base.Pow(exp - 1) * Base.InnerDifferentiate(variable)
                 : Base is Number
                 ? Base.Pow(Exponent) * MathS.Ln(Base) * Exponent.InnerDifferentiate(variable)
@@ -302,11 +302,12 @@ namespace AngouriMath
 
         partial record Signumf
         {
-            // TODO: the Delta function required to be defined,
-            // or a piecewise definition
+            // sgn is flat either side of zero and has no derivative at zero, so the
+            // derivative is 0 wherever it exists. Saying so with a condition is the same
+            // stance Absf takes just below, whose derivative is likewise undefined at zero.
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
-                => MathS.Derivative(this, variable);
+                => Integer.Zero.Provided(!Argument.EqualTo(Integer.Zero));
         }
 
         partial record Absf

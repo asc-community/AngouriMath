@@ -121,12 +121,15 @@ namespace AngouriMath.Tests.Calculus
             Assert.Equal(0, derFunc);
         }
 
+        // sgn is flat either side of zero and has no derivative at zero, so its
+        // derivative is 0 wherever it exists, stated with the condition that says where
+        // that is.
         [Fact]
         public void TestSgnDer()
         {
             Entity func = "sgn(x + 2)";
             var derived = func.Differentiate("x");
-            Assert.Equal(MathS.Derivative(func, x), derived);
+            Assert.Equal("0 provided not x + 2 = 0".ToEntity(), derived);
         }
 
         [Fact]
