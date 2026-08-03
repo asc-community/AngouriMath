@@ -227,12 +227,28 @@ namespace AngouriMath
             // For complex z, |z| = sqrt(Re(z)^2 + Im(z)^2)
             private protected override Entity IntrinsicCondition => Boolean.True;
 
+            /// <summary>
+            /// The Euclidean norm of a vector.
+            /// </summary>
+            /// <remarks>
+            /// This used to always finish with <see cref="Entity.InnerSimplified"/>, even
+            /// when the caller had asked for numeric evaluation. A norm like sqrt(369)
+            /// has no exact simplification, so it survived as a <see cref="Powf"/> and
+            /// <see cref="Entity.EvalNumerical"/> then rejected it as "not a simple
+            /// number" -- it only worked when the norm was a perfect square.
+            /// </remarks>
+            private static Entity VectorNorm(Matrix vector, bool isExact)
+            {
+                var norm = Sumf.Sum(vector.Select(component => component.Pow(2))).Pow(0.5);
+                return isExact ? norm.InnerSimplified : norm.Evaled;
+            }
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact)
                 => ExpandOnOneArgument(Argument,
                     a => a switch
                     {
-                        Matrix m when m.IsVector => Sumf.Sum(m.Select(c => c.Pow(2))).Pow(0.5).InnerSimplified,
+                        Matrix m when m.IsVector => VectorNorm(m, isExact),
                         Complex n when !isExact => Number.Abs(n),
                         Absf abs => abs,
                         Signumf({ DomainCondition: var condition }) => Integer.One.Provided(condition),
