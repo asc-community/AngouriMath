@@ -44,7 +44,7 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) =>
-                ExpandOnTwoArguments(Subtrahend, Minuend,
+                ExpandOnTwoArguments(Minuend, Subtrahend,
                     (augend, addend) => (augend, addend) switch
                     {
                         (Complex a, Complex b) when !isExact => a - b,

@@ -18,7 +18,7 @@ namespace AngouriMath
         public partial record Minusf
         {
             internal override string ToSymPy() =>
-                Subtrahend.ToSymPy(Subtrahend.Priority < Priority.Minus) + " - " + Minuend.ToSymPy(Minuend.Priority <= Priority.Minus);
+                Minuend.ToSymPy(Minuend.Priority < Priority.Minus) + " - " + Subtrahend.ToSymPy(Subtrahend.Priority <= Priority.Minus);
         }
 
         public partial record Mulf

@@ -38,18 +38,14 @@ namespace AngouriMath
 
         partial record Minusf
         {
-            // Careful: this node is declared Minusf(Subtrahend, Minuend), so the
-            // expression is `Subtrahend - Minuend` -- the two property names are the
-            // reverse of the usual terminology. Reading them as their names suggest is
-            // what produced the bug below.
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Subtrahend.ContainsNode(x)
+                Minuend.ContainsNode(x)
                 // x - a = value => x = value + a
-                ? Subtrahend.Invert(value + Minuend, x)
-                // a - x = value => x = a - value. This used to return `value - Subtrahend`,
+                ? Minuend.Invert(value + Subtrahend, x)
+                // a - x = value => x = a - value. This used to return `value - Minuend`,
                 // the negation of the right answer, which is why solving
                 // `a = 1 / (b - c)` for c gave `1/a - b` instead of `b - 1/a`.
-                : Minuend.Invert(Subtrahend - value, x);
+                : Subtrahend.Invert(Minuend - value, x);
         }
 
         partial record Mulf

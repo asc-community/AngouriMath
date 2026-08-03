@@ -51,8 +51,8 @@ namespace AngouriMath
             internal static IEnumerable<Entity> LinearChildren(Entity tree) => tree switch
             {
                 Sumf(var augend, var addend) => LinearChildren(augend).Concat(LinearChildren(addend)),
-                Minusf(var subtrahend, var minuend) =>
-                    LinearChildren(subtrahend).Concat(LinearChildren(minuend).Select(entity => -1 * entity)),
+                Minusf(var minuend, var subtrahend) =>
+                    LinearChildren(minuend).Concat(LinearChildren(subtrahend).Select(entity => -1 * entity)),
                 _ => new[] { tree }
             };
         }
@@ -60,21 +60,21 @@ namespace AngouriMath
         /// <summary>
         /// A node of difference
         /// </summary>
-        public sealed partial record Minusf(Entity Subtrahend, Entity Minuend) : ContinuousNode, IBinaryNode
+        public sealed partial record Minusf(Entity Minuend, Entity Subtrahend) : ContinuousNode, IBinaryNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Minusf New(Entity subtrahend, Entity minuend) =>
-                ReferenceEquals(Subtrahend, subtrahend) && ReferenceEquals(Minuend, minuend) ? this : new(subtrahend, minuend);
+            private Minusf New(Entity minuend, Entity subtrahend) =>
+                ReferenceEquals(Minuend, minuend) && ReferenceEquals(Subtrahend, subtrahend) ? this : new(minuend, subtrahend);
             internal override Priority Priority => Priority.Minus;
 
-            public Entity NodeFirstChild => Subtrahend;
+            public Entity NodeFirstChild => Minuend;
 
-            public Entity NodeSecondChild => Minuend;
+            public Entity NodeSecondChild => Subtrahend;
 
             /// <inheritdoc/>
-            public override Entity Replace(Func<Entity, Entity> func) => func(New(Subtrahend.Replace(func), Minuend.Replace(func)));
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Minuend.Replace(func), Subtrahend.Replace(func)));
             /// <inheritdoc/>
-            protected override Entity[] InitDirectChildren() => new[] { Subtrahend, Minuend };
+            protected override Entity[] InitDirectChildren() => new[] { Minuend, Subtrahend };
         }
 
         /// <summary>

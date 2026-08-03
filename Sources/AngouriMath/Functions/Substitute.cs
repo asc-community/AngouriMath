@@ -29,7 +29,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
-                => this == x ? value : New(Subtrahend.Substitute(x, value), Minuend.Substitute(x, value));
+                => this == x ? value : New(Minuend.Substitute(x, value), Subtrahend.Substitute(x, value));
         }
 
         partial record Mulf

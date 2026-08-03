@@ -113,7 +113,7 @@ namespace AngouriMath
             // (a - b)' = a' - b'
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
-                Subtrahend.InnerDifferentiate(variable) - Minuend.InnerDifferentiate(variable);
+                Minuend.InnerDifferentiate(variable) - Subtrahend.InnerDifferentiate(variable);
         }
 
         partial record Mulf
