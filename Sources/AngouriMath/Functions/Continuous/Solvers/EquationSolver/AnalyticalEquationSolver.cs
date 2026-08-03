@@ -92,6 +92,17 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (expr == x)
                 return new Entity[] { 0 }.ToSet();
 
+            // Whether a candidate root really is one. The loose tolerance that guesses the
+            // rational must not also be what decides this: at 1e-7, x^41 + 6x + 1 accepted
+            // -1/6, whose residual is -1.25e-32 -- small, but the difference between an
+            // answer and a decoration (#235). Where the residual comes out as an exact
+            // ratio, which is the case whenever the equation and the candidate are both
+            // rational, it is required to be exactly zero. Where it does not -- an equation
+            // carrying pi, say -- there is nothing to be exact about and the ordinary
+            // tolerance still decides.
+            static bool IsGenuineRoot(Complex residual)
+                => residual is Rational ratio ? ratio.ERational.IsZero : IsZero(residual);
+
             // Applies an attempt to downcast roots
             static Entity TryDowncast(Entity equation, Variable x, Entity root)
             {
@@ -102,7 +113,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 var downcasted = Complex.Create(preciseValue.RealPart, preciseValue.ImaginaryPart);
                 if (equation.Substitute(x, downcasted).Evaled is not Complex error)
                     return root;
-                return IsZero(error) && downcasted.RealPart is Rational && downcasted.ImaginaryPart is Rational
+                return IsGenuineRoot(error) && downcasted.RealPart is Rational && downcasted.ImaginaryPart is Rational
                        ? downcasted : root.InnerSimplified;
             }
 
