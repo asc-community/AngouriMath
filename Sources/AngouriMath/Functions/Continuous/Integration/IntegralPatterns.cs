@@ -5,6 +5,8 @@
 // Website: https://am.angouri.org.
 //
 
+using PeterO.Numbers;
+
 namespace AngouriMath.Functions.Algebra
 {
     internal static class IntegralPatterns
@@ -19,17 +21,12 @@ namespace AngouriMath.Functions.Algebra
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
                     MathS.Sin(arg) / a,
 
-            // By power reduction: sin(u)^2 = (1 - cos(2u)) / 2, so the integral is
-            // x/2 - sin(2u)/(4a). Without this, integrating sin(x)^2 fell through to
-            // integration by parts and cycled there.
-            Entity.Powf(Entity.Sinf(var arg), Entity.Number.Integer(2)) when
-                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
-                    x / 2 - MathS.Sin(2 * arg) / (4 * a),
-
-            // cos(u)^2 = (1 + cos(2u)) / 2
-            Entity.Powf(Entity.Cosf(var arg), Entity.Number.Integer(2)) when
-                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
-                    x / 2 + MathS.Sin(2 * arg) / (4 * a),
+            // sin(u)^n * cos(u)^m for whole n and m, which covers sin(x)^2 and cos(x)^2
+            // as much as sin(x)^3 or sin(x)^2 * cos(x)^2.
+            _ when TryReadSineCosinePowers(expr, x, out var trigArg, out var sinePower, out var cosinePower)
+                   && sinePower + cosinePower >= 2
+                   && TreeAnalyzer.TryGetPolyLinear(trigArg, x, out var trigRate, out _) =>
+                       IntegrateSineCosinePowers(trigArg, sinePower, cosinePower, trigRate, x),
 
             Entity.Secantf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
@@ -130,6 +127,116 @@ namespace AngouriMath.Functions.Algebra
 
             _ => null
         };
+
+
+        /// <summary>
+        /// Reads an expression as <c>sin(arg)^n * cos(arg)^m</c>, where either power may be
+        /// zero, or reports that it is not of that shape. Both factors have to be functions
+        /// of the same argument.
+        /// </summary>
+        private static bool TryReadSineCosinePowers(
+            Entity expr, Entity.Variable x, out Entity arg, out int sinePower, out int cosinePower)
+        {
+            arg = 0;
+            sinePower = cosinePower = 0;
+            switch (expr)
+            {
+                case Entity.Sinf(var a):
+                    arg = a; sinePower = 1; return a.ContainsNode(x);
+                case Entity.Cosf(var a):
+                    arg = a; cosinePower = 1; return a.ContainsNode(x);
+                case Entity.Powf(Entity.Sinf(var a), Entity.Number.Integer power)
+                    when power.EInteger.Sign > 0 && power.EInteger.CanFitInInt32():
+                    arg = a; sinePower = power.EInteger.ToInt32Checked(); return a.ContainsNode(x);
+                case Entity.Powf(Entity.Cosf(var a), Entity.Number.Integer power)
+                    when power.EInteger.Sign > 0 && power.EInteger.CanFitInInt32():
+                    arg = a; cosinePower = power.EInteger.ToInt32Checked(); return a.ContainsNode(x);
+                case Entity.Mulf(var left, var right)
+                    when TryReadSineCosinePowers(left, x, out var leftArg, out var leftSine, out var leftCosine)
+                         && TryReadSineCosinePowers(right, x, out var rightArg, out var rightSine, out var rightCosine)
+                         && leftArg == rightArg:
+                    arg = leftArg;
+                    sinePower = leftSine + rightSine;
+                    cosinePower = leftCosine + rightCosine;
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// The antiderivative of <c>sin(u)^n * cos(u)^m</c> where <c>u</c> is linear in x
+        /// with slope <paramref name="rate"/>.
+        /// </summary>
+        /// <remarks>
+        /// With an odd power there is a substitution: peel one factor off to be the
+        /// differential and write what is left in the other function, which turns the
+        /// integral into a polynomial. With both powers even there is no such factor to
+        /// peel, so the halved-angle identities go in instead and the result is integrated
+        /// again -- the total power halves each time, so this ends.
+        /// </remarks>
+        private static Entity IntegrateSineCosinePowers(
+            Entity arg, int sinePower, int cosinePower, Entity rate, Entity.Variable x)
+        {
+            if (sinePower == 0 && cosinePower == 0)
+                return x;
+
+            // cos^(2k+1) * sin^n: let s = sin(u), ds = cos(u) du
+            //   = (1/rate) * sum_j C(k, j) (-1)^j s^(n + 2j + 1) / (n + 2j + 1)
+            //
+            // Tried before the sine substitution, so that where both powers are odd the
+            // answer comes back in sin rather than cos: sin(x)cos(x) integrates to
+            // sin(x)^2/2, which is the form everyone writes, rather than the equally
+            // correct -cos(x)^2/2 that differs from it by a constant.
+            if (cosinePower % 2 == 1)
+            {
+                var k = (cosinePower - 1) / 2;
+                Entity sum = 0;
+                for (var j = 0; j <= k; j++)
+                {
+                    var power = sinePower + 2 * j + 1;
+                    sum += Binomial(k, j) * (j % 2 == 0 ? 1 : -1) * MathS.Sin(arg).Pow(power) / power;
+                }
+                return sum / rate;
+            }
+
+            // sin^(2k+1) * cos^m: let c = cos(u), dc = -sin(u) du
+            if (sinePower % 2 == 1)
+            {
+                var k = (sinePower - 1) / 2;
+                Entity sum = 0;
+                for (var j = 0; j <= k; j++)
+                {
+                    var power = cosinePower + 2 * j + 1;
+                    sum += Binomial(k, j) * (j % 2 == 0 ? 1 : -1) * MathS.Cos(arg).Pow(power) / power;
+                }
+                return -sum / rate;
+            }
+
+            // Both even: sin^2 = (1 - cos(2u))/2 and cos^2 = (1 + cos(2u))/2, expanded into
+            // powers of cos(2u), each of which is integrated by the same rules.
+            var p = sinePower / 2;
+            var q = cosinePower / 2;
+            var doubled = 2 * arg;
+            Entity result = 0;
+            // (1 - t)^p (1 + t)^q with t = cos(2u), over 2^(p+q)
+            for (var i = 0; i <= p; i++)
+                for (var j = 0; j <= q; j++)
+                {
+                    var coefficient = Binomial(p, i) * Binomial(q, j) * (i % 2 == 0 ? 1 : -1);
+                    var term = IntegrateSineCosinePowers(doubled, 0, i + j, 2 * rate, x);
+                    result += coefficient * term;
+                }
+            return result / Entity.Number.Integer.Create(EInteger.One.ShiftLeft(p + q));
+        }
+
+        private static Entity.Number.Integer Binomial(int n, int k)
+        {
+            var result = EInteger.One;
+            for (var i = 0; i < k; i++)
+                result = result * EInteger.FromInt32(n - i) / EInteger.FromInt32(i + 1);
+            return Entity.Number.Integer.Create(result);
+        }
 
         /// <summary>
         /// Whether <paramref name="expr"/> is an exponential in <paramref name="x"/>, and

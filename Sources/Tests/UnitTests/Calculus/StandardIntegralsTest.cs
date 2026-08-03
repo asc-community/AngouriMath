@@ -84,5 +84,31 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("1 / x", new[] { 0.31, 1.4 })]
         public void NeighbouringFormsAreUnaffected(string integrand, double[] points) =>
             AssertIsAntiderivative(integrand, points);
+
+        // sin(u)^n * cos(u)^m for whole n and m. An odd power gives a factor to peel off
+        // as the differential, which turns the integral into a polynomial; with both even
+        // the halved-angle identities go in and the result is integrated again.
+        [Theory]
+        [InlineData("sin(x) ^ 3", new[] { 0.31, 1.4, -0.8 })]
+        [InlineData("cos(x) ^ 3", new[] { 0.31, 1.4, -0.8 })]
+        [InlineData("sin(x) ^ 4", new[] { 0.31, 1.4, -0.8 })]
+        [InlineData("cos(x) ^ 5", new[] { 0.31, 1.4, -0.8 })]
+        [InlineData("sin(x) ^ 6", new[] { 0.31, 1.4, -0.8 })]
+        [InlineData("sin(x) ^ 2 * cos(x) ^ 2", new[] { 0.31, 1.4, -0.8 })]
+        [InlineData("sin(x) ^ 3 * cos(x) ^ 2", new[] { 0.31, 1.4, -0.8 })]
+        [InlineData("sin(x) ^ 2 * cos(x) ^ 3", new[] { 0.31, 1.4, -0.8 })]
+        [InlineData("sin(2 * x) ^ 2", new[] { 0.31, 1.4, -0.8 })]
+        [InlineData("sin(3 * x + 1) ^ 3", new[] { 0.31, 1.4, -0.8 })]
+        public void PowersOfSineAndCosine(string integrand, double[] points) =>
+            AssertIsAntiderivative(integrand, points);
+
+        // Where both powers are odd either substitution works, and they differ by a
+        // constant. The sine one is the form everyone writes, and two existing tests
+        // assert it, so it is the one tried first.
+        [Fact]
+        public void BothPowersOddGivesTheSineForm() =>
+            Assert.Equal(MathS.Boolean.True,
+                "sin(x) * cos(x)".Integrate("x").InnerSimplified
+                    .EqualTo("sin(x) ^ 2 / 2 + C".ToEntity().InnerSimplified).Simplify());
     }
 }
