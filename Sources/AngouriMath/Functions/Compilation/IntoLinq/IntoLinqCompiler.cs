@@ -20,6 +20,15 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             IEnumerable<(Type type, Variable variable)> typesAndNames
             ) where TDelegate : Delegate
         {
+            // A matrix has no compiled form, but an expression built out of matrices often
+            // has a value that is an ordinary number -- [0, 1]T * [[a, b], [c, d]] * [1, 0]
+            // is c -- and there is nothing to stop that being compiled. Nothing simplified
+            // before compiling, so those failed along with the ones that genuinely cannot
+            // be compiled (https://github.com/asc-community/AngouriMath/issues/425).
+            // Only expressions that mention a matrix pay for this.
+            if (expr.Nodes.Any(node => node is Entity.Matrix))
+                expr = expr.InnerSimplified;
+
             var subexpressionsCache = typesAndNames.ToDictionary(c => (Entity)c.variable, c => Expression.Parameter(c.type));
             var functionArguments = subexpressionsCache.Select(c => c.Value).ToArray(); // copying
             var localVars = new List<ParameterExpression>();

@@ -215,7 +215,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 
                 Providedf => HandleProvidedf(left, right),
 
-                _ => throw new AngouriBugException("A binary node seems to be not added")
+                _ => throw new UncompilableNodeException(
+                    $"The node of type {typeHolder.GetType()} does not support compilation.")
             };
             
             Expression HandleProvidedf(Expression expr, Expression cond)
@@ -238,7 +239,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             {
                 Piecewise => HandlePiecewise(en),
                 // TODO: finite set -> hash set
-                _ => throw new AngouriBugException("A node seems to be not added")
+                _ => throw new UncompilableNodeException(
+                    $"The node of type {typeHolder.GetType()} does not support compilation.")
                 //FiniteSet => Expression.
             };
         }
