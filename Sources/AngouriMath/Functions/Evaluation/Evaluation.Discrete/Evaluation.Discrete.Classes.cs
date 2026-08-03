@@ -114,11 +114,30 @@ namespace AngouriMath
         {
             // Equality comparison is always defined for any inputs
             private protected override Entity IntrinsicCondition => True;
+
+            /// <summary>
+            /// Decides equality of two constants.
+            /// </summary>
+            /// <remarks>
+            /// Comparing the separately evaluated values for exact digit equality is not
+            /// enough. sqrt(i) and (1 + i) / sqrt(2) are the same number, but evaluating
+            /// each of them rounds independently, so the results disagree in the last few
+            /// digits and the comparison used to answer False. Their difference, on the
+            /// other hand, cancels, and <see cref="Number.Real"/>'s factory maps anything
+            /// below <see cref="MathS.Settings.PrecisionErrorZeroRange"/> onto an exact
+            /// zero -- so testing the difference is both more robust and consistent with
+            /// how the rest of the library already decides what counts as zero.
+            /// </remarks>
+            private static bool ConstantsAreEqual(Entity left, Entity right)
+                => left.Evaled == right.Evaled
+                    || (left - right).Evaled is Number.Complex difference
+                        && Number.IsZero(difference);
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact)
                 => ExpandOnTwoArguments(Left, Right,
                     (left, right) => left == right ? true
-                    : left.IsConstant && right.IsConstant ? left.Evaled == right.Evaled
+                    : left.IsConstant && right.IsConstant ? ConstantsAreEqual(left, right)
                     : null,
                     (@this, a, b) => ((Equalsf)@this).New(a, b), isExact);
         }
