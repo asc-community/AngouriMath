@@ -127,6 +127,14 @@ namespace AngouriMath.Convenience
         public T Default { get; }
 
         /// <summary>
+        /// Whether anyone has called <see cref="Set"/> on this setting, i.e. whether
+        /// <see cref="Value"/> is anything other than the value the constructor pushed.
+        /// Lets a default be treated as "nobody expressed an opinion" rather than as a
+        /// deliberate choice.
+        /// </summary>
+        internal bool IsOverriden => values.Count > 1;
+
+        /// <summary>
         /// This tiny struct is needed to be under `using` operator, so that your settings
         /// are automatically rolled back on the end of your method
         /// <code>
@@ -157,6 +165,8 @@ namespace AngouriMath.Convenience
     internal sealed class KeyStack<TKey, TValue>
     {
         private readonly List<(TKey key, TValue value)> list = new();
+
+        internal int Count => list.Count;
 
         internal TValue Peek() => list[^1].value;
 

@@ -5467,6 +5467,37 @@ namespace AngouriMath
             [ThreadStatic] private static Setting<EDecimal>? precisionErrorZeroRange;
 
             /// <summary>
+            /// The tolerance within which downcasting rounds a number onto a nearby integer.
+            /// </summary>
+            /// <remarks>
+            /// This is <see cref="PrecisionErrorZeroRange"/> whenever a caller has set it,
+            /// but its default of 1e-16 is far too coarse to be applied blindly: numbers are
+            /// evaluated to <see cref="DecimalPrecisionContext"/> digits, 100 by default, so
+            /// 1e-16 sits nowhere near the noise floor. Applying it destroyed every legitimate
+            /// small value -- <c>1e-20</c> parsed to zero and <c>e^(-40)</c> evaluated to zero.
+            /// Residuals genuinely left over by exact cancellation, such as the one from
+            /// <c>sin(pi)</c>, land around 1e-99, so half the working digits separates the two
+            /// cases with room to spare. Never looser than the setting's own default, so that
+            /// lowering the precision cannot silently widen the tolerance.
+            /// </remarks>
+            internal static EDecimal DowncastingTolerance
+            {
+                get
+                {
+                    var configured = PrecisionErrorZeroRange.Value;
+                    if (PrecisionErrorZeroRange.IsOverriden)
+                        return configured;
+                    var precision = DecimalPrecisionContext.Value.Precision;
+                    if (precision.IsZero)
+                        return configured;
+                    // Built from EIntegers throughout: the precision is user-supplied and
+                    // need not fit in an int.
+                    var derived = EDecimal.Create(EInteger.One, precision.Divide(2).Negate());
+                    return derived.LessThan(configured) ? derived : configured;
+                }
+            }
+
+            /// <summary>
             /// If you only need analytical solutions and an empty set if no analytical solutions were found, disable Newton's method
             /// </summary>
             /// <example>

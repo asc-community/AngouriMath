@@ -126,7 +126,15 @@ namespace AngouriMath
                     var (intPart, rest) = num.SplitDecimal();
                     if (intPart > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
                         return null;
-                    if (IsZero(rest))
+                    // Whether the continued fraction has terminated is a question about the
+                    // digits of intPart, so the tolerance is relative to it. Number.IsZero
+                    // compares against PrecisionErrorZeroRange outright, which at the top of
+                    // the recursion -- where intPart is 0 and rest is the whole number --
+                    // declared every value below 1e-16 to be the integer 0. That is how
+                    // 1e-20 came to parse as 0. Below the top, intPart is at least 1 (rest
+                    // was inverted to get here), so the test stays as permissive as it was.
+                    if (rest.Abs().LessThan(EDecimal.FromEInteger(intPart)
+                            .Multiply(MathS.Settings.PrecisionErrorZeroRange, MathS.Settings.DecimalPrecisionContext)))
                         return Integer.Create(sign * intPart);
                     else
                     {

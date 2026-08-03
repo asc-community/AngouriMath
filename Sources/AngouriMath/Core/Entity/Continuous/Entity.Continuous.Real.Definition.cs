@@ -63,9 +63,10 @@ namespace AngouriMath
                         return new Real(value);
                     var (intPart, intRest) = value.SplitDecimal();
                     // If the difference between value & round(value) is zero (see Number.IsZero), we consider value as an integer
-                    if (intRest.LessThan(MathS.Settings.PrecisionErrorZeroRange))
+                    var tolerance = MathS.Settings.DowncastingTolerance;
+                    if (intRest.LessThan(tolerance))
                         return Integer.Create(intPart);
-                    if (intRest.GreaterThan(1 - MathS.Settings.PrecisionErrorZeroRange.Value))
+                    if (intRest.GreaterThan(1 - tolerance))
                         return Integer.Create(intPart.Increment());
 
                     var attempt = Rational.FindRational(value);
