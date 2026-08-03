@@ -82,24 +82,37 @@ namespace AngouriMath.Functions.Algebra
                        : new();
             var result = new List<List<Entity>>();
             var replacements = new Dictionary<Variable, Entity>();
+            var remainingVars = vars.Slice(0, vars.Length - 1);
+            // Which equation to eliminate `var` from is decided by whether it occurs in
+            // one, and occurring is a syntactic question. Substituting an earlier variable
+            // routinely leaves an occurrence that cancels: eliminating x_4 from a dense
+            // 4x4 turns the next equation into x_1 + 2*x_2 + x_3 - (x_1 + x_2 + x_3 - 4) - 5,
+            // where x_3 is written twice and worth nothing. Solving that for x_3 has no
+            // answer, and committing to the first candidate meant the whole system was
+            // then declared unsolvable -- https://github.com/asc-community/AngouriMath/issues/608.
+            // So a candidate that yields nothing is passed over for the next one rather than ending the search.
             for (int i = 0; i < equations.Count; i++)
                 if (equations[i].ContainsNode(var))
                 {
-                    var solutionsOverVar = equations[i].SolveEquation(var).InnerSimplified;
-                    equations.RemoveAt(i);
-                    vars = vars.Slice(0, vars.Length - 1);
+                    if (equations[i].SolveEquation(var).InnerSimplified is not FiniteSet sols
+                        || sols.Count == 0)
+                        continue;
 
-                    if (solutionsOverVar is FiniteSet sols)
-                        foreach (var sol in sols)
-                        foreach (var j in InSolveSystem(equations.Select(eq => eq.Substitute(var, sol)).ToList(), vars))
+                    var rest = new List<Entity>(equations);
+                    rest.RemoveAt(i);
+
+                    foreach (var sol in sols)
+                        foreach (var j in InSolveSystem(rest.Select(eq => eq.Substitute(var, sol)).ToList(), remainingVars))
                         {
                             replacements.Clear();
-                            for (int varid = 0; varid < vars.Length; varid++)
-                                replacements.Add(vars[varid], j[varid]);
+                            for (int varid = 0; varid < remainingVars.Length; varid++)
+                                replacements.Add(remainingVars[varid], j[varid]);
                             j.Add(sol.Substitute(replacements).InnerSimplified);
                             result.Add(j);
                         }
-                    break;
+
+                    if (result.Count > 0)
+                        return result;
                 }
             return result;
         }
