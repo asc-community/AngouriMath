@@ -63,7 +63,11 @@ namespace AngouriMath.Functions
             while (coefficients.Length > 1 && coefficients[0].IsZero)
             {
                 roots.Add(ERational.Zero);
-                coefficients = coefficients[1..];
+                // Copied rather than sliced: the range operator needs a helper that
+                // netstandard2.0, which this project also targets, does not have.
+                var shifted = new ERational[coefficients.Length - 1];
+                System.Array.Copy(coefficients, 1, shifted, 0, shifted.Length);
+                coefficients = shifted;
             }
 
             foreach (var candidate in RationalRootCandidates(coefficients))
@@ -121,9 +125,12 @@ namespace AngouriMath.Functions
             var found = new ERational[degree.ToInt32Checked() + 1];
             for (var i = 0; i < found.Length; i++)
                 found[i] = ERational.Zero;
-            foreach (var (power, coefficient) in monomials)
+            // .Key/.Value rather than deconstruction: KeyValuePair has no Deconstruct on
+            // netstandard2.0, which this project also targets.
+            foreach (var monomial in monomials)
             {
-                if (power is null || power.Sign < 0 || coefficient.Evaled is not Rational ratio)
+                var power = monomial.Key;
+                if (power is null || power.Sign < 0 || monomial.Value.Evaled is not Rational ratio)
                     return false;
                 found[power.ToInt32Checked()] = ratio.ERational;
             }
@@ -143,7 +150,7 @@ namespace AngouriMath.Functions
             var whole = coefficients.Select(c => c.Numerator * scale.Divide(c.Denominator)).ToArray();
 
             var constant = whole[0].Abs();
-            var leading = whole[^1].Abs();
+            var leading = whole[whole.Length - 1].Abs();
             if (constant.IsZero || constant > MaxCoefficientToFactor || leading > MaxCoefficientToFactor)
                 return Enumerable.Empty<ERational>();
 
