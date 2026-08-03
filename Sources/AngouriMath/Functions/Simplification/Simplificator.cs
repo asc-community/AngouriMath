@@ -109,6 +109,23 @@ namespace AngouriMath.Functions
                     AddHistory(res1);
                     res = PickSimplest(res, res1);
                     AddHistory(res = res.Replace(Patterns.CollapseTrigonometricFunctions).Replace(Patterns.TrigonometricRules));
+
+                    // Multiple angles opened up, then gathered again by the ordinary rules.
+                    // Offered as a candidate rather than taken: written out, sin(4x) is far
+                    // longer than it started, and only worth it where the pieces cancel --
+                    // which is what the complexity metric is for.
+                    var expandedAngles = res
+                        .Replace(Patterns.ExpandMultipleAngleRules)
+                        .Replace(Patterns.NormalTrigonometricForm)
+                        .InnerSimplified;
+                    if (expandedAngles != res)
+                    {
+                        AddHistory(expandedAngles);
+                        AddHistory(SimplifyChildren(expandedAngles)
+                            .Replace(Patterns.TrigonometricRules)
+                            .Replace(Patterns.CommonRules)
+                            .InnerSimplified);
+                    }
                 }
 
 

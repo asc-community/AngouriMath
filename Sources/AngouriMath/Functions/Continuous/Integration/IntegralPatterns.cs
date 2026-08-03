@@ -19,6 +19,18 @@ namespace AngouriMath.Functions.Algebra
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
                     MathS.Sin(arg) / a,
 
+            // By power reduction: sin(u)^2 = (1 - cos(2u)) / 2, so the integral is
+            // x/2 - sin(2u)/(4a). Without this, integrating sin(x)^2 fell through to
+            // integration by parts and cycled there.
+            Entity.Powf(Entity.Sinf(var arg), Entity.Number.Integer(2)) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    x / 2 - MathS.Sin(2 * arg) / (4 * a),
+
+            // cos(u)^2 = (1 + cos(2u)) / 2
+            Entity.Powf(Entity.Cosf(var arg), Entity.Number.Integer(2)) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    x / 2 + MathS.Sin(2 * arg) / (4 * a),
+
             Entity.Secantf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
                     MathS.Hyperbolic.Artanh(MathS.Sin(arg)) / a,
