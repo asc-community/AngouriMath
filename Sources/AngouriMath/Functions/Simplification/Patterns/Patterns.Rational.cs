@@ -19,7 +19,7 @@ namespace AngouriMath.Functions
             // simplifier to cancel it back down, and since this rule runs inside Simplify's
             // own pass -- calling Simplify again on both halves -- each fraction added to
             // the sum squares the denominator before anything cancels. Three fractions over
-            // x + y + z never finished, which is #403.
+            // x + y + z never finished, which is https://github.com/asc-community/AngouriMath/issues/403.
             if (leftDen == rightDen)
                 return (leftNum + rightNum).InnerSimplified / leftDen;
 
