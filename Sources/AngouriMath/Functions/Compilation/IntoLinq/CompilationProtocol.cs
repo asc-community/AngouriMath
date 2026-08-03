@@ -215,7 +215,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 
                 Providedf => HandleProvidedf(left, right),
 
-                _ => throw new AngouriBugException("A binary node seems to be not added")
+                _ => throw new UncompilableNodeException(
+                    $"The node of type {typeHolder.GetType()} does not support compilation.")
             };
             
             Expression HandleProvidedf(Expression expr, Expression cond)
@@ -238,7 +239,13 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             {
                 Piecewise => HandlePiecewise(en),
                 // TODO: finite set -> hash set
-                _ => throw new AngouriBugException("A node seems to be not added")
+                // Reaching a node with no compiled form is the caller asking for something
+                // that is not supported, not a bug in the library, and the exception should
+                // say which node it was. It used to report "a node seems to be not added"
+                // as an internal bug assertion, which is what compiling a matrix hit (#425,
+                // #526).
+                _ => throw new UncompilableNodeException(
+                    $"The node of type {typeHolder.GetType()} does not support compilation.")
                 //FiniteSet => Expression.
             };
         }
