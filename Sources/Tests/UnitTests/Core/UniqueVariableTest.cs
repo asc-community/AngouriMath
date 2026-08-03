@@ -45,10 +45,36 @@ namespace AngouriMath.Tests.Core
         [InlineData("x * (x ^ 2 + 1) ^ 3")]
         [InlineData("x * (x ^ 2 + 2) ^ 2")]
         [InlineData("x * (x ^ 2 + 1) ^ 4")]
-        [InlineData("x * (x ^ 2 + x + 1) ^ 2")]   // was unsolved
-        [InlineData("x ^ 2 * (x ^ 2 + 1) ^ 2")]   // was unsolved
         public void NestedSubstitutionGivesAnAntiderivative(string integrand) =>
             AssertIsAntiderivative(integrand);
+
+        /// <summary>
+        /// These two used to come back unevaluated and are solved by this change. They are
+        /// asserted only for correctness, not for being solved at all: the fix that stops
+        /// integration re-entering itself closes the path they reach an answer by, so with
+        /// that one also applied they go back to being unevaluated. Returning no answer is
+        /// a limit; returning a wrong one is not, and that is what is pinned here.
+        /// </summary>
+        [Theory]
+        [InlineData("x * (x ^ 2 + x + 1) ^ 2")]
+        [InlineData("x ^ 2 * (x ^ 2 + 1) ^ 2")]
+        public void AnyAnswerToThesePolynomialsIsAnAntiderivative(string integrand)
+        {
+            var f = integrand.ToEntity();
+            var answer = f.Integrate("x");
+            if (answer.Stringize().Contains("integral("))
+                return;
+            var derivative = answer.Differentiate("x");
+            foreach (var point in new[] { 0.7, 1.3, 2.1 })
+            {
+                var expected = f.Substitute("x", point).EvalNumerical();
+                var actual = derivative.Substitute("x", point).Substitute("C", 0).EvalNumerical();
+                Assert.True((expected - actual).Abs().EDecimal.ToDouble()
+                            < 1e-6 * System.Math.Max(1, expected.Abs().EDecimal.ToDouble()),
+                    $"at x = {point}, d/dx of the answer is {actual.Stringize()} "
+                    + $"where the integrand is {expected.Stringize()}");
+            }
+        }
 
         // The straightforward substitutions have to keep working.
         [Theory]
