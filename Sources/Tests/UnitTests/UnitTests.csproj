@@ -14,7 +14,9 @@
 
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="6.0.0-alpha0002" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
+    <!-- 16.9.4 pulled in Newtonsoft.Json 9.0.1 transitively, which NU1903 flags as
+         having a known high-severity vulnerability (GHSA-5crp-9r3c-p9vr). -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="Xunit.Combinatorial" Version="1.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
