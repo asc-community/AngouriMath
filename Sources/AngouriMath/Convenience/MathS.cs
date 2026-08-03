@@ -3761,7 +3761,7 @@ namespace AngouriMath
         /// Console.WriteLine(ToBaseN(13.125m, 10));
         /// 
         /// // A repeating expansion is cut off at the configured decimal precision
-        /// // instead of hanging; see issue 584.
+        /// // instead of hanging; see https://github.com/asc-community/AngouriMath/issues/584.
         /// Console.WriteLine(ToBaseN(13.125m, 5).Substring(0, 12) + "...");
         /// 
         /// Console.WriteLine(ToBaseN(13.125m, 8));
