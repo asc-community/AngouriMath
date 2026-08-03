@@ -79,6 +79,39 @@ namespace AngouriMath.Functions
             _ => x
         };
 
+        /// <summary>
+        /// The largest whole multiplier worth opening up. The expansion of sin(n x) grows
+        /// with n, and past a handful the result is longer than anything it buys.
+        /// </summary>
+        private const int MaxAngleMultiplier = 8;
+
+        /// <summary>
+        /// <c>sin(n x)</c> and <c>cos(n x)</c> written out in <c>sin(x)</c> and
+        /// <c>cos(x)</c>, for a whole n.
+        /// </summary>
+        /// <remarks>
+        /// The expansions are <see cref="TrigonometricAngleExpansion"/>'s, which were only
+        /// ever reached for numeric angles that are multiples of pi. Nothing opened a
+        /// symbolic <c>sin(2x)</c>, so <c>cos(2x) - (1 - 2sin(x)^2)</c> did not reduce to
+        /// zero and neither did <c>(sin(2t)csc(t))^2/4 - cos(2t) - sin(t)^2</c>, which is
+        /// #557.
+        /// </remarks>
+        internal static Entity ExpandMultipleAngleRules(Entity x) => x switch
+        {
+            Sinf(Mulf(Integer n, var inner)) when IsWorthExpanding(n) =>
+                TrigonometricAngleExpansion.ExpandSineArgumentMultiplied(
+                    new Sinf(inner), new Cosf(inner), n.EInteger.ToInt32Checked()),
+
+            Cosf(Mulf(Integer n, var inner)) when IsWorthExpanding(n) =>
+                TrigonometricAngleExpansion.ExpandCosineArgumentMultiplied(
+                    new Sinf(inner), new Cosf(inner), n.EInteger.ToInt32Checked()),
+
+            _ => x
+        };
+
+        private static bool IsWorthExpanding(Integer n)
+            => n.EInteger.Abs() >= 2 && n.EInteger.Abs() <= MaxAngleMultiplier;
+
         internal static Entity CollapseTrigonometricFunctions(Entity x) => x switch
         {
             // sin / cos = tan
