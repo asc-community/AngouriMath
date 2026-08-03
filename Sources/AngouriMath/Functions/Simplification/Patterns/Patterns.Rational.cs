@@ -15,6 +15,14 @@ namespace AngouriMath.Functions
         private static Entity SumOfFractions(Entity expr,
             Entity leftNum, Entity leftDen, Entity rightNum, Entity rightDen)
         {
+            // a/d + b/d = (a + b)/d. Cross-multiplying instead builds d*d and leaves the
+            // simplifier to cancel it back down, and since this rule runs inside Simplify's
+            // own pass -- calling Simplify again on both halves -- each fraction added to
+            // the sum squares the denominator before anything cancels. Three fractions over
+            // x + y + z never finished, which is #403.
+            if (leftDen == rightDen)
+                return (leftNum + rightNum).InnerSimplified / leftDen;
+
             var twoInt = ((leftNum + leftDen).Vars, (rightNum + rightDen).Vars).IntersectSequences().Any();
             if (twoInt)
                 return (leftNum * rightDen + rightNum * leftDen).Simplify() / (rightDen * leftDen).Simplify();

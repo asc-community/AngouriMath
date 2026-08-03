@@ -179,7 +179,10 @@ namespace AngouriMath.Tests.Algebra
 
         [Theory]
         [InlineData("(x - b) / (x + a) + c", 1, "{ -(a * c + -b) / (1 + c) provided not -(a * c + -b) / (1 + c) + a = 0 }")]
-        [InlineData("(x - b) / (x + a) + c / (x + a)", 1, "{ -(c + -b) provided not a + -(c + -b) = 0 }")]
+        // Both operands share the denominator, so they now add as (x - b + c) / (x + a)
+        // rather than being cross-multiplied; the root is the same b - c, reached with its
+        // terms in the other order.
+        [InlineData("(x - b) / (x + a) + c / (x + a)", 1, "{ -(-b + c) provided not a + -(-b + c) = 0 }")]
         [InlineData("(x - b) / (x + a) + c / (x + a)2", 2, "{ (-(-b + a) - sqrt((-b + a) ^ 2 - 4 * (a * -b + c))) / 2 provided not (-(-b + a) - sqrt((-b + a) ^ 2 - 4 * (a * -b + c))) / 2 + a = 0, (-(-b + a) + sqrt((-b + a) ^ 2 - 4 * (a * -b + c))) / 2 provided not (-(-b + a) + sqrt((-b + a) ^ 2 - 4 * (a * -b + c))) / 2 + a = 0 }")]
         [InlineData("(x - b) / (x + a) + c + (x - c) / (x + d)", 2, null)]
         public void CDSolver(string expr, int rootCount, string? verifyRoots) => TestSolver(expr, rootCount, verifyRoots: verifyRoots);
