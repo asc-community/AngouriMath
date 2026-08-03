@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using PeterO.Numbers;
 using static AngouriMath.Entity;
 
 namespace AngouriMath.Functions
@@ -100,7 +101,60 @@ namespace AngouriMath.Functions
             Sumf(Logf(var any3, var any1), Logf(var any3a, var any2)) when any3 == any3a => any3.Log(any1 * any2),
             Minusf(Logf(var any3, var any1), Logf(var any3a, var any2)) when any3 == any3a => any3.Log(any1 / any2),
 
+            // sqrt(8) = 2 * sqrt(2), cbrt(54) = 3 * cbrt(2)
+            Powf(Integer { IsPositive: true } radicand, Rational and not Integer and var power)
+                when ReduceRadical(radicand, power) is { } reduced => reduced,
+
             _ => x
         };
+
+        /// <summary>
+        /// Largest divisor tried when reducing a radical. Reducing sqrt(n) exactly would
+        /// mean factoring n, which is not something a simplification pass can afford to
+        /// do on every node. Trial division by small divisors catches every radical that
+        /// turns up in practice; anything left stays under the root, which is still a
+        /// correct answer, just not a fully reduced one.
+        /// </summary>
+        private const int MaxRadicalTrialDivisor = 1000;
+
+        /// <summary>
+        /// Rewrites <c>n ^ (p/q)</c> as <c>a ^ p * b ^ (p/q)</c> where <c>n = a^q * b</c>,
+        /// i.e. pulls every q-th power out from under the root.
+        /// </summary>
+        /// <returns>
+        /// <see langword="null"/> when nothing can be pulled out, so that the rule does
+        /// not fire and rewriting terminates.
+        /// </returns>
+        private static Entity? ReduceRadical(Integer radicand, Rational power)
+        {
+            var denominator = power.ERational.Denominator;
+            if (denominator < 2 || denominator > 64)
+                return null;
+            var root = denominator.ToInt32Checked();
+
+            var inside = radicand.EInteger;
+            if (inside <= 1)
+                return null;
+
+            var outside = EInteger.One;
+            for (int divisor = 2; divisor <= MaxRadicalTrialDivisor; divisor++)
+            {
+                var divisorPower = EInteger.FromInt32(divisor).Pow(root);
+                if (divisorPower > inside)
+                    break;
+                while (inside.Remainder(divisorPower).IsZero)
+                {
+                    inside /= divisorPower;
+                    outside *= EInteger.FromInt32(divisor);
+                }
+            }
+
+            if (outside.Equals(EInteger.One))
+                return null; // already reduced; firing here would loop forever
+
+            // n^(p/q) = (a^q * b)^(p/q) = a^p * b^(p/q)
+            return new Powf(Integer.Create(outside), Integer.Create(power.ERational.Numerator))
+                 * new Powf(Integer.Create(inside), power);
+        }
     }
 }
