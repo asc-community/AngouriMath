@@ -72,8 +72,8 @@ namespace AngouriMath
         {
             private protected override void CompileNode(Compiler compiler)
             {
-                Minuend.InnerCompile(compiler);
                 Subtrahend.InnerCompile(compiler);
+                Minuend.InnerCompile(compiler);
                 compiler.Instructions.Add(new(InstructionType.CALL_MINUS));
             }
         }

@@ -22,7 +22,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Stringize() =>
-                Subtrahend.Stringize(Subtrahend.Priority < Priority) + " - " + Minuend.Stringize(Minuend.Priority <= Priority);
+                Minuend.Stringize(Minuend.Priority < Priority) + " - " + Subtrahend.Stringize(Subtrahend.Priority <= Priority);
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }

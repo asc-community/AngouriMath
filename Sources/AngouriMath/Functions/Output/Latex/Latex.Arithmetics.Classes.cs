@@ -24,8 +24,8 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Latexise() =>
-                Subtrahend.Latexise(Subtrahend.LatexPriority < LatexPriority)
-                + "-" + Minuend.Latexise(Minuend.LatexPriority <= LatexPriority);
+                Minuend.Latexise(Minuend.LatexPriority < LatexPriority)
+                + "-" + Subtrahend.Latexise(Subtrahend.LatexPriority <= LatexPriority);
         }
 
         public partial record Mulf

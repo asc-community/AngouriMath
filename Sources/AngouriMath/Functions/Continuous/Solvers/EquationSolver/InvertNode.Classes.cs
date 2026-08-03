@@ -39,11 +39,13 @@ namespace AngouriMath
         partial record Minusf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Subtrahend.ContainsNode(x)
+                Minuend.ContainsNode(x)
                 // x - a = value => x = value + a
-                ? Subtrahend.Invert(value + Minuend, x)
-                // a - x = value => x = a - value
-                : Minuend.Invert(value - Subtrahend, x);
+                ? Minuend.Invert(value + Subtrahend, x)
+                // a - x = value => x = a - value. This used to return `value - Minuend`,
+                // the negation of the right answer, which is why solving
+                // `a = 1 / (b - c)` for c gave `1/a - b` instead of `b - 1/a`.
+                : Subtrahend.Invert(Minuend - value, x);
         }
 
         partial record Mulf
