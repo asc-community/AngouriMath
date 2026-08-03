@@ -89,8 +89,8 @@ namespace AngouriMath.Functions.Algebra
             // 4x4 turns the next equation into x_1 + 2*x_2 + x_3 - (x_1 + x_2 + x_3 - 4) - 5,
             // where x_3 is written twice and worth nothing. Solving that for x_3 has no
             // answer, and committing to the first candidate meant the whole system was
-            // then declared unsolvable -- #608. So a candidate that yields nothing is
-            // passed over for the next one rather than ending the search.
+            // then declared unsolvable -- https://github.com/asc-community/AngouriMath/issues/608.
+            // So a candidate that yields nothing is passed over for the next one rather than ending the search.
             for (int i = 0; i < equations.Count; i++)
                 if (equations[i].ContainsNode(var))
                 {
