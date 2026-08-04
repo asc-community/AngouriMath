@@ -196,39 +196,85 @@ namespace AngouriMath.Functions.Algebra
         [ThreadStatic] private static bool suppresslHopital;
 
         /// <summary>
-        /// A product that has a reciprocal factor in it, rewritten as a quotient, or
-        /// <see langword="null"/> if it has none. The rule below only reads quotients, so
-        /// <c>lim x -&gt; +oo x^4 * e^(-x)</c> came out as NaN while the same limit written
-        /// <c>x^4 / e^x</c> gave 0 --
-        /// https://github.com/asc-community/AngouriMath/issues/596.
+        /// One product broken into a numerator and a denominator, with every reciprocal factor
+        /// taken into the latter. A product with no reciprocal factor in it comes back with a
+        /// denominator of 1, which is what makes this usable term by term below.
         /// </summary>
-        private static Entity? AsQuotient(Entity expr)
+        private static (Entity Numerator, Entity Denominator) SplitProduct(Entity expr)
         {
-            if (expr is not Mulf)
-                return null;
             Entity numerator = 1, denominator = 1;
-            var reciprocal = false;
             foreach (var factor in Mulf.LinearChildren(expr))
                 switch (factor)
                 {
                     case Powf(var @base, Real { IsNegative: true } power):
                         denominator *= @base.Pow(-power);
-                        reciprocal = true;
                         break;
                     case Powf(var @base, Mulf(Real { IsNegative: true } coefficient, var rest)):
                         denominator *= @base.Pow(-coefficient * rest);
-                        reciprocal = true;
                         break;
                     case Divf(var dividend, var divisor):
                         numerator *= dividend;
                         denominator *= divisor;
-                        reciprocal = true;
                         break;
                     default:
                         numerator *= factor;
                         break;
                 }
-            return reciprocal ? numerator / denominator : null;
+            return (numerator, denominator);
+        }
+
+        /// <summary>
+        /// How many terms of a sum are worth putting over a common denominator. Each one
+        /// multiplies the numerator by every other term's denominator, so the expression grows
+        /// with the square of the count, and the rule below has to differentiate whatever comes
+        /// out of it. Two and three terms is what the forms that need this are written with.
+        /// </summary>
+        private const int MaxTermsOverACommonDenominator = 3;
+
+        /// <summary>
+        /// The expression rewritten as a single quotient, or <see langword="null"/> where it is
+        /// not one to begin with and nothing is gained by writing it as one. The rule below only
+        /// reads quotients, and two kinds of expression are quotients without being written as
+        /// one.
+        /// <para/>
+        /// A product with a reciprocal factor: <c>lim x -&gt; +oo x^4 * e^(-x)</c> came out as
+        /// NaN while the same limit written <c>x^4 / e^x</c> gave 0 --
+        /// https://github.com/asc-community/AngouriMath/issues/596.
+        /// <para/>
+        /// And a sum of them, which is where the differences of two divergent parts at a finite
+        /// point live: <c>1/x - 1/sin(x)</c> at 0 is +oo - +oo on the right and -oo - -oo on the
+        /// left, and nothing in the descent takes a difference apart any further than asking
+        /// what each half tends to. Over the common denominator it is
+        /// <c>(sin(x) - x) / (x * sin(x))</c>, which is 0/0 and which the rule settles at 0 in
+        /// three steps.
+        /// </summary>
+        private static Entity? AsQuotient(Entity expr, Variable x)
+        {
+            if (expr is Mulf)
+            {
+                var (numerator, denominator) = SplitProduct(expr);
+                return denominator == 1 ? null : numerator / denominator;
+            }
+            if (expr is not (Sumf or Minusf))
+                return null;
+            var terms = Sumf.LinearChildren(expr).ToList();
+            if (terms.Count > MaxTermsOverACommonDenominator)
+                return null;
+            Entity? combined = null, common = null;
+            var worthIt = false;
+            foreach (var term in terms)
+            {
+                var (numerator, denominator) = SplitProduct(term);
+                // A denominator that does not contain x is a constant factor and putting the sum
+                // over it gains nothing, while still costing the rule an expression to
+                // differentiate. It is the denominators that vanish or diverge that make the
+                // difference indeterminate, and those are the ones that contain x.
+                worthIt |= denominator != 1 && denominator.ContainsNode(x);
+                (combined, common) = combined is null || common is null
+                    ? (numerator, denominator)
+                    : (combined * denominator + numerator * common, common * denominator);
+            }
+            return worthIt && combined is { } && common is { } ? (combined / common).InnerSimplified : null;
         }
 
         /// <remarks>
@@ -258,7 +304,7 @@ namespace AngouriMath.Functions.Algebra
 
         private static Entity? ApplylHopitalRuleImpl(Entity expr, Variable x, Entity dest, ApproachFrom side)
         {
-            if (expr is not Divf && AsQuotient(expr) is { } quotient)
+            if (expr is not Divf && AsQuotient(expr, x) is { } quotient)
                 expr = quotient;
             if (expr is Divf(var num, var den))
                 if (EvalAssumingContinuous(num.Limit(x, dest, side)) is var numLimit && EvalAssumingContinuous(den.Limit(x, dest, side)) is var denLimit)
@@ -487,6 +533,20 @@ namespace AngouriMath.Functions.Algebra
                     when ComputeLimit(a, x, dest) is { } aLim && ComputeLimit(b, x, dest) is { } bLim &&
                         IsFiniteNode(aLim.Evaled) && IsFiniteNode(bLim.Evaled)
                         => transformation(a, aLim) * transformation(b, bLim),
+                _ => expr
+            };
+
+        /// <summary>
+        /// A tangent or a cotangent written as the quotient it is. Kept apart from
+        /// <see cref="TrivialTrigonometricReplacement"/>, which runs in front of the first
+        /// remarkable limit, because that limit matches a quotient and this rewrite would turn
+        /// the quotient a tangent sits under into a product.
+        /// </summary>
+        private static Entity AsSineOverCosine(Entity expr, Variable x)
+            => expr switch
+            {
+                Tanf(var arg) when arg.ContainsNode(x) => MathS.Sin(arg) / MathS.Cos(arg),
+                Cotanf(var arg) when arg.ContainsNode(x) => MathS.Cos(arg) / MathS.Sin(arg),
                 _ => expr
             };
 
