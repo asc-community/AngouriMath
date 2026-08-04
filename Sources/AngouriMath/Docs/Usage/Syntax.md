@@ -1,0 +1,108 @@
+# Expression syntax
+
+What `MathS.FromString` accepts, and what `Entity.Stringize` produces. The authority is
+[`Core/Antlr/AngouriMath.g`](../../Core/Antlr/AngouriMath.g); this page is a reading of it. To
+change the language, change the grammar and regenerate — see
+[`ImproveParser.md`](../Contributing/ImproveParser.md).
+
+## The contract
+
+**Parsing what `Stringize` prints gives back the expression it printed.** That is the whole
+point of the printed form, and it is enforced by `StringizeRoundTripTest`. A node whose usual
+notation is not in the grammar prints as its function call instead: a lambda prints as
+`lambda(x, x + 1)` and not `x -> x + 1`, because `->` is the implication operator and the arrow
+form would silently come back as something else.
+
+LaTeX output is under no such obligation — nothing parses LaTeX — so `Latexise` is free to use
+`\frac`, `\bmod` and the rest.
+
+## Operators, loosest first
+
+Everything on one line has the same precedence and groups to the left, except `^`, which groups
+to the right.
+
+| | operators | notes |
+|---|---|---|
+| 1 | `provided` | |
+| 2 | `implies` | |
+| 3 | `or` `\|` | |
+| 4 | `xor` | |
+| 5 | `and` `&` | |
+| 6 | `not` | prefix |
+| 7 | `=` `<>` `>` `>=` `<` `<=` | chained: `a < b < c` means `a < b and b < c` |
+| 8 | `in` | |
+| 9 | `unite` `\/`, `setsubtract` `\` | |
+| 10 | `intersect` `/\` | |
+| 11 | `+` `-` | |
+| 12 | `*` `/` `mod` | |
+| 13 | `+` `-` | prefix |
+| 14 | `^` | **groups to the right**: `a ^ b ^ c` is `a ^ (b ^ c)` |
+| 15 | `!` | postfix factorial |
+
+`%` is **not** an operator. It is left free to mean percent; the remainder is written `mod`.
+
+`mod` is the floored remainder, `a - b * floor(a / b)`, which takes the sign of the **divisor**:
+`(-7) mod 3` is 2 and `7 mod (-3)` is -2. This is the convention SymPy, Mathematica and Maxima
+use, and the one under which the residues modulo n are the numbers from 0 to n - 1. C's `%`
+truncates instead; it is a different operation and the library does not inherit it.
+
+## Numbers and constants
+
+`1`, `1.5`, `1/2`, `1e-9`, `i`, `e`, `pi`, `+oo`, `-oo`, `true`, `false`.
+
+A variable is a letter or `_` followed by letters, digits or `_`, and Greek letters are letters.
+Juxtaposition is multiplication, so `2x` is `2 * x` — which is also why an unknown function name
+parses as a product rather than as an error: `foo(x)` is `foo * x`, silently, unless `foo` is one
+of the names below.
+
+## Sets
+
+| | |
+|---|---|
+| finite | `{ 1, 2, 3 }`, `{}` |
+| interval | `[a; b]` closed, `(a; b)` open, `[a; b)` and `(a; b]` half-open |
+| conditional | `{ x : x > 0 }` |
+| special | `RR` `CC` `ZZ` `QQ` `BB` |
+| operations | `unite` `/\` … see the table above |
+
+## Matrices and vectors
+
+`[1, 2, 3]` is a column vector, `[[1, 2], [3, 4]]` a matrix, `[1, 2, 3]T` a transpose.
+
+## Functions
+
+Everything below is written `name(argument, ...)`.
+
+**Trigonometric** — `sin` `cos` `tan` `cotan` `cot` `sec` `cosec` `csc`, and the inverses
+`arcsin` `arccos` `arctan` `arccotan` `arccot` `arcsec` `arccosec` `arccsc`, each also spelled
+`asin` `acos` `atan` `acotan` `acot` `asec` `acosec` `acsc`.
+
+**Hyperbolic** — `sinh` `sh` `cosh` `ch` `tanh` `th` `cotanh` `coth` `cth` `sech` `sch`
+`cosech` `csch`.
+
+**Inverse hyperbolic** — the inverse of a hyperbolic function is an *area*, not an arc, so it is
+`arsinh` (also `asinh`, `arsh`; `arcsinh` is **refused**), `arcosh`, `artanh`, `arcotanh`, and
+their short forms `arsh` `arch` `arth` `arcth` `arsch` `arcsch`. The `arc-` spellings raise a
+parse error rather than being silently read as a product.
+
+Both hyperbolic families are **rewritten as they are parsed** and are not nodes of their own:
+`sinh(x)` becomes `(e ^ x - e ^ (-x)) / 2` and `arsinh(x)` becomes `ln(x + sqrt(x ^ 2 + 1))`.
+So they do not print back as themselves — what round-trips is the expression, not the spelling.
+The same goes for `cbrt(x)`, which is `x ^ (1/3)`, and `sqr(x)`, which is `x ^ 2`.
+
+**Other** — `sqrt` `cbrt` `sqr` `pow(a, b)` `ln` `log(base, x)` `abs` `signum` `sgn` `sign`
+`phi` `gamma` `factorial` (or postfix `!`).
+
+**Calculus** — `derivative(expr, var, order)`, `integral(expr, var)`, `limit(expr, var, dest)`,
+`limitleft(...)`, `limitright(...)`.
+
+**Structural** — `piecewise(a provided p, b provided q)`, `lambda(param, body)`,
+`apply(f, arg, ...)`, `domain(expr, set)`.
+
+## Where it is easy to be caught out
+
+- **`^` groups to the right.** `2 ^ 2 ^ 3` is 256, not 64. Write `(2 ^ 2) ^ 3` for the other.
+- **An unknown name is a product**, not an error. `sinx` is `s * i * n * x`.
+- **`%` is not the remainder.** Write `mod`.
+- **Intervals use `;`**, not `,`: `[1; 2]`. `[1, 2]` is a vector.
+- **`->` is implication**, not a lambda arrow.
