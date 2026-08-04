@@ -124,6 +124,14 @@ namespace AngouriMath.Functions.Algebra
                 && qa.Evaled is Entity.Number.Complex { IsZero: false }
                     => IntegrateRootOfQuadratic(qa, qb, qc, radicand, x),
 
+            // ∫ k / (x^2 * sqrt(ax^2 + c)) dx, the shape a trigonometric substitution is
+            // usually taught for. Differentiating sqrt(ax^2 + c)/x gives exactly
+            // -c/(x^2 * sqrt(ax^2 + c)), so every sign of a and c is the one formula and
+            // there is no case analysis to get wrong. Without it 1/(x^2 * sqrt(x^2 - 1))
+            // had no antiderivative at all.
+            _ when TryReadOverSquareTimesRoot(expr, x, out var overFactor, out var overRadicand, out var overConstant)
+                => -overFactor * MathS.Sqrt(overRadicand) / (overConstant * x),
+
             // ∫ k / sqrt(ax^2 + bx + c) dx -- the arcsine and logarithm forms. Without
             // these, 1/sqrt(1 - x^2) had no antiderivative at all.
             Entity.Divf(var numerator,
@@ -309,6 +317,48 @@ namespace AngouriMath.Functions.Algebra
         /// is the square root of something linear, which the ordinary power rule already
         /// integrates, and dividing by a would not be allowed anyway.
         /// </remarks>
+        /// <summary>
+        /// Reads <c>k / (x^2 * sqrt(ax^2 + c))</c>, giving back k, the radicand and its
+        /// constant term. The radicand has to be a quadratic in x with no linear term and
+        /// with neither of its two coefficients zero: a zero constant makes the formula
+        /// below divide by it, and with a zero a there is no root of x left to speak of.
+        /// </summary>
+        private static bool TryReadOverSquareTimesRoot(
+            Entity expr, Entity.Variable x,
+            out Entity factor, out Entity radicand, out Entity constantTerm)
+        {
+            factor = radicand = constantTerm = 0;
+            if (expr is not Entity.Divf(var numerator, var denominator) || numerator.ContainsNode(x))
+                return false;
+            Entity coefficient = numerator;
+            var squares = 0;
+            Entity? root = null, constant = null;
+            foreach (var part in Entity.Mulf.LinearChildren(denominator))
+                switch (part)
+                {
+                    case Entity.Powf(var square, Entity.Number.Integer(2)) when square == x:
+                        squares++;
+                        break;
+                    case Entity.Powf(var under, Entity.Number.Rational(Entity.Number.Integer(1), Entity.Number.Integer(2)))
+                        when root is null
+                            && TreeAnalyzer.TryGetPolyQuadratic(under, x, out var qa, out var qb, out var qc)
+                            && qa.Evaled is Entity.Number.Complex { IsZero: false }
+                            && qb.Evaled is Entity.Number.Complex { IsZero: true }
+                            && qc.Evaled is Entity.Number.Complex { IsZero: false }:
+                        (root, constant) = (under, qc);
+                        break;
+                    case var other when !other.ContainsNode(x):
+                        coefficient /= other;
+                        break;
+                    default:
+                        return false;
+                }
+            if (squares != 1 || root is null || constant is null)
+                return false;
+            (factor, radicand, constantTerm) = (coefficient, root, constant);
+            return true;
+        }
+
         private static Entity IntegrateRootOfQuadratic(
             Entity a, Entity b, Entity c, Entity radicand, Entity.Variable x)
             => (2 * a * x + b) * MathS.Sqrt(radicand) / (4 * a)
