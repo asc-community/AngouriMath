@@ -72,10 +72,20 @@ namespace AngouriMath.Tests.Calculus
         /// honest. What must not happen is a hang, and the answer must not become NaN either,
         /// since NaN asserts that the limit does not exist.
         /// </summary>
+        /// <remarks>
+        /// The last two are the forms that showed a bound on the number of steps is not by
+        /// itself a bound on the work. Each step asks what the two parts of its quotient tend
+        /// to, and those are limits the rule may be applied to in turn, so sixteen steps deep
+        /// is far more than sixteen steps: both of these ran for over twenty seconds before the
+        /// rule was stopped from going round a cycle or handing on a quotient bigger than the
+        /// one it came from.
+        /// </remarks>
         [Theory]
         [InlineData("x / sqrt(x ^ 2 + 1)")]
         [InlineData("(x + sin(x)) / x")]
         [InlineData("x ^ 20 / e ^ x")]
+        [InlineData("sqrt(x ^ 2 - x) / x")]
+        [InlineData("x ^ (3/2) * sqrt(1 + 1 / x ^ 2) / x ^ 2")]
         public void AFormTheRuleCannotSettleTerminatesWithoutClaimingAnAnswer(string expression)
         {
             var task = Task.Run(() => Limit(expression, "+oo"));
