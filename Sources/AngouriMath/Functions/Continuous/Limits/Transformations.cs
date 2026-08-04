@@ -82,6 +82,68 @@ namespace AngouriMath.Functions.Algebra
             => !IsInfiniteNode(expr) && expr != MathS.NaN;
 
         /// <summary>
+        /// How many derivatives of the divisor to take looking for the order at which it
+        /// vanishes. A divisor that is still flat after four of them is one whose sign this has
+        /// no cheap reading of, and reading it wrongly would answer +oo where the truth is -oo,
+        /// which is worse than not answering. The forms this is for vanish at the first order
+        /// (sin(x), e^x - 1, x - a) or the second (1 - cos(x), x^2).
+        /// </summary>
+        private const int MaxVanishingOrder = 4;
+
+        /// <summary>
+        /// The infinity a quotient tends to when its divisor vanishes and its dividend does not,
+        /// or <see langword="null"/> where that is not the shape or the side the divisor
+        /// vanishes from cannot be read off.
+        /// </summary>
+        /// <remarks>
+        /// The descent puts each part's own limit in place of the part, and for this shape that
+        /// throws away the only thing that decides the answer. <c>cos(x) / sin(x)</c> at 0
+        /// becomes <c>1 / 0</c>, which is NaN -- the claim that the limit does not exist -- where
+        /// on the right it is +oo and on the left -oo.
+        /// <para/>
+        /// The side the divisor vanishes from is read off its first derivative that does not
+        /// vanish with it. Where <c>g(a) = 0</c> and the first non-vanishing derivative there is
+        /// the k-th, <c>g(x)</c> has the sign of <c>g_k(a) * (x - a)^k</c> near a, which is the
+        /// sign of <c>g_k(a)</c> on the right and that times <c>(-1)^k</c> on the left. Nothing
+        /// is claimed unless a derivative comes out finite and non-zero at the point: an
+        /// expression that is not differentiable there, or whose derivative diverges as
+        /// <c>sqrt(x)</c>'s does, is left alone.
+        /// </remarks>
+        internal static Entity? DivergesAtAVanishingDivisor(Entity dividend, Entity divisor, Variable x, Entity dest, ApproachFrom side)
+        {
+            if (side is not (ApproachFrom.Left or ApproachFrom.Right) || !dest.IsFinite || !divisor.ContainsNode(x))
+                return null;
+            if (EvalAssumingContinuous(divisor.Limit(x, dest, side)) is not Real { IsZero: true })
+                return null;
+            // A dividend that vanishes too makes the quotient indeterminate rather than
+            // divergent, and one that diverges is a different question again. Only a dividend
+            // with a definite non-zero size leaves the divisor to decide the answer.
+            if (EvalAssumingContinuous(dividend.Limit(x, dest, side)) is not Real { IsFinite: true, IsZero: false } dividendLimit)
+                return null;
+
+            var derivative = divisor;
+            for (var order = 1; order <= MaxVanishingOrder; order++)
+            {
+                MultithreadingFunctional.ExitIfCancelled();
+                derivative = derivative.Differentiate(x).Simplify();
+                var atThePoint = EvalAssumingContinuous(derivative.Substitute(x, dest).InnerSimplified);
+                if (atThePoint is not Real { IsFinite: true } value)
+                    return null;
+                if (value.IsZero)
+                    continue;
+                // (x - a)^k is positive on the right whatever k is, and on the left it takes the
+                // sign of (-1)^k, so approaching from the left at an odd order turns the sign of
+                // the derivative around and nothing else does.
+                var turnsAround = side is ApproachFrom.Left && order % 2 != 0;
+                var divisorIsPositive = value.IsNegative == turnsAround;
+                return dividendLimit.IsNegative == divisorIsPositive
+                    ? Real.NegativeInfinity
+                    : Real.PositiveInfinity;
+            }
+            return null;
+        }
+
+        /// <summary>
         /// How deep the rule may be applied to one limit. Differentiating both parts does not
         /// always make the quotient simpler -- x / sqrt(x^2 + 1) turns into sqrt(x^2 + 1) / x,
         /// which turns back, so the two stay indeterminate forever -- and without a bound the
