@@ -169,7 +169,18 @@ namespace AngouriMath.Functions.Algebra
             return reciprocal ? numerator / denominator : null;
         }
 
-        private static Entity? ApplylHopitalRule(Entity expr, Variable x, Entity dest)
+        /// <remarks>
+        /// The side is carried through because the rule is stated one-sidedly to begin with --
+        /// the two-sided case is the two one-sided ones agreeing -- so it is the same rule
+        /// either way, asked of the same quotient under the same premises. Carrying it is what
+        /// lets the rule answer where the two-sided reading has nothing to say, and the two
+        /// questions the rule asks along the way are both of that kind: what the parts tend to,
+        /// and what the differentiated quotient tends to. For <c>(1 - cos(x)) / x^3</c> at 0
+        /// the second of those reaches <c>sin(x) / (3x^2)</c>, which is +oo on the right and
+        /// -oo on the left, so asking about both sides at once gives NaN and the step is
+        /// wasted. Asked one side at a time it answers.
+        /// </remarks>
+        private static Entity? ApplylHopitalRule(Entity expr, Variable x, Entity dest, ApproachFrom side = ApproachFrom.BothSides)
         {
             if (lHopitalDepth == 0)
                 lHopitalApplications = 0;
@@ -179,16 +190,16 @@ namespace AngouriMath.Functions.Algebra
             // asking what the two parts tend to is itself a limit that the rule may be applied
             // to, and counting only the recursion left those two free to nest without a bound.
             lHopitalDepth++;
-            try { return ApplylHopitalRuleImpl(expr, x, dest); }
+            try { return ApplylHopitalRuleImpl(expr, x, dest, side); }
             finally { lHopitalDepth--; }
         }
 
-        private static Entity? ApplylHopitalRuleImpl(Entity expr, Variable x, Entity dest)
+        private static Entity? ApplylHopitalRuleImpl(Entity expr, Variable x, Entity dest, ApproachFrom side)
         {
             if (expr is not Divf && AsQuotient(expr) is { } quotient)
                 expr = quotient;
             if (expr is Divf(var num, var den))
-                if (EvalAssumingContinuous(num.Limit(x, dest)) is var numLimit && EvalAssumingContinuous(den.Limit(x, dest)) is var denLimit)
+                if (EvalAssumingContinuous(num.Limit(x, dest, side)) is var numLimit && EvalAssumingContinuous(den.Limit(x, dest, side)) is var denLimit)
                     if (numLimit == 0 && denLimit == 0 ||
                             IsInfiniteNode(numLimit) && IsInfiniteNode(denLimit))
                         if (num is not Number && den is not Number)
@@ -213,7 +224,7 @@ namespace AngouriMath.Functions.Algebra
                                 lHopitalChain!.Add(applied);
                                 try
                                 {
-                                    if (ComputeLimit(applied, x, dest) is { } resLim)
+                                    if (ComputeLimit(applied, x, dest, side) is { } resLim)
                                         return resLim;
                                 }
                                 finally { lHopitalChain.RemoveAt(lHopitalChain.Count - 1); }
