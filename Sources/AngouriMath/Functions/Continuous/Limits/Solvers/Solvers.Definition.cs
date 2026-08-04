@@ -67,6 +67,15 @@ namespace AngouriMath.Functions.Algebra
                 var oneSided = expr.ComputeLimitDivideEtImpera(x, dest, side);
                 if (oneSided is { } found && (acceptNaN || found.Evaled != MathS.NaN))
                     return oneSided;
+                // The same rule the two-sided path falls through to, asked with the side it was
+                // given. l'Hopital's rule is stated one-sidedly to begin with -- the two-sided
+                // case is the two one-sided ones agreeing -- so this is not a weaker reading of
+                // it than the one above. Where the descent has nothing to say about a quotient,
+                // it is what answers (1 - cos(x)) / x^2 at 0+ with 1/2 rather than NaN, and
+                // csc(x) * x with 1: the csc rewrite leaves a product, which the descent does
+                // not take apart but which the rule reads back as the quotient x / sin(x).
+                if (ApplylHopitalRule(expr, x, dest, side) is { } lhopital && lhopital.Evaled != MathS.NaN)
+                    return lhopital;
                 // The one-sided path is the only one with nothing behind it, and the descent
                 // can make an indeterminate form definite on the way down: for x * ln(x) at 0+
                 // it substitutes the first factor's own limit and then asks for 0 * -oo, which

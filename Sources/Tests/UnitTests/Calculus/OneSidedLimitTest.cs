@@ -61,6 +61,34 @@ namespace AngouriMath.Tests.Calculus
             AssertLimit(expression, destination, side, expected);
 
         /// <summary>
+        /// l'Hopital's rule was reached from the two-sided path only, so a one-sided limit of a
+        /// quotient the descent could not read had nothing to fall back on. csc(x) * x is the
+        /// odd one out: the csc rewrite makes it the product (1 / sin(x)) * x, which the descent
+        /// does not take apart, and the rule reads it back as the quotient x / sin(x).
+        /// </summary>
+        [Theory]
+        [InlineData("(1 - cos(x)) / x ^ 2", "0", ApproachFrom.Right, "1/2")]
+        [InlineData("(1 - cos(x)) / x ^ 2", "0", ApproachFrom.Left, "1/2")]
+        [InlineData("csc(x) * x", "0", ApproachFrom.Right, "1")]
+        [InlineData("csc(x) * x", "0", ApproachFrom.Left, "1")]
+        public void AQuotientTheDescentCannotReadGoesToTheRule(string expression, string destination, ApproachFrom side, string expected) =>
+            AssertLimit(expression, destination, side, expected);
+
+        /// <summary>
+        /// The rule is asked with the side it was given, which is what the rule is stated with
+        /// in the first place. Both questions it asks along the way -- what the two parts tend
+        /// to, and what the differentiated quotient tends to -- can have a one-sided answer and
+        /// no two-sided one. Here the first step of (1 - cos(x)) / x^3 reaches sin(x) / (3x^2),
+        /// which is +oo on the right and -oo on the left, so asking about both sides at once
+        /// gives NaN and the step is wasted.
+        /// </summary>
+        [Theory]
+        [InlineData("(1 - cos(x)) / x ^ 3", "0", ApproachFrom.Right, "+oo")]
+        [InlineData("(1 - cos(x)) / x ^ 3", "0", ApproachFrom.Left, "-oo")]
+        public void TheRuleIsAskedAboutTheSideItWasGiven(string expression, string destination, ApproachFrom side, string expected) =>
+            AssertLimit(expression, destination, side, expected);
+
+        /// <summary>
         /// The one-sided answers that were already right, kept. The fallback is only consulted
         /// where the descent returned nothing or NaN, so none of these should reach it at all.
         /// </summary>
