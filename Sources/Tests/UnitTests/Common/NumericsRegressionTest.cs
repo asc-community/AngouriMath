@@ -70,7 +70,8 @@ namespace AngouriMath.Tests.Common
                 $"round-trip of {text} gave {back}");
         }
 
-        // Adjacent to #584: a zero integer part used to render as the empty string,
+        // Adjacent to https://github.com/asc-community/AngouriMath/issues/584:
+        // a zero integer part used to render as the empty string,
         // so ToBaseN(0.5m, 2) produced ".1" and ToBaseN(0m, 2) produced "".
         [Theory]
         [InlineData(0, 2, "0")]
@@ -171,7 +172,8 @@ namespace AngouriMath.Tests.Common
         // https://github.com/asc-community/AngouriMath/issues/561
         // The reporter's 4x4 matrix spans 1e5 to 1e50, so entries of its inverse fall
         // below 1e-16 and downcasting rounded them to zero. Fixed by the same change as
-        // #602; pinned here because the matrix path reaches it by its own route.
+        // https://github.com/asc-community/AngouriMath/issues/602;
+        // pinned here because the matrix path reaches it by its own route.
         [Fact]
         public void Issue561_LargeValuedMatrixInvertsExactly()
         {
