@@ -54,7 +54,8 @@ namespace AngouriMath.Tests.Core
         {
             if (MathS.Utils.TryGetPolyLinear("a x - b + 3x + x", "x", out var a, out var b))
             {
-                AssertEntityEqual("a + 3 + 1", a);
+                // 3 and 1 are added together now that Expand collects like terms.
+                AssertEntityEqual("a + 4", a);
                 AssertEntityEqual("-b", b);
             }
             else

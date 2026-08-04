@@ -24,7 +24,9 @@ namespace AngouriMath.Tests.Common
         public void Factorial()
         {
             var expr = MathS.Factorial(x + 3) / MathS.Factorial(x + 1);
-            Assert.Equal(MathS.Pow(x, 2) + x * 3 + (2 * x + 6), expr.Expand());
+            // Expand adds up like terms now, so 3x and 2x arrive as 5x rather than
+            // side by side.
+            Assert.Equal(MathS.Pow(x, 2) + 5 * x + 6, expr.Expand());
             expr = MathS.Factorial(x + -3) / MathS.Factorial(x + -1);
             Assert.Equal(1 / (x + -2) / (x + -1), expr.Expand());
         }

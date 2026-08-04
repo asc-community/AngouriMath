@@ -202,6 +202,7 @@ namespace AngouriMath
         /// y ^ 8 + 8 * x * y ^ 7 + 28 * x ^ 2 * y ^ 6 + 56 * x ^ 3 * y ^ 5 + 70 * x ^ 4 * y ^ 4 + 56 * x ^ 5 * y ^ 3 + 28 * x ^ 6 * y ^ 2 + 8 * x ^ 7 * y + x ^ 8
         /// </code>
         /// </example> 
+
         public Entity Expand(int level = 2)
         {
             static Entity Expand_(Entity e, int level) =>
@@ -214,7 +215,89 @@ namespace AngouriMath
                     expChildren.AddRange(exp);
                 else
                     return this; // if one is too complicated, return the current one
-            return Expand_(TreeAnalyzer.MultiHangBinary(expChildren, (a, b) => new Sumf(a, b)), level).InnerSimplified;
+            return CollectLikeTerms(
+                Expand_(TreeAnalyzer.MultiHangBinary(expChildren, (a, b) => new Sumf(a, b)), level).InnerSimplified);
+        }
+
+        /// <summary>
+        /// Adds up the terms of an expanded sum that differ only by a numeric factor, so
+        /// that expanding actually finishes: <c>(x+1)^2 * (x+1)^2</c> multiplied out gives
+        /// sixteen terms, of which only five are distinct.
+        /// </summary>
+        /// <remarks>
+        /// Deliberately not <see cref="Simplify(int)"/>, which is far too expensive to run
+        /// inside <see cref="Expand(int)"/>. Each term is reduced to a coefficient and a
+        /// product of powers, and terms whose products agree are added together --
+        /// enough to collect like terms and nothing more.
+        /// </remarks>
+        private static Entity CollectLikeTerms(Entity expanded)
+        {
+            if (expanded is not Sumf and not Minusf)
+                return expanded;
+
+            // A term carrying a domain condition must not be folded into another: the
+            // conditions are what say where the answer holds, and adding coefficients
+            // together loses them. (4a - 2)/(2x) + (1 - 2a)/x is 0 only where x is not 0,
+            // and collecting it to a plain 0 would drop exactly that.
+            if (expanded.Nodes.Any(node => node is Providedf))
+                return expanded;
+
+            var coefficients = new Dictionary<string, Entity>();
+            var monomials = new Dictionary<string, Entity>();
+            var order = new List<string>();
+
+            foreach (var term in Sumf.LinearChildren(expanded))
+            {
+                Entity coefficient = 1;
+                var exponents = new Dictionary<string, Entity>();
+                var bases = new Dictionary<string, Entity>();
+
+                foreach (var factor in Mulf.LinearChildren(term))
+                {
+                    // PowerRules folds (x^2)^2 into x^4, without which the two would be
+                    // counted as different monomials.
+                    var reduced = factor.Replace(Functions.Patterns.PowerRules).InnerSimplified;
+                    if (reduced is Number)
+                    {
+                        coefficient = (coefficient * reduced).InnerSimplified;
+                        continue;
+                    }
+                    var (@base, exponent) = reduced is Powf(var b, var e) ? (b, e) : (reduced, (Entity)1);
+                    var key = @base.Stringize();
+                    bases[key] = @base;
+                    exponents[key] = exponents.TryGetValue(key, out var already)
+                        ? (already + exponent).InnerSimplified
+                        : exponent;
+                }
+
+                var monomialKey = string.Join(" ", (IEnumerable<string>)exponents.Keys.OrderBy(k => k, System.StringComparer.Ordinal)
+                    .Select(k => k + "^" + exponents[k].Stringize()));
+
+                if (coefficients.TryGetValue(monomialKey, out var running))
+                    coefficients[monomialKey] = (running + coefficient).InnerSimplified;
+                else
+                {
+                    order.Add(monomialKey);
+                    coefficients[monomialKey] = coefficient;
+                    Entity monomial = 1;
+                    foreach (var key in exponents.Keys.OrderBy(k => k, System.StringComparer.Ordinal))
+                        monomial = (monomial * bases[key].Pow(exponents[key])).InnerSimplified;
+                    monomials[monomialKey] = monomial;
+                }
+            }
+
+            Entity result = 0;
+            foreach (var key in order)
+            {
+                // A term whose coefficients cancelled is still written out rather than
+                // dropped. Where the monomial is defined everywhere it simplifies to 0 and
+                // costs nothing; where it is not -- x^-1, say -- InnerSimplified turns
+                // 0 * x^-1 into `0 provided not x = 0`, and dropping the term would have
+                // thrown that condition away. (4a - 2)/(2x) + (1 - 2a)/x is the case.
+                var term = (coefficients[key] * monomials[key]).InnerSimplified;
+                result = result == Integer.Create(0) ? term : result + term;
+            }
+            return result.InnerSimplified;
         }
 
         /// <summary>
