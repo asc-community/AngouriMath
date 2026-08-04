@@ -30,7 +30,8 @@ namespace AngouriMath.Tests.PatternsTest
         // The same identity written as cos(2x) - (2cos(x)^2 - 1) gets as far as
         // 1 - cos(x)^2 - sin(x)^2 and stops: sin^2 + cos^2 = 1 is matched as a pair, and
         // there the pair sits either side of a subtraction. That is the same
-        // pairwise-versus-flattened gap as #531, in a product of trigonometric terms
+        // pairwise-versus-flattened gap as
+        // https://github.com/asc-community/AngouriMath/issues/531, in a product of trigonometric terms
         // rather than a sum, and is not something opening the angle can reach.
         [Fact]
         public void PythagoreanPairAcrossASubtractionIsStillMissed() =>

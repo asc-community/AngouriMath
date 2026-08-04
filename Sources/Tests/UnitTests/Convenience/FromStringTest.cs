@@ -71,7 +71,13 @@ namespace AngouriMath.Tests.Convenience
         {
             // Only needed for Mac
             using var _ = Settings.PrecisionErrorZeroRange.Set(2e-16m);
-            Assert.Equal(i, FromString("x^2+1").SolveNt(x).First());
+            var roots = FromString("x^2+1").SolveNt(x);
+            // Both roots, rather than whichever of them a set happens to hand back first.
+            // That order was never the solver's to decide and it changed once the search
+            // began collapsing its duplicates in a fixed order.
+            Assert.Equal(2, roots.Count);
+            Assert.Contains(Entity.Number.Complex.Create(0, 1), roots);
+            Assert.Contains(Entity.Number.Complex.Create(0, -1), roots);
         }
         [Fact] public void TestFormula9() => Assert.Equal(1, FromString("cos(sin(0))").EvalNumerical());
         [Fact] public void TestFormula10() => Assert.Equal(Entity.Number.Complex.Create(4, 1), FromString("2i + 2 * 2 - 1i").EvalNumerical());
@@ -191,6 +197,8 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("acoth", "Arcotanh")]
         [InlineData("arcoth", "Arcotanh")]
         [InlineData("arcth", "Arcotanh")]
+        [InlineData("acotanh", "Arcotanh")]
+        [InlineData("arcotanh", "Arcotanh")]
 
         [InlineData("asech", "Arsech")]
         [InlineData("arsech", "Arsech")]
@@ -198,6 +206,8 @@ namespace AngouriMath.Tests.Convenience
 
         [InlineData("acsch", "Arcosech")]
         [InlineData("arcsch", "Arcosech")]
+        [InlineData("acosech", "Arcosech")]
+        [InlineData("arcosech", "Arcosech")]
         public void TestHyperbolic(string parsedName, string methodName)
         {
             var methods = typeof(MathS.Hyperbolic).GetMethods();

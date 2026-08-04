@@ -94,7 +94,15 @@ namespace AngouriMath
                             ({ } bas, { IsFinite: true } lim2) => (bas, lim2),
                             _ => (Dividend, Divisor)
                         };
-                    return ComputeLimitImpl(New(dividend, divisor), x, dist, side);
+                    var substituted = ComputeLimitImpl(New(dividend, divisor), x, dist, side);
+                    if (substituted is { } found && found.Evaled != MathS.NaN)
+                        return found;
+                    // Putting the two parts' limits in place of the parts loses the one thing
+                    // that decides a quotient whose divisor vanishes: 1 / 0 says nothing about
+                    // which side the divisor vanishes from, and so comes back NaN. Only where
+                    // nothing above answered, and whatever it did answer is kept if this finds
+                    // nothing better.
+                    return DivergesAtAVanishingDivisor(Dividend, Divisor, x, dist, side) ?? substituted;
                 }
             }
         }

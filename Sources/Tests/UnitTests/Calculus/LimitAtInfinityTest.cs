@@ -39,6 +39,7 @@ namespace AngouriMath.Tests.Calculus
         // than its bound allows, so it was left unevaluated. Nothing about that bound has
         // changed -- the answer comes from one leading term instead of twenty derivatives.
         [InlineData("x ^ 20 / e ^ x", "+oo", "0")]
+        [InlineData("x ^ (3/2) * sqrt(1 + 1 / x ^ 2) / x ^ 2", "+oo", "0")]
         public void CompetingGrowthAtInfinity(string expression, string destination, string expected) =>
             Assert.Equal(expected.ToEntity(), Limit(expression, destination).Simplify());
 
@@ -75,6 +76,13 @@ namespace AngouriMath.Tests.Calculus
         /// honest; what must not happen is a hang, and the answer must not become NaN, since
         /// NaN asserts that the limit does not exist rather than that it was not found.
         /// </summary>
+        /// <remarks>
+        /// The two forms this test used to also carry -- x^20 / e^x, and
+        /// x^(3/2) * sqrt(1 + 1/x^2) / x^2 -- are settled by the series and have moved to
+        /// <see cref="CompetingGrowthAtInfinity"/>. They were here because l'Hopital's rule
+        /// cannot reach them within its bound on steps, which is still true of the rule and is
+        /// no longer true of the library. Nothing about that bound changed.
+        /// </remarks>
         [Theory]
         [InlineData("(x + sin(x)) / x")]
         [InlineData("sin(x)")]

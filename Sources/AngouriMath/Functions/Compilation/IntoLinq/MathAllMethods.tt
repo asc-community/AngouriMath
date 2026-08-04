@@ -47,7 +47,11 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 <# foreach (var name in new[]{ "Sin", "Cos", "Tan", "Asin", "Acos", "Atan" }) { #>
 
         public static System.Numerics.Complex <#= name #>(System.Numerics.Complex a)
+<# if (name == "Asin") { #>
+            => AngouriMath.Core.Compilation.ComplexBranches.Arcsin(a);
+<# } else { #>
             => System.Numerics.Complex.<#= name #>(a);
+<# } #>
         public static double <#= name #>(double a)
             => Math.<#= name #>(a);
         public static float <#= name #>(float a)
@@ -85,7 +89,11 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 <# foreach (var name in new[]{ ("Acot", "Atan"), ("Asec", "Acos"), ("Acsc", "Asin") }) { #>
 
         public static System.Numerics.Complex <#= name.Item1 #>(System.Numerics.Complex a)
+<# if (name.Item1 == "Acsc") { #>
+            => AngouriMath.Core.Compilation.ComplexBranches.Arccosecant(a);
+<# } else { #>
             => System.Numerics.Complex.<#= name.Item2 #>(1 / a);
+<# } #>
         public static double <#= name.Item1 #>(double a)
             => Math.<#= name.Item2 #>(1 / a);
         public static float <#= name.Item1 #>(float a)
