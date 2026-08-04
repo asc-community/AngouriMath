@@ -295,9 +295,29 @@ namespace AngouriMath
 
         partial record Signumf
         {
-            // TODO:
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
-                => new Limitf(this, x, dist, side);
+            {
+                if (Argument.ComputeLimitDivideEtImpera(x, dist, side) is not { } argument)
+                    return null;
+                // The sign is constant on either side of zero, so wherever the argument tends
+                // to anything but zero the limit is simply the sign of that -- including the
+                // infinities, where it is 1 and -1. At zero it is the one place there is
+                // nothing to say: the sign is 1 on one side and -1 on the other, and which one
+                // a one-sided limit takes depends on the direction the argument approaches
+                // from rather than only on what it tends to.
+                //
+                // Nothing is returned there rather than an unevaluated limit of this very
+                // expression. That is what used to be here, and it does not merely fail to
+                // answer -- the two-sided path compares its two one-sided results by evaluating
+                // them, evaluating a limit computes it, and computing it arrives back here. The
+                // recursion ends by overflowing the stack, which kills the process rather than
+                // raising anything a caller could catch:
+                // https://github.com/asc-community/AngouriMath/issues/704. Null says the same
+                // thing to the caller, which hands back an unevaluated limit of its own.
+                if (argument.Evaled is not Number value || value == 0 || value.Evaled == MathS.NaN)
+                    return null;
+                return new Signumf(argument);
+            }
         }
 
         partial record Absf
