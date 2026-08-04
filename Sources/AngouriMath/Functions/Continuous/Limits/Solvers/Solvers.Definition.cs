@@ -50,30 +50,71 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             expr = expr.Replace(ExpandLogarithm);
 
+            // In front of both paths, not only the two-sided one. Each of these is guarded on
+            // a two-sided limit, and a two-sided limit that exists is also the limit from
+            // either side, so none of them says anything one-sided that it did not already say
+            // two-sided. Skipping them is what made (1 + x)^(1/x) at 0+ answer 1: without the
+            // second remarkable limit the descent reads it as 1^(+oo) and is definite about
+            // it, where the same expression approached from both sides gives e.
+            expr = expr.Replace(a => TrivialTrigonometricReplacement(a, x));
+            expr = ApplyTrivialTransformations(expr, x, dest, (_, exprLim) => exprLim);
+            expr = ApplyFirstRemarkable(expr, x, dest);
+            expr = expr.Replace(c => ApplySecondRemarkable(c, x, dest));
+            // A tangent is a quotient as much as a cosecant is a reciprocal, and leaving it
+            // written as one function makes it opaque to everything that reads quotients --
+            // including the split that puts a difference of fractions over one denominator,
+            // which takes tan(x) into the numerator whole and so combines 1/x - 1/tan(x) over
+            // x * tan(x). That is the right answer in the wrong form: the rules do reach 0
+            // through it, but only after rewriting the whole expression dozens of ways, and
+            // lim x->0+ (1/sin(x) - 1/tan(x)) took forty seconds against under one for the
+            // same limit over sin(x) * sin(x).
+            //
+            // After the first remarkable limit and not with the trigonometric rewrite in front
+            // of it. That one matches a quotient, and rewriting tan(b*x - x) as a quotient of
+            // its own turns the quotient it sits under into a product:
+            // lim x->0 sin(x - a*x) / tan(b*x - x) stops being read at all.
+            expr = expr.Replace(c => AsSineOverCosine(c, x));
+            MultithreadingFunctional.ExitIfCancelled();
+
             if (side is ApproachFrom.Left or ApproachFrom.Right)
-                return expr.ComputeLimitDivideEtImpera(x, dest, side);
+            {
+                var oneSided = expr.ComputeLimitDivideEtImpera(x, dest, side);
+                if (oneSided is { } found && (acceptNaN || found.Evaled != MathS.NaN))
+                    return oneSided;
+                // The same rule the two-sided path falls through to, asked with the side it was
+                // given. l'Hopital's rule is stated one-sidedly to begin with -- the two-sided
+                // case is the two one-sided ones agreeing -- so this is not a weaker reading of
+                // it than the one above. Where the descent has nothing to say about a quotient,
+                // it is what answers (1 - cos(x)) / x^2 at 0+ with 1/2 rather than NaN, and
+                // csc(x) * x with 1: the csc rewrite leaves a product, which the descent does
+                // not take apart but which the rule reads back as the quotient x / sin(x).
+                if (ApplylHopitalRule(expr, x, dest, side) is { } lhopital && lhopital.Evaled != MathS.NaN)
+                    return lhopital;
+                // The one-sided path is the only one with nothing behind it, and the descent
+                // can make an indeterminate form definite on the way down: for x * ln(x) at 0+
+                // it substitutes the first factor's own limit and then asks for 0 * -oo, which
+                // is NaN. NaN is the claim that the limit does not exist, and here it is 0.
+                //
+                // Moving x out to infinity is what ComputeLimitImpl does for a finite
+                // destination in any case, so this asks the same question in the place where
+                // l'Hopital's rule and the rest of the machinery for infinity live -- none of
+                // which this path can otherwise reach. Only where nothing above answered, and
+                // whatever was found before is kept if this finds nothing better.
+                // Simplified, and not only for tidiness: the substitution leaves the
+                // destination behind as a term, and it is exactly that leftover which makes
+                // the answer NaN. x * ln(x) at 0+ becomes (0 + 1/x) * ln(0 + 1/x), whose limit
+                // at infinity comes back NaN, where the same expression written as
+                // (1/x) * ln(1/x) comes back 0.
+                if (dest.IsFinite
+                    && ComputeLimit(expr.Substitute(x, side is ApproachFrom.Left ? dest - 1 / x : dest + 1 / x)
+                                        .InnerSimplified,
+                                    x, Real.PositiveInfinity) is { } byInfinity
+                    && byInfinity.Evaled != MathS.NaN)
+                    return byInfinity;
+                return oneSided;
+            }
             if (side is ApproachFrom.BothSides)
             {
-                expr = expr.Replace(a => TrivialTrigonometricReplacement(a, x));
-                expr = ApplyTrivialTransformations(expr, x, dest, (_, exprLim) => exprLim);
-                expr = ApplyFirstRemarkable(expr, x, dest);
-                // expr = ApplySecondRemarkable(expr, x, dest);
-                expr = expr.Replace(c => ApplySecondRemarkable(c, x, dest));
-                // A tangent is a quotient as much as a cosecant is a reciprocal, and leaving it
-                // written as one function makes it opaque to everything that reads quotients --
-                // including the split below, which puts tan(x) into the numerator whole and so
-                // combines 1/x - 1/tan(x) over x * tan(x). That is the right answer in the wrong
-                // form: the rules do reach 0 through it, but only after rewriting the whole
-                // expression dozens of ways, and lim x->0+ (1/sin(x) - 1/tan(x)) took forty
-                // seconds. Over sin(x) * sin(x), the same limit is answered in under one.
-                //
-                // Here and not with the other trigonometric rewrite above, which runs in front
-                // of the first remarkable limit. That one matches a quotient, and rewriting
-                // tan(b*x - x) as a quotient of its own turns the quotient it sits under into a
-                // product: lim x->0 sin(x - a*x) / tan(b*x - x) stops being read at all.
-                expr = expr.Replace(c => AsSineOverCosine(c, x));
-
-                MultithreadingFunctional.ExitIfCancelled();
                 if (!dest.IsFinite)
                 {
                     // just compute limit with no check for left/right equality
@@ -88,6 +129,14 @@ namespace AngouriMath.Functions.Algebra
                     // reciprocal, and a NaN from it would claim the limit does not exist.
                     if (ApplylHopitalRule(expr, x, dest) is { } lhopital && lhopital.Evaled != MathS.NaN)
                         return lhopital;
+                    // The rewrites are worth their cost only where there is no answer without
+                    // them, and each of them costs an expansion or a simplification of the
+                    // whole expression. The descent visits every part of every expression, so
+                    // rather than pay for them at each of those parts on every limit ever
+                    // taken, the descent is walked a second time with them turned on, and only
+                    // for an expression that has just been found to have no answer at all.
+                    if (SolveByRewriting(expr, x, dest) is { } rewritten && rewritten.Evaled != MathS.NaN)
+                        return rewritten;
                     return atInfinity;
                 }
                 else if (expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left) is { } fromLeft
