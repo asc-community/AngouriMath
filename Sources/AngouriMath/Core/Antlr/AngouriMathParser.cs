@@ -85,7 +85,7 @@ internal partial class AngouriMathParser : Parser {
 	};
 
 	private static readonly string[] _LiteralNames = {
-		null, "'!'", "'^'", "'-'", "'+'", "'*'", "'/'", "'%'", "'intersect'", 
+		null, "'!'", "'^'", "'-'", "'+'", "'*'", "'/'", "'mod'", "'intersect'", 
 		"'/\\'", "'unite'", "'\\/'", "'setsubtract'", "'\\'", "'in'", "'>='", 
 		"'<='", "'>'", "'<'", "'='", "'<>'", "'not'", "'and'", "'&'", "'xor'", 
 		"'or'", "'|'", "'implies'", "'->'", "'provided'", "','", "';'", "':'", 

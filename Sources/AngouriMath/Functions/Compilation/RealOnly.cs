@@ -30,8 +30,20 @@ namespace AngouriMath.Core.Compilation
         /// dividend, which is what <see cref="Entity.Evaled"/> does as well.
         /// </remarks>
         public static NumericsComplex Mod(NumericsComplex a, NumericsComplex b)
-            => a.Imaginary is not 0 || b.Imaginary is not 0
-                ? new NumericsComplex(double.NaN, double.NaN)
-                : new NumericsComplex(a.Real % b.Real, 0);
+        {
+            if (a.Imaginary is not 0 || b.Imaginary is not 0)
+                return new NumericsComplex(double.NaN, double.NaN);
+            var truncated = a.Real % b.Real;
+            // The runtime's own % truncates, where the node is the floored remainder that takes
+            // the sign of the divisor. They differ by exactly one divisor, and only where the
+            // remainder and the divisor disagree in sign.
+            // The + 0.0 is not idle: the runtime's % gives -0.0 for -6 % 3, and while that
+            // compares equal to zero it prints as -0 and is not what the interpreter answers.
+            return new NumericsComplex(
+                (truncated is 0 || truncated < 0 == b.Real < 0
+                    ? truncated
+                    : truncated + b.Real) + 0.0,
+                0);
+        }
     }
 }

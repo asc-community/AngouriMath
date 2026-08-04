@@ -51,7 +51,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Stringize() =>
-                Dividend.Stringize(Dividend.Priority < Priority) + " % " + Divisor.Stringize(Divisor.Priority <= Priority);
+                Dividend.Stringize(Dividend.Priority < Priority) + " mod " + Divisor.Stringize(Divisor.Priority <= Priority);
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }

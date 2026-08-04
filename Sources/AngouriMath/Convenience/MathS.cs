@@ -422,10 +422,15 @@ namespace AngouriMath
         /// <paramref name="dividend"/> % <paramref name="divisor"/>.
         /// </summary>
         /// <remarks>
-        /// The remainder takes the sign of the dividend, as C#'s own <c>%</c> does and as the
-        /// underlying arbitrary-precision arithmetic does: <c>(-7) % 3</c> is -1, not 2. That is
-        /// the truncated convention, not the Euclidean one -- for a non-negative answer whatever
-        /// the sign of the dividend, write <c>(a % b + b) % b</c>.
+        /// The remainder takes the sign of the divisor -- the floored convention,
+        /// <c>a - b * floor(a / b)</c>, under which <c>(-7) mod 3</c> is 2 and <c>7 mod (-3)</c>
+        /// is -2. This is what a mathematician means by mod: it is the convention under which
+        /// the residues modulo n are the numbers from 0 to n - 1, and it is what SymPy,
+        /// Mathematica and Maxima all answer. C# truncates instead and so its <c>%</c> on two
+        /// <see cref="int"/>s gives -1 there, but that is an operation on machine integers and
+        /// not this one.
+        /// <para/>
+        /// Written <c>mod</c> when parsed from a string. <c>%</c> is left to mean percent.
         /// </remarks>
         /// <param name="dividend">The expression whose remainder is taken</param>
         /// <param name="divisor">The expression divided by; the result is undefined where it is zero</param>

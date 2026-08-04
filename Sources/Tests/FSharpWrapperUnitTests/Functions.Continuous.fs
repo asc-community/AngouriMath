@@ -76,8 +76,11 @@ let ``Sqrt test exact`` () = Assert.Equal(parsed "22", sqrt 484)
 // well. It needs nothing of its own: F# resolves % through op_Modulus, which is what the
 // operator on Entity compiles to, so the kernel's node is what an F# % builds.
 [<Fact>]
-let ``Mod operator test`` () = Assert.Equal(parsed "x % 3", x % (parsed 3))
+let ``Mod operator test`` () = Assert.Equal(parsed "x mod 3", x % (parsed 3))
 [<Fact>]
 let ``Mod operator evaluates`` () = Assert.Equal(parsed 1, (parsed 7 % parsed 3).Evaled)
+// The node is the mathematician's mod, so it takes the sign of the divisor and gives 2 here,
+// where F#'s own % on two integers would give -1. It is the same operator name over a different
+// type, as % over a matrix or a polynomial would be.
 [<Fact>]
-let ``Mod operator follows the dividend's sign`` () = Assert.Equal(parsed -1, (parsed -7 % parsed 3).Evaled)
+let ``Mod operator follows the divisor's sign`` () = Assert.Equal(parsed 2, (parsed -7 % parsed 3).Evaled)

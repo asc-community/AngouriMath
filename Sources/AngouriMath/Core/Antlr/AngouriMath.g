@@ -98,7 +98,7 @@ mult_expression returns[Entity value]
    : u1 = unary_expression { $value = $u1.value; } 
    ('*' u2 = unary_expression { $value = $value * $u2.value; } | 
     '/' u2 = unary_expression { $value = $value / $u2.value; } |
-    '%' u2 = unary_expression { $value = $value % $u2.value; })*
+    'mod' u2 = unary_expression { $value = $value % $u2.value; })*
    ;
    
 sum_expression returns[Entity value]

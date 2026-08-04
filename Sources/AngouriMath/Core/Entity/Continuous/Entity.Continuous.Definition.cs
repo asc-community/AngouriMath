@@ -80,7 +80,9 @@ namespace AngouriMath
         public static Entity operator /(Entity dividend, Entity divisor) => new Divf(dividend, divisor);
 
         /// <summary>
-        /// Hangs two nodes to a Mod node (i. e. building an expression)
+        /// Hangs two nodes to a Mod node (i. e. building an expression). Note that the node is
+        /// the mathematician's mod and so takes the sign of the divisor, where C#'s own
+        /// <c>%</c> on two <see cref="int"/>s truncates: see <see cref="MathS.Mod"/>.
         /// </summary>
         /// <param name="dividend">The left node, whose remainder is taken</param>
         /// <param name="divisor">The right node, the one divided by</param>
