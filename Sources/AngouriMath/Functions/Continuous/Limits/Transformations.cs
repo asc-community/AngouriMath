@@ -6,9 +6,11 @@
 //
 
 using AngouriMath.Core.Multithreading;
+using PeterO.Numbers;
 using System;
 using System.Linq;
 using static AngouriMath.Entity;
+using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions.Algebra
 {
@@ -82,6 +84,68 @@ namespace AngouriMath.Functions.Algebra
             => !IsInfiniteNode(expr) && expr != MathS.NaN;
 
         /// <summary>
+        /// How many derivatives of the divisor to take looking for the order at which it
+        /// vanishes. A divisor that is still flat after four of them is one whose sign this has
+        /// no cheap reading of, and reading it wrongly would answer +oo where the truth is -oo,
+        /// which is worse than not answering. The forms this is for vanish at the first order
+        /// (sin(x), e^x - 1, x - a) or the second (1 - cos(x), x^2).
+        /// </summary>
+        private const int MaxVanishingOrder = 4;
+
+        /// <summary>
+        /// The infinity a quotient tends to when its divisor vanishes and its dividend does not,
+        /// or <see langword="null"/> where that is not the shape or the side the divisor
+        /// vanishes from cannot be read off.
+        /// </summary>
+        /// <remarks>
+        /// The descent puts each part's own limit in place of the part, and for this shape that
+        /// throws away the only thing that decides the answer. <c>cos(x) / sin(x)</c> at 0
+        /// becomes <c>1 / 0</c>, which is NaN -- the claim that the limit does not exist -- where
+        /// on the right it is +oo and on the left -oo.
+        /// <para/>
+        /// The side the divisor vanishes from is read off its first derivative that does not
+        /// vanish with it. Where <c>g(a) = 0</c> and the first non-vanishing derivative there is
+        /// the k-th, <c>g(x)</c> has the sign of <c>g_k(a) * (x - a)^k</c> near a, which is the
+        /// sign of <c>g_k(a)</c> on the right and that times <c>(-1)^k</c> on the left. Nothing
+        /// is claimed unless a derivative comes out finite and non-zero at the point: an
+        /// expression that is not differentiable there, or whose derivative diverges as
+        /// <c>sqrt(x)</c>'s does, is left alone.
+        /// </remarks>
+        internal static Entity? DivergesAtAVanishingDivisor(Entity dividend, Entity divisor, Variable x, Entity dest, ApproachFrom side)
+        {
+            if (side is not (ApproachFrom.Left or ApproachFrom.Right) || !dest.IsFinite || !divisor.ContainsNode(x))
+                return null;
+            if (EvalAssumingContinuous(divisor.Limit(x, dest, side)) is not Real { IsZero: true })
+                return null;
+            // A dividend that vanishes too makes the quotient indeterminate rather than
+            // divergent, and one that diverges is a different question again. Only a dividend
+            // with a definite non-zero size leaves the divisor to decide the answer.
+            if (EvalAssumingContinuous(dividend.Limit(x, dest, side)) is not Real { IsFinite: true, IsZero: false } dividendLimit)
+                return null;
+
+            var derivative = divisor;
+            for (var order = 1; order <= MaxVanishingOrder; order++)
+            {
+                MultithreadingFunctional.ExitIfCancelled();
+                derivative = derivative.Differentiate(x).Simplify();
+                var atThePoint = EvalAssumingContinuous(derivative.Substitute(x, dest).InnerSimplified);
+                if (atThePoint is not Real { IsFinite: true } value)
+                    return null;
+                if (value.IsZero)
+                    continue;
+                // (x - a)^k is positive on the right whatever k is, and on the left it takes the
+                // sign of (-1)^k, so approaching from the left at an odd order turns the sign of
+                // the derivative around and nothing else does.
+                var turnsAround = side is ApproachFrom.Left && order % 2 != 0;
+                var divisorIsPositive = value.IsNegative == turnsAround;
+                return dividendLimit.IsNegative == divisorIsPositive
+                    ? Real.NegativeInfinity
+                    : Real.PositiveInfinity;
+            }
+            return null;
+        }
+
+        /// <summary>
         /// How deep the rule may be applied to one limit. Differentiating both parts does not
         /// always make the quotient simpler -- x / sqrt(x^2 + 1) turns into sqrt(x^2 + 1) / x,
         /// which turns back, so the two stay indeterminate forever -- and without a bound the
@@ -129,6 +193,8 @@ namespace AngouriMath.Functions.Algebra
         private static bool GrewTooMuch(Entity quotient, Entity applied)
             => applied.Nodes.Count() > quotient.Nodes.Count() + 8;
 
+        [ThreadStatic] private static bool suppresslHopital;
+
         /// <summary>
         /// A product that has a reciprocal factor in it, rewritten as a quotient, or
         /// <see langword="null"/> if it has none. The rule below only reads quotients, so
@@ -165,26 +231,37 @@ namespace AngouriMath.Functions.Algebra
             return reciprocal ? numerator / denominator : null;
         }
 
-        private static Entity? ApplylHopitalRule(Entity expr, Variable x, Entity dest)
+        /// <remarks>
+        /// The side is carried through because the rule is stated one-sidedly to begin with --
+        /// the two-sided case is the two one-sided ones agreeing -- so it is the same rule
+        /// either way, asked of the same quotient under the same premises. Carrying it is what
+        /// lets the rule answer where the two-sided reading has nothing to say, and the two
+        /// questions the rule asks along the way are both of that kind: what the parts tend to,
+        /// and what the differentiated quotient tends to. For <c>(1 - cos(x)) / x^3</c> at 0
+        /// the second of those reaches <c>sin(x) / (3x^2)</c>, which is +oo on the right and
+        /// -oo on the left, so asking about both sides at once gives NaN and the step is
+        /// wasted. Asked one side at a time it answers.
+        /// </remarks>
+        private static Entity? ApplylHopitalRule(Entity expr, Variable x, Entity dest, ApproachFrom side = ApproachFrom.BothSides)
         {
             if (lHopitalDepth == 0)
                 lHopitalApplications = 0;
-            if (lHopitalDepth >= MaxlHopitalDepth || lHopitalApplications >= MaxlHopitalApplications)
+            if (lHopitalDepth >= MaxlHopitalDepth || lHopitalApplications >= MaxlHopitalApplications || suppresslHopital)
                 return null;
             // Held for the whole of the rule and not just for the recursive call below, since
             // asking what the two parts tend to is itself a limit that the rule may be applied
             // to, and counting only the recursion left those two free to nest without a bound.
             lHopitalDepth++;
-            try { return ApplylHopitalRuleImpl(expr, x, dest); }
+            try { return ApplylHopitalRuleImpl(expr, x, dest, side); }
             finally { lHopitalDepth--; }
         }
 
-        private static Entity? ApplylHopitalRuleImpl(Entity expr, Variable x, Entity dest)
+        private static Entity? ApplylHopitalRuleImpl(Entity expr, Variable x, Entity dest, ApproachFrom side)
         {
             if (expr is not Divf && AsQuotient(expr) is { } quotient)
                 expr = quotient;
             if (expr is Divf(var num, var den))
-                if (EvalAssumingContinuous(num.Limit(x, dest)) is var numLimit && EvalAssumingContinuous(den.Limit(x, dest)) is var denLimit)
+                if (EvalAssumingContinuous(num.Limit(x, dest, side)) is var numLimit && EvalAssumingContinuous(den.Limit(x, dest, side)) is var denLimit)
                     if (numLimit == 0 && denLimit == 0 ||
                             IsInfiniteNode(numLimit) && IsInfiniteNode(denLimit))
                         if (num is not Number && den is not Number)
@@ -209,13 +286,191 @@ namespace AngouriMath.Functions.Algebra
                                 lHopitalChain!.Add(applied);
                                 try
                                 {
-                                    if (ComputeLimit(applied, x, dest) is { } resLim)
+                                    if (ComputeLimit(applied, x, dest, side) is { } resLim)
                                         return resLim;
                                 }
                                 finally { lHopitalChain.RemoveAt(lHopitalChain.Count - 1); }
                             }
             return null;
         }
+
+        /// <summary>
+        /// How deep one limit may go into rewriting itself. Each of the rewrites below hands
+        /// back another limit to take, and that one is entitled to be rewritten in turn, so
+        /// without a bound the work would multiply.
+        /// </summary>
+        private const int MaxRewriteDepth = 2;
+
+        [ThreadStatic] private static int rewriteDepth;
+
+        /// <summary>
+        /// The readings that need the expression rewritten before any solver can see anything
+        /// in it. Every one of them costs an expansion or a simplification of the whole
+        /// expression, which is why this sits here rather than in the descent that visits each
+        /// of its parts, and why it is reached only once it is settled that the expression as
+        /// written has no answer.
+        /// </summary>
+        private static Entity? SolveByRewriting(Entity expr, Variable x, Entity dest)
+        {
+            if (rewriteDepth >= MaxRewriteDepth)
+                return null;
+            // -oo is +oo with -x written for x, the same substitution the solvers are handed.
+            // Reading the growth of a root off x^d depends on it: x^d is positive in the one
+            // direction only.
+            if (dest.Evaled is Real { IsNegative: true })
+                expr = expr.Substitute(x, -x);
+            var toInfinity = Real.PositiveInfinity;
+            var simplified = expr.Simplify();
+            if (simplified is Providedf(var body, _))
+                simplified = body;
+
+            rewriteDepth++;
+            try
+            {
+                // Simplification can hand back an expression of another kind altogether, and
+                // which parts a limit is broken into is decided by that kind:
+                // sqrt(x^2 + 1) / sqrt(x^2 + 3x) is broken up as a quotient, while what
+                // simplifying gives is the single root sqrt((x^2 + 1) / (x^2 + 3x)), whose
+                // argument can be read straight off.
+                if (simplified.GetType() != expr.GetType()
+                    && Settled(simplified.ComputeLimitDivideEtImpera(x, toInfinity, ApproachFrom.Left)) is { } byShape)
+                    return byShape;
+
+                if (ExtractRadicalGrowth(simplified, x) is { } extracted
+                    && Settled(extracted.ComputeLimitDivideEtImpera(x, toInfinity, ApproachFrom.Left)) is { } byGrowth)
+                    return byGrowth;
+
+                return Settled(SolveAsDifferenceOfInfinities(simplified, x));
+            }
+            finally { rewriteDepth--; }
+
+            // Rewriting brings domain conditions with it -- dividing by x^d is only the same
+            // expression where x is not zero -- and a limit is taken of a continuous
+            // expression regardless of the points where it is undefined, as the solvers
+            // themselves do with the same shape.
+            static Entity? Settled(Entity? limit)
+            {
+                while (limit is Providedf(var inner, _)) limit = inner;
+                return limit is null || limit.Evaled == MathS.NaN ? null : limit;
+            }
+        }
+
+        /// <summary>
+        /// The whole expression with every root of a polynomial rewritten so that its growth is
+        /// a factor of its own -- <c>sqrt(x^2 + x)</c> becomes <c>x * sqrt(1 + 1/x)</c> -- or
+        /// <see langword="null"/> if it has no such root. Every solver reads a polynomial or a
+        /// substitution of +oo, and neither can say anything about a root of a sum, so
+        /// <c>lim x -&gt; +oo sqrt(x^2 + x) / x</c> was left unevaluated while the rewritten
+        /// <c>sqrt(1 + 1/x)</c> is settled by substitution alone.
+        /// </summary>
+        /// <remarks>
+        /// <c>P = x^d * (P / x^d)</c>, and <c>(uv)^r = u^r v^r</c> needs <c>u</c> to be positive,
+        /// which <c>x^d</c> is for every x past some point on the way to +oo. That is the only
+        /// direction this is used in: a destination of -oo has already been turned into +oo by
+        /// substituting -x for x before any of this runs.
+        /// </remarks>
+        private static Entity? ExtractRadicalGrowth(Entity expr, Variable x)
+        {
+            if (!expr.Nodes.Any(IsRootOfASum))
+                return null;
+            var extracted = expr.Replace(RewriteRoot);
+            return extracted == expr ? null : extracted.Simplify();
+
+            bool IsRootOfASum(Entity node)
+                => node is Powf(Sumf or Minusf, Number.Rational and not Number.Integer);
+
+            Entity RewriteRoot(Entity node)
+            {
+                if (!IsRootOfASum(node)
+                    || node is not Powf(var @base, var power)
+                    || !TreeAnalyzer.TryGetPolynomial(@base, x, out var monomials))
+                    return node;
+                var degree = monomials.Keys.Aggregate(EInteger.Zero, EInteger.Max);
+                if (degree.CompareTo(EInteger.One) < 0)
+                    return node;
+                var growth = MathS.Pow(x, Number.Integer.Create(degree));
+                return MathS.Pow(x, Number.Integer.Create(degree) * power) * MathS.Pow((@base / growth).Simplify(), power);
+            }
+        }
+
+        /// <summary>
+        /// How many times a single limit may be broken down as a difference of two divergent
+        /// parts. The conjugate below turns one difference into another, and every part of it
+        /// is a limit in its own right, so without a bound the work would multiply.
+        /// </summary>
+        private const int MaxDifferenceDepth = 2;
+
+        [ThreadStatic] private static int differenceDepth;
+
+        /// <summary>
+        /// Which infinity an already computed limit is, or 0 if it is finite or not a number.
+        /// </summary>
+        private static int InfiniteSign(Entity? limit)
+            => limit?.Evaled is Real { IsFinite: false, IsNaN: false } real ? (real.IsNegative ? -1 : 1) : 0;
+
+        /// <summary>
+        /// oo - oo, which says nothing on its own: whichever of the two grows faster decides
+        /// the answer, and if neither does the difference can still be finite. Two of the
+        /// standard readings are covered -- one part outgrowing the other, and the conjugate
+        /// for a difference containing a root.
+        /// </summary>
+        private static Entity? SolveAsDifferenceOfInfinities(Entity expr, Variable x)
+        {
+            if (differenceDepth >= MaxDifferenceDepth || expr is not (Sumf or Minusf))
+                return null;
+            var terms = Sumf.LinearChildren(expr).ToArray();
+            if (terms.Length != 2)
+                return null;
+            var dest = Real.PositiveInfinity;
+            differenceDepth++;
+            try
+            {
+                var (firstSign, secondSign) =
+                    (InfiniteSign(ComputeLimit(terms[0], x, dest)), InfiniteSign(ComputeLimit(terms[1], x, dest)));
+                if (firstSign == 0 || secondSign != -firstSign)
+                    return null;
+                // Written as minuend - subtrahend with both parts tending to +oo, so that the
+                // reading below does not have to carry the signs around with it.
+                var (minuend, subtrahend) = firstSign > 0
+                    ? (terms[0], -terms[1])
+                    : (terms[1], -terms[0]);
+
+                // The faster growing part decides the answer whenever there is one, which is
+                // what the ratio of the two says: lim x -> +oo e^x - x is +oo because x / e^x
+                // tends to 0, and -oo the other way round. This settles nothing when the two
+                // grow alike, and the ratio then tends to 1 rather than to 0 or to infinity.
+                if (ComputeLimit((subtrahend / minuend).Simplify(), x, dest) is { } ratio)
+                {
+                    if (ratio.Evaled == Number.Integer.Zero)
+                        return Real.PositiveInfinity;
+                    if (InfiniteSign(ratio) > 0)
+                        return Real.NegativeInfinity;
+                }
+
+                // a - b = (a^2 - b^2) / (a + b), an identity wherever a + b is not zero, which
+                // it is not on the way to +oo. It is only an improvement when squaring removes
+                // a root, and then the leading terms cancel in the numerator and what is left
+                // is an ordinary quotient: sqrt(x^2 + x) - x becomes x / (sqrt(x^2 + x) + x).
+                if (!ContainsRadical(minuend, x) && !ContainsRadical(subtrahend, x))
+                    return null;
+                MultithreadingFunctional.ExitIfCancelled();
+                var conjugate = ((minuend * minuend - subtrahend * subtrahend) / (minuend + subtrahend)).Simplify();
+                if (conjugate == expr)
+                    return null;
+                // Without the roots the numerator is an ordinary polynomial and the denominator
+                // is what it was, so the quotient either falls to the solvers directly or it is
+                // no better than what it replaced. Differentiating it repeatedly is a long way
+                // round to the same nothing, and it is most of the cost here.
+                suppresslHopital = true;
+                try { return ComputeLimit(conjugate, x, dest); }
+                finally { suppresslHopital = false; }
+            }
+            finally { differenceDepth--; }
+        }
+
+        private static bool ContainsRadical(Entity expr, Variable x)
+            => expr.Nodes.Any(node =>
+                node is Powf(var @base, Number.Rational and not Number.Integer) && @base.ContainsNode(x));
 
         private static Entity ApplyTrivialTransformations(Entity expr, Variable x, Entity dest, Func<Entity, Entity, Entity> transformation)
             => expr switch

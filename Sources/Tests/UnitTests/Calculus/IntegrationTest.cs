@@ -335,7 +335,8 @@ namespace AngouriMath.Tests.Calculus
             var expr = MathS.Sin(x);
             // Quadrature over a symmetric interval leaves a residual around 1e-17, which
             // downcasting used to round away. It no longer does, because the same rounding
-            // was destroying every legitimate small number (see IssueRegressionTest, #602).
+            // was destroying every legitimate small number (see IssueRegressionTest, and
+            // https://github.com/asc-community/AngouriMath/issues/602).
             // Asserted the way Test1 and Test3 assert, against the method's own accuracy.
             Assert.True(MathS.Compute.DefiniteIntegral(expr, x, -1, 1).Abs() < 1e-15);
         }
