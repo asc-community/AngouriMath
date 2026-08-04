@@ -43,7 +43,18 @@ namespace AngouriMath
         public partial record Variable
         {
             private protected override void CompileNode(Compiler compiler) =>
-                compiler.Instructions.Add(new(InstructionType.PUSH_VAR, compiler.VarNamespace[this]));
+                compiler.Instructions.Add(new(InstructionType.PUSH_VAR,
+                    compiler.VarNamespace.TryGetValue(this, out var slot)
+                    ? slot
+                    // A compiled expression is a function of the variables it was compiled
+                    // over, so one it does not mention is not something it can be given a
+                    // value for. Looking the name up and letting the lookup fail said only
+                    // that some key was not present in some dictionary.
+                    : throw new UncompilableNodeException(
+                        $"{this} is not among the variables the expression is being compiled over" +
+                        (compiler.VarNamespace.Count is 0
+                            ? ", which are none"
+                            : $", which are {string.Join(", ", compiler.VarNamespace.Keys)}"))));
 
             /// <inheritdoc/>
             public override int GetHashCode()
