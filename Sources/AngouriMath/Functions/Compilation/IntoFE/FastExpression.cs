@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -137,7 +137,7 @@ namespace AngouriMath.Core
                         stack.Push(System.Numerics.Complex.Log(stack.Pop(), stack.Pop().Real));
                         break;
                     case InstructionType.CALL_ARCSIN:
-                        stack.Push(System.Numerics.Complex.Conjugate(System.Numerics.Complex.Asin(stack.Pop())));
+                        stack.Push(Core.Compilation.ComplexBranches.Arcsin(stack.Pop()));
                         break;
                     case InstructionType.CALL_ARCCOS:
                         stack.Push(System.Numerics.Complex.Acos(stack.Pop()));
@@ -152,7 +152,7 @@ namespace AngouriMath.Core
                         stack.Push(System.Numerics.Complex.Acos(1 / stack.Pop()));
                         break;
                     case InstructionType.CALL_ARCCOSECANT:
-                        stack.Push(System.Numerics.Complex.Asin(1 / stack.Pop()));
+                        stack.Push(Core.Compilation.ComplexBranches.Arccosecant(stack.Pop()));
                         break;
                     case InstructionType.CALL_FACTORIAL:
                         // https://stackoverflow.com/a/15454784/5429648
