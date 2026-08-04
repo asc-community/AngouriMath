@@ -7,6 +7,7 @@
 
 using AngouriMath.Core.Multithreading;
 using System;
+using System.Linq;
 using static AngouriMath.Entity;
 
 namespace AngouriMath.Functions.Algebra
@@ -72,8 +73,108 @@ namespace AngouriMath.Functions.Algebra
         private static bool IsFiniteNode(Entity expr)
             => !IsInfiniteNode(expr) && expr != MathS.NaN;
 
+        /// <summary>
+        /// How deep the rule may be applied to one limit. Differentiating both parts does not
+        /// always make the quotient simpler -- x / sqrt(x^2 + 1) turns into sqrt(x^2 + 1) / x,
+        /// which turns back, so the two stay indeterminate forever -- and without a bound the
+        /// recursion below would not end. The bound has to leave room for the degree of a
+        /// polynomial: x^10 / e^x takes ten steps.
+        /// </summary>
+        private const int MaxlHopitalDepth = 16;
+
+        [ThreadStatic] private static int lHopitalDepth;
+
+        /// <summary>
+        /// How many times in all the rule may differentiate a quotient while one limit is being
+        /// computed. Bounding the depth alone does not bound the work: each step asks what the
+        /// two parts of its quotient tend to, and those are limits the rule may be applied to
+        /// in turn, so the steps fan out rather than follow one another, and sixteen deep is
+        /// far more than sixteen of them. This is a backstop rather than the answer to that --
+        /// the two conditions below are what keep the fan-out from starting.
+        /// </summary>
+        private const int MaxlHopitalApplications = 64;
+
+        [ThreadStatic] private static int lHopitalApplications;
+
+        [ThreadStatic] private static List<Entity>? lHopitalChain;
+
+        /// <summary>
+        /// Whether the rule is already partway through this very quotient. Differentiating both
+        /// parts of sqrt(x^2 - x) / x gives its reciprocal, and differentiating that gives the
+        /// first back, so the rule can go round for as long as the bound on its depth allows.
+        /// Each step of the way costs a simplification and two limits of its own, which is why
+        /// bounding the depth is not by itself enough to stop that limit running for a minute.
+        /// </summary>
+        private static bool AlreadyBeingDifferentiated(Entity quotient)
+            => (lHopitalChain ??= new()).Contains(quotient);
+
+        /// <summary>
+        /// Whether differentiating both parts has left a quotient bigger than the one it came
+        /// from by more than the derivative of a power or a logarithm accounts for. Each step
+        /// asks what the two parts of its quotient tend to, and a bigger quotient makes those
+        /// two questions harder than the one being answered, so a step that grows is a step
+        /// away from an answer rather than towards one. The room left over is measured: the
+        /// steps that do reach an answer add two nodes, and the most any of them was seen to
+        /// add is six, while one step of x^(3/2) * sqrt(1 + 1/x^2) / x^2 adds eighteen and
+        /// leaves the rule tens of seconds of work that ends in nothing.
+        /// </summary>
+        private static bool GrewTooMuch(Entity quotient, Entity applied)
+            => applied.Nodes.Count() > quotient.Nodes.Count() + 8;
+
+        /// <summary>
+        /// A product that has a reciprocal factor in it, rewritten as a quotient, or
+        /// <see langword="null"/> if it has none. The rule below only reads quotients, so
+        /// <c>lim x -&gt; +oo x^4 * e^(-x)</c> came out as NaN while the same limit written
+        /// <c>x^4 / e^x</c> gave 0 --
+        /// https://github.com/asc-community/AngouriMath/issues/596.
+        /// </summary>
+        private static Entity? AsQuotient(Entity expr)
+        {
+            if (expr is not Mulf)
+                return null;
+            Entity numerator = 1, denominator = 1;
+            var reciprocal = false;
+            foreach (var factor in Mulf.LinearChildren(expr))
+                switch (factor)
+                {
+                    case Powf(var @base, Real { IsNegative: true } power):
+                        denominator *= @base.Pow(-power);
+                        reciprocal = true;
+                        break;
+                    case Powf(var @base, Mulf(Real { IsNegative: true } coefficient, var rest)):
+                        denominator *= @base.Pow(-coefficient * rest);
+                        reciprocal = true;
+                        break;
+                    case Divf(var dividend, var divisor):
+                        numerator *= dividend;
+                        denominator *= divisor;
+                        reciprocal = true;
+                        break;
+                    default:
+                        numerator *= factor;
+                        break;
+                }
+            return reciprocal ? numerator / denominator : null;
+        }
+
         private static Entity? ApplylHopitalRule(Entity expr, Variable x, Entity dest)
         {
+            if (lHopitalDepth == 0)
+                lHopitalApplications = 0;
+            if (lHopitalDepth >= MaxlHopitalDepth || lHopitalApplications >= MaxlHopitalApplications)
+                return null;
+            // Held for the whole of the rule and not just for the recursive call below, since
+            // asking what the two parts tend to is itself a limit that the rule may be applied
+            // to, and counting only the recursion left those two free to nest without a bound.
+            lHopitalDepth++;
+            try { return ApplylHopitalRuleImpl(expr, x, dest); }
+            finally { lHopitalDepth--; }
+        }
+
+        private static Entity? ApplylHopitalRuleImpl(Entity expr, Variable x, Entity dest)
+        {
+            if (expr is not Divf && AsQuotient(expr) is { } quotient)
+                expr = quotient;
             if (expr is Divf(var num, var den))
                 if (EvalAssumingContinuous(num.Limit(x, dest)) is var numLimit && EvalAssumingContinuous(den.Limit(x, dest)) is var denLimit)
                     if (numLimit == 0 && denLimit == 0 ||
@@ -81,10 +182,29 @@ namespace AngouriMath.Functions.Algebra
                         if (num is not Number && den is not Number)
                             if (num.ContainsNode(x) && den.ContainsNode(x))
                             {
-                                var applied = num.Differentiate(x) / den.Differentiate(x);
+                                // Simplified, because the shape of the quotient is what the
+                                // machinery below matches on and differentiation does not
+                                // produce it: d/dx ln(x)^2 is 2 * ln(x) * (1 / x), a product
+                                // with a quotient inside rather than the quotient
+                                // 2 * ln(x) / x, and only the second has a limit here.
+                                var applied = (num.Differentiate(x) / den.Differentiate(x)).Simplify();
+                                // The domain condition simplification leaves behind is what the
+                                // derivative of a logarithm or a root carries, and a Providedf is
+                                // not a continuous node, so the quotient would be turned away
+                                // unread. Limits already treat the expression as continuous, as
+                                // SimplifyAndComputeLimitToInfinity does with the same shape.
+                                while (applied is Providedf(var body, _)) applied = body;
+                                if (AlreadyBeingDifferentiated(applied) || GrewTooMuch(expr, applied))
+                                    return null;
+                                lHopitalApplications++;
                                 MultithreadingFunctional.ExitIfCancelled();
-                                if (ComputeLimit(applied, x, dest) is { } resLim)
-                                    return resLim;
+                                lHopitalChain!.Add(applied);
+                                try
+                                {
+                                    if (ComputeLimit(applied, x, dest) is { } resLim)
+                                        return resLim;
+                                }
+                                finally { lHopitalChain.RemoveAt(lHopitalChain.Count - 1); }
                             }
             return null;
         }

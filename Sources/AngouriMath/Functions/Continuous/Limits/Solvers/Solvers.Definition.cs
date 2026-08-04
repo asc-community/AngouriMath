@@ -62,9 +62,21 @@ namespace AngouriMath.Functions.Algebra
 
                 MultithreadingFunctional.ExitIfCancelled();
                 if (!dest.IsFinite)
+                {
                     // just compute limit with no check for left/right equality
                     // here approach left will be ignored anyways, as dest is infinite number
-                    return expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left);
+                    var atInfinity = expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left);
+                    if (atInfinity is { } found && found.Evaled != MathS.NaN)
+                        return found;
+                    // l'Hopital's rule was only ever reached for a finite destination, so the
+                    // textbook oo/oo cases at infinity -- ln(x) / x, x / e^x, ln(x) / sqrt(x) --
+                    // were left with nothing to catch them. The rule is only allowed to improve
+                    // on what is already there: sqrt(x) / sqrt(x + 1) merely turns into its own
+                    // reciprocal, and a NaN from it would claim the limit does not exist.
+                    if (ApplylHopitalRule(expr, x, dest) is { } lhopital && lhopital.Evaled != MathS.NaN)
+                        return lhopital;
+                    return atInfinity;
+                }
                 else if (expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left) is { } fromLeft
                   && expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Right) is { } fromRight)
                 {
