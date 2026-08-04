@@ -58,18 +58,6 @@ Note, that all tests and builds are tested for the following three operating sys
 | Terminal | <a href="https://www.nuget.org/packages/AngouriMath.Terminal"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/AngouriMath.Terminal?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.Terminal"><img alt="Nuget" src="https://img.shields.io/nuget/v/AngouriMath.Terminal?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.Terminal"><img alt="Nuget" src="https://img.shields.io/nuget/dt/AngouriMath.Terminal?color=darkblue&label=Downloads&style=flat-square"></a> |
 | C++ | <img alt="GitHub release (latest SemVer including pre-releases)" src="https://img.shields.io/github/v/release/asc-community/AngouriMathLab?include_prereleases&label=GH%20Releases"> | WIP | WIP |
 
-There are also latest-master versions (updated on every push to master) on [MyGet](https://www.myget.org/feed/Packages/angourimath):
-| MyGet | Downloads |
-|-------|-----------|
-| [![MyGet (with prereleases)](https://img.shields.io/myget/angourimath/vpre/AngouriMath?label=AngouriMath)](https://www.myget.org/feed/angourimath/package/nuget/AngouriMath) | ![MyGet](https://img.shields.io/myget/angourimath/dt/AngouriMath?label=Downloads) |
-| [![MyGet (with prereleases)](https://img.shields.io/myget/angourimath/vpre/AngouriMath.FSharp?label=AngouriMath.FSharp)](https://www.myget.org/feed/angourimath/package/nuget/AngouriMath.FSharp) | ![MyGet](https://img.shields.io/myget/angourimath/dt/AngouriMath.FSharp?label=Downloads) |
-| [![MyGet (with prereleases)](https://img.shields.io/myget/angourimath/vpre/AngouriMath.Interactive?label=AngouriMath.Interactive)](https://www.myget.org/feed/angourimath/package/nuget/AngouriMath.Interactive) | ![MyGet](https://img.shields.io/myget/angourimath/dt/AngouriMath.Interactive?label=Downloads) |
-| [![MyGet (with prereleases)](https://img.shields.io/myget/angourimath/vpre/AngouriMath.Terminal?label=AngouriMath.Terminal)](https://www.myget.org/feed/angourimath/package/nuget/AngouriMath.Terminal) | ![MyGet](https://img.shields.io/myget/angourimath/dt/AngouriMath.Terminal?label=Downloads) |
-  
-Source to install from MyGet:
-```
-https://www.myget.org/F/angourimath/api/v3/index.json  
-```
   
 #### Other info
 | Website | Stars | License |
