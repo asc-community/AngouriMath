@@ -47,6 +47,15 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        public partial record Modf
+        {
+            /// <inheritdoc/>
+            public override string Stringize() =>
+                Dividend.Stringize(Dividend.Priority < Priority) + " mod " + Divisor.Stringize(Divisor.Priority <= Priority);
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Logf
         {
             /// <inheritdoc/>

@@ -109,6 +109,16 @@ namespace AngouriMath
             }
         }
 
+        public partial record Modf
+        {
+            private protected override void CompileNode(Compiler compiler)
+            {
+                Divisor.InnerCompile(compiler);
+                Dividend.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_MOD));
+            }
+        }
+
         public partial record Powf
         {
             private protected override void CompileNode(Compiler compiler)

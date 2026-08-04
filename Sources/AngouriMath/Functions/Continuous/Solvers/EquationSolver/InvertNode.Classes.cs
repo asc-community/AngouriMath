@@ -67,6 +67,15 @@ namespace AngouriMath
                 : Divisor.Invert(Dividend / value, x);
         }
 
+        partial record Modf
+        {
+            // x % a = value has one solution per period, so inverting it means introducing
+            // an integer parameter the way the trigonometric inversions do. Until that is
+            // written, no solutions is the honest answer -- a wrong one would be worse.
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => Enumerable.Empty<Entity>();
+        }
+
         partial record Powf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)

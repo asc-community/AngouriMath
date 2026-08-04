@@ -417,6 +417,26 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Pow(Entity @base, Entity power) => new Powf(@base, power);
 
+        /// <summary>
+        /// The remainder after dividing one expression by another, that is, the node
+        /// <paramref name="dividend"/> % <paramref name="divisor"/>.
+        /// </summary>
+        /// <remarks>
+        /// The remainder takes the sign of the divisor -- the floored convention,
+        /// <c>a - b * floor(a / b)</c>, under which <c>(-7) mod 3</c> is 2 and <c>7 mod (-3)</c>
+        /// is -2. This is what a mathematician means by mod: it is the convention under which
+        /// the residues modulo n are the numbers from 0 to n - 1, and it is what SymPy,
+        /// Mathematica and Maxima all answer. C# truncates instead and so its <c>%</c> on two
+        /// <see cref="int"/>s gives -1 there, but that is an operation on machine integers and
+        /// not this one.
+        /// <para/>
+        /// Written <c>mod</c> when parsed from a string. <c>%</c> is left to mean percent.
+        /// </remarks>
+        /// <param name="dividend">The expression whose remainder is taken</param>
+        /// <param name="divisor">The expression divided by; the result is undefined where it is zero</param>
+        /// <returns>The node of the remainder</returns>
+        public static Entity Mod(Entity dividend, Entity divisor) => new Modf(dividend, divisor);
+
         /// <summary>Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/></summary>
         /// <param name="a">The argument of which square root will be taken</param>
         /// <returns>Power node with (1/2) as the power</returns>

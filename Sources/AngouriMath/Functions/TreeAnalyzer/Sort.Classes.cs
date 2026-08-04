@@ -81,6 +81,12 @@ namespace AngouriMath
                 => Choice(level, "", "divmul_", "div_");
         }
 
+        public partial record Modf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "", "divmul_", "mod_");
+        }
+
         public partial record Powf
         {
             private protected override string SortHashName(SortLevel level)

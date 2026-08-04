@@ -141,6 +141,29 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Dividend, Divisor };
         }
+
+        /// <summary>
+        /// A node of modulus, that is, the remainder after division. Follows the sign of
+        /// the dividend, as C#'s own <c>%</c> does and as
+        /// PeterO.Numbers does underneath: -7 % 3 is -1,
+        /// not 2.
+        /// </summary>
+        public sealed partial record Modf(Entity Dividend, Entity Divisor) : ContinuousNode, IBinaryNode
+        {
+            /// <summary>Reuse the cache by returning the same object if possible</summary>
+            internal Modf New(Entity dividend, Entity divisor) =>
+                ReferenceEquals(Dividend, dividend) && ReferenceEquals(Divisor, divisor) ? this : new(dividend, divisor);
+            internal override Priority Priority => Priority.Mul;
+
+            public Entity NodeFirstChild => Dividend;
+
+            public Entity NodeSecondChild => Divisor;
+
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Dividend.Replace(func), Divisor.Replace(func)));
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Dividend, Divisor };
+        }
 #pragma warning restore CS1591  // only while records' parameters cannot be documented
     }
 }

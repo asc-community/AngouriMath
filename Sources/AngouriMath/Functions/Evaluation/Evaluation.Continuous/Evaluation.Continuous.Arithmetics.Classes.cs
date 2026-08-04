@@ -100,6 +100,59 @@ namespace AngouriMath
                 },
                 (@this, a, b) => ((Divf)@this).New(a, b), isExact);
         }
+        public partial record Modf
+        {
+            // Like division, undefined when the divisor is zero
+            private protected override Entity IntrinsicCondition => !Divisor.EqualTo(0);
+
+            /// <summary>
+            /// The remainder of the floored division, a - b * floor(a / b), which takes the sign
+            /// of the divisor: -7 mod 3 is 2, and 7 mod -3 is -2.
+            /// </summary>
+            /// <remarks>
+            /// This is what a mathematician means by mod. It is the convention under which the
+            /// residues modulo n are the numbers from 0 to n - 1, which is the whole point of
+            /// the operation in number theory, and it is what the other systems answer: SymPy,
+            /// Mathematica and Maxima all give 2 for -7 mod 3. C and the languages descended
+            /// from it truncate instead and so answer -1, but their % is an operation on
+            /// machine integers, not this one.
+            /// <para/>
+            /// Built from the truncated remainder rather than from a floor, since there is no
+            /// floor in this library: the two differ by exactly one divisor, and only where the
+            /// remainder and the divisor disagree in sign.
+            /// </remarks>
+            private static Real FlooredRemainder(Real a, Real b)
+            {
+                var truncated = a % b;
+                return truncated == 0 || truncated.IsNegative == b.IsNegative
+                    ? truncated
+                    : (Real)(truncated + b);
+            }
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnTwoArguments(Dividend, Divisor,
+                (a, b) => (a, b) switch
+                {
+                    (_, Integer(0)) => Real.NaN,
+                    // Only for reals: the remainder of a complex number by another is not
+                    // one thing, and guessing at it would be worse than leaving it alone.
+                    (Real n1, Real n2) when !isExact => FlooredRemainder(n1, n2),
+                    (Integer(0), var n0) =>
+                        n0.Evaled is Complex c
+                        ? c.IsZero ? MathS.NaN : 0
+                        : new Providedf(0, new Notf(new Equalsf(n0, 0))),
+                    (var n1, Integer(1)) when n1.Evaled is Integer => 0,
+                    // a % a = 0 wherever a % a means anything at all, which is wherever a is
+                    // not zero -- and where it is, the whole node is undefined in any case.
+                    (var n1, var n2) when n1 == n2 => new Providedf(0, new Notf(new Equalsf(n2, 0))),
+                    // (a % b) % b = a % b: the first remainder already lies strictly between
+                    // -|b| and |b|, so taking it again changes nothing.
+                    (Modf(_, var inner) whole, var n2) when inner == n2 => whole,
+                    _ => null
+                },
+                (@this, a, b) => ((Modf)@this).New(a, b), isExact);
+        }
         public partial record Powf
         {
             // Power is undefined in two cases:

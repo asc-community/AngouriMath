@@ -33,6 +33,12 @@ namespace AngouriMath
                 Dividend.ToSymPy(Dividend.Priority < Priority.Div) + " / " + Divisor.ToSymPy(Divisor.Priority <= Priority.Div);
         }
 
+        public partial record Modf
+        {
+            internal override string ToSymPy() =>
+                "sympy.Mod(" + Dividend.ToSymPy() + ", " + Divisor.ToSymPy() + ")";
+        }
+
         public partial record Logf
         {
             internal override string ToSymPy() => "sympy.log(" + Antilogarithm.ToSymPy() + ", " + Base.ToSymPy() + ")";

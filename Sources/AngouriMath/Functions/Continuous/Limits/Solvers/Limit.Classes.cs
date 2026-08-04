@@ -107,6 +107,32 @@ namespace AngouriMath
             }
         }
 
+        partial record Modf
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                if (Dividend.ComputeLimitDivideEtImpera(x, dist, side) is not { } dividend
+                    || Divisor.ComputeLimitDivideEtImpera(x, dist, side) is not { } divisor)
+                    return null;
+                var substituted = New(dividend, divisor);
+                if (substituted.Evaled is not Number { IsFinite: true } value)
+                    return null;
+                // The remainder is continuous except where the dividend reaches a non-zero
+                // multiple of the divisor, and there it jumps: x % 3 tends to 3 approaching 3
+                // from the left and to 0 from the right. Which of the two a one-sided limit
+                // takes depends on the direction the dividend crosses in, not only on what it
+                // tends to, so the jumps are left unanswered rather than answered with the
+                // value at the point -- that value is one of the two one-sided limits and not
+                // the other, and is no two-sided limit at all.
+                //
+                // Zero is not one of those points: the remainder takes the sign of the dividend,
+                // so x % 3 is x on either side of 0 and passes through it continuously.
+                if (value == 0 && dividend.Evaled != 0)
+                    return null;
+                return substituted;
+            }
+        }
+
         partial record Sinf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>

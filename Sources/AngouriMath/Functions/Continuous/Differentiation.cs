@@ -132,6 +132,21 @@ namespace AngouriMath
                 (Dividend.InnerDifferentiate(variable) * Divisor - Divisor.InnerDifferentiate(variable) * Dividend) / Divisor.Pow(2);
         }
 
+        partial record Modf
+        {
+            // a % b is a - b * floor(a / b), so away from the jumps its derivative is
+            // a' - b' * floor(a / b) -- and where b is constant that is simply a'. At a
+            // multiple of the divisor it is not differentiable at all, which is why the
+            // general case is left alone rather than answered with the piecewise-constant
+            // formula: floor is not a node this library has, so writing the general case
+            // would mean writing something that is wrong at the jumps.
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                Divisor.ContainsNode(variable)
+                    ? new Derivativef(this, variable, 1)
+                    : Dividend.InnerDifferentiate(variable);
+        }
+
         partial record Powf
         {
             // (a ^ b)' = e ^ (ln(a) * b) * (a' * b / a + ln(a) * b')

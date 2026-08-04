@@ -74,6 +74,12 @@ namespace AngouriMath
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
+        partial record Modf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Real;
+        }
+
         partial record Sinf
         {
             /// <inheritdoc/>
