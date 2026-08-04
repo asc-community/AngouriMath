@@ -81,18 +81,24 @@ namespace AngouriMath.Tests.Calculus
             AssertLimit(expression, destination, expected);
 
         /// <summary>
-        /// Neither reading settles this one: the two parts grow alike, so the ratio says
-        /// nothing, and the conjugate is a quotient the solvers cannot read either. Leaving it
-        /// unevaluated is honest; taking a long time over it is not, and the conjugate used to
-        /// be handed to l'Hopital's rule, which spent seconds arriving at the same nothing.
+        /// The conjugate reading cannot settle this one -- the two parts grow alike, so the
+        /// ratio says nothing, and the conjugate is a quotient the solvers cannot read either.
+        /// The series can: the two radicals differ at the first order in 1/x, and the
+        /// difference of their leading terms is (3x - 1) / (2x), which tends to 3/2.
         /// </summary>
-        [Fact]
-        public void AFormNeitherReadingSettlesTerminatesWithoutClaimingAnAnswer()
+        /// <remarks>
+        /// This asserted an unevaluated limit until the series landed, and was correct to while
+        /// the conjugate was the only reading of it. It is the one test the two changes disagree
+        /// about, and the disagreement is the series being right.
+        /// </remarks>
+        [Theory]
+        [InlineData("sqrt(x ^ 2 + 3 * x) - sqrt(x ^ 2 + 1)", "3/2")]
+        [InlineData("sqrt(x ^ 2 + 3 * x) - sqrt(x ^ 2 + 5 * x)", "-1")]
+        public void ADifferenceOfLikeRadicalsIsSettledByTheSeries(string expression, string expected)
         {
-            var task = Task.Run(() =>
-                "sqrt(x ^ 2 + 3 * x) - sqrt(x ^ 2 + 1)".ToEntity().Limit("x", "+oo".ToEntity()));
+            var task = Task.Run(() => expression.ToEntity().Limit("x", "+oo".ToEntity()).Simplify());
             Assert.True(task.Wait(TimeSpan.FromSeconds(30)), "the limit did not terminate");
-            Assert.IsType<Entity.Limitf>(task.Result);
+            Assert.Equal(expected.ToEntity().Evaled, task.Result.Evaled);
         }
     }
 }

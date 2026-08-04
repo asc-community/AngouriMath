@@ -137,6 +137,21 @@ namespace AngouriMath.Functions.Algebra
                     // for an expression that has just been found to have no answer at all.
                     if (SolveByRewriting(expr, x, dest) is { } rewritten && rewritten.Evaled != MathS.NaN)
                         return rewritten;
+                    // Last, because it is the most expensive and everything above is cheaper
+                    // for the cases it answers. What it adds are the ones nothing above has
+                    // any reading of, including the differences whose terms cancel to every
+                    // order: e^(x + e^(-x)) - e^x is 1, and no amount of differentiating both
+                    // parts of it arrives there.
+                    //
+                    // Only where the destination is itself infinite, which is what the
+                    // algorithm is stated for. A limit at a finite point reaches infinity too,
+                    // by substituting for x, but there it would be replacing answers the rules
+                    // above already give rather than adding ones they do not -- a change worth
+                    // making on its own evidence and not as a side effect of this.
+                    if (Gruntz.LimitToPositiveInfinity(
+                            dest.Evaled is Real { IsNegative: true } ? expr.Substitute(x, -x) : expr, x)
+                        is { } byGruntz && byGruntz.Evaled != MathS.NaN)
+                        return byGruntz;
                     return atInfinity;
                 }
                 else if (expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left) is { } fromLeft

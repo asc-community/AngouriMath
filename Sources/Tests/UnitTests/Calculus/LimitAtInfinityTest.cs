@@ -35,6 +35,11 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("ln(ln(x)) / ln(x)", "+oo", "0")]
         [InlineData("sqrt(x) / sqrt(x + 1)", "+oo", "1")]
         [InlineData("x ^ 10 / e ^ x", "+oo", "0")]
+        // Pinned as unsettleable until now: l'Hopital's rule reaches it only after more steps
+        // than its bound allows, so it was left unevaluated. Nothing about that bound has
+        // changed -- the answer comes from one leading term instead of twenty derivatives.
+        [InlineData("x ^ 20 / e ^ x", "+oo", "0")]
+        [InlineData("x ^ (3/2) * sqrt(1 + 1 / x ^ 2) / x ^ 2", "+oo", "0")]
         public void CompetingGrowthAtInfinity(string expression, string destination, string expected) =>
             Assert.Equal(expected.ToEntity(), Limit(expression, destination).Simplify());
 
@@ -66,24 +71,23 @@ namespace AngouriMath.Tests.Calculus
             Assert.Equal(expected.ToEntity(), Limit(expression, destination).Simplify());
 
         /// <summary>
-        /// Differentiating both parts of (x + sin(x)) / x gives back something no closer to an
-        /// answer, so the rule has to be stopped; x^20 / e^x would settle but only after more
-        /// steps than the bound allows. Either way the limit is left unevaluated, which is
-        /// honest. What must not happen is a hang, and the answer must not become NaN either,
-        /// since NaN asserts that the limit does not exist.
+        /// An oscillating expression has no limit at infinity and no comparability class
+        /// either, so nothing here has anything to say about it. Leaving it unevaluated is
+        /// honest; what must not happen is a hang, and the answer must not become NaN, since
+        /// NaN asserts that the limit does not exist rather than that it was not found.
         /// </summary>
         /// <remarks>
-        /// The last is the form that showed a bound on the number of steps is not by itself a
-        /// bound on the work. Each step asks what the two parts of its quotient tend to, and
-        /// those are limits the rule may be applied to in turn, so sixteen steps deep is far
-        /// more than sixteen steps: it ran for over twenty seconds before the rule was stopped
-        /// from going round a cycle or handing on a quotient bigger than the one it came from.
+        /// The two forms this test used to also carry -- x^20 / e^x, and
+        /// x^(3/2) * sqrt(1 + 1/x^2) / x^2 -- are settled by the series and have moved to
+        /// <see cref="CompetingGrowthAtInfinity"/>. They were here because l'Hopital's rule
+        /// cannot reach them within its bound on steps, which is still true of the rule and is
+        /// no longer true of the library. Nothing about that bound changed.
         /// </remarks>
         [Theory]
         [InlineData("(x + sin(x)) / x")]
-        [InlineData("x ^ 20 / e ^ x")]
-        [InlineData("x ^ (3/2) * sqrt(1 + 1 / x ^ 2) / x ^ 2")]
-        public void AFormTheRuleCannotSettleTerminatesWithoutClaimingAnAnswer(string expression)
+        [InlineData("sin(x)")]
+        [InlineData("x * sin(x)")]
+        public void AFormThatCannotBeSettledTerminatesWithoutClaimingAnAnswer(string expression)
         {
             var task = Task.Run(() => Limit(expression, "+oo"));
             Assert.True(task.Wait(TimeSpan.FromSeconds(30)), "the limit did not terminate");
