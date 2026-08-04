@@ -24,6 +24,21 @@ namespace AngouriMath.Core.Exceptions
     /// </summary>
     public sealed class MissingOperatorParseException : ParseException { internal MissingOperatorParseException(string msg) : base(msg) { } }
     
+    /// <summary>
+    /// Thrown when a name that is not a function is applied to arguments, in one of the
+    /// cases where reading it as a product instead would be a silent surprise.
+    /// </summary>
+    /// <example>
+    /// <code>
+    /// "arsinh(x)".ToEntity();  // the inverse hyperbolic sine
+    /// "arcsinh(x)".ToEntity(); // thrown: there is no such function
+    /// </code>
+    /// </example>
+    public sealed class UnrecognizedFunctionParseException : ParseException
+    {
+        internal UnrecognizedFunctionParseException(string msg) : base(msg) { }
+    }
+
     /// <summary>Thrown when non-known domain is passed to the domain function</summary>
     public sealed class UnrecognizedDomainException : ParseException
     {

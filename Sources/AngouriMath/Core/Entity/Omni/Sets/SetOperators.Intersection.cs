@@ -30,15 +30,21 @@ namespace AngouriMath.Core.Sets
         {
             if (A.Left == B.Left && A.Right == B.Right)
                 return new Interval(A.Left, A.LeftClosed && B.LeftClosed, A.Right, A.RightClosed && B.RightClosed);
-            if (A.Left is not Real aLeft ||
-                A.Right is not Real aRight ||
-                B.Left is not Real bLeft ||
-                B.Right is not Real bRight)
+            // Compared by what the endpoints are worth, not by whether they are written as
+            // bare numbers. (sqrt(33) - 3) / 6 is a Divf and never a Real, so an interval
+            // written with one was given up on -- which is
+            // https://github.com/asc-community/AngouriMath/issues/415. The bounds of the result
+            // are taken from the original expressions, so the answer keeps them exact
+            // rather than turning them into a hundred decimal places.
+            if (A.Left.Evaled is not Real aLeft ||
+                A.Right.Evaled is not Real aRight ||
+                B.Left.Evaled is not Real bLeft ||
+                B.Right.Evaled is not Real bRight)
                 return A.Intersect(B);
             if (aLeft == bRight)
-                return A.LeftClosed && B.RightClosed ? new FiniteSet(aLeft) : Empty;
+                return A.LeftClosed && B.RightClosed ? new FiniteSet(A.Left) : Empty;
             if (bLeft == aRight)
-                return A.RightClosed && B.LeftClosed ? new FiniteSet(bLeft) : Empty;
+                return A.RightClosed && B.LeftClosed ? new FiniteSet(B.Left) : Empty;
             if (aLeft >= aRight)
                 return B;
             if (bLeft >= bRight)
@@ -49,12 +55,12 @@ namespace AngouriMath.Core.Sets
                 return Empty;
             var (left, leftClosed) =
                aLeft == bLeft ?
-               (aLeft, A.LeftClosed && B.LeftClosed) :
-               (bLeft < aLeft ? (aLeft, A.LeftClosed) : (bLeft, B.LeftClosed));
+               (A.Left, A.LeftClosed && B.LeftClosed) :
+               (bLeft < aLeft ? (A.Left, A.LeftClosed) : (B.Left, B.LeftClosed));
             var (right, rightClosed) =
                 aRight == bRight ?
-                (aRight, A.RightClosed && B.RightClosed) :
-                (bRight > aRight ? (aRight, A.RightClosed) : (bRight, B.RightClosed));
+                (A.Right, A.RightClosed && B.RightClosed) :
+                (bRight > aRight ? (A.Right, A.RightClosed) : (B.Right, B.RightClosed));
             return new Interval(left, leftClosed, right, rightClosed);
         }
 

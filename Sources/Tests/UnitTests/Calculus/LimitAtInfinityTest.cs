@@ -66,25 +66,22 @@ namespace AngouriMath.Tests.Calculus
             Assert.Equal(expected.ToEntity(), Limit(expression, destination).Simplify());
 
         /// <summary>
-        /// Differentiating both parts of x / sqrt(x^2 + 1) gives its own reciprocal, so the rule
-        /// never settles and has to be stopped; x^20 / e^x would settle but only after more
+        /// Differentiating both parts of (x + sin(x)) / x gives back something no closer to an
+        /// answer, so the rule has to be stopped; x^20 / e^x would settle but only after more
         /// steps than the bound allows. Either way the limit is left unevaluated, which is
         /// honest. What must not happen is a hang, and the answer must not become NaN either,
         /// since NaN asserts that the limit does not exist.
         /// </summary>
         /// <remarks>
-        /// The last two are the forms that showed a bound on the number of steps is not by
-        /// itself a bound on the work. Each step asks what the two parts of its quotient tend
-        /// to, and those are limits the rule may be applied to in turn, so sixteen steps deep
-        /// is far more than sixteen steps: both of these ran for over twenty seconds before the
-        /// rule was stopped from going round a cycle or handing on a quotient bigger than the
-        /// one it came from.
+        /// The last is the form that showed a bound on the number of steps is not by itself a
+        /// bound on the work. Each step asks what the two parts of its quotient tend to, and
+        /// those are limits the rule may be applied to in turn, so sixteen steps deep is far
+        /// more than sixteen steps: it ran for over twenty seconds before the rule was stopped
+        /// from going round a cycle or handing on a quotient bigger than the one it came from.
         /// </remarks>
         [Theory]
-        [InlineData("x / sqrt(x ^ 2 + 1)")]
         [InlineData("(x + sin(x)) / x")]
         [InlineData("x ^ 20 / e ^ x")]
-        [InlineData("sqrt(x ^ 2 - x) / x")]
         [InlineData("x ^ (3/2) * sqrt(1 + 1 / x ^ 2) / x ^ 2")]
         public void AFormTheRuleCannotSettleTerminatesWithoutClaimingAnAnswer(string expression)
         {

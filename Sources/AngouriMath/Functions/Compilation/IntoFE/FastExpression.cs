@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -54,10 +54,34 @@ namespace AngouriMath.Core
                 + (Type != InstructionType.PUSH_CONST ? "" : Value.ToString());
         }
 
-        private readonly Stack<System.Numerics.Complex> stack;
-        private readonly System.Numerics.Complex[] cache;
+        /// <summary>
+        /// The working stack and the cache of repeated subexpressions, one set per thread
+        /// rather than one per compiled expression.
+        /// </summary>
+        /// <remarks>
+        /// They used to be instance fields, which made a compiled expression unsafe to call
+        /// from more than one thread at a time: two calls interleaved their pushes and pops
+        /// and the second to finish found the stack in a state it did not put it in. Worse,
+        /// the damage was permanent -- the count check throws before anything is popped, so
+        /// one racing call left the leftovers behind and every later call failed too, on one
+        /// thread or many. See https://github.com/asc-community/AngouriMath/issues/637.
+        /// <para/>
+        /// Per thread rather than per call so that calling a compiled expression still
+        /// allocates nothing, which is the point of compiling it. Neither buffer carries
+        /// anything from one call to the next: the stack is emptied on the way in, and the
+        /// cache is only ever read at a slot the same call has already written.
+        /// </remarks>
+        private sealed class Scratch
+        {
+            public readonly Stack<System.Numerics.Complex> Stack = new();
+            public System.Numerics.Complex[] Cache = System.Array.Empty<System.Numerics.Complex>();
+        }
+
+        [System.ThreadStatic] private static Scratch? scratch;
+
         private readonly List<Instruction> instructions;
         private readonly int varCount;
+        private readonly int cacheCount;
 
         /// <summary>
         /// You cannot modify this function once it is sealed. The final user will never access to its
@@ -67,8 +91,7 @@ namespace AngouriMath.Core
         {
             this.varCount = varCount;
             this.instructions = instructions;
-            stack = new Stack<System.Numerics.Complex>(instructions.Count);
-            cache = new System.Numerics.Complex[cacheCount];
+            this.cacheCount = cacheCount;
         }
 
         /// <summary>Calls the compiled function (synonym to <see cref="Substitute(System.Numerics.Complex[])"/>)</summary>
@@ -85,6 +108,12 @@ namespace AngouriMath.Core
         {
             if (values.Length != varCount)
                 throw new WrongNumberOfArgumentsException($"Wrong number of parameters: Expected {varCount} but {values.Length} provided");
+            var mine = scratch ??= new Scratch();
+            var stack = mine.Stack;
+            stack.Clear();
+            var cache = mine.Cache;
+            if (cache.Length < cacheCount)
+                mine.Cache = cache = new System.Numerics.Complex[cacheCount];
             foreach (var instruction in instructions)
                 switch (instruction.Type)
                 {
@@ -137,7 +166,7 @@ namespace AngouriMath.Core
                         stack.Push(System.Numerics.Complex.Log(stack.Pop(), stack.Pop().Real));
                         break;
                     case InstructionType.CALL_ARCSIN:
-                        stack.Push(System.Numerics.Complex.Conjugate(System.Numerics.Complex.Asin(stack.Pop())));
+                        stack.Push(Core.Compilation.ComplexBranches.Arcsin(stack.Pop()));
                         break;
                     case InstructionType.CALL_ARCCOS:
                         stack.Push(System.Numerics.Complex.Acos(stack.Pop()));
@@ -152,7 +181,7 @@ namespace AngouriMath.Core
                         stack.Push(System.Numerics.Complex.Acos(1 / stack.Pop()));
                         break;
                     case InstructionType.CALL_ARCCOSECANT:
-                        stack.Push(System.Numerics.Complex.Asin(1 / stack.Pop()));
+                        stack.Push(Core.Compilation.ComplexBranches.Arccosecant(stack.Pop()));
                         break;
                     case InstructionType.CALL_FACTORIAL:
                         // https://stackoverflow.com/a/15454784/5429648

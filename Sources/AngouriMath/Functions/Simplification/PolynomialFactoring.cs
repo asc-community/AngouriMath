@@ -106,20 +106,111 @@ namespace AngouriMath.Functions
         }
 
         /// <summary>
+        /// One step of a partial fraction decomposition, at a rational root of the
+        /// denominator: <c>N/D</c> becomes <c>A/(x - r) + R/Q</c>, where <c>D = (x - r)Q</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// One step, and not the whole decomposition, because a step is all that is needed:
+        /// what is left over is a smaller problem of the same kind, and by the time its
+        /// denominator is a quadratic there is already a rule for it. So
+        /// <c>1/(x^3 + 1)</c> splits into <c>(1/3)/(x + 1)</c> and <c>(2 - x)/(3(x^2 - x + 1))</c>,
+        /// and the second of those is a quotient the integrator can read as it stands.
+        /// </para>
+        /// <para>
+        /// The coefficient is Heaviside's: at the root every other term of the
+        /// decomposition is finite, so <c>A = N(r)/Q(r)</c>. What is left, <c>N - A*Q</c>,
+        /// then has <c>r</c> for a root by construction and divides exactly.
+        /// </para>
+        /// <para>
+        /// Rational roots only, and simple ones: a repeated root needs a term over
+        /// <c>(x - r)^2</c> as well, which this does not produce, so it declines instead.
+        /// Denominators of degree below three are left alone, since the rules for a linear
+        /// or quadratic denominator already answer those and answer them in one piece.
+        /// </para>
+        /// </remarks>
+        internal static bool TrySplitOffRationalRoot(
+            Entity numerator, Entity denominator, Variable x,
+            [NotNullWhen(true)] out Entity? simplePart,
+            [NotNullWhen(true)] out Entity? restNumerator,
+            [NotNullWhen(true)] out Entity? restDenominator)
+        {
+            simplePart = restNumerator = restDenominator = null;
+            if (!TryGetRationalCoefficients(denominator, x, leastTerms: 1, leastDegree: 3, out var d)
+                || !TryGetRationalCoefficients(numerator, x, leastTerms: 1, leastDegree: 0, out var n))
+                return false;
+            // Only a proper fraction decomposes; an improper one is a polynomial plus a
+            // proper fraction and has to be divided out first, which is not done here.
+            if (n.Length >= d.Length)
+                return false;
+
+            foreach (var root in RootCandidates(d))
+            {
+                if (!Evaluate(d, root).IsZero)
+                    continue;
+                var q = DivideByLinear(d, root);
+                var atRoot = Evaluate(q, root);
+                if (atRoot.IsZero)
+                    continue;                       // repeated root, see above
+                var a = Evaluate(n, root).Divide(atRoot);
+                var left = Subtract(n, Scale(q, a));
+                if (!Evaluate(left, root).IsZero)
+                    continue;                       // cannot happen; checked rather than assumed
+                simplePart = Rational.Create(a) / LinearFactor(root, x);
+                restNumerator = BuildPolynomial(DivideByLinear(left, root), x);
+                restDenominator = BuildPolynomial(q, x);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Zero first, then the candidates of the rational root theorem, which cannot offer
+        /// it: they are built from divisors of the constant term, and a polynomial with a
+        /// root at zero has none.
+        /// </summary>
+        private static IEnumerable<ERational> RootCandidates(ERational[] coefficients)
+            => coefficients[0].IsZero
+                ? new[] { ERational.Zero }.Concat(RationalRootCandidates(coefficients))
+                : RationalRootCandidates(coefficients);
+
+        /// <summary>x - r, or x where r is zero.</summary>
+        private static Entity LinearFactor(ERational root, Variable x)
+            => root.IsZero ? x
+                : root.Sign < 0 ? x + Rational.Create(root.Negate())
+                : x - Rational.Create(root);
+
+        private static ERational[] Scale(ERational[] coefficients, ERational by)
+            => coefficients.Select(c => c.Multiply(by)).ToArray();
+
+        private static ERational[] Subtract(ERational[] left, ERational[] right)
+        {
+            var result = new ERational[System.Math.Max(left.Length, right.Length)];
+            for (var i = 0; i < result.Length; i++)
+                result[i] = (i < left.Length ? left[i] : ERational.Zero)
+                    .Subtract(i < right.Length ? right[i] : ERational.Zero);
+            return result;
+        }
+
+        /// <summary>
         /// The coefficients of <paramref name="expr"/> in <paramref name="x"/>, lowest
         /// power first, or <see langword="false"/> if it is not a polynomial in
         /// <paramref name="x"/> with rational coefficients alone.
         /// </summary>
         private static bool TryGetRationalCoefficients(Entity expr, Variable x, out ERational[] coefficients)
+            => TryGetRationalCoefficients(expr, x, leastTerms: 2, leastDegree: 2, out coefficients);
+
+        private static bool TryGetRationalCoefficients(
+            Entity expr, Variable x, int leastTerms, int leastDegree, out ERational[] coefficients)
         {
             coefficients = System.Array.Empty<ERational>();
             var monomials = PolynomialSolver.GatherMonomialInformation<EInteger, TreeAnalyzer.PrimitiveInteger>(
                 Sumf.LinearChildren(expr.Expand()), x);
-            if (monomials is null || monomials.Count < 2)
+            if (monomials is null || monomials.Count < leastTerms)
                 return false;
 
             var degree = monomials.Keys.Max();
-            if (degree is null || degree > MaxDegree || degree < 2)
+            if (degree is null || degree > MaxDegree || degree < leastDegree)
                 return false;
 
             var found = new ERational[degree.ToInt32Checked() + 1];

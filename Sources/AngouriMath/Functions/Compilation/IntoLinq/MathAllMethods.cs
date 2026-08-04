@@ -91,7 +91,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
 
         public static System.Numerics.Complex Asin(System.Numerics.Complex a)
-            => System.Numerics.Complex.Asin(a);
+            => AngouriMath.Core.Compilation.ComplexBranches.Arcsin(a);
         public static double Asin(double a)
             => Math.Asin(a);
         public static float Asin(float a)
@@ -209,7 +209,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
 
         public static System.Numerics.Complex Acsc(System.Numerics.Complex a)
-            => System.Numerics.Complex.Asin(1 / a);
+            => AngouriMath.Core.Compilation.ComplexBranches.Arccosecant(a);
         public static double Acsc(double a)
             => Math.Asin(1 / a);
         public static float Acsc(float a)

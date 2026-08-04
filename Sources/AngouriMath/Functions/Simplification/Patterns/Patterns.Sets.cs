@@ -18,6 +18,14 @@ namespace AngouriMath.Functions
         internal static Entity SetOperatorRules(Entity x) => x switch
         {
             Intersectionf(var any1, var any1a) when any1 == any1a => any1,
+
+            // A /\ (B \/ C) = (A /\ B) \/ (A /\ C). Without this, an intersection whose
+            // other side is a union is left as written however simple each piece is, which
+            // is half of https://github.com/asc-community/AngouriMath/issues/415.
+            Intersectionf(Set setA, Unionf(Set setB, Set setC)) =>
+                setA.Intersect(setB).Unite(setA.Intersect(setC)),
+            Intersectionf(Unionf(Set setB, Set setC), Set setA) =>
+                setB.Intersect(setA).Unite(setC.Intersect(setA)),
             Unionf(var any1, var any1a) when any1 == any1a => any1,
             SetMinusf(var any1, var any1a) when any1 == any1a => Empty,
             ConditionalSet(var var1, Inf(var var1a, var set)) when var1 == var1a => set,

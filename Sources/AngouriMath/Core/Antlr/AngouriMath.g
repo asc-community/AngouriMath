@@ -324,28 +324,34 @@ atom returns[Entity value]
     | 'asinh(' args = function_arguments ')' { Assert("arcsin", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsinh($args.list[0]); }
     | 'arsinh(' args = function_arguments ')' { Assert("arcsin", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsinh($args.list[0]); }
     | 'arsh(' args = function_arguments ')' { Assert("arcsin", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsinh($args.list[0]); }
+    | 'arcsinh(' args = function_arguments ')' { throw new UnrecognizedFunctionParseException("there is no function arcsinh: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic sine is arsinh, asinh or arsh"); }
 
     | 'acosh(' args = function_arguments ')' { Assert("arccos", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosh($args.list[0]); }
     | 'arcosh(' args = function_arguments ')' { Assert("arccos", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosh($args.list[0]); }
     | 'arch(' args = function_arguments ')' { Assert("arccos", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosh($args.list[0]); }
+    | 'arccosh(' args = function_arguments ')' { throw new UnrecognizedFunctionParseException("there is no function arccosh: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic cosine is arcosh, acosh or arch"); }
 
     | 'atanh(' args = function_arguments ')' { Assert("arctan", 1, $args.list.Count); $value = MathS.Hyperbolic.Artanh($args.list[0]); }
     | 'artanh(' args = function_arguments ')' { Assert("arctan", 1, $args.list.Count); $value = MathS.Hyperbolic.Artanh($args.list[0]); }
     | 'arth(' args = function_arguments ')' { Assert("arctan", 1, $args.list.Count); $value = MathS.Hyperbolic.Artanh($args.list[0]); }
+    | 'arctanh(' args = function_arguments ')' { throw new UnrecognizedFunctionParseException("there is no function arctanh: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic tangent is artanh, atanh or arth"); }
 
     | 'acoth(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcotanh($args.list[0]); }
     | 'arcoth(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcotanh($args.list[0]); }
     | 'acotanh(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcotanh($args.list[0]); }
     | 'arcotanh(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcotanh($args.list[0]); }
     | 'arcth(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcotanh($args.list[0]); }
+    | 'arccotanh(' args = function_arguments ')' { throw new UnrecognizedFunctionParseException("there is no function arccotanh: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic cotangent is arcotanh, acotanh, arcoth, acoth or arcth"); }
 
     | 'asech(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsech($args.list[0]); }
     | 'arsech(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsech($args.list[0]); }
     | 'arsch(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsech($args.list[0]); }
+    | 'arcsech(' args = function_arguments ')' { throw new UnrecognizedFunctionParseException("there is no function arcsech: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic secant is arsech, asech or arsch"); }
 
     | 'acosech(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosech($args.list[0]); }
     | 'arcosech(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosech($args.list[0]); }
     | 'arcsch(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosech($args.list[0]); }
+    | 'arccosech(' args = function_arguments ')' { throw new UnrecognizedFunctionParseException("there is no function arccosech: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic cosecant is arcosech, acosech, arcsch or acsch"); }
     | 'acsch(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosech($args.list[0]); }
     /* End */
 
