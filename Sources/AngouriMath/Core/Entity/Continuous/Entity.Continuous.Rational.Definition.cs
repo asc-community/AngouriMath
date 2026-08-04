@@ -174,15 +174,23 @@ namespace AngouriMath
                 public static Rational operator +(Rational a) => a;
                 public static Rational operator -(Rational a) => OpMul(Integer.MinusOne, a);
                 
-                // TODO: consider the case for the divisor to be negative
+                /// <summary>
+                /// The floored remainder, which takes the sign of the divisor: -7/2 % 3 is 5/2
+                /// and -7/2 % (-3) is -1/2.
+                /// See https://github.com/asc-community/AngouriMath/issues/708.
+                /// </summary>
+                /// <remarks>
+                /// Adding the divisor whenever the truncated remainder came out negative is the
+                /// right conversion only where the divisor is positive; for a negative one it
+                /// moved the answer further from zero, so (-7/2) % (-3) came back as -7/2 --
+                /// larger in magnitude than the divisor, and a remainder under no convention.
+                /// </remarks>
                 public static Rational operator %(Rational a, Rational b)
                     => a.ERational.Remainder(b.ERational)
-                        .Alias(out var mod)
-                        .IsNegative switch
-                        {
-                            false => mod,
-                            true => mod + b,
-                        };
+                        .Alias(out var truncated)
+                        .IsZero || truncated.IsNegative == b.ERational.IsNegative
+                        ? truncated
+                        : truncated + b;
                 public static implicit operator Rational(sbyte value) => (long)value;
                 public static implicit operator Rational(byte value) => (ulong)value;
                 public static implicit operator Rational(short value) => (long)value;

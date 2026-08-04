@@ -122,7 +122,22 @@ namespace AngouriMath
                 public static Real operator /(Real a, Real b) => OpDiv(a, b).Downcast<Real>();
                 public static Real operator +(Real a) => a;
                 public static Real operator -(Real a) => OpMul(Integer.MinusOne, a);
-                public static Real operator %(Real a, Real b) => a.EDecimal.Remainder(b.EDecimal, MathS.Settings.DecimalPrecisionContext);
+                /// <summary>
+                /// The floored remainder, which takes the sign of the divisor: -7 % 3 is 2 and
+                /// 7 % (-3) is -2. See https://github.com/asc-community/AngouriMath/issues/708.
+                /// </summary>
+                /// <remarks>
+                /// This one used to truncate and so took the sign of the dividend, disagreeing
+                /// with the same operator on <see cref="Integer"/> and on
+                /// <see cref="Rational"/> -- which one applied depended on the static type at
+                /// the call site rather than on the values.
+                /// </remarks>
+                public static Real operator %(Real a, Real b)
+                    => a.EDecimal.Remainder(b.EDecimal, MathS.Settings.DecimalPrecisionContext)
+                        .Alias(out var truncated)
+                        .IsZero || truncated.IsNegative == b.EDecimal.IsNegative
+                        ? truncated
+                        : truncated.Add(b.EDecimal, MathS.Settings.DecimalPrecisionContext);
                 public static implicit operator Real(sbyte value) => (long)value;
                 public static implicit operator Real(byte value) => (ulong)value;
                 public static implicit operator Real(short value) => (long)value;

@@ -131,7 +131,20 @@ namespace AngouriMath
                 public static Integer operator -(Integer a, Integer b) => OpSub(a, b);
                 public static Integer operator *(Integer a, Integer b) => OpMul(a, b);
                 public static Real operator /(Integer a, Integer b) => (Real)OpDiv(a, b);
-                public static Integer operator %(Integer a, Integer b) => a.EInteger.Mod(b.EInteger);
+                /// <summary>
+                /// The floored remainder, which takes the sign of the divisor: -7 % 3 is 2 and
+                /// 7 % (-3) is -2. See https://github.com/asc-community/AngouriMath/issues/708.
+                /// </summary>
+                /// <remarks>
+                /// Not <c>EInteger.Mod</c>, which refuses a negative divisor outright and so
+                /// made this operator throw on ordinary input.
+                /// </remarks>
+                public static Integer operator %(Integer a, Integer b)
+                    => a.EInteger.Remainder(b.EInteger)
+                        .Alias(out var truncated)
+                        .IsZero || truncated.Sign == b.EInteger.Sign
+                        ? truncated
+                        : truncated.Add(b.EInteger);
                 public static Integer operator +(Integer a) => a;
                 public static Integer operator -(Integer a) => OpMul(MinusOne, a);
                 public static implicit operator Integer(sbyte value) => Create(value);
