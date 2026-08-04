@@ -23,6 +23,30 @@ namespace AngouriMath.Functions.Algebra
             });
         }
 
+        /// <summary>
+        /// A quotient of polynomials whose denominator has a rational root, split at that
+        /// root and integrated in two parts.
+        /// </summary>
+        /// <remarks>
+        /// The rules for a linear or a quadratic denominator answer those in one piece, so
+        /// what is left over are the denominators of degree three and up, which nothing
+        /// read at all: 1/(x^3 + 1) had no antiderivative. Splitting at the root -1 leaves
+        /// (1/3)/(x + 1) and (2 - x)/(3(x^2 - x + 1)), and both of those are already
+        /// integrable, the second by the rule for a linear numerator over a quadratic.
+        /// Each step takes a degree off the denominator, so this ends.
+        /// </remarks>
+        internal static Entity? SolveByPartialFractions(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (expr is not Entity.Divf(var numerator, var denominator)
+                || !Functions.PolynomialFactoring.TrySplitOffRationalRoot(
+                    numerator, denominator, x, out var simple, out var restNumerator, out var restDenominator))
+                return null;
+            return Integration.ComputeIndefiniteIntegral(simple, x, integrateByParts) is { } first
+                && Integration.ComputeIndefiniteIntegral(restNumerator / restDenominator, x, integrateByParts) is { } rest
+                ? first + rest
+                : null;
+        }
+
         internal static Entity? SolveAsPolynomialTerm(Entity expr, Entity.Variable x, bool integrateByParts = true) => expr switch
         {
             Entity.Mulf(var m1, var m2) =>
