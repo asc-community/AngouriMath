@@ -57,7 +57,7 @@ namespace AngouriMath.Functions.Algebra
                 throw new WrongNumberOfArgumentsException("Number of equations must be equal to that of vars");
             int initVarCount = vars.Length;
 
-            var res = InSolveSystem(equations, vars);
+            var res = InSolveSystem(equations, vars, Sumf.Sum(equations));
             foreach (var tuple in res)
                 if (tuple.Count != initVarCount)
                     throw new AngouriBugException("InSolveSystem incorrect output");
@@ -73,13 +73,27 @@ namespace AngouriMath.Functions.Algebra
         /// <see cref="List{T}"/> of <see cref="Variable"/>s,
         /// where each of them must be mentioned in at least one entity from equations
         /// </param>
-        internal static List<List<Entity>> InSolveSystem(List<Entity> equations, ReadOnlySpan<Variable> vars)
+        /// <param name="nameSource">
+        /// The system as a whole, so that a parameter standing for a free variable is given
+        /// a name that none of the equations already uses
+        /// </param>
+        internal static List<List<Entity>> InSolveSystem(List<Entity> equations, ReadOnlySpan<Variable> vars, Entity nameSource)
         {
             var var = vars[^1];
             if (equations.Count == 1)
-                return equations[0].InnerSimplified.SolveEquation(var).InnerSimplified is FiniteSet els 
-                       ? els.Select(sol => new List<Entity> { sol }).ToList()
-                       : new();
+            {
+                var solutions = equations[0].InnerSimplified.SolveEquation(var).InnerSimplified;
+                if (solutions is FiniteSet els)
+                    return els.Select(sol => new List<Entity> { sol }).ToList();
+                // Nothing is left to constrain `var`, so every value of it extends to a solution
+                // of the system rather than none of them doing so. Reporting no solutions here is
+                // what made a solvable system come back as null from SolveSystem --
+                // https://github.com/asc-community/AngouriMath/issues/550. A free parameter says
+                // what the answer is in the same way the trigonometric solvers say it with n_1.
+                if (solutions == MathS.Sets.C)
+                    return new() { new List<Entity> { Variable.CreateUnique(nameSource, "t") } };
+                return new();
+            }
             var result = new List<List<Entity>>();
             var replacements = new Dictionary<Variable, Entity>();
             var remainingVars = vars.Slice(0, vars.Length - 1);
@@ -102,7 +116,7 @@ namespace AngouriMath.Functions.Algebra
                     rest.RemoveAt(i);
 
                     foreach (var sol in sols)
-                        foreach (var j in InSolveSystem(rest.Select(eq => eq.Substitute(var, sol)).ToList(), remainingVars))
+                        foreach (var j in InSolveSystem(rest.Select(eq => eq.Substitute(var, sol)).ToList(), remainingVars, nameSource))
                         {
                             replacements.Clear();
                             for (int varid = 0; varid < remainingVars.Length; varid++)

@@ -174,9 +174,15 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <param name="subtree">
         /// The expression the polynomial of (e. g. cos(x)^2 + cos(x) + 1 is a polynomial of cos(x))
         /// </param>
+        /// <param name="isIdentity">
+        /// Whether every coefficient cancelled, which leaves an equation that every value of
+        /// <paramref name="subtree"/> satisfies rather than one that none does
+        /// </param>
         /// <returns>A finite <see cref="Set"/> if successful, <see langword="null"/> otherwise</returns>
-        internal static IEnumerable<Entity>? SolveAsPolynomial(Entity expr, Variable subtree)
+        internal static IEnumerable<Entity>? SolveAsPolynomial(Entity expr, Variable subtree, out bool isIdentity)
         {
+            isIdentity = false;
+
             // Safely expand the expression
             // Here we find all terms
             var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, entity => entity.ContainsNode(subtree));
@@ -189,7 +195,20 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 <EInteger, TreeAnalyzer.PrimitiveInteger>(children, subtree);
             if (monomialsByPower == null)
                 return null; // meaning that the given equation is not polynomial
-            
+
+            // A monomial whose coefficient cancelled is not a term of the polynomial, and
+            // leaving it in makes the equation look as though it had a degree it does not.
+            // x - x was read as one times x and answered with the root 0, when in fact
+            // every x satisfies it -- https://github.com/asc-community/AngouriMath/issues/550.
+            foreach (var power in monomialsByPower.Keys.ToList())
+                if (monomialsByPower[power].Evaled is Complex { IsZero: true })
+                    monomialsByPower.Remove(power);
+            if (monomialsByPower.Count == 0)
+            {
+                isIdentity = true;
+                return null;
+            }
+
             var res = ReduceCommonPower(ref monomialsByPower)
                 ? new Entity[] { 0 } // x5 + x3 + x2 - common power is 2, one root is 0, then x3 + x + 1
                 : Enumerable.Empty<Entity>();

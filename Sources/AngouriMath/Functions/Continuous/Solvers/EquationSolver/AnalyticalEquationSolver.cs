@@ -144,8 +144,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     break;
             }
 
-            if (PolynomialSolver.SolveAsPolynomial(expr, x) is { } poly)
+            if (PolynomialSolver.SolveAsPolynomial(expr, x, out var isIdentity) is { } poly)
                 return poly.Select(e => TryDowncast(expr, x, e.InnerSimplified)).ToSet();
+            if (isIdentity)
+                return MathS.Sets.C;
 
             // If the replacement isn't one-variable one,
             // then solving over replacements is already useless,
@@ -158,7 +160,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 {
                     MultithreadingFunctional.ExitIfCancelled();
                     if (!alt.ContainsNode(x))
-                        return Set.Empty; // in this case there is either 0 or +oo solutions
+                        // There are either 0 or +oo solutions, and which of the two it is
+                        // is decided by whether what is left of the equation is zero.
+                        return alt.Evaled is Complex { IsZero: true } ? MathS.Sets.C : Set.Empty;
                     var minimumSubtree = TreeAnalyzer.GetMinimumSubtree(alt, x);
                     if (minimumSubtree == x)
                         continue;
