@@ -88,6 +88,8 @@ namespace AngouriMath.Functions.Algebra
                 // it is what answers (1 - cos(x)) / x^2 at 0+ with 1/2 rather than NaN, and
                 // csc(x) * x with 1: the csc rewrite leaves a product, which the descent does
                 // not take apart but which the rule reads back as the quotient x / sin(x).
+                if (SolveAsIndeterminatePower(expr, x, dest, side) is { } byExponent)
+                    return byExponent;
                 if (ApplylHopitalRule(expr, x, dest, side) is { } lhopital && lhopital.Evaled != MathS.NaN)
                     return lhopital;
                 // The one-sided path is the only one with nothing behind it, and the descent
@@ -127,6 +129,8 @@ namespace AngouriMath.Functions.Algebra
                     // were left with nothing to catch them. The rule is only allowed to improve
                     // on what is already there: sqrt(x) / sqrt(x + 1) merely turns into its own
                     // reciprocal, and a NaN from it would claim the limit does not exist.
+                    if (SolveAsIndeterminatePower(expr, x, dest, ApproachFrom.Left) is { } byExponent)
+                        return byExponent;
                     if (ApplylHopitalRule(expr, x, dest) is { } lhopital && lhopital.Evaled != MathS.NaN)
                         return lhopital;
                     // The rewrites are worth their cost only where there is no answer without

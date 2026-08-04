@@ -52,6 +52,65 @@ namespace AngouriMath.Functions.Algebra
                 _ => expr
             };
 
+        /// <summary>
+        /// The limit of f(x)^g(x) where the pair is indeterminate and the second remarkable
+        /// limit does not already cover it -- that is, 0^0 and oo^0 -- or <see langword="null"/>
+        /// where that is not the shape or the exponent settles nothing.
+        /// </summary>
+        /// <remarks>
+        /// The descent substitutes each part's own limit, so both of these arrive as 0^0, which
+        /// is NaN. Written over as e^(g * ln f), the same question is the limit of a product of
+        /// something vanishing with something diverging, which the rules below can take apart.
+        /// <para/>
+        /// The exponent is asked as a limit of its own rather than rewritten in place, because a
+        /// rewrite would only hand the descent a product it reads no better than the power: the
+        /// descent substitutes the parts' limits and does not apply l'Hopital's rule to a part.
+        /// Asking outright is what puts the whole machinery behind the exponent.
+        /// <para/>
+        /// 1^oo is left to <see cref="ApplySecondRemarkable"/>, which answers it more directly,
+        /// and 0^oo and oo^oo are not indeterminate at all.
+        /// </remarks>
+        private static Entity? SolveAsIndeterminatePower(Entity expr, Variable x, Entity dest, ApproachFrom side)
+        {
+            if (expr is not Powf(var @base, var power)
+                || !@base.ContainsNode(x) || !power.ContainsNode(x)
+                || indeterminatePowerDepth >= MaxIndeterminatePowerDepth)
+                return null;
+            if (EvalAssumingContinuous(power.Limit(x, dest, side)) != 0)
+                return null;
+            var baseLimit = EvalAssumingContinuous(@base.Limit(x, dest, side));
+            if (baseLimit != 0 && !IsInfiniteNode(baseLimit))
+                return null;
+            // Every route out of ln(f) runs through differentiating f, so a base this library
+            // cannot differentiate is one the rewrite cannot finish on: it would only hand the
+            // rules an expression with a hole in it and let them work at it. A factorial is the
+            // case that matters -- its derivative wants the digamma function, which is not here,
+            // and comes back as NaN -- and lim x->+oo ((x!) / x^x)^(1/x) is the expression. It
+            // has no answer either way, and without this it takes a long time not to find one.
+            var derivative = @base.Differentiate(x).InnerSimplified;
+            if (derivative.Nodes.Any(node => node is Derivativef || node == MathS.NaN))
+                return null;
+
+            indeterminatePowerDepth++;
+            try
+            {
+                if (ComputeLimit((power * MathS.Ln(@base)).InnerSimplified, x, dest, side) is not { } exponent
+                    || exponent.Evaled == MathS.NaN)
+                    return null;
+                return MathS.e.Pow(exponent).InnerSimplified;
+            }
+            finally { indeterminatePowerDepth--; }
+        }
+
+        /// <summary>
+        /// How deep the rewriting of one power into another may go. The exponent it asks about
+        /// is a limit in its own right and may hold a power of the same shape, so without a
+        /// bound the work would multiply.
+        /// </summary>
+        private const int MaxIndeterminatePowerDepth = 3;
+
+        [ThreadStatic] private static int indeterminatePowerDepth;
+
         private static bool IsInfiniteNode(Entity expr)
             => expr.ContainsNode("+oo") || expr.ContainsNode("-oo"); // TODO: is it correct?
 
@@ -248,12 +307,22 @@ namespace AngouriMath.Functions.Algebra
         /// <c>(sin(x) - x) / (x * sin(x))</c>, which is 0/0 and which the rule settles at 0 in
         /// three steps.
         /// </summary>
-        private static Entity? AsQuotient(Entity expr, Variable x)
+        private static Entity? AsQuotient(Entity expr, Variable x, Entity dest, ApproachFrom side)
         {
             if (expr is Mulf)
             {
+                // Taking the reciprocal factors out is the better reading where it gives the
+                // rule something it can use -- x * e^(-x) comes out as the clean x / e^x -- so
+                // it is tried first. But it can also hide the indeterminacy rather than expose
+                // it: tan(x) * ln(x) has been written sin(x) / cos(x) * ln(x) by the time it
+                // arrives, and splitting on the reciprocal gives sin(x) * ln(x) / cos(x), whose
+                // divisor tends to 1. That is no longer a quotient the rule reads, so the other
+                // arrangement is tried in its place rather than after it.
                 var (numerator, denominator) = SplitProduct(expr);
-                return denominator == 1 ? null : numerator / denominator;
+                if (denominator != 1 && IsIndeterminateQuotient(numerator, denominator, x, dest, side))
+                    return numerator / denominator;
+                return AsQuotientOfVanishingAndDiverging(expr, x, dest, side)
+                    ?? (denominator == 1 ? null : numerator / denominator);
             }
             if (expr is not (Sumf or Minusf))
                 return null;
@@ -275,6 +344,56 @@ namespace AngouriMath.Functions.Algebra
                     : (combined * denominator + numerator * common, common * denominator);
             }
             return worthIt && combined is { } && common is { } ? (combined / common).InnerSimplified : null;
+        }
+
+        /// <summary>
+        /// Whether a quotient is one of the two forms l'Hopital's rule reads: 0/0 or oo/oo.
+        /// </summary>
+        private static bool IsIndeterminateQuotient(Entity numerator, Entity denominator, Variable x, Entity dest, ApproachFrom side)
+        {
+            var above = EvalAssumingContinuous(numerator.Limit(x, dest, side));
+            var below = EvalAssumingContinuous(denominator.Limit(x, dest, side));
+            return above == 0 && below == 0 || IsInfiniteNode(above) && IsInfiniteNode(below);
+        }
+
+        /// <summary>
+        /// A product of something vanishing with something diverging, written as the quotient
+        /// of the diverging factor by the reciprocal of the vanishing one, or
+        /// <see langword="null"/> where it is not that shape.
+        /// </summary>
+        /// <remarks>
+        /// This is the other way a product can be indeterminate without being written as a
+        /// quotient, and the split above cannot see it: <c>sin(x) * ln(x)</c> has no reciprocal
+        /// factor at all, so both halves go into the numerator and it comes back unchanged.
+        /// <para/>
+        /// The diverging factor goes on top and the vanishing one is inverted underneath, not
+        /// the other way round, though both give an indeterminate quotient. Differentiating
+        /// <c>ln(x) / csc(x)</c> gets rid of the logarithm and arrives at an answer; the other
+        /// arrangement, <c>sin(x) / (1 / ln(x))</c>, differentiates into a product of the same
+        /// shape as the one it started from and goes round.
+        /// </remarks>
+        private static Entity? AsQuotientOfVanishingAndDiverging(Entity expr, Variable x, Entity dest, ApproachFrom side)
+        {
+            Entity? vanishing = null, diverging = null;
+            Entity rest = 1;
+            foreach (var factor in Mulf.LinearChildren(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    rest *= factor;
+                    continue;
+                }
+                var limit = EvalAssumingContinuous(factor.Limit(x, dest, side));
+                if (vanishing is null && limit == 0)
+                    vanishing = factor;
+                else if (diverging is null && IsInfiniteNode(limit))
+                    diverging = factor;
+                else
+                    rest *= factor;
+            }
+            return vanishing is { } zero && diverging is { } infinity
+                ? rest * infinity / (1 / zero).InnerSimplified
+                : null;
         }
 
         /// <remarks>
@@ -304,7 +423,7 @@ namespace AngouriMath.Functions.Algebra
 
         private static Entity? ApplylHopitalRuleImpl(Entity expr, Variable x, Entity dest, ApproachFrom side)
         {
-            if (expr is not Divf && AsQuotient(expr, x) is { } quotient)
+            if (expr is not Divf && AsQuotient(expr, x, dest, side) is { } quotient)
                 expr = quotient;
             if (expr is Divf(var num, var den))
                 if (EvalAssumingContinuous(num.Limit(x, dest, side)) is var numLimit && EvalAssumingContinuous(den.Limit(x, dest, side)) is var denLimit)
