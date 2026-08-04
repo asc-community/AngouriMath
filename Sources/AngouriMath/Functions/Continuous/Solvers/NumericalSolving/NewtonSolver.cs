@@ -66,11 +66,20 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
             var res = new HashSet<Complex>();
             var df = WithoutConditions(expr.Differentiate(v).Simplify()).Compile(v);
             var f = WithoutConditions(expr.Simplify()).Compile(v);
+            // The shares are worked out by CtxDivide, which rounds to the working precision,
+            // rather than by EDecimal's own operator, which has no context and answers NaN
+            // whenever the quotient does not terminate in base ten. Only step counts of the
+            // form 2^a * 5^b divide exactly, so for 3, 6, 7, 9, 12, 21 and most other values
+            // every share but the first came out NaN, and with it every starting point: the
+            // grid quietly shrank to the single corner where x and y are both zero. The
+            // default of 10 divides exactly, which is why this went unseen -- and why asking
+            // for a finer search made the answer worse rather than better. x^3 - 2x gives all
+            // three of its roots at 10 steps and only one at 21.
             for (int x = 0; x < settings.StepCount.Re; x++)
                 for (int y = 0; y < settings.StepCount.Im; y++)
                 {
-                    var xShare = ((EDecimal)x) / settings.StepCount.Re;
-                    var yShare = ((EDecimal)y) / settings.StepCount.Im;
+                    var xShare = CtxDivide((EDecimal)x, settings.StepCount.Re);
+                    var yShare = CtxDivide((EDecimal)y, settings.StepCount.Im);
                     var value = Complex.Create(
                         settings.From.Re * xShare + settings.To.Re * (1 - xShare),
                         settings.From.Im * yShare + settings.To.Im * (1 - yShare));
