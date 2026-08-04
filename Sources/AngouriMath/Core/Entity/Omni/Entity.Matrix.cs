@@ -145,6 +145,39 @@ namespace AngouriMath
             public Entity this[int x, int y] => InnerMatrix[x, y];
 
             /// <summary>
+            /// The submatrix spanned by the given rows and columns, for example
+            /// <code>a[1.., ..]</code> for every row of a matrix but the first, or
+            /// <code>a[..2, 1..3]</code> for the first two rows of its second and third columns.
+            /// </summary>
+            /// <remarks>
+            /// Both extents have to be written out. A matrix indexed by one number gives a row
+            /// while a vector indexed by one number gives an element, so a single range would
+            /// have to mean one thing here and the other there --
+            /// https://github.com/asc-community/AngouriMath/issues/443.
+            /// </remarks>
+            /// <exception cref="ArgumentOutOfRangeException">
+            /// Thrown if either range reaches past the matrix.
+            /// </exception>
+            /// <exception cref="InvalidMatrixOperationException">
+            /// Thrown if either range is empty, since a matrix has at least one row and one
+            /// column.
+            /// </exception>
+            public Matrix this[Range rows, Range columns]
+            {
+                get
+                {
+                    var (firstRow, rowCount) = rows.GetOffsetAndLength(RowCount);
+                    var (firstColumn, columnCount) = columns.GetOffsetAndLength(ColumnCount);
+                    if (rowCount is 0 || columnCount is 0)
+                        throw new InvalidMatrixOperationException(
+                            $"A {rowCount}x{columnCount} matrix cannot be created; both extents must be non-empty");
+                    return new Matrix(
+                        indices => InnerMatrix[firstRow + indices[0], firstColumn + indices[1]],
+                        rowCount, columnCount);
+                }
+            }
+
+            /// <summary>
             /// Checks whether the matrix only contains one
             /// column.
             /// </summary>
