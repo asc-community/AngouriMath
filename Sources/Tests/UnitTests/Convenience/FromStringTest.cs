@@ -197,6 +197,8 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("acoth", "Arcotanh")]
         [InlineData("arcoth", "Arcotanh")]
         [InlineData("arcth", "Arcotanh")]
+        [InlineData("acotanh", "Arcotanh")]
+        [InlineData("arcotanh", "Arcotanh")]
 
         [InlineData("asech", "Arsech")]
         [InlineData("arsech", "Arsech")]
@@ -204,6 +206,8 @@ namespace AngouriMath.Tests.Convenience
 
         [InlineData("acsch", "Arcosech")]
         [InlineData("arcsch", "Arcosech")]
+        [InlineData("acosech", "Arcosech")]
+        [InlineData("arcosech", "Arcosech")]
         public void TestHyperbolic(string parsedName, string methodName)
         {
             var methods = typeof(MathS.Hyperbolic).GetMethods();
