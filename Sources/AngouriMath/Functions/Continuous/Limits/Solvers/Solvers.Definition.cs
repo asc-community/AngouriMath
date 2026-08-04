@@ -75,6 +75,14 @@ namespace AngouriMath.Functions.Algebra
                     // reciprocal, and a NaN from it would claim the limit does not exist.
                     if (ApplylHopitalRule(expr, x, dest) is { } lhopital && lhopital.Evaled != MathS.NaN)
                         return lhopital;
+                    // The rewrites are worth their cost only where there is no answer without
+                    // them, and each of them costs an expansion or a simplification of the
+                    // whole expression. The descent visits every part of every expression, so
+                    // rather than pay for them at each of those parts on every limit ever
+                    // taken, the descent is walked a second time with them turned on, and only
+                    // for an expression that has just been found to have no answer at all.
+                    if (SolveByRewriting(expr, x, dest) is { } rewritten && rewritten.Evaled != MathS.NaN)
+                        return rewritten;
                     return atInfinity;
                 }
                 else if (expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left) is { } fromLeft
