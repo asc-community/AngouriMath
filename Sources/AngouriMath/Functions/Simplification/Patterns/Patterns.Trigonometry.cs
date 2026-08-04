@@ -24,6 +24,21 @@ namespace AngouriMath.Functions
             Sumf(Arctanf(var any1), Arccotanf(var any1a)) when any1 == any1a => MathS.pi / 2,
             Sumf(Arccotanf(var any1), Arctanf(var any1a)) when any1 == any1a => MathS.pi / 2,
 
+            // arctan(a) + arctan(b) = arctan((a + b)/(1 - ab)), which is the tangent
+            // addition formula read backwards. It holds as written only while ab < 1: past
+            // that the sum leaves the range arctan answers in and the identity is off by a
+            // whole pi. Both arguments have to be numbers, so that ab < 1 is a question
+            // with an answer -- arctan(1/2) + arctan(1/3) is pi/4, while
+            // arctan(2) + arctan(3) is 3pi/4 and is left alone.
+            Sumf(Arctanf(Real a), Arctanf(Real b)) when (a * b).Evaled is Real product && product < 1
+                => MathS.Arctan(((a + b) / (1 - a * b)).InnerSimplified),
+
+            // The two angles whose tangent is an irrational this can recognise. The ones
+            // at +-1 are handled where arctan is simplified, since a candidate offered
+            // here has to win on node count and pi/4 does not beat arctan(1).
+            Arctanf(Powf(Integer(3), Rational(Integer(1), Integer(2)))) => MathS.pi / 3,
+            Arctanf(Divf(Integer(1), Powf(Integer(3), Rational(Integer(1), Integer(2))))) => MathS.pi / 6,
+
             // tan * cot = 1
             Mulf(Tanf(var any1), Cotanf(var any1a)) when any1 == any1a => 1,
             Mulf(Cotanf(var any1), Tanf(var any1a)) when any1 == any1a => 1,
