@@ -86,7 +86,8 @@ namespace AngouriMath.Tests.Common
 
         // https://github.com/asc-community/AngouriMath/issues/550
         // The reporter's small system did not solve. The 25x26 one from the same report
-        // is a question of scale and is tracked separately at #608.
+        // is a question of scale and is tracked separately at
+        // https://github.com/asc-community/AngouriMath/issues/608.
         [Fact]
         public void Issue550_SmallLinearSystemSolves()
         {

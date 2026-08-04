@@ -94,7 +94,7 @@ namespace AngouriMath.Functions
         /// ever reached for numeric angles that are multiples of pi. Nothing opened a
         /// symbolic <c>sin(2x)</c>, so <c>cos(2x) - (1 - 2sin(x)^2)</c> did not reduce to
         /// zero and neither did <c>(sin(2t)csc(t))^2/4 - cos(2t) - sin(t)^2</c>, which is
-        /// #557.
+        /// https://github.com/asc-community/AngouriMath/issues/557.
         /// </remarks>
         internal static Entity ExpandMultipleAngleRules(Entity x) => x switch
         {

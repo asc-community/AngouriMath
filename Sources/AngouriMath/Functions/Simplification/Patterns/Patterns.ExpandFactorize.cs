@@ -71,7 +71,8 @@ namespace AngouriMath.Functions
         /// </summary>
         /// <remarks>
         /// The pairwise rules only ever see two adjacent terms of the sum tree, so a sum of
-        /// four was left half-factored at <c>a*(c + d) + b*c + b*d</c> -- that is #531. Sums
+        /// four was left half-factored at <c>a*(c + d) + b*c + b*d</c> -- that is
+        /// https://github.com/asc-community/AngouriMath/issues/531. Sums
         /// of two are left to those rules, which are older and better tested.
         /// </remarks>
         /// <returns><see langword="null"/> when no factor is shared, so the rule does not fire.</returns>
