@@ -31,8 +31,16 @@ namespace AngouriMath.Functions.Algebra
 
             if (solutions is FiniteSet finiteSet)
             {
-                return finiteSet.Select(simplifier)
+                var finite = finiteSet.Select(simplifier)
                     .Where(elem => elem.IsFinite && factorizer(equation.Substitute(x, elem)).IsFinite).ToSet();
+                // An equation written out as expr = 0 has had its answers checked against it
+                // since the extraneous root of ln(x) + ln(x+1) = 0 was fixed, but the same
+                // equation written as the bare expr came through here instead and was only
+                // checked for being finite. The two disagreed:
+                // (2^x + 2^(2x) - 6 = 0).Solve(x) gave { 1 } while
+                // "2^x + 2^(2x) - 6".SolveEquation(x) gave { 1, ln((-3) ^ (1 / ln(2))) },
+                // and the second of those is not a root of anything.
+                return StatementSolver.WithoutSpuriousRoots(finite, equation, x);
             }
             else
                 return solutions;

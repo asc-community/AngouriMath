@@ -6,6 +6,7 @@
 //
 
 using AngouriMath.Extensions;
+using PeterO.Numbers;
 using AngouriMath.Functions.Continuous.Solvers.SetSolver;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
@@ -36,10 +37,34 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// substitutions that follows, so the answers are checked once, here, against the
         /// equation as the caller wrote it.
         /// </remarks>
-        private static Set WithoutSpuriousRoots(Set roots, Entity equation, Variable x)
+        internal static Set WithoutSpuriousRoots(Set roots, Entity equation, Variable x)
             => roots is FiniteSet finite && finite.Any(root => IsSpurious(equation, x, root))
                 ? finite.Where(root => !IsSpurious(equation, x, root)).ToSet()
                 : roots;
+
+        /// <summary>
+        /// How large the residual has to be next to the terms it is the sum of before it
+        /// counts as evidence against a root.
+        /// </summary>
+        /// <remarks>
+        /// A residual that is merely non-zero is not evidence. A root found numerically is
+        /// only as accurate as the search that found it, and the terms of the equation at
+        /// such a root cancel to within that accuracy rather than exactly. Judging the
+        /// residual on its own size threw away every root of
+        /// <c>1/210 - 17x/210 + 101x^2/210 - 247x^3/210 + x^4</c>, whose four roots come
+        /// back as decimals and leave 5.2e-6 against terms of about 1.2e-2, and answered
+        /// that quartic with the empty set.
+        ///
+        /// The two cases are far apart, which is what makes a threshold possible at all.
+        /// A spurious root is not a near miss: it comes from a rewrite that widened the
+        /// domain, so the residual is a whole quantity in its own right -- 2*pi*i for the
+        /// logarithm sum, or the difference between -3 and 9 for an exponential. Over the
+        /// equations measured, every genuine root sits at 4.5e-4 or below and most at
+        /// 1e-15, while every spurious one sits between 1.5 and 2. This is a hundredth:
+        /// twenty times above the worst genuine root and a hundred and fifty times below
+        /// the mildest spurious one.
+        /// </remarks>
+        [ConstantField] private static readonly EDecimal RelativeResidualTolerance = EDecimal.FromString("0.01");
 
         /// <summary>
         /// Whether a root demonstrably fails the equation. Anything that cannot be
@@ -53,12 +78,31 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return false;
             try
             {
-                return equation.Substitute(x, root).Evaled is Number.Complex residual
-                    && residual.IsFinite
-                    && !residual.Abs().EDecimal.LessThan(MathS.Settings.PrecisionErrorCommon);
+                var substituted = equation.Substitute(x, root);
+                if (substituted.Evaled is not Number.Complex residual || !residual.IsFinite)
+                    return false;
+                var size = residual.Abs().EDecimal;
+                if (size.LessThan(MathS.Settings.PrecisionErrorCommon))
+                    return false;
+                return size.GreaterThan(LargestTerm(substituted).Multiply(RelativeResidualTolerance));
             }
             catch (Core.Exceptions.AngouriBugException) { throw; }
             catch (System.Exception) { return false; }
+        }
+
+        /// <summary>
+        /// The largest of the terms the equation adds up to at the root, which is the scale
+        /// the residual has to be read against. A single term is its own largest, so an
+        /// equation that is not a sum is judged on the size of its residual alone -- there
+        /// is nothing there for a root to have cancelled inexactly.
+        /// </summary>
+        private static EDecimal LargestTerm(Entity substituted)
+        {
+            var largest = EDecimal.Zero;
+            foreach (var term in Sumf.LinearChildren(substituted))
+                if (term.Evaled is Number.Complex value && value.IsFinite)
+                    largest = EDecimal.Max(largest, value.Abs().EDecimal);
+            return largest;
         }
 
         internal static Set Solve(Entity expr, Variable x)
