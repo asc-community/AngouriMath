@@ -66,9 +66,17 @@ namespace AngouriMath.Functions.Algebra
         /// <c>g(x) * (f(x) - 1)</c>, which is well defined from either side.
         /// </remarks>
         private static bool DivergesInMagnitude(Entity power, Variable x, Entity dest)
-            => IsInfiniteNode(power.Limit(x, dest))
-                || (IsInfiniteNode(power.Limit(x, dest, ApproachFrom.Left))
-                    && IsInfiniteNode(power.Limit(x, dest, ApproachFrom.Right)));
+        {
+            if (IsInfiniteNode(power.Limit(x, dest)))
+                return true;
+            // Only worth asking one side at a time where there are two sides to ask about.
+            // Approaching an infinite destination there is only one, so the two further
+            // limits would be wasted work and would not mean anything either.
+            if (IsInfiniteNode(dest))
+                return false;
+            return IsInfiniteNode(power.Limit(x, dest, ApproachFrom.Left))
+                && IsInfiniteNode(power.Limit(x, dest, ApproachFrom.Right));
+        }
 
         private static bool IsFiniteNode(Entity expr)
             => !IsInfiniteNode(expr) && expr != MathS.NaN;
