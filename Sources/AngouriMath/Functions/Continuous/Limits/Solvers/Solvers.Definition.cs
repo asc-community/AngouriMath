@@ -59,6 +59,19 @@ namespace AngouriMath.Functions.Algebra
                 expr = ApplyFirstRemarkable(expr, x, dest);
                 // expr = ApplySecondRemarkable(expr, x, dest);
                 expr = expr.Replace(c => ApplySecondRemarkable(c, x, dest));
+                // A tangent is a quotient as much as a cosecant is a reciprocal, and leaving it
+                // written as one function makes it opaque to everything that reads quotients --
+                // including the split below, which puts tan(x) into the numerator whole and so
+                // combines 1/x - 1/tan(x) over x * tan(x). That is the right answer in the wrong
+                // form: the rules do reach 0 through it, but only after rewriting the whole
+                // expression dozens of ways, and lim x->0+ (1/sin(x) - 1/tan(x)) took forty
+                // seconds. Over sin(x) * sin(x), the same limit is answered in under one.
+                //
+                // Here and not with the other trigonometric rewrite above, which runs in front
+                // of the first remarkable limit. That one matches a quotient, and rewriting
+                // tan(b*x - x) as a quotient of its own turns the quotient it sits under into a
+                // product: lim x->0 sin(x - a*x) / tan(b*x - x) stops being read at all.
+                expr = expr.Replace(c => AsSineOverCosine(c, x));
 
                 MultithreadingFunctional.ExitIfCancelled();
                 if (!dest.IsFinite)

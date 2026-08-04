@@ -196,8 +196,9 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             Entity? combined = null, common = null;
             var worthIt = false;
-            foreach (var term in terms)
+            foreach (var rawTerm in terms)
             {
+                var term = rawTerm.Replace(node => AsSineAndCosine(node, x));
                 var (numerator, denominator) = SplitProduct(term);
                 // A denominator that does not contain x is a constant factor and putting the sum
                 // over it gains nothing, while still costing the rule an expression to
@@ -210,6 +211,30 @@ namespace AngouriMath.Functions.Algebra
             }
             return worthIt && combined is { } && common is { } ? (combined / common).InnerSimplified : null;
         }
+
+        /// <summary>
+        /// A tangent or a cotangent written as the quotient it is, so that the common denominator
+        /// above is one the rest of the machinery can read.
+        /// </summary>
+        /// <remarks>
+        /// Left alone, <c>tan(x)</c> is opaque to the split above: it is neither a quotient nor a
+        /// negative power, so it goes into the numerator whole and
+        /// <c>lim x-&gt;0+ (1/x - 1/tan(x))</c> comes out over <c>x * tan(x)</c>. That quotient is
+        /// the right answer written in the wrong form -- the rules do eventually reach 0 through
+        /// it, but only after rewriting the whole expression dozens of ways, which took thirty
+        /// seconds. Over <c>x * sin(x)</c> instead, with <c>sin(x) - x * cos(x)</c> above it, the
+        /// same limit is answered in under half of one.
+        /// <para/>
+        /// Only here, and not in front of the descent, where the first remarkable limit matches
+        /// on <c>tan(x)</c> itself and would stop seeing it.
+        /// </remarks>
+        private static Entity AsSineAndCosine(Entity node, Variable x)
+            => node switch
+            {
+                Tanf(var arg) when arg.ContainsNode(x) => MathS.Sin(arg) / MathS.Cos(arg),
+                Cotanf(var arg) when arg.ContainsNode(x) => MathS.Cos(arg) / MathS.Sin(arg),
+                _ => node
+            };
 
         private static Entity? ApplylHopitalRule(Entity expr, Variable x, Entity dest)
         {
@@ -278,6 +303,20 @@ namespace AngouriMath.Functions.Algebra
                     when ComputeLimit(a, x, dest) is { } aLim && ComputeLimit(b, x, dest) is { } bLim &&
                         IsFiniteNode(aLim.Evaled) && IsFiniteNode(bLim.Evaled)
                         => transformation(a, aLim) * transformation(b, bLim),
+                _ => expr
+            };
+
+        /// <summary>
+        /// A tangent or a cotangent written as the quotient it is. Kept apart from
+        /// <see cref="TrivialTrigonometricReplacement"/>, which runs in front of the first
+        /// remarkable limit, because that limit matches a quotient and this rewrite would turn
+        /// the quotient a tangent sits under into a product.
+        /// </summary>
+        private static Entity AsSineOverCosine(Entity expr, Variable x)
+            => expr switch
+            {
+                Tanf(var arg) when arg.ContainsNode(x) => MathS.Sin(arg) / MathS.Cos(arg),
+                Cotanf(var arg) when arg.ContainsNode(x) => MathS.Cos(arg) / MathS.Sin(arg),
                 _ => expr
             };
 
