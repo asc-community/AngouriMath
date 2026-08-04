@@ -66,7 +66,12 @@ namespace AngouriMath
             public override string Stringize() =>
                 Exponent == 0.5m
                 ? "sqrt(" + Base.Stringize() + ")"
-                : Base.Stringize(Base.Priority < Priority) + " ^ " + Exponent.Stringize(Exponent.Priority < Priority);
+                // The base takes <=, the exponent takes <, which is the mirror of the rule the
+                // left-associative operators above use: ^ groups to the right, so it is the
+                // *left* operand that needs bracketing when it is a power of its own.
+                // (2 ^ 3) ^ 2 printed as 2 ^ 3 ^ 2 before, which is 512 where the expression
+                // printed is 64.
+                : Base.Stringize(Base.Priority <= Priority) + " ^ " + Exponent.Stringize(Exponent.Priority < Priority);
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }

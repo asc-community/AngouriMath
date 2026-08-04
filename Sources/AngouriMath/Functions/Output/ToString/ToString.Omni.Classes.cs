@@ -135,7 +135,15 @@ namespace AngouriMath
         partial record Piecewise
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"({string.Join(", ", Cases.Select(n => $"{n.Expression} if {n.Predicate}"))})";
+            // piecewise(a provided p, b provided q). The `if` spelling is not in the grammar,
+            // and neither is a bare comma-separated list, so a printed piecewise came back
+            // either as a product with `if` read as an undeclared variable, or as nothing at
+            // all once there was more than one case.
+            public override string Stringize()
+                => "piecewise(" + string.Join(", ",
+                    Cases.Select(n => n.Expression.Stringize(n.Expression.Priority < Priority)
+                                      + " provided "
+                                      + n.Predicate.Stringize(n.Predicate.Priority < Priority))) + ")";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -159,9 +167,11 @@ namespace AngouriMath
         partial record Application
         {
             /// <inheritdoc/>
+            // apply(f, a, b), for the same reason: juxtaposition is not application in the
+            // grammar, and `(x -> x + 1) 2` came back as a power.
             public override string Stringize()
-                => Expression.Stringize(Expression.Priority < Priority) + " " +
-                    " ".Join(Arguments.Select(arg => arg.Stringize(arg.Priority <= Priority)));
+                => "apply(" + Expression.Stringize() + ", " +
+                    string.Join(", ", Arguments.Select(arg => arg.Stringize())) + ")";
 
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -170,8 +180,11 @@ namespace AngouriMath
         partial record Lambda
         {
             /// <inheritdoc/>
+            // lambda(p, body), because that is what the parser reads. The arrow spelling is
+            // not in the grammar at all, and `->` there is the implication operator, so a
+            // printed lambda used to come back as an implication.
             public override string Stringize()
-                => Parameter.Stringize() + " -> " + Body.Stringize(Body.Priority < Priority);
+                => "lambda(" + Parameter.Stringize() + ", " + Body.Stringize() + ")";
 
             /// <inheritdoc/>
             public override string ToString() => Stringize();
