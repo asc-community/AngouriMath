@@ -1,6 +1,3 @@
-> [!WARNING]
-> AngouriMath is no longer actively maintained. You can still use it, but there won't be active development anymore (full story at [wbg.gg](https://wbg.gg/blog/angourimath-deprecation)). Feel free to submit pull requests though.
-
 <p align="center">
   <a href="https://github.com/asc-community/AngouriMath">
     <img src="./.github/additional/readme/icon_white.png" alt="AngouriMath logo" width="200" height="200">
