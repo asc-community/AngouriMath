@@ -66,7 +66,7 @@ namespace AngouriMath.Functions.Algebra
                     (arg / a) * (MathS.Ln(MathS.Abs(arg)) - 1),
 
             Entity.Divf(var numerator, var denominator) when
-                !numerator.ContainsNode(x) 
+                !numerator.ContainsNode(x)
                 && TreeAnalyzer.TryGetPolyQuadratic(denominator, x, out var a, out var b, out var c) // ∫ k/(ax^2 + bx + c) dx
                     => IntegrateRationalQuadratic(numerator, a, b, c, x),
 
@@ -131,6 +131,42 @@ namespace AngouriMath.Functions.Algebra
                 !numerator.ContainsNode(x)
                 && TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var ra, out var rb, out var rc)
                     => IntegrateOverRootOfQuadratic(numerator, ra, rb, rc, radicand, x),
+
+            // ∫ (px + q)/(ax^2 + bx + c) dx. Only the constant numerator was covered, so
+            // x/(x^2 + 2x + 5) and (x + 3)/(x^2 + 3x + 2) had no antiderivative at all.
+            Entity.Divf(var numerator, var denominator) when
+                numerator.ContainsNode(x)
+                && TreeAnalyzer.TryGetPolyLinear(numerator, x, out var p, out var q)
+                && TreeAnalyzer.TryGetPolyQuadratic(denominator, x, out var a, out var b, out var c)
+                && a.Evaled is Entity.Number.Complex { IsZero: false }
+                    => IntegrateLinearOverQuadratic(p, q, a, b, c, denominator, x),
+
+            // ∫ (px + q)/(bx + c) dx, the same rewrite one degree down: the quotient is the
+            // constant p/b plus a remainder over the divisor. x/(x + 1) had no antiderivative.
+            Entity.Divf(var numerator, var denominator) when
+                numerator.ContainsNode(x)
+                && TreeAnalyzer.TryGetPolyLinear(numerator, x, out var p, out var q)
+                && TreeAnalyzer.TryGetPolyLinear(denominator, x, out var b, out var c)
+                && b.Evaled is Entity.Number.Complex { IsZero: false }
+                    => p * x / b + (q - p * c / b) * MathS.Ln(MathS.Abs(denominator)) / b,
+
+            // 1/cos(u)^2 and 1/sin(u)^2, which are written that way at least as often as
+            // sec(u)^2 and csc(u)^2 and were not recognised in that form.
+            Entity.Divf(var numerator, Entity.Powf(Entity.Cosf(var arg), Entity.Number.Integer(2))) when
+                !numerator.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    numerator * MathS.Tan(arg) / a,
+
+            Entity.Divf(var numerator, Entity.Powf(Entity.Sinf(var arg), Entity.Number.Integer(2))) when
+                !numerator.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    -numerator * MathS.Cotan(arg) / a,
+
+            Entity.Powf(Entity.Secantf(var arg), Entity.Number.Integer(2)) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    MathS.Tan(arg) / a,
+
+            Entity.Powf(Entity.Cosecantf(var arg), Entity.Number.Integer(2)) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    -MathS.Cotan(arg) / a,
 
             _ => null
         };
@@ -310,6 +346,17 @@ namespace AngouriMath.Functions.Algebra
                 new Entity.Providedf(logarithmCase, a > 0)
             ]);
         }
+
+        /// <summary>
+        /// ∫ (px + q)/(ax^2 + bx + c) dx, by writing the numerator as a multiple of the
+        /// denominator's derivative plus a constant:
+        /// px + q = (p/2a)(2ax + b) + (q - pb/2a). The first part integrates to a logarithm
+        /// and the second is the constant-numerator case above.
+        /// </summary>
+        private static Entity IntegrateLinearOverQuadratic(
+            Entity p, Entity q, Entity a, Entity b, Entity c, Entity denominator, Entity.Variable x)
+            => p / (2 * a) * MathS.Ln(MathS.Abs(denominator))
+               + IntegrateRationalQuadratic(q - p * b / (2 * a), a, b, c, x);
 
         private static Entity IntegrateRationalQuadratic(Entity numerator, Entity a, Entity b, Entity c, Entity.Variable x)
         {
