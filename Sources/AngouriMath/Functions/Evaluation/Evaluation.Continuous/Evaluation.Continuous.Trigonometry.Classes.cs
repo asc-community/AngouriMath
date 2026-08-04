@@ -226,6 +226,12 @@ namespace AngouriMath
                     Complex n when !isExact => Number.Arctan(n),
                     Real r when r.EDecimal.IsPositiveInfinity() => MathS.pi / 2,
                     Real r when r.EDecimal.IsNegativeInfinity() => -MathS.pi / 2,
+                    // The two finite angles arctan names outright, kept here beside the
+                    // infinite ones rather than offered to the simplifier as candidates:
+                    // there it lost to arctan(1) on node count, so a sum that came to
+                    // pi/4 stopped one step short of it.
+                    Integer(1) => MathS.pi / 4,
+                    Integer(-1) => -MathS.pi / 4,
                     _ => null
                 },
                 (@this, a) => ((Arctanf)@this).New(a), isExact);
