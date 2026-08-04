@@ -5,7 +5,9 @@
 // Website: https://am.angouri.org.
 //
 
+using AngouriMath.Core.Exceptions;
 using System;
+using System.Linq;
 using System.Linq.Expressions;
 using static AngouriMath.Entity;
 
@@ -57,7 +59,17 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 Variable { IsConstant: true } c
                     => BuildTree(c.Evaled, cachedSubexpressions, variableAssignments, newLocalVars, protocol),
 
-                Variable x => cachedSubexpressions[x],
+                // A compiled expression is a function of the variables it was compiled over,
+                // so one it does not mention is not something it can be given a value for.
+                // Reaching into the cache and letting the lookup fail said only that some
+                // key was not present in some dictionary.
+                Variable x => cachedSubexpressions.TryGetValue(x, out var argument)
+                    ? argument
+                    : throw new UncompilableNodeException(
+                        $"{x} is not among the variables the expression is being compiled over" +
+                        (cachedSubexpressions.Keys.OfType<Variable>().ToList() is { Count: > 0 } over
+                            ? $", which are {string.Join(", ", over)}"
+                            : ", which are none")),
 
                 Entity.Boolean or Number => protocol.ConvertConstant(expr),
 
