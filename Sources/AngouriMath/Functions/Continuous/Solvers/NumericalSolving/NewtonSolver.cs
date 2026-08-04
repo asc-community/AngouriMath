@@ -79,12 +79,67 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
                         MathS.Settings.PrecisionErrorCommon.Value)
                         res.Add(root);
                 }
-            // Rounded first, then verified: rounding collapses the duplicates the grid
-            // search produces, so there is less to verify, and what gets verified is the
-            // values actually handed back.
-            var rounded = WithoutIterationNoise(res);
-            rounded.RemoveWhere(root => !Satisfies(expr, v, root));
-            return rounded;
+            // Rounded and collapsed first, then verified: both cut down the duplicates the
+            // grid search produces, so there is less to verify, and what gets verified is
+            // the values actually handed back.
+            var distinct = OnePerRoot(WithoutIterationNoise(res), f);
+            distinct.RemoveWhere(root => !Satisfies(expr, v, root));
+            return distinct;
+        }
+
+        /// <summary>
+        /// How far apart two candidates may be, relative to their own size, and still be
+        /// the same root.
+        /// </summary>
+        /// <remarks>
+        /// The search starts from a grid and iterates in double precision, so the same root
+        /// reached from different starting points comes back agreeing to about sixteen
+        /// significant digits and differing after that. Left as they were, those were
+        /// counted as separate answers: x^5 + 3x + 1 came back with 28 roots and x^6 + x + 1
+        /// with 23, four of the 28 being -0.83907243306660750, -0.83907243306660761,
+        /// -0.83907243306660773 and -0.83907243306660784.
+        ///
+        /// The measured room is wide. Candidates for one root lie within 1e-15 of each other
+        /// relative to their size, while the nearest two distinct roots over the twelve
+        /// polynomials tried are 0.42 apart. This is 1e-13: a hundred times above the noise
+        /// and still twelve orders below the closest two roots that were ever told apart.
+        /// </remarks>
+        [ConstantField] private static readonly EDecimal SameRootTolerance = EDecimal.Create(1, -13);
+
+        private static bool AreTheSameRoot(Complex a, Complex b)
+        {
+            var apart = EDecimal.Max(
+                a.RealPart.EDecimal.Subtract(b.RealPart.EDecimal).Abs(),
+                a.ImaginaryPart.EDecimal.Subtract(b.ImaginaryPart.EDecimal).Abs());
+            var size = EDecimal.Max(EDecimal.One, EDecimal.Max(
+                a.RealPart.EDecimal.Abs(), a.ImaginaryPart.EDecimal.Abs()));
+            return !apart.GreaterThan(size.Multiply(SameRootTolerance));
+        }
+
+        /// <summary>
+        /// One candidate per root, keeping whichever of each group leaves the equation
+        /// closest to zero. Ordered first, so that which candidate is compared against
+        /// which does not depend on the order the grid happened to produce them in.
+        /// </summary>
+        private static HashSet<Complex> OnePerRoot(HashSet<Complex> roots, FastExpression f)
+        {
+            EDecimal Residual(Complex root)
+            {
+                try { return f.Call(root.ToNumerics()).ToNumber().Abs().EDecimal; }
+                catch (System.Exception) { return EDecimal.PositiveInfinity; }
+            }
+            var kept = new List<Complex>();
+            foreach (var root in roots
+                .OrderBy(root => root.RealPart.EDecimal)
+                .ThenBy(root => root.ImaginaryPart.EDecimal))
+            {
+                var same = kept.FindIndex(other => AreTheSameRoot(other, root));
+                if (same < 0)
+                    kept.Add(root);
+                else if (Residual(root).CompareTo(Residual(kept[same])) < 0)
+                    kept[same] = root;
+            }
+            return new HashSet<Complex>(kept);
         }
 
         /// <summary>
