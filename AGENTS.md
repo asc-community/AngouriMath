@@ -17,6 +17,12 @@ the library is wrong — even where the library's way is defensible in isolation
 thing; the inverse of `sinh` is an *area*, not an arc, so it is `arsinh` (#687). Follow the notation
 of the people who use the subject, not the notation that was easiest to parse.
 
+When you have to choose a convention, **check what the other systems answer** — SymPy,
+Mathematica, Maxima — and match the mathematics rather than the language you are writing in.
+`mod` takes the sign of the divisor because that is what a mathematician means by mod and what
+all three of those give; C's `%` truncates, but C's `%` is an operation on machine integers.
+Check it, do not reason about it from memory: this exact case was got wrong first time round.
+
 **Consistency is the point.** [#497](https://github.com/asc-community/AngouriMath/issues/497), the
 2.0 paper, names inconsistency as the central defect: *"one may find it inconsistent in a lot of
 places in API, behaviour, and internal structure of code."* A rule that fires for `sin` but not
@@ -40,6 +46,26 @@ does not exist. Returning an unevaluated node is honest.
 
 So, in order of preference: right answer > no answer > slow answer > wrong answer. A wrong answer is
 worse than a hang, because a hang is visible.
+
+Say "no answer" by returning **`null`**, not by handing back an unevaluated node of the expression
+you were asked about. `Limitf(this, ...)` looks like the honest answer and is in fact a cycle: the
+caller evaluates it to compare, evaluating computes the limit, and computing arrives back where it
+started. That overflows the stack, which kills the process rather than raising anything catchable.
+`null` reads the same to the caller and terminates.
+
+## Output has a contract too
+
+**Parsing what `Stringize` prints must give back the expression it printed.** Anything else makes
+the printed form a lie, and a silent one, since a wrong reading is usually still a valid
+expression: `(2^3)^2` printed as `2^3^2` is 512 where the expression is 64, and a piecewise
+printed with `if` came back as a product with `if` read as an undeclared variable. If a node's
+usual notation is not in the grammar, print the function call the parser does have.
+`StringizeRoundTripTest` is where that is enforced; add to it when you add a node.
+
+`Latexise` is under no such obligation — nothing parses LaTeX.
+
+The syntax the parser accepts is written down in `Sources/AngouriMath/Docs/Usage/Syntax.md`.
+Keep it true when you change the grammar.
 
 ## Verify the mathematics, not the string
 
