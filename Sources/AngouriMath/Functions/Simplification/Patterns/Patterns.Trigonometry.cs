@@ -24,6 +24,21 @@ namespace AngouriMath.Functions
             Sumf(Arctanf(var any1), Arccotanf(var any1a)) when any1 == any1a => MathS.pi / 2,
             Sumf(Arccotanf(var any1), Arctanf(var any1a)) when any1 == any1a => MathS.pi / 2,
 
+            // sin(2u) csc(u) = 2 cos(u), which is the double angle over the single one.
+            // A rule of its own because the two do not meet any other way: opening sin(2u)
+            // up leaves 2 sin(u) cos(u) csc(u), whose sine and cosecant are no longer
+            // adjacent in the product, and the rules that cancel those are pairwise. So
+            // (sin(2t) csc(t))^2/4 - cos(2t) - sin(t)^2 stopped one step short of zero --
+            // https://github.com/asc-community/AngouriMath/issues/557.
+            // The condition is the cosecant's own and has to be carried: 2cos(u) is a
+            // number where sin(u) is zero and sin(2u) csc(u) is not, so dropping it would
+            // answer for a point the expression does not reach. It is the same condition
+            // the cancellation of sin(u) csc(u) already comes back with.
+            Mulf(Sinf(Mulf(Integer(2), var any1)), Cosecantf(var any1a)) when any1 == any1a
+                => (2 * new Cosf(any1)).Provided(new Cosecantf(any1).DomainCondition),
+            Mulf(Cosecantf(var any1a), Sinf(Mulf(Integer(2), var any1))) when any1 == any1a
+                => (2 * new Cosf(any1)).Provided(new Cosecantf(any1).DomainCondition),
+
             // tan * cot = 1
             Mulf(Tanf(var any1), Cotanf(var any1a)) when any1 == any1a => 1,
             Mulf(Cotanf(var any1), Tanf(var any1a)) when any1 == any1a => 1,
