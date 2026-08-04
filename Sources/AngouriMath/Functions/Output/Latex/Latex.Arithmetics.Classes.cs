@@ -94,6 +94,13 @@ namespace AngouriMath
                 @"\frac{" + Dividend.Latexise() + "}{" + Divisor.Latexise() + "}";
         }
 
+        public partial record Modf
+        {
+            /// <inheritdoc/>
+            public override string Latexise() =>
+                Dividend.Latexise(Dividend.Priority < Priority) + @" \bmod " + Divisor.Latexise(Divisor.Priority <= Priority);
+        }
+
         public partial record Logf
         {
             /// <inheritdoc/>

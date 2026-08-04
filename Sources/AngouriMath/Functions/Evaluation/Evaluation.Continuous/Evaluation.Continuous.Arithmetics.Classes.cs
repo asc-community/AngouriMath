@@ -100,6 +100,35 @@ namespace AngouriMath
                 },
                 (@this, a, b) => ((Divf)@this).New(a, b), isExact);
         }
+        public partial record Modf
+        {
+            // Like division, undefined when the divisor is zero
+            private protected override Entity IntrinsicCondition => !Divisor.EqualTo(0);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnTwoArguments(Dividend, Divisor,
+                (a, b) => (a, b) switch
+                {
+                    (_, Integer(0)) => Real.NaN,
+                    // Only for reals: the remainder of a complex number by another is not
+                    // one thing, and guessing at it would be worse than leaving it alone.
+                    (Real n1, Real n2) when !isExact => n1 % n2,
+                    (Integer(0), var n0) =>
+                        n0.Evaled is Complex c
+                        ? c.IsZero ? MathS.NaN : 0
+                        : new Providedf(0, new Notf(new Equalsf(n0, 0))),
+                    (var n1, Integer(1)) when n1.Evaled is Integer => 0,
+                    // a % a = 0 wherever a % a means anything at all, which is wherever a is
+                    // not zero -- and where it is, the whole node is undefined in any case.
+                    (var n1, var n2) when n1 == n2 => new Providedf(0, new Notf(new Equalsf(n2, 0))),
+                    // (a % b) % b = a % b: the first remainder already lies strictly between
+                    // -|b| and |b|, so taking it again changes nothing.
+                    (Modf(_, var inner) whole, var n2) when inner == n2 => whole,
+                    _ => null
+                },
+                (@this, a, b) => ((Modf)@this).New(a, b), isExact);
+        }
         public partial record Powf
         {
             // Power is undefined in two cases:

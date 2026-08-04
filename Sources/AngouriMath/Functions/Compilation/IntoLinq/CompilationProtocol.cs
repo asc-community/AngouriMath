@@ -193,6 +193,10 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 Minusf => Expression.Subtract(left, right),
                 Mulf => Expression.Multiply(left, right),
                 Divf => Expression.Divide(ShouldBeAtLeastDouble(left), ShouldBeAtLeastDouble(right)),
+                // Not widened to double the way division is: the remainder of two integers is
+                // an integer, and widening it would only lose that. The sign convention is the
+                // one the runtime already has, which is the one the interpreter uses too.
+                Modf => Expression.Modulo(left, right),
                 Powf when 
                     ShouldBeAtLeastDouble(left) is var newLeft 
                     && ShouldBeAtLeastDouble(right) is var newRight

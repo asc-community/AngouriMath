@@ -72,3 +72,12 @@ let ``Cos test exact`` () = Assert.Equal(parsed "1", cos 0)
 let ``Tan test exact`` () = Assert.Equal(parsed "0", tan 0)
 [<Fact>]        
 let ``Sqrt test exact`` () = Assert.Equal(parsed "22", sqrt 484)
+// https://github.com/asc-community/AngouriMath/issues/402 asks for the % operator here as
+// well. It needs nothing of its own: F# resolves % through op_Modulus, which is what the
+// operator on Entity compiles to, so the kernel's node is what an F# % builds.
+[<Fact>]
+let ``Mod operator test`` () = Assert.Equal(parsed "x % 3", x % (parsed 3))
+[<Fact>]
+let ``Mod operator evaluates`` () = Assert.Equal(parsed 1, (parsed 7 % parsed 3).Evaled)
+[<Fact>]
+let ``Mod operator follows the dividend's sign`` () = Assert.Equal(parsed -1, (parsed -7 % parsed 3).Evaled)

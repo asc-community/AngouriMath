@@ -417,6 +417,21 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Pow(Entity @base, Entity power) => new Powf(@base, power);
 
+        /// <summary>
+        /// The remainder after dividing one expression by another, that is, the node
+        /// <paramref name="dividend"/> % <paramref name="divisor"/>.
+        /// </summary>
+        /// <remarks>
+        /// The remainder takes the sign of the dividend, as C#'s own <c>%</c> does and as the
+        /// underlying arbitrary-precision arithmetic does: <c>(-7) % 3</c> is -1, not 2. That is
+        /// the truncated convention, not the Euclidean one -- for a non-negative answer whatever
+        /// the sign of the dividend, write <c>(a % b + b) % b</c>.
+        /// </remarks>
+        /// <param name="dividend">The expression whose remainder is taken</param>
+        /// <param name="divisor">The expression divided by; the result is undefined where it is zero</param>
+        /// <returns>The node of the remainder</returns>
+        public static Entity Mod(Entity dividend, Entity divisor) => new Modf(dividend, divisor);
+
         /// <summary>Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/></summary>
         /// <param name="a">The argument of which square root will be taken</param>
         /// <returns>Power node with (1/2) as the power</returns>

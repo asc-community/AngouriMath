@@ -79,6 +79,16 @@ namespace AngouriMath
         /// <param name="divisor">The right node to add</param>
         public static Entity operator /(Entity dividend, Entity divisor) => new Divf(dividend, divisor);
 
+        /// <summary>
+        /// Hangs two nodes to a Mod node (i. e. building an expression)
+        /// </summary>
+        /// <param name="dividend">The left node, whose remainder is taken</param>
+        /// <param name="divisor">The right node, the one divided by</param>
+        public static Entity operator %(Entity dividend, Entity divisor) => new Modf(dividend, divisor);
+
+        /// <summary><see cref="MathS.Mod(Entity, Entity)"/></summary>
+        public Entity Mod(Entity divisor) => new Modf(this, divisor);
+
         /// <summary><see cref="MathS.Sin(Entity)"/></summary>
         public Entity Sin() => new Sinf(this);
         /// <summary><see cref="MathS.Cos(Entity)"/></summary>

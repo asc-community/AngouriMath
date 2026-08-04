@@ -43,6 +43,7 @@ namespace AngouriMath.Core
             CALL_MINUS,
             CALL_MUL,
             CALL_DIV,
+            CALL_MOD,
             CALL_POW,
             CALL_LOG,
         }
@@ -140,6 +141,9 @@ namespace AngouriMath.Core
                         break;
                     case InstructionType.CALL_DIV:
                         stack.Push(stack.Pop() / stack.Pop());
+                        break;
+                    case InstructionType.CALL_MOD:
+                        stack.Push(Core.Compilation.RealOnly.Mod(stack.Pop(), stack.Pop()));
                         break;
                     case InstructionType.CALL_POW:
                         stack.Push(System.Numerics.Complex.Pow(stack.Pop(), stack.Pop()));

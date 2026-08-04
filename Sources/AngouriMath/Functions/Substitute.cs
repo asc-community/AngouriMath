@@ -46,6 +46,13 @@ namespace AngouriMath
                 => this == x ? value : New(Dividend.Substitute(x, value), Divisor.Substitute(x, value));
         }
 
+        partial record Modf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Dividend.Substitute(x, value), Divisor.Substitute(x, value));
+        }
+
         partial record Sinf
         {
             /// <inheritdoc/>
