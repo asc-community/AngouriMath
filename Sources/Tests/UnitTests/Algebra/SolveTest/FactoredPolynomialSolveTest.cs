@@ -98,6 +98,37 @@ namespace AngouriMath.Tests.Algebra
         public void RootsThatCanBeWrittenExactlyAre(string equation) =>
             AssertEveryRootIsExact(equation);
 
+        private static bool IsNear(Entity root, double re, double im)
+        {
+            if (root.Vars.Any())
+                return false;
+            var value = root.EvalNumerical();
+            return System.Math.Abs(value.RealPart.EDecimal.ToDouble() - re) < 1e-9
+                && System.Math.Abs(value.ImaginaryPart.EDecimal.ToDouble() - im) < 1e-9;
+        }
+
+        /// <summary>
+        /// Worse than an unreadable answer: an incomplete one. Above degree four the whole
+        /// equation went to the numeric solver, which searches for real roots, so
+        /// (x - 1)(x^2 - 2)(x^2 + x + 1) = 0 came back as { 1, sqrt(2), -sqrt(2) } -- the
+        /// two roots of its x^2 + x + 1 factor were missing, and a set that is short of two
+        /// roots does not look any different from one that is not.
+        /// Splitting off the rational root leaves a quartic, which is solved whole.
+        /// </summary>
+        [Theory]
+        [InlineData("x ^ 5 - 2 * x ^ 3 - x ^ 2 + 2 = 0")]
+        [InlineData("(x - 1) * (x ^ 2 - 2) * (x ^ 2 + x + 1) = 0")]
+        public void AQuinticKeepsTheRootsOfItsIrreducibleFactor(string equation)
+        {
+            var roots = Roots(equation);
+            var sqrt2 = System.Math.Sqrt(2);
+            var halfSqrt3 = System.Math.Sqrt(3) / 2;
+            foreach (var (re, im) in new[] { (1.0, 0.0), (sqrt2, 0.0), (-sqrt2, 0.0),
+                                             (-0.5, halfSqrt3), (-0.5, -halfSqrt3) })
+                Assert.Contains(roots, root => IsNear(root, re, im));
+            Assert.Equal(5, roots.Count);
+        }
+
         // What must not change. A polynomial with no rational root has nothing to split off,
         // and its roots are what they always were.
         [Fact]
