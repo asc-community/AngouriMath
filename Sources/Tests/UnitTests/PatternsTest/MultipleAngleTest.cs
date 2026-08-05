@@ -24,19 +24,17 @@ namespace AngouriMath.Tests.PatternsTest
         [InlineData("cos(2 * x) - (1 - 2 * sin(x) ^ 2)")]
         [InlineData("cos(2 * x) - (cos(x) ^ 2 - sin(x) ^ 2)")]
         [InlineData("sin(4 * x) - 2 * sin(2 * x) * cos(2 * x)")]
+        // Was pinned separately as PythagoreanPairAcrossASubtractionIsStillMissed, which
+        // recorded that this form stops at 1 - cos(x)^2 - sin(x)^2 because sin^2 + cos^2 = 1
+        // was matched only as an adjacent *sum* and here the pair sits either side of a
+        // subtraction. The identity solved for one square rather than for 1 --
+        // 1 - cos(:)^2 = sin(:)^2 -- closes that arrangement, so it belongs here now:
+        // https://github.com/asc-community/AngouriMath/issues/725. Nothing about opening the
+        // angle changed, and the note that this was not something the angle expansion could
+        // reach was correct.
+        [InlineData("cos(2 * x) - (2 * cos(x) ^ 2 - 1)")]
         public void IdentitiesReduceToZero(string input) =>
             Assert.Equal(Entity.Number.Integer.Create(0), input.ToEntity().Simplify());
-
-        // The same identity written as cos(2x) - (2cos(x)^2 - 1) gets as far as
-        // 1 - cos(x)^2 - sin(x)^2 and stops: sin^2 + cos^2 = 1 is matched as a pair, and
-        // there the pair sits either side of a subtraction. That is the same
-        // pairwise-versus-flattened gap as
-        // https://github.com/asc-community/AngouriMath/issues/531, in a product of trigonometric terms
-        // rather than a sum, and is not something opening the angle can reach.
-        [Fact]
-        public void PythagoreanPairAcrossASubtractionIsStillMissed() =>
-            Assert.Equal("1 - cos(x) ^ 2 - sin(x) ^ 2".ToEntity(),
-                "cos(2 * x) - (2 * cos(x) ^ 2 - 1)".ToEntity().Simplify());
 
         [Fact]
         public void DoubleAngleAndSquareCombine() =>

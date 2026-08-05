@@ -76,6 +76,25 @@ namespace AngouriMath.Functions
             Sumf(Powf(Cosf(var any1), Integer(2)),
                  Powf(Sinf(var any1a), Integer(2))) when any1 == any1a => 1,
 
+            // The same identity solved for one square rather than for 1. Only this direction:
+            // the two sides are interchangeable, and rewriting cos(:)^2 back as 1 - sin(:)^2
+            // would undo this as fast as it fired.
+            Minusf(Integer(1), Powf(Sinf(var any1), Integer(2))) => new Powf(new Cosf(any1), 2),
+            Minusf(Integer(1), Powf(Cosf(var any1), Integer(2))) => new Powf(new Sinf(any1), 2),
+
+            // The identity divided through by sin(:)^2 and by cos(:)^2. Knowing the one above
+            // and not these made the answer depend on which of the three ways an expression
+            // happened to be written -- https://github.com/asc-community/AngouriMath/issues/725.
+            Sumf(Integer(1), Powf(Tanf(var any1), Integer(2))) => new Powf(new Secantf(any1), 2),
+            Sumf(Powf(Tanf(var any1), Integer(2)), Integer(1)) => new Powf(new Secantf(any1), 2),
+            Sumf(Integer(1), Powf(Cotanf(var any1), Integer(2))) => new Powf(new Cosecantf(any1), 2),
+            Sumf(Powf(Cotanf(var any1), Integer(2)), Integer(1)) => new Powf(new Cosecantf(any1), 2),
+
+            Minusf(Powf(Secantf(var any1), Integer(2)),
+                   Powf(Tanf(var any1a), Integer(2))) when any1 == any1a => 1,
+            Minusf(Powf(Cosecantf(var any1), Integer(2)),
+                   Powf(Cotanf(var any1a), Integer(2))) when any1 == any1a => 1,
+
             Minusf(Powf(Sinf(var any1), Integer(2)), Powf(Cosf(var any1a), Integer(2))) when any1 == any1a =>
                 -1 * (new Powf(new Cosf(any1), 2) - new Powf(new Sinf(any1), 2)),
             Minusf(Powf(Cosf(var any1), Integer(2)), Powf(Sinf(var any1a), Integer(2))) when any1 == any1a =>
