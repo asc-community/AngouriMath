@@ -46,7 +46,13 @@ namespace AngouriMath.Functions.Algebra
 
         public static Entity? ComputeLimit(Entity expr, Variable x, Entity dest, ApproachFrom side = ApproachFrom.BothSides, bool acceptNaN = false)
         {
-            if (expr is not ContinuousNode and not Variable)
+            // A piecewise is not continuous and is still something a limit can be taken of: it
+            // agrees with one of its cases on the whole of the way in, and that case is
+            // continuous. Without it here the descent's reading of one was never reached --
+            // https://github.com/asc-community/AngouriMath/issues/536. The gate itself stays,
+            // since it is what keeps a statement like `a and x` out of machinery that would
+            // differentiate it.
+            if (expr is not ContinuousNode and not Variable and not Piecewise)
                 return null;
             expr = expr.Replace(ExpandLogarithm);
 

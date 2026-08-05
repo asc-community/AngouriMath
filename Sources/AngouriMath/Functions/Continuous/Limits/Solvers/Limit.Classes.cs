@@ -33,22 +33,36 @@ namespace AngouriMath
 
         partial record Sumf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Augend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Augend,
-                    Addend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Addend),
-                    x, dist, side);
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                if (ComputeLimitImpl(this, x, dist, side) is { } lim)
+                    return lim;
+                var (augend, addend) =
+                    (Augend.ComputeLimitDivideEtImpera(x, dist, side), Addend.ComputeLimitDivideEtImpera(x, dist, side)) switch
+                    {
+                        ({ } lim1, { } lim2) when IsDeterminate(New(lim1, lim2), x) => (lim1, lim2),
+                        var (lim1, lim2) => (lim1 is { IsFinite: true } ? lim1 : Augend,
+                                             lim2 is { IsFinite: true } ? lim2 : Addend)
+                    };
+                return ComputeLimitImpl(New(augend, addend), x, dist, side);
+            }
         }
 
         partial record Minusf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Minuend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Minuend,
-                    Subtrahend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Subtrahend),
-                    x, dist, side);
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                if (ComputeLimitImpl(this, x, dist, side) is { } lim)
+                    return lim;
+                var (minuend, subtrahend) =
+                    (Minuend.ComputeLimitDivideEtImpera(x, dist, side), Subtrahend.ComputeLimitDivideEtImpera(x, dist, side)) switch
+                    {
+                        ({ } lim1, { } lim2) when IsDeterminate(New(lim1, lim2), x) => (lim1, lim2),
+                        var (lim1, lim2) => (lim1 is { IsFinite: true } ? lim1 : Minuend,
+                                             lim2 is { IsFinite: true } ? lim2 : Subtrahend)
+                    };
+                return ComputeLimitImpl(New(minuend, subtrahend), x, dist, side);
+            }
         }
 
         partial record Mulf
@@ -62,6 +76,7 @@ namespace AngouriMath
                     var (mp, md) =
                         (Multiplier.ComputeLimitDivideEtImpera(x, dist, side), Multiplicand.ComputeLimitDivideEtImpera(x, dist, side)) switch
                         {
+                            ({ } lim1, { } lim2) when IsDeterminate(New(lim1, lim2), x) => (lim1, lim2),
                             ({ IsFinite: true } lim1, { IsFinite: true } lim2) => (lim1, lim2),
                             (_, { } l2) when !Multiplier.ContainsNode(x) => (Multiplier, l2),
                             ({ } l1, _) when !Multiplicand.ContainsNode(x) => (l1, Multiplicand),
@@ -86,6 +101,7 @@ namespace AngouriMath
                     var (dividend, divisor) =
                         (Dividend.ComputeLimitDivideEtImpera(x, dist, side), Divisor.ComputeLimitDivideEtImpera(x, dist, side)) switch
                         {
+                            ({ } lim1, { } lim2) when IsDeterminate(New(lim1, lim2), x) => (lim1, lim2),
                             ({ } lim1, { } lim2) when lim1.InnerSimplified.IsFinite && lim2.InnerSimplified.IsFinite && lim2.InnerSimplified != 0 => (lim1, lim2),
                             ({ IsFinite: true } lim1, { IsFinite: true } lim2) => (lim1, lim2),
                             (_, { } l2) when !Dividend.ContainsNode(x) => (Dividend, l2),
@@ -171,11 +187,18 @@ namespace AngouriMath
 
         partial record Arcsecantf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
-                    x, dist, side);
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                // Asked in front of the substitution, which for a diverging argument does answer
+                // -- with arcsec(+oo), a right angle written as a function of an infinity rather
+                // than as the right angle it is.
+                if (InverseTrigonometryAtInfinity(this, Argument.ComputeLimitDivideEtImpera(x, dist, side)) is { } atInfinity)
+                    return atInfinity;
+                return ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
+                    : ComputeLimitImpl(New(
+                        Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
+                        x, dist, side);
+            }
         }
 
         partial record Arccosecantf
@@ -240,20 +263,28 @@ namespace AngouriMath
 
         partial record Arcsinf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
-                    x, dist, side);
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                if (InverseTrigonometryAtInfinity(this, Argument.ComputeLimitDivideEtImpera(x, dist, side)) is { } atInfinity)
+                    return atInfinity;
+                return ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
+                    : ComputeLimitImpl(New(
+                        Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
+                        x, dist, side);
+            }
         }
 
         partial record Arccosf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
-                    x, dist, side);
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                if (InverseTrigonometryAtInfinity(this, Argument.ComputeLimitDivideEtImpera(x, dist, side)) is { } atInfinity)
+                    return atInfinity;
+                return ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
+                    : ComputeLimitImpl(New(
+                        Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
+                        x, dist, side);
+            }
         }
 
         partial record Arctanf
@@ -367,13 +398,24 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
             {
-                var allLims = Cases.Select(c => (lim: c.Expression.ComputeLimitDivideEtImpera(x, dist, side), pred: c.Predicate));
-                if (allLims.Select(c => c.lim is null).Any())
-                    return null;
-                return New(allLims.Select(
-                    c => c.lim is not null ? 
-                    new Providedf(c.lim, c.pred) : 
-                    throw new AngouriBugException("It's been checked before")));
+                // Close enough to the destination one case is the whole of the expression, so the
+                // limit is that case's limit -- and which case that is is decided the same way
+                // evaluation decides it, by the first predicate that holds once every earlier one
+                // has failed. A limit of the cases with their predicates carried along was what
+                // used to be built here, and it answers nothing: the predicates still speak about
+                // x, which the limit has just got rid of.
+                foreach (var (expression, predicate) in Cases)
+                    switch (HoldsNear(predicate, x, dist, side))
+                    {
+                        case true: return ComputeLimit(expression, x, dist, side);
+                        case false: continue;
+                        // A case that may or may not hold near the destination leaves it open
+                        // which expression the limit is of, and the ones after it unreachable.
+                        default: return null;
+                    }
+                // Every case fails throughout the neighbourhood, so the expression is undefined
+                // on the whole of the way in and there is nothing for it to tend to.
+                return MathS.NaN;
             }
         }
 

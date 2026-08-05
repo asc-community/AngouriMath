@@ -110,6 +110,24 @@ namespace AngouriMath.Tests.Calculus
             AssertLimit(expression, destination, side, expected);
 
         /// <summary>
+        /// https://github.com/asc-community/AngouriMath/issues/596 -- the reporter's difference
+        /// of reciprocal logarithms, which is -1/2. Both one-sided readings answer it; the
+        /// two-sided one does not, and promoting the agreement of the two into a two-sided answer
+        /// is not open, since it would also make lim x->0 x * ln(x) equal 0, where the library
+        /// deliberately answers NaN because ln(x) is not real on the left.
+        /// </summary>
+        [Theory]
+        [InlineData(ApproachFrom.Right)]
+        [InlineData(ApproachFrom.Left)]
+        public void ADifferenceOfReciprocalLogarithms(ApproachFrom side)
+        {
+            var task = System.Threading.Tasks.Task.Run(() =>
+                Limit("1 / ln(x + sqrt(x * x + 1)) - 1 / ln(x + 1)", "0", side));
+            Assert.True(task.Wait(System.TimeSpan.FromSeconds(60)), "the limit did not terminate");
+            Assert.Equal("-1/2".ToEntity().Evaled, task.Result.Evaled);
+        }
+
+        /// <summary>
         /// The fallback moves x out to infinity, which is what a finite destination does in any
         /// case. It must not be reached for a destination that is already infinite, where the
         /// substitution would mean nothing.
