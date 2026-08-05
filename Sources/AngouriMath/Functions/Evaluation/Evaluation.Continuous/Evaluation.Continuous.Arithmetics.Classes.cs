@@ -96,6 +96,13 @@ namespace AngouriMath
                     (_, Integer(0)) => Real.NaN,
                     (Complex n1, Complex n2) when !isExact => n1 / n2,
                     (var n1, Integer(1)) => n1,
+                    // A radical in the denominator is the reciprocal power asked for outright,
+                    // and answering it there is what makes 1/sqrt(2) and sqrt(1/2) the same
+                    // thing on the page as well as in value.
+                    // https://github.com/asc-community/AngouriMath/issues/205
+                    (var n1, Powf(Rational radicand, Rational exponent)) when
+                        RootExtraction.PullOutOfDenominator(radicand, exponent) is { } rationalized
+                        => (n1 * rationalized).InnerSimplified(isExact),
                     _ => null
                 },
                 (@this, a, b) => ((Divf)@this).New(a, b), isExact);
@@ -182,11 +189,14 @@ namespace AngouriMath
                           : 1
                         : new Providedf(1, !x.EqualTo(0)),
                     (var n1, Integer(1)) => n1,
+                    // https://github.com/asc-community/AngouriMath/issues/281
+                    (Rational radicand, Rational exponent) when
+                        RootExtraction.PullOutOfRadical(radicand, exponent) is { } pulled => pulled.InnerSimplified(isExact),
                     _ => null
                 },
                 (@this, a, b) => ((Powf)@this).New(a, b), isExact);
         }
-        
+
         public partial record Logf
         {
             // Logarithm is undefined when:

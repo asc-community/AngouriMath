@@ -44,16 +44,41 @@ namespace AngouriMath.Tests.Common
             Assert.DoesNotContain("-", simplified.Stringize());
         }
 
-        // A standalone surd is a separate matter: Simplify picks between candidate
-        // forms by a complexity metric, and by that metric `sqrt(12)` beats
-        // `2 * sqrt(3)`, so the reduced form is generated but not selected. Changing
-        // that is a change to the metric, not to this rule. Pinning the current
-        // behaviour so the distinction is deliberate rather than accidental.
+        // https://github.com/asc-community/AngouriMath/issues/281
+        // A standalone surd used to keep the form it was written in, because Simplify
+        // picks between candidates by a complexity metric and by that metric `sqrt(12)`
+        // beats `2 * sqrt(3)`. The metric is the wrong judge here: the reduced radicand
+        // is the canonical form every other system prints -- sympy, Mathematica and
+        // Maxima all answer 2*sqrt(3) -- and it is what makes two surds comparable
+        // without simplifying their difference. So the reduction now happens where the
+        // power itself is built rather than being offered as a candidate.
         [Theory]
-        [InlineData("sqrt(12)")]
-        [InlineData("sqrt(18)")]
-        public void Issue205_StandaloneSurdsKeepTheShorterForm(string input) =>
-            Assert.Equal(input.ToEntity(), input.ToEntity().Simplify());
+        [InlineData("sqrt(12)", "2 * sqrt(3)")]
+        [InlineData("sqrt(18)", "3 * sqrt(2)")]
+        [InlineData("sqrt(1/2)", "sqrt(2) / 2")]
+        [InlineData("(2 ^ 3 * 5 ^ 7) ^ (1/3)", "50 * 5 ^ (1/3)")]
+        [InlineData("12 ^ (5/2)", "288 * sqrt(3)")]
+        // A negative exponent is the same question asked of the reciprocal, and it has to give
+        // the same answer: 1/sqrt(2) and sqrt(1/2) are one number and printed differently only
+        // because one of them was declined.
+        [InlineData("1 / sqrt(2)", "sqrt(2) / 2")]
+        [InlineData("2 ^ (-1/2)", "sqrt(2) / 2")]
+        [InlineData("1 / sqrt(12)", "sqrt(3) / 6")]
+        [InlineData("1 / sqrt(8)", "sqrt(2) / 4")]
+        [InlineData("1 / cbrt(2)", "4 ^ (1/3) / 2")]
+        [InlineData("x / sqrt(2)", "x * sqrt(2) / 2")]
+        [InlineData("8 ^ (-1/3)", "1/2")]
+        public void Issue281_PerfectPowersComeOutFromUnderTheRoot(string input, string expected) =>
+            Assert.Equal(Entity.Number.Integer.Create(0),
+                (input.ToEntity().Simplify() - expected.ToEntity()).Simplify());
+
+        // A negative radicand is not reduced: the extraction would have to choose a branch,
+        // and which branch a negative base takes is already settled elsewhere -- the odd
+        // roots take the real one, so (-8)^(1/3) is -2 and not 1 + i*sqrt(3). Reducing the
+        // radicand under an even root would be picking that same choice by accident.
+        [Fact]
+        public void Issue281_NegativeRadicandsAreNotReduced() =>
+            Assert.Equal("sqrt(-12)", "(-12) ^ (1/2)".ToEntity().Simplify().Stringize());
 
         // Whatever form comes out, it must still be the same number.
         [Theory]
@@ -215,5 +240,70 @@ namespace AngouriMath.Tests.Common
         [InlineData("x * ln(x)")]
         public void AntiderivativesNeverContainNaN(string integrand) =>
             Assert.DoesNotContain("NaN", integrand.ToEntity().Integrate("x").Stringize());
+
+        // https://github.com/asc-community/AngouriMath/issues/569
+        // https://github.com/asc-community/AngouriMath/issues/179
+        // The trigonometric tables were only ever read forwards, so sin(pi/4) was sqrt(2)/2
+        // but arcsin(sqrt(2)/2) stayed as written. arctan was the exception, and only at
+        // +-1, which is why arctan(1) already answered pi/4.
+        [Theory]
+        [InlineData("arcsin(1/2)", "pi / 6")]
+        [InlineData("arcsin(sqrt(2) / 2)", "pi / 4")]
+        [InlineData("arcsin(sqrt(3) / 2)", "pi / 3")]
+        [InlineData("arcsin(1)", "pi / 2")]
+        [InlineData("arcsin(0)", "0")]
+        [InlineData("arccos(1/2)", "pi / 3")]
+        [InlineData("arccos(0)", "pi / 2")]
+        [InlineData("arccos(1)", "0")]
+        [InlineData("arctan(sqrt(3))", "pi / 3")]
+        [InlineData("arctan(sqrt(3) / 3)", "pi / 6")]
+        [InlineData("arccotan(1)", "pi / 4")]
+        [InlineData("arccotan(sqrt(3))", "pi / 6")]
+        // The 5ths, 8ths, 10ths and 12ths of the circle, which are in the forward table too
+        [InlineData("arcsin((sqrt(5) - 1) / 4)", "pi / 10")]
+        [InlineData("arcsin(sqrt(2 - sqrt(2)) / 2)", "pi / 8")]
+        [InlineData("arcsin((sqrt(6) - sqrt(2)) / 4)", "pi / 12")]
+        [InlineData("arctan(2 - sqrt(3))", "pi / 12")]
+        [InlineData("arctan(sqrt(2) - 1)", "pi / 8")]
+        [InlineData("arctan(sqrt(5 - 2 * sqrt(5)))", "pi / 5")]
+        // Both functions are odd, and arccos/arccotan take the complement
+        [InlineData("arcsin(-1/2)", "-pi / 6")]
+        [InlineData("arctan(-sqrt(3))", "-pi / 3")]
+        [InlineData("arccos(-1/2)", "2 * pi / 3")]
+        [InlineData("arccos(-1)", "pi")]
+        public void Issue569_InverseTrigonometryReadsTheTableBackwards(string input, string expected) =>
+            Assert.Equal(Entity.Number.Integer.Create(0),
+                (input.ToEntity().Simplify() - expected.ToEntity()).Simplify());
+
+        // A value that is merely near a table entry is not that entry, and one that is not in
+        // the table at all has no closed form to give. `arcsin(0.4999999)` in particular must
+        // not come back pi/6: the double comparison is a sieve, not the answer.
+        [Theory]
+        [InlineData("arcsin(4999999/10000000)", "arcsin")]
+        [InlineData("arcsin(1/3)", "arcsin")]
+        [InlineData("arctan(2)", "arctan")]
+        [InlineData("arcsin(x)", "arcsin")]
+        [InlineData("arcsin(2)", "arcsin")]           // outside the real branch
+        public void Issue569_NonTableValuesAreLeftAlone(string input, string stillThere)
+        {
+            var simplified = input.ToEntity().Simplify().Stringize();
+            Assert.Contains(stillThere, simplified);
+            Assert.DoesNotContain("pi", simplified);
+        }
+
+        // And the angle that comes back must be the angle that was asked for.
+        [Theory]
+        [InlineData("arcsin(1/2)")]
+        [InlineData("arccos(1/2)")]
+        [InlineData("arctan(sqrt(3))")]
+        [InlineData("arccotan(1)")]
+        [InlineData("arcsin(-sqrt(2) / 2)")]
+        [InlineData("arccos(-sqrt(3) / 2)")]
+        public void Issue569_RecognisedAnglesKeepTheirValue(string input)
+        {
+            var before = input.ToEntity().EvalNumerical().RealPart.EDecimal.ToDouble();
+            var after = input.ToEntity().Simplify().EvalNumerical().RealPart.EDecimal.ToDouble();
+            Assert.Equal(before, after, 12);
+        }
     }
 }
