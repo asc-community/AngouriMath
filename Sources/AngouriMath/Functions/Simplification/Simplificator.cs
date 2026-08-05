@@ -92,6 +92,15 @@ namespace AngouriMath.Functions
 
                 AddHistory(res = res.Replace(Patterns.InvertNegativePowers).Replace(Patterns.DivisionPreparingRules).InnerSimplified);
 
+                // Lowest terms, offered as one more candidate rather than taken. Cancelling
+                // means multiplying out, and a quotient that cancels down to a polynomial
+                // was often better off in the form it was already written in:
+                // 3x^2 (u + 2)^2 / (3x^2) is (u + 2)^2, which the rules below reach as it
+                // stands, and u^2 + 4u + 4 only once this has expanded it. The complexity
+                // metric is what should decide between them.
+                if (res.Nodes.Any(child => child is Divf))
+                    AddHistory(res.Replace(Patterns.PolynomialGcdCancellation).InnerSimplified);
+
                 AddHistory(res = res.Replace(Patterns.PolynomialLongDivision).InnerSimplified);
 
                 AddHistory(res = res.Replace(Patterns.NormalTrigonometricForm).InnerSimplified);

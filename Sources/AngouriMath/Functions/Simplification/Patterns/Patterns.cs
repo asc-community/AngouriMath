@@ -50,5 +50,17 @@ namespace AngouriMath.Functions
             && TreeAnalyzer.PolynomialLongDivision(num, denom) is var (divided, remainder)
             ? divided + remainder
             : x;
+
+        /// <summary>
+        /// A quotient of polynomials put into lowest terms:
+        /// <c>(x^2 + 2xy + y^2) / (x^2 - y^2)</c> becomes <c>(x + y) / (x - y)</c>.
+        /// See <see cref="PolynomialGcd"/> for what is and is not attempted, and
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/55">#55</a>.
+        /// </summary>
+        internal static Entity PolynomialGcdCancellation(Entity x) =>
+            x is Divf(var num, var denom)
+            && PolynomialGcd.TryCancel(num, denom, out var cancelled)
+            ? cancelled
+            : x;
     }
 }
