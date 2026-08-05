@@ -143,6 +143,32 @@ namespace AngouriMath.Functions.Algebra
             => !IsInfiniteNode(expr) && expr != MathS.NaN;
 
         /// <summary>
+        /// Whether putting the parts' own limits in place of the parts settles the whole -- that
+        /// is, whether the combination of the two is a number rather than an indeterminate form.
+        /// </summary>
+        /// <remarks>
+        /// The algebra of limits holds for the infinities as much as for the finite values:
+        /// where f tends to A and g to B, f * g tends to A * B whenever A * B means anything, and
+        /// 1 * +oo means +oo as surely as 2 * 3 means 6. The descent asked only whether both
+        /// limits were finite, so the determinate infinite combinations were left to the solvers,
+        /// which substitute the destination and read what comes out --
+        /// https://github.com/asc-community/AngouriMath/issues/335. That left
+        /// <c>lim x-&gt;0+ cos(x) / sin(x)</c> answered and <c>lim x-&gt;0+ cos(x) * (1 / sin(x))</c>
+        /// not, the same limit written two ways.
+        /// <para/>
+        /// The indeterminate forms are exactly the ones the arithmetic calls NaN: 0 * oo,
+        /// oo - oo, oo / oo, 0 / 0 and a non-zero over 0, whose answer depends on which side the
+        /// divisor vanishes from. Each of those is left to fall through to the readings that can
+        /// take it apart.
+        /// <para/>
+        /// Powers are not asked this question. The arithmetic answers <c>1 ^ (+oo)</c> with 1 and
+        /// <c>(+oo) ^ 0</c> with 1, and as limits both are indeterminate -- <c>(1 + 1/x)^x</c>
+        /// tends to e -- so a power settled this way would be settled wrongly.
+        /// </remarks>
+        internal static bool IsDeterminate(Entity combined, Variable x)
+            => !combined.ContainsNode(x) && combined.Evaled is Number { IsNaN: false };
+
+        /// <summary>
         /// How many derivatives of the divisor to take looking for the order at which it
         /// vanishes. A divisor that is still flat after four of them is one whose sign this has
         /// no cheap reading of, and reading it wrongly would answer +oo where the truth is -oo,

@@ -33,22 +33,36 @@ namespace AngouriMath
 
         partial record Sumf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Augend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Augend,
-                    Addend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Addend),
-                    x, dist, side);
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                if (ComputeLimitImpl(this, x, dist, side) is { } lim)
+                    return lim;
+                var (augend, addend) =
+                    (Augend.ComputeLimitDivideEtImpera(x, dist, side), Addend.ComputeLimitDivideEtImpera(x, dist, side)) switch
+                    {
+                        ({ } lim1, { } lim2) when IsDeterminate(New(lim1, lim2), x) => (lim1, lim2),
+                        var (lim1, lim2) => (lim1 is { IsFinite: true } ? lim1 : Augend,
+                                             lim2 is { IsFinite: true } ? lim2 : Addend)
+                    };
+                return ComputeLimitImpl(New(augend, addend), x, dist, side);
+            }
         }
 
         partial record Minusf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Minuend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Minuend,
-                    Subtrahend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Subtrahend),
-                    x, dist, side);
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                if (ComputeLimitImpl(this, x, dist, side) is { } lim)
+                    return lim;
+                var (minuend, subtrahend) =
+                    (Minuend.ComputeLimitDivideEtImpera(x, dist, side), Subtrahend.ComputeLimitDivideEtImpera(x, dist, side)) switch
+                    {
+                        ({ } lim1, { } lim2) when IsDeterminate(New(lim1, lim2), x) => (lim1, lim2),
+                        var (lim1, lim2) => (lim1 is { IsFinite: true } ? lim1 : Minuend,
+                                             lim2 is { IsFinite: true } ? lim2 : Subtrahend)
+                    };
+                return ComputeLimitImpl(New(minuend, subtrahend), x, dist, side);
+            }
         }
 
         partial record Mulf
@@ -62,6 +76,7 @@ namespace AngouriMath
                     var (mp, md) =
                         (Multiplier.ComputeLimitDivideEtImpera(x, dist, side), Multiplicand.ComputeLimitDivideEtImpera(x, dist, side)) switch
                         {
+                            ({ } lim1, { } lim2) when IsDeterminate(New(lim1, lim2), x) => (lim1, lim2),
                             ({ IsFinite: true } lim1, { IsFinite: true } lim2) => (lim1, lim2),
                             (_, { } l2) when !Multiplier.ContainsNode(x) => (Multiplier, l2),
                             ({ } l1, _) when !Multiplicand.ContainsNode(x) => (l1, Multiplicand),
@@ -86,6 +101,7 @@ namespace AngouriMath
                     var (dividend, divisor) =
                         (Dividend.ComputeLimitDivideEtImpera(x, dist, side), Divisor.ComputeLimitDivideEtImpera(x, dist, side)) switch
                         {
+                            ({ } lim1, { } lim2) when IsDeterminate(New(lim1, lim2), x) => (lim1, lim2),
                             ({ } lim1, { } lim2) when lim1.InnerSimplified.IsFinite && lim2.InnerSimplified.IsFinite && lim2.InnerSimplified != 0 => (lim1, lim2),
                             ({ IsFinite: true } lim1, { IsFinite: true } lim2) => (lim1, lim2),
                             (_, { } l2) when !Dividend.ContainsNode(x) => (Dividend, l2),
