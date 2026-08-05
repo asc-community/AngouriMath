@@ -99,10 +99,18 @@ The same goes for `cbrt(x)`, which is `x ^ (1/3)`, and `sqr(x)`, which is `x ^ 2
 **Structural** — `piecewise(a provided p, b provided q)`, `lambda(param, body)`,
 `apply(f, arg, ...)`, `domain(expr, set)`.
 
+**Refused by name** — `floor` `ceil` `ceiling` `round` `trunc` `min` `max` `gcd` `lcm` `erf`
+`conjugate`. AngouriMath has none of these, and each is what some other CAS calls a function, so a
+caller reaches for it. Left alone they would be read as products under the rule below and answer
+silently and wrongly; they raise a parse error naming the function instead. `re` and `im` are the
+same case and are *not* refused, being short enough to be somebody's variable.
+
 ## Where it is easy to be caught out
 
 - **`^` groups to the right.** `2 ^ 2 ^ 3` is 256, not 64. Write `(2 ^ 2) ^ 3` for the other.
-- **An unknown name is a product**, not an error. `sinx` is `s * i * n * x`.
+- **An unknown name is a product**, not an error. `sinx` is `s * i * n * x`, and `f(x)` for an
+  unknown `f` is `f * x`. That is what makes `a(b + c)` work, and it is why the names above are
+  refused individually rather than by a general rule.
 - **`%` is not the remainder.** Write `mod`.
 - **Intervals use `;`**, not `,`: `[1; 2]`. `[1, 2]` is a vector.
 - **`->` is implication**, not a lambda arrow.

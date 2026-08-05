@@ -41,8 +41,21 @@ options
 {
     // Nullable reference type analysis is disabled by default for generated code without '#nullable enable'
     public Entity Result = null;
-    
+
     public void Parse() { this.statement(); }
+
+    // A name the grammar does not know, followed by a bracket, falls through to the implicit
+    // multiplication that lets a(b + c) mean a * (b + c). For a one-argument call that never
+    // fails: floor(x) came back as the product of an undeclared variable named floor with x,
+    // and (floor(x) - 3 = 0).Solve("x") answered { 3 / floor }, which is a root of nothing.
+    // Refusing every unknown name is not an option -- it is what makes a(b + c) work -- so the
+    // names below are refused one at a time, exactly as arcsinh is above.
+    // https://github.com/asc-community/AngouriMath/issues/733
+    static Entity NotImplementedFunction(string name, string what)
+        => throw new UnrecognizedFunctionParseException(
+            $"there is no function {name}: AngouriMath has no {what}. It is refused by name " +
+            $"rather than read as the product of a variable named {name} with its argument, " +
+            $"which is what an unknown name followed by a bracket would otherwise mean");
 }
 
 @namespace { Antlr }
@@ -394,6 +407,23 @@ atom returns[Entity value]
     | 'sign(' args = function_arguments ')' { Assert("sign", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
     | 'abs(' args = function_arguments ')' { Assert("abs", 1, $args.list.Count); $value = MathS.Abs($args.list[0]); }
     | 'phi(' args = function_arguments ')' { Assert("phi", 1, $args.list.Count); $value = MathS.NumberTheory.Phi($args.list[0]); }
+
+    /* Names the library does not have. Each is a function every other CAS spells this way, so
+       a caller reaches for it, and without these rules each is silently read as a product --
+       see NotImplementedFunction above. Refusing is not the feature; it is the difference
+       between a missing function and a wrong answer. */
+
+    | 'floor(' args = function_arguments ')' { $value = NotImplementedFunction("floor", "rounding functions"); }
+    | 'ceil(' args = function_arguments ')' { $value = NotImplementedFunction("ceil", "rounding functions"); }
+    | 'ceiling(' args = function_arguments ')' { $value = NotImplementedFunction("ceiling", "rounding functions"); }
+    | 'round(' args = function_arguments ')' { $value = NotImplementedFunction("round", "rounding functions"); }
+    | 'trunc(' args = function_arguments ')' { $value = NotImplementedFunction("trunc", "rounding functions"); }
+    | 'min(' args = function_arguments ')' { $value = NotImplementedFunction("min", "minimum or maximum function"); }
+    | 'max(' args = function_arguments ')' { $value = NotImplementedFunction("max", "minimum or maximum function"); }
+    | 'gcd(' args = function_arguments ')' { $value = NotImplementedFunction("gcd", "greatest common divisor as a symbolic function"); }
+    | 'lcm(' args = function_arguments ')' { $value = NotImplementedFunction("lcm", "least common multiple as a symbolic function"); }
+    | 'erf(' args = function_arguments ')' { $value = NotImplementedFunction("erf", "error function"); }
+    | 'conjugate(' args = function_arguments ')' { $value = NotImplementedFunction("conjugate", "complex conjugate as a symbolic function"); }
     | 'domain(' args = function_arguments ')' 
         { 
             Assert("domain", 2, $args.list.Count); 
