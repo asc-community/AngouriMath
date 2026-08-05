@@ -134,7 +134,32 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         goto default;
                     // TODO: optimize?
                     return subtrahend.Invert(minuend, lastChild).Select(result => Solve(lastChild - result, x, compensateSolving: true)).Unite();
-                case Function:
+                // A power is zero exactly where its base is, so f(x)^n = 0 has the roots of
+                // f(x) = 0 and no others. Routing it that way rather than leaving it to the
+                // replacement machinery below is what makes it answer *identically* to the
+                // equation it is: without this (x^2 + x + 1)^2 = 0 is answered
+                // { -1/2 + -sqrt(-3/4), -1/2 + sqrt(-3/4) } where x^2 + x + 1 = 0 gives
+                // { (-1 - sqrt(-3))/2, (-1 + sqrt(-3))/2 }, and takes about four times as
+                // long to get there. https://github.com/asc-community/AngouriMath/issues/744
+                //
+                // Only for an exponent that is a positive number and free of x. A negative
+                // one is never zero, and one that moves with x is a different equation; both
+                // are left to the inversion below, which is what has always answered them.
+                case Powf(var @base, var power)
+                    when @base.ContainsNode(x) && !power.ContainsNode(x)
+                         && power.Evaled is Real { IsPositive: true }:
+                    return Solve(@base, x, compensateSolving);
+                // Inverting isolates x only where x occurs once, which is what Invert's own
+                // documentation requires and what this case did not check. Given
+                // sin(x^2 + x) = 0 it inverted the sine, then the sum, then the square, and
+                // handed back { +-sqrt(2*pi*n_1 - x), ... } -- the equation rearranged rather
+                // than solved, since the x left on the right stayed where it stood. Where the
+                // variable occurs more than once, the replacement machinery below is what
+                // answers: it solves sin(t) = 0 and then t = x^2 + x for each root, which is
+                // how the same equation written cos(x^2 + x + 1) = 1 was answered correctly
+                // all along -- a right-hand side of zero is the only reason this case was
+                // reached at all. https://github.com/asc-community/AngouriMath/issues/744
+                case Function when expr.Nodes.Count(node => node == x) == 1:
                     return expr.Invert(0, x).Select(ent => TryDowncast(expr, x, ent)).ToSet();
                 case Providedf(var expression, var predicate):
                     return Solve(expression, x, compensateSolving).Filter(predicate, x);
