@@ -367,13 +367,24 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
             {
-                var allLims = Cases.Select(c => (lim: c.Expression.ComputeLimitDivideEtImpera(x, dist, side), pred: c.Predicate));
-                if (allLims.Select(c => c.lim is null).Any())
-                    return null;
-                return New(allLims.Select(
-                    c => c.lim is not null ? 
-                    new Providedf(c.lim, c.pred) : 
-                    throw new AngouriBugException("It's been checked before")));
+                // Close enough to the destination one case is the whole of the expression, so the
+                // limit is that case's limit -- and which case that is is decided the same way
+                // evaluation decides it, by the first predicate that holds once every earlier one
+                // has failed. A limit of the cases with their predicates carried along was what
+                // used to be built here, and it answers nothing: the predicates still speak about
+                // x, which the limit has just got rid of.
+                foreach (var (expression, predicate) in Cases)
+                    switch (HoldsNear(predicate, x, dist, side))
+                    {
+                        case true: return ComputeLimit(expression, x, dist, side);
+                        case false: continue;
+                        // A case that may or may not hold near the destination leaves it open
+                        // which expression the limit is of, and the ones after it unreachable.
+                        default: return null;
+                    }
+                // Every case fails throughout the neighbourhood, so the expression is undefined
+                // on the whole of the way in and there is nothing for it to tend to.
+                return MathS.NaN;
             }
         }
 

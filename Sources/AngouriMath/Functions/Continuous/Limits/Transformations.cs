@@ -181,8 +181,31 @@ namespace AngouriMath.Functions.Algebra
             // with a definite non-zero size leaves the divisor to decide the answer.
             if (EvalAssumingContinuous(dividend.Limit(x, dest, side)) is not Real { IsFinite: true, IsZero: false } dividendLimit)
                 return null;
+            if (SignFromVanishingOrder(divisor, x, dest, side) is not { } divisorSign)
+                return null;
+            return dividendLimit.IsNegative == divisorSign > 0
+                ? Real.NegativeInfinity
+                : Real.PositiveInfinity;
+        }
 
-            var derivative = divisor;
+        /// <summary>
+        /// The sign an expression that vanishes at the destination keeps on one side of it,
+        /// or <see langword="null"/> where it cannot be read off.
+        /// </summary>
+        /// <remarks>
+        /// The sign is read off the first derivative that does not vanish with the expression.
+        /// Where <c>g(a) = 0</c> and the first non-vanishing derivative there is the k-th,
+        /// <c>g(x)</c> has the sign of <c>g_k(a) * (x - a)^k</c> near a, which is the sign of
+        /// <c>g_k(a)</c> on the right and that times <c>(-1)^k</c> on the left. Nothing is
+        /// claimed unless a derivative comes out finite and non-zero at the point: an expression
+        /// that is not differentiable there, or whose derivative diverges as <c>sqrt(x)</c>'s
+        /// does, is left alone.
+        /// </remarks>
+        private static int? SignFromVanishingOrder(Entity expr, Variable x, Entity dest, ApproachFrom side)
+        {
+            if (side is not (ApproachFrom.Left or ApproachFrom.Right) || !dest.IsFinite)
+                return null;
+            var derivative = expr;
             for (var order = 1; order <= MaxVanishingOrder; order++)
             {
                 MultithreadingFunctional.ExitIfCancelled();
@@ -196,12 +219,85 @@ namespace AngouriMath.Functions.Algebra
                 // sign of (-1)^k, so approaching from the left at an odd order turns the sign of
                 // the derivative around and nothing else does.
                 var turnsAround = side is ApproachFrom.Left && order % 2 != 0;
-                var divisorIsPositive = value.IsNegative == turnsAround;
-                return dividendLimit.IsNegative == divisorIsPositive
-                    ? Real.NegativeInfinity
-                    : Real.PositiveInfinity;
+                return value.IsNegative == turnsAround ? 1 : -1;
             }
             return null;
+        }
+
+        /// <summary>
+        /// The sign an expression keeps throughout a punctured one-sided neighbourhood of the
+        /// destination, or <see langword="null"/> where it cannot be read off.
+        /// </summary>
+        private static int? SignNear(Entity expr, Variable x, Entity dest, ApproachFrom side)
+        {
+            if (EvalAssumingContinuous(expr.Limit(x, dest, side)) is not Real { IsNaN: false } limit)
+                return null;
+            // A non-zero limit, infinities included, fixes the sign on its own: the expression
+            // is within any margin of that limit close enough to the destination, and one of
+            // those margins keeps it on the same side of zero.
+            if (!limit.IsZero)
+                return limit.IsNegative ? -1 : 1;
+            return SignFromVanishingOrder(expr, x, dest, side);
+        }
+
+        /// <summary>
+        /// Whether a predicate holds throughout a punctured one-sided neighbourhood of the
+        /// destination, fails throughout one, or cannot be settled either way
+        /// (<see langword="null"/>).
+        /// </summary>
+        /// <remarks>
+        /// This is what a limit of a piecewise expression needs and all it needs: near enough to
+        /// the destination one case is the whole of the expression, so the limit is that case's
+        /// limit. What decides a comparison is the sign the difference of its two sides keeps
+        /// near the destination, which is one question per comparison and not a solution set.
+        /// <para/>
+        /// A comparison whose difference vanishes identically -- <c>x &lt; x</c>, or any
+        /// predicate whose truth changes infinitely often on the way in -- settles nothing here
+        /// and comes back null, since neither answer would hold throughout a neighbourhood.
+        /// </remarks>
+        internal static bool? HoldsNear(Entity predicate, Variable x, Entity dest, ApproachFrom side)
+        {
+            // A predicate the variable does not occur in is the same statement everywhere, so
+            // there is nothing to approach: it either evaluates or it says nothing.
+            if (!predicate.ContainsNode(x))
+                return predicate.Evaled is Entity.Boolean constant ? constant.Value : null;
+            switch (predicate)
+            {
+                case Entity.Boolean(var value):
+                    return value;
+                case Notf(var argument):
+                    return HoldsNear(argument, x, dest, side) is { } inner ? !inner : null;
+                case Andf(var left, var right):
+                    {
+                        var (l, r) = (HoldsNear(left, x, dest, side), HoldsNear(right, x, dest, side));
+                        if (l is false || r is false) return false;
+                        return l is true && r is true ? true : null;
+                    }
+                case Orf(var left, var right):
+                    {
+                        var (l, r) = (HoldsNear(left, x, dest, side), HoldsNear(right, x, dest, side));
+                        if (l is true || r is true) return true;
+                        return l is false && r is false ? false : null;
+                    }
+                // Strict and non-strict read the same here. They differ only where the difference
+                // is exactly zero, and a difference that is zero anywhere on the way in is one
+                // this has no sign for either way.
+                case Lessf(var left, var right):
+                    return SignNear(left - right, x, dest, side) is { } lessSign ? lessSign < 0 : null;
+                case LessOrEqualf(var left, var right):
+                    return SignNear(left - right, x, dest, side) is { } lessOrEqualSign ? lessOrEqualSign < 0 : null;
+                case Greaterf(var left, var right):
+                    return SignNear(left - right, x, dest, side) is { } greaterSign ? greaterSign > 0 : null;
+                case GreaterOrEqualf(var left, var right):
+                    return SignNear(left - right, x, dest, side) is { } greaterOrEqualSign ? greaterOrEqualSign > 0 : null;
+                // A difference that keeps a sign is never zero, so the two sides are unequal
+                // throughout the neighbourhood. The other way round is not readable here: a
+                // difference this cannot sign is not thereby zero.
+                case Equalsf(var left, var right):
+                    return SignNear(left - right, x, dest, side) is { } ? false : null;
+                default:
+                    return null;
+            }
         }
 
         /// <summary>
