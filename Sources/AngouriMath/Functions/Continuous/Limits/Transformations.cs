@@ -391,9 +391,17 @@ namespace AngouriMath.Functions.Algebra
                 else
                     rest *= factor;
             }
-            return vanishing is { } zero && diverging is { } infinity
-                ? rest * infinity / (1 / zero).InnerSimplified
-                : null;
+            if (vanishing is not { } zero || diverging is not { } infinity)
+                return null;
+            // The leftover factors are split rather than multiplied on top, because the children
+            // of a product arrive flattened through any division in it: tan(x) * ln(x) comes
+            // apart into sin(x), cos(x)^(-1) and ln(x), and putting that cos(x)^(-1) into the
+            // numerator would rebuild the very product this is meant to take apart -- the
+            // quotient would simplify straight back to it and the rule would be handed its own
+            // input. Into the denominator it gives ln(x) / (cos(x) / sin(x)), which is oo/oo
+            // and which the rule settles at 0.
+            var (restNumerator, restDenominator) = SplitProduct(rest);
+            return restNumerator * infinity / (restDenominator * (1 / zero)).InnerSimplified;
         }
 
         /// <remarks>
