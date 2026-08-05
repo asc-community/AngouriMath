@@ -48,6 +48,22 @@ namespace AngouriMath.Functions
             Mulf(Powf(var any1, var any3), Powf(var any2, var any3a)) when any3 == any3a => new Powf(any1 * any2, any3),
             Divf(Powf(var any1, var any3), Powf(var any2, var any3a)) when any3 == any3a => new Powf(any1 / any2, any3),
 
+            // {1} ^ n / {2} ^ (c * n) = ({1} / {2} ^ c) ^ n, and the same the other way up.
+            //
+            // The rule above pairs two powers by their exponents, and the ({}^{})^{} rule
+            // further up rewrites (b^c)^n as b^(c*n) -- on the child, on the way up, so it
+            // has already happened by the time the pair is looked at. Where it applies to
+            // only one of the two, which is whenever only one base is itself a power, the
+            // exponents stop matching and the pair is lost: (a^2)^x / (b^2)^x gathers,
+            // because both sides moved together, while (a^2)^x / b^x does not.
+            // These read that pair back. Restricted to a whole c so that nothing gains a
+            // root it did not have -- b^c goes into the base, rather than the exponent
+            // being divided. https://github.com/asc-community/AngouriMath/issues/740
+            Divf(Powf(var any1, var any3), Powf(var any2, Mulf(Integer { IsPositive: true } const1, var any3a)))
+                when any3 == any3a => new Powf(any1 / new Powf(any2, const1), any3),
+            Divf(Powf(var any1, Mulf(Integer { IsPositive: true } const1, var any3)), Powf(var any2, var any3a))
+                when any3 == any3a => new Powf(new Powf(any1, const1) / any2, any3),
+
             // x / x^n
             Divf(var any1, Powf(var any1a, var any2)) when any1 == any1a => new Powf(any1, 1 - any2),
 
