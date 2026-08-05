@@ -16,12 +16,23 @@ namespace AngouriMath.Functions.Algebra
 {
     partial class LimitFunctional
     {
+        /// <summary>
+        /// A vanishing function written as the vanishing argument it is equivalent to, where
+        /// that argument is what vanishes. <c>sin(u) / u</c>, <c>tan(u) / u</c>,
+        /// <c>arcsin(u) / u</c> and <c>arctan(u) / u</c> all tend to 1 as u tends to 0, so one
+        /// may be written for the other in a product or a quotient without changing its limit.
+        /// </summary>
+        /// <remarks>
+        /// The argument's own limit is what the equivalence needs, not the function's. sin(x)
+        /// vanishes at pi as surely as at 0 and is not equivalent to x there -- it is equivalent
+        /// to pi - x -- so rewriting it as x turned <c>lim x-&gt;pi sin(x) / (x - pi)</c>, which
+        /// is -1, into pi / 0.
+        /// </remarks>
         private static Entity EquivalenceRules(Entity expr, Variable x, Entity dest)
-            => expr switch
-            {
-                Sinf or Tanf or Arcsinf or Arctanf => expr.DirectChildren[0],
-                _ => expr
-            };
+            => expr is (Sinf or Tanf or Arcsinf or Arctanf)
+               && EvalAssumingContinuous(expr.DirectChildren[0].Limit(x, dest)) == 0
+                ? expr.DirectChildren[0]
+                : expr;
         private static Entity EvalAssumingContinuous(Entity expr) =>
             expr.Evaled switch
             {
@@ -34,6 +45,17 @@ namespace AngouriMath.Functions.Algebra
                 Divf(var a, var b) div
                     when EvalAssumingContinuous(a.Limit(x, dest)) == 0 && EvalAssumingContinuous(b.Limit(x, dest)) == 0
                         => div.New(EquivalenceRules(a, x, dest), EquivalenceRules(b, x, dest)),
+
+                // A product takes the substitution as much as a quotient does -- it is the ratio
+                // of the two forms tending to 1 that licenses it, and that says nothing about
+                // which of them the rest of the expression is written over. Only the quotient
+                // had it, so lim x->0+ tan(x) * ln(x) went the long way round through l'Hopital's
+                // rule and came back NaN, where the same limit written sin(x) * ln(x) is 0.
+                Mulf(var a, var b)
+                    when EquivalenceRules(a, x, dest) is var equivalentA
+                      && EquivalenceRules(b, x, dest) is var equivalentB
+                      && (!ReferenceEquals(equivalentA, a) || !ReferenceEquals(equivalentB, b))
+                        => equivalentA * equivalentB,
 
                 _ => expr
             };
