@@ -38,6 +38,34 @@ namespace AngouriMath.Tests.PatternsTest
             Assert.Equal(expected.ToEntity().Simplify(), Bare(expression));
 
         /// <summary>
+        /// The second expression the reporter gives, which is the first one with a
+        /// quotient of sixth and eighth powers of sin(t) added in front of it. Both are 0.
+        /// <para/>
+        /// This one needs the opened angle to survive as far as the fractions: the quotient
+        /// only cancels once its terms are over a common denominator, and the passes that
+        /// build one run before the angles are opened. So the opened form was offered to the
+        /// complexity metric in the one shape where its payoff had not happened yet, and was
+        /// rightly rejected as the longer of the two. It is now simplified in full first --
+        /// including expanded, since the cancellation only shows up once the products are
+        /// multiplied out -- which is what Expand and Factorize already get.
+        /// </summary>
+        [Fact]
+        public void TheReportersSecondExpressionIsAlsoZero() =>
+            Assert.Equal(Entity.Number.Integer.Create(0), Bare(
+                "(cos(2 * t) * sin(t) ^ 6 * (-1) + cos(t) * sin(t) ^ 5 * sin(2 * t)"
+                + " - sin(2 * t) ^ 2 * sin(t) ^ 4 / 4) / sin(t) ^ 8 - 1"
+                + " + (sin(2 * t) * cosec(t)) ^ 2 / 4 - cos(2 * t) - sin(t) ^ 2"));
+
+        // The pieces it is built from, each 0 or 1 on its own. Together they say the
+        // cancellation is the quotient's and not only the tail's.
+        [Theory]
+        [InlineData("(cos(2 * t) * sin(t) ^ 6 * (-1) + cos(t) * sin(t) ^ 5 * sin(2 * t)"
+                    + " - sin(2 * t) ^ 2 * sin(t) ^ 4 / 4) / sin(t) ^ 8", "1")]
+        [InlineData("(sin(t) ^ 6 - sin(2 * t) ^ 2 * sin(t) ^ 4 / 4) / sin(t) ^ 8 - 1", "0")]
+        public void TheQuotientCancelsOnItsOwn(string expression, string expected) =>
+            Assert.Equal(expected.ToEntity(), Bare(expression));
+
+        /// <summary>
         /// 2cos(u) is a number where sin(u) is zero and sin(2u) csc(u) is not, so the
         /// cosecant's own condition has to be carried rather than dropped. It is the same
         /// condition the cancellation of sin(u) csc(u) already comes back with.

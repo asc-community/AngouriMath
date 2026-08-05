@@ -206,6 +206,26 @@ namespace AngouriMath.Functions
             {
                 AddHistory(res.Expand().Simplify(-level));
                 AddHistory(res.Factorize().Simplify(-level));
+
+                // A multiple angle written out is worth having only where the pieces then
+                // cancel, so it has to be simplified in full before the metric can be
+                // asked -- the same reason Expand and Factorize are re-simplified above,
+                // and for the same reason it is a candidate rather than a step. The pass
+                // inside the loop offers the opened form to the trigonometric rules only,
+                // which settles an expression that is already one term; it cannot settle
+                // one whose cancellation needs a common denominator, because the passes
+                // that build one ran earlier in the loop, while the angles were still shut.
+                // That is https://github.com/asc-community/AngouriMath/issues/557: the
+                // reporter's second expression is 0, and reaches 0 through
+                // 2 sin(t) cos(t) and not through sin(2t).
+                var openedAngles = res
+                    .Replace(Patterns.ExpandMultipleAngleRules)
+                    .Replace(Patterns.NormalTrigonometricForm)
+                    .InnerSimplified;
+                if (openedAngles != res)
+                    // Expanded, and for the same reason res is expanded above: the
+                    // cancellation only shows up once the products are multiplied out.
+                    AddHistory(openedAngles.Expand().Simplify(-level));
             }
 
             return history.Values.SelectMany(x => x);
