@@ -34,5 +34,18 @@ jobs:
         dotnet build Sources/Tests/FSharpWrapperUnitTests
 
     - name: Test
+      if: ${{ matrix.os != 'ubuntu-latest' }}
       run: |
         dotnet test "Sources/Tests/FSharpWrapperUnitTests" -c Release -l GitHubActions
+
+    - name: Test with coverage
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        dotnet test "Sources/Tests/FSharpWrapperUnitTests" -c Release -l GitHubActions --collect:"XPlat Code Coverage" --results-directory ./coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+    - name: 'Send to codecov'
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      uses: codecov/codecov-action@v5
+      with:
+        directory: ./coverage
+        flags: fsharp
