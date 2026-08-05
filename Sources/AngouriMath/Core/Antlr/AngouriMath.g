@@ -273,6 +273,7 @@ atom returns[Entity value]
     | 'cbrt(' args = function_arguments ')' { Assert("cbrt", 1, $args.list.Count); $value = MathS.Cbrt($args.list[0]); }
     | 'sqr(' args = function_arguments ')' { Assert("sqr", 1, $args.list.Count); $value = MathS.Sqr($args.list[0]); }
     | 'ln(' args = function_arguments ')' { Assert("ln", 1, $args.list.Count); $value = MathS.Ln($args.list[0]); }
+    | 'exp(' args = function_arguments ')' { Assert("exp", 1, $args.list.Count); $value = MathS.Pow(MathS.e, $args.list[0]); }
 
     /* Trigonometric functions */
     | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }
