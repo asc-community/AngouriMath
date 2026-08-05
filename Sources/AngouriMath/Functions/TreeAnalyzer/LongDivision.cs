@@ -57,6 +57,34 @@ namespace AngouriMath.Functions
         }
 
         /// <summary>
+        /// A power in the one form that equal powers share. <see cref="EDecimal"/> keeps the
+        /// scale it was written or computed at, and is equal only to an <see cref="EDecimal"/>
+        /// of that same scale -- so <c>2</c> and <c>2.0</c> are the same number and different
+        /// dictionary keys. Removing the trailing zeros is what makes them one key.
+        /// </summary>
+        /// <remarks>
+        /// The unlimited context, so that reducing a power never rounds it. Rounding here
+        /// would merge two powers that are genuinely different, which is the opposite
+        /// mistake and a worse one.
+        /// </remarks>
+        private static EDecimal Canonical(EDecimal power) => power.Reduce(EContext.Unlimited);
+
+        private static Dictionary<EDecimal, Entity> Canonicalise(Dictionary<EDecimal, Entity> powers)
+        {
+            var canonical = new Dictionary<EDecimal, Entity>();
+            foreach (var pair in powers)
+            {
+                var power = Canonical(pair.Key);
+                // Two powers of the source may reduce to the same one, and then they are one
+                // monomial and their coefficients add. Overwriting instead would silently
+                // drop a term.
+                canonical[power] = canonical.TryGetValue(power, out var already)
+                    ? already + pair.Value : pair.Value;
+            }
+            return canonical;
+        }
+
+        /// <summary>
         /// Divides one polynomial over another one:
         /// <a href="https://en.wikipedia.org/wiki/Polynomial_long_division"/>
         /// </summary>
@@ -83,10 +111,19 @@ namespace AngouriMath.Functions
             var polyvar = monoinfoP.Keys.FirstOrDefault(monoinfoQ.ContainsKey);
             // cannot divide, return unchanged
             if (polyvar is null) return null;
-            var maxpowP = monoinfoP[polyvar].Keys.Max() ?? throw new AngouriBugException("No null expected");
-            var maxpowQ = monoinfoQ[polyvar].Keys.Max() ?? throw new AngouriBugException("No null expected");
-            var maxvalP = monoinfoP[polyvar][maxpowP];
-            var maxvalQ = monoinfoQ[polyvar][maxpowQ];
+
+            // The powers are dictionary keys, and EDecimal is equal only to an EDecimal of the
+            // same scale: 2 and 2.0 are the same number and not the same key. Every power
+            // arrived at by arithmetic below carries the scale of that arithmetic, so
+            // 1.5 + 0.5 comes out as 2.0 and misses the 2 already in the dictionary. Reduced
+            // once, here, so that every key in play is in the one canonical form and the
+            // lookups below mean what they say. https://github.com/asc-community/AngouriMath/issues/751
+            var powersOfP = Canonicalise(monoinfoP[polyvar]);
+            var powersOfQ = Canonicalise(monoinfoQ[polyvar]);
+            var maxpowP = powersOfP.Keys.Max() ?? throw new AngouriBugException("No null expected");
+            var maxpowQ = powersOfQ.Keys.Max() ?? throw new AngouriBugException("No null expected");
+            var maxvalP = powersOfP[maxpowP];
+            var maxvalQ = powersOfQ[maxpowQ];
 
             // TODO: add case where all powers are non-positive
             // for now just return polynomials unchanged
@@ -97,30 +134,29 @@ namespace AngouriMath.Functions
             while (maxpowP.GreaterThanOrEquals(maxpowQ))
             {
                 // KeyPair is ax^n with Key=n, Value=a
-                var deltapow = maxpowP - maxpowQ;
+                var deltapow = Canonical(maxpowP - maxpowQ);
                 var deltamul = maxvalP / maxvalQ;
                 result[deltapow] = deltamul;
 
-                foreach (var n in monoinfoQ[polyvar])
+                foreach (var n in powersOfQ)
                 {
-                    // TODO: precision loss can happen here. MUST be fixed somehow
-                    var newpow = deltapow + n.Key;
-                    if (monoinfoP[polyvar].TryGetValue(newpow, out var existing))
-                        monoinfoP[polyvar][newpow] = existing - deltamul * n.Value;
+                    var newpow = Canonical(deltapow + n.Key);
+                    if (powersOfP.TryGetValue(newpow, out var existing))
+                        powersOfP[newpow] = existing - deltamul * n.Value;
                     else
-                        monoinfoP[polyvar][newpow] = -deltamul * n.Value;
+                        powersOfP[newpow] = -deltamul * n.Value;
                 }
-                _ = monoinfoP[polyvar].Remove(maxpowP);
-                if (monoinfoP[polyvar].Count == 0)
+                _ = powersOfP.Remove(maxpowP);
+                if (powersOfP.Count == 0)
                     break;
 
-                maxpowP = monoinfoP[polyvar].Keys.Max() ?? throw new AngouriBugException("No null expected");
-                maxvalP = monoinfoP[polyvar][maxpowP];
+                maxpowP = powersOfP.Keys.Max() ?? throw new AngouriBugException("No null expected");
+                maxvalP = powersOfP[maxpowP];
             }
 
             // check if all left in P is zero. If something left, division is impossible => return P / Q
             Entity rest = 0;
-            foreach (var coef in monoinfoP[polyvar])
+            foreach (var coef in powersOfP)
                 if (coef.Value.Simplify() is not Integer(0) and var simplified)
                     if (coef.Key.IsZero) // Don't insert unnecessary x^0 because it's undefined for x=0
                         rest += simplified;
