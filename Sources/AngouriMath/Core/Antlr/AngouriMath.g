@@ -360,6 +360,7 @@ atom returns[Entity value]
     /* End */
 
 
+    | 'factorial(' args = function_arguments ')' { Assert("factorial", 1, $args.list.Count); $value = MathS.Factorial($args.list[0]); }
     | 'gamma(' args = function_arguments ')' { Assert("gamma", 1, $args.list.Count); $value = MathS.Gamma($args.list[0]); }
     | 'derivative(' args = function_arguments ')' 
         {
