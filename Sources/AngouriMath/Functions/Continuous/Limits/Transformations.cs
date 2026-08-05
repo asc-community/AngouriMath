@@ -16,12 +16,23 @@ namespace AngouriMath.Functions.Algebra
 {
     partial class LimitFunctional
     {
+        /// <summary>
+        /// A vanishing function written as the vanishing argument it is equivalent to, where
+        /// that argument is what vanishes. <c>sin(u) / u</c>, <c>tan(u) / u</c>,
+        /// <c>arcsin(u) / u</c> and <c>arctan(u) / u</c> all tend to 1 as u tends to 0, so one
+        /// may be written for the other in a product or a quotient without changing its limit.
+        /// </summary>
+        /// <remarks>
+        /// The argument's own limit is what the equivalence needs, not the function's. sin(x)
+        /// vanishes at pi as surely as at 0 and is not equivalent to x there -- it is equivalent
+        /// to pi - x -- so rewriting it as x turned <c>lim x-&gt;pi sin(x) / (x - pi)</c>, which
+        /// is -1, into pi / 0.
+        /// </remarks>
         private static Entity EquivalenceRules(Entity expr, Variable x, Entity dest)
-            => expr switch
-            {
-                Sinf or Tanf or Arcsinf or Arctanf => expr.DirectChildren[0],
-                _ => expr
-            };
+            => expr is (Sinf or Tanf or Arcsinf or Arctanf)
+               && EvalAssumingContinuous(expr.DirectChildren[0].Limit(x, dest)) == 0
+                ? expr.DirectChildren[0]
+                : expr;
         private static Entity EvalAssumingContinuous(Entity expr) =>
             expr.Evaled switch
             {
@@ -34,6 +45,17 @@ namespace AngouriMath.Functions.Algebra
                 Divf(var a, var b) div
                     when EvalAssumingContinuous(a.Limit(x, dest)) == 0 && EvalAssumingContinuous(b.Limit(x, dest)) == 0
                         => div.New(EquivalenceRules(a, x, dest), EquivalenceRules(b, x, dest)),
+
+                // A product takes the substitution as much as a quotient does -- it is the ratio
+                // of the two forms tending to 1 that licenses it, and that says nothing about
+                // which of them the rest of the expression is written over. Only the quotient
+                // had it, so lim x->0+ tan(x) * ln(x) went the long way round through l'Hopital's
+                // rule and came back NaN, where the same limit written sin(x) * ln(x) is 0.
+                Mulf(var a, var b)
+                    when EquivalenceRules(a, x, dest) is var equivalentA
+                      && EquivalenceRules(b, x, dest) is var equivalentB
+                      && (!ReferenceEquals(equivalentA, a) || !ReferenceEquals(equivalentB, b))
+                        => equivalentA * equivalentB,
 
                 _ => expr
             };
@@ -143,6 +165,67 @@ namespace AngouriMath.Functions.Algebra
             => !IsInfiniteNode(expr) && expr != MathS.NaN;
 
         /// <summary>
+        /// What an inverse trigonometric function tends to where its argument grows without
+        /// bound, or <see langword="null"/> where the argument does not diverge or the function
+        /// is not one this has a reading for.
+        /// </summary>
+        /// <remarks>
+        /// Neither arcsine nor arccosine is real past 1, and this library reads both on the side
+        /// of the cut below the real axis: arcsin(t) is pi/2 - i*arcosh(t) for real t greater
+        /// than 1 and -pi/2 - i*arcosh(t) for t less than -1, with arccos being pi/2 - arcsin
+        /// throughout. arcosh grows without bound, so what is left in the limit is that real part
+        /// with an infinite imaginary one -- https://github.com/asc-community/AngouriMath/issues/333.
+        /// <para/>
+        /// C99 and Python take the other side of both cuts and so answer the conjugates.
+        /// CompiledArcsinBranchTest pins the side this library takes, and a limit that disagreed
+        /// with the function it is a limit of would be worse than either convention.
+        /// <para/>
+        /// An arcsecant is an arccosine of the reciprocal, so a diverging argument takes it to
+        /// arccos(0), which is a right angle and is real. Substituting the infinity does settle
+        /// that one, but it settles it as arcsec(+oo) -- the right angle written as a function of
+        /// an infinity rather than as the right angle.
+        /// </remarks>
+        internal static Entity? InverseTrigonometryAtInfinity(Entity function, Entity? argumentLimit)
+        {
+            if (argumentLimit?.Evaled is not Real { IsFinite: false, IsNaN: false } diverging)
+                return null;
+            var downwards = MathS.i * Real.PositiveInfinity;
+            return function switch
+            {
+                Arcsinf => (diverging.IsNegative ? -MathS.pi / 2 : MathS.pi / 2) - downwards,
+                Arccosf => (diverging.IsNegative ? MathS.pi : 0) + downwards,
+                Arcsecantf => MathS.pi / 2,
+                _ => null
+            };
+        }
+
+        /// <summary>
+        /// Whether putting the parts' own limits in place of the parts settles the whole -- that
+        /// is, whether the combination of the two is a number rather than an indeterminate form.
+        /// </summary>
+        /// <remarks>
+        /// The algebra of limits holds for the infinities as much as for the finite values:
+        /// where f tends to A and g to B, f * g tends to A * B whenever A * B means anything, and
+        /// 1 * +oo means +oo as surely as 2 * 3 means 6. The descent asked only whether both
+        /// limits were finite, so the determinate infinite combinations were left to the solvers,
+        /// which substitute the destination and read what comes out --
+        /// https://github.com/asc-community/AngouriMath/issues/335. That left
+        /// <c>lim x-&gt;0+ cos(x) / sin(x)</c> answered and <c>lim x-&gt;0+ cos(x) * (1 / sin(x))</c>
+        /// not, the same limit written two ways.
+        /// <para/>
+        /// The indeterminate forms are exactly the ones the arithmetic calls NaN: 0 * oo,
+        /// oo - oo, oo / oo, 0 / 0 and a non-zero over 0, whose answer depends on which side the
+        /// divisor vanishes from. Each of those is left to fall through to the readings that can
+        /// take it apart.
+        /// <para/>
+        /// Powers are not asked this question. The arithmetic answers <c>1 ^ (+oo)</c> with 1 and
+        /// <c>(+oo) ^ 0</c> with 1, and as limits both are indeterminate -- <c>(1 + 1/x)^x</c>
+        /// tends to e -- so a power settled this way would be settled wrongly.
+        /// </remarks>
+        internal static bool IsDeterminate(Entity combined, Variable x)
+            => !combined.ContainsNode(x) && combined.Evaled is Number { IsNaN: false };
+
+        /// <summary>
         /// How many derivatives of the divisor to take looking for the order at which it
         /// vanishes. A divisor that is still flat after four of them is one whose sign this has
         /// no cheap reading of, and reading it wrongly would answer +oo where the truth is -oo,
@@ -181,8 +264,31 @@ namespace AngouriMath.Functions.Algebra
             // with a definite non-zero size leaves the divisor to decide the answer.
             if (EvalAssumingContinuous(dividend.Limit(x, dest, side)) is not Real { IsFinite: true, IsZero: false } dividendLimit)
                 return null;
+            if (SignFromVanishingOrder(divisor, x, dest, side) is not { } divisorSign)
+                return null;
+            return dividendLimit.IsNegative == divisorSign > 0
+                ? Real.NegativeInfinity
+                : Real.PositiveInfinity;
+        }
 
-            var derivative = divisor;
+        /// <summary>
+        /// The sign an expression that vanishes at the destination keeps on one side of it,
+        /// or <see langword="null"/> where it cannot be read off.
+        /// </summary>
+        /// <remarks>
+        /// The sign is read off the first derivative that does not vanish with the expression.
+        /// Where <c>g(a) = 0</c> and the first non-vanishing derivative there is the k-th,
+        /// <c>g(x)</c> has the sign of <c>g_k(a) * (x - a)^k</c> near a, which is the sign of
+        /// <c>g_k(a)</c> on the right and that times <c>(-1)^k</c> on the left. Nothing is
+        /// claimed unless a derivative comes out finite and non-zero at the point: an expression
+        /// that is not differentiable there, or whose derivative diverges as <c>sqrt(x)</c>'s
+        /// does, is left alone.
+        /// </remarks>
+        private static int? SignFromVanishingOrder(Entity expr, Variable x, Entity dest, ApproachFrom side)
+        {
+            if (side is not (ApproachFrom.Left or ApproachFrom.Right) || !dest.IsFinite)
+                return null;
+            var derivative = expr;
             for (var order = 1; order <= MaxVanishingOrder; order++)
             {
                 MultithreadingFunctional.ExitIfCancelled();
@@ -196,12 +302,85 @@ namespace AngouriMath.Functions.Algebra
                 // sign of (-1)^k, so approaching from the left at an odd order turns the sign of
                 // the derivative around and nothing else does.
                 var turnsAround = side is ApproachFrom.Left && order % 2 != 0;
-                var divisorIsPositive = value.IsNegative == turnsAround;
-                return dividendLimit.IsNegative == divisorIsPositive
-                    ? Real.NegativeInfinity
-                    : Real.PositiveInfinity;
+                return value.IsNegative == turnsAround ? 1 : -1;
             }
             return null;
+        }
+
+        /// <summary>
+        /// The sign an expression keeps throughout a punctured one-sided neighbourhood of the
+        /// destination, or <see langword="null"/> where it cannot be read off.
+        /// </summary>
+        private static int? SignNear(Entity expr, Variable x, Entity dest, ApproachFrom side)
+        {
+            if (EvalAssumingContinuous(expr.Limit(x, dest, side)) is not Real { IsNaN: false } limit)
+                return null;
+            // A non-zero limit, infinities included, fixes the sign on its own: the expression
+            // is within any margin of that limit close enough to the destination, and one of
+            // those margins keeps it on the same side of zero.
+            if (!limit.IsZero)
+                return limit.IsNegative ? -1 : 1;
+            return SignFromVanishingOrder(expr, x, dest, side);
+        }
+
+        /// <summary>
+        /// Whether a predicate holds throughout a punctured one-sided neighbourhood of the
+        /// destination, fails throughout one, or cannot be settled either way
+        /// (<see langword="null"/>).
+        /// </summary>
+        /// <remarks>
+        /// This is what a limit of a piecewise expression needs and all it needs: near enough to
+        /// the destination one case is the whole of the expression, so the limit is that case's
+        /// limit. What decides a comparison is the sign the difference of its two sides keeps
+        /// near the destination, which is one question per comparison and not a solution set.
+        /// <para/>
+        /// A comparison whose difference vanishes identically -- <c>x &lt; x</c>, or any
+        /// predicate whose truth changes infinitely often on the way in -- settles nothing here
+        /// and comes back null, since neither answer would hold throughout a neighbourhood.
+        /// </remarks>
+        internal static bool? HoldsNear(Entity predicate, Variable x, Entity dest, ApproachFrom side)
+        {
+            // A predicate the variable does not occur in is the same statement everywhere, so
+            // there is nothing to approach: it either evaluates or it says nothing.
+            if (!predicate.ContainsNode(x))
+                return predicate.Evaled is Entity.Boolean constant ? constant.Value : null;
+            switch (predicate)
+            {
+                case Entity.Boolean(var value):
+                    return value;
+                case Notf(var argument):
+                    return HoldsNear(argument, x, dest, side) is { } inner ? !inner : null;
+                case Andf(var left, var right):
+                    {
+                        var (l, r) = (HoldsNear(left, x, dest, side), HoldsNear(right, x, dest, side));
+                        if (l is false || r is false) return false;
+                        return l is true && r is true ? true : null;
+                    }
+                case Orf(var left, var right):
+                    {
+                        var (l, r) = (HoldsNear(left, x, dest, side), HoldsNear(right, x, dest, side));
+                        if (l is true || r is true) return true;
+                        return l is false && r is false ? false : null;
+                    }
+                // Strict and non-strict read the same here. They differ only where the difference
+                // is exactly zero, and a difference that is zero anywhere on the way in is one
+                // this has no sign for either way.
+                case Lessf(var left, var right):
+                    return SignNear(left - right, x, dest, side) is { } lessSign ? lessSign < 0 : null;
+                case LessOrEqualf(var left, var right):
+                    return SignNear(left - right, x, dest, side) is { } lessOrEqualSign ? lessOrEqualSign < 0 : null;
+                case Greaterf(var left, var right):
+                    return SignNear(left - right, x, dest, side) is { } greaterSign ? greaterSign > 0 : null;
+                case GreaterOrEqualf(var left, var right):
+                    return SignNear(left - right, x, dest, side) is { } greaterOrEqualSign ? greaterOrEqualSign > 0 : null;
+                // A difference that keeps a sign is never zero, so the two sides are unequal
+                // throughout the neighbourhood. The other way round is not readable here: a
+                // difference this cannot sign is not thereby zero.
+                case Equalsf(var left, var right):
+                    return SignNear(left - right, x, dest, side) is { } ? false : null;
+                default:
+                    return null;
+            }
         }
 
         /// <summary>

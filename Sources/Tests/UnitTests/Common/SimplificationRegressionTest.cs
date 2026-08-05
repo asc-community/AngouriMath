@@ -288,5 +288,27 @@ namespace AngouriMath.Tests.Common
         [InlineData("x * ln(x)")]
         public void AntiderivativesNeverContainNaN(string integrand) =>
             Assert.DoesNotContain("NaN", integrand.ToEntity().Integrate("x").Stringize());
+
+        // A negative factor under the line was taken out by multiplying by it and inverting
+        // what was left, so a / (-b * c) came back as -(b * (c / a)) -- the reciprocal of the
+        // right answer. Simplify keeps whichever candidate is shortest, so the inverted form
+        // won wherever it was smaller, which is wherever the numerator was 1.
+        //
+        // Checked numerically as well as symbolically: an inverted answer differs from the
+        // original by a factor, and subtracting the two can simplify to something that only
+        // looks like zero if the same wrong rule fires on the difference.
+        [Theory]
+        [InlineData("(1/x) / (-1 - 1/x)", 2.0, -1.0 / 3)]
+        [InlineData("(1/x) / (-1 - 1/x^2)", 2.0, -0.4)]
+        [InlineData("1 / (x * (-1 - 1/x))", 2.0, -1.0 / 3)]
+        [InlineData("(1/x) / (-1 - y^2/x^2)", 2.0, -0.4)]
+        [InlineData("1 / (-2 * x)", 2.0, -0.25)]
+        public void ANegativeFactorUnderTheLineStaysUnderIt(string input, double at, double expected)
+        {
+            var simplified = input.ToEntity().Simplify();
+            var value = simplified.Substitute("x", at).Substitute("y", 1).EvalNumerical();
+            Assert.True(System.Math.Abs(((Entity.Number.Complex)value).RealPart.EDecimal.ToDouble() - expected) < 1e-9,
+                $"{input} simplified to {simplified.Stringize()}, which is {value.Stringize()} at x = {at}");
+        }
     }
 }
