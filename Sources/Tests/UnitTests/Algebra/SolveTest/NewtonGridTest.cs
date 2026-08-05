@@ -76,5 +76,39 @@ namespace AngouriMath.Tests.Algebra.PolynomialSolverTests
         [Fact]
         public void AStepCountThatDoesNotDivideExactlyStillReachesTheOutlyingRoots() =>
             Assert.Equal(new[] { -1.895494d, 0d, 1.895494d }, RealRoots("sin(x) - x / 2", 21));
+
+        /// <summary>
+        /// The grid is two-dimensional, so a step count of N lays real starting points
+        /// (To - From) / N apart while costing N^2 Newton runs. Roots closer together than
+        /// that fall in one interval and only one of them is reached -- which is
+        /// https://github.com/asc-community/AngouriMath/issues/115. Sign changes along the
+        /// real axis seed the search as well, and there are N^2 of those for the same
+        /// reason there are N^2 grid points, so the spacing that matters for a real root
+        /// is (To - From) / N^2: 0.2 at the default step count rather than 2.
+        /// <para/>
+        /// These roots are 0.5 apart, so a step count of 8 is where N^2 first resolves
+        /// them and 5 is not enough -- asking for a cheaper search still gets one. The
+        /// default of 10 has a factor of two in hand.
+        /// </summary>
+        [Theory]
+        [InlineData(8)]
+        [InlineData(10)]
+        [InlineData(21)]
+        public void RootsCloserTogetherThanTheGridSpacingAreStillFound(int steps) =>
+            Assert.Equal(new[] { -0.5d, 0d, 0.5d }, RealRoots("arcsin(x) - x * pi / 3", steps));
+
+        /// <summary>
+        /// A sign change witnesses a root of odd multiplicity only, so the grid still has
+        /// to be the one finding roots off the real axis and repeated roots on it. Neither
+        /// may be lost to the new seeding.
+        /// </summary>
+        [Fact]
+        public void RootsWithNoSignChangeAreStillFound()
+        {
+            Assert.Equal(new[] { -1.414214d, 1.414214d }, RealRoots("x^2 - 2", 10));
+            Assert.Equal(new double[0], RealRoots("x^2 + 1", 10));    // both roots are +-i
+            Assert.Equal(2, Roots("x^2 + 1", 10).Count);
+            Assert.Contains(-1d, RealRoots("x^2 + 2*x + 1", 10));     // a double root, no sign change
+        }
     }
 }
