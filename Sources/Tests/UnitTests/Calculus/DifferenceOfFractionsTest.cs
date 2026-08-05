@@ -38,6 +38,24 @@ namespace AngouriMath.Tests.Calculus
             AssertLimit(expression, destination, expected);
 
         /// <summary>
+        /// https://github.com/asc-community/AngouriMath/issues/727.
+        /// <para/>
+        /// The same difference with both denominators squared. Putting it over a common
+        /// denominator is not enough on its own here: the denominator that comes out is a
+        /// product of two vanishing factors, so l'Hopital's rule differentiates it by the
+        /// product rule and the quotient grows at every step before it collapses. The rule
+        /// used to refuse the first of those steps and leave the descent to answer
+        /// +oo - +oo, which is NaN -- the claim that the limit does not exist -- where it
+        /// is -1/3.
+        /// </summary>
+        [Theory]
+        [InlineData("1/x ^ 2 - 1/sin(x) ^ 2", "0", "-1/3")]
+        [InlineData("1/sin(x) ^ 2 - 1/x ^ 2", "0", "1/3")]
+        [InlineData("csc(x) ^ 2 - 1/x ^ 2", "0", "1/3")]
+        public void ADifferenceOfSquaredFractionsIsSettledToo(string expression, string destination, string expected) =>
+            AssertLimit(expression, destination, expected);
+
+        /// <summary>
         /// A sum is only put over a common denominator where a denominator contains the variable
         /// -- those are the ones that vanish or diverge and make the difference indeterminate.
         /// Combining over a constant gains nothing and still costs the rule an expression to

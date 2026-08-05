@@ -420,16 +420,37 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// Whether differentiating both parts has left a quotient bigger than the one it came
-        /// from by more than the derivative of a power or a logarithm accounts for. Each step
-        /// asks what the two parts of its quotient tend to, and a bigger quotient makes those
-        /// two questions harder than the one being answered, so a step that grows is a step
-        /// away from an answer rather than towards one. The room left over is measured: the
-        /// steps that do reach an answer add two nodes, and the most any of them was seen to
-        /// add is six, while one step of x^(3/2) * sqrt(1 + 1/x^2) / x^2 adds eighteen and
-        /// leaves the rule tens of seconds of work that ends in nothing.
+        /// from by more than a step on the way to an answer accounts for. Each step asks what
+        /// the two parts of its quotient tend to, and a bigger quotient makes those two
+        /// questions harder than the one being answered, so a step that grows without bound is
+        /// a step away from an answer rather than towards one. One step of
+        /// x^(3/2) * sqrt(1 + 1/x^2) / x^2 adds twelve nodes and the next adds twenty-six,
+        /// which is that shape.
         /// </summary>
+        /// <remarks>
+        /// The room was a flat eight nodes, which is what growth looks like when the divisor is
+        /// a power of the variable: differentiating that shrinks it, so the only thing that
+        /// grows is the dividend and it grows by addition. A divisor that is a *product* of
+        /// vanishing factors grows by the product rule instead, which is multiplication --
+        /// x^2 * sin(x)^2 differentiates into a sum of two products, each about the size of the
+        /// whole. Such a chain still terminates, since the order at which the divisor vanishes
+        /// falls by one at every step, but it grows for as long as it takes to get there and
+        /// only then collapses: 1/x^2 - 1/sin(x)^2 at 0 goes 17 -> 26 -> 33 -> 46 nodes before
+        /// four steps settle it at -1/3. A flat budget cannot say that, and turned the first of
+        /// those steps away, leaving the descent to answer +oo - +oo -- NaN, the claim that the
+        /// limit does not exist -- for a limit that exists.
+        /// <para/>
+        /// So the room is the larger of the eight nodes and three fifths again, which is
+        /// proportional where the growth is proportional and unchanged for the small quotients
+        /// the flat budget was measured on. It is wider than the old rule everywhere, so no
+        /// chain that reached an answer before is turned away now. It costs nothing on the
+        /// shape that motivated the flat budget either: nineteen nodes to thirty-one is above
+        /// three fifths again as surely as it is above eight more, so that chain still stops at
+        /// the same step, and the limit still answers 0 in the same 240 ms. The corpus is
+        /// unchanged at 112/117 and, in total time, within noise of where it was.
+        /// </remarks>
         private static bool GrewTooMuch(Entity quotient, Entity applied)
-            => applied.Nodes.Count() > quotient.Nodes.Count() + 8;
+            => applied.Nodes.Count() > Math.Max(quotient.Nodes.Count() + 8, quotient.Nodes.Count() * 8 / 5);
 
         [ThreadStatic] private static bool suppresslHopital;
 
@@ -438,12 +459,27 @@ namespace AngouriMath.Functions.Algebra
         /// taken into the latter. A product with no reciprocal factor in it comes back with a
         /// denominator of 1, which is what makes this usable term by term below.
         /// </summary>
+        /// <remarks>
+        /// A power of a quotient is one of these too, and is how a squared cosecant arrives:
+        /// csc(x) is written 1/sin(x) in front of the descent, so csc(x)^2 reaches here as
+        /// (1/sin(x))^2 with its denominator inside the power rather than at the top. Read as
+        /// a factor with no denominator, csc(x)^2 - 1/x^2 at 0 was never put over a common
+        /// denominator and came back unevaluated where it is 1/3.
+        /// <para/>
+        /// Only for a whole power, where (a/b)^n is a^n/b^n exactly. At a half it is not: the
+        /// square root of 1/(-1) is i and the quotient of the two square roots is -i, and a
+        /// limit taken of the second is a limit of a different function.
+        /// </remarks>
         private static (Entity Numerator, Entity Denominator) SplitProduct(Entity expr)
         {
             Entity numerator = 1, denominator = 1;
             foreach (var factor in Mulf.LinearChildren(expr))
                 switch (factor)
                 {
+                    case Powf(Divf(var dividend, var divisor), Integer { IsPositive: true } power):
+                        numerator *= dividend.Pow(power);
+                        denominator *= divisor.Pow(power);
+                        break;
                     case Powf(var @base, Real { IsNegative: true } power):
                         denominator *= @base.Pow(-power);
                         break;
