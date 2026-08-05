@@ -165,6 +165,41 @@ namespace AngouriMath.Functions.Algebra
             => !IsInfiniteNode(expr) && expr != MathS.NaN;
 
         /// <summary>
+        /// What an inverse trigonometric function tends to where its argument grows without
+        /// bound, or <see langword="null"/> where the argument does not diverge or the function
+        /// is not one this has a reading for.
+        /// </summary>
+        /// <remarks>
+        /// Neither arcsine nor arccosine is real past 1, and this library reads both on the side
+        /// of the cut below the real axis: arcsin(t) is pi/2 - i*arcosh(t) for real t greater
+        /// than 1 and -pi/2 - i*arcosh(t) for t less than -1, with arccos being pi/2 - arcsin
+        /// throughout. arcosh grows without bound, so what is left in the limit is that real part
+        /// with an infinite imaginary one -- https://github.com/asc-community/AngouriMath/issues/333.
+        /// <para/>
+        /// C99 and Python take the other side of both cuts and so answer the conjugates.
+        /// CompiledArcsinBranchTest pins the side this library takes, and a limit that disagreed
+        /// with the function it is a limit of would be worse than either convention.
+        /// <para/>
+        /// An arcsecant is an arccosine of the reciprocal, so a diverging argument takes it to
+        /// arccos(0), which is a right angle and is real. Substituting the infinity does settle
+        /// that one, but it settles it as arcsec(+oo) -- the right angle written as a function of
+        /// an infinity rather than as the right angle.
+        /// </remarks>
+        internal static Entity? InverseTrigonometryAtInfinity(Entity function, Entity? argumentLimit)
+        {
+            if (argumentLimit?.Evaled is not Real { IsFinite: false, IsNaN: false } diverging)
+                return null;
+            var downwards = MathS.i * Real.PositiveInfinity;
+            return function switch
+            {
+                Arcsinf => (diverging.IsNegative ? -MathS.pi / 2 : MathS.pi / 2) - downwards,
+                Arccosf => (diverging.IsNegative ? MathS.pi : 0) + downwards,
+                Arcsecantf => MathS.pi / 2,
+                _ => null
+            };
+        }
+
+        /// <summary>
         /// Whether putting the parts' own limits in place of the parts settles the whole -- that
         /// is, whether the combination of the two is a number rather than an indeterminate form.
         /// </summary>
