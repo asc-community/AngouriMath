@@ -62,57 +62,125 @@ namespace AngouriMath.Functions
             return false;
         }
 
-        internal static bool PullSin(Complex arg,
+        /// <summary>
+        /// Every angle in the tables below is written <c>2pi/n</c>, so they name nothing at
+        /// all between <c>2pi/5</c> and <c>2pi/3</c> -- the whole lower half of the circle
+        /// is missing, and most of the second quadrant with it. The identities each Pull
+        /// tries reach some of what is missing and not the rest, which is why
+        /// <c>sin(2pi/3)</c> was answered exactly while its neighbour <c>sin(5pi/3)</c>, the
+        /// same value negated, was left as written. Turning the argument by half a circle
+        /// and taking the sign back is what the tables are short of. It is applied once,
+        /// around the lookups rather than inside them, so it cannot turn back and loop.
+        /// https://github.com/asc-community/AngouriMath/issues/743
+        /// </summary>
+        private static Complex HalfTurn(Complex arg) => arg - (Real)MathS.DecimalConst.pi;
+
+        /// <summary>
+        /// Tries a lookup on the argument and then on the argument turned by half a circle,
+        /// taking the sign back over the turn if <paramref name="oddOverHalfTurn"/>. Sine
+        /// and cosine both change sign; the tangent's period *is* half a circle, so it does
+        /// not.
+        /// </summary>
+        private static bool OrHalfTurn(System.Func<Complex, (bool Found, Entity? Value)> lookup,
+            Complex arg, bool oddOverHalfTurn,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? res)
         {
-            if (TryPulling(TableSin, arg, out res))
-                return true;
-            if (TryPulling(TableSin, (Real)MathS.DecimalConst.pi - arg, out res))
-                return true;
-            if (TryPulling(TableCos, arg * 2, out res))
+            if (lookup(arg) is (true, { } here))
             {
-                res = MathS.Sqrt((1 - res) / 2);
-                if (Number.Sin(arg) is Real real && real < 0)
-                    res *= -1;
+                res = here;
                 return true;
             }
+            if (lookup(HalfTurn(arg)) is (true, { } turned))
+            {
+                res = oddOverHalfTurn ? -turned : turned;
+                return true;
+            }
+            res = null;
             return false;
+        }
+
+        /// <summary>Sine read off the table itself, which is where the exact values are.</summary>
+        private static (bool, Entity?) SinFromTable(Complex arg)
+        {
+            if (TryPulling(TableSin, arg, out var res))
+                return (true, res);
+            // sin(x) = sin(pi - x)
+            if (TryPulling(TableSin, (Real)MathS.DecimalConst.pi - arg, out res))
+                return (true, res);
+            return (false, null);
+        }
+
+        /// <summary>
+        /// Sine built out of the cosine of the doubled angle. Tried only after every table
+        /// reading has been, because what it builds is a nested radical where the table has
+        /// a flat one: at 6pi/5 it gives sqrt((1 + (sqrt(5) - 1)/4) / 2) for a value the
+        /// table names as (sqrt(5) + 1)/4, and the roots of x^5 = 1 then come back written
+        /// two different ways.
+        /// </summary>
+        private static (bool, Entity?) SinFromDoubledAngle(Complex arg)
+        {
+            // sin(x) = +-sqrt((1 - cos(2x)) / 2)
+            if (!TryPulling(TableCos, arg * 2, out var res))
+                return (false, null);
+            res = MathS.Sqrt((1 - res) / 2);
+            if (Number.Sin(arg) is Real real && real < 0)
+                res *= -1;
+            return (true, res);
+        }
+
+        internal static bool PullSin(Complex arg,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? res)
+            => OrHalfTurn(SinFromTable, arg, oddOverHalfTurn: true, out res)
+            || OrHalfTurn(SinFromDoubledAngle, arg, oddOverHalfTurn: true, out res);
+
+        private static (bool, Entity?) CosFromTable(Complex arg)
+        {
+            if (TryPulling(TableCos, arg, out var res))
+                return (true, res);
+            // cos(x) = cos(-x)
+            if (TryPulling(TableCos, -1 * arg, out res))
+                return (true, res);
+            return (false, null);
+        }
+
+        private static (bool, Entity?) CosFromDoubledAngle(Complex arg)
+        {
+            // cos(x) = +-sqrt((1 + cos(2x)) / 2)
+            if (!TryPulling(TableCos, arg * 2, out var res))
+                return (false, null);
+            res = MathS.Sqrt((1 + res) / 2);
+            if (Number.Cos(arg) is Real real && real < 0)
+                res *= -1;
+            return (true, res);
         }
 
         internal static bool PullCos(Complex arg,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? res)
+            => OrHalfTurn(CosFromTable, arg, oddOverHalfTurn: true, out res)
+            || OrHalfTurn(CosFromDoubledAngle, arg, oddOverHalfTurn: true, out res);
+
+        private static (bool, Entity?) TanFromTable(Complex arg)
         {
-            if (TryPulling(TableCos, arg, out res))
-                return true;
-            if (TryPulling(TableCos, -1 * arg, out res))
-                return true;
-            if (TryPulling(TableCos, arg * 2, out res))
-            {
-                res = MathS.Sqrt((1 + res) / 2);
-                if (Number.Cos(arg) is Real real && real < 0)
-                    res *= -1;
-                return true;
-            }
-            return false;
+            if (TryPulling(TableTan, arg, out var res))
+                return (true, res);
+            // tan(x) = -tan(pi - x)
+            if (TryPulling(TableTan, (Real)MathS.DecimalConst.pi - arg, out res))
+                return (true, res * -1);
+            return (false, null);
+        }
+
+        private static (bool, Entity?) TanFromDoubledAngle(Complex arg)
+        {
+            // tan(x) = sqrt((1 - cos(2x)) / (1 + cos(2x)))
+            if (!TryPulling(TableCos, arg * 2, out var res))
+                return (false, null);
+            return (true, MathS.Sqrt((1 - res) / (1 + res)));
         }
 
         internal static bool PullTan(Complex arg,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? res)
-        {
-            if (TryPulling(TableTan, arg, out res))
-                return true;
-            if (TryPulling(TableTan, (Real)MathS.DecimalConst.pi - arg, out res))
-            {
-                res *= -1;
-                return true;
-            }
-            if (TryPulling(TableCos, arg * 2, out res))
-            {
-                res = MathS.Sqrt((1 - res) / (1 + res));
-                return true;
-            }
-            return false;
-        }
+            => OrHalfTurn(TanFromTable, arg, oddOverHalfTurn: false, out res)
+            || OrHalfTurn(TanFromDoubledAngle, arg, oddOverHalfTurn: false, out res);
 
         private static Entity Sqrt(Entity a) => MathS.Pow(a, f1_2);
         private static Entity Cbrt(Entity a) => MathS.Pow(a, f1_3);
