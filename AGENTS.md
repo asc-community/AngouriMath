@@ -83,6 +83,12 @@ go, named for the issue.
 **Reproduce on a stock `master` build before claiming anything is broken.** More than one confident
 report here has turned out to describe behaviour that was never broken.
 
+The same measurement is worth taking before you plan a fix at all. An open issue names the version
+its reporter was on, and the tracker is older than the code: on 2026-08-05, eleven of the open
+issues turned out to be already fixed, and re-measuring them cost minutes where planning fixes for
+them would have cost days. Run the reporter's expression first. Close it with the measurement if it
+answers, and say which build you measured.
+
 ## Aim high
 
 The ambition is to answer the hard problems: olympiad and competition algebra, calculus and number
