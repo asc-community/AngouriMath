@@ -268,6 +268,8 @@ atom returns[Entity value]
     | '{' cset_args = cset_arguments '}' { $value = new ConditionalSet($cset_args.couple.variable, $cset_args.couple.predicate); }
     | '{' args = function_arguments '}' { $value = new FiniteSet((IEnumerable<Entity>)$args.list); }
     | 'log(' args = function_arguments ')' { $value = Assert("log", (1, 2), $args.list.Count) ? MathS.Log(10, $args.list[0]) : MathS.Log($args.list[0], $args.list[1]); }
+    | 'log10(' args = function_arguments ')' { Assert("log10", 1, $args.list.Count); $value = MathS.Log(10, $args.list[0]); }
+    | 'log2(' args = function_arguments ')' { Assert("log2", 1, $args.list.Count); $value = MathS.Log(2, $args.list[0]); }
     | 'pow(' args = function_arguments ')' { Assert("pow", 2, $args.list.Count); $value = MathS.Pow($args.list[0], $args.list[1]); }
     | 'sqrt(' args = function_arguments ')' { Assert("sqrt", 1, $args.list.Count); $value = MathS.Sqrt($args.list[0]); }
     | 'cbrt(' args = function_arguments ')' { Assert("cbrt", 1, $args.list.Count); $value = MathS.Cbrt($args.list[0]); }
