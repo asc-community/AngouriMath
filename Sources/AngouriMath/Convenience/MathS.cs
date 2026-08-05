@@ -4419,6 +4419,30 @@ namespace AngouriMath
         public static Entity? Det(Matrix m)
             => m.Determinant;
 
+        /// <summary>
+        /// Returns the characteristic polynomial det(x*I - m) of a square matrix, whose roots
+        /// are its eigenvalues. https://github.com/asc-community/AngouriMath/issues/381
+        /// </summary>
+        /// <param name="m">A square matrix</param>
+        /// <param name="variable">The variable the polynomial is written in</param>
+        /// <example>
+        /// <code>
+        /// Matrix a = "[[1, 2], [3, 4]]";
+        /// Console.WriteLine(CharacteristicPolynomial(a, "x"));
+        /// Console.WriteLine(CharacteristicPolynomial(a, "x").SolveEquation("x"));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// (1 - x) * (4 - x) - 6
+        /// { 5/2 - sqrt(33) / 2, 5/2 + sqrt(33) / 2 }
+        /// </code>
+        /// </example>
+        /// <exception cref="Core.Exceptions.InvalidMatrixOperationException">
+        /// Thrown for a non-square matrix
+        /// </exception>
+        public static Entity CharacteristicPolynomial(Matrix m, Variable variable)
+            => m.CharacteristicPolynomial(variable);
+
         /// <summary>Creates an instance of <see cref="Entity.Matrix"/>.</summary>
         /// <param name="values">
         /// A two-dimensional array of values.

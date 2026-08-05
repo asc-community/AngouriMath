@@ -250,6 +250,39 @@ namespace AngouriMath
             }, this);
             private LazyPropertyA<Matrix?> inverse;
 
+            /// <summary>
+            /// The characteristic polynomial det(x*I - A), whose roots are the eigenvalues
+            /// of the matrix. https://github.com/asc-community/AngouriMath/issues/381
+            /// </summary>
+            /// <param name="variable">
+            /// The variable the polynomial is written in
+            /// </param>
+            /// <returns>
+            /// A polynomial of degree <see cref="RowCount"/>, inner simplified. It is monic:
+            /// det(x*I - A) rather than det(A - x*I), which are the same polynomial up to a
+            /// sign for an odd-sized matrix. The eigenvalues are the roots either way, and the
+            /// monic form is the one sympy and most linear algebra texts state, so it is the
+            /// one that composes with the polynomial solver without a stray -1 in front.
+            /// </returns>
+            /// <exception cref="InvalidMatrixOperationException">
+            /// Thrown for a non-square matrix, which has no characteristic polynomial
+            /// </exception>
+            public Entity CharacteristicPolynomial(Variable variable)
+            {
+                if (!IsSquare)
+                    throw new InvalidMatrixOperationException(
+                        "Only a square matrix has a characteristic polynomial");
+                var shifted = InnerMatrix.Copy(true);
+                for (var i = 0; i < RowCount; i++)
+                    shifted[i, i] = (variable - shifted[i, i]).InnerSimplified;
+                for (var row = 0; row < RowCount; row++)
+                    for (var column = 0; column < ColumnCount; column++)
+                        if (row != column)
+                            shifted[row, column] = (-shifted[row, column]).InnerSimplified;
+                return new Matrix(shifted).Determinant
+                    ?? throw new AngouriBugException("A square matrix always has a determinant");
+            }
+
 
             /// <summary>
             /// The Add operator. Performs an active operation
