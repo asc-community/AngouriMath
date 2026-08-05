@@ -131,6 +131,137 @@ namespace AngouriMath.Functions.Algebra
             else return null;
         }
 
+        /// <summary>
+        /// The squeeze theorem, in the one shape that does not need the bounded factor's own
+        /// limit: a factor bounded near the destination times one that vanishes there tends to
+        /// zero, however wildly the bounded one oscillates. Also written as a quotient, where a
+        /// bounded dividend over a diverging divisor is the same statement.
+        /// </summary>
+        /// <remarks>
+        /// Every other rule reads a limit as a value -- the descent puts each part's own limit in
+        /// place of the part, l'Hopital's rule wants a determinate quotient, Gruntz compares rates
+        /// of growth. <c>sin(x)</c> has no limit at infinity, so each of them correctly declines
+        /// and the product is left indeterminate in the shape <c>(no limit) * 0</c>. What the
+        /// theorem needs of the factor is not its limit but its boundedness, which is a weaker
+        /// fact and one that can be read off the shape --
+        /// https://github.com/asc-community/AngouriMath/issues/723.
+        /// </remarks>
+        internal static Entity? SolveAsBoundedTimesVanishing(Entity expr, Variable x)
+        {
+            switch (expr)
+            {
+                case Mulf(var multiplier, var multiplicand):
+                    if (IsBoundedAtInfinity(multiplier, x) && VanishesAtInfinity(multiplicand, x))
+                        return Integer.Zero;
+                    if (IsBoundedAtInfinity(multiplicand, x) && VanishesAtInfinity(multiplier, x))
+                        return Integer.Zero;
+                    return null;
+                case Divf(var dividend, var divisor):
+                    if (IsBoundedAtInfinity(dividend, x) && DivergesAtInfinity(divisor, x))
+                        return Integer.Zero;
+                    return null;
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// That a sine or a cosine has no limit where its argument grows without bound: it takes
+        /// every value in its range infinitely often on the way in and settles on none of them.
+        /// </summary>
+        /// <remarks>
+        /// NaN is the claim that there is no limit, which is a different and stronger statement
+        /// than leaving the node unevaluated -- that one says only that none of the rules found
+        /// one. The distinction is worth making where it can be: it is the one this library draws
+        /// between a limit it has decided against and a limit it has not reached.
+        /// <para/>
+        /// Only for a real argument, as with boundedness above, and for the same reason:
+        /// sin(i * t) diverges rather than oscillating.
+        /// </remarks>
+        internal static Entity? SolveAsOscillationWithoutLimit(Entity expr, Variable x)
+            => expr is Sinf or Cosf
+               && IsRealValued(expr.DirectChildren[0], x)
+               && DivergesAtInfinity(expr.DirectChildren[0], x)
+                ? Real.NaN
+                : null;
+
+        private static bool VanishesAtInfinity(Entity expr, Variable x)
+            => LimitFunctional.ComputeLimit(expr, x, Real.PositiveInfinity) is { } limit
+               && limit.Evaled is Real { IsZero: true };
+
+        private static bool DivergesAtInfinity(Entity expr, Variable x)
+            => LimitFunctional.ComputeLimit(expr, x, Real.PositiveInfinity) is { } limit
+               && limit.Evaled is Real { IsFinite: false, IsNaN: false };
+
+        /// <summary>
+        /// Whether the expression stays within some finite bound as x grows, established without
+        /// asking what it tends to. Nothing is claimed for a shape not listed here.
+        /// </summary>
+        /// <remarks>
+        /// Deliberately not "has a finite limit": that is the case the rest of the machinery
+        /// already covers, and asking for it here would only repeat work while missing the
+        /// factors this exists for, which have no limit at all.
+        /// </remarks>
+        private static bool IsBoundedAtInfinity(Entity expr, Variable x)
+        {
+            if (!expr.ContainsNode(x))
+                return expr.Evaled is Number { IsFinite: true };
+            switch (expr)
+            {
+                // A sine and a cosine never exceed 1 in magnitude and a sign never exceeds 1;
+                // an arctangent and an arccotangent stay within an interval of angles. Each of
+                // those is a fact about a real argument, and none of them holds otherwise:
+                // sin(i * t) is i * sinh(t), which grows without bound.
+                case Sinf or Cosf or Signumf or Arctanf or Arccotanf:
+                    return IsRealValued(expr.DirectChildren[0], x);
+                case Absf(var argument):
+                    return IsBoundedAtInfinity(argument, x);
+                case Mulf(var multiplier, var multiplicand):
+                    return IsBoundedAtInfinity(multiplier, x) && IsBoundedAtInfinity(multiplicand, x);
+                case Sumf(var augend, var addend):
+                    return IsBoundedAtInfinity(augend, x) && IsBoundedAtInfinity(addend, x);
+                case Minusf(var minuend, var subtrahend):
+                    return IsBoundedAtInfinity(minuend, x) && IsBoundedAtInfinity(subtrahend, x);
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Whether the expression is real wherever it is defined, given that x is. A free variable
+        /// is read as complex by this library, so one appearing anywhere but under a modulus
+        /// settles nothing and the answer is no.
+        /// </summary>
+        private static bool IsRealValued(Entity expr, Variable x)
+        {
+            if (!expr.ContainsNode(x))
+                return expr.Evaled is Real { IsNaN: false };
+            switch (expr)
+            {
+                case Variable variable:
+                    return variable == x;
+                case Sumf(var augend, var addend):
+                    return IsRealValued(augend, x) && IsRealValued(addend, x);
+                case Minusf(var minuend, var subtrahend):
+                    return IsRealValued(minuend, x) && IsRealValued(subtrahend, x);
+                case Mulf(var multiplier, var multiplicand):
+                    return IsRealValued(multiplier, x) && IsRealValued(multiplicand, x);
+                case Divf(var dividend, var divisor):
+                    return IsRealValued(dividend, x) && IsRealValued(divisor, x);
+                // Only an integer exponent keeps a real base real: x ^ (1/2) is not real below 0.
+                case Powf(var @base, Integer):
+                    return IsRealValued(@base, x);
+                case Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf
+                     or Arctanf or Arccotanf or Signumf:
+                    return IsRealValued(expr.DirectChildren[0], x);
+                // A modulus is real whatever it is taken of.
+                case Absf:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         internal static Entity? SolveAsLogarithmDivision(Entity expr, Variable x)
         {
             if (expr is Divf(Logf(var upperLogBase, var upperLogArgument), Logf(var lowerLogBase, var lowerLogArgument)))

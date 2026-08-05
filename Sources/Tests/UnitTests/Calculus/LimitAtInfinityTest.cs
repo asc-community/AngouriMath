@@ -82,10 +82,16 @@ namespace AngouriMath.Tests.Calculus
         /// <see cref="CompetingGrowthAtInfinity"/>. They were here because l'Hopital's rule
         /// cannot reach them within its bound on steps, which is still true of the rule and is
         /// no longer true of the library. Nothing about that bound changed.
+        /// <para/>
+        /// sin(x) itself has moved to <see cref="BoundedTimesVanishingTest"/> for the opposite
+        /// reason: it is now NaN, and that is not a guess. Nothing here established
+        /// non-existence, so claiming it here would have been one; a sine takes every value in
+        /// [-1, 1] infinitely often on the way out to infinity, which does establish it. The
+        /// distinction this summary draws is the point and it still holds -- the two forms left
+        /// are ones nothing has established anything about.
         /// </remarks>
         [Theory]
         [InlineData("(x + sin(x)) / x")]
-        [InlineData("sin(x)")]
         [InlineData("x * sin(x)")]
         public void AFormThatCannotBeSettledTerminatesWithoutClaimingAnAnswer(string expression)
         {
