@@ -64,8 +64,14 @@ namespace AngouriMath.Tests.Calculus
         /// monotone and so comparable at all. A sine is not: it has no limit at infinity and no
         /// comparability class, so this declines rather than guesses.
         /// </summary>
+        /// <remarks>
+        /// A bare sin(x) used to be the first of these and is now answered NaN -- not by this
+        /// algorithm, which still declines it, but by the rule that reads a sine's range
+        /// directly (<see cref="BoundedTimesVanishingTest"/>). What this test is about is
+        /// unchanged: the two forms left are ones no rule anywhere has a reading of, and the
+        /// series must not invent one for them.
+        /// </remarks>
         [Theory]
-        [InlineData("sin(x)")]
         [InlineData("(x + sin(x)) / x")]
         [InlineData("x * cos(x)")]
         public void AnOscillationIsDeclinedRatherThanGuessedAt(string expression)

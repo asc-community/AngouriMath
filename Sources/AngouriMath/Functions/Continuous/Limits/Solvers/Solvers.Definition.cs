@@ -34,6 +34,19 @@ namespace AngouriMath.Functions.Algebra
             var logarithmDivisionResult = LimitSolvers.SolveAsLogarithmDivision(expr, x);
             if (logarithmDivisionResult is { }) return logarithmDivisionResult;
 
+            // Last, because it is the only one here that asks for a limit of its own and so is
+            // the only one whose cost is another walk of the machinery. Everything above reads
+            // the expression where it stands.
+            var boundedResult = LimitSolvers.SolveAsBoundedTimesVanishing(expr, x);
+            if (boundedResult is { }) return boundedResult;
+
+            // After the rule above and not before it. This one answers NaN, which is the claim
+            // that there is no limit, and the squeeze theorem is precisely the case where a
+            // factor with no limit of its own still leaves the product with one. Asked first it
+            // would settle sin(x) / x as (no limit) / (+oo) before the theorem was reached.
+            var oscillationResult = LimitSolvers.SolveAsOscillationWithoutLimit(expr, x);
+            if (oscillationResult is { }) return oscillationResult;
+
             return null;
         }
 
