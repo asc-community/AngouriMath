@@ -123,6 +123,15 @@ convention, and test the disagreeing points.
 
 ## Working practice
 
+**A plan belongs in an issue, not in a comment.** When work splits into separable pieces — or when
+a discussion settles on a design bigger than the thread it is in — open a new issue per piece and
+then execute on them. A plan left in a comment is not work anybody can pick up, schedule or argue
+with separately, and the thread it sits in closes over it.
+
+Split by what can be landed and measured on its own, not by topic. Each new issue says what the
+problem is, what the plan is, and what has to be re-measured rather than assumed; then link them
+from the issue they came out of, and say which one closes it.
+
 **Branch first, always.** Never commit a feature or a fix straight to `master`, even with write
 access. One branch per change, each independently mergeable, cut from `master`.
 
