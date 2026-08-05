@@ -66,6 +66,13 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
             var res = new HashSet<Complex>();
             var df = WithoutConditions(expr.Differentiate(v).Simplify()).Compile(v);
             var f = WithoutConditions(expr.Simplify()).Compile(v);
+            void IterateFrom(NumericsComplex start)
+            {
+                var root = NewtonIter(f, df, start, settings.Precision);
+                if (root.IsFinite && f.Call(root.ToNumerics()).ToNumber().Abs() <
+                    MathS.Settings.PrecisionErrorCommon.Value)
+                    res.Add(root);
+            }
             // The shares are worked out by CtxDivide, which rounds to the working precision,
             // rather than by EDecimal's own operator, which has no context and answers NaN
             // whenever the quotient does not terminate in base ten. Only step counts of the
@@ -83,17 +90,93 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
                     var value = Complex.Create(
                         settings.From.Re * xShare + settings.To.Re * (1 - xShare),
                         settings.From.Im * yShare + settings.To.Im * (1 - yShare));
-                    var root = NewtonIter(f, df, value.ToNumerics(), settings.Precision);
-                    if (root.IsFinite && f.Call(root.ToNumerics()).ToNumber().Abs() <
-                        MathS.Settings.PrecisionErrorCommon.Value)
-                        res.Add(root);
+                    IterateFrom(value.ToNumerics());
                 }
+            foreach (var start in RealSignChanges(f, settings))
+                IterateFrom(start);
             // Rounded and collapsed first, then verified: both cut down the duplicates the
             // grid search produces, so there is less to verify, and what gets verified is
             // the values actually handed back.
             var distinct = OnePerRoot(WithoutIterationNoise(res), f);
             distinct.RemoveWhere(root => !Satisfies(expr, v, root));
             return distinct;
+        }
+
+        /// <summary>
+        /// How much of the value at a real point may be imaginary before the expression
+        /// is taken not to be real-valued there, relative to the real part's own size.
+        /// </summary>
+        private const double NotRealHere = 1e-9;
+
+        /// <summary>
+        /// Extra starting points, read off the sign changes of the expression along the
+        /// real axis.
+        /// </summary>
+        /// <remarks>
+        /// The grid is two-dimensional, so its resolution along the real axis is only the
+        /// square root of what it costs: the default 10 x 10 lays real starting points 2
+        /// apart, and two roots closer together than that share one, so which of them gets
+        /// reached is left to where the iteration happens to go. A polynomial usually
+        /// survives that, its basins being interleaved across the whole plane -- the roots
+        /// of <c>x*(x - 1/2)*(x + 1/2)</c> all come back. An expression that is only real
+        /// on a small interval does not: outside <c>[-1, 1]</c> every starting point hands
+        /// <c>arcsin</c> a complex value and the iteration wanders off. That is
+        /// https://github.com/asc-community/AngouriMath/issues/115 -- <c>arcsin(x) - x*pi/3</c>
+        /// has roots at -1/2, 0 and 1/2, and only 0 came back. It is not a matter of
+        /// iterating harder: all three were already inside the region being searched.
+        /// <para/>
+        /// A sign change is a far cheaper witness of a root than a Newton run is -- one
+        /// evaluation against the sixty an iteration to precision 30 costs. So the scan can
+        /// afford as many points as the whole grid has, <see cref="MathS.Settings.NewtonSetting.StepCount"/>
+        /// multiplied out, which lays them 0.2 apart by default rather than 2, and it costs
+        /// a couple of percent of what the grid already spends. Newton then runs only from
+        /// the brackets, of which a well-behaved expression has a handful.
+        /// <para/>
+        /// This is additive, not a replacement. A sign change witnesses a root of odd
+        /// multiplicity on an interval where the expression is real; it says nothing about
+        /// a repeated root like <c>x^2</c>, nor about any root off the real axis. Those stay
+        /// the grid's to find, and the grid is left as it was.
+        /// </remarks>
+        private static IEnumerable<NumericsComplex> RealSignChanges(
+            FastExpression f, MathS.Settings.NewtonSetting settings)
+        {
+            // The value at a real point, or null where the expression is not real-valued
+            // there. arcsin outside [-1, 1] is the case that matters: half the default
+            // region is outside the domain of the reporter's own equation, and the
+            // intermediate value theorem has nothing to say about a complex value.
+            double? RealValueAt(double at)
+            {
+                NumericsComplex value;
+                try { value = f.Call(new NumericsComplex(at, 0)); }
+                catch (System.Exception) { return null; }
+                if (double.IsNaN(value.Real) || double.IsInfinity(value.Real)
+                    || double.IsNaN(value.Imaginary) || double.IsInfinity(value.Imaginary))
+                    return null;
+                return Math.Abs(value.Imaginary)
+                    > NotRealHere * (1 + Math.Abs(value.Real)) ? null : value.Real;
+            }
+            var count = (long)settings.StepCount.Re * settings.StepCount.Im;
+            if (count < 2)
+                yield break;
+            var from = settings.From.Re.ToDouble();
+            var to = settings.To.Re.ToDouble();
+            var previousAt = double.NaN;
+            double? previous = null;
+            for (long i = 0; i <= count; i++)
+            {
+                var share = (double)i / count;
+                var at = from * share + to * (1 - share);
+                var value = RealValueAt(at);
+                if (value is 0d)
+                    yield return new NumericsComplex(at, 0);
+                else if (value is { } here && previous is { } there
+                    && (here < 0) != (there < 0))
+                    // The midpoint, rather than either end: the bracket holds a root and
+                    // Newton converges fastest from as near it as we can say it is.
+                    yield return new NumericsComplex((at + previousAt) / 2, 0);
+                previousAt = at;
+                previous = value;
+            }
         }
 
         /// <summary>

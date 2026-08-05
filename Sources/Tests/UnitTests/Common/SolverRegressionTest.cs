@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using System.Linq;
 using AngouriMath;
 using AngouriMath.Extensions;
 using Xunit;
@@ -162,6 +163,29 @@ namespace AngouriMath.Tests.Common
         [InlineData("x + ln(x) = 0", 1)]
         public void RootVerificationKeepsEveryGenuineRoot(string equation, int expected) =>
             Assert.Equal(expected, ((Entity.Set.FiniteSet)equation.ToEntity().Solve("x")).Count);
+
+        // https://github.com/asc-community/AngouriMath/issues/115
+        // The numerical solver starts from a two-dimensional grid, so its resolution
+        // along the real axis is only the square root of what the grid costs: the
+        // default 10 x 10 over [-10, 10] lays real starting points 2 apart. All three
+        // roots of the reporter's equation lie within [-1/2, 1/2], so they shared a
+        // single starting point and only 0 ever came back. Every root was inside the
+        // region already being searched, which is what makes this a defect rather than
+        // a limit of the method.
+        [Theory]
+        [InlineData("arcsin(x) - x * pi / 3", 0.5)]
+        [InlineData("arcsin(x) - 1.2 * x", 0.8556152428091417)]
+        public void Issue115_NewtonFindsRootsCloserTogetherThanTheGridSpacing(
+            string equation, double outer)
+        {
+            var roots = (Entity.Set.FiniteSet)equation.ToEntity().SolveEquation("x");
+            var found = roots.Select(root => root.EvalNumerical().RealPart.EDecimal.ToDouble())
+                             .OrderBy(value => value).ToList();
+            Assert.Equal(3, found.Count);
+            Assert.Equal(-outer, found[0], 9);
+            Assert.Equal(0d, found[1], 9);
+            Assert.Equal(outer, found[2], 9);
+        }
 
         // Not in the tracker. Simplification leaves domain conditions behind, and the
         // Newton solver compiled the simplified form without stripping them, so an
