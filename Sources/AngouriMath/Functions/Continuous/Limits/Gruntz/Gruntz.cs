@@ -78,6 +78,7 @@ namespace AngouriMath.Functions.Algebra
         {
             if (depth > 0)
                 return null;                       // already inside; the caller is the entry
+            expr = AsExponentials(expr, x);
             try { return LimitInf(expr, x); }
             catch (Core.Exceptions.AngouriBugException) { throw; }
             catch (OperationCanceledException) { throw; }
@@ -163,6 +164,31 @@ namespace AngouriMath.Functions.Algebra
         }
 
         private static Entity Exponential(Entity exponent) => MathS.Pow(MathS.e, exponent);
+
+        /// <summary>
+        /// Every power whose exponent moves rewritten as an exponential, which is how
+        /// <see cref="Mrv"/> reads one in any case.
+        /// </summary>
+        /// <remarks>
+        /// The mrv set holds subexpressions of the expression and <see cref="Rewrite"/>
+        /// substitutes them by name, so a member has to occur in the expression as it stands.
+        /// Reading b^p as exp(p * ln(b)) inside Mrv alone put a member in the set that was
+        /// nowhere in the expression: for x^x / e^(x * ln(x)) the set came back holding the
+        /// same exponential twice, once as the constructed e^(x * ln(x)) and once as the
+        /// denominator's own e^(ln(x) * x), and the substitution found only the second. The
+        /// numerator went into the series as x^x, whose leading exponent reads as +1, and the
+        /// limit came back 0 where the two sides are equal and the answer is 1.
+        /// https://github.com/asc-community/AngouriMath/issues/735
+        /// This assumes b is positive, which is what Mrv's own reading of the same node
+        /// already assumed; the algorithm is scoped to the exp-log functions, and a moving
+        /// exponent over a base that changes sign is outside that class either way.
+        /// </remarks>
+        private static Entity AsExponentials(Entity e, Variable x) => e.Replace(node =>
+            node is Powf(var @base, var power)
+            && @base != MathS.e
+            && power.ContainsNode(x)
+                ? Exponential((power * MathS.Ln(@base)).InnerSimplified)
+                : node);
 
         /// <summary>
         /// The expression without the domain conditions simplification leaves behind. A limit
@@ -378,6 +404,12 @@ namespace AngouriMath.Functions.Algebra
                 rewritten = rewritten.Substitute(member, coefficient * MathS.Pow(substituted, power));
             }
             if (rewritten.ContainsNode(x) && !logarithmOfW.ContainsNode(x))
+                return null;
+            // A member the substitution did not find is a member left in the series, where it
+            // is read as part of a coefficient and the conclusion is drawn from a leading term
+            // that is not the leading term. There is nothing to salvage from that, and saying
+            // nothing is the only safe reading -- this is where x^x / e^(x * ln(x)) answered 0.
+            if (members.Any(member => rewritten.ContainsNode(member.Member)))
                 return null;
             return (rewritten, logarithmOfW);
         }
