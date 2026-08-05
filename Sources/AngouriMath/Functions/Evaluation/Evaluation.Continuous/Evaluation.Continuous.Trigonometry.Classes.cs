@@ -192,6 +192,7 @@ namespace AngouriMath
                 a => a switch
                 {
                     Complex n when !isExact => Number.Arcsin(n),
+                    { Evaled: Complex n } when isExact && InverseTrigonometricTableValues.PullArcsin(n, out var res) => res,
                     _ => null
                 },
                 (@this, a) => ((Arcsinf)@this).New(a), isExact);
@@ -209,6 +210,7 @@ namespace AngouriMath
                 a => a switch
                 {
                     Complex n when !isExact => Number.Arccos(n),
+                    { Evaled: Complex n } when isExact && InverseTrigonometricTableValues.PullArccos(n, out var res) => res,
                     _ => null
                 },
                 (@this, a) => ((Arccosf)@this).New(a), isExact);
@@ -232,6 +234,7 @@ namespace AngouriMath
                     // pi/4 stopped one step short of it.
                     Integer(1) => MathS.pi / 4,
                     Integer(-1) => -MathS.pi / 4,
+                    { Evaled: Complex n } when isExact && InverseTrigonometricTableValues.PullArctan(n, out var res) => res,
                     _ => null
                 },
                 (@this, a) => ((Arctanf)@this).New(a), isExact);
@@ -247,6 +250,7 @@ namespace AngouriMath
                 a => a switch
                 {
                     Complex n when !isExact => Number.Arccotan(n),
+                    { Evaled: Complex n } when isExact && InverseTrigonometricTableValues.PullArccotan(n, out var res) => res,
                     _ => null
                 },
                 (@this, a) => ((Arccotanf)@this).New(a), isExact);

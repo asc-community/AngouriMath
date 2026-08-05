@@ -102,10 +102,12 @@ namespace AngouriMath.Tests.Common
             Assert.IsAssignableFrom<Entity.Number>("(|[12,15]|)".ToEntity().Evaled);
 
         // The exact path must keep its symbolic answer -- this fix is only about the
-        // numeric one.
+        // numeric one. The radicand comes out reduced (369 = 9 * 41) since perfect powers
+        // are pulled out from under a root:
+        // https://github.com/asc-community/AngouriMath/issues/281
         [Fact]
         public void Issue662_ExactPathStaysSymbolic() =>
-            Assert.Equal("sqrt(369)".ToEntity(), "(|[12,15]|)".ToEntity().InnerSimplified);
+            Assert.Equal("3 * sqrt(41)".ToEntity(), "(|[12,15]|)".ToEntity().InnerSimplified);
 
         // Not filed upstream; found while measuring solver coverage.
         // `lim x->0 (1+x)^(1/x)` answered 1 instead of e. The second remarkable limit
