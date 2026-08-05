@@ -74,6 +74,21 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// </summary>
         private static bool IsSpurious(Entity equation, Variable x, Entity root)
         {
+            // A root that still mentions the variable it solves for is the equation
+            // rearranged, not an answer to it: x = sqrt(-1 - x) says nothing about x. This
+            // is decided before the parameter exemption below, which would otherwise keep
+            // such a root unconditionally -- it carries a variable, so substituting it back
+            // leaves an expression rather than a residual, and there is no evidence to drop
+            // it on. That is how (x^2 + x + 1)^2 = 0 came to be answered with two of them.
+            //
+            // No equation reaches this today: the routes that produced such a root are
+            // fixed at their source in AnalyticalEquationSolver, which is what makes those
+            // equations answer correctly rather than emptily. It is kept because Invert
+            // requires the variable to occur once and only one of its five callers checks
+            // that, so the next caller to forget is caught here rather than in a bug report.
+            // https://github.com/asc-community/AngouriMath/issues/744
+            if (root.ContainsNode(x))
+                return true;
             if (root.Vars.Any())
                 return false;
             try
