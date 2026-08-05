@@ -140,9 +140,52 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     return Solve(expression, x, compensateSolving).Filter(predicate, x);
                 case Piecewise p:
                     return EquationSolver.SolvePiecewise(p, x, (e, x) => Solve(e, x, compensateSolving));
+                // A product is zero exactly where one of its factors is. Without this the
+                // factors are expanded back into a polynomial and the equation is answered
+                // by the general formula for whatever degree that turns out to be, so
+                // (x - 1)(x^2 - 3) = 0 -- handed over already factored -- came back as two
+                // nested cube roots of 26 + 18i rather than as 1 and +-sqrt(3).
+                // https://github.com/asc-community/AngouriMath/issues/272
+                //
+                // A factor free of x contributes no roots. It could still be zero itself,
+                // which would make every x a solution, but that is a reading the solver
+                // does not take anywhere else either: a * (x^2 - 3) = 0 already answered
+                // +-sqrt(3) by dividing a out, so nothing changes here.
+                case Mulf(var left, var right) when left.ContainsNode(x) || right.ContainsNode(x):
+                {
+                    var factors = new List<Entity>(2);
+                    if (left.ContainsNode(x)) factors.Add(left);
+                    if (right.ContainsNode(x)) factors.Add(right);
+                    var product = expr;
+                    // Zeroing one factor makes the product zero only where the others are
+                    // defined: x * (1/x) is undefined at 0, not zero there. This has to be
+                    // checked here rather than left to the verification every solver shares,
+                    // because that deliberately keeps a root whose residual does not
+                    // evaluate to a number at all -- a root is only dropped on positive
+                    // evidence, and NaN is not evidence (see SolveStatement.IsSpurious).
+                    bool ProductIsDefinedAt(Entity root)
+                        => root.Vars.Any()
+                           || product.Substitute(x, root).Evaled is not Complex value
+                           || value.IsFinite;
+                    var fromFactors = factors.Select(factor => Solve(factor, x, compensateSolving)).Unite();
+                    // Collapsed first: uniting sets builds a Unionf, and the roots cannot be
+                    // looked at one at a time until it is a finite set again.
+                    return fromFactors.InnerSimplified is FiniteSet found
+                        ? found.Where(ProductIsDefinedAt).ToSet()
+                        : fromFactors;
+                }
                 default:
                     break;
             }
+
+            // The same equation written out as a sum. Where a rational root can be divided
+            // out, what is left is a polynomial of lower degree, and the factors are then
+            // solved one at a time by the case above -- which is how x^3 - x^2 - 3x + 3 is
+            // answered exactly, and how a quintic is answered at all.
+            // https://github.com/asc-community/AngouriMath/issues/272
+            if (Functions.PolynomialFactoring.TrySplitOffRationalRoots(expr, x, out var split)
+                && split is Mulf)
+                return Solve(split, x, compensateSolving);
 
             if (PolynomialSolver.SolveAsPolynomial(expr, x, out var isIdentity) is { } poly)
                 return poly.Select(e => TryDowncast(expr, x, e.InnerSimplified)).ToSet();
