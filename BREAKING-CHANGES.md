@@ -24,6 +24,7 @@ read first.
 | loud | `Minusf.Minuend` / `.Subtrahend` | named for the wrong operand | named for the right one |
 | **silent** | `exp(x)`, `log10(x)`, `log2(x)` | products of undeclared variables | the functions |
 | loud | `arcsinh(x)` and its five relatives | a product | `UnrecognizedFunctionParseException` |
+| loud | `floor(x)` and ten other names the library lacks | a product, silently | `UnrecognizedFunctionParseException` |
 | loud | `mod` as a variable name | a variable | a keyword, so a parse error |
 | **silent** | `Stringize` of powers, lambdas, applications, piecewises | did not parse back | parses back |
 | **silent** | numbers below `1e-16` | rounded to `0` | kept |
@@ -123,6 +124,41 @@ and its five relatives are correct and untouched, and a name that merely begins 
 `arcs(x)`, `arcsinhh(x)` — is still the product it was.
 
 PR [#687](https://github.com/asc-community/AngouriMath/pull/687).
+
+### Eleven function names the library does not have are refused
+
+| | |
+|---|---|
+| was | `floor * x`, silently |
+| is | `UnrecognizedFunctionParseException` |
+
+`floor`, `ceil`, `ceiling`, `round`, `trunc`, `min`, `max`, `gcd`, `lcm`, `erf` and `conjugate` are
+each what some other CAS calls a function, and AngouriMath has none of them. A name the grammar does
+not know, followed by a bracket, is the implicit multiplication that lets `a(b + c)` mean
+`a * (b + c)` — so each came back as the product of an undeclared variable with its argument, and
+nothing said so. What that cost:
+
+```csharp
+"floor(x) - 3 = 0".Solve("x")     // was { 3 / floor }, a root of nothing
+```
+
+Two things are worth knowing before you read this as a loss. First, it is the **same absence** that
+was already reported for two arguments, only reported the same way now: `min(x, y)` did raise, but
+with `no viable alternative at input '*('` from the parser generator, so whether a missing function
+was invisible or merely cryptic depended on how many arguments the caller happened to pass. Second,
+none of these is being removed — none was ever there.
+
+Refusing *every* unknown name is not an option, because that is what `a(b + c)` is. So these are
+refused one at a time, as `arcsinh` above is, and everything else is untouched: each name on its own
+is still an ordinary variable (`min + 1`, `floor + floor`), and a longer name beginning the same way
+is still a product (`minimum(x)`, `rounded(x)`, `maxx(y)`).
+
+`re` and `im` are deliberately **not** refused although they misparse identically. Two letters is
+short enough that a caller may reasonably have a variable of that name, and refusing would break
+their expression to fix nobody's.
+
+[#733](https://github.com/asc-community/AngouriMath/issues/733), PR
+[#750](https://github.com/asc-community/AngouriMath/pull/750).
 
 ### `mod` is now a keyword
 
