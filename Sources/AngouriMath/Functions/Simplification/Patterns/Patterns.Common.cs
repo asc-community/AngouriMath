@@ -39,8 +39,15 @@ namespace AngouriMath.Functions
             Divf(Mulf(var any1, Real { IsNegative: true } num), var any2) => -((-num) * (any1 / any2)),
             Mulf(var any2, Mulf(Real { IsNegative: true } num, var any1)) => -((-num) * (any1 * any2)),
             Mulf(var any2, Mulf(var any1, Real { IsNegative: true } num)) => -((-num) * (any1 * any2)),
-            Divf(var any2, Mulf(Real { IsNegative: true } num, var any1)) => -((-num) * (any1 / any2)),
-            Divf(var any2, Mulf(var any1, Real { IsNegative: true } num)) => -((-num) * (any1 / any2)),
+            // A negative factor under the line comes out as a sign in front, and what is left
+            // stays under the line: a / (-b * c) is -(a / (b * c)), not -(b * (c / a)). Written
+            // the latter way -- as the four rules above it are, where the negative factor is in
+            // the numerator and multiplying by it is right -- the quotient came back inverted,
+            // and Simplify takes whichever candidate is shortest, so the inverted one won
+            // wherever it was smaller: 1 / (x * (-1 - 1/x)) simplified to -(1 + x), which is its
+            // reciprocal.
+            Divf(var any2, Mulf(Real { IsNegative: true } num, var any1)) => -(any2 / ((-num) * any1)),
+            Divf(var any2, Mulf(var any1, Real { IsNegative: true } num)) => -(any2 / ((-num) * any1)),
 
             _ => x
         };
