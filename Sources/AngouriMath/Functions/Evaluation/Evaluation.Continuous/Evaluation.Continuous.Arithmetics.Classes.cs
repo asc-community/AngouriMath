@@ -105,30 +105,6 @@ namespace AngouriMath
             // Like division, undefined when the divisor is zero
             private protected override Entity IntrinsicCondition => !Divisor.EqualTo(0);
 
-            /// <summary>
-            /// The remainder of the floored division, a - b * floor(a / b), which takes the sign
-            /// of the divisor: -7 mod 3 is 2, and 7 mod -3 is -2.
-            /// </summary>
-            /// <remarks>
-            /// This is what a mathematician means by mod. It is the convention under which the
-            /// residues modulo n are the numbers from 0 to n - 1, which is the whole point of
-            /// the operation in number theory, and it is what the other systems answer: SymPy,
-            /// Mathematica and Maxima all give 2 for -7 mod 3. C and the languages descended
-            /// from it truncate instead and so answer -1, but their % is an operation on
-            /// machine integers, not this one.
-            /// <para/>
-            /// Built from the truncated remainder rather than from a floor, since there is no
-            /// floor in this library: the two differ by exactly one divisor, and only where the
-            /// remainder and the divisor disagree in sign.
-            /// </remarks>
-            private static Real FlooredRemainder(Real a, Real b)
-            {
-                var truncated = a % b;
-                return truncated == 0 || truncated.IsNegative == b.IsNegative
-                    ? truncated
-                    : (Real)(truncated + b);
-            }
-
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) =>
                 ExpandOnTwoArguments(Dividend, Divisor,
@@ -137,7 +113,13 @@ namespace AngouriMath
                     (_, Integer(0)) => Real.NaN,
                     // Only for reals: the remainder of a complex number by another is not
                     // one thing, and guessing at it would be worse than leaving it alone.
-                    (Real n1, Real n2) when !isExact => FlooredRemainder(n1, n2),
+                    //
+                    // The operator is the floored remainder, which is this node's own reading of
+                    // mod, so there is nothing left here to do by hand. It was not always: until
+                    // https://github.com/asc-community/AngouriMath/issues/708 the three numeric
+                    // types answered % three different ways, and this had to compute the answer
+                    // rather than ask for it.
+                    (Real n1, Real n2) when !isExact => n1 % n2,
                     (Integer(0), var n0) =>
                         n0.Evaled is Complex c
                         ? c.IsZero ? MathS.NaN : 0
