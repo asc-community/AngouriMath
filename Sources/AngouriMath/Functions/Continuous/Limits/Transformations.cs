@@ -39,6 +39,94 @@ namespace AngouriMath.Functions.Algebra
                 Providedf(var inner, _) => inner,
                 var x => x
             };
+        /// <summary>
+        /// How close in the approach is sampled when asking whether a function stays real on
+        /// the way to its destination. Powers of ten rather than a fixed step, because what
+        /// matters is near and not evenly spaced: <c>sqrt(x - 1)</c> is real just to the left
+        /// of 2 and not just to the left of 1, and only the nearer samples tell those apart.
+        /// </summary>
+        /// <remarks>
+        /// It stops at a thousandth, and the reason is cost rather than principle. The sample
+        /// point goes into the expression, and an expression may put it in an exponent:
+        /// <c>(1 + x)^(1/x)</c> at 1e-9 is <c>1.000000001</c> raised to a billion, evaluated
+        /// at a hundred digits, and asking that six times on every limit the machinery takes
+        /// turned a 20 ms limit into a timeout.
+        /// <para/>
+        /// Sampling less far in only ever *misses* a function that leaves the reals nearer the
+        /// destination than this reaches, and a miss leaves the limit answered exactly as it
+        /// was before. The guard withdraws on evidence and never on the absence of it, so the
+        /// cheap end of that trade is the safe one.
+        /// </remarks>
+        [ConstantField] private static readonly int[] ApproachScales = { 1, 2, 3 };
+
+        /// <summary>
+        /// Whether the expression takes values outside the reals on the way in. Under a real
+        /// codomain such a limit has no value, rather than the value its complex continuation
+        /// approaches.
+        /// </summary>
+        /// <remarks>
+        /// <c>lim x-&gt;0- ln(x)</c> is the plain case: the logarithm of a negative real is
+        /// <c>ln|x| + i*pi</c>, and answering <c>-oo</c> reports the magnitude of something
+        /// that is not a real number at any point of the approach.
+        /// <para/>
+        /// Decided by sampling rather than symbolically, and deliberately: what is being asked
+        /// is whether the function *takes* non-real values near a point, which no property of
+        /// the tree answers. The direction of error is chosen too. A sample that cannot be
+        /// evaluated, or that comes back non-finite, is passed over rather than counted, and an
+        /// expression carrying a second variable is not judged at all -- so the answer is only
+        /// ever "yes, demonstrably" or "not shown", and a limit is withdrawn on evidence.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/719">#719</a>
+        /// </remarks>
+        private static bool LeavesTheRealsOnTheApproach(Entity expr, Variable x, Entity dest, ApproachFrom side)
+        {
+            if (expr.Vars.Count() != 1)
+                return false;
+            var towardsNegative = side is ApproachFrom.Left;
+            if (!dest.IsFinite)
+                towardsNegative = dest.Evaled is Real { IsNegative: true };
+            foreach (var scale in ApproachScales)
+            {
+                var ten = EInteger.FromInt32(10).Pow(scale);
+                Entity point;
+                if (dest.IsFinite)
+                {
+                    var step = (Entity)Rational.Create(EInteger.One, ten);
+                    point = towardsNegative ? dest - step : dest + step;
+                }
+                else
+                {
+                    var far = (Entity)Integer.Create(ten);
+                    point = towardsNegative ? -far : far;
+                }
+                Complex value;
+                try
+                {
+                    if (expr.Substitute(x, point).EvalNumerical() is not Complex evaluated)
+                        continue;
+                    value = evaluated;
+                }
+                catch (Core.Exceptions.AngouriBugException) { throw; }
+                catch (System.Exception) { continue; }
+                if (!value.IsFinite)
+                    continue;
+                var imaginary = value.ImaginaryPart.EDecimal.Abs();
+                var real = value.RealPart.EDecimal.Abs();
+                // Relative, since the point may be evaluated at a scale where an absolute
+                // threshold means nothing, and a rounding artefact must not withdraw a limit.
+                if (imaginary.GreaterThan(EDecimal.Create(1, -6).Multiply(EDecimal.Max(real, EDecimal.One, null))))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Whether the reading in force is of real-valued functions, in which case a limit
+        /// reached only through the complex plane is not one.
+        /// </summary>
+        internal static bool RealCodomainWithdraws(Entity expr, Variable x, Entity dest, ApproachFrom side)
+            => MathS.Settings.Codomain.Value is AngouriMath.Core.Domain.Real
+               && LeavesTheRealsOnTheApproach(expr, x, dest, side);
+
         private static Entity ApplyFirstRemarkable(Entity expr, Variable x, Entity dest)
             => expr switch
             {

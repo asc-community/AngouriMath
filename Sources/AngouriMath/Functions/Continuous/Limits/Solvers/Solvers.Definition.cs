@@ -98,6 +98,20 @@ namespace AngouriMath.Functions.Algebra
             // differentiate it.
             if (expr is not ContinuousNode and not Variable and not Piecewise)
                 return null;
+
+            // Under a real codomain a limit reached only through values the function does not
+            // take in the reals is not a limit of it.
+            //
+            // Before the rewrites below and not after them, which is load-bearing rather than
+            // tidy: each of those asks for limits of its own, and under this reading those
+            // sub-limits come back unevaluated -- whereupon evaluating the unevaluated limit
+            // asks for it again, through the same rewrite, without end. Answering here costs
+            // nothing and asks nothing.
+            // https://github.com/asc-community/AngouriMath/issues/719
+            if (RealCodomainWithdraws(expr, x, dest,
+                    side is ApproachFrom.Left ? ApproachFrom.Left : ApproachFrom.Right))
+                return null;
+
             expr = expr.Replace(ExpandLogarithm);
 
             // In front of both paths, not only the two-sided one. Each of these is guarded on

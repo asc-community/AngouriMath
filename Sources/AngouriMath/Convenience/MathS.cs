@@ -5700,7 +5700,41 @@ namespace AngouriMath
             /// </summary>
             public static Setting<EContext> DecimalPrecisionContext =>
                 decimalPrecisionContext ??= new EContext(100, ERounding.HalfUp, -100, 1000, false);
-            [ThreadStatic] private static Setting<EContext>? decimalPrecisionContext;           
+            [ThreadStatic] private static Setting<EContext>? decimalPrecisionContext;
+
+            /// <summary>
+            /// Whether functions are being read as real-valued or complex-valued. It is a
+            /// statement about the reading and not about any one expression -- an
+            /// <see cref="Entity"/>'s own <c>Codomain</c> says what a particular node is
+            /// declared over, where this says what the library should take a function to be.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// <see cref="Domain.Complex"/> by default, which is what AngouriMath has always
+            /// done: <c>lim x-&gt;0- ln(x)</c> answers <c>-oo</c>, reading the logarithm along
+            /// its complex continuation, since the logarithm of a negative real is
+            /// <c>ln|x| + i*pi</c> and only its magnitude is being reported.
+            /// </para>
+            /// <para>
+            /// Under <see cref="Domain.Real"/> a limit approached through values the function
+            /// does not take in the reals has no value rather than the continued one. That is
+            /// the missing information behind a family of questions -- whether two agreeing
+            /// one-sided limits may be promoted to a two-sided one, and whether
+            /// <c>sqrt(x^2)</c> is <c>x</c> -- because each of them is answerable one way over
+            /// the reals and another over the complex plane, and the library had no way to be
+            /// told which was meant.
+            /// <a href="https://github.com/asc-community/AngouriMath/issues/719">#719</a>
+            /// </para>
+            /// <example>
+            /// <code>
+            /// using var _ = MathS.Settings.Codomain.Set(Domain.Real);
+            /// Console.WriteLine("ln(x)".Limit("x", 0, ApproachFrom.Left));
+            /// </code>
+            /// prints the unevaluated limit, where the default prints <c>-oo</c>.
+            /// </example>
+            /// </remarks>
+            public static Setting<Domain> Codomain => codomain ??= Domain.Complex;
+            [ThreadStatic] private static Setting<Domain>? codomain;
         }
 
         /// <summary>Returns an <see cref="Entity"/> in polynomial order if possible</summary>
