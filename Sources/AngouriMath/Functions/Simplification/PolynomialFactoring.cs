@@ -106,6 +106,62 @@ namespace AngouriMath.Functions
         }
 
         /// <summary>
+        /// <paramref name="expr"/> written as the linear factors of its rational roots
+        /// times whatever will not divide, or <see langword="false"/> where it has no
+        /// rational root at all.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <see cref="TryFactor"/> answers a different question and answers it more
+        /// strictly: it offers a factorization only when the polynomial splits completely
+        /// into whole linear factors, because a partly factored sum is not obviously a
+        /// better way of *writing* the same thing. Solving is not a question of how to
+        /// write it. <c>(x - 1)(x^2 - 3)</c> is no nicer to read than
+        /// <c>x^3 - x^2 - 3x + 3</c>, but it is the difference between answering with
+        /// <c>1</c> and <c>+-sqrt(3)</c> and answering with two nested cube roots of
+        /// <c>26 + 18i</c> -- and above degree four, between answering at all and handing
+        /// the equation to the numeric solver.
+        /// https://github.com/asc-community/AngouriMath/issues/272
+        /// </para>
+        /// <para>
+        /// Fractional roots are kept here where <see cref="TryFactor"/> declines them, for
+        /// the same reason: a root of <c>1/2</c> is as exact an answer as any, whatever
+        /// the factored form looks like on the page.
+        /// </para>
+        /// </remarks>
+        internal static bool TrySplitOffRationalRoots(
+            Entity expr, Variable x, [NotNullWhen(true)] out Entity? factored)
+        {
+            factored = null;
+            if (!TryGetRationalCoefficients(expr, x, out var coefficients))
+                return false;
+
+            // Two terms is a x^n + b, which is answered whole by inverting x^n = -b/a, and
+            // that gives the n roots in the form a + bi. Splitting it would divide out the
+            // rational ones and leave the rest to be dug out of a quotient: x^3 - 8 reads
+            // as 2 and (-1/2 +- i*sqrt(3)/2)*2 that way, and as 2 and (-2 -+ sqrt(-12))/2
+            // this way. Nothing here improves on that, so it is left alone.
+            if (coefficients.Count(coefficient => !coefficient.IsZero) <= 2)
+                return false;
+
+            var factors = new List<Entity>();
+            foreach (var candidate in RootCandidates(coefficients))
+                while (coefficients.Length > 1 && Evaluate(coefficients, candidate).IsZero)
+                {
+                    factors.Add(LinearFactor(candidate, x));
+                    coefficients = DivideByLinear(coefficients, candidate);
+                }
+            if (factors.Count == 0)
+                return false;
+
+            var remainder = BuildPolynomial(coefficients, x);
+            if (remainder != Integer.One)
+                factors.Add(remainder);
+            factored = factors.Aggregate((left, right) => left * right);
+            return true;
+        }
+
+        /// <summary>
         /// One step of a partial fraction decomposition, at a rational root of the
         /// denominator: <c>N/D</c> becomes <c>A/(x - r) + R/Q</c>, where <c>D = (x - r)Q</c>.
         /// </summary>
