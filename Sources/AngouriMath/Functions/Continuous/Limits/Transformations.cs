@@ -75,6 +75,27 @@ namespace AngouriMath.Functions.Algebra
             };
 
         /// <summary>
+        /// How many times over <see cref="ApplySecondRemarkable"/> may be re-read into an
+        /// expression that <see cref="SimplifyAndComputeLimitToInfinity"/>'s simplification
+        /// has just created.
+        /// </summary>
+        /// <remarks>
+        /// The rewrite puts the base under an <c>e</c>, which the rule's own pattern requires
+        /// to contain the variable and so does not match, meaning it cannot feed itself
+        /// directly. This guards the indirect route -- a simplification that reads
+        /// <c>e^(g * (f - 1))</c> back as a power whose exponent moves -- and the cost, since
+        /// every level of it asks for limits of its own.
+        /// </remarks>
+        private const int MaxSecondRemarkableRereads = 3;
+
+        [ThreadStatic] private static int secondRemarkableRereads;
+
+        /// <summary>
+        /// Whether a re-reading of the second remarkable limit may still be attempted.
+        /// </summary>
+        private static bool MaySecondRemarkableBeReread => secondRemarkableRereads < MaxSecondRemarkableRereads;
+
+        /// <summary>
         /// The limit of f(x)^g(x) where the pair is indeterminate and the second remarkable
         /// limit does not already cover it -- that is, 0^0 and oo^0 -- or <see langword="null"/>
         /// where that is not the shape or the exponent settles nothing.

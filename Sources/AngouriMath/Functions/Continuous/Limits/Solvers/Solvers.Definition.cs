@@ -19,6 +19,37 @@ namespace AngouriMath.Functions.Algebra
             expr = expr.Simplify();
             if (expr is Providedf(var expression, _)) expr = expression; // limits operate assuming a continuous expression even though some points may be undefined.
 
+            // The second remarkable limit reads a 1^oo, and it ran once, at the top of
+            // ComputeLimit, against the expression as it was written. But a form it reads can
+            // be *created* by the simplification above: (x - 5)^x / x^x is a quotient when the
+            // rule runs and ((x - 5)/x)^x by the time it gets here, and the substitution below
+            // then answers 1^(+oo) with 1 where the limit is e^(-5).
+            // https://github.com/asc-community/AngouriMath/issues/738
+            //
+            // Asked again here, which is where the expression is in the form the solvers will
+            // read it in and where the destination is +oo whichever destination was asked for.
+            // The rule is the same one and its guards are the same, so this adds no reading it
+            // did not already have -- only the second chance to apply it. What comes out goes
+            // back through ComputeLimit rather than on to the solvers below, because the
+            // rewrite leaves e^(g * (f - 1)) unsimplified and it is the simplification of the
+            // exponent that turns it into a limit anything can take.
+            //
+            // Only an answer, never a refusal: where this finds nothing the solvers below are
+            // still asked, and they are what answers everything that is not a 1^oo.
+            if (MaySecondRemarkableBeReread)
+            {
+                secondRemarkableRereads++;
+                try
+                {
+                    if (expr.Replace(node => ApplySecondRemarkable(node, x, Real.PositiveInfinity)) is var reread
+                        && reread != expr
+                        && ComputeLimit(reread, x, Real.PositiveInfinity) is { } byRemarkable
+                        && byRemarkable.Evaled != MathS.NaN)
+                        return byRemarkable;
+                }
+                finally { secondRemarkableRereads--; }
+            }
+
             var substitutionResult = LimitSolvers.SolveBySubstitution(expr, x);
             if (substitutionResult is { }) return substitutionResult;
 
