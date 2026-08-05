@@ -12,6 +12,12 @@ how it is expressed. Read this as instructions for doing mathematics well, using
 correctness wins. A published API that returns the wrong answer is not an asset to preserve; it is
 a bug with users. Say so in the changelog, and change it.
 
+Saying so is not optional, and it has a place: [BREAKING-CHANGES.md](BREAKING-CHANGES.md). Anything
+that makes the same input give a different answer goes there before the branch merges, with the old
+value, the new one, and why — measured on a build of each, not read off the diff. A user whose code
+depended on the wrong answer deserves to find out from us why it moved, rather than from their own
+test suite.
+
 The same goes for convention. If mathematicians write it one way and the library writes it another,
 the library is wrong — even where the library's way is defensible in isolation. `arcsinh` is not a
 thing; the inverse of `sinh` is an *area*, not an arc, so it is `arsinh` (#687). Follow the notation
@@ -64,8 +70,13 @@ usual notation is not in the grammar, print the function call the parser does ha
 
 `Latexise` is under no such obligation — nothing parses LaTeX.
 
-The syntax the parser accepts is written down in `Sources/AngouriMath/Docs/Usage/Syntax.md`.
-Keep it true when you change the grammar.
+The syntax the parser accepts is written down in
+[`Docs/Usage/Syntax.md`](Sources/AngouriMath/Docs/Usage/Syntax.md). Keep it true when you change the
+grammar — and change the grammar the way
+[`Docs/Contributing/ImproveParser.md`](Sources/AngouriMath/Docs/Contributing/ImproveParser.md) sets
+out, by editing `AngouriMath.g` and regenerating. Never hand-edit the generated files. Regenerate the
+*unmodified* grammar first and check the diff is empty, so that what you then commit is your rule and
+not a toolchain version.
 
 ## Verify the mathematics, not the string
 
@@ -77,8 +88,16 @@ Never assert on printed form unless the printed form *is* the bug. Assert the pr
 - a limit: check it against the value at nearby points, or a series
 
 A string comparison passes for `2*x` and fails for `x*2`, which tells you nothing about whether the
-answer is right. `Sources/Tests/UnitTests/Common/IssueRegressionTest.cs` is where issue regressions
-go, named for the issue.
+answer is right.
+
+Issue regressions go in `Sources/Tests/UnitTests/Common/`, in the file for the area and named
+`IssueNNN_WhatItAsserts` after the issue —
+[`SimplificationRegressionTest.cs`](Sources/Tests/UnitTests/Common/SimplificationRegressionTest.cs),
+[`SolverRegressionTest.cs`](Sources/Tests/UnitTests/Common/SolverRegressionTest.cs) and
+[`NumericsRegressionTest.cs`](Sources/Tests/UnitTests/Common/NumericsRegressionTest.cs).
+[`AlreadyFixedIssuesTest.cs`](Sources/Tests/UnitTests/Common/AlreadyFixedIssuesTest.cs) is the
+separate case: an open issue that turns out to work today, pinned so it can be closed without
+leaving whatever closed it unprotected.
 
 **Reproduce on a stock `master` build before claiming anything is broken.** More than one confident
 report here has turned out to describe behaviour that was never broken.
@@ -152,7 +171,10 @@ Then:
 4. If an existing test now fails, decide honestly which it is — the answer got better, the test was
    pinning a fudge, or you broke something — and say which in the commit message. Never loosen an
    assertion without writing down why.
-5. Open a PR. State what was wrong, why the fix is right, and what you measured.
+5. If the same input now gives a different answer, add it to
+   [BREAKING-CHANGES.md](BREAKING-CHANGES.md) — including when the old answer was wrong. A test you
+   had to change is the usual sign that you owe an entry.
+6. Open a PR. State what was wrong, why the fix is right, and what you measured.
 
 `TreatWarningsAsErrors` is on and there are custom analyzers; a static field needs
 `[ConstantField]`, `[ThreadStatic]` or `[ConcurrentField]`.
@@ -175,6 +197,30 @@ reason; a story about how you arrived at it is not.
 
 Cite issues by full URL in code comments (`https://github.com/asc-community/AngouriMath/issues/557`),
 since a bare `#557` means nothing outside GitHub. `#557` is fine in PR titles and bodies.
+
+## Where things are written down
+
+Before writing a paragraph explaining something, check whether it already has a home. Most of these
+are short, and a stale one is worse than none — if you change what a file describes, change the file.
+
+| | |
+|---|---|
+| [BREAKING-CHANGES.md](BREAKING-CHANGES.md) | every input whose answer has changed, with both values and why |
+| [CHANGELOG.md](CHANGELOG.md) | points at the published release notes on the site |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | for humans; how to get set up and what a PR should look like |
+| [`Docs/Usage/Syntax.md`](Sources/AngouriMath/Docs/Usage/Syntax.md) | what the parser accepts. The grammar was the only statement of it until [#706](https://github.com/asc-community/AngouriMath/pull/706) |
+| [`Docs/Usage/Exceptions.md`](Sources/AngouriMath/Docs/Usage/Exceptions.md) | the exception hierarchy under `AngouriMathBaseException` |
+| [`Docs/Contributing/`](Sources/AngouriMath/Docs/Contributing/README.md) | the index of the contributor docs |
+| [`Contributing/General.md`](Sources/AngouriMath/Docs/Contributing/General.md) | the `Entity` hierarchy, in a paragraph |
+| [`Contributing/AddingNode.cs`](Sources/AngouriMath/Docs/Contributing/AddingNode.cs) | every place a new node has to be taught about. Read it *before* adding one |
+| [`Contributing/ImproveParser.md`](Sources/AngouriMath/Docs/Contributing/ImproveParser.md) | how to change the grammar and regenerate |
+| [`Contributing/coding_rules.md`](Sources/AngouriMath/Docs/Contributing/coding_rules.md) | sealed-or-abstract, and immutability of `Entity` |
+| [`WhatsNew/version_performance_control.md`](Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md) | the inter-version performance table, and how to add a column |
+| `Sources/Analyzers/` | the custom analyzers, including the static-field one behind `[ConstantField]` |
+
+`Docs/Contributing/RS1617Errors.md` is the one exception: it describes adding public members to a
+`PublicApi.*.txt`, and neither those files nor the analyzer that wanted them are in the tree any
+more. Do not follow it; delete or rewrite it if you are in there anyway.
 
 ## Where the work is
 
