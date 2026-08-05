@@ -8,6 +8,7 @@
 using AngouriMath;
 using AngouriMath.Extensions;
 using PeterO.Numbers;
+using System.Linq;
 using Xunit;
 
 namespace AngouriMath.Tests.Common
@@ -202,6 +203,78 @@ namespace AngouriMath.Tests.Common
             var difference = (input.ToEntity() - input.ToEntity().Factorize()).Simplify();
             while (difference is Entity.Providedf(var inner, _)) difference = inner;
             Assert.Equal(Entity.Number.Integer.Create(0), difference);
+        }
+
+        // https://github.com/asc-community/AngouriMath/issues/55
+        // A quotient of polynomials only ever reached lowest terms where the common
+        // factor was one the pattern rules could see written out. In one variable the
+        // factoring rules found most of them; in several there was nothing at all, so
+        // (x + y)^2 / ((x - y)(x + y)) came back long-divided as
+        // 1 + (2y^2 + 2xy)/(x^2 - y^2) -- still carrying the factor it should have lost.
+        [Theory]
+        [InlineData("(x ^ 2 + 2 * x * y + y ^ 2) / (x ^ 2 - y ^ 2)", "(x + y) / (x - y)")]
+        [InlineData("(x ^ 2 - 2 * x * y + y ^ 2) / (x ^ 2 - y ^ 2)", "(x - y) / (x + y)")]
+        [InlineData("(a ^ 2 - b ^ 2) / (a ^ 2 + 2 * a * b + b ^ 2)", "(a - b) / (a + b)")]
+        [InlineData("(x ^ 2 * y - y ^ 3) / (x * y + y ^ 2)", "x - y")]
+        [InlineData("(x ^ 2 * y ^ 2 - 1) / (x * y - 1)", "x * y + 1")]
+        [InlineData("(x ^ 3 - y ^ 3) / (x ^ 2 - y ^ 2)", "(x ^ 2 + x * y + y ^ 2) / (x + y)")]
+        public void Issue55_MultivariateQuotientsReachLowestTerms(string input, string expected)
+        {
+            var simplified = input.ToEntity().Simplify();
+            var bare = simplified;
+            while (bare is Entity.Providedf(var inner, _)) bare = inner;
+
+            // Equal as expressions, wherever both are defined...
+            var difference = (bare - expected.ToEntity()).Simplify();
+            while (difference is Entity.Providedf(var inner, _)) difference = inner;
+            Assert.Equal(Entity.Number.Integer.Create(0), difference);
+
+            // ...and no bigger than the reduced form, which is what the issue is about:
+            // the answer it complains of is the same number too, just not in lowest terms.
+            Assert.True(bare.Nodes.Count() <= expected.ToEntity().Nodes.Count(), bare.Stringize());
+        }
+
+        // Cancelling widens the domain -- at x = -y the quotient was 0/0 where the
+        // reduced form is 0 -- so the condition has to travel with the answer.
+        [Fact]
+        public void Issue55_CancellationKeepsTheDomainCondition()
+        {
+            var simplified = "(x ^ 2 + 2 * x * y + y ^ 2) / (x ^ 2 - y ^ 2)".ToEntity().Simplify();
+            var atRemovedFactor = simplified.Substitute("x", 1).Substitute("y", -1).Evaled;
+            Assert.Equal(MathS.NaN, atRemovedFactor);
+        }
+
+        // A common divisor that is not there must not be found. These are all coprime,
+        // and the point of the check is that nothing is cancelled out of them.
+        [Theory]
+        [InlineData("(x + y) / (x - y)")]
+        [InlineData("(x ^ 2 + y ^ 2) / (x + y)")]
+        [InlineData("(x + 1) / (y + 1)")]
+        public void Issue55_CoprimeQuotientsAreLeftAlone(string input) =>
+            Assert.Equal(input.ToEntity(), input.ToEntity().Simplify());
+
+        // The strongest thing that can be said about a computed divisor is that the
+        // quotient still takes the same values. Sampled at whole points, where a divisor
+        // that did not really divide shows up as a different number.
+        [Theory]
+        [InlineData("(x ^ 2 + 2 * x * y + y ^ 2) / (x ^ 2 - y ^ 2)")]
+        [InlineData("(x ^ 3 - y ^ 3) / (x ^ 2 - y ^ 2)")]
+        [InlineData("(a ^ 2 - b ^ 2) / (a ^ 2 + 2 * a * b + b ^ 2)")]
+        [InlineData("(x ^ 4 - y ^ 4) / (x ^ 2 - 2 * x * y + y ^ 2)")]
+        [InlineData("(x ^ 3 + x ^ 2 * y - x * y ^ 2 - y ^ 3) / (x ^ 2 - y ^ 2)")]
+        [InlineData("(x ^ 2 * y ^ 2 - 1) / (x * y - 1)")]
+        [InlineData("(6 * x ^ 2 - 6 * y ^ 2) / (4 * x + 4 * y)")]
+        public void Issue55_CancellationPreservesValue(string input)
+        {
+            var original = input.ToEntity();
+            var simplified = original.Simplify();
+            var variables = original.Vars.OrderBy(variable => variable.Name).ToArray();
+            foreach (var (first, second) in new[] { (3, 5), (7, 2), (-4, 9), (11, -6) })
+            {
+                Entity Bind(Entity expr) =>
+                    expr.Substitute(variables[0], first).Substitute(variables[1], second);
+                Assert.Equal(Bind(original).EvalNumerical(), Bind(simplified).EvalNumerical());
+            }
         }
 
         // Dividing the integrand by a derivative that is zero gives NaN, and NaN
