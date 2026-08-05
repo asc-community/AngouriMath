@@ -33,8 +33,8 @@ namespace AngouriMath.Tests.Calculus
     /// </summary>
     public sealed class RemarkableLimitAfterSimplificationTest
     {
-        private static Entity LimitOf(string expression) =>
-            expression.ToEntity().Limit("x", "+oo".ToEntity()).Simplify();
+        private static Entity LimitOf(string expression, string destination = "+oo") =>
+            expression.ToEntity().Limit("x", destination.ToEntity()).Simplify();
 
         /// <summary>
         /// The mathematics rather than the printed form, and rather than the decimal either:
@@ -42,9 +42,9 @@ namespace AngouriMath.Tests.Calculus
         /// here is written <c>e^(-5)</c>, and evaluating those two reaches the same number by
         /// different roundings, so they disagree in the last digit while being one value.
         /// </summary>
-        private static void AssertLimit(string expression, string expected)
+        private static void AssertLimit(string expression, string expected, string destination = "+oo")
         {
-            var difference = (LimitOf(expression) - expected.ToEntity()).Simplify();
+            var difference = (LimitOf(expression, destination) - expected.ToEntity()).Simplify();
             while (difference is Entity.Providedf(var inner, _)) difference = inner;
             Assert.Equal(Entity.Number.Integer.Create(0), difference);
         }
@@ -82,6 +82,30 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("(x - 2) ^ x / (x + 2) ^ x", "e ^ (-4)")]
         public void WhatTheBaseRatioLeavesBehindDecidesIt(string expression, string expected) =>
             AssertLimit(expression, expected);
+
+        /// <summary>
+        /// Approaching -oo, which reaches the rule down a different road: the destination is
+        /// normalised by substituting -x for x rather than by leaving the expression alone, so
+        /// the form the re-read sees is one the substitution built. This was wrong in the same
+        /// way -- it answered 1 -- and (1 - 5/x)^x for x -> -oo is 1/(1 + 5/t)^t at t -> +oo,
+        /// which is the same e^(-5).
+        /// </summary>
+        [Fact]
+        public void TheSubstitutedDestinationIsReadToo() =>
+            AssertLimit("(x - 5) ^ x / x ^ x", "e ^ (-5)", "-oo");
+
+        /// <summary>
+        /// The finite destinations, which were right before and have to stay so. These never
+        /// had the defect: <c>(1 + x)^(1/x)</c> is already a 1^oo as written, so the rule
+        /// catches it at the top of <c>ComputeLimit</c> without needing anything re-read. They
+        /// are here because the re-read runs on this path as well and must not disturb it.
+        /// </summary>
+        [Theory]
+        [InlineData("(1 + x) ^ (1/x) / (1 + 2 * x) ^ (1/x)", "e ^ (-1)")]
+        [InlineData("(1 + 2 * x) ^ (1/x) / (1 + x) ^ (1/x)", "e")]
+        [InlineData("(1 + 3 * x) ^ (1/x) / (1 + x) ^ (1/x)", "e ^ 2")]
+        public void TheFiniteDestinationsAreUndisturbed(string expression, string expected) =>
+            AssertLimit(expression, expected, "0");
 
         /// <summary>
         /// The claim the expected values rest on, checked at a point rather than argued.
