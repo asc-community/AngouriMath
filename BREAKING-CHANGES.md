@@ -37,6 +37,7 @@ read first.
 | **silent** | numeric root sets | one root per starting point | one root per root |
 | **silent** | many limits | `NaN`, or unevaluated | a value |
 | **silent** | a vanishing sine behind a constant factor | `NaN` | a value — but `sin(x)*ln(x)*2` loses its `0` |
+| **silent** | a limit assembling `oo^0` or `1^oo` | that form's value, `1` | the real answer, or unevaluated |
 | **silent** | some integrals | not antiderivatives | closed forms |
 | **silent** | two integrals | answered correctly | unevaluated — a deliberate loss |
 | loud | `Compile` over a missing variable | `KeyNotFoundException` | `UncompilableNodeException` |
@@ -800,6 +801,53 @@ already `NaN` — and no answer changed into a different answer.
 
 [#749](https://github.com/asc-community/AngouriMath/issues/749), PR
 [#759](https://github.com/asc-community/AngouriMath/pull/759).
+
+### An indeterminate power form is no longer read off as its value
+
+A limit was answered, where nothing else had a reading of it, by substituting the destination and
+evaluating. That is right wherever the expression is continuous there, and an indeterminate form is
+exactly where it is not. Almost all of them already declined, because they evaluate to `NaN` and
+every caller reads `NaN` as "no limit" — `0 * oo`, `oo - oo`, `oo / oo`, `0^0`. The two that do not
+are `oo^0` and `1^oo`, which this library's arithmetic answers with `1`, so a limit that assembled
+either read that `1` off as its answer:
+
+```
+lim x->+oo (e^x) ^ (1/ln(x))    was  1     is  +oo
+lim x->+oo (x^2) ^ (1/ln(x))    was  1     is  e^2
+lim x->+oo (x!)  ^ (1/x)        was  1     is  unevaluated   (it is +oo)
+lim x->+oo (x!)  ^ (1/ln(x))    was  1     is  unevaluated   (it is +oo)
+```
+
+`(x^2)^(1/ln x)` is `e^(2*ln(x)/ln(x))`, that is `e^2` at every `x`, so the old answer was not merely
+imprecise. `(x!)^(1/x)` grows like `x/e` by Stirling — `(100!)^(1/100)` is already `37.99`.
+
+This does **not** change what `(+oo)^0` or `1^oo` evaluate to as expressions. Both are still `1`, the
+same convention SymPy and IEEE 754's `pow` use; the change is that a *limit* no longer reads its
+answer off one. `0^0` is deliberately untouched for the opposite reason: its `NaN` is how the library
+says `lim x->0 x^x` does not exist, which `LimitTest.TestNoLimit` pins, and declining it would turn a
+considered "does not exist" into "not settled".
+
+**What it costs.** Three limits that were answered `1` are now unevaluated, because the substitution
+that used to land on them is gone and nothing else has a reading:
+
+```
+lim x->+oo (x!)  ^ (1/x^2)      was  1     is  unevaluated   (it is 1)
+lim x->0   (1/x) ^ x            was  1     is  unevaluated
+lim x->0   (1/x) ^ (x^2)        was  1     is  unevaluated
+```
+
+The first was right by luck: the same substitution gave `1` for `(x!)^(1/x)`, where the answer is
+`+oo`, and the two cannot be told apart at the point where the value is read off. Answering it
+properly wants Stirling's expansion of `ln(x!)`, which is the second half of #754. The other two are
+two-sided limits at `0` whose base has no two-sided limit at all and which are not real to the left
+of `0`, so the `1` came from the complex continuation; **their one-sided readings are unchanged** —
+`lim x->0+ (1/x)^x` is still `1`.
+
+Measured over 225 generated powers at `0` and `+oo`: 2 wrong values became right ones, 3 wrong values
+became unevaluated, 1 `NaN` became unevaluated, and 3 right values became unevaluated.
+
+[#754](https://github.com/asc-community/AngouriMath/issues/754), PR
+[#760](https://github.com/asc-community/AngouriMath/pull/760).
 
 ### `lim x->2 signum(x)` no longer kills the process
 
