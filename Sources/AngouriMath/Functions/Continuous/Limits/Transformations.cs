@@ -148,6 +148,44 @@ namespace AngouriMath.Functions.Algebra
                 _ => expr
             };
 
+        /// <summary>
+        /// <see cref="ApplyFirstRemarkable"/> applied down the product-and-quotient spine
+        /// rather than at the root alone.
+        /// </summary>
+        /// <remarks>
+        /// The rule matches a product or a quotient whose own child is a vanishing sine, so a
+        /// constant factor written to the left pushes that sine one level down and out of
+        /// reach: <c>2 * sin(1/x) * x</c> parses as <c>(2 * sin(1/x)) * x</c>, whose children
+        /// are a product and a variable. The descent then reads it as <c>0 * (+oo)</c> and is
+        /// definite about it, while the same product written <c>sin(1/x) * x * 2</c> answers 2.
+        /// Which side a caller writes a constant on is not a mathematical difference, and
+        /// simplification produces either.
+        /// <para/>
+        /// **Not a plain <c>Replace</c>, and that is the whole of what keeps it sound.** The
+        /// equivalence holds for a *factor* of the expression as a whole -- if <c>f/g -> 1</c>
+        /// then <c>f*h</c> and <c>g*h</c> go to the same place -- and not for a term of a sum,
+        /// where the difference between <c>f</c> and <c>g</c> is the entire answer. Rewriting
+        /// the sine inside <c>(sin(x)/x - 1)/x^2</c> would answer 0 where the limit is -1/6.
+        /// Stopping at anything that is not a product or a quotient keeps every rewrite to a
+        /// factor of the whole.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/749">#749</a>
+        /// </remarks>
+        private static Entity ApplyFirstRemarkableOverFactors(Entity expr, Variable x, Entity dest)
+        {
+            var applied = ApplyFirstRemarkable(expr, x, dest);
+            if (applied is not (Mulf or Divf))
+                return applied;
+            var left = ApplyFirstRemarkableOverFactors(applied.DirectChildren[0], x, dest);
+            var right = ApplyFirstRemarkableOverFactors(applied.DirectChildren[1], x, dest);
+            // Rebuilt only where a factor actually changed, so an expression the rule has
+            // nothing to say about comes back as the very node it went in as, keeping whatever
+            // the rest of the machinery has already cached against it.
+            if (ReferenceEquals(left, applied.DirectChildren[0])
+                && ReferenceEquals(right, applied.DirectChildren[1]))
+                return applied;
+            return applied is Mulf ? left * right : left / right;
+        }
+
         private static Entity ApplySecondRemarkable(Entity expr, Variable x, Entity dest)
             => expr switch
             {
