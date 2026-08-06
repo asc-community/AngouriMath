@@ -36,6 +36,7 @@ read first.
 | **silent** | an identity equation | `{ }` or `{ 0 }` | all of `CC` |
 | **silent** | numeric root sets | one root per starting point | one root per root |
 | **silent** | many limits | `NaN`, or unevaluated | a value |
+| **silent** | a vanishing sine behind a constant factor | `NaN` | a value — but `sin(x)*ln(x)*2` loses its `0` |
 | **silent** | some integrals | not antiderivatives | closed forms |
 | **silent** | two integrals | answered correctly | unevaluated — a deliberate loss |
 | loud | `Compile` over a missing variable | `KeyNotFoundException` | `UncompilableNodeException` |
@@ -756,6 +757,49 @@ PRs [#680](https://github.com/asc-community/AngouriMath/pull/680),
 [#710](https://github.com/asc-community/AngouriMath/pull/710),
 [#714](https://github.com/asc-community/AngouriMath/pull/714),
 [#724](https://github.com/asc-community/AngouriMath/pull/724).
+
+### A constant factor no longer decides whether a vanishing sine is seen
+
+The first remarkable limit — a vanishing `sin(u)`, `tan(u)`, `arcsin(u)` or `arctan(u)` rewritten as
+the `u` it is equivalent to — was applied at the root of the expression only. A constant factor
+written on one side pushes that function a level down and out of reach, so the same product answered
+two different things depending on how it was spelled:
+
+```
+lim x->+oo sin(1/x) * x * 2       was  2        is  2
+lim x->+oo 2 * sin(1/x) * x       was  NaN      is  2
+lim x->+oo sin(1/x) * x / 2       was  NaN      is  1/2
+lim x->0   sin(x) * 1/x / 2       was  NaN      is  1/2
+lim x->+oo 2 * tan(1/x) * x^2     was  NaN      is  +oo
+```
+
+The rule is now applied down the product-and-quotient spine. It stops at anything that is not a
+product or a quotient, which is what keeps it sound: the equivalence licenses replacing a *factor*
+of the expression as a whole, and not a term of a sum, where the difference between the two forms is
+the whole answer. `lim x->0 (sin(x)/x - 1)/x^2` is still `-1/6` and `lim x->0 (sin(x) - x)/x^3` is
+still `-1/6`, as they must be — a rule that descended into sums would answer both `0`.
+
+**The loss, and it is a value becoming `NaN`.** A vanishing factor against a logarithm was being
+shielded from a rewrite the library already applies to the same limit written without the constant:
+
+```
+lim x->0   sin(x) * ln(x) * 2     was  0        is  NaN
+lim x->0   2 * arctan(x) * ln(x)  was  0        is  NaN
+lim x->0   sin(x) * ln(x)         was  NaN      is  NaN     (unchanged, and the reason)
+```
+
+The rewrite is sound — `sin(x) * ln(x)` and `x * ln(x)` have the same limit — and what it exposes is
+that `lim x->0 x * ln(x)` is `NaN` by design, for the reason given above: `ln(x)` is not real to the
+left of `0`. So the previous `0` was the accident, and the two spellings of one limit now agree
+instead of contradicting each other. Under `MathS.Settings.Codomain.Set(Domain.Real)` both come back
+unevaluated, which is the honest answer where the function has no real left-hand neighbourhood.
+
+Measured over 811 generated products and quotients: 196 `NaN`s became values, 13 values became this
+one `NaN` — every one of them of the shape above, and in each case the constant-free spelling was
+already `NaN` — and no answer changed into a different answer.
+
+[#749](https://github.com/asc-community/AngouriMath/issues/749), PR
+[#759](https://github.com/asc-community/AngouriMath/pull/759).
 
 ### `lim x->2 signum(x)` no longer kills the process
 
