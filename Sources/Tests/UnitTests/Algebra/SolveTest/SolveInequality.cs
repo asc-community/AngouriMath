@@ -39,21 +39,6 @@ namespace AngouriMath.Tests.Algebra
         }
 
         /// <summary>
-        /// A symbolic coefficient has no known sign, and the roots come out of the quadratic
-        /// formula as <c>(-b - sqrt(D))/(2a)</c> before <c>(-b + sqrt(D))/(2a)</c> -- ascending
-        /// only while <c>a</c> is positive. Solving <c>expr &lt;= 0</c> negates the expression,
-        /// so it arrives with a negative leading coefficient and the pair the wrong way round,
-        /// and <c>(x - a)(x + a) &lt;= 0</c> was answered with an interval running from
-        /// <c>|a|</c> down to <c>-|a|</c>: empty, with the entire solution set lost.
-        /// <para/>
-        /// The endpoints are now ordered by the closed form of min and max rather than by a
-        /// comparison that cannot be made, so the one interval is right for either sign.
-        /// Checked by what it specialises to, not by how it prints -- the printed form is
-        /// carrying an <c>abs</c> the simplifier keeps, since <c>abs(2 * sqrt(a^2))</c> is not
-        /// <c>2 * sqrt(a^2)</c> unless <c>a</c> is known real.
-        /// <a href="https://github.com/asc-community/AngouriMath/issues/757">#757</a>
-        /// </summary>
-        /// <summary>
         /// Checked by which points the answer holds rather than by how it prints:
         /// <c>1/2 * abs(X)</c> and <c>abs(X) / 2</c> are one number written two ways, and a
         /// structural comparison calls that a disagreement.
@@ -131,6 +116,12 @@ namespace AngouriMath.Tests.Algebra
         [InlineData("x >= a")]
         [InlineData("(x + a)(x + b) >= 0")]
         [InlineData("(x + a)(x + b) > 0")]
+        // These two were skipped as "Piecewise required" and no longer are. They wanted the
+        // smaller of two symbolic roots as the left endpoint, and that has a closed form --
+        // https://github.com/asc-community/AngouriMath/issues/757 -- so no case split was
+        // needed to answer them after all.
+        [InlineData("(x + a)(x + b) <= 0")]
+        [InlineData("(x + a)(x + b) < 0")]
         public void AutoTest(string inequality, string setToCheck = "{ -5, -3, 0, 3, 5 }")
         {
             FiniteSet checkpoints = (FiniteSet)setToCheck.Simplify();
@@ -140,13 +131,20 @@ namespace AngouriMath.Tests.Algebra
                     $"{roots} doesn't contain {cp}");
         }
 
-        [Theory(Skip = "Piecewise required")]
+        /// <summary>
+        /// What ordering the endpoints does not reach. A symbol on the right-hand side moves
+        /// the roots rather than merely permuting them, so whether the quadratic has real roots
+        /// at all turns on the sign of <c>a + 1/4</c> -- and where it has none the answer is the
+        /// whole line or nothing, which is not an interval between endpoints in any order.
+        /// That wants the case split this solver still does not make, as does a symbolic
+        /// *leading* coefficient:
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/762">#762</a>.
+        /// </summary>
+        [Theory(Skip = "a case split on the sign of the discriminant is required")]
         [InlineData("(x + 1)(x + 2) < a")]
         [InlineData("(x + 1)(x + 2) <= a")]
         [InlineData("(x + 1)(x + 2) > a")]
         [InlineData("(x + 1)(x + 2) >= a")]
-        [InlineData("(x + a)(x + b) <= 0")]
-        [InlineData("(x + a)(x + b) < 0")]
         public void AutoTestSkip(string inequality, string setToCheck = "{ -5, -3, 0, 3, 5 }")
             => AutoTest(inequality, setToCheck);
     }
