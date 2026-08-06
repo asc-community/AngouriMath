@@ -25,6 +25,7 @@ read first.
 | **silent** | `exp(x)`, `log10(x)`, `log2(x)` | products of undeclared variables | the functions |
 | loud | `arcsinh(x)` and its five relatives | a product | `UnrecognizedFunctionParseException` |
 | loud | `floor(x)` and ten other names the library lacks | a product, silently | `UnrecognizedFunctionParseException` |
+| **silent** | `sqrt(x^2)`, `sqrt(-x)` and their kind | `x`, `i*sqrt(x)` — wrong for negative x | left as written |
 | loud | `mod` as a variable name | a variable | a keyword, so a parse error |
 | **silent** | `Stringize` of powers, lambdas, applications, piecewises | did not parse back | parses back |
 | **silent** | numbers below `1e-16` | rounded to `0` | kept |
@@ -159,6 +160,47 @@ their expression to fix nobody's.
 
 [#733](https://github.com/asc-community/AngouriMath/issues/733), PR
 [#750](https://github.com/asc-community/AngouriMath/pull/750).
+
+### `sqrt(x^2)` is no longer `x`, and `sqrt(-x)` is no longer `i * sqrt(x)`
+
+| | |
+|---|---|
+| was | `x`, and `i * sqrt(x)` |
+| is | left as written |
+
+Both were wrong, and by a whole sign rather than a rounding:
+
+```csharp
+"sqrt(x ^ 2)".Simplify()      // was x       — at x = -0.63 that is -0.63 where it is 0.63
+"(x ^ 2) ^ (3/2)".Simplify()  // was x ^ 3   — at x = -2 that is -8 where it is 8
+"sqrt(-x)".Simplify()         // was i*sqrt(x) — at x = -0.63 that is -0.7937, not 0.7937
+```
+
+Two rules were being applied without the condition each needs. `(a^b)^c = a^(b*c)` holds for
+a positive `a`, and for any `a` when `c` is a whole number — `(a^b)^3` is `a^b` multiplied by
+itself three times however `a` is signed. `(a*x)^c = a^c * x^c` holds for a positive `a`, and
+again for a whole `c`. Both are now restricted to exactly that, and unchanged where they hold:
+`(x^(1/2))^2` is still `x`, `(-x)^2` is still `x^2`, `(2^2)^(1/2)` is still `2`.
+
+`sqrt(x^2)` is `abs(x)`, and the library does not write that for you — it leaves the
+expression alone rather than answering something false. Writing `abs` requires knowing the
+expression is real, which is what
+[#719](https://github.com/asc-community/AngouriMath/issues/719)'s codomain now makes sayable
+and is not yet read by the simplifier.
+
+**One thing got worse, and it is worth stating plainly.** The inequality solver was leaning
+on `sqrt(4a^2) = 2a`: `(x - a)(x + a) <= 0` answered `[a; -a]`, which is right for `a < 0`
+and empty for `a > 0`. It now answers `{ a, -a } \/ (sqrt(a^2); -sqrt(a^2))`, whose interval
+is empty for either sign. Neither form is right for both, because the solver has no case
+split on the sign of a symbolic coefficient — that is
+[#757](https://github.com/asc-community/AngouriMath/issues/757), and it was invisible while an
+unsound rewrite was making it look right half the time.
+
+Found by `work/simpsweep`, which generates the expressions it checks; its count of
+disagreements over 10463 expressions goes **30 to 0**.
+
+[#752](https://github.com/asc-community/AngouriMath/issues/752), PR
+[#758](https://github.com/asc-community/AngouriMath/pull/758).
 
 ### `mod` is now a keyword
 

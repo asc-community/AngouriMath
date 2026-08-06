@@ -22,7 +22,19 @@ namespace AngouriMath.Tests.Algebra
         [InlineData("(x - 2)(x + 2) > 0", @"(-oo; -2) \/ (2; +oo)")]
         [InlineData("(x - 2)(x + 2) < 0", "(-2; 2)")]
         [InlineData("(x - 2)(x + 2) <= 0", "[-2; 2]")]
-        [InlineData("(x - a)(x + a) <= 0", "[a; -a]")]
+        // A symbolic coefficient has no known sign, and the solver builds (root1; root2)
+        // without asking which root is the smaller -- so one sign of `a` always comes out
+        // as an empty interval. This used to read as [a; -a], correct for a < 0 and empty
+        // for a > 0, and it read that way only because sqrt(4a^2) was simplifying to 2a.
+        // That is unsound for a < 0 and is fixed in
+        // https://github.com/asc-community/AngouriMath/issues/752; with it gone the interval
+        // is empty for either sign and the endpoints survive.
+        //
+        // Neither form is right for both signs. Pinned as it now stands rather than deleted,
+        // because the expectation is still evidence -- of
+        // https://github.com/asc-community/AngouriMath/issues/757, which wants the case split
+        // on the sign that would answer this properly.
+        [InlineData("(x - a)(x + a) <= 0", @"{ a, -a } \/ (sqrt(a ^ 2); -sqrt(a ^ 2))")]
         public void Test(string initial, string expected)
         {
             Variable x = "x";

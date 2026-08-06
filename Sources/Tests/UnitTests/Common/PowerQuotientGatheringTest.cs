@@ -127,14 +127,25 @@ namespace AngouriMath.Tests.Common
         }
 
         /// <summary>
-        /// What is deliberately left. A fractional c would have to divide the exponent
-        /// rather than move into the base, so <c>(sqrt(x) + 1)^x / sqrt(x)^x</c> would
-        /// become <c>((sqrt(x) + 1)^2 / x)^(x/2)</c> -- a squared numerator to buy a
-        /// gathered form. That is a judgement about output rather than the gap this fixes,
-        /// so it is pinned as it stands rather than forced.
+        /// This was the case deliberately left: a fractional c would have to divide the
+        /// exponent rather than move into the base, so it would have become
+        /// <c>((sqrt(x) + 1)^2 / x)^(x/2)</c> -- a squared numerator to buy a gathered form.
+        /// <para/>
+        /// It gathers now, and better, without that trade. Narrowing the
+        /// <c>(a^b)^c = a^(b*c)</c> rule to where it is true
+        /// (https://github.com/asc-community/AngouriMath/issues/752) means
+        /// <c>sqrt(x)^x</c> no longer flattens to <c>x^(x/2)</c>, so both exponents stay
+        /// <c>x</c> and the ordinary pairing rule reaches it. The gap this file is about was
+        /// a rewrite running ahead of the pairing, and one less rewrite is one less way to
+        /// run ahead of it.
         /// </summary>
         [Fact]
-        public void AFractionalExponentRatioIsStillNotGathered() =>
-            Assert.False(Simplified("(sqrt(x) + 1) ^ x / sqrt(x) ^ x") is Entity.Powf);
+        public void AFractionalExponentRatioGathersOnceNothingFlattensItFirst()
+        {
+            var simplified = Simplified("(sqrt(x) + 1) ^ x / sqrt(x) ^ x");
+            Assert.True(simplified is Entity.Powf,
+                $"came back as {simplified.Stringize()}");
+            AssertSameValueAt("(sqrt(x) + 1) ^ x / sqrt(x) ^ x", ("x", "13/10"));
+        }
     }
 }
