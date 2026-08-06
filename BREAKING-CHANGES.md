@@ -34,6 +34,7 @@ read first.
 | **silent** | radicals, everywhere | `sqrt(12)` | `2 * sqrt(3)` |
 | **silent** | `Expand` | left like terms uncollected | collects them |
 | **silent** | an identity equation | `{ }` or `{ 0 }` | all of `CC` |
+| **silent** | a quadratic inequality | wrong for one sign of a symbolic coefficient | a case split on that sign |
 | **silent** | numeric root sets | one root per starting point | one root per root |
 | **silent** | many limits | `NaN`, or unevaluated | a value |
 | **silent** | a vanishing sine behind a constant factor | `NaN` | a value — but `sin(x)*ln(x)*2` loses its `0` |
@@ -536,6 +537,49 @@ hundred decimal places.
 ---
 
 ## Solving
+
+### A quadratic inequality is answered for every sign its coefficients may have
+
+Three things decided a quadratic inequality's answer that the solver was not asking about, each of
+them the sign of something it could not evaluate:
+
+```
+x^2 + 1 > 0                    was  { }                    is  RR
+3*x^2 + 1 > 0                  was  (-oo; c) \/ (c; +oo)   is  RR
+a*x^2 - 1 < 0     at a = 3     was  the complement of      is  (-1/sqrt(3); 1/sqrt(3))
+                                    the solution set
+(x + 1)(x + 2) < a             was  an interval even where it has no real roots
+```
+
+A parabola lies above zero *between* its roots when it opens downwards and *outside* them when it
+opens upwards, and the test for that read `a is Real { IsNegative: true }` — which a symbol fails,
+so every symbolic leading coefficient was read as positive. Where the quadratic has no real roots it
+sits wholly on one side, and the empty set was returned whichever side that was. And whether "no
+real roots" was noticed at all depended on how far the radical simplified: `sqrt(-4)` is the literal
+`2i` and `sqrt(-12)` is a product that is not one, so `x^2 + 1` was recognised and `3*x^2 + 1` was
+not. The linear branch had the same defect in miniature — `a*x + b > 0` is `x > -b/a` for a positive
+`a` and `x < -b/a` for a negative one.
+
+**What changes for callers.** A *concrete* coefficient is untouched: `(x - 2)(x + 2) <= 0` is still
+`[-2; 2]` and `x^2 - 4 < 0` is still `(-2; 2)`. Where a coefficient is symbolic the answer is now a
+union of conditional sets rather than a single interval — the case split written in the vocabulary
+the library already has, since `Piecewise` is an `Entity` and `Solve` returns a `Set`:
+
+```
+{ x : a > 0 and x in ... or a < 0 and x in ... or a = 0 and x in ... }
+```
+
+Code that assumed `Solve` on an inequality returns an `Interval` will now sometimes get a
+`ConditionalSet` or a `Unionf`. It was returning a wrong interval before.
+
+Measured over 128 specialisations — solve with the symbol, substitute a value of each sign, and
+compare membership against the inequality itself at eleven points: **81/128 correct on 1.4.0,
+128/128 now**. Four cases skipped as "Piecewise required" since 1.2 pass.
+
+[#757](https://github.com/asc-community/AngouriMath/issues/757) and
+[#762](https://github.com/asc-community/AngouriMath/issues/762), PRs
+[#761](https://github.com/asc-community/AngouriMath/pull/761) and
+[#763](https://github.com/asc-community/AngouriMath/pull/763).
 
 ### An identity equation is answered with every value, not with none
 
