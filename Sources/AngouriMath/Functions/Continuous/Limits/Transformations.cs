@@ -247,29 +247,102 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             if (EvalAssumingContinuous(power.Limit(x, dest, side)) != 0)
                 return null;
-            var baseLimit = EvalAssumingContinuous(@base.Limit(x, dest, side));
-            if (baseLimit != 0 && !IsInfiniteNode(baseLimit))
-                return null;
-            // Every route out of ln(f) runs through differentiating f, so a base this library
-            // cannot differentiate is one the rewrite cannot finish on: it would only hand the
-            // rules an expression with a hole in it and let them work at it. A factorial is the
-            // case that matters -- its derivative wants the digamma function, which is not here,
-            // and comes back as NaN -- and lim x->+oo ((x!) / x^x)^(1/x) is the expression. It
-            // has no answer either way, and without this it takes a long time not to find one.
-            var derivative = @base.Differentiate(x).InnerSimplified;
-            if (derivative.Nodes.Any(node => node is Derivativef || node == MathS.NaN))
-                return null;
+
+            // f^g is e^(g * ln f), and this rule computes the limit of the exponent. Where the
+            // base holds a diverging factorial, that logarithm is what Stirling's expansion is
+            // stated for -- so the expansion is applied here, to the exponent, rather than to
+            // the base, where it would have to reproduce the factorial itself and its merely
+            // *relative* error. https://github.com/asc-community/AngouriMath/issues/754
+            var byStirling = StirlingExponent(@base, power, x, dest);
+
+            if (byStirling is null)
+            {
+                var baseLimit = EvalAssumingContinuous(@base.Limit(x, dest, side));
+                if (baseLimit != 0 && !IsInfiniteNode(baseLimit))
+                    return null;
+                // Every route out of ln(f) runs through differentiating f, so a base this
+                // library cannot differentiate is one the rewrite cannot finish on: it would
+                // only hand the rules an expression with a hole in it and let them work at it.
+                // A factorial is the case that matters -- its derivative wants the digamma
+                // function, which is not here, and comes back as NaN. That is why the expansion
+                // above is tried first: where it applies there is no factorial left to
+                // differentiate, and this guard is asking about an expression the rule is no
+                // longer going to use.
+                var derivative = @base.Differentiate(x).InnerSimplified;
+                if (derivative.Nodes.Any(node => node is Derivativef || node == MathS.NaN))
+                    return null;
+            }
 
             indeterminatePowerDepth++;
             try
             {
-                if (ComputeLimit((power * MathS.Ln(@base)).InnerSimplified, x, dest, side) is not { } exponent
+                var exponentExpr = byStirling ?? (power * MathS.Ln(@base)).InnerSimplified;
+                if (ComputeLimit(exponentExpr, x, dest, side) is not { } exponent
                     || exponent.Evaled == MathS.NaN)
                     return null;
                 return MathS.e.Pow(exponent).InnerSimplified;
             }
             finally { indeterminatePowerDepth--; }
         }
+
+        /// <summary>
+        /// <c>power * ln(base)</c> with the logarithm of every diverging factorial in it
+        /// replaced by Stirling's expansion, or <see langword="null"/> where there is no such
+        /// factorial or the expansion would not be sound here.
+        /// </summary>
+        /// <remarks>
+        /// <c>ln(f!)</c> is <c>f*ln(f) - f + ln(2*pi*f)/2 + 1/(12f) + O(1/f^3)</c>, and what is
+        /// dropped **vanishes** -- where the asymptotic for <c>f!</c> itself has an error that
+        /// is merely relative. That is why the expansion is written for the logarithm and
+        /// applied to this exponent rather than substituted for the factorial in the base.
+        /// <para/>
+        /// Vanishing is still not sufficient, because the dropped term is multiplied by the
+        /// exponent the rewrite sits under: the answer is <c>e^(power * ln(base))</c>, so an
+        /// error of <c>1/(12f)</c> in the logarithm contributes <c>power/(12f)</c> to the
+        /// exponent. Requiring <c>power / f -> 0</c> is what makes it disappear. For
+        /// <c>((x!) / x^x)^(1/x)</c> that ratio is <c>1/x^2</c>.
+        /// <para/>
+        /// The logarithm has to be taken apart before the factorial's own is visible:
+        /// <c>ln(x!/x^x)</c> is one node, and nothing here simplifies it. Splitting it over
+        /// products, quotients and powers assumes the parts are positive on the approach, which
+        /// is the same assumption the simplifier's <c>ln(a) + ln(b) = ln(a*b)</c> already
+        /// makes; it is confined to logarithms that actually hold a diverging factorial, so it
+        /// is reached only by expressions that have no answer at all without it.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/754">#754</a>
+        /// </remarks>
+        private static Entity? StirlingExponent(Entity @base, Entity power, Variable x, Entity dest)
+        {
+            var factorials = @base.Nodes.OfType<Factorialf>()
+                .Where(f => f.Argument.ContainsNode(x)
+                            && EvalAssumingContinuous(f.Argument.Limit(x, dest)) == Real.PositiveInfinity)
+                .ToList();
+            if (factorials.Count == 0)
+                return null;
+            // The dropped 1/(12f) is multiplied by the exponent this sits under, so it only
+            // disappears where power/f does.
+            foreach (var factorial in factorials)
+                if (EvalAssumingContinuous((power / factorial.Argument).Limit(x, dest)) != 0)
+                    return null;
+            return (power * LogarithmExpanded(@base, x, dest)).InnerSimplified;
+        }
+
+        /// <summary>
+        /// <c>ln(antilogarithm)</c> taken apart over products, quotients and powers, with
+        /// Stirling's expansion written for the logarithm of a diverging factorial.
+        /// </summary>
+        private static Entity LogarithmExpanded(Entity antilogarithm, Variable x, Entity dest)
+            => antilogarithm switch
+            {
+                Factorialf(var argument)
+                    when EvalAssumingContinuous(argument.Limit(x, dest)) == Real.PositiveInfinity
+                        => argument * MathS.Ln(argument) - argument
+                           + MathS.Ln(2 * MathS.pi * argument) / 2,
+                Mulf(var a, var b) => LogarithmExpanded(a, x, dest) + LogarithmExpanded(b, x, dest),
+                Divf(var a, var b) => LogarithmExpanded(a, x, dest) - LogarithmExpanded(b, x, dest),
+                Powf(var b, var e) when !e.ContainsNode(x) || b.ContainsNode(x)
+                    => e * LogarithmExpanded(b, x, dest),
+                _ => MathS.Ln(antilogarithm)
+            };
 
         /// <summary>
         /// How deep the rewriting of one power into another may go. The exponent it asks about
