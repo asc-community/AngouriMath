@@ -40,6 +40,7 @@ read first.
 | **silent** | a vanishing sine behind a constant factor | `NaN` | a value — but `sin(x)*ln(x)*2` loses its `0` |
 | **silent** | a limit assembling `oo^0` or `1^oo` | that form's value, `1` | the real answer, or unevaluated |
 | **silent** | a factorial under a vanishing exponent | unevaluated | a value, by Stirling |
+| **silent** | `ln(x!)` in a limit | unevaluated, and `ln(x!)/ln(x)` was `NaN` | a value |
 | **silent** | some integrals | not antiderivatives | closed forms |
 | **silent** | two integrals | answered correctly | unevaluated — a deliberate loss |
 | loud | `Compile` over a missing variable | `KeyNotFoundException` | `UncompilableNodeException` |
@@ -893,6 +894,39 @@ became unevaluated, 1 `NaN` became unevaluated, and 3 right values became uneval
 
 [#754](https://github.com/asc-community/AngouriMath/issues/754), PR
 [#760](https://github.com/asc-community/AngouriMath/pull/760).
+
+### A factorial's logarithm is read wherever it appears
+
+The expansion below arrived inside the rule that turns `f^g` into `e^(g * ln f)`, so it reached a
+factorial only under a vanishing exponent — the harder question answered and the easier one left:
+
+```
+lim x->+oo ln(x!) / (x * ln(x))   was  unevaluated   is  1
+lim x->+oo ln(x!) / x             was  unevaluated   is  +oo
+lim x->+oo ln(x!) / x^2           was  unevaluated   is  0
+lim x->+oo ln(x!) - x * ln(x)     was  unevaluated   is  -oo
+lim x->+oo ln((2*x)!) / (x*ln(x)) was  unevaluated   is  2
+lim x->+oo ln(x!) / ln(x)         was  NaN           is  +oo
+```
+
+The last is the one that was a **wrong answer** rather than a missing one: `NaN` claims the limit
+does not exist, and that quotient is asymptotic to `x` — 9.6e11 at `x = 1e12`.
+
+Applying the expansion wherever a factorial's logarithm appears is **not** unconditionally sound, so
+it is guarded. What Stirling drops is `1/(12f)`, and what that costs the answer is the rate at which
+the answer moves with the logarithm — so the coefficient is found by putting a variable where the
+logarithm is and differentiating, and the rewrite is refused unless `coefficient / f` vanishes.
+`x * (ln(x!) - (x*ln(x) - x + ln(2*pi*x)/2))` is `1/12`, built out of the dropped term itself, and an
+unguarded rewrite would answer it `0`.
+
+**What it costs.** `lim x->+oo ln((x+1)!) / (x*ln(x))` was unevaluated in about a second and now
+takes longer than 20 s to be unevaluated. The rewrite is right and the expression it hands over is
+right; the machinery cannot take that limit quickly, which is demonstrable without any of this by
+writing the expanded form out by hand. One of 70 in a generated factorial sweep, where 24 already
+timed out before this change.
+
+[#765](https://github.com/asc-community/AngouriMath/issues/765), PR
+[#766](https://github.com/asc-community/AngouriMath/pull/766).
 
 ### A factorial under a vanishing exponent has a limit
 
