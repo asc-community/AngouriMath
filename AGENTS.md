@@ -59,6 +59,30 @@ caller evaluates it to compare, evaluating computes the limit, and computing arr
 started. That overflows the stack, which kills the process rather than raising anything catchable.
 `null` reads the same to the caller and terminates.
 
+### But "no answer" is the floor, not the target
+
+Read that ordering forwards. *Right answer* comes first, and refusing is what you do when you have
+established there is nothing better — not when the right answer looks like more work than you
+wanted. Difficulty is not an argument, and neither is "I cannot promise this lands cleanly": the
+way to find out whether a fix lands is to write it and measure it, and a failure you measured is a
+finding worth having. These *are* reasons to prefer one fix over another — it degrades output
+callers depend on, it rests on an assumption that is not true in general, it cannot be validated by
+anything you can run. These are not: it touches more files, it might break tests you would then
+have to understand, a smaller change exists that suppresses the wrong answer without producing the
+right one.
+
+The worked example is [#757](https://github.com/asc-community/AngouriMath/issues/757).
+`(x - a)(x + a) <= 0` was answered with an interval whose endpoints are ordered for one sign of `a`
+only, and the two candidate fixes were a case split on that sign, or declining to answer a symbolic
+coefficient at all. Refusing is not a fix that works — it is a stopgap — and choosing it would have
+been choosing the smaller diff over the answer.
+
+**And before building a case analysis, look for the closed form.** That same issue looked like it
+needed three branches on the sign of `a`; the answer is the single interval `[-|a|; |a|]`, because
+`min(p, q)` is `(p + q - |p - q|)/2` and `max(p, q)` is `(p + q + |p - q|)/2`. One interval, right
+for either sign and for `a = 0`, and it collapses to exactly the old output when the roots are
+concrete. Enumerating cases is usually a sign that an identity has been missed.
+
 ## Output has a contract too
 
 **Parsing what `Stringize` prints must give back the expression it printed.** Anything else makes
