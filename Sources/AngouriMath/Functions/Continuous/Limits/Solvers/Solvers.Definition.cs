@@ -81,6 +81,61 @@ namespace AngouriMath.Functions.Algebra
             return null;
         }
 
+        /// <summary>
+        /// The limit where the two one-sided limits agree, asked of each side through the
+        /// whole of <see cref="ComputeLimit"/>, or <see langword="null"/> where either side
+        /// has no answer, the two differ, or the reading is not of real-valued functions.
+        /// </summary>
+        /// <remarks>
+        /// A two-sided limit is the two one-sided ones agreeing, and the branch that compares
+        /// them compares two <c>ComputeLimitDivideEtImpera</c> results -- the bare descent --
+        /// where a caller who names a side gets that descent *and* everything behind it:
+        /// <see cref="SolveAsIndeterminatePower"/>, l'Hopital's rule, and the substitution
+        /// that moves a finite destination out to infinity.
+        /// <para/>
+        /// **Only under a real codomain, and that is the whole of what makes it sound.** The
+        /// promotion cannot be made over the complex plane, because there the one-sided limits
+        /// do not stay inside the reals: `lim x->0- x^x` answers 1 from the continuation, so
+        /// promoting agreement would give `lim x->0 x^x` the value 1 where `x^x` is not real
+        /// to the left of 0 at all, and `LimitTest.TestNoLimit` pins it as non-existent.
+        /// Under <see cref="AngouriMath.Core.Domain.Real"/> that side has no value to agree
+        /// with, so the case this could get wrong is the case that no longer arises.
+        /// <para/>
+        /// Asked only where the answer would otherwise be NaN, so nothing that already answers
+        /// pays for it, and it can only ever turn a refusal into an answer.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/719">#719</a>,
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/596">#596</a>
+        /// </remarks>
+        private static Entity? WhereBothSidesAgree(Entity expr, Variable x, Entity dest)
+        {
+            if (MathS.Settings.Codomain.Value is not AngouriMath.Core.Domain.Real
+                || bothSidesDepth >= MaxBothSidesDepth)
+                return null;
+            bothSidesDepth++;
+            try
+            {
+                if (ComputeLimit(expr, x, dest, ApproachFrom.Left) is not { } fromLeft
+                    || fromLeft.Evaled == MathS.NaN)
+                    return null;
+                if (ComputeLimit(expr, x, dest, ApproachFrom.Right) is not { } fromRight
+                    || fromRight.Evaled == MathS.NaN)
+                    return null;
+                return fromLeft == fromRight || ExpressionNumerical.AreEqual(fromLeft, fromRight)
+                    ? fromLeft : null;
+            }
+            finally { bothSidesDepth--; }
+        }
+
+        /// <summary>
+        /// How deep <see cref="WhereBothSidesAgree"/> may nest. Each one-sided limit it asks
+        /// for may itself reach a two-sided limit of a subexpression, so without a bound the
+        /// two questions would branch into four and so on down the tree, for expressions that
+        /// have no answer either way and where the whole cost buys nothing.
+        /// </summary>
+        private const int MaxBothSidesDepth = 2;
+
+        [System.ThreadStatic] private static int bothSidesDepth;
+
         private static Entity ExpandLogarithm(Entity expr)
             => expr switch
             {
@@ -108,8 +163,15 @@ namespace AngouriMath.Functions.Algebra
             // asks for it again, through the same rewrite, without end. Answering here costs
             // nothing and asks nothing.
             // https://github.com/asc-community/AngouriMath/issues/719
-            if (RealCodomainWithdraws(expr, x, dest,
-                    side is ApproachFrom.Left ? ApproachFrom.Left : ApproachFrom.Right))
+            // A two-sided limit is withdrawn if *either* approach leaves the reals, since it
+            // is the two one-sided ones agreeing and one of them is not there to agree.
+            // Checking only one direction left lim x->0 sqrt(x) answering 0 while its own
+            // left-hand limit had been withdrawn, which is the two halves disagreeing about
+            // the same reading.
+            if (side is ApproachFrom.BothSides
+                ? RealCodomainWithdraws(expr, x, dest, ApproachFrom.Left)
+                    || RealCodomainWithdraws(expr, x, dest, ApproachFrom.Right)
+                : RealCodomainWithdraws(expr, x, dest, side))
                 return null;
 
             expr = expr.Replace(ExpandLogarithm);
@@ -229,15 +291,27 @@ namespace AngouriMath.Functions.Algebra
                         return fromLeft;
                     if (ExpressionNumerical.AreEqual(fromLeft, fromRight) && (acceptNaN || fromLeft.Evaled != MathS.NaN))
                         return fromLeft;
-                    var lhopital = ApplylHopitalRule(expr, x, dest);
-                    if (lhopital != null) return ComputeLimit(lhopital, x, dest, acceptNaN: true);
-                    else return MathS.NaN; // A two-sided limit cannot exist if the limit from left and right don't match.
+                    if (ApplylHopitalRule(expr, x, dest) is { } lhopital
+                        && ComputeLimit(lhopital, x, dest, acceptNaN: true) is { } byRule
+                        && (acceptNaN || byRule.Evaled != MathS.NaN))
+                        return byRule;
+                    // Asking each side properly, which is what the two above were not asked.
+                    // https://github.com/asc-community/AngouriMath/issues/719
+                    if (WhereBothSidesAgree(expr, x, dest) is { } agreed)
+                        return agreed;
+                    return MathS.NaN; // A two-sided limit cannot exist if the limit from left and right don't match.
                 }
                 else
                 {
-                    var lhopital = ApplylHopitalRule(expr, x, dest);
-                    if (lhopital != null) return ComputeLimit(lhopital, x, dest);
-                    else return null;
+                    if (ApplylHopitalRule(expr, x, dest) is { } lhopital
+                        && ComputeLimit(lhopital, x, dest) is { } byRule)
+                        return byRule;
+                    // The same promotion as above. This branch is reached where the descent
+                    // has nothing to say about one of the sides at all, rather than saying
+                    // something that disagrees -- which is most of what the one-sided
+                    // fallbacks are for, so it is where the promotion is worth the most.
+                    // https://github.com/asc-community/AngouriMath/issues/719
+                    return WhereBothSidesAgree(expr, x, dest);
                 }
             }
             throw new AngouriBugException($"Unresolved enum parameter {side}");

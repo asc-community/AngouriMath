@@ -131,21 +131,77 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
-        /// What this does not yet do. Promoting two agreeing one-sided limits to a two-sided
-        /// one is the point of the setting and is deliberately not part of it: step 1 changes
-        /// what every one-sided limit answers under a real codomain, and that wants measuring
-        /// on its own before anything is built on top. Pinned so the next step has somewhere
-        /// to land and so the current state is a decision rather than an oversight.
+        /// The point of the setting. Two agreeing one-sided limits are a two-sided one, and
+        /// the promotion is safe here for the reason it was unsafe before: over the complex
+        /// plane it would give <c>lim x-&gt;0 x^x</c> the value 1, and over the reals that
+        /// side has no value to agree with.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/596">#596</a> is the
+        /// expression that reported it.
         /// </summary>
         [Fact]
-        public void AgreeingOneSidedLimitsAreNotYetPromoted()
+        public void AgreeingOneSidedLimitsArePromoted()
+        {
+            const string reported = "1 / ln(x + sqrt(x ^ 2 + 1)) - 1 / ln(x + 1)";
+            // Both sides answer, and agree.
+            Assert.Equal("-1/2".ToEntity().Evaled, LimitOverTheReals(reported, "0", ApproachFrom.Left).Evaled);
+            Assert.Equal("-1/2".ToEntity().Evaled, LimitOverTheReals(reported, "0", ApproachFrom.Right).Evaled);
+
+            using var _ = MathS.Settings.Codomain.Set(Domain.Real);
+            var twoSided = reported.ToEntity().Limit("x", 0).Simplify();
+            Assert.Equal("-1/2".ToEntity().Evaled, twoSided.Evaled);
+        }
+
+        /// <summary>
+        /// The two the promotion must not reach, and the reason it could not be made at all
+        /// before the codomain existed. Each is real on one side only, so under this reading
+        /// there is nothing on the other side to agree with.
+        /// </summary>
+        [Theory]
+        [InlineData("x * ln(x)")]
+        [InlineData("x ^ x")]
+        [InlineData("sqrt(x)")]
+        [InlineData("ln(x)")]
+        public void AFunctionRealOnOneSideOnlyIsNotPromoted(string expr)
         {
             using var _ = MathS.Settings.Codomain.Set(Domain.Real);
-            // Both sides are 0 and the two-sided answer is still NaN.
-            Assert.Equal(Entity.Number.Integer.Create(0),
-                Limit("x * ln(x)", "0", ApproachFrom.Right).Evaled);
-            Assert.Equal(MathS.NaN.Evaled,
-                "x * ln(x)".ToEntity().Limit("x", 0).Simplify().Evaled);
+            Assert.True(IsUnevaluated(expr.ToEntity().Limit("x", 0).Simplify()),
+                $"{expr} was given a two-sided limit over the reals");
         }
+
+        /// <summary>
+        /// And the ones that genuinely have no limit keep saying so: the promotion asks
+        /// whether the sides *agree*, not merely whether they exist.
+        /// </summary>
+        [Theory]
+        [InlineData("1 / x")]
+        [InlineData("abs(x) / x")]
+        [InlineData("e ^ (1/x)")]
+        [InlineData("arctan(1/x)")]
+        public void SidesThatDisagreeStillHaveNoTwoSidedLimit(string expr)
+        {
+            using var _ = MathS.Settings.Codomain.Set(Domain.Real);
+            Assert.Equal(MathS.NaN.Evaled, expr.ToEntity().Limit("x", 0).Simplify().Evaled);
+        }
+
+        /// <summary>
+        /// The promotion is opt-in with everything else. Over the complex plane these answer
+        /// exactly as they always have, which is what keeps <c>LimitTest.TestNoLimit</c>
+        /// meaning what it meant.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(x)", "0")]
+        [InlineData("sin(x) / x", "1")]
+        public void TheDefaultReadingIsUnchangedForTwoSidedLimitsToo(string expr, string expected) =>
+            Assert.Equal(expected.ToEntity().Evaled,
+                expr.ToEntity().Limit("x", 0).Simplify().Evaled);
+
+        // The two the real reading withdraws are, by default, still the definite NaN they
+        // always were -- which is what keeps LimitTest.TestNoLimit meaning what it meant.
+        [Theory]
+        [InlineData("x ^ x")]
+        [InlineData("x * ln(x)")]
+        public void TheDefaultReadingStillCallsTheseNonExistent(string expr) =>
+            Assert.Equal(MathS.NaN.Evaled, expr.ToEntity().Limit("x", 0).Simplify().Evaled);
+
     }
 }
