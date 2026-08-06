@@ -42,7 +42,18 @@ namespace AngouriMath.Functions
             Divf(Powf(var any1, var any2), Powf(var any1a, var any3)) when any1 == any1a => new Powf(any1, any2 - any3),
 
             // ({} ^ {}) ^ {} = {} ^ ({} * {})
-            Powf(Powf(var any1, var any2), var any3) => new Powf(any1, any2 * any3),
+            //
+            // True for a positive base whatever the exponents, and for any base when the
+            // outer exponent is a whole number -- (a^b)^3 is a^b * a^b * a^b however a is
+            // signed. Outside those two it is false, and it was applied unconditionally:
+            //
+            //     sqrt(x^2)      came back as x,    which at -0.63 is -0.63 where it is 0.63
+            //     (x^2)^(3/2)    came back as x^3,  which at -2 is -8 where it is 8
+            //
+            // https://github.com/asc-community/AngouriMath/issues/752
+            Powf(Powf(var any1, var any2), var any3)
+                when any3 is Integer || any1.Evaled is Real { IsPositive: true }
+                => new Powf(any1, any2 * any3),
 
             // {1} ^ n * {2} ^ n = ({1} * {2}) ^ n
             Mulf(Powf(var any1, var any3), Powf(var any2, var any3a)) when any3 == any3a => new Powf(any1 * any2, any3),
@@ -82,7 +93,15 @@ namespace AngouriMath.Functions
             Mulf(Mulf(var any2, var any1), Powf(var any1a, var any3)) when any1 == any1a => new Powf(any1, any3 + 1) * any2,
 
             // (a * x) ^ c = a^c * x^c
-            Powf(Mulf(Number const1, var any1), Number const2) =>
+            //
+            // Taking a factor out from under a root needs that factor to be positive, or the
+            // root to be a whole power. With a negative one it moves the branch: sqrt(-x)
+            // became sqrt(-1) * sqrt(x) = i * sqrt(x), and at x = -0.63 the first is 0.7937
+            // while the second is -0.7937 -- the negation, not the value. A positive constant
+            // is safe whatever the sign of x, which is why the rule is narrowed rather than
+            // removed. https://github.com/asc-community/AngouriMath/issues/752
+            Powf(Mulf(Number const1, var any1), Number const2)
+                when const2 is Integer || const1 is Real { IsPositive: true } =>
                 new Powf(const1, const2) * new Powf(any1, const2),
 
             // {1} ^ (-1) = 1 / {1}
