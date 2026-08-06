@@ -76,6 +76,21 @@ namespace AngouriMath.Functions
             AddHistory(stage1);
             var res = stage1;
 
+            // A boolean expression minimised properly, offered as one more candidate rather
+            // than taken. The rewrite rules reach absorption and stop there, so
+            // `a and b or a and not b` factored to `a and (b or not b)` and had no rule to
+            // finish it. Quine-McCluskey covers that, excluded middle, non-contradiction and
+            // every larger cover in one procedure.
+            //
+            // A candidate can only be returned where it is the shortest on offer, so this
+            // cannot make any expression's answer longer -- which is also what settles
+            // https://github.com/asc-community/AngouriMath/issues/769, where an `implies`
+            // rewrite won at 12 nodes against the 16-node input because the 4-node minimal
+            // form was never generated for it to lose to.
+            // https://github.com/asc-community/AngouriMath/issues/768
+            if (Functions.Boolean.Minimiser.Minimise(stage1) is { } minimised)
+                AddHistory(minimised);
+
             for (int i = 0; i < Math.Abs(level); i++)
             {
                 var sortLevel = i switch

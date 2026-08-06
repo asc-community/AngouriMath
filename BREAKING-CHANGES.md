@@ -41,6 +41,7 @@ read first.
 | **silent** | a limit assembling `oo^0` or `1^oo` | that form's value, `1` | the real answer, or unevaluated |
 | **silent** | a factorial under a vanishing exponent | unevaluated | a value, by Stirling |
 | **silent** | `ln(x!)` in a limit | unevaluated, and `ln(x!)/ln(x)` was `NaN` | a value |
+| **silent** | a boolean expression | factored, not minimised | minimised where that is shorter |
 | **silent** | some integrals | not antiderivatives | closed forms |
 | **silent** | two integrals | answered correctly | unevaluated — a deliberate loss |
 | loud | `Compile` over a missing variable | `KeyNotFoundException` | `UncompilableNodeException` |
@@ -537,6 +538,47 @@ hundred decimal places.
 [#677](https://github.com/asc-community/AngouriMath/pull/677).
 
 ---
+
+## Boolean simplification
+
+### A boolean expression is minimised rather than merely factored
+
+The rewrite rules reached absorption and stopped there, so the factoring worked and had nothing to
+finish it — there is no rule taking `b or not b` to `true`:
+
+```
+a and b or a and not b                          was  a and (b or not b)   is  a
+a or not a                                      was  a or not a           is  true
+a and not a                                     was  a and not a          is  false
+(a and b) or (a and not b) or (not a and b)      was  not a and b or a and (b or not b)
+                                                 is  a or b
+(not a and not b and not c) or (not a and not b and c)
+                                                 was  a or b or c implies not (a or b) and c
+                                                 is  not (a or b)
+```
+
+Two-level minimisation by Quine–McCluskey now runs over the truth table, covering excluded middle,
+non-contradiction and every larger cover in one procedure rather than as separate rules.
+
+**It is offered to `Simplify` as one more candidate, not as a replacement for its answer.**
+Candidates are ranked by node count and the shortest is returned, so this can only change an
+expression where the minimal form is shorter than everything else already on offer. That is what
+keeps `not (a and b)` as it is — 4 nodes against its sum-of-products form `not a or not b` at 5 — and
+it means no expression's answer gets longer.
+
+The last row above is [#769](https://github.com/asc-community/AngouriMath/issues/769), where an
+`implies` rewrite won at 12 nodes against the 16-node input. That rewrite was not misbehaving; the
+4-node answer was simply never generated for it to lose to.
+
+Bounded at **10 variables**, since the table is `2^n` rows. Beyond that it declines rather than
+hangs. A cover of k terms is at least `2k-1` nodes, so where that already exceeds the input the
+search is abandoned before it starts — parity over ten variables has 512 minterms, none of which
+combine, and finding its 512-term minimal form took 1.5 s to produce a candidate that loses to the
+input. With the check, 34 ms.
+
+[#768](https://github.com/asc-community/AngouriMath/issues/768) and
+[#769](https://github.com/asc-community/AngouriMath/issues/769), PR
+[#770](https://github.com/asc-community/AngouriMath/pull/770).
 
 ## Solving
 
