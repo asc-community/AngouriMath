@@ -327,6 +327,67 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Stirling's expansion of <c>ln(f!)</c>, whose error is the vanishing
+        /// <c>1/(12f) + O(1/f^3)</c>.
+        /// </summary>
+        private static Entity StirlingSeries(Entity argument)
+            => argument * MathS.Ln(argument) - argument + MathS.Ln(2 * MathS.pi * argument) / 2;
+
+        /// <summary>
+        /// The expression with the logarithm of every diverging factorial in it replaced by
+        /// Stirling's expansion, or <see langword="null"/> where there is none or the error the
+        /// expansion drops would not vanish out of the answer.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="StirlingExponent"/> can state its guard as <c>power / f -> 0</c> because
+        /// it knows the shape it is working in: the answer there is
+        /// <c>e^(power * ln(base))</c>, so <c>power</c> *is* the coefficient the dropped
+        /// <c>1/(12f)</c> gets multiplied by. Anywhere else that coefficient has to be found
+        /// rather than read off, and it is found by putting a variable where the logarithm is
+        /// and differentiating with respect to it.
+        /// <para/>
+        /// This is not a rewrite that may be applied wherever a factorial's logarithm appears.
+        /// <c>x * (ln(x!) - (x*ln(x) - x + ln(2*pi*x)/2))</c> is <c>1/12</c> -- an expression
+        /// built out of the dropped term itself -- and a rewrite that did not ask would answer
+        /// it <c>0</c>. There the coefficient is <c>x</c> and <c>x / x</c> does not vanish, so
+        /// it is refused. For <c>ln(x!) / x</c> the coefficient is <c>1/x</c> and the ratio is
+        /// <c>1/x^2</c>, so it is allowed.
+        /// <para/>
+        /// The coefficient is put back in terms of the logarithm before it is judged, since an
+        /// expression need not be linear in it: for <c>ln(x!)^2</c> the derivative is
+        /// <c>2*ln(x!)</c>, which grows like <c>2*x*ln(x)</c> and is refused -- correctly, as
+        /// the difference of the squares is <c>ln(x)/6</c> and diverges.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/765">#765</a>
+        /// </remarks>
+        private static Entity? StirlingRewritten(Entity expr, Variable x, Entity dest)
+        {
+            var logarithms = expr.Nodes
+                .OfType<Logf>()
+                .Where(logarithm => logarithm.Base == MathS.e
+                                    && logarithm.Antilogarithm is Factorialf { Argument: var argument }
+                                    && argument.ContainsNode(x)
+                                    && EvalAssumingContinuous(argument.Limit(x, dest)) == Real.PositiveInfinity)
+                .Distinct()
+                .ToList();
+            if (logarithms.Count == 0)
+                return null;
+            var rewritten = expr;
+            foreach (var logarithm in logarithms)
+            {
+                var argument = ((Factorialf)logarithm.Antilogarithm).Argument;
+                var probe = Variable.CreateTemp(expr.Vars);
+                var coefficient = expr.Substitute(logarithm, probe)
+                    .Differentiate(probe).InnerSimplified.Substitute(probe, logarithm);
+                if (coefficient.Nodes.Any(node => node is Derivativef || node == MathS.NaN))
+                    return null;
+                if (EvalAssumingContinuous((coefficient / argument).Limit(x, dest)) != 0)
+                    return null;
+                rewritten = rewritten.Substitute(logarithm, StirlingSeries(argument));
+            }
+            return rewritten;
+        }
+
+        /// <summary>
         /// <c>ln(antilogarithm)</c> taken apart over products, quotients and powers, with
         /// Stirling's expansion written for the logarithm of a diverging factorial.
         /// </summary>
@@ -335,8 +396,7 @@ namespace AngouriMath.Functions.Algebra
             {
                 Factorialf(var argument)
                     when EvalAssumingContinuous(argument.Limit(x, dest)) == Real.PositiveInfinity
-                        => argument * MathS.Ln(argument) - argument
-                           + MathS.Ln(2 * MathS.pi * argument) / 2,
+                        => StirlingSeries(argument),
                 Mulf(var a, var b) => LogarithmExpanded(a, x, dest) + LogarithmExpanded(b, x, dest),
                 Divf(var a, var b) => LogarithmExpanded(a, x, dest) - LogarithmExpanded(b, x, dest),
                 Powf(var b, var e) when !e.ContainsNode(x) || b.ContainsNode(x)
@@ -991,6 +1051,16 @@ namespace AngouriMath.Functions.Algebra
                 if (ExtractRadicalGrowth(simplified, x) is { } extracted
                     && Settled(extracted.ComputeLimitDivideEtImpera(x, toInfinity, ApproachFrom.Left)) is { } byGrowth)
                     return byGrowth;
+
+                // A factorial's logarithm has no reading anywhere else -- every route out of
+                // ln(f) differentiates f, and a factorial's derivative wants the digamma
+                // function. SolveAsIndeterminatePower reaches the ones sitting under a
+                // vanishing exponent; this reaches the rest, which is why ln(x!)/x had no
+                // answer while ((x!)/x^x)^(1/x) did.
+                // https://github.com/asc-community/AngouriMath/issues/765
+                if (StirlingRewritten(simplified, x, toInfinity) is { } byStirling
+                    && Settled(ComputeLimit(byStirling, x, toInfinity)) is { } byFactorial)
+                    return byFactorial;
 
                 return Settled(SolveAsDifferenceOfInfinities(simplified, x));
             }
