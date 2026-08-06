@@ -284,6 +284,50 @@ namespace AngouriMath.Functions.Algebra
             => expr.ContainsNode("+oo") || expr.ContainsNode("-oo"); // TODO: is it correct?
 
         /// <summary>
+        /// Whether a power assembled out of the limits of its base and its exponent is an
+        /// indeterminate <em>form</em> that this library's arithmetic nonetheless answers with
+        /// a value, so that reading the value off would answer the limit wrongly.
+        /// </summary>
+        /// <remarks>
+        /// Substituting each part's own limit into a node and reading the result off is right
+        /// wherever the arithmetic is continuous there, and an indeterminate form is exactly
+        /// where it is not. Nearly all of them are already declined without any of this,
+        /// because they evaluate to NaN and every caller treats NaN as "no limit":
+        /// <c>0 * oo</c>, <c>oo - oo</c>, <c>oo / oo</c> and -- the one that matters here --
+        /// <c>0^0</c>. That last is why <c>lim x-&gt;0 x^x</c> is NaN, which this library means
+        /// deliberately and pins in <c>LimitTest.TestNoLimit</c>, so <c>0^0</c> is **not**
+        /// listed here: declining it would turn a considered "does not exist" into "not
+        /// settled".
+        /// <para/>
+        /// The gap is the two forms whose arithmetic gives 1 rather than NaN. <c>oo^0</c> and
+        /// <c>1^oo</c> are each the shape of limits with different values -- <c>(1 + 1/x)^x</c>
+        /// is <c>e</c> and <c>1^x</c> is 1, both of them <c>1^oo</c> -- and a limit that
+        /// assembled one of them read that 1 off as its answer:
+        /// <c>lim x-&gt;+oo (x!)^(1/x)</c> came back 1 where it is +oo.
+        /// <para/>
+        /// This says nothing about what the expression <c>(+oo)^0</c> evaluates to on its own.
+        /// That is a question of convention, on which this library agrees with SymPy and with
+        /// IEEE 754's <c>pow</c> in answering 1, and it is left exactly as it was.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/754">#754</a>
+        /// </remarks>
+        internal static bool IsIndeterminatePowerForm(Entity @base, Entity exponent)
+        {
+            var baseValue = EvalAssumingContinuous(@base);
+            var exponentValue = EvalAssumingContinuous(exponent);
+            if (exponentValue == 0)
+                return IsInfiniteNode(baseValue);
+            return baseValue == 1 && IsInfiniteNode(exponentValue);
+        }
+
+        /// <summary>
+        /// Whether an expression that a destination has already been substituted into holds an
+        /// indeterminate power form anywhere in it, in which case its value is not the limit.
+        /// </summary>
+        internal static bool HoldsAnIndeterminatePowerForm(Entity expr)
+            => expr.Nodes.Any(node => node is Powf(var @base, var exponent)
+                                      && IsIndeterminatePowerForm(@base, exponent));
+
+        /// <summary>
         /// Whether the exponent grows without bound, which is all the second remarkable
         /// limit needs.
         /// </summary>

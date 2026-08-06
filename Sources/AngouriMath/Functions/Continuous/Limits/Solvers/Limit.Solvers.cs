@@ -46,6 +46,16 @@ namespace AngouriMath.Functions.Algebra
             {
                 MultithreadingFunctional.ExitIfCancelled();
                 if (limit == Real.NaN) return null;
+                // Reading the value at the destination is the limit only where the expression
+                // is continuous there, and an indeterminate form is exactly where it is not.
+                // Every other one of them already declines on the line above, because this
+                // library's arithmetic answers 0 * oo, oo - oo, oo / oo and 0^0 with NaN. The
+                // two power forms do not: (+oo)^0 and 1^oo evaluate to 1 -- the same
+                // convention SymPy and IEEE 754's pow use, and not one this touches -- so a
+                // limit that assembled one of them read that 1 off as its answer, and
+                // lim x->+oo (x!)^(1/x) came back 1 where it is +oo.
+                // https://github.com/asc-community/AngouriMath/issues/754
+                if (LimitFunctional.HoldsAnIndeterminatePowerForm(res)) return null;
                 if (!limit.RealPart.IsFinite)
                     return limit.RealPart; // TODO: sometimes we get { oo + value * i } so we assume it is just infinity
                 if (limit == Integer.Zero) return limit;

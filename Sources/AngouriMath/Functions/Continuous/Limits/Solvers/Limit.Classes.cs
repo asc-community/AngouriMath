@@ -246,9 +246,11 @@ namespace AngouriMath
 
         partial record Powf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                if (ComputeLimitImpl(this, x, dist, side) is { } lim)
+                    return lim;
+                var substituted =
                     (Base.ComputeLimitDivideEtImpera(x, dist, side), Exponent.ComputeLimitDivideEtImpera(x, dist, side))
                     switch {
                         ({ IsFinite: true } lim1, { IsFinite: true } lim2) => New(lim1, lim2),
@@ -257,8 +259,21 @@ namespace AngouriMath
                         ({ IsFinite: true } lim1, { } exp) => New(lim1, exp),
                         ({ } bas, { IsFinite: true } lim2) => New(bas, lim2),
                         _ => New(Base, Exponent)
-                    },
-                    x, dist, side);
+                    };
+                // Putting each part's own limit in place of the part leaves a power that says
+                // nothing whenever the two of them meet in an indeterminate form. The sum, the
+                // product and the quotient are already guarded against this by IsDeterminate
+                // above; the power was not, so lim x->+oo (x!)^(1/x) assembled (+oo)!^0 and
+                // read 1 off it, where the limit is +oo. Declining hands the expression to the
+                // rules behind the descent, and leaves it unevaluated -- "not settled" --
+                // rather than wrong if none of them answers either.
+                // https://github.com/asc-community/AngouriMath/issues/754
+                if (substituted is Powf(var substitutedBase, var substitutedExponent)
+                    && !substituted.ContainsNode(x)
+                    && IsIndeterminatePowerForm(substitutedBase, substitutedExponent))
+                    return null;
+                return ComputeLimitImpl(substituted, x, dist, side);
+            }
         }
 
         partial record Arcsinf
