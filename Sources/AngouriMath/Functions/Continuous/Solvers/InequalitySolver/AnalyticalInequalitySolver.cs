@@ -31,9 +31,17 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     var root = PolynomialSolver.SolveLinear(a, b).First();
                     if (root is Complex and not Real)
                         return Empty;
+                    // a*x + b > 0 is x > -b/a for a positive a and x < -b/a for a negative one,
+                    // and for a = 0 it is not an inequality in x at all -- it is b > 0, which
+                    // holds everywhere or nowhere.
+                    Set below = new Interval(Real.NegativeInfinity, false, root, false);
+                    Set above = new Interval(root, false, Real.PositiveInfinity, false);
                     if (a is Real { IsNegative: true })
-                        return new Interval(Real.NegativeInfinity, false, root, false);
-                    return new Interval(root, false, Real.PositiveInfinity, false);
+                        return below;
+                    if (a is Real)
+                        return above;
+                    return BySignOf(a, x, whenPositive: above, whenNegative: below,
+                                    whenZero: Everywhere(b, x));
                 }
             }
             {
@@ -43,18 +51,102 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     b = b.InnerSimplified;
                     c = c.InnerSimplified;
                     var roots = PolynomialSolver.SolveQuadratic(a, b, c);
-                    if (roots.Any(c => c is Complex and not Real))
-                        return Empty;
+                    var discriminant = (MathS.Sqr(b) - 4 * a * c).InnerSimplified;
+                    // Read off the discriminant and not off the roots. Whether a root comes back
+                    // as something `is Complex` depends on how far the radical simplified:
+                    // sqrt(-4) is the literal 2i and sqrt(-12) is a product that is not one, so
+                    // x^2 + 1 was recognised as never reaching zero and 3*x^2 + 1 was not.
+                    // Where the leading coefficient vanishes there is no parabola: what is left
+                    // is b*x + c, which the linear branch above answers -- unless b vanishes
+                    // too, and then there is no x in it at all and the statement is a
+                    // comparison of constants, true on the whole line or on none of it.
+                    var degenerate = (b * x + c).InnerSimplified;
+                    Set whenDegenerate = degenerate.ContainsNode(x)
+                        ? Solve(degenerate, x)
+                        : Everywhere(degenerate, x);
+                    // No real root means the parabola never crosses zero, so it is above it
+                    // everywhere or below it everywhere -- and which of those is the sign of the
+                    // leading coefficient. Returning the empty set regardless answered
+                    // x^2 + 1 > 0 with nothing, where it holds at every real x.
+                    Set NeverZero() => ByLeadingSign(a, x, SpecialSet.Create(Domain.Real), Empty,
+                                                     whenDegenerate);
+                    if (discriminant.Evaled is Real { IsNegative: true }
+                        || roots.Any(root => root is Complex and not Real))
+                        return NeverZero();
                     roots = TreeAnalyzer.SortRealsAndNonReals(roots);
-                    var (root1, root2) = AscendingEndpoints(roots.First(), roots.Last());
-                    if (a is Real { IsNegative: true })
-                        return new Interval(root1, false, root2, false);
-                    return new Interval(Real.NegativeInfinity, false, root1, false)
+                    var (root1, root2, endpointCondition) = AscendingEndpoints(roots.First(), roots.Last());
+                    // A parabola is above zero between its roots when it opens downwards and
+                    // outside them when it opens upwards, and which of those it does is the
+                    // sign of the leading coefficient. That test read `a is Real { IsNegative:
+                    // true }`, which a symbol fails -- so every symbolic leading coefficient
+                    // was answered as though it were positive, and a*x^2 - 1 < 0 came back with
+                    // the complement of its solution set.
+                    Set between = new Interval(root1, false, root2, false);
+                    Set outside = new Interval(Real.NegativeInfinity, false, root1, false)
                         .Unite(new Interval(root2, false, Real.PositiveInfinity, false));
+                    var crossingZero = ByLeadingSign(a, x, outside, between, whenDegenerate);
+                    // The discriminant's sign is a second undecidable question, and an
+                    // independent one: (x + 1)(x + 2) < a negates to a leading coefficient of
+                    // -1, concrete and negative, while its discriminant 1 + 4a is symbolic. So
+                    // this split is made on its own evidence rather than only where the leading
+                    // coefficient is a symbol.
+                    if (discriminant.Evaled is Real)
+                        return Assuming(endpointCondition, crossingZero, x);
+                    return Assuming(endpointCondition,
+                        crossingZero.Filter(discriminant >= 0, x)
+                            .Unite(NeverZero().Filter(discriminant < 0, x)),
+                        x);
                 }
             }
             throw FutureReleaseException.Raised("Inequalities are not implemented yet", "1.2.1");
         }
+
+        /// <summary>
+        /// The three answers a coefficient of unknown sign may have, joined into one set that
+        /// is whichever of them the sign turns out to select.
+        /// </summary>
+        /// <remarks>
+        /// The conditions are mutually exclusive and cover every case, so the union of the
+        /// three conditional sets is the case split -- each is empty except the one whose
+        /// condition holds. This is what a piecewise would say, said in a way that is still a
+        /// <see cref="Set"/>: <see cref="Piecewise"/> is an <see cref="Entity"/>, so
+        /// <see cref="Solve"/> cannot hand one back.
+        /// <para/>
+        /// Unlike the ordering of the endpoints, which has a closed form
+        /// (<see cref="AscendingEndpoints"/>), this genuinely needs the split: lying between
+        /// the roots and lying outside them differ topologically and not arithmetically, so no
+        /// single interval covers both.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/762">#762</a>
+        /// </remarks>
+        private static Set BySignOf(Entity coefficient, Variable x,
+                                    Set whenPositive, Set whenNegative, Set whenZero)
+            => whenPositive.Filter(coefficient > 0, x)
+                .Unite(whenNegative.Filter(coefficient < 0, x))
+                .Unite(whenZero.Filter(coefficient.Equalizes(0), x));
+
+        /// <summary>
+        /// Whichever of the two the leading coefficient selects, read off directly where its
+        /// sign is known and left as a case split where it is not, so that a concrete
+        /// coefficient produces exactly the interval it always did.
+        /// </summary>
+        private static Set ByLeadingSign(Entity a, Variable x,
+                                         Set whenPositive, Set whenNegative, Set whenZero)
+            => a is Real { IsNegative: true } ? whenNegative
+             : a is Real ? whenPositive
+             : BySignOf(a, x, whenPositive, whenNegative, whenZero);
+
+        /// <summary>
+        /// The solutions of a statement that does not mention <paramref name="x"/> at all:
+        /// every real number where it holds, and none where it does not.
+        /// </summary>
+        private static Set Everywhere(Entity constant, Variable x)
+            => SpecialSet.Create(Domain.Real).Filter(constant > 0, x);
+
+        /// <summary>
+        /// The answer under a condition it needed, or the answer itself where there was none.
+        /// </summary>
+        private static Set Assuming(Entity? condition, Set answer, Variable x)
+            => condition is null ? answer : answer.Filter(condition, x);
 
         /// <summary>
         /// The two roots as (smaller, larger).
@@ -81,32 +173,41 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// changes shape.
         /// <a href="https://github.com/asc-community/AngouriMath/issues/757">#757</a>
         /// </remarks>
-        private static (Entity Lower, Entity Upper) AscendingEndpoints(Entity first, Entity second)
+        private static (Entity Lower, Entity Upper, Entity? Condition) AscendingEndpoints(Entity first, Entity second)
         {
             if (first is Real && second is Real)
-                return (first, second);
+                return (first, second, null);
             var spread = MathS.Abs(first - second);
-            return (Tidied((first + second - spread) / 2), Tidied((first + second + spread) / 2));
+            var (lower, lowerCondition) = WithoutCondition(((first + second - spread) / 2).Simplify());
+            var (upper, upperCondition) = WithoutCondition(((first + second + spread) / 2).Simplify());
+            return (lower, upper, Both(lowerCondition, upperCondition));
         }
 
         /// <summary>
-        /// An endpoint in the shortest form that is still an endpoint.
+        /// An endpoint split into its value and whatever the simplification had to assume to
+        /// reach it, since a <see cref="Providedf"/> where an endpoint belongs makes the
+        /// interval an <see cref="Entity"/> rather than a <see cref="Set"/>.
         /// </summary>
         /// <remarks>
-        /// <see cref="Entity.Simplify"/> is what turns the arithmetic above back into something
-        /// readable, but it may cancel a symbol against itself on the way -- which holds only
-        /// away from zero, and so comes back as a <see cref="Providedf"/>. A condition where an
-        /// endpoint belongs makes the interval an <see cref="Entity"/> rather than a
-        /// <see cref="Set"/>, and threw on the cast for <c>a*x^2 - 1 &lt;= 0</c>. The
-        /// unsimplified form is the same number and assumes nothing, so it is what is kept
-        /// there. Those are the expressions whose *leading* coefficient is symbolic, which this
-        /// does not claim to answer correctly in any case -- whether the solution lies inside
-        /// the roots or outside them turns on the sign of that coefficient, and that is a
-        /// second question from the one here.
+        /// Ordering the roots of <c>a*x^2 - 1</c> cancels an <c>a</c> against itself, which
+        /// holds only away from zero, so the condition is real and is carried into the answer
+        /// rather than dropped from it -- by the same <see cref="Set.Filter"/> that carries the
+        /// sign of the leading coefficient.
         /// </remarks>
-        private static Entity Tidied(Entity endpoint)
-            => endpoint.Simplify() is var simplified && simplified is not Providedf
-                ? simplified
-                : endpoint.InnerSimplified;
+        private static (Entity Value, Entity? Condition) WithoutCondition(Entity expr)
+        {
+            Entity? condition = null;
+            while (expr is Providedf(var inner, var predicate))
+            {
+                condition = Both(condition, predicate);
+                expr = inner;
+            }
+            return (expr, condition);
+        }
+
+        private static Entity? Both(Entity? left, Entity? right)
+            => left is null ? right
+             : right is null || left == right ? left
+             : left & right;
     }
 }

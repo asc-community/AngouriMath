@@ -132,20 +132,94 @@ namespace AngouriMath.Tests.Algebra
         }
 
         /// <summary>
-        /// What ordering the endpoints does not reach. A symbol on the right-hand side moves
-        /// the roots rather than merely permuting them, so whether the quadratic has real roots
-        /// at all turns on the sign of <c>a + 1/4</c> -- and where it has none the answer is the
-        /// whole line or nothing, which is not an interval between endpoints in any order.
-        /// That wants the case split this solver still does not make, as does a symbolic
-        /// *leading* coefficient:
-        /// <a href="https://github.com/asc-community/AngouriMath/issues/762">#762</a>.
+        /// A symbol on the right-hand side moves the roots rather than merely permuting them,
+        /// so whether the quadratic has real roots at all turns on the sign of <c>a + 1/4</c>,
+        /// and where it has none the answer is the whole line or nothing rather than an
+        /// interval between endpoints. These were skipped as "Piecewise required" since 1.2 and
+        /// are answered by the case split on the signs of the leading coefficient and the
+        /// discriminant.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/762">#762</a>
         /// </summary>
-        [Theory(Skip = "a case split on the sign of the discriminant is required")]
+        [Theory]
         [InlineData("(x + 1)(x + 2) < a")]
         [InlineData("(x + 1)(x + 2) <= a")]
         [InlineData("(x + 1)(x + 2) > a")]
         [InlineData("(x + 1)(x + 2) >= a")]
-        public void AutoTestSkip(string inequality, string setToCheck = "{ -5, -3, 0, 3, 5 }")
+        public void AShiftedRightHandSideIsAnsweredToo(string inequality, string setToCheck = "{ -5, -3, 0, 3, 5 }")
             => AutoTest(inequality, setToCheck);
+
+        /// <summary>
+        /// Whether a parabola lies above zero between its roots or outside them is the sign of
+        /// its leading coefficient, and the solver tested <c>a is Real { IsNegative: true }</c>
+        /// -- which a symbol fails, so every symbolic leading coefficient was read as positive
+        /// and <c>a*x^2 - 1 &lt; 0</c> came back with the complement of its solution set. Where
+        /// the coefficient is symbolic, so is the discriminant's sign, and a negative one means
+        /// no real roots at all and no endpoints to lie between.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/762">#762</a>
+        /// </summary>
+        [Theory]
+        [InlineData("a*x^2 - 1 < 0", "3")]
+        [InlineData("a*x^2 - 1 < 0", "-3")]
+        [InlineData("a*x^2 - 1 < 0", "1/2")]
+        [InlineData("a*x^2 - 1 < 0", "-1/2")]
+        [InlineData("a*x^2 - 1 <= 0", "3")]
+        [InlineData("a*x^2 - 1 <= 0", "-3")]
+        [InlineData("a*x^2 - 1 > 0", "3")]
+        [InlineData("a*x^2 - 1 > 0", "-3")]
+        [InlineData("a*x^2 - 1 >= 0", "3")]
+        [InlineData("a*x^2 - 1 >= 0", "-3")]
+        [InlineData("a*x^2 - a < 0", "3")]
+        [InlineData("a*x^2 - a < 0", "-3")]
+        [InlineData("a*x^2 - a > 0", "3")]
+        [InlineData("a*x^2 - a > 0", "-3")]
+        [InlineData("a*x^2 - a >= 0", "1/2")]
+        [InlineData("a*x^2 - a >= 0", "-1/2")]
+        public void ASymbolicLeadingCoefficientPicksItsOwnBranch(string inequality, string value)
+            => AssertSolvesLike(inequality, value);
+
+        /// <summary>
+        /// A symbolic coefficient on a linear inequality has the same defect in miniature:
+        /// <c>a*x + b &gt; 0</c> is <c>x &gt; -b/a</c> for a positive <c>a</c> and
+        /// <c>x &lt; -b/a</c> for a negative one, and for <c>a = 0</c> it is not an inequality
+        /// in <c>x</c> at all.
+        /// </summary>
+        [Theory]
+        [InlineData("a*x - 1 > 0", "3")]
+        [InlineData("a*x - 1 > 0", "-3")]
+        [InlineData("a*x + 2 < 0", "3")]
+        [InlineData("a*x + 2 < 0", "-3")]
+        [InlineData("a*x - 1 >= 0", "1/2")]
+        [InlineData("a*x - 1 >= 0", "-1/2")]
+        public void ASymbolicLinearCoefficientPicksItsOwnDirection(string inequality, string value)
+            => AssertSolvesLike(inequality, value);
+
+        /// <summary>
+        /// A quadratic that never reaches zero is above it everywhere or below it everywhere,
+        /// and which of those is again the sign of the leading coefficient. Returning the empty
+        /// set regardless answered <c>x^2 + 1 &gt; 0</c> with nothing, where it holds at every
+        /// real x. Whether this was noticed at all depended on how far the radical simplified:
+        /// <c>sqrt(-4)</c> is the literal <c>2i</c> and <c>sqrt(-12)</c> is a product that is
+        /// not, so <c>x^2 + 1</c> was recognised and <c>3*x^2 + 1</c> was not -- the
+        /// discriminant is read directly now.
+        /// </summary>
+        [Theory]
+        [InlineData("x^2 + 1 > 0", true)]
+        [InlineData("3*x^2 + 1 > 0", true)]
+        [InlineData("x^2 + x + 1 > 0", true)]
+        [InlineData("x^2 + 1 >= 0", true)]
+        [InlineData("x^2 + 1 < 0", false)]
+        [InlineData("3*x^2 + 1 <= 0", false)]
+        [InlineData("-x^2 - 1 < 0", true)]
+        [InlineData("-x^2 - 1 > 0", false)]
+        [InlineData("-3*x^2 - 1 <= 0", true)]
+        public void AQuadraticThatNeverReachesZeroHoldsEverywhereOrNowhere(string inequality, bool everywhere)
+        {
+            Variable x = "x";
+            var solutions = (Set)((Entity)inequality).Solve(x).Simplify();
+            foreach (var point in new Entity[] { -7, -1, 0, "1/2".ToEntity(), 3, 7 })
+                Assert.True(solutions.Contains(point) == everywhere,
+                    $"{inequality} was solved as {solutions}, which "
+                    + (everywhere ? "does not hold" : "holds") + $" at x = {point}");
+        }
     }
 }
