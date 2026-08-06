@@ -94,31 +94,28 @@ namespace AngouriMath.Tests.Calculus
             AssertDiverges("(e^x) ^ (1/ln(x))", "+oo");
 
         /// <summary>
-        /// The factorial cases from the report. A factorial's derivative wants the digamma
-        /// function, which this library does not have, so <c>SolveAsIndeterminatePower</c>
-        /// declines and nothing else has a reading either -- they are left unsettled rather
-        /// than answered wrongly. <c>(x!)^(1/x)</c> is <c>+oo</c>: by Stirling it grows like
-        /// <c>x/e</c>, and <c>(100!)^(1/100)</c> is already 37.99.
+        /// The factorial cases from the report, which were left unsettled when this guard
+        /// landed and are answered now that Stirling's expansion of <c>ln(f!)</c> reaches them.
+        /// <c>(x!)^(1/x)</c> grows like <c>x/e</c> -- <c>(100!)^(1/100)</c> is already 37.99 --
+        /// and it is the value the substitution used to read off as <c>1</c>.
         /// </summary>
         [Theory]
         [InlineData("(x!) ^ (1/x)")]
         [InlineData("(x!) ^ (1/ln(x))")]
-        public void AFactorialUnderAVanishingExponentIsLeftUnsettled(string expression) =>
-            AssertNotSettled(expression, "+oo");
+        public void AFactorialUnderAVanishingExponentDiverges(string expression) =>
+            AssertDiverges(expression, "+oo");
 
         /// <summary>
-        /// **What this costs.** <c>(x!)^(1/x^2)</c> is 1 -- its logarithm is
-        /// <c>ln(x!)/x^2 ~ ln(x)/x</c>, which vanishes -- and the old substitution happened to
-        /// land on that 1 for the same reason it landed on 1 for <c>(x!)^(1/x)</c>, where the
-        /// answer is <c>+oo</c>. It was right by luck rather than by reading, and the two
-        /// cannot be told apart at the point where the value is read off.
-        /// <para/>
-        /// Answering it properly wants Stirling's expansion of <c>ln(x!)</c>, which is the
-        /// second half of #754 and is not attempted here.
+        /// **What this used to cost, and no longer does.** <c>(x!)^(1/x^2)</c> is 1 -- its
+        /// logarithm is <c>ln(x!)/x^2 ~ ln(x)/x</c>, which vanishes -- and the old substitution
+        /// landed on that 1 for the same reason it landed on 1 for <c>(x!)^(1/x)</c>, where the
+        /// answer is <c>+oo</c>. It was right by luck rather than by reading, so it was
+        /// withdrawn along with the case that was wrong. Stirling's expansion answers it by
+        /// reading, which is what makes keeping it worth anything.
         /// </summary>
         [Fact]
-        public void TheFactorialCaseThatWasAccidentallyRightIsAlsoLeftUnsettled() =>
-            AssertNotSettled("(x!) ^ (1/x^2)", "+oo");
+        public void TheFactorialCaseThatWasAccidentallyRightIsAnsweredByReading() =>
+            AssertLimit("(x!) ^ (1/x^2)", "+oo", "1");
 
         /// <summary>
         /// <c>0^0</c> is deliberately **not** guarded. It evaluates to NaN, and that NaN is

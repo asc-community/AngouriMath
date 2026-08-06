@@ -39,6 +39,7 @@ read first.
 | **silent** | many limits | `NaN`, or unevaluated | a value |
 | **silent** | a vanishing sine behind a constant factor | `NaN` | a value — but `sin(x)*ln(x)*2` loses its `0` |
 | **silent** | a limit assembling `oo^0` or `1^oo` | that form's value, `1` | the real answer, or unevaluated |
+| **silent** | a factorial under a vanishing exponent | unevaluated | a value, by Stirling |
 | **silent** | some integrals | not antiderivatives | closed forms |
 | **silent** | two integrals | answered correctly | unevaluated — a deliberate loss |
 | loud | `Compile` over a missing variable | `KeyNotFoundException` | `UncompilableNodeException` |
@@ -871,18 +872,18 @@ answer off one. `0^0` is deliberately untouched for the opposite reason: its `Na
 says `lim x->0 x^x` does not exist, which `LimitTest.TestNoLimit` pins, and declining it would turn a
 considered "does not exist" into "not settled".
 
-**What it costs.** Three limits that were answered `1` are now unevaluated, because the substitution
+**What it costs.** Two limits that were answered `1` are now unevaluated, because the substitution
 that used to land on them is gone and nothing else has a reading:
 
 ```
-lim x->+oo (x!)  ^ (1/x^2)      was  1     is  unevaluated   (it is 1)
 lim x->0   (1/x) ^ x            was  1     is  unevaluated
 lim x->0   (1/x) ^ (x^2)        was  1     is  unevaluated
 ```
 
-The first was right by luck: the same substitution gave `1` for `(x!)^(1/x)`, where the answer is
-`+oo`, and the two cannot be told apart at the point where the value is read off. Answering it
-properly wants Stirling's expansion of `ln(x!)`, which is the second half of #754. The other two are
+A third, `lim x->+oo (x!)^(1/x^2)`, was withdrawn here and is answered `1` again by the entry
+below — it was right by luck when this landed, since the same substitution gave `1` for
+`(x!)^(1/x)` where the answer is `+oo`, and the two cannot be told apart at the point where the
+value is read off. Stirling's expansion answers it by reading instead. The other two are
 two-sided limits at `0` whose base has no two-sided limit at all and which are not real to the left
 of `0`, so the `1` came from the complex continuation; **their one-sided readings are unchanged** —
 `lim x->0+ (1/x)^x` is still `1`.
@@ -892,6 +893,41 @@ became unevaluated, 1 `NaN` became unevaluated, and 3 right values became uneval
 
 [#754](https://github.com/asc-community/AngouriMath/issues/754), PR
 [#760](https://github.com/asc-community/AngouriMath/pull/760).
+
+### A factorial under a vanishing exponent has a limit
+
+A power whose base holds a factorial had none at all. Every route out of `ln(f)` runs through
+differentiating `f`, and a factorial's derivative wants the digamma function, which this library does
+not have — so the rule that reads `f^g` as `e^(g * ln f)` declined and nothing behind it had a
+reading either:
+
+```
+lim x->+oo (x! / x^x) ^ (1/x)   was  unevaluated   is  1/e
+lim x->+oo (x!) ^ (1/x)         was  unevaluated   is  +oo
+lim x->+oo (x!) ^ (1/ln(x))     was  unevaluated   is  +oo
+lim x->+oo (x!) ^ (1/x^2)       was  unevaluated   is  1
+lim x->+oo (x! / e^x) ^ (1/x)   was  unevaluated   is  +oo
+lim x->+oo ((x+1)! / x!) ^ (1/x)  was unevaluated  is  1
+```
+
+Stirling's expansion is stated for exactly that logarithm — `ln(f!)` is
+`f*ln(f) - f + ln(2*pi*f)/2 + 1/(12f) + O(1/f^3)` — and it is applied to the **exponent** rather than
+substituted for the factorial in the base. That is what makes it sound: what is dropped here
+*vanishes*, where the asymptotic for `f!` itself has an error that is merely relative and survives
+being raised to a power. Vanishing is still not enough on its own, since the dropped term is
+multiplied by the exponent it sits under, so `power / f -> 0` is required; `(x!)^x` fails that and is
+left alone.
+
+Every one of these values was checked numerically before being claimed — `(x!/x^x)^(1/x)` is
+`0.3678794453` at `x = 1e9` against `1/e = 0.3678794412`. Note that **SymPy 1.14.0 answers that one
+`0`**, so it is not a usable oracle here.
+
+Nothing without a factorial in it changes: over 225 generated powers, six results differ and all six
+are one of these, every one of them an unevaluated node becoming a value. `casbench` 112/117 →
+113/117.
+
+[#754](https://github.com/asc-community/AngouriMath/issues/754), PR
+[#764](https://github.com/asc-community/AngouriMath/pull/764).
 
 ### `lim x->2 signum(x)` no longer kills the process
 
