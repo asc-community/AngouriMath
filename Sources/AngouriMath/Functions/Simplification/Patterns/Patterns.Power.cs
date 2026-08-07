@@ -56,7 +56,30 @@ namespace AngouriMath.Functions
                 => new Powf(any1, any2 * any3),
 
             // {1} ^ n * {2} ^ n = ({1} * {2}) ^ n
-            Mulf(Powf(var any1, var any3), Powf(var any2, var any3a)) when any3 == any3a => new Powf(any1 * any2, any3),
+            //
+            // The same condition the ({}^{})^{} rule above carries, and missing here for the
+            // same reason -- both were written unconditionally and #752 only looked at one of
+            // them. True for a whole n whatever the signs, since a^3 b^3 is (ab)(ab)(ab), and
+            // for positive real bases whatever the exponent. Outside those two the two sides
+            // can differ by a full turn of the argument:
+            //
+            //     sqrt(x) * sqrt(y)   came back as sqrt(x * y), and at x = y = -1 the first
+            //                         is i * i = -1 while the second is sqrt(1) = 1
+            //
+            // https://github.com/asc-community/AngouriMath/issues/801
+            Mulf(Powf(var any1, var any3), Powf(var any2, var any3a))
+                when any3 == any3a
+                     && (any3 is Integer
+                         || (any1.Evaled is Real { IsPositive: true }
+                             && any2.Evaled is Real { IsPositive: true }))
+                => new Powf(any1 * any2, any3),
+            // The quotient form has the same hole -- sqrt(2) / sqrt(-3) is -0.8165i while
+            // (2 / -3)^(1/2) is +0.8165i -- and is deliberately left unguarded, because
+            // guarding it costs answers rather than only shapes. It is what lets the limit
+            // machinery read a 1^oo out of a quotient, so `(x^2 + 1)^x / (x^2)^x` stops
+            // being answered at all, which is the whole of #739 and #740. Which of the two
+            // to prefer is a maintainer's call and is filed separately rather than taken
+            // here. https://github.com/asc-community/AngouriMath/issues/802
             Divf(Powf(var any1, var any3), Powf(var any2, var any3a)) when any3 == any3a => new Powf(any1 / any2, any3),
 
             // {1} ^ n / {2} ^ (c * n) = ({1} / {2} ^ c) ^ n, and the same the other way up.
