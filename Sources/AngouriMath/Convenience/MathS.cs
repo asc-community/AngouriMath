@@ -5632,6 +5632,14 @@ namespace AngouriMath
                             cases.Sum(@case =>
                                 DefaultCriteria(@case.Expression) + 0.1 * DefaultCriteria(@case.Predicate) + ExtraHeavyWeight * (@case.Expression.Nodes.Count(n => n is Providedf) + @case.Predicate.Nodes.Count(n => n is Providedf))),
                         Variable => Weight, // Number of variables
+                        // A root in a denominator, which the rationalising rule clears out.
+                        // Without a weight here the two forms tie -- 1 / (sqrt(3) + 5) and
+                        // (sqrt(3) - 5) / (-22) are the same rate -- and a tie is settled by
+                        // whichever candidate was generated first, which is not a preference
+                        // so much as an accident. This states the preference instead.
+                        // https://github.com/asc-community/AngouriMath/issues/205
+                        Divf(_, var divisor) when divisor.Nodes.Any(node => node is Powf(_, Rational and not Integer))
+                            => MinorWeight + Weight + expr.DirectChildren.Sum(DefaultCriteria),
                         Divf => MinorWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of divides
                         Rational(Integer(1 or -1), _) and not Integer => Weight + expr.DirectChildren.Sum(DefaultCriteria), // Number of rationals with unit numerator
                         Powf(_, Real { IsNegative: true }) => HeavyWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of negative powers
