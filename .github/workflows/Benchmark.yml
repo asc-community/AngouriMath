@@ -1,16 +1,37 @@
 name: 'Kernel Benchmark'
 
+# The path filters below used to read "./Sources/AngouriMath/AngouriMath", which is not a
+# path in this tree: the kernel is Sources/AngouriMath/ and its project file is
+# Sources/AngouriMath/AngouriMath.csproj, with no nested AngouriMath directory. The pattern
+# has no wildcard, so it could only ever match that one literal non-existent path, and the
+# workflow last ran on 2026-01-02 -- two minutes before the filter was re-added in f51c7e03.
+# Ninety-eight PRs merged after that without being benchmarked.
+#
+# Path filters are globs matched against paths relative to the repository root, so the
+# leading "./" was wrong as well, though it made no difference while the target did not
+# exist. https://github.com/asc-community/AngouriMath/issues/775
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
+    # Written out twice rather than shared through a YAML anchor: anchors are not a
+    # supported part of the workflow syntax, and a benchmark that fails to parse is a
+    # worse outcome than the one being fixed here.
     paths:
-      - "./Sources/AngouriMath/AngouriMath"
+      - "Sources/AngouriMath/**"
+      # A change to the benchmark itself is worth benchmarking.
+      - "Sources/Tests/DotnetBenchmark/**"
+      # And so is a change to this file -- which is also what lets a fix to these filters
+      # demonstrate that it works, rather than being reasoned about.
+      - ".github/workflows/Benchmark.yml"
   pull_request:
     branches:
       - '*'
     paths:
-      - "./Sources/AngouriMath/AngouriMath"
+      - "Sources/AngouriMath/**"
+      - "Sources/Tests/DotnetBenchmark/**"
+      - ".github/workflows/Benchmark.yml"
 
 jobs:
   Benchmark:
