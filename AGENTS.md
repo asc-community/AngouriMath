@@ -145,6 +145,62 @@ counts alongside the solved count. A change that solves one more problem and int
 answer is a regression. Compare against SymPy, Mathematica, or a textbook — being different from
 SymPy is not automatically being wrong, but it is always worth explaining.
 
+## One structure under several features
+
+Four things in this library are the same shape, and three of them were written separately before
+anyone noticed: a **finitely-supported map from a basis into a coefficient semiring**.
+
+| feature | basis | its monoid operation | coefficients | where |
+|---|---|---|---|---|
+| polynomials | exponent vectors | addition of exponents | `Entity` | `PolynomialSolver.GatherMonomialInformation` |
+| asymptotic series | rational exponents | addition | `Entity` | `AsymptoticSeries.Terms` |
+| boolean minterms | assignments | concatenation | the boolean semiring | `Functions/Boolean/Minimiser` |
+| quantum states | basis kets | tensor product | `Entity` | `Functions/Quantum` *(being added)* |
+
+The basis is a **monoid**, so the whole is a monoid algebra `R[M]`. That is not decoration: it makes
+the operation these features all want into a single one. Factoring is *dividing out the monoid GCD
+of the support*, and these two lines are the same computation —
+
+```
+x^2*y + x^2      =  x^2 * (y + 1)                  gcd of {(2,1),(2,0)} is (2,0)
+|001> + |011>    =  |0> (x) (|0> + |1>) (x) |1>    common prefix |0>, common suffix |1>
+```
+
+— which is why "factor out a common monomial" and "detect tensor separability" do not need two
+implementations.
+
+**Idempotence is a property of the semiring, not of the algorithm.** `a or a = a` holds in the
+boolean semiring and `|x> + |x> = 2|x>` says it fails in the complex one, and that single difference
+is what separates *covering* from *superposition*. Quine-McCluskey's merge step is absorption; it is
+correct only because a minterm may be covered twice for free. Write that as data on the semiring and
+the classical minimiser becomes the idempotent special case of the general thing, rather than a
+separate subsystem.
+
+**What does not share, and must not be made to.** Cover selection is boolean only, for exactly the
+reason above. Factorisation into irreducibles is polynomials only — only the monomial content is
+common. Truncation and order tracking are series only. A shared engine that swallowed these would be
+wrong in a way that type-checks.
+
+**Two representations, deliberately.** The coefficients are `Entity` throughout; the choice is what
+the *basis* is, and it is made differently on purpose:
+
+| | basis | why |
+|---|---|---|
+| quantum | `Entity`-backed | the state is then an ordinary expression, so `Simplify`, `Substitute`, `Latexise` and the rest work on it without anything being taught about quantum |
+| polynomials, series | a generic `TBasis` struct | exponent vectors never enter the expression tree, and the internal layers stay allocation-free and type-safe |
+
+One generic spine, instantiated twice. That is less tidy than picking a single answer, and the
+untidiness is the point: making quantum states first-class expressions is what puts the
+classical/quantum boundary inside one algebra instead of between two subsystems, while an exponent
+vector has no business being an `Entity` and would cost allocation on the hottest path in the
+library. If you are tempted to unify these later, price the polynomial side first — that is the one
+with the measurements against it.
+
+**What is not this shape at all**, and is worth saying so that nobody tries: sets and intervals
+(union is not coefficient addition), piecewise (a condition is not a basis element), matrices (the
+product is contraction, not convolution), and operators or gates — those act *on* states rather than
+being states, and they belong to a quantum computing library rather than to a CAS.
+
 ## Keep up with the mathematics
 
 Algorithms here are decades of literature deep, and the good ones are written down. Before inventing
@@ -264,6 +320,9 @@ Good entry points, roughly by depth:
   [#381](https://github.com/asc-community/AngouriMath/issues/381). Diophantine equations and
   characteristic polynomials both want the polynomial layer.
 - **The polynomial layer itself** — multivariate GCD, resultants, factorisation. Large, and most of
-  the above sits behind it.
+  the above sits behind it. Its representation is already a monoid algebra in all but name; see
+  *One structure under several features* for the shape it wants, and note that
+  `GatherMonomialInformation` is on the hot path for solving, long division *and* simplification, so
+  nothing there moves without a measured proof it did not regress.
 - **[#497](https://github.com/asc-community/AngouriMath/issues/497), AngouriMath 2.0** — the design
   paper. If you are proposing something structural, propose it there.
