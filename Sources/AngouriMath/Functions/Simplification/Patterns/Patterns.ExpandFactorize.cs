@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using PeterO.Numbers;
 using static AngouriMath.Entity;
 
 namespace AngouriMath.Functions
@@ -63,6 +64,116 @@ namespace AngouriMath.Functions
 
             _ => x
         };
+
+
+        /// <summary>
+        /// A three-term sum that is a perfect square with a radical in it.
+        /// </summary>
+        /// <remarks>
+        /// Its own pass, run before <see cref="FactorizeRules"/> rather than as an arm of
+        /// it. <c>Replace</c> walks bottom-up, so the common-factor rule reaches the inner
+        /// <c>4 + 4*sqrt(x)</c> of <c>4 + 4*sqrt(x) + x</c> first and rewrites it to
+        /// <c>4 * (1 + sqrt(x))</c> -- by the time the outer sum is looked at, the three
+        /// terms this needs are no longer there. Ordering the arms within the switch does
+        /// not help, because the two rules are looking at different nodes.
+        /// https://github.com/asc-community/AngouriMath/issues/176
+        /// </remarks>
+        internal static Entity PerfectSquareRules(Entity x)
+            => x is Sumf or Minusf && CollapseToPerfectSquare(x) is { } square ? square : x;
+
+        /// <summary>
+        /// <c>u + 2*sqrt(u)*sqrt(v) + v</c> collapses to <c>(sqrt(u) + sqrt(v))^2</c>, which
+        /// is what <c>1 + sqrt(2x) + x/2</c> is.
+        /// https://github.com/asc-community/AngouriMath/issues/176
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The identity itself is unconditional: <c>(sqrt(u) + sqrt(v))^2</c> expands to
+        /// <c>u + 2*sqrt(u)*sqrt(v) + v</c> because <c>sqrt(u)^2</c> is <c>u</c> for every
+        /// complex <c>u</c>. It is the *square of a principal root*, not the root of a
+        /// square -- <c>sqrt(u^2) = u</c> is the false one, and holds only for a
+        /// non-negative <c>u</c>. https://github.com/asc-community/AngouriMath/issues/752
+        /// </para>
+        /// <para>
+        /// What cannot be trusted is the test for whether the cross term matches. Deciding
+        /// it needs <see cref="Entity.Simplify"/>, and the simplifier equates
+        /// <c>sqrt(x)*sqrt(y)</c> with <c>sqrt(x*y)</c>, which is false on the branch cuts:
+        /// at <c>x = y = -1</c>, <c>x + 2*sqrt(x*y) + y</c> is 0 while
+        /// <c>(sqrt(x) + sqrt(y))^2</c> is -4. Asked symbolically, this rule fired on that
+        /// sum and produced a wrong answer.
+        /// </para>
+        /// <para>
+        /// So the symbolic match only proposes, and a numeric check at sample points
+        /// disposes. The points include negative values, which is where a branch-cut error
+        /// shows and nowhere else, and every free variable is given a different one so that
+        /// <c>x</c> and <c>y</c> cannot coincide into a case that happens to hold. The rule
+        /// withdraws unless every sampled point agrees, so a variable it cannot evaluate at
+        /// simply means no collapse.
+        /// </para>
+        /// <para>
+        /// Restricted to sums that contain a radical, both because that is where the gap is
+        /// -- a polynomial trinomial is collapsed by the rules above -- and to keep the cost
+        /// of that <c>Simplify</c> off every three-term sum in every tree.
+        /// </para>
+        /// </remarks>
+        /// <returns><see langword="null"/> when the sum is not a square, so the rule does not fire.</returns>
+        private static Entity? CollapseToPerfectSquare(Entity expr)
+        {
+            if (!expr.Nodes.Any(node => node is Powf(_, Rational and not Integer)))
+                return null;
+            var terms = Sumf.LinearChildren(expr).ToList();
+            if (terms.Count != 3)
+                return null;
+
+            for (var cross = 0; cross < 3; cross++)
+            {
+                var w = terms[cross];
+                var p = new Powf(terms[(cross + 1) % 3], Rational.Create(1, 2));
+                var q = new Powf(terms[(cross + 2) % 3], Rational.Create(1, 2));
+                var product = (2 * p * q).Simplify();
+                var candidate =
+                    (product - w).Simplify() == 0 ? new Powf((p + q).Simplify(), 2) :
+                    (product + w).Simplify() == 0 ? new Powf((p - q).Simplify(), 2) :
+                    null;
+                if (candidate is { } square && AgreesNumerically(expr, square))
+                    return square;
+            }
+            return null;
+        }
+
+        /// <summary>Sample points, negative first: a branch-cut error shows nowhere else.</summary>
+        [ConstantField] private static readonly EDecimal[] PerfectSquareSamplePoints =
+            { EDecimal.FromString("-1.7"), EDecimal.FromString("-0.6"),
+              EDecimal.FromString("0.8"), EDecimal.FromString("2.3") };
+
+        /// <summary>
+        /// Whether a proposed collapse is the same number as what it replaces, checked at
+        /// <see cref="PerfectSquareSamplePoints"/> with each free variable offset from the
+        /// last so that two of them never take the same value.
+        /// </summary>
+        private static bool AgreesNumerically(Entity original, Entity candidate)
+        {
+            var variables = original.Vars.ToList();
+            if (variables.Count == 0)
+                return true;
+            for (var i = 0; i < PerfectSquareSamplePoints.Length; i++)
+            {
+                Entity before = original, after = candidate;
+                for (var v = 0; v < variables.Count; v++)
+                {
+                    var point = PerfectSquareSamplePoints[(i + v) % PerfectSquareSamplePoints.Length];
+                    before = before.Substitute(variables[v], Real.Create(point));
+                    after = after.Substitute(variables[v], Real.Create(point));
+                }
+                if (before.Evaled is not Complex left || after.Evaled is not Complex right)
+                    return false;
+                var difference = (left - right).Abs();
+                if (difference is not Real real || real.EDecimal.Abs()
+                        .CompareTo(EDecimal.FromString("1e-12")) > 0)
+                    return false;
+            }
+            return true;
+        }
 
         /// <summary>
         /// Pulls a shared factor out of the terms of a sum: <c>a*c + a*d + b*c + b*d</c>
