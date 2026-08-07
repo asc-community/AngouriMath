@@ -67,7 +67,10 @@ namespace AngouriMath.Tests.Common
         [Theory]
         [InlineData("23.3", "233/10")]
         [InlineData("5.3", "53/10")]
-        [InlineData("-5.3i", "-53/10i")]
+        // Was "-53/10i", which the parser reads as -53/(10i) -- that is +5.3i, the negation
+        // of the number being printed. The expectation was pinning the misprint, so it is
+        // corrected rather than loosened; the multiplication is now explicit.
+        [InlineData("-5.3i", "-53/10 * i")]
         public void DecimalToRational(string @decimal, string rational)
         {
             string expr = $"{@decimal} + 3 / 3 + {@decimal} + i";

@@ -31,13 +31,19 @@ namespace AngouriMath
                         else
                             return number.Stringize();
                     }
+                    // A fraction next to the i has to be multiplied by it explicitly. Written
+                    // as 1/2i the parser reads 1/(2i), which is the negation of what was
+                    // printed, and bracketing it as (1/2)i does not help -- a bracket followed
+                    // by a name is read as a power, so 2 + (3/4)i came back as 2 + (3/4)^i.
+                    // Both are silent: the misreading is a valid expression, so nothing
+                    // complains, and every root of a trigonometric equation prints this way.
+                    var times = ImaginaryPart is Rational and not Integer ? " * " : "";
                     if (ImaginaryPart is Integer(0))
                         return RealPart.Stringize();
                     else if (RealPart is Integer(0))
-                        return RenderNum(ImaginaryPart) + "i";
-                    var (l, r) = ImaginaryPart is Rational and not Integer ? ("(", ")") : ("", "");
+                        return RenderNum(ImaginaryPart) + times + "i";
                     var (im, sign) = ImaginaryPart > 0 ? (ImaginaryPart, "+") : (-ImaginaryPart, "-");
-                    return RealPart.Stringize() + " " + sign + " " + l + RenderNum(im) + r + "i";
+                    return RealPart.Stringize() + " " + sign + " " + RenderNum(im) + times + "i";
                 }
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
