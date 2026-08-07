@@ -15,6 +15,22 @@
   <ItemGroup>
     <PackageReference Include="FSharp.SystemTextJson" Version="0.17.4" />
     <PackageReference Include="Microsoft.DotNet.Interactive.FSharp" Version="1.0.0-beta.25323.1" />
+
+    <!--
+    Pinned to pull the patched build of a transitive dependency forward.
+    Microsoft.DotNet.Interactive.FSharp brings System.Security.Cryptography.Xml 9.0.6, which
+    carries eight known high severity advisories (NU1903): GHSA-23rf-6693-g89p,
+    GHSA-37gx-xxp4-5rgx, GHSA-6588-8gv4-xfgh, GHSA-8q5v-6pqq-x66h, GHSA-cvvh-rhrc-wg4q,
+    GHSA-g8r8-53c2-pm3f, GHSA-mmjf-rqrv-855v and GHSA-w3x6-4m5h-cxqf. 9.0.18 is the patched
+    build on the same major line.
+
+    A direct reference rather than an upgrade of the package that brings it in: moving
+    Microsoft.DotNet.Interactive.FSharp to its newest beta, 1.0.0-beta.26120.1, fails to
+    build with 452 errors and does not clear the advisories either. Measured, not assumed.
+    Remove this line once that package ships a build whose own dependency is patched.
+    https://github.com/asc-community/AngouriMath/issues/542
+    -->
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.18" />
     <!--
     <PackageReference Include="AngouriMath.Interactive" Version="1.4.0-preview.3" />
     -->
