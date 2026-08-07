@@ -44,6 +44,7 @@ read first.
 | **silent** | a boolean expression | factored, not minimised | minimised where that is shorter |
 | **silent** | some integrals | not antiderivatives | closed forms |
 | **silent** | two integrals | answered correctly | unevaluated — a deliberate loss |
+| **silent** | `k/(a x^2 + c)` and `k/sqrt(a x^2 + c)` for symbolic `a` | `NaN` | a piecewise on the sign of the discriminant |
 | loud | `Compile` over a missing variable | `KeyNotFoundException` | `UncompilableNodeException` |
 
 ---
@@ -1113,6 +1114,34 @@ one.
 
 PRs [#665](https://github.com/asc-community/AngouriMath/pull/665) and
 [#675](https://github.com/asc-community/AngouriMath/pull/675).
+
+### A quadratic denominator with a symbolic leading coefficient answered `NaN`
+
+`1/(4 + 9*x^2)` has always come back as an arctangent. `1/(a^2 + b^2*x^2)` came back as `NaN` — the
+claim that no antiderivative exists, for one of the most common integrals there is.
+
+```
+int 1/(a^2 + b^2*x^2) dx     was  NaN + C
+                             is   a piecewise, the arctangent where 4*a^2*b^2 > 0
+int 1/sqrt(a*x^2 + c) dx     was  NaN + C
+                             is   a piecewise on the sign of a
+```
+
+Both patterns build their `a = 0` arm as though the denominator still had an `x` term —
+`(k/b) ln|bx + c|` and `2k sqrt(bx + c)/b` — each dividing by a `b` that is zero whenever the
+denominator is written without one. The arm is guarded afterwards by a `Providedf` on `a = 0`, so a
+numeric leading coefficient makes it decidably unreachable and it is dropped before anything looks
+inside; a symbolic one leaves it in place, and a `Providedf` carrying `NaN` takes the whole piecewise
+with it. Every test of these shapes used numbers, where the defect cannot be reached.
+
+The arm was also the wrong formula, not merely undefined: where `a = 0` and `b = 0` the integrand is
+the constant `k/c` and its antiderivative is `kx/c`, which is what it now says.
+
+Measured over the 1774 fair problems of Rubi's independent test suites: answered 536 -> 543, wrong
+7 -> 0. Three problems that were never answered moved from unevaluated to timeout, the `NaN` having
+served as an accidental early exit.
+
+PR [#774](https://github.com/asc-community/AngouriMath/pull/774).
 
 ### Two integrals that were answered are now unevaluated
 

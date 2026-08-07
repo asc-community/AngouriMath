@@ -387,8 +387,14 @@ namespace AngouriMath.Functions.Algebra
             var logarithmCase =
                 numerator * MathS.Ln(MathS.Abs(twoAxPlusB + 2 * MathS.Sqrt(a) * MathS.Sqrt(radicand))) / MathS.Sqrt(a);
 
-            // a = 0: sqrt(bx + c), which integrates as an ordinary power
-            var linearCase = 2 * numerator * MathS.Sqrt(b * x + c) / b;
+            // a = 0: sqrt(bx + c), which integrates as an ordinary power, and needs b ≠ 0 for
+            // the same reason the rational case below does. Where the radicand has no x term
+            // the integrand is the constant k/sqrt(c) and its antiderivative is kx/sqrt(c);
+            // the division by zero otherwise left here is what made k/sqrt(a x^2 + c) answer
+            // NaN for every symbolic a, since only a numeric a lets this arm be dropped.
+            var linearCase = TreeAnalyzer.IsZero(b)
+                ? numerator * x / MathS.Sqrt(c)
+                : 2 * numerator * MathS.Sqrt(b * x + c) / b;
 
             return MathS.Piecewise([
                 new Entity.Providedf(linearCase, a.EqualTo(0)),
@@ -412,8 +418,15 @@ namespace AngouriMath.Functions.Algebra
         {
             // The formula depends on whether it's linear (a = 0) or quadratic (a ≠ 0)
             // Case 0: a = 0 (linear, not quadratic)
-            // ∫ k/(bx + c) dx = (k/b) * ln|bx + c|
-            var linearCase = numerator * MathS.Ln(MathS.Abs(b * x + c)) / b;
+            // ∫ k/(bx + c) dx = (k/b) * ln|bx + c|, which needs b ≠ 0. Where the denominator
+            // has no x term the integrand is the constant k/c and its antiderivative is kx/c;
+            // writing the logarithm there divides by zero, and a Providedf carrying NaN takes
+            // the whole piecewise with it. That is only ever reached when a is symbolic, since
+            // a numeric a makes this arm decidably unreachable and it is dropped before the
+            // NaN can propagate -- so k/(a x^2 + c) answered NaN while k/(2 x^2 + c) did not.
+            var linearCase = TreeAnalyzer.IsZero(b)
+                ? numerator * x / c
+                : numerator * MathS.Ln(MathS.Abs(b * x + c)) / b;
             
             // For true quadratics (a ≠ 0), discriminant Δ = 4ac - b^2 determines the form
             var discriminant = 4 * a * c - b * b;
