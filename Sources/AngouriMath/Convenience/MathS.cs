@@ -6869,6 +6869,77 @@ namespace AngouriMath
         }
 
         /// <summary>
+        /// Symbolic quantum states: superpositions of basis kets with <see cref="Entity"/>
+        /// amplitudes.
+        /// </summary>
+        /// <remarks>
+        /// A state is an ordinary expression rather than a new kind of node. <c>Ket</c> builds
+        /// <c>apply(ket, 0, 1)</c> for |01&gt;, so a superposition is a sum of products and
+        /// everything that reads expressions reads it -- which is why adding two states,
+        /// scaling one, and collecting <c>a|x&gt; + b|x&gt;</c> into <c>(a+b)|x&gt;</c> need no
+        /// method here. <c>Simplify</c> already does them.
+        /// <para/>
+        /// What is here is what the ordinary machinery has no reason to know: factoring a
+        /// definite qubit out of a superposition, and the two questions that are about states
+        /// as states rather than as expressions.
+        /// <para/>
+        /// There are deliberately no gates. A gate acts *on* a state rather than being one,
+        /// and operators, circuits and measurement belong to a quantum computing library
+        /// rather than to a computer algebra system.
+        /// </remarks>
+        public static class Quantum
+        {
+            /// <summary>
+            /// The basis ket over the given qubits, each 0 or 1: <c>Ket(0, 1)</c> is |01&gt;.
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// var bell = (MathS.Quantum.Ket(0, 0) + MathS.Quantum.Ket(1, 1)) / MathS.Sqrt(2);
+            /// Console.WriteLine(bell.Simplify());
+            /// </code>
+            /// </example>
+            public static Entity Ket(params int[] qubits)
+                => Entity.Variable.CreateVariableUnchecked(Functions.Quantum.QuantumState.KetHead)
+                    .Apply(qubits.Select(q => (Entity)q).ToArray());
+
+            /// <summary>
+            /// The state written as a tensor product where its leading or trailing qubits are
+            /// in a definite basis state, or the expression unchanged where none is.
+            /// </summary>
+            /// <remarks>
+            /// <c>|001&gt; + |011&gt;</c> becomes <c>|0&gt; (|0&gt; + |1&gt;) |1&gt;</c>. A
+            /// state with no definite qubit at either end comes back as it went in -- including
+            /// an entangled one such as <c>|00&gt; + |11&gt;</c>, which has no factorisation at
+            /// all, and a product state such as <c>(|0&gt;+|1&gt;)(|0&gt;+|1&gt;)</c>, whose
+            /// separability this does not yet detect.
+            /// </remarks>
+            public static Entity Factorise(Entity state)
+                => Functions.Quantum.Factorisation.Factorise(state) ?? state;
+
+            /// <summary>
+            /// A product of states over consecutive qubits multiplied back out into a single
+            /// superposition -- the inverse of <c>Factorise</c> -- or the expression unchanged
+            /// where it is not such a product.
+            /// </summary>
+            public static Entity TensorExpand(Entity state)
+                => Functions.Quantum.Factorisation.TensorExpand(state) ?? state;
+
+            /// <summary>
+            /// Whether the amplitudes square-sum to one, or <see langword="null"/> where that
+            /// cannot be settled -- a symbolic amplitude need not have a decidable modulus.
+            /// </summary>
+            public static bool? IsNormalised(Entity state)
+                => Functions.Quantum.Factorisation.IsNormalised(state);
+
+            /// <summary>
+            /// Whether two states differ only by a global phase, which is the difference no
+            /// measurement can see -- or <see langword="null"/> where that cannot be settled.
+            /// </summary>
+            public static bool? EqualUpToGlobalPhase(Entity left, Entity right)
+                => Functions.Quantum.Factorisation.EqualUpToGlobalPhase(left, right);
+        }
+
+        /// <summary>
         /// Some operations on booleans are stored here
         /// </summary>
         public static class Boolean
