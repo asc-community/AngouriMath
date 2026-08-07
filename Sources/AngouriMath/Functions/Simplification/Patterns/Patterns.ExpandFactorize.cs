@@ -58,7 +58,18 @@ namespace AngouriMath.Functions
             Minusf(var any1, var any1a) when any1 == any1a => 0,
 
             // a ^ b * c ^ b = (a * c) ^ b
-            Mulf(Powf(var any1, var any2), Powf(var any3, var any2a)) when any2 == any2a => new Powf(any1 * any3, any2),
+            //
+            // Guarded like its twin in PowerRules, which is where this identity is written
+            // out and explained: true for a whole b whatever the signs, and for positive
+            // real bases whatever the exponent, and false outside those two --
+            // sqrt(x) * sqrt(y) became sqrt(x * y), which at x = y = -1 is 1 where the
+            // product is -1. https://github.com/asc-community/AngouriMath/issues/801
+            Mulf(Powf(var any1, var any2), Powf(var any3, var any2a))
+                when any2 == any2a
+                     && (any2 is Integer
+                         || (any1.Evaled is Real { IsPositive: true }
+                             && any3.Evaled is Real { IsPositive: true }))
+                => new Powf(any1 * any3, any2),
 
             Sumf or Minusf when CollectCommonFactors(x) is { } collected => collected,
 
