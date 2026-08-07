@@ -11,8 +11,53 @@ namespace AngouriMath.Functions.Algebra
 {
     internal static class IntegralPatterns
     {
+        /// <summary>
+        /// The argument through which each rule below reads its integrand's dependence on
+        /// <paramref name="x"/>, or <see langword="null"/> for a shape none of them matches.
+        /// </summary>
+        /// <remarks>
+        /// The conditions on the two two-argument nodes are the ones their own rules carry:
+        /// a base that mentions <c>x</c> is a different integral, not this one.
+        /// </remarks>
+        private static Entity? RateBearingArgument(Entity expr, Entity.Variable x) => expr switch
+        {
+            Entity.Sinf(var arg) => arg,
+            Entity.Cosf(var arg) => arg,
+            Entity.Secantf(var arg) => arg,
+            Entity.Cosecantf(var arg) => arg,
+            Entity.Tanf(var arg) => arg,
+            Entity.Cotanf(var arg) => arg,
+            Entity.Absf(var arg) => arg,
+            Entity.Signumf(var arg) => arg,
+            Entity.Arcsinf(var arg) => arg,
+            Entity.Arccosf(var arg) => arg,
+            Entity.Arctanf(var arg) => arg,
+            Entity.Arccotanf(var arg) => arg,
+            Entity.Logf(var @base, var arg) when !@base.ContainsNode(x) => arg,
+            Entity.Powf(var @base, var power) when !@base.ContainsNode(x) => power,
+            _ => null
+        };
+
         internal static Entity? TryStandardIntegrals(Entity expr, Entity.Variable x) => expr switch
         {
+            // Every rule below divides by the linear rate of its integrand's argument, and
+            // an argument that mentions x without depending on it has a rate of zero. That
+            // put a literal division by zero into the answer, so `e ^ (x + -x)` integrated
+            // to `e ^ (x + -x) / (0 * ln(e))`, which evaluates to NaN. Each of those
+            // integrands depends on x only through that argument, so a zero rate means the
+            // integrand is a constant and integrates to itself times x.
+            //
+            // The rate has to be decidably zero: a symbolic one, as in sin(a * x), is not,
+            // and answering sin(a * x) * x there would be wrong for every non-zero a.
+            //
+            // Reachable from ordinary input once two powers of one base are gathered:
+            // e^x * e^(-x) becomes e^(x + -x), whose rate is zero while `x + -x` is still
+            // written out. https://github.com/asc-community/AngouriMath/issues/785
+            _ when RateBearingArgument(expr, x) is { } constant
+                   && TreeAnalyzer.TryGetPolyLinear(constant, x, out var rate, out _)
+                   && rate.Evaled is Entity.Number.Complex { IsZero: true }
+                => expr * x,
+
             Entity.Sinf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _)  =>
                     -MathS.Cos(arg) / a,
