@@ -176,13 +176,19 @@ namespace AngouriMath.Tests.Common
             "derivative(apply(f, x), x, -2)".ToEntity().InnerSimplified.ShouldBe("integral(integral(apply(f, x), x), x)");
         [Fact] public void DerivativeToIntegralEval() =>
             "derivative(apply(f, x) + (sin(3)^2 + cos(3)^2), x, -1)".ToEntity().Evaled.ShouldBe("integral(apply(f, x) + 1, x)");
+        // The multiplication is distributed into the branches now that Integrate
+        // inner-simplifies its answer (https://github.com/asc-community/AngouriMath/issues/772).
+        // Same value, and it is the form the library already produced for the same
+        // question asked through the node -- see PiecewiseIntegrate1NodeInnerSimplified
+        // below, which has always expected `piecewise(2 * x + C provided a, ...)`. The two
+        // paths disagreed; the old expectation here was pinning that disagreement.
         [Fact] public void PiecewiseIntegrate1() =>
             "piecewise(2 provided a, 3)".Integrate("x")
-            .ShouldBe("piecewise(2 provided a, 3) * x + C");
+            .ShouldBe("piecewise(2 * x provided a, 3 * x) + C");
 
         [Fact] public void PiecewiseIntegrate2() =>
             "piecewise(2 provided a, 3)".Integrate("d")
-            .ShouldBe("piecewise(2 provided a, 3) * d + C");
+            .ShouldBe("piecewise(2 * d provided a, 3 * d) + C");
 
         [Fact] public void PiecewiseIntegrate3() =>
             "piecewise(x provided a, 1/x)".Integrate("x")

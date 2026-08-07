@@ -21,8 +21,17 @@ namespace AngouriMath
         /// <returns>
         /// An integrated expression. It might remain the same or be transformed into nodes with no integrals.
         /// </returns>
+        /// <remarks>
+        /// The antiderivative is inner-simplified before it is returned, as the definite
+        /// overload below has always done. Without it the answer kept branches whose guard
+        /// was a comparison of two literals -- <c>1/sqrt(x^2 - 1)</c> came back as a
+        /// three-branch piecewise on <c>1 * 1 ^ 2</c>, two of them dead -- and a caller that
+        /// inspects the answer rather than evaluating it saw all three. `Piecewise` already
+        /// drops a branch whose guard is decidably false; nothing was asking it to.
+        /// https://github.com/asc-community/AngouriMath/issues/772
+        /// </remarks>
         public Entity Integrate(Variable x) =>
-            Integration.ComputeIndefiniteIntegral(InnerSimplified, x) is { } antiderivative
+            Integration.ComputeIndefiniteIntegral(InnerSimplified, x)?.InnerSimplified is { } antiderivative
             ? antiderivative + (antiderivative.VarsAndConsts.Contains("C") ? Variable.CreateUnique(antiderivative, "C") : "C")
             : new Integralf(this, x, null);
         /// <summary>
