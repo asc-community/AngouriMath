@@ -21,6 +21,7 @@ namespace AngouriMath.Tests.Common
     /// https://github.com/asc-community/AngouriMath/issues/637, which reports it as a
     /// compilation problem -- compiling in parallel is fine, it is calling that was not.
     /// </summary>
+    [Trait("Area", "Common")]
     public sealed class ParallelCompiledCallTest
     {
         private const int Threads = 16;

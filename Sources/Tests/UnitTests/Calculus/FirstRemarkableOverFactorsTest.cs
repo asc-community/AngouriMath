@@ -27,6 +27,7 @@ namespace AngouriMath.Tests.Calculus
     /// and not for a term of a sum, where the difference between the two forms is the entire
     /// answer. <see cref="ASumIsNotRewritten"/> is what holds that line.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class FirstRemarkableOverFactorsTest
     {
         private static Entity LimitOf(string expression, string destination) =>

@@ -13,6 +13,7 @@ using AngouriMath.Extensions;
 
 namespace AngouriMath.Tests.Algebra
 {
+    [Trait("Area", "Algebra")]
     public sealed class MatrixTest
     {
         public static readonly Entity.Matrix A = MathS.Matrices.Matrix(4, 2,

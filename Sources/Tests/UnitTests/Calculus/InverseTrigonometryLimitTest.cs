@@ -18,6 +18,7 @@ namespace AngouriMath.Tests.Calculus
     /// below the real axis, so along the reals it goes off to infinity in the imaginary direction
     /// with its real part settling at a right angle.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class InverseTrigonometryLimitTest
     {
         private static Entity Limit(string expression, string destination) =>

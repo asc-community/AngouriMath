@@ -25,6 +25,7 @@ namespace AngouriMath.Tests.Calculus
     /// No issue exists for this; it was found while measuring what a factorial's Stirling
     /// expansion would need, where x^x is the term the factorial is compared against.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class GruntzMovingExponentTest
     {
         private static void AssertLimit(string expression, string expected) =>

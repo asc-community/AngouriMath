@@ -19,6 +19,7 @@ namespace AngouriMath.Tests.Common
     /// at the call site rather than on the values.
     /// See https://github.com/asc-community/AngouriMath/issues/708.
     /// </summary>
+    [Trait("Area", "Common")]
     public sealed class NumericModulusTest
     {
         /// <summary>

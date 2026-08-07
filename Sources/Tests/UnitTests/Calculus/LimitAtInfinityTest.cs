@@ -17,6 +17,7 @@ namespace AngouriMath.Tests.Calculus
     /// l'Hopital's rule was only applied when the destination was finite, so the ordinary
     /// competing-growth limits at infinity came back unevaluated.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class LimitAtInfinityTest
     {
         private static Entity Limit(string expression, string destination) =>

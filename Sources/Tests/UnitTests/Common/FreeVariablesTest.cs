@@ -14,6 +14,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.Common
 {
+    [Trait("Area", "Common")]
     public class FreeVariablesTest
     {
         private IEnumerable<Entity.Variable> SeqVar(params string[] vars)

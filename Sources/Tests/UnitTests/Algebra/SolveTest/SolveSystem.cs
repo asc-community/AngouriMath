@@ -12,6 +12,7 @@ using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Tests.Algebra
 {
+    [Trait("Area", "Algebra")]
     public sealed class SolveSystem
     {
         internal static void AssertSystemSolvable(Entity[] equations, Entity.Variable[] vars, int rootCount, Integer? ToSub = null)

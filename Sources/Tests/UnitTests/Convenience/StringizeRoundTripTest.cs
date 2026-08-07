@@ -16,6 +16,7 @@ namespace AngouriMath.Tests.Common
     /// expression it printed. Anything else makes the printed form a lie, and a silent one,
     /// since a wrong reading is still a valid expression.
     /// </summary>
+    [Trait("Area", "Convenience")]
     public sealed class StringizeRoundTripTest
     {
         private static void AssertRoundTrip(string source)

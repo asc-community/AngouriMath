@@ -27,6 +27,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.PatternsTest
 {
+    [Trait("Area", "PatternsTest")]
     public sealed class TestTrigTableConsts
     {
         // TODO: Remove when we implement extra precision for rounding

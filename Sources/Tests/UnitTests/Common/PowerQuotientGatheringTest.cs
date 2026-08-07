@@ -20,6 +20,7 @@ namespace AngouriMath.Tests.Common
     /// has already happened -- and where it applies to only one of the two, the exponents
     /// no longer match. https://github.com/asc-community/AngouriMath/issues/740
     /// </summary>
+    [Trait("Area", "Common")]
     public sealed class PowerQuotientGatheringTest
     {
         private static Entity Simplified(string expr) => expr.ToEntity().Simplify();

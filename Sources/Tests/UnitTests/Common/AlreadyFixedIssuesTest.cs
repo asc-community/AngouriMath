@@ -18,6 +18,7 @@ namespace AngouriMath.Tests.Common
     /// without leaving the fix that closed it unprotected. Every case is the reporter's
     /// own, taken from the issue.
     /// </summary>
+    [Trait("Area", "Common")]
     public sealed class AlreadyFixedIssuesTest
     {
         private static readonly System.TimeSpan Budget = System.TimeSpan.FromSeconds(30);

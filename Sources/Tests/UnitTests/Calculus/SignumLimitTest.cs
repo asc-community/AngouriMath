@@ -22,6 +22,7 @@ namespace AngouriMath.Tests.Calculus
     /// overflowing the stack, which kills the process rather than raising anything a caller
     /// could catch -- https://github.com/asc-community/AngouriMath/issues/704.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class SignumLimitTest
     {
         private static Entity Limit(string expression, string destination) =>

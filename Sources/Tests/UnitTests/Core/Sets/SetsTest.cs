@@ -12,6 +12,7 @@ using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Tests.Core
 {
+    [Trait("Area", "Core")]
     public sealed class SetsTest
     {
         private static Set A = MathS.Sets.Empty;

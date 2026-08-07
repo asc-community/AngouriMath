@@ -21,6 +21,7 @@ namespace AngouriMath.Tests.Common
     /// the only test of it looked -- and wrong everywhere else, so compiled arcsine was the
     /// conjugate of the arcsine over the whole rest of the plane.
     /// </summary>
+    [Trait("Area", "Common")]
     public sealed class CompiledArcsinBranchTest
     {
         private static readonly Entity.Variable x = MathS.Var(nameof(x));

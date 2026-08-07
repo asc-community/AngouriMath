@@ -16,6 +16,7 @@ namespace AngouriMath.Tests.PatternsTest
     /// The factored form is offered to the simplifier as a candidate, so what these pin
     /// is both that it is produced and that it is preferred where it should be.
     /// </summary>
+    [Trait("Area", "PatternsTest")]
     public sealed class PolynomialFactoringTest
     {
         // https://github.com/asc-community/AngouriMath/issues/177

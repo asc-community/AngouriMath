@@ -12,6 +12,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.Common
 {
+    [Trait("Area", "Common")]
     public sealed class ImplicitOperators
     {
         internal void Test(Entity expr, Entity expected) => Assert.Equal(expected, expr);

@@ -21,6 +21,7 @@ namespace AngouriMath.Tests.Convenience
     /// https://github.com/asc-community/AngouriMath/issues/618. There was no node for it at
     /// all: there was no <c>mod</c> and no <c>MathS.Mod</c>.
     /// </summary>
+    [Trait("Area", "Convenience")]
     public sealed class ModulusTest
     {
         private static readonly Entity.Variable x = MathS.Var("x");

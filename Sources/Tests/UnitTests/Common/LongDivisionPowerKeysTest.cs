@@ -23,6 +23,7 @@ namespace AngouriMath.Tests.Common
     /// <c>2 * a / sqrt(a)</c> simplified to <c>-2 * sqrt(a)</c>.
     /// https://github.com/asc-community/AngouriMath/issues/751
     /// </summary>
+    [Trait("Area", "Common")]
     public sealed class LongDivisionPowerKeysTest
     {
         /// <summary>

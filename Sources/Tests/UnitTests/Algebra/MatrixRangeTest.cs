@@ -16,6 +16,7 @@ namespace AngouriMath.Tests.Algebra
     /// Taking part of a matrix by range, as asked for in
     /// https://github.com/asc-community/AngouriMath/issues/443.
     /// </summary>
+    [Trait("Area", "Algebra")]
     public sealed class MatrixRangeTest
     {
         private static readonly Entity.Matrix ThreeByThree = MathS.Matrices.Matrix(3, 3,

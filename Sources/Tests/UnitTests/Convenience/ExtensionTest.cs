@@ -12,6 +12,7 @@ using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Tests.Convenience
 {
+    [Trait("Area", "Convenience")]
     public class ExtensionTest
     {
         [Fact]

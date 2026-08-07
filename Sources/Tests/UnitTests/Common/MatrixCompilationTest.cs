@@ -16,6 +16,7 @@ namespace AngouriMath.Tests.Common
     /// Compiling expressions that mention matrices. A matrix has no compiled form, but an
     /// expression built out of matrices often has a value that is an ordinary number.
     /// </summary>
+    [Trait("Area", "Common")]
     public sealed class MatrixCompilationTest
     {
         // https://github.com/asc-community/AngouriMath/issues/425

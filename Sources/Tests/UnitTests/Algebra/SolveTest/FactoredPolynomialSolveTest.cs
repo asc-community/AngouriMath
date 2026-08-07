@@ -18,6 +18,7 @@ namespace AngouriMath.Tests.Algebra
     /// general formula for its degree -- or, above degree four, to the numeric solver.
     /// https://github.com/asc-community/AngouriMath/issues/272
     /// </summary>
+    [Trait("Area", "Algebra")]
     public sealed class FactoredPolynomialSolveTest
     {
         private static Entity.Set.FiniteSet Roots(string equation) =>

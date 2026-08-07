@@ -31,6 +31,7 @@ namespace AngouriMath.Tests.Calculus
     /// rather than in the limits -- the same quotient written <c>((x^2 + 1) / x^2)^x</c> is
     /// answered 1 without any of this.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class RemarkableLimitAfterSimplificationTest
     {
         private static Entity LimitOf(string expression, string destination = "+oo") =>

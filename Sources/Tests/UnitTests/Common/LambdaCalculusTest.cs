@@ -16,6 +16,7 @@ using static AngouriMath.Entity;
 
 namespace AngouriMath.Tests.Common
 {
+    [Trait("Area", "Common")]
     public class LambdaCalculusTest
     {
         private readonly Variable x = "x";

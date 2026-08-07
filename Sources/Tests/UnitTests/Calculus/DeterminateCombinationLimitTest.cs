@@ -20,6 +20,7 @@ namespace AngouriMath.Tests.Calculus
     /// how it was written: cos(x) / sin(x) at 0+ was +oo and cos(x) * (1 / sin(x)) was
     /// unevaluated.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class DeterminateCombinationLimitTest
     {
         private static void AssertLimit(string expression, string destination, ApproachFrom side, string expected) =>

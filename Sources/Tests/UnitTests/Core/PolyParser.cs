@@ -10,6 +10,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.Core
 {
+    [Trait("Area", "Core")]
     public class PolyParser
     {
         // Workaround to avoid ToString which results in SO in RC1

@@ -20,6 +20,7 @@ namespace AngouriMath.Tests.Calculus
     /// the other quotients of polynomials escaped it, because those the solvers read outright
     /// once x has been moved out to infinity.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class VanishingDenominatorTest
     {
         private static void AssertLimit(string expression, string destination, ApproachFrom side, string expected) =>

@@ -19,6 +19,7 @@ namespace AngouriMath.Tests.Calculus
     /// expression came back unevaluated wherever it was taken, including at points nowhere
     /// near a seam.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class PiecewiseLimitTest
     {
         private const string Sign = "piecewise(-1 provided x < 0, 1 provided x > 0, 0)";

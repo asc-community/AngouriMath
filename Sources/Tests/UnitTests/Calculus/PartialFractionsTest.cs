@@ -19,6 +19,7 @@ namespace AngouriMath.Tests.Calculus
     /// Each answer is checked by differentiating it back and comparing at points, since
     /// what matters is that it is an antiderivative and not what form it is written in.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class PartialFractionsTest
     {
         private static void AssertIsAntiderivative(string integrand, params double[] points)

@@ -29,6 +29,22 @@ dotnet test UnitTests
 dotnet test FSharpWrapperUnitTests
 ```
 
+Every test in `UnitTests` carries an `Area` trait naming the directory it lives in, so while
+you are working on one part of the library you can run just that part:
+
+```
+dotnet test UnitTests --filter "Area=Calculus"
+```
+
+The areas are `Algebra`, `Calculus`, `Common`, `Convenience`, `Core`, `Discrete` and
+`PatternsTest`, and every test has exactly one -- the seven of them add up to the whole
+suite, so nothing is missed by running them all separately.
+
+**Run the whole suite before opening a pull request.** The traits are for the loop you run
+while writing the change, not for what you check before proposing it: this library is full
+of rules that interact, and a change to simplification has broken solving and integration
+here more than once.
+
 Use `Sources/Samples/Samples/Playground.csproj` as a sandbox project, where you can manually test anything you want.
 
 ### Tips for working with git

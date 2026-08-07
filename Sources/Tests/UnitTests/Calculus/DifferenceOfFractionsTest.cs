@@ -19,6 +19,7 @@ namespace AngouriMath.Tests.Calculus
     /// expression is (sin(x) - x) / (x * sin(x)), which is an ordinary 0/0 that l'Hopital's
     /// rule settles.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class DifferenceOfFractionsTest
     {
         // Compared as numbers, since "1/2" parses as a division of two integers rather than as

@@ -23,6 +23,7 @@ namespace AngouriMath.Tests.Calculus
     /// No issue is filed for this; it was found by work/intbench against Rubi's suite, where
     /// it accounted for six of the seven wrong answers.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class SymbolicCoefficientIntegralsTest
     {
         /// <summary>

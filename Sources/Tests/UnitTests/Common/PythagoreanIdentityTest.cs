@@ -16,6 +16,7 @@ namespace AngouriMath.Tests.Common
     /// two forms got by dividing it through by sin^2 and by cos^2.
     /// https://github.com/asc-community/AngouriMath/issues/725
     /// </summary>
+    [Trait("Area", "Common")]
     public sealed class PythagoreanIdentityTest
     {
         /// <summary>

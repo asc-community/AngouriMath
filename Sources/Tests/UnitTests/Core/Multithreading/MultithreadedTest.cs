@@ -13,6 +13,7 @@ using System.Threading;
 
 namespace AngouriMath.Tests.Core.Multithreading
 {
+    [Trait("Area", "Core")]
     public sealed class MultithreadedTest
     {
         [Fact]

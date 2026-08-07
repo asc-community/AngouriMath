@@ -20,6 +20,7 @@ namespace AngouriMath.Tests.Calculus
     /// Only the quotient had the substitution, and it was made on the function vanishing rather
     /// than on its argument vanishing, which are two different conditions.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class EquivalentInfinitesimalTest
     {
         private static Entity Limit(string expression, string destination, ApproachFrom side)

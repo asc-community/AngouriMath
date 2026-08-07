@@ -13,6 +13,7 @@ using AngouriMath.Extensions;
 
 namespace AngouriMath.Tests.Algebra
 {
+    [Trait("Area", "Algebra")]
     public sealed class NumberTheoryTest
     {
         [Theory]

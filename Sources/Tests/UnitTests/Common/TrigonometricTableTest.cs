@@ -22,6 +22,7 @@ namespace AngouriMath.Tests.Common
     /// <c>1/2 + i*sin(5/3*pi)</c>, its own conjugate spelled differently.
     /// https://github.com/asc-community/AngouriMath/issues/743
     /// </summary>
+    [Trait("Area", "Common")]
     public sealed class TrigonometricTableTest
     {
         /// <summary>The denominators the table has entries for, plus a few it has not.</summary>

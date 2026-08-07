@@ -10,6 +10,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.Common
 {
+    [Trait("Area", "Common")]
     public sealed class ExpandFactorizeTest
     {
         public static readonly Entity.Variable x = MathS.Var(nameof(x));

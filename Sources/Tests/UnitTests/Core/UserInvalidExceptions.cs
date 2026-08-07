@@ -15,6 +15,7 @@ using static AngouriMath.Entity;
 
 namespace AngouriMath.Tests.Core
 {
+    [Trait("Area", "Core")]
     public sealed class UserInvalidExceptions
     {
         [Fact] public void PrecisionTooHigh() => 

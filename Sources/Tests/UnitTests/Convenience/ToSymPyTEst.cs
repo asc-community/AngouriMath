@@ -10,6 +10,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.Convenience
 {
+    [Trait("Area", "Convenience")]
     public class ToSymPyTest
     {
         [Theory]

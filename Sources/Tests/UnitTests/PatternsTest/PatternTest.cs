@@ -10,6 +10,7 @@ using AngouriMath.Extensions;
 
 namespace AngouriMath.Tests.PatternsTest
 {
+    [Trait("Area", "PatternsTest")]
     public sealed class PatternTest
     {
         private const int GithubIssue170Timeout = 1600; // we don't know the target machines

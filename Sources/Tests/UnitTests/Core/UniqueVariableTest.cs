@@ -17,6 +17,7 @@ namespace AngouriMath.Tests.Core
     /// integration, which is where the collision showed up, because the machinery that
     /// makes them is internal.
     /// </summary>
+    [Trait("Area", "Core")]
     public sealed class UniqueVariableTest
     {
         private static void AssertIsAntiderivative(string integrand)

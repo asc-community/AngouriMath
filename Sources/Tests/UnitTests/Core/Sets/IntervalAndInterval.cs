@@ -13,6 +13,7 @@ using static AngouriMath.MathS.Sets;
 
 namespace AngouriMath.Tests.Core.Sets
 {
+    [Trait("Area", "Core")]
     public sealed class IntervalAndInterval
     {
         private readonly Set A = Interval(2, true, 5, true);

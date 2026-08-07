@@ -20,6 +20,7 @@ using FluentAssertions;
 
 namespace AngouriMath.Tests.Convenience
 {
+    [Trait("Area", "Convenience")]
     public sealed class FromStringTest
     {
         public static readonly Entity.Variable x = Var(nameof(x));

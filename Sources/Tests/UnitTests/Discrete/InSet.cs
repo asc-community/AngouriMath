@@ -11,6 +11,7 @@ using AngouriMath;
 
 namespace AngouriMath.Tests.Discrete
 {
+    [Trait("Area", "Discrete")]
     public sealed class InSet
     {
         [Theory]

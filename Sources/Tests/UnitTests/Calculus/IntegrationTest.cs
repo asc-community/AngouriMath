@@ -11,6 +11,7 @@ using AngouriMath.Extensions;
 
 namespace AngouriMath.Tests.Calculus
 {
+    [Trait("Area", "Calculus")]
     public sealed class IntegrationTest
     {
         // TODO: add more tests

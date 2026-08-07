@@ -12,6 +12,7 @@ using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Tests.Algebra
 {
+    [Trait("Area", "Algebra")]
     public sealed class SolveEquationWithPiecewise
     {
         [Theory]

@@ -21,6 +21,7 @@ namespace AngouriMath.Tests.Algebra
     /// left where it stood.
     /// https://github.com/asc-community/AngouriMath/issues/744
     /// </summary>
+    [Trait("Area", "Algebra")]
     public sealed class RepeatedVariableSolveTest
     {
         private static Entity.Set.FiniteSet Roots(string equation) =>

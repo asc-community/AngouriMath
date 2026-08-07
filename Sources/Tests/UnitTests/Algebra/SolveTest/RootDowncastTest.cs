@@ -15,6 +15,7 @@ namespace AngouriMath.Tests.Algebra
     /// A numeric root that lands near a simple ratio is rewritten as that ratio. These
     /// pin when that is allowed to happen, since a ratio is read as an exact answer.
     /// </summary>
+    [Trait("Area", "Algebra")]
     public sealed class RootDowncastTest
     {
         private static Entity SingleRoot(string equation) =>

@@ -18,6 +18,7 @@ namespace AngouriMath.Tests.Algebra.SolveTest
     /// not with one entry per starting point the search happened to use. No issue is filed
     /// for this; it was found while checking the answers of another fix.
     /// </summary>
+    [Trait("Area", "Algebra")]
     public sealed class DuplicateRootTest
     {
         /// <summary>

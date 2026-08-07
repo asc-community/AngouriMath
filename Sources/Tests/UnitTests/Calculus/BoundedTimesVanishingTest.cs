@@ -21,6 +21,7 @@ namespace AngouriMath.Tests.Calculus
     /// and left the product indeterminate in the shape (no limit) * 0.
     /// https://github.com/asc-community/AngouriMath/issues/723
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class BoundedTimesVanishingTest
     {
         private static void AssertLimit(string expression, string destination, string expected)

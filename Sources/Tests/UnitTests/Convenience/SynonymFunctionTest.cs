@@ -14,6 +14,7 @@ using AngouriMath.Extensions;
 
 namespace AngouriMath.Tests.Convenience
 {
+    [Trait("Area", "Convenience")]
     public sealed class SynonymFunctionTest
     {
         private readonly Entity x = MathS.Var(nameof(x));

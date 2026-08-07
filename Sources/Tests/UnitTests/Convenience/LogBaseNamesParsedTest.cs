@@ -19,6 +19,7 @@ namespace AngouriMath.Tests.Convenience
     /// and x2 means x^2 by design, so log10(100) came out as log^10 * 100.
     /// https://github.com/asc-community/AngouriMath/issues/733
     /// </summary>
+    [Trait("Area", "Convenience")]
     public sealed class LogBaseNamesParsedTest
     {
         [Theory]

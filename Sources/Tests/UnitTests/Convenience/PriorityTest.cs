@@ -10,6 +10,7 @@ using AngouriMath.Extensions;
 
 namespace AngouriMath.Tests.Common
 {
+    [Trait("Area", "Convenience")]
     public class PriorityTest
     {
         [Theory]

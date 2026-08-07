@@ -10,6 +10,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.Algebra.SolveTest
 {
+    [Trait("Area", "Algebra")]
     public sealed class SolveStatement
     {
         [Theory]

@@ -10,6 +10,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.Common
 {
+    [Trait("Area", "Common")]
     public sealed class NonStrictTest
     {
         static readonly Entity.Variable x = nameof(x);

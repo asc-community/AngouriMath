@@ -15,6 +15,7 @@ using Complex = AngouriMath.Entity.Number.Complex;
 
 namespace AngouriMath.Tests;
 
+[Trait("Area", "Core")]
 public class GenericMath
 {
     [Fact]

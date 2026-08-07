@@ -11,6 +11,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.Core
 {
+    [Trait("Area", "Core")]
     public sealed class Domains
     {
         [Theory]

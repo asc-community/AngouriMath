@@ -20,6 +20,7 @@ namespace AngouriMath.Tests.Convenience
     /// so factorial(5) came out as the product factorial * 5, silently, where it is 120.
     /// https://github.com/asc-community/AngouriMath/issues/733
     /// </summary>
+    [Trait("Area", "Convenience")]
     public sealed class FactorialNameParsedTest
     {
         [Theory]

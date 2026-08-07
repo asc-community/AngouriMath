@@ -19,6 +19,7 @@ namespace AngouriMath.Tests.PatternsTest
     /// (sin(2t) csc(t))^2/4 - cos(2t) - sin(t)^2 stopped one step short of zero, which is
     /// what https://github.com/asc-community/AngouriMath/issues/557 asks for.
     /// </summary>
+    [Trait("Area", "PatternsTest")]
     public sealed class DoubleAngleOverSineTest
     {
         private static Entity Bare(string expression)

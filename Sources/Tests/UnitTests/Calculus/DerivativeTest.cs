@@ -13,6 +13,7 @@ using static AngouriMath.Entity;
 
 namespace AngouriMath.Tests.Calculus
 {
+    [Trait("Area", "Calculus")]
     public sealed class DerivativeTest
     {
         private static readonly Variable x = "x";

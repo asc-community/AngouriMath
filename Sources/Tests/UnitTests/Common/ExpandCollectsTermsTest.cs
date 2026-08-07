@@ -14,6 +14,7 @@ namespace AngouriMath.Tests.Common
     /// <summary>
     /// Expand adds up the terms it produces that differ only by a numeric factor.
     /// </summary>
+    [Trait("Area", "Common")]
     public sealed class ExpandCollectsTermsTest
     {
         // https://github.com/asc-community/AngouriMath/issues/164
