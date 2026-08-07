@@ -158,7 +158,33 @@ namespace AngouriMath
                 var res = new List<Providedf>();
                 foreach (var (@case, srcCase) in (Cases, Cases.Select(c => c.New(c.Expression.InnerSimplified(isExact), c.Predicate.InnerSimplified(isExact)))).Zip()) {
                     if (@case.Predicate.Evaled == Boolean.False) continue;
-                    res.Add(srcCase.Expression is Providedf(var inner, var pred) ? new Providedf(inner, (srcCase.Predicate & pred).InnerSimplified(isExact)) : srcCase);
+                    var toAdd = srcCase.Expression is Providedf(var inner, var pred) ? new Providedf(inner, (srcCase.Predicate & pred).InnerSimplified(isExact)) : srcCase;
+
+                    // A piecewise takes its first matching case, and both rules below follow
+                    // from that alone -- neither needs any predicate to be decidable, which
+                    // is what makes them apply where the reduction above does not.
+                    // https://github.com/asc-community/AngouriMath/issues/327
+
+                    // A predicate that already guards an earlier case can never reach this
+                    // one: wherever it holds, the earlier case is taken.
+                    if (res.Any(seen => seen.Predicate == toAdd.Predicate))
+                    {
+                        // Not `continue` -- a decidably true predicate still ends the list,
+                        // and skipping that check here would carry unreachable cases past it.
+                        if (@case.Predicate.Evaled == Boolean.True) break;
+                        continue;
+                    }
+
+                    // Two consecutive cases with one expression are one case guarded by
+                    // either predicate. Consecutive is the whole condition: a case with a
+                    // different expression sitting between them could be taken instead, and
+                    // merging across it would change the value where its predicate holds.
+                    if (res.Count > 0 && res[res.Count - 1].Expression == toAdd.Expression)
+                        res[res.Count - 1] = new Providedf(toAdd.Expression,
+                            (res[res.Count - 1].Predicate | toAdd.Predicate).InnerSimplified(isExact));
+                    else
+                        res.Add(toAdd);
+
                     if (@case.Predicate.Evaled == Boolean.True) break;
                 }
                 return New(res);

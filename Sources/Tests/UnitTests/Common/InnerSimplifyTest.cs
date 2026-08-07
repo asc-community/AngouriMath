@@ -198,11 +198,14 @@ namespace AngouriMath.Tests.Common
             "piecewise(x provided a, 1/x)".Differentiate("x")
             .ShouldBe("piecewise(1 provided a, ((-1)) / ((x) ^ (2)))");
 
-        // although this one will be collapsed into 0 with #327 implemented
+        // The two cases carried one expression and merged into a single case guarded
+        // by either predicate when #327 landed -- which is what the note that used to
+        // sit here predicted. It does not collapse all the way to 0: that needs
+        // `p or not p` to reduce to true, which is #536 and is a different question.
         [Fact] public void PiecewiseDerivative2() {
             var result = "piecewise(x provided a, 1/x)".Differentiate("y");
-            result.ShouldBe("piecewise(0 provided a, 0 provided not x^2 = 0 provided true)");
-            result.Simplify().ShouldBe("piecewise(0 provided a, 0 provided not x = 0)");
+            result.ShouldBe("piecewise(0 provided (a or not x^2 = 0))");
+            result.Simplify().ShouldBe("piecewise(0 provided (a or not x = 0))");
         }
 
         [Fact] public void PiecewiseLimit1() =>
@@ -228,12 +231,15 @@ namespace AngouriMath.Tests.Common
             "derivative(piecewise(x provided a, 1/x), x)".ToEntity().Evaled
             .ShouldBe("piecewise(1 provided a, ((-1)) / ((x) ^ (2)))");
 
-        // although this one will be collapsed into 0 with #327 implemented
+        // The two cases carried one expression and merged into a single case guarded
+        // by either predicate when #327 landed -- which is what the note that used to
+        // sit here predicted. It does not collapse all the way to 0: that needs
+        // `p or not p` to reduce to true, which is #536 and is a different question.
         [Fact] public void PiecewiseDerivative2NodeEvaled()
         {
             var result = "derivative(piecewise(x provided a, 1/x), y)".ToEntity().Evaled;
-            result.ShouldBe("piecewise(0 provided a, 0 provided not x^2 = 0 provided true)");
-            result.Simplify().ShouldBe("piecewise(0 provided a, 0 provided not x = 0)");
+            result.ShouldBe("piecewise(0 provided (a or not x^2 = 0))");
+            result.Simplify().ShouldBe("piecewise(0 provided (a or not x = 0))");
         }
 
         [Fact] public void PiecewiseLimit1NodeEvaled() =>
@@ -259,12 +265,15 @@ namespace AngouriMath.Tests.Common
             "derivative(piecewise(x provided a, 1/x), x)".ToEntity().InnerSimplified
             .ShouldBe("piecewise(1 provided a, ((-1)) / ((x) ^ (2)))");
 
-        // although this one will be collapsed into 0 with #327 implemented
+        // The two cases carried one expression and merged into a single case guarded
+        // by either predicate when #327 landed -- which is what the note that used to
+        // sit here predicted. It does not collapse all the way to 0: that needs
+        // `p or not p` to reduce to true, which is #536 and is a different question.
         [Fact] public void PiecewiseDerivative2NodeInnerSimplified()
         {
             var result = "derivative(piecewise(x provided a, 1/x), y)".ToEntity().InnerSimplified;
-            result.ShouldBe("piecewise(0 provided a, 0 provided not x^2 = 0 provided true)");
-            result.Simplify().ShouldBe("piecewise(0 provided a, 0 provided not x = 0)");
+            result.ShouldBe("piecewise(0 provided (a or not x^2 = 0))");
+            result.Simplify().ShouldBe("piecewise(0 provided (a or not x = 0))");
         }
 
         [Fact] public void PiecewiseLimit1NodeInnerSimplified() =>
