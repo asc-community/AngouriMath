@@ -19,6 +19,7 @@ namespace AngouriMath.Tests.Calculus
     /// it are the expressions whose parts cancel to every order, which no amount of
     /// differentiating both halves reaches.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class GruntzTest
     {
         private static void AssertLimit(string expression, string destination, string expected) =>

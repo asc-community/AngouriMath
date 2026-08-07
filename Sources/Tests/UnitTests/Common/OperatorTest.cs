@@ -11,6 +11,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.Common
 {
+    [Trait("Area", "Common")]
     public sealed class OperatorTest
     {
         [Fact] public void TestEq() => Assert.Equal(MathS.Var("x"), MathS.Var("x"));

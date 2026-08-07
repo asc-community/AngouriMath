@@ -13,6 +13,7 @@ using static AngouriMath.Entity;
 
 namespace AngouriMath.Tests.Core.Multithreading
 {
+    [Trait("Area", "Core")]
     public sealed class SettingsAndThreads
     {
         #region Obsolete settings

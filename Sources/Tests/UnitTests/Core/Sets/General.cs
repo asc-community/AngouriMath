@@ -10,6 +10,7 @@ using AngouriMath.Extensions;
 
 namespace AngouriMath.Tests.Core.Sets
 {
+    [Trait("Area", "Core")]
     public sealed class General
     {
         [Theory]

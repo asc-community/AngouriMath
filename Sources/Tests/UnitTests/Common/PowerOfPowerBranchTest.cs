@@ -21,6 +21,7 @@ namespace AngouriMath.Tests.Common
     /// each the negation of the right answer where x is negative.
     /// https://github.com/asc-community/AngouriMath/issues/752
     /// </summary>
+    [Trait("Area", "Common")]
     public sealed class PowerOfPowerBranchTest
     {
         /// <summary>

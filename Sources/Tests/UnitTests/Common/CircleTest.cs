@@ -12,6 +12,7 @@ using AngouriMath.Extensions;
 
 namespace AngouriMath.Tests.Common
 {
+    [Trait("Area", "Common")]
     public sealed class CircleTest
     {
         public static readonly Entity.Variable x = MathS.Var(nameof(x));

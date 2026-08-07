@@ -10,6 +10,7 @@ using static AngouriMath.MathS.Settings;
 
 namespace AngouriMath.Tests.Core
 {
+    [Trait("Area", "Core")]
     public sealed class Settings
     {
         [Fact]

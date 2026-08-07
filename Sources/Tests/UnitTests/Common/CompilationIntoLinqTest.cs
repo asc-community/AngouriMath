@@ -15,6 +15,7 @@ using HonkSharp.Fluency;
 
 namespace AngouriMath.Tests.Common
 {
+    [Trait("Area", "Common")]
     public sealed class CompilationIntoLinqTest
     {
         [Theory]

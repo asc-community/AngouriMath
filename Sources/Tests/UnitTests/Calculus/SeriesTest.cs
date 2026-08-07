@@ -10,6 +10,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.Calculus
 {
+    [Trait("Area", "Calculus")]
     public sealed class SeriesTest
     {
         [Theory]

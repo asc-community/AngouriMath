@@ -13,6 +13,7 @@ using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Tests.Common
 {
+    [Trait("Area", "Common")]
     public class InnerSimplifyTest
     {
         [Theory]

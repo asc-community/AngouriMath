@@ -13,6 +13,7 @@ using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Tests.Convenience
 {
+    [Trait("Area", "Convenience")]
     public sealed class LatexTests
     {
         private static readonly Entity x = MathS.Var(nameof(x));

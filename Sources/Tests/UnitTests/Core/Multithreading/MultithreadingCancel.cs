@@ -16,6 +16,7 @@ using System.Linq;
 
 namespace AngouriMath.Tests.Core.Multithreading
 {
+    [Trait("Area", "Core")]
     public sealed class MultithreadingCancel
     {
         private static void SomeLongLastingTask()

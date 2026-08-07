@@ -17,6 +17,7 @@ namespace AngouriMath.Tests.Common
     /// the two could not be added, and arctan(1) stayed as it was. No issue is filed for
     /// this; it comes from the gaps a solver corpus showed.
     /// </summary>
+    [Trait("Area", "Common")]
     public sealed class ArctanIdentitiesTest
     {
         private static Entity Simplified(string expression) => expression.ToEntity().Simplify();

@@ -19,6 +19,7 @@ namespace AngouriMath.Tests.Algebra.SolveTest
     /// filed for this; it was found while checking whether
     /// https://github.com/asc-community/AngouriMath/issues/214 could be closed.
     /// </summary>
+    [Trait("Area", "Algebra")]
     public sealed class SpuriousRootTest
     {
         /// <summary>

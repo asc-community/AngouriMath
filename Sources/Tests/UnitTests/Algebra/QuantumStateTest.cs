@@ -19,6 +19,7 @@ namespace AngouriMath.Tests.Algebra
     /// Everything is compared symbolically. No amplitude is evaluated to a double anywhere in
     /// this file, which is what makes <c>1/sqrt(2)</c> an exact answer rather than 0.7071.
     /// </summary>
+    [Trait("Area", "Algebra")]
     public sealed class QuantumStateTest
     {
         private static Entity Ket(params int[] qubits) => MathS.Quantum.Ket(qubits);

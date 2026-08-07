@@ -13,6 +13,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.Calculus
 {
+    [Trait("Area", "Calculus")]
     public sealed class Limits
     {
         void TestLimit(Entity expr, Entity where, ApproachFrom appr, Entity desiredOutput)

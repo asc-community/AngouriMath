@@ -18,6 +18,7 @@ namespace AngouriMath.Tests.Calculus
     /// either a polynomial or a substitution of +oo, and a root of a sum is neither, so a
     /// difference of two of them was left unevaluated however plainly it converged.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class DifferenceAtInfinityTest
     {
         // Compared as numbers, since "1/2" parses as a division of two integers rather than as

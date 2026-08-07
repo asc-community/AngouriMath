@@ -28,6 +28,7 @@ namespace AngouriMath.Tests.Calculus
     ///
     /// https://github.com/asc-community/AngouriMath/issues/754
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class StirlingFactorialLimitTest
     {
         private static Entity LimitOf(string expression) =>

@@ -19,6 +19,7 @@ namespace AngouriMath.Tests.Calculus
     /// something vanishing with something diverging had no reading either unless one of the
     /// factors happened to be written as a reciprocal.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class IndeterminatePowerTest
     {
         private static Entity Limit(string expression, string destination, ApproachFrom side) =>

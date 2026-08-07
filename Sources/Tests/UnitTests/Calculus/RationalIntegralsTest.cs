@@ -17,6 +17,7 @@ namespace AngouriMath.Tests.Calculus
     /// differentiating it back and comparing at points, since what matters is that it is an
     /// antiderivative and not what form it is written in.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class RationalIntegralsTest
     {
         private static void AssertIsAntiderivative(string integrand, params double[] points)

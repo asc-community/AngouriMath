@@ -12,6 +12,7 @@ namespace AngouriMath.Tests.Discrete
 {
     using static Entity.Boolean;
 
+    [Trait("Area", "Discrete")]
     public sealed class BooleanEval
     {
         private void Test(Entity expr, Entity.Boolean expected)

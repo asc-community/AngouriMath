@@ -10,6 +10,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.PatternsTest
 {
+    [Trait("Area", "PatternsTest")]
     public sealed class SortSimplifyTest
     {
         [Theory]

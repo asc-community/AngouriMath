@@ -12,6 +12,7 @@ using PeterO.Numbers;
 
 namespace AngouriMath.Tests.PatternsTest
 {
+    [Trait("Area", "PatternsTest")]
     public sealed class SmartExpander
     {
         public (bool equal, Complex eval1, Complex eval2, Real err) AreEqual(Entity expr1, Entity expr2, Complex toSub)

@@ -16,6 +16,7 @@ namespace AngouriMath.Tests.PatternsTest
     /// offered to the simplifier as a candidate, so what these pin is both that it is
     /// produced and that it is only preferred where the pieces cancel.
     /// </summary>
+    [Trait("Area", "PatternsTest")]
     public sealed class MultipleAngleTest
     {
         // Identities that only close once the multiple angle is opened up.

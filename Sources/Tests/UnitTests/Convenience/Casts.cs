@@ -12,6 +12,7 @@ using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath.Tests.Convenience
 {
+    [Trait("Area", "Convenience")]
     public sealed class Casts
     {
         [Fact] public void ToDoubleSuccess1() => Assert.Equal(3d, (double)"3".EvalNumerical());

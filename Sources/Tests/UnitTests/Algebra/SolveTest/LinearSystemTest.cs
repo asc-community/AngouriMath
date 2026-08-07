@@ -16,6 +16,7 @@ namespace AngouriMath.Tests.Algebra
     /// occurrences of the next that cancel, and the solver used to commit to the first
     /// equation those occurrences appeared in.
     /// </summary>
+    [Trait("Area", "Algebra")]
     public sealed class LinearSystemTest
     {
         /// <summary>

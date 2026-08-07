@@ -18,6 +18,7 @@ namespace AngouriMath.Tests.Convenience
     /// read as a product of an undeclared variable and its argument and nothing was said
     /// about it. No issue is filed for this.
     /// </summary>
+    [Trait("Area", "Convenience")]
     public sealed class ArcHyperbolicRefusedTest
     {
         [Theory]

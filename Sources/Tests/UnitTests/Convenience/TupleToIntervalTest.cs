@@ -27,6 +27,7 @@ using AngouriMath.Extensions;
 
 namespace AngouriMath.Tests.Extensions
 {
+    [Trait("Area", "Convenience")]
     public class IntervalExtensionTest
     {
         [Fact] public void Test0()

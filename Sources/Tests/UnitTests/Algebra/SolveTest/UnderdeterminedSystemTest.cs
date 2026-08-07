@@ -17,6 +17,7 @@ namespace AngouriMath.Tests.Algebra
     /// not pin every unknown down still has solutions; there are just infinitely many of them.
     /// The solver used to answer either null or a single tuple that is not the whole answer.
     /// </summary>
+    [Trait("Area", "Algebra")]
     public sealed class UnderdeterminedSystemTest
     {
         private const string h =

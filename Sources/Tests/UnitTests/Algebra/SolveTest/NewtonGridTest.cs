@@ -21,6 +21,7 @@ namespace AngouriMath.Tests.Algebra.PolynomialSolverTests
     /// starting point and a grid of NaN, so the search covered a single corner of the region
     /// it was asked for and quietly returned fewer roots the finer it was told to look.
     /// </summary>
+    [Trait("Area", "Algebra")]
     public sealed class NewtonGridTest
     {
         private static HashSet<Entity.Number.Complex> Roots(string expression, int steps)

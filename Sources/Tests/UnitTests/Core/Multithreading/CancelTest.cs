@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 
 namespace AngouriMath.Tests.Core.Multithreading
 {
+    [Trait("Area", "Core")]
     public sealed class CancelTest
     {
         const int ShouldLastAtLeast = 10000;

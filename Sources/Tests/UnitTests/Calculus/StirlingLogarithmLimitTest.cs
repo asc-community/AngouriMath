@@ -21,6 +21,7 @@ namespace AngouriMath.Tests.Calculus
     /// that is reached only once nothing else has a reading.
     /// https://github.com/asc-community/AngouriMath/issues/765
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class StirlingLogarithmLimitTest
     {
         private static Entity LimitOf(string expression) =>

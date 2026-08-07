@@ -19,6 +19,7 @@ namespace AngouriMath.Tests.Calculus
     /// part's own limit in place of the part. x * ln(x) at 0+ becomes 0 * ln(x), so 0 * -oo,
     /// so NaN, and NaN is the claim that the limit does not exist.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class OneSidedLimitTest
     {
         private static Entity Limit(string expression, string destination, ApproachFrom side) =>

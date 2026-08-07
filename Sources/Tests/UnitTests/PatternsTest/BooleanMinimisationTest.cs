@@ -24,6 +24,7 @@ namespace AngouriMath.Tests.PatternsTest
     /// can only change an expression's answer where it is shorter than everything else on
     /// offer -- which is also why it needs no separate entry point.
     /// </summary>
+    [Trait("Area", "PatternsTest")]
     public sealed class BooleanMinimisationTest
     {
         private static void AssertSimplifiesTo(string input, string expected) =>

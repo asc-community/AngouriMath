@@ -13,6 +13,7 @@ using Xunit;
 namespace AngouriMath.Tests.Discrete
 {
     using static AngouriMath.Entity;
+    [Trait("Area", "Discrete")]
     public sealed class BooleanSolver
     {
         [Theory]

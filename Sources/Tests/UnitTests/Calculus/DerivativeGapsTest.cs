@@ -16,6 +16,7 @@ namespace AngouriMath.Tests.Calculus
     /// condition on it that does not belong. Both were found by differentiating
     /// antiderivatives back and checking them at points.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class DerivativeGapsTest
     {
         [Fact]

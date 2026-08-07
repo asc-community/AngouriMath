@@ -11,6 +11,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.Core
 {
+    [Trait("Area", "Core")]
     public sealed class NumericDigits
     {
         void Test(Entity.Number n, string expected) => Assert.Equal(expected, n.Stringize());

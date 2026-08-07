@@ -17,6 +17,7 @@ namespace AngouriMath.Tests.Common
     /// Each test names the issue it locks down, so a future refactor that
     /// reintroduces the bug fails loudly.
     /// </summary>
+    [Trait("Area", "Common")]
     public sealed class NumericsRegressionTest
     {
         // https://github.com/asc-community/AngouriMath/issues/625

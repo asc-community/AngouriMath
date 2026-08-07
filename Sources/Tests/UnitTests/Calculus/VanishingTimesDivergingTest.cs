@@ -22,6 +22,7 @@ namespace AngouriMath.Tests.Calculus
     /// straight back and the rule was handed its own input. Split into the denominator instead,
     /// x * ln(x) / cos(x) is answered rather than run at until it times out.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class VanishingTimesDivergingTest
     {
         private static void AssertLimit(string expression, string expected)

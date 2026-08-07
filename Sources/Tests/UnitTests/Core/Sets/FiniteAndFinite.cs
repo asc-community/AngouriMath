@@ -12,6 +12,7 @@ using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Tests.Core.Sets
 {
+    [Trait("Area", "Core")]
     public sealed class FiniteAndFinite
     {
         private readonly Set A = new FiniteSet(1,   3, 5);

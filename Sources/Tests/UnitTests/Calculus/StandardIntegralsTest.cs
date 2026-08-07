@@ -16,6 +16,7 @@ namespace AngouriMath.Tests.Calculus
     /// checked by differentiating the answer back and comparing at points, since what
     /// matters is that it is an antiderivative, not what form it is written in.
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class StandardIntegralsTest
     {
         /// <param name="points">

@@ -23,6 +23,7 @@ namespace AngouriMath.Tests.Calculus
     /// <see cref="MathS.Settings.Codomain"/> is that information.
     /// https://github.com/asc-community/AngouriMath/issues/719
     /// </summary>
+    [Trait("Area", "Calculus")]
     public sealed class RealCodomainLimitTest
     {
         private static Entity Limit(string expr, string destination, ApproachFrom side) =>

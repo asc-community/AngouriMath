@@ -15,6 +15,7 @@ using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Tests.Algebra
 {
+    [Trait("Area", "Algebra")]
     public sealed class SolveEquationWithConstraints
     {
         /// <summary>Numerically checks if a root fits an equation</summary>

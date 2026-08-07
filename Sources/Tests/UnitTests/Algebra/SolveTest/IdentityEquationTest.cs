@@ -18,6 +18,7 @@ namespace AngouriMath.Tests.Algebra
     /// <see cref="Core.EquationSystem.Solve"/> --
     /// https://github.com/asc-community/AngouriMath/issues/550.
     /// </summary>
+    [Trait("Area", "Algebra")]
     public sealed class IdentityEquationTest
     {
         [Theory]

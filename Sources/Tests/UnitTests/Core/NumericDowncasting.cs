@@ -14,6 +14,7 @@ using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Tests.Core
 {
+    [Trait("Area", "Core")]
     public sealed class NumericDowncastingTest
     {
         #region Test from complex to...

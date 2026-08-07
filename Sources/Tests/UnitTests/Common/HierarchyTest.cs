@@ -20,6 +20,7 @@ namespace AngouriMath.Tests.Common
         }
     }
 
+    [Trait("Area", "Common")]
     public sealed class HierarchyTest
     {
         [Theory, CombinatorialData]

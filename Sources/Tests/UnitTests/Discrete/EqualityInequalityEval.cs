@@ -11,6 +11,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.Discrete
 {
+    [Trait("Area", "Discrete")]
     public sealed class EqualityInequalityEval
     {
         [Theory]

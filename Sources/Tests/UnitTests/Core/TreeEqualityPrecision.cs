@@ -15,6 +15,7 @@ using System;
 
 namespace AngouriMath.Tests.Core
 {
+    [Trait("Area", "Core")]
     public class TreeEqualityPrecision
     {
         [Theory]

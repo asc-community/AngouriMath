@@ -11,6 +11,7 @@ using Xunit;
 
 namespace AngouriMath.Tests.Common
 {
+    [Trait("Area", "Common")]
     public class BuiltinFunctionsAppliedTest
     {
         public static readonly Entity.Variable x = MathS.Var(nameof(x));

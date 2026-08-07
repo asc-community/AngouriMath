@@ -18,6 +18,7 @@ namespace AngouriMath.Tests.Common
     /// filed for this; it was found sweeping the compilers for expressions that fail in a
     /// way that says nothing.
     /// </summary>
+    [Trait("Area", "Common")]
     public sealed class CompileUnboundVariableTest
     {
         /// <summary>

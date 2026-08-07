@@ -20,6 +20,7 @@ namespace AngouriMath.Tests.Convenience
     /// said about it, so exp(x) - 3x = 0 answered { 0 }: a wrong answer to a question the
     /// library had misread, rather than a refusal to answer. No issue is filed for this.
     /// </summary>
+    [Trait("Area", "Convenience")]
     public sealed class ExpParsedTest
     {
         // e^x, not a distinct node: the library already differentiates, integrates and

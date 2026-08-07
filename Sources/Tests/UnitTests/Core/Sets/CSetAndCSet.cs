@@ -11,6 +11,7 @@ using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
 namespace AngouriMath.Tests.Core.Sets
 {
+    [Trait("Area", "Core")]
     public sealed class CSetAndCSet
     {
         private readonly Set A = new ConditionalSet("x", "x > 0");

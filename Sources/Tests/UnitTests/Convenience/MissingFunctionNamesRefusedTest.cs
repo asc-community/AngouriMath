@@ -23,6 +23,7 @@ namespace AngouriMath.Tests.Convenience
     /// so these are refused one at a time, as <c>arcsinh</c> already is.
     /// https://github.com/asc-community/AngouriMath/issues/733
     /// </summary>
+    [Trait("Area", "Convenience")]
     public sealed class MissingFunctionNamesRefusedTest
     {
         [Theory]
