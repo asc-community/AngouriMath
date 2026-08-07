@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -93,26 +93,23 @@ namespace AngouriMath.Tests.Calculus
             AssertIsAntiderivative(integrand, points);
 
         /// <summary>
-        /// **A separate known gap, pinned here so it is not read as this one.** Two powers of
-        /// one base are never merged: <c>x^2 / x</c> is declined though it is <c>x</c>, and
-        /// distributing the first case below gives <c>sin(x)^4 * (-6) * sin(x)^2</c>, which
-        /// is declined though it is <c>-6 sin(x)^6</c>.
+        /// These were pinned here as a *separate* known gap, declined rather than hung, so
+        /// that they would not be read as the defect this file is about: two powers of one
+        /// base were never merged, so <c>x^2 / x</c> was declined though it is <c>x</c>.
         /// <para/>
-        /// It is only ever fixed by accident. A substitution rebuilds the tree on its way
-        /// past, and that rebuild is what merges the powers -- which is why every argument
-        /// other than a bare <c>x</c> (<c>2*x</c>, <c>x+1</c>, <c>a+f*x</c>) answers and a
-        /// bare <c>x</c> does not.
-        /// <para/>
-        /// These are declined in milliseconds rather than hung, so this is a missing answer
-        /// and not the defect this file is about. Measured on master before the reordering,
-        /// so it is pre-existing rather than caused by it.
+        /// That gap is fixed, and the assertion is inverted rather than deleted -- it is the
+        /// evidence that distributing over a sum and merging the powers compose, which is
+        /// the one thing neither issue could show on its own. Distributing
+        /// <c>sin(x)^4 * (5 - 6 sin(x)^2)</c> is what *produces* <c>sin(x)^4 * (-6) * sin(x)^2</c>,
+        /// and the merge is what makes that answerable.
+        /// https://github.com/asc-community/AngouriMath/issues/781
         /// </summary>
         [Theory]
         [InlineData("sin(x) ^ 4 * (5 - 6 * sin(x) ^ 2)")]
         [InlineData("sin(x) ^ 4 * (-6) * sin(x) ^ 2")]
         [InlineData("x ^ 2 * (x + 1 / x)")]
         [InlineData("x ^ 2 / x")]
-        public void PowersOfOneBaseAreNotMerged(string integrand) =>
-            Assert.Contains("integral(", IntegrateWithinBudget(integrand).Stringize());
+        public void PowersOfOneBaseAreNowMerged(string integrand) =>
+            Assert.DoesNotContain("integral(", IntegrateWithinBudget(integrand).Stringize());
     }
 }
