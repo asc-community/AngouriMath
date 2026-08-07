@@ -260,7 +260,12 @@ namespace AngouriMath.Tests.Algebra
         [InlineData("(3 - x)^2 - 4", 2)]
         [InlineData("arccos(x)2 - 1", 1)]
         [InlineData("x! - 1", 0)]
-        [InlineData("limit(x, x, y)2 - 2", 0)]
+        // `limit(x, x, y)2 - 2` moved to EquationWithoutTheUnknownTest: the limit binds
+        // x, so the equation reduces to y^2 - 2 and mentions no unknown at all. It now
+        // answers `{ x : y^2 - 2 = 0 }` rather than `{ }` -- every x is a solution when y
+        // is a square root of 2 -- and this helper verifies a count of roots through a
+        // FiniteSet, which that answer is not.
+        // https://github.com/asc-community/AngouriMath/issues/278
         [InlineData("sec(x) - a", 2)]
         [InlineData("csc(x) - a", 2)]
         [InlineData("arcsec(x) - a", 1, 3)]

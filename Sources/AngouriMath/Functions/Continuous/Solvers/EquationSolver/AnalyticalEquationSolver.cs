@@ -92,6 +92,27 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (expr == x)
                 return new Entity[] { 0 }.ToSet();
 
+            // An equation that does not mention x at all has either no solutions or every
+            // solution, and which of the two is decided by whether what is left is zero.
+            // Where that is not decidable the honest answer is the condition itself: `a = b`
+            // answered `{ }`, which asserts that no x satisfies it -- and every x does,
+            // whenever a happens to equal b.
+            // https://github.com/asc-community/AngouriMath/issues/278
+            if (!compensateSolving && !expr.ContainsNode(x))
+            {
+                if (expr.Evaled is Complex evaluated)
+                    return evaluated.IsZero ? (Set)MathS.Sets.C : Set.Empty;
+                // `a - a` is zero and does not look it until the simplifier has been asked,
+                // and answering the condition there would be as wrong as answering the empty
+                // set -- it would say "provided a = a" where the answer is every x. Only an
+                // equation with no x in it at all reaches this, so the simplification is paid
+                // for once and never inside a loop.
+                var residual = expr.Simplify();
+                if (residual.Evaled is Complex simplified)
+                    return simplified.IsZero ? (Set)MathS.Sets.C : Set.Empty;
+                return new ConditionalSet(x, residual.Equalizes(0));
+            }
+
             // Whether a candidate root really is one. The loose tolerance that guesses the
             // rational must not also be what decides this: at 1e-7, x^41 + 6x + 1 accepted
             // -1/6, whose residual is -1.25e-32 -- small, but the difference between an
