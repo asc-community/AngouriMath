@@ -59,9 +59,21 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveLogarithmic(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
-            if (integrateByParts && (answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x)) is { }) return answer;
-            // this may expand to too many terms
+            // Linearity comes before integration by parts, because it decomposes the problem
+            // into strictly simpler ones where by parts searches. It cannot cost an answer:
+            // splitting returns null unless *every* term integrates, so a sum that only comes
+            // out whole still falls through to by parts below.
+            //
+            // A product with a sum in it -- sin(a+f*x)^4 * (5 - 6*sin(a+f*x)^2) -- reaches
+            // this as a product, so only the expansion here finds the two terms it is. Behind
+            // by parts it never did: the search spent the whole budget first and the caller
+            // waited over 20 seconds to be told nothing, where the split answers in 0.16.
+            // https://github.com/asc-community/AngouriMath/issues/779
+            //
+            // Expansion is bounded by MaxExpansionTermCount, which returns null rather than
+            // building the terms, so putting it earlier cannot blow the tree up either.
             if ((answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { }) return answer;
+            if (integrateByParts && (answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x)) is { }) return answer;
             return null;
         }
         /// <summary>
