@@ -248,6 +248,24 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // // //
             }
 
+            // An equation in both sin(u) and cos(u), where one of them appears only at even
+            // powers, is a polynomial in the other once cos^2 is written as 1 - sin^2 -- and
+            // the replacement machinery above then solves it as one. This has to come before
+            // the trigonometric solver, which writes both in terms of e^(i u) and so answers
+            // a quadratic in sin(a x) with a quartic in e^(i a x).
+            // https://github.com/asc-community/AngouriMath/issues/270
+            // Solved without compensation, whatever this call was given. The rewrite keeps
+            // the whole left-hand side of `... = 0` rather than peeling a constant off it,
+            // so there is nothing to compensate -- and compensating skips the replacement
+            // machinery, which is the only thing that can solve what the rewrite produces.
+            // Passed `true`, this fired, produced `1 - sin(x)^2 + sin(x)` and then answered
+            // it through the exponential solver anyway, which is the route it exists to
+            // avoid. It cannot recurse: what comes back mentions only one of the two
+            // functions, so the rewrite declines it.
+            if (TrigonometricSolver.TryRewriteInOneFunction(expr, x, out var inOneFunction)
+                && Solve(inOneFunction, x) is FiniteSet { IsSetEmpty: false } elsPythagorean)
+                return (Set)elsPythagorean.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
+
             // if no replacement worked, try trigonometric solver
             if (TrigonometricSolver.TrySolveLinear(expr, x, out var trig) && trig is FiniteSet elsTrig)
                 return (Set)elsTrig.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
