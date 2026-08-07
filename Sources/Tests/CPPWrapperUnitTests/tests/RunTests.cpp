@@ -1,5 +1,6 @@
 #include <AngouriMath.h>
 #include <gtest/gtest.h>
+#include <vector>
 
 TEST(RunTests, ParsingTest1) {
     auto src = "x / 2 + 3";
@@ -173,4 +174,40 @@ TEST(RunTests, ToComplex) {
     auto com = comSim.AsComplex();
     EXPECT_EQ(6.0, com.real());
     EXPECT_EQ(1.0, com.imag());
+}
+
+// A method called on a temporary Entity threw NonExistentObjectAddressingException: the
+// temporary was destroyed, and its handle released, before the call that used it returned.
+// https://github.com/asc-community/AngouriMath/issues/367
+//
+// It does not reproduce on this version. The issue's own line is first, then the shapes a
+// too-early release would show up in and this one did not: a result outliving the temporary
+// it came from, two calls chained off one, a temporary passed as an argument, a result
+// copied out of the scope that made it, and enough repetitions to shake loose a handle that
+// is freed but not yet reused.
+TEST(RunTests, TemporaryEntityOutlivesTheCallOnIt) {
+    EXPECT_EQ(AngouriMath::Entity("x + 2").Simplify().ToString(), "2 + x");
+}
+
+TEST(RunTests, ResultOutlivesTheTemporaryItCameFrom) {
+    auto simplified = AngouriMath::Entity("x + 2").Simplify();
+    EXPECT_EQ(simplified.ToString(), "2 + x");
+}
+
+TEST(RunTests, TwoCallsChainedOffOneTemporary) {
+    EXPECT_EQ(AngouriMath::Entity("(x + 2) * 1").Simplify().Differentiate("x").ToString(), "1");
+}
+
+TEST(RunTests, ResultCopiedOutOfTheScopeThatMadeIt) {
+    std::vector<AngouriMath::Entity> kept;
+    {
+        kept.push_back(AngouriMath::Entity("sin(x) ^ 2 + cos(x) ^ 2").Simplify());
+    }
+    EXPECT_EQ(kept[0].ToString(), "1");
+}
+
+TEST(RunTests, ManyTemporariesDoNotReleaseAHandleInUse) {
+    for (int i = 0; i < 200; i++) {
+        EXPECT_EQ(AngouriMath::Entity("x + 2").Simplify().ToString(), "2 + x");
+    }
 }
