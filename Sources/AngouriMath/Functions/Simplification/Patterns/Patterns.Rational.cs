@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using PeterO.Numbers;
 using AngouriMath.Extensions;
 using static AngouriMath.Entity;
 
@@ -66,6 +67,98 @@ namespace AngouriMath.Functions
                     => PairwiseGrouping(num, den, level).Select(PowerRules).MultiplyAll().InnerSimplified.Replace(CollapseMultipleFractions),
                 _ => expr
             };
+
+        /// <summary>n^(p/q) for a q of 2 or more -- a root that is not a whole power.</summary>
+        private static bool IsSurd(Entity node)
+            => node is Powf(_, Rational and not Integer);
+
+        /// <summary>
+        /// <c>num / (a + b)</c> becomes <c>num * (a - b) / (a^2 - b^2)</c>, which clears a
+        /// square root out of a two-term denominator:
+        /// <c>(5 - sqrt(3)) / (5 + sqrt(3))</c> is <c>14/11 - 5/11 * sqrt(3)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The library already prefers a denominator without a surd -- <c>1/sqrt(2)</c> has
+        /// always come back as <c>sqrt(2)/2</c> -- so this extends an existing preference to
+        /// the binomial case. https://github.com/asc-community/AngouriMath/issues/205
+        /// </para>
+        /// <para>
+        /// Three conditions, and each is load-bearing. The denominator must be constant,
+        /// because multiplying numerator and denominator by <c>a - b</c> is only valid where
+        /// that is non-zero, and for a symbolic denominator it is not decidable -- rewriting
+        /// there would either lose a value or attach a condition to every such quotient.
+        /// <c>a^2 - b^2</c> must fold to a rational, which is what says the root was
+        /// actually cleared: a conjugate does nothing for a cube root, where
+        /// <c>1 - 2^(2/3)</c> is no better than <c>1 + 2^(1/3)</c>. And it must be non-zero,
+        /// which rules out <c>a = b</c> and, since it is <c>(a-b)(a+b)</c>, guarantees the
+        /// original denominator was non-zero too.
+        /// </para>
+        /// <para>
+        /// Terminates because the rewritten denominator is a rational and this rule requires
+        /// a surd in the denominator to fire at all.
+        /// </para>
+        /// </remarks>
+        /// <summary>
+        /// <c>p * value / q</c> for a rational <c>p/q</c>, written so that the rational is
+        /// split across the quotient rather than left as a factor: a unit-numerator rational
+        /// carries its own weight in the complexity criteria, so <c>(1/2) * value</c> would
+        /// rate worse than <c>value / 2</c> and hand back the comparison this is trying to win.
+        /// </summary>
+        private static Entity ScaleBy(ERational ratio, Entity value)
+        {
+            var scaled = ratio.Numerator.Equals(EInteger.One)
+                ? value
+                : (Integer.Create(ratio.Numerator) * value).InnerSimplified;
+            return ratio.Denominator.Equals(EInteger.One)
+                ? scaled
+                : scaled / Integer.Create(ratio.Denominator);
+        }
+
+        internal static Entity RationaliseDenominator(Entity expr)
+        {
+            // k * (value / d) -> (k * value) / d, reduced, where the numerator carries a surd
+            // this rule moved up out of a denominator. Without it a numeric coefficient never
+            // meets the divisor: `k / (p + sqrt(q))` is split into `k * (1 / (p + sqrt(q)))`
+            // before this rule runs, so the quotient it rewrites has a numerator of 1 and the
+            // k stays outside. 2 / (3 - sqrt(5)) came out as `2 * (3 + sqrt(5)) / 4`, which is
+            // longer than what it replaced -- while 1 / (3 - sqrt(5)), with no coefficient to
+            // strand, answered correctly all along.
+            if (expr is Mulf(Rational coefficient, Divf(var inner, Rational { IsZero: false } innerDivisor))
+                && inner.Nodes.Any(IsSurd))
+                return ScaleBy(coefficient.ERational.Divide(innerDivisor.ERational), inner);
+
+            if (expr is not Divf(var num, var den))
+                return expr;
+            var (a, b) = den switch
+            {
+                Sumf(var left, var right) => (left, right),
+                Minusf(var left, var right) => (left, -right),
+                _ => (null, null)
+            };
+            if (a is null || b is null)
+                return expr;
+            if (den.Vars.Any() || !den.Nodes.Any(IsSurd))
+                return expr;
+
+            var product = (a * a - b * b).InnerSimplified;
+            if (product is not Rational { IsZero: false } rational)
+                return expr;
+            // Orient the conjugate so the rational denominator comes out positive. Taking
+            // it the other way round leaves a double negative -- 1/(5 + sqrt(3)) became
+            // (sqrt(3) - 5) / (-22) -- which nothing downstream folds back, so the candidate
+            // stayed longer than the form it replaced and lost on the metric it was supposed
+            // to win. Negating both halves is the same number.
+            var negative = rational.IsNegative;
+            var conjugate = negative ? b - a : a - b;
+            var divisor = negative ? (Rational)(-rational).InnerSimplified : rational;
+
+            // A rational numerator is cancelled against the divisor rather than left to meet
+            // it later, which it does not: InnerSimplify leaves `2 * (3 + sqrt(5)) * 1/4`.
+            if (num is Rational numerator)
+                return ScaleBy(numerator.ERational.Divide(divisor.ERational), conjugate);
+            return ((num * conjugate) / divisor).InnerSimplified;
+        }
 
         internal static Entity CollapseMultipleFractions(Entity expr)
             => expr switch

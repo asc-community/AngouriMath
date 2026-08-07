@@ -99,6 +99,15 @@ namespace AngouriMath.Functions
                     2 => TreeAnalyzer.SortLevel.LOW_LEVEL,
                     _ => TreeAnalyzer.SortLevel.HIGH_LEVEL
                 };
+                // Clearing a surd out of a two-term denominator, before anything else has
+                // rearranged the quotient. Taken rather than offered as a candidate: the
+                // complexity metric ties on it -- 1/(sqrt(3)+5) and (sqrt(3)-5)/(-22) rate
+                // the same -- and a tie is settled by whichever candidate came first, which
+                // is an accident rather than a preference.
+                // https://github.com/asc-community/AngouriMath/issues/205
+                if (res.Nodes.Any(child => child is Divf))
+                    AddHistory(res = res.Replace(Patterns.RationaliseDenominator).InnerSimplified);
+
                 res = res.Replace(Patterns.SortRules(sortLevel)).InnerSimplified;
                 if (res.Nodes.Any(child => child is Powf))
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
@@ -117,6 +126,7 @@ namespace AngouriMath.Functions
                     AddHistory(res.Replace(Patterns.PolynomialGcdCancellation).InnerSimplified);
 
                 AddHistory(res = res.Replace(Patterns.PolynomialLongDivision).InnerSimplified);
+
 
                 AddHistory(res = res.Replace(Patterns.NormalTrigonometricForm).InnerSimplified);
                 AddHistory(res = res.Replace(Patterns.CollapseMultipleFractions).InnerSimplified);
