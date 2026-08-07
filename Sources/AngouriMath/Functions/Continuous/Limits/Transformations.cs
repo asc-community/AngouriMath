@@ -364,9 +364,7 @@ namespace AngouriMath.Functions.Algebra
             var logarithms = expr.Nodes
                 .OfType<Logf>()
                 .Where(logarithm => logarithm.Base == MathS.e
-                                    && logarithm.Antilogarithm is Factorialf { Argument: var argument }
-                                    && argument.ContainsNode(x)
-                                    && EvalAssumingContinuous(argument.Limit(x, dest)) == Real.PositiveInfinity)
+                                    && DivergingFactorials(logarithm.Antilogarithm, x, dest).Count > 0)
                 .Distinct()
                 .ToList();
             if (logarithms.Count == 0)
@@ -374,17 +372,125 @@ namespace AngouriMath.Functions.Algebra
             var rewritten = expr;
             foreach (var logarithm in logarithms)
             {
-                var argument = ((Factorialf)logarithm.Antilogarithm).Argument;
                 var probe = Variable.CreateTemp(expr.Vars);
                 var coefficient = expr.Substitute(logarithm, probe)
                     .Differentiate(probe).InnerSimplified.Substitute(probe, logarithm);
                 if (coefficient.Nodes.Any(node => node is Derivativef || node == MathS.NaN))
                     return null;
-                if (EvalAssumingContinuous((coefficient / argument).Limit(x, dest)) != 0)
-                    return null;
-                rewritten = rewritten.Substitute(logarithm, StirlingSeries(argument));
+                // The logarithm may hold several factorials, and what the expansion drops from
+                // it is the sum of their 1/(12f). Each has to vanish against the coefficient.
+                foreach (var factorial in DivergingFactorials(logarithm.Antilogarithm, x, dest))
+                    if (EvalAssumingContinuous((coefficient / factorial.Argument).Limit(x, dest)) != 0)
+                        return null;
+                rewritten = rewritten.Substitute(logarithm,
+                    LogarithmExpanded(logarithm.Antilogarithm, x, dest));
             }
             return rewritten;
+        }
+
+        /// <summary>
+        /// Whether an expression is already being read through its own logarithm further up,
+        /// in which case doing it again buys nothing and costs a great deal.
+        /// </summary>
+        [ThreadStatic] private static bool substitutingFactorial;
+
+        /// <summary>
+        /// The fixed power of <paramref name="target"/> that <paramref name="expr"/> depends
+        /// on, or <see langword="null"/> where there is no such power.
+        /// </summary>
+        /// <remarks>
+        /// Once the expression is read through its logarithm, <c>ln(expr)</c> holds
+        /// <c>ln(target)</c> multiplied by exactly this power -- so it is the coefficient the
+        /// dropped <c>1/(12f)</c> arrives with, and the same guard as everywhere else applies
+        /// to it. Only multiplication, division and a constant power keep a factor a factor; a
+        /// sum does not (<c>x! + x</c> is not a fixed power of the factorial at all), and
+        /// neither does an exponent that moves -- for <c>(x!)^x</c> the power is <c>x</c>,
+        /// <c>x/(12x)</c> does not vanish, and it is refused.
+        /// <para/>
+        /// Read off the shape rather than by differentiating and simplifying. That is the same
+        /// answer at a fraction of the cost: the symbolic route needs a full
+        /// <see cref="Entity.Simplify"/> to cancel the target back out -- <c>InnerSimplified</c>
+        /// leaves <c>p * (1/x^x) / (p/x^x)</c> standing -- and it is asked on every expression
+        /// holding a factorial.
+        /// </remarks>
+        private static int? PowerItAppearsTo(Entity expr, Entity target, Variable x)
+        {
+            if (expr == target)
+                return 1;
+            if (!expr.ContainsNode(target))
+                return 0;
+            switch (expr)
+            {
+                case Mulf(var multiplier, var multiplicand):
+                    return PowerItAppearsTo(multiplier, target, x)
+                         + PowerItAppearsTo(multiplicand, target, x);
+                case Divf(var dividend, var divisor):
+                    return PowerItAppearsTo(dividend, target, x)
+                         - PowerItAppearsTo(divisor, target, x);
+                case Powf(var @base, var exponent)
+                    when !exponent.ContainsNode(x) && !exponent.ContainsNode(target)
+                         && exponent.Evaled is Integer power:
+                    return PowerItAppearsTo(@base, target, x) * (int)power;
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// The distinct factorials in an expression whose argument runs off to infinity, which
+        /// are the ones Stirling's expansion is stated for.
+        /// </summary>
+        private static List<Factorialf> DivergingFactorials(Entity expr, Variable x, Entity dest)
+            => expr.Nodes
+                .OfType<Factorialf>()
+                .Where(factorial => factorial.Argument.ContainsNode(x)
+                                    && EvalAssumingContinuous(factorial.Argument.Limit(x, dest))
+                                       == Real.PositiveInfinity)
+                .Distinct()
+                .ToList();
+
+        /// <summary>
+        /// The logarithm of an expression holding a diverging factorial, with Stirling's
+        /// expansion written into it -- so that the limit is <c>e</c> to the limit of this --
+        /// or <see langword="null"/> where there is no such factorial or the expansion would
+        /// not be sound.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="StirlingRewritten"/> reaches a factorial only where a logarithm is
+        /// already written down, and <c>x! / x^x</c> has none, so that shape had no limit at
+        /// all. It is read here by supplying the logarithm: for a positive expression
+        /// <c>lim H</c> is <c>e^(lim ln H)</c>, and <c>ln H</c> is where the expansion applies.
+        /// <para/>
+        /// **Not by substituting <c>e^(Stirling(f))</c> for the factorial**, which is the
+        /// obvious move and was measured to be much worse. It puts an <c>e</c> to a large
+        /// exponent into the expression, the machinery evaluates that constant to a
+        /// hundred-digit decimal, and everything downstream carries it:
+        /// <c>lim x-&gt;+oo (x!/e^x)^(1/x)</c> went from half a second to over a minute, on an
+        /// expression <see cref="StirlingExponent"/> already answers. Going through the
+        /// logarithm keeps the only <c>e</c> in the final answer.
+        /// <para/>
+        /// The guard is <see cref="PowerItAppearsTo"/>: it is the power of the factorial the
+        /// expression depends on, which is exactly the coefficient <c>ln(f!)</c> carries in
+        /// <c>ln H</c>, so the dropped <c>1/(12f)</c> has to vanish against it as everywhere
+        /// else. <c>(x!)^x</c> gives <c>x</c>, and <c>x/(12x)</c> does not vanish.
+        /// </remarks>
+        private static Entity? StirlingByItsOwnLogarithm(Entity expr, Variable x, Entity dest)
+        {
+            var factorials = DivergingFactorials(expr, x, dest);
+            if (factorials.Count == 0)
+                return null;
+            foreach (var factorial in factorials)
+            {
+                // The power the expression depends on the factorial through is the coefficient
+                // the dropped 1/(12f) arrives with, once the whole thing is read through its
+                // logarithm -- so it is the same guard as everywhere else, and it is refused
+                // where it does not vanish.
+                if (PowerItAppearsTo(expr, factorial, x) is not { } power || power == 0)
+                    return null;
+                if (EvalAssumingContinuous(((Entity)power / factorial.Argument).Limit(x, dest)) != 0)
+                    return null;
+            }
+            return LogarithmExpanded(expr, x, dest);
         }
 
         /// <summary>
@@ -1061,6 +1167,23 @@ namespace AngouriMath.Functions.Algebra
                 if (StirlingRewritten(simplified, x, toInfinity) is { } byStirling
                     && Settled(ComputeLimit(byStirling, x, toInfinity)) is { } byFactorial)
                     return byFactorial;
+
+                // And the factorials that are not under a logarithm at all, where what may be
+                // dropped is a relative error rather than an additive one. Second, because the
+                // logarithm above is the cheaper reading and the sounder one -- an additive
+                // error that vanishes needs less of the expression to be true of it than a
+                // relative one that tends to 1.
+                if (!substitutingFactorial
+                    && StirlingByItsOwnLogarithm(simplified, x, toInfinity) is { } logarithm)
+                {
+                    substitutingFactorial = true;
+                    try
+                    {
+                        if (Settled(ComputeLimit(logarithm, x, toInfinity)) is { } exponent)
+                            return MathS.e.Pow(exponent).InnerSimplified;
+                    }
+                    finally { substitutingFactorial = false; }
+                }
 
                 return Settled(SolveAsDifferenceOfInfinities(simplified, x));
             }

@@ -937,6 +937,40 @@ became unevaluated, 1 `NaN` became unevaluated, and 3 right values became uneval
 [#754](https://github.com/asc-community/AngouriMath/issues/754), PR
 [#760](https://github.com/asc-community/AngouriMath/pull/760).
 
+### A factorial itself is read where it has no logarithm at all
+
+The two readings below both need the factorial to be under a logarithm already — one supplies the
+logarithm, by turning `f^g` into `e^(g * ln f)`, and the other rewrites a logarithm that is written
+down. Neither reaches `x! / x^x`, which has none:
+
+```
+lim x->+oo x! / x^x           was  unevaluated   is  0
+lim x->+oo x^x / x!           was  unevaluated   is  +oo
+lim x->+oo x! / e^x           was  unevaluated   is  +oo
+lim x->+oo ln(x! / x^x) / x   was  a 20 s+ hang  is  -1
+lim x->+oo ln(x! / x^x)       was  unevaluated   is  -oo
+```
+
+The logarithm is supplied instead: for a positive expression `lim H` is `e^(lim ln H)`, and `ln H` is
+where the expansion applies. The guard is the power of the factorial the expression depends on, which
+is exactly the coefficient `ln(f!)` carries in `ln H`, so the dropped `1/(12f)` has to vanish against
+it — `(x!)^x` gives `x`, and `x/(12x)` does not, so it is refused.
+
+Not by substituting `e^(Stirling(f))` for the factorial, which is the obvious move and measured much
+worse: it puts an `e` to a large exponent into the expression, the machinery evaluates that constant
+to a hundred-digit decimal, and everything downstream carries it. `lim x->+oo (x!/e^x)^(1/x)` went
+from half a second to over a minute that way, on an expression the library already answered.
+
+The rewrite that reads a *logarithm* is broadened at the same time, from `ln(f!)` to any logarithm
+holding a diverging factorial, so `ln(x! / x^x)` is taken apart rather than left as one opaque node.
+
+Over 70 generated factorial expressions, against the release before these three changes: **33
+answered → 66 answered, 25 timeouts → 1, and nothing lost**. Values spot-checked numerically at up to
+`x = 1e6`.
+
+[#754](https://github.com/asc-community/AngouriMath/issues/754), PR
+[#767](https://github.com/asc-community/AngouriMath/pull/767).
+
 ### A factorial's logarithm is read wherever it appears
 
 The expansion below arrived inside the rule that turns `f^g` into `e^(g * ln f)`, so it reached a
