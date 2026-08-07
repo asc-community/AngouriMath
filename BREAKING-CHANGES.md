@@ -28,6 +28,7 @@ read first.
 | **silent** | `sqrt(x^2)`, `sqrt(-x)` and their kind | `x`, `i*sqrt(x)` — wrong for negative x | left as written |
 | loud | `mod` as a variable name | a variable | a keyword, so a parse error |
 | **silent** | `Stringize` of powers, lambdas, applications, piecewises | did not parse back | parses back |
+| **silent** | `Stringize` of a complex number with a fractional imaginary part | read back as its negation, or as a power | parses back |
 | **silent** | numbers below `1e-16` | rounded to `0` | kept |
 | **silent** | `Real` `%` | `-7 % 3` was `-1` | `2` |
 | **silent** | `Simplify` of a cancelling quotient | the quotient | a `Providedf` |
@@ -247,10 +248,23 @@ expression. **If you compare `Stringize` output against fixed strings, these fou
 | `lambda(x, x + 1)` | `x -> x + 1` | `x implies x + 1` | `lambda(x, x + 1)` |
 | `apply(f, 2)` | `f 2` | a power | `apply(f, 2)` |
 | `piecewise(1 provided x > 0)` | `(1 if x > 0)` | a product, `if` being an undeclared variable | `piecewise(1 provided (x > 0))` |
+| `i / 2` evaluated | `1/2i` | `1 / (2i)`, which is its **negation** | `1/2 * i` |
+| `2 + 3 * i / 4` evaluated | `2 + (3/4)i` | `2 + (3/4) ^ i`, a different number | `2 + 3/4 * i` |
 
 Powers group to the right, so it is the base that needs bracketing when it is a power of its own —
-the mirror of the rule the left-associative operators use. The other three have no operator spelling
+the mirror of the rule the left-associative operators use. The next three have no operator spelling
 in the grammar, so they now print as the function call the parser does have.
+
+The last two are one defect. A complex number whose imaginary part is a fraction was printed with
+the fraction pushed up against the `i`, and `1/2i` is read as `1 / (2i)` — the negation of what was
+printed. The case with a real part bracketed the coefficient, which looks like a guard and is not:
+a bracket followed by a name is read as exponentiation, so `(3/4)i` came back as `(3/4) ^ i`. Both
+now multiply explicitly, which needs no bracket since `*` and `/` bind tighter than `+`. Integer
+coefficients never had the problem and are unchanged — `i`, `-i` and `2i` print as before.
+
+This one is worth reading twice if you parse printed output, because the misreading is a perfectly
+ordinary number: every root of a trigonometric equation prints through this path, and
+`cos(x)^2 + sin(x) = 0` returns roots that are exact as entities and were not as text.
 
 `Latexise` is under no such obligation, since nothing parses LaTeX, and is unaffected.
 

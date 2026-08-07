@@ -161,5 +161,36 @@ namespace AngouriMath.Tests.Common
         [InlineData("e")]
         [InlineData("pi")]
         public void MatricesAndNumbersRoundTrip(string source) => AssertRoundTrip(source);
+
+        /// <summary>
+        /// The cases above round-trip the expression as written, so <c>i / 2</c> stays a
+        /// division and never reaches the printer for a complex <em>number</em>. Evaluating
+        /// first is what exercises that printer, and it printed a pure imaginary with a
+        /// fractional part as <c>1/2i</c> -- which the parser reads as <c>1/(2i)</c>, the
+        /// negation of what was printed. The mixed case was already right, bracketing it as
+        /// <c>2 + (3/4)i</c>; the pure-imaginary arm returned before that bracketing was
+        /// applied.
+        ///
+        /// Silent, and it misleads a reader as much as a parser: every root of a
+        /// trigonometric equation is printed through this.
+        /// </summary>
+        [Theory]
+        [InlineData("i / 2")]
+        [InlineData("-i / 2")]
+        [InlineData("3 * i / 4")]
+        [InlineData("-5 * i / 3")]
+        [InlineData("2 + 3 * i / 4")]
+        [InlineData("2 - 3 * i / 4")]
+        [InlineData("i")]
+        [InlineData("-i")]
+        [InlineData("2 * i")]
+        [InlineData("-2 * i")]
+        [InlineData("1/2")]
+        [InlineData("2 + 3 * i")]
+        public void AnEvaluatedComplexNumberRoundTrips(string source)
+        {
+            var value = source.ToEntity().Evaled;
+            Assert.Equal(value, value.Stringize().ToEntity().Evaled);
+        }
     }
 }
