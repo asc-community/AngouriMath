@@ -46,9 +46,33 @@ namespace AngouriMath.Functions.Algebra
 {
     internal static partial class Integration
     {
+        /// <summary>
+        /// Brings the two powers of one base in a product together, so that an integrand
+        /// which is a power in disguise is recognised as one.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This has to happen on every recursive call rather than once on the way in. The
+        /// shape is produced by the integrator itself -- distributing a product over a sum
+        /// turns <c>sin(x)^4 * (5 - 6*sin(x)^2)</c> into a term <c>sin(x)^4 * (-6) * sin(x)^2</c>
+        /// -- so normalising only the caller's input would miss every case the integrator
+        /// generates for itself. https://github.com/asc-community/AngouriMath/issues/781
+        /// </para>
+        /// <para>
+        /// Deliberately not followed by <c>InnerSimplified</c>: that rewrites <c>x^(-2)</c>
+        /// back into <c>1/x^2</c>, and <see cref="IndefiniteIntegralSolver.SolveAsPolynomialTerm"/>
+        /// rewrites a <c>1/x^n</c> it is handed into <c>Pow(x, -n)</c>, so the pair recurse
+        /// into each other until the stack runs out. The gathering folds the exponents it
+        /// builds and leaves the rest of the tree alone.
+        /// </para>
+        /// </remarks>
+        private static Entity Normalized(Entity expr) =>
+            expr.Replace(Patterns.GatherPowersOfOneBase);
+
         /// <summary>Does not add the constant of integration because this is called recursively.</summary>
         internal static Entity? ComputeIndefiniteIntegral(Entity expr, Entity.Variable x, bool integrateByParts = true)
         {
+            expr = Normalized(expr);
             if (!expr.ContainsNode(x)) return expr * x; // base case, handle here
             if ((IntegralPatterns.TryStandardIntegrals(expr, x)) is { } answer) return answer;
             // The flag has to be handed on. Every one of these recurses, and a solver that

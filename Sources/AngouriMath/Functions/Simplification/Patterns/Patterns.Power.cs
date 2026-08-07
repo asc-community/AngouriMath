@@ -144,6 +144,110 @@ namespace AngouriMath.Functions
         };
 
         /// <summary>
+        /// Gathers the factors of a product that are powers of one base, wherever they sit
+        /// in it: <c>a^n * c * a^m</c> becomes <c>a^(n+m) * c</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <see cref="PowerRules"/> already has <c>{}^n * {}^m = {}^(n+m)</c>, but it pairs
+        /// two sibling nodes, and a product is a tree rather than a list -- in
+        /// <c>sin(x)^4 * (-6) * sin(x)^2</c> the constant sits between the two powers, so
+        /// they are never siblings and the rule never fires. Full <see cref="Entity.Simplify"/>
+        /// gets these because it reassociates and sorts the factors first; nothing that
+        /// normalises without sorting does.
+        /// </para>
+        /// <para>
+        /// <c>a^n * a^m = a^(n+m)</c> needs no condition: with <c>a^n</c> read as
+        /// <c>e^(n Log a)</c> on the principal branch, the two sides are
+        /// <c>e^(n Log a) * e^(m Log a)</c> and <c>e^((n+m) Log a)</c>, which are equal for
+        /// every complex <c>n</c> and <c>m</c>. This is what makes it unlike
+        /// <c>(a^b)^c = a^(b*c)</c>, which moves the branch and is guarded above.
+        /// The one point it does not cover is <c>a = 0</c> with a negative exponent, where
+        /// <c>0^2 * 0^(-1)</c> is undefined and <c>0^1</c> is 0 -- so this is applied to
+        /// integrands, where an antiderivative may differ on a measure-zero set, and not in
+        /// <see cref="PowerRules"/>. https://github.com/asc-community/AngouriMath/issues/781
+        /// </para>
+        /// </remarks>
+        internal static Entity GatherPowersOfOneBase(Entity x)
+        {
+            if (x is not (Mulf or Divf))
+                return x;
+
+            // Exponent null marks a factor that is carried through untouched.
+            var factors = new List<(Entity Base, Entity? Exponent)>();
+            var merged = false;
+            foreach (var factor in Mulf.LinearChildren(x))
+            {
+                var (@base, exponent) = Decompose(factor);
+                // Numeric factors are left to evaluation, which folds 2 * 2 into 4. Gathering
+                // them here would write it as 2^2 and call that progress.
+                if (@base is Number)
+                {
+                    factors.Add((factor, null));
+                    continue;
+                }
+                var found = false;
+                for (var i = 0; i < factors.Count; i++)
+                    if (factors[i].Exponent is { } already && factors[i].Base == @base)
+                    {
+                        // Only the exponent is folded, never the product around it.
+                        // InnerSimplified on the whole expression rewrites x^(-2) back into
+                        // 1/x^2, and SolveAsPolynomialTerm turns a 1/x^n it is handed into
+                        // Pow(x, -n) again -- the two normalisations chase each other until
+                        // the stack runs out.
+                        factors[i] = (@base, (already + exponent).InnerSimplified);
+                        merged = found = true;
+                        break;
+                    }
+                if (!found)
+                    factors.Add((@base, exponent));
+            }
+
+            // Rebuilding unconditionally would rewrite every quotient in the tree as a
+            // negative power, since LinearChildren flattens a / b into a * b^(-1).
+            if (!merged)
+                return x;
+
+            Entity? result = null;
+            foreach (var (@base, exponent) in factors)
+            {
+                var factor = exponent switch
+                {
+                    null => @base,
+                    Integer(1) => @base,
+                    _ => new Powf(@base, exponent)
+                };
+                result = result is null ? factor : result * factor;
+            }
+            return result ?? x;
+        }
+
+        /// <summary>
+        /// Reads a factor of a product as a base and an exponent.
+        /// </summary>
+        /// <remarks>
+        /// The nested case is not cosmetic: <see cref="Mulf.LinearChildren"/> writes a
+        /// divisor as <c>(...)^(-1)</c>, so <c>x^3 / x^2</c> arrives as
+        /// <c>x^3 * (x^2)^(-1)</c>, whose second factor has base <c>x^2</c> rather than
+        /// <c>x</c> and would be read as an unrelated base. Unwrapping it is
+        /// <c>(a^b)^n = a^(b*n)</c>, which holds for a whole <c>n</c> whatever the sign of
+        /// <c>a</c> -- the same guard the <c>({}^{})^{}</c> rule above carries, and for the
+        /// same reason. https://github.com/asc-community/AngouriMath/issues/752
+        /// </remarks>
+        private static (Entity Base, Entity Exponent) Decompose(Entity factor)
+        {
+            if (factor is not Powf(var @base, var exponent))
+                return (factor, 1);
+            while (@base is Powf(var inner, var innerExponent)
+                   && (exponent is Integer || inner.Evaled is Real { IsPositive: true }))
+            {
+                exponent = innerExponent * exponent;
+                @base = inner;
+            }
+            return (@base, exponent);
+        }
+
+        /// <summary>
         /// Largest divisor tried when reducing a radical. Reducing sqrt(n) exactly would
         /// mean factoring n, which is not something a simplification pass can afford to
         /// do on every node. Trial division by small divisors catches every radical that
