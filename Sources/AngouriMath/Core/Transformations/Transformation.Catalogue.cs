@@ -148,8 +148,8 @@ namespace AngouriMath.Core.Transformations
                 side);
 
         /// <summary>
-        /// The transformations that differ only by a level, built once, so that an ordinary
-        /// <c>Simplify()</c> allocates nothing to reach its transformation.
+        /// The transformations that differ only by a level, each built at most once, so that
+        /// an ordinary <c>Simplify()</c> allocates nothing to reach its transformation.
         /// </summary>
         /// <remarks>
         /// Filled on demand rather than in the static initialiser, and it has to be. Building
