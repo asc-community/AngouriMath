@@ -60,9 +60,34 @@ namespace AngouriMath.Core.Transformations
         /// </summary>
         /// <param name="expression">The expression to rewrite.</param>
         public Entity ApplyOnce(Entity expression)
-            => expression is null
-                ? throw new ArgumentNullException(nameof(expression))
-                : expression.Replace(rules);
+        {
+            if (expression is null)
+                throw new ArgumentNullException(nameof(expression));
+
+            // One thread-static read, per application rather than per node, and nothing
+            // allocated: the ordinary path must not pay for a recording nobody opened.
+            var recording = RewriteRecording.Current;
+            return recording is null
+                ? expression.Replace(rules)
+                : ApplyOnceRecording(expression, recording);
+        }
+
+        /// <remarks>
+        /// A method of its own, and that is the whole reason for it. The closure below
+        /// captures the rule set and the recording, and the compiler allocates the object
+        /// holding them where they come into scope -- so writing this inline in
+        /// <see cref="ApplyOnce(Entity)"/> put one allocation on every rewrite in the
+        /// library whether or not anybody was recording. Measured: it cost `Simplify` a
+        /// fifth of its allocation on the benchmark expressions.
+        /// </remarks>
+        private Entity ApplyOnceRecording(Entity expression, RewriteRecording recording)
+            => expression.Replace(node =>
+            {
+                var rewritten = rules(node);
+                if (rewritten != node)
+                    recording.Add(this, node, rewritten);
+                return rewritten;
+            });
 
         /// <summary>
         /// This set as a <see cref="Transformation"/>, so that it composes with the rest of
