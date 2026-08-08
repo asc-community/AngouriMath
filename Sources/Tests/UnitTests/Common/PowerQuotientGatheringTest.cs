@@ -1,10 +1,11 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
 // Website: https://am.angouri.org.
 //
 
+using System.Linq;
 using System.Threading.Tasks;
 using AngouriMath;
 using AngouriMath.Extensions;
@@ -19,6 +20,19 @@ namespace AngouriMath.Tests.Common
     /// <c>b^(c*p)</c> on the child, on the way up, so by the time the pair is looked at it
     /// has already happened -- and where it applies to only one of the two, the exponents
     /// no longer match. https://github.com/asc-community/AngouriMath/issues/740
+    /// <para/>
+    /// <b>That gathering no longer happens in <c>Simplify</c>, and these tests moved with
+    /// it.</b> <c>(a/b)^p</c> is not <c>a^p / b^p</c> across the branch cuts --
+    /// <c>sqrt(2)/sqrt(-3)</c> is <c>-0.8165i</c> where <c>(2/-3)^(1/2)</c> is
+    /// <c>+0.8165i</c> -- so the rule is now conditioned like the rest of its family
+    /// (https://github.com/asc-community/AngouriMath/issues/802).
+    /// <para/>
+    /// Nothing is lost by that, because the gathering was a *means*: #740 wanted it so the
+    /// limit machinery could read a <c>1^oo</c> out of a quotient. The limit reader now
+    /// recognises the quotient itself, where the identity is checkable -- there is a
+    /// destination to be near, and both bases can be required to stay positive on the way to
+    /// it. So the assertions below moved from the mechanism to the outcome it existed for:
+    /// they ask whether the limit is answered, not whether <c>Simplify</c> prints one power.
     /// </summary>
     [Trait("Area", "Common")]
     public sealed class PowerQuotientGatheringTest
@@ -56,15 +70,23 @@ namespace AngouriMath.Tests.Common
                 $"{expr} came back as {simplified.Stringize()}, which is not a single power");
         }
 
+        /// <summary>
+        /// The quotients #740 was about, asked as the question it was really asking: does the
+        /// limit come out? The shapes it used to assert -- a single power in Simplify's
+        /// output -- are no longer produced, and should not be: see the note on the class.
+        /// </summary>
         [Theory]
-        [InlineData("(a ^ 2 + 1) ^ x / (a ^ 2) ^ x")]
         [InlineData("(x ^ 2 + 1) ^ x / (x ^ 2) ^ x")]
         [InlineData("(x ^ 3 + 1) ^ x / (x ^ 3) ^ x")]
-        [InlineData("(a ^ 2) ^ x / b ^ x")]
         [InlineData("(x ^ 2) ^ x / (x ^ 2 + 1) ^ x")]
-        [InlineData("x ^ (2 * a) / y ^ a")]
-        public void AQuotientOfPowersGathersWhenOneBaseIsItselfAPower(string expr) =>
-            AssertGathersIntoOnePower(expr);
+        [InlineData("(sqrt(x) + 1) ^ x / sqrt(x) ^ x")]
+        public void AQuotientOfPowersIsStillAnsweredAsALimit(string expr)
+        {
+            var limit = Task.Run(() => expr.ToEntity().Limit("x", "+oo").Simplify());
+            Assert.True(limit.Wait(System.TimeSpan.FromSeconds(30)), $"{expr} did not terminate");
+            Assert.False(limit.Result.Nodes.Any(node => node is Entity.Limitf),
+                $"{expr} came back unevaluated: {limit.Result.Stringize()}");
+        }
 
         [Theory]
         [InlineData("(a ^ 2 + 1) ^ x / (a ^ 2) ^ x")]
@@ -101,14 +123,19 @@ namespace AngouriMath.Tests.Common
             Assert.False(Simplified(expr) is Entity.Powf,
                 $"{expr} was gathered into {Simplified(expr).Stringize()}");
 
-        // What already worked, and still does.
+        /// <summary>
+        /// These used to be asserted to gather into one power. They no longer do, because
+        /// their bases are symbolic and nothing can say the quotient stays on the principal
+        /// branch -- which is the whole of #802. What must still hold is that simplifying
+        /// them does not change what they are, so that is what is asserted.
+        /// </summary>
         [Theory]
         [InlineData("(y + 1) ^ x / y ^ x")]
         [InlineData("a ^ x / b ^ x")]
         [InlineData("(a ^ 2) ^ x / (b ^ 2) ^ x")]
         [InlineData("(x + 1) ^ (2 * x) / x ^ (2 * x)")]
-        public void TheQuotientsThatAlreadyGatheredStillDo(string expr) =>
-            AssertGathersIntoOnePower(expr);
+        public void TheQuotientsThatNoLongerGatherKeepTheirValue(string expr) =>
+            AssertSameValueAt(expr, ("a", "17/10"), ("b", "23/10"), ("x", "13/10"), ("y", "31/10"));
 
         /// <summary>
         /// The limits #739 fixed go through the same gathering, so they are pinned here as
@@ -141,11 +168,11 @@ namespace AngouriMath.Tests.Common
         /// run ahead of it.
         /// </summary>
         [Fact]
-        public void AFractionalExponentRatioGathersOnceNothingFlattensItFirst()
+        public void AFractionalExponentRatioKeepsItsValue()
         {
-            var simplified = Simplified("(sqrt(x) + 1) ^ x / sqrt(x) ^ x");
-            Assert.True(simplified is Entity.Powf,
-                $"came back as {simplified.Stringize()}");
+            // The gathering this used to assert is gone with #802, and the limit it was
+            // wanted for is covered by AQuotientOfPowersIsStillAnsweredAsALimit above. What
+            // is checked here is that simplifying still does not change the value.
             AssertSameValueAt("(sqrt(x) + 1) ^ x / sqrt(x) ^ x", ("x", "13/10"));
         }
     }
