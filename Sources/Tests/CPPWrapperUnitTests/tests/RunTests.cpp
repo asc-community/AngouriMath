@@ -1,6 +1,7 @@
 #include <AngouriMath.h>
 #include <gtest/gtest.h>
 #include <vector>
+#include <string>
 
 TEST(RunTests, ParsingTest1) {
     auto src = "x / 2 + 3";
@@ -54,20 +55,25 @@ TEST(RunTests, DiffTest2) {
     EXPECT_EQ(expected.ToString(), actual.ToString());
 }
 
+// An antiderivative is checked by differentiating it back, not by comparing its printed
+// form. These two compared against the literals "x2 / 2" and "x2 / 2 + 2x", which do not
+// say what they look like -- "x2" parses as a variable of that name rather than as a
+// square -- and which could not survive Integrate gaining its constant of integration.
+// The printed form is not the property under test: d/dx of the answer is.
+static void ExpectAntiderivative(const char* integrand) {
+    AngouriMath::Entity entity = integrand;
+    auto back = entity.Integrate("x").Differentiate("x");
+    auto difference = AngouriMath::Entity(
+        "(" + back.ToString() + ") - (" + std::string(integrand) + ")");
+    EXPECT_EQ("0", difference.Simplify().ToString());
+}
+
 TEST(RunTests, IntTest1) {
-    auto src = "x";
-    AngouriMath::Entity entity = src;
-    auto actual = entity.Integrate("x");
-    auto expected = AngouriMath::Entity("x2 / 2");
-    EXPECT_EQ(expected.ToString(), actual.ToString());
+    ExpectAntiderivative("x");
 }
 
 TEST(RunTests, IntTest2) {
-    auto src = "x + 2";
-    AngouriMath::Entity entity = src;
-    auto actual = entity.Integrate("x");
-    auto expected = AngouriMath::Entity("x2 / 2 + 2x");
-    EXPECT_EQ(expected.ToString(), actual.ToString());
+    ExpectAntiderivative("x + 2");
 }
 
 TEST(RunTests, LimTest1) {
