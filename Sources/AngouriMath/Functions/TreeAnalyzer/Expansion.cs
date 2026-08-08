@@ -97,8 +97,13 @@ namespace AngouriMath.Functions
                     throw new AngouriBugException("SmartExpandOver must be only called of non-sum expression");
                 case Divf:
                     expr = expr.Replace(Patterns.ExpandFactorialDivisions);
+                    // Cancelling a quotient of factorials can leave a sum -- (x + 1)! / x!
+                    // is x + 1 -- and this method is documented not to take one. Going back
+                    // in through the sum-aware entry point costs nothing when the result is
+                    // not a sum, since that is where it sends anything else anyway.
+                    // https://github.com/asc-community/AngouriMath/issues/817
                     if (!(expr is Divf(var dividend, var divisor)))
-                        return SmartExpandOver(expr, conditionForUniqueTerms);
+                        return GatherLinearChildrenOverSumAndExpand(expr, conditionForUniqueTerms);
                     var numChildren = GatherLinearChildrenOverSumAndExpand(dividend, conditionForUniqueTerms);
                     if (numChildren is null || numChildren.Count > MathS.Settings.MaxExpansionTermCount)
                         return null;

@@ -402,17 +402,37 @@ namespace AngouriMath.Tests.Common
                 $"{input} simplified to {simplified.Stringize()}, which is {value.Stringize()} at x = {at}");
         }
 
-        // Expand reaches SmartExpandOver with a sum and that method asserts it never gets
-        // one, so a public call throws AngouriBugException where the honest answer is the
-        // expression back unexpanded. Simplify handles the same input and gives 1 + x.
+        // Cancelling a quotient of factorials can leave a sum -- (x + 1)! / x! is x + 1 --
+        // and SmartExpandOver, which is documented not to take a sum, was handed the result
+        // and threw AngouriBugException out of a public method.
         // https://github.com/asc-community/AngouriMath/issues/817
-        [Theory(Skip = "https://github.com/asc-community/AngouriMath/issues/817")]
-        [InlineData("(x + 1)! / x!")]
-        [InlineData("(x + 2)! / x!")]
-        public void ExpandDoesNotThrowOnAQuotientOfFactorials(string input)
+        //
+        // Asserted as a value rather than as a string: expanding must not change what the
+        // expression is worth, and the point it is checked at is one where the factorials
+        // are defined and the quotient is a whole number.
+        [Theory]
+        [InlineData("(x + 1)! / x!", 4, 5)]
+        [InlineData("(x + 2)! / x!", 4, 30)]
+        [InlineData("(x + 3)! / x!", 4, 210)]
+        [InlineData("x! / (x + 1)!", 4, 0.2)]
+        [InlineData("(x + 1)! / x! + y", 4, 9)]
+        [InlineData("((x + 1)! / x!) * (a + b)", 4, 40)]
+        public void ExpandKeepsTheValueOfAQuotientOfFactorials(string input, int at, double expected)
         {
             var expanded = input.ToEntity().Expand();
-            Assert.NotNull(expanded);
+            var value = expanded.Substitute("x", at).Substitute("y", 4).Substitute("a", 3).Substitute("b", 5).EvalNumerical();
+            var real = ((Entity.Number.Complex)value).RealPart.EDecimal.ToDouble();
+            Assert.True(System.Math.Abs(real - expected) < 1e-9,
+                $"{input} expanded to {expanded.Stringize()}, which is {value.Stringize()} at x = {at} rather than {expected}");
         }
+
+        // The cancellation is what makes the expansion possible at all, so the answer should
+        // no longer mention a factorial where the two cancel completely.
+        [Theory]
+        [InlineData("(x + 1)! / x!")]
+        [InlineData("(x + 2)! / x!")]
+        [InlineData("(x + y + 1)! / (x + y)!")]
+        public void ExpandCancelsAQuotientOfFactorialsRatherThanLeavingIt(string input)
+            => Assert.DoesNotContain(input.ToEntity().Expand().Nodes, node => node is Entity.Factorialf);
     }
 }

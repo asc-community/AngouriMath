@@ -47,6 +47,7 @@ read first.
 | **silent** | two integrals | answered correctly | unevaluated — a deliberate loss |
 | **silent** | `k/(a x^2 + c)` and `k/sqrt(a x^2 + c)` for symbolic `a` | `NaN` | a piecewise on the sign of the discriminant |
 | loud | `Compile` over a missing variable | `KeyNotFoundException` | `UncompilableNodeException` |
+| loud | `Expand` of a quotient of factorials | `AngouriBugException` | the expanded polynomial |
 | loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
 | **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
 
@@ -1262,6 +1263,31 @@ on. **Change your `catch` clause.** Constants are unaffected: `pi` and `e` are s
 variable is looked up, so `"pi * x"` still compiles over `x` alone.
 
 PR [#688](https://github.com/asc-community/AngouriMath/pull/688).
+
+### `Expand` of a quotient of factorials threw instead of expanding
+
+```csharp
+"(x + 1)! / x!".ToEntity().Expand();
+// was  AngouriBugException: SmartExpandOver must be only called of non-sum expression
+// is   x + 1
+
+"(x + 2)! / x!".ToEntity().Expand();
+// was  AngouriBugException
+// is   x ^ 2 + 3 * x + 2
+```
+
+Expansion cancels a quotient of factorials before it does anything else, and the cancellation can
+leave a sum — `(x + 1)! / x!` is `x + 1`. The result was then handed straight back to the routine
+that expands a *non*-sum, which asserts that it never receives one, so the assertion fired and an
+`AngouriBugException` came out of a public method. Sending the cancelled expression through the
+sum-aware entry point instead costs nothing when it is not a sum, since that is where everything
+else goes anyway.
+
+**`AngouriBugException` is the library reporting that the library is broken**, so nothing was
+depending on this; the entry is here because the same call now returns a value where it used to
+throw. `Simplify` was never affected — it answered `1 + x` throughout.
+
+Issue [#817](https://github.com/asc-community/AngouriMath/issues/817).
 
 ### Compiled arcsine was the conjugate of the arcsine
 
