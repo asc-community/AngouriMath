@@ -73,14 +73,20 @@ namespace AngouriMath.Functions
                          || (any1.Evaled is Real { IsPositive: true }
                              && any2.Evaled is Real { IsPositive: true }))
                 => new Powf(any1 * any2, any3),
-            // The quotient form has the same hole -- sqrt(2) / sqrt(-3) is -0.8165i while
-            // (2 / -3)^(1/2) is +0.8165i -- and is deliberately left unguarded, because
-            // guarding it costs answers rather than only shapes. It is what lets the limit
-            // machinery read a 1^oo out of a quotient, so `(x^2 + 1)^x / (x^2)^x` stops
-            // being answered at all, which is the whole of #739 and #740. Which of the two
-            // to prefer is a maintainer's call and is filed separately rather than taken
-            // here. https://github.com/asc-community/AngouriMath/issues/802
-            Divf(Powf(var any1, var any3), Powf(var any2, var any3a)) when any3 == any3a => new Powf(any1 / any2, any3),
+            // Same condition, same reason -- sqrt(2) / sqrt(-3) is -0.8165i where
+            // (2 / -3)^(1/2) is +0.8165i. https://github.com/asc-community/AngouriMath/issues/802
+            //
+            // This gathering was what let the limit machinery read a 1^oo out of a quotient,
+            // so guarding it here used to cost `(x^2 + 1)^x / (x^2)^x` its limit. The limit
+            // reader now recognises the quotient itself, where the identity is checkable
+            // because there is a destination to be near and the bases can be required to be
+            // positive on the way to it -- see ApplySecondRemarkable.
+            Divf(Powf(var any1, var any3), Powf(var any2, var any3a))
+                when any3 == any3a
+                     && (any3 is Integer
+                         || (any1.Evaled is Real { IsPositive: true }
+                             && any2.Evaled is Real { IsPositive: true }))
+                => new Powf(any1 / any2, any3),
 
             // {1} ^ n / {2} ^ (c * n) = ({1} / {2} ^ c) ^ n, and the same the other way up.
             //

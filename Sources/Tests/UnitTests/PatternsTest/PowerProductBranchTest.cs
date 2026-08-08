@@ -33,6 +33,7 @@ namespace AngouriMath.Tests.PatternsTest
         [Theory]
         [InlineData("x ^ (1/2) * y ^ (1/2)")]
         [InlineData("sqrt(x) * sqrt(y)")]
+        [InlineData("sqrt(x) / sqrt(y)")]
         [InlineData("x ^ (1/3) * y ^ (1/3)")]
         [InlineData("x ^ (3/2) * y ^ (3/2)")]
         public void SimplifyingKeepsTheValueAtNegativeBases(string expr)
@@ -51,25 +52,24 @@ namespace AngouriMath.Tests.PatternsTest
         }
 
         /// <summary>
-        /// The quotient form has the same hole and is deliberately still open:
-        /// <c>sqrt(2) / sqrt(-3)</c> is <c>-0.8165i</c> while <c>(2 / -3)^(1/2)</c> is
-        /// <c>+0.8165i</c>. It is left because guarding it costs *answers* rather than only
-        /// shapes -- it is what lets the limit machinery read a 1^oo out of a quotient, and
-        /// with it guarded <c>(x^2 + 1)^x / (x^2)^x</c> stops having a limit at all, which
-        /// is the whole of #739 and #740. Pinned here so that the day it is fixed, this
-        /// test fails and says where to look.
+        /// The quotient form had the same hole -- <c>sqrt(2) / sqrt(-3)</c> is
+        /// <c>-0.8165i</c> where <c>(2 / -3)^(1/2)</c> is <c>+0.8165i</c> -- and is fixed
+        /// too. It was left out of the first pass because guarding it cost *answers*: the
+        /// gathering was what let the limit machinery read a <c>1^oo</c> out of a quotient.
+        /// The limit reader now recognises the quotient itself, where the identity is
+        /// checkable, so the guard costs nothing.
         /// https://github.com/asc-community/AngouriMath/issues/802
         /// </summary>
         [Fact]
-        public void TheQuotientFormIsStillWrongAndThatIsRecorded()
+        public void TheQuotientFormKeepsItsValueToo()
         {
             var simplified = "sqrt(x) / sqrt(y)".ToEntity().Simplify();
             var before = "sqrt(x) / sqrt(y)".ToEntity().Substitute("x", 2).Substitute("y", -3).EvalNumerical();
             var after = simplified.Substitute("x", 2).Substitute("y", -3).EvalNumerical();
             Assert.True(
-                Math.Abs(before.ImaginaryPart.EDecimal.ToDouble() - after.ImaginaryPart.EDecimal.ToDouble()) > 1e-9,
-                $"the quotient form now agrees at x = 2, y = -3 -- #802 looks fixed, so this test "
-                + $"should become an assertion that it stays fixed. Simplified: {simplified.Stringize()}");
+                Math.Abs(before.ImaginaryPart.EDecimal.ToDouble() - after.ImaginaryPart.EDecimal.ToDouble()) < 1e-9,
+                $"sqrt(x) / sqrt(y) simplified to {simplified.Stringize()}, which at x = 2, y = -3 "
+                + $"is {after.Stringize()} rather than {before.Stringize()}");
         }
 
         /// <summary>

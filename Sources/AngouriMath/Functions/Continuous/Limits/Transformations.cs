@@ -197,8 +197,40 @@ namespace AngouriMath.Functions.Algebra
                 EvalAssumingContinuous((xPlusOne - 1).Limit(x, dest)) == 0 && DivergesInMagnitude(xPower, x, dest) =>
                 MathS.e.Pow(xPower * (xPlusOne - 1)),
 
+                // a(x)^n / b(x)^n, the same limit written as a quotient. The simplifier used
+                // to gather this into (a/b)^n for us, which is how the shape reached the rule
+                // above at all -- and that gathering is false across the branch cuts, since
+                // sqrt(2)/sqrt(-3) is -0.8165i where (2/-3)^(1/2) is +0.8165i.
+                // https://github.com/asc-community/AngouriMath/issues/802
+                //
+                // Read here instead, it is sound: a limit only needs the identity to hold in a
+                // neighbourhood of the destination, and both bases are required to be
+                // eventually positive on the way there -- where their arguments are both zero
+                // and there is no turn of the argument to lose. That is checkable, which is
+                // exactly what it is not in the simplifier, where the expression has no
+                // destination to be near.
+                Divf(Powf(var numeratorBase, var power), Powf(var denominatorBase, var powerAgain)) when
+                power == powerAgain && numeratorBase.ContainsNode(x) && denominatorBase.ContainsNode(x)
+                && power.ContainsNode(x)
+                && IsEventuallyPositive(numeratorBase, x, dest) && IsEventuallyPositive(denominatorBase, x, dest)
+                && EvalAssumingContinuous((numeratorBase / denominatorBase - 1).Limit(x, dest)) == 0
+                && DivergesInMagnitude(power, x, dest) =>
+                MathS.e.Pow(power * (numeratorBase / denominatorBase - 1)),
+
                 _ => expr
             };
+
+        /// <summary>
+        /// Whether a base stays positive on the approach to <paramref name="dest"/>, which is
+        /// what makes gathering a quotient of two powers into one power sound *here* when it
+        /// is not sound in general: two positive bases have argument zero apiece, so their
+        /// quotient's argument cannot leave the principal branch.
+        /// </summary>
+        private static bool IsEventuallyPositive(Entity expr, Variable x, Entity dest)
+        {
+            var limit = EvalAssumingContinuous(expr.Limit(x, dest));
+            return limit == Real.PositiveInfinity || limit is Real { IsPositive: true };
+        }
 
         /// <summary>
         /// How many times over <see cref="ApplySecondRemarkable"/> may be re-read into an
