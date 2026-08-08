@@ -401,5 +401,18 @@ namespace AngouriMath.Tests.Common
             Assert.True(System.Math.Abs(((Entity.Number.Complex)value).RealPart.EDecimal.ToDouble() - expected) < 1e-9,
                 $"{input} simplified to {simplified.Stringize()}, which is {value.Stringize()} at x = {at}");
         }
+
+        // Expand reaches SmartExpandOver with a sum and that method asserts it never gets
+        // one, so a public call throws AngouriBugException where the honest answer is the
+        // expression back unexpanded. Simplify handles the same input and gives 1 + x.
+        // https://github.com/asc-community/AngouriMath/issues/817
+        [Theory(Skip = "https://github.com/asc-community/AngouriMath/issues/817")]
+        [InlineData("(x + 1)! / x!")]
+        [InlineData("(x + 2)! / x!")]
+        public void ExpandDoesNotThrowOnAQuotientOfFactorials(string input)
+        {
+            var expanded = input.ToEntity().Expand();
+            Assert.NotNull(expanded);
+        }
     }
 }

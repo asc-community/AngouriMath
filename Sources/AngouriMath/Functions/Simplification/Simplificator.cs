@@ -72,7 +72,7 @@ namespace AngouriMath.Functions
 #endif
                 void __IterAddHistory(Entity expr)
                 {
-                    var refexpr = expr.Replace(Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL)).InnerSimplified;
+                    var refexpr = expr.Rewrite(RewriteRules.CanonicalOrder).InnerSimplified;
                     var compl1 = refexpr.SimplifiedRate;
                     var compl2 = expr.SimplifiedRate;
                     var n = compl1 > compl2 ? expr : refexpr;
@@ -83,7 +83,7 @@ namespace AngouriMath.Functions
                         history[ncompl] = new HashSet<Entity> { n };
                 }
                 __IterAddHistory(expr);
-                __IterAddHistory(expr.Replace(Patterns.InvertNegativePowers));
+                __IterAddHistory(expr.Rewrite(RewriteRules.InvertNegativePowers));
 
                 MultithreadingFunctional.ExitIfCancelled();
             }
@@ -121,15 +121,15 @@ namespace AngouriMath.Functions
                 // is an accident rather than a preference.
                 // https://github.com/asc-community/AngouriMath/issues/205
                 if (res.Nodes.Any(child => child is Divf))
-                    AddHistory(res = res.Replace(Patterns.RationaliseDenominator).InnerSimplified);
+                    AddHistory(res = res.Rewrite(RewriteRules.RationaliseDenominator).InnerSimplified);
 
-                res = res.Replace(Patterns.SortRules(sortLevel)).InnerSimplified;
+                res = res.Rewrite(RewriteRules.CanonicalOrderAt(sortLevel)).InnerSimplified;
                 if (res.Nodes.Any(child => child is Powf))
-                    AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
+                    AddHistory(res = res.Rewrite(RewriteRules.Power).InnerSimplified);
 
                 AddHistory(res = SimplifyChildren(res));
 
-                AddHistory(res = res.Replace(Patterns.InvertNegativePowers).Replace(Patterns.DivisionPreparingRules).InnerSimplified);
+                AddHistory(res = res.Rewrite(RewriteRules.InvertNegativePowers).Rewrite(RewriteRules.DivisionPreparing).InnerSimplified);
 
                 // Lowest terms, offered as one more candidate rather than taken. Cancelling
                 // means multiplying out, and a quotient that cancels down to a polynomial
@@ -138,41 +138,41 @@ namespace AngouriMath.Functions
                 // stands, and u^2 + 4u + 4 only once this has expanded it. The complexity
                 // metric is what should decide between them.
                 if (res.Nodes.Any(child => child is Divf))
-                    AddHistory(res.Replace(Patterns.PolynomialGcdCancellation).InnerSimplified);
+                    AddHistory(res.Rewrite(RewriteRules.PolynomialGcdCancellation).InnerSimplified);
 
-                AddHistory(res = res.Replace(Patterns.PolynomialLongDivision).InnerSimplified);
+                AddHistory(res = res.Rewrite(RewriteRules.PolynomialLongDivision).InnerSimplified);
 
 
-                AddHistory(res = res.Replace(Patterns.NormalTrigonometricForm).InnerSimplified);
-                AddHistory(res = res.Replace(Patterns.CollapseMultipleFractions).InnerSimplified);
-                AddHistory(res = res.Replace(e => Patterns.FractionCommonDenominatorRules(e, sortLevel)).InnerSimplified);
-                AddHistory(res = res.Replace(Patterns.InvertNegativePowers).Replace(Patterns.DivisionPreparingRules).InnerSimplified);
-                AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
-                AddHistory(res = res.Replace(Patterns.TrigonometricRules).InnerSimplified);
-                AddHistory(res = res.Replace(Patterns.CollapseTrigonometricFunctions).InnerSimplified);
+                AddHistory(res = res.Rewrite(RewriteRules.NormalTrigonometricForm).InnerSimplified);
+                AddHistory(res = res.Rewrite(RewriteRules.CollapseMultipleFractions).InnerSimplified);
+                AddHistory(res = res.Rewrite(RewriteRules.CommonDenominatorAt(sortLevel)).InnerSimplified);
+                AddHistory(res = res.Rewrite(RewriteRules.InvertNegativePowers).Rewrite(RewriteRules.DivisionPreparing).InnerSimplified);
+                AddHistory(res = res.Rewrite(RewriteRules.Power).InnerSimplified);
+                AddHistory(res = res.Rewrite(RewriteRules.Trigonometric).InnerSimplified);
+                AddHistory(res = res.Rewrite(RewriteRules.CollapseTrigonometricFunctions).InnerSimplified);
 
                 if (res.Nodes.Any(child => child is TrigonometricFunction))
                 {
-                    var res1 = res.Replace(Patterns.ExpandTrigonometricRules).InnerSimplified;
-                    AddHistory(res = res.Replace(Patterns.TrigonometricRules).Replace(Patterns.CommonRules).InnerSimplified);
+                    var res1 = res.Rewrite(RewriteRules.ExpandTrigonometric).InnerSimplified;
+                    AddHistory(res = res.Rewrite(RewriteRules.Trigonometric).Rewrite(RewriteRules.Common).InnerSimplified);
                     AddHistory(res1);
                     res = PickSimplest(res, res1);
-                    AddHistory(res = res.Replace(Patterns.CollapseTrigonometricFunctions).Replace(Patterns.TrigonometricRules));
+                    AddHistory(res = res.Rewrite(RewriteRules.CollapseTrigonometricFunctions).Rewrite(RewriteRules.Trigonometric));
 
                     // Multiple angles opened up, then gathered again by the ordinary rules.
                     // Offered as a candidate rather than taken: written out, sin(4x) is far
                     // longer than it started, and only worth it where the pieces cancel --
                     // which is what the complexity metric is for.
                     var expandedAngles = res
-                        .Replace(Patterns.ExpandMultipleAngleRules)
-                        .Replace(Patterns.NormalTrigonometricForm)
+                        .Rewrite(RewriteRules.ExpandMultipleAngle)
+                        .Rewrite(RewriteRules.NormalTrigonometricForm)
                         .InnerSimplified;
                     if (expandedAngles != res)
                     {
                         AddHistory(expandedAngles);
                         AddHistory(SimplifyChildren(expandedAngles)
-                            .Replace(Patterns.TrigonometricRules)
-                            .Replace(Patterns.CommonRules)
+                            .Rewrite(RewriteRules.Trigonometric)
+                            .Rewrite(RewriteRules.Common)
                             .InnerSimplified);
                     }
                 }
@@ -180,35 +180,35 @@ namespace AngouriMath.Functions
 
                 if (res.Nodes.Any(child => child is Statement))
                 {
-                    AddHistory(res = res.Replace(Patterns.BooleanRules).InnerSimplified);
+                    AddHistory(res = res.Rewrite(RewriteRules.Boolean).InnerSimplified);
                 }
 
 
                 if (res.Nodes.Any(child => child is ComparisonSign))
                 {
-                    AddHistory(res = res.Replace(Patterns.InequalityEqualityRules).InnerSimplified);
+                    AddHistory(res = res.Rewrite(RewriteRules.InequalityEquality).InnerSimplified);
                 }
 
                 if (res.Nodes.Any(child => child is Factorialf))
                 {
-                    AddHistory(res = res.Replace(Patterns.ExpandFactorialDivisions).InnerSimplified);
-                    AddHistory(res = res.Replace(Patterns.FactorizeFactorialMultiplications).InnerSimplified);
+                    AddHistory(res = res.Rewrite(RewriteRules.ExpandFactorialDivisions).InnerSimplified);
+                    AddHistory(res = res.Rewrite(RewriteRules.FactorizeFactorialMultiplications).InnerSimplified);
                 }
 
 
                 if (res.Nodes.Any(child => child is Powf or Logf))
-                    AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
+                    AddHistory(res = res.Rewrite(RewriteRules.Power).InnerSimplified);
 
                 if (res.Nodes.Any(child => child is Set))
                 {
-                    var replaced = res.Replace(Patterns.SetOperatorRules);
+                    var replaced = res.Rewrite(RewriteRules.SetOperator);
 
                     AddHistory(res = replaced.InnerSimplified);
                 }
 
 
                 if (res.Nodes.Any(child => child is Phif))
-                    AddHistory(res = res.Replace(Patterns.PhiFunctionRules).InnerSimplified);
+                    AddHistory(res = res.Rewrite(RewriteRules.PhiFunction).InnerSimplified);
 
                 Entity? possiblePoly = null;
                 foreach (var var in res.Vars)
@@ -227,10 +227,10 @@ namespace AngouriMath.Functions
                         AddHistory(factoredPoly);
 
 
-                AddHistory(res = res.Replace(Patterns.CommonRules));
+                AddHistory(res = res.Rewrite(RewriteRules.Common));
 
 
-                AddHistory(res = res.Replace(Patterns.NumericNeatRules));
+                AddHistory(res = res.Rewrite(RewriteRules.NumericNeat));
 
                 /*
                 This was intended to simplify expressions as polynomials over nodes, some kind of
@@ -259,8 +259,8 @@ namespace AngouriMath.Functions
                 // reporter's second expression is 0, and reaches 0 through
                 // 2 sin(t) cos(t) and not through sin(2t).
                 var openedAngles = res
-                    .Replace(Patterns.ExpandMultipleAngleRules)
-                    .Replace(Patterns.NormalTrigonometricForm)
+                    .Rewrite(RewriteRules.ExpandMultipleAngle)
+                    .Rewrite(RewriteRules.NormalTrigonometricForm)
                     .InnerSimplified;
                 if (openedAngles != res)
                     // Expanded, and for the same reason res is expanded above: the
