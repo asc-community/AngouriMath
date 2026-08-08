@@ -92,7 +92,17 @@ printed with `if` came back as a product with `if` read as an undeclared variabl
 usual notation is not in the grammar, print the function call the parser does have.
 `StringizeRoundTripTest` is where that is enforced; add to it when you add a node.
 
-`Latexise` is under no such obligation — nothing parses LaTeX.
+**`Latexise` has a round trip too, and it is enforced in someone else's repository.**
+[CSharpMath.Evaluation](https://github.com/verybadcat/CSharpMath/blob/master/CSharpMath.Evaluation/Evaluation.cs)
+reads LaTeX back into an `Entity`, and says so in its own source: *"CSharpMath must handle all LaTeX
+coming from AngouriMath or a bug is present!"* So a change to what `Latexise` emits — a new node, a
+different command, a changed bracketing — can break a downstream project, and no test here will say
+so.
+
+That is weaker than `Stringize`'s contract, not stronger. `StringizeRoundTripTest` fails in this
+repository the moment the printed form stops parsing; the LaTeX contract fails as a bug report from
+someone else, months later. When you change `Latexise` output, check it against CSharpMath and open
+a PR there as well ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
 
 The syntax the parser accepts is written down in
 [`Docs/Usage/Syntax.md`](Sources/AngouriMath/Docs/Usage/Syntax.md). Keep it true when you change the
