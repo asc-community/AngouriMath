@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   
   <PropertyGroup>
-    <TargetFrameworks>net7.0;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net8.0;net10.0</TargetFrameworks>
     <PackageId>AngouriMath</PackageId>
     <Product>AngouriMath</Product>
   </PropertyGroup>
@@ -86,6 +86,11 @@
     </None>
   
     <None Include="extension.dib" Pack="true" PackagePath="interactive-extensions/dotnet" />
-    <Compile Remove="Core/Entity/GenericMath/**" Condition="'$(TargetFramework)' != 'net7.0'" />
+    <!--
+    Generic math needs INumber<T>, which is net7.0 and later. Written as a compatibility
+    test rather than a list of frameworks so that adding one to TargetFrameworks above
+    does not silently drop this folder from it.
+    -->
+    <Compile Remove="Core/Entity/GenericMath/**" Condition="!$([MSBuild]::IsTargetFrameworkCompatible($(TargetFramework), 'net7.0'))" />
   </ItemGroup>
 </Project>

@@ -34,7 +34,7 @@
   
   <ItemGroup>
     <ProjectReference Include="..\..\AngouriMath\AngouriMath.csproj">
-      <SetTargetFramework>TargetFramework=net7.0</SetTargetFramework>
+      <SetTargetFramework>TargetFramework=net10.0</SetTargetFramework>
     </ProjectReference>
   </ItemGroup>
 
