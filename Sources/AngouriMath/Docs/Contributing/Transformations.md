@@ -165,12 +165,20 @@ Two things to get right:
 
 ## What the next step is
 
-The unit here is the rule *set*, not the single `pattern -> replacement` line, because every rewrite
-in this library is a case of one `switch` and the compiler turns that into a type test and a jump —
-splitting each case into an object would trade one dispatch per node for one delegate call per rule
-per node, on the hottest path there is. Making the individual rewrites addressable without paying
-that is the next piece of work, and nothing here forecloses it: a set whose rewrites become
-individually reachable keeps its name and its entry in the registry.
+The unit here is the rule *set*, not the single `pattern -> replacement` line — because that is what
+has been built, **not** because the finer grain costs too much. This document used to say it would
+trade one dispatch per node for one delegate call per rule per node. That was asserted, never
+measured, and it is wrong: [#825](https://github.com/asc-community/AngouriMath/issues/825) measures
+rules bucketed by the node type they match at **as fast as** the hand-written `switch` on a
+realistic-sized set and **2.3× faster** on a small one, at identical allocation. A large `switch`
+over distinct node types is compiled into that same type dispatch anyway, so an explicit registry is
+not paying for anything — it is writing down what the compiler already infers from arm order.
+
+What does stand in the way is transcription: splitting forty `switch` arms by hand is forty chances
+to change a pattern silently, and the per-rule metadata has to stay in step with the pattern. Both
+point at a source generator over the existing bodies, which is what #746 item 50 should decide.
+Nothing here forecloses it: a set whose rewrites become individually reachable keeps its name and its
+entry in the registry.
 
 After that, in dependency order: the goal/tactic layer that `Solve` belongs in, and then derivations,
 which want every step to be attributable — which is what naming the steps was for.
