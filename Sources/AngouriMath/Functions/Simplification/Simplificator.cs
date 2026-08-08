@@ -6,7 +6,9 @@
 //
 
 using System;
+using AngouriMath.Core;
 using AngouriMath.Core.Multithreading;
+using AngouriMath.Core.Transformations;
 using PeterO.Numbers;
 
 namespace AngouriMath.Functions
@@ -22,14 +24,27 @@ namespace AngouriMath.Functions
         /// <summary>See more details in <see cref="Entity.Simplify(int)"/></summary>
         internal static Entity Simplify(Entity expr, int level) => Alternate(expr, level).First().InnerSimplified;
 
-        internal static Entity SimplifyChildren(Entity expr)
-        {
-            return expr.Replace(Patterns.InvertNegativePowers)
-                       .Replace(Patterns.InvertNegativeMultipliers).Replace(
-                        Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL)
-                        )
-                .InnerSimplified.Replace(Patterns.CommonRules).InnerSimplified;
-        }
+        /// <summary>
+        /// The tidying pass every stage of <see cref="Alternate(Entity, int)"/> runs: get
+        /// the quotients and the signs into their usual shape, put the operands in order,
+        /// then collect like terms.
+        /// </summary>
+        /// <remarks>
+        /// Composed once, statically, out of <see cref="RewriteRules"/> rather than written
+        /// out as a chain of <c>Replace</c> calls -- so the sequence is a value that can be
+        /// named, printed and tested, and so each stage of it is a registry entry other
+        /// code can reach on its own. The passes and their order are unchanged.
+        /// </remarks>
+        [ConstantField]
+        private static readonly Transformation simplifyChildren =
+            Transformation.Rewriting(RewriteRules.InvertNegativePowers)
+                .Then(Transformation.Rewriting(RewriteRules.InvertNegativeMultipliers))
+                .Then(Transformation.Rewriting(RewriteRules.CanonicalOrder))
+                .Then(Transformation.InnerSimplification)
+                .Then(Transformation.Rewriting(RewriteRules.Common))
+                .Then(Transformation.InnerSimplification);
+
+        internal static Entity SimplifyChildren(Entity expr) => simplifyChildren.ApplyOrKeep(expr);
 
         /// <summary>Finds all alternative forms of an expression</summary>
         internal static IEnumerable<Entity> Alternate(Entity src, int level)

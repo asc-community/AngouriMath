@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using AngouriMath.Core.Transformations;
 using AngouriMath.Extensions;
 using AngouriMath.Functions.Algebra;
 using PeterO.Numbers;
@@ -31,7 +32,7 @@ namespace AngouriMath
         /// https://github.com/asc-community/AngouriMath/issues/772
         /// </remarks>
         public Entity Integrate(Variable x) =>
-            Integration.ComputeIndefiniteIntegral(InnerSimplified, x)?.InnerSimplified is { } antiderivative
+            Transformation.Integration(x).Apply(this).Output is { } antiderivative
             ? antiderivative + (antiderivative.VarsAndConsts.Contains("C") ? Variable.CreateUnique(antiderivative, "C") : "C")
             : new Integralf(this, x, null);
         /// <summary>
@@ -45,7 +46,7 @@ namespace AngouriMath
         /// An integrated expression. It might remain the same or be transformed into nodes with no integrals.
         /// </returns>
         public Entity Integrate(Variable x, Entity from, Entity to) =>
-            Integration.ComputeIndefiniteIntegral(InnerSimplified, x)?.InnerSimplified is { } antiderivative
+            Transformation.Integration(x).Apply(this).Output is { } antiderivative
             ? antiderivative.Substitute(x, to) - antiderivative.Substitute(x, from)
             : new Integralf(this, x, (from, to));
     }

@@ -34,6 +34,7 @@ namespace AngouriMath.Core
 namespace AngouriMath
 {
     using Core;
+    using Core.Transformations;
     using static Functions.Algebra.LimitFunctional;
     partial record Entity
     {
@@ -58,8 +59,8 @@ namespace AngouriMath
         /// cannot be determined
         /// </returns>
         public Entity Limit(Variable x, Entity destination, ApproachFrom side)
-        { 
-            var res = ComputeLimit(this, x, destination, side); 
+        {
+            var res = Transformation.LimitAt(x, destination, side).Apply(this).Output;
             if (res is null) return new Limitf(this, x, destination, side);
             return res.InnerSimplified;
         }
@@ -118,7 +119,9 @@ namespace AngouriMath
         /// </example>
         public Entity Limit(Variable x, Entity destination)
         {
-            var res = ComputeLimit(this, x, destination, ApproachFrom.BothSides);
+            // The NaN test is on the limit as computed, before it is tidied: an expression
+            // that inner-simplifies to NaN is not the same claim as one that came back NaN.
+            var res = Transformation.LimitAt(x, destination, ApproachFrom.BothSides).Apply(this).Output;
             if (res is null || res == MathS.NaN)
                 return new Limitf(this, x, destination, ApproachFrom.BothSides).InnerSimplified;
             return res.InnerSimplified;
