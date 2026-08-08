@@ -48,6 +48,7 @@ read first.
 | **silent** | `k/(a x^2 + c)` and `k/sqrt(a x^2 + c)` for symbolic `a` | `NaN` | a piecewise on the sign of the discriminant |
 | loud | `Compile` over a missing variable | `KeyNotFoundException` | `UncompilableNodeException` |
 | loud | `Expand` of a quotient of factorials | `AngouriBugException` | the expanded polynomial |
+| loud | parsing a `provided` in a parenthesised comma list | `NullReferenceException` | `UnhandledParseException` |
 | loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
 | **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
 
@@ -1288,6 +1289,30 @@ depending on this; the entry is here because the same call now returns a value w
 throw. `Simplify` was never affected — it answered `1 + x` throughout.
 
 Issue [#817](https://github.com/asc-community/AngouriMath/issues/817).
+
+### A parse failure no longer escapes as a `NullReferenceException`
+
+```csharp
+"(1 provided x > 0, 2)".ToEntity();
+// was  NullReferenceException
+// is   UnhandledParseException: line 1:17 no viable alternative at input '(1providedx>0,'
+```
+
+ANTLR reports a syntax error to the listener and then *recovers*, carrying on with a rule context
+whose value was never assigned. The grammar's action for `provided` runs anyway and dereferences it,
+so the parse came down before the error already recorded against the input was read.
+
+**Change your `catch` clause if you were catching `NullReferenceException` around user input** — but
+the point of the fix is that you should not have had to.
+[`Docs/Usage/Exceptions.md`](Sources/AngouriMath/Docs/Usage/Exceptions.md) says every parse failure
+arrives under `AngouriMathBaseException`, and a caller who wrote the one correct `catch` was not
+catching this.
+
+The construct is unaffected: `1 provided x > 0` parses, and so does the piecewise form
+`piecewise(1 provided x > 0, 2 provided x < 0, 3)`. What is refused is the comma list with no
+`piecewise` in front of it, which has no rule.
+
+Issue [#813](https://github.com/asc-community/AngouriMath/issues/813).
 
 ### Compiled arcsine was the conjugate of the arcsine
 
