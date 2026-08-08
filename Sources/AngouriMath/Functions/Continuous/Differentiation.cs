@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using AngouriMath.Core.Transformations;
 using PeterO.Numbers;
 
 namespace AngouriMath
@@ -43,6 +44,14 @@ namespace AngouriMath
         /// </code>
         /// </example>
         public Entity Differentiate(Variable variable)
+            => Transformation.Differentiation(variable).ApplyOrKeep(this);
+
+        /// <summary>
+        /// What <see cref="Differentiate(Variable)"/> does, reachable by
+        /// <see cref="Transformation.Differentiation(Variable)"/> without going back
+        /// through the public method and round again.
+        /// </summary>
+        internal Entity DifferentiateOnce(Variable variable)
             => InnerDifferentiate(variable).InnerSimplified;
 
         /// <summary>

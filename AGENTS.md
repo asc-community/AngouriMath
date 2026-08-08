@@ -201,6 +201,38 @@ with the measurements against it.
 product is contraction, not convolution), and operators or gates — those act *on* states rather than
 being states, and they belong to a quantum computing library rather than to a CAS.
 
+## An operation is a value, not only a method
+
+`Simplify`, `Expand`, `Factorize`, `Differentiate`, `Integrate` and `Limit` are adapters over
+`AngouriMath.Core.Transformations` — a `Transformation` is the operation itself, carrying a name,
+what it claims about its output, and how well justified the claim is. The algorithms underneath are
+untouched; what changed is that a step can be named, composed and enumerated rather than only
+called. See [`Contributing/Transformations.md`](Sources/AngouriMath/Docs/Contributing/Transformations.md),
+and [#746](https://github.com/asc-community/AngouriMath/issues/746) for where it is going.
+
+Three habits it asks for, and each is the honesty rule above in a different place:
+
+**Say which relation you are claiming.** `Equivalence` means the output is another way of writing the
+input; `Derivation` means it is a different object. A derivative and an antiderivative are
+`Derivation`, and a test that subtracts one from its input and asserts zero is testing nothing.
+
+**Do not label a rewrite `Sound` without an argument.** Every rule set shipped today is
+`SoundUnderAssumptions`, and a test over `RewriteRules.All` holds it there. The tier is declared, not
+verified — so promoting one means changing that test, and saying in the same change why the rewrite
+needs no assumptions. Loosening a tier needs nothing.
+
+**Say "no answer" with `null`, here too.** `ApplyCore` returning `null` is the layer's way of saying
+"I could not settle this", and it is the one place where the new layer is *more* honest than the 1.x
+method it backs: `Transformation.Integration` has no answer where `Entity.Integrate` returns an
+unevaluated `Integralf`. Both are the same claim; neither is `NaN`.
+
+And what not to do with it. `Solve` is not a transformation — it consumes a goal and produces a
+solution set, and it belongs in a tactic layer that does not exist yet. `Entity.Set` being an
+`Entity` means it would type-check as `Entity -> Entity`, which is the reason to keep it out rather
+than a reason to put it in. Nor is there any inverse machinery: `Expand` and `Factor` are not
+inverses and `Unsolve` is not well defined, so the API does not invent a symmetry the mathematics
+does not have.
+
 ## Keep up with the mathematics
 
 Algorithms here are decades of literature deep, and the good ones are written down. Before inventing
@@ -294,6 +326,7 @@ are short, and a stale one is worse than none — if you change what a file desc
 | [`Contributing/General.md`](Sources/AngouriMath/Docs/Contributing/General.md) | the `Entity` hierarchy, in a paragraph |
 | [`Contributing/AddingNode.cs`](Sources/AngouriMath/Docs/Contributing/AddingNode.cs) | every place a new node has to be taught about. Read it *before* adding one |
 | [`Contributing/ImproveParser.md`](Sources/AngouriMath/Docs/Contributing/ImproveParser.md) | how to change the grammar and regenerate |
+| [`Contributing/Transformations.md`](Sources/AngouriMath/Docs/Contributing/Transformations.md) | the transformation layer the 1.x entry points sit on, and how to add the next rule set |
 | [`Contributing/coding_rules.md`](Sources/AngouriMath/Docs/Contributing/coding_rules.md) | sealed-or-abstract, and immutability of `Entity` |
 | [`WhatsNew/version_performance_control.md`](Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md) | the inter-version performance table, and how to add a column |
 | `Sources/Analyzers/` | the custom analyzers, including the static-field one behind `[ConstantField]` |

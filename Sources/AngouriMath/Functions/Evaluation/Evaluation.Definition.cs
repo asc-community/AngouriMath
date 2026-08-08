@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using AngouriMath.Core.Transformations;
 using HonkSharp.Laziness;
 
 namespace AngouriMath
@@ -204,6 +205,14 @@ namespace AngouriMath
         /// </example> 
 
         public Entity Expand(int level = 2)
+            => Transformation.ExpansionAtLevel(level).ApplyOrKeep(this);
+
+        /// <summary>
+        /// What <see cref="Expand(int)"/> does, reachable by
+        /// <see cref="Transformation.ExpansionAtLevel(int)"/> without going back through
+        /// the public method and round again.
+        /// </summary>
+        internal Entity ExpandOverSum(int level)
         {
             static Entity Expand_(Entity e, int level) =>
                 level <= 1
@@ -330,11 +339,16 @@ namespace AngouriMath
         /// (1 + x) * (1 + y)
         /// </code>
         /// </example>
-        public Entity Factorize(int level = 2) => level <= 1
-            // InnerSimplified, so that the factors come back finished: the rules leave
-            // x ^ 1 where they mean x, and sqrt(4) where they mean 2.
-            ? this.Replace(Patterns.PerfectSquareRules).Replace(Patterns.FactorizeRules).InnerSimplified
-            : this.Replace(Patterns.PerfectSquareRules).Replace(Patterns.FactorizeRules).InnerSimplified.Factorize(level - 1);
+        /// <remarks>
+        /// One pass is the perfect-square rules, then the factorisation rules, then
+        /// <see cref="InnerSimplified"/> -- so that the factors come back finished, since
+        /// the rules leave <c>x ^ 1</c> where they mean <c>x</c> and <c>sqrt(4)</c> where
+        /// they mean <c>2</c> -- and <paramref name="level"/> is how many times that runs.
+        /// Built out of <see cref="RewriteRules"/> by
+        /// <see cref="Transformation.FactorizationAtLevel(int)"/>.
+        /// </remarks>
+        public Entity Factorize(int level = 2)
+            => Transformation.FactorizationAtLevel(level).ApplyOrKeep(this);
 
         /// <summary>
         /// Simplifies an equation ( e.g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x )
@@ -386,7 +400,8 @@ namespace AngouriMath
         /// cos((x * y) ^ 2 + x * y) * (2 * x * y ^ 2 + y)
         /// </code>
         /// </example>
-        public Entity Simplify(int level = 2) => Simplificator.Simplify(this, level);
+        public Entity Simplify(int level = 2)
+            => Transformation.SimplificationAtLevel(level).ApplyOrKeep(this);
 
         /// <summary>Finds all alternative forms of an expression sorted by their complexity</summary>
         /// <example>
