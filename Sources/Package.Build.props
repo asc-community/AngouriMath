@@ -12,7 +12,22 @@
   -->
   
   <PropertyGroup>
-    <Version>1.4.0-preview.4</Version>
+    <!--
+    The version under development. The NuGet workflow overrides PackageVersion from the
+    release tag, so what ships is named by the tag; this is what a local build and the
+    assembly metadata carry.
+    -->
+    <Version>2.0.0-preview.1</Version>
+
+    <!--
+    Pinned to the major for the whole of 2.x, and deliberately not tracking Version.
+    The assembly is strong-named (see AngouriMath.csproj), and for a signed assembly
+    every AssemblyVersion change breaks binding on consumers that do not add a redirect.
+    Holding it at 2.0.0.0 makes every 2.x release a drop-in replacement. FileVersion
+    carries the release for anyone reading the file properties.
+    -->
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.0</FileVersion>
 
     <Authors>WhiteBlackGoose and contributors</Authors>
     <Company>Angouri</Company>
