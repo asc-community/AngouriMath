@@ -242,6 +242,11 @@ input; `Derivation` means it is a different object. A derivative and an antideri
 verified — so promoting one means changing that test, and saying in the same change why the rewrite
 needs no assumptions. Loosening a tier needs nothing.
 
+**A recording is a scope, not a setting.** `RewriteRecording.Start()` collects the rewrites that
+fire while it is open, and costs one thread-static read per rule set — not per node — when nobody
+opened one. Anything else added to this layer has to keep that shape: the common path may not pay
+for machinery it is not using, and a switch a caller can leave on is a way of making it pay.
+
 **Say "no answer" with `null`, here too.** `ApplyCore` returning `null` is the layer's way of saying
 "I could not settle this", and it is the one place where the new layer is *more* honest than the 1.x
 method it backs: `Transformation.Integration` has no answer where `Entity.Integrate` returns an

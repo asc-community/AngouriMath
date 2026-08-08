@@ -37,6 +37,7 @@ same claim in the shape its callers expect, by handing back an unevaluated `Inte
 | `TransformationResult` | input, output-or-nothing, and which transformation ran. A struct, so routing an ordinary call through this layer allocates nothing |
 | `RewriteRuleSet` | a named, attributed group of rewrites — `Name`, `Description`, `Relation`, `Soundness`, `ApplyOnce` |
 | `RewriteRules` | the registry: every rule set the simplifier applies, explicitly listed, enumerable through `All` in a fixed order |
+| `RewriteRecording` / `RewriteStep` | a scope that collects the rewrites which fired while it was open — off unless asked for, and free when off |
 
 Composition is `Then`, `Repeat(n)` and `UntilStable(max)`. All three take their bound from the
 caller: there is no unbounded rewrite loop anywhere in the layer, and `UntilStable` reports hitting
@@ -67,6 +68,39 @@ built out of the registry. `SimplifyChildren` — which every stage of the simpl
 
 Everything else is a thin adapter over the algorithm that was already there. **Nothing that worked
 was rewritten to make the architecture tidier.**
+
+## Recording what fired
+
+```csharp
+using var recording = RewriteRecording.Start();
+var simplified = ((Entity)"a / (b / c)").Simplify();
+foreach (var step in recording.Steps)
+    Console.WriteLine(step);      // Common: a / (b / c) -> a * c / b
+```
+
+This is [#28](https://github.com/asc-community/AngouriMath/issues/28). Three things about it
+are deliberate and worth keeping:
+
+**Free when off.** With no recording open, applying a rule set costs one thread-static read
+more than it did before — per rule set, not per node — and allocates nothing. That is why it
+is a scope rather than a setting: a setting is something a caller can leave on.
+
+**Per thread**, like `MathS.Settings`, so a parallel caller records its own work and nobody
+else's. Recordings nest, and an inner one hides the outer until it closes.
+
+**A step is a subexpression, not a snapshot.** A rewrite pass walks bottom-up and rewrites
+nodes as it goes, so there is no moment at which a partly-rewritten whole expression exists
+to photograph. #28's example shows whole-expression snapshots; reporting those would mean
+constructing something the engine never held.
+
+And the honest limit, which the type's own documentation states: **these are the rewrites,
+not everything `Simplify` did.** Simplification also expands, factorises, divides
+polynomials, minimises boolean expressions, and then *chooses* among candidates by a
+complexity metric. The steps are every rewrite that fired across every candidate generated —
+including candidates that lost. Reading them as a route from the input to the returned answer
+would be reading in something that is not there. Making that route available is the
+derivation work in #746's v5.0 tier, and it needs the candidate search to be attributable
+first, not just the rewrites.
 
 ## What is deliberately not here
 
