@@ -18,18 +18,21 @@ namespace AngouriMath.Core.Transformations
     /// <remarks>
     /// <para>
     /// The set, rather than the single <c>pattern -&gt; replacement</c> line, is the unit
-    /// here on purpose. Every rewrite in this library is a case of one <c>switch</c>
-    /// matched against a node, and the C# compiler turns that switch into a type test and a
-    /// jump. Splitting each case into its own object would replace one dispatch per node
-    /// with one delegate call per rule per node on the hottest path in the library, and buy
-    /// nothing that a caller can use today. What a caller can use today is the set:
-    /// <see cref="RewriteRules.All"/> is enumerable, each entry is applicable on its own,
-    /// and the tests iterate it.
+    /// here because that is what has been built so far — <b>not</b> because the finer grain
+    /// is too expensive. It was asserted here that it would be, on the grounds that each
+    /// rule would cost a delegate call per node; measuring it found the opposite, and the
+    /// measurement is in
+    /// <a href="https://github.com/asc-community/AngouriMath/issues/825">#825</a>: rules
+    /// bucketed by the node type they match run as fast as the hand-written <c>switch</c>
+    /// at realistic set sizes and faster at small ones, because a large <c>switch</c> over
+    /// distinct node types is compiled into that same dispatch anyway.
     /// </para>
     /// <para>
-    /// The finer grain is the next step rather than the abandoned one — see
-    /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> on rules
-    /// as data — and nothing here forecloses it: a set whose rewrites become individually
+    /// What actually stands in the way is transcription: splitting forty <c>switch</c> arms
+    /// by hand is forty chances to change a pattern silently. That points at a source
+    /// generator over the existing bodies rather than at leaving the rewrites unnamed. See
+    /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> item 50,
+    /// and note that nothing here forecloses it: a set whose rewrites become individually
     /// addressable keeps the same name and the same entry in the registry.
     /// </para>
     /// </remarks>
