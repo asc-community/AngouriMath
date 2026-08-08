@@ -77,6 +77,9 @@ namespace DotnetBenchmark
                     {
                         "RAMUsageTest" => GetReportByBenchmark(typeof(RAMUsageTest), "Gen 0", "Gen 1", "Gen 2", "Allocated"),
                         "CommonFunctionsInterVersion" => GetReportByBenchmark(typeof(CommonFunctionsInterVersion), "Mean", "Error", "StdDev"),
+                        // Allocated as well as Mean: the regressions this one exists to catch
+                        // show up in allocation and are invisible in the timings.
+                        "TransformationLayer" => GetReportByBenchmark(typeof(TransformationLayer), "Mean", "Error", "StdDev", "Allocated"),
                         "CompiledFuncTest" => GetReportByBenchmark(typeof(CompiledFuncTest), "Mean", "Error", "StdDev"),
                         "NumbersBenchmark" => GetReportByBenchmark(typeof(NumbersBenchmark), "Mean", "Error", "StdDev"),
                         _ => throw new($"Unexpected benchmark {arg}")
