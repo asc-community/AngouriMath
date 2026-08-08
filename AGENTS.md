@@ -334,10 +334,15 @@ replaces had gone stale, with eight of its ten issues closed, so it was pointing
   open-ended, and both measurable one problem at a time.
 - **Solving** — [#475](https://github.com/asc-community/AngouriMath/issues/475), [#381](https://github.com/asc-community/AngouriMath/issues/381). Diophantine equations and characteristic
   polynomials both want the polynomial layer.
-- **Decisions only a major version may take** — [#318](https://github.com/asc-community/AngouriMath/issues/318) `InvertNode` returning a `Set`
-  rather than an `IEnumerable<Entity>`, [#204](https://github.com/asc-community/AngouriMath/issues/204) roots versus fractional powers,
+- **A wrong answer** — [#812](https://github.com/asc-community/AngouriMath/issues/812). `abs(x) = -1` returns a non-empty set whose members do not
+  satisfy it. Highest priority here by the rule at the top of this file: not answering is
+  legitimate, answering wrongly is not.
+- **Decisions only a major version may take** — [#204](https://github.com/asc-community/AngouriMath/issues/204) roots versus fractional powers,
   [#326](https://github.com/asc-community/AngouriMath/issues/326) the syntax for piecewise, [#721](https://github.com/asc-community/AngouriMath/issues/721) unifying `Codomain` with
-  `provided ... in RR`. Cheap now; after 2.0 ships each waits for 3.0.
+  `provided ... in RR`. Cheap now; after 2.0 ships each waits for 3.0. Note that
+  [#318](https://github.com/asc-community/AngouriMath/issues/318) is *not* one of these despite looking like it: `Invert` and `InvertNode` are
+  `internal` and `private protected`, so changing what they return breaks nobody, and the
+  parametric sets it asks for already work — what is left of it is the guard in #812.
 - **Structural** — [#286](https://github.com/asc-community/AngouriMath/issues/286) and [#495](https://github.com/asc-community/AngouriMath/issues/495), functions and lambdas as entities;
   [#248](https://github.com/asc-community/AngouriMath/issues/248), n-ary operators. All three add node types, and whether *that* is a breaking
   change is itself undecided — see #248.
