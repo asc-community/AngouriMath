@@ -216,8 +216,8 @@ namespace AngouriMath
         {
             static Entity Expand_(Entity e, int level) =>
                 level <= 1
-                ? e.Replace(Patterns.ExpandRules)
-                : Expand_(e.Replace(Patterns.ExpandRules), level - 1);
+                ? e.Rewrite(RewriteRules.Expansion)
+                : Expand_(e.Rewrite(RewriteRules.Expansion), level - 1);
             var expChildren = new List<Entity>();
             foreach (var linChild in Sumf.LinearChildren(this))
                 if (TreeAnalyzer.SmartExpandOver(linChild, entity => true) is { } exp)
@@ -265,7 +265,7 @@ namespace AngouriMath
                 {
                     // PowerRules folds (x^2)^2 into x^4, without which the two would be
                     // counted as different monomials.
-                    var reduced = factor.Replace(Functions.Patterns.PowerRules).InnerSimplified;
+                    var reduced = factor.Rewrite(RewriteRules.Power).InnerSimplified;
                     if (reduced is Number)
                     {
                         coefficient = (coefficient * reduced).InnerSimplified;

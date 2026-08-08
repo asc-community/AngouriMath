@@ -39,6 +39,16 @@ namespace AngouriMath.Tests.Core.Transformations
             "(x ^ 3 + 3 * x ^ 2 * y + 3 * x * y ^ 2 + y ^ 3) / (x + y)",
             "2 * x + 3 * x",
             "sqrt(12) + sqrt(27)",
+            // Not arithmetic, so that the boolean, comparison, set, factorial and totient
+            // rule sets are exercised rather than passing over inputs they cannot match.
+            "a and b or a and not b",
+            "x > 3 and x < 5",
+            "{ 1, 2 } unite { 2, 3 }",
+            // Not (x + 1)! / x!, which crashes Expand:
+            // https://github.com/asc-community/AngouriMath/issues/817
+            "x! * (x + 1)",
+            "phi(12)",
+            "tan(x) * cot(x)",
         }.Select(x => new object[] { x }).ToArray();
 
         private static Entity Parse(string raw) => MathS.FromString(raw);
@@ -355,6 +365,17 @@ namespace AngouriMath.Tests.Core.Transformations
                 Assert.Equal(TransformationRelation.Equivalence, transformation.Relation);
                 if (transformation.Apply(expr).Output is not { } output)
                     continue;
+
+                // Subtracting a set from a set is elementwise, so the difference of two
+                // equal sets is the set of pairwise differences and not zero. The property
+                // is about expressions that denote a value; for the rest, the strongest
+                // honest statement is that the two simplify to the same thing.
+                if (expr is Entity.Set || output is Entity.Set)
+                {
+                    Assert.Equal(expr.Simplify(), output.Simplify());
+                    continue;
+                }
+
                 // The property, not the printed form: subtract the two sides and simplify.
                 // A domain condition may survive that -- the two sides agree only where both
                 // are defined, which is exactly what SoundUnderAssumptions says -- so the
@@ -362,11 +383,88 @@ namespace AngouriMath.Tests.Core.Transformations
                 var difference = (expr - output).Simplify();
                 if (difference is Entity.Providedf(var value, _))
                     difference = value;
-                Assert.True(
-                    difference == 0,
-                    $"{transformation.Name} changed the value of {raw}: difference simplified to {difference}");
+                if (difference == 0)
+                    continue;
+
+                // Simplifying the difference to zero proves the two agree; failing to is not
+                // proof that they differ, only that this simplifier could not settle it.
+                // x! * (x + 1) expands to (x + 1)!, which is right, and the difference of the
+                // two does not reduce. So the fallback looks for an actual counterexample
+                // instead of reporting the unproven case as a defect.
+                Assert.False(
+                    DisagreesAtSomePoint(expr, output),
+                    $"{transformation.Name} changed the value of {raw}: it gives {output.Stringize()}, "
+                    + "and the two take different values at a point where both are defined");
             }
         }
+
+        /// <summary>
+        /// Whether the two take different values somewhere both are defined — a
+        /// counterexample to their being the same expression written two ways.
+        /// </summary>
+        /// <remarks>
+        /// Points where either side fails to evaluate, or comes out infinite or NaN, say
+        /// nothing: a rewrite that is valid away from a pole is exactly what
+        /// <see cref="Soundness.SoundUnderAssumptions"/> means, so those are passed over
+        /// rather than counted against it. Small positive integers, since factorials and
+        /// logarithms are only defined on part of the line and 0 and 1 are degenerate for
+        /// both.
+        /// </remarks>
+        private static bool DisagreesAtSomePoint(Entity one, Entity another)
+        {
+            var variables = one.Vars.Concat(another.Vars).Distinct().ToList();
+            foreach (var point in new[] { 2, 3, 5 })
+            {
+                Entity left = one, right = another;
+                foreach (var variable in variables)
+                {
+                    left = left.Substitute(variable, point);
+                    right = right.Substitute(variable, point);
+                }
+
+                Entity.Number difference, scale;
+                try
+                {
+                    difference = (left - right).EvalNumerical();
+                    scale = left.EvalNumerical();
+                }
+                catch (AngouriMath.Core.Exceptions.AngouriMathBaseException)
+                {
+                    continue;
+                }
+
+                if (!difference.IsFinite || !scale.IsFinite)
+                    continue;
+
+                // Relative: the values here run from single digits to factorials, and an
+                // absolute threshold would either pass everything large or fail everything
+                // evaluated to a hundred digits and rounded.
+                if (Magnitude(difference) > 1e-9 * (1 + Magnitude(scale)))
+                    return true;
+            }
+            return false;
+
+            static double Magnitude(Entity.Number number)
+            {
+                var complex = (Entity.Number.Complex)number;
+                var real = complex.RealPart.EDecimal.ToDouble();
+                var imaginary = complex.ImaginaryPart.EDecimal.ToDouble();
+                return Math.Sqrt(real * real + imaginary * imaginary);
+            }
+        }
+
+        [Theory]
+        // Genuinely different, and the check must say so -- otherwise the property test
+        // above is a safety net that catches nothing.
+        [InlineData("x + 1", "x + 2", true)]
+        [InlineData("x ^ 2", "x ^ 3", true)]
+        [InlineData("sqrt(x)", "-sqrt(x)", true)]
+        // The same value written two ways, including the case Simplify cannot settle.
+        [InlineData("x * 2", "2 * x", false)]
+        [InlineData("x! * (x + 1)", "(x + 1)!", false)]
+        [InlineData("sqrt(12) + sqrt(27)", "5 * sqrt(3)", false)]
+        public void TheCounterexampleSearchFindsCounterexamplesAndOnlyThose(string one, string another, bool expected)
+            => Assert.Equal(expected, DisagreesAtSomePoint(Parse(one), Parse(another)));
 
         [Fact]
         public void SubstitutionIsTheOneThingHereThatNeedsNoAssumptions()

@@ -36,7 +36,7 @@ same claim in the shape its callers expect, by handing back an unevaluated `Inte
 | `Transformation` | the operation: `Name`, `Relation`, `Soundness`, `Apply`, and the static catalogue |
 | `TransformationResult` | input, output-or-nothing, and which transformation ran. A struct, so routing an ordinary call through this layer allocates nothing |
 | `RewriteRuleSet` | a named, attributed group of rewrites — `Name`, `Description`, `Relation`, `Soundness`, `ApplyOnce` |
-| `RewriteRules` | the registry: every shipped set, explicitly listed, enumerable through `All` in a fixed order |
+| `RewriteRules` | the registry: every rule set the simplifier applies, explicitly listed, enumerable through `All` in a fixed order |
 
 Composition is `Then`, `Repeat(n)` and `UntilStable(max)`. All three take their bound from the
 caller: there is no unbounded rewrite loop anywhere in the layer, and `UntilStable` reports hitting
@@ -83,8 +83,12 @@ API does not invent symmetry that the mathematics does not have.
 **`Heuristic` currently has no instance in the catalogue.** That is a statement about what is
 registered so far, not a claim that nothing in the library guesses.
 
-**Most of the pattern table is still only reachable from `Simplificator`.** `RewriteRules` registers
-the ten sets the catalogue is built from. The rest are unchanged and unregistered.
+**Some rewrites still bypass the registry.** Every set the *simplifier* applies is registered, and
+`Simplificator` reaches all of them through `RewriteRules` — that is what lets an account of what
+`Simplify` did be a complete one, since a set reachable only by its method has no name to attribute a
+step to. The equation and set solvers, the integrator and `TreeAnalyzer` still call `Patterns`
+directly. `Patterns.TrigonometricToExponentialRules(from, to)` cannot become a registry entry as it
+stands: it is parameterised by two variables, so it is a family of sets rather than one.
 
 ## Adding the next one
 
@@ -109,7 +113,13 @@ public static RewriteRuleSet Power { get; } = new(
 ```
 
 Add it to `RewriteRules.All` in the same change — the list is explicit so that its order is a
-decision rather than an accident.
+decision rather than an accident. Where a set is parameterised by something with a small fixed range,
+register one entry per value and add an `internal` chooser beside them (`CanonicalOrderAt`,
+`CommonDenominatorAt` are the two): the alternative is an entry that cannot be enumerated, which
+defeats the point of the list.
+
+Inside the library, apply a set with `expression.Rewrite(RewriteRules.Power)` rather than
+`RewriteRules.Power.ApplyOnce(expression)` — a sequence of rule sets otherwise reads inside out.
 
 Two things to get right:
 

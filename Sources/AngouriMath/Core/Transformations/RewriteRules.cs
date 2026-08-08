@@ -21,27 +21,58 @@ namespace AngouriMath.Core.Transformations
     /// which type happened to be loaded first.
     /// </para>
     /// <para>
-    /// This is a slice, not the whole pattern table. The sets below are the ones the
-    /// transformations in <see cref="Transformation"/> are built from; the rest of
-    /// <c>Functions/Simplification/Patterns</c> is still reached only from
-    /// <c>Simplificator</c>. Adding one here is five lines and gets it enumeration, a
-    /// soundness label and the tests over <see cref="All"/> for free.
+    /// Every rule set the simplifier applies is registered here, and the simplifier reaches
+    /// them through this registry rather than through <c>Patterns</c> directly. That is what
+    /// lets an account of what the simplifier did to an expression be a complete one: a set
+    /// reachable only by its method has no name to report and nothing to attribute a step to,
+    /// so a derivation built while some sets were still unregistered would quietly omit
+    /// whatever they had done.
+    /// </para>
+    /// <para>
+    /// Every entry is declared <see cref="Soundness.SoundUnderAssumptions"/>. That is a claim
+    /// about what has been argued, not about what is true — nothing here checks a tier, so
+    /// the registry starts conservative and promoting an entry means making the case for it.
     /// </para>
     /// </remarks>
     public static class RewriteRules
     {
+        #region Arrangement
+
         /// <summary>
         /// Puts the operands of commutative chains into a canonical order and groups equal
         /// ones together, so that <c>x + y</c> and <c>y + x</c> stop being different trees.
+        /// Looks at variables and functions only, ignoring constants and operators.
         /// </summary>
         public static RewriteRuleSet CanonicalOrder { get; } = new(
             nameof(CanonicalOrder),
-            "Sorts and groups the operands of sums, products, conjunctions, disjunctions and set operations.",
+            "Sorts and groups the operands of sums, products, conjunctions, disjunctions and set operations, by variables and functions alone.",
             TransformationRelation.Equivalence,
             // Regrouping reads a quotient as a product with a negative power, which is the
             // same value wherever the divisor is not zero.
             Soundness.SoundUnderAssumptions,
             Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL));
+
+        /// <summary>
+        /// <see cref="CanonicalOrder"/>, counting constants as well, so that terms differing
+        /// only by a numeric factor are no longer grouped together.
+        /// </summary>
+        public static RewriteRuleSet CanonicalOrderCountingConstants { get; } = new(
+            nameof(CanonicalOrderCountingConstants),
+            "Sorts and groups commutative operands, distinguishing terms by their constants too.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.SortRules(TreeAnalyzer.SortLevel.MIDDLE_LEVEL));
+
+        /// <summary>
+        /// <see cref="CanonicalOrder"/> over the whole subtree, so that only structurally
+        /// identical operands are grouped.
+        /// </summary>
+        public static RewriteRuleSet CanonicalOrderExact { get; } = new(
+            nameof(CanonicalOrderExact),
+            "Sorts and groups commutative operands by the whole subtree.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.SortRules(TreeAnalyzer.SortLevel.LOW_LEVEL));
 
         /// <summary>
         /// Turns a negative power into a quotient: <c>a * b ^ (-1)</c> becomes <c>a / b</c>.
@@ -75,6 +106,30 @@ namespace AngouriMath.Core.Transformations
             Patterns.CommonRules);
 
         /// <summary>
+        /// Gets a quotient into the shape the division rules expect before they run.
+        /// </summary>
+        public static RewriteRuleSet DivisionPreparing { get; } = new(
+            nameof(DivisionPreparing),
+            "Lifts numeric factors out of a quotient so that the division rules can see it.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.DivisionPreparingRules);
+
+        /// <summary>
+        /// Cosmetic arrangement of signs, so that adding a negative reads as a difference.
+        /// </summary>
+        public static RewriteRuleSet NumericNeat { get; } = new(
+            nameof(NumericNeat),
+            "Arranges signs so that adding a negative is written as subtracting a positive.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.NumericNeatRules);
+
+        #endregion
+
+        #region Powers, products and sums
+
+        /// <summary>
         /// Rules about powers, roots and logarithms.
         /// </summary>
         public static RewriteRuleSet Power { get; } = new(
@@ -85,18 +140,6 @@ namespace AngouriMath.Core.Transformations
             // guard is what the tier is stating.
             Soundness.SoundUnderAssumptions,
             Patterns.PowerRules);
-
-        /// <summary>
-        /// The trigonometric identities.
-        /// </summary>
-        public static RewriteRuleSet Trigonometric { get; } = new(
-            nameof(Trigonometric),
-            "Applies trigonometric identities to sines, cosines and their relatives.",
-            TransformationRelation.Equivalence,
-            // tan and cot bring poles with them, so an identity that introduces one holds
-            // away from those points rather than everywhere.
-            Soundness.SoundUnderAssumptions,
-            Patterns.TrigonometricRules);
 
         /// <summary>
         /// Multiplies products over sums out.
@@ -129,6 +172,10 @@ namespace AngouriMath.Core.Transformations
             Soundness.SoundUnderAssumptions,
             Patterns.PerfectSquareRules);
 
+        #endregion
+
+        #region Quotients
+
         /// <summary>
         /// Clears a surd out of a two-term denominator.
         /// </summary>
@@ -140,6 +187,193 @@ namespace AngouriMath.Core.Transformations
             Patterns.RationaliseDenominator);
 
         /// <summary>
+        /// Brings a quotient of quotients down to a single one.
+        /// </summary>
+        public static RewriteRuleSet CollapseMultipleFractions { get; } = new(
+            nameof(CollapseMultipleFractions),
+            "Collapses nested quotients into a single numerator over a single denominator.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.CollapseMultipleFractions);
+
+        /// <summary>
+        /// Puts a sum of quotients over one denominator, grouping the terms by variables and
+        /// functions alone.
+        /// </summary>
+        public static RewriteRuleSet CommonDenominator { get; } = new(
+            nameof(CommonDenominator),
+            "Adds quotients by putting them over a common denominator.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.HIGH_LEVEL));
+
+        /// <summary>
+        /// <see cref="CommonDenominator"/>, counting constants when it groups terms.
+        /// </summary>
+        public static RewriteRuleSet CommonDenominatorCountingConstants { get; } = new(
+            nameof(CommonDenominatorCountingConstants),
+            "Adds quotients over a common denominator, distinguishing terms by their constants too.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.MIDDLE_LEVEL));
+
+        /// <summary>
+        /// <see cref="CommonDenominator"/>, grouping terms by the whole subtree.
+        /// </summary>
+        public static RewriteRuleSet CommonDenominatorExact { get; } = new(
+            nameof(CommonDenominatorExact),
+            "Adds quotients over a common denominator, grouping terms by the whole subtree.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.LOW_LEVEL));
+
+        /// <summary>
+        /// Divides one polynomial by another, leaving a quotient plus a remainder.
+        /// </summary>
+        public static RewriteRuleSet PolynomialLongDivision { get; } = new(
+            nameof(PolynomialLongDivision),
+            "Divides a polynomial by a polynomial, giving the quotient plus the remainder.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.PolynomialLongDivision);
+
+        /// <summary>
+        /// Puts a quotient of polynomials into lowest terms.
+        /// </summary>
+        public static RewriteRuleSet PolynomialGcdCancellation { get; } = new(
+            nameof(PolynomialGcdCancellation),
+            "Cancels the greatest common divisor of a polynomial quotient's numerator and denominator.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.PolynomialGcdCancellation);
+
+        #endregion
+
+        #region Trigonometry
+
+        /// <summary>
+        /// The trigonometric identities.
+        /// </summary>
+        public static RewriteRuleSet Trigonometric { get; } = new(
+            nameof(Trigonometric),
+            "Applies trigonometric identities to sines, cosines and their relatives.",
+            TransformationRelation.Equivalence,
+            // tan and cot bring poles with them, so an identity that introduces one holds
+            // away from those points rather than everywhere.
+            Soundness.SoundUnderAssumptions,
+            Patterns.TrigonometricRules);
+
+        /// <summary>
+        /// Rewrites the derived trigonometric functions in terms of sine and cosine.
+        /// </summary>
+        public static RewriteRuleSet NormalTrigonometricForm { get; } = new(
+            nameof(NormalTrigonometricForm),
+            "Writes tangents, cotangents, secants and cosecants as sines and cosines.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.NormalTrigonometricForm);
+
+        /// <summary>
+        /// Gathers sines and cosines back into the derived functions where that is shorter.
+        /// </summary>
+        public static RewriteRuleSet CollapseTrigonometricFunctions { get; } = new(
+            nameof(CollapseTrigonometricFunctions),
+            "Recognises a quotient or reciprocal of sines and cosines as a tangent, cotangent, secant or cosecant.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.CollapseTrigonometricFunctions);
+
+        /// <summary>
+        /// Opens a trigonometric function of a sum into functions of its terms.
+        /// </summary>
+        public static RewriteRuleSet ExpandTrigonometric { get; } = new(
+            nameof(ExpandTrigonometric),
+            "Expands a sine or cosine of a sum into products of sines and cosines of its terms.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.ExpandTrigonometricRules);
+
+        /// <summary>
+        /// Opens a trigonometric function of a multiplied angle.
+        /// </summary>
+        /// <remarks>
+        /// Written out, <c>sin(4x)</c> is far longer than it started, which is why the
+        /// simplifier offers the result as a candidate rather than taking it.
+        /// </remarks>
+        public static RewriteRuleSet ExpandMultipleAngle { get; } = new(
+            nameof(ExpandMultipleAngle),
+            "Expands a sine or cosine of an integer multiple of an angle.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.ExpandMultipleAngleRules);
+
+        #endregion
+
+        #region Statements, sets and number theory
+
+        /// <summary>
+        /// The rules of boolean algebra.
+        /// </summary>
+        public static RewriteRuleSet Boolean { get; } = new(
+            nameof(Boolean),
+            "Applies the identities of boolean algebra to conjunctions, disjunctions and negations.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.BooleanRules);
+
+        /// <summary>
+        /// Rules about equalities and inequalities.
+        /// </summary>
+        public static RewriteRuleSet InequalityEquality { get; } = new(
+            nameof(InequalityEquality),
+            "Rearranges equalities and inequalities into their usual form.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.InequalityEqualityRules);
+
+        /// <summary>
+        /// Rules about unions, intersections and set differences.
+        /// </summary>
+        public static RewriteRuleSet SetOperator { get; } = new(
+            nameof(SetOperator),
+            "Applies the identities of set algebra to unions, intersections and set differences.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.SetOperatorRules);
+
+        /// <summary>
+        /// Cancels a quotient of factorials down to the terms that survive.
+        /// </summary>
+        public static RewriteRuleSet ExpandFactorialDivisions { get; } = new(
+            nameof(ExpandFactorialDivisions),
+            "Cancels a quotient of factorials into the product of the terms that do not cancel.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.ExpandFactorialDivisions);
+
+        /// <summary>
+        /// Recognises a product of consecutive terms as a factorial.
+        /// </summary>
+        public static RewriteRuleSet FactorizeFactorialMultiplications { get; } = new(
+            nameof(FactorizeFactorialMultiplications),
+            "Gathers a product of a factorial and its neighbouring terms back into one factorial.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.FactorizeFactorialMultiplications);
+
+        /// <summary>
+        /// Rules about Euler's totient function.
+        /// </summary>
+        public static RewriteRuleSet PhiFunction { get; } = new(
+            nameof(PhiFunction),
+            "Applies the multiplicative identities of Euler's totient function.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            Patterns.PhiFunctionRules);
+
+        #endregion
+
+        /// <summary>
         /// Every rule set registered above, in a fixed order. Enumerable so that a property
         /// that should hold of all of them can be tested over all of them rather than over
         /// whichever ones somebody remembered.
@@ -147,15 +381,58 @@ namespace AngouriMath.Core.Transformations
         public static IReadOnlyList<RewriteRuleSet> All { get; } = new[]
         {
             CanonicalOrder,
+            CanonicalOrderCountingConstants,
+            CanonicalOrderExact,
             InvertNegativePowers,
             InvertNegativeMultipliers,
             Common,
+            DivisionPreparing,
+            NumericNeat,
             Power,
-            Trigonometric,
             Expansion,
             Factorization,
             PerfectSquare,
             RationaliseDenominator,
+            CollapseMultipleFractions,
+            CommonDenominator,
+            CommonDenominatorCountingConstants,
+            CommonDenominatorExact,
+            PolynomialLongDivision,
+            PolynomialGcdCancellation,
+            Trigonometric,
+            NormalTrigonometricForm,
+            CollapseTrigonometricFunctions,
+            ExpandTrigonometric,
+            ExpandMultipleAngle,
+            Boolean,
+            InequalityEquality,
+            SetOperator,
+            ExpandFactorialDivisions,
+            FactorizeFactorialMultiplications,
+            PhiFunction,
         };
+
+        /// <summary>
+        /// The <see cref="CanonicalOrder"/> family, chosen by how finely it distinguishes
+        /// operands. The simplifier picks the level from which pass it is on.
+        /// </summary>
+        internal static RewriteRuleSet CanonicalOrderAt(TreeAnalyzer.SortLevel level)
+            => level switch
+            {
+                TreeAnalyzer.SortLevel.MIDDLE_LEVEL => CanonicalOrderCountingConstants,
+                TreeAnalyzer.SortLevel.LOW_LEVEL => CanonicalOrderExact,
+                _ => CanonicalOrder
+            };
+
+        /// <summary>
+        /// The <see cref="CommonDenominator"/> family, chosen the same way.
+        /// </summary>
+        internal static RewriteRuleSet CommonDenominatorAt(TreeAnalyzer.SortLevel level)
+            => level switch
+            {
+                TreeAnalyzer.SortLevel.MIDDLE_LEVEL => CommonDenominatorCountingConstants,
+                TreeAnalyzer.SortLevel.LOW_LEVEL => CommonDenominatorExact,
+                _ => CommonDenominator
+            };
     }
 }
