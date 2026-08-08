@@ -249,6 +249,9 @@ namespace AngouriMath.Tests.Core.Transformations
         public void FactorizeIsItsTransformation(string raw)
             => Assert.Equal(Parse(raw).Factorize(), Transformation.Factorization.Apply(Parse(raw)).Output);
 
+        // All three take a level, so all three are checked at one -- including the levels
+        // outside the range the catalogue keeps built, and the negative ones Simplify passes
+        // itself when it re-simplifies a candidate.
         [Theory]
         [InlineData(0)]
         [InlineData(1)]
@@ -258,6 +261,40 @@ namespace AngouriMath.Tests.Core.Transformations
             => Assert.Equal(
                 Parse("x * y + y + 1 + x").Factorize(level),
                 Transformation.FactorizationAtLevel(level).Apply(Parse("x * y + y + 1 + x")).Output);
+
+        [Theory]
+        [InlineData(-2)]
+        [InlineData(-1)]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
+        [InlineData(6)]
+        public void SimplifyIsItsTransformationAtEveryLevel(int level)
+            => Assert.Equal(
+                Parse("sin(x) / tan(x) + a / (b / c)").Simplify(level),
+                Transformation.SimplificationAtLevel(level).Apply(Parse("sin(x) / tan(x) + a / (b / c)")).Output);
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
+        [InlineData(6)]
+        public void ExpandIsItsTransformationAtEveryLevel(int level)
+            => Assert.Equal(
+                Parse("(x + y) ^ 3 * (a + b)").Expand(level),
+                Transformation.ExpansionAtLevel(level).Apply(Parse("(x + y) ^ 3 * (a + b)")).Output);
+
+        [Theory]
+        [InlineData(6)]
+        [InlineData(-6)]
+        public void ALevelOutsideTheCachedRangeStillWorks(int level)
+        {
+            // The catalogue keeps -4..4 built and constructs anything else on the spot; a
+            // level outside that range must behave the same, not merely not throw.
+            var built = Transformation.FactorizationAtLevel(level);
+            Assert.Equal(Parse("x * y + y + 1 + x").Factorize(level), built.Apply(Parse("x * y + y + 1 + x")).Output);
+        }
 
         [Theory]
         [MemberData(nameof(Corpus))]
