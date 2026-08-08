@@ -259,11 +259,17 @@ namespace AngouriMath
             // abs(f(x)) = value
             // f(x) = value * e ^ (i * n)
             // x = f(x).InvertNode(value * e ^ (i * n), x)
+            //
+            // value * e ^ (i * r) has modulus |value|, not value, so it solves the equation
+            // only where the two agree -- that is, where value is real and not negative.
+            // Without that condition abs(x) = -1 came back as { -e ^ (i * r) provided r in RR },
+            // whose members have modulus 1 and solve nothing.
+            // https://github.com/asc-community/AngouriMath/issues/812
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
             {
                 var @var = Variable.CreateUnique(value + Argument, "r");
                 return Argument.Invert(value * MathS.e.Pow(MathS.i * @var), x)
-                    .Select(c => c.Provided(@var.In(MathS.Sets.R)));
+                    .Select(c => c.Provided(@var.In(MathS.Sets.R) & new GreaterOrEqualf(value, 0)));
             }
         }
 

@@ -132,6 +132,27 @@ issues turned out to be already fixed, and re-measuring them cost minutes where 
 them would have cost days. Run the reporter's expression first. Close it with the measurement if it
 answers, and say which build you measured.
 
+### Extend the harness rather than writing a throwaway
+
+The measurement tools are infrastructure, not scaffolding. When the one you reach for cannot
+express the measurement you need — no operation for the call you want to make, no coverage of the
+shape you are chasing — **add the operation and keep it**. A scratch project answers the question
+once and is deleted; the next person to ask it writes the same thing again.
+
+Learned the wrong way round: closing
+[#629](https://github.com/asc-community/AngouriMath/issues/629) needed a system solve, the probe had
+no operation for one, and a throwaway project got written to answer it. The durable version was ten
+lines in the probe. Same measurement, and only one of the two can be re-run.
+
+Listed inputs and generated inputs fail differently, and both are worth having. A corpus of recorded
+problems tells you about the corpus. A harness that builds its own inputs — sampling negative points,
+checking a simplification against the expression it came from — finds what nobody thought to write
+down: [#744](https://github.com/asc-community/AngouriMath/issues/744),
+[#751](https://github.com/asc-community/AngouriMath/issues/751) and
+[#752](https://github.com/asc-community/AngouriMath/issues/752) were all found that way while every
+listed corpus stayed green. When you add one, sample negative points, make the tolerance relative,
+and treat a `NaN` as a failure only where the original had a value somewhere.
+
 ## Aim high
 
 The ambition is to answer the hard problems: olympiad and competition algebra, calculus and number
@@ -337,25 +358,35 @@ more. Do not follow it; delete or rewrite it if you are in there anyway.
 
 ## Where the work is
 
-Good entry points, roughly by depth:
+Good entry points, roughly by depth. **Checked against the tracker on 2026-08-08** — the list this
+replaces had gone stale, with eight of its ten issues closed, so it was pointing at finished work.
 
-- **Simplification consistency** — [#531](https://github.com/asc-community/AngouriMath/issues/531),
-  [#557](https://github.com/asc-community/AngouriMath/issues/557),
-  [#415](https://github.com/asc-community/AngouriMath/issues/415). Rules that fire in one arrangement
-  and not another.
-- **Limits** — [#596](https://github.com/asc-community/AngouriMath/issues/596),
-  [#536](https://github.com/asc-community/AngouriMath/issues/536). `0^0` and `oo^0` have no rule
-  where `1^oo` has one; piecewise has none at all.
-- **Numerics** — [#602](https://github.com/asc-community/AngouriMath/issues/602). Precision that
-  holds at one scale and not another.
-- **Solving** — [#629](https://github.com/asc-community/AngouriMath/issues/629),
-  [#475](https://github.com/asc-community/AngouriMath/issues/475),
-  [#381](https://github.com/asc-community/AngouriMath/issues/381). Diophantine equations and
-  characteristic polynomials both want the polynomial layer.
+- **Missing functions** — [#809](https://github.com/asc-community/AngouriMath/issues/809). `floor`, `ceil`, `round`, `min`, `max`, `gcd`. Each wants
+  a design decision rather than a grammar line, and `min`/`max` are the cheapest thing here.
+- **More solvers** — [#231](https://github.com/asc-community/AngouriMath/issues/231) for limits, [#233](https://github.com/asc-community/AngouriMath/issues/233) for integrals. Both accepted, both
+  open-ended, and both measurable one problem at a time.
+- **Solving** — [#475](https://github.com/asc-community/AngouriMath/issues/475), [#381](https://github.com/asc-community/AngouriMath/issues/381). Diophantine equations and characteristic
+  polynomials both want the polynomial layer.
+- **A wrong answer** — [#812](https://github.com/asc-community/AngouriMath/issues/812). `abs(x) = -1` returns a non-empty set whose members do not
+  satisfy it. Highest priority here by the rule at the top of this file: not answering is
+  legitimate, answering wrongly is not.
+- **Decisions only a major version may take** — [#204](https://github.com/asc-community/AngouriMath/issues/204) roots versus fractional powers,
+  [#326](https://github.com/asc-community/AngouriMath/issues/326) the syntax for piecewise, [#721](https://github.com/asc-community/AngouriMath/issues/721) unifying `Codomain` with
+  `provided ... in RR`. Cheap now; after 2.0 ships each waits for 3.0. Note that
+  [#318](https://github.com/asc-community/AngouriMath/issues/318) is *not* one of these despite looking like it: `Invert` and `InvertNode` are
+  `internal` and `private protected`, so changing what they return breaks nobody, and the
+  parametric sets it asks for already work — what is left of it is the guard in #812.
+- **Structural** — [#286](https://github.com/asc-community/AngouriMath/issues/286) and [#495](https://github.com/asc-community/AngouriMath/issues/495), functions and lambdas as entities;
+  [#248](https://github.com/asc-community/AngouriMath/issues/248), n-ary operators. All three add node types, and whether *that* is a breaking
+  change is itself undecided — see #248.
 - **The polynomial layer itself** — multivariate GCD, resultants, factorisation. Large, and most of
   the above sits behind it. Its representation is already a monoid algebra in all but name; see
   *One structure under several features* for the shape it wants, and note that
   `GatherMonomialInformation` is on the hot path for solving, long division *and* simplification, so
   nothing there moves without a measured proof it did not regress.
-- **[#497](https://github.com/asc-community/AngouriMath/issues/497), AngouriMath 2.0** — the design
-  paper. If you are proposing something structural, propose it there.
+- **The goals** — [#717](https://github.com/asc-community/AngouriMath/issues/717) parity with sympy, [#718](https://github.com/asc-community/AngouriMath/issues/718) competition and textbook
+  problems, [#746](https://github.com/asc-community/AngouriMath/issues/746) the ten-year one. Long-horizon, and each names its own measurement.
+
+[#497](https://github.com/asc-community/AngouriMath/issues/497), the AngouriMath 2.0 design paper, is **closed**: the decision recorded there on
+2026-08-04 was to evolve the existing design rather than rewrite it in F#. So 2.0 is now a version
+of this codebase, not a successor to it, and structural proposals belong in their own issue.

@@ -15,7 +15,7 @@ read first.
 
 ---
 
-## Unreleased — since 1.4.0
+## 2.0.0 (unreleased) — since 1.4.0
 
 ### At a glance
 
@@ -47,6 +47,45 @@ read first.
 | **silent** | two integrals | answered correctly | unevaluated — a deliberate loss |
 | **silent** | `k/(a x^2 + c)` and `k/sqrt(a x^2 + c)` for symbolic `a` | `NaN` | a piecewise on the sign of the discriminant |
 | loud | `Compile` over a missing variable | `KeyNotFoundException` | `UncompilableNodeException` |
+| loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
+| **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
+
+---
+
+## Target frameworks
+
+`net7.0` is replaced by `net8.0` and `net10.0`. `netstandard2.0` is unchanged, so consumers on
+.NET Framework and the older runtimes are unaffected.
+
+| | was | is |
+|---|---|---|
+| `TargetFrameworks` | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
+
+.NET 7 left support in May 2024, so the old list named one framework nobody should still be
+targeting and no supported modern one. A consumer on net8.0 or net10.0 previously resolved the
+`netstandard2.0` asset and silently lost the generic-math surface with it; they now get a real
+target.
+
+**What breaks.** Anything that pins the framework of its reference:
+
+```xml
+<ProjectReference Include="...\AngouriMath.csproj">
+  <SetTargetFramework>TargetFramework=net7.0</SetTargetFramework>   <!-- no longer resolves -->
+</ProjectReference>
+```
+
+fails with `NETSDK1005: Assets file ... doesn't have a target for 'net7.0'`. Change it to `net10.0`
+or `net8.0`. This is not hypothetical -- every one of the nine measurement harnesses in this
+workspace pinned `net7.0` and had to be repointed.
+
+A consumer that references the NuGet package rather than the project picks its asset by its own
+framework and needs no change, unless it targets `net7.0` itself, in which case it now resolves
+`netstandard2.0` and loses the generic-math types.
+
+**Generic math is unchanged in reach.** `Core/Entity/GenericMath` needs `INumber<T>` and so is
+still compiled only into the net7.0-and-later targets -- now written as a compatibility test
+rather than a literal `!= 'net7.0'`, so adding a framework does not silently drop it. Verified on
+the built assemblies: present in `net8.0` and `net10.0`, absent from `netstandard2.0`.
 
 ---
 
