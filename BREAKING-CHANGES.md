@@ -48,6 +48,7 @@ read first.
 | **silent** | `k/(a x^2 + c)` and `k/sqrt(a x^2 + c)` for symbolic `a` | `NaN` | a piecewise on the sign of the discriminant |
 | loud | `Compile` over a missing variable | `KeyNotFoundException` | `UncompilableNodeException` |
 | loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
+| **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
 
 ---
 
