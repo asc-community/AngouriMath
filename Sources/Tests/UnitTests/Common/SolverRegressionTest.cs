@@ -199,5 +199,49 @@ namespace AngouriMath.Tests.Common
             // The omega constant: the root of x = -ln(x).
             Assert.Equal(0.5671432904097838, root.EvalNumerical().RealPart.EDecimal.ToDouble(), 9);
         }
+
+        // abs(x) = a was inverted to the circle a * e ^ (i * r), which has modulus |a| and
+        // so only solves the equation where a is real and not negative. The condition was
+        // missing, so a negative right-hand side came back with a set of non-solutions
+        // rather than with nothing. https://github.com/asc-community/AngouriMath/issues/812
+        [Theory]
+        [InlineData("abs(x) = -1")]
+        [InlineData("abs(x) = -3/2")]
+        [InlineData("abs(x) + 1 = 0")]
+        public void Issue812_AnAbsoluteValueCannotEqualANegative(string equation)
+        {
+            var solutions = (Entity.Set.FiniteSet)equation.ToEntity().Solve("x");
+            Assert.Empty(solutions);
+        }
+
+        // The guard must not cost the answers that were right. Each solution is checked by
+        // substituting it back, with the free parameter of the circle given a value, rather
+        // than by comparing the printed form.
+        [Theory]
+        [InlineData("3", 3.0)]
+        [InlineData("1/2", 0.5)]
+        [InlineData("0", 0.0)]
+        public void Issue812_ANonNegativeRightHandSideStillSolves(string rhs, double modulus)
+        {
+            var solutions = (Entity.Set.FiniteSet)$"abs(x) = {rhs}".ToEntity().Solve("x");
+            var solution = Assert.Single(solutions);
+            var parameter = solution.Vars.Single(v => v.Name != "x");
+            foreach (var point in new[] { 0.0, 1.0, -2.5 })
+            {
+                var candidate = solution.Substitute(parameter, point);
+                while (candidate is Entity.Providedf(var inner, _)) candidate = inner;
+                Assert.Equal(modulus,
+                    MathS.Abs(candidate).EvalNumerical().RealPart.EDecimal.ToDouble(), 9);
+            }
+        }
+
+        // A symbolic right-hand side cannot be decided either way, so the condition is
+        // carried rather than resolved -- which is what #318 asked this inversion to do.
+        [Fact]
+        public void Issue812_ASymbolicRightHandSideCarriesTheCondition()
+        {
+            var printed = "abs(x) = a".ToEntity().Solve("x").Stringize();
+            Assert.Contains("a >= 0", printed);
+        }
     }
 }
