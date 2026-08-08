@@ -41,9 +41,62 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("+!", "line 1:1")]
         [InlineData("_", "line 1:0")]
         [InlineData("()", "line 1:1")]
+        // A `provided` in a parenthesised comma list. ANTLR reports the syntax error and
+        // then recovers, and the grammar's action for `provided` runs anyway on a rule
+        // context whose value was never assigned -- so these used to bring the parse down
+        // with a raw NullReferenceException, which a caller catching AngouriMathBaseException
+        // around user input does not catch.
+        // https://github.com/asc-community/AngouriMath/issues/813
+        [InlineData("(1 provided x > 0, 2)", "line 1:17")]
+        [InlineData("(a provided b, c)", "line 1:13")]
+        [InlineData("(1 provided x > 0, 2, 3)", "line 1:17")]
+        [InlineData("(1, 2 provided x > 0)", "line 1:2")]
+        [InlineData("(1 provided x > 0, 2 provided x < 0)", "line 1:17")]
         public void Error(string input, string errorPrefix) =>
             Assert.StartsWith(errorPrefix,
                 Assert.Throws<UnhandledParseException>(() => (Entity)input).Message);
+
+        // The construct itself is untouched: what is refused is the invalid input, not
+        // `provided`. https://github.com/asc-community/AngouriMath/issues/813
+        [Theory]
+        [InlineData("1 provided x > 0")]
+        [InlineData("(1 provided x > 0)")]
+        [InlineData("(1 provided x > 0) + 2")]
+        [InlineData("a provided b provided c")]
+        public void AProvidedStillParses(string input)
+            => Assert.Contains(((Entity)input).Nodes, node => node is Providedf);
+
+        // A comma list of `provided` is the piecewise syntax, and it parses -- so the fix
+        // must not refuse it. The list without a piecewise in front of it is what has no
+        // rule, which is what the crash was hiding.
+        // https://github.com/asc-community/AngouriMath/issues/813
+        [Theory]
+        [InlineData("piecewise(1 provided x > 0, 2)")]
+        [InlineData("piecewise(1 provided x > 0, 2 provided x < 0)")]
+        [InlineData("piecewise(1 provided x > 0, 2 provided x < 0, 3)")]
+        public void APiecewiseOverAProvidedListStillParses(string input)
+            => Assert.IsType<Piecewise>((Entity)input);
+
+        // Every way an input can be refused must arrive as this library's own exception --
+        // Docs/Usage/Exceptions.md says so, and a caller wrapping user input in one catch
+        // is relying on it. Nothing here may come back as a raw framework exception.
+        // https://github.com/asc-community/AngouriMath/issues/813
+        [Theory]
+        [InlineData("(1 provided x > 0, 2)")]
+        [InlineData("(provided, )")]
+        [InlineData("(1 provided, 2)")]
+        [InlineData("(1 provided x > 0,)")]
+        [InlineData("(, 1 provided x)")]
+        [InlineData("{1 provided x > 0, 2")]
+        [InlineData("[1 provided x > 0, 2)")]
+        [InlineData("piecewise(1 provided x > 0")]
+        public void AnInvalidInputIsRefusedByThisLibrarysOwnException(string input)
+        {
+            var thrown = Record.Exception(() => (Entity)input);
+            Assert.NotNull(thrown);
+            Assert.True(thrown is AngouriMathBaseException,
+                $"{input} was refused with {thrown!.GetType().FullName} rather than an AngouriMathBaseException");
+        }
         [Theory]
         [InlineData("limitleft()", "limitleft should have exactly 3 arguments but 0 arguments are provided")]
         [InlineData("derivative(3)", "derivative should have exactly 3 arguments or 2 arguments but 1 argument is provided")]

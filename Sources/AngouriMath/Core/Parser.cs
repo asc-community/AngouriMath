@@ -14,6 +14,7 @@ Any modifications to other source files will be overwritten when the parser is r
 */
 
 using Antlr4.Runtime;
+using System;
 using System.IO;
 using System.Text;
 
@@ -148,11 +149,31 @@ namespace AngouriMath.Core
 
             
             var parser = new AngouriMathParser(tokenStream, null, writer);
-            parser.Parse();
-            
+
+            // ANTLR reports a syntax error to the listener and then *recovers*, carrying on
+            // with a rule context whose value was never assigned. The grammar's actions run
+            // anyway and dereference it, so an invalid input can bring the parse down before
+            // the error already sitting in `writer.errors` is ever read. Reading it is the
+            // honest answer: the input really was invalid, and that is what the caller is
+            // owed -- an exception under AngouriMathBaseException, as Docs/Usage/Exceptions.md
+            // promises, rather than whatever the half-built tree happened to throw.
+            //
+            // Guarded on an error having been reported, so this cannot swallow a genuine bug:
+            // where the parser throws with nothing recorded against the input, the exception
+            // is ours and it keeps propagating.
+            // https://github.com/asc-community/AngouriMath/issues/813
+            try
+            {
+                parser.Parse();
+            }
+            catch (Exception) when (writer.errors.Count > 0)
+            {
+                return new Failure<ReasonWhyParsingFailed>(writer.errors[0]);
+            }
+
             if (writer.errors.Count > 0)
                 return new Failure<ReasonWhyParsingFailed>(writer.errors[0]);
-            
+
             return parser.Result;
         }
 
