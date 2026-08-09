@@ -159,5 +159,74 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("ceil(0/0)")]
         public void AnUndefinedArgumentStaysUndefined(string input)
             => Assert.True(input.ToEntity().Evaled.IsNaN);
+
+        /// <summary>
+        /// A limit over <c>floor</c> or <c>ceil</c> terminates —
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/829">#829</a>.
+        /// </summary>
+        /// <remarks>
+        /// Every one of these used to overflow the stack, because the nodes inherited a default
+        /// <c>ComputeLimitDivideEtImpera</c> that returns an unevaluated limit of the very node
+        /// being asked about, and evaluating that computes it again. That kills the process
+        /// rather than raising anything, so this test cannot assert an exception — it asserts
+        /// that an answer arrives at all, which a regression would turn into a dead test run
+        /// rather than a silent pass. It is the same fault
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/704">#704</a> fixed on
+        /// <c>signum</c>.
+        /// </remarks>
+        [Theory]
+        [InlineData("floor(x)", "0")]
+        [InlineData("floor(x)", "2")]
+        [InlineData("floor(x)", "1/2")]
+        [InlineData("floor(x)", "+oo")]
+        [InlineData("floor(x)", "-oo")]
+        [InlineData("ceil(x)", "0")]
+        [InlineData("ceil(x)", "3/2")]
+        [InlineData("ceil(x)", "+oo")]
+        [InlineData("floor(cos(x))", "0")]
+        public void TakingALimitTerminates(string input, string destination)
+        {
+            var task = System.Threading.Tasks.Task.Run(
+                () => input.ToEntity().Limit("x", destination.ToEntity()));
+            Assert.True(task.Wait(System.TimeSpan.FromSeconds(20)),
+                $"limit({input}, x, {destination}) did not finish");
+            Assert.NotNull(task.Result);
+        }
+
+        /// <summary>
+        /// Between two consecutive integers the function is constant, so the limit is that
+        /// constant — including at the infinities, where the floor of an infinity is itself.
+        /// </summary>
+        [Theory]
+        [InlineData("floor(x)", "1/2", "0")]
+        [InlineData("floor(x)", "3/2", "1")]
+        [InlineData("floor(x)", "-1/2", "-1")]
+        [InlineData("ceil(x)", "3/2", "2")]
+        [InlineData("ceil(x)", "-1/2", "0")]
+        [InlineData("floor(x + 1/2)", "0", "0")]
+        [InlineData("ceil(x + 1/2)", "0", "1")]
+        [InlineData("floor(1/2 + x^2)", "0", "0")]
+        [InlineData("floor(x)", "+oo", "+oo")]
+        [InlineData("floor(x)", "-oo", "-oo")]
+        [InlineData("ceil(x)", "-oo", "-oo")]
+        public void TheLimitAwayFromAJumpIsTheValue(string input, string destination, string expected)
+            => Assert.Equal(expected.ToEntity().Evaled,
+                input.ToEntity().Limit("x", destination.ToEntity()).Evaled);
+
+        /// <summary>
+        /// On a jump the two sides disagree, and which side the argument arrives from is not
+        /// decided by the side <c>x</c> approaches its destination from. So the answer is an
+        /// unevaluated limit — the same thing <c>signum</c> returns at zero. What it must not
+        /// do is pick one of the two values.
+        /// </summary>
+        [Theory]
+        [InlineData("floor(x)", "0")]
+        [InlineData("floor(x)", "2")]
+        [InlineData("floor(x)", "-3")]
+        [InlineData("ceil(x)", "0")]
+        [InlineData("ceil(x)", "2")]
+        public void TheLimitOnAJumpIsDeclined(string input, string destination)
+            => Assert.IsType<Entity.Limitf>(
+                input.ToEntity().Limit("x", destination.ToEntity()));
     }
 }

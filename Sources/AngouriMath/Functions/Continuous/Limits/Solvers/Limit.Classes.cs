@@ -398,6 +398,74 @@ namespace AngouriMath
                 => Argument.ComputeLimitDivideEtImpera(x, dist, side)?.Abs();
         }
 
+        /// <summary>
+        /// The limit of a function that is constant between consecutive integers and jumps at
+        /// each of them, given the limit of its argument.
+        /// </summary>
+        /// <remarks>
+        /// Away from the jumps the function is locally constant, so the limit is simply the
+        /// function of the argument's limit. On a jump there is nothing to say: the value
+        /// differs on the two sides of it, and which side the argument arrives from is not
+        /// decided by the side <paramref name="x"/> approaches its destination from --
+        /// lim(x -> 0+) floor(2 - x^2) reaches 2 from below and lim(x -> 0+) floor(2 + x^2)
+        /// from above, and both are limits from the right.
+        /// <para/>
+        /// Null is returned there rather than an unevaluated limit of the very expression being
+        /// asked about. The latter is what the inherited default does, and it does not merely
+        /// fail to answer: the two-sided path compares its one-sided results by evaluating them,
+        /// evaluating a limit computes it, and computing it arrives back here. The recursion
+        /// ends by overflowing the stack, which kills the process rather than raising anything a
+        /// caller could catch.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/829">#829</a> is that
+        /// fault on these two nodes and
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/704">#704</a> was the
+        /// same one on <see cref="Signumf"/>.
+        /// </remarks>
+        private static Entity? LimitOfAStepFunction(Entity argument, Variable x, Entity dist,
+            ApproachFrom side, System.Func<Entity, Entity> rebuild)
+        {
+            if (argument.ComputeLimitDivideEtImpera(x, dist, side) is not { } limit)
+                return null;
+            if (limit.Evaled is not Number value || value.IsNaN)
+                return null;
+            // An infinity is its own floor and its own ceil, so it is not a jump.
+            if (!value.IsFinite)
+                return rebuild(limit);
+            // Taken componentwise, as the evaluation is, so a jump in either part is a jump --
+            // except that a real value's imaginary part is identically zero rather than
+            // tending to zero, and the floor of a constant zero is a constant zero. Only a
+            // genuinely complex limit has an imaginary part that can arrive at an integer from
+            // one side or the other.
+            //
+            // Like the Absf and Signumf overrides above, this reads the argument as real-valued
+            // along the path. An argument that is complex near the destination and real at it
+            // can still be answered here when it should not be; that is the assumption those
+            // two already make, and narrowing it wants a way to decide realness that this
+            // library does not have yet -- https://github.com/asc-community/AngouriMath/issues/721.
+            if (value is not Complex { RealPart: var real, ImaginaryPart: var imaginary })
+                return null;
+            if (SitsOnAJump(real))
+                return null;
+            if (value is not Real && SitsOnAJump(imaginary))
+                return null;
+            return rebuild(limit);
+
+            static bool SitsOnAJump(Real part) =>
+                part is Integer || part.EDecimal.CompareTo(part.EDecimal.Floor()) == 0;
+        }
+
+        partial record Floorf
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+                => LimitOfAStepFunction(Argument, x, dist, side, static a => new Floorf(a));
+        }
+
+        partial record Ceilf
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+                => LimitOfAStepFunction(Argument, x, dist, side, static a => new Ceilf(a));
+        }
+
         partial record Providedf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
