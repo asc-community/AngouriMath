@@ -16,8 +16,10 @@ namespace AngouriMath.Tests.Core.Multithreading
     [Trait("Area", "Core")]
     public sealed class SettingsAndThreads
     {
-        #region Obsolete settings
-#pragma warning disable CS0618 // The obsolete method should still work!
+        // A setting can be scoped two ways: As(value, action) runs the action under it, and
+        // Set(value) returns a disposable that restores it. Both are supported; each region
+        // covers one of them.
+        #region Callback form -- As(value, action)
         [Fact]
         public void OSettingValue1()
         {
@@ -86,10 +88,9 @@ namespace AngouriMath.Tests.Core.Multithreading
                 }
             );
         }
-#pragma warning restore CS0618 // The obsolote method should still work!
         #endregion
 
-        #region Normal settings
+        #region Disposable form -- Set(value)
         [Fact]
         public void SettingValue1()
         {
