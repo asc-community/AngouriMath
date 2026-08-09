@@ -13,8 +13,12 @@ notation is not in the grammar prints as its function call instead: a lambda pri
 `lambda(x, x + 1)` and not `x -> x + 1`, because `->` is the implication operator and the arrow
 form would silently come back as something else.
 
-LaTeX output is under no such obligation — nothing parses LaTeX — so `Latexise` is free to use
-`\frac`, `\bmod` and the rest.
+**LaTeX output has a round trip too, and it is checked in someone else's repository.**
+[CSharpMath.Evaluation](https://github.com/verybadcat/CSharpMath/blob/master/CSharpMath.Evaluation/Evaluation.cs)
+reads LaTeX back into an `Entity` and says so in its own source — *"CSharpMath must handle all
+LaTeX coming from AngouriMath or a bug is present!"* — so `Latexise` is free to use `\frac`,
+`\bmod` and the rest, but changing what it emits can break a downstream project and no test here
+will say so ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
 
 ## Operators, loosest first
 
@@ -93,17 +97,28 @@ The same goes for `cbrt(x)`, which is `x ^ (1/3)`, and `sqr(x)`, which is `x ^ 2
 **Other** — `sqrt` `cbrt` `sqr` `pow(a, b)` `ln` `log(base, x)` `abs` `signum` `sgn` `sign`
 `phi` `gamma` `factorial` (or postfix `!`).
 
+**Rounding** — `floor` `ceil` (`ceiling` is accepted on the way in and prints as `ceil`) `round`.
+All three round a complex argument componentwise. `floor` and `ceil` go toward the infinities
+rather than toward zero, so `floor(-3/2)` is `-2`; `round` goes to the **nearest even** on a tie,
+so `round(1/2)` is `0` and `round(5/2)` is `2`, which is what Python, SymPy, Mathematica and
+IEEE 754 all mean by rounding — and is *not* `floor(x + 1/2)`.
+
+**Comparison and divisors** — `min(a, b, ...)` `max(a, b, ...)` `gcd(a, b, ...)`. All three take
+any number of arguments and fold. `min` and `max` compare only where the arguments are ordered and
+are otherwise left as written. `gcd` computes over integers and rationals — `gcd(1/2, 1/3)` is
+`1/6` — and leaves the polynomial case alone.
+
 **Calculus** — `derivative(expr, var, order)`, `integral(expr, var)`, `limit(expr, var, dest)`,
 `limitleft(...)`, `limitright(...)`.
 
 **Structural** — `piecewise(a provided p, b provided q)`, `lambda(param, body)`,
 `apply(f, arg, ...)`, `domain(expr, set)`.
 
-**Refused by name** — `floor` `ceil` `ceiling` `round` `trunc` `min` `max` `gcd` `lcm` `erf`
-`conjugate`. AngouriMath has none of these, and each is what some other CAS calls a function, so a
-caller reaches for it. Left alone they would be read as products under the rule below and answer
-silently and wrongly; they raise a parse error naming the function instead. `re` and `im` are the
-same case and are *not* refused, being short enough to be somebody's variable.
+**Refused by name** — `trunc` `lcm` `erf` `conjugate`. AngouriMath has none of these, and each is
+what some other CAS calls a function, so a caller reaches for it. Left alone they would be read as
+products under the rule below and answer silently and wrongly; they raise a parse error naming the
+function instead. `re` and `im` are the same case and are *not* refused, being short enough to be
+somebody's variable.
 
 ## Where it is easy to be caught out
 
