@@ -37,3 +37,26 @@ jobs:
 
     - name: Build Utils
       run: dotnet build Sources/Utils/Utils/Utils.csproj
+
+    # The samples are the code most like what a user writes, and nothing built them
+    # until now. Two of them called integral(f, x, 1), which stopped parsing in 1.4.0,
+    # and stayed broken for seven months because no job compiled or ran them.
+    - name: Build samples
+      run: |
+        dotnet build Sources/Samples/SampleNet5/SampleNet5.csproj
+        dotnet build Sources/Samples/FSharpSample/FSharpSample.fsproj
+        dotnet build Sources/Samples/FSharpPlayground/FSharpPlayground.fsproj
+        dotnet build Sources/Samples/Samples/Playground.csproj
+        dotnet build Sources/Samples/InteractivePlayground/InteractivePlayground.fsproj
+        dotnet build Sources/Samples/AngouriMathPlot/AngouriMathPlot.csproj
+        dotnet build Sources/Samples/GraphicExample/GraphicExample.csproj
+
+    # Building is not enough: both samples that broke compiled cleanly and threw at
+    # runtime. Only the console ones can run here -- AngouriMathPlot and GraphicExample
+    # are windowed, and InteractivePlayground opens a browser through Plotly.
+    - name: Run console samples
+      run: |
+        dotnet run --project Sources/Samples/SampleNet5/SampleNet5.csproj --no-build
+        dotnet run --project Sources/Samples/FSharpSample/FSharpSample.fsproj --no-build
+        dotnet run --project Sources/Samples/FSharpPlayground/FSharpPlayground.fsproj --no-build
+        dotnet run --project Sources/Samples/Samples/Playground.csproj --no-build
