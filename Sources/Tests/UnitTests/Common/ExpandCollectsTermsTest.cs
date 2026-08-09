@@ -91,6 +91,40 @@ namespace AngouriMath.Tests.Common
             Assert.NotEqual(MathS.NaN, input.ToEntity().Simplify());
         }
 
+        // Collecting keys a term on its monomial, so a numeric factor has to reach the
+        // coefficient rather than stay inside the key. A factor that reduces to a product
+        // -- (2 * x)^2 becomes 4 * x^2 -- or that is a power of one -- (2 * x * y)^2 --
+        // was taken whole, keyed on "4 * x ^ 2", and could not meet the plain x^2 terms it
+        // belonged with. https://github.com/asc-community/AngouriMath/issues/855
+        [Theory]
+        [InlineData("(x+1)^2 * (x+1)^2", "1 + 4 * x + 6 * x ^ 2 + 4 * x ^ 3 + x ^ 4")]
+        [InlineData("(x+1)^4", "1 + 4 * x + 6 * x ^ 2 + 4 * x ^ 3 + x ^ 4")]
+        [InlineData("(2x+1)^2 * (2x+1)^2", "1 + 8 * x + 24 * x ^ 2 + 32 * x ^ 3 + 16 * x ^ 4")]
+        [InlineData("(3x)^2 + x^2", "10 * x ^ 2")]
+        public void ANumericFactorReachesTheCoefficient(string input, string expected) =>
+            Assert.Equal(expected.ToEntity(), input.ToEntity().Expand());
+
+        // Compared as printed rather than as trees: the two agree in value and in every
+        // coefficient and differ only in how the products associate.
+        [Fact]
+        public void APowerOfAProductIsSplitOverItsFactors() =>
+            Assert.Equal("y ^ 4 + 4 * x * y ^ 3 + 6 * x ^ 2 * y ^ 2 + 4 * x ^ 3 * y + x ^ 4",
+                "(x+y)^2 * (x+y)^2".ToEntity().Expand().Stringize());
+
+        // A term carrying a function is left whole, because opening it costs a cancellation
+        // the trigonometric rules would otherwise make: (1/2 * sin(2t))^2 * csc(t)^2
+        // collapses to cos(t)^2 while it is intact and does not once the 1/2 is lifted out.
+        [Fact]
+        public void ATermCarryingAFunctionIsLeftWhole()
+        {
+            // The domain condition is stripped the way DoubleAngleOverSineTest does: the
+            // cosecant makes this undefined where sin(x) is 0, which is a true statement
+            // about the expression and not what this test is about.
+            var simplified = "(sin(2 * x) * cosec(x)) ^ 2 / 4 - cos(2 * x) - sin(x) ^ 2".ToEntity().Simplify();
+            while (simplified is Entity.Providedf(var inner, _)) simplified = inner;
+            Assert.Equal(Entity.Number.Integer.Create(0), simplified);
+        }
+
         // The sets that can be shifted elementwise still are -- the guard above must not
         // turn collecting off for them.
         [Theory]
