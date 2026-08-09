@@ -17,7 +17,7 @@
     release tag, so what ships is named by the tag; this is what a local build and the
     assembly metadata carry.
     -->
-    <Version>2.0.0-preview.1</Version>
+    <Version>2.0.0-preview.2</Version>
 
     <!--
     Pinned to the major for the whole of 2.x, and deliberately not tracking Version.
