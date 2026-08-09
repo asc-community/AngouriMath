@@ -278,6 +278,11 @@ namespace AngouriMath
                     {
                         // An integer is already its own floor, and it stays exact.
                         Integer n => n,
+                        // An infinity is its own floor -- there is no greatest integer below
+                        // +oo -- and NaN propagates. Neither survives EInteger, which refuses
+                        // both, and the exception was reaching the caller:
+                        // https://github.com/asc-community/AngouriMath/issues/830
+                        Real { IsFinite: false } n => n,
                         Rational n => Integer.Create(n.EDecimal.Floor().ToEInteger()),
                         Real n when !isExact => Integer.Create(n.EDecimal.Floor().ToEInteger()),
                         Complex n when !isExact => Complex.Create(
@@ -301,6 +306,8 @@ namespace AngouriMath
                     a => a switch
                     {
                         Integer n => n,
+                        // As in Floorf: https://github.com/asc-community/AngouriMath/issues/830
+                        Real { IsFinite: false } n => n,
                         Rational n => Integer.Create(n.EDecimal.Ceiling().ToEInteger()),
                         Real n when !isExact => Integer.Create(n.EDecimal.Ceiling().ToEInteger()),
                         Complex n when !isExact => Complex.Create(

@@ -132,5 +132,32 @@ namespace AngouriMath.Tests.Convenience
                     $"floor({point})".ToEntity().Simplify());
             Assert.Equal(Entity.Number.Integer.Create(4), "floor(4)".ToEntity().Simplify());
         }
+
+        /// <summary>
+        /// An infinity is its own floor and its own ceil, and NaN propagates —
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/830">#830</a>.
+        /// </summary>
+        /// <remarks>
+        /// These used to throw <see cref="System.OverflowException"/> ("Value is infinity or
+        /// NaN") out of evaluation, from the <c>EInteger</c> conversion. An internal exception
+        /// from the numeric library is not one a caller has any reason to expect, and the
+        /// neighbours do not do it: <c>abs(+oo)</c> is <c>+oo</c> and <c>abs(0/0)</c> is NaN.
+        /// </remarks>
+        [Theory]
+        [InlineData("floor(+oo)", "+oo")]
+        [InlineData("ceil(+oo)", "+oo")]
+        [InlineData("floor(-oo)", "-oo")]
+        [InlineData("ceil(-oo)", "-oo")]
+        public void AnInfiniteArgumentIsItsOwnFloorAndCeil(string input, string expected)
+        {
+            Assert.Equal(expected.ToEntity().Evaled, input.ToEntity().Evaled);
+            Assert.Equal(expected.ToEntity().Evaled, input.ToEntity().Simplify().Evaled);
+        }
+
+        [Theory]
+        [InlineData("floor(0/0)")]
+        [InlineData("ceil(0/0)")]
+        public void AnUndefinedArgumentStaysUndefined(string input)
+            => Assert.True(input.ToEntity().Evaled.IsNaN);
     }
 }
