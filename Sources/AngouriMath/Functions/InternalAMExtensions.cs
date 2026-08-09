@@ -610,6 +610,17 @@ namespace AngouriMath
         public static EDecimal Ceiling(this EDecimal x) => x.RoundToExponent(0, ERounding.Ceiling);
         /// <summary>If there is a fractional part, returns the previous largest integer</summary>
         public static EDecimal Floor(this EDecimal x) => x.RoundToExponent(0, ERounding.Floor);
+        /// <summary>
+        /// Rounds to the nearest integer, a tie going to the even one — what
+        /// <see cref="Entity.Roundf"/> means by rounding.
+        /// </summary>
+        /// <remarks>
+        /// Distinct from <see cref="Round(EDecimal)"/> just above, which is half <i>up</i>
+        /// and is what the numeric helpers around it want. The two disagree at every tie:
+        /// half up sends 5/2 to 3, half to even sends it to 2. Python, SymPy, Mathematica
+        /// and IEEE 754 all mean the latter by "round".
+        /// </remarks>
+        public static EDecimal RoundHalfEven(this EDecimal x) => x.RoundToExponent(0, ERounding.HalfEven);
 
         // Based on https://github.com/eobermuhlner/big-math/blob/ba75e9a80f040224cfeef3c2ac06390179712443/ch.obermuhlner.math.big/src/main/java/ch/obermuhlner/math/big/BigDecimalMath.java
 

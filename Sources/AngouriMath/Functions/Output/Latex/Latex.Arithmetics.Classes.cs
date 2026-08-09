@@ -172,6 +172,35 @@ namespace AngouriMath
                 => $@"\left\lceil{{{Argument.Latexise()}}}\right\rceil";
         }
 
+        partial record Roundf
+        {
+            // The nearest-integer brackets: a floor on the left, a ceiling on the right.
+            /// <inheritdoc/>
+            public override string Latexise()
+                => $@"\left\lfloor{{{Argument.Latexise()}}}\right\rceil";
+        }
+
+        partial record Minf
+        {
+            /// <inheritdoc/>
+            public override string Latexise()
+                => $@"\min\left({Left.Latexise()}, {Right.Latexise()}\right)";
+        }
+
+        partial record Maxf
+        {
+            /// <inheritdoc/>
+            public override string Latexise()
+                => $@"\max\left({Left.Latexise()}, {Right.Latexise()}\right)";
+        }
+
+        partial record Gcdf
+        {
+            /// <inheritdoc/>
+            public override string Latexise()
+                => $@"\gcd\left({Left.Latexise()}, {Right.Latexise()}\right)";
+        }
+
         partial record Phif
         {
             /// <inheritdoc/>

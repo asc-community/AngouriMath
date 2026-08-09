@@ -125,6 +125,38 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        public partial record Roundf
+        {
+            /// <inheritdoc/>
+            public override string Stringize() => $"round({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Minf
+        {
+            /// <inheritdoc/>
+            public override string Stringize() => $"min({Left.Stringize()}, {Right.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Maxf
+        {
+            /// <inheritdoc/>
+            public override string Stringize() => $"max({Left.Stringize()}, {Right.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Gcdf
+        {
+            /// <inheritdoc/>
+            public override string Stringize() => $"gcd({Left.Stringize()}, {Right.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Factorialf
         {
             /// <inheritdoc/>

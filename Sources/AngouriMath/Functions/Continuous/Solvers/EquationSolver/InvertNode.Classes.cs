@@ -309,6 +309,49 @@ namespace AngouriMath
             }
         }
 
+        partial record Roundf
+        {
+            // round(f(x)) = value, solvable only for integer value, and then f(x) lies in
+            // [value - 1/2, value + 1/2] -- closed at whichever end keeps the tie going to
+            // the even integer, which depends on the parity of value. Rather than encode
+            // that, the parameter covers the open interval and the two endpoints are left
+            // out: every point named is a solution, which is the direction that matters.
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+            {
+                var t = Variable.CreateUnique(value + Argument, "t");
+                return Argument.Invert(value + t, x)
+                    .Select(c => c.Provided(
+                        value.In(MathS.Sets.Z)
+                        & t.In(MathS.Sets.R)
+                        & new Greaterf(t, Rational.Create(-1, 2))
+                        & new Lessf(t, Rational.Create(1, 2))));
+            }
+        }
+
+        partial record Minf
+        {
+            // min(a, b) = value says one of them is value and the other is no smaller, which
+            // is a disjunction over which one it was rather than an inversion of a function
+            // of x. Nothing here can express that, and inventing a branch would answer
+            // confidently and wrongly, so this declines the way Factorialf and Phif do.
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => Enumerable.Empty<Entity>();
+        }
+
+        partial record Maxf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => Enumerable.Empty<Entity>();
+        }
+
+        partial record Gcdf
+        {
+            // The preimage of a gcd is every pair whose greatest common divisor is the
+            // value, which is not a function of x that can be undone.
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => Enumerable.Empty<Entity>();
+        }
+
         partial record Boolean
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)

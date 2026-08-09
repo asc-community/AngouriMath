@@ -50,6 +50,7 @@ read first.
 | loud | `Expand` of a quotient of factorials | `AngouriBugException` | the expanded polynomial |
 | loud | parsing a `provided` in a parenthesised comma list | `NullReferenceException` | `UnhandledParseException` |
 | loud | `floor(x)`, `ceil(x)`, `ceiling(x)` | `UnrecognizedFunctionParseException` | the functions |
+| loud | `round(x)`, `min(a, b)`, `max(a, b)`, `gcd(a, b)` | `UnrecognizedFunctionParseException` | the functions |
 | loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
 | **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
 
@@ -1290,6 +1291,29 @@ depending on this; the entry is here because the same call now returns a value w
 throw. `Simplify` was never affected — it answered `1 + x` throughout.
 
 Issue [#817](https://github.com/asc-community/AngouriMath/issues/817).
+
+### `round`, `min`, `max` and `gcd` exist, so they no longer raise
+
+```csharp
+"round(5/2)".ToEntity().Simplify();   // was UnrecognizedFunctionParseException, is 2
+"min(3, 5)".ToEntity().Simplify();    // was UnrecognizedFunctionParseException, is 3
+"gcd(1/2, 1/3)".ToEntity().Simplify();// was UnrecognizedFunctionParseException, is 1/6
+```
+
+**`round` is half to even**, which is what Python, SymPy, Mathematica and IEEE 754 all mean by
+rounding, and what .NET's `Math.Round` does by default: `round(1/2)` is `0`, `round(5/2)` is `2`.
+It is deliberately **not** `floor(x + 1/2)`, which disagrees at every tie, and there is a test
+pinning that they differ.
+
+`min`, `max` and `gcd` take any number of arguments and fold, so `min(3, 5, 1)` is `1`. `min` and
+`max` compare only where the arguments are ordered — an unordered pair is left as the node rather
+than guessed at, as SymPy's `Min` does. `gcd` covers integers and rationals, `gcd(1/2, 1/3)` being
+`1/6` exactly as SymPy gives; the polynomial case is left unevaluated for now even though this
+library computes polynomial gcds elsewhere.
+
+`trunc`, `lcm`, `erf` and `conjugate` are still refused by name.
+
+Issue [#809](https://github.com/asc-community/AngouriMath/issues/809).
 
 ### `floor` and `ceil` exist, so they no longer raise
 

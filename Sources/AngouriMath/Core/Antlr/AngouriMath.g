@@ -412,17 +412,19 @@ atom returns[Entity value]
     /* SymPy's spelling, accepted so that an expression copied from there parses. Stringize
        prints the short form, which is what the round-trip test pins. */
     | 'ceiling(' args = function_arguments ')' { Assert("ceiling", 1, $args.list.Count); $value = MathS.Ceil($args.list[0]); }
+    | 'round(' args = function_arguments ')' { Assert("round", 1, $args.list.Count); $value = MathS.Round($args.list[0]); }
+    /* min and max take any number of arguments, as they do everywhere else, and fold left
+       into the binary node. One argument is that argument. */
+    | 'min(' args = function_arguments ')' { AssertAtLeast("min", 1, $args.list.Count); $value = $args.list.Aggregate((a, b) => MathS.Min(a, b)); }
+    | 'max(' args = function_arguments ')' { AssertAtLeast("max", 1, $args.list.Count); $value = $args.list.Aggregate((a, b) => MathS.Max(a, b)); }
+    | 'gcd(' args = function_arguments ')' { AssertAtLeast("gcd", 1, $args.list.Count); $value = $args.list.Aggregate((a, b) => MathS.Gcd(a, b)); }
 
     /* Names the library does not have. Each is a function every other CAS spells this way, so
        a caller reaches for it, and without these rules each is silently read as a product --
        see NotImplementedFunction above. Refusing is not the feature; it is the difference
        between a missing function and a wrong answer. */
 
-    | 'round(' args = function_arguments ')' { $value = NotImplementedFunction("round", "rounding functions"); }
     | 'trunc(' args = function_arguments ')' { $value = NotImplementedFunction("trunc", "rounding functions"); }
-    | 'min(' args = function_arguments ')' { $value = NotImplementedFunction("min", "minimum or maximum function"); }
-    | 'max(' args = function_arguments ')' { $value = NotImplementedFunction("max", "minimum or maximum function"); }
-    | 'gcd(' args = function_arguments ')' { $value = NotImplementedFunction("gcd", "greatest common divisor as a symbolic function"); }
     | 'lcm(' args = function_arguments ')' { $value = NotImplementedFunction("lcm", "least common multiple as a symbolic function"); }
     | 'erf(' args = function_arguments ')' { $value = NotImplementedFunction("erf", "error function"); }
     | 'conjugate(' args = function_arguments ')' { $value = NotImplementedFunction("conjugate", "complex conjugate as a symbolic function"); }

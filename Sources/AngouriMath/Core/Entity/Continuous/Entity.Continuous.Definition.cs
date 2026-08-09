@@ -131,5 +131,13 @@ namespace AngouriMath
         public Entity Floor() => new Floorf(this);
         /// <summary><see cref="MathS.Ceil(Entity)"/></summary>
         public Entity Ceil() => new Ceilf(this);
+        /// <summary><see cref="MathS.Round(Entity)"/></summary>
+        public Entity Round() => new Roundf(this);
+        /// <summary><see cref="MathS.Min(Entity, Entity)"/></summary>
+        public Entity Min(Entity another) => new Minf(this, another);
+        /// <summary><see cref="MathS.Max(Entity, Entity)"/></summary>
+        public Entity Max(Entity another) => new Maxf(this, another);
+        /// <summary><see cref="MathS.Gcd(Entity, Entity)"/></summary>
+        public Entity Gcd(Entity another) => new Gcdf(this, another);
     }
 }

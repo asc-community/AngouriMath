@@ -215,6 +215,30 @@ namespace AngouriMath
                 => Choice(level, "floorceil_", "ceil_", "ceil_");
         }
 
+        public partial record Roundf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "floorceil_", "round_", "round_");
+        }
+
+        public partial record Minf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "minmax_", "min_", "min_");
+        }
+
+        public partial record Maxf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "minmax_", "max_", "max_");
+        }
+
+        public partial record Gcdf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "gcd_", "gcd_", "gcd_");
+        }
+
         partial record Boolean
         {
             private protected override string SortHashName(SortLevel level)

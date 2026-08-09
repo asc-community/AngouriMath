@@ -360,6 +360,15 @@ namespace AngouriMath
                 => Integer.Zero.Provided(!Argument.In(MathS.Sets.Z));
         }
 
+        partial record Roundf
+        {
+            // Flat between the half-integers and discontinuous at each of them -- round
+            // jumps where the argument is exactly a half, not where it is an integer.
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable)
+                => Integer.Zero.Provided(!(Argument - Rational.Create(1, 2)).In(MathS.Sets.Z));
+        }
+
         partial record Providedf
         {
             /// <inheritdoc/>

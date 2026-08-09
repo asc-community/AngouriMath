@@ -107,7 +107,7 @@ internal partial class AngouriMathParser : Parser {
 		"'arcsch('", "'arccosech('", "'acsch('", "'factorial('", "'gamma('", "'derivative('", 
 		"'integral('", "'limit('", "'limitleft('", "'limitright('", "'signum('", 
 		"'sgn('", "'sign('", "'abs('", "'phi('", "'floor('", "'ceil('", "'ceiling('", 
-		"'round('", "'trunc('", "'min('", "'max('", "'gcd('", "'lcm('", "'erf('", 
+		"'round('", "'min('", "'max('", "'gcd('", "'trunc('", "'lcm('", "'erf('", 
 		"'conjugate('", "'domain('", "'piecewise('", "'apply('", "'lambda('"
 	};
 	private static readonly string[] _SymbolicNames = {
@@ -3100,7 +3100,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 821;
 				Match(T__40);
-				 _localctx.value =  NotImplementedFunction("round", "rounding functions"); 
+				 Assert("round", 1, _localctx.args.list.Count); _localctx.value =  MathS.Round(_localctx.args.list[0]); 
 				}
 				break;
 			case 106:
@@ -3112,7 +3112,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 826;
 				Match(T__40);
-				 _localctx.value =  NotImplementedFunction("trunc", "rounding functions"); 
+				 AssertAtLeast("min", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Aggregate((a, b) => MathS.Min(a, b)); 
 				}
 				break;
 			case 107:
@@ -3124,7 +3124,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 831;
 				Match(T__40);
-				 _localctx.value =  NotImplementedFunction("min", "minimum or maximum function"); 
+				 AssertAtLeast("max", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Aggregate((a, b) => MathS.Max(a, b)); 
 				}
 				break;
 			case 108:
@@ -3136,7 +3136,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 836;
 				Match(T__40);
-				 _localctx.value =  NotImplementedFunction("max", "minimum or maximum function"); 
+				 AssertAtLeast("gcd", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Aggregate((a, b) => MathS.Gcd(a, b)); 
 				}
 				break;
 			case 109:
@@ -3148,7 +3148,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 841;
 				Match(T__40);
-				 _localctx.value =  NotImplementedFunction("gcd", "greatest common divisor as a symbolic function"); 
+				 _localctx.value =  NotImplementedFunction("trunc", "rounding functions"); 
 				}
 				break;
 			case 110:

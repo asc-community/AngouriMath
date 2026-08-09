@@ -81,5 +81,15 @@ namespace AngouriMath.Core.Exceptions
             throw new FunctionArgumentCountException(
                 $"{function} should have exactly {CountArguments(expected.Item1, false)} or {CountArguments(expected.Item2, false)} but {CountArguments(actual, true)} provided");
         }
+        /// <summary>
+        /// For the functions that take any number of arguments and fold over them —
+        /// <c>min</c>, <c>max</c> and <c>gcd</c>, which have no fixed arity anywhere else
+        /// either.
+        /// </summary>
+        internal static void AssertAtLeast(string function, int least, int actual)
+        {
+            if (actual < least) throw new FunctionArgumentCountException(
+                $"{function} should have at least {CountArguments(least, false)} but {CountArguments(actual, true)} provided");
+        }
     }
 }
