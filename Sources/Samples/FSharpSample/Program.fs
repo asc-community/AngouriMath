@@ -43,4 +43,4 @@ printfn "%O" (``lim x->0`` "sin(a x) / x")
 printfn "%O" (limit "x" 0 "sin(a x) / x")
 
 // LaTeX
-printfn "%O" (latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)")
+printfn "%O" (latex "x / e + alpha + sqrt(x) + integral(y + 3, y)")
