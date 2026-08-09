@@ -127,10 +127,10 @@ fine — only a concrete `List<Entity>` broke, which is why it survived to a 2.0
 This was not three separate defects. One conversion made *every* `params Entity[]` overload in
 the library uncallable with a list, including any added later.
 
-**This one moves between previews.** The conversion is present in `2.0.0-preview.1`, which is
-published, and gone from `2.0.0-preview.2`. It is so far the only entry here that changes
-between two previews rather than between releases: a reader coming from 1.3.0 or 1.4.0 can
-ignore the distinction, one already on preview.1 cannot.
+**This one moves between previews.** The conversion is in `2.0.0-preview.1` and
+`2.0.0-preview.2`, both published, and is removed in the release that follows them. It is so
+far the only entry here that changes between two previews rather than between releases: a
+reader coming from 1.3.0 or 1.4.0 can ignore the distinction, one already on a preview cannot.
 
 **What breaks.** Assigning a list where an `Entity` is expected:
 
