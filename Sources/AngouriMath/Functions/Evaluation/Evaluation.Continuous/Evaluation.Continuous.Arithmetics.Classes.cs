@@ -311,6 +311,86 @@ namespace AngouriMath
                     (@this, a) => ((Ceilf)@this).New(a), isExact);
         }
 
+        public partial record Roundf
+        {
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
+                    a => a switch
+                    {
+                        Integer n => n,
+                        Rational n => Integer.Create(n.EDecimal.RoundHalfEven().ToEInteger()),
+                        Real n when !isExact => Integer.Create(n.EDecimal.RoundHalfEven().ToEInteger()),
+                        Complex n when !isExact => Complex.Create(
+                            n.RealPart.EDecimal.RoundHalfEven(), n.ImaginaryPart.EDecimal.RoundHalfEven()),
+                        // Anything that already produced an integer is left alone.
+                        Floorf or Ceilf or Roundf => a,
+                        _ => null
+                    },
+                    (@this, a) => ((Roundf)@this).New(a), isExact);
+        }
+
+        public partial record Minf
+        {
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Left, Right,
+                    (a, b) => (a, b) switch
+                    {
+                        // Only ordered arguments compare. A complex one is left alone rather
+                        // than guessed at, which is what SymPy's Min does too.
+                        (Real l, Real r) => l.EDecimal.CompareTo(r.EDecimal) <= 0 ? l : r,
+                        var (l, r) when l == r => l,
+                        _ => null
+                    },
+                    (@this, a, b) => ((Minf)@this).New(a, b), isExact);
+        }
+
+        public partial record Maxf
+        {
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Left, Right,
+                    (a, b) => (a, b) switch
+                    {
+                        (Real l, Real r) => l.EDecimal.CompareTo(r.EDecimal) >= 0 ? l : r,
+                        var (l, r) when l == r => l,
+                        _ => null
+                    },
+                    (@this, a, b) => ((Maxf)@this).New(a, b), isExact);
+        }
+
+        public partial record Gcdf
+        {
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Left, Right,
+                    (a, b) => (a, b) switch
+                    {
+                        // gcd is non-negative by convention, and gcd(0, n) is |n|.
+                        (Integer l, Integer r) => Integer.Create(l.EInteger.Gcd(r.EInteger)),
+                        // gcd(a/b, c/d) = gcd(a, c) / lcm(b, d) -- which is what SymPy gives,
+                        // so gcd(1/2, 1/3) is 1/6 rather than an error.
+                        (Rational l, Rational r) => Rational.Create(
+                            l.Numerator.EInteger.Gcd(r.Numerator.EInteger),
+                            l.Denominator.EInteger / l.Denominator.EInteger.Gcd(r.Denominator.EInteger) * r.Denominator.EInteger),
+                        var (l, r) when l == r => l,
+                        // The polynomial case is left to the node: PolynomialGcd already
+                        // computes one for the cancellation rule, and wiring it in here is
+                        // its own change rather than something to guess at.
+                        _ => null
+                    },
+                    (@this, a, b) => ((Gcdf)@this).New(a, b), isExact);
+        }
+
         public partial record Absf
         {
             // Absolute value is defined everywhere in the complex plane

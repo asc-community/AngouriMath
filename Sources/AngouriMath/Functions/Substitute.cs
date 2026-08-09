@@ -186,6 +186,34 @@ namespace AngouriMath
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
+        partial record Roundf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Argument.Substitute(x, value));
+        }
+
+        partial record Minf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+        }
+
+        partial record Maxf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+        }
+
+        partial record Gcdf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+        }
+
         partial record Boolean
         {
             /// <inheritdoc/>

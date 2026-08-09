@@ -77,6 +77,48 @@ namespace AngouriMath
                 => $@"sympy.ceiling({Argument.ToSymPy()})";
         }
 
+        public partial record Roundf
+        {
+            /// <remarks>
+            /// SymPy has no symbolic round -- `RoundFunction` is an abstract base and
+            /// raises, and `.round()` is a method on a concrete number rather than a
+            /// function of an expression. So this is built out of what SymPy does have.
+            ///
+            /// It is deliberately not `sympy.floor(x + 1/2)`, which is the obvious
+            /// translation and is wrong at every tie: that sends 1/2 to 1 and 5/2 to 3,
+            /// where rounding half to even gives 0 and 2. The correction below is exactly
+            /// the tie case -- when the fractional part is a half and the candidate is odd,
+            /// step down to the even neighbour -- and was checked against SymPy's own
+            /// `Rational.round()` on ties, non-ties and negatives.
+            /// </remarks>
+            internal override string ToSymPy()
+            {
+                var arg = Argument.ToSymPy();
+                var candidate = $"sympy.floor({arg} + sympy.Rational(1, 2))";
+                return $"sympy.Piecewise(({candidate} - 1, "
+                     + $"sympy.Eq(sympy.frac({arg}), sympy.Rational(1, 2)) & sympy.Eq(sympy.Mod({candidate}, 2), 1)), "
+                     + $"({candidate}, True))";
+            }
+        }
+
+        public partial record Minf
+        {
+            internal override string ToSymPy()
+                => $@"sympy.Min({Left.ToSymPy()}, {Right.ToSymPy()})";
+        }
+
+        public partial record Maxf
+        {
+            internal override string ToSymPy()
+                => $@"sympy.Max({Left.ToSymPy()}, {Right.ToSymPy()})";
+        }
+
+        public partial record Gcdf
+        {
+            internal override string ToSymPy()
+                => $@"sympy.gcd({Left.ToSymPy()}, {Right.ToSymPy()})";
+        }
+
         public partial record Phif
         {
             internal override string ToSymPy() => $"sympy.totient({Argument.ToSymPy()})";

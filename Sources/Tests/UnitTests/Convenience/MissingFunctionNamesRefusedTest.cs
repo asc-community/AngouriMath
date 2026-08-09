@@ -26,16 +26,12 @@ namespace AngouriMath.Tests.Convenience
     [Trait("Area", "Convenience")]
     public sealed class MissingFunctionNamesRefusedTest
     {
-        // floor, ceil and ceiling were on this list until they were implemented:
-        // https://github.com/asc-community/AngouriMath/issues/809
+        // floor, ceil, ceiling, round, min, max and gcd were all on this list until they
+        // were implemented: https://github.com/asc-community/AngouriMath/issues/809
         [Theory]
-        [InlineData("round(x)")]
         [InlineData("trunc(x)")]
         [InlineData("erf(x)")]
         [InlineData("conjugate(x)")]
-        [InlineData("min(x, y)")]
-        [InlineData("max(x, y)")]
-        [InlineData("gcd(x, y)")]
         [InlineData("lcm(x, y)")]
         public void ANameTheLibraryDoesNotHaveIsRefused(string written) =>
             Assert.Throws<UnrecognizedFunctionParseException>(() => written.ToEntity());
@@ -45,8 +41,8 @@ namespace AngouriMath.Tests.Convenience
         /// cannot otherwise tell what happened to their expression.
         /// </summary>
         [Theory]
-        [InlineData("round(x)", "round")]
-        [InlineData("gcd(x, y)", "gcd")]
+        [InlineData("trunc(x)", "trunc")]
+        [InlineData("lcm(x, y)", "lcm")]
         [InlineData("conjugate(x)", "conjugate")]
         public void TheRefusalNamesTheFunction(string written, string name) =>
             Assert.Contains(name,
@@ -59,11 +55,11 @@ namespace AngouriMath.Tests.Convenience
         /// absence was invisible or cryptic according to how the caller happened to write it.
         /// </summary>
         [Theory]
-        [InlineData("min(x)")]
-        [InlineData("min(x, y)")]
-        [InlineData("min(x, y, z)")]
-        [InlineData("round(x)")]
-        [InlineData("round(x, y)")]
+        [InlineData("lcm(x)")]
+        [InlineData("lcm(x, y)")]
+        [InlineData("lcm(x, y, z)")]
+        [InlineData("trunc(x)")]
+        [InlineData("trunc(x, y)")]
         public void TheArgumentCountDoesNotDecideWhetherItIsReported(string written) =>
             Assert.Throws<UnrecognizedFunctionParseException>(() => written.ToEntity());
 
@@ -86,8 +82,8 @@ namespace AngouriMath.Tests.Convenience
         public void TheEquationThatUsedToBeAnsweredWithNonsenseNowSaysWhyItCannotBe()
         {
             var thrown = Assert.Throws<UnrecognizedFunctionParseException>(
-                () => "round(x) - 3 = 0".ToEntity().Solve("x"));
-            Assert.Contains("round", thrown.Message);
+                () => "trunc(x) - 3 = 0".ToEntity().Solve("x"));
+            Assert.Contains("trunc", thrown.Message);
         }
 
         /// <summary>
@@ -143,6 +139,10 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("floor(x)")]
         [InlineData("ceil(x)")]
         [InlineData("ceiling(x)")]
+        [InlineData("round(x)")]
+        [InlineData("min(x, y)")]
+        [InlineData("max(x, y)")]
+        [InlineData("gcd(x, y)")]
         public void TheNamesTheLibraryHasStillParse(string written) =>
             Assert.NotNull(written.ToEntity());
 

@@ -1030,6 +1030,72 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Ceil(Entity a) => new Ceilf(a);
 
+        /// <summary>
+        /// The nearest integer to <paramref name="a"/>, a tie going to the even one.
+        /// </summary>
+        /// <param name="a">The argument to round.</param>
+        /// <returns>The rounded argument.</returns>
+        /// <remarks>
+        /// Half to even, as Python, SymPy, Mathematica and IEEE 754 all round: <c>round(1/2)</c>
+        /// is <c>0</c> and <c>round(3/2)</c> is <c>2</c>. It is therefore <b>not</b>
+        /// <c>floor(x + 1/2)</c>, which differs at every tie.
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        ///
+        /// Console.WriteLine(Round("1/2").Simplify());
+        /// Console.WriteLine(Round("3/2").Simplify());
+        /// Console.WriteLine(Round("5/2").Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 0
+        /// 2
+        /// 2
+        /// </code>
+        /// </example>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Round(Entity a) => new Roundf(a);
+
+        /// <summary>
+        /// The lesser of <paramref name="a"/> and <paramref name="b"/>.
+        /// </summary>
+        /// <param name="a">The first argument.</param>
+        /// <param name="b">The second argument.</param>
+        /// <returns>Whichever is smaller, or the unevaluated node where they cannot be compared.</returns>
+        /// <remarks>
+        /// Only ordered arguments compare, so a complex one is left alone rather than
+        /// guessed at. For more than two, nest: <c>Min(Min(a, b), c)</c>.
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Min(Entity a, Entity b) => new Minf(a, b);
+
+        /// <summary>
+        /// The greater of <paramref name="a"/> and <paramref name="b"/>.
+        /// </summary>
+        /// <param name="a">The first argument.</param>
+        /// <param name="b">The second argument.</param>
+        /// <returns>Whichever is larger, or the unevaluated node where they cannot be compared.</returns>
+        /// <remarks>See <see cref="Min(Entity, Entity)"/>.</remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Max(Entity a, Entity b) => new Maxf(a, b);
+
+        /// <summary>
+        /// The greatest common divisor of <paramref name="a"/> and <paramref name="b"/>.
+        /// </summary>
+        /// <param name="a">The first argument.</param>
+        /// <param name="b">The second argument.</param>
+        /// <returns>The gcd where it can be computed, the unevaluated node otherwise.</returns>
+        /// <remarks>
+        /// Integers and rationals are computed — <c>gcd(1/2, 1/3)</c> is <c>1/6</c>, as
+        /// SymPy gives. The polynomial case is left unevaluated for now, though this library
+        /// does compute polynomial gcds elsewhere.
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Gcd(Entity a, Entity b) => new Gcdf(a, b);
+
         /// <summary>Boolean negation
         /// <a href="https://en.wikipedia.org/wiki/Negation">Wikipedia</a></summary>
         /// <param name="a">Argument node of which Negation function will be taken</param>

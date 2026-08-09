@@ -215,6 +215,31 @@ namespace AngouriMath
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
+        partial record Roundf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Complex;
+        }
+
+        partial record Minf
+        {
+            // Only ordered arguments compare, so the value is real wherever there is one.
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Real;
+        }
+
+        partial record Maxf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Real;
+        }
+
+        partial record Gcdf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Complex;
+        }
+
         partial record Boolean
         {
             /// <inheritdoc/>
