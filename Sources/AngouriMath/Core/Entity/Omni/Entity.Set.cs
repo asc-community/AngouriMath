@@ -83,7 +83,6 @@ namespace AngouriMath
         public static implicit operator Entity(Domain domain) => Set.SpecialSet.Create(domain);
         public static implicit operator Entity((Entity left, Entity right) interval) => new Interval(interval.left, true, interval.right, true);
         public static implicit operator Entity(Entity[] elements) => new FiniteSet(elements);
-        public static implicit operator Entity(List<Entity> elements) => new FiniteSet((IEnumerable<Entity>)elements);
 #pragma warning restore CS1591
 
     }
