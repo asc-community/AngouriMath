@@ -28,3 +28,6 @@ file_header_template=\nCopyright (c) 2019-2026 Angouri.\nAngouriMath is licensed
 # rather than the folder.
 [AngouriMath/Core/Entity/Continuous/Entity.Continuous.{Floors,Rounding}.Classes.cs]
 file_header_template=\nCopyright (c) 2019-2026 Angouri.\nAngouriMath is licensed under MIT.\nDetails: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.\nWebsite: https://am.angouri.org.\n
+
+[Utils/Utils/CiTiming.cs]
+file_header_template=\nCopyright (c) 2019-2026 Angouri.\nAngouriMath is licensed under MIT.\nDetails: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.\nWebsite: https://am.angouri.org.\n
