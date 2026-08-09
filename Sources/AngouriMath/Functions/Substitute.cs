@@ -172,6 +172,20 @@ namespace AngouriMath
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
+        partial record Floorf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Argument.Substitute(x, value));
+        }
+
+        partial record Ceilf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Argument.Substitute(x, value));
+        }
+
         partial record Boolean
         {
             /// <inheritdoc/>

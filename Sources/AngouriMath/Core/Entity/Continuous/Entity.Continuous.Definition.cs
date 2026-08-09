@@ -127,5 +127,9 @@ namespace AngouriMath
         public Entity Signum() => new Signumf(this);
         /// <summary><see cref="MathS.Abs(Entity)"/></summary>
         public Entity Abs() => new Absf(this);
+        /// <summary><see cref="MathS.Floor(Entity)"/></summary>
+        public Entity Floor() => new Floorf(this);
+        /// <summary><see cref="MathS.Ceil(Entity)"/></summary>
+        public Entity Ceil() => new Ceilf(this);
     }
 }

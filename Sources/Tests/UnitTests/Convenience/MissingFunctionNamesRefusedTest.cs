@@ -26,10 +26,9 @@ namespace AngouriMath.Tests.Convenience
     [Trait("Area", "Convenience")]
     public sealed class MissingFunctionNamesRefusedTest
     {
+        // floor, ceil and ceiling were on this list until they were implemented:
+        // https://github.com/asc-community/AngouriMath/issues/809
         [Theory]
-        [InlineData("floor(x)")]
-        [InlineData("ceil(x)")]
-        [InlineData("ceiling(x)")]
         [InlineData("round(x)")]
         [InlineData("trunc(x)")]
         [InlineData("erf(x)")]
@@ -46,7 +45,7 @@ namespace AngouriMath.Tests.Convenience
         /// cannot otherwise tell what happened to their expression.
         /// </summary>
         [Theory]
-        [InlineData("floor(x)", "floor")]
+        [InlineData("round(x)", "round")]
         [InlineData("gcd(x, y)", "gcd")]
         [InlineData("conjugate(x)", "conjugate")]
         public void TheRefusalNamesTheFunction(string written, string name) =>
@@ -63,10 +62,21 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("min(x)")]
         [InlineData("min(x, y)")]
         [InlineData("min(x, y, z)")]
-        [InlineData("floor(x)")]
-        [InlineData("floor(x, y)")]
+        [InlineData("round(x)")]
+        [InlineData("round(x, y)")]
         public void TheArgumentCountDoesNotDecideWhetherItIsReported(string written) =>
             Assert.Throws<UnrecognizedFunctionParseException>(() => written.ToEntity());
+
+        /// <summary>
+        /// A name the library <i>does</i> have, called with the wrong number of arguments, is
+        /// a different complaint and says so -- the count is the problem, not the name.
+        /// </summary>
+        [Theory]
+        [InlineData("floor(x, y)", "floor")]
+        [InlineData("ceil(x, y)", "ceil")]
+        public void AnImplementedNameWithTheWrongArgumentCountSaysThat(string written, string name)
+            => Assert.Contains(name,
+                Assert.Throws<FunctionArgumentCountException>(() => written.ToEntity()).Message);
 
         /// <summary>
         /// What the defect actually cost, and the reason this is worth a parse error rather
@@ -76,8 +86,24 @@ namespace AngouriMath.Tests.Convenience
         public void TheEquationThatUsedToBeAnsweredWithNonsenseNowSaysWhyItCannotBe()
         {
             var thrown = Assert.Throws<UnrecognizedFunctionParseException>(
-                () => "floor(x) - 3 = 0".ToEntity().Solve("x"));
-            Assert.Contains("floor", thrown.Message);
+                () => "round(x) - 3 = 0".ToEntity().Solve("x"));
+            Assert.Contains("round", thrown.Message);
+        }
+
+        /// <summary>
+        /// And the original expression from #733 is now answered rather than refused, since
+        /// floor exists. <c>floor(x) = 3</c> holds on the whole of <c>[3, 4)</c>, so the
+        /// answer is that interval carried as a parameter and not a single point -- what it
+        /// must never be again is <c>{ 3 / floor }</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/809
+        /// </summary>
+        [Fact]
+        public void TheEquationFromTheOriginalReportIsAnsweredNow()
+        {
+            var solutions = "floor(x) - 3 = 0".ToEntity().Solve("x");
+            Assert.NotNull(solutions);
+            Assert.DoesNotContain(solutions!.Nodes, node => node is Entity.Variable { Name: "floor" });
+            Assert.Contains(solutions.Nodes, node => node is Entity.Providedf);
         }
 
         /// <summary>
@@ -114,6 +140,9 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("sin(x)")]
         [InlineData("arsinh(x)")]
         [InlineData("phi(x)")]
+        [InlineData("floor(x)")]
+        [InlineData("ceil(x)")]
+        [InlineData("ceiling(x)")]
         public void TheNamesTheLibraryHasStillParse(string written) =>
             Assert.NotNull(written.ToEntity());
 

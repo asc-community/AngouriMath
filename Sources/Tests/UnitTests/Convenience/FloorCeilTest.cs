@@ -1,0 +1,136 @@
+//
+// Copyright (c) 2019-2026 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
+
+using System.Linq;
+using AngouriMath;
+using AngouriMath.Extensions;
+using Xunit;
+
+namespace AngouriMath.Tests.Convenience
+{
+    /// <summary>
+    /// <c>floor</c> and <c>ceil</c> — <a href="https://github.com/asc-community/AngouriMath/issues/809">#809</a>.
+    /// </summary>
+    /// <remarks>
+    /// The expected values are SymPy 1.14's, measured rather than reasoned about, as
+    /// AGENTS.md asks when a convention has to be chosen. The ones that matter are the
+    /// negative arguments — rounding toward the infinities rather than toward zero — and the
+    /// complex case, which both SymPy and Mathematica take componentwise.
+    /// </remarks>
+    [Trait("Area", "Convenience")]
+    public sealed class FloorCeilTest
+    {
+        [Theory]
+        [InlineData("floor(3/2)", 1)]
+        [InlineData("floor(-3/2)", -2)]
+        [InlineData("floor(-1/2)", -1)]
+        [InlineData("floor(5/2)", 2)]
+        [InlineData("floor(-5/2)", -3)]
+        [InlineData("floor(2)", 2)]
+        [InlineData("floor(-2)", -2)]
+        [InlineData("ceil(3/2)", 2)]
+        [InlineData("ceil(-3/2)", -1)]
+        [InlineData("ceil(-1/2)", 0)]
+        [InlineData("ceil(5/2)", 3)]
+        [InlineData("ceil(-5/2)", -2)]
+        [InlineData("ceil(2)", 2)]
+        [InlineData("ceil(-2)", -2)]
+        public void TheValueIsWhatSymPyGives(string input, int expected)
+            => Assert.Equal(Entity.Number.Integer.Create(expected), input.ToEntity().Simplify());
+
+        // Componentwise, so that floor of a real keeps its meaning when the imaginary part
+        // happens to be zero.
+        [Theory]
+        [InlineData("floor(3/2 + 5/2 * i)", "1 + 2i")]
+        [InlineData("ceil(3/2 + 5/2 * i)", "2 + 3i")]
+        [InlineData("floor(-3/2 - 5/2 * i)", "-2 - 3i")]
+        [InlineData("ceil(-3/2 - 5/2 * i)", "-1 - 2i")]
+        public void AComplexArgumentIsTakenComponentwise(string input, string expected)
+            => Assert.Equal(expected.ToEntity().EvalNumerical(), input.ToEntity().EvalNumerical());
+
+        // Both produce an integer, and both leave one alone.
+        [Theory]
+        [InlineData("floor(floor(x))", "floor(x)")]
+        [InlineData("ceil(ceil(x))", "ceil(x)")]
+        [InlineData("floor(ceil(x))", "ceil(x)")]
+        [InlineData("ceil(floor(x))", "floor(x)")]
+        public void ApplyingItTwiceChangesNothing(string input, string expected)
+            => Assert.Equal(expected.ToEntity(), input.ToEntity().Simplify());
+
+        [Theory]
+        [InlineData("floor(x)")]
+        [InlineData("ceil(x)")]
+        [InlineData("floor(x + y)")]
+        [InlineData("ceil(sin(x))")]
+        public void ASymbolicArgumentIsLeftAlone(string input)
+            => Assert.Equal(input.ToEntity(), input.ToEntity().Simplify());
+
+        // Flat between the integers and discontinuous at each of them, so the derivative is
+        // zero where it exists and the condition says where that is. SymPy declines to
+        // answer at all here; this library can say more, because it has Providedf.
+        [Theory]
+        [InlineData("floor(x)")]
+        [InlineData("ceil(x)")]
+        public void TheDerivativeIsZeroAwayFromTheIntegers(string input)
+        {
+            var derivative = input.ToEntity().Differentiate("x");
+            var provided = Assert.IsType<Entity.Providedf>(derivative);
+            Assert.Equal(Entity.Number.Integer.Create(0), provided.Expression);
+        }
+
+        [Theory]
+        [InlineData("floor(x)", @"\left\lfloor{x}\right\rfloor")]
+        [InlineData("ceil(x)", @"\left\lceil{x}\right\rceil")]
+        public void TheLatexIsTheUsualBrackets(string input, string expected)
+            => Assert.Equal(expected, input.ToEntity().Latexise());
+
+        // Stringize prints the short spelling, and SymPy's `ceiling` is accepted on the way
+        // in so that an expression copied from there parses.
+        [Theory]
+        [InlineData("floor(x)", "floor(x)")]
+        [InlineData("ceil(x)", "ceil(x)")]
+        [InlineData("ceiling(x)", "ceil(x)")]
+        public void ItPrintsTheShortSpellingAndParsesBoth(string input, string expected)
+            => Assert.Equal(expected, input.ToEntity().Stringize());
+
+        [Theory]
+        [InlineData("floor(x)")]
+        [InlineData("ceil(x)")]
+        [InlineData("floor(x) + ceil(y)")]
+        public void ThePrintedFormParsesBackToTheSameExpression(string input)
+            => Assert.Equal(input.ToEntity(), input.ToEntity().Stringize().ToEntity());
+
+        [Theory]
+        [InlineData("floor(x)", "7/2", 3)]
+        [InlineData("ceil(x)", "7/2", 4)]
+        [InlineData("floor(x)", "-7/2", -4)]
+        [InlineData("ceil(x)", "-7/2", -3)]
+        public void SubstitutingReachesTheValue(string input, string at, int expected)
+            => Assert.Equal(Entity.Number.Integer.Create(expected),
+                input.ToEntity().Substitute("x", at.ToEntity()).Simplify());
+
+        /// <summary>
+        /// <c>floor(x) = 3</c> holds on the whole of <c>[3, 4)</c>, so the inverse is a
+        /// parameter over that interval rather than a point. What it must not do is invent a
+        /// single root.
+        /// </summary>
+        [Fact]
+        public void SolvingGivesTheWholeIntervalAndNotAPoint()
+        {
+            var solutions = "floor(x) - 3 = 0".ToEntity().Solve("x");
+            Assert.NotNull(solutions);
+            var conditions = solutions!.Nodes.OfType<Entity.Providedf>().ToList();
+            Assert.NotEmpty(conditions);
+
+            // Every point of [3, 4) is a solution, and 4 is not.
+            foreach (var point in new[] { "3", "3.5", "39/10" })
+                Assert.Equal(Entity.Number.Integer.Create(3),
+                    $"floor({point})".ToEntity().Simplify());
+            Assert.Equal(Entity.Number.Integer.Create(4), "floor(4)".ToEntity().Simplify());
+        }
+    }
+}

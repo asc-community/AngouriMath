@@ -158,6 +158,20 @@ namespace AngouriMath
                 => $@"\left|{Argument.Latexise()}\right|";
         }
 
+        partial record Floorf
+        {
+            /// <inheritdoc/>
+            public override string Latexise()
+                => $@"\left\lfloor{{{Argument.Latexise()}}}\right\rfloor";
+        }
+
+        partial record Ceilf
+        {
+            /// <inheritdoc/>
+            public override string Latexise()
+                => $@"\left\lceil{{{Argument.Latexise()}}}\right\rceil";
+        }
+
         partial record Phif
         {
             /// <inheritdoc/>

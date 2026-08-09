@@ -64,6 +64,19 @@ namespace AngouriMath
                 => $@"sympy.Abs({Argument.ToSymPy()})";
         }
 
+        public partial record Floorf
+        {
+            internal override string ToSymPy()
+                => $@"sympy.floor({Argument.ToSymPy()})";
+        }
+
+        public partial record Ceilf
+        {
+            // SymPy spells it in full; `ceil` is not a name it has.
+            internal override string ToSymPy()
+                => $@"sympy.ceiling({Argument.ToSymPy()})";
+        }
+
         public partial record Phif
         {
             internal override string ToSymPy() => $"sympy.totient({Argument.ToSymPy()})";

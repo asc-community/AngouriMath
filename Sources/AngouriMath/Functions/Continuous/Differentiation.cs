@@ -341,6 +341,25 @@ namespace AngouriMath
                 => MathS.Signum(Argument).Provided(!Argument.EqualTo(Integer.Zero)) * Argument.InnerDifferentiate(variable);
         }
 
+        partial record Floorf
+        {
+            // Flat between consecutive integers and discontinuous at each of them, so the
+            // derivative is 0 wherever it exists and nowhere at an integer argument. Saying
+            // that with a condition is the stance Signumf and Absf take above; SymPy
+            // instead leaves the derivative unevaluated, which says less, and this library
+            // has Providedf to say more with.
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable)
+                => Integer.Zero.Provided(!Argument.In(MathS.Sets.Z));
+        }
+
+        partial record Ceilf
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable)
+                => Integer.Zero.Provided(!Argument.In(MathS.Sets.Z));
+        }
+
         partial record Providedf
         {
             /// <inheritdoc/>

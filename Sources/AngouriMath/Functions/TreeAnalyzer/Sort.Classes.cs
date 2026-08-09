@@ -203,6 +203,18 @@ namespace AngouriMath
                 => Choice(level, "sgnabs_", "abs_", "abs_");
         }
 
+        public partial record Floorf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "floorceil_", "floor_", "floor_");
+        }
+
+        public partial record Ceilf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "floorceil_", "ceil_", "ceil_");
+        }
+
         partial record Boolean
         {
             private protected override string SortHashName(SortLevel level)
