@@ -239,6 +239,22 @@ namespace AngouriMath
         /// product of powers, and terms whose products agree are added together --
         /// enough to collect like terms and nothing more.
         /// </remarks>
+        /// <summary>
+        /// Whether every node of the expression is one that monomial collection describes:
+        /// numbers, variables, and the operations that build a polynomial out of them.
+        /// </summary>
+        /// <remarks>
+        /// Opening a product to reach its numeric factor is what lets like terms meet, and
+        /// it is also what stops a product cancelling as a whole -- lifting the 1/2 out of
+        /// <c>(1/2 * sin(2t))^2 * csc(t)^2</c> costs the cancellation to <c>cos(t)^2</c>.
+        /// Collection is a statement about polynomials, so it opens polynomials and leaves
+        /// anything carrying a function intact for the rules that do know it.
+        /// https://github.com/asc-community/AngouriMath/issues/855
+        /// </remarks>
+        private static bool IsPolynomialShaped(Entity expression)
+            => expression.Nodes.All(node =>
+                node is Number or Variable or Mulf or Powf or Sumf or Minusf or Divf);
+
         private static Entity CollectLikeTerms(Entity expanded)
         {
             if (expanded is not Sumf and not Minusf)
@@ -261,14 +277,37 @@ namespace AngouriMath
                 var exponents = new Dictionary<string, Entity>();
                 var bases = new Dictionary<string, Entity>();
 
-                foreach (var factor in Mulf.LinearChildren(term))
+                var pending = new Stack<Entity>(Mulf.LinearChildren(term));
+                while (pending.Count > 0)
                 {
                     // PowerRules folds (x^2)^2 into x^4, without which the two would be
                     // counted as different monomials.
-                    var reduced = factor.Rewrite(RewriteRules.Power).InnerSimplified;
+                    var reduced = pending.Pop().Rewrite(RewriteRules.Power).InnerSimplified;
                     if (reduced is Number)
                     {
                         coefficient = (coefficient * reduced).InnerSimplified;
+                        continue;
+                    }
+                    // Reducing a factor can turn it into a product -- (2 * x)^2 becomes
+                    // 4 * x^2 -- and taken whole that is a monomial of its own, keyed on
+                    // "4 * x ^ 2" and unable to meet the plain x^2 terms it belongs with.
+                    // Split it again so the 4 reaches the coefficient. Each child is
+                    // smaller than the product it came from, so this terminates.
+                    // https://github.com/asc-community/AngouriMath/issues/855
+                    if (reduced is Mulf && IsPolynomialShaped(reduced))
+                    {
+                        foreach (var inner in Mulf.LinearChildren(reduced))
+                            pending.Push(inner);
+                        continue;
+                    }
+                    // The same one shape out: (2 * x * y)^2 is a power of a product that
+                    // the rules above do not distribute. Only for an integer exponent,
+                    // where (a * b)^n = a^n * b^n holds for every a and b; for any other
+                    // exponent it is a statement about branches.
+                    if (reduced is Powf(Mulf product, Integer wholePower) && IsPolynomialShaped(product))
+                    {
+                        foreach (var inner in Mulf.LinearChildren(product))
+                            pending.Push(inner.Pow(wholePower));
                         continue;
                     }
                     var (@base, exponent) = reduced is Powf(var b, var e) ? (b, e) : (reduced, (Entity)1);
@@ -327,6 +366,7 @@ namespace AngouriMath
             if (collected.Nodes.Any(node => node == MathS.NaN)
                 && !expanded.Nodes.Any(node => node == MathS.NaN))
                 return expanded;
+
             return collected;
         }
 
