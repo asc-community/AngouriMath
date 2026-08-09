@@ -35,13 +35,13 @@ namespace AngouriMath.Functions.Quantum
     /// is a rank-one test on the amplitudes across a bipartition -- a different algorithm,
     /// belonging to this file rather than to the spine, and not written yet.
     /// </remarks>
-    internal static class Factorisation
+    internal static class Factorization
     {
         /// <summary>
         /// The state rewritten as a product, or <see langword="null"/> where it is not a state
         /// or has no qubit in a definite basis state at either end.
         /// </summary>
-        internal static Entity? Factorise(Entity expr)
+        internal static Entity? TensorFactorize(Entity expr)
         {
             if (QuantumState.TryRead(expr) is not { } state || state.IsEmpty)
                 return null;
@@ -76,7 +76,7 @@ namespace AngouriMath.Functions.Quantum
         /// superposition, or <see langword="null"/> where the expression is not such a product.
         /// </summary>
         /// <remarks>
-        /// The inverse of <see cref="Factorise"/>, and the reason it is here rather than on the
+        /// The inverse of <see cref="TensorFactorize"/>, and the reason it is here rather than on the
         /// spine: within one state the qubits are a fixed width and combining two kets overlays
         /// them, while a *product* of states concatenates their widths. Those are two different
         /// monoids on the same type, and only the first is what
@@ -143,7 +143,7 @@ namespace AngouriMath.Functions.Quantum
         /// the library. Left to <c>Simplify</c> to settle rather than evaluated numerically,
         /// so <c>1/sqrt(2)</c> is recognised exactly.
         /// </remarks>
-        internal static bool? IsNormalised(Entity expr)
+        internal static bool? IsNormalized(Entity expr)
         {
             if (QuantumState.TryRead(expr) is not { } state || state.IsEmpty)
                 return null;

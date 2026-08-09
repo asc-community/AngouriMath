@@ -53,6 +53,8 @@ read first.
 | loud | `round(x)`, `min(a, b)`, `max(a, b)`, `gcd(a, b)` | `UnrecognizedFunctionParseException` | the functions |
 | loud | 28 members deprecated since 1.x | obsolete but present | removed |
 | loud | `Latexise`, `ILatexiseable`, `entity_latexise` | the British spelling | `Latexize`, `ILatexizeable`, `entity_latexize` |
+| loud | `MathS.Quantum.Factorise` | one letter from the unrelated `Entity.Factorize` | `MathS.Quantum.TensorFactorize` |
+| loud | `MathS.Quantum.IsNormalised` | the British spelling | `MathS.Quantum.IsNormalized` |
 | loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
 | **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
 
@@ -144,16 +146,41 @@ forwarding member: this release is the one that removed 28 members that accumula
 so adding a permanent one here would undo that on the same day. The compiler reports each site, and
 the fix is mechanical.
 
-`MathS.Quantum.Factorise` keeps its spelling for now. Renaming it to `Factorize` would give the
-library two public `Factorize` methods doing unrelated things — expression factoring on `Entity`,
-tensor factorisation on a quantum state — which is a worse outcome than the inconsistency. It wants
-a distinguishing name rather than a spelling change, and that is not decided here.
-
 **Downstream.** [`CSharpMath.Evaluation`](https://github.com/verybadcat/CSharpMath) reads LaTeX
 produced here back into an `Entity` and calls this method. It is unaffected until it moves to 2.0,
 at which point it needs the new name.
 
 [#840](https://github.com/asc-community/AngouriMath/issues/840).
+
+### `MathS.Quantum.Factorise` is now `MathS.Quantum.TensorFactorize`
+
+| | was | is |
+|---|---|---|
+| the method | `MathS.Quantum.Factorise(Entity)` | `MathS.Quantum.TensorFactorize(Entity)` |
+
+The old name differed by one letter from `Entity.Factorize`, which does something else entirely —
+algebraic factoring of an expression, against tensor factorisation of a quantum state. Both take an
+`Entity` and return an `Entity`, so nothing but the name distinguished them, and the name barely
+did.
+
+Renaming it to `Factorize` would have made the spelling uniform and the API worse: two public
+`Factorize` methods doing unrelated things. `MathS.Quantum` already holds the inverse operation as
+`TensorExpand`, so `TensorFactorize` states the domain and the direction, pairs with its inverse,
+and ends the collision. The spelling is fixed as a side effect rather than as the point.
+
+**What breaks.** Every call to `MathS.Quantum.Factorise`. There is no forwarding member, for the
+same reason as above. The compiler reports each site.
+
+`MathS.Quantum.IsNormalised` is renamed to `IsNormalized` in the same pass. It carries no collision,
+only the spelling — but it is a public member, so 2.0 is equally the last release that can change
+it, and leaving it would have meant shipping one British member after two renames made expressly to
+remove them.
+
+With these two, the public surface has one spelling throughout. That is checkable rather than
+asserted: `PublicApi.txt` is the recorded surface, and it now contains no `-ise`, `-ised` or
+`-isation` member.
+
+[#843](https://github.com/asc-community/AngouriMath/issues/843).
 
 ---
 

@@ -2300,10 +2300,10 @@ AngouriMath.MathS+Numbers.Create(System.Int64) : AngouriMath.Entity+Number+Integ
 AngouriMath.MathS+Numbers.Create(System.Numerics.Complex) : AngouriMath.Entity+Number+Complex
 AngouriMath.MathS+Numbers.CreateRational(PeterO.Numbers.EInteger, PeterO.Numbers.EInteger) : AngouriMath.Entity+Number+Rational
 AngouriMath.MathS+Quantum.EqualUpToGlobalPhase(AngouriMath.Entity, AngouriMath.Entity) : System.Nullable<System.Boolean>
-AngouriMath.MathS+Quantum.Factorise(AngouriMath.Entity) : AngouriMath.Entity
-AngouriMath.MathS+Quantum.IsNormalised(AngouriMath.Entity) : System.Nullable<System.Boolean>
+AngouriMath.MathS+Quantum.IsNormalized(AngouriMath.Entity) : System.Nullable<System.Boolean>
 AngouriMath.MathS+Quantum.Ket(System.Int32[]) : AngouriMath.Entity
 AngouriMath.MathS+Quantum.TensorExpand(AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.MathS+Quantum.TensorFactorize(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS+Series.Maclaurin(AngouriMath.Entity, System.Int32, AngouriMath.Entity+Variable[]) : AngouriMath.Entity
 AngouriMath.MathS+Series.Taylor(AngouriMath.Entity, System.Int32, System.ValueTuple<AngouriMath.Entity+Variable,AngouriMath.Entity+Variable,AngouriMath.Entity>[]) : AngouriMath.Entity
 AngouriMath.MathS+Series.Taylor(AngouriMath.Entity, System.Int32, System.ValueTuple<AngouriMath.Entity+Variable,AngouriMath.Entity>[]) : AngouriMath.Entity
