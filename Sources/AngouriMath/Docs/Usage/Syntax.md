@@ -108,8 +108,14 @@ any number of arguments and fold. `min` and `max` compare only where the argumen
 are otherwise left as written. `gcd` computes over integers and rationals — `gcd(1/2, 1/3)` is
 `1/6` — and leaves the polynomial case alone.
 
-**Calculus** — `derivative(expr, var, order)`, `integral(expr, var)`, `limit(expr, var, dest)`,
-`limitleft(...)`, `limitright(...)`.
+**Calculus** — `derivative(expr, var, order)`, `integral(expr, var)`,
+`integral(expr, var, from, to)`, `limit(expr, var, dest)`, `limitleft(...)`, `limitright(...)`.
+
+`derivative` takes an order and `integral` does not: `derivative(f, x, 2)` is the second
+derivative, while `integral`'s third and fourth arguments are the bounds of a definite integral,
+not a count. `integral(f, x, 2)` is therefore a parse error rather than the second antiderivative
+— three arguments name neither form. This is deliberate; the iteration count was replaced by the
+range in [#657](https://github.com/asc-community/AngouriMath/pull/657).
 
 **Structural** — `piecewise(a provided p, b provided q)`, `lambda(param, body)`,
 `apply(f, arg, ...)`, `domain(expr, set)`.

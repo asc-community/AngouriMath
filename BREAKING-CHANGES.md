@@ -1528,6 +1528,34 @@ Not behavioural changes, listed so that a reader working through this file has t
 
 ---
 
+## 1.4.0 — one change that was never written down
+
+This file begins at 2.0.0, so a break introduced *by* 1.4.0 has had no home in it. One is worth
+recording, because 1.4.0 is what a `dotnet add package` installs today and the change is silent
+until a string is parsed.
+
+### `integral` takes bounds, not an iteration count
+
+| | 1.3.0 | 1.4.0 onwards |
+|---|---|---|
+| `integral(f, x, 1)` | accepted, read as `integral(f, x)` | `FunctionArgumentCountException` |
+| `integral(f, x, a, b)` | — | the definite integral from `a` to `b` |
+
+The third argument used to be a repetition count and is now the lower bound of a range, so three
+arguments name neither form and are refused. `derivative(f, x, n)` is unaffected and still takes an
+order, which is why the two functions read differently.
+
+This was deliberate — PR [#657](https://github.com/asc-community/AngouriMath/pull/657), "change
+integral node to support range instead of iterations" — and it is covered by a test. It simply went
+out without a note. Both samples in this repository called `integral(f, x, 1)` and had been failing
+against 1.4.0 since January without anyone seeing it, because they were pinned to 1.3.0; PR
+[#846](https://github.com/asc-community/AngouriMath/pull/846) is what surfaced it.
+
+**What to do.** `integral(f, x, 1)` becomes `integral(f, x)` — identical in meaning, since 1.3.0
+turned the former into the latter anyway. For a repeated antiderivative, nest the calls.
+
+---
+
 ## If one of these hurts
 
 Open an issue at https://github.com/asc-community/AngouriMath/issues saying what you were relying
