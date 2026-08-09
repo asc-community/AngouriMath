@@ -40,6 +40,9 @@
 
   <ItemGroup>
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+
+    <!-- Read at run time by PublicApiSurfaceTest; see its remarks. -->
+    <Content Include="Common\PublicApi.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
