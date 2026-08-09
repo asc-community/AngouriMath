@@ -140,12 +140,29 @@ namespace AngouriMath
         /// the same or related type, until these become simple enough to be solved
         /// directly. The solutions to the sub-problems are then combined to give a
         /// solution to the original problem.
+        ///
+        /// Here we try to compute the limit for each child and then merge them into the limit
+        /// of the whole expression. Theoretically, for cases such as limit (x -> -1) 1 / (x + 1)
+        /// this method will return NaN, but thanks to replacement of x by a non-definite
+        /// expression, it is somehow compensated.
         /// </summary>
-        // here we try to compute limit for each children and then merge them into limit of whole expression
-        // theoretically, for cases such limit (x -> -1) 1 / (x + 1)
-        // this method will return NaN, but thanks to replacement of x to an non-definite expression,
-        // it is somehow compensated
+        /// <remarks>
+        /// <b>Null, not <see cref="Limitf"/>.</b> This used to hand back
+        /// <c>new Limitf(this, ...)</c>, which reads as the honest "I could not settle this"
+        /// and is in fact a cycle: the caller evaluates the node to compare it, evaluating a
+        /// <see cref="Limitf"/> computes the limit, and computing arrives back here. That
+        /// overflows the stack, which kills the process rather than raising anything a caller
+        /// can catch — the exact failure AGENTS.md names, with this exact expression as its
+        /// example.
+        ///
+        /// It made every node without an override a landmine, since inheriting the default
+        /// was enough to crash: floor, ceil, round, min, max, gcd and phi all did.
+        /// Returning null reads the same to every caller here — they all test with
+        /// <c>is { }</c> — and terminates.
+        /// https://github.com/asc-community/AngouriMath/issues/829
+        /// https://github.com/asc-community/AngouriMath/issues/833
+        /// </remarks>
         internal virtual Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
-            => new Limitf(this, x, dist, side);
+            => null;
     }
 }
