@@ -88,8 +88,8 @@ namespace AngouriMath.Tests.Convenience
             Assert.Equal("x mod 3", "x mod 3".ToEntity().Stringize());
 
         [Fact]
-        public void ItLatexisesAsBmod() =>
-            Assert.Equal(@"x \bmod 3", "x mod 3".ToEntity().Latexise());
+        public void ItLatexizesAsBmod() =>
+            Assert.Equal(@"x \bmod 3", "x mod 3".ToEntity().Latexize());
 
         [Theory]
         [InlineData("x mod x", "0")]

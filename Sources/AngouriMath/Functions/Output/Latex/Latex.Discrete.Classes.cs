@@ -13,22 +13,22 @@ namespace AngouriMath
         partial record Boolean
         {
             /// <inheritdoc/>
-            public override string Latexise() => (bool)this ? @"\top " : @"\bot ";
+            public override string Latexize() => (bool)this ? @"\top " : @"\bot ";
         }
 
         partial record Notf
         {
             /// <inheritdoc/>
-            public override string Latexise()
+            public override string Latexize()
                 => Argument is Equalsf(var left, var right)
-                   ? $@"{left.Latexise(left.LatexPriority <= Priority.Equal)} \neq {right.Latexise(right.LatexPriority <= Priority.Equal)}"
-                   : $@"\neg{{{Argument.Latexise(Argument.LatexPriority < LatexPriority)}}}";
+                   ? $@"{left.Latexize(left.LatexPriority <= Priority.Equal)} \neq {right.Latexize(right.LatexPriority <= Priority.Equal)}"
+                   : $@"\neg{{{Argument.Latexize(Argument.LatexPriority < LatexPriority)}}}";
         }
 
         partial record Andf
         {
             /// <inheritdoc/>
-            public override string Latexise()
+            public override string Latexize()
             {
                 var result = new System.Text.StringBuilder();
                 Entity? left = null;
@@ -42,7 +42,7 @@ namespace AngouriMath
                             var renew = left != child.DirectChildren[0];
                             if (!first && renew) result.Append(@" \land ");
                             first = false;
-                            if (first || renew) result.Append(child.DirectChildren[0].Latexise(child.DirectChildren[0].LatexPriority <= child.LatexPriority));
+                            if (first || renew) result.Append(child.DirectChildren[0].Latexize(child.DirectChildren[0].LatexPriority <= child.LatexPriority));
                             renew = false;
                             result.Append(child switch {
                                 Equalsf => " = ",
@@ -50,24 +50,24 @@ namespace AngouriMath
                                 GreaterOrEqualf => @" \geq ",
                                 Lessf => " < ",
                                 LessOrEqualf => @" \leq ",
-                                _ => throw new Core.Exceptions.AngouriBugException("Unexpected comparison sign in Andf.Latexise")
-                            }).Append(child.DirectChildren[1].Latexise(child.DirectChildren[1].LatexPriority <= child.LatexPriority));
+                                _ => throw new Core.Exceptions.AngouriBugException("Unexpected comparison sign in Andf.Latexize")
+                            }).Append(child.DirectChildren[1].Latexize(child.DirectChildren[1].LatexPriority <= child.LatexPriority));
                             left = child.DirectChildren[1];
                             break;
                         case Notf (Equalsf eq):
                             renew = left != eq.Left;
                             if (!first && renew) result.Append(@" \land ");
                             first = false;
-                            if (first || renew) result.Append(eq.Left.Latexise(eq.Left.LatexPriority <= eq.LatexPriority));
+                            if (first || renew) result.Append(eq.Left.Latexize(eq.Left.LatexPriority <= eq.LatexPriority));
                             renew = false;
-                            result.Append(@" \neq ").Append(eq.Right.Latexise(eq.Right.LatexPriority <= eq.LatexPriority));
+                            result.Append(@" \neq ").Append(eq.Right.Latexize(eq.Right.LatexPriority <= eq.LatexPriority));
                             left = eq.Right;
                             break;
                         default:
                             if (!first) result.Append(" \\land ");
                             left = null;
                             first = false;
-                            result.Append(child.Latexise(child.LatexPriority < LatexPriority));
+                            result.Append(child.Latexize(child.LatexPriority < LatexPriority));
                             break;
                     }
                 }
@@ -78,16 +78,16 @@ namespace AngouriMath
         partial record Orf
         {
             /// <inheritdoc/>
-            public override string Latexise()
-                => $@"{Left.Latexise(Left.LatexPriority < LatexPriority)} \lor {Right.Latexise(Right.LatexPriority < LatexPriority)}";
+            public override string Latexize()
+                => $@"{Left.Latexize(Left.LatexPriority < LatexPriority)} \lor {Right.Latexize(Right.LatexPriority < LatexPriority)}";
         }
 
         partial record Xorf
         {
             /// <inheritdoc/>
             // NOTE: \veebar (⊻) can disambiguate better than \oplus (⊕) which can mean the direct sum in algebra.
-            public override string Latexise()
-                => $@"{Left.Latexise(Left.LatexPriority < LatexPriority)} \veebar {Right.Latexise(Right.LatexPriority < LatexPriority)}";
+            public override string Latexize()
+                => $@"{Left.Latexize(Left.LatexPriority < LatexPriority)} \veebar {Right.Latexize(Right.LatexPriority < LatexPriority)}";
         }
 
         partial record Impliesf
@@ -98,22 +98,22 @@ namespace AngouriMath
             // \implies (⇒) is a metalanguage symbol indicating a logical consequence or entailment. It's used to express that one statement logically follows from another.
             // ISO 80000-2 puts ⇒ first for implies, but → is also accepted and is more common in logic contexts.
             // ⇒ can be used in steps for proofs if we were to add it later.
-            public override string Latexise()
-                => $@"{Assumption.Latexise(Assumption.LatexPriority <= LatexPriority)} \to {Conclusion.Latexise(Conclusion.LatexPriority < LatexPriority)}";
+            public override string Latexize()
+                => $@"{Assumption.Latexize(Assumption.LatexPriority <= LatexPriority)} \to {Conclusion.Latexize(Conclusion.LatexPriority < LatexPriority)}";
         }
 
         partial record Equalsf
         {
             /// <inheritdoc/>
-            public override string Latexise()
-                => $@"{Left.Latexise(Left.LatexPriority <= LatexPriority)} = {Right.Latexise(Right.LatexPriority <= LatexPriority)}";
+            public override string Latexize()
+                => $@"{Left.Latexize(Left.LatexPriority <= LatexPriority)} = {Right.Latexize(Right.LatexPriority <= LatexPriority)}";
         }
 
         partial record Greaterf
         {
             /// <inheritdoc/>
-            public override string Latexise()
-                => $@"{Left.Latexise(Left.LatexPriority <= LatexPriority)} > {Right.Latexise(Right.LatexPriority <= LatexPriority)}";
+            public override string Latexize()
+                => $@"{Left.Latexize(Left.LatexPriority <= LatexPriority)} > {Right.Latexize(Right.LatexPriority <= LatexPriority)}";
         }
 
         partial record GreaterOrEqualf
@@ -121,15 +121,15 @@ namespace AngouriMath
             /// <inheritdoc/>
             // NOTE: While \geqslant (⩾) is more used in e.g. Russian texts, \geq (≥) is more universally used in English texts.
             // Since the output language of LaTeX is English (referencing Piecewise and Providedf), \geq is more appropriate.
-            public override string Latexise()
-                => $@"{Left.Latexise(Left.LatexPriority <= LatexPriority)} \geq {Right.Latexise(Right.LatexPriority <= LatexPriority)}";
+            public override string Latexize()
+                => $@"{Left.Latexize(Left.LatexPriority <= LatexPriority)} \geq {Right.Latexize(Right.LatexPriority <= LatexPriority)}";
         }
 
         partial record Lessf
         {
             /// <inheritdoc/>
-            public override string Latexise()
-                => $@"{Left.Latexise(Left.LatexPriority <= LatexPriority)} < {Right.Latexise(Right.LatexPriority <= LatexPriority)}";
+            public override string Latexize()
+                => $@"{Left.Latexize(Left.LatexPriority <= LatexPriority)} < {Right.Latexize(Right.LatexPriority <= LatexPriority)}";
         }
 
         partial record LessOrEqualf
@@ -137,8 +137,8 @@ namespace AngouriMath
             /// <inheritdoc/>
             // NOTE: While \leqslant (⩽) is more used in e.g. Russian texts, \leq (≤) is more universally used in English texts.
             // Since the output language of LaTeX is English (referencing Piecewise and Providedf), \leq is more appropriate.
-            public override string Latexise()
-                => $@"{Left.Latexise(Left.LatexPriority <= LatexPriority)} \leq {Right.Latexise(Right.LatexPriority <= LatexPriority)}";
+            public override string Latexize()
+                => $@"{Left.Latexize(Left.LatexPriority <= LatexPriority)} \leq {Right.Latexize(Right.LatexPriority <= LatexPriority)}";
         }
     }
 }

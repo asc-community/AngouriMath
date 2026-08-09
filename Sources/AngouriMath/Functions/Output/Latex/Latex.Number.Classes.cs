@@ -16,7 +16,7 @@ namespace AngouriMath
             partial record Complex
             {
                 /// <inheritdoc/>
-                public override string Latexise()
+                public override string Latexize()
                 {
                     static string RenderNum(Real number)
                     {
@@ -25,22 +25,22 @@ namespace AngouriMath
                         else if (number == Integer.One)
                             return "";
                         else
-                            return number.Latexise();
+                            return number.Latexize();
                     }
                     if (ImaginaryPart is Integer(0))
-                        return RealPart.Latexise();
+                        return RealPart.Latexize();
                     else if (RealPart is Integer(0))
                         return RenderNum(ImaginaryPart) + @"\mathrm{i}"; // Display i upright per ISO 80000-2.
                     var (im, sign) = ImaginaryPart > 0 ? (ImaginaryPart, "+") : (-ImaginaryPart, "-");
-                    return RealPart.Latexise() + " " + sign + " " +
-                        (im == 1 ? "" : im.Latexise(ImaginaryPart is Rational and not Integer)) + @"\mathrm{i}";
+                    return RealPart.Latexize() + " " + sign + " " +
+                        (im == 1 ? "" : im.Latexize(ImaginaryPart is Rational and not Integer)) + @"\mathrm{i}";
                 }
             }
 
             partial record Real
             {
                 /// <inheritdoc/>
-                public override string Latexise() => this switch
+                public override string Latexize() => this switch
                 {
                     { IsFinite: true } => EDecimal.ToString(),
                     { IsNaN: true } => @"\mathrm{undefined}",
@@ -52,14 +52,14 @@ namespace AngouriMath
             partial record Rational
             {
                 /// <inheritdoc/>
-                public override string Latexise() => $@"\frac{{{ERational.Numerator}}}{{{ERational.Denominator}}}";
+                public override string Latexize() => $@"\frac{{{ERational.Numerator}}}{{{ERational.Denominator}}}";
 
             }
 
             partial record Integer
             {
                 /// <inheritdoc/>
-                public override string Latexise() => EInteger.ToString();
+                public override string Latexize() => EInteger.ToString();
             }
         }
     }

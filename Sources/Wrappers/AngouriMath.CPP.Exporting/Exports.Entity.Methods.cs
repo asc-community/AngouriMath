@@ -22,10 +22,10 @@ namespace AngouriMath.CPP.Exporting
                 exprPtr => Marshal.StringToHGlobalAnsi(exprPtr.AsEntity.ToString())
             );
 
-        [UnmanagedCallersOnly(EntryPoint = "entity_latexise")]
+        [UnmanagedCallersOnly(EntryPoint = "entity_latexize")]
         public static NErrorCode EntityToLatex(ObjRef exprPtr, IntPtr* res)
             => ExceptionEncode(res, exprPtr,
-                exprPtr => Marshal.StringToHGlobalAnsi(exprPtr.AsEntity.Latexise())
+                exprPtr => Marshal.StringToHGlobalAnsi(exprPtr.AsEntity.Latexize())
             );
 
         #endregion

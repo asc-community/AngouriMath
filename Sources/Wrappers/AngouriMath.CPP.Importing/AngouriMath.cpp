@@ -84,10 +84,10 @@ namespace AngouriMath
         return innerEntityInstance.get()->CachedString();
     }
 
-    std::string Entity::Latexise() const
+    std::string Entity::Latexize() const
     {
         char* buff = nullptr;
-        HandleErrorCode(entity_latexise(innerEntityInstance.get()->GetReference(), &buff));
+        HandleErrorCode(entity_latexize(innerEntityInstance.get()->GetReference(), &buff));
         auto res = buff != nullptr ? std::string(buff) : std::string();
         free_string(buff);
         return res;

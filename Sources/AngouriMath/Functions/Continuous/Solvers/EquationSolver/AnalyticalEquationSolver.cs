@@ -15,7 +15,7 @@ using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
 {
-    partial record Entity : ILatexiseable
+    partial record Entity : ILatexizeable
     {
         /// <summary>
         /// Attempt to find analytical roots of a custom equation.

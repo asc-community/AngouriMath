@@ -30,7 +30,7 @@
 /// 3. A few essential methods
 ///     a. InnerEval and InnerSimplify (<see cref="AngouriMath.Entity.Sinf.InnerEval"/> for numerical and <see cref="AngouriMath.Entity.Andf.InnerEval"/> for boolean)
 ///     b. Stringize (<see cref="AngouriMath.Entity.Sinf.Stringize"/>) (and tests to CircleTest.cs)
-///     c. Latexise (<see cref="AngouriMath.Entity.Sinf.Latexise"/>) (and tests to LatexTest.cs)
+///     c. Latexize (<see cref="AngouriMath.Entity.Sinf.Latexize"/>) (and tests to LatexTest.cs)
 ///     d. Limit computation (<see cref="AngouriMath.Entity.Sinf.ComputeLimitDivideEtImpera"/>) (and tests to LimitTest.cs)
 ///     e. Hash for sorting (<see cref="AngouriMath.Entity.Sinf.SortHashName"/>)
 ///     f. Default domain <see cref="AngouriMath.Entity.Sinf.Codomain"/>

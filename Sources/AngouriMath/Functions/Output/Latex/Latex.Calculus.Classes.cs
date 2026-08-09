@@ -19,39 +19,39 @@ namespace AngouriMath
         public partial record Derivativef
         {
             /// <inheritdoc/>
-            public override string Latexise()
+            public override string Latexize()
             {
                 if (Iterations < 0)
                 {
                     var sb = new StringBuilder();
                     for (int i = 0; i < -Iterations; i++)
                         sb.Append(@"\int");
-                    sb.Append(' ').Append(Expression.Latexise(Expression.LatexPriority < Priority.LatexCalculusOperation));
+                    sb.Append(' ').Append(Expression.Latexize(Expression.LatexPriority < Priority.LatexCalculusOperation));
 
                     for (int i = 0; i < -Iterations; i++)
                     {
                         sb.Append(@"\,");
                         sb.Append(@"\mathrm{d}");
-                        sb.Append(Var.Latexise(Var is not Variable { IsLatexUprightFormatted: false }));
+                        sb.Append(Var.Latexize(Var is not Variable { IsLatexUprightFormatted: false }));
                     }
                     return sb.ToString();
                 }
                 var powerIfNeeded = Iterations == 1 ? "" : "^{" + Iterations + "}";
                 // NOTE: \mathrm{d} is used for upright 'd' following ISO 80000-2 standard.
                 // The differential operator should be upright (roman) to distinguish it from variables, similar to sin, cos, log, etc.
-                return $$"""\frac{\mathrm{d}{{powerIfNeeded}}}{\mathrm{d}{{Var.Latexise(Var is not Variable { IsLatexUprightFormatted: false })
-                    }}{{powerIfNeeded}}}{{Expression.Latexise(Expression.LatexPriority < Priority.LatexCalculusOperation)}}""";
+                return $$"""\frac{\mathrm{d}{{powerIfNeeded}}}{\mathrm{d}{{Var.Latexize(Var is not Variable { IsLatexUprightFormatted: false })
+                    }}{{powerIfNeeded}}}{{Expression.Latexize(Expression.LatexPriority < Priority.LatexCalculusOperation)}}""";
             }
         }
 
         public partial record Integralf
         {
             /// <inheritdoc/>
-            public override string Latexise()
+            public override string Latexize()
             {
                 var sb = new StringBuilder(@"\int");
-                if (Range is var (from, to)) sb.Append('_').Append('{').Append(from.Latexise()).Append('}').Append('^').Append('{').Append(to.Latexise()).Append('}');
-                sb.Append(' ').Append(Expression.Latexise(Expression.LatexPriority < Priority.LatexCalculusOperation));
+                if (Range is var (from, to)) sb.Append('_').Append('{').Append(from.Latexize()).Append('}').Append('^').Append('{').Append(to.Latexize()).Append('}');
+                sb.Append(' ').Append(Expression.Latexize(Expression.LatexPriority < Priority.LatexCalculusOperation));
 
                 // NOTE: \mathrm{d} is used for upright 'd' following ISO 80000-2 standard.
                 // The differential operator should be upright (roman) to distinguish it from variables.
@@ -61,7 +61,7 @@ namespace AngouriMath
                 // Thin spaces (\,) are added between differentials following standard practice.
                 sb.Append(@"\,"); // Leading space before first differential and between differentials
                 sb.Append(@"\mathrm{d}");
-                sb.Append(Var.Latexise(Var is not Variable { IsLatexUprightFormatted: false }));
+                sb.Append(Var.Latexize(Var is not Variable { IsLatexUprightFormatted: false }));
                 return sb.ToString();
             }
         }
@@ -69,27 +69,27 @@ namespace AngouriMath
         public partial record Limitf
         {
             /// <inheritdoc/>
-            public override string Latexise()
+            public override string Latexize()
             {
                 var sb = new StringBuilder();
-                sb.Append(@"\lim_{").Append(Var.Latexise())
+                sb.Append(@"\lim_{").Append(Var.Latexize())
                     .Append(@"\to ");
 
                 switch (ApproachFrom)
                 {
                     case ApproachFrom.Left:
-                        sb.Append(Destination.Latexise(Destination.LatexPriority <= Priority.Pow)).Append("^-");
+                        sb.Append(Destination.Latexize(Destination.LatexPriority <= Priority.Pow)).Append("^-");
                         break;
                     case ApproachFrom.Right:
-                        sb.Append(Destination.Latexise(Destination.LatexPriority <= Priority.Pow)).Append("^+");
+                        sb.Append(Destination.Latexize(Destination.LatexPriority <= Priority.Pow)).Append("^+");
                         break;
                     case ApproachFrom.BothSides:
-                        sb.Append(Destination.Latexise());
+                        sb.Append(Destination.Latexize());
                         break;
                 }
 
                 sb.Append("} ");
-                sb.Append(Expression.Latexise(Expression.LatexPriority < Priority.LatexCalculusOperation));
+                sb.Append(Expression.Latexize(Expression.LatexPriority < Priority.LatexCalculusOperation));
                 return sb.ToString();
             }
         }

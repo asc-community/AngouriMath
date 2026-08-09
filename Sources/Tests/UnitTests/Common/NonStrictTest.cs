@@ -18,7 +18,7 @@ namespace AngouriMath.Tests.Common
         public void TensorLatex()
         {
             var tens = MathS.Matrices.Matrix(2, 2, 1342, 2123, 1423, 1122);
-            Assert.True(tens.Latexise().Length > 16);
+            Assert.True(tens.Latexize().Length > 16);
         }
 
         [Fact]
@@ -28,7 +28,7 @@ namespace AngouriMath.Tests.Common
                 "x + 3",
                 "y + x + 5"
             );
-            Assert.True(eq.Latexise().Length > 10);
+            Assert.True(eq.Latexize().Length > 10);
         }
 
         [Fact]

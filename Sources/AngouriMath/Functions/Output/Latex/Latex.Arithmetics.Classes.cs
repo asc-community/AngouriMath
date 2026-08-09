@@ -14,24 +14,24 @@ namespace AngouriMath
         public partial record Sumf
         {
             /// <inheritdoc/>
-            public override string Latexise() =>
-                Augend.Latexise(Augend.LatexPriority < LatexPriority)
-                + (Addend.Latexise(Addend.LatexPriority < LatexPriority) is var addend && addend.StartsWith("-")
+            public override string Latexize() =>
+                Augend.Latexize(Augend.LatexPriority < LatexPriority)
+                + (Addend.Latexize(Addend.LatexPriority < LatexPriority) is var addend && addend.StartsWith("-")
                     ? addend : "+" + addend);
         }
 
         public partial record Minusf
         {
             /// <inheritdoc/>
-            public override string Latexise() =>
-                Minuend.Latexise(Minuend.LatexPriority < LatexPriority)
-                + "-" + Subtrahend.Latexise(Subtrahend.LatexPriority <= LatexPriority);
+            public override string Latexize() =>
+                Minuend.Latexize(Minuend.LatexPriority < LatexPriority)
+                + "-" + Subtrahend.Latexize(Subtrahend.LatexPriority <= LatexPriority);
         }
 
         public partial record Mulf
         {
             /// <inheritdoc/>
-            public override string Latexise()
+            public override string Latexize()
             {
                 var longArray = GatherProducts(this).ToArray();
                 return longArray.AggregateIndexed("",
@@ -44,15 +44,15 @@ namespace AngouriMath
                                 {
                                     // -1, -2, 2i, i, -i, -2i etc. in the front and not (1+i) etc.
                                     Number { LatexPriority: Priority.Sum } and not Complex { RealPart.IsZero: false, ImaginaryPart.IsZero: false } =>
-                                        currIn.Latexise(false),
-                                    _ => currIn.Latexise(currIn.LatexPriority < LatexPriority)
+                                        currIn.Latexize(false),
+                                    _ => currIn.Latexize(currIn.LatexPriority < LatexPriority)
                                 };
                             case 1:
                                 if (longArray[index - 1] is Integer(-1))
-                                    return $"-{currIn.Latexise(currIn.LatexPriority < LatexPriority)}"; // display "-1 * x * y" as "-x \cdot y", only for the first -1
+                                    return $"-{currIn.Latexize(currIn.LatexPriority < LatexPriority)}"; // display "-1 * x * y" as "-x \cdot y", only for the first -1
                                 break;
                         }
-                        var currOut = currIn.Latexise(currIn.LatexPriority < LatexPriority);
+                        var currOut = currIn.Latexize(currIn.LatexPriority < LatexPriority);
 
                         return (longArray[index - 1], currIn) switch // whether we use juxtaposition and omit \cdot
                         {
@@ -90,39 +90,39 @@ namespace AngouriMath
         public partial record Divf
         {
             /// <inheritdoc/>
-            public override string Latexise() =>
-                @"\frac{" + Dividend.Latexise() + "}{" + Divisor.Latexise() + "}";
+            public override string Latexize() =>
+                @"\frac{" + Dividend.Latexize() + "}{" + Divisor.Latexize() + "}";
         }
 
         public partial record Modf
         {
             /// <inheritdoc/>
-            public override string Latexise() =>
-                Dividend.Latexise(Dividend.Priority < Priority) + @" \bmod " + Divisor.Latexise(Divisor.Priority <= Priority);
+            public override string Latexize() =>
+                Dividend.Latexize(Dividend.Priority < Priority) + @" \bmod " + Divisor.Latexize(Divisor.Priority <= Priority);
         }
 
         public partial record Logf
         {
             /// <inheritdoc/>
-            public override string Latexise() =>
+            public override string Latexize() =>
                 Base == 10
-                ? @"\log\left(" + Antilogarithm.Latexise() + @"\right)"
+                ? @"\log\left(" + Antilogarithm.Latexize() + @"\right)"
                 : Base == MathS.e
-                ? @"\ln\left(" + Antilogarithm.Latexise() + @"\right)"
-                : @"\log_{" + Base.Latexise() + @"}\left(" + Antilogarithm.Latexise() + @"\right)";
+                ? @"\ln\left(" + Antilogarithm.Latexize() + @"\right)"
+                : @"\log_{" + Base.Latexize() + @"}\left(" + Antilogarithm.Latexize() + @"\right)";
         }
 
         public partial record Powf
         {
             /// <inheritdoc/>
-            public override string Latexise()
+            public override string Latexize()
             {
                 if (Exponent is Rational { ERational: { Numerator: var numerator, Denominator: var denominator } }
                     and not Integer)
                 {
                     var str =
                         @"\sqrt" + (denominator.Equals(2) ? "" : "[" + denominator + "]")
-                        + "{" + Base.Latexise() + "}";
+                        + "{" + Base.Latexize() + "}";
                     var abs = numerator.Abs();
                     if (!abs.Equals(EInteger.One))
                         str += "^{" + abs + "}";
@@ -132,7 +132,7 @@ namespace AngouriMath
                 }
                 else
                 {
-                    return "{" + Base.Latexise(Base.LatexPriority <= LatexPriority) + "}^{" + Exponent.Latexise() + "}";
+                    return "{" + Base.Latexize(Base.LatexPriority <= LatexPriority) + "}^{" + Exponent.Latexize() + "}";
                 }
             }
         }
@@ -140,72 +140,72 @@ namespace AngouriMath
         public partial record Factorialf
         {
             /// <inheritdoc/>
-            public override string Latexise() =>
-                Argument.Latexise(Argument.LatexPriority <= LatexPriority) + "!";
+            public override string Latexize() =>
+                Argument.Latexize(Argument.LatexPriority <= LatexPriority) + "!";
         }
 
         partial record Signumf
         {
             /// <inheritdoc/>
-            public override string Latexise()
-                => $@"\operatorname{{sgn}}\left({Argument.Latexise()}\right)";
+            public override string Latexize()
+                => $@"\operatorname{{sgn}}\left({Argument.Latexize()}\right)";
         }
 
         partial record Absf
         {
             /// <inheritdoc/>
-            public override string Latexise()
-                => $@"\left|{Argument.Latexise()}\right|";
+            public override string Latexize()
+                => $@"\left|{Argument.Latexize()}\right|";
         }
 
         partial record Floorf
         {
             /// <inheritdoc/>
-            public override string Latexise()
-                => $@"\left\lfloor{{{Argument.Latexise()}}}\right\rfloor";
+            public override string Latexize()
+                => $@"\left\lfloor{{{Argument.Latexize()}}}\right\rfloor";
         }
 
         partial record Ceilf
         {
             /// <inheritdoc/>
-            public override string Latexise()
-                => $@"\left\lceil{{{Argument.Latexise()}}}\right\rceil";
+            public override string Latexize()
+                => $@"\left\lceil{{{Argument.Latexize()}}}\right\rceil";
         }
 
         partial record Roundf
         {
             // The nearest-integer brackets: a floor on the left, a ceiling on the right.
             /// <inheritdoc/>
-            public override string Latexise()
-                => $@"\left\lfloor{{{Argument.Latexise()}}}\right\rceil";
+            public override string Latexize()
+                => $@"\left\lfloor{{{Argument.Latexize()}}}\right\rceil";
         }
 
         partial record Minf
         {
             /// <inheritdoc/>
-            public override string Latexise()
-                => $@"\min\left({Left.Latexise()}, {Right.Latexise()}\right)";
+            public override string Latexize()
+                => $@"\min\left({Left.Latexize()}, {Right.Latexize()}\right)";
         }
 
         partial record Maxf
         {
             /// <inheritdoc/>
-            public override string Latexise()
-                => $@"\max\left({Left.Latexise()}, {Right.Latexise()}\right)";
+            public override string Latexize()
+                => $@"\max\left({Left.Latexize()}, {Right.Latexize()}\right)";
         }
 
         partial record Gcdf
         {
             /// <inheritdoc/>
-            public override string Latexise()
-                => $@"\gcd\left({Left.Latexise()}, {Right.Latexise()}\right)";
+            public override string Latexize()
+                => $@"\gcd\left({Left.Latexize()}, {Right.Latexize()}\right)";
         }
 
         partial record Phif
         {
             /// <inheritdoc/>
             // NOTE: \operatorname is used here to distinguish the phi function from variables, consistent with sgn and other functions.
-            public override string Latexise() => $@"\operatorname{{\varphi}}\left({Argument.Latexise()}\right)";
+            public override string Latexize() => $@"\operatorname{{\varphi}}\left({Argument.Latexize()}\right)";
         }
     }
 }

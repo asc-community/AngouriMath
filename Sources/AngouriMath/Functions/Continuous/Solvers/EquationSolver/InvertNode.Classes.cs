@@ -10,7 +10,7 @@ using AngouriMath.Functions.Algebra;
 
 namespace AngouriMath
 {
-    partial record Entity : ILatexiseable
+    partial record Entity : ILatexizeable
     {
         partial record Number
         {

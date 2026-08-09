@@ -119,7 +119,7 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("max(x, y)", @"\max\left(x, y\right)")]
         [InlineData("gcd(x, y)", @"\gcd\left(x, y\right)")]
         public void TheLatexIsTheUsualNotation(string input, string expected)
-            => Assert.Equal(expected, input.ToEntity().Latexise());
+            => Assert.Equal(expected, input.ToEntity().Latexize());
 
         /// <summary>
         /// Round is flat between the <i>half</i>-integers and jumps at each of them, which is

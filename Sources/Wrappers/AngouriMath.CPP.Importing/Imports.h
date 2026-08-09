@@ -17,7 +17,7 @@ extern "C"
     DLL_CODE NativeErrorCode free_string(String);
 
     DLL_CODE NativeErrorCode entity_to_string(EntityRef, StringOut);
-    DLL_CODE NativeErrorCode entity_latexise(EntityRef, StringOut);
+    DLL_CODE NativeErrorCode entity_latexize(EntityRef, StringOut);
     DLL_CODE NativeErrorCode maths_from_string(String, EntityOut);
 
     DLL_CODE NativeErrorCode entity_differentiate(EntityRef, EntityRef, EntityOut);

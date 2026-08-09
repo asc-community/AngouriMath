@@ -37,22 +37,22 @@ namespace AngouriMath
                 // Single-letter variables remain italic as per standard mathematical typography.
                 varName.Length > 1 && !LatexisableConstants.Contains(varName);
             /// <summary>
-            /// Returns latexised const if it is possible to latexise it,
+            /// Returns latexized const if it is possible to latexize it,
             /// or its original name otherwise
             /// </summary>
-            public override string Latexise()
+            public override string Latexize()
             {
-                static string LatexisePart(string symbol)
+                static string LatexizePart(string symbol)
                 {
                     var inner = LatexisableConstants.Contains(symbol) ? $@"\{symbol}" : symbol;
                     return IsNameLatexUprightFormatted(symbol) ? $@"\mathrm{{{inner}}}" : inner;
                 }
                 // For variables with subscripts (e.g., "pi_2", "x_e", "e_pi")
-                // Both the main part and subscript are processed through LatexisePart,
+                // Both the main part and subscript are processed through LatexizePart,
                 // which handles upright formatting for "pi" and "e" consistently
                 return SplitIndex() is var (prefix, index)
-                    ? $"{LatexisePart(prefix)}_{{{LatexisePart(index)}}}"
-                    : LatexisePart(Name);
+                    ? $"{LatexizePart(prefix)}_{{{LatexizePart(index)}}}"
+                    : LatexizePart(Name);
             }
         }
     }

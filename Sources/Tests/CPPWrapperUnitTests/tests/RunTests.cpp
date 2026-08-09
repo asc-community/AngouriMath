@@ -30,13 +30,13 @@ TEST(RunTests, ParsingTest3) {
 TEST(RunTests, Latex1) {
     auto src = "x + 1";
     AngouriMath::Entity entity = src;
-    EXPECT_EQ("x+1", entity.Latexise());
+    EXPECT_EQ("x+1", entity.Latexize());
 }
 
 TEST(RunTests, Latex2) {
     auto src = "sqrt(x)";
     AngouriMath::Entity entity = src;
-    EXPECT_EQ("\\sqrt{x}", entity.Latexise());
+    EXPECT_EQ("\\sqrt{x}", entity.Latexize());
 }
 
 TEST(RunTests, DiffTest1) {

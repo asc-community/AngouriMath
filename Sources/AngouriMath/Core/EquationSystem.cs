@@ -17,13 +17,13 @@ namespace AngouriMath.Core
     /// It is a system of arbitrary equations, not only those linear. However,
     /// it is not a system of <see cref="Statement"/>s.
     /// </summary>
-    public sealed class EquationSystem : ILatexiseable
+    public sealed class EquationSystem : ILatexizeable
     {
         private readonly IEnumerable<Entity> equations;
 
         /// <summary>
         /// The equations you pass should not have an <see cref="MathS.Equality"/> node.
-        /// After having created a system of equations, you may solve or latexise it.
+        /// After having created a system of equations, you may solve or latexize it.
         /// </summary>
         /// <param name="equations">
         /// Any <see cref="IEnumerable{T}"/> parameter, such as <see cref="List{T}"/> or <see cref="System.Array"/>.
@@ -40,7 +40,7 @@ namespace AngouriMath.Core
 
         /// <summary>
         /// The equations you pass should not have an <see cref="MathS.Equality"/> node.
-        /// After having created a system of equations, you may solve or latexise it.
+        /// After having created a system of equations, you may solve or latexize it.
         /// </summary>
         /// <param name="equations">
         /// An <see cref="System.Array"/>
@@ -73,19 +73,19 @@ namespace AngouriMath.Core
         public Matrix? Solve(params Variable[] vars) => EquationSolver.SolveSystem(equations, vars);
 
         /// <returns>
-        /// Latexised version of the system. It adds
+        /// Latexized version of the system. It adds
         /// zero equality to all the provided expressions
         /// </returns>
-        public string Latexise()
+        public string Latexize()
         {
             using var enumerator = equations.GetEnumerator();
             if (!enumerator.MoveNext())
                 return string.Empty;
-            var firstEquation = enumerator.Current.Latexise() + " = 0";
+            var firstEquation = enumerator.Current.Latexize() + " = 0";
             if (!enumerator.MoveNext())
                 return firstEquation;
             var sb = new StringBuilder(@"\begin{cases}").Append(firstEquation);
-            do sb.Append(@"\\").Append(enumerator.Current.Latexise()).Append(" = 0");
+            do sb.Append(@"\\").Append(enumerator.Current.Latexize()).Append(" = 0");
             while (enumerator.MoveNext());
             sb.Append(@"\end{cases}");
             return sb.ToString();
