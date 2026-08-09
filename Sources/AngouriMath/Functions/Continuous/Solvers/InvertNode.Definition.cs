@@ -7,7 +7,7 @@
 
 namespace AngouriMath
 {
-    partial record Entity : ILatexiseable
+    partial record Entity : ILatexizeable
     {
         /// <summary><para>This <see cref="Entity"/> MUST contain exactly ONE occurance of <paramref name="x"/>,
         /// otherwise this function won't work correctly.</para>

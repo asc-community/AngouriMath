@@ -64,7 +64,7 @@ namespace AngouriMath
 
         // Methods
         std::string ToString() const;
-        std::string Latexise() const;
+        std::string Latexize() const;
         Entity Differentiate(const Entity& var) const;
         Entity Integrate(const Entity& var) const;
         Entity Solve(const Entity& var) const;

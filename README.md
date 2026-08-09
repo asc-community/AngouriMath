@@ -264,7 +264,7 @@ Console.WriteLine("x^2 + x + a".SolveEquation("x"));
 Under developing now and forever (always available)
 ```cs
 Entity expr = "(sin(x)^2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
-Console.WriteLine(expr.SolveEquation("x").Latexise());
+Console.WriteLine(expr.SolveEquation("x").Latexize());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\left\{-\left(-\arcsin\left(\frac{1-\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\pi--\arcsin\left(\frac{1-\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\arcsin\left(\frac{1%2B\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\pi--\arcsin\left(\frac{1%2B\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),\frac{-b}{-1},-i,i,1,2\right\}">
 
@@ -297,7 +297,7 @@ var system = MathS.Equations(
     "cos(x2 + 1)^2 + 3y",
     "y * (-1) + 4cos(x2 + 1)"
 );
-Console.WriteLine(system.Latexise());
+Console.WriteLine(system.Latexize());
 var solutions = system.Solve("x", "y");
 Console.WriteLine(solutions);
 ```
@@ -334,10 +334,10 @@ WriteLine("x^2 + a x".Integrate("x").InnerSimplified);
 
 There are four types of sets:
 ```cs
-WriteLine("{ 1, 2 }".Latexise());
-WriteLine("[3; +oo)".Latexise());
-WriteLine("RR".Latexise());
-WriteLine("{ x : x^8 + a x < 0 }".Latexise());
+WriteLine("{ 1, 2 }".Latexize());
+WriteLine("[3; +oo)".Latexize());
+WriteLine("RR".Latexize());
+WriteLine("{ x : x^8 + a x < 0 }".Latexize());
 ```
 
 <img src="https://render.githubusercontent.com/render/math?math=\left\{ 1, 2 \right\}">
@@ -347,9 +347,9 @@ WriteLine("{ x : x^8 + a x < 0 }".Latexise());
 
 And there operators:
 ```cs
-WriteLine(@"A \/ B".Latexise());
-WriteLine(@"A /\ B".Latexise());
-WriteLine(@"A \ B".Latexise());
+WriteLine(@"A \/ B".Latexize());
+WriteLine(@"A /\ B".Latexize());
+WriteLine(@"A \ B".Latexize());
 ```
 
 <img src="https://render.githubusercontent.com/render/math?math=A\cup B">
@@ -363,7 +363,7 @@ WriteLine(@"A \ B".Latexise());
 You can build LaTeX with AngouriMath:
 ```cs
 var expr = "x ^ y + sqrt(x) + integral(sqrt(x) / a, x, 1) + derive(sqrt(x) / a, x, 1) + limit(sqrt(x) / a, x, +oo)";
-Console.WriteLine(expr.Latexise());
+Console.WriteLine(expr.Latexize());
 >>> {x}^{y}+\sqrt{x}+\int \left[\frac{\sqrt{x}}{a}\right] dx+\frac{d\left[\frac{\sqrt{x}}{a}\right]}{dx}+\lim_{x\to \infty } \left[\frac{\sqrt{x}}{a}\right]
 ```
 <img src="https://render.githubusercontent.com/render/math?math={x}^{y}%2B\sqrt{x}%2B\int\left[\frac{\sqrt{x}}{a}\right]dx%2B\frac{d\left[\frac{\sqrt{x}}{a}\right]}{dx}%2B\lim_{x\to\infty}\left[\frac{\sqrt{x}}{a}\right]">

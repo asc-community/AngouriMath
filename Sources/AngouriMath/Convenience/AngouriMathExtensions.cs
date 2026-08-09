@@ -279,7 +279,7 @@ namespace AngouriMath.Extensions
         /// Builds a LaTeX code from an expression
         /// </summary>
         /// <returns>A <see cref="string"/> which can be rendered into pretty output</returns>
-        public static string Latexise(this string str) => str.ToEntity().Latexise();
+        public static string Latexize(this string str) => str.ToEntity().Latexize();
 
         /// <summary>
         /// Compiles an expression into a special compiled code that runs via

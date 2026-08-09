@@ -12,9 +12,9 @@ open AngouriMath.FSharp.Functions
 
 type KernelExtension() = 
     static member public applyMagic () =
-        let registerLatexRendering (latexiser : 'a -> string) =
+        let registerLatexRendering (latexizer : 'a -> string) =
             // register text/latex
-            (fun o -> $"$${latexiser o}$$")
+            (fun o -> $"$${latexizer o}$$")
             |> (fun f -> new Func<'a, string>(f))
             |> (fun f -> Formatter.Register<'a>(f, "text/latex"))
 
@@ -22,7 +22,7 @@ type KernelExtension() =
             (fun o -> $@"
 <script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>
 <script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>
-\[{latexiser o}\]")
+\[{latexizer o}\]")
             |> (fun f -> new Func<'a, string>(f))
             |> (fun f -> Formatter.Register<'a>(f, "text/html"))
 
@@ -36,7 +36,7 @@ type KernelExtension() =
         Formatter.SetPreferredMimeTypesFor(typeof<EInteger>, "text/plain")
         Formatter.Register<EInteger>(new Func<EInteger, string>(fun o -> o.ToString()), "text/plain")
 
-        registerLatexRendering (fun (o : ILatexiseable) -> latex o)
+        registerLatexRendering (fun (o : ILatexizeable) -> latex o)
 
         registerLatexRendering (fun (o : ERational) -> $@"\frac{{{o.Numerator}}}{{{o.Denominator}}}")
 

@@ -8,7 +8,7 @@
 namespace AngouriMath
 {
     using Core;
-    partial record Entity : ILatexiseable
+    partial record Entity : ILatexizeable
     {
         /// <summary>
         /// Returns the expression in LaTeX
@@ -16,7 +16,7 @@ namespace AngouriMath
         /// <example>
         /// <code>
         /// Entity expr = "a / b + sqrt(c)";
-        /// Console.WriteLine(expr.Latexise());
+        /// Console.WriteLine(expr.Latexize());
         /// </code>
         /// Output:
         /// <code>
@@ -31,10 +31,10 @@ namespace AngouriMath
         /// 
         /// Entity expr = "sqrt(a) + integral(sin(x), x)";
         /// Console.WriteLine(expr);
-        /// Console.WriteLine(expr.Latexise());
+        /// Console.WriteLine(expr.Latexize());
         /// Entity expr2 = "a / b ^ limit(sin(x) - cosh(y), x, +oo)";
         /// Console.WriteLine(expr2);
-        /// Console.WriteLine(expr2.Latexise());
+        /// Console.WriteLine(expr2.Latexize());
         /// </code>
         /// Prints
         /// <code>
@@ -44,7 +44,7 @@ namespace AngouriMath
         /// \frac{a}{{b}^{\lim_{x\to \infty } \left[\sin\left(x\right)-\frac{{e}^{y}+{e}^{-y}}{2}\right]}}
         /// </code>
         /// </example>
-        public abstract string Latexise();
+        public abstract string Latexize();
         /// <summary>
         /// Calculus operators, unlike other functions, have a <see cref="LatexPriority"/> between addition/subtraction
         /// and multiplication/division which is different from <see cref="Priority"/>.
@@ -53,7 +53,7 @@ namespace AngouriMath
 
         /// <summary>Returns the expression in LaTeX (for example, a / b -> \frac{a}{b})</summary>
         /// <param name="parenthesesRequired">Whether to wrap it with parentheses</param>
-        protected internal string Latexise(bool parenthesesRequired) =>
-            parenthesesRequired ? @$"\left({Latexise()}\right)" : Latexise();
+        protected internal string Latexize(bool parenthesesRequired) =>
+            parenthesesRequired ? @$"\left({Latexize()}\right)" : Latexize();
     }
 }

@@ -3162,7 +3162,7 @@ namespace AngouriMath
         /// var inCyrillic = Var("Абаваола");
         /// </code>
         /// Underscore "_" allows indexing. Greek letter names (e. g.
-        /// "alpha") will be latexised as Greek letter (but other than that,
+        /// "alpha") will be latexized as Greek letter (but other than that,
         /// will appear as "alpha" in other places).
         /// </example>
         public static Variable Var(string name) => name;
@@ -3184,7 +3184,7 @@ namespace AngouriMath
         /// var inCyrillic = Var("Абаваола");
         /// </code>
         /// Underscore "_" allows indexing. Greek letter names (e. g.
-        /// "alpha") will be latexised as Greek letter (but other than that,
+        /// "alpha") will be latexized as Greek letter (but other than that,
         /// will appear as "alpha" in other places).
         /// </example>
         public static (Variable, Variable) Var(string name1, string name2) => (Var(name1), Var(name2));
@@ -3206,7 +3206,7 @@ namespace AngouriMath
         /// var inCyrillic = Var("Абаваола");
         /// </code>
         /// Underscore "_" allows indexing. Greek letter names (e. g.
-        /// "alpha") will be latexised as Greek letter (but other than that,
+        /// "alpha") will be latexized as Greek letter (but other than that,
         /// will appear as "alpha" in other places).
         /// </example>
         public static (Variable, Variable, Variable) Var(string name1, string name2, string name3)
@@ -3231,7 +3231,7 @@ namespace AngouriMath
         /// var inCyrillic = Var("Абаваола");
         /// </code>
         /// Underscore "_" allows indexing. Greek letter names (e. g.
-        /// "alpha") will be latexised as Greek letter (but other than that,
+        /// "alpha") will be latexized as Greek letter (but other than that,
         /// will appear as "alpha" in other places).
         /// </example>
         public static (Variable, Variable, Variable, Variable) Var(string name1, string name2, string name3, string name4)
@@ -3256,7 +3256,7 @@ namespace AngouriMath
         /// var inCyrillic = Var("Абаваола");
         /// </code>
         /// Underscore "_" allows indexing. Greek letter names (e. g.
-        /// "alpha") will be latexised as Greek letter (but other than that,
+        /// "alpha") will be latexized as Greek letter (but other than that,
         /// will appear as "alpha" in other places).
         /// </example>
         public static (Variable, Variable, Variable, Variable, Variable) Var(string name1, string name2, string name3, string name4, string name5)
@@ -3984,7 +3984,7 @@ namespace AngouriMath
         /// <returns>
         /// The <a href="https://en.wikipedia.org/wiki/LaTeX">LaTeX</a> representation of the argument
         /// </returns>
-        /// <param name="latexiseable">
+        /// <param name="latexizeable">
         /// Any element (<see cref="Entity"/>, <see cref="Set"/>, etc.) that can be represented in LaTeX
         /// </param>
         /// <example>
@@ -4008,7 +4008,7 @@ namespace AngouriMath
         /// \frac{a}{{b}^{\lim_{x\to \infty } \left[\sin\left(x\right)-\frac{{e}^{y}+{e}^{-y}}{2}\right]}}
         /// </code>
         /// </example>
-        public static string Latex(ILatexiseable latexiseable) => latexiseable.Latexise();
+        public static string Latex(ILatexizeable latexizeable) => latexizeable.Latexize();
 
         /// <summary>
         /// <para>All operations for <see cref="Number"/> and its derived classes are available from here.</para>

@@ -28,7 +28,7 @@ Formatter.Register<PeterO.Numbers.EDecimal>(o => o.ToString(), "text/plain");
 Formatter.SetPreferredMimeTypesFor(typeof(PeterO.Numbers.EInteger), "text/plain");
 Formatter.Register<PeterO.Numbers.EInteger>(o => o.ToString(), "text/plain");
 
-RegisterLatex<AngouriMath.Core.ILatexiseable>(o => o.Latexise());
+RegisterLatex<AngouriMath.Core.ILatexizeable>(o => o.Latexize());
 
 RegisterLatex<PeterO.Numbers.ERational>(o => $@"\frac{{{o.Numerator}}}{{{o.Denominator}}}");
 

@@ -70,10 +70,10 @@ namespace AngouriMath.Core
     /// 
     /// Entity expr = "sqrt(a) + integral(sin(x), x)";
     /// Console.WriteLine(expr);
-    /// Console.WriteLine(expr.Latexise());
+    /// Console.WriteLine(expr.Latexize());
     /// Entity expr2 = "a / b ^ limit(sin(x) - cosh(y), x, +oo)";
     /// Console.WriteLine(expr2);
-    /// Console.WriteLine(expr2.Latexise());
+    /// Console.WriteLine(expr2.Latexize());
     /// </code>
     /// Prints
     /// <code>
@@ -83,13 +83,13 @@ namespace AngouriMath.Core
     /// \frac{a}{{b}^{\lim_{x\to \infty } \left[\sin\left(x\right)-\frac{{e}^{y}+{e}^{-y}}{2}\right]}}
     /// </code>
     /// </example>
-    public interface ILatexiseable
+    public interface ILatexizeable
     { 
         /// <summary>
         /// Converts the object to the LaTeX format
         /// That is, a string that can be later displayed and rendered as LaTeX
         /// </summary>
-        public string Latexise(); 
+        public string Latexize(); 
     }
 }
 
@@ -101,7 +101,7 @@ namespace AngouriMath
     /// Every node, expression, or number is an <see cref="Entity"/>.
     /// However, you cannot create an instance of this class, look for the nested classes instead.
     /// </summary>
-    public abstract partial record Entity : ILatexiseable
+    public abstract partial record Entity : ILatexizeable
     {
         /// <summary>
         /// Returns the array of the direct children. Will be

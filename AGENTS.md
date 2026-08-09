@@ -92,16 +92,16 @@ printed with `if` came back as a product with `if` read as an undeclared variabl
 usual notation is not in the grammar, print the function call the parser does have.
 `StringizeRoundTripTest` is where that is enforced; add to it when you add a node.
 
-**`Latexise` has a round trip too, and it is enforced in someone else's repository.**
+**`Latexize` has a round trip too, and it is enforced in someone else's repository.**
 [CSharpMath.Evaluation](https://github.com/verybadcat/CSharpMath/blob/master/CSharpMath.Evaluation/Evaluation.cs)
 reads LaTeX back into an `Entity`, and says so in its own source: *"CSharpMath must handle all LaTeX
-coming from AngouriMath or a bug is present!"* So a change to what `Latexise` emits — a new node, a
+coming from AngouriMath or a bug is present!"* So a change to what `Latexize` emits — a new node, a
 different command, a changed bracketing — can break a downstream project, and no test here will say
 so.
 
 That is weaker than `Stringize`'s contract, not stronger. `StringizeRoundTripTest` fails in this
 repository the moment the printed form stops parsing; the LaTeX contract fails as a bug report from
-someone else, months later. When you change `Latexise` output, check it against CSharpMath and open
+someone else, months later. When you change `Latexize` output, check it against CSharpMath and open
 a PR there as well ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
 
 The syntax the parser accepts is written down in
@@ -217,7 +217,7 @@ the *basis* is, and it is made differently on purpose:
 
 | | basis | why |
 |---|---|---|
-| quantum | `Entity`-backed | the state is then an ordinary expression, so `Simplify`, `Substitute`, `Latexise` and the rest work on it without anything being taught about quantum |
+| quantum | `Entity`-backed | the state is then an ordinary expression, so `Simplify`, `Substitute`, `Latexize` and the rest work on it without anything being taught about quantum |
 | polynomials, series | a generic `TBasis` struct | exponent vectors never enter the expression tree, and the internal layers stay allocation-free and type-safe |
 
 One generic spine, instantiated twice. That is less tidy than picking a single answer, and the

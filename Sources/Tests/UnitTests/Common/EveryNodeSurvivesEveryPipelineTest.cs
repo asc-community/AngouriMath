@@ -74,7 +74,7 @@ namespace AngouriMath.Tests.Common
         private static readonly (string Name, Action<Entity> Run)[] Pipelines =
         {
             ("Stringize",     e => e.Stringize()),
-            ("Latexise",      e => e.Latexise()),
+            ("Latexize",      e => e.Latexize()),
             ("ToString",      e => e.ToString()),
             ("InnerSimplified", e => { _ = e.InnerSimplified; }),
             ("Evaled",        e => { _ = e.Evaled; }),

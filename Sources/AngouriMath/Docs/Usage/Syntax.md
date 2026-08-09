@@ -16,7 +16,7 @@ form would silently come back as something else.
 **LaTeX output has a round trip too, and it is checked in someone else's repository.**
 [CSharpMath.Evaluation](https://github.com/verybadcat/CSharpMath/blob/master/CSharpMath.Evaluation/Evaluation.cs)
 reads LaTeX back into an `Entity` and says so in its own source — *"CSharpMath must handle all
-LaTeX coming from AngouriMath or a bug is present!"* — so `Latexise` is free to use `\frac`,
+LaTeX coming from AngouriMath or a bug is present!"* — so `Latexize` is free to use `\frac`,
 `\bmod` and the rest, but changing what it emits can break a downstream project and no test here
 will say so ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
 

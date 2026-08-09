@@ -22,8 +22,8 @@ JsonFSharpConverter () |> options.Converters.Add
 
 let private objectEncode (o : obj) =
     match o with
-    | :? ILatexiseable as latexiseable -> 
-        let toSerialize = LatexSuccess (latexiseable.Latexise (), string o)
+    | :? ILatexizeable as latexizeable -> 
+        let toSerialize = LatexSuccess (latexizeable.Latexize (), string o)
         EncodingLatexPrefix + JsonSerializer.Serialize(toSerialize, options)
     | _ ->
         let toSerialize = PlainTextSuccess (string o)

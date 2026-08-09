@@ -25,7 +25,7 @@ let asBool expr =
 
 /// Gets the LaTeX form of an expression
 let latex x =
-    (parsed x).Latexise()
+    (parsed x).Latexize()
 
 /// Substitutes the given variable with the given value in the given expression
 let substituted x value expr = (parsed expr).Substitute(parsed x, parsed value).InnerSimplified

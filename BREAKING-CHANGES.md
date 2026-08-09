@@ -52,6 +52,7 @@ read first.
 | loud | `floor(x)`, `ceil(x)`, `ceiling(x)` | `UnrecognizedFunctionParseException` | the functions |
 | loud | `round(x)`, `min(a, b)`, `max(a, b)`, `gcd(a, b)` | `UnrecognizedFunctionParseException` | the functions |
 | loud | 28 members deprecated since 1.x | obsolete but present | removed |
+| loud | `Latexise`, `ILatexiseable`, `entity_latexise` | the British spelling | `Latexize`, `ILatexizeable`, `entity_latexize` |
 | loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
 | **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
 
@@ -117,6 +118,42 @@ right answer. Code written against the old names was wrong in the same way.
 
 [#632](https://github.com/asc-community/AngouriMath/issues/632), PR
 [#664](https://github.com/asc-community/AngouriMath/pull/664).
+
+### `Latexise` is now `Latexize`
+
+The library serialises a node to text two ways, and spelled them in two languages:
+
+| | was | is |
+|---|---|---|
+| the method | `Latexise()` | `Latexize()` |
+| the interface | `ILatexiseable` | `ILatexizeable` |
+| the string extension | `"x + 1".Latexise()` | `"x + 1".Latexize()` |
+| the C# helper | `MathS.Latex(ILatexiseable)` | `MathS.Latex(ILatexizeable)` |
+| the native entry point | `entity_latexise` | `entity_latexize` |
+| the C++ method | `Entity::Latexise()` | `Entity::Latexize()` |
+| the F# function | `latexise` | `latexize` |
+
+Everything else in the public surface is `-ize` — `Stringize`, `Factorize`, `Serialize`,
+`Deserialize` — so `Latexise` and its interface were the only members a caller had to remember the
+other spelling for. `Stringize` and `Latexise` do the same kind of thing and sit next to each other
+in every file that has either, which is what made the split spelling costly rather than merely
+untidy.
+
+**What breaks.** Every call, every override, and every implementation of the interface. There is no
+forwarding member: this release is the one that removed 28 members that accumulated as forwarders,
+so adding a permanent one here would undo that on the same day. The compiler reports each site, and
+the fix is mechanical.
+
+`MathS.Quantum.Factorise` keeps its spelling for now. Renaming it to `Factorize` would give the
+library two public `Factorize` methods doing unrelated things — expression factoring on `Entity`,
+tensor factorisation on a quantum state — which is a worse outcome than the inconsistency. It wants
+a distinguishing name rather than a spelling change, and that is not decided here.
+
+**Downstream.** [`CSharpMath.Evaluation`](https://github.com/verybadcat/CSharpMath) reads LaTeX
+produced here back into an `Entity` and calls this method. It is unaffected until it moves to 2.0,
+at which point it needs the new name.
+
+[#840](https://github.com/asc-community/AngouriMath/issues/840).
 
 ---
 
@@ -312,7 +349,10 @@ This one is worth reading twice if you parse printed output, because the misread
 ordinary number: every root of a trigonometric equation prints through this path, and
 `cos(x)^2 + sin(x) = 0` returns roots that are exact as entities and were not as text.
 
-`Latexise` is under no such obligation, since nothing parses LaTeX, and is unaffected.
+`Latexize` is unaffected by this change. Its output is under a weaker obligation, not none:
+nothing in this repository parses LaTeX back, but [`CSharpMath.Evaluation`](https://github.com/verybadcat/CSharpMath)
+does, so a change to what it emits can break a downstream project with no test here to say so
+([#822](https://github.com/asc-community/AngouriMath/issues/822)).
 
 The syntax the parser accepts is now written down in
 [`Sources/AngouriMath/Docs/Usage/Syntax.md`](Sources/AngouriMath/Docs/Usage/Syntax.md).

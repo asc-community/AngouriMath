@@ -13,7 +13,7 @@ open AngouriMath
 open AngouriMath.FSharp.Functions
 
 [<Fact>]
-let ``Latex with magic ILatexiseable html`` () =
+let ``Latex with magic ILatexizeable html`` () =
     AngouriMath.InteractiveExtension.KernelExtension.applyMagic()
     let entity = parsed "x / 2"
     let html = entity.ToDisplayString("text/html")
@@ -46,7 +46,7 @@ let ``Latex with magic ERational multi-char for html`` () =
 
 
 [<Fact>]
-let ``Latex with magic ILatexiseable latex`` () =
+let ``Latex with magic ILatexizeable latex`` () =
     AngouriMath.InteractiveExtension.KernelExtension.applyMagic()
     let entity = parsed "x / 2"
     let latex = entity.ToDisplayString("text/latex")

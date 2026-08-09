@@ -86,7 +86,7 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("floor(x)", @"\left\lfloor{x}\right\rfloor")]
         [InlineData("ceil(x)", @"\left\lceil{x}\right\rceil")]
         public void TheLatexIsTheUsualBrackets(string input, string expected)
-            => Assert.Equal(expected, input.ToEntity().Latexise());
+            => Assert.Equal(expected, input.ToEntity().Latexize());
 
         // Stringize prints the short spelling, and SymPy's `ceiling` is accepted on the way
         // in so that an expression copied from there parses.

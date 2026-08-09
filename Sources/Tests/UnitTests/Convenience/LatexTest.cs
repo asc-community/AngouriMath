@@ -23,8 +23,8 @@ namespace AngouriMath.Tests.Convenience
         private static readonly Entity m2i = -2 * MathS.i;
         private static readonly Entity numPi = MathS.DecimalConst.pi;
         private static readonly Entity mNumPi = -MathS.DecimalConst.pi;
-        void Test(string expected, ILatexiseable actual) =>
-            Assert.Equal(expected, actual.Latexise());
+        void Test(string expected, ILatexizeable actual) =>
+            Assert.Equal(expected, actual.Latexize());
         void TestSimplify(string expected, Entity actual) =>
             Test(expected, actual.Simplify());
         [Fact] public void Num0() => TestSimplify("0", 0);
@@ -246,7 +246,7 @@ namespace AngouriMath.Tests.Convenience
             Test(@"\int\int\int \left({x}^{23}-x_{\mathrm{16}}\right)\,\mathrm{d}\left({x_{f}}^{2}\right)\,\mathrm{d}\left({x_{f}}^{2}\right)\,\mathrm{d}\left({x_{f}}^{2}\right)", MathS.Derivative("x^23-x_16", "x_f^2", -3));
         [Fact] public void DerivativeAt0() => Test(@"\frac{\mathrm{d}^{0}}{\mathrm{d}x^{0}}\left(x+1\right)+1", MathS.Derivative("x+1", "x", 0) + 1);
         [Theory, CombinatorialData] public void DerivativeAsIntegral([CombinatorialValues("x", "x_f", "ab", "ab_cd", "e", "alpha", "alpha_beta", "alpha_e")] string v) =>
-            Test(MathS.Integral(Integer.One + v, v).Latexise(), MathS.Derivative(Integer.One + v, v, -1));
+            Test(MathS.Integral(Integer.One + v, v).Latexize(), MathS.Derivative(Integer.One + v, v, -1));
         [Fact] public void Limit1() =>
             Test(@"\lim_{x\to 0^-} \left(x+y\right)", (Entity)"limitleft(x + y, x, 0)");
         [Fact] public void Limit2() =>
