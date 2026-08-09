@@ -5305,93 +5305,6 @@ namespace AngouriMath
             public static Matrix Matrix(int rows, int columns, params Entity[] values) =>
                 new(GenTensor.CreateMatrix(rows, columns, (x, y) => values[x * columns + y]));
 
-            /// <summary>Creates an instance of <see cref="Entity.Matrix"/> that is a matrix.</summary>
-            /// <param name="values">A two-dimensional array of values</param>
-            /// <returns>A two-dimensional <see cref="Entity.Matrix"/> which is a matrix</returns>
-            [Obsolete("Use MathS.Matrix instead")]
-            public static Matrix Matrix(Entity[,] values) => new(GenTensor.CreateMatrix(values));
-
-            /// <summary>Creates an instance of <see cref="Entity.Matrix"/> that is a vector.</summary>
-            /// <param name="values">The cells of the <see cref="Entity.Matrix"/></param>
-            /// <returns>A one-dimensional <see cref="Entity.Matrix"/> which is a vector</returns>
-            [Obsolete("Use MathS.Vector instead")]
-            public static Matrix Vector(params Entity[] values)
-            {
-                var arr = new Entity[values.Length, 1];
-                for (int i = 0; i < values.Length; i++)
-                    arr[i, 0] = values[i];
-                return new(GenTensor.CreateMatrix(arr));
-            }
-
-            /// <summary>Returns the dot product of two <see cref="Entity.Matrix"/>s that are matrices.</summary>
-            /// <param name="A">First matrix (its width is the result's width)</param>
-            /// <param name="B">Second matrix (its height is the result's height)</param>
-            /// <returns>A two-dimensional <see cref="Entity.Matrix"/> (matrix) as a result of symbolic multiplication</returns>
-            [Obsolete("Use operator * instead")]
-            public static Matrix DotProduct(Matrix A, Matrix B) => new(GenTensor.MatrixMultiply(A.InnerMatrix, B.InnerMatrix));
-
-            /// <summary>Returns the dot product of two <see cref="Entity.Matrix"/>s that are matrices.</summary>
-            /// <param name="A">First matrix (its width is the result's width)</param>
-            /// <param name="B">Second matrix (its height is the result's height)</param>
-            /// <returns>A two-dimensional <see cref="Entity.Matrix"/> (matrix) as a result of symbolic multiplication</returns>
-            [Obsolete("Use operator * instead")]
-            public static Matrix MatrixMultiplication(Matrix A, Matrix B) => new(GenTensor.TensorMatrixMultiply(A.InnerMatrix, B.InnerMatrix));
-
-            /// <summary>Returns the scalar product of two <see cref="Entity.Matrix"/>s that are vectors with the same length.</summary>
-            /// <param name="a">First vector (order does not matter)</param>
-            /// <param name="b">Second vector</param>
-            /// <returns>The resulting scalar which is an <see cref="Entity"/> and not a <see cref="Entity.Matrix"/></returns>
-            /// <example>
-            /// <code>
-            /// using System;
-            /// using static AngouriMath.MathS;
-            /// using static AngouriMath.Entity;
-            /// 
-            /// Matrix A = @"
-            /// [[a, b],
-            ///  [c, d]]
-            /// ";
-            /// Matrix B = @"
-            /// [[f, g],
-            ///  [k, l]]
-            /// ";
-            /// Console.WriteLine((A * B).ToString(multilineFormat: true));
-            /// Console.WriteLine(Matrices.PointwiseMultiplication(A, B).ToString(multilineFormat: true));
-            /// Console.WriteLine("-------------------");
-            /// var v1 = Vector(1, 2, 3);
-            /// var v2 = Vector(10, 20, 30);
-            /// Console.WriteLine(v1);
-            /// Console.WriteLine(v2);
-            /// Console.WriteLine((v1.T * v2).AsScalar());
-            /// </code>
-            /// Prints
-            /// <code>
-            /// Matrix[2 x 2]
-            /// a * f + b * k   a * g + b * l   
-            /// c * f + d * k   c * g + d * l   
-            /// Matrix[2 x 2]
-            /// a * f   b * g   
-            /// c * k   d * l   
-            /// -------------------
-            /// [1, 2, 3]
-            /// [10, 20, 30]
-            /// 140
-            /// </code>
-            /// </example>
-            [Obsolete("Use a.T * b for the same purpose")]
-            public static Entity ScalarProduct(Matrix a, Matrix b) => GenTensor.VectorDotProduct(a.InnerMatrix, b.InnerMatrix);
-
-            /// <summary>
-            /// Creates a closed interval (segment)
-            /// </summary>
-            [Obsolete("Use MathS.Interval instead")]
-            public static Interval Interval(Entity left, Entity right) => new Interval(left, true, right, true);
-
-            /// <summary>
-            /// Creates an interval with custom endings
-            /// </summary>
-            [Obsolete("Use MathS.Interval instead")]
-            public static Interval Interval(Entity left, bool leftClosed, Entity right, bool rightClosed) => new Interval(left, leftClosed, right, rightClosed);
         }
 
         /// <summary>
@@ -6493,96 +6406,6 @@ namespace AngouriMath
         public static class Compute
         {
             /// <summary>
-            /// If possible, analytically computes the limit of <paramref name="expr"/>
-            /// if <paramref name="var"/> approaches to <paramref name="approachDestination"/>
-            /// from one of two sides (left and right).
-            /// Returns <see langword="null"/> otherwise.
-            /// </summary>
-            [Obsolete("Now these functions are available as non-static methods at Entity")]
-            public static Entity Limit(Entity expr, Variable var, Entity approachDestination,
-                ApproachFrom direction)
-                => expr.Limit(var, approachDestination, direction);
-
-            /// <summary>
-            /// If possible, analytically computes the limit of <paramref name="expr"/>
-            /// if <paramref name="var"/> approaches to <paramref name="approachDestination"/>.
-            /// Returns <see langword="null"/> otherwise or if limits from left and right sides differ.
-            /// </summary>
-            [Obsolete("Now these functions are available as non-static methods at Entity")]
-            public static Entity Limit(Entity expr, Variable var, Entity approachDestination)
-                => expr.Limit(var, approachDestination, ApproachFrom.BothSides);
-
-            /// <summary>Derives over <paramref name="x"/> <paramref name="power"/> times</summary>
-            [Obsolete("Now these functions are available as non-static methods at Entity")]
-            public static Entity Derivative(Entity expr, Variable x, EInteger power)
-            {
-                var ent = expr;
-                for (var _ = 0; _ < power; _++)
-                    ent = Derivative(ent, x);
-                return ent;
-            }
-
-            /// <summary>Derivation over a variable (without simplification)</summary>
-            /// <param name="expr">The expression to find derivative over</param>
-            /// <param name="x">The variable to derive over</param>
-            /// <returns>The derived result</returns>
-            [Obsolete("Now these functions are available as non-static methods at Entity")]
-            public static Entity Derivative(Entity expr, Variable x) => expr.Differentiate(x);
-
-            /// <summary>Integrates over <paramref name="x"/> <paramref name="power"/> times</summary>
-            [Obsolete("Now these functions are available as non-static methods at Entity")]
-            public static Entity Integral(Entity expr, Variable x, EInteger power)
-            {
-                var ent = expr;
-                for (var _ = 0; _ < power; _++)
-                    ent = Integral(ent, x);
-                return ent;
-            }
-
-            /// <summary>Integrates over a variable (without simplification)</summary>
-            /// <param name="expr">The expression to be integrated over <paramref name="x"/></param>
-            /// <param name="x">The variable to integrate over</param>
-            /// <returns>The integrated result</returns>
-            [Obsolete("Now these functions are available as non-static methods at Entity")]
-            public static Entity Integral(Entity expr, Variable x) 
-                => expr.Integrate(x);
-
-            /// <summary>
-            /// Returns a value of a definite integral of a function. Only works for one-variable functions
-            /// </summary>
-            /// <param name="expr">The expression to be numerically integrated over <paramref name="x"/></param>
-            /// <param name="x">Variable to integrate over</param>
-            /// <param name="from">The complex lower bound for integrating</param>
-            /// <param name="to">The complex upper bound for integrating</param>
-            [Obsolete("Now these functions are available as non-static methods at Entity")]
-            public static Complex DefiniteIntegral(Entity expr, Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to) =>
-                DefiniteIntegral(expr, x, from, to, 100);
-
-            /// <summary>
-            /// Returns a value of a definite integral of a function. Only works for one-variable functions
-            /// </summary>
-            /// <param name="expr">The function to be numerically integrated</param>
-            /// <param name="x">Variable to integrate over</param>
-            /// <param name="from">The real lower bound for integrating</param>
-            /// <param name="to">The real upper bound for integrating</param>
-            [Obsolete("Now these functions are available as non-static methods at Entity")]
-            public static Complex DefiniteIntegral(Entity expr, Variable x, EDecimal from, EDecimal to) =>
-                DefiniteIntegral(expr, x, (from, 0), (to, 0), 100);
-
-            /// <summary>
-            /// Returns a value of a definite integral of a function. Only works for one-variable functions
-            /// </summary>
-            /// <param name="expr">The function to be numerically integrated</param>
-            /// <param name="x">Variable to integrate over</param>
-            /// <param name="from">The complex lower bound for integrating</param>
-            /// <param name="to">The complex upper bound for integrating</param>
-            /// <param name="stepCount">Accuracy (initially, amount of iterations)</param>
-            [Obsolete("Now these functions are available as non-static methods at Entity")]
-            public static Complex DefiniteIntegral(Entity expr, Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount) =>
-                Integration.IntegrateNumerically(expr, x, Complex.Create(from.Re, from.Im), Complex.Create(to.Re, to.Im), stepCount);
-
-
-            /// <summary>
             /// Computes Euler phi function
             /// <a href="https://en.wikipedia.org/wiki/Euler%27s_totient_function"/>
             /// If integer x is non-positive, the result will be 0
@@ -6688,7 +6511,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Hangs your <see cref="Entity"/> to a derivative node
-        /// (to evaluate instead use <see cref="Compute.Derivative(Entity, Variable)"/>)
+        /// (to evaluate instead use <see cref="Entity.Differentiate(Entity.Variable)"/>)
         /// </summary>
         /// <param name="expr">Expression to be hung</param>
         /// <param name="var">Variable over which derivative is taken</param>
@@ -6741,7 +6564,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Hangs your <see cref="Entity"/> to a derivative node
-        /// (to evaluate instead use <see cref="Compute.Derivative(Entity, Variable)"/>)
+        /// (to evaluate instead use <see cref="Entity.Differentiate(Entity.Variable)"/>)
         /// </summary>
         /// <param name="expr">Expression to be hung</param>
         /// <param name="var">Variable over which derivative is taken</param>
@@ -6795,7 +6618,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Hangs your entity to an integral node
-        /// (to evaluate instead use <see cref="Compute.Integral(Entity, Variable)"/>)
+        /// (to evaluate instead use <see cref="Entity.Integrate(Entity.Variable)"/>)
         /// </summary>
         /// <param name="expr">Expression to be hung</param>
         /// <param name="var">Variable over which integral is taken</param>
@@ -6848,7 +6671,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Hangs your entity to an integral node
-        /// (to evaluate instead use <see cref="Compute.Integral(Entity, Variable)"/>)
+        /// (to evaluate instead use <see cref="Entity.Integrate(Entity.Variable)"/>)
         /// </summary>
         /// <param name="expr">Expression to be hung</param>
         /// <param name="var">Variable over which integral is taken</param>
@@ -6903,7 +6726,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Hangs your entity to a limit node
-        /// (to evaluate instead use <see cref="Compute.Limit(Entity, Variable, Entity)"/>)
+        /// (to evaluate instead use <see cref="Entity.Limit(Entity.Variable, Entity)"/>)
         /// </summary>
         /// <param name="expr">Expression to be hung</param>
         /// <param name="var">Variable over which limit is taken</param>

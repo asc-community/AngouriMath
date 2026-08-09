@@ -322,13 +322,12 @@ namespace AngouriMath.Tests.Calculus
         }
 
         static readonly Entity.Variable x = nameof(x);
-#pragma warning disable CS0618 // Type or member is obsolete
         [Fact]
         public void Test1()
         {
             var expr = x;
 
-            Assert.True((MathS.Compute.DefiniteIntegral(expr, x, 0, 1).RealPart - 1.0 / 2).Abs() < 0.1);
+            Assert.True((expr.DefiniteIntegral(x, 0, 1).RealPart - 1.0 / 2).Abs() < 0.1);
         }
         [Fact]
         public void Test2()
@@ -339,14 +338,13 @@ namespace AngouriMath.Tests.Calculus
             // was destroying every legitimate small number (see IssueRegressionTest, and
             // https://github.com/asc-community/AngouriMath/issues/602).
             // Asserted the way Test1 and Test3 assert, against the method's own accuracy.
-            Assert.True(MathS.Compute.DefiniteIntegral(expr, x, -1, 1).Abs() < 1e-15);
+            Assert.True(expr.DefiniteIntegral(x, -1, 1).Abs() < 1e-15);
         }
         [Fact]
         public void Test3()
         {
             var expr = MathS.Sin(x);
-            Assert.True(MathS.Compute.DefiniteIntegral(expr, x, 0, 3).RealPart > 1.5);
+            Assert.True(expr.DefiniteIntegral(x, 0, 3).RealPart > 1.5);
         }
-#pragma warning restore CS0618 // Type or member is obsolete
     }
 }

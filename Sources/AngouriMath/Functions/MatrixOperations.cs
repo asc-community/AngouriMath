@@ -10,7 +10,6 @@ using GenericTensor.Core;
 using static AngouriMath.Entity;
 
 namespace AngouriMath.Core;
-#pragma warning disable CS0618
 internal static class MatrixOperations
 {
     internal static Matrix Concat(MathS.Matrices.Direction dir, params Matrix[] matrices)
@@ -26,14 +25,18 @@ internal static class MatrixOperations
             _ => throw new AngouriBugException("Unhandled case")
         };
 
-        var expectedSize = matrices[0].Shape[axis1];
+        // Axis 0 is rows and axis 1 is columns, which is what the removed Shape indexer
+        // meant by those positions.
+        static int SizeAlong(Matrix matrix, int axis) => axis is 0 ? matrix.RowCount : matrix.ColumnCount;
+
+        var expectedSize = SizeAlong(matrices[0], axis1);
 
         var totalSize2 = 0;
         foreach (var matrix in matrices)
         {
-            if (matrix.Shape[axis1] != expectedSize)
-                throw new BadMatrixShapeException($"Expected size of {expectedSize} but got {matrix.Shape[axis1]} instead");
-            totalSize2 += matrix.Shape[axis2];
+            if (SizeAlong(matrix, axis1) != expectedSize)
+                throw new BadMatrixShapeException($"Expected size of {expectedSize} but got {SizeAlong(matrix, axis1)} instead");
+            totalSize2 += SizeAlong(matrix, axis2);
         }
 
         var result = GenTensor<Entity, Matrix.EntityTensorWrapperOperations>.CreateMatrix(
@@ -85,4 +88,3 @@ internal static class MatrixOperations
         return new Matrix(res);
     }
 }
-#pragma warning restore CS0618

@@ -51,6 +51,7 @@ read first.
 | loud | parsing a `provided` in a parenthesised comma list | `NullReferenceException` | `UnhandledParseException` |
 | loud | `floor(x)`, `ceil(x)`, `ceiling(x)` | `UnrecognizedFunctionParseException` | the functions |
 | loud | `round(x)`, `min(a, b)`, `max(a, b)`, `gcd(a, b)` | `UnrecognizedFunctionParseException` | the functions |
+| loud | 28 members deprecated since 1.x | obsolete but present | removed |
 | loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
 | **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
 
@@ -1291,6 +1292,35 @@ depending on this; the entry is here because the same call now returns a value w
 throw. `Simplify` was never affected — it answered `1 + x` throughout.
 
 Issue [#817](https://github.com/asc-community/AngouriMath/issues/817).
+
+### The deprecated members are gone
+
+2.0 follows semantic versioning, so everything carrying `[Obsolete]` has been removed — 28 members
+in all. Each obsolete message named its replacement, and those replacements are what to move to:
+
+| removed | use instead |
+|---|---|
+| `MathS.Matrices.Matrix(Entity[,])` | `MathS.Matrix` |
+| `MathS.Matrices.Vector(params Entity[])` | `MathS.Vector` |
+| `MathS.Matrices.MatrixMultiplication`, `DotProduct` | `operator *` |
+| `MathS.Matrices.ScalarProduct(a, b)` | `a.T * b` |
+| `MathS.Matrices.Interval(...)` ×2 | `MathS.Interval` |
+| `MathS.Compute.Derivative(expr, x)` ×2 | `expr.Differentiate(x)` |
+| `MathS.Compute.Integral(expr, x)` ×2 | `expr.Integrate(x)` |
+| `MathS.Compute.Limit(expr, x, to)` ×2 | `expr.Limit(x, to)` |
+| `MathS.Compute.DefiniteIntegral(...)` ×3 | **`expr.DefiniteIntegral(x, from, to)` — new, see below** |
+| `Entity.Derive(x)`, `"...".Derive(x)` | `Differentiate` |
+| `Entity.Matrix.Shape` | `RowCount` and `ColumnCount` |
+| `Setting.Global`, `Setting.RollBackToDefault` | `Setting.Set` in a `using` |
+| `CompilationProtocol`'s six converter delegates | inherit and override the methods |
+| `CompilationProtocolBuiltinConstantConverters` | `CompilationProtocol` |
+
+**One of those replacements did not exist.** `MathS.Compute.DefiniteIntegral` was deprecated in
+favour of "non-static methods at `Entity`", and there was no `Entity.DefiniteIntegral` — every other
+member of that group had a counterpart and this one did not. Removing the group as it stood would
+have taken numeric definite integration out of the library with nothing to replace it, so
+`Entity.DefiniteIntegral(x, from, to, stepCount = 100)` is added here, in real and complex bound
+overloads.
 
 ### `round`, `min`, `max` and `gcd` exist, so they no longer raise
 
