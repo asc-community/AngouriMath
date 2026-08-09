@@ -367,9 +367,11 @@ are short, and a stale one is worse than none — if you change what a file desc
 | [`WhatsNew/version_performance_control.md`](Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md) | the inter-version performance table, and how to add a column |
 | `Sources/Analyzers/` | the custom analyzers, including the static-field one behind `[ConstantField]` |
 
-`Docs/Contributing/RS1617Errors.md` is the one exception: it describes adding public members to a
-`PublicApi.*.txt`, and neither those files nor the analyzer that wanted them are in the tree any
-more. Do not follow it; delete or rewrite it if you are in there anyway.
+Anything added for the library's own purposes is not `public` — see
+[`Contributing/coding_rules.md`](Sources/AngouriMath/Docs/Contributing/coding_rules.md). Nothing
+checks that any more: the `PublicApiAnalyzers` package that required every public member to be
+listed in a `PublicApi.*.txt` is gone from the tree, so it is a rule to follow rather than one to
+be caught by.
 
 ## Where the work is
 
