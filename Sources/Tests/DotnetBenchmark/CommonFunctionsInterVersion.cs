@@ -11,6 +11,7 @@ using AngouriMath;
 using AngouriMath.Extensions;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Exporters.Csv;
+using PeterO.Numbers;
 
 namespace DotnetBenchmark
 {
@@ -52,8 +53,28 @@ namespace DotnetBenchmark
         private static readonly Entity toSolveHard = "(sin(cos(x) + sin(x) + c) + sqr(sin(cos(x) + sin(x) + c)) + a)4 + (sin(cos(x) + sin(x) + c) + sqr(sin(cos(x) + sin(x) + c)) + a) + b";
 
         // Testing evaluation
+        // NB: evalEasy is one instance and an Entity caches its own Evaled, so from the
+        // moment that cache was added this stopped measuring evaluation and started
+        // measuring a dictionary lookup -- which is why the row reads single-digit
+        // nanoseconds. Kept as it is so the column history stays comparable; the two
+        // benchmarks below build their expression afresh each call for that reason.
         [Benchmark] public void EvalEasy() => evalEasy.EvalNumerical();
         private static readonly Entity evalEasy = "1 + 2 + log(2, 3) + sqrt(4) - 4 ^ 7 + e * pi";
+
+        // Testing trigonometry against precision, which is what #167 asked for. Building
+        // the nodes is included in the measurement and costs microseconds against
+        // milliseconds of arithmetic, so it does not move the number; evaluating a cached
+        // instance instead would move it to zero.
+        [Benchmark] public void EvalTrig()
+            => (MathS.Sin(1) + MathS.Cos(1) + MathS.Tan(1)).EvalNumerical();
+
+        [Benchmark] public void EvalTrigPrecise()
+        {
+            using var _ = MathS.Settings.DecimalPrecisionContext.Set(fiveHundredDigits);
+            (MathS.Sin(1) + MathS.Cos(1) + MathS.Tan(1)).EvalNumerical();
+        }
+        private static readonly EContext fiveHundredDigits =
+            new(500, ERounding.HalfUp, -500, 5000, false);
 
         // Testing compilation
         [Benchmark] public void CompileEasy() => toCompileEasy.Compile<Complex, Complex>("x");

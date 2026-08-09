@@ -76,7 +76,9 @@ namespace DotnetBenchmark
                     arg switch
                     {
                         "RAMUsageTest" => GetReportByBenchmark(typeof(RAMUsageTest), "Gen 0", "Gen 1", "Gen 2", "Allocated"),
-                        "CommonFunctionsInterVersion" => GetReportByBenchmark(typeof(CommonFunctionsInterVersion), "Mean", "Error", "StdDev"),
+                        // Allocated: the class has carried [MemoryDiagnoser] all along, so the
+                        // figure was being collected on every run and then dropped here.
+                        "CommonFunctionsInterVersion" => GetReportByBenchmark(typeof(CommonFunctionsInterVersion), "Mean", "Error", "StdDev", "Allocated"),
                         // Allocated as well as Mean: the regressions this one exists to catch
                         // show up in allocation and are invisible in the timings.
                         "TransformationLayer" => GetReportByBenchmark(typeof(TransformationLayer), "Mean", "Error", "StdDev", "Allocated"),

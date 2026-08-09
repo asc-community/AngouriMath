@@ -21,6 +21,32 @@ on a path that does not exist and had not run since 2026-01-02 -- ninety-eight m
 requests went unmeasured. Fixed in
 [#775](https://github.com/asc-community/AngouriMath/issues/775).
 
+**Allocation is reported alongside the timings** from the column after the 1620th. The
+benchmark class has carried `[MemoryDiagnoser]` all along, so the figure was measured on every
+run and then discarded, because the reporting code asked for `Mean`, `Error` and `StdDev` and
+nothing else. Asked for by [#167](https://github.com/asc-community/AngouriMath/issues/167).
+
+**`EvalTrig` and `EvalTrigPrecise`** are new in the same column and are the other half of
+[#167](https://github.com/asc-community/AngouriMath/issues/167): what arbitrary precision costs
+in trigonometry. Both evaluate `sin(1) + cos(1) + tan(1)`, the first at the default hundred
+digits and the second at five hundred. Measured while writing them, on one machine, so treat
+these as the shape rather than as the numbers:
+
+| digits | per evaluation |
+|---|---|
+| 100 (default) | 3.8 ms |
+| 200 | 10.2 ms |
+| 500 | 25.4 ms |
+| 1000 | 146 ms |
+
+**Read `EvalEasy` with care.** It evaluates one `Entity` instance, and an `Entity` caches its
+own `Evaled`, so from the moment that cache landed the row stopped measuring evaluation and
+started measuring a lookup -- which is what the fall to single-digit nanoseconds is, not a
+speed-up of the arithmetic. Measured directly: a hundred thousand evaluations of one instance
+take a millisecond in total, while a thousand evaluations of freshly built nodes take a second.
+The row is kept as it is so the column history stays comparable, and the two trigonometric
+benchmarks build their expression afresh on every call for exactly this reason.
+
 |          Method |         [331st](https://github.com/asc-community/AngouriMath/commit/10e6e5a90e7270336b68dc5fd6aa36f3e0e65d2b) |          [380th](https://github.com/asc-community/AngouriMath/commit/73ae36488ddb863c1d6f35db5ed2f5dcf1484a26) |     [391st](https://github.com/asc-community/AngouriMath/commit/c7e08e6936bfdc2373377bec81ffd160e406244f)      |         [410th](https://github.com/asc-community/AngouriMath/commit/20814936bc740a9f410af4a4368e9895eab7aaf7) |           [483rd](https://github.com/asc-community/AngouriMath/commit/355963dcdf0ff9da568e9f1144ad2b7b68c19584) |         [520th](https://github.com/asc-community/AngouriMath/commit/70aa71acb73307c9f7df0aac006faae31b06058c) |         [690th](https://github.com/asc-community/AngouriMath/commit/5cc894939cb3657f0aa7ef5a25fd55011058929f) |         [826th](https://github.com/asc-community/AngouriMath/commit/87e33ec3590a95dd4ec59ff5c1f77064a64196d1) |         [914th](https://github.com/asc-community/AngouriMath/commit/6134338df083a908369b6bcfb69e70a4269ec51b) |         [920th](https://github.com/asc-community/AngouriMath/commit/501a0a3a9b2e07cddf92c4446b73ad6e2748253a) |        [1034th](https://github.com/asc-community/AngouriMath/commit/a3f48b47795b2dc2b3435152989a6e15639a65b4) |        [1066th](https://github.com/asc-community/AngouriMath/commit/a33746651f56a380b6c17913aa844f162f258d8c) |        [1090th](https://github.com/asc-community/AngouriMath/commit/9530c5b04484e98023941f7693bbeb1a3282cee6) |           [1446th](https://github.com/asc-community/AngouriMath/commit/2abb2b537c03977281f3fc2cab1da2c78c36a5f5) | [1620th](https://github.com/asc-community/AngouriMath/commit/e05d71797f53a9ac7dbdad6075cd7302a91036e7) |
 |---------------- |--------------:|---------------:|---------------:|--------------:|----------------:|--------------:|--------------:|--------------:|--------------:|--------------:|--------------:|--------------:|--------------:|-----------------:|--------------:|
 |       ParseEasy |        28,599 |         73,669 |        134,120 |        44,328 |          54,675 |        21,722 |        32,212 |        32,138 |        34,702 |        32,199 |        33,008 |        27,483 |        33,043 |        34,664 | 11,760 ns |
