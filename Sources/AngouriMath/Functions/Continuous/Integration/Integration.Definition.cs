@@ -49,6 +49,36 @@ namespace AngouriMath
             Transformation.Integration(x).Apply(this).Output is { } antiderivative
             ? antiderivative.Substitute(x, to) - antiderivative.Substitute(x, from)
             : new Integralf(this, x, (from, to));
+
+        /// <summary>
+        /// Integrates numerically over <paramref name="x"/> between two bounds, without
+        /// looking for an antiderivative. Only works for one-variable functions.
+        /// </summary>
+        /// <param name="x">The variable to integrate over.</param>
+        /// <param name="from">The lower bound.</param>
+        /// <param name="to">The upper bound.</param>
+        /// <param name="stepCount">How many steps to take; more is more accurate and slower.</param>
+        /// <returns>The value of the integral.</returns>
+        /// <remarks>
+        /// This is the instance method the obsolete <c>MathS.Compute.DefiniteIntegral</c>
+        /// said to use and which did not exist — every other member of that group had a
+        /// counterpart on <see cref="Entity"/> and this one did not, so removing the group
+        /// would have taken numeric definite integration with it.
+        /// </remarks>
+        public Number.Complex DefiniteIntegral(Variable x, Number.Complex from, Number.Complex to, int stepCount = 100)
+            => Integration.IntegrateNumerically(this, x, from, to, stepCount);
+
+        /// <summary>
+        /// Integrates numerically over <paramref name="x"/> between two real bounds.
+        /// </summary>
+        /// <param name="x">The variable to integrate over.</param>
+        /// <param name="from">The lower bound.</param>
+        /// <param name="to">The upper bound.</param>
+        /// <param name="stepCount">How many steps to take; more is more accurate and slower.</param>
+        /// <returns>The value of the integral.</returns>
+        public Number.Complex DefiniteIntegral(Variable x, EDecimal from, EDecimal to, int stepCount = 100)
+            => Integration.IntegrateNumerically(this, x,
+                Number.Complex.Create(from, 0), Number.Complex.Create(to, 0), stepCount);
     }
 }
 
@@ -113,7 +143,7 @@ namespace AngouriMath.Functions.Algebra
         /// <summary>
         /// Returns the approximate numeric value of a definite integral of a function. Only works for one-variable functions.
         /// Accuracy is limited to the number specified (default is 100).
-        /// See more at <see cref="MathS.Compute.DefiniteIntegral(Entity, Entity.Variable, EDecimal, EDecimal)"/>
+        /// See more at <see cref="Entity.DefiniteIntegral(Entity.Variable, EDecimal, EDecimal, int)"/>
         /// </summary>
         /// <param name="expr">Expression to integrate</param>
         /// <param name="x">Variable to integrate over</param>

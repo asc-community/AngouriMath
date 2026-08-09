@@ -110,10 +110,6 @@ namespace AngouriMath
             /// </summary>
             public int RowCount => InnerMatrix.Shape[0];
 
-            /// <summary>List of <see cref="int"/>s that stand for dimensions</summary>
-            [Obsolete("Use ColumnCount and RowCount instead")]
-            public TensorShape Shape => InnerMatrix.Shape;
-
             /// <summary>
             /// List of dimensions
             /// If you need matrix, list 2 dimensions 

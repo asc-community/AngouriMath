@@ -21,50 +21,17 @@ namespace AngouriMath.Core.Compilation.IntoLinq
     public partial record CompilationProtocol
 #pragma warning restore SealedOrAbstract
     {
-        /// <summary>
-        /// Change this method if you want a custom converter from number and boolean into the necessary type
-        /// </summary>
-        [Obsolete("Inherit from CompilationProtocol and override the necessary methods instead")]
-        public Func<Entity, Expression>? ConstantConverter { get; init; }
 
-        /// <summary>
-        /// Change this if you want a custom conversion of NaN into an appropriate type
-        /// </summary>
-        [Obsolete("Inherit from CompilationProtocol and override the necessary methods instead")]
-        public Func<Type, Expression>? NaNConverter { get; init; }
         
-        /// <summary>
-        /// Change this if you want a custom conversion between types
-        /// </summary>
-        [Obsolete("Inherit from CompilationProtocol and override the necessary methods instead")]
-        public Func<Expression, Type, Expression>? TypeConverter { get; init; }
         
-        /// <summary>
-        /// Change this if you want to override compilation node for unary nodes
-        /// </summary>
-        [Obsolete("Inherit from CompilationProtocol and override the necessary methods instead")]
-        public Func<Expression, Entity, Expression>? UnaryNodeConverter { get; init; }
         
-        /// <summary>
-        /// Change this if you want to override compilation node for binary nodes
-        /// </summary>
-        [Obsolete("Inherit from CompilationProtocol and override the necessary methods instead")]
-        public Func<Expression, Expression, Entity, Expression>? BinaryNodeConverter { get; init; }
 
-        /// <summary>
-        /// Change this if you want to override compilation node for non-unary and non-binary nodes
-        /// </summary>
-        [Obsolete("Inherit from CompilationProtocol and override the necessary methods instead")]
-        public Func<IEnumerable<Expression>, Entity, Expression>? AnyArgumentConverter { get; init; }
 
-#pragma warning disable CS0618 // remove when converters above are removed
         /// <summary>
         /// This treats any number as <see cref="Complex"/> and any boolean as <see cref="bool"/>
         /// </summary>
         public virtual Expression ConvertConstant(Entity e)
         {
-            if (ConstantConverter is not null)
-                return ConstantConverter(e);
             
             return e switch
             {
@@ -79,8 +46,6 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// </summary>
         public virtual Expression ConvertNaN(Type type)
         {
-            if (NaNConverter is not null)
-                return NaNConverter(type);
             
             type = Nullable.GetUnderlyingType(type) ?? type;
             
@@ -106,8 +71,6 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// </summary>
         public virtual Expression ConvertType(Expression expr, Type type)
         {
-            if (TypeConverter is not null)
-                return TypeConverter(expr, type);
             
             if (expr.Type == type)
                 return expr;
@@ -143,8 +106,6 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// </summary>
         public virtual Expression ConvertUnaryNode(Expression e, Entity typeHolder)
         {
-            if (UnaryNodeConverter is not null)
-                return UnaryNodeConverter(e, typeHolder);
             
             return typeHolder switch
             {
@@ -183,8 +144,6 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// </summary>
         public virtual Expression ConvertBinaryNode(Expression left, Expression right, Entity typeHolder)
         {
-            if (BinaryNodeConverter is not null)
-                return BinaryNodeConverter(left, right, typeHolder);
             
             (left, right) = EqualizeTypesIfAble(left, right);
             return typeHolder switch
@@ -238,8 +197,6 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// </summary>
         public virtual Expression ConvertOtherNode(IEnumerable<Expression> en, Entity typeHolder)
         {
-            if (AnyArgumentConverter is not null)
-                return AnyArgumentConverter(en, typeHolder);
             
             return typeHolder switch
             {
@@ -287,7 +244,6 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             
             return piecewiseExpr;
         }
-#pragma warning restore CS0618
         
         private static object DownCast(Number num)
         {

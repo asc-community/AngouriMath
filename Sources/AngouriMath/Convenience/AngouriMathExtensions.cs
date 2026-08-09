@@ -307,23 +307,6 @@ namespace AngouriMath.Extensions
         /// The derived expression which might contain <see cref="Derivativef"/> nodes,
         /// or the initial one
         /// </returns>
-        [Obsolete("Renamed to Differentiate")]
-        public static Entity Derive(this string str, Variable x)
-            => str.ToEntity().Differentiate(x);
-
-        /// <summary>
-        /// Finds the symbolical derivative of the given expression
-        /// </summary>
-        /// <param name="str">
-        /// The expression to be parsed and differentiated
-        /// </param>
-        /// <param name="x">
-        /// Over which variable to find the derivative
-        /// </param>
-        /// <returns>
-        /// The derived expression which might contain <see cref="Derivativef"/> nodes,
-        /// or the initial one
-        /// </returns>
         public static Entity Differentiate(this string str, Variable x)
             => str.ToEntity().Differentiate(x);
 

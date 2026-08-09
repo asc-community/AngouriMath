@@ -25,7 +25,7 @@ namespace AngouriMath.Tests.Algebra
             7, 8, 9
         );
 
-        private static readonly Entity.Matrix Column = MathS.Matrices.Vector(1, 2, 3);
+        private static readonly Entity.Matrix Column = MathS.Vector(1, 2, 3);
 
         [Fact]
         public void EveryRowButTheFirst() =>
@@ -58,7 +58,7 @@ namespace AngouriMath.Tests.Algebra
         // rows with, and it has only the one column to ask for.
         [Fact]
         public void PartOfAVector() =>
-            Assert.Equal(MathS.Matrices.Vector(2, 3), Column[1.., ..]);
+            Assert.Equal(MathS.Vector(2, 3), Column[1.., ..]);
 
         // The result is a matrix in its own right and nothing of the original is shared with
         // it, so what is read out of it does not depend on the order the two were built in.

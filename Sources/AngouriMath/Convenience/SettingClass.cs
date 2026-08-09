@@ -24,28 +24,6 @@ namespace AngouriMath.Convenience
         }
 
         /// <summary>
-        /// Use it if you don't need to unset it
-        /// Should be NOT used for industrial projects
-        /// (only for some manual calculations)
-        /// </summary>
-        /// <param name="value">The new value of the setting</param>
-        [Obsolete("Method `Global` is not threadsafe and inconvenient. Use method `Set` instead.")]
-        public void Global(T value)
-            => Set(value);
-
-        /// <summary>
-        /// Use it in case if you need to cancel any adjustments of the setting
-        /// and rollback to the one predefined in <see cref="MathS"/>.
-        /// It does not roll back to the previous value. Instead, it sets the 
-        /// value which is defined right after <see cref="MathS"/> is
-        /// initialized. If you need recoverable settings (aka local),
-        /// use method <see cref="As"/>.
-        /// </summary>
-        [Obsolete("Method `RollBackToDefault` is not threadsafe and inconvenient. Use method `Set` instead.")]
-        public void RollBackToDefault()
-            => Global(Default);
-
-        /// <summary>
         /// Sets the new value for the setting
         /// </summary>
         /// <param name="value">
