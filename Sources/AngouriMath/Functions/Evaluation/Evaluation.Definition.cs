@@ -290,7 +290,17 @@ namespace AngouriMath
                     coefficients[monomialKey] = coefficient;
                     Entity monomial = 1;
                     foreach (var key in exponents.Keys.OrderBy(k => k, System.StringComparer.Ordinal))
-                        monomial = (monomial * bases[key].Pow(exponents[key])).InnerSimplified;
+                    {
+                        // A factor that appeared once goes back as itself, not as base^1.
+                        // Raising to the first power is an identity only where the power is
+                        // defined at all: RR^1, ZZ^1 and true^1 are all NaN, so writing the
+                        // factor that way turns an expression that had a value into one that
+                        // does not. https://github.com/asc-community/AngouriMath/issues/851
+                        var factor = exponents[key] == Integer.Create(1)
+                            ? bases[key]
+                            : bases[key].Pow(exponents[key]);
+                        monomial = (monomial * factor).InnerSimplified;
+                    }
                     monomials[monomialKey] = monomial;
                 }
             }
@@ -306,7 +316,18 @@ namespace AngouriMath
                 var term = (coefficients[key] * monomials[key]).InnerSimplified;
                 result = result == Integer.Create(0) ? term : result + term;
             }
-            return result.InnerSimplified;
+            var collected = result.InnerSimplified;
+
+            // Collecting is an improvement, never a requirement, so a collection that
+            // introduced NaN is discarded rather than returned. The decomposition into
+            // coefficient and monomial only describes a node that multiplies and takes
+            // powers; a factor of any other kind -- a set raised above the first power,
+            // say -- reassembles into something undefined. Keeping the expanded form is
+            // always sound. https://github.com/asc-community/AngouriMath/issues/851
+            if (collected.Nodes.Any(node => node == MathS.NaN)
+                && !expanded.Nodes.Any(node => node == MathS.NaN))
+                return expanded;
+            return collected;
         }
 
         /// <summary>

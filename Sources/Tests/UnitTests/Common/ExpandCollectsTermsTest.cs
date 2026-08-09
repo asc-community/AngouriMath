@@ -69,5 +69,34 @@ namespace AngouriMath.Tests.Common
         public void CancellingTermsKeepTheirDomainCondition() =>
             Assert.Equal("0 provided not x = 0".ToEntity(),
                 "(4a - 2) / (2x) + (1 - 2a) / x".ToEntity().Simplify());
+
+        // Collecting reduces each factor to a base and an exponent and then puts it back
+        // together. Writing a factor that appeared once as base^1 is an identity only where
+        // the power is defined at all -- RR^1 and true^1 are NaN -- so a term of a kind that
+        // does not take powers used to come back undefined.
+        // https://github.com/asc-community/AngouriMath/issues/851
+        [Theory]
+        [InlineData("RR + 1")]
+        [InlineData("1 + RR")]
+        [InlineData("RR + x")]
+        [InlineData("ZZ + 1")]
+        [InlineData("QQ + 1")]
+        [InlineData("CC + 1")]
+        [InlineData("BB + 1")]
+        [InlineData("true + 1")]
+        [InlineData("RR * RR + 1")]
+        public void ATermThatTakesNoPowerIsNotLost(string input)
+        {
+            Assert.NotEqual(MathS.NaN, input.ToEntity().Expand());
+            Assert.NotEqual(MathS.NaN, input.ToEntity().Simplify());
+        }
+
+        // The sets that can be shifted elementwise still are -- the guard above must not
+        // turn collecting off for them.
+        [Theory]
+        [InlineData("{ 1, 2 } + 1", "{ 2, 3 }")]
+        [InlineData("[0; 1] + 1", "[1; 2]")]
+        public void ASetThatCanBeShiftedStillIs(string input, string expected) =>
+            Assert.Equal(expected.ToEntity(), input.ToEntity().Simplify());
     }
 }
