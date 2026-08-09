@@ -13,8 +13,12 @@ notation is not in the grammar prints as its function call instead: a lambda pri
 `lambda(x, x + 1)` and not `x -> x + 1`, because `->` is the implication operator and the arrow
 form would silently come back as something else.
 
-LaTeX output is under no such obligation — nothing parses LaTeX — so `Latexise` is free to use
-`\frac`, `\bmod` and the rest.
+**LaTeX output has a round trip too, and it is checked in someone else's repository.**
+[CSharpMath.Evaluation](https://github.com/verybadcat/CSharpMath/blob/master/CSharpMath.Evaluation/Evaluation.cs)
+reads LaTeX back into an `Entity` and says so in its own source — *"CSharpMath must handle all
+LaTeX coming from AngouriMath or a bug is present!"* — so `Latexise` is free to use `\frac`,
+`\bmod` and the rest, but changing what it emits can break a downstream project and no test here
+will say so ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
 
 ## Operators, loosest first
 
