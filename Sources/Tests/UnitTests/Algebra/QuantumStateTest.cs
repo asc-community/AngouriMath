@@ -57,12 +57,12 @@ namespace AngouriMath.Tests.Algebra
 
         [Theory]
         [InlineData(true)]
-        public void TheStandardStatesAreNormalised(bool _)
+        public void TheStandardStatesAreNormalized(bool _)
         {
-            Assert.True(MathS.Quantum.IsNormalised(Bell));
-            Assert.True(MathS.Quantum.IsNormalised(Product));
-            Assert.True(MathS.Quantum.IsNormalised(Ghz));
-            Assert.True(MathS.Quantum.IsNormalised(Ket(0, 1)));
+            Assert.True(MathS.Quantum.IsNormalized(Bell));
+            Assert.True(MathS.Quantum.IsNormalized(Product));
+            Assert.True(MathS.Quantum.IsNormalized(Ghz));
+            Assert.True(MathS.Quantum.IsNormalized(Ket(0, 1)));
         }
 
         /// <summary>
@@ -73,23 +73,23 @@ namespace AngouriMath.Tests.Algebra
         [Fact]
         public void AnAmplitudeInFrontIsReadTheSameAsADivisor()
         {
-            Assert.True(MathS.Quantum.IsNormalised(1 / Sqrt2 * (Ket(0, 0) + Ket(1, 1))));
+            Assert.True(MathS.Quantum.IsNormalized(1 / Sqrt2 * (Ket(0, 0) + Ket(1, 1))));
             AssertSame(Ket(0) * (Ket(0) + Ket(1)) * 2,
-                       MathS.Quantum.Factorise(2 * (Ket(0, 0) + Ket(0, 1))));
+                       MathS.Quantum.TensorFactorize(2 * (Ket(0, 0) + Ket(0, 1))));
         }
 
         [Fact]
-        public void AnUnnormalisedStateIsNotNormalised()
+        public void AnUnnormalizedStateIsNotNormalized()
         {
-            Assert.False(MathS.Quantum.IsNormalised(Ket(0, 0) + Ket(1, 1)));
-            Assert.False(MathS.Quantum.IsNormalised(2 * Ket(0)));
+            Assert.False(MathS.Quantum.IsNormalized(Ket(0, 0) + Ket(1, 1)));
+            Assert.False(MathS.Quantum.IsNormalized(2 * Ket(0)));
         }
 
         [Fact]
         public void SomethingThatIsNotAStateHasNoAnswer()
         {
-            Assert.Null(MathS.Quantum.IsNormalised("x + 1".ToEntity()));
-            Assert.Null(MathS.Quantum.IsNormalised("apply(ket, 5)".ToEntity()));
+            Assert.Null(MathS.Quantum.IsNormalized("x + 1".ToEntity()));
+            Assert.Null(MathS.Quantum.IsNormalized("apply(ket, 5)".ToEntity()));
         }
 
         // ---- factorisation ----
@@ -102,13 +102,13 @@ namespace AngouriMath.Tests.Algebra
         [Fact]
         public void ADefiniteQubitAtEitherEndFactorsOut()
         {
-            var factored = MathS.Quantum.Factorise(Ket(0, 0, 1) + Ket(0, 1, 1));
+            var factored = MathS.Quantum.TensorFactorize(Ket(0, 0, 1) + Ket(0, 1, 1));
             AssertSame(Ket(0) * (Ket(0) + Ket(1)) * Ket(1), factored);
         }
 
         [Fact]
         public void ADefiniteLeadingQubitFactorsOutAlone() =>
-            AssertSame(Ket(0) * (Ket(0) + Ket(1)) / Sqrt2, MathS.Quantum.Factorise(Product));
+            AssertSame(Ket(0) * (Ket(0) + Ket(1)) / Sqrt2, MathS.Quantum.TensorFactorize(Product));
 
         /// <summary>
         /// **Entanglement is the absence of this.** Neither qubit of a Bell state has a
@@ -118,8 +118,8 @@ namespace AngouriMath.Tests.Algebra
         [Fact]
         public void AnEntangledStateDoesNotFactor()
         {
-            AssertSame(Bell, MathS.Quantum.Factorise(Bell));
-            AssertSame(Ghz, MathS.Quantum.Factorise(Ghz));
+            AssertSame(Bell, MathS.Quantum.TensorFactorize(Bell));
+            AssertSame(Ghz, MathS.Quantum.TensorFactorize(Ghz));
         }
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace AngouriMath.Tests.Algebra
         public void SeparabilityWithoutADefiniteQubitIsNotYetDetected()
         {
             var uniform = Ket(0, 0) + Ket(0, 1) + Ket(1, 0) + Ket(1, 1);
-            AssertSame(uniform, MathS.Quantum.Factorise(uniform));
+            AssertSame(uniform, MathS.Quantum.TensorFactorize(uniform));
         }
 
         // ---- round trip ----
@@ -147,7 +147,7 @@ namespace AngouriMath.Tests.Algebra
         [InlineData("(0,0,1)+(0,1,1)")]
         [InlineData("(0,0)+(0,1)")]
         [InlineData("(1,0,0)+(1,0,1)")]
-        public void ExpandingAFactorisationReturnsTheOriginal(string which)
+        public void ExpandingATensorFactorizationReturnsTheOriginal(string which)
         {
             var original = which switch
             {
@@ -155,7 +155,7 @@ namespace AngouriMath.Tests.Algebra
                 "(0,0)+(0,1)" => Ket(0, 0) + Ket(0, 1),
                 _ => Ket(1, 0, 0) + Ket(1, 0, 1),
             };
-            var roundTripped = MathS.Quantum.TensorExpand(MathS.Quantum.Factorise(original));
+            var roundTripped = MathS.Quantum.TensorExpand(MathS.Quantum.TensorFactorize(original));
             AssertSame(original, roundTripped);
         }
 

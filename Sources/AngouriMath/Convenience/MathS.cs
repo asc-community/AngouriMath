@@ -6867,30 +6867,30 @@ namespace AngouriMath
             /// all, and a product state such as <c>(|0&gt;+|1&gt;)(|0&gt;+|1&gt;)</c>, whose
             /// separability this does not yet detect.
             /// </remarks>
-            public static Entity Factorise(Entity state)
-                => Functions.Quantum.Factorisation.Factorise(state) ?? state;
+            public static Entity TensorFactorize(Entity state)
+                => Functions.Quantum.Factorization.TensorFactorize(state) ?? state;
 
             /// <summary>
             /// A product of states over consecutive qubits multiplied back out into a single
-            /// superposition -- the inverse of <c>Factorise</c> -- or the expression unchanged
+            /// superposition -- the inverse of <c>TensorFactorize</c> -- or the expression unchanged
             /// where it is not such a product.
             /// </summary>
             public static Entity TensorExpand(Entity state)
-                => Functions.Quantum.Factorisation.TensorExpand(state) ?? state;
+                => Functions.Quantum.Factorization.TensorExpand(state) ?? state;
 
             /// <summary>
             /// Whether the amplitudes square-sum to one, or <see langword="null"/> where that
             /// cannot be settled -- a symbolic amplitude need not have a decidable modulus.
             /// </summary>
-            public static bool? IsNormalised(Entity state)
-                => Functions.Quantum.Factorisation.IsNormalised(state);
+            public static bool? IsNormalized(Entity state)
+                => Functions.Quantum.Factorization.IsNormalized(state);
 
             /// <summary>
             /// Whether two states differ only by a global phase, which is the difference no
             /// measurement can see -- or <see langword="null"/> where that cannot be settled.
             /// </summary>
             public static bool? EqualUpToGlobalPhase(Entity left, Entity right)
-                => Functions.Quantum.Factorisation.EqualUpToGlobalPhase(left, right);
+                => Functions.Quantum.Factorization.EqualUpToGlobalPhase(left, right);
         }
 
         /// <summary>
