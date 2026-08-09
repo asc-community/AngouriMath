@@ -266,6 +266,51 @@ namespace AngouriMath
                     (@this, a) => ((Signumf)@this).New(a), isExact);
         }
 
+        public partial record Floorf
+        {
+            // Defined everywhere in the complex plane, taken componentwise.
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
+                    a => a switch
+                    {
+                        // An integer is already its own floor, and it stays exact.
+                        Integer n => n,
+                        Rational n => Integer.Create(n.EDecimal.Floor().ToEInteger()),
+                        Real n when !isExact => Integer.Create(n.EDecimal.Floor().ToEInteger()),
+                        Complex n when !isExact => Complex.Create(
+                            n.RealPart.EDecimal.Floor(), n.ImaginaryPart.EDecimal.Floor()),
+                        // Idempotent: the floor of an integer is that integer, and floor
+                        // always produces one.
+                        Floorf or Ceilf => a,
+                        _ => null
+                    },
+                    (@this, a) => ((Floorf)@this).New(a), isExact);
+        }
+
+        public partial record Ceilf
+        {
+            // Defined everywhere in the complex plane, taken componentwise.
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
+                    a => a switch
+                    {
+                        Integer n => n,
+                        Rational n => Integer.Create(n.EDecimal.Ceiling().ToEInteger()),
+                        Real n when !isExact => Integer.Create(n.EDecimal.Ceiling().ToEInteger()),
+                        Complex n when !isExact => Complex.Create(
+                            n.RealPart.EDecimal.Ceiling(), n.ImaginaryPart.EDecimal.Ceiling()),
+                        Floorf or Ceilf => a,
+                        _ => null
+                    },
+                    (@this, a) => ((Ceilf)@this).New(a), isExact);
+        }
+
         public partial record Absf
         {
             // Absolute value is defined everywhere in the complex plane

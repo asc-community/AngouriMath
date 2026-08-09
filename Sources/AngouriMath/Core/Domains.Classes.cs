@@ -200,6 +200,21 @@ namespace AngouriMath
             public override Domain Codomain { get; protected init; } = Domain.Real;
         }
 
+        partial record Floorf
+        {
+            // Complex rather than Integer: taken componentwise, floor of a complex number
+            // is a Gaussian integer, and there is no domain for those. The codomain of the
+            // real case is stated by the value, not by this.
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Complex;
+        }
+
+        partial record Ceilf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Complex;
+        }
+
         partial record Boolean
         {
             /// <inheritdoc/>

@@ -109,6 +109,22 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        public partial record Floorf
+        {
+            /// <inheritdoc/>
+            public override string Stringize() => $"floor({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Ceilf
+        {
+            /// <inheritdoc/>
+            public override string Stringize() => $"ceil({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Factorialf
         {
             /// <inheritdoc/>

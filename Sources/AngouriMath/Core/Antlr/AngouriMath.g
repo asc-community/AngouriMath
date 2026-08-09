@@ -407,15 +407,17 @@ atom returns[Entity value]
     | 'sign(' args = function_arguments ')' { Assert("sign", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
     | 'abs(' args = function_arguments ')' { Assert("abs", 1, $args.list.Count); $value = MathS.Abs($args.list[0]); }
     | 'phi(' args = function_arguments ')' { Assert("phi", 1, $args.list.Count); $value = MathS.NumberTheory.Phi($args.list[0]); }
+    | 'floor(' args = function_arguments ')' { Assert("floor", 1, $args.list.Count); $value = MathS.Floor($args.list[0]); }
+    | 'ceil(' args = function_arguments ')' { Assert("ceil", 1, $args.list.Count); $value = MathS.Ceil($args.list[0]); }
+    /* SymPy's spelling, accepted so that an expression copied from there parses. Stringize
+       prints the short form, which is what the round-trip test pins. */
+    | 'ceiling(' args = function_arguments ')' { Assert("ceiling", 1, $args.list.Count); $value = MathS.Ceil($args.list[0]); }
 
     /* Names the library does not have. Each is a function every other CAS spells this way, so
        a caller reaches for it, and without these rules each is silently read as a product --
        see NotImplementedFunction above. Refusing is not the feature; it is the difference
        between a missing function and a wrong answer. */
 
-    | 'floor(' args = function_arguments ')' { $value = NotImplementedFunction("floor", "rounding functions"); }
-    | 'ceil(' args = function_arguments ')' { $value = NotImplementedFunction("ceil", "rounding functions"); }
-    | 'ceiling(' args = function_arguments ')' { $value = NotImplementedFunction("ceiling", "rounding functions"); }
     | 'round(' args = function_arguments ')' { $value = NotImplementedFunction("round", "rounding functions"); }
     | 'trunc(' args = function_arguments ')' { $value = NotImplementedFunction("trunc", "rounding functions"); }
     | 'min(' args = function_arguments ')' { $value = NotImplementedFunction("min", "minimum or maximum function"); }

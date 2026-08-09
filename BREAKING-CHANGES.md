@@ -49,6 +49,7 @@ read first.
 | loud | `Compile` over a missing variable | `KeyNotFoundException` | `UncompilableNodeException` |
 | loud | `Expand` of a quotient of factorials | `AngouriBugException` | the expanded polynomial |
 | loud | parsing a `provided` in a parenthesised comma list | `NullReferenceException` | `UnhandledParseException` |
+| loud | `floor(x)`, `ceil(x)`, `ceiling(x)` | `UnrecognizedFunctionParseException` | the functions |
 | loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
 | **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
 
@@ -1289,6 +1290,33 @@ depending on this; the entry is here because the same call now returns a value w
 throw. `Simplify` was never affected — it answered `1 + x` throughout.
 
 Issue [#817](https://github.com/asc-community/AngouriMath/issues/817).
+
+### `floor` and `ceil` exist, so they no longer raise
+
+```csharp
+"floor(x)".ToEntity();
+// was  UnrecognizedFunctionParseException: floor is not a function this library has
+// is   floor(x)
+
+"floor(x) - 3 = 0".ToEntity().Solve("x");
+// was  UnrecognizedFunctionParseException
+// is   { 3 + t_1 provided t_1 in RR and t_1 >= 0 and t_1 < 1 }
+```
+
+`ceiling(` is accepted as well, since that is SymPy's spelling; `Stringize` prints the short
+`ceil(`. Both round toward the infinities rather than toward zero — `floor(-3/2)` is `-2` — and both
+are taken componentwise on a complex argument, which is what SymPy and Mathematica do. Every value
+in the test file was measured against SymPy 1.14 rather than reasoned about.
+
+**If you were catching `UnrecognizedFunctionParseException` around these names, that is now dead
+code.** Nothing else moves: `round`, `trunc`, `min`, `max`, `gcd` and `lcm` are still refused by
+name, and `floor` on its own — without a bracket — is still an ordinary variable.
+
+The derivative is `0 provided not x in ZZ`: flat between the integers, undefined at each of them.
+SymPy leaves that derivative unevaluated; this library states the condition instead, which is the
+stance `Signumf` and `Absf` already take.
+
+Issue [#809](https://github.com/asc-community/AngouriMath/issues/809).
 
 ### A parse failure no longer escapes as a `NullReferenceException`
 

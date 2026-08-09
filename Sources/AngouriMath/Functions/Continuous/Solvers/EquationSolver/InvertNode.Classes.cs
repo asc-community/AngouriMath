@@ -273,6 +273,42 @@ namespace AngouriMath
             }
         }
 
+        partial record Floorf
+        {
+            // floor(f(x)) = value
+            // solvable only where value is an integer, and then f(x) is anywhere in the
+            // half-open interval [value, value + 1) -- so the preimage is a parameter t in
+            // [0, 1) rather than a point, which is the same device Signumf and Absf use for
+            // their own many-to-one inverses.
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+            {
+                var t = Variable.CreateUnique(value + Argument, "t");
+                return Argument.Invert(value + t, x)
+                    .Select(c => c.Provided(
+                        value.In(MathS.Sets.Z)
+                        & t.In(MathS.Sets.R)
+                        & new GreaterOrEqualf(t, 0)
+                        & new Lessf(t, 1)));
+            }
+        }
+
+        partial record Ceilf
+        {
+            // ceil(f(x)) = value
+            // likewise integer-valued, with f(x) in (value - 1, value] -- so the parameter
+            // is subtracted rather than added.
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+            {
+                var t = Variable.CreateUnique(value + Argument, "t");
+                return Argument.Invert(value - t, x)
+                    .Select(c => c.Provided(
+                        value.In(MathS.Sets.Z)
+                        & t.In(MathS.Sets.R)
+                        & new GreaterOrEqualf(t, 0)
+                        & new Lessf(t, 1)));
+            }
+        }
+
         partial record Boolean
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)

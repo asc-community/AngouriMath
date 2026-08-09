@@ -3064,7 +3064,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 806;
 				Match(T__40);
-				 _localctx.value =  NotImplementedFunction("floor", "rounding functions"); 
+				 Assert("floor", 1, _localctx.args.list.Count); _localctx.value =  MathS.Floor(_localctx.args.list[0]); 
 				}
 				break;
 			case 103:
@@ -3076,7 +3076,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 811;
 				Match(T__40);
-				 _localctx.value =  NotImplementedFunction("ceil", "rounding functions"); 
+				 Assert("ceil", 1, _localctx.args.list.Count); _localctx.value =  MathS.Ceil(_localctx.args.list[0]); 
 				}
 				break;
 			case 104:
@@ -3088,7 +3088,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 816;
 				Match(T__40);
-				 _localctx.value =  NotImplementedFunction("ceiling", "rounding functions"); 
+				 Assert("ceiling", 1, _localctx.args.list.Count); _localctx.value =  MathS.Ceil(_localctx.args.list[0]); 
 				}
 				break;
 			case 105:

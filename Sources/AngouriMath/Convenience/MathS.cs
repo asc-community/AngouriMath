@@ -973,6 +973,63 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Abs(Entity a) => new Absf(a);
 
+        /// <summary>
+        /// The greatest integer not above <paramref name="a"/>.
+        /// </summary>
+        /// <param name="a">The argument to take the floor of.</param>
+        /// <returns>The floor of the argument.</returns>
+        /// <remarks>
+        /// Toward negative infinity, not toward zero: <c>floor(-3/2)</c> is <c>-2</c>. On a
+        /// complex argument it is taken componentwise, which is what SymPy and Mathematica
+        /// both do.
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        ///
+        /// Console.WriteLine(Floor("3/2").Simplify());
+        /// Console.WriteLine(Floor("-3/2").Simplify());
+        /// Console.WriteLine(Floor("x"));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 1
+        /// -2
+        /// floor(x)
+        /// </code>
+        /// </example>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Floor(Entity a) => new Floorf(a);
+
+        /// <summary>
+        /// The least integer not below <paramref name="a"/>.
+        /// </summary>
+        /// <param name="a">The argument to take the ceiling of.</param>
+        /// <returns>The ceiling of the argument.</returns>
+        /// <remarks>
+        /// Toward positive infinity, not away from zero: <c>ceil(-3/2)</c> is <c>-1</c>.
+        /// Componentwise on a complex argument, as <see cref="Floor(Entity)"/> is.
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        ///
+        /// Console.WriteLine(Ceil("3/2").Simplify());
+        /// Console.WriteLine(Ceil("-3/2").Simplify());
+        /// Console.WriteLine(Ceil("x"));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 2
+        /// -1
+        /// ceil(x)
+        /// </code>
+        /// </example>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Ceil(Entity a) => new Ceilf(a);
+
         /// <summary>Boolean negation
         /// <a href="https://en.wikipedia.org/wiki/Negation">Wikipedia</a></summary>
         /// <param name="a">Argument node of which Negation function will be taken</param>
