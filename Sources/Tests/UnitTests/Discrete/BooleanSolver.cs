@@ -6,8 +6,10 @@
 //
 
 using AngouriMath;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Xunit;
 
 namespace AngouriMath.Tests.Discrete
@@ -149,6 +151,81 @@ namespace AngouriMath.Tests.Discrete
                 for (var j = 0; j < 4; j++)
                     actual = (actual << 1) | ((bool)solutions[row, j].EvalBoolean() ? 1 : 0);
                 Assert.Equal(expected[row], actual);
+            }
+        }
+
+        /// <summary>
+        /// A tautology over n variables has 2^n models and every one has to be written down,
+        /// so the answer can be far larger than the caller could know in advance — 22
+        /// variables is four million rows and some gigabytes. Pruning cannot help, since
+        /// there is nothing to prune, which leaves stopping as the only recourse. It was not
+        /// available: the token that aborts <see cref="Entity.Solve"/> was not consulted here
+        /// at all.
+        /// </summary>
+        static Entity Tautology(int count)
+        {
+            Entity all = (Entity)"p_0" | !(Entity)"p_0";
+            for (var i = 1; i < count; i++)
+                all &= (Entity)$"p_{i}" | !(Entity)$"p_{i}";
+            return all;
+        }
+
+        [Fact]
+        public void AnAlreadyCancelledTokenStopsTheSolverAtOnce()
+        {
+            using var source = new CancellationTokenSource();
+            source.Cancel();
+            MathS.Multithreading.SetLocalCancellationToken(source.Token);
+            try
+            {
+                Assert.Throws<OperationCanceledException>(
+                    () => MathS.SolveBooleanTable(Tautology(24), Vars(24)));
+            }
+            finally
+            {
+                MathS.Multithreading.SetLocalCancellationToken(default);
+            }
+        }
+
+        [Fact]
+        public void CancellingPartwayThroughStopsTheSolver()
+        {
+            using var source = new CancellationTokenSource();
+            using var started = new ManualResetEventSlim();
+
+            var worker = new Thread(() =>
+            {
+                MathS.Multithreading.SetLocalCancellationToken(source.Token);
+                started.Set();
+                try { MathS.SolveBooleanTable(Tautology(24), Vars(24)); }
+                catch (OperationCanceledException) { cancelled = true; }
+            });
+            worker.Start();
+            started.Wait();
+            Thread.Sleep(200);
+            source.Cancel();
+
+            Assert.True(worker.Join(TimeSpan.FromSeconds(20)), "the solver ignored the cancellation");
+            Assert.True(cancelled, "the solver stopped without reporting cancellation");
+        }
+
+        private volatile bool cancelled;
+
+        /// <summary>The truth table is all 2^n rows by definition, and must stop too.</summary>
+        [Fact]
+        public void AnAlreadyCancelledTokenStopsTheTruthTableAtOnce()
+        {
+            using var source = new CancellationTokenSource();
+            source.Cancel();
+            MathS.Multithreading.SetLocalCancellationToken(source.Token);
+            try
+            {
+                Assert.Throws<OperationCanceledException>(
+                    () => MathS.Boolean.BuildTruthTable(Tautology(24), Vars(24)));
+            }
+            finally
+            {
+                MathS.Multithreading.SetLocalCancellationToken(default);
             }
         }
 

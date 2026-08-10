@@ -58,7 +58,9 @@ read first.
 | loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
 | **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
 | loud | implicit `List<Entity>` to `Entity` | made a `FiniteSet`, and made three `params` overloads uncallable | removed |
+| loud | implicit `Entity[]` to `Entity` | made a `FiniteSet`, discarding order and repeats | removed |
 | **silent** | a `MathS.Settings` scope across an `await`, or inside a task | lost, or somebody else's | follows the call |
+| **silent** | a `RewriteRecording` across an `await`, or work started under it | lost, or somebody else's | follows the call |
 | loud | a polynomial system with more equations than unknowns | `WrongNumberOfArgumentsException` | solved |
 
 ---
@@ -102,12 +104,12 @@ the built assemblies: present in `net8.0` and `net10.0`, absent from `netstandar
 
 ## Types and members
 
-### The implicit conversion from `List<Entity>` is removed
+### The implicit conversions from a collection are removed
 
 `Entity` had two implicit conversions from a collection, both building a `FiniteSet`:
 
 ```csharp
-public static implicit operator Entity(Entity[] elements);
+public static implicit operator Entity(Entity[] elements);       // removed
 public static implicit operator Entity(List<Entity> elements);   // removed
 ```
 
@@ -145,12 +147,24 @@ Write one of these instead:
 ```csharp
 Entity set = new FiniteSet(new List<Entity> { 1, 2, 3 });
 Entity set = new List<Entity> { 1, 2, 3 }.ToSet();
-Entity set = new Entity[] { 1, 2, 3 };       // the array conversion is unchanged
 ```
 
-The `Entity[]` conversion is kept: an array argument binds to the `params` overload in its normal
-form by an identity conversion, which beats the alternatives outright, so it never produced the
-ambiguity.
+**The conversion from `Entity[]` is gone as well.** It was kept at first, on the narrow
+ground that it never produced the ambiguity — an array binds to the `params` overload in its
+normal form by an identity conversion, which wins outright. That was true and beside the
+point. An array carries an order and can repeat an element; a set has neither, so the
+conversion silently discarded part of what it was handed, and an implicit conversion that
+loses information is the wrong shape regardless of which overloads it happens to break.
+Set types are built explicitly nearly everywhere for this reason.
+
+```csharp
+Entity set = new Entity[] { 1, 2, 3 };          // no longer compiles either
+Entity set = new FiniteSet(1, 2, 3);            // say it
+Entity set = new Entity[] { 1, 2, 3 }.ToSet();
+```
+
+Only one place in the whole repository relied on it, which was the test pinning it.
+
 ### A settings scope belongs to the call, not to the thread
 
 `MathS.Settings` values were held in `[ThreadStatic]` fields — fourteen of them. A scope
@@ -206,6 +220,48 @@ null on every access, and that is dearer than the async-local lookup that replac
 Opening a scope got much cheaper because it no longer mints a `Guid` to identify itself,
 though it allocates more, since assigning an `AsyncLocal` copies the flow's value map. Reads
 outnumber scope openings by orders of magnitude in any real workload.
+### A rewrite recording belongs to the call, not to the thread
+
+`RewriteRecording` held its ambient scope in a `[ThreadStatic]` field, and documented the
+consequence rather than fixing it:
+
+> **A synchronous scope, and it has to be.** Do not `await` inside one.
+
+It no longer has to be. The scope is an `AsyncLocal`, as `MathS.Settings` and the
+cancellation token in `MathS.Multithreading` are, so it survives an `await` and work
+started under it reports to it wherever it runs.
+
+| | was | is |
+|---|---|---|
+| a recording across an `await` | lost, and the thread could collect a stranger's rewrites | kept |
+| work started under a recording, on another thread | **not** collected | collected |
+| two flows each with their own recording | separate | separate |
+| a recording opened inside a task, seen after it ends | no | no |
+
+**What breaks.** The second row. A recording no longer stops at the thread boundary:
+
+```csharp
+using var recording = RewriteRecording.Start();
+var t = new Thread(() => expr.Simplify());
+t.Start(); t.Join();
+recording.Steps;   // used to be empty of that work; now contains it
+```
+
+That is what the code says and what the scope is for, but a caller who fanned out inside a
+recording and expected only their own thread's rewrites will now see everything. Open the
+recording inside the callback to keep the old behaviour.
+
+**`Steps` is now a snapshot.** It was a live view of the underlying list; because the store
+has to tolerate concurrent writers it is a `ConcurrentQueue`, and `Steps` copies out of it.
+Reading it after disposing — the documented use — is unchanged. Holding the returned list
+across further recording and expecting it to grow no longer works.
+
+**Order across parallel work is not defined.** Steps from one flow keep the order they fired
+in; two flows recording into the same recording interleave however they happen to run. The
+single-threaded case, which is what `Simplify` is, is unaffected.
+
+Being off is still free: no recording open still costs one ambient read per rule set and
+allocates nothing, which `RewriteAllocationTest` continues to hold to.
 ### An over-determined polynomial system is solved rather than refused
 
 `EquationSystem.Solve` insisted on as many equations as unknowns and threw otherwise:
