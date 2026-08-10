@@ -2126,7 +2126,6 @@ AngouriMath.Entity.op_ExclusiveOr(AngouriMath.Entity, AngouriMath.Entity) : Ango
 AngouriMath.Entity.op_GreaterThan(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.Entity.op_GreaterThanOrEqual(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.Entity.op_Implicit(AngouriMath.Core.Domain) : AngouriMath.Entity
-AngouriMath.Entity.op_Implicit(AngouriMath.Entity[]) : AngouriMath.Entity
 AngouriMath.Entity.op_Implicit(PeterO.Numbers.EDecimal) : AngouriMath.Entity
 AngouriMath.Entity.op_Implicit(PeterO.Numbers.EInteger) : AngouriMath.Entity
 AngouriMath.Entity.op_Implicit(PeterO.Numbers.ERational) : AngouriMath.Entity

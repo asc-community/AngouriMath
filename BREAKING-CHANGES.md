@@ -58,6 +58,7 @@ read first.
 | loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
 | **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
 | loud | implicit `List<Entity>` to `Entity` | made a `FiniteSet`, and made three `params` overloads uncallable | removed |
+| loud | implicit `Entity[]` to `Entity` | made a `FiniteSet`, discarding order and repeats | removed |
 | **silent** | a `MathS.Settings` scope across an `await`, or inside a task | lost, or somebody else's | follows the call |
 
 ---
@@ -101,12 +102,12 @@ the built assemblies: present in `net8.0` and `net10.0`, absent from `netstandar
 
 ## Types and members
 
-### The implicit conversion from `List<Entity>` is removed
+### The implicit conversions from a collection are removed
 
 `Entity` had two implicit conversions from a collection, both building a `FiniteSet`:
 
 ```csharp
-public static implicit operator Entity(Entity[] elements);
+public static implicit operator Entity(Entity[] elements);       // removed
 public static implicit operator Entity(List<Entity> elements);   // removed
 ```
 
@@ -144,12 +145,24 @@ Write one of these instead:
 ```csharp
 Entity set = new FiniteSet(new List<Entity> { 1, 2, 3 });
 Entity set = new List<Entity> { 1, 2, 3 }.ToSet();
-Entity set = new Entity[] { 1, 2, 3 };       // the array conversion is unchanged
 ```
 
-The `Entity[]` conversion is kept: an array argument binds to the `params` overload in its normal
-form by an identity conversion, which beats the alternatives outright, so it never produced the
-ambiguity.
+**The conversion from `Entity[]` is gone as well.** It was kept at first, on the narrow
+ground that it never produced the ambiguity — an array binds to the `params` overload in its
+normal form by an identity conversion, which wins outright. That was true and beside the
+point. An array carries an order and can repeat an element; a set has neither, so the
+conversion silently discarded part of what it was handed, and an implicit conversion that
+loses information is the wrong shape regardless of which overloads it happens to break.
+Set types are built explicitly nearly everywhere for this reason.
+
+```csharp
+Entity set = new Entity[] { 1, 2, 3 };          // no longer compiles either
+Entity set = new FiniteSet(1, 2, 3);            // say it
+Entity set = new Entity[] { 1, 2, 3 }.ToSet();
+```
+
+Only one place in the whole repository relied on it, which was the test pinning it.
+
 ### A settings scope belongs to the call, not to the thread
 
 `MathS.Settings` values were held in `[ThreadStatic]` fields — fourteen of them. A scope
