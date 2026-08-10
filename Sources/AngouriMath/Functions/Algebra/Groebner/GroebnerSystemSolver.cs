@@ -34,13 +34,15 @@ namespace AngouriMath.Functions.Algebra.Groebner
     /// converted by <see cref="Fglm"/>.
     /// </para>
     /// <para>
-    /// <b>Deliberately narrow.</b> This answers only where it can check its own answer
-    /// exactly: every candidate is substituted back into the original equations and kept
-    /// only if they simplify to zero. Where a root is numeric that check cannot be made, and
-    /// rather than accept a tuple on a tolerance — which is how a wrong root becomes a
-    /// reported solution — the whole system is handed back to the existing solver. So this
-    /// takes the systems with exact solutions, which is the case that was hanging, and
-    /// declines the rest without changing what they did before.
+    /// <b>It answers only where it can check its own answer.</b> Every candidate goes back
+    /// into the original equations and is kept only if they reduce to exactly zero. That
+    /// covers rational and radical solutions — <c>x^2 - 2, y - x</c> comes back as
+    /// <c>(sqrt(2), sqrt(2))</c> and <c>(-sqrt(2), -sqrt(2))</c> — because one structural
+    /// pass is enough to prove a radical identity. Where a root is a decimal the check cannot
+    /// be made at all, and rather than accept a tuple on a tolerance, which is how a root
+    /// that is merely close becomes a reported solution, the whole system goes back to the
+    /// existing solver. So this takes what it can prove and declines the rest without
+    /// changing what those did before.
     /// </para>
     /// </remarks>
     internal static class GroebnerSystemSolver
@@ -110,7 +112,7 @@ namespace AngouriMath.Functions.Algebra.Groebner
                 return false;
 
             foreach (var candidate in found)
-                if (!Satisfies(equations, variables, candidate))
+                if (!Satisfies(equations, variables, candidate, budget))
                     return false;
 
             if (found.Count == 0)
@@ -161,17 +163,6 @@ namespace AngouriMath.Functions.Algebra.Groebner
 
             foreach (var root in roots)
             {
-                // Only rational roots are taken, and the reason is the check at the end.
-                // Substituting a radical or a decimal back and asking whether the equations
-                // come out zero means simplifying nested radicals, which is unbounded work
-                // that then usually fails to prove anything -- a degree-nine univariate had
-                // this spending longer on the verification than the old solver takes on the
-                // whole system. With rationals the check is exact arithmetic and immediate.
-                // So: this takes the systems whose solutions are rational, which is the case
-                // that was hanging, and leaves the rest to the solver that already has them.
-                if (root is not Number.Rational)
-                    return false;
-
                 assignment[at] = root;
                 var narrowed = new List<Entity>(equations.Count);
                 foreach (var equation in equations)
@@ -191,23 +182,44 @@ namespace AngouriMath.Functions.Algebra.Groebner
         /// exactly zero.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// Needed because a triangular basis can hand back a tuple that satisfies the
         /// triangle without satisfying the system it came from, where the ideal is not in
-        /// shape position. Every coordinate is rational by the time this runs, so the whole
-        /// thing is exact rational arithmetic — no tolerance is involved, and none would be
-        /// accepted: a tolerance is what turns a root that is merely close into one that is
-        /// reported.
+        /// shape position. So candidates are checked rather than trusted.
+        /// </para>
+        /// <para>
+        /// <see cref="Entity.InnerSimplified"/> and deliberately not
+        /// <see cref="Entity.Simplify(int)"/>. The full simplifier searches — it generates
+        /// candidate forms and picks between them — so how long it takes to decide a nested
+        /// radical is not bounded by anything, and an early version of this spent longer
+        /// failing to prove a degree-nine root satisfied its system than the old solver takes
+        /// to solve the whole thing. `InnerSimplified` is one structural pass, which is
+        /// cheap enough to be safe here and still proves what is needed:
+        /// <c>sqrt(2)^2 - 2</c>, <c>(3^(1/3))^3 - 3</c> and a Cardano cube root all reduce to
+        /// zero in single-digit milliseconds.
+        /// </para>
+        /// <para>
+        /// It only ever proves zero, never disproves it, so a candidate it cannot settle is
+        /// declined and the system falls back. That costs coverage and never costs
+        /// correctness — and no tolerance is involved anywhere, which is what would turn a
+        /// root that is merely close into one that gets reported.
+        /// </para>
         /// </remarks>
         static bool Satisfies(
-            IReadOnlyList<Entity> equations, IReadOnlyList<Variable> variables, Entity[] candidate)
+            IReadOnlyList<Entity> equations, IReadOnlyList<Variable> variables,
+            Entity[] candidate, GroebnerBudget budget)
         {
             var substitutions = new Dictionary<Variable, Entity>(variables.Count);
             for (var i = 0; i < variables.Count; i++)
                 substitutions[variables[i]] = candidate[i];
 
             foreach (var equation in equations)
-                if (equation.Substitute(substitutions).Evaled is not Number.Rational { IsZero: true })
+            {
+                if (!budget.Spend("time"))
                     return false;
+                if (equation.Substitute(substitutions).InnerSimplified is not Number.Integer { IsZero: true })
+                    return false;
+            }
             return true;
         }
     }

@@ -156,12 +156,50 @@ namespace AngouriMath.Tests.Algebra
         }
 
         /// <summary>
-        /// Polynomial, but its solutions are not rational, so it is declined too — and the
-        /// declining has to be quick, because the work of proving a nested radical satisfies
-        /// the system is unbounded and was what made this path cost more than it saved.
+        /// A radical solution is still an exact one, and one structural pass is enough to
+        /// prove it satisfies the system, so these are in reach too.
+        /// </summary>
+        [Theory]
+        [InlineData("x^2 - 2", "y - x", 2)]
+        [InlineData("x^2 - 2", "y^2 - 3", 4)]
+        [InlineData("x^2 + y^2 - 4", "x - y", 2)]
+        [InlineData("x^2 + x - 1", "y - x^2", 2)]
+        [InlineData("x^3 - 2", "y - x", 3)]
+        public void SystemsWithIrrationalSolutionsAreSolved(string first, string second, int expected)
+        {
+            Entity[] equations = { first, second };
+            Variable[] variables = { "x", "y" };
+
+            var solutions = MathS.Equations(equations).Solve(variables);
+
+            Assert.NotNull(solutions);
+            Assert.Equal(expected, solutions.RowCount);
+            AssertEverySolutionSatisfies(equations, variables, solutions);
+        }
+
+        /// <summary>
+        /// The answers stay exact rather than being handed back as decimals — which is the
+        /// point of triangularising rather than evaluating.
         /// </summary>
         [Fact]
-        public void APolynomialSystemWithoutRationalSolutionsIsLeftAlone()
+        public void AnIrrationalSolutionComesBackInRadicals()
+        {
+            var solutions = MathS.Equations(new Entity[] { "x^2 - 2", "y - x" }).Solve("x", "y");
+            Assert.NotNull(solutions);
+            for (var row = 0; row < solutions.RowCount; row++)
+                for (var column = 0; column < solutions.ColumnCount; column++)
+                    Assert.DoesNotContain(
+                        solutions[row, column].Nodes,
+                        node => node is Number.Real and not Number.Rational);
+        }
+
+        /// <summary>
+        /// Where the univariate's roots are decimals there is nothing to prove an identity
+        /// with, so the system is declined — and the declining has to be quick, because an
+        /// earlier version proved nothing slowly and cost more than it saved.
+        /// </summary>
+        [Fact]
+        public void APolynomialSystemWithDecimalRootsIsStillAnswered()
         {
             Entity[] equations = { "x3 + 9 x2 y - 10", "y3 + x y2 - 2" };
             var solutions = MathS.Equations(equations).Solve("x", "y");
