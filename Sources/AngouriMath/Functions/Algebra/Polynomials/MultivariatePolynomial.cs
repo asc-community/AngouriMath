@@ -32,10 +32,20 @@ namespace AngouriMath.Functions
     /// </para>
     /// </remarks>
     /// <remarks>
-    /// Partial so that the operations only a Gröbner basis needs — monomial divisibility,
-    /// an order other than lexicographic, reduction against a set — live beside the solver
-    /// that wants them, in <c>Functions/Algebra/Groebner</c>, rather than swelling the type
-    /// that simplification uses. See <c>MultivariatePolynomial.Groebner.cs</c>.
+    /// <para>
+    /// This and its neighbours in <c>Functions/Algebra/Polynomials</c> are kernel algebra:
+    /// the solvers, the evaluator and the simplifier all depend on them, and they depend on
+    /// none of those. That direction is the point of the folder. <see cref="PolynomialGcd"/>
+    /// in particular is reached from simplification, from <c>Core/Transformations</c> and
+    /// from evaluation, which is why it lived under <c>Functions/Simplification</c> for as
+    /// long as simplification was the only caller anybody had counted.
+    /// </para>
+    /// <para>
+    /// Partial so that the operations only a Gröbner basis needs — monomial divisibility, an
+    /// order other than lexicographic, reduction against a set — live beside the solver that
+    /// wants them, in <c>Functions/Algebra/Groebner</c>, rather than here where every other
+    /// caller would have to read past them. See <c>MultivariatePolynomial.Groebner.cs</c>.
+    /// </para>
     /// </remarks>
     internal sealed partial class MultivariatePolynomial
     {
