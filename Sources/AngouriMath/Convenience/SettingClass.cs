@@ -1,4 +1,4 @@
-﻿//
+//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -6,6 +6,7 @@
 //
 
 using System;
+using System.Threading;
 
 namespace AngouriMath.Convenience
 {
@@ -15,13 +16,49 @@ namespace AngouriMath.Convenience
     /// <typeparam name="T">
     /// Those configurations can be of different types
     /// </typeparam>
+    /// <remarks>
+    /// <para>
+    /// A setting is one object for the whole process, and what it holds is per *flow*, not
+    /// per thread: the stack of values lives in an <see cref="AsyncLocal{T}"/>. A scope
+    /// opened before an <see langword="await"/> is therefore still in force after it, and a
+    /// scope opened inside a task is invisible to that task's siblings and to whatever
+    /// started it. Backing the field with <c>[ThreadStatic]</c> gave neither: a continuation
+    /// resumed on a pool thread saw the defaults, and a thread returned to the pool carried
+    /// whatever scope was left on it into the next caller.
+    /// </para>
+    /// <para>
+    /// The frames are immutable, which is what makes the reference safe to share. An
+    /// <see cref="AsyncLocal{T}"/> copies on assignment to <see cref="AsyncLocal{T}.Value"/>
+    /// and on nothing else, so if a frame could be mutated in place, two flows holding the
+    /// same chain would write over each other. Pushing and popping therefore build a new
+    /// chain and assign it, rather than editing one.
+    /// </para>
+    /// </remarks>
     public sealed class Setting<T> where T : notnull
     {
-        internal Setting(T defaultValue)
+        /// <summary>
+        /// One pushed value, and the chain below it. Never mutated once built.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="Id"/> is what a scope is released by, rather than the frame's own
+        /// reference. Releasing a scope that is not on top rebuilds everything above it, and
+        /// a rebuilt frame is a different object — so identifying a scope by its frame would
+        /// leave the ones above it impossible to release afterwards. The id is a counter and
+        /// not a <see cref="Guid"/>: generating a guid per scope cost more than everything
+        /// else <see cref="Set"/> does put together.
+        /// </remarks>
+        private sealed class Frame
         {
-            Set(defaultValue);
-            Default = defaultValue; 
+            internal readonly long Id;
+            internal readonly T Value;
+            internal readonly Frame? Next;
+            internal Frame(long id, T value, Frame? next) => (Id, Value, Next) = (id, value, next);
         }
+
+        private readonly AsyncLocal<Frame?> frames = new();
+        private long lastId;
+
+        internal Setting(T defaultValue) => Default = defaultValue;
 
         /// <summary>
         /// Sets the new value for the setting
@@ -40,9 +77,42 @@ namespace AngouriMath.Convenience
         /// </returns>
         public AutoBackRollableTemporarySettingUnit Set(T value)
         {
-            var guid = Guid.NewGuid();
-            values.Push(guid, value);
-            return new AutoBackRollableTemporarySettingUnit(this, guid);
+            var id = Interlocked.Increment(ref lastId);
+            frames.Value = new Frame(id, value, frames.Value);
+            return new AutoBackRollableTemporarySettingUnit(this, id);
+        }
+
+        /// <summary>
+        /// Takes the scope numbered <paramref name="id"/> back out of this flow's chain,
+        /// wherever in it it sits. Disposal is normally in the reverse order of
+        /// <see cref="Set"/>, which is the cheap case of popping the head; out-of-order
+        /// disposal rebuilds what was above it. An id that is not in this flow's chain —
+        /// because the scope was opened in another one, or is already released — is not an
+        /// error and undoes nothing.
+        /// </summary>
+        private void Remove(long id)
+        {
+            var top = frames.Value;
+            if (top is null)
+                return;
+            if (top.Id == id)
+            {
+                frames.Value = top.Next;
+                return;
+            }
+            var above = new System.Collections.Generic.List<Frame>();
+            var current = top;
+            while (current is not null && current.Id != id)
+            {
+                above.Add(current);
+                current = current.Next;
+            }
+            if (current is null)
+                return;
+            var rebuilt = current.Next;
+            for (var i = above.Count - 1; i >= 0; i--)
+                rebuilt = new Frame(above[i].Id, above[i].Value, rebuilt);
+            frames.Value = rebuilt;
         }
 
         /// <summary>
@@ -92,12 +162,10 @@ namespace AngouriMath.Convenience
         /// </summary>
         public override string? ToString() => Value.ToString();
 
-        private readonly KeyStack<Guid, T> values = new();
-
         /// <summary>
         /// The current value of the setting
         /// </summary>
-        public T Value => values.Peek();
+        public T Value => frames.Value is { } frame ? frame.Value : Default;
 
         /// <summary>
         /// The default value of the setting
@@ -110,7 +178,7 @@ namespace AngouriMath.Convenience
         /// Lets a default be treated as "nobody expressed an opinion" rather than as a
         /// deliberate choice.
         /// </summary>
-        internal bool IsOverriden => values.Count > 1;
+        internal bool IsOverriden => frames.Value is not null;
 
         /// <summary>
         /// This tiny struct is needed to be under `using` operator, so that your settings
@@ -124,49 +192,18 @@ namespace AngouriMath.Convenience
         {
             private readonly Setting<T> setting;
             private bool disposed;
-            private readonly Guid guid;
-            internal AutoBackRollableTemporarySettingUnit(Setting<T> settingToRollBack, Guid guid)
-                => (this.setting, disposed, this.guid) = (settingToRollBack, false, guid);
+            private readonly long id;
+            internal AutoBackRollableTemporarySettingUnit(Setting<T> settingToRollBack, long id)
+                => (setting, disposed, this.id) = (settingToRollBack, false, id);
 
             /// <inheritdoc/>
             public void Dispose()
             {
                 if (disposed)
                     return;
-                setting.values.Remove(guid);
+                setting.Remove(id);
                 disposed = true;
             }
         }
-    }
-
-
-    internal sealed class KeyStack<TKey, TValue>
-    {
-        private readonly List<(TKey key, TValue value)> list = new();
-
-        internal int Count => list.Count;
-
-        internal TValue Peek() => list[^1].value;
-
-        internal bool Remove(TKey key)
-        {
-            int index = -1;
-            for (int i = list.Count - 1; i >= 0; i--)
-                if (key is not null && key.Equals(list[i].key))
-                {
-                    index = i;
-                    break;
-                }
-            if (index == -1)
-                return false;
-            list.RemoveAt(index);
-            return true;
-        }
-
-        internal void Push(TKey key, TValue value)
-            => list.Add((key, value));
-
-        internal void Pop()
-            => list.RemoveAt(list.Count - 1);
     }
 }

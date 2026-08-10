@@ -5347,8 +5347,7 @@ namespace AngouriMath
             /// Exception, but we still can parse a ^ 2 + 2 * x + a * b + 2 * (g + e) ^ 3
             /// </code>
             /// </example>
-            public static Setting<bool> ExplicitParsingOnly => explicitParsingOnly ??= false;
-            [ThreadStatic] private static Setting<bool>? explicitParsingOnly;
+            public static Setting<bool> ExplicitParsingOnly { get; } = false;
             
             /// <summary>
             /// That is how we perform newton solving when no analytical solution was found
@@ -5400,8 +5399,7 @@ namespace AngouriMath
             /// AngouriMath.Entity+Number+Real
             /// </code>
             /// </example>
-            public static Setting<bool> DowncastingEnabled => downcastingEnabled ??= true;
-            [ThreadStatic] private static Setting<bool>? downcastingEnabled;
+            public static Setting<bool> DowncastingEnabled { get; } = true;
 
             /// <summary>
             /// Amount of iterations allowed for attempting to cast to a rational
@@ -5448,8 +5446,7 @@ namespace AngouriMath
             /// 5/7
             /// </code>
             /// </example>
-            public static Setting<int> FloatToRationalIterCount => floatToRationalIterCount ??= 15;
-            [ThreadStatic] private static Setting<int>? floatToRationalIterCount;
+            public static Setting<int> FloatToRationalIterCount { get; } = 15;
 
             /// <summary>
             /// If a numerator or denominator is too large, it's suspended to better keep the real number instead of casting
@@ -5503,24 +5500,20 @@ namespace AngouriMath
             /// 100/169137
             /// </code>
             /// </example>
-            public static Setting<EInteger> MaxAbsNumeratorOrDenominatorValue =>
-                maxAbsNumeratorOrDenominatorValue ??= EInteger.FromInt32(100000000);
-            [ThreadStatic] private static Setting<EInteger>? maxAbsNumeratorOrDenominatorValue;
+            public static Setting<EInteger> MaxAbsNumeratorOrDenominatorValue { get; } = EInteger.FromInt32(100000000);
 
             /// <summary>
             /// Sets threshold for comparison
             /// For example, if you don't need precision higher than 6 digits after .,
             /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
             /// </summary>
-            public static Setting<EDecimal> PrecisionErrorCommon => precisionErrorCommon ??= EDecimal.Create(1, -6);
-            [ThreadStatic] private static Setting<EDecimal>? precisionErrorCommon;
+            public static Setting<EDecimal> PrecisionErrorCommon { get; } = EDecimal.Create(1, -6);
 
 
             /// <summary>
             /// Numbers whose absolute value is less than PrecisionErrorZeroRange are considered zeros
             /// </summary>
-            public static Setting<EDecimal> PrecisionErrorZeroRange => precisionErrorZeroRange ??= EDecimal.Create(1, -16);
-            [ThreadStatic] private static Setting<EDecimal>? precisionErrorZeroRange;
+            public static Setting<EDecimal> PrecisionErrorZeroRange { get; } = EDecimal.Create(1, -16);
 
             /// <summary>
             /// The tolerance within which downcasting rounds a number onto a nearby integer.
@@ -5576,8 +5569,7 @@ namespace AngouriMath
             /// {  } // nothing was found for 5-degree polynomial without numeric solution
             /// </code>
             /// </example>
-            public static Setting<bool> AllowNewton => allowNewton ??= true;
-            [ThreadStatic] private static Setting<bool>? allowNewton;
+            public static Setting<bool> AllowNewton { get; } = true;
 
             /// <summary>
             /// Criteria for simplifier so you could control which expressions are considered easier by you.
@@ -5649,8 +5641,7 @@ namespace AngouriMath
             /// By default criteria it cannot simplify it further, however, the custom one
             /// it simplified from 2 to 1. 
             /// </example>
-            public static Setting<Func<Entity, double>> ComplexityCriteria =>
-                complexityCriteria ??= new Func<Entity, double>(expr =>
+            public static Setting<Func<Entity, double>> ComplexityCriteria { get; } = new Func<Entity, double>(expr =>
                 {
                     // Those are of the 2nd power to avoid problems with floating numbers
                     const double TinyWeight       = 0.5;
@@ -5688,7 +5679,6 @@ namespace AngouriMath
                     } + Weight; // Number of nodes
                     return DefaultCriteria(expr);
                 });
-            [ThreadStatic] private static Setting<Func<Entity, double>>? complexityCriteria;
 
             /// <summary>
             /// Settings for the Newton-Raphson's root-search method
@@ -5703,8 +5693,7 @@ namespace AngouriMath
             /// ...
             /// </code>
             /// </summary>
-            public static Setting<NewtonSetting> NewtonSolver => newtonSolver ??= new NewtonSetting();
-            [ThreadStatic] private static Setting<NewtonSetting>? newtonSolver;
+            public static Setting<NewtonSetting> NewtonSolver { get; } = new NewtonSetting();
 
             /// <summary>
             /// The maximum number of linear children of an expression in polynomial solver
@@ -5736,15 +5725,12 @@ namespace AngouriMath
             ///     </item>
             /// </list>
             /// </summary>
-            public static Setting<long> MaxExpansionTermCount => maxExpansionTermCount ??= 2_000;
-            [ThreadStatic] private static Setting<long>? maxExpansionTermCount;
+            public static Setting<long> MaxExpansionTermCount { get; } = 2_000;
 
             /// <summary>
             /// Settings for <see cref="EDecimal"/> precisions of <a href="https://github.com/peteroupc/Numbers">PeterO.Numbers</a>
             /// </summary>
-            public static Setting<EContext> DecimalPrecisionContext =>
-                decimalPrecisionContext ??= new EContext(100, ERounding.HalfUp, -100, 1000, false);
-            [ThreadStatic] private static Setting<EContext>? decimalPrecisionContext;
+            public static Setting<EContext> DecimalPrecisionContext { get; } = new EContext(100, ERounding.HalfUp, -100, 1000, false);
 
             /// <summary>
             /// Whether functions are being read as real-valued or complex-valued. It is a
@@ -5777,8 +5763,7 @@ namespace AngouriMath
             /// prints the unevaluated limit, where the default prints <c>-oo</c>.
             /// </example>
             /// </remarks>
-            public static Setting<Domain> Codomain => codomain ??= Domain.Complex;
-            [ThreadStatic] private static Setting<Domain>? codomain;
+            public static Setting<Domain> Codomain { get; } = Domain.Complex;
         }
 
         /// <summary>Returns an <see cref="Entity"/> in polynomial order if possible</summary>
