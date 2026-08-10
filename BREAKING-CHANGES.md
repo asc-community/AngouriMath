@@ -59,6 +59,7 @@ read first.
 | **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
 | loud | implicit `List<Entity>` to `Entity` | made a `FiniteSet`, and made three `params` overloads uncallable | removed |
 | loud | implicit `Entity[]` to `Entity` | made a `FiniteSet`, discarding order and repeats | removed |
+| loud | implicit `(Entity, Entity)` to `Entity` | made a **closed** interval, though `(a, b)` reads as the open one | removed |
 | **silent** | a `MathS.Settings` scope across an `await`, or inside a task | lost, or somebody else's | follows the call |
 | **silent** | a `RewriteRecording` across an `await`, or work started under it | lost, or somebody else's | follows the call |
 
@@ -163,6 +164,32 @@ Entity set = new Entity[] { 1, 2, 3 }.ToSet();
 ```
 
 Only one place in the whole repository relied on it, which was the test pinning it.
+
+**And the conversion from a pair, which had the same fault from the other side.** A
+two-element tuple became an `Interval`, and since a tuple says nothing about whether its
+endpoints are included, the conversion had to supply that:
+
+```csharp
+Entity e = ((Entity)1, (Entity)5);
+// was: [1; 5] — both endpoints included, and 1 is a member
+```
+
+Where the array conversion dropped information that was there, this one produced
+information that was not — and chose the reading opposite to the notation, since `(1, 5)`
+is the open interval in ordinary mathematical writing and `[1, 5]` the closed one. A caller
+writing what looks like an open interval got a closed one, silently.
+
+```csharp
+Entity e = MathS.Interval(1, 5);                 // closed, said out loud
+Entity e = MathS.Interval(1, false, 5, false);   // open
+Entity e = new Interval(1, true, 5, true);
+```
+
+Nothing in the library, the tests, the F# wrapper or the utilities used it.
+
+The pairs elsewhere in the API are unaffected, because none of them has to guess: an
+integration `Range`, the arguments of `Substitute`, the cases of `MathS.Piecewise` and
+`ToProvided` are all ordered pairs whose two halves have distinct, stated roles.
 
 ### A settings scope belongs to the call, not to the thread
 
