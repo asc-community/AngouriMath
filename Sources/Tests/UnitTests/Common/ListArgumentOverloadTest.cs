@@ -8,6 +8,7 @@
 using System.Collections.Generic;
 using AngouriMath;
 using AngouriMath.Core;
+using AngouriMath.Extensions;
 using Xunit;
 
 namespace AngouriMath.Tests.Common
@@ -59,14 +60,21 @@ namespace AngouriMath.Tests.Common
         }
 
         /// <summary>
-        /// The conversion from an array is deliberately kept, so an array in an
-        /// <c>Entity</c> position is still a set.
+        /// An array in an <c>Entity</c> position is no longer a set. Both conversions are
+        /// gone: an array carries an order and repeats, a set has neither, so the conversion
+        /// silently discarded part of what it was handed — and it is the one that made the
+        /// overloads above ambiguous in the first place. Building a set says so instead.
         /// </summary>
+        /// <remarks>
+        /// This compiling is what says the conversion has not come back; the assertion is
+        /// only that the explicit forms mean what they used to.
+        /// </remarks>
         [Fact]
-        public void ArrayStillConvertsToASet()
+        public void AnArrayIsBuiltIntoASetExplicitly()
         {
-            Entity set = new Entity[] { 1, 2, 3 };
-            Assert.Equal(new Entity.Set.FiniteSet(1, 2, 3), set);
+            var elements = new Entity[] { 1, 2, 3 };
+            Assert.Equal(new Entity.Set.FiniteSet(1, 2, 3), new Entity.Set.FiniteSet(elements));
+            Assert.Equal(new Entity.Set.FiniteSet(1, 2, 3), elements.ToSet());
         }
     }
 }
