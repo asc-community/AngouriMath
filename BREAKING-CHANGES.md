@@ -62,6 +62,7 @@ read first.
 | loud | implicit `(Entity, Entity)` to `Entity` | made a **closed** interval, though `(a, b)` reads as the open one | removed |
 | **silent** | a `MathS.Settings` scope across an `await`, or inside a task | lost, or somebody else's | follows the call |
 | **silent** | a `RewriteRecording` across an `await`, or work started under it | lost, or somebody else's | follows the call |
+| loud | a polynomial system with more equations than unknowns | `WrongNumberOfArgumentsException` | solved |
 
 ---
 
@@ -288,6 +289,36 @@ single-threaded case, which is what `Simplify` is, is unaffected.
 
 Being off is still free: no recording open still costs one ambient read per rule set and
 allocates nothing, which `RewriteAllocationTest` continues to hold to.
+### An over-determined polynomial system is solved rather than refused
+
+`EquationSystem.Solve` insisted on as many equations as unknowns and threw otherwise:
+
+```csharp
+MathS.Equations("x^2 + y^2 - 25", "x + y - 7", "x*y - 12").Solve("x", "y");
+// was: WrongNumberOfArgumentsException
+// is:  the two solutions, (3, 4) and (4, 3)
+```
+
+The count was a consequence of how the old solver worked — it eliminated one variable per
+equation — and not of the problem. A Gröbner basis has no use for the equality, and an
+extra equation that happens to be a consequence of the others is not an error to report.
+
+An inconsistent system now reports itself as one, which it also could not do before:
+
+```csharp
+MathS.Equations("x^2 + y^2 - 25", "x + y - 7", "x*y - 99").Solve("x", "y");
+// was: WrongNumberOfArgumentsException
+// is:  null — no solutions
+```
+
+**What breaks.** Code that catches `WrongNumberOfArgumentsException` to detect a
+malformed system will no longer see it for the polynomial case. **Fewer** equations than
+unknowns still throws: a free variable means infinitely many solutions, which this does
+not enumerate.
+
+The relaxation only applies where the system is a polynomial one over `Q` in at most eight
+variables and its solutions are rational. Everything else reaches the previous solver
+exactly as before, including the equation-count check.
 
 ### `Minusf`'s two operands exchanged names
 
