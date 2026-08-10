@@ -57,6 +57,7 @@ read first.
 | loud | `MathS.Quantum.IsNormalised` | the British spelling | `MathS.Quantum.IsNormalized` |
 | loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
 | **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
+| loud | implicit `List<Entity>` to `Entity` | made a `FiniteSet`, and made three `params` overloads uncallable | removed |
 
 ---
 
@@ -98,6 +99,56 @@ the built assemblies: present in `net8.0` and `net10.0`, absent from `netstandar
 ---
 
 ## Types and members
+
+### The implicit conversion from `List<Entity>` is removed
+
+`Entity` had two implicit conversions from a collection, both building a `FiniteSet`:
+
+```csharp
+public static implicit operator Entity(Entity[] elements);
+public static implicit operator Entity(List<Entity> elements);   // removed
+```
+
+The second one made three public members impossible to call with a `List<Entity>`:
+
+```csharp
+var equations = new List<Entity> { "x - 1", "y - 2" };
+new EquationSystem(equations);        // error CS0121: the call is ambiguous
+new FiniteSet(equations);             // error CS0121
+MathS.Equations(equations);           // error CS0121
+```
+
+Each of those has both an `IEnumerable<Entity>` overload and a `params Entity[]` overload. With
+the conversion in place a `List<Entity>` also converts to a single `Entity`, so the `params`
+overload becomes applicable in its expanded form, neither candidate is better than the other,
+and the call does not compile. The array, `IEnumerable<Entity>`, and variadic forms were always
+fine — only a concrete `List<Entity>` broke, which is why it survived to a 2.0 preview.
+
+This was not three separate defects. One conversion made *every* `params Entity[]` overload in
+the library uncallable with a list, including any added later.
+
+**This one moves between previews.** The conversion is in `2.0.0-preview.1` and
+`2.0.0-preview.2`, both published, and is removed in the release that follows them. It is so
+far the only entry here that changes between two previews rather than between releases: a
+reader coming from 1.3.0 or 1.4.0 can ignore the distinction, one already on a preview cannot.
+
+**What breaks.** Assigning a list where an `Entity` is expected:
+
+```csharp
+Entity set = new List<Entity> { 1, 2, 3 };   // no longer compiles
+```
+
+Write one of these instead:
+
+```csharp
+Entity set = new FiniteSet(new List<Entity> { 1, 2, 3 });
+Entity set = new List<Entity> { 1, 2, 3 }.ToSet();
+Entity set = new Entity[] { 1, 2, 3 };       // the array conversion is unchanged
+```
+
+The `Entity[]` conversion is kept: an array argument binds to the `params` overload in its normal
+form by an identity conversion, which beats the alternatives outright, so it never produced the
+ambiguity.
 
 ### `Minusf`'s two operands exchanged names
 
