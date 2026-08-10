@@ -30,8 +30,6 @@ namespace AngouriMath.Functions
     /// exactly the lexicographic order on exponents that <see cref="DivideExact"/> needs,
     /// and looking a monomial up costs one hash.
     /// </para>
-    /// </remarks>
-    /// <remarks>
     /// <para>
     /// This and its neighbours in <c>Functions/Algebra/Polynomials</c> are kernel algebra:
     /// the solvers, the evaluator and the simplifier all depend on them, and they depend on
