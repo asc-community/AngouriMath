@@ -61,6 +61,7 @@ read first.
 | loud | implicit `Entity[]` to `Entity` | made a `FiniteSet`, discarding order and repeats | removed |
 | loud | implicit `(Entity, Entity)` to `Entity` | made a **closed** interval, though `(a, b)` reads as the open one | removed |
 | **silent** | a `MathS.Settings` scope across an `await`, or inside a task | lost, or somebody else's | follows the call |
+| **silent** | a `RewriteRecording` across an `await`, or work started under it | lost, or somebody else's | follows the call |
 
 ---
 
@@ -245,6 +246,48 @@ null on every access, and that is dearer than the async-local lookup that replac
 Opening a scope got much cheaper because it no longer mints a `Guid` to identify itself,
 though it allocates more, since assigning an `AsyncLocal` copies the flow's value map. Reads
 outnumber scope openings by orders of magnitude in any real workload.
+### A rewrite recording belongs to the call, not to the thread
+
+`RewriteRecording` held its ambient scope in a `[ThreadStatic]` field, and documented the
+consequence rather than fixing it:
+
+> **A synchronous scope, and it has to be.** Do not `await` inside one.
+
+It no longer has to be. The scope is an `AsyncLocal`, as `MathS.Settings` and the
+cancellation token in `MathS.Multithreading` are, so it survives an `await` and work
+started under it reports to it wherever it runs.
+
+| | was | is |
+|---|---|---|
+| a recording across an `await` | lost, and the thread could collect a stranger's rewrites | kept |
+| work started under a recording, on another thread | **not** collected | collected |
+| two flows each with their own recording | separate | separate |
+| a recording opened inside a task, seen after it ends | no | no |
+
+**What breaks.** The second row. A recording no longer stops at the thread boundary:
+
+```csharp
+using var recording = RewriteRecording.Start();
+var t = new Thread(() => expr.Simplify());
+t.Start(); t.Join();
+recording.Steps;   // used to be empty of that work; now contains it
+```
+
+That is what the code says and what the scope is for, but a caller who fanned out inside a
+recording and expected only their own thread's rewrites will now see everything. Open the
+recording inside the callback to keep the old behaviour.
+
+**`Steps` is now a snapshot.** It was a live view of the underlying list; because the store
+has to tolerate concurrent writers it is a `ConcurrentQueue`, and `Steps` copies out of it.
+Reading it after disposing — the documented use — is unchanged. Holding the returned list
+across further recording and expecting it to grow no longer works.
+
+**Order across parallel work is not defined.** Steps from one flow keep the order they fired
+in; two flows recording into the same recording interleave however they happen to run. The
+single-threaded case, which is what `Simplify` is, is unaffected.
+
+Being off is still free: no recording open still costs one ambient read per rule set and
+allocates nothing, which `RewriteAllocationTest` continues to hold to.
 
 ### `Minusf`'s two operands exchanged names
 
