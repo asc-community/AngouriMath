@@ -27,6 +27,6 @@ namespace AngouriMath.Functions.Boolean.AnalyticalSolving
     internal static class BooleanAnalyticalSolver
     {
         internal static Set SolveBoolean(Entity expr, Variable x)
-            => throw FutureReleaseException.Raised("Piecewise", "1.2.1");
+            => throw new NotSufficientlySupportedException("Solving a piecewise statement is not supported");
     }
 }

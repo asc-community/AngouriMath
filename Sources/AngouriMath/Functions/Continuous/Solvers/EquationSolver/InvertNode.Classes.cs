@@ -468,31 +468,36 @@ namespace AngouriMath
         partial record Equalsf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw FutureReleaseException.Raised("We should be able to return sets from invertnode", "1.2");
+                => throw new NotSufficientlySupportedException(
+                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
         }
 
         partial record Greaterf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw FutureReleaseException.Raised("We should be able to return sets from invertnode", "1.2");
+                => throw new NotSufficientlySupportedException(
+                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
         }
 
         partial record GreaterOrEqualf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw FutureReleaseException.Raised("We should be able to return sets from invertnode", "1.2");
+                => throw new NotSufficientlySupportedException(
+                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
         }
 
         partial record Lessf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw FutureReleaseException.Raised("We should be able to return sets from invertnode", "1.2");
+                => throw new NotSufficientlySupportedException(
+                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
         }
 
         partial record LessOrEqualf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw FutureReleaseException.Raised("We should be able to return sets from invertnode", "1.2");
+                => throw new NotSufficientlySupportedException(
+                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
         }
 
         partial record Set
@@ -564,14 +569,16 @@ namespace AngouriMath
             {
                 // f(x) /\ A = value
                 private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                    => throw FutureReleaseException.Raised("Piecewise to check whether value is subset of A", "1.3");
+                    => throw new NotSufficientlySupportedException(
+                        "Deciding this membership would need a piecewise condition, which is not supported here");
             }
 
             partial record SetMinusf
             {
                 // f(x) \ A = value
                 private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                    => throw FutureReleaseException.Raised("Piecewise to check whether value is subset of A", "1.3");
+                    => throw new NotSufficientlySupportedException(
+                        "Deciding this membership would need a piecewise condition, which is not supported here");
             }
 
             partial record Inf
@@ -579,7 +586,8 @@ namespace AngouriMath
                 // TODO: CSet is needed here => InvertNode to return a Set, not an IEnumerable
                 // f(x) in A = value
                 private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                    => throw FutureReleaseException.Raised("InvertNode should return set", "1.2");
+                    => throw new NotSufficientlySupportedException(
+                        "Inverting this node would need a set-valued answer, which the inverter cannot give");
             }
         }
 

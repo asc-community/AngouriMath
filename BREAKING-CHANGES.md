@@ -63,6 +63,7 @@ read first.
 | **silent** | a `MathS.Settings` scope across an `await`, or inside a task | lost, or somebody else's | follows the call |
 | **silent** | a `RewriteRecording` across an `await`, or work started under it | lost, or somebody else's | follows the call |
 | loud | a polynomial system with more equations than unknowns | `WrongNumberOfArgumentsException` | solved |
+| loud | a known gap, e.g. a cubic inequality | `AngouriBugException`, asking to be reported | `NotSufficientlySupportedException` |
 
 ---
 
@@ -191,6 +192,40 @@ Nothing in the library, the tests, the F# wrapper or the utilities used it.
 The pairs elsewhere in the API are unaffected, because none of them has to guess: an
 integration `Range`, the arguments of `Substitute`, the cases of `MathS.Piecewise` and
 `ToProvided` are all ordered pairs whose two halves have distinct, stated roles.
+
+### A known gap no longer presents as a bug
+
+`FutureReleaseException` is removed, and the twelve places that threw through it now throw
+`NotSufficientlySupportedException`.
+
+It worked by naming the release a feature was planned for:
+
+```csharp
+throw FutureReleaseException.Raised("Inequalities are not implemented yet", "1.2.1");
+```
+
+and turning *itself* into an `AngouriBugException` once that release had shipped — message
+ending *"please report about it to the official repository"*. Every site named 1.2, 1.2.1 or
+1.3. All three shipped years ago, so twelve known gaps were inviting bug reports about work
+nobody had started:
+
+```csharp
+("x3 - x > 0").Solve("x");
+// was: AngouriBugException — "Inequalities are not implemented yet was planned for 1.2.1
+//      but hasn't been released by 1.2.1 ... please report about it"
+// is:  NotSufficientlySupportedException — "Only linear and quadratic polynomial
+//      inequalities are supported; this one is of a higher degree"
+```
+
+An unbuilt feature is not a bug, and a caller cannot act on being told to report one.
+
+**What breaks.** `FutureReleaseException` is gone from the public surface; catch
+`NotSufficientlySupportedException`, or `AngouriMathBaseException` for both. Code catching
+`AngouriBugException` around any of these gaps no longer catches them.
+
+The messages changed too, and deliberately: they were notes to a maintainer — *"We should
+be able to return sets from invertnode"* — and are now what is not supported, since they
+are the only thing a caller sees.
 
 ### A settings scope belongs to the call, not to the thread
 
