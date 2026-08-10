@@ -2144,7 +2144,6 @@ AngouriMath.Entity.op_Implicit(System.String) : AngouriMath.Entity
 AngouriMath.Entity.op_Implicit(System.UInt16) : AngouriMath.Entity
 AngouriMath.Entity.op_Implicit(System.UInt32) : AngouriMath.Entity
 AngouriMath.Entity.op_Implicit(System.UInt64) : AngouriMath.Entity
-AngouriMath.Entity.op_Implicit(System.ValueTuple<AngouriMath.Entity,AngouriMath.Entity>) : AngouriMath.Entity
 AngouriMath.Entity.op_Inequality(AngouriMath.Entity, AngouriMath.Entity) : System.Boolean
 AngouriMath.Entity.op_LessThan(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.Entity.op_LessThanOrEqual(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity

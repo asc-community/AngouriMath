@@ -33,5 +33,26 @@ namespace AngouriMath.Tests.Common
         [Fact] public void FromEInteger() => Test(EInteger.FromString("32324"), "32324");
         [Fact] public void FromERational() => Test(ERational.Create(EInteger.FromString("32324"), EInteger.FromString("243244")), ((Entity)"32324/243244").InnerSimplified);
         [Fact] public void FromEDecimal() => Test(EDecimal.FromString("3.4"), "3.4");
+
+        /// <summary>
+        /// The conversions that used to exist from a collection and from a pair are gone,
+        /// because each had to supply something its input did not carry — an array has an
+        /// order and repeats where a set has neither, and a pair says nothing about whether
+        /// its endpoints are included. An interval is asked for by name instead, which also
+        /// makes the choice visible rather than assumed.
+        /// </summary>
+        /// <remarks>
+        /// This test compiling is the part that matters: bring either conversion back and the
+        /// assertions below start passing for the wrong reason, but the ones in
+        /// <c>ListArgumentOverloadTest</c> stop building.
+        /// </remarks>
+        [Fact]
+        public void AnIntervalIsAskedForByName()
+        {
+            Test(MathS.Interval(1, 5), new Entity.Set.Interval(1, true, 5, true));
+            Assert.NotEqual(
+                (Entity)MathS.Interval(1, true, 5, true),
+                (Entity)MathS.Interval(1, false, 5, false));
+        }
     }
 }
