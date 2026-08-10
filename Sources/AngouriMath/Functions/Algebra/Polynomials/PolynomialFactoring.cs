@@ -204,20 +204,58 @@ namespace AngouriMath.Functions
             {
                 if (!Evaluate(d, root).IsZero)
                     continue;
-                var q = DivideByLinear(d, root);
+
+                // Divide the root out as many times as it goes. Stopping at one and giving up
+                // on the rest left 1/(x^4 + x^2) with no antiderivative: its only rational
+                // root is zero, twice, so a single division leaves x^3 + x, which is zero
+                // there again. A root of multiplicity m contributes a term over the m-th
+                // power, and one degree still comes off the denominator, so this ends for the
+                // same reason the single case did.
+                var q = d;
+                var multiplicity = 0;
+                do
+                {
+                    q = DivideByLinear(q, root);
+                    multiplicity++;
+                }
+                while (q.Length > 1 && Evaluate(q, root).IsZero);
+
                 var atRoot = Evaluate(q, root);
                 if (atRoot.IsZero)
-                    continue;                       // repeated root, see above
+                    continue;                       // the denominator is a power of this factor alone
+
                 var a = Evaluate(n, root).Divide(atRoot);
                 var left = Subtract(n, Scale(q, a));
                 if (!Evaluate(left, root).IsZero)
                     continue;                       // cannot happen; checked rather than assumed
-                simplePart = Rational.Create(a) / LinearFactor(root, x);
+
+                var factor = LinearFactor(root, x);
+                simplePart = Rational.Create(a) / (multiplicity == 1 ? factor : factor.Pow(multiplicity));
+
+                // What is left is over (x - r)^(m-1) times q, having cancelled one (x - r)
+                // against the numerator, which vanishes at the root by construction.
+                var restCoefficients = q;
+                for (var i = 1; i < multiplicity; i++)
+                    restCoefficients = MultiplyByLinear(restCoefficients, root);
                 restNumerator = BuildPolynomial(DivideByLinear(left, root), x);
-                restDenominator = BuildPolynomial(q, x);
+                restDenominator = BuildPolynomial(restCoefficients, x);
                 return true;
             }
             return false;
+        }
+
+        /// <summary>Multiplies by <c>x - root</c>, the inverse of <see cref="DivideByLinear"/>.</summary>
+        private static ERational[] MultiplyByLinear(ERational[] coefficients, ERational root)
+        {
+            var product = new ERational[coefficients.Length + 1];
+            for (var i = 0; i < product.Length; i++)
+                product[i] = ERational.Zero;
+            for (var i = 0; i < coefficients.Length; i++)
+            {
+                product[i + 1] = product[i + 1].Add(coefficients[i]);
+                product[i] = product[i].Subtract(coefficients[i].Multiply(root));
+            }
+            return product;
         }
 
         /// <summary>

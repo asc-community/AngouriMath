@@ -78,5 +78,30 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x * e ^ x", new[] { 0.3, 1.7 })]
         public void NeighbouringFormsAreUnaffected(string integrand, double[] points) =>
             AssertIsAntiderivative(integrand, points);
+
+        // A denominator whose rational root repeats. Splitting off one factor and giving up
+        // if the quotient still vanished there left 1/(x^4 + x^2) with no antiderivative:
+        // its only rational root is zero, twice. A root of multiplicity m contributes a term
+        // over the m-th power, and taking all m out at once is what the single-root arm was
+        // already doing for m = 1.
+        [Theory]
+        [InlineData("1 / (x ^ 4 + x ^ 2)", new[] { 0.7, 1.3, -1.7 })]
+        [InlineData("1 / (x ^ 3 + x ^ 2)", new[] { 0.7, 1.3, -1.7 })]
+        [InlineData("1 / (x ^ 2 * (x + 1))", new[] { 0.7, 1.3, -1.7 })]
+        [InlineData("1 / ((x - 1) ^ 2 * (x + 2))", new[] { 0.7, 2.3, -1.7 })]
+        [InlineData("x / ((x - 1) ^ 2 * (x ^ 2 + 1))", new[] { 0.7, 2.3, -1.7 })]
+        [InlineData("1 / ((x + 1) ^ 3 * (x - 2))", new[] { 0.7, 2.3, -1.7 })]
+        [InlineData("(x + 1) / (x ^ 3 - x ^ 2)", new[] { 0.7, 1.3, -1.7 })]
+        public void ARepeatedRationalRootDecomposesToo(string integrand, double[] points) =>
+            AssertIsAntiderivative(integrand, points);
+
+        // Denominators with no rational root at all are still out of reach: x^4 + 1 is
+        // irreducible over Q and only factors once real coefficients are allowed. Recorded
+        // so the boundary is visible rather than inferred from an absence.
+        [Theory]
+        [InlineData("x ^ 2 / (x ^ 4 + 1)")]
+        [InlineData("1 / (x ^ 4 + 4)")]
+        public void ADenominatorWithNoRationalRootIsStillDeclined(string integrand) =>
+            Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
     }
 }
