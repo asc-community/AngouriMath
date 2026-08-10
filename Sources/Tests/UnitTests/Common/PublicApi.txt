@@ -2132,7 +2132,6 @@ AngouriMath.Entity.op_Implicit(PeterO.Numbers.EInteger) : AngouriMath.Entity
 AngouriMath.Entity.op_Implicit(PeterO.Numbers.ERational) : AngouriMath.Entity
 AngouriMath.Entity.op_Implicit(System.Boolean) : AngouriMath.Entity
 AngouriMath.Entity.op_Implicit(System.Byte) : AngouriMath.Entity
-AngouriMath.Entity.op_Implicit(System.Collections.Generic.List<AngouriMath.Entity>) : AngouriMath.Entity
 AngouriMath.Entity.op_Implicit(System.Decimal) : AngouriMath.Entity
 AngouriMath.Entity.op_Implicit(System.Double) : AngouriMath.Entity
 AngouriMath.Entity.op_Implicit(System.Int16) : AngouriMath.Entity

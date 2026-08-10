@@ -22,16 +22,14 @@ namespace AngouriMath
             /// Explicit output for ToString, that is, no signs or parentheses will be omitted. Useful
             /// for debugging and diagnostic.
             /// </summary>
-            public static Setting<bool> OutputExplicit => outputExplicit ??= false;
-            [ThreadStatic] private static Setting<bool>? outputExplicit;
+            public static Setting<bool> OutputExplicit { get; } = false;
 
             /// <summary>
             /// Set a predicate on the state of <see cref="Entity"/> so that once
             /// the predicate turns true in method <see cref="Entity.Simplify"/>,
             /// an exception <see cref="DiagnosticCatchException"/> is thrown.
             /// </summary>
-            public static Setting<Func<Entity, bool>> CatchOnSimplify => catchOnSimplify ??= (Func<Entity, bool>)(a => false);
-            [ThreadStatic] private static Setting<Func<Entity, bool>>? catchOnSimplify;
+            public static Setting<Func<Entity, bool>> CatchOnSimplify { get; } = (Func<Entity, bool>)(a => false);
 
             /// <summary>
             /// Will only occur in debug mode,

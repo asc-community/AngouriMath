@@ -57,6 +57,8 @@ read first.
 | loud | `MathS.Quantum.IsNormalised` | the British spelling | `MathS.Quantum.IsNormalized` |
 | loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
 | **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
+| loud | implicit `List<Entity>` to `Entity` | made a `FiniteSet`, and made three `params` overloads uncallable | removed |
+| **silent** | a `MathS.Settings` scope across an `await`, or inside a task | lost, or somebody else's | follows the call |
 | loud | a polynomial system with more equations than unknowns | `WrongNumberOfArgumentsException` | solved |
 
 ---
@@ -100,6 +102,110 @@ the built assemblies: present in `net8.0` and `net10.0`, absent from `netstandar
 
 ## Types and members
 
+### The implicit conversion from `List<Entity>` is removed
+
+`Entity` had two implicit conversions from a collection, both building a `FiniteSet`:
+
+```csharp
+public static implicit operator Entity(Entity[] elements);
+public static implicit operator Entity(List<Entity> elements);   // removed
+```
+
+The second one made three public members impossible to call with a `List<Entity>`:
+
+```csharp
+var equations = new List<Entity> { "x - 1", "y - 2" };
+new EquationSystem(equations);        // error CS0121: the call is ambiguous
+new FiniteSet(equations);             // error CS0121
+MathS.Equations(equations);           // error CS0121
+```
+
+Each of those has both an `IEnumerable<Entity>` overload and a `params Entity[]` overload. With
+the conversion in place a `List<Entity>` also converts to a single `Entity`, so the `params`
+overload becomes applicable in its expanded form, neither candidate is better than the other,
+and the call does not compile. The array, `IEnumerable<Entity>`, and variadic forms were always
+fine — only a concrete `List<Entity>` broke, which is why it survived to a 2.0 preview.
+
+This was not three separate defects. One conversion made *every* `params Entity[]` overload in
+the library uncallable with a list, including any added later.
+
+**This one moves between previews.** The conversion is in `2.0.0-preview.1` and
+`2.0.0-preview.2`, both published, and is removed in the release that follows them. It is so
+far the only entry here that changes between two previews rather than between releases: a
+reader coming from 1.3.0 or 1.4.0 can ignore the distinction, one already on a preview cannot.
+
+**What breaks.** Assigning a list where an `Entity` is expected:
+
+```csharp
+Entity set = new List<Entity> { 1, 2, 3 };   // no longer compiles
+```
+
+Write one of these instead:
+
+```csharp
+Entity set = new FiniteSet(new List<Entity> { 1, 2, 3 });
+Entity set = new List<Entity> { 1, 2, 3 }.ToSet();
+Entity set = new Entity[] { 1, 2, 3 };       // the array conversion is unchanged
+```
+
+The `Entity[]` conversion is kept: an array argument binds to the `params` overload in its normal
+form by an identity conversion, which beats the alternatives outright, so it never produced the
+ambiguity.
+### A settings scope belongs to the call, not to the thread
+
+`MathS.Settings` values were held in `[ThreadStatic]` fields — fourteen of them. A scope
+therefore stopped at the first `await`:
+
+```csharp
+using var _ = MathS.Settings.MaxExpansionTermCount.Set(1);
+Console.WriteLine(MathS.Settings.MaxExpansionTermCount.Value);   // 1
+await Task.Delay(20).ConfigureAwait(false);
+Console.WriteLine(MathS.Settings.MaxExpansionTermCount.Value);   // was 2000, the default
+```
+
+The continuation resumed on a pool thread that had never seen the scope, so the setting
+silently read its default. The same mechanism ran the other way too: a thread returned to
+the pool still carried whatever scope was left on it, so the *next* caller to borrow that
+thread could compute under a precision or codomain it never asked for. Neither shows up as
+an error; both change the answer.
+
+The values now live in an `AsyncLocal`, which is what the cancellation token in
+`MathS.Multithreading` already used.
+
+| | was | is |
+|---|---|---|
+| a scope across an `await` | lost | kept |
+| a scope inside `Task.Run` started under it | not inherited | **inherited** |
+| a scope opened in a task, seen by a sibling | no | no |
+| a scope opened in a task, seen after it ends | no | no |
+| a thread reused by the pool | could carry a stale scope | cannot |
+
+**What breaks.** The second row is the one to read. Work started inside a scope now runs
+under it:
+
+```csharp
+using var _ = MathS.Settings.Codomain.Set(Domain.Real);
+await Task.Run(() => expr.Solve("x"));   // now solves over R; used to solve over C
+```
+
+That is what the code says, and almost always what was meant — but if you parallelised
+inside a scope and relied on the child *not* seeing it, it does now. Move the scope inside
+the callback to keep the old behaviour.
+
+**Cost.** Measured over 20 000 000 reads and 2 000 000 scopes:
+
+| | was | is |
+|---|---|---|
+| read `PrecisionErrorZeroRange.Value` | 7.3–8.0 ns | **1.2 ns** |
+| read `DowncastingEnabled.Value` | 0.79 ns | 0.96 ns |
+| `Set()` + `Dispose()` | 388–395 ns, 32 B | **46 ns**, 112 B |
+| a `Simplify` workload | 5.6–5.8 s | 5.5–5.6 s, +1.5 % allocated |
+
+Reads got faster rather than slower: the old getter re-tested a `[ThreadStatic]` field for
+null on every access, and that is dearer than the async-local lookup that replaced it.
+Opening a scope got much cheaper because it no longer mints a `Guid` to identify itself,
+though it allocates more, since assigning an `AsyncLocal` copies the flow's value map. Reads
+outnumber scope openings by orders of magnitude in any real workload.
 ### An over-determined polynomial system is solved rather than refused
 
 `EquationSystem.Solve` insisted on as many equations as unknowns and threw otherwise:
