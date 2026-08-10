@@ -6,6 +6,7 @@
 //
 
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Multithreading;
 using System;
 using static AngouriMath.Entity;
 
@@ -91,6 +92,7 @@ namespace AngouriMath.Functions.Boolean
         static void Search(Entity expr, Variable[] variables, Dictionary<Variable, int> index,
                            int[] assignment, int depth, MatrixBuilder tb)
         {
+            MultithreadingFunctional.ExitIfCancelled();
             switch (Evaluate(expr, index, assignment))
             {
                 case Verdict.False:
@@ -121,12 +123,20 @@ namespace AngouriMath.Functions.Boolean
         /// Writes out every way of filling in the variables from <paramref name="depth"/> on,
         /// in counting order. Called where the expression is already true whatever they are.
         /// </summary>
+        /// <remarks>
+        /// This is where the cost of the method's shape lands. The search is cheap, but every
+        /// model has to be written down, and a formula that most assignments satisfy has a
+        /// great many: a tautology over 22 variables is four million rows and 2.4 GB. So this
+        /// is the loop that most needs to be interruptible — the caller cannot know in advance
+        /// that the answer will not fit.
+        /// </remarks>
         static void EmitEveryCompletion(int[] assignment, int depth, MatrixBuilder tb)
         {
             var free = assignment.Length - depth;
             var total = 1L << free;
             for (long combination = 0; combination < total; combination++)
             {
+                MultithreadingFunctional.ExitIfCancelled();
                 var row = new Entity[assignment.Length];
                 for (var i = 0; i < depth; i++)
                     row[i] = assignment[i] == 1;
@@ -241,6 +251,9 @@ namespace AngouriMath.Functions.Boolean
             var variablesStorage = new Dictionary<Variable, Entity>();
             do
             {
+                // A truth table is all 2^n rows by definition, so there is no pruning to be
+                // had here and the only mercy available is being able to stop.
+                MultithreadingFunctional.ExitIfCancelled();
                 for (int i = 0; i < count; i++)
                     variablesStorage[variables[i]] = states[i];
                 tb.Add(states.Select(s => (Entity)s).Append(expr.Substitute(variablesStorage).EvalBoolean()));

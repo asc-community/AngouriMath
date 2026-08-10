@@ -8,6 +8,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using AngouriMath;
 using AngouriMath.Core.Transformations;
 using Xunit;
@@ -139,21 +140,77 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         [Fact]
-        public void ARecordingOnOneThreadDoesNotSeeAnother()
+        public void WorkStartedUnderARecordingIsCollectedWhereverItRuns()
         {
+            // The recording belongs to the call, so work begun under it reports to it even
+            // on another thread. Held per thread this collected nothing, because the new
+            // thread had never seen the recording.
             using var recording = RewriteRecording.Start();
             Parse("a / (b / c)").Simplify();
             var mine = recording.Steps.Count;
+            Assert.NotEqual(0, mine);
 
-            // A thread joined synchronously rather than an awaited task. Awaiting would
-            // yield this thread while the recording is still open on it, and this thread is
-            // exactly where the test runner is free to start something else -- which the
-            // recording would then collect, because it follows the thread and not the call.
             var other = new Thread(() => Parse("sin(x) / tan(x) + u / (v / w)").Simplify());
             other.Start();
             other.Join();
 
-            Assert.Equal(mine, recording.Steps.Count);
+            Assert.True(recording.Steps.Count > mine);
+        }
+
+        [Fact]
+        public async Task ARecordingSurvivesAnAwait()
+        {
+            using var recording = RewriteRecording.Start();
+            await Task.Delay(20).ConfigureAwait(false);
+            Parse("a / (b / c)").Simplify();
+            Assert.NotEmpty(recording.Steps);
+        }
+
+        [Fact]
+        public async Task SiblingRecordingsDoNotSeeEachOther()
+        {
+            // The isolation that the per-thread field did give and that this must keep. The
+            // barrier makes both recordings open before either does any work.
+            using var barrier = new Barrier(2);
+            async Task<(int mine, IReadOnlyList<RewriteStep> steps)> Branch(string expr)
+            {
+                await Task.Yield();
+                using var recording = RewriteRecording.Start();
+                barrier.SignalAndWait();
+                Parse(expr).Simplify();
+                await Task.Delay(20).ConfigureAwait(false);
+                return (recording.Steps.Count, recording.Steps);
+            }
+
+            var left = Branch("a / (b / c)");
+            var right = Branch("sin(x) / tan(x)");
+            var results = await Task.WhenAll(left, right);
+
+            Assert.All(results, r => Assert.NotEqual(0, r.mine));
+            // Neither collected the other's work: together they would be the union, and each
+            // is strictly smaller than that.
+            var combined = results.Sum(r => r.mine);
+            Assert.All(results, r => Assert.True(r.mine < combined));
+        }
+
+        [Fact]
+        public async Task ARecordingOpenedInsideATaskDoesNotEscapeIt()
+        {
+            RewriteRecording? inner = null;
+            await Task.Run(() =>
+            {
+                // Left open on purpose: what is under test is that the pointer does not leak
+                // out of the task, not that Dispose puts it back.
+                inner = RewriteRecording.Start();
+                Parse("a / (b / c)").Simplify();
+            });
+
+            var recording = Assert.IsType<RewriteRecording>(inner);
+            var whenTheTaskEnded = recording.Steps.Count;
+            Assert.NotEqual(0, whenTheTaskEnded);
+
+            Parse("sin(x) / tan(x) + u / (v / w)").Simplify();
+            Assert.Equal(whenTheTaskEnded, recording.Steps.Count);
         }
 
         [Fact]
