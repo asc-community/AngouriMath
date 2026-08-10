@@ -1,0 +1,202 @@
+//
+// Copyright (c) 2019-2026 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
+
+using System.Collections.Generic;
+using System.Linq;
+using AngouriMath;
+using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
+using Xunit;
+using static AngouriMath.Entity;
+
+namespace AngouriMath.Tests.Algebra
+{
+    /// <summary>
+    /// Systems that are triangularised by a Gröbner basis rather than eliminated in
+    /// radicals — <a href="https://github.com/asc-community/AngouriMath/issues/860">#860</a>.
+    /// </summary>
+    [Trait("Area", "Algebra")]
+    public sealed class GroebnerSystemTest
+    {
+        static Variable[] Vars(int count) =>
+            Enumerable.Range(0, count).Select(i => (Variable)$"x_{i}").ToArray();
+
+        /// <summary>n unknowns that are a permutation of 1..n, written as n power sums.</summary>
+        static Entity[] PowerSums(int n)
+        {
+            var equations = new Entity[n];
+            for (var power = 1; power <= n; power++)
+            {
+                Entity sum = 0;
+                for (var v = 0; v < n; v++)
+                    sum += MathS.Pow($"x_{v}", power);
+                var target = 0L;
+                for (var k = 1; k <= n; k++)
+                {
+                    var term = 1L;
+                    for (var e = 0; e < power; e++) term *= k;
+                    target += term;
+                }
+                equations[power - 1] = sum - target;
+            }
+            return equations;
+        }
+
+        static void AssertEverySolutionSatisfies(Entity[] equations, Variable[] variables, Matrix solutions)
+        {
+            for (var row = 0; row < solutions.RowCount; row++)
+            {
+                var substitutions = new Dictionary<Variable, Entity>();
+                for (var column = 0; column < variables.Length; column++)
+                    substitutions[variables[column]] = solutions[row, column];
+                foreach (var equation in equations)
+                    Assert.Equal(0, equation.Substitute(substitutions).EvalNumerical());
+            }
+        }
+
+        /// <summary>
+        /// Four coupled equations did not finish in three hundred seconds when each
+        /// elimination went through the radical formulas, while four uncoupled ones with 256
+        /// solutions took seventeen milliseconds. The cost was the radicals, not the size.
+        /// </summary>
+        [Theory]
+        [InlineData(2, 2)]
+        [InlineData(3, 6)]
+        [InlineData(4, 24)]
+        [InlineData(5, 120)]
+        public void CoupledSystemsAreSolved(int variableCount, int expectedSolutions)
+        {
+            var equations = PowerSums(variableCount);
+            var variables = Vars(variableCount);
+
+            var solutions = MathS.Equations(equations).Solve(variables);
+
+            Assert.NotNull(solutions);
+            Assert.Equal(expectedSolutions, solutions.RowCount);
+            Assert.Equal(variableCount, solutions.ColumnCount);
+            AssertEverySolutionSatisfies(equations, variables, solutions);
+        }
+
+        /// <summary>
+        /// More equations than unknowns used to be refused outright, and a Gröbner basis has
+        /// no use for as many of one as the other.
+        /// </summary>
+        [Fact]
+        public void AnOverDeterminedConsistentSystemIsSolved()
+        {
+            Entity[] equations = { "x^2 + y^2 - 25", "x + y - 7", "x*y - 12" };
+            Variable[] variables = { "x", "y" };
+
+            var solutions = MathS.Equations(equations).Solve(variables);
+
+            Assert.NotNull(solutions);
+            Assert.Equal(2, solutions.RowCount);
+            AssertEverySolutionSatisfies(equations, variables, solutions);
+        }
+
+        /// <summary>
+        /// The textbook signal for an inconsistent system is that the basis contains a
+        /// nonzero constant. It has to arrive as "no solutions" and not as an exception.
+        /// </summary>
+        [Fact]
+        public void AnOverDeterminedInconsistentSystemHasNoSolutions()
+        {
+            Entity[] equations = { "x^2 + y^2 - 25", "x + y - 7", "x*y - 99" };
+            Assert.Null(MathS.Equations(equations).Solve("x", "y"));
+        }
+
+        [Fact]
+        public void AConsistentSquareSystemIsUnaffected()
+        {
+            Entity[] equations = { "x^2 + y^2 - 25", "x + y - 7" };
+            Variable[] variables = { "x", "y" };
+
+            var solutions = MathS.Equations(equations).Solve(variables);
+
+            Assert.NotNull(solutions);
+            Assert.Equal(2, solutions.RowCount);
+            AssertEverySolutionSatisfies(equations, variables, solutions);
+        }
+
+        /// <summary>
+        /// The columns are the variables in the order they were asked for, which the
+        /// triangular back-substitution fills in from the last one first.
+        /// </summary>
+        [Fact]
+        public void ColumnsFollowTheOrderTheVariablesWereGivenIn()
+        {
+            Entity[] equations = { "x - 1", "y - 2" };
+            var solutions = MathS.Equations(equations).Solve("x", "y");
+            Assert.NotNull(solutions);
+            Assert.Equal(1, solutions.RowCount);
+            Assert.Equal(1, solutions[0, 0].EvalNumerical());
+            Assert.Equal(2, solutions[0, 1].EvalNumerical());
+
+            var swapped = MathS.Equations(equations).Solve("y", "x");
+            Assert.NotNull(swapped);
+            Assert.Equal(2, swapped[0, 0].EvalNumerical());
+            Assert.Equal(1, swapped[0, 1].EvalNumerical());
+        }
+
+        /// <summary>
+        /// Not a polynomial over Q in these variables, so the Gröbner path must decline and
+        /// leave the answer exactly as it was.
+        /// </summary>
+        [Fact]
+        public void ANonPolynomialSystemIsLeftToTheExistingSolver()
+        {
+            Entity[] equations = { "cos(x2 + 1)^2 + 3y", "y * (-1) + 4cos(x2 + 1)" };
+            var solutions = MathS.Equations(equations).Solve("x", "y");
+            Assert.NotNull(solutions);
+            Assert.Equal(8, solutions.RowCount);
+        }
+
+        /// <summary>
+        /// Polynomial, but its solutions are not rational, so it is declined too — and the
+        /// declining has to be quick, because the work of proving a nested radical satisfies
+        /// the system is unbounded and was what made this path cost more than it saved.
+        /// </summary>
+        [Fact]
+        public void APolynomialSystemWithoutRationalSolutionsIsLeftAlone()
+        {
+            Entity[] equations = { "x3 + 9 x2 y - 10", "y3 + x y2 - 2" };
+            var solutions = MathS.Equations(equations).Solve("x", "y");
+            Assert.NotNull(solutions);
+            Assert.Equal(9, solutions.RowCount);
+        }
+
+        /// <summary>
+        /// A free variable means infinitely many solutions, which is not something a
+        /// triangular basis enumerates — the ideal is not zero-dimensional, so there is no
+        /// finite set of standard monomials and the conversion declines. Fewer equations
+        /// than unknowns therefore still reaches the old refusal, unchanged.
+        /// </summary>
+        [Fact]
+        public void AnUnderDeterminedSystemIsStillRefused()
+            => Assert.Throws<WrongNumberOfArgumentsException>(
+                () => MathS.Equations(new Entity[] { "x + y - 3" }).Solve("x", "y"));
+
+        /// <summary>
+        /// Eight unknowns is the ceiling of the packed representation; nine has to fall
+        /// through rather than be truncated.
+        /// </summary>
+        [Fact]
+        public void MoreVariablesThanThePackingHoldsFallsThrough()
+        {
+            var equations = new Entity[9];
+            var variables = new Variable[9];
+            for (var i = 0; i < 9; i++)
+            {
+                variables[i] = $"v_{i}";
+                equations[i] = variables[i] - (i + 1);
+            }
+            var solutions = MathS.Equations(equations).Solve(variables);
+            Assert.NotNull(solutions);
+            Assert.Equal(1, solutions.RowCount);
+        }
+    }
+}

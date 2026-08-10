@@ -31,7 +31,13 @@ namespace AngouriMath.Functions
     /// and looking a monomial up costs one hash.
     /// </para>
     /// </remarks>
-    internal sealed class MultivariatePolynomial
+    /// <remarks>
+    /// Partial so that the operations only a Gröbner basis needs — monomial divisibility,
+    /// an order other than lexicographic, reduction against a set — live beside the solver
+    /// that wants them, in <c>Functions/Algebra/Groebner</c>, rather than swelling the type
+    /// that simplification uses. See <c>MultivariatePolynomial.Groebner.cs</c>.
+    /// </remarks>
+    internal sealed partial class MultivariatePolynomial
     {
         /// <summary>One byte of the packed monomial each, so eight of them fit.</summary>
         internal const int MaxVariables = 8;

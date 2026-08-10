@@ -57,6 +57,7 @@ read first.
 | loud | `MathS.Quantum.IsNormalised` | the British spelling | `MathS.Quantum.IsNormalized` |
 | loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
 | **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
+| loud | a polynomial system with more equations than unknowns | `WrongNumberOfArgumentsException` | solved |
 
 ---
 
@@ -98,6 +99,37 @@ the built assemblies: present in `net8.0` and `net10.0`, absent from `netstandar
 ---
 
 ## Types and members
+
+### An over-determined polynomial system is solved rather than refused
+
+`EquationSystem.Solve` insisted on as many equations as unknowns and threw otherwise:
+
+```csharp
+MathS.Equations("x^2 + y^2 - 25", "x + y - 7", "x*y - 12").Solve("x", "y");
+// was: WrongNumberOfArgumentsException
+// is:  the two solutions, (3, 4) and (4, 3)
+```
+
+The count was a consequence of how the old solver worked — it eliminated one variable per
+equation — and not of the problem. A Gröbner basis has no use for the equality, and an
+extra equation that happens to be a consequence of the others is not an error to report.
+
+An inconsistent system now reports itself as one, which it also could not do before:
+
+```csharp
+MathS.Equations("x^2 + y^2 - 25", "x + y - 7", "x*y - 99").Solve("x", "y");
+// was: WrongNumberOfArgumentsException
+// is:  null — no solutions
+```
+
+**What breaks.** Code that catches `WrongNumberOfArgumentsException` to detect a
+malformed system will no longer see it for the polynomial case. **Fewer** equations than
+unknowns still throws: a free variable means infinitely many solutions, which this does
+not enumerate.
+
+The relaxation only applies where the system is a polynomial one over `Q` in at most eight
+variables and its solutions are rational. Everything else reaches the previous solver
+exactly as before, including the equation-count check.
 
 ### `Minusf`'s two operands exchanged names
 

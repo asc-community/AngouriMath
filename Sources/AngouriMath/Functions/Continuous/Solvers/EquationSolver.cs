@@ -61,6 +61,17 @@ namespace AngouriMath.Functions.Algebra
         internal static Matrix? SolveSystem(IEnumerable<Entity> inputEquations, ReadOnlySpan<Variable> vars)
         {
             var equations = new List<Entity>(inputEquations.Select(equation => equation.InnerSimplified));
+
+            // Triangularising first, where the system is polynomial over Q and the answer can
+            // be checked exactly. Eliminating in radicals -- which is what InSolveSystem below
+            // does -- costs nothing on an uncoupled system and does not finish on a coupled
+            // one, so this is tried before the equation count is even insisted on: a Groebner
+            // basis has no use for as many equations as unknowns.
+            var variables = new Variable[vars.Length];
+            vars.CopyTo(variables);
+            if (Groebner.GroebnerSystemSolver.TrySolve(equations, variables, out var triangularised))
+                return triangularised;
+
             if (equations.Count != vars.Length)
                 throw new WrongNumberOfArgumentsException("Number of equations must be equal to that of vars");
             int initVarCount = vars.Length;
