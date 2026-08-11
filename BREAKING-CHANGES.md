@@ -64,6 +64,7 @@ read first.
 | **silent** | a `RewriteRecording` across an `await`, or work started under it | lost, or somebody else's | follows the call |
 | loud | a polynomial system with more equations than unknowns | `WrongNumberOfArgumentsException` | solved |
 | loud | a known gap, e.g. a cubic inequality | `AngouriBugException`, asking to be reported | `NotSufficientlySupportedException` |
+| **silent** | `arcsin(sin(x))` and three siblings | `x`, wrong wherever `x` leaves the principal interval | left as written unless `x` is a real in that interval |
 
 ---
 
@@ -192,6 +193,52 @@ Nothing in the library, the tests, the F# wrapper or the utilities used it.
 The pairs elsewhere in the API are unaffected, because none of them has to guess: an
 integration `Range`, the arguments of `Substitute`, the cases of `MathS.Piecewise` and
 `ToProvided` are all ordered pairs whose two halves have distinct, stated roles.
+
+### An inverse trigonometric function no longer cancels its own function off the principal branch
+
+`arcsin` is a left inverse of `sin` only on `[-pi/2, pi/2]`, and the three siblings likewise only on
+their own intervals. The rewrite was unconditional, so `Simplify` returned a value that is wrong at
+every real point outside the interval:
+
+| | was | is | the value at that point |
+|---|---|---|---|
+| `arcsin(sin(x))` | `x` | left as written | `pi - x` for `x` in `[pi/2, 3pi/2]`, and so on |
+| `arccos(cos(x))` | `x` | left as written | `2*pi - x` for `x` in `[pi, 2pi]` |
+| `arctan(tan(x))` | `x` | left as written | `x - pi` for `x` in `(pi/2, 3pi/2)` |
+| `arccotan(cotan(x))` | `x` | left as written | `x - pi` for `x` in `(pi, 2pi)` |
+
+Measured on a build of `35f4ae5a` before this change and after it. The four rules are older than
+1.4.0 and untouched since, so 1.4.0 answers the same way, but the numbers below are from the two
+2.0.0 builds rather than from a 1.4.0 one:
+
+```
+"arcsin(sin(x))".Simplify().Substitute("x", 3).EvalNumerical()
+  was  3
+  is   0.14159...        which is pi - 3, and is what arcsin(sin(3)) equals
+
+"arctan(tan(x))".Simplify().Substitute("x", 2).EvalNumerical()
+  was  2
+  is   -1.14159...       = 2 - pi
+
+"arccos(cos(x))".Simplify().Substitute("x", 4).EvalNumerical()
+  was  4
+  is   2.28318...        = 2*pi - 4
+```
+
+**Where the argument is a real number inside the interval, the cancellation still happens and stays
+exact**: `arcsin(sin(1/2))` is `1/2`, not a decimal. Where it is symbolic, the expression is left as
+written, which is what SymPy and Mathematica both answer.
+
+A condition was deliberately *not* attached. `arcsin(sin(x))` is defined for every real `x`, so
+`x provided x >= -pi/2 and x <= pi/2` would say the expression is undefined outside the interval
+when in fact it merely has another value — trading a wrong value for a wrong domain.
+
+**The other direction is unchanged**, and needs no assumption: `sin(arcsin(z))`, `cos(arccos(z))`,
+`tan(arctan(z))` and `cotan(arccotan(z))` are all `z`, because they compose the *right* inverse.
+
+`CircleTest.Test8` asserted `arccotan(cotan(3x)) == 3x` and was pinning the wrong answer; it now
+asserts that the expression is left alone. Issue
+[#884](https://github.com/asc-community/AngouriMath/issues/884).
 
 ### A known gap no longer presents as a bug
 

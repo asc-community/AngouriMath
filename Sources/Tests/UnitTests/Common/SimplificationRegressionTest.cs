@@ -521,5 +521,69 @@ namespace AngouriMath.Tests.Common
             using var _ = MathS.Settings.Codomain.Set(Domain.Real);
             Assert.Equal(Entity.Boolean.False, input.ToEntity().Simplify());
         }
+
+        // https://github.com/asc-community/AngouriMath/issues/884
+        // arcsin is a left inverse of sin only on [-pi/2, pi/2], and the three siblings
+        // likewise only on their principal intervals. The rewrite was unconditional, so
+        // arcsin(sin(3)) simplified to 3 where the value is pi - 3 -- a wrong answer at an
+        // ordinary real point, not a missing one.
+        //
+        // Asserted numerically because the point of the bug is the value: comparing the
+        // simplified form against the original at a point outside the principal interval
+        // is the only assertion that fails for the right reason.
+        [Theory]
+        [InlineData("arcsin(sin(x))", "3")]
+        [InlineData("arcsin(sin(x))", "pi")]
+        [InlineData("arcsin(sin(x))", "-2")]
+        [InlineData("arccos(cos(x))", "4")]
+        [InlineData("arccos(cos(x))", "-1")]
+        [InlineData("arctan(tan(x))", "2")]
+        [InlineData("arctan(tan(x))", "-2")]
+        [InlineData("arccotan(cotan(x))", "-1")]
+        public void SimplifyingAnInverseOfItsOwnFunctionKeepsTheValueOffThePrincipalBranch(
+            string expression, string at)
+        {
+            var original = expression.ToEntity();
+            var simplified = original.Simplify();
+            var before = original.Substitute("x", at.ToEntity()).EvalNumerical();
+            var after = simplified.Substitute("x", at.ToEntity()).EvalNumerical();
+            Assert.True(Magnitude(before - after) < 1e-20,
+                $"{expression} simplified to {simplified.Stringize()}, which at x = {at} is "
+                + $"{after.Stringize()} rather than {before.Stringize()}");
+        }
+
+        // The cancellation is still wanted where the argument is inside the principal
+        // interval, and there it has to stay exact rather than becoming a decimal. The
+        // expectation is simplified too because "1/2" parses as a Divf rather than a
+        // Rational (https://github.com/asc-community/AngouriMath/issues/873), and Entity
+        // equality is structural; a decimal answer still fails, which is what this pins.
+        [Theory]
+        [InlineData("arcsin(sin(1/2))", "1/2")]
+        [InlineData("arccos(cos(1/2))", "1/2")]
+        [InlineData("arctan(tan(1/2))", "1/2")]
+        [InlineData("arcsin(sin(0))", "0")]
+        [InlineData("arctan(tan(-1/3))", "-1/3")]
+        public void SimplifyingAnInverseOfItsOwnFunctionStaysExactOnThePrincipalBranch(
+            string expression, string expected)
+        {
+            Assert.Equal(expected.ToEntity().Simplify(), expression.ToEntity().Simplify());
+        }
+
+        // The other direction composes the *right* inverse and needs no assumption at all:
+        // sin(arcsin(z)) is z wherever arcsin(z) is defined. Pinned so that guarding the
+        // unsound half does not take the sound half with it.
+        [Theory]
+        [InlineData("sin(arcsin(x))")]
+        [InlineData("cos(arccos(x))")]
+        [InlineData("tan(arctan(x))")]
+        [InlineData("cotan(arccotan(x))")]
+        public void ComposingAFunctionOverItsOwnInverseIsStillTheIdentity(string input)
+        {
+            Assert.Equal("x".ToEntity(), input.ToEntity().Simplify());
+        }
+
+        static double Magnitude(Entity difference) =>
+            ((System.Numerics.Complex)difference.EvalNumerical()).Magnitude;
+
     }
 }

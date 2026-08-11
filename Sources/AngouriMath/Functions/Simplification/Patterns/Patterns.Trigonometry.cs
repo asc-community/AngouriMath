@@ -6,12 +6,55 @@
 //
 
 using System;
+using PeterO.Numbers;
 using static AngouriMath.Entity;
 
 namespace AngouriMath.Functions
 {
     internal static partial class Patterns
     {
+        /// The real value of <paramref name="argument"/> where there is one to read. A rule
+        /// that holds only on a principal branch may fire only where the branch can be
+        /// decided, so a symbolic argument -- or one off the real line -- has to leave the
+        /// node alone.
+        private static bool TryReadReal(Entity argument, out EDecimal value)
+        {
+            value = EDecimal.Zero;
+            if (argument.Evaled is not Number.Real real || !real.EDecimal.IsFinite) return false;
+            value = real.EDecimal;
+            return true;
+        }
+
+        /// <summary>Whether the argument lies in <c>[-pi/2, pi/2]</c>, or in the open interval
+        /// when <paramref name="closed"/> is false — the intervals <c>arcsin</c> and
+        /// <c>arctan</c> answer in.</summary>
+        /// <remarks>
+        /// Tested by doubling the argument and comparing against pi rather than by halving pi,
+        /// because addition of two <see cref="EDecimal"/>s is exact and division is not. The
+        /// comparison is still only as good as the working precision, and an argument that
+        /// close to an endpoint is treated as outside the interval — which declines to
+        /// rewrite, the safe direction.
+        /// </remarks>
+        private static bool WithinHalfPi(Entity argument, bool closed)
+        {
+            if (!TryReadReal(argument, out var value)) return false;
+            var absolute = value.Abs();
+            var comparison = absolute.Add(absolute).CompareTo(MathS.DecimalConst.pi);
+            return closed ? comparison <= 0 : comparison < 0;
+        }
+
+        /// <summary>Whether the argument lies in <c>[0, pi]</c>, or in the open interval when
+        /// <paramref name="closed"/> is false — the intervals <c>arccos</c> and
+        /// <c>arccotan</c> answer in.</summary>
+        private static bool WithinZeroAndPi(Entity argument, bool closed)
+        {
+            if (!TryReadReal(argument, out var value)) return false;
+            if (value.IsNegative || (!closed && value.IsZero)) return false;
+            var comparison = value.CompareTo(MathS.DecimalConst.pi);
+            return closed ? comparison <= 0 : comparison < 0;
+        }
+
+
         internal static Entity TrigonometricRules(Entity x) => x switch
         {
             // sin({}) * cos({}) = 1/2 * sin(2{})
@@ -58,13 +101,27 @@ namespace AngouriMath.Functions
             Mulf(Tanf(var any1), Cotanf(var any1a)) when any1 == any1a => 1,
             Mulf(Cotanf(var any1), Tanf(var any1a)) when any1 == any1a => 1,
 
-            // arcfunc(func(x)) = x
-            Arcsinf(Sinf(var any1)) => any1,
-            Arccosf(Cosf(var any1)) => any1,
-            Arctanf(Tanf(var any1)) => any1,
-            Arccotanf(Cotanf(var any1)) => any1,
+            // arcfunc(func(x)) = x, but only where x already lies in the interval arcfunc
+            // answers in. Outside it the composition folds back into that interval, so
+            // arcsin(sin(3)) is pi - 3 and arccos(cos(4)) is 2*pi - 4. Applied
+            // unconditionally this returned a wrong value at ordinary real points --
+            // https://github.com/asc-community/AngouriMath/issues/884
+            //
+            // A symbolic argument is left as written, which is what SymPy and Mathematica
+            // both do, and is a legitimate answer where returning x is not. Attaching the
+            // interval as a condition instead would be a second wrong answer: the
+            // composition is defined for every real x, so saying it is undefined outside the
+            // interval trades a wrong value for a wrong domain.
+            //
+            // The two tangent-family intervals are open, because tan and cotan have no value
+            // at the endpoints and the composition has none there either.
+            Arcsinf(Sinf(var any1)) when WithinHalfPi(any1, closed: true) => any1,
+            Arccosf(Cosf(var any1)) when WithinZeroAndPi(any1, closed: true) => any1,
+            Arctanf(Tanf(var any1)) when WithinHalfPi(any1, closed: false) => any1,
+            Arccotanf(Cotanf(var any1)) when WithinZeroAndPi(any1, closed: false) => any1,
 
-            // func(arcfunc(x)) = x
+            // func(arcfunc(x)) = x, and this direction needs no assumption: it composes the
+            // *right* inverse, so sin(arcsin(z)) is z wherever arcsin(z) is defined at all.
             Sinf(Arcsinf(var any1)) => any1,
             Cosf(Arccosf(var any1)) => any1,
             Tanf(Arctanf(var any1)) => any1,
