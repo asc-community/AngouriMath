@@ -28,6 +28,9 @@ namespace AngouriMath.Functions
             Andf(Notf(var any1), Notf(var any2)) when IsLogic(any1, any2) => !(any1 | any2),
             Orf(Notf(var any1), Notf(var any2)) when IsLogic(any1, any2) => !(any1 & any2),
             Orf(Notf(var any1), var any1a) when any1 == any1a && IsLogic(any1) => True,
+            // The same law with the operands the other way round. `or` is commutative, so
+            // leaving this out made the answer depend on which side the negation was written.
+            Orf(var any1a, Notf(var any1)) when any1 == any1a && IsLogic(any1) => True,
             Orf(Notf(var any1), var any2) when IsLogic(any1, any2) => any1.Implies(any2),
             Andf(var any1, var any1a) when any1 == any1a && IsLogic(any1) => any1,
             Orf(var any1, var any1a) when any1 == any1a && IsLogic(any1) => any1,
