@@ -434,5 +434,28 @@ namespace AngouriMath.Tests.Common
         [InlineData("(x + y + 1)! / (x + y)!")]
         public void ExpandCancelsAQuotientOfFactorialsRatherThanLeavingIt(string input)
             => Assert.DoesNotContain(input.ToEntity().Expand().Nodes, node => node is Entity.Factorialf);
+
+        // https://github.com/asc-community/AngouriMath/issues/876
+        // There was one excluded-middle rule and it matched the negation on the left operand
+        // only. `or` is commutative, so the same proposition had two answers depending on
+        // which side it was written: `not (x < 0) or (x < 0)` was True while
+        // `(x < 0) or not (x < 0)` was left as written. A bare variable hid it, because the
+        // boolean minimiser reduces those whichever way round they are — it takes a
+        // comparison, which the minimiser does not treat as an atom, to see it.
+        [Theory]
+        [InlineData("not (x < 0) or (x < 0)")]
+        [InlineData("(x < 0) or not (x < 0)")]
+        [InlineData("not (x > 0) or (x > 0)")]
+        [InlineData("(x > 0) or not (x > 0)")]
+        [InlineData("not (x <= 0) or (x <= 0)")]
+        [InlineData("(x <= 0) or not (x <= 0)")]
+        [InlineData("not (a = b) or (a = b)")]
+        [InlineData("(a = b) or not (a = b)")]
+        [InlineData("not (x in RR) or (x in RR)")]
+        [InlineData("(x in RR) or not (x in RR)")]
+        [InlineData("not p or p")]
+        [InlineData("p or not p")]
+        public void ExcludedMiddleHoldsWhicheverOperandCarriesTheNegation(string input)
+            => Assert.Equal(Entity.Boolean.True, input.ToEntity().Simplify());
     }
 }
