@@ -16,7 +16,14 @@ namespace AngouriMath.Tests.PatternsTest
         [Theory]
         [InlineData("a + x + e + d + sin(x) + c + 1 + 2 + 2a", "3 + sin(x) + 3 * a + c + d + e + x")]
         [InlineData("x + a + b + c + arcsin(x2) + d + e + 1/2 - 23 * sqrt(3) + arccos(x * x)", "1/2 + (-23) * sqrt(3) + pi / 2 + a + b + c + d + e + x")]
-        [InlineData("x + a + b + c + arctan(x2) + d + e + 1/2 - 23 * sqrt(3) + arccot(x * x)", "1/2 + (-23) * sqrt(3) + pi / 2 + a + b + c + d + e + x")]
+        // The sorting in this case was a side effect of the collapse, not independent of it:
+        // arctan(x^2) + arccotan(x^2) used to become pi/2, which shortened the sum and made the
+        // sorted-and-collected candidate the winner. That collapse is only valid where the
+        // argument's sign is known, and x^2 is not a known non-negative for a symbolic x -- at
+        // x = i it is -1 -- so the sum now stays and nothing shortens. The arcsin/arccos case
+        // above still collapses, because that identity needs no assumption, and it still sorts.
+        // https://github.com/asc-community/AngouriMath/issues/887
+        [InlineData("x + a + b + c + arctan(x2) + d + e + 1/2 - 23 * sqrt(3) + arccot(x * x)", "x + a + b + c + arctan(x ^ 2) + d + e + 1/2 - 23 * sqrt(3) + arccotan(x ^ 2)")]
         [InlineData("a / b + c + d + e + f + sin(x) + arcsin(x) + 1 + 0 - a * (b ^ -1)", "1 + arcsin(x) + sin(x) + c + d + e + f provided not b = 0")]
         // Skipped
         // [InlineData("sin(arcsin(c x) + arccos(x c) + c)2 + a + b + sin(x) + 0 + cos(c - -arcsin(c x) - -arccos(-c x * (-1)))2", "1")]
