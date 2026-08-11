@@ -45,7 +45,16 @@ namespace AngouriMath.Tests.PatternsTest
         [Fact] public void Patt5() => AssertSimplify((x + 3) * (3 / (x + 3)), "3 provided not 3 + x = 0");
         [Fact] public void Patt6() => AssertSimplify((x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3)), "1 + x provided not (2 + x) * (3 + x) = 0");
         [Fact] public void Patt7() => AssertSimplify(MathS.Arcsin(x * 3) + MathS.Arccos(x * 3), MathS.pi / 2);
-        [Fact] public void Patt8() => AssertSimplify(MathS.Arccotan(x * 3) + MathS.Arctan(x * 3), MathS.pi / 2);
+        // arccotan here is arctan(1/x) with range (-pi/2, pi/2], so this sum is pi/2 only where
+        // the argument is a non-negative real and -pi/2 where it is negative. It asserted pi/2
+        // for a symbolic argument, which is a wrong answer at every negative x, and the rewrite
+        // now decides the sign or leaves the sum alone.
+        // https://github.com/asc-community/AngouriMath/issues/887
+        [Fact] public void Patt8() => AssertSimplify(MathS.Arccotan(x * 3) + MathS.Arctan(x * 3),
+            MathS.Arccotan(3 * x) + MathS.Arctan(3 * x));
+        [Fact] public void Patt8Positive() => AssertSimplify(MathS.Arccotan(3) + MathS.Arctan(3), MathS.pi / 2);
+        [Fact] public void Patt8Negative() =>
+            AssertSimplifyToString(MathS.Arccotan(-3) + MathS.Arctan(-3), "-1/2 * pi");
         [Fact] public void Patt9() => AssertSimplify(MathS.Arccotan(x * 3) + MathS.Arctan(x * 6), MathS.Arccotan(3 * x) + MathS.Arctan(6 * x));
         [Fact] public void Patt10() => AssertSimplify(MathS.Arcsin(x * 3) + MathS.Arccos(x * 1), MathS.Arcsin(3 * x) + MathS.Arccos(x));
         [Fact] public void Patt11() => AssertSimplify(3 + x + 4 + x, 7 + 2 * x);

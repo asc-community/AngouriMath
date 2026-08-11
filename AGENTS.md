@@ -363,6 +363,7 @@ are short, and a stale one is worse than none — if you change what a file desc
 | [`Contributing/AddingNode.cs`](Sources/AngouriMath/Docs/Contributing/AddingNode.cs) | every place a new node has to be taught about. Read it *before* adding one |
 | [`Contributing/ImproveParser.md`](Sources/AngouriMath/Docs/Contributing/ImproveParser.md) | how to change the grammar and regenerate |
 | [`Contributing/Transformations.md`](Sources/AngouriMath/Docs/Contributing/Transformations.md) | the transformation layer the 1.x entry points sit on, and how to add the next rule set |
+| [`Contributing/SimplificationContract.md`](Sources/AngouriMath/Docs/Contributing/SimplificationContract.md) | what a rewrite may assume, and the ten obligations one has to meet. Read it *before* adding or changing a rule |
 | [`Contributing/coding_rules.md`](Sources/AngouriMath/Docs/Contributing/coding_rules.md) | sealed-or-abstract, and immutability of `Entity` |
 | [`WhatsNew/version_performance_control.md`](Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md) | the inter-version performance table, and how to add a column |
 | `Sources/Analyzers/` | the custom analyzers, including the static-field one behind `[ConstantField]` |

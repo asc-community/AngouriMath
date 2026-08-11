@@ -70,9 +70,16 @@ namespace AngouriMath.Tests.Common
         }
 
         // The identities next to this one have to keep working.
+        //
+        // arctan(x) + arccotan(x) is *not* among them and was listed here in error: this
+        // library's arccotan is arctan(1/x) with range (-pi/2, pi/2], so the sum is pi/2 only
+        // for non-negative x and is -pi/2 for negative x. It is now answered where the sign is
+        // decidable and left alone for a symbol, so the case below uses a number.
+        // https://github.com/asc-community/AngouriMath/issues/887
         [Theory]
         [InlineData("arcsin(x) + arccos(x)", "pi / 2")]
-        [InlineData("arctan(x) + arccotan(x)", "pi / 2")]
+        [InlineData("arctan(3) + arccotan(3)", "pi / 2")]
+        [InlineData("arctan(-3) + arccotan(-3)", "-pi / 2")]
         [InlineData("tan(arctan(x))", "x")]
         [InlineData("arctan(tan(1/2))", "1/2")]
         public void NeighbouringIdentitiesAreUnaffected(string expression, string expected) =>
