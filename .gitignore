@@ -14,14 +14,7 @@ obj/
 /obj
 /packages
 /fieldtest/testprj
-/AngouriMath/Core/Sys/Items/Numeric/packages
-/Tests/UnitTests/Algebra/SolveTest/TestGenerator/.idea
-/Tests/UnitTests/Algebra/SolveTest/TestGenerator/out/production/AM_utils
-/Sources/Tests/UnitTests/TestGenerator/.idea
-/Sources/Tests/UnitTests/TestUtils/.idea
-/Sources/Tests/UnitTests/TestUtils/out/production/TestGenerator
 /AngouriMath.sln.DotSettings.user
-/Sources/Tests/UnitTests/.idea
 /Sources/Tests/DotnetBenchmark/benchmark_results.csv
 /Sources/AngouriMath/Core/Antlr/antlr4
 /Samples/.ipynb_checkpoints
