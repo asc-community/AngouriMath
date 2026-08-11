@@ -85,8 +85,14 @@ namespace AngouriMath.Tests.Common
         [Fact]
         public void Test7() => Assert.Equal(3 * x, MathS.Sin(MathS.Arcsin(x * 3)).Simplify());
 
+        // This asserted 3 * x, which is not what arccotan(cotan(3x)) is: arccotan answers in
+        // (0, pi), so at x = 2 the expression is about 2.86 and 3 * x is 6. The test was
+        // pinning a wrong answer, and the rewrite behind it now fires only where the argument
+        // is a real number inside that interval --
+        // https://github.com/asc-community/AngouriMath/issues/884
         [Fact]
-        public void Test8() => Assert.Equal(3 * x, MathS.Arccotan(MathS.Cotan(x * 3)).Simplify());
+        public void Test8() => Assert.Equal(MathS.Arccotan(MathS.Cotan(3 * x)),
+            MathS.Arccotan(MathS.Cotan(x * 3)).Simplify());
 
         [Theory]
         [InlineData("x / y + x * x * y")]
