@@ -280,10 +280,11 @@ Such a harness would have found all four rules of #884 immediately. It does not 
 Obligation O2 says to state the assumption set. For a large part of classical mathematics somebody has
 already stated it, machine-checked it, and published it:
 **[mathlib4](https://leanprover-community.github.io/mathlib4_docs/)**. Every lemma carries its
-hypotheses explicitly, because Lean will not accept it otherwise — which is exactly the discipline a
-rewrite rule needs and exactly what ours have repeatedly lacked.
+hypotheses explicitly, because Lean will not accept it otherwise — which is the discipline a rewrite
+rule needs, already applied to most of classical analysis.
 
-Checked against mathlib after the fact, the intervals this library now guards with are the same ones:
+The intervals this library guards the inverse-trigonometric cancellations with are the ones mathlib
+states:
 
 | mathlib4 | our guard |
 |---|---|
@@ -292,11 +293,12 @@ Checked against mathlib after the fact, the intervals this library now guards wi
 | `Real.arctan_tan {x : ℝ} (hx₁ : -(π / 2) < x) (hx₂ : x < π / 2) : arctan (tan x) = x` | `WithinHalfPi(closed: false)` |
 | `@[simp] Real.tan_arctan (x : ℝ) : tan (arctan x) = x` — no hypothesis | the right-inverse direction, unguarded |
 
-Four for four, including the open-versus-closed distinction that separates `arctan` from `arcsin`.
-Reading those four lines would have been faster than the measurements that produced them, and this is
-the first place to look when writing a guard.
+Note the open-versus-closed distinction that separates `arctan` from `arcsin`, and that
+`Real.tan_arctan` is a `@[simp]` lemma with no hypothesis at all — the right-inverse direction needs
+none, which is §5's point in someone else's notation. This is the first place to look when writing a
+guard.
 
-**Two warnings, both learned from the same exercise.**
+**Two warnings.**
 
 **A hypothesis can differ because the convention differs, not because the mathematics does.**
 `Real.sin_arcsin` requires `-1 ≤ x ≤ 1`, and this library needs no such condition — because mathlib's
@@ -305,10 +307,12 @@ plane. Both are right about their own `arcsin`. Copying a hypothesis without che
 it belongs to is the same error as reading a branch cut off memory, so §6 applies: measure what *this*
 library does.
 
-**And it does not cover everything.** mathlib has no `arccot` at all, which is precisely the rule this
-library got wrong twice — the range here is `(-pi/2, pi/2]` and not the `(0, pi)` of the textbooks
+**And it does not cover everything.** mathlib has no `arccot`, and `arccot` is the case where this
+library's convention departs furthest from the textbooks: its range is `(-pi/2, pi/2]` rather than
+`(0, pi)`, so `arccotan(-1)` is `-pi/4`
 ([#887](https://github.com/asc-community/AngouriMath/issues/887)). Where the lookup is empty there is
-no substitute for measuring the function at a positive argument, a negative one, and zero.
+no substitute for measuring the function at a positive argument, a negative one, and zero, and writing
+the three values into the comment.
 
 ## 10. What this does not settle
 

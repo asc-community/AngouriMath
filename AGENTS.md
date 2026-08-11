@@ -388,10 +388,10 @@ things in it are easy to break by accident and impossible to undo afterwards.
 
 **Its `v1.0`–`v9.0` are capability tiers, not versions.** `v1.0` is "a symbolic engine worth building
 on" — a real polynomial layer, a *written* canonical-form specification, pattern matching as data
-rather than a `switch`, and assumptions that travel with a node. `v2.0` is "the rewrite graph". So a
-published package version does **not** mean the tier of the same name has been reached, and shipping
-one spends a label the roadmap was using. That happened with `2.0.0`, which is a breaking-changes
-release published while tier 1 is still unfinished; see the discussion on #746.
+rather than a `switch`, and assumptions that travel with a node. `v2.0` is "the rewrite graph". A
+published package version does **not** mean the tier of the same name has been reached, and choosing
+one spends a label the roadmap is using: check #746 before picking a number, and say on the issue
+which tier the release does and does not advance.
 
 **Three conditions cut across every tier**, and #746 says a tier that violates one has failed
 whatever else it delivered:
@@ -400,10 +400,11 @@ whatever else it delivered:
    and early, because a published one cannot be moved. Anything large landing in the kernel wants that
    decision first — #746's item 78.
 2. **Speed and memory on popular use cases are measured, not hoped for.** Parse, `Simplify`, `Solve`
-   and `Differentiate` on textbook-sized input. `2.0.0` shipped with no measurement at all and no
-   column in
-   [`WhatsNew/version_performance_control.md`](Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md);
-   do not repeat that.
+   and `Differentiate` on textbook-sized input, recorded in
+   [`WhatsNew/version_performance_control.md`](Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md).
+   Measure the previous column again on the same machine and publish the pair: columns taken on
+   different hardware cannot be read as a ratio, and a uniform factor across every row is the machine
+   rather than the code.
 3. **Correctness coverage grows with the surface.** Each new layer adds ways to be wrong that the one
    below could not express.
 

@@ -17,7 +17,7 @@ nothing else is read:
    *Read the roadmap before you release anything* in AGENTS.md.
 4. **Before adding or changing a simplification rule**, read
    [`Contributing/SimplificationContract.md`](Sources/AngouriMath/Docs/Contributing/SimplificationContract.md).
-   Five wrong answers were found in one day in rules that stated no assumptions.
+   A rule states the assumptions under which it holds, or it is asserting there are none.
 
 The measurement harnesses live outside this repository, in the analysis workspace one directory up
 (`work/`): a self-verifying solver corpus, a property checker, root-completeness and
