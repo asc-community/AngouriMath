@@ -27,10 +27,14 @@ namespace AngouriMath.Functions
             Impliesf(var ass, var other) when ass == False && IsLogic(other) => True.Provided(other.DomainCondition),
             Andf(Notf(var any1), Notf(var any2)) when IsLogic(any1, any2) => !(any1 | any2),
             Orf(Notf(var any1), Notf(var any2)) when IsLogic(any1, any2) => !(any1 & any2),
-            Orf(Notf(var any1), var any1a) when any1 == any1a && IsLogic(any1) => True,
+            // Excluded middle needs the proposition to have a truth value, which an order
+            // comparison over the complex plane does not: `i < 0` is NaN, and answering True
+            // there made Simplify disagree with substituting first.
+            // https://github.com/asc-community/AngouriMath/issues/876
+            Orf(Notf(var any1), var any1a) when any1 == any1a && IsLogic(any1) => True.Provided(TruthCondition(any1)),
             // The same law with the operands the other way round. `or` is commutative, so
             // leaving this out made the answer depend on which side the negation was written.
-            Orf(var any1a, Notf(var any1)) when any1 == any1a && IsLogic(any1) => True,
+            Orf(var any1a, Notf(var any1)) when any1 == any1a && IsLogic(any1) => True.Provided(TruthCondition(any1)),
             Orf(Notf(var any1), var any2) when IsLogic(any1, any2) => any1.Implies(any2),
             Andf(var any1, var any1a) when any1 == any1a && IsLogic(any1) => any1,
             Orf(var any1, var any1a) when any1 == any1a && IsLogic(any1) => any1,
