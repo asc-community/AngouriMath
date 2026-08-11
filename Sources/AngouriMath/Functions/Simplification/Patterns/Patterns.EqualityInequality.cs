@@ -42,6 +42,60 @@ namespace AngouriMath.Functions
             return false;
         }
 
+        /// Two comparisons of one pair of operands that between them leave no case. Exactly one
+        /// of a &lt; b, a = b and a &gt; b holds on an ordered field, so a disjunction covering
+        /// all three is valid there -- and `&lt;` with `&gt;=` is how excluded middle for an
+        /// order comparison is usually written.
+        private static bool ExhaustiveSigns(ComparisonSign left, ComparisonSign right)
+        {
+            if (left is Lessf)
+                return right is GreaterOrEqualf;
+            if (left is LessOrEqualf)
+                return right is Greaterf or GreaterOrEqualf;
+            if (left is Greaterf)
+                return right is LessOrEqualf;
+            if (left is GreaterOrEqualf)
+                return right is Lessf or LessOrEqualf;
+            return false;
+        }
+
+        // Whether the ordering is there to be read at this operand. A node's declared codomain
+        // is the only thing that can say so for a symbol: a Variable is Domain.Any until it is
+        // told otherwise.
+        private static bool IsKnownReal(Entity entity)
+            => entity.Codomain is AngouriMath.Core.Domain.Integer
+                              or AngouriMath.Core.Domain.Rational
+                              or AngouriMath.Core.Domain.Real;
+
+        /// The condition under which an order comparison against <paramref name="entity"/> has
+        /// a truth value. Over the complex plane it need not have one -- <c>i &lt; 0</c> is
+        /// <c>NaN</c>, since the complex numbers are not ordered -- so a rule that decides a
+        /// conjunction or a disjunction of comparisons has to carry the condition rather than
+        /// help itself to it. <see cref="Entity.Provided(Entity)"/> drops the condition when it
+        /// is <c>True</c>, so nothing is attached where the operands are already known real or
+        /// where the reading is real-valued to begin with.
+        /// https://github.com/asc-community/AngouriMath/issues/876
+        private static Entity OrderedCondition(Entity entity)
+            => MathS.Settings.Codomain.Value is AngouriMath.Core.Domain.Real || IsKnownReal(entity)
+                ? True
+                : entity.In(AngouriMath.Core.Domain.Real);
+
+        /// The condition under which <paramref name="statement"/> has a truth value at all.
+        /// Equality and set membership have one everywhere on the complex plane; an order
+        /// comparison has one only where both of its operands are real.
+        /// https://github.com/asc-community/AngouriMath/issues/876
+        internal static Entity TruthCondition(Entity statement) => statement switch
+        {
+            Equalsf => True,
+            ComparisonSign sign =>
+                BothHold(OrderedCondition(sign.DirectChildren[0]), OrderedCondition(sign.DirectChildren[1])),
+            _ => True
+        };
+
+        // `True & c` is an Andf and not True, which would stop Provided from dropping it.
+        private static Entity BothHold(Entity left, Entity right)
+            => left == True ? right : right == True ? left : left & right;
+
         internal static Entity InequalityEqualityRules(Entity x) => x switch
         {
             Orf(Lessf(var any1, var any2), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 <= any2,
@@ -87,7 +141,20 @@ namespace AngouriMath.Functions
             Andf(ComparisonSign left, ComparisonSign right) when
             left.DirectChildren[0] == right.DirectChildren[0] &&
             left.DirectChildren[1] == right.DirectChildren[1] &&
-            OppositeSigns(left, right) => False,
+            OppositeSigns(left, right) =>
+                False.Provided(OrderedCondition(left.DirectChildren[0]))
+                     .Provided(OrderedCondition(left.DirectChildren[1])),
+
+            // The other half of the same law. The unsatisfiable conjunction above was decided
+            // and the valid disjunction was not, so the library was taking the half of excluded
+            // middle that needs the operands to be real and skipping the half that needs the
+            // same thing. https://github.com/asc-community/AngouriMath/issues/876
+            Orf(ComparisonSign left, ComparisonSign right) when
+            left.DirectChildren[0] == right.DirectChildren[0] &&
+            left.DirectChildren[1] == right.DirectChildren[1] &&
+            ExhaustiveSigns(left, right) =>
+                True.Provided(OrderedCondition(left.DirectChildren[0]))
+                    .Provided(OrderedCondition(left.DirectChildren[1])),
 
             Equalsf(Powf(var any1, var rePo), var zero) when IsRealPositive(rePo) && IsZero(zero) => any1.EqualTo(zero),
             Equalsf(Divf(Integer(1), var expr), var zero) when IsZero(zero) => new Providedf(false, !expr.EqualTo(0)),
@@ -139,10 +206,13 @@ namespace AngouriMath.Functions
             // a! = 0
             Equalsf(Factorialf({ DomainCondition: var condition }), var zeroEnt) when IsZero(zeroEnt) => False.Provided(condition),
 
-            Greaterf(var any1, var any1a) when any1 == any1a => False.Provided(any1.DomainCondition),
-            Lessf(var any1, var any1a) when any1 == any1a => False.Provided(any1.DomainCondition),
-            GreaterOrEqualf(var any1, var any1a) when any1 == any1a => True.Provided(any1.DomainCondition),
-            LessOrEqualf(var any1, var any1a) when any1 == any1a => True.Provided(any1.DomainCondition),
+            // The DomainCondition is about singularities and says nothing about where the
+            // ordering is defined, so both conditions are needed: `x < x` is False on the real
+            // line and NaN at x = i.
+            Greaterf(var any1, var any1a) when any1 == any1a => False.Provided(any1.DomainCondition).Provided(OrderedCondition(any1)),
+            Lessf(var any1, var any1a) when any1 == any1a => False.Provided(any1.DomainCondition).Provided(OrderedCondition(any1)),
+            GreaterOrEqualf(var any1, var any1a) when any1 == any1a => True.Provided(any1.DomainCondition).Provided(OrderedCondition(any1)),
+            LessOrEqualf(var any1, var any1a) when any1 == any1a => True.Provided(any1.DomainCondition).Provided(OrderedCondition(any1)),
 
             _ => x
         };

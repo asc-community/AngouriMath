@@ -6,6 +6,7 @@
 //
 
 using AngouriMath;
+using AngouriMath.Core;
 using AngouriMath.Extensions;
 using PeterO.Numbers;
 using System.Linq;
@@ -442,13 +443,14 @@ namespace AngouriMath.Tests.Common
         // `(x < 0) or not (x < 0)` was left as written. A bare variable hid it, because the
         // boolean minimiser reduces those whichever way round they are — it takes a
         // comparison, which the minimiser does not treat as an atom, to see it.
+        //
+        // The rows here are the propositions that hold unconditionally, which is why they can
+        // be pinned to True outright: equality and set membership are decided everywhere on
+        // the complex plane, and a boolean variable stands for something with a truth value.
+        // The order comparisons that were also listed here moved to
+        // <see cref="AnExhaustivePairOfComparisonsHoldsOverTheReals"/>, because `i < 0` has no
+        // truth value and True is not their answer over the default codomain.
         [Theory]
-        [InlineData("not (x < 0) or (x < 0)")]
-        [InlineData("(x < 0) or not (x < 0)")]
-        [InlineData("not (x > 0) or (x > 0)")]
-        [InlineData("(x > 0) or not (x > 0)")]
-        [InlineData("not (x <= 0) or (x <= 0)")]
-        [InlineData("(x <= 0) or not (x <= 0)")]
         [InlineData("not (a = b) or (a = b)")]
         [InlineData("(a = b) or not (a = b)")]
         [InlineData("not (x in RR) or (x in RR)")]
@@ -457,5 +459,67 @@ namespace AngouriMath.Tests.Common
         [InlineData("p or not p")]
         public void ExcludedMiddleHoldsWhicheverOperandCarriesTheNegation(string input)
             => Assert.Equal(Entity.Boolean.True, input.ToEntity().Simplify());
+
+        // https://github.com/asc-community/AngouriMath/issues/876 §2
+        // An order comparison need not have a truth value: the default codomain is
+        // Domain.Complex and `i < 0` is NaN. The rules that decide two comparisons of the same
+        // pair of operands did not say so — `x < 0 and x >= 0` reduced to False, which is the
+        // answer over the reals, while at x = i the statement is NaN. So Simplify did not
+        // commute with Substitute, silently. The reduction is right; what was missing is the
+        // condition it holds under.
+        //
+        // This is asserted as a commutation rather than against a printed form so that it
+        // holds whatever shape the condition takes.
+        [Theory]
+        [InlineData("x < 0 and x >= 0")]
+        [InlineData("x > 0 and x <= 0")]
+        [InlineData("x < 0 and x = 0")]
+        [InlineData("x < 0 or x >= 0")]
+        [InlineData("x <= 0 or x > 0")]
+        [InlineData("x < x")]
+        [InlineData("x >= x")]
+        [InlineData("not (x < 0) or (x < 0)")]
+        [InlineData("(x < 0) or not (x < 0)")]
+        public void DecidingAPairOfComparisonsKeepsItsValueOffTheRealLine(string input)
+        {
+            var original = input.ToEntity();
+            var atI = original.Substitute("x", "i").Evaled;
+            // Stated rather than assumed: the whole point is that there is nothing to decide
+            // here, so a change that gave `i < 0` a truth value would make this test vacuous.
+            Assert.Equal(MathS.NaN, atI);
+            Assert.Equal(atI, original.Simplify().Substitute("x", "i").Evaled);
+        }
+
+        // https://github.com/asc-community/AngouriMath/issues/876 §3
+        // The unsatisfiable conjunction was decided and the valid disjunction was not, so the
+        // library took the half of excluded middle that is unsound off the real line and
+        // skipped the half that is sound on it. Over the reals both are decided outright, and
+        // nothing else in the library read MathS.Settings.Codomain to find that out.
+        [Theory]
+        [InlineData("x < 0 or x >= 0")]
+        [InlineData("x <= 0 or x > 0")]
+        [InlineData("x <= 0 or x >= 0")]
+        [InlineData("x > 0 or x <= 0")]
+        [InlineData("x >= x")]
+        [InlineData("not (x < 0) or (x < 0)")]
+        [InlineData("(x < 0) or not (x < 0)")]
+        [InlineData("not (x <= 0) or (x <= 0)")]
+        [InlineData("(x <= 0) or not (x <= 0)")]
+        public void AnExhaustivePairOfComparisonsHoldsOverTheReals(string input)
+        {
+            using var _ = MathS.Settings.Codomain.Set(Domain.Real);
+            Assert.Equal(Entity.Boolean.True, input.ToEntity().Simplify());
+        }
+
+        [Theory]
+        [InlineData("x < 0 and x >= 0")]
+        [InlineData("x > 0 and x <= 0")]
+        [InlineData("x < 0 and x = 0")]
+        [InlineData("x < x")]
+        public void AContradictoryPairOfComparisonsFailsOverTheReals(string input)
+        {
+            using var _ = MathS.Settings.Codomain.Set(Domain.Real);
+            Assert.Equal(Entity.Boolean.False, input.ToEntity().Simplify());
+        }
     }
 }

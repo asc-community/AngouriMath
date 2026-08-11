@@ -447,8 +447,19 @@ namespace AngouriMath
                         contains = substituted.EvalBoolean();
                         return true;
                     }
-                    else
+                    // A predicate that is False where its condition holds, and has no truth
+                    // value where it does not, is not membership either way -- so this much is
+                    // decided even though the condition is not. `x = a and x > a` at x := a is
+                    // False for real a and undefined for the rest of the plane, and a is not a
+                    // member of the set on any of it.
+                    // https://github.com/asc-community/AngouriMath/issues/878
+                    var core = substituted;
+                    while (core is Providedf(var inner, _))
+                        core = inner;
+                    if (!core.EvaluableBoolean)
                         return false;
+                    bool held = core.EvalBoolean();
+                    return !held;
                 }
 
                 internal Entity New(Entity var, Entity predicate)
