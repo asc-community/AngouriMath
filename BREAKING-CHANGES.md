@@ -15,7 +15,7 @@ read first.
 
 ---
 
-## 2.0.0 (unreleased) — since 1.4.0
+## 2.0.0 — since 1.4.0
 
 ### At a glance
 
@@ -135,9 +135,9 @@ This was not three separate defects. One conversion made *every* `params Entity[
 the library uncallable with a list, including any added later.
 
 **This one moves between previews.** The conversion is in `2.0.0-preview.1` and
-`2.0.0-preview.2`, both published, and is removed in the release that follows them. It is so
-far the only entry here that changes between two previews rather than between releases: a
-reader coming from 1.3.0 or 1.4.0 can ignore the distinction, one already on a preview cannot.
+`2.0.0-preview.2`, both published, and is gone in `2.0.0`. It is the only entry here that
+changes between two previews rather than between releases: a reader coming from 1.3.0 or
+1.4.0 can ignore the distinction, one already on a preview cannot.
 
 **What breaks.** Assigning a list where an `Entity` is expected:
 
