@@ -400,7 +400,14 @@ namespace AngouriMath
             {
                 if (LostToExponentRange(x) || LostToExponentRange(@base))
                     return Ln(x) / Ln(@base);
-                if (x is Real real && real.EDecimal.CompareTo(EDecimal.Zero) > 0 && @base is Real realBase && realBase.EDecimal.CompareTo(EDecimal.Zero) > 0)
+                // A base of 1 is excluded from the real shortcut so that it falls through to the
+                // ratio below. log_1(x) is ln(x)/ln(1) = ln(x)/0, and every division by zero in
+                // this library is NaN -- but LogN answers 0 for log_1(1) and +oo for log_1(2),
+                // so the shortcut and the definition disagreed.
+                // https://github.com/asc-community/AngouriMath/issues/890
+                if (x is Real real && real.EDecimal.CompareTo(EDecimal.Zero) > 0
+                    && @base is Real realBase && realBase.EDecimal.CompareTo(EDecimal.Zero) > 0
+                    && realBase.EDecimal.CompareTo(EDecimal.One) != 0)
                     return real.EDecimal.LogN(realBase.EDecimal, MathS.Settings.DecimalPrecisionContext);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
                 return Ln(x) / Ln(@base);
