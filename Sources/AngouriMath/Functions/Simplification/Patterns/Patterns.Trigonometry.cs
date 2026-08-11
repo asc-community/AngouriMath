@@ -43,9 +43,46 @@ namespace AngouriMath.Functions
             return closed ? comparison <= 0 : comparison < 0;
         }
 
+        /// <summary>Whether the argument lies in the range <c>arccotan</c> answers in, which is
+        /// <c>(-pi/2, pi/2]</c> without zero.</summary>
+        /// <remarks>
+        /// This library's <c>arccotan</c> is <c>arctan(1/x)</c> extended by
+        /// <c>arccotan(0) = pi/2</c>, so its range is that half-open interval and **not** the
+        /// <c>(0, pi)</c> that many texts use — <c>arccotan(-1)</c> is <c>-pi/4</c>. Zero is
+        /// excluded because <c>cotan</c> has no value there, so the composition has none either
+        /// and rewriting it to <c>x</c> would invent one.
+        /// https://github.com/asc-community/AngouriMath/issues/887
+        /// </remarks>
+        private static bool WithinArccotanRange(Entity argument)
+        {
+            if (!TryReadReal(argument, out var value) || value.IsZero) return false;
+            var twice = value.Add(value);
+            var pi = MathS.DecimalConst.pi;
+            return twice.CompareTo(pi) <= 0 && twice.CompareTo(pi.Negate()) > 0;
+        }
+
+        /// <summary>
+        /// <c>arctan(x) + arccotan(x)</c>, which is <c>pi/2</c> where <c>x</c> is a non-negative
+        /// real and <c>-pi/2</c> where it is negative, or <see langword="null"/> where the sign
+        /// cannot be read.
+        /// </summary>
+        /// <remarks>
+        /// It follows from the range above: for positive <c>x</c> both terms are positive and sum
+        /// to <c>pi/2</c>, and for negative <c>x</c> both are negative. <c>pi/2 * sgn(x)</c> is
+        /// the closed form and is wrong at exactly one point — <c>x = 0</c>, where the sum is
+        /// <c>pi/2</c> while <c>sgn</c> is <c>0</c> — so the sign is decided here rather than
+        /// written into the answer. A symbolic argument has no decidable sign and is left alone.
+        /// </remarks>
+        private static Entity? ArctanPlusArccotan(Entity argument)
+        {
+            var evaled = argument.Evaled;
+            if (IsRealNegative(evaled)) return -MathS.pi / 2;
+            if (IsRealPositive(evaled) || IsZero(evaled)) return MathS.pi / 2;
+            return null;
+        }
+
         /// <summary>Whether the argument lies in <c>[0, pi]</c>, or in the open interval when
-        /// <paramref name="closed"/> is false — the intervals <c>arccos</c> and
-        /// <c>arccotan</c> answer in.</summary>
+        /// <paramref name="closed"/> is false — the interval <c>arccos</c> answers in.</summary>
         private static bool WithinZeroAndPi(Entity argument, bool closed)
         {
             if (!TryReadReal(argument, out var value)) return false;
@@ -61,11 +98,19 @@ namespace AngouriMath.Functions
             Mulf(Sinf(var any1), Cosf(var any1a)) when any1 == any1a => Rational.Create(1, 2) * new Sinf(2 * any1),
             Mulf(Cosf(var any1), Sinf(var any1a)) when any1 == any1a => Rational.Create(1, 2) * new Sinf(2 * any1),
 
-            // arc1({}) + arc2({}) = pi/2
+            // arcsin(x) + arccos(x) = pi/2 wherever both are defined, and needs no assumption:
+            // arccos(x) is pi/2 - arcsin(x) by definition, over the whole plane.
             Sumf(Arcsinf(var any1), Arccosf(var any1a)) when any1 == any1a => MathS.pi / 2,
             Sumf(Arccosf(var any1), Arcsinf(var any1a)) when any1 == any1a => MathS.pi / 2,
-            Sumf(Arctanf(var any1), Arccotanf(var any1a)) when any1 == any1a => MathS.pi / 2,
-            Sumf(Arccotanf(var any1), Arctanf(var any1a)) when any1 == any1a => MathS.pi / 2,
+
+            // arctan(x) + arccotan(x) does *not* behave that way here, because arccotan is
+            // arctan(1/x) with range (-pi/2, pi/2]: the sum is pi/2 for non-negative x and
+            // -pi/2 for negative x. It was pi/2 unconditionally, which is a wrong answer at
+            // every negative real -- https://github.com/asc-community/AngouriMath/issues/887
+            Sumf(Arctanf(var any1), Arccotanf(var any1a)) when any1 == any1a
+                && ArctanPlusArccotan(any1) is { } sum => sum,
+            Sumf(Arccotanf(var any1), Arctanf(var any1a)) when any1 == any1a
+                && ArctanPlusArccotan(any1) is { } sum => sum,
 
             // arctan(a) + arctan(b) = arctan((a + b)/(1 - ab)), which is the tangent
             // addition formula read backwards. It holds as written only while ab < 1: past
@@ -118,7 +163,7 @@ namespace AngouriMath.Functions
             Arcsinf(Sinf(var any1)) when WithinHalfPi(any1, closed: true) => any1,
             Arccosf(Cosf(var any1)) when WithinZeroAndPi(any1, closed: true) => any1,
             Arctanf(Tanf(var any1)) when WithinHalfPi(any1, closed: false) => any1,
-            Arccotanf(Cotanf(var any1)) when WithinZeroAndPi(any1, closed: false) => any1,
+            Arccotanf(Cotanf(var any1)) when WithinArccotanRange(any1) => any1,
 
             // func(arcfunc(x)) = x, and this direction needs no assumption: it composes the
             // *right* inverse, so sin(arcsin(z)) is z wherever arcsin(z) is defined at all.

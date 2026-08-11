@@ -585,5 +585,75 @@ namespace AngouriMath.Tests.Common
         static double Magnitude(Entity difference) =>
             ((System.Numerics.Complex)difference.EvalNumerical()).Magnitude;
 
+        // This library's arccotan is arctan(1/x) extended with arccotan(0) = pi/2, so its
+        // range is (-pi/2, pi/2] and not the (0, pi) some texts use. #884 guarded
+        // arccotan(cotan(x)) with [0, pi] on the assumption it was the latter, which left the
+        // wrong answer in place above pi/2 -- arccotan(cotan(2)) is -1.1416 and simplified to
+        // 2 -- and refused the rewrite below zero, where it is correct.
+        // The argument has to be a number *before* Simplify runs, because that is what the
+        // guard reads: a symbolic argument leaves the node alone and would pass whatever the
+        // interval said. Every one of these is a composition whose value the rewrite must not
+        // change, at points inside and outside each principal range.
+        [Theory]
+        [InlineData("arccotan(cotan(2))")]
+        [InlineData("arccotan(cotan(3))")]
+        [InlineData("arccotan(cotan(-2))")]
+        [InlineData("arccotan(cotan(-1/2))")]
+        [InlineData("arccotan(cotan(1/2))")]
+        [InlineData("arcsin(sin(3))")]
+        [InlineData("arcsin(sin(-3))")]
+        [InlineData("arcsin(sin(1/2))")]
+        [InlineData("arccos(cos(4))")]
+        [InlineData("arccos(cos(-1))")]
+        [InlineData("arccos(cos(2))")]
+        [InlineData("arctan(tan(2))")]
+        [InlineData("arctan(tan(-2))")]
+        [InlineData("arctan(tan(1/2))")]
+        public void CancellingAnInverseOverANumberKeepsTheValue(string expression)
+        {
+            var original = expression.ToEntity();
+            var simplified = original.Simplify();
+            Assert.True(Magnitude(original.EvalNumerical() - simplified.EvalNumerical()) < 1e-20,
+                $"{expression} simplified to {simplified.Stringize()}, which is "
+                + $"{simplified.EvalNumerical().Stringize()} rather than "
+                + $"{original.EvalNumerical().Stringize()}");
+        }
+
+        // Inside the range it must still cancel, and exactly. -1/2 is in it and 2 is not,
+        // which is the half the old interval had backwards.
+        [Theory]
+        [InlineData("arccotan(cotan(1/2))", "1/2")]
+        [InlineData("arccotan(cotan(-1/2))", "-1/2")]
+        [InlineData("arccotan(cotan(-1))", "-1")]
+        public void SimplifyingArccotanOfCotanStaysExactInsideItsRange(string expression, string expected)
+        {
+            Assert.Equal(expected.ToEntity().Simplify(), expression.ToEntity().Simplify());
+        }
+
+        // arctan(x) + arccotan(x) is pi/2 for x >= 0 and -pi/2 for x < 0, by the same range.
+        // It was pi/2 unconditionally.
+        [Theory]
+        [InlineData("3", "pi / 2")]
+        [InlineData("1/2", "pi / 2")]
+        [InlineData("0", "pi / 2")]
+        [InlineData("-3", "-pi / 2")]
+        [InlineData("-1/2", "-pi / 2")]
+        public void ArctanPlusArccotanFollowsTheSignOfItsArgument(string at, string expected)
+        {
+            var sum = $"arctan({at}) + arccotan({at})".ToEntity().Simplify();
+            Assert.True(Magnitude(sum - expected.ToEntity()) < 1e-20,
+                $"arctan({at}) + arccotan({at}) simplified to {sum.Stringize()}, not {expected}");
+        }
+
+        // A symbolic argument has no decidable sign, so the sum is left as written rather than
+        // answered for one sign of it.
+        [Fact]
+        public void ArctanPlusArccotanOfASymbolIsLeftAlone()
+        {
+            var simplified = "arctan(x) + arccotan(x)".ToEntity().Simplify();
+            Assert.NotEqual(MathS.pi / 2, simplified);
+            Assert.NotEqual(-MathS.pi / 2, simplified);
+        }
+
     }
 }
