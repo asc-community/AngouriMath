@@ -98,7 +98,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         x);
                 }
             }
-            throw FutureReleaseException.Raised("Inequalities are not implemented yet", "1.2.1");
+            throw new NotSufficientlySupportedException(
+                "Only linear and quadratic polynomial inequalities are supported; "
+                + "this one is of a higher degree");
         }
 
         /// <summary>

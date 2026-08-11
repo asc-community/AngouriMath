@@ -91,12 +91,12 @@ namespace AngouriMath
 
                 public byte[] Serialize(Entity a)
                 {
-                    throw FutureReleaseException.Raised("Serialization");
+                    throw new NotSufficientlySupportedException("Serializing a matrix is not supported");
                 }
 
                 public Entity Deserialize(byte[] data)
                 {
-                    throw FutureReleaseException.Raised("Deserialization");
+                    throw new NotSufficientlySupportedException("Deserializing a matrix is not supported");
                 }
             }
 #pragma warning restore CS1591
