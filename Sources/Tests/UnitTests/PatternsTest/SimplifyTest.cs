@@ -152,8 +152,15 @@ namespace AngouriMath.Tests.PatternsTest
         [InlineData("abs(x)", "abs(x)")]
         [InlineData("abs(abs(x))", "abs(x)")]
         [InlineData("abs(abs(abs(x)))", "abs(x)")]
-        [InlineData("abs(sgn(x))", "1")]
-        [InlineData("sgn(abs(x))", "1")]
+        // Both of these asserted 1, and both are 0 at x = 0, because sgn(0) is 0. They are left
+        // as written now: a condition would say the expression is undefined at zero when it is
+        // merely something else, and there is no closed form for "1 away from zero, 0 at it"
+        // other than the expressions themselves.
+        // https://github.com/asc-community/AngouriMath/issues/892
+        [InlineData("abs(sgn(x))", "abs(sgn(x))")]
+        [InlineData("sgn(abs(x))", "sgn(abs(x))")]
+        [InlineData("abs(sgn(0))", "0")]
+        [InlineData("sgn(abs(-3))", "1")]
         public void AbsTest(string input, string output) => AssertSimplifyToString(input, output);
 
         [Theory]

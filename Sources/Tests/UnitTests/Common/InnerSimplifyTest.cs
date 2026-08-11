@@ -22,6 +22,12 @@ namespace AngouriMath.Tests.Common
         [InlineData("ln(abs(x)) - 1")]
         [InlineData("2 * ln(abs(x))")]
         [InlineData("ln(abs(x))^2")]
+        // Both are 0 at x = 0, since sgn(0) is 0, so neither collapses to 1 any more.
+        // https://github.com/asc-community/AngouriMath/issues/892
+        [InlineData("signum(abs(x))")]
+        [InlineData("abs(signum(x))")]
+        [InlineData("signum(abs(x/x))")]
+        [InlineData("abs(signum(x/x))")]
         public void ShouldNotChangeTest(string expr)
         {
             var expected = expr.ToEntity();
@@ -83,10 +89,16 @@ namespace AngouriMath.Tests.Common
 
         [InlineData("abs(abs(x))", "abs(x)")]
         [InlineData("signum(signum(x))", "signum(x)")]
-        [InlineData("signum(abs(x))", "1")]
-        [InlineData("abs(signum(x))", "1")]
-        [InlineData("signum(abs(x/x))", "1 provided not x = 0")]
-        [InlineData("abs(signum(x/x))", "1 provided not x = 0")]
+        // signum(abs(x)) and abs(signum(x)) asserted 1 and are 0 at x = 0
+        // (https://github.com/asc-community/AngouriMath/issues/892), so they are now left as
+        // written and live in ShouldNotChange below.
+        //
+        // The x/x pair went with them, and that is a coverage loss rather than a correction:
+        // x/x is nonzero everywhere it is defined, so 1 provided not x = 0 was right for it.
+        // Telling the two apart needs "nonzero throughout its domain", and the only tests
+        // available here are the argument's Evaled -- which leaves x/x as x/x -- and its
+        // DomainCondition, which is what conflated them in the first place. Simplify would
+        // answer it and cannot be called from inside InnerSimplify (#403).
 
         [InlineData("log(10, x) * log(10, x)", "log(10, x)^2")]
         public void ShouldChangeTo(string from, string to)

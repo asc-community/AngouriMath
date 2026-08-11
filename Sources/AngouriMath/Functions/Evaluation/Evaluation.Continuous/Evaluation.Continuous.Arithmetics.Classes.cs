@@ -12,6 +12,27 @@ namespace AngouriMath
 {
     partial record Entity
     {
+        /// <summary>
+        /// The value of <paramref name="expr"/> where it has one, with the condition it holds
+        /// under, or <see langword="null"/> where there is no value to read.
+        /// </summary>
+        /// <remarks>
+        /// The condition is what separates an argument that is nonzero *throughout its domain*
+        /// from one that can itself vanish. <c>x / x</c> evaluates to <c>1 provided not x = 0</c>,
+        /// so it is nonzero wherever it is defined at all and a rule may rely on that, carrying
+        /// the condition forward; a bare <c>x</c> has no value and no such promise. Reading only
+        /// the argument's <see cref="DomainCondition"/> conflates the two, which is how
+        /// <c>sgn(abs(x))</c> came to be <c>1</c>
+        /// (https://github.com/asc-community/AngouriMath/issues/892).
+        /// </remarks>
+        private static (Number.Complex Value, Entity Condition)? ValueWithCondition(Entity expr)
+            => expr.Evaled switch
+            {
+                Number.Complex value => (value, Boolean.True),
+                Providedf(Number.Complex value, var condition) => (value, condition),
+                _ => null,
+            };
+
         public partial record Number
         {
             private protected override Entity IntrinsicCondition => Boolean.True;
@@ -278,7 +299,19 @@ namespace AngouriMath
                     {
                         Real n => n.EDecimal.Sign,
                         Complex n when !isExact => Number.Signum(n),
-                        Absf({ DomainCondition: var condition }) => Integer.One.Provided(condition),
+                        // sgn(|z|) is 1 wherever z is nonzero and 0 where it is not: |z| is never
+                        // negative, so the only question is whether it vanishes. This answered 1
+                        // for every argument -- so sgn(abs(x)) simplified to 1, where at x = 0 the
+                        // value is 0, because sgn(0) is 0 as the comment above says.
+                        //
+                        // A condition is not the fix. The expression is defined at zero and equal
+                        // to 0 there, so `1 provided not z = 0` would replace a wrong value with a
+                        // wrong domain. Where the argument's vanishing cannot be decided the node
+                        // is left as written instead.
+                        // https://github.com/asc-community/AngouriMath/issues/892
+                        Absf(var magnitudeOf) when ValueWithCondition(magnitudeOf) is { } known
+                            => (known.Value.IsZero ? Integer.Zero : Integer.One)
+                                .Provided(known.Condition),
                         Signumf signum => signum,
                         _ => null
                     },
@@ -447,7 +480,13 @@ namespace AngouriMath
                         Matrix m when m.IsVector => VectorNorm(m, isExact),
                         Complex n when !isExact => Number.Abs(n),
                         Absf abs => abs,
-                        Signumf({ DomainCondition: var condition }) => Integer.One.Provided(condition),
+                        // |sgn(z)| has unit modulus wherever z is nonzero and is 0 at zero, the
+                        // same question as sgn(|z|) above and with the same answer. See there for
+                        // why this decides rather than attaching a condition.
+                        // https://github.com/asc-community/AngouriMath/issues/892
+                        Signumf(var signOf) when ValueWithCondition(signOf) is { } known
+                            => (known.Value.IsZero ? Integer.Zero : Integer.One)
+                                .Provided(known.Condition),
                         _ => null
                     },
                     (@this, a) => ((Absf)@this).New(a), isExact);
