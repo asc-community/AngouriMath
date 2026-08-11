@@ -65,6 +65,7 @@ read first.
 | loud | a polynomial system with more equations than unknowns | `WrongNumberOfArgumentsException` | solved |
 | loud | a known gap, e.g. a cubic inequality | `AngouriBugException`, asking to be reported | `NotSufficientlySupportedException` |
 | **silent** | `arcsin(sin(x))` and three siblings | `x`, wrong wherever `x` leaves the principal interval | left as written unless `x` is a real in that interval |
+| **silent** | `arctan(x) + arccotan(x)` | `pi/2`, wrong for every negative `x` | `pi/2` or `-pi/2` where the sign is known, else left as written |
 
 ---
 
@@ -239,6 +240,47 @@ when in fact it merely has another value — trading a wrong value for a wrong d
 `CircleTest.Test8` asserted `arccotan(cotan(3x)) == 3x` and was pinning the wrong answer; it now
 asserts that the expression is left alone. Issue
 [#884](https://github.com/asc-community/AngouriMath/issues/884).
+
+### `arctan(x) + arccotan(x)` is not always `pi/2`, and `arccotan(cotan(x))` was guarded wrongly
+
+Both follow from one fact about this library's `arccotan`: it is `arctan(1/x)` extended by
+`arccotan(0) = pi/2`, so its **range is `(-pi/2, pi/2]`** and not the `(0, pi)` that many textbooks
+use. Measured: `arccotan(1)` is `pi/4`, `arccotan(-1)` is `-pi/4`, `arccotan(0)` is `pi/2`.
+
+| | was | is |
+|---|---|---|
+| `arctan(-3) + arccotan(-3)` | `pi/2` | `-1/2 * pi` — which is the value |
+| `arctan(3) + arccotan(3)` | `pi/2` | `pi/2`, unchanged |
+| `arctan(x) + arccotan(x)` for symbolic `x` | `pi/2` | left as written |
+| `arccotan(cotan(2))` | `2` | `-1.1416...` — which is the value, `2 - pi` |
+| `arccotan(cotan(-1/2))` | left as written | `-1/2` |
+
+The sum is `pi/2` for a non-negative real argument and `-pi/2` for a negative one. `pi/2 * sgn(x)`
+is the closed form and is wrong at exactly one point — at `x = 0` the sum is `pi/2` while `sgn(0)`
+is `0` — so the sign is decided where it can be read and the sum is left alone otherwise. A
+`Piecewise` would be total, but `Compile` throws `UncompilableNodeException` on one, so answering
+that way would break expressions that compile today.
+
+**The second row is a correction to the release before it.** 2.0.0 guarded
+`arccotan(cotan(x))` with `[0, pi]`, on the assumption that `arccotan`'s range was `(0, pi)`. That
+admitted `(pi/2, pi)`, where the rewrite is false, and refused `(-pi/2, 0)`, where it is true. The
+interval is now `(-pi/2, pi/2]` without zero — zero excluded because `cotan` has no value there, so
+the composition has none either and rewriting to `x` would invent one. The other three intervals
+from that change check out: `arcsin` is `[-pi/2, pi/2]`, `arccos` is `[0, pi]`, `arctan` is
+`(-pi/2, pi/2)`.
+
+`arcsin(x) + arccos(x) -> pi/2` is **unchanged and needs no assumption**, since `arccos(x)` is
+`pi/2 - arcsin(x)` by definition over the whole plane.
+
+Three tests moved. `SimplifyTest.Patt8` and `ArctanIdentitiesTest.NeighbouringIdentitiesAreUnaffected`
+asserted `pi/2` for a symbolic argument and were pinning the wrong answer; both now use numbers and
+cover each sign. `SortSimplifyTest`'s `arctan(x2) + arccot(x*x)` case sorted and collected its whole
+sum only because the collapse shortened it, so with the collapse gone the sum stays as written —
+the sibling `arcsin`/`arccos` case still collapses and still sorts.
+
+Found by `boundcheck`, a harness that composes every unary function node with every other and
+compares against the original at points where an assumption fails rather than at sampled points.
+Issue [#887](https://github.com/asc-community/AngouriMath/issues/887).
 
 ### A known gap no longer presents as a bug
 
