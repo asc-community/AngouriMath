@@ -1795,7 +1795,8 @@ until a string is parsed.
 | | 1.3.0 | 1.4.0 onwards |
 |---|---|---|
 | `integral(f, x, 1)` | accepted, read as `integral(f, x)` | `FunctionArgumentCountException` |
-| `integral(f, x, a, b)` | — | the definite integral from `a` to `b` |
+| `integral(x, x, 2)` | the second antiderivative, `x ^ 3 / 6` | `FunctionArgumentCountException` |
+| `integral(x, x, 0, 1)` | `FunctionArgumentCountException` | the definite integral from `0` to `1` |
 
 The third argument used to be a repetition count and is now the lower bound of a range, so three
 arguments name neither form and are refused. `derivative(f, x, n)` is unaffected and still takes an
@@ -1808,7 +1809,11 @@ against 1.4.0 since January without anyone seeing it, because they were pinned t
 [#846](https://github.com/asc-community/AngouriMath/pull/846) is what surfaced it.
 
 **What to do.** `integral(f, x, 1)` becomes `integral(f, x)` — identical in meaning, since 1.3.0
-turned the former into the latter anyway. For a repeated antiderivative, nest the calls.
+turned the former into the latter anyway. A count of two or more was not a no-op and is the part
+that is actually gone: nest the calls instead, `integral(integral(f, x), x)`, which 1.3.0 accepted
+as well. Expect the answer to differ by the constants of integration, which the same PR began
+adding — where `integral(x, x, 2)` gave `x ^ 3 / 6` on 1.3.0, the nested form gives
+`C_1 + C * x + x ^ 3 / 6` from 1.4.0 onwards.
 
 ---
 
