@@ -212,8 +212,27 @@ namespace AngouriMath
                     (a, b) => (a, b) switch
                     {
                         (Complex n1, Complex n2) when !isExact => Number.Log(n1, n2),
-                        ({ DomainCondition: var condition }, Integer(0)) => Real.NegativeInfinity.Provided(condition),
-                        ({ DomainCondition: var condition }, Integer(1)) => Integer.Zero.Provided(condition),
+
+                        // log_b(0) is ln(0)/ln(b), that is -oo/ln(b), so the sign of the answer
+                        // is the sign of ln(b): -oo for a base above 1 and +oo for one between
+                        // 0 and 1. This answered -oo for every base, which is wrong below 1 --
+                        // and for a base this cannot place on one side of 1 there is no signed
+                        // answer to give, so the node is left as written.
+                        // https://github.com/asc-community/AngouriMath/issues/890
+                        ({ DomainCondition: var condition }, Integer(0))
+                            when a.Evaled is Real above && above > 1
+                            => Real.NegativeInfinity.Provided(condition),
+                        ({ DomainCondition: var condition }, Integer(0))
+                            when a.Evaled is Real below && below > 0 && below < 1
+                            => Real.PositiveInfinity.Provided(condition),
+
+                        // log_b(1) is 0/ln(b), which is 0 for every base but 1, where it is
+                        // 0/0 -- and every division by zero here is NaN. The condition belongs
+                        // on the answer rather than gating the rule, because at b = 1 the
+                        // expression is genuinely undefined and not merely something else.
+                        ({ DomainCondition: var condition }, Integer(1))
+                            => Integer.Zero.Provided(condition).Provided(!a.EqualTo(1)),
+
                         _ => null
                     },
                     (@this, a, b) => ((Logf)@this).New(a, b), isExact);
