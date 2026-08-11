@@ -68,6 +68,9 @@ read first.
 | loud | a known gap, e.g. a cubic inequality | `AngouriBugException`, asking to be reported | `NotSufficientlySupportedException` |
 | **silent** | `arcsin(sin(x))` and three siblings | `x`, wrong wherever `x` leaves the principal interval | left as written unless `x` is a real in that interval |
 | **silent** | `arctan(x) + arccotan(x)` | `pi/2`, wrong for every negative `x` | `pi/2` or `-pi/2` where the sign is known, else left as written |
+| **silent** | `log(1, 1)` | `0` | `NaN`, since it is `0/0` |
+| **silent** | `log(b, 1)` | `0` for any base | `0 provided not b = 1` |
+| **silent** | `log(1/2, 0)` and any base below 1 | `-oo` | `+oo` |
 
 ---
 
@@ -273,6 +276,37 @@ bug report or an exception nobody was told to expect. Issue
 Found by `crashcheck`, which runs each case in a child process so that a crash is a result rather
 than the end of the run. On 1652 cases it reports 0 crashes and 0 hangs, and these 16 were every
 remaining finding.
+
+### A logarithm behaves like the division it is defined as
+
+`log_b(z)` is `ln(z) / ln(b)`, and three answers did not follow from that. Every division by zero in
+this library is `NaN` — `0/0`, `2/0` and `-2/0` all are — so a logarithm whose base is `1` divides by
+`ln(1) = 0` and must be `NaN` too.
+
+| | was | is |
+|---|---|---|
+| `log(1, 1)` | `0` | `NaN` — it is `0/0` |
+| `log(1, 2)` | `+oo` | `NaN` — dividing by `ln 1 = 0` has no signed answer |
+| `log(b, 1)` | `0`, for any base including 1 | `0 provided not b = 1` |
+| `log(1/2, 0)`, and any base below 1 | `-oo` | `+oo` |
+| `log(2, 0)`, and any base above 1 | `-oo` | `-oo`, unchanged |
+| `log(x, 0)` for symbolic `x` | `-oo` | left as written |
+
+The first two came from a shortcut: `Number.Log` uses `EDecimal.LogN` for a positive real base, and
+`LogN` answers `0` for `log_1(1)` and `+oo` for `log_1(2)` where falling through to `Ln(x)/Ln(base)`
+gives `NaN` for both. A base of `1` is now excluded from the shortcut so the two paths agree.
+
+`log(b, 1)` is `0/ln(b)`, which is `0` for every base but `1`. **A condition is right here**, unlike
+the interval cases above: at `b = 1` the expression genuinely is undefined rather than merely
+something else, so narrowing the domain is what the mathematics says.
+
+`log(b, 0)` is `-oo/ln(b)`, so the sign of the answer follows the sign of `ln(b)`. It answered `-oo`
+for every base, which is wrong below `1`. For a base that cannot be placed on one side of `1` there is
+no signed answer to give, so the node is left as written.
+
+Issue [#890](https://github.com/asc-community/AngouriMath/issues/890), which also records a second
+half not fixed here: `DomainCondition` of `log(-3, -3)` is `False` while the expression evaluates to
+`1`, so the declared domain and the evaluation disagree. That is #721's question and wants a decision.
 
 ### `arctan(x) + arccotan(x)` is not always `pi/2`, and `arccotan(cotan(x))` was guarded wrongly
 

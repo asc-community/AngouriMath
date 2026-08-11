@@ -585,6 +585,51 @@ namespace AngouriMath.Tests.Common
         static double Magnitude(Entity difference) =>
             ((System.Numerics.Complex)difference.EvalNumerical()).Magnitude;
 
+        // https://github.com/asc-community/AngouriMath/issues/890
+        // log_b(1) is ln(1)/ln(b), which is 0/ln(b) -- so 0 for every base except 1, where it
+        // is 0/0. The rewrite answered 0 for any base at all, so log(1, 1) was 0 where every
+        // division by zero in this library is NaN.
+        [Fact]
+        public void LogarithmOfOneIsZeroOnlyWhereTheBaseIsNotOne()
+        {
+            Assert.Equal(MathS.NaN, "log(1, 1)".ToEntity().Simplify());
+            Assert.Equal(MathS.NaN, "log(1, 1)".ToEntity().EvalNumerical());
+        }
+
+        [Theory]
+        [InlineData("log(2, 1)")]
+        [InlineData("log(1/2, 1)")]
+        [InlineData("log(e, 1)")]
+        public void LogarithmOfOneStillCollapsesForAnOrdinaryBase(string expression) =>
+            Assert.Equal(Entity.Number.Integer.Create(0), expression.ToEntity().Simplify());
+
+        // A symbolic base cannot be placed away from 1, so the answer carries the condition --
+        // and here a condition is right, because at b = 1 the expression really is undefined
+        // rather than merely different.
+        [Fact]
+        public void LogarithmOfOneOverASymbolCarriesItsCondition()
+        {
+            var simplified = "log(x, 1)".ToEntity().Simplify();
+            Assert.NotEqual(Entity.Number.Integer.Create(0), simplified);
+            Assert.Equal(MathS.NaN, simplified.Substitute("x", 1).EvalNumerical());
+        }
+
+        // log_b(0) is ln(0)/ln(b) = -oo/ln(b), whose sign follows the sign of ln(b): -oo above
+        // 1 and +oo between 0 and 1. It answered -oo for every base.
+        [Theory]
+        [InlineData("log(2, 0)", "-oo")]
+        [InlineData("log(3, 0)", "-oo")]
+        [InlineData("log(1/2, 0)", "+oo")]
+        [InlineData("log(1/3, 0)", "+oo")]
+        public void LogarithmOfZeroFollowsTheSignOfItsBase(string expression, string expected) =>
+            Assert.Equal(expected.ToEntity(), expression.ToEntity().Simplify());
+
+        // For a base whose side of 1 cannot be read there is no signed answer to give, so the
+        // node is left as written rather than answered with one of the two.
+        [Fact]
+        public void LogarithmOfZeroOverASymbolIsLeftAlone() =>
+            Assert.Equal("log(x, 0)".ToEntity(), "log(x, 0)".ToEntity().Simplify());
+
         // This library's arccotan is arctan(1/x) extended with arccotan(0) = pi/2, so its
         // range is (-pi/2, pi/2] and not the (0, pi) some texts use. #884 guarded
         // arccotan(cotan(x)) with [0, pi] on the assumption it was the latter, which left the
@@ -654,6 +699,5 @@ namespace AngouriMath.Tests.Common
             Assert.NotEqual(MathS.pi / 2, simplified);
             Assert.NotEqual(-MathS.pi / 2, simplified);
         }
-
     }
 }
