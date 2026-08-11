@@ -46,15 +46,46 @@ namespace AngouriMath
                 private protected override Entity IntrinsicCondition => Boolean.True;
                 /// <inheritdoc/>
                 protected override Entity InnerSimplify(bool isExact)
-                    => ExpandOnTwoAndTArguments(Var, Predicate, Codomain,
-                        (a, b, cod) => (a, b, cod) switch
-                        {
-                            (_, { Evaled: Boolean(true) }, var codom) => codom,
-                            (_, { Evaled: Boolean(false) }, var codom) => Empty,
-                            _ => null
-                        },
-                        (@this, @var, pred, _) => ((ConditionalSet)@this).New(@var, pred), isExact, propagateSet: false
-                        );
+                {
+                    // Deliberately not ExpandOnTwoAndTArguments: this node binds Var, and that
+                    // helper lifts a Providedf out of an argument onto the whole expression.
+                    // A predicate's condition is a statement about the bound variable, so
+                    // lifting it puts Var outside its own binder -- `{ x : 1/x = 0 }` came back
+                    // as `{ } provided not x = 0`, where the x named in the condition is no
+                    // longer the x the set ranges over.
+                    // https://github.com/asc-community/AngouriMath/issues/878
+                    var predicate = Predicate.InnerSimplified(isExact);
+
+                    // `expr provided a provided b` is what the rules build where two operands
+                    // each need a condition, so the chain is read to the end rather than one
+                    // layer down.
+                    var condition = (Entity)Boolean.True;
+                    var core = predicate;
+                    while (core is Providedf(var inner, var predicated))
+                    {
+                        condition = condition == Boolean.True ? predicated : condition & predicated;
+                        core = inner;
+                    }
+
+                    // Membership is the predicate holding, so anything short of True admits
+                    // nothing: a predicate that is False where it is defined and undefined
+                    // elsewhere -- which is what a condition on False says -- has no members.
+                    // Where the predicate is True under a condition, the members are exactly
+                    // the points the condition admits, and it becomes the predicate rather than
+                    // escaping to the outside of the set.
+                    return core.Evaled switch
+                    {
+                        Boolean(false) => Empty,
+                        Boolean(true) when condition != Boolean.True => New(Var, condition),
+                        // No set names every value a symbol could take, so a predicate that
+                        // holds everywhere is left as written rather than asking for the set of
+                        // Domain.Any, which does not exist.
+                        Boolean(true) => Codomain is AngouriMath.Core.Domain.Any
+                            ? New(Var, Boolean.True)
+                            : SpecialSet.Create(Codomain),
+                        _ => New(Var, predicate)
+                    };
+                }
             }
 
             partial record SpecialSet

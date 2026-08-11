@@ -6,6 +6,7 @@
 //
 
 using AngouriMath;
+using AngouriMath.Extensions;
 using Xunit;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
@@ -43,5 +44,39 @@ namespace AngouriMath.Tests.Core.Sets
         [Fact] public void Intersection2() => Test(A.Intersect(A1), new("x", "x > 0"));
         [Fact] public void Intersection3() => TestArb(A.Intersect(D).Simplify(), Set.Empty);
         [Fact] public void Intersection4() => TestArb(D.Intersect(A).Simplify(), Set.Empty);
+
+        // https://github.com/asc-community/AngouriMath/issues/878
+        // The predicate was passed to the argument-expanding helper, which lifts a Providedf
+        // out of an argument onto the whole expression. For a node that binds a variable that
+        // puts the bound variable outside its own binder: `{ x : 1/x = 0 }` came back as
+        // `{ } provided not x = 0`. Membership is the predicate holding, and a predicate that
+        // is False where its condition holds and undefined where it does not admits nothing,
+        // so the answer is the empty set with no condition to place anywhere.
+        [Theory]
+        [InlineData("{ x : 1/x = 0 }")]
+        [InlineData("{ x : x > 0 and x < 0 }")]
+        public void APredicateThatIsNeverTrueGivesTheEmptySetAndNoCondition(string input)
+            => Assert.Equal(Set.Empty, input.ToEntity().Simplify());
+
+        // Nothing may name the bound variable outside the set, whatever the answer turns out
+        // to be, so this is asserted on the shape rather than on one expected result.
+        [Theory]
+        [InlineData("{ x : 1/x = 0 }")]
+        [InlineData("{ x : x/x = 1 }")]
+        [InlineData("{ x : x > 0 and x < 0 }")]
+        [InlineData("{ x : x = a and x > a }")]
+        public void SimplifyingASetBuilderLeavesNoConditionOutsideTheBinder(string input)
+            => Assert.DoesNotContain(input.ToEntity().Simplify().DirectChildren, node => node is Providedf);
+
+        // For a predicate that holds everywhere InnerSimplify returned the node's Codomain,
+        // which is Domain.Any for a set-builder, and SpecialSet.Create has no case for Any --
+        // so it threw AngouriBugException out of Simplify on valid input rather than answering.
+        [Theory]
+        [InlineData("{ x : 1 = 1 }")]
+        [InlineData("{ x : x = x }")]
+        [InlineData("{ x : x/x = 1 }")]
+        [InlineData("{ x : x > 0 or x <= 0 }")]
+        public void APredicateThatHoldsEverywhereDoesNotThrow(string input)
+            => Assert.IsAssignableFrom<Set>(input.ToEntity().Simplify());
     }
 }
