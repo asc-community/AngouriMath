@@ -36,12 +36,29 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             var localVars = new List<ParameterExpression>();
             var variableAssignments = new List<Expression>();
 
-            var tree = BuildTree(expr, subexpressionsCache, variableAssignments, localVars, protocol);
-            var treeWithLocals = Expression.Block(localVars, variableAssignments.Append(tree));
-            Expression entireExpression = returnType is not null ? protocol.ConvertType(treeWithLocals, returnType) : treeWithLocals;
-            var finalLambda = Expression.Lambda<TDelegate>(entireExpression, functionArguments);
+            // Linq.Expression refuses a mismatch by throwing its own exceptions -- an
+            // InvalidOperationException for `not x` where x is a double, an ArgumentException
+            // for a Providedf whose condition is not boolean -- and those were reaching the
+            // caller unwrapped, so a CAS raised exceptions outside its own documented hierarchy
+            // for input it simply cannot compile. The mismatch is real and the answer is the
+            // exception written down for it.
+            // https://github.com/asc-community/AngouriMath/issues/894
+            try
+            {
+                var tree = BuildTree(expr, subexpressionsCache, variableAssignments, localVars, protocol);
+                var treeWithLocals = Expression.Block(localVars, variableAssignments.Append(tree));
+                Expression entireExpression = returnType is not null ? protocol.ConvertType(treeWithLocals, returnType) : treeWithLocals;
+                var finalLambda = Expression.Lambda<TDelegate>(entireExpression, functionArguments);
 
-            return finalLambda.Compile();
+                return finalLambda.Compile();
+            }
+            catch (Exception e) when (e is InvalidOperationException or ArgumentException
+                                          or NotSupportedException
+                                      && e is not AngouriMathBaseException)
+            {
+                throw new UncompilableNodeException(
+                    $"`{expr.Stringize()}` has no compiled form for the types requested: {e.Message}");
+            }
         }
 
         internal static Expression BuildTree(

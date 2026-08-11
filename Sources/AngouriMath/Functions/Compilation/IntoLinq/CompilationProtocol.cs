@@ -128,7 +128,17 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 
                 Notf =>         Expression.Not(e),
                 
-                _ => throw new AngouriBugException("An unary node seems to be not added")
+                // A node this converter has no case for has no compiled form, and that is a gap
+                // in coverage rather than an internal error. It threw AngouriBugException, which
+                // asks the caller to report a bug -- so compiling floor(x), ceil(x), round(x),
+                // x!, gamma(x) or phi(x) told the user to file an issue for something the
+                // library already knows it cannot do. UncompilableNodeException is the exception
+                // documented for exactly this, and #872 moved the other known gaps off
+                // AngouriBugException for the same reason.
+                // https://github.com/asc-community/AngouriMath/issues/894
+                _ => throw new UncompilableNodeException(
+                    $"There is no compiled form for {typeHolder.GetType().Name}. "
+                    + "Define a CompilationProtocol which overrides ConvertUnaryNode to add one.")
             };
         }
 

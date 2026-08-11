@@ -47,6 +47,8 @@ read first.
 | **silent** | two integrals | answered correctly | unevaluated — a deliberate loss |
 | **silent** | `k/(a x^2 + c)` and `k/sqrt(a x^2 + c)` for symbolic `a` | `NaN` | a piecewise on the sign of the discriminant |
 | loud | `Compile` over a missing variable | `KeyNotFoundException` | `UncompilableNodeException` |
+| loud | `Compile` of `floor`, `ceil`, `round`, `phi`, `gamma`, `!` | `AngouriBugException`, asking to be reported | `UncompilableNodeException` |
+| loud | `Compile` of a boolean or lambda node as `double` | `InvalidOperationException` from Linq | `UncompilableNodeException` |
 | loud | `Expand` of a quotient of factorials | `AngouriBugException` | the expanded polynomial |
 | loud | parsing a `provided` in a parenthesised comma list | `NullReferenceException` | `UnhandledParseException` |
 | loud | `floor(x)`, `ceil(x)`, `ceiling(x)` | `UnrecognizedFunctionParseException` | the functions |
@@ -239,6 +241,37 @@ when in fact it merely has another value — trading a wrong value for a wrong d
 `CircleTest.Test8` asserted `arccotan(cotan(3x)) == 3x` and was pinning the wrong answer; it now
 asserts that the expression is left alone. Issue
 [#884](https://github.com/asc-community/AngouriMath/issues/884).
+
+### `Compile` fails with its own exception rather than someone else's
+
+Two families, both reported as `UncompilableNodeException` — the exception
+[`Docs/Usage/Exceptions.md`](Sources/AngouriMath/Docs/Usage/Exceptions.md) documents for a node with
+no compiled form. Neither the node set nor the compiled output changes; only what is thrown when
+compilation is impossible.
+
+| input, compiled as `<double, double>` | was | is |
+|---|---|---|
+| `floor(x)`, `ceil(x)`, `round(x)`, `phi(x)`, `gamma(x)`, `x!` | `AngouriBugException`: *An unary node seems to be not added* | `UncompilableNodeException` |
+| `not x`, `x and 2`, `x or 2`, `x xor 2`, `x implies 2`, `x -> x + 1` | `InvalidOperationException` from `System.Linq.Expressions` | `UncompilableNodeException` |
+| `x provided 2` | `ArgumentException`: *Argument must be boolean* | `UncompilableNodeException` |
+
+`AngouriBugException` means "an internal error occurred, report it", and none of the first row is one
+— the converter has no case for the node, which is a gap in coverage. **Four of those nodes are ones
+2.0 added**: `floor`, `ceil` and `round` arrived with #809 and the compiler was never taught them, so
+a caller compiling a 2.0 feature was asked to file a bug report.
+
+The second family matters for a caller who followed the documentation: `catch (AngouriMathBaseException)`
+is what the exception reference tells you to write around a library call, and Linq's exceptions are
+not under it, so those escaped the handler entirely.
+
+**What this does not do** is teach the compiler `floor`, `ceil`, `round` and the rest. That is worth
+doing and is separate; this is only about the failure being honest rather than either a request for a
+bug report or an exception nobody was told to expect. Issue
+[#894](https://github.com/asc-community/AngouriMath/issues/894).
+
+Found by `crashcheck`, which runs each case in a child process so that a crash is a result rather
+than the end of the run. On 1652 cases it reports 0 crashes and 0 hangs, and these 16 were every
+remaining finding.
 
 ### A known gap no longer presents as a bug
 

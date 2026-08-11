@@ -51,6 +51,38 @@ namespace AngouriMath.Tests.Core
             Assert.Throws<UncompilableNodeException>(() =>
                 "x + { x, x }".Compile("x"));
 
+        // https://github.com/asc-community/AngouriMath/issues/894
+        // A node the Linq converter has no case for threw AngouriBugException, which asks the
+        // caller to report a bug -- for a gap in coverage the library already knows about. Four
+        // of these are nodes 2.0 added and never taught the compiler.
+        [Theory]
+        [InlineData("floor(x)")]
+        [InlineData("ceil(x)")]
+        [InlineData("round(x)")]
+        [InlineData("phi(x)")]
+        [InlineData("gamma(x)")]
+        [InlineData("x!")]
+        [InlineData("(x + 1)! / x!")]
+        public void ANodeWithNoCompiledFormSaysSoRatherThanAskingForABugReport(string expression) =>
+            Assert.Throws<UncompilableNodeException>(() =>
+                expression.ToEntity().Compile<double, double>("x"));
+
+        // The same, for a mismatch Linq.Expression refuses rather than the converter: a boolean
+        // node has no double-valued compiled form, and the exception used to be
+        // System.Linq.Expressions' own, so `catch (AngouriMathBaseException)` -- which is what
+        // Docs/Usage/Exceptions.md tells a caller to write -- did not catch it.
+        [Theory]
+        [InlineData("not x")]
+        [InlineData("x and 2")]
+        [InlineData("x or 2")]
+        [InlineData("x xor 2")]
+        [InlineData("x implies 2")]
+        [InlineData("x provided 2")]
+        [InlineData("x -> x + 1")]
+        public void ATypeMismatchInTheCompiledFormStaysInsideTheLibrarysHierarchy(string expression) =>
+            Assert.Throws<UncompilableNodeException>(() =>
+                expression.ToEntity().Compile<double, double>("x"));
+
         [Fact] public void CannotEvalNum1() =>
             Assert.Throws<CannotEvalException>(() =>
                 "x".EvalNumerical());
