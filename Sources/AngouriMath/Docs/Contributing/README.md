@@ -12,7 +12,10 @@ If you aren't sure about what to add, you may want to check the current projects
 3. <a href="./ImproveParser.md">Improve parser</a>
 4. <a href="./Transformations.md">Transformations</a> — the layer the 1.x entry points sit on, and
    how to add the next rule set or transformation
-5. <a href="./coding_rules.md">Coding rules</a> — sealed-or-abstract, immutability, and what may be
+5. <a href="./SimplificationContract.md">What a simplification rule may assume</a> — read before
+   adding or changing a rewrite. What has to be true for it to be sound, the four things that are
+   not the same, and the branch-cut conventions this library commits to
+6. <a href="./coding_rules.md">Coding rules</a> — sealed-or-abstract, immutability, and what may be
    made `public`
 
 See also <a href="../../../../BREAKING-CHANGES.md">BREAKING-CHANGES.md</a>, where a change that makes
