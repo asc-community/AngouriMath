@@ -28,6 +28,8 @@ read first.
 | **silent** | `sqrt(x^2)`, `sqrt(-x)` and their kind | `x`, `i*sqrt(x)` — wrong for negative x | left as written |
 | loud | `mod` as a variable name | a variable | a keyword, so a parse error |
 | loud | `NaN` as a variable name | a variable | a keyword, so the NaN value |
+| loud | `MathS.ToSympyCode` of any non-integer rational | `SyntaxError` — a parenthesis was never closed | code that runs |
+| loud | `MathS.ToSympyCode` of `NaN`, `+oo`, `-oo` | `NameError` — the name is never bound | `sympy.nan`, `sympy.oo`, `-sympy.oo` |
 | **silent** | `NaN` printed and read back | a variable of that name, which cancels and collects | the NaN value |
 | **silent** | `Stringize` of powers, lambdas, applications, piecewises | did not parse back | parses back |
 | **silent** | `Stringize` of a complex number with a fractional imaginary part | read back as its negation, or as a power | parses back |
@@ -1008,6 +1010,35 @@ disagreements over 10463 expressions goes **30 to 0**.
 
 [#752](https://github.com/asc-community/AngouriMath/issues/752), PR
 [#758](https://github.com/asc-community/AngouriMath/pull/758).
+
+### `MathS.ToSympyCode` emits Python that runs
+
+Its documented purpose is code you can run in SymPy, and for two whole classes of expression it
+emitted code that did not run at all.
+
+| expression | was | is |
+|---|---|---|
+| `1/2`, `1/3 + 1/6` | `sympy.Rational(1, 2` — `SyntaxError: '(' was never closed` | `sympy.Rational(1, 2)` |
+| `0/0`, `1/0` | `NaN` — `NameError: name 'NaN' is not defined` | `sympy.nan` |
+| `+oo`, `-oo` | `+oo`, `-oo` — `NameError` | `sympy.oo`, `-sympy.oo` |
+
+The first is a missing parenthesis, and it broke **every** expression carrying a non-integer rational,
+which is most of what a computer algebra system hands back. The second is a value with no binding: the
+generated preamble declares a `sympy.Symbol` for each free *variable*, and a `NaN` or an infinity is
+neither a variable nor something SymPy names the same way this library does.
+
+Both were checked by running the emitted programs against SymPy 1.14 rather than by reading them, which
+is also how it was established that they now come back **exact** — `1/2` arrives as SymPy's `Half` and
+not as the float `0.5`.
+
+Nothing else about the exporter changes. `pi`, `e` and `i` were already emitted as `sympy.pi`,
+`sympy.E` and `sympy.I`, and `sqrt` as `sympy.sqrt`.
+
+Two tests now hold the properties that failed, without needing an interpreter in the suite: the
+parentheses balance, and every name in the emitted body is either declared in the preamble or reached
+through `sympy.`. 17 of their 23 cases fail against the old exporter.
+
+Issue [#909](https://github.com/asc-community/AngouriMath/issues/909).
 
 ### `NaN` is now a keyword, and the printed form of NaN reads back
 
