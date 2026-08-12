@@ -214,8 +214,9 @@ Worked examples, each measured.
 
 ## 6. The conventions this library commits to
 
-Branch cuts disagree between systems, so these are measured on a 2.0.0 build rather than assumed. A
-rewrite that changes any of them changes answers.
+Branch cuts disagree between systems, so these are measured rather than assumed — on a 2.0.0 build
+when this table was written, and re-measured unchanged on 2.1.0, which is worth doing whenever a
+release touches a branch. A rewrite that changes any of them changes answers.
 
 | | value | convention |
 |---|---|---|
