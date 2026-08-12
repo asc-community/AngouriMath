@@ -264,6 +264,7 @@ cset_arguments returns[(Entity variable, Entity predicate) couple]
 atom returns[Entity value]
     : '+oo' { $value = Entity.Number.Real.PositiveInfinity; }
     | '-oo' { $value = Entity.Number.Real.NegativeInfinity; }
+    | NAN { $value = Entity.Number.Real.NaN; }
     | NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
     | BOOLEAN { $value = Entity.Boolean.Parse($BOOLEAN.text); }
     | SPECIALSET { $value = Entity.Set.SpecialSet.Create($SPECIALSET.text); }
@@ -477,6 +478,13 @@ NUMBER: ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i'? | '.'? ('0'..'9')+ EXPONENT? 
 SPECIALSET: ('CC' | 'RR' | 'QQ' | 'ZZ' | 'BB') ;
 
 BOOLEAN: ('true' | 'True' | 'false' | 'False') ;
+
+// Only the one spelling, which is what Stringize prints. BOOLEAN carries two capitalisations of
+// each word because it has to read back its own output -- Entity.Boolean prints True and a caller
+// types true -- and NaN prints and reads the same way, so there is nothing to reconcile.
+// Declared above VARIABLE, since equal-length matches go to the earlier rule and this word would
+// otherwise be an identifier. https://github.com/asc-community/AngouriMath/issues/906
+NAN: 'NaN' ;
 
 VARIABLE: ('a'..'z'|'A'..'Z'|'\u0370'..'\u03FF'|'\u1F00'..'\u1FFF'|'\u0400'..'\u04FF')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9'|'\u0370'..'\u03FF'|'\u1F00'..'\u1FFF'|'\u0400'..'\u04FF')+)? ;
   

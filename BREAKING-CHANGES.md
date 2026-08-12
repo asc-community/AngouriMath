@@ -27,6 +27,8 @@ read first.
 | loud | `floor(x)` and ten other names the library lacks | a product, silently | `UnrecognizedFunctionParseException` |
 | **silent** | `sqrt(x^2)`, `sqrt(-x)` and their kind | `x`, `i*sqrt(x)` — wrong for negative x | left as written |
 | loud | `mod` as a variable name | a variable | a keyword, so a parse error |
+| loud | `NaN` as a variable name | a variable | a keyword, so the NaN value |
+| **silent** | `NaN` printed and read back | a variable of that name, which cancels and collects | the NaN value |
 | **silent** | `Stringize` of powers, lambdas, applications, piecewises | did not parse back | parses back |
 | **silent** | `Stringize` of a complex number with a fractional imaginary part | read back as its negation, or as a power | parses back |
 | **silent** | numbers below `1e-16` | rounded to `0` | kept |
@@ -1006,6 +1008,40 @@ disagreements over 10463 expressions goes **30 to 0**.
 
 [#752](https://github.com/asc-community/AngouriMath/issues/752), PR
 [#758](https://github.com/asc-community/AngouriMath/pull/758).
+
+### `NaN` is now a keyword, and the printed form of NaN reads back
+
+`Stringize` prints the NaN value as `NaN`, and the grammar had no such token, so reading it back gave a
+**variable of that name**. A variable behaves like any symbol — it cancels, collects and compares — and
+nothing on the page distinguished the two, since a variable named `NaN` also prints as `NaN`:
+
+| expression | was | is |
+|---|---|---|
+| `"NaN - NaN".Simplify()` | `0` | `NaN` |
+| `"NaN / NaN".Simplify()` | `1 provided not NaN = 0` | `NaN` |
+| `"NaN * 0".Evaled` | `0` | `NaN` |
+| `"NaN * 2".Evaled`, `"NaN + NaN".Evaled` | left as written | `NaN` |
+| `NaN` as a variable name | a variable | a parse of the NaN value |
+| `NaNx`, `NaN_1`, `aNaN` | variables | variables, unchanged |
+
+This is the same trade `mod` took above: a word that was an identifier becomes a keyword, so an
+expression using it as a variable name now means something else. It is the narrower half of the trade —
+only the exact spelling is reserved, because the lexer takes the longest match, so any longer name that
+merely contains it is still a variable.
+
+Only `NaN` is affected. Its two siblings already had tokens: `+oo` and `-oo` both print and parse, and
+`Latexize` has had `\mathrm{undefined}` for all along — which is the token
+[CSharpMath](https://github.com/verybadcat/CSharpMath) decodes back to `MathS.NaN`, so the LaTeX round
+trip was closed already and is untouched here.
+
+**The round-trip test now runs in both directions.** Every case in `StringizeRoundTripTest` began from a
+*string*, so it could only reach expressions the parser already produces, and a value with no source
+form was invisible to all of them however many cases were added. It now also enumerates the library's
+named constants by reflection — `MathS` and `Entity.Number.Real` — prints each and reads it back, so a
+constant added later is covered without anyone remembering the file exists. Those two cases are what
+fail against the old grammar.
+
+Issue [#906](https://github.com/asc-community/AngouriMath/issues/906).
 
 ### `mod` is now a keyword
 
