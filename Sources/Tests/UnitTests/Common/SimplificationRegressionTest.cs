@@ -940,6 +940,61 @@ namespace AngouriMath.Tests.Common
         public void ArithmeticIsStillStrictInNaN(string expression) =>
             Assert.Equal(MathS.NaN, expression.ToEntity().Evaled);
 
+        // https://github.com/asc-community/AngouriMath/issues/897
+        // A number is not a truth value, so a connective over one has no answer to give: 0 is not
+        // false and 1 is not true. It used to report the same category error three different ways
+        // -- NaN where the operator had to look at the number, a correct-by-short-circuit False
+        // where it did not, and a rewritten `not 0` for `true xor 0` -- so what a caller got
+        // depended on which operator and which operand position. NaN is the worst of the three: it
+        // says the expression does not exist, where the truth is that it is not a proposition.
+        [Theory]
+        [InlineData("false and 0")]
+        [InlineData("true and 0")]
+        [InlineData("0 and true")]
+        [InlineData("true or 0")]
+        [InlineData("false or 0")]
+        [InlineData("false xor 0")]
+        [InlineData("true xor 0")]
+        [InlineData("not 0")]
+        [InlineData("0 xor 0")]
+        [InlineData("true implies 0")]
+        [InlineData("0 implies true")]
+        [InlineData("true and 1")]
+        [InlineData("true and 1/2")]
+        [InlineData("true and i")]
+        public void AConnectiveOverANumberHasNoAnswer(string expression)
+        {
+            var evaled = expression.ToEntity().Evaled;
+            Assert.NotEqual(MathS.NaN, evaled);
+            Assert.IsNotType<Entity.Boolean>(evaled);
+            Assert.False(expression.ToEntity().EvaluableBoolean);
+        }
+
+        // A caller who insists on a boolean still gets the type error, at the layer where insisting
+        // happens -- which is why declining here loses nothing that mattered.
+        [Fact]
+        public void InsistingOnABooleanOverANumberStillThrows() =>
+            Assert.Throws<AngouriMath.Core.Exceptions.CannotEvalException>(
+                () => "true and 0".ToEntity().EvalBoolean());
+
+        // The distinction this rests on, and the one that makes it not a retreat from #880: NaN is
+        // how this library spells "no truth value", and a connective settles what it can with one.
+        // A number is a value of the wrong sort. The two must not be treated alike.
+        [Theory]
+        [InlineData("(0/0) and false", "false")]
+        [InlineData("(i < 0) and false", "false")]
+        [InlineData("(0/0) or true", "true")]
+        public void AnUndefinedTruthValueIsNotANumberForThisPurpose(string expression, string expected) =>
+            Assert.Equal(expected.ToEntity(), expression.ToEntity().Evaled);
+
+        // Nor is a symbol: a bare variable is Domain.Any, so it may yet be a truth value and the
+        // absorbing rules still apply to it.
+        [Theory]
+        [InlineData("false and x", "false")]
+        [InlineData("true or x", "true")]
+        public void ASymbolMayStillBeATruthValue(string expression, string expected) =>
+            Assert.Equal(expected.ToEntity(), expression.ToEntity().Evaled);
+
         // The contradiction this removes, stated as the commutation it broke.
         [Theory]
         [InlineData("true or (true and (x < 0))")]

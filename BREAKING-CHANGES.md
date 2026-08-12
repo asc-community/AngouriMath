@@ -74,6 +74,7 @@ read first.
 | **silent** | `-(a - b)` inside a power, a function or a matrix | left as written | `b - a`, as at the root |
 | **silent** | `Expand` of a matrix | the matrix, unexpanded | expanded entry by entry |
 | **silent** | `false and u`, `true or u`, `false implies u` for an undefined `u` | `NaN` | `False`, `True`, `True` — what the truth table settles |
+| **silent** | a connective over a number, e.g. `true and 0`, `false and 0` | `NaN`, or `False` by short-circuit | left as written — a number is not a truth value |
 | **silent** | `arctan(x) + arccotan(x)` | `pi/2`, wrong for every negative `x` | `pi/2` or `-pi/2` where the sign is known, else left as written |
 | **silent** | `log(1, 1)` | `0` | `NaN`, since it is `0/0` |
 | **silent** | `log(b, 1)` | `0` for any base | `0 provided not b = 1` |
@@ -407,6 +408,45 @@ have their own test asserting the unevaluated node, so a future fix flips them b
 `boundcheck` drops from four disagreements to two; the remaining two are `log(x, x)` and
 `ln(x) + ln(x+1)`, both recorded elsewhere as wanting a decision rather than a guard. Issue
 [#902](https://github.com/asc-community/AngouriMath/issues/902).
+
+### A logical connective over a number has no answer
+
+A number is not a truth value: `0` is not `False` and `1` is not `True`. The same category error was
+reported three different ways, depending on which operator saw it and in which position:
+
+| expression | was | is |
+|---|---|---|
+| `true and 0`, `false or 0`, `false xor 0` | `NaN` | left as written |
+| `false and 0`, `true or 0` | `False`, `True` — by short-circuit | left as written |
+| `true xor 0` | `not 0` | left as written |
+| `not 0`, `0 xor 0` | left as written | unchanged |
+| `true and 1`, `true and 1/2`, `true and i` | `NaN` | left as written |
+
+**`NaN` was the worst of the three.** In this library it means *this does not exist*, and `true and 0`
+exists perfectly well — it is not a proposition. Reporting a sort error as nonexistence tells a caller
+something false about the mathematics, and it is the answer an `if` on `EvaluableBoolean` does not save
+you from. The other two were an answer arrived at by not looking, and a rewrite of one non-boolean into
+another.
+
+**Two answers are withdrawn deliberately.** `false and 0` and `true or 0` used to come back `False` and
+`True`, because short-circuiting settled them before the number was examined. Those are gone: whether an
+operand is admissible cannot depend on whether the operator happened to need it. There is no proposition
+here for `False` to be the truth of.
+
+A caller who insists on a boolean is unaffected — `EvalBoolean()` throws `CannotEvalException` for an
+unevaluated node exactly as it did for `NaN`, so the type error still surfaces at the layer where
+insisting happens. `DomainCondition` stops contradicting evaluation as a side effect: `domain(a xor 0)`
+says `True`, and there is no longer a `NaN` for it to disagree with.
+
+**A number is not the same as an undefined truth value, and the two must not be treated alike.** `NaN`
+is how this library spells *no truth value* — what an order comparison over the complex plane produces —
+and a connective settles what it can with one, which is the entry above. So `(0/0) and False` and
+`(i < 0) and False` are both still `False`, and only a genuine number makes a connective decline. A bare
+variable is `Domain.Any` and may yet be a truth value, so `false and x` is still `False`.
+
+Issue [#897](https://github.com/asc-community/AngouriMath/issues/897), which asked whether a number is
+a truth value here at all. It is not; a truth value that is neither true nor false is what
+`MathS.Quantum` is for.
 
 ### A logical connective is no longer strict in `NaN`
 
