@@ -67,6 +67,7 @@ read first.
 | loud | a polynomial system with more equations than unknowns | `WrongNumberOfArgumentsException` | solved |
 | loud | a known gap, e.g. a cubic inequality | `AngouriBugException`, asking to be reported | `NotSufficientlySupportedException` |
 | **silent** | `arcsin(sin(x))` and three siblings | `x`, wrong wherever `x` leaves the principal interval | left as written unless `x` is a real in that interval |
+| **silent** | `abs(sgn(x))` and `sgn(abs(x))` | `1`, wrong at `x = 0` where both are `0` | left as written unless the argument's value can be read |
 | **silent** | `arctan(x) + arccotan(x)` | `pi/2`, wrong for every negative `x` | `pi/2` or `-pi/2` where the sign is known, else left as written |
 | **silent** | `log(1, 1)` | `0` | `NaN`, since it is `0/0` |
 | **silent** | `log(b, 1)` | `0` for any base | `0 provided not b = 1` |
@@ -349,6 +350,39 @@ the sibling `arcsin`/`arccos` case still collapses and still sorts.
 Found by `boundcheck`, a harness that composes every unary function node with every other and
 compares against the original at points where an assumption fails rather than at sampled points.
 Issue [#887](https://github.com/asc-community/AngouriMath/issues/887).
+
+### `abs(sgn(x))` and `sgn(abs(x))` are not `1` at zero
+
+`|sgn(z)|` and `sgn(|z|)` are `1` for every `z` except `0`, where both are `0`, because `sgn(0)` is
+`0`. Both rewrites answered `1` for any argument.
+
+| | was | is |
+|---|---|---|
+| `abs(sgn(x))`, `sgn(abs(x))` | `1` | left as written |
+| the same at `x = 0` | `1` | `0` — which is the value |
+| `abs(sgn(0))`, `sgn(abs(0))` | `0`, unchanged | |
+| `abs(sgn(2))`, `sgn(abs(-3))` | `1`, unchanged | |
+| `signum(abs(x/x))`, `abs(signum(x/x))` | `1 provided not x = 0` | left as written |
+
+The rules consulted the argument's `DomainCondition`, which answers a different question from the one
+they needed: a bare `x` is defined everywhere and can *be* zero, while `x / x` is defined only away
+from zero and is nonzero throughout. Reading the domain conflated the two.
+
+**A condition would not have been the fix**, for the same reason as in the two entries above: the
+expression is defined at zero and equal to `0` there, so `1 provided not z = 0` would replace a wrong
+value with a wrong domain. There is no closed form for "1 away from zero, 0 at it" other than the
+expressions themselves, so the rules decide where the argument's value can be read and decline
+otherwise.
+
+**The last row is a coverage loss, not a correction.** `1 provided not x = 0` was right for `x / x`.
+Separating it from the `x` case needs "nonzero throughout its domain", and neither test available in
+`InnerSimplify` can express it — `Evaled` leaves `x / x` as `x / x`, and `DomainCondition` is what
+conflated them; `Simplify` would answer it and cannot be called from there (#403).
+
+Found by `boundcheck` after adding `x = 0` and `x = 1` to its sample points: 366 shapes had been
+passing at 23 points chosen for branch cuts and principal intervals, none of which was the place
+where a rule's own arithmetic degenerates. Issue
+[#892](https://github.com/asc-community/AngouriMath/issues/892).
 
 ### `abs` folds where the sign of its argument is known
 

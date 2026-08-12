@@ -741,5 +741,43 @@ namespace AngouriMath.Tests.Common
             var simplified = "abs(-a)".ToEntity().Simplify();
             Assert.Contains(simplified.Nodes, node => node is Entity.Absf);
         }
+        // https://github.com/asc-community/AngouriMath/issues/892
+        // |sgn(z)| and sgn(|z|) are 1 for every z except 0, where both are 0 -- sgn(0) is 0,
+        // which the comment above Signumf.InnerSimplify already said. Both rewrites answered 1
+        // for any argument at all, so a symbolic one gave a value that is wrong at one point.
+        //
+        // A condition would be the wrong fix: at z = 0 the expression is defined and equal to
+        // 0, so `1 provided not z = 0` would trade a wrong value for a wrong domain.
+        [Theory]
+        [InlineData("abs(sgn(x))")]
+        [InlineData("sgn(abs(x))")]
+        [InlineData("abs(sgn(x + y))")]
+        public void ComposingAbsAndSignumOverASymbolIsLeftAlone(string expression) =>
+            Assert.NotEqual(Entity.Number.Integer.Create(1), expression.ToEntity().Simplify());
+
+        // Where the argument's vanishing can be decided, the answer is still given, and it is
+        // the right one at zero.
+        [Theory]
+        [InlineData("abs(sgn(0))", "0")]
+        [InlineData("sgn(abs(0))", "0")]
+        [InlineData("abs(sgn(2))", "1")]
+        [InlineData("sgn(abs(-3))", "1")]
+        [InlineData("abs(sgn(-1/2))", "1")]
+        [InlineData("sgn(abs(i))", "1")]
+        public void ComposingAbsAndSignumOverANumberIsDecided(string expression, string expected) =>
+            Assert.Equal(expected.ToEntity(), expression.ToEntity().Simplify());
+
+        // The value is what the bug was, so it is the value that is asserted: at x = 0 both
+        // compositions are 0, and a rewrite to 1 is off by one there.
+        [Theory]
+        [InlineData("abs(sgn(x))")]
+        [InlineData("sgn(abs(x))")]
+        public void ComposingAbsAndSignumKeepsItsValueAtZero(string expression)
+        {
+            var original = expression.ToEntity();
+            var simplified = original.Simplify();
+            Assert.Equal(original.Substitute("x", 0).EvalNumerical(),
+                simplified.Substitute("x", 0).EvalNumerical());
+        }
     }
 }
