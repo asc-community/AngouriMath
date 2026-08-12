@@ -52,7 +52,7 @@ namespace AngouriMath
                         (_, Boolean(true)) => left,
                         _ => null
                     },
-                    (@this, a, b) => ((Andf)@this).New(a, b), isExact);
+                    (@this, a, b) => ((Andf)@this).New(a, b), isExact, settlesNaN: true);
         }
 
         partial record Orf
@@ -69,7 +69,7 @@ namespace AngouriMath
                         (_, Boolean(false)) => left,
                         _ => null
                     },
-                    (@this, a, b) => ((Orf)@this).New(a, b), isExact);
+                    (@this, a, b) => ((Orf)@this).New(a, b), isExact, settlesNaN: true);
         }
 
         partial record Xorf
@@ -88,7 +88,7 @@ namespace AngouriMath
                         (_, Boolean(false)) => left,
                         _ => null
                     },
-                    (@this, a, b) => ((Xorf)@this).New(a, b), isExact);
+                    (@this, a, b) => ((Xorf)@this).New(a, b), isExact, settlesNaN: true);
         }
 
         partial record Impliesf
@@ -107,7 +107,7 @@ namespace AngouriMath
                         (_, Boolean(false)) => !left,
                         _ => null
                     },
-                    (@this, a, b) => ((Impliesf)@this).New(a, b), isExact);
+                    (@this, a, b) => ((Impliesf)@this).New(a, b), isExact, settlesNaN: true);
         }
 
         partial record Equalsf

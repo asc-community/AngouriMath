@@ -73,6 +73,7 @@ read first.
 | **silent** | `DirectChildren` of a conditional set | a name off the predicate's hash, and one in 26^4 threw | `%1`, fresh by construction |
 | **silent** | `-(a - b)` inside a power, a function or a matrix | left as written | `b - a`, as at the root |
 | **silent** | `Expand` of a matrix | the matrix, unexpanded | expanded entry by entry |
+| **silent** | `false and u`, `true or u`, `false implies u` for an undefined `u` | `NaN` | `False`, `True`, `True` — what the truth table settles |
 | **silent** | `arctan(x) + arccotan(x)` | `pi/2`, wrong for every negative `x` | `pi/2` or `-pi/2` where the sign is known, else left as written |
 | **silent** | `log(1, 1)` | `0` | `NaN`, since it is `0/0` |
 | **silent** | `log(b, 1)` | `0` for any base | `0 provided not b = 1` |
@@ -406,6 +407,55 @@ have their own test asserting the unevaluated node, so a future fix flips them b
 `boundcheck` drops from four disagreements to two; the remaining two are `log(x, x)` and
 `ln(x) + ln(x+1)`, both recorded elsewhere as wanting a decision rather than a guard. Issue
 [#902](https://github.com/asc-community/AngouriMath/issues/902).
+
+### A logical connective is no longer strict in `NaN`
+
+`Simplify` and evaluation disagreed about three-valued logic. `Simplify` gave the Kleene answer and
+evaluation absorbed everything into `NaN`, so the two contradicted each other on the same expression:
+
+```
+"True or (True and (x < 0))".Simplify()          ->  True
+the same, at x := i, evaluated as written        ->  NaN      (was)
+                                                 ->  True     (is)
+```
+
+`i < 0` has no truth value — the default codomain is `Domain.Complex` and the complex numbers are not
+ordered — so it evaluates to `NaN`. What changed is what a connective does with such an operand.
+
+| expression | was | is |
+|---|---|---|
+| `(i < 0) and False` | `NaN` | `False` |
+| `(i < 0) or True` | `NaN` | `True` |
+| `False implies (i < 0)` | `NaN` | `True` |
+| `(i < 0) implies True` | `NaN` | `True` |
+| `(i < 0) and True` | `NaN` | `NaN`, unchanged |
+| `(i < 0) or False` | `NaN` | `NaN`, unchanged |
+| `not (i < 0)` | `NaN` | `NaN`, unchanged |
+| `(i < 0) xor (i < 0)` | `NaN` | `NaN`, unchanged |
+| `(0/0) * 0`, `(0/0) + 1` | `NaN` | `NaN`, unchanged |
+
+The rule is the ordinary one for three-valued logic: an operand with no truth value cannot change an
+answer the table settles without it, and where the answer does depend on it the result stays `NaN`.
+**Arithmetic is untouched** — `NaN` still absorbs there, which is why this is opted into per node
+rather than changed for everything: a rule for a zero factor exists, and `NaN * 0` must not reach it.
+
+The tables were already three-valued. `Andf` reads `(_, Boolean(false))` as `False` and
+`(Boolean(true), _)` as its right operand, which is Kleene as written; what overrode them was one line
+in the shared `ExpandOnTwoArguments`, `if (left.IsNaN || right.IsNaN) return MathS.NaN;`, running
+*before* the table was consulted. The connectives now get first refusal on an undefined operand and
+hand back `null` where they cannot settle it, which is what still reaches `NaN`.
+
+**One consequence to know about.** For `x < 0 and x = 0` the evaluator now settles `False` for every
+`x`, since `x = 0` is decidably false at `x = i` and `False and u` is `False`. `Simplify` answers
+`False provided x in RR`, whose condition
+([#876](https://github.com/asc-community/AngouriMath/issues/876)) is over-strong for that row: the
+reduction needs one conjunct false, not both operands real. So `Simplify` is now weaker than evaluation
+there rather than stronger. It is recorded in a test rather than fixed here, because the rules #876
+conditioned want going through one at a time.
+
+Issue [#880](https://github.com/asc-community/AngouriMath/issues/880), which set this out as a fork
+between Kleene and strict evaluation and left it open for want of a measurement. The measurement: one
+assertion in the suite changed, and it was that issue's own guard clause.
 
 ### A negated difference is turned round wherever it sits, and `Expand` descends into a matrix
 
