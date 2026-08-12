@@ -27,10 +27,31 @@ namespace AngouriMath
                 Multiplier.ToSymPy(Multiplier.Priority < Priority.Mul) + " * " + Multiplicand.ToSymPy(Multiplicand.Priority < Priority.Mul);
         }
 
+        /// <summary>
+        /// The operand written so that SymPy does the arithmetic rather than Python.
+        /// </summary>
+        /// <remarks>
+        /// Python's <c>/</c> and its <c>**</c> with a negative exponent are float operations on two
+        /// integers, so an exact value would leave here inexact: <c>1 / 2</c> is <c>0.5</c> there,
+        /// and <c>sympify(0.5)</c> is a <c>Float</c> and not <c>Rational(1, 2)</c> — the exactness
+        /// is gone before SymPy sees the expression, and nothing downstream recovers it. Making one
+        /// operand a SymPy integer is enough, since its operators sympify the other side.
+        /// <para/>
+        /// Only a pair of integers needs this. With a symbol anywhere in the shape SymPy's own
+        /// operators already take over, and <c>+</c>, <c>-</c>, <c>*</c> and a non-negative
+        /// <c>**</c> are exact on Python integers, whose precision is unbounded.
+        /// https://github.com/asc-community/AngouriMath/issues/911
+        /// </remarks>
+        private static string ToSymPyExactly(Entity operand)
+            => $"sympy.Integer({operand.ToSymPy()})";
+
         public partial record Divf
         {
             internal override string ToSymPy() =>
-                Dividend.ToSymPy(Dividend.Priority < Priority.Div) + " / " + Divisor.ToSymPy(Divisor.Priority <= Priority.Div);
+                (Dividend is Number.Integer && Divisor is Number.Integer
+                    ? ToSymPyExactly(Dividend)
+                    : Dividend.ToSymPy(Dividend.Priority < Priority.Div))
+                + " / " + Divisor.ToSymPy(Divisor.Priority <= Priority.Div);
         }
 
         public partial record Modf
@@ -49,7 +70,10 @@ namespace AngouriMath
             internal override string ToSymPy() =>
                 Exponent == 0.5m
                 ? "sympy.sqrt(" + Base.ToSymPy() + ")"
-                : Base.ToSymPy(Base.Priority < Priority.Pow) + " ** " + Exponent.ToSymPy(Exponent.Priority < Priority.Pow);
+                : (Base is Number.Integer && Exponent is Number.Integer { IsNegative: true }
+                    ? ToSymPyExactly(Base)
+                    : Base.ToSymPy(Base.Priority < Priority.Pow))
+                  + " ** " + Exponent.ToSymPy(Exponent.Priority < Priority.Pow);
         }
 
         public partial record Signumf
