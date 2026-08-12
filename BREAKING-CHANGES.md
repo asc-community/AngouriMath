@@ -15,63 +15,28 @@ read first.
 
 ---
 
-## 2.0.0 — since 1.4.0
+## 2.1.0 — since 2.0.0
+
+Everything here landed **after** the 2.0.0 tag, so it is not in the package a reader of that
+section already has. Almost all of it is a wrong answer becoming a right one, found by the
+boundary and crash harnesses rather than reported; two answers are withdrawn deliberately and say
+so, and one word — `NaN` — is reserved.
+
+Performance against 2.0.0 is measured and published as a pair in
+[`Docs/WhatsNew/version_performance_control.md`](Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md):
+no regression, the largest real move being `SolveMedium` at +4.6%.
 
 ### At a glance
 
 | Silent? | What | Was | Is |
 |---|---|---|---|
-| loud | `Minusf.Minuend` / `.Subtrahend` | named for the wrong operand | named for the right one |
-| **silent** | `exp(x)`, `log10(x)`, `log2(x)` | products of undeclared variables | the functions |
-| loud | `arcsinh(x)` and its five relatives | a product | `UnrecognizedFunctionParseException` |
-| loud | `floor(x)` and ten other names the library lacks | a product, silently | `UnrecognizedFunctionParseException` |
-| **silent** | `sqrt(x^2)`, `sqrt(-x)` and their kind | `x`, `i*sqrt(x)` — wrong for negative x | left as written |
-| loud | `mod` as a variable name | a variable | a keyword, so a parse error |
 | loud | `NaN` as a variable name | a variable | a keyword, so the NaN value |
 | loud | `MathS.ToSympyCode` of any non-integer rational | `SyntaxError` — a parenthesis was never closed | code that runs |
 | **silent** | `MathS.ToSympyCode` of `1/2`, `2^(-1)` | ran, and gave the float `0.5` | `1/2`, exact |
 | loud | `MathS.ToSympyCode` of `NaN`, `+oo`, `-oo` | `NameError` — the name is never bound | `sympy.nan`, `sympy.oo`, `-sympy.oo` |
 | **silent** | `NaN` printed and read back | a variable of that name, which cancels and collects | the NaN value |
-| **silent** | `Stringize` of powers, lambdas, applications, piecewises | did not parse back | parses back |
-| **silent** | `Stringize` of a complex number with a fractional imaginary part | read back as its negation, or as a power | parses back |
-| **silent** | numbers below `1e-16` | rounded to `0` | kept |
-| **silent** | `Real` `%` | `-7 % 3` was `-1` | `2` |
-| **silent** | `Simplify` of a cancelling quotient | the quotient | a `Providedf` |
-| **silent** | radicals, everywhere | `sqrt(12)` | `2 * sqrt(3)` |
-| **silent** | `Expand` | left like terms uncollected | collects them |
-| **silent** | an identity equation | `{ }` or `{ 0 }` | all of `CC` |
-| **silent** | a quadratic inequality | wrong for one sign of a symbolic coefficient | a case split on that sign |
-| **silent** | numeric root sets | one root per starting point | one root per root |
-| **silent** | many limits | `NaN`, or unevaluated | a value |
-| **silent** | a vanishing sine behind a constant factor | `NaN` | a value — but `sin(x)*ln(x)*2` loses its `0` |
-| **silent** | a limit assembling `oo^0` or `1^oo` | that form's value, `1` | the real answer, or unevaluated |
-| **silent** | a factorial under a vanishing exponent | unevaluated | a value, by Stirling |
-| **silent** | `ln(x!)` in a limit | unevaluated, and `ln(x!)/ln(x)` was `NaN` | a value |
-| **silent** | a boolean expression | factored, not minimised | minimised where that is shorter |
-| **silent** | some integrals | not antiderivatives | closed forms |
-| **silent** | two integrals | answered correctly | unevaluated — a deliberate loss |
-| **silent** | `k/(a x^2 + c)` and `k/sqrt(a x^2 + c)` for symbolic `a` | `NaN` | a piecewise on the sign of the discriminant |
-| loud | `Compile` over a missing variable | `KeyNotFoundException` | `UncompilableNodeException` |
 | loud | `Compile` of `floor`, `ceil`, `round`, `phi`, `gamma`, `!` | `AngouriBugException`, asking to be reported | `UncompilableNodeException` |
 | loud | `Compile` of a boolean or lambda node as `double` | `InvalidOperationException` from Linq | `UncompilableNodeException` |
-| loud | `Expand` of a quotient of factorials | `AngouriBugException` | the expanded polynomial |
-| loud | parsing a `provided` in a parenthesised comma list | `NullReferenceException` | `UnhandledParseException` |
-| loud | `floor(x)`, `ceil(x)`, `ceiling(x)` | `UnrecognizedFunctionParseException` | the functions |
-| loud | `round(x)`, `min(a, b)`, `max(a, b)`, `gcd(a, b)` | `UnrecognizedFunctionParseException` | the functions |
-| loud | 28 members deprecated since 1.x | obsolete but present | removed |
-| loud | `Latexise`, `ILatexiseable`, `entity_latexise` | the British spelling | `Latexize`, `ILatexizeable`, `entity_latexize` |
-| loud | `MathS.Quantum.Factorise` | one letter from the unrelated `Entity.Factorize` | `MathS.Quantum.TensorFactorize` |
-| loud | `MathS.Quantum.IsNormalised` | the British spelling | `MathS.Quantum.IsNormalized` |
-| loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
-| **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
-| loud | implicit `List<Entity>` to `Entity` | made a `FiniteSet`, and made three `params` overloads uncallable | removed |
-| loud | implicit `Entity[]` to `Entity` | made a `FiniteSet`, discarding order and repeats | removed |
-| loud | implicit `(Entity, Entity)` to `Entity` | made a **closed** interval, though `(a, b)` reads as the open one | removed |
-| **silent** | a `MathS.Settings` scope across an `await`, or inside a task | lost, or somebody else's | follows the call |
-| **silent** | a `RewriteRecording` across an `await`, or work started under it | lost, or somebody else's | follows the call |
-| loud | a polynomial system with more equations than unknowns | `WrongNumberOfArgumentsException` | solved |
-| loud | a known gap, e.g. a cubic inequality | `AngouriBugException`, asking to be reported | `NotSufficientlySupportedException` |
-| **silent** | `arcsin(sin(x))` and three siblings | `x`, wrong wherever `x` leaves the principal interval | left as written unless `x` is a real in that interval |
 | **silent** | `abs(sgn(x))` and `sgn(abs(x))` | `1`, wrong at `x = 0` where both are `0` | left as written unless the argument's value can be read |
 | **silent** | `ln(e^x)`, `log(2, 2^x)`, `ln(x^2)` | `x`, `x`, `2 * ln(x)` — wrong off the real line | left as written unless the argument is decidable |
 | **silent** | two limits over `(x^2)^x` and `x^x` | answered correctly | unevaluated — a deliberate loss |
@@ -85,180 +50,6 @@ read first.
 | **silent** | `log(b, 1)` | `0` for any base | `0 provided not b = 1` |
 | **silent** | `log(1/2, 0)` and any base below 1 | `-oo` | `+oo` |
 | **silent** | `abs(-sqrt(6))`, `abs(-pi)`, `abs(1 - sqrt(2))` | left as written | `sqrt(6)`, `pi`, `sqrt(2) - 1` |
-
----
-
-## Target frameworks
-
-`net7.0` is replaced by `net8.0` and `net10.0`. `netstandard2.0` is unchanged, so consumers on
-.NET Framework and the older runtimes are unaffected.
-
-| | was | is |
-|---|---|---|
-| `TargetFrameworks` | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
-
-.NET 7 left support in May 2024, so the old list named one framework nobody should still be
-targeting and no supported modern one. A consumer on net8.0 or net10.0 previously resolved the
-`netstandard2.0` asset and silently lost the generic-math surface with it; they now get a real
-target.
-
-**What breaks.** Anything that pins the framework of its reference:
-
-```xml
-<ProjectReference Include="...\AngouriMath.csproj">
-  <SetTargetFramework>TargetFramework=net7.0</SetTargetFramework>   <!-- no longer resolves -->
-</ProjectReference>
-```
-
-fails with `NETSDK1005: Assets file ... doesn't have a target for 'net7.0'`. Change it to `net10.0`
-or `net8.0`. This is not hypothetical -- every one of the nine measurement harnesses in this
-workspace pinned `net7.0` and had to be repointed.
-
-A consumer that references the NuGet package rather than the project picks its asset by its own
-framework and needs no change, unless it targets `net7.0` itself, in which case it now resolves
-`netstandard2.0` and loses the generic-math types.
-
-**Generic math is unchanged in reach.** `Core/Entity/GenericMath` needs `INumber<T>` and so is
-still compiled only into the net7.0-and-later targets -- now written as a compatibility test
-rather than a literal `!= 'net7.0'`, so adding a framework does not silently drop it. Verified on
-the built assemblies: present in `net8.0` and `net10.0`, absent from `netstandard2.0`.
-
----
-
-## Types and members
-
-### The implicit conversions from a collection are removed
-
-`Entity` had two implicit conversions from a collection, both building a `FiniteSet`:
-
-```csharp
-public static implicit operator Entity(Entity[] elements);       // removed
-public static implicit operator Entity(List<Entity> elements);   // removed
-```
-
-The second one made three public members impossible to call with a `List<Entity>`:
-
-```csharp
-var equations = new List<Entity> { "x - 1", "y - 2" };
-new EquationSystem(equations);        // error CS0121: the call is ambiguous
-new FiniteSet(equations);             // error CS0121
-MathS.Equations(equations);           // error CS0121
-```
-
-Each of those has both an `IEnumerable<Entity>` overload and a `params Entity[]` overload. With
-the conversion in place a `List<Entity>` also converts to a single `Entity`, so the `params`
-overload becomes applicable in its expanded form, neither candidate is better than the other,
-and the call does not compile. The array, `IEnumerable<Entity>`, and variadic forms were always
-fine — only a concrete `List<Entity>` broke, which is why it survived to a 2.0 preview.
-
-This was not three separate defects. One conversion made *every* `params Entity[]` overload in
-the library uncallable with a list, including any added later.
-
-**This one moves between previews.** The conversion is in `2.0.0-preview.1` and
-`2.0.0-preview.2`, both published, and is gone in `2.0.0`. It is the only entry here that
-changes between two previews rather than between releases: a reader coming from 1.3.0 or
-1.4.0 can ignore the distinction, one already on a preview cannot.
-
-**What breaks.** Assigning a list where an `Entity` is expected:
-
-```csharp
-Entity set = new List<Entity> { 1, 2, 3 };   // no longer compiles
-```
-
-Write one of these instead:
-
-```csharp
-Entity set = new FiniteSet(new List<Entity> { 1, 2, 3 });
-Entity set = new List<Entity> { 1, 2, 3 }.ToSet();
-```
-
-**The conversion from `Entity[]` is gone as well.** It was kept at first, on the narrow
-ground that it never produced the ambiguity — an array binds to the `params` overload in its
-normal form by an identity conversion, which wins outright. That was true and beside the
-point. An array carries an order and can repeat an element; a set has neither, so the
-conversion silently discarded part of what it was handed, and an implicit conversion that
-loses information is the wrong shape regardless of which overloads it happens to break.
-Set types are built explicitly nearly everywhere for this reason.
-
-```csharp
-Entity set = new Entity[] { 1, 2, 3 };          // no longer compiles either
-Entity set = new FiniteSet(1, 2, 3);            // say it
-Entity set = new Entity[] { 1, 2, 3 }.ToSet();
-```
-
-Only one place in the whole repository relied on it, which was the test pinning it.
-
-**And the conversion from a pair, which had the same fault from the other side.** A
-two-element tuple became an `Interval`, and since a tuple says nothing about whether its
-endpoints are included, the conversion had to supply that:
-
-```csharp
-Entity e = ((Entity)1, (Entity)5);
-// was: [1; 5] — both endpoints included, and 1 is a member
-```
-
-Where the array conversion dropped information that was there, this one produced
-information that was not — and chose the reading opposite to the notation, since `(1, 5)`
-is the open interval in ordinary mathematical writing and `[1, 5]` the closed one. A caller
-writing what looks like an open interval got a closed one, silently.
-
-```csharp
-Entity e = MathS.Interval(1, 5);                 // closed, said out loud
-Entity e = MathS.Interval(1, false, 5, false);   // open
-Entity e = new Interval(1, true, 5, true);
-```
-
-Nothing in the library, the tests, the F# wrapper or the utilities used it.
-
-The pairs elsewhere in the API are unaffected, because none of them has to guess: an
-integration `Range`, the arguments of `Substitute`, the cases of `MathS.Piecewise` and
-`ToProvided` are all ordered pairs whose two halves have distinct, stated roles.
-
-### An inverse trigonometric function no longer cancels its own function off the principal branch
-
-`arcsin` is a left inverse of `sin` only on `[-pi/2, pi/2]`, and the three siblings likewise only on
-their own intervals. The rewrite was unconditional, so `Simplify` returned a value that is wrong at
-every real point outside the interval:
-
-| | was | is | the value at that point |
-|---|---|---|---|
-| `arcsin(sin(x))` | `x` | left as written | `pi - x` for `x` in `[pi/2, 3pi/2]`, and so on |
-| `arccos(cos(x))` | `x` | left as written | `2*pi - x` for `x` in `[pi, 2pi]` |
-| `arctan(tan(x))` | `x` | left as written | `x - pi` for `x` in `(pi/2, 3pi/2)` |
-| `arccotan(cotan(x))` | `x` | left as written | `x - pi` for `x` in `(pi, 2pi)` |
-
-Measured on a build of `35f4ae5a` before this change and after it. The four rules are older than
-1.4.0 and untouched since, so 1.4.0 answers the same way, but the numbers below are from the two
-2.0.0 builds rather than from a 1.4.0 one:
-
-```
-"arcsin(sin(x))".Simplify().Substitute("x", 3).EvalNumerical()
-  was  3
-  is   0.14159...        which is pi - 3, and is what arcsin(sin(3)) equals
-
-"arctan(tan(x))".Simplify().Substitute("x", 2).EvalNumerical()
-  was  2
-  is   -1.14159...       = 2 - pi
-
-"arccos(cos(x))".Simplify().Substitute("x", 4).EvalNumerical()
-  was  4
-  is   2.28318...        = 2*pi - 4
-```
-
-**Where the argument is a real number inside the interval, the cancellation still happens and stays
-exact**: `arcsin(sin(1/2))` is `1/2`, not a decimal. Where it is symbolic, the expression is left as
-written, which is what SymPy and Mathematica both answer.
-
-A condition was deliberately *not* attached. `arcsin(sin(x))` is defined for every real `x`, so
-`x provided x >= -pi/2 and x <= pi/2` would say the expression is undefined outside the interval
-when in fact it merely has another value — trading a wrong value for a wrong domain.
-
-**The other direction is unchanged**, and needs no assumption: `sin(arcsin(z))`, `cos(arccos(z))`,
-`tan(arctan(z))` and `cotan(arccotan(z))` are all `z`, because they compose the *right* inverse.
-
-`CircleTest.Test8` asserted `arccotan(cotan(3x)) == 3x` and was pinning the wrong answer; it now
-asserts that the expression is left alone. Issue
-[#884](https://github.com/asc-community/AngouriMath/issues/884).
 
 ### `Compile` fails with its own exception rather than someone else's
 
@@ -630,6 +421,326 @@ negation, so a rule that read "negative, therefore negate" would be wrong there.
 off the value, and a value that is not a finite real does not answer the question.
 
 Issue [#881](https://github.com/asc-community/AngouriMath/issues/881).
+
+### `MathS.ToSympyCode` emits Python that runs
+
+Its documented purpose is code you can run in SymPy, and for two whole classes of expression it
+emitted code that did not run at all.
+
+| expression | was | is |
+|---|---|---|
+| `1/2`, `1/3 + 1/6` | `sympy.Rational(1, 2` — `SyntaxError: '(' was never closed` | `sympy.Rational(1, 2)` |
+| `0/0`, `1/0` | `NaN` — `NameError: name 'NaN' is not defined` | `sympy.nan` |
+| `+oo`, `-oo` | `+oo`, `-oo` — `NameError` | `sympy.oo`, `-sympy.oo` |
+
+The first is a missing parenthesis, and it broke **every** expression carrying a non-integer rational,
+which is most of what a computer algebra system hands back. The second is a value with no binding: the
+generated preamble declares a `sympy.Symbol` for each free *variable*, and a `NaN` or an infinity is
+neither a variable nor something SymPy names the same way this library does.
+
+Both were checked by running the emitted programs against SymPy 1.14 rather than by reading them, which
+is also how it was established that they now come back **exact** — `1/2` arrives as SymPy's `Half` and
+not as the float `0.5`.
+
+Nothing else about the exporter changes. `pi`, `e` and `i` were already emitted as `sympy.pi`,
+`sympy.E` and `sympy.I`, and `sqrt` as `sympy.sqrt`.
+
+Two tests now hold the properties that failed, without needing an interpreter in the suite: the
+parentheses balance, and every name in the emitted body is either declared in the preamble or reached
+through `sympy.`. 17 of their 23 cases fail against the old exporter.
+
+Issue [#909](https://github.com/asc-community/AngouriMath/issues/909).
+
+### `MathS.ToSympyCode` keeps an exact value exact
+
+The generated program ran, and then quietly gave a different number. Python's `/`, and its `**` with a
+negative exponent, are float operations on two integers:
+
+| expression | emitted | SymPy read it as | now emitted | and reads as |
+|---|---|---|---|---|
+| `1/2` | `1 / 2` | `0.500000000000000`, a `Float` | `sympy.Integer(1) / 2` | `1/2`, a `Rational` |
+| `2^(-1)` | `2 ** (-1)` | `0.5` | `sympy.Integer(2) ** (-1)` | `1/2` |
+| `2^(-3)` | `2 ** (-3)` | `0.125` | `sympy.Integer(2) ** (-3)` | `1/8` |
+| `x + 1/2` | `x + 1 / 2` | `x + 0.5` | `x + sympy.Integer(1) / 2` | `x + 1/2` |
+
+Making one operand a SymPy integer hands the arithmetic to SymPy, which keeps it exact. **Only a pair of
+integers is rewritten**, and the rest of the emitted code is unchanged: with a symbol anywhere in the
+shape SymPy's own operators already take over (`x / 2`, `1 / x`, `x ** (-1)`), and `+`, `-`, `*` and a
+non-negative `**` are exact on Python integers, whose precision is unbounded — `2 ** 70` was always
+right.
+
+It bit only the **unsimplified** form, which is the one a caller writes: `"1/2".ToEntity()` is a `Divf`
+of two integers, because a printed rational parses back as a division
+([#873](https://github.com/asc-community/AngouriMath/issues/873)), while a simplified `1/2` is a
+`Rational` node and already emitted `sympy.Rational(1, 2)`.
+
+Checked by running the emitted programs against SymPy 1.14, which is the only way this class of defect
+shows itself — the code was always valid, so the earlier tests could not have caught it, and the two
+added here assert the property instead: no two plain integer literals are combined with `/` or with a
+negative `**`.
+
+Issue [#911](https://github.com/asc-community/AngouriMath/issues/911).
+
+### `NaN` is now a keyword, and the printed form of NaN reads back
+
+`Stringize` prints the NaN value as `NaN`, and the grammar had no such token, so reading it back gave a
+**variable of that name**. A variable behaves like any symbol — it cancels, collects and compares — and
+nothing on the page distinguished the two, since a variable named `NaN` also prints as `NaN`:
+
+| expression | was | is |
+|---|---|---|
+| `"NaN - NaN".Simplify()` | `0` | `NaN` |
+| `"NaN / NaN".Simplify()` | `1 provided not NaN = 0` | `NaN` |
+| `"NaN * 0".Evaled` | `0` | `NaN` |
+| `"NaN * 2".Evaled`, `"NaN + NaN".Evaled` | left as written | `NaN` |
+| `NaN` as a variable name | a variable | a parse of the NaN value |
+| `NaNx`, `NaN_1`, `aNaN` | variables | variables, unchanged |
+
+This is the same trade `mod` took above: a word that was an identifier becomes a keyword, so an
+expression using it as a variable name now means something else. It is the narrower half of the trade —
+only the exact spelling is reserved, because the lexer takes the longest match, so any longer name that
+merely contains it is still a variable.
+
+Only `NaN` is affected. Its two siblings already had tokens: `+oo` and `-oo` both print and parse, and
+`Latexize` has had `\mathrm{undefined}` for all along — which is the token
+[CSharpMath](https://github.com/verybadcat/CSharpMath) decodes back to `MathS.NaN`, so the LaTeX round
+trip was closed already and is untouched here.
+
+**The round-trip test now runs in both directions.** Every case in `StringizeRoundTripTest` began from a
+*string*, so it could only reach expressions the parser already produces, and a value with no source
+form was invisible to all of them however many cases were added. It now also enumerates the library's
+named constants by reflection — `MathS` and `Entity.Number.Real` — prints each and reads it back, so a
+constant added later is covered without anyone remembering the file exists. Those two cases are what
+fail against the old grammar.
+
+Issue [#906](https://github.com/asc-community/AngouriMath/issues/906).
+
+---
+
+## 2.0.0 — since 1.4.0
+
+### At a glance
+
+| Silent? | What | Was | Is |
+|---|---|---|---|
+| loud | `Minusf.Minuend` / `.Subtrahend` | named for the wrong operand | named for the right one |
+| **silent** | `exp(x)`, `log10(x)`, `log2(x)` | products of undeclared variables | the functions |
+| loud | `arcsinh(x)` and its five relatives | a product | `UnrecognizedFunctionParseException` |
+| loud | `floor(x)` and ten other names the library lacks | a product, silently | `UnrecognizedFunctionParseException` |
+| **silent** | `sqrt(x^2)`, `sqrt(-x)` and their kind | `x`, `i*sqrt(x)` — wrong for negative x | left as written |
+| loud | `mod` as a variable name | a variable | a keyword, so a parse error |
+| **silent** | `Stringize` of powers, lambdas, applications, piecewises | did not parse back | parses back |
+| **silent** | `Stringize` of a complex number with a fractional imaginary part | read back as its negation, or as a power | parses back |
+| **silent** | numbers below `1e-16` | rounded to `0` | kept |
+| **silent** | `Real` `%` | `-7 % 3` was `-1` | `2` |
+| **silent** | `Simplify` of a cancelling quotient | the quotient | a `Providedf` |
+| **silent** | radicals, everywhere | `sqrt(12)` | `2 * sqrt(3)` |
+| **silent** | `Expand` | left like terms uncollected | collects them |
+| **silent** | an identity equation | `{ }` or `{ 0 }` | all of `CC` |
+| **silent** | a quadratic inequality | wrong for one sign of a symbolic coefficient | a case split on that sign |
+| **silent** | numeric root sets | one root per starting point | one root per root |
+| **silent** | many limits | `NaN`, or unevaluated | a value |
+| **silent** | a vanishing sine behind a constant factor | `NaN` | a value — but `sin(x)*ln(x)*2` loses its `0` |
+| **silent** | a limit assembling `oo^0` or `1^oo` | that form's value, `1` | the real answer, or unevaluated |
+| **silent** | a factorial under a vanishing exponent | unevaluated | a value, by Stirling |
+| **silent** | `ln(x!)` in a limit | unevaluated, and `ln(x!)/ln(x)` was `NaN` | a value |
+| **silent** | a boolean expression | factored, not minimised | minimised where that is shorter |
+| **silent** | some integrals | not antiderivatives | closed forms |
+| **silent** | two integrals | answered correctly | unevaluated — a deliberate loss |
+| **silent** | `k/(a x^2 + c)` and `k/sqrt(a x^2 + c)` for symbolic `a` | `NaN` | a piecewise on the sign of the discriminant |
+| loud | `Compile` over a missing variable | `KeyNotFoundException` | `UncompilableNodeException` |
+| loud | `Expand` of a quotient of factorials | `AngouriBugException` | the expanded polynomial |
+| loud | parsing a `provided` in a parenthesised comma list | `NullReferenceException` | `UnhandledParseException` |
+| loud | `floor(x)`, `ceil(x)`, `ceiling(x)` | `UnrecognizedFunctionParseException` | the functions |
+| loud | `round(x)`, `min(a, b)`, `max(a, b)`, `gcd(a, b)` | `UnrecognizedFunctionParseException` | the functions |
+| loud | 28 members deprecated since 1.x | obsolete but present | removed |
+| loud | `Latexise`, `ILatexiseable`, `entity_latexise` | the British spelling | `Latexize`, `ILatexizeable`, `entity_latexize` |
+| loud | `MathS.Quantum.Factorise` | one letter from the unrelated `Entity.Factorize` | `MathS.Quantum.TensorFactorize` |
+| loud | `MathS.Quantum.IsNormalised` | the British spelling | `MathS.Quantum.IsNormalized` |
+| loud | the target frameworks | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
+| **silent** | `abs(x) = c` for a negative `c` | a set of non-solutions | the empty set |
+| loud | implicit `List<Entity>` to `Entity` | made a `FiniteSet`, and made three `params` overloads uncallable | removed |
+| loud | implicit `Entity[]` to `Entity` | made a `FiniteSet`, discarding order and repeats | removed |
+| loud | implicit `(Entity, Entity)` to `Entity` | made a **closed** interval, though `(a, b)` reads as the open one | removed |
+| **silent** | a `MathS.Settings` scope across an `await`, or inside a task | lost, or somebody else's | follows the call |
+| **silent** | a `RewriteRecording` across an `await`, or work started under it | lost, or somebody else's | follows the call |
+| loud | a polynomial system with more equations than unknowns | `WrongNumberOfArgumentsException` | solved |
+| loud | a known gap, e.g. a cubic inequality | `AngouriBugException`, asking to be reported | `NotSufficientlySupportedException` |
+| **silent** | `arcsin(sin(x))` and three siblings | `x`, wrong wherever `x` leaves the principal interval | left as written unless `x` is a real in that interval |
+
+---
+
+## Target frameworks
+
+`net7.0` is replaced by `net8.0` and `net10.0`. `netstandard2.0` is unchanged, so consumers on
+.NET Framework and the older runtimes are unaffected.
+
+| | was | is |
+|---|---|---|
+| `TargetFrameworks` | `net7.0;netstandard2.0` | `netstandard2.0;net8.0;net10.0` |
+
+.NET 7 left support in May 2024, so the old list named one framework nobody should still be
+targeting and no supported modern one. A consumer on net8.0 or net10.0 previously resolved the
+`netstandard2.0` asset and silently lost the generic-math surface with it; they now get a real
+target.
+
+**What breaks.** Anything that pins the framework of its reference:
+
+```xml
+<ProjectReference Include="...\AngouriMath.csproj">
+  <SetTargetFramework>TargetFramework=net7.0</SetTargetFramework>   <!-- no longer resolves -->
+</ProjectReference>
+```
+
+fails with `NETSDK1005: Assets file ... doesn't have a target for 'net7.0'`. Change it to `net10.0`
+or `net8.0`. This is not hypothetical -- every one of the nine measurement harnesses in this
+workspace pinned `net7.0` and had to be repointed.
+
+A consumer that references the NuGet package rather than the project picks its asset by its own
+framework and needs no change, unless it targets `net7.0` itself, in which case it now resolves
+`netstandard2.0` and loses the generic-math types.
+
+**Generic math is unchanged in reach.** `Core/Entity/GenericMath` needs `INumber<T>` and so is
+still compiled only into the net7.0-and-later targets -- now written as a compatibility test
+rather than a literal `!= 'net7.0'`, so adding a framework does not silently drop it. Verified on
+the built assemblies: present in `net8.0` and `net10.0`, absent from `netstandard2.0`.
+
+---
+
+## Types and members
+
+### The implicit conversions from a collection are removed
+
+`Entity` had two implicit conversions from a collection, both building a `FiniteSet`:
+
+```csharp
+public static implicit operator Entity(Entity[] elements);       // removed
+public static implicit operator Entity(List<Entity> elements);   // removed
+```
+
+The second one made three public members impossible to call with a `List<Entity>`:
+
+```csharp
+var equations = new List<Entity> { "x - 1", "y - 2" };
+new EquationSystem(equations);        // error CS0121: the call is ambiguous
+new FiniteSet(equations);             // error CS0121
+MathS.Equations(equations);           // error CS0121
+```
+
+Each of those has both an `IEnumerable<Entity>` overload and a `params Entity[]` overload. With
+the conversion in place a `List<Entity>` also converts to a single `Entity`, so the `params`
+overload becomes applicable in its expanded form, neither candidate is better than the other,
+and the call does not compile. The array, `IEnumerable<Entity>`, and variadic forms were always
+fine — only a concrete `List<Entity>` broke, which is why it survived to a 2.0 preview.
+
+This was not three separate defects. One conversion made *every* `params Entity[]` overload in
+the library uncallable with a list, including any added later.
+
+**This one moves between previews.** The conversion is in `2.0.0-preview.1` and
+`2.0.0-preview.2`, both published, and is gone in `2.0.0`. It is the only entry here that
+changes between two previews rather than between releases: a reader coming from 1.3.0 or
+1.4.0 can ignore the distinction, one already on a preview cannot.
+
+**What breaks.** Assigning a list where an `Entity` is expected:
+
+```csharp
+Entity set = new List<Entity> { 1, 2, 3 };   // no longer compiles
+```
+
+Write one of these instead:
+
+```csharp
+Entity set = new FiniteSet(new List<Entity> { 1, 2, 3 });
+Entity set = new List<Entity> { 1, 2, 3 }.ToSet();
+```
+
+**The conversion from `Entity[]` is gone as well.** It was kept at first, on the narrow
+ground that it never produced the ambiguity — an array binds to the `params` overload in its
+normal form by an identity conversion, which wins outright. That was true and beside the
+point. An array carries an order and can repeat an element; a set has neither, so the
+conversion silently discarded part of what it was handed, and an implicit conversion that
+loses information is the wrong shape regardless of which overloads it happens to break.
+Set types are built explicitly nearly everywhere for this reason.
+
+```csharp
+Entity set = new Entity[] { 1, 2, 3 };          // no longer compiles either
+Entity set = new FiniteSet(1, 2, 3);            // say it
+Entity set = new Entity[] { 1, 2, 3 }.ToSet();
+```
+
+Only one place in the whole repository relied on it, which was the test pinning it.
+
+**And the conversion from a pair, which had the same fault from the other side.** A
+two-element tuple became an `Interval`, and since a tuple says nothing about whether its
+endpoints are included, the conversion had to supply that:
+
+```csharp
+Entity e = ((Entity)1, (Entity)5);
+// was: [1; 5] — both endpoints included, and 1 is a member
+```
+
+Where the array conversion dropped information that was there, this one produced
+information that was not — and chose the reading opposite to the notation, since `(1, 5)`
+is the open interval in ordinary mathematical writing and `[1, 5]` the closed one. A caller
+writing what looks like an open interval got a closed one, silently.
+
+```csharp
+Entity e = MathS.Interval(1, 5);                 // closed, said out loud
+Entity e = MathS.Interval(1, false, 5, false);   // open
+Entity e = new Interval(1, true, 5, true);
+```
+
+Nothing in the library, the tests, the F# wrapper or the utilities used it.
+
+The pairs elsewhere in the API are unaffected, because none of them has to guess: an
+integration `Range`, the arguments of `Substitute`, the cases of `MathS.Piecewise` and
+`ToProvided` are all ordered pairs whose two halves have distinct, stated roles.
+
+### An inverse trigonometric function no longer cancels its own function off the principal branch
+
+`arcsin` is a left inverse of `sin` only on `[-pi/2, pi/2]`, and the three siblings likewise only on
+their own intervals. The rewrite was unconditional, so `Simplify` returned a value that is wrong at
+every real point outside the interval:
+
+| | was | is | the value at that point |
+|---|---|---|---|
+| `arcsin(sin(x))` | `x` | left as written | `pi - x` for `x` in `[pi/2, 3pi/2]`, and so on |
+| `arccos(cos(x))` | `x` | left as written | `2*pi - x` for `x` in `[pi, 2pi]` |
+| `arctan(tan(x))` | `x` | left as written | `x - pi` for `x` in `(pi/2, 3pi/2)` |
+| `arccotan(cotan(x))` | `x` | left as written | `x - pi` for `x` in `(pi, 2pi)` |
+
+Measured on a build of `35f4ae5a` before this change and after it. The four rules are older than
+1.4.0 and untouched since, so 1.4.0 answers the same way, but the numbers below are from the two
+2.0.0 builds rather than from a 1.4.0 one:
+
+```
+"arcsin(sin(x))".Simplify().Substitute("x", 3).EvalNumerical()
+  was  3
+  is   0.14159...        which is pi - 3, and is what arcsin(sin(3)) equals
+
+"arctan(tan(x))".Simplify().Substitute("x", 2).EvalNumerical()
+  was  2
+  is   -1.14159...       = 2 - pi
+
+"arccos(cos(x))".Simplify().Substitute("x", 4).EvalNumerical()
+  was  4
+  is   2.28318...        = 2*pi - 4
+```
+
+**Where the argument is a real number inside the interval, the cancellation still happens and stays
+exact**: `arcsin(sin(1/2))` is `1/2`, not a decimal. Where it is symbolic, the expression is left as
+written, which is what SymPy and Mathematica both answer.
+
+A condition was deliberately *not* attached. `arcsin(sin(x))` is defined for every real `x`, so
+`x provided x >= -pi/2 and x <= pi/2` would say the expression is undefined outside the interval
+when in fact it merely has another value — trading a wrong value for a wrong domain.
+
+**The other direction is unchanged**, and needs no assumption: `sin(arcsin(z))`, `cos(arccos(z))`,
+`tan(arctan(z))` and `cotan(arccotan(z))` are all `z`, because they compose the *right* inverse.
+
+`CircleTest.Test8` asserted `arccotan(cotan(3x)) == 3x` and was pinning the wrong answer; it now
+asserts that the expression is left alone. Issue
+[#884](https://github.com/asc-community/AngouriMath/issues/884).
 
 ### A known gap no longer presents as a bug
 
@@ -1011,99 +1122,6 @@ disagreements over 10463 expressions goes **30 to 0**.
 
 [#752](https://github.com/asc-community/AngouriMath/issues/752), PR
 [#758](https://github.com/asc-community/AngouriMath/pull/758).
-
-### `MathS.ToSympyCode` emits Python that runs
-
-Its documented purpose is code you can run in SymPy, and for two whole classes of expression it
-emitted code that did not run at all.
-
-| expression | was | is |
-|---|---|---|
-| `1/2`, `1/3 + 1/6` | `sympy.Rational(1, 2` — `SyntaxError: '(' was never closed` | `sympy.Rational(1, 2)` |
-| `0/0`, `1/0` | `NaN` — `NameError: name 'NaN' is not defined` | `sympy.nan` |
-| `+oo`, `-oo` | `+oo`, `-oo` — `NameError` | `sympy.oo`, `-sympy.oo` |
-
-The first is a missing parenthesis, and it broke **every** expression carrying a non-integer rational,
-which is most of what a computer algebra system hands back. The second is a value with no binding: the
-generated preamble declares a `sympy.Symbol` for each free *variable*, and a `NaN` or an infinity is
-neither a variable nor something SymPy names the same way this library does.
-
-Both were checked by running the emitted programs against SymPy 1.14 rather than by reading them, which
-is also how it was established that they now come back **exact** — `1/2` arrives as SymPy's `Half` and
-not as the float `0.5`.
-
-Nothing else about the exporter changes. `pi`, `e` and `i` were already emitted as `sympy.pi`,
-`sympy.E` and `sympy.I`, and `sqrt` as `sympy.sqrt`.
-
-Two tests now hold the properties that failed, without needing an interpreter in the suite: the
-parentheses balance, and every name in the emitted body is either declared in the preamble or reached
-through `sympy.`. 17 of their 23 cases fail against the old exporter.
-
-Issue [#909](https://github.com/asc-community/AngouriMath/issues/909).
-
-### `MathS.ToSympyCode` keeps an exact value exact
-
-The generated program ran, and then quietly gave a different number. Python's `/`, and its `**` with a
-negative exponent, are float operations on two integers:
-
-| expression | emitted | SymPy read it as | now emitted | and reads as |
-|---|---|---|---|---|
-| `1/2` | `1 / 2` | `0.500000000000000`, a `Float` | `sympy.Integer(1) / 2` | `1/2`, a `Rational` |
-| `2^(-1)` | `2 ** (-1)` | `0.5` | `sympy.Integer(2) ** (-1)` | `1/2` |
-| `2^(-3)` | `2 ** (-3)` | `0.125` | `sympy.Integer(2) ** (-3)` | `1/8` |
-| `x + 1/2` | `x + 1 / 2` | `x + 0.5` | `x + sympy.Integer(1) / 2` | `x + 1/2` |
-
-Making one operand a SymPy integer hands the arithmetic to SymPy, which keeps it exact. **Only a pair of
-integers is rewritten**, and the rest of the emitted code is unchanged: with a symbol anywhere in the
-shape SymPy's own operators already take over (`x / 2`, `1 / x`, `x ** (-1)`), and `+`, `-`, `*` and a
-non-negative `**` are exact on Python integers, whose precision is unbounded — `2 ** 70` was always
-right.
-
-It bit only the **unsimplified** form, which is the one a caller writes: `"1/2".ToEntity()` is a `Divf`
-of two integers, because a printed rational parses back as a division
-([#873](https://github.com/asc-community/AngouriMath/issues/873)), while a simplified `1/2` is a
-`Rational` node and already emitted `sympy.Rational(1, 2)`.
-
-Checked by running the emitted programs against SymPy 1.14, which is the only way this class of defect
-shows itself — the code was always valid, so the earlier tests could not have caught it, and the two
-added here assert the property instead: no two plain integer literals are combined with `/` or with a
-negative `**`.
-
-Issue [#911](https://github.com/asc-community/AngouriMath/issues/911).
-
-### `NaN` is now a keyword, and the printed form of NaN reads back
-
-`Stringize` prints the NaN value as `NaN`, and the grammar had no such token, so reading it back gave a
-**variable of that name**. A variable behaves like any symbol — it cancels, collects and compares — and
-nothing on the page distinguished the two, since a variable named `NaN` also prints as `NaN`:
-
-| expression | was | is |
-|---|---|---|
-| `"NaN - NaN".Simplify()` | `0` | `NaN` |
-| `"NaN / NaN".Simplify()` | `1 provided not NaN = 0` | `NaN` |
-| `"NaN * 0".Evaled` | `0` | `NaN` |
-| `"NaN * 2".Evaled`, `"NaN + NaN".Evaled` | left as written | `NaN` |
-| `NaN` as a variable name | a variable | a parse of the NaN value |
-| `NaNx`, `NaN_1`, `aNaN` | variables | variables, unchanged |
-
-This is the same trade `mod` took above: a word that was an identifier becomes a keyword, so an
-expression using it as a variable name now means something else. It is the narrower half of the trade —
-only the exact spelling is reserved, because the lexer takes the longest match, so any longer name that
-merely contains it is still a variable.
-
-Only `NaN` is affected. Its two siblings already had tokens: `+oo` and `-oo` both print and parse, and
-`Latexize` has had `\mathrm{undefined}` for all along — which is the token
-[CSharpMath](https://github.com/verybadcat/CSharpMath) decodes back to `MathS.NaN`, so the LaTeX round
-trip was closed already and is untouched here.
-
-**The round-trip test now runs in both directions.** Every case in `StringizeRoundTripTest` began from a
-*string*, so it could only reach expressions the parser already produces, and a value with no source
-form was invisible to all of them however many cases were added. It now also enumerates the library's
-named constants by reflection — `MathS` and `Entity.Number.Real` — prints each and reads it back, so a
-constant added later is covered without anyone remembering the file exists. Those two cases are what
-fail against the old grammar.
-
-Issue [#906](https://github.com/asc-community/AngouriMath/issues/906).
 
 ### `mod` is now a keyword
 
