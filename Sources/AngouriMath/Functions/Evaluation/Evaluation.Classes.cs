@@ -45,19 +45,37 @@ namespace AngouriMath
         /// <param name="propagateSet">
         /// Set operations should not be applied on all pairs of elements when it cannot be simplified.
         /// </param>
+        /// <param name="settlesNaN">
+        /// Whether <paramref name="operation"/> is asked about a <c>NaN</c> operand instead of the
+        /// result being <c>NaN</c> outright. A logical connective can settle one -- <c>false and u</c>
+        /// is <c>false</c> whatever <c>u</c> is -- and arithmetic cannot, so this is off by default:
+        /// <c>NaN * 0</c> must not become <c>0</c> just because a rule for a zero factor exists.
+        /// https://github.com/asc-community/AngouriMath/issues/880
+        /// </param>
         private Entity ExpandOnTwoArguments(
             Entity left,
-            Entity right, 
-            Func<Entity, Entity, Entity?> operation, 
-            Func<Entity, Entity, Entity, Entity> defaultCtor, 
+            Entity right,
+            Func<Entity, Entity, Entity?> operation,
+            Func<Entity, Entity, Entity, Entity> defaultCtor,
             bool isExact,
-            bool propagateSet = true)
+            bool propagateSet = true,
+            bool settlesNaN = false)
         {
             if (isExact && this.Evaled is (Number { IsExact: true } or Boolean) and var n)
                 return n;
             left = left.InnerSimplified(isExact);
             right = right.InnerSimplified(isExact);
-            if (left.IsNaN || right.IsNaN) return MathS.NaN;
+            if (left.IsNaN || right.IsNaN)
+            {
+                // A connective gets first refusal on an undefined operand, and hands back null where
+                // it cannot settle the case, which is what falls through to NaN here. Its own table
+                // is already the three-valued one: `and` reads (_, false) as false and (true, _) as
+                // its right operand, so a NaN that genuinely decides nothing stays NaN by arriving
+                // back out of the switch.
+                if (settlesNaN && operation(left, right) is { } settled)
+                    return settled;
+                return MathS.NaN;
+            }
 
             if (operation(left, right) is { } preRes)
                 return preRes;

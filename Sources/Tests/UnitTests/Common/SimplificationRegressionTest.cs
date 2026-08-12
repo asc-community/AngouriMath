@@ -473,7 +473,6 @@ namespace AngouriMath.Tests.Common
         [Theory]
         [InlineData("x < 0 and x >= 0")]
         [InlineData("x > 0 and x <= 0")]
-        [InlineData("x < 0 and x = 0")]
         [InlineData("x < 0 or x >= 0")]
         [InlineData("x <= 0 or x > 0")]
         [InlineData("x < x")]
@@ -488,6 +487,29 @@ namespace AngouriMath.Tests.Common
             // here, so a change that gave `i < 0` a truth value would make this test vacuous.
             Assert.Equal(MathS.NaN, atI);
             Assert.Equal(atI, original.Simplify().Substitute("x", "i").Evaled);
+        }
+
+        // https://github.com/asc-community/AngouriMath/issues/880
+        // `x < 0 and x = 0` was a row of the theory above until evaluation became Kleene, and it
+        // no longer belongs there: at x = i one conjunct is *decidably* false -- `i = 0` is False,
+        // not NaN -- and `False and u` is False whatever `u` is. So there is something to decide
+        // here, and the value is False rather than NaN.
+        //
+        // Which leaves the pair disagreeing the other way round from #876. Evaluation now settles
+        // the conjunction everywhere, while Simplify answers `False provided x in RR`, whose
+        // condition is unnecessary for this row: the reduction needs one conjunct to be false, not
+        // both operands to be real. The condition is over-strong rather than wrong, so it is
+        // recorded here rather than removed -- the rules #876 conditioned would want going through
+        // one at a time to see which of them still need it, and that is not this change.
+        [Fact]
+        public void AConjunctionWithOneFalseConjunctIsFalseOffTheRealLineToo()
+        {
+            var original = "x < 0 and x = 0".ToEntity();
+            Assert.Equal(Entity.Boolean.False, original.Substitute("x", "i").Evaled);
+
+            // And what Simplify gives is weaker, which is the follow-up rather than a regression:
+            // it declines off the real line where the evaluator decides.
+            Assert.Equal(MathS.NaN, original.Simplify().Substitute("x", "i").Evaled);
         }
 
         // https://github.com/asc-community/AngouriMath/issues/876 §3
@@ -875,6 +897,58 @@ namespace AngouriMath.Tests.Common
             Assert.True(simplified.Complexity < answer.Complexity,
                 $"the system's answer simplified to {simplified.Stringize()}, which is no shorter "
                 + $"than the {answer.Stringize()} it came from");
+        }
+
+        // https://github.com/asc-community/AngouriMath/issues/880
+        // A connective is no longer strict in NaN. `false and u` is false and `true or u` is true
+        // whatever `u` is, so an operand with no truth value does not absorb an answer the truth
+        // table settles without it. Simplify already answered this way -- `true or (true and
+        // (x < 0))` is True -- while evaluation answered NaN, so the two contradicted each other.
+        //
+        // `i < 0` is the undefined operand throughout: the default codomain is Domain.Complex and
+        // the complex numbers are not ordered.
+        [Theory]
+        [InlineData("(i < 0) and false", "false")]
+        [InlineData("false and (i < 0)", "false")]
+        [InlineData("(i < 0) or true", "true")]
+        [InlineData("true or (i < 0)", "true")]
+        [InlineData("false implies (i < 0)", "true")]
+        [InlineData("(i < 0) implies true", "true")]
+        public void AConnectiveSettlesWhatItsTruthTableSettles(string expression, string expected) =>
+            Assert.Equal(expected.ToEntity(), expression.ToEntity().Evaled);
+
+        // And what the table does not settle stays unsettled: NaN means "this does not exist", so
+        // a connective may not invent a value for it either.
+        [Theory]
+        [InlineData("(i < 0) and true")]
+        [InlineData("(i < 0) or false")]
+        [InlineData("not (i < 0)")]
+        [InlineData("(i < 0) xor (i < 0)")]
+        [InlineData("(i < 0) xor true")]
+        [InlineData("(i < 0) implies false")]
+        public void AConnectiveInventsNothingItCannotSettle(string expression) =>
+            Assert.Equal(MathS.NaN, expression.ToEntity().Evaled);
+
+        // Arithmetic stays strict, which is the reason this is opted into per node rather than
+        // done in the shared helper for everything: a rule for a zero factor exists, and NaN * 0
+        // must not reach it.
+        [Theory]
+        [InlineData("(0/0) * 0")]
+        [InlineData("(0/0) + 1")]
+        [InlineData("(0/0) - (0/0)")]
+        [InlineData("(0/0) ^ 0")]
+        public void ArithmeticIsStillStrictInNaN(string expression) =>
+            Assert.Equal(MathS.NaN, expression.ToEntity().Evaled);
+
+        // The contradiction this removes, stated as the commutation it broke.
+        [Theory]
+        [InlineData("true or (true and (x < 0))")]
+        [InlineData("false and (x < 0)")]
+        public void SimplifyAndEvaluationAgreeOffTheRealLine(string input)
+        {
+            var original = input.ToEntity();
+            Assert.Equal(original.Substitute("x", "i").Evaled,
+                original.Simplify().Substitute("x", "i").Evaled);
         }
     }
 }
