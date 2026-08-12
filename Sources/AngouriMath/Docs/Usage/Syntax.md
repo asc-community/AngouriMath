@@ -52,7 +52,11 @@ truncates instead; it is a different operation and the library does not inherit 
 
 ## Numbers and constants
 
-`1`, `1.5`, `1/2`, `1e-9`, `i`, `e`, `pi`, `+oo`, `-oo`, `true`, `false`.
+`1`, `1.5`, `1/2`, `1e-9`, `i`, `e`, `pi`, `+oo`, `-oo`, `NaN`, `true`, `false`.
+
+`NaN` is the value an undefined computation gives — `0/0` and `1/0` both reach it — and it is
+spelled exactly that way, since only the exact word is reserved. A longer name containing it, such
+as `NaNx` or `NaN_1`, is still a variable, because the lexer takes the longest match.
 
 A variable is a letter or `_` followed by letters, digits or `_`, and Greek letters are letters.
 Juxtaposition is multiplication, so `2x` is `2 * x` — which is also why an unknown function name

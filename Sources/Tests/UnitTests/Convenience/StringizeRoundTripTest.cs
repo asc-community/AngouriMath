@@ -7,6 +7,9 @@
 
 using AngouriMath;
 using AngouriMath.Extensions;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using Xunit;
 
 namespace AngouriMath.Tests.Common
@@ -193,5 +196,89 @@ namespace AngouriMath.Tests.Common
             var value = source.ToEntity().Evaled;
             Assert.Equal(value, value.Stringize().ToEntity().Evaled);
         }
+
+        /// <summary>
+        /// Every value the library hands out as a named constant, printed and read back.
+        /// </summary>
+        /// <remarks>
+        /// This is the round trip taken from the other end, and the direction the rest of this
+        /// class structurally cannot see: every case above starts from a **string**, so it can only
+        /// reach expressions the parser already produces. A value with no source form is invisible
+        /// to all of them, however many cases are added.
+        /// <para/>
+        /// That is how <c>NaN</c> went unnoticed. It printed as <c>NaN</c>, the grammar had no such
+        /// token, so reading it back gave a <em>variable</em> of that name -- which then cancelled
+        /// and collected like any symbol, making <c>NaN - NaN</c> into <c>0</c> and
+        /// <c>NaN / NaN</c> into <c>1 provided not NaN = 0</c>. Nothing on the page distinguished
+        /// the two, since a variable named <c>NaN</c> prints as <c>NaN</c> as well.
+        /// https://github.com/asc-community/AngouriMath/issues/906
+        /// <para/>
+        /// Enumerated by reflection rather than written out, so that a constant added to
+        /// <see cref="MathS"/> or to <see cref="Entity.Number.Real"/> later is covered without
+        /// anyone remembering this file exists. The names are the test data rather than the values,
+        /// because xUnit wants its data serializable and an <see cref="Entity"/> is not.
+        /// </remarks>
+        public static IEnumerable<object[]> NamedConstants() =>
+            ConstantsByName.Keys.Select(name => new object[] { name });
+
+        private static readonly IReadOnlyDictionary<string, Entity> ConstantsByName =
+            new[] { typeof(MathS), typeof(Entity.Number.Real) }
+                .SelectMany(type => type.GetFields(BindingFlags.Public | BindingFlags.Static))
+                .Where(field => typeof(Entity).IsAssignableFrom(field.FieldType))
+                .ToDictionary(field => field.DeclaringType!.Name + "." + field.Name,
+                              field => (Entity)field.GetValue(null)!);
+
+        [Theory]
+        [MemberData(nameof(NamedConstants))]
+        public void ANamedConstantRoundTrips(string name)
+        {
+            var constant = ConstantsByName[name];
+            var printed = constant.Stringize();
+            Assert.Equal(constant, printed.ToEntity());
+        }
+
+        /// <summary>
+        /// And the same for what those constants evaluate to, since a constant may print one way
+        /// and its value another -- <c>MathS.oo</c> is a <see cref="Entity.Number.Real"/> already,
+        /// but <c>pi</c> and <c>e</c> are variables that carry a numeric value.
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(NamedConstants))]
+        public void AnEvaluatedNamedConstantRoundTrips(string name)
+        {
+            var value = ConstantsByName[name].Evaled;
+            Assert.Equal(value, value.Stringize().ToEntity().Evaled);
+        }
+
+        /// <summary>
+        /// The three non-finite reals together, since they are one family and only one of them was
+        /// broken. Written out as well as enumerated above, because these are the values a caller
+        /// meets by computing rather than by naming: <c>0/0</c> and <c>1/0</c> reach NaN, and a
+        /// divergent limit reaches an infinity.
+        /// </summary>
+        [Theory]
+        [InlineData("0/0")]
+        [InlineData("1/0")]
+        [InlineData("-1/0")]
+        [InlineData("+oo")]
+        [InlineData("-oo")]
+        [InlineData("+oo - +oo")]
+        [InlineData("1/0 + 1")]
+        public void ANonFiniteValueRoundTrips(string source)
+        {
+            var value = source.ToEntity().Evaled;
+            Assert.Equal(value, value.Stringize().ToEntity().Evaled);
+        }
+
+        /// <summary>
+        /// Reserving the word costs the identifier, and only the exact spelling: a longer name that
+        /// merely starts with it is still a variable, because the lexer takes the longest match.
+        /// </summary>
+        [Theory]
+        [InlineData("NaNx")]
+        [InlineData("NaN_1")]
+        [InlineData("aNaN")]
+        public void AWordContainingTheTokenIsStillAVariable(string source) =>
+            Assert.IsType<Entity.Variable>(source.ToEntity());
     }
 }
