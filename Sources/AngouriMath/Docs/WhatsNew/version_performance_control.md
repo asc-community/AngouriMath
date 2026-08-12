@@ -157,3 +157,64 @@ and it is on the hot path. Worth a measurement of its own before more guards are
 `EvalEasy` is not a real movement in either direction. It measures a cached lookup rather than
 arithmetic — see the note above the main table — and at one nanosecond the figure is dominated by
 whatever the harness itself costs.
+
+## The 1691st and the 1707th, measured together on one machine — the pair for 2.1.0
+
+`v2.0.0` itself against the 2.1.0 candidate: the 1691st is
+[`f2594259`](https://github.com/asc-community/AngouriMath/commit/f2594259), tagged `v2.0.0`, and the
+1707th is [`9446c762`](https://github.com/asc-community/AngouriMath/commit/9446c762), sixteen commits
+later. Both measured minutes apart in one session on one machine, so **only these two columns may be
+read against each other**; neither may be compared with anything above.
+
+This is the question a release needs answered — what the version users have costs against the version
+they are being offered — which the pair above could not answer, since it took the 1697th rather than
+the tag.
+
+| Method | [1691st](https://github.com/asc-community/AngouriMath/commit/f2594259) | [1707th](https://github.com/asc-community/AngouriMath/commit/9446c762) | change |
+|---|--:|--:|--:|
+| ParseEasy | 5,920 ns | 5,703 ns | −3.7% |
+| ParseHard | 1,343,362 ns | 1,339,656 ns | −0.3% |
+| SimplifyEasy | 81,620 ns | 83,340 ns | +2.1% |
+| SimplifyHard | 1,574,777,032 ns | 1,614,280,250 ns | +2.5% |
+| Derivate | 13,510 ns | 13,741 ns | +1.7% |
+| SolveEasy | 11,139,199 ns | 11,383,594 ns | +2.2% |
+| SolveEasyMedium | 23,437 ns | 23,733 ns | +1.3% |
+| SolveMedium | 397,908 ns | 416,180 ns | +4.6% |
+| SolveMediumHard | 71,646,943 ns | 71,756,037 ns | +0.2% |
+| SolveHard | 770,417,841 ns | 761,848,527 ns | −1.1% |
+| EvalEasy | 1.211 ns | 1.336 ns | +10.3% |
+| EvalTrig | 701,704 ns | 703,612 ns | +0.3% |
+| EvalTrigPrecise | 22,673,032 ns | 22,585,377 ns | −0.4% |
+| CompileEasy | 186,889 ns | 187,557 ns | +0.4% |
+| CompileHard | 319,797 ns | 319,365 ns | −0.1% |
+| RunEasy | 20.36 ns | 19.99 ns | −1.8% |
+| RunMedium | 163.9 ns | 168.6 ns | +2.9% |
+| RunHard | 293.0 ns | 294.6 ns | +0.5% |
+
+Allocation over the same pair: `SimplifyEasy` 127,964 → 128,564 B (+0.5%), `CompileEasy`
+16,207 → 16,408 B (+1.2%), `ParseHard` 3,486,001 → 3,498,137 B (+0.3%), `SimplifyHard`
+3,737,107,808 → 3,733,175,840 B (−0.1%). `Derivate`, `EvalTrig` and `EvalTrigPrecise` are
+**byte-identical**, and the remaining rows move by tens of bytes on totals in the millions.
+
+**Read: no regression.** The largest real move is `SolveMedium` at +4.6%, which by the standard at the
+top of this file says nothing on its own; the rest sits inside ±3%. `EvalEasy` at +10.3% is 0.125 ns and
+is the cached-lookup row again.
+
+### It also corrects the section above
+
+That pair reported `SimplifyEasy` at **+8.7%**, attributed it to guards added in that range calling
+`Evaled` inside a pattern's `when` clause, and asked for "a measurement of its own before more guards
+are written that way". Since then roughly six more guards of exactly that shape were added — the
+interval tests of [#887](https://github.com/asc-community/AngouriMath/issues/887), the zero test of
+[#892](https://github.com/asc-community/AngouriMath/issues/892), the sign read of
+[#881](https://github.com/asc-community/AngouriMath/issues/881), the positivity check of
+[#902](https://github.com/asc-community/AngouriMath/issues/902) and the sort guard of
+[#897](https://github.com/asc-community/AngouriMath/issues/897).
+
+`SimplifyEasy` is **+2.1%** here, and its allocation moves 0.5%. If the guards were the cause, that row
+should have moved further and allocation should have followed, since `Evaled` allocates on its first
+call per node. Neither happened. **So the +8.7% was mostly the machine rather than the guards, and the
+attribution in the section above was wrong** — which is the same error that section itself was written
+to catch, made one level down: a single number read as a cause without a second measurement to hold it
+against. The action item it raised is discharged, and the answer is that this pattern is not
+measurably expensive at this scale.

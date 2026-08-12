@@ -17,7 +17,7 @@
     release tag, so what ships is named by the tag; this is what a local build and the
     assembly metadata carry.
     -->
-    <Version>2.0.0</Version>
+    <Version>2.1.0</Version>
 
     <!--
     Pinned to the major for the whole of 2.x, and deliberately not tracking Version.
@@ -27,7 +27,7 @@
     carries the release for anyone reading the file properties.
     -->
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
-    <FileVersion>2.0.0.0</FileVersion>
+    <FileVersion>2.1.0.0</FileVersion>
 
     <Authors>WhiteBlackGoose and contributors</Authors>
     <Company>Angouri</Company>
