@@ -101,3 +101,59 @@ timings do.
 argument for it. Evaluating `1 + 2 + log(2, 3) + sqrt(4) - 4 ^ 7 + e * pi` cannot allocate zero
 bytes; a dictionary lookup can. `RunEasy`, `RunMedium` and `RunHard` allocate nothing for the
 honest reason -- a compiled delegate over `Complex` has nothing to put on the heap.
+
+---
+
+## The 1671st and the 1697th, measured together on one machine
+
+**Why a pair rather than a column.** 2.0.0 shipped without any performance measurement at all, so
+there is no column for it: it is commit 1691 and the table above stops at the 1671st. Filling that gap
+with a single new column would have been worse than leaving it. Measured on a developer machine, every
+one of the sixteen rows came out at 0.5–0.6× of the 1671st — a uniform factor across the board, which
+is a faster machine and not faster code. A reader comparing the two columns would have seen an
+across-the-board 1.75× improvement that does not exist, which is exactly the mistake the note at the
+top of this file warns about.
+
+So the 1671st was re-measured on the same machine, minutes apart, with nothing else running. Only the
+right-hand pair below may be read as a ratio; neither may be compared with the columns above.
+
+The 1697th is `6476513b`, which is 2.0.0 plus the five corrections merged after it and the `abs`/`sgn`
+fix — so this answers "did the release and the fixes after it cost anything", which is the question
+2.0.1 needs answered.
+
+| Method | [1671st](https://github.com/asc-community/AngouriMath/commit/253b5a8d598a9a1d721b777340bd53ae3be12f99) | [1697th](https://github.com/asc-community/AngouriMath/commit/6476513b) | change |
+|---|--:|--:|--:|
+| ParseEasy | 5,887 ns | 6,052 ns | +2.8% |
+| ParseHard | 1,364,570 ns | 1,430,477 ns | +4.8% |
+| SimplifyEasy | 79,832 ns | 86,744 ns | **+8.7%** |
+| SimplifyHard | 1,646,740,009 ns | 1,697,337,871 ns | +3.1% |
+| Derivate | 13,745 ns | 14,367 ns | +4.5% |
+| SolveEasy | 11,302,282 ns | 11,883,543 ns | +5.1% |
+| SolveEasyMedium | 24,545 ns | 24,438 ns | −0.4% |
+| SolveMedium | 420,926 ns | 433,918 ns | +3.1% |
+| SolveMediumHard | 74,401,542 ns | 76,053,093 ns | +2.2% |
+| SolveHard | 751,607,244 ns | 766,020,069 ns | +1.9% |
+| EvalEasy | 1.34 ns | 0.85 ns | see below |
+| EvalTrig | 720,189 ns | 711,009 ns | −1.3% |
+| EvalTrigPrecise | 22,870,710 ns | 23,086,271 ns | +0.9% |
+| CompileEasy | 191,188 ns | 191,289 ns | +0.1% |
+| CompileHard | 320,897 ns | 323,255 ns | +0.7% |
+| RunEasy | 20.12 ns | 20.24 ns | +0.6% |
+| RunMedium | 163.8 ns | 169.9 ns | +3.7% |
+| RunHard | 290.6 ns | 296.9 ns | +2.2% |
+
+Allocation over the same pair: `SimplifyHard` 3,710,538,664 → 3,737,029,480 B (+0.7%), `SolveHard`
+1,341,724,616 → 1,356,514,512 B (+1.1%), `SolveMediumHard` 152,244,664 → 155,187,208 B (+1.9%);
+everything else within a few tenths of a per cent.
+
+**Read: no regression, with one row worth watching.** Most of the table moves 1–5%, which by this
+file's own standard says nothing. `SimplifyEasy` at **+8.7%** is above that, and there is a plausible
+cause rather than a mystery: the corrections merged in that range added guards to the simplification
+patterns — `WithinHalfPi`, `WithinArccotanRange`, and the `abs`/`sgn` zero test — and each calls
+`Evaled` inside a pattern's `when` clause on a path that previously matched structurally. `Evaled` is
+cached per node, so the cost is a first-call computation and a lookup thereafter, but it is not free
+and it is on the hot path. Worth a measurement of its own before more guards are written that way.
+
+`EvalEasy` is not a real movement in either direction. It measures a cached lookup rather than
+arithmetic — see the note above the main table — and at one nanosecond the figure is dominated by
+whatever the harness itself costs.
