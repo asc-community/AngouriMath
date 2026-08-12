@@ -819,5 +819,62 @@ namespace AngouriMath.Tests.Common
             Assert.Equal(original.Substitute("x", 0).EvalNumerical(),
                 simplified.Substitute("x", 0).EvalNumerical());
         }
+
+        // https://github.com/asc-community/AngouriMath/issues/882
+        // -(a - b) was turned into b - a for a whole expression and not for the same expression
+        // inside another node, because the step came from Expand -- which is offered for the root
+        // only and does not descend into an exponent, a function's argument or a matrix. So what a
+        // caller got depended on where the subexpression sat. As a rule it runs everywhere.
+        //
+        // The printed form is the bug here, which is why it is what these assert: every one of
+        // these was already the right *number*, written the long way round.
+        [Theory]
+        [InlineData("-(5 - sqrt(-11))", "sqrt(-11) - 5")]
+        [InlineData("-(5 - sqrt(-11)) + y", "sqrt(-11) - 5 + y")]
+        [InlineData("2 ^ (-(5 - sqrt(-11)))", "2 ^ (sqrt(-11) - 5)")]
+        [InlineData("sgn(-(5 - sqrt(-11)))", "sgn(sqrt(-11) - 5)")]
+        [InlineData("[[-(5 - sqrt(-11)), 1]]", "[[sqrt(-11) - 5, 1]]")]
+        [InlineData("-(a - b)", "b - a")]
+        public void ANegatedDifferenceIsTurnedRoundWhereverItSits(string expression, string expected) =>
+            Assert.Equal(expected, expression.ToEntity().Simplify().Stringize());
+
+        // And it is the same number afterwards, which the printed forms above do not check.
+        [Theory]
+        [InlineData("-(a - b)")]
+        [InlineData("2 ^ (-(a - b))")]
+        [InlineData("sgn(-(a - b))")]
+        public void TurningANegatedDifferenceRoundKeepsItsValue(string expression)
+        {
+            var original = expression.ToEntity();
+            var simplified = original.Simplify();
+            foreach (var (a, b) in new[] { (2, 7), (-3, 5), (0, 0), (4, -1) })
+                Assert.Equal(
+                    original.Substitute("a", a).Substitute("b", b).EvalNumerical(),
+                    simplified.Substitute("a", a).Substitute("b", b).EvalNumerical());
+        }
+
+        // The same issue's second half: Expand read its argument as a sum, and a matrix is not one,
+        // so a matrix left by the "too complicated, return what came in" exit. Factorize and
+        // Differentiate both descend, being built out of rewrite rules, so Expand was the odd one
+        // out rather than matrices being held back deliberately.
+        [Theory]
+        [InlineData("[[(x+1)^2, 1]]", "[[1 + 2 * x + x ^ 2, 1]]")]
+        [InlineData("[[(x+1)^2, (y+2)^2], [1, x]]", "[[1 + 2 * x + x ^ 2, 4 + 4 * y + y ^ 2], [1, x]]")]
+        public void ExpandDescendsIntoAMatrix(string expression, string expected) =>
+            Assert.Equal(expected, expression.ToEntity().Expand().Stringize());
+
+        // What a user meets it through: EquationSystem.Solve returns a Matrix, so every entry of a
+        // system's answer was left in the form the solver happened to build it in. Asserted by
+        // node count rather than by form, since the point is that the entries got shorter.
+        [Fact]
+        public void ASystemsAnswerSimplifiesEntryByEntry()
+        {
+            var answer = MathS.Equations("x2 + y", "y - x - 3").Solve("x", "y");
+            Assert.NotNull(answer);
+            var simplified = answer!.Simplify();
+            Assert.True(simplified.Complexity < answer.Complexity,
+                $"the system's answer simplified to {simplified.Stringize()}, which is no shorter "
+                + $"than the {answer.Stringize()} it came from");
+        }
     }
 }

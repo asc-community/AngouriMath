@@ -17,11 +17,28 @@ namespace AngouriMath.Functions
             expr is Powf(var @base, Integer { IsNegative: true } pow)
             ? 1 / MathS.Pow(@base, -1 * pow)
             : expr;
-        /// <summary>1 + (-x) => 1 - x</summary>
-        internal static Entity InvertNegativeMultipliers(Entity expr) =>
-            expr is Sumf(var any1, Mulf(Real { IsNegative: true } const1, var any2))
-            ? any1 - (-1 * const1) * any2
-            : expr;
+        /// <summary>1 + (-x) => 1 - x, and -(a - b) => b - a</summary>
+        internal static Entity InvertNegativeMultipliers(Entity expr) => expr switch
+        {
+            Sumf(var any1, Mulf(Real { IsNegative: true } const1, var any2))
+                => any1 - (-1 * const1) * any2,
+
+            // -(a - b) => b - a. A unary minus parses as (-1) * x, so this is the shape a negated
+            // difference arrives in, and turning it round removes the multiplication and the
+            // negative constant together: five nodes become three, and the metric charges four for
+            // a negative real on top of that.
+            //
+            // What matters is where it runs rather than what it does. Expand already produced this
+            // form for a whole expression, and Expand is offered for the root only and does not
+            // descend into an exponent, a function's argument or a matrix -- so `-(5 - sqrt(-11))`
+            // simplified while `2 ^ (-(5 - sqrt(-11)))`, `sgn(-(5 - sqrt(-11)))` and the same entry
+            // inside a matrix did not. A rule runs everywhere.
+            // https://github.com/asc-community/AngouriMath/issues/882
+            Mulf(Integer(-1), Minusf(var subtrahend, var minuend))
+                => minuend - subtrahend,
+
+            _ => expr
+        };
 
         internal static Entity PowerRules(Entity x) => x switch
         {

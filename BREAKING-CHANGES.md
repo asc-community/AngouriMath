@@ -71,6 +71,8 @@ read first.
 | **silent** | `ln(e^x)`, `log(2, 2^x)`, `ln(x^2)` | `x`, `x`, `2 * ln(x)` — wrong off the real line | left as written unless the argument is decidable |
 | **silent** | two limits over `(x^2)^x` and `x^x` | answered correctly | unevaluated — a deliberate loss |
 | **silent** | `DirectChildren` of a conditional set | a name off the predicate's hash, and one in 26^4 threw | `%1`, fresh by construction |
+| **silent** | `-(a - b)` inside a power, a function or a matrix | left as written | `b - a`, as at the root |
+| **silent** | `Expand` of a matrix | the matrix, unexpanded | expanded entry by entry |
 | **silent** | `arctan(x) + arccotan(x)` | `pi/2`, wrong for every negative `x` | `pi/2` or `-pi/2` where the sign is known, else left as written |
 | **silent** | `log(1, 1)` | `0` | `NaN`, since it is `0/0` |
 | **silent** | `log(b, 1)` | `0` for any base | `0 provided not b = 1` |
@@ -404,6 +406,45 @@ have their own test asserting the unevaluated node, so a future fix flips them b
 `boundcheck` drops from four disagreements to two; the remaining two are `log(x, x)` and
 `ln(x) + ln(x+1)`, both recorded elsewhere as wanting a decision rather than a guard. Issue
 [#902](https://github.com/asc-community/AngouriMath/issues/902).
+
+### A negated difference is turned round wherever it sits, and `Expand` descends into a matrix
+
+`-(a - b)` became `b - a` for a whole expression and not for the same expression inside another node,
+so what a caller got depended on where the subexpression sat:
+
+| input | was | is |
+|---|---|---|
+| `-(5 - sqrt(-11))` | `sqrt(-11) - 5` | unchanged |
+| `-(5 - sqrt(-11)) + y` | `y - (5 - sqrt(-11))` | `sqrt(-11) - 5 + y` |
+| `2 ^ (-(5 - sqrt(-11)))` | left as written | `2 ^ (sqrt(-11) - 5)` |
+| `sgn(-(5 - sqrt(-11)))` | left as written | `sgn(sqrt(-11) - 5)` |
+| `[[-(5 - sqrt(-11)), 1]]` | left as written | `[[sqrt(-11) - 5, 1]]` |
+| `Expand` of `[[(x+1)^2, 1]]` | `[[(x + 1) ^ 2, 1]]` | `[[1 + 2 * x + x ^ 2, 1]]` |
+
+Every one of these was already the right number, written the long way round. The step came from
+`Expand`, which the simplifier offers for the **root** expression only and which does not descend into
+an exponent, a function's argument or a matrix. Written as a rule instead — a unary minus parses as
+`(-1) * x`, so `(-1) * (a - b)` becomes `b - a`, which is five nodes for three — it runs wherever the
+shape occurs, since a rule walks the tree.
+
+`Expand` of a matrix is the same story from the other end: it read its argument as a sum, and a matrix
+is not one, so a matrix left through the "too complicated, return what came in" exit. It now expands
+entry by entry. `Factorize` and `Differentiate` both already descended, being built out of rewrite
+rules, so this was `Expand` being the odd one out rather than matrices being held back deliberately.
+
+**Where a caller meets it.** `EquationSystem.Solve` returns a `Matrix`, so a solved system's entries
+were left in whatever form the solver built them in:
+
+```
+MathS.Equations("x2 + y", "y - x - 3").Solve("x", "y").Simplify()
+
+was:  [[-(-(5 - sqrt(-11)) / 2 + 3), (5 - sqrt(-11)) / 2], [-(-(5 + sqrt(-11)) / 2 + 3), (5 + sqrt(-11)) / 2]]
+is:   [[-1/2 + -1/2 * sqrt(-11), 5/2 + -1/2 * sqrt(-11)], [1/2 * sqrt(-11) + -1/2, 1/2 * sqrt(-11) + 5/2]]
+```
+
+Issue [#882](https://github.com/asc-community/AngouriMath/issues/882), which
+[#497](https://github.com/asc-community/AngouriMath/issues/497) names as the shape of defect to hunt:
+the same input simplifying or not depending on its parent.
 
 ### A conditional set's bound variable is renamed to a temporary
 

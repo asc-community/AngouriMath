@@ -214,6 +214,16 @@ namespace AngouriMath
         /// </summary>
         internal Entity ExpandOverSum(int level)
         {
+            // A matrix is expanded entry by entry. What follows reads the expression as a sum, and
+            // a matrix is not one, so it left through the escape at the bottom and came back as it
+            // arrived: [[(x+1)^2, 1]] was not expanded while (x+1)^2 was. Factorize and
+            // Differentiate both descend into a matrix, being built out of rewrite rules, and a
+            // rule walks the tree -- so this was Expand being the odd one out rather than matrices
+            // being held back on purpose.
+            // https://github.com/asc-community/AngouriMath/issues/882
+            if (this is Matrix matrix)
+                return matrix.With((_, _, entry) => entry.Expand(level));
+
             static Entity Expand_(Entity e, int level) =>
                 level <= 1
                 ? e.Rewrite(RewriteRules.Expansion)
