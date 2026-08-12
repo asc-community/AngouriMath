@@ -155,7 +155,16 @@ namespace AngouriMath.Functions
             // x * {} ^ {} = {} ^ {} * x
             Mulf(Variable var1, Powf(var any1, var any2)) => new Powf(any1, any2) * var1,
 
-            Logf(var any1, Powf(var any2, var any3)) => any3 * MathS.Log(any1, any2),
+            // log_b(a^c) = c * log_b(a) holds where c * ln(a) stays inside the strip
+            // Im in (-pi, pi] that ln maps onto, and not in general: ln(e^(3*pi*i)) is pi*i
+            // while 3*pi*i is not, the two differing by exactly the 2*pi*i the principal branch
+            // discards. A base that is a positive real makes ln(a) real, and a real exponent then
+            // keeps the product real, so there is nothing to discard. Anything else is left as
+            // written -- including a symbolic exponent under the default complex reading, where
+            // the question is not decidable.
+            // https://github.com/asc-community/AngouriMath/issues/902
+            Logf(var any1, Powf(var any2, var any3))
+                when IsPositiveReal(any2) && MayBeTakenAsReal(any3) => any3 * MathS.Log(any1, any2),
             Logf(var any1, var any1a) when any1 == any1a => new Providedf(1, any1 > 0),
             Logf(Divf(Integer(1), var any1), Divf(Integer(1), var any2)) => MathS.Log(any1, any2),
             Logf(var any1, Divf(Integer(1), var any2)) => -MathS.Log(any1, any2),
@@ -263,6 +272,33 @@ namespace AngouriMath.Functions
         /// <c>a</c> -- the same guard the <c>({}^{})^{}</c> rule above carries, and for the
         /// same reason. https://github.com/asc-community/AngouriMath/issues/752
         /// </remarks>
+        /// <summary>
+        /// Whether <paramref name="entity"/> is a real strictly above zero, decided rather than
+        /// assumed. <c>ln</c> of such a number is a real, so a real multiple of it stays on the
+        /// real line and inside <c>ln</c>'s principal strip.
+        /// </summary>
+        /// <remarks>
+        /// Finiteness is checked separately because <see cref="Real.IsPositive"/> is
+        /// <c>!IsNegative &amp;&amp; !IsZero</c>, which <c>NaN</c> and <c>+oo</c> both satisfy.
+        /// </remarks>
+        private static bool IsPositiveReal(Entity entity)
+            => entity.Evaled is Real { EDecimal.IsFinite: true } value && value.IsPositive;
+
+        /// <summary>
+        /// Whether this operand may be taken as real: because the expression is being read as a
+        /// real-valued one, because the node's own declared codomain says so, or because its value
+        /// is a real to begin with.
+        /// </summary>
+        /// <remarks>
+        /// The first two are the disjunction <c>Patterns.EqualityInequality.cs</c> uses to ask the
+        /// same question. A bare <see cref="Variable"/> is <c>Domain.Any</c>, so a symbol under the
+        /// default complex reading answers <see langword="false"/> here -- which is the point.
+        /// </remarks>
+        private static bool MayBeTakenAsReal(Entity entity)
+            => MathS.Settings.Codomain.Value is AngouriMath.Core.Domain.Real
+               || IsKnownReal(entity)
+               || entity.Evaled is Real { EDecimal.IsFinite: true };
+
         private static (Entity Base, Entity Exponent) Decompose(Entity factor)
         {
             if (factor is not Powf(var @base, var exponent))
