@@ -38,6 +38,28 @@ namespace AngouriMath
                     (@this, a) => ((Notf)@this).New(a), isExact);
         }
 
+        /// <summary>
+        /// Whether either operand of a logical connective is a number, which is not a truth value:
+        /// <c>0</c> is not <see langword="false"/> and <c>1</c> is not <see langword="true"/>. A
+        /// connective declines such a pair rather than answering, and declines it even where its
+        /// table could answer without looking -- <c>false and 0</c> is not a proposition to be
+        /// false about.
+        /// </summary>
+        /// <remarks>
+        /// <c>NaN</c> is excluded deliberately, and the distinction is the point. <c>NaN</c> is how
+        /// this library spells <em>no truth value</em>, which is what an order comparison over the
+        /// complex plane produces, and what a connective does with one is settled by the
+        /// three-valued table: <c>false and NaN</c> is <see langword="false"/>
+        /// (https://github.com/asc-community/AngouriMath/issues/880). A number is the other thing
+        /// entirely -- a value of the wrong sort, where the question rather than the answer is at
+        /// fault. https://github.com/asc-community/AngouriMath/issues/897
+        /// </remarks>
+        private static bool MixesANumberWithATruthValue(Entity left, Entity right)
+            => IsNotATruthValue(left) || IsNotATruthValue(right);
+
+        private static bool IsNotATruthValue(Entity operand)
+            => operand.Evaled is Number && !operand.Evaled.IsNaN;
+
         partial record Andf
         {
             // Logical AND is always defined for any inputs
@@ -45,7 +67,9 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact)
                 => ExpandOnTwoArguments(Left, Right,
-                    (left, right) => left == right ? left : (left.Evaled, right.Evaled) switch
+                    (left, right) => MixesANumberWithATruthValue(left, right) ? null
+                        : left == right ? left
+                        : (left.Evaled, right.Evaled) switch
                     {
                         (Boolean(false), _) or (_, Boolean(false)) => False,
                         (Boolean(true), _) => right,
@@ -62,7 +86,8 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact)
                 => ExpandOnTwoArguments(Left, Right,
-                    (left, right) => (left.Evaled, right.Evaled) switch
+                    (left, right) => MixesANumberWithATruthValue(left, right) ? null
+                        : (left.Evaled, right.Evaled) switch
                     {
                         (Boolean(true), _) or (_, Boolean(true)) => True,
                         (Boolean(false), _) => right,
@@ -79,7 +104,8 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact)
                 => ExpandOnTwoArguments(Left, Right,
-                    (left, right) => (left.Evaled, right.Evaled) switch
+                    (left, right) => MixesANumberWithATruthValue(left, right) ? null
+                        : (left.Evaled, right.Evaled) switch
                     {
                         (Boolean(var leftBool), Boolean(var rightBool)) => leftBool ^ rightBool,
                         (Boolean(true), _) => !right,
@@ -98,7 +124,8 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact)
                 => ExpandOnTwoArguments(Assumption, Conclusion,
-                    (left, right) => (left.Evaled, right.Evaled) switch
+                    (left, right) => MixesANumberWithATruthValue(left, right) ? null
+                        : (left.Evaled, right.Evaled) switch
                     {
                         (Boolean(var leftBool), Boolean(var rightBool)) => !leftBool || rightBool,
                         (Boolean(false), _) => True,
