@@ -68,11 +68,14 @@ read first.
 | loud | a known gap, e.g. a cubic inequality | `AngouriBugException`, asking to be reported | `NotSufficientlySupportedException` |
 | **silent** | `arcsin(sin(x))` and three siblings | `x`, wrong wherever `x` leaves the principal interval | left as written unless `x` is a real in that interval |
 | **silent** | `abs(sgn(x))` and `sgn(abs(x))` | `1`, wrong at `x = 0` where both are `0` | left as written unless the argument's value can be read |
+| **silent** | `ln(e^x)`, `log(2, 2^x)`, `ln(x^2)` | `x`, `x`, `2 * ln(x)` — wrong off the real line | left as written unless the argument is decidable |
+| **silent** | two limits over `(x^2)^x` and `x^x` | answered correctly | unevaluated — a deliberate loss |
 | **silent** | `DirectChildren` of a conditional set | a name off the predicate's hash, and one in 26^4 threw | `%1`, fresh by construction |
 | **silent** | `arctan(x) + arccotan(x)` | `pi/2`, wrong for every negative `x` | `pi/2` or `-pi/2` where the sign is known, else left as written |
 | **silent** | `log(1, 1)` | `0` | `NaN`, since it is `0/0` |
 | **silent** | `log(b, 1)` | `0` for any base | `0 provided not b = 1` |
 | **silent** | `log(1/2, 0)` and any base below 1 | `-oo` | `+oo` |
+| **silent** | `abs(-sqrt(6))`, `abs(-pi)`, `abs(1 - sqrt(2))` | left as written | `sqrt(6)`, `pi`, `sqrt(2) - 1` |
 
 ---
 
@@ -351,6 +354,57 @@ Found by `boundcheck`, a harness that composes every unary function node with ev
 compares against the original at points where an assumption fails rather than at sampled points.
 Issue [#887](https://github.com/asc-community/AngouriMath/issues/887).
 
+### An exponent is no longer pulled out of a logarithm over an undecided argument
+
+`log_b(a^c) = c * log_b(a)` holds where `c * ln(a)` stays inside the strip `Im in (-pi, pi]` that `ln`
+maps onto. It was applied to any argument at all, and the rewritten form is shorter, so it is what an
+ordinary caller got:
+
+| | was | is |
+|---|---|---|
+| `ln(e^x)` | `x` | left as written |
+| `log(2, 2^x)` | `x` | left as written |
+| `ln(x^2)` | `2 * ln(x)` | left as written |
+| `ln(e^3)`, `log(2, 2^5)` | `3`, `5` | unchanged |
+| `ln(e^x)` under `Codomain.Set(Domain.Real)` | `x` | `x`, unchanged |
+
+`ln(e^x) -> x` is wrong wherever `Im x` leaves that strip. At `x = 3*pi*i` the expression is `pi*i`,
+because `e^(3*pi*i)` is `-1`, while `x` is `9.4247...i` — the two differ by exactly the full turn the
+principal branch discards. `MathS.Settings.Codomain` defaults to `Domain.Complex`, so this was unsound
+on the library's own default reading. It is also unsound for a negative real base: `log(2, 64)` is `6`
+where `2 * log(2, -8)` is `6 + 9.0647...i`.
+
+The rule now asks for a base that is decidably a positive real, and an exponent that may be taken as
+real — because the reading is real analysis, because the node's declared codomain says so, or because
+its value is a real. A symbolic exponent under the default complex reading is none of those, so the
+expression is left as written: decide, or decline, as with the four inverse-trigonometric rules above.
+
+**Two limits are lost, and that is the cost of this entry rather than an oversight.**
+
+| | was | is |
+|---|---|---|
+| `lim x->+oo (x^2)^x / e^(2*x*ln(x))` | `1` | unevaluated |
+| `lim x->+oo x^x / e^(x*ln(x) - ln(x))` | `+oo` | unevaluated |
+
+Both are right answers becoming no answer, which this file has recorded before for two integrals, and
+which the ordering in [AGENTS.md](AGENTS.md) prefers to a wrong answer reachable from `ln(e^x)`. They
+are unevaluated rather than `NaN`: the caller is told nothing was settled, not that the limit does not
+exist.
+
+They want the identity that was just removed. `d/dx (x^2)^x` carries `ln(x^2)`, and l'Hopital's rule
+reached it through `Simplify`. On the way to `+oo` the base genuinely is positive, so the identity is
+true there — the limit machinery simply has no way to say so to the simplifier. Supplying it from the
+limit side was tried and does not reach: rewriting the expression before `Simplify` is called does pull
+the exponent out, and `Simplify`'s own candidate search then writes `(x^2)^x` back into a logarithm and
+needs the identity again. It is load-bearing *inside* the search, so what would restore these two is an
+assumption travelling with the expression — `#746`'s tier 1 and the subject of
+[#721](https://github.com/asc-community/AngouriMath/issues/721) — and not another pass. The two rows
+have their own test asserting the unevaluated node, so a future fix flips them back deliberately.
+
+`boundcheck` drops from four disagreements to two; the remaining two are `log(x, x)` and
+`ln(x) + ln(x+1)`, both recorded elsewhere as wanting a decision rather than a guard. Issue
+[#902](https://github.com/asc-community/AngouriMath/issues/902).
+
 ### A conditional set's bound variable is renamed to a temporary
 
 `DirectChildren` of `{ x : P(x) }` renames the binder, so that the bound `x` is not read as an `x`
@@ -411,6 +465,35 @@ Found by `boundcheck` after adding `x = 0` and `x = 1` to its sample points: 366
 passing at 23 points chosen for branch cuts and principal intervals, none of which was the place
 where a rule's own arithmetic degenerates. Issue
 [#892](https://github.com/asc-community/AngouriMath/issues/892).
+
+### `abs` folds where the sign of its argument is known
+
+`|x|` is `x` for a non-negative real `x` and `-x` for a negative one. That is the definition of the
+function rather than an identity with a side condition, and it was applied only when the argument
+was a *number*. An argument whose value is a known real without its node being a number was left
+alone, so a radical or a constant kept its `abs`:
+
+| | was | is |
+|---|---|---|
+| `abs(-sqrt(6))` | left as written | `sqrt(6)` |
+| `abs(-pi)`, `abs(-e)` | left as written | `pi`, `e` |
+| `abs(1 - sqrt(2))` | left as written | `sqrt(2) - 1` |
+| `abs(-2)` | `2` | `2`, unchanged |
+| `abs(sqrt(-4))` | `2` | `2`, unchanged — the magnitude of `2i` |
+| `abs(-a)` for symbolic `a` | left as written | left as written |
+
+Where this shows up is in an answer built out of radicals. `(2x^2 - 3 > 0) and (x > 0)` solved to
+`(abs(-sqrt(6)) / 2; +oo)` and now solves to `(sqrt(6) / 2; +oo)`; the endpoint was always the same
+number, printed in a form that looked like unfinished work. The
+[Solvers wiki page](https://github.com/asc-community/AngouriMath/wiki/Solvers) shows the old output
+and wants updating with the release.
+
+**Nothing is assumed about a symbol**, and an argument off the real line is declined rather than
+guessed at: `sqrt(-4)` evaluates to `2i`, whose absolute value is `2` — neither the argument nor its
+negation, so a rule that read "negative, therefore negate" would be wrong there. The sign is read
+off the value, and a value that is not a finite real does not answer the question.
+
+Issue [#881](https://github.com/asc-community/AngouriMath/issues/881).
 
 ### A known gap no longer presents as a bug
 
