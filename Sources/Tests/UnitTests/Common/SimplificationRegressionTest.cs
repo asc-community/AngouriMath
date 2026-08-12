@@ -585,6 +585,46 @@ namespace AngouriMath.Tests.Common
         static double Magnitude(Entity difference) =>
             ((System.Numerics.Complex)difference.EvalNumerical()).Magnitude;
 
+        // https://github.com/asc-community/AngouriMath/issues/902
+        // log_b(a^c) = c * log_b(a) needs c * ln(a) to stay inside the strip Im in (-pi, pi] that
+        // ln maps onto, and it was applied to anything at all. ln(e^x) came back as x, which at
+        // x = 3*pi*i is 9.42i where the expression is pi*i -- e^(3*pi*i) being -1. The rewrite
+        // wins on complexity, so it is what an ordinary caller gets.
+        [Theory]
+        [InlineData("ln(e^x)")]
+        [InlineData("log(2, 2^x)")]
+        [InlineData("ln(x^2)")]
+        [InlineData("log(2, x^2)")]
+        public void AnExponentIsNotPulledOutOfALogarithmOverAnUndecidedArgument(string expression) =>
+            Assert.Equal(expression.ToEntity(), expression.ToEntity().Simplify());
+
+        // The value is the point, so it is the value that is checked: at 3*pi*i the two forms
+        // differ by the full turn the principal branch discards.
+        [Fact]
+        public void TheLogarithmOfAPowerKeepsItsValueOffTheRealLine()
+        {
+            var original = "ln(e^x)".ToEntity();
+            var at = "3 * pi * i".ToEntity();
+            Assert.Equal(original.Substitute("x", at).EvalNumerical(),
+                original.Simplify().Substitute("x", at).EvalNumerical());
+        }
+
+        // Where both sides are decidable it still fires, and a real reading is enough to decide
+        // it: under Domain.Real the exponent is real by the reading itself.
+        [Theory]
+        [InlineData("ln(e^3)", "3")]
+        [InlineData("log(2, 2^5)", "5")]
+        [InlineData("ln(e^(1/2))", "1/2")]
+        public void AnExponentIsPulledOutWhereTheArgumentIsDecidable(string expression, string expected) =>
+            Assert.Equal(expected.ToEntity().Simplify(), expression.ToEntity().Simplify());
+
+        [Fact]
+        public void ARealReadingDecidesTheExponent()
+        {
+            using var _ = MathS.Settings.Codomain.Set(AngouriMath.Core.Domain.Real);
+            Assert.Equal("x".ToEntity(), "ln(e^x)".ToEntity().Simplify());
+        }
+
         // https://github.com/asc-community/AngouriMath/issues/890
         // log_b(1) is ln(1)/ln(b), which is 0/ln(b) -- so 0 for every base except 1, where it
         // is 0/0. The rewrite answered 0 for any base at all, so log(1, 1) was 0 where every

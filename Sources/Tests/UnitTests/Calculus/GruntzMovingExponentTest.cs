@@ -42,7 +42,6 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x ^ x / e ^ (x * ln(x))", "1")]
         [InlineData("e ^ (x * ln(x)) / x ^ x", "1")]
         [InlineData("x ^ (2 * x) / e ^ (2 * x * ln(x))", "1")]
-        [InlineData("(x ^ 2) ^ x / e ^ (2 * x * ln(x))", "1")]
         public void APowerAndItsExponentialAreOneFunction(string expression, string expected) =>
             AssertLimit(expression, expected);
 
@@ -53,10 +52,42 @@ namespace AngouriMath.Tests.Calculus
         /// </summary>
         [Theory]
         [InlineData("x ^ x / e ^ (x * ln(x) - x)", "+oo")]
-        [InlineData("x ^ x / e ^ (x * ln(x) - ln(x))", "+oo")]
         [InlineData("x ^ x / e ^ (x * ln(x) + x)", "0")]
         public void WhatIsLeftOverDecidesIt(string expression, string expected) =>
             AssertLimit(expression, expected);
+
+        /// <summary>
+        /// Two of the cases above are no longer answered, and they are lost honestly: each comes
+        /// back as an unevaluated <c>limit</c> node rather than as a value, so the caller is told
+        /// that nothing was settled instead of being told something false.
+        /// </summary>
+        /// <remarks>
+        /// Both need <c>ln(a^c) = c * ln(a)</c> — <c>d/dx (x^2)^x</c> carries <c>ln(x^2)</c>, and
+        /// l'Hopital's rule reached it through <c>Simplify</c>. That identity is false off
+        /// <c>ln</c>'s principal strip, so the simplifier no longer applies it
+        /// (https://github.com/asc-community/AngouriMath/issues/902), and as x -> +oo the base
+        /// really is positive, so what is missing here is a way to say so.
+        /// <para/>
+        /// Supplying it from the limit side does not reach: rewriting the expression before
+        /// <c>Simplify</c> is called does pull the exponent out, and <c>Simplify</c>'s own
+        /// candidate search then writes <c>(x^2)^x</c> back into a logarithm and needs the
+        /// identity again. It is load-bearing *inside* the search, so restoring these two wants
+        /// an assumption travelling with the expression rather than another pre-pass.
+        /// <para/>
+        /// An unevaluated node is asserted rather than <c>NaN</c> deliberately: <c>NaN</c> would
+        /// claim the limit does not exist, and it does. If a value comes back here, the
+        /// assumption mechanism has arrived and these two rows belong back in the theories above.
+        /// </remarks>
+        [Theory]
+        [InlineData("(x ^ 2) ^ x / e ^ (2 * x * ln(x))")]
+        [InlineData("x ^ x / e ^ (x * ln(x) - ln(x))")]
+        public void AnExponentUnderALogarithmIsNotReadForNow(string expression)
+        {
+            var limit = expression.ToEntity().Limit("x", "+oo".ToEntity());
+            Assert.True(limit is Entity.Limitf,
+                $"{expression} came back as {limit.Stringize()}, which is a value rather than an "
+                + "unevaluated limit -- see this test's remarks before changing it");
+        }
 
         /// <summary>
         /// The claim the expected values above rest on, checked at a point rather than argued:
