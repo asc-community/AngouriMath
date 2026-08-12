@@ -68,6 +68,7 @@ read first.
 | loud | a known gap, e.g. a cubic inequality | `AngouriBugException`, asking to be reported | `NotSufficientlySupportedException` |
 | **silent** | `arcsin(sin(x))` and three siblings | `x`, wrong wherever `x` leaves the principal interval | left as written unless `x` is a real in that interval |
 | **silent** | `abs(sgn(x))` and `sgn(abs(x))` | `1`, wrong at `x = 0` where both are `0` | left as written unless the argument's value can be read |
+| **silent** | `DirectChildren` of a conditional set | a name off the predicate's hash, and one in 26^4 threw | `%1`, fresh by construction |
 | **silent** | `arctan(x) + arccotan(x)` | `pi/2`, wrong for every negative `x` | `pi/2` or `-pi/2` where the sign is known, else left as written |
 | **silent** | `log(1, 1)` | `0` | `NaN`, since it is `0/0` |
 | **silent** | `log(b, 1)` | `0` for any base | `0 provided not b = 1` |
@@ -349,6 +350,34 @@ the sibling `arcsin`/`arccos` case still collapses and still sorts.
 Found by `boundcheck`, a harness that composes every unary function node with every other and
 compares against the original at points where an assumption fails rather than at sampled points.
 Issue [#887](https://github.com/asc-community/AngouriMath/issues/887).
+
+### A conditional set's bound variable is renamed to a temporary
+
+`DirectChildren` of `{ x : P(x) }` renames the binder, so that the bound `x` is not read as an `x`
+that may be free outside the set. The replacement name was four lowercase letters derived from the
+predicate's hash code, and it was produced through `MathS.Var`, which **parses** — so a name that the
+parser reads as something other than a variable did not come back as one.
+
+| | was | is |
+|---|---|---|
+| `new ConditionalSet("x", "x > 0").DirectChildren[0]` | `abcd > 0`, a different name in every process | `%1 > 0` |
+| one predicate in `26^4` | `CannotParseInstanceException: Cannot parse an instance of Variable from `true`` | `%1 > 0` |
+
+Four lowercase letters can spell `true`. They can also spell a variable the predicate already uses, in
+which case the rename captures it and the set means something else — silently, with no exception to
+say so. The name now comes from `Variable.CreateTemp`, which reads the predicate's variables rather
+than its hash and hands back `%1` upward, skipping what is taken: fresh by construction, and with no
+reading as anything but a variable, since the parser does not accept `%`.
+
+**Printed output does not change.** `Stringize` reads the node's own fields, so `{ x : x > 0 }` still
+prints with its own binder, and `Solve` answers containing a conditional set are unaffected. Nothing
+could have depended on the old name either, since string hash codes are randomised per process and it
+was therefore different on every run — which is also why this surfaced as a CI failure that would not
+reproduce.
+
+`Variable.CreateRandom`, which had this one caller, is removed. It was `internal`.
+
+Issue [#891](https://github.com/asc-community/AngouriMath/issues/891).
 
 ### `abs(sgn(x))` and `sgn(abs(x))` are not `1` at zero
 

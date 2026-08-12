@@ -468,10 +468,23 @@ namespace AngouriMath
 
                 internal override Priority Priority => Priority.Leaf;
 
-                // The predicate is the child, but the set variable X is not the same as X out of the set,
-                // so to avoid ambiguity, we replace it with a random variable name
+                // The predicate is the child, but the set variable X is not the same as X out of the
+                // set, so to avoid ambiguity it is renamed to one that nothing else can be called.
+                //
+                // CreateTemp, rather than a name derived from the predicate's hash code, which is
+                // what this did until #891. That mapped the hash onto four lowercase letters, and
+                // four lowercase letters can spell `true` -- which went through MathS.Var, and
+                // MathS.Var *parses*, so the parser read a boolean and the conversion to Variable
+                // threw. One name in 26^4 does that, and string hash codes are randomised per
+                // process, so it surfaced as a CI failure that would not reproduce. The same four
+                // letters could also coincide with a free variable of the predicate and capture it,
+                // which is silent. CreateTemp is derived from the predicate's variables rather than
+                // its hash: `%1` upward, skipping what is taken, so it is fresh by construction and
+                // has no reading as anything but a variable.
+                // https://github.com/asc-community/AngouriMath/issues/891
                 /// <inheritdoc/>
-                protected override Entity[] InitDirectChildren() => new[] { Predicate.Substitute(Var, Variable.CreateRandom(Predicate)) };
+                protected override Entity[] InitDirectChildren() =>
+                    new[] { Predicate.Substitute(Var, Variable.CreateTemp(Predicate.Vars)) };
 
                 /// <inheritdoc/>
                 public override bool IsSetFinite => false;
