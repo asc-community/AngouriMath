@@ -700,6 +700,47 @@ namespace AngouriMath.Tests.Common
             Assert.NotEqual(-MathS.pi / 2, simplified);
         }
 
+        // https://github.com/asc-community/AngouriMath/issues/881
+        // |x| is x where the argument is a non-negative real and -x where it is negative, which
+        // is the definition of abs rather than an identity needing an assumption. Only a Number
+        // folded, so abs(-sqrt(6)) and abs(-pi) came back exactly as written, and a concrete
+        // quadratic inequality was answered with abs(-sqrt(6)) / 2 as an endpoint.
+        [Theory]
+        [InlineData("abs(-sqrt(6))", "sqrt(6)")]
+        [InlineData("abs(sqrt(6))", "sqrt(6)")]
+        [InlineData("abs(-pi)", "pi")]
+        [InlineData("abs(-e)", "e")]
+        [InlineData("abs(1 - sqrt(2))", "sqrt(2) - 1")]
+        [InlineData("abs(-sqrt(6)) / 2", "sqrt(6) / 2")]
+        public void AbsoluteValueFoldsWhereTheSignOfTheArgumentIsDecidable(string expression, string expected)
+        {
+            var simplified = expression.ToEntity().Simplify();
+            Assert.DoesNotContain(simplified.Nodes, node => node is Entity.Absf);
+            Assert.True(Magnitude(simplified - expected.ToEntity()) < 1e-20,
+                $"{expression} simplified to {simplified.Stringize()}, not {expected}");
+        }
+
+        // An argument off the real line is neither itself nor its negation under abs: sqrt(-4)
+        // is 2i, whose magnitude is 2. So the sign is read off the value, and a value that is
+        // not real does not answer the question.
+        [Theory]
+        [InlineData("abs(sqrt(-4))", "2")]
+        [InlineData("abs(-sqrt(-4))", "2")]
+        public void AbsoluteValueOffTheRealLineIsTheMagnitude(string expression, string expected)
+        {
+            var simplified = expression.ToEntity().Simplify();
+            Assert.True(Magnitude(simplified - expected.ToEntity()) < 1e-20,
+                $"{expression} simplified to {simplified.Stringize()}, not {expected}");
+        }
+
+        // A symbol has no decidable sign, so nothing is assumed about it: abs(-a) is not a, and
+        // it is not -a either. It stays as written.
+        [Fact]
+        public void AbsoluteValueOfASymbolIsLeftAlone()
+        {
+            var simplified = "abs(-a)".ToEntity().Simplify();
+            Assert.Contains(simplified.Nodes, node => node is Entity.Absf);
+        }
         // https://github.com/asc-community/AngouriMath/issues/892
         // |sgn(z)| and sgn(|z|) are 1 for every z except 0, where both are 0 -- sgn(0) is 0,
         // which the comment above Signumf.InnerSimplify already said. Both rewrites answered 1
