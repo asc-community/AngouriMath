@@ -111,5 +111,51 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("-oo", "-sympy.oo")]
         public void AValueIsEmittedWithSympysOwnSpelling(string expression, string expected) =>
             Assert.Contains(expected, MathS.ToSympyCode(expression.ToEntity().Simplify()));
+
+        /// <summary>
+        /// Python's <c>/</c>, and its <c>**</c> with a negative exponent, are float operations on
+        /// two integers. So the emitted body must never combine two plain integer literals with
+        /// either: <c>1 / 2</c> is <c>0.5</c> there, and an exact value would leave here inexact
+        /// with nothing downstream able to recover it.
+        /// </summary>
+        /// <remarks>
+        /// Asserted as a property of the emitted text rather than by running it, since the suite
+        /// cannot depend on an interpreter. These are taken <em>unsimplified</em> on purpose: a
+        /// simplified <c>1/2</c> is a <c>Rational</c> node and was always exact, while what a
+        /// caller writes parses to a <c>Divf</c> of two integers — which is #873 — and that is the
+        /// shape that was losing the value.
+        /// https://github.com/asc-community/AngouriMath/issues/911
+        /// </remarks>
+        [Theory]
+        [InlineData("1/2")]
+        [InlineData("4/2")]
+        [InlineData("x + 1/2")]
+        [InlineData("2 ^ (-1)")]
+        [InlineData("2 ^ (-3)")]
+        [InlineData("(1/2) ^ (-1)")]
+        [InlineData("1/3 + 1/6")]
+        [InlineData("sin(x) / 2 + 1/4")]
+        public void NoTwoIntegerLiteralsAreCombinedInexactly(string expression)
+        {
+            var (_, body) = Split(MathS.ToSympyCode(expression.ToEntity()));
+            Assert.DoesNotMatch(@"(?<![\w.)])\d+\s*/\s*\d", body);
+            Assert.DoesNotMatch(@"(?<![\w.)])\d+\s*\*\*\s*\(-", body);
+        }
+
+        /// <summary>
+        /// What that looks like: one operand handed to SymPy, which then does the arithmetic and
+        /// keeps it exact. Only the pair-of-integers shapes are touched — with a symbol anywhere
+        /// SymPy's operators already take over, and <c>2 ** 70</c> is exact because Python's
+        /// integers are unbounded.
+        /// </summary>
+        [Theory]
+        [InlineData("1/2", "sympy.Integer(1) / 2")]
+        [InlineData("2 ^ (-1)", "sympy.Integer(2) ** (-1)")]
+        [InlineData("x / 2", "x / 2")]
+        [InlineData("1/x", "1 / x")]
+        [InlineData("2 ^ 70", "2 ** 70")]
+        [InlineData("x ^ (-1)", "x ** (-1)")]
+        public void OnlyAPairOfIntegersIsRewritten(string expression, string expected) =>
+            Assert.Contains(expected, MathS.ToSympyCode(expression.ToEntity()));
     }
 }

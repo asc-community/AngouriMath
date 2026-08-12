@@ -29,6 +29,7 @@ read first.
 | loud | `mod` as a variable name | a variable | a keyword, so a parse error |
 | loud | `NaN` as a variable name | a variable | a keyword, so the NaN value |
 | loud | `MathS.ToSympyCode` of any non-integer rational | `SyntaxError` — a parenthesis was never closed | code that runs |
+| **silent** | `MathS.ToSympyCode` of `1/2`, `2^(-1)` | ran, and gave the float `0.5` | `1/2`, exact |
 | loud | `MathS.ToSympyCode` of `NaN`, `+oo`, `-oo` | `NameError` — the name is never bound | `sympy.nan`, `sympy.oo`, `-sympy.oo` |
 | **silent** | `NaN` printed and read back | a variable of that name, which cancels and collects | the NaN value |
 | **silent** | `Stringize` of powers, lambdas, applications, piecewises | did not parse back | parses back |
@@ -1039,6 +1040,36 @@ parentheses balance, and every name in the emitted body is either declared in th
 through `sympy.`. 17 of their 23 cases fail against the old exporter.
 
 Issue [#909](https://github.com/asc-community/AngouriMath/issues/909).
+
+### `MathS.ToSympyCode` keeps an exact value exact
+
+The generated program ran, and then quietly gave a different number. Python's `/`, and its `**` with a
+negative exponent, are float operations on two integers:
+
+| expression | emitted | SymPy read it as | now emitted | and reads as |
+|---|---|---|---|---|
+| `1/2` | `1 / 2` | `0.500000000000000`, a `Float` | `sympy.Integer(1) / 2` | `1/2`, a `Rational` |
+| `2^(-1)` | `2 ** (-1)` | `0.5` | `sympy.Integer(2) ** (-1)` | `1/2` |
+| `2^(-3)` | `2 ** (-3)` | `0.125` | `sympy.Integer(2) ** (-3)` | `1/8` |
+| `x + 1/2` | `x + 1 / 2` | `x + 0.5` | `x + sympy.Integer(1) / 2` | `x + 1/2` |
+
+Making one operand a SymPy integer hands the arithmetic to SymPy, which keeps it exact. **Only a pair of
+integers is rewritten**, and the rest of the emitted code is unchanged: with a symbol anywhere in the
+shape SymPy's own operators already take over (`x / 2`, `1 / x`, `x ** (-1)`), and `+`, `-`, `*` and a
+non-negative `**` are exact on Python integers, whose precision is unbounded — `2 ** 70` was always
+right.
+
+It bit only the **unsimplified** form, which is the one a caller writes: `"1/2".ToEntity()` is a `Divf`
+of two integers, because a printed rational parses back as a division
+([#873](https://github.com/asc-community/AngouriMath/issues/873)), while a simplified `1/2` is a
+`Rational` node and already emitted `sympy.Rational(1, 2)`.
+
+Checked by running the emitted programs against SymPy 1.14, which is the only way this class of defect
+shows itself — the code was always valid, so the earlier tests could not have caught it, and the two
+added here assert the property instead: no two plain integer literals are combined with `/` or with a
+negative `**`.
+
+Issue [#911](https://github.com/asc-community/AngouriMath/issues/911).
 
 ### `NaN` is now a keyword, and the printed form of NaN reads back
 
