@@ -275,7 +275,46 @@ grammar.** For each rewrite, construct the set where its assumption fails and te
 and compare `L` against `R` numerically at each, counting **both undefined** as agreement, per O4.
 Such a harness would have found all four rules of #884 immediately. It does not exist yet.
 
-## 9. What this does not settle
+## 9. Where to look an assumption set up
+
+Obligation O2 says to state the assumption set. For a large part of classical mathematics somebody has
+already stated it, machine-checked it, and published it:
+**[mathlib4](https://leanprover-community.github.io/mathlib4_docs/)**. Every lemma carries its
+hypotheses explicitly, because Lean will not accept it otherwise — which is the discipline a rewrite
+rule needs, already applied to most of classical analysis.
+
+The intervals this library guards the inverse-trigonometric cancellations with are the ones mathlib
+states:
+
+| mathlib4 | our guard |
+|---|---|
+| `Real.arcsin_sin {x : ℝ} (hx₁ : -(π / 2) ≤ x) (hx₂ : x ≤ π / 2) : arcsin (sin x) = x` | `WithinHalfPi(closed: true)` |
+| `Real.arccos_cos {x : ℝ} (hx₁ : 0 ≤ x) (hx₂ : x ≤ π) : arccos (cos x) = x` | `WithinZeroAndPi(closed: true)` |
+| `Real.arctan_tan {x : ℝ} (hx₁ : -(π / 2) < x) (hx₂ : x < π / 2) : arctan (tan x) = x` | `WithinHalfPi(closed: false)` |
+| `@[simp] Real.tan_arctan (x : ℝ) : tan (arctan x) = x` — no hypothesis | the right-inverse direction, unguarded |
+
+Note the open-versus-closed distinction that separates `arctan` from `arcsin`, and that
+`Real.tan_arctan` is a `@[simp]` lemma with no hypothesis at all — the right-inverse direction needs
+none, which is §5's point in someone else's notation. This is the first place to look when writing a
+guard.
+
+**Two warnings.**
+
+**A hypothesis can differ because the convention differs, not because the mathematics does.**
+`Real.sin_arcsin` requires `-1 ≤ x ≤ 1`, and this library needs no such condition — because mathlib's
+`Real.arcsin` clamps outside `[-1, 1]` to stay a total real function, while ours goes into the complex
+plane. Both are right about their own `arcsin`. Copying a hypothesis without checking which convention
+it belongs to is the same error as reading a branch cut off memory, so §6 applies: measure what *this*
+library does.
+
+**And it does not cover everything.** mathlib has no `arccot`, and `arccot` is the case where this
+library's convention departs furthest from the textbooks: its range is `(-pi/2, pi/2]` rather than
+`(0, pi)`, so `arccotan(-1)` is `-pi/4`
+([#887](https://github.com/asc-community/AngouriMath/issues/887)). Where the lookup is empty there is
+no substitute for measuring the function at a positive argument, a negative one, and zero, and writing
+the three values into the comment.
+
+## 10. What this does not settle
 
 - **Per-symbol assumptions.** SymPy carries them on the symbol (`Symbol('x', positive=True)`) with
   `refine`/`ask` to query, and an explicit `force=True` escape where the user accepts the risk. This

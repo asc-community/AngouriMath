@@ -283,6 +283,11 @@ a procedure, find out whether it has a name:
   new symbolic-computation algorithms appear.
 - **Gruntz's thesis** for limits, **Bronstein's _Symbolic Integration I_** for integration,
   **_Modern Computer Algebra_** (von zur Gathen & Gerhard) for the polynomial layer.
+- **[mathlib4](https://leanprover-community.github.io/mathlib4_docs/)** — for the *hypotheses* of an
+  identity. Every lemma there carries its side conditions explicitly and machine-checked, which is
+  exactly what a rewrite rule needs and exactly what our rules have repeatedly been missing. See
+  [`Contributing/SimplificationContract.md`](Sources/AngouriMath/Docs/Contributing/SimplificationContract.md)
+  for how to use it and where it does not help.
 
 Branch cuts deserve a specific warning: `arcsin`, `log`, and fractional powers disagree between
 conventions, and C99, .NET, Python and Mathematica do not all agree. Decide deliberately, cite the
@@ -373,6 +378,39 @@ Anything added for the library's own purposes is not `public` — see
 checks that any more: the `PublicApiAnalyzers` package that required every public member to be
 listed in a `PublicApi.*.txt` is gone from the tree, so it is a rule to follow rather than one to
 be caught by.
+
+## Read the roadmap before you release anything
+
+[#746](https://github.com/asc-community/AngouriMath/issues/746) is the ten-year technical vision, and
+it is **not optional reading before a release, a version number, or anything that lands in the kernel
+package**. It was written to be argued with, not obeyed — but it has to be read first, because two
+things in it are easy to break by accident and impossible to undo afterwards.
+
+**Its `v1.0`–`v9.0` are capability tiers, not versions.** `v1.0` is "a symbolic engine worth building
+on" — a real polynomial layer, a *written* canonical-form specification, pattern matching as data
+rather than a `switch`, and assumptions that travel with a node. `v2.0` is "the rewrite graph". A
+published package version does **not** mean the tier of the same name has been reached, and choosing
+one spends a label the roadmap is using: check #746 before picking a number, and say on the issue
+which tier the release does and does not advance.
+
+**Three conditions cut across every tier**, and #746 says a tier that violates one has failed
+whatever else it delivered:
+
+1. **The common case pays for nothing it does not use.** Package boundaries are decided deliberately
+   and early, because a published one cannot be moved. Anything large landing in the kernel wants that
+   decision first — #746's item 78.
+2. **Speed and memory on popular use cases are measured, not hoped for.** Parse, `Simplify`, `Solve`
+   and `Differentiate` on textbook-sized input, recorded in
+   [`WhatsNew/version_performance_control.md`](Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md).
+   Measure the previous column again on the same machine and publish the pair: columns taken on
+   different hardware cannot be read as a ratio, and a uniform factor across every row is the machine
+   rather than the code.
+3. **Correctness coverage grows with the surface.** Each new layer adds ways to be wrong that the one
+   below could not express.
+
+So the release checklist is: the suite and the harnesses in `work/` green, a `BREAKING-CHANGES.md`
+entry for every changed answer measured on real builds, **a performance column measured against the
+previous one on the same machine**, and a version number that does not contradict #746.
 
 ## Where the work is
 
