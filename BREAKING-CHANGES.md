@@ -71,6 +71,7 @@ read first.
 | **silent** | `log(1, 1)` | `0` | `NaN`, since it is `0/0` |
 | **silent** | `log(b, 1)` | `0` for any base | `0 provided not b = 1` |
 | **silent** | `log(1/2, 0)` and any base below 1 | `-oo` | `+oo` |
+| **silent** | `abs(-sqrt(6))`, `abs(-pi)`, `abs(1 - sqrt(2))` | left as written | `sqrt(6)`, `pi`, `sqrt(2) - 1` |
 
 ---
 
@@ -348,6 +349,35 @@ the sibling `arcsin`/`arccos` case still collapses and still sorts.
 Found by `boundcheck`, a harness that composes every unary function node with every other and
 compares against the original at points where an assumption fails rather than at sampled points.
 Issue [#887](https://github.com/asc-community/AngouriMath/issues/887).
+
+### `abs` folds where the sign of its argument is known
+
+`|x|` is `x` for a non-negative real `x` and `-x` for a negative one. That is the definition of the
+function rather than an identity with a side condition, and it was applied only when the argument
+was a *number*. An argument whose value is a known real without its node being a number was left
+alone, so a radical or a constant kept its `abs`:
+
+| | was | is |
+|---|---|---|
+| `abs(-sqrt(6))` | left as written | `sqrt(6)` |
+| `abs(-pi)`, `abs(-e)` | left as written | `pi`, `e` |
+| `abs(1 - sqrt(2))` | left as written | `sqrt(2) - 1` |
+| `abs(-2)` | `2` | `2`, unchanged |
+| `abs(sqrt(-4))` | `2` | `2`, unchanged — the magnitude of `2i` |
+| `abs(-a)` for symbolic `a` | left as written | left as written |
+
+Where this shows up is in an answer built out of radicals. `(2x^2 - 3 > 0) and (x > 0)` solved to
+`(abs(-sqrt(6)) / 2; +oo)` and now solves to `(sqrt(6) / 2; +oo)`; the endpoint was always the same
+number, printed in a form that looked like unfinished work. The
+[Solvers wiki page](https://github.com/asc-community/AngouriMath/wiki/Solvers) shows the old output
+and wants updating with the release.
+
+**Nothing is assumed about a symbol**, and an argument off the real line is declined rather than
+guessed at: `sqrt(-4)` evaluates to `2i`, whose absolute value is `2` — neither the argument nor its
+negation, so a rule that read "negative, therefore negate" would be wrong there. The sign is read
+off the value, and a value that is not a finite real does not answer the question.
+
+Issue [#881](https://github.com/asc-community/AngouriMath/issues/881).
 
 ### A known gap no longer presents as a bug
 

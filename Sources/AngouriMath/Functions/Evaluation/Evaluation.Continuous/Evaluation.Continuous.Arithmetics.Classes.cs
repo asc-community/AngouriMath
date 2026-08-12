@@ -448,6 +448,24 @@ namespace AngouriMath
                         Complex n when !isExact => Number.Abs(n),
                         Absf abs => abs,
                         Signumf({ DomainCondition: var condition }) => Integer.One.Provided(condition),
+
+                        // |x| is x where the argument is a non-negative real and -x where it is
+                        // negative, which is the definition rather than an identity needing an
+                        // assumption. A Number folded already; what this reaches is an argument
+                        // whose *value* is a known real without its node being a number --
+                        // abs(-sqrt(6)) and abs(-pi) stayed as written, so a concrete quadratic
+                        // inequality answered with abs(-sqrt(6)) / 2 in it.
+                        //
+                        // An argument off the real line has to decline: sqrt(-4) evaluates to 2i,
+                        // and |2i| is 2, which is neither the argument nor its negation. Nothing
+                        // is assumed about the sign of a symbol either -- there the value cannot
+                        // be read at all and the node is left alone.
+                        // https://github.com/asc-community/AngouriMath/issues/881
+                        var argument when argument.Evaled is Real { EDecimal.IsFinite: true } value
+                            => value.EDecimal.IsNegative
+                                ? (-argument).InnerSimplified(isExact)
+                                : argument,
+
                         _ => null
                     },
                     (@this, a) => ((Absf)@this).New(a), isExact);
