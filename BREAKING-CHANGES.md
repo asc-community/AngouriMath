@@ -25,6 +25,61 @@ read first.
 | **silent** | `DomainCondition` of a logarithm, under the default reading | the real condition, so `log(-3, -3)` was declared undefined while evaluating to `1` | `not b = 0 and not b = 1 and not a = 0` |
 | **silent** | `ln(x).DomainCondition` | `x > 0` | `not x = 0` |
 | **silent** | `"x ^ n".Differentiate("x").Simplify()` | `x ^ n * n / x provided x > 0` — `NaN` at every negative `x` | `x ^ n * n / x provided not x = 0` |
+| **silent** | `"x^5 + 2x^3 - 2x^2 - 4".SolveEquation("x")` | three of the five roots, one of them a float | all five, exact |
+| | `"x^4 + x^2 + 1".SolveEquation("x")` | `sqrt((-1 - sqrt(-3)) / 2)` and its three companions | `(-1 - sqrt(-3)) / 2` and its three, with no nested radical |
+| | `"x^4 + 3x^2 + 2".SolveEquation("x")` | `{ sqrt(-2), -sqrt(-2), i, -i }` | the same four, in the order the factors are found |
+
+### A polynomial equation that factors is solved through its factors
+
+A polynomial of degree four or more may factor over the rationals with no rational root anywhere in
+it — `x^4 + 3x^2 + 2` is `(x^2 + 1)(x^2 + 2)` — and nothing in the solver could see that. The
+rational-root split that runs first is by construction blind to it, and what followed was the
+general machinery for the degree: Ferrari at four, and at five and above no general solution exists
+to reach for. A real polynomial layer
+([#746](https://github.com/asc-community/AngouriMath/issues/746) item 43) is what was missing, and
+the equation solver is its first consumer: where the polynomial factors, each factor is now solved
+as a lower-degree equation of its own.
+
+The change is confined to degree four and up, and that is not a threshold chosen for caution. A
+quadratic or a cubic that factors at all has a rational root — a cubic splits as a linear factor
+times a quadratic, or into three linear factors, and either way there is a linear factor to find —
+so the step that runs before this one has already divided it out. Four is the first degree at which
+a polynomial can factor with nothing rational to catch. A two-termed `a*x^n + b` is also left alone,
+for the reason already written down where the rational-root split declines one: inverting the power
+answers it whole and in polar form.
+
+**The one that was wrong rather than merely differently written.** An incomplete solution set is not
+a partial answer, it is a false one — it says these are the roots.
+
+```
+"x^5 + 2x^3 - 2x^2 - 4".SolveEquation("x")
+
+was  { sqrt(-2), -sqrt(-2), sqrt(1.5874010519681995834417875812505371868610382080078125) }
+is   { sqrt(-2), -sqrt(-2), 2 ^ (1/3),
+       (-1/2 + i * 1/2 * sqrt(3)) * 2 ^ (1/3), (-1/2 + i * -1/2 * sqrt(3)) * 2 ^ (1/3) }
+```
+
+The polynomial is `(x^2 + 2)(x^3 - 2)`. Two of its five roots were missing, and the one real root of
+`x^3 - 2` came back as the square root of a float where `2 ^ (1/3)` is exact — an inexact answer to a
+question that has an exact one. It also took 4.6 seconds and now takes under a quarter of one.
+
+**The others are the same numbers, written better or written in a different order.** Factoring first
+means each root comes out of a quadratic or a cubic rather than out of the resolvent of a quartic,
+and the forms are correspondingly plainer:
+
+```
+"x^4 + x^2 + 1".SolveEquation("x")
+was  { sqrt((-1 - sqrt(-3)) / 2), -sqrt((-1 - sqrt(-3)) / 2), ... }
+is   { (-1 - sqrt(-3)) / 2, (-1 + sqrt(-3)) / 2, (1 - sqrt(-3)) / 2, (1 + sqrt(-3)) / 2 }
+
+"x^4 + 3x^3 + 6x^2 + 5x + 3".SolveEquation("x")
+was  { -3/4 + (-1/2 + -sqrt(-8)) / 2, ... }
+is   { (-1 - sqrt(-3)) / 2, (-1 + sqrt(-3)) / 2, (-2 - sqrt(-8)) / 2, (-2 + sqrt(-8)) / 2 }
+```
+
+Both sets are unchanged as sets — the members were checked to be equal, not merely to look it. Where
+a solution set is only reordered, as for `x^4 + 3x^2 + 2` and `2x^4 + 6x^2 + 4`, code that indexed
+into the result rather than searching it will see different elements at the same positions.
 
 ### The logarithm's domain follows the reading, as every other node's already did
 
