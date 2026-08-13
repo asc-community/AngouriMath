@@ -42,6 +42,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x ^ x / e ^ (x * ln(x))", "1")]
         [InlineData("e ^ (x * ln(x)) / x ^ x", "1")]
         [InlineData("x ^ (2 * x) / e ^ (2 * x * ln(x))", "1")]
+        [InlineData("(x ^ 2) ^ x / e ^ (2 * x * ln(x))", "1")]
         public void APowerAndItsExponentialAreOneFunction(string expression, string expected) =>
             AssertLimit(expression, expected);
 
@@ -53,40 +54,33 @@ namespace AngouriMath.Tests.Calculus
         [Theory]
         [InlineData("x ^ x / e ^ (x * ln(x) - x)", "+oo")]
         [InlineData("x ^ x / e ^ (x * ln(x) + x)", "0")]
+        [InlineData("x ^ x / e ^ (x * ln(x) - ln(x))", "+oo")]
         public void WhatIsLeftOverDecidesIt(string expression, string expected) =>
             AssertLimit(expression, expected);
 
         /// <summary>
-        /// Two of the cases above are no longer answered, and they are lost honestly: each comes
-        /// back as an unevaluated <c>limit</c> node rather than as a value, so the caller is told
-        /// that nothing was settled instead of being told something false.
+        /// The two rows above that need <c>ln(a^c) = c * ln(a)</c> are answered only because a
+        /// limit is being read. The identity is false off <c>ln</c>'s principal strip
+        /// (https://github.com/asc-community/AngouriMath/issues/902), so a bare <c>Simplify</c>
+        /// must still decline it: there is no destination there, and nothing says the base keeps
+        /// its sign.
         /// </summary>
         /// <remarks>
-        /// Both need <c>ln(a^c) = c * ln(a)</c> — <c>d/dx (x^2)^x</c> carries <c>ln(x^2)</c>, and
-        /// l'Hopital's rule reached it through <c>Simplify</c>. That identity is false off
-        /// <c>ln</c>'s principal strip, so the simplifier no longer applies it
-        /// (https://github.com/asc-community/AngouriMath/issues/902), and as x -> +oo the base
-        /// really is positive, so what is missing here is a way to say so.
-        /// <para/>
-        /// Supplying it from the limit side does not reach: rewriting the expression before
-        /// <c>Simplify</c> is called does pull the exponent out, and <c>Simplify</c>'s own
-        /// candidate search then writes <c>(x^2)^x</c> back into a logarithm and needs the
-        /// identity again. It is load-bearing *inside* the search, so restoring these two wants
-        /// an assumption travelling with the expression rather than another pre-pass.
-        /// <para/>
-        /// An unevaluated node is asserted rather than <c>NaN</c> deliberately: <c>NaN</c> would
-        /// claim the limit does not exist, and it does. If a value comes back here, the
-        /// assumption mechanism has arrived and these two rows belong back in the theories above.
+        /// This is the half of the pair that can regress silently. Widening the guard until an
+        /// ordinary <c>Simplify</c> applies the identity would restore the wrong answer #902
+        /// reported -- <c>ln(e^x)</c> as <c>x</c>, which at <c>x = 3*pi*i</c> is <c>9.4247i</c>
+        /// where the expression is <c>pi*i</c> -- and every limit above would keep passing.
         /// </remarks>
         [Theory]
-        [InlineData("(x ^ 2) ^ x / e ^ (2 * x * ln(x))")]
-        [InlineData("x ^ x / e ^ (x * ln(x) - ln(x))")]
-        public void AnExponentUnderALogarithmIsNotReadForNow(string expression)
+        [InlineData("ln(e ^ x)")]
+        [InlineData("log(2, 2 ^ x)")]
+        public void OutsideALimitTheExponentStaysUnderTheLogarithm(string expression)
         {
-            var limit = expression.ToEntity().Limit("x", "+oo".ToEntity());
-            Assert.True(limit is Entity.Limitf,
-                $"{expression} came back as {limit.Stringize()}, which is a value rather than an "
-                + "unevaluated limit -- see this test's remarks before changing it");
+            var simplified = expression.ToEntity().Simplify();
+            Assert.True(simplified is Entity.Logf,
+                $"{expression} simplified to {simplified.Stringize()}, pulling the exponent out "
+                + "of a logarithm with nothing to say the base holds its sign -- see this test's "
+                + "remarks before changing it");
         }
 
         /// <summary>

@@ -406,3 +406,43 @@ Recorded because each was ruled out by measurement and none was reachable by arg
 
 The last of those is the one worth generalising: **withdrawing a rewrite has a cost in search, not
 only in coverage**, and that cost is invisible until something is timed.
+
+## 12. The same move takes the second rule, and retires a prediction
+
+`log_b(a^c) = c * log_b(a)` was withdrawn from an undecided argument by
+[#902](https://github.com/asc-community/AngouriMath/issues/902) for the same reason as the gathering
+above — it is false off `ln`'s principal strip — and it cost two limits over `(x^2)^x` and `x^x`.
+Those were recorded as needing *an assumption travelling with the expression*, on the strength of
+three insertion points that were each implemented, instrumented and measured to fail.
+
+**The measurement was sound; the conclusion was not.** All three were pre-passes. A pre-pass rewrites
+the expression and hands it on, so it cannot reach the candidate search that rebuilds the logarithm
+behind it — which is precisely what the 192-times and 117-times counts above were showing. The
+ambient approach of §11 is a different mechanism: the *rule* asks it, so it is answered wherever the
+rule is asked, candidate search included. Applying it to this second rule answers both limits, on the
+default complex reading, with no assumption mechanism anywhere.
+
+**The distinction to carry to the next unsound rule.** Two repairs look alike and are not:
+
+| | reaches | example |
+|---|---|---|
+| the machinery rewrites a shape it matches directly | what the machinery constructs | #802, `ApplySecondRemarkable` |
+| the rule asks an ambient scope for a condition | that, **and** what `Simplify` constructs for itself | §11's gathering, and this |
+
+Prefer the second whenever the rule is one the simplifier's own alternation depends on. Ask which
+kind is needed before promising a limit-side guard, and do not conclude from a failed pre-pass that
+an assumption channel is required.
+
+**What the condition has to be, and why it is not read off a limit.** A positive limit does not make
+a base real on the way to it: `x + i*sin(x)` tends to `+oo` off the real line. So the base and the
+exponent are both required to be real *along* the approach, decided structurally — closed
+subexpressions that evaluate to a finite real, the approach variable itself, and sums, products,
+quotients and absolute values of those. A power joins only with a whole exponent or a decidably
+positive base, since `(-2)^(1/2)` is imaginary. A second variable carries no approach and is refused,
+as is anything unlisted: the list costs coverage and never correctness, which is the right way round.
+
+**Outside a limit the rule still declines, and that half needs its own test.** Widening the guard
+until an ordinary `Simplify` applies the identity restores #902's wrong answer — `ln(e^x)` as `x`,
+which at `x = 3*pi*i` is `9.4247i` where the expression is `pi*i` — while every limit that motivated
+the change keeps passing. A rewrite earned under a stated approach must be shown to be *unavailable*
+without one.
