@@ -240,9 +240,9 @@ namespace AngouriMath.Functions
                 // The division below is the whole point of the subresultant sequence: what
                 // it leaves is a subresultant, so it comes out exact, and the coefficients
                 // stay the size of the subresultants instead of compounding.
-                if (scale.Power(delta) is not { } scalePower
-                    || previousLead.Multiply(scalePower) is not { } factor
-                    || remainder.DivideExact(factor) is not { } next)
+                if (scale.Power(delta, MultivariatePolynomial.MaxIntermediateTerms) is not { } scalePower
+                    || previousLead.Multiply(scalePower, MultivariatePolynomial.MaxIntermediateTerms) is not { } factor
+                    || remainder.DivideExact(factor, MultivariatePolynomial.MaxIntermediateTerms) is not { } next)
                     return null;
 
                 left = right;
@@ -252,9 +252,9 @@ namespace AngouriMath.Functions
                     scale = previousLead;
                 else if (delta > 1)
                 {
-                    if (previousLead.Power(delta) is not { } raised
-                        || scale.Power(delta - 1) is not { } divisor
-                        || raised.DivideExact(divisor) is not { } updated)
+                    if (previousLead.Power(delta, MultivariatePolynomial.MaxIntermediateTerms) is not { } raised
+                        || scale.Power(delta - 1, MultivariatePolynomial.MaxIntermediateTerms) is not { } divisor
+                        || raised.DivideExact(divisor, MultivariatePolynomial.MaxIntermediateTerms) is not { } updated)
                         return null;
                     scale = updated;
                 }
@@ -281,8 +281,8 @@ namespace AngouriMath.Functions
                     break;
                 MultithreadingFunctional.ExitIfCancelled();
                 var shift = remainder.DegreeIn(main) - divisorDegree;
-                if (divisorLead.Multiply(remainder) is not { } scaled
-                    || remainder.LeadingCoefficientIn(main).Multiply(divisor) is not { } cancelling
+                if (divisorLead.Multiply(remainder, MultivariatePolynomial.MaxIntermediateTerms) is not { } scaled
+                    || remainder.LeadingCoefficientIn(main).Multiply(divisor, MultivariatePolynomial.MaxIntermediateTerms) is not { } cancelling
                     || cancelling.ShiftedBy(main, shift) is not { } shifted)
                     return null;
                 remainder = scaled.Subtract(shifted);
@@ -292,7 +292,7 @@ namespace AngouriMath.Functions
                 return remainder;
             for (var i = 0; i < outstanding; i++)
             {
-                if (divisorLead.Multiply(remainder) is not { } scaled)
+                if (divisorLead.Multiply(remainder, MultivariatePolynomial.MaxIntermediateTerms) is not { } scaled)
                     return null;
                 remainder = scaled;
             }

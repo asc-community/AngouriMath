@@ -295,10 +295,13 @@ namespace AngouriMath.Tests.Algebra.Polynomials
         /// clock-seeded generator out.
         /// </summary>
         /// <remarks>
-        /// Seven of these three thousand are declined rather than answered, and the count is
-        /// asserted rather than ignored: <see cref="TheTermCeilingIsReachedByAnIntermediate"/>
-        /// is what reaches the ceiling and why the inputs that do it are so small. The bound
-        /// is an upper one, so finding fewer never fails.
+        /// Seven of these three thousand used to be declined rather than answered, all of them
+        /// for the reason in <see cref="AnIntermediatePastTheInputCeilingIsStillAnswered"/> —
+        /// an intermediate past the input bound on the way to a small answer. Since
+        /// <see cref="MultivariatePolynomial.MaxIntermediateTerms"/> that is none of them, and
+        /// the count is asserted at zero rather than bounded, so a refusal reappearing fails
+        /// here instead of passing quietly under a ceiling.
+        /// https://github.com/asc-community/AngouriMath/issues/920
         /// </remarks>
         [Fact]
         public void GcdIsMultiplicativeOverManyDrawnTriples()
@@ -322,7 +325,7 @@ namespace AngouriMath.Tests.Algebra.Polynomials
                 Assert.True(divisor.SameAs(expected), $"trial {trial}: the divisor is not the expected one");
                 AssertIsGreatestCommonDivisor(first, second, divisor, SweepVariables.Length);
             }
-            Assert.True(declined <= 7, $"{declined} of 3000 triples were declined");
+            Assert.True(declined == 0, $"{declined} of 3000 triples were declined");
         }
 
         #endregion
@@ -501,12 +504,14 @@ namespace AngouriMath.Tests.Algebra.Polynomials
         /// wrong answer is that the step declines.
         /// </summary>
         /// <remarks>
-        /// Pinned as a refusal, which is a legitimate answer. Should the ceiling be raised, or
-        /// the sequence learn to keep its intermediates primitive, this becomes an answer and
-        /// the test should be changed to assert that answer deliberately.
+        /// This was pinned as a refusal, and is now the answer. The intermediate is held to
+        /// <see cref="MultivariatePolynomial.MaxIntermediateTerms"/> rather than to the input
+        /// bound, which is the distinction the refusal was missing: nothing about the question
+        /// asked here is large, only something passed through on the way to it.
+        /// https://github.com/asc-community/AngouriMath/issues/920
         /// </remarks>
         [Fact]
-        public void TheTermCeilingIsReachedByAnIntermediate()
+        public void AnIntermediatePastTheInputCeilingIsStillAnswered()
         {
             var variables = new[] { "a", "b", "c", "d" };
             var left = Polynomial("(b + c + 1) * (a + b) * (a + b + c + d)", variables);
@@ -514,11 +519,15 @@ namespace AngouriMath.Tests.Algebra.Polynomials
             Assert.Equal(19, left.TermCount);
             Assert.Equal(29, right.TermCount);
 
-            // a + b + c + d divides both, and is not found.
+            // a + b + c + d divides both, and is now found rather than declined.
             var common = Polynomial("a + b + c + d", variables);
             Assert.NotNull(left.DivideExact(common));
             Assert.NotNull(right.DivideExact(common));
-            Assert.Null(Gcd(left, right, variables.Length));
+
+            var divisor = Gcd(left, right, variables.Length);
+            Assert.NotNull(divisor);
+            Assert.True(divisor.SameAs(common), "the divisor found is not a + b + c + d");
+            AssertIsGreatestCommonDivisor(left, right, divisor, variables.Length);
         }
 
         #endregion

@@ -63,6 +63,27 @@ namespace AngouriMath.Functions
         /// </summary>
         internal const int MaxTerms = 512;
 
+        /// <summary>
+        /// The ceiling for an intermediate of a calculation whose input and answer are both
+        /// already inside <see cref="MaxTerms"/>.
+        /// </summary>
+        /// <remarks>
+        /// A multivariate pseudo-remainder multiplies through by a leading coefficient that is
+        /// itself a polynomial, so its intermediates grow in monomial count even when neither
+        /// side is anywhere near the bound — the subresultant divisions bound how big the
+        /// coefficients get, not how many terms there are. Holding those intermediates to the
+        /// input bound refused a gcd of a 19-term and a 29-term pair.
+        /// https://github.com/asc-community/AngouriMath/issues/920
+        ///
+        /// It is deliberately a second constant rather than a larger <see cref="MaxTerms"/>.
+        /// The input bound is what protects the hot path — <c>TryCancel</c> runs on every
+        /// quotient the simplifier builds — and raising it turned three documented refusals
+        /// into answers, including a direct product of two 495-term inputs. What was too small
+        /// was never the bound on what may be asked, only the bound on what may be passed
+        /// through on the way to an answer that is itself small.
+        /// </remarks>
+        internal const int MaxIntermediateTerms = 4096;
+
         private const int BitsPerVariable = 8;
         private const ulong PowerMask = 0xFF;
 
@@ -163,7 +184,7 @@ namespace AngouriMath.Functions
                 into[monomial] = sum;
         }
 
-        internal MultivariatePolynomial? Multiply(MultivariatePolynomial other)
+        internal MultivariatePolynomial? Multiply(MultivariatePolynomial other, int maxTerms = MaxTerms)
         {
             if (IsZero || other.IsZero)
                 return Zero(VariableCount);
@@ -174,13 +195,13 @@ namespace AngouriMath.Functions
                     if (!TryMultiplyMonomials(left.Key, right.Key, VariableCount, out var monomial))
                         return null;
                     Accumulate(result, monomial, left.Value.Multiply(right.Value).ToLowestTerms());
-                    if (result.Count > MaxTerms)
+                    if (result.Count > maxTerms)
                         return null;
                 }
             return new(VariableCount, result);
         }
 
-        internal MultivariatePolynomial? Power(int exponent)
+        internal MultivariatePolynomial? Power(int exponent, int maxTerms = MaxTerms)
         {
             if (exponent < 0 || exponent > MaxDegree)
                 return null;
@@ -190,14 +211,14 @@ namespace AngouriMath.Functions
             {
                 if ((exponent & 1) == 1)
                 {
-                    if (result.Multiply(square) is not { } multiplied)
+                    if (result.Multiply(square, maxTerms) is not { } multiplied)
                         return null;
                     result = multiplied;
                 }
                 exponent >>= 1;
                 if (exponent == 0)
                     break;
-                if (square.Multiply(square) is not { } squared)
+                if (square.Multiply(square, maxTerms) is not { } squared)
                     return null;
                 square = squared;
             }
@@ -292,7 +313,7 @@ namespace AngouriMath.Functions
         /// That is the check the caller relies on: nothing is cancelled that has not been
         /// divided out and seen to leave nothing behind.
         /// </remarks>
-        internal MultivariatePolynomial? DivideExact(MultivariatePolynomial divisor)
+        internal MultivariatePolynomial? DivideExact(MultivariatePolynomial divisor, int maxTerms = MaxTerms)
         {
             if (divisor.IsZero)
                 return null;
@@ -305,7 +326,7 @@ namespace AngouriMath.Functions
             var divisorValue = divisor.terms[divisorLead];
             var quotient = new Dictionary<ulong, ERational>();
             var rest = this;
-            for (var step = 0; step <= MaxTerms; step++)
+            for (var step = 0; step <= maxTerms; step++)
             {
                 if (rest.IsZero)
                     return new(VariableCount, quotient);
@@ -317,7 +338,7 @@ namespace AngouriMath.Functions
                 if (divisor.MultiplyByTerm(monomial, value) is not { } product)
                     return null;
                 rest = rest.Subtract(product);
-                if (rest.TermCount > MaxTerms)
+                if (rest.TermCount > maxTerms)
                     return null;
             }
             return null;
