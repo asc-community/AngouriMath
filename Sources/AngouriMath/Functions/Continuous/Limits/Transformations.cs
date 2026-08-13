@@ -381,6 +381,85 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Whether <c>log_b(a^c) = c * log_b(a)</c> may be applied here, which it may only while
+        /// an approach is being read, and only where <paramref name="base"/> holds a positive
+        /// sign on it and <paramref name="exponent"/> is real along it.
+        /// </summary>
+        /// <remarks>
+        /// The identity needs <c>Im(c * ln a)</c> inside the strip <c>(-pi, pi]</c>. A base that
+        /// is positive on the approach makes <c>ln a</c> real, and a real <c>c</c> then leaves the
+        /// product real, so there is nothing for the principal branch to discard. Both halves are
+        /// answerable here and neither is answerable to a simplifier reading the expression on its
+        /// own account, which is why the rule declines there.
+        /// <para/>
+        /// The approach is withdrawn for the duration of the sign check, as in
+        /// <see cref="MayGatherLogarithmsHere"/>, so the limits it asks for cannot come back
+        /// through this same door.
+        /// https://github.com/asc-community/AngouriMath/issues/902
+        /// </remarks>
+        internal static bool MayTakeLogOfPowerHere(Entity @base, Entity exponent)
+        {
+            if (currentApproach is not { } approach || logOfPowerDepth >= MaxLogOfPowerDepth)
+                return false;
+            // A destination off the real line is not an approach along it, and then nothing below
+            // can be said about the variable.
+            if (approach.Dest.Evaled is not Real)
+                return false;
+            // The sign check below reads the base's limit, and a limit being positive does not
+            // make the base real on the way to it -- x + i*sin(x) tends to +oo off the real line.
+            if (!IsRealAlong(@base, approach.X) || !IsRealAlong(exponent, approach.X))
+                return false;
+            logOfPowerDepth++;
+            var previous = SwapApproach(null);
+            try
+            {
+                return MemoisedSign(@base, approach) == 1;
+            }
+            finally { SwapApproach(previous); logOfPowerDepth--; }
+        }
+
+        /// <summary>
+        /// How deep <see cref="MayTakeLogOfPowerHere"/> may re-enter itself, for the reason
+        /// <see cref="MaxGatherLogarithmsDepth"/> gives: it asks for a limit, and that limit runs
+        /// the machinery the question was asked from.
+        /// </summary>
+        private const int MaxLogOfPowerDepth = 1;
+
+        [System.ThreadStatic] private static int logOfPowerDepth;
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> is real wherever <paramref name="x"/> is, decided
+        /// structurally. On an approach to a real destination the variable runs along the real
+        /// line, which is the one thing that makes this answerable for a symbol at all.
+        /// </summary>
+        /// <remarks>
+        /// A power is admitted only with a whole exponent or a decidably positive base, because a
+        /// real raised to a real leaves the real line as soon as the base goes negative:
+        /// <c>(-2)^(1/2)</c> is imaginary. Any other symbol answers <see langword="false"/>, since
+        /// a second variable carries no approach and may be complex. Anything unlisted answers
+        /// <see langword="false"/> as well, which costs coverage and never correctness.
+        /// </remarks>
+        private static bool IsRealAlong(Entity expr, Variable x)
+        {
+            // Anything closed that evaluates to a finite real is one, which is how pi and e get
+            // in: both are Variable here, and neither is the approach variable.
+            if (expr.Evaled is Real { EDecimal.IsFinite: true })
+                return true;
+            return expr switch
+            {
+                Variable v => v == x,
+                Sumf(var a, var b) => IsRealAlong(a, x) && IsRealAlong(b, x),
+                Minusf(var a, var b) => IsRealAlong(a, x) && IsRealAlong(b, x),
+                Mulf(var a, var b) => IsRealAlong(a, x) && IsRealAlong(b, x),
+                Divf(var a, var b) => IsRealAlong(a, x) && IsRealAlong(b, x),
+                Absf => true,
+                Powf(var b, Integer) => IsRealAlong(b, x),
+                Powf(var b, var e) => IsRealAlong(e, x) && b.Evaled is Real { IsPositive: true },
+                _ => false
+            };
+        }
+
+        /// <summary>
         /// How many times over <see cref="ApplySecondRemarkable"/> may be re-read into an
         /// expression that <see cref="SimplifyAndComputeLimitToInfinity"/>'s simplification
         /// has just created.

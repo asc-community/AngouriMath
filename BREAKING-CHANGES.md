@@ -26,6 +26,7 @@ read first.
 | **silent** | `ln(x).DomainCondition` | `x > 0` | `not x = 0` |
 | **silent** | `"x ^ n".Differentiate("x").Simplify()` | `x ^ n * n / x provided x > 0` — `NaN` at every negative `x` | `x ^ n * n / x provided not x = 0` |
 | **silent** | `ln(a) + ln(b)` and `ln(a) - ln(b)` for symbolic `a`, `b` | `ln(a * b)`, `ln(a / b)` — wrong by `2*pi*i` off the positive reals | left as written |
+| **silent** | `lim x->+oo (x^2)^x / e^(2*x*ln(x))` and `lim x->+oo x^x / e^(x*ln(x) - ln(x))` | unevaluated, the deliberate loss 2.1.0 recorded | `1` and `+oo`, the answers from before 2.1.0 |
 | **silent** | `"x^5 + 2x^3 - 2x^2 - 4".SolveEquation("x")` | three of the five roots, one of them a float | all five, exact |
 | | `"x^4 + x^2 + 1".SolveEquation("x")` | `sqrt((-1 - sqrt(-3)) / 2)` and its three companions | `(-1 - sqrt(-3)) / 2` and its three, with no nested radical |
 | | `"x^4 + 3x^2 + 2".SolveEquation("x")` | `{ sqrt(-2), -sqrt(-2), i, -i }` | the same four, in the order the factors are found |
@@ -109,6 +110,47 @@ does not cost coverage, it costs **termination**, because the limit machinery's 
 creates the pairs that only this puts back together.
 
 From [#721](https://github.com/asc-community/AngouriMath/issues/721).
+
+### An exponent under a logarithm is read again, where a limit says the base holds its sign
+
+2.1.0 withdrew `log_b(a^c) = c * log_b(a)` from an undecided argument, because it is false off
+`ln`'s principal strip, and recorded two limits as the price:
+
+| | 2.1.0 | now |
+|---|---|---|
+| `lim x->+oo (x^2)^x / e^(2*x*ln(x))` | unevaluated | `1` |
+| `lim x->+oo x^x / e^(x*ln(x) - ln(x))` | unevaluated | `+oo` |
+
+Both are answered again, and by the same route the logarithm gathering above takes: a stated
+approach. The identity needs `Im(c * ln a)` inside `(-pi, pi]`; a base that holds a positive sign on
+the way to the destination makes `ln a` real, and an exponent that is real along the approach leaves
+the product real, so there is nothing for the principal branch to discard. Both halves are
+answerable while a limit is being read and neither is answerable to a simplifier reading an
+expression on its own account — so **outside a limit the rule still declines**, and `ln(e^x)` is
+still left as written. That half now has a test of its own, because widening the guard until an
+ordinary `Simplify` applies the identity would restore the wrong answer
+[#902](https://github.com/asc-community/AngouriMath/issues/902) reported while every limit above
+kept passing.
+
+The exponent's realness is decided structurally and conservatively rather than read off a limit: a
+positive *limit* does not make a base real on the way to it, since `x + i*sin(x)` tends to `+oo` off
+the real line. A power is admitted only with a whole exponent or a decidably positive base, because
+`(-2)^(1/2)` is imaginary; a second variable carries no approach and is refused. Anything unlisted
+is refused too, which costs coverage and never correctness.
+
+**What this corrects is a recorded prediction, not only a lost answer.** 2.1.0's entry said these two
+wanted "an assumption travelling with the expression — `#746`'s tier 1 and the subject of
+[#721](https://github.com/asc-community/AngouriMath/issues/721) — and not another pass", on the
+strength of three insertion points that were each tried and each failed. That measurement was
+sound and the conclusion drawn from it was not: all three were *pre-passes*, which rewrite the
+expression before `Simplify` is called and cannot reach the candidate search that rebuilds it. An
+ambient scope is not a pass. The rule itself asks whether an approach is being read, so it is
+answered wherever the rule is asked — including 117 times inside one l'Hopital descent. No
+assumption mechanism arrived, and none was needed.
+
+`boundcheck` stays at **0** disagreements, and the suite finishes in its usual time — the failure
+mode to watch for here is a hang rather than a wrong answer, since the limit machinery's own
+expansion creates the shapes these rules put back.
 
 ### The logarithm's domain follows the reading, as every other node's already did
 

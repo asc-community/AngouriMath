@@ -180,8 +180,11 @@ namespace AngouriMath.Functions
             // written -- including a symbolic exponent under the default complex reading, where
             // the question is not decidable.
             // https://github.com/asc-community/AngouriMath/issues/902
+            // Or the limit machinery is reading the expression towards a destination and has
+            // established the base holds a positive sign on the way to it, which is the same
+            // second way in that the logarithm gathering below takes.
             Logf(var any1, Powf(var any2, var any3))
-                when IsPositiveReal(any2) && MayBeTakenAsReal(any3) => any3 * MathS.Log(any1, any2),
+                when MayTakeLogOfPower(any2, any3) => any3 * MathS.Log(any1, any2),
             // log_b(b) is 1 wherever it is defined at all, so the condition to carry is the
             // node's own and not one written out here. Asserting `any1 > 0` stated the real
             // reading inside the rule and was wrong in both directions at once: undefined at
@@ -322,6 +325,16 @@ namespace AngouriMath.Functions
         /// </remarks>
         private static bool IsPositiveReal(Entity entity)
             => entity.Evaled is Real { EDecimal.IsFinite: true } value && value.IsPositive;
+
+        /// <summary>
+        /// Whether the exponent may be pulled out of a logarithm: because the base is a decidably
+        /// positive number and the exponent may be taken as real, or because a limit is being read
+        /// and the base holds a positive sign on the approach to its destination while the exponent
+        /// is real along it.
+        /// </summary>
+        private static bool MayTakeLogOfPower(Entity @base, Entity exponent)
+            => (IsPositiveReal(@base) && MayBeTakenAsReal(exponent))
+               || Algebra.LimitFunctional.MayTakeLogOfPowerHere(@base, exponent);
 
         /// <summary>
         /// Whether two antilogarithms may be gathered into one: because both are decidably
