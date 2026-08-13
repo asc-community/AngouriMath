@@ -44,10 +44,16 @@ it. So the whole "this is undefined here" story is one property away:
 | `1/x` | `not x = 0` |
 | `(x-1)/(x-1)` | `not x - 1 = 0` |
 | `tan(x)` | `not cos(x) = 0` |
-| `ln(x)` | `x > 0` |
-| `log(b, x)` | `b > 0 and not b = 1 and x > 0` |
+| `ln(x)` | `not x = 0` |
+| `log(b, x)` | `not b = 0 and not b = 1 and not x = 0` |
 | `x^y` | `not x = 0 or y > 0` |
 | `sqrt(x)`, `arcsin(x)`, `sgn(x)`, `arcsin(sin(x))` | `True` |
+
+The two logarithm rows are the **complex** reading, which is the default. Under
+`WithCodomain(Domain.Real)` they are `x > 0` and `b > 0 and not b = 1 and x > 0`. Which of the two
+you get is the reading, as it already was for `arcsin` and its siblings
+([#916](https://github.com/asc-community/AngouriMath/pull/916), from
+[#721](https://github.com/asc-community/AngouriMath/issues/721)).
 
 **This is the property to compare across a rewrite.** If the two sides do not have the same domain,
 the rule either attaches the difference or does not fire.
@@ -246,15 +252,21 @@ it to the other.
 
 Recorded here because the contract makes them visible, not because they are settled.
 
-**`ln` and `sqrt` disagree about which reading their domain describes.** With the default codomain
-`Domain.Complex`, `DomainCondition` of `ln(x)` is `x > 0` — the real reading, since a complex logarithm
-is defined for every `x != 0` — while `DomainCondition` of `sqrt(x)` is `True`, the complex reading.
-The two cannot both be right under one setting. Likewise `arcsin(x)` reports `True`, which is the
-complex reading, though over the reals it needs `|x| <= 1`.
+**~~`ln` and `sqrt` disagree about which reading their domain describes.~~ Fixed** in
+[#916](https://github.com/asc-community/AngouriMath/pull/916). `ln(x)` reported `x > 0` — the real
+reading — while `sqrt(x)` reported `True`, the complex one, and the two could not both be right under
+one setting. The logarithm now states both and picks by the reading, so all of `ln`, `sqrt` and
+`arcsin` describe the same reading at the same time.
 
-**`DomainCondition` does not read `MathS.Settings.Codomain` at all.** It is a property of the node,
-fixed at construction, so it cannot say "defined here, given that we are doing real analysis". That is
-the same gap as #721, in a second place.
+Worth keeping from how it was fixed: **the condition cannot be read off evaluation.** Writing the
+complex condition to match what `Evaled` returns makes `ln(x)` defined everywhere, because `ln(0)` is
+`-oo` and `log(0, 5)` is `0` — all values. `-oo` is not a complex number, and taking it for one
+silently drops the guard on `ln(x) * 0`, which is `NaN` at `x = 0`.
+
+**`DomainCondition` still does not read `MathS.Settings.Codomain`.** It reads the node's own
+`Codomain`, which `WithCodomain` sets, so a domain can be stated per node but not per scope. Unifying
+the two is the half of [#721](https://github.com/asc-community/AngouriMath/issues/721) that is still
+open.
 
 ## 8. Checking this, and why the existing harnesses cannot
 
@@ -274,7 +286,14 @@ grammar.** For each rewrite, construct the set where its assumption fails and te
 - a negative base with a rational exponent, at both odd and even denominators;
 
 and compare `L` against `R` numerically at each, counting **both undefined** as agreement, per O4.
-Such a harness would have found all four rules of #884 immediately. It does not exist yet.
+Such a harness would have found all four rules of #884 immediately.
+
+**It exists.** `boundcheck`, in the analysis workspace beside this repository, is built exactly that
+way: it enumerates the unary function nodes by reflection, composes them pairwise, and tests the
+result at 25 points chosen to sit where some rule's assumption fails. 372 shapes, 966 comparisons. It
+found [#887](https://github.com/asc-community/AngouriMath/issues/887) within minutes of existing —
+an error in the fix for #884, which is the most useful thing to record about it. It currently reports
+**one** disagreement, and §11 is that one.
 
 ## 9. Where to look an assumption set up
 
@@ -322,7 +341,55 @@ the three values into the comment.
   library has a global reading and a per-node `Codomain`, and no way to say "this `x` is positive".
   Most of the assumption sets in §5 would be dischargeable if there were one. That is a design
   question, not an omission from this file.
+
+  **One caution, from measuring the case most often cited for it.** `ln(a) + ln(b) -> ln(a*b)` was
+  the standing example of a rule that per-symbol assumptions would rescue. §11 measures what
+  guarding it actually costs, and the blocker turns out to be that the limit machinery depends on
+  the rule to terminate — which no assumption on `a` and `b` discharges, because the limit
+  machinery's own expansion is what creates the operands. Assumptions are still worth having; this
+  particular consumer is not the argument for them. Pick a consumer that has been measured.
 - **Whether `Providedf` should be able to express a neighbourhood**, which is #721.
 - **The fractional-power convention**, which is #204.
 - **The tiers.** `Soundness` remains declared, not checked. Nothing here promotes a rule set to
   `Sound`; doing so still needs the argument that its assumption set is empty, written down.
+
+## 11. The one rule `boundcheck` still reports, and what it costs to guard
+
+```
+ln(a) + ln(b)  ->  ln(a * b)         Patterns.Power.cs, and the Minusf sibling
+```
+
+Unsound off the positive reals, and `boundcheck`'s last disagreement: at `x = -3`,
+`ln(x) + ln(x+1)` is `1.7918 + 6.2832i` and `ln(x*(1+x))` is `1.7918`. The two differ by `2*pi*i`,
+which is the turn of the argument the principal branch discards. The rule carries no condition at
+all, so by O2 it is asserting there is nothing to assume, and that assertion is false.
+
+**It is written down here rather than fixed because guarding it has been measured, and the cost is
+not what it was assumed to be.** `work/TRIAGE.md` recorded the cost as "the log-equation solver loses
+coverage". Guarding both rules with the file's existing `IsPositiveReal` idiom and running the suite
+gives something else:
+
+- **three failures** — `SimplifyTest.PowerRulesTest` for `ln(a) + ln(b)` and `ln(a) - ln(b)`, which
+  are the rules' own tests, and `OneSidedLimitTest.ADifferenceOfReciprocalLogarithms(Left)`;
+- **and a hang.** The run does not finish. Left alone it passed three and a half hours against a
+  normal five minutes; under `--blame-hang` the host is killed with the offending test among
+  `RemarkableLimitAfterSimplificationTest`, `RealCodomainLimitTest.AgreeingOneSidedLimitsArePromoted`,
+  `StirlingFactorialLimitTest`, `PowerQuotientGatheringTest` and `SolveOneEquation.LinearTrigRoots`.
+  Four of those five are limit tests.
+
+So the dependency is not coverage but **termination**: the limit machinery expands logarithms
+(`LogarithmExpanded`, `Limits/Transformations.cs`) and relies on the simplifier to gather them back.
+Remove the gathering and some limit paths stop reaching a fixed point.
+
+**The precedent for fixing it is in the same file, eight rules up.** `a^n / b^n -> (a/b)^n` was
+guarded for exactly this reason, cost `(x^2 + 1)^x / (x^2)^x` its limit, and was repaired not by
+relaxing the guard but by teaching the limit reader to recognise the quotient itself — where the
+identity *is* checkable, because there is a destination to be near and `IsEventuallyPositive` can
+require the bases to be positive on the way to it. See `ApplySecondRemarkable`. Note also what that
+repair needed: a thread-static re-read bound (`MaxSecondRemarkableRereads`), because the rewrite can
+feed itself indirectly and every level asks for limits of its own. The logarithm path has no such
+bound, which is the likeliest reason its symptom is a hang rather than a lost answer.
+
+**Acceptance for whoever takes it:** the guard is in place, `boundcheck` reports **0** disagreements,
+those three tests pass, the suite finishes in its usual five minutes, and no limit answer is lost —
+measured, since a predicted interaction is worth exactly what it has been measured at.
