@@ -292,10 +292,26 @@ namespace AngouriMath.Functions
         /// <paramref name="x"/> with rational coefficients alone.
         /// </summary>
         private static bool TryGetRationalCoefficients(Entity expr, Variable x, out ERational[] coefficients)
-            => TryGetRationalCoefficients(expr, x, leastTerms: 2, leastDegree: 2, out coefficients);
+            => TryGetRationalCoefficients(expr, x, leastTerms: 2, leastDegree: 2, MaxDegree, out coefficients);
 
         private static bool TryGetRationalCoefficients(
             Entity expr, Variable x, int leastTerms, int leastDegree, out ERational[] coefficients)
+            => TryGetRationalCoefficients(expr, x, leastTerms, leastDegree, MaxDegree, out coefficients);
+
+        /// <summary>
+        /// The coefficients of <paramref name="expr"/> in <paramref name="x"/>, lowest power
+        /// first, or <see langword="false"/> if it is not a polynomial in <paramref name="x"/>
+        /// with rational coefficients alone.
+        /// </summary>
+        /// <remarks>
+        /// The degree ceiling is the caller's because it is a statement about what that caller
+        /// can afford, not about what a polynomial is: root-finding here gives up at sixteen,
+        /// while <see cref="PolynomialFactorization"/> reaches further because Berlekamp and
+        /// the Hensel lift stay cheap where a divisor search does not.
+        /// </remarks>
+        internal static bool TryGetRationalCoefficients(
+            Entity expr, Variable x, int leastTerms, int leastDegree, int maxDegree,
+            out ERational[] coefficients)
         {
             coefficients = System.Array.Empty<ERational>();
             var monomials = PolynomialSolver.GatherMonomialInformation<EInteger, TreeAnalyzer.PrimitiveInteger>(
@@ -304,7 +320,7 @@ namespace AngouriMath.Functions
                 return false;
 
             var degree = monomials.Keys.Max();
-            if (degree is null || degree > MaxDegree || degree < leastDegree)
+            if (degree is null || degree > maxDegree || degree < leastDegree)
                 return false;
 
             var found = new ERational[degree.ToInt32Checked() + 1];
