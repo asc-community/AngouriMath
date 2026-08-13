@@ -1005,5 +1005,66 @@ namespace AngouriMath.Tests.Common
             Assert.Equal(original.Substitute("x", "i").Evaled,
                 original.Simplify().Substitute("x", "i").Evaled);
         }
+
+        // https://github.com/asc-community/AngouriMath/issues/721
+        // log_b(b) is 1 wherever it is defined, and the rewrite carried `provided x > 0` --
+        // the real-domain condition, written out inside the rule rather than read from the
+        // node. It was wrong in both directions at once: at x = -3 the logarithm is 1 and
+        // the simplification was NaN, and at x = 1 the logarithm is NaN and the
+        // simplification was 1.
+        [Theory]
+        [InlineData("-3")]
+        [InlineData("-1/2")]
+        [InlineData("2")]
+        [InlineData("1")]
+        [InlineData("0")]
+        public void ALogarithmOfItsOwnBaseKeepsItsValueOffThePositiveReals(string at)
+        {
+            var original = "log(x, x)".ToEntity();
+            var simplified = original.Simplify();
+            Assert.Equal(original.Substitute("x", at.ToEntity()).Evaled,
+                simplified.Substitute("x", at.ToEntity()).Evaled);
+        }
+
+        // The contradiction #890 reported, which is the same defect seen from the domain
+        // side: the library gave the expression a value and declared it undefined
+        // everywhere at the same time.
+        [Theory]
+        [InlineData("log(-3, -3)")]
+        [InlineData("log(2, -8)")]
+        [InlineData("log(-2, 8)")]
+        public void ALogarithmWithNegativeArgumentsIsNotDeclaredUndefined(string input)
+        {
+            var expression = input.ToEntity();
+            Assert.NotEqual(MathS.NaN, expression.Evaled);
+            Assert.Equal(Entity.Boolean.True, expression.DomainCondition.Evaled);
+        }
+
+        // Which of the two conditions applies is the reading, as it already was for arcsin
+        // and its siblings. A negative base is admitted over the complex plane and refused
+        // over the reals; 0 and 1 are refused under either.
+        [Theory]
+        [InlineData("-3", true)]
+        [InlineData("2", true)]
+        [InlineData("1", false)]
+        [InlineData("0", false)]
+        public void TheLogarithmsDomainOverTheComplexPlaneAdmitsANegativeBase(string at, bool defined)
+        {
+            var condition = "log(x, x)".ToEntity().DomainCondition;
+            Assert.Equal(defined ? Entity.Boolean.True : Entity.Boolean.False,
+                condition.Substitute("x", at.ToEntity()).Evaled);
+        }
+
+        [Theory]
+        [InlineData("-3", false)]
+        [InlineData("2", true)]
+        [InlineData("1", false)]
+        [InlineData("0", false)]
+        public void TheLogarithmsDomainOverTheRealsStillRefusesANegativeBase(string at, bool defined)
+        {
+            var condition = "log(x, x)".ToEntity().WithCodomain(Domain.Real).DomainCondition;
+            Assert.Equal(defined ? Entity.Boolean.True : Entity.Boolean.False,
+                condition.Substitute("x", at.ToEntity()).Evaled);
+        }
     }
 }

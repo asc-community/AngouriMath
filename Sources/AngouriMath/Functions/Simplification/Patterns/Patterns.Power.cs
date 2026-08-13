@@ -182,7 +182,15 @@ namespace AngouriMath.Functions
             // https://github.com/asc-community/AngouriMath/issues/902
             Logf(var any1, Powf(var any2, var any3))
                 when IsPositiveReal(any2) && MayBeTakenAsReal(any3) => any3 * MathS.Log(any1, any2),
-            Logf(var any1, var any1a) when any1 == any1a => new Providedf(1, any1 > 0),
+            // log_b(b) is 1 wherever it is defined at all, so the condition to carry is the
+            // node's own and not one written out here. Asserting `any1 > 0` stated the real
+            // reading inside the rule and was wrong in both directions at once: undefined at
+            // x = -3, where log(-3, -3) evaluates to 1, and defined at x = 1, where
+            // log(1, 1) is NaN. Reading the condition instead gets both, and follows the
+            // reading rather than fixing it.
+            // https://github.com/asc-community/AngouriMath/issues/721
+            Logf(var any1, var any1a) logarithm when any1 == any1a
+                => new Providedf(1, logarithm.DomainCondition),
             Logf(Divf(Integer(1), var any1), Divf(Integer(1), var any2)) => MathS.Log(any1, any2),
             Logf(var any1, Divf(Integer(1), var any2)) => -MathS.Log(any1, any2),
             Logf(Divf(Integer(1), var any1), var any2) => -MathS.Log(any1, any2),

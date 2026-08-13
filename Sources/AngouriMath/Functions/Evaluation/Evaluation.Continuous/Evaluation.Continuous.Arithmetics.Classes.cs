@@ -220,12 +220,29 @@ namespace AngouriMath
 
         public partial record Logf
         {
-            // Logarithm is undefined when:
-            // - base <= 0 or base = 1
-            // - antilogarithm <= 0
-            // For complex logarithms, we use the principal branch
-            private protected override Entity IntrinsicCondition => 
-                Base > 0 & !Base.EqualTo(1) & Antilogarithm > 0;
+            // Which of the two conditions below applies is the reading, exactly as it is
+            // for Arcsinf and its siblings. This node alone stated the real one as though
+            // it were the only one, so the library declared an expression undefined and
+            // gave it a value at the same time: log(-3, -3) evaluates to 1 while its
+            // DomainCondition was False.
+            //
+            // Over the reals the base must be positive and not 1, and the antilogarithm
+            // positive. Over the complex plane log_b(a) is ln(a)/ln(b), which asks only
+            // that both logarithms exist and that the denominator is not zero: no complex
+            // number has 0 as its exponential, so a and b must be nonzero, and ln(b) = 0
+            // is b = 1. Negative and non-real arguments are fine -- log(-3, -3) is 1 and
+            // log(2, -8) is 3 + 4.53i -- which is the whole of what the real condition was
+            // wrongly forbidding.
+            //
+            // The zero cases are stated rather than read off evaluation, which returns the
+            // extended-real -oo for ln(0) and so would call it defined. -oo is not a
+            // complex number, and taking it for one loses conditions that are needed
+            // downstream: `ln(x) * 0` is 0 only away from x = 0, since -oo * 0 is NaN.
+            // https://github.com/asc-community/AngouriMath/issues/721
+            private protected override Entity IntrinsicCondition =>
+                Codomain < Domain.Complex
+                ? Base > 0 & !Base.EqualTo(1) & Antilogarithm > 0
+                : !Base.EqualTo(0) & !Base.EqualTo(1) & !Antilogarithm.EqualTo(0);
             
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) => 
