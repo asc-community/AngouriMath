@@ -78,7 +78,8 @@ That condition was the logarithm's real one, so the derivative was undefined at 
 The condition does not vanish: `ln(0) * 0` is `-oo * 0`, which is `NaN`, so `not x = 0` is kept.
 
 From [#721](https://github.com/asc-community/AngouriMath/issues/721) and
-[#890](https://github.com/asc-community/AngouriMath/issues/890).
+[#890](https://github.com/asc-community/AngouriMath/issues/890), in PR
+[#916](https://github.com/asc-community/AngouriMath/pull/916).
 
 ---
 
