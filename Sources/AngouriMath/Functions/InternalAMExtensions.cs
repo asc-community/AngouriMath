@@ -10,7 +10,20 @@ using System.Numerics;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 using AngouriMath.Extensions;
-//[assembly:System.Runtime.CompilerServices.InternalsVisibleTo("UnitTests")]
+
+// The kernel algebra in Functions/Algebra/Polynomials is internal and is reached from the
+// public surface only through Simplify, Solve and Integrate, which means a test driven from
+// outside cannot separate a defect in a greatest common divisor from a defect in whichever
+// caller happened to invoke it. The pieces that carry their own mathematics -- Berlekamp over
+// a prime field, the Hensel lift, the subresultant sequence -- are checked against exhaustive
+// or independently computed answers of their own, and that needs them to be nameable there.
+// The key is this assembly's own, so the test project signs with key.snk too; the alternative
+// to naming it is dropping the strong name, which is a published property of the package.
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("UnitTests, PublicKey="
+    + "0024000004800000940000000602000000240000525341310004000001000100f54ef0f5905ba32e"
+    + "cae04751103c5565283a4c4fa2b07627ff7a7e556b287f198203a09935d998ce9d812a696aa2e71c"
+    + "552aeb08b7a67f49a5557ef4faab3d9f033182be1a646b24c932399732107462848dcb97acecc844"
+    + "9997b1b77e6bd337e1116878226dd4954e004f11193ccd8e29fc156615c798f733712923ffe8d6c5")]
 
 namespace AngouriMath
 {

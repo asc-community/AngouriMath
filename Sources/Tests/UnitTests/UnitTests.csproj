@@ -4,6 +4,11 @@
     <TargetFramework>net10.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
+
+    <!-- Signed with the library's own key so that its InternalsVisibleTo can name this
+         assembly: a strong-named assembly may only befriend another strong-named one. -->
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\AngouriMath\key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
