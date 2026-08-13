@@ -15,6 +15,74 @@ read first.
 
 ---
 
+## Unreleased — since 2.1.0
+
+### At a glance
+
+| Silent? | What | Was | Is |
+|---|---|---|---|
+| **silent** | `log(x, x)` simplified | `1 provided x > 0` — `NaN` at every negative `x`, and `1` at `x = 1` where the logarithm is `NaN` | `1 provided not x = 0 and not x = 1` |
+| **silent** | `DomainCondition` of a logarithm, under the default reading | the real condition, so `log(-3, -3)` was declared undefined while evaluating to `1` | `not b = 0 and not b = 1 and not a = 0` |
+| **silent** | `ln(x).DomainCondition` | `x > 0` | `not x = 0` |
+| **silent** | `"x ^ n".Differentiate("x").Simplify()` | `x ^ n * n / x provided x > 0` — `NaN` at every negative `x` | `x ^ n * n / x provided not x = 0` |
+
+### The logarithm's domain follows the reading, as every other node's already did
+
+`Arcsinf`, `Arccosf`, `Arcsecantf` and `Arccosecantf` each state one condition over the reals and
+another over the complex plane, and pick between them by the reading. `Logf` stated the real one as
+though it were the only one, which is what
+[#890](https://github.com/asc-community/AngouriMath/issues/890) reported as a contradiction: the
+library gave an expression a value and declared it undefined at the same time.
+
+```
+log(-3, -3)                        1          — unchanged
+log(-3, -3).DomainCondition        False  ->  True
+ln(x).DomainCondition              x > 0  ->  not x = 0
+```
+
+Over the complex plane `log_b(a)` is `ln(a) / ln(b)`, which asks only that both logarithms exist
+and that the denominator is not zero — no complex number has `0` as its exponential, so `a` and `b`
+must be nonzero, and `ln(b) = 0` is `b = 1`. Negative and non-real arguments are admitted:
+`log(2, -8)` is `3 + 4.53i` and was declared undefined.
+
+**The real condition is still there and still reachable.** `expr.WithCodomain(Domain.Real)` gives
+`x > 0 and not x = 1` for `log(x, x)` exactly as before; what changed is which of the two is the
+default, and the default is now the same complex reading the evaluator has always used.
+
+### `log_b(b) -> 1` carries the condition it has rather than one written into the rule
+
+The rewrite asserted `provided x > 0`, and that was wrong in both directions at once — it withdrew
+an answer that exists and kept one that does not:
+
+```
+"log(x, x)".Simplify()             1 provided x > 0  ->  1 provided not x = 0 and not x = 1
+  at x = -3                        NaN  ->  1      (the logarithm is 1)
+  at x = 1                         1    ->  NaN    (the logarithm is NaN)
+```
+
+`boundcheck` reports one disagreement where it reported two. The survivor,
+`ln(x) + ln(x+1) -> ln(x*(1+x))`, needs an assumption travelling with the variable and is
+untouched here.
+
+### The derivative of a symbolic power loses a condition it never needed
+
+`d/dx x^n` goes through `ln(x) * 0`, and `anything * 0 = 0` carries the operand's domain condition.
+That condition was the logarithm's real one, so the derivative was undefined at every negative `x`:
+
+```
+"x ^ n".Differentiate("x").Simplify()   x ^ n * n / x provided x > 0
+                                    ->  x ^ n * n / x provided not x = 0
+  at n = 3, x = -2.5                 NaN  ->  75/4   (and 3x^2 at -2.5 is 75/4)
+```
+
+The condition does not vanish: `ln(0) * 0` is `-oo * 0`, which is `NaN`, so `not x = 0` is kept.
+
+From [#721](https://github.com/asc-community/AngouriMath/issues/721) and
+[#890](https://github.com/asc-community/AngouriMath/issues/890), in PR
+[#916](https://github.com/asc-community/AngouriMath/pull/916).
+
+---
+
 ## 2.1.0 — since 2.0.0
 
 Everything here landed **after** the 2.0.0 tag, so it is not in the package a reader of that

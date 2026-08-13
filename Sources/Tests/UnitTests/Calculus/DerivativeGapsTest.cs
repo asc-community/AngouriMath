@@ -66,9 +66,14 @@ namespace AngouriMath.Tests.Calculus
         }
 
         // A genuinely symbolic exponent must still take the logarithmic rule, condition
-        // and all.
+        // and all. The condition is `not x = 0` and was `x > 0` until the logarithm's
+        // domain stopped being stated over the reals regardless of the reading: it comes
+        // from `ln(x) * 0`, which is 0 everywhere ln(x) has a value and NaN at x = 0,
+        // where -oo * 0 is indeterminate. The old condition also cost the answer at every
+        // negative x -- at n = 3, x = -2.5 the derivative is 75/4 and used to be NaN.
+        // https://github.com/asc-community/AngouriMath/issues/721
         [Theory]
-        [InlineData("x ^ n", "x ^ n * n / x provided x > 0")]
+        [InlineData("x ^ n", "x ^ n * n / x provided not x = 0")]
         [InlineData("2 ^ x", "ln(2) * 2 ^ x")]
         // Compared as printed text: what is under test is that the logarithmic rule and
         // its condition are still used, and the tree differs from the parsed expectation
