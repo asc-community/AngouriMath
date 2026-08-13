@@ -14,7 +14,27 @@ namespace AngouriMath.Functions.Algebra
     using static Entity.Number;
     internal static partial class LimitFunctional
     {
+        /// <summary>
+        /// Everything below here reads the expression on its way to <c>+oo</c>, whichever
+        /// destination was asked for, so that is stated once and held for the whole computation.
+        /// </summary>
+        /// <remarks>
+        /// It has to be the whole computation rather than the simplification below: the
+        /// logarithm pairs that have to be gathered are created *inside* the simplifier's own
+        /// candidate search and are gathered there, without ever being a subexpression any of
+        /// these methods sees. Measured -- with the approach stated around only the first
+        /// simplification, the rule was reached 192 times for <c>lim x-&gt;-oo (x-5)^x / x^x</c>
+        /// with the operands <c>-x</c> and <c>-(x+5)</c>, and every one of them found no approach
+        /// to check against. https://github.com/asc-community/AngouriMath/issues/721
+        /// </remarks>
         private static Entity? SimplifyAndComputeLimitToInfinity(Entity expr, Variable x)
+        {
+            var outerApproach = EnterApproach(x, Real.PositiveInfinity);
+            try { return SimplifyAndComputeLimitToInfinityCore(expr, x); }
+            finally { LeaveApproach(outerApproach); }
+        }
+
+        private static Entity? SimplifyAndComputeLimitToInfinityCore(Entity expr, Variable x)
         {
             expr = expr.Simplify();
             if (expr is Providedf(var expression, _)) expr = expression; // limits operate assuming a continuous expression even though some points may be undefined.
@@ -65,9 +85,9 @@ namespace AngouriMath.Functions.Algebra
             var logarithmDivisionResult = LimitSolvers.SolveAsLogarithmDivision(expr, x);
             if (logarithmDivisionResult is { }) return logarithmDivisionResult;
 
-            // Last, because it is the only one here that asks for a limit of its own and so is
-            // the only one whose cost is another walk of the machinery. Everything above reads
-            // the expression where it stands.
+            // Last, because its cost is another walk of the machinery over an expression no
+            // smaller than this one -- unlike the rule above, whose sub-limits are subtrees. The
+            // readers before both of them settle the expression where it stands.
             var boundedResult = LimitSolvers.SolveAsBoundedTimesVanishing(expr, x);
             if (boundedResult is { }) return boundedResult;
 
@@ -144,6 +164,18 @@ namespace AngouriMath.Functions.Algebra
             };
 
         public static Entity? ComputeLimit(Entity expr, Variable x, Entity dest, ApproachFrom side = ApproachFrom.BothSides, bool acceptNaN = false)
+        {
+            // The approach is stated for the whole computation, not only where the destination
+            // has been normalised to +oo. Everything below simplifies as it goes, and a rule that
+            // may only fire while the approach is in scope is otherwise declining through most of
+            // the work -- which is not a wrong answer but is a slower one, since what it declines
+            // to collapse the search then has to explore.
+            var enclosingApproach = EnterApproach(x, dest);
+            try { return ComputeLimitWithinApproach(expr, x, dest, side, acceptNaN); }
+            finally { LeaveApproach(enclosingApproach); }
+        }
+
+        private static Entity? ComputeLimitWithinApproach(Entity expr, Variable x, Entity dest, ApproachFrom side, bool acceptNaN)
         {
             // A piecewise is not continuous and is still something a limit can be taken of: it
             // agrees with one of its cases on the whole of the way in, and that case is
@@ -278,9 +310,21 @@ namespace AngouriMath.Functions.Algebra
                     // by substituting for x, but there it would be replacing answers the rules
                     // above already give rather than adding ones they do not -- a change worth
                     // making on its own evidence and not as a side effect of this.
-                    if (Gruntz.LimitToPositiveInfinity(
-                            dest.Evaled is Real { IsNegative: true } ? expr.Substitute(x, -x) : expr, x)
-                        is { } byGruntz && byGruntz.Evaled != MathS.NaN)
+                    // Gruntz reads everything on its way to +oo -- a negative destination is
+                    // normalised by substituting -x, exactly as above -- and it simplifies as it
+                    // goes, so the approach is stated for it too. This is the one that carries
+                    // lim x->-oo (x-5)^x / x^x: what the substitution leaves is
+                    // ln(-x) - ln(-(x+5)), both operands negative, gathered inside the
+                    // simplifier and nowhere a rewrite of ours can reach.
+                    var gruntzApproach = EnterApproach(x, Real.PositiveInfinity);
+                    Entity? byGruntz;
+                    try
+                    {
+                        byGruntz = Gruntz.LimitToPositiveInfinity(
+                            dest.Evaled is Real { IsNegative: true } ? expr.Substitute(x, -x) : expr, x);
+                    }
+                    finally { LeaveApproach(gruntzApproach); }
+                    if (byGruntz is { } && byGruntz.Evaled != MathS.NaN)
                         return byGruntz;
                     return atInfinity;
                 }
