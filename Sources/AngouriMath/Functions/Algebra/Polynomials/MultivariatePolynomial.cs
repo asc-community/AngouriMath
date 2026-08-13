@@ -393,7 +393,12 @@ namespace AngouriMath.Functions
         /// before it is built rather than after.
         /// </remarks>
         internal static MultivariatePolynomial? TryParse(Entity expr, IReadOnlyDictionary<Variable, int> variables)
-            => expr switch
+            // A ninth variable has no byte of the packed monomial to live in, and the shift
+            // that would address it is negative, which the language turns into a shift by
+            // 56 -- the first variable's byte. So it would not fail, it would silently be
+            // the first variable, and x_1 - x_9 would read as the zero polynomial. Refused
+            // here rather than guarded at each caller, since the packing is this type's.
+            => variables.Count > MaxVariables ? null : expr switch
             {
                 // Integer is a Rational, so this arm takes both.
                 Rational rational => Constant(variables.Count, rational.ERational),
