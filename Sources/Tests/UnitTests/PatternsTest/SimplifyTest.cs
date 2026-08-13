@@ -180,11 +180,31 @@ namespace AngouriMath.Tests.PatternsTest
         [InlineData("arccos(1 / x)", "arcsec(x)")]
         public void TrigTest(string input, string output) => AssertSimplifyToString(input, output);
 
+        // ln(a) + ln(b) = ln(a*b) is false off the positive reals -- at a = -3, b = -2 the two
+        // differ by 2*pi*i -- so a symbol, which may be anything, is left alone. Two numbers
+        // known to be positive still gather. The identity is not lost: the limit machinery
+        // states where an expression is going, and there the sign of each operand is decidable,
+        // which is the only place the condition can be discharged for something symbolic.
+        // https://github.com/asc-community/AngouriMath/issues/721
         [Theory]
-        [InlineData("ln(a) + ln(b)", "ln(a * b)")]
-        [InlineData("ln(a) - ln(b)", "ln(a / b)")]
+        [InlineData("ln(a) + ln(b)", "ln(a) + ln(b)")]
+        [InlineData("ln(a) - ln(b)", "ln(a) - ln(b)")]
+        [InlineData("ln(2) + ln(3)", "ln(6)")]
+        [InlineData("ln(6) - ln(2)", "ln(3)")]
         [InlineData("log(2, a) + ln(b)", "log(2, a) + ln(b)")]
         public void PowerRulesTest(string input, string output) => AssertSimplifyToString(input, output);
+
+        // The value has to survive, which is the whole point of withdrawing the rewrite: at
+        // x = -3 the sum is 1.7918 + 6.2832i and the gathered form was 1.7918.
+        [Theory]
+        [InlineData("ln(x) + ln(x+1)")]
+        [InlineData("ln(x) - ln(x+1)")]
+        public void ALogarithmSumKeepsItsValueOffThePositiveReals(string expression)
+        {
+            var original = (Entity)expression;
+            Assert.Equal(original.Substitute("x", -3).EvalNumerical(),
+                original.Simplify().Substitute("x", -3).EvalNumerical());
+        }
 
         [Theory]
         [InlineData("a/a", "1 provided not a = 0")]

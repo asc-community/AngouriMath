@@ -233,6 +233,154 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// The sign an expression settles on approaching <paramref name="dest"/>: <c>1</c> where
+        /// it stays positive, <c>-1</c> where it stays negative, <c>0</c> where neither can be
+        /// read -- a limit of zero, a non-real one, or none at all.
+        /// </summary>
+        private static int SignOnTheApproach(Entity expr, Variable x, Entity dest)
+        {
+            var limit = EvalAssumingContinuous(expr.Limit(x, dest));
+            if (limit == Real.PositiveInfinity) return 1;
+            if (limit == Real.NegativeInfinity) return -1;
+            return limit switch
+            {
+                Real { IsPositive: true } => 1,
+                Real { IsNegative: true } => -1,
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        /// <see cref="SignOnTheApproach"/>, asked once per expression per approach. An
+        /// <see cref="Entity"/> hashes structurally, so the same operand written the same way is
+        /// the same key.
+        /// </summary>
+        private static int MemoisedSign(Entity expr, Approach approach)
+        {
+            var key = (approach.Dest, expr);
+            if (signMemo is { } memo && memo.TryGetValue(key, out var known))
+                return known;
+            var sign = SignOnTheApproach(expr, approach.X, approach.Dest);
+            if (signMemo is { } store)
+                store[key] = sign;
+            return sign;
+        }
+
+        /// <summary>
+        /// How deep <see cref="MayGatherLogarithmsHere"/> may re-enter itself. It asks for a
+        /// limit per operand, and those limits run the machinery the question was asked from.
+        /// </summary>
+        private const int MaxGatherLogarithmsDepth = 1;
+
+        [System.ThreadStatic] private static int gatherLogarithmsDepth;
+
+        /// <summary>
+        /// The approach the limit machinery is currently reading an expression on, or
+        /// <see langword="null"/> where an expression is being simplified on its own account.
+        /// </summary>
+        /// <remarks>
+        /// This is the one thing a simplification rule cannot work out for itself and the limit
+        /// machinery can: *where the expression is going*. <c>ln(a) + ln(b) = ln(a*b)</c> is
+        /// false off the positive reals, so <c>Simplify</c> may not apply it to a symbol -- but
+        /// on a stated approach the sign of each operand is decidable, and where the two signs
+        /// agree the identity is exact. Without this the rule would have to be either unsound
+        /// (as it was) or absent, and absent costs termination rather than coverage: the limit
+        /// machinery's own expansion creates logarithm pairs that only this can put back
+        /// together. https://github.com/asc-community/AngouriMath/issues/721
+        /// <para/>
+        /// Thread-static because the limit machinery is synchronous and every other setting here
+        /// is; it is swapped rather than set, so a nested reading restores the outer one.
+        /// </remarks>
+        [System.ThreadStatic] private static Approach? currentApproach;
+
+        /// <summary>
+        /// A destination being approached, and the signs already established against it.
+        /// </summary>
+        /// <remarks>
+        /// The memo is not an optimisation to be taken or left. The rule is asked once per match
+        /// per candidate the simplifier generates, and it is asked about the *same* operands over
+        /// and over: <c>lim x-&gt;-oo (x-5)^x / x^x</c> put the same pair to it 192 times. Each
+        /// answer costs two limits, which run this whole machinery, so without the memo the
+        /// #596 limit stops finishing inside the minute its own test allows it.
+        /// </remarks>
+        internal readonly record struct Approach(Variable X, Entity Dest);
+
+        /// <summary>
+        /// The signs already established, keyed by the destination they were established against
+        /// as well as by the expression, and shared by every approach inside the outermost one.
+        /// </summary>
+        /// <remarks>
+        /// A memo per approach is very nearly no memo at all: the limit machinery re-enters
+        /// itself constantly and asks about the same operands each time -- one computation put
+        /// the same pair to the rule 192 times, and each answer costs two limits, which run this
+        /// whole machinery. It is dropped when the outermost approach is left, so nothing
+        /// survives a call.
+        /// </remarks>
+        [System.ThreadStatic] private static Dictionary<(Entity Dest, Entity Expr), int>? signMemo;
+
+        [System.ThreadStatic] private static int approachDepth;
+
+        /// <summary>
+        /// States that <paramref name="x"/> is being read on its way to <paramref name="dest"/>,
+        /// and returns the previous approach for <see cref="LeaveApproach"/> to put back.
+        /// </summary>
+        internal static Approach? EnterApproach(Variable x, Entity dest)
+        {
+            var previous = currentApproach;
+            approachDepth++;
+            signMemo ??= new();
+            currentApproach = new Approach(x, dest);
+            return previous;
+        }
+
+        /// <summary>
+        /// Puts back what <see cref="EnterApproach"/> returned, and drops the memo once the
+        /// outermost approach is left.
+        /// </summary>
+        internal static void LeaveApproach(Approach? previous)
+        {
+            currentApproach = previous;
+            if (--approachDepth == 0)
+                signMemo = null;
+        }
+
+        /// <summary>
+        /// Installs <paramref name="approach"/> as the current one and returns the previous, for
+        /// the caller to put back.
+        /// </summary>
+        internal static Approach? SwapApproach(Approach? approach)
+        {
+            var previous = currentApproach;
+            currentApproach = approach;
+            return previous;
+        }
+
+        /// <summary>
+        /// Whether the simplifier's logarithm gathering may fire here, which it may only while
+        /// an approach is being read and only where the operands hold their sign on it.
+        /// </summary>
+        /// <remarks>
+        /// The approach is withdrawn for the duration of the check, so that the limits it asks
+        /// for cannot come back through this same door -- conservative, and it terminates.
+        /// </remarks>
+        internal static bool MayGatherLogarithmsHere(Entity left, Entity right, bool isDifference)
+        {
+            if (currentApproach is not { } approach || gatherLogarithmsDepth >= MaxGatherLogarithmsDepth)
+                return false;
+            gatherLogarithmsDepth++;
+            var previous = SwapApproach(null);
+            try
+            {
+                var leftSign = MemoisedSign(left, approach);
+                if (leftSign == 0)
+                    return false;
+                var rightSign = MemoisedSign(right, approach);
+                return isDifference ? leftSign == rightSign : leftSign == 1 && rightSign == 1;
+            }
+            finally { SwapApproach(previous); gatherLogarithmsDepth--; }
+        }
+
+        /// <summary>
         /// How many times over <see cref="ApplySecondRemarkable"/> may be re-read into an
         /// expression that <see cref="SimplifyAndComputeLimitToInfinity"/>'s simplification
         /// has just created.

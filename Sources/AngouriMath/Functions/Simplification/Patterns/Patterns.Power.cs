@@ -196,8 +196,22 @@ namespace AngouriMath.Functions
             Logf(Divf(Integer(1), var any1), var any2) => -MathS.Log(any1, any2),
             
 
-            Sumf(Logf(var any3, var any1), Logf(var any3a, var any2)) when any3 == any3a => any3.Log(any1 * any2),
-            Minusf(Logf(var any3, var any1), Logf(var any3a, var any2)) when any3 == any3a => any3.Log(any1 / any2),
+            // ln(a) + ln(b) = ln(a*b), and the difference likewise, are false off the positive
+            // reals: at x = -3 the sum of ln(x) and ln(x+1) exceeds ln(x*(1+x)) by 2*pi*i, the
+            // turn of the argument the principal branch discards. Both were applied
+            // unconditionally, and that was the last disagreement `boundcheck` reported.
+            //
+            // Two ways to earn them. Either the operands are decidably positive here, or the
+            // limit machinery is reading the expression towards a destination and has
+            // established that they hold their sign on the way to it -- which is the only thing
+            // that can discharge the condition for a symbol, and is what the identity is for.
+            // Withdrawing it outright does not merely cost coverage: the limit machinery's own
+            // expansion creates the pairs, so nothing puts them back and some limits stop
+            // terminating. https://github.com/asc-community/AngouriMath/issues/721
+            Sumf(Logf(var any3, var any1), Logf(var any3a, var any2)) when any3 == any3a
+                && MayGatherLogarithms(any1, any2, isDifference: false) => any3.Log(any1 * any2),
+            Minusf(Logf(var any3, var any1), Logf(var any3a, var any2)) when any3 == any3a
+                && MayGatherLogarithms(any1, any2, isDifference: true) => any3.Log(any1 / any2),
 
             // sqrt(8) = 2 * sqrt(2), cbrt(54) = 3 * cbrt(2)
             Powf(Integer { IsPositive: true } radicand, Rational and not Integer and var power)
@@ -308,6 +322,15 @@ namespace AngouriMath.Functions
         /// </remarks>
         private static bool IsPositiveReal(Entity entity)
             => entity.Evaled is Real { EDecimal.IsFinite: true } value && value.IsPositive;
+
+        /// <summary>
+        /// Whether two antilogarithms may be gathered into one: because both are decidably
+        /// positive numbers, or because a limit is being read and they hold their sign on the
+        /// approach to its destination.
+        /// </summary>
+        private static bool MayGatherLogarithms(Entity left, Entity right, bool isDifference)
+            => (IsPositiveReal(left) && IsPositiveReal(right))
+               || Algebra.LimitFunctional.MayGatherLogarithmsHere(left, right, isDifference);
 
         /// <summary>
         /// Whether this operand may be taken as real: because the expression is being read as a

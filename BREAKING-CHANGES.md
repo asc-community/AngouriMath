@@ -25,6 +25,7 @@ read first.
 | **silent** | `DomainCondition` of a logarithm, under the default reading | the real condition, so `log(-3, -3)` was declared undefined while evaluating to `1` | `not b = 0 and not b = 1 and not a = 0` |
 | **silent** | `ln(x).DomainCondition` | `x > 0` | `not x = 0` |
 | **silent** | `"x ^ n".Differentiate("x").Simplify()` | `x ^ n * n / x provided x > 0` — `NaN` at every negative `x` | `x ^ n * n / x provided not x = 0` |
+| **silent** | `ln(a) + ln(b)` and `ln(a) - ln(b)` for symbolic `a`, `b` | `ln(a * b)`, `ln(a / b)` — wrong by `2*pi*i` off the positive reals | left as written |
 | **silent** | `"x^5 + 2x^3 - 2x^2 - 4".SolveEquation("x")` | three of the five roots, one of them a float | all five, exact |
 | | `"x^4 + x^2 + 1".SolveEquation("x")` | `sqrt((-1 - sqrt(-3)) / 2)` and its three companions | `(-1 - sqrt(-3)) / 2` and its three, with no nested radical |
 | | `"x^4 + 3x^2 + 2".SolveEquation("x")` | `{ sqrt(-2), -sqrt(-2), i, -i }` | the same four, in the order the factors are found |
@@ -80,6 +81,34 @@ is   { (-1 - sqrt(-3)) / 2, (-1 + sqrt(-3)) / 2, (-2 - sqrt(-8)) / 2, (-2 + sqrt
 Both sets are unchanged as sets — the members were checked to be equal, not merely to look it. Where
 a solution set is only reordered, as for `x^4 + 3x^2 + 2` and `2x^4 + 6x^2 + 4`, code that indexed
 into the result rather than searching it will see different elements at the same positions.
+
+### A sum of logarithms is no longer gathered unless that is exact
+
+`ln(a) + ln(b) = ln(a*b)` is false off the positive reals. At `x = -3` the two sides differ by
+`2*pi*i`, the turn of the argument the principal branch discards:
+
+```
+"ln(x) + ln(x+1)" at x = -3     1.7918 + 6.2832i
+gathered to ln(x*(1+x))         1.7918              — the value that was returned
+```
+
+Both rules were applied unconditionally, and this was the last disagreement `boundcheck` reported.
+It now reports **none**.
+
+**Numbers still gather.** `ln(2) + ln(3)` is `ln(6)` and `ln(6) - ln(2)` is `ln(3)`, because there
+the operands are decidably positive. What no longer happens is the same rewrite on a *symbol*,
+which may be anything.
+
+**And the identity is not lost where it was doing real work.** Taking a limit states where the
+expression is going, and on a stated approach the sign of each operand is decidable — so the
+gathering still happens inside a limit, exactly where it is exact. A sum needs both operands
+positive; a difference needs only that their signs *agree*, since `ln` of a negative is
+`ln|.| + pi*i` and that cancels in a difference while it would double in a sum. No limit answer is
+lost, which was measured rather than assumed: withdrawing the rule without putting it back this way
+does not cost coverage, it costs **termination**, because the limit machinery's own expansion
+creates the pairs that only this puts back together.
+
+From [#721](https://github.com/asc-community/AngouriMath/issues/721).
 
 ### The logarithm's domain follows the reading, as every other node's already did
 
