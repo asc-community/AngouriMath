@@ -293,7 +293,7 @@ way: it enumerates the unary function nodes by reflection, composes them pairwis
 result at 25 points chosen to sit where some rule's assumption fails. 372 shapes, 966 comparisons. It
 found [#887](https://github.com/asc-community/AngouriMath/issues/887) within minutes of existing —
 an error in the fix for #884, which is the most useful thing to record about it. It currently reports
-**one** disagreement, and §11 is that one.
+**no** disagreements; §11 is the last one it reported and how that was closed.
 
 ## 9. Where to look an assumption set up
 
@@ -353,43 +353,56 @@ the three values into the comment.
 - **The tiers.** `Soundness` remains declared, not checked. Nothing here promotes a rule set to
   `Sound`; doing so still needs the argument that its assumption set is empty, written down.
 
-## 11. The one rule `boundcheck` still reports, and what it costs to guard
+## 11. The rule `boundcheck` used to report, and what guarding it actually cost
 
 ```
 ln(a) + ln(b)  ->  ln(a * b)         Patterns.Power.cs, and the Minusf sibling
 ```
 
-Unsound off the positive reals, and `boundcheck`'s last disagreement: at `x = -3`,
+Unsound off the positive reals, and for a long time `boundcheck`'s last disagreement: at `x = -3`,
 `ln(x) + ln(x+1)` is `1.7918 + 6.2832i` and `ln(x*(1+x))` is `1.7918`. The two differ by `2*pi*i`,
-which is the turn of the argument the principal branch discards. The rule carries no condition at
-all, so by O2 it is asserting there is nothing to assume, and that assertion is false.
+which is the turn of the argument the principal branch discards. The rule carried no condition at
+all, so by O2 it was asserting there is nothing to assume, and that assertion was false.
 
-**It is written down here rather than fixed because guarding it has been measured, and the cost is
-not what it was assumed to be.** `work/TRIAGE.md` recorded the cost as "the log-equation solver loses
-coverage". Guarding both rules with the file's existing `IsPositiveReal` idiom and running the suite
-gives something else:
+**Fixed in [#922](https://github.com/asc-community/AngouriMath/pull/922), and `boundcheck` now
+reports none.** What it took is worth keeping, because the obvious fix is wrong in an instructive
+way.
 
-- **three failures** — `SimplifyTest.PowerRulesTest` for `ln(a) + ln(b)` and `ln(a) - ln(b)`, which
-  are the rules' own tests, and `OneSidedLimitTest.ADifferenceOfReciprocalLogarithms(Left)`;
-- **and a hang.** The run does not finish. Left alone it passed three and a half hours against a
-  normal five minutes; under `--blame-hang` the host is killed with the offending test among
-  `RemarkableLimitAfterSimplificationTest`, `RealCodomainLimitTest.AgreeingOneSidedLimitsArePromoted`,
-  `StirlingFactorialLimitTest`, `PowerQuotientGatheringTest` and `SolveOneEquation.LinearTrigRoots`.
-  Four of those five are limit tests.
+### Guarding it alone does not lose an answer, it fails to terminate
 
-So the dependency is not coverage but **termination**: the limit machinery expands logarithms
-(`LogarithmExpanded`, `Limits/Transformations.cs`) and relies on the simplifier to gather them back.
-Remove the gathering and some limit paths stop reaching a fixed point.
+`work/TRIAGE.md` recorded the cost as "the log-equation solver loses coverage". Guarding both rules
+with the file's own `IsPositiveReal` idiom and running the suite gives something else: three
+failures, and then a run that does not finish — three and a half hours against a normal five
+minutes, with four of the five candidate tests under `--blame-hang` being limit tests.
 
-**The precedent for fixing it is in the same file, eight rules up.** `a^n / b^n -> (a/b)^n` was
-guarded for exactly this reason, cost `(x^2 + 1)^x / (x^2)^x` its limit, and was repaired not by
-relaxing the guard but by teaching the limit reader to recognise the quotient itself — where the
-identity *is* checkable, because there is a destination to be near and `IsEventuallyPositive` can
-require the bases to be positive on the way to it. See `ApplySecondRemarkable`. Note also what that
-repair needed: a thread-static re-read bound (`MaxSecondRemarkableRereads`), because the rewrite can
-feed itself indirectly and every level asks for limits of its own. The logarithm path has no such
-bound, which is the likeliest reason its symptom is a hang rather than a lost answer.
+The limit machinery **expands** logarithms (`LogarithmExpanded`, `Limits/Transformations.cs`) and
+relies on the simplifier to gather them back. Remove the gathering and some limit paths never reach
+a fixed point. **This is the shape to look for whenever a rule is withdrawn**: ask not only what
+answers it was producing, but what other machinery was relying on it to close a loop.
 
-**Acceptance for whoever takes it:** the guard is in place, `boundcheck` reports **0** disagreements,
-those three tests pass, the suite finishes in its usual five minutes, and no limit answer is lost —
-measured, since a predicted interaction is worth exactly what it has been measured at.
+### The identity moves to where it is checkable
+
+This is §3's third row and [#802](https://github.com/asc-community/AngouriMath/issues/802)'s rule
+applied: a limit knows *where the expression is going*, which is the one thing a simplification rule
+cannot work out for itself, and on a stated approach the sign of each operand is decidable. So the
+limit machinery states the approach and the rule consults it. A sum needs both operands positive; a
+difference needs only that their signs **agree**, since `ln` of a negative is `ln|.| + pi*i` and that
+cancels in a difference while it would double in a sum.
+
+Numbers still gather without any of this — `ln(2) + ln(3)` is `ln(6)` — because there the operands
+are decidably positive. What no longer happens is the rewrite on a symbol, which may be anything.
+
+### Where the identity had to be stated, which took four attempts
+
+Recorded because each was ruled out by measurement and none was reachable by argument:
+
+- a limit **solver** never fires, because the machinery never asks a sub-limit for that node;
+- a **rewrite** in the limit pipeline is reached **zero** times;
+- the gathering happens inside the simplifier's own candidate search, so stating the approach
+  around one `Simplify` is not enough — the rule was reached **192 times** with the right operands
+  and no approach to check against;
+- stating it only at the `+oo`-normalised entries is correct but **6× slower**, because a rule that
+  declines leaves the search to explore what it would have collapsed.
+
+The last of those is the one worth generalising: **withdrawing a rewrite has a cost in search, not
+only in coverage**, and that cost is invisible until something is timed.
