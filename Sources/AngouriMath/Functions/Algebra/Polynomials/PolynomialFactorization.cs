@@ -126,24 +126,31 @@ namespace AngouriMath.Functions
         }
 
         /// <summary>
-        /// Whether <paramref name="expr"/> is <c>a * x^n + b</c> — a polynomial in
-        /// <paramref name="x"/> with only two terms in it.
+        /// Whether factoring <paramref name="expr"/> is worth trying on the way to solving
+        /// it for <paramref name="x"/>.
         /// </summary>
         /// <remarks>
-        /// Asked by callers for which such a polynomial is better left whole than factored.
-        /// Solving is the case: <c>x^n = -b/a</c> inverts in one step and gives the roots in
-        /// polar form, where factoring first divides out the rational ones and leaves the
-        /// rest to be recovered from a quotient — <c>x^3 - 8</c> reads as <c>2</c> and
-        /// <c>(-1/2 +- i sqrt(3)/2) * 2</c> one way and as <c>2</c> and
-        /// <c>(-2 -+ sqrt(-12))/2</c> the other. This is the same judgement
-        /// <see cref="PolynomialFactoring.TrySplitOffRationalRoots"/> makes, and it is here
-        /// rather than inside the factoriser because it is a statement about what a caller
-        /// wants, not about what factors.
+        /// <para>
+        /// Both conditions are about what the step before this one has already done, not
+        /// about what factors. Below degree four there is nothing left to find: a quadratic
+        /// or a cubic that factors at all has a rational root — a cubic splits as a linear
+        /// factor times a quadratic, or into three linear ones, and either way a linear
+        /// factor is there to be found — so
+        /// <see cref="PolynomialFactoring.TrySplitOffRationalRoots"/> has already divided it
+        /// out. Four is the first degree at which a polynomial can factor with no rational
+        /// root anywhere in it, <c>x^4 + 3x^2 + 2</c> being <c>(x^2 + 1)(x^2 + 2)</c>.
+        /// </para>
+        /// <para>
+        /// And a two-termed <c>a*x^n + b</c> is left whole, because inverting the power
+        /// answers it in one step and in polar form, where factoring first divides out the
+        /// rational roots and leaves the rest to be recovered from a quotient. That is the
+        /// judgement <c>TrySplitOffRationalRoots</c> already makes, for the same reason.
+        /// </para>
         /// </remarks>
-        internal static bool IsTwoTermed(Entity expr, Variable x)
+        internal static bool IsWorthFactoringToSolve(Entity expr, Variable x)
             => PolynomialFactoring.TryGetRationalCoefficients(
-                   expr, x, leastTerms: 1, leastDegree: 0, IntegerPolynomial.MaxDegree, out var coefficients)
-               && coefficients.Count(coefficient => !coefficient.IsZero) <= 2;
+                   expr, x, leastTerms: 2, leastDegree: 4, IntegerPolynomial.MaxDegree, out var coefficients)
+               && coefficients.Count(coefficient => !coefficient.IsZero) > 2;
 
         /// <summary>
         /// The irreducible factors of <paramref name="expr"/> over <c>Q</c> with their
