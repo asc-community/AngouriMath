@@ -189,7 +189,7 @@ namespace AngouriMath.Functions
         /// as a polynomial in <paramref name="main"/> — a polynomial in the remaining
         /// variables.
         /// </summary>
-        private static MultivariatePolynomial? ContentIn(
+        internal static MultivariatePolynomial? ContentIn(
             MultivariatePolynomial poly, int main, IReadOnlyList<int> rest, int depth)
         {
             MultivariatePolynomial? content = null;
