@@ -250,6 +250,25 @@ namespace AngouriMath.Functions
             return result;
         }
 
+        /// <summary>
+        /// The partial derivative with respect to <paramref name="variable"/>. Nothing here
+        /// can leave the type's bounds: every exponent falls by one and no monomial is
+        /// created that was not already present.
+        /// </summary>
+        internal MultivariatePolynomial DerivativeIn(int variable)
+        {
+            var result = new Dictionary<ulong, ERational>();
+            foreach (var term in terms)
+            {
+                var power = PowerOf(term.Key, variable);
+                if (power == 0)
+                    continue;
+                Accumulate(result, Without(term.Key, variable) | Pack(variable, power - 1),
+                    term.Value.Multiply(ERational.FromInt32(power)).ToLowestTerms());
+            }
+            return new(VariableCount, result);
+        }
+
         internal MultivariatePolynomial LeadingCoefficientIn(int variable)
         {
             var degree = DegreeIn(variable);
@@ -393,7 +412,12 @@ namespace AngouriMath.Functions
         /// before it is built rather than after.
         /// </remarks>
         internal static MultivariatePolynomial? TryParse(Entity expr, IReadOnlyDictionary<Variable, int> variables)
-            => expr switch
+            // A ninth variable has no byte of the packed monomial to live in, and the shift
+            // that would address it is negative, which the language turns into a shift by
+            // 56 -- the first variable's byte. So it would not fail, it would silently be
+            // the first variable, and x_1 - x_9 would read as the zero polynomial. Refused
+            // here rather than guarded at each caller, since the packing is this type's.
+            => variables.Count > MaxVariables ? null : expr switch
             {
                 // Integer is a Rational, so this arm takes both.
                 Rational rational => Constant(variables.Count, rational.ERational),

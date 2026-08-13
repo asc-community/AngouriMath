@@ -233,6 +233,19 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 && split is Mulf)
                 return Solve(split, x, compensateSolving);
 
+            // A polynomial with no rational root at all may still factor, and then each
+            // factor is a lower-degree equation the product case above answers exactly.
+            // x^5 + 2x^3 - 2x^2 - 4 is (x^2 + 2)(x^3 - 2): three of its five roots are
+            // cube roots of two, which no search for a rational root can reach and which
+            // the general machinery below reaches only numerically, if at all.
+            // Degree four and up, and not two-termed -- see IsWorthFactoringToSolve for why
+            // anything smaller has already been dealt with by the line above.
+            // https://github.com/asc-community/AngouriMath/issues/746
+            if (Functions.PolynomialFactorization.IsWorthFactoringToSolve(expr, x)
+                && Functions.PolynomialFactorization.TryFactorIntoIrreducibles(expr, x, out var factored)
+                && factored is Mulf)
+                return Solve(factored, x, compensateSolving);
+
             if (PolynomialSolver.SolveAsPolynomial(expr, x, out var isIdentity) is { } poly)
                 return poly.Select(e => TryDowncast(expr, x, e.InnerSimplified)).ToSet();
             if (isIdentity)
