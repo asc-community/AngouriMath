@@ -391,7 +391,7 @@ namespace AngouriMath.Tests.Algebra.Polynomials
                 .OrderBy(s => s, System.StringComparer.Ordinal).ToArray();
             Assert.Equal(4, got.Length);
             Assert.All(parts, p => Assert.Equal(1, p.Multiplicity));
-            var rebuilt = Product(parts.Select(p => p.Factor).ToArray());
+            var rebuilt = Product(parts!.Select(p => p.Factor).ToArray());
             Assert.True(rebuilt.SameAs(P(-1, 0, 0, 0, 0, 0, 1)));
         }
 
