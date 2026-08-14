@@ -32,6 +32,48 @@ read first.
 | | `"x^4 + 3x^2 + 2".SolveEquation("x")` | `{ sqrt(-2), -sqrt(-2), i, -i }` | the same four, in the order the factors are found |
 | **silent** | `"1/(x^4 + 3x^2 + 2)".Integrate("x")` | unevaluated | `arctan(x) - sqrt(2) * arctan(sqrt(2) * x / 2) / 2 + C` |
 | **silent** | `"1/(x^4 + 4)".Integrate("x")` | unevaluated | the antiderivative over its two quadratic factors |
+| **silent** | `"sin(-x) + sin(x)".Simplify()` | `sin(-x) + sin(x)` | `0` |
+| **silent** | `"cos(-x)".Simplify()` and `"abs(-x)".Simplify()` | unchanged | `cos(x)`, `abs(x)` |
+
+### The parity identities are applied
+
+`cos(-u) = cos(u)`, `sin(-u) = -sin(u)` and the rest of the family were absent, so an expression that
+cancels exactly did not:
+
+```
+"sin(-x) + sin(x)".Simplify()
+
+was  sin(-x) + sin(x)
+is   0
+```
+
+Nothing false was being asserted, so this is a coverage change rather than a wrong answer put right —
+but an expression that is identically zero was left standing, and anything testing a residual against
+zero saw a non-zero residual where there was none.
+
+The one case that already folded, `cos(-2 * x)`, folded by accident: the multiple-angle expansion
+fires for a coefficient of magnitude two or more, and `-x` is a coefficient of `-1`, which it skips.
+That is why `cos(-2 * x)` worked and `cos(-x)`, `sin(-2 * x)`, `tan(-2 * x)` and `abs(-2 * x)` did
+not. What is matched now is a product with a negative real coefficient, which `-x` and `-2 * x` both
+are.
+
+Even: `cos`, `sec`, `abs`. Odd: `sin`, `tan`, `cotan`, `cosec`, `sgn`. Each holds on the whole
+complex plane, and the poles of the odd ones sit symmetrically about zero — `tan(-z)` is undefined
+exactly where `tan(z)` is — so **no condition is acquired**, which is pinned by its own test. Where a
+cancellation is between two reciprocal functions the condition that was already there survives:
+`tan(-x) + tan(x)` is `0 provided not cos(x) = 0`, which is right, since it is undefined at the poles
+rather than zero there.
+
+**A lone `sin(-x)` still prints as `sin(-x)` rather than `-sin(x)`**, and that is a tie rather than a
+failure: both rate exactly 14 under the complexity criteria, and a tie goes to whichever candidate
+was generated first. The identity is applied — it is what makes the cancellation above work — but it
+does not win a comparison it was never going to win. The tests assert the cancellation for that
+reason, rather than pinning the tie-break.
+
+The inverse functions are deliberately untouched: `arcsin` and `arctan` are odd and `arccos` is not,
+and this library's `arccotan` has range `(-pi/2, pi/2]` rather than the textbook `(0, pi)`, so each
+wants measuring before anything is written down.
+[#929](https://github.com/asc-community/AngouriMath/issues/929).
 
 ### A rational function is decomposed over the factors of its denominator, not only its roots
 

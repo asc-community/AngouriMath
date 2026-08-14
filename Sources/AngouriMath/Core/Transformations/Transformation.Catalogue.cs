@@ -118,12 +118,62 @@ namespace AngouriMath.Core.Transformations
         /// Nothing runs this by default. See
         /// <c>Docs/Contributing/CanonicalForm.md</c> §5 and
         /// <a href="https://github.com/asc-community/AngouriMath/issues/934">#934</a>.
-        /// <c>Transformation.Canonicalisation</c> is the companion that handles the commutative
+        /// <see cref="Canonicalisation"/> is the companion that handles the commutative
         /// structure of expressions generally.
         /// </para>
         /// </remarks>
         public static Transformation RationalCanonicalisation { get; }
             = new RationalCanonicalisationTransformation();
+
+        /// <summary>
+        /// A canonical form for the commutative structure: two expressions differing only in
+        /// how their sums, products, conjunctions, disjunctions and set operations are
+        /// arranged or nested come out as the identical tree.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Normalise, order, normalise</b>, and the first of those is what makes it work.
+        /// The order's key depends on a node's class and the normalisation changes classes:
+        /// in <c>1/2 - x</c> the constant reaches an unprepared sort as <c>1 * 2 ^ (-1)</c>,
+        /// a product, and is ordered against <c>-x</c> as one, but folds to the number
+        /// <c>1/2</c> immediately afterwards — so the next pass orders it the other way and
+        /// the two alternate. Sorting a tree that has already settled sorts what the tree is
+        /// actually going to be.
+        /// </para>
+        /// <para>
+        /// Measured over 834 generated expressions and 2738 ordered pairs by
+        /// <c>work/canoncheck</c>: <b>idempotent, and independent of the order the operands
+        /// were written in</b>, where ordering without the leading normalisation fails 21 of
+        /// the first and <see cref="InnerSimplification"/> alone fails 2024 of the second.
+        /// </para>
+        /// <para>
+        /// <b>What it is not.</b> It is not a canonical form for the language — no such thing
+        /// exists, since zero-equivalence is undecidable here — and it is not a
+        /// simplification, since it makes an expression comparable rather than shorter.
+        /// Equal trees mean the expressions are equal; different trees mean nothing at all.
+        /// <c>Docs/Contributing/CanonicalForm.md</c> states the boundary and what is still owed.
+        /// </para>
+        /// <para>
+        /// <b>Nesting goes with order.</b> The sort works over commutative chains rather than
+        /// over one node, so it flattens as it sorts: <c>(x + y) + a</c> and <c>x + (y + a)</c>
+        /// both reach <c>a + x + y</c>, and reach it as the same tree. That is worth saying
+        /// because <see cref="InnerSimplification"/> alone leaves those two as different trees
+        /// which <i>print identically</i> — associativity being normalised on the way out
+        /// rather than in the expression — so a comparison of printed forms cannot tell the
+        /// two situations apart.
+        /// </para>
+        /// <para>
+        /// Nothing in the library runs this: it is offered, not applied. Putting it inside
+        /// <see cref="InnerSimplification"/> would move every commutative operand order in
+        /// every printed answer at once, which is a decision for a release rather than for a
+        /// transformation. <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a>
+        /// tier 1.
+        /// </para>
+        /// </remarks>
+        public static Transformation Canonicalisation { get; }
+            = InnerSimplification
+                .Then(Rewriting(RewriteRules.CanonicalOrderExact))
+                .Then(InnerSimplification);
 
         /// <summary>
         /// Clears a surd out of a two-term denominator: <c>1 / (sqrt(3) + 5)</c> becomes
