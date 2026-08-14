@@ -74,13 +74,46 @@ namespace AngouriMath.Tests.Calculus
             AssertIsAntiderivative(integrand, points);
 
         /// <summary>
-        /// A denominator with no rational root is not split, and neither is one whose root
-        /// repeats -- that needs a term over the square as well, which is not produced here.
-        /// Both are left unevaluated rather than answered wrongly.
+        /// A denominator that factors over the rationals with no rational root anywhere in
+        /// it. The step at a root cannot get a foothold on any of these, and each one splits
+        /// into quadratics that the rule for a linear numerator over a quadratic already
+        /// integrates. https://github.com/asc-community/AngouriMath/issues/919
+        /// </summary>
+        [Theory]
+        [InlineData("1 / (x ^ 4 + 3 * x ^ 2 + 2)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("x / (x ^ 4 + 3 * x ^ 2 + 2)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("(x + 1) / (x ^ 4 + 3 * x ^ 2 + 2)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("1 / ((x ^ 2 + 1) * (x ^ 2 + 2))", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("1 / (x ^ 4 + 4)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        public void ADenominatorThatFactorsWithNoRationalRoot(string integrand, double[] points) =>
+            AssertIsAntiderivative(integrand, points);
+
+        // A numerator that shares a factor with the denominator still has to come out right:
+        // (x^2 + 1) cancels here, so one of the two numerators the split produces is zero.
+        [Theory]
+        [InlineData("(x ^ 2 + 1) / (x ^ 4 + 3 * x ^ 2 + 2)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        public void ANumeratorThatCancels(string integrand, double[] points) =>
+            AssertIsAntiderivative(integrand, points);
+
+        // A rational root and an irreducible quadratic in the same denominator, which needs
+        // both steps: x^5 + ... + 1 is (x + 1)(x^2 + x + 1)(x^2 - x + 1), so the root at -1
+        // comes off first and what is left has no root to divide out.
+        [Theory]
+        [InlineData("1 / (x ^ 5 + x ^ 4 + x ^ 3 + x ^ 2 + x + 1)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        public void ARootAndAnIrreducibleFactorTogether(string integrand, double[] points) =>
+            AssertIsAntiderivative(integrand, points);
+
+        /// <summary>
+        /// What is still left unevaluated rather than answered wrongly: a denominator that is
+        /// irreducible, and one that is a power of a single irreducible. The second is not a
+        /// splitting problem -- there is no coprime pair to split it into, and the ladder
+        /// over <c>f^k</c> that would decompose it produces terms over <c>(x^2 + 1)^2</c>
+        /// that no integration rule reads, so decomposing it would answer nothing.
         /// </summary>
         [Theory]
         [InlineData("x ^ 2 / (x ^ 4 + 1)")]
         [InlineData("1 / (x ^ 3 + x ^ 2 + x + 2)")]
+        [InlineData("1 / (x ^ 4 + 2 * x ^ 2 + 1)")]
         public void WhatCannotBeSplitIsLeftAlone(string integrand) =>
             Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
     }

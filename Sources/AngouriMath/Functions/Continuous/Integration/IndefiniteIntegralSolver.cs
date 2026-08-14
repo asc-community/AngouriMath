@@ -24,27 +24,46 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// A quotient of polynomials whose denominator has a rational root, split at that
-        /// root and integrated in two parts.
+        /// A quotient of polynomials, split into two smaller quotients and integrated in two
+        /// parts — at a rational root of the denominator where it has one, and otherwise at a
+        /// coprime pair of its irreducible factors.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// The rules for a linear or a quadratic denominator answer those in one piece, so
         /// what is left over are the denominators of degree three and up, which nothing
         /// read at all: 1/(x^3 + 1) had no antiderivative. Splitting at the root -1 leaves
         /// (1/3)/(x + 1) and (2 - x)/(3(x^2 - x + 1)), and both of those are already
         /// integrable, the second by the rule for a linear numerator over a quadratic.
         /// Each step takes a degree off the denominator, so this ends.
+        /// </para>
+        /// <para>
+        /// The split at a root reaches a denominator only where it has a rational one, which
+        /// left 1/(x^4 + 3x^2 + 2) unevaluated although it is (x^2 + 1)(x^2 + 2) and both of
+        /// those are integrated by the rule above. <see cref="Functions.PartialFractions"/>
+        /// splits those, and is tried when the split at a root either does not apply or
+        /// applies and leaves something that will not integrate — it takes the denominator
+        /// apart differently, so a failure of the one is no evidence about the other.
+        /// </para>
         /// </remarks>
         internal static Entity? SolveByPartialFractions(Entity expr, Entity.Variable x, bool integrateByParts)
         {
-            if (expr is not Entity.Divf(var numerator, var denominator)
-                || !Functions.PolynomialFactoring.TrySplitOffRationalRoot(
-                    numerator, denominator, x, out var simple, out var restNumerator, out var restDenominator))
+            if (expr is not Entity.Divf(var numerator, var denominator))
                 return null;
-            return Integration.ComputeIndefiniteIntegral(simple, x, integrateByParts) is { } first
-                && Integration.ComputeIndefiniteIntegral(restNumerator / restDenominator, x, integrateByParts) is { } rest
-                ? first + rest
-                : null;
+
+            if (Functions.PolynomialFactoring.TrySplitOffRationalRoot(
+                    numerator, denominator, x, out var simple, out var restNumerator, out var restDenominator)
+                && Integration.ComputeIndefiniteIntegral(simple, x, integrateByParts) is { } first
+                && Integration.ComputeIndefiniteIntegral(restNumerator / restDenominator, x, integrateByParts) is { } rest)
+                return first + rest;
+
+            if (Functions.PartialFractions.TrySplitIntoCoprimeParts(
+                    numerator, denominator, x, out var left, out var right)
+                && Integration.ComputeIndefiniteIntegral(left, x, integrateByParts) is { } overOne
+                && Integration.ComputeIndefiniteIntegral(right, x, integrateByParts) is { } overOther)
+                return overOne + overOther;
+
+            return null;
         }
 
         internal static Entity? SolveAsPolynomialTerm(Entity expr, Entity.Variable x, bool integrateByParts = true) => expr switch
