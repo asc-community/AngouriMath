@@ -25,6 +25,16 @@ using AngouriMath.Extensions;
     + "552aeb08b7a67f49a5557ef4faab3d9f033182be1a646b24c932399732107462848dcb97acecc844"
     + "9997b1b77e6bd337e1116878226dd4954e004f11193ccd8e29fc156615c798f733712923ffe8d6c5")]
 
+// And to the benchmark project, for one question that cannot be asked from outside: whether a
+// rule expressed as data costs more than the same rule as an arm of a `switch`. #746 v2.0 names a
+// slower Simplify as unacceptable, so the migration in #248 is only viable if that cost is
+// measured rather than assumed, and the matching engine is internal.
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("DotnetBenchmark, PublicKey="
+    + "0024000004800000940000000602000000240000525341310004000001000100f54ef0f5905ba32e"
+    + "cae04751103c5565283a4c4fa2b07627ff7a7e556b287f198203a09935d998ce9d812a696aa2e71c"
+    + "552aeb08b7a67f49a5557ef4faab3d9f033182be1a646b24c932399732107462848dcb97acecc844"
+    + "9997b1b77e6bd337e1116878226dd4954e004f11193ccd8e29fc156615c798f733712923ffe8d6c5")]
+
 namespace AngouriMath
 {
     // Visibility for the class is internal so we can use public for methods as we like

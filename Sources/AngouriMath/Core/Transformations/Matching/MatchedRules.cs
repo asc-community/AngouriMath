@@ -11,14 +11,34 @@ using static AngouriMath.Entity.Number;
 namespace AngouriMath.Core.Transformations.Matching
 {
     /// <summary>
-    /// Rule sets written as data. One so far, deliberately: the value of this file is that a
-    /// set expressed here can be checked against the <c>switch</c> that already expresses it,
-    /// so the migration is proven one set at a time rather than asserted wholesale.
+    /// Rule sets written as data, a few at a time and deliberately so: the value of this file is
+    /// that a set expressed here can be checked against the <c>switch</c> that already expresses
+    /// it, so the migration is proven one set at a time rather than asserted wholesale.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <c>MatchedRulesAgreeWithTheSwitchTest</c> is that check. It runs both forms over
     /// generated expressions and requires them to agree on every one, which is what makes
     /// replacing the <c>switch</c> a mechanical step rather than a leap.
+    /// </para>
+    /// <para>
+    /// <see cref="PythagoreanIdentity"/> is the exception, and is here for the opposite reason:
+    /// there is nothing for it to agree with. It uses n-ary matching to say something the
+    /// <c>switch</c> has no way of saying, so it is checked against the mathematics rather than
+    /// against the code it would replace.
+    /// </para>
+    /// <para>
+    /// <b>What it costs to actually use one of these has been measured, once, end to end.</b>
+    /// <see cref="DivisionPreparing"/> was put in place of its <c>switch</c> in
+    /// <c>RewriteRules.DivisionPreparing</c> — which <c>Simplificator</c> runs twice per
+    /// iteration — and the whole suite passed, 7143 of 7143, so the exchange is a behavioural
+    /// non-event rather than merely an agreeing one. The cost was <b>no extra allocation</b>
+    /// (<c>Simplify</c> identical at 84,402 B, <c>SimplifyQuotient</c> +0.04%) and about
+    /// <b>5% of <c>Simplify</c>'s time</b> for that one set. The ten-times figure a single pass
+    /// shows does not reach the caller, because dispatch is a small part of what simplification
+    /// spends; but five percent for one of some thirty sets is not free either, so the exchange
+    /// is worth making where a set's rules need to be data and is not worth making wholesale.
+    /// </para>
     /// </remarks>
     internal static class MatchedRules
     {
@@ -216,6 +236,50 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("p")),
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
                 bound => bound["k"] * (bound["p"] + bound["q"]),
+                Soundness.Sound));
+
+        /// <summary>
+        /// The Pythagorean identity, written once and firing wherever the two terms sit.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This set exists to show what <see cref="MatchPattern.Gathered{T}"/> buys, because the
+        /// <c>switch</c> cannot express it. <c>Patterns.TrigonometricRules</c> spends <b>two</b>
+        /// arms on this identity — <c>Sumf(Powf(Sinf, 2), Powf(Cosf, 2))</c> and the same with the
+        /// operands the other way round — because it has no commutative matching, and both match
+        /// only two children of one <c>Sumf</c>. So the pair is found in
+        /// <c>sin(x)^2 + cos(x)^2</c> and missed in <c>a + sin(x)^2 + b + cos(x)^2</c>, where the
+        /// two terms are not siblings. The library's answer is to sort the operands with
+        /// <c>CanonicalOrder</c> before the rules run, so the pair becomes adjacent. That works,
+        /// and it is the matcher's limitation showing through as a pipeline stage.
+        /// </para>
+        /// <para>
+        /// Here the rule says what it means: <i>among the terms of this sum, find one squared
+        /// sine and one squared cosine of the same argument</i>. The rest of the sum comes back
+        /// bound, and is <c>0</c> when there is none, so the same rule covers both shapes.
+        /// </para>
+        /// <para>
+        /// <see cref="Soundness.Sound"/>: <c>sin²+cos² = 1</c> holds for every complex argument,
+        /// with no branch to choose and no point excluded.
+        /// </para>
+        /// </remarks>
+        internal static MatchedRuleSet PythagoreanIdentity { get; } = new(
+            nameof(PythagoreanIdentity),
+
+            // ... + sin(x)^2 + ... + cos(x)^2 + ...  ->  1 + (everything else)
+            new MatchedRule(
+                "squared-sine-and-cosine-of-one-argument-sum-to-one",
+                MatchPattern.Gathered<Sumf>(
+                    "rest",
+                    MatchPattern.Node<Powf>(
+                        MatchPattern.Node<Sinf>(MatchPattern.Any("x")),
+                        MatchPattern.Exact(Integer.Create(2))),
+                    MatchPattern.Node<Powf>(
+                        MatchPattern.Node<Cosf>(MatchPattern.Any("x")),
+                        MatchPattern.Exact(Integer.Create(2)))),
+                // "x" is bound by the first part and re-matched by the second, so the two terms
+                // are required to be about the same argument rather than merely both squared.
+                bound => 1 + bound["rest"],
                 Soundness.Sound));
     }
 }

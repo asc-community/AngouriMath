@@ -3,6 +3,13 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
+    <!--
+    Signed with the library's own key, as UnitTests is, so that the internals can be named
+    here. The matching engine is internal, and the question of whether a rule expressed as
+    data costs more than the same rule as a `switch` arm cannot be asked from outside it.
+    -->
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\AngouriMath\key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
