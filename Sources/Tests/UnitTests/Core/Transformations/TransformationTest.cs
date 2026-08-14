@@ -206,7 +206,7 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.NotNull(Transformation.Expansion);
             Assert.NotNull(Transformation.Factorization);
             Assert.NotNull(Transformation.Normalization);
-            Assert.NotNull(Transformation.Rationalisation);
+            Assert.NotNull(Transformation.Rationalization);
             Assert.NotNull(Transformation.InnerSimplification);
         }
 
@@ -379,7 +379,7 @@ namespace AngouriMath.Tests.Core.Transformations
                          Transformation.Expansion,
                          Transformation.Factorization,
                          Transformation.Normalization,
-                         Transformation.Rationalisation,
+                         Transformation.Rationalization,
                          Transformation.InnerSimplification,
                      })
                 Assert.Equal(transformation.Apply(expr).Output, transformation.Apply(expr).Output);
@@ -395,7 +395,7 @@ namespace AngouriMath.Tests.Core.Transformations
                          Transformation.Expansion,
                          Transformation.Factorization,
                          Transformation.Normalization,
-                         Transformation.Rationalisation,
+                         Transformation.Rationalization,
                          Transformation.InnerSimplification,
                      })
             {
@@ -536,9 +536,9 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         [Fact]
-        public void RationalisationClearsASurdOutOfADenominator()
+        public void RationalizationClearsASurdOutOfADenominator()
         {
-            var result = Transformation.Rationalisation.Apply(Parse("1 / (sqrt(3) + 5)"));
+            var result = Transformation.Rationalization.Apply(Parse("1 / (sqrt(3) + 5)"));
 
             Assert.True(result.Succeeded);
             Assert.DoesNotContain(

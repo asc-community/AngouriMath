@@ -54,7 +54,7 @@ namespace DotnetBenchmark
         // The layer reached directly.
         [Benchmark] public void SimplificationTransformation() => Transformation.Simplification.Apply(simplifyInput);
         [Benchmark] public void Normalization() => Transformation.Normalization.Apply(unorderedInput);
-        [Benchmark] public void Rationalisation() => Transformation.Rationalisation.Apply(surdInput);
+        [Benchmark] public void Rationalization() => Transformation.Rationalization.Apply(surdInput);
         [Benchmark] public void Substitution() => Transformation.Substitution("x", 3).Apply(quotientInput);
 
         // A single rewrite pass, the unit everything above is built out of.

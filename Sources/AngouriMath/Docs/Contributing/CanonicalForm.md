@@ -168,7 +168,7 @@ to give order independence on every pair tried.
 
 Both are met by composing what already exists in the right sequence — normalise, order, normalise —
 which §3 measures at 0 failures on both properties and which is
-`Transformation.Canonicalisation`. **Nesting comes with the ordering**, because the sort works over
+`Transformation.Canonicalization`. **Nesting comes with the ordering**, because the sort works over
 commutative *chains* rather than over one node, so it flattens as it sorts: `(x + y) + a` and
 `x + (y + a)` both reach `a + x + y`, as the same tree.
 
@@ -282,7 +282,7 @@ wrong by a test written in a hurry.
 
 ## 8. What is owed
 
-1. **Where the canonicaliser runs.** It exists — `Transformation.Canonicalisation`, built out of
+1. **Where the canonicaliser runs.** It exists — `Transformation.Canonicalization`, built out of
    parts that already existed, measured idempotent and order-independent, with no rule changed — and
    nothing calls it. Offering it changes nothing for anyone. Putting it inside `InnerSimplified`
    moves every commutative operand order in every printed answer at once, which is a release of its

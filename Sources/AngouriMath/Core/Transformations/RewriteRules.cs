@@ -179,12 +179,12 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Clears a surd out of a two-term denominator.
         /// </summary>
-        public static RewriteRuleSet RationaliseDenominator { get; } = new(
-            nameof(RationaliseDenominator),
+        public static RewriteRuleSet RationalizeDenominator { get; } = new(
+            nameof(RationalizeDenominator),
             "Multiplies a quotient by the conjugate of its denominator to clear a surd from it.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.RationaliseDenominator);
+            Patterns.RationalizeDenominator);
 
         /// <summary>
         /// Brings a quotient of quotients down to a single one.
@@ -392,7 +392,7 @@ namespace AngouriMath.Core.Transformations
             Expansion,
             Factorization,
             PerfectSquare,
-            RationaliseDenominator,
+            RationalizeDenominator,
             CollapseMultipleFractions,
             CommonDenominator,
             CommonDenominatorCountingConstants,

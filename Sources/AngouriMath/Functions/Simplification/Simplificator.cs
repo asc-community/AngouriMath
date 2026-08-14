@@ -121,7 +121,7 @@ namespace AngouriMath.Functions
                 // is an accident rather than a preference.
                 // https://github.com/asc-community/AngouriMath/issues/205
                 if (res.Nodes.Any(child => child is Divf))
-                    AddHistory(res = res.Rewrite(RewriteRules.RationaliseDenominator).InnerSimplified);
+                    AddHistory(res = res.Rewrite(RewriteRules.RationalizeDenominator).InnerSimplified);
 
                 res = res.Rewrite(RewriteRules.CanonicalOrderAt(sortLevel)).InnerSimplified;
                 if (res.Nodes.Any(child => child is Powf))

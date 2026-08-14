@@ -35,6 +35,7 @@ read first.
 | **silent** | `"sin(-x) + sin(x)".Simplify()` | `sin(-x) + sin(x)` | `0` |
 | **silent** | `"cos(-x)".Simplify()` and `"abs(-x)".Simplify()` | unchanged | `cos(x)`, `abs(x)` |
 | **silent** | `"cos(0 ^ y)".InnerSimplified` | `-(-1) provided ...` | `1 provided ...` |
+| | `Transformation.Rationalisation` and `RewriteRules.RationaliseDenominator` | spelled `-ise`, alone on a surface that is otherwise `Factorize`, `Normalization` | spelled `-ize`; a build error rather than a wrong answer |
 
 ### `InnerSimplified` is idempotent again
 
@@ -312,6 +313,31 @@ The condition does not vanish: `ln(0) * 0` is `-oo * 0`, which is `NaN`, so `not
 From [#721](https://github.com/asc-community/AngouriMath/issues/721) and
 [#890](https://github.com/asc-community/AngouriMath/issues/890), in PR
 [#916](https://github.com/asc-community/AngouriMath/pull/916).
+
+### Three members spelled `-ise` are spelled `-ize`
+
+The rest of the surface is `Factorize`, `Latexize`, `Stringize`, `Normalization`, `Factorization`.
+Three members added in 2.1.0 were not, so the same operation had two spellings depending on which
+one a caller reached for:
+
+| Was | Is |
+|---|---|
+| `Transformation.Rationalisation` | `Transformation.Rationalization` |
+| `RewriteRules.RationaliseDenominator` | `RewriteRules.RationalizeDenominator` |
+| `Patterns.RationaliseDenominator` (internal) | `Patterns.RationalizeDenominator` |
+
+**This one breaks a build rather than an answer** — the compiler names the missing member, so there
+is nothing to discover at runtime. The rule set's `Name` comes from `nameof`, so a caller that
+matched on the string `"RationaliseDenominator"` gets `"RationalizeDenominator"` instead; that part
+*is* silent, and it is the only part that is.
+
+Documentation prose keeps British spelling throughout — `Factorize` has always sat beside the word
+"factorisation" and still does. The convention is about identifiers.
+
+Recorded here rather than left alone because a tag is public whether or not anyone has taken it. The
+two canonical-form members added in this release were renamed before they ever shipped, so they are
+not in the table.
+In PR [#940](https://github.com/asc-community/AngouriMath/pull/940).
 
 ---
 

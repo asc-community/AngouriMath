@@ -69,7 +69,7 @@ namespace AngouriMath.Functions
         /// </remarks>
         private static EDecimal Canonical(EDecimal power) => power.Reduce(EContext.Unlimited);
 
-        private static Dictionary<EDecimal, Entity> Canonicalise(Dictionary<EDecimal, Entity> powers)
+        private static Dictionary<EDecimal, Entity> Canonicalize(Dictionary<EDecimal, Entity> powers)
         {
             var canonical = new Dictionary<EDecimal, Entity>();
             foreach (var pair in powers)
@@ -118,8 +118,8 @@ namespace AngouriMath.Functions
             // 1.5 + 0.5 comes out as 2.0 and misses the 2 already in the dictionary. Reduced
             // once, here, so that every key in play is in the one canonical form and the
             // lookups below mean what they say. https://github.com/asc-community/AngouriMath/issues/751
-            var powersOfP = Canonicalise(monoinfoP[polyvar]);
-            var powersOfQ = Canonicalise(monoinfoQ[polyvar]);
+            var powersOfP = Canonicalize(monoinfoP[polyvar]);
+            var powersOfQ = Canonicalize(monoinfoQ[polyvar]);
             var maxpowP = powersOfP.Keys.Max() ?? throw new AngouriBugException("No null expected");
             var maxpowQ = powersOfQ.Keys.Max() ?? throw new AngouriBugException("No null expected");
             var maxvalP = powersOfP[maxpowP];
