@@ -59,8 +59,13 @@ namespace AngouriMath
             public static implicit operator Number(decimal value) => Real.Create(EDecimal.FromDecimal(value));
             public static implicit operator Number(System.Numerics.Complex value)
                 => Complex.Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
+            // Read as the two's-complement bytes it is, which is what BigInteger.ToByteArray
+            // returns and what the same conversion on Entity has always done. The overload
+            // reached before was EInteger.FromString(byte[]), which reads a byte array as ASCII
+            // digits, so every value whose bytes are not digit characters threw a FormatException
+            // -- which is nearly all of them, 1 included.
             public static implicit operator Number(System.Numerics.BigInteger bigInt)
-                => Integer.Create(EInteger.FromString(bigInt.ToByteArray()));
+                => Integer.Create(EInteger.FromBytes(bigInt.ToByteArray(), littleEndian: true));
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         }
     }
