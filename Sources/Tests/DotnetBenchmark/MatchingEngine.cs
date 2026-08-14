@@ -6,6 +6,7 @@
 //
 
 using AngouriMath;
+using AngouriMath.Core.Transformations;
 using AngouriMath.Core.Transformations.Matching;
 using AngouriMath.Functions;
 using BenchmarkDotNet.Attributes;
@@ -87,5 +88,29 @@ namespace DotnetBenchmark
         [Benchmark]
         public Entity PythagorasDataLongMiss()
             => MatchedRules.PythagoreanIdentity.ApplyHere(longMiss);
+
+        // ---- One whole pass over a tree, which is the unit the pipeline actually spends ----
+        //
+        // Everything above is one node. What decides whether the migration is affordable is a
+        // pass: every node of a real expression asked, where most nodes are the wrong shape and
+        // the answer is no. The two sets here are the same rules -- the switch is
+        // Patterns.DivisionPreparingRules and the data set was proven to agree with it in #938 --
+        // so this is a like-for-like swap of one rule set inside the machinery that uses it.
+
+        private static readonly Entity passInput =
+            "(x ^ 3 + 3 * x ^ 2 * y + 3 * x * y ^ 2 + y ^ 3) / (x + y) + a * (1 / b) + sin(x) / 2";
+
+        private static readonly RewriteRuleSet divisionAsData = new(
+            "DivisionPreparingAsData",
+            "The same rules as RewriteRules.DivisionPreparing, expressed as data.",
+            TransformationRelation.Equivalence,
+            Soundness.SoundUnderAssumptions,
+            MatchedRules.DivisionPreparing.ApplyHere);
+
+        [Benchmark]
+        public Entity PassSwitch() => RewriteRules.DivisionPreparing.ApplyOnce(passInput);
+
+        [Benchmark]
+        public Entity PassData() => divisionAsData.ApplyOnce(passInput);
     }
 }

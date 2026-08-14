@@ -104,6 +104,15 @@ namespace AngouriMath.Core.Transformations.Matching
         /// </summary>
         private readonly MatchedRule[] rules;
 
+        // Indexing the rules by the node type each one requires -- the thing a `switch` cannot
+        // do and a set of values can -- was tried here and is deliberately absent. Measured, a
+        // per-runtime-type cache of the applicable rules cost 24 bytes per node and 912 bytes on
+        // a pass, deterministically and reproducibly, and bought a time improvement that sat
+        // inside this machine's run-to-run drift. Where the allocation came from was never
+        // accounted for, and an optimisation that makes the deterministic column worse for an
+        // unexplained reason is not one to keep. The cost being fought is in the match attempt
+        // rather than in the dispatch, so an index is aimed at the wrong half.
+
         internal string Name { get; }
 
         /// <summary>The rules, in the order they are tried. <b>Enumerable</b>, which is the whole point.</summary>
@@ -128,7 +137,7 @@ namespace AngouriMath.Core.Transformations.Matching
         /// <summary>One rewrite at this node only, leaving children alone.</summary>
         internal Entity ApplyHere(Entity expr)
         {
-            // Indexed rather than foreach-over-the-property: see the note on `rules`.
+            // The array rather than the IReadOnlyList property: see the note on `rules`.
             foreach (var rule in rules)
                 if (rule.TryApply(expr) is { } rewritten)
                     return rewritten;
