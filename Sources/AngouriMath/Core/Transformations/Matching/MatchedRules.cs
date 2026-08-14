@@ -27,6 +27,18 @@ namespace AngouriMath.Core.Transformations.Matching
     /// <c>switch</c> has no way of saying, so it is checked against the mathematics rather than
     /// against the code it would replace.
     /// </para>
+    /// <para>
+    /// <b>What it costs to actually use one of these has been measured, once, end to end.</b>
+    /// <see cref="DivisionPreparing"/> was put in place of its <c>switch</c> in
+    /// <c>RewriteRules.DivisionPreparing</c> — which <c>Simplificator</c> runs twice per
+    /// iteration — and the whole suite passed, 7143 of 7143, so the exchange is a behavioural
+    /// non-event rather than merely an agreeing one. The cost was <b>no extra allocation</b>
+    /// (<c>Simplify</c> identical at 84,402 B, <c>SimplifyQuotient</c> +0.04%) and about
+    /// <b>5% of <c>Simplify</c>'s time</b> for that one set. The ten-times figure a single pass
+    /// shows does not reach the caller, because dispatch is a small part of what simplification
+    /// spends; but five percent for one of some thirty sets is not free either, so the exchange
+    /// is worth making where a set's rules need to be data and is not worth making wholesale.
+    /// </para>
     /// </remarks>
     internal static class MatchedRules
     {
