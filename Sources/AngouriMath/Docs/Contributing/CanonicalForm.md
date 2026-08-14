@@ -68,11 +68,11 @@ them the first column's idempotence reads 1 rather than 0 and the last column's 
 rather than 4; nothing else moves. A harness report records a build, so regenerate it before quoting
 it against a later one.
 
-| | `InnerSimplified` | `CanonicalOrderExact` then `InnerSimplified` | `Simplify` |
-|---|---|---|---|
-| idempotence | 0 failed of 834 | **21 failed of 834** | 0 failed of 120 |
-| order independence | 2024 failed of 2738 | **0 failed of 2738** | 8 failed of 72 |
-| listed agreements | 20 failed of 30 | 10 failed of 30 | 4 failed of 30 |
+| | `InnerSimplified` | order, then normalise | **normalise, order, normalise** | `Simplify` |
+|---|---|---|---|---|
+| idempotence | 0 failed of 834 | 21 failed of 834 | **0 failed of 834** | 0 failed of 120 |
+| order independence | 2024 failed of 2738 | 0 failed of 2738 | **0 failed of 2738** | 8 failed of 72 |
+| listed agreements | 20 failed of 30 | 10 failed of 30 | 10 failed of 30 | 4 failed of 30 |
 
 **None of the three is canonical, and no one of them is closest on every property.** The middle
 column is the surprise and it is the useful one.
@@ -87,18 +87,25 @@ a specification would normally have to invent is built; **what is missing is tha
 does not run it.** `Simplify` does, which is most of why it agrees so much more often than
 `InnerSimplified` — the names imply the opposite of the truth here.
 
-**And the pair is not confluent, which is the real obstacle.** Sorting and then normalising is not
-idempotent: 21 of 834. Every failure is the sort and `InnerSimplified` disagreeing about where a
-numeric operand belongs, and each undoing the other:
+**And the composition that has both properties is the third column, which is the canonicaliser this
+tier was asking for.** Sorting and *then* normalising is not idempotent — 21 of 834 — but
+normalising, sorting, and normalising again is idempotent and order-independent on everything tried:
+**0 of 834 and 0 of 2738**.
+
+The reason is worth knowing, because it is not a conflict between rules and nothing has to be
+decided between them. **The sort's key depends on a node's class, and the normalisation changes
+classes.** In `1/2 - x` the constant reaches the sort as `1 * 2 ^ (-1)`, a *product*, and is ordered
+against `-x` as one; the normalisation then folds it to the number `1/2`, and the next sort — now
+seeing a number — orders it the other way:
 
 ```
-1 / 2 - x     ->   -x + 1/2    ->   1/2 + -x    ->   ...
-0 ^ x         ->   0 provided x / 2 * (...) > 0      ->   0 provided 1/2 * (...) * x > 0   ->  ...
+1 / 2 - x    sorted    ->  -x + 1 * 2 ^ (-1)    normalised  ->  -x + 1/2
+-x + 1/2     sorted    ->  1/2 + -x                             ...and back again
 ```
 
-The sort puts the constant one way and `Patterns.NumericNeatRules` puts it back. Neither is wrong on
-its own; they simply have not been made to agree, and until they do, applying the order inside the
-normalisation would trade 2024 order failures for a form that never settles.
+So the sort was ordering a shape that was about to stop existing. Normalise first and it sorts what
+the tree is actually going to be. `x + (-1/2)`, whose constant is already a number, was stable all
+along — which is the control that makes this the explanation rather than a guess.
 
 `Simplify`'s remaining 8 order failures are a different thing again: ties. When two candidates rate
 equal the tie goes to whichever was generated first, which depends on the input order. What ranks
@@ -153,12 +160,10 @@ A **total order on operands** is what makes ordering decidable, and the library 
 `CanonicalOrderCountingConstants` and `CanonicalOrderExact`. Measured, the exact one is total enough
 to give order independence on every pair tried.
 
-Two things are still owed and neither is the order itself. **Flattening** is done by the printer
-rather than in the tree, which is why `(x + y) + a` and `x + (y + a)` print alike and differ. And the
-order and the normalisation have to be made to **agree**: today, sorting and then normalising
-oscillates on any sum with a numeric term, because `Patterns.NumericNeatRules` puts the constant back
-where the sort took it from. Deciding which of the two wins is a smaller question than inventing an
-order, and it is the one actually in the way.
+One thing is still owed and it is not the order. **Flattening** is done by the printer rather than in
+the tree, which is why `(x + y) + a` and `x + (y + a)` print alike and differ. The ordering itself is
+solved by composing what already exists in the right sequence — normalise, order, normalise — which
+§3 measures at 0 failures on both properties.
 
 ### Operators that are sugar for a commutative one
 
@@ -267,10 +272,12 @@ wrong by a test written in a hurry.
 
 ## 8. What is owed
 
-1. **Make the order and the normalisation agree**, so that `CanonicalOrderExact` followed by
-   `InnerSimplified` settles instead of oscillating on a sum with a numeric term. This is the piece
-   in the way of everything else: the order is already total and already gives perfect order
-   independence, and it cannot be moved into the normalisation until the pair is confluent.
+1. **Expose `InnerSimplified` → `CanonicalOrderExact` → `InnerSimplified` as the canonicaliser**,
+   under a name, with §5's boundary stated in its documentation. It is measured idempotent and
+   order-independent, it is built entirely out of parts that already exist, and it needs no rule
+   changed. What it needs is a decision about *where* it runs: as an opt-in operation nothing
+   changes, and inside `InnerSimplified` every commutative operand order in every printed answer
+   moves at once, which is a release of its own.
 2. Flattening of sums and products in the tree rather than in the printer.
 3. The rational-function canonical form of §5, as an explicit operation with the boundary in its
    signature.
