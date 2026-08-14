@@ -34,6 +34,28 @@ read first.
 | **silent** | `"1/(x^4 + 4)".Integrate("x")` | unevaluated | the antiderivative over its two quadratic factors |
 | **silent** | `"sin(-x) + sin(x)".Simplify()` | `sin(-x) + sin(x)` | `0` |
 | **silent** | `"cos(-x)".Simplify()` and `"abs(-x)".Simplify()` | unchanged | `cos(x)`, `abs(x)` |
+| **silent** | `"cos(0 ^ y)".InnerSimplified` | `-(-1) provided ...` | `1 provided ...` |
+
+### `InnerSimplified` is idempotent again
+
+An exact trigonometric value reached through a half turn — `cos(x)` read off the table as
+`-cos(pi - x)` — was built as a negation over the value it turned to and handed back unfolded. Where
+the answer is then *wrapped* rather than rebuilt, nothing normalises it again:
+
+```
+"cos(0 ^ y)".InnerSimplified
+
+was  -(-1) provided y / 2 * (1 + 1 / sgn(y) ^ 2) > 0
+is       1 provided y / 2 * (1 + 1 / sgn(y) ^ 2) > 0
+```
+
+Both are the same value, so nothing was wrong — but applying `InnerSimplified` twice gave a different
+tree from applying it once, and a great deal of the library treats what it hands back as settled.
+`Simplify` was unaffected, since it normalises again anyway.
+
+Found by `canoncheck`, the canonical-form harness: it was the only idempotence failure in 834
+generated expressions, and the count is now zero.
+[#930](https://github.com/asc-community/AngouriMath/issues/930).
 
 ### The parity identities are applied
 

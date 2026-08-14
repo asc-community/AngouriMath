@@ -92,7 +92,14 @@ namespace AngouriMath.Functions
             }
             if (lookup(HalfTurn(arg)) is (true, { } turned))
             {
-                res = oddOverHalfTurn ? -turned : turned;
+                // Folded here rather than left to whoever receives it. The negation is built
+                // above a value that is already in its final form, so nothing downstream is
+                // obliged to look at it again -- and where the answer is wrapped rather than
+                // rebuilt, nothing does: cos(0 ^ y) came back as `-(-1) provided ...` and
+                // needed a second InnerSimplified to become `1 provided ...`, which is an
+                // idempotence failure rather than a cosmetic one.
+                // https://github.com/asc-community/AngouriMath/issues/930
+                res = oddOverHalfTurn ? (-turned).InnerSimplified : turned;
                 return true;
             }
             res = null;

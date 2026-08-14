@@ -427,6 +427,34 @@ namespace AngouriMath.Tests.Common
             expr.ToEntity().Evaled.ShouldBe(MathS.NaN);
             expr.ToEntity().InnerSimplified.ShouldBe(MathS.NaN);
         }
+
+        /// <summary>
+        /// Normalising a normalised expression leaves it alone. `cos(0 ^ y)` did not: the
+        /// exact value of a cosine reached through a half turn was built as a negation over
+        /// the value it turned to and handed back unfolded, so the answer arrived as
+        /// `-(-1) provided ...` and became `1 provided ...` only if something normalised it
+        /// again. https://github.com/asc-community/AngouriMath/issues/930
+        /// </summary>
+        /// <remarks>
+        /// Compared as entities rather than as strings, deliberately. The general failure here
+        /// includes two trees that print alike and differ — `(x + y) + a` and `x + (y + a)` do
+        /// — so a comparison of printed forms would wave those through. See
+        /// `Docs/Contributing/CanonicalForm.md`.
+        /// </remarks>
+        [Theory]
+        [InlineData("cos(0 ^ y)")]
+        [InlineData("sin(0 ^ y)")]
+        [InlineData("cos(0)")]
+        [InlineData("cos(pi)")]
+        [InlineData("sin(pi / 6)")]
+        [InlineData("cos(pi / 3)")]
+        [InlineData("tan(pi / 4)")]
+        [InlineData("x + sin(0 ^ y)")]
+        public void InnerSimplifiedIsIdempotent(string expr)
+        {
+            var once = expr.ToEntity().InnerSimplified;
+            Assert.Equal(once, once.InnerSimplified);
+        }
     }
 }
 
