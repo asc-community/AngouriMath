@@ -148,6 +148,81 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         /// <summary>
+        /// A rule-level guard over <b>two</b> bindings at once, which no predicate on a single
+        /// hole can express: <c>(a^b)^c = a^(b*c)</c> holds for a positive base whatever the
+        /// exponents, and for any base when the outer exponent is whole.
+        /// </summary>
+        /// <remarks>
+        /// Compared against the <c>switch</c> only where the comparison is meaningful.
+        /// <c>PowerRules</c> is a large set and an earlier arm may fire on the same expression,
+        /// so a case counts only where the switch either did nothing or produced exactly the
+        /// power-of-a-power answer; anything else means a different arm matched and says
+        /// nothing about this rule. <b>That the rule cannot be isolated from its `switch` any
+        /// other way is itself the argument for rules being data.</b>
+        /// </remarks>
+        [Fact]
+        public void AGuardOverTwoBindingsMatchesTheSwitch()
+        {
+            var disagreements = new List<string>();
+            var compared = 0;
+            var fired = 0;
+            foreach (var expr in Corpus())
+            {
+                if (expr is not Entity.Powf(Entity.Powf(var a, var b), var c)) continue;
+                var expected = Patterns.PowerRules(expr);
+                var mine = MatchedRules.PowerOfPower.ApplyHere(expr);
+                var theAnswer = (Entity)new Entity.Powf(a, b * c);
+
+                if (!expected.Equals(expr) && !expected.Equals(theAnswer)) continue;
+                compared++;
+                if (!expected.Equals(expr)) fired++;
+                if (!expected.Equals(mine))
+                    disagreements.Add($"{expr.Stringize()}: switch gave {expected.Stringize()}, "
+                        + $"data gave {mine.Stringize()}");
+            }
+            Assert.True(compared > 20, $"only {compared} comparable cases");
+            Assert.True(fired > 0, "the switch never applied this rule, so agreement proves nothing");
+            Assert.True(disagreements.Count == 0,
+                $"{disagreements.Count} of {compared} disagreed:\n" + string.Join("\n", disagreements.Take(10)));
+        }
+
+        /// <summary>
+        /// The guard is the whole point: #752 is what happens when this rule is applied without
+        /// one. <c>sqrt(x^2)</c> must not become <c>x</c>, since at -0.63 that is -0.63 where
+        /// the expression is 0.63.
+        /// </summary>
+        [Theory]
+        [InlineData("(x ^ 2) ^ 3", true)]      // whole outer exponent, any base
+        [InlineData("(x ^ 2) ^ (-1)", true)]   // still whole
+        [InlineData("(2 ^ x) ^ (1/2)", true)]  // base is a positive real
+        [InlineData("(x ^ 2) ^ (1/2)", false)] // neither, and this one is #752
+        [InlineData("(x ^ 2) ^ (3/2)", false)]
+        [InlineData("(x ^ y) ^ z", false)]
+        public void TheGuardDecidesWhetherItFires(string expression, bool shouldFire)
+        {
+            var expr = expression.ToEntity();
+            Assert.Equal(shouldFire, !MatchedRules.PowerOfPower.ApplyHere(expr).Equals(expr));
+        }
+
+        /// <summary>
+        /// And where it does fire the value survives, checked at a negative point — which is
+        /// where the unguarded version went wrong.
+        /// </summary>
+        [Theory]
+        [InlineData("(x ^ 2) ^ 3", -0.63)]
+        [InlineData("(x ^ 2) ^ (-1)", -1.7)]
+        [InlineData("(x ^ 3) ^ 2", -2.4)]
+        public void WhereItFiresTheValueSurvives(string expression, double at)
+        {
+            var expr = expression.ToEntity();
+            var rewritten = MatchedRules.PowerOfPower.ApplyHere(expr);
+            Assert.NotEqual(expr, rewritten);
+            var before = expr.Substitute("x", at).EvalNumerical().RealPart.EDecimal.ToDouble();
+            var after = rewritten.Substitute("x", at).EvalNumerical().RealPart.EDecimal.ToDouble();
+            Assert.Equal(before, after, 8);
+        }
+
+        /// <summary>
         /// A name used twice binds the same subexpression both times — which is the
         /// <c>when any1 == any1a</c> guard the existing rules write out by hand, made
         /// structural.

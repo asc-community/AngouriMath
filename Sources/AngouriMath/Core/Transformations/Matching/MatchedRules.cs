@@ -150,5 +150,42 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Divf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
                 bound => bound["a"] * bound["c"] / bound["b"],
                 Soundness.SoundUnderAssumptions));
+
+        /// <summary>
+        /// The one rule from <see cref="Functions.Patterns.PowerRules"/> that carries a real
+        /// side condition, as data.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The third set expressed here, and the one that exercises the last piece of the
+        /// design: a <b>condition about the match as a whole</b> rather than about one hole.
+        /// <c>(a^b)^c = a^(b*c)</c> is true for a positive base whatever the exponents, and for
+        /// any base when the outer exponent is whole — and false outside those two, which is
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/752">#752</a>: applied
+        /// unconditionally it turned <c>sqrt(x^2)</c> into <c>x</c>, which at -0.63 is -0.63
+        /// where the expression is 0.63.
+        /// </para>
+        /// <para>
+        /// It is also the first rule here whose <see cref="Soundness"/> carries information
+        /// rather than repeating its neighbours'. The condition is what makes it
+        /// <see cref="Soundness.SoundUnderAssumptions"/>, and a reader can see the condition
+        /// and the tier in one place — which is the whole argument for rules being data, since
+        /// in the <c>switch</c> the tier lives on the set and the condition lives forty lines
+        /// away from it.
+        /// </para>
+        /// </remarks>
+        internal static MatchedRuleSet PowerOfPower { get; } = new(
+            nameof(PowerOfPower),
+
+            new MatchedRule(
+                "power-of-a-power-multiplies-its-exponents",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                    MatchPattern.Any("c")),
+                bound => new Powf(bound["a"], bound["b"] * bound["c"]),
+                Soundness.SoundUnderAssumptions,
+                // Two bindings at once, which no predicate on a single hole can express.
+                when: bound => bound["c"] is Integer
+                    || bound["a"].Evaled is Real { IsPositive: true }));
     }
 }
