@@ -63,10 +63,9 @@ namespace AngouriMath.Core.Transformations.Matching
     /// match and the caller takes the first that survives to the end.
     /// </para>
     /// <para>
-    /// Commutativity is over a <i>binary</i> node: <c>a + b</c> matches <c>b + a</c>. Matching
-    /// across a flattened chain — <c>a + b + c</c> against <c>x + y</c> with <c>x = a + b</c> —
-    /// is the n-ary half of #248 and is not here; the associative case wants the operands
-    /// gathered first and is a larger change than the commutative one.
+    /// Commutativity over a <i>binary</i> node — <c>a + b</c> matches <c>b + a</c> — is
+    /// <see cref="Commutative{T}"/>. Matching across a flattened chain, so that a rule about two
+    /// terms finds them among five, is <see cref="Gathered{T}"/>: the n-ary half of #248.
     /// </para>
     /// </remarks>
     internal abstract class MatchPattern
@@ -116,6 +115,54 @@ namespace AngouriMath.Core.Transformations.Matching
         /// </summary>
         internal static MatchPattern Commutative<T>(MatchPattern left, MatchPattern right) where T : Entity
             => new NodePattern(typeof(T), new[] { left, right }, commutative: true);
+
+        /// <summary>
+        /// Matches an associative-commutative chain of <typeparamref name="T"/> — a sum or a
+        /// product — by finding <paramref name="parts"/> among its operands <b>in any positions</b>
+        /// and binding whatever is left over to <paramref name="restName"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is the n-ary half of
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/248">#248</a>, and it is
+        /// what lets a rule about two terms fire on an expression with five. A binary pattern
+        /// cannot: <c>sin(x)^2 + cos(x)^2</c> inside <c>a + sin(x)^2 + b + cos(x)^2</c> is not two
+        /// children of any one node. The library's present answer is to sort the operands with
+        /// <c>CanonicalOrder</c> before running the rules so that the pair lands adjacent — which
+        /// works, and is a workaround for the matcher rather than a property of the mathematics.
+        /// </para>
+        /// <para>
+        /// <b>When nothing is left over, <paramref name="restName"/> is bound to the operator's
+        /// identity</b> — <c>0</c> for a sum, <c>1</c> for a product. That is not a convenience:
+        /// the empty sum <i>is</i> zero and the empty product <i>is</i> one, so one rule covers
+        /// both <c>sin(x)^2 + cos(x)^2</c> and the same pair buried in a longer sum, and the
+        /// right-hand side never has to ask which case it is in.
+        /// </para>
+        /// <para>
+        /// Operands come from <c>LinearChildren</c>, so subtraction and division are already
+        /// normalised: <c>a - b</c> offers <c>a</c> and <c>(-1) * b</c>, and <c>a / b</c> offers
+        /// <c>a</c> and <c>b ^ (-1)</c>. A rule therefore does not need a second arm for the
+        /// subtractive spelling, which is one of the ways the <c>switch</c> sets multiplied.
+        /// </para>
+        /// <para>
+        /// <b>Cost.</b> Assigning k parts to n operands is n!/(n-k)! attempts, so this is bounded
+        /// by <see cref="MaxAssignments"/> measured work rather than by a reasoned size limit, as
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/921">#921</a> settled for
+        /// the resultant. Past the bound it stops yielding, so the rule <i>does not apply</i>
+        /// rather than taking unbounded time — declining is a legitimate answer where a wrong one
+        /// or a hang is not.
+        /// </para>
+        /// </remarks>
+        internal static MatchPattern Gathered<T>(string restName, params MatchPattern[] parts)
+            where T : Entity
+            => new GatheredPattern(typeof(T), restName, parts);
+
+        /// <summary>
+        /// The ceiling on how many part-to-operand assignments one <see cref="Gathered{T}"/> will
+        /// try. Reached only by a rule with several holes over a long chain: two parts stay under
+        /// it until 100 operands, three until 22, four until 11.
+        /// </summary>
+        internal const int MaxAssignments = 10_000;
 
         private sealed class AnyPattern : MatchPattern
         {
@@ -211,6 +258,110 @@ namespace AngouriMath.Core.Transformations.Matching
                 foreach (var head in children[index].Match(actual[index], bindings))
                     foreach (var rest in MatchInOrder(actual, head, index + 1))
                         yield return rest;
+            }
+        }
+
+        private sealed class GatheredPattern : MatchPattern
+        {
+            private readonly Type nodeType;
+            private readonly string restName;
+            private readonly MatchPattern[] parts;
+
+            internal GatheredPattern(Type nodeType, string restName, MatchPattern[] parts)
+            {
+                if (nodeType != typeof(Entity.Sumf) && nodeType != typeof(Entity.Mulf))
+                    throw new ArgumentException(
+                        "gathering is over the associative operators, which are Sumf and Mulf",
+                        nameof(nodeType));
+                if (parts.Length == 0)
+                    throw new ArgumentException("a gathered pattern with no parts matches nothing "
+                        + "in particular", nameof(parts));
+                this.nodeType = nodeType;
+                this.restName = restName ?? throw new ArgumentNullException(nameof(restName));
+                this.parts = parts;
+            }
+
+            private bool OverSum => nodeType == typeof(Entity.Sumf);
+
+            internal override IEnumerable<string> BoundNames
+                => parts.SelectMany(part => part.BoundNames).Append(restName);
+
+            internal override IEnumerable<Bindings> Match(Entity expr, Bindings bindings)
+            {
+                // The subtractive and divisive spellings are the same chain, which is why the
+                // guard admits them: `a - b` is a sum whose second operand LinearChildren has
+                // already negated. Anything else is a chain of one and cannot hold two parts.
+                var isChain = OverSum
+                    ? expr is Entity.Sumf or Entity.Minusf
+                    : expr is Entity.Mulf or Entity.Divf;
+                if (!isChain) yield break;
+
+                var operands = (OverSum
+                    ? Entity.Sumf.LinearChildren(expr)
+                    : Entity.Mulf.LinearChildren(expr)).ToList();
+                if (operands.Count < parts.Length) yield break;
+
+                var used = new bool[operands.Count];
+                var chosen = new int[parts.Length];
+                var budget = new Budget(MaxAssignments);
+                foreach (var solution in Assign(operands, used, chosen, 0, bindings, budget))
+                    yield return solution;
+            }
+
+            /// <summary>
+            /// Every injective assignment of parts to operand positions, depth first, with each
+            /// part matched against its operand before the next is placed — so an assignment that
+            /// cannot match is abandoned rather than completed and then rejected.
+            /// </summary>
+            private IEnumerable<Bindings> Assign(
+                List<Entity> operands, bool[] used, int[] chosen, int part,
+                Bindings bindings, Budget budget)
+            {
+                if (part == parts.Length)
+                {
+                    yield return bindings.With(restName, Leftover(operands, used));
+                    yield break;
+                }
+                for (var i = 0; i < operands.Count; i++)
+                {
+                    if (used[i]) continue;
+                    if (!budget.Spend()) yield break;
+                    used[i] = true;
+                    chosen[part] = i;
+                    foreach (var head in parts[part].Match(operands[i], bindings))
+                        foreach (var full in Assign(operands, used, chosen, part + 1, head, budget))
+                            yield return full;
+                    used[i] = false;
+                }
+            }
+
+            /// <summary>
+            /// The operands no part claimed, folded back into one expression — or the operator's
+            /// identity where every operand was claimed, because the empty sum is zero and the
+            /// empty product is one.
+            /// </summary>
+            private Entity Leftover(List<Entity> operands, bool[] used)
+            {
+                Entity? rest = null;
+                for (var i = 0; i < operands.Count; i++)
+                {
+                    if (used[i]) continue;
+                    rest = rest is null
+                        ? operands[i]
+                        : OverSum ? rest + operands[i] : rest * operands[i];
+                }
+                return rest ?? (OverSum ? Entity.Number.Integer.Zero : Entity.Number.Integer.One);
+            }
+
+            /// <summary>
+            /// Shared across one <see cref="Match"/> call so the bound is on the whole search and
+            /// not on each branch of it, which is the difference between a bound and a suggestion.
+            /// </summary>
+            private sealed class Budget
+            {
+                private int left;
+                internal Budget(int total) => left = total;
+                internal bool Spend() => left-- > 0;
             }
         }
     }
