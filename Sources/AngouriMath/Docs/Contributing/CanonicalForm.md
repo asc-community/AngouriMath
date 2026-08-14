@@ -114,9 +114,15 @@ count that `Complexity` returns; ties between differently-shaped forms are commo
 
 ### The finding that matters most for anyone writing a rule
 
-`(x + y) + a` and `x + (y + a)` **both print as `x + y + a` and are different trees.** Associativity
-is normalised in the printer, not in the expression. A rule, a test or a cache that compares printed
-forms will call them equal; one that compares entities will not. Compare entities.
+`(x + y) + a` and `x + (y + a)` **both print as `x + y + a` and are different trees** after
+`InnerSimplified`. Associativity is normalised in the printer, not in the expression. A rule, a test
+or a cache that compares printed forms will call them equal; one that compares entities will not.
+Compare entities.
+
+The canonicaliser of the third column *does* make them one tree — `a + x + y` — because the sort
+works over commutative chains and so flattens as it sorts. That is worth knowing and does not soften
+the warning: what almost everything in the library actually sees is `InnerSimplified`, where the two
+trees are still two.
 
 ### Two defects it turned up, rather than decisions — both since fixed
 
@@ -160,10 +166,14 @@ A **total order on operands** is what makes ordering decidable, and the library 
 `CanonicalOrderCountingConstants` and `CanonicalOrderExact`. Measured, the exact one is total enough
 to give order independence on every pair tried.
 
-One thing is still owed and it is not the order. **Flattening** is done by the printer rather than in
-the tree, which is why `(x + y) + a` and `x + (y + a)` print alike and differ. The ordering itself is
-solved by composing what already exists in the right sequence — normalise, order, normalise — which
-§3 measures at 0 failures on both properties.
+Both are met by composing what already exists in the right sequence — normalise, order, normalise —
+which §3 measures at 0 failures on both properties and which is
+`Transformation.Canonicalisation`. **Nesting comes with the ordering**, because the sort works over
+commutative *chains* rather than over one node, so it flattens as it sorts: `(x + y) + a` and
+`x + (y + a)` both reach `a + x + y`, as the same tree.
+
+What is *not* met is that `InnerSimplified` on its own does neither, and it is `InnerSimplified` that
+every rule and every cache in the library sees.
 
 ### Operators that are sugar for a commutative one
 
@@ -272,16 +282,14 @@ wrong by a test written in a hurry.
 
 ## 8. What is owed
 
-1. **Expose `InnerSimplified` → `CanonicalOrderExact` → `InnerSimplified` as the canonicaliser**,
-   under a name, with §5's boundary stated in its documentation. It is measured idempotent and
-   order-independent, it is built entirely out of parts that already exist, and it needs no rule
-   changed. What it needs is a decision about *where* it runs: as an opt-in operation nothing
-   changes, and inside `InnerSimplified` every commutative operand order in every printed answer
-   moves at once, which is a release of its own.
-2. Flattening of sums and products in the tree rather than in the printer.
-3. The rational-function canonical form of §5, as an explicit operation with the boundary in its
-   signature.
-4. `canoncheck` in CI once the counts are meant to be zero, which they are not yet. Until then it is
+1. **Where the canonicaliser runs.** It exists — `Transformation.Canonicalisation`, built out of
+   parts that already existed, measured idempotent and order-independent, with no rule changed — and
+   nothing calls it. Offering it changes nothing for anyone. Putting it inside `InnerSimplified`
+   moves every commutative operand order in every printed answer at once, which is a release of its
+   own and a decision rather than an implementation.
+2. The rational-function canonical form of §5, as an explicit operation with the boundary in its
+   signature. This is the one that needs building rather than composing.
+3. `canoncheck` in CI once the counts are meant to be zero, which they are not yet. Until then it is
    a measurement, and its numbers belong in a commit message rather than in a gate.
 
 The two defects §3 lists are fixed and are not on this list.
