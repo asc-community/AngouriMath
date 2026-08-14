@@ -95,13 +95,24 @@ namespace AngouriMath.Tests.Calculus
         public void ARepeatedRationalRootDecomposesToo(string integrand, double[] points) =>
             AssertIsAntiderivative(integrand, points);
 
-        // Denominators with no rational root at all are still out of reach: x^4 + 1 is
-        // irreducible over Q and only factors once real coefficients are allowed. Recorded
-        // so the boundary is visible rather than inferred from an absence.
+        // A denominator that factors over Q with no rational root anywhere in it, which the
+        // split at a root cannot get a foothold on. x^4 + 3x^2 + 2 is (x^2 + 1)(x^2 + 2) and
+        // x^4 + 4 is (x^2 - 2x + 2)(x^2 + 2x + 2); the split at a coprime pair of factors
+        // reaches both. https://github.com/asc-community/AngouriMath/issues/919
+        [Theory]
+        [InlineData("1 / (x ^ 4 + 3 * x ^ 2 + 2)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("1 / (x ^ 4 + 4)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        public void ADenominatorThatFactorsWithNoRationalRoot(string integrand, double[] points) =>
+            AssertIsAntiderivative(integrand, points);
+
+        // What is out of reach is a denominator that does not factor over Q at all -- x^4 + 1
+        // is irreducible and only factors once real coefficients are allowed -- and one that
+        // is a power of a single irreducible, which has no coprime pair to split into.
+        // Recorded so the boundary is visible rather than inferred from an absence.
         [Theory]
         [InlineData("x ^ 2 / (x ^ 4 + 1)")]
-        [InlineData("1 / (x ^ 4 + 4)")]
-        public void ADenominatorWithNoRationalRootIsStillDeclined(string integrand) =>
+        [InlineData("1 / (x ^ 4 + 2 * x ^ 2 + 1)")]
+        public void ADenominatorThatDoesNotFactorIsStillDeclined(string integrand) =>
             Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
     }
 }

@@ -30,6 +30,48 @@ read first.
 | **silent** | `"x^5 + 2x^3 - 2x^2 - 4".SolveEquation("x")` | three of the five roots, one of them a float | all five, exact |
 | | `"x^4 + x^2 + 1".SolveEquation("x")` | `sqrt((-1 - sqrt(-3)) / 2)` and its three companions | `(-1 - sqrt(-3)) / 2` and its three, with no nested radical |
 | | `"x^4 + 3x^2 + 2".SolveEquation("x")` | `{ sqrt(-2), -sqrt(-2), i, -i }` | the same four, in the order the factors are found |
+| **silent** | `"1/(x^4 + 3x^2 + 2)".Integrate("x")` | unevaluated | `arctan(x) - sqrt(2) * arctan(sqrt(2) * x / 2) / 2 + C` |
+| **silent** | `"1/(x^4 + 4)".Integrate("x")` | unevaluated | the antiderivative over its two quadratic factors |
+
+### A rational function is decomposed over the factors of its denominator, not only its roots
+
+The other consumer of the polynomial layer, and the same blindness one level along. A partial
+fraction decomposition split `N/D` at a **rational root** of `D`, so a denominator with no rational
+root was left whole and its integral came back unevaluated — even where every factor was one the
+integrator already reads. `x^4 + 3x^2 + 2` is `(x^2 + 1)(x^2 + 2)`, and the rule for a linear
+numerator over a quadratic answers both halves.
+
+```
+"1/(x^4 + 3x^2 + 2)".Integrate("x")
+
+was  integral(1 / (x ^ 4 + 3 * x ^ 2 + 2), x)
+is   arctan(x) - sqrt(2) * arctan(sqrt(2) * x / 2) / 2 + C
+```
+
+The step is a coprime split rather than a full decomposition, which is what the step at a root
+already was: the denominator is factored into irreducibles, one irreducible with its multiplicity is
+taken against the product of the rest, the extended Euclidean algorithm in `Q[x]` gives `U*A + V*B =
+1`, and `N/(A*B)` becomes `N*V/A + N*U/B` with each numerator reduced modulo its own denominator.
+Both sides are strictly smaller problems of the same kind, so the integrator recurses into them and
+arrives at the full decomposition either way.
+
+**No condition is attached, and that is a statement rather than an omission.** `A` and `B` being
+coprime, `A*B` is zero exactly where one of them is, so the two sides are undefined at the same
+points. A decomposition that loses a singularity is one that cancels a shared factor, and this does
+not cancel anything.
+
+**What is still declined.** A denominator irreducible over `Q` — `x^4 + 1` is, and only factors once
+real coefficients are allowed — and, more generally, any denominator one of whose factors is a shape
+no integration rule reads: an irreducible of degree three or more, or a quadratic repeated. So
+`(x^2 + 1)^2` is declined, and the ladder that would decompose it is deliberately not built, because
+every term it produces is over `(x^2 + c)^k` and would come back unevaluated in turn.
+
+Deciding that from the factorisation rather than by trying is what keeps the cost of declining to the
+one factorisation. Splitting regardless and recursing made `(1 - x^4)/(1 + x^4 + x^8)`, whose
+factorisation holds the irreducible quartic `x^4 - x^2 + 1`, take 18s to return the same unevaluated
+integral it returns in 203ms — measured, and the reason the guard is there rather than a preference.
+
+[#919](https://github.com/asc-community/AngouriMath/issues/919).
 
 ### A polynomial equation that factors is solved through its factors
 
