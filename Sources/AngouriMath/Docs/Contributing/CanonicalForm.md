@@ -288,7 +288,12 @@ wrong by a test written in a hurry.
    moves every commutative operand order in every printed answer at once, which is a release of its
    own and a decision rather than an implementation.
 2. The rational-function canonical form of §5, as an explicit operation with the boundary in its
-   signature. This is the one that needs building rather than composing.
+   signature — [#934](https://github.com/asc-community/AngouriMath/issues/934). This is the one that
+   needs building rather than composing, and the part that is missing is smaller and more specific
+   than it sounds: the greatest common divisor is already there and already verifies itself, but
+   **nothing in the library puts an expression over a common denominator**, so `1/x + 1/y` and
+   `(x+y)/(x*y)` cannot be brought to a common form by any existing route. `Simplify` prefers the
+   split one and will pull the combined one apart again.
 3. `canoncheck` in CI once the counts are meant to be zero, which they are not yet. Until then it is
    a measurement, and its numbers belong in a commit message rather than in a gate.
 
