@@ -218,3 +218,75 @@ attribution in the section above was wrong** — which is the same error that se
 to catch, made one level down: a single number read as a cause without a second measurement to hold it
 against. The action item it raised is discharged, and the answer is that this pattern is not
 measurably expensive at this scale.
+
+## The 1709th and the 1724th, measured together on one machine — the pair for 2.2.0
+
+`v2.1.0` against the 2.2.0 candidate: the 1709th is
+[`b8cf4dcd`](https://github.com/asc-community/AngouriMath/commit/b8cf4dcd), tagged `v2.1.0`, and the
+1724th is [`03a0bf64`](https://github.com/asc-community/AngouriMath/commit/03a0bf64), fifteen commits
+later. Measured minutes apart in one session on one machine, so **only these two columns may be read
+against each other**; neither may be compared with anything above.
+
+| Method | [1709th](https://github.com/asc-community/AngouriMath/commit/b8cf4dcd) | [1724th](https://github.com/asc-community/AngouriMath/commit/03a0bf64) | change | allocated, 1709th | allocated, 1724th |
+|---|--:|--:|--:|--:|--:|
+| ParseEasy | 5,746 ns | 5,747 ns | +0.0% | 18,061 B | 18,061 B |
+| ParseHard | 1,325,558 ns | 1,369,170 ns | +3.3% | 3,498,137 B | 3,498,137 B |
+| SimplifyEasy | 82,305 ns | 81,872 ns | −0.5% | 128,564 B | 128,564 B |
+| SimplifyHard | 1,590.6 ms | 1,581.7 ms | −0.6% | 3,733,136,832 B | 3,749,448,792 B |
+| Derivate | 13,461 ns | 13,565 ns | +0.8% | 52,811 B | 52,823 B |
+| SolveEasy | 11,208,548 ns | 11,177,085 ns | −0.3% | 20,220,106 B | 20,234,998 B |
+| **SolveEasyMedium** | 23,509 ns | 28,503 ns | **+21.2%** | 80,184 B | **95,873 B** |
+| **SolveMedium** | 411,557 ns | 461,734 ns | **+12.2%** | 554,368 B | **658,259 B** |
+| **SolveMediumHard** | 74.9 ms | 85.4 ms | **+14.0%** | 155,190,904 B | **171,395,096 B** |
+| **SolveHard** | 800.2 ms | 858.0 ms | **+7.2%** | 1,356,524,520 B | **1,486,581,640 B** |
+| EvalEasy | 1.334 ns | 1.332 ns | −0.1% | — | — |
+| EvalTrig | 706,201 ns | 700,257 ns | −0.8% | 1,341,377 B | 1,341,377 B |
+| EvalTrigPrecise | 22,548,629 ns | 22,583,915 ns | +0.2% | 12,742,205 B | 12,742,205 B |
+| CompileEasy | 186,227 ns | 188,554 ns | +1.2% | 16,191 B | 16,309 B |
+| CompileHard | 321,647 ns | 319,845 ns | −0.6% | 38,377 B | 37,755 B |
+| RunEasy | 20.117 ns | 20.047 ns | −0.3% | — | — |
+| RunMedium | 165.849 ns | 163.145 ns | −1.6% | — | — |
+| RunHard | 293.908 ns | 291.365 ns | −0.9% | — | — |
+
+### Four solver rows moved, and the allocation moved with them
+
+Everything that is not the solver is flat — parse, simplify, evaluate and the compiled-call trio all
+within 2%, with allocation byte-identical on most rows. Four `Solve*` rows are 7% to 21% slower and
+allocate 10% to 20% more.
+
+**Allocation moving with the timing is what makes this a real change rather than the machine.** The
+pair above this one is the cautionary case: a row reported +8.7% with allocation flat, and
+re-measuring put it at +2.1%. Here four related rows move together in both, which noise does not do.
+
+### It is [#918](https://github.com/asc-community/AngouriMath/pull/918), and it is a price rather than a regression
+
+Isolated by measuring the commits either side of it. Allocation steps exactly once, at the polynomial
+layer, and is identical before and after within each half:
+
+| SolveMedium, allocated | |
+|---|--:|
+| the 1709th, `v2.1.0` | 554,368 B |
+| [`51194ce8`](https://github.com/asc-community/AngouriMath/commit/51194ce8), before #918 | 554,368 B |
+| [`69f66da7`](https://github.com/asc-community/AngouriMath/commit/69f66da7), after #918 | 658,259 B |
+| the 1724th | 658,259 B |
+
+The same clean step appears in all four rows. `SolveEasy` — a quadratic, which never reaches the
+factorisation path — is flat throughout, which is the mechanism corroborating itself.
+
+#918 made the equation solver the polynomial layer's first consumer: where a polynomial factors over
+`Q`, each factor is now solved as a lower-degree equation of its own. That is what turned
+`x^5 + 2x^3 - 2x^2 - 4` from three roots, one of them a float, into all five, exact. An incomplete
+solution set is not a partial answer but a false one, so **this cost buys a wrong answer being
+right**, and by the first rule in [AGENTS.md](../../../../AGENTS.md) it is the correct trade. It is
+recorded here rather than fixed.
+
+### What the suite cannot see, which is worth more than the rows it can
+
+**None of these ten solver benchmarks benefit from #918.** They are quadratics, a substituted
+quadratic and a trigonometric substitution; not one of them factors into lower-degree pieces, so
+every one pays the search and none collects the answer. The column therefore shows the change as
+pure cost, which is true of these inputs and false of the change.
+
+A benchmark whose polynomial *does* factor — the quintic from #918's own changelog entry is the
+obvious candidate — is owed before the next column, or this row will keep reporting a correctness
+fix as a slowdown for as long as anyone reads it.
