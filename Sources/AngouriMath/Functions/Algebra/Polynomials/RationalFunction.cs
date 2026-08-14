@@ -68,7 +68,7 @@ namespace AngouriMath.Functions
         /// <see langword="false"/> where it is not a rational function over <c>Q</c> in its
         /// free variables, or where a bound is reached.
         /// </summary>
-        internal static bool TryCanonicalise(Entity expr, [NotNullWhen(true)] out Entity? canonical)
+        internal static bool TryCanonicalize(Entity expr, [NotNullWhen(true)] out Entity? canonical)
         {
             canonical = null;
             if (expr.Complexity > MaxComplexity)

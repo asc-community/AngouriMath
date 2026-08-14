@@ -118,12 +118,12 @@ namespace AngouriMath.Core.Transformations
         /// Nothing runs this by default. See
         /// <c>Docs/Contributing/CanonicalForm.md</c> §5 and
         /// <a href="https://github.com/asc-community/AngouriMath/issues/934">#934</a>.
-        /// <see cref="Canonicalisation"/> is the companion that handles the commutative
+        /// <see cref="Canonicalization"/> is the companion that handles the commutative
         /// structure of expressions generally.
         /// </para>
         /// </remarks>
-        public static Transformation RationalCanonicalisation { get; }
-            = new RationalCanonicalisationTransformation();
+        public static Transformation RationalCanonicalization { get; }
+            = new RationalCanonicalizationTransformation();
 
         /// <summary>
         /// A canonical form for the commutative structure: two expressions differing only in
@@ -170,7 +170,7 @@ namespace AngouriMath.Core.Transformations
         /// tier 1.
         /// </para>
         /// </remarks>
-        public static Transformation Canonicalisation { get; }
+        public static Transformation Canonicalization { get; }
             = InnerSimplification
                 .Then(Rewriting(RewriteRules.CanonicalOrderExact))
                 .Then(InnerSimplification);
@@ -179,8 +179,8 @@ namespace AngouriMath.Core.Transformations
         /// Clears a surd out of a two-term denominator: <c>1 / (sqrt(3) + 5)</c> becomes
         /// <c>(sqrt(3) - 5) / (-22)</c>.
         /// </summary>
-        public static Transformation Rationalisation { get; }
-            = Rewriting(RewriteRules.RationaliseDenominator).Then(InnerSimplification);
+        public static Transformation Rationalization { get; }
+            = Rewriting(RewriteRules.RationalizeDenominator).Then(InnerSimplification);
 
         /// <summary>
         /// Replaces every occurrence of <paramref name="what"/> with
@@ -269,7 +269,7 @@ namespace AngouriMath.Core.Transformations
                     : cached[level - Lowest] ??= make(level);
         }
 
-        private sealed class RationalCanonicalisationTransformation : Transformation
+        private sealed class RationalCanonicalizationTransformation : Transformation
         {
             public override string Name => "rational-canonical-form";
 
@@ -278,7 +278,7 @@ namespace AngouriMath.Core.Transformations
             public override Soundness Soundness => Soundness.SoundUnderAssumptions;
 
             protected override Entity? ApplyCore(Entity input)
-                => RationalFunction.TryCanonicalise(input, out var canonical) ? canonical : null;
+                => RationalFunction.TryCanonicalize(input, out var canonical) ? canonical : null;
         }
 
         private sealed class InnerSimplificationTransformation : Transformation

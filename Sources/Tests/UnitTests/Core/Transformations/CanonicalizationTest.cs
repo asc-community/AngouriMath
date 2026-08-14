@@ -13,7 +13,7 @@ using Xunit;
 namespace AngouriMath.Tests.Core.Transformations
 {
     /// <summary>
-    /// <see cref="Transformation.Canonicalisation"/>: a canonical form for the commutative
+    /// <see cref="Transformation.Canonicalization"/>: a canonical form for the commutative
     /// structure. Two expressions differing only in how their operands are arranged come out
     /// as the identical tree. https://github.com/asc-community/AngouriMath/issues/746
     /// </summary>
@@ -24,10 +24,10 @@ namespace AngouriMath.Tests.Core.Transformations
     /// most likely thing for a test in this area to get wrong.
     /// </remarks>
     [Trait("Area", "Core")]
-    public sealed class CanonicalisationTest
+    public sealed class CanonicalizationTest
     {
         private static Entity Canonical(string expression)
-            => Transformation.Canonicalisation.ApplyOrKeep(expression.ToEntity());
+            => Transformation.Canonicalization.ApplyOrKeep(expression.ToEntity());
 
         /// <summary>
         /// The property the form exists for: however the operands were written, the tree is
@@ -60,10 +60,10 @@ namespace AngouriMath.Tests.Core.Transformations
         [InlineData("x + 1 * 1 / 2")]
         [InlineData("(x + y) * (a - 1/2)")]
         [InlineData("sin(x) + cos(x) + 1/3")]
-        public void CanonicalisingTwiceIsCanonicalisingOnce(string expression)
+        public void CanonicalizingTwiceIsCanonicalizingOnce(string expression)
         {
             var once = Canonical(expression);
-            Assert.Equal(once, Transformation.Canonicalisation.ApplyOrKeep(once));
+            Assert.Equal(once, Transformation.Canonicalization.ApplyOrKeep(once));
         }
 
         /// <summary>

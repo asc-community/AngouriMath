@@ -26,7 +26,7 @@ namespace AngouriMath.Tests.PatternsTest
     /// the binomial case rather than introducing one, which is the half of #205 that does
     /// not need a maintainer's ruling.
     /// </remarks>
-    public sealed class RationaliseDenominatorTest
+    public sealed class RationalizeDenominatorTest
     {
         private static bool IsSurd(Entity node)
             => node is Entity.Powf(_, Entity.Number.Rational and not Entity.Number.Integer);
@@ -99,7 +99,7 @@ namespace AngouriMath.Tests.PatternsTest
         /// through a different route and this rule does not fire on it at all.
         /// </summary>
         [Fact]
-        public void ASingleSurdDenominatorStillRationalises()
+        public void ASingleSurdDenominatorStillRationalizes()
             => Assert.Equal("sqrt(2) / 2".ToEntity().Simplify(), "1 / sqrt(2)".ToEntity().Simplify());
     }
 }

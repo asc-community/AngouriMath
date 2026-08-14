@@ -483,7 +483,7 @@ namespace AngouriMath
         /// <para>
         /// This is not <see cref="Simplify(int)"/> and is not trying to be. It makes an
         /// expression <i>comparable</i>, not shorter, and it may well make it longer. What it
-        /// buys is that <c>a.Canonicalise() == b.Canonicalise()</c> is a real test of whether
+        /// buys is that <c>a.Canonicalize() == b.Canonicalize()</c> is a real test of whether
         /// the two are the same expression, where comparing simplified forms is not.
         /// </para>
         /// <para>
@@ -493,7 +493,7 @@ namespace AngouriMath
         /// functions and <c>abs</c> are in play — so this canonicalises the part that can be:
         /// the arrangement of commutative operators. For rational functions over <c>Q</c>, where
         /// a complete canonical form does exist, use
-        /// <see cref="CanonicaliseAsRationalFunction"/>.
+        /// <see cref="CanonicalizeAsRationalFunction"/>.
         /// <c>Docs/Contributing/CanonicalForm.md</c> states the boundary and how far off the
         /// library is from it.
         /// </para>
@@ -503,8 +503,8 @@ namespace AngouriMath
         /// using AngouriMath;
         /// using static System.Console;
         ///
-        /// WriteLine("x + y".ToEntity().Canonicalise() == "y + x".ToEntity().Canonicalise());
-        /// WriteLine("(x + y) + a".ToEntity().Canonicalise() == "x + (y + a)".ToEntity().Canonicalise());
+        /// WriteLine("x + y".ToEntity().Canonicalize() == "y + x".ToEntity().Canonicalize());
+        /// WriteLine("(x + y) + a".ToEntity().Canonicalize() == "x + (y + a)".ToEntity().Canonicalize());
         /// </code>
         /// Prints
         /// <code>
@@ -512,8 +512,8 @@ namespace AngouriMath
         /// True
         /// </code>
         /// </example>
-        public Entity Canonicalise()
-            => Transformation.Canonicalisation.ApplyOrKeep(this);
+        public Entity Canonicalize()
+            => Transformation.Canonicalization.ApplyOrKeep(this);
 
         /// <summary>
         /// A canonical form for rational functions over <c>Q</c>, or <see langword="null"/>
@@ -543,9 +543,9 @@ namespace AngouriMath
         /// using AngouriMath;
         /// using static System.Console;
         ///
-        /// WriteLine("1/x + 1/y".ToEntity().CanonicaliseAsRationalFunction());
-        /// WriteLine("(x + y) / (x * y)".ToEntity().CanonicaliseAsRationalFunction());
-        /// WriteLine("sin(x) / x".ToEntity().CanonicaliseAsRationalFunction() is null);
+        /// WriteLine("1/x + 1/y".ToEntity().CanonicalizeAsRationalFunction());
+        /// WriteLine("(x + y) / (x * y)".ToEntity().CanonicalizeAsRationalFunction());
+        /// WriteLine("sin(x) / x".ToEntity().CanonicalizeAsRationalFunction() is null);
         /// </code>
         /// Prints
         /// <code>
@@ -554,8 +554,8 @@ namespace AngouriMath
         /// True
         /// </code>
         /// </example>
-        public Entity? CanonicaliseAsRationalFunction()
-            => Transformation.RationalCanonicalisation.Apply(this).Output;
+        public Entity? CanonicalizeAsRationalFunction()
+            => Transformation.RationalCanonicalization.Apply(this).Output;
 
         /// <summary>Finds all alternative forms of an expression sorted by their complexity</summary>
         /// <example>

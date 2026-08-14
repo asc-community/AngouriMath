@@ -13,7 +13,7 @@ using Xunit;
 namespace AngouriMath.Tests.Core.Transformations
 {
     /// <summary>
-    /// <see cref="Transformation.RationalCanonicalisation"/>: a canonical form for rational
+    /// <see cref="Transformation.RationalCanonicalization"/>: a canonical form for rational
     /// functions over Q, which is the part of the language where one is possible.
     /// https://github.com/asc-community/AngouriMath/issues/934
     /// </summary>
@@ -27,7 +27,7 @@ namespace AngouriMath.Tests.Core.Transformations
     {
         private static Entity? Canonical(string expression)
         {
-            var result = Transformation.RationalCanonicalisation.Apply(expression.ToEntity());
+            var result = Transformation.RationalCanonicalization.Apply(expression.ToEntity());
             return result.Succeeded ? result.Output : null;
         }
 
@@ -131,10 +131,10 @@ namespace AngouriMath.Tests.Core.Transformations
         [InlineData("2 * x / (4 * y)")]
         [InlineData("(x ^ 2 - 1) / (x + 1)")]
         [InlineData("x + 1")]
-        public void CanonicalisingTwiceIsCanonicalisingOnce(string expression)
+        public void CanonicalizingTwiceIsCanonicalizingOnce(string expression)
         {
             var once = Required(expression);
-            var twice = Transformation.RationalCanonicalisation.Apply(once);
+            var twice = Transformation.RationalCanonicalization.Apply(once);
             // A condition attached on the first pass is not itself a rational function, so the
             // second pass may decline; what must not happen is a different quotient.
             if (twice.Succeeded)

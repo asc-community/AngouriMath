@@ -115,7 +115,7 @@ namespace AngouriMath.Functions
                 : scaled / Integer.Create(ratio.Denominator);
         }
 
-        internal static Entity RationaliseDenominator(Entity expr)
+        internal static Entity RationalizeDenominator(Entity expr)
         {
             // k * (value / d) -> (k * value) / d, reduced, where the numerator carries a surd
             // this rule moved up out of a denominator. Without it a numeric coefficient never

@@ -17,7 +17,7 @@ namespace AngouriMath.Tests.Core.Transformations
     /// https://github.com/asc-community/AngouriMath/issues/746
     /// </summary>
     [Trait("Area", "Core")]
-    public sealed class CanonicaliseEntryPointTest
+    public sealed class CanonicalizeEntryPointTest
     {
         /// <summary>
         /// What the method is for: equality of the forms is a real test of equality of the
@@ -28,24 +28,24 @@ namespace AngouriMath.Tests.Core.Transformations
         [InlineData("x * y * a", "a * y * x")]
         [InlineData("(x + y) + a", "x + (y + a)")]
         [InlineData("1/2 - x", "-x + 1/2")]
-        public void CanonicaliseMakesTwoWritingsOneTree(string left, string right)
-            => Assert.Equal(left.ToEntity().Canonicalise(), right.ToEntity().Canonicalise());
+        public void CanonicalizeMakesTwoWritingsOneTree(string left, string right)
+            => Assert.Equal(left.ToEntity().Canonicalize(), right.ToEntity().Canonicalize());
 
         [Theory]
         [InlineData("x + y", "x * y")]
         [InlineData("x - y", "y - x")]
         public void AndDoesNotConflateWhatDiffers(string left, string right)
-            => Assert.NotEqual(left.ToEntity().Canonicalise(), right.ToEntity().Canonicalise());
+            => Assert.NotEqual(left.ToEntity().Canonicalize(), right.ToEntity().Canonicalize());
 
         /// <summary>It is a form, so applying it twice changes nothing.</summary>
         [Theory]
         [InlineData("1/2 - x")]
         [InlineData("sin(x) + cos(x) + 1/3")]
         [InlineData("(x + y) * (a - 1/2)")]
-        public void CanonicaliseIsAFixedPoint(string expression)
+        public void CanonicalizeIsAFixedPoint(string expression)
         {
-            var once = expression.ToEntity().Canonicalise();
-            Assert.Equal(once, once.Canonicalise());
+            var once = expression.ToEntity().Canonicalize();
+            Assert.Equal(once, once.Canonicalize());
         }
 
         /// <summary>The rational form decides equality on the sublanguage where it can.</summary>
@@ -55,8 +55,8 @@ namespace AngouriMath.Tests.Core.Transformations
         [InlineData("x / y + 1", "(x + y) / y")]
         public void TheRationalFormDecidesEquality(string left, string right)
         {
-            var one = left.ToEntity().CanonicaliseAsRationalFunction();
-            var two = right.ToEntity().CanonicaliseAsRationalFunction();
+            var one = left.ToEntity().CanonicalizeAsRationalFunction();
+            var two = right.ToEntity().CanonicalizeAsRationalFunction();
             Assert.NotNull(one);
             Assert.Equal(one, two);
         }
@@ -70,7 +70,7 @@ namespace AngouriMath.Tests.Core.Transformations
         [InlineData("sqrt(x)")]
         [InlineData("e ^ x")]
         public void TheRationalFormRefusesWhatIsNotOne(string expression)
-            => Assert.Null(expression.ToEntity().CanonicaliseAsRationalFunction());
+            => Assert.Null(expression.ToEntity().CanonicalizeAsRationalFunction());
 
         /// <summary>
         /// A removable singularity is not removed: the quotient is undefined where the
@@ -80,9 +80,9 @@ namespace AngouriMath.Tests.Core.Transformations
         [Fact]
         public void ACancelledFactorKeepsItsCondition()
         {
-            var cancelled = "x / x".ToEntity().CanonicaliseAsRationalFunction();
+            var cancelled = "x / x".ToEntity().CanonicalizeAsRationalFunction();
             Assert.True(cancelled is Entity.Providedf);
-            Assert.NotEqual("1".ToEntity().CanonicaliseAsRationalFunction(), cancelled);
+            Assert.NotEqual("1".ToEntity().CanonicalizeAsRationalFunction(), cancelled);
         }
 
         /// <summary>

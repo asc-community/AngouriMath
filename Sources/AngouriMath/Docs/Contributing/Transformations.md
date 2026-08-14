@@ -129,8 +129,8 @@ stands: it is parameterised by two variables, so it is a family of sets rather t
 A new transformation built from rules that already exist is one line:
 
 ```csharp
-public static Transformation Rationalisation { get; }
-    = Rewriting(RewriteRules.RationaliseDenominator).Then(InnerSimplification);
+public static Transformation Rationalization { get; }
+    = Rewriting(RewriteRules.RationalizeDenominator).Then(InnerSimplification);
 ```
 
 A new rule set is five, and registering it gets it enumeration, an identity, a soundness label, and
