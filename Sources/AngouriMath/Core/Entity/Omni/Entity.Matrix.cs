@@ -71,35 +71,83 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => InnerMatrix.Iterate().Select(tup => tup.Value).ToArray();
 
-#pragma warning disable CS1591
+            /// <summary>
+            /// Arithmetic on <see cref="Entity"/> as the tensor library wants it, so that a
+            /// matrix can hold expressions rather than numbers.
+            /// </summary>
+            /// <remarks>
+            /// Every operation here normalises its result with <see cref="InnerSimplified"/>.
+            /// Without it an entry would accumulate the whole history of the operations that
+            /// built it — a determinant over a 4×4 of symbols is a sum of products of sums, and
+            /// left unnormalised it grows past being readable or comparable.
+            /// </remarks>
             public readonly struct EntityTensorWrapperOperations : IOperations<Entity>
             {
+                /// <summary>Their sum, normalised.</summary>
                 public Entity Add(Entity a, Entity b) => (a + b).InnerSimplified;
+
+                /// <summary>Their difference, normalised.</summary>
                 public Entity Subtract(Entity a, Entity b) => (a - b).InnerSimplified;
+
+                /// <summary>Their product, normalised.</summary>
                 public Entity Multiply(Entity a, Entity b) => (a * b).InnerSimplified;
+
+                /// <summary>Its negation, normalised.</summary>
                 public Entity Negate(Entity a) => (-a).InnerSimplified;
+
+                /// <summary>Their quotient, normalised.</summary>
                 public Entity Divide(Entity a, Entity b) => (a / b).InnerSimplified;
+
+                /// <summary>The multiplicative identity, which is the integer one.</summary>
                 public Entity CreateOne() => Number.Integer.One;
+
+                /// <summary>The additive identity, which is the integer zero.</summary>
                 public Entity CreateZero() => Number.Integer.Zero;
+
+                /// <summary>
+                /// The entity itself. An <see cref="Entity"/> is immutable, so there is nothing
+                /// to copy and sharing it is safe.
+                /// </summary>
                 public Entity Copy(Entity a) => a;
+
 #pragma warning disable CA1822 // Mark members as static
+                /// <summary>The entity itself, as the interface requires it be passed through.</summary>
                 public Entity Forward(Entity a) => a;
 #pragma warning restore CA1822 // Mark members as static
+
+                /// <summary>
+                /// Whether the two are the same expression. This is structural equality and not
+                /// mathematical: <c>x + x</c> and <c>2 * x</c> are not equal here.
+                /// </summary>
                 public bool AreEqual(Entity a, Entity b) => a == b;
+
+                /// <summary>
+                /// Whether the entity is the literal zero — again structurally, so an expression
+                /// that happens to be zero everywhere is not recognised as one.
+                /// </summary>
                 public bool IsZero(Entity a) => a == 0;
+
+                /// <summary>The entity written out, as <see cref="Stringize()"/> writes it.</summary>
                 public string ToString(Entity a) => a.Stringize();
 
+                /// <summary>
+                /// Not supported: an expression has no byte form here.
+                /// </summary>
+                /// <exception cref="NotSufficientlySupportedException">Always.</exception>
                 public byte[] Serialize(Entity a)
                 {
                     throw new NotSufficientlySupportedException("Serializing a matrix is not supported");
                 }
 
+                /// <summary>
+                /// Not supported: an expression has no byte form here.
+                /// </summary>
+                /// <exception cref="NotSufficientlySupportedException">Always.</exception>
                 public Entity Deserialize(byte[] data)
                 {
                     throw new NotSufficientlySupportedException("Deserializing a matrix is not supported");
                 }
             }
-#pragma warning restore CS1591
             /// <summary>
             /// The number of columns of a matrix. It is 1 for vectors.
             /// </summary>

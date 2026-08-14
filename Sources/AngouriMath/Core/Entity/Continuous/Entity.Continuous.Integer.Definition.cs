@@ -121,15 +121,47 @@ namespace AngouriMath
                 /// </summary>
                 public Integer IntegerDiv(Integer a) => EInteger.Divide(a.EInteger);
 
-#pragma warning disable CS1591
+                // Comparison here is on the value and answers a bool, where the same operators
+                // on Entity build an inequality node instead.
+
+                /// <summary>Whether the first is strictly greater.</summary>
                 public static bool operator >(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) > 0;
+
+                /// <summary>Whether the first is greater or they are equal.</summary>
                 public static bool operator >=(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) >= 0;
+
+                /// <summary>Whether the first is strictly less.</summary>
                 public static bool operator <(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) < 0;
+
+                /// <summary>Whether the first is less or they are equal.</summary>
                 public static bool operator <=(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) <= 0;
+
+                /// <summary>
+                /// Negative, zero or positive as this is less than, equal to or greater than
+                /// <paramref name="other"/>, which is what sorting wants.
+                /// </summary>
+                /// <exception cref="System.ArgumentNullException">
+                /// Thrown where <paramref name="other"/> is <see langword="null"/>, rather than
+                /// sorting it first as <see cref="System.IComparable{T}"/> usually would.
+                /// </exception>
                 public int CompareTo(Integer? other) => other is null ? throw new System.ArgumentNullException() : EInteger.CompareTo(other.EInteger);
+
+                /// <summary>Their sum, exactly and at any size.</summary>
                 public static Integer operator +(Integer a, Integer b) => OpSum(a, b);
+
+                /// <summary>Their difference, exactly and at any size.</summary>
                 public static Integer operator -(Integer a, Integer b) => OpSub(a, b);
+
+                /// <summary>Their product, exactly and at any size.</summary>
                 public static Integer operator *(Integer a, Integer b) => OpMul(a, b);
+
+                /// <summary>
+                /// Their quotient — <b>not</b> integer division. <c>1 / 2</c> is a half and not
+                /// zero, which is why the result is a <see cref="Real"/>: it is a
+                /// <see cref="Rational"/> wherever the division is not exact, and
+                /// <see cref="Real.NaN"/> where the divisor is zero. For the truncating kind,
+                /// see <see cref="IntegerDiv(Integer)"/>.
+                /// </summary>
                 public static Real operator /(Integer a, Integer b) => (Real)OpDiv(a, b);
                 /// <summary>
                 /// The floored remainder, which takes the sign of the divisor: -7 % 3 is 2 and
@@ -145,18 +177,44 @@ namespace AngouriMath
                         .IsZero || truncated.Sign == b.EInteger.Sign
                         ? truncated
                         : truncated.Add(b.EInteger);
+                /// <summary>The operand itself; unary plus changes nothing.</summary>
                 public static Integer operator +(Integer a) => a;
+
+                /// <summary>Its negation.</summary>
                 public static Integer operator -(Integer a) => OpMul(MinusOne, a);
+
+                // Nothing to downcast to here, so unlike the conversions on Real and Rational
+                // these give exactly what they say.
+
+                /// <summary>The number as an <see cref="Integer"/>.</summary>
                 public static implicit operator Integer(sbyte value) => Create(value);
+
+                /// <summary>The number as an <see cref="Integer"/>.</summary>
                 public static implicit operator Integer(byte value) => Create(value);
+
+                /// <summary>The number as an <see cref="Integer"/>.</summary>
                 public static implicit operator Integer(short value) => Create(value);
+
+                /// <summary>The number as an <see cref="Integer"/>.</summary>
                 public static implicit operator Integer(ushort value) => Create(value);
+
+                /// <summary>The number as an <see cref="Integer"/>.</summary>
                 public static implicit operator Integer(int value) => Create(value);
+
+                /// <summary>The number as an <see cref="Integer"/>.</summary>
                 public static implicit operator Integer(uint value) => Create(value);
+
+                /// <summary>The number as an <see cref="Integer"/>.</summary>
                 public static implicit operator Integer(long value) => Create(value);
+
+                /// <summary>The number as an <see cref="Integer"/>.</summary>
                 public static implicit operator Integer(ulong value) => Create(value);
+
+                /// <summary>
+                /// The integer as an <see cref="Integer"/>, of any size — this is the conversion
+                /// to reach for where a value will not fit in a <see langword="long"/>.
+                /// </summary>
                 public static implicit operator Integer(EInteger value) => Create(value);
-#pragma warning restore CS1591
 
             }
         }

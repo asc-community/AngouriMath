@@ -11,7 +11,6 @@ namespace AngouriMath
 {
     partial record Entity
     {
-#pragma warning disable CS1591  // only while records' parameters cannot be documented
         /// <summary>
         /// A node of exponential (power)
         /// </summary>
@@ -22,8 +21,10 @@ namespace AngouriMath
                 ReferenceEquals(Base, @base) && ReferenceEquals(Exponent, exponent) ? this : new(@base, exponent);
             internal override Priority Priority => Priority.Pow;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Base;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Exponent;
 
             /// <inheritdoc/>
@@ -41,8 +42,10 @@ namespace AngouriMath
             private Logf New(Entity @base, Entity antilogarithm) =>
                 ReferenceEquals(Base, @base) && ReferenceEquals(Antilogarithm, antilogarithm) ? this : new(@base, antilogarithm);
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Base;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Antilogarithm;
 
             /// <inheritdoc/>
@@ -51,6 +54,5 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Base, Antilogarithm };
         }
 
-#pragma warning restore CS1591  // only while records' parameters cannot be documented
     }
 }

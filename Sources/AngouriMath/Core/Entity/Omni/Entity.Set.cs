@@ -79,9 +79,11 @@ namespace AngouriMath
         /// <returns>A new node</returns>
         public Set SetSubtract(Entity anotherSet) => new SetMinusf(this, anotherSet);
 
-#pragma warning disable CS1591
+        /// <summary>
+        /// The domain as the set of all its values — <see cref="Domain.Real"/> becomes the set
+        /// of reals — so a domain can be written wherever an expression is expected.
+        /// </summary>
         public static implicit operator Entity(Domain domain) => Set.SpecialSet.Create(domain);
-#pragma warning restore CS1591
 
     }
 }

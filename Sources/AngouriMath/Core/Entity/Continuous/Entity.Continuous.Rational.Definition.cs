@@ -48,17 +48,22 @@ namespace AngouriMath
                 public Integer Denominator => denominator.GetValue(static @this => @this.ERational.Denominator, this);
                 private LazyPropertyA<Integer> denominator;
 
-#pragma warning disable CS1591
-
+                /// <summary>Takes the ratio out, so that <c>var (r) = rational;</c> works.</summary>
+                /// <param name="rational">The value as an <see cref="ERational"/>.</param>
                 public void Deconstruct(out ERational rational) => rational = ERational;
 
+                /// <summary>
+                /// Takes the two parts out, so that <c>var (num, den) = rational;</c> works.
+                /// They are in lowest terms and the denominator is positive, since that is the
+                /// only form a <see cref="Rational"/> is ever built in.
+                /// </summary>
+                /// <param name="numerator">The numerator.</param>
+                /// <param name="denominator">The denominator.</param>
                 public void Deconstruct(out Integer numerator, out Integer denominator)
                 {
                     numerator = Numerator;
                     denominator = Denominator;
                 }
-
-#pragma warning restore CS1591
 
                 /// <inheritdoc/>
                 public override bool IsExact => true;
@@ -161,17 +166,52 @@ namespace AngouriMath
                     }
                 }
 
-#pragma warning disable CS1591
+                // Comparison here is on the value and answers a bool, where the same operators
+                // on Entity build an inequality node instead.
+
+                /// <summary>Whether the first is strictly greater.</summary>
                 public static bool operator >(Rational a, Rational b) => a.ERational.CompareTo(b.ERational) > 0;
+
+                /// <summary>Whether the first is greater or they are equal.</summary>
                 public static bool operator >=(Rational a, Rational b) => a.ERational.CompareTo(b.ERational) >= 0;
+
+                /// <summary>Whether the first is strictly less.</summary>
                 public static bool operator <(Rational a, Rational b) => a.ERational.CompareTo(b.ERational) < 0;
+
+                /// <summary>Whether the first is less or they are equal.</summary>
                 public static bool operator <=(Rational a, Rational b) => a.ERational.CompareTo(b.ERational) <= 0;
+
+                /// <summary>
+                /// Negative, zero or positive as this is less than, equal to or greater than
+                /// <paramref name="other"/>, which is what sorting wants.
+                /// </summary>
+                /// <exception cref="System.ArgumentNullException">
+                /// Thrown where <paramref name="other"/> is <see langword="null"/>, rather than
+                /// sorting it first as <see cref="System.IComparable{T}"/> usually would.
+                /// </exception>
                 public int CompareTo(Rational? other) => other is null ? throw new System.ArgumentNullException() : ERational.CompareTo(other.ERational);
+
+                /// <summary>Their sum, exactly.</summary>
                 public static Rational operator +(Rational a, Rational b) => OpSum(a, b);
+
+                /// <summary>Their difference, exactly.</summary>
                 public static Rational operator -(Rational a, Rational b) => OpSub(a, b);
+
+                /// <summary>Their product, exactly.</summary>
                 public static Rational operator *(Rational a, Rational b) => OpMul(a, b);
+
+                /// <summary>
+                /// Their quotient. <see cref="Real"/> rather than <see cref="Rational"/>,
+                /// because dividing by zero has to go somewhere and the answer is
+                /// <see cref="Real.NaN"/>, which is not a ratio. Every other quotient of two
+                /// ratios is a ratio and arrives as one.
+                /// </summary>
                 public static Real operator /(Rational a, Rational b) => (Real)OpDiv(a, b);
+
+                /// <summary>The operand itself; unary plus changes nothing.</summary>
                 public static Rational operator +(Rational a) => a;
+
+                /// <summary>Its negation.</summary>
                 public static Rational operator -(Rational a) => OpMul(Integer.MinusOne, a);
                 
                 /// <summary>
@@ -191,26 +231,60 @@ namespace AngouriMath
                         .IsZero || truncated.IsNegative == b.ERational.IsNegative
                         ? truncated
                         : truncated + b;
+                // As elsewhere, downcasting is on by default and a whole value arrives as an
+                // Integer, so the runtime type is narrower than the declared one.
+
+                /// <summary>The number as a <see cref="Rational"/>.</summary>
                 public static implicit operator Rational(sbyte value) => (long)value;
+
+                /// <summary>The number as a <see cref="Rational"/>.</summary>
                 public static implicit operator Rational(byte value) => (ulong)value;
+
+                /// <summary>The number as a <see cref="Rational"/>.</summary>
                 public static implicit operator Rational(short value) => (long)value;
+
+                /// <summary>The number as a <see cref="Rational"/>.</summary>
                 public static implicit operator Rational(ushort value) => (ulong)value;
+
+                /// <summary>The number as a <see cref="Rational"/>.</summary>
                 public static implicit operator Rational(int value) => (long)value;
+
+                /// <summary>The number as a <see cref="Rational"/>.</summary>
                 public static implicit operator Rational(uint value) => (ulong)value;
+
+                /// <summary>
+                /// The number as a <see cref="Rational"/> — an <see cref="Integer"/> at runtime
+                /// while downcasting is enabled.
+                /// </summary>
                 public static implicit operator Rational(long value)
                     => MathS.Settings.DowncastingEnabled
                         ? Integer.Create(value)
                         : new Rational(value);
+
+                /// <summary>
+                /// The number as a <see cref="Rational"/> — an <see cref="Integer"/> at runtime
+                /// while downcasting is enabled.
+                /// </summary>
                 public static implicit operator Rational(ulong value)
                     => MathS.Settings.DowncastingEnabled
                         ? Integer.Create(value)
                         : new Rational(value);
+
+                /// <summary>
+                /// The integer as a <see cref="Rational"/> over one — an <see cref="Integer"/>
+                /// at runtime while downcasting is enabled.
+                /// </summary>
                 public static implicit operator Rational(EInteger value)
                     => MathS.Settings.DowncastingEnabled
                         ? Integer.Create(value)
                         : new Rational(ERational.FromEInteger(value));
+
+                /// <summary>
+                /// The ratio as a <see cref="Rational"/>, in lowest terms and with a positive
+                /// denominator: <c>2/4</c> arrives as <c>1/2</c> and <c>1/(-2)</c> as
+                /// <c>(-1)/2</c>.
+                /// </summary>
                 public static implicit operator Rational(ERational value) => Create(value);
-#pragma warning restore CS1591
             }
         }
     }

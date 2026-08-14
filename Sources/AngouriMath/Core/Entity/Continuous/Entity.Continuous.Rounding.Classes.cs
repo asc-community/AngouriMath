@@ -11,7 +11,6 @@ namespace AngouriMath
 {
     partial record Entity
     {
-#pragma warning disable CS1591  // only while records' parameters cannot be documented
         /// <summary>
         /// A node of round: the nearest integer, with a tie going to the even one.
         /// </summary>
@@ -23,6 +22,7 @@ namespace AngouriMath
         /// </remarks>
         public sealed partial record Roundf(Entity Argument) : Function, IUnaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeChild => Argument;
 
             private Roundf New(Entity arg) =>
@@ -46,8 +46,10 @@ namespace AngouriMath
         /// </remarks>
         public sealed partial record Minf(Entity Left, Entity Right) : Function, IBinaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Left;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Right;
 
             private Minf New(Entity left, Entity right) =>
@@ -64,8 +66,10 @@ namespace AngouriMath
         /// <remarks>See <see cref="Minf"/> for why this is a node.</remarks>
         public sealed partial record Maxf(Entity Left, Entity Right) : Function, IBinaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Left;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Right;
 
             private Maxf New(Entity left, Entity right) =>
@@ -88,8 +92,10 @@ namespace AngouriMath
         /// </remarks>
         public sealed partial record Gcdf(Entity Left, Entity Right) : Function, IBinaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Left;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Right;
 
             private Gcdf New(Entity left, Entity right) =>
@@ -99,6 +105,5 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
-#pragma warning restore CS1591  // only while records' parameters cannot be documented
     }
 }

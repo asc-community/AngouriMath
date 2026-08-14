@@ -5166,10 +5166,11 @@ namespace AngouriMath
             /// </summary>
             public enum Direction
             {
-#pragma warning disable CS1591
+                /// <summary>Side by side, so the columns of the second follow the first.</summary>
                 Horizontal,
+
+                /// <summary>One above the other, so the rows of the second follow the first.</summary>
                 Vertical
-#pragma warning restore CS1591
             }
 
             /// <summary>

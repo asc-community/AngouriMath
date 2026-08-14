@@ -11,7 +11,6 @@ namespace AngouriMath
 {
     partial record Entity
     {
-#pragma warning disable CS1591  // only while records' parameters cannot be documented
         /// <summary>
         /// A node of floor: the greatest integer not above the argument.
         /// </summary>
@@ -23,6 +22,7 @@ namespace AngouriMath
         /// </remarks>
         public sealed partial record Floorf(Entity Argument) : Function, IUnaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeChild => Argument;
 
             private Floorf New(Entity arg) =>
@@ -42,6 +42,7 @@ namespace AngouriMath
         /// </remarks>
         public sealed partial record Ceilf(Entity Argument) : Function, IUnaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeChild => Argument;
 
             private Ceilf New(Entity arg) =>
@@ -51,6 +52,5 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
-#pragma warning restore CS1591  // only while records' parameters cannot be documented
     }
 }
