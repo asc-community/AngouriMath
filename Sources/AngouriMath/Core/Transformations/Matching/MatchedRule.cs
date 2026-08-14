@@ -67,6 +67,18 @@ namespace AngouriMath.Core.Transformations.Matching
         /// </summary>
         internal Entity? TryApply(Entity expr)
         {
+            // A pattern with no choice in it has at most one match, so asking for a sequence of
+            // them allocates an iterator per pattern node to deliver either zero answers or one.
+            // Most rules are of that kind, and a rewrite pass makes an attempt at every node of
+            // the tree, so this path is worth having separately.
+            if (Left.IsDeterministic)
+            {
+                if (!Left.TryMatchOnce(expr, Bindings.Empty, out var only)) return null;
+                if (when is not null && !when(only)) return null;
+                try { return right(only); }
+                catch { return null; }
+            }
+
             // Every way the pattern matches, in order, and the first that also satisfies the
             // side condition wins. Taking only the first *match* would be wrong: commutativity
             // means `b*a + c*a` matches `k*p + k*q` several ways and only some of them bind

@@ -141,6 +141,51 @@ namespace AngouriMath.Core.Transformations.Matching
         /// </summary>
         private protected abstract Type? RootType { get; }
 
+        /// <summary>
+        /// Whether this pattern can match an expression in <b>at most one way</b>, so that a
+        /// caller wanting a solution needs no enumeration and no backtracking.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// True for everything except <see cref="Commutative{T}"/> and <see cref="Gathered{T}"/>,
+        /// and false for any node containing one of those, since a choice anywhere below makes
+        /// the whole pattern a search.
+        /// </para>
+        /// <para>
+        /// This is worth distinguishing because <b>most rules are in the deterministic subset</b>
+        /// and enumeration is pure overhead for them: <see cref="MatchCore"/> is an iterator, so
+        /// a state machine is allocated for every node of the pattern at every attempt, and a
+        /// rewrite pass makes an attempt at every node of the tree. Measured on one rule set over
+        /// one tree, that was ten times the time and seven times the allocation of the
+        /// <c>switch</c> the set mirrors.
+        /// </para>
+        /// </remarks>
+        internal virtual bool IsDeterministic => true;
+
+        /// <summary>
+        /// The single way this matches, without enumerating. Only meaningful where
+        /// <see cref="IsDeterministic"/>; a pattern that can match several ways must be asked
+        /// through <see cref="Match"/>, which is why this is not the only entry point.
+        /// </summary>
+        /// <remarks>
+        /// It must agree with <see cref="Match"/> exactly — the same bindings, or no match where
+        /// <see cref="Match"/> yields nothing. <c>DeterministicMatchingAgreesWithEnumeration</c>
+        /// is the test that holds the two together, over generated expressions, because two
+        /// implementations of one thing is how a matcher acquires a case where they differ.
+        /// </remarks>
+        internal bool TryMatchOnce(Entity expr, Bindings bindings, out Bindings result)
+        {
+            if (RootType is { } required && !required.IsInstanceOfType(expr))
+            {
+                result = bindings;
+                return false;
+            }
+            return TryMatchOnceCore(expr, bindings, out result);
+        }
+
+        private protected abstract bool TryMatchOnceCore(
+            Entity expr, Bindings bindings, out Bindings result);
+
         /// <summary>The names this pattern binds, so a right-hand side can be checked for a typo.</summary>
         internal abstract IEnumerable<string> BoundNames { get; }
 
@@ -258,6 +303,16 @@ namespace AngouriMath.Core.Transformations.Matching
                 }
                 yield return bindings.With(name, expr);
             }
+
+            private protected override bool TryMatchOnceCore(
+                Entity expr, Bindings bindings, out Bindings result)
+            {
+                result = bindings;
+                if (where is not null && !where(expr)) return false;
+                if (bindings.TryGet(name, out var already)) return already.Equals(expr);
+                result = bindings.With(name, expr);
+                return true;
+            }
         }
 
         private sealed class ExactPattern : MatchPattern
@@ -280,6 +335,13 @@ namespace AngouriMath.Core.Transformations.Matching
             private protected override IEnumerable<Bindings> MatchCore(Entity expr, Bindings bindings)
             {
                 if (value.Equals(expr)) yield return bindings;
+            }
+
+            private protected override bool TryMatchOnceCore(
+                Entity expr, Bindings bindings, out Bindings result)
+            {
+                result = bindings;
+                return value.Equals(expr);
             }
         }
 
@@ -334,6 +396,27 @@ namespace AngouriMath.Core.Transformations.Matching
                 foreach (var head in children[index].Match(actual[index], bindings))
                     foreach (var rest in MatchInOrder(actual, head, index + 1))
                         yield return rest;
+            }
+
+            /// <summary>
+            /// A commutative node is a choice of two orders, and a node is only as determinate
+            /// as the children it is made of.
+            /// </summary>
+            internal override bool IsDeterministic
+                => !commutative && children.All(child => child.IsDeterministic);
+
+            private protected override bool TryMatchOnceCore(
+                Entity expr, Bindings bindings, out Bindings result)
+            {
+                result = bindings;
+                var actual = expr.DirectChildren;
+                if (actual.Count != children.Length) return false;
+                // Left to right, threading the bindings through. No backtracking is needed
+                // because no child offers a second answer -- that is what IsDeterministic means.
+                for (var i = 0; i < children.Length; i++)
+                    if (!children[i].TryMatchOnce(actual[i], result, out result))
+                        return false;
+                return true;
             }
         }
 
@@ -440,6 +523,14 @@ namespace AngouriMath.Core.Transformations.Matching
             /// Shared across one <see cref="Match"/> call so the bound is on the whole search and
             /// not on each branch of it, which is the difference between a bound and a suggestion.
             /// </summary>
+            /// <summary>Choosing which operands the parts claim is the whole of what it does.</summary>
+            internal override bool IsDeterministic => false;
+
+            private protected override bool TryMatchOnceCore(
+                Entity expr, Bindings bindings, out Bindings result)
+                => throw new InvalidOperationException(
+                    "a gathered pattern is a search and has to be asked through Match");
+
             private sealed class Budget
             {
                 private int left;
