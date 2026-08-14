@@ -176,6 +176,30 @@ counts alongside the solved count. A change that solves one more problem and int
 answer is a regression. Compare against SymPy, Mathematica, or a textbook — being different from
 SymPy is not automatically being wrong, but it is always worth explaining.
 
+### The corpus runs on every commit, and it records what it found
+
+`Sources/Tests/UnitTests/Corpus` is that measurement, in the suite, so it runs on every commit. Each
+problem carries the verdict it currently earns and the gate fails on two things: **any wrong answer**,
+and **any case that stops matching its record** — including one that gets *better*, so the record
+cannot quietly drift away from the library.
+
+So when a change makes the corpus solve something it did not:
+
+1. the gate fails and names the case;
+2. **update its `Expect` in `Corpus.cs` in the same change**, which is how the improvement gets
+   recorded rather than absorbed;
+3. and if it is worth a line to a user, `BREAKING-CHANGES.md` too.
+
+Answers are checked, not compared against stored text — a root is substituted back into its equation,
+an antiderivative is differentiated back, a simplification is evaluated against the expression it came
+from. A change of *form* is therefore not a failure and only a change of *value* is, which is what
+lets the corpus stay useful while printed output moves.
+
+**It is a gate and not a harness.** It is small and takes about a second, because everything in the
+suite is paid for on every commit. The harnesses in `work/` are where a measurement generates its own
+inputs, takes minutes, and gets read by a person; the two are not substitutes, and a finding from a
+harness that is worth keeping belongs in the corpus as a new problem.
+
 ## One structure under several features
 
 Four things in this library are the same shape, and three of them were written separately before
