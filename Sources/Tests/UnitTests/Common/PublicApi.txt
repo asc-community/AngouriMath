@@ -165,6 +165,7 @@ AngouriMath.Core.Transformations.Transformation.Integration(AngouriMath.Entity+V
 AngouriMath.Core.Transformations.Transformation.LimitAt(AngouriMath.Entity+Variable, AngouriMath.Entity, AngouriMath.Core.ApproachFrom) : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.Name { } : System.String
 AngouriMath.Core.Transformations.Transformation.Normalization { } : AngouriMath.Core.Transformations.Transformation
+AngouriMath.Core.Transformations.Transformation.RationalCanonicalisation { } : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.Rationalisation { } : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.Relation { } : AngouriMath.Core.Transformations.TransformationRelation
 AngouriMath.Core.Transformations.Transformation.Repeat(System.Int32) : AngouriMath.Core.Transformations.Transformation
