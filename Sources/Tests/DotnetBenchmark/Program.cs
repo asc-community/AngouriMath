@@ -82,6 +82,10 @@ namespace DotnetBenchmark
                         // Allocated as well as Mean: the regressions this one exists to catch
                         // show up in allocation and are invisible in the timings.
                         "TransformationLayer" => GetReportByBenchmark(typeof(TransformationLayer), "Mean", "Error", "StdDev", "Allocated"),
+                        // Ratio as well: this one exists to compare two forms of the same rule,
+                        // and the absolute nanoseconds matter far less than the factor between
+                        // them. See MatchingEngine for what the factor decides.
+                        "MatchingEngine" => GetReportByBenchmark(typeof(MatchingEngine), "Mean", "Error", "StdDev", "Ratio", "Allocated"),
                         "CompiledFuncTest" => GetReportByBenchmark(typeof(CompiledFuncTest), "Mean", "Error", "StdDev"),
                         "NumbersBenchmark" => GetReportByBenchmark(typeof(NumbersBenchmark), "Mean", "Error", "StdDev"),
                         _ => throw new($"Unexpected benchmark {arg}")

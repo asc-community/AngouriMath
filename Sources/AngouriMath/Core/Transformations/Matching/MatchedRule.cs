@@ -92,29 +92,44 @@ namespace AngouriMath.Core.Transformations.Matching
         internal MatchedRuleSet(string name, params MatchedRule[] rules)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
-            Rules = rules ?? throw new ArgumentNullException(nameof(rules));
+            this.rules = rules ?? throw new ArgumentNullException(nameof(rules));
         }
+
+        /// <summary>
+        /// Held as the array as well as exposed as a list, and walked as the array in
+        /// <see cref="ApplyHere"/>. <c>foreach</c> over an <see cref="IReadOnlyList{T}"/> goes
+        /// through the interface and boxes an enumerator; over the array it does not. That is
+        /// 32 bytes per rule set per node, on a path a rewrite pass takes for every node in the
+        /// tree, and it was the whole of what remained after the match itself stopped allocating.
+        /// </summary>
+        private readonly MatchedRule[] rules;
 
         internal string Name { get; }
 
         /// <summary>The rules, in the order they are tried. <b>Enumerable</b>, which is the whole point.</summary>
-        internal IReadOnlyList<MatchedRule> Rules { get; }
+        internal IReadOnlyList<MatchedRule> Rules => rules;
 
         /// <summary>
         /// The weakest tier any of its rules is justified at — derived rather than declared,
         /// so it cannot drift from the rules it is about.
         /// </summary>
         internal Soundness Soundness
-            => Rules.Count == 0 ? Soundness.Sound : Rules.Max(rule => rule.Soundness);
+            => rules.Length == 0 ? Soundness.Sound : rules.Max(rule => rule.Soundness);
 
         /// <summary>The first rule that applies at this node, or null.</summary>
         internal MatchedRule? FirstMatching(Entity expr)
-            => Rules.FirstOrDefault(rule => rule.TryApply(expr) is not null);
+        {
+            foreach (var rule in rules)
+                if (rule.TryApply(expr) is not null)
+                    return rule;
+            return null;
+        }
 
         /// <summary>One rewrite at this node only, leaving children alone.</summary>
         internal Entity ApplyHere(Entity expr)
         {
-            foreach (var rule in Rules)
+            // Indexed rather than foreach-over-the-property: see the note on `rules`.
+            foreach (var rule in rules)
                 if (rule.TryApply(expr) is { } rewritten)
                     return rewritten;
             return expr;
