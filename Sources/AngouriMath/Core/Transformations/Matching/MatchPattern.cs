@@ -57,6 +57,20 @@ namespace AngouriMath.Core.Transformations.Matching
         internal static MatchPattern Any<T>(string name) where T : Entity
             => new AnyPattern(name, typeof(T));
 
+        /// <summary>
+        /// Matches anything of the given node type that also satisfies <paramref name="where"/>,
+        /// and binds it.
+        /// </summary>
+        /// <remarks>
+        /// This is the C# property pattern — <c>Integer { IsPositive: true }</c> — as data. It
+        /// is a predicate on the node rather than on the bindings, which is the distinction
+        /// that matters: a condition about *this hole* travels with the hole and can be read
+        /// off a rule, where a condition about the match as a whole belongs in the rule's
+        /// <c>when</c> and cannot.
+        /// </remarks>
+        internal static MatchPattern Any<T>(string name, Func<T, bool> where) where T : Entity
+            => new AnyPattern(name, typeof(T), node => where((T)node));
+
         /// <summary>Matches exactly this expression, binding nothing.</summary>
         internal static MatchPattern Exact(Entity value) => new ExactPattern(value);
 
@@ -68,11 +82,13 @@ namespace AngouriMath.Core.Transformations.Matching
         {
             private readonly string name;
             private readonly Type? required;
+            private readonly Func<Entity, bool>? where;
 
-            internal AnyPattern(string name, Type? required)
+            internal AnyPattern(string name, Type? required, Func<Entity, bool>? where = null)
             {
                 this.name = name;
                 this.required = required;
+                this.where = where;
             }
 
             internal override IEnumerable<string> BoundNames => new[] { name };
@@ -80,6 +96,8 @@ namespace AngouriMath.Core.Transformations.Matching
             internal override bool TryMatch(Entity expr, Dictionary<string, Entity> bindings)
             {
                 if (required is not null && !required.IsInstanceOfType(expr))
+                    return false;
+                if (where is not null && !where(expr))
                     return false;
                 // A repeated name is the `when any1 == any1a` guard, made structural: the
                 // second occurrence matches only what the first one already stood for.

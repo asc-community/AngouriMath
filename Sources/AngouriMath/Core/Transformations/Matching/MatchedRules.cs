@@ -62,5 +62,93 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any("b")),
                 bound => bound["c"] * (bound["b"] / bound["a"]),
                 Soundness.SoundUnderAssumptions));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.CollapseMultipleFractions"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The second set expressed here, and chosen because it is harder in three ways that
+        /// test whether the shape generalises rather than whether it works once. It has eight
+        /// rules instead of three; it is <b>order-dependent</b>, since
+        /// <c>Mulf(Divf, Divf)</c> has to be tried before <c>Mulf(a, Divf)</c> or the more
+        /// general rule would swallow the special one; and it needs a <b>predicate on a
+        /// hole</b> — <c>Integer { IsPositive: true }</c> — which the matcher did not have.
+        /// </para>
+        /// <para>
+        /// One feature was added for it and nothing else changed, which is the answer to the
+        /// question this set was picked to ask.
+        /// </para>
+        /// </remarks>
+        internal static MatchedRuleSet CollapseMultipleFractions { get; } = new(
+            nameof(CollapseMultipleFractions),
+
+            // (a / b) ^ c -> a^c / b^c, for a positive whole c
+            new MatchedRule(
+                "positive-power-of-a-quotient-distributes",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                    MatchPattern.Any<Integer>("c", whole => whole.IsPositive)),
+                bound => bound["a"].Pow(bound["c"]) / bound["b"].Pow(bound["c"]),
+                Soundness.SoundUnderAssumptions),
+
+            // (a * b) ^ c -> a^c * b^c, for a positive whole c
+            new MatchedRule(
+                "positive-power-of-a-product-distributes",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                    MatchPattern.Any<Integer>("c", whole => whole.IsPositive)),
+                bound => bound["a"].Pow(bound["c"]) * bound["b"].Pow(bound["c"]),
+                Soundness.SoundUnderAssumptions),
+
+            // (a/b) * (c/d) -> (a*c) / (b*d). Before the two below it, which are more general.
+            new MatchedRule(
+                "product-of-two-quotients",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                    MatchPattern.Node<Divf>(MatchPattern.Any("c"), MatchPattern.Any("d"))),
+                bound => bound["a"] * bound["c"] / (bound["b"] * bound["d"]),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "product-with-a-quotient-on-the-right",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Node<Divf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
+                bound => bound["a"] * bound["b"] / bound["c"],
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "product-with-a-quotient-on-the-left",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                    MatchPattern.Any("c")),
+                bound => bound["a"] * bound["c"] / bound["b"],
+                Soundness.SoundUnderAssumptions),
+
+            // (a/b) / (c/d) -> (a*d) / (b*c). Likewise before the two below it.
+            new MatchedRule(
+                "quotient-of-two-quotients",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                    MatchPattern.Node<Divf>(MatchPattern.Any("c"), MatchPattern.Any("d"))),
+                bound => bound["a"] * bound["d"] / (bound["b"] * bound["c"]),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "quotient-whose-numerator-is-a-quotient",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                    MatchPattern.Any("c")),
+                bound => bound["a"] / (bound["b"] * bound["c"]),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "quotient-whose-denominator-is-a-quotient",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Node<Divf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
+                bound => bound["a"] * bound["c"] / bound["b"],
+                Soundness.SoundUnderAssumptions));
     }
 }

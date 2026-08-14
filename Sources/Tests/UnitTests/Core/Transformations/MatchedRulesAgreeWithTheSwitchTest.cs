@@ -70,8 +70,8 @@ namespace AngouriMath.Tests.Core.Transformations
             return parsed;
         }
 
-        [Fact]
-        public void DivisionPreparingAsDataMatchesTheSwitch()
+        private static void AssertAgrees(
+            string what, System.Func<Entity, Entity> bySwitch, MatchedRuleSet byData, int leastFirings)
         {
             var corpus = Corpus();
             Assert.True(corpus.Count > 500, $"the corpus is only {corpus.Count} expressions");
@@ -80,20 +80,71 @@ namespace AngouriMath.Tests.Core.Transformations
             var fired = 0;
             foreach (var expr in corpus)
             {
-                var bySwitch = Patterns.DivisionPreparingRules(expr);
-                var byData = MatchedRules.DivisionPreparing.ApplyHere(expr);
-                if (!bySwitch.Equals(expr)) fired++;
-                if (!bySwitch.Equals(byData))
-                    disagreements.Add($"{expr.Stringize()}: switch gave {bySwitch.Stringize()}, "
-                        + $"data gave {byData.Stringize()}");
+                var expected = bySwitch(expr);
+                var actual = byData.ApplyHere(expr);
+                if (!expected.Equals(expr)) fired++;
+                if (!expected.Equals(actual))
+                    disagreements.Add($"{expr.Stringize()}: switch gave {expected.Stringize()}, "
+                        + $"data gave {actual.Stringize()}");
             }
 
             // The set has to actually fire, or agreement is the agreement of two things that
             // both did nothing.
-            Assert.True(fired > 20, $"the rules only fired on {fired} of {corpus.Count} expressions");
+            Assert.True(fired >= leastFirings,
+                $"{what}: the rules only fired on {fired} of {corpus.Count} expressions");
             Assert.True(disagreements.Count == 0,
-                $"{disagreements.Count} of {corpus.Count} disagreed:\n"
+                $"{what}: {disagreements.Count} of {corpus.Count} disagreed:\n"
                 + string.Join("\n", disagreements.Take(10)));
+        }
+
+        [Fact]
+        public void DivisionPreparingAsDataMatchesTheSwitch()
+            => AssertAgrees("DivisionPreparing", Patterns.DivisionPreparingRules,
+                MatchedRules.DivisionPreparing, leastFirings: 20);
+
+        /// <summary>
+        /// The second set, and the one that says whether the shape generalises. It is harder in
+        /// three ways: eight rules rather than three, an order that is load-bearing — the
+        /// quotient-times-quotient rule has to be tried before the general product rule or the
+        /// general one swallows it — and a predicate on a hole,
+        /// <c>Integer { IsPositive: true }</c>.
+        /// </summary>
+        [Fact]
+        public void CollapseMultipleFractionsAsDataMatchesTheSwitch()
+            => AssertAgrees("CollapseMultipleFractions", Patterns.CollapseMultipleFractions,
+                MatchedRules.CollapseMultipleFractions, leastFirings: 50);
+
+        /// <summary>
+        /// A predicate on a hole refuses what fails it, which is the C# property pattern
+        /// <c>Integer { IsPositive: true }</c> as data.
+        /// </summary>
+        [Theory]
+        [InlineData("(x / y) ^ 2", true)]
+        [InlineData("(x / y) ^ (-2)", false)]
+        [InlineData("(x / y) ^ 0", false)]
+        [InlineData("(x / y) ^ z", false)]
+        public void APredicateOnAHoleIsChecked(string expression, bool shouldFire)
+        {
+            var expr = expression.ToEntity();
+            var rewritten = MatchedRules.CollapseMultipleFractions.ApplyHere(expr);
+            Assert.Equal(shouldFire, !rewritten.Equals(expr));
+        }
+
+        /// <summary>
+        /// Order is part of the data. Reversing the two rules that overlap makes the general
+        /// one swallow the special one, which is what an ordered list is for and what a
+        /// <c>switch</c> gets by accident of being written top to bottom.
+        /// </summary>
+        [Fact]
+        public void TheOrderOfTheRulesIsLoadBearing()
+        {
+            var expr = "(a / b) * (c / d)".ToEntity();
+            var asWritten = MatchedRules.CollapseMultipleFractions.FirstMatching(expr);
+            Assert.Equal("product-of-two-quotients", asWritten!.Name);
+
+            var reversed = new MatchedRuleSet("reversed",
+                MatchedRules.CollapseMultipleFractions.Rules.Reverse().ToArray());
+            Assert.NotEqual("product-of-two-quotients", reversed.FirstMatching(expr)!.Name);
         }
 
         /// <summary>
