@@ -11,7 +11,6 @@ namespace AngouriMath
 {
     partial record Entity
     {
-#pragma warning disable CS1591  // only while records' parameters cannot be documented
         /// <summary>
         /// A node of factorial
         /// </summary>
@@ -22,6 +21,7 @@ namespace AngouriMath
             // This is still a function for pattern replacement
             internal override Priority Priority => Priority.Factorial;
 
+            /// <inheritdoc/>
             public Entity NodeChild => Argument;
 
             /// <inheritdoc/>
@@ -29,6 +29,5 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
-#pragma warning restore CS1591  // only while records' parameters cannot be documented
     }
 }

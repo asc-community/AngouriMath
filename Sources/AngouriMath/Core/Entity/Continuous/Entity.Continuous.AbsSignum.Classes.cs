@@ -11,12 +11,12 @@ namespace AngouriMath
 {
     partial record Entity
     {
-#pragma warning disable CS1591  // only while records' parameters cannot be documented
         /// <summary>
         /// A node of signum
         /// </summary>
         public sealed partial record Signumf(Entity Argument) : Function, IUnaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeChild => Argument;
 
             private Signumf New(Entity arg) =>
@@ -32,6 +32,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Absf(Entity Argument) : Function, IUnaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeChild => Argument;
 
             private Absf New(Entity arg) =>
@@ -41,6 +42,5 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
-#pragma warning restore CS1591  // only while records' parameters cannot be documented
     }
 }

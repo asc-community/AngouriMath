@@ -14,13 +14,14 @@ namespace AngouriMath
 {
     partial record Entity
     {
-#pragma warning disable CS1591 // TODO: add docs for records' arguments
         /// <summary>
         /// That is a node which equals Expression if Predicate is true, otherwise <see cref="MathS.NaN"/>
         /// </summary>
         public sealed partial record Providedf(Entity Expression, Entity Predicate) : Entity, IBinaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Expression;
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Predicate;
             
             internal Providedf New(Entity expression, Entity predicate)
@@ -50,6 +51,10 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Piecewise : Entity, IEquatable<Piecewise?>
         {
+            /// <summary>
+            /// The cases, in the order they are considered: the value of the piecewise is that
+            /// of the first one whose condition holds.
+            /// </summary>
             public IEnumerable<Providedf> Cases => cases;
             private readonly IEnumerable<Providedf> cases = Enumerable.Empty<Providedf>();
 
@@ -113,7 +118,6 @@ namespace AngouriMath
                 => Cases.Select(c => c.New(transformation(c.Expression), c.Predicate)).ToPiecewise();
         }
 
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 
     

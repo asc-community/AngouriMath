@@ -11,7 +11,6 @@ namespace AngouriMath
 {
     partial record Entity
     {
-#pragma warning disable CS1591  // only while records' parameters cannot be documented
         /// <summary>
         /// A node of sum
         /// </summary>
@@ -34,8 +33,10 @@ namespace AngouriMath
                 ReferenceEquals(Augend, augend) && ReferenceEquals(Addend, addend) ? this : new(augend, addend);
             internal override Priority Priority => Priority.Sum;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Augend;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Addend;
 
             /// <inheritdoc/>
@@ -67,8 +68,10 @@ namespace AngouriMath
                 ReferenceEquals(Minuend, minuend) && ReferenceEquals(Subtrahend, subtrahend) ? this : new(minuend, subtrahend);
             internal override Priority Priority => Priority.Minus;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Minuend;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Subtrahend;
 
             /// <inheritdoc/>
@@ -99,8 +102,10 @@ namespace AngouriMath
                 ReferenceEquals(Multiplier, multiplier) && ReferenceEquals(Multiplicand, multiplicand) ? this : new(multiplier, multiplicand);
             internal override Priority Priority => Priority.Mul;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Multiplier;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Multiplicand;
 
             /// <inheritdoc/>
@@ -132,8 +137,10 @@ namespace AngouriMath
                 ReferenceEquals(Dividend, dividend) && ReferenceEquals(Divisor, divisor) ? this : new(dividend, divisor);
             internal override Priority Priority => Priority.Div;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Dividend;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Divisor;
 
             /// <inheritdoc/>
@@ -155,8 +162,10 @@ namespace AngouriMath
                 ReferenceEquals(Dividend, dividend) && ReferenceEquals(Divisor, divisor) ? this : new(dividend, divisor);
             internal override Priority Priority => Priority.Mul;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Dividend;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Divisor;
 
             /// <inheritdoc/>
@@ -164,6 +173,5 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Dividend, Divisor };
         }
-#pragma warning restore CS1591  // only while records' parameters cannot be documented
     }
 }

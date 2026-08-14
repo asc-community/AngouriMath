@@ -195,55 +195,136 @@ namespace AngouriMath
                 public System.Numerics.Complex ToNumerics() =>
                     new System.Numerics.Complex(RealPart.EDecimal.ToDouble(), ImaginaryPart.EDecimal.ToDouble());
 
-#pragma warning disable CS1591
+                /// <summary>
+                /// Narrows to <see cref="System.Numerics.Complex"/>, which is
+                /// <see cref="ToNumerics"/> and loses precision the same way.
+                /// </summary>
                 public static explicit operator System.Numerics.Complex(Complex it)
                     => it.ToNumerics();
 
+                /// <summary>Their sum.</summary>
                 public static Complex operator +(Complex a, Complex b) => OpSum(a, b);
+
+                /// <summary>Their difference.</summary>
                 public static Complex operator -(Complex a, Complex b) => OpSub(a, b);
+
+                /// <summary>Their product.</summary>
                 public static Complex operator *(Complex a, Complex b) => OpMul(a, b);
+
+                /// <summary>Their quotient.</summary>
                 public static Complex operator /(Complex a, Complex b) => OpDiv(a, b);
+
+                /// <summary>The operand itself; unary plus changes nothing.</summary>
                 public static Complex operator +(Complex a) => a;
+
+                /// <summary>Its negation.</summary>
                 public static Complex operator -(Complex a) => OpMul(Integer.MinusOne, a);
+
+                // The conversions below share one surprise, stated once here and referred to
+                // rather than repeated: where MathS.Settings.DowncastingEnabled is on, which is
+                // the default, an exact whole value arrives as an Integer and an exact ratio as
+                // a Rational. The declared type is Complex either way, so the difference shows
+                // up in the runtime type and in what the number prints as, not in the signature.
+
+                /// <summary>The number as a <see cref="Complex"/>.</summary>
                 public static implicit operator Complex(sbyte value) => (long)value;
+
+                /// <summary>The number as a <see cref="Complex"/>.</summary>
                 public static implicit operator Complex(byte value) => (ulong)value;
+
+                /// <summary>The number as a <see cref="Complex"/>.</summary>
                 public static implicit operator Complex(short value) => (long)value;
+
+                /// <summary>The number as a <see cref="Complex"/>.</summary>
                 public static implicit operator Complex(ushort value) => (ulong)value;
+
+                /// <summary>The number as a <see cref="Complex"/>.</summary>
                 public static implicit operator Complex(int value) => (long)value;
+
+                /// <summary>The number as a <see cref="Complex"/>.</summary>
                 public static implicit operator Complex(uint value) => (ulong)value;
+
+                /// <summary>
+                /// The number as a <see cref="Complex"/> — an <see cref="Integer"/> at runtime
+                /// while downcasting is enabled.
+                /// </summary>
                 public static implicit operator Complex(long value)
                     => MathS.Settings.DowncastingEnabled
                         ? Integer.Create(value)
                         : Create(value, 0);
+                /// <summary>
+                /// The number as a <see cref="Complex"/> — an <see cref="Integer"/> at runtime
+                /// while downcasting is enabled.
+                /// </summary>
                 public static implicit operator Complex(ulong value)
                     => MathS.Settings.DowncastingEnabled
                         ? Integer.Create(value)
                         : Create(value, 0);
+
+                /// <summary>
+                /// The integer as a <see cref="Complex"/> — an <see cref="Integer"/> at runtime
+                /// while downcasting is enabled.
+                /// </summary>
                 public static implicit operator Complex(EInteger value)
                     => MathS.Settings.DowncastingEnabled
                         ? Integer.Create(value)
                         : Create(value, 0);
+
+                /// <summary>
+                /// The ratio as a <see cref="Complex"/> — a <see cref="Rational"/> at runtime
+                /// while downcasting is enabled, and so still exact.
+                /// </summary>
                 public static implicit operator Complex(ERational value)
                     => MathS.Settings.DowncastingEnabled
                         ? Rational.Create(value)
                         : Create(value, 0);
+
+                /// <summary>The decimal as a <see cref="Complex"/> with no imaginary part.</summary>
                 public static implicit operator Complex(EDecimal value)
                     => Create(value, 0);
+
+                /// <summary>
+                /// The value as a <see cref="Complex"/> with no imaginary part. It is read as the
+                /// binary <see langword="float"/> it is, so a literal such as <c>0.1f</c> arrives
+                /// as the value that literal actually holds and not as one tenth.
+                /// </summary>
                 public static implicit operator Complex(float value)
                     => Create(EDecimal.FromSingle(value), 0);
+
+                /// <summary>
+                /// The value as a <see cref="Complex"/> with no imaginary part, read as the
+                /// binary <see langword="double"/> it is rather than as the decimal it was
+                /// written as.
+                /// </summary>
                 public static implicit operator Complex(double value)
                     => Create(EDecimal.FromDouble(value), 0);
+
+                /// <summary>
+                /// The value as a <see cref="Complex"/> with no imaginary part. A
+                /// <see langword="decimal"/> is decimal already, so this one keeps the digits
+                /// that were written.
+                /// </summary>
                 public static implicit operator Complex(decimal value)
                     => Create(EDecimal.FromDecimal(value), 0);
+
+                /// <summary>
+                /// The .NET complex number as this one, through its two
+                /// <see langword="double"/> parts and their precision.
+                /// </summary>
                 public static implicit operator Complex(System.Numerics.Complex value) =>
                     Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
+
+                /// <summary>The pair read as real and imaginary parts.</summary>
                 public static implicit operator Complex((int re, int im) v) => Create(v.re, v.im);
+
+                /// <summary>The pair read as real and imaginary parts.</summary>
                 public static implicit operator Complex((float re, float im) v) => Create(v.re, v.im);
+
+                /// <summary>The pair read as real and imaginary parts.</summary>
                 public static implicit operator Complex((decimal re, decimal im) v) => Create(v.re, v.im);
+
+                /// <summary>The pair read as real and imaginary parts.</summary>
                 public static implicit operator Complex((double re, double im) v) => Create(v.re, v.im);
-
-#pragma warning restore CS1591
-
             }
         }
     }

@@ -12,7 +12,6 @@ namespace AngouriMath
 {
     partial record Entity
     {
-#pragma warning disable CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
 
         /// <summary>
         /// This node represents all possible values a boolean node might be of
@@ -95,6 +94,7 @@ namespace AngouriMath
         {
             internal override Priority Priority => Priority.Negation;
 
+            /// <inheritdoc/>
             public Entity NodeChild => Argument;
 
             private Notf New(Entity negated) =>
@@ -113,8 +113,10 @@ namespace AngouriMath
         {
             internal override Priority Priority => Priority.Conjunction;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Left;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Right;
 
             private Andf New(Entity left, Entity right) =>
@@ -133,8 +135,10 @@ namespace AngouriMath
         {
             internal override Priority Priority => Priority.Disjunction;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Left;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Right;
 
             private Orf New(Entity left, Entity right) =>
@@ -153,8 +157,10 @@ namespace AngouriMath
         {
             internal override Priority Priority => Priority.XDisjunction;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Left;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Right;
 
             private Xorf New(Entity left, Entity right) =>
@@ -173,8 +179,10 @@ namespace AngouriMath
         {
             internal override Priority Priority => Priority.Implication;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Assumption;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Conclusion;
 
             private Impliesf New(Entity assumption, Entity conclusion) =>
@@ -197,8 +205,10 @@ namespace AngouriMath
         {
             internal override Priority Priority => Priority.Equal;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Left;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Right;
 
             internal Equalsf New(Entity left, Entity right)
@@ -221,8 +231,10 @@ namespace AngouriMath
         {
             internal override Priority Priority => Priority.GreaterThan;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Left;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Right;
 
             internal Greaterf New(Entity left, Entity right)
@@ -245,8 +257,10 @@ namespace AngouriMath
         {
             internal override Priority Priority => Priority.GreaterThan;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Left;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Right;
 
             internal GreaterOrEqualf New(Entity left, Entity right)
@@ -269,8 +283,10 @@ namespace AngouriMath
         {
             internal override Priority Priority => Priority.GreaterThan;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Left;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Right;
 
             internal Lessf New(Entity left, Entity right)
@@ -293,8 +309,10 @@ namespace AngouriMath
         {
             internal override Priority Priority => Priority.GreaterThan;
 
+            /// <inheritdoc/>
             public Entity NodeFirstChild => Left;
 
+            /// <inheritdoc/>
             public Entity NodeSecondChild => Right;
 
             internal LessOrEqualf New(Entity left, Entity right)
@@ -318,8 +336,10 @@ namespace AngouriMath
             {
                 internal override Priority Priority => Priority.ContainsIn;
 
+                /// <inheritdoc/>
                 public Entity NodeFirstChild => Element;
 
+                /// <inheritdoc/>
                 public Entity NodeSecondChild => SupSet;
 
                 internal Inf New(Entity element, Entity supSet)
@@ -339,6 +359,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Phif(Entity Argument) : Function, IUnaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeChild => Argument;
 
             internal Phif New(Entity argument)
@@ -352,6 +373,5 @@ namespace AngouriMath
         }
         #endregion
 
-#pragma warning restore CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
     }
 }

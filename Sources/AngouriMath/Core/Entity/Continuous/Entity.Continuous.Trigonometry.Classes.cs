@@ -11,12 +11,12 @@ namespace AngouriMath
 {
     partial record Entity
     {
-#pragma warning disable CS1591  // only while records' parameters cannot be documented
         /// <summary>
         /// A node of sine
         /// </summary>
         public sealed partial record Sinf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -32,6 +32,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Cosf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -47,6 +48,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Tanf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -62,6 +64,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Cotanf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -77,6 +80,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Secantf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -92,6 +96,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Cosecantf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
+            /// <inheritdoc/>
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -101,6 +106,5 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
-#pragma warning restore CS1591  // only while records' parameters cannot be documented
     }
 }
