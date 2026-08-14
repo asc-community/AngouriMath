@@ -17,17 +17,21 @@
     release tag, so what ships is named by the tag; this is what a local build and the
     assembly metadata carry.
     -->
-    <Version>2.1.0</Version>
+    <Version>2.2.0</Version>
 
     <!--
     Pinned to the major for the whole of 2.x, and deliberately not tracking Version.
     The assembly is strong-named (see AngouriMath.csproj), and for a signed assembly
     every AssemblyVersion change breaks binding on consumers that do not add a redirect.
-    Holding it at 2.0.0.0 makes every 2.x release a drop-in replacement. FileVersion
+    Holding it at 2.0.0.0 lets a 2.x assembly load in place of another without one.
+
+    That is binding, not compatibility: a member removed or renamed within 2.x still
+    throws MissingMethodException when a consumer compiled against the older assembly
+    reaches it. 2.2.0 renames two, both recorded in BREAKING-CHANGES.md. FileVersion
     carries the release for anyone reading the file properties.
     -->
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
-    <FileVersion>2.1.0.0</FileVersion>
+    <FileVersion>2.2.0.0</FileVersion>
 
     <Authors>WhiteBlackGoose and contributors</Authors>
     <Company>Angouri</Company>

@@ -15,7 +15,7 @@ read first.
 
 ---
 
-## Unreleased — since 2.1.0
+## 2.2.0 — since 2.1.0
 
 ### At a glance
 
@@ -326,10 +326,17 @@ one a caller reached for:
 | `RewriteRules.RationaliseDenominator` | `RewriteRules.RationalizeDenominator` |
 | `Patterns.RationaliseDenominator` (internal) | `Patterns.RationalizeDenominator` |
 
-**This one breaks a build rather than an answer** — the compiler names the missing member, so there
-is nothing to discover at runtime. The rule set's `Name` comes from `nameof`, so a caller that
-matched on the string `"RationaliseDenominator"` gets `"RationalizeDenominator"` instead; that part
-*is* silent, and it is the only part that is.
+**If you recompile, this breaks a build rather than an answer** — the compiler names the missing
+member. Two ways it can reach you later than that:
+
+- `AssemblyVersion` is pinned at `2.0.0.0` for the whole of 2.x precisely so that a consumer can
+  drop a new DLL in without a binding redirect. Do that without recompiling, and a call to
+  `Transformation.Rationalisation` throws `MissingMethodException` when it is *reached*, not when
+  the assembly loads. That is the one path on which this behaves like a silent change.
+- The rule set's `Name` comes from `nameof`, so a caller matching on the string
+  `"RationaliseDenominator"` now sees `"RationalizeDenominator"` and simply stops matching.
+
+Recompiling against 2.2.0 turns both into compile errors, except the string.
 
 Documentation prose keeps British spelling throughout — `Factorize` has always sat beside the word
 "factorisation" and still does. The convention is about identifiers.
