@@ -223,6 +223,144 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         /// <summary>
+        /// Every <c>p*q + r*s</c> over a handful of operands. The general corpus above only
+        /// happens to contain five expressions of that shape, which is too few to conclude
+        /// anything from, and the shape is the whole subject here — so it is generated rather
+        /// than hoped for. Four operands give 256 sums, most sharing a factor and some sharing
+        /// two, which is the case the tie-break is about.
+        /// </summary>
+        private static List<Entity> ProductSums()
+        {
+            var operands = new[] { "x", "y", "z", "2" };
+            var made = new List<Entity>();
+            foreach (var p in operands)
+                foreach (var q in operands)
+                    foreach (var r in operands)
+                        foreach (var s in operands)
+                        {
+                            try { made.Add($"{p} * {q} + {r} * {s}".ToEntity()); }
+                            catch { /* every one of these parses; the guard is for the generator */ }
+                        }
+            return made;
+        }
+
+        /// <summary>
+        /// The four hand-written arms of `{1}*{2} + {1}*{3}`, as an oracle. `CommonRules`
+        /// writes the identity out once per ordering because a C# pattern cannot say "either
+        /// way round"; this reproduces them, in their order, so the one commutative rule can be
+        /// held against them.
+        /// </summary>
+        private static Entity? TheFourArms(Entity expr)
+        {
+            if (expr is not Entity.Sumf(Entity.Mulf(var l1, var l2), Entity.Mulf(var r1, var r2)))
+                return null;
+            if (l1.Equals(r1)) return l1 * (l2 + r2);
+            if (l2.Equals(r1)) return l2 * (l1 + r2);
+            if (l1.Equals(r2)) return l1 * (l2 + r1);
+            if (l2.Equals(r2)) return l2 * (l1 + r1);
+            return null;
+        }
+
+        /// <summary>
+        /// **One commutative rule fires exactly where the four arms fire.** That is the claim
+        /// #248 is about, and it holds.
+        /// </summary>
+        /// <remarks>
+        /// The *value* is always the same. The *tree* is not always the same, and that is a
+        /// real finding rather than a defect in either: where more than one factor is shared,
+        /// the four arms and the commutative rule pull out different ones — `a*b + b*a` gives
+        /// `b*(a+a)` from the arms and `a*(b+b)` from the rule, both of which are `2ab`. Which
+        /// one you get is a tie-break that the `switch` fixes by the order its arms happen to be
+        /// written in, and that nothing ever chose deliberately. Migrating this rule is
+        /// therefore **not** purely mechanical: it needs a tie-break convention, or the printed
+        /// answer moves for expressions with two shared factors.
+        /// </remarks>
+        [Fact]
+        public void OneCommutativeRuleFiresWhereTheFourArmsDo()
+        {
+            var firedBoth = 0;
+            var sameTree = 0;
+            var disagreedOnWhether = new List<string>();
+            var differentTree = new List<string>();
+
+            foreach (var expr in ProductSums())
+            {
+                var byArms = TheFourArms(expr);
+                var byRule = MatchedRules.SharedFactor.Rules[0].TryApply(expr);
+
+                if ((byArms is null) != (byRule is null))
+                {
+                    disagreedOnWhether.Add($"{expr.Stringize()}: arms {(byArms is null ? "no" : "yes")}, "
+                        + $"rule {(byRule is null ? "no" : "yes")}");
+                    continue;
+                }
+                if (byArms is null) continue;
+                firedBoth++;
+                if (byArms.Equals(byRule)) sameTree++;
+                else differentTree.Add($"{expr.Stringize()}: arms {byArms.Stringize()}, "
+                    + $"rule {byRule!.Stringize()}");
+            }
+
+            Assert.True(firedBoth > 100, $"only {firedBoth} expressions exercised the rule");
+            Assert.True(disagreedOnWhether.Count == 0,
+                $"{disagreedOnWhether.Count} disagreed about *whether* to fire:\n"
+                + string.Join("\n", disagreedOnWhether.Take(10)));
+
+            // Where the trees differ, the values must not. Checked numerically rather than
+            // asserted, because "both are correct" is the entire claim being made.
+            foreach (var expr in ProductSums())
+            {
+                var byArms = TheFourArms(expr);
+                var byRule = MatchedRules.SharedFactor.Rules[0].TryApply(expr);
+                if (byArms is null || byRule is null || byArms.Equals(byRule)) continue;
+                foreach (var at in new[] { 0.37, -1.7, 2.4 })
+                {
+                    static Entity Point(Entity e, double at)
+                        => e.Substitute("x", at).Substitute("y", at + 1).Substitute("z", at - 0.5);
+                    var one = Point(byArms, at);
+                    var two = Point(byRule, at);
+                    if (!one.EvaluableNumerical || !two.EvaluableNumerical) continue;
+                    var left = one.EvalNumerical().RealPart.EDecimal.ToDouble();
+                    var right = two.EvalNumerical().RealPart.EDecimal.ToDouble();
+                    if (double.IsNaN(left) || double.IsNaN(right)) continue;
+                    Assert.Equal(left, right, 8);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Backtracking, which commutativity needs and a first-match matcher does not have.
+        /// `b*a + c*a` shares `a`, and finding it means abandoning the first way the left
+        /// product matched — bind `k = b`, fail on the right, come back and try `k = a`.
+        /// </summary>
+        [Theory]
+        [InlineData("b * a + c * a")]
+        [InlineData("a * b + a * c")]
+        [InlineData("a * b + c * a")]
+        [InlineData("b * a + a * c")]
+        public void CommutativeMatchingBacktracks(string expression)
+            => Assert.NotNull(MatchedRules.SharedFactor.Rules[0].TryApply(expression.ToEntity()));
+
+        /// <summary>And it does not invent a shared factor where there is none.</summary>
+        [Theory]
+        [InlineData("a * b + c * d")]
+        [InlineData("a + b")]
+        [InlineData("a * b - a * c")]
+        public void CommutativeMatchingDoesNotOverreach(string expression)
+            => Assert.Null(MatchedRules.SharedFactor.Rules[0].TryApply(expression.ToEntity()));
+
+        /// <summary>
+        /// Distributivity needs no condition, so this is the first rule here whose tier says
+        /// something its neighbours' does not.
+        /// </summary>
+        [Fact]
+        public void ARuleCanBeSoundWhileItsNeighboursAreNot()
+        {
+            Assert.Equal(Soundness.Sound, MatchedRules.SharedFactor.Soundness);
+            Assert.Equal(Soundness.SoundUnderAssumptions, MatchedRules.PowerOfPower.Soundness);
+        }
+
+        /// <summary>
         /// A name used twice binds the same subexpression both times — which is the
         /// <c>when any1 == any1a</c> guard the existing rules write out by hand, made
         /// structural.

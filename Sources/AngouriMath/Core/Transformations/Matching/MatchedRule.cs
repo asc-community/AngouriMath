@@ -37,9 +37,9 @@ namespace AngouriMath.Core.Transformations.Matching
         internal MatchedRule(
             string name,
             MatchPattern left,
-            Func<IReadOnlyDictionary<string, Entity>, Entity> right,
+            Func<Bindings, Entity> right,
             Soundness soundness,
-            Func<IReadOnlyDictionary<string, Entity>, bool>? when = null)
+            Func<Bindings, bool>? when = null)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Left = left ?? throw new ArgumentNullException(nameof(left));
@@ -48,8 +48,8 @@ namespace AngouriMath.Core.Transformations.Matching
             this.when = when;
         }
 
-        private readonly Func<IReadOnlyDictionary<string, Entity>, Entity> right;
-        private readonly Func<IReadOnlyDictionary<string, Entity>, bool>? when;
+        private readonly Func<Bindings, Entity> right;
+        private readonly Func<Bindings, bool>? when;
 
         /// <summary>What to call this rule in a report, a test or a bug.</summary>
         internal string Name { get; }
@@ -67,13 +67,18 @@ namespace AngouriMath.Core.Transformations.Matching
         /// </summary>
         internal Entity? TryApply(Entity expr)
         {
-            var bindings = new Dictionary<string, Entity>();
-            if (!Left.TryMatch(expr, bindings))
-                return null;
-            if (when is not null && !when(bindings))
-                return null;
-            try { return right(bindings); }
-            catch { return null; }
+            // Every way the pattern matches, in order, and the first that also satisfies the
+            // side condition wins. Taking only the first *match* would be wrong: commutativity
+            // means `b*a + c*a` matches `k*p + k*q` several ways and only some of them bind
+            // `k` to the factor the condition is about.
+            foreach (var bindings in Left.Match(expr, Bindings.Empty))
+            {
+                if (when is not null && !when(bindings))
+                    continue;
+                try { return right(bindings); }
+                catch { return null; }
+            }
+            return null;
         }
     }
 

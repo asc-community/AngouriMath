@@ -187,5 +187,35 @@ namespace AngouriMath.Core.Transformations.Matching
                 // Two bindings at once, which no predicate on a single hole can express.
                 when: bound => bound["c"] is Integer
                     || bound["a"].Evaled is Real { IsPositive: true }));
+
+        /// <summary>
+        /// <c>k*p + k*q = k*(p + q)</c>, written once, where the <c>switch</c> writes it four
+        /// times.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is what <a href="https://github.com/asc-community/AngouriMath/issues/248">#248</a>
+        /// is for. <c>Patterns.CommonRules</c> spells the same identity out in four arms —
+        /// <c>(k*p) + (k*q)</c>, <c>(p*k) + (k*q)</c>, <c>(k*p) + (q*k)</c>, <c>(p*k) + (q*k)</c>
+        /// — because a C# pattern cannot say "either way round". One commutative pattern says
+        /// it, and the four arms become one rule.
+        /// </para>
+        /// <para>
+        /// It is also the <b>first rule here that is <see cref="Soundness.Sound"/></b>.
+        /// Distributivity holds for every complex <c>k</c>, <c>p</c> and <c>q</c> with no side
+        /// condition and no branch to choose, so the tier says something its neighbours' does
+        /// not — which is the whole reason a tier belongs on a rule rather than on a set.
+        /// </para>
+        /// </remarks>
+        internal static MatchedRuleSet SharedFactor { get; } = new(
+            nameof(SharedFactor),
+
+            new MatchedRule(
+                "a-shared-factor-comes-out-of-a-sum",
+                MatchPattern.Commutative<Sumf>(
+                    MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("p")),
+                    MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
+                bound => bound["k"] * (bound["p"] + bound["q"]),
+                Soundness.Sound));
     }
 }
