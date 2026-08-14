@@ -474,6 +474,89 @@ namespace AngouriMath
         public Entity Simplify(int level = 2)
             => Transformation.SimplificationAtLevel(level).ApplyOrKeep(this);
 
+        /// <summary>
+        /// A canonical form for the commutative structure: two expressions differing only in
+        /// how their sums, products, conjunctions, disjunctions and set operations are
+        /// arranged or nested come out as the <b>identical tree</b>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is not <see cref="Simplify(int)"/> and is not trying to be. It makes an
+        /// expression <i>comparable</i>, not shorter, and it may well make it longer. What it
+        /// buys is that <c>a.Canonicalise() == b.Canonicalise()</c> is a real test of whether
+        /// the two are the same expression, where comparing simplified forms is not.
+        /// </para>
+        /// <para>
+        /// <b>Equal trees mean the expressions are equal; different trees mean nothing at
+        /// all.</b> There is no canonical form for the whole language — deciding whether an
+        /// expression is zero is undecidable once <c>pi</c>, the exponential, the trigonometric
+        /// functions and <c>abs</c> are in play — so this canonicalises the part that can be:
+        /// the arrangement of commutative operators. For rational functions over <c>Q</c>, where
+        /// a complete canonical form does exist, use
+        /// <see cref="CanonicaliseAsRationalFunction"/>.
+        /// <c>Docs/Contributing/CanonicalForm.md</c> states the boundary and how far off the
+        /// library is from it.
+        /// </para>
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// using AngouriMath;
+        /// using static System.Console;
+        ///
+        /// WriteLine("x + y".ToEntity().Canonicalise() == "y + x".ToEntity().Canonicalise());
+        /// WriteLine("(x + y) + a".ToEntity().Canonicalise() == "x + (y + a)".ToEntity().Canonicalise());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// True
+        /// True
+        /// </code>
+        /// </example>
+        public Entity Canonicalise()
+            => Transformation.Canonicalisation.ApplyOrKeep(this);
+
+        /// <summary>
+        /// A canonical form for rational functions over <c>Q</c>, or <see langword="null"/>
+        /// where this is not one.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Two rational functions are equal <b>exactly when</b> this form is identical, so on
+        /// that sublanguage equality is decided by comparing nodes rather than by searching —
+        /// which is what <c>(a - b).Simplify()</c> against zero can never be.
+        /// </para>
+        /// <para>
+        /// <b>It answers only where it can, and says so by answering nothing.</b> Anything that
+        /// is not a rational function over <c>Q</c> in its free variables gets
+        /// <see langword="null"/>, because a form whose whole value is that equal trees mean
+        /// equal expressions must not hand back a normalisation that merely resembles one.
+        /// </para>
+        /// <para>
+        /// Cancelling a common factor widens the domain, so where one comes out the answer
+        /// carries the condition that it is nonzero: <c>x/x</c> is <c>1 provided not x = 0</c>
+        /// and not <c>1</c>, and <c>(x^2 - 1)/(x + 1)</c> is not the same function as
+        /// <c>x - 1</c>.
+        /// </para>
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// using AngouriMath;
+        /// using static System.Console;
+        ///
+        /// WriteLine("1/x + 1/y".ToEntity().CanonicaliseAsRationalFunction());
+        /// WriteLine("(x + y) / (x * y)".ToEntity().CanonicaliseAsRationalFunction());
+        /// WriteLine("sin(x) / x".ToEntity().CanonicaliseAsRationalFunction() is null);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// (x + y) / (x * y)
+        /// (x + y) / (x * y)
+        /// True
+        /// </code>
+        /// </example>
+        public Entity? CanonicaliseAsRationalFunction()
+            => Transformation.RationalCanonicalisation.Apply(this).Output;
+
         /// <summary>Finds all alternative forms of an expression sorted by their complexity</summary>
         /// <example>
         /// <code>

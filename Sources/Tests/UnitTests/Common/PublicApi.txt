@@ -2015,6 +2015,8 @@ AngouriMath.Entity.Arccotan() : AngouriMath.Entity
 AngouriMath.Entity.Arcsec() : AngouriMath.Entity
 AngouriMath.Entity.Arcsin() : AngouriMath.Entity
 AngouriMath.Entity.Arctan() : AngouriMath.Entity
+AngouriMath.Entity.Canonicalise() : AngouriMath.Entity
+AngouriMath.Entity.CanonicaliseAsRationalFunction() : AngouriMath.Entity
 AngouriMath.Entity.Ceil() : AngouriMath.Entity
 AngouriMath.Entity.Codomain { } : AngouriMath.Core.Domain
 AngouriMath.Entity.Compile(AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol, System.Type, System.Collections.Generic.IEnumerable<System.ValueTuple<System.Type,AngouriMath.Entity+Variable>>) : TDelegate
