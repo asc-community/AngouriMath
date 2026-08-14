@@ -89,6 +89,43 @@ namespace AngouriMath.Core.Transformations
             = Rewriting(RewriteRules.CanonicalOrder).Then(InnerSimplification);
 
         /// <summary>
+        /// A canonical form for <b>rational functions over <c>Q</c></b>: two expressions
+        /// denoting the same quotient of polynomials become the identical tree, so equality on
+        /// that sublanguage is decided by comparing nodes rather than by searching.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>It answers only where it can.</b> There is no canonical form for the whole
+        /// language — zero-equivalence is undecidable once <c>pi</c>, the exponential, the
+        /// trigonometric functions and <c>abs</c> are in play (Richardson, 1968) — so anything
+        /// that is not a rational function over <c>Q</c> in its free variables gets no answer
+        /// at all. That refusal is the point: a form whose value is that equal trees mean equal
+        /// expressions must not quietly hand back a normalisation that merely resembles one.
+        /// </para>
+        /// <para>
+        /// The expression is gathered into a single quotient — which is the part nothing else
+        /// in the library does, and without which <c>1/x + 1/y</c> and <c>(x + y)/(x*y)</c>
+        /// could never meet — then reduced by the multivariate greatest common divisor and
+        /// scaled so the denominator is monic in the lexicographic monomial order.
+        /// </para>
+        /// <para>
+        /// <b>Cancelling carries its condition.</b> <c>x/x</c> is not <c>1</c>, so where a
+        /// factor of positive degree comes out the answer says the factor is nonzero, as the
+        /// rest of the library already does. Gathering over a common denominator widens
+        /// nothing by itself: a sum is defined exactly where its terms are.
+        /// </para>
+        /// <para>
+        /// Nothing runs this by default. See
+        /// <c>Docs/Contributing/CanonicalForm.md</c> §5 and
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/934">#934</a>.
+        /// <c>Transformation.Canonicalisation</c> is the companion that handles the commutative
+        /// structure of expressions generally.
+        /// </para>
+        /// </remarks>
+        public static Transformation RationalCanonicalisation { get; }
+            = new RationalCanonicalisationTransformation();
+
+        /// <summary>
         /// Clears a surd out of a two-term denominator: <c>1 / (sqrt(3) + 5)</c> becomes
         /// <c>(sqrt(3) - 5) / (-22)</c>.
         /// </summary>
@@ -180,6 +217,18 @@ namespace AngouriMath.Core.Transformations
                 => level < Lowest || level > Highest
                     ? make(level)
                     : cached[level - Lowest] ??= make(level);
+        }
+
+        private sealed class RationalCanonicalisationTransformation : Transformation
+        {
+            public override string Name => "rational-canonical-form";
+
+            public override TransformationRelation Relation => TransformationRelation.Equivalence;
+
+            public override Soundness Soundness => Soundness.SoundUnderAssumptions;
+
+            protected override Entity? ApplyCore(Entity input)
+                => RationalFunction.TryCanonicalise(input, out var canonical) ? canonical : null;
         }
 
         private sealed class InnerSimplificationTransformation : Transformation
