@@ -177,14 +177,27 @@ namespace AngouriMath
                     (a, b) => AreEqual<Real>(a.RealPart, b.RealPart) && AreEqual<Real>(a.ImaginaryPart, b.ImaginaryPart)
                     );
 
-#pragma warning disable CS1591
+            // These compute rather than build: unlike the operators on Entity, which assemble a
+            // Sumf or a Mulf to be evaluated later, these are arithmetic on numbers and hand back
+            // the number that results.
+
+            /// <summary>Their sum, computed.</summary>
             public static Number operator +(Number a, Number b) => OpSum(a, b);
+
+            /// <summary>Their difference, computed.</summary>
             public static Number operator -(Number a, Number b) => OpSub(a, b);
+
+            /// <summary>Their product, computed.</summary>
             public static Number operator *(Number a, Number b) => OpMul(a, b);
+
+            /// <summary>Their quotient, computed.</summary>
             public static Number operator /(Number a, Number b) => OpDiv(a, b);
+
+            /// <summary>The operand itself; unary plus changes nothing.</summary>
             public static Number operator +(Number a) => a;
+
+            /// <summary>Its negation, computed.</summary>
             public static Number operator -(Number a) => OpMul(-1, a);
-#pragma warning restore CS1591
 
             /// <summary>
             /// Gets all n-th roots of a number,
