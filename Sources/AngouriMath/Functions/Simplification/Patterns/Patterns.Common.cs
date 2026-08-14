@@ -22,11 +22,20 @@ namespace AngouriMath.Functions
 
         internal static Entity NumericNeatRules(Entity x) => x switch
         {
-            Sumf(Real { IsNegative: true } left, Real { IsNegative: true } right) => -(left + right),
+            // (-a) + (-b) is -(a + b), and the operands are already negative here, so what is
+            // added is their magnitudes. Written as -(left + right) this negated a sum that was
+            // negative already and answered `2` for `-1 + -1` -- invisible through Simplify,
+            // where evaluation folds a pair of numerals before this is ever consulted, and
+            // plainly wrong through RewriteRules.NumericNeat, which is public.
+            // https://github.com/asc-community/AngouriMath/issues/936
+            Sumf(Real { IsNegative: true } left, Real { IsNegative: true } right)
+                => -((-left) + (Entity)(-right)),
             Sumf(var any1, Real { IsNegative: true } right) => any1 - -right,
             Sumf(Real { IsNegative: true } left, var any1) => any1 - -left,
 
-            Minusf(Real { IsNegative: true } left, Real { IsNegative: true } right) => -left + -right,
+            // (-a) - (-b) is b - a, not a + b.
+            Minusf(Real { IsNegative: true } left, Real { IsNegative: true } right)
+                => (-right) - (Entity)(-left),
             Minusf(var any1, Real { IsNegative: true } right) => any1 + -right,
             Minusf(Real { IsNegative: true } left, var any1) => -(any1 + -left),
 
