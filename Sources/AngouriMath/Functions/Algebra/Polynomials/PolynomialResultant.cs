@@ -54,13 +54,51 @@ namespace AngouriMath.Functions
     internal static class PolynomialResultant
     {
         /// <summary>
-        /// The elimination is cubic in the size of the Sylvester matrix, with a
-        /// multiplication of two multivariate polynomials at every step, so the size is what
-        /// decides whether this finishes. The bound is on <c>deg f + deg g</c>; 24 leaves a
-        /// 13824-step elimination as the worst case admitted, and admits the discriminant of
-        /// anything up to degree 12, since <c>deg f + deg f'</c> is <c>2 deg f - 1</c>.
+        /// The bound on <c>deg f + deg g</c>. It exists to stop the matrix being built at
+        /// all; what the elimination then costs is bounded by
+        /// <see cref="MaxEliminationWork"/> instead, and the two are not the same question.
         /// </summary>
-        private const int MaxSylvesterSize = 24;
+        /// <remarks>
+        /// Size is the cheap axis, which is why this is generous. With scalar entries the
+        /// elimination does <c>size^3 / 3</c> units of the work counted below, and 40 measured
+        /// 31ms and 35MB of allocation — where the same size with three-term entries costs 22
+        /// seconds and 79GB. So a ceiling on size alone can only be right for one shape of
+        /// input at a time, and this one is set for the shape it can actually decide: 40
+        /// admits the discriminant of anything up to degree 20, since <c>deg f + deg f'</c> is
+        /// <c>2 deg f - 1</c>. https://github.com/asc-community/AngouriMath/issues/921
+        /// </remarks>
+        private const int MaxSylvesterSize = 40;
+
+        /// <summary>
+        /// The budget on the elimination itself, in units of one coefficient-pair
+        /// multiplication: each step adds the product of the term counts of the two operands
+        /// of each of its two products, which is what a sparse multiplication costs.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Measured rather than reasoned, across the two axes that matter — Sylvester size,
+        /// and terms per entry. Over the whole range the unit predicts both resources
+        /// linearly and tightly: <b>1.4KB of allocation and 0.4µs per unit</b>. So this budget
+        /// is about a second, and about three gigabytes of garbage, and moving it moves both
+        /// together.
+        /// </para>
+        /// <para>
+        /// A bound on the input shape cannot do this job, which is the measurement's real
+        /// finding. The cost is mild in size and violent in terms per entry — between the
+        /// fifth and the eighth power of it over the range — so no product of the two is the
+        /// right law. Worse, <b>the most expensive input is not the widest</b>: entries wide
+        /// enough trip <see cref="MultivariatePolynomial.MaxTerms"/> early and the elimination
+        /// declines cheaply, while three-term entries grow just slowly enough to spend 6
+        /// seconds and 21GB before declining at size 24. The shape that costs the most is the
+        /// one just inside the term ceiling, and no bound read off the degrees can see it.
+        /// </para>
+        /// <para>
+        /// Set to admit every case that answered at all in the sweep bar one — two-term
+        /// entries at size 40, which answers in 2.9 seconds having allocated 8.4GB — and to
+        /// refuse the expensive refusals, which is where it earns its keep.
+        /// </para>
+        /// </remarks>
+        private const long MaxEliminationWork = 2_500_000;
 
         [ConstantField] private static readonly ERational MinusOne = ERational.One.Negate();
 
@@ -217,6 +255,7 @@ namespace AngouriMath.Functions
                         matrix[rightDegree + row][row + rightDegree - power] = coefficient;
 
             var negated = false;
+            var work = 0L;
             var previous = MultivariatePolynomial.One(variableCount);
             for (var pivot = 0; pivot + 1 < size; pivot++)
             {
@@ -243,6 +282,13 @@ namespace AngouriMath.Functions
                     var leading = matrix[row][pivot];
                     for (var column = pivot + 1; column < size; column++)
                     {
+                        // Charged before the multiplication rather than after it, so that the
+                        // budget cannot be overshot by the one step that was going to be the
+                        // most expensive of them.
+                        work += (long)head.TermCount * matrix[row][column].TermCount
+                            + (long)leading.TermCount * matrix[pivot][column].TermCount;
+                        if (work > MaxEliminationWork)
+                            return null;
                         if (head.Multiply(matrix[row][column]) is not { } kept
                             || leading.Multiply(matrix[pivot][column]) is not { } removed
                             || kept.Subtract(removed).DivideExact(previous) is not { } reduced)

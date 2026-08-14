@@ -232,6 +232,30 @@ namespace AngouriMath.Functions
             Mulf(Rational(var mOne, var den), var any1) when mOne == -1 && den != 1 => -(any1 / den),
             Mulf(var any1, Rational(var mOne, var den)) when mOne == -1 && den != 1 => -(any1 / den),
 
+            // Parity. Each of these holds on the whole complex plane, and the poles of the odd
+            // ones sit symmetrically about zero -- tan(-z) is undefined exactly where tan(z)
+            // is -- so the domain neither widens nor narrows and no condition is owed.
+            //
+            // What is matched is a product with a negative real coefficient, which is what
+            // both `-x` and `-2 * x` are: the first is a coefficient of -1, and -1 is exactly
+            // what the multiple-angle expansion skips, since that asks for |n| >= 2. So
+            // cos(-2 * x) folded while cos(-x) did not, sin folded neither, and
+            // sin(-x) + sin(x) did not reach zero.
+            // https://github.com/asc-community/AngouriMath/issues/929
+            //
+            // The inverse functions are deliberately absent. arcsin and arctan are odd and
+            // arccos is not, and this library's arccotan has range (-pi/2, pi/2] rather than
+            // the textbook (0, pi), so each of them wants measuring before it is written down.
+            Cosf(Mulf(Real { IsNegative: true } neg, var rest)) => new Cosf((-neg) * rest),
+            Secantf(Mulf(Real { IsNegative: true } neg, var rest)) => new Secantf((-neg) * rest),
+            Absf(Mulf(Real { IsNegative: true } neg, var rest)) => new Absf((-neg) * rest),
+
+            Sinf(Mulf(Real { IsNegative: true } neg, var rest)) => -new Sinf((-neg) * rest),
+            Tanf(Mulf(Real { IsNegative: true } neg, var rest)) => -new Tanf((-neg) * rest),
+            Cotanf(Mulf(Real { IsNegative: true } neg, var rest)) => -new Cotanf((-neg) * rest),
+            Cosecantf(Mulf(Real { IsNegative: true } neg, var rest)) => -new Cosecantf((-neg) * rest),
+            Signumf(Mulf(Real { IsNegative: true } neg, var rest)) => -new Signumf((-neg) * rest),
+
             _ => x
         };
     }

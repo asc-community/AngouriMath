@@ -154,6 +154,7 @@ AngouriMath.Core.Transformations.Soundness.value__ : System.Int32
 AngouriMath.Core.Transformations.Transformation.Apply(AngouriMath.Entity) : AngouriMath.Core.Transformations.TransformationResult
 AngouriMath.Core.Transformations.Transformation.ApplyCore(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.Core.Transformations.Transformation.ApplyOrKeep(AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.Core.Transformations.Transformation.Canonicalisation { } : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.Differentiation(AngouriMath.Entity+Variable) : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.Expansion { } : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.ExpansionAtLevel(System.Int32) : AngouriMath.Core.Transformations.Transformation

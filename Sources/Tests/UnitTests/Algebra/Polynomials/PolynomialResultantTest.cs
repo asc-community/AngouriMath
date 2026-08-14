@@ -520,7 +520,8 @@ namespace AngouriMath.Tests.Algebra.Polynomials
         [Fact]
         public void InputTooLargeForTheEliminationIsRefusedRatherThanAttempted()
         {
-            var coefficients = new ERational[21];
+            // deg f + deg g of 42, one past the ceiling on size.
+            var coefficients = new ERational[22];
             for (var power = 0; power < coefficients.Length; power++)
                 coefficients[power] = Rational(power % 5 + 1);
             var poly = Univariate(coefficients);
@@ -533,14 +534,52 @@ namespace AngouriMath.Tests.Algebra.Polynomials
         {
             // deg f + deg g of exactly the ceiling, so that the refusal above reads as a
             // bound rather than as a description of everything past a handful of terms.
-            var leftRoots = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
-            var rightRoots = new[] { 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24 };
+            var leftRoots = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+            var rightRoots = new[] { 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40 };
             AssertConstant(
                 ResultantFromRoots(1, leftRoots, 1, rightRoots),
                 PolynomialResultant.Resultant(
                     Univariate(FromRoots(1, leftRoots)), Univariate(FromRoots(1, rightRoots)),
                     0, NoOtherVariables),
                 "Res(f, g) at the ceiling");
+        }
+
+        /// <summary>
+        /// Three variables, every coefficient in the main one carrying two monomials in the
+        /// other two, at a Sylvester size the ceiling admits. The elimination is refused all
+        /// the same, on the budget rather than on the size — which is the whole point of
+        /// there being two bounds: the cost of an elimination is not readable off its degrees.
+        /// https://github.com/asc-community/AngouriMath/issues/921
+        /// </summary>
+        [Fact]
+        public void AnEliminationPastTheWorkBudgetIsRefusedThoughItsSizeIsAdmitted()
+        {
+            var left = Wide(20, 2, seed: 1);
+            var right = Wide(20, 2, seed: 2);
+            Assert.Equal(20, left.DegreeIn(0));
+            Assert.Equal(20, right.DegreeIn(0));
+            Assert.Null(PolynomialResultant.Resultant(left, right, 0, new[] { 1, 2 }));
+        }
+
+        /// <summary>
+        /// A polynomial of the given degree in variable 0, each of whose coefficients carries
+        /// <paramref name="width"/> distinct monomials in variables 1 and 2.
+        /// </summary>
+        private static MultivariatePolynomial Wide(int degree, int width, int seed)
+        {
+            var shape = new[] { (A: 0, B: 0), (A: 1, B: 0), (A: 0, B: 1), (A: 1, B: 1) };
+            var result = MultivariatePolynomial.Zero(3);
+            for (var power = 0; power <= degree; power++)
+                for (var term = 0; term < width; term++)
+                {
+                    var value = Rational(1 + (seed * 7 + power * 3 + term * 5) % 11);
+                    var monomial = MultivariatePolynomial.Constant(3, value).ShiftedBy(0, power)
+                        ?.ShiftedBy(1, shape[term % shape.Length].A)
+                        ?.ShiftedBy(2, shape[term % shape.Length].B);
+                    Assert.NotNull(monomial);
+                    result = result.Add(monomial!);
+                }
+            return result;
         }
     }
 }
