@@ -60,24 +60,50 @@ Three properties, each of which a canonical form must have and none of which nee
 - **order independence** — the operands of a commutative operator may be written either way round;
 - **agreement** — two writings of one expression reach the same form.
 
-`work/canoncheck` measures all three against both candidates, comparing **entities and not printed
-strings**. Measured on `master`:
+`work/canoncheck` measures all three against each candidate, comparing **entities and not printed
+strings**. The figures below are on `master` with the two defects of the following subsection fixed
+— [#929](https://github.com/asc-community/AngouriMath/issues/929) and
+[#930](https://github.com/asc-community/AngouriMath/issues/930), each landing separately. Without
+them the first column's idempotence reads 1 rather than 0 and the last column's agreements read 6
+rather than 4; nothing else moves. A harness report records a build, so regenerate it before quoting
+it against a later one.
 
-| | `InnerSimplified` | `Simplify` |
-|---|---|---|
-| idempotence | 1 failed of 834 | **0 failed of 120** |
-| order independence | 2024 failed of 2738 | 8 failed of 72 |
-| listed agreements | 20 failed of 30 | 6 failed of 30 |
+| | `InnerSimplified` | `CanonicalOrderExact` then `InnerSimplified` | `Simplify` |
+|---|---|---|---|
+| idempotence | 0 failed of 834 | **21 failed of 834** | 0 failed of 120 |
+| order independence | 2024 failed of 2738 | **0 failed of 2738** | 8 failed of 72 |
+| listed agreements | 20 failed of 30 | 10 failed of 30 | 4 failed of 30 |
 
-**Neither is canonical, and `Simplify` is much the closer of the two.** That is worth stating
-plainly because the names imply the opposite: `InnerSimplified` sounds like the normal form and
-`Simplify` like the pretty-printer, and it is the other way round. `InnerSimplified` does not order
-the operands of a sum or a product at all, so it fails three quarters of the order checks by
-construction; `Simplify` reorders as a side effect of searching and rating candidates, and agrees
-far more often — but not always, because when two candidates rate equal the tie goes to whichever
-was generated first, which depends on the input order. What ranks them is
-`MathS.Settings.ComplexityCriteria` — `SimplifiedRate`, a weighted count — and not the node count
-that `Complexity` returns; ties between differently-shaped forms are common.
+**None of the three is canonical, and no one of them is closest on every property.** The middle
+column is the surprise and it is the useful one.
+
+**The total order already exists and it works.** `RewriteRules.CanonicalOrderExact` sorts and groups
+the operands of sums, products, conjunctions, disjunctions and set operations by the whole subtree,
+and applying it makes order independence *perfect* — 0 failures of 2738, against 2024 without it.
+There are three granularities: `CanonicalOrder` ignores constants so that `x` and `2 * x` group
+together for collecting like terms, `CanonicalOrderCountingConstants` distinguishes them, and
+`CanonicalOrderExact` compares whole subtrees, which is the one a canonical form wants. So the thing
+a specification would normally have to invent is built; **what is missing is that the normalisation
+does not run it.** `Simplify` does, which is most of why it agrees so much more often than
+`InnerSimplified` — the names imply the opposite of the truth here.
+
+**And the pair is not confluent, which is the real obstacle.** Sorting and then normalising is not
+idempotent: 21 of 834. Every failure is the sort and `InnerSimplified` disagreeing about where a
+numeric operand belongs, and each undoing the other:
+
+```
+1 / 2 - x     ->   -x + 1/2    ->   1/2 + -x    ->   ...
+0 ^ x         ->   0 provided x / 2 * (...) > 0      ->   0 provided 1/2 * (...) * x > 0   ->  ...
+```
+
+The sort puts the constant one way and `Patterns.NumericNeatRules` puts it back. Neither is wrong on
+its own; they simply have not been made to agree, and until they do, applying the order inside the
+normalisation would trade 2024 order failures for a form that never settles.
+
+`Simplify`'s remaining 8 order failures are a different thing again: ties. When two candidates rate
+equal the tie goes to whichever was generated first, which depends on the input order. What ranks
+them is `MathS.Settings.ComplexityCriteria` — `SimplifiedRate`, a weighted count — and not the node
+count that `Complexity` returns; ties between differently-shaped forms are common.
 
 ### The finding that matters most for anyone writing a rule
 
@@ -85,14 +111,19 @@ that `Complexity` returns; ties between differently-shaped forms are common.
 is normalised in the printer, not in the expression. A rule, a test or a cache that compares printed
 forms will call them equal; one that compares entities will not. Compare entities.
 
-### Two defects it turned up, rather than decisions
+### Two defects it turned up, rather than decisions — both since fixed
 
-- `cos(0 ^ y)` is not idempotent under `InnerSimplified`: the first pass leaves `-(-1)` at the head
-  of the answer and the second folds it to `1`. `-(-1)` on its own folds immediately, so a rewrite
-  is building it above already-normalised children and returning without re-normalising.
-- `cos(-x)`, `sin(-x)`, `tan(-x)` and `abs(-x)` are left alone by `Simplify`, while `cos(-2 * x)`
-  folds to `cos(2 * x)`. The parity identities are keyed on a shape that a bare negation does not
-  have.
+- `cos(0 ^ y)` was not idempotent under `InnerSimplified`: the first pass left `-(-1)` at the head of
+  the answer and the second folded it to `1`. `-(-1)` on its own folds immediately, so a rewrite was
+  building it above already-normalised children and returning without re-normalising.
+  [#930](https://github.com/asc-community/AngouriMath/issues/930).
+- `cos(-x)`, `sin(-x)`, `tan(-x)` and `abs(-x)` were left alone by `Simplify` while `cos(-2 * x)`
+  folded to `cos(2 * x)` — by accident, through the multiple-angle expansion rather than through
+  parity, since that skips a coefficient of `-1`. So `sin(-x) + sin(x)` did not reach `0`.
+  [#929](https://github.com/asc-community/AngouriMath/issues/929); with it the listed agreements
+  above are 4 rather than 6.
+
+Both were found on the first run, which is the argument for the harness rather than for the document.
 
 ## 4. What canonical means per node class
 
@@ -112,16 +143,22 @@ marked; where it does not, the line is what `canoncheck` should eventually asser
 
 | class | canonical form |
 |---|---|
-| `Sumf` | flat over nesting, operands in a total order, numeric operands folded into one leading term, a zero term dropped — **not met**: neither flattened nor ordered in the tree |
-| `Mulf` | flat, ordered, numeric factors folded into one leading factor, a one factor dropped, a zero factor collapsing the product — **not met**, as above |
-| `Andf`, `Orf`, `Xorf` | flat, ordered, constants folded, duplicates dropped — **not met** |
-| `Unionf`, `Intersectionf` | flat, ordered by the element order — **not met** |
+| `Sumf` | flat over nesting, operands in a total order, numeric operands folded into one leading term, a zero term dropped — **ordered by `CanonicalOrderExact`, which the normalisation does not run**; not flattened in the tree |
+| `Mulf` | flat, ordered, numeric factors folded into one leading factor, a one factor dropped, a zero factor collapsing the product — as above |
+| `Andf`, `Orf`, `Xorf` | flat, ordered, constants folded, duplicates dropped — ordered by the same rewrite |
+| `Unionf`, `Intersectionf` | flat, ordered by the element order — ordered by the same rewrite |
 
-A **total order on operands** is what makes ordering decidable, and it has to be specified rather
-than left to whatever a sort happens to do: by node class first in a fixed class order, then by the
-class's own key — a number by value, a variable by name, a function by its name and then
-lexicographically by its already-ordered children. It has to be total and stable, and it has to be
-independent of how the expression was written, which is exactly what the order checks test.
+A **total order on operands** is what makes ordering decidable, and the library has one:
+`Patterns.SortRules` at three granularities, reached through `RewriteRules.CanonicalOrder`,
+`CanonicalOrderCountingConstants` and `CanonicalOrderExact`. Measured, the exact one is total enough
+to give order independence on every pair tried.
+
+Two things are still owed and neither is the order itself. **Flattening** is done by the printer
+rather than in the tree, which is why `(x + y) + a` and `x + (y + a)` print alike and differ. And the
+order and the normalisation have to be made to **agree**: today, sorting and then normalising
+oscillates on any sum with a numeric term, because `Patterns.NumericNeatRules` puts the constant back
+where the sort took it from. Deciding which of the two wins is a smaller question than inventing an
+order, and it is the one actually in the way.
 
 ### Operators that are sugar for a commutative one
 
@@ -218,9 +255,11 @@ The one thing it *is* required to be is sound, which is [SimplificationContract.
 ## 7. How this is checked
 
 `work/canoncheck`. It builds expressions by growing a small grammar, then checks idempotence and
-order independence generatively and a listed set of agreements by hand. Its three counts are the
-thing to watch; the listed pairs are each a claim this file makes or disclaims, so a disagreement
-there is a decision to take rather than necessarily a defect.
+order independence generatively and a listed set of agreements by hand. It runs all three over each
+of the three candidate forms — `InnerSimplified`, `CanonicalOrderExact` followed by
+`InnerSimplified`, and `Simplify` — because the interesting facts are the differences between the
+columns rather than any one number. The listed pairs are each a claim this file makes or disclaims,
+so a disagreement there is a decision to take rather than necessarily a defect.
 
 It compares entities. Nothing in it reads a printed form, which is deliberate: the associativity
 finding in §3 is invisible to a string comparison and is the single most likely thing to be got
@@ -228,11 +267,14 @@ wrong by a test written in a hurry.
 
 ## 8. What is owed
 
-1. A total order on operands, specified here and implemented once, rather than per node class.
+1. **Make the order and the normalisation agree**, so that `CanonicalOrderExact` followed by
+   `InnerSimplified` settles instead of oscillating on a sum with a numeric term. This is the piece
+   in the way of everything else: the order is already total and already gives perfect order
+   independence, and it cannot be moved into the normalisation until the pair is confluent.
 2. Flattening of sums and products in the tree rather than in the printer.
-3. The two defects in §3 — the non-idempotent `-(-1)`, and the parity identities that miss a bare
-   negation.
-4. The rational-function canonical form of §5, as an explicit operation with the boundary in its
+3. The rational-function canonical form of §5, as an explicit operation with the boundary in its
    signature.
-5. `canoncheck` in CI once the counts are meant to be zero, which they are not yet. Until then it is
+4. `canoncheck` in CI once the counts are meant to be zero, which they are not yet. Until then it is
    a measurement, and its numbers belong in a commit message rather than in a gate.
+
+The two defects §3 lists are fixed and are not on this list.
