@@ -15,6 +15,40 @@ read first.
 
 ---
 
+## Unreleased — since 2.2.0
+
+### At a glance
+
+| Silent? | What | Was | Is |
+|---|---|---|---|
+| | `(Entity.Number)someBigInteger` | `FormatException: Illegal character found`, for almost every value | the number |
+
+### A `BigInteger` converts to a `Number` instead of throwing
+
+`Entity` and `Entity.Number` both offer an implicit conversion from
+`System.Numerics.BigInteger`, and they did not agree. `Entity`'s read the two's-complement bytes;
+`Number`'s passed the same bytes to `EInteger.FromString`, whose `byte[]` overload reads them as
+**ASCII digits**:
+
+```csharp
+Entity        fine  = new BigInteger(123456789);   // 123456789
+Entity.Number threw = new BigInteger(123456789);   // FormatException: Illegal character found
+```
+
+So the conversion failed for every value whose bytes are not digit characters — which is nearly all
+of them, `1` included. The few that worked did so by accident: `12594` is the two bytes `'2'` and
+`'1'`, and came out as `21`.
+
+Nothing in the library reached it, which is why no test caught it; it is only on the public surface.
+Both conversions now read the bytes, and a test requires the two to agree rather than merely to
+work.
+
+Found while documenting the members a `#pragma warning disable CS1591` was covering — the two
+conversions sit in different files and had to be read side by side to look wrong.
+[#585](https://github.com/asc-community/AngouriMath/issues/585).
+
+---
+
 ## 2.2.0 — since 2.1.0
 
 ### At a glance
