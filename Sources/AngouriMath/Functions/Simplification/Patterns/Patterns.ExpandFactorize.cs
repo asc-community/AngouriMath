@@ -12,6 +12,7 @@ namespace AngouriMath.Functions
 {
     internal static partial class Patterns
     {
+        [AddressableRules]
         internal static Entity ExpandRules(Entity x) => x switch
         {
             Sinf(Sumf(var any1, var any2)) => new Sinf(any1) * new Cosf(any2) + new Sinf(any2) * new Cosf(any1),
@@ -20,6 +21,7 @@ namespace AngouriMath.Functions
             _ => x
         };
 
+        [AddressableRules]
         internal static Entity FactorizeRules(Entity x) => x switch
         {
             // {1}^2n - {2}^2m = ({1}^n - {2}^m) * ({1}^n + {2}^m).

@@ -39,6 +39,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Analyzers.CodeFixes", "Anal
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Analyzers.Debug", "Analyzers\Analyzers.Debug\Analyzers.Debug.csproj", "{7C7DE223-D688-E7C3-1021-C86827910720}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RuleRegistryGenerator", "Analyzers\RuleRegistryGenerator\RuleRegistryGenerator.csproj", "{1E2C70F3-EB0F-46AC-8D12-293243D4C135}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AngouriMathPlot", "Samples\AngouriMathPlot\AngouriMathPlot.csproj", "{4B2B48EE-B454-A3AC-5534-63E894592140}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphicExample", "Samples\GraphicExample\GraphicExample.csproj", "{13409571-0ADC-B9C6-2EE7-44DF0B4AD43C}"
@@ -161,6 +163,10 @@ Global
 		{40BCFEFF-F691-B86D-DEF7-1B3D75C72011}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{40BCFEFF-F691-B86D-DEF7-1B3D75C72011}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{40BCFEFF-F691-B86D-DEF7-1B3D75C72011}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E2C70F3-EB0F-46AC-8D12-293243D4C135}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E2C70F3-EB0F-46AC-8D12-293243D4C135}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E2C70F3-EB0F-46AC-8D12-293243D4C135}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E2C70F3-EB0F-46AC-8D12-293243D4C135}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -188,5 +194,6 @@ Global
 		{FD30A551-F0D8-071A-9356-0BF0CDFB2FCC} = {D8022D2F-1DCE-4CE1-98DF-70B00D719D59}
 		{ABAD0619-30C7-242D-670F-2ECC908074A2} = {D8022D2F-1DCE-4CE1-98DF-70B00D719D59}
 		{40BCFEFF-F691-B86D-DEF7-1B3D75C72011} = {D8022D2F-1DCE-4CE1-98DF-70B00D719D59}
+		{1E2C70F3-EB0F-46AC-8D12-293243D4C135} = {358BFC2B-1A5B-4740-8BA1-0E53EFC7EDAC}
 	EndGlobalSection
 EndGlobal

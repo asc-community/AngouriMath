@@ -92,6 +92,7 @@ namespace AngouriMath.Functions
         }
 
 
+        [AddressableRules]
         internal static Entity TrigonometricRules(Entity x) => x switch
         {
             // sin({}) * cos({}) = 1/2 * sin(2{})
@@ -220,6 +221,7 @@ namespace AngouriMath.Functions
 
             _ => x
         };
+        [AddressableRules]
         internal static Entity ExpandTrigonometricRules(Entity x) => x switch
         {
             Mulf(Rational(Integer(1), Integer(2)), Sinf(Mulf(Integer(2), var any1))) => new Sinf(any1) * new Cosf(any1),
@@ -247,6 +249,7 @@ namespace AngouriMath.Functions
         /// zero and neither did <c>(sin(2t)csc(t))^2/4 - cos(2t) - sin(t)^2</c>, which is
         /// https://github.com/asc-community/AngouriMath/issues/557.
         /// </remarks>
+        [AddressableRules]
         internal static Entity ExpandMultipleAngleRules(Entity x) => x switch
         {
             Sinf(Mulf(Integer n, var inner)) when IsWorthExpanding(n) =>
@@ -263,6 +266,7 @@ namespace AngouriMath.Functions
         private static bool IsWorthExpanding(Integer n)
             => n.EInteger.Abs() >= 2 && n.EInteger.Abs() <= MaxAngleMultiplier;
 
+        [AddressableRules]
         internal static Entity CollapseTrigonometricFunctions(Entity x) => x switch
         {
             // sin / cos = tan
@@ -279,6 +283,7 @@ namespace AngouriMath.Functions
         /// <summary>
         /// For this it is true that any trigonometric function is either sin or cos
         /// </summary>
+        [AddressableRules]
         internal static Entity NormalTrigonometricForm(Entity x) => x switch
         {
             Tanf(var any1) => any1.Sin() / any1.Cos(),

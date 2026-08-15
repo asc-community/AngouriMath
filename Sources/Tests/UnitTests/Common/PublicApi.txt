@@ -120,11 +120,29 @@ AngouriMath.Core.ReasonOfFailureWhileParsing.op_Inequality(AngouriMath.Core.Reas
 AngouriMath.Core.Transformations.RewriteRecording.Dispose() : System.Void
 AngouriMath.Core.Transformations.RewriteRecording.Start() : AngouriMath.Core.Transformations.RewriteRecording
 AngouriMath.Core.Transformations.RewriteRecording.Steps { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Core.Transformations.RewriteStep>
+AngouriMath.Core.Transformations.RewriteRule.Description { } : System.String
+AngouriMath.Core.Transformations.RewriteRule.Growth { } : AngouriMath.Core.Transformations.RewriteRuleGrowth
+AngouriMath.Core.Transformations.RewriteRule.Guard { } : System.String
+AngouriMath.Core.Transformations.RewriteRule.Index { } : System.Int32
+AngouriMath.Core.Transformations.RewriteRule.Name { } : System.String
+AngouriMath.Core.Transformations.RewriteRule.NodeTypes { } : System.Collections.Generic.IReadOnlyList<System.Type>
+AngouriMath.Core.Transformations.RewriteRule.Pattern { } : System.String
+AngouriMath.Core.Transformations.RewriteRule.Replacement { } : System.String
+AngouriMath.Core.Transformations.RewriteRule.Source { } : System.String
+AngouriMath.Core.Transformations.RewriteRule.SourceLine { } : System.Int32
+AngouriMath.Core.Transformations.RewriteRule.ToString() : System.String
+AngouriMath.Core.Transformations.RewriteRule.TryApply(AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.Core.Transformations.RewriteRuleGrowth.Collects : AngouriMath.Core.Transformations.RewriteRuleGrowth
+AngouriMath.Core.Transformations.RewriteRuleGrowth.Expands : AngouriMath.Core.Transformations.RewriteRuleGrowth
+AngouriMath.Core.Transformations.RewriteRuleGrowth.Rearranges : AngouriMath.Core.Transformations.RewriteRuleGrowth
+AngouriMath.Core.Transformations.RewriteRuleGrowth.value__ : System.Int32
 AngouriMath.Core.Transformations.RewriteRuleSet.ApplyOnce(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.Core.Transformations.RewriteRuleSet.AsTransformation() : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.RewriteRuleSet.Description { } : System.String
 AngouriMath.Core.Transformations.RewriteRuleSet.Name { } : System.String
 AngouriMath.Core.Transformations.RewriteRuleSet.Relation { } : AngouriMath.Core.Transformations.TransformationRelation
+AngouriMath.Core.Transformations.RewriteRuleSet.RuleFiringAt(AngouriMath.Entity) : AngouriMath.Core.Transformations.RewriteRule
+AngouriMath.Core.Transformations.RewriteRuleSet.Rules { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Core.Transformations.RewriteRule>
 AngouriMath.Core.Transformations.RewriteRuleSet.Soundness { } : AngouriMath.Core.Transformations.Soundness
 AngouriMath.Core.Transformations.RewriteRuleSet.ToString() : System.String
 AngouriMath.Core.Transformations.RewriteRules.All { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Core.Transformations.RewriteRuleSet>
@@ -161,6 +179,7 @@ AngouriMath.Core.Transformations.RewriteRules.Trigonometric { } : AngouriMath.Co
 AngouriMath.Core.Transformations.RewriteStep.After { } : AngouriMath.Entity
 AngouriMath.Core.Transformations.RewriteStep.Before { } : AngouriMath.Entity
 AngouriMath.Core.Transformations.RewriteStep.Relation { } : AngouriMath.Core.Transformations.TransformationRelation
+AngouriMath.Core.Transformations.RewriteStep.Rule { } : AngouriMath.Core.Transformations.RewriteRule
 AngouriMath.Core.Transformations.RewriteStep.RuleSet { } : AngouriMath.Core.Transformations.RewriteRuleSet
 AngouriMath.Core.Transformations.RewriteStep.Soundness { } : AngouriMath.Core.Transformations.Soundness
 AngouriMath.Core.Transformations.RewriteStep.ToString() : System.String
@@ -2504,6 +2523,7 @@ class AngouriMath.Core.ReasonOfFailureWhileParsing+InternalError
 class AngouriMath.Core.ReasonOfFailureWhileParsing+MissingOperator
 class AngouriMath.Core.ReasonOfFailureWhileParsing+Unknown
 class AngouriMath.Core.Transformations.RewriteRecording
+class AngouriMath.Core.Transformations.RewriteRule
 class AngouriMath.Core.Transformations.RewriteRuleSet
 class AngouriMath.Core.Transformations.RewriteRules
 class AngouriMath.Core.Transformations.Transformation
@@ -2604,6 +2624,7 @@ class AngouriMath.MathS+UnsafeAndInternal
 class AngouriMath.MathS+Utils
 enum AngouriMath.Core.ApproachFrom
 enum AngouriMath.Core.Domain
+enum AngouriMath.Core.Transformations.RewriteRuleGrowth
 enum AngouriMath.Core.Transformations.Soundness
 enum AngouriMath.Core.Transformations.TransformationRelation
 enum AngouriMath.MathS+Matrices+Direction

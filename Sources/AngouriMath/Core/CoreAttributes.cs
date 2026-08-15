@@ -22,4 +22,17 @@ namespace AngouriMath.Core
     /// </summary>
     [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
     internal sealed class ConcurrentFieldAttribute : Attribute { }
+
+    /// <summary>
+    /// Marks a rewrite rule <c>switch</c> whose arms are to be generated as individually
+    /// addressable <see cref="Transformations.RewriteRule"/> values, in a field named after the
+    /// method with <c>Arms</c> appended.
+    /// </summary>
+    /// <remarks>
+    /// The method must be expression-bodied with a body of the form <c>parameter switch { ... }</c>;
+    /// anything else is a build error rather than an empty list, since a rule set that silently
+    /// has no rules reads exactly like one that has been checked.
+    /// </remarks>
+    [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    internal sealed class AddressableRulesAttribute : Attribute { }
 }

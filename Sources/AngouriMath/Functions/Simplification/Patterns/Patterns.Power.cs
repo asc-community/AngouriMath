@@ -18,6 +18,7 @@ namespace AngouriMath.Functions
             ? 1 / MathS.Pow(@base, -1 * pow)
             : expr;
         /// <summary>1 + (-x) => 1 - x, and -(a - b) => b - a</summary>
+        [AddressableRules]
         internal static Entity InvertNegativeMultipliers(Entity expr) => expr switch
         {
             Sumf(var any1, Mulf(Real { IsNegative: true } const1, var any2))
@@ -40,6 +41,7 @@ namespace AngouriMath.Functions
             _ => expr
         };
 
+        [AddressableRules]
         internal static Entity PowerRules(Entity x) => x switch
         {
             // {} / {} = 1 provided not {} = 0
@@ -126,9 +128,6 @@ namespace AngouriMath.Functions
 
             // x^n / x
             Divf(Powf(var any1, var any2), var any1a) when any1 == any1a => new Powf(any1, any2 - 1),
-
-            // x^n / x^m
-            Divf(Powf(var any1, var any2), Powf(var any1a, var any3)) when any1 == any1a => new Powf(any1, any2 - any3),
 
             // c ^ log(c, a) = a
             Powf(Number const1, Logf(Number const1a, var any1)) when const1 == const1a => any1,

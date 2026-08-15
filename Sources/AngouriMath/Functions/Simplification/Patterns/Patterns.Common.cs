@@ -12,6 +12,7 @@ namespace AngouriMath.Functions
 {
     internal static partial class Patterns
     {
+        [AddressableRules]
         internal static Entity DivisionPreparingRules(Entity x) => x switch
         {
             Mulf(var any1, Divf(Integer(1), var any2)) => any1 / any2,
@@ -20,6 +21,7 @@ namespace AngouriMath.Functions
             _ => x
         };
 
+        [AddressableRules]
         internal static Entity NumericNeatRules(Entity x) => x switch
         {
             // (-a) + (-b) is -(a + b), and the operands are already negative here, so what is
@@ -61,6 +63,7 @@ namespace AngouriMath.Functions
             _ => x
         };
 
+        [AddressableRules]
         internal static Entity CommonRules(Entity x) => x switch
         {
             // (a * f(x)) * g(x) = a * (f(x) * g(x))
@@ -149,9 +152,6 @@ namespace AngouriMath.Functions
             Sumf(Divf(var anyButNot1 and not Integer(1), var any2), var anyButNot1a)
                 when anyButNot1 == anyButNot1a => anyButNot1 * (1 + 1 / any2),
 
-            // {1} * {2} - {1} * {3} = {1} * ({2} - {3})
-            Minusf(Mulf(var any1, var any2), Mulf(var any1a, var any3)) when any1 == any1a => any1 * (any2 - any3),
-
             // x * x = x ^ 2
             Mulf(var any1, var any1a) when any1 == any1a => new Powf(any1, 2),
 
@@ -204,10 +204,6 @@ namespace AngouriMath.Functions
 
             // a * (b * {}) = (a * b) * {}
             Mulf(Number const1, Mulf(Number const2, var any1)) => const1 * const2 * any1,
-
-            // {1} - {2} * {1}
-            Minusf(var any1, Mulf(var any2, var any1a)) when any1 == any1a => any1 * (1 - any2),
-            Minusf(var any1, Mulf(var any1a, var any2)) when any1 == any1a => any1 * (1 - any2),
 
             Sumf(var any1, Sumf(var any2, var any1a)) when any1 == any1a => 2 * any1 + any2,
             Sumf(var any1, Sumf(var any1a, var any2)) when any1 == any1a => 2 * any1 + any2,

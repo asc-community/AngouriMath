@@ -92,7 +92,8 @@ namespace AngouriMath.Core.Transformations
             "Moves a negative numeric factor out of a product into the sign of the term.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.InvertNegativeMultipliers);
+            Patterns.InvertNegativeMultipliers,
+            Patterns.InvertNegativeMultipliersArms);
 
         /// <summary>
         /// The arithmetic housekeeping rules — collecting like terms, flattening nested
@@ -103,7 +104,8 @@ namespace AngouriMath.Core.Transformations
             "Collects like terms and normalises the arrangement of products and quotients.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.CommonRules);
+            Patterns.CommonRules,
+            Patterns.CommonRulesArms);
 
         /// <summary>
         /// Gets a quotient into the shape the division rules expect before they run.
@@ -113,7 +115,8 @@ namespace AngouriMath.Core.Transformations
             "Lifts numeric factors out of a quotient so that the division rules can see it.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.DivisionPreparingRules);
+            Patterns.DivisionPreparingRules,
+            Patterns.DivisionPreparingRulesArms);
 
         /// <summary>
         /// Cosmetic arrangement of signs, so that adding a negative reads as a difference.
@@ -123,7 +126,8 @@ namespace AngouriMath.Core.Transformations
             "Arranges signs so that adding a negative is written as subtracting a positive.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.NumericNeatRules);
+            Patterns.NumericNeatRules,
+            Patterns.NumericNeatRulesArms);
 
         #endregion
 
@@ -139,7 +143,8 @@ namespace AngouriMath.Core.Transformations
             // (a ^ b) ^ c is a ^ (b c) only on a branch; the rules guard for it, and the
             // guard is what the tier is stating.
             Soundness.SoundUnderAssumptions,
-            Patterns.PowerRules);
+            Patterns.PowerRules,
+            Patterns.PowerRulesArms);
 
         /// <summary>
         /// Multiplies products over sums out.
@@ -149,7 +154,8 @@ namespace AngouriMath.Core.Transformations
             "Distributes products and powers over sums.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.ExpandRules);
+            Patterns.ExpandRules,
+            Patterns.ExpandRulesArms);
 
         /// <summary>
         /// Takes common factors back out of a sum.
@@ -159,7 +165,8 @@ namespace AngouriMath.Core.Transformations
             "Gathers common factors out of sums.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.FactorizeRules);
+            Patterns.FactorizeRules,
+            Patterns.FactorizeRulesArms);
 
         /// <summary>
         /// Recognises a perfect square written out, so that factorisation has something to
@@ -261,7 +268,8 @@ namespace AngouriMath.Core.Transformations
             // tan and cot bring poles with them, so an identity that introduces one holds
             // away from those points rather than everywhere.
             Soundness.SoundUnderAssumptions,
-            Patterns.TrigonometricRules);
+            Patterns.TrigonometricRules,
+            Patterns.TrigonometricRulesArms);
 
         /// <summary>
         /// Rewrites the derived trigonometric functions in terms of sine and cosine.
@@ -271,7 +279,8 @@ namespace AngouriMath.Core.Transformations
             "Writes tangents, cotangents, secants and cosecants as sines and cosines.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.NormalTrigonometricForm);
+            Patterns.NormalTrigonometricForm,
+            Patterns.NormalTrigonometricFormArms);
 
         /// <summary>
         /// Gathers sines and cosines back into the derived functions where that is shorter.
@@ -281,7 +290,8 @@ namespace AngouriMath.Core.Transformations
             "Recognises a quotient or reciprocal of sines and cosines as a tangent, cotangent, secant or cosecant.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.CollapseTrigonometricFunctions);
+            Patterns.CollapseTrigonometricFunctions,
+            Patterns.CollapseTrigonometricFunctionsArms);
 
         /// <summary>
         /// Opens a trigonometric function of a sum into functions of its terms.
@@ -291,7 +301,8 @@ namespace AngouriMath.Core.Transformations
             "Expands a sine or cosine of a sum into products of sines and cosines of its terms.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.ExpandTrigonometricRules);
+            Patterns.ExpandTrigonometricRules,
+            Patterns.ExpandTrigonometricRulesArms);
 
         /// <summary>
         /// Opens a trigonometric function of a multiplied angle.
@@ -305,7 +316,8 @@ namespace AngouriMath.Core.Transformations
             "Expands a sine or cosine of an integer multiple of an angle.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.ExpandMultipleAngleRules);
+            Patterns.ExpandMultipleAngleRules,
+            Patterns.ExpandMultipleAngleRulesArms);
 
         #endregion
 
@@ -319,7 +331,8 @@ namespace AngouriMath.Core.Transformations
             "Applies the identities of boolean algebra to conjunctions, disjunctions and negations.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.BooleanRules);
+            Patterns.BooleanRules,
+            Patterns.BooleanRulesArms);
 
         /// <summary>
         /// Rules about equalities and inequalities.
@@ -329,7 +342,8 @@ namespace AngouriMath.Core.Transformations
             "Rearranges equalities and inequalities into their usual form.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.InequalityEqualityRules);
+            Patterns.InequalityEqualityRules,
+            Patterns.InequalityEqualityRulesArms);
 
         /// <summary>
         /// Rules about unions, intersections and set differences.
@@ -339,7 +353,8 @@ namespace AngouriMath.Core.Transformations
             "Applies the identities of set algebra to unions, intersections and set differences.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.SetOperatorRules);
+            Patterns.SetOperatorRules,
+            Patterns.SetOperatorRulesArms);
 
         /// <summary>
         /// Cancels a quotient of factorials down to the terms that survive.
@@ -369,7 +384,8 @@ namespace AngouriMath.Core.Transformations
             "Applies the multiplicative identities of Euler's totient function.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.PhiFunctionRules);
+            Patterns.PhiFunctionRules,
+            Patterns.PhiFunctionRulesArms);
 
         #endregion
 

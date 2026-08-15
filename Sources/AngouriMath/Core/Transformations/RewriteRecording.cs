@@ -127,11 +127,11 @@ namespace AngouriMath.Core.Transformations
         /// </summary>
         internal static RewriteRecording? Current => current.Value;
 
-        internal void Add(RewriteRuleSet ruleSet, Entity before, Entity after)
+        internal void Add(RewriteRuleSet ruleSet, RewriteRule? rule, Entity before, Entity after)
         {
             if (closed)
                 return;
-            steps.Enqueue(new RewriteStep(ruleSet, before, after));
+            steps.Enqueue(new RewriteStep(ruleSet, rule, before, after));
         }
     }
 }

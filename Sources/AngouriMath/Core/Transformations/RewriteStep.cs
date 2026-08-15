@@ -19,11 +19,23 @@ namespace AngouriMath.Core.Transformations
     /// </remarks>
     public readonly struct RewriteStep
     {
-        internal RewriteStep(RewriteRuleSet ruleSet, Entity before, Entity after)
-            => (RuleSet, Before, After) = (ruleSet, before, after);
+        internal RewriteStep(RewriteRuleSet ruleSet, RewriteRule? rule, Entity before, Entity after)
+            => (RuleSet, Rule, Before, After) = (ruleSet, rule, before, after);
 
         /// <summary>Which rule set rewrote it.</summary>
         public RewriteRuleSet RuleSet { get; }
+
+        /// <summary>
+        /// Which single rewrite in that set did it, where the set is addressable at that grain —
+        /// see <see cref="RewriteRuleSet.Rules"/>. Null where it is not.
+        /// </summary>
+        /// <remarks>
+        /// This is the grain
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/28">#28</a> asks for: a
+        /// derivation that names the identity applied, rather than the group of identities it
+        /// was filed under.
+        /// </remarks>
+        public RewriteRule? Rule { get; }
 
         /// <summary>The subexpression as it was matched.</summary>
         public Entity Before { get; }
@@ -38,6 +50,9 @@ namespace AngouriMath.Core.Transformations
         public Soundness Soundness => RuleSet.Soundness;
 
         /// <inheritdoc/>
-        public override string ToString() => $"{RuleSet.Name}: {Before.Stringize()} -> {After.Stringize()}";
+        public override string ToString()
+            => Rule is null
+                ? $"{RuleSet.Name}: {Before.Stringize()} -> {After.Stringize()}"
+                : $"{RuleSet.Name}/{Rule.Name}: {Before.Stringize()} -> {After.Stringize()}";
     }
 }
