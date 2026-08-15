@@ -23,3 +23,9 @@ The measurement harnesses live outside this repository, in the analysis workspac
 (`work/`): a self-verifying solver corpus, a property checker, root-completeness and
 simplification sweeps, a boundary checker, a crash harness that survives a stack overflow, and a
 checker for the documentation's code samples. Run them before claiming anything is fixed.
+
+Inside the repository there is one measurement, and it is a *gate* rather than a harness:
+`Sources/Tests/UnitTests/Corpus` runs forty problems on every commit and reports **solved / unsolved
+/ wrong / error / timeout**. It fails on a wrong answer, and on any case that stops matching its
+recorded verdict — including one that improves, which is a prompt to record the improvement rather
+than a complaint. See *The corpus runs on every commit* in [AGENTS.md](AGENTS.md).
