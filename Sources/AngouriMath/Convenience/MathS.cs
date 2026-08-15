@@ -5642,44 +5642,15 @@ namespace AngouriMath
             /// By default criteria it cannot simplify it further, however, the custom one
             /// it simplified from 2 to 1. 
             /// </example>
-            public static Setting<Func<Entity, double>> ComplexityCriteria { get; } = new Func<Entity, double>(expr =>
-                {
-                    // Those are of the 2nd power to avoid problems with floating numbers
-                    const double TinyWeight       = 0.5;
-                    const double MinorWeight      = 1.0;
-                    const double Weight           = 2.0;
-                    const double MajorWeight      = 4.0;
-                    const double HeavyWeight      = 8.0;
-                    const double ExtraHeavyWeight = 12.0;
-
-                    static double DefaultCriteria(Entity expr) => expr switch {
-                        // Weigh provided predicates much less but nested provideds heavy
-                        Providedf(var inner, var predicate) =>
-                            DefaultCriteria(inner) + 0.1 * DefaultCriteria(predicate) + ExtraHeavyWeight * (inner.Nodes.Count(n => n is Providedf) + predicate.Nodes.Count(n => n is Providedf)),
-                        Piecewise { Cases: var cases } =>
-                            cases.Sum(@case =>
-                                DefaultCriteria(@case.Expression) + 0.1 * DefaultCriteria(@case.Predicate) + ExtraHeavyWeight * (@case.Expression.Nodes.Count(n => n is Providedf) + @case.Predicate.Nodes.Count(n => n is Providedf))),
-                        Variable => Weight, // Number of variables
-                        // A root in a denominator, which the rationalising rule clears out.
-                        // Without a weight here the two forms tie -- 1 / (sqrt(3) + 5) and
-                        // (sqrt(3) - 5) / (-22) are the same rate -- and a tie is settled by
-                        // whichever candidate was generated first, which is not a preference
-                        // so much as an accident. This states the preference instead.
-                        // https://github.com/asc-community/AngouriMath/issues/205
-                        Divf(_, var divisor) when divisor.Nodes.Any(node => node is Powf(_, Rational and not Integer))
-                            => MinorWeight + Weight + expr.DirectChildren.Sum(DefaultCriteria),
-                        Divf => MinorWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of divides
-                        Rational(Integer(1 or -1), _) and not Integer => Weight + expr.DirectChildren.Sum(DefaultCriteria), // Number of rationals with unit numerator
-                        Powf(_, Real { IsNegative: true }) => HeavyWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of negative powers
-                        Logf => TinyWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of logarithms
-                        Phif => ExtraHeavyWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of phi functions
-                        Real { IsNegative: true } => MajorWeight + expr.DirectChildren.Sum(DefaultCriteria), // Number of negative reals
-                        ComparisonSign when expr.DirectChildren[0] == 0 => Weight + expr.DirectChildren.Sum(DefaultCriteria), // 0 < x is bad. x > 0 is good.
-                        Notf (Equalsf eq) => -Weight + DefaultCriteria(eq), // (not x = 0) is equally complex as (x = 0)
-                        _ => expr.DirectChildren.Sum(DefaultCriteria)
-                    } + Weight; // Number of nodes
-                    return DefaultCriteria(expr);
-                });
+            /// <remarks>
+            /// The function itself lives on <see cref="CostModel.Default"/>, with the named
+            /// alternatives beside it — <see cref="CostModel.SmallestTree"/>,
+            /// <see cref="CostModel.FewestDivisions"/>, <see cref="CostModel.FewestRadicals"/>.
+            /// It is referenced rather than repeated so the setting's default and the model
+            /// cannot drift apart.
+            /// </remarks>
+            public static Setting<Func<Entity, double>> ComplexityCriteria { get; } =
+                new Func<Entity, double>(CostModel.DefaultCost);
 
             /// <summary>
             /// Settings for the Newton-Raphson's root-search method
