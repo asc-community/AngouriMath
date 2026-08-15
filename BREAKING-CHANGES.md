@@ -1,4 +1,4 @@
-# Behavioural and breaking changes
+﻿# Behavioural and breaking changes
 
 AngouriMath puts mathematical correctness ahead of backward compatibility. An API that returns the
 wrong answer is not an asset to preserve, so when the two disagree the answer changes — see
@@ -22,6 +22,35 @@ read first.
 | Silent? | What | Was | Is |
 |---|---|---|---|
 | | `(Entity.Number)someBigInteger` | `FormatException: Illegal character found`, for almost every value | the number |
+| **Silent** | `"1/x".Integrate("x")`, and every antiderivative with a logarithm | `ln(abs(x)) + C` | `ln(x) + C` |
+
+### An antiderivative with a logarithm drops the absolute value unless the codomain is real
+
+`abs` is not holomorphic, so `ln(abs(f))` is an antiderivative of `f'/f` **on the real line and
+nowhere else** — differentiating it off the line does not return the integrand. The table produced
+it unconditionally, including under the default codomain, which is the complex plane. That is
+[#946](https://github.com/asc-community/AngouriMath/issues/946), and separating by codomain is the
+answer given on the issue.
+
+```csharp
+"1/x".Integrate("x")        // was: ln(abs(x)) + C        now: ln(x) + C
+"tan(x)".Integrate("x")     // was: -ln(abs(cos(x))) + C  now: -ln(cos(x)) + C
+```
+
+The previous answer is still available, and is now a statement about where you are working rather
+than the only thing on offer:
+
+```csharp
+using var _ = MathS.Settings.Codomain.Set(Domain.Real);
+"1/x".Integrate("x")        // ln(abs(x)) + C, as before
+```
+
+**Silent**: the call still succeeds and returns a different expression. If you were integrating on
+the reals and relying on the default, set the codomain and nothing changes.
+
+Eleven rules in the table introduced the absolute value themselves and all eleven now ask. The rule
+for `∫ ln(abs(ax + b)) dx` is deliberately **not** among them: there the absolute value comes from
+the integrand the caller wrote, not from the rule, so it is left where it is.
 
 ### A `BigInteger` converts to a `Number` instead of throwing
 

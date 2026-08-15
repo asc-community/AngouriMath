@@ -87,7 +87,7 @@ namespace AngouriMath.Functions.Algebra
             Entity.Powf(var @base, var power) =>
                 !power.ContainsNode(x) && @base == x ?
                     power == -1 ?
-                        MathS.Ln(MathS.Abs(@base)) :
+                        IntegralPatterns.AntiderivativeLog(@base) :
                         MathS.Pow(x, power + 1) / (power + 1) :
                     null,
 

@@ -238,7 +238,7 @@ namespace AngouriMath.Tests.Common
 
         [Fact] public void PiecewiseIntegrate3NodeEvaled() =>
             "integral(piecewise(x provided a, 1/x), x)".ToEntity().Evaled
-            .ShouldBe("piecewise(x ^ 2 / 2 + C provided a, ln(abs(x)) + C)".ToEntity().Evaled);
+            .ShouldBe("piecewise(x ^ 2 / 2 + C provided a, ln(x) + C)".ToEntity().Evaled);
 
         [Fact] public void PiecewiseDerivative1NodeEvaled() =>
             "derivative(piecewise(x provided a, 1/x), x)".ToEntity().Evaled
@@ -272,7 +272,7 @@ namespace AngouriMath.Tests.Common
 
         [Fact] public void PiecewiseIntegrate3NodeInnerSimplified() =>
             "integral(piecewise(x provided a, 1/x), x)".ToEntity().InnerSimplified
-            .ShouldBe("piecewise(x ^ 2 / 2 + C provided a, ln(abs(x)) + C)");
+            .ShouldBe("piecewise(x ^ 2 / 2 + C provided a, ln(x) + C)");
 
         [Fact] public void PiecewiseDerivative1NodeInnerSimplified() =>
             "derivative(piecewise(x provided a, 1/x), x)".ToEntity().InnerSimplified
