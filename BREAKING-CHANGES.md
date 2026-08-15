@@ -23,6 +23,36 @@ read first.
 |---|---|---|---|
 | | `(Entity.Number)someBigInteger` | `FormatException: Illegal character found`, for almost every value | the number |
 | **Silent** | `"1/x".Integrate("x")`, and every antiderivative with a logarithm | `ln(abs(x)) + C` | `ln(x) + C` |
+| **Silent** | `CostModel.FewestDivisions.Cost(y ^ (1 * (-1)) * x)` | `0.007`, cheaper than `x / y` | `1.007` |
+
+### `FewestDivisions` and `FewestRadicals` score by value, not by spelling
+
+Both tested the exponent's **node**: `Powf(_, Real { IsNegative: true })` and
+`Powf(_, Rational and not Integer)`. In `y ^ (1 * (-1))` the exponent is a `Mulf`, so neither
+fired, and the writing whose division the model could not see scored *cheapest* — under the
+criterion whose whole job is to remove divisions.
+
+| expression | `FewestDivisions` was | is |
+|---|--:|--:|
+| `x / y` | 1.003 | 1.003 |
+| `y ^ (-1) * x` | 1.005 | 1.005 |
+| `y ^ (1 * (-1)) * x` | **0.007** | **1.007** |
+
+All three are one value written three ways, so one division each is the answer, and the written
+form — being the smallest tree — is now correctly the cheapest. `FewestRadicals` had the same shape
+of test and so the same blind spot: `x ^ (2 ^ (-1))` is a square root and is now counted as one.
+
+**`Simplify`'s output does not change.** Measured on a build of each, twelve division-heavy inputs
+under both models, twenty-four results, byte-identical. `Simplify` scores candidates it has already
+evaluated, so it did not reach the gap; what reaches it is a caller scoring expressions it did not
+build — extraction on an e-graph, where every writing of a value is a member of one class at once,
+which is how this was found. Only `Cost` returns different numbers, and only for an expression with
+an unevaluated exponent.
+
+`Default` and `SmallestTree` are deliberately **unchanged**. They count how an expression is
+written, and `y ^ (1 * (-1)) * x` really is a bigger tree — for them the node as written is not an
+approximation of the question, it is the question.
+[#950](https://github.com/asc-community/AngouriMath/issues/950).
 
 ### An antiderivative with a logarithm drops the absolute value unless the codomain is real
 
