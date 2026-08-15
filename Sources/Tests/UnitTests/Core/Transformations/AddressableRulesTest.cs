@@ -281,8 +281,8 @@ namespace AngouriMath.Tests.Core.Transformations
                 foreach (var rule in set.Rules)
                 {
                     Assert.False(string.IsNullOrWhiteSpace(rule.Name), $"{set.Name} has a nameless rule");
-                    Assert.False(string.IsNullOrWhiteSpace(rule.Pattern), $"{set.Name}/{rule.Name} has no pattern");
-                    Assert.False(string.IsNullOrWhiteSpace(rule.Replacement), $"{set.Name}/{rule.Name} builds nothing");
+                    Assert.False(string.IsNullOrWhiteSpace(rule.PatternSource), $"{set.Name}/{rule.Name} has no pattern");
+                    Assert.False(string.IsNullOrWhiteSpace(rule.ReplacementSource), $"{set.Name}/{rule.Name} builds nothing");
                     Assert.True(rule.SourceLine > 0, $"{set.Name}/{rule.Name} has no line");
                     Assert.All(rule.NodeTypes, type => Assert.True(typeof(Entity).IsAssignableFrom(type),
                         $"{set.Name}/{rule.Name} is filed under {type}, which is not a node"));
@@ -337,7 +337,7 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.Equal(RewriteRules.Common, step.RuleSet);
             Assert.NotNull(step.Rule);
             Assert.Equal("a / (b / c) = a * c / b", step.Rule.Description);
-            Assert.Equal("Divf(var any1, Divf(var any2, var any3))", step.Rule.Pattern);
+            Assert.Equal("Divf(var any1, Divf(var any2, var any3))", step.Rule.PatternSource);
             Assert.Equal(step.After, step.Rule.TryApply(step.Before));
         }
 

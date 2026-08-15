@@ -122,12 +122,12 @@ AngouriMath.Core.Transformations.RewriteRecording.Start() : AngouriMath.Core.Tra
 AngouriMath.Core.Transformations.RewriteRecording.Steps { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Core.Transformations.RewriteStep>
 AngouriMath.Core.Transformations.RewriteRule.Description { } : System.String
 AngouriMath.Core.Transformations.RewriteRule.Growth { } : AngouriMath.Core.Transformations.RewriteRuleGrowth
-AngouriMath.Core.Transformations.RewriteRule.Guard { } : System.String
+AngouriMath.Core.Transformations.RewriteRule.GuardSource { } : System.String
 AngouriMath.Core.Transformations.RewriteRule.Index { } : System.Int32
 AngouriMath.Core.Transformations.RewriteRule.Name { } : System.String
 AngouriMath.Core.Transformations.RewriteRule.NodeTypes { } : System.Collections.Generic.IReadOnlyList<System.Type>
-AngouriMath.Core.Transformations.RewriteRule.Pattern { } : System.String
-AngouriMath.Core.Transformations.RewriteRule.Replacement { } : System.String
+AngouriMath.Core.Transformations.RewriteRule.PatternSource { } : System.String
+AngouriMath.Core.Transformations.RewriteRule.ReplacementSource { } : System.String
 AngouriMath.Core.Transformations.RewriteRule.Source { } : System.String
 AngouriMath.Core.Transformations.RewriteRule.SourceLine { } : System.Int32
 AngouriMath.Core.Transformations.RewriteRule.ToString() : System.String

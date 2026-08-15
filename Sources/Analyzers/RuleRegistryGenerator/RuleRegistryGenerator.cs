@@ -212,9 +212,9 @@ namespace AngouriMath.Generators
                 text.AppendLine($"{indent}            description: {Literal(Description(arm))},");
                 text.AppendLine($"{indent}            nodeTypes: new global::System.Type[] {{ "
                     + string.Join(", ", nodeTypes.Select(type => $"typeof({type})")) + " },");
-                text.AppendLine($"{indent}            pattern: {Literal(pattern)},");
-                text.AppendLine($"{indent}            guard: {Literal(guard)},");
-                text.AppendLine($"{indent}            replacement: {Literal(replacement)},");
+                text.AppendLine($"{indent}            patternSource: {Literal(pattern)},");
+                text.AppendLine($"{indent}            guardSource: {Literal(guard)},");
+                text.AppendLine($"{indent}            replacementSource: {Literal(replacement)},");
                 text.AppendLine($"{indent}            growth: global::AngouriMath.Core.Transformations.RewriteRuleGrowth.{growth},");
                 text.AppendLine($"{indent}            sourceLine: {line},");
                 text.AppendLine($"{indent}            apply: static global::AngouriMath.Entity? "

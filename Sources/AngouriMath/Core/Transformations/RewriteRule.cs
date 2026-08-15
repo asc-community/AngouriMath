@@ -79,9 +79,9 @@ namespace AngouriMath.Core.Transformations
             string name,
             string? description,
             IReadOnlyList<Type> nodeTypes,
-            string pattern,
-            string? guard,
-            string replacement,
+            string patternSource,
+            string? guardSource,
+            string replacementSource,
             RewriteRuleGrowth growth,
             int sourceLine,
             Func<Entity, Entity?> apply)
@@ -91,9 +91,9 @@ namespace AngouriMath.Core.Transformations
             Name = name;
             Description = description;
             NodeTypes = nodeTypes;
-            Pattern = pattern;
-            Guard = guard;
-            Replacement = replacement;
+            PatternSource = patternSource;
+            GuardSource = guardSource;
+            ReplacementSource = replacementSource;
             Growth = growth;
             SourceLine = sourceLine;
             this.apply = apply;
@@ -139,14 +139,34 @@ namespace AngouriMath.Core.Transformations
         /// </remarks>
         public IReadOnlyList<Type> NodeTypes { get; }
 
-        /// <summary>The pattern, as source.</summary>
-        public string Pattern { get; }
+        /// <summary>The pattern the arm matches, as the C# source writes it.</summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Source text, and named so.</b> This is what a reader would see in the
+        /// <c>switch</c>, not a representation anything can match against — to ask whether this
+        /// rule fires on a node, call <see cref="TryApply(Entity)"/>, which runs the arm itself.
+        /// </para>
+        /// <para>
+        /// The name carries <c>Source</c> because
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 1 is
+        /// pattern matching as data, and when a pattern becomes a value it should be able to be
+        /// called <c>Pattern</c> without first breaking somebody. Deciding that after the
+        /// property shipped would have cost a major version; deciding it here cost nothing.
+        /// </para>
+        /// </remarks>
+        public string PatternSource { get; }
 
-        /// <summary>The side condition, as source, or <see langword="null"/> where there is none.</summary>
-        public string? Guard { get; }
+        /// <summary>
+        /// The side condition as the C# source writes it, or <see langword="null"/> where the arm
+        /// has no <c>when</c> clause. Source text — see <see cref="PatternSource"/>.
+        /// </summary>
+        public string? GuardSource { get; }
 
-        /// <summary>What the rule builds, as source.</summary>
-        public string Replacement { get; }
+        /// <summary>
+        /// What the arm builds, as the C# source writes it. Source text — see
+        /// <see cref="PatternSource"/>.
+        /// </summary>
+        public string ReplacementSource { get; }
 
         /// <summary>Which way the rewrite moves. See <see cref="RewriteRuleGrowth"/>.</summary>
         public RewriteRuleGrowth Growth { get; }
@@ -168,6 +188,8 @@ namespace AngouriMath.Core.Transformations
 
         /// <inheritdoc/>
         public override string ToString()
-            => Guard is null ? $"{Pattern} => {Replacement}" : $"{Pattern} when {Guard} => {Replacement}";
+            => GuardSource is null
+                ? $"{PatternSource} => {ReplacementSource}"
+                : $"{PatternSource} when {GuardSource} => {ReplacementSource}";
     }
 }
