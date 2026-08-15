@@ -28,6 +28,23 @@ AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol.ctor()
 AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol.ctor(AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol)
 AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol.op_Equality(AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol, AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol) : System.Boolean
 AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol.op_Inequality(AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol, AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol) : System.Boolean
+AngouriMath.Core.CostModel.<Clone>$() : AngouriMath.Core.CostModel
+AngouriMath.Core.CostModel.All { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Core.CostModel>
+AngouriMath.Core.CostModel.Cost { } : System.Func<AngouriMath.Entity,System.Double>
+AngouriMath.Core.CostModel.Deconstruct(System.String&, System.String&, System.Func<AngouriMath.Entity,System.Double>&) : System.Void
+AngouriMath.Core.CostModel.Default { } : AngouriMath.Core.CostModel
+AngouriMath.Core.CostModel.Description { } : System.String
+AngouriMath.Core.CostModel.Equals(AngouriMath.Core.CostModel) : System.Boolean
+AngouriMath.Core.CostModel.Equals(System.Object) : System.Boolean
+AngouriMath.Core.CostModel.FewestDivisions { } : AngouriMath.Core.CostModel
+AngouriMath.Core.CostModel.FewestRadicals { } : AngouriMath.Core.CostModel
+AngouriMath.Core.CostModel.GetHashCode() : System.Int32
+AngouriMath.Core.CostModel.Name { } : System.String
+AngouriMath.Core.CostModel.SmallestTree { } : AngouriMath.Core.CostModel
+AngouriMath.Core.CostModel.ToString() : System.String
+AngouriMath.Core.CostModel.ctor(System.String, System.String, System.Func<AngouriMath.Entity,System.Double>)
+AngouriMath.Core.CostModel.op_Equality(AngouriMath.Core.CostModel, AngouriMath.Core.CostModel) : System.Boolean
+AngouriMath.Core.CostModel.op_Inequality(AngouriMath.Core.CostModel, AngouriMath.Core.CostModel) : System.Boolean
 AngouriMath.Core.Domain.Any : AngouriMath.Core.Domain
 AngouriMath.Core.Domain.Boolean : AngouriMath.Core.Domain
 AngouriMath.Core.Domain.Complex : AngouriMath.Core.Domain
@@ -2452,6 +2469,7 @@ AngouriMath.MathS.oo : AngouriMath.Entity+Number+Real
 AngouriMath.MathS.pi : AngouriMath.Entity+Variable
 class AngouriMath.Convenience.Setting<T>
 class AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol
+class AngouriMath.Core.CostModel
 class AngouriMath.Core.EquationSystem
 class AngouriMath.Core.Exceptions.AngouriBugException
 class AngouriMath.Core.Exceptions.AngouriMathBaseException

@@ -33,6 +33,14 @@ file_header_template=\nCopyright (c) 2019-2026 Angouri.\nAngouriMath is licensed
 [Tests/UnitTests/Algebra/GroebnerSystemTest.cs]
 file_header_template=\nCopyright (c) 2019-2026 Angouri.\nAngouriMath is licensed under MIT.\nDetails: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.\nWebsite: https://am.angouri.org.\n
 
+# Named per file rather than per directory: AngouriMath/Core holds files from every year of
+# the project, so widening the pattern would demand a header rewrite of all of them.
+[AngouriMath/Core/CostModel.cs]
+file_header_template=\nCopyright (c) 2019-2026 Angouri.\nAngouriMath is licensed under MIT.\nDetails: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.\nWebsite: https://am.angouri.org.\n
+
+[Tests/UnitTests/Core/CostModelTest.cs]
+file_header_template=\nCopyright (c) 2019-2026 Angouri.\nAngouriMath is licensed under MIT.\nDetails: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.\nWebsite: https://am.angouri.org.\n
+
 [Tests/UnitTests/Common/ListArgumentOverloadTest.cs]
 file_header_template=\nCopyright (c) 2019-2026 Angouri.\nAngouriMath is licensed under MIT.\nDetails: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.\nWebsite: https://am.angouri.org.\n
 
