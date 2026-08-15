@@ -22,6 +22,7 @@ namespace AngouriMath.Functions
         private static bool IsLogic(Entity a, Entity b, Entity c)
             => IsLogic(a, b) && IsLogic(c);
 
+        [AddressableRules]
         internal static Entity BooleanRules(Entity x) => x switch
         {
             Impliesf(var ass, var other) when ass == False && IsLogic(other) => True.Provided(other.DomainCondition),

@@ -96,6 +96,7 @@ namespace AngouriMath.Functions
         private static Entity BothHold(Entity left, Entity right)
             => left == True ? right : right == True ? left : left & right;
 
+        [AddressableRules]
         internal static Entity InequalityEqualityRules(Entity x) => x switch
         {
             Orf(Lessf(var any1, var any2), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 <= any2,

@@ -49,6 +49,13 @@
 
     <!--Analyzers-->
     <ProjectReference Include="../Analyzers/Analyzers/Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+
+    <!--
+    The rule registry generator. Both attributes are load-bearing: without OutputItemType the
+    compiler is never handed the generator, and the failure shows up as the generated fields
+    being missing rather than as anything about generators.
+    -->
+    <ProjectReference Include="../Analyzers/RuleRegistryGenerator/RuleRegistryGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
   <ItemGroup>

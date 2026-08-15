@@ -15,6 +15,7 @@ namespace AngouriMath.Functions
     {
         [ConstantField] private static readonly FiniteSet FullBooleanSet = new FiniteSet(True, False);
 
+        [AddressableRules]
         internal static Entity SetOperatorRules(Entity x) => x switch
         {
             Intersectionf(var any1, var any1a) when any1 == any1a => any1,

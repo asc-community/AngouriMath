@@ -17,31 +17,21 @@ namespace AngouriMath.Core.Transformations
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The set, rather than the single <c>pattern -&gt; replacement</c> line, is the unit
-    /// here because that is what has been built so far — <b>not</b> because the finer grain
-    /// is too expensive. It was asserted here that it would be, on the grounds that each
-    /// rule would cost a delegate call per node; measuring it found the opposite, and the
-    /// measurement is in
-    /// <a href="https://github.com/asc-community/AngouriMath/issues/825">#825</a>: rules
-    /// bucketed by the node type they match run as fast as the hand-written <c>switch</c>
-    /// at realistic set sizes and faster at small ones, because a large <c>switch</c> over
-    /// distinct node types is compiled into that same dispatch anyway.
-    /// </para>
-    /// <para>
-    /// What actually stands in the way is transcription: splitting forty <c>switch</c> arms
-    /// by hand is forty chances to change a pattern silently. That points at a source
-    /// generator over the existing bodies rather than at leaving the rewrites unnamed. See
-    /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> item 50,
-    /// and note that nothing here forecloses it: a set whose rewrites become individually
-    /// addressable keeps the same name and the same entry in the registry.
+    /// The set is the unit the library <i>applies</i>; <see cref="Rules"/> is the unit inside
+    /// it. Those rules are generated from the <c>switch</c> that defines the set rather than
+    /// written out again, so the <c>switch</c> stays the thing a human edits and the thing
+    /// this calls, and the two cannot drift apart. See
+    /// <a href="https://github.com/asc-community/AngouriMath/issues/825">#825</a> and
+    /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> item 50.
     /// </para>
     /// </remarks>
     public sealed class RewriteRuleSet
     {
         private readonly Func<Entity, Entity> rules;
 
-        internal RewriteRuleSet(string name, string description, TransformationRelation relation, Soundness soundness, Func<Entity, Entity> rules)
-            => (Name, Description, Relation, Soundness, this.rules) = (name, description, relation, soundness, rules);
+        internal RewriteRuleSet(string name, string description, TransformationRelation relation, Soundness soundness, Func<Entity, Entity> rules, IReadOnlyList<RewriteRule>? addressable = null)
+            => (Name, Description, Relation, Soundness, this.rules, Rules)
+                = (name, description, relation, soundness, rules, addressable ?? Array.Empty<RewriteRule>());
 
         /// <summary>A stable identity for this set.</summary>
         public string Name { get; }
@@ -54,6 +44,44 @@ namespace AngouriMath.Core.Transformations
 
         /// <summary>How well justified that claim is. See <see cref="Soundness"/> on what a tier here is and is not.</summary>
         public Soundness Soundness { get; }
+
+        /// <summary>
+        /// The individual rewrites this set is made of, in the order they are tried.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Empty is not the same as "no rewrites".</b> A set whose rewrites are written as a
+        /// <c>switch</c> over the expression has every arm listed here; a set built some other
+        /// way — a sort, a polynomial division, a method with branches and locals — has none,
+        /// because there are no arms to generate from. <see cref="Name"/> and
+        /// <see cref="ApplyOnce(Entity)"/> behave identically either way, so this is a statement
+        /// about how finely the set can be reported on and not about what it does.
+        /// </para>
+        /// <para>
+        /// First match wins, exactly as in the <c>switch</c>, so the order is part of the
+        /// meaning: where two rules can fire on one node, the earlier one does.
+        /// </para>
+        /// </remarks>
+        public IReadOnlyList<RewriteRule> Rules { get; }
+
+        /// <summary>
+        /// The rule that fires at this node, or <see langword="null"/> where none does.
+        /// </summary>
+        /// <remarks>
+        /// At this node only, leaving its children alone — which is what an arm of the
+        /// <c>switch</c> sees. Always null for a set with no <see cref="Rules"/>.
+        /// </remarks>
+        public RewriteRule? RuleFiringAt(Entity node)
+        {
+            if (node is null)
+                throw new ArgumentNullException(nameof(node));
+            // The array, and by index: this is walked once per recorded rewrite and the sets are
+            // long -- CommonRules alone has 103 arms.
+            for (var i = 0; i < Rules.Count; i++)
+                if (Rules[i].TryApply(node) is not null)
+                    return Rules[i];
+            return null;
+        }
 
         /// <summary>
         /// Applies the set once, bottom-up over every node, exactly as
@@ -88,7 +116,10 @@ namespace AngouriMath.Core.Transformations
             {
                 var rewritten = rules(node);
                 if (rewritten != node)
-                    recording.Add(this, node, rewritten);
+                    // Which rule did it, asked only of a node that actually changed and only
+                    // while somebody is recording. The arms are tried in the same order the
+                    // switch tries them, so the first that applies is the one that fired.
+                    recording.Add(this, RuleFiringAt(node), node, rewritten);
                 return rewritten;
             });
 
