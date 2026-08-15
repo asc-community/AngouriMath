@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -131,6 +131,58 @@ namespace AngouriMath.Tests.Core
             Assert.Equal(0, small.Nodes.Count(n => n is Entity.Divf));
             Assert.Equal(0, large.Nodes.Count(n => n is Entity.Divf));
             Assert.True(CostModel.FewestDivisions.Cost(small) < CostModel.FewestDivisions.Cost(large));
+        }
+
+        /// <summary>
+        /// https://github.com/asc-community/AngouriMath/issues/950 -- the three are one value
+        /// written three ways, and a model that counts divisions has to count the same number in
+        /// each. It used to read the exponent's node, so the writing whose division it could not
+        /// see scored cheapest, under the criterion whose whole job is removing them.
+        /// </summary>
+        [Fact]
+        public void AFeatureModelCountsTheValueAndNotTheSpelling()
+        {
+            var written = "x / y".ToEntity();
+            var negativePower = MathS.Pow("y".ToEntity(), -1) * "x".ToEntity();
+            var unevaluatedExponent = MathS.Pow("y".ToEntity(), "1".ToEntity() * (-1)) * "x".ToEntity();
+
+            // The middle one is the point: its exponent is a Mulf, not a negative Real.
+            Assert.IsNotType<Entity.Number>(
+                Assert.IsType<Entity.Powf>(unevaluatedExponent.DirectChildren[0]).Exponent);
+
+            // One division each, so the feature term is equal and only the node term separates
+            // them -- which means the written form, being smallest, must come out cheapest.
+            foreach (var e in new[] { written, negativePower, unevaluatedExponent })
+                Assert.True(CostModel.FewestDivisions.Cost(e) >= 1,
+                    $"{e.Stringize()} is a division and must be counted as one");
+            Assert.True(CostModel.FewestDivisions.Cost(written)
+                        < CostModel.FewestDivisions.Cost(unevaluatedExponent),
+                "the writing whose division is hardest to see must not be the cheapest");
+        }
+
+        /// <summary>The same blind spot, in the other feature model.</summary>
+        [Fact]
+        public void FewestRadicalsSeesARadicalWhoseExponentIsUnevaluated()
+        {
+            var root = "sqrt(x)".ToEntity();
+            var spelledOut = MathS.Pow("x".ToEntity(), MathS.Pow(2, -1));
+            Assert.True(CostModel.FewestRadicals.Cost(root) >= 1);
+            Assert.True(CostModel.FewestRadicals.Cost(spelledOut) >= 1,
+                "x ^ (2 ^ (-1)) is a square root however the exponent is written");
+        }
+
+        /// <summary>
+        /// And the other half of #950: a model that counts <i>spelling</i> is right to read the
+        /// node as written, so widening the feature models must not have widened these.
+        /// </summary>
+        [Fact]
+        public void ASpellingModelStillCountsHowItIsWritten()
+        {
+            var written = "x / y".ToEntity();
+            var unevaluatedExponent = MathS.Pow("y".ToEntity(), "1".ToEntity() * (-1)) * "x".ToEntity();
+            Assert.True(CostModel.SmallestTree.Cost(written)
+                        < CostModel.SmallestTree.Cost(unevaluatedExponent),
+                "y ^ (1 * (-1)) * x really is a bigger tree, and SmallestTree counts trees");
         }
 
         /// <summary>They can be listed and named, which is what "as data" buys.</summary>

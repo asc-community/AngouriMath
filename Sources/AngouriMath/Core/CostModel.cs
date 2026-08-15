@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -25,6 +25,27 @@ namespace AngouriMath.Core
     /// what the alternatives are. <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a>
     /// v2.0 asks for a cost model that is data for exactly that reason, and names the examples —
     /// smallest tree, fewest radicals — that <see cref="All"/> now holds.
+    /// </para>
+    /// <para>
+    /// <b>A model counts one of two things, and which one decides what it may read.</b>
+    /// <see cref="SmallestTree"/> and <see cref="Default"/> count <i>how the expression is
+    /// written</i>: <c>y ^ (1 * (-1)) * x</c> really is a bigger tree than <c>x / y</c>, so
+    /// reading the node as written is not an approximation, it is the question. The others count a
+    /// <i>mathematical feature</i> — is there a division here, is there a radical — which is a
+    /// property of the value and not of the spelling, so they ask what an exponent
+    /// <see cref="Entity.Evaled"/> to rather than what it was typed as.
+    /// </para>
+    /// <para>
+    /// The distinction is worth stating because getting it wrong is silent and backwards:
+    /// <see cref="FewestDivisions"/> used to test the exponent's node, so
+    /// <c>y ^ (1 * (-1)) * x</c> — a division written where the test could not see it — scored
+    /// <i>cheaper</i> than <c>x / y</c>, under the one criterion whose whole job is to remove
+    /// divisions. That is
+    /// <a href="https://github.com/asc-community/AngouriMath/issues/950">#950</a>. <b>A caller
+    /// writing their own model wants to decide which of the two kinds it is</b>, because nothing
+    /// here can decide it for them: an expression handed to a cost model has not necessarily been
+    /// evaluated, and on an e-graph — where every writing of a value is a member of one class at
+    /// once — it certainly has not.
     /// </para>
     /// <para>
     /// <b>Every model here counts nodes a little, even the ones that are about something else.</b>
@@ -76,24 +97,29 @@ namespace AngouriMath.Core
         /// <summary>Prefers the expression with fewest divisions, then fewest nodes.</summary>
         /// <remarks>
         /// A negative power is a division written differently, so it counts too — otherwise the
-        /// model would merely move divisions rather than remove them.
+        /// model would merely move divisions rather than remove them. For the same reason the
+        /// exponent is read by value: <c>y ^ (1 * (-1))</c> is a division however it is spelled,
+        /// and a test that missed it would rate the unevaluated writing cheapest.
         /// </remarks>
         public static CostModel FewestDivisions { get; } = new(
             nameof(FewestDivisions),
             "Fewest divisions, counting a negative power as one, then fewest nodes.",
             static expr => Feature(expr, static node =>
-                node is Divf || node is Powf(_, Real { IsNegative: true })));
+                node is Divf
+                || node is Powf(_, var exponent) && exponent.Evaled is Real { IsNegative: true }));
 
         /// <summary>Prefers the expression with fewest radicals, then fewest nodes.</summary>
         /// <remarks>
         /// A radical is a power by a non-integer rational — <c>sqrt(x)</c> is <c>x ^ (1/2)</c>
-        /// here, and there is no separate root node to count.
+        /// here, and there is no separate root node to count. The exponent is read by value, so
+        /// <c>x ^ (2 ^ (-1))</c> counts as the radical it is.
         /// </remarks>
         public static CostModel FewestRadicals { get; } = new(
             nameof(FewestRadicals),
             "Fewest fractional powers, then fewest nodes.",
             static expr => Feature(expr, static node =>
-                node is Powf(_, Rational and not Integer)));
+                node is Powf(_, var exponent)
+                && exponent.Evaled is Rational and not Integer));
 
         /// <summary>
         /// Every model here, so a caller can offer the choice rather than hard-code one.
