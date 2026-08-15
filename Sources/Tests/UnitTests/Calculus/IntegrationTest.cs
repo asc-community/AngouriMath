@@ -35,8 +35,48 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("e^e^x", "integral(e ^ e ^ x, x)")] // don't recurse infinitely
         public void TestIndefinite(string initial, string expected)
         {
+            using var _ = MathS.Settings.Codomain.Set(AngouriMath.Core.Domain.Real);
             Assert.Equal(MathS.Boolean.True, initial.Integrate("x").EqualTo(expected).Simplify());
             Assert.Equal(expected, MathS.Integral(initial, "x").Simplify().Stringize());
+        }
+
+        /// <summary>
+        /// https://github.com/asc-community/AngouriMath/issues/946 -- <c>abs</c> is not
+        /// holomorphic, so <c>ln(abs(f))</c> is an antiderivative on the real line and nowhere
+        /// else. The default codomain is the complex plane, so the default answer is the plain
+        /// logarithm.
+        /// </summary>
+        [Theory]
+        [InlineData("1/x", "ln(x) + C")]
+        [InlineData("a / x", "a * ln(x) + C")]
+        [InlineData("tan(x)", "-ln(cos(x)) + C")]
+        [InlineData("cos(x) / sin(x)", "ln(sin(x)) + C")]
+        [InlineData("1 / (2*x + 5)", "ln(2 * x + 5) / 2 + C")]
+        [InlineData("arctan(x)", "x * arctan(x) - ln(1 + x ^ 2) / 2 + C")]
+        public void TheDefaultCodomainIntegratesWithoutAbs(string initial, string expected)
+        {
+            // Stated rather than assumed: the whole point of these rows is that they are what a
+            // caller who has set nothing gets.
+            Assert.Equal(AngouriMath.Core.Domain.Complex, MathS.Settings.Codomain.Value);
+            var result = initial.Integrate("x").InnerSimplified;
+            var expectedResult = expected.ToEntity().InnerSimplified;
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
+        }
+
+        /// <summary>
+        /// And the real-line form is still reachable, which is the other half of #946: the
+        /// absolute value was not wrong, it was unconditional.
+        /// </summary>
+        [Theory]
+        [InlineData("1/x", "ln(abs(x)) + C")]
+        [InlineData("tan(x)", "-ln(abs(cos(x))) + C")]
+        [InlineData("cos(x) / sin(x)", "ln(abs(sin(x))) + C")]
+        public void TheRealCodomainKeepsTheAbsoluteValue(string initial, string expected)
+        {
+            using var _ = MathS.Settings.Codomain.Set(AngouriMath.Core.Domain.Real);
+            var result = initial.Integrate("x").InnerSimplified;
+            var expectedResult = expected.ToEntity().InnerSimplified;
+            Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
         [Theory]
         [InlineData("2x * e ^ (x2)", "e ^ (x2) + C")]
@@ -56,6 +96,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("cos(x) / sin(x)", "ln(abs(sin(x))) + C")]
         public void TestTrigonometricSubstitution(string initial, string expected)
         {
+            using var _ = MathS.Settings.Codomain.Set(AngouriMath.Core.Domain.Real);
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
             Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
@@ -67,6 +108,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x / (1 + x2)", "1/2 * ln(abs(1 + x2)) + C")]
         public void TestRationalFunctionSubstitution(string initial, string expected)
         {
+            using var _ = MathS.Settings.Codomain.Set(AngouriMath.Core.Domain.Real);
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
             Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
@@ -121,6 +163,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("1 / (x * ln(x))", "ln(abs(ln(x))) + C")]
         public void TestLogarithmicSubstitution(string initial, string expected)
         {
+            using var _ = MathS.Settings.Codomain.Set(AngouriMath.Core.Domain.Real);
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
             Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
@@ -131,6 +174,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sec(x) * tan(x)", "sec(x) + C")]
         public void TestAdvancedTrigSubstitution(string initial, string expected)
         {
+            using var _ = MathS.Settings.Codomain.Set(AngouriMath.Core.Domain.Real);
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
             Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
@@ -236,6 +280,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("1 / (3*x^2 + 5*x + 2)", "ln(abs(1 + -1/3 / (x + 1))) + C")] // factorable
         public void TestQuadraticDenominator(string initial, string expected)
         {
+            using var _ = MathS.Settings.Codomain.Set(AngouriMath.Core.Domain.Real);
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
             Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
@@ -283,6 +328,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("arccos(x)", "x * arccos(x) - sqrt(1 - x ^ 2) + C")]
         public void TestIntegrationByPartsNonPolynomial(string initial, string expected)
         {
+            using var _ = MathS.Settings.Codomain.Set(AngouriMath.Core.Domain.Real);
             var result = initial.Integrate("x").InnerSimplified;
             var expectedResult = expected.ToEntity().InnerSimplified;
             Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());

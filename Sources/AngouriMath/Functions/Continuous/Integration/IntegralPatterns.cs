@@ -12,6 +12,35 @@ namespace AngouriMath.Functions.Algebra
     internal static class IntegralPatterns
     {
         /// <summary>
+        /// The logarithm an antiderivative of <c>f'/f</c> is written with: <c>ln(abs(f))</c> when
+        /// the codomain is the reals, <c>ln(f)</c> when it is the complex plane.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>ln(abs(f))</c> is an antiderivative of <c>f'/f</c> only on the real line. <c>abs</c>
+        /// is not holomorphic, so off the real line the textbook form is not an antiderivative of
+        /// anything -- differentiating it does not return the integrand. That is
+        /// https://github.com/asc-community/AngouriMath/issues/946, and separating by codomain is
+        /// the answer given there.
+        /// </para>
+        /// <para>
+        /// Under <see cref="AngouriMath.Core.Domain.Real"/> this returns exactly what the table
+        /// returned before, so a caller who has said they are working on the reals sees no change.
+        /// The default codomain is the complex plane, so the default answer does change --
+        /// recorded in <c>BREAKING-CHANGES.md</c>.
+        /// </para>
+        /// <para>
+        /// This is for an <c>abs</c> the rule <i>introduces</i>. Where the integrand already
+        /// carries one -- the rule for <c>ln(abs(ax + b))</c> below -- the <c>abs</c> in the
+        /// result is the caller's own and is left alone.
+        /// </para>
+        /// </remarks>
+        internal static Entity AntiderivativeLog(Entity arg)
+            => MathS.Settings.Codomain.Value is AngouriMath.Core.Domain.Real
+                ? MathS.Ln(MathS.Abs(arg))
+                : MathS.Ln(arg);
+
+        /// <summary>
         /// The argument through which each rule below reads its integrand's dependence on
         /// <paramref name="x"/>, or <see langword="null"/> for a shape none of them matches.
         /// </summary>
@@ -79,15 +108,15 @@ namespace AngouriMath.Functions.Algebra
 
             Entity.Cosecantf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
-                    MathS.Ln(MathS.Abs(MathS.Tan(0.5 * arg))) / a,
+                    AntiderivativeLog(MathS.Tan(0.5 * arg)) / a,
 
             Entity.Tanf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
-                    -MathS.Ln(MathS.Abs(MathS.Cos(arg))) / a,
+                    -AntiderivativeLog(MathS.Cos(arg)) / a,
 
             Entity.Cotanf(var arg) when
                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
-                    MathS.Ln(MathS.Abs(MathS.Sin(arg))) / a,
+                    AntiderivativeLog(MathS.Sin(arg)) / a,
 
             Entity.Logf(var @base, var arg) when
                 !@base.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out var b) =>
@@ -128,11 +157,11 @@ namespace AngouriMath.Functions.Algebra
 
             Entity.Arctanf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
-                    (arg * MathS.Arctan(arg) - MathS.Ln(MathS.Abs(1 + arg * arg)) / 2) / a,
+                    (arg * MathS.Arctan(arg) - AntiderivativeLog(1 + arg * arg) / 2) / a,
 
             Entity.Arccotanf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
-                    (arg * MathS.Arccotan(arg) + MathS.Ln(MathS.Abs(1 + arg * arg)) / 2) / a,
+                    (arg * MathS.Arccotan(arg) + AntiderivativeLog(1 + arg * arg) / 2) / a,
 
             // ∫ B^(px + q) * sin(mx + n) dx and its cosine twin. Integrating by parts
             // twice returns the integral it started from, so the usual machinery cycles
@@ -201,7 +230,7 @@ namespace AngouriMath.Functions.Algebra
                 && TreeAnalyzer.TryGetPolyLinear(numerator, x, out var p, out var q)
                 && TreeAnalyzer.TryGetPolyLinear(denominator, x, out var b, out var c)
                 && b.Evaled is Entity.Number.Complex { IsZero: false }
-                    => p * x / b + (q - p * c / b) * MathS.Ln(MathS.Abs(denominator)) / b,
+                    => p * x / b + (q - p * c / b) * AntiderivativeLog(denominator) / b,
 
             // 1/cos(u)^2 and 1/sin(u)^2, which are written that way at least as often as
             // sec(u)^2 and csc(u)^2 and were not recognised in that form.
@@ -430,7 +459,7 @@ namespace AngouriMath.Functions.Algebra
 
             // a > 0
             var logarithmCase =
-                numerator * MathS.Ln(MathS.Abs(twoAxPlusB + 2 * MathS.Sqrt(a) * MathS.Sqrt(radicand))) / MathS.Sqrt(a);
+                numerator * AntiderivativeLog(twoAxPlusB + 2 * MathS.Sqrt(a) * MathS.Sqrt(radicand)) / MathS.Sqrt(a);
 
             // a = 0: sqrt(bx + c), which integrates as an ordinary power, and needs b ≠ 0 for
             // the same reason the rational case below does. Where the radicand has no x term
@@ -456,7 +485,7 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         private static Entity IntegrateLinearOverQuadratic(
             Entity p, Entity q, Entity a, Entity b, Entity c, Entity denominator, Entity.Variable x)
-            => p / (2 * a) * MathS.Ln(MathS.Abs(denominator))
+            => p / (2 * a) * AntiderivativeLog(denominator)
                + IntegrateRationalQuadratic(q - p * b / (2 * a), a, b, c, x);
 
         private static Entity IntegrateRationalQuadratic(Entity numerator, Entity a, Entity b, Entity c, Entity.Variable x)
@@ -471,7 +500,7 @@ namespace AngouriMath.Functions.Algebra
             // NaN can propagate -- so k/(a x^2 + c) answered NaN while k/(2 x^2 + c) did not.
             var linearCase = TreeAnalyzer.IsZero(b)
                 ? numerator * x / c
-                : numerator * MathS.Ln(MathS.Abs(b * x + c)) / b;
+                : numerator * AntiderivativeLog(b * x + c) / b;
             
             // For true quadratics (a ≠ 0), discriminant Δ = 4ac - b^2 determines the form
             var discriminant = 4 * a * c - b * b;
@@ -490,7 +519,7 @@ namespace AngouriMath.Functions.Algebra
             // Case 3: Δ < 0 (two distinct real roots, use logarithm)
             // Result: (k/√(-Δ)) * ln|(2ax + b - √(-Δ))/(2ax + b + √(-Δ))|
             var sqrtNegDiscriminant = MathS.Sqrt(-discriminant);
-            var lnCase = numerator * MathS.Ln(MathS.Abs((twoAxPlusB - sqrtNegDiscriminant) / (twoAxPlusB + sqrtNegDiscriminant))) / sqrtNegDiscriminant;
+            var lnCase = numerator * AntiderivativeLog((twoAxPlusB - sqrtNegDiscriminant) / (twoAxPlusB + sqrtNegDiscriminant)) / sqrtNegDiscriminant;
             
             // Return as piecewise based on a and discriminant
             return MathS.Piecewise([
