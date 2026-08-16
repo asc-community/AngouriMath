@@ -1,4 +1,4 @@
-name: 'Kernel Benchmark'
+﻿name: 'Kernel Benchmark'
 
 # The path filters below used to read "./Sources/AngouriMath/AngouriMath", which is not a
 # path in this tree: the kernel is Sources/AngouriMath/ and its project file is
@@ -54,4 +54,24 @@ jobs:
       run: |
         cd Sources/Tests/DotnetBenchmark
         dotnet run -c Release RAMUsageTest
+
+    # The numbers used to exist only in this job's log, which expires -- so there was no way to
+    # see whether a figure had moved without re-running an old commit by hand. Retaining them is
+    # step 1 of https://github.com/asc-community/AngouriMath/issues/500, and the only step that
+    # can be taken from inside this repository: the two destinations that issue names,
+    # AngouriMathLab/performance-reports and AngouriMathLab/performance-reports-tools, do not
+    # exist.
+    #
+    # if: always() because a benchmark that fell over part way still produced numbers for the
+    # cases that ran, and those are the interesting ones when something has just broken.
+    - name: 'Retain the results'
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results-${{ github.sha }}
+        path: |
+          Sources/Tests/DotnetBenchmark/benchmark_results.csv/**
+          Sources/Tests/DotnetBenchmark/BenchmarkDotNet.Artifacts/**
+        if-no-files-found: warn
+        retention-days: 90
         
