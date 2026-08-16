@@ -98,7 +98,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             private Notf New(Entity negated) =>
-                ReferenceEquals(Argument, negated) ? this : new(negated);
+                ReferenceEquals(Argument, negated) ? this : new(negated) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -120,7 +120,7 @@ namespace AngouriMath
             public Entity NodeSecondChild => Right;
 
             private Andf New(Entity left, Entity right) =>
-                ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+                ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
@@ -142,7 +142,7 @@ namespace AngouriMath
             public Entity NodeSecondChild => Right;
 
             private Orf New(Entity left, Entity right) =>
-                ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+                ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
@@ -164,7 +164,7 @@ namespace AngouriMath
             public Entity NodeSecondChild => Right;
 
             private Xorf New(Entity left, Entity right) =>
-                ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+                ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
@@ -186,7 +186,7 @@ namespace AngouriMath
             public Entity NodeSecondChild => Conclusion;
 
             private Impliesf New(Entity assumption, Entity conclusion) =>
-                ReferenceEquals(Assumption, assumption) && ReferenceEquals(Conclusion, conclusion) ? this : new(assumption, conclusion);
+                ReferenceEquals(Assumption, assumption) && ReferenceEquals(Conclusion, conclusion) ? this : new(assumption, conclusion) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Assumption.Replace(func), Conclusion.Replace(func)));
@@ -238,7 +238,7 @@ namespace AngouriMath
             public Entity NodeSecondChild => Right;
 
             internal Greaterf New(Entity left, Entity right)
-                => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+                => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
@@ -264,7 +264,7 @@ namespace AngouriMath
             public Entity NodeSecondChild => Right;
 
             internal GreaterOrEqualf New(Entity left, Entity right)
-                => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+                => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
@@ -290,7 +290,7 @@ namespace AngouriMath
             public Entity NodeSecondChild => Right;
 
             internal Lessf New(Entity left, Entity right)
-                => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+                => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
@@ -316,7 +316,7 @@ namespace AngouriMath
             public Entity NodeSecondChild => Right;
 
             internal LessOrEqualf New(Entity left, Entity right)
-                => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+                => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
@@ -343,7 +343,7 @@ namespace AngouriMath
                 public Entity NodeSecondChild => SupSet;
 
                 internal Inf New(Entity element, Entity supSet)
-                    => ReferenceEquals(Element, element) && ReferenceEquals(SupSet, supSet) ? this : new(element, supSet);
+                    => ReferenceEquals(Element, element) && ReferenceEquals(SupSet, supSet) ? this : new(element, supSet) { Codomain = Codomain };
                 /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Element.Replace(func), SupSet.Replace(func)));
@@ -363,7 +363,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             internal Phif New(Entity argument)
-                   => ReferenceEquals(argument, Argument) ? this : new(argument);
+                   => ReferenceEquals(argument, Argument) ? this : new(argument) { Codomain = Codomain };
 
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));

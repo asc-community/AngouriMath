@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -26,7 +26,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             private Floorf New(Entity arg) =>
-                ReferenceEquals(Argument, arg) ? this : new(arg);
+                ReferenceEquals(Argument, arg) ? this : new(arg) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -46,7 +46,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             private Ceilf New(Entity arg) =>
-                ReferenceEquals(Argument, arg) ? this : new(arg);
+                ReferenceEquals(Argument, arg) ? this : new(arg) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
