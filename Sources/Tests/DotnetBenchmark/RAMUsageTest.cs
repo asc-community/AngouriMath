@@ -10,6 +10,7 @@ using AngouriMath.Extensions;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using HonkSharp.Fluency;
+using BenchmarkDotNet.Exporters.Csv;
 using HonkSharp.Functional;
 using System;
 using static AngouriMath.Entity;
@@ -17,6 +18,11 @@ using static AngouriMath.Entity.Number;
 
 namespace DotnetBenchmark
 {
+    // Exports a CSV like CommonFunctionsInterVersion does. Without it this benchmark wrote its
+    // numbers to the console only, so the RAM half of every CI run was gone the moment the job
+    // finished. https://github.com/asc-community/AngouriMath/issues/500
+    [ArtifactsPath(@"./benchmark_results.csv")]
+    [CsvExporter(CsvSeparator.Semicolon)]
     [MemoryDiagnoser]
     public class RAMUsageTest
     {
