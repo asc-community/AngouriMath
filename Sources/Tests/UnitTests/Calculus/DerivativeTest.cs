@@ -198,5 +198,45 @@ namespace AngouriMath.Tests.Calculus
                     MathS.Derivative(ff, x.Pow(2)) * (2 * x)
                     + MathS.Derivative(ff, x.Pow(3)) * (3 * x.Pow(2))
                 );
+
+        /// <summary>
+        /// https://github.com/asc-community/AngouriMath/issues/958 -- differentiating a factorial
+        /// answered <c>NaN</c>, which claims the derivative does not exist. It does: <c>x!</c> is
+        /// smooth away from the poles and the library evaluates <c>(1/2)!</c> happily. The honest
+        /// answer is the unevaluated derivative, which is what every other node it cannot
+        /// differentiate already returns.
+        /// </summary>
+        [Fact] public void AFactorialDeclinesRatherThanClaimingNoDerivativeExists()
+        {
+            var derivative = MathS.Derivative(MathS.Factorial(x), x).InnerSimplified;
+            Assert.NotEqual(MathS.NaN, derivative);
+            Assert.Contains(derivative.Nodes, node => node is Entity.Derivativef);
+        }
+
+        /// <summary>
+        /// The reason it mattered: <c>NaN</c> propagates, so one factorial destroyed the whole
+        /// derivative. Declining leaves every other term intact.
+        /// </summary>
+        [Fact] public void APartOfADerivativeSurvivesAFactorialItCannotTake()
+        {
+            var derivative = (MathS.Factorial(x) + x.Pow(2)).Differentiate(x).InnerSimplified;
+            Assert.NotEqual(MathS.NaN, derivative);
+            Assert.Contains(derivative.Nodes, node => node == 2 * x);
+        }
+
+        /// <summary>
+        /// **Regression guard for a hang.** Declining instead of answering <c>NaN</c> removed the
+        /// thing that used to stop l'Hopital: differentiating an unevaluated derivative only
+        /// raises its <c>Iterations</c>, so every pass looked new to the repetition guard and the
+        /// rule ran to 200,000 differentiations. It now refuses when a derivative it cannot take
+        /// appears, and this limit -- which is meant to be refused -- terminates.
+        /// </summary>
+        [Fact(Timeout = 30000)] public void ALimitOverAFactorialTerminatesRatherThanDifferentiatingForever()
+        {
+            var limit = "ln(x!) * x - x^2 * ln(x)".ToEntity()
+                .Limit(x, Entity.Number.Real.PositiveInfinity);
+            Assert.True(limit.Evaled is Entity.Limitf,
+                $"the expansion should be refused here, and it came back {limit.Evaled}");
+        }
     }
 }

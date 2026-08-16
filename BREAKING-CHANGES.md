@@ -25,6 +25,30 @@ read first.
 | **Silent** | `"1/x".Integrate("x")`, and every antiderivative with a logarithm | `ln(abs(x)) + C` | `ln(x) + C` |
 | **Silent** | `CostModel.FewestDivisions.Cost(y ^ (1 * (-1)) * x)` | `0.007`, cheaper than `x / y` | `1.007` |
 | **Silent** | `Real.NaN > (Real)1`, and the other three operators | `true` | `false` |
+| **Silent** | `"x!".Differentiate("x")`, and anything containing it | `NaN` | the unevaluated `derivative(x!, x)` |
+
+### Differentiating a factorial declines instead of answering `NaN`
+
+`d/dx x!` answered `NaN`, which asserts the derivative **does not exist**. It does — `x!` is
+`Γ(x + 1)`, the library already evaluates `(1/2)!` as `0.886…`, and `d/dx x!` at 3 is an ordinary
+`Γ'(4) ≈ 3.966`. It now returns the unevaluated derivative, which is what every other node the
+library cannot differentiate already does.
+
+```csharp
+"x!".Differentiate("x")           // was: NaN     now: derivative(x!, x)
+"x! + x^2".Differentiate("x")     // was: NaN     now: derivative(x!, x) + 2 * x
+```
+
+The second line is why it mattered: `NaN` propagates, so a single factorial destroyed an otherwise
+fine derivative. Anything testing `== MathS.NaN` to detect "cannot differentiate" should look for an
+`Entity.Derivativef` in the result instead.
+
+A limit that reaches a factorial may now be **refused where it previously answered `NaN`** — the same
+change of spelling, one level up.
+
+Computing the derivative properly needs the digamma function and remains
+[#171](https://github.com/asc-community/AngouriMath/issues/171).
+[#958](https://github.com/asc-community/AngouriMath/issues/958).
 
 ### `Real`'s comparison operators refuse `NaN` instead of ordering it
 
