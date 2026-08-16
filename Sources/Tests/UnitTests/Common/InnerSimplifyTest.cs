@@ -295,15 +295,9 @@ namespace AngouriMath.Tests.Common
 
         [Theory]
         [InlineData("pi", "1")]
-        [InlineData("pi / 2", "1 / 2")]
         [InlineData("2pi", "2 * 1")]
         [InlineData("pi * 2", "1 * 2")]
-        [InlineData("pi + pi / 2", "1 + 1 / 2")]
-        [InlineData("pi / 2 + pi / 3", "1 / 2 + 1 / 3")]
-        [InlineData("pi / 2 - 2 pi", "1 / 2 - 2 * 1")]
-        [InlineData("pi / 2 - pi * 2", "1 / 2 - 1 * 2")]
         [InlineData("1 / (2 / pi)", "1 / (2 / 1)")]
-        [InlineData("1 / (2 / pi) + pi / 2", "1 / (2 / 1) + 1 / 2")]
         [InlineData("1 / (2 / (3 / (4 / pi)))", "1 / (2 / (3 / (4 / 1)))")]
         [InlineData("pi * pi", "1 * pi")]
         public void TestDivideByEntityStrict(string inputRaw, string expectedRaw)
@@ -311,6 +305,33 @@ namespace AngouriMath.Tests.Common
             Entity input = inputRaw;
             var actual = MathS.UnsafeAndInternal.DivideByEntityStrict(input, "pi");
             actual.ShouldBeNotNull().ShouldBe(expectedRaw);
+        }
+
+        /// <summary>
+        /// The rows whose expectation is an <b>unevaluated</b> quotient of two integers, which
+        /// since https://github.com/asc-community/AngouriMath/issues/873 can no longer be written
+        /// as text: <c>"1 / 2"</c> now parses to the <c>Rational</c> it denotes, so the string no
+        /// longer names the tree this operation produces.
+        /// </summary>
+        /// <remarks>
+        /// Constructed rather than parsed, and kept as its own test rather than folded into the
+        /// theory above, because the reason they are different is the point. Comparing
+        /// <c>InnerSimplified</c> on both sides would make them pass and would stop the test being
+        /// about strictness, which is what it is named for.
+        /// </remarks>
+        [Fact]
+        public void TestDivideByEntityStrictOnUnevaluatedQuotients()
+        {
+            static Entity Half() => new Entity.Divf(1, 2);
+            static void Check(string input, Entity expected) =>
+                MathS.UnsafeAndInternal.DivideByEntityStrict(input, "pi").ShouldBeNotNull().ShouldBe(expected);
+
+            Check("pi / 2", Half());
+            Check("pi + pi / 2", 1 + Half());
+            Check("pi / 2 + pi / 3", Half() + new Entity.Divf(1, 3));
+            Check("pi / 2 - 2 pi", Half() - 2 * (Entity)1);
+            Check("pi / 2 - pi * 2", Half() - (Entity)1 * 2);
+            Check("1 / (2 / pi) + pi / 2", new Entity.Divf(1, new Entity.Divf(2, 1)) + Half());
         }
 
         [Theory]
