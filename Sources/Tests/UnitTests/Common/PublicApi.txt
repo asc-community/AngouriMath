@@ -2397,6 +2397,7 @@ AngouriMath.MathS.Arccotan(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Arcsec(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Arcsin(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Arctan(AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.MathS.Average(AngouriMath.Entity+Matrix) : AngouriMath.Entity
 AngouriMath.MathS.Cbrt(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Ceil(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Conjunction(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
@@ -2462,6 +2463,7 @@ AngouriMath.MathS.Round(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Scalar(AngouriMath.Entity) : AngouriMath.Entity+Matrix
 AngouriMath.MathS.Sec(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.SetSubtraction(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity+Set
+AngouriMath.MathS.Sigmoid(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Signum(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Sin(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.SolveBooleanTable(AngouriMath.Entity, AngouriMath.Entity+Variable[]) : AngouriMath.Entity+Matrix
@@ -2479,6 +2481,7 @@ AngouriMath.MathS.Var(System.String, System.String, System.String) : System.Valu
 AngouriMath.MathS.Var(System.String, System.String, System.String, System.String) : System.ValueTuple<AngouriMath.Entity+Variable,AngouriMath.Entity+Variable,AngouriMath.Entity+Variable,AngouriMath.Entity+Variable>
 AngouriMath.MathS.Var(System.String, System.String, System.String, System.String, System.String) : System.ValueTuple<AngouriMath.Entity+Variable,AngouriMath.Entity+Variable,AngouriMath.Entity+Variable,AngouriMath.Entity+Variable,AngouriMath.Entity+Variable>
 AngouriMath.MathS.Vector(AngouriMath.Entity[]) : AngouriMath.Entity+Matrix
+AngouriMath.MathS.VectorLength(AngouriMath.Entity+Matrix) : AngouriMath.Entity
 AngouriMath.MathS.ZeroMatrix(System.Int32) : AngouriMath.Entity+Matrix
 AngouriMath.MathS.ZeroMatrix(System.Int32, System.Int32) : AngouriMath.Entity+Matrix
 AngouriMath.MathS.ZeroVector(System.Int32) : AngouriMath.Entity+Matrix
