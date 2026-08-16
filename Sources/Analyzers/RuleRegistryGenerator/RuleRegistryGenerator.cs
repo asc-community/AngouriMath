@@ -178,14 +178,22 @@ namespace AngouriMath.Generators
             // they are emitted as a method taking the same parameters instead.
             var lambda = method.ExpressionBody?.Expression as SimpleLambdaExpressionSyntax;
             var inner = lambda?.Body as ExpressionSyntax ?? method.ExpressionBody?.Expression;
-            ParameterSyntax parameter;
-            if (lambda is not null)
-                parameter = lambda.Parameter;
-            else if (method.ParameterList.Parameters.Count == 1)
-                parameter = method.ParameterList.Parameters[0];
-            else
+            // Which parameter is the expression being rewritten. A factory says so by being a
+            // lambda; a switch says so by naming it; and a method with one parameter has only the
+            // one to offer. A switch that takes a second parameter — a sort level, say — is read
+            // by asking the switch rather than by counting, which is the whole of this.
+            ParameterSyntax? parameter =
+                lambda is not null ? lambda.Parameter
+                : inner is SwitchExpressionSyntax { GoverningExpression: IdentifierNameSyntax named }
+                    ? method.ParameterList.Parameters.FirstOrDefault(p => p.Identifier.Text == named.Identifier.Text)
+                : method.ParameterList.Parameters.Count == 1 ? method.ParameterList.Parameters[0]
+                : null;
+            if (parameter is null)
                 return null;
             var subject = parameter.Identifier.Text;
+            // Everything else the method takes is closed over by the arms, so it decides whether
+            // they can be a field at all.
+            var captured = method.ParameterList.Parameters.Where(p => p != parameter).ToList();
             // A lambda parameter is written without its type, and the arms are copied into a
             // context where nothing infers it, so it is named rather than echoed.
             var parameterType = parameter.Type?.ToString() ?? "global::AngouriMath.Entity";
@@ -200,7 +208,7 @@ namespace AngouriMath.Generators
             text.AppendLine($"{indent}/// The arms of <see cref=\"{method.Identifier.Text}\"/>, each one addressable on its own.");
             text.AppendLine($"{indent}/// Generated from the <c>switch</c> itself, so the two cannot disagree.");
             text.AppendLine($"{indent}/// </summary>");
-            if (lambda is null)
+            if (captured.Count == 0)
             {
                 text.AppendLine($"{indent}[global::AngouriMath.Core.ConstantField]");
                 text.AppendLine($"{indent}internal static readonly global::System.Collections.Generic.IReadOnlyList"
@@ -209,7 +217,7 @@ namespace AngouriMath.Generators
             else
                 text.AppendLine($"{indent}internal static global::System.Collections.Generic.IReadOnlyList"
                     + $"<global::AngouriMath.Core.Transformations.RewriteRule> {method.Identifier.Text}Arms"
-                    + $"{method.ParameterList} =>");
+                    + $"({string.Join(", ", captured)}) =>");
             text.AppendLine($"{indent}    new global::AngouriMath.Core.Transformations.RewriteRule[]");
             text.AppendLine($"{indent}    {{");
 
@@ -240,8 +248,8 @@ namespace AngouriMath.Generators
                 text.AppendLine($"{indent}            replacementSource: {Literal(replacement)},");
                 text.AppendLine($"{indent}            growth: global::AngouriMath.Core.Transformations.RewriteRuleGrowth.{growth},");
                 text.AppendLine($"{indent}            sourceLine: {line},");
-                // A factory's arm reads the factory's parameters, so its lambda cannot be static.
-                text.AppendLine($"{indent}            apply: {(lambda is null ? "static " : "")}global::AngouriMath.Entity? "
+                // An arm that reads a captured parameter cannot be a static lambda.
+                text.AppendLine($"{indent}            apply: {(captured.Count == 0 ? "static " : "")}global::AngouriMath.Entity? "
                     + $"({parameterType} {subject}) => {arm.Apply}),");
             }
 
