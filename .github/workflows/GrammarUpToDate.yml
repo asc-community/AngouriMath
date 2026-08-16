@@ -1,0 +1,69 @@
+name: 'Grammar Up To Date'
+
+# The parser under Sources/AngouriMath/Core/Antlr is generated from AngouriMath.g and committed,
+# and nothing regenerates it at build time. That is a deliberate trade -- generating on every build
+# would put a Java runtime between a contributor and `dotnet build` -- but it leaves one hazard:
+# a grammar edit whose regeneration was forgotten produces a parser that no longer matches its own
+# grammar, and nothing notices until someone wonders why their rule does not fire.
+#
+# So this regenerates and fails if the tree moves. It is the same guarantee the rule registry gets
+# from being generated at compile time (#825), bought here for one CI job rather than for every
+# build on every machine.
+#
+# Measured before writing this: a full regeneration on 4b2c104b reproduced the committed files
+# byte for byte, so the check starts from a clean baseline rather than from a diff nobody can fix.
+# https://github.com/asc-community/AngouriMath/issues/898
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "Sources/AngouriMath/Core/Antlr/**"
+      - "Sources/Utils/Utils/AntlrPostProcessor.cs"
+      - ".github/workflows/GrammarUpToDate.yml"
+  pull_request:
+    branches:
+      - '*'
+    paths:
+      - "Sources/AngouriMath/Core/Antlr/**"
+      - "Sources/Utils/Utils/AntlrPostProcessor.cs"
+      - ".github/workflows/GrammarUpToDate.yml"
+
+jobs:
+  Regenerate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    # The jar is vendored next to the grammar, so the version is pinned by the repository rather
+    # than by whatever the runner happens to have.
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '10.x'
+        dotnet-quality: 'preview'
+
+    # The same two commands Sources/Utils/antlr_rerun.bat runs, without its interactive pause.
+    - name: 'Regenerate the parser from the grammar'
+      run: java -jar ./antlr-4.13.1-complete.jar -package AngouriMath.Core.Antlr ./AngouriMath.g
+      working-directory: Sources/AngouriMath/Core/Antlr
+
+    - name: 'Make the generated classes internal again'
+      run: dotnet run --project Utils -c Release AntlrPostProcessorReplacePublicWithInternal
+      working-directory: Sources/Utils
+
+    - name: 'Fail if the committed parser is not what the grammar generates'
+      run: |
+        if ! git diff --exit-code -- Sources/AngouriMath/Core/Antlr/; then
+          echo "::error::The committed parser does not match AngouriMath.g."
+          echo "::error::Run Sources/Utils/antlr_rerun.bat and commit the result."
+          exit 1
+        fi
