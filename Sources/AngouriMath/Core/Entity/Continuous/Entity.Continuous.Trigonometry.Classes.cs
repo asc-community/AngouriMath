@@ -20,7 +20,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Sinf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            private Sinf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -36,7 +36,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Cosf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            private Cosf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -52,7 +52,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Tanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            private Tanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -68,7 +68,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Cotanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            private Cotanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -84,7 +84,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Secantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            private Secantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -100,7 +100,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Cosecantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            private Cosecantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>

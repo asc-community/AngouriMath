@@ -20,7 +20,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Arcsinf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            private Arcsinf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -36,7 +36,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Arccosf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            private Arccosf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -52,7 +52,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Arctanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            private Arctanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -68,7 +68,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            Arccotanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            Arccotanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -84,7 +84,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Arcsecantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            private Arcsecantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -100,7 +100,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Arccosecantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            private Arccosecantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>

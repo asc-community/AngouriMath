@@ -247,12 +247,12 @@ namespace AngouriMath
                 internal Interval New(Entity left, Entity right)
                     => ReferenceEquals(Left, left) 
                     && ReferenceEquals(Right, right)
-                    ? this : new Interval(left, LeftClosed, right, RightClosed);
+                    ? this : new Interval(left, LeftClosed, right, RightClosed) { Codomain = Codomain };
 
                 internal Interval New(Entity left, bool leftClosed, Entity right, bool rightClosed)
                     => ReferenceEquals(Left, left) && ReferenceEquals(Right, right)
                     && LeftClosed == leftClosed && RightClosed == rightClosed
-                    ? this : new Interval(left, leftClosed, right, rightClosed);
+                    ? this : new Interval(left, leftClosed, right, rightClosed) { Codomain = Codomain };
 
                 /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
@@ -463,7 +463,7 @@ namespace AngouriMath
 
                 internal Entity New(Entity var, Entity predicate)
                     => ReferenceEquals(Var, var) && ReferenceEquals(Predicate, predicate) ?
-                    this : new ConditionalSet(var, predicate);
+                    this : new ConditionalSet(var, predicate) { Codomain = Codomain };
 
                 internal override Priority Priority => Priority.Leaf;
 

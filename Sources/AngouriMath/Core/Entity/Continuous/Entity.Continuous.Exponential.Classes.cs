@@ -18,7 +18,7 @@ namespace AngouriMath
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Powf New(Entity @base, Entity exponent) =>
-                ReferenceEquals(Base, @base) && ReferenceEquals(Exponent, exponent) ? this : new(@base, exponent);
+                ReferenceEquals(Base, @base) && ReferenceEquals(Exponent, exponent) ? this : new(@base, exponent) { Codomain = Codomain };
             internal override Priority Priority => Priority.Pow;
 
             /// <inheritdoc/>
@@ -40,7 +40,7 @@ namespace AngouriMath
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Logf New(Entity @base, Entity antilogarithm) =>
-                ReferenceEquals(Base, @base) && ReferenceEquals(Antilogarithm, antilogarithm) ? this : new(@base, antilogarithm);
+                ReferenceEquals(Base, @base) && ReferenceEquals(Antilogarithm, antilogarithm) ? this : new(@base, antilogarithm) { Codomain = Codomain };
 
             /// <inheritdoc/>
             public Entity NodeFirstChild => Base;

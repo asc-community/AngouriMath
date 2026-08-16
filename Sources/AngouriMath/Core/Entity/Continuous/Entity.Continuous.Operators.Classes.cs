@@ -30,7 +30,7 @@ namespace AngouriMath
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Sumf New(Entity augend, Entity addend) =>
-                ReferenceEquals(Augend, augend) && ReferenceEquals(Addend, addend) ? this : new(augend, addend);
+                ReferenceEquals(Augend, augend) && ReferenceEquals(Addend, addend) ? this : new(augend, addend) { Codomain = Codomain };
             internal override Priority Priority => Priority.Sum;
 
             /// <inheritdoc/>
@@ -65,7 +65,7 @@ namespace AngouriMath
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Minusf New(Entity minuend, Entity subtrahend) =>
-                ReferenceEquals(Minuend, minuend) && ReferenceEquals(Subtrahend, subtrahend) ? this : new(minuend, subtrahend);
+                ReferenceEquals(Minuend, minuend) && ReferenceEquals(Subtrahend, subtrahend) ? this : new(minuend, subtrahend) { Codomain = Codomain };
             internal override Priority Priority => Priority.Minus;
 
             /// <inheritdoc/>
@@ -99,7 +99,7 @@ namespace AngouriMath
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Mulf New(Entity multiplier, Entity multiplicand) =>
-                ReferenceEquals(Multiplier, multiplier) && ReferenceEquals(Multiplicand, multiplicand) ? this : new(multiplier, multiplicand);
+                ReferenceEquals(Multiplier, multiplier) && ReferenceEquals(Multiplicand, multiplicand) ? this : new(multiplier, multiplicand) { Codomain = Codomain };
             internal override Priority Priority => Priority.Mul;
 
             /// <inheritdoc/>
@@ -134,7 +134,7 @@ namespace AngouriMath
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             internal Divf New(Entity dividend, Entity divisor) =>
-                ReferenceEquals(Dividend, dividend) && ReferenceEquals(Divisor, divisor) ? this : new(dividend, divisor);
+                ReferenceEquals(Dividend, dividend) && ReferenceEquals(Divisor, divisor) ? this : new(dividend, divisor) { Codomain = Codomain };
             internal override Priority Priority => Priority.Div;
 
             /// <inheritdoc/>
@@ -159,7 +159,7 @@ namespace AngouriMath
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             internal Modf New(Entity dividend, Entity divisor) =>
-                ReferenceEquals(Dividend, dividend) && ReferenceEquals(Divisor, divisor) ? this : new(dividend, divisor);
+                ReferenceEquals(Dividend, dividend) && ReferenceEquals(Divisor, divisor) ? this : new(dividend, divisor) { Codomain = Codomain };
             internal override Priority Priority => Priority.Mul;
 
             /// <inheritdoc/>

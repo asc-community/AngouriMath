@@ -57,7 +57,7 @@ namespace AngouriMath
             Matrix New(GenTensor innerMatrix) =>
                 innerMatrix.Iterate().All(tup => ReferenceEquals(InnerMatrix.GetValueNoCheck(tup.Index), tup.Value))
                 ? this
-                : new Matrix(innerMatrix);
+                : new Matrix(innerMatrix) { Codomain = Codomain };
             internal override Priority Priority => Priority.Leaf;
             internal Matrix Elementwise(Func<Entity, Entity> operation) =>
                 New(GenTensor.CreateTensor(InnerMatrix.Shape, indices => operation(InnerMatrix.GetValueNoCheck(indices))));

@@ -22,7 +22,7 @@ namespace AngouriMath
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Derivativef New(Entity expression, Entity var) =>
                 ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var)
-                ? this : new(expression, var, Iterations);
+                ? this : new(expression, var, Iterations) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) =>
                 func(New(Expression.Replace(func), Var.Replace(func)));
@@ -40,7 +40,7 @@ namespace AngouriMath
                 ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var)
                 && (range is null && Range is null || range is var (newFrom, newTo) && Range is var (oldFrom, oldTo)
                     && ReferenceEquals(newFrom, oldFrom) && ReferenceEquals(newTo, oldTo))
-                ? this : new(expression, var, range);
+                ? this : new(expression, var, range) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) =>
                 func(New(Expression.Replace(func), Var, Range is var (from, to) ? (from.Replace(func), to.Replace(func)) : null));
@@ -56,7 +56,7 @@ namespace AngouriMath
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Limitf New(Entity expression, Entity var, Entity destination, ApproachFrom approachFrom) =>
                 ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var) && ReferenceEquals(Destination, destination)
-                && ApproachFrom == approachFrom ? this : new(expression, var, destination, approachFrom);
+                && ApproachFrom == approachFrom ? this : new(expression, var, destination, approachFrom) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) =>
                 func(New(Expression.Replace(func), Var.Replace(func), Destination.Replace(func), ApproachFrom));
