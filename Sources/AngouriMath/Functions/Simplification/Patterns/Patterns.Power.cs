@@ -13,6 +13,7 @@ namespace AngouriMath.Functions
     partial class Patterns
     {
         /// <summary>a ^ (-1) => 1 / a</summary>
+        [AddressableRules]
         internal static Entity InvertNegativePowers(Entity expr) =>
             expr is Powf(var @base, Integer { IsNegative: true } pow)
             ? 1 / MathS.Pow(@base, -1 * pow)
