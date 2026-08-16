@@ -250,3 +250,26 @@ let solutions x expr =
     match parsed expr with
     | :? Entity.Statement as statement -> statement.Solve(symbol x).InnerSimplified :?> Entity.Set
     | func -> (equality func 0).Solve(symbol x).InnerSimplified :?> Entity.Set
+
+/// Returns a system of equations, built from a list of equalities or expressions.
+/// An expression that is not an equality is read as being equal to zero, exactly as
+/// `solutions` reads a single one.
+let equationSystem (equations : 'T list) =
+    MathS.Equations(equations |> List.map (fun eq ->
+        match parsed eq with
+        // EquationSystem reads each entry as being equal to zero, so an equality written out
+        // is moved to one side rather than handed over as a node -- passing the node makes the
+        // solver try to invert an equality, which it cannot do.
+        | :? Entity.Equalsf as equation -> equation.Left - equation.Right
+        | func -> func))
+
+/// Solves a system of equations over the given variables.
+///
+/// Each row of the resulting matrix is one solution and its columns follow the order of
+/// `vars`, so `solveSystem ["x"; "y"] ["x + y - 3"; "x - y - 1"]` answers `[[2, 1]]`:
+/// one solution, with x = 2 and y = 1. Returns None where none was found, rather than an
+/// empty matrix, since "no solution" and "the solver gave up" are the same answer here and
+/// neither is a matrix.
+let solveSystem (vars : 'T list) (equations : 'U list) =
+    (equationSystem equations).Solve(vars |> List.map symbol |> Array.ofList)
+    |> Option.ofObj
