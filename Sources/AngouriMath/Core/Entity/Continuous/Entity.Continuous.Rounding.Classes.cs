@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -26,7 +26,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             private Roundf New(Entity arg) =>
-                ReferenceEquals(Argument, arg) ? this : new(arg);
+                ReferenceEquals(Argument, arg) ? this : new(arg) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -53,7 +53,7 @@ namespace AngouriMath
             public Entity NodeSecondChild => Right;
 
             private Minf New(Entity left, Entity right) =>
-                ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+                ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Left.Replace(func), Right.Replace(func)));
             /// <inheritdoc/>
@@ -73,7 +73,7 @@ namespace AngouriMath
             public Entity NodeSecondChild => Right;
 
             private Maxf New(Entity left, Entity right) =>
-                ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+                ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Left.Replace(func), Right.Replace(func)));
             /// <inheritdoc/>
@@ -99,7 +99,7 @@ namespace AngouriMath
             public Entity NodeSecondChild => Right;
 
             private Gcdf New(Entity left, Entity right) =>
-                ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+                ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Left.Replace(func), Right.Replace(func)));
             /// <inheritdoc/>

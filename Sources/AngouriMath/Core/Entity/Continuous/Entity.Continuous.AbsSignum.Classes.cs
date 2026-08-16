@@ -20,7 +20,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             private Signumf New(Entity arg) =>
-                ReferenceEquals(Argument, arg) ? this : new(arg);
+                ReferenceEquals(Argument, arg) ? this : new(arg) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -36,7 +36,7 @@ namespace AngouriMath
             public Entity NodeChild => Argument;
 
             private Absf New(Entity arg) =>
-                ReferenceEquals(Argument, arg) ? this : new(arg);
+                ReferenceEquals(Argument, arg) ? this : new(arg) { Codomain = Codomain };
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>

@@ -25,7 +25,26 @@ read first.
 | **Silent** | `"1/x".Integrate("x")`, and every antiderivative with a logarithm | `ln(abs(x)) + C` | `ln(x) + C` |
 | **Silent** | `CostModel.FewestDivisions.Cost(y ^ (1 * (-1)) * x)` | `0.007`, cheaper than `x / y` | `1.007` |
 | **Silent** | `Real.NaN > (Real)1`, and the other three operators | `true` | `false` |
+| **Silent** | a rewritten expression under `domain(...)` — including via `Substitute` | the constraint was dropped, so it answered | it refuses, as it did before the rewrite |
 | **Silent** | `"7/2".ToEntity()` and any quotient of two integer literals | a `Divf` | the `Rational` it denotes |
+
+### A rewritten node keeps its `Codomain`, so a domain constraint no longer disappears
+
+`Entity.Replace` rebuilds every node on the path to a change, and a rebuilt node started from its
+type's default codomain rather than the one the original carried. Any rewrite therefore dropped a
+`domain(...)` annotation — including `Substitute`, which is built on `Replace`.
+
+```csharp
+"domain(sqrt(x), ZZ)".ToEntity().Substitute("x", "4/9".ToEntity()).EvalNumerical()
+// was: 2/3     now: NaN        — 2/3 is not an integer, so the constraint refuses it
+```
+
+The old behaviour was **silent** and one-sided: constraints were only ever weakened, never
+strengthened, so a rewrite could make an undefined expression look defined but never the reverse.
+An expression that answered a value where it should have refused now refuses.
+
+Measured: the whole suite passes unchanged with the fix in, so nothing in the library depended on
+the annotation being lost. [#955](https://github.com/asc-community/AngouriMath/issues/955).
 
 ### A quotient of two integer literals parses as a `Rational`
 
