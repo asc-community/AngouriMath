@@ -24,6 +24,33 @@ read first.
 | | `(Entity.Number)someBigInteger` | `FormatException: Illegal character found`, for almost every value | the number |
 | **Silent** | `"1/x".Integrate("x")`, and every antiderivative with a logarithm | `ln(abs(x)) + C` | `ln(x) + C` |
 | **Silent** | `CostModel.FewestDivisions.Cost(y ^ (1 * (-1)) * x)` | `0.007`, cheaper than `x / y` | `1.007` |
+| **Silent** | `Real.NaN > (Real)1`, and the other three operators | `true` | `false` |
+
+### `Real`'s comparison operators refuse `NaN` instead of ordering it
+
+`Real`'s `>`, `>=`, `<` and `<=` ordered `NaN` above every number, so `NaN > 1` was `true` and
+`1 < NaN` was `true` as well. That is `EDecimal`'s total order showing through, and it is not what
+`double` does, where every comparison against `NaN` is false in both directions.
+
+```csharp
+Real one = 1;
+Real.NaN > one     // was: true     now: false
+Real.NaN >= one    // was: true     now: false
+one < Real.NaN     // was: true     now: false
+Real.NaN <= one    // was: false    now: false
+```
+
+The failure it caused is one-sided and unsafe: a guard written as `if (value > threshold)` treated
+an undefined value as *exceeding* the threshold. Of the two possible defaults that is the worse one,
+and this library's stated position is that answering wrongly is worse than not answering.
+
+**`CompareTo` is unchanged and still orders `NaN` above every number.** That is deliberate, not an
+inconsistency left behind: sorting requires a total order — `Array.Sort` may loop or throw without
+one — while an operator does not. "Where does this sort" and "is this greater" are different
+questions, and only the second has no answer for a value that is not a number. Anything relying on
+the old operator behaviour to sort should call `CompareTo`, which never changed.
+
+[#947](https://github.com/asc-community/AngouriMath/issues/947).
 
 ### `FewestDivisions` and `FewestRadicals` score by value, not by spelling
 
