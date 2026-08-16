@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -67,6 +67,16 @@ namespace AngouriMath.Tests.Core.Transformations
             yield return (RewriteRules.InvertNegativePowers, Patterns.InvertNegativePowers);
             yield return (RewriteRules.PolynomialLongDivision, Patterns.PolynomialLongDivision);
             yield return (RewriteRules.PolynomialGcdCancellation, Patterns.PolynomialGcdCancellation);
+            // A switch that takes a second parameter: one switch, three sets, differing only in
+            // the sort level it is closed over.
+            yield return (RewriteRules.CommonDenominator,
+                expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.HIGH_LEVEL));
+            yield return (RewriteRules.CommonDenominatorCountingConstants,
+                expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.MIDDLE_LEVEL));
+            yield return (RewriteRules.CommonDenominatorExact,
+                expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.LOW_LEVEL));
+            // A shape that was already readable and simply not marked.
+            yield return (RewriteRules.CollapseMultipleFractions, Patterns.CollapseMultipleFractions);
         }
 
         public static IEnumerable<object[]> AddressableSets()
@@ -262,27 +272,23 @@ namespace AngouriMath.Tests.Core.Transformations
             var without = RewriteRules.All.Where(set => set.Rules.Count == 0)
                 .Select(set => set.Name).OrderBy(name => name, StringComparer.Ordinal).ToList();
 
-            // What is left is not one kind of thing, and saying so would be wrong: of these eight,
-            // only RationalizeDenominator, ExpandFactorialDivisions and
-            // FactorizeFactorialMultiplications are methods with branches and locals. The three
-            // CommonDenominator sets are a switch that takes a second parameter, which the
-            // generator does not read yet; CollapseMultipleFractions is an ordinary one-parameter
-            // switch and PerfectSquare a single `is` pattern, both of which it reads today and
-            // neither of which is marked. So this list is a list, not a category.
+            // Three of these four are a method with a statement body, branches and locals, and no
+            // arms to read. PerfectSquare is not: it is a single `is` pattern that the generator
+            // reads perfectly well, and it is left out on cost rather than on shape. Replaying one
+            // rule against its switch over this corpus takes 5m10s, because deciding whether the
+            // cross term matches goes through Simplify -- as long as the entire rest of the suite.
+            // Worth doing, worth deciding on its own, and not worth smuggling in beside four sets
+            // that cost eight seconds between them.
             Assert.Equal(new[]
             {
-                "CollapseMultipleFractions",
-                "CommonDenominator",
-                "CommonDenominatorCountingConstants",
-                "CommonDenominatorExact",
                 "ExpandFactorialDivisions",
                 "FactorizeFactorialMultiplications",
                 "PerfectSquare",
                 "RationalizeDenominator",
             }, without);
 
-            Assert.Equal(22, withRules.Count);
-            Assert.Equal(371, withRules.Sum(set => set.Rules.Count));
+            Assert.Equal(26, withRules.Count);
+            Assert.Equal(388, withRules.Sum(set => set.Rules.Count));
         }
 
         [Fact]
@@ -357,16 +363,16 @@ namespace AngouriMath.Tests.Core.Transformations
         {
             // Stated rather than assumed: if this set ever becomes addressable the test would
             // otherwise keep passing while testing nothing at all. It has already happened twice
-            // -- CanonicalOrderExact stood here, then InvertNegativePowers -- so the assertion is
-            // load-bearing rather than decorative.
-            Assert.Empty(RewriteRules.CollapseMultipleFractions.Rules);
+            // -- CanonicalOrderExact, then InvertNegativePowers, then CollapseMultipleFractions --
+            // so the assertion is load-bearing rather than decorative.
+            Assert.Empty(RewriteRules.RationalizeDenominator.Rules);
 
             using var recording = RewriteRecording.Start();
-            RewriteRules.CollapseMultipleFractions.ApplyOnce("x / y / z".ToEntity());
+            RewriteRules.RationalizeDenominator.ApplyOnce("1 / (3 - sqrt(5))".ToEntity());
             recording.Dispose();
 
             var step = Assert.Single(recording.Steps);
-            Assert.Equal(RewriteRules.CollapseMultipleFractions, step.RuleSet);
+            Assert.Equal(RewriteRules.RationalizeDenominator, step.RuleSet);
             Assert.Null(step.Rule);
         }
     }
