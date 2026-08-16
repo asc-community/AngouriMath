@@ -974,6 +974,107 @@ namespace AngouriMath
         public static Entity Abs(Entity a) => new Absf(a);
 
         /// <summary>
+        /// The logistic function, <c>1 / (1 + e^(-a))</c>.
+        /// <a href="https://en.wikipedia.org/wiki/Sigmoid_function"/>
+        /// </summary>
+        /// <param name="a">The argument of the sigmoid.</param>
+        /// <returns>
+        /// The expression it is defined as, not a node of its own — so everything that already
+        /// works on an exponential works on this: it differentiates, it evaluates, it prints.
+        /// </returns>
+        /// <remarks>
+        /// One of the "non-kernel" functions of
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/321">#321</a>: things
+        /// worth being able to <i>write</i>, which need no new node type because the kernel can
+        /// already say them. Adding a node instead would mean the eleven steps of
+        /// <c>Docs/Contributing/AddingNode.cs</c> and a new shape for every rule to ignore.
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.MathS;
+        ///
+        /// Console.WriteLine(Sigmoid("x"));
+        /// Console.WriteLine(Sigmoid(0).EvalNumerical());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 1 / (1 + e ^ (-x))
+        /// 1/2
+        /// </code>
+        /// </example>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Sigmoid(Entity a) => 1 / (1 + Pow(e, -a));
+
+        /// <summary>
+        /// The arithmetic mean of a matrix's cells.
+        /// <a href="https://en.wikipedia.org/wiki/Arithmetic_mean"/>
+        /// </summary>
+        /// <param name="m">The matrix whose cells are averaged. A vector is a matrix here.</param>
+        /// <returns>Their sum over their count.</returns>
+        /// <remarks>
+        /// Symbolic, so it averages what it is given rather than what it can evaluate:
+        /// <c>Avg</c> of <c>[a, b]</c> is <c>(a + b) / 2</c>. See
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/321">#321</a>.
+        /// </remarks>
+        /// <exception cref="System.ArgumentNullException">Thrown where the matrix is null.</exception>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.MathS;
+        ///
+        /// Console.WriteLine(Average(Vector(1, 2, 3)).Simplify());
+        /// Console.WriteLine(Average(Vector("a", "b")).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 2
+        /// (a + b) / 2
+        /// </code>
+        /// </example>
+        public static Entity Average(Matrix m)
+        {
+            if (m is null)
+                throw new System.ArgumentNullException(nameof(m));
+            var cells = m.RowCount * m.ColumnCount;
+            Entity sum = 0;
+            for (var row = 0; row < m.RowCount; row++)
+                for (var column = 0; column < m.ColumnCount; column++)
+                    sum += m[row, column];
+            return sum / cells;
+        }
+
+        /// <summary>
+        /// The Euclidean length of a vector, <c>sqrt(sum of the squares of its cells)</c>.
+        /// </summary>
+        /// <param name="v">The vector whose length is taken.</param>
+        /// <returns>Its length, as <see cref="Abs(Entity)"/> of the vector.</returns>
+        /// <remarks>
+        /// A name rather than a new capability: <c>abs([3, 4])</c> has always answered <c>5</c>,
+        /// and this is that spelled so it can be found. Named on
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/321">#321</a>, where the
+        /// observation that "VectorLength is <c>Abs</c>" is the whole implementation.
+        /// </remarks>
+        /// <exception cref="System.ArgumentNullException">Thrown where the vector is null.</exception>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.MathS;
+        ///
+        /// Console.WriteLine(VectorLength(Vector(3, 4)).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 5
+        /// </code>
+        /// </example>
+        public static Entity VectorLength(Matrix v)
+            => v is null ? throw new System.ArgumentNullException(nameof(v)) : Abs(v);
+
+        /// <summary>
         /// The greatest integer not above <paramref name="a"/>.
         /// </summary>
         /// <param name="a">The argument to take the floor of.</param>
