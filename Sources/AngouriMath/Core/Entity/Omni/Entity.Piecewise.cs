@@ -26,7 +26,7 @@ namespace AngouriMath
             
             internal Providedf New(Entity expression, Entity predicate)
                 => ReferenceEquals(expression, Expression) && ReferenceEquals(predicate, Predicate) ? this :
-                new Providedf(expression, predicate);
+                new Providedf(expression, predicate) { Codomain = Codomain };
 
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
@@ -63,7 +63,7 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => Cases.Select(c => (c.Expression, c.Predicate)).ConcatTuples().ToArray();
 
             private Piecewise New(IEnumerable<Providedf> newCases)
-                => (Cases, newCases).SequencesAreEqualReferences() ? this : new Piecewise(newCases);
+                => (Cases, newCases).SequencesAreEqualReferences() ? this : new Piecewise(newCases) { Codomain = Codomain };
 
             /// <summary>
             /// Creates an instance of Piecewise

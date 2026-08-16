@@ -17,7 +17,7 @@ namespace AngouriMath
         public sealed partial record Factorialf(Entity Argument) : Function, IUnaryNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Factorialf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            private Factorialf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument) { Codomain = Codomain };
             // This is still a function for pattern replacement
             internal override Priority Priority => Priority.Factorial;
 
