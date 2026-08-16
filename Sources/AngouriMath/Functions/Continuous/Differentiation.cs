@@ -266,13 +266,35 @@ namespace AngouriMath
 
         partial record Factorialf
         {
-            // (x!)' = Γ(x + 1) polygamma(0, x + 1)
-            /// <inheritdoc/>
+            /// <summary>
+            /// <c>(x!)' = Γ(x + 1) ψ(x + 1)</c>, which needs a symbolic gamma and polygamma the
+            /// library does not have — so this declines rather than answering.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// It used to answer <see cref="Number.Real.NaN"/>, which says the derivative <i>does
+            /// not exist</i>. It does: <c>x!</c> is <c>Γ(x + 1)</c> and the library already
+            /// evaluates it away from the integers — <c>(1/2)!</c> is <c>0.886…</c> — so it is
+            /// smooth except at the poles, and <c>d/dx x!</c> at 3 is an ordinary
+            /// <c>Γ'(4) ≈ 3.966</c>. Saying <c>NaN</c> was a wrong answer rather than a missing
+            /// feature, and it propagated: one factorial anywhere turned an otherwise fine
+            /// derivative into <c>NaN</c>.
+            /// https://github.com/asc-community/AngouriMath/issues/958
+            /// </para>
+            /// <para>
+            /// Returning the unevaluated derivative is what every other node the library cannot
+            /// differentiate already does — <c>apply(f, x)</c> among them — and it is what
+            /// <c>AGENTS.md</c> asks for: unevaluated means "I could not settle this", <c>NaN</c>
+            /// means "this does not exist", and only the first is true here.
+            /// </para>
+            /// <para>
+            /// Computing it properly is
+            /// <a href="https://github.com/asc-community/AngouriMath/issues/171">#171</a>, which is
+            /// a separate and larger piece of work; this rule stays correct once that lands.
+            /// </para>
+            /// </remarks>
             protected override Entity InnerDifferentiate(Variable variable)
-            {
-                // TODO: Implementation of symbolic gamma function and polygamma functions needed
-                return Number.Real.NaN;
-            }
+                => MathS.Derivative(this, variable, 1);
         }
 
 #pragma warning disable IDE0054 // Use compound assignment

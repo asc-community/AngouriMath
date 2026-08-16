@@ -287,8 +287,20 @@ namespace AngouriMath.Functions.Algebra
                     && (lowerLogLimit.Nodes.Any(child => child == Real.PositiveInfinity || child == Real.NegativeInfinity)
                      || lowerLogLimit == Integer.Zero))
                 {
-                    var p = (upperLogArgument.Differentiate(x) / upperLogArgument).InnerSimplified;
-                    var q = (lowerLogArgument.Differentiate(x) / lowerLogArgument).InnerSimplified;
+                    var upperDerivative = upperLogArgument.Differentiate(x).InnerSimplified;
+                    var lowerDerivative = lowerLogArgument.Differentiate(x).InnerSimplified;
+                    // A derivative the library cannot compute comes back *unevaluated* rather than
+                    // as NaN (https://github.com/asc-community/AngouriMath/issues/958). Handing one
+                    // to ComputeLimit asks the very question that could not be answered, and the
+                    // factorial reaches here through Stirling, so this technique declines instead
+                    // of recurring. NaN used to end the recursion by poisoning the quotient, which
+                    // stopped the loop for the wrong reason -- it also asserted the derivative did
+                    // not exist.
+                    if (upperDerivative.Nodes.Any(node => node is Derivativef)
+                        || lowerDerivative.Nodes.Any(node => node is Derivativef))
+                        return null;
+                    var p = (upperDerivative / upperLogArgument).InnerSimplified;
+                    var q = (lowerDerivative / lowerLogArgument).InnerSimplified;
                     return LimitFunctional.ComputeLimit(p / q, x, Real.PositiveInfinity);
                 }
                 else

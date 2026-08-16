@@ -17,6 +17,7 @@
     <Compile Include="CompilationTest.fs" />
     <Compile Include="Functions.Matrices.fs" />
     <Compile Include="Functions.Order.fs" />
+    <Compile Include="Functions.Systems.fs" />
     <Compile Include="Common.fs" />
     <Compile Include="Functions.Discrete.fs" />
     <Compile Include="Functions.Continuous.fs" />
