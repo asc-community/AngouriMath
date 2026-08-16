@@ -166,15 +166,33 @@ namespace AngouriMath.Generators
 
         private static string? Body(MethodDeclarationSyntax method, string indent)
         {
-            if (method.ExpressionBody?.Expression is not SwitchExpressionSyntax dispatch)
+            // Two shapes are read. A rule set written directly as a switch over its expression,
+            //     static Entity CommonRules(Entity x) => x switch { ... }
+            // and a *factory* for one, which is how a set parameterised by something that is not
+            // the expression is written,
+            //     static Func<Entity, Entity> SortRules(SortLevel level) => x => x switch { ... }
+            // The arms of a factory close over its parameters, so they cannot be a static field;
+            // they are emitted as a method taking the same parameters instead. Everything after
+            // this point is common to both, which is the point of unwrapping here.
+            var lambda = method.ExpressionBody?.Expression as SimpleLambdaExpressionSyntax;
+            if ((lambda?.Body ?? method.ExpressionBody?.Expression) is not SwitchExpressionSyntax dispatch)
                 return null;
             if (dispatch.GoverningExpression is not IdentifierNameSyntax governing)
                 return null;
-            if (method.ParameterList.Parameters.Count != 1)
-                return null;
-            var parameter = method.ParameterList.Parameters[0];
+            ParameterSyntax parameter;
+            if (lambda is null)
+            {
+                if (method.ParameterList.Parameters.Count != 1)
+                    return null;
+                parameter = method.ParameterList.Parameters[0];
+            }
+            else
+                parameter = lambda.Parameter;
             if (parameter.Identifier.Text != governing.Identifier.Text)
                 return null;
+            // A lambda parameter is written without its type, and the arms are copied into a
+            // context where nothing infers it, so it is named rather than echoed.
+            var parameterType = parameter.Type?.ToString() ?? "global::AngouriMath.Entity";
 
             var arms = dispatch.Arms.Where(arm => arm.Pattern is not DiscardPatternSyntax).ToList();
             var names = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -184,9 +202,16 @@ namespace AngouriMath.Generators
             text.AppendLine($"{indent}/// The arms of <see cref=\"{method.Identifier.Text}\"/>, each one addressable on its own.");
             text.AppendLine($"{indent}/// Generated from the <c>switch</c> itself, so the two cannot disagree.");
             text.AppendLine($"{indent}/// </summary>");
-            text.AppendLine($"{indent}[global::AngouriMath.Core.ConstantField]");
-            text.AppendLine($"{indent}internal static readonly global::System.Collections.Generic.IReadOnlyList"
-                + $"<global::AngouriMath.Core.Transformations.RewriteRule> {method.Identifier.Text}Arms =");
+            if (lambda is null)
+            {
+                text.AppendLine($"{indent}[global::AngouriMath.Core.ConstantField]");
+                text.AppendLine($"{indent}internal static readonly global::System.Collections.Generic.IReadOnlyList"
+                    + $"<global::AngouriMath.Core.Transformations.RewriteRule> {method.Identifier.Text}Arms =");
+            }
+            else
+                text.AppendLine($"{indent}internal static global::System.Collections.Generic.IReadOnlyList"
+                    + $"<global::AngouriMath.Core.Transformations.RewriteRule> {method.Identifier.Text}Arms"
+                    + $"{method.ParameterList} =>");
             text.AppendLine($"{indent}    new global::AngouriMath.Core.Transformations.RewriteRule[]");
             text.AppendLine($"{indent}    {{");
 
@@ -217,8 +242,9 @@ namespace AngouriMath.Generators
                 text.AppendLine($"{indent}            replacementSource: {Literal(replacement)},");
                 text.AppendLine($"{indent}            growth: global::AngouriMath.Core.Transformations.RewriteRuleGrowth.{growth},");
                 text.AppendLine($"{indent}            sourceLine: {line},");
-                text.AppendLine($"{indent}            apply: static global::AngouriMath.Entity? "
-                    + $"({parameter.Type} {parameter.Identifier.Text}) => {parameter.Identifier.Text} switch");
+                // A factory's arm reads the factory's parameters, so its lambda cannot be static.
+                text.AppendLine($"{indent}            apply: {(lambda is null ? "static " : "")}global::AngouriMath.Entity? "
+                    + $"({parameterType} {parameter.Identifier.Text}) => {parameter.Identifier.Text} switch");
                 text.AppendLine($"{indent}            {{");
                 text.AppendLine($"{indent}                {arm.Pattern}{(arm.WhenClause is null ? "" : " " + arm.WhenClause)} => {arm.Expression},");
                 text.AppendLine($"{indent}                _ => null");

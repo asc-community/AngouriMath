@@ -51,9 +51,12 @@ namespace AngouriMath.Core.Transformations
         /// <remarks>
         /// <para>
         /// <b>Empty is not the same as "no rewrites".</b> A set whose rewrites are written as a
-        /// <c>switch</c> over the expression has every arm listed here; a set built some other
-        /// way — a sort, a polynomial division, a method with branches and locals — has none,
-        /// because there are no arms to generate from. <see cref="Name"/> and
+        /// <c>switch</c> over the expression has every arm listed here, whether the
+        /// <c>switch</c> is the rule method itself or sits inside a factory parameterised by
+        /// something else — the sorts are the latter, one <c>switch</c> read at three levels. A
+        /// set built without one — a polynomial division, a method with branches and locals, a
+        /// single <c>is</c> pattern that is one rule and has nothing to split — has none, because
+        /// there are no arms to generate from. <see cref="Name"/> and
         /// <see cref="ApplyOnce(Entity)"/> behave identically either way, so this is a statement
         /// about how finely the set can be reported on and not about what it does.
         /// </para>

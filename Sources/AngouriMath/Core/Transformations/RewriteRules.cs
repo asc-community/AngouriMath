@@ -50,7 +50,8 @@ namespace AngouriMath.Core.Transformations
             // Regrouping reads a quotient as a product with a negative power, which is the
             // same value wherever the divisor is not zero.
             Soundness.SoundUnderAssumptions,
-            Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL));
+            Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL),
+            Patterns.SortRulesArms(TreeAnalyzer.SortLevel.HIGH_LEVEL));
 
         /// <summary>
         /// <see cref="CanonicalOrder"/>, counting constants as well, so that terms differing
@@ -61,7 +62,8 @@ namespace AngouriMath.Core.Transformations
             "Sorts and groups commutative operands, distinguishing terms by their constants too.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.SortRules(TreeAnalyzer.SortLevel.MIDDLE_LEVEL));
+            Patterns.SortRules(TreeAnalyzer.SortLevel.MIDDLE_LEVEL),
+            Patterns.SortRulesArms(TreeAnalyzer.SortLevel.MIDDLE_LEVEL));
 
         /// <summary>
         /// <see cref="CanonicalOrder"/> over the whole subtree, so that only structurally
@@ -72,7 +74,8 @@ namespace AngouriMath.Core.Transformations
             "Sorts and groups commutative operands by the whole subtree.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.SortRules(TreeAnalyzer.SortLevel.LOW_LEVEL));
+            Patterns.SortRules(TreeAnalyzer.SortLevel.LOW_LEVEL),
+            Patterns.SortRulesArms(TreeAnalyzer.SortLevel.LOW_LEVEL));
 
         /// <summary>
         /// Turns a negative power into a quotient: <c>a * b ^ (-1)</c> becomes <c>a / b</c>.
