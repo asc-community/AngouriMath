@@ -12,6 +12,18 @@
     <Compile Include="PreRunCode.fs" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <!--
+    Never published: angourimath.terminal.lib is a 404 on nuget.org, while the tool that uses it,
+    angourimath.terminal, is published. It packed anyway, and packing raised NU5104, which says a
+    stable release should not have a prerelease dependency, about Microsoft.DotNet.Interactive.FSharp,
+    which has 107 versions on nuget and has never shipped a stable one. So the warning was about a
+    package nobody releases, naming a dependency that cannot become stable.
+    https://github.com/asc-community/AngouriMath/issues/542
+    -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="FSharp.SystemTextJson" Version="0.17.4" />
     <PackageReference Include="Microsoft.DotNet.Interactive.FSharp" Version="1.0.0-beta.25323.1" />
