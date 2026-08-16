@@ -38,6 +38,10 @@ namespace AngouriMath.Tests.Common
 
         [Fact] public void TupleSub1() => Assert.Equal("3 + 2 * 6", "x + 2y".Substitute(("x", "y"), (3, 6)));
         [Fact] public void TupleSub2() => Assert.Equal("3 + 2 * 6 + 8", "x + 2y + z".Substitute(("x", "y", "z"), (3, 6, 8)));
-        [Fact] public void TupleSub3() => Assert.Equal("3 + 2 * 6 + 8 / 11", "x + 2y + z / d".Substitute(("x", "y", "z", "d"), (3, 6, 8, 11)));
+        // Constructed rather than written as a string: substitution leaves an unevaluated
+        // Divf(8, 11), and since #873 no text spells that -- "8 / 11" parses to the Rational.
+        [Fact] public void TupleSub3() => Assert.Equal(
+            (Entity)3 + 2 * (Entity)6 + new Entity.Divf(8, 11),
+            "x + 2y + z / d".Substitute(("x", "y", "z", "d"), (3, 6, 8, 11)));
     }
 }

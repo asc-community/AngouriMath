@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -174,8 +174,58 @@ namespace AngouriMath.Core
             if (writer.errors.Count > 0)
                 return new Failure<ReasonWhyParsingFailed>(writer.errors[0]);
 
-            return parser.Result;
+            return RationalLiterals(parser.Result);
         }
+
+        /// <summary>
+        /// Rewrites a quotient of two integer literals into the <see cref="Rational"/> it denotes,
+        /// so that a <see cref="Rational"/>'s printed form parses back to a
+        /// <see cref="Rational"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// A <see cref="Rational"/> prints as <c>7/2</c> and there is no rational literal in the
+        /// grammar, so re-parsing gave a <see cref="Entity.Divf"/> and the round trip was not an
+        /// identity — the value survived and the node did not. That is
+        /// https://github.com/asc-community/AngouriMath/issues/946's neighbour,
+        /// https://github.com/asc-community/AngouriMath/issues/873, answered there with "if you
+        /// have two integers on both sides of the division, it is reasonable to try to parse it
+        /// as a rational".
+        /// </para>
+        /// <para>
+        /// <b>A quotient that reduces to an integer is left alone</b>, deliberately. Parsing is
+        /// not simplification: turning <c>4/2</c> into <c>2</c> would discard what the caller
+        /// wrote, and <c>4/2</c> already round-trips, being a <see cref="Entity.Divf"/> before and
+        /// after. Only the non-integer case is what a <see cref="Rational"/> can print as, so only
+        /// it is what the round trip needs.
+        /// </para>
+        /// <para>
+        /// This agrees with the normalisation rather than anticipating it:
+        /// <c>Divf(1, 2).InnerSimplified</c> was already a <see cref="Rational"/>, so the parser
+        /// was the one step that disagreed.
+        /// </para>
+        /// </remarks>
+        private static Entity RationalLiterals(Entity parsed)
+            => parsed.Replace(static node =>
+            {
+                if (node is not Entity.Divf(Entity.Number.Integer numerator,
+                                            Entity.Number.Integer denominator))
+                    return node;
+                if (denominator.EInteger.IsZero)
+                    return node;
+                var value = Entity.Number.Rational.Create(numerator.EInteger, denominator.EInteger);
+                if (value is Entity.Number.Integer)
+                    return node;
+                // The codomain travels with the node, and `domain(1/2, ZZ)` has already put one on
+                // the quotient by the time this runs -- so handing back a bare Rational would drop
+                // it and the domain check would silently start passing. Caught by Domains.CheckNaN.
+                //
+                // Only a codomain somebody asked for is carried. A quotient that nobody annotated
+                // has the default, Complex, while a rational literal takes the tighter Rational --
+                // so copying it unconditionally would make `7/2` and `3.5` structurally unequal,
+                // which is the round trip this change exists to fix, broken from the other end.
+                return node.Codomain == Domain.Complex ? value : value.WithCodomain(node.Codomain);
+            });
 
         internal static Entity Parse(string source)
             => ParseSilent(source)

@@ -27,6 +27,7 @@ read first.
 | **Silent** | `Real.NaN > (Real)1`, and the other three operators | `true` | `false` |
 | **Silent** | a rewritten expression under `domain(...)` — including via `Substitute` | the constraint was dropped, so it answered | it refuses, as it did before the rewrite |
 | **Silent** | `"x!".Differentiate("x")`, and anything containing it | `NaN` | the unevaluated `derivative(x!, x)` |
+| **Silent** | `"7/2".ToEntity()` and any quotient of two integer literals | a `Divf` | the `Rational` it denotes |
 
 ### A rewritten node keeps its `Codomain`, so a domain constraint no longer disappears
 
@@ -68,6 +69,32 @@ change of spelling, one level up.
 Computing the derivative properly needs the digamma function and remains
 [#171](https://github.com/asc-community/AngouriMath/issues/171).
 [#958](https://github.com/asc-community/AngouriMath/issues/958).
+### A quotient of two integer literals parses as a `Rational`
+
+`"7/2".ToEntity()` was a `Divf(7, 2)`; it is now the `Rational` 7/2. The value was always the same
+and the node was not, so a `Rational` did not survive being printed and read back:
+
+```csharp
+Entity original = "3.5".ToEntity();   // Rational, 7/2
+original == original.Stringize().ToEntity();   // was: false     now: true
+```
+
+`Entity` equality is structural, so anything relying on that round trip — printing to text and
+parsing back, which is the natural way to serialize — was quietly getting a different tree.
+[#873](https://github.com/asc-community/AngouriMath/issues/873).
+
+**A quotient that reduces to an integer is unchanged.** `"4/2".ToEntity()` is still a `Divf`, not
+`2`. Parsing is not simplification, and turning it into `2` would discard what the caller wrote;
+`4/2` also already round-tripped, being a `Divf` before and after. Only the non-integer case is one
+a `Rational` can print as.
+
+What changes for a caller: `"1/2".ToEntity()` now prints `1/2` rather than `1 / 2`, since `Rational`
+and `Divf` space differently, and a pattern match on `Divf` no longer sees a parsed integer
+quotient. Matching `Rational` catches both spellings, and `InnerSimplified` already produced a
+`Rational` here, so code that simplified before matching is unaffected.
+
+**`Complex` has the same defect and is not fixed here.** A constructed `Complex` prints `1 + 2i` and
+parses back as a `Sumf`, or a `Minusf` for `3 - 4i`. It is tracked on the same issue.
 
 ### `Real`'s comparison operators refuse `NaN` instead of ordering it
 

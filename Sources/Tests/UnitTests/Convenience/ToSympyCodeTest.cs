@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -149,7 +149,11 @@ namespace AngouriMath.Tests.Convenience
         /// integers are unbounded.
         /// </summary>
         [Theory]
-        [InlineData("1/2", "sympy.Integer(1) / 2")]
+        // Since https://github.com/asc-community/AngouriMath/issues/873 a quotient of two
+        // integer literals parses as the Rational it denotes, so this emits what the simplified
+        // case above already emitted -- the two spellings converge rather than needing separate
+        // handling, which is the point of that fix.
+        [InlineData("1/2", "sympy.Rational(1, 2)")]
         [InlineData("2 ^ (-1)", "sympy.Integer(2) ** (-1)")]
         [InlineData("x / 2", "x / 2")]
         [InlineData("1/x", "1 / x")]

@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -183,14 +183,19 @@ namespace AngouriMath.Tests.Common
         /// The round trips that do not hold, keyed by what the node prints as, with the reason.
         /// </summary>
         /// <remarks>
-        /// Both entries are a number that prints as an operator: the printed form is the right
-        /// one to read, and re-parsing it gives the operator rather than the number. So this is
-        /// a statement about where the two forms part company, not a list of things to fix —
-        /// what it buys is that no *other* node type may join them unnoticed.
+        /// The entry is a number that prints as an operator: the printed form is the right one to
+        /// read, and re-parsing it gives the operator rather than the number. So this is a
+        /// statement about where the two forms part company, not a list of things to fix — what
+        /// it buys is that no *other* node type may join it unnoticed.
+        ///
+        /// <c>Rational</c> was here too until
+        /// https://github.com/asc-community/AngouriMath/issues/873, which taught the parser that a
+        /// quotient of two integer literals is the rational it denotes. <c>Complex</c> is the same
+        /// shape of defect and is still open: it prints as a sum, or as a difference when the
+        /// imaginary part is negative, and both parse back as the operator.
         /// </remarks>
         private static readonly Dictionary<string, string> KnownRoundTripFailures = new(StringComparer.Ordinal)
         {
-            ["1/2"] = "a Rational prints as a quotient, and a quotient parses as Divf(1, 2)",
             ["1 + 2i"] = "a Complex prints as a sum, and a sum parses as Sumf(1, 2i)",
         };
 
