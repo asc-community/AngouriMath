@@ -56,6 +56,7 @@ namespace AngouriMath.Functions
             return factors.Values;
         }
 
+        [AddressableRules]
         internal static Entity FractionCommonDenominatorRules(Entity expr, TreeAnalyzer.SortLevel level)
             => expr switch
             {
@@ -160,6 +161,7 @@ namespace AngouriMath.Functions
             return ((num * conjugate) / divisor).InnerSimplified;
         }
 
+        [AddressableRules]
         internal static Entity CollapseMultipleFractions(Entity expr)
             => expr switch
             {
