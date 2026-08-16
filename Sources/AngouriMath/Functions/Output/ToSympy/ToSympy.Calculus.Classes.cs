@@ -21,6 +21,18 @@ namespace AngouriMath
             internal override string ToSymPy() => $"sympy.integrate({Expression.ToSymPy()}, {(Range is var (from, to) ? $"({Var.ToSymPy()}, {from.ToSymPy()}, {to.ToSymPy()})" : Var.ToSymPy())})";
         }
 
+        public partial record Summationf
+        {
+            internal override string ToSymPy() =>
+                $"sympy.Sum({Expression.ToSymPy()}, ({Var.ToSymPy()}, {From.ToSymPy()}, {To.ToSymPy()}))";
+        }
+
+        public partial record Productf
+        {
+            internal override string ToSymPy() =>
+                $"sympy.Product({Expression.ToSymPy()}, ({Var.ToSymPy()}, {From.ToSymPy()}, {To.ToSymPy()}))";
+        }
+
         public partial record Limitf
         {
             internal override string ToSymPy() =>

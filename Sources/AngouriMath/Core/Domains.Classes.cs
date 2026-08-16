@@ -182,6 +182,18 @@ namespace AngouriMath
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
+        partial record Summationf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Complex;
+        }
+
+        partial record Productf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Complex;
+        }
+
         partial record Limitf
         {
             /// <inheritdoc/>

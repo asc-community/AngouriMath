@@ -36,6 +36,24 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        public partial record Summationf
+        {
+            /// <inheritdoc/>
+            public override string Stringize() =>
+                $"sum({Expression.Stringize()}, {Var.Stringize()}, {From.Stringize()}, {To.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Productf
+        {
+            /// <inheritdoc/>
+            public override string Stringize() =>
+                $"product({Expression.Stringize()}, {Var.Stringize()}, {From.Stringize()}, {To.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Limitf
         {
             /// <inheritdoc/>

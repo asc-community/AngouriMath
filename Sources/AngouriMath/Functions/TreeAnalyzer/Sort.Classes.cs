@@ -186,6 +186,16 @@ namespace AngouriMath
             private protected override string SortHashName(SortLevel level) => "integralf_";
         }
 
+        public partial record Summationf
+        {
+            private protected override string SortHashName(SortLevel level) => "summationf_";
+        }
+
+        public partial record Productf
+        {
+            private protected override string SortHashName(SortLevel level) => "productf_";
+        }
+
         public partial record Limitf
         {
             private protected override string SortHashName(SortLevel level) => "limitf_";

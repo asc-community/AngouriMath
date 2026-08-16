@@ -6838,6 +6838,72 @@ namespace AngouriMath
         public static Entity Limit(Entity expr, Entity var, Entity dest, ApproachFrom approach = ApproachFrom.BothSides)
             => new Limitf(expr, var, dest, approach);
 
+        /// <summary>
+        /// A summation of <paramref name="expr"/> as <paramref name="var"/> runs from
+        /// <paramref name="from"/> to <paramref name="to"/> inclusive.
+        /// </summary>
+        /// <param name="expr">The summand. It may mention <paramref name="var"/>.</param>
+        /// <param name="var">
+        /// The index, which this <b>binds</b> — it is not a free variable of the result. It must be
+        /// a <see cref="Entity.Variable"/>: <c>i</c> is the imaginary unit here, not an index, so
+        /// <c>Sum("i", "i", 1, 10)</c> is left unevaluated rather than guessed at.
+        /// </param>
+        /// <param name="from">The first value of the index.</param>
+        /// <param name="to">The last value of the index, inclusive.</param>
+        /// <returns>
+        /// The sum written out where the bounds are concrete integers and there are not too many
+        /// terms, and an unevaluated <see cref="Entity.Summationf"/> otherwise — so a symbolic
+        /// bound is carried rather than refused.
+        /// </returns>
+        /// <remarks>
+        /// An empty range sums to <c>0</c>, which is stated rather than left to fall out of the
+        /// loop. <a href="https://github.com/asc-community/AngouriMath/issues/248">#248</a>
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.MathS;
+        ///
+        /// Console.WriteLine(Sum("k", "k", 1, 10).Simplify());
+        /// Console.WriteLine(Sum("k", "k", 1, "n"));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 55
+        /// sum(k, k, 1, n)
+        /// </code>
+        /// </example>
+        public static Entity Sum(Entity expr, Entity var, Entity from, Entity to)
+            => new Summationf(expr, var, from, to);
+
+        /// <summary>
+        /// A product of <paramref name="expr"/> as <paramref name="var"/> runs from
+        /// <paramref name="from"/> to <paramref name="to"/> inclusive. Mirrors
+        /// <see cref="Sum(Entity, Entity, Entity, Entity)"/> exactly, with an empty range
+        /// multiplying to <c>1</c>.
+        /// </summary>
+        /// <param name="expr">The factor. It may mention <paramref name="var"/>.</param>
+        /// <param name="var">The index, which this binds.</param>
+        /// <param name="from">The first value of the index.</param>
+        /// <param name="to">The last value of the index, inclusive.</param>
+        /// <returns>The product written out where it can be, and an unevaluated node otherwise.</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.MathS;
+        ///
+        /// Console.WriteLine(Product("k", "k", 1, 5).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 120
+        /// </code>
+        /// </example>
+        public static Entity Product(Entity expr, Entity var, Entity from, Entity to)
+            => new Productf(expr, var, from, to);
+
         /// <summary>Some non-symbolic constants</summary>
         [SuppressMessage("Style", "IDE1006:Naming Styles",
             Justification = "Lowercase constants as written in Mathematics")]

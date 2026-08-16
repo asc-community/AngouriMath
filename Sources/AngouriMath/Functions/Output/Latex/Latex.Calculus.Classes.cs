@@ -66,6 +66,22 @@ namespace AngouriMath
             }
         }
 
+        public partial record Summationf
+        {
+            /// <inheritdoc/>
+            public override string Latexize() =>
+                @"\sum_{" + Var.Latexize() + "=" + From.Latexize() + "}^{" + To.Latexize() + "}"
+                + Expression.Latexize(Expression.Priority < Priority.Sum);
+        }
+
+        public partial record Productf
+        {
+            /// <inheritdoc/>
+            public override string Latexize() =>
+                @"\prod_{" + Var.Latexize() + "=" + From.Latexize() + "}^{" + To.Latexize() + "}"
+                + Expression.Latexize(Expression.Priority < Priority.Mul);
+        }
+
         public partial record Limitf
         {
             /// <inheritdoc/>
