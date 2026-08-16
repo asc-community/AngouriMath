@@ -290,7 +290,10 @@ Such a harness would have found all four rules of #884 immediately.
 
 **It exists.** `boundcheck`, in the analysis workspace beside this repository, is built exactly that
 way: it enumerates the unary function nodes by reflection, composes them pairwise, and tests the
-result at 25 points chosen to sit where some rule's assumption fails. 372 shapes, 966 comparisons. It
+result at 25 points chosen to sit where some rule's assumption fails — 372 shapes, of which only the
+ones some rule actually rewrites are worth comparing. The number of comparisons is deliberately not
+written down here: it falls every time a rule gains a guard, so a figure in prose is one that goes
+stale without anything failing. Ask the harness. It
 found [#887](https://github.com/asc-community/AngouriMath/issues/887) within minutes of existing —
 an error in the fix for #884, which is the most useful thing to record about it. It currently reports
 **no** disagreements; §11 is the last one it reported and how that was closed.
