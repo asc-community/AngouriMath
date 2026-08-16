@@ -113,34 +113,62 @@ namespace AngouriMath
                 // Comparison here is on the value and answers a bool, unlike the operators on
                 // Entity, which build an inequality node to be solved or evaluated later.
                 //
-                // These order NaN rather than refusing to: NaN sorts above every number, so
-                // NaN > 1 and NaN >= 1 are both true and 1 < NaN is true as well. That is a
-                // total order and it is not what double does, where every comparison against
-                // NaN is false. Measured at +1, -1 and NaN rather than assumed, because the
-                // IEEE habit is the one a reader arrives with.
+                // The four operators refuse NaN: every one of them is false when either side is
+                // NaN, as with double. CompareTo below deliberately does not, because sorting
+                // needs a total order and an operator does not. See
+                // https://github.com/asc-community/AngouriMath/issues/947 -- these used to order
+                // NaN above every number, so `NaN > 1` was true and a guard reading
+                // `if (value > threshold)` treated an undefined value as exceeding the threshold,
+                // which is the least safe of the two available defaults.
 
                 /// <summary>
-                /// Whether the first is strictly greater. <see cref="NaN"/> counts as greater
-                /// than every number, so <c>NaN &gt; x</c> holds for any real <c>x</c>.
+                /// Whether the first is strictly greater, and <see langword="false"/> where
+                /// either is <see cref="NaN"/>.
                 /// </summary>
-                public static bool operator >(Real a, Real b) => a.EDecimal.GreaterThan(b.EDecimal);
-
-                /// <summary>Whether the first is greater or they are equal.</summary>
-                public static bool operator >=(Real a, Real b) => a.EDecimal.GreaterThanOrEquals(b.EDecimal);
+                /// <remarks>
+                /// A comparison against <see cref="NaN"/> is false in both directions, as with
+                /// <see langword="double"/>: <c>NaN &gt; x</c> and <c>x &gt; NaN</c> are both
+                /// false, and so are the other three operators. "Not a number" is not a position
+                /// in the order, so asking where it sits has no true answer to give.
+                /// <see cref="CompareTo(Real)"/> answers a different question and still orders it.
+                /// </remarks>
+                public static bool operator >(Real a, Real b)
+                    => !a.IsNaN && !b.IsNaN && a.EDecimal.GreaterThan(b.EDecimal);
 
                 /// <summary>
-                /// Whether the first is strictly less. <see cref="NaN"/> is less than nothing,
-                /// and every number is less than it.
+                /// Whether the first is greater or they are equal, and <see langword="false"/>
+                /// where either is <see cref="NaN"/> -- including <c>NaN &gt;= NaN</c>.
                 /// </summary>
-                public static bool operator <(Real a, Real b) => a.EDecimal.LessThan(b.EDecimal);
+                public static bool operator >=(Real a, Real b)
+                    => !a.IsNaN && !b.IsNaN && a.EDecimal.GreaterThanOrEquals(b.EDecimal);
 
-                /// <summary>Whether the first is less or they are equal.</summary>
-                public static bool operator <=(Real a, Real b) => a.EDecimal.LessThanOrEquals(b.EDecimal);
+                /// <summary>
+                /// Whether the first is strictly less, and <see langword="false"/> where either
+                /// is <see cref="NaN"/>. See <see cref="op_GreaterThan(Real, Real)"/>.
+                /// </summary>
+                public static bool operator <(Real a, Real b)
+                    => !a.IsNaN && !b.IsNaN && a.EDecimal.LessThan(b.EDecimal);
+
+                /// <summary>
+                /// Whether the first is less or they are equal, and <see langword="false"/> where
+                /// either is <see cref="NaN"/> -- including <c>NaN &lt;= NaN</c>.
+                /// </summary>
+                public static bool operator <=(Real a, Real b)
+                    => !a.IsNaN && !b.IsNaN && a.EDecimal.LessThanOrEquals(b.EDecimal);
 
                 /// <summary>
                 /// Negative, zero or positive as this is less than, equal to or greater than
                 /// <paramref name="other"/>, which is what sorting wants.
                 /// </summary>
+                /// <remarks>
+                /// <b>This orders <see cref="NaN"/> and the operators do not</b>, which is
+                /// deliberate rather than an inconsistency left behind. Sorting requires a total
+                /// order -- <see cref="System.Array.Sort(System.Array)"/> may loop or throw
+                /// without one -- so <see cref="NaN"/> has to sort somewhere, and it sorts above
+                /// every number. "Where does this sort" and "is this greater" are different
+                /// questions, and only the second has no answer for a value that is not a number.
+                /// See https://github.com/asc-community/AngouriMath/issues/947.
+                /// </remarks>
                 /// <exception cref="System.ArgumentNullException">
                 /// Thrown where <paramref name="other"/> is <see langword="null"/>. Unlike
                 /// <see cref="System.IComparable{T}"/>'s usual contract, null does not sort first

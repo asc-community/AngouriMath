@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -12,32 +12,77 @@ using static AngouriMath.Entity.Number;
 namespace AngouriMath.Tests.Core
 {
     /// <summary>
-    /// How <see cref="Real"/>'s comparison operators order <see cref="Real.NaN"/>, which is not
-    /// how <see langword="double"/> does and is now written into their documentation.
+    /// How <see cref="Real"/>'s comparisons treat <see cref="Real.NaN"/>: the operators refuse
+    /// it, <see cref="Real.CompareTo(Real)"/> orders it, and the split is the point.
     /// </summary>
     /// <remarks>
-    /// Pinned because it is surprising and because the documentation asserts it. A reader
-    /// arrives with the IEEE habit, where every comparison against NaN is false; here the
-    /// comparison is a total order and NaN sits at the top of it.
+    /// https://github.com/asc-community/AngouriMath/issues/947. Both halves are pinned because
+    /// each is surprising on its own and only makes sense beside the other.
     /// </remarks>
     [Trait("Area", "Core")]
     public sealed class RealComparisonTest
     {
+        /// <summary>Every operator is false against NaN, in both directions, as with double.</summary>
         [Theory]
         [InlineData(1)]
         [InlineData(-1)]
         [InlineData(0)]
         [InlineData(100000)]
-        public void NaNIsAboveEveryNumber(int number)
+        public void NoOperatorHoldsAgainstNaN(int number)
         {
             Real value = number;
-            Assert.True(Real.NaN > value);
-            Assert.True(Real.NaN >= value);
+            Assert.False(Real.NaN > value);
+            Assert.False(Real.NaN >= value);
             Assert.False(Real.NaN < value);
             Assert.False(Real.NaN <= value);
 
-            Assert.True(value < Real.NaN);
             Assert.False(value > Real.NaN);
+            Assert.False(value >= Real.NaN);
+            Assert.False(value < Real.NaN);
+            Assert.False(value <= Real.NaN);
+        }
+
+        /// <summary>
+        /// Including against itself: NaN is not greater than, less than, or equal-or-either to
+        /// NaN. This is the row a reader is most likely to get wrong from habit.
+        /// </summary>
+        [Fact]
+        public void NorAgainstItself()
+        {
+            Assert.False(Real.NaN > Real.NaN);
+            Assert.False(Real.NaN >= Real.NaN);
+            Assert.False(Real.NaN < Real.NaN);
+            Assert.False(Real.NaN <= Real.NaN);
+        }
+
+        /// <summary>
+        /// The guard that motivated the change: an undefined value must not read as exceeding a
+        /// threshold, which is the least safe way for it to fail.
+        /// </summary>
+        [Fact]
+        public void AnUndefinedValueDoesNotExceedAThreshold()
+        {
+            Real one = 1, zero = 0;
+            var undefined = one / zero;
+            Assert.True(undefined.IsNaN);
+            Assert.False(undefined > (Real)100);
+        }
+
+        /// <summary>
+        /// CompareTo still orders NaN, because sorting needs a total order and would otherwise
+        /// loop or throw. This is the half that did *not* change.
+        /// </summary>
+        [Fact]
+        public void CompareToStillTotallyOrdersSoSortingWorks()
+        {
+            Real one = 1, two = 2;
+            Assert.True(Real.NaN.CompareTo(one) > 0);
+            Assert.True(one.CompareTo(Real.NaN) < 0);
+            Assert.Equal(0, Real.NaN.CompareTo(Real.NaN));
+
+            var values = new[] { two, Real.NaN, one };
+            System.Array.Sort(values);
+            Assert.Equal(new[] { one, two, Real.NaN }, values);
         }
 
         /// <summary>And the ordinary order is the ordinary one.</summary>
