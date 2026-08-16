@@ -46,6 +46,7 @@ namespace AngouriMath.Functions
                 SortAndGroup(Xorf.LinearChildren(x), level, (a, b) => a ^ b),
             _ => x,
         };
+        [AddressableRules]
         internal static Entity PolynomialLongDivision(Entity x) =>
             x is Divf(var num, var denom)
             && TreeAnalyzer.PolynomialLongDivision(num, denom) is var (divided, remainder)
@@ -58,6 +59,7 @@ namespace AngouriMath.Functions
         /// See <see cref="PolynomialGcd"/> for what is and is not attempted, and
         /// <a href="https://github.com/asc-community/AngouriMath/issues/55">#55</a>.
         /// </summary>
+        [AddressableRules]
         internal static Entity PolynomialGcdCancellation(Entity x) =>
             x is Divf(var num, var denom)
             && PolynomialGcd.TryCancel(num, denom, out var cancelled)
