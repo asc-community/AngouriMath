@@ -27,6 +27,7 @@ namespace AngouriMath.Functions
         }
 
         /// <summary>Actual sorting with <see cref="Entity.SortHash(TreeAnalyzer.SortLevel)"/></summary>
+        [AddressableRules]
         internal static Func<Entity, Entity> SortRules(TreeAnalyzer.SortLevel level) => x => x switch
         {
             Sumf or Minusf =>

@@ -57,6 +57,12 @@ namespace AngouriMath.Tests.Core.Transformations
             yield return (RewriteRules.InequalityEquality, Patterns.InequalityEqualityRules);
             yield return (RewriteRules.SetOperator, Patterns.SetOperatorRules);
             yield return (RewriteRules.PhiFunction, Patterns.PhiFunctionRules);
+            // The factory shape: one switch, three sets, differing only in the sort level it is
+            // closed over. Each is replayed against the switch built at its own level, so a rule
+            // generated at one level and applied at another would show up here.
+            yield return (RewriteRules.CanonicalOrder, Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL));
+            yield return (RewriteRules.CanonicalOrderCountingConstants, Patterns.SortRules(TreeAnalyzer.SortLevel.MIDDLE_LEVEL));
+            yield return (RewriteRules.CanonicalOrderExact, Patterns.SortRules(TreeAnalyzer.SortLevel.LOW_LEVEL));
         }
 
         public static IEnumerable<object[]> AddressableSets()
@@ -252,11 +258,12 @@ namespace AngouriMath.Tests.Core.Transformations
             var without = RewriteRules.All.Where(set => set.Rules.Count == 0)
                 .Select(set => set.Name).OrderBy(name => name, StringComparer.Ordinal).ToList();
 
+            // The three CanonicalOrder sets are not here: their rules are written as a switch
+            // inside a factory parameterised by the sort level, which the generator now reads.
+            // What is left is genuinely armless -- a polynomial division, a method with branches
+            // and locals, a single `is` pattern that is one rule and has nothing to split.
             Assert.Equal(new[]
             {
-                "CanonicalOrder",
-                "CanonicalOrderCountingConstants",
-                "CanonicalOrderExact",
                 "CollapseMultipleFractions",
                 "CommonDenominator",
                 "CommonDenominatorCountingConstants",
@@ -270,8 +277,8 @@ namespace AngouriMath.Tests.Core.Transformations
                 "RationalizeDenominator",
             }, without);
 
-            Assert.Equal(16, withRules.Count);
-            Assert.Equal(347, withRules.Sum(set => set.Rules.Count));
+            Assert.Equal(19, withRules.Count);
+            Assert.Equal(368, withRules.Sum(set => set.Rules.Count));
         }
 
         [Fact]
@@ -344,12 +351,16 @@ namespace AngouriMath.Tests.Core.Transformations
         [Fact]
         public void ASetWithNoAddressableRulesStillRecordsItsStep()
         {
+            // Stated rather than assumed: if this set ever becomes addressable the test would
+            // otherwise keep passing while testing nothing at all.
+            Assert.Empty(RewriteRules.InvertNegativePowers.Rules);
+
             using var recording = RewriteRecording.Start();
-            RewriteRules.CanonicalOrderExact.ApplyOnce("y + x".ToEntity());
+            RewriteRules.InvertNegativePowers.ApplyOnce("x ^ (-2)".ToEntity());
             recording.Dispose();
 
             var step = Assert.Single(recording.Steps);
-            Assert.Equal(RewriteRules.CanonicalOrderExact, step.RuleSet);
+            Assert.Equal(RewriteRules.InvertNegativePowers, step.RuleSet);
             Assert.Null(step.Rule);
         }
     }
