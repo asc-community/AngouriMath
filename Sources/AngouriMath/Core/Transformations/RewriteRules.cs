@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -205,7 +205,8 @@ namespace AngouriMath.Core.Transformations
             "Collapses nested quotients into a single numerator over a single denominator.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.CollapseMultipleFractions);
+            Patterns.CollapseMultipleFractions,
+            Patterns.CollapseMultipleFractionsArms);
 
         /// <summary>
         /// Puts a sum of quotients over one denominator, grouping the terms by variables and
@@ -216,7 +217,8 @@ namespace AngouriMath.Core.Transformations
             "Adds quotients by putting them over a common denominator.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.HIGH_LEVEL));
+            expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.HIGH_LEVEL),
+            Patterns.FractionCommonDenominatorRulesArms(TreeAnalyzer.SortLevel.HIGH_LEVEL));
 
         /// <summary>
         /// <see cref="CommonDenominator"/>, counting constants when it groups terms.
@@ -226,7 +228,8 @@ namespace AngouriMath.Core.Transformations
             "Adds quotients over a common denominator, distinguishing terms by their constants too.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.MIDDLE_LEVEL));
+            expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.MIDDLE_LEVEL),
+            Patterns.FractionCommonDenominatorRulesArms(TreeAnalyzer.SortLevel.MIDDLE_LEVEL));
 
         /// <summary>
         /// <see cref="CommonDenominator"/>, grouping terms by the whole subtree.
@@ -236,7 +239,8 @@ namespace AngouriMath.Core.Transformations
             "Adds quotients over a common denominator, grouping terms by the whole subtree.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.LOW_LEVEL));
+            expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.LOW_LEVEL),
+            Patterns.FractionCommonDenominatorRulesArms(TreeAnalyzer.SortLevel.LOW_LEVEL));
 
         /// <summary>
         /// Divides one polynomial by another, leaving a quotient plus a remainder.
