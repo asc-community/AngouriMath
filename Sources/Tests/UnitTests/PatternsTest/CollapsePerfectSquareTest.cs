@@ -78,6 +78,35 @@ namespace AngouriMath.Tests.PatternsTest
             => AssertSameValue(expr, expr.ToEntity().Factorize());
 
         /// <summary>
+        /// A sum the rule cannot evaluate at its sample points is left alone, and cheaply:
+        /// the numeric check it ends on needs a number at every point, so asking the
+        /// symbolic question first only pays for the refusal.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/972">#972</a>
+        /// </summary>
+        /// <remarks>
+        /// Asserted on the root rather than on every node: a collapse of the whole sum lands
+        /// there, while <c>FactorizeRules</c> may leave a square somewhere inside for reasons
+        /// that have nothing to do with this rule.
+        /// </remarks>
+        [Fact]
+        public void ASumItCannotEvaluateIsLeftAlone()
+            => Assert.False("x - pi - sqrt({ 1, 2 })".ToEntity().Factorize()
+                is Entity.Powf(_, Entity.Number.Integer(2)));
+
+        /// <summary>
+        /// The rule builds <c>sqrt</c> of each term to test the cross term, so a negative
+        /// term makes it ask about a nested radical over a negative number — which is what
+        /// took eight seconds to answer "no". It still answers "no".
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/972">#972</a>
+        /// </summary>
+        [Theory]
+        [InlineData("x + 1 - sqrt(2)")]
+        [InlineData("x - pi - sqrt(2)")]
+        [InlineData("x + 1 - 2 ^ (1/3)")]
+        public void ASumWithANegativeRadicalTermIsLeftAlone(string expr)
+            => AssertSameValue(expr, expr.ToEntity().Factorize());
+
+        /// <summary>
         /// <c>sqrt(u)^2</c> is <c>u</c> for every complex <c>u</c>, but <c>sqrt(u^2)</c> is
         /// not <c>u</c> -- it is <c>u</c> only where <c>u</c> is non-negative. So a
         /// polynomial trinomial must not be collapsed through this route, which would be

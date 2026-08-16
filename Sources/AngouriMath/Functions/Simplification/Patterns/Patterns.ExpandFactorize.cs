@@ -137,13 +137,29 @@ namespace AngouriMath.Functions
             var terms = Sumf.LinearChildren(expr).ToList();
             if (terms.Count != 3)
                 return null;
+            // A collapse has to survive AgreesNumerically, which needs a Complex at every sample
+            // point. So a sum with free variables that does not evaluate to one -- a set inside a
+            // radical, say -- can never fire this rule, and asking symbolically first only pays
+            // for the refusal. Not a special case for sets: it is the same necessary condition
+            // the rule already ends on, asked before the cost instead of after it.
+            if (!EvaluableAtSamplePoints(expr))
+                return null;
 
             for (var cross = 0; cross < 3; cross++)
             {
                 var w = terms[cross];
                 var p = new Powf(terms[(cross + 1) % 3], Rational.Create(1, 2));
                 var q = new Powf(terms[(cross + 2) % 3], Rational.Create(1, 2));
-                var product = (2 * p * q).Simplify();
+                // Reject at sample points before paying for the symbolic test, which is the
+                // whole cost of this rule. A term of the sum may be negative -- `-sqrt(2)` in
+                // `a + b - sqrt(2)` -- and taking its square root builds `sqrt(-sqrt(2))`, a
+                // nested radical over a negative number, which Simplify is very slow on. Twelve
+                // of those per entry is eight seconds to answer "no".
+                // https://github.com/asc-community/AngouriMath/issues/972
+                var crossTerm = 2 * p * q;
+                if (DiffersNumerically(crossTerm, w) && DiffersNumerically(crossTerm, -w))
+                    continue;
+                var product = crossTerm.Simplify();
                 var candidate =
                     (product - w).Simplify() == 0 ? new Powf((p + q).Simplify(), 2) :
                     (product + w).Simplify() == 0 ? new Powf((p - q).Simplify(), 2) :
@@ -164,6 +180,60 @@ namespace AngouriMath.Functions
         /// <see cref="PerfectSquareSamplePoints"/> with each free variable offset from the
         /// last so that two of them never take the same value.
         /// </summary>
+        /// <summary>
+        /// Whether the sum evaluates to a number at the sample points at all, which
+        /// <see cref="AgreesNumerically"/> requires of any collapse this proposes.
+        /// </summary>
+        /// <remarks>
+        /// A sum with no free variables is exempt, because <see cref="AgreesNumerically"/>
+        /// exempts it too — it returns true without evaluating anything, so a rule that fires
+        /// on a constant sum must not be stopped here.
+        /// </remarks>
+        private static bool EvaluableAtSamplePoints(Entity expr)
+        {
+            var variables = expr.Vars.ToList();
+            if (variables.Count == 0)
+                return true;
+            Entity at = expr;
+            for (var v = 0; v < variables.Count; v++)
+                at = at.Substitute(variables[v], Real.Create(PerfectSquareSamplePoints[v % PerfectSquareSamplePoints.Length]));
+            return at.Evaled is Complex;
+        }
+
+        /// <summary>
+        /// Whether two expressions are <i>demonstrably</i> different at
+        /// <see cref="PerfectSquareSamplePoints"/>, used to drop a cross term before the
+        /// symbolic test costs anything.
+        /// </summary>
+        /// <remarks>
+        /// The asymmetry with <see cref="AgreesNumerically"/> is deliberate and is what makes
+        /// this safe to put in front of the symbolic test: that one answers "may I keep this",
+        /// so it refuses whatever it cannot evaluate; this one answers "may I drop this", so it
+        /// refuses to drop whatever it cannot evaluate. A point it cannot reach is not evidence
+        /// of difference, and a rule may not decline on evidence it does not have.
+        /// </remarks>
+        private static bool DiffersNumerically(Entity left, Entity right)
+        {
+            var variables = (left + right).Vars.ToList();
+            for (var i = 0; i < PerfectSquareSamplePoints.Length; i++)
+            {
+                Entity a = left, b = right;
+                for (var v = 0; v < variables.Count; v++)
+                {
+                    var point = PerfectSquareSamplePoints[(i + v) % PerfectSquareSamplePoints.Length];
+                    a = a.Substitute(variables[v], Real.Create(point));
+                    b = b.Substitute(variables[v], Real.Create(point));
+                }
+                if (a.Evaled is not Complex left1 || b.Evaled is not Complex right1)
+                    return false;
+                var difference = (left1 - right1).Abs();
+                if (difference is Real real && real.EDecimal.Abs()
+                        .CompareTo(EDecimal.FromString("1e-12")) > 0)
+                    return true;
+            }
+            return false;
+        }
+
         private static bool AgreesNumerically(Entity original, Entity candidate)
         {
             var variables = original.Vars.ToList();
