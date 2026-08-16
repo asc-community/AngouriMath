@@ -63,6 +63,10 @@ namespace AngouriMath.Tests.Core.Transformations
             yield return (RewriteRules.CanonicalOrder, Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL));
             yield return (RewriteRules.CanonicalOrderCountingConstants, Patterns.SortRules(TreeAnalyzer.SortLevel.MIDDLE_LEVEL));
             yield return (RewriteRules.CanonicalOrderExact, Patterns.SortRules(TreeAnalyzer.SortLevel.LOW_LEVEL));
+            // Sets that are a single rule: the method is the rule, so it is its own switch here.
+            yield return (RewriteRules.InvertNegativePowers, Patterns.InvertNegativePowers);
+            yield return (RewriteRules.PolynomialLongDivision, Patterns.PolynomialLongDivision);
+            yield return (RewriteRules.PolynomialGcdCancellation, Patterns.PolynomialGcdCancellation);
         }
 
         public static IEnumerable<object[]> AddressableSets()
@@ -258,10 +262,9 @@ namespace AngouriMath.Tests.Core.Transformations
             var without = RewriteRules.All.Where(set => set.Rules.Count == 0)
                 .Select(set => set.Name).OrderBy(name => name, StringComparer.Ordinal).ToList();
 
-            // The three CanonicalOrder sets are not here: their rules are written as a switch
-            // inside a factory parameterised by the sort level, which the generator now reads.
-            // What is left is genuinely armless -- a polynomial division, a method with branches
-            // and locals, a single `is` pattern that is one rule and has nothing to split.
+            // What is left is armless because it is a method with branches and locals, which has
+            // no arms to read. Everything written as a switch -- directly, or inside a factory --
+            // and everything that is a single `is` pattern is now addressable.
             Assert.Equal(new[]
             {
                 "CollapseMultipleFractions",
@@ -270,15 +273,12 @@ namespace AngouriMath.Tests.Core.Transformations
                 "CommonDenominatorExact",
                 "ExpandFactorialDivisions",
                 "FactorizeFactorialMultiplications",
-                "InvertNegativePowers",
                 "PerfectSquare",
-                "PolynomialGcdCancellation",
-                "PolynomialLongDivision",
                 "RationalizeDenominator",
             }, without);
 
-            Assert.Equal(19, withRules.Count);
-            Assert.Equal(368, withRules.Sum(set => set.Rules.Count));
+            Assert.Equal(22, withRules.Count);
+            Assert.Equal(371, withRules.Sum(set => set.Rules.Count));
         }
 
         [Fact]
@@ -352,15 +352,17 @@ namespace AngouriMath.Tests.Core.Transformations
         public void ASetWithNoAddressableRulesStillRecordsItsStep()
         {
             // Stated rather than assumed: if this set ever becomes addressable the test would
-            // otherwise keep passing while testing nothing at all.
-            Assert.Empty(RewriteRules.InvertNegativePowers.Rules);
+            // otherwise keep passing while testing nothing at all. It has already happened twice
+            // -- CanonicalOrderExact stood here, then InvertNegativePowers -- so the assertion is
+            // load-bearing rather than decorative.
+            Assert.Empty(RewriteRules.CollapseMultipleFractions.Rules);
 
             using var recording = RewriteRecording.Start();
-            RewriteRules.InvertNegativePowers.ApplyOnce("x ^ (-2)".ToEntity());
+            RewriteRules.CollapseMultipleFractions.ApplyOnce("x / y / z".ToEntity());
             recording.Dispose();
 
             var step = Assert.Single(recording.Steps);
-            Assert.Equal(RewriteRules.InvertNegativePowers, step.RuleSet);
+            Assert.Equal(RewriteRules.CollapseMultipleFractions, step.RuleSet);
             Assert.Null(step.Rule);
         }
     }
