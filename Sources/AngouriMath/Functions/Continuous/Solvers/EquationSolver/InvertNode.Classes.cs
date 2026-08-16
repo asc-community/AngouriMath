@@ -237,6 +237,23 @@ namespace AngouriMath
                 : Enumerable.Empty<Entity>();
         }
 
+        partial record Summationf
+        {
+            // The unknown sits under a binder, and inverting would have to solve for it inside a
+            // sum whose length may be symbolic. Declining is the honest answer -- and the wrong
+            // one is on record: solving through an opaque Derivativef returns a non-solution,
+            // https://github.com/asc-community/AngouriMath/issues/964.
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
+                Enumerable.Empty<Entity>();
+        }
+
+        partial record Productf
+        {
+            // Same reasoning as Summationf above.
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
+                Enumerable.Empty<Entity>();
+        }
+
         partial record Limitf
         {
             // TODO: We can't just do a limit on the inverse function: https://math.stackexchange.com/q/3397326/627798

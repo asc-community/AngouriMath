@@ -425,6 +425,41 @@ namespace AngouriMath
             }
         }
 
+        partial record Summationf
+        {
+            /// <inheritdoc/>
+            /// <remarks>
+            /// The index is <b>bound</b>, so a substitution from outside must not reach it. Renamed
+            /// to a fresh variable first, exactly as <see cref="Integralf"/> does; without this
+            /// `sum(i, i, 1, n).Substitute("i", 5)` would rewrite the index itself.
+            /// </remarks>
+            public override Entity Substitute(Entity x, Entity value)
+            {
+                if (this == x)
+                    return value;
+                var replacement = Variable.CreateTemp((x + value + Expression + Var).Vars);
+                var tempSubstituted = Expression.Substitute(Var, replacement);
+                var subs = tempSubstituted.Substitute(x, value);
+                var postSubs = subs.Substitute(replacement, Var);
+                return New(postSubs, Var, From.Substitute(x, value), To.Substitute(x, value));
+            }
+        }
+
+        partial record Productf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+            {
+                if (this == x)
+                    return value;
+                var replacement = Variable.CreateTemp((x + value + Expression + Var).Vars);
+                var tempSubstituted = Expression.Substitute(Var, replacement);
+                var subs = tempSubstituted.Substitute(x, value);
+                var postSubs = subs.Substitute(replacement, Var);
+                return New(postSubs, Var, From.Substitute(x, value), To.Substitute(x, value));
+            }
+        }
+
         partial record Derivativef
         {
             // TODO: it might be optimized

@@ -7,6 +7,8 @@
 
 using AngouriMath.Functions.Algebra;
 
+using System;
+
 namespace AngouriMath
 {
     partial record Entity
@@ -66,6 +68,66 @@ namespace AngouriMath
 
 
         // TODO: rewrite this part too
+        public partial record Summationf
+        {
+            /// <summary>
+            /// A summation is a well-formed expression whatever its bounds, so it is defined
+            /// everywhere its expression is; the expansion below is an evaluation, not a
+            /// definedness claim.
+            /// </summary>
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <summary>
+            /// How many terms are worth writing out. A sum of a thousand terms is a correct
+            /// expansion and a useless expression, and the cost is paid by everything downstream
+            /// that then walks it.
+            /// </summary>
+            internal const int MaxExpandedTerms = 100;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact) =>
+                Expanded(this, Expression, Var, From, To, static (a, b) => a + b, 0, isExact) ?? this;
+
+            /// <summary>
+            /// Writes the operator out where its bounds are concrete integers and there are few
+            /// enough terms, and returns null otherwise -- an unevaluated operator rather than a
+            /// wrong or enormous answer.
+            /// </summary>
+            internal static Entity? Expanded(Entity self, Entity expression, Entity var, Entity from, Entity to,
+                Func<Entity, Entity, Entity> combine, Entity empty, bool isExact)
+            {
+                if (var is not Variable index)
+                    return null;
+                if (from.Evaled is not Integer lower || to.Evaled is not Integer upper)
+                    return null;
+                if (!lower.EInteger.CanFitInInt32() || !upper.EInteger.CanFitInInt32())
+                    return null;
+                var lo = lower.EInteger.ToInt32Checked();
+                var hi = upper.EInteger.ToInt32Checked();
+                // An empty range is the operator's identity: nothing summed is 0, nothing
+                // multiplied is 1. Stated rather than left to the loop, which would return the
+                // accumulator's initial value by accident and read as a coincidence.
+                if (hi < lo)
+                    return empty;
+                if ((long)hi - lo + 1 > MaxExpandedTerms)
+                    return null;
+                var accumulated = empty;
+                for (var i = lo; i <= hi; i++)
+                    accumulated = combine(accumulated, expression.Substitute(index, i));
+                return accumulated.InnerSimplified;
+            }
+        }
+
+        public partial record Productf
+        {
+            /// <summary>See <see cref="Summationf"/>; a product is defined wherever its expression is.</summary>
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact) =>
+                Summationf.Expanded(this, Expression, Var, From, To, static (a, b) => a * b, 1, isExact) ?? this;
+        }
+
         public partial record Limitf
         {
             // The limit operator is always defined symbolically, even though
