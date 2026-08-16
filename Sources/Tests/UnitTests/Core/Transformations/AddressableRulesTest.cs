@@ -262,9 +262,13 @@ namespace AngouriMath.Tests.Core.Transformations
             var without = RewriteRules.All.Where(set => set.Rules.Count == 0)
                 .Select(set => set.Name).OrderBy(name => name, StringComparer.Ordinal).ToList();
 
-            // What is left is armless because it is a method with branches and locals, which has
-            // no arms to read. Everything written as a switch -- directly, or inside a factory --
-            // and everything that is a single `is` pattern is now addressable.
+            // What is left is not one kind of thing, and saying so would be wrong: of these eight,
+            // only RationalizeDenominator, ExpandFactorialDivisions and
+            // FactorizeFactorialMultiplications are methods with branches and locals. The three
+            // CommonDenominator sets are a switch that takes a second parameter, which the
+            // generator does not read yet; CollapseMultipleFractions is an ordinary one-parameter
+            // switch and PerfectSquare a single `is` pattern, both of which it reads today and
+            // neither of which is marked. So this list is a list, not a category.
             Assert.Equal(new[]
             {
                 "CollapseMultipleFractions",
