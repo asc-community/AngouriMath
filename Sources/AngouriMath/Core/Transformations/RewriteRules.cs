@@ -85,7 +85,8 @@ namespace AngouriMath.Core.Transformations
             "Rewrites negative powers as quotients.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.InvertNegativePowers);
+            Patterns.InvertNegativePowers,
+            Patterns.InvertNegativePowersArms);
 
         /// <summary>
         /// Brings a negative numeric factor out in front of the term it multiplies.
@@ -245,7 +246,8 @@ namespace AngouriMath.Core.Transformations
             "Divides a polynomial by a polynomial, giving the quotient plus the remainder.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.PolynomialLongDivision);
+            Patterns.PolynomialLongDivision,
+            Patterns.PolynomialLongDivisionArms);
 
         /// <summary>
         /// Puts a quotient of polynomials into lowest terms.
@@ -255,7 +257,8 @@ namespace AngouriMath.Core.Transformations
             "Cancels the greatest common divisor of a polynomial quotient's numerator and denominator.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.PolynomialGcdCancellation);
+            Patterns.PolynomialGcdCancellation,
+            Patterns.PolynomialGcdCancellationArms);
 
         #endregion
 

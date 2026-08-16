@@ -130,7 +130,8 @@ namespace AngouriMath.Generators
                 // severity setting, which matters because the failure mode being guarded against
                 // is a rule set silently having no rules rather than a rule being wrong.
                 text.AppendLine($"{indent}#error AddressableRules: '{method.Identifier.Text}' must be an "
-                    + "expression-bodied method whose body is `parameter switch { ... }`.");
+                    + "expression-bodied method whose body is `x switch { ... }`, `x => x switch { ... }`, "
+                    + "or `x is pattern [&& guard] ? replacement : x`.");
             }
             else
                 text.Append(body);
@@ -166,35 +167,32 @@ namespace AngouriMath.Generators
 
         private static string? Body(MethodDeclarationSyntax method, string indent)
         {
-            // Two shapes are read. A rule set written directly as a switch over its expression,
+            // Three shapes are read. A rule set written directly as a switch over its expression,
             //     static Entity CommonRules(Entity x) => x switch { ... }
-            // and a *factory* for one, which is how a set parameterised by something that is not
-            // the expression is written,
+            // a *factory* for one, which is how a set parameterised by something that is not the
+            // expression is written,
             //     static Func<Entity, Entity> SortRules(SortLevel level) => x => x switch { ... }
+            // and a set that is a single rule, which needs no switch to say so,
+            //     static Entity InvertNegativePowers(Entity x) => x is Powf(...) ? ... : x;
             // The arms of a factory close over its parameters, so they cannot be a static field;
-            // they are emitted as a method taking the same parameters instead. Everything after
-            // this point is common to both, which is the point of unwrapping here.
+            // they are emitted as a method taking the same parameters instead.
             var lambda = method.ExpressionBody?.Expression as SimpleLambdaExpressionSyntax;
-            if ((lambda?.Body ?? method.ExpressionBody?.Expression) is not SwitchExpressionSyntax dispatch)
-                return null;
-            if (dispatch.GoverningExpression is not IdentifierNameSyntax governing)
-                return null;
+            var inner = lambda?.Body as ExpressionSyntax ?? method.ExpressionBody?.Expression;
             ParameterSyntax parameter;
-            if (lambda is null)
-            {
-                if (method.ParameterList.Parameters.Count != 1)
-                    return null;
-                parameter = method.ParameterList.Parameters[0];
-            }
-            else
+            if (lambda is not null)
                 parameter = lambda.Parameter;
-            if (parameter.Identifier.Text != governing.Identifier.Text)
+            else if (method.ParameterList.Parameters.Count == 1)
+                parameter = method.ParameterList.Parameters[0];
+            else
                 return null;
+            var subject = parameter.Identifier.Text;
             // A lambda parameter is written without its type, and the arms are copied into a
             // context where nothing infers it, so it is named rather than echoed.
             var parameterType = parameter.Type?.ToString() ?? "global::AngouriMath.Entity";
 
-            var arms = dispatch.Arms.Where(arm => arm.Pattern is not DiscardPatternSyntax).ToList();
+            var arms = ArmsOf(inner, subject, indent, method.GetLeadingTrivia());
+            if (arms is null)
+                return null;
             var names = new Dictionary<string, int>(StringComparer.Ordinal);
 
             var text = new StringBuilder();
@@ -219,22 +217,22 @@ namespace AngouriMath.Generators
             {
                 var arm = arms[index];
                 var pattern = Flatten(arm.Pattern.ToString());
-                var guard = arm.WhenClause is null ? null : Flatten(arm.WhenClause.Condition.ToString());
-                var replacement = Flatten(arm.Expression.ToString());
+                var guard = arm.Guard is null ? null : Flatten(arm.Guard);
+                var replacement = Flatten(arm.Replacement.ToString());
                 var key = guard is null ? pattern : pattern + " when " + guard;
                 names.TryGetValue(key, out var seen);
                 names[key] = seen + 1;
                 var name = seen == 0 ? key : $"{key} #{seen + 1}";
 
-                var line = arm.GetLocation().GetLineSpan().StartLinePosition.Line + 1;
+                var line = arm.Source.GetLocation().GetLineSpan().StartLinePosition.Line + 1;
                 var nodeTypes = RootTypesOf(arm.Pattern);
-                var growth = Growth(arm.Pattern, arm.Expression);
+                var growth = Growth(arm.Pattern, arm.Replacement);
 
                 text.AppendLine($"{indent}        new global::AngouriMath.Core.Transformations.RewriteRule(");
                 text.AppendLine($"{indent}            source: \"{method.Identifier.Text}\",");
                 text.AppendLine($"{indent}            index: {index},");
                 text.AppendLine($"{indent}            name: {Literal(name)},");
-                text.AppendLine($"{indent}            description: {Literal(Description(arm))},");
+                text.AppendLine($"{indent}            description: {Literal(arm.Description)},");
                 text.AppendLine($"{indent}            nodeTypes: new global::System.Type[] {{ "
                     + string.Join(", ", nodeTypes.Select(type => $"typeof({type})")) + " },");
                 text.AppendLine($"{indent}            patternSource: {Literal(pattern)},");
@@ -244,26 +242,167 @@ namespace AngouriMath.Generators
                 text.AppendLine($"{indent}            sourceLine: {line},");
                 // A factory's arm reads the factory's parameters, so its lambda cannot be static.
                 text.AppendLine($"{indent}            apply: {(lambda is null ? "static " : "")}global::AngouriMath.Entity? "
-                    + $"({parameterType} {parameter.Identifier.Text}) => {parameter.Identifier.Text} switch");
-                text.AppendLine($"{indent}            {{");
-                text.AppendLine($"{indent}                {arm.Pattern}{(arm.WhenClause is null ? "" : " " + arm.WhenClause)} => {arm.Expression},");
-                text.AppendLine($"{indent}                _ => null");
-                text.AppendLine($"{indent}            }}),");
+                    + $"({parameterType} {subject}) => {arm.Apply}),");
             }
 
             text.AppendLine($"{indent}    }};");
             return text.ToString();
         }
 
-        /// <summary>The comment written above an arm, which is the rule stated as mathematics.</summary>
-        private static string? Description(SwitchExpressionArmSyntax arm)
+        /// <summary>One rule, whatever shape the method that holds it was written in.</summary>
+        private sealed class Arm
         {
-            var lines = arm.GetLeadingTrivia()
-                .Where(trivia => trivia.IsKind(SyntaxKind.SingleLineCommentTrivia))
-                .Select(trivia => trivia.ToString().TrimStart('/').Trim())
-                .Where(line => line.Length > 0)
-                .ToList();
+            internal Arm(PatternSyntax pattern, string? guard, ExpressionSyntax replacement,
+                SyntaxNode source, string? description, string apply)
+                => (Pattern, Guard, Replacement, Source, Description, Apply)
+                    = (pattern, guard, replacement, source, description, apply);
+
+            internal PatternSyntax Pattern { get; }
+            internal string? Guard { get; }
+            internal ExpressionSyntax Replacement { get; }
+            /// <summary>What the rule was read from, for its line number.</summary>
+            internal SyntaxNode Source { get; }
+            internal string? Description { get; }
+            /// <summary>The body of the generated <c>apply</c>, copied from the source it came from.</summary>
+            internal string Apply { get; }
+        }
+
+        /// <summary>
+        /// The rules a method body holds, or <see langword="null"/> where it is not a shape this
+        /// can read. <paramref name="ownDoc"/> is the method's own leading trivia, which describes
+        /// the rule when the method <i>is</i> one.
+        /// </summary>
+        private static List<Arm>? ArmsOf(ExpressionSyntax? body, string subject, string indent, SyntaxTriviaList ownDoc)
+        {
+            switch (body)
+            {
+                case SwitchExpressionSyntax dispatch
+                    when dispatch.GoverningExpression is IdentifierNameSyntax governing
+                         && governing.Identifier.Text == subject:
+                    return dispatch.Arms
+                        .Where(arm => arm.Pattern is not DiscardPatternSyntax)
+                        .Select(arm => new Arm(
+                            arm.Pattern,
+                            arm.WhenClause?.Condition.ToString(),
+                            arm.Expression,
+                            arm,
+                            Description(arm.GetLeadingTrivia()),
+                            // A one-armed switch over the same subject, so the pattern binds its
+                            // variables exactly as it does where it is written.
+                            $"{subject} switch\n"
+                            + $"{indent}            {{\n"
+                            + $"{indent}                {arm.Pattern}"
+                            + $"{(arm.WhenClause is null ? "" : " " + arm.WhenClause)} => {arm.Expression},\n"
+                            + $"{indent}                _ => null\n"
+                            + $"{indent}            }}"))
+                        .ToList();
+
+                // `subject is pattern [&& guard] ? replacement : subject` — a set that is a single
+                // rule and needs no switch to say so. The false branch has to be the subject
+                // itself; anything else is a second rewrite this would silently drop.
+                case ConditionalExpressionSyntax conditional
+                    when conditional.WhenFalse is IdentifierNameSyntax unchanged
+                         && unchanged.Identifier.Text == subject:
+                {
+                    var conjuncts = Conjuncts(conditional.Condition);
+                    if (conjuncts[0] is not IsPatternExpressionSyntax test
+                        || test.Expression is not IdentifierNameSyntax tested
+                        || tested.Identifier.Text != subject)
+                        return null;
+                    return new List<Arm>
+                    {
+                        new Arm(
+                            test.Pattern,
+                            conjuncts.Count == 1 ? null : string.Join(" && ", conjuncts.Skip(1)),
+                            conditional.WhenTrue,
+                            conditional,
+                            Description(ownDoc),
+                            // The condition is kept whole rather than rebuilt from the pattern and
+                            // the guard: a later conjunct may declare what the replacement reads,
+                            // which is how the polynomial rules are written.
+                            $"{conditional.Condition} ? {conditional.WhenTrue} : null")
+                    };
+                }
+
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>The value of one attribute of an XML tag, or null where it carries none.</summary>
+        private static string? AttributeOf(string tag, string name)
+        {
+            var at = tag.IndexOf(name + "=\"", StringComparison.Ordinal);
+            if (at < 0)
+                return null;
+            var from = at + name.Length + 2;
+            var to = tag.IndexOf('"', from);
+            return to < 0 ? null : tag.Substring(from, to - from);
+        }
+
+        /// <summary>The operands of a chain of <c>&amp;&amp;</c>, left to right.</summary>
+        private static List<ExpressionSyntax> Conjuncts(ExpressionSyntax expression)
+        {
+            if (expression is not BinaryExpressionSyntax binary || !binary.IsKind(SyntaxKind.LogicalAndExpression))
+                return new List<ExpressionSyntax> { expression };
+            var operands = Conjuncts(binary.Left);
+            operands.AddRange(Conjuncts(binary.Right));
+            return operands;
+        }
+
+        /// <summary>The comment written above a rule, which is the rule stated as mathematics.</summary>
+        private static string? Description(SyntaxTriviaList trivia)
+        {
+            // A `//` comment is prose and is taken as written: mathematics is full of `<` and `>`,
+            // and reading it as XML would eat `a ^ (-1) => 1 / a` down to `a ^ (-1) 1 / a`. Only a
+            // `///` comment is XML, and only there are the tags stripped.
+            var lines = new List<string>();
+            foreach (var item in trivia)
+            {
+                var line =
+                    item.IsKind(SyntaxKind.SingleLineCommentTrivia) ? item.ToString().TrimStart('/').Trim()
+                    : item.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia) ? WithoutTags(item.ToString())
+                    : "";
+                if (line.Length > 0)
+                    lines.Add(line);
+            }
             return lines.Count == 0 ? null : string.Join(" ", lines);
+        }
+
+        /// <summary>
+        /// A comment's text without its slashes or its XML, so that a <c>&lt;summary&gt;</c> above a
+        /// single-rule method reads the same way a <c>//</c> above an arm does.
+        /// </summary>
+        private static string WithoutTags(string comment)
+        {
+            var text = new StringBuilder(comment.Length);
+            for (var i = 0; i < comment.Length; i++)
+            {
+                if (comment[i] != '<')
+                {
+                    text.Append(comment[i]);
+                    continue;
+                }
+                var end = comment.IndexOf('>', i);
+                if (end < 0)
+                    break;
+                // A `see` carries its meaning in the attribute and has nothing between its tags, so
+                // dropping it wholesale leaves a hole: "See  for what is and is not attempted".
+                var cref = AttributeOf(comment.Substring(i + 1, end - i - 1), "cref");
+                if (cref is not null)
+                {
+                    var head = cref.Substring(cref.IndexOf(':') + 1);
+                    var arguments = head.IndexOf('(');
+                    if (arguments >= 0)
+                        head = head.Substring(0, arguments);
+                    text.Append(head.Substring(head.LastIndexOf('.') + 1));
+                }
+                i = end;
+            }
+            return string.Join(" ", text.ToString()
+                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => line.TrimStart().TrimStart('/').Trim())
+                .Where(line => line.Length > 0));
         }
 
         /// <summary>
