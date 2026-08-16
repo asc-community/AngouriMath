@@ -1356,6 +1356,15 @@ namespace AngouriMath.Functions.Algebra
                                 // unread. Limits already treat the expression as continuous, as
                                 // SimplifyAndComputeLimitToInfinity does with the same shape.
                                 while (applied is Providedf(var body, _)) applied = body;
+                                // A derivative the library cannot compute comes back unevaluated
+                                // (https://github.com/asc-community/AngouriMath/issues/958), and
+                                // differentiating *that* again only raises its Iterations -- so
+                                // every pass produces a quotient the chain below has not seen and
+                                // AlreadyBeingDifferentiated never fires. The factorial reaches
+                                // here and ran to 200,000 differentiations before this guard.
+                                // l'Hopital has nothing to say about a derivative it cannot take.
+                                if (applied.Nodes.Any(node => node is Derivativef))
+                                    return null;
                                 if (AlreadyBeingDifferentiated(applied) || GrewTooMuch(expr, applied))
                                     return null;
                                 lHopitalApplications++;
