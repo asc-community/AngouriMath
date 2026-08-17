@@ -184,7 +184,8 @@ namespace AngouriMath.Core.Transformations
             "Collapses a written-out perfect square into a squared binomial.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.PerfectSquareRules);
+            Patterns.PerfectSquareRules,
+            Patterns.PerfectSquareRulesArms);
 
         #endregion
 

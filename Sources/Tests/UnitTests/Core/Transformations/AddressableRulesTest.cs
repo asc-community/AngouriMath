@@ -77,6 +77,9 @@ namespace AngouriMath.Tests.Core.Transformations
                 expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.LOW_LEVEL));
             // A shape that was already readable and simply not marked.
             yield return (RewriteRules.CollapseMultipleFractions, Patterns.CollapseMultipleFractions);
+            // Held back until #974 made it affordable: replaying it against its switch over this
+            // corpus took 5m10s, as long as the rest of the suite. It is 5.7s now.
+            yield return (RewriteRules.PerfectSquare, Patterns.PerfectSquareRules);
         }
 
         public static IEnumerable<object[]> AddressableSets()
@@ -132,6 +135,10 @@ namespace AngouriMath.Tests.Core.Transformations
             "tan(x)", "cotan(x)", "sec(x)", "csc(x)", "1 / sin(x)", "cos(x) / sin(x)",
             // Factorization
             "x ^ 2 - y ^ 2", "x ^ 4 - y ^ 2", "x * y + x * 2",
+            // PerfectSquare, which collapses u + 2*sqrt(u)*sqrt(v) + v. It needs a surd, and the
+            // grammar above makes no fractional exponent — so without these the set never fires
+            // and the replay would compare nothing while reporting green.
+            "1 + sqrt(2 * x) + x / 2", "x + 2 * sqrt(x) * sqrt(y) + y", "2 + 2 * sqrt(2) + 1",
             // Power
             "log(x, y) + log(x, 2)", "(x ^ 2) ^ 3", "sqrt(x) * sqrt(x)", "2 ^ x * 2 ^ y",
         };
@@ -272,23 +279,19 @@ namespace AngouriMath.Tests.Core.Transformations
             var without = RewriteRules.All.Where(set => set.Rules.Count == 0)
                 .Select(set => set.Name).OrderBy(name => name, StringComparer.Ordinal).ToList();
 
-            // Three of these four are a method with a statement body, branches and locals, and no
-            // arms to read. PerfectSquare is not: it is a single `is` pattern that the generator
-            // reads perfectly well, and it is left out on cost rather than on shape. Replaying one
-            // rule against its switch over this corpus takes 5m10s, because deciding whether the
-            // cross term matches goes through Simplify -- as long as the entire rest of the suite.
-            // Worth doing, worth deciding on its own, and not worth smuggling in beside four sets
-            // that cost eight seconds between them.
+            // All three are a method with a statement body, branches and locals, and no arms to
+            // read. That is the only reason left: every shape the generator can read is now read,
+            // and PerfectSquare -- held out of this list on cost rather than shape until #974 --
+            // has joined them.
             Assert.Equal(new[]
             {
                 "ExpandFactorialDivisions",
                 "FactorizeFactorialMultiplications",
-                "PerfectSquare",
                 "RationalizeDenominator",
             }, without);
 
-            Assert.Equal(26, withRules.Count);
-            Assert.Equal(388, withRules.Sum(set => set.Rules.Count));
+            Assert.Equal(27, withRules.Count);
+            Assert.Equal(389, withRules.Sum(set => set.Rules.Count));
         }
 
         [Fact]
