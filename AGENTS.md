@@ -352,6 +352,11 @@ Then:
    [BREAKING-CHANGES.md](BREAKING-CHANGES.md) — including when the old answer was wrong. A test you
    had to change is the usual sign that you owe an entry.
 6. Open a PR. State what was wrong, why the fix is right, and what you measured.
+7. **Read the PR's own thread before it merges**, and answer what is on it. Comments arrive after
+   the checks go green, so a PR that was clear when it was opened need not still be; and a review
+   merged over does not go away — it comes back as an issue somebody else had to file. Both places
+   count, and the API shows them separately: `gh pr view <n> --comments` for the thread, and
+   `gh api repos/{owner}/{repo}/pulls/<n>/comments` for comments left on the diff.
 
 `TreatWarningsAsErrors` is on and there are custom analyzers; a static field needs
 `[ConstantField]`, `[ThreadStatic]` or `[ConcurrentField]`.
