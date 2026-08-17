@@ -17,9 +17,11 @@ namespace AngouriMath.Tests.Core
     /// over a range. <a href="https://github.com/asc-community/AngouriMath/issues/248">#248</a>
     /// </summary>
     /// <remarks>
-    /// The index is written <c>k</c> throughout and never <c>i</c>, deliberately: <c>i</c> is the
-    /// imaginary unit, so <c>sum(i, i, 1, 10)</c> binds nothing and is left unevaluated. That is
-    /// pinned below rather than left as a trap.
+    /// The index is mostly written <c>k</c>, but <c>i</c> works too and the cases below say so.
+    /// <c>i</c> is the imaginary unit — decided in the lexer, so it cannot be a variable anywhere
+    /// in the language — and naming it as an index used to bind nothing and sum nothing. It is now
+    /// read as the declaration it plainly is, and only inside the operator that declares it.
+    /// <a href="https://github.com/asc-community/AngouriMath/issues/976">#976</a>
     /// </remarks>
     [Trait("Area", "Core")]
     public sealed class SummationProductTest
@@ -78,12 +80,33 @@ namespace AngouriMath.Tests.Core
                 "sum(k, k, 1, n)".ToEntity().Substitute("n", 3).Simplify().Evaled);
 
         /// <summary>
-        /// <c>i</c> is the imaginary unit, so it cannot be an index. The operator declines rather
-        /// than guessing, which is the honest answer and the one a caller can see.
+        /// <c>i</c> is the imaginary unit, and the lexer decides that — so naming it as the index
+        /// used to sum nothing. Naming it is now taken as the declaration it obviously is.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/976">#976</a>
         /// </summary>
+        [Theory]
+        [InlineData("sum(i, i, 1, 10)", "55")]
+        [InlineData("sum(i ^ 2, i, 1, 4)", "30")]
+        [InlineData("product(i, i, 1, 5)", "120")]
+        public void TheImaginaryUnitCanBeAnIndexWhenItIsDeclaredAsOne(string expression, string expected) =>
+            Assert.Equal(expected.ToEntity().Evaled, expression.ToEntity().Simplify().Evaled);
+
+        /// <summary>
+        /// The other half, and the one that would make the change above a wrong answer if it
+        /// failed: <c>i</c> is reinterpreted only where it is the index. Anywhere else — inside
+        /// the same sum, or outside it — it is still the imaginary unit.
+        /// </summary>
+        [Theory]
+        [InlineData("sum(i * k, k, 1, 3)", "6i")]
+        [InlineData("sum(k + i, k, 1, 2)", "3 + 2i")]
+        [InlineData("sum(i, i, 1, 3) + i", "6 + i")]
+        public void ElsewhereItIsStillTheImaginaryUnit(string expression, string expected) =>
+            Assert.Equal(expected.ToEntity().Evaled, expression.ToEntity().Simplify().Evaled);
+
+        /// <summary>A declared index with a symbolic bound is still carried, not guessed at.</summary>
         [Fact]
-        public void TheImaginaryUnitIsNotAnIndex() =>
-            Assert.IsType<Entity.Summationf>("sum(i, i, 1, 10)".ToEntity().Simplify());
+        public void ADeclaredImaginaryUnitIndexWithASymbolicBoundIsCarried() =>
+            Assert.IsType<Entity.Summationf>("sum(i, i, 1, n)".ToEntity().Simplify());
 
         /// <summary>
         /// Too many terms is left unexpanded: a thousand-term sum is a correct expansion and a
