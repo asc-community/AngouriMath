@@ -6844,10 +6844,11 @@ namespace AngouriMath
         /// </summary>
         /// <param name="expr">The summand. It may mention <paramref name="var"/>.</param>
         /// <param name="var">
-        /// The index, which this <b>binds</b> — it is not a free variable of the result. Naming
-        /// <c>i</c> works: it is the imaginary unit everywhere else, but declaring it as the index
-        /// is taken as meaning it, throughout this operator and nowhere outside it. See
-        /// <see cref="Iterated"/>.
+        /// The index, which this <b>binds</b> — it is not a free variable of the result. Passing the
+        /// imaginary unit declares an index <i>named</i> <c>i</c>, which shadows the constant inside
+        /// <paramref name="expr"/>, so <c>sum(i, i, 1, 10)</c> is the sum a textbook means by it;
+        /// the bounds are outside the binder and keep the constant. Anything else that is not a
+        /// <see cref="Entity.Variable"/> binds nothing and is carried unevaluated.
         /// </param>
         /// <param name="from">The first value of the index.</param>
         /// <param name="to">The last value of the index, inclusive.</param>
@@ -6868,15 +6869,20 @@ namespace AngouriMath
         ///
         /// Console.WriteLine(Sum("k", "k", 1, 10).Simplify());
         /// Console.WriteLine(Sum("k", "k", 1, "n"));
+        /// Console.WriteLine(Sum("i", "i", 1, 10).Simplify());
         /// </code>
         /// Prints
         /// <code>
         /// 55
         /// sum(k, k, 1, n)
+        /// 55
         /// </code>
         /// </example>
         public static Entity Sum(Entity expr, Entity var, Entity from, Entity to)
-            => Iterated(static (e, v, f, t) => new Summationf(e, v, f, t), expr, var, from, to);
+        {
+            (expr, var) = ShadowImaginaryUnitIndex(expr, var);
+            return new Summationf(expr, var, from, to);
+        }
 
         /// <summary>
         /// A product of <paramref name="expr"/> as <paramref name="var"/> runs from
@@ -6885,7 +6891,10 @@ namespace AngouriMath
         /// multiplying to <c>1</c>.
         /// </summary>
         /// <param name="expr">The factor. It may mention <paramref name="var"/>.</param>
-        /// <param name="var">The index, which this binds.</param>
+        /// <param name="var">
+        /// The index, which this binds; the imaginary unit declares an index named <c>i</c>, exactly
+        /// as in <see cref="Sum(Entity, Entity, Entity, Entity)"/>.
+        /// </param>
         /// <param name="from">The first value of the index.</param>
         /// <param name="to">The last value of the index, inclusive.</param>
         /// <returns>The product written out where it can be, and an unevaluated node otherwise.</returns>
@@ -6903,43 +6912,56 @@ namespace AngouriMath
         /// </code>
         /// </example>
         public static Entity Product(Entity expr, Entity var, Entity from, Entity to)
-            => Iterated(static (e, v, f, t) => new Productf(e, v, f, t), expr, var, from, to);
+        {
+            (expr, var) = ShadowImaginaryUnitIndex(expr, var);
+            return new Productf(expr, var, from, to);
+        }
 
         /// <summary>
-        /// Reads <c>i</c> as the loop variable where it is named as one, through the summand and
-        /// the bounds as well as in the index position.
+        /// Reads a binder whose index is the imaginary unit as declaring an index <i>named</i>
+        /// <c>i</c>, and shadows the constant inside the body accordingly.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// <c>i</c> is the imaginary unit, and that is decided in the lexer — <c>NUMBER: ... |</c>
-        /// <c>'i'</c> — so it never reaches the rule that makes variables and cannot be one
-        /// anywhere in the language. That left <c>sum(i, i, 1, 10)</c> quietly summing nothing:
-        /// the index was a number, so the operator had no variable to bind.
-        /// <a href="https://github.com/asc-community/AngouriMath/issues/976">#976</a>
+        /// <c>i</c> lexes as the imaginary unit — see the <c>NUMBER</c> rule in
+        /// <c>AngouriMath.g</c> — so <c>sum(i, i, 1, 10)</c>, which is how every textbook writes
+        /// that sum, arrived here with a number in the index position, bound nothing, and was
+        /// carried unevaluated. An index is a name, and the imaginary unit is not one, so there is
+        /// no reading under which the caller meant the constant: the only informative thing to do
+        /// is to take the declaration seriously and let it shadow, as any bound name shadows an
+        /// outer one. <a href="https://github.com/asc-community/AngouriMath/issues/976">#976</a>
         /// </para>
         /// <para>
-        /// Naming <c>i</c> as the index says something about the whole operator, so it is honoured
-        /// throughout it. Doing it in the index position alone would be worse than not doing it at
-        /// all: the index would become a variable while every <c>i</c> in the summand stayed the
-        /// imaginary unit, nothing would substitute, and <c>sum(i, i, 1, 10)</c> would answer
-        /// <c>10i</c> instead of 55 — a wrong answer in place of an unevaluated one.
+        /// It is the <i>name</i> that is shadowed, so what changes is every literal written with it:
+        /// the bare <c>i</c>, and <c>2i</c> too, since that is one number token rather than a
+        /// product. Reading <c>sum(2i, i, 1, 3)</c> as <c>6i</c> while <c>sum(2 * i, i, 1, 3)</c> is
+        /// <c>12</c> would answer one expression two ways. A number with a real part as well cannot
+        /// be written as a single token, so no spelling of it mentions the name and it is left alone
+        /// — as is <c>sqrt(-1)</c>, which denotes the constant without naming it.
         /// </para>
         /// <para>
-        /// Only inside the operator that declares it. <c>sum(i * k, k, 1, 3)</c> is <c>6i</c>, and
-        /// the <c>i</c> in <c>sum(i, i, 1, 3) + i</c> outside the sum is still the imaginary unit.
+        /// The bounds are left alone: they lie outside the binder, in the scope the declaration is
+        /// made in, so the imaginary unit is still the imaginary unit there.
         /// </para>
         /// </remarks>
-        private static Entity Iterated(
-            Func<Entity, Entity, Entity, Entity, Entity> build,
-            Entity expr, Entity var, Entity from, Entity to)
+        private static (Entity Expression, Entity Var) ShadowImaginaryUnitIndex(Entity expr, Entity var)
         {
-            if (var != i)
-                return build(expr, var, from, to);
-            var index = Entity.Variable.CreateVariableUnchecked("i");
-            Entity Rename(Entity subject) => subject.Replace(node => node == i ? index : node);
-            return build(Rename(expr), index, Rename(from), Rename(to));
-        }
+            if (!IsImaginaryUnit(var))
+                return (expr, var);
+            var index = Variable.CreateVariableUnchecked("i");
+            // Real, Rational and Integer all derive from Complex, so `is not Real` is what keeps an
+            // ordinary 2 out of this: a pure-imaginary number is the one kind the lexer builds out
+            // of the letter being shadowed.
+            return (expr.Replace(node => node switch
+            {
+                Complex { RealPart.IsZero: true } written when written is not Real =>
+                    IsImaginaryUnit(written) ? index : written.ImaginaryPart * index,
+                _ => node
+            }), index);
 
+            static bool IsImaginaryUnit(Entity entity) =>
+                entity is Complex { ImaginaryPart: Integer(1) } complex && complex.RealPart.IsZero;
+        }
 
         /// <summary>Some non-symbolic constants</summary>
         [SuppressMessage("Style", "IDE1006:Naming Styles",

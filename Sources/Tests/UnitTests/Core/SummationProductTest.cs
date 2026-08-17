@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using System.Linq;
 using AngouriMath;
 using AngouriMath.Extensions;
 using Xunit;
@@ -17,11 +18,10 @@ namespace AngouriMath.Tests.Core
     /// over a range. <a href="https://github.com/asc-community/AngouriMath/issues/248">#248</a>
     /// </summary>
     /// <remarks>
-    /// The index is mostly written <c>k</c>, but <c>i</c> works too and the cases below say so.
-    /// <c>i</c> is the imaginary unit — decided in the lexer, so it cannot be a variable anywhere
-    /// in the language — and naming it as an index used to bind nothing and sum nothing. It is now
-    /// read as the declaration it plainly is, and only inside the operator that declares it.
-    /// <a href="https://github.com/asc-community/AngouriMath/issues/976">#976</a>
+    /// The index is written <c>k</c> in most of what follows, but <c>i</c> works too: it lexes as
+    /// the imaginary unit, and declaring it as the index shadows the constant inside the body.
+    /// <a href="https://github.com/asc-community/AngouriMath/issues/976">#976</a> asked for that,
+    /// and the tests at the bottom of this file are what it means.
     /// </remarks>
     [Trait("Area", "Core")]
     public sealed class SummationProductTest
@@ -80,33 +80,77 @@ namespace AngouriMath.Tests.Core
                 "sum(k, k, 1, n)".ToEntity().Substitute("n", 3).Simplify().Evaled);
 
         /// <summary>
-        /// <c>i</c> is the imaginary unit, and the lexer decides that — so naming it as the index
-        /// used to sum nothing. Naming it is now taken as the declaration it obviously is.
-        /// <a href="https://github.com/asc-community/AngouriMath/issues/976">#976</a>
+        /// <c>i</c> lexes as the imaginary unit, and declaring it as the index shadows that: the
+        /// sum every textbook writes with <c>i</c> is the sum a reader means by it. #976
         /// </summary>
         [Theory]
         [InlineData("sum(i, i, 1, 10)", "55")]
-        [InlineData("sum(i ^ 2, i, 1, 4)", "30")]
-        [InlineData("product(i, i, 1, 5)", "120")]
-        public void TheImaginaryUnitCanBeAnIndexWhenItIsDeclaredAsOne(string expression, string expected) =>
+        [InlineData("sum(i^2, i, 1, 4)", "30")]
+        [InlineData("product(i, i, 1, 4)", "24")]
+        public void AnIndexNamedIShadowsTheImaginaryUnit(string expression, string expected) =>
             Assert.Equal(expected.ToEntity().Evaled, expression.ToEntity().Simplify().Evaled);
 
         /// <summary>
-        /// The other half, and the one that would make the change above a wrong answer if it
-        /// failed: <c>i</c> is reinterpreted only where it is the index. Anywhere else — inside
-        /// the same sum, or outside it — it is still the imaginary unit.
+        /// The same through the C# surface, which is why the shadowing lives in <c>MathS.Sum</c>
+        /// rather than in the grammar action: <c>"i"</c> converts to an entity by being parsed, so
+        /// this call arrives exactly as the parsed text does, and the two must not disagree.
+        /// </summary>
+        [Fact]
+        public void TheApiShadowsItToo() =>
+            Assert.Equal(((Entity)55).Evaled, Sum("i", "i", 1, 10).Simplify().Evaled);
+
+        /// <summary>
+        /// The shadowing reaches an imaginary <i>literal</i> too, because <c>2i</c> is one number
+        /// token rather than a product: answering this <c>6i</c> while <c>sum(2 * i, i, 1, 3)</c>
+        /// is <c>12</c> would be one expression answered two ways.
         /// </summary>
         [Theory]
-        [InlineData("sum(i * k, k, 1, 3)", "6i")]
-        [InlineData("sum(k + i, k, 1, 2)", "3 + 2i")]
-        [InlineData("sum(i, i, 1, 3) + i", "6 + i")]
-        public void ElsewhereItIsStillTheImaginaryUnit(string expression, string expected) =>
-            Assert.Equal(expected.ToEntity().Evaled, expression.ToEntity().Simplify().Evaled);
+        [InlineData("sum(2i, i, 1, 3)")]
+        [InlineData("sum(2 * i, i, 1, 3)")]
+        public void AnImaginaryLiteralIsTwiceTheIndexToo(string expression) =>
+            Assert.Equal(((Entity)12).Evaled, expression.ToEntity().Simplify().Evaled);
 
-        /// <summary>A declared index with a symbolic bound is still carried, not guessed at.</summary>
+        /// <summary>
+        /// And nothing is shadowed where <c>i</c> was not declared: the constant is still the
+        /// constant when the index is something else, which is the half that could regress silently.
+        /// </summary>
         [Fact]
-        public void ADeclaredImaginaryUnitIndexWithASymbolicBoundIsCarried() =>
-            Assert.IsType<Entity.Summationf>("sum(i, i, 1, n)".ToEntity().Simplify());
+        public void TheImaginaryUnitSurvivesAnIndexNamedSomethingElse() =>
+            Assert.Equal((3 * MathS.i).Evaled, "sum(i, k, 1, 3)".ToEntity().Simplify().Evaled);
+
+        /// <summary>
+        /// What is shadowed is the <i>name</i>, so an expression that denotes the constant without
+        /// naming it still denotes it — the same way shadowing works anywhere else. This is the case
+        /// that says the rule is syntactic rather than a hunt for the value.
+        /// </summary>
+        [Fact]
+        public void AnExpressionThatOnlyEqualsTheImaginaryUnitIsNotTheName() =>
+            Assert.Equal((3 * MathS.i).Evaled, "sum(sqrt(-1), i, 1, 3)".ToEntity().Simplify().Evaled);
+
+        /// <summary>
+        /// The index is a name once it is declared, so it is bound like any other index — the
+        /// property <see cref="SubstitutingTheIndexFromOutsideDoesNothing"/> pins for <c>k</c>.
+        /// </summary>
+        [Fact]
+        public void TheShadowedIndexIsBoundLikeAnyOther()
+        {
+            var summation = "sum(i, i, 1, n)".ToEntity();
+            var index = Assert.Single(summation.Vars.Where(variable => variable.Name == "i"));
+            Assert.Equal(summation, summation.Substitute(index, 5));
+        }
+
+        /// <summary>
+        /// The bounds are outside the binder — they are written in the scope the declaration is
+        /// made in — so the imaginary unit there is still the imaginary unit, and a range that ends
+        /// at it has no integer bound and is carried.
+        /// </summary>
+        [Fact]
+        public void TheBoundsAreOutsideTheBinder()
+        {
+            var summation = Assert.IsType<Entity.Summationf>("sum(i, i, 1, i)".ToEntity().Simplify());
+            Assert.Equal(MathS.i, summation.To);
+            Assert.IsType<Entity.Variable>(summation.Var);
+        }
 
         /// <summary>
         /// Too many terms is left unexpanded: a thousand-term sum is a correct expansion and a
@@ -119,6 +163,10 @@ namespace AngouriMath.Tests.Core
         [Theory]
         [InlineData("sum(k, k, 1, n)")]
         [InlineData("product(k, k, 1, n)")]
+        // A shadowed index prints as `i`, which reads as the imaginary unit anywhere else -- so the
+        // round trip only closes because parsing the printed form shadows it again. #976
+        [InlineData("sum(i, i, 1, n)")]
+        [InlineData("product(i^2, i, 1, n)")]
         public void ItPrintsAndParsesBackToItself(string expression)
         {
             var original = expression.ToEntity();
