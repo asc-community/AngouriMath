@@ -91,6 +91,7 @@ namespace AngouriMath.Functions
         /// not help, because the two rules are looking at different nodes.
         /// https://github.com/asc-community/AngouriMath/issues/176
         /// </remarks>
+        [AddressableRules]
         internal static Entity PerfectSquareRules(Entity x)
             => x is Sumf or Minusf && CollapseToPerfectSquare(x) is { } square ? square : x;
 
