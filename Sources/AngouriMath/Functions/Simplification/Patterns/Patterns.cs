@@ -13,7 +13,7 @@ namespace AngouriMath.Functions
 {
     internal static partial class Patterns
     {
-        private static Entity SortAndGroup(IEnumerable<Entity> children, TreeAnalyzer.SortLevel level, Func<Entity, Entity, Entity> ctor)
+        private static Entity SortAndGroup(Entity original, IEnumerable<Entity> children, TreeAnalyzer.SortLevel level, Func<Entity, Entity, Entity> ctor)
         {
             var groups = new Dictionary<string, List<Entity>>();
             foreach (var child in children)
@@ -23,7 +23,13 @@ namespace AngouriMath.Functions
                     groups[hash] = new();
                 groups[hash].Add(child);
             }
-            return groups.OrderBy(pair => pair.Key).Select(pair => pair.Value.Aggregate(ctor)).Aggregate(ctor);
+            var sorted = groups.OrderBy(pair => pair.Key).Select(pair => pair.Value.Aggregate(ctor)).Aggregate(ctor);
+            // Hand the original back where the sort changed nothing. Aggregate builds a fresh
+            // node whether or not the order moved, and an Entity memoises InnerSimplified, Evaled
+            // and its complexity on the instance -- so rebuilding an already-ordered chain threw
+            // all of that away and made the next pass re-derive it from cold.
+            // https://github.com/asc-community/AngouriMath/issues/975
+            return sorted == original ? original : sorted;
         }
 
         /// <summary>Actual sorting with <see cref="Entity.SortHash(TreeAnalyzer.SortLevel)"/></summary>
@@ -31,19 +37,19 @@ namespace AngouriMath.Functions
         internal static Func<Entity, Entity> SortRules(TreeAnalyzer.SortLevel level) => x => x switch
         {
             Sumf or Minusf =>
-                SortAndGroup(Sumf.LinearChildren(x), level, (a, b) => a + b),
+                SortAndGroup(x, Sumf.LinearChildren(x), level, (a, b) => a + b),
             Mulf or Divf =>
-                SortAndGroup(Mulf.LinearChildren(x), level, (a, b) => a * b),
+                SortAndGroup(x, Mulf.LinearChildren(x), level, (a, b) => a * b),
             Andf =>
-                SortAndGroup(Andf.LinearChildren(x), level, (a, b) => a & b),
+                SortAndGroup(x, Andf.LinearChildren(x), level, (a, b) => a & b),
             Orf =>
-                SortAndGroup(Orf.LinearChildren(x), level, (a, b) => a | b),
+                SortAndGroup(x, Orf.LinearChildren(x), level, (a, b) => a | b),
             Unionf =>
-                SortAndGroup(Unionf.LinearChildren(x), level, (a, b) => a.Unite(b)),
+                SortAndGroup(x, Unionf.LinearChildren(x), level, (a, b) => a.Unite(b)),
             Intersectionf =>
-                SortAndGroup(Intersectionf.LinearChildren(x), level, (a, b) => a.Intersect(b)),
+                SortAndGroup(x, Intersectionf.LinearChildren(x), level, (a, b) => a.Intersect(b)),
             Xorf => 
-                SortAndGroup(Xorf.LinearChildren(x), level, (a, b) => a ^ b),
+                SortAndGroup(x, Xorf.LinearChildren(x), level, (a, b) => a ^ b),
             _ => x,
         };
         [AddressableRules]
