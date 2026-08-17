@@ -29,9 +29,9 @@ namespace AngouriMath.Core.Transformations
     {
         private readonly Func<Entity, Entity> rules;
 
-        internal RewriteRuleSet(string name, string description, TransformationRelation relation, Soundness soundness, Func<Entity, Entity> rules, IReadOnlyList<RewriteRule>? addressable = null)
-            => (Name, Description, Relation, Soundness, this.rules, Rules)
-                = (name, description, relation, soundness, rules, addressable ?? Array.Empty<RewriteRule>());
+        internal RewriteRuleSet(string name, string description, TransformationRelation relation, Soundness soundness, Func<Entity, Entity> rules, IReadOnlyList<RewriteRule>? addressable = null, bool isNormalization = false)
+            => (Name, Description, Relation, Soundness, this.rules, Rules, IsNormalization)
+                = (name, description, relation, soundness, rules, addressable ?? Array.Empty<RewriteRule>(), isNormalization);
 
         /// <summary>A stable identity for this set.</summary>
         public string Name { get; }
@@ -44,6 +44,24 @@ namespace AngouriMath.Core.Transformations
 
         /// <summary>How well justified that claim is. See <see cref="Soundness"/> on what a tier here is and is not.</summary>
         public Soundness Soundness { get; }
+
+        /// <summary>
+        /// Whether this set only puts an expression into a canonical shape, rather than moving it
+        /// towards an answer.
+        /// </summary>
+        /// <remarks>
+        /// Declared by the set rather than inferred, because it is a statement about intent that
+        /// no amount of looking at a rewrite settles: reordering <c>y + x</c> to <c>x + y</c> and
+        /// collapsing <c>x + x</c> to <c>2 * x</c> are both equivalences that change the tree, and
+        /// only the author knows which one was meant as tidying.
+        /// <para/>
+        /// What it is for: a reader following a derivation wants the rewrites that got somewhere,
+        /// and normalisation is the engine straightening the expression between them. On
+        /// <c>x^(-1)/(y/z)</c> it is 251 of the 270 recorded rewrites. See
+        /// <see cref="RewriteRecording.Derivation"/> and
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/28">#28</a>.
+        /// </remarks>
+        public bool IsNormalization { get; }
 
         /// <summary>
         /// The individual rewrites this set is made of, in the order they are tried.

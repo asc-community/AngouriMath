@@ -51,7 +51,8 @@ namespace AngouriMath.Core.Transformations
             // same value wherever the divisor is not zero.
             Soundness.SoundUnderAssumptions,
             Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL),
-            Patterns.SortRulesArms(TreeAnalyzer.SortLevel.HIGH_LEVEL));
+            Patterns.SortRulesArms(TreeAnalyzer.SortLevel.HIGH_LEVEL),
+            isNormalization: true);
 
         /// <summary>
         /// <see cref="CanonicalOrder"/>, counting constants as well, so that terms differing
@@ -63,7 +64,8 @@ namespace AngouriMath.Core.Transformations
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
             Patterns.SortRules(TreeAnalyzer.SortLevel.MIDDLE_LEVEL),
-            Patterns.SortRulesArms(TreeAnalyzer.SortLevel.MIDDLE_LEVEL));
+            Patterns.SortRulesArms(TreeAnalyzer.SortLevel.MIDDLE_LEVEL),
+            isNormalization: true);
 
         /// <summary>
         /// <see cref="CanonicalOrder"/> over the whole subtree, so that only structurally
@@ -75,7 +77,8 @@ namespace AngouriMath.Core.Transformations
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
             Patterns.SortRules(TreeAnalyzer.SortLevel.LOW_LEVEL),
-            Patterns.SortRulesArms(TreeAnalyzer.SortLevel.LOW_LEVEL));
+            Patterns.SortRulesArms(TreeAnalyzer.SortLevel.LOW_LEVEL),
+            isNormalization: true);
 
         /// <summary>
         /// Turns a negative power into a quotient: <c>a * b ^ (-1)</c> becomes <c>a / b</c>.

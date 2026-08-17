@@ -42,6 +42,70 @@ namespace AngouriMath.Tests.Core.Transformations
             }
         }
 
+        /// <summary>
+        /// The reporter's expression on
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/28">#28</a>, and the rule
+        /// they wrote out by hand — <c>any1 / (any2 / any3) -> any1 * any3 / any2</c> — is in the
+        /// derivation, named.
+        /// </summary>
+        [Fact]
+        public void TheDerivationNamesTheRewritesTheReporterAskedFor()
+        {
+            using var recording = RewriteRecording.Start();
+            Parse("x^(-1)/(y/z)").Simplify();
+
+            var derivation = recording.Derivation;
+            Assert.NotEmpty(derivation);
+            Assert.Contains(derivation, step =>
+                step.Rule?.PatternSource == "Divf(var any1, Divf(var any2, var any3))"
+                && step.Rule?.ReplacementSource == "any1 * any3 / any2");
+        }
+
+        /// <summary>
+        /// The point of the view: the raw list is dominated by the engine tidying up between
+        /// rewrites, and by the same rewrite recurring down every candidate branch.
+        /// </summary>
+        [Fact]
+        public void TheDerivationIsFarShorterThanTheRawRecording()
+        {
+            using var recording = RewriteRecording.Start();
+            Parse("x^(-1)/(y/z)").Simplify();
+
+            Assert.True(recording.Steps.Count > 100,
+                $"the raw recording is only {recording.Steps.Count} steps, so this proves nothing");
+            Assert.True(recording.Derivation.Count < 15,
+                $"the derivation is {recording.Derivation.Count} steps: "
+                + string.Join("; ", recording.Derivation.Select(s => s.Rule?.Name ?? s.RuleSet.Name)));
+        }
+
+        /// <summary>Normalisation is what the view drops, so none of it may survive.</summary>
+        [Fact]
+        public void TheDerivationHasNoNormalisation()
+        {
+            using var recording = RewriteRecording.Start();
+            Parse("x^(-1)/(y/z)").Simplify();
+
+            // Stated rather than assumed: if the raw recording had no normalisation in it the
+            // assertion below would hold while testing nothing.
+            Assert.Contains(recording.Steps, step => step.RuleSet.IsNormalization);
+            Assert.DoesNotContain(recording.Derivation, step => step.RuleSet.IsNormalization);
+        }
+
+        /// <summary>
+        /// A rewrite that takes one step is reported as one step, with the rule that did it.
+        /// </summary>
+        [Theory]
+        [InlineData("x + x", "2 * any1")]
+        [InlineData("sin(x)^2 + cos(x)^2", "1")]
+        public void AOneStepRewriteIsOneStep(string expr, string replacement)
+        {
+            using var recording = RewriteRecording.Start();
+            Parse(expr).Simplify();
+
+            var step = Assert.Single(recording.Derivation);
+            Assert.Equal(replacement, step.Rule?.ReplacementSource);
+        }
+
         [Fact]
         public void AStepSaysWhatItClaimsAndHowWellJustifiedItIs()
         {
