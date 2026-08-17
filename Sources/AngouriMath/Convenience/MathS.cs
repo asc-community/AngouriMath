@@ -6844,9 +6844,10 @@ namespace AngouriMath
         /// </summary>
         /// <param name="expr">The summand. It may mention <paramref name="var"/>.</param>
         /// <param name="var">
-        /// The index, which this <b>binds</b> — it is not a free variable of the result. It must be
-        /// a <see cref="Entity.Variable"/>: <c>i</c> is the imaginary unit here, not an index, so
-        /// <c>Sum("i", "i", 1, 10)</c> is left unevaluated rather than guessed at.
+        /// The index, which this <b>binds</b> — it is not a free variable of the result. Naming
+        /// <c>i</c> works: it is the imaginary unit everywhere else, but declaring it as the index
+        /// is taken as meaning it, throughout this operator and nowhere outside it. See
+        /// <see cref="Iterated"/>.
         /// </param>
         /// <param name="from">The first value of the index.</param>
         /// <param name="to">The last value of the index, inclusive.</param>
@@ -6875,7 +6876,7 @@ namespace AngouriMath
         /// </code>
         /// </example>
         public static Entity Sum(Entity expr, Entity var, Entity from, Entity to)
-            => new Summationf(expr, var, from, to);
+            => Iterated(static (e, v, f, t) => new Summationf(e, v, f, t), expr, var, from, to);
 
         /// <summary>
         /// A product of <paramref name="expr"/> as <paramref name="var"/> runs from
@@ -6902,7 +6903,43 @@ namespace AngouriMath
         /// </code>
         /// </example>
         public static Entity Product(Entity expr, Entity var, Entity from, Entity to)
-            => new Productf(expr, var, from, to);
+            => Iterated(static (e, v, f, t) => new Productf(e, v, f, t), expr, var, from, to);
+
+        /// <summary>
+        /// Reads <c>i</c> as the loop variable where it is named as one, through the summand and
+        /// the bounds as well as in the index position.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>i</c> is the imaginary unit, and that is decided in the lexer — <c>NUMBER: ... |</c>
+        /// <c>'i'</c> — so it never reaches the rule that makes variables and cannot be one
+        /// anywhere in the language. That left <c>sum(i, i, 1, 10)</c> quietly summing nothing:
+        /// the index was a number, so the operator had no variable to bind.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/976">#976</a>
+        /// </para>
+        /// <para>
+        /// Naming <c>i</c> as the index says something about the whole operator, so it is honoured
+        /// throughout it. Doing it in the index position alone would be worse than not doing it at
+        /// all: the index would become a variable while every <c>i</c> in the summand stayed the
+        /// imaginary unit, nothing would substitute, and <c>sum(i, i, 1, 10)</c> would answer
+        /// <c>10i</c> instead of 55 — a wrong answer in place of an unevaluated one.
+        /// </para>
+        /// <para>
+        /// Only inside the operator that declares it. <c>sum(i * k, k, 1, 3)</c> is <c>6i</c>, and
+        /// the <c>i</c> in <c>sum(i, i, 1, 3) + i</c> outside the sum is still the imaginary unit.
+        /// </para>
+        /// </remarks>
+        private static Entity Iterated(
+            Func<Entity, Entity, Entity, Entity, Entity> build,
+            Entity expr, Entity var, Entity from, Entity to)
+        {
+            if (var != i)
+                return build(expr, var, from, to);
+            var index = Entity.Variable.CreateVariableUnchecked("i");
+            Entity Rename(Entity subject) => subject.Replace(node => node == i ? index : node);
+            return build(Rename(expr), index, Rename(from), Rename(to));
+        }
+
 
         /// <summary>Some non-symbolic constants</summary>
         [SuppressMessage("Style", "IDE1006:Naming Styles",
