@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace AngouriMath.Core.Transformations
@@ -45,6 +46,12 @@ namespace AngouriMath.Core.Transformations
     /// rewrites, in the order they fired, across every candidate that was generated,
     /// including the ones that lost. Reading them as a route from the input to the returned
     /// answer would be reading in something that is not there.
+    /// </para>
+    /// <para>
+    /// <see cref="Steps"/> is that raw list. <see cref="Derivation"/> is the same list with the
+    /// normalisation and the repeats taken out, which is what a reader asking "how did it get
+    /// there" wants — 270 rewrites down to 6 on <c>x^(-1)/(y/z)</c>. It is still a set of
+    /// rewrites rather than a path; the paragraph above applies to both.
     /// </para>
     /// </remarks>
     /// <example>
@@ -107,6 +114,52 @@ namespace AngouriMath.Core.Transformations
         /// gives the complete list either way.
         /// </remarks>
         public IReadOnlyList<RewriteStep> Steps => steps.ToArray();
+
+        /// <summary>
+        /// <see cref="Steps"/> with the tidying taken out and the repeats collapsed — the rewrites
+        /// that are worth reading. <a href="https://github.com/asc-community/AngouriMath/issues/28">#28</a>
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Two things are dropped, and neither is a judgement about importance. Sets that declare
+        /// <see cref="RewriteRuleSet.IsNormalization"/> are the engine straightening an expression
+        /// between real rewrites. And a rewrite that has already appeared is not shown again: the
+        /// simplifier explores several candidate forms and rewrites the same subexpression the same
+        /// way in each, so the raw list repeats itself many times over.
+        /// </para>
+        /// <para>
+        /// On <c>x^(-1)/(y/z)</c> that is 270 recorded rewrites down to 6.
+        /// </para>
+        /// <para>
+        /// <b>This is a set of rewrites, not a path.</b> Each entry is a real rewrite that really
+        /// fired, on the subexpression it names — but <see cref="Entity.Simplify(int)"/> searches candidate
+        /// forms and keeps the best, so these come from several branches and some belong to
+        /// candidates that were discarded. Reading them in order does not walk from the input to
+        /// the answer, and a step's <see cref="RewriteStep.Before"/> is a subexpression rather than
+        /// the whole expression at that moment. Producing a single path, with a whole expression at
+        /// each stage, needs the simplifier to record which candidate each rewrite belonged to,
+        /// which it does not do yet.
+        /// </para>
+        /// </remarks>
+        public IReadOnlyList<RewriteStep> Derivation
+        {
+            get
+            {
+                var seen = new HashSet<(string, string, string)>();
+                var derivation = new List<RewriteStep>();
+                foreach (var step in steps)
+                {
+                    if (step.RuleSet.IsNormalization)
+                        continue;
+                    // Keyed on what the reader sees — which rewrite, from what, to what — so that
+                    // the same rewrite found down two candidate branches is shown once.
+                    if (seen.Add((step.Rule?.Name ?? step.RuleSet.Name,
+                                  step.Before.Stringize(), step.After.Stringize())))
+                        derivation.Add(step);
+                }
+                return derivation;
+            }
+        }
 
         /// <summary>Closes the recording. <see cref="Steps"/> stays readable afterwards.</summary>
         public void Dispose()
