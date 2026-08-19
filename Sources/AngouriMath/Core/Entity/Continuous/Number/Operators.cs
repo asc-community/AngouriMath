@@ -239,6 +239,37 @@ namespace AngouriMath
                 return res;
             }
 
+            /// <summary>
+            /// Whether <see cref="FindGoodRoot"/> can return anything at all for this base and
+            /// root power, asked before it runs so that its cost is only paid where its answer
+            /// can be used.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// It answers with a <see cref="Real"/>, and a negative real has no real root of even
+            /// order — for real <c>x</c> and even <c>q</c>, <c>x ^ q</c> is never negative — so
+            /// every even root of it lies off the real line and the search is a certain miss.
+            /// </para>
+            /// <para>
+            /// It is not a cheap miss. The search computes all <c>q</c> roots to the full decimal
+            /// precision and attempts a rational conversion of each part of each, which is 7.5 ms
+            /// of the 12.6 ms that evaluating <c>sqrt(-pi)</c> used to cost. What makes that reach
+            /// a caller is that <c>Simplify</c> asks for the value of the same expression dozens of
+            /// times over — each rewrite hands it a freshly built node, whose cached value is not
+            /// the previous node's — so <c>Simplify("sqrt(-pi)")</c> spent 556 ms returning its
+            /// argument unchanged, and spends 232 ms now.
+            /// <a href="https://github.com/asc-community/AngouriMath/issues/975">#975</a>
+            /// </para>
+            /// <para>
+            /// A non-real base is left to the search rather than excluded here. A complex number
+            /// has no real root either, but a real one whose imaginary part is a rounding artefact
+            /// arrives as <see cref="Complex"/>, and this is a performance guard rather than the
+            /// place to decide what such a number is.
+            /// </para>
+            /// </remarks>
+            private static bool CanHaveARealRoot(Complex @base, EInteger rootPower) =>
+                @base is not Real { IsNegative: true } || !rootPower.IsEven;
+
             internal static Real? FindGoodRoot(Complex @base, Integer power)
             {
                 Real? positive = null, real = null;
@@ -378,7 +409,8 @@ namespace AngouriMath
                 if (@base.IsFinite && power is Integer { EInteger: var pow })
                     return BinaryIntPow(@base, pow);
 
-                if (@base.IsFinite && power is Rational r && r.ERational.Denominator.Abs() < 10 // there should be a minimal threshold to avoid long searches 
+                if (@base.IsFinite && power is Rational r && r.ERational.Denominator.Abs() < 10 // there should be a minimal threshold to avoid long searches
+                    && CanHaveARealRoot(@base, r.ERational.Denominator.Abs())
                     && FindGoodRoot(@base, r.ERational.Denominator) is { } goodRoot)
                     return Pow(goodRoot, r.ERational.Numerator);
 

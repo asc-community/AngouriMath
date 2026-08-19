@@ -56,6 +56,41 @@ namespace AngouriMath.Tests.Core
             Complex c = a + b;
             Assert.Equal(Complex.Create(3, 1), c);
         }
+        /// <summary>
+        /// A root of a negative real. Evaluating one used to search for a real root first, which
+        /// for an even order cannot exist — every even root of a negative real is off the real
+        /// line — and the search is not a cheap miss, so
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/975">#975</a> skips it
+        /// there. These pin what the skipping must not cost: the exact answers on the even side,
+        /// and the real root the search is still there to find on the odd side.
+        /// </summary>
+        [Theory]
+        // Even order: the real-root search is skipped, and the exact value has to survive the
+        // general complex formula it falls through to.
+        [InlineData("sqrt(-4)", "2i")]
+        [InlineData("(-4) ^ (3/2)", "-8i")]
+        [InlineData("(-1) ^ (1/2)", "i")]
+        // Odd order: a real root exists, so the search still runs and still answers exactly.
+        [InlineData("(-8) ^ (1/3)", "-2")]
+        [InlineData("(-27) ^ (2/3)", "9")]
+        // And the positive side, which the guard does not touch.
+        [InlineData("4 ^ (1/2)", "2")]
+        [InlineData("16 ^ (1/4)", "2")]
+        [InlineData("1 ^ (1/4)", "1")]
+        public void ARootOfANegativeRealKeepsItsExactValue(string expression, string expected) =>
+            Assert.Equal(expected.ToEntity().Evaled, expression.ToEntity().Evaled);
+
+        /// <summary>
+        /// And where it is not exact it is still the imaginary multiple of the positive root, to
+        /// the last digit of the precision context — which is the identity the skipped search was
+        /// never contributing to. #975
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(-2)", "i * sqrt(2)")]
+        [InlineData("sqrt(-pi)", "i * sqrt(pi)")]
+        public void AnEvenRootOfANegativeRealIsTheImaginaryOne(string negative, string imaginary) =>
+            Assert.Equal(imaginary.ToEntity().Evaled, negative.ToEntity().Evaled);
+
         [Fact]
         public void TestRationalDowncasting()
         {
