@@ -89,8 +89,17 @@ namespace AngouriMath.Core.Transformations
         /// The rule that fires at this node, or <see langword="null"/> where none does.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// At this node only, leaving its children alone — which is what an arm of the
         /// <c>switch</c> sees. Always null for a set with no <see cref="Rules"/>.
+        /// </para>
+        /// <para>
+        /// <b>Firing means changing the node.</b> An arm can match and then decline: the factorial
+        /// arms match any quotient of factorials and hand back what they were given where the two
+        /// offsets are a hundred apart, since writing that product out is not a simplification.
+        /// Naming such an arm here would report a rewrite that did not happen, so a rule that
+        /// returns the node it was given is not the rule that fired.
+        /// </para>
         /// </remarks>
         public RewriteRule? RuleFiringAt(Entity node)
         {
@@ -99,7 +108,7 @@ namespace AngouriMath.Core.Transformations
             // The array, and by index: this is walked once per recorded rewrite and the sets are
             // long -- CommonRules alone has 103 arms.
             for (var i = 0; i < Rules.Count; i++)
-                if (Rules[i].TryApply(node) is not null)
+                if (Rules[i].TryApply(node) is { } rewritten && rewritten != node)
                     return Rules[i];
             return null;
         }
