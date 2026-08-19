@@ -28,6 +28,13 @@ read first.
 | **Silent** | a rewritten expression under `domain(...)` — including via `Substitute` | the constraint was dropped, so it answered | it refuses, as it did before the rewrite |
 | **Silent** | `"x!".Differentiate("x")`, and anything containing it | `NaN` | the unevaluated `derivative(x!, x)` |
 | **Silent** | `"7/2".ToEntity()` and any quotient of two integer literals | a `Divf` | the `Rational` it denotes |
+| **Silent** | `sum(i, i, 1, 10)`, and every binder given `i` as the name it binds | the imaginary unit in the name position, so nothing was bound | `i` is the bound name, and `55` |
+| **Silent** | `sum(2i, i, 1, 3)` | `6i` | `12` |
+| **Silent** | `derivative(i ^ 2, i)` | `0` | `2 * i` |
+| **Silent** | `{ i : i > 0 }` | `NaN` | the set it describes |
+| **Silent** | `limit(i, i, 0)` | unevaluated | `0` |
+| **Silent** | `integral(i, i)` | `-1/2 + C` | `i ^ 2 / 2 + C` |
+| | `lambda(i, i + 1)` | `InvalidArgumentParseException` | the lambda |
 
 ### A rewritten node keeps its `Codomain`, so a domain constraint no longer disappears
 
@@ -202,6 +209,46 @@ work.
 Found while documenting the members a `#pragma warning disable CS1591` was covering — the two
 conversions sit in different files and had to be read side by side to look wrong.
 [#585](https://github.com/asc-community/AngouriMath/issues/585).
+
+### A binder given `i` as the name it binds reads it as that name
+
+`i` is the imaginary unit, and the lexer decides it — `NUMBER: ... | 'i'` — so it never reaches the
+rule that makes variables and could not be a bound name anywhere in the language. Every binder
+handed one therefore did something other than bind: a sum bound nothing and stayed unevaluated, a
+set builder answered `NaN`, a lambda threw. Naming `i` is now read as the declaration it plainly
+is, throughout that binder and nowhere else.
+
+```csharp
+"sum(i, i, 1, 10)".ToEntity().Simplify()      // was: unevaluated       now: 55
+"sum(2i, i, 1, 3)".ToEntity().Simplify()      // was: 6i                now: 12
+"integral(i, i)".ToEntity().Simplify()        // was: -1/2 + C          now: i ^ 2 / 2 + C
+"limit(i, i, 0)".ToEntity().Simplify()        // was: unevaluated       now: 0
+"derivative(i ^ 2, i)".ToEntity().Simplify()  // was: 0                 now: 2 * i
+"{ i : i > 0 }".ToEntity().Simplify()         // was: NaN               now: { i : i > 0 }
+"lambda(i, i + 1)".ToEntity()                 // was: threw             now: the lambda
+```
+
+`2i` is one token, so a written coefficient on the bound name arrives as a single number with
+nothing in it to rename; under a binder that names `i` it is read as the product it would be with
+any other name, which is what turns `6i` into `12` above.
+
+**Only inside the binder that declares it**, which is what makes this a fix and not a new defect:
+
+```csharp
+"sum(i * k, k, 1, 3)".ToEntity().Simplify()          // 6i, unchanged
+"sum(i, i, 1, 3) + i".ToEntity().Simplify()          // 6 + i, unchanged
+"sum(sqrt(-1) * i, i, 1, 10)".ToEntity().Simplify()  // 55i — the sum's index, times the unit
+```
+
+The last is what SymPy answers for `Sum(sqrt(-1) * i, (i, 1, 10))`, which resolves the same
+collision by naming the constant `I` and refusing to bind it.
+
+`e` and `pi` are unaffected and needed nothing here: they are variables that carry a value, so a
+binder has always taken those names. They are also not fully fixed by anything in this entry — a
+bound `e` still means `2.718…`, since the bound name and the constant are one object.
+[#984](https://github.com/asc-community/AngouriMath/issues/984) has the measurements.
+
+[#976](https://github.com/asc-community/AngouriMath/issues/976).
 
 ---
 

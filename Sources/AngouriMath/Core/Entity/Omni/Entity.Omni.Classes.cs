@@ -6,6 +6,7 @@
 //
 
 using System;
+using AngouriMath.Core;
 using System.Collections;
 using AngouriMath.Core.HashCode;
 using AngouriMath.Core.Exceptions;
@@ -431,6 +432,12 @@ namespace AngouriMath
             /// </example>
             public sealed partial record ConditionalSet(Entity Var, Entity Predicate) : Set, IEquatable<ConditionalSet?>
             {
+                /// <summary>The name this set builder binds. See <see cref="Core.Binding"/>.</summary>
+                public Entity Var { get; init; } = Binding.Of(Var).Name;
+
+                /// <summary>What holds of <see cref="Var"/> exactly for the members of this set.</summary>
+                public Entity Predicate { get; init; } = Binding.Of(Var).In(Predicate);
+
                 /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Var, Predicate.Replace(func)));

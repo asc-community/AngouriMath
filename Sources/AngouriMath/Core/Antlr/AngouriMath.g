@@ -461,8 +461,13 @@ atom returns[Entity value]
             var body = $args.list.Last();
             foreach (var x in ((IEnumerable<Entity>)$args.list).Reverse().Skip(1))
             {
-                if (x is not Variable v) throw new InvalidArgumentParseException($"Lambda is expected to have valid parameters, {x} encountered instead");
-                body = body.LambdaOver(v);
+                /* Lambda's parameter is typed Variable, so unlike every other binder it cannot
+                   be handed the imaginary unit and read it there. i is what a lambda over an
+                   index is called, so it is read here instead.
+                   https://github.com/asc-community/AngouriMath/issues/976 */
+                var bound = AngouriMath.Core.Binding.Of(x);
+                if (bound.Name is not Variable v) throw new InvalidArgumentParseException($"Lambda is expected to have valid parameters, {x} encountered instead");
+                body = bound.In(body).LambdaOver(v);
             }
             $value = body;
         }
