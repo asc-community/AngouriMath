@@ -5,6 +5,8 @@
 // Website: https://am.angouri.org.
 //
 
+using AngouriMath.Core;
+
 namespace AngouriMath
 {
     partial record Entity
@@ -36,8 +38,18 @@ namespace AngouriMath
         /// <summary>
         /// Describes any calculus operator
         /// </summary>
+        /// <remarks>
+        /// Every one of these <b>binds</b> <see cref="Var"/>, so this is where a bound name is
+        /// read — see <see cref="Core.Binding"/> for the one name in the language that needs
+        /// reading rather than taking as it arrives.
+        /// </remarks>
         public abstract partial record CalculusOperator(Entity Expression, Entity Var) : Function
         {
+            /// <summary>The name this operator binds.</summary>
+            public Entity Var { get; init; } = Binding.Of(Var).Name;
+
+            /// <summary>The expression the operator is applied to, which may mention <see cref="Var"/>.</summary>
+            public Entity Expression { get; init; } = Binding.Of(Var).In(Expression);
         }
 
         /// <summary>

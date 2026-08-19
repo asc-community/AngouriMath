@@ -6,6 +6,7 @@
 //
 
 using System;
+using AngouriMath.Core;
 
 namespace AngouriMath
 {
@@ -35,6 +36,11 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Integralf(Entity Expression, Entity Var, (Entity from, Entity to)? Range) : CalculusOperator(Expression, Var)
         {
+            /// <summary>The interval integrated over, or <see langword="null"/> for an indefinite integral.</summary>
+            public (Entity from, Entity to)? Range { get; init; } = Range is var (from, to)
+                ? (Binding.Of(Var).In(from), Binding.Of(Var).In(to))
+                : Range;
+
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Integralf New(Entity expression, Entity var, (Entity from, Entity to)? range) =>
                 ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var)
@@ -70,6 +76,12 @@ namespace AngouriMath
         /// </remarks>
         public sealed partial record Summationf(Entity Expression, Entity Var, Entity From, Entity To) : CalculusOperator(Expression, Var)
         {
+            /// <summary>The first value of the index.</summary>
+            public Entity From { get; init; } = Binding.Of(Var).In(From);
+
+            /// <summary>The last value of the index, inclusive.</summary>
+            public Entity To { get; init; } = Binding.Of(Var).In(To);
+
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Summationf New(Entity expression, Entity var, Entity from, Entity to) =>
                 ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var)
@@ -89,6 +101,12 @@ namespace AngouriMath
         /// <remarks><a href="https://github.com/asc-community/AngouriMath/issues/248">#248</a></remarks>
         public sealed partial record Productf(Entity Expression, Entity Var, Entity From, Entity To) : CalculusOperator(Expression, Var)
         {
+            /// <summary>The first value of the index.</summary>
+            public Entity From { get; init; } = Binding.Of(Var).In(From);
+
+            /// <summary>The last value of the index, inclusive.</summary>
+            public Entity To { get; init; } = Binding.Of(Var).In(To);
+
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Productf New(Entity expression, Entity var, Entity from, Entity to) =>
                 ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var)
@@ -106,6 +124,9 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Limitf(Entity Expression, Entity Var, Entity Destination, ApproachFrom ApproachFrom) : CalculusOperator(Expression, Var)
         {
+            /// <summary>What the variable approaches.</summary>
+            public Entity Destination { get; init; } = Binding.Of(Var).In(Destination);
+
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Limitf New(Entity expression, Entity var, Entity destination, ApproachFrom approachFrom) =>
                 ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var) && ReferenceEquals(Destination, destination)
