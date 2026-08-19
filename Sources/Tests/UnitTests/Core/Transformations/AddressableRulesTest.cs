@@ -267,10 +267,10 @@ namespace AngouriMath.Tests.Core.Transformations
         /// than a claim that it is "mostly" done.
         /// </summary>
         /// <remarks>
-        /// The sets that are not are the ones whose rewrites are not a <c>switch</c> over the
-        /// expression — a sort, a polynomial division, a method with branches and locals. Each is
-        /// named here so that making one addressable is a change to this list rather than a
-        /// silent improvement nobody records.
+        /// A set that is not addressable is one whose rewrites are not a <c>switch</c> over the
+        /// expression. Each is named here rather than counted, so that making one addressable is a
+        /// change to this list rather than a silent improvement nobody records — and so that a
+        /// claim about <i>why</i> a set is on it can be checked against the set.
         /// </remarks>
         [Fact]
         public void TheRegistryIsAddressableAsFarAsItSaysItIs()
@@ -279,19 +279,43 @@ namespace AngouriMath.Tests.Core.Transformations
             var without = RewriteRules.All.Where(set => set.Rules.Count == 0)
                 .Select(set => set.Name).OrderBy(name => name, StringComparer.Ordinal).ToList();
 
-            // All three are a method with a statement body, branches and locals, and no arms to
-            // read. That is the only reason left: every shape the generator can read is now read,
-            // and PerfectSquare -- held out of this list on cost rather than shape until #974 --
-            // has joined them.
-            Assert.Equal(new[]
-            {
-                "ExpandFactorialDivisions",
-                "FactorizeFactorialMultiplications",
-                "RationalizeDenominator",
-            }, without);
+            // One left, and it is the only reason left: a rewrite written as a procedure --
+            // branches, locals, a conjugate computed and oriented -- with no arms to read. The two
+            // factorial sets were on this list until it turned out they were not that shape at
+            // all: each was a switch that a statement body and a local function had put out of
+            // reach, and lifting the local function out was the whole of it.
+            Assert.Equal(new[] { "RationalizeDenominator" }, without);
 
-            Assert.Equal(27, withRules.Count);
-            Assert.Equal(389, withRules.Sum(set => set.Rules.Count));
+            Assert.Equal(29, withRules.Count);
+            Assert.Equal(405, withRules.Sum(set => set.Rules.Count));
+        }
+
+        /// <summary>
+        /// The two factorial sets, whose arms match a shape and then decide — and whose deciding
+        /// is what makes "which rule fired" a question with a wrong answer available.
+        /// </summary>
+        [Fact]
+        public void AnArmThatMatchesAndDeclinesIsNotTheRuleThatFired()
+        {
+            var set = RewriteRules.ExpandFactorialDivisions;
+            var declined = "(x + 100)! / x!".ToEntity();
+
+            // An arm matches -- the shape is a quotient of factorials over the same variable --
+            // and hands back what it was given, because a hundred terms written out is not a
+            // simplification. So the set as a whole changes nothing.
+            var matched = set.Rules.Where(rule => rule.TryApply(declined) is not null).ToList();
+            Assert.NotEmpty(matched);
+            Assert.All(matched, rule => Assert.Equal(declined, rule.TryApply(declined)));
+            Assert.Equal(declined, set.ApplyOnce(declined));
+            // So no rule fired here, and saying one did would be reporting a rewrite that did not
+            // happen.
+            Assert.Null(set.RuleFiringAt(declined));
+
+            // and the same set, on an input where an arm does fire, names it
+            var fires = "(x + 2)! / x!".ToEntity();
+            var rule = Assert.IsType<RewriteRule>(set.RuleFiringAt(fires));
+            Assert.Equal(set.ApplyOnce(fires), rule.TryApply(fires));
+            Assert.NotEqual(fires, set.ApplyOnce(fires));
         }
 
         [Fact]
