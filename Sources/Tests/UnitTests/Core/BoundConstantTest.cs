@@ -25,15 +25,6 @@ namespace AngouriMath.Tests.Core
     [Trait("Area", "Core")]
     public sealed class BoundConstantTest
     {
-        /// <summary>
-        /// The name a binder declares, as the binder itself reads it. Written rather than parsed,
-        /// because parsing <c>e</c> gives the constant — which is the whole subject here — so an
-        /// expectation spelled as a string could not say "a variable called e" at all.
-        /// </summary>
-        private static Entity.Variable BoundName(string name) =>
-            Assert.IsType<Entity.Summationf>($"sum({name}, {name}, 1, 1)".ToEntity()).Var as Entity.Variable
-            ?? throw new Xunit.Sdk.XunitException($"a binder over {name} did not bind a variable");
-
         // ---------------------------------------------------------------- the five in #984
 
         /// <summary>
@@ -45,9 +36,11 @@ namespace AngouriMath.Tests.Core
         [InlineData("pi")]
         public void DifferentiatingByABoundNameIsNotZero(string name)
         {
-            var bound = BoundName(name);
-            Assert.Equal(2 * bound, $"derivative({name} ^ 2, {name})".ToEntity().Simplify());
-            Assert.Equal(2 * bound, $"derivative({name} ^ 2, {name})".ToEntity().Evaled);
+            // `<name>_1` and not `<name>`: the answer carries the name out of the binder that
+            // declared it, and a variable called `pi` is one the parser cannot produce. See
+            // ANameThatOutlivesItsBinderIsRenamedSoItCanBeWritten below.
+            Assert.Equal($"2 * {name}_1".ToEntity(), $"derivative({name} ^ 2, {name})".ToEntity().Simplify());
+            Assert.Equal($"2 * {name}_1".ToEntity(), $"derivative({name} ^ 2, {name})".ToEntity().Evaled);
         }
 
         /// <summary>A set builder's predicate is about its own name, not about the constant.</summary>
@@ -124,9 +117,9 @@ namespace AngouriMath.Tests.Core
             foreach (var name in new[] { "e", "pi" })
             {
                 // Where the bound name outlives its binder -- an indefinite integral, a
-                // derivative -- it is a variable, so it is renamed rather than substituted for.
+                // derivative -- it comes back renamed, so the comparison renames it to match.
                 var bound = string.Format(shape, name).ToEntity().Simplify();
-                var renamed = bound.Substitute(BoundName(name), MathS.Var("qq"));
+                var renamed = bound.Substitute($"{name}_1".ToEntity(), MathS.Var("qq"));
                 Assert.Equal(ordinary, renamed);
             }
         }
@@ -280,21 +273,62 @@ namespace AngouriMath.Tests.Core
             Assert.Equal(expected.ToEntity(), expression.ToEntity().Simplify());
 
         /// <summary>
-        /// A name that outlives the binder that declared it is a variable, and prints as the name
-        /// it was given — so the printed form reads back as the constant rather than as that
-        /// variable. Recorded rather than asserted away: it is the same for the imaginary unit
-        /// since <a href="https://github.com/asc-community/AngouriMath/issues/976">#976</a>, and
-        /// nothing short of a name for the escaped variable would change it.
+        /// A name that outlives the binder that declared it is renamed to one that can be written.
+        /// Most binders consume their name — a sum answers a number, a set builder keeps it inside
+        /// itself — but a derivative and an indefinite integral return it, and a variable called
+        /// <c>pi</c> is a thing the parser cannot produce, so <c>2 * pi</c> would read back as
+        /// twice the constant. Renaming a bound variable is free, so it is renamed.
         /// </summary>
         [Theory]
-        [InlineData("derivative(pi ^ 2, pi)", "2 * pi")]
-        [InlineData("derivative(e ^ 2, e)", "2 * e")]
-        [InlineData("derivative(i ^ 2, i)", "2 * i")]
-        public void ANameThatOutlivesItsBinderPrintsAsItself(string expression, string printed)
+        [InlineData("derivative({0} ^ 2, {0})", "2 * {0}_1")]
+        [InlineData("integral({0} ^ 2, {0})", "{0}_1 ^ 3 / 3 + C")]
+        public void ANameThatOutlivesItsBinderIsRenamedSoItCanBeWritten(string shape, string expected)
         {
-            var answer = expression.ToEntity().Simplify();
-            Assert.Equal(printed, answer.Stringize());
-            Assert.NotEqual(printed.ToEntity(), answer);
+            foreach (var name in new[] { "pi", "e", "i" })
+                Assert.Equal(string.Format(expected, name).ToEntity(),
+                             string.Format(shape, name).ToEntity().Simplify());
+            // An ordinary name is not renamed, because it did not need to be.
+            Assert.Equal(string.Format(expected, "qq").Replace("qq_1", "qq").ToEntity(),
+                         string.Format(shape, "qq").ToEntity().Simplify());
+        }
+
+        /// <summary>
+        /// Which is the property the renaming exists for: whatever a binder over one of these
+        /// names answers, printing it and reading it back gives the same expression.
+        /// </summary>
+        [Theory]
+        [InlineData("derivative({0} ^ 2, {0})")]
+        [InlineData("integral({0} ^ 2, {0})")]
+        [InlineData("integral({0} ^ 2, {0}, 0, 1)")]
+        [InlineData("sum({0} ^ 2, {0}, 1, 3)")]
+        [InlineData("product({0} ^ 2, {0}, 1, 3)")]
+        [InlineData("limit({0} ^ 2, {0}, 3)")]
+        [InlineData("{{ {0} : {0} > 0 }}")]
+        [InlineData("lambda({0}, {0} + 1)")]
+        public void EveryBinderOverAConstantsNameAnswersSomethingThatReadsBack(string shape)
+        {
+            foreach (var name in new[] { "pi", "e", "i", "qq" })
+            {
+                var answer = string.Format(shape, name).ToEntity().Simplify();
+                Assert.Equal(answer, answer.Stringize().ToEntity());
+            }
+        }
+
+        /// <summary>
+        /// Differentiation compares the node and not its name, so a constant that simplification
+        /// produces inside a binder over that name is not differentiated as though it were the
+        /// index. <c>arccos(0)</c> is <c>pi / 2</c>, and the product rule was applying to both
+        /// factors of <c>arccos(0) * pi</c> where only one of them depends on the index.
+        /// </summary>
+        [Fact]
+        public void AProducedConstantIsNotDifferentiatedAsTheIndex()
+        {
+            Assert.Equal("derivative(arccos(0) * qq, qq)".ToEntity().Simplify(),
+                         "derivative(arccos(0) * pi, pi)".ToEntity().Simplify());
+            Assert.Equal("pi / 2".ToEntity(), "derivative(arccos(0) * pi, pi)".ToEntity().Simplify());
+            // And the `e` inside a logarithm is not the index either.
+            Assert.Equal("derivative(ln(x) * qq, qq)".ToEntity().Simplify(),
+                         "derivative(ln(x) * e, e)".ToEntity().Simplify());
         }
 
         /// <summary>

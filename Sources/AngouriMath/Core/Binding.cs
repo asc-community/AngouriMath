@@ -98,6 +98,31 @@ namespace AngouriMath.Core
             return scope.Replace(node => ReferenceEquals(node, constant) ? bound : node);
         }
 
+        /// <summary>
+        /// Can this name be written down as a variable? Three cannot: <c>i</c> is a number to the
+        /// lexer, and <c>pi</c> and <c>e</c> parse as <see cref="Entity.Constant"/>s.
+        /// </summary>
+        private static bool CanBeWritten(Variable name)
+            => name.Name != index.Name && !Variable.IsConstantName(name.Name);
+
+        /// <summary>
+        /// An answer that carries a bound name out of the binder that declared it, with that name
+        /// made writable.
+        /// </summary>
+        /// <remarks>
+        /// Most binders consume the name they declare — a sum over <c>pi</c> answers a number, and
+        /// a set builder keeps it inside itself, so both print as they were written and read back
+        /// as themselves. A derivative and an indefinite integral <b>return</b> it, and a variable
+        /// called <c>pi</c> is a thing the parser cannot produce: <c>2 * pi</c> would read back as
+        /// twice the constant, which is not what it means. Renaming a bound variable is free —
+        /// it is the same function either way — so it is renamed to a name that can be written.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/984">#984</a>
+        /// </remarks>
+        internal static Entity? Written(Entity bound, Entity? answer)
+            => answer is not null && bound is Variable name && !CanBeWritten(name) && answer.ContainsNode(name)
+                ? answer.Substitute(name, Variable.CreateUnique(answer, name.Name))
+                : answer;
+
         /// <remarks>
         /// <c>2i</c> is one token — the lexer's <c>NUMBER</c> ends <c>'i'?</c> — so a written
         /// <c>2i</c> arrives as a single number and not as a product with anything to rename.

@@ -44,8 +44,11 @@ namespace AngouriMath.Tests.Core
             var overK = string.Format(shape, "k").ToEntity().Simplify();
             var overI = string.Format(shape, "i").ToEntity().Simplify();
             // Renamed rather than compared as they stand: the two answers are the same
-            // expression written over different names wherever the name survives into it.
-            Assert.Equal(overK, overI.Substitute(Entity.Variable.CreateVariableUnchecked("i"), "k"));
+            // expression written over different names wherever the name survives into it. Where
+            // it survives it comes back as `i_1`, since a variable called `i` cannot be written
+            // and so cannot be read back — see BoundConstantTest.
+            Assert.Equal(overK, overI.Substitute("i_1".ToEntity(), "k")
+                                     .Substitute(Entity.Variable.CreateVariableUnchecked("i"), "k"));
         }
 
         /// <summary>

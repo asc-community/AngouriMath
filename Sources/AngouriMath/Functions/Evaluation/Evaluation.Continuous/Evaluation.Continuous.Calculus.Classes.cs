@@ -26,7 +26,7 @@ namespace AngouriMath
                         // TODO: should we call InnerSimplified here?
                         (var expr, Variable var, int asInt)
                             when expr.Differentiate(var, asInt) is var res and not Derivativef
-                            => res.InnerSimplified(isExact),
+                            => Core.Binding.Written(var, res.InnerSimplified(isExact)),
                         (var expr, Variable var, int asInt) => null,
                         (Application, _, _) => null,
                         (var expr, Entity otherExpr, int asInt)
@@ -51,12 +51,12 @@ namespace AngouriMath
                 ExpandOnTwoAndTArguments(Expression, Var, Range,
                     (a, b, c) => (a, b, c) switch
                     {
-                        (var expr, Variable var, var (from, to)) => ConditionallySimplified(expr.Integrate(var, from, to), isExact),
+                        (var expr, Variable var, var (from, to)) => Core.Binding.Written(var, ConditionallySimplified(expr.Integrate(var, from, to), isExact)),
                         (var expr, var otherExpr, var (from, to))
                             when Variable.CreateTemp(otherExpr.Vars) is var tempVar
                             && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
                             && tempSubstituted.Integrate(tempVar, from, to) is var res => ConditionallySimplified(res.Substitute(tempVar, otherExpr), isExact),
-                        (var expr, Variable var, null) => ConditionallySimplified(expr.Integrate(var), isExact),
+                        (var expr, Variable var, null) => Core.Binding.Written(var, ConditionallySimplified(expr.Integrate(var), isExact)),
                         (var expr, var otherExpr, null)
                             when Variable.CreateTemp(otherExpr.Vars) is var tempVar
                             && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
