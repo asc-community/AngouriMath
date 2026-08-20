@@ -17,10 +17,13 @@ namespace AngouriMath.Tests.Calculus
     /// </summary>
     /// <remarks>
     /// Differentiating with respect to a <i>subexpression</i> is a real feature
-    /// (<a href="https://github.com/asc-community/AngouriMath/issues/230">#230</a>): the
-    /// subexpression is given a name and the derivative is taken over the name. It has two
-    /// premises — the subexpression must be able to vary, and it must occur — and neither was
-    /// checked, so the answers below were produced for questions that have none.
+    /// (<a href="https://github.com/asc-community/AngouriMath/issues/230">#230</a>). It was done
+    /// by giving the subexpression a name and differentiating over the name, which has two
+    /// premises that were not checked: the subexpression must be able to <i>vary</i>, and the
+    /// rename must be <i>exact</i> — nothing of the subexpression's own variables may be left
+    /// over, or the leftovers are read as independent of the name they came from.
+    /// Where the rename is not exact this is a change of variables, and a change of variables
+    /// needs no occurrence at all.
     /// </remarks>
     [Trait("Area", "Calculus")]
     public sealed class BoundNameTest
@@ -41,15 +44,48 @@ namespace AngouriMath.Tests.Calculus
             AssertDeclined(expression);
 
         /// <summary>
-        /// A subexpression that does not occur cannot be renamed, so there is nothing to
-        /// differentiate over — and answering <c>0</c> asserts that the expression does not
-        /// depend on it, which is a different and unchecked claim.
+        /// A subexpression that does not occur is a <b>change of variables</b> and not a rename,
+        /// and it has an answer. With <c>z = x + 1</c>, <c>x ^ 2</c> is <c>(z - 1) ^ 2</c>, whose
+        /// derivative is <c>2(z - 1) = 2x</c> — which is <c>(df/dx) / (dg/dx)</c> without having
+        /// to invert <c>g</c>. Answering <c>0</c> asserted independence; declining said there was
+        /// no answer; there is one.
+        /// </summary>
+        /// <remarks>
+        /// Named by @Happypig375 in review on
+        /// <a href="https://github.com/asc-community/AngouriMath/pull/990">#990</a>.
+        /// </remarks>
+        [Theory]
+        [InlineData("derivative(x ^ 2, x + 1)", "2 * x")]
+        [InlineData("derivative(x ^ 2, x + 1, 2)", "2")]
+        [InlineData("derivative(x ^ 2, 2 * x)", "x")]
+        [InlineData("derivative(x ^ 2, sin(x))", "2 * x / cos(x)")]
+        [InlineData("integral(x ^ 2, x + 1)", "x ^ 3 / 3 + C")]
+        public void ASubexpressionThatDoesNotOccurIsAChangeOfVariables(string expression, string expected) =>
+            Assert.Equal(expected.ToEntity().Simplify(), expression.ToEntity().Simplify());
+
+        /// <summary>
+        /// And a rename that leaves the subexpression's own variables behind is not exact, so it
+        /// is a change of variables too. <c>derivative(x * (x + 1), x + 1)</c> renamed one factor
+        /// and read the other as independent of the name, answering <c>x</c>; with
+        /// <c>z = x + 1</c> the expression is <c>(z - 1) z</c>, whose derivative is
+        /// <c>2z - 1 = 2x + 1</c>.
         /// </summary>
         [Theory]
-        [InlineData("derivative(x ^ 2, sin(x))")]
-        [InlineData("derivative(x ^ 2, x + 1)")]
-        [InlineData("integral(x ^ 2, sin(x))")]
-        public void ASubexpressionThatDoesNotOccurIsDeclined(string expression) =>
+        [InlineData("derivative(x * (x + 1), x + 1)", "1 + 2 * x")]
+        [InlineData("integral(x * (x + 1), x + 1)", "x ^ 3 / 3 + x ^ 2 / 2 + C")]
+        public void ARenameThatLeavesTheVariableBehindIsNotExact(string expression, string expected) =>
+            Assert.Equal(expected.ToEntity().Simplify(), expression.ToEntity().Simplify());
+
+        /// <summary>
+        /// What still has no answer: a subexpression of more than one variable that the rename
+        /// cannot take exactly. <c>d(x + y)/d(x * y)</c> is <c>1/y</c> through <c>x</c> and
+        /// <c>1/x</c> through <c>y</c>, so there is nothing to answer without a direction.
+        /// </summary>
+        [Theory]
+        [InlineData("derivative(x ^ 2, x * y)")]
+        [InlineData("derivative(x + y, x * y)")]
+        [InlineData("integral(x ^ 2, x * y)")]
+        public void ASubexpressionOfSeveralVariablesIsStillDeclined(string expression) =>
             AssertDeclined(expression);
 
         /// <summary>
@@ -70,6 +106,9 @@ namespace AngouriMath.Tests.Calculus
         [Theory]
         [InlineData("derivative((x + 1) ^ 2, x + 1)", "2 * (1 + x)")]
         [InlineData("derivative(sin(x) ^ 2, sin(x))", "2 * sin(x)")]
+        [InlineData("derivative(sin(x) ^ 3, sin(x))", "3 * sin(x) ^ 2")]
+        [InlineData("derivative((x * y) ^ 2, x * y)", "2 * x * y")]
+        [InlineData("integral((x + 1) ^ 2, x + 1)", "(x + 1) ^ 3 / 3 + C")]
         public void DifferentiatingOverASubexpressionThatOccursStillWorks(string expression, string expected) =>
             Assert.Equal(expected.ToEntity().Simplify(), expression.ToEntity().Simplify());
 

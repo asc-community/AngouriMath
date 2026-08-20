@@ -36,7 +36,9 @@ read first.
 | **Silent** | `integral(i, i)` | `-1/2 + C` | `i ^ 2 / 2 + C` |
 | | `lambda(i, i + 1)` | `InvalidArgumentParseException` | the lambda |
 | **Silent** | `derivative(x ^ 3, 3)`, and any derivative or integral over a number | `ln(x) * x ^ 3` | the unevaluated `derivative(x ^ 3, 3)` |
-| **Silent** | `derivative(x ^ 2, sin(x))`, over a subexpression that does not occur | `0` | the unevaluated derivative |
+| **Silent** | `derivative(x ^ 2, x + 1)`, over a subexpression that does not occur | `0` | `2 * x`, by change of variables |
+| **Silent** | `derivative(x * (x + 1), x + 1)`, where the rename left a variable behind | `x` | `1 + 2 * x` |
+| **Silent** | `derivative(x ^ 2, x * y)`, over several variables at once | `0` | the unevaluated derivative |
 | **Silent** | `derivative(x ^ 2 + y ^ 2, [x, y])` | `0` | `[2 * x, 2 * y]`, the gradient |
 | **Silent** | `integral(x, [x, y]T)` | `[[C + x ^ 2, C + x * y]]` | `[[x ^ 2 / 2 + C, x * y + C]]` |
 | **Silent** | `derivative(e ^ 2, e)`, over a named constant | `0` | `2 * e` |
@@ -259,20 +261,43 @@ bound `e` still means `2.718…`, since the bound name and the constant are one 
 Differentiating with respect to a *subexpression* is a feature
 ([#230](https://github.com/asc-community/AngouriMath/issues/230)): the subexpression is given a
 name and the derivative is taken over the name, so `derivative((x + 1) ^ 2, x + 1)` is `2 * (x + 1)`.
-It has two premises — the subexpression has to be able to vary, and it has to occur — and neither
-was checked. Both are now.
+The rename has two premises that were not checked. The subexpression has to be able to **vary** —
+a number in that position was renamed and differentiated over, which answers a question with no
+meaning:
 
 ```csharp
-"derivative(x ^ 3, 3)".ToEntity().Simplify()      // was: ln(x) * x ^ 3   now: unevaluated
-"integral(x ^ 2, 2)".ToEntity().Simplify()        // was: x ^ 2 / ln(x) + C   now: unevaluated
-"derivative(x ^ 2, sin(x))".ToEntity().Simplify() // was: 0               now: unevaluated
-"derivative(x ^ 2, x + 1)".ToEntity().Simplify()  // was: 0               now: unevaluated
+"derivative(x ^ 3, 3)".ToEntity().Simplify()   // was: ln(x) * x ^ 3       now: unevaluated
+"integral(x ^ 2, 2)".ToEntity().Simplify()     // was: x ^ 2 / ln(x) + C   now: unevaluated
 ```
 
-A number renamed and differentiated over gives an answer to a question with no meaning; a
-subexpression that does not occur gives `0`, which asserts independence rather than reporting that
-there was nothing to rename. Both are now the unevaluated node, which is the library's way of
-saying it could not settle the question.
+And the rename has to be **exact**, which means nothing of the subexpression's own variables may be
+left behind. Where something is, the leftovers were read as independent of the name they came from:
+
+```csharp
+"derivative(x * (x + 1), x + 1)".ToEntity().Simplify()  // was: x   now: 1 + 2 * x
+```
+
+`x` is what you get by renaming `x + 1` to `z` and reading the other `x` as a constant. With
+`z = x + 1` the expression is `(z - 1) * z`, whose derivative is `2z - 1`, which is `2x + 1`.
+
+**Where the rename is not exact, this is a change of variables — and a change of variables needs no
+occurrence at all.** `d f / d g` is `(df/dx) / (dg/dx)`, which is the substitution without having to
+invert `g`:
+
+```csharp
+"derivative(x ^ 2, x + 1)".ToEntity().Simplify()   // was: 0   now: 2 * x
+"derivative(x ^ 2, 2 * x)".ToEntity().Simplify()   // was: 0   now: x
+"derivative(x ^ 2, sin(x))".ToEntity().Simplify()  // was: 0   now: 2 * x / cos(x)
+"integral(x ^ 2, x + 1)".ToEntity().Simplify()     // was: 0   now: x ^ 3 / 3 + C
+```
+
+What still has no answer is a subexpression of **several** variables that the rename cannot take
+exactly: `d(x + y)/d(x * y)` is `1/y` through `x` and `1/x` through `y`, so there is nothing to
+answer without a direction. Those are the unevaluated node — the library's way of saying it could
+not settle the question — rather than `0`.
+
+A definite integral over a subexpression is unchanged: its range is stated in the new variable, and
+converting it needs `g` inverted, which is a separate question.
 
 **A vector in that position is now the gradient.** The elementwise broadcast every binder already
 has was unreachable, because the rename matched first and answered `0`:
