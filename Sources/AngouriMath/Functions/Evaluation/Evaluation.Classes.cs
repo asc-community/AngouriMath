@@ -17,7 +17,20 @@ namespace AngouriMath
         {
             private protected override Entity IntrinsicCondition => true;
             /// <inheritdoc/>
-            protected override Entity InnerSimplify(bool isExact) => !isExact && ConstantList.TryGetValue(Name, out var value) ? value : this;
+            /// <remarks>
+            /// A variable is itself, whatever it is called. What a name is worth is asked of the
+            /// node and not of a table keyed by name, which is what used to make a bound `e`
+            /// carry Euler's number.
+            /// <a href="https://github.com/asc-community/AngouriMath/issues/984">#984</a>
+            /// </remarks>
+            protected override Entity InnerSimplify(bool isExact) => this;
+        }
+
+        public partial record Constant
+        {
+            /// <inheritdoc/>
+            /// <remarks>Exactly, a constant is itself; approximately, it is its value.</remarks>
+            protected override Entity InnerSimplify(bool isExact) => isExact ? this : Value;
         }
 
         /// <summary>

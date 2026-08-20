@@ -35,6 +35,15 @@ read first.
 | **Silent** | `limit(i, i, 0)` | unevaluated | `0` |
 | **Silent** | `integral(i, i)` | `-1/2 + C` | `i ^ 2 / 2 + C` |
 | | `lambda(i, i + 1)` | `InvalidArgumentParseException` | the lambda |
+| **Silent** | `derivative(e ^ 2, e)`, `derivative(pi ^ 2, pi)` | `0` | `2 * e`, `2 * pi` |
+| **Silent** | `{ e : e > 0 }` | `{ e : True }` | the set it describes |
+| **Silent** | `limit(e, e, 0).Evaled` | `2.718…` | `0` |
+| **Silent** | `integral(e, e, 0, 1).Evaled` | `3.694…` | `1/2` |
+| **Silent** | `integral(arccos(0), pi, 0, 1)` | `1/4` | `pi / 2` |
+| **Silent** | `sum(ln(x), e, 1, 2)`, and any binder over `e` around a logarithm | `log(1, x) + log(2, x)` | `2 * ln(x)` |
+| **Silent** | `ln(x).Substitute("e", 3)` | `log(3, x)` | `ln(x)` |
+| **Silent** | `"sum(pi, pi, 1, 3)".ToEntity().Vars` | empty — the index was read as a constant | `pi` |
+| | `MathS.pi.GetType()` | `Entity.Variable` | `Entity.Constant`, which derives from it |
 
 ### A rewritten node keeps its `Codomain`, so a domain constraint no longer disappears
 
@@ -243,12 +252,75 @@ any other name, which is what turns `6i` into `12` above.
 The last is what SymPy answers for `Sum(sqrt(-1) * i, (i, 1, 10))`, which resolves the same
 collision by naming the constant `I` and refusing to bind it.
 
-`e` and `pi` are unaffected and needed nothing here: they are variables that carry a value, so a
-binder has always taken those names. They are also not fully fixed by anything in this entry — a
-bound `e` still means `2.718…`, since the bound name and the constant are one object.
-[#984](https://github.com/asc-community/AngouriMath/issues/984) has the measurements.
+`e` and `pi` needed nothing here, being variables that carried a value — and were not fixed by it
+either, for the same reason. The entry below does that.
 
 [#976](https://github.com/asc-community/AngouriMath/issues/976).
+
+### A name a binder declares is a variable, including `pi` and `e`
+
+A mathematical constant used to be a `Variable` whose *name* was looked up in a table, so a `pi` a
+binder declared and the constant `pi` were one object and nothing downstream could tell them apart.
+It is now `Entity.Constant`, a node — so a binder holds a variable while the rest of the language
+holds the constant, and every binder-based operation reads the same thing.
+
+```csharp
+"derivative(e ^ 2, e)".ToEntity().Simplify()   // was: 0             now: 2 * e
+"derivative(pi ^ 2, pi)".ToEntity().Simplify() // was: 0             now: 2 * pi
+"{ e : e > 0 }".ToEntity().Simplify()          // was: { e : True }  now: { e : e > 0 }
+"limit(e, e, 0)".ToEntity().Evaled             // was: 2.718…        now: 0
+"integral(e, e, 0, 1)".ToEntity().Evaled       // was: 3.694…        now: 1/2
+```
+
+A constant that simplification **produces** inside a binder over its name is no longer caught by it,
+which was a wrong answer of a different kind — `arccos(0)` is `pi / 2`, and integrating it over a
+name spelled `pi` integrated that:
+
+```csharp
+"integral(arccos(0), pi, 0, 1)".ToEntity().Simplify()  // was: 1/4   now: pi / 2
+"integral(arccos(0), q, 0, 1)".ToEntity().Simplify()   // pi / 2, unchanged — the same answer now
+```
+
+`ln` and `exp` are written over Euler's number in their own definitions — `Ln(a)` is `Logf(e, a)`,
+and `exp(x)` is `e ^ x` — and that occurrence is the value rather than a mention of the name, so no
+binder reaches it and neither does a substitution for the name:
+
+```csharp
+"sum(ln(x), e, 1, 2)".ToEntity().Simplify()   // was: log(1, x) + log(2, x)   now: 2 * ln(x)
+"sum(exp(x), e, 1, 2)".ToEntity().Simplify()  // was: 1 + 2 ^ x               now: 2 * e ^ x
+"sum(ln(e), e, 1, 1)".ToEntity().Simplify()   // was: NaN, being log(1, 1)    now: 0
+MathS.Ln("x").Substitute("e", 3)              // was: log(3, x)               now: ln(x)
+```
+
+Where the writer does name `e`, it still binds, which is the same rule read the other way:
+
+```csharp
+"sum(log(e, x), e, 1, 2)".ToEntity().Simplify()  // log(1, x) + log(2, x)
+"sum(e ^ x, e, 1, 2)".ToEntity().Simplify()      // 1 + 2 ^ x
+```
+
+**Two consequences to read for.** A bound name now counts as a variable, so `Vars` reports it:
+
+```csharp
+"sum(pi, pi, 1, 3)".ToEntity().Vars   // was: empty      now: pi
+"pi * x".ToEntity().Vars              // x, unchanged — a free constant is still not a variable
+```
+
+And `MathS.pi` and `MathS.e` are `Entity.Constant` rather than `Entity.Variable`. They are still
+*typed* `Variable` and `Constant` derives from it, so no signature changed and nothing that compiles
+today stops compiling; but `MathS.Var("pi")` is a constant, and a `pi` a binder declares is no
+longer equal to it. Substituting for the constant is unchanged where it was already right — a
+binder's own name was out of reach before as well — and no longer reaches into a logarithm:
+
+```csharp
+"pi + x".ToEntity().Substitute(MathS.pi, 3)             // 3 + x, unchanged
+"sum(pi, pi, 1, 3)".ToEntity().Substitute(MathS.pi, 3)  // unchanged before and after
+```
+
+Free `pi` and `e` are otherwise untouched: `sin(pi)` is `0`, `ln(e)` is `1`, `arccos(0)` is `pi / 2`,
+and their numeric values are what they were.
+
+[#984](https://github.com/asc-community/AngouriMath/issues/984).
 
 ---
 

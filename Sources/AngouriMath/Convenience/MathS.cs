@@ -859,7 +859,9 @@ namespace AngouriMath
         /// </code>
         /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
-        public static Entity Ln(Entity a) => new Logf(e, a);
+        // The base is the value and not a reference to the name `e`, so a binder that declares
+        // that name does not reach inside a logarithm. https://github.com/asc-community/AngouriMath/issues/984
+        public static Entity Ln(Entity a) => new Logf(Entity.Constant.EulerIntrinsic, a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Factorial"/></summary>
         /// <param name="a">Argument node of which factorial will be taken</param>

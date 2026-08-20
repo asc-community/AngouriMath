@@ -17,10 +17,10 @@ namespace AngouriMath.Tests.Core
     /// <a href="https://github.com/asc-community/AngouriMath/issues/976">#976</a>
     /// </summary>
     /// <remarks>
-    /// <c>e</c> and <c>pi</c> need none of this and are here to say why: they are
-    /// <see cref="Entity.Variable"/>s that carry a value, so a binder shadows them by
-    /// construction. <c>i</c> is a number — the lexer decides it, <c>NUMBER: ... | 'i'</c> — so
-    /// without this it is the one name in the language that no binder can bind.
+    /// <c>i</c> is a number — the lexer decides it, <c>NUMBER: ... | 'i'</c> — so without this it
+    /// is the one name in the language that no binder can bind. <c>e</c> and <c>pi</c> reach the
+    /// same place by the other road and are covered by <c>BoundConstantTest</c>:
+    /// <see cref="Entity.Constant"/> is what makes a written one an occurrence a binder can take.
     /// </remarks>
     [Trait("Area", "Core")]
     public sealed class BinderShadowingTest
@@ -125,9 +125,9 @@ namespace AngouriMath.Tests.Core
         }
 
         /// <summary>
-        /// Nothing was added for <c>e</c> and <c>pi</c> because a binder already shadows them:
-        /// they are variables that carry a value, so the name in the index position binds, and
-        /// these have always worked.
+        /// The same binders over <c>e</c> and <c>pi</c>. These worked before
+        /// <see cref="Entity.Constant"/> as well, because the binder writes the name out before
+        /// anything reads it; the cases that did not are in <c>BoundConstantTest</c>.
         /// </summary>
         [Theory]
         [InlineData("sum(e, e, 1, 3)", "6")]
@@ -135,36 +135,6 @@ namespace AngouriMath.Tests.Core
         [InlineData("integral(e, e, 0, 1)", "1/2")]
         public void ANamedConstantThatIsAVariableNeededNothing(string expression, string expected) =>
             Assert.Equal(expected.ToEntity(), expression.ToEntity().Simplify());
-
-        /// <summary>
-        /// And where they do <i>not</i> work, which is recorded here rather than believed away.
-        /// </summary>
-        /// <remarks>
-        /// A bound <c>e</c> keeps the constant's value, because the bound name and the constant
-        /// are the same object: <c>Variable.ConstantList</c> is keyed by name, so a variable
-        /// called <c>e</c> is <c>2.718…</c> wherever it is read, binder or no binder. Nothing
-        /// short of a representation that tells a bound name from a constant one fixes these,
-        /// which is why this change is about the one constant that is not a variable — for
-        /// <c>i</c> the bound name and the unit are distinguishable, and that is the whole reason
-        /// the fix above is possible at all.
-        /// <a href="https://github.com/asc-community/AngouriMath/issues/984">#984</a>
-        /// </remarks>
-        [Theory]
-        [InlineData("derivative(e ^ 2, e)", "0")]              // 2 * e
-        [InlineData("derivative(pi ^ 2, pi)", "0")]            // 2 * pi
-        [InlineData("{ e : e > 0 }", "{ e : True }")]          // { e : e > 0 }
-        public void ABoundNamedConstantStillCarriesItsValue(string expression, string expected) =>
-            Assert.Equal(expected.ToEntity(), expression.ToEntity().Simplify());
-
-        /// <summary>The same, on the path that shows it most plainly.</summary>
-        [Fact]
-        public void ABoundNamedConstantEvaluatesToTheConstant()
-        {
-            // Simplify gets this right -- it is 0 -- and Evaled does not, which is the shape of
-            // the defect: the bound name is only a constant once something reads its value.
-            Assert.Equal("limit(e, e, 0)".ToEntity().Simplify(), (Entity)0);
-            Assert.Equal(MathS.DecimalConst.e, "limit(e, e, 0)".ToEntity().Evaled.EvalNumerical().RealPart.EDecimal);
-        }
 
     }
 }

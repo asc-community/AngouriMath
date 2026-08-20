@@ -1903,7 +1903,7 @@ internal partial class AngouriMathParser : Parser {
 				{
 				State = 329;
 				_localctx._VARIABLE = Match(VARIABLE);
-				 _localctx.value =  Entity.Variable.CreateVariableUnchecked((_localctx._VARIABLE!=null?_localctx._VARIABLE.Text:null)); 
+				 _localctx.value =  Entity.Variable.CreateVariableOrConstant((_localctx._VARIABLE!=null?_localctx._VARIABLE.Text:null)); 
 				}
 				break;
 			case 8:
@@ -2131,7 +2131,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 423;
 				Match(T__40);
-				 Assert("exp", 1, _localctx.args.list.Count); _localctx.value =  MathS.Pow(MathS.e, _localctx.args.list[0]); 
+				 Assert("exp", 1, _localctx.args.list.Count); _localctx.value =  MathS.Pow(Entity.Constant.EulerIntrinsic, _localctx.args.list[0]); 
 				}
 				break;
 			case 27:
