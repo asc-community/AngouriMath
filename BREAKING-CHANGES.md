@@ -42,7 +42,6 @@ read first.
 | **Silent** | `integral(arccos(0), pi, 0, 1)` | `1/4` | `pi / 2` |
 | **Silent** | `derivative(arccos(0) * pi, pi)` | `0` | `pi / 2` |
 | **Silent** | `sum(ln(x), e, 1, 2)`, and any binder over `e` around a logarithm | `log(1, x) + log(2, x)` | `2 * ln(x)` |
-| **Silent** | `ln(x).Substitute("e", 3)` | `log(3, x)` | `ln(x)` |
 | **Silent** | `"sum(pi, pi, 1, 3)".ToEntity().Vars` | empty — the index was read as a constant | `pi` |
 | | `MathS.pi.GetType()` | `Entity.Variable` | `Entity.Constant`, which derives from it |
 
@@ -302,14 +301,18 @@ name spelled `pi` integrated that:
 
 `ln` and `exp` are written over Euler's number in their own definitions — `Ln(a)` is `Logf(e, a)`,
 and `exp(x)` is `e ^ x` — and that occurrence is the value rather than a mention of the name, so no
-binder reaches it and neither does a substitution for the name:
+binder reaches it:
 
 ```csharp
 "sum(ln(x), e, 1, 2)".ToEntity().Simplify()   // was: log(1, x) + log(2, x)   now: 2 * ln(x)
 "sum(exp(x), e, 1, 2)".ToEntity().Simplify()  // was: 1 + 2 ^ x               now: 2 * e ^ x
 "sum(ln(e), e, 1, 1)".ToEntity().Simplify()   // was: NaN, being log(1, 1)    now: 0
-MathS.Ln("x").Substitute("e", 3)              // was: log(3, x)               now: ln(x)
 ```
+
+Substituting **for the constant** still reaches that base, and unchanged — `MathS.Ln("x").Substitute("e", 3)`
+is `log(3, x)` before and after. A binder binds *occurrences* and a substitution replaces a *value*,
+and the base of a logarithm is Euler's number by value however it got there, so replacing Euler's
+number by 3 replaces it there too. `ln(x).VarsAndConsts` has said `e, x` all along.
 
 Where the writer does name `e`, it still binds, which is the same rule read the other way:
 
