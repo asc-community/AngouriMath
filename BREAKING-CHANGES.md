@@ -35,6 +35,11 @@ read first.
 | **Silent** | `limit(i, i, 0)` | unevaluated | `0` |
 | **Silent** | `integral(i, i)` | `-1/2 + C` | `i ^ 2 / 2 + C` |
 | | `lambda(i, i + 1)` | `InvalidArgumentParseException` | the lambda |
+| **Silent** | `derivative(x ^ 3, 3)`, and any derivative or integral over a number | `ln(x) * x ^ 3` | the unevaluated `derivative(x ^ 3, 3)` |
+| **Silent** | `derivative(x ^ 2, sin(x))`, over a subexpression that does not occur | `0` | the unevaluated derivative |
+| **Silent** | `derivative(x ^ 2 + y ^ 2, [x, y])` | `0` | `[2 * x, 2 * y]`, the gradient |
+| **Silent** | `integral(x, [x, y]T)` | `[[C + x ^ 2, C + x * y]]` | `[[x ^ 2 / 2 + C, x * y + C]]` |
+| **Silent** | `derivative(e ^ 2, e)`, over a named constant | `0` | `2 * e` |
 
 ### A rewritten node keeps its `Codomain`, so a domain constraint no longer disappears
 
@@ -249,6 +254,47 @@ bound `e` still means `2.718…`, since the bound name and the constant are one 
 [#984](https://github.com/asc-community/AngouriMath/issues/984) has the measurements.
 
 [#976](https://github.com/asc-community/AngouriMath/issues/976).
+### A derivative or an integral over something that is not a variable
+
+Differentiating with respect to a *subexpression* is a feature
+([#230](https://github.com/asc-community/AngouriMath/issues/230)): the subexpression is given a
+name and the derivative is taken over the name, so `derivative((x + 1) ^ 2, x + 1)` is `2 * (x + 1)`.
+It has two premises — the subexpression has to be able to vary, and it has to occur — and neither
+was checked. Both are now.
+
+```csharp
+"derivative(x ^ 3, 3)".ToEntity().Simplify()      // was: ln(x) * x ^ 3   now: unevaluated
+"integral(x ^ 2, 2)".ToEntity().Simplify()        // was: x ^ 2 / ln(x) + C   now: unevaluated
+"derivative(x ^ 2, sin(x))".ToEntity().Simplify() // was: 0               now: unevaluated
+"derivative(x ^ 2, x + 1)".ToEntity().Simplify()  // was: 0               now: unevaluated
+```
+
+A number renamed and differentiated over gives an answer to a question with no meaning; a
+subexpression that does not occur gives `0`, which asserts independence rather than reporting that
+there was nothing to rename. Both are now the unevaluated node, which is the library's way of
+saying it could not settle the question.
+
+**A vector in that position is now the gradient.** The elementwise broadcast every binder already
+has was unreachable, because the rename matched first and answered `0`:
+
+```csharp
+"derivative(x ^ 2 + y ^ 2, [x, y])".ToEntity().Simplify()   // was: 0   now: [2 * x, 2 * y]
+"integral(x, [x, y]T)".ToEntity().Simplify()
+// was: [[C + x ^ 2, C + x * y]]      the first component is not the integral of x
+// now: [[x ^ 2 / 2 + C, x * y + C]]
+```
+
+This is componentwise and no more than that: `derivative([x * y, x + y], [x, y])` pairs index with
+index and is `[y, 1]`, the diagonal of the Jacobian rather than the Jacobian. What shape a full
+Jacobian or Hessian should take is a convention this does not choose.
+
+**A named constant can be differentiated over.** `derivative(e ^ 2, e)` was `0` — `e` is a variable
+carrying a value, the value arrived in the variable position, and a number there took the rename
+path. It is `2 * e`, and `derivative(pi ^ 2, pi)` is `2 * pi`. Two of the four defects recorded in
+[#984](https://github.com/asc-community/AngouriMath/issues/984) go with it; the set builder and
+`limit(e, e, 0).Evaled` remain.
+
+[#964](https://github.com/asc-community/AngouriMath/issues/964).
 
 ---
 

@@ -29,8 +29,23 @@ namespace AngouriMath
                             => res.InnerSimplified(isExact),
                         (var expr, Variable var, int asInt) => null,
                         (Application, _, _) => null,
+                        // Differentiating with respect to a subexpression rather than a variable
+                        // -- https://github.com/asc-community/AngouriMath/issues/230 -- works by
+                        // giving that subexpression a name and differentiating over the name. It
+                        // therefore has two premises, and both have to hold or the answer is a
+                        // confident number about a question nobody asked.
+                        //
+                        // The subexpression has to be something that can *vary*: with a number
+                        // there, `derivative(x ^ 3, 3)` renamed the exponent and answered
+                        // `ln(x) * x ^ 3`. And it has to actually occur, or the rename changes
+                        // nothing and the derivative of an expression that does not contain it
+                        // comes back 0 -- which is how `derivative(x ^ 2 + y ^ 2, [x, y])`, a
+                        // gradient, was 0. Declining here lets the matrix broadcast above reach
+                        // it instead, one component at a time.
+                        // https://github.com/asc-community/AngouriMath/issues/964
                         (var expr, Entity otherExpr, int asInt)
-                            when Variable.CreateTemp(otherExpr.Vars) is var tempVar
+                            when otherExpr.Vars.Count > 0 && expr.ContainsNode(otherExpr)
+                            && Variable.CreateTemp(otherExpr.Vars) is var tempVar
                             && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
                             && tempSubstituted.Differentiate(tempVar, asInt) is var res and not Derivativef
                             => res.Substitute(tempVar, otherExpr).InnerSimplified(isExact),
@@ -52,13 +67,17 @@ namespace AngouriMath
                     (a, b, c) => (a, b, c) switch
                     {
                         (var expr, Variable var, var (from, to)) => ConditionallySimplified(expr.Integrate(var, from, to), isExact),
+                        // Both premises of the rename, as in Derivativef above.
+                        // https://github.com/asc-community/AngouriMath/issues/964
                         (var expr, var otherExpr, var (from, to))
-                            when Variable.CreateTemp(otherExpr.Vars) is var tempVar
+                            when otherExpr.Vars.Count > 0 && expr.ContainsNode(otherExpr)
+                            && Variable.CreateTemp(otherExpr.Vars) is var tempVar
                             && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
                             && tempSubstituted.Integrate(tempVar, from, to) is var res => ConditionallySimplified(res.Substitute(tempVar, otherExpr), isExact),
                         (var expr, Variable var, null) => ConditionallySimplified(expr.Integrate(var), isExact),
                         (var expr, var otherExpr, null)
-                            when Variable.CreateTemp(otherExpr.Vars) is var tempVar
+                            when otherExpr.Vars.Count > 0 && expr.ContainsNode(otherExpr)
+                            && Variable.CreateTemp(otherExpr.Vars) is var tempVar
                             && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
                             && tempSubstituted.Integrate(tempVar) is var res => ConditionallySimplified(res.Substitute(tempVar, otherExpr), isExact),
                         _ => null
