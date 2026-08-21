@@ -593,9 +593,22 @@ namespace AngouriMath
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;
-                    if (entity.Evaled.IsSymbolic)
+                    var evaled = entity.Evaled;
+                    if (evaled.IsSymbolic)
                         return false;
-                    contains = MayContain(entity.Evaled);
+                    // MayContain asks whether something *might* be a member, and so is
+                    // permissive about everything that is not a constant leaf. That is what
+                    // its other caller needs -- a codomain guard has to let through what it
+                    // has not ruled out -- but membership is the opposite question, and
+                    // answering it with the permissive result made a matrix a member of BB,
+                    // ZZ, QQ, RR and CC at once, and of ZZ /\ BB with them.
+                    // A closed non-leaf -- a matrix, a finite set, an interval -- is neither
+                    // a number nor a boolean, so it is a member of none of these, and that
+                    // is decided rather than unknown.
+                    // https://github.com/asc-community/AngouriMath/issues/995
+                    if (!evaled.IsConstantLeaf)
+                        return true;
+                    contains = MayContain(evaled);
                     return true;
                 }
 

@@ -35,6 +35,29 @@ read first.
 | **Silent** | `limit(i, i, 0)` | unevaluated | `0` |
 | **Silent** | `integral(i, i)` | `-1/2 + C` | `i ^ 2 / 2 + C` |
 | | `lambda(i, i + 1)` | `InvalidArgumentParseException` | the lambda |
+| **Silent** | `[1, 2] in RR`, and a matrix or a finite set against any of `BB`, `ZZ`, `QQ`, `RR`, `CC` | `True` | `False` |
+
+### A matrix is no longer a member of every special set at once
+
+`SpecialSet.TryContains` decided membership by asking `MayContain`, which is deliberately permissive
+about anything that is not a constant leaf — the right answer for a codomain guard, which has to let
+through what it has not ruled out, and the wrong one for a membership decision.
+
+```csharp
+"[1, 2] in BB".ToEntity().Simplify()              // was: True    now: False
+"[1, 2] in ZZ".ToEntity().Simplify()              // was: True    now: False
+"[1, 2] in RR".ToEntity().Simplify()              // was: True    now: False
+"[1, 2] in (ZZ /\\ BB)".ToEntity().Simplify()     // was: True    now: False
+"{ 1, 2 } in RR".ToEntity().Simplify()            // was: True    now: False
+```
+
+The old answers were mutually contradictory — `ZZ` and `BB` share no members, and the same matrix was
+in both — so nothing could have depended on all of them. `MayContain` itself is unchanged, and so is
+every answer for a number or a boolean: `3 in RR` is `True`, `i in RR` is `False`, `x in RR` is still
+undecided rather than answered.
+
+Measured: the whole suite passes with the fix in, and the corpus is unchanged at 116/119 with 0 wrong.
+[#995](https://github.com/asc-community/AngouriMath/issues/995).
 
 ### A rewritten node keeps its `Codomain`, so a domain constraint no longer disappears
 
