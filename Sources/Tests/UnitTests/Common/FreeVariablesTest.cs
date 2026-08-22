@@ -68,5 +68,52 @@ namespace AngouriMath.Tests.Common
                 SeqVar("x", "y", "z"),
                 "x + lambda(f, y + z + x)".ToEntity().FreeVariables
             );
+
+        // A set builder's DirectChildren is its predicate with the bound name renamed
+        // to a fresh one, so that two builders differing only in that name compare and
+        // hash alike. Reading the answer off DirectChildren therefore reported a name
+        // that is in no expression: not the bound name, not typeable, and different for
+        // a different predicate. A set builder binds the name it declares exactly as a
+        // lambda binds its parameter, so these mirror the lambda cases above.
+        // https://github.com/asc-community/AngouriMath/issues/989
+        [Theory]
+        [InlineData("{ k : k > 0 }")]
+        [InlineData("{ k : k > a }")]
+        [InlineData("x + { k : k > a }")]
+        public void ASetBuildersPlaceholderIsInNoAnswer(string exprRaw)
+        {
+            var expr = exprRaw.ToEntity();
+            Assert.DoesNotContain(expr.FreeVariables, v => v.Name.StartsWith("%"));
+            Assert.DoesNotContain(expr.Vars, v => v.Name.StartsWith("%"));
+            Assert.DoesNotContain(expr.VarsAndConsts, v => v.Name.StartsWith("%"));
+        }
+
+        [Theory]
+        [InlineData("{ k : k > 0 }")]
+        [InlineData("lambda(k, k > 0)")]
+        public void ASetBuilderBindsItsNameAsALambdaDoes(string exprRaw)
+            => Assert.Equal(SeqVar(), exprRaw.ToEntity().FreeVariables);
+
+        [Theory]
+        [InlineData("{ k : k > a }")]
+        [InlineData("lambda(k, k > a)")]
+        public void ASetBuilderLeavesTheRestFree(string exprRaw)
+            => Assert.Equal(SeqVar("a"), exprRaw.ToEntity().FreeVariables);
+
+        [Theory]
+        [InlineData("{ k : k > a }")]
+        [InlineData("lambda(k, k > a)")]
+        public void ASetBuildersOwnNameStillOccurs(string exprRaw)
+            => Assert.Equal(
+                SeqVar("k", "a").OrderBy(v => v.Name),
+                exprRaw.ToEntity().Vars.OrderBy(v => v.Name));
+
+        // and the rename it publishes is still doing its job: two builders that differ
+        // only in the bound name are the same set
+        [Fact]
+        public void TwoSetBuildersDifferingOnlyInTheBoundNameAreStillEqual()
+            => Assert.Equal(
+                Entity.Boolean.True,
+                "{ x : x > 0 } = { y : y > 0 }".ToEntity().Simplify());
     }
 }
