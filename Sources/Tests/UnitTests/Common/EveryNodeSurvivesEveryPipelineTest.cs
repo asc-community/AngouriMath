@@ -96,6 +96,7 @@ namespace AngouriMath.Tests.Common
             MathS.Sets.Z,                                       // Integers
             Entity.Set.SpecialSet.Create(Domain.Boolean),       // Booleans
             X,                                                  // Variable
+            MathS.pi,                                           // Constant
         };
 
         public static IEnumerable<object[]> EveryNodeType()

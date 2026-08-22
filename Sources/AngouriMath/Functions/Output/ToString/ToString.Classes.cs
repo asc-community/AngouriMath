@@ -16,5 +16,16 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
+
+        public partial record Constant
+        {
+            /// <inheritdoc/>
+            /// <remarks>
+            /// A record synthesizes <see cref="object.ToString"/> from its members unless the type
+            /// declares one, which is why every node here declares one. A constant prints as its
+            /// name in both roles, so a bound occurrence reads back as it was written.
+            /// </remarks>
+            public override string ToString() => Stringize();
+        }
     }
 }
