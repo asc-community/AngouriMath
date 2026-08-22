@@ -35,6 +35,7 @@ read first.
 | **Silent** | `limit(i, i, 0)` | unevaluated | `0` |
 | **Silent** | `integral(i, i)` | `-1/2 + C` | `i_1 ^ 2 / 2 + C` |
 | | `lambda(i, i + 1)` | `InvalidArgumentParseException` | the lambda |
+| **Silent** | `"{ k : k > 0 }".ToEntity().FreeVariables` — and `Vars`, and `VarsAndConsts` | `{ %1 }`, a name in no expression | `{ }`, `{ k }`, `{ k }` |
 | **Silent** | the symbolic determinant of a matrix, substituted where a pivot vanishes — `[[0,1,2],[3,4,5],[6,7,8]]` through `[[a,b,c],[d,e,f],[g,h,i]]` | `NaN` | `0` |
 | **Silent** | `((Entity.Matrix)"[[x, 1], [2, y]]".ToEntity()).Determinant.Simplify()` | `x * y - 2 provided not x = 0` | `x * y - 2` |
 | **Silent** | `[1, 2] in RR`, and a matrix or a finite set against any of `BB`, `ZZ`, `QQ`, `RR`, `CC` | `True` | `False` |
@@ -56,6 +57,45 @@ read first.
 | **Silent** | `derivative(x ^ 2 + y ^ 2, [x, y])` | `0` | `[2 * x, 2 * y]`, the gradient |
 | **Silent** | `integral(x, [x, y]T)` | `[[C + x ^ 2, C + x * y]]` | `[[x ^ 2 / 2 + C, x * y + C]]` |
 | **Silent** | `derivative(e ^ 2, e)`, over a named constant | `0` | `2 * e` |
+
+### A set builder's internal placeholder no longer escapes into `Vars` or `FreeVariables`
+
+`ConditionalSet.DirectChildren` is its predicate with the bound name renamed to a fresh one, so that
+two builders differing only in that name compare and hash alike — `{ x : x > 0 } = { y : y > 0 }`
+is `True`, and stays `True`. Every property that reports names by walking `DirectChildren` picked
+that invented name up and returned it.
+
+```csharp
+"{ k : k > 0 }".ToEntity().FreeVariables   // was: { %1 }   now: { }
+"{ k : k > 0 }".ToEntity().Vars            // was: { %1 }   now: { k }
+"{ k : k > a }".ToEntity().FreeVariables   // was: { %1, a }      now: { a }
+"{ k : k > a }".ToEntity().Vars            // was: { %1, a }      now: { k, a }
+"x + { k : k > a }".ToEntity().Vars        // was: { x, %1, a }   now: { x, k, a }
+```
+
+`%1` is neither answer on anybody's definition. It is not the bound name, it is not in the
+expression the caller wrote, `Variable.CreateTemp` invents a different one for a different
+predicate, and it cannot be typed — the parser has no `%`. It broke `Vars`'s own promise too, which
+is the variables that *occur*: `k` occurs and was missing, `%1` does not occur and was there.
+
+A set builder binds the name it declares exactly as a lambda binds its parameter, so all three
+properties now answer for `{ k : ... }` what they already answered for `lambda(k, ...)`:
+
+| | `lambda(k, k > a)` | `{ k : k > a }` was | `{ k : k > a }` now |
+|---|---|---|---|
+| `FreeVariables` | `{ a }` | `{ %1, a }` | `{ a }` |
+| `Vars` | `{ k, a }` | `{ %1, a }` | `{ k, a }` |
+
+Only the reporting changed. `DirectChildren` still publishes the renamed predicate, because that is
+what makes two alpha-equivalent builders equal, and `Replace` and `Substitute` never used it — both
+override and work from `Var` and `Predicate` directly.
+
+This does **not** answer the second half of [#989](https://github.com/asc-community/AngouriMath/issues/989),
+which asks whether `sum`, `integral`, `limit` and `derivative` should bind their variable here too.
+That is a documented choice rather than a leak, and it is still open.
+
+Measured: suite 7376 passed, 0 failed; corpus unchanged at 116/119 with 0 wrong, and no case's
+verdict or answer altered. [#989](https://github.com/asc-community/AngouriMath/issues/989).
 
 ### The symbolic determinant is a polynomial, not a quotient by its pivots
 

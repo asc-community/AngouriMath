@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -547,7 +547,19 @@ namespace AngouriMath
         /// </code>
         /// </example>
         public IReadOnlyCollection<Variable> VarsAndConsts => varsAndConsts.GetValue(
-            static @this => new HashSet<Variable>(@this is Variable v ? new[] { v } : @this.DirectChildren.SelectMany(x => x.VarsAndConsts)), this);
+            static @this => new HashSet<Variable>(@this switch
+                {
+                    Variable v => new[] { v },
+                    // A set builder's DirectChildren is its predicate with the bound name
+                    // renamed to a fresh one, so that two set builders differing only in
+                    // that name compare and hash alike. That name is invented, not written:
+                    // it is not in the expression, it cannot be typed, and a different
+                    // predicate gets a different one. Read the builder's own parts instead.
+                    // https://github.com/asc-community/AngouriMath/issues/989
+                    Set.ConditionalSet(var bound, var predicate)
+                        => predicate.VarsAndConsts.Concat(bound.VarsAndConsts),
+                    _ => @this.DirectChildren.SelectMany(x => x.VarsAndConsts)
+                }), this);
         private LazyPropertyA<IReadOnlyCollection<Variable>> varsAndConsts;
 
 
@@ -597,6 +609,13 @@ namespace AngouriMath
                         Lambda(var par, var body)
                             => body.FreeVariables.Where(v => v != par).ToList(),
                         Variable v => new []{ v },
+                        // Same as above: the renamed predicate that DirectChildren publishes
+                        // would put an invented name in the answer. A set builder also binds
+                        // the name it declares, exactly as a lambda binds its parameter, so
+                        // that name is not free either.
+                        // https://github.com/asc-community/AngouriMath/issues/989
+                        Set.ConditionalSet(var bound, var predicate)
+                            => predicate.FreeVariables.Where(v => !bound.VarsAndConsts.Contains(v)).ToList(),
                         _ => new HashSet<Variable>(@this.DirectChildren.SelectMany(c => c.FreeVariables))
                     }
                 ,
