@@ -844,6 +844,12 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Lambda(Variable Parameter, Entity Body) : Entity
         {
+            /// <summary>The name this lambda binds. See <see cref="Core.Binding"/>.</summary>
+            public Variable Parameter { get; init; } = Binding.Of(Parameter).Name as Variable ?? Parameter;
+
+            /// <summary>The body, with the bound name meaning what it means here.</summary>
+            public Entity Body { get; init; } = Binding.Of(Parameter).In(Body);
+
             private Lambda New(Variable parameter, Entity body)
                 => ReferenceEquals(Parameter, parameter) && ReferenceEquals(Body, body)
                     ? this

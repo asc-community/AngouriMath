@@ -56,7 +56,7 @@ namespace AngouriMath
                         // TODO: should we call InnerSimplified here?
                         (var expr, Variable var, int asInt)
                             when expr.Differentiate(var, asInt) is var res and not Derivativef
-                            => res.InnerSimplified(isExact),
+                            => Core.Binding.Written(var, res.InnerSimplified(isExact)),
                         (var expr, Variable var, int asInt) => null,
                         (Application, _, _) => null,
                         // Differentiating with respect to a subexpression rather than a variable
@@ -125,7 +125,7 @@ namespace AngouriMath
                 ExpandOnTwoAndTArguments(Expression, Var, Range,
                     (a, b, c) => (a, b, c) switch
                     {
-                        (var expr, Variable var, var (from, to)) => ConditionallySimplified(expr.Integrate(var, from, to), isExact),
+                        (var expr, Variable var, var (from, to)) => Core.Binding.Written(var, ConditionallySimplified(expr.Integrate(var, from, to), isExact)),
                         // The rename, under the same guard as in Derivativef above: exact only
                         // where nothing of the subexpression's own variables is left over.
                         // https://github.com/asc-community/AngouriMath/issues/964
@@ -135,7 +135,7 @@ namespace AngouriMath
                             && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
                             && !otherExpr.Vars.Any(tempSubstituted.ContainsNode)
                             && tempSubstituted.Integrate(tempVar, from, to) is var res => ConditionallySimplified(res.Substitute(tempVar, otherExpr), isExact),
-                        (var expr, Variable var, null) => ConditionallySimplified(expr.Integrate(var), isExact),
+                        (var expr, Variable var, null) => Core.Binding.Written(var, ConditionallySimplified(expr.Integrate(var), isExact)),
                         (var expr, var otherExpr, null)
                             when otherExpr.Vars.Count > 0
                             && Variable.CreateTemp(otherExpr.Vars) is var tempVar
