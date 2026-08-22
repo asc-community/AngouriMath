@@ -264,7 +264,14 @@ namespace AngouriMath
             private LazyPropertyA<Matrix> t;
 
             // We do not need to use Gaussian elimination here
-            // since we anyway get N! memory use
+            // since we anyway get N! memory use.
+            // Gaussian elimination is also not merely no cheaper, it is wrong here:
+            // it leaves the pivots as literal divisions, so the expression it returns
+            // is undefined wherever a pivot vanishes -- at points where the
+            // determinant itself is perfectly well defined. The determinant of a
+            // matrix over a commutative ring is a polynomial in its entries, and
+            // Laplace expansion never divides, so there is nothing to exclude.
+            // https://github.com/asc-community/AngouriMath/issues/992
             /// <summary>
             /// Finds the symbolical determinant via Laplace's method
             /// </summary>
@@ -273,7 +280,7 @@ namespace AngouriMath
                 {
                     if (!@this.IsSquare) 
                         return null;
-                    return @this.InnerMatrix.DeterminantGaussianSafeDivision().InnerSimplified;
+                    return @this.InnerMatrix.DeterminantLaplace().InnerSimplified;
                 },
                 this
                 );

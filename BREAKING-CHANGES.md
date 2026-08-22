@@ -35,6 +35,66 @@ read first.
 | **Silent** | `limit(i, i, 0)` | unevaluated | `0` |
 | **Silent** | `integral(i, i)` | `-1/2 + C` | `i ^ 2 / 2 + C` |
 | | `lambda(i, i + 1)` | `InvalidArgumentParseException` | the lambda |
+| **Silent** | the symbolic determinant of a matrix, substituted where a pivot vanishes — `[[0,1,2],[3,4,5],[6,7,8]]` through `[[a,b,c],[d,e,f],[g,h,i]]` | `NaN` | `0` |
+| **Silent** | `((Entity.Matrix)"[[x, 1], [2, y]]".ToEntity()).Determinant.Simplify()` | `x * y - 2 provided not x = 0` | `x * y - 2` |
+
+### The symbolic determinant is a polynomial, not a quotient by its pivots
+
+`Matrix.Determinant` was computed by Gaussian elimination, which leaves the pivots as literal
+divisions. The expression it returned was therefore undefined wherever a pivot vanishes — at points
+where the determinant itself is perfectly well defined.
+
+```csharp
+var m = (Entity.Matrix)"[[x, 1], [2, y]]".ToEntity();
+m.Determinant             // was: x * (y * x + -2) / x           now: x * y + -2
+m.Determinant.Simplify()  // was: x * y - 2 provided not x = 0   now: x * y - 2
+m.Determinant.Substitute("x", 0).Substitute("y", 5).Evaled   // was: NaN   now: -2
+```
+
+`x = 0` is an ordinary point of that matrix — its determinant there is `-2` — and `NaN` asserts the
+value **does not exist**. At 3×3 it stops being an edge case, because the denominator is
+`a ^ 4 * (a * e - b * d)` and so two conditions have to miss:
+
+```csharp
+// [[a, b, c], [d, e, f], [g, h, i]].Determinant, substituted:
+// [[0, 1, 2], [3, 4, 5], [6, 7, 8]]     was: NaN   now: 0     (the pivot a is 0)
+// [[1, 2, 3], [2, 4, 6], [1, 1, 1]]     was: NaN   now: 0     (a * e = b * d)
+// [[1, 2, 3], [4, 5, 6], [7, 8, 10]]    was: -3    now: -3
+// [[2, 1, 0], [1, 2, 1], [0, 1, 2]]     was: 4     now: 4
+```
+
+Two of those four are ordinary matrices, and the first is the singular example every linear-algebra
+course opens with. Both wrong answers were **silent**: the call succeeded and returned `NaN`, which
+is exactly the answer a caller checking for singularity was looking for.
+
+The determinant of a matrix over a commutative ring is a polynomial in its entries, so Laplace
+expansion — which never divides — needs no condition at all. It is what the property's own
+documentation and the comment above it already claimed was in use.
+
+**This is not a performance trade.** Measured on the same machine, property only, both arms built
+from source: Laplace returns a *smaller* expression at every size, and the elimination it replaces
+was the slower of the two on numeric matrices by a wide margin.
+
+| entries | Gaussian complexity | Laplace complexity | Gaussian, numeric | Laplace, numeric |
+|---|---|---|---|---|
+| 2×2 | 13 | 9 | | |
+| 3×3 | 79 | 37 | | |
+| 4×4 | 443 | 163 | | |
+| 5×5 | 2461 | 833 | | |
+| 6×6 | 13673 | 5021 | 164 ms | 126 ms |
+| 7×7 | | 35173 | | |
+| 8×8 | | | over 120 s | 358 ms |
+| 10×10 | | | over 120 s | 4478 ms |
+
+Laplace expansion is `O(n!)`, and a fully symbolic determinant has `n!` terms however it is
+computed, so that is the size of the answer rather than an overhead. The practical ceiling on a
+numeric matrix moves from 7×7 to 10×10; 11×11 does not return, where under the elimination 8×8
+already did not. A fraction-free elimination (Bareiss) would raise it further and is worth having,
+but it is a separate change and this one is not blocked on it.
+
+Measured: the whole suite passes with the fix in, and the corpus is unchanged — 116/119 with 0
+wrong, 0 error, 0 timeout, and no case's verdict or answer altered.
+[#992](https://github.com/asc-community/AngouriMath/issues/992).
 
 ### A rewritten node keeps its `Codomain`, so a domain constraint no longer disappears
 
