@@ -238,5 +238,69 @@ namespace AngouriMath.Tests.Calculus
             Assert.True(limit.Evaled is Entity.Limitf,
                 $"the expansion should be refused here, and it came back {limit.Evaled}");
         }
+
+        /// <summary>
+        /// <see cref="Entity.Differentiate(Variable)"/> takes a <see cref="Variable"/>, and
+        /// <c>MathS.pi</c> and <c>MathS.e</c> are ones, so they could be handed to it and it
+        /// differentiated as though they varied: <c>sin(pi)</c> came back as <c>-1</c>, which is
+        /// <c>cos(pi)</c> — the chain rule run over a symbol that cannot change. Nothing varies
+        /// with respect to something that cannot vary, so the answer is <c>0</c>.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/993">#993</a>
+        /// </summary>
+        [Theory]
+        [InlineData("pi ^ 2", "pi")]        // was 2 * pi
+        [InlineData("sin(pi)", "pi")]       // was -1
+        [InlineData("x * pi", "pi")]        // was x
+        [InlineData("sin(x * pi)", "pi")]   // was cos(x * pi) * x
+        [InlineData("x ^ pi", "pi")]
+        [InlineData("x", "pi")]
+        [InlineData("e ^ 2", "e")]          // was 2 * e
+        // a node whose derivative the library cannot take is still 0 over a name that cannot
+        // vary -- declining there would be declining something settled
+        [InlineData("x!", "pi")]
+        public void DifferentiatingOverAConstantIsZero(string exprRaw, string constant)
+            => Assert.Equal(0, exprRaw.ToEntity().Differentiate((Variable)constant));
+
+        /// <summary>
+        /// The power overload too, where the guard has to come before the loop.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/993">#993</a>
+        /// </summary>
+        [Theory]
+        [InlineData("pi ^ 3", 1)]
+        [InlineData("pi ^ 3", 2)]
+        [InlineData("x * pi", 3)]
+        public void DifferentiatingOverAConstantNTimesIsZero(string exprRaw, int power)
+            => Assert.Equal(0, exprRaw.ToEntity().Differentiate((Variable)"pi", power));
+
+        /// <summary>
+        /// Zero times returns the input, and a negative power integrates — neither is a
+        /// derivative, and neither changes. An antiderivative with respect to something that
+        /// cannot vary has no value to give at all, which is a different question from this one.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/993">#993</a>
+        /// </summary>
+        [Fact] public void ZeroTimesAndNegativePowersAreUntouched()
+        {
+            Assert.Equal("pi ^ 2".ToEntity(), "pi ^ 2".ToEntity().Differentiate((Variable)"pi", 0));
+            Assert.Equal("pi ^ 2".ToEntity().Integrate((Variable)"pi"),
+                "pi ^ 2".ToEntity().Differentiate((Variable)"pi", -1));
+        }
+
+        /// <summary>
+        /// And an ordinary variable is untouched, including where a constant is present as a
+        /// coefficient — the guard is about what is differentiated *over*, not about what
+        /// appears in the expression.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/993">#993</a>
+        /// </summary>
+        [Theory]
+        [InlineData("x * y", "y", "x")]
+        [InlineData("sin(x) * x", "x", "cos(x) * x + sin(x)")]
+        [InlineData("x ^ 2 * pi", "x", "2 * x * pi")]
+        [InlineData("e ^ x", "x", "e ^ x")]
+        [InlineData("pi * sin(x)", "x", "pi * cos(x)")]
+        public void DifferentiatingOverAnOrdinaryVariableIsUnchanged(
+            string exprRaw, string over, string expected)
+            => Assert.Equal(0,
+                (exprRaw.ToEntity().Differentiate((Variable)over) - expected.ToEntity())
+                    .Simplify().EvalNumerical());
     }
 }

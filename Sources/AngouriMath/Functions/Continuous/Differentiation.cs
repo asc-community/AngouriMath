@@ -44,7 +44,20 @@ namespace AngouriMath
         /// </code>
         /// </example>
         public Entity Differentiate(Variable variable)
-            => Transformation.Differentiation(variable).ApplyOrKeep(this);
+            // Nothing varies with respect to a name that cannot vary, so the answer is 0 --
+            // and it is an answer, not a refusal, which is why it is given here rather than
+            // left as an unresolved Derivativef for the nodes that build one.
+            //
+            // The test is whether the name evaluates to a number, not whether it is spelled
+            // like a constant: a name a *binder* declares can vary even when it is spelled
+            // `pi`, and it evaluates to itself. That is what keeps this compatible with
+            // https://github.com/asc-community/AngouriMath/issues/984, whose answer to
+            // `derivative(pi ^ 2, pi)` is over the variable the binder holds. This call has
+            // no binder in it, and the constant arrives directly in the position that says
+            // what varies.
+            // https://github.com/asc-community/AngouriMath/issues/993
+            => variable.Evaled is Number ? 0
+                : Transformation.Differentiation(variable).ApplyOrKeep(this);
 
         /// <summary>
         /// What <see cref="Differentiate(Variable)"/> does, reachable by
@@ -66,7 +79,23 @@ namespace AngouriMath
         {
             
             /// <inheritdoc/>
-            protected override Entity InnerDifferentiate(Variable variable) => Name == variable.Name ? 1 : 0;
+            /// <remarks>
+            /// A name that cannot vary contributes nothing to any derivative, so
+            /// <c>d(anything)/d(pi)</c> is <c>0</c> and not <c>1</c> even where the name
+            /// matches. <see cref="Entity.Differentiate(Variable)"/> takes a
+            /// <see cref="Variable"/>, and <c>MathS.pi</c> and <c>MathS.e</c> are ones, so
+            /// they can be handed to it -- and <c>sin(pi)</c> came back as <c>-1</c>, which
+            /// is <c>cos(pi)</c>: the chain rule run over a symbol that cannot change.
+            /// Every route bottoms out here, so this is the whole guard.
+            ///
+            /// The test is whether the name itself evaluates to a number, rather than
+            /// whether it is spelled like a constant. A name a binder declares *can* vary
+            /// even when it is spelled <c>pi</c>, and it evaluates to itself.
+            /// <a href="https://github.com/asc-community/AngouriMath/issues/993">#993</a>
+            /// </remarks>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                variable.Evaled is Number ? 0
+                : Name == variable.Name ? 1 : 0;
         }
 
         partial record Matrix
@@ -79,6 +108,12 @@ namespace AngouriMath
         public Entity Differentiate(Variable x, int power)
         {
             var ent = this;
+            // As above -- and only for the differentiating direction, since a negative power
+            // integrates and an antiderivative with respect to something that cannot vary has
+            // no value to give at all.
+            // https://github.com/asc-community/AngouriMath/issues/993
+            if (power > 0 && x.Evaled is Number)
+                return 0;
             if (power < 0)
                 for (var _ = 0; _ < -power; _++)
                     ent = ent.Integrate(x);
