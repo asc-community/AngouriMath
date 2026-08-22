@@ -35,6 +35,49 @@ read first.
 | **Silent** | `limit(i, i, 0)` | unevaluated | `0` |
 | **Silent** | `integral(i, i)` | `-1/2 + C` | `i ^ 2 / 2 + C` |
 | | `lambda(i, i + 1)` | `InvalidArgumentParseException` | the lambda |
+| **Silent** | `"x ^ 3".ToEntity().Differentiate(x, 2)`, and every `Differentiate(x, n)` with `n >= 1` | `(0 * x ^ 2 + 2 * x ^ 1 * 1 * 3) * 1 + 0 * 3 * x ^ 2` | `2 * x * 3` |
+
+### `Differentiate(x, n)` answers what `Differentiate(x)` n times answers
+
+The two overloads reached different code. `Differentiate(Variable)` goes through the transformation,
+which ends at `DifferentiateOnce` and simplifies; `Differentiate(Variable, int)` called
+`InnerDifferentiate` straight in its loop, so nothing was ever simplified — and because each pass
+differentiated the *unsimplified* result of the last, every `0 *` and `* 1` the chain rule produces
+was still there to be differentiated again.
+
+```csharp
+var x = MathS.Var("x");
+"x ^ 3".ToEntity().Differentiate(x, 1)   // was: 3 * x ^ 2 * 1                                   now: 3 * x ^ 2
+"x ^ 3".ToEntity().Differentiate(x, 2)   // was: (0 * x ^ 2 + 2 * x ^ 1 * 1 * 3) * 1 + 0 * 3 * x ^ 2   now: 2 * x * 3
+```
+
+At `n = 3` it is no longer just untidy:
+
+```
+"x ^ 4".Differentiate(x, 3)
+// was: (0 * x ^ 3 + 3 * x ^ 2 * 1 * 0 + ((0 * x ^ 2 + 2 * x ^ 1 * 1 * 3) * 1 + 0 * 3 * x ^ 2) * 4
+//       + 0 * 3 * x ^ 2 * 1) * 1 + 0 * (0 * x ^ 3 + 3 * x ^ 2 * 1 * 4) + 0 * 4 * x ^ 3
+//       + (0 * x ^ 3 + 3 * x ^ 2 * 1 * 4) * 0
+// now: 2 * x * 3 * 4
+```
+
+The value was never wrong — `Differentiate(x, 3)` and differentiating three times agree numerically
+on both versions — so this is a change of *form*, and it breaks anyone matching on the shape of the
+result. It also means the cost grew with the accumulated mess rather than with the derivative.
+
+`n = 0` (returns the input) and `n < 0` (integrates) are unchanged.
+
+**Why the two were not simply merged.** `Derivativef`'s simplification decides whether a derivative
+can be taken by asking for it and keeping the node when a `Derivativef` comes back — that test is
+what terminates it. Routing it through an overload that simplifies each pass makes it simplify the
+very node it is deciding about, arrive back at itself, and recurse: `derivative(x!, x, 2)` overflowed
+the stack after 3214 frames. So the raw loop still exists as an internal `InnerDifferentiate(Variable,
+int)`, which is what that caller uses, and only the public overload simplifies. There are cases for
+both in `work/crashcheck`.
+
+Measured: suite 7378 passed, 0 failed; corpus unchanged at 116/119 with 0 wrong, no case's verdict or
+answer altered; crashcheck 1834 cases, 0 crashed.
+[#1002](https://github.com/asc-community/AngouriMath/issues/1002).
 
 ### A rewritten node keeps its `Codomain`, so a domain constraint no longer disappears
 

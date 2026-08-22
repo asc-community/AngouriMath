@@ -23,16 +23,20 @@ namespace AngouriMath
                 ExpandOnTwoAndTArguments(Expression, Var, Iterations,
                     (a, b, c) => (a, b, c) switch
                     {
-                        // TODO: should we call InnerSimplified here?
+                        // InnerDifferentiate, not the public Differentiate: the test below is
+                        // "did the derivative come back unresolved", and the public overload
+                        // simplifies each pass, so asking it would simplify the very
+                        // Derivativef this is deciding about and arrive back here unchanged.
+                        // https://github.com/asc-community/AngouriMath/issues/1002
                         (var expr, Variable var, int asInt)
-                            when expr.Differentiate(var, asInt) is var res and not Derivativef
+                            when expr.InnerDifferentiate(var, asInt) is var res and not Derivativef
                             => res.InnerSimplified(isExact),
                         (var expr, Variable var, int asInt) => null,
                         (Application, _, _) => null,
                         (var expr, Entity otherExpr, int asInt)
                             when Variable.CreateTemp(otherExpr.Vars) is var tempVar
                             && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
-                            && tempSubstituted.Differentiate(tempVar, asInt) is var res and not Derivativef
+                            && tempSubstituted.InnerDifferentiate(tempVar, asInt) is var res and not Derivativef
                             => res.Substitute(tempVar, otherExpr).InnerSimplified(isExact),
                         _ => null
                     },
