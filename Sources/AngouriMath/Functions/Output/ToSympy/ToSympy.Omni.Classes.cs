@@ -16,19 +16,28 @@ namespace AngouriMath
             partial record FiniteSet
             {
                 internal override string ToSymPy()
-                    => $"FiniteSet({string.Join(", ", Elements.Select(c => c.ToSymPy()))})";
+                    => $"sympy.FiniteSet({string.Join(", ", Elements.Select(c => c.ToSymPy()))})";
             }
 
             partial record Interval
             {
                 internal override string ToSymPy()
-                    => $"Interval({Left}, {Right}, left_open={((Boolean)!LeftClosed).ToSymPy()}, right_open={((Boolean)!RightClosed).ToSymPy()})";
+                    => $"sympy.Interval({Left.ToSymPy()}, {Right.ToSymPy()}, left_open={((Boolean)!LeftClosed).ToSymPy()}, right_open={((Boolean)!RightClosed).ToSymPy()})";
             }
 
             partial record ConditionalSet
             {
+                // A set builder's Codomain is Domain.Any, which SpecialSet.Create has no
+                // member for and throws on -- so every set builder threw an AngouriBugException
+                // out of the exporter. SymPy names that set: S.UniversalSet is the one it
+                // prints ConditionSet without a third argument for, which is what "no
+                // restriction beyond the predicate" means here too.
+                // https://github.com/asc-community/AngouriMath/issues/985
                 internal override string ToSymPy()
-                    => $"ConditionSet({Var.ToSymPy()}, {Predicate.ToSymPy()}, {((SpecialSet)Codomain).ToSymPy()})";
+                    => $"sympy.ConditionSet({Var.ToSymPy()}, {Predicate.ToSymPy()}, {CodomainToSymPy()})";
+
+                private string CodomainToSymPy()
+                    => Codomain is Domain.Any ? "sympy.S.UniversalSet" : SpecialSet.Create(Codomain).ToSymPy();
             }
 
             partial record SpecialSet
@@ -36,25 +45,25 @@ namespace AngouriMath
                 partial record Integers
                 {
                     internal override string ToSymPy()
-                        => "S.Integers";
+                        => "sympy.S.Integers";
                 }
 
                 partial record Rationals
                 {
                     internal override string ToSymPy()
-                        => "S.Rationals";
+                        => "sympy.S.Rationals";
                 }
 
                 partial record Reals
                 {
                     internal override string ToSymPy()
-                        => "S.Reals";
+                        => "sympy.S.Reals";
                 }
 
                 partial record Complexes
                 {
                     internal override string ToSymPy()
-                        => "S.Complexes";
+                        => "sympy.S.Complexes";
                 }
 
                 internal override string ToSymPy()
@@ -64,25 +73,30 @@ namespace AngouriMath
             partial record Unionf
             {
                 internal override string ToSymPy()
-                    => $"Union({Left.ToSymPy()}, {Right.ToSymPy()})";
+                    => $"sympy.Union({Left.ToSymPy()}, {Right.ToSymPy()})";
             }
 
             partial record Intersectionf
             {
                 internal override string ToSymPy()
-                    => $"Intersection({Left.ToSymPy()}, {Right.ToSymPy()})";
+                    => $"sympy.Intersection({Left.ToSymPy()}, {Right.ToSymPy()})";
             }
 
             partial record SetMinusf
             {
                 internal override string ToSymPy()
-                    => $"Complement({Left.ToSymPy()}, {Right.ToSymPy()})";
+                    => $"sympy.Complement({Left.ToSymPy()}, {Right.ToSymPy()})";
             }
 
             partial record Inf
             {
+                // Python's `in` forces its result to a bool, and a membership that is not
+                // decided is not one: `x in sympy.S.Reals` raises "did not evaluate to a
+                // bool: (-oo < x) & (x < oo)". `.contains` is the form that answers with the
+                // condition instead, and it still answers True or False when it can.
+                // https://github.com/asc-community/AngouriMath/issues/985
                 internal override string ToSymPy()
-                    => $"{Element.ToSymPy(Element.Priority < Priority)} in {SupSet.ToSymPy(SupSet.Priority < Priority)}";
+                    => $"({SupSet.ToSymPy()}).contains({Element.ToSymPy()})";
             }
         }
 
@@ -96,7 +110,7 @@ namespace AngouriMath
 
         partial record Piecewise
         {
-            internal override string ToSymPy() => $"sympy.Piecewise({string.Join(", ", Cases.Select(c => $"({c.Expression}, {c.Predicate})"))})";
+            internal override string ToSymPy() => $"sympy.Piecewise({string.Join(", ", Cases.Select(c => $"({c.Expression.ToSymPy()}, {c.Predicate.ToSymPy()})"))})";
         }
         
         partial record Matrix
@@ -107,7 +121,7 @@ namespace AngouriMath
                         IsVector switch
                         {
                             true => this.Select(c => c.ToSymPy()),
-                            false => this.Select(c => $"[{string.Join(", ", ((Matrix)c).T)}]"),
+                            false => this.Select(c => $"[{string.Join(", ", ((Matrix)c).T.Select(e => e.ToSymPy()))}]"),
                         }) +
                    "])";
         }
@@ -123,7 +137,7 @@ namespace AngouriMath
         partial record Lambda
         {
             internal override string ToSymPy()
-                => $"sympy.Lambda({Parameter.ToSymPy()}, )";
+                => $"sympy.Lambda({Parameter.ToSymPy()}, {Body.ToSymPy()})";
         }
     }
 }

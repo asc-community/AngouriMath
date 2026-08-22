@@ -35,6 +35,67 @@ read first.
 | **Silent** | `limit(i, i, 0)` | unevaluated | `0` |
 | **Silent** | `integral(i, i)` | `-1/2 + C` | `i ^ 2 / 2 + C` |
 | | `lambda(i, i + 1)` | `InvalidArgumentParseException` | the lambda |
+| **Silent** | `MathS.ToSympyCode` for any set, lambda, piecewise or non-vector matrix | Python that does not run — `NameError`, `SyntaxError`, `TypeError`, or an exception out of the exporter | Python that runs |
+
+### `ToSympyCode` emits Python that runs
+
+`MathS.ToSympyCode` is documented as producing code you can run in SymPy. For every set, every
+lambda, every `piecewise` and every non-vector matrix, it did not — and the failure was **silent**
+in the sense that matters here: the string came back looking like Python.
+
+The preamble is `import sympy` and nothing else, so every SymPy name in the body has to be
+qualified. Six exports were not, and a seventh threw before it got that far:
+
+```python
+expr = FiniteSet(1, 2)                        # was: NameError: name 'FiniteSet' is not defined
+expr = Interval(0, 1, ...)                    # was: NameError: name 'Interval' is not defined
+expr = Union(FiniteSet(1, 2), FiniteSet(3))   # was: NameError: name 'Union' is not defined
+expr = x in S.Reals                           # was: NameError: name 'S' is not defined
+expr = sympy.Lambda(x, )                      # was: TypeError: missing 1 required positional argument
+```
+
+| input | was | now |
+|---|---|---|
+| `{ 1, 2 }` | `FiniteSet(1, 2)` | `sympy.FiniteSet(1, 2)` |
+| `ZZ` | `S.Integers` | `sympy.S.Integers` |
+| `{1,2} \/ {3}` | `Union(FiniteSet(1, 2), FiniteSet(3))` | `sympy.Union(sympy.FiniteSet(1, 2), sympy.FiniteSet(3))` |
+| `lambda(x, sin(x) + 1)` | `sympy.Lambda(x, )` | `sympy.Lambda(x, sympy.sin(x) + 1)` |
+| `{ x : x > 0 }` | `AngouriBugException` out of the exporter | `sympy.ConditionSet(x, x > 0, sympy.S.UniversalSet)` |
+| `[sin(a); b]` | `Interval(sin(a), b, ...)` | `sympy.Interval(sympy.sin(a), b, ...)` |
+| `piecewise(sin(x) provided x > 0, …)` | `sympy.Piecewise((sin(x), x > 0), …)` | `sympy.Piecewise((sympy.sin(x), x > 0), …)` |
+| `[[sin(a), b], [c, d]]` | `sympy.ImmutableMatrix([[sin(a), b], …])` | `sympy.ImmutableMatrix([[sympy.sin(a), b], …])` |
+| `x in RR` | `x in S.Reals` | `(sympy.S.Reals).contains(x)` |
+
+Three separate faults, all of them invisible to the tests that were there:
+
+- **Unqualified names.** `import sympy` binds `sympy`, not `FiniteSet` or `S`.
+- **Parts interpolated rather than exported.** `Interval`, `Piecewise` and the non-vector `Matrix`
+  wrote their children with `{Left}` instead of `{Left.ToSymPy()}`. A bare variable spells the same
+  in both languages, so it only shows once the part is a function — `sin(a)`, which Python does not
+  have.
+- **A set builder threw.** `ConditionalSet.Codomain` is `Domain.Any`, which `SpecialSet.Create` has
+  no member for, so the exporter's cast raised `AngouriBugException` — "please report about it to
+  the official repository", which is [#985](https://github.com/asc-community/AngouriMath/issues/985).
+  SymPy names that set: `S.UniversalSet`, which is the one it prints `ConditionSet` *without* a
+  third argument for.
+
+`x in RR` also changes shape rather than just qualification. Python's `in` coerces its result to a
+`bool`, and a membership that is not decided is not one: `x in sympy.S.Reals` raises
+`TypeError: did not evaluate to a bool: (-oo < x) & (x < oo)`. `.contains` answers with the
+condition, and still answers `True` or `False` where it can.
+
+**Why the tests passed.** They asserted substring containment — `Assert.Contains("Piecewise((a, b),
+(c, d))")` — which holds whether the parts were exported or interpolated, and holds on a program
+that does not run at all. The new cases pin the whole emitted expression, and one of them asserts
+every SymPy name carries its qualifier.
+
+Measured with `work/sympycheck`, which executes the generated program rather than reading it: of 45
+emitted programs the corpus now covers, **43 run** and 0 return an inexact value. The two that do
+not are the set builders, whose preamble still declares the placeholder that
+[#989](https://github.com/asc-community/AngouriMath/issues/989) is about — `%1 = sympy.Symbol('%1')`
+is a `SyntaxError` whatever the body says. Their `expr` line is correct here, and with #989's fix
+in as well, 45 of 45 run. Suite 7385 passed, 0 failed; corpus unchanged at 116/119 with 0 wrong.
+[#985](https://github.com/asc-community/AngouriMath/issues/985).
 
 ### A rewritten node keeps its `Codomain`, so a domain constraint no longer disappears
 
