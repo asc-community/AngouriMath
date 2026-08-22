@@ -20,7 +20,9 @@ namespace AngouriMath
         /// Construct a <see cref="Variable"/> with an implicit conversion from <see cref="string"/>.
         /// It has no type, so you can substitute any value under a given variable.
         /// </summary>
-        public sealed partial record Variable : Entity
+#pragma warning disable SealedOrAbstract // Constant derives from it, as Real does from Complex
+        public partial record Variable : Entity
+#pragma warning restore SealedOrAbstract
         {
             /// <summary>
             /// Deconstructs Variable as follows
@@ -29,7 +31,7 @@ namespace AngouriMath
             public void Deconstruct(out string name)
                 => name = Name;
             internal static Variable CreateVariableUnchecked(string name) => new(name);
-            private Variable(string name) => Name = name;
+            private protected Variable(string name) => Name = name;
 
             /// <summary>
             /// The name of the variable as a string
@@ -42,14 +44,36 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
 
-            [ConstantField] internal static readonly Variable pi = new Variable(nameof(pi));
-            [ConstantField] internal static readonly Variable e = new Variable(nameof(e));
+            /// <summary>
+            /// Which names the language reads as mathematical constants, and what each is worth.
+            /// This is the whole registry: a name is a constant exactly when it is a key here,
+            /// and nothing below asks about <c>pi</c> or <c>e</c> by name.
+            /// </summary>
             [ConstantField] internal static readonly IReadOnlyDictionary<string, Complex> ConstantList =
                 new Dictionary<string, Complex>
                 {
                     { nameof(pi), MathS.DecimalConst.pi },
                     { nameof(e), MathS.DecimalConst.e }
                 };
+
+            /// <summary>Each constant as the name a writer types, which is the form a binder can take.</summary>
+            [ConstantField] internal static readonly IReadOnlyDictionary<string, Constant> NamedConstants =
+                ConstantList.Keys.ToDictionary(name => name, Constant.Named);
+
+            [ConstantField] internal static readonly Constant pi = NamedConstants[nameof(pi)];
+            [ConstantField] internal static readonly Constant e = NamedConstants[nameof(e)];
+
+            /// <summary>Is this name one the language reads as a mathematical constant?</summary>
+            internal static bool IsConstantName(string name) => ConstantList.ContainsKey(name);
+
+            /// <summary>
+            /// A name as the language reads it: a constant where the name is one, a variable
+            /// otherwise. This is what the parser calls, so a written <c>pi</c> is the constant
+            /// and a <c>pi</c> that a binder declares is not — they stop being one object.
+            /// <a href="https://github.com/asc-community/AngouriMath/issues/984">#984</a>
+            /// </summary>
+            internal static Variable CreateVariableOrConstant(string name)
+                => NamedConstants.TryGetValue(name, out var constant) ? constant : new Variable(name);
 
             /// <summary>
             /// Extracts this <see cref="Variable"/>'s name and index
@@ -96,7 +120,9 @@ namespace AngouriMath
             private static readonly Variable[] letterVars = 
                 "xyzabcdefghijklmnopqrstuvw"
                 .Select(c => new Variable(c.ToString()))
-                .Where(c => c.IsConstant is false)
+                // A fresh name that prints as `e` would parse back as the constant, so the
+                // constant names stay out of here even though they are ordinary variables now.
+                .Where(c => !IsConstantName(c.Name))
                 .ToArray();
 
             /// <summary>
@@ -130,6 +156,59 @@ namespace AngouriMath
                 return new Variable("%" + i);
             }
 
+        }
+
+        /// <summary>
+        /// A mathematical constant: a number whose spelling happens to be a legal identifier.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// It is a <see cref="Variable"/> by inheritance, so everything that reads a leaf by name
+        /// keeps working, and a distinct type by record identity, which is the whole point: a
+        /// binder that declares <c>pi</c> and the constant <c>pi</c> are no longer one object, so
+        /// evaluation can tell them apart without being told where it is.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/984">#984</a>
+        /// </para>
+        /// <para>
+        /// A binder binds <b>occurrences</b>, not values, and that is the whole of the second
+        /// distinction here. Every constant a writer types is the one object in
+        /// <c>NamedConstants</c>, because the parser and <see cref="MathS.pi"/> hand that
+        /// object back; the base of <c>ln</c> and of <c>exp</c> is
+        /// <see cref="EulerIntrinsic"/>, a separate object, because it is Euler's number standing
+        /// in an operator's own definition and not a reference to the name <c>e</c>. A binder
+        /// replaces the occurrences it was handed — compared by reference — so
+        /// <c>sum(ln(x), e, 1, 2)</c> is <c>2 * ln(x)</c> while <c>sum(log(e, x), e, 1, 2)</c>,
+        /// where the writer did name <c>e</c>, is <c>log(1, x) + log(2, x)</c>.
+        /// </para>
+        /// <para>
+        /// The two are <b>equal</b>, and deliberately so: they are the same number, they print
+        /// alike, and any rule that matches one matches the other, so nothing about canonical form,
+        /// equality or substitution changes. Only the identity of the occurrence differs, and only
+        /// while a binder is deciding what it binds — which is at construction, before anything
+        /// evaluates.
+        /// </para>
+        /// </remarks>
+        public sealed partial record Constant : Variable
+        {
+            private Constant(string name) : base(name) { }
+
+            /// <summary>A constant as the name a writer types. One object per name, kept in
+            /// <c>Variable.NamedConstants</c> — a binder recognises it by reference.</summary>
+            internal static Constant Named(string name) => new(name);
+
+            /// <summary>What this constant is worth.</summary>
+            /// <remarks>
+            /// A computed property on purpose: a record compares its instance fields, and the
+            /// identity of a constant is its name and its role, not a hundred digits of it.
+            /// </remarks>
+            internal Number.Complex Value => ConstantList[Name];
+
+            /// <summary>
+            /// Euler's number as the base of <c>ln</c> and of <c>exp</c>. Equal to the written
+            /// <c>e</c> and a different object from it, which is what keeps a binder over the
+            /// name <c>e</c> out of a logarithm.
+            /// </summary>
+            [ConstantField] internal static readonly Constant EulerIntrinsic = new(nameof(e));
         }
         #endregion
     }

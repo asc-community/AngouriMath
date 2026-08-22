@@ -66,7 +66,14 @@ namespace AngouriMath
         {
             
             /// <inheritdoc/>
-            protected override Entity InnerDifferentiate(Variable variable) => Name == variable.Name ? 1 : 0;
+            /// <remarks>
+            /// The node, not its name. A <see cref="Constant"/> and a <see cref="Variable"/> can
+            /// share a spelling — that is what a binder over <c>pi</c> produces — and comparing
+            /// the spelling made <c>derivative(arccos(0) * pi, pi)</c> differentiate the
+            /// <c>pi / 2</c> that <c>arccos(0)</c> simplifies to as though it were the index.
+            /// <a href="https://github.com/asc-community/AngouriMath/issues/984">#984</a>
+            /// </remarks>
+            protected override Entity InnerDifferentiate(Variable variable) => this == variable ? 1 : 0;
         }
 
         partial record Matrix
