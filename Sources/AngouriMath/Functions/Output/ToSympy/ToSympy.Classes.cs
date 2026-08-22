@@ -11,12 +11,18 @@ namespace AngouriMath
     {
         public partial record Variable
         {
-            internal override string ToSymPy() 
+            // A name, whatever it is spelled. A bound `e` is a variable and exports as one; only
+            // the constant node below exports as SymPy's constant.
+            internal override string ToSymPy() => Name;
+        }
+
+        public partial record Constant
+        {
+            internal override string ToSymPy()
                 => Name switch
                 {
                     "e" => "sympy.E",
-                    "pi" => "sympy.pi",
-                    _ => Name
+                    _ => "sympy." + Name
                 };
         }
     }

@@ -30,12 +30,30 @@ read first.
 | **Silent** | `"7/2".ToEntity()` and any quotient of two integer literals | a `Divf` | the `Rational` it denotes |
 | **Silent** | `sum(i, i, 1, 10)`, and every binder given `i` as the name it binds | the imaginary unit in the name position, so nothing was bound | `i` is the bound name, and `55` |
 | **Silent** | `sum(2i, i, 1, 3)` | `6i` | `12` |
-| **Silent** | `derivative(i ^ 2, i)` | `0` | `2 * i` |
+| **Silent** | `derivative(i ^ 2, i)` | `0` | `2 * i_1` |
 | **Silent** | `{ i : i > 0 }` | `NaN` | the set it describes |
 | **Silent** | `limit(i, i, 0)` | unevaluated | `0` |
-| **Silent** | `integral(i, i)` | `-1/2 + C` | `i ^ 2 / 2 + C` |
+| **Silent** | `integral(i, i)` | `-1/2 + C` | `i_1 ^ 2 / 2 + C` |
 | | `lambda(i, i + 1)` | `InvalidArgumentParseException` | the lambda |
 | **Silent** | `[1, 2] in RR`, and a matrix or a finite set against any of `BB`, `ZZ`, `QQ`, `RR`, `CC` | `True` | `False` |
+| **Silent** | `"sin(pi)".ToEntity().Differentiate(MathS.pi)`, and every derivative over `pi` or `e` | `-1`, the chain rule run over a symbol that cannot change | `0` |
+| **Silent** | `"x ^ 3".ToEntity().Differentiate(x, 2)`, and every `Differentiate(x, n)` with `n >= 1` | `(0 * x ^ 2 + 2 * x ^ 1 * 1 * 3) * 1 + 0 * 3 * x ^ 2` | `2 * x * 3` |
+| **Silent** | `derivative(e ^ 2, e)`, `derivative(pi ^ 2, pi)` | `0` | `2 * e_1`, `2 * pi_1` |
+| **Silent** | `{ e : e > 0 }` | `{ e : True }` | the set it describes |
+| **Silent** | `limit(e, e, 0).Evaled` | `2.718…` | `0` |
+| **Silent** | `integral(e, e, 0, 1).Evaled` | `3.694…` | `1/2` |
+| **Silent** | `integral(arccos(0), pi, 0, 1)` | `1/4` | `pi / 2` |
+| **Silent** | `derivative(arccos(0) * pi, pi)` | `0` | `pi / 2` |
+| **Silent** | `sum(ln(x), e, 1, 2)`, and any binder over `e` around a logarithm | `log(1, x) + log(2, x)` | `2 * ln(x)` |
+| **Silent** | `"sum(pi, pi, 1, 3)".ToEntity().Vars` | empty — the index was read as a constant | `pi` |
+| | `MathS.pi.GetType()` | `Entity.Variable` | `Entity.Constant`, which derives from it |
+| **Silent** | `derivative(x ^ 3, 3)`, and any derivative or integral over a number | `ln(x) * x ^ 3` | the unevaluated `derivative(x ^ 3, 3)` |
+| **Silent** | `derivative(x ^ 2, x + 1)`, over a subexpression that does not occur | `0` | `2 * x`, by change of variables |
+| **Silent** | `derivative(x * (x + 1), x + 1)`, where the rename left a variable behind | `x` | `1 + 2 * x` |
+| **Silent** | `derivative(x ^ 2, x * y)`, over several variables at once | `0` | the unevaluated derivative |
+| **Silent** | `derivative(x ^ 2 + y ^ 2, [x, y])` | `0` | `[2 * x, 2 * y]`, the gradient |
+| **Silent** | `integral(x, [x, y]T)` | `[[C + x ^ 2, C + x * y]]` | `[[x ^ 2 / 2 + C, x * y + C]]` |
+| **Silent** | `derivative(e ^ 2, e)`, over a named constant | `0` | `2 * e` |
 
 ### A matrix is no longer a member of every special set at once
 
@@ -58,6 +76,93 @@ undecided rather than answered.
 
 Measured: the whole suite passes with the fix in, and the corpus is unchanged at 116/119 with 0 wrong.
 [#995](https://github.com/asc-community/AngouriMath/issues/995).
+
+### Differentiating over a constant is `0`, not the chain rule over a symbol that cannot change
+
+`Entity.Differentiate(Variable)` takes a `Variable`, and `MathS.pi` and `MathS.e` are ones — so they
+could be handed to it, and it differentiated as though they varied.
+
+```csharp
+"pi ^ 2".ToEntity().Differentiate(MathS.pi)        // was: 2 * pi                now: 0
+"sin(pi)".ToEntity().Differentiate(MathS.pi)       // was: -1                    now: 0
+"x * pi".ToEntity().Differentiate(MathS.pi)        // was: x                     now: 0
+"sin(x * pi)".ToEntity().Differentiate(MathS.pi)   // was: cos(x * pi) * x       now: 0
+"x!".ToEntity().Differentiate(MathS.pi)            // was: derivative(x!, pi)    now: 0
+"e ^ 2".ToEntity().Differentiate(MathS.e)          // was: 2 * e                 now: 0
+"pi ^ 3".ToEntity().Differentiate(MathS.pi, 2)     // was: an unsimplified 0     now: 0
+```
+
+`sin(pi)` is `0`, and its derivative with respect to anything is `0`. `-1` is `cos(pi)` — the chain
+rule run over a symbol that cannot change. `x!` is the case where the library cannot take the
+derivative at all, and it is `0` here regardless, because the *variable* is what settles it.
+
+An ordinary variable is untouched, including where a constant is present as a coefficient:
+`"x ^ 2 * pi".Differentiate(x)` is `2 * x * pi` on both versions. The guard is about what is
+differentiated **over**, not about what appears in the expression. `Differentiate(x, 0)` returns the
+input and `Differentiate(x, n)` with `n < 0` integrates; neither changes.
+
+**The test is whether the name evaluates to a number, not whether it is spelled like a constant.**
+That is what makes this compatible with
+[#984](https://github.com/asc-community/AngouriMath/issues/984): a name a *binder* declares can vary
+even when it is spelled `pi`, and it evaluates to itself.
+
+**The node form is a different question and belongs to #984.** On this version
+`"derivative(x * pi, pi)".ToEntity().InnerSimplified` also goes from `x` to `0`, because the node
+asks the same public method. Once #984's fix lands the parser *binds* `pi` there, so it becomes
+`2 * pi_1` — a derivative over the variable the binder holds — and that is the intended answer, not
+a regression of this one. The two compose: measured together, `sin(pi)` differentiated by `MathS.pi`
+is `0` and `derivative(pi ^ 2, pi)` is `2 * pi_1`.
+
+`Integrate` and `Limit` over a constant are **not** changed. They have no value to give — there is
+nothing to integrate with respect to a thing that cannot vary — so leaving them unevaluated is the
+existing "I could not settle this", not a refusal of something settled. The derivative *is* settled,
+which is why it is answered rather than declined.
+
+Measured: suite 7383 passed, 0 failed; corpus unchanged at 116/119 with 0 wrong, no case's verdict or
+answer altered; crashcheck 1834 cases, 0 crashed.
+[#993](https://github.com/asc-community/AngouriMath/issues/993).
+
+### `Differentiate(x, n)` answers what `Differentiate(x)` n times answers
+
+The two overloads reached different code. `Differentiate(Variable)` goes through the transformation,
+which ends at `DifferentiateOnce` and simplifies; `Differentiate(Variable, int)` called
+`InnerDifferentiate` straight in its loop, so nothing was ever simplified — and because each pass
+differentiated the *unsimplified* result of the last, every `0 *` and `* 1` the chain rule produces
+was still there to be differentiated again.
+
+```csharp
+var x = MathS.Var("x");
+"x ^ 3".ToEntity().Differentiate(x, 1)   // was: 3 * x ^ 2 * 1                                   now: 3 * x ^ 2
+"x ^ 3".ToEntity().Differentiate(x, 2)   // was: (0 * x ^ 2 + 2 * x ^ 1 * 1 * 3) * 1 + 0 * 3 * x ^ 2   now: 2 * x * 3
+```
+
+At `n = 3` it is no longer just untidy:
+
+```
+"x ^ 4".Differentiate(x, 3)
+// was: (0 * x ^ 3 + 3 * x ^ 2 * 1 * 0 + ((0 * x ^ 2 + 2 * x ^ 1 * 1 * 3) * 1 + 0 * 3 * x ^ 2) * 4
+//       + 0 * 3 * x ^ 2 * 1) * 1 + 0 * (0 * x ^ 3 + 3 * x ^ 2 * 1 * 4) + 0 * 4 * x ^ 3
+//       + (0 * x ^ 3 + 3 * x ^ 2 * 1 * 4) * 0
+// now: 2 * x * 3 * 4
+```
+
+The value was never wrong — `Differentiate(x, 3)` and differentiating three times agree numerically
+on both versions — so this is a change of *form*, and it breaks anyone matching on the shape of the
+result. It also means the cost grew with the accumulated mess rather than with the derivative.
+
+`n = 0` (returns the input) and `n < 0` (integrates) are unchanged.
+
+**Why the two were not simply merged.** `Derivativef`'s simplification decides whether a derivative
+can be taken by asking for it and keeping the node when a `Derivativef` comes back — that test is
+what terminates it. Routing it through an overload that simplifies each pass makes it simplify the
+very node it is deciding about, arrive back at itself, and recurse: `derivative(x!, x, 2)` overflowed
+the stack after 3214 frames. So the raw loop still exists as an internal `InnerDifferentiate(Variable,
+int)`, which is what that caller uses, and only the public overload simplifies. There are cases for
+both in `work/crashcheck`.
+
+Measured: suite 7378 passed, 0 failed; corpus unchanged at 116/119 with 0 wrong, no case's verdict or
+answer altered; crashcheck 1834 cases, 0 crashed.
+[#1002](https://github.com/asc-community/AngouriMath/issues/1002).
 
 ### A rewritten node keeps its `Codomain`, so a domain constraint no longer disappears
 
@@ -244,9 +349,9 @@ is, throughout that binder and nowhere else.
 ```csharp
 "sum(i, i, 1, 10)".ToEntity().Simplify()      // was: unevaluated       now: 55
 "sum(2i, i, 1, 3)".ToEntity().Simplify()      // was: 6i                now: 12
-"integral(i, i)".ToEntity().Simplify()        // was: -1/2 + C          now: i ^ 2 / 2 + C
+"integral(i, i)".ToEntity().Simplify()        // was: -1/2 + C          now: i_1 ^ 2 / 2 + C
 "limit(i, i, 0)".ToEntity().Simplify()        // was: unevaluated       now: 0
-"derivative(i ^ 2, i)".ToEntity().Simplify()  // was: 0                 now: 2 * i
+"derivative(i ^ 2, i)".ToEntity().Simplify()  // was: 0                 now: 2 * i_1
 "{ i : i > 0 }".ToEntity().Simplify()         // was: NaN               now: { i : i > 0 }
 "lambda(i, i + 1)".ToEntity()                 // was: threw             now: the lambda
 ```
@@ -266,12 +371,161 @@ any other name, which is what turns `6i` into `12` above.
 The last is what SymPy answers for `Sum(sqrt(-1) * i, (i, 1, 10))`, which resolves the same
 collision by naming the constant `I` and refusing to bind it.
 
-`e` and `pi` are unaffected and needed nothing here: they are variables that carry a value, so a
-binder has always taken those names. They are also not fully fixed by anything in this entry — a
-bound `e` still means `2.718…`, since the bound name and the constant are one object.
-[#984](https://github.com/asc-community/AngouriMath/issues/984) has the measurements.
+`e` and `pi` needed nothing here, being variables that carried a value — and were not fixed by it
+either, for the same reason. The entry below does that.
 
 [#976](https://github.com/asc-community/AngouriMath/issues/976).
+### A derivative or an integral over something that is not a variable
+
+Differentiating with respect to a *subexpression* is a feature
+([#230](https://github.com/asc-community/AngouriMath/issues/230)): the subexpression is given a
+name and the derivative is taken over the name, so `derivative((x + 1) ^ 2, x + 1)` is `2 * (x + 1)`.
+The rename has two premises that were not checked. The subexpression has to be able to **vary** —
+a number in that position was renamed and differentiated over, which answers a question with no
+meaning:
+
+```csharp
+"derivative(x ^ 3, 3)".ToEntity().Simplify()   // was: ln(x) * x ^ 3       now: unevaluated
+"integral(x ^ 2, 2)".ToEntity().Simplify()     // was: x ^ 2 / ln(x) + C   now: unevaluated
+```
+
+And the rename has to be **exact**, which means nothing of the subexpression's own variables may be
+left behind. Where something is, the leftovers were read as independent of the name they came from:
+
+```csharp
+"derivative(x * (x + 1), x + 1)".ToEntity().Simplify()  // was: x   now: 1 + 2 * x
+```
+
+`x` is what you get by renaming `x + 1` to `z` and reading the other `x` as a constant. With
+`z = x + 1` the expression is `(z - 1) * z`, whose derivative is `2z - 1`, which is `2x + 1`.
+
+**Where the rename is not exact, this is a change of variables — and a change of variables needs no
+occurrence at all.** `d f / d g` is `(df/dx) / (dg/dx)`, which is the substitution without having to
+invert `g`:
+
+```csharp
+"derivative(x ^ 2, x + 1)".ToEntity().Simplify()   // was: 0   now: 2 * x
+"derivative(x ^ 2, 2 * x)".ToEntity().Simplify()   // was: 0   now: x
+"derivative(x ^ 2, sin(x))".ToEntity().Simplify()  // was: 0   now: 2 * x / cos(x)
+"integral(x ^ 2, x + 1)".ToEntity().Simplify()     // was: 0   now: x ^ 3 / 3 + C
+```
+
+What still has no answer is a subexpression of **several** variables that the rename cannot take
+exactly: `d(x + y)/d(x * y)` is `1/y` through `x` and `1/x` through `y`, so there is nothing to
+answer without a direction. Those are the unevaluated node — the library's way of saying it could
+not settle the question — rather than `0`.
+
+A definite integral over a subexpression is unchanged: its range is stated in the new variable, and
+converting it needs `g` inverted, which is a separate question.
+
+**A vector in that position is now the gradient.** The elementwise broadcast every binder already
+has was unreachable, because the rename matched first and answered `0`:
+
+```csharp
+"derivative(x ^ 2 + y ^ 2, [x, y])".ToEntity().Simplify()   // was: 0   now: [2 * x, 2 * y]
+"integral(x, [x, y]T)".ToEntity().Simplify()
+// was: [[C + x ^ 2, C + x * y]]      the first component is not the integral of x
+// now: [[x ^ 2 / 2 + C, x * y + C]]
+```
+
+This is componentwise and no more than that: `derivative([x * y, x + y], [x, y])` pairs index with
+index and is `[y, 1]`, the diagonal of the Jacobian rather than the Jacobian. What shape a full
+Jacobian or Hessian should take is a convention this does not choose.
+
+**A named constant can be differentiated over.** `derivative(e ^ 2, e)` was `0` — `e` is a variable
+carrying a value, the value arrived in the variable position, and a number there took the rename
+path. It is `2 * e`, and `derivative(pi ^ 2, pi)` is `2 * pi`. Two of the four defects recorded in
+[#984](https://github.com/asc-community/AngouriMath/issues/984) go with it; the set builder and
+`limit(e, e, 0).Evaled` remain.
+
+[#964](https://github.com/asc-community/AngouriMath/issues/964).
+
+### A name a binder declares is a variable, including `pi` and `e`
+
+A mathematical constant used to be a `Variable` whose *name* was looked up in a table, so a `pi` a
+binder declared and the constant `pi` were one object and nothing downstream could tell them apart.
+It is now `Entity.Constant`, a node — so a binder holds a variable while the rest of the language
+holds the constant, and every binder-based operation reads the same thing.
+
+```csharp
+"derivative(e ^ 2, e)".ToEntity().Simplify()   // was: 0             now: 2 * e_1
+"derivative(pi ^ 2, pi)".ToEntity().Simplify() // was: 0             now: 2 * pi_1
+"{ e : e > 0 }".ToEntity().Simplify()          // was: { e : True }  now: { e : e > 0 }
+"limit(e, e, 0)".ToEntity().Evaled             // was: 2.718…        now: 0
+"integral(e, e, 0, 1)".ToEntity().Evaled       // was: 3.694…        now: 1/2
+```
+
+**`pi_1`, not `pi`.** Most binders consume the name they declare — a sum over `pi` answers a number,
+a set builder keeps it inside itself — and those print as they were written and read back as
+themselves. A derivative and an indefinite integral *return* it, and a variable called `pi` is one
+the parser cannot produce, so `2 * pi` would read back as twice the constant. Renaming a bound
+variable is free, so it is renamed to a name that can be written. **This applies to `i` as well**,
+and changes the two answers the entry above introduced: `derivative(i ^ 2, i)` is `2 * i_1` and
+`integral(i, i)` is `i_1 ^ 2 / 2 + C`. Every binder over `pi`, `e` or `i` now answers something that
+parses back to itself; an ordinary name is never renamed.
+
+Differentiation compares the node rather than its name, so a constant that simplification
+**produces** inside a binder over that name is no longer differentiated as though it were the index:
+
+```csharp
+"derivative(arccos(0) * pi, pi)".ToEntity().Simplify()  // was: 0                     now: pi / 2
+"derivative(arccos(0) * q, q)".ToEntity().Simplify()    // pi / 2, unchanged — the same answer now
+"derivative(ln(x) * e, e)".ToEntity().Simplify()        // was: 0 provided not x = 0  now: ln(x) provided not x = 0
+```
+
+A constant that simplification **produces** inside a binder over its name is no longer caught by it,
+which was a wrong answer of a different kind — `arccos(0)` is `pi / 2`, and integrating it over a
+name spelled `pi` integrated that:
+
+```csharp
+"integral(arccos(0), pi, 0, 1)".ToEntity().Simplify()  // was: 1/4   now: pi / 2
+"integral(arccos(0), q, 0, 1)".ToEntity().Simplify()   // pi / 2, unchanged — the same answer now
+```
+
+`ln` and `exp` are written over Euler's number in their own definitions — `Ln(a)` is `Logf(e, a)`,
+and `exp(x)` is `e ^ x` — and that occurrence is the value rather than a mention of the name, so no
+binder reaches it:
+
+```csharp
+"sum(ln(x), e, 1, 2)".ToEntity().Simplify()   // was: log(1, x) + log(2, x)   now: 2 * ln(x)
+"sum(exp(x), e, 1, 2)".ToEntity().Simplify()  // was: 1 + 2 ^ x               now: 2 * e ^ x
+"sum(ln(e), e, 1, 1)".ToEntity().Simplify()   // was: NaN, being log(1, 1)    now: 0
+```
+
+Substituting **for the constant** still reaches that base, and unchanged — `MathS.Ln("x").Substitute("e", 3)`
+is `log(3, x)` before and after. A binder binds *occurrences* and a substitution replaces a *value*,
+and the base of a logarithm is Euler's number by value however it got there, so replacing Euler's
+number by 3 replaces it there too. `ln(x).VarsAndConsts` has said `e, x` all along.
+
+Where the writer does name `e`, it still binds, which is the same rule read the other way:
+
+```csharp
+"sum(log(e, x), e, 1, 2)".ToEntity().Simplify()  // log(1, x) + log(2, x)
+"sum(e ^ x, e, 1, 2)".ToEntity().Simplify()      // 1 + 2 ^ x
+```
+
+**Two consequences to read for.** A bound name now counts as a variable, so `Vars` reports it:
+
+```csharp
+"sum(pi, pi, 1, 3)".ToEntity().Vars   // was: empty      now: pi
+"pi * x".ToEntity().Vars              // x, unchanged — a free constant is still not a variable
+```
+
+And `MathS.pi` and `MathS.e` are `Entity.Constant` rather than `Entity.Variable`. They are still
+*typed* `Variable` and `Constant` derives from it, so no signature changed and nothing that compiles
+today stops compiling; but `MathS.Var("pi")` is a constant, and a `pi` a binder declares is no
+longer equal to it. Substituting for the constant is unchanged where it was already right — a
+binder's own name was out of reach before as well — and no longer reaches into a logarithm:
+
+```csharp
+"pi + x".ToEntity().Substitute(MathS.pi, 3)             // 3 + x, unchanged
+"sum(pi, pi, 1, 3)".ToEntity().Substitute(MathS.pi, 3)  // unchanged before and after
+```
+
+Free `pi` and `e` are otherwise untouched: `sin(pi)` is `0`, `ln(e)` is `1`, `arccos(0)` is `pi / 2`,
+and their numeric values are what they were.
+
+[#984](https://github.com/asc-community/AngouriMath/issues/984).
 
 ---
 

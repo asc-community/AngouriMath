@@ -328,8 +328,8 @@ namespace AngouriMath.Core
                 foreach (var varName in variables)
                     if (!varName.IsConstant)
                         varNamespace[varName] = id++;
-                foreach (var pair in Variable.ConstantList)
-                    func = func.Substitute(Variable.CreateVariableUnchecked(pair.Key), pair.Value);
+                foreach (var constant in Variable.NamedConstants.Values)
+                    func = func.Substitute(constant, constant.Value);
                 var visited = new HashSet<Entity>();
                 var cache = new Dictionary<Entity, int>();
                 foreach (var node in func.Nodes)

@@ -15,13 +15,13 @@ namespace AngouriMath.Core
     /// </summary>
     /// <remarks>
     /// <para>
-    /// There is one name in the language a binder cannot otherwise bind. <c>i</c> is the
-    /// imaginary unit and that is decided in the lexer — <c>NUMBER: ... | 'i'</c> — so it never
-    /// reaches the rule that makes variables and cannot be one anywhere. <c>e</c> and <c>pi</c>
-    /// are the other way round: they are <see cref="Variable"/>s that carry a value, so a binder
-    /// takes the name without trouble — and cannot then stop it meaning the constant, since a
-    /// bound <c>e</c> and the constant <c>e</c> are one object. That is why this is about the one
-    /// named constant that is not a variable.
+    /// Two kinds of name need reading rather than taking as they arrive, and they arrive from
+    /// opposite directions. <c>i</c> is the imaginary unit and that is decided in the lexer —
+    /// <c>NUMBER: ... | 'i'</c> — so it never reaches the rule that makes variables and is a
+    /// number in the name position. <c>e</c> and <c>pi</c> are <see cref="Entity.Constant"/>s,
+    /// which are <see cref="Variable"/>s by inheritance and separate objects by identity, so the
+    /// name position holds a constant and what is bound must be the variable of that name.
+    /// Either way the answer is the same: the binder decides what its name means, once, here.
     /// <a href="https://github.com/asc-community/AngouriMath/issues/976">#976</a>,
     /// <a href="https://github.com/asc-community/AngouriMath/issues/984">#984</a>
     /// </para>
@@ -39,8 +39,8 @@ namespace AngouriMath.Core
     /// </para>
     /// <para>
     /// This is a <see langword="struct"/> holding two fields and it is the whole cost of the
-    /// feature where nothing is shadowed: <see cref="Of(Entity)"/> is one equality test and
-    /// <see cref="In(Entity)"/> hands the expression straight back without walking it.
+    /// feature where nothing is shadowed: <see cref="Of(Entity)"/> is two type tests that both
+    /// fail, and <see cref="In(Entity)"/> hands the expression straight back without walking it.
     /// </para>
     /// </remarks>
     internal readonly struct Binding
@@ -48,34 +48,80 @@ namespace AngouriMath.Core
         /// <summary>
         /// What <c>i</c> becomes where it is bound. Unchecked, because the checked factory
         /// parses and the parser reads <c>i</c> as the imaginary unit — the very thing that
-        /// makes this type necessary.
+        /// makes this type necessary. A constant's name is read the same way, and for the same
+        /// reason: <c>CreateVariableOrConstant</c> would hand the constant straight back.
         /// </summary>
         [ConstantField]
         private static readonly Variable index = Variable.CreateVariableUnchecked("i");
 
         private readonly Entity given;
-        private readonly bool shadowed;
+        private readonly Variable? renamed;
 
-        private Binding(Entity given, bool shadowed) => (this.given, this.shadowed) = (given, shadowed);
+        private Binding(Entity given, Variable? renamed) => (this.given, this.renamed) = (given, renamed);
 
         /// <summary>Reads a bound name as the binder was given it.</summary>
         /// <param name="name">Whatever arrived in the name position.</param>
         /// <remarks>
         /// Every binder node runs this on the way in, so it is written to cost nothing in the
-        /// case that is nearly all of them: a bound name is a <see cref="Variable"/>, the type
-        /// test fails, and the equality is never reached. Measured at 2.2ns as an equality and
-        /// 0.5ns this way, against about 10ns to construct the node it guards.
+        /// case that is nearly all of them: a bound name is an ordinary <see cref="Variable"/>,
+        /// both type tests fail, and neither equality is reached. Measured at 2.2ns as an
+        /// equality and 0.5ns this way, against about 10ns to construct the node it guards.
         /// </remarks>
-        internal static Binding Of(Entity name) => new(name, name is Complex && name == MathS.i);
+        internal static Binding Of(Entity name)
+            => name is Constant constant
+                ? new(name, Variable.CreateVariableUnchecked(constant.Name))
+             : name is Complex && name == MathS.i
+                ? new(name, index)
+             : new(name, null);
 
-        /// <summary>The name to bind: what was given, unless that was the imaginary unit.</summary>
-        internal Entity Name => shadowed ? index : given;
+        /// <summary>
+        /// The name to bind: what was given, unless that was a constant — the imaginary unit,
+        /// or a name the language reads as one.
+        /// </summary>
+        internal Entity Name => renamed ?? given;
 
         /// <summary>
         /// An expression that is inside this binder, with the bound name meaning what it means
         /// here. Identity unless something is shadowed.
         /// </summary>
-        internal Entity In(Entity scope) => shadowed ? scope.Replace(Rename) : scope;
+        internal Entity In(Entity scope)
+        {
+            if (renamed is null)
+                return scope;
+            if (given is not Constant constant)
+                return scope.Replace(Rename);
+            // Copied out because a lambda in a struct cannot reach `this` (CS1673). By reference,
+            // not by value: a binder binds the occurrences it was handed, and the base of `ln` is
+            // Euler's number rather than a mention of the name `e`, so it is a different object
+            // and stays out of reach. See Entity.Constant.
+            var bound = renamed;
+            return scope.Replace(node => ReferenceEquals(node, constant) ? bound : node);
+        }
+
+        /// <summary>
+        /// Can this name be written down as a variable? Three cannot: <c>i</c> is a number to the
+        /// lexer, and <c>pi</c> and <c>e</c> parse as <see cref="Entity.Constant"/>s.
+        /// </summary>
+        private static bool CanBeWritten(Variable name)
+            => name.Name != index.Name && !Variable.IsConstantName(name.Name);
+
+        /// <summary>
+        /// An answer that carries a bound name out of the binder that declared it, with that name
+        /// made writable.
+        /// </summary>
+        /// <remarks>
+        /// Most binders consume the name they declare — a sum over <c>pi</c> answers a number, and
+        /// a set builder keeps it inside itself, so both print as they were written and read back
+        /// as themselves. A derivative and an indefinite integral <b>return</b> it, and a variable
+        /// called <c>pi</c> is a thing the parser cannot produce: <c>2 * pi</c> would read back as
+        /// twice the constant, which is not what it means. Renaming a bound variable is free —
+        /// it is the same function either way — so it is renamed to a name that can be written.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/984">#984</a>
+        /// </remarks>
+        internal static Entity? Written(Entity bound, Entity? answer)
+            => answer is not null && bound is Variable name && !CanBeWritten(name) && answer.ContainsNode(name)
+                ? answer.Substitute(name, Variable.CreateUnique(answer, name.Name))
+                : answer;
 
         /// <remarks>
         /// <c>2i</c> is one token — the lexer's <c>NUMBER</c> ends <c>'i'?</c> — so a written
