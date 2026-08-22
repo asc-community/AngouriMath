@@ -44,6 +44,13 @@ read first.
 | **Silent** | `sum(ln(x), e, 1, 2)`, and any binder over `e` around a logarithm | `log(1, x) + log(2, x)` | `2 * ln(x)` |
 | **Silent** | `"sum(pi, pi, 1, 3)".ToEntity().Vars` | empty — the index was read as a constant | `pi` |
 | | `MathS.pi.GetType()` | `Entity.Variable` | `Entity.Constant`, which derives from it |
+| **Silent** | `derivative(x ^ 3, 3)`, and any derivative or integral over a number | `ln(x) * x ^ 3` | the unevaluated `derivative(x ^ 3, 3)` |
+| **Silent** | `derivative(x ^ 2, x + 1)`, over a subexpression that does not occur | `0` | `2 * x`, by change of variables |
+| **Silent** | `derivative(x * (x + 1), x + 1)`, where the rename left a variable behind | `x` | `1 + 2 * x` |
+| **Silent** | `derivative(x ^ 2, x * y)`, over several variables at once | `0` | the unevaluated derivative |
+| **Silent** | `derivative(x ^ 2 + y ^ 2, [x, y])` | `0` | `[2 * x, 2 * y]`, the gradient |
+| **Silent** | `integral(x, [x, y]T)` | `[[C + x ^ 2, C + x * y]]` | `[[x ^ 2 / 2 + C, x * y + C]]` |
+| **Silent** | `derivative(e ^ 2, e)`, over a named constant | `0` | `2 * e` |
 
 ### A rewritten node keeps its `Codomain`, so a domain constraint no longer disappears
 
@@ -256,6 +263,70 @@ collision by naming the constant `I` and refusing to bind it.
 either, for the same reason. The entry below does that.
 
 [#976](https://github.com/asc-community/AngouriMath/issues/976).
+### A derivative or an integral over something that is not a variable
+
+Differentiating with respect to a *subexpression* is a feature
+([#230](https://github.com/asc-community/AngouriMath/issues/230)): the subexpression is given a
+name and the derivative is taken over the name, so `derivative((x + 1) ^ 2, x + 1)` is `2 * (x + 1)`.
+The rename has two premises that were not checked. The subexpression has to be able to **vary** —
+a number in that position was renamed and differentiated over, which answers a question with no
+meaning:
+
+```csharp
+"derivative(x ^ 3, 3)".ToEntity().Simplify()   // was: ln(x) * x ^ 3       now: unevaluated
+"integral(x ^ 2, 2)".ToEntity().Simplify()     // was: x ^ 2 / ln(x) + C   now: unevaluated
+```
+
+And the rename has to be **exact**, which means nothing of the subexpression's own variables may be
+left behind. Where something is, the leftovers were read as independent of the name they came from:
+
+```csharp
+"derivative(x * (x + 1), x + 1)".ToEntity().Simplify()  // was: x   now: 1 + 2 * x
+```
+
+`x` is what you get by renaming `x + 1` to `z` and reading the other `x` as a constant. With
+`z = x + 1` the expression is `(z - 1) * z`, whose derivative is `2z - 1`, which is `2x + 1`.
+
+**Where the rename is not exact, this is a change of variables — and a change of variables needs no
+occurrence at all.** `d f / d g` is `(df/dx) / (dg/dx)`, which is the substitution without having to
+invert `g`:
+
+```csharp
+"derivative(x ^ 2, x + 1)".ToEntity().Simplify()   // was: 0   now: 2 * x
+"derivative(x ^ 2, 2 * x)".ToEntity().Simplify()   // was: 0   now: x
+"derivative(x ^ 2, sin(x))".ToEntity().Simplify()  // was: 0   now: 2 * x / cos(x)
+"integral(x ^ 2, x + 1)".ToEntity().Simplify()     // was: 0   now: x ^ 3 / 3 + C
+```
+
+What still has no answer is a subexpression of **several** variables that the rename cannot take
+exactly: `d(x + y)/d(x * y)` is `1/y` through `x` and `1/x` through `y`, so there is nothing to
+answer without a direction. Those are the unevaluated node — the library's way of saying it could
+not settle the question — rather than `0`.
+
+A definite integral over a subexpression is unchanged: its range is stated in the new variable, and
+converting it needs `g` inverted, which is a separate question.
+
+**A vector in that position is now the gradient.** The elementwise broadcast every binder already
+has was unreachable, because the rename matched first and answered `0`:
+
+```csharp
+"derivative(x ^ 2 + y ^ 2, [x, y])".ToEntity().Simplify()   // was: 0   now: [2 * x, 2 * y]
+"integral(x, [x, y]T)".ToEntity().Simplify()
+// was: [[C + x ^ 2, C + x * y]]      the first component is not the integral of x
+// now: [[x ^ 2 / 2 + C, x * y + C]]
+```
+
+This is componentwise and no more than that: `derivative([x * y, x + y], [x, y])` pairs index with
+index and is `[y, 1]`, the diagonal of the Jacobian rather than the Jacobian. What shape a full
+Jacobian or Hessian should take is a convention this does not choose.
+
+**A named constant can be differentiated over.** `derivative(e ^ 2, e)` was `0` — `e` is a variable
+carrying a value, the value arrived in the variable position, and a number there took the rename
+path. It is `2 * e`, and `derivative(pi ^ 2, pi)` is `2 * pi`. Two of the four defects recorded in
+[#984](https://github.com/asc-community/AngouriMath/issues/984) go with it; the set builder and
+`limit(e, e, 0).Evaled` remain.
+
+[#964](https://github.com/asc-community/AngouriMath/issues/964).
 
 ### A name a binder declares is a variable, including `pi` and `e`
 

@@ -378,7 +378,8 @@ namespace AngouriMath.Core.Transformations
             "Cancels a quotient of factorials into the product of the terms that do not cancel.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.ExpandFactorialDivisions);
+            Patterns.ExpandFactorialDivisions,
+            Patterns.ExpandFactorialDivisionsArms);
 
         /// <summary>
         /// Recognises a product of consecutive terms as a factorial.
@@ -388,7 +389,8 @@ namespace AngouriMath.Core.Transformations
             "Gathers a product of a factorial and its neighbouring terms back into one factorial.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.FactorizeFactorialMultiplications);
+            Patterns.FactorizeFactorialMultiplications,
+            Patterns.FactorizeFactorialMultiplicationsArms);
 
         /// <summary>
         /// Rules about Euler's totient function.
