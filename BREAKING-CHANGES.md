@@ -35,6 +35,7 @@ read first.
 | **Silent** | `limit(i, i, 0)` | unevaluated | `0` |
 | **Silent** | `integral(i, i)` | `-1/2 + C` | `i_1 ^ 2 / 2 + C` |
 | | `lambda(i, i + 1)` | `InvalidArgumentParseException` | the lambda |
+| **Silent** | `"sin(pi)".ToEntity().Differentiate(MathS.pi)`, and every derivative over `pi` or `e` | `-1`, the chain rule run over a symbol that cannot change | `0` |
 | **Silent** | `"x ^ 3".ToEntity().Differentiate(x, 2)`, and every `Differentiate(x, n)` with `n >= 1` | `(0 * x ^ 2 + 2 * x ^ 1 * 1 * 3) * 1 + 0 * 3 * x ^ 2` | `2 * x * 3` |
 | **Silent** | `derivative(e ^ 2, e)`, `derivative(pi ^ 2, pi)` | `0` | `2 * e_1`, `2 * pi_1` |
 | **Silent** | `{ e : e > 0 }` | `{ e : True }` | the set it describes |
@@ -52,6 +53,51 @@ read first.
 | **Silent** | `derivative(x ^ 2 + y ^ 2, [x, y])` | `0` | `[2 * x, 2 * y]`, the gradient |
 | **Silent** | `integral(x, [x, y]T)` | `[[C + x ^ 2, C + x * y]]` | `[[x ^ 2 / 2 + C, x * y + C]]` |
 | **Silent** | `derivative(e ^ 2, e)`, over a named constant | `0` | `2 * e` |
+
+### Differentiating over a constant is `0`, not the chain rule over a symbol that cannot change
+
+`Entity.Differentiate(Variable)` takes a `Variable`, and `MathS.pi` and `MathS.e` are ones — so they
+could be handed to it, and it differentiated as though they varied.
+
+```csharp
+"pi ^ 2".ToEntity().Differentiate(MathS.pi)        // was: 2 * pi                now: 0
+"sin(pi)".ToEntity().Differentiate(MathS.pi)       // was: -1                    now: 0
+"x * pi".ToEntity().Differentiate(MathS.pi)        // was: x                     now: 0
+"sin(x * pi)".ToEntity().Differentiate(MathS.pi)   // was: cos(x * pi) * x       now: 0
+"x!".ToEntity().Differentiate(MathS.pi)            // was: derivative(x!, pi)    now: 0
+"e ^ 2".ToEntity().Differentiate(MathS.e)          // was: 2 * e                 now: 0
+"pi ^ 3".ToEntity().Differentiate(MathS.pi, 2)     // was: an unsimplified 0     now: 0
+```
+
+`sin(pi)` is `0`, and its derivative with respect to anything is `0`. `-1` is `cos(pi)` — the chain
+rule run over a symbol that cannot change. `x!` is the case where the library cannot take the
+derivative at all, and it is `0` here regardless, because the *variable* is what settles it.
+
+An ordinary variable is untouched, including where a constant is present as a coefficient:
+`"x ^ 2 * pi".Differentiate(x)` is `2 * x * pi` on both versions. The guard is about what is
+differentiated **over**, not about what appears in the expression. `Differentiate(x, 0)` returns the
+input and `Differentiate(x, n)` with `n < 0` integrates; neither changes.
+
+**The test is whether the name evaluates to a number, not whether it is spelled like a constant.**
+That is what makes this compatible with
+[#984](https://github.com/asc-community/AngouriMath/issues/984): a name a *binder* declares can vary
+even when it is spelled `pi`, and it evaluates to itself.
+
+**The node form is a different question and belongs to #984.** On this version
+`"derivative(x * pi, pi)".ToEntity().InnerSimplified` also goes from `x` to `0`, because the node
+asks the same public method. Once #984's fix lands the parser *binds* `pi` there, so it becomes
+`2 * pi_1` — a derivative over the variable the binder holds — and that is the intended answer, not
+a regression of this one. The two compose: measured together, `sin(pi)` differentiated by `MathS.pi`
+is `0` and `derivative(pi ^ 2, pi)` is `2 * pi_1`.
+
+`Integrate` and `Limit` over a constant are **not** changed. They have no value to give — there is
+nothing to integrate with respect to a thing that cannot vary — so leaving them unevaluated is the
+existing "I could not settle this", not a refusal of something settled. The derivative *is* settled,
+which is why it is answered rather than declined.
+
+Measured: suite 7383 passed, 0 failed; corpus unchanged at 116/119 with 0 wrong, no case's verdict or
+answer altered; crashcheck 1834 cases, 0 crashed.
+[#993](https://github.com/asc-community/AngouriMath/issues/993).
 
 ### `Differentiate(x, n)` answers what `Differentiate(x)` n times answers
 
