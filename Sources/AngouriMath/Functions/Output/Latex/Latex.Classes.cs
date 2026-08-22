@@ -36,24 +36,40 @@ namespace AngouriMath
                 // from products of single-letter variables (e.g., v·e·l·o·c·i·t·y).
                 // Single-letter variables remain italic as per standard mathematical typography.
                 varName.Length > 1 && !LatexisableConstants.Contains(varName);
+
+            /// <summary>
+            /// Whether this node's own name is set upright. ISO 80000-2 sets constants upright and
+            /// variables italic, and which of the two a name is depends on the node and not on the
+            /// spelling — a <c>pi</c> a binder declares is a variable and is set as one. A
+            /// subscript is part of a name rather than a node of its own, so it keeps being read
+            /// by name above. <a href="https://github.com/asc-community/AngouriMath/issues/984">#984</a>
+            /// </summary>
+            private protected virtual bool IsOwnNameUpright =>
+                Name.Length > 1 && !LatexisableConstants.Contains(Name);
             /// <summary>
             /// Returns latexized const if it is possible to latexize it,
             /// or its original name otherwise
             /// </summary>
             public override string Latexize()
             {
-                static string LatexizePart(string symbol)
+                static string LatexizePart(string symbol, bool upright)
                 {
                     var inner = LatexisableConstants.Contains(symbol) ? $@"\{symbol}" : symbol;
-                    return IsNameLatexUprightFormatted(symbol) ? $@"\mathrm{{{inner}}}" : inner;
+                    return upright ? $@"\mathrm{{{inner}}}" : inner;
                 }
                 // For variables with subscripts (e.g., "pi_2", "x_e", "e_pi")
                 // Both the main part and subscript are processed through LatexizePart,
                 // which handles upright formatting for "pi" and "e" consistently
                 return SplitIndex() is var (prefix, index)
-                    ? $"{LatexizePart(prefix)}_{{{LatexizePart(index)}}}"
-                    : LatexizePart(Name);
+                    ? $"{LatexizePart(prefix, IsNameLatexUprightFormatted(prefix))}_{{{LatexizePart(index, IsNameLatexUprightFormatted(index))}}}"
+                    : LatexizePart(Name, IsOwnNameUpright);
             }
+        }
+
+        public partial record Constant
+        {
+            /// <inheritdoc/>
+            private protected override bool IsOwnNameUpright => true;
         }
     }
 }

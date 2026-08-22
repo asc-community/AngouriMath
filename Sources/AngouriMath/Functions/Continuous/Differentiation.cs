@@ -82,26 +82,51 @@ namespace AngouriMath
             /// <remarks>
             /// A name that cannot vary contributes nothing to any derivative, so
             /// <c>d(anything)/d(pi)</c> is <c>0</c> and not <c>1</c> even where the name
-            /// matches. <see cref="Entity.Differentiate(Variable)"/> takes a
-            /// <see cref="Variable"/>, and <c>MathS.pi</c> and <c>MathS.e</c> are ones, so
-            /// they can be handed to it -- and <c>sin(pi)</c> came back as <c>-1</c>, which
-            /// is <c>cos(pi)</c>: the chain rule run over a symbol that cannot change.
-            /// Every route bottoms out here, so this is the whole guard.
+            /// matches, which is what
+            /// <a href="https://github.com/asc-community/AngouriMath/issues/993">#993</a> is
+            /// about. The test is whether the name evaluates to a number, not whether it is
+            /// spelled like a constant: a name a binder declares can vary even when it is
+            /// spelled <c>pi</c>, and it evaluates to itself.
             ///
-            /// The test is whether the name itself evaluates to a number, rather than
-            /// whether it is spelled like a constant. A name a binder declares *can* vary
-            /// even when it is spelled <c>pi</c>, and it evaluates to itself.
-            /// <a href="https://github.com/asc-community/AngouriMath/issues/993">#993</a>
+            /// And where it does vary, the comparison is of the node, not its name. A
+            /// <see cref="Constant"/> and a <see cref="Variable"/> can share a spelling — that
+            /// is what a binder over <c>pi</c> produces — and comparing the spelling made
+            /// <c>derivative(arccos(0) * pi, pi)</c> differentiate the <c>pi / 2</c> that
+            /// <c>arccos(0)</c> simplifies to as though it were the index.
+            /// <a href="https://github.com/asc-community/AngouriMath/issues/984">#984</a>
             /// </remarks>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 variable.Evaled is Number ? 0
-                : Name == variable.Name ? 1 : 0;
+                : this == variable ? 1 : 0;
         }
 
         partial record Matrix
         {
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) => Elementwise(e => e.InnerDifferentiate(variable));
+        }
+
+        /// <summary>
+        /// <paramref name="power"/> raw passes, with nothing simplified in between.
+        /// <see cref="Derivativef"/>'s simplification needs exactly this and not the public
+        /// overload: it asks for the derivative and keeps the node when what comes back is
+        /// still a <see cref="Derivativef"/>, so a simplification anywhere inside would ask
+        /// that same node to simplify, which asks for the derivative again, without end.
+        /// </summary>
+        internal Entity InnerDifferentiate(Variable x, int power)
+        {
+            var ent = this;
+            // A negative power integrates, exactly as the public overload does -- dropping that
+            // here turned derivative(apply(f, x), x, -1) into apply(f, x) rather than into the
+            // integral, because a loop that never runs returns the input and the input is not a
+            // Derivativef, so the caller took it for a resolved answer.
+            if (power < 0)
+                for (var _ = 0; _ < -power; _++)
+                    ent = ent.Integrate(x);
+            else
+                for (var _ = 0; _ < power; _++)
+                    ent = ent.InnerDifferentiate(x);
+            return ent;
         }
 
         /// <summary>Derives over <paramref name="x"/> <paramref name="power"/> times</summary>
@@ -119,7 +144,14 @@ namespace AngouriMath
                     ent = ent.Integrate(x);
             else
                 for (var _ = 0; _ < power; _++)
-                    ent = ent.InnerDifferentiate(x);
+                    // DifferentiateOnce, not InnerDifferentiate: the raw chain rule leaves
+                    // every `0 *` and `* 1` it produces in place, and the next pass
+                    // differentiates those too, so the expression compounds rather than
+                    // reduces. Differentiate(Variable) reaches DifferentiateOnce through the
+                    // transformation, which is why one pass of it answered and n passes of
+                    // this did not.
+                    // https://github.com/asc-community/AngouriMath/issues/1002
+                    ent = ent.DifferentiateOnce(x);
             return ent;
         }
 

@@ -502,6 +502,17 @@ AngouriMath.Entity+ComparisonSign.ctor()
 AngouriMath.Entity+ComparisonSign.ctor(AngouriMath.Entity+ComparisonSign)
 AngouriMath.Entity+ComparisonSign.op_Equality(AngouriMath.Entity+ComparisonSign, AngouriMath.Entity+ComparisonSign) : System.Boolean
 AngouriMath.Entity+ComparisonSign.op_Inequality(AngouriMath.Entity+ComparisonSign, AngouriMath.Entity+ComparisonSign) : System.Boolean
+AngouriMath.Entity+Constant.<Clone>$() : AngouriMath.Entity+Constant
+AngouriMath.Entity+Constant.EqualityContract { } : System.Type
+AngouriMath.Entity+Constant.Equals(AngouriMath.Entity+Constant) : System.Boolean
+AngouriMath.Entity+Constant.Equals(AngouriMath.Entity+Variable) : System.Boolean
+AngouriMath.Entity+Constant.Equals(System.Object) : System.Boolean
+AngouriMath.Entity+Constant.GetHashCode() : System.Int32
+AngouriMath.Entity+Constant.InnerSimplify(System.Boolean) : AngouriMath.Entity
+AngouriMath.Entity+Constant.PrintMembers(System.Text.StringBuilder) : System.Boolean
+AngouriMath.Entity+Constant.ToString() : System.String
+AngouriMath.Entity+Constant.op_Equality(AngouriMath.Entity+Constant, AngouriMath.Entity+Constant) : System.Boolean
+AngouriMath.Entity+Constant.op_Inequality(AngouriMath.Entity+Constant, AngouriMath.Entity+Constant) : System.Boolean
 AngouriMath.Entity+ContinuousNode.<Clone>$() : AngouriMath.Entity+ContinuousNode
 AngouriMath.Entity+ContinuousNode.EqualityContract { } : System.Type
 AngouriMath.Entity+ContinuousNode.Equals(AngouriMath.Entity) : System.Boolean
@@ -2057,6 +2068,7 @@ AngouriMath.Entity+Variable.PrintMembers(System.Text.StringBuilder) : System.Boo
 AngouriMath.Entity+Variable.Replace(System.Func<AngouriMath.Entity,AngouriMath.Entity>) : AngouriMath.Entity
 AngouriMath.Entity+Variable.Stringize() : System.String
 AngouriMath.Entity+Variable.ToString() : System.String
+AngouriMath.Entity+Variable.ctor(AngouriMath.Entity+Variable)
 AngouriMath.Entity+Variable.op_Equality(AngouriMath.Entity+Variable, AngouriMath.Entity+Variable) : System.Boolean
 AngouriMath.Entity+Variable.op_Implicit(System.String) : AngouriMath.Entity+Variable
 AngouriMath.Entity+Variable.op_Inequality(AngouriMath.Entity+Variable, AngouriMath.Entity+Variable) : System.Boolean
@@ -2590,6 +2602,7 @@ class AngouriMath.Entity+Boolean
 class AngouriMath.Entity+CalculusOperator
 class AngouriMath.Entity+Ceilf
 class AngouriMath.Entity+ComparisonSign
+class AngouriMath.Entity+Constant
 class AngouriMath.Entity+ContinuousNode
 class AngouriMath.Entity+Cosecantf
 class AngouriMath.Entity+Cosf

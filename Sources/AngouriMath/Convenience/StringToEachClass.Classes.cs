@@ -20,7 +20,9 @@ namespace AngouriMath
             throw new CannotParseInstanceException(typeof(T), expr);
         }
 
+#pragma warning disable SealedOrAbstract // Constant derives from it, as Real does from Complex
         partial record Variable
+#pragma warning restore SealedOrAbstract
         {
             /// <summary>
             /// Converts from string to specifically variable
