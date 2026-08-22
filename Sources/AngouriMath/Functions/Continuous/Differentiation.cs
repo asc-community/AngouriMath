@@ -82,6 +82,29 @@ namespace AngouriMath
             protected override Entity InnerDifferentiate(Variable variable) => Elementwise(e => e.InnerDifferentiate(variable));
         }
 
+        /// <summary>
+        /// <paramref name="power"/> raw passes, with nothing simplified in between.
+        /// <see cref="Derivativef"/>'s simplification needs exactly this and not the public
+        /// overload: it asks for the derivative and keeps the node when what comes back is
+        /// still a <see cref="Derivativef"/>, so a simplification anywhere inside would ask
+        /// that same node to simplify, which asks for the derivative again, without end.
+        /// </summary>
+        internal Entity InnerDifferentiate(Variable x, int power)
+        {
+            var ent = this;
+            // A negative power integrates, exactly as the public overload does -- dropping that
+            // here turned derivative(apply(f, x), x, -1) into apply(f, x) rather than into the
+            // integral, because a loop that never runs returns the input and the input is not a
+            // Derivativef, so the caller took it for a resolved answer.
+            if (power < 0)
+                for (var _ = 0; _ < -power; _++)
+                    ent = ent.Integrate(x);
+            else
+                for (var _ = 0; _ < power; _++)
+                    ent = ent.InnerDifferentiate(x);
+            return ent;
+        }
+
         /// <summary>Derives over <paramref name="x"/> <paramref name="power"/> times</summary>
         public Entity Differentiate(Variable x, int power)
         {
@@ -91,7 +114,14 @@ namespace AngouriMath
                     ent = ent.Integrate(x);
             else
                 for (var _ = 0; _ < power; _++)
-                    ent = ent.InnerDifferentiate(x);
+                    // DifferentiateOnce, not InnerDifferentiate: the raw chain rule leaves
+                    // every `0 *` and `* 1` it produces in place, and the next pass
+                    // differentiates those too, so the expression compounds rather than
+                    // reduces. Differentiate(Variable) reaches DifferentiateOnce through the
+                    // transformation, which is why one pass of it answered and n passes of
+                    // this did not.
+                    // https://github.com/asc-community/AngouriMath/issues/1002
+                    ent = ent.DifferentiateOnce(x);
             return ent;
         }
 
