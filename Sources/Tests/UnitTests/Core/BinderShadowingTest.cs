@@ -142,18 +142,28 @@ namespace AngouriMath.Tests.Core
         /// <remarks>
         /// A bound <c>e</c> keeps the constant's value, because the bound name and the constant
         /// are the same object: <c>Variable.ConstantList</c> is keyed by name, so a variable
-        /// called <c>e</c> is <c>2.718…</c> wherever it is read, binder or no binder. Nothing
-        /// short of a representation that tells a bound name from a constant one fixes these,
+        /// called <c>e</c> is <c>2.718…</c> wherever something reads its value. Nothing
+        /// short of a representation that tells a bound name from a constant one fixes it,
         /// which is why this change is about the one constant that is not a variable — for
         /// <c>i</c> the bound name and the unit are distinguishable, and that is the whole reason
         /// the fix above is possible at all.
         /// <a href="https://github.com/asc-community/AngouriMath/issues/984">#984</a>
         /// </remarks>
         [Theory]
-        [InlineData("derivative(e ^ 2, e)", "0")]              // 2 * e
-        [InlineData("derivative(pi ^ 2, pi)", "0")]            // 2 * pi
         [InlineData("{ e : e > 0 }", "{ e : True }")]          // { e : e > 0 }
         public void ABoundNamedConstantStillCarriesItsValue(string expression, string expected) =>
+            Assert.Equal(expected.ToEntity(), expression.ToEntity().Simplify());
+
+        /// <summary>
+        /// Differentiating over a bound named constant works, and it is worth its own test
+        /// because it did not: it answered <c>0</c> until the bound name stopped being read as
+        /// the number the constant evaluates to.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/964">#964</a>
+        /// </summary>
+        [Theory]
+        [InlineData("derivative(e ^ 2, e)", "2 * e")]
+        [InlineData("derivative(pi ^ 2, pi)", "2 * pi")]
+        public void ABoundNamedConstantCanBeDifferentiatedOver(string expression, string expected) =>
             Assert.Equal(expected.ToEntity(), expression.ToEntity().Simplify());
 
         /// <summary>The same, on the path that shows it most plainly.</summary>

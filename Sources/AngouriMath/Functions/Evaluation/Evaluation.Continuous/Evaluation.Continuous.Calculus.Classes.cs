@@ -13,6 +13,36 @@ namespace AngouriMath
 {
     partial record Entity
     {
+        /// <summary>
+        /// The derivative of <paramref name="expr"/> with respect to <paramref name="over"/>,
+        /// taken <paramref name="times"/> times, by changing variables rather than by renaming.
+        /// </summary>
+        /// <remarks>
+        /// Differentiating with respect to something that is a function of one variable is
+        /// <c>(df/dx) / (dg/dx)</c> — the chain rule read backwards, which is the change of
+        /// variables <c>z = g(x)</c> without having to invert <c>g</c>. It needs no occurrence of
+        /// <paramref name="over"/> in <paramref name="expr"/>: <c>d(x ^ 2)/d(x + 1)</c> is
+        /// <c>2x</c>. <see langword="null"/> where the question has no answer this way — a
+        /// <paramref name="over"/> that does not vary in <c>x</c>, or a derivative the library
+        /// cannot take.
+        /// </remarks>
+        private static Entity? ChangeOfVariable(Entity expr, Entity over, int times)
+        {
+            var x = over.Vars[0];
+            var dOver = over.Differentiate(x).InnerSimplified;
+            if (dOver is Derivativef || dOver == 0)
+                return null;
+            var result = expr;
+            for (var taken = 0; taken < times; taken++)
+            {
+                var dResult = result.Differentiate(x);
+                if (dResult is Derivativef)
+                    return null;
+                result = (dResult / dOver).InnerSimplified;
+            }
+            return result;
+        }
+
         public partial record Derivativef
         {
             // The derivative operator is always defined symbolically, even though
@@ -29,11 +59,36 @@ namespace AngouriMath
                             => res.InnerSimplified(isExact),
                         (var expr, Variable var, int asInt) => null,
                         (Application, _, _) => null,
+                        // Differentiating with respect to a subexpression rather than a variable
+                        // -- https://github.com/asc-community/AngouriMath/issues/230. The
+                        // subexpression has to be something that can *vary*: with a number there,
+                        // `derivative(x ^ 3, 3)` renamed the exponent and answered
+                        // `ln(x) * x ^ 3`, which is the derivative of a question nobody asked.
+                        // https://github.com/asc-community/AngouriMath/issues/964
+                        //
+                        // Where the whole expression can be written in terms of the subexpression,
+                        // naming it and differentiating over the name is exact: sin(x) ^ 3 is
+                        // z ^ 3, and d(z ^ 3)/dz is 3z ^ 2 wherever z is. That is this arm, and
+                        // the guard is that nothing of the subexpression's own variables is left
+                        // over -- without it, `derivative(x * (x + 1), x + 1)` renamed one factor,
+                        // read the other as independent of the name, and answered `x` where the
+                        // change of variables gives 2x + 1.
                         (var expr, Entity otherExpr, int asInt)
-                            when Variable.CreateTemp(otherExpr.Vars) is var tempVar
+                            when otherExpr.Vars.Count > 0
+                            && Variable.CreateTemp(otherExpr.Vars) is var tempVar
                             && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
+                            && !otherExpr.Vars.Any(tempSubstituted.ContainsNode)
                             && tempSubstituted.Differentiate(tempVar, asInt) is var res and not Derivativef
                             => res.Substitute(tempVar, otherExpr).InnerSimplified(isExact),
+                        // Otherwise it is a change of variables and not a rename, and the
+                        // subexpression does not need to occur at all: with z = x + 1, x ^ 2 is
+                        // (z - 1) ^ 2 and its derivative is 2(z - 1) = 2x. df/dg is
+                        // (df/dx) / (dg/dx), which is that without having to invert g.
+                        // https://github.com/asc-community/AngouriMath/pull/990
+                        (var expr, Entity otherExpr, int asInt)
+                            when otherExpr.Vars.Count is 1
+                            && ChangeOfVariable(expr, otherExpr, asInt) is { } res
+                            => res.InnerSimplified(isExact),
                         _ => null
                     },
                     (@this, a, b, _) => ((Derivativef)@this).New(a, b), isExact);
@@ -46,21 +101,55 @@ namespace AngouriMath
             private protected override Entity IntrinsicCondition => Boolean.True;
 
             private static Entity? ConditionallySimplified(Entity e, bool isExact) => e is Integralf ? null : e.InnerSimplified(isExact);
+
+            /// <summary>
+            /// The antiderivative of <paramref name="expr"/> with respect to
+            /// <paramref name="over"/>, by changing variables rather than by renaming.
+            /// </summary>
+            /// <remarks>
+            /// With <c>z = g(x)</c>, the integral of <c>f</c> over <c>z</c> is the integral of
+            /// <c>f (dg/dx)</c> over <c>x</c>, which needs no occurrence of
+            /// <paramref name="over"/> in <paramref name="expr"/> and no inverse of <c>g</c>.
+            /// <see langword="null"/> where there is no answer this way.
+            /// </remarks>
+            private static Entity? ChangeOfVariable(Entity expr, Entity over)
+            {
+                var x = over.Vars[0];
+                var dOver = over.Differentiate(x).InnerSimplified;
+                if (dOver is Derivativef || dOver == 0)
+                    return null;
+                return (expr * dOver).Integrate(x) is var res and not Integralf ? res : null;
+            }
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact) =>
                 ExpandOnTwoAndTArguments(Expression, Var, Range,
                     (a, b, c) => (a, b, c) switch
                     {
                         (var expr, Variable var, var (from, to)) => ConditionallySimplified(expr.Integrate(var, from, to), isExact),
+                        // The rename, under the same guard as in Derivativef above: exact only
+                        // where nothing of the subexpression's own variables is left over.
+                        // https://github.com/asc-community/AngouriMath/issues/964
                         (var expr, var otherExpr, var (from, to))
-                            when Variable.CreateTemp(otherExpr.Vars) is var tempVar
+                            when otherExpr.Vars.Count > 0
+                            && Variable.CreateTemp(otherExpr.Vars) is var tempVar
                             && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
+                            && !otherExpr.Vars.Any(tempSubstituted.ContainsNode)
                             && tempSubstituted.Integrate(tempVar, from, to) is var res => ConditionallySimplified(res.Substitute(tempVar, otherExpr), isExact),
                         (var expr, Variable var, null) => ConditionallySimplified(expr.Integrate(var), isExact),
                         (var expr, var otherExpr, null)
-                            when Variable.CreateTemp(otherExpr.Vars) is var tempVar
+                            when otherExpr.Vars.Count > 0
+                            && Variable.CreateTemp(otherExpr.Vars) is var tempVar
                             && expr.Substitute(otherExpr, tempVar) is var tempSubstituted
+                            && !otherExpr.Vars.Any(tempSubstituted.ContainsNode)
                             && tempSubstituted.Integrate(tempVar) is var res => ConditionallySimplified(res.Substitute(tempVar, otherExpr), isExact),
+                        // Otherwise a change of variables, as the derivative does: with z = g(x),
+                        // the integral over z is the integral of f (dg/dx) over x. Indefinite
+                        // only -- a range is stated in z, and converting it needs g inverted,
+                        // which is a separate question.
+                        // https://github.com/asc-community/AngouriMath/pull/990
+                        (var expr, var otherExpr, null)
+                            when otherExpr.Vars.Count is 1
+                            && ChangeOfVariable(expr, otherExpr) is { } res => ConditionallySimplified(res, isExact),
                         _ => null
                     },
                     (@this, a, b, c) => ((Integralf)@this).New(a, b, c), isExact);
