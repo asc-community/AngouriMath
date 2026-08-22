@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using System.Linq;
 using AngouriMath;
 using AngouriMath.Core.Exceptions;
 using Xunit;
@@ -871,5 +872,56 @@ namespace AngouriMath.Tests.Algebra
                     )
                 )
             );
+
+        // The determinant of a matrix over a commutative ring is a polynomial in
+        // its entries, so it is defined wherever the entries are. Computing it by
+        // Gaussian elimination left the pivots as literal divisions, which made the
+        // returned expression undefined wherever a pivot vanishes -- so substituting
+        // an ordinary matrix into a symbolic determinant gave NaN for a determinant
+        // that exists. Laplace expansion never divides, so there is nothing to
+        // exclude. https://github.com/asc-community/AngouriMath/issues/992
+        [Theory]
+        // the 2x2 of the issue: the pivot is x, and x = 0 is an ordinary point
+        [InlineData("[[x, 1], [2, y]]", "x", 0, "y", 5, -2)]
+        [InlineData("[[x, 1], [2, y]]", "x", 3, "y", 4, 10)]
+        // a vanishing pivot in the other position
+        [InlineData("[[1, x], [y, 0]]", "x", 2, "y", 0, 0)]
+        public void SymbolicDeterminantIsDefinedWhereAPivotVanishes(
+            string matrixRaw, string a, int aVal, string b, int bVal, int expected)
+        {
+            Matrix m = matrixRaw;
+            var det = TestExtensions.AsNotNull(m.Determinant);
+            Assert.Equal(expected, det.Substitute(a, aVal).Substitute(b, bVal).EvalNumerical());
+        }
+
+        [Theory]
+        // both of these are singular, and both defeated the divided form: the first
+        // has a zero in the pivot position, the second a vanishing 2x2 leading minor
+        [InlineData("[[0, 1, 2], [3, 4, 5], [6, 7, 8]]", 0)]
+        [InlineData("[[1, 2, 3], [2, 4, 6], [1, 1, 1]]", 0)]
+        [InlineData("[[1, 2, 3], [4, 5, 6], [7, 8, 10]]", -3)]
+        [InlineData("[[2, 1, 0], [1, 2, 1], [0, 1, 2]]", 4)]
+        public void GeneralSymbolicDeterminantAgreesWithTheNumericOne(string matrixRaw, int expected)
+        {
+            Matrix numeric = matrixRaw;
+            Matrix symbolic = "[[a, b, c], [d, e, f], [g, h, i]]";
+            var det = TestExtensions.AsNotNull(symbolic.Determinant);
+            foreach (var (name, value) in new[] { "a", "b", "c", "d", "e", "f", "g", "h", "i" }
+                .Select((name, index) => (name, numeric[index / 3, index % 3])))
+                det = det.Substitute(name, value);
+            Assert.Equal(expected, det.EvalNumerical());
+            Assert.Equal(expected, TestExtensions.AsNotNull(numeric.Determinant).EvalNumerical());
+        }
+
+        [Theory]
+        [InlineData("[[x, 1], [2, y]]", "x * y - 2")]
+        [InlineData("[[a, b], [c, d]]", "a * d - b * c")]
+        public void SymbolicDeterminantCarriesNoCondition(string matrixRaw, string expected)
+        {
+            Matrix m = matrixRaw;
+            var det = TestExtensions.AsNotNull(m.Determinant).Simplify();
+            Assert.DoesNotContain(det.Nodes, node => node is Providedf);
+            Assert.Equal(0, ((Entity)expected - det).Simplify().EvalNumerical());
+        }
     }
 }

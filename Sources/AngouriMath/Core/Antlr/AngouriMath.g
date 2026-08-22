@@ -268,7 +268,7 @@ atom returns[Entity value]
     | NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
     | BOOLEAN { $value = Entity.Boolean.Parse($BOOLEAN.text); }
     | SPECIALSET { $value = Entity.Set.SpecialSet.Create($SPECIALSET.text); }
-    | VARIABLE { $value = Entity.Variable.CreateVariableUnchecked($VARIABLE.text); }
+    | VARIABLE { $value = Entity.Variable.CreateVariableOrConstant($VARIABLE.text); }
     | '(|' expression '|)' { $value = $expression.value.Abs(); }
 
     | '[' function_arguments ']T' { $value = ParsingHelpers.TryBuildingMatrix($function_arguments.list).T; }
@@ -289,7 +289,7 @@ atom returns[Entity value]
     | 'cbrt(' args = function_arguments ')' { Assert("cbrt", 1, $args.list.Count); $value = MathS.Cbrt($args.list[0]); }
     | 'sqr(' args = function_arguments ')' { Assert("sqr", 1, $args.list.Count); $value = MathS.Sqr($args.list[0]); }
     | 'ln(' args = function_arguments ')' { Assert("ln", 1, $args.list.Count); $value = MathS.Ln($args.list[0]); }
-    | 'exp(' args = function_arguments ')' { Assert("exp", 1, $args.list.Count); $value = MathS.Pow(MathS.e, $args.list[0]); }
+    | 'exp(' args = function_arguments ')' { Assert("exp", 1, $args.list.Count); $value = MathS.Pow(Entity.Constant.EulerIntrinsic, $args.list[0]); }
 
     /* Trigonometric functions */
     | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }

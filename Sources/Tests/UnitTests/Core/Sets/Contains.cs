@@ -88,6 +88,24 @@ namespace AngouriMath.Tests.Core.Sets
         [InlineData("{x} \\ {y}", "z", false, false)]
         [InlineData("{x} \\ {1}", "1", false, false)]
         [InlineData("{x} \\ {1}", "x", false, false)]
+
+        // A closed non-leaf is not a number and not a boolean, so it is a member of
+        // none of the special sets -- and that is decided, not unknown. It used to be
+        // a member of every one of them, because TryContains answered with MayContain's
+        // deliberately permissive result.
+        // https://github.com/asc-community/AngouriMath/issues/995
+        [InlineData("BB", "[1, 2]", false)]
+        [InlineData("ZZ", "[1, 2]", false)]
+        [InlineData("QQ", "[1, 2]", false)]
+        [InlineData("RR", "[1, 2]", false)]
+        [InlineData("CC", "[1, 2]", false)]
+        [InlineData("ZZ /\\ BB", "[1, 2]", false)]
+        [InlineData("RR", "{ 1, 2 }", false)]
+        [InlineData("RR", "[0; 1]", false)]
+        // and the leaves it always decided correctly still are decided correctly
+        [InlineData("RR", "2", true)]
+        [InlineData("BB", "RR", false)]
+        [InlineData("RR", "RR", false)]
         public void Test(string given, string expected, bool containsExpected, bool tryContainsExpected = true)
         {
             var actualRaw = given.ToEntity();
