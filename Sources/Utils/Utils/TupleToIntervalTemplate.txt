@@ -3,13 +3,31 @@
         /// a closed interval (so that left and right ends are included)
         /// </summary>
         /// <returns>Interval</returns>
+        /// <example>
+        /// <code>
+        /// Console.WriteLine((%val1%, %val2%).ToInterval());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// [%print1%; %print2%]
+        /// </code>
+        /// </example>
         public static Interval ToInterval(this (%type1% left, %type2% right) arg) 
             => MathS.Sets.Interval(arg.left, arg.right);
 
         /// <summary>
         /// Takes a <see cref="%type1%"/> and <see cref="%type2%"/> and returns
-        /// a closed interval (so that left and right ends are included)
+        /// an interval whose two flags say whether each end is included
         /// </summary>
         /// <returns>Interval</returns>
+        /// <example>
+        /// <code>
+        /// Console.WriteLine((%val1%, false, %val2%, true).ToInterval());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// (%print1%; %print2%]
+        /// </code>
+        /// </example>
         public static Interval ToInterval(this (%type1% left, bool leftClosed, %type2% right, bool rightClosed) arg) 
             => new Interval(arg.left, arg.leftClosed, arg.right, arg.rightClosed);

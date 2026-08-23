@@ -1,5 +1,18 @@
 name: 'C++ Test'
 
+# Coverage for this leg is https://github.com/asc-community/AngouriMath/issues/746 item 35 and
+# https://github.com/asc-community/AngouriMath/issues/397, and it is not the same measurement the
+# other three legs make. C#, F# and Interactive each run `dotnet test` and collect coverage of
+# managed assemblies with the VSTest XPlat collector. Nothing in this job can: the library reaches
+# the tests as a Native AOT shared object, the published artefact contains no managed assembly at
+# all, and ctest runs a native executable rather than a test host the collector can attach to.
+#
+# What this leg does have, and what nothing measured until now, is the C++ of the wrapper itself:
+# Sources/Wrappers/AngouriMath.CPP.Importing holds the handle cache, the error-code translation
+# and the exception boundary that every C++ caller goes through. That is ordinary C++, and gcov
+# covers it, so the Linux job builds with --coverage and uploads Cobertura under the `cpp` flag.
+# The number is coverage of the C++ wrapper, not of AngouriMath through it; see
+# Sources/AngouriMath/Docs/Contributing/Coverage.md.
 on:
   push:
     branches:
@@ -38,8 +51,8 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
         sudo apt-get update
-        sudo apt-get install -y zlib1g-dev libkrb5-dev
-        
+        sudo apt-get install -y zlib1g-dev libkrb5-dev gcovr
+
     - name: 'Building the library into native for Windows'
       if: ${{ matrix.os == 'windows-latest' }}
       shell: cmd
@@ -57,9 +70,19 @@ jobs:
         dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r ${{ matrix.flag }} -c release        
 
     - name: 'Preparing tests'
+      if: ${{ matrix.os != 'ubuntu-latest' }}
       run: |
         cd ${{ env.tests_path }}
         cmake -S . -B build
+        mkdir "build/Debug"
+
+    # Same configure, plus gcov instrumentation. -O0 so that a line in the report is a line in the
+    # source; the tests take under a second either way.
+    - name: 'Preparing tests, instrumented for coverage'
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        cd ${{ env.tests_path }}
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage -O0 -g" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
         mkdir "build/Debug"
 
     - name: 'Copying the library for Windows'
@@ -88,6 +111,34 @@ jobs:
         cd build
         ctest
       
+    # The filter is what keeps this honest: without it the report is dominated by the vendored
+    # googletest sources, which nobody here maintains, and by RunTests.cpp, which is 100% covered
+    # by construction because it is the thing being run.
+    - name: 'Coverage of the C++ wrapper'
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        cd ${{ env.tests_path }}/build
+        gcovr --root ../../../../.. --filter '.*AngouriMath\.CPP\.Importing.*' \
+              --print-summary --cobertura coverage-cpp.xml
+        # gcovr writes a well-formed report with nothing in it when the filter matches no file, and
+        # codecov accepts it. Fail here instead, so that a flag claiming this leg is covered cannot
+        # go green on an empty report.
+        grep -q 'lines-valid="[1-9]' coverage-cpp.xml
+
+    # `files`, not `file`: v5 of the action does not take `file`, and given it, it warns about an
+    # unexpected input and then searches the workspace itself. Measured here, that search found 96
+    # reports -- the whole of googletest and of /usr/include/c++/13 -- so the flag would have
+    # carried everything the filter above exists to exclude. `disable_search` and `plugins: noop`
+    # keep it to the one report gcovr wrote.
+    - name: 'Send to codecov'
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      uses: codecov/codecov-action@v5
+      with:
+        files: ./Sources/Tests/CPPWrapperUnitTests/tests/build/coverage-cpp.xml
+        disable_search: true
+        plugins: noop
+        flags: cpp
+
     - name: 'Upload logs'
       if: failure()
       uses: actions/upload-artifact@v6
