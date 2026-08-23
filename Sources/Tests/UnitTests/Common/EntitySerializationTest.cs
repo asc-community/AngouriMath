@@ -314,22 +314,28 @@ namespace AngouriMath.Tests.Common
         }
 
         /// <summary>
-        /// The one where re-association is not value-preserving, because implication is not
-        /// associative. Written to fail when
-        /// <a href="https://github.com/asc-community/AngouriMath/issues/1032">#1032</a> is fixed,
-        /// so that the entry cannot outlive what it describes: the converter needs no change for
-        /// it, since it is the printed form that loses the bracket.
+        /// An operator that is *not* associative keeps its brackets, so a right nesting of one is
+        /// the expression it was.
         /// </summary>
+        /// <remarks>
+        /// The distinction the test above rests on, asserted rather than assumed. It was not true
+        /// until <a href="https://github.com/asc-community/AngouriMath/pull/1009">#1009</a>:
+        /// <c>a implies (b implies c)</c> printed without its brackets and read back as
+        /// <c>(a implies b) implies c</c>, which is a different truth function.
+        /// </remarks>
         [Theory]
         [InlineData("a implies (b implies c)")]
-        [InlineData("a -> (b -> c)")]
-        public void AnImplicationComesBackAsADifferentTruthFunction(string source)
+        [InlineData("(a provided b) provided c")]
+        [InlineData("1 - (2 - 3)")]
+        [InlineData("12 / (3 / 2)")]
+        [InlineData("(2 ^ 3) ^ 2")]
+        [InlineData("x mod (y mod z)")]
+        [InlineData("{ 1, 2, 3 } \\ ({ 2, 3 } \\ { 3 })")]
+        public void AnOperatorThatIsNotAssociativeKeepsItsNesting(string source)
         {
             var expression = MathS.FromString(source);
             var back = JsonSerializer.Deserialize<Entity>(JsonSerializer.Serialize(expression))!;
-            Assert.False(AgreeEverywhere(expression, back),
-                $"{source} survives now, so https://github.com/asc-community/AngouriMath/issues/1032 "
-                + "is fixed — drop this test and let EveryNodeTypeSurvivesJson cover it");
+            Assert.Equal(expression, back);
         }
 
         /// <summary>

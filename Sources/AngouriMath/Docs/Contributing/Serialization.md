@@ -65,14 +65,13 @@ them here:
 - **`Number.Complex` with both parts non-zero.** It prints as a sum and reads back as `Sumf` — the
   same number, a different node. Already recorded in `EveryNodeSurvivesEveryPipelineTest`.
 
-And one that is not about a node type but about how operands nest. An operator whose operands nest
-to the right comes back nested to the left, because the printed form does not bracket a right operand
-of equal priority: `1 + (2 + 3)` prints as `1 + 2 + 3` and reads back as `(1 + 2) + 3`. For `+`, `*`,
-`and`, `or` and `xor` the operator is associative, so the node changes and the value does not — that
-is the objection on #323 that this format still has, and all that is left of it. For `implies` it is
-not associative and the value *does* change:
-[#1032](https://github.com/asc-community/AngouriMath/issues/1032), a defect in the printer's
-parenthesisation guard, with `Providedf` the mirror of it.
+And one that is not about a node type but about how operands nest. An **associative** operator whose
+operands nest to the right comes back nested to the left, because the printed form does not bracket a
+right operand at its own precedence: `1 + (2 + 3)` prints as `1 + 2 + 3` and reads back as
+`(1 + 2) + 3`, and the same for `*`, `and`, `or` and `xor`. The node changes and the value does not,
+which is what makes it an output choice rather than a defect — and it is the objection on #323 that
+this format still has, and all that is left of it. An operator that is *not* associative does keep
+its brackets, since [#1009](https://github.com/asc-community/AngouriMath/pull/1009).
 
 Everything else round trips: 112 of the 115 node shapes measured, including `Lambda` and
 `Application` with bound names, `Provided`, `ConditionalSet`, matrices, the `sum` and `product`
