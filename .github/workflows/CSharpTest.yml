@@ -84,9 +84,12 @@ jobs:
         if-no-files-found: warn
         retention-days: 90
 
+    # `files`, not `file`. v5 of the action does not take `file`: it warns about an unexpected
+    # input, ignores the path, and searches the workspace instead, so the named report was never
+    # what made this flag.
     - name: 'Send to codecov'
       if: ${{ matrix.os == 'windows-latest' }}
       uses: codecov/codecov-action@v5
       with:
-        file: ./Sources/Tests/UnitTests/coverage.opencover.xml
+        files: ./Sources/Tests/UnitTests/coverage.opencover.xml
         flags: csharp

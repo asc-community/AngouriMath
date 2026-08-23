@@ -1,0 +1,402 @@
+[
+ {
+  "area": "simplify",
+  "what": "trigonometric simplification",
+  "sympy": "simplify(sin(x)**2 + cos(x)**2)"
+ },
+ {
+  "area": "simplify",
+  "what": "rational function cancellation",
+  "sympy": "cancel((x**2-1)/(x-1))"
+ },
+ {
+  "area": "simplify",
+  "what": "radical denesting",
+  "sympy": "sqrtdenest(sqrt(5+2*sqrt(6)))"
+ },
+ {
+  "area": "simplify",
+  "what": "combine logarithms",
+  "sympy": "logcombine(log(x)+log(y), force=True)"
+ },
+ {
+  "area": "simplify",
+  "what": "hypergeometric simplification",
+  "sympy": "simplify(gamma(x+1)/gamma(x))"
+ },
+ {
+  "area": "simplify",
+  "what": "trigsimp of a product",
+  "sympy": "trigsimp(2*sin(x)*cos(x))"
+ },
+ {
+  "area": "polys",
+  "what": "factor over the rationals",
+  "sympy": "factor(x**4-1)"
+ },
+ {
+  "area": "polys",
+  "what": "multivariate gcd",
+  "sympy": "gcd(x**2*y+x*y**2, x*y)"
+ },
+ {
+  "area": "polys",
+  "what": "resultant",
+  "sympy": "resultant(x**2-1, x**2-4, x)"
+ },
+ {
+  "area": "polys",
+  "what": "square-free decomposition",
+  "sympy": "sqf(x**4-2*x**2+1)"
+ },
+ {
+  "area": "polys",
+  "what": "Groebner basis",
+  "sympy": "str(groebner([x**2+y**2-1, x-y], x, y))"
+ },
+ {
+  "area": "polys",
+  "what": "factor over a finite field",
+  "sympy": "factor(x**2+1, modulus=2)"
+ },
+ {
+  "area": "polys",
+  "what": "partial fractions",
+  "sympy": "apart(1/(x**2-1))"
+ },
+ {
+  "area": "polys",
+  "what": "minimal polynomial of an algebraic number",
+  "sympy": "minimal_polynomial(sqrt(2)+sqrt(3), x)"
+ },
+ {
+  "area": "solvers",
+  "what": "polynomial equation",
+  "sympy": "solveset(x**2-4, x)"
+ },
+ {
+  "area": "solvers",
+  "what": "transcendental equation",
+  "sympy": "solveset(exp(x)-2, x, domain=S.Reals)"
+ },
+ {
+  "area": "solvers",
+  "what": "linear system",
+  "sympy": "linsolve([x+y-3, x-y-1], [x, y])"
+ },
+ {
+  "area": "solvers",
+  "what": "nonlinear system",
+  "sympy": "nonlinsolve([x**2+y**2-1, x-y], [x, y])"
+ },
+ {
+  "area": "solvers",
+  "what": "ODE",
+  "sympy": "str(dsolve(Derivative(Function('f')(x),x)+Function('f')(x)-x, Function('f')(x)))"
+ },
+ {
+  "area": "solvers",
+  "what": "PDE",
+  "sympy": "'pdsolve exists: ' + str(callable(pdsolve))"
+ },
+ {
+  "area": "solvers",
+  "what": "diophantine equation",
+  "sympy": "diophantine(x**2+y**2-25)"
+ },
+ {
+  "area": "solvers",
+  "what": "recurrence relation",
+  "sympy": "rsolve(Function('y')(n+1)-Function('y')(n)-1, Function('y')(n))"
+ },
+ {
+  "area": "solvers",
+  "what": "inequality",
+  "sympy": "solveset(x**2-4>0, x, domain=S.Reals)"
+ },
+ {
+  "area": "solvers",
+  "what": "numeric root",
+  "sympy": "nsolve(cos(x)-x, x, 1)"
+ },
+ {
+  "area": "integrals",
+  "what": "indefinite integral",
+  "sympy": "integrate(x**2, x)"
+ },
+ {
+  "area": "integrals",
+  "what": "definite integral",
+  "sympy": "integrate(x**2, (x, 0, 1))"
+ },
+ {
+  "area": "integrals",
+  "what": "integral needing Risch",
+  "sympy": "integrate(exp(-x**2), x)"
+ },
+ {
+  "area": "integrals",
+  "what": "integration by parts",
+  "sympy": "integrate(x*exp(x), x)"
+ },
+ {
+  "area": "integrals",
+  "what": "trigonometric substitution",
+  "sympy": "integrate(1/sqrt(1-x**2), x)"
+ },
+ {
+  "area": "integrals",
+  "what": "Laplace transform",
+  "sympy": "str(laplace_transform(exp(-x), x, s))"
+ },
+ {
+  "area": "integrals",
+  "what": "Fourier transform",
+  "sympy": "str(fourier_transform(exp(-x**2), x, k))"
+ },
+ {
+  "area": "integrals",
+  "what": "multiple integral",
+  "sympy": "integrate(x*y, (x, 0, 1), (y, 0, 1))"
+ },
+ {
+  "area": "series",
+  "what": "limit",
+  "sympy": "limit(sin(x)/x, x, 0)"
+ },
+ {
+  "area": "series",
+  "what": "one-sided limit",
+  "sympy": "limit(1/x, x, 0, '+')"
+ },
+ {
+  "area": "series",
+  "what": "Taylor series",
+  "sympy": "series(sin(x), x, 0, 6)"
+ },
+ {
+  "area": "series",
+  "what": "asymptotic expansion",
+  "sympy": "series(exp(x)/x, x, oo, 3)"
+ },
+ {
+  "area": "series",
+  "what": "residue",
+  "sympy": "residue(1/x, x, 0)"
+ },
+ {
+  "area": "concrete",
+  "what": "symbolic summation",
+  "sympy": "summation(k, (k, 1, n))"
+ },
+ {
+  "area": "concrete",
+  "what": "infinite series",
+  "sympy": "summation(1/k**2, (k, 1, oo))"
+ },
+ {
+  "area": "concrete",
+  "what": "symbolic product",
+  "sympy": "product(k, (k, 1, n))"
+ },
+ {
+  "area": "matrices",
+  "what": "determinant",
+  "sympy": "Matrix([[x,1],[2,y]]).det()"
+ },
+ {
+  "area": "matrices",
+  "what": "inverse",
+  "sympy": "Matrix([[1,2],[3,4]]).inv()"
+ },
+ {
+  "area": "matrices",
+  "what": "eigenvalues",
+  "sympy": "str(Matrix([[1,2],[2,1]]).eigenvals())"
+ },
+ {
+  "area": "matrices",
+  "what": "row echelon form",
+  "sympy": "str(Matrix([[1,2],[2,4]]).rref())"
+ },
+ {
+  "area": "matrices",
+  "what": "characteristic polynomial",
+  "sympy": "Matrix([[1,2],[2,1]]).charpoly().as_expr()"
+ },
+ {
+  "area": "matrices",
+  "what": "Jordan form",
+  "sympy": "str(Matrix([[1,1],[0,1]]).jordan_form()[1])"
+ },
+ {
+  "area": "ntheory",
+  "what": "integer factorisation",
+  "sympy": "str(factorint(360))"
+ },
+ {
+  "area": "ntheory",
+  "what": "primality",
+  "sympy": "isprime(104729)"
+ },
+ {
+  "area": "ntheory",
+  "what": "Euler totient",
+  "sympy": "totient(36)"
+ },
+ {
+  "area": "ntheory",
+  "what": "Moebius",
+  "sympy": "mobius(30)"
+ },
+ {
+  "area": "ntheory",
+  "what": "Chinese remainder",
+  "sympy": "str(sympy.ntheory.modular.crt([3,5,7],[2,3,2]))"
+ },
+ {
+  "area": "ntheory",
+  "what": "continued fraction",
+  "sympy": "str(list(continued_fraction_iterator(Rational(415,93))))"
+ },
+ {
+  "area": "logic",
+  "what": "boolean simplification",
+  "sympy": "simplify_logic((a & b) | (a & ~b))"
+ },
+ {
+  "area": "logic",
+  "what": "satisfiability",
+  "sympy": "str(satisfiable(a & ~a))"
+ },
+ {
+  "area": "logic",
+  "what": "conjunctive normal form",
+  "sympy": "to_cnf((a & b) | c)"
+ },
+ {
+  "area": "sets",
+  "what": "interval intersection",
+  "sympy": "Interval(0,2).intersect(Interval(1,3))"
+ },
+ {
+  "area": "sets",
+  "what": "set-builder",
+  "sympy": "str(ConditionSet(x, x>0, S.Reals))"
+ },
+ {
+  "area": "sets",
+  "what": "image of a set",
+  "sympy": "str(imageset(Lambda(x, x**2), Interval(0,2)))"
+ },
+ {
+  "area": "functions",
+  "what": "gamma",
+  "sympy": "gamma(Rational(1,2))"
+ },
+ {
+  "area": "functions",
+  "what": "zeta",
+  "sympy": "zeta(2)"
+ },
+ {
+  "area": "functions",
+  "what": "error function",
+  "sympy": "erf(0)"
+ },
+ {
+  "area": "functions",
+  "what": "Bessel",
+  "sympy": "besselj(0,0)"
+ },
+ {
+  "area": "functions",
+  "what": "Lambert W",
+  "sympy": "LambertW(0)"
+ },
+ {
+  "area": "functions",
+  "what": "polylogarithm",
+  "sympy": "polylog(2,1)"
+ },
+ {
+  "area": "assumptions",
+  "what": "assumption-driven simplification",
+  "sympy": "sqrt(Symbol('p', positive=True)**2)"
+ },
+ {
+  "area": "assumptions",
+  "what": "ask a predicate",
+  "sympy": "str(ask(Q.positive(Symbol('p', positive=True))))"
+ },
+ {
+  "area": "printing",
+  "what": "LaTeX output",
+  "sympy": "latex(Integral(x**2, x))"
+ },
+ {
+  "area": "printing",
+  "what": "C code generation",
+  "sympy": "ccode(x**2+sin(x))"
+ },
+ {
+  "area": "printing",
+  "what": "MathML output",
+  "sympy": "'mathml exists: ' + str(callable(mathml))"
+ },
+ {
+  "area": "discrete",
+  "what": "convolution",
+  "sympy": "str(convolution([1,2],[3,4]))"
+ },
+ {
+  "area": "discrete",
+  "what": "fast Fourier transform",
+  "sympy": "str(fft([1,2,3,4]))"
+ },
+ {
+  "area": "combinatorics",
+  "what": "permutation group",
+  "sympy": "'PermutationGroup exists: ' + str(callable(PermutationGroup))"
+ },
+ {
+  "area": "stats",
+  "what": "probability of an event",
+  "sympy": "str(P(Die('d',6) > 3))"
+ },
+ {
+  "area": "geometry",
+  "what": "line intersection",
+  "sympy": "str(Line((0,0),(1,1)).intersection(Line((0,1),(1,0))))"
+ },
+ {
+  "area": "physics",
+  "what": "units",
+  "sympy": "'units exists: ' + str(callable(convert_to))"
+ },
+ {
+  "area": "vector",
+  "what": "vector calculus",
+  "sympy": "'CoordSys3D exists: ' + str(callable(CoordSys3D))"
+ },
+ {
+  "area": "tensor",
+  "what": "tensor algebra",
+  "sympy": "'tensor exists: ' + str(callable(TensorIndexType))"
+ },
+ {
+  "area": "diffgeom",
+  "what": "differential geometry",
+  "sympy": "'Manifold exists: ' + str(callable(Manifold))"
+ },
+ {
+  "area": "holonomic",
+  "what": "holonomic functions",
+  "sympy": "'expr_to_holonomic exists: ' + str(callable(expr_to_holonomic))"
+ },
+ {
+  "area": "codegen",
+  "what": "compile to a callable",
+  "sympy": "str(lambdify(x, x**2)(3))"
+ }
+]
