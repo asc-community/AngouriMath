@@ -616,12 +616,45 @@ namespace AngouriMath
                         // https://github.com/asc-community/AngouriMath/issues/989
                         Set.ConditionalSet(var bound, var predicate)
                             => predicate.FreeVariables.Where(v => !bound.VarsAndConsts.Contains(v)).ToList(),
+                        // A summation and a product bind their index, so sum(k, k, 1, n) is a
+                        // function of n alone. The index is bound over the bounds as well as the
+                        // summand, which is what Binding says of itself: the name a binder is
+                        // handed is honoured throughout it, through the summand and the bounds.
+                        // https://github.com/asc-community/AngouriMath/issues/1019
+                        Summationf(var body, var index, var from, var to)
+                            => BoundBy(index, body, from, to),
+                        Productf(var body, var index, var from, var to)
+                            => BoundBy(index, body, from, to),
+                        // An integral binds its variable only when it has limits to bind it
+                        // between. The indefinite one does not: the antiderivative of t * b over
+                        // t is b * t ^ 2 / 2 + C, which is still a function of t. Nor does a
+                        // derivative -- d/dt denotes a function of t. Their variable stays free
+                        // on purpose, and a sweep that "fixes" that makes them wrong.
+                        Integralf { Range: { } limits } integral
+                            => BoundBy(integral.Var, integral.Expression, limits.from, limits.to),
                         _ => new HashSet<Variable>(@this.DirectChildren.SelectMany(c => c.FreeVariables))
                     }
                 ,
                 this
             );
         private LazyPropertyA<IReadOnlyCollection<Variable>> freeVariables;
+
+        /// <summary>
+        /// The free variables of <paramref name="parts"/> taken together, less whatever
+        /// <paramref name="binder"/> binds. <paramref name="binder"/> is an <see cref="Entity"/>
+        /// rather than a <see cref="Variable"/> because a binder's name position accepts one and
+        /// the parser is what settles which name it is.
+        /// </summary>
+        private static IReadOnlyCollection<Variable> BoundBy(Entity binder, params Entity[] parts)
+        {
+            var bound = binder.VarsAndConsts;
+            var free = new HashSet<Variable>();
+            foreach (var part in parts)
+                foreach (var v in part.FreeVariables)
+                    if (!bound.Contains(v))
+                        free.Add(v);
+            return free;
+        }
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
         /// Optimized for <see cref="Variable"/>.</summary>
