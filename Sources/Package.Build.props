@@ -29,7 +29,7 @@
     throws MissingMethodException when a consumer compiled against the older assembly
     reaches it. 2.2.0 renamed two, which is why that sentence is here.
 
-    2.3.0 removes and renames nothing. The public surface only grows, by 103 members,
+    2.3.0 removes and renames nothing. The public surface only grows, by 109 members,
     with 0 removals against the 2.2.0 baseline in Tests/UnitTests/Common/PublicApi.txt.
     So for this release the pin is a drop-in guarantee in both senses. What did change is
     behaviour, in seventeen ways recorded in BREAKING-CHANGES.md, and no assembly version
