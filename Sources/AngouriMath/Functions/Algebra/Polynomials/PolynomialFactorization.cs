@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -159,8 +159,34 @@ namespace AngouriMath.Functions
         /// </summary>
         internal static Factorization? Factor(Entity expr, Variable x)
         {
+            if (FactorOverRationals(expr, x, leastTerms: 2, leastDegree: 2) is not { } factorization)
+                return null;
+            // One factor to the first power is the input back again, which is not a
+            // factorisation of it.
+            if (factorization.Parts.Count == 1 && factorization.Parts[0].Multiplicity == 1)
+                return null;
+            return factorization;
+        }
+
+        /// <summary>
+        /// The same, for a caller that wants the factorisation of an irreducible polynomial
+        /// too -- which is the polynomial itself, and is an answer rather than a refusal.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="Factor"/> reports an irreducible polynomial as <see langword="null"/>
+        /// because its callers are looking for a product to work through and there is not
+        /// one. A caller that was asked to factorise, rather than one factorising on the way
+        /// to something else, has to tell "this does not factor" from "I could not settle
+        /// this", and those are the same value there.
+        /// </remarks>
+        internal static Factorization? FactorComplete(Entity expr, Variable x)
+            => FactorOverRationals(expr, x, leastTerms: 1, leastDegree: 1);
+
+        private static Factorization? FactorOverRationals(
+            Entity expr, Variable x, int leastTerms, int leastDegree)
+        {
             if (!PolynomialFactoring.TryGetRationalCoefficients(
-                    expr, x, leastTerms: 2, leastDegree: 2, IntegerPolynomial.MaxDegree, out var rational))
+                    expr, x, leastTerms, leastDegree, IntegerPolynomial.MaxDegree, out var rational))
                 return null;
 
             // Cleared of denominators, so the whole of the rest of this works over Z; the
@@ -173,7 +199,7 @@ namespace AngouriMath.Functions
                 whole[i] = rational[i].Numerator.Multiply(denominator.Divide(rational[i].Denominator));
 
             var poly = IntegerPolynomial.Create(whole);
-            if (poly.Degree < 2)
+            if (poly.Degree < leastDegree)
                 return null;
 
             var primitive = poly.PrimitivePart();
@@ -182,10 +208,6 @@ namespace AngouriMath.Functions
                 content = content.Negate();
 
             if (FactorPrimitive(primitive) is not { } parts)
-                return null;
-            // One factor to the first power is the input back again, which is not a
-            // factorisation of it.
-            if (parts.Count == 1 && parts[0].Multiplicity == 1)
                 return null;
 
             return new Factorization(ERational.Create(content, denominator).ToLowestTerms(), parts);

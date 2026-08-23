@@ -47,6 +47,82 @@ take a millisecond in total, while a thousand evaluations of freshly built nodes
 The row is kept as it is so the column history stays comparable, and the two trigonometric
 benchmarks build their expression afresh on every call for exactly this reason.
 
+---
+
+## The gate, and when the baseline may be updated
+
+This file is a history a person reads. `Sources/Tests/DotnetBenchmark/performance-baseline.json`
+is the same measurement in the form a build can fail on, which is what
+[#746](https://github.com/asc-community/AngouriMath/issues/746)'s standing condition -- *speed and
+memory on popular use cases are measured, not hoped for* -- asks for and what
+[#529](https://github.com/asc-community/AngouriMath/issues/529) asked for before it. The Kernel
+Benchmark workflow runs the benchmarks and then `dotnet run -c Release PerformanceGate`, which
+compares that run against the committed file.
+
+**It gates allocation and not time, because only one of the two is a property of the code.**
+Allocated bytes per operation is what the program asked the allocator for: the same code on the
+same input asks for the same number of bytes. Wall-clock time on a GitHub-hosted runner is a
+property of whoever else is on that host. Measured before choosing the thresholds -- all eighteen
+benchmarks, three consecutive runs of one unchanged build, on a machine deliberately left loaded
+(eight cores, load average around 16, which is closer to a shared runner than an idle desktop is):
+
+| | run to run |
+|---|---|
+| allocation, the sixteen gated benchmarks | at most **0.033%** apart -- six bytes on eighteen kilobytes, for `ParseEasy` -- and identical to the byte on seven of them |
+| mean time | up to **51.8%** apart, and 8-10% on nine of the eighteen |
+
+Three orders of magnitude between the two is the whole argument. Allocation is held to 3%, a
+hundred times the observed spread, and the wall clock fails only above 3.00x, which is a
+catastrophe threshold and deliberately catches nothing smaller. A gate that is red for reasons that
+are not the change is a gate people learn to ignore, and that is worse than not having one.
+
+**Two benchmarks are excluded by name.** `CompileEasy` and `CompileHard` moved 1.0% and 3.6% over
+those same three runs, because what they measure includes the runtime building and JIT-compiling a
+delegate, which is not reproducible the way the library's own allocation is. They are listed in the
+baseline's `ungated` map with that reason, and the gate prints the reason every time it runs -- an
+exclusion is a decision somebody made, not a benchmark that happens to be missing from the file.
+
+**It fails when a number gets better, too**, exactly as the corpus gate does and for the same
+reason: a baseline that overstates what the library allocates silently permits giving the gain
+back. The failure says `IMPROVED` rather than `REGRESSED`, and says what to do about it.
+
+### How to update it
+
+The run writes its numbers in the baseline's own format, so updating the baseline is a copy rather
+than a transcription:
+
+```
+cd Sources/Tests/DotnetBenchmark
+dotnet run -c Release CommonFunctionsInterVersion
+cp benchmark_results.csv/measured-CommonFunctionsInterVersion.json performance-baseline.json
+dotnet run -c Release --no-build PerformanceGate
+```
+
+The same file is in the `benchmark-results-<sha>` artifact of the CI job -- including of the job
+that just failed, which is why the upload step runs `if: always()`. That copy is the better source
+of the two, because it was taken on the machine and the runtime the gate is checked against.
+
+### When updating it is legitimate
+
+- **The allocation went down.** Record it, in the same change. This is the case the gate exists to
+  stop being absorbed, and it is the only one where a red build means nothing is wrong.
+- **The allocation went up and buys something.** [#918](https://github.com/asc-community/AngouriMath/pull/918)
+  is the worked example, below in this file: the polynomial layer made `SolveMedium` allocate 19%
+  more and made an incomplete root set complete. Say which in the pull request, next to the
+  `BREAKING-CHANGES.md` entry that a changed answer already owes.
+- **A benchmark was added or removed.** The gate reports `NEW` or `MISSING`, and the baseline
+  follows in the same change.
+- **The runtime moved under it.** Allocation is a property of the code *and* of the BCL beneath it,
+  so a .NET version bump can move a row with nothing here having changed. The baseline records the
+  `runtime` and `machine` it was taken on, and the gate prints both against the run's own, so check
+  those two lines before concluding this -- and say so in the commit, because it is the one reason
+  on this list that leaves no trace in the diff.
+
+And when it is not: **because the build is red and the number is inconvenient.** The gate names the
+benchmark and the size of the move. A move nobody can explain is the finding, not the obstacle.
+
+---
+
 |          Method |         [331st](https://github.com/asc-community/AngouriMath/commit/10e6e5a90e7270336b68dc5fd6aa36f3e0e65d2b) |          [380th](https://github.com/asc-community/AngouriMath/commit/73ae36488ddb863c1d6f35db5ed2f5dcf1484a26) |     [391st](https://github.com/asc-community/AngouriMath/commit/c7e08e6936bfdc2373377bec81ffd160e406244f)      |         [410th](https://github.com/asc-community/AngouriMath/commit/20814936bc740a9f410af4a4368e9895eab7aaf7) |           [483rd](https://github.com/asc-community/AngouriMath/commit/355963dcdf0ff9da568e9f1144ad2b7b68c19584) |         [520th](https://github.com/asc-community/AngouriMath/commit/70aa71acb73307c9f7df0aac006faae31b06058c) |         [690th](https://github.com/asc-community/AngouriMath/commit/5cc894939cb3657f0aa7ef5a25fd55011058929f) |         [826th](https://github.com/asc-community/AngouriMath/commit/87e33ec3590a95dd4ec59ff5c1f77064a64196d1) |         [914th](https://github.com/asc-community/AngouriMath/commit/6134338df083a908369b6bcfb69e70a4269ec51b) |         [920th](https://github.com/asc-community/AngouriMath/commit/501a0a3a9b2e07cddf92c4446b73ad6e2748253a) |        [1034th](https://github.com/asc-community/AngouriMath/commit/a3f48b47795b2dc2b3435152989a6e15639a65b4) |        [1066th](https://github.com/asc-community/AngouriMath/commit/a33746651f56a380b6c17913aa844f162f258d8c) |        [1090th](https://github.com/asc-community/AngouriMath/commit/9530c5b04484e98023941f7693bbeb1a3282cee6) |           [1446th](https://github.com/asc-community/AngouriMath/commit/2abb2b537c03977281f3fc2cab1da2c78c36a5f5) | [1620th](https://github.com/asc-community/AngouriMath/commit/e05d71797f53a9ac7dbdad6075cd7302a91036e7) | [1671st](https://github.com/asc-community/AngouriMath/commit/253b5a8d598a9a1d721b777340bd53ae3be12f99) | [1769th](https://github.com/asc-community/AngouriMath/commit/3ac24bc241e898509533bc980ec5dc91c5d79a07) |
 |---------------- |--------------:|---------------:|---------------:|--------------:|----------------:|--------------:|--------------:|--------------:|--------------:|--------------:|--------------:|--------------:|--------------:|-----------------:|--------------:|--------------:|--:|
 |       ParseEasy |        28,599 |         73,669 |        134,120 |        44,328 |          54,675 |        21,722 |        32,212 |        32,138 |        34,702 |        32,199 |        33,008 |        27,483 |        33,043 |        34,664 | 11,760 ns | 10,857 ns | 10,080 ns |

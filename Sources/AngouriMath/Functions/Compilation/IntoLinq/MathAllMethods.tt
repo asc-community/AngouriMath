@@ -1,11 +1,30 @@
 ﻿
 <#@ template debug="false" hostspecific="false" language="C#" #>
 <#@ output extension=".cs" #>
+<#
+    // The one-argument functions, in the order they are defined below. Both the definitions and
+    // the dispatch table at the bottom are generated from these, so a function cannot be added
+    // to one and forgotten in the other.
+    var unary = new[]{ "Sin", "Cos", "Tan", "Asin", "Acos", "Atan",
+                       "Cot", "Sec", "Csc", "Acot", "Asec", "Acsc",
+                       "Abs", "Sgn" };
+    var binary = new[]{ "Log", "Pow" };
+    var types = new[]{ "System.Numerics.Complex", "double", "float", "long", "int", "BigInteger" };
+#>
+//
+// Copyright (c) 2019-2022 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
 
 /* THIS FILE IS AUTO-GENERATED */
 
 using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Numerics;
+using System.Reflection;
 
 namespace AngouriMath.Core.Compilation.IntoLinq
 {
@@ -128,5 +147,50 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 return -1;
             return 0;
         }
+
+        /// <summary>
+        /// True where <c>System.Numerics.Complex.IsNaN</c> is, spelled out because that overload is
+        /// .NET 7 and later and this assembly also targets netstandard2.0. A complex number is NaN
+        /// when neither part is infinite and at least one of them is not finite -- (NaN, +oo) is an
+        /// infinity, not a NaN.
+        /// </summary>
+        public static bool IsNaN(System.Numerics.Complex a)
+            => !(double.IsInfinity(a.Real) || double.IsInfinity(a.Imaginary))
+               && !(IsFinite(a.Real) && IsFinite(a.Imaginary));
+
+        private static bool IsFinite(double d) => !double.IsNaN(d) && !double.IsInfinity(d);
+
+        /// <summary>
+        /// What <see cref="CompilationProtocol"/> dispatches through, in place of looking a method
+        /// up on this class by name at run time. A name resolved at run time is invisible to the
+        /// trimmer and to the NativeAOT compiler, which is what
+        /// https://github.com/asc-community/AngouriMath/issues/363 is about; every entry here is a
+        /// direct reference the compiler emits an ldtoken for, so the method is reachable by
+        /// construction. It is also a dictionary lookup rather than an overload resolution, which
+        /// is what it costs per node of every compiled expression.
+        /// </summary>
+        [ConstantField]
+        internal static readonly Dictionary<(string Name, int ArgCount, Type Type), MethodInfo> Definitions = new()
+        {
+<# foreach (var name in binary) { #>
+<# foreach (var type in types) { #>
+            { ("<#= name #>", 2, typeof(<#= type #>)), Def<<#= type #>>((a, b) => <#= name #>(a, b)) },
+<# } #>
+<# } #>
+<# foreach (var name in unary) { #>
+<# foreach (var type in types) { #>
+            { ("<#= name #>", 1, typeof(<#= type #>)), Def<<#= type #>>(a => <#= name #>(a)) },
+<# } #>
+<# } #>
+        };
+
+        // An expression tree is how C# spells "the MethodInfo of this method" without a string:
+        // the compiler emits ldtoken for the call it contains, which both picks the overload at
+        // compile time and roots the method for the trimmer.
+        private static MethodInfo Def<T>(Expression<Func<T, T>> e)
+            => ((MethodCallExpression)e.Body).Method;
+
+        private static MethodInfo Def<T>(Expression<Func<T, T, T>> e)
+            => ((MethodCallExpression)e.Body).Method;
     }
 }

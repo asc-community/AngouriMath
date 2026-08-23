@@ -52,5 +52,8 @@
 /// (and tests to SolveOneEquation.cs)
 /// 10. ToSympy (if applicable) (<see cref="AngouriMath.Entity.Sinf.ToSymPy"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
 /// (and tests to ToSymPyTest.cs)
+/// 11. Name it in Core/Serialization/Entity.Serialization.cs, which is what tells System.Text.Json
+/// that the node is written as its printed form. Nothing else about serialization changes -- see
+/// Serialization.md in the same folder as this file. EntitySerializationTest fails if it is missed.
 
 #pragma warning restore CS1587 // XML comment is not placed on a valid language element
