@@ -32,10 +32,38 @@ namespace AngouriMath.Extensions
         /// <returns>
         /// Returnes a natively compiled expression of type <typeparamref name="TDelegate"/>
         /// </returns>
+        /// <example>
+        /// The delegate computes in the types it was given, so an <see cref="int"/>
+        /// instantiation of a quotient does integer division rather than producing a rational:
+        /// <code>
+        /// var f = "a / b".Compile&lt;Func&lt;int, int, int&gt;&gt;(
+        ///     new CompilationProtocol(),
+        ///     typeof(int),
+        ///     new[] { (typeof(int), (Variable)"a"), (typeof(int), (Variable)"b") });
+        /// Console.WriteLine(f(7, 2));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 3
+        /// </code>
+        /// </example>
         public static TDelegate Compile<TDelegate>(this string @this, CompilationProtocol protocol, Type returnType, IEnumerable<(Type type, Variable variable)> typesAndNames) where TDelegate : Delegate
             => IntoLinqCompiler.Compile<TDelegate>(@this, returnType, protocol, typesAndNames);
 
-<# for (var i = 1; i <= 8; i++) { #>
+<# for (var i = 1; i <= 8; i++) {
+     // The worked example is executed and pinned by ExtensionsExampleTest; e and i are
+     // Euler's number and the imaginary unit to the parser, so the argument names skip them.
+     var exampleVars = new[] { "a", "b", "c", "d", "f", "g", "h", "j" };
+     var expr = ""; var targs = ""; var vargs = ""; var cargs = ""; var total = 0;
+     for (var t = 1; t <= i; t++) {
+       expr += (t == 1 ? "" : " + ") + exampleVars[t - 1];
+       targs += "int, ";
+       vargs += (t == 1 ? "" : ", ") + "\"" + exampleVars[t - 1] + "\"";
+       cargs += (t == 1 ? "" : ", ") + (10 * t).ToString();
+       total += 10 * t;
+     }
+     targs += "int";
+#>
 
         /// <summary>
         /// Compiles a given expression into a native lambda. We use the default protocol.
@@ -60,6 +88,16 @@ namespace AngouriMath.Extensions
     /// <returns>
         /// Returns a natively-compiled delegate
         /// </returns>
+        /// <example>
+        /// <code>
+        /// var f = "<#= expr #>".Compile&lt;<#= targs #>&gt;(<#= vargs #>);
+        /// Console.WriteLine(f(<#= cargs #>));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// <#= total #>
+        /// </code>
+        /// </example>
         public static Func<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut> Compile<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut>(this string @this, Variable var1<# for(var t=2; t<=i; t++){ #>, Variable var<#= t #><# } #>)
             => IntoLinqCompiler.Compile<Func<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut>>(@this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1)<# for(var t=2;t<=i;t++){ #>, (typeof(TIn<#= t #>), var<#= t #>) <# } #> });
