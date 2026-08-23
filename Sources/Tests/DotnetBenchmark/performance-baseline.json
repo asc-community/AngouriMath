@@ -1,0 +1,86 @@
+{
+  "comment": "Allocated bytes and mean nanoseconds per operation for the popular use cases of https://github.com/asc-community/AngouriMath/issues/746. Checked by PerformanceGate.cs; see Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md for when updating it is legitimate.",
+  "benchmark": "CommonFunctionsInterVersion",
+  "commit": "6b93b4012d54c354537821cc8e768ed8570563ce",
+  "measuredOn": "2026-08-23",
+  "runtime": ".NET 10.0.10",
+  "machine": "Ubuntu 26.04 LTS, X64, 8 logical cores",
+  "cases": {
+    "CompileEasy": {
+      "allocatedBytes": 16230,
+      "meanNanoseconds": 217683.91618652345
+    },
+    "CompileHard": {
+      "allocatedBytes": 37733,
+      "meanNanoseconds": 373193.7995876736
+    },
+    "Derivate": {
+      "allocatedBytes": 52824,
+      "meanNanoseconds": 17214.95599332063
+    },
+    "EvalEasy": {
+      "allocatedBytes": 0,
+      "meanNanoseconds": 0.984684884129092
+    },
+    "EvalTrig": {
+      "allocatedBytes": 1341376,
+      "meanNanoseconds": 867492.3806423611
+    },
+    "EvalTrigPrecise": {
+      "allocatedBytes": 12742205,
+      "meanNanoseconds": 26845828.055484693
+    },
+    "ParseEasy": {
+      "allocatedBytes": 18064,
+      "meanNanoseconds": 6918.623293346829
+    },
+    "ParseHard": {
+      "allocatedBytes": 3522432,
+      "meanNanoseconds": 1706600.9333379837
+    },
+    "RunEasy": {
+      "allocatedBytes": 0,
+      "meanNanoseconds": 23.025308667736894
+    },
+    "RunHard": {
+      "allocatedBytes": 0,
+      "meanNanoseconds": 345.98671662012737
+    },
+    "RunMedium": {
+      "allocatedBytes": 0,
+      "meanNanoseconds": 202.93889632432357
+    },
+    "SimplifyEasy": {
+      "allocatedBytes": 128100,
+      "meanNanoseconds": 102040.96768465909
+    },
+    "SimplifyHard": {
+      "allocatedBytes": 3620668728,
+      "meanNanoseconds": 2160215953.7802196
+    },
+    "SolveEasy": {
+      "allocatedBytes": 8852269,
+      "meanNanoseconds": 6083866.387073863
+    },
+    "SolveEasyMedium": {
+      "allocatedBytes": 95795,
+      "meanNanoseconds": 37080.269161224365
+    },
+    "SolveHard": {
+      "allocatedBytes": 1431860248,
+      "meanNanoseconds": 1056388966.8536586
+    },
+    "SolveMedium": {
+      "allocatedBytes": 658130,
+      "meanNanoseconds": 567993.1599434095
+    },
+    "SolveMediumHard": {
+      "allocatedBytes": 162304592,
+      "meanNanoseconds": 99270727.66666667
+    }
+  },
+  "ungated": {
+    "CompileEasy": "Measured allocation includes the runtime building and JIT-compiling a delegate, which is not reproducible: 16,230 / 16,269 / 16,391 B/op over three runs of one unchanged build.",
+    "CompileHard": "The same, and further out: 37,733 / 39,065 / 37,700 B/op over the same three runs, a 3.6% spread against 0.033% for the worst gated benchmark. Gating this would make the gate red for reasons that are not the change."
+  }
+}

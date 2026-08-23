@@ -55,6 +55,22 @@ jobs:
         cd Sources/Tests/DotnetBenchmark
         dotnet run -c Release RAMUsageTest
 
+    # The step that makes the two above a gate rather than a report. It runs no benchmark:
+    # the CPU step wrote what it measured to benchmark_results.csv/measured-*.json, and this
+    # reads that against the committed performance-baseline.json. Allocation is what it fails
+    # on, in either direction; the wall clock is reported and only fails at 3x, because a
+    # GitHub-hosted runner shares its host and a tight time threshold would be red for
+    # reasons that are not the change. The argument, and the variance it was measured from,
+    # are in PerformanceGate.cs.
+    #
+    # Last, so that a failure here does not cost the RAM figures, and before the upload so
+    # that the file to copy over the baseline is in the artifact of the run that failed.
+    # https://github.com/asc-community/AngouriMath/issues/529
+    - name: 'Kernel performance gate'
+      run: |
+        cd Sources/Tests/DotnetBenchmark
+        dotnet run -c Release --no-build PerformanceGate
+
     # The numbers used to exist only in this job's log, which expires -- so there was no way to
     # see whether a figure had moved without re-running an old commit by hand. Retaining them is
     # step 1 of https://github.com/asc-community/AngouriMath/issues/500, and the only step that
