@@ -141,10 +141,10 @@ library in its C# half — with neither half seeing the other's answer.
 |---|--:|
 | answers | 28 |
 | declines | 9 |
-| internal | 5 |
+| internal | 3 |
 | errors | 1 |
 | absent | 35 |
-| unclear | 2 |
+| unclear | 4 |
 
 **The verdict is computed from this library's answer alone, not from agreement.** `answers` means
 something other than the input came back; `declines` means the input came back unchanged, or an
