@@ -29,6 +29,7 @@ namespace AngouriMath
         public Boolean EvalBoolean() =>
             Evaled is Boolean value ? value :
                 throw new CannotEvalException
-                    ($"Result cannot be represented as a simple boolean! Use {nameof(EvaluableBoolean)} to check beforehand.");
+                    ($"`{Stringize()}` evaluates to `{Evaled.Stringize()}`, which cannot be represented as a "
+                     + $"single boolean. Use {nameof(EvaluableBoolean)} to check beforehand.");
     }
 }

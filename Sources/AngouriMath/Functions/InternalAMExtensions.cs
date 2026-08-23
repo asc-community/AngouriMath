@@ -119,7 +119,8 @@ namespace AngouriMath
                     return false;
                 if (curr < list1Length && curr < list2Length)
                     return true;
-                throw new AngouriBugException("Collections should have the same size");
+                throw new AngouriBugException(
+                    $"Collections should have the same size, and these are {list1Length} and {list2Length}");
             }
         }
 
@@ -137,7 +138,8 @@ namespace AngouriMath
                 yield return (iterLeft.Current, iterRight.Current);
 
             if (leftAdv != rightAdv)
-                throw new AngouriBugException("Collections should have the same size");
+                throw new AngouriBugException(
+                    $"Collections should have the same size, and the {(leftAdv ? "right" : "left")} one ran out first");
         }
 
         public static IEnumerable<(T1 left, T2 right)> EachForEach<T1, T2>(this (IEnumerable<T1>, IEnumerable<T2>) seqs)
@@ -688,7 +690,10 @@ namespace AngouriMath
         }
 
         public static EInteger Factorial(this EInteger n) =>
-            n.CanFitInInt32() ? Factorial(n.ToInt32Checked()) : throw new InvalidNumberException("The number is too huge");
+            n.CanFitInInt32()
+            ? Factorial(n.ToInt32Checked())
+            : throw new InvalidNumberException(
+                $"A factorial argument has to fit in an int32, and this one is {n.GetUnsignedBitLengthAsEInteger()} bits wide");
 
         /**
          * <summary>
