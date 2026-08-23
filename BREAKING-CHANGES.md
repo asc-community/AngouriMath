@@ -24,6 +24,8 @@ read first.
 | **Silent** | `"x6 + x y + 1 = 0".ToEntity().Solve("x")`, and every equation no solver settles | `{  }` — there are no roots | `{ x : 1 + x ^ 6 + x * y = 0 }` — these are the roots, whichever they are |
 | **Silent** | `"(x - 1) * (x6 + x y + 1) = 0".ToEntity().Solve("x")` | `{ 1 }` | `{ 1 } \/ { x : 1 + x ^ 6 + x * y = 0 }` |
 | **Silent** | `"x6 + x y + 1 = 0 and x - 1 = 0".ToEntity().Solve("x")` | `{  }` | `{ x : x ^ 6 + x * y + 1 = 0 and x - 1 = 0 }` |
+| **Silent** | `"sum(k, k, 1, n)".ToEntity().FreeVariables`, and `product` | `{ k, n }` — the bound index counted as free | `{ n }` |
+| **Silent** | `"integral(t * b, t, 0, 1)".ToEntity().FreeVariables`, and every integral with limits | `{ b, t }` | `{ b }` |
 | | `"x ^ 3 - x > 0".ToEntity().Solve("x")`, and every polynomial inequality of degree three or more | `NotSufficientlySupportedException: Only linear and quadratic polynomial inequalities are supported` | `(-1; 0) \/ (1; +oo)` — the solution set |
 | **Silent** | `"a implies (b implies c)".ToEntity().Stringize()` | `a implies b implies c`, which reads back as `(a implies b) implies c` | `a implies (b implies c)` |
 | | `"(a implies b) implies c".ToEntity().Stringize()` | `(a implies b) implies c` | `a implies b implies c` |
@@ -136,6 +138,42 @@ else                                { /* not settled, or not finite */ }
 Nothing that solved before stops solving, and no equation that was shown to have no roots gains
 any. Solving `x2 - 4 = 0`, `sin(x) = 1/2`, `x2 + 1 = 0` and the system solver's answers are
 unchanged, as is `Solve` on an inequality.
+
+### A bound index is not a free variable
+
+`FreeVariables` knew about two binders — `Lambda` and the set builder — and about no others. A
+summation and a product bind their index, so `sum(k, k, 1, n)` is a function of `n` alone, and a
+definite integral binds its variable between its limits. Both reported the bound name as free.
+
+Measured on a build of 2.3.0 and a build of this branch:
+
+| input | 2.3.0 | now |
+|---|---|---|
+| `sum(k, k, 1, n)` | `{ k, n }` | `{ n }` |
+| `product(k, k, 1, n)` | `{ k, n }` | `{ n }` |
+| `integral(t * b, t, 0, 1)` | `{ b, t }` | `{ b }` |
+| `integral(t * b, t)` | `{ b, t }` | `{ b, t }` |
+| `derivative(t * b, t)` | `{ b, t }` | `{ b, t }` |
+| `lambda(x, x + y)` | `{ y }` | `{ y }` |
+| `{ k : k > a }` | `{ a }` | `{ a }` |
+
+The index is bound over the **bounds** as well as the body, which is what
+[`Binding`](Sources/AngouriMath/Core/Binding.cs) already says of itself: the name a binder is handed
+is honoured throughout it, through the summand and the bounds. So `sum(k, k, k, n)` is `{ n }` too.
+
+**The last three rows are unchanged on purpose, and the distinction is the interesting part.** An
+indefinite integral does not bind: the antiderivative of `t * b` over `t` is `b * t ^ 2 / 2 + C`,
+which is still a function of `t`. Neither does a derivative — `d/dt` denotes a function of `t`. They
+look like the same shape as a summation and are not, and a later sweep that completes the binder list
+by adding them would make them wrong. `FreeVariablesTest` pins all of it, including the two that must
+stay put.
+
+**`Vars` and `VarsAndConsts` do not change.** They mean every name *occurring*, bound ones included —
+`"sum(k, k, 1, n)".ToEntity().Vars` is still `{ k, n }` — which is what their own XML example has
+always documented, listing a lambda's parameter under *variables and constants*. Occurring and free
+are different questions and the three properties answer them separately.
+
+[#1019](https://github.com/asc-community/AngouriMath/issues/1019).
 
 ### A polynomial inequality of degree three or more is answered
 
