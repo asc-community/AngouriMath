@@ -125,11 +125,18 @@ jobs:
         # go green on an empty report.
         grep -q 'lines-valid="[1-9]' coverage-cpp.xml
 
+    # `files`, not `file`: v5 of the action does not take `file`, and given it, it warns about an
+    # unexpected input and then searches the workspace itself. Measured here, that search found 96
+    # reports -- the whole of googletest and of /usr/include/c++/13 -- so the flag would have
+    # carried everything the filter above exists to exclude. `disable_search` and `plugins: noop`
+    # keep it to the one report gcovr wrote.
     - name: 'Send to codecov'
       if: ${{ matrix.os == 'ubuntu-latest' }}
       uses: codecov/codecov-action@v5
       with:
-        file: ./Sources/Tests/CPPWrapperUnitTests/tests/build/coverage-cpp.xml
+        files: ./Sources/Tests/CPPWrapperUnitTests/tests/build/coverage-cpp.xml
+        disable_search: true
+        plugins: noop
         flags: cpp
 
     - name: 'Upload logs'
