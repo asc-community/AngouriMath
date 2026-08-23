@@ -93,6 +93,29 @@ namespace DotnetBenchmark
         /// <summary>Time fails only above this factor. See the remarks: a catastrophe gate.</summary>
         private const double TimeCeilingFactor = 3.0;
 
+        /// <summary>
+        /// A benchmark whose baseline is under this many nanoseconds is reported but never fails on
+        /// time, for the same reason <see cref="AllocationFloorBytes"/> exists: a ratio taken over a
+        /// interval this short measures the runner, not the code.
+        /// </summary>
+        /// <remarks>
+        /// Measured rather than picked. One run of an unchanged kernel on a 4-core runner against a
+        /// baseline taken on an 8-core one made every single benchmark slower, and by an amount that
+        /// tracks how small it is:
+        /// <code>
+        ///   EvalEasy         0.98 ns    3.58x      ParseEasy      6,919 ns   1.59x
+        ///   RunEasy            23 ns    1.81x      Derivate      17,215 ns   1.52x
+        ///   RunHard           346 ns    1.74x      SimplifyHard   2.16e9 ns  1.30x
+        ///   RunMedium         203 ns    1.57x
+        /// </code>
+        /// Allocation was 0.0% on every one of them, so nothing about the code had moved. The
+        /// inflation is fixed per-call overhead — scheduling, cache state, one fewer core — and it
+        /// disappears into the measurement above roughly a microsecond. Below it, 3x is reachable
+        /// without a defect, and a gate that goes red without a defect is a gate people learn to
+        /// ignore.
+        /// </remarks>
+        private const double TimeFloorNanoseconds = 1_000;
+
         /// <summary>Time above this factor is called out for a human to look at, and does not fail.</summary>
         private const double TimeNoticeFactor = 1.25;
 
@@ -334,11 +357,12 @@ namespace DotnetBenchmark
                     : (now.AllocatedBytes - (double)was.AllocatedBytes) / was.AllocatedBytes;
                 var timeFactor = was.MeanNanoseconds > 0 ? now.MeanNanoseconds / was.MeanNanoseconds : 1;
                 var byBytes = Math.Abs(now.AllocatedBytes - was.AllocatedBytes) >= AllocationFloorBytes;
+                var timeIsMeasurable = was.MeanNanoseconds >= TimeFloorNanoseconds;
 
                 var verdict =
                     byBytes && allocationDelta > AllocationBand ? Verdict.Regressed
                     : byBytes && allocationDelta < -AllocationBand ? Verdict.Improved
-                    : timeFactor > TimeCeilingFactor ? Verdict.Slower
+                    : timeIsMeasurable && timeFactor > TimeCeilingFactor ? Verdict.Slower
                     : timeFactor > TimeNoticeFactor ? Verdict.Slow
                     : Verdict.Ok;
                 yield return new Row(method, verdict, was, now, allocationDelta, timeFactor);
@@ -359,7 +383,8 @@ namespace DotnetBenchmark
             sb.AppendLine();
             sb.AppendLine($" Allocation must stay within {AllocationBand * 100:0}% of the baseline in either direction;"
                 + $" a move of under {AllocationFloorBytes} B/op");
-            sb.AppendLine($" does not count. Time is reported and fails only above {TimeCeilingFactor:0.00}x, because a"
+            sb.AppendLine($" does not count. Time under {TimeFloorNanoseconds:N0} ns/op is reported and never fails,"
+                + $" for the same reason. Otherwise time fails only above {TimeCeilingFactor:0.00}x, because a"
                 + " shared runner's wall clock");
             sb.AppendLine(" is not a property of the code. Both thresholds are argued for in PerformanceGate.cs.");
             sb.AppendLine();
