@@ -66,9 +66,13 @@ namespace DotnetBenchmark
 
     public class Program
     {
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
-            var benchmarkName = args.Length > 0 ? args[0] : "";
+            // PerformanceGate is not a benchmark: it compares the file the last run wrote against
+            // the committed baseline, so it is cheap and can be its own CI step without paying for
+            // the measurement twice. https://github.com/asc-community/AngouriMath/issues/529
+            if (args.Contains(PerformanceGate.Command))
+                return PerformanceGate.Compare(Console.Out);
 
             var reports =
                 args
@@ -87,6 +91,11 @@ namespace DotnetBenchmark
                         // them. See MatchingEngine for what the factor decides.
                         "MatchingEngine" => GetReportByBenchmark(typeof(MatchingEngine), "Mean", "Error", "StdDev", "Ratio", "Allocated"),
                         "CompiledFuncTest" => GetReportByBenchmark(typeof(CompiledFuncTest), "Mean", "Error", "StdDev"),
+                        // The two compilation benchmarks existed as classes that nothing could
+                        // run: one was a commented-out BenchmarkRunner.Run below, the other had
+                        // no arm at all. A benchmark nobody can invoke measures nothing.
+                        "BenchLinqCompilation" => GetReportByBenchmark(typeof(BenchLinqCompilation), "Mean", "Error", "StdDev", "Allocated"),
+                        "CacheCompiledFunc" => GetReportByBenchmark(typeof(CacheCompiledFunc), "Mean", "Error", "StdDev", "Allocated"),
                         "NumbersBenchmark" => GetReportByBenchmark(typeof(NumbersBenchmark), "Mean", "Error", "StdDev"),
                         _ => throw new($"Unexpected benchmark {arg}")
                     }).ToArray(); // active action
@@ -103,12 +112,18 @@ namespace DotnetBenchmark
                 Console.WriteLine();
                 Console.WriteLine();
             }
-            // BenchmarkRunner.Run<BenchLinqCompilation>();
             Console.ReadLine(); Console.ReadLine(); Console.ReadLine();
+            return 0;
         }
 
         public static string GetReportByBenchmark(Type report, params string[] columns)
-            => TableToString(BenchmarkRunner.Run(report).Table, columns);
+        {
+            var summary = BenchmarkRunner.Run(report);
+            // Both numbers, in the baseline's own format, so that updating the baseline is copying
+            // a file rather than transcribing a table.
+            PerformanceGate.WriteMeasurements(summary);
+            return TableToString(summary.Table, columns);
+        }
 
         public static string TableToString(SummaryTable table, params string[] columns)
         {

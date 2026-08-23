@@ -22,7 +22,42 @@ namespace AngouriMath.Functions
             => one.SimplifiedRate < another.SimplifiedRate ? one : another;
 
         /// <summary>See more details in <see cref="Entity.Simplify(int)"/></summary>
-        internal static Entity Simplify(Entity expr, int level) => Alternate(expr, level).First().InnerSimplified;
+        internal static Entity Simplify(Entity expr, int level)
+            => Simplified(RewriteRecording.Current, Alternate(expr, level).First());
+
+        /// <summary>
+        /// <see cref="Entity.InnerSimplified"/>, and the whole-expression step it takes written
+        /// down where somebody is recording.
+        /// </summary>
+        /// <remarks>
+        /// A derivation is a chain of whole expressions, and a rewrite pass only ever records the
+        /// subexpressions it changed -- so the passes below have to say what they turned into or
+        /// the chain has a hole in it wherever the simplifier tidied up. Free when nobody is
+        /// listening: one ambient read per stage, against a tree walk per stage.
+        /// See <see cref="RewriteRecording.PathFrom(Entity, Entity)"/>.
+        /// </remarks>
+        private static Entity Simplified(RewriteRecording? recording, Entity expression)
+        {
+            if (recording is null)
+                return expression.InnerSimplified;
+            var mark = recording.Mark();
+            var simplified = expression.InnerSimplified;
+            if (simplified != expression)
+                recording.Note(expression, simplified, null, nameof(Entity.InnerSimplified), mark);
+            return simplified;
+        }
+
+        /// <summary>
+        /// An expression the simplifier produced by something that is not a rewrite pass, written
+        /// down for the same reason as <see cref="Simplified(RewriteRecording, Entity)"/>. The
+        /// mark is taken with <see cref="RewriteRecording.Mark"/> before the work started.
+        /// </summary>
+        private static Entity Noted(RewriteRecording? recording, Entity before, Entity after, string name, int mark)
+        {
+            if (recording is not null && after != before)
+                recording.Note(before, after, null, name, mark);
+            return after;
+        }
 
         /// <summary>
         /// The tidying pass every stage of <see cref="Alternate(Entity, int)"/> runs: get
@@ -44,16 +79,31 @@ namespace AngouriMath.Functions
                 .Then(Transformation.Rewriting(RewriteRules.Common))
                 .Then(Transformation.InnerSimplification);
 
-        internal static Entity SimplifyChildren(Entity expr) => simplifyChildren.ApplyOrKeep(expr);
+        internal static Entity SimplifyChildren(Entity expr)
+        {
+            var recording = RewriteRecording.Current;
+            if (recording is null)
+                return simplifyChildren.ApplyOrKeep(expr);
+            var mark = recording.Mark();
+            var simplified = simplifyChildren.ApplyOrKeep(expr);
+            // The chain above is six stages, two of which are inner simplifications that record
+            // nothing of their own, so the composition is the smallest step a reader can be
+            // handed here without the chain coming apart in the middle.
+            return Noted(recording, expr, simplified, nameof(SimplifyChildren), mark);
+        }
 
         /// <summary>Finds all alternative forms of an expression</summary>
         internal static IEnumerable<Entity> Alternate(Entity src, int level)
         {
+            var recording = RewriteRecording.Current;
             if (src is FiniteSet ss)
-                return new[] { ss.Apply(ent => ent.Simplify()).InnerSimplified };
+            {
+                var setMark = recording?.Mark() ?? 0;
+                return new[] { Noted(recording, src, ss.Apply(ent => ent.Simplify()).InnerSimplified, "Elementwise", setMark) };
+            }
             if (src is Number or Variable or Entity.Boolean)
                 return new[] { src };
-            var stage1 = src.InnerSimplified;
+            var stage1 = Simplified(recording, src);
 
 #if DEBUG
             if (MathS.Diagnostic.CatchOnSimplify.Value(stage1))
@@ -72,7 +122,7 @@ namespace AngouriMath.Functions
 #endif
                 void __IterAddHistory(Entity expr)
                 {
-                    var refexpr = expr.Rewrite(RewriteRules.CanonicalOrder).InnerSimplified;
+                    var refexpr = Simplified(recording, expr.Rewrite(RewriteRules.CanonicalOrder));
                     var compl1 = refexpr.SimplifiedRate;
                     var compl2 = expr.SimplifiedRate;
                     var n = compl1 > compl2 ? expr : refexpr;
@@ -103,8 +153,9 @@ namespace AngouriMath.Functions
             // rewrite won at 12 nodes against the 16-node input because the 4-node minimal
             // form was never generated for it to lose to.
             // https://github.com/asc-community/AngouriMath/issues/768
+            var minimiserMark = recording?.Mark() ?? 0;
             if (Functions.Boolean.Minimiser.Minimise(stage1) is { } minimised)
-                AddHistory(minimised);
+                AddHistory(Noted(recording, stage1, minimised, "Minimise", minimiserMark));
 
             for (int i = 0; i < Math.Abs(level); i++)
             {
@@ -121,15 +172,15 @@ namespace AngouriMath.Functions
                 // is an accident rather than a preference.
                 // https://github.com/asc-community/AngouriMath/issues/205
                 if (res.Nodes.Any(child => child is Divf))
-                    AddHistory(res = res.Rewrite(RewriteRules.RationalizeDenominator).InnerSimplified);
+                    AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.RationalizeDenominator)));
 
-                res = res.Rewrite(RewriteRules.CanonicalOrderAt(sortLevel)).InnerSimplified;
+                res = Simplified(recording, res.Rewrite(RewriteRules.CanonicalOrderAt(sortLevel)));
                 if (res.Nodes.Any(child => child is Powf))
-                    AddHistory(res = res.Rewrite(RewriteRules.Power).InnerSimplified);
+                    AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.Power)));
 
                 AddHistory(res = SimplifyChildren(res));
 
-                AddHistory(res = res.Rewrite(RewriteRules.InvertNegativePowers).Rewrite(RewriteRules.DivisionPreparing).InnerSimplified);
+                AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.InvertNegativePowers).Rewrite(RewriteRules.DivisionPreparing)));
 
                 // Lowest terms, offered as one more candidate rather than taken. Cancelling
                 // means multiplying out, and a quotient that cancels down to a polynomial
@@ -138,23 +189,23 @@ namespace AngouriMath.Functions
                 // stands, and u^2 + 4u + 4 only once this has expanded it. The complexity
                 // metric is what should decide between them.
                 if (res.Nodes.Any(child => child is Divf))
-                    AddHistory(res.Rewrite(RewriteRules.PolynomialGcdCancellation).InnerSimplified);
+                    AddHistory(Simplified(recording, res.Rewrite(RewriteRules.PolynomialGcdCancellation)));
 
-                AddHistory(res = res.Rewrite(RewriteRules.PolynomialLongDivision).InnerSimplified);
+                AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.PolynomialLongDivision)));
 
 
-                AddHistory(res = res.Rewrite(RewriteRules.NormalTrigonometricForm).InnerSimplified);
-                AddHistory(res = res.Rewrite(RewriteRules.CollapseMultipleFractions).InnerSimplified);
-                AddHistory(res = res.Rewrite(RewriteRules.CommonDenominatorAt(sortLevel)).InnerSimplified);
-                AddHistory(res = res.Rewrite(RewriteRules.InvertNegativePowers).Rewrite(RewriteRules.DivisionPreparing).InnerSimplified);
-                AddHistory(res = res.Rewrite(RewriteRules.Power).InnerSimplified);
-                AddHistory(res = res.Rewrite(RewriteRules.Trigonometric).InnerSimplified);
-                AddHistory(res = res.Rewrite(RewriteRules.CollapseTrigonometricFunctions).InnerSimplified);
+                AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.NormalTrigonometricForm)));
+                AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.CollapseMultipleFractions)));
+                AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.CommonDenominatorAt(sortLevel))));
+                AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.InvertNegativePowers).Rewrite(RewriteRules.DivisionPreparing)));
+                AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.Power)));
+                AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.Trigonometric)));
+                AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.CollapseTrigonometricFunctions)));
 
                 if (res.Nodes.Any(child => child is TrigonometricFunction))
                 {
-                    var res1 = res.Rewrite(RewriteRules.ExpandTrigonometric).InnerSimplified;
-                    AddHistory(res = res.Rewrite(RewriteRules.Trigonometric).Rewrite(RewriteRules.Common).InnerSimplified);
+                    var res1 = Simplified(recording, res.Rewrite(RewriteRules.ExpandTrigonometric));
+                    AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.Trigonometric).Rewrite(RewriteRules.Common)));
                     AddHistory(res1);
                     res = PickSimplest(res, res1);
                     AddHistory(res = res.Rewrite(RewriteRules.CollapseTrigonometricFunctions).Rewrite(RewriteRules.Trigonometric));
@@ -163,58 +214,59 @@ namespace AngouriMath.Functions
                     // Offered as a candidate rather than taken: written out, sin(4x) is far
                     // longer than it started, and only worth it where the pieces cancel --
                     // which is what the complexity metric is for.
-                    var expandedAngles = res
+                    var expandedAngles = Simplified(recording, res
                         .Rewrite(RewriteRules.ExpandMultipleAngle)
-                        .Rewrite(RewriteRules.NormalTrigonometricForm)
-                        .InnerSimplified;
+                        .Rewrite(RewriteRules.NormalTrigonometricForm));
                     if (expandedAngles != res)
                     {
                         AddHistory(expandedAngles);
-                        AddHistory(SimplifyChildren(expandedAngles)
+                        AddHistory(Simplified(recording, SimplifyChildren(expandedAngles)
                             .Rewrite(RewriteRules.Trigonometric)
-                            .Rewrite(RewriteRules.Common)
-                            .InnerSimplified);
+                            .Rewrite(RewriteRules.Common)));
                     }
                 }
 
 
                 if (res.Nodes.Any(child => child is Statement))
                 {
-                    AddHistory(res = res.Rewrite(RewriteRules.Boolean).InnerSimplified);
+                    AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.Boolean)));
                 }
 
 
                 if (res.Nodes.Any(child => child is ComparisonSign))
                 {
-                    AddHistory(res = res.Rewrite(RewriteRules.InequalityEquality).InnerSimplified);
+                    AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.InequalityEquality)));
                 }
 
                 if (res.Nodes.Any(child => child is Factorialf))
                 {
-                    AddHistory(res = res.Rewrite(RewriteRules.ExpandFactorialDivisions).InnerSimplified);
-                    AddHistory(res = res.Rewrite(RewriteRules.FactorizeFactorialMultiplications).InnerSimplified);
+                    AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.ExpandFactorialDivisions)));
+                    AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.FactorizeFactorialMultiplications)));
                 }
 
 
                 if (res.Nodes.Any(child => child is Powf or Logf))
-                    AddHistory(res = res.Rewrite(RewriteRules.Power).InnerSimplified);
+                    AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.Power)));
 
                 if (res.Nodes.Any(child => child is Set))
                 {
                     var replaced = res.Rewrite(RewriteRules.SetOperator);
 
-                    AddHistory(res = replaced.InnerSimplified);
+                    AddHistory(res = Simplified(recording, replaced));
                 }
 
 
                 if (res.Nodes.Any(child => child is Phif))
-                    AddHistory(res = res.Rewrite(RewriteRules.PhiFunction).InnerSimplified);
+                    AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.PhiFunction)));
 
                 Entity? possiblePoly = null;
                 foreach (var var in res.Vars)
+                {
+                    var polyMark = recording?.Mark() ?? 0;
                     if (TryPolynomial(res, var, out var resPoly)
                         && (possiblePoly is null || resPoly.Complexity < possiblePoly.Complexity))
-                        AddHistory(possiblePoly = resPoly);
+                        AddHistory(possiblePoly = Noted(recording, res, resPoly, "AsPolynomial", polyMark));
+                }
                 if (possiblePoly is { } && possiblePoly.Complexity < res.Complexity)
                     res = possiblePoly;
 
@@ -223,8 +275,11 @@ namespace AngouriMath.Functions
                 // something far longer than it started, and the complexity metric is what
                 // should decide between them.
                 foreach (var var in res.Vars)
+                {
+                    var factorMark = recording?.Mark() ?? 0;
                     if (PolynomialFactoring.TryFactor(res, var, out var factoredPoly))
-                        AddHistory(factoredPoly);
+                        AddHistory(Noted(recording, res, factoredPoly, "Factorize", factorMark));
+                }
 
 
                 AddHistory(res = res.Rewrite(RewriteRules.Common));
@@ -244,8 +299,10 @@ namespace AngouriMath.Functions
             }
             if (level > 0) // if level < 0 we don't check whether expanded version is better
             {
-                AddHistory(res.Expand().Simplify(-level));
-                AddHistory(res.Factorize().Simplify(-level));
+                var expandMark = recording?.Mark() ?? 0;
+                AddHistory(Noted(recording, res, res.Expand(), nameof(Entity.Expand), expandMark).Simplify(-level));
+                var factorizeMark = recording?.Mark() ?? 0;
+                AddHistory(Noted(recording, res, res.Factorize(), nameof(Entity.Factorize), factorizeMark).Simplify(-level));
 
                 // A multiple angle written out is worth having only where the pieces then
                 // cancel, so it has to be simplified in full before the metric can be
@@ -258,14 +315,16 @@ namespace AngouriMath.Functions
                 // That is https://github.com/asc-community/AngouriMath/issues/557: the
                 // reporter's second expression is 0, and reaches 0 through
                 // 2 sin(t) cos(t) and not through sin(2t).
-                var openedAngles = res
+                var openedAngles = Simplified(recording, res
                     .Rewrite(RewriteRules.ExpandMultipleAngle)
-                    .Rewrite(RewriteRules.NormalTrigonometricForm)
-                    .InnerSimplified;
+                    .Rewrite(RewriteRules.NormalTrigonometricForm));
                 if (openedAngles != res)
+                {
                     // Expanded, and for the same reason res is expanded above: the
                     // cancellation only shows up once the products are multiplied out.
-                    AddHistory(openedAngles.Expand().Simplify(-level));
+                    var openedMark = recording?.Mark() ?? 0;
+                    AddHistory(Noted(recording, openedAngles, openedAngles.Expand(), nameof(Entity.Expand), openedMark).Simplify(-level));
+                }
             }
 
             return history.Values.SelectMany(x => x);

@@ -58,3 +58,20 @@ TestResults
 **/.ionide/**
 Sources/msbuild.binlog
 **/publish-output/**
+
+# Reports the out-of-tree analysis harnesses write beside the repository root.
+propcheck.md
+boundcheck.md
+canoncheck.md
+confluence.md
+comparison.md
+rulecheck.md
+simpsweep.md
+rootcheck.md
+crashcheck.md
+docsamples.md
+sympyparity.md
+egraph.md
+
+# Agent worktrees and local tool state.
+.claude/
