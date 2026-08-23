@@ -25,6 +25,12 @@
 ///     c. Add <see cref="AngouriMath.Entity.Boolean.Replace"/> to your node
 ///     d. Add <see cref="AngouriMath.Entity.Boolean.Priority"/> to your node
 ///     e. Add <see cref="AngouriMath.Entity.Boolean.InitDirectChildren"/> to your node
+///     f. Add `public override string ToString() => Stringize();`. Every one of the 69 node types
+///        carries this line and nothing enforces it, because the failure is not a compiler error:
+///        Entity is a record, so C# synthesises ToString from PrintMembers, which prints every
+///        public property -- and Evaled and InnerSimplified are public and Entity-valued, so each
+///        calls ToString again. A node without the override does not print wrongly; it exhausts
+///        the stack.
 ///     
 /// 
 /// 3. A few essential methods
