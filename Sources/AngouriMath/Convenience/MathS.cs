@@ -5945,8 +5945,12 @@ namespace AngouriMath
         {
             var sb = new System.Text.StringBuilder();
             sb.Append("import sympy\n\n");
+            // Name rather than Stringize: a variable narrowed with WithCodomain prints as
+            // `domain(x, ZZ)` since https://github.com/asc-community/AngouriMath/issues/1022, and
+            // that is not a Python identifier. The codomain itself does not survive the export --
+            // SymPy would spell it as an assumption on the symbol, which nothing here emits yet.
             foreach (var f in expr.Vars)
-                sb.Append($"{f.Stringize()} = sympy.Symbol('{f.Stringize()}')\n");
+                sb.Append($"{f.Name} = sympy.Symbol('{f.Name}')\n");
             sb.Append('\n');
             sb.Append("expr = ").Append(expr.ToSymPy());
             return sb.ToString();

@@ -34,6 +34,11 @@ read first.
 | | any expression mixing a number with a `Complex` argument, `Compile`d in a NativeAOT app — `"x + 1".Compile<Complex, Complex>("x")` | `UncompilableNodeException: ... The binary operator Add is not defined for the types 'System.Numerics.Complex' and 'System.Numerics.Complex'` | the compiled function, answering as it does under the JIT |
 | | `Compile` to a nullable integral return type in a NativeAOT app | `AngouriBugException: IsNaN method expected for type System.Double`, which took the process down | the compiled function |
 | **Silent** | an app publishing with `PublishTrimmed` or NativeAOT | `AngouriMath.dll` was copied in whole, being unmarked | it is trimmed with the rest, since the assembly now declares `IsTrimmable` |
+| **Silent** | `"domain(x, ZZ)".ToEntity().Stringize()`, and `ToString`, and `EntityJsonConverter` | `x`, which reads back with `Codomain = Any` | `domain(x, ZZ)`, which reads back narrowed |
+| **Silent** | `"domain(sqrt(-1), RR)".ToEntity().Stringize()` | `sqrt(-1)`, which evaluates to `i` when read back | `domain(sqrt(-1), RR)`, which evaluates to `NaN` |
+| **Silent** | `"domain(x, ZZ)".ToEntity().Latexize()` | `x` | `{\left(x\right)}_{\mathbb{Z}}` |
+| **Silent** | `"x - domain(x, ZZ)".ToEntity().Simplify()`, and any sum mixing a node with a narrowed codomain and the same node without | `0` — the two were collected as one monomial | `x - domain(x, ZZ)`, left alone |
+| | every node type's own `Stringize()` and `Latexize()` overrides — `Entity.Sumf.Stringize()` and 129 more | declared on each node | declared once on `Entity`; still callable on every node, and a consumer compiled against 2.3.0 has to be rebuilt |
 
 ### A polynomial inequality of degree three or more is answered
 
@@ -155,6 +160,78 @@ the same precedences this grammar uses — so those needed the same brackets —
 bracketing for. The change only ever adds `\left(`/`\right)` groups, which CSharpMath already
 parses, so nothing downstream needs a matching change
 ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
+
+### A narrowed `Codomain` is printed, so it survives being read back
+
+`Codomain` decides evaluation — `sqrt(-1)` is `i`, and the same expression with `Codomain = Real`
+is `NaN`, which is the example on `Entity.Codomain` itself. No node printed it, so the two printed
+the same string and the annotation was lost the moment an expression was written out: to a file, to
+a database column, through `EntityJsonConverter`, or to another process.
+[#1022](https://github.com/asc-community/AngouriMath/issues/1022).
+
+The parser already had the syntax. `domain(expr, SET)` maps onto `WithCodomain` and works for every
+node, not only a variable, so only the printing half was missing. Measured on a build of 2.3.0 and a
+build of this branch:
+
+| expression | 2.3.0 printed | 2.3.0 read that back as | now prints |
+|---|---|---|---|
+| `"domain(x, ZZ)".ToEntity()` | `x` | a `Variable` with `Codomain = Any` | `domain(x, ZZ)` |
+| `"domain(x + 1, RR)".ToEntity()` | `x + 1` | a `Sumf` with `Codomain = Complex` | `domain(x + 1, RR)` |
+| `"domain(sqrt(-1), RR)".ToEntity()` | `sqrt(-1)` | a `Powf` that evaluates to `i` | `domain(sqrt(-1), RR)` |
+| `"domain([1, 2], RR)".ToEntity()` | `[1, 2]` | a `Matrix` with `Codomain = Any` | `domain([1, 2], RR)` |
+| `Sin(Var("x").WithCodomain(Integer)) + Var("y").WithCodomain(Real)` | `sin(x) + y` | both annotations gone | `sin(domain(x, ZZ)) + domain(y, RR)` |
+
+`EntityJsonConverter` serialises what `Stringize` prints, so it changes with it and needed no code:
+`JsonSerializer.Serialize("domain(x, ZZ)".ToEntity())` was `"x"` and is `"domain(x, ZZ)"`.
+
+**A sum stops collecting two terms that are not the same term.** `Simplify`'s polynomial
+collection keys a monomial by its base's *printed form*, so while the printed form did not
+distinguish `x` from `x` narrowed to the integers, it added them up as one:
+
+```
+"x - domain(x, ZZ)".ToEntity().Simplify()      2.3.0: 0                    now: x - domain(x, ZZ)
+"domain(x, ZZ) + x".ToEntity().Simplify()      2.3.0: 2 * x                now: domain(x, ZZ) + x
+```
+
+`0` is the answer only where `x` is an integer, and the annotation is what says it might not be, so
+this was a wrong answer rather than a tidier one. Confirmed as the cause by putting the collision
+back — keying on the base with its codomain erased brings `0` and `2 * x` straight back.
+
+**The ordinary expression is untouched.** The wrapper is printed only where the codomain is *not*
+the one that parsing the bare text would give back, and nothing inside the library narrows a
+codomain — `WithCodomain` is called from the parser and from callers, and from nowhere else. So
+`"x + 1".ToEntity().Stringize()` is `x + 1` on both versions, and of the 8,084 tests in the suite
+the only two that moved are the one written to pin this defect and the recorded public surface.
+
+That default is **not the same for every node**, which is why the rule is a comparison and not a
+check against `Complex`: a `Variable` and a `Matrix` default to `Any`, `Absf`, `Modf`, `Minf`,
+`Maxf` and `Interval` to `Real`, every boolean node to `Boolean`, each numeric literal to its own
+type's domain, `Phif` to `Integer`, the set nodes and `Providedf`, `Piecewise`, `Application` and
+`Lambda` to `Any`, and the rest to `Complex`. Each node now declares that default next to its
+`Codomain`, and a test asserts that every freshly built node of every node type carries it.
+
+**LaTeX** renders it as a subscripted set, `{\left(x\right)}_{\mathbb{Z}}`. The parentheses are
+unconditional because a variable renders its own index as a subscript, so `x_{\mathbb{Z}}` would be
+indistinguishable from a variable spelled that way. This is new output for
+[CSharpMath.Evaluation](https://github.com/verybadcat/CSharpMath/blob/master/CSharpMath.Evaluation/Evaluation.cs),
+which reads our LaTeX back and has no notion of a codomain; it appears only for an expression that
+carries a narrowed one ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
+
+**Two annotations still do not survive, and both are the grammar's limit.** `Any` cannot be written
+at all — the second argument of `domain(...)` has to be one of the five special sets, and none of
+them means "no restriction" — so a node *widened* to `Any` from a narrower default still prints as
+though it had not been. And no input string yields a rational literal whose codomain is `Complex`,
+because the pass that reads `1/2` as a `Rational` rather than a quotient
+([#873](https://github.com/asc-community/AngouriMath/issues/873)) uses `Complex` as its "nobody
+annotated this" sentinel. Both are pinned by tests that fail if they start working, so neither can
+outlive itself.
+
+**The public surface.** Each node type used to declare its own `public override string Stringize()`
+and `Latexize()`; the codomain wrapper is one decision and now lives once on `Entity`, with the
+per-node rendering behind an internal member. All 130 overrides are therefore gone from
+`PublicApi.txt`. Nothing a caller can write stops compiling — `someSumf.Stringize()` still resolves,
+inherited from `Entity` — but an assembly *compiled* against 2.3.0 binds to
+`Entity+Sumf::Stringize()` where its static type is a concrete node, and has to be rebuilt.
 
 ### `Compile` works in a trimmed or NativeAOT application
 

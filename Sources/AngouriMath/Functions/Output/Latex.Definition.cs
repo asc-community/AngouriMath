@@ -44,7 +44,24 @@ namespace AngouriMath
         /// \frac{a}{{b}^{\lim_{x\to \infty } \left[\sin\left(x\right)-\frac{{e}^{y}+{e}^{-y}}{2}\right]}}
         /// </code>
         /// </example>
-        public abstract string Latexize();
+        /// <remarks>
+        /// A node whose <see cref="Codomain"/> is not its type's default is rendered as the node
+        /// subscripted with the set, <c>{\left(x\right)}_{\mathbb{Z}}</c>. The parentheses are
+        /// unconditional: a <see cref="Variable"/> already renders its own index as a subscript,
+        /// so <c>x_{\mathbb{Z}}</c> would be indistinguishable from a variable named that way.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1022">#1022</a>
+        /// </remarks>
+        public string Latexize()
+            => PrintsItsCodomain
+                ? $@"{{\left({LatexizeNode()}\right)}}_{{{Set.SpecialSet.Create(Codomain).Latexize()}}}"
+                : LatexizeNode();
+
+        /// <summary>
+        /// Renders this node, and this node only: the codomain subscript is
+        /// <see cref="Latexize()"/>'s to add, so that it is decided in one place.
+        /// </summary>
+        private protected abstract string LatexizeNode();
+
         /// <summary>
         /// Calculus operators, unlike other functions, have a <see cref="LatexPriority"/> between addition/subtraction
         /// and multiplication/division which is different from <see cref="Priority"/>.
@@ -53,7 +70,11 @@ namespace AngouriMath
 
         /// <summary>Returns the expression in LaTeX (for example, a / b -> \frac{a}{b})</summary>
         /// <param name="parenthesesRequired">Whether to wrap it with parentheses</param>
+        /// <remarks>
+        /// A node that renders its codomain needs no brackets: the subscript already applies to a
+        /// parenthesised group, so anything around it would be a second pair.
+        /// </remarks>
         protected internal string Latexize(bool parenthesesRequired) =>
-            parenthesesRequired ? @$"\left({Latexize()}\right)" : Latexize();
+            parenthesesRequired && !PrintsItsCodomain ? @$"\left({Latexize()}\right)" : Latexize();
     }
 }

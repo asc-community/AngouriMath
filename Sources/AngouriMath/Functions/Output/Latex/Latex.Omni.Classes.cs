@@ -16,7 +16,7 @@ namespace AngouriMath
             partial record FiniteSet
             {
                 /// <inheritdoc/>
-                public override string Latexize()
+                private protected override string LatexizeNode()
                     => IsSetEmpty ? @"\emptyset" : $@"\left\{{ {string.Join(", ", Elements.Select(c => c.Latexize()))} \right\}}";
             }
 
@@ -25,7 +25,7 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 // NOTE: Comma is used as the separator following standard mathematical notation (ISO 80000-2).
                 // Some regional variants use semicolon, but comma is more universally recognized.
-                public override string Latexize()
+                private protected override string LatexizeNode()
                 {
                     var left = LeftClosed ? "[" : "(";
                     var right = RightClosed ? "]" : ")";
@@ -36,14 +36,14 @@ namespace AngouriMath
             partial record ConditionalSet
             {
                 /// <inheritdoc/>
-                public override string Latexize()
+                private protected override string LatexizeNode()
                     => $@"\left\{{ {Var.Latexize()} : {Predicate.Latexize()} \right\}}";
             }
 
             partial record SpecialSet
             {
                 /// <inheritdoc/>
-                public override string Latexize()
+                private protected override string LatexizeNode()
                     => $@"\mathbb{{{Stringize()[0]}}}";
             }
 
@@ -54,14 +54,14 @@ namespace AngouriMath
                 // them to the left, exactly as the grammar here does, so a \setminus on the right
                 // needs bracketing or it comes back as the outer operator. Union with union is
                 // associative and stays flat.
-                public override string Latexize()
+                private protected override string LatexizeNode()
                     => $@"{Left.Latexize(Left.LatexPriority < LatexPriority)} \cup {Right.Latexize(Right.LatexPriority < LatexPriority || Right is SetMinusf)}";
             }
 
             partial record Intersectionf
             {
                 /// <inheritdoc/>
-                public override string Latexize()
+                private protected override string LatexizeNode()
                     => $@"{Left.Latexize(Left.LatexPriority < LatexPriority)} \cap {Right.Latexize(Right.LatexPriority < LatexPriority)}";
             }
 
@@ -70,7 +70,7 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 // Not associative, and sharing a precedence level with union: anything at that
                 // level on the right is bracketed, the same rule \frac's text form follows.
-                public override string Latexize()
+                private protected override string LatexizeNode()
                     => $@"{Left.Latexize(Left.LatexPriority < LatexPriority)} \setminus {Right.Latexize(Right.LatexPriority <= LatexPriority)}";
             }
 
@@ -78,7 +78,7 @@ namespace AngouriMath
             {
                 /// <inheritdoc/>
                 // \in is left-folded by CSharpMath too, and membership is not associative.
-                public override string Latexize()
+                private protected override string LatexizeNode()
                     => $@"{Element.Latexize(Element.LatexPriority < LatexPriority)} \in {SupSet.Latexize(SupSet.LatexPriority <= LatexPriority)}";
             }
         }
@@ -88,13 +88,13 @@ namespace AngouriMath
             /// <inheritdoc/>
             // Right-folding, so the left operand is the one that needs bracketing -- see the
             // remark on Stringize.
-            public override string Latexize() => $@"{Expression.Latexize(Expression.LatexPriority <= LatexPriority)} \quad \text{{for}} \quad {Predicate.Latexize(Predicate.LatexPriority < LatexPriority)}";
+            private protected override string LatexizeNode() => $@"{Expression.Latexize(Expression.LatexPriority <= LatexPriority)} \quad \text{{for}} \quad {Predicate.Latexize(Predicate.LatexPriority < LatexPriority)}";
         }
 
         partial record Piecewise
         {
             /// <inheritdoc/>
-            public override string Latexize() => @"\begin{cases}" +
+            private protected override string LatexizeNode() => @"\begin{cases}" +
                 string.Join(@"\\",
                 Cases.Select(c =>
                 {
@@ -110,7 +110,7 @@ namespace AngouriMath
         partial record Matrix
         {
             /// <inheritdoc/>
-            public override string Latexize()
+            private protected override string LatexizeNode()
             {
                 if (IsVector)
                 {
@@ -146,7 +146,7 @@ namespace AngouriMath
             /// <inheritdoc/>
             // NOTE: Application represents curried function application. Multiple arguments
             // are rendered as separate applications: f(x)(y) rather than f(x, y)
-            public override string Latexize()
+            private protected override string LatexizeNode()
             {
                 var result = new StringBuilder(Expression.Latexize(Expression.LatexPriority < LatexPriority));
                 foreach (var arg in Arguments)
@@ -162,7 +162,7 @@ namespace AngouriMath
             /// <inheritdoc/>
             // NOTE: \mapsto (↦) links the function variable with its output while
             // \rightarrow (→) links the function domain with its codomain. See https://math.stackexchange.com/a/651240, https://math.stackexchange.com/a/936591
-            public override string Latexize()
+            private protected override string LatexizeNode()
                 => Parameter.Latexize() + @" \mapsto " + Body.Latexize(Body.LatexPriority < LatexPriority);
         }
     }

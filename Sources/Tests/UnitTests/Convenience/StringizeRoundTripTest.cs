@@ -366,5 +366,26 @@ namespace AngouriMath.Tests.Common
         [InlineData("aNaN")]
         public void AWordContainingTheTokenIsStillAVariable(string source) =>
             Assert.IsType<Entity.Variable>(source.ToEntity());
+
+        /// <summary>
+        /// A narrowed codomain is part of the expression, so it is part of what has to come back.
+        /// Nothing printed it, so <c>domain(x, ZZ)</c> printed as <c>x</c> and the annotation was
+        /// gone -- silently, since <c>x</c> is a perfectly good expression.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1022">#1022</a>.
+        /// <see cref="AngouriMath.Tests.Common.CodomainSurvivesPrintingTest"/> takes it across
+        /// every node type; these are the shapes the issue names.
+        /// </summary>
+        [Theory]
+        [InlineData("domain(x, ZZ)")]
+        [InlineData("domain(x + 1, RR)")]
+        [InlineData("domain(sqrt(-1), RR)")]
+        [InlineData("domain([1, 2], RR)")]
+        [InlineData("domain(a and b, BB)")]
+        [InlineData("sin(domain(x, ZZ)) + domain(y, RR)")]
+        [InlineData("2 * domain(x + 1, RR)")]
+        [InlineData("domain(x, ZZ) ^ domain(y, RR)")]
+        [InlineData("integral(domain(x, ZZ), x)")]
+        [InlineData("{ domain(x, ZZ) : x > 0 }")]
+        public void ANarrowedCodomainRoundTrips(string source) => AssertRoundTrip(source);
     }
 }

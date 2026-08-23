@@ -12,84 +12,84 @@ namespace AngouriMath
         public partial record Sinf
         {
             /// <inheritdoc/>
-            public override string Latexize() =>
+            private protected override string LatexizeNode() =>
                 @"\sin\left(" + Argument.Latexize() + @"\right)";
         }
 
         public partial record Cosf
         {
             /// <inheritdoc/>
-            public override string Latexize() =>
+            private protected override string LatexizeNode() =>
                 @"\cos\left(" + Argument.Latexize() + @"\right)";
         }
 
         public partial record Secantf
         {
             /// <inheritdoc/>
-            public override string Latexize() =>
+            private protected override string LatexizeNode() =>
                 @"\sec\left(" + Argument.Latexize() + @"\right)";
         }
 
         public partial record Cosecantf
         {
             /// <inheritdoc/>
-            public override string Latexize() =>
+            private protected override string LatexizeNode() =>
                 @"\csc\left(" + Argument.Latexize() + @"\right)";
         }
 
         public partial record Arcsecantf
         {
             /// <inheritdoc/>
-            public override string Latexize() =>
+            private protected override string LatexizeNode() =>
                 @"\operatorname{arcsec}\left(" + Argument.Latexize() + @"\right)";
         }
 
         public partial record Arccosecantf
         {
             /// <inheritdoc/>
-            public override string Latexize() =>
+            private protected override string LatexizeNode() =>
                 @"\operatorname{arccsc}\left(" + Argument.Latexize() + @"\right)";
         }
 
         public partial record Tanf
         {
             /// <inheritdoc/>
-            public override string Latexize() =>
+            private protected override string LatexizeNode() =>
                 @"\tan\left(" + Argument.Latexize() + @"\right)";
         }
 
         public partial record Cotanf
         {
             /// <inheritdoc/>
-            public override string Latexize() =>
+            private protected override string LatexizeNode() =>
                 @"\cot\left(" + Argument.Latexize() + @"\right)";
         }
 
         public partial record Arcsinf
         {
             /// <inheritdoc/>
-            public override string Latexize() =>
+            private protected override string LatexizeNode() =>
                 @"\arcsin\left(" + Argument.Latexize() + @"\right)";
         }
 
         public partial record Arccosf
         {
             /// <inheritdoc/>
-            public override string Latexize() =>
+            private protected override string LatexizeNode() =>
                 @"\arccos\left(" + Argument.Latexize() + @"\right)";
         }
 
         public partial record Arctanf
         {
             /// <inheritdoc/>
-            public override string Latexize() =>
+            private protected override string LatexizeNode() =>
                 @"\arctan\left(" + Argument.Latexize() + @"\right)";
         }
 
         public partial record Arccotanf
         {
             /// <inheritdoc/>
-            public override string Latexize() =>
+            private protected override string LatexizeNode() =>
                 @"\operatorname{arccot}\left(" + Argument.Latexize() + @"\right)";
         }
     }

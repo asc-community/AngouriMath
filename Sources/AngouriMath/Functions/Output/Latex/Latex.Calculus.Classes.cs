@@ -19,7 +19,7 @@ namespace AngouriMath
         public partial record Derivativef
         {
             /// <inheritdoc/>
-            public override string Latexize()
+            private protected override string LatexizeNode()
             {
                 if (Iterations < 0)
                 {
@@ -47,7 +47,7 @@ namespace AngouriMath
         public partial record Integralf
         {
             /// <inheritdoc/>
-            public override string Latexize()
+            private protected override string LatexizeNode()
             {
                 var sb = new StringBuilder(@"\int");
                 if (Range is var (from, to)) sb.Append('_').Append('{').Append(from.Latexize()).Append('}').Append('^').Append('{').Append(to.Latexize()).Append('}');
@@ -69,7 +69,7 @@ namespace AngouriMath
         public partial record Summationf
         {
             /// <inheritdoc/>
-            public override string Latexize() =>
+            private protected override string LatexizeNode() =>
                 @"\sum_{" + Var.Latexize() + "=" + From.Latexize() + "}^{" + To.Latexize() + "}"
                 + Expression.Latexize(Expression.Priority < Priority.Sum);
         }
@@ -77,7 +77,7 @@ namespace AngouriMath
         public partial record Productf
         {
             /// <inheritdoc/>
-            public override string Latexize() =>
+            private protected override string LatexizeNode() =>
                 @"\prod_{" + Var.Latexize() + "=" + From.Latexize() + "}^{" + To.Latexize() + "}"
                 + Expression.Latexize(Expression.Priority < Priority.Mul);
         }
@@ -85,7 +85,7 @@ namespace AngouriMath
         public partial record Limitf
         {
             /// <inheritdoc/>
-            public override string Latexize()
+            private protected override string LatexizeNode()
             {
                 var sb = new StringBuilder();
                 sb.Append(@"\lim_{").Append(Var.Latexize())

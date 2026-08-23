@@ -1,4 +1,4 @@
-# What a node type has to implement, and who may write one
+﻿# What a node type has to implement, and who may write one
 
 [#1026](https://github.com/asc-community/AngouriMath/issues/1026) asks a question the tree does not
 answer anywhere: **can a node type be defined outside `AngouriMath.dll`, and if not, what would it
@@ -19,7 +19,7 @@ a build, that is next to it. Run them again before quoting a figure at a later c
 
 ## 1. The contract as it is
 
-`Entity` declares **eleven abstract members**. Reflection over the shipped assembly, so this counts
+`Entity` declares **twelve abstract members**. Reflection over the shipped assembly, so this counts
 what a subclass actually has to satisfy rather than what the source appears to say:
 
 ```csharp
@@ -29,9 +29,10 @@ typeof(Entity).GetMethods(Instance | Public | NonPublic | DeclaredOnly).Where(m 
 | member | accessibility | read by | how many of the 68 node types write their own |
 |---|---|---|--:|
 | `Codomain` | `public` (`protected init`) | `InnerSimplifyWithCheck`, domain machinery | 62 |
-| `Latexize()` | `public` | the LaTeX printer, and CSharpMath downstream | 62 |
+| `DefaultCodomain` | **`internal`** | `Entity.Stringize()` and `Entity.Latexize()`, to decide whether the codomain has to be printed | 62 |
+| `LatexizeNode()` | **`private protected`** | `Entity.Latexize()`, hence the LaTeX printer and CSharpMath downstream | 62 |
 | `Replace(Func<Entity, Entity>)` | `public` | every traversal | 58 |
-| `Stringize()` | `public` | the text printer, and the parser round trip | 67 |
+| `StringizeNode()` | **`private protected`** | `Entity.Stringize()`, hence the text printer and the parser round trip | 67 |
 | `InitDirectChildren()` | `protected` | `DirectChildren`, hence everything | 58 |
 | `InnerSimplify(bool)` | `protected` | `InnerSimplified`, `Evaled` | 59 |
 | `Priority` | **`internal`** | `Functions/Output/` **only** | 35 |
