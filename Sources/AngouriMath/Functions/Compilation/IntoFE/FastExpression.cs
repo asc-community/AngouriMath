@@ -219,7 +219,7 @@ namespace AngouriMath.Core
                         break;
                 }
             if (stack.Count != 1)
-                throw new AngouriBugException("Unused values remain in the stack");
+                throw new AngouriBugException($"Unused values remain in the stack: {stack.Count} instead of 1");
             return stack.Pop();
         }
 

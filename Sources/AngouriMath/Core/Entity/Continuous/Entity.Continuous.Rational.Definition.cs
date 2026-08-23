@@ -81,7 +81,9 @@ namespace AngouriMath
                 public static Rational Create(ERational value)
                 {
                     if (!value.IsFinite)
-                        throw new InvalidNumberException("Non-finite values are not rationals - use RealNumber.Create instead");
+                        throw new InvalidNumberException(
+                            $"{value} is not finite, and only a finite value is a rational - "
+                            + $"use {nameof(Real)}.{nameof(Real.Create)} instead");
 
                     if (!MathS.Settings.DowncastingEnabled)
                         return new Rational(value.ToLowestTerms());

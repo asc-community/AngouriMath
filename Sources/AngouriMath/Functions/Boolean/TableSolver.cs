@@ -74,7 +74,9 @@ namespace AngouriMath.Functions.Boolean
             var count = expr.Vars.Count;
             // TODO: we probably also should verify the uniqueness of the given variables
             if (count != variables.Length)
-                throw new WrongNumberOfArgumentsException("Number of variables must equal number of variables in the expression");
+                throw new WrongNumberOfArgumentsException(
+                    $"`{expr.Stringize()}` is over {count} variable(s) ({string.Join(", ", expr.Vars)}), "
+                    + $"and {variables.Length} were given");
 
             var index = new Dictionary<Variable, int>(count);
             for (var i = 0; i < variables.Length; i++)
@@ -245,7 +247,9 @@ namespace AngouriMath.Functions.Boolean
             var count = expr.Vars.Count;
             // TODO: we probably also should verify the uniqueness of the given variables
             if (count != variables.Length)
-                throw new WrongNumberOfArgumentsException("Number of variables must equal number of variables in the expression");
+                throw new WrongNumberOfArgumentsException(
+                    $"`{expr.Stringize()}` is over {count} variable(s) ({string.Join(", ", expr.Vars)}), "
+                    + $"and {variables.Length} were given");
             var states = new bool[variables.Length];
             var tb = new MatrixBuilder(count + 1);
             var variablesStorage = new Dictionary<Variable, Entity>();

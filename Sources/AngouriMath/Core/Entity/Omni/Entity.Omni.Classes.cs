@@ -551,7 +551,7 @@ namespace AngouriMath
                         Domain.Rational => new Rationals(),
                         Domain.Real => new Reals(),
                         Domain.Complex => new Complexes(),
-                        _ => throw new AngouriBugException("The given domain is not presented in those possible")
+                        _ => throw new AngouriBugException($"The domain {domain} is not one of those a special set exists for")
                     };
                     InnerStorage[domain] = result;
                     return result;
@@ -565,7 +565,7 @@ namespace AngouriMath
                         "QQ" or "Rationals" => Domain.Rational,
                         "RR" or "Reals" => Domain.Real,
                         "CC" or "Complexes" => Domain.Complex,
-                        _ => throw new AngouriBugException("The given domain is not presented in those possible")
+                        _ => throw new AngouriBugException($"The domain {domain} is not one of those a special set exists for")
                     };
 
                 /// <summary>

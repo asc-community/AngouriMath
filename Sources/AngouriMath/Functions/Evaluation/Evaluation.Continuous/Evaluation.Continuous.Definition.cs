@@ -29,6 +29,7 @@ namespace AngouriMath
         public Complex EvalNumerical() =>
             Evaled is Complex value ? value :
                 throw new CannotEvalException
-                    ($"Result cannot be represented as a simple number! Use {nameof(EvaluableNumerical)} to check beforehand.");
+                    ($"`{Stringize()}` evaluates to `{Evaled.Stringize()}`, which cannot be represented as a "
+                     + $"single number. Use {nameof(EvaluableNumerical)} to check beforehand.");
     }
 }

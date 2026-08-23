@@ -231,10 +231,14 @@ namespace AngouriMath.Core
             => ParseSilent(source)
                 .Switch(
                     valid => valid,
+                    // ANTLR's diagnostic is a line and a column and nothing else, which names
+                    // no input once the string has travelled through a caller's own layers. The
+                    // source is appended rather than prepended because the location is what the
+                    // message is read for first, and because callers assert on that prefix.
                     failure => failure.Reason.Switch<Entity>(
-                            unknown => throw new UnhandledParseException(unknown.Reason),
-                            missingOperator => throw new MissingOperatorParseException(missingOperator.Details),
-                            internalError => throw new AngouriBugException(internalError.Details)
+                            unknown => throw new UnhandledParseException($"{unknown.Reason}, while parsing `{source}`"),
+                            missingOperator => throw new MissingOperatorParseException($"{missingOperator.Details}, while parsing `{source}`"),
+                            internalError => throw new AngouriBugException($"{internalError.Details}, while parsing `{source}`")
                     )
                 );
     }

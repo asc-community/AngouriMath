@@ -33,7 +33,8 @@ namespace AngouriMath
             /// </summary>
             /// <exception cref="ElementInSetAmbiguousException">Thrown when </exception>
             public bool Contains(Entity entity)
-                => TryContains(entity, out var res) ? res : throw new ElementInSetAmbiguousException("Cannot determine whether the element is in the set");
+                => TryContains(entity, out var res) ? res : throw new ElementInSetAmbiguousException(
+                    $"Cannot determine whether `{entity.Stringize()}` is an element of `{Stringize()}`");
 
             /// <summary>
             /// Returns an empty set

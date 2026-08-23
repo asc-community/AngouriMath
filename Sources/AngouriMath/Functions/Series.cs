@@ -23,7 +23,7 @@ namespace AngouriMath.Functions
         internal static Entity SingleTaylorExpansion(Entity expr, int termCount, Variable exprVariable, Variable polyVariable, Entity point)
         {
             if (termCount < 0)
-                throw new InvalidNumberException($"{nameof(termCount)} is supposed to be at least 0");
+                throw new InvalidNumberException($"{nameof(termCount)} is supposed to be at least 0, and {termCount} was given");
             var terms = new List<Entity>();
             foreach (var term in SingleTaylorExpansionTerms(expr, exprVariable, polyVariable, point))
             {
@@ -57,7 +57,7 @@ namespace AngouriMath.Functions
         internal static Entity MultivariableTaylorExpansion(Entity expr, int termCount, params (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars)
         {
             if (termCount < 0)
-                throw new InvalidNumberException($"{nameof(termCount)} is supposed to be at least 0");
+                throw new InvalidNumberException($"{nameof(termCount)} is supposed to be at least 0, and {termCount} was given");
             var terms = new List<Entity>();
             foreach (var term in MultivariableTaylorExpansionTerms(expr, exprToPolyVars))
             {

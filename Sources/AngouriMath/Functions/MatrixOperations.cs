@@ -22,7 +22,7 @@ internal static class MatrixOperations
         {
             MathS.Matrices.Direction.Vertical => (1, 0),
             MathS.Matrices.Direction.Horizontal => (0, 1),
-            _ => throw new AngouriBugException("Unhandled case")
+            _ => throw new AngouriBugException($"Unhandled concatenation direction {dir}")
         };
 
         // Axis 0 is rows and axis 1 is columns, which is what the removed Shape indexer
@@ -35,7 +35,9 @@ internal static class MatrixOperations
         foreach (var matrix in matrices)
         {
             if (SizeAlong(matrix, axis1) != expectedSize)
-                throw new BadMatrixShapeException($"Expected size of {expectedSize} but got {SizeAlong(matrix, axis1)} instead");
+                throw new BadMatrixShapeException(
+                    $"Concatenating {dir}ly needs every matrix to have {expectedSize} along axis {axis1}, "
+                    + $"and `{matrix.Stringize()}` is {matrix.RowCount}x{matrix.ColumnCount}");
             totalSize2 += SizeAlong(matrix, axis2);
         }
 
@@ -48,7 +50,7 @@ internal static class MatrixOperations
         {
             MathS.Matrices.Direction.Horizontal => ConcatHorizontal(result, matrices),
             MathS.Matrices.Direction.Vertical => ConcatVertical(result, matrices),
-            _ => throw new AngouriBugException("Unhandled case")
+            _ => throw new AngouriBugException($"Unhandled concatenation direction {dir}")
         };
     }
 
