@@ -514,6 +514,7 @@ are short, and a stale one is worse than none — if you change what a file desc
 | [`Contributing/SimplificationContract.md`](Sources/AngouriMath/Docs/Contributing/SimplificationContract.md) | what a rewrite may assume, and the ten obligations one has to meet. Read it *before* adding or changing a rule |
 | [`Contributing/CanonicalForm.md`](Sources/AngouriMath/Docs/Contributing/CanonicalForm.md) | canonical versus simplest, why no canonical form exists for the whole language, and what one means per node class. Read it before comparing two expressions for equality |
 | [`Contributing/coding_rules.md`](Sources/AngouriMath/Docs/Contributing/coding_rules.md) | sealed-or-abstract, and immutability of `Entity` |
+| [`Contributing/Packaging.md`](Sources/AngouriMath/Docs/Contributing/Packaging.md) | which capabilities ship in the kernel package and which ship separately, and the four checkable clauses that decide. Read it before anything large lands in the kernel |
 | [`WhatsNew/version_performance_control.md`](Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md) | the inter-version performance table, and how to add a column |
 | `Sources/Analyzers/` | the custom analyzers, including the static-field one behind `[ConstantField]` |
 
