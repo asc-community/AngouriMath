@@ -2407,6 +2407,11 @@ AngouriMath.MathS+Numbers.Create(System.Int32) : AngouriMath.Entity+Number+Integ
 AngouriMath.MathS+Numbers.Create(System.Int64) : AngouriMath.Entity+Number+Integer
 AngouriMath.MathS+Numbers.Create(System.Numerics.Complex) : AngouriMath.Entity+Number+Complex
 AngouriMath.MathS+Numbers.CreateRational(PeterO.Numbers.EInteger, PeterO.Numbers.EInteger) : AngouriMath.Entity+Number+Rational
+AngouriMath.MathS+Polynomials.Discriminant(AngouriMath.Entity, AngouriMath.Entity+Variable) : AngouriMath.Entity
+AngouriMath.MathS+Polynomials.Factor(AngouriMath.Entity, AngouriMath.Entity+Variable) : AngouriMath.Entity
+AngouriMath.MathS+Polynomials.Gcd(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.MathS+Polynomials.Resultant(AngouriMath.Entity, AngouriMath.Entity, AngouriMath.Entity+Variable) : AngouriMath.Entity
+AngouriMath.MathS+Polynomials.SquareFreePart(AngouriMath.Entity, AngouriMath.Entity+Variable) : AngouriMath.Entity
 AngouriMath.MathS+Quantum.EqualUpToGlobalPhase(AngouriMath.Entity, AngouriMath.Entity) : System.Nullable<System.Boolean>
 AngouriMath.MathS+Quantum.IsNormalized(AngouriMath.Entity) : System.Nullable<System.Boolean>
 AngouriMath.MathS+Quantum.Ket(System.Int32[]) : AngouriMath.Entity
@@ -2695,6 +2700,7 @@ class AngouriMath.MathS+Matrices
 class AngouriMath.MathS+Multithreading
 class AngouriMath.MathS+NumberTheory
 class AngouriMath.MathS+Numbers
+class AngouriMath.MathS+Polynomials
 class AngouriMath.MathS+Quantum
 class AngouriMath.MathS+Series
 class AngouriMath.MathS+Sets
