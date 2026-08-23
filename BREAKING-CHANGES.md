@@ -219,6 +219,34 @@ simplification settles a condition that was written to stay open. It no longer f
 [#964](https://github.com/asc-community/AngouriMath/issues/964)
 
 ---
+| | `Entity.Set.SpecialSet.Create("NN")`, and any domain name this library does not have | `AngouriBugException` | `UnrecognizedDomainException: Unrecognized domain NN` |
+| | `Entity.Set.SpecialSet.Create(Domain.Any)`, and any `Domain` that is not one of the five sets | `AngouriBugException` | `NotSufficientlySupportedException: There is no special set for domain Any` |
+
+### An unknown domain is the caller's input, not a library defect
+
+`SpecialSet.Create(string)` and `SpecialSet.Create(Domain)` are both `public`. Given a name or a
+`Domain` value they do not know, both threw `AngouriBugException`, whose message ends *"please report
+about it to the official repository"* — so a caller who wrote `"NN"` was told their own typo was a
+defect in this library and asked to file it.
+
+Both are now the caller's error, and both stay under `AngouriMathBaseException`, so a `catch` for
+that is unaffected. Measured on a build of each side:
+
+| input | 2.3.0 | now |
+|---|---|---|
+| `Create("NN")` | `AngouriBugException: The given domain is not presented in those possible …please report about it to the official repository` | `UnrecognizedDomainException: Unrecognized domain NN` |
+| `Create(Domain.Any)` | the same | `NotSufficientlySupportedException: There is no special set for domain Any` |
+| `Create((Domain)99)` | the same | `NotSufficientlySupportedException: There is no special set for domain 99` |
+| `Create("RR")` | `RR` | `RR` |
+
+`UnrecognizedDomainException` has existed since it was written and nothing threw it;
+[`Docs/Usage/Exceptions.md`](Sources/AngouriMath/Docs/Usage/Exceptions.md) is where the difference
+between the three types is written down. `Domain.Any` is a documented member of the enum meaning *no
+restriction*, which is not a set this library has a node for — `Domains.IsWithinDomain` answers it
+before ever reaching `Create`, so nothing inside the library was affected.
+
+If you catch `AngouriBugException` around a call that builds a set from a name you did not choose,
+catch `MathSException` — or its parent — instead.
 
 ## 2.3.0 — since 2.2.0
 
