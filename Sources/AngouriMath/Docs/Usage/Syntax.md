@@ -1,4 +1,4 @@
-# Expression syntax
+﻿# Expression syntax
 
 What `MathS.FromString` accepts, and what `Entity.Stringize` produces. The authority is
 [`Core/Antlr/AngouriMath.g`](../../Core/Antlr/AngouriMath.g); this page is a reading of it. To
@@ -22,12 +22,17 @@ will say so ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
 
 ## Operators, loosest first
 
-Everything on one line has the same precedence and groups to the left, except `^`, which groups
-to the right.
+Everything on one line has the same precedence and groups to the left, except `^` and `provided`,
+which group to the right.
+
+Grouping is not decoration: an operator that is not associative prints the brackets it has, so
+`a implies (b implies c)` prints with them and `(a implies b) implies c` prints without. Where the
+operator *is* associative the brackets carry no mathematics and are not printed, so `x + (y + z)`
+prints as `x + y + z` and reads back as `(x + y) + z` — the same number, a differently shaped tree.
 
 | | operators | notes |
 |---|---|---|
-| 1 | `provided` | |
+| 1 | `provided` | **groups to the right**: `a provided b provided c` is `a provided (b provided c)` |
 | 2 | `implies` | |
 | 3 | `or` `\|` | |
 | 4 | `xor` | |
@@ -35,10 +40,10 @@ to the right.
 | 6 | `not` | prefix |
 | 7 | `=` `<>` `>` `>=` `<` `<=` | chained: `a < b < c` means `a < b and b < c` |
 | 8 | `in` | |
-| 9 | `unite` `\/`, `setsubtract` `\` | |
+| 9 | `unite` `\/`, `setsubtract` `\` | one level, so `A \/ B \ C` is `(A \/ B) \ C` |
 | 10 | `intersect` `/\` | |
 | 11 | `+` `-` | |
-| 12 | `*` `/` `mod` | |
+| 12 | `*` `/` `mod` | one level, so `x * y mod z` is `(x * y) mod z` |
 | 13 | `+` `-` | prefix |
 | 14 | `^` | **groups to the right**: `a ^ b ^ c` is `a ^ (b ^ c)` |
 | 15 | `!` | postfix factorial |

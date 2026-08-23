@@ -49,6 +49,20 @@ namespace AngouriMath.Tests.Common
         [InlineData("not a = b", "a <> b")]
         [InlineData("a = b and not b = c and c < d", "a = b <> c < d")]
         [InlineData("not a = b and not b = c", "a <> b <> c")]
+        // The right operand of a left-folded operator that is not associative has to keep its
+        // brackets, or the normalized form is a different expression.
+        [InlineData("a implies (b implies c)", "a implies (b implies c)")]
+        [InlineData("a implies b implies c", "(a implies b) implies c")]
+        [InlineData("a implies (b implies c) implies d", "(a implies (b implies c)) implies d")]
+        [InlineData(@"A \ (B \ C)", @"A \ (B \ C)")]
+        [InlineData(@"A \ B \ C", @"(A \ B) \ C")]
+        [InlineData(@"A \/ (B \ C)", @"A \/ (B \ C)")]
+        [InlineData(@"A \ (B \/ C)", @"A \ (B \/ C)")]
+        [InlineData(@"A \/ B \ C", @"(A \/ B) \ C")]
+        [InlineData("a in (b in c)", "a in (b in c)")]
+        [InlineData("a in b in c", "(a in b) in c")]
+        [InlineData("a * (b mod c)", "a * (b mod c)")]
+        [InlineData("a * b mod c", "(a * b) mod c")]
         public void Test(string normalizedForm, string alternateForm)
         {
             Assert.Equal(alternateForm.ToEntity(), normalizedForm.ToEntity());

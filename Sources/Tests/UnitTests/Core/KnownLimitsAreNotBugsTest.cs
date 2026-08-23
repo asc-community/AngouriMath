@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -25,11 +25,21 @@ namespace AngouriMath.Tests.Core
     [Trait("Area", "Core")]
     public sealed class KnownLimitsAreNotBugsTest
     {
+        /// <summary>
+        /// Degree is no longer the gap; an irreducible factor of degree five or more is.
+        /// The sign table answers a polynomial inequality of any degree whose real roots it
+        /// can establish completely, and how many real roots an irreducible factor has is
+        /// settled by its discriminant up to degree three and by the discriminant with two
+        /// auxiliary quantities at four. At five there is no such criterion, and no formula
+        /// for the roots either, so an irreducible quintic factor is where this stops. The
+        /// cases that used to be listed here are now answered — see
+        /// <c>SolveInequality.AHigherDegreePolynomialInequalityIsAnswered</c>.
+        /// </summary>
         [Theory]
-        [InlineData("x ^ 3 - x > 0")]
-        [InlineData("x ^ 4 - 5 * x ^ 2 + 4 > 0")]
-        [InlineData("x ^ 4 + 1 > 0")]
-        [InlineData("x ^ 6 - 1 >= 0")]
+        [InlineData("x ^ 5 - x - 1 > 0")]
+        [InlineData("x ^ 5 - x + 1 > 0")]
+        [InlineData("x ^ 6 + x + 1 > 0")]
+        [InlineData("x ^ 7 - x - 1 < 0")]
         public void AHigherDegreeInequalitySaysItIsUnsupported(string statement)
         {
             var thrown = Assert.Throws<NotSufficientlySupportedException>(
@@ -43,6 +53,12 @@ namespace AngouriMath.Tests.Core
         [InlineData("x - 1 > 0")]
         [InlineData("x ^ 2 - 1 > 0")]
         [InlineData("x ^ 2 - 2 > 0")]
+        [InlineData("x ^ 3 - x > 0")]
+        [InlineData("x ^ 4 - 5 * x ^ 2 + 4 > 0")]
+        [InlineData("x ^ 6 - 1 >= 0")]
+        [InlineData("x ^ 4 + 1 > 0")]
+        [InlineData("x ^ 4 - 2 > 0")]
+        [InlineData("x ^ 4 + x + 1 > 0")]
         public void TheDegreesThatAreSupportedStillAnswer(string statement)
         {
             var solutions = ((Entity)statement).Solve("x");

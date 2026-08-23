@@ -117,8 +117,23 @@ AngouriMath.Core.ReasonOfFailureWhileParsing.ctor()
 AngouriMath.Core.ReasonOfFailureWhileParsing.ctor(AngouriMath.Core.ReasonOfFailureWhileParsing)
 AngouriMath.Core.ReasonOfFailureWhileParsing.op_Equality(AngouriMath.Core.ReasonOfFailureWhileParsing, AngouriMath.Core.ReasonOfFailureWhileParsing) : System.Boolean
 AngouriMath.Core.ReasonOfFailureWhileParsing.op_Inequality(AngouriMath.Core.ReasonOfFailureWhileParsing, AngouriMath.Core.ReasonOfFailureWhileParsing) : System.Boolean
+AngouriMath.Core.Transformations.DerivationPath.ExpressionsExplored { } : System.Int32
+AngouriMath.Core.Transformations.DerivationPath.Input { } : AngouriMath.Entity
+AngouriMath.Core.Transformations.DerivationPath.OfSimplifying(AngouriMath.Entity, System.Int32) : AngouriMath.Core.Transformations.DerivationPath
+AngouriMath.Core.Transformations.DerivationPath.Result { } : AngouriMath.Entity
+AngouriMath.Core.Transformations.DerivationPath.Steps { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Core.Transformations.DerivationStep>
+AngouriMath.Core.Transformations.DerivationPath.ToString() : System.String
+AngouriMath.Core.Transformations.DerivationStep.After { } : AngouriMath.Entity
+AngouriMath.Core.Transformations.DerivationStep.Before { } : AngouriMath.Entity
+AngouriMath.Core.Transformations.DerivationStep.Name { } : System.String
+AngouriMath.Core.Transformations.DerivationStep.Relation { } : System.Nullable<AngouriMath.Core.Transformations.TransformationRelation>
+AngouriMath.Core.Transformations.DerivationStep.Rewrites { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Core.Transformations.RewriteStep>
+AngouriMath.Core.Transformations.DerivationStep.RuleSet { } : AngouriMath.Core.Transformations.RewriteRuleSet
+AngouriMath.Core.Transformations.DerivationStep.Soundness { } : System.Nullable<AngouriMath.Core.Transformations.Soundness>
+AngouriMath.Core.Transformations.DerivationStep.ToString() : System.String
 AngouriMath.Core.Transformations.RewriteRecording.Derivation { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Core.Transformations.RewriteStep>
 AngouriMath.Core.Transformations.RewriteRecording.Dispose() : System.Void
+AngouriMath.Core.Transformations.RewriteRecording.PathFrom(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Core.Transformations.DerivationPath
 AngouriMath.Core.Transformations.RewriteRecording.Start() : AngouriMath.Core.Transformations.RewriteRecording
 AngouriMath.Core.Transformations.RewriteRecording.Steps { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Core.Transformations.RewriteStep>
 AngouriMath.Core.Transformations.RewriteRule.Description { } : System.String
@@ -2392,6 +2407,11 @@ AngouriMath.MathS+Numbers.Create(System.Int32) : AngouriMath.Entity+Number+Integ
 AngouriMath.MathS+Numbers.Create(System.Int64) : AngouriMath.Entity+Number+Integer
 AngouriMath.MathS+Numbers.Create(System.Numerics.Complex) : AngouriMath.Entity+Number+Complex
 AngouriMath.MathS+Numbers.CreateRational(PeterO.Numbers.EInteger, PeterO.Numbers.EInteger) : AngouriMath.Entity+Number+Rational
+AngouriMath.MathS+Polynomials.Discriminant(AngouriMath.Entity, AngouriMath.Entity+Variable) : AngouriMath.Entity
+AngouriMath.MathS+Polynomials.Factor(AngouriMath.Entity, AngouriMath.Entity+Variable) : AngouriMath.Entity
+AngouriMath.MathS+Polynomials.Gcd(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.MathS+Polynomials.Resultant(AngouriMath.Entity, AngouriMath.Entity, AngouriMath.Entity+Variable) : AngouriMath.Entity
+AngouriMath.MathS+Polynomials.SquareFreePart(AngouriMath.Entity, AngouriMath.Entity+Variable) : AngouriMath.Entity
 AngouriMath.MathS+Quantum.EqualUpToGlobalPhase(AngouriMath.Entity, AngouriMath.Entity) : System.Nullable<System.Boolean>
 AngouriMath.MathS+Quantum.IsNormalized(AngouriMath.Entity) : System.Nullable<System.Boolean>
 AngouriMath.MathS+Quantum.Ket(System.Int32[]) : AngouriMath.Entity
@@ -2583,6 +2603,7 @@ class AngouriMath.Core.ReasonOfFailureWhileParsing
 class AngouriMath.Core.ReasonOfFailureWhileParsing+InternalError
 class AngouriMath.Core.ReasonOfFailureWhileParsing+MissingOperator
 class AngouriMath.Core.ReasonOfFailureWhileParsing+Unknown
+class AngouriMath.Core.Transformations.DerivationPath
 class AngouriMath.Core.Transformations.RewriteRecording
 class AngouriMath.Core.Transformations.RewriteRule
 class AngouriMath.Core.Transformations.RewriteRuleSet
@@ -2679,6 +2700,7 @@ class AngouriMath.MathS+Matrices
 class AngouriMath.MathS+Multithreading
 class AngouriMath.MathS+NumberTheory
 class AngouriMath.MathS+Numbers
+class AngouriMath.MathS+Polynomials
 class AngouriMath.MathS+Quantum
 class AngouriMath.MathS+Series
 class AngouriMath.MathS+Sets
@@ -2700,6 +2722,7 @@ interface AngouriMath.Core.ILatexizeable
 interface AngouriMath.Core.IScalarClosedArithmetics<T>
 interface AngouriMath.Core.IUnaryNode
 struct AngouriMath.Convenience.Setting<T>
+struct AngouriMath.Core.Transformations.DerivationStep
 struct AngouriMath.Core.Transformations.RewriteStep
 struct AngouriMath.Core.Transformations.TransformationResult
 struct AngouriMath.Entity+Matrix+EntityTensorWrapperOperations

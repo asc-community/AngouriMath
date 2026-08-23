@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+  The trimming / NativeAOT gate for the kernel (roadmap item 79, and #363 for the
+  compilation half). It exists to be *published*, not to be built: trimming and ILC only
+  run under `dotnet publish`, so a green `dotnet build` here says nothing.
+
+  See Docs/Contributing/Trimming.md for what the gate covers and how to run it.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>AotSmokeTest</AssemblyName>
+    <RootNamespace>AngouriMath.AotSmokeTest</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+    Trimming is on for every publish of this project so that `dotnet publish -r <rid>`
+    is the gate, with no flag for a caller to forget. The NativeAOT half adds
+    -p:PublishAot=true on top; ILC implies trimming, and the two publishes go to
+    different output directories so one does not read the other's binary.
+    -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>full</TrimMode>
+
+    <!--
+    NativeAOT is opted into with -p:AngouriMathPublishAot=true rather than by setting
+    PublishAot on the command line. MSBuild passes a command-line property down to every
+    ProjectReference as a global property, and AngouriMath.csproj still targets
+    netstandard2.0, for which ahead-of-time compilation is not a thing: -p:PublishAot=true
+    reaches it and fails the whole publish with NETSDK1207 before this project is looked at.
+    A name the kernel project does not react to cannot do that.
+    -->
+    <PublishAot Condition="'$(AngouriMathPublishAot)' == 'true'">true</PublishAot>
+
+    <!--
+    Without this the ILLink rolls every warning in an assembly up into one IL2104
+    "assembly produced trim warnings", which names the assembly and not the line. The
+    gate is supposed to say where the reflection is.
+    -->
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
+
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+
+    <!--
+    Three separate switches, and none of them implies another: TreatWarningsAsErrors is
+    Roslyn's, ILLinkTreatWarningsAsErrors is the trimmer's and IlcTreatWarningsAsErrors is
+    the NativeAOT compiler's. Set explicitly rather than left to default from
+    TreatWarningsAsErrors, because a default is a thing a future SDK may change.
+    -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <ILLinkTreatWarningsAsErrors>true</ILLinkTreatWarningsAsErrors>
+    <IlcTreatWarningsAsErrors>true</IlcTreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../AngouriMath/AngouriMath.csproj" />
+  </ItemGroup>
+
+</Project>

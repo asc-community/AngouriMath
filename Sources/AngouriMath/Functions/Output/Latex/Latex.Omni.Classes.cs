@@ -50,8 +50,12 @@ namespace AngouriMath
             partial record Unionf
             {
                 /// <inheritdoc/>
+                // CSharpMath.Evaluation reads \cup and \setminus at one precedence level and folds
+                // them to the left, exactly as the grammar here does, so a \setminus on the right
+                // needs bracketing or it comes back as the outer operator. Union with union is
+                // associative and stays flat.
                 public override string Latexize()
-                    => $@"{Left.Latexize(Left.LatexPriority < LatexPriority)} \cup {Right.Latexize(Right.LatexPriority < LatexPriority)}";
+                    => $@"{Left.Latexize(Left.LatexPriority < LatexPriority)} \cup {Right.Latexize(Right.LatexPriority < LatexPriority || Right is SetMinusf)}";
             }
 
             partial record Intersectionf
@@ -64,22 +68,27 @@ namespace AngouriMath
             partial record SetMinusf
             {
                 /// <inheritdoc/>
+                // Not associative, and sharing a precedence level with union: anything at that
+                // level on the right is bracketed, the same rule \frac's text form follows.
                 public override string Latexize()
-                    => $@"{Left.Latexize(Left.LatexPriority < LatexPriority)} \setminus {Right.Latexize(Right.LatexPriority < LatexPriority)}";
+                    => $@"{Left.Latexize(Left.LatexPriority < LatexPriority)} \setminus {Right.Latexize(Right.LatexPriority <= LatexPriority)}";
             }
 
             partial record Inf
             {
                 /// <inheritdoc/>
+                // \in is left-folded by CSharpMath too, and membership is not associative.
                 public override string Latexize()
-                    => $@"{Element.Latexize(Element.LatexPriority < LatexPriority)} \in {SupSet.Latexize(SupSet.LatexPriority < LatexPriority)}";
+                    => $@"{Element.Latexize(Element.LatexPriority < LatexPriority)} \in {SupSet.Latexize(SupSet.LatexPriority <= LatexPriority)}";
             }
         }
 
         partial record Providedf
         {
             /// <inheritdoc/>
-            public override string Latexize() => $@"{Expression.Latexize(Expression.LatexPriority < LatexPriority)} \quad \text{{for}} \quad {Predicate.Latexize(Predicate.LatexPriority < LatexPriority)}";
+            // Right-folding, so the left operand is the one that needs bracketing -- see the
+            // remark on Stringize.
+            public override string Latexize() => $@"{Expression.Latexize(Expression.LatexPriority <= LatexPriority)} \quad \text{{for}} \quad {Predicate.Latexize(Predicate.LatexPriority < LatexPriority)}";
         }
 
         partial record Piecewise

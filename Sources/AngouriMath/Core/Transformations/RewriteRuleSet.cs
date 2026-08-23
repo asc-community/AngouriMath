@@ -106,7 +106,7 @@ namespace AngouriMath.Core.Transformations
             if (node is null)
                 throw new ArgumentNullException(nameof(node));
             // The array, and by index: this is walked once per recorded rewrite and the sets are
-            // long -- CommonRules alone has 103 arms.
+            // long -- Common alone has 100 arms, and InequalityEquality 65.
             for (var i = 0; i < Rules.Count; i++)
                 if (Rules[i].TryApply(node) is { } rewritten && rewritten != node)
                     return Rules[i];
@@ -142,16 +142,25 @@ namespace AngouriMath.Core.Transformations
         /// fifth of its allocation on the benchmark expressions.
         /// </remarks>
         private Entity ApplyOnceRecording(Entity expression, RewriteRecording recording)
-            => expression.Replace(node =>
+        {
+            var mark = recording.Mark();
+            var rewritten = expression.Replace(node =>
             {
-                var rewritten = rules(node);
-                if (rewritten != node)
+                var inner = rules(node);
+                if (inner != node)
                     // Which rule did it, asked only of a node that actually changed and only
                     // while somebody is recording. The arms are tried in the same order the
                     // switch tries them, so the first that applies is the one that fired.
-                    recording.Add(this, RuleFiringAt(node), node, rewritten);
-                return rewritten;
+                    recording.Add(this, RuleFiringAt(node), node, inner);
+                return inner;
             });
+            // And the pass as a whole, which is the grain a derivation is read at: the steps
+            // above are subexpressions, and only this has the expression that contained them
+            // before and after. See RewriteRecording.PathFrom.
+            if (rewritten != expression)
+                recording.Note(expression, rewritten, this, Name, mark);
+            return rewritten;
+        }
 
         /// <summary>
         /// This set as a <see cref="Transformation"/>, so that it composes with the rest of

@@ -85,20 +85,21 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             {
                 return Expression.Condition(Expression.Equal(expr, Expression.Constant(null, expr.Type)),
                                                              ConvertNaN(type),
-                                                             Expression.Convert(expr, type));
+                                                             Coerce(expr, type));
             }
             
             // ex. double -> long?
             if (!exprNullable && exprNaNisNaN && typeNullable && !typeNaNisNaN)
             {
-                MethodInfo isNaN = expr.Type.GetMethod("IsNaN") ?? throw new AngouriBugException($"IsNaN method expected for type {expr.Type}");
-                
+                if (!nanChecks.TryGetValue(expr.Type, out var isNaN))
+                    throw new AngouriBugException($"IsNaN method expected for type {expr.Type}");
+
                 return Expression.Condition(Expression.Call(isNaN, expr),
                                             Expression.Constant(null, type),
-                                            Expression.Convert(expr, type));
+                                            Coerce(expr, type));
             }
 
-            return Expression.Convert(expr, type);
+            return Coerce(expr, type);
         }
         
         /// <summary>
@@ -158,16 +159,18 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             (left, right) = EqualizeTypesIfAble(left, right);
             return typeHolder switch
             {
-                Sumf => Expression.Add(left, right),
-                Minusf => Expression.Subtract(left, right),
-                Mulf => Expression.Multiply(left, right),
-                Divf => Expression.Divide(ShouldBeAtLeastDouble(left), ShouldBeAtLeastDouble(right)),
+                Sumf => Operator(ExpressionType.Add, left, right),
+                Minusf => Operator(ExpressionType.Subtract, left, right),
+                Mulf => Operator(ExpressionType.Multiply, left, right),
+                Divf => Operator(ExpressionType.Divide, ShouldBeAtLeastDouble(left), ShouldBeAtLeastDouble(right)),
                 // ((a % b) + b) % b, and not the bare a % b: the runtime truncates, where the
                 // node is the floored remainder that takes the sign of the divisor, and this is
                 // the shortest expression that turns the one into the other for every pair of
                 // signs. Not widened to double the way division is -- the remainder of two
                 // integers is an integer, and widening would only lose that.
-                Modf => Expression.Modulo(Expression.Add(Expression.Modulo(left, right), right), right),
+                Modf => Operator(ExpressionType.Modulo,
+                                 Operator(ExpressionType.Add, Operator(ExpressionType.Modulo, left, right), right),
+                                 right),
                 Powf when 
                     ShouldBeAtLeastDouble(left) is var newLeft 
                     && ShouldBeAtLeastDouble(right) is var newRight
@@ -182,11 +185,11 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 Xorf => Expression.ExclusiveOr(left, right),
                 Impliesf => Expression.Or(Expression.Not(left), right),
 
-                Lessf => Expression.LessThan(left, right),
-                LessOrEqualf => Expression.LessThanOrEqual(left, right),
-                Greaterf => Expression.GreaterThan(left, right),
-                GreaterOrEqualf => Expression.GreaterThanOrEqual(left, right),
-                Equalsf => Expression.Equal(left, right),
+                Lessf => Operator(ExpressionType.LessThan, left, right),
+                LessOrEqualf => Operator(ExpressionType.LessThanOrEqual, left, right),
+                Greaterf => Operator(ExpressionType.GreaterThan, left, right),
+                GreaterOrEqualf => Operator(ExpressionType.GreaterThanOrEqual, left, right),
+                Equalsf => Operator(ExpressionType.Equal, left, right),
                 
                 Providedf => HandleProvidedf(left, right),
 
@@ -267,16 +270,138 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         }
 
 
-        private static Type[] GenerateArrayOfType(int argCount, Type type)
-        {
-            var l = new List<Type>();
-            for (int i = 0; i < argCount; i++)
-                l.Add(type);
-            return l.ToArray();
-        }
-
+        // MathAllMethods is a generated table of typed overloads, and this used to reach it with
+        // typeof(MathAllMethods).GetMethod(name, ...) -- a name and a signature resolved at run
+        // time. Both the trimmer and the NativeAOT compiler answer that by keeping every public
+        // method of the class, used or not, since neither can tell which name will be asked for;
+        // and the run paid an overload resolution per node of every expression compiled. The
+        // dictionary is generated beside the methods, so the two cannot drift apart.
+        // https://github.com/asc-community/AngouriMath/issues/363
         private static MethodInfo GetDef(string name, int argCount, Type type)
-            => typeof(MathAllMethods).GetMethod(name, GenerateArrayOfType(argCount, type)) ?? throw new AngouriBugException("No null expected");
+            => MathAllMethods.Definitions.TryGetValue((name, argCount, type), out var method)
+                ? method
+                : throw new AngouriBugException($"No compiled definition of {name} taking {argCount} argument(s) of type {type}");
+
+        /// <summary>
+        /// The types whose NaN is a value rather than <see langword="null"/> -- the only ones for
+        /// which <see cref="ConvertType"/> ever needs to ask whether a value is NaN. Named rather
+        /// than found by <c>Type.GetMethod("IsNaN")</c>, which a trimmed build has no way to keep.
+        /// </summary>
+        [ConstantField] private static readonly Dictionary<Type, MethodInfo> nanChecks = new()
+            {
+                { typeof(System.Numerics.Complex), Named<System.Numerics.Complex>(v => MathAllMethods.IsNaN(v)) },
+                { typeof(double), Named<double>(v => double.IsNaN(v)) },
+                { typeof(float), Named<float>(v => float.IsNaN(v)) },
+            };
+
+        /// <summary>
+        /// The user-defined conversion operators between the types in
+        /// <see cref="typeLevelInHierarchy"/>. <see cref="Expression.Convert(Expression, Type)"/>
+        /// finds one by reflecting over the target type, and a trimmed or NativeAOT build has no
+        /// metadata for an operator nothing referenced: <c>double -> Complex</c> came back as "no
+        /// coercion operator is defined between types", so a compiled expression mixing an integer
+        /// literal with a complex argument threw where the JIT build answered. Naming them keeps
+        /// them, and spares the lookup.
+        /// https://github.com/asc-community/AngouriMath/issues/363
+        /// </summary>
+        [ConstantField] private static readonly Dictionary<(Type From, Type To), MethodInfo> conversionOperators = new()
+            {
+                { (typeof(int), typeof(System.Numerics.Complex)), Conv<int, System.Numerics.Complex>(v => (System.Numerics.Complex)v) },
+                { (typeof(long), typeof(System.Numerics.Complex)), Conv<long, System.Numerics.Complex>(v => (System.Numerics.Complex)v) },
+                { (typeof(float), typeof(System.Numerics.Complex)), Conv<float, System.Numerics.Complex>(v => (System.Numerics.Complex)v) },
+                { (typeof(double), typeof(System.Numerics.Complex)), Conv<double, System.Numerics.Complex>(v => (System.Numerics.Complex)v) },
+                { (typeof(BigInteger), typeof(System.Numerics.Complex)), Conv<BigInteger, System.Numerics.Complex>(v => (System.Numerics.Complex)v) },
+
+                { (typeof(int), typeof(BigInteger)), Conv<int, BigInteger>(v => (BigInteger)v) },
+                { (typeof(long), typeof(BigInteger)), Conv<long, BigInteger>(v => (BigInteger)v) },
+                { (typeof(float), typeof(BigInteger)), Conv<float, BigInteger>(v => (BigInteger)v) },
+                { (typeof(double), typeof(BigInteger)), Conv<double, BigInteger>(v => (BigInteger)v) },
+
+                { (typeof(BigInteger), typeof(int)), Conv<BigInteger, int>(v => (int)v) },
+                { (typeof(BigInteger), typeof(long)), Conv<BigInteger, long>(v => (long)v) },
+                { (typeof(BigInteger), typeof(float)), Conv<BigInteger, float>(v => (float)v) },
+                { (typeof(BigInteger), typeof(double)), Conv<BigInteger, double>(v => (double)v) },
+            };
+
+        /// <summary>
+        /// The nullable form of every type in <see cref="typeLevelInHierarchy"/> that has one, in
+        /// place of <c>typeof(Nullable&lt;&gt;).MakeGenericType(t)</c>: constructing a generic over
+        /// a value type at run time is the one thing NativeAOT cannot promise (IL3050), and the
+        /// set of types this can be asked for is closed and six long.
+        /// </summary>
+        [ConstantField] private static readonly Dictionary<Type, Type> nullableForms = new()
+            {
+                { typeof(System.Numerics.Complex), typeof(System.Numerics.Complex?) },
+                { typeof(double), typeof(double?) },
+                { typeof(float), typeof(float?) },
+                { typeof(long), typeof(long?) },
+                { typeof(BigInteger), typeof(BigInteger?) },
+                { typeof(int), typeof(int?) },
+            };
+
+        // An expression tree is how C# names a method without a string: the compiler emits an
+        // ldtoken for the call or the conversion inside it, which resolves the overload at compile
+        // time and roots the member for the trimmer.
+        private static MethodInfo Named<T>(Expression<Func<T, bool>> e)
+            => ((MethodCallExpression)e.Body).Method;
+
+        private static MethodInfo Conv<TFrom, TTo>(Expression<Func<TFrom, TTo>> e)
+            => ((UnaryExpression)e.Body).Method
+               ?? throw new AngouriBugException($"{typeof(TFrom)} -> {typeof(TTo)} is not a user-defined conversion");
+
+        /// <summary>
+        /// The operators <see cref="System.Numerics.Complex"/> and <see cref="BigInteger"/> define
+        /// as methods. <c>Expression.Add</c> and its neighbours look one up by reflecting over the
+        /// operand type, which is the same hole as the conversions above: NativeAOT kept no
+        /// metadata for <c>Complex.op_Addition</c>, so <c>x + 1</c> compiled over a complex
+        /// argument threw "the binary operator Add is not defined". The built-in numeric types are
+        /// absent on purpose -- their operators are IL instructions and there is nothing to find.
+        /// https://github.com/asc-community/AngouriMath/issues/363
+        /// </summary>
+        [ConstantField] private static readonly Dictionary<(ExpressionType Kind, Type Type), MethodInfo> operators = new()
+            {
+                { (ExpressionType.Add, typeof(System.Numerics.Complex)), Op<System.Numerics.Complex>((a, b) => a + b) },
+                { (ExpressionType.Subtract, typeof(System.Numerics.Complex)), Op<System.Numerics.Complex>((a, b) => a - b) },
+                { (ExpressionType.Multiply, typeof(System.Numerics.Complex)), Op<System.Numerics.Complex>((a, b) => a * b) },
+                { (ExpressionType.Divide, typeof(System.Numerics.Complex)), Op<System.Numerics.Complex>((a, b) => a / b) },
+                { (ExpressionType.Equal, typeof(System.Numerics.Complex)), Cmp<System.Numerics.Complex>((a, b) => a == b) },
+
+                { (ExpressionType.Add, typeof(BigInteger)), Op<BigInteger>((a, b) => a + b) },
+                { (ExpressionType.Subtract, typeof(BigInteger)), Op<BigInteger>((a, b) => a - b) },
+                { (ExpressionType.Multiply, typeof(BigInteger)), Op<BigInteger>((a, b) => a * b) },
+                { (ExpressionType.Divide, typeof(BigInteger)), Op<BigInteger>((a, b) => a / b) },
+                { (ExpressionType.Modulo, typeof(BigInteger)), Op<BigInteger>((a, b) => a % b) },
+                { (ExpressionType.Equal, typeof(BigInteger)), Cmp<BigInteger>((a, b) => a == b) },
+                { (ExpressionType.LessThan, typeof(BigInteger)), Cmp<BigInteger>((a, b) => a < b) },
+                { (ExpressionType.LessThanOrEqual, typeof(BigInteger)), Cmp<BigInteger>((a, b) => a <= b) },
+                { (ExpressionType.GreaterThan, typeof(BigInteger)), Cmp<BigInteger>((a, b) => a > b) },
+                { (ExpressionType.GreaterThanOrEqual, typeof(BigInteger)), Cmp<BigInteger>((a, b) => a >= b) },
+            };
+
+        private static MethodInfo Op<T>(Expression<Func<T, T, T>> e)
+            => ((BinaryExpression)e.Body).Method
+               ?? throw new AngouriBugException($"{typeof(T)} defines this operator as an instruction, not a method");
+
+        private static MethodInfo Cmp<T>(Expression<Func<T, T, bool>> e)
+            => ((BinaryExpression)e.Body).Method
+               ?? throw new AngouriBugException($"{typeof(T)} defines this operator as an instruction, not a method");
+
+        // MakeBinary with a null method is exactly what Expression.Add and its neighbours do, so a
+        // type that is not in the table is built the way it always was. liftToNull: false is their
+        // default too, and MakeBinary ignores it for everything but the comparisons.
+        private static Expression Operator(ExpressionType kind, Expression left, Expression right)
+            => Expression.MakeBinary(
+                kind, left, right, liftToNull: false,
+                method: operators.TryGetValue((kind, Nullable.GetUnderlyingType(left.Type) ?? left.Type), out var op) ? op : null);
+
+        private static Expression Coerce(Expression expr, Type type)
+        {
+            var from = Nullable.GetUnderlyingType(expr.Type) ?? expr.Type;
+            var to = Nullable.GetUnderlyingType(type) ?? type;
+            return conversionOperators.TryGetValue((from, to), out var op)
+                ? Expression.Convert(expr, type, op)
+                : Expression.Convert(expr, type);
+        }
 
 
         [ConstantField] private static readonly Dictionary<Type, int> typeLevelInHierarchy = new()
@@ -323,7 +448,11 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             var typeToCastTo = MaxType(leftType, rightType);
             if (nullable && ((ConstantExpression)ConvertNaN(typeToCastTo)).Value == null)
             {
-                typeToCastTo = typeof(Nullable<>).MakeGenericType(typeToCastTo);
+                // object is the one key of typeLevelInHierarchy with no nullable form, and it
+                // cannot arrive here: nullable is only true when one side unwrapped to a value
+                // type, whose level is above object's, so MaxType never returns object.
+                if (nullableForms.TryGetValue(typeToCastTo, out var nullableForm))
+                    typeToCastTo = nullableForm;
             }
             
             left = ConvertType(left, typeToCastTo);
