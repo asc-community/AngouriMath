@@ -88,8 +88,13 @@ namespace AngouriMath
             partial record Unionf
             {
                 /// <inheritdoc/>
+                // Union is associative, so a union on the right may stay unbracketed -- but `\/`
+                // and `\` share one precedence level and are folded by one loop in the grammar, so
+                // a *set difference* on the right must be bracketed or it is re-read as the outer
+                // operator: `{ 1, 2 } \/ ({ 3 } \ { 1, 2 })` is { 1, 2, 3 } and
+                // `({ 1, 2 } \/ { 3 }) \ { 1, 2 }` is { 3 }.
                 public override string Stringize()
-                    => $@"{Left.Stringize(Left.Priority < Priority)} \/ {Right.Stringize(Right.Priority < Priority)}";
+                    => $@"{Left.Stringize(Left.Priority < Priority)} \/ {Right.Stringize(Right.Priority < Priority || Right is SetMinusf)}";
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
             }
@@ -106,8 +111,12 @@ namespace AngouriMath
             partial record SetMinusf
             {
                 /// <inheritdoc/>
+                // Set difference is not associative, and it shares its precedence level with
+                // union, so anything at that level on the right needs bracketing -- the same rule
+                // `-` and `/` follow. `{1,2,3} \ ({2,3} \ {3})` is { 1, 3 } where
+                // `({1,2,3} \ {2,3}) \ {3}` is { 1 }.
                 public override string Stringize()
-                    => $@"{Left.Stringize(Left.Priority < Priority)} \ {Right.Stringize(Right.Priority < Priority)}";
+                    => $@"{Left.Stringize(Left.Priority < Priority)} \ {Right.Stringize(Right.Priority <= Priority)}";
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
             }
@@ -115,8 +124,10 @@ namespace AngouriMath
             partial record Inf
             {
                 /// <inheritdoc/>
+                // `in` is folded to the left and is not associative: `(a in b) in c` asks whether
+                // a truth value is an element of c, `a in (b in c)` whether a is an element of one.
                 public override string Stringize()
-                    => $@"{Element.Stringize(Element.Priority < Priority)} in {SupSet.Stringize(SupSet.Priority < Priority)}";
+                    => $@"{Element.Stringize(Element.Priority < Priority)} in {SupSet.Stringize(SupSet.Priority <= Priority)}";
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
             }
