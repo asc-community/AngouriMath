@@ -157,6 +157,14 @@ about what the operation does. Same for `Isolate`, `Eliminate` and `Parametrize`
 a well-defined operation. Where an inverse is mathematically meaningful there is room to add one; the
 API does not invent symmetry that the mathematics does not have.
 
+An individual *rule* is a different question, and one that has an answer: a rule both of whose sides
+are patterns over the same holes can be read backwards, and thirteen of the fourteen rules written as
+data can be. `k*p + k*q -> k*(p + q)` and its reverse are one rule read two ways; the Pythagorean
+identity is not, because `1` does not say which angle it came from. See
+[`ReversibleRules.md`](ReversibleRules.md) for what that requires, why the reversal is licensed, and
+what it deliberately does not claim. None of the 405 rules in `RewriteRules.All` can be read
+backwards, because their replacement is C# source text.
+
 **`Heuristic` currently has no instance in the catalogue.** That is a statement about what is
 registered so far, not a claim that nothing in the library guesses.
 
@@ -232,6 +240,11 @@ So what is left, in dependency order:
   back to. `Simplify` never needs one, because it does not backtrack — it generates candidates and
   ranks them — so the case that wants it is the solvers, and it belongs with the tactic layer rather
   than in front of it.
+- **A production caller for a rule read backwards** — the mechanism exists and nothing uses it. The
+  consumer #746 tier 2 names is the inverse-pair table equality saturation needs, since a saturation
+  engine keeps both results where this pipeline keeps one and so has to be told which rewrites undo
+  each other. `RewriteRuleGrowth` does not answer that: it says which way a rule moves, not which
+  rule is the inverse of which.
 - **Rendering a step as a sentence** — #746's v5.0. Everything a sentence needs is now on a step
   except one thing: *why the rewrite is allowed*. `Soundness` is declared, not checked, and a rule
   that holds only under an assumption does not say which. That is the same gap

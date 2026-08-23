@@ -189,6 +189,103 @@ namespace AngouriMath.Core.Transformations.Matching
         /// <summary>The names this pattern binds, so a right-hand side can be checked for a typo.</summary>
         internal abstract IEnumerable<string> BoundNames { get; }
 
+        /// <summary>
+        /// Whether this pattern can be read as a <b>template</b> as well as a pattern — whether
+        /// <see cref="TryBuild"/> can put an expression together out of it.
+        /// </summary>
+        /// <remarks>
+        /// Structural, and independent of any bindings, so a rule is classified once where it is
+        /// written rather than once per expression it is asked about. False only where a node type
+        /// is one <see cref="Construct"/> does not build.
+        /// </remarks>
+        internal abstract bool IsBuildable { get; }
+
+        /// <summary>
+        /// The expression this pattern stands for under <paramref name="bindings"/>, or
+        /// <see langword="false"/> where those bindings do not satisfy it.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The other direction of <see cref="Match"/>, at the grain of one pattern: matching takes
+        /// an expression apart into bindings, and this puts one together out of them. A rule whose
+        /// two sides are both patterns therefore has two directions rather than one, which is what
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 2 means
+        /// by a rule that can be read backwards.
+        /// </para>
+        /// <para>
+        /// <b>A hole's own constraint is checked here as well as when matching.</b> That is what
+        /// makes reversal lose nothing: a constraint is written once, on the side that states it,
+        /// and is enforced whenever that side is built — so the reverse of
+        /// <c>(a/b)^c -&gt; a^c/b^c</c> may match any <c>c</c> at all and still refuses to build
+        /// the quotient-of-powers unless <c>c</c> is the positive integer the forward rule
+        /// required.
+        /// </para>
+        /// </remarks>
+        internal abstract bool TryBuild(Bindings bindings, out Entity built);
+
+        /// <summary>
+        /// A node of <paramref name="nodeType"/> over <paramref name="children"/>, or
+        /// <see langword="null"/> where that is not a node this builds.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Written out rather than reflected. <c>Activator.CreateInstance</c> would build any node
+        /// type and would make this un-trimmable and un-AOT-publishable, which
+        /// <c>Docs/Contributing/Trimming.md</c> forbids for the kernel; and a node's constructor is
+        /// not reachable through <c>IUnaryNode</c> or <c>IBinaryNode</c>, which expose the children
+        /// and nothing else.
+        /// </para>
+        /// <para>
+        /// A node type absent from here is <b>matchable but not buildable</b>: a pattern over it is
+        /// still a rule's left-hand side, and <see cref="IsBuildable"/> is what says it cannot be a
+        /// right-hand side or be reached by reading a rule backwards. Adding a type is one line,
+        /// and <c>EveryDataRuleIsBuildableOnBothSides</c> is the test that says when one is owed.
+        /// </para>
+        /// </remarks>
+        private static Entity? Construct(Type nodeType, Entity[] children)
+        {
+            if (children.Length == 1)
+            {
+                var only = children[0];
+                return
+                    nodeType == typeof(Entity.Sinf) ? new Entity.Sinf(only) :
+                    nodeType == typeof(Entity.Cosf) ? new Entity.Cosf(only) :
+                    nodeType == typeof(Entity.Tanf) ? new Entity.Tanf(only) :
+                    nodeType == typeof(Entity.Cotanf) ? new Entity.Cotanf(only) :
+                    nodeType == typeof(Entity.Absf) ? new Entity.Absf(only) :
+                    nodeType == typeof(Entity.Signumf) ? new Entity.Signumf(only) :
+                    (Entity?)null;
+            }
+            if (children.Length == 2)
+            {
+                Entity first = children[0], second = children[1];
+                return
+                    nodeType == typeof(Entity.Sumf) ? new Entity.Sumf(first, second) :
+                    nodeType == typeof(Entity.Minusf) ? new Entity.Minusf(first, second) :
+                    nodeType == typeof(Entity.Mulf) ? new Entity.Mulf(first, second) :
+                    nodeType == typeof(Entity.Divf) ? new Entity.Divf(first, second) :
+                    nodeType == typeof(Entity.Powf) ? new Entity.Powf(first, second) :
+                    nodeType == typeof(Entity.Logf) ? new Entity.Logf(first, second) :
+                    (Entity?)null;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Whether <see cref="Construct"/> builds this type at this arity, asked by building one
+        /// over placeholders rather than by listing the types a second time — a list written twice
+        /// is a list that drifts.
+        /// </summary>
+        private static bool CanConstruct(Type nodeType, int arity)
+        {
+            if (arity is not (1 or 2))
+                return false;
+            var placeholders = new Entity[arity];
+            for (var i = 0; i < arity; i++)
+                placeholders[i] = Entity.Number.Integer.Zero;
+            return Construct(nodeType, placeholders) is not null;
+        }
+
         /// <summary>Whether it matches at all, which is <see cref="Match"/> asked for one answer.</summary>
         internal bool Matches(Entity expr) => Match(expr, Bindings.Empty).Any();
 
@@ -313,6 +410,21 @@ namespace AngouriMath.Core.Transformations.Matching
                 result = bindings.With(name, expr);
                 return true;
             }
+
+            internal override bool IsBuildable => true;
+
+            internal override bool TryBuild(Bindings bindings, out Entity built)
+            {
+                built = null!;
+                if (!bindings.TryGet(name, out var value)) return false;
+                // The same two constraints the match imposes, imposed again on the way out. A
+                // rule read backwards binds this hole from its other side, where the constraint
+                // is not written, so this is the only place left to enforce it.
+                if (required is not null && !required.IsInstanceOfType(value)) return false;
+                if (where is not null && !where(value)) return false;
+                built = value;
+                return true;
+            }
         }
 
         private sealed class ExactPattern : MatchPattern
@@ -343,6 +455,14 @@ namespace AngouriMath.Core.Transformations.Matching
                 result = bindings;
                 return value.Equals(expr);
             }
+
+            internal override bool IsBuildable => true;
+
+            internal override bool TryBuild(Bindings bindings, out Entity built)
+            {
+                built = value;
+                return true;
+            }
         }
 
         private sealed class NodePattern : MatchPattern
@@ -359,7 +479,12 @@ namespace AngouriMath.Core.Transformations.Matching
                 if (commutative && children.Length != 2)
                     throw new ArgumentException("commutative matching is over a two-child node",
                         nameof(children));
+                buildable = CanConstruct(nodeType, children.Length)
+                    && children.All(child => child.IsBuildable);
             }
+
+            /// <summary>Settled here because it depends on nothing that changes afterwards.</summary>
+            private readonly bool buildable;
 
             internal override IEnumerable<string> BoundNames => children.SelectMany(c => c.BoundNames);
 
@@ -416,6 +541,24 @@ namespace AngouriMath.Core.Transformations.Matching
                 for (var i = 0; i < children.Length; i++)
                     if (!children[i].TryMatchOnce(actual[i], result, out result))
                         return false;
+                return true;
+            }
+
+            internal override bool IsBuildable => buildable;
+
+            internal override bool TryBuild(Bindings bindings, out Entity built)
+            {
+                built = null!;
+                // The written order, and for a commutative node too. Both orders denote the same
+                // value, a template has to write one of them down, and the one the rule was
+                // written in is the one its author meant to read.
+                var parts = new Entity[children.Length];
+                for (var i = 0; i < children.Length; i++)
+                    if (!children[i].TryBuild(bindings, out parts[i]))
+                        return false;
+                if (Construct(nodeType, parts) is not { } node)
+                    return false;
+                built = node;
                 return true;
             }
         }
@@ -530,6 +673,32 @@ namespace AngouriMath.Core.Transformations.Matching
                 Entity expr, Bindings bindings, out Bindings result)
                 => throw new InvalidOperationException(
                     "a gathered pattern is a search and has to be asked through Match");
+
+            internal override bool IsBuildable => parts.All(part => part.IsBuildable);
+
+            internal override bool TryBuild(Bindings bindings, out Entity built)
+            {
+                built = null!;
+                Entity? chain = null;
+                foreach (var part in parts)
+                {
+                    if (!part.TryBuild(bindings, out var one)) return false;
+                    chain = chain is null ? one : Combine(chain, one);
+                }
+                if (!bindings.TryGet(restName, out var rest)) return false;
+                // The identity is dropped rather than written back. Matching a chain that holds
+                // nothing but the parts binds the rest to 0 or to 1 -- see Leftover -- and putting
+                // that in would build `sin(x)^2 + cos(x)^2 + 0`, which is the same value written
+                // worse. There is at least one part, so the chain is never empty.
+                built = IsIdentity(rest) ? chain! : Combine(chain!, rest);
+                return true;
+            }
+
+            private Entity Combine(Entity left, Entity right)
+                => OverSum ? new Entity.Sumf(left, right) : new Entity.Mulf(left, right);
+
+            private bool IsIdentity(Entity operand)
+                => operand.Equals(OverSum ? Entity.Number.Integer.Zero : Entity.Number.Integer.One);
 
             private sealed class Budget
             {

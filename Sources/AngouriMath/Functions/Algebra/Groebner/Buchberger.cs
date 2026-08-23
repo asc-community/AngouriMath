@@ -6,7 +6,7 @@
 //
 
 using System;
-using System.Diagnostics;
+using AngouriMath.Core.Budgets;
 using PeterO.Numbers;
 
 namespace AngouriMath.Functions.Algebra.Groebner
@@ -15,56 +15,64 @@ namespace AngouriMath.Functions.Algebra.Groebner
     /// What a Gröbner computation is allowed to spend before it gives up.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Buchberger is doubly exponential in the worst case, so declining has to be reachable:
-    /// a caller waiting forever is a worse answer than "not this one". Four separate
+    /// a caller waiting forever is a worse answer than "not this one". Several separate
     /// ceilings because the ways it runs away are not the same — a system can blow up in the
     /// number of pairs, in the size of one polynomial, in the width of the rationals while
     /// everything else stays small, or in none of those while simply taking too long.
     /// Coefficient width is here because it is the one that actually fires: a system has
     /// been seen to give up with 53 pairs and 64 terms and coefficients 188 digits wide,
     /// which no count of pairs or terms would have caught.
+    /// </para>
+    /// <para>
+    /// The ceilings below are this algorithm's; the accounting is
+    /// <see cref="BudgetLedger"/>, which every bounded computation shares. That is what
+    /// lets the reason survive: a ledger names which ceiling fired and hands that to
+    /// <see cref="BudgetRecording"/>, where the old private budget recorded the same string
+    /// and nothing ever read it
+    /// (<a href="https://github.com/asc-community/AngouriMath/issues/896">#896</a>).
+    /// </para>
     /// </remarks>
     internal sealed class GroebnerBudget
     {
-        internal int MaxPairs { get; init; } = 20000;
-        internal int MaxBasisSize { get; init; } = 500;
-        internal int MaxTerms { get; init; } = 20000;
-        internal int MaxCoefficientDigits { get; init; } = 400;
-        internal int MaxQuotientDimension { get; init; } = 512;
-        internal TimeSpan Limit { get; init; } = TimeSpan.FromSeconds(5);
+        internal const int MaxPairs = 20000;
+        internal const int MaxBasisSize = 500;
+        internal const int MaxTerms = 20000;
+        internal const int MaxCoefficientDigits = 400;
+        internal const int MaxQuotientDimension = 512;
 
-        internal string? Exceeded { get; private set; }
+        /// <summary>
+        /// What this algorithm bounds itself by when the caller has expressed no opinion.
+        /// The clock and no step ceiling, which is what it has always done — a step ceiling
+        /// here would be a different answer on the systems that currently finish just inside
+        /// five seconds, and picking one is a measurement rather than a default.
+        /// </summary>
+        [ConstantField]
+        internal static readonly WorkBudget Default = new() { Time = TimeSpan.FromSeconds(5) };
 
-        private readonly Stopwatch stopwatch = Stopwatch.StartNew();
+        private readonly BudgetLedger ledger = BudgetLedger.For("Gröbner", Default);
 
-        internal bool Spend(string what)
-        {
-            if (Exceeded is not null)
-                return false;
-            if (stopwatch.Elapsed > Limit)
-            {
-                Exceeded = "time";
-                return false;
-            }
-            _ = what;
-            return true;
-        }
+        /// <summary>
+        /// Charges one unit of work and answers whether to carry on. Called where the
+        /// algorithm would otherwise be able to loop.
+        /// </summary>
+        internal bool Spend() => ledger.Spend();
 
-        internal bool Allow(bool within, string what)
-        {
-            if (Exceeded is not null)
-                return false;
-            if (!within)
-            {
-                Exceeded = what;
-                return false;
-            }
-            return true;
-        }
+        /// <summary>
+        /// Answers whether <paramref name="within"/> holds, recording
+        /// <paramref name="what"/> as the reason where it does not.
+        /// </summary>
+        internal bool Allow(bool within, string what) => ledger.Require(within, what);
 
         internal bool CheckPolynomial(MultivariatePolynomial polynomial)
             => Allow(polynomial.TermCount <= MaxTerms, "terms")
             && Allow(polynomial.MaxCoefficientDigits() <= MaxCoefficientDigits, "coefficients");
+
+        /// <summary>
+        /// Hands what this computation spent, and what stopped it, to whoever is recording.
+        /// </summary>
+        internal void Report() => ledger.Report();
     }
 
     /// <summary>Buchberger's algorithm, with the Gebauer–Möller pair criteria.</summary>
@@ -90,9 +98,9 @@ namespace AngouriMath.Functions.Algebra.Groebner
             var considered = 0;
             while (pairs.Count > 0)
             {
-                if (!budget.Spend("time")) return null;
-                if (!budget.Allow(++considered <= budget.MaxPairs, "pairs")) return null;
-                if (!budget.Allow(basis.Count <= budget.MaxBasisSize, "basis")) return null;
+                if (!budget.Spend()) return null;
+                if (!budget.Allow(++considered <= GroebnerBudget.MaxPairs, "pairs")) return null;
+                if (!budget.Allow(basis.Count <= GroebnerBudget.MaxBasisSize, "basis")) return null;
 
                 var chosen = ChooseNormalStrategy(basis, pairs, order);
                 var (left, right) = pairs[chosen];
@@ -213,7 +221,7 @@ namespace AngouriMath.Functions.Algebra.Groebner
             var reducing = true;
             while (reducing && !remainder.IsZero)
             {
-                if (!budget.Spend("time")) return null;
+                if (!budget.Spend()) return null;
                 if (!budget.CheckPolynomial(remainder)) return null;
                 reducing = false;
                 var leading = remainder.LeadingMonomial(order);
@@ -249,7 +257,7 @@ namespace AngouriMath.Functions.Algebra.Groebner
             var work = polynomial;
             while (!work.IsZero)
             {
-                if (!budget.Spend("time")) return null;
+                if (!budget.Spend()) return null;
                 if (!budget.CheckPolynomial(work)) return null;
 
                 var leading = work.LeadingMonomial(order);

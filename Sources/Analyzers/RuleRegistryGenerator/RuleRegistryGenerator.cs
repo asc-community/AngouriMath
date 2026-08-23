@@ -461,8 +461,10 @@ namespace AngouriMath.Generators
         /// <remarks>
         /// A syntactic proxy, and deliberately a crude one: it counts what is written rather than
         /// what the expression evaluates to, so a rule whose replacement calls a helper is counted
-        /// as the call. It is enough for the question a saturation scheduler asks, which is which
-        /// pairs of rules are each other's inverse.
+        /// as the call. It says which way a rule moves and no more: two rules that both collect
+        /// need not be related at all, so a saturation scheduler asking which rule undoes which
+        /// gets no answer from this. That question needs a rule with two sides —
+        /// <c>Docs/Contributing/ReversibleRules.md</c>.
         /// </remarks>
         private static string Growth(PatternSyntax pattern, ExpressionSyntax replacement)
         {

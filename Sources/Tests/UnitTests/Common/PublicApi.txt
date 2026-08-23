@@ -11,6 +11,36 @@ AngouriMath.Core.ApproachFrom.BothSides : AngouriMath.Core.ApproachFrom
 AngouriMath.Core.ApproachFrom.Left : AngouriMath.Core.ApproachFrom
 AngouriMath.Core.ApproachFrom.Right : AngouriMath.Core.ApproachFrom
 AngouriMath.Core.ApproachFrom.value__ : System.Int32
+AngouriMath.Core.Budgets.BudgetOutcome.<Clone>$() : AngouriMath.Core.Budgets.BudgetOutcome
+AngouriMath.Core.Budgets.BudgetOutcome.Completed { } : System.Boolean
+AngouriMath.Core.Budgets.BudgetOutcome.Deconstruct(System.String&, System.String&, System.Int64&, System.TimeSpan&, System.Boolean&) : System.Void
+AngouriMath.Core.Budgets.BudgetOutcome.Elapsed { } : System.TimeSpan
+AngouriMath.Core.Budgets.BudgetOutcome.Equals(AngouriMath.Core.Budgets.BudgetOutcome) : System.Boolean
+AngouriMath.Core.Budgets.BudgetOutcome.Equals(System.Object) : System.Boolean
+AngouriMath.Core.Budgets.BudgetOutcome.GetHashCode() : System.Int32
+AngouriMath.Core.Budgets.BudgetOutcome.IsDeterministic { } : System.Boolean
+AngouriMath.Core.Budgets.BudgetOutcome.Reason { } : System.String
+AngouriMath.Core.Budgets.BudgetOutcome.Steps { } : System.Int64
+AngouriMath.Core.Budgets.BudgetOutcome.ToString() : System.String
+AngouriMath.Core.Budgets.BudgetOutcome.Where { } : System.String
+AngouriMath.Core.Budgets.BudgetOutcome.ctor(System.String, System.String, System.Int64, System.TimeSpan, System.Boolean)
+AngouriMath.Core.Budgets.BudgetOutcome.op_Equality(AngouriMath.Core.Budgets.BudgetOutcome, AngouriMath.Core.Budgets.BudgetOutcome) : System.Boolean
+AngouriMath.Core.Budgets.BudgetOutcome.op_Inequality(AngouriMath.Core.Budgets.BudgetOutcome, AngouriMath.Core.Budgets.BudgetOutcome) : System.Boolean
+AngouriMath.Core.Budgets.BudgetRecording.Dispose() : System.Void
+AngouriMath.Core.Budgets.BudgetRecording.Exhausted { } : System.Collections.Generic.IEnumerable<AngouriMath.Core.Budgets.BudgetOutcome>
+AngouriMath.Core.Budgets.BudgetRecording.Outcomes { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Core.Budgets.BudgetOutcome>
+AngouriMath.Core.Budgets.BudgetRecording.Start() : AngouriMath.Core.Budgets.BudgetRecording
+AngouriMath.Core.Budgets.WorkBudget.<Clone>$() : AngouriMath.Core.Budgets.WorkBudget
+AngouriMath.Core.Budgets.WorkBudget.Equals(AngouriMath.Core.Budgets.WorkBudget) : System.Boolean
+AngouriMath.Core.Budgets.WorkBudget.Equals(System.Object) : System.Boolean
+AngouriMath.Core.Budgets.WorkBudget.GetHashCode() : System.Int32
+AngouriMath.Core.Budgets.WorkBudget.Steps { } : System.Int64
+AngouriMath.Core.Budgets.WorkBudget.Time { } : System.Nullable<System.TimeSpan>
+AngouriMath.Core.Budgets.WorkBudget.ToString() : System.String
+AngouriMath.Core.Budgets.WorkBudget.Unlimited { } : AngouriMath.Core.Budgets.WorkBudget
+AngouriMath.Core.Budgets.WorkBudget.ctor()
+AngouriMath.Core.Budgets.WorkBudget.op_Equality(AngouriMath.Core.Budgets.WorkBudget, AngouriMath.Core.Budgets.WorkBudget) : System.Boolean
+AngouriMath.Core.Budgets.WorkBudget.op_Inequality(AngouriMath.Core.Budgets.WorkBudget, AngouriMath.Core.Budgets.WorkBudget) : System.Boolean
 AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol.<Clone>$() : AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol
 AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol.ConvertBinaryNode(System.Linq.Expressions.Expression, System.Linq.Expressions.Expression, AngouriMath.Entity) : System.Linq.Expressions.Expression
 AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol.ConvertConstant(AngouriMath.Entity) : System.Linq.Expressions.Expression
@@ -2450,6 +2480,7 @@ AngouriMath.MathS+Settings+NewtonSetting.ctor()
 AngouriMath.MathS+Settings+NewtonSetting.op_Equality(AngouriMath.MathS+Settings+NewtonSetting, AngouriMath.MathS+Settings+NewtonSetting) : System.Boolean
 AngouriMath.MathS+Settings+NewtonSetting.op_Inequality(AngouriMath.MathS+Settings+NewtonSetting, AngouriMath.MathS+Settings+NewtonSetting) : System.Boolean
 AngouriMath.MathS+Settings.AllowNewton { } : AngouriMath.Convenience.Setting<System.Boolean>
+AngouriMath.MathS+Settings.Budget { } : AngouriMath.Convenience.Setting<AngouriMath.Core.Budgets.WorkBudget>
 AngouriMath.MathS+Settings.Codomain { } : AngouriMath.Convenience.Setting<AngouriMath.Core.Domain>
 AngouriMath.MathS+Settings.ComplexityCriteria { } : AngouriMath.Convenience.Setting<System.Func<AngouriMath.Entity,System.Double>>
 AngouriMath.MathS+Settings.DecimalPrecisionContext { } : AngouriMath.Convenience.Setting<PeterO.Numbers.EContext>
@@ -2574,6 +2605,9 @@ AngouriMath.MathS.i : AngouriMath.Entity+Number+Complex
 AngouriMath.MathS.oo : AngouriMath.Entity+Number+Real
 AngouriMath.MathS.pi : AngouriMath.Entity+Variable
 class AngouriMath.Convenience.Setting<T>
+class AngouriMath.Core.Budgets.BudgetOutcome
+class AngouriMath.Core.Budgets.BudgetRecording
+class AngouriMath.Core.Budgets.WorkBudget
 class AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol
 class AngouriMath.Core.CostModel
 class AngouriMath.Core.EquationSystem

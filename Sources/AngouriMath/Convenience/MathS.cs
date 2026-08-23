@@ -15,6 +15,7 @@ using AngouriMath.Convenience;
 using AngouriMath.Core.Multithreading;
 using System.Threading;
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Budgets;
 
 namespace AngouriMath
 {
@@ -5839,6 +5840,43 @@ namespace AngouriMath
             /// </example>
             /// </remarks>
             public static Setting<Domain> Codomain { get; } = Domain.Complex;
+
+            /// <summary>
+            /// What an algorithm that can run away is allowed to spend before it declines.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// <b>Leaving this alone is not the same as setting it to
+            /// <see cref="WorkBudget.Unlimited"/>.</b> Unset, each algorithm keeps the budget
+            /// it chose for itself -- the Gr&#246;bner path bounds itself by five seconds and
+            /// by five structural ceilings, and did so before this setting existed. Set, this
+            /// replaces those defaults wherever a budget is honoured, so
+            /// <see cref="WorkBudget.Unlimited"/> here means "do not stop", which for a
+            /// doubly-exponential algorithm means what it says.
+            /// </para>
+            /// <para>
+            /// A budget in <see cref="WorkBudget.Steps"/> is reproducible and one in
+            /// <see cref="WorkBudget.Time"/> is not, so a caller who needs the same answer on
+            /// every machine sets the first and leaves the second
+            /// <see langword="null"/>. Which one stopped a computation is reported through
+            /// <see cref="BudgetRecording"/>.
+            /// (<a href="https://github.com/asc-community/AngouriMath/issues/373">#373</a>)
+            /// </para>
+            /// <para>
+            /// It is honoured only where an algorithm asks -- today that is the Gr&#246;bner
+            /// system solver. Everything else in the library bounds itself by ceilings of its
+            /// own that this does not reach, so setting it does not make an arbitrary call
+            /// bounded.
+            /// </para>
+            /// </remarks>
+            /// <example>
+            /// <code>
+            /// using var _ = MathS.Settings.Budget.Set(new WorkBudget { Steps = 100_000 });
+            /// using var recording = BudgetRecording.Start();
+            /// var solutions = MathS.Equations("x2 + y2 - 4", "x y - 1").Solve("x", "y");
+            /// </code>
+            /// </example>
+            public static Setting<WorkBudget> Budget { get; } = WorkBudget.Unlimited;
         }
 
         /// <summary>Returns an <see cref="Entity"/> in polynomial order if possible</summary>
