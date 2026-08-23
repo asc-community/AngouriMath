@@ -43,6 +43,34 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 : roots;
 
         /// <summary>
+        /// Answers the condition itself where a root denies the independence the calculus
+        /// operators in the equation were evaluated under.
+        /// </summary>
+        /// <remarks>
+        /// <c>derivative(y, x) + y - x</c> was answered <c>{ x }</c>: the derivative went to
+        /// zero because <c>y</c> is not <c>x</c>, and the root then says that it is. Putting
+        /// it back gives <c>derivative(x, x) + x - x</c>, which is 1 — so the set named a
+        /// member that is not a root. A root free of that name is untouched, because nothing
+        /// was assumed that it goes on to deny: <c>derivative(y * x, x) + y - 1</c> is still
+        /// <c>{ 1/2 }</c>.
+        ///
+        /// The equation is not thereby unsatisfiable, so the empty set would be a second
+        /// false claim in place of the first. What holds is the condition as written, and
+        /// solving it needs a differential-equation solver this library does not have.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/964">#964</a>,
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a>
+        /// </remarks>
+        internal static Set UnsolvedWhereIndependenceIsDenied(Set roots, Entity condition, Variable x)
+        {
+            if (roots is not FiniteSet finite)
+                return roots;
+            var assumed = CalculusOperator.NamesAssumedFreeOf(condition, x);
+            return assumed.Count > 0 && finite.Any(root => assumed.Any(root.ContainsNode))
+                ? new ConditionalSet(x, condition)
+                : roots;
+        }
+
+        /// <summary>
         /// How large the residual has to be next to the terms it is the sum of before it
         /// counts as evidence against a root.
         /// </summary>
@@ -127,7 +155,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     => AnalyticalSetSolver.Solve(left, right, x),
 
                 Equalsf(var left, var right) when left is not Set && right is not Set
-                    => WithoutSpuriousRoots(AnalyticalEquationSolver.Solve(left - right, x), left - right, x),
+                    => UnsolvedWhereIndependenceIsDenied(
+                        WithoutSpuriousRoots(AnalyticalEquationSolver.Solve(left - right, x), left - right, x),
+                        expr, x),
 
                 Equalsf => Empty,
 
