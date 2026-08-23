@@ -55,8 +55,13 @@ namespace AngouriMath
         partial record Impliesf
         {
             /// <inheritdoc/>
+            // The grammar folds `implies` to the left, like everything but `^` and `provided`, so
+            // it is the *conclusion* that needs bracketing when it is an implication of its own.
+            // The two are not interchangeable: `false implies (true implies false)` is true, and
+            // `(false implies true) implies false` is false, so printing the first without its
+            // brackets said the opposite of what it meant.
             public override string Stringize()
-                => $"{Assumption.Stringize(Assumption.Priority <= Priority)} implies {Conclusion.Stringize(Conclusion.Priority < Priority)}";
+                => $"{Assumption.Stringize(Assumption.Priority < Priority)} implies {Conclusion.Stringize(Conclusion.Priority <= Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
