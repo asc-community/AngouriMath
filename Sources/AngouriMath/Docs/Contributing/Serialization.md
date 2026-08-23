@@ -1,7 +1,9 @@
 ## Serialization
 
-An `Entity` written out and read back is the entity that was written. The format is the expression
-itself, in the library's own syntax — what `Stringize` prints and `MathS.FromString` reads.
+An `Entity` written out and read back is the expression that was written, as exactly as the
+printed form is — which is the whole of the design, and *What the printed form does not carry* below
+is where that is not an identity. The format is the expression itself, in the library's own syntax:
+what `Stringize` prints and `MathS.FromString` reads.
 
 ```csharp
 public sealed record Problem(string Title, Entity Body);
@@ -63,9 +65,18 @@ them here:
 - **`Number.Complex` with both parts non-zero.** It prints as a sum and reads back as `Sumf` — the
   same number, a different node. Already recorded in `EveryNodeSurvivesEveryPipelineTest`.
 
-Everything else round trips: 112 of the 115 shapes measured, including `Lambda` and `Application`
-with bound names, `Provided`, `ConditionalSet`, matrices, the `sum` and `product` binders, and the
-bound constants `pi`, `e` and `i`.
+And one that is not about a node type but about how operands nest. An operator whose operands nest
+to the right comes back nested to the left, because the printed form does not bracket a right operand
+of equal priority: `1 + (2 + 3)` prints as `1 + 2 + 3` and reads back as `(1 + 2) + 3`. For `+`, `*`,
+`and`, `or` and `xor` the operator is associative, so the node changes and the value does not — that
+is the objection on #323 that this format still has, and all that is left of it. For `implies` it is
+not associative and the value *does* change:
+[#1032](https://github.com/asc-community/AngouriMath/issues/1032), a defect in the printer's
+parenthesisation guard, with `Providedf` the mirror of it.
+
+Everything else round trips: 112 of the 115 node shapes measured, including `Lambda` and
+`Application` with bound names, `Provided`, `ConditionalSet`, matrices, the `sum` and `product`
+binders, and the bound constants `pi`, `e` and `i`.
 
 ### Why the attribute is on every node type and not only on `Entity`
 

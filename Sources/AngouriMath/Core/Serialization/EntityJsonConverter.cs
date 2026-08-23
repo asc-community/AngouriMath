@@ -45,8 +45,12 @@ namespace AngouriMath.Core.Serialization
     /// <see cref="Entity.WithCodomain(Domain)"/> comes back with the default
     /// (<a href="https://github.com/asc-community/AngouriMath/issues/1022">#1022</a>); and an
     /// <see cref="Entity.Number.Complex"/> with both parts non-zero, which prints as a sum and
-    /// reads back as one — the same number, a different node. Both are properties of printing
-    /// rather than of this converter, and fixing them there fixes them here.
+    /// reads back as one — the same number, a different node. Nor is a right nesting kept, since a
+    /// right operand of equal priority is not bracketed: <c>1 + (2 + 3)</c> comes back as
+    /// <c>(1 + 2) + 3</c>, harmlessly where the operator is associative and not for <c>implies</c>
+    /// (<a href="https://github.com/asc-community/AngouriMath/issues/1032">#1032</a>). All of these
+    /// are properties of printing rather than of this converter, and fixing them there fixes them
+    /// here.
     /// </para>
     /// <a href="https://github.com/asc-community/AngouriMath/issues/323">#323</a>
     /// </remarks>

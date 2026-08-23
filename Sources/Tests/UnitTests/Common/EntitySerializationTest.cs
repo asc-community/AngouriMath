@@ -287,6 +287,71 @@ namespace AngouriMath.Tests.Common
         }
 
         /// <summary>
+        /// An operator whose operands nest to the right comes back nested to the left, because
+        /// the printed form does not bracket a right operand of equal priority.
+        /// </summary>
+        /// <remarks>
+        /// A choice about output rather than a defect, for these five: each is associative, so the
+        /// node changes and the value does not. It is here because it is the oldest objection on
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/323">#323</a> — that
+        /// <c>a.ToString().ToEntity()</c> need not equal <c>a</c>, with <c>1 + 2 + 3</c> as the
+        /// example — and this is what remains of it.
+        /// </remarks>
+        [Theory]
+        [InlineData("1 + (2 + 3)")]
+        [InlineData("2 * (3 * 4)")]
+        [InlineData("a and (b and c)")]
+        [InlineData("a or (b or c)")]
+        [InlineData("a xor (b xor c)")]
+        public void AnAssociativeOperatorComesBackReassociated(string source)
+        {
+            var expression = MathS.FromString(source);
+            var back = JsonSerializer.Deserialize<Entity>(JsonSerializer.Serialize(expression))!;
+            Assert.NotEqual(expression, back);
+            Assert.True(AgreeEverywhere(expression, back),
+                $"{source} came back as {back.Stringize()}, which is a different value and not "
+                + "merely a different nesting");
+        }
+
+        /// <summary>
+        /// The one where re-association is not value-preserving, because implication is not
+        /// associative. Written to fail when
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1032">#1032</a> is fixed,
+        /// so that the entry cannot outlive what it describes: the converter needs no change for
+        /// it, since it is the printed form that loses the bracket.
+        /// </summary>
+        [Theory]
+        [InlineData("a implies (b implies c)")]
+        [InlineData("a -> (b -> c)")]
+        public void AnImplicationComesBackAsADifferentTruthFunction(string source)
+        {
+            var expression = MathS.FromString(source);
+            var back = JsonSerializer.Deserialize<Entity>(JsonSerializer.Serialize(expression))!;
+            Assert.False(AgreeEverywhere(expression, back),
+                $"{source} survives now, so https://github.com/asc-community/AngouriMath/issues/1032 "
+                + "is fixed — drop this test and let EveryNodeTypeSurvivesJson cover it");
+        }
+
+        /// <summary>
+        /// Do two expressions in <c>a</c>, <c>b</c> and <c>c</c> take the same value at every
+        /// assignment of those three? Eight points, which is all of them for booleans, and enough
+        /// for the numeric cases here since those have no variables at all.
+        /// </summary>
+        private static bool AgreeEverywhere(Entity left, Entity right)
+        {
+            foreach (var assignment in new[] { false, true }
+                         .SelectMany(a => new[] { false, true }
+                             .SelectMany(b => new[] { false, true }.Select(c => (a, b, c)))))
+            {
+                static Entity At(Entity what, (bool a, bool b, bool c) point)
+                    => what.Substitute("a", point.a).Substitute("b", point.b).Substitute("c", point.c).Evaled;
+                if (At(left, assignment) != At(right, assignment))
+                    return false;
+            }
+            return true;
+        }
+
+        /// <summary>
         /// A binder's parameter is a name, and serializing does not rename it. The concern is
         /// specific: <see cref="Entity.DirectChildren"/> publishes a bound body with the parameter
         /// renamed, so anything that reads an expression through traversal can hand back an
