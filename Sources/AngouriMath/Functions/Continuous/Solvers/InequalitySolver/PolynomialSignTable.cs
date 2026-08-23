@@ -199,7 +199,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (degree == 1)
             {
                 var root = ERational.Create(factor[0].Negate(), factor[1]).ToLowestTerms();
-                into.Add(new Root(Rational.Create(root), root.ToDouble(), multiplicity));
+                // The root is exact; its double is what the sample points are placed from,
+                // and a rational too large to be one at all would put them nowhere.
+                var approximation = root.ToDouble();
+                if (double.IsNaN(approximation) || double.IsInfinity(approximation))
+                    return false;
+                into.Add(new Root(Rational.Create(root), approximation, multiplicity));
                 return true;
             }
 
