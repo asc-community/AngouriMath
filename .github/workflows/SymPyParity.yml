@@ -1,0 +1,76 @@
+name: 'SymPy parity watch'
+
+# The comparison against SymPy is a snapshot: 80 probes over 23 areas, taken by hand, against one
+# SymPy version, and published in Sources/AngouriMath/Docs/Usage/Comparison.md. A snapshot cannot
+# tell you it has gone out of date, and this is
+# https://github.com/asc-community/AngouriMath/issues/746 item 73 -- "the one SymPy snapshot goes
+# stale on its own -- it wants a scheduled re-run rather than another hand-taken snapshot".
+#
+# What runs here is the SymPy half only. The other half asks this library the same 80 questions
+# and lives in the analysis workspace, not in this repository, so this job compares nothing
+# between the two libraries and repeats no verdict about either. It answers the one question the
+# published page cannot answer about itself: is SymPy still the version, and still giving the
+# answers, that the page was written from. When either has moved the job fails, and the run
+# uploads the new answers so re-taking the snapshot is a file copy plus a re-run of the harness.
+#
+# Maxima and SageMath are named alongside SymPy in that roadmap item and are deliberately absent
+# here. Nothing in this repository has ever measured them, and a workflow that installed them
+# without a baseline to compare against would report a green tick for a comparison nobody made.
+#
+# The path filters carry no leading "./" -- a filter is a glob relative to the repository root,
+# and "./x" matches nothing there. That defect silenced Benchmark.yml for ninety-eight merged
+# pull requests and CPPBuild.yml for its whole existence
+# (https://github.com/asc-community/AngouriMath/issues/775). The filters name this file and the
+# probe set so that a change to either demonstrates itself on its own pull request; the weekly
+# run is what actually watches SymPy, and a schedule trigger only fires once the workflow is on
+# the default branch.
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/sympy-parity/**'
+      - '.github/workflows/SymPyParity.yml'
+  pull_request:
+    branches:
+      - '*'
+    paths:
+      - '.github/sympy-parity/**'
+      - '.github/workflows/SymPyParity.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  Parity:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    # Unpinned on purpose: the question this job asks is what today's SymPy does. Pinning it
+    # would make the job agree with the baseline for ever and measure nothing.
+    - name: 'Install the newest SymPy'
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade sympy
+        python -c "import sympy; print('SymPy', sympy.__version__)"
+
+    - name: 'Re-run the SymPy probes against the published snapshot'
+      run: python .github/sympy-parity/check.py
+
+    - name: 'Upload what SymPy answers today'
+      if: always()
+      uses: actions/upload-artifact@v6
+      with:
+        name: sympy-current
+        path: .github/sympy-parity/sympy-current.json
+        if-no-files-found: warn
+        retention-days: 90
