@@ -26,29 +26,68 @@ namespace AngouriMath.Core.Transformations.Matching
     /// same value and the field distinguishes nothing.
     /// </para>
     /// <para>
-    /// The right-hand side is a builder over the bindings rather than a second pattern. That is
-    /// a deliberate first step and not the end state: a rule whose right-hand side is also data
-    /// can be read backwards, which is what tier 2's "direction" field wants. Building it as
-    /// data before the matching half is proven would be guessing at two shapes at once.
+    /// <b>Where the right-hand side is a pattern too, the rule has two directions rather than
+    /// one.</b> <see cref="Reversed"/> is the same rule read the other way, and
+    /// <see cref="Reversal"/> says why a rule has no such reading when it has none. That is
+    /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 2's first
+    /// missing piece, and <c>Docs/Contributing/ReversibleRules.md</c> is the argument for when a
+    /// reversal is licensed.
     /// </para>
     /// </remarks>
     internal sealed class MatchedRule
     {
+        /// <summary>A rule whose right-hand side is a pattern, and which therefore has two directions.</summary>
+        internal MatchedRule(
+            string name,
+            MatchPattern left,
+            MatchPattern right,
+            Soundness soundness,
+            Func<Bindings, bool>? when = null)
+            : this(name, left, null, right ?? throw new ArgumentNullException(nameof(right)), soundness, when)
+        {
+            // A name the replacement reads and the pattern never binds is a typo, and it is a
+            // typo that would otherwise show up as a rule that silently never fires. Only a
+            // right-hand side written as data can be checked for it at all.
+            foreach (var wanted in right.BoundNames)
+                if (!left.BoundNames.Contains(wanted))
+                    throw new ArgumentException(
+                        $"'{name}' builds '{wanted}', which its pattern does not bind", nameof(right));
+        }
+
+        /// <summary>
+        /// A rule whose right-hand side is code. One-way: see <see cref="RuleReversal.ReplacementIsCode"/>.
+        /// </summary>
         internal MatchedRule(
             string name,
             MatchPattern left,
             Func<Bindings, Entity> right,
             Soundness soundness,
             Func<Bindings, bool>? when = null)
+            : this(name, left, right ?? throw new ArgumentNullException(nameof(right)), null, soundness, when)
+        {
+        }
+
+        private MatchedRule(
+            string name,
+            MatchPattern left,
+            Func<Bindings, Entity>? rightCode,
+            MatchPattern? rightPattern,
+            Soundness soundness,
+            Func<Bindings, bool>? when)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Left = left ?? throw new ArgumentNullException(nameof(left));
-            this.right = right ?? throw new ArgumentNullException(nameof(right));
+            this.right = rightCode;
+            Right = rightPattern;
             Soundness = soundness;
             this.when = when;
+            // Settled here rather than on first ask. It depends on nothing that changes
+            // afterwards, and a lazily cached enum is a field wider than a word: two threads
+            // arriving together could read a half-written one, where a reference cannot tear.
+            Reversal = Classify();
         }
 
-        private readonly Func<Bindings, Entity> right;
+        private readonly Func<Bindings, Entity>? right;
         private readonly Func<Bindings, bool>? when;
 
         /// <summary>What to call this rule in a report, a test or a bug.</summary>
@@ -56,6 +95,12 @@ namespace AngouriMath.Core.Transformations.Matching
 
         /// <summary>The shape it fires on.</summary>
         internal MatchPattern Left { get; }
+
+        /// <summary>
+        /// What it puts there instead, where that is a pattern — or <see langword="null"/> where
+        /// the replacement is code and there is nothing to match against.
+        /// </summary>
+        internal MatchPattern? Right { get; }
 
         /// <summary>How well justified this rule's claim is — per rule, which is the point.</summary>
         internal Soundness Soundness { get; }
@@ -75,8 +120,7 @@ namespace AngouriMath.Core.Transformations.Matching
             {
                 if (!Left.TryMatchOnce(expr, Bindings.Empty, out var only)) return null;
                 if (when is not null && !when(only)) return null;
-                try { return right(only); }
-                catch { return null; }
+                return Build(only);
             }
 
             // Every way the pattern matches, in order, and the first that also satisfies the
@@ -87,11 +131,112 @@ namespace AngouriMath.Core.Transformations.Matching
             {
                 if (when is not null && !when(bindings))
                     continue;
-                try { return right(bindings); }
-                catch { return null; }
+                // A match whose replacement cannot be built is a match that does not apply, and
+                // another way of matching may still. Only the last of them decides that the rule
+                // declines.
+                if (Build(bindings) is { } rewritten)
+                    return rewritten;
             }
             return null;
         }
+
+        /// <summary>
+        /// The replacement under these bindings, or <see langword="null"/> where it cannot be
+        /// built — which is the rule declining rather than an error, whichever form the
+        /// right-hand side takes.
+        /// </summary>
+        private Entity? Build(Bindings bindings)
+        {
+            if (Right is not null)
+                return Right.TryBuild(bindings, out var built) ? built : null;
+            try { return right!(bindings); }
+            catch { return null; }
+        }
+
+        /// <summary>
+        /// Whether this rule can be read backwards, and where it cannot, why not.
+        /// </summary>
+        /// <remarks>
+        /// <b>Derived from the two sides, not declared.</b> Every clause below is a property of
+        /// what the rule is written as, so the distinction between a one-way rewrite and a
+        /// two-way one is something a test can fail on rather than something a comment asserts.
+        /// </remarks>
+        internal RuleReversal Reversal { get; }
+
+        private RuleReversal Classify()
+        {
+            if (Right is null)
+                return RuleReversal.ReplacementIsCode;
+            // Set equality, and the direction that can fail is the one checked: a name the
+            // replacement builds and the pattern does not bind is refused in the constructor, so
+            // what is left is a name the pattern binds and the replacement throws away.
+            foreach (var bound in Left.BoundNames)
+                if (!Right.BoundNames.Contains(bound))
+                    return RuleReversal.ReplacementDropsHoles;
+            if (!Left.IsBuildable || !Right.IsBuildable)
+                return RuleReversal.PatternCannotBeBuilt;
+            return RuleReversal.Reversible;
+        }
+
+        /// <summary>
+        /// This rule read the other way, or <see langword="null"/> where it has no such reading.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The two sides swap and nothing else does. The side condition is carried over
+        /// unchanged, because it is a predicate on the bindings and both directions produce the
+        /// same bindings; and <see cref="Soundness"/> is carried over unchanged, because what a
+        /// rewrite rule claims is an equality and an equality is symmetric.
+        /// </para>
+        /// <para>
+        /// <b>What does not carry over is termination.</b> A rule that collects becomes one that
+        /// expands, so a reversed rule composed with the rule it came from does not reach a fixed
+        /// point — <c>k*p + k*q</c> and <c>k*(p + q)</c> rewrite to each other forever. A reversed
+        /// set is a thing to ask questions of, not one to run to stability.
+        /// </para>
+        /// </remarks>
+        internal MatchedRule? Reversed
+            => Reversal is RuleReversal.Reversible
+                ? reversed ??= new MatchedRule($"reversed {Name}", Right!, Left, Soundness, when)
+                : null;
+
+        private MatchedRule? reversed;
+    }
+
+    /// <summary>
+    /// Whether a <see cref="MatchedRule"/> can be read backwards, and where it cannot, what stops
+    /// it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Not every rewrite has an inverse worth having, and this says which do.</b>
+    /// <c>x - x -&gt; 0</c> is a rewrite nobody wants to read backwards and nobody could: from
+    /// <c>0</c> there is no recovering which <c>x</c> was cancelled. That is
+    /// <see cref="ReplacementDropsHoles"/>, and it is a fact about the rule rather than a
+    /// judgement about it.
+    /// </remarks>
+    internal enum RuleReversal
+    {
+        /// <summary>Both sides are patterns over the same holes, and both can be built.</summary>
+        Reversible,
+
+        /// <summary>
+        /// The replacement is a builder over the bindings rather than a pattern, so there is
+        /// nothing to match an expression against.
+        /// </summary>
+        ReplacementIsCode,
+
+        /// <summary>
+        /// The replacement does not mention every hole the pattern binds, so reading it backwards
+        /// would have to invent what the forward direction discarded. The Pythagorean identity is
+        /// the standing example: <c>sin(x)^2 + cos(x)^2 -&gt; 1</c> forgets the angle.
+        /// </summary>
+        ReplacementDropsHoles,
+
+        /// <summary>
+        /// One of the two sides is over a node type this cannot construct, so it can be matched
+        /// and not written. See <c>MatchPattern.Construct</c>.
+        /// </summary>
+        PatternCannotBeBuilt
     }
 
     /// <summary>
@@ -129,6 +274,31 @@ namespace AngouriMath.Core.Transformations.Matching
 
         /// <summary>The rules, in the order they are tried. <b>Enumerable</b>, which is the whole point.</summary>
         internal IReadOnlyList<MatchedRule> Rules => rules;
+
+        /// <summary>
+        /// The rules of this set that can be read backwards, read backwards — so that
+        /// <see cref="ApplyHere(Entity)"/> on it answers <i>what could this expression have come
+        /// from</i> rather than <i>what does it become</i>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Smaller than the set it comes from whenever some of its rules are one-way, and
+        /// <see cref="MatchedRule.Reversal"/> on each says which. A set none of whose rules
+        /// reverses has no rules here, which is the difference being reported rather than hidden.
+        /// </para>
+        /// <para>
+        /// <b>Not a rule set to run.</b> It is first-match-wins like any other, so applying it and
+        /// then the set it came from need not return what you started with — the two sets order
+        /// their rules independently. And every rule in it undoes one in the set it came from, so
+        /// composing the two does not terminate. What it is for is asking.
+        /// </para>
+        /// </remarks>
+        internal MatchedRuleSet Reversed
+            => reversed ??= new MatchedRuleSet(
+                $"reversed {Name}",
+                rules.Select(rule => rule.Reversed).OfType<MatchedRule>().ToArray());
+
+        private MatchedRuleSet? reversed;
 
         /// <summary>
         /// The weakest tier any of its rules is justified at — derived rather than declared,

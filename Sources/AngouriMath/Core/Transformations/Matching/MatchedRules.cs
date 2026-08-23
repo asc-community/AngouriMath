@@ -28,6 +28,13 @@ namespace AngouriMath.Core.Transformations.Matching
     /// against the code it would replace.
     /// </para>
     /// <para>
+    /// <b>Both sides of every rule here are patterns</b>, so thirteen of the fourteen can be read
+    /// backwards — <see cref="MatchedRule.Reversed"/>, and
+    /// <c>Docs/Contributing/ReversibleRules.md</c> for what that requires and what it does not
+    /// claim. The fourteenth is the Pythagorean identity, which cannot, for a reason that is about
+    /// the mathematics rather than about the encoding.
+    /// </para>
+    /// <para>
     /// <b>What it costs to actually use one of these has been measured, once, end to end.</b>
     /// <see cref="DivisionPreparing"/> was put in place of its <c>switch</c> in
     /// <c>RewriteRules.DivisionPreparing</c> — which <c>Simplificator</c> runs twice per
@@ -59,7 +66,7 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(
                     MatchPattern.Any("a"),
                     MatchPattern.Node<Divf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Any("b"))),
-                bound => bound["a"] / bound["b"],
+                MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
                 // a * (1/b) and a/b are undefined at exactly the same points, but the quotient
                 // is a quotient either way, so this inherits division's own condition rather
                 // than adding one. Left at the conservative tier until the audit reaches it.
@@ -71,7 +78,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(
                     MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any("a")),
                     MatchPattern.Any("b")),
-                bound => bound["c"] * (bound["a"] / bound["b"]),
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Any("c"),
+                    MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
                 Soundness.SoundUnderAssumptions),
 
             // (c / a) * b -> c * (b / a), for a numeric c
@@ -80,7 +89,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(
                     MatchPattern.Node<Divf>(MatchPattern.Any<Number>("c"), MatchPattern.Any("a")),
                     MatchPattern.Any("b")),
-                bound => bound["c"] * (bound["b"] / bound["a"]),
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Any("c"),
+                    MatchPattern.Node<Divf>(MatchPattern.Any("b"), MatchPattern.Any("a"))),
                 Soundness.SoundUnderAssumptions));
 
         /// <summary>
@@ -109,7 +120,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Powf>(
                     MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
                     MatchPattern.Any<Integer>("c", whole => whole.IsPositive)),
-                bound => bound["a"].Pow(bound["c"]) / bound["b"].Pow(bound["c"]),
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("c")),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
                 Soundness.SoundUnderAssumptions),
 
             // (a * b) ^ c -> a^c * b^c, for a positive whole c
@@ -118,7 +131,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Powf>(
                     MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
                     MatchPattern.Any<Integer>("c", whole => whole.IsPositive)),
-                bound => bound["a"].Pow(bound["c"]) * bound["b"].Pow(bound["c"]),
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("c")),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
                 Soundness.SoundUnderAssumptions),
 
             // (a/b) * (c/d) -> (a*c) / (b*d). Before the two below it, which are more general.
@@ -127,7 +142,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(
                     MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
                     MatchPattern.Node<Divf>(MatchPattern.Any("c"), MatchPattern.Any("d"))),
-                bound => bound["a"] * bound["c"] / (bound["b"] * bound["d"]),
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c")),
+                    MatchPattern.Node<Mulf>(MatchPattern.Any("b"), MatchPattern.Any("d"))),
                 Soundness.SoundUnderAssumptions),
 
             new MatchedRule(
@@ -135,7 +152,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(
                     MatchPattern.Any("a"),
                     MatchPattern.Node<Divf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
-                bound => bound["a"] * bound["b"] / bound["c"],
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                    MatchPattern.Any("c")),
                 Soundness.SoundUnderAssumptions),
 
             new MatchedRule(
@@ -143,7 +162,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(
                     MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
                     MatchPattern.Any("c")),
-                bound => bound["a"] * bound["c"] / bound["b"],
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c")),
+                    MatchPattern.Any("b")),
                 Soundness.SoundUnderAssumptions),
 
             // (a/b) / (c/d) -> (a*d) / (b*c). Likewise before the two below it.
@@ -152,7 +173,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(
                     MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
                     MatchPattern.Node<Divf>(MatchPattern.Any("c"), MatchPattern.Any("d"))),
-                bound => bound["a"] * bound["d"] / (bound["b"] * bound["c"]),
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("d")),
+                    MatchPattern.Node<Mulf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
                 Soundness.SoundUnderAssumptions),
 
             new MatchedRule(
@@ -160,7 +183,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(
                     MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
                     MatchPattern.Any("c")),
-                bound => bound["a"] / (bound["b"] * bound["c"]),
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Node<Mulf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
                 Soundness.SoundUnderAssumptions),
 
             new MatchedRule(
@@ -168,7 +193,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(
                     MatchPattern.Any("a"),
                     MatchPattern.Node<Divf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
-                bound => bound["a"] * bound["c"] / bound["b"],
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c")),
+                    MatchPattern.Any("b")),
                 Soundness.SoundUnderAssumptions));
 
         /// <summary>
@@ -202,7 +229,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Powf>(
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
                     MatchPattern.Any("c")),
-                bound => new Powf(bound["a"], bound["b"] * bound["c"]),
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Node<Mulf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
                 Soundness.SoundUnderAssumptions,
                 // Two bindings at once, which no predicate on a single hole can express.
                 when: bound => bound["c"] is Integer
@@ -235,7 +264,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Sumf>(
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("p")),
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
-                bound => bound["k"] * (bound["p"] + bound["q"]),
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Any("k"),
+                    MatchPattern.Node<Sumf>(MatchPattern.Any("p"), MatchPattern.Any("q"))),
                 Soundness.Sound));
 
         /// <summary>
@@ -262,6 +293,13 @@ namespace AngouriMath.Core.Transformations.Matching
         /// <see cref="Soundness.Sound"/>: <c>sin²+cos² = 1</c> holds for every complex argument,
         /// with no branch to choose and no point excluded.
         /// </para>
+        /// <para>
+        /// <b>The one rule here with no backwards reading</b>, and the reason is the identity
+        /// rather than the way it is written: <c>1</c> does not say which angle it came from, so
+        /// <c>x</c> is bound on the left and mentioned nowhere on the right.
+        /// <see cref="MatchedRule.Reversal"/> is <see cref="RuleReversal.ReplacementDropsHoles"/>
+        /// and <see cref="MatchedRule.Reversed"/> is <see langword="null"/>.
+        /// </para>
         /// </remarks>
         internal static MatchedRuleSet PythagoreanIdentity { get; } = new(
             nameof(PythagoreanIdentity),
@@ -279,7 +317,7 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Exact(Integer.Create(2)))),
                 // "x" is bound by the first part and re-matched by the second, so the two terms
                 // are required to be about the same argument rather than merely both squared.
-                bound => 1 + bound["rest"],
+                MatchPattern.Node<Sumf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Any("rest")),
                 Soundness.Sound));
     }
 }
