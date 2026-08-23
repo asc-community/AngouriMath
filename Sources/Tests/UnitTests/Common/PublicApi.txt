@@ -117,6 +117,12 @@ AngouriMath.Core.ReasonOfFailureWhileParsing.ctor()
 AngouriMath.Core.ReasonOfFailureWhileParsing.ctor(AngouriMath.Core.ReasonOfFailureWhileParsing)
 AngouriMath.Core.ReasonOfFailureWhileParsing.op_Equality(AngouriMath.Core.ReasonOfFailureWhileParsing, AngouriMath.Core.ReasonOfFailureWhileParsing) : System.Boolean
 AngouriMath.Core.ReasonOfFailureWhileParsing.op_Inequality(AngouriMath.Core.ReasonOfFailureWhileParsing, AngouriMath.Core.ReasonOfFailureWhileParsing) : System.Boolean
+AngouriMath.Core.Serialization.EntityJsonConverter.CanConvert(System.Type) : System.Boolean
+AngouriMath.Core.Serialization.EntityJsonConverter.Read(System.Text.Json.Utf8JsonReader&, System.Type, System.Text.Json.JsonSerializerOptions) : AngouriMath.Entity
+AngouriMath.Core.Serialization.EntityJsonConverter.ReadAsPropertyName(System.Text.Json.Utf8JsonReader&, System.Type, System.Text.Json.JsonSerializerOptions) : AngouriMath.Entity
+AngouriMath.Core.Serialization.EntityJsonConverter.Write(System.Text.Json.Utf8JsonWriter, AngouriMath.Entity, System.Text.Json.JsonSerializerOptions) : System.Void
+AngouriMath.Core.Serialization.EntityJsonConverter.WriteAsPropertyName(System.Text.Json.Utf8JsonWriter, AngouriMath.Entity, System.Text.Json.JsonSerializerOptions) : System.Void
+AngouriMath.Core.Serialization.EntityJsonConverter.ctor()
 AngouriMath.Core.Transformations.DerivationPath.ExpressionsExplored { } : System.Int32
 AngouriMath.Core.Transformations.DerivationPath.Input { } : AngouriMath.Entity
 AngouriMath.Core.Transformations.DerivationPath.OfSimplifying(AngouriMath.Entity, System.Int32) : AngouriMath.Core.Transformations.DerivationPath
@@ -2603,6 +2609,7 @@ class AngouriMath.Core.ReasonOfFailureWhileParsing
 class AngouriMath.Core.ReasonOfFailureWhileParsing+InternalError
 class AngouriMath.Core.ReasonOfFailureWhileParsing+MissingOperator
 class AngouriMath.Core.ReasonOfFailureWhileParsing+Unknown
+class AngouriMath.Core.Serialization.EntityJsonConverter
 class AngouriMath.Core.Transformations.DerivationPath
 class AngouriMath.Core.Transformations.RewriteRecording
 class AngouriMath.Core.Transformations.RewriteRule
