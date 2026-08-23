@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -25,11 +25,20 @@ namespace AngouriMath.Tests.Core
     [Trait("Area", "Core")]
     public sealed class KnownLimitsAreNotBugsTest
     {
+        /// <summary>
+        /// Degree is no longer the gap; an irreducible factor of degree four or more is.
+        /// The sign table answers a polynomial inequality of any degree whose real roots it
+        /// can establish completely, and the number of real roots of an irreducible factor is
+        /// read off its discriminant — which decides it up to degree three and does not at
+        /// four, where a positive discriminant means four real roots or none. So
+        /// <c>x^4 + 1</c> and <c>x^4 - 2</c>, both irreducible over Q, are still refused,
+        /// and the three cases that used to be listed here are now answered — see
+        /// <c>SolveInequality.AHigherDegreePolynomialInequalityIsAnswered</c>.
+        /// </summary>
         [Theory]
-        [InlineData("x ^ 3 - x > 0")]
-        [InlineData("x ^ 4 - 5 * x ^ 2 + 4 > 0")]
         [InlineData("x ^ 4 + 1 > 0")]
-        [InlineData("x ^ 6 - 1 >= 0")]
+        [InlineData("x ^ 4 - 2 > 0")]
+        [InlineData("x ^ 4 + x + 1 > 0")]
         public void AHigherDegreeInequalitySaysItIsUnsupported(string statement)
         {
             var thrown = Assert.Throws<NotSufficientlySupportedException>(
@@ -43,6 +52,9 @@ namespace AngouriMath.Tests.Core
         [InlineData("x - 1 > 0")]
         [InlineData("x ^ 2 - 1 > 0")]
         [InlineData("x ^ 2 - 2 > 0")]
+        [InlineData("x ^ 3 - x > 0")]
+        [InlineData("x ^ 4 - 5 * x ^ 2 + 4 > 0")]
+        [InlineData("x ^ 6 - 1 >= 0")]
         public void TheDegreesThatAreSupportedStillAnswer(string statement)
         {
             var solutions = ((Entity)statement).Solve("x");

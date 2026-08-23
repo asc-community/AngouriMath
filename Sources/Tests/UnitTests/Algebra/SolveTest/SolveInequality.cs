@@ -5,6 +5,8 @@
 // Website: https://am.angouri.org.
 //
 
+using System.Collections.Generic;
+using PeterO.Numbers;
 using AngouriMath;
 using AngouriMath.Extensions;
 using Xunit;
@@ -222,5 +224,76 @@ namespace AngouriMath.Tests.Algebra
                     $"{inequality} was solved as {solutions}, which "
                     + (everywhere ? "does not hold" : "holds") + $" at x = {point}");
         }
+
+        /// <summary>
+        /// A univariate polynomial inequality of degree three or more, answered by the sign
+        /// table over its irreducible factors. Checked by which points the answer holds at
+        /// rather than by how it prints, since the endpoints of a cubic's intervals are
+        /// radicals with several equally correct writings.
+        /// </summary>
+        private static void AssertHoldsExactlyWhereItShould(string inequality, params double[] extraPoints)
+        {
+            Variable x = "x";
+            var solutions = (Set)((Entity)inequality).Solve(x).Simplify();
+            var points = new List<Entity>();
+            for (var numerator = -60; numerator <= 60; numerator++)
+                points.Add(Number.Rational.Create(EInteger.FromInt32(numerator), EInteger.FromInt32(17)));
+            foreach (var extra in extraPoints)
+                points.Add(Number.Rational.Create(EInteger.FromInt64((long)System.Math.Round(extra * 1000)), EInteger.FromInt32(1000)));
+            foreach (var point in points)
+            {
+                var truth = ((Entity)inequality).Substitute(x, point).EvalBoolean();
+                Assert.True(solutions.Contains(point) == truth,
+                    $"{inequality} was solved as {solutions}, which "
+                    + (truth ? "excludes" : "includes") + $" x = {point} where the inequality "
+                    + (truth ? "holds" : "does not hold"));
+            }
+        }
+
+        /// <summary>
+        /// Degree three and above used to be refused outright -- "Only linear and quadratic
+        /// polynomial inequalities are supported". The sign table answers them by factoring
+        /// into irreducibles over Q and reading the sign between consecutive roots, and the
+        /// discriminant of each factor is what says how many real roots there are to look
+        /// for. <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a>,
+        /// item 43.
+        /// </summary>
+        [Theory]
+        // Splits into linear factors.
+        [InlineData("x^3 - x > 0")]
+        [InlineData("x^3 - x < 0")]
+        [InlineData("x^3 - x >= 0")]
+        [InlineData("x^3 - x <= 0")]
+        [InlineData("x^4 - 5*x^2 + 4 > 0")]
+        [InlineData("x^4 - 5*x^2 + 4 < 0")]
+        // A repeated factor, where the sign does not change across the root.
+        [InlineData("(x - 1)^2 * (x + 2) > 0")]
+        [InlineData("(x - 1)^2 * (x + 2) < 0")]
+        [InlineData("(x - 1)^2 * (x + 2) >= 0")]
+        [InlineData("x^2 * (x - 3) < 0")]
+        // An irreducible quadratic factor with real roots: its discriminant is positive, so
+        // it contributes two endpoints that are not rational.
+        [InlineData("x^3 - 2*x + 1 > 0")]
+        [InlineData("x^3 - 2*x + 1 < 0")]
+        // An irreducible quadratic factor with no real roots at all, which contributes a
+        // constant sign and no endpoint.
+        [InlineData("(x - 1) * (x^2 + 1) > 0")]
+        [InlineData("(x^2 + x + 1) * (x + 2) < 0")]
+        [InlineData("x^4 + x^2 + 1 > 0")]
+        [InlineData("x^4 + x^2 + 1 < 0")]
+        // An irreducible cubic: one real root where the discriminant is negative, three
+        // where it is positive.
+        [InlineData("x^3 - 2 > 0")]
+        [InlineData("x^3 - 2 < 0")]
+        [InlineData("x^3 - 3*x + 1 > 0")]
+        [InlineData("x^3 - 3*x + 1 < 0")]
+        // A negative leading coefficient, and denominators in the coefficients.
+        [InlineData("-x^3 + x > 0")]
+        [InlineData("x^3/2 - x/8 > 0")]
+        // Degree five and six, still splitting into factors of degree at most three.
+        [InlineData("x^5 - 5*x^3 + 4*x > 0")]
+        [InlineData("(x^2 - 2) * (x^2 - 3) * (x + 1) > 0")]
+        public void AHigherDegreePolynomialInequalityIsAnswered(string inequality)
+            => AssertHoldsExactlyWhereItShould(inequality);
     }
 }
