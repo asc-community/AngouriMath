@@ -551,7 +551,6 @@ namespace AngouriMath
                         Domain.Rational => new Rationals(),
                         Domain.Real => new Reals(),
                         Domain.Complex => new Complexes(),
-                        _ => throw new AngouriBugException($"The domain {domain} is not one of those a special set exists for")
                         // Domain.Any is a documented member of the enum and means "no restriction",
                         // which is not a set this library has a node for -- Domains.IsWithinDomain
                         // answers it before ever reaching here. Either that or a value cast in from
@@ -572,7 +571,6 @@ namespace AngouriMath
                         "QQ" or "Rationals" => Domain.Rational,
                         "RR" or "Reals" => Domain.Real,
                         "CC" or "Complexes" => Domain.Complex,
-                        _ => throw new AngouriBugException($"The domain {domain} is not one of those a special set exists for")
                         // A name this switch does not know came from the caller: Create(string) is
                         // public, and the only other route in is a SPECIALSET token, every spelling
                         // of which is listed above. UnrecognizedDomainException has existed for
