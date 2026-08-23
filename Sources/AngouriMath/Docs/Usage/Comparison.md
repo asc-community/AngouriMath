@@ -304,18 +304,19 @@ integral.
 - 116 excluded: Rubi's antiderivative is non-elementary, so the problem would be unfair
 - 1,774 fair, all of which ran, at a 5-second budget
 
-**Answered 602 of 1,774 (33.9%)**: 602 where `Integrate`'s own answer checks out and 0 more that
+**Answered 604 of 1,774 (34.0%)**: 604 where `Integrate`'s own answer checks out and 0 more that
 only checked out after `Simplify()`. 1,118 unevaluated, **0 wrong**, 8 unverifiable on the reals,
-0 errors, 46 timeouts. Restricted to the 1,726 problems for which Rubi records a positive step
-count — the ones it answers optimally itself — the rate is 602/1,726 (34.9%).
+0 errors, 44 timeouts. Restricted to the 1,726 problems for which Rubi records a positive step
+count — the ones it answers optimally itself — the rate is 604/1,726 (35.0%).
 
-**The timeout column is not reproducible, and the solved column inherits that.** A previous run of
-the same slice answered 604 with 43 timeouts. All three problems that moved between the two runs
-moved *into* the timeout bucket — none became unevaluated and none became wrong — and timed on their
-own against this same build they take 1,744 ms, 1,579 ms and 835 ms, none of them close to the
-5-second budget. The harness cannot abort a thread, so a case that does time out leaks one, and the
-leaked threads slow every problem after it. So read this rate as ±3 problems, and read a *wrong*
-answer, of which there are none, as the number that means something.
+**The timeout column is not reproducible, and the solved column inherits that.** Two runs of *this
+same commit*, same slice and same 5-second budget, answered **604 with 44 timeouts** and **602 with
+46**. Every problem that differed between them moved into or out of the timeout bucket — none became
+unevaluated and none became wrong — and timed on their own against this build the three take
+1,744 ms, 1,579 ms and 835 ms, none close to the budget. `intbench` cannot abort a thread, so a case
+that does time out leaks one and the leaked threads slow every problem after it; how many leak
+depends on what else the machine is doing. So read this rate as **±3 problems**, and read the
+*wrong* answer count, which is 0 in both runs, as the number that means something.
 
 | Source | Run | Solved | +Simplify | Unevaluated | Wrong | Unverifiable | Error | Timeout | Rate |
 |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
@@ -328,7 +329,7 @@ answer, of which there are none, as the number that means something.
 | Jeffrey Problems | 9 | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0% |
 | Moses Problems | 107 | 54 | 0 | 47 | 0 | 4 | 0 | 2 | 50% |
 | Stewart Problems | 376 | 183 | 0 | 189 | 0 | 0 | 0 | 4 | 49% |
-| Timofeev Problems | 666 | 160 | 0 | 478 | 0 | 1 | 0 | 27 | 24% |
+| Timofeev Problems | 666 | 162 | 0 | 478 | 0 | 1 | 0 | 25 | 24% |
 | Welz Problems | 104 | 3 | 0 | 96 | 0 | 0 | 0 | 5 | 3% |
 | Wester Problems | 8 | 0 | 0 | 8 | 0 | 0 | 0 | 0 | 0% |
 
@@ -352,19 +353,19 @@ is differentiated back and compared to the integrand numerically at positive rea
 the raw nor the simplified answer could be evaluated on the reals at two or more points — the
 harness's symbolic parameters are bound to one fixed set of positive reals, so an integrand whose
 radicand is negative throughout has nowhere real to be compared. They are listed by name in the
-report rather than folded into either column, because a silent bucket reads as a clean one. The 46
+report rather than folded into either column, because a silent bucket reads as a clean one. The 44
 timeouts count against the rate, not out of the denominator.
 
 **The number to hold this against is the library's own corpus.** On the same 2.3.0 commit and the
 same day, `casbench` — another harness in the same workspace, over 121 problems written here —
-solves 116 of the 119 that have an elementary answer, 97.5%. The Rubi rate is 33.9%. Both are
+solves 116 of the 119 that have an elementary answer, 97.5%. The Rubi rate is 34.0%. Both are
 correct measurements of different things: the first says that the problems we chose are solved,
 the second says what happens to a list somebody else wrote down. Only the second is a measurement
 of the library rather than of the corpus.
 
 ## What none of this establishes
 
-- **A corpus is a list somebody wrote down.** 602 of 1,774 is a statement about Rubi's textbook
+- **A corpus is a list somebody wrote down.** 604 of 1,774 is a statement about Rubi's textbook
   problems at a 5-second budget. It is not a statement about integration in general, and a
   different suite would give a different number without the integrator changing.
 - **Nothing here adjudicates a disagreement.** Where this library and another give different
