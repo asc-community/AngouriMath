@@ -97,7 +97,7 @@ namespace AngouriMath.Functions.Algebra.Groebner
             const MonomialOrder computed = MonomialOrder.DegreeReverseLexicographic;
 
             var standard = StandardMonomials(
-                degreeReverseLexicographic, variableCount, computed, budget.MaxQuotientDimension);
+                degreeReverseLexicographic, variableCount, computed, GroebnerBudget.MaxQuotientDimension);
             if (standard is null)
             {
                 _ = budget.Allow(false, "quotient dimension");
@@ -126,7 +126,7 @@ namespace AngouriMath.Functions.Algebra.Groebner
 
             while (queue.Count > 0)
             {
-                if (!budget.Spend("time"))
+                if (!budget.Spend())
                     return null;
 
                 var monomial = queue.Min;
