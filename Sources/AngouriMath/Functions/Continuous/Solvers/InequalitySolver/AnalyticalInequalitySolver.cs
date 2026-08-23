@@ -98,9 +98,17 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         x);
                 }
             }
+            // Degree three and up, where the coefficients are rational: the sign of a
+            // polynomial between consecutive real roots is constant, so the answer is the
+            // union of the intervals where it is positive. See PolynomialSignTable for what
+            // makes the root list complete, which is the whole difficulty.
+            if (PolynomialSignTable.TrySolve(expr, x, out var bySign))
+                return bySign;
             throw new NotSufficientlySupportedException(
-                "Only linear and quadratic polynomial inequalities are supported; "
-                + "this one is of a higher degree");
+                "Only polynomial inequalities are supported, and of those only the ones "
+                + "whose real roots can be established completely: linear and quadratic "
+                + "with any coefficients, and higher degrees where the coefficients are "
+                + "rational and no irreducible factor is of degree five or more");
         }
 
         /// <summary>

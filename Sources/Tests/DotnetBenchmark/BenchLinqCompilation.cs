@@ -13,6 +13,7 @@ using System.Numerics;
 
 namespace DotnetBenchmark
 {
+    [MemoryDiagnoser]
     public class BenchLinqCompilation
     {
         public readonly Func<Complex, Complex, Complex> NormalSimpleLambda =

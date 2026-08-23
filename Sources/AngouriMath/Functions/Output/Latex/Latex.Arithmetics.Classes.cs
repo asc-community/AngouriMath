@@ -49,10 +49,13 @@ namespace AngouriMath
                                 };
                             case 1:
                                 if (longArray[index - 1] is Integer(-1))
-                                    return $"-{currIn.Latexize(currIn.LatexPriority < LatexPriority)}"; // display "-1 * x * y" as "-x \cdot y", only for the first -1
+                                    return $"-{currIn.Latexize(currIn.LatexPriority < LatexPriority || currIn is Modf)}"; // display "-1 * x * y" as "-x \cdot y", only for the first -1
                                 break;
                         }
-                        var currOut = currIn.Latexize(currIn.LatexPriority < LatexPriority);
+                        // A factor other than the first that is a `mod` needs brackets: \bmod sits
+                        // at this precedence level and is not associative, so "x \cdot y \bmod z"
+                        // reads as "(x y) mod z". 2 * (3 mod 2) is 2 and (2 * 3) mod 2 is 0.
+                        var currOut = currIn.Latexize(currIn.LatexPriority < LatexPriority || currIn is Modf);
 
                         return (longArray[index - 1], currIn) switch // whether we use juxtaposition and omit \cdot
                         {

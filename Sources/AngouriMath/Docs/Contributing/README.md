@@ -18,8 +18,12 @@ If you aren't sure about what to add, you may want to check the current projects
 6. <a href="./CanonicalForm.md">What canonical form means here</a> — and how it differs from
    "simplest". Why no canonical form exists for the whole language, what one means per node class,
    and where the library measurably stands against it
-7. <a href="./coding_rules.md">Coding rules</a> — sealed-or-abstract, immutability, and what may be
+7. <a href="./Trimming.md">Trimming and NativeAOT</a> — what the kernel promises by being marked
+   `IsAotCompatible`, what checks it, and the four shapes of run-time name lookup that break it
+8. <a href="./coding_rules.md">Coding rules</a> — sealed-or-abstract, immutability, and what may be
    made `public`
+8. <a href="./Packaging.md">What ships in which package</a> — the four published packages, what the
+   kernel measurably costs a caller, and the rule deciding where the next capability goes
 
 See also <a href="../../../../BREAKING-CHANGES.md">BREAKING-CHANGES.md</a>, where a change that makes
 the same input give a different answer is recorded, and

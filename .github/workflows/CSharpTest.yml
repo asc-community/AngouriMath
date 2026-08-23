@@ -1,5 +1,10 @@
 name: 'C# Test'
 
+# No path filters, on purpose: this is the suite, and every change is one it can break.
+# That also means it cannot carry the defect that silenced the benchmark for ninety-eight
+# merged PRs -- a leading "./" in a path filter matches nothing, because filters are globs
+# relative to the repository root. Check that before adding any filter here.
+# https://github.com/asc-community/AngouriMath/issues/775
 on:
   push:
     branches:
@@ -56,6 +61,28 @@ jobs:
         name: Report
         path: ./Sources/Tests/UnitTests/coverage.opencover.xml
         retention-days: 3
+
+    # The corpus gate reports solved / unsolved / wrong / error / timeout rather than pass or
+    # fail, and until now those numbers existed only in this job's log, which expires. This is
+    # the artefact half of https://github.com/asc-community/AngouriMath/issues/746 item 36; the
+    # per-commit history half is Sources/Tests/UnitTests/Corpus/corpus-baseline.tsv, which is
+    # committed, because an artefact cannot be diffed, cannot be attributed to the commit that
+    # moved a number, and expires.
+    #
+    # if: always() because a suite that fell over part way still measured the cases that ran,
+    # and those are the interesting ones when something has just broken. Uploaded from every
+    # operating system in the matrix: a verdict that differs between them is a finding.
+    #
+    # The glob spans bin/Debug and bin/Release because the two test steps above do not agree on
+    # the configuration -- the Windows one takes the default.
+    - name: 'Retain the corpus results'
+      if: always()
+      uses: actions/upload-artifact@v6
+      with:
+        name: corpus-report-${{ matrix.os }}-${{ github.sha }}
+        path: Sources/Tests/UnitTests/bin/**/corpus-report.tsv
+        if-no-files-found: warn
+        retention-days: 90
 
     - name: 'Send to codecov'
       if: ${{ matrix.os == 'windows-latest' }}

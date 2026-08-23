@@ -1,4 +1,5 @@
-﻿//
+
+//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -8,7 +9,10 @@
 /* THIS FILE IS AUTO-GENERATED */
 
 using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Numerics;
+using System.Reflection;
 
 namespace AngouriMath.Core.Compilation.IntoLinq
 {
@@ -243,5 +247,136 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 return -1;
             return 0;
         }
+
+        /// <summary>
+        /// True where <c>System.Numerics.Complex.IsNaN</c> is, spelled out because that overload is
+        /// .NET 7 and later and this assembly also targets netstandard2.0. A complex number is NaN
+        /// when neither part is infinite and at least one of them is not finite -- (NaN, +oo) is an
+        /// infinity, not a NaN.
+        /// </summary>
+        public static bool IsNaN(System.Numerics.Complex a)
+            => !(double.IsInfinity(a.Real) || double.IsInfinity(a.Imaginary))
+               && !(IsFinite(a.Real) && IsFinite(a.Imaginary));
+
+        private static bool IsFinite(double d) => !double.IsNaN(d) && !double.IsInfinity(d);
+
+        /// <summary>
+        /// What <see cref="CompilationProtocol"/> dispatches through, in place of looking a method
+        /// up on this class by name at run time. A name resolved at run time is invisible to the
+        /// trimmer and to the NativeAOT compiler, which is what
+        /// https://github.com/asc-community/AngouriMath/issues/363 is about; every entry here is a
+        /// direct reference the compiler emits an ldtoken for, so the method is reachable by
+        /// construction. It is also a dictionary lookup rather than an overload resolution, which
+        /// is what it costs per node of every compiled expression.
+        /// </summary>
+        [ConstantField]
+        internal static readonly Dictionary<(string Name, int ArgCount, Type Type), MethodInfo> Definitions = new()
+        {
+            { ("Log", 2, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>((a, b) => Log(a, b)) },
+            { ("Log", 2, typeof(double)), Def<double>((a, b) => Log(a, b)) },
+            { ("Log", 2, typeof(float)), Def<float>((a, b) => Log(a, b)) },
+            { ("Log", 2, typeof(long)), Def<long>((a, b) => Log(a, b)) },
+            { ("Log", 2, typeof(int)), Def<int>((a, b) => Log(a, b)) },
+            { ("Log", 2, typeof(BigInteger)), Def<BigInteger>((a, b) => Log(a, b)) },
+            { ("Pow", 2, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>((a, b) => Pow(a, b)) },
+            { ("Pow", 2, typeof(double)), Def<double>((a, b) => Pow(a, b)) },
+            { ("Pow", 2, typeof(float)), Def<float>((a, b) => Pow(a, b)) },
+            { ("Pow", 2, typeof(long)), Def<long>((a, b) => Pow(a, b)) },
+            { ("Pow", 2, typeof(int)), Def<int>((a, b) => Pow(a, b)) },
+            { ("Pow", 2, typeof(BigInteger)), Def<BigInteger>((a, b) => Pow(a, b)) },
+            { ("Sin", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Sin(a)) },
+            { ("Sin", 1, typeof(double)), Def<double>(a => Sin(a)) },
+            { ("Sin", 1, typeof(float)), Def<float>(a => Sin(a)) },
+            { ("Sin", 1, typeof(long)), Def<long>(a => Sin(a)) },
+            { ("Sin", 1, typeof(int)), Def<int>(a => Sin(a)) },
+            { ("Sin", 1, typeof(BigInteger)), Def<BigInteger>(a => Sin(a)) },
+            { ("Cos", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Cos(a)) },
+            { ("Cos", 1, typeof(double)), Def<double>(a => Cos(a)) },
+            { ("Cos", 1, typeof(float)), Def<float>(a => Cos(a)) },
+            { ("Cos", 1, typeof(long)), Def<long>(a => Cos(a)) },
+            { ("Cos", 1, typeof(int)), Def<int>(a => Cos(a)) },
+            { ("Cos", 1, typeof(BigInteger)), Def<BigInteger>(a => Cos(a)) },
+            { ("Tan", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Tan(a)) },
+            { ("Tan", 1, typeof(double)), Def<double>(a => Tan(a)) },
+            { ("Tan", 1, typeof(float)), Def<float>(a => Tan(a)) },
+            { ("Tan", 1, typeof(long)), Def<long>(a => Tan(a)) },
+            { ("Tan", 1, typeof(int)), Def<int>(a => Tan(a)) },
+            { ("Tan", 1, typeof(BigInteger)), Def<BigInteger>(a => Tan(a)) },
+            { ("Asin", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Asin(a)) },
+            { ("Asin", 1, typeof(double)), Def<double>(a => Asin(a)) },
+            { ("Asin", 1, typeof(float)), Def<float>(a => Asin(a)) },
+            { ("Asin", 1, typeof(long)), Def<long>(a => Asin(a)) },
+            { ("Asin", 1, typeof(int)), Def<int>(a => Asin(a)) },
+            { ("Asin", 1, typeof(BigInteger)), Def<BigInteger>(a => Asin(a)) },
+            { ("Acos", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Acos(a)) },
+            { ("Acos", 1, typeof(double)), Def<double>(a => Acos(a)) },
+            { ("Acos", 1, typeof(float)), Def<float>(a => Acos(a)) },
+            { ("Acos", 1, typeof(long)), Def<long>(a => Acos(a)) },
+            { ("Acos", 1, typeof(int)), Def<int>(a => Acos(a)) },
+            { ("Acos", 1, typeof(BigInteger)), Def<BigInteger>(a => Acos(a)) },
+            { ("Atan", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Atan(a)) },
+            { ("Atan", 1, typeof(double)), Def<double>(a => Atan(a)) },
+            { ("Atan", 1, typeof(float)), Def<float>(a => Atan(a)) },
+            { ("Atan", 1, typeof(long)), Def<long>(a => Atan(a)) },
+            { ("Atan", 1, typeof(int)), Def<int>(a => Atan(a)) },
+            { ("Atan", 1, typeof(BigInteger)), Def<BigInteger>(a => Atan(a)) },
+            { ("Cot", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Cot(a)) },
+            { ("Cot", 1, typeof(double)), Def<double>(a => Cot(a)) },
+            { ("Cot", 1, typeof(float)), Def<float>(a => Cot(a)) },
+            { ("Cot", 1, typeof(long)), Def<long>(a => Cot(a)) },
+            { ("Cot", 1, typeof(int)), Def<int>(a => Cot(a)) },
+            { ("Cot", 1, typeof(BigInteger)), Def<BigInteger>(a => Cot(a)) },
+            { ("Sec", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Sec(a)) },
+            { ("Sec", 1, typeof(double)), Def<double>(a => Sec(a)) },
+            { ("Sec", 1, typeof(float)), Def<float>(a => Sec(a)) },
+            { ("Sec", 1, typeof(long)), Def<long>(a => Sec(a)) },
+            { ("Sec", 1, typeof(int)), Def<int>(a => Sec(a)) },
+            { ("Sec", 1, typeof(BigInteger)), Def<BigInteger>(a => Sec(a)) },
+            { ("Csc", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Csc(a)) },
+            { ("Csc", 1, typeof(double)), Def<double>(a => Csc(a)) },
+            { ("Csc", 1, typeof(float)), Def<float>(a => Csc(a)) },
+            { ("Csc", 1, typeof(long)), Def<long>(a => Csc(a)) },
+            { ("Csc", 1, typeof(int)), Def<int>(a => Csc(a)) },
+            { ("Csc", 1, typeof(BigInteger)), Def<BigInteger>(a => Csc(a)) },
+            { ("Acot", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Acot(a)) },
+            { ("Acot", 1, typeof(double)), Def<double>(a => Acot(a)) },
+            { ("Acot", 1, typeof(float)), Def<float>(a => Acot(a)) },
+            { ("Acot", 1, typeof(long)), Def<long>(a => Acot(a)) },
+            { ("Acot", 1, typeof(int)), Def<int>(a => Acot(a)) },
+            { ("Acot", 1, typeof(BigInteger)), Def<BigInteger>(a => Acot(a)) },
+            { ("Asec", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Asec(a)) },
+            { ("Asec", 1, typeof(double)), Def<double>(a => Asec(a)) },
+            { ("Asec", 1, typeof(float)), Def<float>(a => Asec(a)) },
+            { ("Asec", 1, typeof(long)), Def<long>(a => Asec(a)) },
+            { ("Asec", 1, typeof(int)), Def<int>(a => Asec(a)) },
+            { ("Asec", 1, typeof(BigInteger)), Def<BigInteger>(a => Asec(a)) },
+            { ("Acsc", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Acsc(a)) },
+            { ("Acsc", 1, typeof(double)), Def<double>(a => Acsc(a)) },
+            { ("Acsc", 1, typeof(float)), Def<float>(a => Acsc(a)) },
+            { ("Acsc", 1, typeof(long)), Def<long>(a => Acsc(a)) },
+            { ("Acsc", 1, typeof(int)), Def<int>(a => Acsc(a)) },
+            { ("Acsc", 1, typeof(BigInteger)), Def<BigInteger>(a => Acsc(a)) },
+            { ("Abs", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Abs(a)) },
+            { ("Abs", 1, typeof(double)), Def<double>(a => Abs(a)) },
+            { ("Abs", 1, typeof(float)), Def<float>(a => Abs(a)) },
+            { ("Abs", 1, typeof(long)), Def<long>(a => Abs(a)) },
+            { ("Abs", 1, typeof(int)), Def<int>(a => Abs(a)) },
+            { ("Abs", 1, typeof(BigInteger)), Def<BigInteger>(a => Abs(a)) },
+            { ("Sgn", 1, typeof(System.Numerics.Complex)), Def<System.Numerics.Complex>(a => Sgn(a)) },
+            { ("Sgn", 1, typeof(double)), Def<double>(a => Sgn(a)) },
+            { ("Sgn", 1, typeof(float)), Def<float>(a => Sgn(a)) },
+            { ("Sgn", 1, typeof(long)), Def<long>(a => Sgn(a)) },
+            { ("Sgn", 1, typeof(int)), Def<int>(a => Sgn(a)) },
+            { ("Sgn", 1, typeof(BigInteger)), Def<BigInteger>(a => Sgn(a)) },
+        };
+
+        // An expression tree is how C# spells "the MethodInfo of this method" without a string:
+        // the compiler emits ldtoken for the call it contains, which both picks the overload at
+        // compile time and roots the method for the trimmer.
+        private static MethodInfo Def<T>(Expression<Func<T, T>> e)
+            => ((MethodCallExpression)e.Body).Method;
+
+        private static MethodInfo Def<T>(Expression<Func<T, T, T>> e)
+            => ((MethodCallExpression)e.Body).Method;
     }
 }

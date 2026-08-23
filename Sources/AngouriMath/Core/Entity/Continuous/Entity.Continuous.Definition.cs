@@ -23,7 +23,7 @@ namespace AngouriMath
         /// Describes any node that is a function (e. g. sin, cos, etc.) or calculus operator (e. g. derivative, integral, limit)
         /// but not an arithmetic operator or leaf
         /// </summary>
-        public abstract record Function : ContinuousNode
+        public abstract partial record Function : ContinuousNode
         {
             internal override Priority Priority => Priority.Func;
         }
@@ -31,7 +31,7 @@ namespace AngouriMath
         /// <summary>
         /// Describes any function that is related to trigonometry
         /// </summary>
-        public abstract record TrigonometricFunction : Function
+        public abstract partial record TrigonometricFunction : Function
         {
 
         }

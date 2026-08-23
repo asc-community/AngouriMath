@@ -15,12 +15,172 @@ read first.
 
 ---
 
-## Unreleased
+## Unreleased — since 2.3.0
 
 ### At a glance
 
 | Silent? | What | Was | Is |
 |---|---|---|---|
+| | `"x ^ 3 - x > 0".ToEntity().Solve("x")`, and every polynomial inequality of degree three or more | `NotSufficientlySupportedException: Only linear and quadratic polynomial inequalities are supported` | `(-1; 0) \/ (1; +oo)` — the solution set |
+| **Silent** | `"a implies (b implies c)".ToEntity().Stringize()` | `a implies b implies c`, which reads back as `(a implies b) implies c` | `a implies (b implies c)` |
+| | `"(a implies b) implies c".ToEntity().Stringize()` | `(a implies b) implies c` | `a implies b implies c` |
+| **Silent** | `@"A \ (B \ C)".ToEntity().Stringize()`, and `Latexize` | `A \ B \ C` / `A \setminus B \setminus C` | `A \ (B \ C)` / `A \setminus \left(B \setminus C\right)` |
+| **Silent** | `@"A \ (B \/ C)".ToEntity().Stringize()`, and `Latexize` | `A \ B \/ C` / `A \setminus B \cup C` | `A \ (B \/ C)` / `A \setminus \left(B \cup C\right)` |
+| **Silent** | `@"A \/ (B \ C)".ToEntity().Stringize()`, and `Latexize` | `A \/ B \ C` / `A \cup B \setminus C` | `A \/ (B \ C)` / `A \cup \left(B \setminus C\right)` |
+| **Silent** | `"(x provided p) provided q".ToEntity().Stringize()`, and `Latexize` | `x provided p provided q`, which reads back as `x provided (p provided q)` | `(x provided p) provided q` |
+| **Silent** | `"a in (b in c)".ToEntity().Stringize()`, and `Latexize` | `a in b in c` / `a \in b \in c` | `a in (b in c)` / `a \in \left(b \in c\right)` |
+| **Silent** | `"x * (y mod z)".ToEntity().Stringize()`, and `Latexize` | `x * y mod z` / `x y \bmod z` | `x * (y mod z)` / `x \left(y \bmod z\right)` |
+| **Silent** | `"-1 * (y mod z)".ToEntity().Stringize()` | `-y mod z` | `-(y mod z)` |
+| | any expression mixing a number with a `Complex` argument, `Compile`d in a NativeAOT app — `"x + 1".Compile<Complex, Complex>("x")` | `UncompilableNodeException: ... The binary operator Add is not defined for the types 'System.Numerics.Complex' and 'System.Numerics.Complex'` | the compiled function, answering as it does under the JIT |
+| | `Compile` to a nullable integral return type in a NativeAOT app | `AngouriBugException: IsNaN method expected for type System.Double`, which took the process down | the compiled function |
+| **Silent** | an app publishing with `PublishTrimmed` or NativeAOT | `AngouriMath.dll` was copied in whole, being unmarked | it is trimmed with the rest, since the assembly now declares `IsTrimmable` |
+
+### A polynomial inequality of degree three or more is answered
+
+**Was** — every univariate polynomial inequality above degree two was refused outright, whatever its
+coefficients and however easily it factored:
+
+```
+"x ^ 3 - x > 0".ToEntity().Solve("x")
+    NotSufficientlySupportedException: Only linear and quadratic polynomial inequalities are
+    supported; this one is of a higher degree
+```
+
+**Is** — the solution set, where the real roots can be established completely:
+
+```
+"x ^ 3 - x > 0".ToEntity().Solve("x")                   (-1; 0) \/ (1; +oo)
+"x ^ 3 - x >= 0".ToEntity().Solve("x")                  { 0, 1, -1 } \/ (-1; 0) \/ (1; +oo)
+"(x - 1) ^ 2 * (x + 2) > 0".ToEntity().Solve("x")       (-2; 1) \/ (1; +oo)
+"x ^ 4 - 5 * x ^ 2 + 4 > 0".ToEntity().Solve("x")       (-oo; -2) \/ (-1; 1) \/ (2; +oo)
+"x ^ 3 - 2 * x + 1 > 0".ToEntity().Solve("x")           ((-1 - sqrt(5)) / 2; (-1 + sqrt(5)) / 2) \/ (1; +oo)
+"x ^ 3 - 2 > 0".ToEntity().Solve("x")                   (2 ^ (1/3); +oo)
+"x ^ 5 - 5 * x ^ 3 + 4 * x > 0".ToEntity().Solve("x")   (-2; -1) \/ (0; 1) \/ (2; +oo)
+"x ^ 4 + 1 > 0".ToEntity().Solve("x")                   (-oo; +oo)
+"x ^ 4 - 2 > 0".ToEntity().Solve("x")                   (-oo; -2 ^ (1/4)) \/ (2 ^ (1/4); +oo)
+"x ^ 4 - 10 * x ^ 2 + 1 > 0".ToEntity().Solve("x")      (-oo; -sqrt((10 + 4 * sqrt(6)) / 2))
+                                                          \/ (-sqrt((10 - 4 * sqrt(6)) / 2); sqrt((10 - 4 * sqrt(6)) / 2))
+                                                          \/ (sqrt((10 + 4 * sqrt(6)) / 2); +oo)
+```
+
+A polynomial has one sign on each open interval between consecutive real roots, so the answer is the
+union of the intervals where that sign is positive. What makes it an answer rather than a guess is
+that the list of real roots is *complete*: the polynomial is written as a product of powers of
+irreducibles over `Q`, verified to multiply back, and the number of real roots of each irreducible
+factor is read off its **discriminant** — two where a quadratic factor's is positive and none where
+it is negative, three and one respectively for a cubic, and — for a quartic — the discriminant
+with the two auxiliary quantities of the standard criterion, a negative discriminant meaning two
+real roots and a positive one four or none. A missed root would merge two intervals of
+opposite sign and report the wrong half of one as the solution, so this is the difference between
+the feature and a wrong answer.
+
+**And the refusal that remains is a different one.** The gap is no longer degree; it is an
+irreducible factor of degree five or more, where there is no criterion for the number of real roots
+and no formula for the roots either. So the message changed too:
+
+```
+"x ^ 5 - x - 1 > 0".ToEntity().Solve("x")
+    NotSufficientlySupportedException: Only polynomial inequalities are supported, and of those
+    only the ones whose real roots can be established completely: linear and quadratic with any
+    coefficients, and higher degrees where the coefficients are rational and no irreducible factor
+    is of degree five or more
+```
+
+Code that caught `NotSufficientlySupportedException` still catches it; code that matched on the
+message text does not. Linear and quadratic inequalities are untouched, including the symbolic
+coefficients and the case splits on their signs, which the sign table does not do — it takes only
+rational coefficients, and only from degree three up.
+
+[#746](https://github.com/asc-community/AngouriMath/issues/746) item 43.
+
+### A printed operator that is not associative keeps its brackets
+
+`Stringize` is the library's own input format: parsing what it prints has to give back the
+expression it printed, and that is what [`StringizeRoundTripTest`](Sources/Tests/UnitTests/Convenience/StringizeRoundTripTest.cs)
+enforces. Six operators broke it, five of them in the same way — the printer left the **right**
+operand unbracketed at its own precedence level, while the grammar folds that level to the left, so
+the printed text came back re-associated. The sixth, `provided`, is the mirror: it is the one infix
+operator the grammar folds to the **right**, so there it is the *left* operand that mis-associates.
+
+Four of the six are not associative, so the re-association changed the answer and not merely
+the shape. Measured on a build of 2.3.0 and a build of this branch:
+
+| input | 2.3.0 printed | 2.3.0 read that back as | value moved |
+|---|---|---|---|
+| `false implies (true implies false)` | `False implies True implies False` | `(False implies True) implies False` | `True` → `False` |
+| `{ 1, 2, 3 } \ ({ 2, 3 } \ { 3 })` | `{ 1, 2, 3 } \ { 2, 3 } \ { 3 }` | `({ 1, 2, 3 } \ { 2, 3 }) \ { 3 }` | `{ 1, 3 }` → `{ 1 }` |
+| `{ 1, 2 } \/ ({ 3 } \ { 1, 2 })` | `{ 1, 2 } \/ { 3 } \ { 1, 2 }` | `({ 1, 2 } \/ { 3 }) \ { 1, 2 }` | `{ 1, 2, 3 }` → `{ 3 }` |
+| `{ 1, 2 } \ ({ 2 } \/ { 3 })` | `{ 1, 2 } \ { 2 } \/ { 3 }` | `({ 1, 2 } \ { 2 }) \/ { 3 }` | `{ 1 }` → `{ 1, 3 }` |
+| `2 * (3 mod 2)` | `2 * 3 mod 2` | `(2 * 3) mod 2` | `2` → `0` |
+
+On this branch each of those prints its brackets and reads back as itself, so the value column
+no longer moves.
+
+`implies` also changes in the other direction, because its printer had the rule the wrong way
+round rather than missing: it bracketed the **assumption** — the operand that never needs it under
+a left fold — and not the conclusion. So `(a implies b) implies c`, which used to print as
+`(a implies b) implies c`, now prints flat as `a implies b implies c`. Both read back as the same
+expression; the brackets were redundant, and printing them is what made the genuinely ambiguous
+case look no different.
+
+`\/` and `mod` are bracketed only against the operator that makes them ambiguous, because both
+share a precedence level with an operator that is not associative while being associative
+themselves:
+
+- `A \/ (B \/ C)` still prints `A \/ B \/ C`; `A \/ (B \ C)` now prints `A \/ (B \ C)`.
+- `x * (y * z)` still prints `x * y * z` and `x * (y / z)` still prints `x * y / z`;
+  `x * (y mod z)` now prints `x * (y mod z)`.
+- `-1 * (y mod z)` printed `-y mod z` and now prints `-(y mod z)`.
+
+`provided` is bracketed on the other side, and it is the case where the value is *not* the test.
+`(x provided p) provided q` and `x provided (p provided q)` are both `x` exactly when `p` and `q`
+hold, so no answer moves — and they are different expressions, which is what the round trip is
+about. It printed flat and read back as the right-nested one.
+
+**What has not changed, deliberately.** An operator that *is* associative still prints flat, so
+`x + (y + z)` still prints `x + y + z`, and likewise for `*`, `and`, `or`, `xor`, `unite` and
+`intersect`. Those come back as a different `Entity` — a left-nested tree instead of
+a right-nested one — and as the same number, because the bracketing carries no mathematics. The
+alternative would print every expanded polynomial as a right-nested pile of parentheses:
+`"(a + b + c + d) ^ 2".ToEntity().Expand()` prints, on both versions,
+`d ^ 2 + 2 * c * d + c ^ 2 + 2 * b * d + 2 * b * c + b ^ 2 + 2 * a * d + 2 * a * c + 2 * a * b + a ^ 2`,
+and its sum is right-nested throughout. `StringizeRoundTripTest` pins that decision so that it
+stays one.
+
+**LaTeX.** `Latexize` moves for the four set and `mod` cases above and **not** for `implies`.
+[CSharpMath.Evaluation](https://github.com/verybadcat/CSharpMath/blob/master/CSharpMath.Evaluation/Evaluation.cs),
+which reads our LaTeX back, folds `\cup`, `\setminus`, `\in`, `\cdot` and `\bmod` to the left at
+the same precedences this grammar uses — so those needed the same brackets — but folds `\to` to the
+**right**, which is the usual convention for implication and is what `Latexize` was already
+bracketing for. The change only ever adds `\left(`/`\right)` groups, which CSharpMath already
+parses, so nothing downstream needs a matching change
+([#822](https://github.com/asc-community/AngouriMath/issues/822)).
+
+### `Compile` works in a trimmed or NativeAOT application
+
+The Linq compilation path found the method for each node by name —
+`typeof(MathAllMethods).GetMethod(name, ...)` for the mathematical functions,
+`expr.Type.GetMethod("IsNaN")` for the NaN test — and left the operators and conversions between
+`Complex`, `BigInteger` and the primitives to `Expression.Add` and `Expression.Convert`, which find
+them by reflecting over the operand type. A name resolved at run time is invisible to the trimmer,
+so the members were removed and the lookups came back empty. All four are now tables of members
+named at compile time: `MathAllMethods.Definitions` generated beside the methods it dispatches to,
+and `nanChecks`, `operators` and `conversionOperators` in `CompilationProtocol`.
+
+Nothing changes under the JIT — the same `MethodInfo` reaches the same `Expression` node — and the
+44 assertions of `Sources/Tests/AotSmokeTest` give byte-identical output under the JIT, a trimmed
+publish and a NativeAOT publish. What changed is that the second and third of those now run at all:
+before this, six of them threw and the seventh aborted the process.
+
+`AngouriMath` is marked `IsAotCompatible` for `net8.0` and later as a result, which is also the
+silent half of the entry above: a trimmer reads that as permission to remove unused code from
+inside the assembly, so an app that trims will now get a smaller `AngouriMath` rather than all of
+it. That is the point of the mark, and
+[`Docs/Contributing/Trimming.md`](Sources/AngouriMath/Docs/Contributing/Trimming.md) says what
+keeps it true.
+
+[#363](https://github.com/asc-community/AngouriMath/issues/363),
+[#746](https://github.com/asc-community/AngouriMath/issues/746) item 79.
 | **Silent** | `"derivative(y, x) + y - x".SolveEquation("y")`, and the same equation written `= 0` | `{ x }`, which is not a root of it | `{ y : derivative(y, x) + y - x = 0 }` |
 | **Silent** | `"integral(y, x) + y - x".SolveEquation("y")` | `{ -(C + -x) / (x + 1) }` | `{ y : integral(y, x) + y - x = 0 }` |
 | **Silent** | `"limit(y, x, 0) + y - x".SolveEquation("y")` | `{ x / 2 }` | `{ y : limit(y, x, 0) + y - x = 0 }` |

@@ -38,20 +38,16 @@ namespace AngouriMath.Core.Transformations
     /// <see cref="Entity.Simplify(int)"/> is — is unaffected.
     /// </para>
     /// <para>
-    /// <b>What this is not.</b> It records rewrites — which is what
-    /// <a href="https://github.com/asc-community/AngouriMath/issues/28">#28</a> asks for —
-    /// and not everything <see cref="Entity.Simplify(int)"/> does. Simplification also
-    /// expands, factorises, divides polynomials, minimises boolean expressions and then
-    /// *chooses* among the candidates by a complexity metric; the steps below are the
-    /// rewrites, in the order they fired, across every candidate that was generated,
-    /// including the ones that lost. Reading them as a route from the input to the returned
-    /// answer would be reading in something that is not there.
-    /// </para>
-    /// <para>
-    /// <see cref="Steps"/> is that raw list. <see cref="Derivation"/> is the same list with the
-    /// normalisation and the repeats taken out, which is what a reader asking "how did it get
-    /// there" wants — 270 rewrites down to 6 on <c>x^(-1)/(y/z)</c>. It is still a set of
-    /// rewrites rather than a path; the paragraph above applies to both.
+    /// <b>Three views, and they answer different questions.</b> <see cref="Steps"/> is every
+    /// rewrite that fired, on the subexpression it matched, across every candidate
+    /// <see cref="Entity.Simplify(int)"/> generated including the ones that lost.
+    /// <see cref="Derivation"/> is the same list with the normalisation and the repeats taken
+    /// out — 270 rewrites down to 5 on <c>x^(-1)/(y/z)</c> — and it is still a *set* of
+    /// rewrites, so reading it in order does not walk from the input to the answer.
+    /// <see cref="PathFrom(Entity, Entity)"/> is the one that does: whole expressions, in
+    /// order, from the input to the value that was returned, with the losing candidates left
+    /// out. Ask the first what fired, the second which identities were used, the third how it
+    /// got there.
     /// </para>
     /// </remarks>
     /// <example>
@@ -84,6 +80,22 @@ namespace AngouriMath.Core.Transformations
         /// write rather than a merged list.
         /// </summary>
         private readonly ConcurrentQueue<RewriteStep> steps = new();
+
+        /// <summary>
+        /// One whole expression turning into another, which is what a path is made of. Kept
+        /// beside <see cref="steps"/> rather than derived from it, because a rewrite pass
+        /// records the subexpressions it changed and never the expression that contained
+        /// them — so the two grains are different measurements and neither reconstructs the
+        /// other.
+        /// </summary>
+        private readonly ConcurrentQueue<Edge> edges = new();
+
+        /// <summary>
+        /// How many rewrites have been recorded, so that an edge can say which of them fired
+        /// inside it by index. <see cref="ConcurrentQueue{T}.Count"/> walks the segments, and
+        /// this is read twice per edge.
+        /// </summary>
+        private int recorded;
 
         private volatile bool closed;
 
@@ -128,7 +140,7 @@ namespace AngouriMath.Core.Transformations
         /// way in each, so the raw list repeats itself many times over.
         /// </para>
         /// <para>
-        /// On <c>x^(-1)/(y/z)</c> that is 270 recorded rewrites down to 6.
+        /// On <c>x^(-1)/(y/z)</c> that is 270 recorded rewrites down to 5.
         /// </para>
         /// <para>
         /// <b>This is a set of rewrites, not a path.</b> Each entry is a real rewrite that really
@@ -136,9 +148,8 @@ namespace AngouriMath.Core.Transformations
         /// forms and keeps the best, so these come from several branches and some belong to
         /// candidates that were discarded. Reading them in order does not walk from the input to
         /// the answer, and a step's <see cref="RewriteStep.Before"/> is a subexpression rather than
-        /// the whole expression at that moment. Producing a single path, with a whole expression at
-        /// each stage, needs the simplifier to record which candidate each rewrite belonged to,
-        /// which it does not do yet.
+        /// the whole expression at that moment. <see cref="PathFrom(Entity, Entity)"/> is the view
+        /// that does walk it, at the grain of whole expressions.
         /// </para>
         /// </remarks>
         public IReadOnlyList<RewriteStep> Derivation
@@ -185,6 +196,134 @@ namespace AngouriMath.Core.Transformations
             if (closed)
                 return;
             steps.Enqueue(new RewriteStep(ruleSet, rule, before, after));
+            Interlocked.Increment(ref recorded);
+        }
+
+        /// <summary>Where the rewrite list stands now, so that an edge can bracket its own.</summary>
+        internal int Mark() => Volatile.Read(ref recorded);
+
+        /// <summary>
+        /// One whole expression having become another. <paramref name="from"/> is the
+        /// <see cref="Mark()"/> taken before the work started.
+        /// </summary>
+        internal void Note(Entity before, Entity after, RewriteRuleSet? ruleSet, string name, int from)
+        {
+            if (closed)
+                return;
+            edges.Enqueue(new Edge(before, after, ruleSet, name, from, Mark()));
+        }
+
+        /// <summary>
+        /// How <paramref name="input"/> became <paramref name="result"/>: the steps, in order,
+        /// each one a whole expression. <see langword="null"/> where this recording holds no
+        /// chain of steps joining the two.
+        /// </summary>
+        /// <param name="input">The expression the work started from.</param>
+        /// <param name="result">The value it returned.</param>
+        /// <remarks>
+        /// <para>
+        /// Reconstructed rather than logged, and it has to be: the simplifier does not walk one
+        /// expression to an answer, it grows a family of candidates and keeps the cheapest, so
+        /// "the route" only exists once the winner is known. Every edge here is one the engine
+        /// really traversed; what this does is pick out the ones joining these two ends.
+        /// </para>
+        /// <para>
+        /// The shortest such chain is taken, breadth-first over the edges in the order they were
+        /// recorded — so the answer is the same every time for the same work, and a candidate the
+        /// search abandoned cannot appear, since nothing leads from it to the result.
+        /// </para>
+        /// <para>
+        /// <see langword="null"/> means "this recording cannot account for that", not "there was
+        /// no route". It is what you get from a result this recording never saw produced — a
+        /// different operation, or work done before the recording opened.
+        /// </para>
+        /// </remarks>
+        public DerivationPath? PathFrom(Entity input, Entity result)
+        {
+            if (input is null)
+                throw new ArgumentNullException(nameof(input));
+            if (result is null)
+                throw new ArgumentNullException(nameof(result));
+
+            var all = edges.ToArray();
+            var produced = new HashSet<Entity>();
+            var outgoing = new Dictionary<Entity, List<int>>();
+            for (var i = 0; i < all.Length; i++)
+            {
+                produced.Add(all[i].After);
+                if (!outgoing.TryGetValue(all[i].Before, out var fromHere))
+                    outgoing[all[i].Before] = fromHere = new List<int>();
+                fromHere.Add(i);
+            }
+
+            // Already there. A path of length zero, and not a failure: `2 + 2` simplifies to
+            // `4` before the candidate search starts, and asking how is a fair question with
+            // "it did not have to do anything" as the answer.
+            if (input == result)
+                return new DerivationPath(input, result, Array.Empty<DerivationStep>(), produced.Count);
+
+            var reachedBy = new Dictionary<Entity, int>();
+            var seen = new HashSet<Entity> { input };
+            var frontier = new Queue<Entity>();
+            frontier.Enqueue(input);
+            var arrived = false;
+            while (frontier.Count > 0 && !arrived)
+                if (outgoing.TryGetValue(frontier.Dequeue(), out var fromHere))
+                    foreach (var edge in fromHere)
+                    {
+                        var next = all[edge].After;
+                        if (!seen.Add(next))
+                            continue;
+                        reachedBy[next] = edge;
+                        if (next == result)
+                        {
+                            arrived = true;
+                            break;
+                        }
+                        frontier.Enqueue(next);
+                    }
+            if (!arrived)
+                return null;
+
+            var chain = new List<int>();
+            for (var at = result; reachedBy.TryGetValue(at, out var edge); at = all[edge].Before)
+                chain.Add(edge);
+            chain.Reverse();
+
+            var recordedSteps = steps.ToArray();
+            var path = new List<DerivationStep>(chain.Count);
+            foreach (var edge in chain)
+            {
+                var (before, after, ruleSet, name, from, to) = all[edge];
+                // Clamped because a recording that is still being written to can hand back
+                // fewer rewrites than an edge counted, and a torn read is not worth throwing over.
+                from = Math.Min(from, recordedSteps.Length);
+                to = Math.Min(to, recordedSteps.Length);
+                var rewrites = to > from ? new RewriteStep[to - from] : Array.Empty<RewriteStep>();
+                Array.Copy(recordedSteps, from, rewrites, 0, rewrites.Length);
+                path.Add(new DerivationStep(before, after, ruleSet, name, rewrites));
+            }
+            return new DerivationPath(input, result, path, produced.Count);
+        }
+
+        /// <summary>One recorded whole-expression step, before the rewrites inside it are attached.</summary>
+        private readonly struct Edge
+        {
+            internal Edge(Entity before, Entity after, RewriteRuleSet? ruleSet, string name, int from, int to)
+                => (this.before, this.after, this.ruleSet, this.name, this.from, this.to)
+                    = (before, after, ruleSet, name, from, to);
+
+            private readonly Entity before, after;
+            private readonly RewriteRuleSet? ruleSet;
+            private readonly string name;
+            private readonly int from, to;
+
+            internal Entity After => after;
+
+            internal Entity Before => before;
+
+            internal void Deconstruct(out Entity before, out Entity after, out RewriteRuleSet? ruleSet, out string name, out int from, out int to)
+                => (before, after, ruleSet, name, from, to) = (this.before, this.after, this.ruleSet, this.name, this.from, this.to);
         }
     }
 }
