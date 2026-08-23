@@ -115,5 +115,65 @@ namespace AngouriMath.Tests.Common
             => Assert.Equal(
                 Entity.Boolean.True,
                 "{ x : x > 0 } = { y : y > 0 }".ToEntity().Simplify());
+
+        /// <summary>
+        /// A summation and a product bind their index: the value of sum(k, k, 1, n) depends on n
+        /// and not on any k outside it.
+        /// https://github.com/asc-community/AngouriMath/issues/1019
+        /// </summary>
+        [Theory]
+        [InlineData("sum(k, k, 1, n)")]
+        [InlineData("product(k, k, 1, n)")]
+        [InlineData("sum(k * 2, k, 1, n)")]
+        public void ARangeBinderBindsItsIndex(string exprRaw)
+            => Assert.Equal(SeqVar("n"), exprRaw.ToEntity().FreeVariables);
+
+        /// <summary>
+        /// The index is bound over the bounds as well as the body, which is what
+        /// <see cref="AngouriMath.Core.Binding"/> says of itself.
+        /// </summary>
+        [Fact]
+        public void TheIndexIsBoundOverTheBoundsToo()
+            => Assert.Equal(SeqVar("n"), "sum(k, k, k, n)".ToEntity().FreeVariables);
+
+        /// <summary>
+        /// A definite integral binds its variable between its limits.
+        /// </summary>
+        [Theory]
+        [InlineData("integral(t * b, t, 0, 1)")]
+        [InlineData("integral(t, t, 0, b)")]
+        public void ADefiniteIntegralBindsItsVariable(string exprRaw)
+            => Assert.Equal(SeqVar("b"), exprRaw.ToEntity().FreeVariables);
+
+        /// <summary>
+        /// And the two that look like the same shape and are not. The antiderivative of
+        /// <c>t * b</c> over <c>t</c> is <c>b * t ^ 2 / 2 + C</c>, still a function of <c>t</c>;
+        /// <c>d/dt</c> denotes a function of <c>t</c> as well. Neither binds, and a sweep that
+        /// makes them bind makes them wrong.
+        /// </summary>
+        [Theory]
+        [InlineData("integral(t * b, t)")]
+        [InlineData("derivative(t * b, t)")]
+        public void AnIndefiniteIntegralAndADerivativeDoNotBind(string exprRaw)
+            => Assert.Equal(
+                SeqVar("b", "t").OrderBy(v => v.Name),
+                exprRaw.ToEntity().FreeVariables.OrderBy(v => v.Name));
+
+        /// <summary>
+        /// Binding the index does not hide it from <see cref="Entity.Vars"/>, which means every
+        /// name occurring and says so.
+        /// </summary>
+        [Fact]
+        public void ABoundIndexStillOccurs()
+            => Assert.Equal(
+                SeqVar("k", "n").OrderBy(v => v.Name),
+                "sum(k, k, 1, n)".ToEntity().Vars.OrderBy(v => v.Name));
+
+        /// <summary>Only inside the binder that declares it.</summary>
+        [Fact]
+        public void AnIndexOutsideItsBinderIsStillFree()
+            => Assert.Equal(
+                SeqVar("k", "n").OrderBy(v => v.Name),
+                "sum(k, k, 1, n) + k".ToEntity().FreeVariables.OrderBy(v => v.Name));
     }
 }
