@@ -75,7 +75,8 @@ namespace AngouriMath.Core
             {
                 foreach (var row in alreadyHas)
                     if (row.Count != columnCount)
-                        throw new AngouriBugException($"Invalid usage of {nameof(MatrixBuilder)}");
+                        throw new AngouriBugException(
+                            $"A row of {row.Count} entries cannot go into a {nameof(MatrixBuilder)} of {columnCount} columns");
                 raw = alreadyHas;
             }
         }
@@ -94,7 +95,8 @@ namespace AngouriMath.Core
             if (row.Count == columnCount)
                 raw.Add(row);
             else
-                throw new InvalidMatrixOperationException($"Incorrect usage of {nameof(MatrixBuilder)}"); 
+                throw new InvalidMatrixOperationException(
+                    $"A row of {row.Count} entries cannot be added to a {nameof(MatrixBuilder)} of {columnCount} columns"); 
         }
 
         /// <summary>

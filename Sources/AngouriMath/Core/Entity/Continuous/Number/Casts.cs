@@ -98,7 +98,9 @@ namespace AngouriMath
                 }
                 catch (OverflowException)
                 {
-                    throw new InvalidNumberException("The given precision is too high");
+                    throw new InvalidNumberException(
+                        $"The decimal precision setting is {MathS.Settings.DecimalPrecisionContext.Value.Precision}, "
+                        + "which is too high to fit in an int32");
                 }
 
                 return re.EDecimal.ToSizedEInteger(plannedPrecision * 3).ToBigInteger();

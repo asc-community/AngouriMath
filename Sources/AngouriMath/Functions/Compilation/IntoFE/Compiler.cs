@@ -14,7 +14,9 @@ namespace AngouriMath
     partial record Entity
     {
         private protected virtual void CompileNode(Compiler compiler)
-            => throw new UncompilableNodeException($"The node of type {GetType()} does not support compilation. Feel free to report it as an issue on our official repository.");
+            => throw new UncompilableNodeException(
+                $"`{Stringize()}`, a node of type {GetType()}, does not support compilation. "
+                + "Feel free to report it as an issue on our official repository.");
         /// <summary>
         /// Recursive compilation that pushes intructions to the stack (<see cref="Compiler.Instructions"/>)
         /// </summary>
@@ -64,7 +66,7 @@ namespace AngouriMath
         partial record Matrix
         {
             private protected override void CompileNode(Compiler compiler) =>
-                throw new UncompilableNodeException($"Tensors cannot be compiled");
+                throw new UncompilableNodeException($"A {nameof(Matrix)} cannot be compiled: `{Stringize()}`");
         }
 
         // Each function and operator processing
@@ -262,19 +264,19 @@ namespace AngouriMath
         public partial record Derivativef
         {
             private protected override void CompileNode(Compiler compiler) =>
-                throw new UncompilableNodeException($"Derivatives cannot be compiled");
+                throw new UncompilableNodeException($"A derivative cannot be compiled: `{Stringize()}`");
         }
 
         public partial record Integralf
         {
             private protected override void CompileNode(Compiler compiler) =>
-                throw new UncompilableNodeException($"Integrals cannot be compiled");
+                throw new UncompilableNodeException($"An integral cannot be compiled: `{Stringize()}`");
         }
 
         public partial record Limitf
         {
             private protected override void CompileNode(Compiler compiler) =>
-                throw new UncompilableNodeException($"Limits cannot be compiled");
+                throw new UncompilableNodeException($"A limit cannot be compiled: `{Stringize()}`");
         }
 
         public partial record Signumf
