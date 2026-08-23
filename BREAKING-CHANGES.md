@@ -21,6 +21,9 @@ read first.
 
 | Silent? | What | Was | Is |
 |---|---|---|---|
+| **Silent** | `"x6 + x y + 1 = 0".ToEntity().Solve("x")`, and every equation no solver settles | `{  }` — there are no roots | `{ x : 1 + x ^ 6 + x * y = 0 }` — these are the roots, whichever they are |
+| **Silent** | `"(x - 1) * (x6 + x y + 1) = 0".ToEntity().Solve("x")` | `{ 1 }` | `{ 1 } \/ { x : 1 + x ^ 6 + x * y = 0 }` |
+| **Silent** | `"x6 + x y + 1 = 0 and x - 1 = 0".ToEntity().Solve("x")` | `{  }` | `{ x : x ^ 6 + x * y + 1 = 0 and x - 1 = 0 }` |
 | | `"x ^ 3 - x > 0".ToEntity().Solve("x")`, and every polynomial inequality of degree three or more | `NotSufficientlySupportedException: Only linear and quadratic polynomial inequalities are supported` | `(-1; 0) \/ (1; +oo)` — the solution set |
 | **Silent** | `"a implies (b implies c)".ToEntity().Stringize()` | `a implies b implies c`, which reads back as `(a implies b) implies c` | `a implies (b implies c)` |
 | | `"(a implies b) implies c".ToEntity().Stringize()` | `(a implies b) implies c` | `a implies b implies c` |
@@ -34,6 +37,105 @@ read first.
 | | any expression mixing a number with a `Complex` argument, `Compile`d in a NativeAOT app — `"x + 1".Compile<Complex, Complex>("x")` | `UncompilableNodeException: ... The binary operator Add is not defined for the types 'System.Numerics.Complex' and 'System.Numerics.Complex'` | the compiled function, answering as it does under the JIT |
 | | `Compile` to a nullable integral return type in a NativeAOT app | `AngouriBugException: IsNaN method expected for type System.Double`, which took the process down | the compiled function |
 | **Silent** | an app publishing with `PublishTrimmed` or NativeAOT | `AngouriMath.dll` was copied in whole, being unmarked | it is trimmed with the rest, since the assembly now declares `IsTrimmable` |
+
+### An equation nothing settled is no longer answered with the empty set
+
+`Solve` and `SolveEquation` returned an empty `FiniteSet` for two different things: an equation
+shown to have no roots, and an equation every solver in the chain declined. The empty set is a
+positive claim — *no x satisfies this* — so the second of those was a wrong answer rather than a
+graceful failure ([#1036](https://github.com/asc-community/AngouriMath/issues/1036),
+[#746](https://github.com/asc-community/AngouriMath/issues/746) tier 4).
+
+**Was** — indistinguishable, and false for the second column:
+
+```
+"x6 + x y + 1 = 0".ToEntity().Solve("x")            {  }        six roots for every y
+"sin(x) + x + y = 0".ToEntity().Solve("x")          {  }
+"e^x + x + y = 0".ToEntity().Solve("x")             {  }
+"x6 + x y + 1".ToEntity().SolveEquation("x")        {  }
+"e^x = 0".ToEntity().Solve("x")                     {  }        genuinely none
+"abs(x) = -1".ToEntity().Solve("x")                 {  }        genuinely none
+```
+
+**Is** — the equation itself, as the set of the x that satisfy it. It names the same set and
+asserts of it only what was established:
+
+```
+"x6 + x y + 1 = 0".ToEntity().Solve("x")            { x : 1 + x ^ 6 + x * y = 0 }
+"sin(x) + x + y = 0".ToEntity().Solve("x")          { x : sin(x) + x = -y }
+"e^x + x + y = 0".ToEntity().Solve("x")             { x : e ^ x + x = -y }
+"x6 + x y + 1".ToEntity().SolveEquation("x")        { x : 1 + x ^ 6 + x * y = 0 }
+"e^x = 0".ToEntity().Solve("x")                     {  }        unchanged
+"abs(x) = -1".ToEntity().Solve("x")                 {  }        unchanged
+```
+
+Turning Newton's method off leaves nothing numerical either, and those answers move the same way.
+A search over finitely many starting points inside a bounded region finding nothing is a fact about
+the search:
+
+```
+using var _ = MathS.Settings.AllowNewton.Set(false);
+
+"x5 + 3x + 1 = 0".ToEntity().Solve("x")             was {  }   is { x : x ^ 5 + 3 * x = -1 }
+"sin(x) * x - 3 = 0".ToEntity().Solve("x")          was {  }   is { x : sin(x) * x = 3 }
+
+"x + sqrt(x^0.1 + a) + c".ToEntity().SolveEquation("x")
+    was {  }   is { x : sqrt(a + x ^ (1/10)) + c + x = 0 }
+"(x + 6)^(1/6) + x + x3 + a".ToEntity().SolveEquation("x")
+    was {  }   is { x : (6 + x) ^ (1/6) + x + x ^ 3 = -a }
+"2 ^ (x sin(x)) + 4 ^ (x sin(x)) + c".ToEntity().SolveEquation("x")
+    was {  }
+    is  { x : sin(x) * x = ln(((-1 - sqrt(1 - 4 * c)) / 2) ^ (1 / ln(2)))
+              or sin(x) * x = ln(((-1 + sqrt(1 - 4 * c)) / 2) ^ (1 / ln(2))) }
+```
+
+The last of those is the shape of it: the exponential solver did settle the equation in
+`2 ^ (x sin(x))`, and it was the inversion of `x * sin(x)` that had nothing to say. What comes back
+now is the half that was solved, with the half that was not left standing as a condition.
+
+An answer that is partly settled keeps the part that is, so a product one of whose factors was
+solved comes back as a union rather than as the factor's roots alone:
+
+```
+"(x - 1) * (x6 + x y + 1) = 0".ToEntity().Solve("x")
+    was  { 1 }
+    is   { 1 } \/ { x : 1 + x ^ 6 + x * y = 0 }
+
+"x6 + x y + 1 = 0 or x - 1 = 0".ToEntity().Solve("x")
+    was  { 1 }
+    is   { 1 } \/ { x : 1 + x ^ 6 + x * y = 0 }
+
+"x6 + x y + 1 = 0 implies x - 1 = 0".ToEntity().Solve("x")
+    was  { 1 } \/ BB
+    is   { 1 } \/ (BB \ { x : 1 + x ^ 6 + x * y = 0 })
+```
+
+A conjunction with an unsettled side is answered as the conjunction. Intersecting a finite set with
+a condition keeps the elements whose membership could not be decided, so taking the intersection
+here would have replaced one false claim with another — `{ 1 }` says 1 solves
+`x^6 + x*y + 1 = 0`, and it does so only at `y = -2`:
+
+```
+"x6 + x y + 1 = 0 and x - 1 = 0".ToEntity().Solve("x")
+    was  {  }
+    is   { x : x ^ 6 + x * y + 1 = 0 and x - 1 = 0 }
+```
+
+**What this means for callers.** `Solve` has always been typed `Set` and has always been able to
+return an `Interval`, a `ConditionalSet` or a union; what changes is how often it does. Code that
+casts the result to `FiniteSet`, or that reads an empty result as "no solutions", has to say which
+of the two it means:
+
+```csharp
+var answer = equation.Solve(x);
+if (answer is FiniteSet roots)      { /* these are all of them */ }
+else if (answer.IsSetEmpty)         { /* shown to have none */ }
+else                                { /* not settled, or not finite */ }
+```
+
+Nothing that solved before stops solving, and no equation that was shown to have no roots gains
+any. Solving `x2 - 4 = 0`, `sin(x) = 1/2`, `x2 + 1 = 0` and the system solver's answers are
+unchanged, as is `Solve` on an inequality.
 
 ### A polynomial inequality of degree three or more is answered
 
