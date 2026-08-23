@@ -200,6 +200,26 @@ suite is paid for on every commit. The harnesses in `work/` are where a measurem
 inputs, takes minutes, and gets read by a person; the two are not substitutes, and a finding from a
 harness that is worth keeping belongs in the corpus as a new problem.
 
+### And a second gate, on what the popular use cases allocate
+
+`Sources/Tests/DotnetBenchmark/performance-baseline.json` records allocated bytes and mean
+nanoseconds per operation for parse, `Simplify`, `Solve` and `Differentiate` on textbook-sized input.
+The Kernel Benchmark workflow runs the benchmarks and then `PerformanceGate`, which compares the run
+against that file and fails the build. It behaves like the corpus gate — including failing when a
+number gets **better**, because a baseline that overstates what the library allocates would let a
+later change give the gain back unnoticed.
+
+**It gates allocation and reports time.** Allocated bytes are a property of the code: the same input
+asks the allocator for the same number of bytes. A shared runner's wall clock is a property of
+whoever else is on that host, so the time column fails only above 3x — a catastrophe threshold, not
+a performance one. The measurement that chose those two numbers is in the remarks of
+`PerformanceGate.cs`.
+
+It runs on the benchmark job rather than in the suite, because it costs about ten minutes and
+everything in the suite is paid for on every commit. What to do when it fails, and when updating the
+baseline is legitimate, is in
+[`WhatsNew/version_performance_control.md`](Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md).
+
 ## One structure under several features
 
 Four things in this library are the same shape, and three of them were written separately before
@@ -399,8 +419,9 @@ are short, and a stale one is worse than none — if you change what a file desc
 | [`Contributing/Transformations.md`](Sources/AngouriMath/Docs/Contributing/Transformations.md) | the transformation layer the 1.x entry points sit on, and how to add the next rule set |
 | [`Contributing/SimplificationContract.md`](Sources/AngouriMath/Docs/Contributing/SimplificationContract.md) | what a rewrite may assume, and the ten obligations one has to meet. Read it *before* adding or changing a rule |
 | [`Contributing/CanonicalForm.md`](Sources/AngouriMath/Docs/Contributing/CanonicalForm.md) | canonical versus simplest, why no canonical form exists for the whole language, and what one means per node class. Read it before comparing two expressions for equality |
+| [`Contributing/Trimming.md`](Sources/AngouriMath/Docs/Contributing/Trimming.md) | what `IsAotCompatible` on the kernel promises, and what breaks it. Read it before adding reflection anywhere |
 | [`Contributing/coding_rules.md`](Sources/AngouriMath/Docs/Contributing/coding_rules.md) | sealed-or-abstract, and immutability of `Entity` |
-| [`WhatsNew/version_performance_control.md`](Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md) | the inter-version performance table, and how to add a column |
+| [`WhatsNew/version_performance_control.md`](Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md) | the inter-version performance table, how to add a column, and when the CI performance baseline may be updated |
 | `Sources/Analyzers/` | the custom analyzers, including the static-field one behind `[ConstantField]` |
 
 Anything added for the library's own purposes is not `public` — see
@@ -434,7 +455,8 @@ whatever else it delivered:
    [`WhatsNew/version_performance_control.md`](Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md).
    Measure the previous column again on the same machine and publish the pair: columns taken on
    different hardware cannot be read as a ratio, and a uniform factor across every row is the machine
-   rather than the code.
+   rather than the code. Since #529 that is a gate and not only a record — see *And a second gate, on
+   what the popular use cases allocate* above.
 3. **Correctness coverage grows with the surface.** Each new layer adds ways to be wrong that the one
    below could not express.
 

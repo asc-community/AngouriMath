@@ -30,10 +30,14 @@ namespace AngouriMath
         public partial record Mulf
         {
             /// <inheritdoc/>
+            // Multiplication is associative, so a product or a quotient on the right may stay
+            // unbracketed -- but `mod` shares this precedence level and is not associative, so a
+            // `mod` on the right must be bracketed or it is re-read as the outer operator:
+            // `2 * (3 mod 2)` is 2 and `(2 * 3) mod 2` is 0.
             public override string Stringize() =>
                 (Multiplier is Integer(-1) && !MathS.Diagnostic.OutputExplicit ? "-"
                     : Multiplier.Stringize(Multiplier.Priority < Priority) + " * ")
-                + Multiplicand.Stringize(Multiplicand.Priority < Priority);
+                + Multiplicand.Stringize(Multiplicand.Priority < Priority || Multiplicand is Modf);
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }

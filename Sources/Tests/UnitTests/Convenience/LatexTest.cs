@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -312,10 +312,13 @@ namespace AngouriMath.Tests.Convenience
             => Test(@"x \quad \text{for} \quad y", MathS.Provided("x", "y"));
         [Fact] public void Provided2()
             => Test(@"x+1 \quad \text{for} \quad y > 0", MathS.Provided("x + 1", "y > 0"));
+        // Both of these are left-nested, and `provided` folds to the right -- so the flat form
+        // these used to expect is read back as the *right*-nested tree, which is a different
+        // expression. The grouping is the assertion; the two used to pin its absence.
         [Fact] public void Provided3()
-            => Test(@"a \quad \text{for} \quad b \quad \text{for} \quad c", MathS.Provided(MathS.Provided("a", "b"), "c"));
+            => Test(@"\left(a \quad \text{for} \quad b\right) \quad \text{for} \quad c", MathS.Provided(MathS.Provided("a", "b"), "c"));
         [Fact] public void Provided4()
-            => Test(@"\left(a \quad \text{for} \quad b \quad \text{for} \quad c \quad \text{for} \quad d\right) \to \top ", MathS.Provided(MathS.Provided("a", "b"), MathS.Provided("c", "d")).Implies(Entity.Boolean.True));
+            => Test(@"\left(\left(a \quad \text{for} \quad b\right) \quad \text{for} \quad c \quad \text{for} \quad d\right) \to \top ", MathS.Provided(MathS.Provided("a", "b"), MathS.Provided("c", "d")).Implies(Entity.Boolean.True));
         // Juxtaposition tests
         [Fact] public void M1InTheMiddle() => Test(@"x \left(-1\right) \cdot x", (x * (-1)) * x);
         [Fact] public void MultiplyNumberWithPower() => Test(@"2 \cdot {3}^{4}", 2 * ((Entity)3).Pow(4));
@@ -532,6 +535,37 @@ namespace AngouriMath.Tests.Convenience
             => Test(@"\left\{ 1, 2, 3 \right\} \setminus \left\{ 2 \right\}", MathS.Sets.Finite(1, 2, 3).SetSubtract(MathS.Sets.Finite(2)));
         [Fact] public void SetIn()
             => Test(@"x \in \left\{ 1, 2, 3 \right\}", x.In(MathS.Sets.Finite(1, 2, 3)));
+
+        // Associativity, which LaTeX has to express too: CSharpMath.Evaluation reads the LaTeX
+        // back, and it folds \cup, \setminus and \in to the left at the precedences the grammar
+        // here uses, so a right operand at the same level must be bracketed or it comes back as
+        // the outer operator. \to is the exception -- CSharpMath folds it to the *right*, the
+        // usual convention for implication, so it is the assumption that gets the brackets.
+        private static readonly Entity A = MathS.Sets.Finite(1, 2), B = MathS.Sets.Finite(2, 3), C = MathS.Sets.Finite(3);
+        private static readonly string As = @"\left\{ 1, 2 \right\}", Bs = @"\left\{ 2, 3 \right\}", Cs = @"\left\{ 3 \right\}";
+
+        [Fact] public void SetMinusOfSetMinusOnTheRight()
+            => Test($@"{As} \setminus \left({Bs} \setminus {Cs}\right)", A.SetSubtract(B.SetSubtract(C)));
+        [Fact] public void SetMinusOfSetMinusOnTheLeft()
+            => Test($@"{As} \setminus {Bs} \setminus {Cs}", A.SetSubtract(B).SetSubtract(C));
+        [Fact] public void SetMinusOfUnionOnTheRight()
+            => Test($@"{As} \setminus \left({Bs} \cup {Cs}\right)", A.SetSubtract(B.Unite(C)));
+        [Fact] public void UnionOfSetMinusOnTheRight()
+            => Test($@"{As} \cup \left({Bs} \setminus {Cs}\right)", A.Unite(B.SetSubtract(C)));
+        [Fact] public void UnionOfUnionOnTheRightStaysFlat()
+            => Test($@"{As} \cup {Bs} \cup {Cs}", A.Unite(B.Unite(C)));
+        [Fact] public void IntersectionOfIntersectionOnTheRightStaysFlat()
+            => Test($@"{As} \cap {Bs} \cap {Cs}", A.Intersect(B.Intersect(C)));
+        [Fact] public void InOfInOnTheRight()
+            => Test(@"x \in \left(y \in z\right)", x.In(MathS.Var("y").In(MathS.Var("z"))));
+        [Fact] public void ImpliesOfImpliesOnTheRightStaysFlat()
+            => Test(@"x \to y \to z", x.Implies(MathS.Var("y").Implies(MathS.Var("z"))));
+        [Fact] public void ImpliesOfImpliesOnTheLeft()
+            => Test(@"\left(x \to y\right) \to z", x.Implies(MathS.Var("y")).Implies(MathS.Var("z")));
+        [Fact] public void ModAsANonLeadingFactor()
+            => Test(@"x \left(y \bmod z\right)", x * (MathS.Var("y") % MathS.Var("z")));
+        [Fact] public void ModAsTheLeadingFactorStaysFlat()
+            => Test(@"x \bmod y \cdot z", (x % MathS.Var("y")) * MathS.Var("z"));
             
         // Special sets
         [Fact] public void SetBooleans()

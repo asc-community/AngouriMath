@@ -216,7 +216,20 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void TestProvided1() => Assert.Equal(MathS.Provided("a", "b"), FromString("a provided b"));
         [Fact] public void TestProvided2() => Assert.Equal(MathS.Provided("a", MathS.Provided("b", "c")), FromString("a provided b provided c"));
         [Fact] public void TestProvided3() => Assert.Equal(MathS.Provided(MathS.Provided("a", "b"), "c"), FromString("(a provided b) provided c"));
-        [Fact] public void TestProvided4() => Assert.Equal(FromString("a provided (b provided c)").Stringize(), FromString("(a provided b) provided c").Stringize());
+        // These two are different expressions -- `provided` folds to the right, so only the first
+        // is what the flat spelling means -- and this used to assert that they print alike. That
+        // is the round trip failing, written down as an expectation: the printed form of the
+        // second came back as the first. They must print differently, and each must read back as
+        // itself.
+        [Fact] public void TestProvided4()
+        {
+            var rightNested = FromString("a provided (b provided c)");
+            var leftNested = FromString("(a provided b) provided c");
+            Assert.NotEqual(rightNested, leftNested);
+            Assert.NotEqual(rightNested.Stringize(), leftNested.Stringize());
+            Assert.Equal(rightNested, FromString(rightNested.Stringize()));
+            Assert.Equal(leftNested, FromString(leftNested.Stringize()));
+        }
 
         [Theory]
         [InlineData("sh", "Sinh")]
