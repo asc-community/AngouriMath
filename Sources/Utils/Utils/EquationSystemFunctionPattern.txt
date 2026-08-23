@@ -1,5 +1,17 @@
 ﻿        ///<summary>Solves a given set of arbitrary equations</summary>
         ///<returns>A tensor whose width is %i% columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (%tupleargs%) eqs, %vars%)
+        /// <example>
+        /// The answer has one row per solution and one column per variable, in the order the
+        /// variables were named:
+        /// <code>
+        /// var solutions = (%eqlist%).SolveSystem(%varlist%);
+        /// Console.WriteLine(solutions);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// %rows%
+        /// </code>
+        /// </example>
+        public static Matrix? SolveSystem(this (%tupleargs%) eqs, %vars%)
             => MathS.Equations(%argspassed%).Solve(%varspassed%);
 
