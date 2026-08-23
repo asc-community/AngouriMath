@@ -40,7 +40,8 @@ namespace AngouriMath.Functions.Algebra
                 // (2^x + 2^(2x) - 6 = 0).Solve(x) gave { 1 } while
                 // "2^x + 2^(2x) - 6".SolveEquation(x) gave { 1, ln((-3) ^ (1 / ln(2))) },
                 // and the second of those is not a root of anything.
-                return StatementSolver.WithoutSpuriousRoots(finite, equation, x);
+                return StatementSolver.UnsolvedWhereIndependenceIsDenied(
+                    StatementSolver.WithoutSpuriousRoots(finite, equation, x), equation.Equalizes(0), x);
             }
             else
                 return solutions;
