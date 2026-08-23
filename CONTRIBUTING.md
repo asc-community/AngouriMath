@@ -13,13 +13,13 @@ If you are not on Windows, static analyzers and some samples might not be built.
 cd Sources
 dotnet build
 ```
-This will build your solution successfully, if you are on Windows. Otherwise, you might need to build projects separately:
+This will build your solution successfully, if you are on Windows. Otherwise, you might need to build projects separately -- `dotnet build` takes a path, since `-p` is short for `--property` and not for a project:
 ```
 cd Sources
-dotnet build -p AngouriMath
+dotnet build AngouriMath/AngouriMath.csproj
 cd Wrappers
-dotnet build -p AngouriMath.FSharp
-dotnet build -p AngouriMath.Interactive
+dotnet build AngouriMath.FSharp/AngouriMath.FSharp.fsproj
+dotnet build AngouriMath.Interactive/AngouriMath.Interactive.fsproj
 ```
 
 Running tests is no more complicated:
@@ -68,13 +68,28 @@ git push --set-upstream origin my-branch
 
 ### Closing an issue
 
-One of the most valuable ways to contribute to the project is to close tickets from from [projects](https://github.com/asc-community/AngouriMath/projects) or [issues](https://github.com/asc-community/AngouriMath/issues). If you wish to work on a card, ping one of the maintaintainers, for example, @WhiteBlackGoose, and ask for assigning the issue to you.
+One of the most valuable ways to contribute to the project is to close tickets from [issues](https://github.com/asc-community/AngouriMath/issues). If you wish to work on a card, ping one of the maintaintainers, for example, @WhiteBlackGoose, and ask for assigning the issue to you.
 
 Then, when you started working on it, we highly recommend opening a draft pull request as soon as possible. This will help everybody see your changes and potentially help you. Then, once PR is ready, open it and wait for a review.
 
 ### Adding your feature or fixing a bug
 
 It is highly encouraged to open an issue first. Once opened, follow the approach described above.
+
+Three things are expected of a pull request here that are not obvious from the code, and all three
+are set out at length in [AGENTS.md](AGENTS.md), which applies to humans too:
+
+- **If the same input now gives a different answer, it goes in
+  [BREAKING-CHANGES.md](BREAKING-CHANGES.md)** -- including when the old answer was wrong -- with the
+  old value, the new one and why, measured on a build of each version rather than read off the diff.
+  A test you had to change is the usual sign that you owe an entry.
+- **The corpus gate runs on every commit.** `Sources/Tests/UnitTests/Corpus` reports solved, wrong,
+  error and timeout counts, and it fails both when the library gets worse *and* when it gets better
+  without the record being updated to say so. The second is not a nuisance: an improvement nobody
+  wrote down is an improvement nobody can tell from a fluke later.
+- **Read your pull request's own thread before it merges.** Comments arrive after the checks go
+  green, so a PR that was clear when it was opened need not still be, and the thread and the
+  comments left on the diff are two separate places.
 
 ### Types of issues
 
@@ -94,9 +109,12 @@ You might have some questions about the way you should write your code, or how y
 
 There are a few projects the repository contains:
 ```
-              +-> AngouriMath.Experimental
-              |
 AngouriMath --+-> AngouriMath.FSharp --> AngouriMath.Interactive --> AngouriMath.Terminal
               |
               +-> AngouriMath.CPP
 ```
+
+Four of those are published to NuGet: `AngouriMath`, `AngouriMath.FSharp`,
+`AngouriMath.Interactive` and `AngouriMath.Terminal`. The C++ wrapper builds and is tested but is
+not packaged, and there is no `AngouriMath.Experimental` project -- `MathS.Experimental` is a class
+inside the kernel.

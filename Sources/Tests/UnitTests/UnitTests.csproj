@@ -48,6 +48,9 @@
 
     <!-- Read at run time by PublicApiSurfaceTest; see its remarks. -->
     <Content Include="Common\PublicApi.txt" CopyToOutputDirectory="PreserveNewest" />
+
+    <!-- Read at run time by CorpusGateTest; see CorpusRecord's remarks. -->
+    <Content Include="Corpus\corpus-baseline.tsv" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

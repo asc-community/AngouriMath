@@ -87,6 +87,13 @@ namespace AngouriMath.Tests.Corpus
     /// as something that ought to work — plus a few standard limits. Nothing here is vendored
     /// from another project's test suite.
     /// </para>
+    /// <para>
+    /// The verdicts recorded here are also projected into <c>corpus-baseline.tsv</c> beside this
+    /// file, which is what gives the corpus a machine-readable history that outlives a CI job
+    /// log. Changing a <see cref="Problem.Expect"/> here means regenerating that file; see
+    /// <see cref="CorpusRecord"/> for how, and why the history lives in the repository rather
+    /// than in an artefact.
+    /// </para>
     /// </remarks>
     public static class Corpus
     {

@@ -66,9 +66,13 @@ namespace DotnetBenchmark
 
     public class Program
     {
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
-            var benchmarkName = args.Length > 0 ? args[0] : "";
+            // PerformanceGate is not a benchmark: it compares the file the last run wrote against
+            // the committed baseline, so it is cheap and can be its own CI step without paying for
+            // the measurement twice. https://github.com/asc-community/AngouriMath/issues/529
+            if (args.Contains(PerformanceGate.Command))
+                return PerformanceGate.Compare(Console.Out);
 
             var reports =
                 args
@@ -109,10 +113,17 @@ namespace DotnetBenchmark
                 Console.WriteLine();
             }
             Console.ReadLine(); Console.ReadLine(); Console.ReadLine();
+            return 0;
         }
 
         public static string GetReportByBenchmark(Type report, params string[] columns)
-            => TableToString(BenchmarkRunner.Run(report).Table, columns);
+        {
+            var summary = BenchmarkRunner.Run(report);
+            // Both numbers, in the baseline's own format, so that updating the baseline is copying
+            // a file rather than transcribing a table.
+            PerformanceGate.WriteMeasurements(summary);
+            return TableToString(summary.Table, columns);
+        }
 
         public static string TableToString(SummaryTable table, params string[] columns)
         {
