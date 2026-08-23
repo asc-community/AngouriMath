@@ -84,6 +84,14 @@ equations, systems of equations,
 with <a href="https://am.angouri.org/wiki/10.-Matrices.html">matrices</a>, find limits,
 convert an expression to LaTeX, and <a href="https://am.angouri.org/wiki/">many other things</a>.
 
+## How does it compare?
+
+Measured rather than asserted:
+<a href="./Sources/AngouriMath/Docs/Usage/Comparison.md">Docs/Usage/Comparison.md</a> puts the
+library beside Math.NET Symbolics, Symbolism, SymPy 1.14.0 and Rubi's integration test-suite, and
+reproduces the rows it loses as well as the ones it wins &mdash; 604 of 1,774 Rubi integrals
+answered with no wrong answer, and Math.NET faster on all four operations both libraries can do.
+
 ## Where can be used?
 
 <a href="#jupyter"><img src="./.github/additional/readme/side.PNG" align="right" width="25%" alt="AngouriMath now supports Jupyter integration"/></a>
