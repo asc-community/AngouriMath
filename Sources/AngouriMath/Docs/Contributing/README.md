@@ -24,6 +24,9 @@ If you aren't sure about what to add, you may want to check the current projects
    made `public`
 9. <a href="./Packaging.md">What ships in which package</a> — the four published packages, what the
    kernel measurably costs a caller, and the rule deciding where the next capability goes
+10. <a href="./NodeContract.md">What a node type has to implement</a> — the eleven abstract members
+   of `Entity`, which five an assembly outside the kernel cannot reach, and the decision on whether a
+   domain package may define a node type at all
 10. <a href="./ReversibleRules.md">Reading a rewrite rule backwards</a> — what a rule has to carry
    before it can be read the other way, which rules can carry it, and what the mechanism costs the
    fast path

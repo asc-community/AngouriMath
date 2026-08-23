@@ -38,6 +38,21 @@ namespace AngouriMath.Extensions
         /// <returns>
         /// Returnes a natively compiled expression of type <typeparamref name="TDelegate"/>
         /// </returns>
+        /// <example>
+        /// The delegate computes in the types it was given, so an <see cref="int"/>
+        /// instantiation of a quotient does integer division rather than producing a rational:
+        /// <code>
+        /// var f = "a / b".Compile&lt;Func&lt;int, int, int&gt;&gt;(
+        ///     new CompilationProtocol(),
+        ///     typeof(int),
+        ///     new[] { (typeof(int), (Variable)"a"), (typeof(int), (Variable)"b") });
+        /// Console.WriteLine(f(7, 2));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 3
+        /// </code>
+        /// </example>
         public static TDelegate Compile<TDelegate>(this string @this, CompilationProtocol protocol, Type returnType, IEnumerable<(Type type, Variable variable)> typesAndNames) where TDelegate : Delegate
             => IntoLinqCompiler.Compile<TDelegate>(@this, returnType, protocol, typesAndNames);
 
@@ -61,6 +76,16 @@ namespace AngouriMath.Extensions
         /// <returns>
         /// Returns a natively-compiled delegate
         /// </returns>
+        /// <example>
+        /// <code>
+        /// var f = "a".Compile&lt;int, int&gt;("a");
+        /// Console.WriteLine(f(10));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 10
+        /// </code>
+        /// </example>
         public static Func<TIn1, TOut> Compile<TIn1, TOut>(this string @this, Variable var1)
             => IntoLinqCompiler.Compile<Func<TIn1, TOut>>(@this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1) });
@@ -91,6 +116,16 @@ namespace AngouriMath.Extensions
         /// <returns>
         /// Returns a natively-compiled delegate
         /// </returns>
+        /// <example>
+        /// <code>
+        /// var f = "a + b".Compile&lt;int, int, int&gt;("a", "b");
+        /// Console.WriteLine(f(10, 20));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 30
+        /// </code>
+        /// </example>
         public static Func<TIn1, TIn2, TOut> Compile<TIn1, TIn2, TOut>(this string @this, Variable var1, Variable var2)
             => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TOut>>(@this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1), (typeof(TIn2), var2)  });
@@ -127,6 +162,16 @@ namespace AngouriMath.Extensions
         /// <returns>
         /// Returns a natively-compiled delegate
         /// </returns>
+        /// <example>
+        /// <code>
+        /// var f = "a + b + c".Compile&lt;int, int, int, int&gt;("a", "b", "c");
+        /// Console.WriteLine(f(10, 20, 30));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 60
+        /// </code>
+        /// </example>
         public static Func<TIn1, TIn2, TIn3, TOut> Compile<TIn1, TIn2, TIn3, TOut>(this string @this, Variable var1, Variable var2, Variable var3)
             => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TOut>>(@this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) , (typeof(TIn3), var3)  });
@@ -169,6 +214,16 @@ namespace AngouriMath.Extensions
         /// <returns>
         /// Returns a natively-compiled delegate
         /// </returns>
+        /// <example>
+        /// <code>
+        /// var f = "a + b + c + d".Compile&lt;int, int, int, int, int&gt;("a", "b", "c", "d");
+        /// Console.WriteLine(f(10, 20, 30, 40));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 100
+        /// </code>
+        /// </example>
         public static Func<TIn1, TIn2, TIn3, TIn4, TOut> Compile<TIn1, TIn2, TIn3, TIn4, TOut>(this string @this, Variable var1, Variable var2, Variable var3, Variable var4)
             => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TOut>>(@this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) , (typeof(TIn3), var3) , (typeof(TIn4), var4)  });
@@ -217,6 +272,16 @@ namespace AngouriMath.Extensions
         /// <returns>
         /// Returns a natively-compiled delegate
         /// </returns>
+        /// <example>
+        /// <code>
+        /// var f = "a + b + c + d + f".Compile&lt;int, int, int, int, int, int&gt;("a", "b", "c", "d", "f");
+        /// Console.WriteLine(f(10, 20, 30, 40, 50));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 150
+        /// </code>
+        /// </example>
         public static Func<TIn1, TIn2, TIn3, TIn4, TIn5, TOut> Compile<TIn1, TIn2, TIn3, TIn4, TIn5, TOut>(this string @this, Variable var1, Variable var2, Variable var3, Variable var4, Variable var5)
             => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TIn5, TOut>>(@this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) , (typeof(TIn3), var3) , (typeof(TIn4), var4) , (typeof(TIn5), var5)  });
@@ -271,6 +336,16 @@ namespace AngouriMath.Extensions
         /// <returns>
         /// Returns a natively-compiled delegate
         /// </returns>
+        /// <example>
+        /// <code>
+        /// var f = "a + b + c + d + f + g".Compile&lt;int, int, int, int, int, int, int&gt;("a", "b", "c", "d", "f", "g");
+        /// Console.WriteLine(f(10, 20, 30, 40, 50, 60));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 210
+        /// </code>
+        /// </example>
         public static Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TOut> Compile<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TOut>(this string @this, Variable var1, Variable var2, Variable var3, Variable var4, Variable var5, Variable var6)
             => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TOut>>(@this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) , (typeof(TIn3), var3) , (typeof(TIn4), var4) , (typeof(TIn5), var5) , (typeof(TIn6), var6)  });
@@ -331,6 +406,16 @@ namespace AngouriMath.Extensions
         /// <returns>
         /// Returns a natively-compiled delegate
         /// </returns>
+        /// <example>
+        /// <code>
+        /// var f = "a + b + c + d + f + g + h".Compile&lt;int, int, int, int, int, int, int, int&gt;("a", "b", "c", "d", "f", "g", "h");
+        /// Console.WriteLine(f(10, 20, 30, 40, 50, 60, 70));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 280
+        /// </code>
+        /// </example>
         public static Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TOut> Compile<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TOut>(this string @this, Variable var1, Variable var2, Variable var3, Variable var4, Variable var5, Variable var6, Variable var7)
             => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TOut>>(@this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) , (typeof(TIn3), var3) , (typeof(TIn4), var4) , (typeof(TIn5), var5) , (typeof(TIn6), var6) , (typeof(TIn7), var7)  });
@@ -397,6 +482,16 @@ namespace AngouriMath.Extensions
         /// <returns>
         /// Returns a natively-compiled delegate
         /// </returns>
+        /// <example>
+        /// <code>
+        /// var f = "a + b + c + d + f + g + h + j".Compile&lt;int, int, int, int, int, int, int, int, int&gt;("a", "b", "c", "d", "f", "g", "h", "j");
+        /// Console.WriteLine(f(10, 20, 30, 40, 50, 60, 70, 80));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 360
+        /// </code>
+        /// </example>
         public static Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TIn8, TOut> Compile<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TIn8, TOut>(this string @this, Variable var1, Variable var2, Variable var3, Variable var4, Variable var5, Variable var6, Variable var7, Variable var8)
             => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TIn8, TOut>>(@this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) , (typeof(TIn3), var3) , (typeof(TIn4), var4) , (typeof(TIn5), var5) , (typeof(TIn6), var6) , (typeof(TIn7), var7) , (typeof(TIn8), var8)  });

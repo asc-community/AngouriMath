@@ -13,6 +13,9 @@ notation is not in the grammar prints as its function call instead: a lambda pri
 `lambda(x, x + 1)` and not `x -> x + 1`, because `->` is the implication operator and the arrow
 form would silently come back as something else.
 
+One thing the printed form does not carry: a **codomain**. `domain(x, ZZ)` prints as `x`, and the
+narrowing is lost on the way back ([#1022](https://github.com/asc-community/AngouriMath/issues/1022)).
+
 **LaTeX output has a round trip too, and it is checked in someone else's repository.**
 [CSharpMath.Evaluation](https://github.com/verybadcat/CSharpMath/blob/master/CSharpMath.Evaluation/Evaluation.cs)
 reads LaTeX back into an `Entity` and says so in its own source — *"CSharpMath must handle all
@@ -33,7 +36,7 @@ prints as `x + y + z` and reads back as `(x + y) + z` — the same number, a dif
 | | operators | notes |
 |---|---|---|
 | 1 | `provided` | **groups to the right**: `a provided b provided c` is `a provided (b provided c)` |
-| 2 | `implies` | |
+| 2 | `implies` `->` | |
 | 3 | `or` `\|` | |
 | 4 | `xor` | |
 | 5 | `and` `&` | |
@@ -55,18 +58,61 @@ prints as `x + y + z` and reads back as `(x + y) + z` — the same number, a dif
 use, and the one under which the residues modulo n are the numbers from 0 to n - 1. C's `%`
 truncates instead; it is a different operation and the library does not inherit it.
 
+## Whitespace and comments
+
+Newlines are skipped, so an expression may be written over several lines. `//` runs to the end of
+the line and `/* … */` spans lines; both are dropped before parsing. A `//` comment needs a newline
+after it: it is the newline that ends the comment, so `x + 1 // done` is a parse error where
+`x + 1 /* done */` is `x + 1` ([#1039](https://github.com/asc-community/AngouriMath/issues/1039)).
+
 ## Numbers and constants
 
-`1`, `1.5`, `1/2`, `1e-9`, `i`, `e`, `pi`, `+oo`, `-oo`, `NaN`, `true`, `false`.
+`1`, `1.5`, `.5`, `1.`, `1/2`, `1e-9`, `i`, `e`, `pi`, `+oo`, `-oo`, `NaN`, `true`, `false`.
+
+A trailing `i` makes the literal imaginary, exponent and all: `3i`, `1.5e3i`. `i` on its own is the
+imaginary unit, and it is a **number** rather than a name — which is why `x i` is `x ^ i` and not a
+product (below), why `ix` is an ordinary variable called `ix`, and why an operator that declares
+`i` as an index has to say so.
+
+Booleans are written `true` or `false`; `True` and `False` are read as well, because that is what
+`Stringize` prints.
 
 `NaN` is the value an undefined computation gives — `0/0` and `1/0` both reach it — and it is
 spelled exactly that way, since only the exact word is reserved. A longer name containing it, such
 as `NaNx` or `NaN_1`, is still a variable, because the lexer takes the longest match.
 
-A variable is a letter or `_` followed by letters, digits or `_`, and Greek letters are letters.
-Juxtaposition is multiplication, so `2x` is `2 * x` — which is also why an unknown function name
-parses as a product rather than as an error: `foo(x)` is `foo * x`, silently, unless `foo` is one
-of the names below.
+## Names
+
+A name is **one or more letters**, optionally followed by `_` and one or more letters or digits:
+`x`, `xy`, `x_1`, `x_a`, `α`, `ω_1`, `Θ_1`, `альфа`, `x_ω`. Letters are `a`–`z`, `A`–`Z`, Greek
+(U+0370–U+03FF and U+1F00–U+1FFF) and Cyrillic (U+0400–U+04FF); no other script is one, so `ﬁ` is
+a lexer error.
+
+Four things that look like names and are not:
+
+| written | what it is |
+|---|---|
+| `_x`, `x_` | a lexer error. `_` may neither begin a name nor end one |
+| `x_1_2` | a lexer error. At most one `_`, so subscripts do not nest ([#524](https://github.com/asc-community/AngouriMath/issues/524)) |
+| `x1` | `x ^ 1`. A digit is not a letter, and a name beside a number is a power — see below |
+| `sinx` | one name, spelled `sinx`. Letters written together are a single name, never a product of one-letter ones |
+
+## Juxtaposition
+
+Two things written next to each other have an operator inserted between them, and **which
+operator depends on what comes second**:
+
+| | inserted | |
+|---|---|---|
+| number, name or `)`, then a **name**, a function or `(` | `*` | `2x` is `2 * x`, `a(b + c)` is `a * (b + c)`, `x sin(x)` is `x * sin(x)`, `x(2)` is `x * 2` |
+| number, name or `)`, then a **number** | `^` | `x2` is `x ^ 2`, `(x + 1)2` is `(x + 1) ^ 2`, `3 2` is `3 ^ 2` |
+
+So `x2` is a square and `x(2)` is a product, and since `i` is a number, `x i` is `x ^ i` while
+`2i x` is `2i * x`.
+
+`MathS.Settings.ExplicitParsingOnly` turns the insertion off. Under it every row above is a
+`MissingOperatorParseException` naming the two tokens it will not join, and only what is written
+with an operator parses.
 
 ## Sets
 
@@ -74,13 +120,17 @@ of the names below.
 |---|---|
 | finite | `{ 1, 2, 3 }`, `{}` |
 | interval | `[a; b]` closed, `(a; b)` open, `[a; b)` and `(a; b]` half-open |
-| conditional | `{ x : x > 0 }` |
+| conditional | `{ x : x > 0 }` — the name before the `:` is declared, as under `sum` below |
 | special | `RR` `CC` `ZZ` `QQ` `BB` |
 | operations | `unite` `/\` … see the table above |
 
 ## Matrices and vectors
 
-`[1, 2, 3]` is a column vector, `[[1, 2], [3, 4]]` a matrix, `[1, 2, 3]T` a transpose.
+`[1, 2, 3]` is a column vector (3 by 1), `[[1, 2], [3, 4]]` a matrix, `[1, 2, 3]T` a transpose
+(1 by 3). There is no empty vector: `[]` is not a value this library has
+([#1028](https://github.com/asc-community/AngouriMath/issues/1028)), while the empty set `{}` is.
+
+`(|x|)` is the absolute value of `x`, and prints back as `abs(x)`.
 
 ## Functions
 
@@ -94,17 +144,31 @@ Everything below is written `name(argument, ...)`.
 `cosech` `csch`.
 
 **Inverse hyperbolic** — the inverse of a hyperbolic function is an *area*, not an arc, so it is
-`arsinh` (also `asinh`, `arsh`; `arcsinh` is **refused**), `arcosh`, `artanh`, `arcotanh`, and
-their short forms `arsh` `arch` `arth` `arcth` `arsch` `arcsch`. The `arc-` spellings raise a
-parse error rather than being silently read as a product.
+`ar-` and not `arc-`. Each has a long spelling, an `a-` spelling and at least one short one:
+
+| | | |
+|---|---|---|
+| sine | `arsinh` `asinh` `arsh` | `arcsinh` is **refused** |
+| cosine | `arcosh` `acosh` `arch` | `arccosh` is **refused** |
+| tangent | `artanh` `atanh` `arth` | `arctanh` is **refused** |
+| cotangent | `arcotanh` `acotanh` `arcoth` `acoth` `arcth` | `arccotanh` is **refused** |
+| secant | `arsech` `asech` `arsch` | `arcsech` is **refused** |
+| cosecant | `arcosech` `acosech` `arcsch` `acsch` | `arccosech` is **refused** |
+
+A refused spelling raises a parse error that names the accepted ones. It is refused rather than
+ignored because an unknown name followed by a bracket is a product (above), so `arcsinh(x)` left
+alone would quietly be a variable times `x`.
 
 Both hyperbolic families are **rewritten as they are parsed** and are not nodes of their own:
 `sinh(x)` becomes `(e ^ x - e ^ (-x)) / 2` and `arsinh(x)` becomes `ln(x + sqrt(x ^ 2 + 1))`.
 So they do not print back as themselves — what round-trips is the expression, not the spelling.
-The same goes for `cbrt(x)`, which is `x ^ (1/3)`, and `sqr(x)`, which is `x ^ 2`.
+The same goes for `cbrt(x)`, which is `x ^ (1/3)`, `sqr(x)`, which is `x ^ 2`, and `exp(x)`,
+which is `e ^ x`.
 
-**Other** — `sqrt` `cbrt` `sqr` `pow(a, b)` `ln` `log(base, x)` `abs` `signum` `sgn` `sign`
-`phi` `gamma` `factorial` (or postfix `!`).
+**Powers and logarithms** — `sqrt` `cbrt` `sqr` `pow(a, b)` `exp` `ln` `log(base, x)`. `log` with
+one argument is base 10, so `log(100)` is 2; `log10` and `log2` say it in the name.
+
+**Other** — `abs` `signum` `sgn` `sign` `phi` `gamma` `factorial` (or postfix `!`).
 
 **Rounding** — `floor` `ceil` (`ceiling` is accepted on the way in and prints as `ceil`) `round`.
 All three round a complex argument componentwise. `floor` and `ceil` go toward the infinities
@@ -131,16 +195,45 @@ range in [#657](https://github.com/asc-community/AngouriMath/pull/657).
 
 **Refused by name** — `trunc` `lcm` `erf` `conjugate`. AngouriMath has none of these, and each is
 what some other CAS calls a function, so a caller reaches for it. Left alone they would be read as
-products under the rule below and answer silently and wrongly; they raise a parse error naming the
+products under the rule above and answer silently and wrongly; they raise a parse error naming the
 function instead. `re` and `im` are the same case and are *not* refused, being short enough to be
 somebody's variable.
+
+## `sum` and `product`, which declare a name
+
+`sum(body, name, from, to)` and `product(body, name, from, to)`. The **second** argument is the
+name being declared and the first is the body it runs over, so `sum(i, i, 1, 10)` is
+1 + 2 + … + 10 = 55, and `sum(k, k, 1, 10)` is the same number written over a different name.
+
+Both bounds are inclusive and the step is one. An empty range is the operator's identity —
+`sum(k, k, 5, 1)` is `0` and `product(k, k, 5, 1)` is `1` — and the range is written out only when
+both bounds are integers, so `sum(k, k, 1, n)` and `sum(k, k, 1, 5/2)` stay as they are written.
+
+**The declared name means the name, and only inside the operator that declares it.** Two names
+show this, because both mean something else in this language:
+
+- `i` is the imaginary unit, so `sum(i, i, 1, 10)` is `55` and not a sum of imaginary units.
+  Outside, it is the unit again: `sum(i, i, 1, 3) + i` is `6 + i`, and `sum(sqrt(-1) * i, i, 1, 10)`
+  is `55i` — the factor is the unit, the index is the name. `2i` is a single number token, so
+  `sum(2i, i, 1, 3)` is `12`: two times the index, three times over.
+- `pi` and `e` are constants, so `product(pi, pi, 1, 4)` is `24` and `sum(e, e, 1, 3)` is `6`.
+
+A declared name that outlives the operator declaring it is renamed, since `i` and `pi` are not
+names the parser can produce: `derivative(pi ^ 2, pi)` is `2 * pi_1`.
+
+Every binder in the language reads its name this way — `integral`, `derivative`, `limit`, `lambda`
+and the set builder `{ x : … }` alike. `lambda` is the one that will not take a number: its
+parameter is typed as a name, so `lambda(2, x)` is a parse error where `sum(k, 2, 1, 3)` is not.
 
 ## Where it is easy to be caught out
 
 - **`^` groups to the right.** `2 ^ 2 ^ 3` is 256, not 64. Write `(2 ^ 2) ^ 3` for the other.
-- **An unknown name is a product**, not an error. `sinx` is `s * i * n * x`, and `f(x)` for an
-  unknown `f` is `f * x`. That is what makes `a(b + c)` work, and it is why the names above are
-  refused individually rather than by a general rule.
+- **A name beside a number is a power.** `x2` is `x ^ 2`; `x(2)` is `x * 2`.
+- **Letters run together are one name.** `sinx` is a variable called `sinx`, not `sin(x)` and not
+  a product. Write the bracket.
+- **An unknown name with a bracket is a product**, not an error: `f(x)` for an unknown `f` is
+  `f * x`. That is what makes `a(b + c)` work, and it is why the names above are refused
+  individually rather than by a general rule.
 - **`%` is not the remainder.** Write `mod`.
 - **Intervals use `;`**, not `,`: `[1; 2]`. `[1, 2]` is a vector.
 - **`->` is implication**, not a lambda arrow.

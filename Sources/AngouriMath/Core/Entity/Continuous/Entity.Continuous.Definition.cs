@@ -50,6 +50,34 @@ namespace AngouriMath
 
             /// <summary>The expression the operator is applied to, which may mention <see cref="Var"/>.</summary>
             public Entity Expression { get; init; } = Binding.Of(Var).In(Expression);
+
+            /// <summary>
+            /// The names some calculus operator in <paramref name="expression"/> is taken over,
+            /// where <paramref name="name"/> stands inside the body that operator is applied to.
+            /// </summary>
+            /// <remarks>
+            /// Such an operator decides its value by taking <paramref name="name"/> to be free
+            /// of the name it is taken over: <c>derivative(y, x)</c> is 0 because <c>y</c> is not
+            /// <c>x</c>, <c>limit(y, x, 0)</c> is <c>y</c>, and <c>integral(y, x)</c> is
+            /// <c>x * y + C</c>. That is a decision about the name and not about a value put in
+            /// its place, so wherever <paramref name="name"/> stands for values rather than for
+            /// itself — a set builder ranges over them, a solver's answer supplies one — the
+            /// decision is not available and nothing may rest on it.
+            /// <a href="https://github.com/asc-community/AngouriMath/issues/964">#964</a>
+            ///
+            /// The name an operator binds itself is not one of these: the <c>y</c> in
+            /// <c>derivative(y ^ 2, y)</c> is the one being differentiated over, and no
+            /// independence is claimed of it.
+            /// </remarks>
+            internal static IReadOnlyCollection<Variable> NamesAssumedFreeOf(Entity expression, Variable name)
+            {
+                HashSet<Variable>? found = null;
+                foreach (var node in expression.Nodes)
+                    if (node is CalculusOperator { Var: Variable over } calculus
+                        && over != name && calculus.Expression.ContainsNode(name))
+                        (found ??= new HashSet<Variable>()).Add(over);
+                return found ?? (IReadOnlyCollection<Variable>)System.Array.Empty<Variable>();
+            }
         }
 
         /// <summary>
