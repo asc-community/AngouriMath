@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -135,6 +135,92 @@ namespace AngouriMath.Tests.Common
         [InlineData("x <> y")]
         [InlineData("x provided y")]
         public void BooleansRoundTrip(string source) => AssertRoundTrip(source);
+
+        /// <summary>
+        /// An operator that is <em>not</em> associative has to print the bracketing it has, because
+        /// the flat form is read the way the grammar folds -- to the left for everything but
+        /// <c>^</c> and <c>provided</c>. Printing <c>a implies (b implies c)</c> as
+        /// <c>a implies b implies c</c> did not merely look wrong: it comes back as
+        /// <c>(a implies b) implies c</c>, and the two do not agree
+        /// (<c>false implies (true implies false)</c> is true, the other is false).
+        /// </summary>
+        /// <remarks>
+        /// <c>\/</c> and <c>\</c> share one precedence level and are folded by the same loop, so a
+        /// <c>\</c> on the right of a <c>\/</c> mis-associates too even though union on its own is
+        /// associative; and <c>mod</c> shares a level with <c>*</c> and <c>/</c>, so a <c>mod</c> on
+        /// the right of a <c>*</c> does the same.
+        /// </remarks>
+        [Theory]
+        [InlineData("a implies (b implies c)")]
+        [InlineData("(a implies b) implies c")]
+        [InlineData("a implies b implies c")]
+        [InlineData("a implies (b implies (c implies d))")]
+        [InlineData("(a implies (b implies c)) implies d")]
+        [InlineData("a implies (b or c)")]
+        [InlineData(@"A \ (B \ C)")]
+        [InlineData(@"(A \ B) \ C")]
+        [InlineData(@"A \/ (B \ C)")]
+        [InlineData(@"A \ (B \/ C)")]
+        [InlineData(@"(A \/ B) \ C")]
+        [InlineData(@"A \ (B /\ C)")]
+        [InlineData(@"A /\ (B \ C)")]
+        [InlineData("a in (b in c)")]
+        [InlineData("(a in b) in c")]
+        [InlineData("x * (y mod z)")]
+        [InlineData("(x * y) mod z")]
+        [InlineData("x mod (y * z)")]
+        [InlineData("x / (y mod z)")]
+        [InlineData("x mod (y mod z)")]
+        // `provided` is the mirror case: it folds to the *right*, so it is the left operand that
+        // mis-associates. Its value survives either reading -- `(x provided p) provided q` and
+        // `x provided (p provided q)` are both `x` exactly when `p` and `q` hold -- which is why
+        // a check on the value alone passes it and a check on the expression does not.
+        [InlineData("(x provided p) provided q")]
+        [InlineData("x provided (p provided q)")]
+        [InlineData("x provided p provided q")]
+        [InlineData("((x provided p) provided q) provided r")]
+        public void ANonAssociativeOperatorKeepsItsGrouping(string source) => AssertRoundTrip(source);
+
+        /// <summary>
+        /// The same defect stated in values rather than in trees: each of these is a case where
+        /// reading the printed form back the way the grammar folds gives a different answer.
+        /// </summary>
+        [Theory]
+        [InlineData("false implies (true implies false)")]
+        [InlineData(@"{ 1, 2, 3 } \ ({ 2, 3 } \ { 3 })")]
+        [InlineData(@"{ 1, 2 } \ ({ 2 } \/ { 3 })")]
+        [InlineData(@"{ 1, 2 } \/ ({ 3 } \ { 1, 2 })")]
+        [InlineData("2 * (3 mod 2)")]
+        [InlineData("(3 in { 3 }) in BB")]
+        public void AMisreadGroupingWouldChangeTheValue(string source)
+        {
+            var original = source.ToEntity();
+            Assert.Equal(original.Evaled, original.Stringize().ToEntity().Evaled);
+        }
+
+        /// <summary>
+        /// The other half of the rule, pinned so that it is a decision rather than an oversight:
+        /// an operator that <em>is</em> associative prints flat, because the bracketing then
+        /// carries no mathematics. <c>x + (y + z)</c> comes back as <c>(x + y) + z</c>, which is a
+        /// different <see cref="Entity"/> and the same number -- and bracketing it instead would
+        /// turn every expanded polynomial into a right-nested pile of parentheses.
+        /// </summary>
+        [Theory]
+        [InlineData("1 + (2 + 3)", "1 + 2 + 3")]
+        [InlineData("1 + (2 - 3)", "1 + 2 - 3")]
+        [InlineData("2 * (3 * 4)", "2 * 3 * 4")]
+        [InlineData("2 * (6 / 3)", "2 * 6 / 3")]
+        [InlineData("true and (false and true)", "True and False and True")]
+        [InlineData("true or (false or true)", "True or False or True")]
+        [InlineData("true xor (false xor true)", "True xor False xor True")]
+        [InlineData(@"{ 1 } \/ ({ 2 } \/ { 3 })", @"{ 1 } \/ { 2 } \/ { 3 }")]
+        [InlineData(@"{ 1, 2 } /\ ({ 2, 3 } /\ { 2 })", @"{ 1, 2 } /\ { 2, 3 } /\ { 2 }")]
+        public void AnAssociativeOperatorPrintsFlatAndKeepsItsValue(string source, string expectedFlat)
+        {
+            var original = source.ToEntity();
+            Assert.Equal(expectedFlat, original.Stringize());
+            Assert.Equal(original.Evaled, original.Stringize().ToEntity().Evaled);
+        }
 
         [Theory]
         [InlineData("{ 1, 2, 3 }")]

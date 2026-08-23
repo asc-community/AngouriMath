@@ -1,0 +1,210 @@
+﻿//
+// Copyright (c) 2019-2026 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
+
+using System.Linq;
+using AngouriMath;
+using AngouriMath.Extensions;
+using Xunit;
+using static AngouriMath.Entity;
+using static AngouriMath.Entity.Number;
+
+namespace AngouriMath.Tests.Algebra.Polynomials
+{
+    /// <summary>
+    /// <see cref="MathS.Polynomials"/> — that it answers, that it refuses where it must, and
+    /// that the worked examples in its documentation are the output it actually produces.
+    /// </summary>
+    [Trait("Area", "Algebra")]
+    public sealed class PolynomialSurfaceTest
+    {
+        /// <summary>
+        /// The printed form is the assertion here, deliberately and against the usual rule.
+        /// These are the examples in the XML documentation, and what is being tested is that a
+        /// reader who runs one gets what the page says — so a change of form is exactly the
+        /// failure this has to catch. Everything else in this file asserts the mathematics.
+        /// </summary>
+        [Theory]
+        [InlineData("x ^ 4 - 5 * x ^ 2 + 4", "(x + 1) * (x + 2) * (x - 2) * (x - 1)")]
+        [InlineData("x ^ 3 - 3 * x ^ 2 + 3 * x - 1", "(x - 1) ^ 3")]
+        [InlineData("x ^ 2 + 1", "x ^ 2 + 1")]
+        public void TheFactorExamplesPrintWhatTheDocumentationSays(string input, string expected)
+            => Assert.Equal(expected, MathS.Polynomials.Factor(input, "x")?.Stringize());
+
+        [Theory]
+        [InlineData("x ^ 2 - 1", "x ^ 2 + 2 * x + 1", "x + 1")]
+        [InlineData("x ^ 2 - y ^ 2", "x ^ 2 - 2 * x * y + y ^ 2", "x - y")]
+        [InlineData("x ^ 2 + 1", "x ^ 2 + 2", "1")]
+        public void TheGcdExamplesPrintWhatTheDocumentationSays(string left, string right, string expected)
+            => Assert.Equal(expected, MathS.Polynomials.Gcd(left, right)?.Stringize());
+
+        [Theory]
+        [InlineData("x ^ 2 + y ^ 2 - 1", "x + y - 1", "y", "2 * x ^ 2 - 2 * x")]
+        [InlineData("x ^ 2 - 1", "x - a", "x", "a ^ 2 - 1")]
+        public void TheResultantExamplesPrintWhatTheDocumentationSays(
+            string left, string right, string eliminate, string expected)
+            => Assert.Equal(expected, MathS.Polynomials.Resultant(left, right, eliminate)?.Stringize());
+
+        [Theory]
+        [InlineData("a * x ^ 2 + b * x + c", "-4 * a * c + b ^ 2")]
+        [InlineData("x ^ 3 - 3 * x + 1", "81")]
+        [InlineData("x ^ 2 - 2 * x + 1", "0")]
+        public void TheDiscriminantExamplesPrintWhatTheDocumentationSays(string input, string expected)
+            => Assert.Equal(expected, MathS.Polynomials.Discriminant(input, "x")?.Stringize());
+
+        [Theory]
+        [InlineData("(x - 1) ^ 3 * (x + 2) ^ 2", "x ^ 2 + x - 2")]
+        [InlineData("x ^ 2 + 1", "x ^ 2 + 1")]
+        public void TheSquareFreePartExamplesPrintWhatTheDocumentationSays(string input, string expected)
+            => Assert.Equal(expected, MathS.Polynomials.SquareFreePart(input, "x")?.Stringize());
+
+        /// <summary>The factors multiply back to what they came from.</summary>
+        [Theory]
+        [InlineData("x ^ 4 - 5 * x ^ 2 + 4")]
+        [InlineData("x ^ 6 - 1")]
+        [InlineData("2 * x ^ 2 - 2")]
+        [InlineData("x ^ 2 / 4 - 1")]
+        [InlineData("x ^ 8 - 1")]
+        [InlineData("x ^ 4 + 3 * x ^ 2 + 2")]
+        [InlineData("x ^ 3 - 3 * x ^ 2 + 3 * x - 1")]
+        [InlineData("x + 1")]
+        [InlineData("x ^ 2 + 1")]
+        public void AFactorisationIsTheSamePolynomial(string input)
+        {
+            var factored = MathS.Polynomials.Factor(input, "x");
+            Assert.NotNull(factored);
+            Assert.Equal(Integer.Create(0),
+                (factored! - input.ToEntity()).Expand().Simplify());
+        }
+
+        /// <summary>The greatest common divisor divides both, and the quotients are coprime.</summary>
+        [Theory]
+        [InlineData("x ^ 2 - 1", "x ^ 2 + 2 * x + 1", "x + 1")]
+        [InlineData("x ^ 3 - x", "x ^ 2 - x", "x ^ 2 - x")]
+        [InlineData("x ^ 2 - y ^ 2", "x ^ 2 - 2 * x * y + y ^ 2", "x - y")]
+        [InlineData("(x + y) * (x - y)", "(x + y) ^ 2", "x + y")]
+        public void AGreatestCommonDivisorDividesBoth(string left, string right, string expected)
+        {
+            var divisor = MathS.Polynomials.Gcd(left, right);
+            Assert.NotNull(divisor);
+            Assert.Equal(Integer.Create(0), (divisor! - expected.ToEntity()).Expand().Simplify());
+        }
+
+        /// <summary>
+        /// The resultant vanishes exactly where the two polynomials have a common root in the
+        /// eliminated variable — checked by substituting the values that make it vanish back
+        /// into the pair and solving.
+        /// </summary>
+        [Fact]
+        public void TheResultantVanishesWhereThereIsACommonRoot()
+        {
+            // Res_x(x^2 - 1, x - a) = a^2 - 1, so the two share a root exactly at a = +-1.
+            var resultant = MathS.Polynomials.Resultant("x ^ 2 - 1", "x - a", "x");
+            Assert.NotNull(resultant);
+            foreach (var value in new Entity[] { 1, -1 })
+            {
+                Assert.Equal(Integer.Create(0), resultant!.Substitute("a", value).Simplify());
+                // and the shared root really is there
+                var shared = "x ^ 2 - 1".ToEntity().SolveEquation("x");
+                Assert.Contains(value, ((Set.FiniteSet)shared.InnerSimplified).ToArray());
+            }
+            foreach (var value in new Entity[] { 0, 2, -3 })
+                Assert.NotEqual(Integer.Create(0), resultant!.Substitute("a", value).Simplify());
+        }
+
+        /// <summary>
+        /// The discriminant vanishes exactly where the polynomial has a repeated root, and its
+        /// sign counts the real roots of a cubic.
+        /// </summary>
+        [Theory]
+        [InlineData("x ^ 2 - 2 * x + 1", 0)]
+        [InlineData("x ^ 2 - 1", 1)]
+        [InlineData("x ^ 2 + 1", -1)]
+        [InlineData("x ^ 3 - 3 * x + 1", 1)]     // three real roots
+        [InlineData("x ^ 3 - 2", -1)]            // one real root
+        [InlineData("x ^ 3 - 3 * x + 2", 0)]     // a repeated root at 1
+        public void TheDiscriminantHasTheSignItShould(string input, int sign)
+        {
+            var discriminant = MathS.Polynomials.Discriminant(input, "x");
+            Assert.NotNull(discriminant);
+            var value = (Real)discriminant!.EvalNumerical().RealPart;
+            Assert.Equal(sign, value.EDecimal.Sign);
+        }
+
+        /// <summary>
+        /// The square-free part has the same roots as what it came from, and each of them
+        /// once — so it is what the original is divided by the greatest common divisor with
+        /// its derivative, and its own discriminant no longer vanishes.
+        /// </summary>
+        [Theory]
+        [InlineData("(x - 1) ^ 3 * (x + 2) ^ 2")]
+        [InlineData("x ^ 4 - 2 * x ^ 2 + 1")]
+        [InlineData("(x ^ 2 + 1) ^ 2")]
+        public void ASquareFreePartHasNoRepeatedRoot(string input)
+        {
+            var part = MathS.Polynomials.SquareFreePart(input, "x");
+            Assert.NotNull(part);
+            var discriminant = MathS.Polynomials.Discriminant(part!, "x");
+            Assert.NotNull(discriminant);
+            Assert.NotEqual(Integer.Create(0), discriminant!.Simplify());
+            // Every root of the original is a root of the square-free part.
+            foreach (var root in (Set.FiniteSet)input.ToEntity().SolveEquation("x").InnerSimplified)
+                Assert.Equal(Integer.Create(0), part!.Substitute("x", root).Simplify());
+        }
+
+        /// <summary>
+        /// A request outside what the layer can do is refused with <see langword="null"/>, and
+        /// never answered with the input as though it were the result. Handing
+        /// <c>x * y + y</c> back from a factorisation would say that <c>y * (x + 1)</c> does
+        /// not exist, which is a wrong answer and not a graceful failure.
+        /// </summary>
+        [Theory]
+        [InlineData("x * y + y")]                    // multivariate
+        [InlineData("x ^ 2 * y ^ 2 - 1")]            // multivariate
+        [InlineData("x ^ 2 - a")]                    // a symbolic coefficient is not rational
+        [InlineData("sin(x) + 1")]                   // not a polynomial
+        [InlineData("x ^ 33 - 1")]                   // past the degree bound of the factoriser
+        public void FactorisationRefusesRatherThanReturningTheInput(string input)
+            => Assert.Null(MathS.Polynomials.Factor(input, "x"));
+
+        /// <summary>Nine variables is one more than the packed monomial has room for.</summary>
+        [Fact]
+        public void NineVariablesAreRefused()
+        {
+            var eight = "a + b + c + d + f + g + h + k";
+            var nine = eight + " + m";
+            Assert.NotNull(MathS.Polynomials.Gcd(eight, eight + " + 1"));
+            Assert.Null(MathS.Polynomials.Gcd(nine, nine + " + 1"));
+            Assert.Null(MathS.Polynomials.Resultant(nine, nine + " + 1", "a"));
+            Assert.Null(MathS.Polynomials.Discriminant(nine + " + a ^ 2", "a"));
+        }
+
+        /// <summary>
+        /// Degree 128 is one past what a packed monomial can hold, so everything that goes
+        /// through the multivariate representation declines rather than truncating.
+        /// </summary>
+        [Fact]
+        public void ADegreeBeyondTheBoundIsRefused()
+        {
+            var degree128 = string.Join(" + ",
+                Enumerable.Range(0, 129).Select(power => power == 0 ? "1" : $"x ^ {power}"));
+            Assert.Null(MathS.Polynomials.Factor(degree128, "x"));
+            Assert.Null(MathS.Polynomials.Discriminant(degree128, "x"));
+            Assert.Null(MathS.Polynomials.SquareFreePart(degree128, "x"));
+            Assert.Null(MathS.Polynomials.Gcd(degree128, degree128 + " + 1"));
+        }
+
+        /// <summary>Something that is not a polynomial at all is refused everywhere.</summary>
+        [Fact]
+        public void SomethingThatIsNotAPolynomialIsRefused()
+        {
+            Assert.Null(MathS.Polynomials.Gcd("sin(x)", "x"));
+            Assert.Null(MathS.Polynomials.Resultant("sin(x)", "x", "x"));
+            Assert.Null(MathS.Polynomials.Discriminant("1 / x", "x"));
+            Assert.Null(MathS.Polynomials.SquareFreePart("e ^ x", "x"));
+        }
+    }
+}

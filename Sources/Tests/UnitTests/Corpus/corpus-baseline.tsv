@@ -1,0 +1,47 @@
+# AngouriMath corpus baseline. One line per problem, tab separated.
+# Generated from Corpus.All -- not hand-edited. To update it, change Expect
+# in Corpus.cs, re-run the suite with AM_UPDATE_CORPUS_BASELINE=1, and commit both.
+# Its git history is the per-commit history of the corpus -- item 36 of
+# https://github.com/asc-community/AngouriMath/issues/746.
+# totals	Solved=39	Unsolved=1	Wrong=0	Error=0	Timeout=0	Total=40
+name	op	verdict
+int:arctan-form	Integrate	Solved
+int:by-parts-cyclic	Integrate	Solved
+int:exponential	Integrate	Solved
+int:hard	Integrate	Unsolved
+int:partial-fractions	Integrate	Solved
+int:power	Integrate	Solved
+int:reciprocal	Integrate	Solved
+int:trig	Integrate	Solved
+int:u-sub	Integrate	Solved
+lim:0/0	Limit	Solved
+lim:0/0-arcsin	Limit	Solved
+lim:1^oo	Limit	Solved
+lim:log	Limit	Solved
+lim:oo-oo	Limit	Solved
+lim:ratio	Limit	Solved
+simp:abs	Simplify	Solved
+simp:collapse	Simplify	Solved
+simp:factoring	Simplify	Solved
+simp:inverse-trig	Simplify	Solved
+simp:log-ratio	Simplify	Solved
+simp:parity	Simplify	Solved
+simp:polynomial	Simplify	Solved
+simp:power-tower	Simplify	Solved
+simp:rational	Simplify	Solved
+simp:rational-two-vars	Simplify	Solved
+simp:surd-product	Simplify	Solved
+simp:surds	Simplify	Solved
+simp:trig-cyclic	Simplify	Solved
+simp:trig-double	Simplify	Solved
+simp:trig-pythagoras	Simplify	Solved
+solve:biquadratic	Solve	Solved
+solve:cubic	Solve	Solved
+solve:exponential	Solve	Solved
+solve:linear	Solve	Solved
+solve:product	Solve	Solved
+solve:quadratic	Solve	Solved
+solve:quadratic-complex	Solve	Solved
+solve:quartic-nested	Solve	Solved
+solve:quintic-factorable	Solve	Solved
+solve:trig	Solve	Solved
