@@ -21,6 +21,7 @@ read first.
 
 | Silent? | What | Was | Is |
 |---|---|---|---|
+| | `"x ^ 3 - x > 0".ToEntity().Solve("x")`, and every polynomial inequality of degree three or more | `NotSufficientlySupportedException: Only linear and quadratic polynomial inequalities are supported` | `(-1; 0) \/ (1; +oo)` — the solution set |
 | **Silent** | `"a implies (b implies c)".ToEntity().Stringize()` | `a implies b implies c`, which reads back as `(a implies b) implies c` | `a implies (b implies c)` |
 | | `"(a implies b) implies c".ToEntity().Stringize()` | `(a implies b) implies c` | `a implies b implies c` |
 | **Silent** | `@"A \ (B \ C)".ToEntity().Stringize()`, and `Latexize` | `A \ B \ C` / `A \setminus B \setminus C` | `A \ (B \ C)` / `A \setminus \left(B \setminus C\right)` |
@@ -33,6 +34,64 @@ read first.
 | | any expression mixing a number with a `Complex` argument, `Compile`d in a NativeAOT app — `"x + 1".Compile<Complex, Complex>("x")` | `UncompilableNodeException: ... The binary operator Add is not defined for the types 'System.Numerics.Complex' and 'System.Numerics.Complex'` | the compiled function, answering as it does under the JIT |
 | | `Compile` to a nullable integral return type in a NativeAOT app | `AngouriBugException: IsNaN method expected for type System.Double`, which took the process down | the compiled function |
 | **Silent** | an app publishing with `PublishTrimmed` or NativeAOT | `AngouriMath.dll` was copied in whole, being unmarked | it is trimmed with the rest, since the assembly now declares `IsTrimmable` |
+
+### A polynomial inequality of degree three or more is answered
+
+**Was** — every univariate polynomial inequality above degree two was refused outright, whatever its
+coefficients and however easily it factored:
+
+```
+"x ^ 3 - x > 0".ToEntity().Solve("x")
+    NotSufficientlySupportedException: Only linear and quadratic polynomial inequalities are
+    supported; this one is of a higher degree
+```
+
+**Is** — the solution set, where the real roots can be established completely:
+
+```
+"x ^ 3 - x > 0".ToEntity().Solve("x")                   (-1; 0) \/ (1; +oo)
+"x ^ 3 - x >= 0".ToEntity().Solve("x")                  { 0, 1, -1 } \/ (-1; 0) \/ (1; +oo)
+"(x - 1) ^ 2 * (x + 2) > 0".ToEntity().Solve("x")       (-2; 1) \/ (1; +oo)
+"x ^ 4 - 5 * x ^ 2 + 4 > 0".ToEntity().Solve("x")       (-oo; -2) \/ (-1; 1) \/ (2; +oo)
+"x ^ 3 - 2 * x + 1 > 0".ToEntity().Solve("x")           ((-1 - sqrt(5)) / 2; (-1 + sqrt(5)) / 2) \/ (1; +oo)
+"x ^ 3 - 2 > 0".ToEntity().Solve("x")                   (2 ^ (1/3); +oo)
+"x ^ 5 - 5 * x ^ 3 + 4 * x > 0".ToEntity().Solve("x")   (-2; -1) \/ (0; 1) \/ (2; +oo)
+"x ^ 4 + 1 > 0".ToEntity().Solve("x")                   (-oo; +oo)
+"x ^ 4 - 2 > 0".ToEntity().Solve("x")                   (-oo; -2 ^ (1/4)) \/ (2 ^ (1/4); +oo)
+"x ^ 4 - 10 * x ^ 2 + 1 > 0".ToEntity().Solve("x")      (-oo; -sqrt((10 + 4 * sqrt(6)) / 2))
+                                                          \/ (-sqrt((10 - 4 * sqrt(6)) / 2); sqrt((10 - 4 * sqrt(6)) / 2))
+                                                          \/ (sqrt((10 + 4 * sqrt(6)) / 2); +oo)
+```
+
+A polynomial has one sign on each open interval between consecutive real roots, so the answer is the
+union of the intervals where that sign is positive. What makes it an answer rather than a guess is
+that the list of real roots is *complete*: the polynomial is written as a product of powers of
+irreducibles over `Q`, verified to multiply back, and the number of real roots of each irreducible
+factor is read off its **discriminant** — two where a quadratic factor's is positive and none where
+it is negative, three and one respectively for a cubic, and — for a quartic — the discriminant
+with the two auxiliary quantities of the standard criterion, a negative discriminant meaning two
+real roots and a positive one four or none. A missed root would merge two intervals of
+opposite sign and report the wrong half of one as the solution, so this is the difference between
+the feature and a wrong answer.
+
+**And the refusal that remains is a different one.** The gap is no longer degree; it is an
+irreducible factor of degree five or more, where there is no criterion for the number of real roots
+and no formula for the roots either. So the message changed too:
+
+```
+"x ^ 5 - x - 1 > 0".ToEntity().Solve("x")
+    NotSufficientlySupportedException: Only polynomial inequalities are supported, and of those
+    only the ones whose real roots can be established completely: linear and quadratic with any
+    coefficients, and higher degrees where the coefficients are rational and no irreducible factor
+    is of degree five or more
+```
+
+Code that caught `NotSufficientlySupportedException` still catches it; code that matched on the
+message text does not. Linear and quadratic inequalities are untouched, including the symbolic
+coefficients and the case splits on their signs, which the sign table does not do — it takes only
+rational coefficients, and only from degree three up.
+
+[#746](https://github.com/asc-community/AngouriMath/issues/746) item 43.
 
 ### A printed operator that is not associative keeps its brackets
 
@@ -131,7 +190,6 @@ keeps it true.
 
 | Silent? | What | Was | Is |
 |---|---|---|---|
-| | `"x ^ 3 - x > 0".ToEntity().Solve("x")`, and every polynomial inequality of degree three or more | `NotSufficientlySupportedException: Only linear and quadratic polynomial inequalities are supported` | `(-1; 0) \/ (1; +oo)` — the solution set |
 | | `(Entity.Number)someBigInteger` | `FormatException: Illegal character found`, for almost every value | the number |
 | **Silent** | `"1/x".Integrate("x")`, and every antiderivative with a logarithm | `ln(abs(x)) + C` | `ln(x) + C` |
 | **Silent** | `CostModel.FewestDivisions.Cost(y ^ (1 * (-1)) * x)` | `0.007`, cheaper than `x / y` | `1.007` |
@@ -169,64 +227,6 @@ keeps it true.
 | **Silent** | `derivative(x ^ 2 + y ^ 2, [x, y])` | `0` | `[2 * x, 2 * y]`, the gradient |
 | **Silent** | `integral(x, [x, y]T)` | `[[C + x ^ 2, C + x * y]]` | `[[x ^ 2 / 2 + C, x * y + C]]` |
 | **Silent** | `derivative(e ^ 2, e)`, over a named constant | `0` | `2 * e` |
-
-### A polynomial inequality of degree three or more is answered
-
-**Was** — every univariate polynomial inequality above degree two was refused outright, whatever its
-coefficients and however easily it factored:
-
-```
-"x ^ 3 - x > 0".ToEntity().Solve("x")
-    NotSufficientlySupportedException: Only linear and quadratic polynomial inequalities are
-    supported; this one is of a higher degree
-```
-
-**Is** — the solution set, where the real roots can be established completely:
-
-```
-"x ^ 3 - x > 0".ToEntity().Solve("x")                   (-1; 0) \/ (1; +oo)
-"x ^ 3 - x >= 0".ToEntity().Solve("x")                  { 0, 1, -1 } \/ (-1; 0) \/ (1; +oo)
-"(x - 1) ^ 2 * (x + 2) > 0".ToEntity().Solve("x")       (-2; 1) \/ (1; +oo)
-"x ^ 4 - 5 * x ^ 2 + 4 > 0".ToEntity().Solve("x")       (-oo; -2) \/ (-1; 1) \/ (2; +oo)
-"x ^ 3 - 2 * x + 1 > 0".ToEntity().Solve("x")           ((-1 - sqrt(5)) / 2; (-1 + sqrt(5)) / 2) \/ (1; +oo)
-"x ^ 3 - 2 > 0".ToEntity().Solve("x")                   (2 ^ (1/3); +oo)
-"x ^ 5 - 5 * x ^ 3 + 4 * x > 0".ToEntity().Solve("x")   (-2; -1) \/ (0; 1) \/ (2; +oo)
-"x ^ 4 + 1 > 0".ToEntity().Solve("x")                   (-oo; +oo)
-"x ^ 4 - 2 > 0".ToEntity().Solve("x")                   (-oo; -2 ^ (1/4)) \/ (2 ^ (1/4); +oo)
-"x ^ 4 - 10 * x ^ 2 + 1 > 0".ToEntity().Solve("x")      (-oo; -sqrt((10 + 4 * sqrt(6)) / 2))
-                                                          \/ (-sqrt((10 - 4 * sqrt(6)) / 2); sqrt((10 - 4 * sqrt(6)) / 2))
-                                                          \/ (sqrt((10 + 4 * sqrt(6)) / 2); +oo)
-```
-
-A polynomial has one sign on each open interval between consecutive real roots, so the answer is the
-union of the intervals where that sign is positive. What makes it an answer rather than a guess is
-that the list of real roots is *complete*: the polynomial is written as a product of powers of
-irreducibles over `Q`, verified to multiply back, and the number of real roots of each irreducible
-factor is read off its **discriminant** — two where a quadratic factor's is positive and none where
-it is negative, three and one respectively for a cubic, and — for a quartic — the discriminant
-with the two auxiliary quantities of the standard criterion, a negative discriminant meaning two
-real roots and a positive one four or none. A missed root would merge two intervals of
-opposite sign and report the wrong half of one as the solution, so this is the difference between
-the feature and a wrong answer.
-
-**And the refusal that remains is a different one.** The gap is no longer degree; it is an
-irreducible factor of degree five or more, where there is no criterion for the number of real roots
-and no formula for the roots either. So the message changed too:
-
-```
-"x ^ 5 - x - 1 > 0".ToEntity().Solve("x")
-    NotSufficientlySupportedException: Only polynomial inequalities are supported, and of those
-    only the ones whose real roots can be established completely: linear and quadratic with any
-    coefficients, and higher degrees where the coefficients are rational and no irreducible factor
-    is of degree five or more
-```
-
-Code that caught `NotSufficientlySupportedException` still catches it; code that matched on the
-message text does not. Linear and quadratic inequalities are untouched, including the symbolic
-coefficients and the case splits on their signs, which the sign table does not do — it takes only
-rational coefficients, and only from degree three up.
-
-[#746](https://github.com/asc-community/AngouriMath/issues/746) item 43.
 
 ### `ToSympyCode` emits Python that runs
 
