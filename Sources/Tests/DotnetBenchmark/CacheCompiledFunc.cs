@@ -14,6 +14,7 @@ using System.Linq.Expressions;
 
 namespace DotnetBenchmark
 {
+    [MemoryDiagnoser]
     public class CacheCompiledFunc
     {
         private readonly FastExpression complexFunc;
