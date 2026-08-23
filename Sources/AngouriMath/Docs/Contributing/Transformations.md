@@ -82,12 +82,13 @@ foreach (var step in recording.Steps)
 This is [#28](https://github.com/asc-community/AngouriMath/issues/28). Three things about it
 are deliberate and worth keeping:
 
-**Free when off.** With no recording open, applying a rule set costs one thread-static read
-more than it did before — per rule set, not per node — and allocates nothing. That is why it
-is a scope rather than a setting: a setting is something a caller can leave on.
+**Free when off.** With no recording open, applying a rule set costs one ambient read more
+than it did before — per rule set, not per node — and allocates nothing. That is why it is a
+scope rather than a setting: a setting is something a caller can leave on.
 
-**Per thread**, like `MathS.Settings`, so a parallel caller records its own work and nobody
-else's. Recordings nest, and an inner one hides the outer until it closes.
+**Per flow**, like `MathS.Settings`, so a parallel caller records its own work and nobody
+else's. It follows the call rather than the thread, so it survives an `await` and work started
+under it reports to it. Recordings nest, and an inner one hides the outer until it closes.
 
 **A step is a subexpression, not a snapshot.** A rewrite pass walks bottom-up and rewrites
 nodes as it goes, so there is no moment at which a partly-rewritten whole expression exists
