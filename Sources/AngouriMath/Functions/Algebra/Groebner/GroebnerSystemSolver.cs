@@ -8,6 +8,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
+using AngouriMath.Core.Budgets;
 using static AngouriMath.Entity;
 
 namespace AngouriMath.Functions.Algebra.Groebner
@@ -53,13 +54,41 @@ namespace AngouriMath.Functions.Algebra.Groebner
         /// are none. Answers <see langword="false"/> where the caller should carry on with
         /// whatever it would have done.
         /// </summary>
+        /// <remarks>
+        /// <see langword="false"/> is one word for several different situations — the system
+        /// is not polynomial, the basis ran out of budget, a root could not be verified — and
+        /// a caller who has to guess which cannot debug the call
+        /// (<a href="https://github.com/asc-community/AngouriMath/issues/896">#896</a>). Each
+        /// of them is named on the way out, and a <see cref="BudgetRecording"/> open around
+        /// the call collects them; with none open this costs one ambient read for the whole
+        /// solve.
+        /// </remarks>
         internal static bool TrySolve(
             IReadOnlyList<Entity> equations, IReadOnlyList<Variable> variables, out Matrix? solutions)
         {
+            var budget = new GroebnerBudget();
+            try
+            {
+                return Attempt(equations, variables, budget, out solutions);
+            }
+            finally
+            {
+                budget.Report();
+            }
+        }
+
+        /// <summary>
+        /// Split out so that <see cref="TrySolve"/> can report what this spent on every way
+        /// out of it, including the ones that decline before any work is done.
+        /// </summary>
+        static bool Attempt(
+            IReadOnlyList<Entity> equations, IReadOnlyList<Variable> variables,
+            GroebnerBudget budget, out Matrix? solutions)
+        {
             solutions = null;
             if (equations.Count == 0 || variables.Count == 0)
-                return false;
-            if (variables.Count > MultivariatePolynomial.MaxVariables)
+                return budget.Allow(false, "nothing to solve");
+            if (!budget.Allow(variables.Count <= MultivariatePolynomial.MaxVariables, "variable count"))
                 return false;
 
             var index = new Dictionary<Variable, int>(variables.Count);
@@ -67,7 +96,7 @@ namespace AngouriMath.Functions.Algebra.Groebner
             {
                 // A repeated variable would make the column layout of the answer a lie.
                 if (index.ContainsKey(variables[i]))
-                    return false;
+                    return budget.Allow(false, "repeated variable");
                 index[variables[i]] = i;
             }
 
@@ -77,14 +106,13 @@ namespace AngouriMath.Functions.Algebra.Groebner
                 // Refuses anything that is not a polynomial over Q in these variables, which
                 // is the guard everything below relies on.
                 if (MultivariatePolynomial.TryParse(equation, index) is not { } polynomial)
-                    return false;
+                    return budget.Allow(false, "not polynomial");
                 if (!polynomial.IsZero)
                     polynomials.Add(polynomial);
             }
             if (polynomials.Count == 0)
-                return false;
+                return budget.Allow(false, "no equations");
 
-            var budget = new GroebnerBudget();
             var basis = Buchberger.Compute(polynomials, MonomialOrder.DegreeReverseLexicographic, budget);
             if (basis is null)
                 return false;
@@ -108,7 +136,7 @@ namespace AngouriMath.Functions.Algebra.Groebner
 
             var found = new List<Entity[]>();
             var assignment = new Entity[variables.Count];
-            if (!BackSubstitute(triangular, variables, variables.Count - 1, assignment, found))
+            if (!BackSubstitute(triangular, variables, variables.Count - 1, assignment, found, budget))
                 return false;
 
             foreach (var candidate in found)
@@ -136,7 +164,7 @@ namespace AngouriMath.Functions.Algebra.Groebner
         /// </summary>
         static bool BackSubstitute(
             IReadOnlyList<Entity> equations, IReadOnlyList<Variable> variables,
-            int at, Entity[] assignment, List<Entity[]> found)
+            int at, Entity[] assignment, List<Entity[]> found, GroebnerBudget budget)
         {
             if (at < 0)
             {
@@ -156,10 +184,10 @@ namespace AngouriMath.Functions.Algebra.Groebner
                 }
             }
             if (univariate is null)
-                return false;
+                return budget.Allow(false, "no univariate equation");
 
             if (univariate.SolveEquation(variable).InnerSimplified is not Set.FiniteSet roots)
-                return false;
+                return budget.Allow(false, "unenumerable roots");
 
             foreach (var root in roots)
             {
@@ -171,7 +199,7 @@ namespace AngouriMath.Functions.Algebra.Groebner
                     if (substituted.Vars.Any())
                         narrowed.Add(substituted);
                 }
-                if (!BackSubstitute(narrowed, variables, at - 1, assignment, found))
+                if (!BackSubstitute(narrowed, variables, at - 1, assignment, found, budget))
                     return false;
             }
             return true;
@@ -215,10 +243,10 @@ namespace AngouriMath.Functions.Algebra.Groebner
 
             foreach (var equation in equations)
             {
-                if (!budget.Spend("time"))
+                if (!budget.Spend())
                     return false;
                 if (equation.Substitute(substitutions).InnerSimplified is not Number.Integer { IsZero: true })
-                    return false;
+                    return budget.Allow(false, "unverifiable root");
             }
             return true;
         }
