@@ -15,6 +15,44 @@ read first.
 
 ---
 
+## Unreleased — since 2.3.0
+
+### At a glance
+
+| Silent? | What | Was | Is |
+|---|---|---|---|
+| | any expression mixing a number with a `Complex` argument, `Compile`d in a NativeAOT app — `"x + 1".Compile<Complex, Complex>("x")` | `UncompilableNodeException: ... The binary operator Add is not defined for the types 'System.Numerics.Complex' and 'System.Numerics.Complex'` | the compiled function, answering as it does under the JIT |
+| | `Compile` to a nullable integral return type in a NativeAOT app | `AngouriBugException: IsNaN method expected for type System.Double`, which took the process down | the compiled function |
+| **Silent** | an app publishing with `PublishTrimmed` or NativeAOT | `AngouriMath.dll` was copied in whole, being unmarked | it is trimmed with the rest, since the assembly now declares `IsTrimmable` |
+
+### `Compile` works in a trimmed or NativeAOT application
+
+The Linq compilation path found the method for each node by name —
+`typeof(MathAllMethods).GetMethod(name, ...)` for the mathematical functions,
+`expr.Type.GetMethod("IsNaN")` for the NaN test — and left the operators and conversions between
+`Complex`, `BigInteger` and the primitives to `Expression.Add` and `Expression.Convert`, which find
+them by reflecting over the operand type. A name resolved at run time is invisible to the trimmer,
+so the members were removed and the lookups came back empty. All four are now tables of members
+named at compile time: `MathAllMethods.Definitions` generated beside the methods it dispatches to,
+and `nanChecks`, `operators` and `conversionOperators` in `CompilationProtocol`.
+
+Nothing changes under the JIT — the same `MethodInfo` reaches the same `Expression` node — and the
+44 assertions of `Sources/Tests/AotSmokeTest` give byte-identical output under the JIT, a trimmed
+publish and a NativeAOT publish. What changed is that the second and third of those now run at all:
+before this, six of them threw and the seventh aborted the process.
+
+`AngouriMath` is marked `IsAotCompatible` for `net8.0` and later as a result, which is also the
+silent half of the entry above: a trimmer reads that as permission to remove unused code from
+inside the assembly, so an app that trims will now get a smaller `AngouriMath` rather than all of
+it. That is the point of the mark, and
+[`Docs/Contributing/Trimming.md`](Sources/AngouriMath/Docs/Contributing/Trimming.md) says what
+keeps it true.
+
+[#363](https://github.com/asc-community/AngouriMath/issues/363),
+[#746](https://github.com/asc-community/AngouriMath/issues/746) item 79.
+
+---
+
 ## 2.3.0 — since 2.2.0
 
 ### At a glance
