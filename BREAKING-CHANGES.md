@@ -15,6 +15,87 @@ read first.
 
 ---
 
+## Unreleased — since 2.3.0
+
+### At a glance
+
+| Silent? | What | Was | Is |
+|---|---|---|---|
+| **Silent** | `"a implies (b implies c)".ToEntity().Stringize()` | `a implies b implies c`, which reads back as `(a implies b) implies c` | `a implies (b implies c)` |
+| | `"(a implies b) implies c".ToEntity().Stringize()` | `(a implies b) implies c` | `a implies b implies c` |
+| **Silent** | `@"A \ (B \ C)".ToEntity().Stringize()`, and `Latexize` | `A \ B \ C` / `A \setminus B \setminus C` | `A \ (B \ C)` / `A \setminus \left(B \setminus C\right)` |
+| **Silent** | `@"A \ (B \/ C)".ToEntity().Stringize()`, and `Latexize` | `A \ B \/ C` / `A \setminus B \cup C` | `A \ (B \/ C)` / `A \setminus \left(B \cup C\right)` |
+| **Silent** | `@"A \/ (B \ C)".ToEntity().Stringize()`, and `Latexize` | `A \/ B \ C` / `A \cup B \setminus C` | `A \/ (B \ C)` / `A \cup \left(B \setminus C\right)` |
+| **Silent** | `"(x provided p) provided q".ToEntity().Stringize()`, and `Latexize` | `x provided p provided q`, which reads back as `x provided (p provided q)` | `(x provided p) provided q` |
+| **Silent** | `"a in (b in c)".ToEntity().Stringize()`, and `Latexize` | `a in b in c` / `a \in b \in c` | `a in (b in c)` / `a \in \left(b \in c\right)` |
+| **Silent** | `"x * (y mod z)".ToEntity().Stringize()`, and `Latexize` | `x * y mod z` / `x y \bmod z` | `x * (y mod z)` / `x \left(y \bmod z\right)` |
+| **Silent** | `"-1 * (y mod z)".ToEntity().Stringize()` | `-y mod z` | `-(y mod z)` |
+
+### A printed operator that is not associative keeps its brackets
+
+`Stringize` is the library's own input format: parsing what it prints has to give back the
+expression it printed, and that is what [`StringizeRoundTripTest`](Sources/Tests/UnitTests/Convenience/StringizeRoundTripTest.cs)
+enforces. Six operators broke it, five of them in the same way — the printer left the **right**
+operand unbracketed at its own precedence level, while the grammar folds that level to the left, so
+the printed text came back re-associated. The sixth, `provided`, is the mirror: it is the one infix
+operator the grammar folds to the **right**, so there it is the *left* operand that mis-associates.
+
+Four of the six are not associative, so the re-association changed the answer and not merely
+the shape. Measured on a build of 2.3.0 and a build of this branch:
+
+| input | 2.3.0 printed | 2.3.0 read that back as | value moved |
+|---|---|---|---|
+| `false implies (true implies false)` | `False implies True implies False` | `(False implies True) implies False` | `True` → `False` |
+| `{ 1, 2, 3 } \ ({ 2, 3 } \ { 3 })` | `{ 1, 2, 3 } \ { 2, 3 } \ { 3 }` | `({ 1, 2, 3 } \ { 2, 3 }) \ { 3 }` | `{ 1, 3 }` → `{ 1 }` |
+| `{ 1, 2 } \/ ({ 3 } \ { 1, 2 })` | `{ 1, 2 } \/ { 3 } \ { 1, 2 }` | `({ 1, 2 } \/ { 3 }) \ { 1, 2 }` | `{ 1, 2, 3 }` → `{ 3 }` |
+| `{ 1, 2 } \ ({ 2 } \/ { 3 })` | `{ 1, 2 } \ { 2 } \/ { 3 }` | `({ 1, 2 } \ { 2 }) \/ { 3 }` | `{ 1 }` → `{ 1, 3 }` |
+| `2 * (3 mod 2)` | `2 * 3 mod 2` | `(2 * 3) mod 2` | `2` → `0` |
+
+On this branch each of those prints its brackets and reads back as itself, so the value column
+no longer moves.
+
+`implies` also changes in the other direction, because its printer had the rule the wrong way
+round rather than missing: it bracketed the **assumption** — the operand that never needs it under
+a left fold — and not the conclusion. So `(a implies b) implies c`, which used to print as
+`(a implies b) implies c`, now prints flat as `a implies b implies c`. Both read back as the same
+expression; the brackets were redundant, and printing them is what made the genuinely ambiguous
+case look no different.
+
+`\/` and `mod` are bracketed only against the operator that makes them ambiguous, because both
+share a precedence level with an operator that is not associative while being associative
+themselves:
+
+- `A \/ (B \/ C)` still prints `A \/ B \/ C`; `A \/ (B \ C)` now prints `A \/ (B \ C)`.
+- `x * (y * z)` still prints `x * y * z` and `x * (y / z)` still prints `x * y / z`;
+  `x * (y mod z)` now prints `x * (y mod z)`.
+- `-1 * (y mod z)` printed `-y mod z` and now prints `-(y mod z)`.
+
+`provided` is bracketed on the other side, and it is the case where the value is *not* the test.
+`(x provided p) provided q` and `x provided (p provided q)` are both `x` exactly when `p` and `q`
+hold, so no answer moves — and they are different expressions, which is what the round trip is
+about. It printed flat and read back as the right-nested one.
+
+**What has not changed, deliberately.** An operator that *is* associative still prints flat, so
+`x + (y + z)` still prints `x + y + z`, and likewise for `*`, `and`, `or`, `xor`, `unite` and
+`intersect`. Those come back as a different `Entity` — a left-nested tree instead of
+a right-nested one — and as the same number, because the bracketing carries no mathematics. The
+alternative would print every expanded polynomial as a right-nested pile of parentheses:
+`"(a + b + c + d) ^ 2".ToEntity().Expand()` prints, on both versions,
+`d ^ 2 + 2 * c * d + c ^ 2 + 2 * b * d + 2 * b * c + b ^ 2 + 2 * a * d + 2 * a * c + 2 * a * b + a ^ 2`,
+and its sum is right-nested throughout. `StringizeRoundTripTest` pins that decision so that it
+stays one.
+
+**LaTeX.** `Latexize` moves for the four set and `mod` cases above and **not** for `implies`.
+[CSharpMath.Evaluation](https://github.com/verybadcat/CSharpMath/blob/master/CSharpMath.Evaluation/Evaluation.cs),
+which reads our LaTeX back, folds `\cup`, `\setminus`, `\in`, `\cdot` and `\bmod` to the left at
+the same precedences this grammar uses — so those needed the same brackets — but folds `\to` to the
+**right**, which is the usual convention for implication and is what `Latexize` was already
+bracketing for. The change only ever adds `\left(`/`\right)` groups, which CSharpMath already
+parses, so nothing downstream needs a matching change
+([#822](https://github.com/asc-community/AngouriMath/issues/822)).
+
+---
+
 ## 2.3.0 — since 2.2.0
 
 ### At a glance
