@@ -293,6 +293,17 @@ namespace AngouriMath.Tests.Algebra
         // Degree five and six, still splitting into factors of degree at most three.
         [InlineData("x^5 - 5*x^3 + 4*x > 0")]
         [InlineData("(x^2 - 2) * (x^2 - 3) * (x + 1) > 0")]
+        // An irreducible quartic factor, where the discriminant's sign is only half the
+        // answer: negative means two real roots, and positive means four or none, which the
+        // two auxiliary quantities of the standard criterion decide between.
+        [InlineData("x^4 + 1 > 0")]            // four or none, and none
+        [InlineData("x^4 + x + 1 > 0")]        // four or none, and none
+        [InlineData("x^4 - 2 > 0")]            // two real
+        [InlineData("x^4 - 2 < 0")]
+        [InlineData("x^4 - x - 1 > 0")]        // two real
+        [InlineData("x^4 - 10*x^2 + 1 > 0")]   // four real
+        [InlineData("x^4 - 10*x^2 + 1 < 0")]
+        [InlineData("(x^4 - 2) * (x - 1) > 0")]
         public void AHigherDegreePolynomialInequalityIsAnswered(string inequality)
             => AssertHoldsExactlyWhereItShould(inequality);
     }

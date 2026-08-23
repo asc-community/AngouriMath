@@ -81,6 +81,11 @@ coefficients and however easily it factored:
 "x ^ 3 - 2 * x + 1 > 0".ToEntity().Solve("x")           ((-1 - sqrt(5)) / 2; (-1 + sqrt(5)) / 2) \/ (1; +oo)
 "x ^ 3 - 2 > 0".ToEntity().Solve("x")                   (2 ^ (1/3); +oo)
 "x ^ 5 - 5 * x ^ 3 + 4 * x > 0".ToEntity().Solve("x")   (-2; -1) \/ (0; 1) \/ (2; +oo)
+"x ^ 4 + 1 > 0".ToEntity().Solve("x")                   (-oo; +oo)
+"x ^ 4 - 2 > 0".ToEntity().Solve("x")                   (-oo; -2 ^ (1/4)) \/ (2 ^ (1/4); +oo)
+"x ^ 4 - 10 * x ^ 2 + 1 > 0".ToEntity().Solve("x")      (-oo; -sqrt((10 + 4 * sqrt(6)) / 2))
+                                                          \/ (-sqrt((10 - 4 * sqrt(6)) / 2); sqrt((10 - 4 * sqrt(6)) / 2))
+                                                          \/ (sqrt((10 + 4 * sqrt(6)) / 2); +oo)
 ```
 
 A polynomial has one sign on each open interval between consecutive real roots, so the answer is the
@@ -88,20 +93,22 @@ union of the intervals where that sign is positive. What makes it an answer rath
 that the list of real roots is *complete*: the polynomial is written as a product of powers of
 irreducibles over `Q`, verified to multiply back, and the number of real roots of each irreducible
 factor is read off its **discriminant** — two where a quadratic factor's is positive and none where
-it is negative, three and one respectively for a cubic. A missed root would merge two intervals of
+it is negative, three and one respectively for a cubic, and — for a quartic — the discriminant
+with the two auxiliary quantities of the standard criterion, a negative discriminant meaning two
+real roots and a positive one four or none. A missed root would merge two intervals of
 opposite sign and report the wrong half of one as the solution, so this is the difference between
 the feature and a wrong answer.
 
 **And the refusal that remains is a different one.** The gap is no longer degree; it is an
-irreducible factor of degree four or more, where the discriminant stops deciding the number of real
-roots — a quartic with a positive discriminant has four or none. So the message changed too:
+irreducible factor of degree five or more, where there is no criterion for the number of real roots
+and no formula for the roots either. So the message changed too:
 
 ```
-"x ^ 4 + 1 > 0".ToEntity().Solve("x")
+"x ^ 5 - x - 1 > 0".ToEntity().Solve("x")
     NotSufficientlySupportedException: Only polynomial inequalities are supported, and of those
     only the ones whose real roots can be established completely: linear and quadratic with any
     coefficients, and higher degrees where the coefficients are rational and no irreducible factor
-    is of degree four or more
+    is of degree five or more
 ```
 
 Code that caught `NotSufficientlySupportedException` still catches it; code that matched on the

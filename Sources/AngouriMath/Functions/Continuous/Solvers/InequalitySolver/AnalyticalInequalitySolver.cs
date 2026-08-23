@@ -108,7 +108,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 "Only polynomial inequalities are supported, and of those only the ones "
                 + "whose real roots can be established completely: linear and quadratic "
                 + "with any coefficients, and higher degrees where the coefficients are "
-                + "rational and no irreducible factor is of degree four or more");
+                + "rational and no irreducible factor is of degree five or more");
         }
 
         /// <summary>

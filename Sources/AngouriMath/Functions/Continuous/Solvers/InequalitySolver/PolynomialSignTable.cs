@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -36,10 +36,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     /// being coprime. Second, the number of real roots of each factor is read off its
     /// <see cref="PolynomialResultant.Discriminant"/>: a factor of degree two has two real
     /// roots where its discriminant is positive and none where it is negative, and one of
-    /// degree three has three and one respectively. That count is what makes a root list a
-    /// complete root list rather than a list of the roots that happened to come back, and it
-    /// is the reason a degree-four irreducible factor is refused — its discriminant does not
-    /// decide between four real roots and none.
+    /// degree three has three and one respectively. A factor of degree four needs two more
+    /// quantities alongside the discriminant, and there is no such criterion at five — nor a
+    /// formula for the roots — which is where this stops. That count is what makes a root
+    /// list a complete root list rather than a list of the roots that happened to come back.
     /// </para>
     /// <para>
     /// The roots themselves come from the solver reached through <c>SolveEquation</c>,
@@ -61,17 +61,16 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     {
         /// <summary>
         /// The highest degree an irreducible factor may have for its number of real roots to
-        /// be readable off its discriminant.
+        /// be settled.
         /// </summary>
         /// <remarks>
-        /// One and two are the degrees where the sign of the discriminant is the whole
-        /// answer, three is where it is still the whole answer (positive means three real
-        /// roots, negative one), and four is where it stops being one: a quartic with a
-        /// positive discriminant has four real roots or none, and telling those apart needs
-        /// the two further quantities of the standard criterion rather than the discriminant
-        /// alone.
+        /// Up to three the sign of the discriminant is the whole answer. At four it is half
+        /// of it — a negative discriminant means exactly two real roots, and a positive one
+        /// means four or none — and the two auxiliary quantities of the standard criterion
+        /// decide between those. At five there is no such criterion, and there is no formula
+        /// for the roots either.
         /// </remarks>
-        private const int MaxFactorDegree = 3;
+        private const int MaxFactorDegree = 4;
 
         /// <summary>
         /// Two consecutive roots closer than this, relative to their size, are not separated
@@ -235,27 +234,43 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return true;
             }
 
-            // One real root among three, the other two a conjugate pair off the axis. The
-            // real one is the one whose imaginary part is rounding rather than value, and it
-            // is taken only where that is not a close call.
+            // Some of the roots are real and the rest are conjugate pairs off the axis. The
+            // real ones are those whose imaginary part is rounding rather than value, and
+            // they are taken only where the two groups are far enough apart that saying
+            // which is which is not a close call.
             candidates.Sort(static (left, right) => left.Imaginary.CompareTo(right.Imaginary));
-            var chosen = candidates[0];
-            var scale = Math.Max(1.0, Math.Abs(chosen.Real));
-            if (!(chosen.Imaginary < 1e-9 * scale) || !(candidates[1].Imaginary > 1e-3 * scale))
+            var scale = 1.0;
+            for (var i = 0; i < expected; i++)
+                scale = Math.Max(scale, Math.Abs(candidates[i].Real));
+            if (!(candidates[expected - 1].Imaginary < 1e-9 * scale)
+                || !(candidates[expected].Imaginary > 1e-3 * scale))
                 return false;
-            into.Add(new Root(chosen.Value, chosen.Real, multiplicity));
+            for (var i = 0; i < expected; i++)
+                into.Add(new Root(candidates[i].Value, candidates[i].Real, multiplicity));
             return true;
         }
 
         /// <summary>
-        /// How many distinct real roots an irreducible <paramref name="factor"/> of degree two
-        /// or three has, read off the sign of its discriminant, or <see langword="null"/>
-        /// where the discriminant could not be computed or came out zero.
+        /// How many distinct real roots an irreducible <paramref name="factor"/> of degree
+        /// two, three or four has, or <see langword="null"/> where that could not be settled.
         /// </summary>
         /// <remarks>
+        /// <para>
+        /// The sign of the discriminant decides it outright up to degree three. At four it
+        /// separates two real roots (negative) from four or none (positive), and the two
+        /// auxiliary quantities <c>P = 8ac - 3b^2</c> and
+        /// <c>D = 64a^3 e - 16a^2 c^2 + 16a b^2 c - 16a^2 b d - 3b^4</c> decide between
+        /// those: four real where both are negative, none where either is positive. Where
+        /// neither of those holds — one of them zero and the other not positive — the
+        /// criterion says nothing, and neither does this. Rees, <i>A note on the quartic</i>,
+        /// Amer. Math. Monthly 29 (1922); Lazard, <i>Quantifier elimination: optimal solution
+        /// for two classical examples</i>, J. Symbolic Comput. 5 (1988).
+        /// </para>
+        /// <para>
         /// A zero discriminant means a repeated factor, which an irreducible polynomial does
         /// not have — so it is a sign that the input was not what it was taken to be, and the
         /// sign table declines rather than proceeds.
+        /// </para>
         /// </remarks>
         private static int? RealRootCount(IntegerPolynomial factor, Variable x, int degree)
         {
@@ -269,12 +284,32 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var sign = discriminant.CoefficientOf(0).Sign;
             if (sign == 0)
                 return null;
-            return degree switch
+            switch (degree)
             {
-                2 => sign > 0 ? 2 : 0,
-                3 => sign > 0 ? 3 : 1,
-                _ => null
-            };
+                case 2: return sign > 0 ? 2 : 0;
+                case 3: return sign > 0 ? 3 : 1;
+                case 4:
+                    if (sign < 0)
+                        return 2;
+                    var a = factor[4];
+                    var b = factor[3];
+                    var c = factor[2];
+                    var d = factor[1];
+                    var e = factor[0];
+                    var p = EInteger.FromInt32(8).Multiply(a).Multiply(c)
+                        .Subtract(EInteger.FromInt32(3).Multiply(b).Multiply(b));
+                    var big = EInteger.FromInt32(64).Multiply(a).Multiply(a).Multiply(a).Multiply(e)
+                        .Subtract(EInteger.FromInt32(16).Multiply(a).Multiply(a).Multiply(c).Multiply(c))
+                        .Add(EInteger.FromInt32(16).Multiply(a).Multiply(b).Multiply(b).Multiply(c))
+                        .Subtract(EInteger.FromInt32(16).Multiply(a).Multiply(a).Multiply(b).Multiply(d))
+                        .Subtract(EInteger.FromInt32(3).Multiply(b).Multiply(b).Multiply(b).Multiply(b));
+                    if (p.Sign < 0 && big.Sign < 0)
+                        return 4;
+                    if (p.Sign > 0 || big.Sign > 0)
+                        return 0;
+                    return null;
+                default: return null;
+            }
         }
 
         /// <summary>
