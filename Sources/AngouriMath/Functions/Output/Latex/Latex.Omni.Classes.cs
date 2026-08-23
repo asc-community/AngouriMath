@@ -86,7 +86,9 @@ namespace AngouriMath
         partial record Providedf
         {
             /// <inheritdoc/>
-            public override string Latexize() => $@"{Expression.Latexize(Expression.LatexPriority < LatexPriority)} \quad \text{{for}} \quad {Predicate.Latexize(Predicate.LatexPriority < LatexPriority)}";
+            // Right-folding, so the left operand is the one that needs bracketing -- see the
+            // remark on Stringize.
+            public override string Latexize() => $@"{Expression.Latexize(Expression.LatexPriority <= LatexPriority)} \quad \text{{for}} \quad {Predicate.Latexize(Predicate.LatexPriority < LatexPriority)}";
         }
 
         partial record Piecewise

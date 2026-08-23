@@ -138,7 +138,14 @@ namespace AngouriMath
         partial record Providedf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $@"{Expression.Stringize(Expression.Priority < Priority.Provided)} provided {Predicate.Stringize(Predicate.Priority < Priority.Provided)}";
+            // `provided` is the one infix operator the grammar folds to the *right*, so this is
+            // the mirror of the `implies` rule: the flat form is read as
+            // `a provided (b provided c)`, and it is the left operand that has to say when it is
+            // an attached condition of its own. `(x provided p) provided q` printed flat came
+            // back as `x provided (p provided q)` -- the same value, since both are `x` exactly
+            // when `p` and `q` hold, and a different expression, which is what the round trip is
+            // about.
+            public override string Stringize() => $@"{Expression.Stringize(Expression.Priority <= Priority.Provided)} provided {Predicate.Stringize(Predicate.Priority < Priority.Provided)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }

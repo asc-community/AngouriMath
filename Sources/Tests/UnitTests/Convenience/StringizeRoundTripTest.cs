@@ -171,6 +171,14 @@ namespace AngouriMath.Tests.Common
         [InlineData("x mod (y * z)")]
         [InlineData("x / (y mod z)")]
         [InlineData("x mod (y mod z)")]
+        // `provided` is the mirror case: it folds to the *right*, so it is the left operand that
+        // mis-associates. Its value survives either reading -- `(x provided p) provided q` and
+        // `x provided (p provided q)` are both `x` exactly when `p` and `q` hold -- which is why
+        // a check on the value alone passes it and a check on the expression does not.
+        [InlineData("(x provided p) provided q")]
+        [InlineData("x provided (p provided q)")]
+        [InlineData("x provided p provided q")]
+        [InlineData("((x provided p) provided q) provided r")]
         public void ANonAssociativeOperatorKeepsItsGrouping(string source) => AssertRoundTrip(source);
 
         /// <summary>
@@ -207,7 +215,6 @@ namespace AngouriMath.Tests.Common
         [InlineData("true xor (false xor true)", "True xor False xor True")]
         [InlineData(@"{ 1 } \/ ({ 2 } \/ { 3 })", @"{ 1 } \/ { 2 } \/ { 3 }")]
         [InlineData(@"{ 1, 2 } /\ ({ 2, 3 } /\ { 2 })", @"{ 1, 2 } /\ { 2, 3 } /\ { 2 }")]
-        [InlineData("(x provided p) provided q", "x provided p provided q")]
         public void AnAssociativeOperatorPrintsFlatAndKeepsItsValue(string source, string expectedFlat)
         {
             var original = source.ToEntity();

@@ -312,10 +312,13 @@ namespace AngouriMath.Tests.Convenience
             => Test(@"x \quad \text{for} \quad y", MathS.Provided("x", "y"));
         [Fact] public void Provided2()
             => Test(@"x+1 \quad \text{for} \quad y > 0", MathS.Provided("x + 1", "y > 0"));
+        // Both of these are left-nested, and `provided` folds to the right -- so the flat form
+        // these used to expect is read back as the *right*-nested tree, which is a different
+        // expression. The grouping is the assertion; the two used to pin its absence.
         [Fact] public void Provided3()
-            => Test(@"a \quad \text{for} \quad b \quad \text{for} \quad c", MathS.Provided(MathS.Provided("a", "b"), "c"));
+            => Test(@"\left(a \quad \text{for} \quad b\right) \quad \text{for} \quad c", MathS.Provided(MathS.Provided("a", "b"), "c"));
         [Fact] public void Provided4()
-            => Test(@"\left(a \quad \text{for} \quad b \quad \text{for} \quad c \quad \text{for} \quad d\right) \to \top ", MathS.Provided(MathS.Provided("a", "b"), MathS.Provided("c", "d")).Implies(Entity.Boolean.True));
+            => Test(@"\left(\left(a \quad \text{for} \quad b\right) \quad \text{for} \quad c \quad \text{for} \quad d\right) \to \top ", MathS.Provided(MathS.Provided("a", "b"), MathS.Provided("c", "d")).Implies(Entity.Boolean.True));
         // Juxtaposition tests
         [Fact] public void M1InTheMiddle() => Test(@"x \left(-1\right) \cdot x", (x * (-1)) * x);
         [Fact] public void MultiplyNumberWithPower() => Test(@"2 \cdot {3}^{4}", 2 * ((Entity)3).Pow(4));

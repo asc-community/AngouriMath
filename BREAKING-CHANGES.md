@@ -26,6 +26,7 @@ read first.
 | **Silent** | `@"A \ (B \ C)".ToEntity().Stringize()`, and `Latexize` | `A \ B \ C` / `A \setminus B \setminus C` | `A \ (B \ C)` / `A \setminus \left(B \setminus C\right)` |
 | **Silent** | `@"A \ (B \/ C)".ToEntity().Stringize()`, and `Latexize` | `A \ B \/ C` / `A \setminus B \cup C` | `A \ (B \/ C)` / `A \setminus \left(B \cup C\right)` |
 | **Silent** | `@"A \/ (B \ C)".ToEntity().Stringize()`, and `Latexize` | `A \/ B \ C` / `A \cup B \setminus C` | `A \/ (B \ C)` / `A \cup \left(B \setminus C\right)` |
+| **Silent** | `"(x provided p) provided q".ToEntity().Stringize()`, and `Latexize` | `x provided p provided q`, which reads back as `x provided (p provided q)` | `(x provided p) provided q` |
 | **Silent** | `"a in (b in c)".ToEntity().Stringize()`, and `Latexize` | `a in b in c` / `a \in b \in c` | `a in (b in c)` / `a \in \left(b \in c\right)` |
 | **Silent** | `"x * (y mod z)".ToEntity().Stringize()`, and `Latexize` | `x * y mod z` / `x y \bmod z` | `x * (y mod z)` / `x \left(y \bmod z\right)` |
 | **Silent** | `"-1 * (y mod z)".ToEntity().Stringize()` | `-y mod z` | `-(y mod z)` |
@@ -34,11 +35,12 @@ read first.
 
 `Stringize` is the library's own input format: parsing what it prints has to give back the
 expression it printed, and that is what [`StringizeRoundTripTest`](Sources/Tests/UnitTests/Convenience/StringizeRoundTripTest.cs)
-enforces. Five operators broke it, all in the same way — the printer left the **right** operand
-unbracketed at its own precedence level, while the grammar folds that level to the left, so the
-printed text came back re-associated.
+enforces. Six operators broke it, five of them in the same way — the printer left the **right**
+operand unbracketed at its own precedence level, while the grammar folds that level to the left, so
+the printed text came back re-associated. The sixth, `provided`, is the mirror: it is the one infix
+operator the grammar folds to the **right**, so there it is the *left* operand that mis-associates.
 
-Four of the five are not associative, so the re-association changed the answer and not merely
+Four of the six are not associative, so the re-association changed the answer and not merely
 the shape. Measured on a build of 2.3.0 and a build of this branch:
 
 | input | 2.3.0 printed | 2.3.0 read that back as | value moved |
@@ -68,9 +70,14 @@ themselves:
   `x * (y mod z)` now prints `x * (y mod z)`.
 - `-1 * (y mod z)` printed `-y mod z` and now prints `-(y mod z)`.
 
+`provided` is bracketed on the other side, and it is the case where the value is *not* the test.
+`(x provided p) provided q` and `x provided (p provided q)` are both `x` exactly when `p` and `q`
+hold, so no answer moves — and they are different expressions, which is what the round trip is
+about. It printed flat and read back as the right-nested one.
+
 **What has not changed, deliberately.** An operator that *is* associative still prints flat, so
-`x + (y + z)` still prints `x + y + z`, and likewise for `*`, `and`, `or`, `xor`, `unite`,
-`intersect` and `provided`. Those come back as a different `Entity` — a left-nested tree instead of
+`x + (y + z)` still prints `x + y + z`, and likewise for `*`, `and`, `or`, `xor`, `unite` and
+`intersect`. Those come back as a different `Entity` — a left-nested tree instead of
 a right-nested one — and as the same number, because the bracketing carries no mathematics. The
 alternative would print every expanded polynomial as a right-nested pile of parentheses:
 `"(a + b + c + d) ^ 2".ToEntity().Expand()` prints, on both versions,
