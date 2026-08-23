@@ -20,12 +20,12 @@ sentence cannot go on being true after its table has stopped being.
 |---|---|---|---|---|
 | capability, output and speed | Math.NET Symbolics 0.25.0 and Symbolism 1.0.4, on .NET 10.0.10 | `6b93b401`, the 2.3.0 release commit | 2026-08-23 | `libcompare` |
 | 80 feature probes over 23 areas | SymPy 1.14.0 | `6b93b401` | 2026-08-23 | `sympyparity` |
-| 1,774 integration problems | Rubi's test-suite, twelve of its files | `3ac24bc2` | 2026-08-23 | `intbench` |
+| 1,774 integration problems | Rubi's test-suite, twelve of its files | `e4eefde0` | 2026-08-23 | `intbench` |
 
-`3ac24bc2` is three commits before the 2.3.0 tag, and the three differ only in
-`BREAKING-CHANGES.md`, the performance table and the package version — no library code separates
-the two, so the Rubi figures are 2.3.0's figures. The suite has to be downloaded, which is why that
-harness was not re-run with the others at the release commit.
+`e4eefde0` is later than the 2.3.0 tag the other two rows measure: it is `master` after nine pull
+requests landed, so the Rubi figures are the newer ones. That is deliberate — the suite has to be
+downloaded rather than vendored, so this harness is re-run on its own schedule, and the run behind
+this table is the first taken on merged `master`.
 
 **What the reports do not carry.** Only `sympyparity` writes a commit into its own output, taken
 from the project reference it built against, so a moved checkout cannot make it lie. The other two
@@ -304,10 +304,18 @@ integral.
 - 116 excluded: Rubi's antiderivative is non-elementary, so the problem would be unfair
 - 1,774 fair, all of which ran, at a 5-second budget
 
-**Answered 604 of 1,774 (34.0%)**: 604 where `Integrate`'s own answer checks out and 0 more that
-only checked out after `Simplify()`. 1,119 unevaluated, **0 wrong**, 8 unverifiable on the reals,
-0 errors, 43 timeouts. Restricted to the 1,726 problems for which Rubi records a positive step
-count — the ones it answers optimally itself — the rate is 604/1,726 (35.0%).
+**Answered 602 of 1,774 (33.9%)**: 602 where `Integrate`'s own answer checks out and 0 more that
+only checked out after `Simplify()`. 1,118 unevaluated, **0 wrong**, 8 unverifiable on the reals,
+0 errors, 46 timeouts. Restricted to the 1,726 problems for which Rubi records a positive step
+count — the ones it answers optimally itself — the rate is 602/1,726 (34.9%).
+
+**The timeout column is not reproducible, and the solved column inherits that.** A previous run of
+the same slice answered 604 with 43 timeouts. All three problems that moved between the two runs
+moved *into* the timeout bucket — none became unevaluated and none became wrong — and timed on their
+own against this same build they take 1,744 ms, 1,579 ms and 835 ms, none of them close to the
+5-second budget. The harness cannot abort a thread, so a case that does time out leaks one, and the
+leaked threads slow every problem after it. So read this rate as ±3 problems, and read a *wrong*
+answer, of which there are none, as the number that means something.
 
 | Source | Run | Solved | +Simplify | Unevaluated | Wrong | Unverifiable | Error | Timeout | Rate |
 |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
@@ -320,8 +328,8 @@ count — the ones it answers optimally itself — the rate is 604/1,726 (35.0%)
 | Jeffrey Problems | 9 | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0% |
 | Moses Problems | 107 | 54 | 0 | 47 | 0 | 4 | 0 | 2 | 50% |
 | Stewart Problems | 376 | 183 | 0 | 189 | 0 | 0 | 0 | 4 | 49% |
-| Timofeev Problems | 666 | 162 | 0 | 478 | 0 | 1 | 0 | 25 | 24% |
-| Welz Problems | 104 | 3 | 0 | 97 | 0 | 0 | 0 | 4 | 3% |
+| Timofeev Problems | 666 | 160 | 0 | 478 | 0 | 1 | 0 | 27 | 24% |
+| Welz Problems | 104 | 3 | 0 | 96 | 0 | 0 | 0 | 5 | 3% |
 | Wester Problems | 8 | 0 | 0 | 8 | 0 | 0 | 0 | 0 | 0% |
 
 Rubi records how many rule applications each problem took it. That is a difficulty measure produced
@@ -344,19 +352,19 @@ is differentiated back and compared to the integrand numerically at positive rea
 the raw nor the simplified answer could be evaluated on the reals at two or more points — the
 harness's symbolic parameters are bound to one fixed set of positive reals, so an integrand whose
 radicand is negative throughout has nowhere real to be compared. They are listed by name in the
-report rather than folded into either column, because a silent bucket reads as a clean one. The 43
+report rather than folded into either column, because a silent bucket reads as a clean one. The 46
 timeouts count against the rate, not out of the denominator.
 
 **The number to hold this against is the library's own corpus.** On the same 2.3.0 commit and the
 same day, `casbench` — another harness in the same workspace, over 121 problems written here —
-solves 116 of the 119 that have an elementary answer, 97.5%. The Rubi rate is 34.0%. Both are
+solves 116 of the 119 that have an elementary answer, 97.5%. The Rubi rate is 33.9%. Both are
 correct measurements of different things: the first says that the problems we chose are solved,
 the second says what happens to a list somebody else wrote down. Only the second is a measurement
 of the library rather than of the corpus.
 
 ## What none of this establishes
 
-- **A corpus is a list somebody wrote down.** 604 of 1,774 is a statement about Rubi's textbook
+- **A corpus is a list somebody wrote down.** 602 of 1,774 is a statement about Rubi's textbook
   problems at a 5-second budget. It is not a statement about integration in general, and a
   different suite would give a different number without the integrator changing.
 - **Nothing here adjudicates a disagreement.** Where this library and another give different
