@@ -1,16 +1,30 @@
 name: 'C++ Build'
 
+# A path filter is a glob matched against paths relative to the repository root, and the leading
+# "./" these patterns carried matches nothing: from the day the filter was added (f51c7e03,
+# 2026-01-02) this workflow ran zero times, while three commits touching the very directories it
+# names were merged. It is the same defect that silenced Benchmark.yml for ninety-eight PRs --
+# see the comment at the top of that file, and
+# https://github.com/asc-community/AngouriMath/issues/775.
+#
+# The kernel is in the list because the exported native library is compiled from it, so a kernel
+# change is exactly what can break this build; and this file is in the list so that a change to
+# these filters demonstrates itself rather than being reasoned about.
 on:
   push:
     branches:
       - master
     paths:
-      - "./Sources/Wrappers/AngouriMath.CPP.*/**"
+      - "Sources/Wrappers/AngouriMath.CPP.*/**"
+      - "Sources/AngouriMath/**"
+      - ".github/workflows/CPPBuild.yml"
   pull_request:
     branches:
       - '*'
     paths:
-      - "./Sources/Wrappers/AngouriMath.CPP.*/**"
+      - "Sources/Wrappers/AngouriMath.CPP.*/**"
+      - "Sources/AngouriMath/**"
+      - ".github/workflows/CPPBuild.yml"
   workflow_dispatch:
 
 jobs:

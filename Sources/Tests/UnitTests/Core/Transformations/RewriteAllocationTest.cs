@@ -8,6 +8,7 @@
 using System;
 using AngouriMath;
 using AngouriMath.Core.Transformations;
+using AngouriMath.Functions;
 using Xunit;
 
 namespace AngouriMath.Tests.Core.Transformations
@@ -69,6 +70,41 @@ namespace AngouriMath.Tests.Core.Transformations
                 $"applying a rule set with no recording open allocated {allocated} bytes over {Iterations} calls, "
                 + $"which is over the {BudgetBytes} budget. Something on the fast path is allocating per call -- "
                 + "a closure in the method is the usual cause, and moving it into its own method is the usual fix.");
+        }
+
+        /// <summary>
+        /// The same claim one layer up. A derivation is a chain of whole expressions, so the
+        /// simplifier writes down what each of its stages turned into — and that has to be free
+        /// too, or #746's first standing condition is broken by the layer that reports on it.
+        /// </summary>
+        /// <remarks>
+        /// A leaf again, and for the same reason: the tidying pass matches nothing on one and
+        /// rebuilds nothing, so a stray per-stage allocation is the whole measurement instead of
+        /// a rounding error inside it. What this would catch is the step being noted through a
+        /// closure, or the ambient recording being read into something that boxes.
+        /// </remarks>
+        [Fact]
+        public void TakingAStepWithNoRecordingOpenAllocatesEssentiallyNothing()
+        {
+            Entity leaf = MathS.Var("x");
+
+            for (var i = 0; i < 100; i++)
+                Simplificator.SimplifyChildren(leaf);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var i = 0; i < Iterations; i++)
+                Simplificator.SimplifyChildren(leaf);
+            var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+            Assert.True(
+                allocated <= BudgetBytes,
+                $"a simplification stage with no recording open allocated {allocated} bytes over {Iterations} "
+                + $"calls, which is over the {BudgetBytes} budget. Something on the fast path is allocating "
+                + "per stage -- a closure capturing the recording is the usual cause.");
         }
 
         [Fact]

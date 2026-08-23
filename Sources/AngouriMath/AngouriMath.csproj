@@ -21,6 +21,23 @@
     <DocumentationFile>bin/$(Configuration)/$(TargetFramework)/$(MSBuildProjectName).xml</DocumentationFile>
   </PropertyGroup>
 
+  <!--
+  The kernel is trimmable and NativeAOT-compatible, and Sources/Tests/AotSmokeTest is what says
+  so: it publishes an app that parses, simplifies, solves, differentiates and compiles, both
+  trimmed and NativeAOT, fails the build on any IL2xxx/IL3xxx warning, and then runs the binary.
+  This claim is an assertion to consumers (a trimmer takes it as licence to remove code inside
+  this assembly), so it may only be made while that gate passes.
+
+  IsAotCompatible is net8.0 and later (it implies IsTrimmable and turns on the three analyzers);
+  netstandard2.0 has no ahead-of-time story, and IsTrimmable there would be a claim about a
+  target framework where nothing checks it. Written as a compatibility test so that adding a
+  framework to TargetFrameworks does not silently drop it.
+  https://github.com/asc-community/AngouriMath/issues/363
+  -->
+  <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible($(TargetFramework), 'net8.0'))">
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
   <PropertyGroup>
     <Nullable>enable</Nullable>
     <NoWarn>NU5104;CA2252</NoWarn>

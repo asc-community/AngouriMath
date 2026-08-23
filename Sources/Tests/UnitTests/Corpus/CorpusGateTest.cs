@@ -7,6 +7,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -87,23 +89,126 @@ namespace AngouriMath.Tests.Corpus
         [Fact]
         public void TheCorpusHasNotGotWorse()
         {
+            var clock = Stopwatch.StartNew();
             var results = Corpus.All.Select(Run).ToList();
+            clock.Stop();
             output.WriteLine(Report(results));
 
-            var wrong = results.Where(r => r.Verdict == Verdict.Wrong).ToList();
-            var regressed = results
-                .Where(r => r.Verdict != r.Problem.Expect && r.Verdict != Verdict.Wrong)
+            // Written before anything is asserted, so that a run which then fails still leaves
+            // the numbers behind. This is the file the workflow uploads.
+            var rows = results
+                .Select(r => new CorpusRecord.ReportRow(
+                    r.Problem.Name, r.Problem.Op, r.Problem.Expect, r.Verdict,
+                    Status(r.Problem.Expect, r.Verdict), r.Note, r.Answer))
                 .ToList();
+            File.WriteAllText(CorpusRecord.ReportPath,
+                              CorpusRecord.RenderReport(rows, clock.ElapsedMilliseconds));
+            output.WriteLine("Report written to " + CorpusRecord.ReportPath);
 
+            var moved = results.Zip(rows, (result, row) => (result, row.Status))
+                               .Where(pair => pair.Status is not "ok")
+                               .ToList();
+            if (moved.Count == 0) return;
+
+            // The four kinds are spelled out separately, and counted on the first line, because
+            // they ask the reader to do different things: a message that does not say which is
+            // a message that gets the record updated over a real regression.
             var complaint = new StringBuilder();
-            foreach (var r in wrong)
-                complaint.AppendLine($"WRONG    {r.Problem.Name}: {r.Problem.Input} -> {r.Answer} ({r.Note})");
-            foreach (var r in regressed)
-                complaint.AppendLine(
-                    $"CHANGED  {r.Problem.Name}: expected {r.Problem.Expect}, got {r.Verdict}"
-                    + $" ({r.Note}). If this is an improvement, record it in Corpus.cs.");
+            var kinds = new[] { "wrong", "worse", "better", "changed" };
+            complaint.AppendLine("The corpus moved: " + string.Join(", ", kinds
+                .Select(kind => (kind, n: moved.Count(pair => pair.Status == kind)))
+                .Where(pair => pair.n > 0)
+                .Select(pair => $"{pair.n} {pair.kind}")) + ".");
+            complaint.AppendLine();
 
-            Assert.True(complaint.Length == 0, "\n" + complaint + "\n" + Report(results));
+            foreach (var (r, _) in moved.Where(pair => pair.Status is "wrong"))
+                complaint.AppendLine(
+                    $"WRONG    {r.Problem.Name}: {r.Problem.Input} -> {r.Answer} ({r.Note})."
+                    + " An answer that is not right is worse than no answer, so this fails"
+                    + " whatever the record says. Do not record it: NoEntryExpectsAWrongAnswer"
+                    + " rejects Verdict.Wrong as an expectation.");
+            foreach (var (r, _) in moved.Where(pair => pair.Status is "worse"))
+                complaint.AppendLine(
+                    $"WORSE    {r.Problem.Name}: recorded {r.Problem.Expect}, measured {r.Verdict}"
+                    + $" ({r.Note}). THE LIBRARY GOT WORSE HERE. Fix it. Only lower the record if"
+                    + " the old verdict is shown to have been wrong, and say why in the commit.");
+            foreach (var (r, _) in moved.Where(pair => pair.Status is "better"))
+                complaint.AppendLine(
+                    $"BETTER   {r.Problem.Name}: recorded {r.Problem.Expect}, measured {r.Verdict}"
+                    + $" ({r.Note}). NOTHING IS BROKEN -- the library got better and the record"
+                    + $" does not say so. Set Expect = Verdict.{r.Verdict} on this problem in"
+                    + $" Corpus.cs, re-run with {CorpusRecord.UpdateVariable}=1 to refresh"
+                    + $" {CorpusRecord.BaselineFileName}, and commit both.");
+            foreach (var (r, _) in moved.Where(pair => pair.Status is "changed"))
+                complaint.AppendLine(
+                    $"CHANGED  {r.Problem.Name}: recorded {r.Problem.Expect}, measured {r.Verdict}"
+                    + $" ({r.Note}). Neither better nor worse -- both are the library producing"
+                    + " nothing, and there is no defensible ordering between throwing and"
+                    + " hanging. Look at it, then record it the way an improvement is recorded.");
+
+            Assert.True(false, "\n" + complaint + "\n" + Report(results));
+        }
+
+        /// <summary>
+        /// The record and the measurement compared, in the vocabulary the failure message uses.
+        /// </summary>
+        private static string Status(Verdict recorded, Verdict measured) =>
+            // Checked before equality: Expect can never be Wrong, so a wrong answer is always
+            // also a regression, and calling it "wrong" keeps the worst category its own.
+            measured is Verdict.Wrong ? "wrong"
+            : measured == recorded ? "ok"
+            : CorpusRecord.Rank(measured) > CorpusRecord.Rank(recorded) ? "worse"
+            : CorpusRecord.Rank(measured) < CorpusRecord.Rank(recorded) ? "better"
+            : "changed";
+
+        /// <summary>
+        /// The committed record is a projection of <see cref="Corpus.All"/>, and this checks it is
+        /// current. It says nothing about the library — that is what
+        /// <see cref="TheCorpusHasNotGotWorse"/> is for — and it exists so that the corpus has a
+        /// machine-readable history that outlives a job log.
+        /// </summary>
+        [Fact]
+        public void TheBaselineIsTheOneOnRecord()
+        {
+            var rendered = CorpusRecord.RenderBaseline(Corpus.All);
+
+            if (Environment.GetEnvironmentVariable(CorpusRecord.UpdateVariable) is "1")
+            {
+                // Written next to the sources, not to the output directory: the output copy is
+                // the build's, and the next build would overwrite it.
+                File.WriteAllText(CorpusRecord.BaselineSourcePath, rendered);
+                output.WriteLine("Rewrote " + CorpusRecord.BaselineSourcePath);
+                return;
+            }
+
+            Assert.True(File.Exists(CorpusRecord.BaselinePath),
+                $"No corpus baseline at {CorpusRecord.BaselinePath}. Re-run the suite with"
+                + $" {CorpusRecord.UpdateVariable}=1 to write"
+                + $" {CorpusRecord.BaselineSourcePath}, then commit it.");
+
+            var recorded = CorpusRecord.Lines(File.ReadAllText(CorpusRecord.BaselinePath));
+            var measured = CorpusRecord.Lines(rendered);
+            if (recorded.SequenceEqual(measured, StringComparer.Ordinal))
+                return;
+
+            var message = new StringBuilder();
+            message.AppendLine();
+            message.AppendLine($"{CorpusRecord.BaselineFileName} is not what Corpus.cs says.");
+            message.AppendLine("It is generated, so this is never a reason to edit it by hand:"
+                               + $" re-run with {CorpusRecord.UpdateVariable}=1 and commit the result.");
+            Describe(message, "ON RECORD but no longer true", recorded.Except(measured, StringComparer.Ordinal).ToList());
+            Describe(message, "TRUE but not on record", measured.Except(recorded, StringComparer.Ordinal).ToList());
+            Assert.True(false, message.ToString());
+        }
+
+        private static void Describe(StringBuilder into, string heading, IReadOnlyList<string> lines)
+        {
+            if (lines.Count == 0) return;
+            into.AppendLine().AppendLine($"{heading} ({lines.Count}):");
+            foreach (var line in lines.Take(40))
+                into.AppendLine("  " + line);
+            if (lines.Count > 40)
+                into.AppendLine($"  ... and {lines.Count - 40} more");
         }
 
         /// <summary>
