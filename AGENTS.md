@@ -361,6 +361,120 @@ Then:
 `TreatWarningsAsErrors` is on and there are custom analyzers; a static field needs
 `[ConstantField]`, `[ThreadStatic]` or `[ConcurrentField]`.
 
+## Agentic development
+
+Several agents work on this repository at once, and the failure mode is not that they are too slow —
+it is that two of them quietly build the same abstraction twice, or that one reverts the other. Both
+are cheap to prevent and expensive to discover afterwards.
+
+**Work concurrently when the work is independent.** Do not serialise one task behind another merely
+because the other is in progress. Most of what the tracker holds is independent, and treating a
+checklist as an execution order is the commonest way to leave capacity unused.
+
+Before you modify anything:
+
+1. Look at what the repository is actually doing right now — open PRs, live branches, worktrees.
+2. Find out whether another agent is already changing the same files, the same component, or the
+   same abstraction. The third is the one that is easy to miss and the only one git will not warn
+   you about.
+3. Claim the files and components you are going to write, and say so where the work is recorded.
+4. If ownership is unclear, resolve the overlap before writing, not after.
+
+Split the work by **component ownership**, not by issue number. Two issues in one file are one task;
+one issue across two subsystems is usually two. And two agents must never independently design
+competing versions of the same foundational abstraction — that is not a merge conflict, it is two
+designs, and only one of them can survive.
+
+### Dependencies
+
+**A merged PR is not the synchronisation primitive.** Waiting for a merge before starting dependent
+work is usually waste. A dependent task may build on an unmerged commit or branch when that
+dependency's API and design are stable enough that the dependent work will not have to be rewritten
+when it moves.
+
+The converse is the real constraint: **do not pile a large amount of downstream work on an
+architectural change that is still being argued about.** A foundational abstraction should be
+reviewed and settled first; after that, everything behind it can go in parallel. And never duplicate
+or fork an implementation because its PR has not merged — a second copy of a decision is worse than
+waiting for the first.
+
+State a dependency explicitly, as *dependency → the commit or branch it is stable at → the work that
+consumes it*, so the next agent can see what it is standing on. Independent work continues
+throughout; a review in flight blocks only what actually depends on it.
+
+One mechanical trap belongs here because git will not warn about it: **a branch cut on top of another
+branch merges into that branch, not into `master`.** The PR reads `MERGED`, the checks are green, the
+squash commit exists, and `master` does not have the code. Cut every branch from `master`. Two
+branches editing one file cost the second a mechanical conflict round, which is minutes; a
+re-delivery costs a maintainer a second review.
+
+### The repository is the source of truth
+
+Before claiming a task is done, reconcile with the current target branch and check that the work
+still does what it claimed against *that* code, not against the code it was written on.
+
+Never assume that:
+
+- an open issue means the functionality is missing — several here were already built;
+- a closed issue means it is complete — several here were closed over an unbuilt half;
+- a PR existing means its design is final;
+- another agent's description of the code still describes the code.
+
+Recorded verdicts go stale in the direction that costs most: work is skipped because a note says it
+is blocked, and the note is older than the fix. Re-measure before acting on one, and before leaving
+something undone because of one. The executable tests and the code are what is true.
+
+### Git safety
+
+Do not overwrite, revert or reset another agent's work. Destructive git operations — `reset --hard`,
+force-push, branch deletion — are for a branch you own and nothing else.
+
+Keep commits focused and logically separable, so that dependent work can consume one of them without
+also inheriting changes that have nothing to do with it.
+
+### Reviews
+
+Use a review agent where a second reading genuinely pays: mathematical correctness, architecture,
+performance, API compatibility, tests. Give it the dimension to review rather than the whole diff.
+
+**A reviewer reports; it does not silently redesign.** Rewriting another agent's implementation
+inside a review destroys the thing the review was supposed to check, and the author never finds out
+what was wrong. Say what is wrong and why; leave the fix to whoever owns the file.
+
+### Working from a roadmap
+
+A large issue is a dependency graph written down as a list, and the list order is not the execution
+order. Read [#746](https://github.com/asc-community/AngouriMath/issues/746) that way:
+
+1. Audit what is actually implemented, against the code rather than the checklist.
+2. Build the dependency graph.
+3. Find the critical path.
+4. Find everything that is *not* on it and is unblocked today.
+5. Run the independent work concurrently.
+6. Integrate each dependency as it stabilises.
+7. Repeat as newly unblocked work appears.
+
+Reconcile the roadmap afterwards: strike through what is genuinely finished with the PR that
+delivered it, and give anything partial a line naming the half that is missing. "Partial" without
+saying which half is worth nothing.
+
+### Keeping track
+
+For substantial parallel work, keep a short record of each active task: what it is, who owns it,
+which files and components it owns, what it depends on, its status, and the commit or branch it is
+stable at. Keep it next to the work — a PR body and a branch name carry most of it already.
+
+Do not add a coordination mechanism where the repository already has an adequate one, and do not
+leave project-management scaffolding behind once the work it tracked has landed.
+
+### When two agents need the same code
+
+Stop. If two pieces of parallel work turn out to need changes to the same foundational code, parallel
+implementation of *that part* ends and one agreed design comes first; the rest continues. Correctness
+and architectural coherence come before the number of agents running at once — a wrong answer
+produced quickly by six agents is still a wrong answer, and this file's first rule does not have an
+exception for throughput.
+
 ## Write for the reader, briefly
 
 Comments explain **why**, not what — the code says what. The reader is a mathematician six months
