@@ -54,6 +54,17 @@ namespace AngouriMath
                     // as `{ } provided not x = 0`, where the x named in the condition is no
                     // longer the x the set ranges over.
                     // https://github.com/asc-community/AngouriMath/issues/878
+
+                    // A calculus operator taken over some other name reads this one as free of
+                    // it -- derivative(y, x) is 0 because y is not x. Under a binder over y that
+                    // reading is not available: y ranges over values here, and expressions in x
+                    // are among them. Simplifying anyway settles a condition that was written to
+                    // stay open: `{ y : derivative(y, x) + y - x = 0 }` became `{ y : y - x = 0 }`,
+                    // which names x, and putting x back into the condition it came from gives 1.
+                    // https://github.com/asc-community/AngouriMath/issues/964
+                    if (Var is Variable bound && CalculusOperator.NamesAssumedFreeOf(Predicate, bound).Count > 0)
+                        return this;
+
                     var predicate = Predicate.InnerSimplified(isExact);
 
                     // `expr provided a provided b` is what the rules build where two operands

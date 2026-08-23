@@ -181,6 +181,42 @@ keeps it true.
 
 [#363](https://github.com/asc-community/AngouriMath/issues/363),
 [#746](https://github.com/asc-community/AngouriMath/issues/746) item 79.
+| **Silent** | `"derivative(y, x) + y - x".SolveEquation("y")`, and the same equation written `= 0` | `{ x }`, which is not a root of it | `{ y : derivative(y, x) + y - x = 0 }` |
+| **Silent** | `"integral(y, x) + y - x".SolveEquation("y")` | `{ -(C + -x) / (x + 1) }` | `{ y : integral(y, x) + y - x = 0 }` |
+| **Silent** | `"limit(y, x, 0) + y - x".SolveEquation("y")` | `{ x / 2 }` | `{ y : limit(y, x, 0) + y - x = 0 }` |
+| **Silent** | `"sum(y, k, 1, 3) + y - k".SolveEquation("y")` | `{ k / 4 }` | `{ y : sum(y, k, 1, 3) + y - k = 0 }` |
+| **Silent** | `"{ y : derivative(y, x) + y - x = 0 }".ToEntity().Simplify()` | `{ y : y - x = 0 }`, a different set | unchanged |
+
+### An equation whose unknown stands under a derivative is left unsolved
+
+`"derivative(y, x) + y - x".SolveEquation("y")` answered `{ x }`. Substituting that back —
+with this library's own `Substitute` — gives `derivative(x, x) + x - x`, which is `1`. The set
+named a member that is not a root.
+
+The derivative went to zero because `y` is not `x`, and every calculus operator does the same:
+`limit(y, x, 0)` is `y`, `integral(y, x)` is `x * y + C`, `sum(y, k, 1, 3)` is `3 * y`. Each is a
+decision about the *name* `y`, and the root the solver then returns says that name stands for an
+expression in `x` — so the answer denies the step that produced it. Every one of the operators
+was affected, and so was a quadratic in the unknown: `derivative(y, x) + y ^ 2 - x` answered
+`{ sqrt(x), -sqrt(x) }`, which leave `x ^ (-1/2) / 2` and `-1/2 * x ^ (-1/2)`.
+
+The equation is not thereby unsatisfiable, so the empty set would replace one false claim with
+another. What holds is the condition as written, and that is what comes back. Solving it needs a
+differential-equation solver, which
+[#746](https://github.com/asc-community/AngouriMath/issues/746) has as item 48 and which this
+library does not yet have.
+
+A root that does not mention the name the operator is taken over denies nothing, and is returned
+as before: `"derivative(y * x, x) + y - 1".SolveEquation("y")` is `{ 1/2 }`, and
+`"derivative(y ^ 2, y) - 2".SolveEquation("y")` is `{ 1 }` — there the unknown *is* the name the
+derivative binds, and no independence is claimed of it.
+
+The set builder had the same reading of its own bound name and lost it the same way:
+`{ y : derivative(y, x) + y - x = 0 }` simplified to `{ y : y - x = 0 }`, which is `{ x }`. A
+binder over `y` makes `y` range over values, and expressions in `x` are among them, so that
+simplification settles a condition that was written to stay open. It no longer fires.
+
+[#964](https://github.com/asc-community/AngouriMath/issues/964)
 
 ---
 
