@@ -1,0 +1,65 @@
+name: 'Trimming & NativeAOT'
+
+# Deliberately without a paths: filter. What breaks a trimmed or NativeAOT build is a run-time
+# name lookup, and one can be introduced by a change anywhere in the kernel, by a package bump,
+# or by an SDK bump -- so there is no subset of the tree this gate could safely skip. Two
+# workflows here have already been silenced by a filter that matched nothing
+# (https://github.com/asc-community/AngouriMath/issues/775); an unconditional trigger cannot be.
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '*'
+  workflow_dispatch:
+
+jobs:
+  Publish:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: windows-latest
+            rid: win-x64
+          - os: macos-latest
+            rid: osx-arm64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '10.x'
+        dotnet-quality: 'preview'
+
+    # ILC links the runtime into the binary and needs a native linker and zlib to do it.
+    - name: 'Install the native toolchain for Linux'
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang zlib1g-dev
+
+    # The project sets PublishTrimmed, TrimmerSingleWarn=false and ILLinkTreatWarningsAsErrors,
+    # so any IL2xxx from the kernel fails this step. There is no flag to forget on the command
+    # line and no way to read a warning as noise.
+    - name: 'Publish trimmed'
+      run: dotnet publish Sources/Tests/AotSmokeTest/AotSmokeTest.csproj -c Release -r ${{ matrix.rid }} -o artifacts/trimmed
+
+    # Publishing is not the test. Everything the trimmer removed that the kernel reaches for by
+    # name is invisible until the binary runs, so the binary runs, and its exit code is the gate.
+    - name: 'Run the trimmed binary'
+      shell: bash
+      run: ./artifacts/trimmed/AotSmokeTest
+
+    - name: 'Publish NativeAOT'
+      run: dotnet publish Sources/Tests/AotSmokeTest/AotSmokeTest.csproj -c Release -r ${{ matrix.rid }} -p:AngouriMathPublishAot=true -o artifacts/aot
+
+    - name: 'Run the NativeAOT binary'
+      shell: bash
+      run: ./artifacts/aot/AotSmokeTest

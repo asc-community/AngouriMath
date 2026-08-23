@@ -419,6 +419,7 @@ are short, and a stale one is worse than none — if you change what a file desc
 | [`Contributing/Transformations.md`](Sources/AngouriMath/Docs/Contributing/Transformations.md) | the transformation layer the 1.x entry points sit on, and how to add the next rule set |
 | [`Contributing/SimplificationContract.md`](Sources/AngouriMath/Docs/Contributing/SimplificationContract.md) | what a rewrite may assume, and the ten obligations one has to meet. Read it *before* adding or changing a rule |
 | [`Contributing/CanonicalForm.md`](Sources/AngouriMath/Docs/Contributing/CanonicalForm.md) | canonical versus simplest, why no canonical form exists for the whole language, and what one means per node class. Read it before comparing two expressions for equality |
+| [`Contributing/Trimming.md`](Sources/AngouriMath/Docs/Contributing/Trimming.md) | what `IsAotCompatible` on the kernel promises, and what breaks it. Read it before adding reflection anywhere |
 | [`Contributing/coding_rules.md`](Sources/AngouriMath/Docs/Contributing/coding_rules.md) | sealed-or-abstract, and immutability of `Entity` |
 | [`WhatsNew/version_performance_control.md`](Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md) | the inter-version performance table, how to add a column, and when the CI performance baseline may be updated |
 | `Sources/Analyzers/` | the custom analyzers, including the static-field one behind `[ConstantField]` |

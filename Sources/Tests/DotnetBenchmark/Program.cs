@@ -91,6 +91,11 @@ namespace DotnetBenchmark
                         // them. See MatchingEngine for what the factor decides.
                         "MatchingEngine" => GetReportByBenchmark(typeof(MatchingEngine), "Mean", "Error", "StdDev", "Ratio", "Allocated"),
                         "CompiledFuncTest" => GetReportByBenchmark(typeof(CompiledFuncTest), "Mean", "Error", "StdDev"),
+                        // The two compilation benchmarks existed as classes that nothing could
+                        // run: one was a commented-out BenchmarkRunner.Run below, the other had
+                        // no arm at all. A benchmark nobody can invoke measures nothing.
+                        "BenchLinqCompilation" => GetReportByBenchmark(typeof(BenchLinqCompilation), "Mean", "Error", "StdDev", "Allocated"),
+                        "CacheCompiledFunc" => GetReportByBenchmark(typeof(CacheCompiledFunc), "Mean", "Error", "StdDev", "Allocated"),
                         "NumbersBenchmark" => GetReportByBenchmark(typeof(NumbersBenchmark), "Mean", "Error", "StdDev"),
                         _ => throw new($"Unexpected benchmark {arg}")
                     }).ToArray(); // active action
@@ -107,7 +112,6 @@ namespace DotnetBenchmark
                 Console.WriteLine();
                 Console.WriteLine();
             }
-            // BenchmarkRunner.Run<BenchLinqCompilation>();
             Console.ReadLine(); Console.ReadLine(); Console.ReadLine();
             return 0;
         }
