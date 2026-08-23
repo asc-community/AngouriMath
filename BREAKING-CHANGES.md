@@ -15,7 +15,7 @@ read first.
 
 ---
 
-## Unreleased — since 2.2.0
+## 2.3.0 — since 2.2.0
 
 ### At a glance
 
