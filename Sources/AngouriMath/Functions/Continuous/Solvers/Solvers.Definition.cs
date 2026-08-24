@@ -84,7 +84,7 @@ namespace AngouriMath
         /// { 9.08837698687877... }
         /// -----------------
         /// sin(x) * x - 3 = 0
-        /// {  }
+        /// { x : sin(x) * x = 3 }
         /// </code>
         /// </example>
         public Set Solve(Variable var)

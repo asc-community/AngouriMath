@@ -5652,7 +5652,9 @@ namespace AngouriMath
             }
 
             /// <summary>
-            /// If you only need analytical solutions and an empty set if no analytical solutions were found, disable Newton's method
+            /// If you only need analytical solutions, disable Newton's method. What comes back
+            /// where there are none is the equation itself as a set builder: the empty set
+            /// would say the equation has no roots, which is a claim nothing established.
             /// </summary>
             /// <example>
             /// <code>
@@ -5671,7 +5673,7 @@ namespace AngouriMath
             /// { 1.0050669478588620808778841819730587303638458251953125 + 0.93725915669289194820379407246946357190608978271484375i,
             /// ... omitting here most of the output, because it's huge
             /// }
-            /// {  } // nothing was found for 5-degree polynomial without numeric solution
+            /// { x : x ^ 5 + 3 * x = -1 } // no analytical solution was found for this quintic
             /// </code>
             /// </example>
             public static Setting<bool> AllowNewton { get; } = true;

@@ -21,6 +21,11 @@ read first.
 
 | Silent? | What | Was | Is |
 |---|---|---|---|
+| **Silent** | `"x6 + x y + 1 = 0".ToEntity().Solve("x")`, and every equation no solver settles | `{  }` — there are no roots | `{ x : 1 + x ^ 6 + x * y = 0 }` — these are the roots, whichever they are |
+| **Silent** | `"(x - 1) * (x6 + x y + 1) = 0".ToEntity().Solve("x")` | `{ 1 }` | `{ 1 } \/ { x : 1 + x ^ 6 + x * y = 0 }` |
+| **Silent** | `"x6 + x y + 1 = 0 and x - 1 = 0".ToEntity().Solve("x")` | `{  }` | `{ x : x ^ 6 + x * y + 1 = 0 and x - 1 = 0 }` |
+| **Silent** | `"sum(k, k, 1, n)".ToEntity().FreeVariables`, and `product` | `{ k, n }` — the bound index counted as free | `{ n }` |
+| **Silent** | `"integral(t * b, t, 0, 1)".ToEntity().FreeVariables`, and every integral with limits | `{ b, t }` | `{ b }` |
 | | `"x ^ 3 - x > 0".ToEntity().Solve("x")`, and every polynomial inequality of degree three or more | `NotSufficientlySupportedException: Only linear and quadratic polynomial inequalities are supported` | `(-1; 0) \/ (1; +oo)` — the solution set |
 | **Silent** | `"a implies (b implies c)".ToEntity().Stringize()` | `a implies b implies c`, which reads back as `(a implies b) implies c` | `a implies (b implies c)` |
 | | `"(a implies b) implies c".ToEntity().Stringize()` | `(a implies b) implies c` | `a implies b implies c` |
@@ -39,6 +44,141 @@ read first.
 | **Silent** | `"domain(x, ZZ)".ToEntity().Latexize()` | `x` | `{\left(x\right)}_{\mathbb{Z}}` |
 | **Silent** | `"x - domain(x, ZZ)".ToEntity().Simplify()`, and any sum mixing a node with a narrowed codomain and the same node without | `0` — the two were collected as one monomial | `x - domain(x, ZZ)`, left alone |
 | | every node type's own `Stringize()` and `Latexize()` overrides — `Entity.Sumf.Stringize()` and 129 more | declared on each node | declared once on `Entity`; still callable on every node, and a consumer compiled against 2.3.0 has to be rebuilt |
+
+### An equation nothing settled is no longer answered with the empty set
+
+`Solve` and `SolveEquation` returned an empty `FiniteSet` for two different things: an equation
+shown to have no roots, and an equation every solver in the chain declined. The empty set is a
+positive claim — *no x satisfies this* — so the second of those was a wrong answer rather than a
+graceful failure ([#1036](https://github.com/asc-community/AngouriMath/issues/1036),
+[#746](https://github.com/asc-community/AngouriMath/issues/746) tier 4).
+
+**Was** — indistinguishable, and false for the second column:
+
+```
+"x6 + x y + 1 = 0".ToEntity().Solve("x")            {  }        six roots for every y
+"sin(x) + x + y = 0".ToEntity().Solve("x")          {  }
+"e^x + x + y = 0".ToEntity().Solve("x")             {  }
+"x6 + x y + 1".ToEntity().SolveEquation("x")        {  }
+"e^x = 0".ToEntity().Solve("x")                     {  }        genuinely none
+"abs(x) = -1".ToEntity().Solve("x")                 {  }        genuinely none
+```
+
+**Is** — the equation itself, as the set of the x that satisfy it. It names the same set and
+asserts of it only what was established:
+
+```
+"x6 + x y + 1 = 0".ToEntity().Solve("x")            { x : 1 + x ^ 6 + x * y = 0 }
+"sin(x) + x + y = 0".ToEntity().Solve("x")          { x : sin(x) + x = -y }
+"e^x + x + y = 0".ToEntity().Solve("x")             { x : e ^ x + x = -y }
+"x6 + x y + 1".ToEntity().SolveEquation("x")        { x : 1 + x ^ 6 + x * y = 0 }
+"e^x = 0".ToEntity().Solve("x")                     {  }        unchanged
+"abs(x) = -1".ToEntity().Solve("x")                 {  }        unchanged
+```
+
+Turning Newton's method off leaves nothing numerical either, and those answers move the same way.
+A search over finitely many starting points inside a bounded region finding nothing is a fact about
+the search:
+
+```
+using var _ = MathS.Settings.AllowNewton.Set(false);
+
+"x5 + 3x + 1 = 0".ToEntity().Solve("x")             was {  }   is { x : x ^ 5 + 3 * x = -1 }
+"sin(x) * x - 3 = 0".ToEntity().Solve("x")          was {  }   is { x : sin(x) * x = 3 }
+
+"x + sqrt(x^0.1 + a) + c".ToEntity().SolveEquation("x")
+    was {  }   is { x : sqrt(a + x ^ (1/10)) + c + x = 0 }
+"(x + 6)^(1/6) + x + x3 + a".ToEntity().SolveEquation("x")
+    was {  }   is { x : (6 + x) ^ (1/6) + x + x ^ 3 = -a }
+"2 ^ (x sin(x)) + 4 ^ (x sin(x)) + c".ToEntity().SolveEquation("x")
+    was {  }
+    is  { x : sin(x) * x = ln(((-1 - sqrt(1 - 4 * c)) / 2) ^ (1 / ln(2)))
+              or sin(x) * x = ln(((-1 + sqrt(1 - 4 * c)) / 2) ^ (1 / ln(2))) }
+```
+
+The last of those is the shape of it: the exponential solver did settle the equation in
+`2 ^ (x sin(x))`, and it was the inversion of `x * sin(x)` that had nothing to say. What comes back
+now is the half that was solved, with the half that was not left standing as a condition.
+
+An answer that is partly settled keeps the part that is, so a product one of whose factors was
+solved comes back as a union rather than as the factor's roots alone:
+
+```
+"(x - 1) * (x6 + x y + 1) = 0".ToEntity().Solve("x")
+    was  { 1 }
+    is   { 1 } \/ { x : 1 + x ^ 6 + x * y = 0 }
+
+"x6 + x y + 1 = 0 or x - 1 = 0".ToEntity().Solve("x")
+    was  { 1 }
+    is   { 1 } \/ { x : 1 + x ^ 6 + x * y = 0 }
+
+"x6 + x y + 1 = 0 implies x - 1 = 0".ToEntity().Solve("x")
+    was  { 1 } \/ BB
+    is   { 1 } \/ (BB \ { x : 1 + x ^ 6 + x * y = 0 })
+```
+
+A conjunction with an unsettled side is answered as the conjunction. Intersecting a finite set with
+a condition keeps the elements whose membership could not be decided, so taking the intersection
+here would have replaced one false claim with another — `{ 1 }` says 1 solves
+`x^6 + x*y + 1 = 0`, and it does so only at `y = -2`:
+
+```
+"x6 + x y + 1 = 0 and x - 1 = 0".ToEntity().Solve("x")
+    was  {  }
+    is   { x : x ^ 6 + x * y + 1 = 0 and x - 1 = 0 }
+```
+
+**What this means for callers.** `Solve` has always been typed `Set` and has always been able to
+return an `Interval`, a `ConditionalSet` or a union; what changes is how often it does. Code that
+casts the result to `FiniteSet`, or that reads an empty result as "no solutions", has to say which
+of the two it means:
+
+```csharp
+var answer = equation.Solve(x);
+if (answer is FiniteSet roots)      { /* these are all of them */ }
+else if (answer.IsSetEmpty)         { /* shown to have none */ }
+else                                { /* not settled, or not finite */ }
+```
+
+Nothing that solved before stops solving, and no equation that was shown to have no roots gains
+any. Solving `x2 - 4 = 0`, `sin(x) = 1/2`, `x2 + 1 = 0` and the system solver's answers are
+unchanged, as is `Solve` on an inequality.
+
+### A bound index is not a free variable
+
+`FreeVariables` knew about two binders — `Lambda` and the set builder — and about no others. A
+summation and a product bind their index, so `sum(k, k, 1, n)` is a function of `n` alone, and a
+definite integral binds its variable between its limits. Both reported the bound name as free.
+
+Measured on a build of 2.3.0 and a build of this branch:
+
+| input | 2.3.0 | now |
+|---|---|---|
+| `sum(k, k, 1, n)` | `{ k, n }` | `{ n }` |
+| `product(k, k, 1, n)` | `{ k, n }` | `{ n }` |
+| `integral(t * b, t, 0, 1)` | `{ b, t }` | `{ b }` |
+| `integral(t * b, t)` | `{ b, t }` | `{ b, t }` |
+| `derivative(t * b, t)` | `{ b, t }` | `{ b, t }` |
+| `lambda(x, x + y)` | `{ y }` | `{ y }` |
+| `{ k : k > a }` | `{ a }` | `{ a }` |
+
+The index is bound over the **bounds** as well as the body, which is what
+[`Binding`](Sources/AngouriMath/Core/Binding.cs) already says of itself: the name a binder is handed
+is honoured throughout it, through the summand and the bounds. So `sum(k, k, k, n)` is `{ n }` too.
+
+**The last three rows are unchanged on purpose, and the distinction is the interesting part.** An
+indefinite integral does not bind: the antiderivative of `t * b` over `t` is `b * t ^ 2 / 2 + C`,
+which is still a function of `t`. Neither does a derivative — `d/dt` denotes a function of `t`. They
+look like the same shape as a summation and are not, and a later sweep that completes the binder list
+by adding them would make them wrong. `FreeVariablesTest` pins all of it, including the two that must
+stay put.
+
+**`Vars` and `VarsAndConsts` do not change.** They mean every name *occurring*, bound ones included —
+`"sum(k, k, 1, n)".ToEntity().Vars` is still `{ k, n }` — which is what their own XML example has
+always documented, listing a lambda's parameter under *variables and constants*. Occurring and free
+are different questions and the three properties answer them separately.
+
+[#1019](https://github.com/asc-community/AngouriMath/issues/1019).
 
 ### A polynomial inequality of degree three or more is answered
 
