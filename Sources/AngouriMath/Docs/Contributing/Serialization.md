@@ -1,4 +1,4 @@
-## Serialization
+﻿## Serialization
 
 An `Entity` written out and read back is the expression that was written, as exactly as the
 printed form is — which is the whole of the design, and *What the printed form does not carry* below
@@ -54,16 +54,21 @@ free and a benchmark that reuses one measures nothing.
 
 ### What the printed form does not carry
 
-Two, and both are properties of printing rather than of the converter, so fixing them there fixes
-them here:
+One, and it is a property of printing rather than of the converter, so fixing it there fixes it
+here:
 
-- **`Codomain`.** No node prints it, so a node narrowed with `WithCodomain` — or written
-  `domain(x, ZZ)`, which the parser does accept — comes back with the default.
-  [#1022](https://github.com/asc-community/AngouriMath/issues/1022). Pinned by
-  `EntitySerializationTest.ACodomainDoesNotSurviveBecauseNothingPrintsIt`, which is written to fail
-  when the issue is fixed.
 - **`Number.Complex` with both parts non-zero.** It prints as a sum and reads back as `Sumf` — the
   same number, a different node. Already recorded in `EveryNodeSurvivesEveryPipelineTest`.
+
+**`Codomain` used to be on that list and no longer is.** A node narrowed with `WithCodomain` — or
+written `domain(x, ZZ)`, which the parser has always accepted — came back with the default, because
+nothing printed the annotation ([#1022](https://github.com/asc-community/AngouriMath/issues/1022)).
+It prints as `domain(inner, SET)` now, and the converter needed no change at all: it serialises what
+`Stringize` prints. `EntitySerializationTest.ACodomainSurvivesBecauseThePrintedFormCarriesIt` is
+where that is held. Two corners of it are still the *grammar*'s limit rather than the printer's:
+`Domain.Any` has no special set to name it, and no input yields a `Rational` whose codomain is
+`Complex`, since the pass that reads `1/2` as a rational treats `Complex` as "nobody annotated
+this".
 
 And one that is not about a node type but about how operands nest. An **associative** operator whose
 operands nest to the right comes back nested to the left, because the printed form does not bracket a

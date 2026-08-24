@@ -20,7 +20,7 @@ namespace AngouriMath
 #pragma warning restore SealedOrAbstract // AMAnalyzer
             {
                 /// <inheritdoc/>
-                public override string Stringize()
+                private protected override string StringizeNode()
                 {
                     static string RenderNum(Real number)
                     {
@@ -54,7 +54,7 @@ namespace AngouriMath
 #pragma warning restore SealedOrAbstract // AMAnalyzer
             {
                 /// <inheritdoc/>
-                public override string Stringize() => this switch
+                private protected override string StringizeNode() => this switch
                 {
                     { IsFinite: true } => EDecimal.ToString(),
                     { IsNaN: true } => "NaN",
@@ -70,7 +70,7 @@ namespace AngouriMath
 #pragma warning restore SealedOrAbstract // AMAnalyzer
             {
                 /// <inheritdoc/>
-                public override string Stringize() => ERational.ToString();
+                private protected override string StringizeNode() => ERational.ToString();
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
             }
@@ -78,7 +78,7 @@ namespace AngouriMath
             partial record Integer
             {
                 /// <inheritdoc/>
-                public override string Stringize() => EInteger.ToString();
+                private protected override string StringizeNode() => EInteger.ToString();
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
             }

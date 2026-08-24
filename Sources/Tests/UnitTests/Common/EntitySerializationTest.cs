@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -268,22 +268,34 @@ namespace AngouriMath.Tests.Common
         }
 
         /// <summary>
-        /// The one thing the printed form does not carry, pinned so that it is a statement about
-        /// where the two part company rather than a hole nobody measured. Written to fail when
-        /// <a href="https://github.com/asc-community/AngouriMath/issues/1022">#1022</a> is fixed,
-        /// since the converter needs no change for it and this test would then be describing
-        /// something that had stopped being true.
+        /// A codomain survives the converter, because the printed form carries it. It did not
+        /// until <a href="https://github.com/asc-community/AngouriMath/issues/1022">#1022</a>,
+        /// and the converter needed no change for it: it serialises what
+        /// <see cref="Entity.Stringize()"/> prints, so teaching the printer taught this too.
         /// </summary>
         [Fact]
-        public void ACodomainDoesNotSurviveBecauseNothingPrintsIt()
+        public void ACodomainSurvivesBecauseThePrintedFormCarriesIt()
         {
             Entity narrowed = MathS.FromString("domain(x, ZZ)");
             Assert.Equal(Domain.Integer, narrowed.Codomain);
-            Assert.Equal("x", narrowed.Stringize());
+            Assert.Equal("domain(x, ZZ)", narrowed.Stringize());
 
             var back = JsonSerializer.Deserialize<Entity>(JsonSerializer.Serialize(narrowed))!;
-            Assert.NotEqual(narrowed, back);
-            Assert.Equal(Domain.Any, back.Codomain);
+            Assert.Equal(narrowed, back);
+            Assert.Equal(Domain.Integer, back.Codomain);
+        }
+
+        /// <summary>
+        /// And on a subnode, which is where it is easiest to lose: the annotation belongs to the
+        /// node that has it, not to the expression as a whole.
+        /// </summary>
+        [Fact]
+        public void ACodomainOnASubnodeSurvivesToo()
+        {
+            Entity expression = MathS.Sin(MathS.Var("x").WithCodomain(Domain.Integer))
+                                + MathS.Var("y").WithCodomain(Domain.Real);
+            var back = JsonSerializer.Deserialize<Entity>(JsonSerializer.Serialize(expression))!;
+            Assert.Equal(expression, back);
         }
 
         /// <summary>

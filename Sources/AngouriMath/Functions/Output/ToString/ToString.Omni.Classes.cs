@@ -14,7 +14,7 @@ namespace AngouriMath
             partial record FiniteSet
             {
                 /// <inheritdoc/>
-                public override string Stringize()
+                private protected override string StringizeNode()
                     => $"{{ {string.Join(", ", Elements.Select(c => c.Stringize()))} }}";
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
@@ -23,7 +23,7 @@ namespace AngouriMath
             partial record Interval
             {
                 /// <inheritdoc/>
-                public override string Stringize()
+                private protected override string StringizeNode()
                 {
                     var left = LeftClosed ? "[" : "(";
                     var right = RightClosed ? "]" : ")";
@@ -36,7 +36,7 @@ namespace AngouriMath
             partial record ConditionalSet
             {
                 /// <inheritdoc/>
-                public override string Stringize()
+                private protected override string StringizeNode()
                     => $"{{ {Var.Stringize()} : {Predicate.Stringize()} }}";
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
@@ -47,7 +47,7 @@ namespace AngouriMath
                 partial record Booleans
                 {
                     /// <inheritdoc/>
-                    public override string Stringize() => "BB";
+                    private protected override string StringizeNode() => "BB";
                     /// <inheritdoc/>
                     public override string ToString() => Stringize();
                 }
@@ -55,7 +55,7 @@ namespace AngouriMath
                 partial record Integers
                 {
                     /// <inheritdoc/>
-                    public override string Stringize() => "ZZ";
+                    private protected override string StringizeNode() => "ZZ";
                     /// <inheritdoc/>
                     public override string ToString() => Stringize();
                 }
@@ -63,7 +63,7 @@ namespace AngouriMath
                 partial record Rationals
                 {
                     /// <inheritdoc/>
-                    public override string Stringize() => "QQ";
+                    private protected override string StringizeNode() => "QQ";
                     /// <inheritdoc/>
                     public override string ToString() => Stringize();
                 }
@@ -71,7 +71,7 @@ namespace AngouriMath
                 partial record Reals
                 {
                     /// <inheritdoc/>
-                    public override string Stringize() => "RR";
+                    private protected override string StringizeNode() => "RR";
                     /// <inheritdoc/>
                     public override string ToString() => Stringize();
                 }
@@ -79,7 +79,7 @@ namespace AngouriMath
                 partial record Complexes
                 {
                     /// <inheritdoc/>
-                    public override string Stringize() => "CC";
+                    private protected override string StringizeNode() => "CC";
                     /// <inheritdoc/>
                     public override string ToString() => Stringize();
                 }
@@ -93,7 +93,7 @@ namespace AngouriMath
                 // a *set difference* on the right must be bracketed or it is re-read as the outer
                 // operator: `{ 1, 2 } \/ ({ 3 } \ { 1, 2 })` is { 1, 2, 3 } and
                 // `({ 1, 2 } \/ { 3 }) \ { 1, 2 }` is { 3 }.
-                public override string Stringize()
+                private protected override string StringizeNode()
                     => $@"{Left.Stringize(Left.Priority < Priority)} \/ {Right.Stringize(Right.Priority < Priority || Right is SetMinusf)}";
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
@@ -102,7 +102,7 @@ namespace AngouriMath
             partial record Intersectionf
             {
                 /// <inheritdoc/>
-                public override string Stringize()
+                private protected override string StringizeNode()
                     => $@"{Left.Stringize(Left.Priority < Priority)} /\ {Right.Stringize(Right.Priority < Priority)}";
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
@@ -115,7 +115,7 @@ namespace AngouriMath
                 // union, so anything at that level on the right needs bracketing -- the same rule
                 // `-` and `/` follow. `{1,2,3} \ ({2,3} \ {3})` is { 1, 3 } where
                 // `({1,2,3} \ {2,3}) \ {3}` is { 1 }.
-                public override string Stringize()
+                private protected override string StringizeNode()
                     => $@"{Left.Stringize(Left.Priority < Priority)} \ {Right.Stringize(Right.Priority <= Priority)}";
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
@@ -126,7 +126,7 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 // `in` is folded to the left and is not associative: `(a in b) in c` asks whether
                 // a truth value is an element of c, `a in (b in c)` whether a is an element of one.
-                public override string Stringize()
+                private protected override string StringizeNode()
                     => $@"{Element.Stringize(Element.Priority < Priority)} in {SupSet.Stringize(SupSet.Priority <= Priority)}";
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
@@ -145,7 +145,7 @@ namespace AngouriMath
             // back as `x provided (p provided q)` -- the same value, since both are `x` exactly
             // when `p` and `q` hold, and a different expression, which is what the round trip is
             // about.
-            public override string Stringize() => $@"{Expression.Stringize(Expression.Priority <= Priority.Provided)} provided {Predicate.Stringize(Predicate.Priority < Priority.Provided)}";
+            private protected override string StringizeNode() => $@"{Expression.Stringize(Expression.Priority <= Priority.Provided)} provided {Predicate.Stringize(Predicate.Priority < Priority.Provided)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -157,7 +157,7 @@ namespace AngouriMath
             // and neither is a bare comma-separated list, so a printed piecewise came back
             // either as a product with `if` read as an undeclared variable, or as nothing at
             // all once there was more than one case.
-            public override string Stringize()
+            private protected override string StringizeNode()
                 => "piecewise(" + string.Join(", ",
                     Cases.Select(n => n.Expression.Stringize(n.Expression.Priority < Priority)
                                       + " provided "
@@ -169,7 +169,7 @@ namespace AngouriMath
         partial record Matrix
         {
             /// <inheritdoc/>
-            public override string Stringize()
+            private protected override string StringizeNode()
                 => "[" +
                     string.Join(", ",
                         IsVector switch
@@ -187,7 +187,7 @@ namespace AngouriMath
             /// <inheritdoc/>
             // apply(f, a, b), for the same reason: juxtaposition is not application in the
             // grammar, and `(x -> x + 1) 2` came back as a power.
-            public override string Stringize()
+            private protected override string StringizeNode()
                 => "apply(" + Expression.Stringize() + ", " +
                     string.Join(", ", Arguments.Select(arg => arg.Stringize())) + ")";
 
@@ -201,7 +201,7 @@ namespace AngouriMath
             // lambda(p, body), because that is what the parser reads. The arrow spelling is
             // not in the grammar at all, and `->` there is the implication operator, so a
             // printed lambda used to come back as an implication.
-            public override string Stringize()
+            private protected override string StringizeNode()
                 => "lambda(" + Parameter.Stringize() + ", " + Body.Stringize() + ")";
 
             /// <inheritdoc/>

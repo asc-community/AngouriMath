@@ -12,7 +12,7 @@ namespace AngouriMath
         public partial record Sinf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"sin({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"sin({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -20,7 +20,7 @@ namespace AngouriMath
         public partial record Cosf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"cos({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"cos({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -28,7 +28,7 @@ namespace AngouriMath
         public partial record Secantf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"sec({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"sec({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -36,7 +36,7 @@ namespace AngouriMath
         public partial record Cosecantf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"csc({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"csc({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -44,7 +44,7 @@ namespace AngouriMath
         public partial record Arcsecantf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"arcsec({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"arcsec({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -52,7 +52,7 @@ namespace AngouriMath
         public partial record Arccosecantf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"arccsc({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"arccsc({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -60,7 +60,7 @@ namespace AngouriMath
         public partial record Tanf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"tan({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"tan({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -68,7 +68,7 @@ namespace AngouriMath
         public partial record Cotanf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"cotan({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"cotan({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -76,7 +76,7 @@ namespace AngouriMath
         public partial record Arcsinf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"arcsin({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"arcsin({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -84,7 +84,7 @@ namespace AngouriMath
         public partial record Arccosf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"arccos({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"arccos({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -92,7 +92,7 @@ namespace AngouriMath
         public partial record Arctanf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"arctan({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"arctan({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -100,7 +100,7 @@ namespace AngouriMath
         public partial record Arccotanf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"arccotan({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"arccotan({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }

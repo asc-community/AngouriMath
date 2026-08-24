@@ -13,13 +13,13 @@ namespace AngouriMath
         partial record Boolean
         {
             /// <inheritdoc/>
-            public override string Latexize() => (bool)this ? @"\top " : @"\bot ";
+            private protected override string LatexizeNode() => (bool)this ? @"\top " : @"\bot ";
         }
 
         partial record Notf
         {
             /// <inheritdoc/>
-            public override string Latexize()
+            private protected override string LatexizeNode()
                 => Argument is Equalsf(var left, var right)
                    ? $@"{left.Latexize(left.LatexPriority <= Priority.Equal)} \neq {right.Latexize(right.LatexPriority <= Priority.Equal)}"
                    : $@"\neg{{{Argument.Latexize(Argument.LatexPriority < LatexPriority)}}}";
@@ -28,7 +28,7 @@ namespace AngouriMath
         partial record Andf
         {
             /// <inheritdoc/>
-            public override string Latexize()
+            private protected override string LatexizeNode()
             {
                 var result = new System.Text.StringBuilder();
                 Entity? left = null;
@@ -78,7 +78,7 @@ namespace AngouriMath
         partial record Orf
         {
             /// <inheritdoc/>
-            public override string Latexize()
+            private protected override string LatexizeNode()
                 => $@"{Left.Latexize(Left.LatexPriority < LatexPriority)} \lor {Right.Latexize(Right.LatexPriority < LatexPriority)}";
         }
 
@@ -86,7 +86,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             // NOTE: \veebar (⊻) can disambiguate better than \oplus (⊕) which can mean the direct sum in algebra.
-            public override string Latexize()
+            private protected override string LatexizeNode()
                 => $@"{Left.Latexize(Left.LatexPriority < LatexPriority)} \veebar {Right.Latexize(Right.LatexPriority < LatexPriority)}";
         }
 
@@ -98,21 +98,21 @@ namespace AngouriMath
             // \implies (⇒) is a metalanguage symbol indicating a logical consequence or entailment. It's used to express that one statement logically follows from another.
             // ISO 80000-2 puts ⇒ first for implies, but → is also accepted and is more common in logic contexts.
             // ⇒ can be used in steps for proofs if we were to add it later.
-            public override string Latexize()
+            private protected override string LatexizeNode()
                 => $@"{Assumption.Latexize(Assumption.LatexPriority <= LatexPriority)} \to {Conclusion.Latexize(Conclusion.LatexPriority < LatexPriority)}";
         }
 
         partial record Equalsf
         {
             /// <inheritdoc/>
-            public override string Latexize()
+            private protected override string LatexizeNode()
                 => $@"{Left.Latexize(Left.LatexPriority <= LatexPriority)} = {Right.Latexize(Right.LatexPriority <= LatexPriority)}";
         }
 
         partial record Greaterf
         {
             /// <inheritdoc/>
-            public override string Latexize()
+            private protected override string LatexizeNode()
                 => $@"{Left.Latexize(Left.LatexPriority <= LatexPriority)} > {Right.Latexize(Right.LatexPriority <= LatexPriority)}";
         }
 
@@ -121,14 +121,14 @@ namespace AngouriMath
             /// <inheritdoc/>
             // NOTE: While \geqslant (⩾) is more used in e.g. Russian texts, \geq (≥) is more universally used in English texts.
             // Since the output language of LaTeX is English (referencing Piecewise and Providedf), \geq is more appropriate.
-            public override string Latexize()
+            private protected override string LatexizeNode()
                 => $@"{Left.Latexize(Left.LatexPriority <= LatexPriority)} \geq {Right.Latexize(Right.LatexPriority <= LatexPriority)}";
         }
 
         partial record Lessf
         {
             /// <inheritdoc/>
-            public override string Latexize()
+            private protected override string LatexizeNode()
                 => $@"{Left.Latexize(Left.LatexPriority <= LatexPriority)} < {Right.Latexize(Right.LatexPriority <= LatexPriority)}";
         }
 
@@ -137,7 +137,7 @@ namespace AngouriMath
             /// <inheritdoc/>
             // NOTE: While \leqslant (⩽) is more used in e.g. Russian texts, \leq (≤) is more universally used in English texts.
             // Since the output language of LaTeX is English (referencing Piecewise and Providedf), \leq is more appropriate.
-            public override string Latexize()
+            private protected override string LatexizeNode()
                 => $@"{Left.Latexize(Left.LatexPriority <= LatexPriority)} \leq {Right.Latexize(Right.LatexPriority <= LatexPriority)}";
         }
     }

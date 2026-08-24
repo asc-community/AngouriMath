@@ -1,4 +1,4 @@
-# What ships in which package, and how to decide where the next thing goes
+﻿# What ships in which package, and how to decide where the next thing goes
 
 [#746](https://github.com/asc-community/AngouriMath/issues/746) item 78 asks for this file: which
 capabilities belong in the kernel package, which ship separately, and what the dependency rules
@@ -136,16 +136,16 @@ typeof(AngouriMath.Entity).Assembly     # measured by reflection on the built ne
 
 - 634 types, of which **158 are public**;
 - **68 concrete `Entity` subclasses** and 10 abstract ones;
-- **13 abstract members declared on `Entity`** — `<Clone>$` is the compiler's, and `Codomain`'s getter
-  and setter are one property, so **11 distinct capabilities**: `Codomain`, `InitDirectChildren`,
-  `InnerSimplify`, `IntrinsicCondition`, `InvertNode`, `Latexize`, `Priority`, `Replace`,
-  `SortHashName`, `Stringize`, `ToSymPy`;
+- **14 abstract members declared on `Entity`** — `<Clone>$` is the compiler's, and `Codomain`'s getter
+  and setter are one property, so **12 distinct capabilities**: `Codomain`, `DefaultCodomain`,
+  `InitDirectChildren`, `InnerSimplify`, `IntrinsicCondition`, `InvertNode`, `LatexizeNode`,
+  `Priority`, `Replace`, `SortHashName`, `StringizeNode`, `ToSymPy`;
 - 13 referenced assemblies, 4 of them third-party. (`System.Console` is on the list because the
   ANTLR-generated lexer and parser default their error streams to it.)
 
-**Eleven capabilities × 68 node types is the reason the kernel is one assembly.** A capability written
+**Twelve capabilities × 68 node types is the reason the kernel is one assembly.** A capability written
 as an abstract member of `Entity` cannot be in a different package than `Entity`, whatever anyone
-decides. Three of the eleven are output formats and one is a solver detail.
+decides. Three of the twelve are output formats and one is a solver detail.
 
 ---
 
@@ -260,7 +260,7 @@ subsystem's own directory.
 | capability | why it is where it is |
 |---|---|
 | `Entity` model, parser, evaluation, `InnerSimplify`, `ToString` | no clause fires; several are abstract members of `Entity` — **kernel by construction** |
-| LaTeX printer | `public abstract string Latexize()` on `Entity` — **kernel by construction** |
+| LaTeX printer | `private protected abstract string LatexizeNode()` on `Entity` — **kernel by construction** |
 | SymPy export | `internal abstract string ToSymPy()` on `Entity`, overridden by every node — **kernel by construction**, and has been since before `v1.4.0` |
 | simplification rules and the transformation layer | on the default path; 111 public members in the `AngouriMath.Core.Transformations` namespace — **kernel** |
 | polynomial layer | six inbound edges from the engine, including `Simplificator`, `RewriteRules`, `Patterns` and `Evaluation.Continuous.Arithmetics` — **kernel** |

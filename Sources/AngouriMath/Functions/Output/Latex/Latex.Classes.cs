@@ -50,7 +50,7 @@ namespace AngouriMath
             /// Returns latexized const if it is possible to latexize it,
             /// or its original name otherwise
             /// </summary>
-            public override string Latexize()
+            private protected override string LatexizeNode()
             {
                 static string LatexizePart(string symbol, bool upright)
                 {

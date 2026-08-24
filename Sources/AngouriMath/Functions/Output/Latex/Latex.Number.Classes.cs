@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -16,7 +16,7 @@ namespace AngouriMath
             partial record Complex
             {
                 /// <inheritdoc/>
-                public override string Latexize()
+                private protected override string LatexizeNode()
                 {
                     static string RenderNum(Real number)
                     {
@@ -40,7 +40,7 @@ namespace AngouriMath
             partial record Real
             {
                 /// <inheritdoc/>
-                public override string Latexize() => this switch
+                private protected override string LatexizeNode() => this switch
                 {
                     { IsFinite: true } => EDecimal.ToString(),
                     { IsNaN: true } => @"\mathrm{undefined}",
@@ -52,14 +52,14 @@ namespace AngouriMath
             partial record Rational
             {
                 /// <inheritdoc/>
-                public override string Latexize() => $@"\frac{{{ERational.Numerator}}}{{{ERational.Denominator}}}";
+                private protected override string LatexizeNode() => $@"\frac{{{ERational.Numerator}}}{{{ERational.Denominator}}}";
 
             }
 
             partial record Integer
             {
                 /// <inheritdoc/>
-                public override string Latexize() => EInteger.ToString();
+                private protected override string LatexizeNode() => EInteger.ToString();
             }
         }
     }

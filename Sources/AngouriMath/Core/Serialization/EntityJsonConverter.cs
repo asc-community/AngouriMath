@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -40,16 +40,18 @@ namespace AngouriMath.Core.Serialization
     /// serialization uses.
     /// </para>
     /// <para>
-    /// What the printed form does not carry, and neither therefore does this:
-    /// <see cref="Entity.Codomain"/>, which no node prints, so a node narrowed with
-    /// <see cref="Entity.WithCodomain(Domain)"/> comes back with the default
-    /// (<a href="https://github.com/asc-community/AngouriMath/issues/1022">#1022</a>); and an
+    /// What the printed form does not carry, and neither therefore does this: an
     /// <see cref="Entity.Number.Complex"/> with both parts non-zero, which prints as a sum and
     /// reads back as one — the same number, a different node. Nor is a right nesting of an
     /// <em>associative</em> operator kept, since such an operand is not bracketed at its own
     /// precedence: <c>1 + (2 + 3)</c> comes back as <c>(1 + 2) + 3</c>, the same value written the
     /// other way round. Both are properties of printing rather than of this converter, and fixing
-    /// them there fixes them here.
+    /// them there fixes them here — which is what happened to the third,
+    /// <see cref="Entity.Codomain"/>: a node narrowed with
+    /// <see cref="Entity.WithCodomain(Domain)"/> used to come back with the default, and prints
+    /// as <c>domain(inner, SET)</c> since
+    /// <a href="https://github.com/asc-community/AngouriMath/issues/1022">#1022</a>, with no
+    /// change here at all.
     /// </para>
     /// <a href="https://github.com/asc-community/AngouriMath/issues/323">#323</a>
     /// </remarks>

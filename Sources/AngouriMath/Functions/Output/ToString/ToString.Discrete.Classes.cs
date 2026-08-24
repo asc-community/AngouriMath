@@ -12,7 +12,7 @@ namespace AngouriMath
         partial record Boolean
         {
             /// <inheritdoc/>
-            public override string Stringize() => ((bool)this).ToString();
+            private protected override string StringizeNode() => ((bool)this).ToString();
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -20,7 +20,7 @@ namespace AngouriMath
         partial record Notf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"not {Argument.Stringize(Argument.Priority < Priority)}";
+            private protected override string StringizeNode() => $"not {Argument.Stringize(Argument.Priority < Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -28,7 +28,7 @@ namespace AngouriMath
         partial record Andf
         {
             /// <inheritdoc/>
-            public override string Stringize()
+            private protected override string StringizeNode()
                 => $"{Left.Stringize(Left.Priority < Priority)} and {Right.Stringize(Right.Priority < Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -37,7 +37,7 @@ namespace AngouriMath
         partial record Orf
         {
             /// <inheritdoc/>
-            public override string Stringize()
+            private protected override string StringizeNode()
                 => $"{Left.Stringize(Left.Priority < Priority)} or {Right.Stringize(Right.Priority < Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -46,7 +46,7 @@ namespace AngouriMath
         partial record Xorf
         {
             /// <inheritdoc/>
-            public override string Stringize()
+            private protected override string StringizeNode()
                 => $"{Left.Stringize(Left.Priority < Priority)} xor {Right.Stringize(Right.Priority < Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -60,7 +60,7 @@ namespace AngouriMath
             // The two are not interchangeable: `false implies (true implies false)` is true, and
             // `(false implies true) implies false` is false, so printing the first without its
             // brackets said the opposite of what it meant.
-            public override string Stringize()
+            private protected override string StringizeNode()
                 => $"{Assumption.Stringize(Assumption.Priority < Priority)} implies {Conclusion.Stringize(Conclusion.Priority <= Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -69,7 +69,7 @@ namespace AngouriMath
         partial record Equalsf
         {
             /// <inheritdoc/>
-            public override string Stringize()
+            private protected override string StringizeNode()
                 => $"{Left.Stringize(Left.Priority <= Priority)} = {Right.Stringize(Right.Priority <= Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -78,7 +78,7 @@ namespace AngouriMath
         partial record Greaterf
         {
             /// <inheritdoc/>
-            public override string Stringize()
+            private protected override string StringizeNode()
                 => $"{Left.Stringize(Left.Priority <= Priority)} > {Right.Stringize(Right.Priority <= Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -87,7 +87,7 @@ namespace AngouriMath
         partial record GreaterOrEqualf
         {
             /// <inheritdoc/>
-            public override string Stringize()
+            private protected override string StringizeNode()
                 => $"{Left.Stringize(Left.Priority <= Priority)} >= {Right.Stringize(Right.Priority <= Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -96,7 +96,7 @@ namespace AngouriMath
         partial record Lessf
         {
             /// <inheritdoc/>
-            public override string Stringize()
+            private protected override string StringizeNode()
                 => $"{Left.Stringize(Left.Priority <= Priority)} < {Right.Stringize(Right.Priority <= Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -105,7 +105,7 @@ namespace AngouriMath
         partial record LessOrEqualf
         {
             /// <inheritdoc/>
-            public override string Stringize()
+            private protected override string StringizeNode()
                 => $"{Left.Stringize(Left.Priority <= Priority)} <= {Right.Stringize(Right.Priority <= Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();

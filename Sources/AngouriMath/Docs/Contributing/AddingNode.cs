@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -35,11 +35,15 @@
 /// 
 /// 3. A few essential methods
 ///     a. InnerEval and InnerSimplify (<see cref="AngouriMath.Entity.Sinf.InnerEval"/> for numerical and <see cref="AngouriMath.Entity.Andf.InnerEval"/> for boolean)
-///     b. Stringize (<see cref="AngouriMath.Entity.Sinf.Stringize"/>) (and tests to CircleTest.cs)
-///     c. Latexize (<see cref="AngouriMath.Entity.Sinf.Latexize"/>) (and tests to LatexTest.cs)
+///     b. StringizeNode (<see cref="AngouriMath.Entity.Sinf.StringizeNode"/>) (and tests to CircleTest.cs).
+///        It renders this node only; Entity.Stringize wraps the result in `domain(..., SET)`
+///        where the codomain is not the type's default, so that is not yours to do.
+///     c. LatexizeNode (<see cref="AngouriMath.Entity.Sinf.LatexizeNode"/>) (and tests to LatexTest.cs)
 ///     d. Limit computation (<see cref="AngouriMath.Entity.Sinf.ComputeLimitDivideEtImpera"/>) (and tests to LimitTest.cs)
 ///     e. Hash for sorting (<see cref="AngouriMath.Entity.Sinf.SortHashName"/>)
-///     f. Default domain <see cref="AngouriMath.Entity.Sinf.Codomain"/>
+///     f. Default domain <see cref="AngouriMath.Entity.Sinf.Codomain"/>, and
+///        <see cref="AngouriMath.Entity.Sinf.DefaultCodomain"/> beside it naming the same one.
+///        Both are abstract, so a node that declares one and forgets the other does not compile.
 ///     g. Substitute <see cref="AngouriMath.Entity.Sinf.Substitute"/> (and tests to SubstituteTest.cs)
 /// 
 /// 4. Pattern replacer (<see cref="AngouriMath.Functions.Patterns.CommonRules"/> and <see cref="AngouriMath.Functions.Simplificator.Alternate"/>)

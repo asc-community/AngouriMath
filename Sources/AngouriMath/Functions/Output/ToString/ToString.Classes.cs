@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -12,7 +12,7 @@ namespace AngouriMath
         public partial record Variable
         {
             /// <inheritdoc/>
-            public override string Stringize() => Name;
+            private protected override string StringizeNode() => Name;
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }

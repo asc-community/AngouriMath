@@ -13,8 +13,21 @@ notation is not in the grammar prints as its function call instead: a lambda pri
 `lambda(x, x + 1)` and not `x -> x + 1`, because `->` is the implication operator and the arrow
 form would silently come back as something else.
 
-One thing the printed form does not carry: a **codomain**. `domain(x, ZZ)` prints as `x`, and the
-narrowing is lost on the way back ([#1022](https://github.com/asc-community/AngouriMath/issues/1022)).
+A **codomain** is part of that. A node whose `Codomain` is not the one its type carries by default
+prints inside `domain(...)`, so `domain(x, ZZ)` prints as `domain(x, ZZ)` and reads back narrowed
+([#1022](https://github.com/asc-community/AngouriMath/issues/1022)); it is not decoration, since
+`sqrt(-1)` is `i` and `domain(sqrt(-1), RR)` is `NaN`. The wrapper is printed only where it says
+something, so the ordinary expression is unchanged — and the default is not the same for every node:
+a variable and a matrix default to `Any`, `abs` and an interval to `RR`, every boolean node to `BB`,
+each numeric literal to its own type's domain, and everything else to `CC`.
+
+Two annotations still do not survive, and both are the grammar's limit rather than the printer's.
+There is no way to write **`Any`**, because the second argument of `domain(...)` has to be one of
+the five special sets and none of them means "no restriction" — so a node *widened* to `Any` from a
+narrower default prints as though it had not been. And no input at all yields a rational literal
+whose codomain is `CC`: the pass that reads `1/2` as a rational rather than a quotient
+([#873](https://github.com/asc-community/AngouriMath/issues/873)) treats `CC` as "nobody annotated
+this", because that is what an un-annotated `/` carries.
 
 **LaTeX output has a round trip too, and it is checked in someone else's repository.**
 [CSharpMath.Evaluation](https://github.com/verybadcat/CSharpMath/blob/master/CSharpMath.Evaluation/Evaluation.cs)
@@ -193,6 +206,10 @@ range in [#657](https://github.com/asc-community/AngouriMath/pull/657).
 
 **Structural** — `piecewise(a provided p, b provided q)`, `lambda(param, body)`,
 `apply(f, arg, ...)`, `domain(expr, set)`.
+
+`domain` takes a special set — `CC` `RR` `QQ` `ZZ` `BB` — and narrows the *codomain* of whatever
+node it wraps, which is what makes the expression evaluate to `NaN` outside it. It applies to any
+node, not only a variable, and it is what `Stringize` prints for one.
 
 **Refused by name** — `trunc` `lcm` `erf` `conjugate`. AngouriMath has none of these, and each is
 what some other CAS calls a function, so a caller reaches for it. Left alone they would be read as
