@@ -12,7 +12,7 @@ namespace AngouriMath
         public partial record Sumf
         {
             /// <inheritdoc/>
-            public override string Stringize() =>
+            private protected override string StringizeNode() =>
                 Augend.Stringize(Augend.Priority < Priority) + " + " + Addend.Stringize(Addend.Priority < Priority);
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -21,7 +21,7 @@ namespace AngouriMath
         public partial record Minusf
         {
             /// <inheritdoc/>
-            public override string Stringize() =>
+            private protected override string StringizeNode() =>
                 Minuend.Stringize(Minuend.Priority < Priority) + " - " + Subtrahend.Stringize(Subtrahend.Priority <= Priority);
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -34,7 +34,7 @@ namespace AngouriMath
             // unbracketed -- but `mod` shares this precedence level and is not associative, so a
             // `mod` on the right must be bracketed or it is re-read as the outer operator:
             // `2 * (3 mod 2)` is 2 and `(2 * 3) mod 2` is 0.
-            public override string Stringize() =>
+            private protected override string StringizeNode() =>
                 (Multiplier is Integer(-1) && !MathS.Diagnostic.OutputExplicit ? "-"
                     : Multiplier.Stringize(Multiplier.Priority < Priority) + " * ")
                 + Multiplicand.Stringize(Multiplicand.Priority < Priority || Multiplicand is Modf);
@@ -45,7 +45,7 @@ namespace AngouriMath
         public partial record Divf
         {
             /// <inheritdoc/>
-            public override string Stringize() =>
+            private protected override string StringizeNode() =>
                 Dividend.Stringize(Dividend.Priority < Priority) + " / " + Divisor.Stringize(Divisor.Priority <= Priority);
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -54,7 +54,7 @@ namespace AngouriMath
         public partial record Modf
         {
             /// <inheritdoc/>
-            public override string Stringize() =>
+            private protected override string StringizeNode() =>
                 Dividend.Stringize(Dividend.Priority < Priority) + " mod " + Divisor.Stringize(Divisor.Priority <= Priority);
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -63,7 +63,7 @@ namespace AngouriMath
         public partial record Logf
         {
             /// <inheritdoc/>
-            public override string Stringize()
+            private protected override string StringizeNode()
                 => Base == MathS.e ?
                 $"ln({Antilogarithm.Stringize()})"
                 :
@@ -76,7 +76,7 @@ namespace AngouriMath
         public partial record Powf
         {
             /// <inheritdoc/>
-            public override string Stringize() =>
+            private protected override string StringizeNode() =>
                 Exponent == 0.5m
                 ? "sqrt(" + Base.Stringize() + ")"
                 // The base takes <=, the exponent takes <, which is the mirror of the rule the
@@ -92,7 +92,7 @@ namespace AngouriMath
         partial record Phif
         {
             /// <inheritdoc/>
-            public override string Stringize() => $@"phi({Argument.Stringize()})";
+            private protected override string StringizeNode() => $@"phi({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -100,7 +100,7 @@ namespace AngouriMath
         public partial record Signumf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"sgn({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"sgn({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -108,7 +108,7 @@ namespace AngouriMath
         public partial record Absf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"abs({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"abs({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -116,7 +116,7 @@ namespace AngouriMath
         public partial record Floorf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"floor({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"floor({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -124,7 +124,7 @@ namespace AngouriMath
         public partial record Ceilf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"ceil({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"ceil({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -132,7 +132,7 @@ namespace AngouriMath
         public partial record Roundf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"round({Argument.Stringize()})";
+            private protected override string StringizeNode() => $"round({Argument.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -140,7 +140,7 @@ namespace AngouriMath
         public partial record Minf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"min({Left.Stringize()}, {Right.Stringize()})";
+            private protected override string StringizeNode() => $"min({Left.Stringize()}, {Right.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -148,7 +148,7 @@ namespace AngouriMath
         public partial record Maxf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"max({Left.Stringize()}, {Right.Stringize()})";
+            private protected override string StringizeNode() => $"max({Left.Stringize()}, {Right.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -156,7 +156,7 @@ namespace AngouriMath
         public partial record Gcdf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"gcd({Left.Stringize()}, {Right.Stringize()})";
+            private protected override string StringizeNode() => $"gcd({Left.Stringize()}, {Right.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -164,7 +164,7 @@ namespace AngouriMath
         public partial record Factorialf
         {
             /// <inheritdoc/>
-            public override string Stringize() => Argument.Stringize(Argument.Priority <= Priority) + "!";
+            private protected override string StringizeNode() => Argument.Stringize(Argument.Priority <= Priority) + "!";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }

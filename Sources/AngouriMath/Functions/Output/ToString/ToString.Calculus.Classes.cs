@@ -14,7 +14,7 @@ namespace AngouriMath
         public partial record Derivativef
         {
             /// <inheritdoc/>
-            public override string Stringize()
+            private protected override string StringizeNode()
             {
                 if (Iterations == 1)
                     return $"derivative({Expression.Stringize()}, {Var.Stringize()})";
@@ -28,7 +28,7 @@ namespace AngouriMath
         public partial record Integralf
         {
             /// <inheritdoc/>
-            public override string Stringize() =>
+            private protected override string StringizeNode() =>
                 Range is var (from, to)
                 ? $"integral({Expression.Stringize()}, {Var.Stringize()}, {from.Stringize()}, {to.Stringize()})"
                 : $"integral({Expression.Stringize()}, {Var.Stringize()})";
@@ -39,7 +39,7 @@ namespace AngouriMath
         public partial record Summationf
         {
             /// <inheritdoc/>
-            public override string Stringize() =>
+            private protected override string StringizeNode() =>
                 $"sum({Expression.Stringize()}, {Var.Stringize()}, {From.Stringize()}, {To.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -48,7 +48,7 @@ namespace AngouriMath
         public partial record Productf
         {
             /// <inheritdoc/>
-            public override string Stringize() =>
+            private protected override string StringizeNode() =>
                 $"product({Expression.Stringize()}, {Var.Stringize()}, {From.Stringize()}, {To.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
@@ -57,7 +57,7 @@ namespace AngouriMath
         public partial record Limitf
         {
             /// <inheritdoc/>
-            public override string Stringize() =>
+            private protected override string StringizeNode() =>
 
                 ApproachFrom switch
                 {
