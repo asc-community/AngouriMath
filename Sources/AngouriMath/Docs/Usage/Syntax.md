@@ -61,9 +61,10 @@ truncates instead; it is a different operation and the library does not inherit 
 ## Whitespace and comments
 
 Newlines are skipped, so an expression may be written over several lines. `//` runs to the end of
-the line and `/* … */` spans lines; both are dropped before parsing. A `//` comment needs a newline
-after it: it is the newline that ends the comment, so `x + 1 // done` is a parse error where
-`x + 1 /* done */` is `x + 1` ([#1039](https://github.com/asc-community/AngouriMath/issues/1039)).
+the line and `/* … */` spans lines; both are dropped before parsing. A `//` comment is ended by a
+newline or by the end of the input, so `x + 1 // done` and `x + 1 /* done */` are both `x + 1`. Until
+[#1039](https://github.com/asc-community/AngouriMath/issues/1039) the newline was required and the
+first of those was a parse error.
 
 ## Numbers and constants
 
