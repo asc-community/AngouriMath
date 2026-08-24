@@ -481,10 +481,21 @@ namespace AngouriMath.Core.Transformations.Matching
                         nameof(children));
                 buildable = CanConstruct(nodeType, children.Length)
                     && children.All(child => child.IsBuildable);
+                deterministic = !commutative && children.All(child => child.IsDeterministic);
             }
 
             /// <summary>Settled here because it depends on nothing that changes afterwards.</summary>
             private readonly bool buildable;
+
+            /// <summary>
+            /// Settled here for the same reason as <see cref="buildable"/>, and it matters more:
+            /// <c>MatchedRule.TryApply</c> reads it on <b>every attempt</b>, and a rewrite pass
+            /// makes an attempt at every node of the tree with every rule of the set. Computed on
+            /// each read it walked the whole pattern tree behind a delegate before any matching
+            /// began -- so the cost was paid most heavily by the case that does the least work,
+            /// a rule that does not fire.
+            /// </summary>
+            private readonly bool deterministic;
 
             internal override IEnumerable<string> BoundNames => children.SelectMany(c => c.BoundNames);
 
@@ -527,8 +538,7 @@ namespace AngouriMath.Core.Transformations.Matching
             /// A commutative node is a choice of two orders, and a node is only as determinate
             /// as the children it is made of.
             /// </summary>
-            internal override bool IsDeterministic
-                => !commutative && children.All(child => child.IsDeterministic);
+            internal override bool IsDeterministic => deterministic;
 
             private protected override bool TryMatchOnceCore(
                 Entity expr, Bindings bindings, out Bindings result)
