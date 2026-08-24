@@ -43,7 +43,7 @@ read first.
 | **Silent** | `"domain(sqrt(-1), RR)".ToEntity().Stringize()` | `sqrt(-1)`, which evaluates to `i` when read back | `domain(sqrt(-1), RR)`, which evaluates to `NaN` |
 | **Silent** | `"domain(x, ZZ)".ToEntity().Latexize()` | `x` | `{\left(x\right)}_{\mathbb{Z}}` |
 | **Silent** | `"x - domain(x, ZZ)".ToEntity().Simplify()`, and any sum mixing a node with a narrowed codomain and the same node without | `0` — the two were collected as one monomial | `x - domain(x, ZZ)`, left alone |
-| | every node type's own `Stringize()` and `Latexize()` overrides — `Entity.Sumf.Stringize()` and 129 more | declared on each node | declared once on `Entity`; still callable on every node, and a consumer compiled against 2.3.0 has to be rebuilt |
+| | every node type's own `Stringize()` and `Latexize()` overrides — `Entity.Sumf.Stringize()` and 129 more | declared on each node | declared once on `Entity`; still callable on every node, and an assembly compiled against 2.3.0 keeps working without a rebuild |
 
 ### An equation nothing settled is no longer answered with the empty set
 
@@ -370,8 +370,20 @@ outlive itself.
 and `Latexize()`; the codomain wrapper is one decision and now lives once on `Entity`, with the
 per-node rendering behind an internal member. All 130 overrides are therefore gone from
 `PublicApi.txt`. Nothing a caller can write stops compiling — `someSumf.Stringize()` still resolves,
-inherited from `Entity` — but an assembly *compiled* against 2.3.0 binds to
-`Entity+Sumf::Stringize()` where its static type is a concrete node, and has to be rebuilt.
+inherited from `Entity` — and nothing already compiled stops running either.
+
+That second half was measured rather than assumed, because it is the kind of claim that reads
+plausibly in both directions. A consumer calling `((Entity.Sumf)e).Stringize()` was compiled against
+a build of 2.3.0, then run unchanged against a build of this branch: it prints what it printed
+before. Reading its metadata says why — C# binds a virtual call to the type that *declares* the
+method, so the emitted reference is `AngouriMath.Entity::Stringize()` whatever the static type of
+the receiver, and no consumer ever names `Entity+Sumf::Stringize()` at all. The removal is
+invisible except to reflection that asks a node type for its own declared members.
+
+Devirtualising `Stringize()` cannot orphan an override outside the library either: `Entity` already
+carried five `internal` or `private protected` abstract members (`Priority`, `SortHashName`,
+`IntrinsicCondition`, `ToSymPy`, `InvertNode`), so no assembly but this one has ever been able to
+derive a node from it.
 
 ### `Compile` works in a trimmed or NativeAOT application
 
