@@ -45,6 +45,7 @@ read first.
 | **Silent** | `"x - domain(x, ZZ)".ToEntity().Simplify()`, and any sum mixing a node with a narrowed codomain and the same node without | `0` — the two were collected as one monomial | `x - domain(x, ZZ)`, left alone |
 | | every node type's own `Stringize()` and `Latexize()` overrides — `Entity.Sumf.Stringize()` and 129 more | declared on each node | declared once on `Entity`; still callable on every node, and an assembly compiled against 2.3.0 keeps working without a rebuild |
 | | `"x + 1 // done".ToEntity()`, and any input whose last line ends in a `//` comment | `UnhandledParseException: extraneous input '/'` | `x + 1` — the comment is skipped, as the block form already was |
+| | `MathS.Polynomials.Factor("x * y + y", "x")`, and any polynomial whose coefficients in the named variable share a common divisor | `null` — a refusal | `y * (x + 1)` |
 
 ### An equation nothing settled is no longer answered with the empty set
 
@@ -301,6 +302,36 @@ the same precedences this grammar uses — so those needed the same brackets —
 bracketing for. The change only ever adds `\left(`/`\right)` groups, which CSharpMath already
 parses, so nothing downstream needs a matching change
 ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
+
+### `Factor` takes out the content instead of refusing
+
+`MathS.Polynomials.Factor` works over ℚ, so a coefficient that is not a rational number stopped it
+before it began and **every polynomial in more than one variable was refused**. Some of them never
+needed a bigger ring: `x * y + y` is `y` times something univariate, and only the `y` was in the way.
+
+The content in the named variable — the greatest common divisor of the coefficients, a polynomial in
+the other variables — is now taken out first, using the same multivariate machinery
+`MathS.Polynomials.Gcd` is already built from, and what remains goes down the ordinary path.
+
+| | 2.3.0 | now |
+|---|---|---|
+| `Factor("x * y + y", "x")` | `null` | `y * (x + 1)` |
+| `Factor("x ^ 2 * y + x * y", "x")` | `null` | `y * x * (x + 1)` |
+| `Factor("a * x ^ 2 + a * x", "x")` | `null` | `a * x * (x + 1)` |
+| `Factor("x ^ 2 * y ^ 2 - y ^ 2", "x")` | `null` | `y ^ 2 * (x + 1) * (x - 1)` |
+| `Factor("x ^ 2 - y ^ 2", "x")` | `null` | `null` |
+| `Factor("x * y + z", "x")` | `null` | `null` |
+
+**Only a refusal becomes an answer.** Nothing that already factorised changes, because the new path
+runs only where the old one returned `null`. And it is still a refusal wherever the content is a
+constant: `x ^ 2 - y ^ 2` genuinely needs factorisation over ℚ(y), which this is not and does not
+claim to be. That remains the open half of
+[#746](https://github.com/asc-community/AngouriMath/issues/746) item 43.
+
+The test that pinned the refusal carried a comment saying that handing `x * y + y` back *"would say
+that `y * (x + 1)` does not exist, which is a wrong answer and not a graceful failure"*. It now
+asserts that answer, checked numerically at twenty random points per case rather than as a string —
+`Simplify` does not prove `y * x * (x + 1)` equal to `x ^ 2 * y + x * y`, and the two are equal.
 
 ### A narrowed `Codomain` is printed, so it survives being read back
 

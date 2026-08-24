@@ -90,11 +90,19 @@ namespace AngouriMath
             /// </code>
             /// </example>
             public static Entity? Factor(Entity expr, Variable variable)
+                => Assemble(PolynomialFactorization.FactorComplete(expr, variable), variable)
+                   ?? FactorAfterTakingOutTheContent(expr, variable);
+
+            /// <summary>
+            /// A factorisation as an expression, or <see langword="null"/> where there was none.
+            /// </summary>
+            private static Entity? Assemble(
+                PolynomialFactorization.Factorization? factorization, Variable variable)
             {
-                if (PolynomialFactorization.FactorComplete(expr, variable) is not { } factorization)
+                if (factorization is not { } settled)
                     return null;
                 Entity? product = null;
-                foreach (var part in factorization.Parts)
+                foreach (var part in settled.Parts)
                 {
                     var piece = part.Factor.ToEntity(variable);
                     if (part.Multiplicity > 1)
@@ -103,9 +111,56 @@ namespace AngouriMath
                 }
                 if (product is null)
                     return null;
-                return factorization.Constant.CompareTo(ERational.One) == 0
+                return settled.Constant.CompareTo(ERational.One) == 0
                     ? product
-                    : Rational.Create(factorization.Constant) * product;
+                    : Rational.Create(settled.Constant) * product;
+            }
+
+            /// <summary>
+            /// The factorisation of a polynomial whose coefficients in <paramref name="variable"/>
+            /// are themselves polynomials, where taking out their common divisor leaves something
+            /// this can factor — or <see langword="null"/> where it does not.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// <see cref="PolynomialFactorization"/> works over ℚ, so a coefficient that is not a
+            /// rational number stops it before it starts and every polynomial in more than one
+            /// variable was refused. Some of them do not need factorising over a bigger ring at
+            /// all: <c>x * y + y</c> is <c>y</c> times something univariate, and only the <c>y</c>
+            /// was in the way.
+            /// </para>
+            /// <para>
+            /// So the content in <paramref name="variable"/> — the greatest common divisor of the
+            /// coefficients, which is a polynomial in the other variables — is taken out first,
+            /// using the same multivariate machinery <see cref="Gcd"/> is built from, and what
+            /// remains goes down the ordinary path. Where the content is a constant this has
+            /// nothing to offer and says so, which is the honest answer for
+            /// <c>x ^ 2 - y ^ 2</c>: that one genuinely needs factorisation over ℚ(y) and is not
+            /// what this does.
+            /// </para>
+            /// </remarks>
+            private static Entity? FactorAfterTakingOutTheContent(Entity expr, Variable variable)
+            {
+                if (Index(expr, expr, variable) is not var (variables, index))
+                    return null;
+                if (variables.Count < 2)
+                    return null;
+                if (MultivariatePolynomial.TryParse(expr, index) is not { } poly)
+                    return null;
+                var main = index[variable];
+                var others = new List<int>(variables.Count - 1);
+                for (var i = 0; i < variables.Count; i++)
+                    if (i != main)
+                        others.Add(i);
+                if (PolynomialGcd.ContentIn(poly, main, others, 0) is not { } content
+                    || content.IsConstant)
+                    return null;
+                if (poly.DivideExact(content) is not { } primitive)
+                    return null;
+                var rest = Assemble(
+                    PolynomialFactorization.FactorComplete(primitive.ToEntity(variables), variable),
+                    variable);
+                return rest is null ? null : content.ToEntity(variables) * rest;
             }
 
             /// <summary>

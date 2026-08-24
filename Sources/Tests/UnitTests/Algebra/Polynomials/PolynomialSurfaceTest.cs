@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using System;
 using System.Linq;
 using AngouriMath;
 using AngouriMath.Extensions;
@@ -162,13 +163,60 @@ namespace AngouriMath.Tests.Algebra.Polynomials
         /// not exist, which is a wrong answer and not a graceful failure.
         /// </summary>
         [Theory]
-        [InlineData("x * y + y")]                    // multivariate
-        [InlineData("x ^ 2 * y ^ 2 - 1")]            // multivariate
+        [InlineData("x ^ 2 * y ^ 2 - 1")]            // multivariate, and the content is 1
+        [InlineData("x ^ 2 - y ^ 2")]                // needs factorisation over Q(y), which this is not
         [InlineData("x ^ 2 - a")]                    // a symbolic coefficient is not rational
+        [InlineData("x * y + z")]                    // the coefficients are coprime
         [InlineData("sin(x) + 1")]                   // not a polynomial
         [InlineData("x ^ 33 - 1")]                   // past the degree bound of the factoriser
         public void FactorisationRefusesRatherThanReturningTheInput(string input)
             => Assert.Null(MathS.Polynomials.Factor(input, "x"));
+
+        /// <summary>
+        /// A polynomial whose coefficients in <c>x</c> are polynomials themselves is refused by
+        /// the factoriser, which works over the rationals -- but some of them do not need a bigger
+        /// ring at all, only their common divisor taken out first. <c>x * y + y</c> is the example
+        /// the refusal test above used to carry, with a comment saying that handing it back would
+        /// claim <c>y * (x + 1)</c> does not exist.
+        /// </summary>
+        /// <remarks>
+        /// Checked as a value rather than as a string: which arrangement of a product comes back
+        /// is the printer's business, and asserting one pins something this test is not about.
+        /// The factorisation is required to be a product that is not the input, and to agree with
+        /// the input numerically -- <c>Simplify</c> does not prove <c>y * x * (x + 1)</c> equal to
+        /// <c>x ^ 2 * y + x * y</c>, and the two are equal.
+        /// </remarks>
+        [Theory]
+        [InlineData("x * y + y")]
+        [InlineData("x ^ 2 * y + x * y")]
+        [InlineData("a * x ^ 2 + a * x")]
+        [InlineData("2 * x * y + 2 * y")]
+        [InlineData("x ^ 2 * y ^ 2 - y ^ 2")]
+        [InlineData("x ^ 3 * y - x * y")]
+        [InlineData("x * y * z + y * z")]
+        public void TheContentIsTakenOutSoTheRestCanBeFactorised(string input)
+        {
+            var expr = input.ToEntity();
+            var factored = MathS.Polynomials.Factor(expr, "x");
+            Assert.NotNull(factored);
+            Assert.NotEqual(expr, factored);
+            var variables = expr.Vars.Concat(factored!.Vars).Distinct().ToArray();
+            var random = new Random(20260825);
+            for (var trial = 0; trial < 20; trial++)
+            {
+                Entity before = expr, after = factored;
+                foreach (var variable in variables)
+                {
+                    Entity value = Math.Round(random.NextDouble() * 6 - 3, 4);
+                    before = before.Substitute(variable, value);
+                    after = after.Substitute(variable, value);
+                }
+                Assert.Equal(
+                    before.EvalNumerical().RealPart.EDecimal.ToDouble(),
+                    after.EvalNumerical().RealPart.EDecimal.ToDouble(),
+                    9);
+            }
+        }
 
         /// <summary>Nine variables is one more than the packed monomial has room for.</summary>
         [Fact]
