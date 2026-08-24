@@ -148,6 +148,23 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             return largest;
         }
 
+        /// <summary>
+        /// Where both sides of a conjunction were settled, its solution set is the
+        /// intersection of theirs.
+        /// </summary>
+        /// <remarks>
+        /// Where one of them is a condition nothing settled, it is not: intersecting a
+        /// finite set with one keeps an element whose membership could not be decided, so
+        /// <c>x^6 + x*y + 1 = 0 and x - 1 = 0</c> comes back as <c>{ 1 }</c> — and 1 is a
+        /// root of the first only when <c>y</c> is -2. The conjunction as written asserts
+        /// exactly what is known about it and nothing more.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1036">#1036</a>
+        /// </remarks>
+        private static Set Conjunction(Set left, Set right, Entity statement, Variable x)
+            => (left, right) is (ConditionalSet, FiniteSet) or (FiniteSet, ConditionalSet)
+                ? new ConditionalSet(x, statement)
+                : (Set)MathS.Intersection(left, right);
+
         internal static Set Solve(Entity expr, Variable x)
             => expr switch
             {
@@ -161,8 +178,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
                 Equalsf => Empty,
 
-                Andf(var left, var right) => 
-                    MathS.Intersection(Solve(left, x), Solve(right, x)),
+                Andf(var left, var right) =>
+                    Conjunction(Solve(left, x), Solve(right, x), expr, x),
                 Orf(var left, var right) => 
                     MathS.Union(Solve(left, x), Solve(right, x)),
                 Impliesf(var left, var right) => 

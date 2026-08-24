@@ -330,11 +330,43 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // TODO: Solve factorials (Needs Lambert W function)
             // https://mathoverflow.net/a/28977
 
-            // if nothing has been found so far
+            // A numerical search that comes back with nothing has not shown there is
+            // nothing to find: Newton's method is started from finitely many points inside
+            // a bounded region, so an empty result is a fact about the search rather than
+            // about the equation. Where it does find roots the answer is theirs, unchanged.
             if (MathS.Settings.AllowNewton && expr.Vars.Count == 1)
-                return expr.SolveNt(x).Select(ent => TryDowncast(expr, x, ent)).ToSet();
+                return expr.SolveNt(x).Select(ent => TryDowncast(expr, x, ent)).ToSet()
+                    is FiniteSet { IsSetEmpty: false } found ? found : Unsolved(expr, x);
 
-            return Enumerable.Empty<Entity>().ToSet();
+            return Unsolved(expr, x);
         }
+
+        /// <summary>
+        /// The answer when every solver above has declined: the equation itself, as the set
+        /// of the <paramref name="x"/> that satisfy it.
+        /// </summary>
+        /// <remarks>
+        /// The empty set is a positive claim -- that no <paramref name="x"/> satisfies
+        /// <paramref name="equation"/> -- and returning it from an exhausted search asserts
+        /// something nothing here established. <c>x^6 + x*y + 1 = 0</c> has six roots for
+        /// every <c>y</c> and was answered <c>{ }</c>. A condition asserts only what was
+        /// established, which is that these are the roots, whichever they are; the set is
+        /// still exactly the solution set, so nothing downstream is told anything false.
+        ///
+        /// The spelling is the one <see cref="StatementSolver.UnsolvedWhereIndependenceIsDenied"/>
+        /// and the <a href="https://github.com/asc-community/AngouriMath/issues/278">#278</a>
+        /// case above already use, rather than a second way of saying the same thing.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1036">#1036</a>,
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a>
+        /// </remarks>
+        private static Set Unsolved(Entity equation, Variable x)
+            // Written back as an equation between the two sides where there are two, rather
+            // than as the residual the solvers pass around. A compensated call is handed its
+            // equation unsimplified on purpose, so the difference survives for them to read,
+            // and stating it as it stands leaves the reader `x^5 + 3*x - (-1) = 0` where the
+            // question was whether `x^5 + 3*x` is -1. The two admit the same x.
+            => new ConditionalSet(x, equation is Minusf(var lhs, var rhs)
+                ? lhs.Equalizes(rhs)
+                : equation.Equalizes(0));
     }
 }
