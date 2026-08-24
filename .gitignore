@@ -15,7 +15,11 @@ obj/
 /packages
 /fieldtest/testprj
 /AngouriMath.sln.DotSettings.user
-/Sources/Tests/DotnetBenchmark/benchmark_results.csv
+# BenchmarkDotNet's ArtifactsPath, which is relative to the *working directory* rather than
+# to the project -- so `dotnet run --project Sources/Tests/DotnetBenchmark` from the
+# repository root writes it to the root, where an anchored pattern does not reach it.
+# Unanchored, so it is ignored wherever a run happens to drop it.
+benchmark_results.csv/
 /Sources/AngouriMath/Core/Antlr/antlr4
 /Samples/.ipynb_checkpoints
 /Sources/Samples/.ipynb_checkpoints
