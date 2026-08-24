@@ -76,17 +76,30 @@ namespace AngouriMath.Tests.Convenience
             Assert.Equal("x + y".ToEntity(), written.ToEntity());
 
         /// <summary>
-        /// It is the newline that ends a <c>//</c> comment, so one at the end of the input never
-        /// matches and its <c>/</c> reaches the parser
-        /// (<a href="https://github.com/asc-community/AngouriMath/issues/1039">#1039</a>). The
-        /// block form has no such condition.
+        /// A <c>//</c> comment is ended by a newline <i>or</i> by the end of the input. It used to
+        /// require the newline, so a comment on the last line never matched at all and its
+        /// <c>/</c> reached the parser as an operator
+        /// (<a href="https://github.com/asc-community/AngouriMath/issues/1039">#1039</a>) -- which
+        /// is where a comment is most likely to be written, and which the block form never
+        /// required.
+        /// </summary>
+        [Theory]
+        [InlineData("x + 1 // done")]
+        [InlineData("x + 1 // done\n")]
+        [InlineData("x + 1 // done\r\n")]
+        [InlineData("x + 1 //")]
+        [InlineData("x + 1 // a // b")]
+        [InlineData("x + 1 /* done */")]
+        public void ACommentMayEndTheInput(string written) =>
+            Assert.Equal("x + 1".ToEntity(), written.ToEntity());
+
+        /// <summary>
+        /// Skipping the comment leaves the input empty, which is not an expression -- so this is a
+        /// parse error for the same reason <c>""</c> is, not because the comment failed to match.
         /// </summary>
         [Fact]
-        public void ALineCommentNeedsItsNewline()
-        {
-            Assert.Throws<UnhandledParseException>(() => "x + 1 // done".ToEntity());
-            Assert.Equal("x + 1".ToEntity(), "x + 1 /* done */".ToEntity());
-        }
+        public void ACommentIsNotAnExpressionOnItsOwn() =>
+            Assert.Throws<UnhandledParseException>(() => "// nothing".ToEntity());
 
         // ------------------------------------------------------------ numbers and names
 

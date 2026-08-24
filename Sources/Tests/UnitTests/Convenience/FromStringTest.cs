@@ -32,7 +32,10 @@ namespace AngouriMath.Tests.Convenience
         [InlineData(" ", "line 1:1")]
         [InlineData("\t", "line 1:1")]
         [InlineData("  ", "line 1:2")]
-        [InlineData("//", "line 1:0")]
+        // Skipped like the whitespace and block-comment rows above it: the error is at the end
+        // of the input, not at a stray `/`. It was `line 1:0` until #1039, when a `//` comment at
+        // the end of the input did not match and its first `/` reached the parser.
+        [InlineData("//", "line 1:2")]
         [InlineData("//\n", "line 2:0")]
         [InlineData("/**/", "line 1:4")]
         [InlineData("a+", "line 1:2")]
