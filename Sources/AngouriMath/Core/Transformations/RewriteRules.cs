@@ -117,12 +117,17 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Gets a quotient into the shape the division rules expect before they run.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.DivisionPreparing"/>. See the note on
+        /// <see cref="CollapseMultipleFractions"/> for what that costs and what still describes it.
+        /// </remarks>
         public static RewriteRuleSet DivisionPreparing { get; } = new(
             nameof(DivisionPreparing),
             "Lifts numeric factors out of a quotient so that the division rules can see it.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.DivisionPreparingRules,
+            Matching.MatchedRules.DivisionPreparing.ApplyHere,
             Patterns.DivisionPreparingRulesArms);
 
         /// <summary>
@@ -204,12 +209,41 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Brings a quotient of quotients down to a single one.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.CollapseMultipleFractions"/>. This and
+        /// <see cref="DivisionPreparing"/> are the two sets whose data form is proven to agree
+        /// with the <c>switch</c> it mirrors over generated expressions
+        /// (<c>MatchedRulesAgreeWithTheSwitchTest</c>), which is the precondition for running one
+        /// instead of the other.
+        /// </para>
+        /// <para>
+        /// <b>What it costs.</b> Measured against <c>Simplify</c> itself, both arms in
+        /// one process with a third arm that is the <c>switch</c> again as a control: the data form
+        /// is −0.6% where the control differs from its own source by −1.1%, so the change is
+        /// smaller than this machine's disagreement with itself, and allocation is +0.04%. That
+        /// number used to be +5% for <see cref="DivisionPreparing"/> alone, and what closed it was
+        /// settling a pattern's determinism once rather than on every attempt
+        /// (<a href="https://github.com/asc-community/AngouriMath/pull/1050">#1050</a>).
+        /// </para>
+        /// <para>
+        /// <b>The <c>switch</c> is still what describes them.</b> <see cref="RewriteRule"/> carries
+        /// a <see cref="RewriteRule.PatternSource"/> and a <see cref="RewriteRule.SourceLine"/>,
+        /// which <c>RuleRegistryGenerator</c> reads off the arms of a <c>switch</c>; it has no way
+        /// yet to read a rule written as data. So the addressable rules of these two sets still come
+        /// from <c>Patterns</c>, and the arms they describe are the ones the agreement test holds
+        /// the matcher to rather than dead code. Teaching the generator to read
+        /// <see cref="Matching.MatchedRules"/> is what would let the <c>switch</c> go, and is
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/825">#825</a>.
+        /// </para>
+        /// </remarks>
         public static RewriteRuleSet CollapseMultipleFractions { get; } = new(
             nameof(CollapseMultipleFractions),
             "Collapses nested quotients into a single numerator over a single denominator.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.CollapseMultipleFractions,
+            Matching.MatchedRules.CollapseMultipleFractions.ApplyHere,
             Patterns.CollapseMultipleFractionsArms);
 
         /// <summary>
