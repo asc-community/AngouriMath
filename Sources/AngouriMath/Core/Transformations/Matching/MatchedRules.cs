@@ -386,5 +386,89 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
                 MatchPattern.Node<Minusf>(MatchPattern.Any("b"), MatchPattern.Any("a")),
                 Soundness.Sound));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.NormalTrigonometricForm"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// Four rules, and <b>the first set here where every rule reverses</b>: each writes one
+        /// of the four derived trigonometric functions in terms of sine and cosine, and both
+        /// sides are patterns, so reading a rule backwards recognises the quotient and puts the
+        /// name back. That direction is not run by anything today — it is the e-graph's
+        /// inverse-pair table that would — but it is now a property of the rules rather than a
+        /// second set someone has to write.
+        /// </remarks>
+        internal static MatchedRuleSet NormalTrigonometricForm { get; } = new(
+            nameof(NormalTrigonometricForm),
+
+            // tan(a) -> sin(a) / cos(a)
+            new MatchedRule(
+                "tangent-is-sine-over-cosine",
+                MatchPattern.Node<Tanf>(MatchPattern.Any("a")),
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Sinf>(MatchPattern.Any("a")),
+                    MatchPattern.Node<Cosf>(MatchPattern.Any("a"))),
+                // The quotient is undefined exactly where the tangent is -- at a zero of the
+                // cosine -- so the domain neither widens nor narrows. Left at the conservative
+                // tier with its three neighbours until the audit reaches them together.
+                Soundness.SoundUnderAssumptions),
+
+            // cotan(a) -> cos(a) / sin(a)
+            new MatchedRule(
+                "cotangent-is-cosine-over-sine",
+                MatchPattern.Node<Cotanf>(MatchPattern.Any("a")),
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Cosf>(MatchPattern.Any("a")),
+                    MatchPattern.Node<Sinf>(MatchPattern.Any("a"))),
+                Soundness.SoundUnderAssumptions),
+
+            // sec(a) -> 1 / cos(a)
+            new MatchedRule(
+                "secant-is-one-over-cosine",
+                MatchPattern.Node<Secantf>(MatchPattern.Any("a")),
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Exact(Integer.Create(1)),
+                    MatchPattern.Node<Cosf>(MatchPattern.Any("a"))),
+                Soundness.SoundUnderAssumptions),
+
+            // cosec(a) -> 1 / sin(a)
+            new MatchedRule(
+                "cosecant-is-one-over-sine",
+                MatchPattern.Node<Cosecantf>(MatchPattern.Any("a")),
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Exact(Integer.Create(1)),
+                    MatchPattern.Node<Sinf>(MatchPattern.Any("a"))),
+                Soundness.SoundUnderAssumptions));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.PhiFunctionRules"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// One rule, and the first whose <b>predicate on a hole is a mathematical property</b>
+        /// rather than a sign or a type: <c>phi(p ^ k) = p ^ (k - 1) * (p - 1)</c> holds for a
+        /// prime <c>p</c> and for no other integer, so primality is the condition and the hole
+        /// carries it. The replacement is arithmetic on the bound prime, so it is code and the
+        /// rule does not reverse.
+        /// </remarks>
+        internal static MatchedRuleSet PhiFunction { get; } = new(
+            nameof(PhiFunction),
+
+            // phi(p ^ k) -> p ^ (k - 1) * (p - 1), for a prime p
+            new MatchedRule(
+                "eulers-totient-of-a-prime-power",
+                MatchPattern.Node<Phif>(
+                    MatchPattern.Node<Powf>(
+                        MatchPattern.Any<Integer>("p", p => p.IsPrime),
+                        MatchPattern.Any("k"))),
+                // (Integer) on the prime and not on the exponent, and the difference is the
+                // point: p - 1 is arithmetic that folds to a number, k - 1 is a tree because k
+                // is whatever was bound. Written without the cast the rule builds 2 ^ (5 - 1) *
+                // (2 - 1) where the switch builds 2 ^ (5 - 1) * 1, which is what the agreement
+                // test caught.
+                bound => new Powf(bound["p"], bound["k"] - 1) * ((Integer)bound["p"] - 1),
+                // Euler's product formula, which is a theorem and not an assumption: for a prime
+                // p the integers below p^k sharing a factor with it are exactly the multiples of
+                // p, of which there are p^(k-1).
+                Soundness.Sound));
     }
 }
