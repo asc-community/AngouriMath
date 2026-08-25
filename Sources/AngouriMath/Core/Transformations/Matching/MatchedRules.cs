@@ -837,5 +837,133 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(MatchPattern.Any("num"), MatchPattern.Any("den")),
                 (node, _) => Functions.Patterns.MultiplyByTheConjugate(node),
                 Soundness.SoundUnderAssumptions));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.NumericNeatRules"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Sixteen arms become eleven.</b> Six of the sixteen are three rules written twice, once
+        /// for each side a negative factor can sit on inside a product — which is
+        /// <see cref="MatchPattern.Commutative{T}"/> — and two more are the one-sided sum and
+        /// difference rules, whose two spellings are one rule about "the other operand".
+        /// </para>
+        /// <para>
+        /// <b>Order is load-bearing and is kept exactly.</b> The both-negative rules come first,
+        /// because a commutative one-sided rule matches a both-negative sum too and would take
+        /// it. Every replacement negates a bound number, so all eleven are one-way.
+        /// </para>
+        /// </remarks>
+        internal static MatchedRuleSet NumericNeat { get; } = new(
+            nameof(NumericNeat),
+
+            // (-a) + (-b) -> -(a + b), where a and b are the magnitudes
+            new MatchedRule(
+                "a-sum-of-two-negatives-is-a-negated-sum",
+                MatchPattern.Node<Sumf>(
+                    MatchPattern.Any<Real>("l", value => value.IsNegative),
+                    MatchPattern.Any<Real>("r", value => value.IsNegative)),
+                bound => -((-(Real)bound["l"]) + (Entity)(-(Real)bound["r"])),
+                Soundness.Sound),
+
+            // x + (-a) -> x - a, either way round
+            new MatchedRule(
+                "a-negative-added-is-subtracted",
+                MatchPattern.Commutative<Sumf>(
+                    MatchPattern.Any("x"),
+                    MatchPattern.Any<Real>("n", value => value.IsNegative)),
+                bound => bound["x"] - -(Real)bound["n"],
+                Soundness.Sound),
+
+            // (-a) - (-b) -> b - a
+            new MatchedRule(
+                "a-difference-of-two-negatives-turns-round",
+                MatchPattern.Node<Minusf>(
+                    MatchPattern.Any<Real>("l", value => value.IsNegative),
+                    MatchPattern.Any<Real>("r", value => value.IsNegative)),
+                bound => (-(Real)bound["r"]) - (Entity)(-(Real)bound["l"]),
+                Soundness.Sound),
+
+            // x - (-a) -> x + a
+            new MatchedRule(
+                "a-negative-subtracted-is-added",
+                MatchPattern.Node<Minusf>(
+                    MatchPattern.Any("x"),
+                    MatchPattern.Any<Real>("n", value => value.IsNegative)),
+                bound => bound["x"] + -(Real)bound["n"],
+                Soundness.Sound),
+
+            // (-a) - x -> -(x + a)
+            new MatchedRule(
+                "a-negative-minuend-comes-out-in-front",
+                MatchPattern.Node<Minusf>(
+                    MatchPattern.Any<Real>("n", value => value.IsNegative),
+                    MatchPattern.Any("x")),
+                bound => -(bound["x"] + -(Real)bound["n"]),
+                Soundness.Sound),
+
+            // (-a) * (-b) -> a * b
+            new MatchedRule(
+                "a-product-of-two-negatives-is-positive",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Any<Real>("l", value => value.IsNegative),
+                    MatchPattern.Any<Real>("r", value => value.IsNegative)),
+                bound => (-(Real)bound["l"]) * (Entity)(-(Real)bound["r"]),
+                Soundness.Sound),
+
+            // (-a) / (-b) -> a / b
+            new MatchedRule(
+                "a-quotient-of-two-negatives-is-positive",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Any<Real>("l", value => value.IsNegative),
+                    MatchPattern.Any<Real>("r", value => value.IsNegative)),
+                bound => (-(Real)bound["l"]) / (Entity)(-(Real)bound["r"]),
+                Soundness.Sound),
+
+            // (-a * x) * y -> -(a * (x * y)), the negative factor either way round
+            new MatchedRule(
+                "a-negative-factor-in-a-left-product-comes-out",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Commutative<Mulf>(
+                        MatchPattern.Any<Real>("n", value => value.IsNegative),
+                        MatchPattern.Any("x")),
+                    MatchPattern.Any("y")),
+                bound => -((-(Real)bound["n"]) * (bound["x"] * bound["y"])),
+                Soundness.Sound),
+
+            // (-a * x) / y -> -(a * (x / y))
+            new MatchedRule(
+                "a-negative-factor-in-a-numerator-comes-out",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Commutative<Mulf>(
+                        MatchPattern.Any<Real>("n", value => value.IsNegative),
+                        MatchPattern.Any("x")),
+                    MatchPattern.Any("y")),
+                bound => -((-(Real)bound["n"]) * (bound["x"] / bound["y"])),
+                Soundness.Sound),
+
+            // y * (-a * x) -> -(a * (x * y))
+            new MatchedRule(
+                "a-negative-factor-in-a-right-product-comes-out",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Any("y"),
+                    MatchPattern.Commutative<Mulf>(
+                        MatchPattern.Any<Real>("n", value => value.IsNegative),
+                        MatchPattern.Any("x"))),
+                bound => -((-(Real)bound["n"]) * (bound["x"] * bound["y"])),
+                Soundness.Sound),
+
+            // y / (-a * x) -> -(y / (a * x)). What is left stays under the line: written the
+            // other way, as the numerator rules above are, the quotient came back inverted --
+            // https://github.com/asc-community/AngouriMath/issues/936 and the note on the switch.
+            new MatchedRule(
+                "a-negative-factor-in-a-denominator-comes-out",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Any("y"),
+                    MatchPattern.Commutative<Mulf>(
+                        MatchPattern.Any<Real>("n", value => value.IsNegative),
+                        MatchPattern.Any("x"))),
+                bound => -(bound["y"] / ((-(Real)bound["n"]) * bound["x"])),
+                Soundness.Sound));
     }
 }
