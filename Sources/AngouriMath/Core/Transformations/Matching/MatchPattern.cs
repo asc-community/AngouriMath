@@ -142,6 +142,13 @@ namespace AngouriMath.Core.Transformations.Matching
         private protected abstract Type? RootType { get; }
 
         /// <summary>
+        /// The node type this pattern requires at its root, where it requires one — the same
+        /// question <see cref="RootType"/> answers, offered to the registry so that a rule
+        /// written as data can say which node it fires on.
+        /// </summary>
+        internal Type? RequiredRootType => RootType;
+
+        /// <summary>
         /// Whether this pattern can match an expression in <b>at most one way</b>, so that a
         /// caller wanting a solution needs no enumeration and no backtracking.
         /// </summary>
@@ -387,6 +394,11 @@ namespace AngouriMath.Core.Transformations.Matching
 
             internal override IEnumerable<string> BoundNames => new[] { name };
 
+            public override string ToString()
+                => required is null
+                    ? (where is null ? $"var {name}" : $"var {name} where")
+                    : (where is null ? $"{required.Name} {name}" : $"{required.Name} {name} where");
+
             // Exactly the constraint this pattern imposes, so the guard can carry all of it.
             private protected override Type? RootType => required;
 
@@ -436,6 +448,8 @@ namespace AngouriMath.Core.Transformations.Matching
             internal ExactPattern(Entity value) => this.value = value;
 
             internal override IEnumerable<string> BoundNames => Array.Empty<string>();
+
+            public override string ToString() => value.Stringize();
 
             /// <summary>
             /// Null deliberately. Two entities can be equal without being the same runtime type
@@ -500,6 +514,10 @@ namespace AngouriMath.Core.Transformations.Matching
             private readonly bool deterministic;
 
             internal override IEnumerable<string> BoundNames => children.SelectMany(c => c.BoundNames);
+
+            public override string ToString()
+                => (commutative ? "~" : "") + nodeType.Name
+                   + "(" + string.Join(", ", children.Select(child => child.ToString())) + ")";
 
             private protected override Type? RootType => nodeType;
 
@@ -599,6 +617,10 @@ namespace AngouriMath.Core.Transformations.Matching
 
             internal override IEnumerable<string> BoundNames
                 => parts.SelectMany(part => part.BoundNames).Append(restName);
+
+            public override string ToString()
+                => nodeType.Name + "(" + string.Join(", ", parts.Select(part => part.ToString()))
+                   + ", ... var " + restName + ")";
 
             /// <summary>
             /// Null, because two types are admissible rather than one: a sum chain is

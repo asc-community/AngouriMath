@@ -48,6 +48,8 @@ read first.
 | | `MathS.Polynomials.Factor("x * y + y", "x")`, and any polynomial whose coefficients in the named variable share a common divisor | `null` — a refusal | `y * (x + 1)` |
 | | `MathS.Polynomials.SquareFreePart("(x - y) ^ 2 * (x + y)", "x")`, and any polynomial in more than one variable | `null` — a refusal | `x ^ 2 - y ^ 2` |
 | | `MathS.Polynomials.Factor("x ^ 2 - y ^ 2", "x")`, and polynomials in two variables of small enough bidegree | `null` — a refusal | `(x + y) * (x - y)` |
+| | a `switch` over `RewriteRuleGrowth` with no default arm | compiled | does not compile — there is a fourth value, `Unknown` |
+| **Silent** | `RewriteRules.RationalizeDenominator.Rules` | `[]` — the registry could not read the set | its two rules, addressable and named |
 | **Silent** | `RewriteRules.Power.ApplyOnce("ln(1 / x)")`, and every `log(_, 1/_)` and `log(1/_, _)` whose argument is not decidably a positive real | `-ln(x)`, which is wrong on the negative reals | `ln(1 / x)`, left alone |
 
 ### An equation nothing settled is no longer answered with the empty set
@@ -329,6 +331,20 @@ destination and has established the sign on the way.
 from the public simplifier moves. What moves is `RewriteRules.Power` applied on its own, which is
 what [#746](https://github.com/asc-community/AngouriMath/issues/746) tier 2 makes a caller able to
 do ([#1062](https://github.com/asc-community/AngouriMath/issues/1062)).
+
+### `RewriteRuleGrowth` gained a fourth value, `Unknown`
+
+A rule written as **data** builds its answer in code rather than spelling it out, so there is nothing
+to count and no growth to report. The three existing values all make a claim; reporting such a rule
+as `Rearranges` — the middle one, and the one that reads as harmless — would be a claim about a
+rewrite nobody measured.
+
+**Additive**, so nothing that exists changes value. What it means for a caller is that a `switch`
+over `RewriteRuleGrowth` is no longer exhaustive, and code with no default arm will not compile
+against the new assembly until it handles the fourth case.
+
+It appears wherever a rule's replacement is code, which today is `RationalizeDenominator` and the
+one-way rules of the sets already expressed as data.
 
 ### `Factor` factors a polynomial in more than one variable
 

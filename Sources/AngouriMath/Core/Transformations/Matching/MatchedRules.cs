@@ -809,5 +809,44 @@ namespace AngouriMath.Core.Transformations.Matching
                 // What is not is the test for whether the cross term matches, which needs
                 // Simplify -- see the remark on Patterns.CollapseToPerfectSquare.
                 Soundness.SoundUnderAssumptions));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.RationalizeDenominator"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This set is why <see cref="MatchedRuleSet.AsAddressable"/> exists. It is an ordinary
+        /// method with branches and locals rather than a <c>switch</c>, so
+        /// <c>RuleRegistryGenerator</c> declines it — and it was the one set in the registry with
+        /// <b>no addressable rules at all</b>. Nothing about it could be listed, named in a
+        /// report or checked by the tooling that reads arms.
+        /// </para>
+        /// <para>
+        /// Neither rule carries a side condition, for the reason
+        /// <see cref="PolynomialLongDivision"/> gives: the work that decides whether the rewrite
+        /// applies <i>is</i> the rewrite, and each helper hands the expression back where it
+        /// declines.
+        /// </para>
+        /// </remarks>
+        internal static MatchedRuleSet RationalizeDenominator { get; } = new(
+            nameof(RationalizeDenominator),
+
+            // k * (value / d) -> (k * value) / d, where the numerator carries a surd
+            new MatchedRule(
+                "a-numeric-coefficient-is-gathered-over-a-surd",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Any<Rational>("k"),
+                    MatchPattern.Node<Divf>(MatchPattern.Any("value"), MatchPattern.Any<Rational>("d"))),
+                bound => Functions.Patterns.GatherNumericCoefficientOverASurd(
+                    new Mulf(bound["k"], new Divf(bound["value"], bound["d"]))),
+                Soundness.SoundUnderAssumptions),
+
+            // num / (a + b) -> num * (a - b) / (a^2 - b^2)
+            new MatchedRule(
+                "a-two-term-denominator-is-multiplied-by-its-conjugate",
+                MatchPattern.Node<Divf>(MatchPattern.Any("num"), MatchPattern.Any("den")),
+                bound => Functions.Patterns.MultiplyByTheConjugate(
+                    new Divf(bound["num"], bound["den"])),
+                Soundness.SoundUnderAssumptions));
     }
 }

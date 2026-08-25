@@ -38,7 +38,18 @@ namespace AngouriMath.Core.Transformations
         Rearranges,
 
         /// <summary>The replacement is written with more, so the rule opens the expression out.</summary>
-        Expands
+        Expands,
+
+        /// <summary>
+        /// Not judged, because the replacement is not written down: a rule whose right-hand side
+        /// is code builds its answer rather than spelling it, so there is nothing to count.
+        /// </summary>
+        /// <remarks>
+        /// A value rather than a guess. Reporting such a rule as <see cref="Rearranges"/> — the
+        /// middle of the three, and the one that reads as harmless — would be a claim about a
+        /// rewrite nobody measured.
+        /// </remarks>
+        Unknown
     }
 
     /// <summary>

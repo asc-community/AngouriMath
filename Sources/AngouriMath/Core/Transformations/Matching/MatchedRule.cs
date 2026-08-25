@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace AngouriMath.Core.Transformations.Matching
 {
@@ -42,8 +43,9 @@ namespace AngouriMath.Core.Transformations.Matching
             MatchPattern left,
             MatchPattern right,
             Soundness soundness,
-            Func<Bindings, bool>? when = null)
-            : this(name, left, null, right ?? throw new ArgumentNullException(nameof(right)), soundness, when)
+            Func<Bindings, bool>? when = null,
+            [CallerLineNumber] int line = 0)
+            : this(name, left, null, right ?? throw new ArgumentNullException(nameof(right)), soundness, when, line)
         {
             // A name the replacement reads and the pattern never binds is a typo, and it is a
             // typo that would otherwise show up as a rule that silently never fires. Only a
@@ -72,8 +74,9 @@ namespace AngouriMath.Core.Transformations.Matching
             MatchPattern left,
             Func<Bindings, Entity> right,
             Soundness soundness,
-            Func<Bindings, bool>? when = null)
-            : this(name, left, right ?? throw new ArgumentNullException(nameof(right)), null, soundness, when)
+            Func<Bindings, bool>? when = null,
+            [CallerLineNumber] int line = 0)
+            : this(name, left, right ?? throw new ArgumentNullException(nameof(right)), null, soundness, when, line)
         {
         }
 
@@ -83,8 +86,10 @@ namespace AngouriMath.Core.Transformations.Matching
             Func<Bindings, Entity>? rightCode,
             MatchPattern? rightPattern,
             Soundness soundness,
-            Func<Bindings, bool>? when)
+            Func<Bindings, bool>? when,
+            int line)
         {
+            SourceLine = line;
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Left = left ?? throw new ArgumentNullException(nameof(left));
             this.right = rightCode;
@@ -102,6 +107,19 @@ namespace AngouriMath.Core.Transformations.Matching
 
         /// <summary>What to call this rule in a report, a test or a bug.</summary>
         internal string Name { get; }
+
+        /// <summary>
+        /// The line this rule is declared on, taken from the compiler rather than written down.
+        /// </summary>
+        /// <remarks>
+        /// A rule written as data has a real source location like a <c>switch</c> arm does, and
+        /// <c>[CallerLineNumber]</c> is how it keeps one without anybody maintaining it. It is
+        /// what lets a data rule appear in the registry beside the arms.
+        /// </remarks>
+        internal int SourceLine { get; }
+
+        /// <summary>Whether this rule carries a side condition beyond its pattern.</summary>
+        internal bool HasCondition => when is not null;
 
         /// <summary>The shape it fires on.</summary>
         internal MatchPattern Left { get; }
@@ -327,6 +345,57 @@ namespace AngouriMath.Core.Transformations.Matching
         }
 
         /// <summary>One rewrite at this node only, leaving children alone.</summary>
+        /// <summary>
+        /// These rules as <see cref="RewriteRule"/> values, so that a set written as data can
+        /// appear in the registry beside the sets written as a <c>switch</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>RuleRegistryGenerator</c> reads a <c>switch</c>'s arms and cannot read this, which
+        /// is the half of
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/825">#825</a> still open.
+        /// Its cost is not only that a converted set keeps its <c>switch</c>: a set the generator
+        /// <i>declines</i> — an ordinary method with branches and locals — has <b>no addressable
+        /// rules at all</b>, and nothing about it can be listed, checked or named.
+        /// </para>
+        /// <para>
+        /// This is the same problem approached from the other side. The rules here are already
+        /// values; what was missing was their rendering. Everything is read off the rule rather
+        /// than restated: the pattern and the replacement render themselves, the line comes from
+        /// the compiler through <c>[CallerLineNumber]</c>, and the node type comes from what the
+        /// pattern requires at its root. A side condition is a delegate and cannot be quoted, so
+        /// it is reported as being there.
+        /// </para>
+        /// </remarks>
+        internal IReadOnlyList<RewriteRule> AsAddressable()
+        {
+            var built = new RewriteRule[rules.Length];
+            for (var i = 0; i < rules.Length; i++)
+            {
+                var rule = rules[i];
+                var pattern = rule.Left.ToString() ?? "";
+                var replacement = rule.Right?.ToString();
+                built[i] = new RewriteRule(
+                    source: Name,
+                    index: i,
+                    name: rule.Name,
+                    description: null,
+                    nodeTypes: rule.Left.RequiredRootType is { } root
+                        ? new[] { root }
+                        : Array.Empty<Type>(),
+                    patternSource: pattern,
+                    guardSource: rule.HasCondition ? "a side condition on the bindings" : null,
+                    replacementSource: replacement ?? "(built by code)",
+                    growth: replacement is null ? RewriteRuleGrowth.Unknown
+                        : replacement.Length > pattern.Length ? RewriteRuleGrowth.Expands
+                        : replacement.Length < pattern.Length ? RewriteRuleGrowth.Collects
+                        : RewriteRuleGrowth.Rearranges,
+                    sourceLine: rule.SourceLine,
+                    apply: rule.TryApply);
+            }
+            return built;
+        }
+
         internal Entity ApplyHere(Entity expr)
         {
             // The array rather than the IReadOnlyList property: see the note on `rules`.

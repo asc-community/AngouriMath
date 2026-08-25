@@ -223,12 +223,21 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Clears a surd out of a two-term denominator.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher, and <i>listed</i> by it</b> —
+        /// <see cref="Matching.MatchedRules.RationalizeDenominator"/>. This set is an
+        /// ordinary method with branches and locals, which <c>RuleRegistryGenerator</c>
+        /// declines, so it was the one set in the registry with no addressable rules at all.
+        /// Its rules are read from the data form instead, which is the other half of
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/825">#825</a>.
+        /// </remarks>
         public static RewriteRuleSet RationalizeDenominator { get; } = new(
             nameof(RationalizeDenominator),
             "Multiplies a quotient by the conjugate of its denominator to clear a surd from it.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.RationalizeDenominator);
+            Matching.MatchedRules.RationalizeDenominator.ApplyHere,
+            Matching.MatchedRules.RationalizeDenominator.AsAddressable());
 
         /// <summary>
         /// Brings a quotient of quotients down to a single one.
