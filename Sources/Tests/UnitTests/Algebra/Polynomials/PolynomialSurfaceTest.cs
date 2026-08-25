@@ -157,6 +157,59 @@ namespace AngouriMath.Tests.Algebra.Polynomials
         }
 
         /// <summary>
+        /// The square-free part is <c>p / gcd(p, dp/dx)</c> whatever ring the coefficients live
+        /// in, so it is not univariate for any reason but the representation it used to be
+        /// written against. Each case here is built from known factors, and the answer has to be
+        /// their product with every multiplicity dropped to one.
+        /// </summary>
+        /// <remarks>
+        /// Compared numerically rather than as a string, and up to the content: the univariate
+        /// path drops it — <c>SquareFreePart("4 * x ^ 2", "x")</c> is <c>x</c>, not <c>4 * x</c> —
+        /// so <c>x ^ 2 * y ^ 2</c> is <c>x</c> for the same reason, with <c>y ^ 2</c> as the
+        /// content. That is the existing convention rather than a new one.
+        /// </remarks>
+        [Theory]
+        [InlineData("(x - y) ^ 2 * (x + y)", "(x - y) * (x + y)")]
+        [InlineData("(x - y) ^ 3", "x - y")]
+        [InlineData("(x + a) ^ 2 * (x + b)", "(x + a) * (x + b)")]
+        [InlineData("x ^ 2 * y ^ 2", "x")]
+        [InlineData("y ^ 2 * x ^ 2 * (x + 1)", "x * (x + 1)")]
+        public void TheSquareFreePartIsTakenWhereTheCoefficientsArePolynomials(
+            string input, string expected)
+        {
+            var part = MathS.Polynomials.SquareFreePart(input, "x");
+            Assert.NotNull(part);
+            var wanted = expected.ToEntity();
+            var variables = wanted.Vars.Concat(part!.Vars).Distinct().ToArray();
+            var random = new Random(20260825);
+            for (var trial = 0; trial < 20; trial++)
+            {
+                Entity left = wanted, right = part;
+                foreach (var variable in variables)
+                {
+                    Entity value = Math.Round(random.NextDouble() * 6 - 3, 4);
+                    left = left.Substitute(variable, value);
+                    right = right.Substitute(variable, value);
+                }
+                Assert.Equal(
+                    left.EvalNumerical().RealPart.EDecimal.ToDouble(),
+                    right.EvalNumerical().RealPart.EDecimal.ToDouble(),
+                    9);
+            }
+        }
+
+        /// <summary>
+        /// Where the coefficients are polynomials and there is still nothing to say, the answer
+        /// is a refusal rather than a guess.
+        /// </summary>
+        [Theory]
+        [InlineData("y")]                            // constant in x
+        [InlineData("sin(x) + 1")]                   // not a polynomial
+        [InlineData("sin(y) * x ^ 2")]               // the coefficient is not a polynomial either
+        public void ASquareFreePartOutsideTheLayerIsRefused(string input)
+            => Assert.Null(MathS.Polynomials.SquareFreePart(input, "x"));
+
+        /// <summary>
         /// A request outside what the layer can do is refused with <see langword="null"/>, and
         /// never answered with the input as though it were the result. Handing
         /// <c>x * y + y</c> back from a factorisation would say that <c>y * (x + 1)</c> does
