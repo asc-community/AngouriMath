@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using AngouriMath.Core.Transformations;
 using AngouriMath.Core.Transformations.Matching;
 using AngouriMath.Extensions;
@@ -33,14 +34,23 @@ namespace AngouriMath.Tests.Core.Transformations
     [Trait("Area", "Core")]
     public sealed class ReversibleRuleTest
     {
+        /// <summary>
+        /// Every set in <see cref="MatchedRules"/>, read off the type rather than listed here.
+        /// </summary>
+        /// <remarks>
+        /// This was a hand-written list of five, and it stopped covering the file the moment a
+        /// sixth set was added — so <c>EveryDataRuleIsBuildableOnBothSides</c>, whose whole
+        /// purpose is to catch a template naming a node type the matcher can match but not
+        /// build, was silently not looking at the new sets. It missed exactly that: a rule
+        /// building a <c>Cosecantf</c>, which matched, built nothing, and was indistinguishable
+        /// at run time from a rule that did not apply.
+        /// </remarks>
         private static IEnumerable<MatchedRuleSet> DataRuleSets()
-        {
-            yield return MatchedRules.DivisionPreparing;
-            yield return MatchedRules.CollapseMultipleFractions;
-            yield return MatchedRules.PowerOfPower;
-            yield return MatchedRules.SharedFactor;
-            yield return MatchedRules.PythagoreanIdentity;
-        }
+            => typeof(MatchedRules)
+                .GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)
+                .Where(property => property.PropertyType == typeof(MatchedRuleSet))
+                .Select(property => (MatchedRuleSet)property.GetValue(null)!)
+                .OrderBy(set => set.Name, StringComparer.Ordinal);
 
         private static readonly string[] Leaves = { "x", "y", "z", "2", "-1", "1/2", "1", "0" };
 
@@ -83,15 +93,29 @@ namespace AngouriMath.Tests.Core.Transformations
                 .SelectMany(set => set.Rules)
                 .ToDictionary(rule => rule.Name, rule => rule.Reversal);
 
-            var oneWay = actual.Where(pair => pair.Value is not RuleReversal.Reversible).ToList();
+            var oneWay = actual.Where(pair => pair.Value is not RuleReversal.Reversible)
+                .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                .Select(pair => $"{pair.Key}: {pair.Value}")
+                .ToArray();
 
-            // The only rule here that cannot be read backwards, and the reason is the
-            // mathematics rather than the encoding: 1 does not say which angle it came from.
+            // Named one by one and with the reason, so that a rule losing or gaining a direction
+            // fails rather than moving a number. Almost all of these are one-way because their
+            // replacement is arithmetic on a binding rather than a tree built around it -- see
+            // RuleReversal.ReplacementIsCode -- and exactly one is one-way for a mathematical
+            // reason: 1 does not say which angle it came from.
             Assert.Equal(
-                new[] { "squared-sine-and-cosine-of-one-argument-sum-to-one" },
-                oneWay.Select(pair => pair.Key).ToArray());
-            Assert.Equal(RuleReversal.ReplacementDropsHoles, oneWay[0].Value);
-            Assert.Equal(13, actual.Count(pair => pair.Value is RuleReversal.Reversible));
+                new[]
+                {
+                    "a-negative-factor-in-a-sum-becomes-a-difference: ReplacementIsCode",
+                    "a-negative-integer-power-becomes-a-reciprocal: ReplacementIsCode",
+                    "a-quotient-of-polynomials-is-divided-out: ReplacementIsCode",
+                    "a-quotient-of-polynomials-is-put-in-lowest-terms: ReplacementIsCode",
+                    "cosine-of-a-whole-multiple-of-an-angle: ReplacementIsCode",
+                    "eulers-totient-of-a-prime-power: ReplacementIsCode",
+                    "sine-of-a-whole-multiple-of-an-angle: ReplacementIsCode",
+                    "squared-sine-and-cosine-of-one-argument-sum-to-one: ReplacementDropsHoles",
+                },
+                oneWay);
         }
 
         /// <summary>
@@ -232,22 +256,52 @@ namespace AngouriMath.Tests.Core.Transformations
 
         /// <summary>
         /// A pattern over a node this cannot construct is matchable and not writable, so a rule
-        /// using one is one-way — reported as its own reason rather than folded into the others,
-        /// because it is a gap in the mechanism where the rest are facts about the mathematics.
+        /// matching one is one-way — reported as its own reason rather than folded into the
+        /// others, because it is a gap in the mechanism where the rest are facts about the
+        /// mathematics.
         /// </summary>
+        /// <remarks>
+        /// The unbuildable node is on the <b>left</b>, which is the case this is about: the rule
+        /// fires, and only its reverse is impossible. An unbuildable node on the right is a
+        /// different thing entirely and is rejected outright — see
+        /// <see cref="AReplacementCannotNameANodeThisCannotBuild"/>.
+        /// </remarks>
         [Fact]
         public void APatternOverAnUnbuildableNodeIsMatchableAndNotReversible()
         {
             var overMod = new MatchedRule(
                 "modulus",
                 MatchPattern.Node<Modf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
-                MatchPattern.Node<Modf>(MatchPattern.Any("b"), MatchPattern.Any("a")),
+                MatchPattern.Node<Mulf>(MatchPattern.Any("b"), MatchPattern.Any("a")),
                 Soundness.Heuristic);
 
             // It still matches, which is what "matchable and not writable" means.
             Assert.True(overMod.Left.Matches("x mod y".ToEntity()));
+            Assert.Equal("y * x", overMod.TryApply("x mod y".ToEntity())!.Stringize());
             Assert.Equal(RuleReversal.PatternCannotBeBuilt, overMod.Reversal);
             Assert.Null(overMod.Reversed);
+        }
+
+        /// <summary>
+        /// A replacement naming a node type the matcher can match but not construct is not a
+        /// one-way rule — it is a rule that <b>never fires</b>, since the match succeeds and the
+        /// build then returns nothing, which <c>TryApply</c> reports as "did not apply".
+        /// </summary>
+        /// <remarks>
+        /// Indistinguishable at run time from a correct rule on an expression it declines, so
+        /// nothing downstream can catch it. It cost an afternoon and a twenty-eight-row agreement
+        /// failure — a set of four rules building a <c>Cosecantf</c>, which was not in
+        /// <c>MatchPattern.Construct</c> — before the constructor was made to say so.
+        /// </remarks>
+        [Fact]
+        public void AReplacementCannotNameANodeThisCannotBuild()
+        {
+            var thrown = Assert.Throws<ArgumentException>(() => new MatchedRule(
+                "unbuildable",
+                MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                MatchPattern.Node<Modf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                Soundness.Heuristic));
+            Assert.Contains("cannot build", thrown.Message);
         }
 
         /// <summary>
@@ -278,9 +332,17 @@ namespace AngouriMath.Tests.Core.Transformations
             foreach (var set in DataRuleSets())
                 foreach (var rule in set.Rules)
                 {
-                    Assert.True(rule.Left.IsBuildable, $"{set.Name}/{rule.Name}: left");
-                    Assert.NotNull(rule.Right);
-                    Assert.True(rule.Right!.IsBuildable, $"{set.Name}/{rule.Name}: right");
+                    // A rule whose replacement is code has no right-hand pattern to check, and
+                    // its left need not be buildable either: it is one-way whatever the nodes.
+                    if (rule.Right is null)
+                    {
+                        Assert.Equal(RuleReversal.ReplacementIsCode, rule.Reversal);
+                        continue;
+                    }
+                    Assert.True(rule.Right.IsBuildable, $"{set.Name}/{rule.Name}: right");
+                    // The left decides only whether it reads backwards, and the type says which.
+                    Assert.Equal(rule.Left.IsBuildable,
+                        rule.Reversal is not RuleReversal.PatternCannotBeBuilt);
                 }
         }
 
