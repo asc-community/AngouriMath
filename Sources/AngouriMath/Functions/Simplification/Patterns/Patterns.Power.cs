@@ -194,9 +194,27 @@ namespace AngouriMath.Functions
             // https://github.com/asc-community/AngouriMath/issues/721
             Logf(var any1, var any1a) logarithm when any1 == any1a
                 => new Providedf(1, logarithm.DomainCondition),
-            Logf(Divf(Integer(1), var any1), Divf(Integer(1), var any2)) => MathS.Log(any1, any2),
-            Logf(var any1, Divf(Integer(1), var any2)) => -MathS.Log(any1, any2),
-            Logf(Divf(Integer(1), var any1), var any2) => -MathS.Log(any1, any2),
+            // ln(1/b) = -ln(b) is false on the negative reals, for the reason the pair of rules
+            // below is guarded for: the principal argument does not negate with its logarithm.
+            // At b = -0.63, ln(1/b) is 0.462 + pi*i and -ln(b) is 0.462 - pi*i. These three were
+            // applied unconditionally while their neighbours ten lines down carried a guard, and
+            // `work/rulecheck` reports them once its corpus is wide enough to build the shape.
+            //
+            // The condition is the same one, and is asked through the same helper: ln(1/b) is
+            // ln(1) - ln(b), so a reciprocal is the difference case with a numerator of 1. Both
+            // ways of earning it carry over -- the operand is decidably a positive real, or the
+            // limit machinery is reading towards a destination and has established the sign.
+            // https://github.com/asc-community/AngouriMath/issues/721
+            Logf(Divf(Integer(1), var any1), Divf(Integer(1), var any2))
+                when MayGatherLogarithms(Integer.One, any1, isDifference: true)
+                     && MayGatherLogarithms(Integer.One, any2, isDifference: true)
+                => MathS.Log(any1, any2),
+            Logf(var any1, Divf(Integer(1), var any2))
+                when MayGatherLogarithms(Integer.One, any2, isDifference: true)
+                => -MathS.Log(any1, any2),
+            Logf(Divf(Integer(1), var any1), var any2)
+                when MayGatherLogarithms(Integer.One, any1, isDifference: true)
+                => -MathS.Log(any1, any2),
             
 
             // ln(a) + ln(b) = ln(a*b), and the difference likewise, are false off the positive
