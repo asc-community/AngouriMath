@@ -157,15 +157,19 @@ namespace AngouriMath.Tests.Algebra.Polynomials
         }
 
         /// <summary>
-        /// A polynomial in two variables is factored by Kronecker's substitution: with
-        /// <c>s</c> one more than its degree in <c>x</c>, the map <c>x^i y^j -> t^(i + s*j)</c>
-        /// is injective on every monomial that can appear in it or in any of its factors, so a
-        /// factorisation of the image reads back and each subset of its irreducible factors
-        /// names a candidate. Every candidate is checked by exact division, so the failure mode
-        /// is a refusal and not a wrong answer.
+        /// A polynomial in several variables is factored by Kronecker's substitution, written in
+        /// mixed radix: with radices <c>d_i + 1</c> and place values <c>s_0 = 1</c>,
+        /// <c>s_(i+1) = s_i * (d_i + 1)</c>, the map sending a monomial to
+        /// <c>t^(sum of e_i * s_i)</c> writes each exponent as one digit of a numeral, so it is
+        /// injective on every monomial that can appear in the polynomial or in any of its
+        /// factors. A factorisation of the one-variable image reads back digit by digit, and each
+        /// subset of its irreducible factors names a candidate. Every candidate is checked by
+        /// exact division, so the failure mode is a refusal and not a wrong answer.
         /// </summary>
         /// <remarks>
-        /// <c>x ^ 2 - y ^ 2</c> is the case #746 item 43 names, and the one this test exists for.
+        /// <c>x ^ 2 - y ^ 2</c> is the case #746 item 43 names. The three- and four-variable rows
+        /// are the generalisation: the exponent vector is a numeral whatever its length, and only
+        /// the image's degree — a product of the radices, not a sum — decides what fits.
         /// Compared numerically, for the reason the content test above gives.
         /// </remarks>
         [Theory]
@@ -175,7 +179,12 @@ namespace AngouriMath.Tests.Algebra.Polynomials
         [InlineData("x ^ 2 * y ^ 2 - 1", 2)]
         [InlineData("x ^ 4 - y ^ 4", 3)]
         [InlineData("x ^ 2 - y ^ 2 + 2 * x + 1", 2)]
-        public void APolynomialInTwoVariablesIsFactored(string input, int distinctFactors)
+        [InlineData("x ^ 2 - (y + z) ^ 2", 2)]
+        [InlineData("x ^ 2 + 2 * x * y + y ^ 2 - z ^ 2", 2)]
+        [InlineData("x * y - x - y + 1", 2)]
+        [InlineData("(x + y) * (x + z + w)", 2)]
+        [InlineData("(x + y) * (x + z) * (x + w)", 3)]
+        public void APolynomialInSeveralVariablesIsFactored(string input, int distinctFactors)
         {
             var expr = input.ToEntity();
             var factored = MathS.Polynomials.Factor(expr, "x");
@@ -206,6 +215,38 @@ namespace AngouriMath.Tests.Algebra.Polynomials
 
         private static int CountFactors(Entity product)
             => product is Mulf(var left, var right) ? CountFactors(left) + CountFactors(right) : 1;
+
+        /// <summary>
+        /// The image's degree is a <b>product</b> of the radices and not a sum, so the ceiling
+        /// closes quickly as variables are added — and where it closes the answer is a refusal.
+        /// </summary>
+        /// <remarks>
+        /// Every row here does factor mathematically and is declined anyway, which is the shape
+        /// of every limit in this path: a refusal is a possible answer and a wrong one is not.
+        /// The degrees are <c>(2, 2, 1, 1)</c> and <c>(4, 1, 1, 1, 1)</c>, giving images of
+        /// degree 35 and 79 against an <c>IntegerPolynomial.MaxDegree</c> of 32; the third is
+        /// two variables and past it on its own.
+        /// </remarks>
+        [Theory]
+        [InlineData("(x + y + z + w) * (x - y)")]
+        [InlineData("(x + y) * (x + z) * (x + w) * (x + v)")]
+        [InlineData("x ^ 12 - y ^ 12")]
+        public void PastTheSubstitutionsCeilingItRefuses(string input)
+            => Assert.Null(MathS.Polynomials.Factor(input.ToEntity(), "x"));
+
+        /// <summary>
+        /// The main variable is a parameter and not a convention: the same polynomial factored
+        /// with respect to another variable is the same factorisation.
+        /// </summary>
+        [Fact]
+        public void TheMainVariableIsAParameter()
+        {
+            var inX = MathS.Polynomials.Factor("x ^ 2 - y ^ 2".ToEntity(), "x");
+            var inY = MathS.Polynomials.Factor("x ^ 2 - y ^ 2".ToEntity(), "y");
+            Assert.NotNull(inX);
+            Assert.NotNull(inY);
+            Assert.Equal(inX!.Expand().Simplify(), inY!.Expand().Simplify());
+        }
 
         /// <summary>
         /// The square-free part is <c>p / gcd(p, dp/dx)</c> whatever ring the coefficients live

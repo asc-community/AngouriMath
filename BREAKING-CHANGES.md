@@ -305,14 +305,16 @@ bracketing for. The change only ever adds `\left(`/`\right)` groups, which CShar
 parses, so nothing downstream needs a matching change
 ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
 
-### `Factor` factors a polynomial in two variables
+### `Factor` factors a polynomial in more than one variable
 
-After the content is taken out, what remains may still have polynomial coefficients — and where it
-is in two variables it can be factored anyway, by **Kronecker's substitution**. A factor of a
-polynomial of degree `d` in `x` has degree at most `d` in `x`, so with `s = d + 1` the map
-`x^i y^j → t^(i + s*j)` is injective on every monomial that can appear in the polynomial or in any
-of its factors. The one-variable image is factored by the existing factoriser, and each subset of
-its irreducible factors names a candidate.
+After the content is taken out, what remains may still have polynomial coefficients — and it can be
+factored anyway, by **Kronecker's substitution written in mixed radix**. A factor of a polynomial
+has degree at most `d_i` in each variable `v_i`, because a factor divides it. So with radices
+`d_i + 1` and place values `s_0 = 1`, `s_(i+1) = s_i * (d_i + 1)`, the map sending a monomial to
+`t^(Σ e_i · s_i)` writes each exponent as one digit of a numeral, and is therefore injective on
+every monomial that can appear in the polynomial or in any of its factors. The one-variable image
+is factored by the existing factoriser, and each subset of its irreducible factors names a
+candidate.
 
 | | 2.3.0 | now |
 |---|---|---|
@@ -322,17 +324,23 @@ its irreducible factors names a candidate.
 | `Factor("x ^ 4 - y ^ 4", "x")` | `null` | `(x + y) * (x ^ 2 + y ^ 2) * (x - y)` |
 | `Factor("x ^ 2 * y ^ 2 - 1", "x")` | `null` | `(x * y + 1) * (x * y - 1)` |
 | `Factor("x ^ 2 - y ^ 2 + 2 * x + 1", "x")` | `null` | `(x + y + 1) * (x - y + 1)` |
+| `Factor("x ^ 2 - (y + z) ^ 2", "x")` | `null` | `(x + y + z) * (x - y - z)` |
+| `Factor("x ^ 2 + 2 * x * y + y ^ 2 - z ^ 2", "x")` | `null` | `(x + y + z) * (x + y - z)` |
+| `Factor("(x + y) * (x + z) * (x + w)", "x")` | `null` | `(x + y) * (w + x) * (x + z)` |
 | `Factor("x ^ 2 + y ^ 2", "x")` | `null` | `null` — irreducible over ℚ |
-| `Factor("x * y + z", "x")` | `null` | `null` — three variables |
+| `Factor("x * y + z", "x")` | `null` | `null` — irreducible over ℚ |
 
 **It cannot answer wrongly.** The substitution is injective on monomials but not on factorisations,
 so the image may factor further than the polynomial does and a candidate is a guess. Every one is
 tested by exact division before it is kept, and the assembled factors are divided back into the
 input, so the failure mode is a refusal.
 
-**What it refuses.** The image has degree `d + s*e` for degree `e` in the second variable, and the
-one-variable factoriser stops at 32 — so this reaches bidegrees like (2, 10), (3, 7) and (5, 4) and
-refuses past them. The recombination is over subsets, so the image's factor count is capped too.
+**What it refuses.** The image has degree `Π (d_i + 1) - 1`, a **product** and not a sum, and the
+one-variable factoriser stops at 32 — so the ceiling closes quickly as variables are added. Two
+variables reach bidegrees like (2, 10), (3, 7) and (5, 4); three variables of degree 2 fit (27) and
+four do not (81). `Factor("x ^ 12 - y ^ 12", "x")` and
+`Factor("(x + y + z + w) * (x - y)", "x")` are both `null` for this reason, though both factor
+mathematically. The recombination is over subsets, so the image's factor count is capped too.
 Lifting that ceiling is Hensel lifting with an evaluation homomorphism, which is a different piece
 of work.
 
@@ -381,14 +389,14 @@ the other variables — is now taken out first, using the same multivariate mach
 | `Factor("x ^ 2 * y + x * y", "x")` | `null` | `y * x * (x + 1)` |
 | `Factor("a * x ^ 2 + a * x", "x")` | `null` | `a * x * (x + 1)` |
 | `Factor("x ^ 2 * y ^ 2 - y ^ 2", "x")` | `null` | `y ^ 2 * (x + 1) * (x - 1)` |
-| `Factor("x ^ 2 - y ^ 2", "x")` | `null` | `null` |
 | `Factor("x * y + z", "x")` | `null` | `null` |
 
-**Only a refusal becomes an answer.** Nothing that already factorised changes, because the new path
-runs only where the old one returned `null`. And it is still a refusal wherever the content is a
-constant: `x ^ 2 - y ^ 2` genuinely needs factorisation over ℚ(y), which this is not and does not
-claim to be. That remains the open half of
-[#746](https://github.com/asc-community/AngouriMath/issues/746) item 43.
+**Only a refusal becomes an answer.** Nothing that already factorised changes, because this path
+runs only where the old one returned `null`.
+
+Taking the content out does nothing where the content is a constant, so `x ^ 2 - y ^ 2` is not
+answered by this change — it needs factorisation over ℚ(y). That is what Kronecker's substitution
+does, in the entry above, and the two paths are tried in that order.
 
 The test that pinned the refusal carried a comment saying that handing `x * y + y` back *"would say
 that `y * (x + 1)` does not exist, which is a wrong answer and not a graceful failure"*. It now

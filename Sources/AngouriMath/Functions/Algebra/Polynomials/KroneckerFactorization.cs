@@ -11,38 +11,41 @@ using System.Collections.Generic;
 namespace AngouriMath.Functions
 {
     /// <summary>
-    /// Factorisation of a polynomial in two variables, by reducing it to one variable and
-    /// putting the answer back.
+    /// Factorisation of a polynomial in any number of variables, by reducing it to one variable
+    /// and putting the answer back.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Kronecker's substitution.</b> A factor of a polynomial of degree <c>d</c> in <c>x</c>
-    /// has degree at most <c>d</c> in <c>x</c>, so with <c>s = d + 1</c> the map
-    /// <c>x^i y^j -> t^(i + s*j)</c> is injective on every monomial that can appear in the
-    /// polynomial or in any of its factors: <c>i</c> is the remainder and <c>j</c> the quotient of
-    /// the exponent by <c>s</c>, and neither can be confused with another pair. So a factorisation
-    /// of the one-variable image can be read back, and each subset of its irreducible factors
-    /// names a candidate.
+    /// <b>Kronecker's substitution, in mixed radix.</b> A factor of a polynomial has degree at
+    /// most <c>d_i</c> in each variable <c>v_i</c>, because a factor divides it. So with radices
+    /// <c>d_i + 1</c> and place values <c>s_0 = 1</c>, <c>s_(i+1) = s_i * (d_i + 1)</c>, the map
+    /// <c>v_0^e_0 · … · v_(k-1)^e_(k-1) -> t^(Σ e_i · s_i)</c> writes each exponent as one digit
+    /// of a numeral and is therefore injective on every monomial that can appear in the
+    /// polynomial or in any of its factors. A factorisation of the one-variable image can be read
+    /// back digit by digit, and each subset of its irreducible factors names a candidate.
     /// </para>
     /// <para>
-    /// <b>A candidate is a guess and is checked by division.</b> The image can factor further than
-    /// the polynomial does — the substitution is injective on monomials, not on factorisations —
-    /// so a subset whose product reads back as a polynomial need not divide the original. Every
-    /// one is tested with exact division before it is kept, which is why this cannot answer
-    /// wrongly: the worst it does is fail to find a factorisation that exists and say so.
+    /// <b>A candidate is a guess and is checked by division.</b> The image can factor further
+    /// than the polynomial does — the substitution is injective on monomials, not on
+    /// factorisations — so a subset whose product reads back as a polynomial need not divide the
+    /// original. Every one is tested with exact division before it is kept, which is why this
+    /// cannot answer wrongly: the worst it does is fail to find a factorisation that exists and
+    /// say so.
     /// </para>
     /// <para>
-    /// <b>What it will not do.</b> The image has degree <c>d + s * e</c> for a polynomial of
-    /// degree <c>e</c> in <c>y</c>, and the one-variable factoriser stops at
-    /// <see cref="IntegerPolynomial.MaxDegree"/> — so this reaches bidegrees like (2, 10),
-    /// (3, 7) and (5, 4) and refuses beyond them. The recombination is over subsets, so the
-    /// number of irreducible factors of the image is capped as well. Both limits are refusals,
-    /// never wrong answers, and neither is the algorithm one would write to lift this ceiling:
-    /// that is Hensel lifting with an evaluation homomorphism, and it is a different piece of
-    /// work (<a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> item 43).
+    /// <b>What it will not do.</b> The image has degree <c>Π (d_i + 1) - 1</c>, a *product* and
+    /// not a sum, and the one-variable factoriser stops at
+    /// <see cref="IntegerPolynomial.MaxDegree"/> — so the ceiling closes quickly as variables are
+    /// added. Two variables reach bidegrees like (2, 10), (3, 7) and (5, 4); three variables of
+    /// degree 2 fit (27 ≤ 32) and four do not (81); and a quadratic in eight variables is far
+    /// past it. The recombination is over subsets, so the number of irreducible factors of the
+    /// image is capped as well. Both limits are refusals, never wrong answers, and neither is the
+    /// algorithm one would write to lift them: that is Hensel lifting with an evaluation
+    /// homomorphism, and it is a different piece of work
+    /// (<a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> item 43).
     /// </para>
     /// </remarks>
-    internal static class BivariateFactorization
+    internal static class KroneckerFactorization
     {
         /// <summary>
         /// Beyond this the subset search is refused rather than paid for: the recombination is
@@ -52,31 +55,47 @@ namespace AngouriMath.Functions
         private const int MaxImageFactors = 12;
 
         /// <summary>
-        /// The factors of <paramref name="poly"/> in <paramref name="x"/> and <paramref name="y"/>,
-        /// each to the first power and each of positive degree in <paramref name="x"/>, or
-        /// <see langword="null"/> where nothing could be settled. A single factor means the
-        /// polynomial did not factor, which is an answer.
+        /// The factors of <paramref name="poly"/> in <paramref name="main"/> and whatever other
+        /// variables it has, each to the first power and each of positive degree in
+        /// <paramref name="main"/>, or <see langword="null"/> where nothing could be settled. A
+        /// single factor means the polynomial did not factor, which is an answer.
         /// </summary>
         internal static IReadOnlyList<MultivariatePolynomial>? Factor(
-            MultivariatePolynomial poly, int x, int y)
+            MultivariatePolynomial poly, int main)
         {
-            var degreeInX = poly.DegreeIn(x);
-            var degreeInY = poly.DegreeIn(y);
-            if (poly.IsZero || degreeInX < 1 || degreeInY < 1)
+            if (poly.IsZero || poly.DegreeIn(main) < 1)
                 return null;
 
-            var stride = degreeInX + 1;
-            var imageDegree = degreeInX + stride * degreeInY;
-            if (imageDegree > IntegerPolynomial.MaxDegree)
+            // The main variable is placed first so that its exponent is the lowest digit; the
+            // rest follow in index order, and a variable the polynomial does not use is left out
+            // rather than given a radix of one.
+            var order = new List<int> { main };
+            for (var variable = 0; variable < poly.VariableCount; variable++)
+                if (variable != main && poly.DegreeIn(variable) > 0)
+                    order.Add(variable);
+            if (order.Count < 2)
                 return null;
 
-            if (ToImage(poly, x, y, stride, imageDegree) is not { } image)
+            var radices = new int[order.Count];
+            var places = new int[order.Count];
+            long size = 1;
+            for (var i = 0; i < order.Count; i++)
+            {
+                radices[i] = poly.DegreeIn(order[i]) + 1;
+                places[i] = (int)size;
+                size *= radices[i];
+                if (size > IntegerPolynomial.MaxDegree + 1)
+                    return null;
+            }
+            var imageDegree = (int)size - 1;
+
+            if (ToImage(poly, order, places, radices, imageDegree) is not { } image)
                 return null;
             if (PolynomialFactorization.FactorPrimitive(image.PrimitivePart()) is not { } parts)
                 return null;
 
             // The multiplicities are flattened: a square in the image may or may not be a square
-            // in two variables, and the recombination settles that by division rather than by
+            // in the original, and the recombination settles that by division rather than by
             // carrying the exponent across the substitution.
             var irreducibles = new List<IntegerPolynomial>();
             foreach (var part in parts)
@@ -89,7 +108,7 @@ namespace AngouriMath.Functions
             if (irreducibles.Count < 2)
                 return new[] { poly };
 
-            return Recombine(poly, irreducibles, x, y, stride);
+            return Recombine(poly, irreducibles, main, order, places, radices);
         }
 
         /// <summary>
@@ -97,23 +116,15 @@ namespace AngouriMath.Functions
         /// not wanted, since a rational multiple of a factor is the same factor.
         /// </summary>
         private static IntegerPolynomial? ToImage(
-            MultivariatePolynomial poly, int x, int y, int stride, int imageDegree)
+            MultivariatePolynomial poly, IReadOnlyList<int> order,
+            IReadOnlyList<int> places, IReadOnlyList<int> radices, int imageDegree)
         {
             var coefficients = new ERational[imageDegree + 1];
             for (var i = 0; i < coefficients.Length; i++)
                 coefficients[i] = ERational.Zero;
 
-            foreach (var byX in poly.CoefficientsIn(x))
-                foreach (var byY in byX.Value.CoefficientsIn(y))
-                {
-                    // Anything left is a third variable, and this is the two-variable case.
-                    if (!byY.Value.IsConstant)
-                        return null;
-                    var at = byX.Key + stride * byY.Key;
-                    if (at > imageDegree)
-                        return null;
-                    coefficients[at] = coefficients[at].Add(byY.Value.CoefficientOf(0));
-                }
+            if (!Peel(poly, 0, 0))
+                return null;
 
             var denominator = EInteger.One;
             foreach (var coefficient in coefficients)
@@ -123,32 +134,57 @@ namespace AngouriMath.Functions
                 whole[i] = coefficients[i].Numerator
                     .Multiply(denominator.Divide(coefficients[i].Denominator));
             return IntegerPolynomial.Create(whole);
+
+            // One variable at a time, adding that exponent's digit to the place already
+            // accumulated. What is left when every variable has been peeled has to be a constant.
+            bool Peel(MultivariatePolynomial rest, int depth, int at)
+            {
+                if (depth == order.Count)
+                {
+                    if (!rest.IsConstant)
+                        return false;
+                    coefficients[at] = coefficients[at].Add(rest.CoefficientOf(0));
+                    return true;
+                }
+                foreach (var pair in rest.CoefficientsIn(order[depth]))
+                {
+                    if (pair.Key >= radices[depth])
+                        return false;
+                    if (!Peel(pair.Value, depth + 1, at + places[depth] * pair.Key))
+                        return false;
+                }
+                return true;
+            }
         }
 
         private static EInteger Lcm(EInteger left, EInteger right)
             => left.Divide(left.Gcd(right)).Multiply(right);
 
         /// <summary>
-        /// Two variables again, reading each exponent as its remainder and quotient by
-        /// <paramref name="stride"/> — or <see langword="null"/> where a power is past what a
-        /// packed monomial holds.
+        /// Reading each exponent back as one digit of the numeral — or <see langword="null"/>
+        /// where a power is past what a packed monomial holds.
         /// </summary>
         private static MultivariatePolynomial? FromImage(
-            IntegerPolynomial image, int variableCount, int x, int y, int stride)
+            IntegerPolynomial image, int variableCount, IReadOnlyList<int> order,
+            IReadOnlyList<int> places, IReadOnlyList<int> radices)
         {
             var result = MultivariatePolynomial.Zero(variableCount);
             for (var power = 0; power <= image.Degree; power++)
             {
                 if (image[power].IsZero)
                     continue;
-                var inX = power % stride;
-                var inY = power / stride;
-                if (inX > MultivariatePolynomial.MaxDegree || inY > MultivariatePolynomial.MaxDegree)
-                    return null;
-                if (MultivariatePolynomial.Monomial(variableCount, x).Power(inX) is not { } partX
-                    || MultivariatePolynomial.Monomial(variableCount, y).Power(inY) is not { } partY
-                    || partX.Multiply(partY) is not { } monomial)
-                    return null;
+                var monomial = MultivariatePolynomial.One(variableCount);
+                for (var i = 0; i < order.Count; i++)
+                {
+                    var digit = power / places[i] % radices[i];
+                    if (digit > MultivariatePolynomial.MaxDegree)
+                        return null;
+                    if (MultivariatePolynomial.Monomial(variableCount, order[i]).Power(digit)
+                            is not { } part
+                        || monomial.Multiply(part) is not { } multiplied)
+                        return null;
+                    monomial = multiplied;
+                }
                 result = result.Add(monomial.ScaleBy(ERational.Create(image[power], EInteger.One)));
             }
             return result.IsZero ? null : result;
@@ -164,7 +200,8 @@ namespace AngouriMath.Functions
         /// after each success because the remaining polynomial has changed.
         /// </remarks>
         private static IReadOnlyList<MultivariatePolynomial>? Recombine(
-            MultivariatePolynomial poly, List<IntegerPolynomial> irreducibles, int x, int y, int stride)
+            MultivariatePolynomial poly, List<IntegerPolynomial> irreducibles, int main,
+            IReadOnlyList<int> order, IReadOnlyList<int> places, IReadOnlyList<int> radices)
         {
             var found = new List<MultivariatePolynomial>();
             var remaining = poly;
@@ -183,8 +220,9 @@ namespace AngouriMath.Functions
                                 product = multiplied;
                             else
                                 return null;
-                        if (FromImage(product, poly.VariableCount, x, y, stride) is not { } candidate
-                            || candidate.DegreeIn(x) < 1
+                        if (FromImage(product, poly.VariableCount, order, places, radices)
+                                is not { } candidate
+                            || candidate.DegreeIn(main) < 1
                             || remaining.DivideExact(candidate) is not { } quotient)
                             continue;
                         found.Add(candidate.Normalized());
