@@ -202,12 +202,18 @@ namespace AngouriMath.Core.Transformations
         /// Recognises a perfect square written out, so that factorisation has something to
         /// gather.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.PerfectSquare"/>, whose arm is the one that was
+        /// recorded as needing an alternation of node types the matcher does not have. It
+        /// needed a predicate on a hole, which it does.
+        /// </remarks>
         public static RewriteRuleSet PerfectSquare { get; } = new(
             nameof(PerfectSquare),
             "Collapses a written-out perfect square into a squared binomial.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.PerfectSquareRules,
+            Matching.MatchedRules.PerfectSquare.ApplyHere,
             Patterns.PerfectSquareRulesArms);
 
         #endregion

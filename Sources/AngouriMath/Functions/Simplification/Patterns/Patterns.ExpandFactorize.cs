@@ -131,7 +131,8 @@ namespace AngouriMath.Functions
         /// </para>
         /// </remarks>
         /// <returns><see langword="null"/> when the sum is not a square, so the rule does not fire.</returns>
-        private static Entity? CollapseToPerfectSquare(Entity expr)
+        /// <remarks>Internal so that the data form of this set calls it rather than repeating it.</remarks>
+        internal static Entity? CollapseToPerfectSquare(Entity expr)
         {
             if (!expr.Nodes.Any(node => node is Powf(_, Rational and not Integer)))
                 return null;

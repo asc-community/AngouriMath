@@ -262,6 +262,22 @@ namespace AngouriMath.Tests.Core.Transformations
                 });
 
         /// <summary>
+        /// <b>The alternation case.</b> The <c>switch</c> arm is <c>x is Sumf or Minusf</c>, which
+        /// <c>Node&lt;T&gt;</c> cannot say — and which the work-list in <c>work/rulecheck</c>
+        /// recorded as needing an addition to the matcher. A typed hole with a predicate says it,
+        /// and agreement over the corpus is what turns that from an argument into a fact.
+        /// </summary>
+        [Fact]
+        public void PerfectSquareAsDataMatchesTheSwitch()
+            => AssertAgrees("PerfectSquare", Patterns.PerfectSquareRules,
+                MatchedRules.PerfectSquare, leastFirings: 1, extra: new[]
+                {
+                    "1 + sqrt(2 * x) + x / 2", "x + 2 * sqrt(x) * sqrt(y) + y",
+                    "x - 2 * sqrt(x) * sqrt(y) + y", "4 + 4 * x + x ^ 2",
+                    "x + y", "x - y", "sin(x) + cos(x)",
+                });
+
+        /// <summary>
         /// A predicate on a hole that is a mathematical property rather than a sign or a type.
         /// The corpus reaches it rarely, so the shapes are given here as well — a set that fires
         /// four times over a generated corpus is worth checking against cases chosen for it.
