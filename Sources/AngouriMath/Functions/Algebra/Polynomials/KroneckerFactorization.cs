@@ -39,9 +39,27 @@ namespace AngouriMath.Functions
     /// added. Two variables reach bidegrees like (2, 10), (3, 7) and (5, 4); three variables of
     /// degree 2 fit (27 ≤ 32) and four do not (81); and a quadratic in eight variables is far
     /// past it. The recombination is over subsets, so the number of irreducible factors of the
-    /// image is capped as well. Both limits are refusals, never wrong answers, and neither is the
-    /// algorithm one would write to lift them: that is Hensel lifting with an evaluation
-    /// homomorphism, and it is a different piece of work
+    /// image is capped as well. Both limits are refusals, never wrong answers.
+    /// </para>
+    /// <para>
+    /// <b>Raising the degree ceiling is not what would lift them, and that was measured rather
+    /// than assumed.</b> <see cref="IntegerPolynomial.MaxDegree"/> is 32 while the machinery
+    /// underneath affords 64 (<see cref="PrimeFieldFactorization.MaxDegree"/>), which looks like
+    /// a free doubling of the exponent budget — a whole variable's worth of reach, since the
+    /// budget is a product. Doubled, <b>nothing new factors</b>: <c>x^7 - y^7</c>,
+    /// <c>x^6 - y^6</c>, <c>x^3 - (y + z)^3</c>, <c>(x^8 + y)(x^8 + 3y)</c> and
+    /// <c>(x^2 + y^5)(x^2 - y^5)</c> all still refuse, at images of degree 34 to 56 that are
+    /// inside the raised ceiling.
+    /// </para>
+    /// <para>
+    /// The reason is the method rather than the bound: <b>the substitution's images over-factor
+    /// badly</b>. A two-factor bivariate maps to a one-variable polynomial that splits into many
+    /// irreducibles — <c>x^7 - y^7</c> becomes <c>t^7 (1 - t^49)</c>, whose factors are
+    /// cyclotomic — so the recombination is exponential in a factor count the substitution itself
+    /// inflates. That is exactly the cost <see cref="IntegerPolynomial.MaxDegree"/> is set to
+    /// bound, and moving it only moves where the refusal comes from. Lifting these limits means
+    /// not inflating the factor count in the first place, which is <b>Hensel lifting with an
+    /// evaluation homomorphism</b> — a different algorithm, not a larger number
     /// (<a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> item 43).
     /// </para>
     /// </remarks>
