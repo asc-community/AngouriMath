@@ -152,15 +152,72 @@ namespace AngouriMath
                 for (var i = 0; i < variables.Count; i++)
                     if (i != main)
                         others.Add(i);
-                if (PolynomialGcd.ContentIn(poly, main, others, 0) is not { } content
-                    || content.IsConstant)
+                if (PolynomialGcd.ContentIn(poly, main, others, 0) is not { } content)
                     return null;
                 if (poly.DivideExact(content) is not { } primitive)
                     return null;
+
+                // What is left may still have polynomial coefficients, and where it is in two
+                // variables it can be factored anyway -- see BivariateFactorization.
                 var rest = Assemble(
                     PolynomialFactorization.FactorComplete(primitive.ToEntity(variables), variable),
-                    variable);
-                return rest is null ? null : content.ToEntity(variables) * rest;
+                    variable)
+                    ?? Bivariate(primitive, variables, index, variable);
+                if (rest is null)
+                    return null;
+                return content.IsConstant && content.DivideExact(content) is not null
+                       && SameAsOne(content)
+                    ? rest
+                    : content.ToEntity(variables) * rest;
+            }
+
+
+            /// <summary>Whether a constant polynomial is 1, so that it need not be printed.</summary>
+            private static bool SameAsOne(MultivariatePolynomial poly)
+                => poly.IsConstant && poly.CoefficientOf(0).CompareTo(ERational.One) == 0;
+
+            /// <summary>
+            /// The factorisation of a polynomial in exactly two variables, as an expression.
+            /// </summary>
+            /// <remarks>
+            /// Kronecker's substitution: see <see cref="BivariateFactorization"/> for what it
+            /// does, what it refuses, and why a wrong answer is not among the things it can do.
+            /// </remarks>
+            private static Entity? Bivariate(
+                MultivariatePolynomial poly, IReadOnlyList<Variable> variables,
+                IReadOnlyDictionary<Variable, int> index, Variable variable)
+            {
+                if (variables.Count != 2)
+                    return null;
+                var main = index[variable];
+                var other = main == 0 ? 1 : 0;
+                if (BivariateFactorization.Factor(poly, main, other) is not { } factors
+                    || factors.Count < 2)
+                    return null;
+                // Repeated factors are collected into a power, as the one-variable path does:
+                // the recombination finds a square as the same factor twice, and printing it
+                // twice would be a different answer to the same question depending on which
+                // path answered it.
+                Entity? product = null;
+                var pieces = new List<Entity>();
+                foreach (var factor in factors)
+                    pieces.Add(factor.ToEntity(variables));
+                var taken = new bool[pieces.Count];
+                for (var i = 0; i < pieces.Count; i++)
+                {
+                    if (taken[i])
+                        continue;
+                    var multiplicity = 1;
+                    for (var j = i + 1; j < pieces.Count; j++)
+                        if (!taken[j] && pieces[i] == pieces[j])
+                        {
+                            taken[j] = true;
+                            multiplicity++;
+                        }
+                    var piece = multiplicity > 1 ? pieces[i].Pow(multiplicity) : pieces[i];
+                    product = product is null ? piece : product * piece;
+                }
+                return product;
             }
 
             /// <summary>

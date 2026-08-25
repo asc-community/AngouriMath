@@ -47,6 +47,7 @@ read first.
 | | `"x + 1 // done".ToEntity()`, and any input whose last line ends in a `//` comment | `UnhandledParseException: extraneous input '/'` | `x + 1` — the comment is skipped, as the block form already was |
 | | `MathS.Polynomials.Factor("x * y + y", "x")`, and any polynomial whose coefficients in the named variable share a common divisor | `null` — a refusal | `y * (x + 1)` |
 | | `MathS.Polynomials.SquareFreePart("(x - y) ^ 2 * (x + y)", "x")`, and any polynomial in more than one variable | `null` — a refusal | `x ^ 2 - y ^ 2` |
+| | `MathS.Polynomials.Factor("x ^ 2 - y ^ 2", "x")`, and polynomials in two variables of small enough bidegree | `null` — a refusal | `(x + y) * (x - y)` |
 
 ### An equation nothing settled is no longer answered with the empty set
 
@@ -303,6 +304,40 @@ the same precedences this grammar uses — so those needed the same brackets —
 bracketing for. The change only ever adds `\left(`/`\right)` groups, which CSharpMath already
 parses, so nothing downstream needs a matching change
 ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
+
+### `Factor` factors a polynomial in two variables
+
+After the content is taken out, what remains may still have polynomial coefficients — and where it
+is in two variables it can be factored anyway, by **Kronecker's substitution**. A factor of a
+polynomial of degree `d` in `x` has degree at most `d` in `x`, so with `s = d + 1` the map
+`x^i y^j → t^(i + s*j)` is injective on every monomial that can appear in the polynomial or in any
+of its factors. The one-variable image is factored by the existing factoriser, and each subset of
+its irreducible factors names a candidate.
+
+| | 2.3.0 | now |
+|---|---|---|
+| `Factor("x ^ 2 - y ^ 2", "x")` | `null` | `(x + y) * (x - y)` |
+| `Factor("x ^ 2 + 2 * x * y + y ^ 2", "x")` | `null` | `(x + y) ^ 2` |
+| `Factor("x ^ 3 - y ^ 3", "x")` | `null` | `(x - y) * (x ^ 2 + x * y + y ^ 2)` |
+| `Factor("x ^ 4 - y ^ 4", "x")` | `null` | `(x + y) * (x ^ 2 + y ^ 2) * (x - y)` |
+| `Factor("x ^ 2 * y ^ 2 - 1", "x")` | `null` | `(x * y + 1) * (x * y - 1)` |
+| `Factor("x ^ 2 - y ^ 2 + 2 * x + 1", "x")` | `null` | `(x + y + 1) * (x - y + 1)` |
+| `Factor("x ^ 2 + y ^ 2", "x")` | `null` | `null` — irreducible over ℚ |
+| `Factor("x * y + z", "x")` | `null` | `null` — three variables |
+
+**It cannot answer wrongly.** The substitution is injective on monomials but not on factorisations,
+so the image may factor further than the polynomial does and a candidate is a guess. Every one is
+tested by exact division before it is kept, and the assembled factors are divided back into the
+input, so the failure mode is a refusal.
+
+**What it refuses.** The image has degree `d + s*e` for degree `e` in the second variable, and the
+one-variable factoriser stops at 32 — so this reaches bidegrees like (2, 10), (3, 7) and (5, 4) and
+refuses past them. The recombination is over subsets, so the image's factor count is capped too.
+Lifting that ceiling is Hensel lifting with an evaluation homomorphism, which is a different piece
+of work.
+
+`MathS.Polynomials.Factor` has no caller inside the library, so no simplification, solution or
+integral changes with it.
 
 ### The square-free part is taken where the coefficients are polynomials
 
