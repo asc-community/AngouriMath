@@ -294,6 +294,16 @@ namespace AngouriMath.Tests.Core.Transformations
                 });
 
         /// <summary>
+        /// <b>Sixteen arms against eleven rules</b>, and the set where order matters most: the
+        /// both-negative rules have to be tried before the commutative one-sided ones, which
+        /// match a both-negative sum too.
+        /// </summary>
+        [Fact]
+        public void NumericNeatAsDataMatchesTheSwitch()
+            => AssertAgrees("NumericNeat", Patterns.NumericNeatRules,
+                MatchedRules.NumericNeat, leastFirings: 200);
+
+        /// <summary>
         /// A predicate on a hole that is a mathematical property rather than a sign or a type.
         /// The corpus reaches it rarely, so the shapes are given here as well — a set that fires
         /// four times over a generated corpus is worth checking against cases chosen for it.

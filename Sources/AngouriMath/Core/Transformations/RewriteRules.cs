@@ -145,12 +145,18 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Cosmetic arrangement of signs, so that adding a negative reads as a difference.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.NumericNeat"/>, where its sixteen arms are eleven
+        /// rules: six of them are three rules written twice over, once for each side a
+        /// negative factor can sit on, and a commutative pattern says each once.
+        /// </remarks>
         public static RewriteRuleSet NumericNeat { get; } = new(
             nameof(NumericNeat),
             "Arranges signs so that adding a negative is written as subtracting a positive.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.NumericNeatRules,
+            Matching.MatchedRules.NumericNeat.ApplyHere,
             Patterns.NumericNeatRulesArms);
 
         #endregion
