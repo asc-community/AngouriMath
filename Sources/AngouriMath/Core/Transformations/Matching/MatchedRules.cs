@@ -677,5 +677,105 @@ namespace AngouriMath.Core.Transformations.Matching
                     ? cancelled
                     : new Divf(bound["n"], bound["d"]),
                 Soundness.SoundUnderAssumptions));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.ExpandFactorialDivisions"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// <b>Eight arms become three.</b> Four of the eight are one rule written for every way a
+        /// sum can be spelled — <c>x + c</c> or <c>c + x</c>, on each side of the quotient — which
+        /// is what <see cref="MatchPattern.Commutative{T}"/> says once. The other four are the
+        /// cases where one factorial has no constant at all, and they stay separate because the
+        /// constant they pass is <c>0</c> rather than a binding.
+        /// </remarks>
+        internal static MatchedRuleSet ExpandFactorialDivisions { get; } = new(
+            nameof(ExpandFactorialDivisions),
+
+            // (x + a)! / (y + b)!
+            new MatchedRule(
+                "a-quotient-of-shifted-factorials",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Factorialf>(MatchPattern.Commutative<Sumf>(
+                        MatchPattern.Any("x"), MatchPattern.Any<Number>("a"))),
+                    MatchPattern.Node<Factorialf>(MatchPattern.Commutative<Sumf>(
+                        MatchPattern.Any("y"), MatchPattern.Any<Number>("b")))),
+                bound => Functions.Patterns.CancelFactorials(
+                    new Divf(new Factorialf(bound["x"] + bound["a"]),
+                             new Factorialf(bound["y"] + bound["b"])),
+                    bound["x"], bound["y"], (Number)bound["a"], (Number)bound["b"]),
+                Soundness.SoundUnderAssumptions),
+
+            // x! / (y + b)!
+            new MatchedRule(
+                "a-quotient-of-a-plain-factorial-by-a-shifted-one",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Factorialf>(MatchPattern.Any("x")),
+                    MatchPattern.Node<Factorialf>(MatchPattern.Commutative<Sumf>(
+                        MatchPattern.Any("y"), MatchPattern.Any<Number>("b")))),
+                bound => Functions.Patterns.CancelFactorials(
+                    new Divf(new Factorialf(bound["x"]),
+                             new Factorialf(bound["y"] + bound["b"])),
+                    bound["x"], bound["y"], Integer.Create(0), (Number)bound["b"]),
+                Soundness.SoundUnderAssumptions),
+
+            // (x + a)! / y!
+            new MatchedRule(
+                "a-quotient-of-a-shifted-factorial-by-a-plain-one",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Factorialf>(MatchPattern.Commutative<Sumf>(
+                        MatchPattern.Any("x"), MatchPattern.Any<Number>("a"))),
+                    MatchPattern.Node<Factorialf>(MatchPattern.Any("y"))),
+                bound => Functions.Patterns.CancelFactorials(
+                    new Divf(new Factorialf(bound["x"] + bound["a"]),
+                             new Factorialf(bound["y"])),
+                    bound["x"], bound["y"], (Number)bound["a"], Integer.Create(0)),
+                Soundness.SoundUnderAssumptions));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.FactorizeFactorialMultiplications"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// The same eight-into-three collapse as <see cref="ExpandFactorialDivisions"/>, and for
+        /// the same reason.
+        /// </remarks>
+        internal static MatchedRuleSet FactorizeFactorialMultiplications { get; } = new(
+            nameof(FactorizeFactorialMultiplications),
+
+            // (x + a)! * (y + b)
+            new MatchedRule(
+                "a-shifted-factorial-times-the-next-term",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Node<Factorialf>(MatchPattern.Commutative<Sumf>(
+                        MatchPattern.Any("x"), MatchPattern.Any<Number>("a"))),
+                    MatchPattern.Commutative<Sumf>(
+                        MatchPattern.Any("y"), MatchPattern.Any<Number>("b"))),
+                bound => Functions.Patterns.GatherFactorial(
+                    new Mulf(new Factorialf(bound["x"] + bound["a"]), bound["y"] + bound["b"]),
+                    bound["x"], bound["y"], (Number)bound["a"], (Number)bound["b"]),
+                Soundness.SoundUnderAssumptions),
+
+            // x! * (y + b)
+            new MatchedRule(
+                "a-plain-factorial-times-the-next-term",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Node<Factorialf>(MatchPattern.Any("x")),
+                    MatchPattern.Commutative<Sumf>(
+                        MatchPattern.Any("y"), MatchPattern.Any<Number>("b"))),
+                bound => Functions.Patterns.GatherFactorial(
+                    new Mulf(new Factorialf(bound["x"]), bound["y"] + bound["b"]),
+                    bound["x"], bound["y"], Integer.Create(0), (Number)bound["b"]),
+                Soundness.SoundUnderAssumptions),
+
+            // (x + a)! * y
+            new MatchedRule(
+                "a-shifted-factorial-times-a-bare-term",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Node<Factorialf>(MatchPattern.Commutative<Sumf>(
+                        MatchPattern.Any("x"), MatchPattern.Any<Number>("a"))),
+                    MatchPattern.Any("y")),
+                bound => Functions.Patterns.GatherFactorial(
+                    new Mulf(new Factorialf(bound["x"] + bound["a"]), bound["y"]),
+                    bound["x"], bound["y"], (Number)bound["a"], Integer.Create(0)),
+                Soundness.SoundUnderAssumptions));
     }
 }

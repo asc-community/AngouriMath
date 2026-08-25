@@ -462,23 +462,35 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Cancels a quotient of factorials down to the terms that survive.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.ExpandFactorialDivisions"/>, where its eight arms are three rules:
+        /// four of the eight are one rule written for every way a sum can be spelled, and a
+        /// commutative pattern says that once.
+        /// </remarks>
         public static RewriteRuleSet ExpandFactorialDivisions { get; } = new(
             nameof(ExpandFactorialDivisions),
             "Cancels a quotient of factorials into the product of the terms that do not cancel.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.ExpandFactorialDivisions,
+            Matching.MatchedRules.ExpandFactorialDivisions.ApplyHere,
             Patterns.ExpandFactorialDivisionsArms);
 
         /// <summary>
         /// Recognises a product of consecutive terms as a factorial.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.FactorizeFactorialMultiplications"/>, where its eight arms are three rules:
+        /// four of the eight are one rule written for every way a sum can be spelled, and a
+        /// commutative pattern says that once.
+        /// </remarks>
         public static RewriteRuleSet FactorizeFactorialMultiplications { get; } = new(
             nameof(FactorizeFactorialMultiplications),
             "Gathers a product of a factorial and its neighbouring terms back into one factorial.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.FactorizeFactorialMultiplications,
+            Matching.MatchedRules.FactorizeFactorialMultiplications.ApplyHere,
             Patterns.FactorizeFactorialMultiplicationsArms);
 
         /// <summary>
