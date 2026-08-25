@@ -74,10 +74,17 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         private static void AssertAgrees(
-            string what, System.Func<Entity, Entity> bySwitch, MatchedRuleSet byData, int leastFirings)
+            string what, System.Func<Entity, Entity> bySwitch, MatchedRuleSet byData, int leastFirings,
+            string[]? extra = null)
         {
             var corpus = Corpus();
             Assert.True(corpus.Count > 500, $"the corpus is only {corpus.Count} expressions");
+            // A shape the grammar does not generate is still worth comparing on, where a set keys
+            // on a function the corpus has no leaf for. It is added to the generated corpus and
+            // never in place of it: a hand-written list only proves the cases someone thought of.
+            if (extra is not null)
+                foreach (var source in extra)
+                    corpus.Add(source.ToEntity());
 
             var disagreements = new List<string>();
             var fired = 0;
@@ -137,6 +144,40 @@ namespace AngouriMath.Tests.Core.Transformations
         public void InvertNegativeMultipliersAsDataMatchesTheSwitch()
             => AssertAgrees("InvertNegativeMultipliers", Patterns.InvertNegativeMultipliers,
                 MatchedRules.InvertNegativeMultipliers, leastFirings: 40);
+
+        /// <summary>
+        /// Four rules whose sides are all patterns, so this set reverses whole. Nothing runs the
+        /// reverse direction today, which is why agreement forward is what is asserted.
+        /// </summary>
+        /// <remarks>
+        /// The generated corpus has no <c>tan</c>, <c>cotan</c>, <c>sec</c> or <c>cosec</c> leaf
+        /// and so fired this set <b>zero</b> times — agreement between two things neither of
+        /// which ran. The shapes are supplied on top of the corpus rather than instead of it.
+        /// </remarks>
+        [Fact]
+        public void NormalTrigonometricFormAsDataMatchesTheSwitch()
+            => AssertAgrees("NormalTrigonometricForm", Patterns.NormalTrigonometricForm,
+                MatchedRules.NormalTrigonometricForm, leastFirings: 12, extra: new[]
+                {
+                    "tan(x)", "cotan(x)", "sec(x)", "cosec(x)",
+                    "tan(x + y)", "cotan(2 * x)", "sec(sqrt(x))", "cosec(-x)",
+                    "tan(1/2)", "cotan(0)", "sec(2)", "cosec(-1)",
+                    "tan(x) + cotan(x)", "sec(x) * cosec(x)", "1 / tan(x)", "sin(tan(x))",
+                });
+
+        /// <summary>
+        /// A predicate on a hole that is a mathematical property rather than a sign or a type.
+        /// The corpus reaches it rarely, so the shapes are given here as well — a set that fires
+        /// four times over a generated corpus is worth checking against cases chosen for it.
+        /// </summary>
+        [Fact]
+        public void PhiFunctionAsDataMatchesTheSwitch()
+            => AssertAgrees("PhiFunction", Patterns.PhiFunctionRules,
+                MatchedRules.PhiFunction, leastFirings: 1, extra: new[]
+                {
+                    "phi(2 ^ 5)", "phi(3 ^ 2)", "phi(7 ^ 1)", "phi(13 ^ x)",
+                    "phi(4 ^ 3)", "phi(6 ^ 2)", "phi(9 ^ 2)", "phi(x ^ 2)",
+                });
 
         /// <summary>
         /// A predicate on a hole refuses what fails it, which is the C# property pattern

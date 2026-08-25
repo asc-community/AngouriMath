@@ -334,12 +334,19 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Rewrites the derived trigonometric functions in terms of sine and cosine.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.NormalTrigonometricForm"/>, whose four rules are the
+        /// first here that all read backwards. See the note on
+        /// <see cref="CollapseMultipleFractions"/> for what that costs and why the <c>switch</c>
+        /// stays.
+        /// </remarks>
         public static RewriteRuleSet NormalTrigonometricForm { get; } = new(
             nameof(NormalTrigonometricForm),
             "Writes tangents, cotangents, secants and cosecants as sines and cosines.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.NormalTrigonometricForm,
+            Matching.MatchedRules.NormalTrigonometricForm.ApplyHere,
             Patterns.NormalTrigonometricFormArms);
 
         /// <summary>
@@ -441,12 +448,19 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Rules about Euler's totient function.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.PhiFunction"/>, whose single rule carries primality
+        /// as a predicate on the hole it binds. See the note on
+        /// <see cref="CollapseMultipleFractions"/> for what that costs and why the <c>switch</c>
+        /// stays.
+        /// </remarks>
         public static RewriteRuleSet PhiFunction { get; } = new(
             nameof(PhiFunction),
             "Applies the multiplicative identities of Euler's totient function.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.PhiFunctionRules,
+            Matching.MatchedRules.PhiFunction.ApplyHere,
             Patterns.PhiFunctionRulesArms);
 
         #endregion
