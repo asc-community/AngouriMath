@@ -27,7 +27,7 @@ namespace AngouriMath.Functions
     /// <para>
     /// An exponent vector is packed into one <see cref="ulong"/>, a byte to a variable,
     /// the first variable in the most significant byte. Comparing packed monomials is then
-    /// exactly the lexicographic order on exponents that <see cref="DivideExact"/> needs,
+    /// exactly the lexicographic order on exponents that <see cref="DivideExact(MultivariatePolynomial, int)"/> needs,
     /// and looking a monomial up costs one hash.
     /// </para>
     /// <para>
@@ -314,7 +314,24 @@ namespace AngouriMath.Functions
         /// divided out and seen to leave nothing behind.
         /// </remarks>
         internal MultivariatePolynomial? DivideExact(MultivariatePolynomial divisor, int maxTerms = MaxTerms)
+            => DivideExact(divisor, out _, maxTerms);
+
+        /// <summary>
+        /// The same division, saying <b>why</b> there is no quotient. <paramref name="settled"/>
+        /// is <see langword="false"/> where the division ran out of room rather than finishing:
+        /// the term count grew past <paramref name="maxTerms"/>, a monomial went past
+        /// <see cref="MaxDegree"/>, or the loop reached its step limit.
+        /// </summary>
+        /// <remarks>
+        /// A caller that reads a <see langword="null"/> as "does not divide" is right only where
+        /// the division was settled. Where it was not, the same <see langword="null"/> means "no
+        /// answer", and a caller drawing a mathematical conclusion from it — that a polynomial is
+        /// irreducible, say — would be stating exhaustion as a fact.
+        /// </remarks>
+        internal MultivariatePolynomial? DivideExact(
+            MultivariatePolynomial divisor, out bool settled, int maxTerms = MaxTerms)
         {
+            settled = true;
             if (divisor.IsZero)
                 return null;
             if (IsZero)
@@ -331,16 +348,25 @@ namespace AngouriMath.Functions
                 if (rest.IsZero)
                     return new(VariableCount, quotient);
                 var lead = rest.LeadingMonomial();
+                // The leading monomial of what is left is not a multiple of the divisor's, and
+                // no later step can make it one -- so this is a "no" and not a "gave up".
                 if (!TryDivideMonomials(lead, divisorLead, VariableCount, out var monomial))
                     return null;
                 var value = rest.terms[lead].Divide(divisorValue).ToLowestTerms();
                 quotient[monomial] = value;
                 if (divisor.MultiplyByTerm(monomial, value) is not { } product)
+                {
+                    settled = false;
                     return null;
+                }
                 rest = rest.Subtract(product);
                 if (rest.TermCount > maxTerms)
+                {
+                    settled = false;
                     return null;
+                }
             }
+            settled = false;
             return null;
         }
 

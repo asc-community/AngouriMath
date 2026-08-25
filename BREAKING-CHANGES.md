@@ -327,8 +327,28 @@ candidate.
 | `Factor("x ^ 2 - (y + z) ^ 2", "x")` | `null` | `(x + y + z) * (x - y - z)` |
 | `Factor("x ^ 2 + 2 * x * y + y ^ 2 - z ^ 2", "x")` | `null` | `(x + y + z) * (x + y - z)` |
 | `Factor("(x + y) * (x + z) * (x + w)", "x")` | `null` | `(x + y) * (w + x) * (x + z)` |
-| `Factor("x ^ 2 + y ^ 2", "x")` | `null` | `null` — irreducible over ℚ |
-| `Factor("x * y + z", "x")` | `null` | `null` — irreducible over ℚ |
+| `Factor("x * y + y * z", "x")` | `null` | `y * (x + z)` |
+| `Factor("a * x + a * y + a * z", "x")` | `null` | `a * (x + y + z)` |
+| `Factor("x ^ 2 * y - y ^ 3", "x")` | `null` | `y * (x + y) * (x - y)` |
+| `Factor("x ^ 2 + y ^ 2", "x")` | `null` | `x ^ 2 + y ^ 2` — irreducible over ℚ |
+| `Factor("x * y + z", "x")` | `null` | `x * y + z` — irreducible over ℚ |
+| `Factor("x ^ 2 - a", "x")` | `null` | `x ^ 2 - a` — irreducible over ℚ |
+| `Factor("x + y", "x")` | `null` | `x + y` — irreducible over ℚ |
+
+**"It does not factor" is an answer, and the input is how it is said.** The substitution does not
+merely fail to find a factorisation; it *proves* there is none. A splitting of the polynomial into
+two parts of positive degree in the main variable maps to a splitting of the one-variable image,
+because the substitution is a ring homomorphism on these monomials — and every splitting of the
+image is one of the subsets the recombination tries. So where nothing recombines, nothing exists.
+
+Reporting that proof as `null` threw away the content along with it: `x * y + y * z` was refused,
+although `y` had already been taken out and `y * (x + z)` is a factorisation. It also disagreed with
+the one-variable path, where `Factor("x ^ 2 + 1", "x")` has always been `x ^ 2 + 1`.
+
+The proof has one precondition and it is now checked. A trial division answers `null` both for "does
+not divide" and for "ran out of room", and only the first is evidence — so where a division was cut
+short by a term or degree budget, the irreducibility claim is withheld and the answer stays a
+refusal.
 
 **It cannot answer wrongly.** The substitution is injective on monomials but not on factorisations,
 so the image may factor further than the polynomial does and a candidate is a guess. Every one is
@@ -389,7 +409,6 @@ the other variables — is now taken out first, using the same multivariate mach
 | `Factor("x ^ 2 * y + x * y", "x")` | `null` | `y * x * (x + 1)` |
 | `Factor("a * x ^ 2 + a * x", "x")` | `null` | `a * x * (x + 1)` |
 | `Factor("x ^ 2 * y ^ 2 - y ^ 2", "x")` | `null` | `y ^ 2 * (x + 1) * (x - 1)` |
-| `Factor("x * y + z", "x")` | `null` | `null` |
 
 **Only a refusal becomes an answer.** Nothing that already factorised changes, because this path
 runs only where the old one returned `null`.

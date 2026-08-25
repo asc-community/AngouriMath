@@ -227,6 +227,60 @@ namespace AngouriMath.Tests.Algebra.Polynomials
         /// degree 35 and 79 against an <c>IntegerPolynomial.MaxDegree</c> of 32; the third is
         /// two variables and past it on its own.
         /// </remarks>
+        /// <summary>
+        /// A polynomial whose primitive part does not factor still has its content taken out, and
+        /// an irreducible one comes back as itself rather than as a refusal.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The substitution answers "this does not factor" by *proving* it: a factorisation into
+        /// two parts of positive degree in the main variable maps to a splitting of the
+        /// one-variable image, and every splitting of the image is one of the subsets the
+        /// recombination tries. Reporting that proof as <see langword="null"/> threw the content
+        /// away with it — <c>x * y + y * z</c> was refused although <c>y * (x + z)</c> is a
+        /// factorisation this path had already found half of.
+        /// </para>
+        /// <para>
+        /// It also disagreed with the one-variable path, which has always handed back
+        /// <c>Factor("x ^ 2 + 1", "x")</c> as <c>x ^ 2 + 1</c>.
+        /// </para>
+        /// </remarks>
+        [Theory]
+        [InlineData("x * y + y * z", "y * (x + z)")]
+        [InlineData("a * x + a * y + a * z", "a * (x + y + z)")]
+        [InlineData("x ^ 2 * y - y ^ 3", "y * (x + y) * (x - y)")]
+        [InlineData("x ^ 2 + y ^ 2", "x ^ 2 + y ^ 2")]
+        [InlineData("x + y", "x + y")]
+        [InlineData("y * (x ^ 2 + y ^ 2)", "y * (x ^ 2 + y ^ 2)")]
+        [InlineData("x ^ 2 - a", "x ^ 2 - a")]
+        [InlineData("x * y + z", "x * y + z")]
+        public void AnIrreducibleRestIsAnAnswerAndKeepsItsContent(string input, string expected)
+        {
+            var factored = MathS.Polynomials.Factor(input.ToEntity(), "x");
+            Assert.NotNull(factored);
+
+            // Numerically rather than as a string, for the reason the content test above gives:
+            // Simplify does not prove a factored form equal to its expansion.
+            var expr = input.ToEntity();
+            var wanted = expected.ToEntity();
+            var variables = expr.Vars.Concat(factored!.Vars).Concat(wanted.Vars).Distinct().ToArray();
+            var random = new Random(20260825);
+            for (var trial = 0; trial < 20; trial++)
+            {
+                Entity got = factored, want = wanted;
+                foreach (var variable in variables)
+                {
+                    Entity value = Math.Round(random.NextDouble() * 6 - 3, 4);
+                    got = got.Substitute(variable, value);
+                    want = want.Substitute(variable, value);
+                }
+                Assert.Equal(
+                    want.EvalNumerical().RealPart.EDecimal.ToDouble(),
+                    got.EvalNumerical().RealPart.EDecimal.ToDouble(),
+                    9);
+            }
+        }
+
         [Theory]
         [InlineData("(x + y + z + w) * (x - y)")]
         [InlineData("(x + y) * (x + z) * (x + w) * (x + v)")]
@@ -302,16 +356,23 @@ namespace AngouriMath.Tests.Algebra.Polynomials
             => Assert.Null(MathS.Polynomials.SquareFreePart(input, "x"));
 
         /// <summary>
-        /// A request outside what the layer can do is refused with <see langword="null"/>, and
-        /// never answered with the input as though it were the result. Handing
-        /// <c>x * y + y</c> back from a factorisation would say that <c>y * (x + 1)</c> does
-        /// not exist, which is a wrong answer and not a graceful failure.
+        /// A request the layer cannot settle is refused with <see langword="null"/>, and never
+        /// answered with the input as though it were the result. Handing <c>x * y + y</c> back
+        /// from a factorisation would say that <c>y * (x + 1)</c> does not exist, which is a
+        /// wrong answer and not a graceful failure.
         /// </summary>
+        /// <remarks>
+        /// The rows are the two ways of not being asked a question this layer can answer: it is
+        /// not a polynomial, or it is past the factoriser's degree bound. Returning the input
+        /// where the substitution has *proved* the polynomial does not factor is a different
+        /// thing and is asserted separately — see
+        /// <see cref="AnIrreducibleRestIsAnAnswerAndKeepsItsContent"/>. What must never happen is
+        /// the input coming back from a question that was never settled, which is what these
+        /// rows pin.
+        /// </remarks>
         [Theory]
-        [InlineData("x ^ 2 + y ^ 2")]                // irreducible over Q in both variables
-        [InlineData("x ^ 2 - a")]                    // a symbolic coefficient is not rational
-        [InlineData("x * y + z")]                    // three variables: the substitution is over two
         [InlineData("sin(x) + 1")]                   // not a polynomial
+        [InlineData("sin(y) * x ^ 2 + 1")]           // nor is a coefficient of one
         [InlineData("x ^ 33 - 1")]                   // past the degree bound of the factoriser
         public void FactorisationRefusesRatherThanReturningTheInput(string input)
             => Assert.Null(MathS.Polynomials.Factor(input, "x"));
