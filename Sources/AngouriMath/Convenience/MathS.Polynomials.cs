@@ -133,10 +133,10 @@ namespace AngouriMath
             /// So the content in <paramref name="variable"/> — the greatest common divisor of the
             /// coefficients, which is a polynomial in the other variables — is taken out first,
             /// using the same multivariate machinery <see cref="Gcd"/> is built from, and what
-            /// remains goes down the ordinary path. Where the content is a constant this has
-            /// nothing to offer and says so, which is the honest answer for
-            /// <c>x ^ 2 - y ^ 2</c>: that one genuinely needs factorisation over ℚ(y) and is not
-            /// what this does.
+            /// remains goes down the ordinary path. Where the content is a constant that path
+            /// has nothing to offer, and <see cref="KroneckerFactorization"/> answers instead —
+            /// <c>x ^ 2 - y ^ 2</c> is <c>(x + y) * (x - y)</c>, which is a factorisation over
+            /// ℚ(y) reached by substitution rather than by lifting.
             /// </para>
             /// </remarks>
             private static Entity? FactorAfterTakingOutTheContent(Entity expr, Variable variable)
@@ -157,12 +157,12 @@ namespace AngouriMath
                 if (poly.DivideExact(content) is not { } primitive)
                     return null;
 
-                // What is left may still have polynomial coefficients, and where it is in two
-                // variables it can be factored anyway -- see BivariateFactorization.
+                // What is left may still have polynomial coefficients, and it can be factored
+                // anyway while the substitution's ceiling allows -- see KroneckerFactorization.
                 var rest = Assemble(
                     PolynomialFactorization.FactorComplete(primitive.ToEntity(variables), variable),
                     variable)
-                    ?? Bivariate(primitive, variables, index, variable);
+                    ?? Kronecker(primitive, variables, index, variable);
                 if (rest is null)
                     return null;
                 return content.IsConstant && content.DivideExact(content) is not null
@@ -177,21 +177,19 @@ namespace AngouriMath
                 => poly.IsConstant && poly.CoefficientOf(0).CompareTo(ERational.One) == 0;
 
             /// <summary>
-            /// The factorisation of a polynomial in exactly two variables, as an expression.
+            /// The factorisation of a polynomial in more than one variable, as an expression.
             /// </summary>
             /// <remarks>
-            /// Kronecker's substitution: see <see cref="BivariateFactorization"/> for what it
+            /// Kronecker's substitution: see <see cref="KroneckerFactorization"/> for what it
             /// does, what it refuses, and why a wrong answer is not among the things it can do.
             /// </remarks>
-            private static Entity? Bivariate(
+            private static Entity? Kronecker(
                 MultivariatePolynomial poly, IReadOnlyList<Variable> variables,
                 IReadOnlyDictionary<Variable, int> index, Variable variable)
             {
-                if (variables.Count != 2)
+                if (variables.Count < 2)
                     return null;
-                var main = index[variable];
-                var other = main == 0 ? 1 : 0;
-                if (BivariateFactorization.Factor(poly, main, other) is not { } factors
+                if (KroneckerFactorization.Factor(poly, index[variable]) is not { } factors
                     || factors.Count < 2)
                     return null;
                 // Repeated factors are collected into a power, as the one-variable path does:
