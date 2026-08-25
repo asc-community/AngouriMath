@@ -345,7 +345,7 @@ namespace AngouriMath
                 if (!PolynomialFactoring.TryGetRationalCoefficients(
                         expr, variable, leastTerms: 1, leastDegree: 1,
                         IntegerPolynomial.MaxDegree, out var rational))
-                    return null;
+                    return MultivariateSquareFreePart(expr, variable);
                 var denominator = EInteger.One;
                 foreach (var coefficient in rational)
                     denominator = coefficient.Denominator
@@ -358,6 +358,50 @@ namespace AngouriMath
                 if (primitive.DivideExact(repeated) is not { } distinct)
                     return null;
                 return distinct.PrimitivePart().ToEntity(variable);
+            }
+
+            /// <summary>
+            /// The same, where the coefficients in <paramref name="variable"/> are polynomials
+            /// themselves rather than rational numbers.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// <c>p / gcd(p, dp/dx)</c> is the square-free part whatever ring the coefficients
+            /// live in — a repeated factor appears in the derivative one time fewer than in the
+            /// polynomial, so dividing by the common part leaves each distinct factor exactly
+            /// once. The univariate path above says exactly that over ℤ. Nothing about it is
+            /// univariate except the representation it was written against, and the multivariate
+            /// one has all three operations: <c>DerivativeIn</c>, the recursive
+            /// <see cref="PolynomialGcd"/> that <see cref="Gcd"/> is already built from, and
+            /// exact division.
+            /// </para>
+            /// <para>
+            /// Reached only where the rational path declined, so nothing that already answered
+            /// can change.
+            /// </para>
+            /// </remarks>
+            private static Entity? MultivariateSquareFreePart(Entity expr, Variable variable)
+            {
+                if (Index(expr, expr, variable) is not var (variables, index))
+                    return null;
+                if (MultivariatePolynomial.TryParse(expr, index) is not { } poly)
+                    return null;
+                var main = index[variable];
+                // A polynomial constant in the variable has no square-free part in it to speak
+                // of, and the univariate path refuses that case too.
+                if (poly.DegreeIn(main) < 1)
+                    return null;
+                var derivative = poly.DerivativeIn(main);
+                if (derivative.IsZero)
+                    return null;
+                var order = new int[variables.Count];
+                for (var i = 0; i < order.Length; i++)
+                    order[i] = i;
+                if (PolynomialGcd.Gcd(poly, derivative, order, 0) is not { } repeated)
+                    return null;
+                if (poly.DivideExact(repeated) is not { } distinct)
+                    return null;
+                return distinct.Normalized().ToEntity(variables);
             }
 
             /// <summary>

@@ -46,6 +46,7 @@ read first.
 | | every node type's own `Stringize()` and `Latexize()` overrides — `Entity.Sumf.Stringize()` and 129 more | declared on each node | declared once on `Entity`; still callable on every node, and an assembly compiled against 2.3.0 keeps working without a rebuild |
 | | `"x + 1 // done".ToEntity()`, and any input whose last line ends in a `//` comment | `UnhandledParseException: extraneous input '/'` | `x + 1` — the comment is skipped, as the block form already was |
 | | `MathS.Polynomials.Factor("x * y + y", "x")`, and any polynomial whose coefficients in the named variable share a common divisor | `null` — a refusal | `y * (x + 1)` |
+| | `MathS.Polynomials.SquareFreePart("(x - y) ^ 2 * (x + y)", "x")`, and any polynomial in more than one variable | `null` — a refusal | `x ^ 2 - y ^ 2` |
 
 ### An equation nothing settled is no longer answered with the empty set
 
@@ -302,6 +303,32 @@ the same precedences this grammar uses — so those needed the same brackets —
 bracketing for. The change only ever adds `\left(`/`\right)` groups, which CSharpMath already
 parses, so nothing downstream needs a matching change
 ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
+
+### The square-free part is taken where the coefficients are polynomials
+
+`MathS.Polynomials.SquareFreePart` refused every polynomial in more than one variable, for the same
+reason `Factor` did: it was written against a representation with rational coefficients.
+
+`p / gcd(p, dp/dx)` is the square-free part whatever ring the coefficients live in — a repeated
+factor appears in the derivative one time fewer than in the polynomial, so dividing by the common
+part leaves each distinct factor exactly once. The multivariate representation has all three
+operations already: `DerivativeIn`, the recursive greatest common divisor that
+`MathS.Polynomials.Gcd` is built from, and exact division.
+
+| | 2.3.0 | now |
+|---|---|---|
+| `SquareFreePart("(x - y) ^ 2 * (x + y)", "x")` | `null` | `x ^ 2 - y ^ 2` |
+| `SquareFreePart("(x - y) ^ 3", "x")` | `null` | `x - y` |
+| `SquareFreePart("(x + a) ^ 2 * (x + b)", "x")` | `null` | `a * b + a * x + b * x + x ^ 2` |
+| `SquareFreePart("x ^ 2 * y ^ 2", "x")` | `null` | `x` |
+| `SquareFreePart("y", "x")` | `null` | `null` |
+
+**The content is dropped, as it always was.** `SquareFreePart("4 * x ^ 2", "x")` is `x` rather than
+`4 * x`, because the univariate path takes the primitive part first. `x ^ 2 * y ^ 2` is `x` for
+exactly that reason, with `y ^ 2` as the content — the existing convention applied to a wider ring,
+not a new one.
+
+Reached only where the rational path declined, so nothing that already answered can change.
 
 ### `Factor` takes out the content instead of refusing
 
