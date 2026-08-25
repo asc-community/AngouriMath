@@ -48,6 +48,7 @@ read first.
 | | `MathS.Polynomials.Factor("x * y + y", "x")`, and any polynomial whose coefficients in the named variable share a common divisor | `null` — a refusal | `y * (x + 1)` |
 | | `MathS.Polynomials.SquareFreePart("(x - y) ^ 2 * (x + y)", "x")`, and any polynomial in more than one variable | `null` — a refusal | `x ^ 2 - y ^ 2` |
 | | `MathS.Polynomials.Factor("x ^ 2 - y ^ 2", "x")`, and polynomials in two variables of small enough bidegree | `null` — a refusal | `(x + y) * (x - y)` |
+| **Silent** | `RewriteRules.Power.ApplyOnce("ln(1 / x)")`, and every `log(_, 1/_)` and `log(1/_, _)` whose argument is not decidably a positive real | `-ln(x)`, which is wrong on the negative reals | `ln(1 / x)`, left alone |
 
 ### An equation nothing settled is no longer answered with the empty set
 
@@ -304,6 +305,30 @@ the same precedences this grammar uses — so those needed the same brackets —
 bracketing for. The change only ever adds `\left(`/`\right)` groups, which CSharpMath already
 parses, so nothing downstream needs a matching change
 ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
+
+### A reciprocal inside a logarithm is no longer moved out unconditionally
+
+`ln(1/b) = -ln(b)` is false on the negative reals, because the principal argument does not negate
+with its logarithm. At `b = -0.63`, `ln(1/b)` is `0.462 + πi` and `-ln(b)` is `0.462 − πi`.
+
+Three arms of `PowerRules` applied it for every `b`, and they now carry the guard their neighbours
+ten lines below already had — `ln(1/b)` is `ln(1) − ln(b)`, so a reciprocal is the *difference* case
+of the logarithm gathering and the same helper answers it. Both ways of earning the rewrite carry
+over: the argument is decidably a positive real, or the limit machinery is reading towards a
+destination and has established the sign on the way.
+
+| | before | now |
+|---|---|---|
+| `RewriteRules.Power.ApplyOnce("ln(1 / x)")` | `-ln(x)` | `ln(1 / x)` |
+| `RewriteRules.Power.ApplyOnce("log(2, 1 / x)")` | `-log(2, x)` | `log(2, 1 / x)` |
+| `RewriteRules.Power.ApplyOnce("log(1 / x, 1 / y)")` | `log(x, y)` | `log(1 / x, 1 / y)` |
+| `RewriteRules.Power.ApplyOnce("ln(1 / 2.5)")` | `-ln(5/2)` | `-ln(5/2)` — the argument is positive |
+
+**`Simplify` is unchanged**, and that is why this went unnoticed: `"ln(1 / x)".Simplify()` was
+`ln(1 / x)` before and after, because the candidate search never picked that branch. So no answer
+from the public simplifier moves. What moves is `RewriteRules.Power` applied on its own, which is
+what [#746](https://github.com/asc-community/AngouriMath/issues/746) tier 2 makes a caller able to
+do ([#1062](https://github.com/asc-community/AngouriMath/issues/1062)).
 
 ### `Factor` factors a polynomial in more than one variable
 
