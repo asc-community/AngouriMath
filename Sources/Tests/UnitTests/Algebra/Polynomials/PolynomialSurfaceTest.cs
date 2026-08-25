@@ -281,6 +281,38 @@ namespace AngouriMath.Tests.Algebra.Polynomials
             }
         }
 
+        /// <summary>
+        /// The other reason a factorisation is declined, and it is not the degree ceiling: the
+        /// substitution's image <b>over-factors</b>, so the recombination is exponential in a
+        /// count the substitution itself inflates.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Every row here factors mathematically and has an image well inside the degree the
+        /// machinery affords — 34 to 56, against a <c>PrimeFieldFactorization.MaxDegree</c> of
+        /// 64. Raising <c>IntegerPolynomial.MaxDegree</c> from 32 to 64 was measured and changes
+        /// none of them, which is why that is not the lever.
+        /// </para>
+        /// <para>
+        /// <c>x ^ 7 - y ^ 7</c> maps to <c>t ^ 7 * (1 - t ^ 49)</c>, whose factors are
+        /// cyclotomic: a two-factor bivariate becomes a one-variable polynomial with many
+        /// irreducibles. Not inflating that count is Hensel lifting with an evaluation
+        /// homomorphism, a different algorithm rather than a larger bound.
+        /// </para>
+        /// <para>
+        /// This test pins the <i>refusal</i>, not the limit. If one of these starts factoring,
+        /// something got better and the row belongs in the theory above.
+        /// </para>
+        /// </remarks>
+        [Theory]
+        [InlineData("x ^ 7 - y ^ 7")]
+        [InlineData("x ^ 6 - y ^ 6")]
+        [InlineData("x ^ 3 - (y + z) ^ 3")]
+        [InlineData("(x ^ 8 + y) * (x ^ 8 + 3 * y)")]
+        [InlineData("(x ^ 2 + y ^ 5) * (x ^ 2 - y ^ 5)")]
+        public void AnImageThatOverFactorsIsRefused(string input)
+            => Assert.Null(MathS.Polynomials.Factor(input.ToEntity(), "x"));
+
         [Theory]
         [InlineData("(x + y + z + w) * (x - y)")]
         [InlineData("(x + y) * (x + z) * (x + w) * (x + v)")]
