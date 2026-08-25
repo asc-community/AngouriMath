@@ -173,12 +173,18 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Multiplies products over sums out.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.Expansion"/>. See the note on
+        /// <see cref="CollapseMultipleFractions"/> for what that costs and why the <c>switch</c>
+        /// stays.
+        /// </remarks>
         public static RewriteRuleSet Expansion { get; } = new(
             nameof(Expansion),
             "Distributes products and powers over sums.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.ExpandRules,
+            Matching.MatchedRules.Expansion.ApplyHere,
             Patterns.ExpandRulesArms);
 
         /// <summary>
@@ -295,23 +301,35 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Divides one polynomial by another, leaving a quotient plus a remainder.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.PolynomialLongDivision"/>. See the note on
+        /// <see cref="CollapseMultipleFractions"/> for what that costs and why the <c>switch</c>
+        /// stays.
+        /// </remarks>
         public static RewriteRuleSet PolynomialLongDivision { get; } = new(
             nameof(PolynomialLongDivision),
             "Divides a polynomial by a polynomial, giving the quotient plus the remainder.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.PolynomialLongDivision,
+            Matching.MatchedRules.PolynomialLongDivision.ApplyHere,
             Patterns.PolynomialLongDivisionArms);
 
         /// <summary>
         /// Puts a quotient of polynomials into lowest terms.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.PolynomialGcdCancellation"/>. See the note on
+        /// <see cref="CollapseMultipleFractions"/> for what that costs and why the <c>switch</c>
+        /// stays.
+        /// </remarks>
         public static RewriteRuleSet PolynomialGcdCancellation { get; } = new(
             nameof(PolynomialGcdCancellation),
             "Cancels the greatest common divisor of a polynomial quotient's numerator and denominator.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.PolynomialGcdCancellation,
+            Matching.MatchedRules.PolynomialGcdCancellation.ApplyHere,
             Patterns.PolynomialGcdCancellationArms);
 
         #endregion
@@ -352,23 +370,35 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Gathers sines and cosines back into the derived functions where that is shorter.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.CollapseTrigonometricFunctions"/>. See the note on
+        /// <see cref="CollapseMultipleFractions"/> for what that costs and why the <c>switch</c>
+        /// stays.
+        /// </remarks>
         public static RewriteRuleSet CollapseTrigonometricFunctions { get; } = new(
             nameof(CollapseTrigonometricFunctions),
             "Recognises a quotient or reciprocal of sines and cosines as a tangent, cotangent, secant or cosecant.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.CollapseTrigonometricFunctions,
+            Matching.MatchedRules.CollapseTrigonometricFunctions.ApplyHere,
             Patterns.CollapseTrigonometricFunctionsArms);
 
         /// <summary>
         /// Opens a trigonometric function of a sum into functions of its terms.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.ExpandTrigonometric"/>. See the note on
+        /// <see cref="CollapseMultipleFractions"/> for what that costs and why the <c>switch</c>
+        /// stays.
+        /// </remarks>
         public static RewriteRuleSet ExpandTrigonometric { get; } = new(
             nameof(ExpandTrigonometric),
             "Expands a sine or cosine of a sum into products of sines and cosines of its terms.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.ExpandTrigonometricRules,
+            Matching.MatchedRules.ExpandTrigonometric.ApplyHere,
             Patterns.ExpandTrigonometricRulesArms);
 
         /// <summary>
@@ -378,12 +408,18 @@ namespace AngouriMath.Core.Transformations
         /// Written out, <c>sin(4x)</c> is far longer than it started, which is why the
         /// simplifier offers the result as a candidate rather than taking it.
         /// </remarks>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.ExpandMultipleAngle"/>. See the note on
+        /// <see cref="CollapseMultipleFractions"/> for what that costs and why the <c>switch</c>
+        /// stays.
+        /// </remarks>
         public static RewriteRuleSet ExpandMultipleAngle { get; } = new(
             nameof(ExpandMultipleAngle),
             "Expands a sine or cosine of an integer multiple of an angle.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.ExpandMultipleAngleRules,
+            Matching.MatchedRules.ExpandMultipleAngle.ApplyHere,
             Patterns.ExpandMultipleAngleRulesArms);
 
         #endregion

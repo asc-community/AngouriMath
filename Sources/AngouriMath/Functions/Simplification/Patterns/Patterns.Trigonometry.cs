@@ -263,7 +263,13 @@ namespace AngouriMath.Functions
             _ => x
         };
 
-        private static bool IsWorthExpanding(Integer n)
+        /// <summary>Whether opening up sin(n x) or cos(n x) is worth the length it costs.</summary>
+        /// <remarks>
+        /// Internal rather than private so that the data form of this set asks the same
+        /// question rather than repeating its bound, which is how two copies of a constant
+        /// start disagreeing.
+        /// </remarks>
+        internal static bool IsWorthExpanding(Integer n)
             => n.EInteger.Abs() >= 2 && n.EInteger.Abs() <= MaxAngleMultiplier;
 
         [AddressableRules]

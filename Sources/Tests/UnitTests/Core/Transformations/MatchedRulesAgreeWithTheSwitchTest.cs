@@ -166,6 +166,71 @@ namespace AngouriMath.Tests.Core.Transformations
                 });
 
         /// <summary>
+        /// The reverse of <see cref="MatchedRules.NormalTrigonometricForm"/>, and the set where
+        /// order is most obviously load-bearing: the two named quotients have to be tried before
+        /// the general reciprocal rules, or <c>sin(x) / cos(x)</c> becomes <c>sin(x) * sec(x)</c>.
+        /// </summary>
+        [Fact]
+        public void CollapseTrigonometricFunctionsAsDataMatchesTheSwitch()
+            => AssertAgrees("CollapseTrigonometricFunctions", Patterns.CollapseTrigonometricFunctions,
+                MatchedRules.CollapseTrigonometricFunctions, leastFirings: 25);
+
+        /// <summary>
+        /// The angle-sum identities, both of whose sides are patterns. The corpus has no sum
+        /// inside a sine, so the shapes are given.
+        /// </summary>
+        [Fact]
+        public void ExpansionAsDataMatchesTheSwitch()
+            => AssertAgrees("Expansion", Patterns.ExpandRules,
+                MatchedRules.Expansion, leastFirings: 5, extra: new[]
+                {
+                    "sin(x + y)", "sin(x - y)", "sin(2 + x)", "sin(x - 1/2)",
+                    "sin(x + y) * cos(x - y)", "sin(sin(x) + cos(y))",
+                });
+
+        /// <summary>
+        /// The doubled-angle identities, keyed on literals — <c>1/2</c> and <c>2</c> — which the
+        /// corpus does build but never in this arrangement.
+        /// </summary>
+        [Fact]
+        public void ExpandTrigonometricAsDataMatchesTheSwitch()
+            => AssertAgrees("ExpandTrigonometric", Patterns.ExpandTrigonometricRules,
+                MatchedRules.ExpandTrigonometric, leastFirings: 5, extra: new[]
+                {
+                    "1/2 * sin(2 * x)", "cos(2 * x)", "cos(2 * y)", "1/2 * sin(2 * y)",
+                    "cos(2 * (x + y))", "1/2 * sin(2 * sin(x))", "cos(3 * x)", "1/3 * sin(2 * x)",
+                });
+
+        /// <summary>
+        /// A predicate on a hole asked through the <c>switch</c>'s own helper, so the two cannot
+        /// disagree about where the multiplier stops being worth expanding.
+        /// </summary>
+        [Fact]
+        public void ExpandMultipleAngleAsDataMatchesTheSwitch()
+            => AssertAgrees("ExpandMultipleAngle", Patterns.ExpandMultipleAngleRules,
+                MatchedRules.ExpandMultipleAngle, leastFirings: 6, extra: new[]
+                {
+                    "sin(2 * x)", "cos(2 * x)", "sin(3 * x)", "cos(5 * x)",
+                    "sin(8 * x)", "cos(9 * x)", "sin(1 * x)", "sin(-3 * x)",
+                    "cos(x * 2)", "sin(2 * (x + y))",
+                });
+
+        /// <summary>
+        /// The two sets whose rule has no side condition because the work that decides whether it
+        /// applies <i>is</i> the rewrite. Agreement here is what says that handing the expression
+        /// back unchanged reads the same as a <c>switch</c> arm falling through.
+        /// </summary>
+        [Fact]
+        public void PolynomialLongDivisionAsDataMatchesTheSwitch()
+            => AssertAgrees("PolynomialLongDivision", Patterns.PolynomialLongDivision,
+                MatchedRules.PolynomialLongDivision, leastFirings: 20);
+
+        [Fact]
+        public void PolynomialGcdCancellationAsDataMatchesTheSwitch()
+            => AssertAgrees("PolynomialGcdCancellation", Patterns.PolynomialGcdCancellation,
+                MatchedRules.PolynomialGcdCancellation, leastFirings: 10);
+
+        /// <summary>
         /// A predicate on a hole that is a mathematical property rather than a sign or a type.
         /// The corpus reaches it rarely, so the shapes are given here as well — a set that fires
         /// four times over a generated corpus is worth checking against cases chosen for it.

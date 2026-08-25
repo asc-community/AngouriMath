@@ -52,6 +52,16 @@ namespace AngouriMath.Core.Transformations.Matching
                 if (!left.BoundNames.Contains(wanted))
                     throw new ArgumentException(
                         $"'{name}' builds '{wanted}', which its pattern does not bind", nameof(right));
+            // And the same failure mode from the other direction. A node type is matchable
+            // without being buildable -- see MatchPattern.Construct -- so a template naming one
+            // is a rule that matches, builds nothing, and is indistinguishable at run time from a
+            // rule that did not apply. It cost an afternoon and a twenty-eight-row agreement
+            // failure before this check existed, which is the argument for the check.
+            if (!right.IsBuildable)
+                throw new ArgumentException(
+                    $"'{name}' has a replacement this cannot build: some node type in it is "
+                    + "matchable but not constructible. Add it to MatchPattern.Construct, or "
+                    + "write the replacement as code.", nameof(right));
         }
 
         /// <summary>

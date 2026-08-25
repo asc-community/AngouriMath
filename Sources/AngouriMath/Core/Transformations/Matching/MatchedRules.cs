@@ -470,5 +470,212 @@ namespace AngouriMath.Core.Transformations.Matching
                 // p the integers below p^k sharing a factor with it are exactly the multiples of
                 // p, of which there are p^(k-1).
                 Soundness.Sound));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.CollapseTrigonometricFunctions"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// The reverse of <see cref="NormalTrigonometricForm"/>, and the pair is worth having as
+        /// data together: they are each other read backwards, and the type says so instead of a
+        /// comment. Order is load-bearing — the two named quotients must be tried before the
+        /// general reciprocal rules, or <c>sin(x) / cos(x)</c> becomes <c>sin(x) * sec(x)</c>
+        /// rather than <c>tan(x)</c>.
+        /// </remarks>
+        internal static MatchedRuleSet CollapseTrigonometricFunctions { get; } = new(
+            nameof(CollapseTrigonometricFunctions),
+
+            // sin(a) / cos(a) -> tan(a). "a" is bound by the numerator and re-matched by the
+            // denominator, which is how the pattern says "of the same argument".
+            new MatchedRule(
+                "sine-over-cosine-is-the-tangent",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Sinf>(MatchPattern.Any("a")),
+                    MatchPattern.Node<Cosf>(MatchPattern.Any("a"))),
+                MatchPattern.Node<Tanf>(MatchPattern.Any("a")),
+                Soundness.SoundUnderAssumptions),
+
+            // cos(a) / sin(a) -> cotan(a)
+            new MatchedRule(
+                "cosine-over-sine-is-the-cotangent",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Cosf>(MatchPattern.Any("a")),
+                    MatchPattern.Node<Sinf>(MatchPattern.Any("a"))),
+                MatchPattern.Node<Cotanf>(MatchPattern.Any("a")),
+                Soundness.SoundUnderAssumptions),
+
+            // a / sin(b) -> a * cosec(b)
+            new MatchedRule(
+                "a-quotient-by-a-sine-is-a-cosecant",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Node<Sinf>(MatchPattern.Any("b"))),
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Node<Cosecantf>(MatchPattern.Any("b"))),
+                Soundness.SoundUnderAssumptions),
+
+            // a / cos(b) -> a * sec(b)
+            new MatchedRule(
+                "a-quotient-by-a-cosine-is-a-secant",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Node<Cosf>(MatchPattern.Any("b"))),
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Node<Secantf>(MatchPattern.Any("b"))),
+                Soundness.SoundUnderAssumptions));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.ExpandRules"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// The angle-sum identities, and both sides of each are patterns — so read backwards they
+        /// are the angle-<i>gathering</i> identities, which the <c>switch</c> would need a second
+        /// set to say.
+        /// </remarks>
+        internal static MatchedRuleSet Expansion { get; } = new(
+            nameof(Expansion),
+
+            // sin(a + b) -> sin(a)cos(b) + sin(b)cos(a)
+            new MatchedRule(
+                "sine-of-a-sum",
+                MatchPattern.Node<Sinf>(
+                    MatchPattern.Node<Sumf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                MatchPattern.Node<Sumf>(
+                    MatchPattern.Node<Mulf>(
+                        MatchPattern.Node<Sinf>(MatchPattern.Any("a")),
+                        MatchPattern.Node<Cosf>(MatchPattern.Any("b"))),
+                    MatchPattern.Node<Mulf>(
+                        MatchPattern.Node<Sinf>(MatchPattern.Any("b")),
+                        MatchPattern.Node<Cosf>(MatchPattern.Any("a")))),
+                // Holds for every complex a and b: the identity is the addition theorem, which
+                // has no branch to fall off.
+                Soundness.Sound),
+
+            // sin(a - b) -> sin(a)cos(b) - sin(b)cos(a)
+            new MatchedRule(
+                "sine-of-a-difference",
+                MatchPattern.Node<Sinf>(
+                    MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                MatchPattern.Node<Minusf>(
+                    MatchPattern.Node<Mulf>(
+                        MatchPattern.Node<Sinf>(MatchPattern.Any("a")),
+                        MatchPattern.Node<Cosf>(MatchPattern.Any("b"))),
+                    MatchPattern.Node<Mulf>(
+                        MatchPattern.Node<Sinf>(MatchPattern.Any("b")),
+                        MatchPattern.Node<Cosf>(MatchPattern.Any("a")))),
+                Soundness.Sound));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.ExpandTrigonometricRules"/>, as data.
+        /// </summary>
+        internal static MatchedRuleSet ExpandTrigonometric { get; } = new(
+            nameof(ExpandTrigonometric),
+
+            // (1/2) * sin(2a) -> sin(a) * cos(a)
+            new MatchedRule(
+                "half-the-sine-of-a-doubled-angle",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Exact(Rational.Create(1, 2)),
+                    MatchPattern.Node<Sinf>(
+                        MatchPattern.Node<Mulf>(
+                            MatchPattern.Exact(Integer.Create(2)),
+                            MatchPattern.Any("a")))),
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Node<Sinf>(MatchPattern.Any("a")),
+                    MatchPattern.Node<Cosf>(MatchPattern.Any("a"))),
+                Soundness.Sound),
+
+            // cos(2a) -> cos(a)^2 - sin(a)^2
+            new MatchedRule(
+                "cosine-of-a-doubled-angle",
+                MatchPattern.Node<Cosf>(
+                    MatchPattern.Node<Mulf>(
+                        MatchPattern.Exact(Integer.Create(2)),
+                        MatchPattern.Any("a"))),
+                MatchPattern.Node<Minusf>(
+                    MatchPattern.Node<Powf>(
+                        MatchPattern.Node<Cosf>(MatchPattern.Any("a")),
+                        MatchPattern.Exact(Integer.Create(2))),
+                    MatchPattern.Node<Powf>(
+                        MatchPattern.Node<Sinf>(MatchPattern.Any("a")),
+                        MatchPattern.Exact(Integer.Create(2)))),
+                Soundness.Sound));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.ExpandMultipleAngleRules"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// The replacement is a Chebyshev-style expansion computed from the multiplier, so it is
+        /// code and the rule does not reverse. The predicate on the hole asks
+        /// <see cref="Functions.Patterns.IsWorthExpanding"/> rather than repeating its bound,
+        /// which is how two copies of a constant start disagreeing.
+        /// </remarks>
+        internal static MatchedRuleSet ExpandMultipleAngle { get; } = new(
+            nameof(ExpandMultipleAngle),
+
+            // sin(n * a) -> the expansion, for a whole n worth expanding
+            new MatchedRule(
+                "sine-of-a-whole-multiple-of-an-angle",
+                MatchPattern.Node<Sinf>(
+                    MatchPattern.Node<Mulf>(
+                        MatchPattern.Any<Integer>("n", Functions.Patterns.IsWorthExpanding),
+                        MatchPattern.Any("a"))),
+                bound => TrigonometricAngleExpansion.ExpandSineArgumentMultiplied(
+                    new Sinf(bound["a"]), new Cosf(bound["a"]),
+                    ((Integer)bound["n"]).EInteger.ToInt32Checked()),
+                Soundness.Sound),
+
+            // cos(n * a) -> the expansion, for a whole n worth expanding
+            new MatchedRule(
+                "cosine-of-a-whole-multiple-of-an-angle",
+                MatchPattern.Node<Cosf>(
+                    MatchPattern.Node<Mulf>(
+                        MatchPattern.Any<Integer>("n", Functions.Patterns.IsWorthExpanding),
+                        MatchPattern.Any("a"))),
+                bound => TrigonometricAngleExpansion.ExpandCosineArgumentMultiplied(
+                    new Sinf(bound["a"]), new Cosf(bound["a"]),
+                    ((Integer)bound["n"]).EInteger.ToInt32Checked()),
+                Soundness.Sound));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.PolynomialLongDivision"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// One rule with <b>no side condition</b>, deliberately. The work that decides whether it
+        /// applies is the division itself, and asking it in a guard would run it twice on a path
+        /// the simplifier takes for every quotient; the helper hands back the expression
+        /// unchanged where it declines, which <see cref="MatchedRuleSet.ApplyHere"/> reads as no
+        /// rewrite exactly as the <c>switch</c>'s own fallthrough does.
+        /// </remarks>
+        internal static MatchedRuleSet PolynomialLongDivision { get; } = new(
+            nameof(PolynomialLongDivision),
+
+            new MatchedRule(
+                "a-quotient-of-polynomials-is-divided-out",
+                MatchPattern.Node<Divf>(MatchPattern.Any("n"), MatchPattern.Any("d")),
+                bound => TreeAnalyzer.PolynomialLongDivision(bound["n"], bound["d"])
+                    is var (divided, remainder)
+                    ? divided + remainder
+                    : new Divf(bound["n"], bound["d"]),
+                Soundness.SoundUnderAssumptions));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.PolynomialGcdCancellation"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// No side condition, for the reason <see cref="PolynomialLongDivision"/> gives: the
+        /// cancellation is the test.
+        /// </remarks>
+        internal static MatchedRuleSet PolynomialGcdCancellation { get; } = new(
+            nameof(PolynomialGcdCancellation),
+
+            new MatchedRule(
+                "a-quotient-of-polynomials-is-put-in-lowest-terms",
+                MatchPattern.Node<Divf>(MatchPattern.Any("n"), MatchPattern.Any("d")),
+                bound => PolynomialGcd.TryCancel(bound["n"], bound["d"], out var cancelled)
+                    ? cancelled
+                    : new Divf(bound["n"], bound["d"]),
+                Soundness.SoundUnderAssumptions));
     }
 }

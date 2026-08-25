@@ -252,6 +252,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     nodeType == typeof(Entity.Cosf) ? new Entity.Cosf(only) :
                     nodeType == typeof(Entity.Tanf) ? new Entity.Tanf(only) :
                     nodeType == typeof(Entity.Cotanf) ? new Entity.Cotanf(only) :
+                    nodeType == typeof(Entity.Secantf) ? new Entity.Secantf(only) :
+                    nodeType == typeof(Entity.Cosecantf) ? new Entity.Cosecantf(only) :
                     nodeType == typeof(Entity.Absf) ? new Entity.Absf(only) :
                     nodeType == typeof(Entity.Signumf) ? new Entity.Signumf(only) :
                     (Entity?)null;
