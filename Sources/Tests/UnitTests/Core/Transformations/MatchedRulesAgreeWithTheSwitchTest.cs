@@ -430,6 +430,42 @@ namespace AngouriMath.Tests.Core.Transformations
                 });
 
         /// <summary>
+        /// <b>The first sets parameterised by something other than the expression</b>, and the
+        /// pair that unblocks six registry entries between them: three canonical orders and three
+        /// common-denominator variants, one per sort level.
+        /// </summary>
+        /// <remarks>
+        /// Checked at every level, because the level is what the rules close over and a set built
+        /// for one is not evidence about another.
+        /// </remarks>
+        // The level is an internal enum, so the theory carries its ordinal: a public test method
+        // cannot take it as a parameter.
+        private static TreeAnalyzer.SortLevel Level(int ordinal) => (TreeAnalyzer.SortLevel)ordinal;
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(2)]
+        public void SortAsDataMatchesTheSwitch(int ordinal)
+        {
+            var level = Level(ordinal);
+            AssertAgrees($"Sort.{level}", Patterns.SortRules(level),
+                MatchedRules.Sort(level), leastFirings: 100);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(2)]
+        public void CommonDenominatorAsDataMatchesTheSwitch(int ordinal)
+        {
+            var level = Level(ordinal);
+            AssertAgrees($"CommonDenominator.{level}",
+                expr => Patterns.FractionCommonDenominatorRules(expr, level),
+                MatchedRules.CommonDenominator(level), leastFirings: 50);
+        }
+
+        /// <summary>
         /// A predicate on a hole that is a mathematical property rather than a sign or a type.
         /// The corpus reaches it rarely, so the shapes are given here as well — a set that fires
         /// four times over a generated corpus is worth checking against cases chosen for it.
