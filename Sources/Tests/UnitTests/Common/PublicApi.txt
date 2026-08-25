@@ -187,6 +187,7 @@ AngouriMath.Core.Transformations.RewriteRule.TryApply(AngouriMath.Entity) : Ango
 AngouriMath.Core.Transformations.RewriteRuleGrowth.Collects : AngouriMath.Core.Transformations.RewriteRuleGrowth
 AngouriMath.Core.Transformations.RewriteRuleGrowth.Expands : AngouriMath.Core.Transformations.RewriteRuleGrowth
 AngouriMath.Core.Transformations.RewriteRuleGrowth.Rearranges : AngouriMath.Core.Transformations.RewriteRuleGrowth
+AngouriMath.Core.Transformations.RewriteRuleGrowth.Unknown : AngouriMath.Core.Transformations.RewriteRuleGrowth
 AngouriMath.Core.Transformations.RewriteRuleGrowth.value__ : System.Int32
 AngouriMath.Core.Transformations.RewriteRuleSet.ApplyOnce(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.Core.Transformations.RewriteRuleSet.AsTransformation() : AngouriMath.Core.Transformations.Transformation

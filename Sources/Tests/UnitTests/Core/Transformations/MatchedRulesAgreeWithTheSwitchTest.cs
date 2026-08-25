@@ -278,6 +278,22 @@ namespace AngouriMath.Tests.Core.Transformations
                 });
 
         /// <summary>
+        /// The set that had no addressable rules at all, because it is an ordinary method with
+        /// branches and locals rather than a <c>switch</c>. Its two rules now come from the data
+        /// form, and this is what says the data form does what the method does.
+        /// </summary>
+        [Fact]
+        public void RationalizeDenominatorAsDataMatchesTheSwitch()
+            => AssertAgrees("RationalizeDenominator", Patterns.RationalizeDenominator,
+                MatchedRules.RationalizeDenominator, leastFirings: 8, extra: new[]
+                {
+                    "1 / (3 - sqrt(5))", "2 / (3 - sqrt(5))", "1 / (5 + sqrt(3))",
+                    "(5 - sqrt(3)) / (5 + sqrt(3))", "1 / (1 + sqrt(2))", "3 / (2 + sqrt(7))",
+                    "1 / (x + sqrt(2))", "1 / (2 + 3)", "sqrt(2) / (1 + sqrt(2))",
+                    "1/2 * (sqrt(2) / 3)", "1/2 * (x / 3)",
+                });
+
+        /// <summary>
         /// A predicate on a hole that is a mathematical property rather than a sign or a type.
         /// The corpus reaches it rarely, so the shapes are given here as well — a set that fires
         /// four times over a generated corpus is worth checking against cases chosen for it.

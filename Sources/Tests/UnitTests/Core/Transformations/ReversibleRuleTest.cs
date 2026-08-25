@@ -108,6 +108,7 @@ namespace AngouriMath.Tests.Core.Transformations
                 {
                     "a-negative-factor-in-a-sum-becomes-a-difference: ReplacementIsCode",
                     "a-negative-integer-power-becomes-a-reciprocal: ReplacementIsCode",
+                    "a-numeric-coefficient-is-gathered-over-a-surd: ReplacementIsCode",
                     "a-plain-factorial-times-the-next-term: ReplacementIsCode",
                     "a-quotient-of-a-plain-factorial-by-a-shifted-one: ReplacementIsCode",
                     "a-quotient-of-a-shifted-factorial-by-a-plain-one: ReplacementIsCode",
@@ -117,6 +118,7 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-shifted-factorial-times-a-bare-term: ReplacementIsCode",
                     "a-shifted-factorial-times-the-next-term: ReplacementIsCode",
                     "a-sum-or-difference-that-is-a-perfect-square: ReplacementIsCode",
+                    "a-two-term-denominator-is-multiplied-by-its-conjugate: ReplacementIsCode",
                     "cosine-of-a-whole-multiple-of-an-angle: ReplacementIsCode",
                     "eulers-totient-of-a-prime-power: ReplacementIsCode",
                     "sine-of-a-whole-multiple-of-an-angle: ReplacementIsCode",

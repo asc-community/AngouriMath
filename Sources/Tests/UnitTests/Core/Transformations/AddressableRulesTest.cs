@@ -279,15 +279,17 @@ namespace AngouriMath.Tests.Core.Transformations
             var without = RewriteRules.All.Where(set => set.Rules.Count == 0)
                 .Select(set => set.Name).OrderBy(name => name, StringComparer.Ordinal).ToList();
 
-            // One left, and it is the only reason left: a rewrite written as a procedure --
-            // branches, locals, a conjugate computed and oriented -- with no arms to read. The two
-            // factorial sets were on this list until it turned out they were not that shape at
-            // all: each was a switch that a statement body and a local function had put out of
-            // reach, and lifting the local function out was the whole of it.
-            Assert.Equal(new[] { "RationalizeDenominator" }, without);
+            // None left. RationalizeDenominator was the last, and it was the only one whose
+            // reason was real: a rewrite written as a procedure -- branches, locals, a conjugate
+            // computed and oriented -- with no arms for the generator to read. It did not become
+            // a `switch`; its rules are read from its data form instead, through
+            // MatchedRuleSet.AsAddressable, which is the other half of #825. The two factorial
+            // sets were on this list before it, and were not that shape at all: each was a switch
+            // that a statement body and a local function had put out of reach.
+            Assert.Empty(without);
 
-            Assert.Equal(29, withRules.Count);
-            Assert.Equal(405, withRules.Sum(set => set.Rules.Count));
+            Assert.Equal(30, withRules.Count);
+            Assert.Equal(407, withRules.Sum(set => set.Rules.Count));
         }
 
         /// <summary>
@@ -385,14 +387,20 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.Equal(step.After, step.Rule.TryApply(step.Before));
         }
 
+        /// <summary>
+        /// The set that used to have no addressable rules now names the one that fired.
+        /// </summary>
+        /// <remarks>
+        /// This test asserted the opposite until <c>RationalizeDenominator</c> became data: that a
+        /// set with no arms still records its step, with <c>step.Rule</c> null. It carried a note
+        /// saying the premise was stated rather than assumed, <i>"if this set ever becomes
+        /// addressable the test would otherwise keep passing while testing nothing at all"</i> —
+        /// which is exactly what happened, and the note is why it failed rather than went quiet.
+        /// </remarks>
         [Fact]
-        public void ASetWithNoAddressableRulesStillRecordsItsStep()
+        public void TheLastSetWithoutArmsNowNamesTheRuleThatFired()
         {
-            // Stated rather than assumed: if this set ever becomes addressable the test would
-            // otherwise keep passing while testing nothing at all. It has already happened twice
-            // -- CanonicalOrderExact, then InvertNegativePowers, then CollapseMultipleFractions --
-            // so the assertion is load-bearing rather than decorative.
-            Assert.Empty(RewriteRules.RationalizeDenominator.Rules);
+            Assert.NotEmpty(RewriteRules.RationalizeDenominator.Rules);
 
             using var recording = RewriteRecording.Start();
             RewriteRules.RationalizeDenominator.ApplyOnce("1 / (3 - sqrt(5))".ToEntity());
@@ -400,7 +408,12 @@ namespace AngouriMath.Tests.Core.Transformations
 
             var step = Assert.Single(recording.Steps);
             Assert.Equal(RewriteRules.RationalizeDenominator, step.RuleSet);
-            Assert.Null(step.Rule);
+            Assert.NotNull(step.Rule);
+            Assert.Equal("a-two-term-denominator-is-multiplied-by-its-conjugate", step.Rule!.Name);
+            // Rendered from the pattern rather than copied from source text, which is what a rule
+            // written as data has instead of a `switch` arm's syntax.
+            Assert.Equal("Divf(var num, var den)", step.Rule.PatternSource);
+            Assert.Equal(RewriteRuleGrowth.Unknown, step.Rule.Growth);
         }
     }
 }
