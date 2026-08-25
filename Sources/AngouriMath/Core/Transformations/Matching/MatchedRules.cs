@@ -777,5 +777,37 @@ namespace AngouriMath.Core.Transformations.Matching
                     new Mulf(new Factorialf(bound["x"] + bound["a"]), bound["y"]),
                     bound["x"], bound["y"], (Number)bound["a"], Integer.Create(0)),
                 Soundness.SoundUnderAssumptions));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.PerfectSquareRules"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// One rule, and it is here to settle a question rather than for its own sake. The
+        /// <c>switch</c> arm is <c>x is Sumf or Minusf</c> — an <b>alternation of node types</b>,
+        /// which <see cref="MatchPattern.Node{T}"/> cannot say and which was recorded as needing
+        /// an addition to the matcher.
+        /// </para>
+        /// <para>
+        /// <b>It does not.</b> A typed hole with a predicate says it:
+        /// <c>Any&lt;Entity&gt;(name, e =&gt; e is Sumf or Minusf)</c> matches either and binds the
+        /// whole node, which is exactly what the arm does. The same shape covers every other
+        /// construct on that list — <c>var x and not Integer(1)</c> is a predicate,
+        /// <c>Rational and not Integer</c> is a predicate on a typed hole, and
+        /// <c>not Set and not Matrix</c> is a predicate. So the matcher was never the thing
+        /// standing in the way of those sets.
+        /// </para>
+        /// </remarks>
+        internal static MatchedRuleSet PerfectSquare { get; } = new(
+            nameof(PerfectSquare),
+
+            new MatchedRule(
+                "a-sum-or-difference-that-is-a-perfect-square",
+                MatchPattern.Any<Entity>("x", node => node is Sumf or Minusf),
+                bound => Functions.Patterns.CollapseToPerfectSquare(bound["x"]) ?? bound["x"],
+                // sqrt(u)^2 is u for every complex u, so the identity itself is unconditional.
+                // What is not is the test for whether the cross term matches, which needs
+                // Simplify -- see the remark on Patterns.CollapseToPerfectSquare.
+                Soundness.SoundUnderAssumptions));
     }
 }

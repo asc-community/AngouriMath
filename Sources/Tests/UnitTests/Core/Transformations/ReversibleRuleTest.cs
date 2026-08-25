@@ -116,6 +116,7 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-quotient-of-shifted-factorials: ReplacementIsCode",
                     "a-shifted-factorial-times-a-bare-term: ReplacementIsCode",
                     "a-shifted-factorial-times-the-next-term: ReplacementIsCode",
+                    "a-sum-or-difference-that-is-a-perfect-square: ReplacementIsCode",
                     "cosine-of-a-whole-multiple-of-an-angle: ReplacementIsCode",
                     "eulers-totient-of-a-prime-power: ReplacementIsCode",
                     "sine-of-a-whole-multiple-of-an-angle: ReplacementIsCode",
