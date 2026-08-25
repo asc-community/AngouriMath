@@ -22,7 +22,8 @@ namespace AngouriMath.Functions
         /// <see cref="Core.Transformations.RewriteRuleSet.Rules"/> and
         /// <a href="https://github.com/asc-community/AngouriMath/issues/825">#825</a>.
         /// </remarks>
-        private static Entity CancelFactorials(Entity whole, Entity x, Entity x2, Number num, Number den)
+        /// <remarks>Internal so that the data form of this set calls it rather than repeating it.</remarks>
+        internal static Entity CancelFactorials(Entity whole, Entity x, Entity x2, Number num, Number den)
         {
             static Entity Add(Entity a, Number b) =>
                 b is Integer(0) ? a : a + b;
@@ -108,7 +109,8 @@ namespace AngouriMath.Functions
         /// <paramref name="whole"/> where it is not. A static method for the same reason
         /// <see cref="CancelFactorials"/> is one.
         /// </summary>
-        private static Entity GatherFactorial(Entity whole, Entity x, Entity x2, Number factConst, Number @const) =>
+        /// <remarks>Internal so that the data form of this set calls it rather than repeating it.</remarks>
+        internal static Entity GatherFactorial(Entity whole, Entity x, Entity x2, Number factConst, Number @const) =>
             x == x2 && factConst + 1 == @const ? new Factorialf(x + @const) : whole;
     }
 }

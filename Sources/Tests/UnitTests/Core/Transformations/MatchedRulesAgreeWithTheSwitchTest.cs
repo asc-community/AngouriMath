@@ -231,6 +231,37 @@ namespace AngouriMath.Tests.Core.Transformations
                 MatchedRules.PolynomialGcdCancellation, leastFirings: 10);
 
         /// <summary>
+        /// <b>Eight arms against three rules</b>, and this is the test that says the collapse is
+        /// sound. Four of the eight are one rule written for every way a sum can be spelled, which
+        /// <c>Commutative</c> says once — but a commutative pattern may bind the other way round
+        /// where both children fit both holes, and only agreement over generated input settles
+        /// whether that ever changes the answer.
+        /// </summary>
+        [Fact]
+        public void ExpandFactorialDivisionsAsDataMatchesTheSwitch()
+            => AssertAgrees("ExpandFactorialDivisions", Patterns.ExpandFactorialDivisions,
+                MatchedRules.ExpandFactorialDivisions, leastFirings: 4, extra: new[]
+                {
+                    "(x + 3)! / x!", "x! / (x + 3)!", "(3 + x)! / x!", "x! / (3 + x)!",
+                    "(x + 3)! / (x + 1)!", "(3 + x)! / (1 + x)!", "(x + 3)! / (1 + x)!",
+                    "(x + 100)! / x!", "(2 + 3)! / (2 + 1)!", "(x + 1/2)! / x!",
+                    "(y + 2)! / (x + 1)!", "x! / y!", "(x + 2)! / (x + 2)!",
+                });
+
+        /// <summary>
+        /// The same eight-into-three collapse on the multiplicative side.
+        /// </summary>
+        [Fact]
+        public void FactorizeFactorialMultiplicationsAsDataMatchesTheSwitch()
+            => AssertAgrees("FactorizeFactorialMultiplications", Patterns.FactorizeFactorialMultiplications,
+                MatchedRules.FactorizeFactorialMultiplications, leastFirings: 4, extra: new[]
+                {
+                    "(x - 1)! * x", "x! * (x + 1)", "x! * (1 + x)", "(1 + x)! * (x + 2)",
+                    "(x + 1)! * (x + 2)", "(x + 1)! * (2 + x)", "(x + 2)! * (x + 1)",
+                    "(2 + 3)! * (2 + 4)", "x! * y", "(x + 1)! * y", "x! * (x + 2)",
+                });
+
+        /// <summary>
         /// A predicate on a hole that is a mathematical property rather than a sign or a type.
         /// The corpus reaches it rarely, so the shapes are given here as well — a set that fires
         /// four times over a generated corpus is worth checking against cases chosen for it.
