@@ -13,13 +13,14 @@ namespace AngouriMath.Functions
 {
     internal static partial class Patterns
     {
-        private static bool IsLogic(Entity a)
+        /// <remarks>Internal so the data form of this set asks the same question.</remarks>
+        internal static bool IsLogic(Entity a)
             => a is Statement or Variable or Providedf;
 
-        private static bool IsLogic(Entity a, Entity b)
+        internal static bool IsLogic(Entity a, Entity b)
             => IsLogic(a) && IsLogic(b);
 
-        private static bool IsLogic(Entity a, Entity b, Entity c)
+        internal static bool IsLogic(Entity a, Entity b, Entity c)
             => IsLogic(a, b) && IsLogic(c);
 
         [AddressableRules]

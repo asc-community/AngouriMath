@@ -450,12 +450,19 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// The rules of boolean algebra.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.Boolean"/>, where its thirty-six arms are sixteen
+        /// rules. Distributivity is written eight times in the <c>switch</c> and absorption
+        /// another eight, and a commutative pattern at both levels says each once — which
+        /// also completes three orientations of absorption the arms never wrote out.
+        /// </remarks>
         public static RewriteRuleSet Boolean { get; } = new(
             nameof(Boolean),
             "Applies the identities of boolean algebra to conjunctions, disjunctions and negations.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.BooleanRules,
+            Matching.MatchedRules.Boolean.ApplyHere,
             Patterns.BooleanRulesArms);
 
         /// <summary>

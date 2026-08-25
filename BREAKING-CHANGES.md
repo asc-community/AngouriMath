@@ -51,6 +51,7 @@ read first.
 | | a `switch` over `RewriteRuleGrowth` with no default arm | compiled | does not compile — there is a fourth value, `Unknown` |
 | **Silent** | `RewriteRules.RationalizeDenominator.Rules` | `[]` — the registry could not read the set | its two rules, addressable and named |
 | **Silent** | `RewriteRules.Power.ApplyOnce("ln(1 / x)")`, and every `log(_, 1/_)` and `log(1/_, _)` whose argument is not decidably a positive real | `-ln(x)`, which is wrong on the negative reals | `ln(1 / x)`, left alone |
+| **Silent** | `RewriteRules.Boolean.ApplyOnce("a and b or a")`, and two more orientations of absorption | left alone — the arm for that orientation was never written | `a` |
 
 ### An equation nothing settled is no longer answered with the empty set
 
@@ -345,6 +346,28 @@ against the new assembly until it handles the fourth case.
 
 It appears wherever a rule's replacement is code, which today is `RationalizeDenominator` and the
 one-way rules of the sets already expressed as data.
+### `RewriteRules.Boolean` absorbs in three orientations it used to miss
+
+Absorption is written eight times in `Patterns.BooleanRules`, once for each way the shared operand
+can sit inside two commutative pairs — and three of the ways were never written. Expressed as data
+the law is **one commutative rule**, which covers all of them.
+
+| | before | now |
+|---|---|---|
+| `RewriteRules.Boolean.ApplyOnce("a and b or a")` | `a and b or a` | `a` |
+| `RewriteRules.Boolean.ApplyOnce("(a or b) and a")` | `(a or b) and a` | `a` |
+| `RewriteRules.Boolean.ApplyOnce("a or b and not a")` | `a or b and not a` | `a or b` |
+
+Each is a correct absorption: `(a ∧ b) ∨ a` is `a`, and `a ∨ (b ∧ ¬a)` is `a ∨ b`.
+
+**`Simplify` is unchanged** — it reached all three already, because the canonical order puts the
+operands into a fixed arrangement before the rules run, so the orientations the arms missed were
+never the ones it was handed. What moves is `RewriteRules.Boolean` applied on its own.
+
+The same file already carried a comment about this class of gap, on the excluded-middle rule:
+*"The same law with the operands the other way round. `or` is commutative, so leaving this out made
+the answer depend on which side the negation was written."* It was fixed there for one rule and left
+for the rest.
 
 ### `Factor` factors a polynomial in more than one variable
 
