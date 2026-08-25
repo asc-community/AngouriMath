@@ -965,5 +965,219 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any("x"))),
                 bound => -(bound["y"] / ((-(Real)bound["n"]) * bound["x"])),
                 Soundness.Sound));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.BooleanRules"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Thirty-six arms become sixteen</b>, and this set is why
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/248">#248</a> is worth
+        /// having. Distributivity is written <b>eight times</b> in the <c>switch</c> — both
+        /// distributive laws, each for the four ways the shared operand can sit inside two
+        /// commutative pairs — and absorption another eight. A commutative pattern at both levels
+        /// says each of those once.
+        /// </para>
+        /// <para>
+        /// <b>Order is load-bearing throughout.</b> Excluded middle is tried before the general
+        /// <c>¬a ∨ b = a → b</c>, which would otherwise swallow it; and that general rule comes
+        /// before the constant-folding rules, so <c>¬x ∨ True</c> is <c>x → True</c> and not
+        /// <c>True</c>. Both orderings are the <c>switch</c>'s, kept.
+        /// </para>
+        /// <para>
+        /// Every rule asks <see cref="Functions.Patterns.IsLogic(Entity)"/> of what it binds, because
+        /// these laws are about statements and a bare variable under the default reading is not
+        /// one. That is a guard over several bindings, which no predicate on a single hole can
+        /// express.
+        /// </para>
+        /// </remarks>
+        internal static MatchedRuleSet Boolean { get; } = new(
+            nameof(Boolean),
+
+            // False -> b  is  True
+            new MatchedRule(
+                "anything-follows-from-a-falsehood",
+                MatchPattern.Node<Impliesf>(
+                    MatchPattern.Exact(Entity.Boolean.False), MatchPattern.Any("b")),
+                bound => Entity.Boolean.True.Provided(bound["b"].DomainCondition),
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["b"])),
+
+            // De Morgan, both ways round
+            new MatchedRule(
+                "a-conjunction-of-negations-is-a-negated-disjunction",
+                MatchPattern.Node<Andf>(
+                    MatchPattern.Node<Notf>(MatchPattern.Any("a")),
+                    MatchPattern.Node<Notf>(MatchPattern.Any("b"))),
+                bound => !(bound["a"] | bound["b"]),
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])),
+
+            new MatchedRule(
+                "a-disjunction-of-negations-is-a-negated-conjunction",
+                MatchPattern.Node<Orf>(
+                    MatchPattern.Node<Notf>(MatchPattern.Any("a")),
+                    MatchPattern.Node<Notf>(MatchPattern.Any("b"))),
+                bound => !(bound["a"] & bound["b"]),
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])),
+
+            // Excluded middle, either way round. Before the implication rule below, which would
+            // otherwise take it -- and conditional, because a proposition without a truth value
+            // has no excluded middle: `i < 0` is NaN.
+            // https://github.com/asc-community/AngouriMath/issues/876
+            new MatchedRule(
+                "a-statement-or-its-negation-is-true-where-it-has-a-truth-value",
+                MatchPattern.Commutative<Orf>(
+                    MatchPattern.Node<Notf>(MatchPattern.Any("a")), MatchPattern.Any("a")),
+                bound => Entity.Boolean.True.Provided(Functions.Patterns.TruthCondition(bound["a"])),
+                Soundness.SoundUnderAssumptions,
+                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+
+            // Not commutative: `a or not b` is not an implication of anything.
+            new MatchedRule(
+                "a-negation-or-something-is-an-implication",
+                MatchPattern.Node<Orf>(
+                    MatchPattern.Node<Notf>(MatchPattern.Any("a")), MatchPattern.Any("b")),
+                bound => bound["a"].Implies(bound["b"]),
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])),
+
+            // Idempotence
+            new MatchedRule(
+                "a-conjunction-with-itself-is-itself",
+                MatchPattern.Node<Andf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                bound => bound["a"],
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+
+            new MatchedRule(
+                "a-disjunction-with-itself-is-itself",
+                MatchPattern.Node<Orf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                bound => bound["a"],
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+
+            new MatchedRule(
+                "a-statement-implies-itself",
+                MatchPattern.Node<Impliesf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                bound => Entity.Boolean.True,
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+
+            new MatchedRule(
+                "a-statement-differs-from-itself-nowhere",
+                MatchPattern.Node<Xorf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                bound => Entity.Boolean.False.Provided(bound["a"].DomainCondition),
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+
+            new MatchedRule(
+                "a-double-negation-cancels",
+                MatchPattern.Node<Notf>(MatchPattern.Node<Notf>(MatchPattern.Any("a"))),
+                bound => bound["a"],
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+
+            // Constants, after the implication rule above: `not x or True` is `x -> True`.
+            new MatchedRule(
+                "a-disjunction-with-a-truth-is-true",
+                MatchPattern.Node<Orf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                bound => Entity.Boolean.True
+                    .Provided(bound["a"].DomainCondition).Provided(bound["b"].DomainCondition),
+                Soundness.Sound,
+                when: bound => (bound["a"] == Entity.Boolean.True || bound["b"] == Entity.Boolean.True)
+                               && Functions.Patterns.IsLogic(bound["a"], bound["b"])),
+
+            new MatchedRule(
+                "a-conjunction-with-a-falsehood-is-false",
+                MatchPattern.Node<Andf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                bound => Entity.Boolean.False
+                    .Provided(bound["a"].DomainCondition).Provided(bound["b"].DomainCondition),
+                Soundness.Sound,
+                when: bound => (bound["a"] == Entity.Boolean.False || bound["b"] == Entity.Boolean.False)
+                               && Functions.Patterns.IsLogic(bound["a"], bound["b"])),
+
+            // Distributivity. Eight arms of the switch, two rules here: commutative at both
+            // levels finds the shared operand wherever it sits.
+            new MatchedRule(
+                "a-disjunction-of-conjunctions-sharing-an-operand-distributes",
+                MatchPattern.Commutative<Orf>(
+                    MatchPattern.Commutative<Andf>(MatchPattern.Any("k"), MatchPattern.Any("p")),
+                    MatchPattern.Commutative<Andf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
+                bound => bound["k"] & (bound["p"] | bound["q"]),
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["k"], bound["p"], bound["q"])),
+
+            new MatchedRule(
+                "a-conjunction-of-disjunctions-sharing-an-operand-distributes",
+                MatchPattern.Commutative<Andf>(
+                    MatchPattern.Commutative<Orf>(MatchPattern.Any("k"), MatchPattern.Any("p")),
+                    MatchPattern.Commutative<Orf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
+                bound => bound["k"] | (bound["p"] & bound["q"]),
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["k"], bound["p"], bound["q"])),
+
+            // Absorption, and the absorption that leaves something behind. Four arms each in the
+            // switch, and the negated form four more.
+            new MatchedRule(
+                "a-disjunction-absorbs-a-conjunction-it-shares-an-operand-with",
+                MatchPattern.Commutative<Orf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Commutative<Andf>(MatchPattern.Any("a"), MatchPattern.Any("_rest"))),
+                bound => bound["a"],
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+
+            new MatchedRule(
+                "a-conjunction-absorbs-a-disjunction-it-shares-an-operand-with",
+                MatchPattern.Commutative<Andf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Commutative<Orf>(MatchPattern.Any("a"), MatchPattern.Any("_rest"))),
+                bound => bound["a"],
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+
+            new MatchedRule(
+                "a-disjunction-drops-a-negated-copy-of-its-other-operand",
+                MatchPattern.Commutative<Orf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Commutative<Andf>(
+                        MatchPattern.Node<Notf>(MatchPattern.Any("a")), MatchPattern.Any("b"))),
+                bound => bound["a"] | bound["b"],
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+
+            new MatchedRule(
+                "a-conjunction-drops-a-negated-copy-of-its-other-operand",
+                MatchPattern.Commutative<Andf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Commutative<Orf>(
+                        MatchPattern.Node<Notf>(MatchPattern.Any("a")), MatchPattern.Any("b"))),
+                bound => bound["a"] & bound["b"],
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+
+            // Exclusive disjunction, written four ways in the switch.
+            new MatchedRule(
+                "one-and-not-the-other-either-way-round-is-an-exclusive-disjunction",
+                MatchPattern.Commutative<Orf>(
+                    MatchPattern.Commutative<Andf>(
+                        MatchPattern.Any("a"), MatchPattern.Node<Notf>(MatchPattern.Any("b"))),
+                    MatchPattern.Commutative<Andf>(
+                        MatchPattern.Any("b"), MatchPattern.Node<Notf>(MatchPattern.Any("a")))),
+                bound => bound["a"] ^ bound["b"],
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])),
+
+            // Contraposition
+            new MatchedRule(
+                "an-implication-between-negations-turns-round",
+                MatchPattern.Node<Impliesf>(
+                    MatchPattern.Node<Notf>(MatchPattern.Any("a")),
+                    MatchPattern.Node<Notf>(MatchPattern.Any("b"))),
+                bound => bound["b"].Implies(bound["a"]),
+                Soundness.Sound,
+                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])));
     }
 }

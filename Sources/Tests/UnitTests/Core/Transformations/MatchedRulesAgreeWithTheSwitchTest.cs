@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath;
@@ -75,7 +76,7 @@ namespace AngouriMath.Tests.Core.Transformations
 
         private static void AssertAgrees(
             string what, System.Func<Entity, Entity> bySwitch, MatchedRuleSet byData, int leastFirings,
-            string[]? extra = null)
+            string[]? extra = null, string[]? firesWhereTheSwitchDoesNot = null)
         {
             var corpus = Corpus();
             Assert.True(corpus.Count > 500, $"the corpus is only {corpus.Count} expressions");
@@ -87,15 +88,27 @@ namespace AngouriMath.Tests.Core.Transformations
                     corpus.Add(source.ToEntity());
 
             var disagreements = new List<string>();
+            var extraFirings = new List<string>();
             var fired = 0;
             foreach (var expr in corpus)
             {
                 var expected = bySwitch(expr);
                 var actual = byData.ApplyHere(expr);
                 if (!expected.Equals(expr)) fired++;
-                if (!expected.Equals(actual))
-                    disagreements.Add($"{expr.Stringize()}: switch gave {expected.Stringize()}, "
-                        + $"data gave {actual.Stringize()}");
+                if (expected.Equals(actual))
+                    continue;
+                // A rule expressed commutatively can fire where the `switch` misses an
+                // orientation it never wrote out. That is a change rather than a disagreement,
+                // and it is only allowed where the caller names the shape it happens on -- so a
+                // silent divergence is still a failure and a known one is a list to read.
+                if (expected.Equals(expr) && firesWhereTheSwitchDoesNot is not null
+                    && firesWhereTheSwitchDoesNot.Contains(expr.Stringize()))
+                {
+                    extraFirings.Add(expr.Stringize());
+                    continue;
+                }
+                disagreements.Add($"{expr.Stringize()}: switch gave {expected.Stringize()}, "
+                    + $"data gave {actual.Stringize()}");
             }
 
             // The set has to actually fire, or agreement is the agreement of two things that
@@ -105,6 +118,13 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.True(disagreements.Count == 0,
                 $"{what}: {disagreements.Count} of {corpus.Count} disagreed:\n"
                 + string.Join("\n", disagreements.Take(10)));
+
+            // The other direction, so a named shape cannot outlive the gap it describes: if the
+            // `switch` learns the orientation, this list is wrong and says so.
+            if (firesWhereTheSwitchDoesNot is not null)
+                Assert.Equal(
+                    firesWhereTheSwitchDoesNot.OrderBy(one => one, StringComparer.Ordinal).ToArray(),
+                    extraFirings.Distinct().OrderBy(one => one, StringComparer.Ordinal).ToArray());
         }
 
         [Fact]
@@ -302,6 +322,44 @@ namespace AngouriMath.Tests.Core.Transformations
         public void NumericNeatAsDataMatchesTheSwitch()
             => AssertAgrees("NumericNeat", Patterns.NumericNeatRules,
                 MatchedRules.NumericNeat, leastFirings: 200);
+
+        /// <summary>
+        /// <b>Thirty-six arms against sixteen rules</b>, and the set #248 is for. Distributivity
+        /// is written eight times in the <c>switch</c> and absorption another eight, because a C#
+        /// pattern cannot say "either way round" at two levels at once.
+        /// </summary>
+        /// <remarks>
+        /// Boolean shapes are supplied on top of the corpus: the generated grammar builds
+        /// arithmetic, so <c>and</c>, <c>or</c>, <c>not</c>, <c>xor</c> and <c>implies</c> reach
+        /// this set only through what is named here.
+        /// </remarks>
+        [Fact]
+        public void BooleanAsDataMatchesTheSwitch()
+            => AssertAgrees("Boolean", Patterns.BooleanRules,
+                MatchedRules.Boolean, leastFirings: 20, extra: new[]
+                {
+                    "not a and not b", "not a or not b", "not a or a", "a or not a",
+                    "not a or b", "a and a", "a or a", "a implies a", "a xor a", "not not a",
+                    "a or true", "true or a", "a and false", "false and a", "false implies a",
+                    "(a and b) or (a and c)", "(b and a) or (a and c)", "(a and b) or (c and a)",
+                    "(b and a) or (c and a)",
+                    "(a or b) and (a or c)", "(b or a) and (a or c)", "(a or b) and (c or a)",
+                    "(b or a) and (c or a)",
+                    "a or (a and b)", "a and (a or b)", "(a and b) or a", "(a or b) and a",
+                    "a or (not a and b)", "a and (not a or b)", "a or (b and not a)",
+                    "(not a and b) or a", "(a and not b) or (b and not a)",
+                    "(not b and a) or (b and not a)", "(a and not b) or (not a and b)",
+                    "not a implies not b", "a implies b", "a and b", "a or b", "not a",
+                },
+                // Three shapes where the data form fires and the `switch` does not, because the
+                // `switch` wrote some orientations of absorption and not others. Each is a
+                // correct absorption -- (a and b) or a is a, and a or (b and not a) is a or b --
+                // so this is the commutative form being complete where the arms were not, and it
+                // is named here rather than waved through.
+                firesWhereTheSwitchDoesNot: new[]
+                {
+                    "a and b or a", "(a or b) and a", "a or b and not a",
+                });
 
         /// <summary>
         /// A predicate on a hole that is a mathematical property rather than a sign or a type.
