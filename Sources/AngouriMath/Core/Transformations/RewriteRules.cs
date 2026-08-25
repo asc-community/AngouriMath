@@ -83,23 +83,35 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Turns a negative power into a quotient: <c>a * b ^ (-1)</c> becomes <c>a / b</c>.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.InvertNegativePowers"/>. See the note on
+        /// <see cref="CollapseMultipleFractions"/> for what that costs and why the <c>switch</c>
+        /// stays.
+        /// </remarks>
         public static RewriteRuleSet InvertNegativePowers { get; } = new(
             nameof(InvertNegativePowers),
             "Rewrites negative powers as quotients.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.InvertNegativePowers,
+            Matching.MatchedRules.InvertNegativePowers.ApplyHere,
             Patterns.InvertNegativePowersArms);
 
         /// <summary>
         /// Brings a negative numeric factor out in front of the term it multiplies.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.InvertNegativeMultipliers"/>. See the note on
+        /// <see cref="CollapseMultipleFractions"/> for what that costs and why the <c>switch</c>
+        /// stays.
+        /// </remarks>
         public static RewriteRuleSet InvertNegativeMultipliers { get; } = new(
             nameof(InvertNegativeMultipliers),
             "Moves a negative numeric factor out of a product into the sign of the term.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.InvertNegativeMultipliers,
+            Matching.MatchedRules.InvertNegativeMultipliers.ApplyHere,
             Patterns.InvertNegativeMultipliersArms);
 
         /// <summary>
