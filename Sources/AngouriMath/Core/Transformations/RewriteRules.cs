@@ -196,12 +196,18 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Takes common factors back out of a sum.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.Factorization"/>, where its twenty-two arms are
+        /// eleven rules. Taking a common factor out is written four times for a sum and four
+        /// for a difference, and a commutative pattern says each once.
+        /// </remarks>
         public static RewriteRuleSet Factorization { get; } = new(
             nameof(Factorization),
             "Gathers common factors out of sums.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.FactorizeRules,
+            Matching.MatchedRules.Factorization.ApplyHere,
             Patterns.FactorizeRulesArms);
 
         /// <summary>
