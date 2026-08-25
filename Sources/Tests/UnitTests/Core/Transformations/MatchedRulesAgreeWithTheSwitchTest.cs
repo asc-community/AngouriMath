@@ -381,6 +381,36 @@ namespace AngouriMath.Tests.Core.Transformations
                 });
 
         /// <summary>
+        /// <b>Forty-three arms against thirty-three rules</b>, and the set with the most
+        /// conditions: the interval guards of #884 and #887 are per rule here rather than per
+        /// set, which is what the soundness field wanted all along.
+        /// </summary>
+        [Fact]
+        public void TrigonometricAsDataMatchesTheSwitch()
+            => AssertAgrees("Trigonometric", Patterns.TrigonometricRules,
+                MatchedRules.Trigonometric, leastFirings: 20, extra: new[]
+                {
+                    "sin(x) * cos(x)", "cos(x) * sin(x)", "arcsin(x) + arccos(x)",
+                    "arccos(x) + arcsin(x)", "arctan(1) + arccotan(1)", "arctan(-1) + arccotan(-1)",
+                    "arctan(x) + arccotan(x)", "arctan(1/2) + arctan(1/3)", "arctan(2) + arctan(3)",
+                    "arctan(sqrt(3))", "arctan(1 / sqrt(3))",
+                    "sin(2 * x) * cosec(x)", "cosec(x) * sin(2 * x)",
+                    "tan(x) * cotan(x)", "cotan(x) * tan(x)",
+                    "arcsin(sin(1))", "arcsin(sin(3))", "arccos(cos(1))", "arccos(cos(4))",
+                    "arctan(tan(1))", "arccotan(cotan(1))", "arccotan(cotan(0))",
+                    "sin(arcsin(x))", "cos(arccos(x))", "tan(arctan(x))", "cotan(arccotan(x))",
+                    "sin(x) ^ 2 + cos(x) ^ 2", "cos(x) ^ 2 + sin(x) ^ 2",
+                    "1 - sin(x) ^ 2", "1 - cos(x) ^ 2",
+                    "1 + tan(x) ^ 2", "tan(x) ^ 2 + 1", "1 + cotan(x) ^ 2", "cotan(x) ^ 2 + 1",
+                    "sec(x) ^ 2 - tan(x) ^ 2", "cosec(x) ^ 2 - cotan(x) ^ 2",
+                    "sin(x) ^ 2 - cos(x) ^ 2", "cos(x) ^ 2 - sin(x) ^ 2",
+                    "y / sec(x)", "y / cosec(x)",
+                    "sec(x) * cos(x)", "cos(x) * sec(x)", "cosec(x) * sin(x)", "sin(x) * cosec(x)",
+                    "arcsin(2 / x)", "arccos(2 / x)", "arccosec(2 / x)", "arcsec(2 / x)",
+                    "arcsin(x / 2)",
+                });
+
+        /// <summary>
         /// A predicate on a hole that is a mathematical property rather than a sign or a type.
         /// The corpus reaches it rarely, so the shapes are given here as well — a set that fires
         /// four times over a generated corpus is worth checking against cases chosen for it.

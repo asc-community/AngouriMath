@@ -1311,5 +1311,248 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Any<Entity>("x", node => node is Sumf or Minusf),
                 (node, _) => Functions.Patterns.CollectCommonFactors(node) ?? node,
                 Soundness.Sound));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.TrigonometricRules"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// <b>Forty-three arms become thirty-three.</b> Ten of the arms are five rules written
+        /// twice, once for each order of a commutative pair — a sine times a cosine, an arcsine
+        /// plus an arccosine, a tangent times a cotangent, and so on — and a commutative pattern
+        /// says each once. The rest are genuinely distinct identities, several of them carrying
+        /// the interval conditions that
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/884">#884</a> and
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/887">#887</a> are about,
+        /// and those conditions are now attached to the rule they belong to rather than to the
+        /// set.
+        /// </remarks>
+        internal static MatchedRuleSet Trigonometric { get; } = new(
+            nameof(Trigonometric),
+
+            new MatchedRule(
+                "a-sine-times-a-cosine-of-one-angle-is-half-the-doubled-sine",
+                MatchPattern.Commutative<Mulf>(MatchPattern.Node<Sinf>(MatchPattern.Any("a")), MatchPattern.Node<Cosf>(MatchPattern.Any("a"))),
+                bound => Rational.Create(1, 2) * new Sinf(2 * bound["a"]),
+                Soundness.Sound),
+
+            // arccos(x) is pi/2 - arcsin(x) by definition, over the whole plane, so this needs
+            // no assumption.
+            new MatchedRule(
+                "arcsine-plus-arccosine-is-a-right-angle",
+                MatchPattern.Commutative<Sumf>(MatchPattern.Node<Arcsinf>(MatchPattern.Any("a")), MatchPattern.Node<Arccosf>(MatchPattern.Any("a"))),
+                bound => MathS.pi / 2,
+                Soundness.Sound),
+
+            // This library's arccotan is arctan(1/x) with range (-pi/2, pi/2], so the sum is
+            // pi/2 for non-negative x and -pi/2 for negative x -- not pi/2 unconditionally,
+            // which was a wrong answer at every negative real.
+            // https://github.com/asc-community/AngouriMath/issues/887
+            new MatchedRule(
+                "arctangent-plus-arccotangent-is-a-right-angle-with-the-sign-of-the-argument",
+                MatchPattern.Commutative<Sumf>(MatchPattern.Node<Arctanf>(MatchPattern.Any("a")), MatchPattern.Node<Arccotanf>(MatchPattern.Any("a"))),
+                bound => Functions.Patterns.ArctanPlusArccotan(bound["a"])!,
+                Soundness.SoundUnderAssumptions,
+                when: bound => Functions.Patterns.ArctanPlusArccotan(bound["a"]) is not null),
+
+            // Holds as written only while ab < 1: past that the sum leaves the range arctan
+            // answers in and the identity is off by a whole pi. Both arguments have to be
+            // numbers so that ab < 1 is a question with an answer.
+            new MatchedRule(
+                "two-arctangents-of-numbers-add-by-the-tangent-formula",
+                MatchPattern.Node<Sumf>(MatchPattern.Node<Arctanf>(MatchPattern.Any<Real>("a")), MatchPattern.Node<Arctanf>(MatchPattern.Any<Real>("b"))),
+                bound => MathS.Arctan((((Real)bound["a"] + (Real)bound["b"])
+                    / (1 - (Real)bound["a"] * (Real)bound["b"])).InnerSimplified),
+                Soundness.SoundUnderAssumptions,
+                when: bound => ((Real)bound["a"] * (Real)bound["b"]).Evaled is Real product && product < 1),
+
+            new MatchedRule(
+                "the-arctangent-of-root-three",
+                MatchPattern.Node<Arctanf>(MatchPattern.Node<Powf>(MatchPattern.Exact(Integer.Create(3)), MatchPattern.Exact(Rational.Create(1, 2)))),
+                bound => MathS.pi / 3,
+                Soundness.Sound),
+
+            new MatchedRule(
+                "the-arctangent-of-one-over-root-three",
+                MatchPattern.Node<Arctanf>(MatchPattern.Node<Divf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Node<Powf>(MatchPattern.Exact(Integer.Create(3)), MatchPattern.Exact(Rational.Create(1, 2))))),
+                bound => MathS.pi / 6,
+                Soundness.Sound),
+
+            // The cosecant's own condition has to be carried: 2cos(u) is a number where
+            // sin(u) is zero and sin(2u) csc(u) is not.
+            // https://github.com/asc-community/AngouriMath/issues/557
+            new MatchedRule(
+                "a-doubled-sine-times-a-cosecant-is-twice-the-cosine",
+                MatchPattern.Commutative<Mulf>(MatchPattern.Node<Sinf>(MatchPattern.Node<Mulf>(MatchPattern.Exact(Integer.Create(2)), MatchPattern.Any("a"))), MatchPattern.Node<Cosecantf>(MatchPattern.Any("a"))),
+                bound => (2 * new Cosf(bound["a"])).Provided(new Cosecantf(bound["a"]).DomainCondition),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-tangent-times-a-cotangent-of-one-angle-is-one",
+                MatchPattern.Commutative<Mulf>(MatchPattern.Node<Tanf>(MatchPattern.Any("a")), MatchPattern.Node<Cotanf>(MatchPattern.Any("a"))),
+                bound => Integer.Create(1),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "arcsine-of-a-sine-inside-its-own-interval",
+                MatchPattern.Node<Arcsinf>(MatchPattern.Node<Sinf>(MatchPattern.Any("a"))),
+                bound => bound["a"],
+                Soundness.SoundUnderAssumptions,
+                when: bound => Functions.Patterns.WithinHalfPi(bound["a"], closed: true)),
+
+            new MatchedRule(
+                "arccosine-of-a-cosine-inside-its-own-interval",
+                MatchPattern.Node<Arccosf>(MatchPattern.Node<Cosf>(MatchPattern.Any("a"))),
+                bound => bound["a"],
+                Soundness.SoundUnderAssumptions,
+                when: bound => Functions.Patterns.WithinZeroAndPi(bound["a"], closed: true)),
+
+            new MatchedRule(
+                "arctangent-of-a-tangent-inside-its-own-interval",
+                MatchPattern.Node<Arctanf>(MatchPattern.Node<Tanf>(MatchPattern.Any("a"))),
+                bound => bound["a"],
+                Soundness.SoundUnderAssumptions,
+                when: bound => Functions.Patterns.WithinHalfPi(bound["a"], closed: false)),
+
+            new MatchedRule(
+                "arccotangent-of-a-cotangent-inside-its-own-range",
+                MatchPattern.Node<Arccotanf>(MatchPattern.Node<Cotanf>(MatchPattern.Any("a"))),
+                bound => bound["a"],
+                Soundness.SoundUnderAssumptions,
+                when: bound => Functions.Patterns.WithinArccotanRange(bound["a"])),
+
+            new MatchedRule(
+                "a-sine-of-an-arcsine",
+                MatchPattern.Node<Sinf>(MatchPattern.Node<Arcsinf>(MatchPattern.Any("a"))),
+                MatchPattern.Any("a"),
+                Soundness.Sound),
+
+            new MatchedRule(
+                "a-cosine-of-an-arccosine",
+                MatchPattern.Node<Cosf>(MatchPattern.Node<Arccosf>(MatchPattern.Any("a"))),
+                MatchPattern.Any("a"),
+                Soundness.Sound),
+
+            new MatchedRule(
+                "a-tangent-of-an-arctangent",
+                MatchPattern.Node<Tanf>(MatchPattern.Node<Arctanf>(MatchPattern.Any("a"))),
+                MatchPattern.Any("a"),
+                Soundness.Sound),
+
+            new MatchedRule(
+                "a-cotangent-of-an-arccotangent",
+                MatchPattern.Node<Cotanf>(MatchPattern.Node<Arccotanf>(MatchPattern.Any("a"))),
+                MatchPattern.Any("a"),
+                Soundness.Sound),
+
+            new MatchedRule(
+                "a-squared-sine-and-cosine-of-one-angle-sum-to-one",
+                MatchPattern.Commutative<Sumf>(MatchPattern.Node<Powf>(MatchPattern.Node<Sinf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2))), MatchPattern.Node<Powf>(MatchPattern.Node<Cosf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
+                bound => Integer.Create(1),
+                Soundness.Sound),
+
+            // Only this direction: rewriting cos^2 back as 1 - sin^2 would undo it as fast
+            // as it fired.
+            new MatchedRule(
+                "one-less-a-squared-sine-is-a-squared-cosine",
+                MatchPattern.Node<Minusf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Node<Powf>(MatchPattern.Node<Sinf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
+                bound => new Powf(new Cosf(bound["a"]), 2),
+                Soundness.Sound),
+
+            new MatchedRule(
+                "one-less-a-squared-cosine-is-a-squared-sine",
+                MatchPattern.Node<Minusf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Node<Powf>(MatchPattern.Node<Cosf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
+                bound => new Powf(new Sinf(bound["a"]), 2),
+                Soundness.Sound),
+
+            // The identity divided through by cos^2. Knowing the plain one and not these made
+            // the answer depend on which of the three ways an expression happened to be
+            // written -- https://github.com/asc-community/AngouriMath/issues/725
+            new MatchedRule(
+                "one-and-a-squared-tangent-make-a-squared-secant",
+                MatchPattern.Commutative<Sumf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Node<Powf>(MatchPattern.Node<Tanf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
+                bound => new Powf(new Secantf(bound["a"]), 2),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "one-and-a-squared-cotangent-make-a-squared-cosecant",
+                MatchPattern.Commutative<Sumf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Node<Powf>(MatchPattern.Node<Cotanf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
+                bound => new Powf(new Cosecantf(bound["a"]), 2),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-squared-secant-less-a-squared-tangent-is-one",
+                MatchPattern.Node<Minusf>(MatchPattern.Node<Powf>(MatchPattern.Node<Secantf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2))), MatchPattern.Node<Powf>(MatchPattern.Node<Tanf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
+                bound => Integer.Create(1),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-squared-cosecant-less-a-squared-cotangent-is-one",
+                MatchPattern.Node<Minusf>(MatchPattern.Node<Powf>(MatchPattern.Node<Cosecantf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2))), MatchPattern.Node<Powf>(MatchPattern.Node<Cotanf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
+                bound => Integer.Create(1),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-squared-sine-less-a-squared-cosine-turns-round",
+                MatchPattern.Node<Minusf>(MatchPattern.Node<Powf>(MatchPattern.Node<Sinf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2))), MatchPattern.Node<Powf>(MatchPattern.Node<Cosf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
+                bound => -1 * (new Powf(new Cosf(bound["a"]), 2) - new Powf(new Sinf(bound["a"]), 2)),
+                Soundness.Sound),
+
+            new MatchedRule(
+                "a-squared-cosine-less-a-squared-sine-is-the-doubled-cosine",
+                MatchPattern.Node<Minusf>(MatchPattern.Node<Powf>(MatchPattern.Node<Cosf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2))), MatchPattern.Node<Powf>(MatchPattern.Node<Sinf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
+                bound => new Cosf(2 * bound["a"]),
+                Soundness.Sound),
+
+            new MatchedRule(
+                "a-quotient-by-a-secant-is-a-cosine",
+                MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Node<Secantf>(MatchPattern.Any("b"))),
+                bound => bound["a"] * bound["b"].Cos(),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-quotient-by-a-cosecant-is-a-sine",
+                MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Node<Cosecantf>(MatchPattern.Any("b"))),
+                bound => bound["a"] * bound["b"].Sin(),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-secant-times-a-cosine-of-one-angle-is-one",
+                MatchPattern.Commutative<Mulf>(MatchPattern.Node<Secantf>(MatchPattern.Any("a")), MatchPattern.Node<Cosf>(MatchPattern.Any("a"))),
+                bound => Integer.Create(1),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-cosecant-times-a-sine-of-one-angle-is-one",
+                MatchPattern.Commutative<Mulf>(MatchPattern.Node<Cosecantf>(MatchPattern.Any("a")), MatchPattern.Node<Sinf>(MatchPattern.Any("a"))),
+                bound => Integer.Create(1),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "an-arcsine-of-a-numeric-reciprocal-is-an-arccosecant",
+                MatchPattern.Node<Arcsinf>(MatchPattern.Node<Divf>(MatchPattern.Any("n"), MatchPattern.Any("d"))),
+                bound => new Arccosecantf(bound["d"] / bound["n"]),
+                Soundness.SoundUnderAssumptions,
+                when: bound => bound["n"] is Number && bound["d"] is not Number),
+
+            new MatchedRule(
+                "an-arccosine-of-a-numeric-reciprocal-is-an-arcsecant",
+                MatchPattern.Node<Arccosf>(MatchPattern.Node<Divf>(MatchPattern.Any("n"), MatchPattern.Any("d"))),
+                bound => new Arcsecantf(bound["d"] / bound["n"]),
+                Soundness.SoundUnderAssumptions,
+                when: bound => bound["n"] is Number && bound["d"] is not Number),
+
+            new MatchedRule(
+                "an-arccosecant-of-a-numeric-reciprocal-is-an-arcsine",
+                MatchPattern.Node<Arccosecantf>(MatchPattern.Node<Divf>(MatchPattern.Any("n"), MatchPattern.Any("d"))),
+                bound => new Arcsinf(bound["d"] / bound["n"]),
+                Soundness.SoundUnderAssumptions,
+                when: bound => bound["n"] is Number && bound["d"] is not Number),
+
+            new MatchedRule(
+                "an-arcsecant-of-a-numeric-reciprocal-is-an-arccosine",
+                MatchPattern.Node<Arcsecantf>(MatchPattern.Node<Divf>(MatchPattern.Any("n"), MatchPattern.Any("d"))),
+                bound => new Arccosf(bound["d"] / bound["n"]),
+                Soundness.SoundUnderAssumptions,
+                when: bound => bound["n"] is Number && bound["d"] is not Number));
     }
 }
