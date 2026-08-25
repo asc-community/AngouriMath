@@ -35,16 +35,23 @@ namespace AngouriMath.Core.Transformations.Matching
     /// the mathematics rather than about the encoding.
     /// </para>
     /// <para>
-    /// <b>What it costs to actually use one of these has been measured, once, end to end.</b>
-    /// <see cref="DivisionPreparing"/> was put in place of its <c>switch</c> in
-    /// <c>RewriteRules.DivisionPreparing</c> — which <c>Simplificator</c> runs twice per
-    /// iteration — and the whole suite passed, 7143 of 7143, so the exchange is a behavioural
-    /// non-event rather than merely an agreeing one. The cost was <b>no extra allocation</b>
-    /// (<c>Simplify</c> identical at 84,402 B, <c>SimplifyQuotient</c> +0.04%) and about
-    /// <b>5% of <c>Simplify</c>'s time</b> for that one set. The ten-times figure a single pass
-    /// shows does not reach the caller, because dispatch is a small part of what simplification
-    /// spends; but five percent for one of some thirty sets is not free either, so the exchange
-    /// is worth making where a set's rules need to be data and is not worth making wholesale.
+    /// <b>What it costs to use one of these has been measured end to end, and the first answer
+    /// was wrong about the reason.</b> The first exchange cost about <b>5% of
+    /// <c>Simplify</c>'s time</b> for one set, which was recorded here as the price of the idea
+    /// and as the argument against doing it wholesale. It was not the idea: <c>NodePattern</c>
+    /// recomputed <see cref="MatchPattern.IsDeterministic"/> on <i>every attempt</i>, walking the
+    /// whole pattern tree behind a delegate before any matching began, so the case that does the
+    /// least work — a rule that does not fire — paid the most for it. Settled once instead, a
+    /// miss goes 29.99 ns → 13.48 ns and a whole pass 1182.9 ns → 659.9 ns at identical
+    /// allocation.
+    /// </para>
+    /// <para>
+    /// Re-measured against <c>Simplify</c> itself, three arms in one process with the third a
+    /// second copy of the first, the exchange is <b>inside the noise floor on time</b> — six
+    /// samples each, medians +0.12% apart where the same binary spreads 1.90% — and
+    /// <b>+0.14% on allocation</b>, which is the one figure that reproduces: two copies of the
+    /// same assembly agree to 5 bytes in 45.6 MB. So a set is exchanged when its rules want to
+    /// be data, and the cost is no longer the reason not to.
     /// </para>
     /// </remarks>
     internal static class MatchedRules
@@ -318,6 +325,66 @@ namespace AngouriMath.Core.Transformations.Matching
                 // "x" is bound by the first part and re-matched by the second, so the two terms
                 // are required to be about the same argument rather than merely both squared.
                 MatchPattern.Node<Sumf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Any("rest")),
+                Soundness.Sound));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.InvertNegativePowers"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// One rule, and the first here whose replacement is <b>code rather than a pattern</b>:
+        /// <c>-1 * n</c> is arithmetic on the bound integer and not a tree built around it, so
+        /// writing it as a pattern would produce <c>a ^ (-1 * -3)</c> where the <c>switch</c>
+        /// produces <c>a ^ 3</c>. That costs the reversal —
+        /// <see cref="RuleReversal.ReplacementIsCode"/> — which is the honest trade and is
+        /// recorded by the type rather than by a comment.
+        /// </remarks>
+        internal static MatchedRuleSet InvertNegativePowers { get; } = new(
+            nameof(InvertNegativePowers),
+
+            // a ^ n -> 1 / a ^ (-n), for a negative integer n
+            new MatchedRule(
+                "a-negative-integer-power-becomes-a-reciprocal",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Any<Integer>("n", n => n.IsNegative)),
+                bound => 1 / MathS.Pow(bound["a"], -1 * (Integer)bound["n"]),
+                // Both sides are undefined at exactly one place, a = 0, and equal everywhere
+                // else in the complex plane: this is the definition of a negative power rather
+                // than an identity that needs one. Measured at 0 as well as away from it before
+                // the tier was written down.
+                Soundness.Sound));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.InvertNegativeMultipliers"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// Two rules that differ in the way that matters here. The first negates a bound real,
+        /// so its replacement is code and it has no reversal. The second only rearranges what it
+        /// bound — <c>-(a - b) = b - a</c> — so both of its sides are patterns and it reads
+        /// backwards, which is the distinction <see cref="MatchedRule.Reversal"/> exists to make
+        /// visible within one set.
+        /// </remarks>
+        internal static MatchedRuleSet InvertNegativeMultipliers { get; } = new(
+            nameof(InvertNegativeMultipliers),
+
+            // a + (c * b) -> a - (-c) * b, for a negative real c
+            new MatchedRule(
+                "a-negative-factor-in-a-sum-becomes-a-difference",
+                MatchPattern.Node<Sumf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Node<Mulf>(
+                        MatchPattern.Any<Real>("c", c => c.IsNegative),
+                        MatchPattern.Any("b"))),
+                bound => bound["a"] - (-1 * (Real)bound["c"]) * bound["b"],
+                Soundness.Sound),
+
+            // (-1) * (a - b) -> b - a
+            new MatchedRule(
+                "a-negated-difference-is-the-difference-the-other-way",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Exact(Integer.Create(-1)),
+                    MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                MatchPattern.Node<Minusf>(MatchPattern.Any("b"), MatchPattern.Any("a")),
                 Soundness.Sound));
     }
 }

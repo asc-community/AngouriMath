@@ -32,11 +32,14 @@ namespace AngouriMath.Tests.Core.Transformations
     [Trait("Area", "Core")]
     public sealed class MatchedRulesAgreeWithTheSwitchTest
     {
-        private static readonly string[] Leaves = { "x", "y", "2", "-1", "1/2", "1", "0" };
+        // -2 and -1/2 are here for the sets that key on a negative literal. With -1 as the only
+        // negative leaf a rule about negative powers fired on 7 of 1399 expressions, which is
+        // agreement between two things that barely ran.
+        private static readonly string[] Leaves = { "x", "y", "2", "-1", "-2", "1/2", "-1/2", "1", "0" };
 
         private static readonly string[] Unary =
         {
-            "-({0})", "1 / ({0})", "({0}) ^ 2", "sqrt({0})", "sin({0})", "abs({0})",
+            "-({0})", "1 / ({0})", "({0}) ^ 2", "({0}) ^ (-2)", "sqrt({0})", "sin({0})", "abs({0})",
         };
 
         private static readonly string[] Binary =
@@ -113,6 +116,27 @@ namespace AngouriMath.Tests.Core.Transformations
         public void CollapseMultipleFractionsAsDataMatchesTheSwitch()
             => AssertAgrees("CollapseMultipleFractions", Patterns.CollapseMultipleFractions,
                 MatchedRules.CollapseMultipleFractions, leastFirings: 50);
+
+        /// <summary>
+        /// The first set here whose replacement is <b>code</b>: <c>-1 * n</c> is arithmetic on
+        /// the bound integer, so the rule builds <c>a ^ 3</c> where a pattern would build
+        /// <c>a ^ (-1 * -3)</c>. Agreement over generated expressions is what says the arithmetic
+        /// was done the same way, and there is no other way to check it.
+        /// </summary>
+        [Fact]
+        public void InvertNegativePowersAsDataMatchesTheSwitch()
+            => AssertAgrees("InvertNegativePowers", Patterns.InvertNegativePowers,
+                MatchedRules.InvertNegativePowers, leastFirings: 20);
+
+        /// <summary>
+        /// Two rules, one with a code replacement and one whose sides are both patterns, so this
+        /// is the first set where <see cref="MatchedRule.Reversal"/> differs between the rules of
+        /// one set rather than between sets.
+        /// </summary>
+        [Fact]
+        public void InvertNegativeMultipliersAsDataMatchesTheSwitch()
+            => AssertAgrees("InvertNegativeMultipliers", Patterns.InvertNegativeMultipliers,
+                MatchedRules.InvertNegativeMultipliers, leastFirings: 40);
 
         /// <summary>
         /// A predicate on a hole refuses what fails it, which is the C# property pattern
