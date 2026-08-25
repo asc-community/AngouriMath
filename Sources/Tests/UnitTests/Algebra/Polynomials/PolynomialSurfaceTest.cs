@@ -157,6 +157,57 @@ namespace AngouriMath.Tests.Algebra.Polynomials
         }
 
         /// <summary>
+        /// A polynomial in two variables is factored by Kronecker's substitution: with
+        /// <c>s</c> one more than its degree in <c>x</c>, the map <c>x^i y^j -> t^(i + s*j)</c>
+        /// is injective on every monomial that can appear in it or in any of its factors, so a
+        /// factorisation of the image reads back and each subset of its irreducible factors
+        /// names a candidate. Every candidate is checked by exact division, so the failure mode
+        /// is a refusal and not a wrong answer.
+        /// </summary>
+        /// <remarks>
+        /// <c>x ^ 2 - y ^ 2</c> is the case #746 item 43 names, and the one this test exists for.
+        /// Compared numerically, for the reason the content test above gives.
+        /// </remarks>
+        [Theory]
+        [InlineData("x ^ 2 - y ^ 2", 2)]
+        [InlineData("x ^ 2 + 2 * x * y + y ^ 2", 1)]
+        [InlineData("x ^ 3 - y ^ 3", 2)]
+        [InlineData("x ^ 2 * y ^ 2 - 1", 2)]
+        [InlineData("x ^ 4 - y ^ 4", 3)]
+        [InlineData("x ^ 2 - y ^ 2 + 2 * x + 1", 2)]
+        public void APolynomialInTwoVariablesIsFactored(string input, int distinctFactors)
+        {
+            var expr = input.ToEntity();
+            var factored = MathS.Polynomials.Factor(expr, "x");
+            Assert.NotNull(factored);
+            Assert.NotEqual(expr, factored);
+
+            // As many distinct factors as the mathematics has, so a partial factorisation
+            // reported as a whole one fails rather than passing quietly.
+            Assert.Equal(distinctFactors, CountFactors(factored!));
+
+            var variables = expr.Vars.Concat(factored!.Vars).Distinct().ToArray();
+            var random = new Random(20260825);
+            for (var trial = 0; trial < 20; trial++)
+            {
+                Entity before = expr, after = factored;
+                foreach (var variable in variables)
+                {
+                    Entity value = Math.Round(random.NextDouble() * 6 - 3, 4);
+                    before = before.Substitute(variable, value);
+                    after = after.Substitute(variable, value);
+                }
+                Assert.Equal(
+                    before.EvalNumerical().RealPart.EDecimal.ToDouble(),
+                    after.EvalNumerical().RealPart.EDecimal.ToDouble(),
+                    9);
+            }
+        }
+
+        private static int CountFactors(Entity product)
+            => product is Mulf(var left, var right) ? CountFactors(left) + CountFactors(right) : 1;
+
+        /// <summary>
         /// The square-free part is <c>p / gcd(p, dp/dx)</c> whatever ring the coefficients live
         /// in, so it is not univariate for any reason but the representation it used to be
         /// written against. Each case here is built from known factors, and the answer has to be
@@ -216,10 +267,9 @@ namespace AngouriMath.Tests.Algebra.Polynomials
         /// not exist, which is a wrong answer and not a graceful failure.
         /// </summary>
         [Theory]
-        [InlineData("x ^ 2 * y ^ 2 - 1")]            // multivariate, and the content is 1
-        [InlineData("x ^ 2 - y ^ 2")]                // needs factorisation over Q(y), which this is not
+        [InlineData("x ^ 2 + y ^ 2")]                // irreducible over Q in both variables
         [InlineData("x ^ 2 - a")]                    // a symbolic coefficient is not rational
-        [InlineData("x * y + z")]                    // the coefficients are coprime
+        [InlineData("x * y + z")]                    // three variables: the substitution is over two
         [InlineData("sin(x) + 1")]                   // not a polynomial
         [InlineData("x ^ 33 - 1")]                   // past the degree bound of the factoriser
         public void FactorisationRefusesRatherThanReturningTheInput(string input)
