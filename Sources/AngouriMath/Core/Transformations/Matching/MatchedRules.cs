@@ -654,10 +654,10 @@ namespace AngouriMath.Core.Transformations.Matching
             new MatchedRule(
                 "a-quotient-of-polynomials-is-divided-out",
                 MatchPattern.Node<Divf>(MatchPattern.Any("n"), MatchPattern.Any("d")),
-                bound => TreeAnalyzer.PolynomialLongDivision(bound["n"], bound["d"])
+                (node, bound) => TreeAnalyzer.PolynomialLongDivision(bound["n"], bound["d"])
                     is var (divided, remainder)
                     ? divided + remainder
-                    : new Divf(bound["n"], bound["d"]),
+                    : node,
                 Soundness.SoundUnderAssumptions));
 
         /// <summary>
@@ -673,9 +673,9 @@ namespace AngouriMath.Core.Transformations.Matching
             new MatchedRule(
                 "a-quotient-of-polynomials-is-put-in-lowest-terms",
                 MatchPattern.Node<Divf>(MatchPattern.Any("n"), MatchPattern.Any("d")),
-                bound => PolynomialGcd.TryCancel(bound["n"], bound["d"], out var cancelled)
+                (node, bound) => PolynomialGcd.TryCancel(bound["n"], bound["d"], out var cancelled)
                     ? cancelled
-                    : new Divf(bound["n"], bound["d"]),
+                    : node,
                 Soundness.SoundUnderAssumptions));
 
         /// <summary>
@@ -699,10 +699,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any("x"), MatchPattern.Any<Number>("a"))),
                     MatchPattern.Node<Factorialf>(MatchPattern.Commutative<Sumf>(
                         MatchPattern.Any("y"), MatchPattern.Any<Number>("b")))),
-                bound => Functions.Patterns.CancelFactorials(
-                    new Divf(new Factorialf(bound["x"] + bound["a"]),
-                             new Factorialf(bound["y"] + bound["b"])),
-                    bound["x"], bound["y"], (Number)bound["a"], (Number)bound["b"]),
+                (node, bound) => Functions.Patterns.CancelFactorials(
+                    node, bound["x"], bound["y"], (Number)bound["a"], (Number)bound["b"]),
                 Soundness.SoundUnderAssumptions),
 
             // x! / (y + b)!
@@ -712,10 +710,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Factorialf>(MatchPattern.Any("x")),
                     MatchPattern.Node<Factorialf>(MatchPattern.Commutative<Sumf>(
                         MatchPattern.Any("y"), MatchPattern.Any<Number>("b")))),
-                bound => Functions.Patterns.CancelFactorials(
-                    new Divf(new Factorialf(bound["x"]),
-                             new Factorialf(bound["y"] + bound["b"])),
-                    bound["x"], bound["y"], Integer.Create(0), (Number)bound["b"]),
+                (node, bound) => Functions.Patterns.CancelFactorials(
+                    node, bound["x"], bound["y"], Integer.Create(0), (Number)bound["b"]),
                 Soundness.SoundUnderAssumptions),
 
             // (x + a)! / y!
@@ -725,10 +721,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Factorialf>(MatchPattern.Commutative<Sumf>(
                         MatchPattern.Any("x"), MatchPattern.Any<Number>("a"))),
                     MatchPattern.Node<Factorialf>(MatchPattern.Any("y"))),
-                bound => Functions.Patterns.CancelFactorials(
-                    new Divf(new Factorialf(bound["x"] + bound["a"]),
-                             new Factorialf(bound["y"])),
-                    bound["x"], bound["y"], (Number)bound["a"], Integer.Create(0)),
+                (node, bound) => Functions.Patterns.CancelFactorials(
+                    node, bound["x"], bound["y"], (Number)bound["a"], Integer.Create(0)),
                 Soundness.SoundUnderAssumptions));
 
         /// <summary>
@@ -749,9 +743,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any("x"), MatchPattern.Any<Number>("a"))),
                     MatchPattern.Commutative<Sumf>(
                         MatchPattern.Any("y"), MatchPattern.Any<Number>("b"))),
-                bound => Functions.Patterns.GatherFactorial(
-                    new Mulf(new Factorialf(bound["x"] + bound["a"]), bound["y"] + bound["b"]),
-                    bound["x"], bound["y"], (Number)bound["a"], (Number)bound["b"]),
+                (node, bound) => Functions.Patterns.GatherFactorial(
+                    node, bound["x"], bound["y"], (Number)bound["a"], (Number)bound["b"]),
                 Soundness.SoundUnderAssumptions),
 
             // x! * (y + b)
@@ -761,9 +754,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Factorialf>(MatchPattern.Any("x")),
                     MatchPattern.Commutative<Sumf>(
                         MatchPattern.Any("y"), MatchPattern.Any<Number>("b"))),
-                bound => Functions.Patterns.GatherFactorial(
-                    new Mulf(new Factorialf(bound["x"]), bound["y"] + bound["b"]),
-                    bound["x"], bound["y"], Integer.Create(0), (Number)bound["b"]),
+                (node, bound) => Functions.Patterns.GatherFactorial(
+                    node, bound["x"], bound["y"], Integer.Create(0), (Number)bound["b"]),
                 Soundness.SoundUnderAssumptions),
 
             // (x + a)! * y
@@ -773,9 +765,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Factorialf>(MatchPattern.Commutative<Sumf>(
                         MatchPattern.Any("x"), MatchPattern.Any<Number>("a"))),
                     MatchPattern.Any("y")),
-                bound => Functions.Patterns.GatherFactorial(
-                    new Mulf(new Factorialf(bound["x"] + bound["a"]), bound["y"]),
-                    bound["x"], bound["y"], (Number)bound["a"], Integer.Create(0)),
+                (node, bound) => Functions.Patterns.GatherFactorial(
+                    node, bound["x"], bound["y"], (Number)bound["a"], Integer.Create(0)),
                 Soundness.SoundUnderAssumptions));
 
         /// <summary>
@@ -804,7 +795,7 @@ namespace AngouriMath.Core.Transformations.Matching
             new MatchedRule(
                 "a-sum-or-difference-that-is-a-perfect-square",
                 MatchPattern.Any<Entity>("x", node => node is Sumf or Minusf),
-                bound => Functions.Patterns.CollapseToPerfectSquare(bound["x"]) ?? bound["x"],
+                (node, _) => Functions.Patterns.CollapseToPerfectSquare(node) ?? node,
                 // sqrt(u)^2 is u for every complex u, so the identity itself is unconditional.
                 // What is not is the test for whether the cross term matches, which needs
                 // Simplify -- see the remark on Patterns.CollapseToPerfectSquare.
@@ -837,16 +828,14 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(
                     MatchPattern.Any<Rational>("k"),
                     MatchPattern.Node<Divf>(MatchPattern.Any("value"), MatchPattern.Any<Rational>("d"))),
-                bound => Functions.Patterns.GatherNumericCoefficientOverASurd(
-                    new Mulf(bound["k"], new Divf(bound["value"], bound["d"]))),
+                (node, _) => Functions.Patterns.GatherNumericCoefficientOverASurd(node),
                 Soundness.SoundUnderAssumptions),
 
             // num / (a + b) -> num * (a - b) / (a^2 - b^2)
             new MatchedRule(
                 "a-two-term-denominator-is-multiplied-by-its-conjugate",
                 MatchPattern.Node<Divf>(MatchPattern.Any("num"), MatchPattern.Any("den")),
-                bound => Functions.Patterns.MultiplyByTheConjugate(
-                    new Divf(bound["num"], bound["den"])),
+                (node, _) => Functions.Patterns.MultiplyByTheConjugate(node),
                 Soundness.SoundUnderAssumptions));
     }
 }

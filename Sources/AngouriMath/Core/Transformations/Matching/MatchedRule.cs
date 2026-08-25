@@ -76,6 +76,39 @@ namespace AngouriMath.Core.Transformations.Matching
             Soundness soundness,
             Func<Bindings, bool>? when = null,
             [CallerLineNumber] int line = 0)
+            : this(name, left, right is null ? null : (_, bound) => right(bound),
+                   right is null ? throw new ArgumentNullException(nameof(right)) : null,
+                   soundness, when, line)
+        {
+        }
+
+        /// <summary>
+        /// A rule whose right-hand side is code and wants <b>the node it matched</b> as well as
+        /// the bindings.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Not a convenience. A replacement that needs the whole expression — because it hands it
+        /// to a helper that decides for itself whether to rewrite — otherwise has to rebuild it
+        /// from the bindings, and <b>a rebuilt node is a different object with none of the
+        /// original's cached work</b>: its <c>InnerSimplified</c>, <c>Evaled</c>, <c>Codomain</c>
+        /// and rate are all computed again, on every attempt, for every node of the tree.
+        /// </para>
+        /// <para>
+        /// Measured on the limit of <c>x * ln(x) / cos(x)</c>, which reaches
+        /// <c>RationalizeDenominator</c> at every quotient it builds: rebuilding cost <b>4.0 s to
+        /// 5.2 s</b>, and a test with a thirty-second cap failed on two of the three CI platforms
+        /// while passing locally. Handing the node over costs nothing and the rule keeps the
+        /// caches it was given.
+        /// </para>
+        /// </remarks>
+        internal MatchedRule(
+            string name,
+            MatchPattern left,
+            Func<Entity, Bindings, Entity> right,
+            Soundness soundness,
+            Func<Bindings, bool>? when = null,
+            [CallerLineNumber] int line = 0)
             : this(name, left, right ?? throw new ArgumentNullException(nameof(right)), null, soundness, when, line)
         {
         }
@@ -83,7 +116,7 @@ namespace AngouriMath.Core.Transformations.Matching
         private MatchedRule(
             string name,
             MatchPattern left,
-            Func<Bindings, Entity>? rightCode,
+            Func<Entity, Bindings, Entity>? rightCode,
             MatchPattern? rightPattern,
             Soundness soundness,
             Func<Bindings, bool>? when,
@@ -102,7 +135,7 @@ namespace AngouriMath.Core.Transformations.Matching
             Reversal = Classify();
         }
 
-        private readonly Func<Bindings, Entity>? right;
+        private readonly Func<Entity, Bindings, Entity>? right;
         private readonly Func<Bindings, bool>? when;
 
         /// <summary>What to call this rule in a report, a test or a bug.</summary>
@@ -148,7 +181,7 @@ namespace AngouriMath.Core.Transformations.Matching
             {
                 if (!Left.TryMatchOnce(expr, Bindings.Empty, out var only)) return null;
                 if (when is not null && !when(only)) return null;
-                return Build(only);
+                return Build(expr, only);
             }
 
             // Every way the pattern matches, in order, and the first that also satisfies the
@@ -162,7 +195,7 @@ namespace AngouriMath.Core.Transformations.Matching
                 // A match whose replacement cannot be built is a match that does not apply, and
                 // another way of matching may still. Only the last of them decides that the rule
                 // declines.
-                if (Build(bindings) is { } rewritten)
+                if (Build(expr, bindings) is { } rewritten)
                     return rewritten;
             }
             return null;
@@ -173,11 +206,11 @@ namespace AngouriMath.Core.Transformations.Matching
         /// built — which is the rule declining rather than an error, whichever form the
         /// right-hand side takes.
         /// </summary>
-        private Entity? Build(Bindings bindings)
+        private Entity? Build(Entity matched, Bindings bindings)
         {
             if (Right is not null)
                 return Right.TryBuild(bindings, out var built) ? built : null;
-            try { return right!(bindings); }
+            try { return right!(matched, bindings); }
             catch { return null; }
         }
 
