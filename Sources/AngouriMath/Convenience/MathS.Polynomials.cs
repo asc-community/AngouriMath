@@ -57,21 +57,29 @@ namespace AngouriMath
             /// The factorisation; the input itself where it is irreducible over the
             /// rationals, which is an answer and not a refusal; or <see langword="null"/>
             /// where <paramref name="expr"/> is not a polynomial in
-            /// <paramref name="variable"/> alone with rational coefficients, where its degree
-            /// is above 32, or where the factoriser declined.
+            /// <paramref name="variable"/> with rational or polynomial coefficients, or where
+            /// the question is past what the factoriser will do.
             /// </returns>
             /// <remarks>
             /// <para>
-            /// Zassenhaus: square-free decomposition, Berlekamp's factorisation modulo a
-            /// prime, Hensel lifting to a power of it above Mignotte's bound, and
-            /// recombination — and the factors are multiplied back and compared with the
-            /// input before they are returned.
+            /// <b>In one variable, Zassenhaus:</b> square-free decomposition, Berlekamp's
+            /// factorisation modulo a prime, Hensel lifting to a power of it above Mignotte's
+            /// bound, and recombination — and the factors are multiplied back and compared with
+            /// the input before they are returned. The degree bound is 32.
             /// </para>
             /// <para>
-            /// <b>Univariate only.</b> A polynomial in more than one variable is refused
-            /// rather than answered: <c>Factor("x * y + y", "x")</c> is <see langword="null"/>
-            /// and not <c>x * y + y</c>, because handing back the input would say that
-            /// <c>y * (x + 1)</c> does not exist.
+            /// <b>In more than one, two things are tried in order.</b> First the content in
+            /// <paramref name="variable"/> — the common divisor of the coefficients, which is a
+            /// polynomial in the other variables — is taken out. Then whatever remains is
+            /// factored by <b>Kronecker's substitution</b>, which writes the exponent vector as a
+            /// numeral in mixed radix and reads a one-variable factorisation back. Its ceiling is
+            /// a degree budget rather than a variable count: the image has degree the product of
+            /// the radices less one, so three variables of degree 2 fit and four do not.
+            /// </para>
+            /// <para>
+            /// <b>A refusal is possible and a wrong answer is not.</b> Every candidate factor is
+            /// checked by exact division before it is kept, and the assembled factors are divided
+            /// back into the input.
             /// </para>
             /// </remarks>
             /// <example>
@@ -85,8 +93,14 @@ namespace AngouriMath
             /// Console.WriteLine(MathS.Polynomials.Factor("x ^ 2 + 1", "x"));
             /// // x ^ 2 + 1        -- irreducible over Q, which is an answer
             ///
-            /// Console.WriteLine(MathS.Polynomials.Factor("x * y + y", "x") is null);
-            /// // True             -- more than one variable, so it declines
+            /// Console.WriteLine(MathS.Polynomials.Factor("x * y + y", "x"));
+            /// // y * (x + 1)      -- the content in x is taken out first
+            ///
+            /// Console.WriteLine(MathS.Polynomials.Factor("x ^ 2 - y ^ 2", "x"));
+            /// // (x + y) * (x - y)
+            ///
+            /// Console.WriteLine(MathS.Polynomials.Factor("x ^ 12 - y ^ 12", "x") is null);
+            /// // True             -- past the substitution's degree budget
             /// </code>
             /// </example>
             public static Entity? Factor(Entity expr, Variable variable)
@@ -189,9 +203,13 @@ namespace AngouriMath
             {
                 if (variables.Count < 2)
                     return null;
-                if (KroneckerFactorization.Factor(poly, index[variable]) is not { } factors
-                    || factors.Count < 2)
+                if (KroneckerFactorization.Factor(poly, index[variable]) is not { } factors)
                     return null;
+                // One factor is an answer and not a refusal: the substitution has established
+                // that the polynomial does not factor, and a caller that took the content out of
+                // it -- which is who calls this -- still has a factorisation to assemble. The
+                // one-variable path says the same thing the same way, Factor("x ^ 2 + 1", "x")
+                // being x ^ 2 + 1.
                 // Repeated factors are collected into a power, as the one-variable path does:
                 // the recombination finds a square as the same factor twice, and printing it
                 // twice would be a different answer to the same question depending on which

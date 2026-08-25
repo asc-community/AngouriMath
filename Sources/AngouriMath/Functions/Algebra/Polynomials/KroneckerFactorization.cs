@@ -206,6 +206,7 @@ namespace AngouriMath.Functions
             var found = new List<MultivariatePolynomial>();
             var remaining = poly;
             var available = new List<IntegerPolynomial>(irreducibles);
+            var everyDivisionSettled = true;
 
             var progress = true;
             while (progress && available.Count > 0)
@@ -221,10 +222,20 @@ namespace AngouriMath.Functions
                             else
                                 return null;
                         if (FromImage(product, poly.VariableCount, order, places, radices)
-                                is not { } candidate
-                            || candidate.DegreeIn(main) < 1
-                            || remaining.DivideExact(candidate) is not { } quotient)
+                                is not { } candidate)
+                            return null;
+                        // A candidate of degree zero in the main variable would be content, and
+                        // the content is taken out before this runs -- so skipping it discards
+                        // nothing a factorisation could have used.
+                        if (candidate.DegreeIn(main) < 1)
                             continue;
+                        if (remaining.DivideExact(candidate, out var settled) is not { } quotient)
+                        {
+                            // "Does not divide" and "ran out of room" are the same null, and
+                            // only the first of them is evidence.
+                            everyDivisionSettled &= settled;
+                            continue;
+                        }
                         found.Add(candidate.Normalized());
                         remaining = quotient;
                         for (var i = subset.Count - 1; i >= 0; i--)
@@ -234,8 +245,15 @@ namespace AngouriMath.Functions
                     }
             }
 
+            // Nothing recombined. Every subset of the image's irreducible factors was tried, so
+            // a factorisation of the polynomial into two parts of positive degree in the main
+            // variable would have been found: the substitution is a ring homomorphism on these
+            // monomials, so such a factorisation maps to a splitting of the image, and every
+            // splitting of the image is one of the subsets. The polynomial is irreducible, and
+            // saying so is an answer -- but only where every division was settled, since a
+            // division that ran out of room is not a "does not divide".
             if (found.Count == 0)
-                return new[] { poly };
+                return everyDivisionSettled ? new[] { poly } : null;
             if (!remaining.IsConstant)
                 found.Add(remaining.Normalized());
             // Nothing is returned that does not multiply back to what was asked about.
