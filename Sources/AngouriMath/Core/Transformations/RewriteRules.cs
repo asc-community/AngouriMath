@@ -166,6 +166,14 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Rules about powers, roots and logarithms.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.Power"/>, where its thirty-five arms are thirty
+        /// rules. The largest set converted, and the one whose branch-cut conditions are asked
+        /// of <c>Patterns.Power.cs</c> rather than restated: five issues put a guard on one
+        /// rewrite here, and a second copy of one of those guards is how the two come to
+        /// disagree.
+        /// </remarks>
         public static RewriteRuleSet Power { get; } = new(
             nameof(Power),
             "Gathers and splits powers, roots and logarithms.",
@@ -173,7 +181,7 @@ namespace AngouriMath.Core.Transformations
             // (a ^ b) ^ c is a ^ (b c) only on a branch; the rules guard for it, and the
             // guard is what the tier is stating.
             Soundness.SoundUnderAssumptions,
-            Patterns.PowerRules,
+            Matching.MatchedRules.Power.ApplyHere,
             Patterns.PowerRulesArms);
 
         /// <summary>

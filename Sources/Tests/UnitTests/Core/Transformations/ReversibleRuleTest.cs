@@ -108,14 +108,24 @@ namespace AngouriMath.Tests.Core.Transformations
         public void EveryDataRuleIsClassifiedAsWritten()
         {
             // Not a dictionary keyed by name: a set parameterised by a sort level exists three
-            // times over, so one rule name appears three times with the same classification.
-            // Keying by name threw, which is the enumeration having grown a shape the assertion
-            // had not.
+            // times over, and `Power` and `Factorization` deliberately carry the same guarded
+            // `a^b * c^b` -- so one name appears several times, with the same classification each
+            // time. Keying by name threw, which is the enumeration having grown a shape the
+            // assertion had not.
             var actual = DataRuleSets()
                 .SelectMany(set => set.Rules)
                 .Select(rule => (rule.Name, rule.Reversal))
                 .Distinct()
                 .ToList();
+
+            // What `Distinct` must not hide is one name standing for two classifications: that
+            // would list the rule twice below rather than fail, and a name meaning two things is
+            // the thing the exception used to be standing in for.
+            foreach (var byName in actual.GroupBy(pair => pair.Name))
+                Assert.True(byName.Count() == 1,
+                    $"'{byName.Key}' is classified "
+                    + string.Join(" and ", byName.Select(pair => pair.Reversal))
+                    + " in different sets, so the name means two things");
 
             var oneWay = actual.Where(pair => pair.Reversal is not RuleReversal.Reversible)
                 .Select(pair => $"{pair.Name}: {pair.Reversal}")
@@ -179,6 +189,10 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-lessorequal-of-a-thing-with-itself-is-decided: ReplacementIsCode",
                     "a-lessorequal-with-a-number-on-the-left-turns-round: ReplacementIsCode",
                     "a-lessorequal-with-zero-on-the-left-turns-round: ReplacementIsCode",
+                    "a-logarithm-in-a-reciprocal-base-negates: ReplacementIsCode",
+                    "a-logarithm-of-a-reciprocal-in-a-reciprocal-base-turns-round-twice: ReplacementIsCode",
+                    "a-logarithm-of-a-reciprocal-negates: ReplacementIsCode",
+                    "a-logarithm-of-its-own-base-is-one-where-it-is-defined: ReplacementIsCode",
                     "a-negated-conjunction-becomes-a-disjunction-of-negations: ReplacementIsCode",
                     "a-negated-disjunction-becomes-a-conjunction-of-negations: ReplacementIsCode",
                     "a-negation-or-something-is-an-implication: ReplacementIsCode",
@@ -206,7 +220,9 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-negative-integer-power-becomes-a-reciprocal: ReplacementIsCode",
                     "a-negative-minuend-comes-out-in-front: ReplacementIsCode",
                     "a-negative-subtracted-is-added: ReplacementIsCode",
+                    "a-number-raised-to-a-logarithm-of-itself-is-the-antilogarithm: ReplacementIsCode",
                     "a-numeric-coefficient-is-gathered-over-a-surd: ReplacementIsCode",
+                    "a-numeric-factor-comes-out-of-a-power-of-a-product: ReplacementIsCode",
                     "a-plain-factorial-times-the-next-term: ReplacementIsCode",
                     "a-positive-divisor-drops-out-of-a-equals-with-zero: ReplacementIsCode",
                     "a-positive-divisor-drops-out-of-a-greater-with-zero: ReplacementIsCode",
@@ -223,6 +239,13 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-positive-factor-second-drops-out-of-a-greaterorequal-with-zero: ReplacementIsCode",
                     "a-positive-factor-second-drops-out-of-a-less-with-zero: ReplacementIsCode",
                     "a-positive-factor-second-drops-out-of-a-lessorequal-with-zero: ReplacementIsCode",
+                    "a-power-of-a-numeric-reciprocal-times-a-power-of-its-own-denominator-subtracts-the-exponents: ReplacementIsCode",
+                    "a-power-of-a-numeric-reciprocal-times-its-own-denominator-lowers-the-exponent: ReplacementIsCode",
+                    "a-power-of-a-power-multiplies-the-exponents: ReplacementIsCode",
+                    "a-power-over-its-own-base-lowers-the-exponent: ReplacementIsCode",
+                    "a-power-times-a-product-containing-its-own-base-raises-the-exponent: ReplacementIsCode",
+                    "a-power-times-its-own-base-raises-the-exponent: ReplacementIsCode",
+                    "a-power-whose-exponent-divides-by-a-logarithm-of-its-own-base-changes-base: ReplacementIsCode",
                     "a-power-with-a-real-positive-exponent-is-zero-when-its-base-is: ReplacementIsCode",
                     "a-product-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "a-product-of-two-negatives-is-positive: ReplacementIsCode",
@@ -232,12 +255,16 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-quotient-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "a-quotient-of-a-plain-factorial-by-a-shifted-one: ReplacementIsCode",
                     "a-quotient-of-a-shifted-factorial-by-a-plain-one: ReplacementIsCode",
+                    "a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero: ReplacementIsCode",
                     "a-quotient-of-polynomials-is-divided-out: ReplacementIsCode",
                     "a-quotient-of-polynomials-is-put-in-lowest-terms: ReplacementIsCode",
+                    "a-quotient-of-powers-whose-exponents-differ-by-a-whole-factor-takes-it-into-the-dividend: ReplacementIsCode",
+                    "a-quotient-of-powers-whose-exponents-differ-by-a-whole-factor-takes-it-into-the-divisor: ReplacementIsCode",
                     "a-quotient-of-shifted-factorials: ReplacementIsCode",
                     "a-quotient-of-symbolic-parts-is-grouped-pairwise: ReplacementIsCode",
                     "a-quotient-of-two-negatives-is-positive: ReplacementIsCode",
                     "a-reciprocal-is-never-zero: ReplacementIsCode",
+                    "a-reciprocal-power-is-a-quotient: ReplacementIsCode",
                     "a-secant-times-a-cosine-of-one-angle-is-one: ReplacementIsCode",
                     "a-set-less-itself-is-empty: ReplacementIsCode",
                     "a-shifted-factorial-times-a-bare-term: ReplacementIsCode",
@@ -261,9 +288,12 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-term-added-to-itself-doubles: ReplacementIsCode",
                     "a-term-shared-with-a-product-added-to-it-comes-out: ReplacementIsCode",
                     "a-term-subtracted-from-itself-vanishes: ReplacementIsCode",
+                    "a-thing-over-a-power-of-itself-is-one-power: ReplacementIsCode",
                     "a-two-term-denominator-is-multiplied-by-its-conjugate: ReplacementIsCode",
                     "a-union-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "a-union-with-itself-is-itself: PatternCannotBeBuilt",
+                    "a-variable-times-a-power-puts-the-power-first: ReplacementIsCode",
+                    "a-whole-power-comes-out-from-under-a-radical: ReplacementIsCode",
                     "an-arccosecant-of-a-numeric-reciprocal-is-an-arcsine: ReplacementIsCode",
                     "an-arccosine-of-a-numeric-reciprocal-is-an-arcsecant: ReplacementIsCode",
                     "an-arcsecant-of-a-numeric-reciprocal-is-an-arccosine: ReplacementIsCode",
@@ -273,6 +303,7 @@ namespace AngouriMath.Tests.Core.Transformations
                     "an-equality-or-a-less-than-as-written-is-at-most: ReplacementIsCode",
                     "an-equality-or-a-less-than-the-other-way-round-is-at-least: ReplacementIsCode",
                     "an-exclusive-disjunction-chain-is-sorted-and-grouped: ReplacementIsCode",
+                    "an-exponent-comes-out-of-a-logarithm: ReplacementIsCode",
                     "an-implication-between-negations-turns-round: ReplacementIsCode",
                     "an-intersection-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "an-intersection-distributes-over-a-union-on-its-left: ReplacementIsCode",
@@ -287,6 +318,10 @@ namespace AngouriMath.Tests.Core.Transformations
                     "arctangent-of-a-tangent-inside-its-own-interval: ReplacementIsCode",
                     "arctangent-plus-arccotangent-is-a-right-angle-with-the-sign-of-the-argument: ReplacementIsCode",
                     "cosine-of-a-whole-multiple-of-an-angle: ReplacementIsCode",
+                    "dividing-by-a-power-and-then-by-its-base-raises-the-exponent: ReplacementIsCode",
+                    "dividing-by-a-thing-and-then-by-a-power-of-it-raises-the-exponent: ReplacementIsCode",
+                    "dividing-by-two-powers-of-one-base-adds-the-exponents: ReplacementIsCode",
+                    "dividing-twice-by-one-thing-squares-it: ReplacementIsCode",
                     "eulers-totient-of-a-prime-power: ReplacementIsCode",
                     "membership-of-a-singleton-is-an-equality: ReplacementIsCode",
                     "membership-of-an-interval-is-written-out: ReplacementIsCode",
@@ -308,7 +343,12 @@ namespace AngouriMath.Tests.Core.Transformations
                     "two-arctangents-of-numbers-add-by-the-tangent-formula: ReplacementIsCode",
                     "two-comparisons-of-one-pair-that-exclude-each-other-are-false: ReplacementIsCode",
                     "two-comparisons-of-one-pair-that-leave-no-case-are-true: ReplacementIsCode",
+                    "two-logarithms-of-one-base-add-by-multiplying-their-antilogarithms: ReplacementIsCode",
+                    "two-logarithms-of-one-base-subtract-by-dividing-their-antilogarithms: ReplacementIsCode",
+                    "two-powers-of-one-base-divide-by-subtracting-exponents: ReplacementIsCode",
+                    "two-powers-of-one-base-multiply-by-adding-exponents: ReplacementIsCode",
                     "two-powers-of-one-exponent-share-a-base: ReplacementIsCode",
+                    "two-powers-of-one-exponent-share-a-quotient-of-bases: ReplacementIsCode",
                     "two-subtracted-fractions-take-a-common-denominator: ReplacementIsCode",
                 },
                 oneWay);
