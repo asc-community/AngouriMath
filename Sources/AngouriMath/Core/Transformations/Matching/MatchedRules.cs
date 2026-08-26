@@ -1554,5 +1554,131 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => new Arccosf(bound["d"] / bound["n"]),
                 Soundness.SoundUnderAssumptions,
                 when: bound => bound["n"] is Number && bound["d"] is not Number));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.SetOperatorRules"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The set that was expected to need something the matcher does not have, and did not.
+        /// Two things were in doubt. An <see cref="Set.Interval"/> has <b>four</b> children where
+        /// every other node pattern here has one or two — and it turns out a node pattern is not
+        /// limited to two, so the arity was never the question; the rule binds the interval whole
+        /// anyway, because its replacement wants the node rather than its parts.
+        /// </para>
+        /// <para>
+        /// The other <b>was real, and is the first limitation of the matcher this file has had to
+        /// work around.</b> <c>{ x : x in S }</c> is <c>S</c>, and the <c>switch</c> says that by
+        /// deconstructing <c>ConditionalSet(var v, Inf(var v, var s))</c> — a record
+        /// deconstruction, which reads the <i>stored</i> <c>Var</c> and <c>Predicate</c>. The
+        /// matcher walks <c>DirectChildren</c>, and a <see cref="Set.ConditionalSet"/> has
+        /// <b>one</b> child there, its predicate, with the bound variable already renamed to a
+        /// placeholder: <c>{ x : x in [0; 1] }</c> offers <c>%1 in [0; 1]</c> and nothing else.
+        /// A two-child node pattern over it cannot match, and no pattern can name the bound
+        /// variable at all.
+        /// </para>
+        /// <para>
+        /// So that rule binds the whole set and takes it apart in its replacement, which is
+        /// honest rather than clever: the pattern says what the matcher can say, and the
+        /// condition says the rest. Reaching into a binder is
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1074">#1074</a>.
+        /// </para>
+        /// </remarks>
+        internal static MatchedRuleSet SetOperator { get; } = new(
+            nameof(SetOperator),
+
+            // A /\ A = A
+            new MatchedRule(
+                "an-intersection-with-itself-is-itself",
+                MatchPattern.Node<Set.Intersectionf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                MatchPattern.Any("a"),
+                Soundness.Sound),
+
+            // A /\ (B \/ C) = (A /\ B) \/ (A /\ C), and the same with the union on the left.
+            // Two rules rather than one commutative pattern, because each builds its answer with
+            // the operands in the order it found them.
+            new MatchedRule(
+                "an-intersection-distributes-over-a-union-on-its-right",
+                MatchPattern.Node<Set.Intersectionf>(
+                    MatchPattern.Any<Set>("a"),
+                    MatchPattern.Node<Set.Unionf>(
+                        MatchPattern.Any<Set>("b"), MatchPattern.Any<Set>("c"))),
+                bound => ((Set)bound["a"]).Intersect((Set)bound["b"])
+                    .Unite(((Set)bound["a"]).Intersect((Set)bound["c"])),
+                Soundness.Sound),
+
+            new MatchedRule(
+                "an-intersection-distributes-over-a-union-on-its-left",
+                MatchPattern.Node<Set.Intersectionf>(
+                    MatchPattern.Node<Set.Unionf>(
+                        MatchPattern.Any<Set>("b"), MatchPattern.Any<Set>("c")),
+                    MatchPattern.Any<Set>("a")),
+                bound => ((Set)bound["b"]).Intersect((Set)bound["a"])
+                    .Unite(((Set)bound["c"]).Intersect((Set)bound["a"])),
+                Soundness.Sound),
+
+            // A \/ A = A
+            new MatchedRule(
+                "a-union-with-itself-is-itself",
+                MatchPattern.Node<Set.Unionf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                MatchPattern.Any("a"),
+                Soundness.Sound),
+
+            // A \ A = {}
+            new MatchedRule(
+                "a-set-less-itself-is-empty",
+                MatchPattern.Node<Set.SetMinusf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                bound => Set.Empty,
+                Soundness.Sound),
+
+            // { x : x in S } = S. Bound whole and taken apart in the replacement, because a
+            // node pattern cannot reach inside a binder -- see the remark on this set.
+            new MatchedRule(
+                "a-conditional-set-whose-condition-is-its-own-membership-is-that-set",
+                MatchPattern.Any<Set.ConditionalSet>(
+                    "cs", set => set.Predicate is Set.Inf(var member, _) && member == set.Var),
+                bound => ((Set.Inf)((Set.ConditionalSet)bound["cs"]).Predicate).SupSet,
+                Soundness.Sound),
+
+            // x in {a} = (x = a)
+            new MatchedRule(
+                "membership-of-a-singleton-is-an-equality",
+                MatchPattern.Node<Set.Inf>(
+                    MatchPattern.Any("x"),
+                    MatchPattern.Any<Set.FiniteSet>("s", finite => finite.Count == 1)),
+                bound => bound["x"].EqualTo(((Set.FiniteSet)bound["s"]).First()),
+                Soundness.Sound),
+
+            // x in (a; b) is written out as the inequalities it stands for
+            new MatchedRule(
+                "membership-of-an-interval-is-written-out",
+                MatchPattern.Node<Set.Inf>(
+                    MatchPattern.Any<Entity>("x", node => node is not Set and not Matrix),
+                    MatchPattern.Any<Set.Interval>("i")),
+                bound =>
+                {
+                    var interval = (Set.Interval)bound["i"];
+                    return Simplificator.ParaphraseInterval(
+                        bound["x"], interval.Left, interval.LeftClosed,
+                        interval.Right, interval.RightClosed);
+                },
+                Soundness.Sound),
+
+            // { True, False } is the boolean domain
+            new MatchedRule(
+                "the-two-truth-values-are-the-boolean-domain",
+                MatchPattern.Any<Set.FiniteSet>(
+                    "s", finite => finite == Functions.Patterns.FullBooleanSet),
+                bound => Set.SpecialSet.Create(Domain.Boolean),
+                Soundness.Sound),
+
+            // (-oo; +oo) is the domain it is an interval of
+            new MatchedRule(
+                "an-unbounded-interval-is-a-whole-domain",
+                MatchPattern.Any<Set.Interval>(
+                    "i", interval => interval.Left == Real.NegativeInfinity
+                                     && interval.Right == Real.PositiveInfinity),
+                bound => Set.SpecialSet.Create(((Set.Interval)bound["i"]).Codomain),
+                Soundness.Sound));
     }
 }

@@ -411,6 +411,25 @@ namespace AngouriMath.Tests.Core.Transformations
                 });
 
         /// <summary>
+        /// The set that was expected to need something the matcher does not have. It did not —
+        /// a node pattern is not limited to two children, and a name bound twice inside a
+        /// <c>ConditionalSet</c> still matches the same thing twice despite the capture-avoiding
+        /// rename its traversal performs. This test is what says so.
+        /// </summary>
+        [Fact]
+        public void SetOperatorAsDataMatchesTheSwitch()
+            => AssertAgrees("SetOperator", Patterns.SetOperatorRules,
+                MatchedRules.SetOperator, leastFirings: 8, extra: new[]
+                {
+                    @"A /\ A", @"A \/ A", @"A \ A",
+                    @"{ 1, 2 } /\ ({ 2, 3 } \/ { 3, 4 })", @"({ 2, 3 } \/ { 3, 4 }) /\ { 1, 2 }",
+                    "{ x : x in [0; 1] }", "{ x : x in { 1, 2 } }", "{ x : x > 0 }",
+                    "1 in { 5 }", "x in { 5 }", "x in { 5, 6 }",
+                    "x in [0; 1]", "x in (0; 1)", "x in (-oo; +oo)",
+                    "{ true, false }", "{ true }", "(-oo; +oo)", "(0; +oo)",
+                });
+
+        /// <summary>
         /// A predicate on a hole that is a mathematical property rather than a sign or a type.
         /// The corpus reaches it rarely, so the shapes are given here as well — a set that fires
         /// four times over a generated corpus is worth checking against cases chosen for it.
