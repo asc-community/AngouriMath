@@ -347,6 +347,52 @@ namespace AngouriMath.Tests.Algebra.Polynomials
             Assert.Equal(pieces, Mulf.LinearChildren(factored!).Count());
         }
 
+        /// <summary>
+        /// A leading coefficient in <c>x</c> that is a polynomial in <c>y</c> — Wang's
+        /// leading-coefficient problem, which the lift declined until it was made not to arise.
+        /// </summary>
+        /// <remarks>
+        /// <c>L^(n-1) f(z/L, y)</c> is a polynomial and is monic in <c>z</c>, so it has a
+        /// constant leading coefficient and the lift already handles it; a factor comes back as
+        /// <c>h(L·x, y)</c> with the content that substitution introduced divided out. Checked
+        /// by value: the product has to be the polynomial, whatever spelling comes back.
+        /// </para>
+        /// <para>
+        /// <b>Every row is past the substitution's reach as well as having a leading coefficient
+        /// that is a polynomial</b>, and both conditions are needed for the row to be about this.
+        /// A small one like <c>(y x + 1)(x + y)</c> has the leading coefficient but Kronecker
+        /// already factors it, so it would pass without any of this code — which is what the
+        /// first version of this test was made of.
+        /// </remarks>
+        [Theory]
+        [InlineData("(y * x3 + 1) * (x4 - y3)", 2)]
+        [InlineData("(y * x + 1) * (x7 - y7)", 3)]
+        [InlineData("(y * x2 + 1) * (x6 - y6)", 5)]
+        public void ALeadingCoefficientThatIsAPolynomialIsMadeMonic(string input, int pieces)
+        {
+            var factored = MathS.Polynomials.Factor(input.ToEntity(), "x");
+            Assert.NotNull(factored);
+            Assert.IsType<Mulf>(factored);
+            Assert.Equal(Integer.Zero, (factored! - input.ToEntity()).Simplify());
+            Assert.Equal(pieces, Mulf.LinearChildren(factored!).Count());
+        }
+
+        /// <summary>
+        /// The monicisation's own bound. It multiplies by <c>L^(n-1-i)</c>, so the degree it
+        /// adds is <c>(n-1)·deg L</c>, and past twelve the cost stops being milliseconds:
+        /// this row factors correctly in <b>63 seconds</b> unbounded and refuses in three.
+        /// </summary>
+        /// <remarks>
+        /// A refusal is a legitimate answer and a sixty-three second one is not, which is the
+        /// same judgement <c>MaxImageFactors</c> makes about the recombination. The row is here
+        /// rather than deleted so that a bound which stops being needed fails rather than
+        /// quietly costing reach.
+        /// </remarks>
+        [Theory]
+        [InlineData("(y2 * x3 + 1) * (x5 - y2)")]
+        public void PastTheMonicisationsGrowthBoundItRefuses(string input)
+            => Assert.Null(MathS.Polynomials.Factor(input.ToEntity(), "x"));
+
         [Theory]
         [InlineData("(x + y + z + w) * (x - y)")]
         [InlineData("(x + y) * (x + z) * (x + w) * (x + v)")]
