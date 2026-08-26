@@ -12,6 +12,7 @@ using System.Reflection;
 using AngouriMath.Core.Transformations;
 using AngouriMath.Core.Transformations.Matching;
 using AngouriMath.Extensions;
+using AngouriMath.Functions;
 using Xunit;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
@@ -46,11 +47,28 @@ namespace AngouriMath.Tests.Core.Transformations
         /// at run time from a rule that did not apply.
         /// </remarks>
         private static IEnumerable<MatchedRuleSet> DataRuleSets()
-            => typeof(MatchedRules)
-                .GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)
+        {
+            const BindingFlags Any = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+            var sets = typeof(MatchedRules)
+                .GetProperties(Any)
                 .Where(property => property.PropertyType == typeof(MatchedRuleSet))
-                .Select(property => (MatchedRuleSet)property.GetValue(null)!)
-                .OrderBy(set => set.Name, StringComparer.Ordinal);
+                .Select(property => (MatchedRuleSet)property.GetValue(null)!);
+
+            // A set parameterised by a sort level is a *method*, not a property, so enumerating
+            // properties alone stopped covering the file the moment the first one was written --
+            // the same failure as the hand-written list this replaced, one shape further along.
+            // Each is asked for at every level, because the level is what its rules close over.
+            var factories = typeof(MatchedRules)
+                .GetMethods(Any)
+                .Where(method => method.ReturnType == typeof(MatchedRuleSet)
+                                 && method.GetParameters() is { Length: 1 } only
+                                 && only[0].ParameterType == typeof(TreeAnalyzer.SortLevel));
+            foreach (var factory in factories)
+                foreach (var level in Enum.GetValues(typeof(TreeAnalyzer.SortLevel)))
+                    sets = sets.Append((MatchedRuleSet)factory.Invoke(null, new[] { level })!);
+
+            return sets.OrderBy(set => set.Name, StringComparer.Ordinal);
+        }
 
         private static readonly string[] Leaves = { "x", "y", "z", "2", "-1", "1/2", "1", "0" };
 
@@ -89,13 +107,20 @@ namespace AngouriMath.Tests.Core.Transformations
         [Fact]
         public void EveryDataRuleIsClassifiedAsWritten()
         {
+            // Not a dictionary keyed by name: a set parameterised by a sort level exists three
+            // times over, so one rule name appears three times with the same classification.
+            // Keying by name threw, which is the enumeration having grown a shape the assertion
+            // had not.
             var actual = DataRuleSets()
                 .SelectMany(set => set.Rules)
-                .ToDictionary(rule => rule.Name, rule => rule.Reversal);
+                .Select(rule => (rule.Name, rule.Reversal))
+                .Distinct()
+                .ToList();
 
-            var oneWay = actual.Where(pair => pair.Value is not RuleReversal.Reversible)
-                .OrderBy(pair => pair.Key, StringComparer.Ordinal)
-                .Select(pair => $"{pair.Key}: {pair.Value}")
+            var oneWay = actual.Where(pair => pair.Reversal is not RuleReversal.Reversible)
+                .Select(pair => $"{pair.Name}: {pair.Reversal}")
+                .Distinct()
+                .OrderBy(one => one, StringComparer.Ordinal)
                 .ToArray();
 
             // Named one by one and with the reason, so that a rule losing or gaining a direction
@@ -109,6 +134,7 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-common-factor-is-collected-out-of-a-whole-sum: ReplacementIsCode",
                     "a-conditional-set-whose-condition-is-its-own-membership-is-that-set: ReplacementIsCode",
                     "a-conjunction-absorbs-a-disjunction-it-shares-an-operand-with: ReplacementIsCode",
+                    "a-conjunction-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "a-conjunction-drops-a-negated-copy-of-its-other-operand: ReplacementIsCode",
                     "a-conjunction-of-disjunctions-sharing-an-operand-distributes: ReplacementIsCode",
                     "a-conjunction-of-negations-is-a-negated-disjunction: ReplacementIsCode",
@@ -117,9 +143,11 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-cosecant-times-a-sine-of-one-angle-is-one: ReplacementIsCode",
                     "a-cosine-of-an-arccosine: PatternCannotBeBuilt",
                     "a-cotangent-of-an-arccotangent: PatternCannotBeBuilt",
+                    "a-difference-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "a-difference-of-even-powers-splits: ReplacementIsCode",
                     "a-difference-of-two-negatives-turns-round: ReplacementIsCode",
                     "a-disjunction-absorbs-a-conjunction-it-shares-an-operand-with: ReplacementIsCode",
+                    "a-disjunction-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "a-disjunction-drops-a-negated-copy-of-its-other-operand: ReplacementIsCode",
                     "a-disjunction-of-conjunctions-sharing-an-operand-distributes: ReplacementIsCode",
                     "a-disjunction-of-negations-is-a-negated-conjunction: ReplacementIsCode",
@@ -142,15 +170,18 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-negative-subtracted-is-added: ReplacementIsCode",
                     "a-numeric-coefficient-is-gathered-over-a-surd: ReplacementIsCode",
                     "a-plain-factorial-times-the-next-term: ReplacementIsCode",
+                    "a-product-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "a-product-of-two-negatives-is-positive: ReplacementIsCode",
                     "a-product-subtracted-from-its-own-factor: ReplacementIsCode",
                     "a-quotient-by-a-cosecant-is-a-sine: ReplacementIsCode",
                     "a-quotient-by-a-secant-is-a-cosine: ReplacementIsCode",
+                    "a-quotient-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "a-quotient-of-a-plain-factorial-by-a-shifted-one: ReplacementIsCode",
                     "a-quotient-of-a-shifted-factorial-by-a-plain-one: ReplacementIsCode",
                     "a-quotient-of-polynomials-is-divided-out: ReplacementIsCode",
                     "a-quotient-of-polynomials-is-put-in-lowest-terms: ReplacementIsCode",
                     "a-quotient-of-shifted-factorials: ReplacementIsCode",
+                    "a-quotient-of-symbolic-parts-is-grouped-pairwise: ReplacementIsCode",
                     "a-quotient-of-two-negatives-is-positive: ReplacementIsCode",
                     "a-secant-times-a-cosine-of-one-angle-is-one: ReplacementIsCode",
                     "a-set-less-itself-is-empty: ReplacementIsCode",
@@ -167,6 +198,7 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-statement-differs-from-itself-nowhere: ReplacementIsCode",
                     "a-statement-implies-itself: ReplacementIsCode",
                     "a-statement-or-its-negation-is-true-where-it-has-a-truth-value: ReplacementIsCode",
+                    "a-sum-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "a-sum-of-two-negatives-is-a-negated-sum: ReplacementIsCode",
                     "a-sum-or-difference-that-is-a-perfect-square: ReplacementIsCode",
                     "a-tangent-of-an-arctangent: PatternCannotBeBuilt",
@@ -175,12 +207,15 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-term-shared-with-a-product-added-to-it-comes-out: ReplacementIsCode",
                     "a-term-subtracted-from-itself-vanishes: ReplacementIsCode",
                     "a-two-term-denominator-is-multiplied-by-its-conjugate: ReplacementIsCode",
+                    "a-union-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "a-union-with-itself-is-itself: PatternCannotBeBuilt",
                     "an-arccosecant-of-a-numeric-reciprocal-is-an-arcsine: ReplacementIsCode",
                     "an-arccosine-of-a-numeric-reciprocal-is-an-arcsecant: ReplacementIsCode",
                     "an-arcsecant-of-a-numeric-reciprocal-is-an-arccosine: ReplacementIsCode",
                     "an-arcsine-of-a-numeric-reciprocal-is-an-arccosecant: ReplacementIsCode",
+                    "an-exclusive-disjunction-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "an-implication-between-negations-turns-round: ReplacementIsCode",
+                    "an-intersection-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "an-intersection-distributes-over-a-union-on-its-left: ReplacementIsCode",
                     "an-intersection-distributes-over-a-union-on-its-right: ReplacementIsCode",
                     "an-intersection-with-itself-is-itself: PatternCannotBeBuilt",
@@ -206,8 +241,10 @@ namespace AngouriMath.Tests.Core.Transformations
                     "the-arctangent-of-one-over-root-three: ReplacementIsCode",
                     "the-arctangent-of-root-three: ReplacementIsCode",
                     "the-two-truth-values-are-the-boolean-domain: ReplacementIsCode",
+                    "two-added-fractions-take-a-common-denominator: ReplacementIsCode",
                     "two-arctangents-of-numbers-add-by-the-tangent-formula: ReplacementIsCode",
                     "two-powers-of-one-exponent-share-a-base: ReplacementIsCode",
+                    "two-subtracted-fractions-take-a-common-denominator: ReplacementIsCode",
                 },
                 oneWay);
         }

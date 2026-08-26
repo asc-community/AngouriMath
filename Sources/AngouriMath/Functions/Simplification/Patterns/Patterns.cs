@@ -13,7 +13,8 @@ namespace AngouriMath.Functions
 {
     internal static partial class Patterns
     {
-        private static Entity SortAndGroup(Entity original, IEnumerable<Entity> children, TreeAnalyzer.SortLevel level, Func<Entity, Entity, Entity> ctor)
+        /// <remarks>Internal so the data form of this set calls it rather than repeating it.</remarks>
+        internal static Entity SortAndGroup(Entity original, IEnumerable<Entity> children, TreeAnalyzer.SortLevel level, Func<Entity, Entity, Entity> ctor)
         {
             var groups = new Dictionary<string, List<Entity>>();
             foreach (var child in children)

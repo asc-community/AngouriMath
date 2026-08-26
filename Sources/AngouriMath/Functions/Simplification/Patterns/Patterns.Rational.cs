@@ -13,7 +13,8 @@ namespace AngouriMath.Functions
 {
     partial class Patterns
     {
-        private static Entity SumOfFractions(Entity expr,
+        /// <remarks>Internal so the data form of this set calls it rather than repeating it.</remarks>
+        internal static Entity SumOfFractions(Entity expr,
             Entity leftNum, Entity leftDen, Entity rightNum, Entity rightDen)
         {
             // a/d + b/d = (a + b)/d. Cross-multiplying instead builds d*d and leaves the
@@ -65,9 +66,19 @@ namespace AngouriMath.Functions
                 Minusf(Divf(var leftNum, var leftDen), Divf(var rightNum, var rightDen))
                     => SumOfFractions(expr, leftNum, leftDen, -rightNum, rightDen),
                 Divf(var num, var den) when num.Vars.Any() && den.Vars.Any()
-                    => PairwiseGrouping(num, den, level).Select(PowerRules).MultiplyAll().InnerSimplified.Replace(CollapseMultipleFractions),
+                    => PairwiseGroupedQuotient(expr, num, den, level),
                 _ => expr
             };
+
+        /// <summary>
+        /// The quotient regrouped pairwise, its factors put through the power rules and
+        /// multiplied back. A method of its own so that the data form of this set calls the same
+        /// code rather than a copy of it.
+        /// </summary>
+        internal static Entity PairwiseGroupedQuotient(
+            Entity whole, Entity num, Entity den, TreeAnalyzer.SortLevel level)
+            => PairwiseGrouping(num, den, level).Select(PowerRules).MultiplyAll()
+                .InnerSimplified.Replace(CollapseMultipleFractions);
 
         /// <summary>n^(p/q) for a q of 2 or more -- a root that is not a whole power.</summary>
         private static bool IsSurd(Entity node)

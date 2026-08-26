@@ -1680,5 +1680,150 @@ namespace AngouriMath.Core.Transformations.Matching
                                      && interval.Right == Real.PositiveInfinity),
                 bound => Set.SpecialSet.Create(((Set.Interval)bound["i"]).Codomain),
                 Soundness.Sound));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.SortRules"/>, as data — one set per sort level.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>The first set here that is parameterised by something other than the expression.</b>
+        /// A <c>switch</c> takes that as a second argument and closes over it; a set of rules
+        /// closes over it too, but the set itself then has to be built per value rather than
+        /// declared once.
+        /// </para>
+        /// <para>
+        /// <b>And it is not wired, because the exchange is not free here — measured.</b> The
+        /// three canonical orders are the <i>normalisation</i>: they run on every node of every
+        /// simplification pass, where every other set converted so far fires on a shape. Paying
+        /// matcher dispatch there costs <b>+48% of <c>SimplifyEasy</c></b> (0.128 → 0.190 ms over
+        /// five samples each), which the kernel performance gate reports as 4.14x on a shared
+        /// runner. <see cref="CommonDenominator"/>, exchanged in the same change, is
+        /// <b>−0.8%</b>; the attribution is that clean.
+        /// </para>
+        /// <para>
+        /// Giving each rule a concrete root type instead of a predicate over
+        /// <c>Any&lt;Entity&gt;</c> was tried first, on the reading that a hole typed
+        /// <c>Entity</c> matches every node before its predicate is consulted and so defeats the
+        /// root-type dispatch. It moved +52% to +48%, so that was not the cost either: what costs
+        /// is the per-node dispatch itself, and no arrangement of these seven rules avoids it.
+        /// </para>
+        /// <para>
+        /// So this stays here, proven to agree with the <c>switch</c> at every level, and the
+        /// <c>switch</c> keeps running. It is the first set where the answer to "should this be
+        /// data?" is no, and the reason is a number rather than a preference.
+        /// </para>
+        /// <para>
+        /// Every rule is a bare type test with the whole node bound, which is a typed hole — and
+        /// two of the seven test <i>two</i> types, a sum being either <c>Sumf</c> or
+        /// <c>Minusf</c> and a product either <c>Mulf</c> or <c>Divf</c>, which is the predicate
+        /// on a hole again. All seven replacements are code: sorting a chain is not a tree
+        /// written down.
+        /// </para>
+        /// </remarks>
+        internal static MatchedRuleSet Sort(TreeAnalyzer.SortLevel level) => new(
+            nameof(Sort) + "." + level,
+
+            // A sum chain is either spelling, and each is its own rule rather than one rule over
+            // `Sumf or Minusf`. A predicate on a hole of type Entity matches every node in the
+            // tree before the predicate is consulted, which defeats the root-type dispatch that
+            // makes a miss cheap -- and this set runs on every node of every pass, so that is
+            // the difference between an exchange that is free and one that is not.
+            new MatchedRule(
+                "a-sum-chain-is-sorted-and-grouped",
+                MatchPattern.Any<Sumf>("x"),
+                (node, _) => Functions.Patterns.SortAndGroup(
+                    node, Sumf.LinearChildren(node), level, (a, b) => a + b),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-difference-chain-is-sorted-and-grouped",
+                MatchPattern.Any<Minusf>("x"),
+                (node, _) => Functions.Patterns.SortAndGroup(
+                    node, Sumf.LinearChildren(node), level, (a, b) => a + b),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-product-chain-is-sorted-and-grouped",
+                MatchPattern.Any<Mulf>("x"),
+                (node, _) => Functions.Patterns.SortAndGroup(
+                    node, Mulf.LinearChildren(node), level, (a, b) => a * b),
+                // Regrouping reads a quotient as a product with a negative power, which is the
+                // same value wherever the divisor is not zero.
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-quotient-chain-is-sorted-and-grouped",
+                MatchPattern.Any<Divf>("x"),
+                (node, _) => Functions.Patterns.SortAndGroup(
+                    node, Mulf.LinearChildren(node), level, (a, b) => a * b),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-conjunction-chain-is-sorted-and-grouped",
+                MatchPattern.Any<Andf>("x"),
+                (node, _) => Functions.Patterns.SortAndGroup(
+                    node, Andf.LinearChildren(node), level, (a, b) => a & b),
+                Soundness.Sound),
+
+            new MatchedRule(
+                "a-disjunction-chain-is-sorted-and-grouped",
+                MatchPattern.Any<Orf>("x"),
+                (node, _) => Functions.Patterns.SortAndGroup(
+                    node, Orf.LinearChildren(node), level, (a, b) => a | b),
+                Soundness.Sound),
+
+            new MatchedRule(
+                "a-union-chain-is-sorted-and-grouped",
+                MatchPattern.Any<Set.Unionf>("x"),
+                (node, _) => Functions.Patterns.SortAndGroup(
+                    node, Set.Unionf.LinearChildren(node), level, (a, b) => a.Unite(b)),
+                Soundness.Sound),
+
+            new MatchedRule(
+                "an-intersection-chain-is-sorted-and-grouped",
+                MatchPattern.Any<Set.Intersectionf>("x"),
+                (node, _) => Functions.Patterns.SortAndGroup(
+                    node, Set.Intersectionf.LinearChildren(node), level, (a, b) => a.Intersect(b)),
+                Soundness.Sound),
+
+            new MatchedRule(
+                "an-exclusive-disjunction-chain-is-sorted-and-grouped",
+                MatchPattern.Any<Xorf>("x"),
+                (node, _) => Functions.Patterns.SortAndGroup(
+                    node, Xorf.LinearChildren(node), level, (a, b) => a ^ b),
+                Soundness.Sound));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.FractionCommonDenominatorRules"/>, as data — again one
+        /// set per sort level.
+        /// </summary>
+        internal static MatchedRuleSet CommonDenominator(TreeAnalyzer.SortLevel level) => new(
+            nameof(CommonDenominator) + "." + level,
+
+            new MatchedRule(
+                "two-added-fractions-take-a-common-denominator",
+                MatchPattern.Node<Sumf>(
+                    MatchPattern.Node<Divf>(MatchPattern.Any("ln"), MatchPattern.Any("ld")),
+                    MatchPattern.Node<Divf>(MatchPattern.Any("rn"), MatchPattern.Any("rd"))),
+                (node, bound) => Functions.Patterns.SumOfFractions(
+                    node, bound["ln"], bound["ld"], bound["rn"], bound["rd"]),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "two-subtracted-fractions-take-a-common-denominator",
+                MatchPattern.Node<Minusf>(
+                    MatchPattern.Node<Divf>(MatchPattern.Any("ln"), MatchPattern.Any("ld")),
+                    MatchPattern.Node<Divf>(MatchPattern.Any("rn"), MatchPattern.Any("rd"))),
+                (node, bound) => Functions.Patterns.SumOfFractions(
+                    node, bound["ln"], bound["ld"], -bound["rn"], bound["rd"]),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-quotient-of-symbolic-parts-is-grouped-pairwise",
+                MatchPattern.Node<Divf>(MatchPattern.Any("num"), MatchPattern.Any("den")),
+                (node, bound) => Functions.Patterns.PairwiseGroupedQuotient(
+                    node, bound["num"], bound["den"], level),
+                Soundness.SoundUnderAssumptions,
+                when: bound => bound["num"].Vars.Any() && bound["den"].Vars.Any()));
     }
 }

@@ -300,7 +300,7 @@ namespace AngouriMath.Core.Transformations
             "Adds quotients by putting them over a common denominator.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.HIGH_LEVEL),
+            Matching.MatchedRules.CommonDenominator(TreeAnalyzer.SortLevel.HIGH_LEVEL).ApplyHere,
             Patterns.FractionCommonDenominatorRulesArms(TreeAnalyzer.SortLevel.HIGH_LEVEL));
 
         /// <summary>
@@ -311,7 +311,7 @@ namespace AngouriMath.Core.Transformations
             "Adds quotients over a common denominator, distinguishing terms by their constants too.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.MIDDLE_LEVEL),
+            Matching.MatchedRules.CommonDenominator(TreeAnalyzer.SortLevel.MIDDLE_LEVEL).ApplyHere,
             Patterns.FractionCommonDenominatorRulesArms(TreeAnalyzer.SortLevel.MIDDLE_LEVEL));
 
         /// <summary>
@@ -322,7 +322,7 @@ namespace AngouriMath.Core.Transformations
             "Adds quotients over a common denominator, grouping terms by the whole subtree.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            expr => Patterns.FractionCommonDenominatorRules(expr, TreeAnalyzer.SortLevel.LOW_LEVEL),
+            Matching.MatchedRules.CommonDenominator(TreeAnalyzer.SortLevel.LOW_LEVEL).ApplyHere,
             Patterns.FractionCommonDenominatorRulesArms(TreeAnalyzer.SortLevel.LOW_LEVEL));
 
         /// <summary>
