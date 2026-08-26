@@ -21,6 +21,7 @@ read first.
 
 | Silent? | What | Was | Is |
 |---|---|---|---|
+| | `MathS.Polynomials.Factor("x7 - y7", "x")`, and bivariate polynomials whose substituted image over-factors | `null` — a refusal | `(x - y) * (x ^ 6 + x ^ 5 * y + … + y ^ 6)` |
 | | `MathS.Polynomials.Factor("x2 + y2 + z2 + w2 + 1", "x")`, and polynomials in enough variables generally | `null` — a refusal | the polynomial itself, meaning it does not factor |
 | **Silent** | `"x! = 0".ToEntity().Simplify()` | `False`, including at `x = -1` where `x!` has a pole and the statement is `NaN` | `False provided x in RR and (x >= 0 or not x in ZZ)` |
 | **Silent** | `"x! / x!".ToEntity().Simplify()`, and the same for any factorial over itself | `1`, including at `x = -1` where the quotient is `NaN` | `1 provided not x! = 0` |
@@ -312,6 +313,42 @@ the same precedences this grammar uses — so those needed the same brackets —
 bracketing for. The change only ever adds `\left(`/`\right)` groups, which CSharpMath already
 parses, so nothing downstream needs a matching change
 ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
+
+### A polynomial in two variables is factored by lifting rather than by substituting
+
+`MathS.Polynomials.Factor` in several variables was Kronecker's substitution alone, and its
+one-variable image **over-factors**: `x7 - y7` maps to `t^7 (1 - t^49)`, whose factors are
+cyclotomic, so a two-factor bivariate becomes a one-variable polynomial with many irreducibles
+and the recombination is exponential in a count the substitution inflated itself. Those were
+refusals.
+
+An *evaluation* image inflates nothing — `x7 - y7` at `y = 1` is `x7 - 1`, which has the two
+factors the answer has — and the factorisation of that image is lifted back one power of `y` at
+a time.
+
+| | before | now |
+|---|---|---|
+| `Factor("x7 - y7", "x")` | `null` | `(x - y) * (x ^ 6 + x ^ 5 * y + x ^ 4 * y ^ 2 + x ^ 3 * y ^ 3 + x ^ 2 * y ^ 4 + x * y ^ 5 + y ^ 6)` |
+| `Factor("x6 - y6", "x")` | `null` | `(x + y) * (x - y) * (x ^ 2 + x * y + y ^ 2) * (x ^ 2 - x * y + y ^ 2)` |
+| `Factor("x12 - y12", "x")` | `null` | six factors, the full cyclotomic split |
+| `Factor("x4 - y10", "x")` | `null` | `(x ^ 2 + y ^ 5) * (x ^ 2 - y ^ 5)` |
+| `Factor("x16 + 4 x8 y + 3 y2", "x")` | `null` | `(x ^ 8 + 3 * y) * (x ^ 8 + y)` |
+| `Factor("x ^ 3 - (y + z) ^ 3", "x")` | `null` | `null` — three variables, and the lift goes along one |
+| `Factor("(x + y) * (x - y)", "x")` | `(x + y) * (x - y)` | unchanged |
+
+**What it will not do.** The leading coefficient in the main variable has to be a constant.
+Where it is a polynomial in `y`, the lifted factors' leading coefficients must be known before
+the lift to keep them polynomials rather than power series — Wang's leading-coefficient problem
+— and that is a second algorithm on top of this one. It declines, and the substitution is still
+tried first. Three or more variables decline for the same reason: the lift goes along one
+evaluation at a time.
+
+**Nothing is trusted.** Every candidate is checked by exact division of the original, so a bad
+evaluation point, a lift that drifted, or a recombination that is not a factor costs a refusal
+and cannot cost a wrong answer.
+
+This is [#746](https://github.com/asc-community/AngouriMath/issues/746) tier 1's Hensel lifting
+item, in two variables.
 
 ### A polynomial in too many variables to substitute can still be answered
 
