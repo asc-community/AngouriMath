@@ -21,6 +21,8 @@ read first.
 
 | Silent? | What | Was | Is |
 |---|---|---|---|
+| **Silent** | `"x! = 0".ToEntity().Simplify()` | `False`, including at `x = -1` where `x!` has a pole and the statement is `NaN` | `False provided x in RR and (x >= 0 or not x in ZZ)` |
+| **Silent** | `"x! / x!".ToEntity().Simplify()`, and the same for any factorial over itself | `1`, including at `x = -1` where the quotient is `NaN` | `1 provided not x! = 0` |
 | **Silent** | `"(y < x) or (x = y)".ToEntity().Simplify()`, and three more disjunctions of a comparison with an equality written the other way round | `x <= y` — False at `x = 3, y = 2` where the input is True | `x >= y` |
 | **Silent** | `"x6 + x y + 1 = 0".ToEntity().Solve("x")`, and every equation no solver settles | `{  }` — there are no roots | `{ x : 1 + x ^ 6 + x * y = 0 }` — these are the roots, whichever they are |
 | **Silent** | `"(x - 1) * (x6 + x y + 1) = 0".ToEntity().Solve("x")` | `{ 1 }` | `{ 1 } \/ { x : 1 + x ^ 6 + x * y = 0 }` |
@@ -309,6 +311,34 @@ the same precedences this grammar uses — so those needed the same brackets —
 bracketing for. The change only ever adds `\left(`/`\right)` groups, which CSharpMath already
 parses, so nothing downstream needs a matching change
 ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
+
+### `x! = 0` carries the condition under which the factorial exists
+
+A factorial is never zero **where it is defined**, and at a negative integer it is not defined.
+`"x! = 0".ToEntity().Simplify()` was `False` for every `x`, so at `x = -1` it answered a question
+the original declines: `(-1)! = 0` evaluates to `NaN`.
+
+| | before | now |
+|---|---|---|
+| `"x! = 0".ToEntity().Simplify()` | `False` | `False provided x in RR and (x >= 0 or not x in ZZ)` |
+| the same, at `x = 3` | `False` | `False` |
+| the same, at `x = -1` | `False` | `NaN` |
+| `RewriteRules.InequalityEquality.ApplyOnce("x! = 0")` | `False` | `False provided x in RR and (x >= 0 or not x in ZZ)` |
+
+The rule read `Factorialf({ DomainCondition: var condition })`, which is a property pattern on the
+factorial's **argument** rather than on the factorial. For a bare variable that condition is `True`,
+and `Provided` drops a `True`, so the answer went out unconditioned. One character of pattern syntax
+between the two, and the wrong one reads as though it were about the factorial.
+
+Where the factorial exists the answer is still `False`, so the condition narrows the rule rather
+than withdrawing it. A factorial **over itself** moves with it: `a / a = 1 provided a != 0`
+produced `1 provided not x! = 0`, whose condition used to discharge itself because `x! = 0` was
+`False`, and now survives. `"x! / x!".ToEntity().Simplify()` was `1` at every point including the
+poles; it now agrees with the original at `x = 3`, `0`, `-1` and `-2`, where `1` disagreed at both
+negative integers. Found by transcribing the set into `MatchedRules` for
+[#746](https://github.com/asc-community/AngouriMath/issues/746) tier 1, as the single disagreement
+out of 3,485 generated expressions
+([#1081](https://github.com/asc-community/AngouriMath/issues/1081)).
 
 ### Four `or`-with-equality rules gave the opposite comparison
 
