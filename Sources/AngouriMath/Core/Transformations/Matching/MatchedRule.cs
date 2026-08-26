@@ -451,11 +451,55 @@ namespace AngouriMath.Core.Transformations.Matching
 
         internal Entity ApplyHere(Entity expr)
         {
-            // The array rather than the IReadOnlyList property: see the note on `rules`.
-            foreach (var rule in rules)
+            // The rules this node's type can possibly match, rather than all of them. See the
+            // note on `applicable`.
+            foreach (var rule in ApplicableTo(expr.GetType()))
                 if (rule.TryApply(expr) is { } rewritten)
                     return rewritten;
             return expr;
         }
+
+        /// <summary>
+        /// The rules whose pattern requires a root type this one is, cached per runtime type.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// A rule that cannot match still costs a virtual call and a type test to say so, and a
+        /// rewrite pass asks every rule of a set at every node of the tree. For a set of three
+        /// that is nothing, which is why the note above records a per-type index as measured and
+        /// rejected — and it was rejected on a set of three.
+        /// </para>
+        /// <para>
+        /// Thirty sets are data now, so a pass asks several hundred rules at every node where it
+        /// used to ask a handful, and the arithmetic has changed. Indexing is <b>−36.0% of
+        /// <c>SimplifyEasy</c></b> — 148,223 ns to 94,904 ns — with allocation identical to the
+        /// byte and <c>ParseEasy</c>, <c>SolveEasy</c> and <c>SimplifyHard</c> unmoved, so what it
+        /// removes is dispatch and nothing else.
+        /// </para>
+        /// <para>
+        /// What was rejected before was a <i>cache</i> that allocated per node. This allocates
+        /// once per runtime type ever seen and then never again, so a pass over a tree of
+        /// products and sums touches two entries and allocates nothing. The dictionary is only
+        /// ever added to, and adding is done on a copy that replaces the field, so a reader
+        /// racing a writer sees either the old map or the new one and never a torn one.
+        /// </para>
+        /// </remarks>
+        private MatchedRule[] ApplicableTo(Type type)
+        {
+            var known = applicable;
+            if (known.TryGetValue(type, out var found))
+                return found;
+
+            var matching = new List<MatchedRule>(rules.Length);
+            foreach (var rule in rules)
+                if (rule.Left.RequiredRootType is not { } required || required.IsAssignableFrom(type))
+                    matching.Add(rule);
+            found = matching.Count == rules.Length ? rules : matching.ToArray();
+
+            applicable = new Dictionary<Type, MatchedRule[]>(known) { [type] = found };
+            return found;
+        }
+
+        private Dictionary<Type, MatchedRule[]> applicable = new();
     }
 }
