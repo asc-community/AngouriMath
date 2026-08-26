@@ -366,6 +366,12 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// The trigonometric identities.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.Trigonometric"/>, where its forty-three arms are
+        /// thirty-three rules, and where the interval conditions of #884 and #887 are
+        /// attached to the rules that need them rather than to the set.
+        /// </remarks>
         public static RewriteRuleSet Trigonometric { get; } = new(
             nameof(Trigonometric),
             "Applies trigonometric identities to sines, cosines and their relatives.",
@@ -373,7 +379,7 @@ namespace AngouriMath.Core.Transformations
             // tan and cot bring poles with them, so an identity that introduces one holds
             // away from those points rather than everywhere.
             Soundness.SoundUnderAssumptions,
-            Patterns.TrigonometricRules,
+            Matching.MatchedRules.Trigonometric.ApplyHere,
             Patterns.TrigonometricRulesArms);
 
         /// <summary>

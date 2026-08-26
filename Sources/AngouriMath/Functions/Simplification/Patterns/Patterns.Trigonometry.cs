@@ -17,7 +17,7 @@ namespace AngouriMath.Functions
         /// that holds only on a principal branch may fire only where the branch can be
         /// decided, so a symbolic argument -- or one off the real line -- has to leave the
         /// node alone.
-        private static bool TryReadReal(Entity argument, out EDecimal value)
+        internal static bool TryReadReal(Entity argument, out EDecimal value)
         {
             value = EDecimal.Zero;
             if (argument.Evaled is not Number.Real real || !real.EDecimal.IsFinite) return false;
@@ -35,7 +35,7 @@ namespace AngouriMath.Functions
         /// close to an endpoint is treated as outside the interval — which declines to
         /// rewrite, the safe direction.
         /// </remarks>
-        private static bool WithinHalfPi(Entity argument, bool closed)
+        internal static bool WithinHalfPi(Entity argument, bool closed)
         {
             if (!TryReadReal(argument, out var value)) return false;
             var absolute = value.Abs();
@@ -53,7 +53,7 @@ namespace AngouriMath.Functions
         /// and rewriting it to <c>x</c> would invent one.
         /// https://github.com/asc-community/AngouriMath/issues/887
         /// </remarks>
-        private static bool WithinArccotanRange(Entity argument)
+        internal static bool WithinArccotanRange(Entity argument)
         {
             if (!TryReadReal(argument, out var value) || value.IsZero) return false;
             var twice = value.Add(value);
@@ -73,7 +73,7 @@ namespace AngouriMath.Functions
         /// <c>pi/2</c> while <c>sgn</c> is <c>0</c> — so the sign is decided here rather than
         /// written into the answer. A symbolic argument has no decidable sign and is left alone.
         /// </remarks>
-        private static Entity? ArctanPlusArccotan(Entity argument)
+        internal static Entity? ArctanPlusArccotan(Entity argument)
         {
             var evaled = argument.Evaled;
             if (IsRealNegative(evaled)) return -MathS.pi / 2;
@@ -83,7 +83,7 @@ namespace AngouriMath.Functions
 
         /// <summary>Whether the argument lies in <c>[0, pi]</c>, or in the open interval when
         /// <paramref name="closed"/> is false — the interval <c>arccos</c> answers in.</summary>
-        private static bool WithinZeroAndPi(Entity argument, bool closed)
+        internal static bool WithinZeroAndPi(Entity argument, bool closed)
         {
             if (!TryReadReal(argument, out var value)) return false;
             if (value.IsNegative || (!closed && value.IsZero)) return false;
