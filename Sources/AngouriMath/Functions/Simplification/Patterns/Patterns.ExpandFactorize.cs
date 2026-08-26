@@ -272,7 +272,8 @@ namespace AngouriMath.Functions
         /// of two are left to those rules, which are older and better tested.
         /// </remarks>
         /// <returns><see langword="null"/> when no factor is shared, so the rule does not fire.</returns>
-        private static Entity? CollectCommonFactors(Entity expr)
+        /// <remarks>Internal so the data form of this set calls it rather than repeating it.</remarks>
+        internal static Entity? CollectCommonFactors(Entity expr)
         {
             var terms = Sumf.LinearChildren(expr).ToList();
             return terms.Count > 2 ? CollectOver(terms) : null;

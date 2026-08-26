@@ -1179,5 +1179,137 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["b"].Implies(bound["a"]),
                 Soundness.Sound,
                 when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.FactorizeRules"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Twenty-two arms become eleven.</b> Taking a common factor out of a sum is written
+        /// four times — <c>k*p + k*q</c> for each of the four ways the shared factor can sit —
+        /// and the difference four more, and the two "one of the terms <i>is</i> the factor"
+        /// cases twice each. Commutative patterns say each once, at both levels where both
+        /// levels are commutative.
+        /// </para>
+        /// <para>
+        /// A difference is <b>not</b> commutative, so the outer pattern of every subtractive rule
+        /// stays a plain node while its operands' products are matched either way round. That
+        /// distinction is invisible in a <c>switch</c>, where both are just arms.
+        /// </para>
+        /// </remarks>
+        internal static MatchedRuleSet Factorization { get; } = new(
+            nameof(Factorization),
+
+            // a^2n - b^2m -> (a^n - b^m)(a^n + b^m), both exponents even
+            new MatchedRule(
+                "a-difference-of-even-powers-splits",
+                MatchPattern.Node<Minusf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any<Integer>("n")),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any<Integer>("m"))),
+                bound =>
+                {
+                    var halfN = Integer.Create(((Integer)bound["n"]).EInteger / 2);
+                    var halfM = Integer.Create(((Integer)bound["m"]).EInteger / 2);
+                    return (new Powf(bound["a"], halfN) - new Powf(bound["b"], halfM))
+                         * (new Powf(bound["a"], halfN) + new Powf(bound["b"], halfM));
+                },
+                Soundness.Sound,
+                // Both exponents even, or halving them introduces radicals and the rule fires
+                // again on what it just produced.
+                when: bound => ((Integer)bound["n"]).EInteger.IsEven
+                               && ((Integer)bound["m"]).EInteger.IsEven),
+
+            // a^2 - c -> (a - sqrt(c))(a + sqrt(c)), for a numeric c
+            new MatchedRule(
+                "a-square-less-a-number-splits",
+                MatchPattern.Node<Minusf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Exact(Integer.Create(2))),
+                    MatchPattern.Any<Number>("c")),
+                bound => (bound["a"] - new Powf(bound["c"], Rational.Create(1, 2)))
+                       * (bound["a"] + new Powf(bound["c"], Rational.Create(1, 2))),
+                Soundness.SoundUnderAssumptions),
+
+            // k*p + k*q -> k*(p + q), the shared factor anywhere in either product
+            new MatchedRule(
+                "a-factor-shared-by-two-added-products-comes-out",
+                MatchPattern.Commutative<Sumf>(
+                    MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("p")),
+                    MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
+                bound => bound["k"] * (bound["p"] + bound["q"]),
+                Soundness.Sound),
+
+            // k + k*q -> k*(1 + q), either way round at both levels
+            new MatchedRule(
+                "a-term-shared-with-a-product-added-to-it-comes-out",
+                MatchPattern.Commutative<Sumf>(
+                    MatchPattern.Any("k"),
+                    MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
+                bound => bound["k"] * (1 + bound["q"]),
+                Soundness.Sound),
+
+            // k + k -> 2k
+            new MatchedRule(
+                "a-term-added-to-itself-doubles",
+                MatchPattern.Node<Sumf>(MatchPattern.Any("k"), MatchPattern.Any("k")),
+                bound => 2 * bound["k"],
+                Soundness.Sound),
+
+            // k*p - k*q -> k*(p - q). The outer node is a difference and stays one.
+            new MatchedRule(
+                "a-factor-shared-by-two-subtracted-products-comes-out",
+                MatchPattern.Node<Minusf>(
+                    MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("p")),
+                    MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
+                bound => bound["k"] * (bound["p"] - bound["q"]),
+                Soundness.Sound),
+
+            // k - k*q -> k*(1 - q)
+            new MatchedRule(
+                "a-product-subtracted-from-its-own-factor",
+                MatchPattern.Node<Minusf>(
+                    MatchPattern.Any("k"),
+                    MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
+                bound => bound["k"] * (1 - bound["q"]),
+                Soundness.Sound),
+
+            // k*q - k -> k*(q - 1)
+            new MatchedRule(
+                "a-factor-subtracted-from-a-product-it-is-in",
+                MatchPattern.Node<Minusf>(
+                    MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q")),
+                    MatchPattern.Any("k")),
+                bound => bound["k"] * (bound["q"] - 1),
+                Soundness.Sound),
+
+            // k - k -> 0
+            new MatchedRule(
+                "a-term-subtracted-from-itself-vanishes",
+                MatchPattern.Node<Minusf>(MatchPattern.Any("k"), MatchPattern.Any("k")),
+                bound => Integer.Create(0),
+                Soundness.Sound),
+
+            // a^b * c^b -> (a*c)^b, guarded as its twin in PowerRules is
+            new MatchedRule(
+                "two-powers-of-one-exponent-share-a-base",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("c"), MatchPattern.Any("b"))),
+                bound => new Powf(bound["a"] * bound["c"], bound["b"]),
+                // True for a whole exponent whatever the signs, and for positive real bases
+                // whatever the exponent, and false outside those two: sqrt(x) * sqrt(y) became
+                // sqrt(x * y), which at x = y = -1 is 1 where the product is -1.
+                // https://github.com/asc-community/AngouriMath/issues/801
+                Soundness.SoundUnderAssumptions,
+                when: bound => bound["b"] is Integer
+                               || (bound["a"].Evaled is Real { IsPositive: true }
+                                   && bound["c"].Evaled is Real { IsPositive: true })),
+
+            // Anything left, over a whole sum or difference rather than two of its terms. Last,
+            // because it is the general case of the rules above it.
+            new MatchedRule(
+                "a-common-factor-is-collected-out-of-a-whole-sum",
+                MatchPattern.Any<Entity>("x", node => node is Sumf or Minusf),
+                (node, _) => Functions.Patterns.CollectCommonFactors(node) ?? node,
+                Soundness.Sound));
     }
 }

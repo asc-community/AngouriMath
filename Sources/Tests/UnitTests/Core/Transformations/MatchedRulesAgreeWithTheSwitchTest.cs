@@ -362,6 +362,25 @@ namespace AngouriMath.Tests.Core.Transformations
                 });
 
         /// <summary>
+        /// <b>Twenty-two arms against eleven rules.</b> Taking a common factor out is written
+        /// four times for a sum and four for a difference, and a commutative pattern says each
+        /// once — but a difference is not commutative, so only its operands' products are matched
+        /// either way round, which is a distinction a <c>switch</c> cannot make visible.
+        /// </summary>
+        [Fact]
+        public void FactorizationAsDataMatchesTheSwitch()
+            => AssertAgrees("Factorization", Patterns.FactorizeRules,
+                MatchedRules.Factorization, leastFirings: 100, extra: new[]
+                {
+                    "x ^ 4 - y ^ 6", "x ^ 2 - 9", "x ^ 2 - 2",
+                    "a * b + a * c", "b * a + a * c", "a * b + c * a", "b * a + c * a",
+                    "a + a * b", "a + b * a", "a * b + a", "b * a + a", "a + a",
+                    "a * b - a * c", "b * a - a * c", "a * b - c * a", "b * a - c * a",
+                    "a - a * b", "a - b * a", "a * b - a", "b * a - a", "a - a",
+                    "x ^ 3 * y ^ 3", "sqrt(x) * sqrt(y)", "4 + 4 * sqrt(x) + x",
+                });
+
+        /// <summary>
         /// A predicate on a hole that is a mathematical property rather than a sign or a type.
         /// The corpus reaches it rarely, so the shapes are given here as well — a set that fires
         /// four times over a generated corpus is worth checking against cases chosen for it.
