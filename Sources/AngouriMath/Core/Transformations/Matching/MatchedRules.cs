@@ -1692,25 +1692,41 @@ namespace AngouriMath.Core.Transformations.Matching
         /// declared once.
         /// </para>
         /// <para>
-        /// <b>And it is not wired, because the exchange is not free here — measured.</b> The
-        /// three canonical orders are the <i>normalisation</i>: they run on every node of every
-        /// simplification pass, where every other set converted so far fires on a shape. Paying
-        /// matcher dispatch there costs <b>+48% of <c>SimplifyEasy</c></b> (0.128 → 0.190 ms over
-        /// five samples each), which the kernel performance gate reports as 4.14x on a shared
-        /// runner. <see cref="CommonDenominator"/>, exchanged in the same change, is
-        /// <b>−0.8%</b>; the attribution is that clean.
+        /// <b>And it is not wired, because the exchange is not free here — measured, and
+        /// re-measured.</b> The three canonical orders are the <i>normalisation</i>: they run on
+        /// every node of every simplification pass, where every other set fires on a shape.
+        /// </para>
+        /// <para>
+        /// The figure first recorded here was <b>+48% of <c>SimplifyEasy</c></b>, which the
+        /// kernel gate reported as 4.14x on a shared runner. <b>That number has since stopped
+        /// being true</b>, and it was only ever a statement about the matcher of the day: with
+        /// bounded matching (<a href="https://github.com/asc-community/AngouriMath/issues/1079">#1079</a>)
+        /// and rules indexed by node type (#1085) the same wiring measures <b>+13.3%</b> —
+        /// 97,048 ns to 109,968 ns on the repository's own benchmark, with allocation +0.28% and
+        /// inside the gate's band. The decision is unchanged and the reason for it is a third of
+        /// what it was.
+        /// </para>
+        /// <para>
+        /// What is left is not dispatch across the rules. Every rule here is typed —
+        /// <c>Any&lt;Sumf&gt;</c>, <c>Any&lt;Mulf&gt;</c> — so the index tries one or two of them
+        /// at a node, not seven. It is the layer itself: a rule is a match that binds a name and
+        /// a delegate that reads it back, where a <c>switch</c> arm is a type test and a call.
+        /// Everywhere else that layer buys something — a pattern that says what the rewrite is,
+        /// reversible, addressable. Here every rule is <i>a type test and a call already</i>, so
+        /// there is nothing for it to buy. <b>That is the boundary, and it is about what a rule
+        /// is rather than about where it runs.</b>
         /// </para>
         /// <para>
         /// Giving each rule a concrete root type instead of a predicate over
-        /// <c>Any&lt;Entity&gt;</c> was tried first, on the reading that a hole typed
-        /// <c>Entity</c> matches every node before its predicate is consulted and so defeats the
-        /// root-type dispatch. It moved +52% to +48%, so that was not the cost either: what costs
-        /// is the per-node dispatch itself, and no arrangement of these seven rules avoids it.
+        /// <c>Any&lt;Entity&gt;</c> was tried when the figure was 48%, on the reading that a hole
+        /// typed <c>Entity</c> matches every node before its predicate is consulted. It moved
+        /// +52% to +48%, so that was not the cost either.
         /// </para>
         /// <para>
         /// So this stays here, proven to agree with the <c>switch</c> at every level, and the
-        /// <c>switch</c> keeps running. It is the first set where the answer to "should this be
-        /// data?" is no, and the reason is a number rather than a preference.
+        /// <c>switch</c> keeps running. It is the one set where the answer to "should this be
+        /// data?" is no, and the reason is a number rather than a preference — a number that has
+        /// to be re-measured when the matcher changes, since it already has been once.
         /// </para>
         /// <para>
         /// Every rule is a bare type test with the whole node bound, which is a typed hole — and
