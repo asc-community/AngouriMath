@@ -85,6 +85,13 @@ namespace AngouriMath.Functions
                 return null;
             if (BySubstitution(poly, main) is { } factors)
                 return factors;
+            // The substitution's image over-factors -- `x^7 - y^7` maps to `t^7 (1 - t^49)`,
+            // whose factors are cyclotomic -- so its recombination is exponential in a count it
+            // inflated itself. Lifting an *evaluation* image inflates nothing, and reaches the
+            // shapes the remark above names as refused.
+            if (OnlyOther(poly, main) is { } other
+                && BivariateHenselFactorization.Factor(poly, main, other) is { } lifted)
+                return lifted;
             // The substitution gave up -- on the image's degree, on how far it split, or on the
             // arithmetic. An *evaluation* image has the degree of the polynomial in the main
             // variable however many other variables there are, so it is still there to be asked,
@@ -93,6 +100,25 @@ namespace AngouriMath.Functions
             return EvaluationHomomorphism.CertifiesIrreducible(poly, main)
                 ? new[] { poly }
                 : null;
+        }
+
+        /// <summary>
+        /// The one variable other than <paramref name="main"/> that <paramref name="poly"/>
+        /// actually uses, or <see langword="null"/> where it uses none or several — the lift
+        /// works along one evaluation at a time.
+        /// </summary>
+        private static int? OnlyOther(MultivariatePolynomial poly, int main)
+        {
+            int? only = null;
+            for (var variable = 0; variable < poly.VariableCount; variable++)
+            {
+                if (variable == main || poly.DegreeIn(variable) == 0)
+                    continue;
+                if (only is not null)
+                    return null;
+                only = variable;
+            }
+            return only;
         }
 
         /// <summary>

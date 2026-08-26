@@ -305,18 +305,51 @@ namespace AngouriMath.Tests.Algebra.Polynomials
         /// </para>
         /// </remarks>
         [Theory]
-        [InlineData("x ^ 7 - y ^ 7")]
-        [InlineData("x ^ 6 - y ^ 6")]
         [InlineData("x ^ 3 - (y + z) ^ 3")]
-        [InlineData("(x ^ 8 + y) * (x ^ 8 + 3 * y)")]
-        [InlineData("(x ^ 2 + y ^ 5) * (x ^ 2 - y ^ 5)")]
         public void AnImageThatOverFactorsIsRefused(string input)
             => Assert.Null(MathS.Polynomials.Factor(input.ToEntity(), "x"));
+
+        /// <summary>
+        /// The rows that used to sit above, moved here because they factor now — which is what
+        /// that test's remark asked for when it said it pins the refusal and not the limit.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Hensel lifting along an evaluation homomorphism, in two variables. The substitution's
+        /// image over-factors — <c>x ^ 7 - y ^ 7</c> becomes <c>t ^ 7 (1 - t ^ 49)</c>, whose
+        /// factors are cyclotomic — and an evaluation image does not: at <c>y = 1</c> it is
+        /// <c>x ^ 7 - 1</c>, which has the two factors the answer has.
+        /// </para>
+        /// <para>
+        /// Checked by <b>value</b> rather than by spelling. What matters is that the product is
+        /// the polynomial and that it is a product at all; which arrangement of terms comes back
+        /// is the polynomial representation's business, and asserting on it would make this fail
+        /// for a reason that is not about factoring.
+        /// </para>
+        /// </remarks>
+        [Theory]
+        [InlineData("x ^ 7 - y ^ 7", 2)]
+        [InlineData("x ^ 6 - y ^ 6", 4)]
+        [InlineData("(x ^ 8 + y) * (x ^ 8 + 3 * y)", 2)]
+        [InlineData("(x ^ 2 + y ^ 5) * (x ^ 2 - y ^ 5)", 2)]
+        [InlineData("x ^ 12 - y ^ 12", 6)]
+        [InlineData("x ^ 2 - y ^ 2", 2)]
+        [InlineData("x ^ 3 - y ^ 3", 2)]
+        public void AnEvaluationImageIsLiftedBackToAFactorisation(string input, int pieces)
+        {
+            var factored = MathS.Polynomials.Factor(input.ToEntity(), "x");
+            Assert.NotNull(factored);
+            // It is a product, so something was actually found.
+            Assert.IsType<Mulf>(factored);
+            // And the product is the polynomial it came from -- which the factoriser itself
+            // checks by exact division, so this is the same claim made a second way.
+            Assert.Equal(Integer.Zero, (factored! - input.ToEntity()).Simplify());
+            Assert.Equal(pieces, Mulf.LinearChildren(factored!).Count());
+        }
 
         [Theory]
         [InlineData("(x + y + z + w) * (x - y)")]
         [InlineData("(x + y) * (x + z) * (x + w) * (x + v)")]
-        [InlineData("x ^ 12 - y ^ 12")]
         public void PastTheSubstitutionsCeilingItRefuses(string input)
             => Assert.Null(MathS.Polynomials.Factor(input.ToEntity(), "x"));
 
