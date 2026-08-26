@@ -99,14 +99,24 @@ namespace AngouriMath.Functions
         [AddressableRules]
         internal static Entity InequalityEqualityRules(Entity x) => x switch
         {
+            // `a < b or a = b` is `a <= b`, and the four arms below it are the same law with the
+            // comparison written the other way round -- so they answer the other way round too.
+            // `b < a or a = b` is `a >= b`, not `a <= b`: at a = 1, b = 2 the disjunction is
+            // False and `a <= b` is True. Four of these eight carried their neighbour's answer.
+            //
+            // They are only reachable with both operands symbolic. With a number on one side,
+            // the `Lessf(var @const, ...)` arm further down rewrites `2 < x` to `x > 2` earlier
+            // in the same pass, so the disjunction is always looked at with both halves written
+            // the same way round and one of the four correct arms matches.
+            // https://github.com/asc-community/AngouriMath/issues/1077
             Orf(Lessf(var any1, var any2), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 <= any2,
-            Orf(Lessf(var any2, var any1), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 <= any2,
+            Orf(Lessf(var any2, var any1), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 >= any2,
             Orf(Greaterf(var any1, var any2), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 >= any2,
-            Orf(Greaterf(var any2, var any1), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 >= any2,
+            Orf(Greaterf(var any2, var any1), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 <= any2,
             Orf(Equalsf(var any1a, var any2a), Lessf(var any1, var any2)) when any1 == any1a && any2 == any2a => any1 <= any2,
-            Orf(Equalsf(var any1a, var any2a), Lessf(var any2, var any1)) when any1 == any1a && any2 == any2a => any1 <= any2,
+            Orf(Equalsf(var any1a, var any2a), Lessf(var any2, var any1)) when any1 == any1a && any2 == any2a => any1 >= any2,
             Orf(Equalsf(var any1a, var any2a), Greaterf(var any1, var any2)) when any1 == any1a && any2 == any2a => any1 >= any2,
-            Orf(Equalsf(var any1a, var any2a), Greaterf(var any2, var any1)) when any1 == any1a && any2 == any2a => any1 >= any2,
+            Orf(Equalsf(var any1a, var any2a), Greaterf(var any2, var any1)) when any1 == any1a && any2 == any2a => any1 <= any2,
 
             Notf(Greaterf(var any1, var any2)) => any1 <= any2,
             Notf(Lessf(var any1, var any2)) => any1 >= any2,
