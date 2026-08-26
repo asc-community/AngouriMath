@@ -350,7 +350,7 @@ namespace AngouriMath.Functions
         /// and the base holds a positive sign on the approach to its destination while the exponent
         /// is real along it.
         /// </summary>
-        private static bool MayTakeLogOfPower(Entity @base, Entity exponent)
+        internal static bool MayTakeLogOfPower(Entity @base, Entity exponent)
             => (IsPositiveReal(@base) && MayBeTakenAsReal(exponent))
                || Algebra.LimitFunctional.MayTakeLogOfPowerHere(@base, exponent);
 
@@ -359,7 +359,7 @@ namespace AngouriMath.Functions
         /// positive numbers, or because a limit is being read and they hold their sign on the
         /// approach to its destination.
         /// </summary>
-        private static bool MayGatherLogarithms(Entity left, Entity right, bool isDifference)
+        internal static bool MayGatherLogarithms(Entity left, Entity right, bool isDifference)
             => (IsPositiveReal(left) && IsPositiveReal(right))
                || Algebra.LimitFunctional.MayGatherLogarithmsHere(left, right, isDifference);
 
@@ -408,7 +408,7 @@ namespace AngouriMath.Functions
         /// <see langword="null"/> when nothing can be pulled out, so that the rule does
         /// not fire and rewriting terminates.
         /// </returns>
-        private static Entity? ReduceRadical(Integer radicand, Rational power)
+        internal static Entity? ReduceRadical(Integer radicand, Rational power)
         {
             var denominator = power.ERational.Denominator;
             if (denominator < 2 || denominator > 64)

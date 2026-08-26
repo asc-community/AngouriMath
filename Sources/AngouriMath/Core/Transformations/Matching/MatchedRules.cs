@@ -2191,5 +2191,355 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<LessOrEqualf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 bound => Entity.Boolean.True.Provided(bound["a"].DomainCondition).Provided(Functions.Patterns.OrderedConditionFor(bound["a"])),
                 Soundness.SoundUnderAssumptions));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.PowerRules"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>The largest set converted so far, and the one whose rules are least alike.</b> It
+        /// carries the branch-cut guards that <a
+        /// href="https://github.com/asc-community/AngouriMath/issues/752">#752</a>, <a
+        /// href="https://github.com/asc-community/AngouriMath/issues/801">#801</a>, <a
+        /// href="https://github.com/asc-community/AngouriMath/issues/802">#802</a>, <a
+        /// href="https://github.com/asc-community/AngouriMath/issues/902">#902</a> and <a
+        /// href="https://github.com/asc-community/AngouriMath/issues/721">#721</a> each put on one
+        /// rewrite, and those guards are the reason nearly every rule here is
+        /// <see cref="Soundness.SoundUnderAssumptions"/> rather than
+        /// <see cref="Soundness.Sound"/>: the identity is true, and it is true on a region.
+        /// </para>
+        /// <para>
+        /// The conditions stay where they were — <c>Patterns.Power.cs</c> holds
+        /// <c>MayTakeLogOfPower</c>, <c>MayGatherLogarithms</c> and <c>ReduceRadical</c>, and the
+        /// rules here ask them. Copying a branch-cut condition into a second file is how the two
+        /// copies come to disagree, and one of them has already been wrong in both directions at
+        /// once.
+        /// </para>
+        /// <para>
+        /// <para>
+        /// <b>Two commutative rules stand for six arms here, and that is affordable only because
+        /// of <a href="https://github.com/asc-community/AngouriMath/issues/1079">#1079</a>.</b>
+        /// A commutative pattern is not <see cref="MatchPattern.IsDeterministic"/>, and before
+        /// bounded matching that meant enumerating its two candidates through an iterator state
+        /// machine per pattern node, at every node of every pass: 165.05 MB to 171.37 MB on
+        /// <c>SolveMediumHard</c>, +3.8%, past the kernel gate's 3% allocation band. Walked by
+        /// index instead, the same two rules cost +0.94% and the six arms need not be written out.
+        /// </para>
+        /// Two rules read something a <see cref="Bindings"/> cannot carry. <c>log_b(b) = 1</c>
+        /// needs the <i>node's</i> own <c>DomainCondition</c> rather than a condition written out
+        /// here, and takes the overload that is handed the matched node; and the radical reduction
+        /// asks <c>ReduceRadical</c> in both its <c>when</c> and its replacement, because whether
+        /// the rule applies and what it produces are the same computation.
+        /// </para>
+        /// </remarks>
+        internal static MatchedRuleSet Power { get; } = new(
+            nameof(Power),
+
+            new MatchedRule(
+                "a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero",
+                MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                bound => new Providedf(1, !bound["a"].EqualTo(0)),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-power-whose-exponent-divides-by-a-logarithm-of-its-own-base-changes-base",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Node<Divf>(
+                        MatchPattern.Any("n"),
+                        MatchPattern.Node<Logf>(MatchPattern.Any("c"), MatchPattern.Any("a")))),
+                bound => new Powf(bound["c"], bound["n"]),
+                Soundness.SoundUnderAssumptions),
+
+            // Both orientations are written out in the `switch`, so one commutative rule fires
+            // exactly where the pair did.
+            new MatchedRule(
+                "a-power-times-its-own-base-raises-the-exponent",
+                MatchPattern.Commutative<Mulf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n")),
+                    MatchPattern.Any("a")),
+                bound => new Powf(bound["a"], bound["n"] + 1),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "two-powers-of-one-base-multiply-by-adding-exponents",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n")),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("m"))),
+                bound => new Powf(bound["a"], bound["n"] + bound["m"]),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "two-powers-of-one-base-divide-by-subtracting-exponents",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n")),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("m"))),
+                bound => new Powf(bound["a"], bound["n"] - bound["m"]),
+                Soundness.SoundUnderAssumptions),
+
+            // True for a positive base whatever the exponents, and for any base when the outer
+            // exponent is whole. Outside those two it moves the branch, which is what #752
+            // measured: sqrt(x^2) came back as x, and at -0.63 that is the negation.
+            // https://github.com/asc-community/AngouriMath/issues/752
+            new MatchedRule(
+                "a-power-of-a-power-multiplies-the-exponents",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n")),
+                    MatchPattern.Any("m")),
+                bound => new Powf(bound["a"], bound["n"] * bound["m"]),
+                Soundness.SoundUnderAssumptions,
+                when: bound => bound["m"] is Integer
+                               || bound["a"].Evaled is Real { IsPositive: true }),
+
+            // https://github.com/asc-community/AngouriMath/issues/801
+            new MatchedRule(
+                "two-powers-of-one-exponent-share-a-base",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n")),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
+                bound => new Powf(bound["a"] * bound["b"], bound["n"]),
+                Soundness.SoundUnderAssumptions,
+                when: bound => bound["n"] is Integer
+                               || (bound["a"].Evaled is Real { IsPositive: true }
+                                   && bound["b"].Evaled is Real { IsPositive: true })),
+
+            // https://github.com/asc-community/AngouriMath/issues/802
+            new MatchedRule(
+                "two-powers-of-one-exponent-share-a-quotient-of-bases",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n")),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
+                bound => new Powf(bound["a"] / bound["b"], bound["n"]),
+                Soundness.SoundUnderAssumptions,
+                when: bound => bound["n"] is Integer
+                               || (bound["a"].Evaled is Real { IsPositive: true }
+                                   && bound["b"].Evaled is Real { IsPositive: true })),
+
+            // The pair the rule above loses whenever only one of the two bases is itself a power,
+            // read back. https://github.com/asc-community/AngouriMath/issues/740
+            new MatchedRule(
+                "a-quotient-of-powers-whose-exponents-differ-by-a-whole-factor-takes-it-into-the-divisor",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n")),
+                    MatchPattern.Node<Powf>(
+                        MatchPattern.Any("b"),
+                        MatchPattern.Node<Mulf>(
+                            MatchPattern.Any<Integer>("c", whole => whole.IsPositive),
+                            MatchPattern.Any("n")))),
+                bound => new Powf(bound["a"] / new Powf(bound["b"], bound["c"]), bound["n"]),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-quotient-of-powers-whose-exponents-differ-by-a-whole-factor-takes-it-into-the-dividend",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Powf>(
+                        MatchPattern.Any("a"),
+                        MatchPattern.Node<Mulf>(
+                            MatchPattern.Any<Integer>("c", whole => whole.IsPositive),
+                            MatchPattern.Any("n"))),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
+                bound => new Powf(new Powf(bound["a"], bound["c"]) / bound["b"], bound["n"]),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-thing-over-a-power-of-itself-is-one-power",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n"))),
+                bound => new Powf(bound["a"], 1 - bound["n"]),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-power-over-its-own-base-lowers-the-exponent",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n")),
+                    MatchPattern.Any("a")),
+                bound => new Powf(bound["a"], bound["n"] - 1),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-number-raised-to-a-logarithm-of-itself-is-the-antilogarithm",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Any<Number>("c"),
+                    MatchPattern.Node<Logf>(MatchPattern.Any<Number>("c"), MatchPattern.Any("a"))),
+                bound => bound["a"],
+                Soundness.SoundUnderAssumptions),
+
+            // Four `switch` arms: the power on either side of a product, and the shared base in
+            // either position inside it. A commutative pattern says both halves at once.
+            new MatchedRule(
+                "a-power-times-a-product-containing-its-own-base-raises-the-exponent",
+                MatchPattern.Commutative<Mulf>(
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n")),
+                    MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("rest"))),
+                bound => new Powf(bound["a"], bound["n"] + 1) * bound["rest"],
+                Soundness.SoundUnderAssumptions),
+
+            // Taking a factor out from under a root needs that factor positive, or the root to be
+            // a whole power. https://github.com/asc-community/AngouriMath/issues/752
+            new MatchedRule(
+                "a-numeric-factor-comes-out-of-a-power-of-a-product",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any("a")),
+                    MatchPattern.Any<Number>("d")),
+                bound => new Powf(bound["c"], bound["d"]) * new Powf(bound["a"], bound["d"]),
+                Soundness.SoundUnderAssumptions,
+                when: bound => bound["d"] is Integer || bound["c"] is Real { IsPositive: true }),
+
+            new MatchedRule(
+                "a-reciprocal-power-is-a-quotient",
+                MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Exact(Integer.Create(-1))),
+                bound => 1 / bound["a"],
+                Soundness.Sound),
+
+            new MatchedRule(
+                "a-power-of-a-numeric-reciprocal-times-its-own-denominator-lowers-the-exponent",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Node<Powf>(
+                        MatchPattern.Node<Divf>(MatchPattern.Any<Number>("c"), MatchPattern.Any("a")),
+                        MatchPattern.Any<Number>("d")),
+                    MatchPattern.Any("a")),
+                // `Number` arithmetic rather than `Entity` arithmetic: the `switch` binds these
+                // as numbers, so `1 - c` folds to a literal there and would build a `Minusf` here.
+                bound => new Powf(bound["c"], bound["d"])
+                    * new Powf(bound["a"], 1 - (Number)bound["d"]),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-power-of-a-numeric-reciprocal-times-a-power-of-its-own-denominator-subtracts-the-exponents",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Node<Powf>(
+                        MatchPattern.Node<Divf>(MatchPattern.Any<Number>("c"), MatchPattern.Any("a")),
+                        MatchPattern.Any<Number>("d")),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any<Number>("e"))),
+                bound => new Powf(bound["c"], bound["d"])
+                    * new Powf(bound["a"], (Number)bound["e"] - (Number)bound["d"]),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "dividing-twice-by-one-thing-squares-it",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                    MatchPattern.Any("b")),
+                bound => bound["a"] / new Powf(bound["b"], 2),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "dividing-by-a-power-and-then-by-its-base-raises-the-exponent",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Divf>(
+                        MatchPattern.Any("a"),
+                        MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
+                    MatchPattern.Any("b")),
+                bound => bound["a"] / new Powf(bound["b"], bound["n"] + 1),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "dividing-by-a-thing-and-then-by-a-power-of-it-raises-the-exponent",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
+                bound => bound["a"] / new Powf(bound["b"], bound["n"] + 1),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "dividing-by-two-powers-of-one-base-adds-the-exponents",
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Divf>(
+                        MatchPattern.Any("a"),
+                        MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("m"))),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
+                bound => bound["a"] / new Powf(bound["b"], bound["n"] + bound["m"]),
+                Soundness.SoundUnderAssumptions),
+
+            new MatchedRule(
+                "a-variable-times-a-power-puts-the-power-first",
+                MatchPattern.Node<Mulf>(
+                    MatchPattern.Any<Variable>("v"),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n"))),
+                bound => new Powf(bound["a"], bound["n"]) * bound["v"],
+                Soundness.Sound),
+
+            // https://github.com/asc-community/AngouriMath/issues/902
+            new MatchedRule(
+                "an-exponent-comes-out-of-a-logarithm",
+                MatchPattern.Node<Logf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
+                bound => bound["n"] * MathS.Log(bound["a"], bound["b"]),
+                Soundness.SoundUnderAssumptions,
+                when: bound => Functions.Patterns.MayTakeLogOfPower(bound["b"], bound["n"])),
+
+            // The condition to carry is the node's own: log(-3, -3) is 1 where a written-out
+            // `a > 0` calls it undefined, and log(1, 1) is NaN where that guard calls it 1.
+            // https://github.com/asc-community/AngouriMath/issues/721
+            new MatchedRule(
+                "a-logarithm-of-its-own-base-is-one-where-it-is-defined",
+                MatchPattern.Node<Logf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                (node, bound) => new Providedf(1, ((Logf)node).DomainCondition),
+                Soundness.SoundUnderAssumptions),
+
+            // ln(1/b) = -ln(b) is false on the negative reals: at b = -0.63 the two differ by the
+            // full turn of the argument the principal branch discards.
+            // https://github.com/asc-community/AngouriMath/issues/721
+            new MatchedRule(
+                "a-logarithm-of-a-reciprocal-in-a-reciprocal-base-turns-round-twice",
+                MatchPattern.Node<Logf>(
+                    MatchPattern.Node<Divf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Any("a")),
+                    MatchPattern.Node<Divf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Any("b"))),
+                bound => MathS.Log(bound["a"], bound["b"]),
+                Soundness.SoundUnderAssumptions,
+                when: bound => Functions.Patterns.MayGatherLogarithms(Integer.One, bound["a"], isDifference: true)
+                               && Functions.Patterns.MayGatherLogarithms(Integer.One, bound["b"], isDifference: true)),
+
+            new MatchedRule(
+                "a-logarithm-of-a-reciprocal-negates",
+                MatchPattern.Node<Logf>(
+                    MatchPattern.Any("a"),
+                    MatchPattern.Node<Divf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Any("b"))),
+                bound => -MathS.Log(bound["a"], bound["b"]),
+                Soundness.SoundUnderAssumptions,
+                when: bound => Functions.Patterns.MayGatherLogarithms(Integer.One, bound["b"], isDifference: true)),
+
+            new MatchedRule(
+                "a-logarithm-in-a-reciprocal-base-negates",
+                MatchPattern.Node<Logf>(
+                    MatchPattern.Node<Divf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Any("a")),
+                    MatchPattern.Any("b")),
+                bound => -MathS.Log(bound["a"], bound["b"]),
+                Soundness.SoundUnderAssumptions,
+                when: bound => Functions.Patterns.MayGatherLogarithms(Integer.One, bound["a"], isDifference: true)),
+
+            // https://github.com/asc-community/AngouriMath/issues/721
+            new MatchedRule(
+                "two-logarithms-of-one-base-add-by-multiplying-their-antilogarithms",
+                MatchPattern.Node<Sumf>(
+                    MatchPattern.Node<Logf>(MatchPattern.Any("c"), MatchPattern.Any("a")),
+                    MatchPattern.Node<Logf>(MatchPattern.Any("c"), MatchPattern.Any("b"))),
+                bound => bound["c"].Log(bound["a"] * bound["b"]),
+                Soundness.SoundUnderAssumptions,
+                when: bound => Functions.Patterns.MayGatherLogarithms(bound["a"], bound["b"], isDifference: false)),
+
+            new MatchedRule(
+                "two-logarithms-of-one-base-subtract-by-dividing-their-antilogarithms",
+                MatchPattern.Node<Minusf>(
+                    MatchPattern.Node<Logf>(MatchPattern.Any("c"), MatchPattern.Any("a")),
+                    MatchPattern.Node<Logf>(MatchPattern.Any("c"), MatchPattern.Any("b"))),
+                bound => bound["c"].Log(bound["a"] / bound["b"]),
+                Soundness.SoundUnderAssumptions,
+                when: bound => Functions.Patterns.MayGatherLogarithms(bound["a"], bound["b"], isDifference: true)),
+
+            // sqrt(8) = 2 * sqrt(2). Whether it applies and what it produces are one computation,
+            // so the `when` asks the same helper the replacement does.
+            new MatchedRule(
+                "a-whole-power-comes-out-from-under-a-radical",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Any<Integer>("radicand", whole => whole.IsPositive),
+                    MatchPattern.Any<Rational>("power", ratio => ratio is not Integer)),
+                bound => Functions.Patterns.ReduceRadical(
+                    (Integer)bound["radicand"], (Rational)bound["power"])!,
+                Soundness.Sound,
+                when: bound => Functions.Patterns.ReduceRadical(
+                    (Integer)bound["radicand"], (Rational)bound["power"]) is not null));
     }
 }

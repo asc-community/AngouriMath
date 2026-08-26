@@ -504,6 +504,33 @@ namespace AngouriMath.Tests.Core.Transformations
                 });
 
         /// <summary>
+        /// <b>The largest set, and the one carrying the most branch-cut conditions.</b> Five
+        /// separate issues put a guard on one rule here; the data form asks the same helpers in
+        /// <c>Patterns.Power.cs</c> rather than restating any of them, which is the only way two
+        /// copies of a branch cut cannot come to disagree.
+        /// </summary>
+        [Fact]
+        public void PowerAsDataMatchesTheSwitch()
+            => AssertAgrees("Power", Patterns.PowerRules,
+                MatchedRules.Power, leastFirings: 100, extra: new[]
+                {
+                    "x ^ (2 / log(3, x))", "2 ^ log(2, x)", "3 ^ log(3, x + 1)",
+                    "x ^ 2 * x ^ 3", "x ^ 2 / x ^ 3", "(x ^ 2) ^ 3", "sqrt(x ^ 2)",
+                    "x ^ y * z ^ y", "x ^ y / z ^ y", "2 ^ y * 3 ^ y", "2 ^ y / 3 ^ y",
+                    "x ^ y / z ^ (2 * y)", "x ^ (2 * y) / z ^ y",
+                    "x / x ^ 2", "x ^ 2 / x", "x ^ (-1)", "y ^ (-1)",
+                    "x ^ 2 * (x * y)", "(x * y) * x ^ 2", "x ^ 2 * (y * x)", "(y * x) * x ^ 2",
+                    "(2 * x) ^ 3", "(2 * x) ^ (1/2)", "(-2 * x) ^ (1/2)",
+                    "(2 / x) ^ 3 * x", "(2 / x) ^ 3 * x ^ 4",
+                    "x / y / y", "x / y ^ 2 / y", "x / y / y ^ 2", "x / y ^ 3 / y ^ 2",
+                    "x * y ^ 2", "log(2, x ^ 3)", "log(2, 3 ^ x)", "log(x, x)", "log(2, 2)",
+                    "log(1 / x, 1 / y)", "log(x, 1 / y)", "log(1 / x, y)",
+                    "log(2, 3) + log(2, 5)", "log(2, 3) - log(2, 5)",
+                    "log(2, x) + log(2, y)", "log(2, x) - log(2, y)",
+                    "8 ^ (1/2)", "54 ^ (1/3)", "12 ^ (1/2)", "7 ^ (1/2)", "8 ^ (3/2)",
+                });
+
+        /// <summary>
         /// A predicate on a hole that is a mathematical property rather than a sign or a type.
         /// The corpus reaches it rarely, so the shapes are given here as well — a set that fires
         /// four times over a generated corpus is worth checking against cases chosen for it.
