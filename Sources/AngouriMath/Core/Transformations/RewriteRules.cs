@@ -123,7 +123,7 @@ namespace AngouriMath.Core.Transformations
             "Collects like terms and normalises the arrangement of products and quotients.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.CommonRules,
+            Matching.MatchedRules.Common.ApplyHere,
             Patterns.CommonRulesArms);
 
         /// <summary>

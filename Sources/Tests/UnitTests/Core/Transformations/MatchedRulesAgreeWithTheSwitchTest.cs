@@ -531,6 +531,41 @@ namespace AngouriMath.Tests.Core.Transformations
                 });
 
         /// <summary>
+        /// <b>The last set, and the largest: a hundred arms.</b> Most of them are one shape
+        /// written out in every orientation its operands can take, which is what a `switch` has
+        /// to do and a commutative pattern does not — so the hundred are sixty-two rules. Every
+        /// orientation collapsed here is one the `switch` writes out, and this is what says so:
+        /// `firesWhereTheSwitchDoesNot` is empty, so a pattern that reached one shape more than
+        /// its arms did would fail rather than pass quietly.
+        /// </summary>
+        [Fact]
+        public void CommonAsDataMatchesTheSwitch()
+            => AssertAgrees("Common", Patterns.CommonRules,
+                MatchedRules.Common, leastFirings: 400, extra: new[]
+                {
+                    "2 * sin(x) * cos(x)", "(2 * sin(x)) * 3", "3 * (2 * sin(x))",
+                    "(2 * sin(x)) * (3 * cos(x))", "(sin(x) + y) + cos(x)", "cos(x) + (sin(x) + y)",
+                    "sin(x) * 2", "2 + sin(x)", "x * 2", "2 + x",
+                    "2 * x + 3 * x", "2 * x - 3 * x", "(2 * x) * 3", "3 * (2 * x)",
+                    "(x + 2) + 3", "3 + (x + 2)",
+                    "abs(x) * abs(y)", "abs(x) / abs(y)",
+                    "sgn(x) * (y * x) / abs(x)", "sgn(x) * abs(x)", "abs(x) * sgn(x)",
+                    "x / 2", "(1/2) * x", "x * (1/2)", "(-1/2) * x", "x * (-1/2)",
+                    "cos(-x)", "cos(-2 * x)", "sec(-x)", "abs(-x)", "sin(-x)", "sin(-2 * x)",
+                    "tan(-x)", "cotan(-x)", "cosec(-x)", "sgn(-x)",
+                    "(x - y) * (x + y)", "(x + y) * (x - y)",
+                    "x * y / y", "y * x / y", "x * y / (y * z)", "x * y / (z * y)",
+                    "(x - y) / (y - x)", "(x + y) / (y + x)",
+                    "2 / (3 * x)", "2 / (x * 3)", "2 * (3 * x)",
+                    "x + (y + x)", "x + (x + y)", "(y + x) + x", "(x + y) + x",
+                    "(x + y) - x", "(y + x) - x", "x - (y + x)", "x - (x + y)",
+                    "x + (y - x)", "x + (x - y)", "(y - x) + x", "(x - y) + x",
+                    "x - (y - x)", "x - (x - y)", "(y - x) - x", "(x - y) - x",
+                    "x / y + x * z", "x / y + z * x", "z * x + x / y", "x * z + x / y",
+                    "x + x / y", "x / y + x", "2 + 2 / y",
+                });
+
+        /// <summary>
         /// A predicate on a hole that is a mathematical property rather than a sign or a type.
         /// The corpus reaches it rarely, so the shapes are given here as well — a set that fires
         /// four times over a generated corpus is worth checking against cases chosen for it.

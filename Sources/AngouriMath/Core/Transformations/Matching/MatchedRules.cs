@@ -2541,5 +2541,344 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 when: bound => Functions.Patterns.ReduceRadical(
                     (Integer)bound["radicand"], (Rational)bound["power"]) is not null));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.CommonRules"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>The last set, and the one the exchange was always going to be judged on:</b> a
+        /// hundred arms, more than any other, and the great majority of them one shape written
+        /// out in every orientation its operands can take. A commutative pattern says all of
+        /// them at once, so the hundred arms are 62 rules -- and none of that is a guess about
+        /// what the `switch` covers, because every orientation collapsed here is one the
+        /// `switch` writes out. Where it writes only one, the pattern is a node and stays one.
+        /// </para>
+        /// <para>
+        /// Order is load-bearing throughout, more than in any set so far: <c>a * a</c> becoming
+        /// <c>a ^ 2</c> sits in the middle of the file and would swallow half of what is above it
+        /// if it were moved up. The rules are in the arms' order and the agreement test is what
+        /// says that is enough.
+        /// </para>
+        /// </remarks>
+        internal static MatchedRuleSet Common { get; } = new(
+            nameof(Common),
+
+            new MatchedRule(
+                "a-numeric-factor-floats-out-of-a-product-of-functions",
+                MatchPattern.Node<Mulf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Function>("f")), MatchPattern.Any<Function>("g")),
+                bound => bound["f"] * bound["g"] * bound["c"],
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-product-of-two-quotients-is-one-quotient",
+                MatchPattern.Node<Mulf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Divf>(MatchPattern.Any("c"), MatchPattern.Any("d"))),
+                bound => bound["a"] * bound["c"] / (bound["b"] * bound["d"]),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "dividing-by-a-quotient-multiplies-by-its-reciprocal",
+                MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Node<Divf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
+                bound => bound["a"] * bound["c"] / bound["b"],
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-quotient-times-a-thing-keeps-the-divisor-outermost",
+                MatchPattern.Node<Mulf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Any("c")),
+                bound => bound["a"] * bound["c"] / bound["b"],
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-numeric-quotient-of-a-numeric-multiple-collects-its-numbers",
+                MatchPattern.Node<Divf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any("a")), MatchPattern.Any<Number>("d")),
+                bound => (Number)bound["c"] / (Number)bound["d"] * bound["a"],
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "dividing-twice-divides-by-the-product",
+                MatchPattern.Node<Divf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Any("c")),
+                bound => bound["a"] / (bound["b"] * bound["c"]),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-thing-times-a-quotient-keeps-the-divisor-outermost",
+                MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Node<Divf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
+                bound => bound["a"] * bound["b"] / bound["c"],
+                Soundness.SoundUnderAssumptions),
+            // Both orientations of the outer product are written out in the `switch`.
+            new MatchedRule(
+                "two-numeric-factors-around-a-function-collect",
+                MatchPattern.Commutative<Mulf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Function>("f")), MatchPattern.Any<Number>("d")),
+                bound => (Number)bound["c"] * (Number)bound["d"] * bound["f"],
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "two-numeric-multiples-of-functions-collect-their-numbers",
+                MatchPattern.Node<Mulf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Function>("f")), MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any<Function>("g"))),
+                bound => bound["f"] * bound["g"] * ((Number)bound["c"] * (Number)bound["d"]),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "two-functions-in-a-sum-come-together",
+                MatchPattern.Commutative<Sumf>(MatchPattern.Node<Sumf>(MatchPattern.Any<Function>("f"), MatchPattern.Any("a")), MatchPattern.Any<Function>("g")),
+                bound => bound["f"] + bound["g"] + bound["a"],
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-variable-times-a-number-puts-the-number-first",
+                MatchPattern.Node<Mulf>(MatchPattern.Any<Variable>("v"), MatchPattern.Any<Number>("c")),
+                bound => bound["c"] * bound["v"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-number-plus-a-variable-puts-the-variable-first",
+                MatchPattern.Node<Sumf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Variable>("v")),
+                bound => bound["v"] + bound["c"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-function-times-a-number-puts-the-number-first",
+                MatchPattern.Node<Mulf>(MatchPattern.Any<Function>("f"), MatchPattern.Any<Number>("c")),
+                bound => bound["c"] * bound["f"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-number-plus-a-function-puts-the-function-first",
+                MatchPattern.Node<Sumf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Function>("f")),
+                bound => bound["f"] + bound["c"],
+                Soundness.Sound),
+            new MatchedRule(
+                "two-numeric-multiples-of-one-variable-add",
+                MatchPattern.Node<Sumf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Variable>("v")), MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any<Variable>("v"))),
+                bound => ((Number)bound["c"] + (Number)bound["d"]) * bound["v"],
+                Soundness.Sound),
+            new MatchedRule(
+                "two-numeric-multiples-of-one-variable-subtract",
+                MatchPattern.Node<Minusf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Variable>("v")), MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any<Variable>("v"))),
+                bound => ((Number)bound["c"] - (Number)bound["d"]) * bound["v"],
+                Soundness.Sound),
+            // All four orientations are written out in the `switch`, which is what makes one commutative pattern on each side of the sum exact rather than wider.
+            new MatchedRule(
+                "a-common-factor-of-two-added-products-comes-out",
+                MatchPattern.Node<Sumf>(MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c"))),
+                bound => bound["a"] * (bound["b"] + bound["c"]),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-term-shared-with-a-product-added-to-it-comes-out",
+                MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["a"] * (1 + bound["b"]),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-term-added-to-itself-doubles",
+                MatchPattern.Node<Sumf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                bound => 2 * bound["a"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-common-factor-of-two-subtracted-products-comes-out",
+                MatchPattern.Node<Minusf>(MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c"))),
+                bound => bound["a"] * (bound["b"] - bound["c"]),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-term-with-a-product-of-itself-taken-from-it-comes-out",
+                MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["a"] * (1 - bound["b"]),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-term-taken-from-a-product-of-itself-comes-out",
+                MatchPattern.Node<Minusf>(MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Any("a")),
+                bound => bound["a"] * (bound["b"] - 1),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-term-subtracted-from-itself-vanishes",
+                MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                bound => Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-factor-shared-by-a-quotient-and-a-product-added-comes-out",
+                MatchPattern.Node<Sumf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c"))),
+                bound => bound["a"] * (1 / bound["b"] + bound["c"]),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-factor-shared-by-a-product-and-a-quotient-added-comes-out",
+                MatchPattern.Node<Sumf>(MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c")), MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["a"] * (bound["c"] + 1 / bound["b"]),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-term-added-to-a-quotient-of-itself-comes-out",
+                MatchPattern.Commutative<Sumf>(MatchPattern.Any<Entity>("a", one => one is not Integer(1)), MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["a"] * (1 + 1 / bound["b"]),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-thing-times-itself-is-its-square",
+                MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                bound => new Powf(bound["a"], 2),
+                Soundness.Sound),
+            new MatchedRule(
+                "two-numeric-factors-around-a-variable-collect",
+                MatchPattern.Commutative<Mulf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Variable>("v")), MatchPattern.Any<Number>("d")),
+                bound => (Number)bound["c"] * (Number)bound["d"] * bound["v"],
+                Soundness.Sound),
+            new MatchedRule(
+                "two-numeric-terms-around-a-variable-collect",
+                MatchPattern.Commutative<Sumf>(MatchPattern.Node<Sumf>(MatchPattern.Any<Variable>("v"), MatchPattern.Any<Number>("c")), MatchPattern.Any<Number>("d")),
+                bound => bound["v"] + ((Number)bound["c"] + (Number)bound["d"]),
+                Soundness.Sound),
+            new MatchedRule(
+                "a-factor-repeated-across-a-product-squares",
+                MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => new Powf(bound["a"], 2) * bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negated-term-in-a-sum-is-a-subtraction",
+                MatchPattern.Commutative<Sumf>(MatchPattern.Node<Mulf>(MatchPattern.Exact(Integer.Create(-1)), MatchPattern.Any("neg")), MatchPattern.Any("rest")),
+                bound => bound["rest"] - bound["neg"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-difference-times-a-sum-of-one-pair-is-a-difference-of-squares",
+                MatchPattern.Commutative<Mulf>(MatchPattern.Node<Minusf>(MatchPattern.Any<Variable>("v"), MatchPattern.Any("a")), MatchPattern.Node<Sumf>(MatchPattern.Any<Variable>("v"), MatchPattern.Any("a"))),
+                bound => new Powf(bound["v"], 2) - new Powf(bound["a"], 2),
+                Soundness.Sound),
+            new MatchedRule(
+                "a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero",
+                MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                bound => Integer.One.Provided(!bound["a"].EqualTo(Integer.Zero)),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-shared-factor-cancels-out-of-a-quotient",
+                MatchPattern.Node<Divf>(MatchPattern.Commutative<Mulf>(MatchPattern.Any("keep"), MatchPattern.Any("c")), MatchPattern.Any("c")),
+                bound => bound["keep"].Provided(!bound["c"].EqualTo(Integer.Zero)),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-shared-factor-cancels-between-two-products",
+                MatchPattern.Node<Divf>(MatchPattern.Commutative<Mulf>(MatchPattern.Any("num"), MatchPattern.Any("c")), MatchPattern.Commutative<Mulf>(MatchPattern.Any("c"), MatchPattern.Any("den"))),
+                bound => (bound["num"] / bound["den"]).Provided(!bound["c"].EqualTo(Integer.Zero)),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-difference-over-its-own-reverse-is-minus-one",
+                MatchPattern.Node<Divf>(MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Minusf>(MatchPattern.Any("b"), MatchPattern.Any("a"))),
+                (node, bound) => new Providedf(-1, !node.DirectChildren[1].EqualTo(0)),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-sum-over-its-own-reverse-is-one",
+                MatchPattern.Node<Divf>(MatchPattern.Node<Sumf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Sumf>(MatchPattern.Any("b"), MatchPattern.Any("a"))),
+                (node, bound) => new Providedf(1, !node.DirectChildren[1].EqualTo(0)),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-number-over-a-numeric-multiple-splits",
+                MatchPattern.Node<Divf>(MatchPattern.Any<Number>("c"), MatchPattern.Commutative<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any("a"))),
+                bound => (Number)bound["c"] / (Number)bound["d"] / bound["a"],
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "two-numbers-around-a-factor-collect",
+                MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any("a"))),
+                bound => (Number)bound["c"] * (Number)bound["d"] * bound["a"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-term-repeated-across-a-sum-doubles",
+                MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => 2 * bound["a"] + bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-term-taken-back-out-of-a-sum-it-is-in",
+                MatchPattern.Node<Minusf>(MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Any("a")),
+                bound => bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-sum-containing-a-term-taken-from-that-term-leaves-the-rest-negated",
+                MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => -bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-term-added-to-a-difference-that-takes-it-away",
+                MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Node<Minusf>(MatchPattern.Any("b"), MatchPattern.Any("a"))),
+                bound => bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-term-added-to-a-difference-that-starts-from-it",
+                MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => 2 * bound["a"] - bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-difference-that-takes-a-term-away-subtracted-from-it",
+                MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Node<Minusf>(MatchPattern.Any("b"), MatchPattern.Any("a"))),
+                bound => 2 * bound["a"] - bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-difference-that-starts-from-a-term-subtracted-from-it",
+                MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-term-taken-from-a-difference-that-already-took-it",
+                MatchPattern.Node<Minusf>(MatchPattern.Node<Minusf>(MatchPattern.Any("b"), MatchPattern.Any("a")), MatchPattern.Any("a")),
+                bound => bound["b"] - 2 * bound["a"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-term-taken-from-a-difference-that-starts-from-it",
+                MatchPattern.Node<Minusf>(MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Any("a")),
+                bound => -bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-product-of-two-absolute-values-is-the-absolute-value-of-the-product",
+                MatchPattern.Node<Mulf>(MatchPattern.Node<Absf>(MatchPattern.Any("a")), MatchPattern.Node<Absf>(MatchPattern.Any("b"))),
+                bound => new Absf(bound["a"] * bound["b"]),
+                Soundness.Sound),
+            new MatchedRule(
+                "a-quotient-of-two-absolute-values-is-the-absolute-value-of-the-quotient",
+                MatchPattern.Node<Divf>(MatchPattern.Node<Absf>(MatchPattern.Any("a")), MatchPattern.Node<Absf>(MatchPattern.Any("b"))),
+                bound => new Absf(bound["a"] / bound["b"]),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-sign-times-a-thing-over-its-own-absolute-value-cancels",
+                MatchPattern.Node<Divf>(MatchPattern.Node<Mulf>(MatchPattern.Node<Signumf>(MatchPattern.Any("a")), MatchPattern.Node<Mulf>(MatchPattern.Any("b"), MatchPattern.Any("a"))), MatchPattern.Node<Absf>(MatchPattern.Any("a"))),
+                bound => bound["b"].Provided(!bound["a"].EqualTo(Integer.Zero)),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-sign-times-an-absolute-value-of-one-thing-is-that-thing",
+                MatchPattern.Commutative<Mulf>(MatchPattern.Node<Signumf>(MatchPattern.Any("a")), MatchPattern.Node<Absf>(MatchPattern.Any("a"))),
+                bound => bound["a"],
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-reciprocal-rational-factor-is-a-division",
+                MatchPattern.Commutative<Mulf>(MatchPattern.Any<Entity>("r", one => Functions.Patterns.IsWholeReciprocal(one, 1)), MatchPattern.Any("a")),
+                bound => bound["a"] / Functions.Patterns.DenominatorOf(bound["r"]),
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negated-reciprocal-rational-factor-is-a-negated-division",
+                MatchPattern.Commutative<Mulf>(MatchPattern.Any<Entity>("r", one => Functions.Patterns.IsWholeReciprocal(one, -1)), MatchPattern.Any("a")),
+                bound => -(bound["a"] / Functions.Patterns.DenominatorOf(bound["r"])),
+                Soundness.Sound),
+            // Parity, over the whole complex plane. The poles of the odd ones sit symmetrically
+            // about zero -- tan(-z) is undefined exactly where tan(z) is -- so the domain neither
+            // widens nor narrows and no condition is owed.
+            // https://github.com/asc-community/AngouriMath/issues/929
+            new MatchedRule(
+                "an-even-function-of-a-negative-multiple-drops-the-sign-cos",
+                MatchPattern.Node<Cosf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
+                bound => new Cosf((-(Real)bound["neg"]) * bound["rest"]),
+                Soundness.Sound),
+            new MatchedRule(
+                "an-even-function-of-a-negative-multiple-drops-the-sign-secant",
+                MatchPattern.Node<Secantf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
+                bound => new Secantf((-(Real)bound["neg"]) * bound["rest"]),
+                Soundness.Sound),
+            new MatchedRule(
+                "an-even-function-of-a-negative-multiple-drops-the-sign-abs",
+                MatchPattern.Node<Absf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
+                bound => new Absf((-(Real)bound["neg"]) * bound["rest"]),
+                Soundness.Sound),
+            new MatchedRule(
+                "an-odd-function-of-a-negative-multiple-negates-sin",
+                MatchPattern.Node<Sinf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
+                bound => -new Sinf((-(Real)bound["neg"]) * bound["rest"]),
+                Soundness.Sound),
+            new MatchedRule(
+                "an-odd-function-of-a-negative-multiple-negates-tan",
+                MatchPattern.Node<Tanf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
+                bound => -new Tanf((-(Real)bound["neg"]) * bound["rest"]),
+                Soundness.Sound),
+            new MatchedRule(
+                "an-odd-function-of-a-negative-multiple-negates-cotan",
+                MatchPattern.Node<Cotanf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
+                bound => -new Cotanf((-(Real)bound["neg"]) * bound["rest"]),
+                Soundness.Sound),
+            new MatchedRule(
+                "an-odd-function-of-a-negative-multiple-negates-cosecant",
+                MatchPattern.Node<Cosecantf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
+                bound => -new Cosecantf((-(Real)bound["neg"]) * bound["rest"]),
+                Soundness.Sound),
+            new MatchedRule(
+                "an-odd-function-of-a-negative-multiple-negates-signum",
+                MatchPattern.Node<Signumf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
+                bound => -new Signumf((-(Real)bound["neg"]) * bound["rest"]),
+                Soundness.Sound));
     }
 }
