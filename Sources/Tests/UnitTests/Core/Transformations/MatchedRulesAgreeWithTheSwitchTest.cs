@@ -466,6 +466,44 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         /// <summary>
+        /// <b>Sixty-five arms, and the set where transcription found a wrong answer.</b> Four of
+        /// the eight `or`-with-equality arms carried their neighbour's comparison, so
+        /// `(y &lt; x) or (x = y)` simplified to `x &lt;= y` — its own negation off the diagonal.
+        /// That was fixed first (#1077), so this agrees with a `switch` that is right; had it been
+        /// transcribed faithfully instead, this test would have passed and recorded the defect.
+        /// </summary>
+        /// <remarks>
+        /// The corpus needs comparisons, which the arithmetic grammar does not generate, so almost
+        /// all of the firings come from `extra` here. The `leastFirings` threshold is what keeps
+        /// that honest.
+        /// </remarks>
+        [Fact]
+        public void InequalityEqualityAsDataMatchesTheSwitch()
+            => AssertAgrees("InequalityEquality", Patterns.InequalityEqualityRules,
+                MatchedRules.InequalityEquality, leastFirings: 60, extra: new[]
+                {
+                    "(x < y) or (x = y)", "(y < x) or (x = y)", "(x > y) or (x = y)",
+                    "(y > x) or (x = y)", "(x = y) or (x < y)", "(x = y) or (y < x)",
+                    "(x = y) or (x > y)", "(x = y) or (y > x)",
+                    "not (x > y)", "not (x < y)", "not (x >= y)", "not (x <= y)",
+                    "not (x > y and y = z)", "not (x > y or y = z)",
+                    "not (x > y and y < z and z = x)", "not (x > y or y < z or z = x)",
+                    "(x > y and y > z) implies (x > z)", "(x < y and y < z) implies (x < z)",
+                    "0 = x", "0 > x", "0 < x", "0 >= x", "0 <= x",
+                    "2 = x", "2 > x", "2 < x", "2 >= x", "2 <= x",
+                    "x < y and x > y", "x < y and x = y", "x >= y and x < y",
+                    "x < y or x >= y", "x <= y or x > y", "x <= y or x >= y",
+                    "x ^ 2 = 0", "x ^ (1/2) = 0", "1 / x = 0",
+                    "2 * x = 0", "2 * x > 0", "2 * x >= 0", "2 * x < 0", "2 * x <= 0",
+                    "x * 2 = 0", "x * 2 > 0", "x * 2 >= 0", "x * 2 < 0", "x * 2 <= 0",
+                    "-2 * x = 0", "-2 * x > 0", "-2 * x >= 0", "-2 * x < 0", "-2 * x <= 0",
+                    "x * (-2) = 0", "x * (-2) > 0", "x * (-2) < 0",
+                    "x / 2 = 0", "x / 2 > 0", "x / 2 >= 0", "x / 2 < 0", "x / 2 <= 0",
+                    "x / (-2) = 0", "x / (-2) > 0", "x / (-2) < 0",
+                    "x! = 0", "x > x", "x < x", "x >= x", "x <= x",
+                });
+
+        /// <summary>
         /// A predicate on a hole that is a mathematical property rather than a sign or a type.
         /// The corpus reaches it rarely, so the shapes are given here as well — a set that fires
         /// four times over a generated corpus is worth checking against cases chosen for it.

@@ -480,12 +480,20 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Rules about equalities and inequalities.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.InequalityEquality"/>, where its sixty-five arms are
+        /// sixty-five rules: this set writes out shapes rather than orientations, so there is
+        /// nothing for a commutative pattern to collapse. What it gains instead is that the two
+        /// De Morgan folds and the two excluded-middle rules say what they need of the bindings,
+        /// which a <c>switch</c> arm says in a guard beside the shape.
+        /// </remarks>
         public static RewriteRuleSet InequalityEquality { get; } = new(
             nameof(InequalityEquality),
             "Rearranges equalities and inequalities into their usual form.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.InequalityEqualityRules,
+            Matching.MatchedRules.InequalityEquality.ApplyHere,
             Patterns.InequalityEqualityRulesArms);
 
         /// <summary>
