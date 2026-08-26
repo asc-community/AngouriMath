@@ -21,6 +21,7 @@ read first.
 
 | Silent? | What | Was | Is |
 |---|---|---|---|
+| **Silent** | `"(y < x) or (x = y)".ToEntity().Simplify()`, and three more disjunctions of a comparison with an equality written the other way round | `x <= y` — False at `x = 3, y = 2` where the input is True | `x >= y` |
 | **Silent** | `"x6 + x y + 1 = 0".ToEntity().Solve("x")`, and every equation no solver settles | `{  }` — there are no roots | `{ x : 1 + x ^ 6 + x * y = 0 }` — these are the roots, whichever they are |
 | **Silent** | `"(x - 1) * (x6 + x y + 1) = 0".ToEntity().Solve("x")` | `{ 1 }` | `{ 1 } \/ { x : 1 + x ^ 6 + x * y = 0 }` |
 | **Silent** | `"x6 + x y + 1 = 0 and x - 1 = 0".ToEntity().Solve("x")` | `{  }` | `{ x : x ^ 6 + x * y + 1 = 0 and x - 1 = 0 }` |
@@ -308,6 +309,36 @@ the same precedences this grammar uses — so those needed the same brackets —
 bracketing for. The change only ever adds `\left(`/`\right)` groups, which CSharpMath already
 parses, so nothing downstream needs a matching change
 ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
+
+### Four `or`-with-equality rules gave the opposite comparison
+
+`a < b or a = b` is `a <= b`. Written with the comparison the other way round it answers the other
+way round: `b < a or a = b` is `a >= b`. Four of the eight arms of `InequalityEqualityRules` that
+say this carried their neighbour's answer, so the result was the negation of the input everywhere
+off the diagonal.
+
+| | before | now |
+|---|---|---|
+| `RewriteRules.InequalityEquality.ApplyOnce("(y < x) or (x = y)")` | `x <= y` | `x >= y` |
+| `RewriteRules.InequalityEquality.ApplyOnce("(y > x) or (x = y)")` | `x >= y` | `x <= y` |
+| `RewriteRules.InequalityEquality.ApplyOnce("(x = y) or (y < x)")` | `x <= y` | `x >= y` |
+| `RewriteRules.InequalityEquality.ApplyOnce("(x = y) or (y > x)")` | `x >= y` | `x <= y` |
+| `RewriteRules.InequalityEquality.ApplyOnce("(x < y) or (x = y)")` | `x <= y` | `x <= y` — this half was right |
+| `RewriteRules.InequalityEquality.ApplyOnce("(x > y) or (x = y)")` | `x >= y` | `x >= y` — and so was this |
+
+`Simplify` moves with it: `"(y < x) or (x = y)".ToEntity().Simplify()` was `x <= y` and is `x >= y`.
+At `x = 3, y = 2` the input is True and the old answer is False.
+
+**Only reachable with both operands symbolic**, which is why it survived. With a number on one side,
+the `Lessf(var @const, ...)` arm further down the same set rewrites `2 < x` to `x > 2` earlier in the
+pass, so the disjunction is only ever looked at with both halves written the same way round and one
+of the four *correct* arms matches — `"(2 < x) or (x = 2)".ToEntity().Simplify()` was and is `x >= 2`.
+
+Found by transcribing the set into `MatchedRules` for
+[#746](https://github.com/asc-community/AngouriMath/issues/746) tier 1: writing a rule out as data
+makes the correspondence between its pattern and its replacement something you have to state, and
+four of these did not survive stating it
+([#1077](https://github.com/asc-community/AngouriMath/issues/1077)).
 
 ### A reciprocal inside a logarithm is no longer moved out unconditionally
 
