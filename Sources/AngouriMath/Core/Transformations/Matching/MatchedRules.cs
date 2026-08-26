@@ -1825,5 +1825,373 @@ namespace AngouriMath.Core.Transformations.Matching
                     node, bound["num"], bound["den"], level),
                 Soundness.SoundUnderAssumptions,
                 when: bound => bound["num"].Vars.Any() && bound["den"].Vars.Any()));
+
+        /// <summary>
+        /// <see cref="Functions.Patterns.InequalityEqualityRules"/>, as data.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Sixty-five arms, and the set where transcription found a <b>wrong answer</b>: four of
+        /// the eight <c>or</c>-with-equality arms carried their neighbour's comparison, so
+        /// <c>(y &lt; x) or (x = y)</c> simplified to <c>x &lt;= y</c> — the negation of itself
+        /// off the diagonal. Fixed on its own before this
+        /// (<a href="https://github.com/asc-community/AngouriMath/issues/1077">#1077</a>), so what
+        /// is here agrees with a <c>switch</c> that is right.
+        /// </para>
+        /// <para>
+        /// Three things this set needs that a pattern alone does not say. The two De Morgan arms
+        /// are a <b>fold over a chain of any length</b> rather than a shape, so the rule matches
+        /// the chain and the fold stays in <c>Patterns.EqualityInequality.cs</c> where both forms
+        /// ask it. The excluded-middle pair reads <i>two</i> bound comparisons against each other
+        /// — same operands, opposite or exhaustive signs — which is a <c>when</c> over the
+        /// bindings rather than a shape. And the conditions those two attach are about where the
+        /// ordering is defined at all, since <c>i &lt; 0</c> is <c>NaN</c> rather than false.
+        /// </para>
+        /// </remarks>
+        internal static MatchedRuleSet InequalityEquality { get; } = new(
+            nameof(InequalityEquality),
+
+            new MatchedRule(
+                "a-less-than-or-equal-as-written-is-at-most",
+                MatchPattern.Node<Orf>(MatchPattern.Node<Lessf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Equalsf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["a"] <= bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-less-than-or-equal-the-other-way-round-is-at-least",
+                MatchPattern.Node<Orf>(MatchPattern.Node<Lessf>(MatchPattern.Any("b"), MatchPattern.Any("a")), MatchPattern.Node<Equalsf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["a"] >= bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-greater-than-or-equal-as-written-is-at-least",
+                MatchPattern.Node<Orf>(MatchPattern.Node<Greaterf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Equalsf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["a"] >= bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-greater-than-or-equal-the-other-way-round-is-at-most",
+                MatchPattern.Node<Orf>(MatchPattern.Node<Greaterf>(MatchPattern.Any("b"), MatchPattern.Any("a")), MatchPattern.Node<Equalsf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["a"] <= bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "an-equality-or-a-less-than-as-written-is-at-most",
+                MatchPattern.Node<Orf>(MatchPattern.Node<Equalsf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Lessf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["a"] <= bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "an-equality-or-a-less-than-the-other-way-round-is-at-least",
+                MatchPattern.Node<Orf>(MatchPattern.Node<Equalsf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Lessf>(MatchPattern.Any("b"), MatchPattern.Any("a"))),
+                bound => bound["a"] >= bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "an-equality-or-a-greater-than-as-written-is-at-least",
+                MatchPattern.Node<Orf>(MatchPattern.Node<Equalsf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Greaterf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["a"] >= bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "an-equality-or-a-greater-than-the-other-way-round-is-at-most",
+                MatchPattern.Node<Orf>(MatchPattern.Node<Equalsf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Greaterf>(MatchPattern.Any("b"), MatchPattern.Any("a"))),
+                bound => bound["a"] <= bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "the-negation-of-a-greater-turns-it-round",
+                MatchPattern.Node<Notf>(MatchPattern.Node<Greaterf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["a"] <= bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "the-negation-of-a-less-turns-it-round",
+                MatchPattern.Node<Notf>(MatchPattern.Node<Lessf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["a"] >= bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "the-negation-of-a-greaterorequal-turns-it-round",
+                MatchPattern.Node<Notf>(MatchPattern.Node<GreaterOrEqualf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["a"] < bound["b"],
+                Soundness.Sound),
+            new MatchedRule(
+                "the-negation-of-a-lessorequal-turns-it-round",
+                MatchPattern.Node<Notf>(MatchPattern.Node<LessOrEqualf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
+                bound => bound["a"] > bound["b"],
+                Soundness.Sound),
+            // De Morgan over a chain of any length, which is a fold rather than a shape -- so the rule
+            // matches the chain and the fold stays in `Patterns.EqualityInequality.cs`, asked by both
+            // forms.
+            new MatchedRule(
+                "a-negated-conjunction-becomes-a-disjunction-of-negations",
+                MatchPattern.Node<Notf>(MatchPattern.Any<Andf>("chain", chain => Functions.Patterns.MayPushNotInside(Andf.LinearChildren(chain), insideConjunction: true))),
+                bound => Functions.Patterns.PushNotInside(Andf.LinearChildren((Andf)bound["chain"]), disjoin: true),
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negated-disjunction-becomes-a-conjunction-of-negations",
+                MatchPattern.Node<Notf>(MatchPattern.Any<Orf>("chain", chain => Functions.Patterns.MayPushNotInside(Orf.LinearChildren(chain), insideConjunction: false))),
+                bound => Functions.Patterns.PushNotInside(Orf.LinearChildren((Orf)bound["chain"]), disjoin: false),
+                Soundness.Sound),
+            new MatchedRule(
+                "a-chain-of-greaters-implies-its-own-ends",
+                MatchPattern.Node<Impliesf>(MatchPattern.Node<Andf>(MatchPattern.Node<Greaterf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Greaterf>(MatchPattern.Any("b"), MatchPattern.Any("c"))), MatchPattern.Node<Greaterf>(MatchPattern.Any("a"), MatchPattern.Any("c"))),
+                bound => Entity.Boolean.True.Provided(bound["a"].DomainCondition).Provided(bound["b"].DomainCondition).Provided(bound["c"].DomainCondition),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-chain-of-lesss-implies-its-own-ends",
+                MatchPattern.Node<Impliesf>(MatchPattern.Node<Andf>(MatchPattern.Node<Lessf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Lessf>(MatchPattern.Any("b"), MatchPattern.Any("c"))), MatchPattern.Node<Lessf>(MatchPattern.Any("a"), MatchPattern.Any("c"))),
+                bound => Entity.Boolean.True.Provided(bound["a"].DomainCondition).Provided(bound["b"].DomainCondition).Provided(bound["c"].DomainCondition),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-equals-with-zero-on-the-left-turns-round",
+                MatchPattern.Node<Equalsf>(MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one)), MatchPattern.Any<Entity>("other", one => !Functions.Patterns.IsZeroReal(one))),
+                bound => bound["other"].EqualTo(bound["zero"]),
+                Soundness.Sound),
+            new MatchedRule(
+                "a-greater-with-zero-on-the-left-turns-round",
+                MatchPattern.Node<Greaterf>(MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one)), MatchPattern.Any<Entity>("other", one => !Functions.Patterns.IsZeroReal(one))),
+                bound => bound["other"] < bound["zero"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-less-with-zero-on-the-left-turns-round",
+                MatchPattern.Node<Lessf>(MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one)), MatchPattern.Any<Entity>("other", one => !Functions.Patterns.IsZeroReal(one))),
+                bound => bound["other"] > bound["zero"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-greaterorequal-with-zero-on-the-left-turns-round",
+                MatchPattern.Node<GreaterOrEqualf>(MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one)), MatchPattern.Any<Entity>("other", one => !Functions.Patterns.IsZeroReal(one))),
+                bound => bound["other"] <= bound["zero"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-lessorequal-with-zero-on-the-left-turns-round",
+                MatchPattern.Node<LessOrEqualf>(MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one)), MatchPattern.Any<Entity>("other", one => !Functions.Patterns.IsZeroReal(one))),
+                bound => bound["other"] >= bound["zero"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-equals-with-a-number-on-the-left-turns-round",
+                MatchPattern.Node<Equalsf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Entity>("other", one => one is not Number)),
+                bound => bound["other"].EqualTo(bound["c"]),
+                Soundness.Sound),
+            new MatchedRule(
+                "a-greater-with-a-number-on-the-left-turns-round",
+                MatchPattern.Node<Greaterf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Entity>("other", one => one is not Number)),
+                bound => bound["other"] < bound["c"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-less-with-a-number-on-the-left-turns-round",
+                MatchPattern.Node<Lessf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Entity>("other", one => one is not Number)),
+                bound => bound["other"] > bound["c"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-greaterorequal-with-a-number-on-the-left-turns-round",
+                MatchPattern.Node<GreaterOrEqualf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Entity>("other", one => one is not Number)),
+                bound => bound["other"] <= bound["c"],
+                Soundness.Sound),
+            new MatchedRule(
+                "a-lessorequal-with-a-number-on-the-left-turns-round",
+                MatchPattern.Node<LessOrEqualf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Entity>("other", one => one is not Number)),
+                bound => bound["other"] >= bound["c"],
+                Soundness.Sound),
+            new MatchedRule(
+                "two-comparisons-of-one-pair-that-exclude-each-other-are-false",
+                MatchPattern.Node<Andf>(MatchPattern.Any<ComparisonSign>("left"), MatchPattern.Any<ComparisonSign>("right")),
+                bound => Entity.Boolean.False.Provided(Functions.Patterns.OrderedConditionOf(bound["left"], 0)).Provided(Functions.Patterns.OrderedConditionOf(bound["left"], 1)),
+                Soundness.SoundUnderAssumptions,
+                when: bound => Functions.Patterns.SameOperands(bound["left"], bound["right"]) && Functions.Patterns.HaveOppositeSigns(bound["left"], bound["right"])),
+            // The other half of the same law. The unsatisfiable conjunction above was decided and the
+            // valid disjunction was not -- half of excluded middle. https://github.com/asc-
+            // community/AngouriMath/issues/876
+            new MatchedRule(
+                "two-comparisons-of-one-pair-that-leave-no-case-are-true",
+                MatchPattern.Node<Orf>(MatchPattern.Any<ComparisonSign>("left"), MatchPattern.Any<ComparisonSign>("right")),
+                bound => Entity.Boolean.True.Provided(Functions.Patterns.OrderedConditionOf(bound["left"], 0)).Provided(Functions.Patterns.OrderedConditionOf(bound["left"], 1)),
+                Soundness.SoundUnderAssumptions,
+                when: bound => Functions.Patterns.SameOperands(bound["left"], bound["right"]) && Functions.Patterns.HaveExhaustiveSigns(bound["left"], bound["right"])),
+            new MatchedRule(
+                "a-power-with-a-real-positive-exponent-is-zero-when-its-base-is",
+                MatchPattern.Node<Equalsf>(MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("p", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"].EqualTo(bound["zero"]),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-reciprocal-is-never-zero",
+                MatchPattern.Node<Equalsf>(MatchPattern.Node<Divf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Any("e")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => new Providedf(false, !bound["e"].EqualTo(0)),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-positive-factor-first-drops-out-of-a-equals-with-zero",
+                MatchPattern.Node<Equalsf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0)), MatchPattern.Any("a")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"].EqualTo(Integer.Zero),
+                Soundness.Sound),
+            new MatchedRule(
+                "a-positive-factor-first-drops-out-of-a-greater-with-zero",
+                MatchPattern.Node<Greaterf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0)), MatchPattern.Any("a")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] > Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-positive-factor-first-drops-out-of-a-greaterorequal-with-zero",
+                MatchPattern.Node<GreaterOrEqualf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0)), MatchPattern.Any("a")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] >= Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-positive-factor-first-drops-out-of-a-less-with-zero",
+                MatchPattern.Node<Lessf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0)), MatchPattern.Any("a")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] < Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-positive-factor-first-drops-out-of-a-lessorequal-with-zero",
+                MatchPattern.Node<LessOrEqualf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0)), MatchPattern.Any("a")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] <= Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-positive-factor-second-drops-out-of-a-equals-with-zero",
+                MatchPattern.Node<Equalsf>(MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"].EqualTo(Integer.Zero),
+                Soundness.Sound),
+            new MatchedRule(
+                "a-positive-factor-second-drops-out-of-a-greater-with-zero",
+                MatchPattern.Node<Greaterf>(MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] > Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-positive-factor-second-drops-out-of-a-greaterorequal-with-zero",
+                MatchPattern.Node<GreaterOrEqualf>(MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] >= Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-positive-factor-second-drops-out-of-a-less-with-zero",
+                MatchPattern.Node<Lessf>(MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] < Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-positive-factor-second-drops-out-of-a-lessorequal-with-zero",
+                MatchPattern.Node<LessOrEqualf>(MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] <= Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-factor-first-drops-out-of-a-equals-with-zero",
+                MatchPattern.Node<Equalsf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0)), MatchPattern.Any("a")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"].EqualTo(Integer.Zero),
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-factor-first-drops-out-of-a-greater-with-zero",
+                MatchPattern.Node<Greaterf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0)), MatchPattern.Any("a")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] < Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-factor-first-drops-out-of-a-greaterorequal-with-zero",
+                MatchPattern.Node<GreaterOrEqualf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0)), MatchPattern.Any("a")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] <= Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-factor-first-drops-out-of-a-less-with-zero",
+                MatchPattern.Node<Lessf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0)), MatchPattern.Any("a")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] > Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-factor-first-drops-out-of-a-lessorequal-with-zero",
+                MatchPattern.Node<LessOrEqualf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0)), MatchPattern.Any("a")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] >= Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-factor-second-drops-out-of-a-equals-with-zero",
+                MatchPattern.Node<Equalsf>(MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"].EqualTo(Integer.Zero),
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-factor-second-drops-out-of-a-greater-with-zero",
+                MatchPattern.Node<Greaterf>(MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] < Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-factor-second-drops-out-of-a-greaterorequal-with-zero",
+                MatchPattern.Node<GreaterOrEqualf>(MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] <= Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-factor-second-drops-out-of-a-less-with-zero",
+                MatchPattern.Node<Lessf>(MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] > Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-factor-second-drops-out-of-a-lessorequal-with-zero",
+                MatchPattern.Node<LessOrEqualf>(MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] >= Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-positive-divisor-drops-out-of-a-equals-with-zero",
+                MatchPattern.Node<Equalsf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"].EqualTo(Integer.Zero),
+                Soundness.Sound),
+            new MatchedRule(
+                "a-positive-divisor-drops-out-of-a-greater-with-zero",
+                MatchPattern.Node<Greaterf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] > Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-positive-divisor-drops-out-of-a-greaterorequal-with-zero",
+                MatchPattern.Node<GreaterOrEqualf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] >= Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-positive-divisor-drops-out-of-a-less-with-zero",
+                MatchPattern.Node<Lessf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] < Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-positive-divisor-drops-out-of-a-lessorequal-with-zero",
+                MatchPattern.Node<LessOrEqualf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] <= Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-divisor-drops-out-of-a-equals-with-zero",
+                MatchPattern.Node<Equalsf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"].EqualTo(Integer.Zero),
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-divisor-drops-out-of-a-greater-with-zero",
+                MatchPattern.Node<Greaterf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] < Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-divisor-drops-out-of-a-greaterorequal-with-zero",
+                MatchPattern.Node<GreaterOrEqualf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] <= Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-divisor-drops-out-of-a-less-with-zero",
+                MatchPattern.Node<Lessf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] > Integer.Zero,
+                Soundness.Sound),
+            new MatchedRule(
+                "a-negative-divisor-drops-out-of-a-lessorequal-with-zero",
+                MatchPattern.Node<LessOrEqualf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => bound["a"] >= Integer.Zero,
+                Soundness.Sound),
+            // The condition carried is the **argument's**, which is what the `switch` reads --
+            // `Factorialf({ DomainCondition: var condition })` is a property pattern on the child,
+            // not on the factorial. Whether that is the right condition is a separate question and
+            // https://github.com/asc-community/AngouriMath/issues/1081 asks it; agreeing with the
+            // arms is this rule's job.
+            new MatchedRule(
+                "a-factorial-is-never-zero",
+                MatchPattern.Node<Equalsf>(
+                    MatchPattern.Node<Factorialf>(MatchPattern.Any("arg")),
+                    MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
+                bound => Entity.Boolean.False.Provided(bound["arg"].DomainCondition),
+                Soundness.SoundUnderAssumptions),
+            // The `DomainCondition` is about singularities and says nothing about where the ordering is
+            // defined, so both are needed: `x < x` is False on the real line and NaN at x = i.
+            new MatchedRule(
+                "a-greater-of-a-thing-with-itself-is-decided",
+                MatchPattern.Node<Greaterf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                bound => Entity.Boolean.False.Provided(bound["a"].DomainCondition).Provided(Functions.Patterns.OrderedConditionFor(bound["a"])),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-less-of-a-thing-with-itself-is-decided",
+                MatchPattern.Node<Lessf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                bound => Entity.Boolean.False.Provided(bound["a"].DomainCondition).Provided(Functions.Patterns.OrderedConditionFor(bound["a"])),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-greaterorequal-of-a-thing-with-itself-is-decided",
+                MatchPattern.Node<GreaterOrEqualf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                bound => Entity.Boolean.True.Provided(bound["a"].DomainCondition).Provided(Functions.Patterns.OrderedConditionFor(bound["a"])),
+                Soundness.SoundUnderAssumptions),
+            new MatchedRule(
+                "a-lessorequal-of-a-thing-with-itself-is-decided",
+                MatchPattern.Node<LessOrEqualf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
+                bound => Entity.Boolean.True.Provided(bound["a"].DomainCondition).Provided(Functions.Patterns.OrderedConditionFor(bound["a"])),
+                Soundness.SoundUnderAssumptions));
     }
 }
