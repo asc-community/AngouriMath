@@ -13,7 +13,8 @@ namespace AngouriMath.Functions
 {
     internal static partial class Patterns
     {
-        [ConstantField] private static readonly FiniteSet FullBooleanSet = new FiniteSet(True, False);
+        /// <remarks>Internal so the data form of this set compares against the same value.</remarks>
+        [ConstantField] internal static readonly FiniteSet FullBooleanSet = new FiniteSet(True, False);
 
         [AddressableRules]
         internal static Entity SetOperatorRules(Entity x) => x switch

@@ -491,12 +491,19 @@ namespace AngouriMath.Core.Transformations
         /// <summary>
         /// Rules about unions, intersections and set differences.
         /// </summary>
+        /// <remarks>
+        /// <b>Run by the matcher rather than by the <c>switch</c></b> —
+        /// <see cref="Matching.MatchedRules.SetOperator"/>, and the set that found the
+        /// matcher's first real limit: a pattern cannot reach inside a binder, because a
+        /// <c>ConditionalSet</c> offers its predicate and not its bound variable to a
+        /// traversal (<a href="https://github.com/asc-community/AngouriMath/issues/1074">#1074</a>).
+        /// </remarks>
         public static RewriteRuleSet SetOperator { get; } = new(
             nameof(SetOperator),
             "Applies the identities of set algebra to unions, intersections and set differences.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Patterns.SetOperatorRules,
+            Matching.MatchedRules.SetOperator.ApplyHere,
             Patterns.SetOperatorRulesArms);
 
         /// <summary>
