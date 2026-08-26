@@ -5,8 +5,12 @@
 // Website: https://am.angouri.org.
 //
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using AngouriMath.Core.Transformations;
+using AngouriMath.Functions;
 using AngouriMath;
 using AngouriMath.Core.Transformations.Matching;
 using AngouriMath.Extensions;
@@ -30,14 +34,30 @@ namespace AngouriMath.Tests.Core.Transformations
     [Trait("Area", "Core")]
     public sealed class DeterministicMatchingTest
     {
-        private static IEnumerable<MatchedRuleSet> AllSets => new[]
+        /// <summary>
+        /// Every set in <see cref="MatchedRules"/>, read off the class rather than listed.
+        /// </summary>
+        /// <remarks>
+        /// It was a list of five, written when there were five, and it stayed five while the
+        /// class grew past twenty — so the test whose subject is "every rule" was looking at a
+        /// tenth of them. A list of names cannot notice that it is out of date; this can.
+        /// </remarks>
+        private static IEnumerable<MatchedRuleSet> AllSets
         {
-            MatchedRules.DivisionPreparing,
-            MatchedRules.CollapseMultipleFractions,
-            MatchedRules.PowerOfPower,
-            MatchedRules.SharedFactor,
-            MatchedRules.PythagoreanIdentity,
-        };
+            get
+            {
+                const BindingFlags Any = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+                foreach (var property in typeof(MatchedRules).GetProperties(Any))
+                    if (property.PropertyType == typeof(MatchedRuleSet))
+                        yield return (MatchedRuleSet)property.GetValue(null)!;
+                foreach (var factory in typeof(MatchedRules).GetMethods(Any))
+                    if (factory.ReturnType == typeof(MatchedRuleSet)
+                        && factory.GetParameters() is { Length: 1 } parameters
+                        && parameters[0].ParameterType == typeof(TreeAnalyzer.SortLevel))
+                        foreach (var level in Enum.GetValues(typeof(TreeAnalyzer.SortLevel)))
+                            yield return (MatchedRuleSet)factory.Invoke(null, new[] { level })!;
+            }
+        }
 
         /// <summary>
         /// Shapes chosen to hit the rules and to miss them, including the node types they are
@@ -89,6 +109,56 @@ namespace AngouriMath.Tests.Core.Transformations
             }
             // A test that silently checked nothing would pass just as loudly.
             Assert.True(checkedPairs > 100, $"only {checkedPairs} pattern/expression pairs checked");
+        }
+
+        /// <summary>
+        /// The same contract one step out: where a pattern can bound its candidates, walking them
+        /// by index must produce exactly the sequence enumerating them produces — same bindings,
+        /// same order, same count.
+        /// </summary>
+        /// <remarks>
+        /// Order is asserted and not only membership. <c>TryApply</c> takes the first candidate
+        /// that also satisfies the rule's <c>when</c>, so two implementations that agree on the
+        /// <i>set</i> of matches and differ on which comes first are two different rewriters.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1079">#1079</a>
+        /// </remarks>
+        [Fact]
+        public void BoundedMatchingAgreesWithEnumeration()
+        {
+            var checkedPairs = 0;
+            var sawSeveral = 0;
+            foreach (var rule in AllSets.SelectMany(set => set.Rules))
+            {
+                var choices = rule.Left.ChoiceCount;
+                if (choices == MatchPattern.Unbounded) continue;
+                foreach (var text in Corpus)
+                {
+                    var expr = text.ToEntity();
+                    var enumerated = rule.Left.Match(expr, Bindings.Empty).ToList();
+
+                    var byIndex = new List<Bindings>();
+                    for (var choice = 0; choice < choices; choice++)
+                        if (rule.Left.TryMatchChoice(expr, Bindings.Empty, choice, out var bound))
+                            byIndex.Add(bound);
+
+                    Assert.True(enumerated.Count == byIndex.Count,
+                        $"{rule.Name} on '{text}': enumeration found {enumerated.Count} matches, "
+                        + $"indexing found {byIndex.Count}");
+                    for (var i = 0; i < enumerated.Count; i++)
+                        foreach (var name in rule.Left.BoundNames.Distinct())
+                        {
+                            Assert.True(enumerated[i].TryGet(name, out var slow));
+                            Assert.True(byIndex[i].TryGet(name, out var fast));
+                            Assert.Equal(slow, fast);
+                        }
+                    if (enumerated.Count > 1) sawSeveral++;
+                    checkedPairs++;
+                }
+            }
+            Assert.True(checkedPairs > 500, $"only {checkedPairs} pattern/expression pairs checked");
+            // The whole point is the pattern that matches more than one way. If none of them did,
+            // this would be the deterministic test again under another name.
+            Assert.True(sawSeveral > 0, "no bounded pattern matched an expression more than one way");
         }
 
         // That the sets still *rewrite* the same thing end to end is not restated here:

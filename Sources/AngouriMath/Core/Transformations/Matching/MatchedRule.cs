@@ -184,6 +184,26 @@ namespace AngouriMath.Core.Transformations.Matching
                 return Build(expr, only);
             }
 
+            // Between one match and however many sits the case that is neither and is common:
+            // a commutative node of deterministic children offers the written order and the
+            // swapped one and nothing else. Walking those by index costs nothing, where
+            // enumerating them allocates an iterator state machine per pattern node at every
+            // node of the tree -- 6.3 MB on `SolveMediumHard` for two commutative rules in
+            // `RewriteRules.Power`. https://github.com/asc-community/AngouriMath/issues/1079
+            //
+            // The index is an upper bound rather than a count, so a candidate that does not
+            // exist answers false and is skipped, exactly as an enumeration would omit it.
+            if (Left.ChoiceCount is var choices and not MatchPattern.Unbounded)
+            {
+                for (var choice = 0; choice < choices; choice++)
+                {
+                    if (!Left.TryMatchChoice(expr, Bindings.Empty, choice, out var bound)) continue;
+                    if (when is not null && !when(bound)) continue;
+                    if (Build(expr, bound) is { } rewritten) return rewritten;
+                }
+                return null;
+            }
+
             // Every way the pattern matches, in order, and the first that also satisfies the
             // side condition wins. Taking only the first *match* would be wrong: commutativity
             // means `b*a + c*a` matches `k*p + k*q` several ways and only some of them bind

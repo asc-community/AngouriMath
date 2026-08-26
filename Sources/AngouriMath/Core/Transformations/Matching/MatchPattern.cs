@@ -193,6 +193,66 @@ namespace AngouriMath.Core.Transformations.Matching
         private protected abstract bool TryMatchOnceCore(
             Entity expr, Bindings bindings, out Bindings result);
 
+        /// <summary>
+        /// How many candidate matches this pattern can offer at most, or
+        /// <see cref="Unbounded"/> when it cannot say.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Between <see cref="IsDeterministic"/> — exactly one — and <see cref="Match"/> —
+        /// however many — sits the case that is neither and is very common: a
+        /// <see cref="Commutative{T}"/> node of deterministic children, which offers the written
+        /// order and the swapped one and nothing else. Enumerating two candidates through
+        /// <see cref="MatchCore"/> allocates an iterator state machine per pattern node, and a
+        /// rewrite pass makes an attempt at every node of the tree, so on a set that runs on
+        /// every pass that is measurable: 165.05 MB to 171.37 MB of <c>SolveMediumHard</c>, +3.8%,
+        /// for two commutative rules in <c>RewriteRules.Power</c>.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1079">#1079</a>
+        /// </para>
+        /// <para>
+        /// This is an <b>upper bound</b>, not a count: a child whose name is already bound offers
+        /// one candidate or none depending on what it is asked to match, which is not known until
+        /// it is asked. <see cref="TryMatchChoice"/> answers <see langword="false"/> for an index
+        /// that does not exist, so a caller walks every index and skips the misses.
+        /// </para>
+        /// </remarks>
+        internal virtual int ChoiceCount => 1;
+
+        /// <summary>A pattern that cannot bound its candidates, and must be enumerated.</summary>
+        internal const int Unbounded = 0;
+
+        /// <summary>
+        /// The <paramref name="choice"/>th way this matches, counted the way
+        /// <see cref="Match"/> yields them — so choice <c>i</c> is the <c>i</c>th element of that
+        /// sequence, once the indices that do not exist are skipped.
+        /// </summary>
+        /// <remarks>
+        /// It must agree with <see cref="Match"/> in content and in order.
+        /// <c>BoundedMatchingAgreesWithEnumeration</c> is the test that holds the two together
+        /// over generated expressions, for the reason the deterministic path has one: two
+        /// implementations of one thing is how a matcher acquires a case where they differ.
+        /// </remarks>
+        internal bool TryMatchChoice(Entity expr, Bindings bindings, int choice, out Bindings result)
+        {
+            if (RootType is { } required && !required.IsInstanceOfType(expr))
+            {
+                result = bindings;
+                return false;
+            }
+            return TryMatchChoiceCore(expr, bindings, choice, out result);
+        }
+
+        /// <summary>
+        /// One candidate by index. The default is the deterministic one, which is right for every
+        /// pattern that offers a single match; <see cref="NodePattern"/> overrides it.
+        /// </summary>
+        private protected virtual bool TryMatchChoiceCore(
+            Entity expr, Bindings bindings, int choice, out Bindings result)
+        {
+            result = bindings;
+            return choice == 0 && TryMatchOnceCore(expr, bindings, out result);
+        }
+
         /// <summary>The names this pattern binds, so a right-hand side can be checked for a typo.</summary>
         internal abstract IEnumerable<string> BoundNames { get; }
 
@@ -574,6 +634,78 @@ namespace AngouriMath.Core.Transformations.Matching
                 return true;
             }
 
+            /// <summary>
+            /// The product over the children, doubled for a commutative node because it offers
+            /// the written order and the swapped one. <see cref="Unbounded"/> as soon as one
+            /// child is, which is how a <see cref="GatheredPattern"/> anywhere inside makes the
+            /// whole pattern something to enumerate.
+            /// </summary>
+            internal override int ChoiceCount
+            {
+                get
+                {
+                    if (choices != -1) return choices;
+                    long total = 1;
+                    foreach (var child in children)
+                    {
+                        var count = child.ChoiceCount;
+                        if (count == Unbounded) return choices = Unbounded;
+                        total *= count;
+                        if (total > MaxChoices) return choices = Unbounded;
+                    }
+                    if (commutative) total *= 2;
+                    return choices = total > MaxChoices ? Unbounded : (int)total;
+                }
+            }
+
+            /// <summary>
+            /// Past this a pattern is treated as unbounded. It is not a correctness limit — the
+            /// indexing is exact at any size — but a bound past which walking every index is no
+            /// longer obviously cheaper than enumerating, and a guard against a pattern whose
+            /// product overflows.
+            /// </summary>
+            private const int MaxChoices = 64;
+
+            private int choices = -1;
+
+            private protected override bool TryMatchChoiceCore(
+                Entity expr, Bindings bindings, int choice, out Bindings result)
+            {
+                result = bindings;
+                var actual = expr.DirectChildren;
+                if (actual.Count != children.Length) return false;
+
+                // `MatchCore` yields every solution in the written order first and then, for a
+                // commutative node, every solution in the swapped one -- so the low half of the
+                // index space is the written order and the high half is the swapped one.
+                var perOrder = ChoiceCount;
+                if (perOrder == Unbounded) return false;
+                var swapped = false;
+                if (commutative)
+                {
+                    perOrder /= 2;
+                    if (choice >= perOrder) { swapped = true; choice -= perOrder; }
+                }
+
+                if (choice < 0 || choice >= perOrder) return false;
+
+                // Mixed radix over the children, with the first child the most significant digit
+                // -- because `MatchInOrder` makes it the outermost loop, so it is the one that
+                // varies slowest in the sequence this has to agree with. The suffix product is
+                // recomputed rather than stored: there are one to three children, and an array
+                // here would be the allocation this whole path exists to avoid.
+                for (var i = 0; i < children.Length; i++)
+                {
+                    var suffix = 1;
+                    for (var j = i + 1; j < children.Length; j++) suffix *= children[j].ChoiceCount;
+                    var digit = choice / suffix % children[i].ChoiceCount;
+                    var against = swapped ? actual[children.Length - 1 - i] : actual[i];
+                    if (!children[i].TryMatchChoice(against, result, digit, out result))
+                        return false;
+                }
+                return true;
+            }
+
             internal override bool IsBuildable => buildable;
 
             internal override bool TryBuild(Bindings bindings, out Entity built)
@@ -702,6 +834,13 @@ namespace AngouriMath.Core.Transformations.Matching
             /// </summary>
             /// <summary>Choosing which operands the parts claim is the whole of what it does.</summary>
             internal override bool IsDeterministic => false;
+
+            /// <summary>
+            /// Unbounded, and that is the point of it: how many ways k parts sit among n operands
+            /// is a property of the expression rather than of the pattern, so this is the one
+            /// shape that has to be enumerated.
+            /// </summary>
+            internal override int ChoiceCount => Unbounded;
 
             private protected override bool TryMatchOnceCore(
                 Entity expr, Bindings bindings, out Bindings result)
