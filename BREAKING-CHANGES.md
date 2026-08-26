@@ -21,6 +21,7 @@ read first.
 
 | Silent? | What | Was | Is |
 |---|---|---|---|
+| | `MathS.Polynomials.Factor("x2 + y2 + z2 + w2 + 1", "x")`, and polynomials in enough variables generally | `null` — a refusal | the polynomial itself, meaning it does not factor |
 | **Silent** | `"x! = 0".ToEntity().Simplify()` | `False`, including at `x = -1` where `x!` has a pole and the statement is `NaN` | `False provided x in RR and (x >= 0 or not x in ZZ)` |
 | **Silent** | `"x! / x!".ToEntity().Simplify()`, and the same for any factorial over itself | `1`, including at `x = -1` where the quotient is `NaN` | `1 provided not x! = 0` |
 | **Silent** | `"(y < x) or (x = y)".ToEntity().Simplify()`, and three more disjunctions of a comparison with an equality written the other way round | `x <= y` — False at `x = 3, y = 2` where the input is True | `x >= y` |
@@ -311,6 +312,35 @@ the same precedences this grammar uses — so those needed the same brackets —
 bracketing for. The change only ever adds `\left(`/`\right)` groups, which CSharpMath already
 parses, so nothing downstream needs a matching change
 ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
+
+### A polynomial in too many variables to substitute can still be answered
+
+`MathS.Polynomials.Factor` in more than one variable works by Kronecker's substitution, whose
+one-variable image has degree `Π (d_i + 1) - 1` — a *product*. That leaves the one-variable
+factoriser's reach after very few variables, and the answer was a refusal:
+
+| | before | now |
+|---|---|---|
+| `Factor("x2 + y2 + z2 + w2 + 1", "x")` | `null` | `w ^ 2 + x ^ 2 + y ^ 2 + z ^ 2 + 1` |
+| `Factor("x2 + y2 + z2 + 1", "x")` | `x ^ 2 + y ^ 2 + z ^ 2 + 1` | unchanged |
+| `Factor("x7 - y7", "x")` | `null` | `null` — it *is* reducible, and this says nothing about it |
+| `Factor("(x + y) * (x - y)", "x")` | `(x + y) * (x - y)` | unchanged |
+| `Factor("y * (x + 1)", "x")` | `y * (x + 1)` | unchanged |
+
+Where the substitution gives up, the polynomial is now evaluated at an integer point in every
+variable but the main one and the one-variable image is factored. **An image that is irreducible
+and has kept its degree is a proof that its source is irreducible** — substitution is a ring
+homomorphism, so a factorisation would survive it, and degrees in the main variable add, so
+neither part can have lost any while the total is preserved. An evaluation image has the degree
+of the polynomial in the main variable however many other variables there are, so this reaches
+where the substitution cannot.
+
+It answers in one direction only. A reducible image says nothing, so `x7 - y7` is still refused;
+a factor free of the main variable is invisible to it, so the content is checked and anything but
+a constant declines. Since
+[#1059](https://github.com/asc-community/AngouriMath/pull/1059) "it does not factor" is an
+answer rather than a refusal, which is what makes this worth having
+([#746](https://github.com/asc-community/AngouriMath/issues/746) tier 1).
 
 ### `x! = 0` carries the condition under which the factorial exists
 

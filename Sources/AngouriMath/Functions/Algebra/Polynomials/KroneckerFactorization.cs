@@ -83,6 +83,25 @@ namespace AngouriMath.Functions
         {
             if (poly.IsZero || poly.DegreeIn(main) < 1)
                 return null;
+            if (BySubstitution(poly, main) is { } factors)
+                return factors;
+            // The substitution gave up -- on the image's degree, on how far it split, or on the
+            // arithmetic. An *evaluation* image has the degree of the polynomial in the main
+            // variable however many other variables there are, so it is still there to be asked,
+            // and what it can settle is that there is nothing to find. Asked second because it
+            // answers only that: the substitution is the one that can actually factor.
+            return EvaluationHomomorphism.CertifiesIrreducible(poly, main)
+                ? new[] { poly }
+                : null;
+        }
+
+        /// <summary>
+        /// The factorisation by Kronecker's substitution, or <see langword="null"/> where it
+        /// could not be reached.
+        /// </summary>
+        private static IReadOnlyList<MultivariatePolynomial>? BySubstitution(
+            MultivariatePolynomial poly, int main)
+        {
 
             // The main variable is placed first so that its exponent is the lowest digit; the
             // rest follow in index order, and a variable the polynomial does not use is left out
