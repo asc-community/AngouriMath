@@ -275,7 +275,17 @@ namespace AngouriMath.Functions
             LessOrEqualf   (Divf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 >= Integer.Zero,
 
             // a! = 0
-            Equalsf(Factorialf({ DomainCondition: var condition }), var zeroEnt) when IsZero(zeroEnt) => False.Provided(condition),
+            // A factorial is never zero *where it is defined*, and at a negative integer it is
+            // not: `(-1)!` is a pole, so `(-1)! = 0` is NaN rather than False. The condition owed
+            // is therefore the factorial's own -- `x in RR and (x >= 0 or not x in ZZ)`.
+            //
+            // What was written was `Factorialf({ DomainCondition: var condition })`, a property
+            // pattern on the factorial's *argument*. For a bare variable that condition is True,
+            // and `Provided` drops a True, so `x! = 0` went out as an unconditioned False and
+            // answered a question the original declines.
+            // https://github.com/asc-community/AngouriMath/issues/1081
+            Equalsf(Factorialf factorial, var zeroEnt) when IsZero(zeroEnt)
+                => False.Provided(factorial.DomainCondition),
 
             // The DomainCondition is about singularities and says nothing about where the
             // ordering is defined, so both conditions are needed: `x < x` is False on the real

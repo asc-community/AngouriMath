@@ -74,19 +74,25 @@ namespace AngouriMath.Tests.PatternsTest
         [Fact] public void FactorialM1() => AssertSimplify(MathS.Factorial(-1), double.NaN);
         [Fact] public void FactorialM1_5() => AssertSimplify(MathS.Factorial(-1.5m), -2 * MathS.Sqrt(MathS.pi));
         [Fact] public void FactorialM2() => AssertSimplify(MathS.Factorial(-2), double.NaN);
-        [Fact] public void FactorialXP1OverFactorialXP1() => AssertSimplify(MathS.Factorial(x + 1) / MathS.Factorial(x + 1), 1);
+        // These three recorded `1`, and `1` is wrong wherever the factorial has a pole: at
+        // x = -1, `x! / x!` is NaN / NaN and not 1. The condition arrives now because `x! = 0` is
+        // no longer answered False unconditionally, so `a / a = 1 provided a != 0` no longer
+        // discharges itself. Checked at x = 3, 0, -1 and -2: the new form agrees with the
+        // original at all four, where `1` disagreed at every pole.
+        // https://github.com/asc-community/AngouriMath/issues/1081
+        [Fact] public void FactorialXP1OverFactorialXP1() => AssertSimplify(MathS.Factorial(x + 1) / MathS.Factorial(x + 1), "1 provided not (1 + x)! = 0");
         [Fact] public void FactorialXP1OverFactorialX() => AssertSimplify(MathS.Factorial(1 + x) / MathS.Factorial(x), 1 + x);
         [Fact] public void FactorialXP1OverFactorialXM2() => AssertSimplify(MathS.Factorial(1 + x) / MathS.Factorial(-2 + x), "x3 - x");
         [Fact] public void FactorialXP1OverFactorialXM1() => AssertSimplify(MathS.Factorial(1 + x) / MathS.Factorial(-1 + x), x * (1 + x));
         [Fact] public void FactorialXP1OverFactorialXM3() => AssertSimplifyIdentical(MathS.Factorial(x + 1) / MathS.Factorial(x - 3));
         [Fact] public void FactorialXOverFactorialXP1() => AssertSimplify(MathS.Factorial(x) / MathS.Factorial(x + 1), 1 / (1 + x));
-        [Fact] public void FactorialXOverFactorialX() => AssertSimplify(MathS.Factorial(x) / MathS.Factorial(x), 1);
+        [Fact] public void FactorialXOverFactorialX() => AssertSimplify(MathS.Factorial(x) / MathS.Factorial(x), "1 provided not x! = 0");
         [Fact] public void FactorialXOverFactorialXM1() => AssertSimplify(MathS.Factorial(0 + x) / MathS.Factorial(x - 1), x);
         [Fact] public void FactorialXOverFactorialXM2() => AssertSimplify(MathS.Factorial(x + 0) / MathS.Factorial(x - 2), x.Pow(2) - x);
         [Fact] public void FactorialXOverFactorialXM3() => AssertSimplifyIdentical(MathS.Factorial(x) / MathS.Factorial(x - 3));
         [Fact] public void FactorialXM1OverFactorialXP1() => AssertSimplify(MathS.Factorial(x - 1) / MathS.Factorial(x + 1), 1 / (x * (x + 1)));
         [Fact] public void FactorialXM1OverFactorialX() => AssertSimplify(MathS.Factorial(-1 + x) / MathS.Factorial(x), 1 / x);
-        [Fact] public void FactorialXM1OverFactorialXM1() => AssertSimplify(MathS.Factorial(x - 1) / MathS.Factorial(x - 1), 1);
+        [Fact] public void FactorialXM1OverFactorialXM1() => AssertSimplify(MathS.Factorial(x - 1) / MathS.Factorial(x - 1), "1 provided not (-1 + x)! = 0");
         [Fact] public void FactorialXM1OverFactorialXM2() => AssertSimplify(MathS.Factorial(-1 + x) / MathS.Factorial(-2 + x), x - 1);
         // Same two factors, now in ascending order: the polynomial factorer offers
         // (x - 1) * (x - 2) and the complexity metric cannot tell the two orders apart.

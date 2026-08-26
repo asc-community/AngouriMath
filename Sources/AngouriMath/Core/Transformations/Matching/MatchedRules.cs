@@ -2159,17 +2159,15 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<LessOrEqualf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
                 bound => bound["a"] >= Integer.Zero,
                 Soundness.Sound),
-            // The condition carried is the **argument's**, which is what the `switch` reads --
-            // `Factorialf({ DomainCondition: var condition })` is a property pattern on the child,
-            // not on the factorial. Whether that is the right condition is a separate question and
-            // https://github.com/asc-community/AngouriMath/issues/1081 asks it; agreeing with the
-            // arms is this rule's job.
+            // The factorial's own condition, not its argument's: `(-1)!` is a pole, so
+            // `(-1)! = 0` is NaN rather than False.
+            // https://github.com/asc-community/AngouriMath/issues/1081
             new MatchedRule(
                 "a-factorial-is-never-zero",
                 MatchPattern.Node<Equalsf>(
-                    MatchPattern.Node<Factorialf>(MatchPattern.Any("arg")),
+                    MatchPattern.Any<Factorialf>("f"),
                     MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
-                bound => Entity.Boolean.False.Provided(bound["arg"].DomainCondition),
+                bound => Entity.Boolean.False.Provided(((Factorialf)bound["f"]).DomainCondition),
                 Soundness.SoundUnderAssumptions),
             // The `DomainCondition` is about singularities and says nothing about where the ordering is
             // defined, so both are needed: `x < x` is False on the real line and NaN at x = i.
