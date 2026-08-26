@@ -63,6 +63,22 @@ namespace AngouriMath.Functions
             _ => x
         };
 
+        /// <summary>
+        /// Whether this is <c>1/n</c> or <c>-1/n</c> for a whole <c>n</c> other than 1 — the
+        /// coefficient the two "a rational factor is a division" rules key on.
+        /// </summary>
+        /// <remarks>
+        /// Written once and asked by both the <c>switch</c> and <c>MatchedRules.Common</c>, so the
+        /// two forms cannot come to read <c>Rational(var one, var den)</c> differently. An
+        /// <see cref="Integer"/> deconstructs with a denominator of 1 and is excluded by it.
+        /// </remarks>
+        internal static bool IsWholeReciprocal(Entity entity, int numerator)
+            => entity is Rational(var num, var den) && num == numerator && den != 1;
+
+        /// <summary>The denominator of a rational, for the rules <see cref="IsWholeReciprocal"/> admits.</summary>
+        internal static Integer DenominatorOf(Entity entity)
+            => entity is Rational(_, var den) ? den : Integer.One;
+
         [AddressableRules]
         internal static Entity CommonRules(Entity x) => x switch
         {
@@ -231,11 +247,11 @@ namespace AngouriMath.Functions
             Mulf(Signumf(var any1), Absf(var any1a)) when any1 == any1a => any1,
             Mulf(Absf(var any1a), Signumf(var any1)) when any1 == any1a => any1,
 
-            Mulf(Rational(var one, var den), var any1) when one == 1 && den != 1 => any1 / den,
-            Mulf(var any1, Rational(var one, var den)) when one == 1 && den != 1 => any1 / den,
+            Mulf(var ratio, var any1) when IsWholeReciprocal(ratio, 1) => any1 / DenominatorOf(ratio),
+            Mulf(var any1, var ratio) when IsWholeReciprocal(ratio, 1) => any1 / DenominatorOf(ratio),
 
-            Mulf(Rational(var mOne, var den), var any1) when mOne == -1 && den != 1 => -(any1 / den),
-            Mulf(var any1, Rational(var mOne, var den)) when mOne == -1 && den != 1 => -(any1 / den),
+            Mulf(var ratio, var any1) when IsWholeReciprocal(ratio, -1) => -(any1 / DenominatorOf(ratio)),
+            Mulf(var any1, var ratio) when IsWholeReciprocal(ratio, -1) => -(any1 / DenominatorOf(ratio)),
 
             // Parity. Each of these holds on the whole complex plane, and the poles of the odd
             // ones sit symmetrically about zero -- tan(-z) is undefined exactly where tan(z)
