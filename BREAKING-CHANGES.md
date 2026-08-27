@@ -23,6 +23,7 @@ read first.
 |---|---|---|---|
 | **Silent** | `"limit(t * b, t, 0)".ToEntity().FreeVariables`, and every limit | `{ t, b }` — the variable it approaches along counted as free | `{ b }` |
 | **Silent** | `MathS.Polynomials.Factor("4 * x2 - 4 * y2", "x")`, and every multivariate polynomial whose content is a bare constant | `(x + y) * (x - y)` — **not equal to what it factored** | `4 * (x + y) * (x - y)` |
+| | `"x3 - 1".ToEntity().Factorize()`, and every polynomial no rewrite rule has a rule for | `x ^ 3 - 1` — handed back whole | `(x - 1) * (x ^ 2 + x + 1)` |
 | | `Entity.DomainConditionIn(Domain)` | did not exist | the domain of definition for a **stated** reading, through the whole tree |
 | | `MathS.Polynomials.Factor("(y * x3 + 1) * (x4 - y3)", "x")`, and bivariate polynomials whose leading coefficient in the main variable is a polynomial | `null` — a refusal | `(x ^ 4 - y ^ 3) * (x ^ 3 * y + 1)` |
 | | `MathS.Polynomials.Factor("x7 - y7", "x")`, and bivariate polynomials whose substituted image over-factors | `null` — a refusal | `(x - y) * (x ^ 6 + x ^ 5 * y + … + y ^ 6)` |
@@ -392,6 +393,37 @@ constant means the product does not account for the polynomial, and then there i
 give. Everything here was already checked by exact division, but that check is on the individual
 *factors*; nothing compared the assembled product against the input
 ([#1092](https://github.com/asc-community/AngouriMath/issues/1092)).
+### `Factorize` uses the polynomial layer where no rule reaches
+
+`Entity.Factorize` was composed entirely out of `RewriteRules`, so it factored what someone had
+written a rule for and handed everything else back whole — while square-free decomposition,
+Zassenhaus over `Q`, Kronecker's substitution and Hensel lifting all sat in the tree unused by it.
+
+| | before | now |
+|---|---|---|
+| `"x3 - 1".Factorize()` | `x ^ 3 - 1` | `(x - 1) * (x ^ 2 + x + 1)` |
+| `"x4 - 5x2 + 4".Factorize()` | `x ^ 4 - 5 * x ^ 2 + 4` | `(x + 1) * (x + 2) * (x - 2) * (x - 1)` |
+| `"x6 - 1".Factorize()` | `x ^ 6 - 1` | `(x + 1) * (x - 1) * (x ^ 2 + x + 1) * (x ^ 2 - x + 1)` |
+| `"x7 - 1".Factorize()` | `x ^ 7 - 1` | `(x - 1) * (x ^ 6 + x ^ 5 + x ^ 4 + x ^ 3 + x ^ 2 + x + 1)` |
+| `"x2 + 2x + 1".Factorize()` | `x ^ 2 + 2 * x + 1` | `(x + 1) ^ 2` |
+| `"a2 - b2".Factorize()` | `(a - b) * (a + b)` | unchanged |
+| `"x4 - y4".Factorize()` | `(x - y) * (x + y) * (x ^ 2 + y ^ 2)` | unchanged |
+| `"x * y + x".Factorize()` | `x * (1 + y)` | unchanged |
+| `"sin(x) + 1".Factorize()` | `sin(x) + 1` | unchanged |
+
+**The layer speaks only where the rules said nothing.** An expression the rules already turned
+into a product keeps their answer exactly — the order two factors come out in is arbitrary and
+theirs is the one on record, so replacing it would change answers that were never the complaint.
+What moves is only what came back whole.
+
+**`Simplify` is unchanged**, and that took a second seam. It offers a factorisation as a
+*candidate* and its cost model decides; the metric prefers the expanded form, so a factored
+candidate wins only where the two are closest — and those are the places a factored answer is
+least wanted (`x ^ 3 / 3 + x ^ 2 / 2` became `(3 + 2 * x) * x ^ 2 / 6`, an antiderivative in a
+form nobody writes). `Transformation.RuleBasedFactorizationAtLevel` is what that candidate site
+uses now. Offering the layer to that search is
+[#746](https://github.com/asc-community/AngouriMath/issues/746) tier 2's pluggable cost model
+rather than this ([#1018](https://github.com/asc-community/AngouriMath/issues/1018)).
 
 ### A polynomial in two variables is factored by lifting rather than by substituting
 

@@ -302,7 +302,17 @@ namespace AngouriMath.Functions
                 var expandMark = recording?.Mark() ?? 0;
                 AddHistory(Noted(recording, res, res.Expand(), nameof(Entity.Expand), expandMark).Simplify(-level));
                 var factorizeMark = recording?.Mark() ?? 0;
-                AddHistory(Noted(recording, res, res.Factorize(), nameof(Entity.Factorize), factorizeMark).Simplify(-level));
+                // The **rule-based** factorisation, not `Entity.Factorize` -- which now also asks
+                // the polynomial layer, and whose answers must not become candidates here. The
+                // cost model prefers the expanded form (`x ^ 6 - 1` rates 12 expanded against 58
+                // factored), so a factored candidate wins only where the metric is closest, and
+                // those are exactly the places a factored answer is least wanted: `x^3/3 + x^2/2`
+                // becomes `(3 + 2 * x) * x ^ 2 / 6`, an antiderivative in a form no one writes.
+                // Offering the layer here is #746 tier 2's pluggable cost model, not this.
+                // https://github.com/asc-community/AngouriMath/issues/1018
+                AddHistory(Noted(recording, res,
+                    Transformation.RuleBasedFactorizationAtLevel(2).ApplyOrKeep(res),
+                    nameof(Entity.Factorize), factorizeMark).Simplify(-level));
 
                 // A multiple angle written out is worth having only where the pieces then
                 // cancel, so it has to be simplified in full before the metric can be
