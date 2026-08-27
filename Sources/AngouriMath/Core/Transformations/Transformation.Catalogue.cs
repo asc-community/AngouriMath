@@ -70,11 +70,82 @@ namespace AngouriMath.Core.Transformations
         /// </remarks>
         public static Transformation FactorizationAtLevel(int level)
             => LevelledCache.Factorization.For(level, static l =>
+                RuleBasedFactorizationAtLevel(l)
+                    // And then the polynomial layer, which factors what no rule set has a rule
+                    // for. Last, so that the rules keep every answer they already gave and this
+                    // only ever adds one. See PolynomialFactorization.
+                    .Then(PolynomialFactorization));
+
+        /// <summary>
+        /// The rule-based half of <see cref="FactorizationAtLevel"/>, without the polynomial
+        /// layer.
+        /// </summary>
+        /// <remarks>
+        /// Separate because <c>Simplify</c> offers a factorisation as a <b>candidate</b> and its
+        /// cost model decides. The metric prefers the expanded form — <c>x ^ 6 - 1</c> rates 12
+        /// expanded against 58 factored — so a factored candidate wins only where the two are
+        /// closest, and those turn out to be the places a factored answer is least wanted:
+        /// <c>x ^ 3 / 3 + x ^ 2 / 2</c> becomes <c>(3 + 2 * x) * x ^ 2 / 6</c>, an antiderivative
+        /// in a form nobody writes. Offering the layer to that search is
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 2's
+        /// pluggable cost model rather than
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1018">#1018</a>.
+        /// </remarks>
+        public static Transformation RuleBasedFactorizationAtLevel(int level)
+            => LevelledCache.RuleBasedFactorization.For(level, static l =>
                 Rewriting(RewriteRules.PerfectSquare)
                     .Then(Rewriting(RewriteRules.Factorization))
                     .Then(InnerSimplification)
                     // Entity.Factorize has always run at least one pass, whatever it was asked for.
                     .Repeat(Math.Max(l, 1)));
+
+        /// <summary>
+        /// Factors a polynomial by the polynomial layer — square-free decomposition, Zassenhaus
+        /// over <c>Q</c>, Kronecker's substitution and Hensel lifting — rather than by a rule.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// A rule set factors what someone wrote a rule for. <c>x ^ 2 - 1</c> has one and
+        /// <c>x ^ 3 - 1</c> does not, which is why <see cref="Entity.Factorize(int)"/> — the
+        /// operation whose entire job is factorisation — was worse at it than the machinery that
+        /// exists for it. <a href="https://github.com/asc-community/AngouriMath/issues/1018">#1018</a>
+        /// </para>
+        /// <para>
+        /// <b>This is not the cost-model question.</b> The reason the polynomial layer is not
+        /// wired into <c>Simplify</c> is that <c>SimplifiedRate</c> prefers the expanded
+        /// form — <c>x ^ 6 - 1</c> rates 12 expanded against 58 factored — so a factored candidate
+        /// could never win a search. There is no search here: <c>Factorize</c> is asked for the
+        /// factored form and returns it.
+        /// </para>
+        /// <para>
+        /// <b>Which variable.</b> The layer factors with respect to one, and an expression has
+        /// several. Each of its variables is tried in turn and the first that yields a genuine
+        /// product wins, which is deterministic because <see cref="Entity.Vars"/> is. Trying them
+        /// all rather than guessing a main one is what makes <c>x ^ 4 - y ^ 4</c> come out whole
+        /// however the caller wrote it.
+        /// </para>
+        /// <para>
+        /// <b>What it declines.</b> Anything that is not a polynomial, anything the layer refuses,
+        /// and anything whose answer is not a product — a refusal leaves the expression exactly as
+        /// the rules left it, so nothing that factored before can stop factoring.
+        /// </para>
+        /// </remarks>
+        /// <remarks>
+        /// Held in a nested class rather than in a static field of this one. Static field
+        /// initialisers run in declaration order, and <see cref="Factorization"/> — declared
+        /// above — is eager, so a field here would still be <see langword="null"/> when its
+        /// pipeline is built. That surfaces as <c>ArgumentNullException(nameof(next))</c> from a
+        /// combinator rather than as anything naming the real cause, and this file has had that
+        /// failure before. A nested type is initialised on first touch, whatever order this
+        /// one's members are written in.
+        /// </remarks>
+        public static Transformation PolynomialFactorization => PolynomialFactorizationHolder.Instance;
+
+        private static class PolynomialFactorizationHolder
+        {
+            [ConstantField]
+            internal static readonly Transformation Instance = new PolynomialFactorizationTransformation();
+        }
 
         /// <summary>
         /// Puts commutative chains into a canonical order, so that expressions which differ
@@ -261,6 +332,9 @@ namespace AngouriMath.Core.Transformations
             [ConcurrentField]
             internal static readonly LevelledCache Factorization = new();
 
+            [ConstantField]
+            internal static readonly LevelledCache RuleBasedFactorization = new();
+
             private readonly Transformation?[] cached = new Transformation?[Highest - Lowest + 1];
 
             internal Transformation For(int level, Func<int, Transformation> make)
@@ -279,6 +353,35 @@ namespace AngouriMath.Core.Transformations
 
             protected override Entity? ApplyCore(Entity input)
                 => RationalFunction.TryCanonicalize(input, out var canonical) ? canonical : null;
+        }
+
+        private sealed class PolynomialFactorizationTransformation : Transformation
+        {
+            public override string Name => "polynomial-factorization";
+
+            public override TransformationRelation Relation => TransformationRelation.Equivalence;
+
+            public override Soundness Soundness => Soundness.Sound;
+
+            // Total rather than declining, because a step that returns null makes the whole
+            // chain decline -- `Then` has no notion of an optional part, and `Factorization` is
+            // a chain. `InnerSimplification` is total for the same reason. So "nothing to
+            // factor" is the input handed back, not a refusal.
+            protected override Entity? ApplyCore(Entity input)
+            {
+                // Only where the rules found nothing. A product means they already factored it,
+                // and their answer is kept rather than replaced -- the two orders the factors
+                // can come out in are equally correct and the rules' one is the one on record,
+                // so replacing it would change answers that were never the complaint. What #1018
+                // is about is the expressions that come back whole.
+                if (input is Entity.Mulf or Entity.Powf)
+                    return input;
+                foreach (var variable in input.Vars)
+                    if (MathS.Polynomials.Factor(input, variable) is { } factored
+                        && factored is Entity.Mulf or Entity.Powf)
+                        return factored;
+                return input;
+            }
         }
 
         private sealed class InnerSimplificationTransformation : Transformation

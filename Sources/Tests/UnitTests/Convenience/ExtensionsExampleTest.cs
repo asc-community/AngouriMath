@@ -155,7 +155,9 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void FactorizeString()
         {
             Printed("(a - b) * (a + b)", "a2 - b2".Factorize());
-            Printed("x ^ 2 + 2 * x + 1", "x2 + 2x + 1".Factorize());
+            // Was `x ^ 2 + 2 * x + 1` -- Factorize had no rule for it and handed it back whole.
+            // The polynomial layer does. https://github.com/asc-community/AngouriMath/issues/1018
+            Printed("(x + 1) ^ 2", "x2 + 2x + 1".Factorize());
         }
 
         [Fact] public void SubstituteOne()
