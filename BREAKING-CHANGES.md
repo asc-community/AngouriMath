@@ -21,6 +21,7 @@ read first.
 
 | Silent? | What | Was | Is |
 |---|---|---|---|
+| **Silent** | `"limit(t * b, t, 0)".ToEntity().FreeVariables`, and every limit | `{ t, b }` — the variable it approaches along counted as free | `{ b }` |
 | | `Entity.DomainConditionIn(Domain)` | did not exist | the domain of definition for a **stated** reading, through the whole tree |
 | | `MathS.Polynomials.Factor("(y * x3 + 1) * (x4 - y3)", "x")`, and bivariate polynomials whose leading coefficient in the main variable is a polynomial | `null` — a refusal | `(x ^ 4 - y ^ 3) * (x ^ 3 * y + 1)` |
 | | `MathS.Polynomials.Factor("x7 - y7", "x")`, and bivariate polynomials whose substituted image over-factors | `null` — a refusal | `(x - y) * (x ^ 6 + x ^ 5 * y + … + y ^ 6)` |
@@ -315,6 +316,29 @@ the same precedences this grammar uses — so those needed the same brackets —
 bracketing for. The change only ever adds `\left(`/`\right)` groups, which CSharpMath already
 parses, so nothing downstream needs a matching change
 ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
+
+### A limit binds the variable it approaches along
+
+`FreeVariables` learned about a summation, a product and a definite integral in
+[#1045](https://github.com/asc-community/AngouriMath/pull/1045), and about `limit` not at all —
+that commit names the indefinite integral and the derivative as deliberate exclusions and does
+not mention it.
+
+| | before | now |
+|---|---|---|
+| `"limit(t * b, t, 0)".ToEntity().FreeVariables` | `{ t, b }` | `{ b }` |
+| `"limit(t, t, b)".ToEntity().FreeVariables` | `{ t, b }` | `{ b }` |
+| `"limitleft(t * b, t, 0)".ToEntity().FreeVariables` | `{ t, b }` | `{ b }` |
+| `"limit(t, t, 0)".ToEntity().FreeVariables` | `{ t }` | `{ }` |
+
+The reason the indefinite integral and the derivative do not bind is exactly what makes a limit
+bind: an antiderivative of `t * b` over `t` is `b * t ^ 2 / 2 + C` and `d/dt` denotes a function
+of `t`, both still functions of the variable — while **a limit never is**. `lim(t, t, 0)` is `0`,
+and no limit's value depends on the name it approaches along. The destination is where the
+dependence goes, so it is bound over too: `lim(t, t, b)` is a function of `b` alone.
+
+`Vars` and `VarsAndConsts` are untouched, as they were in #1045 — they mean every name occurring
+([#989](https://github.com/asc-community/AngouriMath/issues/989)).
 
 ### A leading coefficient that is a polynomial no longer stops the lift
 

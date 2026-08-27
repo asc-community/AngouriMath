@@ -632,6 +632,15 @@ namespace AngouriMath
                         // on purpose, and a sweep that "fixes" that makes them wrong.
                         Integralf { Range: { } limits } integral
                             => BoundBy(integral.Var, integral.Expression, limits.from, limits.to),
+                        // A limit binds its variable always, and this is the one calculus
+                        // operator of the three for which that is unconditional. The reason the
+                        // two above are conditional does not apply to it: an antiderivative and a
+                        // derivative are still functions of the variable, and a limit never is.
+                        // lim(k, k, 0) is 0, and no limit's value depends on the name it
+                        // approaches along -- the destination is where the dependence goes.
+                        // https://github.com/asc-community/AngouriMath/issues/989
+                        Limitf limit
+                            => BoundBy(limit.Var, limit.Expression, limit.Destination),
                         _ => new HashSet<Variable>(@this.DirectChildren.SelectMany(c => c.FreeVariables))
                     }
                 ,

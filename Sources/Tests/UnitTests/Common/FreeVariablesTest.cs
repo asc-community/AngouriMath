@@ -146,6 +146,26 @@ namespace AngouriMath.Tests.Common
             => Assert.Equal(SeqVar("b"), exprRaw.ToEntity().FreeVariables);
 
         /// <summary>
+        /// A limit binds its variable <b>always</b>, where the integral above binds only when it
+        /// has limits to bind between — and the reason the two below do not bind is what makes
+        /// the difference. An antiderivative and a derivative are still functions of the
+        /// variable; a limit never is. <c>lim(t, t, 0)</c> is <c>0</c>.
+        /// </summary>
+        /// <remarks>
+        /// The destination is where a limit's dependence goes, so it is bound over as well:
+        /// <c>lim(t, t, b)</c> is a function of <c>b</c> and of nothing else. A one-sided limit
+        /// binds the same way — the side is not a variable.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/989">#989</a>
+        /// </remarks>
+        [Theory]
+        [InlineData("limit(t * b, t, 0)")]
+        [InlineData("limit(t, t, b)")]
+        [InlineData("limitleft(t * b, t, 0)")]
+        [InlineData("limitright(t * b, t, 0)")]
+        public void ALimitBindsItsVariable(string exprRaw)
+            => Assert.Equal(SeqVar("b"), exprRaw.ToEntity().FreeVariables);
+
+        /// <summary>
         /// And the two that look like the same shape and are not. The antiderivative of
         /// <c>t * b</c> over <c>t</c> is <c>b * t ^ 2 / 2 + C</c>, still a function of <c>t</c>;
         /// <c>d/dt</c> denotes a function of <c>t</c> as well. Neither binds, and a sweep that
