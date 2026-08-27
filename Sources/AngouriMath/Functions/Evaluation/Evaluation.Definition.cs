@@ -72,6 +72,50 @@ namespace AngouriMath
         private protected abstract Entity IntrinsicCondition { get; }
 
         /// <summary>
+        /// The same as <see cref="DomainCondition"/>, but read in <paramref name="reading"/>
+        /// rather than in whatever codomain each node happens to carry.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>The reading is a parameter of the question, not a property of the expression</b> —
+        /// which is what <c>continuous_domain(f, x, S.Reals)</c> and
+        /// <c>FunctionDomain[f, x, dom]</c> are in the two systems this was measured against, and
+        /// what <a href="https://github.com/asc-community/AngouriMath/issues/721">#721</a> asks
+        /// for. <c>arcsin</c> is defined on <c>|x| &lt;= 1</c> over the reals and everywhere over
+        /// the complex plane; neither is *the* domain of <c>arcsin</c>, and an expression that
+        /// answers only one of them cannot be asked the other.
+        /// </para>
+        /// <para>
+        /// The per-node <see cref="Codomain"/> already selects between the two, and every node
+        /// that has two answers already writes them both. What it could not do is answer for a
+        /// <i>tree</i>: <c>WithCodomain</c> replaces the root's reading and leaves every child on
+        /// its own, so <c>(arcsin(x) + arcsin(y)).WithCodomain(Real).DomainCondition</c> is
+        /// <c>True</c> — the sum has no condition of its own and the two arcsines were never
+        /// asked. Asking for the real reading and being given the complex one underneath is
+        /// exactly the drift that issue is about.
+        /// </para>
+        /// <para>
+        /// The reading is applied where a node's codomain is <b>wider</b> than it and nowhere
+        /// else, so a variable declared over <c>ZZ</c> is not widened to <c>RR</c> by being asked
+        /// a question about the reals.
+        /// </para>
+        /// </remarks>
+        public Entity DomainConditionIn(Domain reading)
+        {
+            var read = Codomain > reading ? WithCodomain(reading) : this;
+            var condition = read.IntrinsicCondition;
+            foreach (var child in DirectChildren)
+                condition = (condition, child.DomainConditionIn(reading)) switch
+                {
+                    (Boolean(true), Boolean(true)) => Boolean.True,
+                    (var left, Boolean(true)) => left,
+                    (Boolean(true), var right) => right,
+                    (var left, var right) => left & right,
+                };
+            return condition.InnerSimplified;
+        }
+
+        /// <summary>
         /// This should NOT be called inside itself
         /// </summary>
         protected abstract Entity InnerSimplify(bool isExact);

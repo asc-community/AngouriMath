@@ -21,6 +21,7 @@ read first.
 
 | Silent? | What | Was | Is |
 |---|---|---|---|
+| | `Entity.DomainConditionIn(Domain)` | did not exist | the domain of definition for a **stated** reading, through the whole tree |
 | | `MathS.Polynomials.Factor("(y * x3 + 1) * (x4 - y3)", "x")`, and bivariate polynomials whose leading coefficient in the main variable is a polynomial | `null` — a refusal | `(x ^ 4 - y ^ 3) * (x ^ 3 * y + 1)` |
 | | `MathS.Polynomials.Factor("x7 - y7", "x")`, and bivariate polynomials whose substituted image over-factors | `null` — a refusal | `(x - y) * (x ^ 6 + x ^ 5 * y + … + y ^ 6)` |
 | | `MathS.Polynomials.Factor("x2 + y2 + z2 + w2 + 1", "x")`, and polynomials in enough variables generally | `null` — a refusal | the polynomial itself, meaning it does not factor |

@@ -2055,6 +2055,7 @@ AngouriMath.Entity.Differentiate(AngouriMath.Entity+Variable) : AngouriMath.Enti
 AngouriMath.Entity.Differentiate(AngouriMath.Entity+Variable, System.Int32) : AngouriMath.Entity
 AngouriMath.Entity.DirectChildren { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Entity>
 AngouriMath.Entity.DomainCondition { } : AngouriMath.Entity
+AngouriMath.Entity.DomainConditionIn(AngouriMath.Core.Domain) : AngouriMath.Entity
 AngouriMath.Entity.EqualTo(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.Entity.EqualityContract { } : System.Type
 AngouriMath.Entity.Equalizes(AngouriMath.Entity) : AngouriMath.Entity
