@@ -307,6 +307,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             MultithreadingFunctional.ExitIfCancelled();
 
+            // Two powers of numeric bases, by logarithms -- before the multiplicative solver,
+            // which reaches the same equations by a substitution that goes through a decimal.
+            // https://github.com/asc-community/AngouriMath/issues/1007
+            if (ExponentialSolver.SolveTwoPowersOfNumericBases(expr, x) is { } expTwo
+                && expTwo is FiniteSet elsExpTwo && elsExpTwo.Any())
+                return (Set)elsExpTwo.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
+            // // //
+
             // if no trigonometric rules helped, try exponential-multiplicative solver
             if (ExponentialSolver.SolveMultiplicative(expr, x) is { } expMul && expMul is FiniteSet elsExpMul)
                 return (Set)elsExpMul.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
