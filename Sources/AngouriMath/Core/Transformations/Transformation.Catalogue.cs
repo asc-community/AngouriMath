@@ -369,18 +369,47 @@ namespace AngouriMath.Core.Transformations
             // factor" is the input handed back, not a refusal.
             protected override Entity? ApplyCore(Entity input)
             {
-                // Only where the rules found nothing. A product means they already factored it,
-                // and their answer is kept rather than replaced -- the two orders the factors
-                // can come out in are equally correct and the rules' one is the one on record,
-                // so replacing it would change answers that were never the complaint. What #1018
-                // is about is the expressions that come back whole.
+                // A product is taken apart and each factor asked separately, rather than being
+                // handed over whole. Replacing the rules' product would change answers that were
+                // never the complaint -- the order two factors come out in is arbitrary and
+                // theirs is the one on record -- but *declining* it leaves a real gap: the rules
+                // take a numeric content out and hand back `2 * (x ^ 3 - 1)`, and the remainder
+                // is exactly the shape #1018 is about. Asking each factor keeps every factor the
+                // rules found and splits the ones they could not.
+                if (input is Entity.Mulf)
+                {
+                    Entity? rebuilt = null;
+                    var moved = false;
+                    foreach (var factor in Entity.Mulf.LinearChildren(input))
+                    {
+                        var piece = Factored(factor) ?? factor;
+                        moved |= !ReferenceEquals(piece, factor);
+                        rebuilt = rebuilt is null ? piece : rebuilt * piece;
+                    }
+                    return moved && rebuilt is not null ? rebuilt : input;
+                }
+                return Factored(input) ?? input;
+            }
+
+            /// <summary>
+            /// <paramref name="input"/> factored by the polynomial layer, or <see langword="null"/>
+            /// where it does not factor.
+            /// </summary>
+            /// <remarks>
+            /// Each of its variables is tried in turn and the first that yields a genuine product
+            /// wins, which is deterministic because <see cref="Entity.Vars"/> is. Trying them all
+            /// rather than guessing a main one is what makes <c>x ^ 4 - y ^ 4</c> come out whole
+            /// however the caller wrote it.
+            /// </remarks>
+            private static Entity? Factored(Entity input)
+            {
                 if (input is Entity.Mulf or Entity.Powf)
-                    return input;
+                    return null;
                 foreach (var variable in input.Vars)
                     if (MathS.Polynomials.Factor(input, variable) is { } factored
                         && factored is Entity.Mulf or Entity.Powf)
                         return factored;
-                return input;
+                return null;
             }
         }
 

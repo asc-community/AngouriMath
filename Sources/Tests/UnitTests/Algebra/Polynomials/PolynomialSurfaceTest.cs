@@ -425,6 +425,31 @@ namespace AngouriMath.Tests.Algebra.Polynomials
             Assert.Equal(Integer.Zero, (factored! - original).Simplify());
         }
 
+        /// <summary>
+        /// <c>Factorize</c> reaches inside a product the rules already made, so a numeric content
+        /// taken out does not strand the remainder unfactored.
+        /// </summary>
+        /// <remarks>
+        /// The rules take the content out and hand back <c>2 * (x ^ 3 - 1)</c>; the polynomial
+        /// layer is what splits the remainder. Declining a product outright — which is how this
+        /// first shipped — keeps the rules' answers but leaves exactly the shape
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1018">#1018</a> is about
+        /// sitting inside one. Each factor is asked separately instead, so every factor the rules
+        /// found survives and the ones they could not split do.
+        /// </remarks>
+        [Theory]
+        [InlineData("2 * x^3 - 2", 3)]
+        [InlineData("3 * x^6 - 3", 5)]
+        [InlineData("5 * x^7 - 5", 3)]
+        [InlineData("y * (x^3 - 1)", 3)]
+        public void FactorizeReachesInsideAProductTheRulesMade(string input, int pieces)
+        {
+            var factored = input.ToEntity().Factorize();
+            Assert.Equal(pieces, Mulf.LinearChildren(factored).Count());
+            // And it is still the polynomial it factored, which is the property #1092 was about.
+            Assert.Equal(Integer.Zero, (factored - input.ToEntity()).Simplify());
+        }
+
         [Theory]
         [InlineData("(x + y + z + w) * (x - y)")]
         [InlineData("(x + y) * (x + z) * (x + w) * (x + v)")]
