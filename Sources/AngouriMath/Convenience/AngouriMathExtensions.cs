@@ -100,8 +100,19 @@ namespace AngouriMath.Extensions
         /// 10
         /// </code>
         /// </example>
+        /// <remarks>
+        /// The empty sum is <c>0</c>, which is what makes
+        /// <c>xs.Concat(ys).SumAll() == xs.SumAll() + ys.SumAll()</c> hold for every pair
+        /// including the empty one. It used to reach <c>MultiHangBinary</c>'s genuine
+        /// precondition and throw an <c>AngouriBugException</c> — whose message asks the caller
+        /// to report a bug against this repository, for a list their own <c>Where</c> happened
+        /// to filter to nothing.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1028">#1028</a>
+        /// </remarks>
         public static Entity SumAll(this IEnumerable<Entity> terms)
-            => TreeAnalyzer.MultiHangBinary(terms.ToArray(), (a, b) => a + b);
+            => terms.ToArray() is { Length: > 0 } array
+                ? TreeAnalyzer.MultiHangBinary(array, (a, b) => a + b)
+                : Entity.Number.Integer.Zero;
 
         /// <summary>
         /// Multiplies all the given terms and returns the resulting expression
@@ -119,8 +130,14 @@ namespace AngouriMath.Extensions
         /// 120
         /// </code>
         /// </example>
+        /// <remarks>
+        /// The empty product is <c>1</c>, for the reason the empty sum is <c>0</c> — see
+        /// <see cref="SumAll"/>.
+        /// </remarks>
         public static Entity MultiplyAll(this IEnumerable<Entity> terms)
-            => TreeAnalyzer.MultiHangBinary(terms.ToArray(), (a, b) => a * b);
+            => terms.ToArray() is { Length: > 0 } array
+                ? TreeAnalyzer.MultiHangBinary(array, (a, b) => a * b)
+                : Entity.Number.Integer.One;
 
         /// <summary>
         /// Converts an <see cref="IEnumerable"/> into a piecewise function

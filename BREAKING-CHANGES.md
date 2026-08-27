@@ -24,6 +24,9 @@ read first.
 | **Silent** | `"limit(t * b, t, 0)".ToEntity().FreeVariables`, and every limit | `{ t, b }` — the variable it approaches along counted as free | `{ b }` |
 | **Silent** | `MathS.Polynomials.Factor("4 * x2 - 4 * y2", "x")`, and every multivariate polynomial whose content is a bare constant | `(x + y) * (x - y)` — **not equal to what it factored** | `4 * (x + y) * (x - y)` |
 | | `"2 * x3 - 2".ToEntity().Factorize()`, and every polynomial whose content the rules take out | `2 * (x ^ 3 - 1)` — the remainder left whole | `2 * (x - 1) * (x ^ 2 + x + 1)` |
+| | `new Entity[0].SumAll()`, and `Sumf.Sum` on an empty list | `AngouriBugException: At least 1 child required` | `0` |
+| | `new Entity[0].MultiplyAll()`, and `Mulf.Multiply` on an empty list | `AngouriBugException` | `1` |
+| | `MathS.Vector()` and `new Entity[0].ToVector()` | `IndexOutOfRangeException` — outside the documented hierarchy | `InvalidMatrixOperationException` |
 | | `"x3 - 1".ToEntity().Factorize()`, and every polynomial no rewrite rule has a rule for | `x ^ 3 - 1` — handed back whole | `(x - 1) * (x ^ 2 + x + 1)` |
 | | `Entity.DomainConditionIn(Domain)` | did not exist | the domain of definition for a **stated** reading, through the whole tree |
 | | `MathS.Polynomials.Factor("(y * x3 + 1) * (x4 - y3)", "x")`, and bivariate polynomials whose leading coefficient in the main variable is a polynomial | `null` — a refusal | `(x ^ 4 - y ^ 3) * (x ^ 3 * y + 1)` |
@@ -415,6 +418,30 @@ every factor the rules found survives and only the ones they could not split are
 asking the property [#1092](https://github.com/asc-community/AngouriMath/issues/1092) is about —
 that the answer multiplies back to its input — of a row that satisfied it and was still less
 factored than it should be.
+### A fold over an empty sequence answers instead of throwing
+
+A fold over a monoid has an identity, so the empty sum is `0` and the empty product is `1` — which
+is what makes `xs.Concat(ys).SumAll() == xs.SumAll() + ys.SumAll()` hold for every pair, the empty
+one included. These threw instead, and threw the wrong *kind* of exception: `AngouriBugException`
+ends its message asking the caller to report a bug against this repository, for a list their own
+`Where` happened to filter to nothing.
+
+| | before | now |
+|---|---|---|
+| `new Entity[0].SumAll()` | `AngouriBugException` | `0` |
+| `new Entity[0].MultiplyAll()` | `AngouriBugException` | `1` |
+| `Sumf.Sum(new Entity[0])` | `AngouriBugException` | `0` |
+| `Mulf.Multiply(new Entity[0])` | `AngouriBugException` | `1` |
+| `MathS.Vector()` | `IndexOutOfRangeException` | `InvalidMatrixOperationException` |
+| `new Entity[0].ToVector()` | `IndexOutOfRangeException` | `InvalidMatrixOperationException` |
+
+`IndexOutOfRangeException` is not under `AngouriMathBaseException`, so a caller catching the
+hierarchy `Docs/Usage/Exceptions.md` documents did not catch it at all.
+
+`Sumf.Sum` and `Mulf.Multiply` are not named in the issue. The defect is *passing an unchecked
+caller collection into `MultiHangBinary`*, whose `>= 1` precondition is genuine, and those two are
+public and do exactly that. `MultiHangBinary` itself is unchanged
+([#1028](https://github.com/asc-community/AngouriMath/issues/1028)).
 
 ### `Factorize` uses the polynomial layer where no rule reaches
 
