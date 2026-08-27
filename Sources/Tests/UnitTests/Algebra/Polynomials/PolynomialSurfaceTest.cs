@@ -393,6 +393,38 @@ namespace AngouriMath.Tests.Algebra.Polynomials
         public void PastTheMonicisationsGrowthBoundItRefuses(string input)
             => Assert.Null(MathS.Polynomials.Factor(input.ToEntity(), "x"));
 
+        /// <summary>
+        /// The property a factorisation has: multiplying the factors gives back what was
+        /// factored. Nothing checked it, and a constant content was being dropped — `4x² - 4y²`
+        /// came back as `(x + y)(x - y)`.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1092">#1092</a>
+        /// </summary>
+        /// <remarks>
+        /// Everything else in this layer is checked by exact division, but that check is on the
+        /// individual <i>factors</i>; nothing compared the **assembled product** against the
+        /// input, so a constant lost during assembly was lost silently. This asserts on the
+        /// value rather than on the spelling, which is the only way to catch that.
+        /// </remarks>
+        [Theory]
+        [InlineData("4 * x^2 - 4 * y^2")]
+        [InlineData("2 * x^2 - 2 * y^2")]
+        [InlineData("6 * x^4 - 6 * y^4")]
+        [InlineData("2 * x^7 - 2 * y^7")]
+        [InlineData("3 * x * y + 3 * y")]
+        [InlineData("5 * x^2 * y - 5 * y")]
+        [InlineData("x^2 - y^2")]
+        [InlineData("x^12 - y^12")]
+        [InlineData("x^2 + y^2 + 1")]
+        [InlineData("-2 * x^2 + 2 * y^2")]
+        [InlineData("x^2/2 - y^2/2")]
+        public void AFactorisationMultipliesBackToWhatItFactored(string input)
+        {
+            var original = input.ToEntity();
+            var factored = MathS.Polynomials.Factor(original, "x");
+            Assert.NotNull(factored);
+            Assert.Equal(Integer.Zero, (factored! - original).Simplify());
+        }
+
         [Theory]
         [InlineData("(x + y + z + w) * (x - y)")]
         [InlineData("(x + y) * (x + z) * (x + w) * (x + v)")]
