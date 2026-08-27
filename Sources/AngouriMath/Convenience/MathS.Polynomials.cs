@@ -205,6 +205,26 @@ namespace AngouriMath
                     return null;
                 if (KroneckerFactorization.Factor(poly, index[variable]) is not { } factors)
                     return null;
+
+                // What the factors multiply to, so that whatever they do not account for can be
+                // put back. `KroneckerFactorization.Factor` returns factors "each of positive
+                // degree in main" -- a constant content is deliberately not among them, and it
+                // is this method's job to reinstate it. It was not, so `4 * x^2 - 4 * y^2` came
+                // back as `(x + y) * (x - y)`: a factorisation that is not equal to what it
+                // factored. https://github.com/asc-community/AngouriMath/issues/1092
+                //
+                // Recovered by exact division rather than by tracking the content separately,
+                // which is what the rest of this layer does with a claim it could get wrong: if
+                // the quotient is not there, or is not a constant, the assembled product does
+                // not account for the polynomial and there is no answer to give.
+                var assembled = MultivariatePolynomial.One(poly.VariableCount);
+                foreach (var factor in factors)
+                    if (assembled.Multiply(factor) is not { } grown)
+                        return null;
+                    else
+                        assembled = grown;
+                if (poly.DivideExact(assembled) is not { IsConstant: true } leftOver)
+                    return null;
                 // One factor is an answer and not a refusal: the substitution has established
                 // that the polynomial does not factor, and a caller that took the content out of
                 // it -- which is who calls this -- still has a factorisation to assemble. The
@@ -233,7 +253,13 @@ namespace AngouriMath
                     var piece = multiplicity > 1 ? pieces[i].Pow(multiplicity) : pieces[i];
                     product = product is null ? piece : product * piece;
                 }
-                return product;
+                if (product is null)
+                    return null;
+                // The content goes in front, where the one-variable path and
+                // FactorAfterTakingOutTheContent both put it, so the same polynomial reads the
+                // same way whichever path answered it.
+                var content = leftOver.ToEntity(variables);
+                return content == Integer.One ? product : content * product;
             }
 
             /// <summary>

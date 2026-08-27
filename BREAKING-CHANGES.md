@@ -22,6 +22,7 @@ read first.
 | Silent? | What | Was | Is |
 |---|---|---|---|
 | **Silent** | `"limit(t * b, t, 0)".ToEntity().FreeVariables`, and every limit | `{ t, b }` — the variable it approaches along counted as free | `{ b }` |
+| **Silent** | `MathS.Polynomials.Factor("4 * x2 - 4 * y2", "x")`, and every multivariate polynomial whose content is a bare constant | `(x + y) * (x - y)` — **not equal to what it factored** | `4 * (x + y) * (x - y)` |
 | | `Entity.DomainConditionIn(Domain)` | did not exist | the domain of definition for a **stated** reading, through the whole tree |
 | | `MathS.Polynomials.Factor("(y * x3 + 1) * (x4 - y3)", "x")`, and bivariate polynomials whose leading coefficient in the main variable is a polynomial | `null` — a refusal | `(x ^ 4 - y ^ 3) * (x ^ 3 * y + 1)` |
 | | `MathS.Polynomials.Factor("x7 - y7", "x")`, and bivariate polynomials whose substituted image over-factors | `null` — a refusal | `(x - y) * (x ^ 6 + x ^ 5 * y + … + y ^ 6)` |
@@ -364,6 +365,33 @@ carries `L^(n-1-i)`, so its degree in the auxiliary variable exceeds the origina
 `(n-1)·deg L`. Measured: a growth of 6 costs 376 ms and a growth of 7 costs 1 ms, while a growth
 of 14 costs **63 seconds** — so growth past 12 is refused. A refusal is a legitimate answer and a
 sixty-three second one is not, which is the same judgement the recombination's own cap makes.
+
+### A factorisation multiplies back to what it factored
+
+`MathS.Polynomials.Factor` dropped a constant content when the polynomial had more than one
+variable, so the product it returned was **not equal to the polynomial it factored**.
+
+| | before | now |
+|---|---|---|
+| `Factor("4 * x2 - 4 * y2", "x")` | `(x + y) * (x - y)` | `4 * (x + y) * (x - y)` |
+| `Factor("2 * x2 - 2 * y2", "x")` | `(x + y) * (x - y)` | `2 * (x + y) * (x - y)` |
+| `Factor("6 * x4 - 6 * y4", "x")` | three factors, no `6` | `6 * (x + y) * (x ^ 2 + y ^ 2) * (x - y)` |
+| `Factor("3 * x * y + 3 * y", "x")` | `y * 3 * (x + 1)` | unchanged — the content is not a constant |
+| `Factor("2 * x2 - 2", "x")` | `2 * (x + 1) * (x - 1)` | unchanged — univariate |
+
+`KroneckerFactorization.Factor` documents its result as *"each of positive degree in the main
+variable"*, so a constant content is deliberately not among the factors it returns and the caller
+must reinstate it. `MathS.Polynomials.Kronecker` assembled the factors into a product and never
+did. Only "multivariate **and** the content is a pure number" landed in the gap; a content with a
+variable in it goes down a different path that reinstates it, and a univariate polynomial never
+reaches the substitution.
+
+The content is recovered by dividing the polynomial by the assembled product, which is what the
+rest of this layer does with a claim it could get wrong — a quotient that is missing or is not a
+constant means the product does not account for the polynomial, and then there is no answer to
+give. Everything here was already checked by exact division, but that check is on the individual
+*factors*; nothing compared the assembled product against the input
+([#1092](https://github.com/asc-community/AngouriMath/issues/1092)).
 
 ### A polynomial in two variables is factored by lifting rather than by substituting
 
