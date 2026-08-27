@@ -172,24 +172,50 @@ namespace AngouriMath.Tests.Common
         }
 
         /// <summary>
-        /// <see cref="Domain.Any"/> is the one codomain that cannot be printed, and this pins it
-        /// rather than leaving it a hole nobody measured.
+        /// <see cref="Domain.Any"/> is written too, so the printed form no longer loses a
+        /// widening. This test used to pin the opposite and is the record of it changing.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1048">#1048</a>
         /// </summary>
         /// <remarks>
-        /// The second argument of <c>domain(...)</c> has to be a
-        /// <see cref="Entity.Set.SpecialSet"/>, and there is no node for "no restriction" — see
-        /// <see cref="Entity.Set.SpecialSet.Create(Domain)"/>, which throws for it. So a node
-        /// <em>widened</em> to <see cref="Domain.Any"/> from a narrower default still prints as
-        /// though it had not been. Printing <c>CC</c> instead would be a different lie, since
-        /// <see cref="Domain.Complex"/> rejects a value <see cref="Domain.Any"/> admits.
+        /// <para>
+        /// There is still no node for "no restriction" — <see cref="Entity.Set.SpecialSet.Create(Domain)"/>
+        /// throws for it — so <c>Any</c> is not a set literal. It is read in the second argument
+        /// of <c>domain(...)</c> and nowhere else, which commits to a spelling without deciding
+        /// whether there is a universal <em>set</em>.
+        /// </para>
+        /// <para>
+        /// Read rather than lexed, deliberately: a literal in a parser rule becomes a global
+        /// lexer token, and making <c>Any</c> a keyword stopped <c>Any + 1</c> parsing at all.
+        /// <see cref="AVariableNamedAnyIsStillAVariable"/> is what keeps that from coming back.
+        /// </para>
         /// </remarks>
-        [Fact]
-        public void WideningToAnyIsTheOneThingThePrintedFormStillCannotSay()
+        [Theory]
+        [InlineData("x + 1")]
+        [InlineData("abs(x)")]
+        [InlineData("phi(x)")]
+        public void WideningToAnyIsWrittenOut(string source)
         {
-            Entity widened = ((Entity)"x + 1").WithCodomain(Domain.Any);
+            var widened = MathS.FromString(source).WithCodomain(Domain.Any);
             Assert.Equal(Domain.Any, widened.Codomain);
-            Assert.Equal("x + 1", widened.Stringize());
-            Assert.NotEqual(widened, MathS.FromString(widened.Stringize()));
+            var printed = widened.Stringize();
+            var read = MathS.FromString(printed);
+            Assert.Equal(Domain.Any, read.Codomain);
+            Assert.Equal(widened, read);
+        }
+
+        /// <summary>
+        /// And <c>Any</c> is not reserved: it is read as the unrestricted codomain in the one
+        /// position where a codomain is expected, and is an ordinary variable everywhere else.
+        /// </summary>
+        [Theory]
+        [InlineData("Any + 1")]
+        [InlineData("Any")]
+        [InlineData("sin(Any)")]
+        public void AVariableNamedAnyIsStillAVariable(string source)
+        {
+            var parsed = MathS.FromString(source);
+            Assert.Contains((Entity.Variable)"Any", parsed.Vars);
+            Assert.Equal(source, parsed.Stringize());
         }
 
         /// <summary>

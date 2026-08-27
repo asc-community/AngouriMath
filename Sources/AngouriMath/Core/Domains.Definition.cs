@@ -78,15 +78,18 @@ namespace AngouriMath
         /// </summary>
         /// <remarks>
         /// <para>
-        /// <see cref="Domain.Any"/> is excluded because the grammar has no way to write it: the
-        /// second argument of <c>domain(...)</c> must be a <see cref="Set.SpecialSet"/>, and there
-        /// is no node for "no restriction" — see <see cref="Set.SpecialSet.Create(Domain)"/>. So a
-        /// node widened to <see cref="Domain.Any"/> from a narrower default still prints as though
-        /// it had not been. Printing <c>CC</c> there would be a different lie, and throwing from a
-        /// printer would take out every diagnostic message that quotes an expression.
+        /// <see cref="Domain.Any"/> used to be excluded, because the grammar had no way to write
+        /// it — the second argument of <c>domain(...)</c> had to be a <see cref="Set.SpecialSet"/>
+        /// and there is no node for "no restriction", see
+        /// <see cref="Set.SpecialSet.Create(Domain)"/>. A node widened to it from a narrower
+        /// default therefore printed as though it had not been, and reading that back gave the
+        /// default: <c>abs(x)</c> widened to <c>Any</c> came back <c>Real</c>. The grammar takes
+        /// <c>domain(x, Any)</c> now, as a keyword in that one position rather than as a set
+        /// literal, so this no longer has to lie by omission.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1048">#1048</a>
         /// </para>
         /// </remarks>
-        internal bool PrintsItsCodomain => Codomain != DefaultCodomain && Codomain != Domain.Any;
+        internal bool PrintsItsCodomain => Codomain != DefaultCodomain;
 
         /// <summary>
         /// Returns this node with the specified codomain, 

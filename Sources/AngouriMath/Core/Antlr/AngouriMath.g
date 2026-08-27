@@ -434,9 +434,19 @@ atom returns[Entity value]
     | 'domain(' args = function_arguments ')' 
         { 
             Assert("domain", 2, $args.list.Count); 
-            if ($args.list[1] is not SpecialSet ss)
+            // `Any` is the unrestricted codomain. It is read here rather than lexed as a
+            // keyword, because a literal in a parser rule becomes a global lexer token and
+            // would reserve the name everywhere -- `Any + 1` stopped parsing when that was
+            // tried. It is not a SpecialSet either: there is no node for "no restriction", see
+            // SpecialSet.Create(Domain). Reading it in this one position commits to a spelling
+            // without deciding whether there is a universal *set*, which is #996.
+            // https://github.com/asc-community/AngouriMath/issues/1048
+            if ($args.list[1] is Variable { Name: "Any" })
+                $value = $args.list[0].WithCodomain(AngouriMath.Core.Domain.Any);
+            else if ($args.list[1] is not SpecialSet ss)
                 throw new InvalidArgumentParseException($"Unrecognized special set {$args.list[1].Stringize()}");
-            $value = $args.list[0].WithCodomain(ss.ToDomain());
+            else
+                $value = $args.list[0].WithCodomain(ss.ToDomain());
         }
     | 'piecewise(' args = function_arguments ')'
         {

@@ -3233,9 +3233,19 @@ internal partial class AngouriMathParser : Parser {
 				Match(T__40);
 				 
 				            Assert("domain", 2, _localctx.args.list.Count); 
-				            if (_localctx.args.list[1] is not SpecialSet ss)
+				            // `Any` is the unrestricted codomain. It is read here rather than lexed as a
+				            // keyword, because a literal in a parser rule becomes a global lexer token and
+				            // would reserve the name everywhere -- `Any + 1` stopped parsing when that was
+				            // tried. It is not a SpecialSet either: there is no node for "no restriction", see
+				            // SpecialSet.Create(Domain). Reading it in this one position commits to a spelling
+				            // without deciding whether there is a universal *set*, which is #996.
+				            // https://github.com/asc-community/AngouriMath/issues/1048
+				            if (_localctx.args.list[1] is Variable { Name: "Any" })
+				                _localctx.value =  _localctx.args.list[0].WithCodomain(AngouriMath.Core.Domain.Any);
+				            else if (_localctx.args.list[1] is not SpecialSet ss)
 				                throw new InvalidArgumentParseException($"Unrecognized special set {_localctx.args.list[1].Stringize()}");
-				            _localctx.value =  _localctx.args.list[0].WithCodomain(ss.ToDomain());
+				            else
+				                _localctx.value =  _localctx.args.list[0].WithCodomain(ss.ToDomain());
 				        
 				}
 				break;
