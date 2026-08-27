@@ -168,8 +168,26 @@ namespace AngouriMath
             // Power is undefined in two cases:
             // - 0^0 is indeterminate
             // - 0^(negative) is undefined (division by zero)
-            private protected override Entity IntrinsicCondition => 
-                (!Base.EqualTo(0) | Exponent > 0);
+            //
+            // And over the reals there is a third, which is the whole of what `sqrt` is: an even
+            // root of a negative number is not real. `x ^ (1/2)` needs `x >= 0` and `x ^ (1/3)`
+            // needs nothing, so the exponent's *denominator* decides it and only a literal
+            // rational has one to read. A symbolic exponent is left with the condition above
+            // rather than given a guess: too strict is a wrong answer here, since this is what a
+            // rewrite consults before firing.
+            // https://github.com/asc-community/AngouriMath/issues/721
+            private protected override Entity IntrinsicCondition =>
+                Codomain < Domain.Complex && IsEvenRoot
+                ? Base >= 0 & (!Base.EqualTo(0) | Exponent > 0)
+                : (!Base.EqualTo(0) | Exponent > 0);
+
+            /// <summary>
+            /// Whether the exponent is a literal rational whose denominator is even — the case
+            /// where a negative base leaves the real line.
+            /// </summary>
+            private bool IsEvenRoot
+                => Exponent is Rational and not Integer and Rational ratio
+                   && ratio.ERational.Denominator.Remainder(2).IsZero;
             
             private static bool TryPower(Matrix m, int exp, out Entity res)
             {
