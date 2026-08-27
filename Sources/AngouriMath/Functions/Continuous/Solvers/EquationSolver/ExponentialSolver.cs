@@ -66,6 +66,84 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 _ => expr
             };
 
+        /// <summary>
+        /// <c>a ^ p(x) = b ^ q(x)</c> for numeric <c>a</c> and <c>b</c>, solved by taking
+        /// logarithms, which keeps the answer exact.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <see cref="SolveMultiplicative"/> reaches these by substitution: it divides one
+        /// exponent by the other and simplifies, and for two different integer bases that ratio
+        /// is <c>ln(3)/ln(2)</c> — irrational — so <c>InnerSimplified</c> settles it to a decimal
+        /// and everything downstream is numeric. The answer then agrees with the exact one to
+        /// about seventeen figures and diverges after, which is a <c>double</c> promoted to a
+        /// decimal rather than a number that was computed.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1007">#1007</a>
+        /// </para>
+        /// <para>
+        /// Taking logarithms has no such step: <c>a ^ p = b ^ q</c> is <c>p ln a = q ln b</c>
+        /// for positive real <c>a</c> and <c>b</c>, and that is an ordinary equation the
+        /// analytical solver answers exactly — <c>3 ^ (x+1) = 2 ^ (x-1)</c> becomes
+        /// <c>-ln(6) / ln(3/2)</c>.
+        /// </para>
+        /// <para>
+        /// Both bases must be <b>decidably positive reals</b>, which is what makes <c>ln</c> of
+        /// them real and the step an equivalence rather than a branch choice. Anything else
+        /// declines and the substitution path still gets its turn, so this only ever adds
+        /// answers.
+        /// </para>
+        /// </remarks>
+        internal static Set? SolveTwoPowersOfNumericBases(Entity expr, Variable x)
+        {
+            // a ^ p - b ^ q, however the subtraction is spelled: `a - b` and `a + (-1) * b` are
+            // the same tree to the solver by the time it gets here.
+            // Zero terms are dropped first: the solver is handed `lhs - rhs - 0`, and the
+            // trailing zero makes a two-power equation look like a three-term one.
+            var terms = Entity.Sumf.LinearChildren(expr)
+                .Where(term => term.Evaled is not Number number || number != 0)
+                .ToList();
+            if (terms.Count != 2)
+                return null;
+
+            var (leftBase, leftPower, leftSign) = AsPower(terms[0]);
+            var (rightBase, rightPower, rightSign) = AsPower(terms[1]);
+            if (leftBase is null || rightBase is null)
+                return null;
+            // One of each sign, or the equation is a sum of two powers and has no such root.
+            if (leftSign == rightSign)
+                return null;
+            // Different bases only: one base is what SolveMultiplicative already does exactly.
+            if (leftBase == rightBase)
+                return null;
+
+            var logarithmic = (leftPower! * MathS.Ln(leftBase) - rightPower! * MathS.Ln(rightBase))
+                .InnerSimplified;
+            if (!logarithmic.ContainsNode(x))
+                return null;
+            return AnalyticalEquationSolver.Solve(logarithmic, x) as FiniteSet;
+        }
+
+        /// <summary>
+        /// <paramref name="term"/> read as a signed power of a decidably positive real base, or
+        /// a null base where it is not one.
+        /// </summary>
+        private static (Entity? Base, Entity? Power, bool Negated) AsPower(Entity term)
+        {
+            var negated = false;
+            if (term is Mulf(Real { IsNegative: true } coefficient, var rest)
+                && coefficient == -1)
+            {
+                negated = true;
+                term = rest;
+            }
+            if (term is not Powf(var @base, var power))
+                return (null, null, negated);
+            // Decidably positive so that ln is real and `a ^ p = b ^ q` iff `p ln a = q ln b`.
+            if (@base.Evaled is not Real { EDecimal.IsFinite: true } value || !value.IsPositive)
+                return (null, null, negated);
+            return (@base, power, negated);
+        }
+
         internal static Set? SolveMultiplicative(Entity expr, Variable x)
         {
             Entity? substitution = null;

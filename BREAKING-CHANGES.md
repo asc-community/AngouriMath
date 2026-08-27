@@ -24,6 +24,7 @@ read first.
 | **Silent** | `"limit(t * b, t, 0)".ToEntity().FreeVariables`, and every limit | `{ t, b }` — the variable it approaches along counted as free | `{ b }` |
 | **Silent** | `MathS.Polynomials.Factor("4 * x2 - 4 * y2", "x")`, and every multivariate polynomial whose content is a bare constant | `(x + y) * (x - y)` — **not equal to what it factored** | `4 * (x + y) * (x - y)` |
 | | `"2 * x3 - 2".ToEntity().Factorize()`, and every polynomial whose content the rules take out | `2 * (x ^ 3 - 1)` — the remainder left whole | `2 * (x - 1) * (x ^ 2 + x + 1)` |
+| | `"3^(x+1) - 2^(x-1)".ToEntity().SolveEquation("x")`, and every equation between two powers of numeric bases | `{ ln(0.04674569822628630438865471319331845734268426895141601562 ^ (1 / ln(2))) }` — a `double` promoted to a decimal | `{ -(ln(3) + ln(2)) / (ln(3) + -ln(2)) }` |
 | | `new Entity[0].SumAll()`, and `Sumf.Sum` on an empty list | `AngouriBugException: At least 1 child required` | `0` |
 | | `new Entity[0].MultiplyAll()`, and `Mulf.Multiply` on an empty list | `AngouriBugException` | `1` |
 | | `MathS.Vector()` and `new Entity[0].ToVector()` | `IndexOutOfRangeException` — outside the documented hierarchy | `InvalidMatrixOperationException` |
@@ -418,6 +419,28 @@ every factor the rules found survives and only the ones they could not split are
 asking the property [#1092](https://github.com/asc-community/AngouriMath/issues/1092) is about —
 that the answer multiplies back to its input — of a row that satisfied it and was still less
 factored than it should be.
+### An equation between two powers of numeric bases is answered exactly
+
+`3 ^ (x+1) = 2 ^ (x-1)` has the exact root `-ln(6) / ln(3/2)`. The multiplicative solver reached it
+by dividing one exponent by the other; for two different integer bases that ratio is
+`ln(3)/ln(2)` — irrational — so `InnerSimplified` settled it to a decimal and everything after was
+numeric. The answer agreed with the exact one to seventeen significant figures and diverged, which
+is the signature of a `double` promoted to a decimal rather than a number that was computed.
+
+| | before | now |
+|---|---|---|
+| `"3^(x+1) - 2^(x-1)".SolveEquation("x")` | `{ ln(0.0467456982262863043886547131933184573426842689514160156250 ^ (1 / ln(2))) }` | `{ -(ln(3) + ln(2)) / (ln(3) + -ln(2)) }` |
+| `"3^(x+1) - 2^x".SolveEquation("x")` | a decimal | `{ -ln(3) / (ln(3) + -ln(2)) }` |
+| `"5^(2x) - 7^(x+3)".SolveEquation("x")` | `{ }` — **no answer at all** | `{ 3 * ln(7) / (2 * ln(5) + -ln(7)) }` |
+| `"3^x - 2^x".SolveEquation("x")` | `{ 0 }` | unchanged |
+| `"2^(2x) - 5·2^x + 4".SolveEquation("x")` | `{ 0, 2 }` | unchanged |
+
+Taking logarithms has no such step: `a ^ p = b ^ q` is `p ln a = q ln b` for positive real `a` and
+`b`, which the analytical solver answers exactly. Both bases must be **decidably positive reals**,
+which is what makes the step an equivalence rather than a branch choice; anything else declines and
+the multiplicative path still gets its turn, so this only ever adds answers
+([#1007](https://github.com/asc-community/AngouriMath/issues/1007)).
+
 ### A fold over an empty sequence answers instead of throwing
 
 A fold over a monoid has an identity, so the empty sum is `0` and the empty product is `1` — which
