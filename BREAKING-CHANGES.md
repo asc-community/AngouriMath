@@ -21,6 +21,7 @@ read first.
 
 | Silent? | What | Was | Is |
 |---|---|---|---|
+| | `MathS.Polynomials.Factor("(y * x3 + 1) * (x4 - y3)", "x")`, and bivariate polynomials whose leading coefficient in the main variable is a polynomial | `null` — a refusal | `(x ^ 4 - y ^ 3) * (x ^ 3 * y + 1)` |
 | | `MathS.Polynomials.Factor("x7 - y7", "x")`, and bivariate polynomials whose substituted image over-factors | `null` — a refusal | `(x - y) * (x ^ 6 + x ^ 5 * y + … + y ^ 6)` |
 | | `MathS.Polynomials.Factor("x2 + y2 + z2 + w2 + 1", "x")`, and polynomials in enough variables generally | `null` — a refusal | the polynomial itself, meaning it does not factor |
 | **Silent** | `"x! = 0".ToEntity().Simplify()` | `False`, including at `x = -1` where `x!` has a pole and the statement is `NaN` | `False provided x in RR and (x >= 0 or not x in ZZ)` |
@@ -313,6 +314,31 @@ the same precedences this grammar uses — so those needed the same brackets —
 bracketing for. The change only ever adds `\left(`/`\right)` groups, which CSharpMath already
 parses, so nothing downstream needs a matching change
 ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
+
+### A leading coefficient that is a polynomial no longer stops the lift
+
+The Hensel lift below declined when the leading coefficient in the main variable was not a
+constant: the lifted factors' leading coefficients have to be known before the lift to keep them
+polynomials rather than power series. That is Wang's leading-coefficient problem, and it is
+avoided here rather than solved — `L^(n-1) f(z/L, y) = Σ a_i L^(n-1-i) z^i` is a polynomial,
+because `n - 1 - i` is never negative below the leading term, and it is **monic** in `z`, because
+the leading term contributes `L · L^(-1)`. A monic polynomial has a constant leading coefficient,
+which is the case the lift already handled. A factor comes back as `h(L·x, y)` with the content
+that substitution introduced divided out.
+
+| | before | now |
+|---|---|---|
+| `Factor("(y * x3 + 1) * (x4 - y3)", "x")` | `null` | `(x ^ 4 - y ^ 3) * (x ^ 3 * y + 1)` |
+| `Factor("(y * x + 1) * (x7 - y7)", "x")` | `null` | three factors |
+| `Factor("(y * x2 + 1) * (x6 - y6)", "x")` | `null` | five factors |
+| `Factor("(y2 * x3 + 1) * (x5 - y2)", "x")` | `null` | `null` — past the growth bound below |
+| `Factor("(y * x + 1) * (x + y)", "x")` | `(x * y + 1) * (x + y)` | unchanged — the substitution already reached it |
+
+That last-but-one row is a **bound rather than a limitation of the method**. The monic form
+carries `L^(n-1-i)`, so its degree in the auxiliary variable exceeds the original's by up to
+`(n-1)·deg L`. Measured: a growth of 6 costs 376 ms and a growth of 7 costs 1 ms, while a growth
+of 14 costs **63 seconds** — so growth past 12 is refused. A refusal is a legitimate answer and a
+sixty-three second one is not, which is the same judgement the recombination's own cap makes.
 
 ### A polynomial in two variables is factored by lifting rather than by substituting
 

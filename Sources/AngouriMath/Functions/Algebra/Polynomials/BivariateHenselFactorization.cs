@@ -67,6 +67,12 @@ namespace AngouriMath.Functions
         private const int MaxImageFactors = 10;
 
         /// <summary>
+        /// How much degree the monicisation may add before it is refused instead. See the note
+        /// where it is used: past this the cost is seconds rather than milliseconds.
+        /// </summary>
+        private const int MaxMonicGrowth = 12;
+
+        /// <summary>
         /// The factors of <paramref name="poly"/> in <paramref name="main"/> and
         /// <paramref name="other"/>, each of positive degree in <paramref name="main"/>, or
         /// <see langword="null"/> where nothing could be settled. A single factor means it does
@@ -80,10 +86,10 @@ namespace AngouriMath.Functions
             if (degreeInMain < 1 || degreeInOther < 1)
                 return null;
 
-            // Wang's leading-coefficient problem is not solved here, so a leading coefficient
-            // that is not a constant declines rather than being guessed at.
+            // A leading coefficient that is a polynomial is made into one that is not, and the
+            // factorisation of that is mapped back. See MonicIn.
             if (!poly.LeadingCoefficientIn(main).IsConstant)
-                return null;
+                return ByMonicisation(poly, main, other, degreeInMain);
 
             // A factor free of the main variable is not something this finds, and its presence
             // would make the image's factorisation say the wrong thing about degrees.
@@ -101,6 +107,149 @@ namespace AngouriMath.Functions
                     return factors;
             }
             return null;
+        }
+
+        /// <summary>
+        /// The factorisation of a polynomial whose leading coefficient in
+        /// <paramref name="main"/> is not a constant, by making it one.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is <b>Wang's leading-coefficient problem</b>, and the answer here is not Wang's.
+        /// His is to factor the leading coefficient and distribute its factors among the lifted
+        /// ones, which needs a way to tell which goes where. The older answer needs none:
+        /// <c>g(z, y) = L^(n-1) · f(z/L, y) = Σ a_i L^(n-1-i) z^i</c> is a polynomial, because
+        /// <c>n - 1 - i</c> is never negative below the leading term, and it is <b>monic</b> in
+        /// <c>z</c>, because the leading term contributes <c>L · L^(-1)</c>. A monic polynomial
+        /// has a constant leading coefficient, which is the case the lift already handles.
+        /// </para>
+        /// <para>
+        /// A factor <c>h(z, y)</c> of the monic form comes back as <c>h(L·x, y)</c> with its
+        /// content in <c>y</c> divided out — the substitution multiplies the coefficient of
+        /// <c>z^j</c> by <c>L^j</c>, and the content is what that puts in and the original never
+        /// had.
+        /// </para>
+        /// <para>
+        /// The cost is that <c>deg_y g</c> grows by up to <c>(n-1)·deg_y L</c>, so the lift is
+        /// deeper and the polynomial larger. Nothing is asserted about staying inside
+        /// <see cref="MultivariatePolynomial"/>'s bounds: the construction returns
+        /// <see langword="null"/> when it leaves them, which is a refusal.
+        /// </para>
+        /// </remarks>
+        private static IReadOnlyList<MultivariatePolynomial>? ByMonicisation(
+            MultivariatePolynomial poly, int main, int other, int degreeInMain)
+        {
+            var leading = poly.LeadingCoefficientIn(main);
+            if (leading.IsZero)
+                return null;
+
+            // The monic form carries L^(n-1-i), so its degree in the auxiliary variable exceeds
+            // the original's by up to (n-1)·deg L, and the lift is that much deeper. Measured on
+            // the cases this reaches: a growth of 6 costs 376 ms and a growth of 7 costs 1 ms,
+            // while a growth of 14 costs **63 seconds** -- so it is bounded rather than paid
+            // for, which is what the rest of this layer does with a cost it cannot predict.
+            var growth = (degreeInMain - 1) * leading.DegreeIn(other);
+            if (growth > MaxMonicGrowth)
+                return null;
+
+            if (MonicIn(poly, main, leading, degreeInMain) is not { } monic)
+                return null;
+            if (!monic.LeadingCoefficientIn(main).IsConstant)
+                return null;
+
+            // The monic form is a different polynomial, so it gets the whole treatment rather
+            // than a shortcut into the lift: its own content, its own evaluation point.
+            if (Factor(monic, main, other) is not { } factors || factors.Count < 2)
+                return null;
+
+            var found = new List<MultivariatePolynomial>();
+            var remaining = poly;
+            foreach (var factor in factors)
+            {
+                if (Substitute(factor, main, leading) is not { } mapped)
+                    return null;
+                if (PolynomialGcd.ContentIn(mapped, main, new[] { other }, 0) is not { } content)
+                    return null;
+                if (mapped.DivideExact(content) is not { } candidate)
+                    return null;
+                if (candidate.DegreeIn(main) < 1)
+                    continue;
+                if (remaining.DivideExact(candidate) is not { } quotient)
+                    return null;
+                found.Add(candidate.Normalized());
+                remaining = quotient;
+            }
+
+            if (found.Count < 2)
+                return null;
+            if (!remaining.IsConstant)
+                found.Add(remaining.Normalized());
+            return found;
+        }
+
+        /// <summary>
+        /// <c>Σ a_i · L^(n-1-i) · x^i</c> — the same polynomial with a leading coefficient of
+        /// one, in a variable that stands for <c>x·L</c>.
+        /// </summary>
+        private static MultivariatePolynomial? MonicIn(
+            MultivariatePolynomial poly, int main, MultivariatePolynomial leading, int degreeInMain)
+        {
+            var result = MultivariatePolynomial.Zero(poly.VariableCount);
+            foreach (var pair in poly.CoefficientsIn(main))
+            {
+                var power = degreeInMain - 1 - pair.Key;
+                var term = pair.Value;
+                if (power > 0)
+                {
+                    if (leading.Power(power) is not { } weight)
+                        return null;
+                    if (term.Multiply(weight) is not { } scaled)
+                        return null;
+                    term = scaled;
+                }
+                else if (power < 0)
+                {
+                    // Only the leading term, where L^(n-1-n) cancels the L the term carries.
+                    if (term.DivideExact(leading) is not { } divided)
+                        return null;
+                    term = divided;
+                }
+                if (pair.Key > 0)
+                {
+                    if (term.ShiftedBy(main, pair.Key) is not { } shifted)
+                        return null;
+                    term = shifted;
+                }
+                result = result.Add(term);
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// <paramref name="poly"/> with <paramref name="main"/> replaced by
+        /// <c><paramref name="main"/> · <paramref name="by"/></c> — so the coefficient of
+        /// <c>x^j</c> is multiplied by <c>by^j</c>.
+        /// </summary>
+        private static MultivariatePolynomial? Substitute(
+            MultivariatePolynomial poly, int main, MultivariatePolynomial by)
+        {
+            var result = MultivariatePolynomial.Zero(poly.VariableCount);
+            foreach (var pair in poly.CoefficientsIn(main))
+            {
+                var term = pair.Value;
+                if (pair.Key > 0)
+                {
+                    if (by.Power(pair.Key) is not { } weight)
+                        return null;
+                    if (term.Multiply(weight) is not { } scaled)
+                        return null;
+                    if (scaled.ShiftedBy(main, pair.Key) is not { } shifted)
+                        return null;
+                    term = shifted;
+                }
+                result = result.Add(term);
+            }
+            return result;
         }
 
         /// <summary>
