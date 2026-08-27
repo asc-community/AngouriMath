@@ -4808,8 +4808,18 @@ namespace AngouriMath
         /// 4
         /// </code>
         /// </example>
+        /// <remarks>
+        /// A vector of no entries is refused rather than built. It used to leak a
+        /// <see cref="IndexOutOfRangeException"/>, which is outside the hierarchy
+        /// <c>Docs/Usage/Exceptions.md</c> documents — so a caller catching
+        /// <c>AngouriMathBaseException</c> did not catch it.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1028">#1028</a>
+        /// </remarks>
         public static Matrix Vector(params Entity[] values)
-            => new Matrix(GenTensor.CreateTensor(new(values.Length, 1), arr => values[arr[0]]));
+            => values.Length is 0
+                ? throw new InvalidMatrixOperationException(
+                    "a vector needs at least one entry; there is no 0x1 matrix here")
+                : new Matrix(GenTensor.CreateTensor(new(values.Length, 1), arr => values[arr[0]]));
 
         /// <summary>
         /// Creates a zero square matrix

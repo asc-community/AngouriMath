@@ -19,8 +19,17 @@ namespace AngouriMath
             /// <summary>
             /// Sums all the terms.
             /// </summary>
+            /// <remarks>
+            /// The empty sum is <c>0</c>. This takes a list from the caller and used to hand it
+            /// to <c>MultiHangBinary</c> unchecked, whose precondition is genuine and whose
+            /// refusal is an <c>AngouriBugException</c> — so an empty list asked the caller to
+            /// report a bug against this repository.
+            /// <a href="https://github.com/asc-community/AngouriMath/issues/1028">#1028</a>
+            /// </remarks>
             public static Entity Sum(IReadOnlyList<Entity> terms)
-                => TreeAnalyzer.MultiHangBinary(terms, (a, b) => a + b);
+                => terms.Count > 0
+                    ? TreeAnalyzer.MultiHangBinary(terms, (a, b) => a + b)
+                    : Number.Integer.Zero;
 
             /// <summary>
             /// Sums all the terms.
@@ -88,8 +97,14 @@ namespace AngouriMath
             /// <summary>
             /// Multiplies all the terms.
             /// </summary>
+            /// <remarks>
+            /// The empty product is <c>1</c>, for the reason the empty sum is <c>0</c> — see
+            /// <see cref="Sumf.Sum(System.Collections.Generic.IReadOnlyList{Entity})"/>.
+            /// </remarks>
             public static Entity Multiply(IReadOnlyList<Entity> terms)
-                => TreeAnalyzer.MultiHangBinary(terms, (a, b) => a * b);
+                => terms.Count > 0
+                    ? TreeAnalyzer.MultiHangBinary(terms, (a, b) => a * b)
+                    : Number.Integer.One;
 
             /// <summary>
             /// Multiplies all the terms.
