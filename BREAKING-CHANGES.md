@@ -23,6 +23,7 @@ read first.
 |---|---|---|---|
 | **Silent** | `"limit(t * b, t, 0)".ToEntity().FreeVariables`, and every limit | `{ t, b }` — the variable it approaches along counted as free | `{ b }` |
 | **Silent** | `MathS.Polynomials.Factor("4 * x2 - 4 * y2", "x")`, and every multivariate polynomial whose content is a bare constant | `(x + y) * (x - y)` — **not equal to what it factored** | `4 * (x + y) * (x - y)` |
+| | `"2 * x3 - 2".ToEntity().Factorize()`, and every polynomial whose content the rules take out | `2 * (x ^ 3 - 1)` — the remainder left whole | `2 * (x - 1) * (x ^ 2 + x + 1)` |
 | | `"x3 - 1".ToEntity().Factorize()`, and every polynomial no rewrite rule has a rule for | `x ^ 3 - 1` — handed back whole | `(x - 1) * (x ^ 2 + x + 1)` |
 | | `Entity.DomainConditionIn(Domain)` | did not exist | the domain of definition for a **stated** reading, through the whole tree |
 | | `MathS.Polynomials.Factor("(y * x3 + 1) * (x4 - y3)", "x")`, and bivariate polynomials whose leading coefficient in the main variable is a polynomial | `null` — a refusal | `(x ^ 4 - y ^ 3) * (x ^ 3 * y + 1)` |
@@ -393,6 +394,28 @@ constant means the product does not account for the polynomial, and then there i
 give. Everything here was already checked by exact division, but that check is on the individual
 *factors*; nothing compared the assembled product against the input
 ([#1092](https://github.com/asc-community/AngouriMath/issues/1092)).
+### `Factorize` reaches inside a product the rules already made
+
+The change below asks the polynomial layer only where the rewrite rules said nothing, so that an
+answer the rules already gave is never replaced. Declining a **product** outright was too broad:
+the rules take a numeric content out and hand back `2 * (x ^ 3 - 1)`, and the remainder is exactly
+the shape that change is about.
+
+| | before | now |
+|---|---|---|
+| `"2 * x3 - 2".Factorize()` | `2 * (x ^ 3 - 1)` | `2 * (x - 1) * (x ^ 2 + x + 1)` |
+| `"3 * x6 - 3".Factorize()` | `3 * (x ^ 6 - 1)` | five factors |
+| `"5 * x7 - 5".Factorize()` | `5 * (x ^ 7 - 1)` | `5 * (x - 1) * (x ^ 6 + … + 1)` |
+| `"y * (x3 - 1)".Factorize()` | `y * (x ^ 3 - 1)` | `y * (x - 1) * (x ^ 2 + x + 1)` |
+| `"2 * x4 - 10 * x2 + 8".Factorize()` | `2 * (x + 1) * (x + 2) * (x - 2) * (x - 1)` | unchanged |
+| `"x * y + x".Factorize()` | `x * (1 + y)` | unchanged |
+
+Each factor of the product is asked separately instead of the product being handed over whole, so
+every factor the rules found survives and only the ones they could not split are split. Found by
+asking the property [#1092](https://github.com/asc-community/AngouriMath/issues/1092) is about —
+that the answer multiplies back to its input — of a row that satisfied it and was still less
+factored than it should be.
+
 ### `Factorize` uses the polynomial layer where no rule reaches
 
 `Entity.Factorize` was composed entirely out of `RewriteRules`, so it factored what someone had
