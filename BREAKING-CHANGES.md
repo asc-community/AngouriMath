@@ -25,6 +25,7 @@ read first.
 | **Silent** | `MathS.Polynomials.Factor("4 * x2 - 4 * y2", "x")`, and every multivariate polynomial whose content is a bare constant | `(x + y) * (x - y)` — **not equal to what it factored** | `4 * (x + y) * (x - y)` |
 | | `"2 * x3 - 2".ToEntity().Factorize()`, and every polynomial whose content the rules take out | `2 * (x ^ 3 - 1)` — the remainder left whole | `2 * (x - 1) * (x ^ 2 + x + 1)` |
 | | `"3^(x+1) - 2^(x-1)".ToEntity().SolveEquation("x")`, and every equation between two powers of numeric bases | `{ ln(0.04674569822628630438865471319331845734268426895141601562 ^ (1 / ln(2))) }` — a `double` promoted to a decimal | `{ -(ln(3) + ln(2)) / (ln(3) + -ln(2)) }` |
+| **Silent** | `MathS.Abs("x").WithCodomain(Domain.Any).Stringize()`, and every node widened to `Any` from a narrower default | `abs(x)` — reads back as `Real`, losing the widening | `domain(abs(x), Any)` |
 | | `new Entity[0].SumAll()`, and `Sumf.Sum` on an empty list | `AngouriBugException: At least 1 child required` | `0` |
 | | `new Entity[0].MultiplyAll()`, and `Mulf.Multiply` on an empty list | `AngouriBugException` | `1` |
 | | `MathS.Vector()` and `new Entity[0].ToVector()` | `IndexOutOfRangeException` — outside the documented hierarchy | `InvalidMatrixOperationException` |
@@ -440,6 +441,31 @@ Taking logarithms has no such step: `a ^ p = b ^ q` is `p ln a = q ln b` for pos
 which is what makes the step an equivalence rather than a branch choice; anything else declines and
 the multiplicative path still gets its turn, so this only ever adds answers
 ([#1007](https://github.com/asc-community/AngouriMath/issues/1007)).
+### A widened codomain is written out, so `Stringize` round-trips it
+
+`Domain.Any` had no spelling: the second argument of `domain(...)` had to be one of the five
+special sets, and none of them means "no restriction". So a node **widened** to `Any` from a
+narrower default printed as though it had not been, and reading that back gave the default.
+
+| | before | now |
+|---|---|---|
+| `MathS.Abs("x").WithCodomain(Any).Stringize()` | `abs(x)` | `domain(abs(x), Any)` |
+| the same, reparsed | `Real` — the widening was lost | `Any` |
+| `MathS.Abs("x").WithCodomain(Integer).Stringize()` | `domain(abs(x), ZZ)` | unchanged |
+| `"Any + 1"` | parses, `Any` is a variable | unchanged |
+
+`Any` is **not** a set literal — there is still no node for "no restriction", and
+`SpecialSet.Create(Domain.Any)` still throws for it. It is read in the second argument of
+`domain(...)` and nowhere else, which commits to a spelling without deciding whether there is a
+universal *set*; that question is [#996](https://github.com/asc-community/AngouriMath/issues/996)
+and this does not answer it.
+
+Read rather than lexed, deliberately. A literal in a parser rule becomes a global lexer token, and
+making `Any` a keyword reserved the name everywhere — `Any + 1` stopped parsing. A test pins that
+it stays an ordinary variable.
+
+`Latexize` renders the subscript as `\mathrm{Any}` rather than a `\mathbb`, since there is no set
+to render ([#1048](https://github.com/asc-community/AngouriMath/issues/1048)).
 
 ### A fold over an empty sequence answers instead of throwing
 

@@ -22,7 +22,11 @@ namespace AngouriMath
         /// </remarks>
         public string Stringize()
             => PrintsItsCodomain
-                ? $"domain({StringizeNode()}, {Set.SpecialSet.Create(Codomain).Stringize()})"
+                // `Any` is a keyword in that position rather than a set, since there is no node
+                // for "no restriction" to ask for a name. #1048
+                ? Codomain is Domain.Any
+                    ? $"domain({StringizeNode()}, Any)"
+                    : $"domain({StringizeNode()}, {Set.SpecialSet.Create(Codomain).Stringize()})"
                 : StringizeNode();
 
         /// <summary>

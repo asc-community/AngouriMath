@@ -53,7 +53,10 @@ namespace AngouriMath
         /// </remarks>
         public string Latexize()
             => PrintsItsCodomain
-                ? $@"{{\left({LatexizeNode()}\right)}}_{{{Set.SpecialSet.Create(Codomain).Latexize()}}}"
+                // No \mathbb for "no restriction" -- there is no set to render. #1048
+                ? Codomain is Domain.Any
+                    ? $@"{{\left({LatexizeNode()}\right)}}_{{\mathrm{{Any}}}}"
+                    : $@"{{\left({LatexizeNode()}\right)}}_{{{Set.SpecialSet.Create(Codomain).Latexize()}}}"
                 : LatexizeNode();
 
         /// <summary>
