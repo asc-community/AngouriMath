@@ -246,6 +246,7 @@ AngouriMath.Core.Transformations.Transformation.ApplyCore(AngouriMath.Entity) : 
 AngouriMath.Core.Transformations.Transformation.ApplyOrKeep(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.Core.Transformations.Transformation.Canonicalization { } : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.Differentiation(AngouriMath.Entity+Variable) : AngouriMath.Core.Transformations.Transformation
+AngouriMath.Core.Transformations.Transformation.EqualitySaturation(AngouriMath.Core.Budgets.WorkBudget, AngouriMath.Core.CostModel) : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.Expansion { } : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.ExpansionAtLevel(System.Int32) : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.Factorization { } : AngouriMath.Core.Transformations.Transformation

@@ -1,0 +1,278 @@
+//
+// Copyright (c) 2019-2026 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using AngouriMath.Core.Transformations.Matching;
+using AngouriMath.Extensions;
+
+namespace AngouriMath.Core.Transformations
+{
+    /// <summary>
+    /// One e-node: an operator, and the e-classes of its children.
+    /// </summary>
+    internal readonly struct ENode : IEquatable<ENode>
+    {
+        internal ENode(string op, int[] children)
+        {
+            Op = op ?? throw new ArgumentNullException(nameof(op));
+            Children = children ?? throw new ArgumentNullException(nameof(children));
+        }
+
+        internal string Op { get; }
+        internal int[] Children { get; }
+
+        public bool Equals(ENode other)
+        {
+            if (Op != other.Op || Children.Length != other.Children.Length) return false;
+            for (var i = 0; i < Children.Length; i++)
+                if (Children[i] != other.Children[i]) return false;
+            return true;
+        }
+
+        public override bool Equals(object? obj) => obj is ENode node && Equals(node);
+
+        public override int GetHashCode()
+        {
+            var hash = Op.GetHashCode();
+            foreach (var child in Children) hash = unchecked(hash * 31 + child);
+            return hash;
+        }
+    }
+
+    /// <summary>
+    /// An e-graph: e-classes over a union-find, e-nodes keyed by operator and child class,
+    /// hash-consed.
+    /// </summary>
+    /// <remarks>
+    /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 2's e-graph,
+    /// moved from the <c>work/egraph</c> measurement harness into the library once the harness had
+    /// answered what it was built to answer — see that harness's own report for the measurement
+    /// this design rests on.
+    /// </remarks>
+    internal sealed class EGraph
+    {
+        private readonly List<int> parent = new();
+        private readonly Dictionary<ENode, int> hashcons = new();
+        private readonly Dictionary<int, HashSet<ENode>> classes = new();
+
+        /// <summary>How many e-classes this graph currently has.</summary>
+        internal int ClassCount => classes.Count;
+
+        /// <summary>How many distinct e-nodes this graph has ever created.</summary>
+        internal int NodeCount => hashcons.Count;
+
+        /// <summary>The representative of the e-class <paramref name="id"/> currently belongs to.</summary>
+        internal int Find(int id)
+        {
+            while (parent[id] != id) { parent[id] = parent[parent[id]]; id = parent[id]; }
+            return id;
+        }
+
+        private int NewClass()
+        {
+            var id = parent.Count;
+            parent.Add(id);
+            classes[id] = new HashSet<ENode>();
+            return id;
+        }
+
+        /// <summary>
+        /// Adds a leaf or an operator over already-added children, and returns the e-class it
+        /// belongs to -- an existing one if an equal e-node is already hash-consed, otherwise a
+        /// fresh one.
+        /// </summary>
+        /// <param name="op">
+        /// The operator identity: a leaf's printed self, so that two different variables or
+        /// numbers never share a class, or a node type's name otherwise.
+        /// </param>
+        /// <param name="children">The e-classes of this e-node's children, already added.</param>
+        internal int Add(string op, params int[] children)
+        {
+            var canonical = new ENode(op, children.Select(Find).ToArray());
+            if (hashcons.TryGetValue(canonical, out var existing))
+                return Find(existing);
+            // Folding on insertion: a neutral-element application denotes exactly the value its
+            // other operand already has, so it is unioned into that operand's class instead of
+            // being given a fresh e-node. Proven against 16 corpus expressions in the #746 tier 2
+            // measurement harness before moving here: it closed eight of the nine blow-ups that
+            // harness found in equality saturation over the full, undirected rule set. Only
+            // catches the shape at the moment it is added -- see Rebuild for what a union
+            // afterwards does not reach back and fold.
+            if (NeutralClass(canonical) is { } folded)
+                return folded;
+            var id = NewClass();
+            hashcons[canonical] = id;
+            classes[id].Add(canonical);
+            return id;
+        }
+
+        private bool Holds(int id, string leaf)
+            => classes.TryGetValue(Find(id), out var set)
+               && set.Any(n => n.Children.Length == 0 && n.Op == leaf);
+
+        /// <summary>
+        /// If <paramref name="node"/> is a neutral element applied to something, the class that
+        /// already denotes its value -- <see langword="null"/> otherwise.
+        /// </summary>
+        /// <remarks>
+        /// <c>Sumf</c> and <c>Mulf</c> are commutative, so the identity folds from either side:
+        /// <c>x + 0</c> and <c>0 + x</c> both denote <c>x</c>. <c>Minusf</c> and <c>Divf</c> are
+        /// not: <c>x - 0</c> and <c>x / 1</c> denote <c>x</c>, but <c>0 - x</c> and <c>1 / x</c>
+        /// do not -- they negate or invert it, a different value from either operand, and not
+        /// something this method may fold away. <c>1 ^ x</c> is likewise not <c>x</c> -- it is
+        /// the constant 1 -- so <c>Powf</c> only checks the exponent.
+        /// </remarks>
+        private int? NeutralClass(ENode node)
+        {
+            if (node.Children.Length != 2) return null;
+            return node.Op switch
+            {
+                "Sumf" => Holds(node.Children[1], "0") ? Find(node.Children[0])
+                    : Holds(node.Children[0], "0") ? Find(node.Children[1])
+                    : (int?)null,
+                "Minusf" => Holds(node.Children[1], "0") ? Find(node.Children[0]) : (int?)null,
+                "Mulf" => Holds(node.Children[1], "1") ? Find(node.Children[0])
+                    : Holds(node.Children[0], "1") ? Find(node.Children[1])
+                    : (int?)null,
+                "Divf" => Holds(node.Children[1], "1") ? Find(node.Children[0]) : (int?)null,
+                "Powf" => Holds(node.Children[1], "1") ? Find(node.Children[0]) : (int?)null,
+                _ => null
+            };
+        }
+
+        /// <summary>Every e-class currently in the graph.</summary>
+        internal IEnumerable<int> Classes => classes.Keys.ToList();
+
+        /// <summary>The e-nodes belonging to the e-class <paramref name="id"/> is a member of.</summary>
+        internal IReadOnlyCollection<ENode> NodesOf(int id) => classes[Find(id)];
+
+        /// <summary>
+        /// Merges the e-classes of <paramref name="left"/> and <paramref name="right"/>, and
+        /// answers whether they were different classes before this call. Does not itself restore
+        /// congruence between e-nodes that now share a child class -- see <see cref="Rebuild"/>.
+        /// </summary>
+        internal bool Union(int left, int right)
+        {
+            left = Find(left);
+            right = Find(right);
+            if (left == right) return false;
+            parent[right] = left;
+            foreach (var node in classes[right]) classes[left].Add(node);
+            classes.Remove(right);
+            return true;
+        }
+
+        /// <summary>
+        /// Restores congruence: after a union, e-nodes whose children are now in the same class
+        /// as each other are congruent and are merged too, repeated until nothing more merges.
+        /// This is the step that makes an e-graph an e-graph rather than a set of terms related
+        /// only by the unions asked for directly.
+        /// </summary>
+        internal void Rebuild()
+        {
+            bool changed;
+            do
+            {
+                changed = false;
+                var seen = new Dictionary<ENode, int>();
+                foreach (var pair in classes.ToList())
+                    foreach (var node in pair.Value.ToList())
+                    {
+                        var canonical = new ENode(node.Op, node.Children.Select(Find).ToArray());
+                        if (seen.TryGetValue(canonical, out var other))
+                        {
+                            if (Union(other, pair.Key)) changed = true;
+                        }
+                        else seen[canonical] = pair.Key;
+                    }
+            } while (changed);
+        }
+
+        /// <summary>
+        /// The operator identity of a node: a leaf's printed self, so that two different
+        /// variables or numbers never share a class, or the node's runtime type otherwise, so
+        /// that <c>x + y</c> and <c>a + b</c> are the same operator over different children.
+        /// </summary>
+        private static string Key(Entity expr)
+            => expr.DirectChildren.Count == 0 ? expr.Stringize() : expr.GetType().Name;
+
+        /// <summary>Adds <paramref name="expr"/> and every one of its subexpressions, bottom-up.</summary>
+        internal int AddEntity(Entity expr)
+        {
+            var children = expr.DirectChildren.Select(AddEntity).ToArray();
+            return Add(Key(expr), children);
+        }
+
+        /// <summary>
+        /// The cheapest entity the e-class <paramref name="id"/> can be built as under
+        /// <paramref name="cost"/>, or <see langword="null"/> where nothing in it can be built --
+        /// every member refers, directly or through a cycle only unions can create, to a node
+        /// type <see cref="MatchPattern.ConstructNode"/> does not build.
+        /// </summary>
+        internal Entity? Extract(int id, Func<Entity, double> cost)
+            => Extract(id, cost, new Dictionary<int, Entity>(), new HashSet<int>());
+
+        private Entity? Extract(int id, Func<Entity, double> cost,
+            Dictionary<int, Entity> memo, HashSet<int> visiting)
+        {
+            id = Find(id);
+            if (memo.TryGetValue(id, out var done)) return done;
+            if (!visiting.Add(id)) return null;              // a cycle; the other node will do
+            Entity? best = null;
+            var bestCost = double.MaxValue;
+            foreach (var node in NodesOf(id))
+            {
+                var parts = new Entity[node.Children.Length];
+                var ok = true;
+                for (var i = 0; i < parts.Length && ok; i++)
+                {
+                    var part = Extract(node.Children[i], cost, memo, visiting);
+                    if (part is null) ok = false;
+                    else parts[i] = part;
+                }
+                if (!ok) continue;
+                Entity? built = parts.Length == 0
+                    ? TryParseLeaf(node.Op)
+                    : MatchPattern.ConstructNode(OperatorType(node.Op), parts);
+                if (built is null) continue;
+                double here;
+                try { here = cost(built); } catch { continue; }
+                if (here >= bestCost) continue;
+                best = built;
+                bestCost = here;
+            }
+            visiting.Remove(id);
+            if (best is not null) memo[id] = best;
+            return best;
+        }
+
+        private static Entity? TryParseLeaf(string printed)
+        {
+            try { return printed.ToEntity(); } catch { return null; }
+        }
+
+        /// <summary>
+        /// <see cref="MatchPattern.ConstructNode"/> takes the runtime <see cref="Type"/> a
+        /// <see cref="Key"/> string names -- this is the one place that resolves the name back,
+        /// so it is the one place that would need to change if two node types ever printed the
+        /// same <c>GetType().Name</c>.
+        /// </summary>
+        [ConstantField]
+        private static readonly Dictionary<string, Type> OperatorTypes = new Type[]
+        {
+            typeof(Entity.Sumf), typeof(Entity.Minusf), typeof(Entity.Mulf), typeof(Entity.Divf),
+            typeof(Entity.Powf), typeof(Entity.Logf), typeof(Entity.Sinf), typeof(Entity.Cosf),
+            typeof(Entity.Tanf), typeof(Entity.Cotanf), typeof(Entity.Secantf),
+            typeof(Entity.Cosecantf), typeof(Entity.Absf), typeof(Entity.Signumf),
+        }.ToDictionary(t => t.Name);
+
+        private static Type OperatorType(string op)
+            => OperatorTypes.TryGetValue(op, out var type) ? type : typeof(void);
+    }
+}

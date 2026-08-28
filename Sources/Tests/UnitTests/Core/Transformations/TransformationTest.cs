@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AngouriMath;
 using AngouriMath.Core;
+using AngouriMath.Core.Budgets;
 using AngouriMath.Core.Transformations;
 using Xunit;
 
@@ -544,6 +545,83 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.DoesNotContain(
                 result.Output!.Nodes,
                 node => node is Entity.Divf(_, var denominator) && denominator.Nodes.Any(n => n is Entity.Powf));
+        }
+
+        #endregion
+
+        #region Equality saturation
+
+        private static WorkBudget SmallSaturationBudget { get; }
+            = new() { Steps = 10_000, Time = TimeSpan.FromSeconds(5) };
+
+        [Fact]
+        public void EqualitySaturationReportsWhatItIsAndWhatItDid()
+        {
+            var transformation = Transformation.EqualitySaturation(SmallSaturationBudget, CostModel.Default);
+            var result = transformation.Apply(Parse("x + 0"));
+
+            Assert.True(result.Succeeded);
+            Assert.True(result.Changed);
+            Assert.Equal(TransformationRelation.Equivalence, result.Relation);
+            Assert.Equal(Soundness.SoundUnderAssumptions, result.Soundness);
+            Assert.Equal(Parse("x"), result.Output);
+        }
+
+        [Fact]
+        public void EqualitySaturationDeclinesToChangeAnExpressionAlreadyAtItsCheapest()
+        {
+            var transformation = Transformation.EqualitySaturation(SmallSaturationBudget, CostModel.Default);
+            var result = transformation.Apply(Parse("x"));
+
+            Assert.True(result.Succeeded);
+            Assert.False(result.Changed);
+        }
+
+        [Fact]
+        public void EqualitySaturationNeverThrowsUnderAStarvedBudget()
+        {
+            var starved = new WorkBudget { Steps = 0, Time = TimeSpan.Zero };
+            var transformation = Transformation.EqualitySaturation(starved, CostModel.Default);
+
+            var result = transformation.Apply(Parse("(x + 1) * (x - 1)"));
+
+            // A budget with nothing to spend still has to answer with something -- the input
+            // itself, extracted from a graph that never got to fire a rule.
+            Assert.True(result.Succeeded);
+        }
+
+        /// <summary>
+        /// A handful of real check points, substituted for every free variable at once. Not
+        /// <see cref="AngouriMath.Functions.ExpressionNumerical.AreEqual"/>'s own complex
+        /// check points: this transformation can reassociate a chain of divisions --
+        /// <c>a / b / c</c> to <c>a / (b * c)</c> -- and comparing the two chains' complex
+        /// floating-point evaluations by exact equality is comparing two different rounding
+        /// paths to the same value, not the value itself. <see cref="Entity.EqualsImprecisely"/>
+        /// is the tolerance this library already uses for exactly that comparison.
+        /// </summary>
+        private static readonly Entity[] RealCheckPoints = { 0.37, 1.91, -2.63, 5.2 };
+
+        [Theory]
+        [MemberData(nameof(Corpus))]
+        public void EqualitySaturationNeverChangesTheValueItClaimsToPreserve(string source)
+        {
+            var input = Parse(source);
+            var transformation = Transformation.EqualitySaturation(SmallSaturationBudget, CostModel.Default);
+            var output = transformation.Apply(input).OutputOrInput;
+
+            var vars = input.Vars.Concat(output.Vars).Distinct().ToList();
+            if (vars.Count == 0) return; // nothing to substitute; Changed already covers this shape
+            foreach (var point in RealCheckPoints)
+            {
+                var before = vars.Aggregate(input, (e, v) => e.Substitute(v, point));
+                var after = vars.Aggregate(output, (e, v) => e.Substitute(v, point));
+                Entity beforeEvaled, afterEvaled;
+                try { beforeEvaled = before.Evaled; afterEvaled = after.Evaled; }
+                catch { continue; } // a boolean/set-valued corpus entry: not this test's claim
+                Assert.True(beforeEvaled.EqualsImprecisely(afterEvaled),
+                    $"{source} at {point.Stringize()}: {beforeEvaled.Stringize()} became "
+                        + $"{afterEvaled.Stringize()} via {output.Stringize()}");
+            }
         }
 
         #endregion
