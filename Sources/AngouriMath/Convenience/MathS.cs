@@ -5745,8 +5745,8 @@ namespace AngouriMath
             ///     expr => expr.Nodes.Count(node => node is Entity.Divf)
             /// );
             /// 
-            /// Console.WriteLine(FromString("a / b + b / c", useCache: false).SimplifiedRate);
-            /// Console.WriteLine(FromString("a / b + b / c", useCache: false).Simplify().SimplifiedRate);
+            /// Console.WriteLine("a / b + b / c".ToEntity().SimplifiedRate);
+            /// Console.WriteLine("a / b + b / c".ToEntity().Simplify().SimplifiedRate);
             /// </code>
             /// Prints
             /// <code>
@@ -5756,14 +5756,25 @@ namespace AngouriMath
             /// 1
             /// </code>
             /// By default criteria it cannot simplify it further, however, the custom one
-            /// it simplified from 2 to 1. 
+            /// it simplified from 2 to 1.
             /// </example>
             /// <remarks>
+            /// <para>
             /// The function itself lives on <see cref="CostModel.Default"/>, with the named
             /// alternatives beside it — <see cref="CostModel.SmallestTree"/>,
             /// <see cref="CostModel.FewestDivisions"/>, <see cref="CostModel.FewestRadicals"/>.
             /// It is referenced rather than repeated so the setting's default and the model
             /// cannot drift apart.
+            /// </para>
+            /// <para>
+            /// The second half of the example above used to need
+            /// <c>FromString(expr, useCache: false)</c>, because a parsed expression is cached by
+            /// its text and <see cref="Entity.SimplifiedRate"/> cached one rate per instance —
+            /// so the number computed under the default criteria was handed back under this one.
+            /// That is fixed: a rate is cached only while nobody has scoped this setting, and a
+            /// scoped criteria is computed afresh. Reading a rate under a criteria of your own no
+            /// longer needs the parser cache defeated to be right.
+            /// </para>
             /// </remarks>
             public static Setting<Func<Entity, double>> ComplexityCriteria { get; } =
                 new Func<Entity, double>(CostModel.DefaultCost);
