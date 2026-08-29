@@ -16,7 +16,7 @@ namespace AngouriMath.Core.Transformations
     /// <summary>
     /// One e-node: an operator, and the e-classes of its children.
     /// </summary>
-    internal readonly struct ENode : IEquatable<ENode>
+    internal readonly struct ENode : IEquatable<ENode>, IComparable<ENode>
     {
         internal ENode(string op, int[] children)
         {
@@ -36,6 +36,27 @@ namespace AngouriMath.Core.Transformations
         }
 
         public override bool Equals(object? obj) => obj is ENode node && Equals(node);
+
+        /// <summary>
+        /// A total order on e-nodes, so that the members of one e-class can be visited in a
+        /// defined sequence. <see cref="HashSet{T}"/> enumeration order is an unspecified
+        /// implementation detail and a string's hash code is randomised per process, so a cost
+        /// tie between two members would otherwise be settled differently from one run to the
+        /// next -- against the premise that a bounded computation is reproducible given a defined
+        /// algorithm order. Ordinal on <see cref="Op"/>, so it does not move with the culture
+        /// either.
+        /// </summary>
+        public int CompareTo(ENode other)
+        {
+            var byOp = string.CompareOrdinal(Op, other.Op);
+            if (byOp != 0) return byOp;
+            if (Children.Length != other.Children.Length)
+                return Children.Length.CompareTo(other.Children.Length);
+            for (var i = 0; i < Children.Length; i++)
+                if (Children[i] != other.Children[i])
+                    return Children[i].CompareTo(other.Children[i]);
+            return 0;
+        }
 
         public override int GetHashCode()
         {
@@ -57,6 +78,14 @@ namespace AngouriMath.Core.Transformations
     /// </remarks>
     internal sealed class EGraph
     {
+        /// <summary>
+        /// How deep <see cref="Extract(int, Func{Entity, double})"/> will chain through child
+        /// classes before declining to build. A crash guard rather than a quality knob: textbook
+        /// input nests nowhere near this far, so the cap is only reached where the alternative is
+        /// an uncatchable stack overflow.
+        /// </summary>
+        private const int MaxExtractionDepth = 256;
+
         private readonly List<int> parent = new();
         private readonly Dictionary<ENode, int> hashcons = new();
         private readonly Dictionary<int, HashSet<ENode>> classes = new();
@@ -256,10 +285,19 @@ namespace AngouriMath.Core.Transformations
         {
             id = Find(id);
             if (memo.TryGetValue(id, out var done)) return done;
+            // visiting is the chain currently being expanded, so its size is this call's depth.
+            // The cycle guard below bounds that chain only by the number of distinct classes,
+            // which unions grow past the input expression's own syntactic depth -- and a
+            // StackOverflowException cannot be caught, so exhausting the stack takes the process
+            // down rather than failing one call. Declining to build is the answer the cycle case
+            // already gives, and the same shape as Gruntz's own MaxDepth.
+            if (visiting.Count >= MaxExtractionDepth) return null;
             if (!visiting.Add(id)) return null;              // a cycle; the other node will do
             Entity? best = null;
             var bestCost = double.MaxValue;
-            foreach (var node in NodesOf(id))
+            // Ordered, not as the set enumerates: a tie on cost is settled by whichever candidate
+            // is reached first, and set order is neither specified nor stable across processes.
+            foreach (var node in NodesOf(id).OrderBy(node => node))
             {
                 var parts = new Entity[node.Children.Length];
                 var ok = true;
@@ -277,6 +315,12 @@ namespace AngouriMath.Core.Transformations
                 if (codomains.TryGetValue(node, out var domain)) built = built.WithCodomain(domain);
                 double here;
                 try { here = cost(built); } catch { continue; }
+                // A model that answers NaN has not ranked this candidate, which is what a model
+                // that throws is already saying, so both decline it the same way. Without this,
+                // the comparison below is false for NaN on either side (IEEE-754), so NaN becomes
+                // the incumbent cheapest and every later candidate then beats it unconditionally
+                // -- the answer stops being the cheapest and becomes whichever member came last.
+                if (double.IsNaN(here)) continue;
                 if (here >= bestCost) continue;
                 best = built;
                 bestCost = here;

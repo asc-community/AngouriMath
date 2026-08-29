@@ -613,6 +613,54 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.False(result.Changed);
         }
 
+        /// <summary>
+        /// <see cref="WorkBudget.Steps"/> charged the e-graph's node-count growth, and
+        /// <c>SafeRules</c> is by construction the rules whose
+        /// <see cref="RewriteRuleGrowth"/> does <i>not</i> expand -- so on ordinary input the
+        /// ledger was charged nothing at all, and a budget of zero steps ran the whole sweep to
+        /// saturation and then reported that it had <see cref="BudgetOutcome.Completed"/>.
+        /// Measured before the fix: three of five varied expressions reported exactly that.
+        /// A step here is what it is for Buchberger, FGLM and <c>MatchPattern</c> -- one unit of
+        /// work attempted -- not a node that happened to be created.
+        /// </summary>
+        [Theory]
+        [InlineData("(x + y) / (x - y) + (x - y) / (x + y)")]
+        [InlineData("(a + b + c + d) ^ 3")]
+        [InlineData("sqrt(2) / (sqrt(3) + sqrt(5)) + ln(a * b * c) + sin(x + y) * cos(x - y)")]
+        public void EqualitySaturationStopsWhenItHasNoStepsToSpend(string source)
+        {
+            var starved = new WorkBudget { Steps = 0, Time = TimeSpan.FromSeconds(30) };
+            var transformation = Transformation.EqualitySaturation(starved, CostModel.Default);
+
+            using var recording = BudgetRecording.Start();
+            transformation.Apply(Parse(source));
+
+            var outcome = recording.Outcomes.Single();
+            Assert.False(outcome.Completed);
+            Assert.Equal("steps", outcome.Reason);
+        }
+
+        /// <summary>
+        /// The other half of the same claim: a ceiling that is reached is a ceiling that was
+        /// counting, so what the ledger reports spent must not run away past what was allowed.
+        /// </summary>
+        [Theory]
+        [InlineData(10)]
+        [InlineData(50)]
+        [InlineData(200)]
+        public void EqualitySaturationSpendsNoMoreThanOneStepPastItsCeiling(int steps)
+        {
+            var budget = new WorkBudget { Steps = steps, Time = TimeSpan.FromSeconds(30) };
+            var transformation = Transformation.EqualitySaturation(budget, CostModel.Default);
+
+            using var recording = BudgetRecording.Start();
+            transformation.Apply(Parse("sqrt(2) / (sqrt(3) + sqrt(5)) + ln(a * b * c) + sin(x + y) * cos(x - y)"));
+
+            var outcome = recording.Outcomes.Single();
+            Assert.True(outcome.Steps <= steps + 1,
+                $"a ceiling of {steps} was overshot to {outcome.Steps}");
+        }
+
         [Fact]
         public void EqualitySaturationNeverThrowsUnderAStarvedBudget()
         {

@@ -526,7 +526,7 @@ namespace AngouriMath.Core.Transformations
                     var merged = false;
                     foreach (var id in graph.Classes.ToList())
                     {
-                        if (!ChargeGrowthSinceLastCall()) break;
+                        if (ledger.Exhausted) break;
                         Entity? term = null;
                         var extracted = false;
                         bool TryTerm(out Entity value)
@@ -542,6 +542,13 @@ namespace AngouriMath.Core.Transformations
 
                         foreach (var rule in SafeRules)
                         {
+                            // One step per match attempt, charged before the attempt -- the unit
+                            // Buchberger, FGLM and MatchPattern all charge, and the work this
+                            // loop actually does. Charging the node-count delta alone (below)
+                            // billed nothing on ordinary input, because SafeRules holds only
+                            // rules that do not expand: a budget of zero steps ran this sweep to
+                            // saturation and then reported that it had completed.
+                            if (!ledger.Spend()) break;
                             int other;
                             if (rule.Left.CanEMatch)
                             {
@@ -566,7 +573,14 @@ namespace AngouriMath.Core.Transformations
                             }
                             if (graph.Union(id, other)) merged = true;
                         }
+                        // What the sweep grew, charged after it rather than before the next
+                        // class's, so that the ceiling bounds the growth that has happened.
+                        if (!ChargeGrowthSinceLastCall()) break;
                     }
+                    // Rebuild rescans every node of every class, repeatedly until nothing more
+                    // becomes congruent -- a round of it is work, and it had no ledger
+                    // interaction anywhere in it.
+                    if (!ledger.Spend()) break;
                     graph.Rebuild();
                     if (!merged) saturated = true;
                 }

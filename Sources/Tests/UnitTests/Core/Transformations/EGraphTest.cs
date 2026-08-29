@@ -216,6 +216,109 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.True(ReferenceEquals(Entity.Constant.EulerIntrinsic, extracted));
         }
 
+        /// <summary>
+        /// A cost model that answers <see cref="double.NaN"/> has not ranked the candidate, and
+        /// every IEEE-754 comparison against <see cref="double.NaN"/> is false -- so the
+        /// cheapest-so-far test never declines it. A model that <i>throws</i> is already declined
+        /// by the surrounding <see langword="catch"/>; one that answers
+        /// <see cref="double.NaN"/> is saying the same thing and is declined the same way.
+        /// </summary>
+        [Fact]
+        public void ExtractDeclinesACandidateItsCostModelCannotRank()
+        {
+            var graph = new EGraph();
+            var root = graph.AddEntity("x".ToEntity());
+
+            var extracted = graph.Extract(root, static _ => double.NaN);
+
+            Assert.Null(extracted);
+        }
+
+        /// <summary>
+        /// The consequence of the above when a class holds more than one candidate: an unranked
+        /// candidate that is not declined becomes the incumbent cheapest, and because every later
+        /// comparison against it is false, every candidate after it wins unconditionally --
+        /// <see cref="EGraph.Extract"/> stops answering with the cheapest and answers with
+        /// whichever member the enumeration reached last.
+        /// </summary>
+        [Fact]
+        public void ExtractPicksTheCheapestPastACandidateItCannotRank()
+        {
+            var graph = new EGraph();
+            var cheap = graph.AddEntity("x".ToEntity());
+            graph.Union(cheap, graph.AddEntity("y".ToEntity()));
+            graph.Union(cheap, graph.AddEntity("z".ToEntity()));
+
+            var extracted = graph.Extract(cheap, static candidate => candidate.Stringize() switch
+            {
+                "x" => 1,
+                "y" => double.NaN,
+                _ => 100
+            });
+
+            Assert.True("x".ToEntity().Equals(extracted));
+        }
+
+        /// <summary>
+        /// <see cref="System.Collections.Generic.HashSet{T}"/> enumeration order is an
+        /// unspecified implementation detail, and a string's hash code is randomised per process
+        /// -- so without a defined order over a class's members, an exact cost tie is settled
+        /// differently from one run to the next. <see cref="CostModel"/>'s own remarks say ties
+        /// are common enough to design the models against, and a bounded computation is meant to
+        /// be reproducible given a defined algorithm order. A tie goes to the ordinally-first
+        /// e-node.
+        /// </summary>
+        [Fact]
+        public void ExtractSettlesACostTieOnADefinedOrder()
+        {
+            var graph = new EGraph();
+            var id = graph.AddEntity("b".ToEntity());
+            graph.Union(id, graph.AddEntity("c".ToEntity()));
+            graph.Union(id, graph.AddEntity("a".ToEntity()));
+
+            var extracted = graph.Extract(id, static _ => 1);
+
+            Assert.True("a".ToEntity().Equals(extracted));
+        }
+
+        /// <summary>
+        /// <see cref="EGraph.Extract"/> recurses through an e-class's children, and its cycle
+        /// guard bounds the chain only by the number of distinct classes -- which unions grow
+        /// past the input expression's own syntactic depth. Past the cap it declines to build,
+        /// the same answer the cycle case already gives, rather than exhausting the stack: a
+        /// <see cref="System.StackOverflowException"/> cannot be caught, so it takes the process
+        /// down instead of failing one call.
+        /// </summary>
+        [Fact]
+        public void ExtractDeclinesToBuildPastItsDepthCap()
+        {
+            Entity deep = "x".ToEntity();
+            for (var i = 0; i < 300; i++) deep += 1;
+            var graph = new EGraph();
+            var root = graph.AddEntity(deep);
+
+            var extracted = graph.Extract(root, CostModel.Default.Cost);
+
+            Assert.Null(extracted);
+        }
+
+        /// <summary>
+        /// The cap is a crash guard, not a quality knob: an expression of ordinary depth must
+        /// still extract normally.
+        /// </summary>
+        [Fact]
+        public void ExtractStillBuildsAnExpressionOfOrdinaryDepth()
+        {
+            Entity ordinary = "x".ToEntity();
+            for (var i = 0; i < 30; i++) ordinary += 1;
+            var graph = new EGraph();
+            var root = graph.AddEntity(ordinary);
+
+            var extracted = graph.Extract(root, CostModel.Default.Cost);
+
+            Assert.NotNull(extracted);
+        }
+
         [Fact]
         public void ContainsLeafFindsAMatchingLiteral()
         {
