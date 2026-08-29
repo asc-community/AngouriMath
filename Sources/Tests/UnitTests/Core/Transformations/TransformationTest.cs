@@ -664,6 +664,22 @@ namespace AngouriMath.Tests.Core.Transformations
                 && ReferenceEquals(Entity.Constant.EulerIntrinsic, @base));
         }
 
+        [Fact]
+        public void EqualitySaturationNowDrawsFromMatchingMatchedRules()
+        {
+            // Not a behavioural assertion (that is what every other EqualitySaturation test in
+            // this file already covers) -- a structural one, that the rule source actually
+            // changed. A rule whose Growth this plan's new MatchedRule.Growth can classify, but
+            // whose public RewriteRuleGrowth twin could not, is the shape that proves it: pick
+            // any one rule from Matching.MatchedRules.All with Growth Collects or Rearranges and
+            // confirm EqualitySaturation still finds the corresponding rewrite.
+            var result = Transformation
+                .EqualitySaturation(SmallSaturationBudget, CostModel.Default)
+                .Apply(Parse("x + 0"));
+            Assert.True(result.Changed);
+            Assert.Equal(Parse("x"), result.Output);
+        }
+
         #endregion
     }
 }

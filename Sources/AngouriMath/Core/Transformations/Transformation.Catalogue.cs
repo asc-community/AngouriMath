@@ -402,15 +402,20 @@ namespace AngouriMath.Core.Transformations
         private sealed class EqualitySaturationTransformation : Transformation
         {
             /// <summary>
-            /// Every rule in the registry whose growth is known not to expand -- see the
-            /// remarks on <see cref="EqualitySaturation"/> for why the other two kinds are
-            /// withheld. Computed once: the registry does not change while the process runs.
+            /// Every rule in <see cref="Matching.MatchedRules.All"/> whose
+            /// <see cref="Matching.MatchedRule.Growth"/> is known not to expand and whose
+            /// <see cref="Matching.MatchedRule.Soundness"/> is at least <see cref="Soundness.SoundUnderAssumptions"/>
+            /// -- the real pattern-tree classification (Task 4), not the public registry's
+            /// string-length proxy, and a per-rule <see cref="Soundness"/> check the previous,
+            /// public-surface-sourced version of this field had no way to make (it filtered by
+            /// Growth alone). Computed once: the registry does not change while the process runs.
             /// </summary>
             [ConstantField]
-            private static readonly IReadOnlyList<RewriteRule> SafeRules
-                = RewriteRules.All
+            private static readonly IReadOnlyList<Matching.MatchedRule> SafeRules
+                = Matching.MatchedRules.All
                     .SelectMany(set => set.Rules)
                     .Where(rule => rule.Growth is RewriteRuleGrowth.Collects or RewriteRuleGrowth.Rearranges)
+                    .Where(rule => rule.Soundness is Soundness.Sound or Soundness.SoundUnderAssumptions)
                     .ToList();
 
             private readonly WorkBudget budget;
@@ -451,17 +456,31 @@ namespace AngouriMath.Core.Transformations
                     foreach (var id in graph.Classes.ToList())
                     {
                         if (!ChargeGrowthSinceLastCall()) break;
-                        var term = graph.Extract(id, costModel.Cost);
-                        if (term is null) continue; // nothing in this class could be rebuilt
+                        Entity? term = null;
+                        bool TryTerm(out Entity value)
+                        {
+                            term ??= graph.Extract(id, costModel.Cost);
+                            value = term!;
+                            return term is not null;
+                        }
+
                         foreach (var rule in SafeRules)
                         {
-                            Entity? rewritten;
-                            try { rewritten = rule.TryApply(term); }
-                            catch { continue; }
-                            if (rewritten is null || rewritten.Equals(term)) continue;
                             int other;
-                            try { other = graph.AddEntity(rewritten); }
-                            catch { continue; } // a shape MatchPattern.ConstructNode cannot rebuild
+                            if (rule.Left.CanEMatch)
+                            {
+                                if (!rule.TryEMatchApply(graph, id, costModel.Cost, out other)) continue;
+                            }
+                            else
+                            {
+                                if (!TryTerm(out var t)) continue;
+                                Entity? rewritten;
+                                try { rewritten = rule.TryApply(t); }
+                                catch { continue; }
+                                if (rewritten is null || rewritten.Equals(t)) continue;
+                                try { other = graph.AddEntity(rewritten); }
+                                catch { continue; }
+                            }
                             if (graph.Union(id, other)) merged = true;
                         }
                     }
