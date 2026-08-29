@@ -349,6 +349,9 @@ namespace AngouriMath.Core.Transformations.Matching
         /// <paramref name="bindings"/> -- the e-graph counterpart of <see cref="Match"/>. Only
         /// meaningful where <see cref="CanEMatch"/>; a caller must check that first.
         /// </summary>
+        /// <param name="graph">The e-graph <paramref name="classId"/> belongs to.</param>
+        /// <param name="classId">The e-class to match against.</param>
+        /// <param name="bindings">The bindings so far, extended rather than replaced.</param>
         /// <param name="cost">
         /// Used only where a lazily-extracted witness is needed (an inline <c>where</c> predicate)
         /// -- see the remarks on <c>Docs/Contributing/EMatching.md</c>'s "lazy extraction" section.
@@ -697,10 +700,14 @@ namespace AngouriMath.Core.Transformations.Matching
                     && children.All(child => child.IsBuildable);
                 deterministic = !commutative && children.All(child => child.IsDeterministic);
                 nodeCount = 1 + children.Sum(child => child.NodeCount);
+                canEMatch = children.All(child => child.CanEMatch);
             }
 
             /// <summary>Settled here because it depends on nothing that changes afterwards.</summary>
             private readonly bool buildable;
+
+            /// <summary>Settled here for the same reason as <see cref="buildable"/>.</summary>
+            private readonly bool canEMatch;
 
             /// <summary>
             /// Settled here for the same reason as <see cref="buildable"/>, and it matters more:
@@ -865,6 +872,48 @@ namespace AngouriMath.Core.Transformations.Matching
                 if (Construct(nodeType, parts) is not { } node)
                     return false;
                 built = node;
+                return true;
+            }
+
+            internal override bool CanEMatch => canEMatch;
+
+            internal override IEnumerable<EBindings> EMatch(
+                EGraph graph, int classId, EBindings bindings, Func<Entity, double> cost)
+            {
+                foreach (var node in graph.NodesOf(classId))
+                {
+                    if (node.Op != nodeType.Name || node.Children.Length != children.Length) continue;
+                    foreach (var solution in EMatchInOrder(graph, node.Children, bindings, 0, cost))
+                        yield return solution;
+                    if (!commutative) continue;
+                    var swapped = new[] { node.Children[1], node.Children[0] };
+                    foreach (var solution in EMatchInOrder(graph, swapped, bindings, 0, cost))
+                        yield return solution;
+                }
+            }
+
+            private IEnumerable<EBindings> EMatchInOrder(
+                EGraph graph, int[] actual, EBindings bindings, int index, Func<Entity, double> cost)
+            {
+                if (index == children.Length)
+                {
+                    yield return bindings;
+                    yield break;
+                }
+                foreach (var head in children[index].EMatch(graph, actual[index], bindings, cost))
+                    foreach (var rest in EMatchInOrder(graph, actual, head, index + 1, cost))
+                        yield return rest;
+            }
+
+            internal override bool ETryBuild(
+                EGraph graph, EBindings bindings, Func<Entity, double> cost, out int classId)
+            {
+                classId = 0;
+                var parts = new int[children.Length];
+                for (var i = 0; i < children.Length; i++)
+                    if (!children[i].ETryBuild(graph, bindings, cost, out parts[i]))
+                        return false;
+                classId = graph.Add(nodeType.Name, parts);
                 return true;
             }
         }

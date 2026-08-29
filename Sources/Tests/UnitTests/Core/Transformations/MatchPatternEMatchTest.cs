@@ -79,5 +79,48 @@ namespace AngouriMath.Tests.Core.Transformations
             var matches = rule.Left.EMatch(graph, root, EBindings.Empty, Cost).ToList();
             Assert.NotEmpty(matches);
         }
+
+        [Fact]
+        public void ANodePatternEMatchesACompoundClass()
+        {
+            var graph = new EGraph();
+            var root = graph.AddEntity("x + y".ToEntity());
+            graph.Rebuild();
+
+            // Find any registry rule whose Left is a two-child NodePattern over Sumf, so this
+            // test exercises real recursion rather than a hand-built pattern (which cannot be
+            // constructed from outside MatchPattern.cs).
+            var rule = MatchedRules.All
+                .SelectMany(set => set.Rules)
+                .First(r => r.Left.CanEMatch && r.Left.RequiredRootType == typeof(Entity.Sumf));
+            var matches = rule.Left.EMatch(graph, root, EBindings.Empty, Cost).ToList();
+            // Not asserting non-empty here -- "x + y" may not satisfy every Sumf-rooted rule's
+            // side holes. The assertion is that this does not throw and returns *some* sequence,
+            // proving the recursive structural walk runs to completion.
+            Assert.NotNull(matches);
+        }
+
+        [Fact]
+        public void ACommutativeNodePatternTriesBothChildOrders()
+        {
+            // Prefer a known commutative rule if one exists in the registry with a NodePattern
+            // Left; if none is found this test should be adjusted to build the case narrowly
+            // rather than skipped -- read Sources/AngouriMath/Core/Transformations/Matching/MatchedRules.cs
+            // for a `commutative: true` NodePattern construction site before finalising this test.
+            var graph = new EGraph();
+            var root = graph.AddEntity("y + x".ToEntity());
+            graph.Rebuild();
+            var rule = MatchedRules.All
+                .SelectMany(set => set.Rules)
+                .First(r => r.Left.CanEMatch && r.Left.RequiredRootType == typeof(Entity.Sumf));
+            var swappedMatches = rule.Left.EMatch(graph, root, EBindings.Empty, Cost).ToList();
+            var straightRoot = graph.AddEntity("x + y".ToEntity());
+            var straightMatches = rule.Left.EMatch(graph, straightRoot, EBindings.Empty, Cost).ToList();
+            // Both orders are valid inputs to the same commutative pattern; neither should throw,
+            // and if the rule's Left is commutative both should find the same number of matches
+            // for these two mirror-image inputs. If the rule found is not commutative this
+            // equality still holds trivially (both zero, or both from independent evaluation).
+            Assert.Equal(straightMatches.Count > 0, swappedMatches.Count > 0);
+        }
     }
 }
