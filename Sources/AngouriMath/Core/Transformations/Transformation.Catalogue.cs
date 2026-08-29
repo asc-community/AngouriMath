@@ -570,6 +570,11 @@ namespace AngouriMath.Core.Transformations
                         // free, and a list of rules has to be told; without it every rule in
                         // SafeRules ran a full pattern match against every class of every pass,
                         // and the large majority of those could not have matched.
+                        //
+                        // A union later in this same sweep can add a node type to the class that
+                        // this set does not have, so a rule can be skipped in a pass where it had
+                        // just become applicable. That costs nothing: a union is exactly what sets
+                        // `merged`, so there is another pass, and the set is gathered again there.
                         var held = new HashSet<Type>();
                         foreach (var node in graph.NodesOf(id)) held.Add(EGraph.RuntimeType(node));
 
@@ -590,10 +595,21 @@ namespace AngouriMath.Core.Transformations
                         {
                             // Before the charge, because a rule this skips was never attempted:
                             // a step is a match attempt, and a type that cannot match is not one.
-                            if (rule.Left.RequiredRootType is { } required
-                                && !held.Contains(required)
-                                && !held.Any(type => required.IsAssignableFrom(type)))
-                                continue;
+                            // Written as a loop rather than as `held.Any(t => ...)`: the lambda
+                            // would capture `required` and so allocate a closure every time the
+                            // exact-type test missed, which is most rules of most classes -- and
+                            // paying an allocation to avoid a pattern match is not a pre-filter.
+                            if (rule.Left.RequiredRootType is { } required && !held.Contains(required))
+                            {
+                                var reachable = false;
+                                foreach (var type in held)
+                                    if (required.IsAssignableFrom(type))
+                                    {
+                                        reachable = true;
+                                        break;
+                                    }
+                                if (!reachable) continue;
+                            }
 
                             // One step per match attempt, charged before the attempt -- the unit
                             // Buchberger, FGLM and MatchPattern all charge, and the work this
