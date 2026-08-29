@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AngouriMath.Core.Transformations;
 
 namespace AngouriMath.Core.Transformations.Matching
 {
@@ -336,6 +337,34 @@ namespace AngouriMath.Core.Transformations.Matching
         internal abstract bool TryBuild(Bindings bindings, out Entity built);
 
         /// <summary>
+        /// Whether this pattern can match an e-class directly, without ever materialising a term
+        /// from it. Structural and independent of any bindings -- computed once per pattern, not
+        /// per attempt. False only for <see cref="GatheredPattern"/> and for any
+        /// <see cref="NodePattern"/> containing one.
+        /// </summary>
+        internal abstract bool CanEMatch { get; }
+
+        /// <summary>
+        /// Every way this pattern can match the e-class <paramref name="classId"/>, extending
+        /// <paramref name="bindings"/> -- the e-graph counterpart of <see cref="Match"/>. Only
+        /// meaningful where <see cref="CanEMatch"/>; a caller must check that first.
+        /// </summary>
+        /// <param name="cost">
+        /// Used only where a lazily-extracted witness is needed (an inline <c>where</c> predicate)
+        /// -- see the remarks on <c>Docs/Contributing/EMatching.md</c>'s "lazy extraction" section.
+        /// </param>
+        internal abstract IEnumerable<EBindings> EMatch(
+            EGraph graph, int classId, EBindings bindings, Func<Entity, double> cost);
+
+        /// <summary>
+        /// The e-class this pattern stands for under <paramref name="bindings"/>, built without
+        /// materialising a term -- the e-graph counterpart of <see cref="TryBuild"/>. Only
+        /// meaningful where <see cref="CanEMatch"/>.
+        /// </summary>
+        internal abstract bool ETryBuild(
+            EGraph graph, EBindings bindings, Func<Entity, double> cost, out int classId);
+
+        /// <summary>
         /// Builds a node of <paramref name="nodeType"/> over <paramref name="children"/>, or
         /// <see langword="null"/> where this cannot -- see the remarks on <see cref="Construct"/>,
         /// which this exposes. <see cref="EGraph"/> uses this to rebuild an extracted e-node's
@@ -594,6 +623,21 @@ namespace AngouriMath.Core.Transformations.Matching
             internal override bool TryBuild(Bindings bindings, out Entity built)
             {
                 built = value;
+                return true;
+            }
+
+            internal override bool CanEMatch => true;
+
+            internal override IEnumerable<EBindings> EMatch(
+                EGraph graph, int classId, EBindings bindings, Func<Entity, double> cost)
+            {
+                if (graph.ContainsLeaf(classId, value)) yield return bindings;
+            }
+
+            internal override bool ETryBuild(
+                EGraph graph, EBindings bindings, Func<Entity, double> cost, out int classId)
+            {
+                classId = graph.AddEntity(value);
                 return true;
             }
         }
@@ -936,6 +980,18 @@ namespace AngouriMath.Core.Transformations.Matching
                 built = IsIdentity(rest) ? chain! : Combine(chain!, rest);
                 return true;
             }
+
+            internal override bool CanEMatch => false;
+
+            internal override IEnumerable<EBindings> EMatch(
+                EGraph graph, int classId, EBindings bindings, Func<Entity, double> cost)
+                => throw new NotSupportedException(
+                    $"{nameof(GatheredPattern)} does not e-match; check {nameof(CanEMatch)} first.");
+
+            internal override bool ETryBuild(
+                EGraph graph, EBindings bindings, Func<Entity, double> cost, out int classId)
+                => throw new NotSupportedException(
+                    $"{nameof(GatheredPattern)} does not e-match; check {nameof(CanEMatch)} first.");
 
             private Entity Combine(Entity left, Entity right)
                 => OverSum ? new Entity.Sumf(left, right) : new Entity.Mulf(left, right);

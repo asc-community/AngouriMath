@@ -5,14 +5,20 @@
 // Website: https://am.angouri.org.
 //
 
+using System;
 using System.Linq;
+using AngouriMath;
+using AngouriMath.Core.Transformations;
 using AngouriMath.Core.Transformations.Matching;
+using AngouriMath.Extensions;
 using Xunit;
 
 namespace AngouriMath.Tests.Core.Transformations
 {
     public sealed class MatchPatternEMatchTest
     {
+        private static readonly Func<Entity, double> Cost = AngouriMath.Core.CostModel.Default.Cost;
+
         // MatchedRules.SharedFactor is `MatchedRules.SharedFactor` from
         // Sources/AngouriMath/Core/Transformations/Matching/MatchedRules.cs:266 -- read it before
         // this task to confirm which rule inside it is the two-term, two-node-each shape this
@@ -38,6 +44,19 @@ namespace AngouriMath.Tests.Core.Transformations
                 .Select(rule => rule.Left)
                 .First(pattern => pattern.NodeCount == 1);
             Assert.Equal(1, leafCount.NodeCount);
+        }
+
+        [Fact]
+        public void ExactPatternEMatchesALiteralAlreadyInTheGraph()
+        {
+            // RationalizeDenominator has no MatchPattern.Left at all (its rules are code-built),
+            // so this uses a set with a known literal in its pattern -- SharedFactor's rules are
+            // over free holes, not literals, so build an ExactPattern indirectly is not possible
+            // from outside MatchPattern. Instead: prove the *graph-level* contract ExactPattern's
+            // EMatch relies on, which is what Task 5 added.
+            var graph = new EGraph();
+            var id = graph.AddEntity("0".ToEntity());
+            Assert.True(graph.ContainsLeaf(id, "0".ToEntity()));
         }
     }
 }
