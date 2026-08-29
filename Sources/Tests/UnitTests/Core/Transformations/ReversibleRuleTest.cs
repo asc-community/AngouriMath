@@ -8,7 +8,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using AngouriMath.Core.Transformations;
 using AngouriMath.Core.Transformations.Matching;
 using AngouriMath.Extensions;
@@ -46,29 +45,7 @@ namespace AngouriMath.Tests.Core.Transformations
         /// building a <c>Cosecantf</c>, which matched, built nothing, and was indistinguishable
         /// at run time from a rule that did not apply.
         /// </remarks>
-        private static IEnumerable<MatchedRuleSet> DataRuleSets()
-        {
-            const BindingFlags Any = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
-            var sets = typeof(MatchedRules)
-                .GetProperties(Any)
-                .Where(property => property.PropertyType == typeof(MatchedRuleSet))
-                .Select(property => (MatchedRuleSet)property.GetValue(null)!);
-
-            // A set parameterised by a sort level is a *method*, not a property, so enumerating
-            // properties alone stopped covering the file the moment the first one was written --
-            // the same failure as the hand-written list this replaced, one shape further along.
-            // Each is asked for at every level, because the level is what its rules close over.
-            var factories = typeof(MatchedRules)
-                .GetMethods(Any)
-                .Where(method => method.ReturnType == typeof(MatchedRuleSet)
-                                 && method.GetParameters() is { Length: 1 } only
-                                 && only[0].ParameterType == typeof(TreeAnalyzer.SortLevel));
-            foreach (var factory in factories)
-                foreach (var level in Enum.GetValues(typeof(TreeAnalyzer.SortLevel)))
-                    sets = sets.Append((MatchedRuleSet)factory.Invoke(null, new[] { level })!);
-
-            return sets.OrderBy(set => set.Name, StringComparer.Ordinal);
-        }
+        private static IEnumerable<MatchedRuleSet> DataRuleSets() => MatchedRules.All;
 
         private static readonly string[] Leaves = { "x", "y", "z", "2", "-1", "1/2", "1", "0" };
 

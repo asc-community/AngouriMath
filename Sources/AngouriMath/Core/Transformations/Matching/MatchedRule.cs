@@ -45,7 +45,7 @@ namespace AngouriMath.Core.Transformations.Matching
             Soundness soundness,
             Func<Bindings, bool>? when = null,
             [CallerLineNumber] int line = 0)
-            : this(name, left, null, right ?? throw new ArgumentNullException(nameof(right)), soundness, when, line)
+            : this(name, left, null, right ?? throw new ArgumentNullException(nameof(right)), soundness, null, when, line)
         {
             // A name the replacement reads and the pattern never binds is a typo, and it is a
             // typo that would otherwise show up as a rule that silently never fires. Only a
@@ -74,11 +74,12 @@ namespace AngouriMath.Core.Transformations.Matching
             MatchPattern left,
             Func<Bindings, Entity> right,
             Soundness soundness,
+            RewriteRuleGrowth? growth = null,
             Func<Bindings, bool>? when = null,
             [CallerLineNumber] int line = 0)
             : this(name, left, right is null ? null : (_, bound) => right(bound),
                    right is null ? throw new ArgumentNullException(nameof(right)) : null,
-                   soundness, when, line)
+                   soundness, growth, when, line)
         {
         }
 
@@ -107,9 +108,11 @@ namespace AngouriMath.Core.Transformations.Matching
             MatchPattern left,
             Func<Entity, Bindings, Entity> right,
             Soundness soundness,
+            RewriteRuleGrowth? growth = null,
             Func<Bindings, bool>? when = null,
             [CallerLineNumber] int line = 0)
-            : this(name, left, right ?? throw new ArgumentNullException(nameof(right)), null, soundness, when, line)
+            : this(name, left, right ?? throw new ArgumentNullException(nameof(right)), null,
+                   soundness, growth, when, line)
         {
         }
 
@@ -119,6 +122,7 @@ namespace AngouriMath.Core.Transformations.Matching
             Func<Entity, Bindings, Entity>? rightCode,
             MatchPattern? rightPattern,
             Soundness soundness,
+            RewriteRuleGrowth? declaredGrowth,
             Func<Bindings, bool>? when,
             int line)
         {
@@ -133,6 +137,7 @@ namespace AngouriMath.Core.Transformations.Matching
             // afterwards, and a lazily cached enum is a field wider than a word: two threads
             // arriving together could read a half-written one, where a reference cannot tear.
             Reversal = Classify();
+            Growth = ClassifyGrowth(declaredGrowth);
         }
 
         private readonly Func<Entity, Bindings, Entity>? right;
@@ -222,6 +227,65 @@ namespace AngouriMath.Core.Transformations.Matching
         }
 
         /// <summary>
+        /// The e-class <see cref="TryApply"/> would produce, found by matching against
+        /// <paramref name="classId"/> directly rather than a materialised term. Caller must check
+        /// <see cref="MatchPattern.CanEMatch"/> on <see cref="Left"/> first -- this throws rather
+        /// than silently falling back, so a caller cannot forget the check and get the old,
+        /// slower path without knowing it.
+        /// </summary>
+        internal bool TryEMatchApply(
+            EGraph graph, int classId, Func<Entity, double> cost, out int resultClassId)
+        {
+            if (!Left.CanEMatch)
+                throw new InvalidOperationException(
+                    $"'{Name}' cannot e-match; check {nameof(Left)}.{nameof(MatchPattern.CanEMatch)} first.");
+
+            resultClassId = 0;
+            foreach (var ebindings in Left.EMatch(graph, classId, EBindings.Empty, cost))
+            {
+                Bindings? entityBindings = null;
+                bool TryEntityBindings(out Bindings result)
+                {
+                    if (entityBindings is { } already) { result = already; return true; }
+                    var built = Bindings.Empty;
+                    foreach (var boundName in Left.BoundNames)
+                    {
+                        if (!ebindings.TryGet(boundName, out var boundClass)) { result = built; return false; }
+                        var witness = graph.Extract(boundClass, cost);
+                        if (witness is null) { result = built; return false; }
+                        built = built.With(boundName, witness);
+                    }
+                    entityBindings = built;
+                    result = built;
+                    return true;
+                }
+
+                if (when is not null)
+                {
+                    if (!TryEntityBindings(out var forWhen)) continue;
+                    if (!when(forWhen)) continue;
+                }
+
+                if (Right is { } right && right.CanEMatch)
+                {
+                    if (right.ETryBuild(graph, ebindings, cost, out resultClassId)) return true;
+                    continue;
+                }
+
+                if (!TryEntityBindings(out var forBuild)) continue;
+                var matched = graph.Extract(classId, cost);
+                if (matched is null) continue;
+                if (Build(matched, forBuild) is { } rewritten)
+                {
+                    try { resultClassId = graph.AddEntity(rewritten); }
+                    catch { continue; }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
         /// The replacement under these bindings, or <see langword="null"/> where it cannot be
         /// built — which is the rule declining rather than an error, whichever form the
         /// right-hand side takes.
@@ -257,6 +321,27 @@ namespace AngouriMath.Core.Transformations.Matching
             if (!Left.IsBuildable || !Right.IsBuildable)
                 return RuleReversal.PatternCannotBeBuilt;
             return RuleReversal.Reversible;
+        }
+
+        /// <summary>
+        /// Whether this rule's replacement is smaller, the same size, or larger than its pattern.
+        /// Computed exactly from <see cref="MatchPattern.NodeCount"/> where the replacement is a
+        /// pattern; <b>declared</b>, not derived, where it is code, the same way
+        /// <see cref="Soundness"/> is declared rather than derived — a code-built replacement has no
+        /// pattern tree to count nodes on, so the only source of truth is whoever wrote the rule and
+        /// can justify the claim. Undeclared code-built rules stay <see cref="RewriteRuleGrowth.Unknown"/>,
+        /// which is the honest default: not proven safe is not the same as safe.
+        /// </summary>
+        internal RewriteRuleGrowth Growth { get; }
+
+        private RewriteRuleGrowth ClassifyGrowth(RewriteRuleGrowth? declared)
+        {
+            if (Right is null) return declared ?? RewriteRuleGrowth.Unknown;
+            var leftSize = Left.NodeCount;
+            var rightSize = Right.NodeCount;
+            return rightSize < leftSize ? RewriteRuleGrowth.Collects
+                 : rightSize > leftSize ? RewriteRuleGrowth.Expands
+                 : RewriteRuleGrowth.Rearranges;
         }
 
         /// <summary>

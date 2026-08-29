@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AngouriMath.Core.Transformations;
 
 namespace AngouriMath.Core.Transformations.Matching
 {
@@ -73,6 +74,44 @@ namespace AngouriMath.Core.Transformations.Matching
 
         /// <summary>A new set with one more name bound, sharing this one as its tail.</summary>
         internal Bindings With(string name, Entity value) => new(this, name, value);
+    }
+
+    /// <summary>
+    /// The e-graph counterpart of <see cref="Bindings"/>: a set of named holes, each standing for
+    /// an e-class id rather than an <see cref="Entity"/>. Same cons-list shape, for the same reason
+    /// -- see <see cref="Bindings"/>'s own remarks -- plus one concrete win it gets for free: a name
+    /// bound twice (<c>x - x -&gt; 0</c>'s repeated <c>x</c>) becomes an O(1) class-id comparison
+    /// instead of an <see cref="Entity.Equals(Entity)"/> call.
+    /// </summary>
+    internal sealed class EBindings
+    {
+        private readonly EBindings? tail;
+        private readonly string? name;
+        private readonly int value;
+
+        internal static EBindings Empty { get; } = new(null, null, 0);
+
+        private EBindings(EBindings? tail, string? name, int value)
+        {
+            this.tail = tail;
+            this.name = name;
+            this.value = value;
+        }
+
+        internal bool TryGet(string wanted, out int found)
+        {
+            for (var at = this; at is not null; at = at.tail)
+                if (at.name == wanted)
+                {
+                    found = at.value;
+                    return true;
+                }
+            found = 0;
+            return false;
+        }
+
+        /// <summary>A new set with one more name bound, sharing this one as its tail.</summary>
+        internal EBindings With(string name, int value) => new(this, name, value);
     }
 
     /// <summary>
@@ -268,6 +307,13 @@ namespace AngouriMath.Core.Transformations.Matching
         internal abstract bool IsBuildable { get; }
 
         /// <summary>
+        /// How many nodes this pattern is, counted structurally -- used to classify a
+        /// <see cref="MatchedRule"/>'s <see cref="RewriteRuleGrowth"/> exactly, in place of the
+        /// public registry's string-length proxy over rendered pattern text.
+        /// </summary>
+        internal abstract int NodeCount { get; }
+
+        /// <summary>
         /// The expression this pattern stands for under <paramref name="bindings"/>, or
         /// <see langword="false"/> where those bindings do not satisfy it.
         /// </summary>
@@ -289,6 +335,37 @@ namespace AngouriMath.Core.Transformations.Matching
         /// </para>
         /// </remarks>
         internal abstract bool TryBuild(Bindings bindings, out Entity built);
+
+        /// <summary>
+        /// Whether this pattern can match an e-class directly, without ever materialising a term
+        /// from it. Structural and independent of any bindings -- computed once per pattern, not
+        /// per attempt. False only for <see cref="GatheredPattern"/> and for any
+        /// <see cref="NodePattern"/> containing one.
+        /// </summary>
+        internal abstract bool CanEMatch { get; }
+
+        /// <summary>
+        /// Every way this pattern can match the e-class <paramref name="classId"/>, extending
+        /// <paramref name="bindings"/> -- the e-graph counterpart of <see cref="Match"/>. Only
+        /// meaningful where <see cref="CanEMatch"/>; a caller must check that first.
+        /// </summary>
+        /// <param name="graph">The e-graph <paramref name="classId"/> belongs to.</param>
+        /// <param name="classId">The e-class to match against.</param>
+        /// <param name="bindings">The bindings so far, extended rather than replaced.</param>
+        /// <param name="cost">
+        /// Used only where a lazily-extracted witness is needed (an inline <c>where</c> predicate)
+        /// -- see the remarks on <c>Docs/Contributing/EMatching.md</c>'s "lazy extraction" section.
+        /// </param>
+        internal abstract IEnumerable<EBindings> EMatch(
+            EGraph graph, int classId, EBindings bindings, Func<Entity, double> cost);
+
+        /// <summary>
+        /// The e-class this pattern stands for under <paramref name="bindings"/>, built without
+        /// materialising a term -- the e-graph counterpart of <see cref="TryBuild"/>. Only
+        /// meaningful where <see cref="CanEMatch"/>.
+        /// </summary>
+        internal abstract bool ETryBuild(
+            EGraph graph, EBindings bindings, Func<Entity, double> cost, out int classId);
 
         /// <summary>
         /// Builds a node of <paramref name="nodeType"/> over <paramref name="children"/>, or
@@ -495,6 +572,8 @@ namespace AngouriMath.Core.Transformations.Matching
 
             internal override bool IsBuildable => true;
 
+            internal override int NodeCount => 1;
+
             internal override bool TryBuild(Bindings bindings, out Entity built)
             {
                 built = null!;
@@ -505,6 +584,53 @@ namespace AngouriMath.Core.Transformations.Matching
                 if (required is not null && !required.IsInstanceOfType(value)) return false;
                 if (where is not null && !where(value)) return false;
                 built = value;
+                return true;
+            }
+
+            internal override bool CanEMatch => true;
+
+            internal override IEnumerable<EBindings> EMatch(
+                EGraph graph, int classId, EBindings bindings, Func<Entity, double> cost)
+            {
+                if (bindings.TryGet(name, out var already))
+                {
+                    if (graph.Find(already) == graph.Find(classId)) yield return bindings;
+                    yield break;
+                }
+                var eligible = required is null
+                    || graph.NodesOf(classId).Any(node => required.IsAssignableFrom(EGraph.RuntimeType(node)));
+                if (!eligible) yield break;
+                if (where is not null)
+                {
+                    var witness = graph.Extract(classId, cost);
+                    // The same guard ETryBuild applies before calling `where`: `where` is
+                    // compiled from `Any<T>(name, where)` as an unguarded cast to T (see that
+                    // factory, above), so a witness the eligibility check above did not itself
+                    // require to be of type T -- the cheapest overall representative of the
+                    // class, not the cheapest one of type T -- would throw InvalidCastException
+                    // rather than simply fail to match. Declining here is a missed match, which
+                    // is a legitimate answer; a crash is not.
+                    if (witness is null
+                        || (required is not null && !required.IsInstanceOfType(witness))
+                        || !where(witness))
+                        yield break;
+                }
+                yield return bindings.With(name, classId);
+            }
+
+            internal override bool ETryBuild(
+                EGraph graph, EBindings bindings, Func<Entity, double> cost, out int classId)
+            {
+                classId = 0;
+                if (!bindings.TryGet(name, out var bound)) return false;
+                if (required is not null || where is not null)
+                {
+                    var witness = graph.Extract(bound, cost);
+                    if (witness is null) return false;
+                    if (required is not null && !required.IsInstanceOfType(witness)) return false;
+                    if (where is not null && !where(witness)) return false;
+                }
+                classId = bound;
                 return true;
             }
         }
@@ -542,9 +668,26 @@ namespace AngouriMath.Core.Transformations.Matching
 
             internal override bool IsBuildable => true;
 
+            internal override int NodeCount => 1;
+
             internal override bool TryBuild(Bindings bindings, out Entity built)
             {
                 built = value;
+                return true;
+            }
+
+            internal override bool CanEMatch => true;
+
+            internal override IEnumerable<EBindings> EMatch(
+                EGraph graph, int classId, EBindings bindings, Func<Entity, double> cost)
+            {
+                if (graph.ContainsLeaf(classId, value)) yield return bindings;
+            }
+
+            internal override bool ETryBuild(
+                EGraph graph, EBindings bindings, Func<Entity, double> cost, out int classId)
+            {
+                classId = graph.AddEntity(value);
                 return true;
             }
         }
@@ -566,10 +709,15 @@ namespace AngouriMath.Core.Transformations.Matching
                 buildable = CanConstruct(nodeType, children.Length)
                     && children.All(child => child.IsBuildable);
                 deterministic = !commutative && children.All(child => child.IsDeterministic);
+                nodeCount = 1 + children.Sum(child => child.NodeCount);
+                canEMatch = children.All(child => child.CanEMatch);
             }
 
             /// <summary>Settled here because it depends on nothing that changes afterwards.</summary>
             private readonly bool buildable;
+
+            /// <summary>Settled here for the same reason as <see cref="buildable"/>.</summary>
+            private readonly bool canEMatch;
 
             /// <summary>
             /// Settled here for the same reason as <see cref="buildable"/>, and it matters more:
@@ -580,6 +728,11 @@ namespace AngouriMath.Core.Transformations.Matching
             /// a rule that does not fire.
             /// </summary>
             private readonly bool deterministic;
+
+            /// <summary>Settled here for the same reason as <see cref="buildable"/>.</summary>
+            private readonly int nodeCount;
+
+            internal override int NodeCount => nodeCount;
 
             internal override IEnumerable<string> BoundNames => children.SelectMany(c => c.BoundNames);
 
@@ -731,6 +884,48 @@ namespace AngouriMath.Core.Transformations.Matching
                 built = node;
                 return true;
             }
+
+            internal override bool CanEMatch => canEMatch;
+
+            internal override IEnumerable<EBindings> EMatch(
+                EGraph graph, int classId, EBindings bindings, Func<Entity, double> cost)
+            {
+                foreach (var node in graph.NodesOf(classId))
+                {
+                    if (node.Op != nodeType.Name || node.Children.Length != children.Length) continue;
+                    foreach (var solution in EMatchInOrder(graph, node.Children, bindings, 0, cost))
+                        yield return solution;
+                    if (!commutative) continue;
+                    var swapped = new[] { node.Children[1], node.Children[0] };
+                    foreach (var solution in EMatchInOrder(graph, swapped, bindings, 0, cost))
+                        yield return solution;
+                }
+            }
+
+            private IEnumerable<EBindings> EMatchInOrder(
+                EGraph graph, int[] actual, EBindings bindings, int index, Func<Entity, double> cost)
+            {
+                if (index == children.Length)
+                {
+                    yield return bindings;
+                    yield break;
+                }
+                foreach (var head in children[index].EMatch(graph, actual[index], bindings, cost))
+                    foreach (var rest in EMatchInOrder(graph, actual, head, index + 1, cost))
+                        yield return rest;
+            }
+
+            internal override bool ETryBuild(
+                EGraph graph, EBindings bindings, Func<Entity, double> cost, out int classId)
+            {
+                classId = 0;
+                var parts = new int[children.Length];
+                for (var i = 0; i < children.Length; i++)
+                    if (!children[i].ETryBuild(graph, bindings, cost, out parts[i]))
+                        return false;
+                classId = graph.Add(nodeType.Name, parts);
+                return true;
+            }
         }
 
         private sealed class GatheredPattern : MatchPattern
@@ -751,7 +946,14 @@ namespace AngouriMath.Core.Transformations.Matching
                 this.nodeType = nodeType;
                 this.restName = restName ?? throw new ArgumentNullException(nameof(restName));
                 this.parts = parts;
+                // An approximation, not the true size: the "rest" this gathers is open-ended and
+                // its actual length is only known once a match commits to one. Counted as the
+                // one node a single wildcard would be. See this plan's Global Constraints for why
+                // this is an accepted, bounded imprecision rather than a defect to fix here.
+                NodeCount = 1 + parts.Sum(part => part.NodeCount) + 1;
             }
+
+            internal override int NodeCount { get; }
 
             private bool OverSum => nodeType == typeof(Entity.Sumf);
 
@@ -874,6 +1076,18 @@ namespace AngouriMath.Core.Transformations.Matching
                 built = IsIdentity(rest) ? chain! : Combine(chain!, rest);
                 return true;
             }
+
+            internal override bool CanEMatch => false;
+
+            internal override IEnumerable<EBindings> EMatch(
+                EGraph graph, int classId, EBindings bindings, Func<Entity, double> cost)
+                => throw new NotSupportedException(
+                    $"{nameof(GatheredPattern)} does not e-match; check {nameof(CanEMatch)} first.");
+
+            internal override bool ETryBuild(
+                EGraph graph, EBindings bindings, Func<Entity, double> cost, out int classId)
+                => throw new NotSupportedException(
+                    $"{nameof(GatheredPattern)} does not e-match; check {nameof(CanEMatch)} first.");
 
             private Entity Combine(Entity left, Entity right)
                 => OverSum ? new Entity.Sumf(left, right) : new Entity.Mulf(left, right);

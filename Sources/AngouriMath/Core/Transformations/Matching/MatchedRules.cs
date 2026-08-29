@@ -1011,6 +1011,9 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Notf>(MatchPattern.Any("b"))),
                 bound => !(bound["a"] | bound["b"]),
                 Soundness.Sound,
+                // Two negations become one, and nothing else moves: three nodes around `a` and
+                // `b` become two.
+                growth: RewriteRuleGrowth.Collects,
                 when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])),
 
             new MatchedRule(
@@ -1020,6 +1023,9 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Notf>(MatchPattern.Any("b"))),
                 bound => !(bound["a"] & bound["b"]),
                 Soundness.Sound,
+                // Two negations become one, and nothing else moves: three nodes around `a` and
+                // `b` become two.
+                growth: RewriteRuleGrowth.Collects,
                 when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])),
 
             // Excluded middle, either way round. Before the implication rule below, which would
@@ -1041,6 +1047,9 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Notf>(MatchPattern.Any("a")), MatchPattern.Any("b")),
                 bound => bound["a"].Implies(bound["b"]),
                 Soundness.Sound,
+                // The `not` disappears and the `or` becomes an `->`: the same `a` and `b` under
+                // one node instead of two.
+                growth: RewriteRuleGrowth.Collects,
                 when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])),
 
             // Idempotence
@@ -1049,6 +1058,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Andf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 bound => bound["a"],
                 Soundness.Sound,
+                // The replacement is the matched node's own child, unconditionally.
+                growth: RewriteRuleGrowth.Collects,
                 when: bound => Functions.Patterns.IsLogic(bound["a"])),
 
             new MatchedRule(
@@ -1056,6 +1067,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Orf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 bound => bound["a"],
                 Soundness.Sound,
+                // The replacement is the matched node's own child, unconditionally.
+                growth: RewriteRuleGrowth.Collects,
                 when: bound => Functions.Patterns.IsLogic(bound["a"])),
 
             new MatchedRule(
@@ -1063,6 +1076,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Impliesf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 bound => Entity.Boolean.True,
                 Soundness.Sound,
+                // One leaf, from a node that had two copies of `a` under it.
+                growth: RewriteRuleGrowth.Collects,
                 when: bound => Functions.Patterns.IsLogic(bound["a"])),
 
             new MatchedRule(
@@ -1077,6 +1092,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Notf>(MatchPattern.Node<Notf>(MatchPattern.Any("a"))),
                 bound => bound["a"],
                 Soundness.Sound,
+                // The replacement is the matched node's own grandchild, unconditionally.
+                growth: RewriteRuleGrowth.Collects,
                 when: bound => Functions.Patterns.IsLogic(bound["a"])),
 
             // Constants, after the implication rule above: `not x or True` is `x -> True`.
@@ -1127,6 +1144,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Commutative<Andf>(MatchPattern.Any("a"), MatchPattern.Any("_rest"))),
                 bound => bound["a"],
                 Soundness.Sound,
+                // The replacement is one of the matched node's own operands, unconditionally.
+                growth: RewriteRuleGrowth.Collects,
                 when: bound => Functions.Patterns.IsLogic(bound["a"])),
 
             new MatchedRule(
@@ -1136,6 +1155,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Commutative<Orf>(MatchPattern.Any("a"), MatchPattern.Any("_rest"))),
                 bound => bound["a"],
                 Soundness.Sound,
+                // The replacement is one of the matched node's own operands, unconditionally.
+                growth: RewriteRuleGrowth.Collects,
                 when: bound => Functions.Patterns.IsLogic(bound["a"])),
 
             new MatchedRule(
@@ -1146,6 +1167,9 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Node<Notf>(MatchPattern.Any("a")), MatchPattern.Any("b"))),
                 bound => bound["a"] | bound["b"],
                 Soundness.Sound,
+                // The second copy of `a` and its `not` and the inner `and` all go; `a` and `b`
+                // are left under the one `or`.
+                growth: RewriteRuleGrowth.Collects,
                 when: bound => Functions.Patterns.IsLogic(bound["a"])),
 
             new MatchedRule(
@@ -1156,6 +1180,9 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Node<Notf>(MatchPattern.Any("a")), MatchPattern.Any("b"))),
                 bound => bound["a"] & bound["b"],
                 Soundness.Sound,
+                // The second copy of `a` and its `not` and the inner `or` all go; `a` and `b`
+                // are left under the one `and`.
+                growth: RewriteRuleGrowth.Collects,
                 when: bound => Functions.Patterns.IsLogic(bound["a"])),
 
             // Exclusive disjunction, written four ways in the switch.
@@ -1168,6 +1195,9 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any("b"), MatchPattern.Node<Notf>(MatchPattern.Any("a")))),
                 bound => bound["a"] ^ bound["b"],
                 Soundness.Sound,
+                // Two `and`s, two `not`s and the duplicate `a` and `b` collapse into one `xor`
+                // over one copy of each.
+                growth: RewriteRuleGrowth.Collects,
                 when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])),
 
             // Contraposition
@@ -1178,6 +1208,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Notf>(MatchPattern.Any("b"))),
                 bound => bound["b"].Implies(bound["a"]),
                 Soundness.Sound,
+                // The same `a` and `b` under the same `->`, swapped, with both `not`s dropped.
+                growth: RewriteRuleGrowth.Collects,
                 when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])));
 
         /// <summary>
@@ -1954,7 +1986,11 @@ namespace AngouriMath.Core.Transformations.Matching
                 "a-equals-with-zero-on-the-left-turns-round",
                 MatchPattern.Node<Equalsf>(MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one)), MatchPattern.Any<Entity>("other", one => !Functions.Patterns.IsZeroReal(one))),
                 bound => bound["other"].EqualTo(bound["zero"]),
-                Soundness.Sound),
+                Soundness.Sound,
+                // `EqualTo` is a bare `Equalsf` -- it never chains the way `Equalizes` and the
+                // comparison operators do -- so this is the same two operands under the same
+                // node, swapped.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "a-greater-with-zero-on-the-left-turns-round",
                 MatchPattern.Node<Greaterf>(MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one)), MatchPattern.Any<Entity>("other", one => !Functions.Patterns.IsZeroReal(one))),
@@ -1979,7 +2015,11 @@ namespace AngouriMath.Core.Transformations.Matching
                 "a-equals-with-a-number-on-the-left-turns-round",
                 MatchPattern.Node<Equalsf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Entity>("other", one => one is not Number)),
                 bound => bound["other"].EqualTo(bound["c"]),
-                Soundness.Sound),
+                Soundness.Sound,
+                // `EqualTo` is a bare `Equalsf` -- it never chains the way `Equalizes` and the
+                // comparison operators do -- so this is the same two operands under the same
+                // node, swapped.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "a-greater-with-a-number-on-the-left-turns-round",
                 MatchPattern.Node<Greaterf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Entity>("other", one => one is not Number)),
@@ -2635,22 +2675,30 @@ namespace AngouriMath.Core.Transformations.Matching
                 "a-variable-times-a-number-puts-the-number-first",
                 MatchPattern.Node<Mulf>(MatchPattern.Any<Variable>("v"), MatchPattern.Any<Number>("c")),
                 bound => bound["c"] * bound["v"],
-                Soundness.Sound),
+                Soundness.Sound,
+                // The same two bound operands under a new `Mulf`, swapped: one node in, one out.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "a-number-plus-a-variable-puts-the-variable-first",
                 MatchPattern.Node<Sumf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Variable>("v")),
                 bound => bound["v"] + bound["c"],
-                Soundness.Sound),
+                Soundness.Sound,
+                // The same two bound operands under a new `Sumf`, swapped: one node in, one out.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "a-function-times-a-number-puts-the-number-first",
                 MatchPattern.Node<Mulf>(MatchPattern.Any<Function>("f"), MatchPattern.Any<Number>("c")),
                 bound => bound["c"] * bound["f"],
-                Soundness.Sound),
+                Soundness.Sound,
+                // The same two bound operands under a new `Mulf`, swapped: one node in, one out.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "a-number-plus-a-function-puts-the-function-first",
                 MatchPattern.Node<Sumf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Function>("f")),
                 bound => bound["f"] + bound["c"],
-                Soundness.Sound),
+                Soundness.Sound,
+                // The same two bound operands under a new `Sumf`, swapped: one node in, one out.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "two-numeric-multiples-of-one-variable-add",
                 MatchPattern.Node<Sumf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Variable>("v")), MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any<Variable>("v"))),
@@ -2896,5 +2944,47 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Signumf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
                 bound => -new Signumf((-(Real)bound["neg"]) * bound["rest"]),
                 Soundness.Sound));
+
+        /// <summary>
+        /// Every <see cref="MatchedRuleSet"/> this class declares — the parameterless ones as
+        /// properties, and <see cref="Sort"/>/<see cref="CommonDenominator"/> at every
+        /// <see cref="TreeAnalyzer.SortLevel"/>, since a set parameterised by a sort level is a
+        /// <b>method</b>, not a property, and enumerating properties alone would silently miss it.
+        /// </summary>
+        /// <remarks>
+        /// Declared last in this file on purpose: it reflects over every member declared above it,
+        /// and a static field initialiser runs in declaration order, so it must run after all of
+        /// them have their backing fields set. Moving it earlier in the file would have it read
+        /// some of those sets as their default (null).
+        /// </remarks>
+        [ConstantField]
+        internal static readonly IReadOnlyList<MatchedRuleSet> All = BuildAll();
+
+        private static IReadOnlyList<MatchedRuleSet> BuildAll()
+        {
+            const System.Reflection.BindingFlags Any =
+                System.Reflection.BindingFlags.NonPublic
+                | System.Reflection.BindingFlags.Public
+                | System.Reflection.BindingFlags.Static;
+
+            var sets = typeof(MatchedRules)
+                .GetProperties(Any)
+                .Where(property => property.PropertyType == typeof(MatchedRuleSet))
+                .Select(property => (MatchedRuleSet)property.GetValue(null)!)
+                .ToList();
+
+            var factories = typeof(MatchedRules)
+                .GetMethods(Any)
+                .Where(method => method.ReturnType == typeof(MatchedRuleSet)
+                                 && method.GetParameters() is { Length: 1 } only
+                                 && only[0].ParameterType == typeof(TreeAnalyzer.SortLevel));
+            foreach (var factory in factories)
+#pragma warning disable IL3050
+                foreach (var level in System.Enum.GetValues(typeof(TreeAnalyzer.SortLevel)))
+                    sets.Add((MatchedRuleSet)factory.Invoke(null, new[] { level })!);
+#pragma warning restore IL3050
+
+            return sets.OrderBy(set => set.Name, System.StringComparer.Ordinal).ToList();
+        }
     }
 }
