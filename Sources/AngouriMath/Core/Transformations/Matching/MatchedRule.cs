@@ -223,6 +223,65 @@ namespace AngouriMath.Core.Transformations.Matching
         }
 
         /// <summary>
+        /// The e-class <see cref="TryApply"/> would produce, found by matching against
+        /// <paramref name="classId"/> directly rather than a materialised term. Caller must check
+        /// <see cref="MatchPattern.CanEMatch"/> on <see cref="Left"/> first -- this throws rather
+        /// than silently falling back, so a caller cannot forget the check and get the old,
+        /// slower path without knowing it.
+        /// </summary>
+        internal bool TryEMatchApply(
+            EGraph graph, int classId, Func<Entity, double> cost, out int resultClassId)
+        {
+            if (!Left.CanEMatch)
+                throw new InvalidOperationException(
+                    $"'{Name}' cannot e-match; check {nameof(Left)}.{nameof(MatchPattern.CanEMatch)} first.");
+
+            resultClassId = 0;
+            foreach (var ebindings in Left.EMatch(graph, classId, EBindings.Empty, cost))
+            {
+                Bindings? entityBindings = null;
+                bool TryEntityBindings(out Bindings result)
+                {
+                    if (entityBindings is { } already) { result = already; return true; }
+                    var built = Bindings.Empty;
+                    foreach (var boundName in Left.BoundNames)
+                    {
+                        if (!ebindings.TryGet(boundName, out var boundClass)) { result = built; return false; }
+                        var witness = graph.Extract(boundClass, cost);
+                        if (witness is null) { result = built; return false; }
+                        built = built.With(boundName, witness);
+                    }
+                    entityBindings = built;
+                    result = built;
+                    return true;
+                }
+
+                if (when is not null)
+                {
+                    if (!TryEntityBindings(out var forWhen)) continue;
+                    if (!when(forWhen)) continue;
+                }
+
+                if (Right is { } right && right.CanEMatch)
+                {
+                    if (right.ETryBuild(graph, ebindings, cost, out resultClassId)) return true;
+                    continue;
+                }
+
+                if (!TryEntityBindings(out var forBuild)) continue;
+                var matched = graph.Extract(classId, cost);
+                if (matched is null) continue;
+                if (Build(matched, forBuild) is { } rewritten)
+                {
+                    try { resultClassId = graph.AddEntity(rewritten); }
+                    catch { continue; }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
         /// The replacement under these bindings, or <see langword="null"/> where it cannot be
         /// built — which is the rule declining rather than an error, whichever form the
         /// right-hand side takes.
