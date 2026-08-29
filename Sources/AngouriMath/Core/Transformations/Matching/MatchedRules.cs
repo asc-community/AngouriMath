@@ -2896,5 +2896,47 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Signumf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
                 bound => -new Signumf((-(Real)bound["neg"]) * bound["rest"]),
                 Soundness.Sound));
+
+        /// <summary>
+        /// Every <see cref="MatchedRuleSet"/> this class declares — the parameterless ones as
+        /// properties, and <see cref="Sort"/>/<see cref="CommonDenominator"/> at every
+        /// <see cref="TreeAnalyzer.SortLevel"/>, since a set parameterised by a sort level is a
+        /// <b>method</b>, not a property, and enumerating properties alone would silently miss it.
+        /// </summary>
+        /// <remarks>
+        /// Declared last in this file on purpose: it reflects over every member declared above it,
+        /// and a static field initialiser runs in declaration order, so it must run after all of
+        /// them have their backing fields set. Moving it earlier in the file would have it read
+        /// some of those sets as their default (null).
+        /// </remarks>
+        [ConstantField]
+        internal static readonly IReadOnlyList<MatchedRuleSet> All = BuildAll();
+
+        private static IReadOnlyList<MatchedRuleSet> BuildAll()
+        {
+            const System.Reflection.BindingFlags Any =
+                System.Reflection.BindingFlags.NonPublic
+                | System.Reflection.BindingFlags.Public
+                | System.Reflection.BindingFlags.Static;
+
+            var sets = typeof(MatchedRules)
+                .GetProperties(Any)
+                .Where(property => property.PropertyType == typeof(MatchedRuleSet))
+                .Select(property => (MatchedRuleSet)property.GetValue(null)!)
+                .ToList();
+
+            var factories = typeof(MatchedRules)
+                .GetMethods(Any)
+                .Where(method => method.ReturnType == typeof(MatchedRuleSet)
+                                 && method.GetParameters() is { Length: 1 } only
+                                 && only[0].ParameterType == typeof(TreeAnalyzer.SortLevel));
+            foreach (var factory in factories)
+#pragma warning disable IL3050
+                foreach (var level in System.Enum.GetValues(typeof(TreeAnalyzer.SortLevel)))
+                    sets.Add((MatchedRuleSet)factory.Invoke(null, new[] { level })!);
+#pragma warning restore IL3050
+
+            return sets.OrderBy(set => set.Name, System.StringComparer.Ordinal).ToList();
+        }
     }
 }
