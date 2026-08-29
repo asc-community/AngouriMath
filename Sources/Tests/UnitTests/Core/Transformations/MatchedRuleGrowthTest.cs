@@ -30,5 +30,28 @@ namespace AngouriMath.Tests.Core.Transformations
                     if (rule.Right is not null)
                         Assert.NotEqual(RewriteRuleGrowth.Unknown, rule.Growth);
         }
+
+        [Fact]
+        public void ACodeBuiltRuleCanDeclareItsOwnGrowth()
+        {
+            var declared = new MatchedRule(
+                "test-declared-growth",
+                MatchPattern.Any("x"),
+                (Bindings b) => b["x"],
+                Soundness.Sound,
+                growth: RewriteRuleGrowth.Collects);
+            Assert.Equal(RewriteRuleGrowth.Collects, declared.Growth);
+        }
+
+        [Fact]
+        public void ACodeBuiltRuleWithNoDeclaredGrowthStaysUnknown()
+        {
+            var undeclared = new MatchedRule(
+                "test-undeclared-growth",
+                MatchPattern.Any("x"),
+                (Bindings b) => b["x"],
+                Soundness.Sound);
+            Assert.Equal(RewriteRuleGrowth.Unknown, undeclared.Growth);
+        }
     }
 }
