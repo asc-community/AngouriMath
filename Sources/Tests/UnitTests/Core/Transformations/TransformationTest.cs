@@ -12,6 +12,7 @@ using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Core.Budgets;
 using AngouriMath.Core.Transformations;
+using AngouriMath.Core.Transformations.Matching;
 using Xunit;
 
 namespace AngouriMath.Tests.Core.Transformations
@@ -591,6 +592,78 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         /// <summary>
+        /// Final review finding I2: the e-match branch in <c>ApplyCore</c> had no
+        /// <c>try</c>/<c>catch</c> around <c>TryEMatchApply</c>, unlike the fallback branch, which
+        /// wraps both <c>TryApply</c> and <c>AddEntity</c>. The finding named a live example --
+        /// <c>power-of-a-power-multiplies-its-exponents</c> in <c>MatchedRules.cs</c>, whose
+        /// <c>when</c> reads <c>bound["c"] is Integer || bound["a"].Evaled is Real { IsPositive:
+        /// true }</c> on a witness <c>TryEMatchApply</c> extracts freely from the e-graph rather
+        /// than one the caller wrote.
+        /// </summary>
+        /// <remarks>
+        /// Tracing <c>MatchedRule.TryEMatchApply</c> and <c>EGraph.Extract</c> by hand first:
+        /// <c>Extract</c> already swallows a failing cost model itself
+        /// (<c>try { here = cost(built); } catch { continue; }</c>), and <c>Evaled</c> is
+        /// documented and implemented to be total (<c>Docs/Usage/Exceptions.md</c>: "<c>Evaled</c>
+        /// is the answer that does not throw"; <c>Andf</c>/<c>Orf</c>/<c>Xorf</c> all decline
+        /// rather than throw on a mistyped operand via <c>MixesANumberWithATruthValue</c>) -- so
+        /// this specific clause cannot actually be driven to throw with real data today. The one
+        /// call inside <c>TryEMatchApply</c> that is not guarded anywhere is <c>when</c> itself
+        /// (the <c>if (when is not null) { ... if (!when(forWhen)) continue; }</c> block), so a
+        /// rule whose condition throws on a shape it does not expect is the live hazard I2 is
+        /// about. Reproduced below with a rule built the way this codebase's own
+        /// <c>MatchedRuleGrowthTest</c> already builds throwaway rules for a unit test, since the
+        /// real named rule's own condition cannot be forced to fail.
+        /// </remarks>
+        [Fact]
+        public void EqualitySaturationDeclinesRatherThanThrowsWhenAWhenConditionThrows()
+        {
+            var throwingRule = new MatchedRule(
+                "test-when-throws-on-a-shape-it-does-not-expect",
+                MatchPattern.Any("x"),
+                (Bindings b) => b["x"],
+                Soundness.Sound,
+                when: _ => throw new InvalidOperationException(
+                    "a when clause asked about a shape it did not expect"));
+            Assert.True(throwingRule.Left.CanEMatch);
+
+            var graph = new EGraph();
+            var root = graph.AddEntity(Parse("x + 1"));
+            graph.Rebuild();
+
+            // RED, absent a guard: nothing inside TryEMatchApply catches the `when` clause's own
+            // exception, so it escapes straight out.
+            Assert.Throws<InvalidOperationException>(
+                () => throwingRule.TryEMatchApply(graph, root, CostModel.Default.Cost, out _));
+
+            // GREEN: this is exactly the shape ApplyCore's e-match branch now uses -- the call
+            // declines the candidate instead of throwing.
+            bool matched;
+            try { matched = throwingRule.TryEMatchApply(graph, root, CostModel.Default.Cost, out _); }
+            catch { matched = false; }
+            Assert.False(matched);
+
+            // And insurance through the real production pipeline: the real registry's own
+            // like-shaped rule (the one I2 named), exercised via real e-matching over every
+            // corpus entry plus a nested power, puts its own `when` clause in front of an "a"
+            // witness which is not a positive real (a bare variable) -- the shape it does not
+            // expect. Nothing throws today (confirmed by hand: reverting ApplyCore's guard still
+            // leaves this loop green, because Evaled cannot actually be made to throw with real
+            // data -- see the remarks above), so this is a regression net against a *future*
+            // when clause that can, not a repro of a live crash.
+            var transformation = Transformation.EqualitySaturation(SmallSaturationBudget, CostModel.Default);
+            foreach (var row in Corpus)
+            {
+                var source = (string)row[0];
+                var exception = Record.Exception(() => transformation.Apply(Parse(source)));
+                Assert.Null(exception);
+            }
+            var nestedPowerException = Record.Exception(
+                () => transformation.Apply(Parse("(x ^ 2) ^ y")));
+            Assert.Null(nestedPowerException);
+        }
+
+        /// <summary>
         /// A handful of real check points, substituted for every free variable at once. Not
         /// <see cref="AngouriMath.Functions.ExpressionNumerical.AreEqual"/>'s own complex
         /// check points: this transformation can reassociate a chain of divisions --
@@ -664,20 +737,57 @@ namespace AngouriMath.Tests.Core.Transformations
                 && ReferenceEquals(Entity.Constant.EulerIntrinsic, @base));
         }
 
+        /// <summary>
+        /// Final review finding C1's test half. The original version of this test used
+        /// <c>Parse("x + 0")</c>, which is vacuous: <c>EGraph.Add</c>'s neutral-fold collapses
+        /// <c>x + 0</c> into <c>x</c>'s class on insertion, before any rule -- e-matched or
+        /// otherwise -- is ever consulted, so the test passed even with <c>SafeRules</c> empty.
+        /// </summary>
+        /// <remarks>
+        /// <c>sin(arcsin(x)) -&gt; x</c> is <c>"a-sine-of-an-arcsine"</c> in
+        /// <c>MatchedRules.cs</c>: an unconditional
+        /// <see cref="Soundness.Sound"/> rule whose pattern
+        /// (<c>Node&lt;Sinf&gt;(Node&lt;Arcsinf&gt;(Any("a")))</c>) is built entirely from
+        /// <c>Node</c>/<c>Any</c> patterns, so it e-matches (per the final review's own strength
+        /// note about <c>NodePattern</c>'s whitelist-free reach) and is not folded away by
+        /// <c>EGraph.Add</c>'s neutral-fold the way <c>x + 0</c> is -- so reaching it through
+        /// <c>EqualitySaturation</c> genuinely exercises the real e-match path this plan added,
+        /// rather than a rewrite the e-graph would have performed on insertion regardless of
+        /// which rules were ever offered to it.
+        /// </remarks>
         [Fact]
-        public void EqualitySaturationNowDrawsFromMatchingMatchedRules()
+        public void EqualitySaturationReachesARuleTheOldRegistryProxyNeverExactlyClassified()
         {
-            // Not a behavioural assertion (that is what every other EqualitySaturation test in
-            // this file already covers) -- a structural one, that the rule source actually
-            // changed. A rule whose Growth this plan's new MatchedRule.Growth can classify, but
-            // whose public RewriteRuleGrowth twin could not, is the shape that proves it: pick
-            // any one rule from Matching.MatchedRules.All with Growth Collects or Rearranges and
-            // confirm EqualitySaturation still finds the corresponding rewrite.
-            var result = Transformation
-                .EqualitySaturation(SmallSaturationBudget, CostModel.Default)
-                .Apply(Parse("x + 0"));
+            var transformation = Transformation.EqualitySaturation(SmallSaturationBudget, CostModel.Default);
+            var result = transformation.Apply(Parse("sin(arcsin(x))"));
+
             Assert.True(result.Changed);
             Assert.Equal(Parse("x"), result.Output);
+        }
+
+        /// <summary>
+        /// Final review finding C1's measurement half: nothing measured or asserted
+        /// <c>SafeRules</c>' real size, which is how it collapsed to 23 -- and then, after Task
+        /// 13's growth-declaration batch, grew back to 43 -- with no test either time. This is
+        /// the ongoing measurement the spec asked for, not a one-time probe: kept as a
+        /// <c>[Fact]</c> so a future collapse fails a test rather than going unmeasured again.
+        /// </summary>
+        /// <remarks>
+        /// The floor is 38, not 43: a few below the real, measured count (see
+        /// <see cref="Transformation.EqualitySaturationSafeRuleCount"/> and
+        /// <c>Docs/Contributing/EqualitySaturationReviewFindings.md</c>), so that ordinary future
+        /// rule-registry churn -- a rule renamed, reclassified, or folded into another -- does not
+        /// make this flaky, while a real collapse back toward the old all-<c>Unknown</c> state
+        /// (23, or worse, 0) still fails it well before it could reach 38.
+        /// </remarks>
+        [Fact]
+        public void SafeRulesHasAtLeastAFloor()
+        {
+            Assert.True(
+                Transformation.EqualitySaturationSafeRuleCount >= 38,
+                $"SafeRules has {Transformation.EqualitySaturationSafeRuleCount} rules, which is "
+                    + "below the floor of 38 -- this is the shape final review finding C1 warned "
+                    + "about: the rule population silently collapsing with nothing to catch it.");
         }
 
         #endregion

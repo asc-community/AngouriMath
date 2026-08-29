@@ -279,35 +279,65 @@ namespace AngouriMath.Core.Transformations
         /// prove will not run away are offered to it — see the next paragraph.
         /// </para>
         /// <para>
-        /// <b>Only rules whose <see cref="RewriteRuleGrowth"/> is
-        /// <see cref="RewriteRuleGrowth.Collects"/> or <see cref="RewriteRuleGrowth.Rearranges"/>
-        /// are used.</b> An expanding rule and a rule built from code rather than a spelled
-        /// pattern (<see cref="RewriteRuleGrowth.Unknown"/>) are both withheld, for the same
-        /// reason: a rule this cannot prove will not make the graph grow without bound is not
-        /// proven safe, and not proven safe is not the same as safe. This is
+        /// <b>Only rules whose <see cref="Matching.MatchedRule.Growth"/> is exactly
+        /// <see cref="RewriteRuleGrowth.Collects"/> or <see cref="RewriteRuleGrowth.Rearranges"/>,
+        /// and whose <see cref="Matching.MatchedRule.Soundness"/> is at least
+        /// <see cref="Soundness.SoundUnderAssumptions"/>, are used</b> — the population is
+        /// <see cref="Matching.MatchedRules.All"/>, not the public registry. Growth is derived
+        /// from the pattern tree for a rule whose replacement is itself a pattern, and declared
+        /// explicitly by the rule's own author for a rule whose replacement is code, which is what
+        /// let a further batch of code-built rules earn a place here without being able to lie
+        /// about it. <see cref="RewriteRuleGrowth.Unknown"/> is withheld either way: a rule nobody
+        /// has justified is not proven safe, and not proven safe is not the same as safe. This is
         /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 2's
-        /// e-graph, measured first in the <c>work/egraph</c> harness against a textbook corpus of
-        /// 16 expressions, all of which saturate under exactly this restriction.
+        /// e-graph. As of this writing the filter passes 43 rules.
         /// </para>
         /// <para>
-        /// <b>What this is not.</b> The harness this is built from enumerates a class's terms and
-        /// rewrites each, which finds the same equalities e-matching would but by materialising
-        /// terms a real e-matcher never builds — slower, and measured that way on purpose to ask
-        /// a memory question rather than a speed one. That instrument moved here unchanged. A
-        /// production e-matcher over <see cref="Matching.MatchPattern"/> is not this; it is what
-        /// tier 2 still names as its production caller's other missing half.
+        /// <b>Real e-matching now runs wherever a rule's pattern supports it, and this only falls
+        /// back to materialising a term where it cannot.</b> A rule's
+        /// <see cref="Matching.MatchPattern.CanEMatch"/> on its <see cref="Matching.MatchedRule.Left"/>
+        /// decides per rule: where it is true this asks the e-graph directly, which is what a
+        /// production e-matcher over <see cref="Matching.MatchPattern"/> is supposed to do; where
+        /// it is false this falls back to extracting a term and rewriting that instead — slower,
+        /// and the only path the harness this is built from ever took. Of the 43 rules the filter
+        /// above passes, roughly 27-28 can actually build a replacement today; the remaining ~15
+        /// each build a boolean connective or a turned-around equality (<c>and</c>, <c>or</c>,
+        /// <c>not</c>, <c>xor</c>, <c>implies</c>, <c>=</c>) and are correctly classified as safe,
+        /// but cannot fire, because <see cref="EGraph"/>'s reconstruction whitelist has no entry
+        /// for any of those node types yet and <c>EGraph.Extract</c> returns nothing for a
+        /// class that needs one. That is a separate, already-known limitation of
+        /// <see cref="EGraph"/> itself — see <c>Docs/Contributing/EqualitySaturationReviewFindings.md</c>
+        /// — not a defect in how these 15 rules were classified. The day the whitelist widens to
+        /// cover those six node types, all 15 go live at once, which is the moment to re-run
+        /// <c>work/egraph</c>, not before.
         /// </para>
         /// <para>
-        /// <b>What generalises and what does not.</b> The 16-expression corpus said the graph
-        /// stops growing under this restriction; it did not and could not say that of every
-        /// expression <c>Simplify</c> is asked to handle. Pass a budget that reflects that this
-        /// is still being found out, not one sized for how much the caller can afford to lose.
+        /// <b>What generalises and what does not.</b> The <c>work/egraph</c> harness's original
+        /// measurement — a textbook corpus of 16 expressions, all of which saturated — was made
+        /// under a much smaller rule set, before the <see cref="Soundness"/> filter existed and
+        /// before any rule here could e-match at all, so it does not describe this population and
+        /// should not be cited as though it still does without being re-run. Even re-run, a corpus
+        /// saturating says the graph stopped growing on those inputs; it did not and could not say
+        /// that of every expression <c>Simplify</c> is asked to handle. Pass a budget that reflects
+        /// that this is still being found out, not one sized for how much the caller can afford to
+        /// lose.
         /// </para>
         /// </remarks>
         public static Transformation EqualitySaturation(WorkBudget budget, CostModel costModel)
             => new EqualitySaturationTransformation(
                 budget ?? throw new ArgumentNullException(nameof(budget)),
                 costModel ?? throw new ArgumentNullException(nameof(costModel)));
+
+        /// <summary>
+        /// Test-only visibility into how many rules <see cref="EqualitySaturation"/> currently
+        /// draws from -- the field itself is <see langword="private"/> on a
+        /// <see langword="private"/> nested class, which a test in another assembly cannot reach
+        /// any other way. Exists so a collapse back toward the old
+        /// all-<see cref="RewriteRuleGrowth.Unknown"/> state (see
+        /// <c>Docs/Contributing/EqualitySaturationReviewFindings.md</c>, finding C1) fails a test
+        /// instead of going unmeasured again.
+        /// </summary>
+        internal static int EqualitySaturationSafeRuleCount => EqualitySaturationTransformation.SafeRuleCount;
 
         /// <summary>
         /// Replaces every occurrence of <paramref name="what"/> with
@@ -418,6 +448,14 @@ namespace AngouriMath.Core.Transformations
                     .Where(rule => rule.Soundness is Soundness.Sound or Soundness.SoundUnderAssumptions)
                     .ToList();
 
+            /// <summary>
+            /// <see cref="SafeRules"/>.Count, for <see cref="Transformation.EqualitySaturationSafeRuleCount"/>
+            /// to forward -- this class is <see langword="private"/>, so even an
+            /// <see langword="internal"/> member here is only visible within
+            /// <see cref="Transformation"/>'s own body, never from another assembly.
+            /// </summary>
+            internal static int SafeRuleCount => SafeRules.Count;
+
             private readonly WorkBudget budget;
             private readonly CostModel costModel;
 
@@ -474,7 +512,14 @@ namespace AngouriMath.Core.Transformations
                             int other;
                             if (rule.Left.CanEMatch)
                             {
-                                if (!rule.TryEMatchApply(graph, id, costModel.Cost, out other)) continue;
+                                // Mirrors the fallback branch below: a rule's `when` is arbitrary
+                                // code asked about a witness this extracted rather than one the
+                                // caller wrote, and a predicate that throws on a shape it did not
+                                // expect must decline the candidate, not escape Apply.
+                                bool matched;
+                                try { matched = rule.TryEMatchApply(graph, id, costModel.Cost, out other); }
+                                catch { continue; }
+                                if (!matched) continue;
                             }
                             else
                             {
