@@ -457,9 +457,14 @@ namespace AngouriMath.Core.Transformations
                     {
                         if (!ChargeGrowthSinceLastCall()) break;
                         Entity? term = null;
+                        var extracted = false;
                         bool TryTerm(out Entity value)
                         {
-                            term ??= graph.Extract(id, costModel.Cost);
+                            if (!extracted)
+                            {
+                                term = graph.Extract(id, costModel.Cost);
+                                extracted = true;
+                            }
                             value = term!;
                             return term is not null;
                         }
