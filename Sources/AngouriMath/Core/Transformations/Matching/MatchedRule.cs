@@ -133,6 +133,7 @@ namespace AngouriMath.Core.Transformations.Matching
             // afterwards, and a lazily cached enum is a field wider than a word: two threads
             // arriving together could read a half-written one, where a reference cannot tear.
             Reversal = Classify();
+            Growth = ClassifyGrowth();
         }
 
         private readonly Func<Entity, Bindings, Entity>? right;
@@ -257,6 +258,23 @@ namespace AngouriMath.Core.Transformations.Matching
             if (!Left.IsBuildable || !Right.IsBuildable)
                 return RuleReversal.PatternCannotBeBuilt;
             return RuleReversal.Reversible;
+        }
+
+        /// <summary>
+        /// Whether this rule's replacement is smaller, the same size, or larger than its pattern
+        /// -- computed from real <see cref="MatchPattern.NodeCount"/>, exactly, in place of the
+        /// public <c>RewriteRule.Growth</c>'s string-length proxy over rendered text.
+        /// </summary>
+        internal RewriteRuleGrowth Growth { get; }
+
+        private RewriteRuleGrowth ClassifyGrowth()
+        {
+            if (Right is null) return RewriteRuleGrowth.Unknown;
+            var leftSize = Left.NodeCount;
+            var rightSize = Right.NodeCount;
+            return rightSize < leftSize ? RewriteRuleGrowth.Collects
+                 : rightSize > leftSize ? RewriteRuleGrowth.Expands
+                 : RewriteRuleGrowth.Rearranges;
         }
 
         /// <summary>
