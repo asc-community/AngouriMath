@@ -306,6 +306,13 @@ namespace AngouriMath.Core.Transformations.Matching
         internal abstract bool IsBuildable { get; }
 
         /// <summary>
+        /// How many nodes this pattern is, counted structurally -- used to classify a
+        /// <see cref="MatchedRule"/>'s <see cref="RewriteRuleGrowth"/> exactly, in place of the
+        /// public registry's string-length proxy over rendered pattern text.
+        /// </summary>
+        internal abstract int NodeCount { get; }
+
+        /// <summary>
         /// The expression this pattern stands for under <paramref name="bindings"/>, or
         /// <see langword="false"/> where those bindings do not satisfy it.
         /// </summary>
@@ -533,6 +540,8 @@ namespace AngouriMath.Core.Transformations.Matching
 
             internal override bool IsBuildable => true;
 
+            internal override int NodeCount => 1;
+
             internal override bool TryBuild(Bindings bindings, out Entity built)
             {
                 built = null!;
@@ -580,6 +589,8 @@ namespace AngouriMath.Core.Transformations.Matching
 
             internal override bool IsBuildable => true;
 
+            internal override int NodeCount => 1;
+
             internal override bool TryBuild(Bindings bindings, out Entity built)
             {
                 built = value;
@@ -604,6 +615,7 @@ namespace AngouriMath.Core.Transformations.Matching
                 buildable = CanConstruct(nodeType, children.Length)
                     && children.All(child => child.IsBuildable);
                 deterministic = !commutative && children.All(child => child.IsDeterministic);
+                nodeCount = 1 + children.Sum(child => child.NodeCount);
             }
 
             /// <summary>Settled here because it depends on nothing that changes afterwards.</summary>
@@ -618,6 +630,11 @@ namespace AngouriMath.Core.Transformations.Matching
             /// a rule that does not fire.
             /// </summary>
             private readonly bool deterministic;
+
+            /// <summary>Settled here for the same reason as <see cref="buildable"/>.</summary>
+            private readonly int nodeCount;
+
+            internal override int NodeCount => nodeCount;
 
             internal override IEnumerable<string> BoundNames => children.SelectMany(c => c.BoundNames);
 
@@ -789,7 +806,14 @@ namespace AngouriMath.Core.Transformations.Matching
                 this.nodeType = nodeType;
                 this.restName = restName ?? throw new ArgumentNullException(nameof(restName));
                 this.parts = parts;
+                // An approximation, not the true size: the "rest" this gathers is open-ended and
+                // its actual length is only known once a match commits to one. Counted as the
+                // one node a single wildcard would be. See this plan's Global Constraints for why
+                // this is an accepted, bounded imprecision rather than a defect to fix here.
+                NodeCount = 1 + parts.Sum(part => part.NodeCount) + 1;
             }
+
+            internal override int NodeCount { get; }
 
             private bool OverSum => nodeType == typeof(Entity.Sumf);
 
