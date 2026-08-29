@@ -309,5 +309,23 @@ namespace AngouriMath.Core.Transformations
 
         private static Type OperatorType(string op)
             => OperatorTypes.TryGetValue(op, out var type) ? type : typeof(void);
+
+        /// <summary>
+        /// Whether the e-class <paramref name="id"/> already contains a leaf equal to
+        /// <paramref name="leaf"/> -- the same check <see cref="NeutralClass"/> uses for a
+        /// neutral element, offered for <see cref="Matching.MatchPattern"/>'s
+        /// <c>ExactPattern.EMatch</c> to use for a literal.
+        /// </summary>
+        internal bool ContainsLeaf(int id, Entity leaf) => Holds(id, Key(leaf));
+
+        /// <summary>
+        /// The runtime <see cref="Type"/> an e-node builds as: a leaf's, by re-parsing its
+        /// printed form, or a non-leaf's operator type, by the same lookup <c>Extract</c>
+        /// uses to reconstruct one. <c>typeof(void)</c> where neither succeeds.
+        /// </summary>
+        internal static Type RuntimeType(ENode node)
+            => node.Children.Length == 0
+                ? TryParseLeaf(node.Op)?.GetType() ?? typeof(void)
+                : OperatorType(node.Op);
     }
 }

@@ -215,5 +215,32 @@ namespace AngouriMath.Tests.Core.Transformations
 
             Assert.True(ReferenceEquals(Entity.Constant.EulerIntrinsic, extracted));
         }
+
+        [Fact]
+        public void ContainsLeafFindsAMatchingLiteral()
+        {
+            var graph = new EGraph();
+            var id = graph.AddEntity("2".ToEntity());
+            Assert.True(graph.ContainsLeaf(id, "2".ToEntity()));
+            Assert.False(graph.ContainsLeaf(id, "3".ToEntity()));
+        }
+
+        [Fact]
+        public void RuntimeTypeOfALeafIsItsParsedType()
+        {
+            var graph = new EGraph();
+            var id = graph.AddEntity("x".ToEntity());
+            var node = graph.NodesOf(id).Single();
+            Assert.Equal(typeof(Entity.Variable), EGraph.RuntimeType(node));
+        }
+
+        [Fact]
+        public void RuntimeTypeOfANonLeafIsItsNodeType()
+        {
+            var graph = new EGraph();
+            var id = graph.AddEntity("x + y".ToEntity());
+            var node = graph.NodesOf(id).Single();
+            Assert.Equal(typeof(Entity.Sumf), EGraph.RuntimeType(node));
+        }
     }
 }
