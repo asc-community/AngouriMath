@@ -314,9 +314,11 @@ namespace AngouriMath.Core.Transformations
         /// <para>
         /// <b>What generalises and what does not.</b> The <c>work/egraph</c> harness's original
         /// measurement — a textbook corpus of 16 expressions, all of which saturated — was made
-        /// under a much smaller rule set, before the <see cref="Soundness"/> filter existed and
-        /// before any rule here could e-match at all, so it does not describe this population and
-        /// should not be cited as though it still does without being re-run. Even re-run, a corpus
+        /// under a much <i>larger</i> rule set (313 rules, off the public registry's string-length
+        /// <see cref="RewriteRuleGrowth"/> proxy), before the <see cref="Soundness"/> filter existed
+        /// and before any rule here could e-match at all, so it does not describe this population —
+        /// a different source, a different filter, a different matcher — and should not be cited as
+        /// though it still does without being re-run. Even re-run, a corpus
         /// saturating says the graph stopped growing on those inputs; it did not and could not say
         /// that of every expression <c>Simplify</c> is asked to handle. Pass a budget that reflects
         /// that this is still being found out, not one sized for how much the caller can afford to
@@ -333,8 +335,8 @@ namespace AngouriMath.Core.Transformations
         /// draws from -- the field itself is <see langword="private"/> on a
         /// <see langword="private"/> nested class, which a test in another assembly cannot reach
         /// any other way. Exists so a collapse back toward the old
-        /// all-<see cref="RewriteRuleGrowth.Unknown"/> state (see
-        /// <c>Docs/Contributing/EqualitySaturationReviewFindings.md</c>, finding C1) fails a test
+        /// all-<see cref="RewriteRuleGrowth.Unknown"/> state — the rule population silently
+        /// shrinking to nothing, the way it once did before this was measured — fails a test
         /// instead of going unmeasured again.
         /// </summary>
         internal static int EqualitySaturationSafeRuleCount => EqualitySaturationTransformation.SafeRuleCount;

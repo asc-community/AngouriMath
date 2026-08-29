@@ -28,8 +28,9 @@ e-matching actually buys: not materialising a term to find out whether a rule's 
 
 ## Where the patterns actually are
 
-`RewriteRules.All` — the public registry `Transformation.EqualitySaturation` currently draws
-`SafeRules` from — is mostly `RuleRegistryGenerator` output: a `RewriteRule`'s `PatternSource` and
+`RewriteRules.All` — the public registry `Transformation.EqualitySaturation` drew `SafeRules` from
+before this document's own change moved it to `Matching.MatchedRules.All` (§5, below) — is mostly
+`RuleRegistryGenerator` output: a `RewriteRule`'s `PatternSource` and
 `ReplacementSource` are rendered *text*, produced from a `switch` arm's Roslyn syntax after the fact.
 There is no `MatchPattern` behind most of them to match a class against — see
 `InversePairTable.md`'s measurement, which found `AsAddressable()` (the one place a `RewriteRule` is

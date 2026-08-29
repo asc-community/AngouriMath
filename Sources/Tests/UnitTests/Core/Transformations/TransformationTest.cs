@@ -592,9 +592,9 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         /// <summary>
-        /// Final review finding I2: the e-match branch in <c>ApplyCore</c> had no
+        /// A pre-merge review found that the e-match branch in <c>ApplyCore</c> had no
         /// <c>try</c>/<c>catch</c> around <c>TryEMatchApply</c>, unlike the fallback branch, which
-        /// wraps both <c>TryApply</c> and <c>AddEntity</c>. The finding named a live example --
+        /// wraps both <c>TryApply</c> and <c>AddEntity</c>. The review named a live example --
         /// <c>power-of-a-power-multiplies-its-exponents</c> in <c>MatchedRules.cs</c>, whose
         /// <c>when</c> reads <c>bound["c"] is Integer || bound["a"].Evaled is Real { IsPositive:
         /// true }</c> on a witness <c>TryEMatchApply</c> extracts freely from the e-graph rather
@@ -610,8 +610,8 @@ namespace AngouriMath.Tests.Core.Transformations
         /// this specific clause cannot actually be driven to throw with real data today. The one
         /// call inside <c>TryEMatchApply</c> that is not guarded anywhere is <c>when</c> itself
         /// (the <c>if (when is not null) { ... if (!when(forWhen)) continue; }</c> block), so a
-        /// rule whose condition throws on a shape it does not expect is the live hazard I2 is
-        /// about. Reproduced below with a rule built the way this codebase's own
+        /// rule whose condition throws on a shape it does not expect is the live hazard the review
+        /// was about. Reproduced below with a rule built the way this codebase's own
         /// <c>MatchedRuleGrowthTest</c> already builds throwaway rules for a unit test, since the
         /// real named rule's own condition cannot be forced to fail.
         /// </remarks>
@@ -738,7 +738,7 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         /// <summary>
-        /// Final review finding C1's test half. The original version of this test used
+        /// A pre-merge review's rule-collapse finding, test half. The original version of this test used
         /// <c>Parse("x + 0")</c>, which is vacuous: <c>EGraph.Add</c>'s neutral-fold collapses
         /// <c>x + 0</c> into <c>x</c>'s class on insertion, before any rule -- e-matched or
         /// otherwise -- is ever consulted, so the test passed even with <c>SafeRules</c> empty.
@@ -748,8 +748,8 @@ namespace AngouriMath.Tests.Core.Transformations
         /// <c>MatchedRules.cs</c>: an unconditional
         /// <see cref="Soundness.Sound"/> rule whose pattern
         /// (<c>Node&lt;Sinf&gt;(Node&lt;Arcsinf&gt;(Any("a")))</c>) is built entirely from
-        /// <c>Node</c>/<c>Any</c> patterns, so it e-matches (per the final review's own strength
-        /// note about <c>NodePattern</c>'s whitelist-free reach) and is not folded away by
+        /// <c>Node</c>/<c>Any</c> patterns, so it e-matches (per <c>NodePattern</c>'s whitelist-free
+        /// reach over the e-graph) and is not folded away by
         /// <c>EGraph.Add</c>'s neutral-fold the way <c>x + 0</c> is -- so reaching it through
         /// <c>EqualitySaturation</c> genuinely exercises the real e-match path this plan added,
         /// rather than a rewrite the e-graph would have performed on insertion regardless of
@@ -766,19 +766,18 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         /// <summary>
-        /// Final review finding C1's measurement half: nothing measured or asserted
-        /// <c>SafeRules</c>' real size, which is how it collapsed to 23 -- and then, after Task
-        /// 13's growth-declaration batch, grew back to 43 -- with no test either time. This is
-        /// the ongoing measurement the spec asked for, not a one-time probe: kept as a
-        /// <c>[Fact]</c> so a future collapse fails a test rather than going unmeasured again.
+        /// A pre-merge review's rule-collapse finding, measurement half: nothing measured or
+        /// asserted <c>SafeRules</c>' real size, which is how it collapsed to 24 -- and then, after
+        /// a growth-declaration batch, grew back to 43 -- with no test either time. This is the
+        /// ongoing measurement the spec asked for, not a one-time probe: kept as a <c>[Fact]</c> so
+        /// a future collapse fails a test rather than going unmeasured again.
         /// </summary>
         /// <remarks>
         /// The floor is 38, not 43: a few below the real, measured count (see
-        /// <see cref="Transformation.EqualitySaturationSafeRuleCount"/> and
-        /// <c>Docs/Contributing/EqualitySaturationReviewFindings.md</c>), so that ordinary future
+        /// <see cref="Transformation.EqualitySaturationSafeRuleCount"/>), so that ordinary future
         /// rule-registry churn -- a rule renamed, reclassified, or folded into another -- does not
         /// make this flaky, while a real collapse back toward the old all-<c>Unknown</c> state
-        /// (23, or worse, 0) still fails it well before it could reach 38.
+        /// (24, or worse, 0) still fails it well before it could reach 38.
         /// </remarks>
         [Fact]
         public void SafeRulesHasAtLeastAFloor()
@@ -786,8 +785,8 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.True(
                 Transformation.EqualitySaturationSafeRuleCount >= 38,
                 $"SafeRules has {Transformation.EqualitySaturationSafeRuleCount} rules, which is "
-                    + "below the floor of 38 -- this is the shape final review finding C1 warned "
-                    + "about: the rule population silently collapsing with nothing to catch it.");
+                    + "below the floor of 38 -- this is the shape a pre-merge review warned about: "
+                    + "the rule population silently collapsing with nothing to catch it.");
         }
 
         #endregion
