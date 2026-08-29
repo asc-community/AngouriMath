@@ -6,6 +6,7 @@
 //
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using AngouriMath;
 using AngouriMath.Core.Transformations;
@@ -162,6 +163,29 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.Empty(matches);
         }
 
+        /// <summary>
+        /// The corpus rows <see cref="EMatchingAgreesWithMatching"/>'s own guard is expected to
+        /// skip, and the specific, already-diagnosed reason each one does -- so that an
+        /// <i>unexpected</i> row hitting the guard (an eighth one, from a future change to
+        /// <c>EGraph.Add</c> or <c>Extract</c> that widens what it cannot represent) fails loudly
+        /// instead of silently joining a plain "18 passed". Kept as a list of the exact strings
+        /// rather than a re-derivation of the guard's condition, because the point is to notice
+        /// when the *set* changes, and re-deriving the condition to check itself proves nothing.
+        /// </summary>
+        private static readonly IReadOnlyDictionary<string, string> RowsTheGraphCannotFaithfullyRepresent
+            = new Dictionary<string, string>
+            {
+                ["x + 0"] = "Sumf folds its 0 operand away on insertion (NeutralClass)",
+                ["x * 1"] = "Mulf folds its 1 operand away on insertion (NeutralClass)",
+                ["x! * (x + 1)"]
+                    = "Factorial is outside EGraph's 14-type reconstruction whitelist",
+                ["x > 3 and x < 5"]
+                    = "a comparison (Greaterf/Lessf) is outside the reconstruction whitelist",
+                ["a and b or a and not b"] = "Andf is outside the reconstruction whitelist",
+                ["{ 1, 2 } unite { 2, 3 }"] = "Unionf is outside the reconstruction whitelist",
+                ["phi(12)"] = "Totient is outside the reconstruction whitelist",
+            };
+
         [Theory]
         [MemberData(nameof(TransformationTest.Corpus), MemberType = typeof(TransformationTest))]
         public void EMatchingAgreesWithMatching(string source)
@@ -193,13 +217,20 @@ namespace AngouriMath.Tests.Core.Transformations
             // insertion has already changed what `expr` denotes, or cannot represent all of it,
             // term-matching against the raw tree and e-matching against the graph are no longer
             // being asked the same question, so nothing below can be compared meaningfully.
-            // Probed directly: seven of this corpus's eighteen rows hit one of the two (`x * 1`,
-            // `x + 0` fold away; `x! * (x + 1)`, `x > 3 and x < 5`, `a and b or a and not b`,
-            // `{ 1, 2 } unite { 2, 3 }` and `phi(12)` contain an unreconstructible type), leaving
-            // eleven rows and 69 (rule, row) pairs where a term match exists -- genuinely
-            // checked below. Every failure this test found before this guard existed was one of
-            // those seven rows and no other.
-            if (graph.Extract(root, Cost) is not { } rebuilt || !rebuilt.Equals(expr)) return;
+            //
+            // This is asserted, not just documented: a row hitting this guard must be one of the
+            // seven named in RowsTheGraphCannotFaithfullyRepresent above, each with its own
+            // diagnosed cause. An eighth, unlisted row hitting it -- a real regression, widening
+            // what the e-graph cannot represent -- fails this test loudly instead of the coverage
+            // silently shrinking behind an unchanged "18 passed".
+            if (graph.Extract(root, Cost) is not { } rebuilt || !rebuilt.Equals(expr))
+            {
+                Assert.True(RowsTheGraphCannotFaithfullyRepresent.ContainsKey(source),
+                    $"{source} cannot be faithfully round-tripped through the e-graph, and it is "
+                    + "not one of the rows already known to hit that -- this looks like a new "
+                    + "gap in EGraph.Add/Extract's coverage, not an expected skip.");
+                return;
+            }
 
             foreach (var rule in MatchedRules.All.SelectMany(set => set.Rules))
             {
