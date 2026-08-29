@@ -1633,6 +1633,426 @@ git commit -m "Verification: e-matching agrees with matching, crosses a union, a
 
 ---
 
+## Addendum: closing the final review's Critical finding
+
+The final whole-branch review (after Task 11) found that `SafeRules` collapsed from the public
+registry's larger population to **23 rules**, because 266 of `Matching.MatchedRules`' 298 rules have a
+**code-built** replacement (`Right is null`), so `MatchedRule.Growth` — computed from `NodeCount` on
+`Left`/`Right`, both real `MatchPattern`s — has no way to classify them and correctly reports
+`Unknown`, which `SafeRules` withholds. This is not a bug in any single task; each task did what its
+brief said. It is a consequence of applying a policy designed for a rule source where almost everything
+has a rendered pattern-based replacement to a source where most replacements are code.
+
+Decided with Rafael: extend scope rather than ship at 23 rules. The fix is to let a `MatchedRule`
+author **declare** `Growth` explicitly on a code-built rule, the same way `Soundness` is already
+declared rather than derived — "tightening a label needs an argument, loosening one does not"
+(`Soundness.cs`'s own words) applies just as much to `Growth`. Task 12 adds the mechanism; Task 13
+applies it to a first, conservatively-scoped batch of code-built rules, each with an inspectable
+justification — not all 266 at once. **A wrong classification here directly risks the unbounded-memory
+growth #746 tier 2's e-graph work exists to avoid** — treat every classification in Task 13 with the
+same "measure, don't guess" discipline as everything else in this workspace's history, and when in
+doubt, leave a rule `Unknown` rather than guess.
+
+Tasks 14 closes the final review's remaining Critical/Important findings (C1's measurement+test,
+I2's dropped exception guard, I7's now-false doc comment) against the *final* rule count, once
+Tasks 12-13 land — fixing them against the interim 23-rule count first would mean redoing them.
+
+---
+
+### Task 12: `MatchedRule.Growth` can be explicitly declared on a code-built rule
+
+**Files:**
+- Modify: `Sources/AngouriMath/Core/Transformations/Matching/MatchedRule.cs`
+- Test: `Sources/Tests/UnitTests/Core/Transformations/MatchedRuleGrowthTest.cs`
+
+**Interfaces:**
+- Consumes: nothing new.
+- Produces: both code-built `MatchedRule` constructors gain an additional optional parameter
+  `RewriteRuleGrowth? growth = null`, placed after `soundness` and before `when` (so existing
+  positional callers that only pass through `soundness` are unaffected, and any caller passing `when`
+  positionally must now also decide `growth` — check the real call sites in `MatchedRules.cs` for how
+  many pass `when` positionally vs. by name before assuming this is silently source-compatible).
+
+- [ ] **Step 1: Write the failing test**
+
+```csharp
+        [Fact]
+        public void ACodeBuiltRuleCanDeclareItsOwnGrowth()
+        {
+            var declared = new MatchedRule(
+                "test-declared-growth",
+                MatchPattern.Any("x"),
+                (Bindings b) => b["x"],
+                Soundness.Sound,
+                growth: RewriteRuleGrowth.Collects);
+            Assert.Equal(RewriteRuleGrowth.Collects, declared.Growth);
+        }
+
+        [Fact]
+        public void ACodeBuiltRuleWithNoDeclaredGrowthStaysUnknown()
+        {
+            var undeclared = new MatchedRule(
+                "test-undeclared-growth",
+                MatchPattern.Any("x"),
+                (Bindings b) => b["x"],
+                Soundness.Sound);
+            Assert.Equal(RewriteRuleGrowth.Unknown, undeclared.Growth);
+        }
+```
+
+Add these beside the existing tests in `MatchedRuleGrowthTest.cs` (from Task 4). Check `MatchPattern.Any(string)`'s
+exact accessibility (it's `internal static`, confirmed in Task 7's own exploration) — this test file
+already has access to internal members of `Matching`.
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `dotnet test Sources/Tests/UnitTests/UnitTests.csproj --filter FullyQualifiedName~ACodeBuiltRuleCanDeclareItsOwnGrowth`
+Expected: FAIL to compile — no `growth:` parameter exists yet on the code-built constructors.
+
+- [ ] **Step 3: Read the real current constructors before editing**
+
+Read `Sources/AngouriMath/Core/Transformations/Matching/MatchedRule.cs` in full first — Tasks 4 and 9
+already touched this file (adding `Growth`/`ClassifyGrowth` and `TryEMatchApply`), so confirm the exact
+current shape of both public code-built constructors and the private one before assuming the plan's
+snippet below is byte-for-byte current.
+
+- [ ] **Step 4: Add the parameter and thread it through**
+
+The two public code-built constructors:
+
+```csharp
+        internal MatchedRule(
+            string name,
+            MatchPattern left,
+            Func<Bindings, Entity> right,
+            Soundness soundness,
+            RewriteRuleGrowth? growth = null,
+            Func<Bindings, bool>? when = null,
+            [CallerLineNumber] int line = 0)
+            : this(name, left, right is null ? null : (_, bound) => right(bound),
+                   right is null ? throw new ArgumentNullException(nameof(right)) : null,
+                   soundness, growth, when, line)
+        {
+        }
+
+        internal MatchedRule(
+            string name,
+            MatchPattern left,
+            Func<Entity, Bindings, Entity> right,
+            Soundness soundness,
+            RewriteRuleGrowth? growth = null,
+            Func<Bindings, bool>? when = null,
+            [CallerLineNumber] int line = 0)
+            : this(name, left, right ?? throw new ArgumentNullException(nameof(right)), null,
+                   soundness, growth, when, line)
+        {
+        }
+```
+
+The pattern-built constructor (the one whose `Right` is a real `MatchPattern`, used by every rule with
+two-pattern sides) is **not** touched — its `Growth` is always computed exactly from `NodeCount` and
+accepting an override there would let a declared value silently contradict a provable one. Do not add
+`growth` to it.
+
+The private constructor gains the new parameter and uses it in `ClassifyGrowth`:
+
+```csharp
+        private MatchedRule(
+            string name,
+            MatchPattern left,
+            Func<Entity, Bindings, Entity>? rightCode,
+            MatchPattern? rightPattern,
+            Soundness soundness,
+            RewriteRuleGrowth? declaredGrowth,
+            Func<Bindings, bool>? when,
+            int line)
+        {
+            SourceLine = line;
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+            Left = left ?? throw new ArgumentNullException(nameof(left));
+            this.right = rightCode;
+            Right = rightPattern;
+            Soundness = soundness;
+            this.when = when;
+            Reversal = Classify();
+            Growth = ClassifyGrowth(declaredGrowth);
+        }
+```
+
+```csharp
+        /// <summary>
+        /// Whether this rule's replacement is smaller, the same size, or larger than its pattern.
+        /// Computed exactly from <see cref="MatchPattern.NodeCount"/> where the replacement is a
+        /// pattern; <b>declared</b>, not derived, where it is code, the same way
+        /// <see cref="Soundness"/> is declared rather than derived — a code-built replacement has no
+        /// pattern tree to count nodes on, so the only source of truth is whoever wrote the rule and
+        /// can justify the claim. Undeclared code-built rules stay <see cref="RewriteRuleGrowth.Unknown"/>,
+        /// which is the honest default: not proven safe is not the same as safe.
+        /// </summary>
+        internal RewriteRuleGrowth Growth { get; }
+
+        private RewriteRuleGrowth ClassifyGrowth(RewriteRuleGrowth? declared)
+        {
+            if (Right is null) return declared ?? RewriteRuleGrowth.Unknown;
+            var leftSize = Left.NodeCount;
+            var rightSize = Right.NodeCount;
+            return rightSize < leftSize ? RewriteRuleGrowth.Collects
+                 : rightSize > leftSize ? RewriteRuleGrowth.Expands
+                 : RewriteRuleGrowth.Rearranges;
+        }
+```
+
+The pattern-built (`this(name, left, null, right ?? ..., soundness, when, line)`) constructor call must
+now pass `null` for `declaredGrowth` explicitly at its call site (it does not accept a `growth`
+parameter itself, but the shared private constructor's signature changed, so its constructor-chaining
+call needs updating too) — find that call site and add the `null` argument in the right position.
+
+- [ ] **Step 5: Check every existing call site that passes `when` or the line number positionally**
+
+Run: `grep -rn "new MatchedRule(" Sources/AngouriMath/Core/Transformations/Matching/MatchedRules.cs | wc -l`
+then spot-check a sample of the results (and any that pass more than 4 positional arguments) to confirm
+none breaks from the inserted parameter. Most calls in this codebase use named arguments for `when:`
+(confirm this by grepping `when:` in the same file) — if any call passes `when` positionally instead,
+that call now binds its `when` lambda to the new `growth` parameter's slot, which is a silent,
+dangerous miscompile-into-a-different-overload risk. If you find any positional `when` call, either fix
+it to use `when:` explicitly or ask the controller before proceeding — do not guess.
+
+- [ ] **Step 6: Full build and full suite**
+
+Run: `dotnet build Sources/AngouriMath/AngouriMath.csproj` then
+`dotnet test Sources/Tests/UnitTests/UnitTests.csproj --filter FullyQualifiedName~MatchedRuleGrowthTest`
+then the full suite once.
+Expected: all green, no behavior change for any existing rule (every existing call site either omits
+`growth` or, if Step 5 found one needing a fix, is fixed to still mean what it meant before).
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add Sources/AngouriMath/Core/Transformations/Matching/MatchedRule.cs \
+        Sources/Tests/UnitTests/Core/Transformations/MatchedRuleGrowthTest.cs
+git commit -m "A code-built rule can declare its own Growth, the same way Soundness is declared"
+```
+
+---
+
+### Task 13: Apply declared `Growth` to a first, conservatively-scoped batch of code-built rules
+
+**Files:**
+- Modify: `Sources/AngouriMath/Core/Transformations/Matching/MatchedRules.cs`
+- Test: none new — this task is validated by the existing `EMatchingAgreesWithMatching`,
+  `EqualitySaturationNeverChangesTheValueItClaimsToPreserve`, and a new count-floor assertion added in
+  Task 14 once the final number is known.
+
+**This task is a judgment task, not a mechanical one — read it in full before starting.**
+
+Find every code-built `MatchedRule` declaration in `MatchedRules.cs` (constructed via the
+`Func<Bindings,Entity>` or `Func<Entity,Bindings,Entity>` overload, i.e. `Right` ends up `null`).
+For each, ask: **can this rule's growth be justified by reading its code alone, for every input it can
+ever be asked about — not just the inputs it's usually tried on?** Only classify a rule where the
+answer is an unqualified yes. Examples of what typically qualifies:
+
+- A rule whose replacement is provably a strict sub-expression of the matched node's own children (a
+  genuine `Collects`), with no branch that could instead construct something larger.
+- A rule whose replacement rearranges the same operands into a different but equal-sized shape (e.g.
+  swapping two children, wrapping in a single new node while removing exactly one old one) — a
+  `Rearranges`.
+
+Examples of what does **not** qualify, and must stay `Unknown`:
+- Anything that calls into `Simplify`, an arbitrary recursive helper, or another `MatchedRuleSet`
+  internally — you cannot bound what that produces by reading this one rule.
+- Anything whose branches depend on a value only known at runtime (an `Evaled` check, a numeric
+  comparison) where different branches build differently-sized results.
+- Anything you are not fully certain about after reading it once. If it takes more than a couple of
+  minutes to convince yourself, that is itself a signal it does not qualify — this is meant to be the
+  *obvious* cases, not an exhaustive audit of all 266.
+
+**Target roughly 10-20 rules for this first batch** — enough to meaningfully grow `SafeRules` and prove
+the mechanism, not an attempt to classify all 266. Leaving most of them `Unknown` is the correct,
+honest outcome for this task, not a shortfall.
+
+- [ ] **Step 1: Survey and list candidates**
+
+Read through `MatchedRules.cs`'s code-built rule declarations. For each candidate you believe qualifies,
+write down: the rule's name, its `MatchedRuleSet`, and a one-sentence justification. Do this for the
+whole candidate list *before* editing any code, so the list can be sanity-checked as a whole (by
+yourself, and later by the reviewer) rather than argued for one at a time after the fact.
+
+- [ ] **Step 2: Apply `growth:` to each rule on the list**
+
+Add `growth: RewriteRuleGrowth.Collects` or `growth: RewriteRuleGrowth.Rearranges` (never `Expands` —
+`SafeRules` withholds those regardless, so declaring one is pointless) to each qualifying
+`MatchedRule(...)` call, as a named argument. Put the one-sentence justification from Step 1 as an
+inline `//` comment on the same call, in this codebase's existing terse style (see how `Soundness` is
+usually justified at its call sites for the tone to match).
+
+- [ ] **Step 3: Run the full suite**
+
+Run: `dotnet test Sources/Tests/UnitTests/UnitTests.csproj` (full run, not filtered — this task changes
+which rules `SafeRules` includes, which the corpus-wide `EMatchingAgreesWithMatching` theory test and
+`EqualitySaturationNeverChangesTheValueItClaimsToPreserve` both exercise directly).
+Expected: all green. If `EMatchingAgreesWithMatching` fails on a newly-included rule, that is real
+evidence the rule's `Left.CanEMatch` path doesn't actually agree with term-matching for it — remove
+that rule from the batch (revert its `growth:` argument) rather than weakening the test, and note which
+one and why in your report.
+If `EqualitySaturationNeverChangesTheValueItClaimsToPreserve` fails on a newly-included rule, that is
+evidence the rule's growth was misclassified (it can produce a wrong value once fired by
+`EqualitySaturation` specifically, as opposed to via its ordinary `TryApply` pipeline position) — remove
+it from the batch and note why.
+
+- [ ] **Step 4: Report the actual before/after `SafeRules` count**
+
+Add a temporary throwaway test or probe (a `Console.WriteLine` in a scratch program, or a temporary
+`[Fact]` you delete before committing) that prints `SafeRules.Count` — record the number in your report.
+Do not leave the throwaway probe in the committed diff.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add Sources/AngouriMath/Core/Transformations/Matching/MatchedRules.cs
+git commit -m "A first batch of code-built rules declare a Growth they can justify by inspection"
+```
+
+---
+
+### Task 14: Close the final review's remaining findings against the real rule count
+
+**Files:**
+- Modify: `Sources/AngouriMath/Core/Transformations/Transformation.Catalogue.cs`
+- Modify: `Sources/Tests/UnitTests/Core/Transformations/TransformationTest.cs`
+
+**Interfaces:** none new — this task only edits doc comments, a test, and one `try`/`catch`.
+
+- [ ] **Step 1: Restore the exception guard around the e-match branch (final review finding I2)**
+
+In `EqualitySaturationTransformation.ApplyCore`, the e-match branch currently reads:
+
+```csharp
+if (rule.Left.CanEMatch)
+{
+    if (!rule.TryEMatchApply(graph, id, costModel.Cost, out other)) continue;
+}
+```
+
+Wrap the call the same way the fallback branch already wraps `rule.TryApply`/`graph.AddEntity`:
+
+```csharp
+if (rule.Left.CanEMatch)
+{
+    bool matched;
+    try { matched = rule.TryEMatchApply(graph, id, costModel.Cost, out other); }
+    catch { continue; }
+    if (!matched) continue;
+}
+```
+
+(Adjust the exact shape to whatever compiles cleanly against the real current code — the point is: a
+`when`/`where` predicate throwing inside `TryEMatchApply` must decline the candidate, not propagate out
+of `Transformation.Apply`, matching the fallback branch's existing behaviour.)
+
+- [ ] **Step 2: Write the failing test for the exception guard**
+
+```csharp
+        [Fact]
+        public void EqualitySaturationDeclinesRatherThanThrowsWhenAWhenConditionThrows()
+        {
+            // A rule with a `when` that throws should make EqualitySaturation decline that rule for
+            // that class, not propagate the exception out of Apply. Exercised indirectly: read
+            // MatchedRules.cs for a real rule with a `when` clause reading an ambiguous property
+            // (e.g. `bound["c"] is Integer || bound["a"].Evaled is Real { IsPositive: true }`, per the
+            // final review's I2 finding) and confirm EqualitySaturation.Apply never throws on any
+            // corpus entry, even where such a rule's `when` is asked about a shape it does not expect.
+        }
+```
+
+Read the final review's I2 finding again before writing this: it names a specific live `when` clause
+(`bound["c"] is Integer || bound["a"].Evaled is Real { IsPositive: true }`) that calls `.Evaled` on an
+arbitrary extracted witness. Write a concrete test around that rule and a corpus entry likely to stress
+it, rather than the placeholder shape above — the placeholder is illustrative, not literal.
+
+- [ ] **Step 3: Confirm RED then GREEN, run the full suite**
+
+- [ ] **Step 4: Replace the vacuous rewiring test (final review finding C1's test half)**
+
+Replace `EqualitySaturationNowDrawsFromMatchingMatchedRules` (`TransformationTest.cs`) — currently
+`Parse("x + 0")`, which never reaches a rule because `EGraph.Add`'s neutral-fold removes it before any
+rule runs — with:
+
+```csharp
+        [Fact]
+        public void EqualitySaturationReachesARuleTheOldRegistryProxyNeverExactlyClassified()
+        {
+            var transformation = Transformation.EqualitySaturation(SmallSaturationBudget, CostModel.Default);
+            var result = transformation.Apply(Parse("sin(arcsin(x))"));
+
+            Assert.True(result.Changed);
+            Assert.Equal(Parse("x"), result.Output);
+        }
+```
+
+Confirm `sin(arcsin(x)) -> x` (or the closest equivalent real rule name — check
+`Matching.MatchedRules` for the actual rule and its exact expected output before committing to this
+exact assertion) is genuinely a live `SafeRules` member reachable only through `NodePattern.EMatch`'s
+whitelist-free reach (per the final review's own strength note) — if this specific rule is not live,
+pick another confirmed member of `SafeRules` that is unreachable via `EGraph`'s neutral-fold shortcut.
+
+- [ ] **Step 5: Measure and record `SafeRules`' real size (final review finding C1's measurement half)**
+
+Add a `[Fact]` (kept, not thrown away — this is the ongoing measurement the spec asked for, not a
+one-time probe):
+
+```csharp
+        [Fact]
+        public void SafeRulesHasAtLeastAFloor()
+        {
+            // A floor, not an exact count -- Tasks 12-13 may grow this further later without needing
+            // this test edited every time. The number here should be read off the real value after
+            // Task 13, not guessed: run the count once, record it, and set the floor comfortably
+            // below it (e.g. 5-10 fewer) so ordinary future rule-registry churn does not make this
+            // test flaky, while a *collapse* back toward the old all-Unknown state still fails it.
+        }
+```
+
+Get the real count by running the same throwaway-probe technique Task 13 Step 4 used (or reuse its
+number if Task 13's report already has it), and write the actual `Assert.True(SafeRules.Count >= N, ...)`
+with a real, justified `N` — replace the comment-only placeholder above with real code before
+committing.
+
+`SafeRules` is `private`, so this test cannot read it directly from `TransformationTest.cs` — either
+add a small `internal` accessor for testing purposes (e.g. an `internal static int SafeRuleCount`
+property on `EqualitySaturationTransformation`, guarded by `[ConstantField]` semantics like the rest of
+that class) or find another way to observe the count indirectly. Decide which, and say so in your
+report — this is a real design choice this step deliberately leaves to you rather than dictating,
+since either is reasonable and the plan does not want to force a specific implementation of a small
+test-visibility seam.
+
+- [ ] **Step 6: Correct the now-false doc comment (final review finding I7)**
+
+`Transformation.Catalogue.cs`'s `EqualitySaturation` doc comment currently says (per the final review):
+
+> "The harness this is built from enumerates a class's terms and rewrites each ... That instrument
+> moved here unchanged. A production e-matcher over `MatchPattern` is not this; it is what tier 2
+> still names as its production caller's other missing half."
+
+This is no longer true — this branch IS that e-matcher, wired in. Read the actual current doc comment
+in full, then rewrite the paragraph to state plainly: real e-matching now runs where `Left.CanEMatch`
+allows (which is most `SafeRules` members after Task 13), falling back to term extraction only where a
+pattern cannot e-match; the rule population is `Matching.MatchedRules.All` filtered by exact `Growth`
+and `Soundness`, at [the real count from Task 13/Step 5] members as of this writing, expected to grow
+as more code-built rules justify a declared `Growth` (Task 12's mechanism); the `work/egraph` harness's
+16-expression measurement was made under the *old* rule population and should not be read as still
+describing this one without re-measuring. Do not just delete the old paragraph — replace it with an
+equally honest one, since a missing explanation is its own kind of misleading.
+
+- [ ] **Step 7: Full suite, then commit**
+
+```bash
+git add Sources/AngouriMath/Core/Transformations/Transformation.Catalogue.cs \
+        Sources/Tests/UnitTests/Core/Transformations/TransformationTest.cs
+git commit -m "Close the final review: restore the exception guard, measure SafeRules, correct the doc comment"
+```
+
+---
+
 ## Open items for whoever picks this up next
 
 - **Reporting the e-match coverage fraction** (spec §5's third bullet) has no home yet in
@@ -1643,6 +2063,16 @@ git commit -m "Verification: e-matching agrees with matching, crosses a union, a
   a defect — but if a future audit finds a `GatheredPattern`-containing rule genuinely misclassified
   as `Collects`/`Rearranges` when it expands, that is real evidence for tightening it, not a
   surprise this plan failed to predict.
+- **The remaining ~250 code-built rules** left `Unknown` after Task 13 are exactly that: not yet
+  justified, not proven unsafe. The next attempt at growing `SafeRules` further starts from Task 13's
+  survey method, not from scratch.
+- **Final review findings I3 (dead code-built fallback path), I4 (no fallback when e-match finds
+  nothing), I5 (whitelist inconsistency between `NodePattern.EMatch` and `AnyPattern.EMatch`), I6 (the
+  corpus skip list removes exactly the non-arithmetic rows), and I8 (several vacuous unit tests in
+  `MatchPatternEMatchTest`)** were not addressed by Tasks 12-14 — I3 is expected to become live once
+  Task 13 lands (a code-built rule with declared `Growth` and an e-matchable `Left` will exercise it
+  for the first time), which is worth confirming rather than assuming. I4-I6 and I8 remain open
+  findings for a future pass.
 - **Retarget this branch's PR to `master`** once #1101 merges — it is currently stacked on
   `tier2-inverse-pair-table` per Global Constraints, and stacked PRs merge into their base, not into
   master, if the retarget is missed.
