@@ -583,6 +583,43 @@ namespace AngouriMath.Core.Transformations.Matching
                 built = value;
                 return true;
             }
+
+            internal override bool CanEMatch => true;
+
+            internal override IEnumerable<EBindings> EMatch(
+                EGraph graph, int classId, EBindings bindings, Func<Entity, double> cost)
+            {
+                if (bindings.TryGet(name, out var already))
+                {
+                    if (graph.Find(already) == graph.Find(classId)) yield return bindings;
+                    yield break;
+                }
+                var eligible = required is null
+                    || graph.NodesOf(classId).Any(node => required.IsAssignableFrom(EGraph.RuntimeType(node)));
+                if (!eligible) yield break;
+                if (where is not null)
+                {
+                    var witness = graph.Extract(classId, cost);
+                    if (witness is null || !where(witness)) yield break;
+                }
+                yield return bindings.With(name, classId);
+            }
+
+            internal override bool ETryBuild(
+                EGraph graph, EBindings bindings, Func<Entity, double> cost, out int classId)
+            {
+                classId = 0;
+                if (!bindings.TryGet(name, out var bound)) return false;
+                if (required is not null || where is not null)
+                {
+                    var witness = graph.Extract(bound, cost);
+                    if (witness is null) return false;
+                    if (required is not null && !required.IsInstanceOfType(witness)) return false;
+                    if (where is not null && !where(witness)) return false;
+                }
+                classId = bound;
+                return true;
+            }
         }
 
         private sealed class ExactPattern : MatchPattern

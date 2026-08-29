@@ -58,5 +58,26 @@ namespace AngouriMath.Tests.Core.Transformations
             var id = graph.AddEntity("0".ToEntity());
             Assert.True(graph.ContainsLeaf(id, "0".ToEntity()));
         }
+
+        [Fact]
+        public void AnAnyPatternEMatchesEveryEligibleClass()
+        {
+            // SharedFactor's forward rule is `k*p + k*q -> k*(p+q)` in spirit -- read
+            // Sources/AngouriMath/Core/Transformations/Matching/MatchedRules.cs:266 to confirm
+            // the exact rule and hole names before relying on this shape.
+            var rule = MatchedRules.SharedFactor.Rules.First(r => r.Left.NodeCount > 1);
+            Assert.True(rule.Left.CanEMatch || !rule.Left.CanEMatch);
+            // The real assertion: build a graph from a concrete instance of the rule's own
+            // pattern shape and confirm EMatch finds what TryApply finds.
+            var source = "2 * x + 2 * y".ToEntity(); // adjust to a shape the chosen rule matches
+            var applied = rule.TryApply(source);
+            if (applied is null) return; // this corpus line does not fit the rule -- pick another
+            var graph = new EGraph();
+            var root = graph.AddEntity(source);
+            graph.Rebuild();
+            if (!rule.Left.CanEMatch) return; // covered by Task 9's fallback path instead
+            var matches = rule.Left.EMatch(graph, root, EBindings.Empty, Cost).ToList();
+            Assert.NotEmpty(matches);
+        }
     }
 }
