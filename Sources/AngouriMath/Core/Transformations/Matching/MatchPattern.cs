@@ -603,7 +603,17 @@ namespace AngouriMath.Core.Transformations.Matching
                 if (where is not null)
                 {
                     var witness = graph.Extract(classId, cost);
-                    if (witness is null || !where(witness)) yield break;
+                    // The same guard ETryBuild applies before calling `where`: `where` is
+                    // compiled from `Any<T>(name, where)` as an unguarded cast to T (see that
+                    // factory, above), so a witness the eligibility check above did not itself
+                    // require to be of type T -- the cheapest overall representative of the
+                    // class, not the cheapest one of type T -- would throw InvalidCastException
+                    // rather than simply fail to match. Declining here is a missed match, which
+                    // is a legitimate answer; a crash is not.
+                    if (witness is null
+                        || (required is not null && !required.IsInstanceOfType(witness))
+                        || !where(witness))
+                        yield break;
                 }
                 yield return bindings.With(name, classId);
             }

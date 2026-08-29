@@ -12,6 +12,8 @@ using AngouriMath.Core.Transformations;
 using AngouriMath.Core.Transformations.Matching;
 using AngouriMath.Extensions;
 using Xunit;
+using static AngouriMath.Entity;
+using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Tests.Core.Transformations
 {
@@ -121,6 +123,43 @@ namespace AngouriMath.Tests.Core.Transformations
             // for these two mirror-image inputs. If the rule found is not commutative this
             // equality still holds trivially (both zero, or both from independent evaluation).
             Assert.Equal(straightMatches.Count > 0, swappedMatches.Count > 0);
+        }
+
+        [Fact]
+        public void AnAnyPatternWithARequiredTypeAndWhereDeclinesRatherThanThrowsOnAWrongWitness()
+        {
+            // Any<T>(name, where) compiles `where` as an unguarded cast to T -- see the factory
+            // just above ExactPattern's declaration in MatchPattern.cs: `node => where((T)node)`.
+            // EMatch's eligibility check only asks whether *some* e-node in the class satisfies
+            // `required`; the witness it extracts to run `where` against can be a different
+            // e-node of the same class entirely, under whatever cost model the caller supplies.
+            // Union two congruent representations -- one that satisfies `required`, one that
+            // does not -- into a single e-class, and hand EMatch a cost model that makes the
+            // wrong-typed one the cheapest overall witness. This is exactly what real
+            // EqualitySaturation unions (Tasks 10-11) will eventually produce; it does not arise
+            // from today's registry rules, which is why this needs a hand-built adversarial cost
+            // model rather than a corpus example.
+            var graph = new EGraph();
+            var integerId = graph.AddEntity(Integer.Create(5));
+            var variableId = graph.AddEntity(MathS.Var("x"));
+            graph.Union(integerId, variableId);
+            graph.Rebuild();
+            var classId = graph.Find(integerId);
+
+            // Whatever is not an Integer is free; whatever is costs a lot -- so the class's
+            // cheapest overall witness is the Variable, even though the class also holds a
+            // positive Integer that would make `required` eligibility succeed.
+            double AdversarialCost(Entity e) => e is Integer ? 1000.0 : 0.0;
+
+            var pattern = MatchPattern.Any<Integer>("n", (Integer n) => n.IsPositive);
+            Assert.True(pattern.CanEMatch);
+
+            // Before the fix this threw InvalidCastException from inside the `where` cast,
+            // because the extracted witness (the Variable) is not an Integer. Declining --
+            // an empty match sequence -- is the correct behaviour: a missed match is a
+            // legitimate answer, a crash is not.
+            var matches = pattern.EMatch(graph, classId, EBindings.Empty, AdversarialCost).ToList();
+            Assert.Empty(matches);
         }
     }
 }
