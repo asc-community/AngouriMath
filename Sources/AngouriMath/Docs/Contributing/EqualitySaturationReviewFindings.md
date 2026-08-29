@@ -3,15 +3,15 @@
 A review pass over [#1101](https://github.com/asc-community/AngouriMath/pull/1101) (`EGraph` and
 `Transformation.EqualitySaturation`) and [#1102](https://github.com/asc-community/AngouriMath/pull/1102)
 (`Transformation.SimplificationAtLevel`), run before either had a human reviewer, found fifteen
-issues. Seven are now fixed, each with a regression test named beside it below. The other eight are
+issues. Ten are now fixed, each with a regression test named beside it below. The other five are
 recorded here rather than fixed, because fixing several of them is a real design question — the same
 shape as [`InversePairTable.md`](InversePairTable.md): naming what is true now, so the next attempt
 starts from a measured position instead of rediscovering one.
 
-The two sections below are the live account; whoever closes one of the remaining eight moves its
-entry up rather than adding a third place to look. One entry in **Fixed** also carries a correction
-to what this document originally claimed, because the recorded diagnosis turned out to be wrong once
-it was measured.
+The two sections below are the live account; whoever closes one of the remaining five moves its entry
+up rather than adding a third place to look. One entry in **Fixed** also carries a correction to what
+this document originally claimed, because the recorded diagnosis turned out to be wrong once it was
+measured.
 
 ## Fixed
 
@@ -77,28 +77,52 @@ mechanism given for it was wrong, and the wrong mechanism was the more flatterin
 is slightly late reads as a rounding error, where a bound that never fires is the feature missing.
 The probe that separated them was four lines and had not been run.*
 
+**`EGraph` kept its own copy of the node-type list `MatchPattern.Construct` hardcodes.** Two lists of
+the same fourteen types, next to a doc comment on `Construct` itself warning that a list written twice
+is a list that drifts — and the drift would have been silent, since a type added to one and not the
+other simply stops being reachable from the e-graph with no compiler error. Fixed by making one table
+hold all three facts at once — the type, its arity, and the constructor call — with the list, the
+name lookup and `CanConstruct` all derived from its keys, so there is no second list left to drift.
+Being a table rather than a chain of `nodeType == typeof(T)` tests also makes the lookup O(1), which
+matters now that the list is three times longer: `BuildableNodeTypesTest` holds it to `Construct` by
+reflecting over every concrete node type, and builds each declared one for real, since a lookup that
+says "yes" does not prove a constructor runs.
+
+**`Extract` silently no-opped on any root type outside that list, and a `Providedf`-wrapped result was
+unioned onto a dead end.** Two findings with one cause. Fourteen types is what `Construct` had
+accumulated, not a principled boundary: comparisons, connectives, the inverse trigonometric functions,
+`floor`/`ceil`/`round`, `mod`, `gcd`, `min`/`max`, the set operations and `Providedf` were all absent,
+so `EqualitySaturation.Apply` on an expression rooted at any of them returned its input reporting
+`Changed = false` — indistinguishable from "already at its cheapest" — and a rule following the
+registry's own convention of wrapping a conditional result in `Providedf` had that result merged onto
+a class nothing could build. Fixed by widening the table to 44 types, which is every node type whose
+constructor takes one or two `Entity` children, less two binders. Six rules gain a reverse direction
+as a result (`a-sine-of-an-arcsine` and its three siblings, `a-union-with-itself-is-itself`,
+`an-intersection-with-itself-is-itself`); each reversed rule is `Expands`, so none of them joins
+`SafeRules`.
+
+*What stays out, and why, is now a statement rather than an accident.* **Binders** — `Lambda`,
+`ConditionalSet` — because the e-graph has no notion of a bound variable's scope and would union a
+bound occurrence with a free one, and because `DirectChildren` hands out a capture-avoidingly renamed
+body rather than the written one; rebuilding either would produce a term meaning something else.
+**Variable-arity nodes** — `Piecewise`, `Application`, the finite `Set`s, `Matrix` — because the table
+keys on an arity of one or two; widening it to n children is a separate piece of work rather than a
+principle. `EGraphTest.ExtractStillDeclinesWhatItCannotFaithfullyRebuild` pins both, including the
+case where the root is buildable and its operands are not.
+
 ## Recorded, not fixed
 
-**The deeper pattern under both fixes above.** The e-graph's node model has nowhere to carry
-anything beyond raw tree shape — no `Codomain`, no leaf reference identity beyond what the two
-targeted fixes now special-case, and, per the next two items, no way to represent a conditional
-equivalence at all. Both fixes here are narrow patches for the two cases a review happened to find;
-a rule that produces some other kind of metadata-bearing node would reopen the same class of bug.
-Whether that calls for a general "attach anything, forget nothing" e-node representation, or stays a
-list of special cases extended as each is found, is not decided here.
+**The deeper pattern: an e-node carries raw tree shape and nothing else.** `Codomain` and
+`EulerIntrinsic`'s reference identity are each special-cased, and a rule producing some other kind of
+metadata-bearing node would reopen the same class of bug. Whether that calls for a general "attach
+anything, forget nothing" e-node representation, or stays a list of special cases extended as each is
+found, is still not decided.
 
-**A `SoundUnderAssumptions` rule's `Providedf`-wrapped result is unioned onto a dead end.**
-`Providedf` is absent from `EGraph`'s 14-type reconstructible whitelist, so when a rule wraps its
-result in a condition — the registry's own documented convention for a rule that does not hold
-unconditionally — `Union` merges the original class onto an unbuildable wrapper class instead of the
-useful unwrapped payload, and the improvement never reaches extraction. Representing "equivalent
-under a condition" is not a data shape the e-graph has today.
-
-**`Extract` silently no-ops on any root type outside its 14-type whitelist.** `Providedf`,
-`Piecewise`, comparisons, and function application all fall outside it, so
-`EqualitySaturation.Apply` on any expression rooted at one of these returns the unchanged input —
-`Changed = false` — even when the e-graph proved an improvement somewhere inside it. Indistinguishable
-from "already optimal".
+*Narrower than it was, though, and worth saying how.* This entry used to name the `Providedf` case as
+evidence that the e-graph had "no way to represent a conditional equivalence at all". That was the
+whitelist rather than the node model: `Providedf` is an ordinary two-child node, and giving
+`Construct` a line for it was the whole fix. What remains is genuinely about the node model —
+per-node data that is not a child, of which `Codomain` is the only instance the library has today.
 
 **`RewriteRecording` — the library's only "what rewrote this and why" mechanism — cannot see
 `EqualitySaturation` at all.** It is populated exclusively inside `RewriteRuleSet.ApplyOnce`;
@@ -106,11 +130,6 @@ from "already optimal".
 A caller who wraps a call in `RewriteRecording.Start()` — the library's own documented pattern for
 introspection — gets a real rewrite with an empty derivation and no signal that introspection failed
 rather than legitimately finding nothing.
-
-**`EGraph.OperatorTypes` hand-duplicates the exact 14-type list `MatchPattern.Construct` already
-hardcodes**, next to a sibling doc comment on `Construct` itself warning that "a list written twice
-is a list that drifts". A future PR extending one without the other silently loses e-graph coverage
-for the new type, with no compiler error.
 
 **`RewriteRule.NodeTypes` — an existing, documented fast pre-filter — is never consulted before
 `ApplyCore` calls the full `TryApply` pattern match on every `SafeRules` entry, per class, per pass.**

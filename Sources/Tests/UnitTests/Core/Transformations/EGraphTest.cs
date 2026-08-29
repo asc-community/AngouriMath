@@ -319,6 +319,83 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.NotNull(extracted);
         }
 
+        /// <summary>
+        /// <see cref="EGraph.Extract"/> rebuilds through the node types
+        /// <c>MatchPattern.Construct</c> knows, and that used to be fourteen arithmetic and
+        /// trigonometric ones. Every other root -- a comparison, a condition attached to a value,
+        /// a set operation -- extracted as <see langword="null"/>, so
+        /// <c>Transformation.EqualitySaturation</c> handed back its input reporting
+        /// <c>Changed = false</c>, which is indistinguishable from "already at its cheapest" even
+        /// where the graph had proved an improvement inside it.
+        /// </summary>
+        [Theory]
+        [InlineData("x > 0")]
+        [InlineData("x = y")]
+        [InlineData("x >= y + 1")]
+        [InlineData("a and b")]
+        [InlineData("not a")]
+        [InlineData("x mod y")]
+        [InlineData("floor(x)")]
+        [InlineData("arcsin(x)")]
+        [InlineData("x!")]
+        // A special set is a leaf, so both operands rebuild and the union over them does too.
+        [InlineData("RR unite ZZ")]
+        public void ExtractRebuildsRootsThatUsedToFallOutsideTheBuildableTypes(string source)
+        {
+            var expr = source.ToEntity();
+            var graph = new EGraph();
+            var root = graph.AddEntity(expr);
+
+            var extracted = graph.Extract(root, CostModel.Default.Cost);
+
+            Assert.NotNull(extracted);
+            Assert.True(expr.Equals(extracted), $"{source} came back as {extracted!.Stringize()}");
+        }
+
+        /// <summary>
+        /// The case the review named specifically: a rule that does not hold unconditionally
+        /// wraps its result in a <see cref="Entity.Providedf"/>, which is the registry's own
+        /// documented convention -- and that wrapper used to be unbuildable, so the class it was
+        /// unioned onto was a dead end and the improvement never reached extraction.
+        /// </summary>
+        [Fact]
+        public void ExtractRebuildsAConditionAttachedToAValue()
+        {
+            Entity provided = new Entity.Providedf("x".ToEntity(), "x > 0".ToEntity());
+            var graph = new EGraph();
+            var root = graph.AddEntity(provided);
+
+            var extracted = graph.Extract(root, CostModel.Default.Cost);
+
+            Assert.NotNull(extracted);
+            Assert.IsType<Entity.Providedf>(extracted);
+            Assert.True(provided.Equals(extracted));
+        }
+
+        /// <summary>
+        /// A binder is still not rebuilt, and that is deliberate rather than pending: the e-graph
+        /// has no notion of a bound variable's scope, and <c>DirectChildren</c> hands out a
+        /// capture-avoidingly renamed body, so rebuilding one from an e-class would produce a term
+        /// meaning something else.
+        /// </summary>
+        /// <remarks>
+        /// The variable-arity nodes are declined for a different reason -- the table keys on a
+        /// type and an arity of one or two, so an n-child node has no entry -- and a union over
+        /// two finite sets shows that this reaches the root through its operands: the
+        /// <c>Unionf</c> itself is buildable and its operands are not.
+        /// </remarks>
+        [Theory]
+        [InlineData("{ x : x > 0 }")]                 // a binder: no notion of scope here
+        [InlineData("{ 1, 2 }")]                      // variable arity
+        [InlineData("{ 1, 2 } unite { 2, 3 }")]       // buildable root, unbuildable operands
+        public void ExtractStillDeclinesWhatItCannotFaithfullyRebuild(string source)
+        {
+            var graph = new EGraph();
+            var root = graph.AddEntity(source.ToEntity());
+
+            Assert.Null(graph.Extract(root, CostModel.Default.Cost));
+        }
+
         [Fact]
         public void ContainsLeafFindsAMatchingLiteral()
         {

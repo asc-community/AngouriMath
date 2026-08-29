@@ -338,21 +338,14 @@ namespace AngouriMath.Core.Transformations
 
         /// <summary>
         /// <see cref="MatchPattern.ConstructNode"/> takes the runtime <see cref="Type"/> a
-        /// <see cref="Key"/> string names -- this is the one place that resolves the name back,
-        /// so it is the one place that would need to change if two node types ever printed the
-        /// same <c>GetType().Name</c>.
+        /// <see cref="Key"/> string names, and <see cref="MatchPattern.BuildableNodeTypes"/> is
+        /// where those types are named -- once, beside the <c>Construct</c> that builds them.
+        /// This used to hold a second copy of that list, which nothing kept in step: a type added
+        /// to one and not the other silently stopped being reachable from here, with no compiler
+        /// error to say so.
         /// </summary>
-        [ConstantField]
-        private static readonly Dictionary<string, Type> OperatorTypes = new Type[]
-        {
-            typeof(Entity.Sumf), typeof(Entity.Minusf), typeof(Entity.Mulf), typeof(Entity.Divf),
-            typeof(Entity.Powf), typeof(Entity.Logf), typeof(Entity.Sinf), typeof(Entity.Cosf),
-            typeof(Entity.Tanf), typeof(Entity.Cotanf), typeof(Entity.Secantf),
-            typeof(Entity.Cosecantf), typeof(Entity.Absf), typeof(Entity.Signumf),
-        }.ToDictionary(t => t.Name);
-
         private static Type OperatorType(string op)
-            => OperatorTypes.TryGetValue(op, out var type) ? type : typeof(void);
+            => MatchPattern.NodeTypeNamed(op) ?? typeof(void);
 
         /// <summary>
         /// Whether the e-class <paramref name="id"/> already contains a leaf equal to

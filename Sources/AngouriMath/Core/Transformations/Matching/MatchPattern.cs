@@ -376,8 +376,82 @@ namespace AngouriMath.Core.Transformations.Matching
         internal static Entity? ConstructNode(Type nodeType, Entity[] children) => Construct(nodeType, children);
 
         /// <summary>
+        /// Every node type this builds, with its arity and the constructor call that builds it.
+        /// One table, and the only place any of these three facts is written.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Constructor calls written out rather than reflected, for the reason
+        /// <see cref="Construct"/> gives. A table rather than a chain of
+        /// <c>nodeType == typeof(T)</c> tests because the chain was walked on every node built
+        /// during matching and grew linearly with this list: at fourteen types that was cheap,
+        /// and this list is longer than that. The lambdas are non-capturing, so each is a single
+        /// cached delegate rather than an allocation per call.
+        /// </para>
+        /// <para>
+        /// <see cref="BuildableNodeTypes"/> and <see cref="NodeTypeNamed"/> are both derived from
+        /// this table's keys, so there is no second list to drift from it — <see cref="EGraph"/>
+        /// used to keep one, and a type added here and not there silently stopped being reachable
+        /// from the e-graph with no compiler error.
+        /// </para>
+        /// </remarks>
+        [ConstantField]
+        private static readonly Dictionary<Type, (int Arity, Func<Entity[], Entity> Build)> constructors = new()
+        {
+            // Trigonometric, and their inverses.
+            [typeof(Entity.Sinf)] = (1, static c => new Entity.Sinf(c[0])),
+            [typeof(Entity.Cosf)] = (1, static c => new Entity.Cosf(c[0])),
+            [typeof(Entity.Tanf)] = (1, static c => new Entity.Tanf(c[0])),
+            [typeof(Entity.Cotanf)] = (1, static c => new Entity.Cotanf(c[0])),
+            [typeof(Entity.Secantf)] = (1, static c => new Entity.Secantf(c[0])),
+            [typeof(Entity.Cosecantf)] = (1, static c => new Entity.Cosecantf(c[0])),
+            [typeof(Entity.Arcsinf)] = (1, static c => new Entity.Arcsinf(c[0])),
+            [typeof(Entity.Arccosf)] = (1, static c => new Entity.Arccosf(c[0])),
+            [typeof(Entity.Arctanf)] = (1, static c => new Entity.Arctanf(c[0])),
+            [typeof(Entity.Arccotanf)] = (1, static c => new Entity.Arccotanf(c[0])),
+            [typeof(Entity.Arcsecantf)] = (1, static c => new Entity.Arcsecantf(c[0])),
+            [typeof(Entity.Arccosecantf)] = (1, static c => new Entity.Arccosecantf(c[0])),
+            // Other unary functions.
+            [typeof(Entity.Absf)] = (1, static c => new Entity.Absf(c[0])),
+            [typeof(Entity.Signumf)] = (1, static c => new Entity.Signumf(c[0])),
+            [typeof(Entity.Floorf)] = (1, static c => new Entity.Floorf(c[0])),
+            [typeof(Entity.Ceilf)] = (1, static c => new Entity.Ceilf(c[0])),
+            [typeof(Entity.Roundf)] = (1, static c => new Entity.Roundf(c[0])),
+            [typeof(Entity.Factorialf)] = (1, static c => new Entity.Factorialf(c[0])),
+            [typeof(Entity.Phif)] = (1, static c => new Entity.Phif(c[0])),
+            [typeof(Entity.Notf)] = (1, static c => new Entity.Notf(c[0])),
+            // Arithmetic.
+            [typeof(Entity.Sumf)] = (2, static c => new Entity.Sumf(c[0], c[1])),
+            [typeof(Entity.Minusf)] = (2, static c => new Entity.Minusf(c[0], c[1])),
+            [typeof(Entity.Mulf)] = (2, static c => new Entity.Mulf(c[0], c[1])),
+            [typeof(Entity.Divf)] = (2, static c => new Entity.Divf(c[0], c[1])),
+            [typeof(Entity.Powf)] = (2, static c => new Entity.Powf(c[0], c[1])),
+            [typeof(Entity.Logf)] = (2, static c => new Entity.Logf(c[0], c[1])),
+            [typeof(Entity.Modf)] = (2, static c => new Entity.Modf(c[0], c[1])),
+            [typeof(Entity.Gcdf)] = (2, static c => new Entity.Gcdf(c[0], c[1])),
+            [typeof(Entity.Minf)] = (2, static c => new Entity.Minf(c[0], c[1])),
+            [typeof(Entity.Maxf)] = (2, static c => new Entity.Maxf(c[0], c[1])),
+            // Comparisons and connectives.
+            [typeof(Entity.Equalsf)] = (2, static c => new Entity.Equalsf(c[0], c[1])),
+            [typeof(Entity.Greaterf)] = (2, static c => new Entity.Greaterf(c[0], c[1])),
+            [typeof(Entity.GreaterOrEqualf)] = (2, static c => new Entity.GreaterOrEqualf(c[0], c[1])),
+            [typeof(Entity.Lessf)] = (2, static c => new Entity.Lessf(c[0], c[1])),
+            [typeof(Entity.LessOrEqualf)] = (2, static c => new Entity.LessOrEqualf(c[0], c[1])),
+            [typeof(Entity.Andf)] = (2, static c => new Entity.Andf(c[0], c[1])),
+            [typeof(Entity.Orf)] = (2, static c => new Entity.Orf(c[0], c[1])),
+            [typeof(Entity.Xorf)] = (2, static c => new Entity.Xorf(c[0], c[1])),
+            [typeof(Entity.Impliesf)] = (2, static c => new Entity.Impliesf(c[0], c[1])),
+            // Sets, and a condition attached to a value.
+            [typeof(Entity.Set.Inf)] = (2, static c => new Entity.Set.Inf(c[0], c[1])),
+            [typeof(Entity.Set.Unionf)] = (2, static c => new Entity.Set.Unionf(c[0], c[1])),
+            [typeof(Entity.Set.Intersectionf)] = (2, static c => new Entity.Set.Intersectionf(c[0], c[1])),
+            [typeof(Entity.Set.SetMinusf)] = (2, static c => new Entity.Set.SetMinusf(c[0], c[1])),
+            [typeof(Entity.Providedf)] = (2, static c => new Entity.Providedf(c[0], c[1])),
+        };
+
+        /// <summary>
         /// A node of <paramref name="nodeType"/> over <paramref name="children"/>, or
-        /// <see langword="null"/> where that is not a node this builds.
+        /// <see langword="null"/> where that is not a node this builds at that arity.
         /// </summary>
         /// <remarks>
         /// <para>
@@ -388,58 +462,59 @@ namespace AngouriMath.Core.Transformations.Matching
         /// and nothing else.
         /// </para>
         /// <para>
-        /// A node type absent from here is <b>matchable but not buildable</b>: a pattern over it is
-        /// still a rule's left-hand side, and <see cref="IsBuildable"/> is what says it cannot be a
-        /// right-hand side or be reached by reading a rule backwards. Adding a type is one line,
-        /// and <c>EveryDataRuleIsBuildableOnBothSides</c> is the test that says when one is owed.
+        /// A node type absent from <see cref="constructors"/> is <b>matchable but not buildable</b>:
+        /// a pattern over it is still a rule's left-hand side, and <see cref="IsBuildable"/> is what
+        /// says it cannot be a right-hand side or be reached by reading a rule backwards. Adding a
+        /// type is one line, and <c>EveryDataRuleIsBuildableOnBothSides</c> is the test that says
+        /// when one is owed.
+        /// </para>
+        /// <para>
+        /// <b>What is still absent, and why.</b> Two kinds. <b>Binders</b> — <c>Entity.Lambda</c>
+        /// and <c>Entity.Set.ConditionalSet</c> — take a bound variable whose scope their body is
+        /// under, and <see cref="EGraph"/> has no notion of binding: it would happily union a
+        /// bound occurrence with a free one, and <c>DirectChildren</c> hands out a
+        /// capture-avoidingly renamed body rather than the written one. Rebuilding either from an
+        /// e-class would produce a term that means something else. <b>Variable-arity nodes</b> —
+        /// <c>Piecewise</c>, <c>Application</c>, the finite <c>Set</c>s and the <c>Matrix</c> —
+        /// are out of this table's shape rather than out of principle: it keys on a type and an
+        /// arity of one or two, and widening it to n children is a different piece of work.
         /// </para>
         /// </remarks>
         private static Entity? Construct(Type nodeType, Entity[] children)
-        {
-            if (children.Length == 1)
-            {
-                var only = children[0];
-                return
-                    nodeType == typeof(Entity.Sinf) ? new Entity.Sinf(only) :
-                    nodeType == typeof(Entity.Cosf) ? new Entity.Cosf(only) :
-                    nodeType == typeof(Entity.Tanf) ? new Entity.Tanf(only) :
-                    nodeType == typeof(Entity.Cotanf) ? new Entity.Cotanf(only) :
-                    nodeType == typeof(Entity.Secantf) ? new Entity.Secantf(only) :
-                    nodeType == typeof(Entity.Cosecantf) ? new Entity.Cosecantf(only) :
-                    nodeType == typeof(Entity.Absf) ? new Entity.Absf(only) :
-                    nodeType == typeof(Entity.Signumf) ? new Entity.Signumf(only) :
-                    (Entity?)null;
-            }
-            if (children.Length == 2)
-            {
-                Entity first = children[0], second = children[1];
-                return
-                    nodeType == typeof(Entity.Sumf) ? new Entity.Sumf(first, second) :
-                    nodeType == typeof(Entity.Minusf) ? new Entity.Minusf(first, second) :
-                    nodeType == typeof(Entity.Mulf) ? new Entity.Mulf(first, second) :
-                    nodeType == typeof(Entity.Divf) ? new Entity.Divf(first, second) :
-                    nodeType == typeof(Entity.Powf) ? new Entity.Powf(first, second) :
-                    nodeType == typeof(Entity.Logf) ? new Entity.Logf(first, second) :
-                    (Entity?)null;
-            }
-            return null;
-        }
+            => constructors.TryGetValue(nodeType, out var entry) && entry.Arity == children.Length
+                ? entry.Build(children)
+                : null;
 
         /// <summary>
-        /// Whether <see cref="Construct"/> builds this type at this arity, asked by building one
-        /// over placeholders rather than by listing the types a second time — a list written twice
-        /// is a list that drifts.
+        /// The node types <see cref="Construct"/> builds. Derived from
+        /// <see cref="constructors"/> rather than listed again — <see cref="EGraph"/> resolves an
+        /// e-node's operator back to a type through <see cref="NodeTypeNamed"/>, and a list
+        /// written twice is a list that drifts, silently and with no compiler error.
         /// </summary>
-        private static bool CanConstruct(Type nodeType, int arity)
-        {
-            if (arity is not (1 or 2))
-                return false;
-            var placeholders = new Entity[arity];
-            for (var i = 0; i < arity; i++)
-                placeholders[i] = Entity.Number.Integer.Zero;
-            return Construct(nodeType, placeholders) is not null;
-        }
+        [ConstantField]
+        internal static readonly IReadOnlyList<Type> BuildableNodeTypes = constructors.Keys.ToList();
 
+        /// <summary>
+        /// <see cref="BuildableNodeTypes"/> by <see cref="System.Reflection.MemberInfo.Name"/>.
+        /// Declared after it, because a static field initialiser that reads another one in the
+        /// same class runs in declaration order and would otherwise see null.
+        /// </summary>
+        [ConstantField]
+        private static readonly Dictionary<string, Type> buildableByName
+            = BuildableNodeTypes.ToDictionary(type => type.Name, StringComparer.Ordinal);
+
+        /// <summary>
+        /// The buildable node type of this name, or <see langword="null"/> where none has it.
+        /// </summary>
+        internal static Type? NodeTypeNamed(string name)
+            => buildableByName.TryGetValue(name, out var type) ? type : null;
+
+        /// <summary>
+        /// Whether <see cref="Construct"/> builds this type at this arity — one lookup in the
+        /// table that does the building, so it cannot answer differently from what building would.
+        /// </summary>
+        internal static bool CanConstruct(Type nodeType, int arity)
+            => constructors.TryGetValue(nodeType, out var entry) && entry.Arity == arity;
         /// <summary>Whether it matches at all, which is <see cref="Match"/> asked for one answer.</summary>
         internal bool Matches(Entity expr) => Match(expr, Bindings.Empty).Any();
 
