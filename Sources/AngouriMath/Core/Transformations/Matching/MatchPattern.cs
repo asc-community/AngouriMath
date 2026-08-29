@@ -76,6 +76,44 @@ namespace AngouriMath.Core.Transformations.Matching
     }
 
     /// <summary>
+    /// The e-graph counterpart of <see cref="Bindings"/>: a set of named holes, each standing for
+    /// an e-class id rather than an <see cref="Entity"/>. Same cons-list shape, for the same reason
+    /// -- see <see cref="Bindings"/>'s own remarks -- plus one concrete win it gets for free: a name
+    /// bound twice (<c>x - x -&gt; 0</c>'s repeated <c>x</c>) becomes an O(1) class-id comparison
+    /// instead of an <see cref="Entity.Equals(Entity)"/> call.
+    /// </summary>
+    internal sealed class EBindings
+    {
+        private readonly EBindings? tail;
+        private readonly string? name;
+        private readonly int value;
+
+        internal static EBindings Empty { get; } = new(null, null, 0);
+
+        private EBindings(EBindings? tail, string? name, int value)
+        {
+            this.tail = tail;
+            this.name = name;
+            this.value = value;
+        }
+
+        internal bool TryGet(string wanted, out int found)
+        {
+            for (var at = this; at is not null; at = at.tail)
+                if (at.name == wanted)
+                {
+                    found = at.value;
+                    return true;
+                }
+            found = 0;
+            return false;
+        }
+
+        /// <summary>A new set with one more name bound, sharing this one as its tail.</summary>
+        internal EBindings With(string name, int value) => new(this, name, value);
+    }
+
+    /// <summary>
     /// The left-hand side of a rewrite rule, as a <b>value</b> rather than as an arm of a
     /// <c>switch</c>.
     /// </summary>
