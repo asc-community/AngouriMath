@@ -291,6 +291,14 @@ namespace AngouriMath.Core.Transformations.Matching
         internal abstract bool TryBuild(Bindings bindings, out Entity built);
 
         /// <summary>
+        /// Builds a node of <paramref name="nodeType"/> over <paramref name="children"/>, or
+        /// <see langword="null"/> where this cannot -- see the remarks on <see cref="Construct"/>,
+        /// which this exposes. <see cref="EGraph"/> uses this to rebuild an extracted e-node's
+        /// type without a second, drifting list of the same operators.
+        /// </summary>
+        internal static Entity? ConstructNode(Type nodeType, Entity[] children) => Construct(nodeType, children);
+
+        /// <summary>
         /// A node of <paramref name="nodeType"/> over <paramref name="children"/>, or
         /// <see langword="null"/> where that is not a node this builds.
         /// </summary>

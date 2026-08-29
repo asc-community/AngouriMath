@@ -6,6 +6,9 @@
 //
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using AngouriMath.Core.Budgets;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
 using static AngouriMath.Entity;
@@ -254,6 +257,59 @@ namespace AngouriMath.Core.Transformations
             = Rewriting(RewriteRules.RationalizeDenominator).Then(InnerSimplification);
 
         /// <summary>
+        /// Explores the equalities the whole registry's rules reach from an expression at once,
+        /// over an e-graph, and extracts the cheapest under <paramref name="costModel"/>.
+        /// </summary>
+        /// <param name="budget">
+        /// What this call may spend before it settles for the best it has found so far.
+        /// <see cref="WorkBudget.Steps"/> is charged once per e-node the graph actually creates;
+        /// <see cref="WorkBudget.Time"/> is the wall-clock backstop. A caller who sets
+        /// <see cref="MathS.Settings.Budget"/> overrides this, the same as every other bounded
+        /// computation in the library.
+        /// </param>
+        /// <param name="costModel">Which candidate counts as cheapest once exploration stops.</param>
+        /// <remarks>
+        /// <para>
+        /// <b>Nothing runs this by default</b> — the same standing as
+        /// <see cref="RationalCanonicalization"/> and <see cref="Canonicalization"/>, and for a
+        /// sharper reason: <c>Simplify</c> applies a rule set once, keeps a candidate and moves on,
+        /// so an expanding rule and a collecting one never meet — the order they run in decides
+        /// which wins. Equality saturation deletes that order and keeps every result, which is
+        /// why it needs a budget rather than a pass count, and why only the rules a scheduler can
+        /// prove will not run away are offered to it — see the next paragraph.
+        /// </para>
+        /// <para>
+        /// <b>Only rules whose <see cref="RewriteRuleGrowth"/> is
+        /// <see cref="RewriteRuleGrowth.Collects"/> or <see cref="RewriteRuleGrowth.Rearranges"/>
+        /// are used.</b> An expanding rule and a rule built from code rather than a spelled
+        /// pattern (<see cref="RewriteRuleGrowth.Unknown"/>) are both withheld, for the same
+        /// reason: a rule this cannot prove will not make the graph grow without bound is not
+        /// proven safe, and not proven safe is not the same as safe. This is
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 2's
+        /// e-graph, measured first in the <c>work/egraph</c> harness against a textbook corpus of
+        /// 16 expressions, all of which saturate under exactly this restriction.
+        /// </para>
+        /// <para>
+        /// <b>What this is not.</b> The harness this is built from enumerates a class's terms and
+        /// rewrites each, which finds the same equalities e-matching would but by materialising
+        /// terms a real e-matcher never builds — slower, and measured that way on purpose to ask
+        /// a memory question rather than a speed one. That instrument moved here unchanged. A
+        /// production e-matcher over <see cref="Matching.MatchPattern"/> is not this; it is what
+        /// tier 2 still names as its production caller's other missing half.
+        /// </para>
+        /// <para>
+        /// <b>What generalises and what does not.</b> The 16-expression corpus said the graph
+        /// stops growing under this restriction; it did not and could not say that of every
+        /// expression <c>Simplify</c> is asked to handle. Pass a budget that reflects that this
+        /// is still being found out, not one sized for how much the caller can afford to lose.
+        /// </para>
+        /// </remarks>
+        public static Transformation EqualitySaturation(WorkBudget budget, CostModel costModel)
+            => new EqualitySaturationTransformation(
+                budget ?? throw new ArgumentNullException(nameof(budget)),
+                costModel ?? throw new ArgumentNullException(nameof(costModel)));
+
+        /// <summary>
         /// Replaces every occurrence of <paramref name="what"/> with
         /// <paramref name="with"/>, as <see cref="Entity.Substitute(Entity, Entity)"/> does.
         /// </summary>
@@ -341,6 +397,81 @@ namespace AngouriMath.Core.Transformations
                 => level < Lowest || level > Highest
                     ? make(level)
                     : cached[level - Lowest] ??= make(level);
+        }
+
+        private sealed class EqualitySaturationTransformation : Transformation
+        {
+            /// <summary>
+            /// Every rule in the registry whose growth is known not to expand -- see the
+            /// remarks on <see cref="EqualitySaturation"/> for why the other two kinds are
+            /// withheld. Computed once: the registry does not change while the process runs.
+            /// </summary>
+            [ConstantField]
+            private static readonly IReadOnlyList<RewriteRule> SafeRules
+                = RewriteRules.All
+                    .SelectMany(set => set.Rules)
+                    .Where(rule => rule.Growth is RewriteRuleGrowth.Collects or RewriteRuleGrowth.Rearranges)
+                    .ToList();
+
+            private readonly WorkBudget budget;
+            private readonly CostModel costModel;
+
+            internal EqualitySaturationTransformation(WorkBudget budget, CostModel costModel)
+                => (this.budget, this.costModel) = (budget, costModel);
+
+            public override string Name => $"equality-saturation[{costModel.Name}]";
+
+            public override TransformationRelation Relation => TransformationRelation.Equivalence;
+
+            // The rules this draws from are a mix of Sound and SoundUnderAssumptions, and a
+            // rule set's own tier is already the minimum over what it contains -- so the
+            // weakest tier represented is the honest claim for the whole of what this used,
+            // the same convention every rule set in the registry already follows.
+            public override Soundness Soundness => Soundness.SoundUnderAssumptions;
+
+            protected override Entity? ApplyCore(Entity input)
+            {
+                var graph = new EGraph();
+                var root = graph.AddEntity(input);
+                graph.Rebuild();
+
+                var ledger = BudgetLedger.For(Name, budget);
+                var chargedNodes = graph.NodeCount;
+                bool ChargeGrowthSinceLastCall()
+                {
+                    var delta = graph.NodeCount - chargedNodes;
+                    chargedNodes = graph.NodeCount;
+                    return ledger.Spend(delta);
+                }
+
+                var saturated = false;
+                while (!saturated && !ledger.Exhausted)
+                {
+                    var merged = false;
+                    foreach (var id in graph.Classes.ToList())
+                    {
+                        if (!ChargeGrowthSinceLastCall()) break;
+                        var term = graph.Extract(id, costModel.Cost);
+                        if (term is null) continue; // nothing in this class could be rebuilt
+                        foreach (var rule in SafeRules)
+                        {
+                            Entity? rewritten;
+                            try { rewritten = rule.TryApply(term); }
+                            catch { continue; }
+                            if (rewritten is null || rewritten.Equals(term)) continue;
+                            int other;
+                            try { other = graph.AddEntity(rewritten); }
+                            catch { continue; } // a shape MatchPattern.ConstructNode cannot rebuild
+                            if (graph.Union(id, other)) merged = true;
+                        }
+                    }
+                    graph.Rebuild();
+                    if (!merged) saturated = true;
+                }
+
+                ledger.Report();
+                return graph.Extract(root, costModel.Cost) ?? input;
+            }
         }
 
         private sealed class RationalCanonicalizationTransformation : Transformation
