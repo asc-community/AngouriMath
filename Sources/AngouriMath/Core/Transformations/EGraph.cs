@@ -161,33 +161,90 @@ namespace AngouriMath.Core.Transformations
                && set.Any(n => n.Children.Length == 0 && n.Op == leaf);
 
         /// <summary>
+        /// The leaves worth trying as an identity. The additive and multiplicative identities,
+        /// which is what the arithmetic operators have; a fold that needed some other constant
+        /// would be a fact about that operator rather than about neutrality.
+        /// </summary>
+        [ConstantField]
+        private static readonly string[] NeutralLeaves = { "0", "1" };
+
+        /// <summary>
+        /// Which operator folds away which leaf on which side, asked of
+        /// <see cref="Entity.InnerSimplified"/> rather than written out a second time.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This used to be a hand-written table over <c>Sumf</c>, <c>Minusf</c>, <c>Mulf</c>,
+        /// <c>Divf</c> and <c>Powf</c>, restating identities each of those types already
+        /// implements and tests in its own <c>InnerSimplify</c>. Nothing kept the two in step, and
+        /// the divergence would have been silent in the worst direction: the e-graph would go on
+        /// asserting an equivalence the rest of the library had stopped believing, merging two
+        /// classes that are no longer equal.
+        /// </para>
+        /// <para>
+        /// Asking instead of restating also settles the cases that make a hand-written table
+        /// fragile, without anybody having to remember them. <c>0 - x</c> is a negation and
+        /// <c>1 / x</c> a reciprocal, so neither folds to its other operand; <c>1 ^ x</c> is the
+        /// constant 1 rather than <c>x</c>. And if an arm ever answers with a condition attached
+        /// — <c>Powf</c>'s <c>1 ^ x</c> already carries a <c>Providedf</c> domain condition — the
+        /// answer is not the bare operand, so no fold is claimed for it. A hand-written table has
+        /// no way to learn any of that.
+        /// </para>
+        /// </remarks>
+        [ConstantField]
+        private static readonly HashSet<(string Op, string Leaf, int LeafSide)> neutralFolds
+            = BuildNeutralFolds();
+
+        private static HashSet<(string Op, string Leaf, int LeafSide)> BuildNeutralFolds()
+        {
+            var folds = new HashSet<(string, string, int)>();
+            Entity operand = MathS.Var("x");
+            foreach (var type in MatchPattern.BuildableNodeTypes)
+                foreach (var leafText in NeutralLeaves)
+                    for (var side = 0; side < 2; side++)
+                    {
+                        var leaf = leafText.ToEntity();
+                        var children = side == 0
+                            ? new[] { leaf, operand }
+                            : new[] { operand, leaf };
+                        // A node this cannot build, or an arm that throws on a shape it did not
+                        // expect, simply contributes no fold -- the table is what was observed.
+                        try
+                        {
+                            if (MatchPattern.ConstructNode(type, children) is not { } built) continue;
+                            if (built.InnerSimplified.Equals(operand))
+                                folds.Add((type.Name, leafText, side));
+                        }
+                        catch { /* not a fold, and not this table's business why */ }
+                    }
+            return folds;
+        }
+
+        /// <summary>
+        /// The folds this graph performs on insertion, as <c>Op(first, second)</c> — for the test
+        /// that names them, so that a change in <c>InnerSimplify</c> shows up as a changed list
+        /// rather than as e-graph folding quietly gaining or losing a case.
+        /// </summary>
+        internal static IEnumerable<string> NeutralFolds
+            => neutralFolds.Select(fold => fold.LeafSide == 0
+                ? $"{fold.Op}({fold.Leaf}, x)"
+                : $"{fold.Op}(x, {fold.Leaf})");
+
+        /// <summary>
         /// If <paramref name="node"/> is a neutral element applied to something, the class that
         /// already denotes its value -- <see langword="null"/> otherwise.
         /// </summary>
-        /// <remarks>
-        /// <c>Sumf</c> and <c>Mulf</c> are commutative, so the identity folds from either side:
-        /// <c>x + 0</c> and <c>0 + x</c> both denote <c>x</c>. <c>Minusf</c> and <c>Divf</c> are
-        /// not: <c>x - 0</c> and <c>x / 1</c> denote <c>x</c>, but <c>0 - x</c> and <c>1 / x</c>
-        /// do not -- they negate or invert it, a different value from either operand, and not
-        /// something this method may fold away. <c>1 ^ x</c> is likewise not <c>x</c> -- it is
-        /// the constant 1 -- so <c>Powf</c> only checks the exponent.
-        /// </remarks>
         private int? NeutralClass(ENode node)
         {
             if (node.Children.Length != 2) return null;
-            return node.Op switch
+            foreach (var leaf in NeutralLeaves)
             {
-                "Sumf" => Holds(node.Children[1], "0") ? Find(node.Children[0])
-                    : Holds(node.Children[0], "0") ? Find(node.Children[1])
-                    : (int?)null,
-                "Minusf" => Holds(node.Children[1], "0") ? Find(node.Children[0]) : (int?)null,
-                "Mulf" => Holds(node.Children[1], "1") ? Find(node.Children[0])
-                    : Holds(node.Children[0], "1") ? Find(node.Children[1])
-                    : (int?)null,
-                "Divf" => Holds(node.Children[1], "1") ? Find(node.Children[0]) : (int?)null,
-                "Powf" => Holds(node.Children[1], "1") ? Find(node.Children[0]) : (int?)null,
-                _ => null
-            };
+                if (neutralFolds.Contains((node.Op, leaf, 1)) && Holds(node.Children[1], leaf))
+                    return Find(node.Children[0]);
+                if (neutralFolds.Contains((node.Op, leaf, 0)) && Holds(node.Children[0], leaf))
+                    return Find(node.Children[1]);
+            }
+            return null;
         }
 
         /// <summary>Every e-class currently in the graph.</summary>

@@ -396,6 +396,49 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.Null(graph.Extract(root, CostModel.Default.Cost));
         }
 
+        /// <summary>
+        /// The folds the e-graph performs on insertion are read off <see cref="Entity.InnerSimplified"/>
+        /// rather than written out again, so the two cannot disagree. This names what that
+        /// derivation currently finds — not to restate the table, but so that a change in
+        /// <c>InnerSimplify</c> shows up here as a changed list rather than as e-graph folding
+        /// quietly gaining or losing a case.
+        /// </summary>
+        /// <remarks>
+        /// The asymmetries are the point. <c>x + 0</c> and <c>0 + x</c> both fold, because
+        /// addition is commutative; <c>x - 0</c> folds and <c>0 - x</c> does not, because that is
+        /// a negation and not this operand; <c>x ^ 1</c> folds and <c>1 ^ x</c> does not, because
+        /// that is the constant 1.
+        /// </remarks>
+        [Fact]
+        public void TheFoldsAreExactlyWhatInnerSimplifyDoes()
+            => Assert.Equal(
+                new[]
+                {
+                    "Divf(x, 1)", "Minusf(x, 0)", "Mulf(1, x)", "Mulf(x, 1)",
+                    "Powf(x, 1)", "Sumf(0, x)", "Sumf(x, 0)",
+                },
+                EGraph.NeutralFolds.OrderBy(fold => fold, System.StringComparer.Ordinal).ToArray());
+
+        [Theory]
+        // The e-graph folds exactly where InnerSimplify does, so these agree by construction.
+        [InlineData("x + 0")]
+        [InlineData("0 + x")]
+        [InlineData("x - 0")]
+        [InlineData("x * 1")]
+        [InlineData("1 * x")]
+        [InlineData("x / 1")]
+        [InlineData("x ^ 1")]
+        public void AFoldedInsertionAgreesWithInnerSimplify(string source)
+        {
+            var expr = source.ToEntity();
+            var graph = new EGraph();
+            var root = graph.AddEntity(expr);
+
+            var extracted = graph.Extract(root, CostModel.Default.Cost);
+
+            Assert.Equal(expr.InnerSimplified, extracted);
+        }
+
         [Fact]
         public void ContainsLeafFindsAMatchingLiteral()
         {

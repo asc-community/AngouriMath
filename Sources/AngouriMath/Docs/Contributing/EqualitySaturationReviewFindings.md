@@ -3,15 +3,16 @@
 A review pass over [#1101](https://github.com/asc-community/AngouriMath/pull/1101) (`EGraph` and
 `Transformation.EqualitySaturation`) and [#1102](https://github.com/asc-community/AngouriMath/pull/1102)
 (`Transformation.SimplificationAtLevel`), run before either had a human reviewer, found fifteen
-issues. Ten are now fixed, each with a regression test named beside it below. The other five are
-recorded here rather than fixed, because fixing several of them is a real design question — the same
-shape as [`InversePairTable.md`](InversePairTable.md): naming what is true now, so the next attempt
-starts from a measured position instead of rediscovering one.
+issues. Fourteen are now fixed, each with a regression test named beside it below. What is left is not
+a defect but a design question — the same shape as [`InversePairTable.md`](InversePairTable.md):
+naming what is true now, so the next attempt starts from a measured position instead of rediscovering
+one.
 
-The two sections below are the live account; whoever closes one of the remaining five moves its entry
-up rather than adding a third place to look. One entry in **Fixed** also carries a correction to what
-this document originally claimed, because the recorded diagnosis turned out to be wrong once it was
-measured.
+The two sections below are the live account; whoever settles the last one moves its entry up rather
+than adding a third place to look. One entry in **Fixed** also carries a correction to what this
+document originally claimed, because the recorded diagnosis turned out to be wrong once it was
+measured — which is why every entry here now names the test that holds it, rather than only the
+reasoning that produced it.
 
 ## Fixed
 
@@ -110,6 +111,55 @@ keys on an arity of one or two; widening it to n children is a separate piece of
 principle. `EGraphTest.ExtractStillDeclinesWhatItCannotFaithfullyRebuild` pins both, including the
 case where the root is buildable and its operands are not.
 
+**`RewriteRecording` — the library's only "what rewrote this and why" mechanism — could not see
+`EqualitySaturation` at all.** It is populated inside `RewriteRuleSet.ApplyOnce`, and saturation asks
+rules directly, so a caller who opened a recording round it got a real rewrite with an empty
+derivation and nothing to distinguish "introspection cannot see this" from "there was nothing to
+see". Fixed by noting the pass — one edge, input to output, under the transformation's own name:
+`TransformationTest.EqualitySaturationIsVisibleToARecording`, with
+`EqualitySaturationRecordsNothingWhenItChangesNothing` for the other half of the convention.
+
+*Deliberately not finer than the pass, and this is a fact about e-graphs rather than a shortcut.* A
+rule set records each firing because a firing there **is** the rewrite: the node it matched leaves and
+the replacement takes its place. A firing in saturation is not — it adds another member to an e-class
+whose members are all already believed equal, and the answer is then chosen by `Extract` from all of
+them at once. Most firings contribute nothing to what extraction picked, and none of them is a step
+on a route from input to output, because there is no route. Reporting them as `RewriteStep`s would
+name rewrites that are not in the answer.
+
+**`RewriteRule.NodeTypes` — a documented fast pre-filter — was never consulted, so every rule ran a
+full pattern match against every class of every pass.** `MatchPattern.RequiredRootType` was already
+there to be asked; a pattern requiring a root type cannot match a class holding no node of it, and
+being a *necessary* condition is exactly what makes it a filter — it licenses skipping a rule, never
+firing one. Fixed by gathering each class's node types once per sweep and consulting it before the
+attempt. Measured over four expressions, match attempts fall by about thirteen times — 1076 steps to
+78 on the largest, 87 to 3 on `x + 0` — with the same answer in every case:
+`TransformationTest.EqualitySaturationDoesNotAttemptEveryRuleOnEveryClass`, asserted against the rule
+count rather than a recorded number so it stays true as rules are added.
+
+**`NeutralClass` hand-rolled an identity table that `InnerSimplify` already implements and tests.**
+Nothing kept the two in step, and the divergence would have been silent in the worst direction: the
+e-graph would go on asserting an equivalence the rest of the library had stopped believing, and merge
+two classes that are no longer equal. Fixed by deriving the table — asking `InnerSimplified` whether
+`op(x, leaf)` really is `x`, for each buildable binary operator and each of the two identities. That
+settles the asymmetries without anyone having to remember them (`0 - x` is a negation, `1 / x` a
+reciprocal, `1 ^ x` the constant 1), and it handles the case a written table cannot: an arm that
+answers with a condition attached does not answer with the bare operand, so no fold is claimed.
+`EGraphTest.TheFoldsAreExactlyWhatInnerSimplifyDoes` names what the derivation finds, so a change in
+`InnerSimplify` shows up as a changed list rather than as e-graph folding quietly gaining or losing a
+case.
+
+**`Entity.SimplifiedRate` answered one cost model's question with another's cached number (PR
+#1102).** The cache is one slot per `Entity` instance and the criteria is an ambient setting, so the
+two do not agree about what the cached number is a rate *of*. Not merely stale:
+`Simplificator.PickSimplest` compares candidates by this property, so it would weigh one model's
+cached rate against another's fresh one and choose on the strength of it, with nothing anywhere to say
+the comparison was meaningless. Fixed by caching only while nobody has scoped the setting — the
+`IsOverriden` test `BudgetLedger.For` already applies to `MathS.Settings.Budget` — so any other
+criteria is computed afresh and can neither be answered with somebody else's number nor leave one
+behind for them: `CostModelTest.ARateIsNotAnsweredFromAnotherCostModelsCache` and
+`EveryModelIsAnsweredWithItsOwnRate`.
+
 ## Recorded, not fixed
 
 **The deeper pattern: an e-node carries raw tree shape and nothing else.** `Codomain` and
@@ -124,43 +174,18 @@ whitelist rather than the node model: `Providedf` is an ordinary two-child node,
 `Construct` a line for it was the whole fix. What remains is genuinely about the node model —
 per-node data that is not a child, of which `Codomain` is the only instance the library has today.
 
-**`RewriteRecording` — the library's only "what rewrote this and why" mechanism — cannot see
-`EqualitySaturation` at all.** It is populated exclusively inside `RewriteRuleSet.ApplyOnce`;
-`EqualitySaturationTransformation.ApplyCore` calls `rule.TryApply` directly, bypassing it entirely.
-A caller who wraps a call in `RewriteRecording.Start()` — the library's own documented pattern for
-introspection — gets a real rewrite with an empty derivation and no signal that introspection failed
-rather than legitimately finding nothing.
-
-**`RewriteRule.NodeTypes` — an existing, documented fast pre-filter — is never consulted before
-`ApplyCore` calls the full `TryApply` pattern match on every `SafeRules` entry, per class, per pass.**
-Purely a performance gap: `Common` alone has roughly 100 arms, and the large majority of match
-attempts against any given class are wasted and uncharged against the budget.
-
-**`NeutralClass` hand-rolls an identity-element table for `Sumf`/`Minusf`/`Mulf`/`Divf`/`Powf` that
-already exists, tested, in each type's own `InnerSimplify`.** Nothing keeps the two in sync — a new
-special case added to `InnerSimplify` (`Powf`'s `1 ^ x` arm already attaches a `Providedf` domain
-condition `NeutralClass` has no way to learn about) would leave `EGraph` asserting an equivalence the
-rest of the library no longer believes, silently and with no test to catch the divergence.
-
-**`Entity.SimplifiedRate`'s cache can go stale across different `CostModel`s (PR #1102).** It is a
-`LazyPropertyA<double>` that computes once per `Entity` instance and caches forever, so a caller who
-reads `.SimplifiedRate` or calls `.Simplify()` under one `CostModel` and then runs
-`SimplificationAtLevel(level, differentCostModel)` on the same or an overlapping entity can have
-`Simplificator.PickSimplest` compare a stale rate against a fresh one with no error. The library
-already documents this exact trap elsewhere (`MathS.Settings.ComplexityCriteria`'s own example uses
-`FromString(expr, useCache: false)` to avoid it); `SimplificationTransformation.ApplyCore` does no
-analogous cache-busting.
-
 ## What is not decided here
 
-Whether the e-graph's node model should grow a general mechanism for metadata that travels with a
-node (the `Codomain`/`Providedf`/root-type-whitelist cluster above), or whether each case is worth
-its own targeted fix as found — same open question `InversePairTable.md` leaves for its own
-mechanism, and arguably the same question either way: how much should ride along on an e-node beyond
-its bare shape. That question is still open, and it is what the `Providedf` and root-type-whitelist
-entries above are both waiting on.
+The one question above, restated as the decision it is: **how much should ride along on an e-node
+beyond its bare shape.** A general "attach anything, forget nothing" representation, or a list of
+special cases extended as each is found. `InversePairTable.md` leaves the same question open for its
+own mechanism, and it is arguably the same question either way.
 
-The five closed since — the `Soundness` check, the `NaN` guard, the tie order, the depth cap and the
-budget — were each independent of it and of each other, which is why they went first. Of the eight
-that remain, only two (`Providedf`, the root-type whitelist) actually depend on that decision; the
-other six are ordinary work that nothing here blocks.
+What the fourteen closed findings say about it is worth recording, because it is not what the review
+expected. Only one of them turned out to depend on this decision at all — `Codomain`, which is still
+special-cased. The `Providedf` case, which this document originally offered as evidence that the
+e-graph had no way to represent a conditional equivalence, was the buildable-type table and nothing
+deeper. The rest were ordinary defects: a missing guard, an undefined order, an absent depth cap, a
+budget charging the wrong quantity, three lists written twice, a filter never consulted, a cache
+keyed on nothing. **A cluster of findings around one subsystem invites a single grand explanation,
+and thirteen of these fourteen did not have one.**

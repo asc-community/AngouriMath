@@ -661,6 +661,72 @@ namespace AngouriMath.Tests.Core.Transformations
                 $"a ceiling of {steps} was overshot to {outcome.Steps}");
         }
 
+        /// <summary>
+        /// <see cref="RewriteRecording"/> is the library's only "what rewrote this and why"
+        /// mechanism, and it is populated inside <see cref="RewriteRuleSet.ApplyOnce"/> --
+        /// which equality saturation does not go through, since it asks rules directly. A caller
+        /// who opened a recording therefore got a real rewrite with an empty derivation, and no
+        /// signal telling them introspection had missed it rather than found nothing.
+        /// </summary>
+        [Fact]
+        public void EqualitySaturationIsVisibleToARecording()
+        {
+            var transformation = Transformation.EqualitySaturation(SmallSaturationBudget, CostModel.Default);
+
+            using var recording = RewriteRecording.Start();
+            var result = transformation.Apply(Parse("x + 0"));
+
+            Assert.True(result.Changed);
+            var path = recording.PathFrom(result.Input, result.Output!);
+            Assert.NotNull(path);
+            Assert.Contains(path!.Steps, step => step.Name == transformation.Name);
+        }
+
+        /// <summary>
+        /// And it records nothing when it changed nothing, which is the convention every rule set
+        /// already follows -- a pass that did not fire is not a step.
+        /// </summary>
+        [Fact]
+        public void EqualitySaturationRecordsNothingWhenItChangesNothing()
+        {
+            var transformation = Transformation.EqualitySaturation(SmallSaturationBudget, CostModel.Default);
+
+            using var recording = RewriteRecording.Start();
+            var result = transformation.Apply(Parse("x"));
+
+            Assert.False(result.Changed);
+            Assert.Empty(recording.Steps);
+        }
+
+        /// <summary>
+        /// <see cref="MatchPattern.RequiredRootType"/> is a documented necessary condition on a
+        /// match, and the sweep did not consult it: every rule in <c>SafeRules</c> ran a full
+        /// pattern match against every class of every pass, and the large majority of those could
+        /// not have matched. Measured over four expressions, consulting it cuts match attempts by
+        /// about thirteen times — 1076 steps to 78 on the largest — with the same answer each time.
+        /// </summary>
+        /// <remarks>
+        /// Asserted against the rule count rather than against a recorded number, so that the
+        /// claim stays true as rules are added: saturating <c>x + 0</c> to its answer costs less
+        /// in total than one unfiltered pass over a single class would.
+        /// </remarks>
+        [Fact]
+        public void EqualitySaturationDoesNotAttemptEveryRuleOnEveryClass()
+        {
+            var generous = new WorkBudget { Steps = 10_000_000, Time = TimeSpan.FromSeconds(60) };
+            var transformation = Transformation.EqualitySaturation(generous, CostModel.Default);
+
+            using var recording = BudgetRecording.Start();
+            var result = transformation.Apply(Parse("x + 0"));
+
+            Assert.Equal(Parse("x"), result.Output);
+            var spent = recording.Outcomes.Single().Steps;
+            Assert.True(spent < Transformation.EqualitySaturationSafeRuleCount,
+                $"the whole saturation spent {spent} steps, which is not less than the "
+                + $"{Transformation.EqualitySaturationSafeRuleCount} one unfiltered pass over one "
+                + "class would cost -- the root-type filter is not being consulted");
+        }
+
         [Fact]
         public void EqualitySaturationNeverThrowsUnderAStarvedBudget()
         {
