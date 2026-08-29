@@ -173,5 +173,47 @@ namespace AngouriMath.Tests.Core.Transformations
 
             Assert.True("x".ToEntity().Equals(extracted));
         }
+
+        /// <summary>
+        /// <see cref="EGraph.Extract"/> rebuilds a non-leaf node through
+        /// <see cref="AngouriMath.Core.Transformations.Matching.MatchPattern.ConstructNode"/>,
+        /// which never restores <see cref="Entity.Codomain"/> -- an init-settable, per-node-type
+        /// property the rest of the codebase treats as load-bearing and explicitly preserves on
+        /// every <c>Replace</c>. Caught in code review before this PR was merged.
+        /// </summary>
+        [Fact]
+        public void ExtractPreservesANarrowedCodomain()
+        {
+            Entity narrowed = MathS.Sqrt(-1).WithCodomain(Domain.Real);
+            var graph = new EGraph();
+            var root = graph.AddEntity(narrowed);
+
+            var extracted = graph.Extract(root, CostModel.Default.Cost);
+
+            Assert.NotNull(extracted);
+            Assert.Equal(Domain.Real, extracted!.Codomain);
+            Assert.Equal(narrowed, extracted);
+            Assert.Equal(narrowed.Evaled, extracted.Evaled);
+        }
+
+        /// <summary>
+        /// <see cref="EGraph.Key"/> keys a leaf by <see cref="Entity.Stringize"/>, and
+        /// <see cref="Entity.Constant.EulerIntrinsic"/> prints identically to the ordinary named
+        /// constant <c>e</c> -- the two are <see cref="object.Equals(object)"/>-equal by design,
+        /// but only <see cref="EulerIntrinsic"/> is meant to stay outside what a binder over the
+        /// name <c>e</c> can capture. Re-parsing the printed form silently swaps it for the named
+        /// constant, which is invisible to every equality-based check and only shows up at a
+        /// binder. Caught in code review before this PR was merged.
+        /// </summary>
+        [Fact]
+        public void ExtractPreservesEulerIntrinsicIdentity()
+        {
+            var graph = new EGraph();
+            var id = graph.AddEntity(Entity.Constant.EulerIntrinsic);
+
+            var extracted = graph.Extract(id, CostModel.Default.Cost);
+
+            Assert.True(ReferenceEquals(Entity.Constant.EulerIntrinsic, extracted));
+        }
     }
 }

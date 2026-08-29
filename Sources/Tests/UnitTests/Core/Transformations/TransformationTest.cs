@@ -624,6 +624,46 @@ namespace AngouriMath.Tests.Core.Transformations
             }
         }
 
+        /// <summary>
+        /// A domain narrowed with <see cref="Entity.WithCodomain"/> survives the round trip
+        /// through the e-graph -- <c>sqrt(-1)</c> is <c>i</c> under the default codomain and
+        /// <see cref="MathS.NaN"/> restricted to the reals, so losing the annotation silently
+        /// changes which value the expression denotes. Caught in code review before this PR was
+        /// merged: <see cref="AngouriMath.Core.Transformations.EGraph.Extract"/> rebuilt every
+        /// node through a bare constructor with nothing to restore it.
+        /// </summary>
+        [Fact]
+        public void EqualitySaturationPreservesANarrowedCodomain()
+        {
+            var input = MathS.Sqrt(-1).WithCodomain(Domain.Real);
+            var transformation = Transformation.EqualitySaturation(SmallSaturationBudget, CostModel.Default);
+
+            var output = transformation.Apply(input).OutputOrInput;
+
+            Assert.Equal(Domain.Real, output.Codomain);
+            Assert.Equal(input.Evaled, output.Evaled);
+        }
+
+        /// <summary>
+        /// <c>ln</c>'s base is <see cref="Entity.Constant.EulerIntrinsic"/>, a distinct object
+        /// from the named constant <c>e</c> kept specifically so a binder over the name <c>e</c>
+        /// does not capture it. The e-graph keys a leaf by its printed form, which the two share,
+        /// so re-extracting used to silently substitute the named constant in its place -- a
+        /// change invisible to every equality check and only wrong at a binder. Caught in code
+        /// review before this PR was merged.
+        /// </summary>
+        [Fact]
+        public void EqualitySaturationPreservesEulerIntrinsicIdentity()
+        {
+            Entity input = MathS.Ln(MathS.Var("x"));
+            var transformation = Transformation.EqualitySaturation(SmallSaturationBudget, CostModel.Default);
+
+            var output = transformation.Apply(input).OutputOrInput;
+
+            Assert.True(output is Entity.Logf(var @base, _)
+                && ReferenceEquals(Entity.Constant.EulerIntrinsic, @base));
+        }
+
         #endregion
     }
 }

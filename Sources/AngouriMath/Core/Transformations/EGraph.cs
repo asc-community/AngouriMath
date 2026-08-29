@@ -61,6 +61,18 @@ namespace AngouriMath.Core.Transformations
         private readonly Dictionary<ENode, int> hashcons = new();
         private readonly Dictionary<int, HashSet<ENode>> classes = new();
 
+        /// <summary>
+        /// The <see cref="Entity.Codomain"/> the source <see cref="Entity"/> carried at the exact
+        /// e-node a real entity was inserted as, where it differs from that node's own default --
+        /// <c>Add(string, int[])</c> has no <see cref="Entity"/> to read it from, only
+        /// <see cref="AddEntity"/> does. <c>Extract(int, Func{Entity, double})</c> re-applies it
+        /// after rebuilding through <see cref="MatchPattern.ConstructNode"/>, which builds through
+        /// a bare constructor and so restores nothing on its own -- unlike every other place this
+        /// codebase reconstructs a node, which copies it forward through a <c>New(...)</c> helper.
+        /// Caught in code review before this PR was merged.
+        /// </summary>
+        private readonly Dictionary<ENode, Domain> codomains = new();
+
         /// <summary>How many e-classes this graph currently has.</summary>
         internal int ClassCount => classes.Count;
 
@@ -92,9 +104,12 @@ namespace AngouriMath.Core.Transformations
         /// numbers never share a class, or a node type's name otherwise.
         /// </param>
         /// <param name="children">The e-classes of this e-node's children, already added.</param>
-        internal int Add(string op, params int[] children)
+        internal int Add(string op, params int[] children) => Add(op, children, null);
+
+        private int Add(string op, int[] children, Domain? codomain)
         {
             var canonical = new ENode(op, children.Select(Find).ToArray());
+            if (codomain is { } existingDomain) codomains[canonical] = existingDomain;
             if (hashcons.TryGetValue(canonical, out var existing))
                 return Find(existing);
             // Folding on insertion: a neutral-element application denotes exactly the value its
@@ -195,18 +210,36 @@ namespace AngouriMath.Core.Transformations
         }
 
         /// <summary>
+        /// A key naming <see cref="Entity.Constant.EulerIntrinsic"/> specifically, distinct from
+        /// any string a real leaf can print as (a leaf's printed form never starts with a NUL) --
+        /// so it shares nothing with the ordinary named constant <c>e</c>, which prints the same
+        /// text <see cref="Entity.Constant.EulerIntrinsic"/> does. Both denote the same number and
+        /// both are kept out of this key's collision space on purpose:
+        /// <see cref="Entity.Constant.EulerIntrinsic"/> is a distinguished reference a binder over
+        /// the name <c>e</c> must not capture, and merging the two into one e-class -- which
+        /// <see cref="Key"/> keying on <c>Entity.Stringize()</c> alone would do -- silently
+        /// discards that distinction on the next extraction. Caught in code review before this PR
+        /// was merged.
+        /// </summary>
+        private const string EulerIntrinsicKey = "\0EulerIntrinsic";
+
+        /// <summary>
         /// The operator identity of a node: a leaf's printed self, so that two different
         /// variables or numbers never share a class, or the node's runtime type otherwise, so
-        /// that <c>x + y</c> and <c>a + b</c> are the same operator over different children.
+        /// that <c>x + y</c> and <c>a + b</c> are the same operator over different children --
+        /// except <see cref="Entity.Constant.EulerIntrinsic"/>, which prints as the ordinary named
+        /// constant <c>e</c> does and is kept out of its class regardless.
         /// </summary>
         private static string Key(Entity expr)
-            => expr.DirectChildren.Count == 0 ? expr.Stringize() : expr.GetType().Name;
+            => ReferenceEquals(expr, Entity.Constant.EulerIntrinsic) ? EulerIntrinsicKey
+             : expr.DirectChildren.Count == 0 ? expr.Stringize() : expr.GetType().Name;
 
         /// <summary>Adds <paramref name="expr"/> and every one of its subexpressions, bottom-up.</summary>
         internal int AddEntity(Entity expr)
         {
             var children = expr.DirectChildren.Select(AddEntity).ToArray();
-            return Add(Key(expr), children);
+            var codomain = expr.Codomain == expr.DefaultCodomain ? (Domain?)null : expr.Codomain;
+            return Add(Key(expr), children, codomain);
         }
 
         /// <summary>
@@ -241,6 +274,7 @@ namespace AngouriMath.Core.Transformations
                     ? TryParseLeaf(node.Op)
                     : MatchPattern.ConstructNode(OperatorType(node.Op), parts);
                 if (built is null) continue;
+                if (codomains.TryGetValue(node, out var domain)) built = built.WithCodomain(domain);
                 double here;
                 try { here = cost(built); } catch { continue; }
                 if (here >= bestCost) continue;
@@ -254,6 +288,7 @@ namespace AngouriMath.Core.Transformations
 
         private static Entity? TryParseLeaf(string printed)
         {
+            if (printed == EulerIntrinsicKey) return Entity.Constant.EulerIntrinsic;
             try { return printed.ToEntity(); } catch { return null; }
         }
 
