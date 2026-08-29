@@ -547,6 +547,41 @@ namespace AngouriMath.Tests.Core.Transformations
                 node => node is Entity.Divf(_, var denominator) && denominator.Nodes.Any(n => n is Entity.Powf));
         }
 
+        [Fact]
+        public void SimplificationAtLevelWithACostModelConsultsThatModelRatherThanTheAmbientDefault()
+        {
+            var calls = 0;
+            var spy = new CostModel("spy", "counts how many candidates it was asked to rate", e =>
+            {
+                calls++;
+                return CostModel.Default.Cost(e);
+            });
+
+            Transformation.SimplificationAtLevel(2, spy).Apply(Parse("(x + 1) ^ 2"));
+
+            Assert.True(calls > 0);
+        }
+
+        [Fact]
+        public void SimplificationAtLevelWithACostModelDoesNotLeakTheOverrideAfterwards()
+        {
+            Assert.False(MathS.Settings.ComplexityCriteria.IsOverriden);
+
+            Transformation.SimplificationAtLevel(2, CostModel.FewestDivisions).Apply(Parse("(x + 1) ^ 2"));
+
+            Assert.False(MathS.Settings.ComplexityCriteria.IsOverriden);
+        }
+
+        [Fact]
+        public void SimplificationAtLevelWithTheDefaultCostModelMatchesTheOverloadWithout()
+        {
+            var withoutModel = Transformation.SimplificationAtLevel(2).Apply(Parse("sin(x) / tan(x) + a / (b / c)"));
+            var withDefaultModel = Transformation.SimplificationAtLevel(2, CostModel.Default)
+                .Apply(Parse("sin(x) / tan(x) + a / (b / c)"));
+
+            Assert.Equal(withoutModel.Output, withDefaultModel.Output);
+        }
+
         #endregion
 
         #region Equality saturation

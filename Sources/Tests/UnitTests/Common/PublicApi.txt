@@ -265,6 +265,7 @@ AngouriMath.Core.Transformations.Transformation.Rewriting(AngouriMath.Core.Trans
 AngouriMath.Core.Transformations.Transformation.RuleBasedFactorizationAtLevel(System.Int32) : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.Simplification { } : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.SimplificationAtLevel(System.Int32) : AngouriMath.Core.Transformations.Transformation
+AngouriMath.Core.Transformations.Transformation.SimplificationAtLevel(System.Int32, AngouriMath.Core.CostModel) : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.Soundness { } : AngouriMath.Core.Transformations.Soundness
 AngouriMath.Core.Transformations.Transformation.Substitution(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.Then(AngouriMath.Core.Transformations.Transformation) : AngouriMath.Core.Transformations.Transformation

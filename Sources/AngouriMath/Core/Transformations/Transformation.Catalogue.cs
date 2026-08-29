@@ -43,7 +43,38 @@ namespace AngouriMath.Core.Transformations
         /// How hard to look; the same argument <see cref="Entity.Simplify(int)"/> takes.
         /// </param>
         public static Transformation SimplificationAtLevel(int level)
-            => LevelledCache.Simplification.For(level, static l => new SimplificationTransformation(l));
+            => LevelledCache.Simplification.For(level, static l => new SimplificationTransformation(l, null));
+
+        /// <summary>
+        /// The full simplification pipeline at a chosen level, rating candidates by
+        /// <paramref name="costModel"/> instead of <see cref="MathS.Settings.ComplexityCriteria"/>.
+        /// </summary>
+        /// <param name="level">
+        /// How hard to look; the same argument <see cref="Entity.Simplify(int)"/> takes.
+        /// </param>
+        /// <param name="costModel">
+        /// Which candidate counts as cheapest. <see cref="Core.CostModel.Default"/> here behaves
+        /// exactly like <see cref="SimplificationAtLevel(int)"/> — passing it is how a caller
+        /// states that on purpose rather than by leaving a parameter out.
+        /// </param>
+        /// <remarks>
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 2 named
+        /// this remaining on its own row: "a cost model that reaches an API rather than an ambient
+        /// setting". <see cref="MathS.Settings.ComplexityCriteria"/> already <i>is</i> an API in
+        /// the sense that a caller can scope it explicitly and safely — it is backed by the same
+        /// <see cref="Convenience.Setting{T}"/> <see cref="MathS.Settings.Budget"/> uses, async-local rather
+        /// than thread-static, so one caller's override cannot leak into another's concurrent call.
+        /// What it lacked was a place in <em>this</em> API, the addressable one <see cref="Transformation"/>
+        /// is: composing <c>SimplificationAtLevel(2, costModel).Then(...)</c> names the choice
+        /// where setting an ambient value around a call does not. This overload does not
+        /// reimplement candidate search against an explicit parameter threaded through
+        /// <c>Simplificator</c> -- that would be a second pipeline to keep in step with the one
+        /// <see cref="Entity.Simplify(int)"/> actually runs. It scopes the existing, already-tested
+        /// setting for the duration of this one call instead of introducing a second pipeline.
+        /// </remarks>
+        public static Transformation SimplificationAtLevel(int level, CostModel costModel)
+            => new SimplificationTransformation(
+                level, costModel ?? throw new ArgumentNullException(nameof(costModel)));
 
         /// <summary>
         /// Multiplies products over sums out, as <see cref="Entity.Expand(int)"/> does.
@@ -558,16 +589,25 @@ namespace AngouriMath.Core.Transformations
         private sealed class SimplificationTransformation : Transformation
         {
             private readonly int level;
+            private readonly CostModel? costModel;
 
-            internal SimplificationTransformation(int level) => this.level = level;
+            internal SimplificationTransformation(int level, CostModel? costModel)
+                => (this.level, this.costModel) = (level, costModel);
 
-            public override string Name => $"simplify[{level}]";
+            public override string Name
+                => costModel is null ? $"simplify[{level}]" : $"simplify[{level}, {costModel.Name}]";
 
             public override TransformationRelation Relation => TransformationRelation.Equivalence;
 
             public override Soundness Soundness => Soundness.SoundUnderAssumptions;
 
-            protected override Entity? ApplyCore(Entity input) => Simplificator.Simplify(input, level);
+            protected override Entity? ApplyCore(Entity input)
+            {
+                if (costModel is null)
+                    return Simplificator.Simplify(input, level);
+                using var _ = MathS.Settings.ComplexityCriteria.Set(costModel.Cost);
+                return Simplificator.Simplify(input, level);
+            }
         }
 
         private sealed class ExpansionTransformation : Transformation
