@@ -149,7 +149,16 @@ namespace AngouriMath.Tests.Core.Transformations
                 Assert.Contains(step.RuleSet, RewriteRules.All);
                 Assert.Equal(step.RuleSet.Name, step.Name);
                 Assert.Equal(step.RuleSet.Relation, step.Relation);
-                Assert.Equal(step.RuleSet.Soundness, step.Soundness);
+                // The step's tier is the weakest of the rewrites that actually fired, and the
+                // set's only where none was recorded. Not the set's outright: a set's tier is the
+                // minimum over all its rules, so a pass of rules that all hold universally would
+                // otherwise inherit a caveat from rules it never reached. On
+                // `sin(x)^2 + cos(x)^2` the step is Sound where Trigonometric is
+                // SoundUnderAssumptions, which is the whole point of the finer grain.
+                var weakest = step.Rewrites.Count == 0
+                    ? step.RuleSet.Soundness
+                    : step.Rewrites.Max(rewrite => rewrite.Soundness);
+                Assert.Equal(weakest, step.Soundness);
             }
         }
 

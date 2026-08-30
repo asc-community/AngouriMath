@@ -63,9 +63,17 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.All(names, name => Assert.True(Explanation.IsProse(name),
                 $"'{name}' is a rule name that does not read as a phrase in English"));
 
-            // And a generated one is not mistaken for prose. Trigonometric still reads its arms
-            // from the `switch`, so its names are rendered patterns.
-            var generated = RewriteRules.Trigonometric.Rules.Select(rule => rule.Name);
+            // And a generated one is not mistaken for prose. Which sets those are moves as the
+            // registry is repointed set by set, so they are found rather than named: a set whose
+            // rules carry no tier of their own is one still described by `RuleRegistryGenerator`,
+            // and every name it gives is a rendered pattern. Naming one instead cost a failure the
+            // day Trigonometric was repointed, which is the argument for asking.
+            var generated = RewriteRules.All
+                .Where(set => set.Rules.Count > 0 && set.Rules.All(rule => rule.Soundness is null))
+                .SelectMany(set => set.Rules)
+                .Select(rule => rule.Name)
+                .ToList();
+            Assert.NotEmpty(generated);
             Assert.All(generated, name => Assert.False(Explanation.IsProse(name),
                 $"'{name}' is a rendered pattern and was taken for prose"));
         }
