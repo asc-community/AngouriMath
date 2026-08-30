@@ -46,8 +46,49 @@ namespace AngouriMath.Core.Transformations
         /// <summary>What the rule set claims about the rewrite. See <see cref="RewriteRuleSet.Relation"/>.</summary>
         public TransformationRelation Relation => RuleSet.Relation;
 
-        /// <summary>How well justified that claim is. See <see cref="Soundness"/> on what a tier is and is not.</summary>
-        public Soundness Soundness => RuleSet.Soundness;
+        /// <summary>
+        /// How well justified that claim is — <b>this rewrite's own tier where it has one</b>, and
+        /// its set's where it has not. See <see cref="Soundness"/> on what a tier is and is not.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This read the set's tier and nothing else until a rule could carry one, which made it
+        /// the same answer for every step of a set — and a set's tier is the <i>minimum</i> over
+        /// its rules, so one conditional rule spoke for a hundred. All thirty sets declare
+        /// <see cref="Transformations.Soundness.SoundUnderAssumptions"/> and 181 of the 322 rules
+        /// written as data are <see cref="Transformations.Soundness.Sound"/>; a step that fires one
+        /// of those 181 now says so.
+        /// </para>
+        /// <para>
+        /// The fallback is not a claim about the rule. Where <see cref="Rule"/> is null, or is an
+        /// arm read off a <c>switch</c> and so declares no tier, what is known is the set's tier
+        /// and that is what this gives.
+        /// </para>
+        /// </remarks>
+        public Soundness Soundness => Rule?.Soundness ?? RuleSet.Soundness;
+
+        /// <summary>
+        /// This rewrite as a sentence: why it was allowed, then what it did.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>Dividing by a quotient multiplies by its reciprocal (a / (b / c) = a * c / b), so
+        /// x / (y / z) becomes x * z / y.</c>
+        /// </para>
+        /// <para>
+        /// Every word of it is read off the rule — the clause is
+        /// <see cref="RewriteRule.Name"/> with its hyphens replaced, and the identity in brackets
+        /// is <see cref="RewriteRule.Description"/>. Nothing is phrased a second time here, so a
+        /// rule that is renamed or re-described says the new thing without this being touched.
+        /// </para>
+        /// <para>
+        /// Where the rewrite is only addressable at set grain — <see cref="Rule"/> is null — the
+        /// sentence attributes rather than explains: <c>x / (y / z) becomes x * z / y, by
+        /// Common.</c> That is the whole of what is known, and dressing it as a reason would be
+        /// inventing one.
+        /// </para>
+        /// </remarks>
+        public string Explain() => Explanation.Sentence(RuleSet, Rule, Before, After);
 
         /// <inheritdoc/>
         public override string ToString()

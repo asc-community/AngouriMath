@@ -66,8 +66,60 @@ namespace AngouriMath.Core.Transformations
         /// <summary>What this step claims about its output, where it is a rule set. See <see cref="RewriteRuleSet.Relation"/>.</summary>
         public TransformationRelation? Relation => RuleSet?.Relation;
 
-        /// <summary>How well justified that claim is, where it is a rule set. See <see cref="Soundness"/>.</summary>
-        public Soundness? Soundness => RuleSet?.Soundness;
+        /// <summary>
+        /// How well justified that claim is — the weakest tier any rewrite inside it holds at,
+        /// falling back to the set's where no rewrite was recorded. <see langword="null"/> where
+        /// the step is not a rule set at all.
+        /// </summary>
+        /// <remarks>
+        /// The weakest, because a step is only as justified as the least justified thing in it: a
+        /// pass of nine unconditional rewrites and one conditional one is a conditional pass. Read
+        /// off the rewrites rather than off the set, so that a pass of rules which all hold
+        /// universally says so instead of inheriting its set's minimum over rules it did not fire.
+        /// </remarks>
+        public Soundness? Soundness
+        {
+            get
+            {
+                if (RuleSet is null) return null;
+                var weakest = (Soundness?)null;
+                foreach (var rewrite in Rewrites)
+                    if (weakest is not { } known || rewrite.Soundness > known)
+                        weakest = rewrite.Soundness;
+                return weakest ?? RuleSet.Soundness;
+            }
+        }
+
+        /// <summary>
+        /// This pass as a sentence: what it did to the whole expression, and why.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// A pass is not a rewrite, so this is not <see cref="RewriteStep.Explain"/> at another
+        /// grain. Three shapes, and which one is used is a fact about the step rather than a
+        /// choice:
+        /// </para>
+        /// <list type="bullet">
+        /// <item>a pass in which <b>one</b> rewrite fired is that rewrite, so it is explained as
+        /// one — anything else wraps a layer of narration around a single identity;</item>
+        /// <item>a pass that only tidies says so and names no identity, because
+        /// <see cref="RewriteRuleSet.IsNormalization"/> is the author saying this step is not where
+        /// the mathematics happened;</item>
+        /// <item>a pass of several rewrites names how many and what did them. The identities are in
+        /// <see cref="Rewrites"/> for a reader who wants them, and repeating all of them here would
+        /// make the chain unreadable at the grain it is read at.</item>
+        /// </list>
+        /// </remarks>
+        public string Explain()
+        {
+            if (RuleSet is { IsNormalization: true })
+                return $"Tidying: {Explanation.Transition(Before, After)}.";
+            if (Rewrites.Count == 1)
+                return Rewrites[0].Explain();
+            if (Rewrites.Count == 0)
+                return $"{Explanation.Transition(Before, After)}, by {Name}.";
+            return $"{Explanation.Transition(Before, After)}, by {Rewrites.Count} rewrites of {Name}.";
+        }
 
         /// <inheritdoc/>
         public override string ToString() => $"{Name}: {Before.Stringize()} -> {After.Stringize()}";
@@ -161,12 +213,83 @@ namespace AngouriMath.Core.Transformations
         }
 
         /// <summary>
+        /// The derivation in prose: what it did, then a numbered sentence per step, then what the
+        /// whole of it is justified by.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 2 asks
+        /// for "transformation metadata rich enough that v5.0 can render a step as a sentence".
+        /// This is the check on that: the metadata is rich enough exactly when a sentence can be
+        /// built from it, and every word of one here is read off a rule — the clause is the rule's
+        /// name with its hyphens replaced, and the identity in brackets is its description.
+        /// </para>
+        /// <para>
+        /// <b>The closing note is counted, not asserted.</b> How many steps hold universally, how
+        /// many hold under assumptions, and how much of the search was discarded are all read off
+        /// this path, so the paragraph cannot come to disagree with the steps above it — which is
+        /// the failure a written-out summary has and a computed one does not.
+        /// </para>
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// Console.WriteLine(DerivationPath.OfSimplifying("x ^ (-1) / (y / z)")!.Explain());
+        /// </code>
+        /// </example>
+        public string Explain()
+        {
+            var text = new StringBuilder();
+            if (Steps.Count == 0)
+            {
+                // Nothing was kept, which is not the same as nothing having been tried -- and the
+                // difference is the whole of what this sentence has to say. The search below
+                // reports it: on `(a + b) ^ 2` five expressions were reached and none was better,
+                // where "nothing was done to it" would have described an engine that did not look.
+                text.Append(Input.Stringize()).Append(" was already ").Append(Result.Stringize())
+                    .Append('.');
+            }
+            else
+            {
+                text.Append(Input.Stringize()).Append(" becomes ").Append(Result.Stringize())
+                    .Append(Steps.Count == 1 ? ", in one step." : $", in {Steps.Count} steps.")
+                    .Append('\n');
+                for (var i = 0; i < Steps.Count; i++)
+                    text.Append('\n').Append(i + 1).Append(". ").Append(Steps[i].Explain());
+            }
+
+            var tiers = new List<Soundness>();
+            foreach (var step in Steps)
+                if (step.Soundness is { } tier)
+                    tiers.Add(tier);
+            var closing = new StringBuilder();
+            if (Explanation.TierNote(tiers, Steps.Count) is { } note)
+                closing.Append(note);
+            // The search, so that the chain does not read as the whole of what happened. Only
+            // where something was discarded: on a path that explored nothing else there is no
+            // discrepancy to explain, and saying so anyway is a sentence that never varies.
+            if (ExpressionsExplored > Steps.Count)
+            {
+                if (closing.Length > 0) closing.Append(' ');
+                closing.Append("The search reached ").Append(ExpressionsExplored)
+                    .Append(Steps.Count == 0
+                        ? " expressions and kept none of them."
+                        : $" expressions and kept these {Steps.Count}.");
+            }
+            if (closing.Length > 0)
+                text.Append(Steps.Count == 0 ? " " : "\n\n").Append(closing);
+            return text.ToString();
+        }
+
+        /// <summary>
         /// The path written out: the input, then one line per step giving what the expression
         /// became and what made it so.
         /// </summary>
         /// <remarks>
         /// The names are lined up in a column, which is what makes a derivation scannable — the
         /// reader is looking down the list of identities used, not reading the expressions.
+        /// <para/>
+        /// <see cref="Explain"/> is the same path for the other reader: prose, naming the identity
+        /// rather than the rule set.
         /// </remarks>
         public override string ToString()
         {
