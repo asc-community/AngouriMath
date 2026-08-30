@@ -335,10 +335,89 @@ namespace AngouriMath.Core.Transformations
         /// type <see cref="MatchPattern.ConstructNode"/> does not build.
         /// </summary>
         internal Entity? Extract(int id, Func<Entity, double> cost)
-            => Extract(id, cost, new Dictionary<int, Entity>(), new HashSet<int>());
+            => Extract(id, new Cheapest(cost), new Dictionary<int, Entity>(), new HashSet<int>());
 
-        private Entity? Extract(int id, Func<Entity, double> cost,
+        /// <summary>
+        /// The least entity the e-class <paramref name="id"/> can be built as under
+        /// <paramref name="order"/>, or <see langword="null"/> where nothing in it can be built.
+        /// </summary>
+        /// <remarks>
+        /// The same walk as <see cref="Extract(int, Func{Entity, double})"/>, choosing by an order
+        /// rather than by a number. That is not a stylistic difference: a cost model ties, and a
+        /// tie is settled by whichever member was reached first, so "the cheapest member" is not a
+        /// well-defined expression where "the least member" is. See <see cref="EntityOrder"/>.
+        /// </remarks>
+        internal Entity? ExtractLeast(int id, IComparer<Entity> order)
+            => Extract(id, new Least(order), new Dictionary<int, Entity>(), new HashSet<int>());
+
+        /// <summary>
+        /// How <c>Extract</c> chooses between the members of one e-class. A
+        /// <see langword="struct"/> under a generic constraint rather than an interface reference,
+        /// so the choice is compiled in rather than dispatched, and no selection is allocated for
+        /// the classes an extraction walks.
+        /// </summary>
+        private interface ISelection
+        {
+            /// <summary>Forgets the previous class's incumbent.</summary>
+            void Begin();
+
+            /// <summary>Offers a candidate; the incumbent afterwards is the better of the two.</summary>
+            void Offer(Entity candidate);
+
+            /// <summary>The incumbent, or <see langword="null"/> where nothing was admissible.</summary>
+            Entity? Best { get; }
+        }
+
+        private struct Cheapest : ISelection
+        {
+            private readonly Func<Entity, double> cost;
+            private Entity? best;
+            private double bestCost;
+
+            internal Cheapest(Func<Entity, double> cost)
+                => (this.cost, best, bestCost) = (cost, null, double.MaxValue);
+
+            public void Begin() => (best, bestCost) = (null, double.MaxValue);
+
+            public void Offer(Entity candidate)
+            {
+                double here;
+                try { here = cost(candidate); } catch { return; }
+                // A model that answers NaN has not ranked this candidate, which is what a model
+                // that throws is already saying, so both decline it the same way. Without this,
+                // the comparison below is false for NaN on either side (IEEE-754), so NaN becomes
+                // the incumbent cheapest and every later candidate then beats it unconditionally
+                // -- the answer stops being the cheapest and becomes whichever member came last.
+                if (double.IsNaN(here)) return;
+                if (here >= bestCost) return;
+                (best, bestCost) = (candidate, here);
+            }
+
+            public readonly Entity? Best => best;
+        }
+
+        private struct Least : ISelection
+        {
+            private readonly IComparer<Entity> order;
+            private Entity? best;
+
+            internal Least(IComparer<Entity> order) => (this.order, best) = (order, null);
+
+            public void Begin() => best = null;
+
+            // No admissibility test to make: an order ranks every pair, where a cost model can
+            // decline one. Nothing here can throw that Compare does not.
+            public void Offer(Entity candidate)
+            {
+                if (best is null || order.Compare(candidate, best) < 0) best = candidate;
+            }
+
+            public readonly Entity? Best => best;
+        }
+
+        private Entity? Extract<TSelection>(int id, TSelection seed,
             Dictionary<int, Entity> memo, HashSet<int> visiting)
+            where TSelection : struct, ISelection
         {
             id = Find(id);
             if (memo.TryGetValue(id, out var done)) return done;
@@ -350,17 +429,18 @@ namespace AngouriMath.Core.Transformations
             // already gives, and the same shape as Gruntz's own MaxDepth.
             if (visiting.Count >= MaxExtractionDepth) return null;
             if (!visiting.Add(id)) return null;              // a cycle; the other node will do
-            Entity? best = null;
-            var bestCost = double.MaxValue;
-            // Ordered, not as the set enumerates: a tie on cost is settled by whichever candidate
-            // is reached first, and set order is neither specified nor stable across processes.
+            var selection = seed;
+            selection.Begin();
+            // Ordered, not as the set enumerates: where the selection ties, the answer is
+            // whichever candidate was reached first, and set order is neither specified nor
+            // stable across processes.
             foreach (var node in NodesOf(id).OrderBy(node => node))
             {
                 var parts = new Entity[node.Children.Length];
                 var ok = true;
                 for (var i = 0; i < parts.Length && ok; i++)
                 {
-                    var part = Extract(node.Children[i], cost, memo, visiting);
+                    var part = Extract(node.Children[i], seed, memo, visiting);
                     if (part is null) ok = false;
                     else parts[i] = part;
                 }
@@ -370,19 +450,10 @@ namespace AngouriMath.Core.Transformations
                     : MatchPattern.ConstructNode(OperatorType(node.Op), parts);
                 if (built is null) continue;
                 if (codomains.TryGetValue(node, out var domain)) built = built.WithCodomain(domain);
-                double here;
-                try { here = cost(built); } catch { continue; }
-                // A model that answers NaN has not ranked this candidate, which is what a model
-                // that throws is already saying, so both decline it the same way. Without this,
-                // the comparison below is false for NaN on either side (IEEE-754), so NaN becomes
-                // the incumbent cheapest and every later candidate then beats it unconditionally
-                // -- the answer stops being the cheapest and becomes whichever member came last.
-                if (double.IsNaN(here)) continue;
-                if (here >= bestCost) continue;
-                best = built;
-                bestCost = here;
+                selection.Offer(built);
             }
             visiting.Remove(id);
+            var best = selection.Best;
             if (best is not null) memo[id] = best;
             return best;
         }

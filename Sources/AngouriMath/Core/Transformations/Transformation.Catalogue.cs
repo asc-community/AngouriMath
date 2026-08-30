@@ -373,6 +373,84 @@ namespace AngouriMath.Core.Transformations
         internal static int EqualitySaturationSafeRuleCount => EqualitySaturationTransformation.SafeRuleCount;
 
         /// <summary>
+        /// Brings an expression to the least of the forms the rules can reach from it, over an
+        /// e-graph — <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a>
+        /// tier 2's "canonicalisation framework built on" the rewrite graph.
+        /// </summary>
+        /// <param name="budget">What bounds the search. See <see cref="EqualitySaturation"/>.</param>
+        /// <param name="widest">
+        /// The widest <see cref="RewriteRuleGrowth"/> admitted, as a ceiling over
+        /// <see cref="RewriteRuleGrowth.Collects"/>, <see cref="RewriteRuleGrowth.Rearranges"/>,
+        /// <see cref="RewriteRuleGrowth.Expands"/>. This is the knob that matters — see the
+        /// measurement below.
+        /// </param>
+        /// <remarks>
+        /// <para>
+        /// <b>How this differs from <see cref="Canonicalization"/>, which is a rule pass.</b> A
+        /// pass rewrites and commits: having applied a rule it is standing on the result, and if
+        /// recognising an equality needed a <i>larger</i> intermediate form, the pass cannot get
+        /// there and back. A graph does not commit — it holds every form at once and chooses at
+        /// the end — so it can pass through a bigger writing to reach a smaller one.
+        /// </para>
+        /// <para>
+        /// <b>That difference is measured, and the measurement says the ceiling matters less than
+        /// it looks.</b> Two rewrite chains run from each of 1458 generated expressions produced
+        /// <b>no divergent pair at all</b> under <see cref="RewriteRuleGrowth.Collects"/> ∪
+        /// <see cref="RewriteRuleGrowth.Rearranges"/>: those rules are confluent on that corpus,
+        /// so a pass already reaches the same form a graph would, and over that ceiling this
+        /// earns nothing at all. Widening it barely helps — over six expression pairs equal only
+        /// through a larger intermediate form, <see cref="RewriteRuleGrowth.Rearranges"/> proved
+        /// two and <see cref="RewriteRuleGrowth.Expands"/>, all nine expanding rules added, proved
+        /// <i>the same two</i>. Only <see cref="RewriteRuleGrowth.Unknown"/> — which admits the
+        /// 270 rules whose growth nobody judged, against 52 that were — proved a third.
+        /// </para>
+        /// <para>
+        /// <b>Why the default is nonetheless the narrow ceiling.</b> Because the widest one is
+        /// where the risk is, not merely where the rules are: the <c>work/egraph</c> harness
+        /// measured a 7,147× blow-up over the undirected rule set — a different mechanism (term
+        /// enumeration, no budget, no pre-filter) on the same question. Six pairs completing
+        /// inside their budget is not evidence against that. So each step up is offered and none
+        /// is assumed, and the caller who takes one is the caller who sets the budget.
+        /// </para>
+        /// <para>
+        /// <b>What this is not.</b> Not a canonical form <i>for the language</i> — no such thing
+        /// exists here, since zero-equivalence is undecidable, and
+        /// <c>Docs/Contributing/CanonicalForm.md</c> states that boundary. It is a canonical form
+        /// <i>modulo these rules and this budget</i>: equal trees mean the rules proved the two
+        /// expressions equal, different trees mean they did not, and a budget that ran out is
+        /// reported rather than hidden. Nothing in the library calls this — like
+        /// <see cref="Canonicalization"/> it is offered, not applied.
+        /// </para>
+        /// </remarks>
+        /// <remarks>
+        /// <para>
+        /// <b>Built on <see cref="Canonicalization"/> rather than beside it.</b> The graph does
+        /// not sort a commutative operand pair: the rules that do build their replacement in code,
+        /// so their <see cref="RewriteRuleGrowth"/> is <see cref="RewriteRuleGrowth.Unknown"/> and
+        /// no ceiling admits them — measured, by <c>x + y</c> and <c>y + x</c> canonicalising to
+        /// themselves. Nor does it flatten <c>(x + y) + a</c> against <c>x + (y + a)</c>, which
+        /// are different trees that print alike. The rule pass does both, is already measured
+        /// idempotent and order-independent, and is not improved by being written again — so it
+        /// runs on each side of the graph step: once so that equal inputs enter the graph as one
+        /// tree, and once so that what extraction rebuilt leaves as one.
+        /// </para>
+        /// </remarks>
+        public static Transformation CanonicalizationOverGraph(WorkBudget budget, RewriteRuleGrowth widest)
+            => Canonicalization
+                .Then(new GraphCanonicalizationTransformation(
+                    budget ?? throw new ArgumentNullException(nameof(budget)), widest))
+                .Then(Canonicalization);
+
+        /// <summary>
+        /// <see cref="CanonicalizationOverGraph(WorkBudget, RewriteRuleGrowth)"/> over the rules
+        /// that do not expand, which is the ceiling
+        /// <see cref="EqualitySaturation"/> also draws from.
+        /// </summary>
+        /// <param name="budget">What bounds the search.</param>
+        public static Transformation CanonicalizationOverGraph(WorkBudget budget)
+            => CanonicalizationOverGraph(budget, RewriteRuleGrowth.Rearranges);
+
+        /// <summary>
         /// Replaces every occurrence of <paramref name="what"/> with
         /// <paramref name="with"/>, as <see cref="Entity.Substitute(Entity, Entity)"/> does.
         /// </summary>
@@ -475,11 +553,7 @@ namespace AngouriMath.Core.Transformations
             /// </summary>
             [ConstantField]
             private static readonly IReadOnlyList<Matching.MatchedRule> SafeRules
-                = Matching.MatchedRules.All
-                    .SelectMany(set => set.Rules)
-                    .Where(rule => rule.Growth is RewriteRuleGrowth.Collects or RewriteRuleGrowth.Rearranges)
-                    .Where(rule => rule.Soundness is Soundness.Sound or Soundness.SoundUnderAssumptions)
-                    .ToList();
+                = Saturation.RulesUpTo(RewriteRuleGrowth.Rearranges);
 
             /// <summary>
             /// <see cref="SafeRules"/>.Count, for <see cref="Transformation.EqualitySaturationSafeRuleCount"/>
@@ -545,117 +619,55 @@ namespace AngouriMath.Core.Transformations
                 graph.Rebuild();
 
                 var ledger = BudgetLedger.For(Name, budget);
-                var chargedNodes = graph.NodeCount;
-                bool ChargeGrowthSinceLastCall()
-                {
-                    var delta = graph.NodeCount - chargedNodes;
-                    chargedNodes = graph.NodeCount;
-                    return ledger.Spend(delta);
-                }
-
-                var saturated = false;
-                while (!saturated && !ledger.Exhausted)
-                {
-                    var merged = false;
-                    foreach (var id in graph.Classes.ToList())
-                    {
-                        if (ledger.Exhausted) break;
-
-                        // Which node types this class holds, gathered once for the whole sweep
-                        // rather than once per rule. A pattern that requires a root type cannot
-                        // match a class holding no node of it -- MatchPattern.RequiredRootType is
-                        // a necessary condition, not a sufficient one, which is the direction that
-                        // makes it a filter: it licenses skipping a rule, never firing one. This
-                        // is the dispatch a switch over node types gets from the compiler for
-                        // free, and a list of rules has to be told; without it every rule in
-                        // SafeRules ran a full pattern match against every class of every pass,
-                        // and the large majority of those could not have matched.
-                        //
-                        // A union later in this same sweep can add a node type to the class that
-                        // this set does not have, so a rule can be skipped in a pass where it had
-                        // just become applicable. That costs nothing: a union is exactly what sets
-                        // `merged`, so there is another pass, and the set is gathered again there.
-                        var held = new HashSet<Type>();
-                        foreach (var node in graph.NodesOf(id)) held.Add(EGraph.RuntimeType(node));
-
-                        Entity? term = null;
-                        var extracted = false;
-                        bool TryTerm(out Entity value)
-                        {
-                            if (!extracted)
-                            {
-                                term = graph.Extract(id, costModel.Cost);
-                                extracted = true;
-                            }
-                            value = term!;
-                            return term is not null;
-                        }
-
-                        foreach (var rule in SafeRules)
-                        {
-                            // Before the charge, because a rule this skips was never attempted:
-                            // a step is a match attempt, and a type that cannot match is not one.
-                            // Written as a loop rather than as `held.Any(t => ...)`: the lambda
-                            // would capture `required` and so allocate a closure every time the
-                            // exact-type test missed, which is most rules of most classes -- and
-                            // paying an allocation to avoid a pattern match is not a pre-filter.
-                            if (rule.Left.RequiredRootType is { } required && !held.Contains(required))
-                            {
-                                var reachable = false;
-                                foreach (var type in held)
-                                    if (required.IsAssignableFrom(type))
-                                    {
-                                        reachable = true;
-                                        break;
-                                    }
-                                if (!reachable) continue;
-                            }
-
-                            // One step per match attempt, charged before the attempt -- the unit
-                            // Buchberger, FGLM and MatchPattern all charge, and the work this
-                            // loop actually does. Charging the node-count delta alone (below)
-                            // billed nothing on ordinary input, because SafeRules holds only
-                            // rules that do not expand: a budget of zero steps ran this sweep to
-                            // saturation and then reported that it had completed.
-                            if (!ledger.Spend()) break;
-                            int other;
-                            if (rule.Left.CanEMatch)
-                            {
-                                // Mirrors the fallback branch below: a rule's `when` is arbitrary
-                                // code asked about a witness this extracted rather than one the
-                                // caller wrote, and a predicate that throws on a shape it did not
-                                // expect must decline the candidate, not escape Apply.
-                                bool matched;
-                                try { matched = rule.TryEMatchApply(graph, id, costModel.Cost, out other); }
-                                catch { continue; }
-                                if (!matched) continue;
-                            }
-                            else
-                            {
-                                if (!TryTerm(out var t)) continue;
-                                Entity? rewritten;
-                                try { rewritten = rule.TryApply(t); }
-                                catch { continue; }
-                                if (rewritten is null || rewritten.Equals(t)) continue;
-                                try { other = graph.AddEntity(rewritten); }
-                                catch { continue; }
-                            }
-                            if (graph.Union(id, other)) merged = true;
-                        }
-                        // What the sweep grew, charged after it rather than before the next
-                        // class's, so that the ceiling bounds the growth that has happened.
-                        if (!ChargeGrowthSinceLastCall()) break;
-                    }
-                    // Rebuild rescans every node of every class, repeatedly until nothing more
-                    // becomes congruent -- a round of it is work, and it had no ledger
-                    // interaction anywhere in it.
-                    if (!ledger.Spend()) break;
-                    graph.Rebuild();
-                    if (!merged) saturated = true;
-                }
-
+                Saturation.Run(graph, SafeRules, ledger, costModel.Cost);
                 ledger.Report();
                 return graph.Extract(root, costModel.Cost) ?? input;
+            }
+        }
+
+        /// <summary>
+        /// <see cref="Transformation.CanonicalizationOverGraph(WorkBudget, RewriteRuleGrowth)"/>.
+        /// </summary>
+        private sealed class GraphCanonicalizationTransformation : Transformation
+        {
+            private readonly WorkBudget budget;
+            private readonly RewriteRuleGrowth widest;
+            private readonly IReadOnlyList<Matching.MatchedRule> rules;
+
+            internal GraphCanonicalizationTransformation(WorkBudget budget, RewriteRuleGrowth widest)
+                => (this.budget, this.widest, rules)
+                    = (budget, widest, Saturation.RulesUpTo(widest));
+
+            public override string Name => $"canonical-over-graph[{widest}]";
+
+            public override TransformationRelation Relation => TransformationRelation.Equivalence;
+
+            // The weakest tier represented in what it may use, which is the convention every rule
+            // set in the registry already follows.
+            public override Soundness Soundness => Soundness.SoundUnderAssumptions;
+
+            /// <inheritdoc cref="EqualitySaturationTransformation.ApplyCore"/>
+            protected override Entity? ApplyCore(Entity input)
+            {
+                var recording = RewriteRecording.Current;
+                var mark = recording?.Mark() ?? 0;
+
+                var graph = new EGraph();
+                var root = graph.AddEntity(input);
+                graph.Rebuild();
+
+                var ledger = BudgetLedger.For(Name, budget);
+                Saturation.Run(graph, rules, ledger, CostModel.Default.Cost);
+                ledger.Report();
+
+                // The least member, not the cheapest: a cost model ties, and a tie would make the
+                // answer depend on which member was reached first, which is exactly the thing a
+                // canonical form may not depend on. See EntityOrder.
+                var output = graph.ExtractLeast(root, EntityOrder.Canonical) ?? input;
+
+                if (recording is not null && !output.Equals(input))
+                    recording.Note(input, output, null, Name, mark);
+                return output;
             }
         }
 
