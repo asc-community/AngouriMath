@@ -94,16 +94,27 @@ namespace AngouriMath.Tests.Core.Transformations
         /// <summary>
         /// A rewrite that takes one step is reported as one step, with the rule that did it.
         /// </summary>
+        /// <remarks>
+        /// <b>The two cases show what repointing a set at its data form buys.</b> <c>Common</c> is
+        /// still described by <c>RuleRegistryGenerator</c>, so its rule is named by the arm's own
+        /// rendered pattern; <c>Trigonometric</c> is described from the rules it runs, so its rule
+        /// is named in words and carries the identity. This asserted the replacement's C# source
+        /// text until the second of those was repointed, at which point it became
+        /// <c>(built by code)</c> — the name is the better thing to hold anyway, being what a
+        /// derivation actually reports.
+        /// </remarks>
         [Theory]
-        [InlineData("x + x", "2 * any1")]
-        [InlineData("sin(x)^2 + cos(x)^2", "1")]
-        public void AOneStepRewriteIsOneStep(string expr, string replacement)
+        [InlineData("x + x", "Sumf(var any1, var any1a) when any1 == any1a", null)]
+        [InlineData("sin(x)^2 + cos(x)^2", "a-squared-sine-and-cosine-of-one-angle-sum-to-one",
+            "sin(a)^2 + cos(a)^2 = 1")]
+        public void AOneStepRewriteIsOneStep(string expr, string ruleName, string? identity)
         {
             using var recording = RewriteRecording.Start();
             Parse(expr).Simplify();
 
             var step = Assert.Single(recording.Derivation);
-            Assert.Equal(replacement, step.Rule?.ReplacementSource);
+            Assert.Equal(ruleName, step.Rule?.Name);
+            Assert.Equal(identity, step.Rule?.Description);
         }
 
         [Fact]

@@ -373,8 +373,7 @@ namespace AngouriMath.Core.Transformations
             // tan and cot bring poles with them, so an identity that introduces one holds
             // away from those points rather than everywhere.
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.Trigonometric.ApplyHere,
-            Patterns.TrigonometricRulesArms);
+            Matching.MatchedRules.Trigonometric);
 
         /// <summary>
         /// Rewrites the derived trigonometric functions in terms of sine and cosine.

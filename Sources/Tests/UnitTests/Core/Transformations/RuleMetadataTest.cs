@@ -134,6 +134,7 @@ namespace AngouriMath.Tests.Core.Transformations
                 nameof(RewriteRules.PolynomialLongDivision),
                 nameof(RewriteRules.RationalizeDenominator),
                 nameof(RewriteRules.SetOperator),
+                nameof(RewriteRules.Trigonometric),
             };
 
             var described = RewriteRules.All
@@ -164,7 +165,7 @@ namespace AngouriMath.Tests.Core.Transformations
             var repointed = RewriteRules.All
                 .Where(set => set.Rules.Count > 0 && set.Rules.All(rule => rule.Soundness is not null))
                 .ToList();
-            Assert.Equal(101, repointed.Sum(set => set.Rules.Count));
+            Assert.Equal(134, repointed.Sum(set => set.Rules.Count));
             Assert.All(repointed, set => Assert.All(set.Rules, rule => Assert.NotNull(rule.Description)));
         }
 

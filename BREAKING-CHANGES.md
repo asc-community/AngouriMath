@@ -68,24 +68,25 @@ read first.
 | **Silent** | `RewriteRules.RationalizeDenominator.Rules` | `[]` — the registry could not read the set | its two rules, addressable and named |
 | **Silent** | `RewriteRules.Power.ApplyOnce("ln(1 / x)")`, and every `log(_, 1/_)` and `log(1/_, _)` whose argument is not decidably a positive real | `-ln(x)`, which is wrong on the negative reals | `ln(1 / x)`, left alone |
 | **Silent** | `RewriteRules.Boolean.ApplyOnce("a and b or a")`, and two more orientations of absorption | left alone — the arm for that orientation was never written | `a` |
-| **Silent** | `RewriteRules.DivisionPreparing.Rules[0].Name`, and every rule of twenty-three sets now described from their data form | `Mulf(var any1, Divf(Integer(1), var any2))` — the `switch` arm's rendered pattern | `reciprocal-factor-becomes-a-quotient` |
+| **Silent** | `RewriteRules.DivisionPreparing.Rules[0].Name`, and every rule of twenty-four sets now described from their data form | `Mulf(var any1, Divf(Integer(1), var any2))` — the `switch` arm's rendered pattern | `reciprocal-factor-becomes-a-quotient` |
 | | `RewriteRules.ExpandFactorialDivisions.Rules.Count`, and `FactorizeFactorialMultiplications` | `8` | `3` — the same rewrites, five of the eight arms being one commutative pattern |
 | | `RewriteRules.Boolean.Rules.Count` | `36` | `20` — a commutative pattern finds a shared operand wherever it sits |
 | | `RewriteRules.NumericNeat.Rules.Count`, and `Factorization` 22 -> 11 | `16` | `11` |
-| | `RewriteRules.All.Sum(set => set.Rules.Count)` | `407` | `365` |
+| | `RewriteRules.Trigonometric.Rules.Count` | `43` | `33` |
+| | `RewriteRules.All.Sum(set => set.Rules.Count)` | `407` | `355` |
 | **Silent** | `RewriteRules.ExpandFactorialDivisions.Rules[0].Growth` | `Collects` — guessed from string length | `Unknown`; whether it collects depends on the offsets |
 | **Silent** | `RewriteStep.Soundness` on a rewrite whose rule declares a tier — `RewriteRules.SetOperator` on `A /\ A`, and every rewrite of the nineteen sets described from their data form | `SoundUnderAssumptions` — its rule set's tier, which is the minimum over every rule in the set | `Sound` — the rule's own |
 | **Silent** | `DerivationStep.Soundness` | its rule set's tier | the weakest tier any rewrite that actually fired inside the step holds at |
 | **Silent** | `"arccotan(-1)".ToEntity().Simplify()`, and every negative argument the inverse-trigonometric table knows | `3/4 * pi` — the textbook range, and **not equal to `arccotan(-1)`**, whose value is `-pi/4` | `-1/4 * pi` |
 
-### Twenty-three rule sets describe the rules they run
+### Twenty-four rule sets describe the rules they run
 
 `RewriteRuleSet.Rules` is what the registry reports a set is made of, and for most of the library's
 life it came from `RuleRegistryGenerator` reading the `switch` that defined the set. Twenty-seven of
 the thirty sets stopped running that `switch` some releases ago — they run
 `MatchedRuleSet.ApplyHere` — and went on describing it. Thirteen of them now describe what they run.
 
-Which twenty-three. Thirteen had **no described arm at all**, so repointing them could only add
+Which twenty-four. Thirteen had **no described arm at all**, so repointing them could only add
 metadata: `CollapseMultipleFractions`, the three `CommonDenominator` sets, `DivisionPreparing`,
 `ExpandFactorialDivisions`, `ExpandMultipleAngle`, `ExpandTrigonometric`, `Expansion`,
 `FactorizeFactorialMultiplications`, `NormalTrigonometricForm`, `PhiFunction` and
@@ -98,8 +99,8 @@ where the identities were **written** rather than carried across: its comments n
 rules' own patterns and replacements. `NumericNeat` and `Factorization` follow it, their comments
 already being identities and needing only the arrow turned into an equals sign.
 
-The four left on the `switch` are the ones where repointing would cost something today: `Common`
-would lose 33 descriptions, `Power` 22, `Trigonometric` 13 and `InequalityEquality` 11. Porting those identities is a later change. Three more —
+The three left on the `switch` are the ones where repointing would cost something today: `Common`
+would lose 33 descriptions, `Power` 22 and `InequalityEquality` 11. Porting those identities is a later change. Three more —
 the `CanonicalOrder` family — still *run* their `switch`, so describing it is not a mismatch.
 
 Four things move, and only the second changes a count:
@@ -117,9 +118,9 @@ commutative pattern finds the shared operand wherever it sits, and absorption's 
 rule twice. `ExpandFactorialDivisions` and `FactorizeFactorialMultiplications` are eight arms each
 written as three, the other five being one rewrite spelled once for each side a factorial can sit on.
 `NumericNeat`'s sixteen are eleven, six of them being three rules written once per side a negative
-factor can sit on; `Factorization`'s twenty-two are eleven for the same reason. Every other repointed
-set is one arm to one rule. Across the registry, 407 becomes **365** while the number of described
-rules goes from **95 to 180**.
+factor can sit on; `Factorization`'s twenty-two are eleven for the same reason, and
+`Trigonometric`'s forty-three are thirty-three. Every other repointed set is one arm to one rule.
+Across the registry, 407 becomes **355** while the number of described rules goes from **95 to 200**.
 
 `Rules[i].Growth` also stops being a guess. `AsAddressable` used to infer it by comparing the lengths
 of the two rendered pattern strings — the only thing available to a generator reading source text —
