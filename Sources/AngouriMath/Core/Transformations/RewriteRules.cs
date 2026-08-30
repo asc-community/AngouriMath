@@ -153,8 +153,7 @@ namespace AngouriMath.Core.Transformations
             "Arranges signs so that adding a negative is written as subtracting a positive.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.NumericNeat.ApplyHere,
-            Patterns.NumericNeatRulesArms);
+            Matching.MatchedRules.NumericNeat);
 
         #endregion
 
@@ -211,8 +210,7 @@ namespace AngouriMath.Core.Transformations
             "Gathers common factors out of sums.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.Factorization.ApplyHere,
-            Patterns.FactorizeRulesArms);
+            Matching.MatchedRules.Factorization);
 
         /// <summary>
         /// Recognises a perfect square written out, so that factorisation has something to
@@ -466,8 +464,7 @@ namespace AngouriMath.Core.Transformations
             "Applies the identities of boolean algebra to conjunctions, disjunctions and negations.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.Boolean.ApplyHere,
-            Patterns.BooleanRulesArms);
+            Matching.MatchedRules.Boolean);
 
         /// <summary>
         /// Rules about equalities and inequalities.

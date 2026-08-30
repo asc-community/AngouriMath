@@ -100,8 +100,8 @@ namespace AngouriMath.Tests.Core.Transformations
         /// reported as absent rather than as its set's.
         /// </summary>
         /// <remarks>
-        /// Twenty sets are described from their data form and carry a tier per rule. Of the ten
-        /// left, seven are still described by <c>RuleRegistryGenerator</c> reading a <c>switch</c>
+        /// Twenty-one sets are described from their data form and carry a tier per rule. Of the
+        /// nine left, six are still described by <c>RuleRegistryGenerator</c> reading a <c>switch</c>
         /// they no longer run, and three — the <c>CanonicalOrder</c> family — still run theirs, so
         /// describing it is honest. Named rather than counted, so that repointing a set is a change
         /// to this list rather than a silent one.
@@ -111,6 +111,7 @@ namespace AngouriMath.Tests.Core.Transformations
         {
             var fromData = new[]
             {
+                nameof(RewriteRules.Boolean),
                 nameof(RewriteRules.CollapseMultipleFractions),
                 nameof(RewriteRules.CollapseTrigonometricFunctions),
                 nameof(RewriteRules.CommonDenominator),
@@ -121,10 +122,12 @@ namespace AngouriMath.Tests.Core.Transformations
                 nameof(RewriteRules.ExpandMultipleAngle),
                 nameof(RewriteRules.ExpandTrigonometric),
                 nameof(RewriteRules.Expansion),
+                nameof(RewriteRules.Factorization),
                 nameof(RewriteRules.FactorizeFactorialMultiplications),
                 nameof(RewriteRules.InvertNegativeMultipliers),
                 nameof(RewriteRules.InvertNegativePowers),
                 nameof(RewriteRules.NormalTrigonometricForm),
+                nameof(RewriteRules.NumericNeat),
                 nameof(RewriteRules.PerfectSquare),
                 nameof(RewriteRules.PhiFunction),
                 nameof(RewriteRules.PolynomialGcdCancellation),
@@ -161,7 +164,7 @@ namespace AngouriMath.Tests.Core.Transformations
             var repointed = RewriteRules.All
                 .Where(set => set.Rules.Count > 0 && set.Rules.All(rule => rule.Soundness is not null))
                 .ToList();
-            Assert.Equal(59, repointed.Sum(set => set.Rules.Count));
+            Assert.Equal(101, repointed.Sum(set => set.Rules.Count));
             Assert.All(repointed, set => Assert.All(set.Rules, rule => Assert.NotNull(rule.Description)));
         }
 

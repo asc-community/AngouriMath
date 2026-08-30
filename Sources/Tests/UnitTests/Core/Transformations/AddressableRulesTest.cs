@@ -290,13 +290,16 @@ namespace AngouriMath.Tests.Core.Transformations
 
             Assert.Equal(30, withRules.Count);
 
-            // 397, and it was 407 before thirteen sets started reporting the rules they run
-            // rather than the `switch` they no longer run. The ten that went are not rules lost:
-            // ExpandFactorialDivisions and FactorizeFactorialMultiplications are eight arms each
-            // that the data form writes as three, the other five being the same rewrite spelled
-            // for each side a factorial can sit on -- which is one commutative pattern. Every
-            // other repointed set is one for one.
-            Assert.Equal(397, withRules.Sum(set => set.Rules.Count));
+            // 365, and it was 407 before the registry started reporting the rules it runs rather
+            // than the `switch` it no longer runs. The forty-two that went are not rules lost, they
+            // are arms the data form writes once. Boolean's thirty-six are twenty, because a
+            // commutative pattern finds a shared operand wherever it sits, so eight arms of
+            // distributivity are two rules and absorption's four-arms-each is one rule twice;
+            // Factorization's twenty-two are eleven for the same reason; NumericNeat's sixteen are
+            // eleven, six of them being three rules written once per side a negative factor can sit
+            // on; and the two factorial sets are eight arms each written as three. Every other
+            // repointed set is one arm for one rule.
+            Assert.Equal(365, withRules.Sum(set => set.Rules.Count));
         }
 
         /// <summary>
