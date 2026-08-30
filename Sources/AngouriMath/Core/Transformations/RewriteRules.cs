@@ -139,8 +139,7 @@ namespace AngouriMath.Core.Transformations
             "Lifts numeric factors out of a quotient so that the division rules can see it.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.DivisionPreparing.ApplyHere,
-            Patterns.DivisionPreparingRulesArms);
+            Matching.MatchedRules.DivisionPreparing);
 
         /// <summary>
         /// Cosmetic arrangement of signs, so that adding a negative reads as a difference.
@@ -198,8 +197,7 @@ namespace AngouriMath.Core.Transformations
             "Distributes products and powers over sums.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.Expansion.ApplyHere,
-            Patterns.ExpandRulesArms);
+            Matching.MatchedRules.Expansion);
 
         /// <summary>
         /// Takes common factors back out of a sum.
@@ -295,8 +293,7 @@ namespace AngouriMath.Core.Transformations
             "Collapses nested quotients into a single numerator over a single denominator.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.CollapseMultipleFractions.ApplyHere,
-            Patterns.CollapseMultipleFractionsArms);
+            Matching.MatchedRules.CollapseMultipleFractions);
 
         /// <summary>
         /// Puts a sum of quotients over one denominator, grouping the terms by variables and
@@ -307,8 +304,7 @@ namespace AngouriMath.Core.Transformations
             "Adds quotients by putting them over a common denominator.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.CommonDenominator(TreeAnalyzer.SortLevel.HIGH_LEVEL).ApplyHere,
-            Patterns.FractionCommonDenominatorRulesArms(TreeAnalyzer.SortLevel.HIGH_LEVEL));
+            Matching.MatchedRules.CommonDenominator(TreeAnalyzer.SortLevel.HIGH_LEVEL));
 
         /// <summary>
         /// <see cref="CommonDenominator"/>, counting constants when it groups terms.
@@ -318,8 +314,7 @@ namespace AngouriMath.Core.Transformations
             "Adds quotients over a common denominator, distinguishing terms by their constants too.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.CommonDenominator(TreeAnalyzer.SortLevel.MIDDLE_LEVEL).ApplyHere,
-            Patterns.FractionCommonDenominatorRulesArms(TreeAnalyzer.SortLevel.MIDDLE_LEVEL));
+            Matching.MatchedRules.CommonDenominator(TreeAnalyzer.SortLevel.MIDDLE_LEVEL));
 
         /// <summary>
         /// <see cref="CommonDenominator"/>, grouping terms by the whole subtree.
@@ -329,8 +324,7 @@ namespace AngouriMath.Core.Transformations
             "Adds quotients over a common denominator, grouping terms by the whole subtree.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.CommonDenominator(TreeAnalyzer.SortLevel.LOW_LEVEL).ApplyHere,
-            Patterns.FractionCommonDenominatorRulesArms(TreeAnalyzer.SortLevel.LOW_LEVEL));
+            Matching.MatchedRules.CommonDenominator(TreeAnalyzer.SortLevel.LOW_LEVEL));
 
         /// <summary>
         /// Divides one polynomial by another, leaving a quotient plus a remainder.
@@ -346,8 +340,7 @@ namespace AngouriMath.Core.Transformations
             "Divides a polynomial by a polynomial, giving the quotient plus the remainder.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.PolynomialLongDivision.ApplyHere,
-            Patterns.PolynomialLongDivisionArms);
+            Matching.MatchedRules.PolynomialLongDivision);
 
         /// <summary>
         /// Puts a quotient of polynomials into lowest terms.
@@ -404,8 +397,7 @@ namespace AngouriMath.Core.Transformations
             "Writes tangents, cotangents, secants and cosecants as sines and cosines.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.NormalTrigonometricForm.ApplyHere,
-            Patterns.NormalTrigonometricFormArms);
+            Matching.MatchedRules.NormalTrigonometricForm);
 
         /// <summary>
         /// Gathers sines and cosines back into the derived functions where that is shorter.
@@ -438,8 +430,7 @@ namespace AngouriMath.Core.Transformations
             "Expands a sine or cosine of a sum into products of sines and cosines of its terms.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.ExpandTrigonometric.ApplyHere,
-            Patterns.ExpandTrigonometricRulesArms);
+            Matching.MatchedRules.ExpandTrigonometric);
 
         /// <summary>
         /// Opens a trigonometric function of a multiplied angle.
@@ -459,8 +450,7 @@ namespace AngouriMath.Core.Transformations
             "Expands a sine or cosine of an integer multiple of an angle.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.ExpandMultipleAngle.ApplyHere,
-            Patterns.ExpandMultipleAngleRulesArms);
+            Matching.MatchedRules.ExpandMultipleAngle);
 
         #endregion
 
@@ -535,8 +525,7 @@ namespace AngouriMath.Core.Transformations
             "Cancels a quotient of factorials into the product of the terms that do not cancel.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.ExpandFactorialDivisions.ApplyHere,
-            Patterns.ExpandFactorialDivisionsArms);
+            Matching.MatchedRules.ExpandFactorialDivisions);
 
         /// <summary>
         /// Recognises a product of consecutive terms as a factorial.
@@ -552,8 +541,7 @@ namespace AngouriMath.Core.Transformations
             "Gathers a product of a factorial and its neighbouring terms back into one factorial.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.FactorizeFactorialMultiplications.ApplyHere,
-            Patterns.FactorizeFactorialMultiplicationsArms);
+            Matching.MatchedRules.FactorizeFactorialMultiplications);
 
         /// <summary>
         /// Rules about Euler's totient function.
@@ -570,8 +558,7 @@ namespace AngouriMath.Core.Transformations
             "Applies the multiplicative identities of Euler's totient function.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.PhiFunction.ApplyHere,
-            Patterns.PhiFunctionRulesArms);
+            Matching.MatchedRules.PhiFunction);
 
         #endregion
 

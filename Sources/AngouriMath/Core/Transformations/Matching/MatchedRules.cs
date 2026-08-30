@@ -77,7 +77,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 // a * (1/b) and a/b are undefined at exactly the same points, but the quotient
                 // is a quotient either way, so this inherits division's own condition rather
                 // than adding one. Left at the conservative tier until the audit reaches it.
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a * (1 / b) = a / b"),
 
             // (c * a) / b -> c * (a / b), for a numeric c
             new MatchedRule(
@@ -88,7 +89,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(
                     MatchPattern.Any("c"),
                     MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "(c * a) / b = c * (a / b), for a numeric c"),
 
             // (c / a) * b -> c * (b / a), for a numeric c
             new MatchedRule(
@@ -99,7 +101,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(
                     MatchPattern.Any("c"),
                     MatchPattern.Node<Divf>(MatchPattern.Any("b"), MatchPattern.Any("a"))),
-                Soundness.SoundUnderAssumptions));
+                Soundness.SoundUnderAssumptions,
+                description: "(c / a) * b = c * (b / a), for a numeric c"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.CollapseMultipleFractions"/>, as data.
@@ -139,7 +142,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("c")),
                     MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "(a / b) ^ c = a^c / b^c, for a positive whole c"),
 
             // (a * b) ^ c -> a^c * b^c, for a positive whole c
             new MatchedRule(
@@ -150,7 +154,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("c")),
                     MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "(a * b) ^ c = a^c * b^c, for a positive whole c"),
 
             // (a/b) * (c/d) -> (a*c) / (b*d). Before the two below it, which are more general.
             new MatchedRule(
@@ -161,7 +166,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(
                     MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c")),
                     MatchPattern.Node<Mulf>(MatchPattern.Any("b"), MatchPattern.Any("d"))),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "(a / b) * (c / d) = (a * c) / (b * d)"),
 
             new MatchedRule(
                 "product-with-a-quotient-on-the-right",
@@ -171,7 +177,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(
                     MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
                     MatchPattern.Any("c")),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a * (b / c) = (a * b) / c"),
 
             new MatchedRule(
                 "product-with-a-quotient-on-the-left",
@@ -181,7 +188,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(
                     MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c")),
                     MatchPattern.Any("b")),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "(a / b) * c = (a * c) / b"),
 
             // (a/b) / (c/d) -> (a*d) / (b*c). Likewise before the two below it.
             new MatchedRule(
@@ -192,7 +200,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(
                     MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("d")),
                     MatchPattern.Node<Mulf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "(a / b) / (c / d) = (a * d) / (b * c)"),
 
             new MatchedRule(
                 "quotient-whose-numerator-is-a-quotient",
@@ -202,7 +211,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(
                     MatchPattern.Any("a"),
                     MatchPattern.Node<Mulf>(MatchPattern.Any("b"), MatchPattern.Any("c"))),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "(a / b) / c = a / (b * c)"),
 
             new MatchedRule(
                 "quotient-whose-denominator-is-a-quotient",
@@ -212,7 +222,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(
                     MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c")),
                     MatchPattern.Any("b")),
-                Soundness.SoundUnderAssumptions));
+                Soundness.SoundUnderAssumptions,
+                description: "a / (b / c) = (a * c) / b"));
 
         /// <summary>
         /// The one rule from <see cref="Functions.Patterns.PowerRules"/> that carries a real
@@ -420,7 +431,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 // The quotient is undefined exactly where the tangent is -- at a zero of the
                 // cosine -- so the domain neither widens nor narrows. Left at the conservative
                 // tier with its three neighbours until the audit reaches them together.
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "tan(a) = sin(a) / cos(a)"),
 
             // cotan(a) -> cos(a) / sin(a)
             new MatchedRule(
@@ -429,7 +441,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(
                     MatchPattern.Node<Cosf>(MatchPattern.Any("a")),
                     MatchPattern.Node<Sinf>(MatchPattern.Any("a"))),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "cotan(a) = cos(a) / sin(a)"),
 
             // sec(a) -> 1 / cos(a)
             new MatchedRule(
@@ -438,7 +451,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(
                     MatchPattern.Exact(Integer.Create(1)),
                     MatchPattern.Node<Cosf>(MatchPattern.Any("a"))),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "sec(a) = 1 / cos(a)"),
 
             // cosec(a) -> 1 / sin(a)
             new MatchedRule(
@@ -447,7 +461,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(
                     MatchPattern.Exact(Integer.Create(1)),
                     MatchPattern.Node<Sinf>(MatchPattern.Any("a"))),
-                Soundness.SoundUnderAssumptions));
+                Soundness.SoundUnderAssumptions,
+                description: "cosec(a) = 1 / sin(a)"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.PhiFunctionRules"/>, as data.
@@ -478,7 +493,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 // Euler's product formula, which is a theorem and not an assumption: for a prime
                 // p the integers below p^k sharing a factor with it are exactly the multiples of
                 // p, of which there are p^(k-1).
-                Soundness.Sound));
+                Soundness.Sound,
+                description: "phi(p ^ k) = p ^ (k - 1) * (p - 1), for a prime p"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.CollapseTrigonometricFunctions"/>, as data.
@@ -559,7 +575,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Node<Cosf>(MatchPattern.Any("a")))),
                 // Holds for every complex a and b: the identity is the addition theorem, which
                 // has no branch to fall off.
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "sin(a + b) = sin(a)cos(b) + sin(b)cos(a)"),
 
             // sin(a - b) -> sin(a)cos(b) - sin(b)cos(a)
             new MatchedRule(
@@ -573,7 +590,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Mulf>(
                         MatchPattern.Node<Sinf>(MatchPattern.Any("b")),
                         MatchPattern.Node<Cosf>(MatchPattern.Any("a")))),
-                Soundness.Sound));
+                Soundness.Sound,
+                description: "sin(a - b) = sin(a)cos(b) - sin(b)cos(a)"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.ExpandTrigonometricRules"/>, as data.
@@ -593,7 +611,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(
                     MatchPattern.Node<Sinf>(MatchPattern.Any("a")),
                     MatchPattern.Node<Cosf>(MatchPattern.Any("a"))),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "(1/2) * sin(2a) = sin(a) * cos(a)"),
 
             // cos(2a) -> cos(a)^2 - sin(a)^2
             new MatchedRule(
@@ -609,7 +628,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(
                         MatchPattern.Node<Sinf>(MatchPattern.Any("a")),
                         MatchPattern.Exact(Integer.Create(2)))),
-                Soundness.Sound));
+                Soundness.Sound,
+                description: "cos(2a) = cos(a)^2 - sin(a)^2"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.ExpandMultipleAngleRules"/>, as data.
@@ -633,7 +653,13 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => TrigonometricAngleExpansion.ExpandSineArgumentMultiplied(
                     new Sinf(bound["a"]), new Cosf(bound["a"]),
                     ((Integer)bound["n"]).EInteger.ToInt32Checked()),
-                Soundness.Sound),
+                Soundness.Sound,
+                // Declared, because the replacement is code and so nothing counts it. The
+                // Chebyshev expansion of sin(n * a) is a sum of n terms where the pattern is one
+                // node, for every n this fires on -- IsWorthExpanding is what bounds n, not what
+                // makes the direction uncertain.
+                RewriteRuleGrowth.Expands,
+                description: "sin(n * a) = its expansion, for a whole n worth expanding"),
 
             // cos(n * a) -> the expansion, for a whole n worth expanding
             new MatchedRule(
@@ -645,7 +671,13 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => TrigonometricAngleExpansion.ExpandCosineArgumentMultiplied(
                     new Sinf(bound["a"]), new Cosf(bound["a"]),
                     ((Integer)bound["n"]).EInteger.ToInt32Checked()),
-                Soundness.Sound));
+                Soundness.Sound,
+                // Declared, because the replacement is code and so nothing counts it. The
+                // Chebyshev expansion of sin(n * a) is a sum of n terms where the pattern is one
+                // node, for every n this fires on -- IsWorthExpanding is what bounds n, not what
+                // makes the direction uncertain.
+                RewriteRuleGrowth.Expands,
+                description: "cos(n * a) = its expansion, for a whole n worth expanding"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.PolynomialLongDivision"/>, as data.
@@ -667,7 +699,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     is var (divided, remainder)
                     ? divided + remainder
                     : node,
-                Soundness.SoundUnderAssumptions));
+                Soundness.SoundUnderAssumptions,
+                description: "n / d = quotient + remainder, by polynomial long division"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.PolynomialGcdCancellation"/>, as data.
@@ -710,7 +743,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any("y"), MatchPattern.Any<Number>("b")))),
                 (node, bound) => Functions.Patterns.CancelFactorials(
                     node, bound["x"], bound["y"], (Number)bound["a"], (Number)bound["b"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "(x + a)! / (y + b)! = the product between them, where the offsets are close"),
 
             // x! / (y + b)!
             new MatchedRule(
@@ -721,7 +755,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any("y"), MatchPattern.Any<Number>("b")))),
                 (node, bound) => Functions.Patterns.CancelFactorials(
                     node, bound["x"], bound["y"], Integer.Create(0), (Number)bound["b"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "x! / (y + b)! = the product between them, where the offsets are close"),
 
             // (x + a)! / y!
             new MatchedRule(
@@ -732,7 +767,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Factorialf>(MatchPattern.Any("y"))),
                 (node, bound) => Functions.Patterns.CancelFactorials(
                     node, bound["x"], bound["y"], (Number)bound["a"], Integer.Create(0)),
-                Soundness.SoundUnderAssumptions));
+                Soundness.SoundUnderAssumptions,
+                description: "(x + a)! / y! = the product between them, where the offsets are close"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.FactorizeFactorialMultiplications"/>, as data.
@@ -754,7 +790,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any("y"), MatchPattern.Any<Number>("b"))),
                 (node, bound) => Functions.Patterns.GatherFactorial(
                     node, bound["x"], bound["y"], (Number)bound["a"], (Number)bound["b"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "(x + a)! * (y + b) = (x + a + 1)!, where (y + b) is the next term"),
 
             // x! * (y + b)
             new MatchedRule(
@@ -765,7 +802,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any("y"), MatchPattern.Any<Number>("b"))),
                 (node, bound) => Functions.Patterns.GatherFactorial(
                     node, bound["x"], bound["y"], Integer.Create(0), (Number)bound["b"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "x! * (y + b) = (x + 1)!, where (y + b) is the next term"),
 
             // (x + a)! * y
             new MatchedRule(
@@ -776,7 +814,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any("y")),
                 (node, bound) => Functions.Patterns.GatherFactorial(
                     node, bound["x"], bound["y"], (Number)bound["a"], Integer.Create(0)),
-                Soundness.SoundUnderAssumptions));
+                Soundness.SoundUnderAssumptions,
+                description: "(x + a)! * y = (x + a + 1)!, where y is the next term"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.PerfectSquareRules"/>, as data.
@@ -1866,7 +1905,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Divf>(MatchPattern.Any("rn"), MatchPattern.Any("rd"))),
                 (node, bound) => Functions.Patterns.SumOfFractions(
                     node, bound["ln"], bound["ld"], bound["rn"], bound["rd"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "ln / ld + rn / rd = one quotient over a common denominator"),
 
             new MatchedRule(
                 "two-subtracted-fractions-take-a-common-denominator",
@@ -1875,7 +1915,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Divf>(MatchPattern.Any("rn"), MatchPattern.Any("rd"))),
                 (node, bound) => Functions.Patterns.SumOfFractions(
                     node, bound["ln"], bound["ld"], -bound["rn"], bound["rd"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "ln / ld - rn / rd = one quotient over a common denominator"),
 
             new MatchedRule(
                 "a-quotient-of-symbolic-parts-is-grouped-pairwise",
@@ -1883,7 +1924,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 (node, bound) => Functions.Patterns.PairwiseGroupedQuotient(
                     node, bound["num"], bound["den"], level),
                 Soundness.SoundUnderAssumptions,
-                when: bound => bound["num"].Vars.Any() && bound["den"].Vars.Any()));
+                when: bound => bound["num"].Vars.Any() && bound["den"].Vars.Any(),
+                description: "num / den = the quotient with shared factors paired off"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.InequalityEqualityRules"/>, as data.
