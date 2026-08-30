@@ -79,6 +79,9 @@ read first.
 | **Silent** | `RewriteRules.ExpandFactorialDivisions.Rules[0].Growth` | `Collects` — guessed from string length | `Unknown`; whether it collects depends on the offsets |
 | **Silent** | `RewriteStep.Soundness` on a rewrite whose rule declares a tier — `RewriteRules.SetOperator` on `A /\ A`, and every rewrite of the nineteen sets described from their data form | `SoundUnderAssumptions` — its rule set's tier, which is the minimum over every rule in the set | `Sound` — the rule's own |
 | **Silent** | `DerivationStep.Soundness` | its rule set's tier | the weakest tier any rewrite that actually fired inside the step holds at |
+| **Silent** | `"5 - (0; 1)".ToEntity().Simplify()`, and every interval subtracted from something | `(5; 4)` — a left end above its right, so the empty set | `(4; 5)` |
+| **Silent** | `"4.5 in (5 - (0; 1))".ToEntity().Simplify()` | `False` | `True` |
+| **Silent** | `"5 - [0; 1)".ToEntity().Simplify()` | `[5; 4)` — the openness left where it was | `(4; 5]` |
 | **Silent** | `"arccotan(-1)".ToEntity().Simplify()`, and every negative argument the inverse-trigonometric table knows | `3/4 * pi` — the textbook range, and **not equal to `arccotan(-1)`**, whose value is `-pi/4` | `-1/4 * pi` |
 
 ### Every rule set describes the rules it runs
@@ -189,6 +192,35 @@ positive argument, a negative one and zero rather than recalling it.
 `arccos` uses the same complement helper and is **unaffected**: its range is `[0, pi]` and `arcsin`'s
 is `[-pi/2, pi/2]`, so `pi/2 - arcsin(x)` holds for every argument. That is asserted too, so that a
 later tidy-up cannot merge the two paths back together.
+
+### Subtracting an interval turns it round
+
+`Minusf` slid an interval's ends without swapping them, so subtracting one produced an interval whose
+left end was above its right — which is empty:
+
+```csharp
+"5 - (0; 1)".ToEntity().Simplify()          // was (5; 4), is (4; 5)
+"4.5 in (5 - (0; 1))".ToEntity().Simplify() // was False, is True
+```
+
+The second line is the one that matters: a wrong answer reached through the operation an interval
+exists for.
+
+**The openness is the half that is easy to miss.** `5 - (0; 1]` is `[4; 5)` — the *excluded* 1 becomes
+the excluded lower end 4, and the *included* 0 becomes the included upper end 5. Swapping the ends and
+leaving the flags where they were would give `(4; 5]`: right about the width and wrong at both ends,
+which no test on the printed form alone would catch. `IntervalSubtractionTest` asserts membership as
+well for that reason.
+
+An interval *minus* a number was always right and stays right — `(0; 1) - 5` is `(-5; -4)`, and
+nothing turns round because nothing is being reflected.
+
+**What this does not fix**, and the boundary is asserted rather than left implicit: `0 - x` is negated
+by an earlier arm, so `0 - [0; 1)` is `-[0; 1)` and stops there. Negating an interval is multiplying
+one, and `Mulf` has no interval case at all — `(0; 1) * 2` is left alone too. That is
+[#322](https://github.com/asc-community/AngouriMath/issues/322)'s remaining half, and it needs a sign
+analysis this does not: a negative multiplier turns the interval round exactly as subtraction does,
+and a zero one collapses it to a point.
 
 ### An equation nothing settled is no longer answered with the empty set
 

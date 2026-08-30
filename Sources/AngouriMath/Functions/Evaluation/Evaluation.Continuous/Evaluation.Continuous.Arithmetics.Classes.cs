@@ -72,7 +72,15 @@ namespace AngouriMath
                         (var n1, Integer(0)) => n1,
                         (Integer(0), var n2) => -n2,
                         (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).InnerSimplified(isExact), (inter.Right - n2).InnerSimplified(isExact)),
-                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).InnerSimplified(isExact), (n2 - inter.Right).InnerSimplified(isExact)),
+                        // Subtracting an interval turns it round, so the ends swap and their
+                        // openness swaps with them. `5 - (0; 1]` is `[4; 5)`: the excluded 1
+                        // becomes the excluded lower end 4, and the included 0 becomes the
+                        // included upper end 5. Written as `New(n2 - Left, n2 - Right)` it came
+                        // back as `(5; 4]` -- an interval whose left end is above its right, which
+                        // is empty, so `4.5 in (5 - (0; 1))` answered False.
+                        (var n2, Interval inter) when n2 is not Set => inter.New(
+                            (n2 - inter.Right).InnerSimplified(isExact), inter.RightClosed,
+                            (n2 - inter.Left).InnerSimplified(isExact), inter.LeftClosed),
                         _ => null
                     },
                     (@this, a, b) => ((Minusf)@this).New(a, b), isExact);
