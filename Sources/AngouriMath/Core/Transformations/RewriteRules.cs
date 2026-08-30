@@ -256,8 +256,7 @@ namespace AngouriMath.Core.Transformations
             "Multiplies a quotient by the conjugate of its denominator to clear a surd from it.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.RationalizeDenominator.ApplyHere,
-            Matching.MatchedRules.RationalizeDenominator.AsAddressable());
+            Matching.MatchedRules.RationalizeDenominator);
 
         /// <summary>
         /// Brings a quotient of quotients down to a single one.

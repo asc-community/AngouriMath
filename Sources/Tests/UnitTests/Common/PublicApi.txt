@@ -180,6 +180,7 @@ AngouriMath.Core.Transformations.RewriteRule.Name { } : System.String
 AngouriMath.Core.Transformations.RewriteRule.NodeTypes { } : System.Collections.Generic.IReadOnlyList<System.Type>
 AngouriMath.Core.Transformations.RewriteRule.PatternSource { } : System.String
 AngouriMath.Core.Transformations.RewriteRule.ReplacementSource { } : System.String
+AngouriMath.Core.Transformations.RewriteRule.Soundness { } : System.Nullable<AngouriMath.Core.Transformations.Soundness>
 AngouriMath.Core.Transformations.RewriteRule.Source { } : System.String
 AngouriMath.Core.Transformations.RewriteRule.SourceLine { } : System.Int32
 AngouriMath.Core.Transformations.RewriteRule.ToString() : System.String

@@ -33,6 +33,32 @@ namespace AngouriMath.Core.Transformations
             => (Name, Description, Relation, Soundness, this.rules, Rules, IsNormalization)
                 = (name, description, relation, soundness, rules, addressable ?? Array.Empty<RewriteRule>(), isNormalization);
 
+        /// <summary>
+        /// A set whose rewrites are written as data: it both <i>runs</i>
+        /// <paramref name="source"/> and <i>describes</i> it.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>One argument rather than two, because two could disagree.</b> The other constructor
+        /// takes what to run and what to report separately, and for most of the registry's life
+        /// those were a matcher on one side and a <c>switch</c> read by
+        /// <c>RuleRegistryGenerator</c> on the other — so a set could describe arms it no longer
+        /// executed, and 26 of them did. Passing the set itself makes that unrepresentable.
+        /// </para>
+        /// <para>
+        /// It also takes the factory call off the caller. A set built by a parameterised factory —
+        /// the common-denominator family, one definition read at three sort levels — would
+        /// otherwise be constructed twice, once for the delegate and once for the rules, and the
+        /// description would be of a different instance from the one that runs.
+        /// </para>
+        /// </remarks>
+        internal RewriteRuleSet(string name, string description, TransformationRelation relation, Soundness soundness, Matching.MatchedRuleSet source, bool isNormalization = false)
+            : this(name, description, relation, soundness,
+                   (source ?? throw new ArgumentNullException(nameof(source))).ApplyHere,
+                   source.AsAddressable(), isNormalization)
+        {
+        }
+
         /// <summary>A stable identity for this set.</summary>
         public string Name { get; }
 

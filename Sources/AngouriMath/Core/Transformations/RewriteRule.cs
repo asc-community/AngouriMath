@@ -75,11 +75,16 @@ namespace AngouriMath.Core.Transformations
     /// <see cref="Entity.Simplify(int)"/> per rule set exchanged.
     /// </para>
     /// <para>
-    /// <b>What is not here.</b> A per-rule <see cref="Soundness"/>. A rule's tier is a claim
-    /// somebody has to argue for, and there is no honest way to derive one from syntax — so
-    /// <see cref="RewriteRuleSet.Soundness"/> remains the declared tier and this type does not
-    /// invent a finer one it cannot justify. What being addressable buys is that the finer tier
-    /// now has somewhere to live once the argument is made, which it did not before.
+    /// <b>A per-rule <see cref="Soundness"/> is here now, and it is empty for most rules on
+    /// purpose.</b> This paragraph used to say the tier was absent, on the argument that a rule's
+    /// tier is a claim somebody has to argue for and cannot be derived from syntax. That argument
+    /// is right and it is not a reason for the property to be missing: where the argument <i>has</i>
+    /// been made, the claim needs somewhere to live. A rule written as data declares one, and 181
+    /// of the 322 such rules are <see cref="Transformations.Soundness.Sound"/> against every set in
+    /// the registry declaring <see cref="Transformations.Soundness.SoundUnderAssumptions"/>. A rule
+    /// read off a <c>switch</c> arm declares nothing, so its <see cref="Soundness"/> is
+    /// <see langword="null"/> — which says the set's tier is a fallback rather than a measurement,
+    /// where silently copying the set's down would have said the opposite.
     /// </para>
     /// </remarks>
     public sealed class RewriteRule
@@ -95,7 +100,8 @@ namespace AngouriMath.Core.Transformations
             string replacementSource,
             RewriteRuleGrowth growth,
             int sourceLine,
-            Func<Entity, Entity?> apply)
+            Func<Entity, Entity?> apply,
+            Soundness? soundness = null)
         {
             Source = source;
             Index = index;
@@ -108,6 +114,7 @@ namespace AngouriMath.Core.Transformations
             Growth = growth;
             SourceLine = sourceLine;
             this.apply = apply;
+            Soundness = soundness;
         }
 
         private readonly Func<Entity, Entity?> apply;
@@ -181,6 +188,32 @@ namespace AngouriMath.Core.Transformations
 
         /// <summary>Which way the rewrite moves. See <see cref="RewriteRuleGrowth"/>.</summary>
         public RewriteRuleGrowth Growth { get; }
+
+        /// <summary>
+        /// How well justified <b>this one rule's</b> claim is, or <see langword="null"/> where the
+        /// rule has no tier of its own and its set's applies. See
+        /// <see cref="Transformations.Soundness"/> for what a tier is and is not.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>A set's tier is the minimum over its rules, so reading it as every rule's tier
+        /// understates most of them.</b> All thirty sets in the registry declare
+        /// <see cref="Transformations.Soundness.SoundUnderAssumptions"/>, and one conditional rule
+        /// is enough to make that true of a set of a hundred. Asked per rule instead, <b>181 of the
+        /// 322 rules written as data are <see cref="Transformations.Soundness.Sound"/></b> — they
+        /// hold for every complex argument, with nothing assumed — and 141 are conditional. That
+        /// difference is invisible at set grain and is what a derivation needs in order to say why
+        /// a particular step was allowed.
+        /// </para>
+        /// <para>
+        /// <see langword="null"/> is the honest answer for a rule read off a <c>switch</c>: an arm
+        /// declares no tier, so it has none of its own, and inventing its set's would be a claim
+        /// the source does not make. A caller wanting the effective tier writes
+        /// <c>rule.Soundness ?? set.Soundness</c>, and the <see langword="null"/> is what tells it
+        /// that the second value is a fallback rather than a measurement.
+        /// </para>
+        /// </remarks>
+        public Soundness? Soundness { get; }
 
         /// <summary>The line of the source file the arm is written on.</summary>
         public int SourceLine { get; }
