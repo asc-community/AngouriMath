@@ -153,6 +153,7 @@ AngouriMath.Core.Serialization.EntityJsonConverter.ReadAsPropertyName(System.Tex
 AngouriMath.Core.Serialization.EntityJsonConverter.Write(System.Text.Json.Utf8JsonWriter, AngouriMath.Entity, System.Text.Json.JsonSerializerOptions) : System.Void
 AngouriMath.Core.Serialization.EntityJsonConverter.WriteAsPropertyName(System.Text.Json.Utf8JsonWriter, AngouriMath.Entity, System.Text.Json.JsonSerializerOptions) : System.Void
 AngouriMath.Core.Serialization.EntityJsonConverter.ctor()
+AngouriMath.Core.Transformations.DerivationPath.Explain() : System.String
 AngouriMath.Core.Transformations.DerivationPath.ExpressionsExplored { } : System.Int32
 AngouriMath.Core.Transformations.DerivationPath.Input { } : AngouriMath.Entity
 AngouriMath.Core.Transformations.DerivationPath.OfSimplifying(AngouriMath.Entity, System.Int32) : AngouriMath.Core.Transformations.DerivationPath
@@ -161,6 +162,7 @@ AngouriMath.Core.Transformations.DerivationPath.Steps { } : System.Collections.G
 AngouriMath.Core.Transformations.DerivationPath.ToString() : System.String
 AngouriMath.Core.Transformations.DerivationStep.After { } : AngouriMath.Entity
 AngouriMath.Core.Transformations.DerivationStep.Before { } : AngouriMath.Entity
+AngouriMath.Core.Transformations.DerivationStep.Explain() : System.String
 AngouriMath.Core.Transformations.DerivationStep.Name { } : System.String
 AngouriMath.Core.Transformations.DerivationStep.Relation { } : System.Nullable<AngouriMath.Core.Transformations.TransformationRelation>
 AngouriMath.Core.Transformations.DerivationStep.Rewrites { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Core.Transformations.RewriteStep>
@@ -233,6 +235,7 @@ AngouriMath.Core.Transformations.RewriteRules.SetOperator { } : AngouriMath.Core
 AngouriMath.Core.Transformations.RewriteRules.Trigonometric { } : AngouriMath.Core.Transformations.RewriteRuleSet
 AngouriMath.Core.Transformations.RewriteStep.After { } : AngouriMath.Entity
 AngouriMath.Core.Transformations.RewriteStep.Before { } : AngouriMath.Entity
+AngouriMath.Core.Transformations.RewriteStep.Explain() : System.String
 AngouriMath.Core.Transformations.RewriteStep.Relation { } : AngouriMath.Core.Transformations.TransformationRelation
 AngouriMath.Core.Transformations.RewriteStep.Rule { } : AngouriMath.Core.Transformations.RewriteRule
 AngouriMath.Core.Transformations.RewriteStep.RuleSet { } : AngouriMath.Core.Transformations.RewriteRuleSet

@@ -72,6 +72,8 @@ read first.
 | | `RewriteRules.ExpandFactorialDivisions.Rules.Count`, and `FactorizeFactorialMultiplications` | `8` | `3` — the same rewrites, five of the eight arms being one commutative pattern |
 | | `RewriteRules.All.Sum(set => set.Rules.Count)` | `407` | `397` |
 | **Silent** | `RewriteRules.ExpandFactorialDivisions.Rules[0].Growth` | `Collects` — guessed from string length | `Unknown`; whether it collects depends on the offsets |
+| **Silent** | `RewriteStep.Soundness` on a rewrite whose rule declares a tier — `RewriteRules.SetOperator` on `A /\ A`, and every rewrite of the nineteen sets described from their data form | `SoundUnderAssumptions` — its rule set's tier, which is the minimum over every rule in the set | `Sound` — the rule's own |
+| **Silent** | `DerivationStep.Soundness` | its rule set's tier | the weakest tier any rewrite that actually fired inside the step holds at |
 
 ### Nineteen rule sets describe the rules they run
 
@@ -117,6 +119,33 @@ factorials collects when the offsets are one apart and expands when they are fiv
 `PatternSource` changes too, from the C# the arm was written in to the pattern the matcher holds —
 `Mulf(var a, Divf(1, var b))` for the same rule. Both are source text for reading; neither is
 something to match against.
+
+### A step is justified by the rule that fired, not by the set it came from
+
+`RewriteStep.Soundness` read `RuleSet.Soundness` and nothing else, so every rewrite of a set reported
+the same tier. A set's tier is the **minimum** over its rules, and one conditional rule is enough to
+make a set of a hundred report as conditional: all thirty sets in the registry declare
+`SoundUnderAssumptions`, while **181 of the 322 rules written as data are `Sound`** — they hold for
+every complex argument, with nothing assumed.
+
+A rewrite now reports its rule's own tier where the rule has one, and its set's where it has not:
+
+```csharp
+using var recording = RewriteRecording.Start();
+RewriteRules.SetOperator.ApplyOnce(@"A /\ A".ToEntity());
+recording.Dispose();
+recording.Steps[0].Soundness           // was SoundUnderAssumptions, is Sound
+recording.Steps[0].RuleSet.Soundness   // still SoundUnderAssumptions, and correctly so
+```
+
+The fallback is not a claim. A rule read off a `switch` declares no tier, so `RewriteRule.Soundness`
+is `null` there and the set's tier is what is known — see *Nineteen rule sets describe the rules they
+run* above for which sets carry per-rule tiers today.
+
+`DerivationStep.Soundness` changes for the same reason and one more: it is now the weakest tier any
+rewrite that **actually fired** inside the step holds at, rather than its set's minimum over rules
+the step may never have reached. A pass of nine unconditional rewrites and one conditional one is
+still a conditional pass; a pass of ten unconditional ones now says so.
 
 ### An equation nothing settled is no longer answered with the empty set
 
