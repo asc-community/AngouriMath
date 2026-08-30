@@ -56,9 +56,13 @@ namespace AngouriMath.Tests.Core.Transformations
 
             var derivation = recording.Derivation;
             Assert.NotEmpty(derivation);
+            // Named in the reporter's terms and then some: the rule they wrote out by hand is
+            // `dividing-by-a-quotient-multiplies-by-its-reciprocal`, and it says so itself. This
+            // matched the `switch` arm's rendered pattern and replacement text until `Common` was
+            // described by the rules it runs.
             Assert.Contains(derivation, step =>
-                step.Rule?.PatternSource == "Divf(var any1, Divf(var any2, var any3))"
-                && step.Rule?.ReplacementSource == "any1 * any3 / any2");
+                step.Rule?.Name == "dividing-by-a-quotient-multiplies-by-its-reciprocal"
+                && step.Rule?.Description == "a / (b / c) = a * c / b");
         }
 
         /// <summary>
@@ -95,16 +99,15 @@ namespace AngouriMath.Tests.Core.Transformations
         /// A rewrite that takes one step is reported as one step, with the rule that did it.
         /// </summary>
         /// <remarks>
-        /// <b>The two cases show what repointing a set at its data form buys.</b> <c>Common</c> is
-        /// still described by <c>RuleRegistryGenerator</c>, so its rule is named by the arm's own
-        /// rendered pattern; <c>Trigonometric</c> is described from the rules it runs, so its rule
-        /// is named in words and carries the identity. This asserted the replacement's C# source
-        /// text until the second of those was repointed, at which point it became
-        /// <c>(built by code)</c> — the name is the better thing to hold anyway, being what a
-        /// derivation actually reports.
+        /// <b>Both are named in words now, and neither was when this was written.</b> It asserted
+        /// the replacement's C# source text — <c>"2 * any1"</c> and <c>"1"</c> — which is what the
+        /// registry had while it described the <c>switch</c> each set had stopped running. As the
+        /// sets were repointed the names became the rules' own and the replacements became
+        /// <c>(built by code)</c>, so the assertion moved to the name and the identity: what a
+        /// derivation reports, and what a reader of one is looking for.
         /// </remarks>
         [Theory]
-        [InlineData("x + x", "Sumf(var any1, var any1a) when any1 == any1a", null)]
+        [InlineData("x + x", "a-term-added-to-itself-doubles", "k + k = 2 * k")]
         [InlineData("sin(x)^2 + cos(x)^2", "a-squared-sine-and-cosine-of-one-angle-sum-to-one",
             "sin(a)^2 + cos(a)^2 = 1")]
         public void AOneStepRewriteIsOneStep(string expr, string ruleName, string? identity)
@@ -331,10 +334,16 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.NotEmpty(recording.Steps);
             foreach (var step in recording.Steps)
             {
-                // Nothing the simplifier applies may claim a proof it has not got, and
-                // nothing it applies may claim to have produced a different object.
+                // Nothing the simplifier applies may claim to have produced a different object.
                 Assert.Equal(TransformationRelation.Equivalence, step.Relation);
-                Assert.NotEqual(Soundness.Sound, step.Soundness);
+                // And nothing may claim a proof it has not got. This asserted `NotEqual(Sound)` --
+                // that every step was conditional -- which was true only because a step reported
+                // its *set's* tier, and a set's tier is the minimum over its rules. A step now
+                // reports the tier of the rule that fired, and 181 of the 322 rules written as
+                // data really are Sound, so the assertion is that the tier is one of the two the
+                // simplifier is allowed to apply rather than that it is always the weaker.
+                Assert.True(step.Soundness is Soundness.Sound or Soundness.SoundUnderAssumptions,
+                    $"{step.RuleSet.Name}/{step.Rule?.Name} claims {step.Soundness}");
             }
         }
     }

@@ -21,8 +21,9 @@ effect". This is how to supply those seven things.
 **322** rules live there today.
 
 The `switch` statements in `Functions/Simplification/Patterns` are the older form. Twenty-seven of
-the thirty registered sets no longer run theirs, and twenty-five no longer describe it either; the
-remainder are being moved set by set ([#825](https://github.com/asc-community/AngouriMath/issues/825)).
+the thirty registered sets no longer run theirs, and **none of those twenty-seven describes it any
+more either**; the three that remain still run theirs, so describing it is honest
+([#825](https://github.com/asc-community/AngouriMath/issues/825)).
 **Do not add a rule to a `switch`.** A `switch` arm cannot carry a name, a tier, an identity or a
 direction, and everything below is about those.
 
@@ -88,7 +89,7 @@ debugged for an afternoon.
 | `Left.ToString()` | `Divf(var a, Divf(var b, var c))` — how the matcher spells it |
 
 Write the identity with `=`, not `->`: it is an equality, and the arrow belongs to the direction the
-rule happens to be applied in. **165** rules carry one today; a new rule should.
+rule happens to be applied in. **292** rules carry one today; a new rule should.
 
 ## The pattern language
 

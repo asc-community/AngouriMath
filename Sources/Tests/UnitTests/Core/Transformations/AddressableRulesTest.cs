@@ -290,8 +290,8 @@ namespace AngouriMath.Tests.Core.Transformations
 
             Assert.Equal(30, withRules.Count);
 
-            // 351, and it was 407 before the registry started reporting the rules it runs rather
-            // than the `switch` it no longer runs. The fifty-six that went are not rules lost, they
+            // 313, and it was 407 before the registry started reporting the rules it runs rather
+            // than the `switch` it no longer runs. The ninety-four that went are not rules lost, they
             // are arms the data form writes once. Boolean's thirty-six are twenty, because a
             // commutative pattern finds a shared operand wherever it sits, so eight arms of
             // distributivity are two rules and absorption's four-arms-each is one rule twice;
@@ -299,7 +299,7 @@ namespace AngouriMath.Tests.Core.Transformations
             // are thirty-three; NumericNeat's sixteen are eleven, six of them being three rules
             // written once per side a negative factor can sit on; and the two factorial sets are
             // eight arms each written as three. Every other repointed set is one arm for one rule.
-            Assert.Equal(351, withRules.Sum(set => set.Rules.Count));
+            Assert.Equal(313, withRules.Sum(set => set.Rules.Count));
         }
 
         /// <summary>
@@ -392,8 +392,13 @@ namespace AngouriMath.Tests.Core.Transformations
             var step = Assert.Single(recording.Steps);
             Assert.Equal(RewriteRules.Common, step.RuleSet);
             Assert.NotNull(step.Rule);
+            Assert.Equal("dividing-by-a-quotient-multiplies-by-its-reciprocal", step.Rule.Name);
             Assert.Equal("a / (b / c) = a * c / b", step.Rule.Description);
-            Assert.Equal("Divf(var any1, Divf(var any2, var any3))", step.Rule.PatternSource);
+            // The matcher's spelling of the pattern, not the `switch`'s. This read
+            // `Divf(var any1, Divf(var any2, var any3))` until `Common` was described by the rules
+            // it runs; both are source text for a reader, and neither is something to match
+            // against -- `TryApply` below is how you ask whether the rule fires.
+            Assert.Equal("Divf(var a, Divf(var b, var c))", step.Rule.PatternSource);
             Assert.Equal(step.After, step.Rule.TryApply(step.Before));
         }
 

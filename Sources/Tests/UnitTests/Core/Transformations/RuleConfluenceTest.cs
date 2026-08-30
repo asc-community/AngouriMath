@@ -180,12 +180,14 @@ namespace AngouriMath.Tests.Core.Transformations
         /// guarantee: an arm inserted above one of these changes an answer, and without this list
         /// nothing would notice.
         /// <para/>
-        /// <b>Two of the three now name their arms and one still cannot</b>, which is the state of
-        /// <a href="https://github.com/asc-community/AngouriMath/issues/825">#825</a> written into a
-        /// test: <c>Power</c> is described from the rules it runs and <c>Common</c> is not. The two
-        /// that name them used to read <c>Power[18,19]</c> and <c>Power[6,19]</c>, and repointing
-        /// that set moved its arms from 35 to 31 and invalidated both — which is the failure the
-        /// note on <see cref="AConflictIsReportableAsThePatternsItIsBetween"/> predicted.
+        /// <b>All three name their arms now.</b> They read <c>Common[12,89]</c>,
+        /// <c>Power[18,19]</c> and <c>Power[6,19]</c> until each set was described by the rules it
+        /// runs rather than by the <c>switch</c> it had stopped running
+        /// (<a href="https://github.com/asc-community/AngouriMath/issues/825">#825</a>) — and
+        /// repointing <c>Power</c> moved its arms from 35 to 31 and invalidated two of them on the
+        /// spot, which is exactly the failure the note on
+        /// <see cref="AConflictIsReportableAsThePatternsItIsBetween"/> predicted and could not do
+        /// anything about while the only name an arm had was its own rendered pattern.
         /// </remarks>
         [Fact]
         public void OnlyTheRecordedArmOrderingsAreLoadBearing()
@@ -195,10 +197,8 @@ namespace AngouriMath.Tests.Core.Transformations
             var recorded = new[]
             {
                 // x * 1/2 -> 1/2 * x (the sort) rather than x / 2 (the quotient). Both settle to
-                // x / 2 once InnerSimplified has run. Still by index, because `Common` is one of
-                // the two sets the registry still describes from its `switch`, and a generated arm
-                // has no name but its own rendered pattern.
-                "Common[12,89]",
+                // x / 2 once InnerSimplified has run.
+                "Common[a-variable-times-a-number-puts-the-number-first,a-reciprocal-rational-factor-is-a-division]",
                 // (-x) ^ (-1) -> -1 / x rather than 1 / (-x).
                 "Power[a-numeric-factor-comes-out-of-a-power-of-a-product,a-reciprocal-power-is-a-quotient]",
                 // (e ^ y) ^ (-1) -> e ^ (y * (-1)) rather than 1 / e ^ y.
