@@ -290,8 +290,8 @@ namespace AngouriMath.Tests.Core.Transformations
 
             Assert.Equal(30, withRules.Count);
 
-            // 355, and it was 407 before the registry started reporting the rules it runs rather
-            // than the `switch` it no longer runs. The fifty-two that went are not rules lost, they
+            // 351, and it was 407 before the registry started reporting the rules it runs rather
+            // than the `switch` it no longer runs. The fifty-six that went are not rules lost, they
             // are arms the data form writes once. Boolean's thirty-six are twenty, because a
             // commutative pattern finds a shared operand wherever it sits, so eight arms of
             // distributivity are two rules and absorption's four-arms-each is one rule twice;
@@ -299,7 +299,7 @@ namespace AngouriMath.Tests.Core.Transformations
             // are thirty-three; NumericNeat's sixteen are eleven, six of them being three rules
             // written once per side a negative factor can sit on; and the two factorial sets are
             // eight arms each written as three. Every other repointed set is one arm for one rule.
-            Assert.Equal(355, withRules.Sum(set => set.Rules.Count));
+            Assert.Equal(351, withRules.Sum(set => set.Rules.Count));
         }
 
         /// <summary>

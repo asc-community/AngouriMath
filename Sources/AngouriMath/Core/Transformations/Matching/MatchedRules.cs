@@ -2456,7 +2456,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 "a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero",
                 MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 bound => new Providedf(1, !bound["a"].EqualTo(0)),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a / a = 1, provided a is not zero"),
 
             new MatchedRule(
                 "a-power-whose-exponent-divides-by-a-logarithm-of-its-own-base-changes-base",
@@ -2466,7 +2467,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any("n"),
                         MatchPattern.Node<Logf>(MatchPattern.Any("c"), MatchPattern.Any("a")))),
                 bound => new Powf(bound["c"], bound["n"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a ^ (n / log(c, a)) = c ^ n"),
 
             // Both orientations are written out in the `switch`, so one commutative rule fires
             // exactly where the pair did.
@@ -2476,7 +2478,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n")),
                     MatchPattern.Any("a")),
                 bound => new Powf(bound["a"], bound["n"] + 1),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a ^ n * a = a ^ (n + 1)"),
 
             new MatchedRule(
                 "two-powers-of-one-base-multiply-by-adding-exponents",
@@ -2484,7 +2487,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n")),
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("m"))),
                 bound => new Powf(bound["a"], bound["n"] + bound["m"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a ^ n * a ^ m = a ^ (n + m)"),
 
             new MatchedRule(
                 "two-powers-of-one-base-divide-by-subtracting-exponents",
@@ -2492,7 +2496,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n")),
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("m"))),
                 bound => new Powf(bound["a"], bound["n"] - bound["m"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a ^ n / a ^ m = a ^ (n - m)"),
 
             // True for a positive base whatever the exponents, and for any base when the outer
             // exponent is whole. Outside those two it moves the branch, which is what #752
@@ -2506,7 +2511,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => new Powf(bound["a"], bound["n"] * bound["m"]),
                 Soundness.SoundUnderAssumptions,
                 when: bound => bound["m"] is Integer
-                               || bound["a"].Evaled is Real { IsPositive: true }),
+                               || bound["a"].Evaled is Real { IsPositive: true },
+                description: "(a ^ n) ^ m = a ^ (n * m)"),
 
             // https://github.com/asc-community/AngouriMath/issues/801
             new MatchedRule(
@@ -2518,7 +2524,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.SoundUnderAssumptions,
                 when: bound => bound["n"] is Integer
                                || (bound["a"].Evaled is Real { IsPositive: true }
-                                   && bound["b"].Evaled is Real { IsPositive: true })),
+                                   && bound["b"].Evaled is Real { IsPositive: true }),
+                description: "a ^ n * b ^ n = (a * b) ^ n"),
 
             // https://github.com/asc-community/AngouriMath/issues/802
             new MatchedRule(
@@ -2530,7 +2537,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.SoundUnderAssumptions,
                 when: bound => bound["n"] is Integer
                                || (bound["a"].Evaled is Real { IsPositive: true }
-                                   && bound["b"].Evaled is Real { IsPositive: true })),
+                                   && bound["b"].Evaled is Real { IsPositive: true }),
+                description: "a ^ n / b ^ n = (a / b) ^ n"),
 
             // The pair the rule above loses whenever only one of the two bases is itself a power,
             // read back. https://github.com/asc-community/AngouriMath/issues/740
@@ -2544,7 +2552,8 @@ namespace AngouriMath.Core.Transformations.Matching
                             MatchPattern.Any<Integer>("c", whole => whole.IsPositive),
                             MatchPattern.Any("n")))),
                 bound => new Powf(bound["a"] / new Powf(bound["b"], bound["c"]), bound["n"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a ^ n / b ^ (c * n) = (a / b ^ c) ^ n, for a positive whole c"),
 
             new MatchedRule(
                 "a-quotient-of-powers-whose-exponents-differ-by-a-whole-factor-takes-it-into-the-dividend",
@@ -2556,7 +2565,8 @@ namespace AngouriMath.Core.Transformations.Matching
                             MatchPattern.Any("n"))),
                     MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
                 bound => new Powf(new Powf(bound["a"], bound["c"]) / bound["b"], bound["n"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a ^ (c * n) / b ^ n = (a ^ c / b) ^ n, for a positive whole c"),
 
             new MatchedRule(
                 "a-thing-over-a-power-of-itself-is-one-power",
@@ -2564,7 +2574,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any("a"),
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n"))),
                 bound => new Powf(bound["a"], 1 - bound["n"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a / a ^ n = a ^ (1 - n)"),
 
             new MatchedRule(
                 "a-power-over-its-own-base-lowers-the-exponent",
@@ -2572,7 +2583,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n")),
                     MatchPattern.Any("a")),
                 bound => new Powf(bound["a"], bound["n"] - 1),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a ^ n / a = a ^ (n - 1)"),
 
             new MatchedRule(
                 "a-number-raised-to-a-logarithm-of-itself-is-the-antilogarithm",
@@ -2580,7 +2592,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Number>("c"),
                     MatchPattern.Node<Logf>(MatchPattern.Any<Number>("c"), MatchPattern.Any("a"))),
                 bound => bound["a"],
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a ^ log(a, b) = b"),
 
             // Four `switch` arms: the power on either side of a product, and the shared base in
             // either position inside it. A commutative pattern says both halves at once.
@@ -2590,7 +2603,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n")),
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("rest"))),
                 bound => new Powf(bound["a"], bound["n"] + 1) * bound["rest"],
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a ^ n * (a * rest) = a ^ (n + 1) * rest"),
 
             // Taking a factor out from under a root needs that factor positive, or the root to be
             // a whole power. https://github.com/asc-community/AngouriMath/issues/752
@@ -2601,13 +2615,15 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Number>("d")),
                 bound => new Powf(bound["c"], bound["d"]) * new Powf(bound["a"], bound["d"]),
                 Soundness.SoundUnderAssumptions,
-                when: bound => bound["d"] is Integer || bound["c"] is Real { IsPositive: true }),
+                when: bound => bound["d"] is Integer || bound["c"] is Real { IsPositive: true },
+                description: "(c * a) ^ d = c ^ d * a ^ d, for numeric c and d"),
 
             new MatchedRule(
                 "a-reciprocal-power-is-a-quotient",
                 MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Exact(Integer.Create(-1))),
                 bound => 1 / bound["a"],
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "a ^ (-n) = 1 / a ^ n"),
 
             new MatchedRule(
                 "a-power-of-a-numeric-reciprocal-times-its-own-denominator-lowers-the-exponent",
@@ -2620,7 +2636,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 // as numbers, so `1 - c` folds to a literal there and would build a `Minusf` here.
                 bound => new Powf(bound["c"], bound["d"])
                     * new Powf(bound["a"], 1 - (Number)bound["d"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "(c / a) ^ d * a = c ^ d * a ^ (1 - d), for numeric c and d"),
 
             new MatchedRule(
                 "a-power-of-a-numeric-reciprocal-times-a-power-of-its-own-denominator-subtracts-the-exponents",
@@ -2631,7 +2648,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any<Number>("e"))),
                 bound => new Powf(bound["c"], bound["d"])
                     * new Powf(bound["a"], (Number)bound["e"] - (Number)bound["d"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "(c / a) ^ d * a ^ e = c ^ d * a ^ (e - d), for numeric c, d and e"),
 
             new MatchedRule(
                 "dividing-twice-by-one-thing-squares-it",
@@ -2639,7 +2657,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
                     MatchPattern.Any("b")),
                 bound => bound["a"] / new Powf(bound["b"], 2),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a / b / b = a / b ^ 2"),
 
             new MatchedRule(
                 "dividing-by-a-power-and-then-by-its-base-raises-the-exponent",
@@ -2649,7 +2668,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
                     MatchPattern.Any("b")),
                 bound => bound["a"] / new Powf(bound["b"], bound["n"] + 1),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a / b ^ n / b = a / b ^ (n + 1)"),
 
             new MatchedRule(
                 "dividing-by-a-thing-and-then-by-a-power-of-it-raises-the-exponent",
@@ -2657,7 +2677,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
                     MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
                 bound => bound["a"] / new Powf(bound["b"], bound["n"] + 1),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a / b / b ^ n = a / b ^ (n + 1)"),
 
             new MatchedRule(
                 "dividing-by-two-powers-of-one-base-adds-the-exponents",
@@ -2667,7 +2688,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("m"))),
                     MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
                 bound => bound["a"] / new Powf(bound["b"], bound["n"] + bound["m"]),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a / b ^ n / b ^ m = a / b ^ (n + m)"),
 
             new MatchedRule(
                 "a-variable-times-a-power-puts-the-power-first",
@@ -2675,7 +2697,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Variable>("v"),
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n"))),
                 bound => new Powf(bound["a"], bound["n"]) * bound["v"],
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "v * a ^ n = a ^ n * v, for a variable v"),
 
             // https://github.com/asc-community/AngouriMath/issues/902
             new MatchedRule(
@@ -2685,7 +2708,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
                 bound => bound["n"] * MathS.Log(bound["a"], bound["b"]),
                 Soundness.SoundUnderAssumptions,
-                when: bound => Functions.Patterns.MayTakeLogOfPower(bound["b"], bound["n"])),
+                when: bound => Functions.Patterns.MayTakeLogOfPower(bound["b"], bound["n"]),
+                description: "log(a, b ^ n) = n * log(a, b)"),
 
             // The condition to carry is the node's own: log(-3, -3) is 1 where a written-out
             // `a > 0` calls it undefined, and log(1, 1) is NaN where that guard calls it 1.
@@ -2694,7 +2718,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 "a-logarithm-of-its-own-base-is-one-where-it-is-defined",
                 MatchPattern.Node<Logf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 (node, bound) => new Providedf(1, ((Logf)node).DomainCondition),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "log(a, a) = 1, where log(a, a) is defined"),
 
             // ln(1/b) = -ln(b) is false on the negative reals: at b = -0.63 the two differ by the
             // full turn of the argument the principal branch discards.
@@ -2707,7 +2732,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => MathS.Log(bound["a"], bound["b"]),
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.MayGatherLogarithms(Integer.One, bound["a"], isDifference: true)
-                               && Functions.Patterns.MayGatherLogarithms(Integer.One, bound["b"], isDifference: true)),
+                               && Functions.Patterns.MayGatherLogarithms(Integer.One, bound["b"], isDifference: true),
+                description: "log(1 / a, 1 / b) = log(a, b)"),
 
             new MatchedRule(
                 "a-logarithm-of-a-reciprocal-negates",
@@ -2716,7 +2742,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Divf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Any("b"))),
                 bound => -MathS.Log(bound["a"], bound["b"]),
                 Soundness.SoundUnderAssumptions,
-                when: bound => Functions.Patterns.MayGatherLogarithms(Integer.One, bound["b"], isDifference: true)),
+                when: bound => Functions.Patterns.MayGatherLogarithms(Integer.One, bound["b"], isDifference: true),
+                description: "log(a, 1 / b) = -log(a, b)"),
 
             new MatchedRule(
                 "a-logarithm-in-a-reciprocal-base-negates",
@@ -2725,7 +2752,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any("b")),
                 bound => -MathS.Log(bound["a"], bound["b"]),
                 Soundness.SoundUnderAssumptions,
-                when: bound => Functions.Patterns.MayGatherLogarithms(Integer.One, bound["a"], isDifference: true)),
+                when: bound => Functions.Patterns.MayGatherLogarithms(Integer.One, bound["a"], isDifference: true),
+                description: "log(1 / a, b) = -log(a, b)"),
 
             // https://github.com/asc-community/AngouriMath/issues/721
             new MatchedRule(
@@ -2735,7 +2763,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Logf>(MatchPattern.Any("c"), MatchPattern.Any("b"))),
                 bound => bound["c"].Log(bound["a"] * bound["b"]),
                 Soundness.SoundUnderAssumptions,
-                when: bound => Functions.Patterns.MayGatherLogarithms(bound["a"], bound["b"], isDifference: false)),
+                when: bound => Functions.Patterns.MayGatherLogarithms(bound["a"], bound["b"], isDifference: false),
+                description: "log(a, b) + log(a, c) = log(a, b * c)"),
 
             new MatchedRule(
                 "two-logarithms-of-one-base-subtract-by-dividing-their-antilogarithms",
@@ -2744,7 +2773,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Logf>(MatchPattern.Any("c"), MatchPattern.Any("b"))),
                 bound => bound["c"].Log(bound["a"] / bound["b"]),
                 Soundness.SoundUnderAssumptions,
-                when: bound => Functions.Patterns.MayGatherLogarithms(bound["a"], bound["b"], isDifference: true)),
+                when: bound => Functions.Patterns.MayGatherLogarithms(bound["a"], bound["b"], isDifference: true),
+                description: "log(a, b) - log(a, c) = log(a, b / c)"),
 
             // sqrt(8) = 2 * sqrt(2). Whether it applies and what it produces are one computation,
             // so the `when` asks the same helper the replacement does.
@@ -2757,7 +2787,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     (Integer)bound["radicand"], (Rational)bound["power"])!,
                 Soundness.Sound,
                 when: bound => Functions.Patterns.ReduceRadical(
-                    (Integer)bound["radicand"], (Rational)bound["power"]) is not null));
+                    (Integer)bound["radicand"], (Rational)bound["power"]) is not null,
+                description: "sqrt(8) = 2 * sqrt(2), and its like for a positive whole radicand"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.CommonRules"/>, as data.
