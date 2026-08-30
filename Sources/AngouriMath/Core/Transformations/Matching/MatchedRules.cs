@@ -923,7 +923,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Real>("l", value => value.IsNegative),
                     MatchPattern.Any<Real>("r", value => value.IsNegative)),
                 bound => -((-(Real)bound["l"]) + (Entity)(-(Real)bound["r"])),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "(-a) + (-b) = -(a + b)"),
 
             // x + (-a) -> x - a, either way round
             new MatchedRule(
@@ -932,7 +933,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any("x"),
                     MatchPattern.Any<Real>("n", value => value.IsNegative)),
                 bound => bound["x"] - -(Real)bound["n"],
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "x + (-a) = x - a"),
 
             // (-a) - (-b) -> b - a
             new MatchedRule(
@@ -941,7 +943,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Real>("l", value => value.IsNegative),
                     MatchPattern.Any<Real>("r", value => value.IsNegative)),
                 bound => (-(Real)bound["r"]) - (Entity)(-(Real)bound["l"]),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "(-a) - (-b) = b - a"),
 
             // x - (-a) -> x + a
             new MatchedRule(
@@ -950,7 +953,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any("x"),
                     MatchPattern.Any<Real>("n", value => value.IsNegative)),
                 bound => bound["x"] + -(Real)bound["n"],
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "x - (-a) = x + a"),
 
             // (-a) - x -> -(x + a)
             new MatchedRule(
@@ -959,7 +963,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Real>("n", value => value.IsNegative),
                     MatchPattern.Any("x")),
                 bound => -(bound["x"] + -(Real)bound["n"]),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "(-a) - x = -(x + a)"),
 
             // (-a) * (-b) -> a * b
             new MatchedRule(
@@ -968,7 +973,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Real>("l", value => value.IsNegative),
                     MatchPattern.Any<Real>("r", value => value.IsNegative)),
                 bound => (-(Real)bound["l"]) * (Entity)(-(Real)bound["r"]),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "(-a) * (-b) = a * b"),
 
             // (-a) / (-b) -> a / b
             new MatchedRule(
@@ -977,7 +983,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Real>("l", value => value.IsNegative),
                     MatchPattern.Any<Real>("r", value => value.IsNegative)),
                 bound => (-(Real)bound["l"]) / (Entity)(-(Real)bound["r"]),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "(-a) / (-b) = a / b"),
 
             // (-a * x) * y -> -(a * (x * y)), the negative factor either way round
             new MatchedRule(
@@ -988,7 +995,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any("x")),
                     MatchPattern.Any("y")),
                 bound => -((-(Real)bound["n"]) * (bound["x"] * bound["y"])),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "(-a * x) * y = -(a * (x * y))"),
 
             // (-a * x) / y -> -(a * (x / y))
             new MatchedRule(
@@ -999,7 +1007,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any("x")),
                     MatchPattern.Any("y")),
                 bound => -((-(Real)bound["n"]) * (bound["x"] / bound["y"])),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "(-a * x) / y = -(a * (x / y))"),
 
             // y * (-a * x) -> -(a * (x * y))
             new MatchedRule(
@@ -1010,7 +1019,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any<Real>("n", value => value.IsNegative),
                         MatchPattern.Any("x"))),
                 bound => -((-(Real)bound["n"]) * (bound["x"] * bound["y"])),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "y * (-a * x) = -(a * (x * y))"),
 
             // y / (-a * x) -> -(y / (a * x)). What is left stays under the line: written the
             // other way, as the numerator rules above are, the quotient came back inverted --
@@ -1023,7 +1033,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any<Real>("n", value => value.IsNegative),
                         MatchPattern.Any("x"))),
                 bound => -(bound["y"] / ((-(Real)bound["n"]) * bound["x"])),
-                Soundness.Sound));
+                Soundness.Sound,
+                description: "y / (-a * x) = -(y / (a * x))"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.BooleanRules"/>, as data.
@@ -1060,7 +1071,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Exact(Entity.Boolean.False), MatchPattern.Any("b")),
                 bound => Entity.Boolean.True.Provided(bound["b"].DomainCondition),
                 Soundness.Sound,
-                when: bound => Functions.Patterns.IsLogic(bound["b"])),
+                when: bound => Functions.Patterns.IsLogic(bound["b"]),
+                description: "(False implies b) = True"),
 
             // De Morgan, both ways round
             new MatchedRule(
@@ -1073,7 +1085,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 // Two negations become one, and nothing else moves: three nodes around `a` and
                 // `b` become two.
                 growth: RewriteRuleGrowth.Collects,
-                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])),
+                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"]),
+                description: "(not a) and (not b) = not (a or b)"),
 
             new MatchedRule(
                 "a-disjunction-of-negations-is-a-negated-conjunction",
@@ -1085,7 +1098,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 // Two negations become one, and nothing else moves: three nodes around `a` and
                 // `b` become two.
                 growth: RewriteRuleGrowth.Collects,
-                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])),
+                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"]),
+                description: "(not a) or (not b) = not (a and b)"),
 
             // Excluded middle, either way round. Before the implication rule below, which would
             // otherwise take it -- and conditional, because a proposition without a truth value
@@ -1097,7 +1111,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Notf>(MatchPattern.Any("a")), MatchPattern.Any("a")),
                 bound => Entity.Boolean.True.Provided(Functions.Patterns.TruthCondition(bound["a"])),
                 Soundness.SoundUnderAssumptions,
-                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+                when: bound => Functions.Patterns.IsLogic(bound["a"]),
+                description: "((not a) or a) = True, where a has a truth value"),
 
             // Not commutative: `a or not b` is not an implication of anything.
             new MatchedRule(
@@ -1109,7 +1124,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 // The `not` disappears and the `or` becomes an `->`: the same `a` and `b` under
                 // one node instead of two.
                 growth: RewriteRuleGrowth.Collects,
-                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])),
+                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"]),
+                description: "((not a) or b) = (a implies b)"),
 
             // Idempotence
             new MatchedRule(
@@ -1119,7 +1135,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 // The replacement is the matched node's own child, unconditionally.
                 growth: RewriteRuleGrowth.Collects,
-                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+                when: bound => Functions.Patterns.IsLogic(bound["a"]),
+                description: "(a and a) = a"),
 
             new MatchedRule(
                 "a-disjunction-with-itself-is-itself",
@@ -1128,7 +1145,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 // The replacement is the matched node's own child, unconditionally.
                 growth: RewriteRuleGrowth.Collects,
-                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+                when: bound => Functions.Patterns.IsLogic(bound["a"]),
+                description: "(a or a) = a"),
 
             new MatchedRule(
                 "a-statement-implies-itself",
@@ -1137,14 +1155,16 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 // One leaf, from a node that had two copies of `a` under it.
                 growth: RewriteRuleGrowth.Collects,
-                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+                when: bound => Functions.Patterns.IsLogic(bound["a"]),
+                description: "(a implies a) = True"),
 
             new MatchedRule(
                 "a-statement-differs-from-itself-nowhere",
                 MatchPattern.Node<Xorf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 bound => Entity.Boolean.False.Provided(bound["a"].DomainCondition),
                 Soundness.Sound,
-                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+                when: bound => Functions.Patterns.IsLogic(bound["a"]),
+                description: "(a xor a) = False"),
 
             new MatchedRule(
                 "a-double-negation-cancels",
@@ -1153,7 +1173,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 // The replacement is the matched node's own grandchild, unconditionally.
                 growth: RewriteRuleGrowth.Collects,
-                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+                when: bound => Functions.Patterns.IsLogic(bound["a"]),
+                description: "not (not a) = a"),
 
             // Constants, after the implication rule above: `not x or True` is `x -> True`.
             new MatchedRule(
@@ -1163,7 +1184,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     .Provided(bound["a"].DomainCondition).Provided(bound["b"].DomainCondition),
                 Soundness.Sound,
                 when: bound => (bound["a"] == Entity.Boolean.True || bound["b"] == Entity.Boolean.True)
-                               && Functions.Patterns.IsLogic(bound["a"], bound["b"])),
+                               && Functions.Patterns.IsLogic(bound["a"], bound["b"]),
+                description: "(a or True) = True"),
 
             new MatchedRule(
                 "a-conjunction-with-a-falsehood-is-false",
@@ -1172,7 +1194,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     .Provided(bound["a"].DomainCondition).Provided(bound["b"].DomainCondition),
                 Soundness.Sound,
                 when: bound => (bound["a"] == Entity.Boolean.False || bound["b"] == Entity.Boolean.False)
-                               && Functions.Patterns.IsLogic(bound["a"], bound["b"])),
+                               && Functions.Patterns.IsLogic(bound["a"], bound["b"]),
+                description: "(a and False) = False"),
 
             // Distributivity. Eight arms of the switch, two rules here: commutative at both
             // levels finds the shared operand wherever it sits.
@@ -1183,7 +1206,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Commutative<Andf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
                 bound => bound["k"] & (bound["p"] | bound["q"]),
                 Soundness.Sound,
-                when: bound => Functions.Patterns.IsLogic(bound["k"], bound["p"], bound["q"])),
+                when: bound => Functions.Patterns.IsLogic(bound["k"], bound["p"], bound["q"]),
+                description: "((k and p) or (k and q)) = (k and (p or q))"),
 
             new MatchedRule(
                 "a-conjunction-of-disjunctions-sharing-an-operand-distributes",
@@ -1192,7 +1216,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Commutative<Orf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
                 bound => bound["k"] | (bound["p"] & bound["q"]),
                 Soundness.Sound,
-                when: bound => Functions.Patterns.IsLogic(bound["k"], bound["p"], bound["q"])),
+                when: bound => Functions.Patterns.IsLogic(bound["k"], bound["p"], bound["q"]),
+                description: "((k or p) and (k or q)) = (k or (p and q))"),
 
             // Absorption, and the absorption that leaves something behind. Four arms each in the
             // switch, and the negated form four more.
@@ -1205,7 +1230,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 // The replacement is one of the matched node's own operands, unconditionally.
                 growth: RewriteRuleGrowth.Collects,
-                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+                when: bound => Functions.Patterns.IsLogic(bound["a"]),
+                description: "(a or (a and b)) = a"),
 
             new MatchedRule(
                 "a-conjunction-absorbs-a-disjunction-it-shares-an-operand-with",
@@ -1216,7 +1242,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 // The replacement is one of the matched node's own operands, unconditionally.
                 growth: RewriteRuleGrowth.Collects,
-                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+                when: bound => Functions.Patterns.IsLogic(bound["a"]),
+                description: "(a and (a or b)) = a"),
 
             new MatchedRule(
                 "a-disjunction-drops-a-negated-copy-of-its-other-operand",
@@ -1229,7 +1256,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 // The second copy of `a` and its `not` and the inner `and` all go; `a` and `b`
                 // are left under the one `or`.
                 growth: RewriteRuleGrowth.Collects,
-                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+                when: bound => Functions.Patterns.IsLogic(bound["a"]),
+                description: "(a or ((not a) and b)) = (a or b)"),
 
             new MatchedRule(
                 "a-conjunction-drops-a-negated-copy-of-its-other-operand",
@@ -1242,7 +1270,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 // The second copy of `a` and its `not` and the inner `or` all go; `a` and `b`
                 // are left under the one `and`.
                 growth: RewriteRuleGrowth.Collects,
-                when: bound => Functions.Patterns.IsLogic(bound["a"])),
+                when: bound => Functions.Patterns.IsLogic(bound["a"]),
+                description: "(a and ((not a) or b)) = (a and b)"),
 
             // Exclusive disjunction, written four ways in the switch.
             new MatchedRule(
@@ -1257,7 +1286,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 // Two `and`s, two `not`s and the duplicate `a` and `b` collapse into one `xor`
                 // over one copy of each.
                 growth: RewriteRuleGrowth.Collects,
-                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])),
+                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"]),
+                description: "((a and not b) or (b and not a)) = (a xor b)"),
 
             // Contraposition
             new MatchedRule(
@@ -1269,7 +1299,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 // The same `a` and `b` under the same `->`, swapped, with both `not`s dropped.
                 growth: RewriteRuleGrowth.Collects,
-                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"])));
+                when: bound => Functions.Patterns.IsLogic(bound["a"], bound["b"]),
+                description: "((not a) implies (not b)) = (b implies a)"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.FactorizeRules"/>, as data.
@@ -1308,7 +1339,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 // Both exponents even, or halving them introduces radicals and the rule fires
                 // again on what it just produced.
                 when: bound => ((Integer)bound["n"]).EInteger.IsEven
-                               && ((Integer)bound["m"]).EInteger.IsEven),
+                               && ((Integer)bound["m"]).EInteger.IsEven,
+                description: "a^2n - b^2m = (a^n - b^m)(a^n + b^m)",
+                // Declared, because the replacement is code and nothing counts it: one difference becomes a product of two.
+                growth: RewriteRuleGrowth.Expands),
 
             // a^2 - c -> (a - sqrt(c))(a + sqrt(c)), for a numeric c
             new MatchedRule(
@@ -1318,7 +1352,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Number>("c")),
                 bound => (bound["a"] - new Powf(bound["c"], Rational.Create(1, 2)))
                        * (bound["a"] + new Powf(bound["c"], Rational.Create(1, 2))),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a^2 - c = (a - sqrt(c))(a + sqrt(c)), for a numeric c",
+                // Declared, because the replacement is code and nothing counts it: one difference becomes a product of two, with a root introduced.
+                growth: RewriteRuleGrowth.Expands),
 
             // k*p + k*q -> k*(p + q), the shared factor anywhere in either product
             new MatchedRule(
@@ -1327,7 +1364,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("p")),
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
                 bound => bound["k"] * (bound["p"] + bound["q"]),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "k*p + k*q = k*(p + q)",
+                // Declared, because the replacement is code and nothing counts it: k*p + k*q is seven nodes and k*(p + q) is five.
+                growth: RewriteRuleGrowth.Collects),
 
             // k + k*q -> k*(1 + q), either way round at both levels
             new MatchedRule(
@@ -1336,14 +1376,16 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any("k"),
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
                 bound => bound["k"] * (1 + bound["q"]),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "k + k*q = k*(1 + q)"),
 
             // k + k -> 2k
             new MatchedRule(
                 "a-term-added-to-itself-doubles",
                 MatchPattern.Node<Sumf>(MatchPattern.Any("k"), MatchPattern.Any("k")),
                 bound => 2 * bound["k"],
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "k + k = 2k"),
 
             // k*p - k*q -> k*(p - q). The outer node is a difference and stays one.
             new MatchedRule(
@@ -1352,7 +1394,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("p")),
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
                 bound => bound["k"] * (bound["p"] - bound["q"]),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "k*p - k*q = k*(p - q)",
+                // Declared, because the replacement is code and nothing counts it: as its added twin: seven nodes become five.
+                growth: RewriteRuleGrowth.Collects),
 
             // k - k*q -> k*(1 - q)
             new MatchedRule(
@@ -1361,7 +1406,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any("k"),
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
                 bound => bound["k"] * (1 - bound["q"]),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "k - k*q = k*(1 - q)"),
 
             // k*q - k -> k*(q - 1)
             new MatchedRule(
@@ -1370,14 +1416,18 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q")),
                     MatchPattern.Any("k")),
                 bound => bound["k"] * (bound["q"] - 1),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "k*q - k = k*(q - 1)"),
 
             // k - k -> 0
             new MatchedRule(
                 "a-term-subtracted-from-itself-vanishes",
                 MatchPattern.Node<Minusf>(MatchPattern.Any("k"), MatchPattern.Any("k")),
                 bound => Integer.Create(0),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "k - k = 0",
+                // Declared, because the replacement is code and nothing counts it: three nodes become one.
+                growth: RewriteRuleGrowth.Collects),
 
             // a^b * c^b -> (a*c)^b, guarded as its twin in PowerRules is
             new MatchedRule(
@@ -1393,7 +1443,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.SoundUnderAssumptions,
                 when: bound => bound["b"] is Integer
                                || (bound["a"].Evaled is Real { IsPositive: true }
-                                   && bound["c"].Evaled is Real { IsPositive: true })),
+                                   && bound["c"].Evaled is Real { IsPositive: true }),
+                description: "a^b * c^b = (a*c)^b",
+                // Declared, because the replacement is code and nothing counts it: a^b * c^b is seven nodes and (a*c)^b is five.
+                growth: RewriteRuleGrowth.Collects),
 
             // Anything left, over a whole sum or difference rather than two of its terms. Last,
             // because it is the general case of the rules above it.
@@ -1401,7 +1454,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 "a-common-factor-is-collected-out-of-a-whole-sum",
                 MatchPattern.Any<Entity>("x", node => node is Sumf or Minusf),
                 (node, _) => Functions.Patterns.CollectCommonFactors(node) ?? node,
-                Soundness.Sound));
+                Soundness.Sound,
+                description: "k*p + k*q + ... = k*(p + q + ...), over a whole sum rather than two of its terms",
+                // Declared, because the replacement is code and nothing counts it: the whole point of it is to be smaller.
+                growth: RewriteRuleGrowth.Collects));
 
         /// <summary>
         /// <see cref="Functions.Patterns.TrigonometricRules"/>, as data.

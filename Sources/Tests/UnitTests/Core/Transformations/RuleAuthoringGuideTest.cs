@@ -49,7 +49,7 @@ namespace AngouriMath.Tests.Core.Transformations
                     MatchedRules.All.Any(data => data.Name == set.Name)
                     || set.Name.StartsWith("CommonDenominator", StringComparison.Ordinal)),
                 "how many registered sets run the matcher");
-            Stated(20, RewriteRules.All.Count(set =>
+            Stated(23, RewriteRules.All.Count(set =>
                     set.Rules.Count > 0 && set.Rules.All(rule => rule.Soundness is not null)),
                 "how many registered sets describe what they run");
         }
@@ -68,7 +68,7 @@ namespace AngouriMath.Tests.Core.Transformations
 
         [Fact]
         public void TheIdentityIsNotTheName()
-            => Stated(59,
+            => Stated(101,
                 MatchedRules.All.SelectMany(set => set.Rules).Count(rule => rule.Description is not null),
                 "how many rules carry an identity");
 
@@ -84,7 +84,7 @@ namespace AngouriMath.Tests.Core.Transformations
                 "how many rules have a pattern on both sides");
             Stated(32, rules.Count(rule => rule.Reversed is not null),
                 "how many two-sided rules have a direction");
-            Stated(268, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Unknown),
+            Stated(261, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Unknown),
                 "how many rules sit at Unknown growth");
 
             // And the thirty-third is the one the document names. Asserted by its own name rather
