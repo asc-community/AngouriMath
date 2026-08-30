@@ -838,14 +838,16 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Rational>("k"),
                     MatchPattern.Node<Divf>(MatchPattern.Any("value"), MatchPattern.Any<Rational>("d"))),
                 (node, _) => Functions.Patterns.GatherNumericCoefficientOverASurd(node),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "k * (value / d) = (k * value) / d"),
 
             // num / (a + b) -> num * (a - b) / (a^2 - b^2)
             new MatchedRule(
                 "a-two-term-denominator-is-multiplied-by-its-conjugate",
                 MatchPattern.Node<Divf>(MatchPattern.Any("num"), MatchPattern.Any("den")),
                 (node, _) => Functions.Patterns.MultiplyByTheConjugate(node),
-                Soundness.SoundUnderAssumptions));
+                Soundness.SoundUnderAssumptions,
+                description: "num / (a + b) = num * (a - b) / (a^2 - b^2)"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.NumericNeatRules"/>, as data.

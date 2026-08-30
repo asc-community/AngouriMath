@@ -44,8 +44,9 @@ namespace AngouriMath.Core.Transformations.Matching
             MatchPattern right,
             Soundness soundness,
             Func<Bindings, bool>? when = null,
+            string? description = null,
             [CallerLineNumber] int line = 0)
-            : this(name, left, null, right ?? throw new ArgumentNullException(nameof(right)), soundness, null, when, line)
+            : this(name, left, null, right ?? throw new ArgumentNullException(nameof(right)), soundness, null, when, description, line)
         {
             // A name the replacement reads and the pattern never binds is a typo, and it is a
             // typo that would otherwise show up as a rule that silently never fires. Only a
@@ -76,10 +77,11 @@ namespace AngouriMath.Core.Transformations.Matching
             Soundness soundness,
             RewriteRuleGrowth? growth = null,
             Func<Bindings, bool>? when = null,
+            string? description = null,
             [CallerLineNumber] int line = 0)
             : this(name, left, right is null ? null : (_, bound) => right(bound),
                    right is null ? throw new ArgumentNullException(nameof(right)) : null,
-                   soundness, growth, when, line)
+                   soundness, growth, when, description, line)
         {
         }
 
@@ -110,9 +112,10 @@ namespace AngouriMath.Core.Transformations.Matching
             Soundness soundness,
             RewriteRuleGrowth? growth = null,
             Func<Bindings, bool>? when = null,
+            string? description = null,
             [CallerLineNumber] int line = 0)
             : this(name, left, right ?? throw new ArgumentNullException(nameof(right)), null,
-                   soundness, growth, when, line)
+                   soundness, growth, when, description, line)
         {
         }
 
@@ -124,9 +127,11 @@ namespace AngouriMath.Core.Transformations.Matching
             Soundness soundness,
             RewriteRuleGrowth? declaredGrowth,
             Func<Bindings, bool>? when,
+            string? description,
             int line)
         {
             SourceLine = line;
+            Description = description;
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Left = left ?? throw new ArgumentNullException(nameof(left));
             this.right = rightCode;
@@ -145,6 +150,30 @@ namespace AngouriMath.Core.Transformations.Matching
 
         /// <summary>What to call this rule in a report, a test or a bug.</summary>
         internal string Name { get; }
+
+        /// <summary>
+        /// The identity this rule is, in the notation a mathematician would write it in — or
+        /// <see langword="null"/> where nobody has written one.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Not the same thing as <see cref="Name"/> or as the rendered pattern.</b>
+        /// <c>a / (b / c) = a * c / b</c> is what this says; <c>dividing-by-a-quotient-multiplies-by-its-reciprocal</c>
+        /// is what to call it, and <c>Divf(var a, Divf(var b, var c))</c> is how the matcher spells
+        /// it. #746 tier 2 wants metadata "rich enough that v5.0 can render a step as a sentence",
+        /// and of those three only this one is the sentence.
+        /// </para>
+        /// <para>
+        /// <b>It exists because the generator has one and this did not.</b>
+        /// <c>RuleRegistryGenerator</c> reads the comment written above a <c>switch</c> arm into
+        /// <see cref="RewriteRule.Description"/> — <b>95 of the registry's 407 arms</b> carry one
+        /// that way. A rule written as data has its identity in a comment too, and a comment is
+        /// not readable at run time, so until this parameter existed converting a set to data
+        /// <i>lost</i> the description rather than keeping it. That is what stands between the
+        /// registry and describing the rules it actually runs.
+        /// </para>
+        /// </remarks>
+        internal string? Description { get; }
 
         /// <summary>
         /// The line this rule is declared on, taken from the compiler rather than written down.
@@ -363,7 +392,8 @@ namespace AngouriMath.Core.Transformations.Matching
         /// </remarks>
         internal MatchedRule? Reversed
             => Reversal is RuleReversal.Reversible
-                ? reversed ??= new MatchedRule($"reversed {Name}", Right!, Left, Soundness, when)
+                ? reversed ??= new MatchedRule($"reversed {Name}", Right!, Left, Soundness, when,
+                    Description is null ? null : $"read backwards: {Description}")
                 : null;
 
         private MatchedRule? reversed;
@@ -617,19 +647,30 @@ namespace AngouriMath.Core.Transformations.Matching
                     source: Name,
                     index: i,
                     name: rule.Name,
-                    description: null,
+                    description: rule.Description,
                     nodeTypes: rule.Left.RequiredRootType is { } root
                         ? new[] { root }
                         : Array.Empty<Type>(),
                     patternSource: pattern,
                     guardSource: rule.HasCondition ? "a side condition on the bindings" : null,
                     replacementSource: replacement ?? "(built by code)",
-                    growth: replacement is null ? RewriteRuleGrowth.Unknown
-                        : replacement.Length > pattern.Length ? RewriteRuleGrowth.Expands
-                        : replacement.Length < pattern.Length ? RewriteRuleGrowth.Collects
-                        : RewriteRuleGrowth.Rearranges,
+                    // The rule's own answer, not a proxy for it. This used to compare the lengths
+                    // of the two rendered strings, which is what the generator has to do -- it
+                    // reads C# source text and has no tree to count. Here there is a tree, and
+                    // guessing from the rendering was wrong 23 times in 322 and in both
+                    // directions: `Divf(var a, Sinf(var b))` to `Mulf(var a, Cosecantf(var b))`
+                    // read as Expands because `Cosecantf` is a longer word than `Sinf`, while
+                    // DivisionPreparing's two read as Collects for the same reason reversed. Worse
+                    // for the thirteen Boolean rules that *declare* their growth on a code-built
+                    // replacement: with no string to measure, the proxy answered Unknown and threw
+                    // the author's declaration away.
+                    growth: rule.Growth,
                     sourceLine: rule.SourceLine,
-                    apply: rule.TryApply);
+                    apply: rule.TryApply,
+                    // Per rule, which is the whole point of a rule being a value. A set's tier is
+                    // the minimum over its rules, so one conditional rule makes a set of a hundred
+                    // report as conditional; 181 of these 322 are Sound.
+                    soundness: rule.Soundness);
             }
             return built;
         }
