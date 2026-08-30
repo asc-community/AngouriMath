@@ -76,6 +76,7 @@ read first.
 | **Silent** | `RewriteRules.ExpandFactorialDivisions.Rules[0].Growth` | `Collects` — guessed from string length | `Unknown`; whether it collects depends on the offsets |
 | **Silent** | `RewriteStep.Soundness` on a rewrite whose rule declares a tier — `RewriteRules.SetOperator` on `A /\ A`, and every rewrite of the nineteen sets described from their data form | `SoundUnderAssumptions` — its rule set's tier, which is the minimum over every rule in the set | `Sound` — the rule's own |
 | **Silent** | `DerivationStep.Soundness` | its rule set's tier | the weakest tier any rewrite that actually fired inside the step holds at |
+| **Silent** | `"arccotan(-1)".ToEntity().Simplify()`, and every negative argument the inverse-trigonometric table knows | `3/4 * pi` — the textbook range, and **not equal to `arccotan(-1)`**, whose value is `-pi/4` | `-1/4 * pi` |
 
 ### Twenty-three rule sets describe the rules they run
 
@@ -156,6 +157,32 @@ run* above for which sets carry per-rule tiers today.
 rewrite that **actually fired** inside the step holds at, rather than its set's minimum over rules
 the step may never have reached. A pass of nine unconditional rewrites and one conditional one is
 still a conditional pass; a pass of ten unconditional ones now says so.
+
+### A negative `arccotan` is negative
+
+`arccotan` here is `arctan(1/x)`, with range `(-pi/2, pi/2]` — **not** the textbook `(0, pi)`. The
+inverse-trigonometric table read it as the textbook `pi/2 - arctan(x)`. The two agree on every
+positive argument and on nothing negative, so a closed form came back that was not the value:
+
+```csharp
+"arccotan(-1)".ToEntity().EvalNumerical()   // -0.7853981633974483…, which is -pi/4
+"arccotan(-1)".ToEntity().Simplify()        // was 3/4 * pi, is -1/4 * pi
+```
+
+`Simplify` and `EvalNumerical` disagreeing about a constant is the sharpest form this kind of defect
+takes, and it reached every table value with a negative argument: `arccotan(-sqrt(3))` was `5/6 * pi`
+and is `-1/6 * pi`, `arccotan(-(2 + sqrt(3)))` was `11/12 * pi` and is `-1/12 * pi`.
+
+**The rule for `arctan(x) + arccotan(x)` had the convention right all along** — it answers `pi/2` for
+a non-negative argument and `-pi/2` for a negative one, which is
+[#887](https://github.com/asc-community/AngouriMath/issues/887). The table's docstring claimed to
+take "the same reading of it" and took the opposite one; the comment asserting agreement is what let
+the disagreement stand. The two now agree, and `ArccotanTableSignTest` measures the range at a
+positive argument, a negative one and zero rather than recalling it.
+
+`arccos` uses the same complement helper and is **unaffected**: its range is `[0, pi]` and `arcsin`'s
+is `[-pi/2, pi/2]`, so `pi/2 - arcsin(x)` holds for every argument. That is asserted too, so that a
+later tidy-up cannot merge the two paths back together.
 
 ### An equation nothing settled is no longer answered with the empty set
 
