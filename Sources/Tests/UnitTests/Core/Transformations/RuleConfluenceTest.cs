@@ -38,6 +38,17 @@ namespace AngouriMath.Tests.Core.Transformations
     /// <b>A sample, not a proof.</b> Two arms that never overlap on the generated input say
     /// nothing either way, and are not recorded as agreeing.
     /// </para>
+    /// <para>
+    /// <b>And a shallower sample than it reads as.</b> The third level below is grown with unary
+    /// shapes only, so this corpus never builds a quotient of quotients or a product of quotients —
+    /// which is where a special rule and the general rule that would swallow it meet.
+    /// <c>RulePriorityTest</c> asks the same question of the same rules written as data, over a
+    /// corpus grown with binary shapes at every level, and finds <b>45</b> conflicts where this
+    /// finds three. It also names them as the rules they are between rather than as the indices
+    /// below, which is what the note on
+    /// <see cref="AConflictIsReportableAsThePatternsItIsBetween"/> asks for; a data rule has a name
+    /// and a <c>switch</c> arm does not.
+    /// </para>
     /// </remarks>
     [Trait("Area", "Core")]
     public sealed class RuleConfluenceTest
