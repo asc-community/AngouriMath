@@ -289,7 +289,14 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.Empty(without);
 
             Assert.Equal(30, withRules.Count);
-            Assert.Equal(407, withRules.Sum(set => set.Rules.Count));
+
+            // 397, and it was 407 before thirteen sets started reporting the rules they run
+            // rather than the `switch` they no longer run. The ten that went are not rules lost:
+            // ExpandFactorialDivisions and FactorizeFactorialMultiplications are eight arms each
+            // that the data form writes as three, the other five being the same rewrite spelled
+            // for each side a factorial can sit on -- which is one commutative pattern. Every
+            // other repointed set is one for one.
+            Assert.Equal(397, withRules.Sum(set => set.Rules.Count));
         }
 
         /// <summary>

@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using System;
 using System.Linq;
 using AngouriMath.Core.Transformations;
 using AngouriMath.Core.Transformations.Matching;
@@ -98,15 +99,64 @@ namespace AngouriMath.Tests.Core.Transformations
         /// A rule's own tier reaches the registry, and a <c>switch</c> arm's absence of one is
         /// reported as absent rather than as its set's.
         /// </summary>
+        /// <remarks>
+        /// Fourteen sets are described from their data form and carry a tier per rule; the other
+        /// sixteen are still described by <c>RuleRegistryGenerator</c>, which reads a <c>switch</c>
+        /// and has no tier to give. Named rather than counted, so that repointing a set is a change
+        /// to this list rather than a silent one.
+        /// </remarks>
         [Fact]
         public void ARuleWrittenAsDataCarriesItsTierIntoTheRegistry()
         {
-            var rationalize = RewriteRules.RationalizeDenominator;
-            Assert.All(rationalize.Rules, rule => Assert.NotNull(rule.Soundness));
+            var fromData = new[]
+            {
+                nameof(RewriteRules.CollapseMultipleFractions),
+                nameof(RewriteRules.CommonDenominator),
+                nameof(RewriteRules.CommonDenominatorCountingConstants),
+                nameof(RewriteRules.CommonDenominatorExact),
+                nameof(RewriteRules.DivisionPreparing),
+                nameof(RewriteRules.ExpandFactorialDivisions),
+                nameof(RewriteRules.ExpandMultipleAngle),
+                nameof(RewriteRules.ExpandTrigonometric),
+                nameof(RewriteRules.Expansion),
+                nameof(RewriteRules.FactorizeFactorialMultiplications),
+                nameof(RewriteRules.NormalTrigonometricForm),
+                nameof(RewriteRules.PhiFunction),
+                nameof(RewriteRules.PolynomialLongDivision),
+                nameof(RewriteRules.RationalizeDenominator),
+            };
 
-            // Every other set is still described by the generator, which has no tier to give.
-            var generated = RewriteRules.All.Where(set => set.Name != rationalize.Name);
+            var described = RewriteRules.All
+                .Where(set => set.Rules.Count > 0 && set.Rules.All(rule => rule.Soundness is not null))
+                .Select(set => set.Name)
+                .OrderBy(name => name, StringComparer.Ordinal);
+            Assert.Equal(fromData.OrderBy(name => name, StringComparer.Ordinal), described);
+
+            // And the rest report no tier of their own rather than their set's.
+            var generated = RewriteRules.All.Where(set => !fromData.Contains(set.Name));
             Assert.All(generated, set => Assert.All(set.Rules, rule => Assert.Null(rule.Soundness)));
+        }
+
+        /// <summary>
+        /// <b>Repointing a set at its data form gains descriptions rather than trading them.</b>
+        /// </summary>
+        /// <remarks>
+        /// The thirteen sets repointed here were chosen for exactly this: not one of them had a
+        /// single described arm, because <c>RuleRegistryGenerator</c> only has a description where
+        /// somebody wrote a comment above the arm and nobody had. Their data rules carry the
+        /// identity instead, so the registry goes from <b>0 of those 38 arms described to 38 of
+        /// 38</b> — where repointing <c>Common</c> or <c>Power</c> today would lose 33 and 22.
+        /// The 40 here is those 38 plus <c>RationalizeDenominator</c>'s two, which were repointed
+        /// before this and described alongside them.
+        /// </remarks>
+        [Fact]
+        public void EveryRuleOfARepointedSetCarriesItsIdentity()
+        {
+            var repointed = RewriteRules.All
+                .Where(set => set.Rules.Count > 0 && set.Rules.All(rule => rule.Soundness is not null))
+                .ToList();
+            Assert.Equal(40, repointed.Sum(set => set.Rules.Count));
+            Assert.All(repointed, set => Assert.All(set.Rules, rule => Assert.NotNull(rule.Description)));
         }
 
         /// <summary>
