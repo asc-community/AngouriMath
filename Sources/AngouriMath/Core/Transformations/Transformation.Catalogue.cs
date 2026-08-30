@@ -505,7 +505,40 @@ namespace AngouriMath.Core.Transformations
             // the same convention every rule set in the registry already follows.
             public override Soundness Soundness => Soundness.SoundUnderAssumptions;
 
+            /// <remarks>
+            /// <para>
+            /// <b>What this reports to a <see cref="RewriteRecording"/>, and what it does not.</b>
+            /// The pass as a whole, and nothing finer. A rule set records each firing because a
+            /// firing there <i>is</i> the rewrite -- the node it matched leaves and the
+            /// replacement takes its place. A firing here is not: it adds another member to an
+            /// e-class, every member of which is already believed equal, and the answer is then
+            /// chosen by <c>EGraph.Extract</c> from all of them at once. Most firings
+            /// contribute nothing to what extraction picked, and none of them is a step on a route
+            /// from the input to the output, because there is no route -- that is the whole point
+            /// of saturating rather than rewriting. Reporting them as
+            /// <see cref="RewriteStep"/>s would name rewrites that are not in the answer.
+            /// </para>
+            /// <para>
+            /// So one edge, input to output, under this transformation's own
+            /// <see cref="Name"/>. That is a true statement at the grain a derivation is read at,
+            /// and it is what was missing: a caller who opened a recording round this used to get
+            /// a real rewrite with an empty derivation, and nothing to distinguish
+            /// "introspection cannot see this" from "there was nothing to see".
+            /// </para>
+            /// </remarks>
             protected override Entity? ApplyCore(Entity input)
+            {
+                // Read once, before the work: nothing here should pay for a recording nobody
+                // opened, which is the same reason RewriteRuleSet.ApplyOnce reads it once.
+                var recording = RewriteRecording.Current;
+                var mark = recording?.Mark() ?? 0;
+                var output = Saturate(input);
+                if (recording is not null && output is not null && !output.Equals(input))
+                    recording.Note(input, output, null, Name, mark);
+                return output;
+            }
+
+            private Entity? Saturate(Entity input)
             {
                 var graph = new EGraph();
                 var root = graph.AddEntity(input);
@@ -526,7 +559,25 @@ namespace AngouriMath.Core.Transformations
                     var merged = false;
                     foreach (var id in graph.Classes.ToList())
                     {
-                        if (!ChargeGrowthSinceLastCall()) break;
+                        if (ledger.Exhausted) break;
+
+                        // Which node types this class holds, gathered once for the whole sweep
+                        // rather than once per rule. A pattern that requires a root type cannot
+                        // match a class holding no node of it -- MatchPattern.RequiredRootType is
+                        // a necessary condition, not a sufficient one, which is the direction that
+                        // makes it a filter: it licenses skipping a rule, never firing one. This
+                        // is the dispatch a switch over node types gets from the compiler for
+                        // free, and a list of rules has to be told; without it every rule in
+                        // SafeRules ran a full pattern match against every class of every pass,
+                        // and the large majority of those could not have matched.
+                        //
+                        // A union later in this same sweep can add a node type to the class that
+                        // this set does not have, so a rule can be skipped in a pass where it had
+                        // just become applicable. That costs nothing: a union is exactly what sets
+                        // `merged`, so there is another pass, and the set is gathered again there.
+                        var held = new HashSet<Type>();
+                        foreach (var node in graph.NodesOf(id)) held.Add(EGraph.RuntimeType(node));
+
                         Entity? term = null;
                         var extracted = false;
                         bool TryTerm(out Entity value)
@@ -542,6 +593,31 @@ namespace AngouriMath.Core.Transformations
 
                         foreach (var rule in SafeRules)
                         {
+                            // Before the charge, because a rule this skips was never attempted:
+                            // a step is a match attempt, and a type that cannot match is not one.
+                            // Written as a loop rather than as `held.Any(t => ...)`: the lambda
+                            // would capture `required` and so allocate a closure every time the
+                            // exact-type test missed, which is most rules of most classes -- and
+                            // paying an allocation to avoid a pattern match is not a pre-filter.
+                            if (rule.Left.RequiredRootType is { } required && !held.Contains(required))
+                            {
+                                var reachable = false;
+                                foreach (var type in held)
+                                    if (required.IsAssignableFrom(type))
+                                    {
+                                        reachable = true;
+                                        break;
+                                    }
+                                if (!reachable) continue;
+                            }
+
+                            // One step per match attempt, charged before the attempt -- the unit
+                            // Buchberger, FGLM and MatchPattern all charge, and the work this
+                            // loop actually does. Charging the node-count delta alone (below)
+                            // billed nothing on ordinary input, because SafeRules holds only
+                            // rules that do not expand: a budget of zero steps ran this sweep to
+                            // saturation and then reported that it had completed.
+                            if (!ledger.Spend()) break;
                             int other;
                             if (rule.Left.CanEMatch)
                             {
@@ -566,7 +642,14 @@ namespace AngouriMath.Core.Transformations
                             }
                             if (graph.Union(id, other)) merged = true;
                         }
+                        // What the sweep grew, charged after it rather than before the next
+                        // class's, so that the ceiling bounds the growth that has happened.
+                        if (!ChargeGrowthSinceLastCall()) break;
                     }
+                    // Rebuild rescans every node of every class, repeatedly until nothing more
+                    // becomes congruent -- a round of it is work, and it had no ledger
+                    // interaction anywhere in it.
+                    if (!ledger.Spend()) break;
                     graph.Rebuild();
                     if (!merged) saturated = true;
                 }

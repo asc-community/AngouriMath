@@ -216,6 +216,229 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.True(ReferenceEquals(Entity.Constant.EulerIntrinsic, extracted));
         }
 
+        /// <summary>
+        /// A cost model that answers <see cref="double.NaN"/> has not ranked the candidate, and
+        /// every IEEE-754 comparison against <see cref="double.NaN"/> is false -- so the
+        /// cheapest-so-far test never declines it. A model that <i>throws</i> is already declined
+        /// by the surrounding <see langword="catch"/>; one that answers
+        /// <see cref="double.NaN"/> is saying the same thing and is declined the same way.
+        /// </summary>
+        [Fact]
+        public void ExtractDeclinesACandidateItsCostModelCannotRank()
+        {
+            var graph = new EGraph();
+            var root = graph.AddEntity("x".ToEntity());
+
+            var extracted = graph.Extract(root, static _ => double.NaN);
+
+            Assert.Null(extracted);
+        }
+
+        /// <summary>
+        /// The consequence of the above when a class holds more than one candidate: an unranked
+        /// candidate that is not declined becomes the incumbent cheapest, and because every later
+        /// comparison against it is false, every candidate after it wins unconditionally --
+        /// <see cref="EGraph.Extract"/> stops answering with the cheapest and answers with
+        /// whichever member the enumeration reached last.
+        /// </summary>
+        [Fact]
+        public void ExtractPicksTheCheapestPastACandidateItCannotRank()
+        {
+            var graph = new EGraph();
+            var cheap = graph.AddEntity("x".ToEntity());
+            graph.Union(cheap, graph.AddEntity("y".ToEntity()));
+            graph.Union(cheap, graph.AddEntity("z".ToEntity()));
+
+            var extracted = graph.Extract(cheap, static candidate => candidate.Stringize() switch
+            {
+                "x" => 1,
+                "y" => double.NaN,
+                _ => 100
+            });
+
+            Assert.True("x".ToEntity().Equals(extracted));
+        }
+
+        /// <summary>
+        /// <see cref="System.Collections.Generic.HashSet{T}"/> enumeration order is an
+        /// unspecified implementation detail, and a string's hash code is randomised per process
+        /// -- so without a defined order over a class's members, an exact cost tie is settled
+        /// differently from one run to the next. <see cref="CostModel"/>'s own remarks say ties
+        /// are common enough to design the models against, and a bounded computation is meant to
+        /// be reproducible given a defined algorithm order. A tie goes to the ordinally-first
+        /// e-node.
+        /// </summary>
+        [Fact]
+        public void ExtractSettlesACostTieOnADefinedOrder()
+        {
+            var graph = new EGraph();
+            var id = graph.AddEntity("b".ToEntity());
+            graph.Union(id, graph.AddEntity("c".ToEntity()));
+            graph.Union(id, graph.AddEntity("a".ToEntity()));
+
+            var extracted = graph.Extract(id, static _ => 1);
+
+            Assert.True("a".ToEntity().Equals(extracted));
+        }
+
+        /// <summary>
+        /// <see cref="EGraph.Extract"/> recurses through an e-class's children, and its cycle
+        /// guard bounds the chain only by the number of distinct classes -- which unions grow
+        /// past the input expression's own syntactic depth. Past the cap it declines to build,
+        /// the same answer the cycle case already gives, rather than exhausting the stack: a
+        /// <see cref="System.StackOverflowException"/> cannot be caught, so it takes the process
+        /// down instead of failing one call.
+        /// </summary>
+        [Fact]
+        public void ExtractDeclinesToBuildPastItsDepthCap()
+        {
+            Entity deep = "x".ToEntity();
+            for (var i = 0; i < 300; i++) deep += 1;
+            var graph = new EGraph();
+            var root = graph.AddEntity(deep);
+
+            var extracted = graph.Extract(root, CostModel.Default.Cost);
+
+            Assert.Null(extracted);
+        }
+
+        /// <summary>
+        /// The cap is a crash guard, not a quality knob: an expression of ordinary depth must
+        /// still extract normally.
+        /// </summary>
+        [Fact]
+        public void ExtractStillBuildsAnExpressionOfOrdinaryDepth()
+        {
+            Entity ordinary = "x".ToEntity();
+            for (var i = 0; i < 30; i++) ordinary += 1;
+            var graph = new EGraph();
+            var root = graph.AddEntity(ordinary);
+
+            var extracted = graph.Extract(root, CostModel.Default.Cost);
+
+            Assert.NotNull(extracted);
+        }
+
+        /// <summary>
+        /// <see cref="EGraph.Extract"/> rebuilds through the node types
+        /// <c>MatchPattern.Construct</c> knows, and that used to be fourteen arithmetic and
+        /// trigonometric ones. Every other root -- a comparison, a condition attached to a value,
+        /// a set operation -- extracted as <see langword="null"/>, so
+        /// <c>Transformation.EqualitySaturation</c> handed back its input reporting
+        /// <c>Changed = false</c>, which is indistinguishable from "already at its cheapest" even
+        /// where the graph had proved an improvement inside it.
+        /// </summary>
+        [Theory]
+        [InlineData("x > 0")]
+        [InlineData("x = y")]
+        [InlineData("x >= y + 1")]
+        [InlineData("a and b")]
+        [InlineData("not a")]
+        [InlineData("x mod y")]
+        [InlineData("floor(x)")]
+        [InlineData("arcsin(x)")]
+        [InlineData("x!")]
+        // A special set is a leaf, so both operands rebuild and the union over them does too.
+        [InlineData("RR unite ZZ")]
+        public void ExtractRebuildsRootsThatUsedToFallOutsideTheBuildableTypes(string source)
+        {
+            var expr = source.ToEntity();
+            var graph = new EGraph();
+            var root = graph.AddEntity(expr);
+
+            var extracted = graph.Extract(root, CostModel.Default.Cost);
+
+            Assert.NotNull(extracted);
+            Assert.True(expr.Equals(extracted), $"{source} came back as {extracted!.Stringize()}");
+        }
+
+        /// <summary>
+        /// The case the review named specifically: a rule that does not hold unconditionally
+        /// wraps its result in a <see cref="Entity.Providedf"/>, which is the registry's own
+        /// documented convention -- and that wrapper used to be unbuildable, so the class it was
+        /// unioned onto was a dead end and the improvement never reached extraction.
+        /// </summary>
+        [Fact]
+        public void ExtractRebuildsAConditionAttachedToAValue()
+        {
+            Entity provided = new Entity.Providedf("x".ToEntity(), "x > 0".ToEntity());
+            var graph = new EGraph();
+            var root = graph.AddEntity(provided);
+
+            var extracted = graph.Extract(root, CostModel.Default.Cost);
+
+            Assert.NotNull(extracted);
+            Assert.IsType<Entity.Providedf>(extracted);
+            Assert.True(provided.Equals(extracted));
+        }
+
+        /// <summary>
+        /// A binder is still not rebuilt, and that is deliberate rather than pending: the e-graph
+        /// has no notion of a bound variable's scope, and <c>DirectChildren</c> hands out a
+        /// capture-avoidingly renamed body, so rebuilding one from an e-class would produce a term
+        /// meaning something else.
+        /// </summary>
+        /// <remarks>
+        /// The variable-arity nodes are declined for a different reason -- the table keys on a
+        /// type and an arity of one or two, so an n-child node has no entry -- and a union over
+        /// two finite sets shows that this reaches the root through its operands: the
+        /// <c>Unionf</c> itself is buildable and its operands are not.
+        /// </remarks>
+        [Theory]
+        [InlineData("{ x : x > 0 }")]                 // a binder: no notion of scope here
+        [InlineData("{ 1, 2 }")]                      // variable arity
+        [InlineData("{ 1, 2 } unite { 2, 3 }")]       // buildable root, unbuildable operands
+        public void ExtractStillDeclinesWhatItCannotFaithfullyRebuild(string source)
+        {
+            var graph = new EGraph();
+            var root = graph.AddEntity(source.ToEntity());
+
+            Assert.Null(graph.Extract(root, CostModel.Default.Cost));
+        }
+
+        /// <summary>
+        /// The folds the e-graph performs on insertion are read off <see cref="Entity.InnerSimplified"/>
+        /// rather than written out again, so the two cannot disagree. This names what that
+        /// derivation currently finds — not to restate the table, but so that a change in
+        /// <c>InnerSimplify</c> shows up here as a changed list rather than as e-graph folding
+        /// quietly gaining or losing a case.
+        /// </summary>
+        /// <remarks>
+        /// The asymmetries are the point. <c>x + 0</c> and <c>0 + x</c> both fold, because
+        /// addition is commutative; <c>x - 0</c> folds and <c>0 - x</c> does not, because that is
+        /// a negation and not this operand; <c>x ^ 1</c> folds and <c>1 ^ x</c> does not, because
+        /// that is the constant 1.
+        /// </remarks>
+        [Fact]
+        public void TheFoldsAreExactlyWhatInnerSimplifyDoes()
+            => Assert.Equal(
+                new[]
+                {
+                    "Divf(x, 1)", "Minusf(x, 0)", "Mulf(1, x)", "Mulf(x, 1)",
+                    "Powf(x, 1)", "Sumf(0, x)", "Sumf(x, 0)",
+                },
+                EGraph.NeutralFolds.OrderBy(fold => fold, System.StringComparer.Ordinal).ToArray());
+
+        [Theory]
+        // The e-graph folds exactly where InnerSimplify does, so these agree by construction.
+        [InlineData("x + 0")]
+        [InlineData("0 + x")]
+        [InlineData("x - 0")]
+        [InlineData("x * 1")]
+        [InlineData("1 * x")]
+        [InlineData("x / 1")]
+        [InlineData("x ^ 1")]
+        public void AFoldedInsertionAgreesWithInnerSimplify(string source)
+        {
+            var expr = source.ToEntity();
+            var graph = new EGraph();
+            var root = graph.AddEntity(expr);
+
+            var extracted = graph.Extract(root, CostModel.Default.Cost);
+
+            Assert.Equal(expr.InnerSimplified, extracted);
+        }
+
         [Fact]
         public void ContainsLeafFindsAMatchingLiteral()
         {

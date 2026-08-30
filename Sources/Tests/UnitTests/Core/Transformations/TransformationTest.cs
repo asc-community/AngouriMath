@@ -613,6 +613,120 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.False(result.Changed);
         }
 
+        /// <summary>
+        /// <see cref="WorkBudget.Steps"/> charged the e-graph's node-count growth, and
+        /// <c>SafeRules</c> is by construction the rules whose
+        /// <see cref="RewriteRuleGrowth"/> does <i>not</i> expand -- so on ordinary input the
+        /// ledger was charged nothing at all, and a budget of zero steps ran the whole sweep to
+        /// saturation and then reported that it had <see cref="BudgetOutcome.Completed"/>.
+        /// Measured before the fix: three of five varied expressions reported exactly that.
+        /// A step here is what it is for Buchberger, FGLM and <c>MatchPattern</c> -- one unit of
+        /// work attempted -- not a node that happened to be created.
+        /// </summary>
+        [Theory]
+        [InlineData("(x + y) / (x - y) + (x - y) / (x + y)")]
+        [InlineData("(a + b + c + d) ^ 3")]
+        [InlineData("sqrt(2) / (sqrt(3) + sqrt(5)) + ln(a * b * c) + sin(x + y) * cos(x - y)")]
+        public void EqualitySaturationStopsWhenItHasNoStepsToSpend(string source)
+        {
+            var starved = new WorkBudget { Steps = 0, Time = TimeSpan.FromSeconds(30) };
+            var transformation = Transformation.EqualitySaturation(starved, CostModel.Default);
+
+            using var recording = BudgetRecording.Start();
+            transformation.Apply(Parse(source));
+
+            var outcome = recording.Outcomes.Single();
+            Assert.False(outcome.Completed);
+            Assert.Equal("steps", outcome.Reason);
+        }
+
+        /// <summary>
+        /// The other half of the same claim: a ceiling that is reached is a ceiling that was
+        /// counting, so what the ledger reports spent must not run away past what was allowed.
+        /// </summary>
+        [Theory]
+        [InlineData(10)]
+        [InlineData(50)]
+        [InlineData(200)]
+        public void EqualitySaturationSpendsNoMoreThanOneStepPastItsCeiling(int steps)
+        {
+            var budget = new WorkBudget { Steps = steps, Time = TimeSpan.FromSeconds(30) };
+            var transformation = Transformation.EqualitySaturation(budget, CostModel.Default);
+
+            using var recording = BudgetRecording.Start();
+            transformation.Apply(Parse("sqrt(2) / (sqrt(3) + sqrt(5)) + ln(a * b * c) + sin(x + y) * cos(x - y)"));
+
+            var outcome = recording.Outcomes.Single();
+            Assert.True(outcome.Steps <= steps + 1,
+                $"a ceiling of {steps} was overshot to {outcome.Steps}");
+        }
+
+        /// <summary>
+        /// <see cref="RewriteRecording"/> is the library's only "what rewrote this and why"
+        /// mechanism, and it is populated inside <see cref="RewriteRuleSet.ApplyOnce"/> --
+        /// which equality saturation does not go through, since it asks rules directly. A caller
+        /// who opened a recording therefore got a real rewrite with an empty derivation, and no
+        /// signal telling them introspection had missed it rather than found nothing.
+        /// </summary>
+        [Fact]
+        public void EqualitySaturationIsVisibleToARecording()
+        {
+            var transformation = Transformation.EqualitySaturation(SmallSaturationBudget, CostModel.Default);
+
+            using var recording = RewriteRecording.Start();
+            var result = transformation.Apply(Parse("x + 0"));
+
+            Assert.True(result.Changed);
+            var path = recording.PathFrom(result.Input, result.Output!);
+            Assert.NotNull(path);
+            Assert.Contains(path!.Steps, step => step.Name == transformation.Name);
+        }
+
+        /// <summary>
+        /// And it records nothing when it changed nothing, which is the convention every rule set
+        /// already follows -- a pass that did not fire is not a step.
+        /// </summary>
+        [Fact]
+        public void EqualitySaturationRecordsNothingWhenItChangesNothing()
+        {
+            var transformation = Transformation.EqualitySaturation(SmallSaturationBudget, CostModel.Default);
+
+            using var recording = RewriteRecording.Start();
+            var result = transformation.Apply(Parse("x"));
+
+            Assert.False(result.Changed);
+            Assert.Empty(recording.Steps);
+        }
+
+        /// <summary>
+        /// <see cref="MatchPattern.RequiredRootType"/> is a documented necessary condition on a
+        /// match, and the sweep did not consult it: every rule in <c>SafeRules</c> ran a full
+        /// pattern match against every class of every pass, and the large majority of those could
+        /// not have matched. Measured over four expressions, consulting it cuts match attempts by
+        /// about thirteen times — 1076 steps to 78 on the largest — with the same answer each time.
+        /// </summary>
+        /// <remarks>
+        /// Asserted against the rule count rather than against a recorded number, so that the
+        /// claim stays true as rules are added: saturating <c>x + 0</c> to its answer costs less
+        /// in total than one unfiltered pass over a single class would.
+        /// </remarks>
+        [Fact]
+        public void EqualitySaturationDoesNotAttemptEveryRuleOnEveryClass()
+        {
+            var generous = new WorkBudget { Steps = 10_000_000, Time = TimeSpan.FromSeconds(60) };
+            var transformation = Transformation.EqualitySaturation(generous, CostModel.Default);
+
+            using var recording = BudgetRecording.Start();
+            var result = transformation.Apply(Parse("x + 0"));
+
+            Assert.Equal(Parse("x"), result.Output);
+            var spent = recording.Outcomes.Single().Steps;
+            Assert.True(spent < Transformation.EqualitySaturationSafeRuleCount,
+                $"the whole saturation spent {spent} steps, which is not less than the "
+                + $"{Transformation.EqualitySaturationSafeRuleCount} one unfiltered pass over one "
+                + "class would cost -- the root-type filter is not being consulted");
+        }
+
         [Fact]
         public void EqualitySaturationNeverThrowsUnderAStarvedBudget()
         {

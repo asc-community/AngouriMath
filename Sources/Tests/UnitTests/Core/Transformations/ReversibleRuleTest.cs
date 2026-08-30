@@ -132,8 +132,6 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-conjunction-with-a-falsehood-is-false: ReplacementIsCode",
                     "a-conjunction-with-itself-is-itself: ReplacementIsCode",
                     "a-cosecant-times-a-sine-of-one-angle-is-one: ReplacementIsCode",
-                    "a-cosine-of-an-arccosine: PatternCannotBeBuilt",
-                    "a-cotangent-of-an-arccotangent: PatternCannotBeBuilt",
                     "a-difference-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "a-difference-of-even-powers-splits: ReplacementIsCode",
                     "a-difference-of-two-negatives-turns-round: ReplacementIsCode",
@@ -272,7 +270,6 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-shifted-factorial-times-the-next-term: ReplacementIsCode",
                     "a-sign-times-a-thing-over-its-own-absolute-value-cancels: ReplacementIsCode",
                     "a-sign-times-an-absolute-value-of-one-thing-is-that-thing: ReplacementIsCode",
-                    "a-sine-of-an-arcsine: PatternCannotBeBuilt",
                     "a-sine-times-a-cosine-of-one-angle-is-half-the-doubled-sine: ReplacementIsCode",
                     "a-square-less-a-number-splits: ReplacementIsCode",
                     "a-squared-cosecant-less-a-squared-cotangent-is-one: ReplacementIsCode",
@@ -288,7 +285,6 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-sum-of-two-negatives-is-a-negated-sum: ReplacementIsCode",
                     "a-sum-or-difference-that-is-a-perfect-square: ReplacementIsCode",
                     "a-sum-over-its-own-reverse-is-one: ReplacementIsCode",
-                    "a-tangent-of-an-arctangent: PatternCannotBeBuilt",
                     "a-tangent-times-a-cotangent-of-one-angle-is-one: ReplacementIsCode",
                     "a-term-added-to-a-difference-that-starts-from-it: ReplacementIsCode",
                     "a-term-added-to-a-difference-that-takes-it-away: ReplacementIsCode",
@@ -307,7 +303,6 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-thing-times-itself-is-its-square: ReplacementIsCode",
                     "a-two-term-denominator-is-multiplied-by-its-conjugate: ReplacementIsCode",
                     "a-union-chain-is-sorted-and-grouped: ReplacementIsCode",
-                    "a-union-with-itself-is-itself: PatternCannotBeBuilt",
                     "a-variable-times-a-number-puts-the-number-first: ReplacementIsCode",
                     "a-variable-times-a-power-puts-the-power-first: ReplacementIsCode",
                     "a-whole-power-comes-out-from-under-a-radical: ReplacementIsCode",
@@ -328,7 +323,6 @@ namespace AngouriMath.Tests.Core.Transformations
                     "an-intersection-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "an-intersection-distributes-over-a-union-on-its-left: ReplacementIsCode",
                     "an-intersection-distributes-over-a-union-on-its-right: ReplacementIsCode",
-                    "an-intersection-with-itself-is-itself: PatternCannotBeBuilt",
                     "an-odd-function-of-a-negative-multiple-negates-cosecant: ReplacementIsCode",
                     "an-odd-function-of-a-negative-multiple-negates-cotan: ReplacementIsCode",
                     "an-odd-function-of-a-negative-multiple-negates-signum: ReplacementIsCode",
@@ -540,17 +534,22 @@ namespace AngouriMath.Tests.Core.Transformations
         [Fact]
         public void APatternOverAnUnbuildableNodeIsMatchableAndNotReversible()
         {
-            var overMod = new MatchedRule(
-                "modulus",
-                MatchPattern.Node<Modf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+            // Integralf carries an optional integration range beside its two children, so no
+            // construction from children alone can rebuild it -- unbuildable for a reason that
+            // will not change, where Modf, which stood here before, was merely a type Construct
+            // had not been given a line for yet.
+            var overIntegral = new MatchedRule(
+                "integral",
+                MatchPattern.Node<Integralf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
                 MatchPattern.Node<Mulf>(MatchPattern.Any("b"), MatchPattern.Any("a")),
                 Soundness.Heuristic);
 
             // It still matches, which is what "matchable and not writable" means.
-            Assert.True(overMod.Left.Matches("x mod y".ToEntity()));
-            Assert.Equal("y * x", overMod.TryApply("x mod y".ToEntity())!.Stringize());
-            Assert.Equal(RuleReversal.PatternCannotBeBuilt, overMod.Reversal);
-            Assert.Null(overMod.Reversed);
+            var integral = MathS.Integral("x".ToEntity(), "y".ToEntity());
+            Assert.True(overIntegral.Left.Matches(integral));
+            Assert.Equal("y * x", overIntegral.TryApply(integral)!.Stringize());
+            Assert.Equal(RuleReversal.PatternCannotBeBuilt, overIntegral.Reversal);
+            Assert.Null(overIntegral.Reversed);
         }
 
         /// <summary>
@@ -570,7 +569,7 @@ namespace AngouriMath.Tests.Core.Transformations
             var thrown = Assert.Throws<ArgumentException>(() => new MatchedRule(
                 "unbuildable",
                 MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
-                MatchPattern.Node<Modf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
+                MatchPattern.Node<Integralf>(MatchPattern.Any("a"), MatchPattern.Any("b")),
                 Soundness.Heuristic));
             Assert.Contains("cannot build", thrown.Message);
         }

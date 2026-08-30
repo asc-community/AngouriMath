@@ -702,7 +702,38 @@ namespace AngouriMath
         /// <see cref="MathS.Settings.ComplexityCriteria"/> which can be changed by user.
         /// See <see cref="MathS.Settings.ComplexityCriteria"/> for more details.
         /// </summary>
-        public double SimplifiedRate => simplifiedRate.GetValue(MathS.Settings.ComplexityCriteria.Value, this);
+        /// <remarks>
+        /// <para>
+        /// <b>Cached for the default criteria only, and computed afresh for any other.</b> The
+        /// cache is one slot per <see cref="Entity"/> instance and the criteria is an ambient
+        /// setting, so the two do not agree about what the cached number is a rate <i>of</i>: a
+        /// rate computed under one cost model was answered with under the next, and
+        /// <c>Simplificator.PickSimplest</c> compares candidates by this property — so it would
+        /// weigh one model's cached rate against another's freshly computed one and choose on the
+        /// strength of it, with nothing anywhere to say the comparison was meaningless.
+        /// </para>
+        /// <para>
+        /// The unset path keeps the cache, which is what nearly every call takes and what the
+        /// slot was there for. A criteria anybody has scoped computes without caching, so it can
+        /// neither be answered with somebody else's number nor leave one behind for them. The
+        /// test is <c>IsOverriden</c> — the setting's own "nobody expressed an opinion", which is
+        /// what <c>BudgetLedger.For</c> already asks of <see cref="MathS.Settings.Budget"/> — and
+        /// not an equality against the default function: it is one ambient read rather than a
+        /// read plus a delegate comparison, on a property <c>Simplificator.PickSimplest</c> reads
+        /// once per candidate. A caller who scopes the default function explicitly gets the same
+        /// number by the uncached route.
+        /// </para>
+        /// </remarks>
+        public double SimplifiedRate
+        {
+            get
+            {
+                var criteria = MathS.Settings.ComplexityCriteria;
+                return criteria.IsOverriden
+                    ? criteria.Value(this)
+                    : simplifiedRate.GetValue(criteria.Default, this);
+            }
+        }
         private LazyPropertyA<double> simplifiedRate;
 
         /// <summary>Checks whether the given expression contains variable</summary>

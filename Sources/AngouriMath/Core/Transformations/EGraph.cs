@@ -16,7 +16,7 @@ namespace AngouriMath.Core.Transformations
     /// <summary>
     /// One e-node: an operator, and the e-classes of its children.
     /// </summary>
-    internal readonly struct ENode : IEquatable<ENode>
+    internal readonly struct ENode : IEquatable<ENode>, IComparable<ENode>
     {
         internal ENode(string op, int[] children)
         {
@@ -36,6 +36,27 @@ namespace AngouriMath.Core.Transformations
         }
 
         public override bool Equals(object? obj) => obj is ENode node && Equals(node);
+
+        /// <summary>
+        /// A total order on e-nodes, so that the members of one e-class can be visited in a
+        /// defined sequence. <see cref="HashSet{T}"/> enumeration order is an unspecified
+        /// implementation detail and a string's hash code is randomised per process, so a cost
+        /// tie between two members would otherwise be settled differently from one run to the
+        /// next -- against the premise that a bounded computation is reproducible given a defined
+        /// algorithm order. Ordinal on <see cref="Op"/>, so it does not move with the culture
+        /// either.
+        /// </summary>
+        public int CompareTo(ENode other)
+        {
+            var byOp = string.CompareOrdinal(Op, other.Op);
+            if (byOp != 0) return byOp;
+            if (Children.Length != other.Children.Length)
+                return Children.Length.CompareTo(other.Children.Length);
+            for (var i = 0; i < Children.Length; i++)
+                if (Children[i] != other.Children[i])
+                    return Children[i].CompareTo(other.Children[i]);
+            return 0;
+        }
 
         public override int GetHashCode()
         {
@@ -57,6 +78,14 @@ namespace AngouriMath.Core.Transformations
     /// </remarks>
     internal sealed class EGraph
     {
+        /// <summary>
+        /// How deep <see cref="Extract(int, Func{Entity, double})"/> will chain through child
+        /// classes before declining to build. A crash guard rather than a quality knob: textbook
+        /// input nests nowhere near this far, so the cap is only reached where the alternative is
+        /// an uncatchable stack overflow.
+        /// </summary>
+        private const int MaxExtractionDepth = 256;
+
         private readonly List<int> parent = new();
         private readonly Dictionary<ENode, int> hashcons = new();
         private readonly Dictionary<int, HashSet<ENode>> classes = new();
@@ -132,33 +161,90 @@ namespace AngouriMath.Core.Transformations
                && set.Any(n => n.Children.Length == 0 && n.Op == leaf);
 
         /// <summary>
+        /// The leaves worth trying as an identity. The additive and multiplicative identities,
+        /// which is what the arithmetic operators have; a fold that needed some other constant
+        /// would be a fact about that operator rather than about neutrality.
+        /// </summary>
+        [ConstantField]
+        private static readonly string[] NeutralLeaves = { "0", "1" };
+
+        /// <summary>
+        /// Which operator folds away which leaf on which side, asked of
+        /// <see cref="Entity.InnerSimplified"/> rather than written out a second time.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This used to be a hand-written table over <c>Sumf</c>, <c>Minusf</c>, <c>Mulf</c>,
+        /// <c>Divf</c> and <c>Powf</c>, restating identities each of those types already
+        /// implements and tests in its own <c>InnerSimplify</c>. Nothing kept the two in step, and
+        /// the divergence would have been silent in the worst direction: the e-graph would go on
+        /// asserting an equivalence the rest of the library had stopped believing, merging two
+        /// classes that are no longer equal.
+        /// </para>
+        /// <para>
+        /// Asking instead of restating also settles the cases that make a hand-written table
+        /// fragile, without anybody having to remember them. <c>0 - x</c> is a negation and
+        /// <c>1 / x</c> a reciprocal, so neither folds to its other operand; <c>1 ^ x</c> is the
+        /// constant 1 rather than <c>x</c>. And if an arm ever answers with a condition attached
+        /// — <c>Powf</c>'s <c>1 ^ x</c> already carries a <c>Providedf</c> domain condition — the
+        /// answer is not the bare operand, so no fold is claimed for it. A hand-written table has
+        /// no way to learn any of that.
+        /// </para>
+        /// </remarks>
+        [ConstantField]
+        private static readonly HashSet<(string Op, string Leaf, int LeafSide)> neutralFolds
+            = BuildNeutralFolds();
+
+        private static HashSet<(string Op, string Leaf, int LeafSide)> BuildNeutralFolds()
+        {
+            var folds = new HashSet<(string, string, int)>();
+            Entity operand = MathS.Var("x");
+            foreach (var type in MatchPattern.BuildableNodeTypes)
+                foreach (var leafText in NeutralLeaves)
+                    for (var side = 0; side < 2; side++)
+                    {
+                        var leaf = leafText.ToEntity();
+                        var children = side == 0
+                            ? new[] { leaf, operand }
+                            : new[] { operand, leaf };
+                        // A node this cannot build, or an arm that throws on a shape it did not
+                        // expect, simply contributes no fold -- the table is what was observed.
+                        try
+                        {
+                            if (MatchPattern.ConstructNode(type, children) is not { } built) continue;
+                            if (built.InnerSimplified.Equals(operand))
+                                folds.Add((type.Name, leafText, side));
+                        }
+                        catch { /* not a fold, and not this table's business why */ }
+                    }
+            return folds;
+        }
+
+        /// <summary>
+        /// The folds this graph performs on insertion, as <c>Op(first, second)</c> — for the test
+        /// that names them, so that a change in <c>InnerSimplify</c> shows up as a changed list
+        /// rather than as e-graph folding quietly gaining or losing a case.
+        /// </summary>
+        internal static IEnumerable<string> NeutralFolds
+            => neutralFolds.Select(fold => fold.LeafSide == 0
+                ? $"{fold.Op}({fold.Leaf}, x)"
+                : $"{fold.Op}(x, {fold.Leaf})");
+
+        /// <summary>
         /// If <paramref name="node"/> is a neutral element applied to something, the class that
         /// already denotes its value -- <see langword="null"/> otherwise.
         /// </summary>
-        /// <remarks>
-        /// <c>Sumf</c> and <c>Mulf</c> are commutative, so the identity folds from either side:
-        /// <c>x + 0</c> and <c>0 + x</c> both denote <c>x</c>. <c>Minusf</c> and <c>Divf</c> are
-        /// not: <c>x - 0</c> and <c>x / 1</c> denote <c>x</c>, but <c>0 - x</c> and <c>1 / x</c>
-        /// do not -- they negate or invert it, a different value from either operand, and not
-        /// something this method may fold away. <c>1 ^ x</c> is likewise not <c>x</c> -- it is
-        /// the constant 1 -- so <c>Powf</c> only checks the exponent.
-        /// </remarks>
         private int? NeutralClass(ENode node)
         {
             if (node.Children.Length != 2) return null;
-            return node.Op switch
+            foreach (var leaf in NeutralLeaves)
             {
-                "Sumf" => Holds(node.Children[1], "0") ? Find(node.Children[0])
-                    : Holds(node.Children[0], "0") ? Find(node.Children[1])
-                    : (int?)null,
-                "Minusf" => Holds(node.Children[1], "0") ? Find(node.Children[0]) : (int?)null,
-                "Mulf" => Holds(node.Children[1], "1") ? Find(node.Children[0])
-                    : Holds(node.Children[0], "1") ? Find(node.Children[1])
-                    : (int?)null,
-                "Divf" => Holds(node.Children[1], "1") ? Find(node.Children[0]) : (int?)null,
-                "Powf" => Holds(node.Children[1], "1") ? Find(node.Children[0]) : (int?)null,
-                _ => null
-            };
+                if (neutralFolds.Contains((node.Op, leaf, 1)) && Holds(node.Children[1], leaf))
+                    return Find(node.Children[0]);
+                if (neutralFolds.Contains((node.Op, leaf, 0)) && Holds(node.Children[0], leaf))
+                    return Find(node.Children[1]);
+            }
+            return null;
         }
 
         /// <summary>Every e-class currently in the graph.</summary>
@@ -256,10 +342,19 @@ namespace AngouriMath.Core.Transformations
         {
             id = Find(id);
             if (memo.TryGetValue(id, out var done)) return done;
+            // visiting is the chain currently being expanded, so its size is this call's depth.
+            // The cycle guard below bounds that chain only by the number of distinct classes,
+            // which unions grow past the input expression's own syntactic depth -- and a
+            // StackOverflowException cannot be caught, so exhausting the stack takes the process
+            // down rather than failing one call. Declining to build is the answer the cycle case
+            // already gives, and the same shape as Gruntz's own MaxDepth.
+            if (visiting.Count >= MaxExtractionDepth) return null;
             if (!visiting.Add(id)) return null;              // a cycle; the other node will do
             Entity? best = null;
             var bestCost = double.MaxValue;
-            foreach (var node in NodesOf(id))
+            // Ordered, not as the set enumerates: a tie on cost is settled by whichever candidate
+            // is reached first, and set order is neither specified nor stable across processes.
+            foreach (var node in NodesOf(id).OrderBy(node => node))
             {
                 var parts = new Entity[node.Children.Length];
                 var ok = true;
@@ -277,6 +372,12 @@ namespace AngouriMath.Core.Transformations
                 if (codomains.TryGetValue(node, out var domain)) built = built.WithCodomain(domain);
                 double here;
                 try { here = cost(built); } catch { continue; }
+                // A model that answers NaN has not ranked this candidate, which is what a model
+                // that throws is already saying, so both decline it the same way. Without this,
+                // the comparison below is false for NaN on either side (IEEE-754), so NaN becomes
+                // the incumbent cheapest and every later candidate then beats it unconditionally
+                // -- the answer stops being the cheapest and becomes whichever member came last.
+                if (double.IsNaN(here)) continue;
                 if (here >= bestCost) continue;
                 best = built;
                 bestCost = here;
@@ -294,21 +395,14 @@ namespace AngouriMath.Core.Transformations
 
         /// <summary>
         /// <see cref="MatchPattern.ConstructNode"/> takes the runtime <see cref="Type"/> a
-        /// <see cref="Key"/> string names -- this is the one place that resolves the name back,
-        /// so it is the one place that would need to change if two node types ever printed the
-        /// same <c>GetType().Name</c>.
+        /// <see cref="Key"/> string names, and <see cref="MatchPattern.BuildableNodeTypes"/> is
+        /// where those types are named -- once, beside the <c>Construct</c> that builds them.
+        /// This used to hold a second copy of that list, which nothing kept in step: a type added
+        /// to one and not the other silently stopped being reachable from here, with no compiler
+        /// error to say so.
         /// </summary>
-        [ConstantField]
-        private static readonly Dictionary<string, Type> OperatorTypes = new Type[]
-        {
-            typeof(Entity.Sumf), typeof(Entity.Minusf), typeof(Entity.Mulf), typeof(Entity.Divf),
-            typeof(Entity.Powf), typeof(Entity.Logf), typeof(Entity.Sinf), typeof(Entity.Cosf),
-            typeof(Entity.Tanf), typeof(Entity.Cotanf), typeof(Entity.Secantf),
-            typeof(Entity.Cosecantf), typeof(Entity.Absf), typeof(Entity.Signumf),
-        }.ToDictionary(t => t.Name);
-
         private static Type OperatorType(string op)
-            => OperatorTypes.TryGetValue(op, out var type) ? type : typeof(void);
+            => MatchPattern.NodeTypeNamed(op) ?? typeof(void);
 
         /// <summary>
         /// Whether the e-class <paramref name="id"/> already contains a leaf equal to

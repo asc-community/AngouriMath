@@ -185,6 +185,49 @@ namespace AngouriMath.Tests.Core
                 "y ^ (1 * (-1)) * x really is a bigger tree, and SmallestTree counts trees");
         }
 
+        /// <summary>
+        /// <see cref="Entity.SimplifiedRate"/> caches one value per <see cref="Entity"/> instance
+        /// and the cost model is an ambient setting, so a rate computed under one model was handed
+        /// back unchanged under another. That is not merely a stale number:
+        /// <c>Simplificator.PickSimplest</c> compares candidates by this property, so it would
+        /// compare one model's cached rate against another's freshly computed one and pick on the
+        /// strength of it, with nothing to say anything had gone wrong.
+        /// </summary>
+        [Fact]
+        public void ARateIsNotAnsweredFromAnotherCostModelsCache()
+        {
+            var expr = "a / b + b / c".ToEntity();
+
+            var underDefault = expr.SimplifiedRate;          // fills the cache
+            double underFewestDivisions;
+            using (MathS.Settings.ComplexityCriteria.Set(CostModel.FewestDivisions.Cost))
+                underFewestDivisions = expr.SimplifiedRate;
+            var backUnderDefault = expr.SimplifiedRate;
+
+            Assert.Equal(CostModel.Default.Cost(expr), underDefault);
+            Assert.Equal(CostModel.FewestDivisions.Cost(expr), underFewestDivisions);
+            Assert.NotEqual(underDefault, underFewestDivisions);
+            // And the scoped model does not poison the slot on the way out either.
+            Assert.Equal(underDefault, backUnderDefault);
+        }
+
+        /// <summary>
+        /// Every model, so that this holds for one a caller wrote as well as for the named ones —
+        /// the cache is keyed on the criteria being the default, not on the model being known.
+        /// </summary>
+        [Fact]
+        public void EveryModelIsAnsweredWithItsOwnRate()
+        {
+            var expr = "1 / (sqrt(3) + 5) + x ^ 2".ToEntity();
+            _ = expr.SimplifiedRate;                          // fills the cache under the default
+
+            foreach (var model in CostModel.All)
+            {
+                using var _scoped = MathS.Settings.ComplexityCriteria.Set(model.Cost);
+                Assert.Equal(model.Cost(expr), expr.SimplifiedRate);
+            }
+        }
+
         /// <summary>They can be listed and named, which is what "as data" buys.</summary>
         [Fact]
         public void TheyCanBeListedAndNamed()
