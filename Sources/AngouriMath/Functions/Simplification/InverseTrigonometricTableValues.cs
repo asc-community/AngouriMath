@@ -82,12 +82,47 @@ namespace AngouriMath.Functions
             => Complement(PullArcsin(arg, out var arcsin), arcsin, out res);
 
         /// <summary>
-        /// arccotan(x) = pi/2 - arctan(x), the same reading of it the simplification rule for
-        /// arctan(x) + arccotan(x) already takes.
+        /// <b><c>arccotan(x)</c> here is <c>arctan(1/x)</c>, with range <c>(-pi/2, pi/2]</c> — not
+        /// the textbook <c>(0, pi)</c>.</b> So the complement is <c>pi/2 - arctan(x)</c> for a
+        /// non-negative argument and <c>-pi/2 - arctan(x)</c> for a negative one.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This read <c>pi/2 - arctan(x)</c> for every argument, which is the textbook identity and
+        /// is <b>wrong on every negative one</b>: <c>arccotan(-1)</c> came back as <c>3/4 * pi</c>
+        /// where the function's own value is <c>-pi/4</c>, so <see cref="Entity.Simplify(int)"/>
+        /// and <c>EvalNumerical</c> disagreed about a closed-form constant. Measured at the three
+        /// arguments that settle a range: <c>arccotan(1)</c> is <c>0.785…</c>, <c>arccotan(-1)</c>
+        /// is <c>-0.785…</c> and <c>arccotan(0)</c> is <c>1.570…</c>, so the range is
+        /// <c>(-pi/2, pi/2]</c> and the function is odd away from zero.
+        /// </para>
+        /// <para>
+        /// The docstring it replaces claimed to take "the same reading of it the simplification
+        /// rule for <c>arctan(x) + arccotan(x)</c> already takes". That rule answers <c>pi/2</c>
+        /// for a non-negative argument and <c>-pi/2</c> for a negative one
+        /// (<a href="https://github.com/asc-community/AngouriMath/issues/887">#887</a>) — so the
+        /// two readings were opposite, and the comment asserting they agreed is what let it stand.
+        /// </para>
+        /// </remarks>
         internal static bool PullArccotan(Complex arg, [NotNullWhen(true)] out Entity? res)
-            => Complement(PullArctan(arg, out var arctan), arctan, out res);
+        {
+            if (!PullArctan(arg, out var arctan) || arctan is null)
+            {
+                res = null;
+                return false;
+            }
+            // The sign is taken from the argument rather than from the angle, because arctan(0)
+            // is 0 and carries none: arccotan(0) is pi/2 and not -pi/2.
+            var negative = arg is Real { EDecimal: var given } && given.IsNegative;
+            res = ((negative ? -pi / 2 : pi / 2) - arctan).InnerSimplified;
+            return true;
+        }
 
+        /// <summary>
+        /// arccos(x) = pi/2 - arcsin(x), which is also the range arccos is stated over — and unlike
+        /// <see cref="PullArccotan"/> this holds for every argument, arccos running over
+        /// <c>[0, pi]</c> while arcsin runs over <c>[-pi/2, pi/2]</c>.
+        /// </summary>
         private static bool Complement(bool found, Entity? angle, [NotNullWhen(true)] out Entity? res)
         {
             if (!found || angle is null)
