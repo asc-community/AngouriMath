@@ -120,6 +120,22 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         /// <summary>
+        /// How an arm is referred to: <b>by name where it has one</b>, and by its index where the
+        /// only name it has is its own rendered pattern.
+        /// </summary>
+        /// <remarks>
+        /// This is what the note on <see cref="AConflictIsReportableAsThePatternsItIsBetween"/>
+        /// asks for — "an index moves whenever somebody edits the <c>switch</c>, which is exactly
+        /// when this test fires" — and it became possible one set at a time, as the registry was
+        /// repointed at the rules it runs. It is not hypothetical: repointing <c>Power</c> moved
+        /// its arms from 35 to 31 and invalidated two recorded orderings that named nothing but
+        /// numbers. A set still described by <c>RuleRegistryGenerator</c> has no name to give, so
+        /// it keeps the index and will stop needing to when it is repointed.
+        /// </remarks>
+        private static string Ident(RewriteRuleSet set, int index)
+            => Explanation.IsProse(set.Rules[index].Name) ? set.Rules[index].Name : index.ToString();
+
+        /// <summary>
         /// Every pair of arms of one set observed to fire at the same node and disagree about the
         /// result, as <c>Set[earlier,later]</c>.
         /// </summary>
@@ -143,7 +159,7 @@ namespace AngouriMath.Tests.Core.Transformations
                             {
                                 if (i >= j || settled[i].Equals(settled[j]))
                                     continue;
-                                var key = $"{set.Name}[{i},{j}]";
+                                var key = $"{set.Name}[{Ident(set, i)},{Ident(set, j)}]";
                                 conflicts.Add(key);
                                 if (!examples.ContainsKey(key))
                                     examples[key] = $"{node.Stringize()} -> {settled[i].Stringize()} "
@@ -163,6 +179,13 @@ namespace AngouriMath.Tests.Core.Transformations
         /// way. They are recorded because that is a fact about the current arms and not a
         /// guarantee: an arm inserted above one of these changes an answer, and without this list
         /// nothing would notice.
+        /// <para/>
+        /// <b>Two of the three now name their arms and one still cannot</b>, which is the state of
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/825">#825</a> written into a
+        /// test: <c>Power</c> is described from the rules it runs and <c>Common</c> is not. The two
+        /// that name them used to read <c>Power[18,19]</c> and <c>Power[6,19]</c>, and repointing
+        /// that set moved its arms from 35 to 31 and invalidated both — which is the failure the
+        /// note on <see cref="AConflictIsReportableAsThePatternsItIsBetween"/> predicted.
         /// </remarks>
         [Fact]
         public void OnlyTheRecordedArmOrderingsAreLoadBearing()
@@ -172,12 +195,14 @@ namespace AngouriMath.Tests.Core.Transformations
             var recorded = new[]
             {
                 // x * 1/2 -> 1/2 * x (the sort) rather than x / 2 (the quotient). Both settle to
-                // x / 2 once InnerSimplified has run.
+                // x / 2 once InnerSimplified has run. Still by index, because `Common` is one of
+                // the two sets the registry still describes from its `switch`, and a generated arm
+                // has no name but its own rendered pattern.
                 "Common[12,89]",
                 // (-x) ^ (-1) -> -1 / x rather than 1 / (-x).
-                "Power[18,19]",
+                "Power[a-numeric-factor-comes-out-of-a-power-of-a-product,a-reciprocal-power-is-a-quotient]",
                 // (e ^ y) ^ (-1) -> e ^ (y * (-1)) rather than 1 / e ^ y.
-                "Power[6,19]",
+                "Power[a-power-of-a-power-multiplies-the-exponents,a-reciprocal-power-is-a-quotient]",
             };
 
             Assert.Equal(
@@ -201,11 +226,15 @@ namespace AngouriMath.Tests.Core.Transformations
             foreach (var conflict in conflicts)
             {
                 var name = conflict.Substring(0, conflict.IndexOf('['));
-                var indices = conflict.Substring(conflict.IndexOf('[') + 1).TrimEnd(']')
-                    .Split(',').Select(int.Parse).ToList();
+                var arms = conflict.Substring(conflict.IndexOf('[') + 1).TrimEnd(']').Split(',');
                 var set = Assert.Single(RewriteRules.All.Where(s => s.Name == name));
-                Assert.NotEmpty(set.Rules[indices[0]].PatternSource);
-                Assert.NotEmpty(set.Rules[indices[1]].PatternSource);
+                foreach (var arm in arms)
+                {
+                    var rule = int.TryParse(arm, out var index)
+                        ? set.Rules[index]
+                        : Assert.Single(set.Rules.Where(r => r.Name == arm));
+                    Assert.NotEmpty(rule.PatternSource);
+                }
                 Assert.NotEmpty(examples[conflict]);
             }
         }

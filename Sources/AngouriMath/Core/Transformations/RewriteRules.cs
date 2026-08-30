@@ -177,8 +177,7 @@ namespace AngouriMath.Core.Transformations
             // (a ^ b) ^ c is a ^ (b c) only on a branch; the rules guard for it, and the
             // guard is what the tier is stating.
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.Power.ApplyHere,
-            Patterns.PowerRulesArms);
+            Matching.MatchedRules.Power);
 
         /// <summary>
         /// Multiplies products over sums out.
