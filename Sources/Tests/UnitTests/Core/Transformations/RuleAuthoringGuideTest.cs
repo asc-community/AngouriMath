@@ -49,7 +49,7 @@ namespace AngouriMath.Tests.Core.Transformations
                     MatchedRules.All.Any(data => data.Name == set.Name)
                     || set.Name.StartsWith("CommonDenominator", StringComparison.Ordinal)),
                 "how many registered sets run the matcher");
-            Stated(25, RewriteRules.All.Count(set =>
+            Stated(27, RewriteRules.All.Count(set =>
                     set.Rules.Count > 0 && set.Rules.All(rule => rule.Soundness is not null)),
                 "how many registered sets describe what they run");
         }
@@ -68,7 +68,7 @@ namespace AngouriMath.Tests.Core.Transformations
 
         [Fact]
         public void TheIdentityIsNotTheName()
-            => Stated(165,
+            => Stated(292,
                 MatchedRules.All.SelectMany(set => set.Rules).Count(rule => rule.Description is not null),
                 "how many rules carry an identity");
 

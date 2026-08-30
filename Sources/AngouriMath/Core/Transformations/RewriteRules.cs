@@ -121,8 +121,7 @@ namespace AngouriMath.Core.Transformations
             "Collects like terms and normalises the arrangement of products and quotients.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.Common.ApplyHere,
-            Patterns.CommonRulesArms);
+            Matching.MatchedRules.Common);
 
         /// <summary>
         /// Gets a quotient into the shape the division rules expect before they run.
@@ -480,8 +479,7 @@ namespace AngouriMath.Core.Transformations
             "Rearranges equalities and inequalities into their usual form.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.InequalityEquality.ApplyHere,
-            Patterns.InequalityEqualityRulesArms);
+            Matching.MatchedRules.InequalityEquality);
 
         /// <summary>
         /// Rules about unions, intersections and set differences.

@@ -175,12 +175,14 @@ namespace AngouriMath.Tests.Core.Transformations
             var path = recording.PathFrom(input, input.Simplify());
 
             Assert.NotNull(path);
-            var carrying = Assert.Single(path!.Steps.Where(step => step.Rewrites.Any(rewrite =>
-                rewrite.Rule?.PatternSource == "Divf(var any1, Divf(var any2, var any3))"
-                && rewrite.Rule?.ReplacementSource == "any1 * any3 / any2")));
+            // By name, since `Common` is described by the rules it runs. This matched the arm's
+            // rendered pattern and replacement text until it was.
+            const string named = "dividing-by-a-quotient-multiplies-by-its-reciprocal";
+            var carrying = Assert.Single(path!.Steps.Where(step =>
+                step.Rewrites.Any(rewrite => rewrite.Rule?.Name == named)));
 
             // and the rewrite it carries is a rewrite of a subexpression of the step it is in
-            var rewrite = carrying.Rewrites.First(step => step.Rule?.ReplacementSource == "any1 * any3 / any2");
+            var rewrite = carrying.Rewrites.First(step => step.Rule?.Name == named);
             Assert.Contains(rewrite.Before, carrying.Before.Nodes);
         }
 

@@ -113,6 +113,7 @@ namespace AngouriMath.Tests.Core.Transformations
             {
                 nameof(RewriteRules.Boolean),
                 nameof(RewriteRules.CollapseMultipleFractions),
+                nameof(RewriteRules.Common),
                 nameof(RewriteRules.CollapseTrigonometricFunctions),
                 nameof(RewriteRules.CommonDenominator),
                 nameof(RewriteRules.CommonDenominatorCountingConstants),
@@ -124,6 +125,7 @@ namespace AngouriMath.Tests.Core.Transformations
                 nameof(RewriteRules.Expansion),
                 nameof(RewriteRules.Factorization),
                 nameof(RewriteRules.FactorizeFactorialMultiplications),
+                nameof(RewriteRules.InequalityEquality),
                 nameof(RewriteRules.InvertNegativeMultipliers),
                 nameof(RewriteRules.InvertNegativePowers),
                 nameof(RewriteRules.NormalTrigonometricForm),
@@ -166,7 +168,7 @@ namespace AngouriMath.Tests.Core.Transformations
             var repointed = RewriteRules.All
                 .Where(set => set.Rules.Count > 0 && set.Rules.All(rule => rule.Soundness is not null))
                 .ToList();
-            Assert.Equal(165, repointed.Sum(set => set.Rules.Count));
+            Assert.Equal(292, repointed.Sum(set => set.Rules.Count));
             Assert.All(repointed, set => Assert.All(set.Rules, rule => Assert.NotNull(rule.Description)));
         }
 
