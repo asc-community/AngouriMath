@@ -117,6 +117,15 @@ namespace AngouriMath.Core.Transformations.Matching
         /// One feature was added for it and nothing else changed, which is the answer to the
         /// question this set was picked to ask.
         /// </para>
+        /// <para>
+        /// <b>The order-dependence above is no longer maintained by hand.</b>
+        /// <see cref="MatchPattern.Subsumes"/> computes it — <c>Mulf(a, Divf(b, c))</c> matches
+        /// everything <c>Mulf(Divf(a, b), Divf(c, d))</c> matches and more — and
+        /// <c>MatchedRuleSet.RulesByPriority</c> puts the specific rule first because of that
+        /// rather than because of where it sits in this file. Four of this set's rule pairs are
+        /// ordered that way, and they are four of only six such conflicts in the whole registry;
+        /// <c>RulePriorityTest</c> lists them.
+        /// </para>
         /// </remarks>
         internal static MatchedRuleSet CollapseMultipleFractions { get; } = new(
             nameof(CollapseMultipleFractions),

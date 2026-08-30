@@ -416,6 +416,7 @@ namespace AngouriMath.Core.Transformations.Matching
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             this.rules = rules ?? throw new ArgumentNullException(nameof(rules));
+            byPriority = ByPriority(this.rules);
         }
 
         /// <summary>
@@ -426,6 +427,85 @@ namespace AngouriMath.Core.Transformations.Matching
         /// tree, and it was the whole of what remained after the match itself stopped allocating.
         /// </summary>
         private readonly MatchedRule[] rules;
+
+        /// <summary>
+        /// The same rules in the order they are actually tried: <b>the more specific rule
+        /// first</b>, and declaration order wherever specificity has no opinion. See
+        /// <see cref="ByPriority"/>.
+        /// </summary>
+        private readonly MatchedRule[] byPriority;
+
+        /// <summary>
+        /// <paramref name="declared"/> ordered so that no rule is tried before a rule its pattern
+        /// subsumes — the more specific one first — keeping declaration order everywhere else.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>What this replaces is the position somebody typed a rule at.</b> A set is
+        /// first-match-wins, so where two rules both fire at a node and disagree, whichever comes
+        /// first decides the answer. Where one pattern subsumes the other that decision is not a
+        /// preference: the general rule would swallow the special one and the special one would
+        /// never fire at all, so the specific rule has to be tried first. That was maintained by
+        /// hand and written in a comment on one set;
+        /// <see cref="MatchPattern.Subsumes"/> computes it, and this applies it.
+        /// </para>
+        /// <para>
+        /// <b>It changes no answer today, and that is a measurement rather than an intention.</b>
+        /// Over the 5,480 within-set rule pairs in <see cref="MatchedRules"/>, subsumption has an
+        /// opinion about <b>28</b> of them — spread across eight sets, <c>Boolean</c> and
+        /// <c>InequalityEquality</c> carrying half — and in <b>every one</b> the specific rule is
+        /// already declared first. None is mutual. So this orders what was already ordered; what
+        /// it adds is that inserting a general rule above a specific one no longer silently
+        /// reverses an answer. <c>RulePriorityTest</c> holds the two orders equal, so the file
+        /// stays readable as well as correct.
+        /// </para>
+        /// <para>
+        /// A stable topological sort, taking the earliest-declared rule that has nothing left
+        /// which must precede it. Subsumption is conservative, so most pairs constrain nothing and
+        /// fall through to declaration order. It cannot cycle — a cycle would need each of two
+        /// rules to be strictly more general than the other — but a cycle is emitted in
+        /// declaration order rather than trusted not to happen, because a sort that silently drops
+        /// a rule would be a set quietly missing a rewrite.
+        /// </para>
+        /// </remarks>
+        private static MatchedRule[] ByPriority(MatchedRule[] declared)
+        {
+            var count = declared.Length;
+            if (count < 2) return declared;
+
+            // mustPrecede[g] is the set of rules that have to be tried before rule g, which is
+            // every rule g's pattern strictly subsumes.
+            var waitingOn = new int[count];
+            var blocks = new List<int>[count];
+            for (var g = 0; g < count; g++)
+                for (var sp = 0; sp < count; sp++)
+                {
+                    if (g == sp) continue;
+                    if (!declared[g].Left.Subsumes(declared[sp].Left)) continue;
+                    if (declared[sp].Left.Subsumes(declared[g].Left)) continue;
+                    (blocks[sp] ??= new List<int>()).Add(g);
+                    waitingOn[g]++;
+                }
+
+            var ordered = new MatchedRule[count];
+            var taken = new bool[count];
+            for (var slot = 0; slot < count; slot++)
+            {
+                var next = -1;
+                for (var i = 0; i < count; i++)
+                    if (!taken[i] && waitingOn[i] == 0) { next = i; break; }
+                // Only reachable if subsumption were not antisymmetric. Falling back to
+                // declaration order keeps every rule in the set.
+                if (next < 0)
+                    for (var i = 0; i < count; i++)
+                        if (!taken[i]) { next = i; break; }
+                taken[next] = true;
+                ordered[slot] = declared[next];
+                if (blocks[next] is { } blocked)
+                    foreach (var g in blocked) waitingOn[g]--;
+            }
+            return ordered;
+        }
 
         // Indexing the rules by the node type each one requires -- the thing a `switch` cannot
         // do and a set of values can -- was tried here and is deliberately absent. Measured, a
@@ -438,7 +518,17 @@ namespace AngouriMath.Core.Transformations.Matching
 
         internal string Name { get; }
 
-        /// <summary>The rules, in the order they are tried. <b>Enumerable</b>, which is the whole point.</summary>
+        /// <summary>
+        /// The rules, <b>in the order they are written</b>. <b>Enumerable</b>, which is the whole
+        /// point.
+        /// </summary>
+        /// <remarks>
+        /// Not necessarily the order they are tried in — see <see cref="RulesByPriority"/>, which
+        /// puts a rule ahead of any rule whose pattern subsumes it. The two are equal today and
+        /// <c>RulePriorityTest</c> holds them equal, so this is the order to read the set in and to
+        /// index it by; <see cref="AsAddressable"/> and <see cref="Reversed"/> use it for that
+        /// reason.
+        /// </remarks>
         internal IReadOnlyList<MatchedRule> Rules => rules;
 
         /// <summary>
@@ -473,14 +563,24 @@ namespace AngouriMath.Core.Transformations.Matching
         internal Soundness Soundness
             => rules.Length == 0 ? Soundness.Sound : rules.Max(rule => rule.Soundness);
 
-        /// <summary>The first rule that applies at this node, or null.</summary>
+        /// <summary>
+        /// The first rule that applies at this node, or null — first in
+        /// <see cref="ByPriority"/>'s order, which is the order it would be tried in.
+        /// </summary>
         internal MatchedRule? FirstMatching(Entity expr)
         {
-            foreach (var rule in rules)
+            foreach (var rule in byPriority)
                 if (rule.TryApply(expr) is not null)
                     return rule;
             return null;
         }
+
+        /// <summary>
+        /// The rules in the order they are tried, which is <see cref="ByPriority"/>'s and not
+        /// necessarily <see cref="Rules"/>'s. Exposed so that the two can be compared rather than
+        /// assumed equal.
+        /// </summary>
+        internal IReadOnlyList<MatchedRule> RulesByPriority => byPriority;
 
         /// <summary>One rewrite at this node only, leaving children alone.</summary>
         /// <summary>
@@ -575,11 +675,11 @@ namespace AngouriMath.Core.Transformations.Matching
             if (known.TryGetValue(type, out var found))
                 return found;
 
-            var matching = new List<MatchedRule>(rules.Length);
-            foreach (var rule in rules)
+            var matching = new List<MatchedRule>(byPriority.Length);
+            foreach (var rule in byPriority)
                 if (rule.Left.RequiredRootType is not { } required || required.IsAssignableFrom(type))
                     matching.Add(rule);
-            found = matching.Count == rules.Length ? rules : matching.ToArray();
+            found = matching.Count == byPriority.Length ? byPriority : matching.ToArray();
 
             applicable = new Dictionary<Type, MatchedRule[]>(known) { [type] = found };
             return found;

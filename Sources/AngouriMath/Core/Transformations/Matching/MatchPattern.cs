@@ -314,6 +314,63 @@ namespace AngouriMath.Core.Transformations.Matching
         internal abstract int NodeCount { get; }
 
         /// <summary>
+        /// Whether every expression <paramref name="other"/> matches, this one matches too — so
+        /// that <i>this pattern is the more general of the two</i>, and a rule written on it
+        /// would swallow a rule written on <paramref name="other"/> if it were tried first.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>The fact behind an ordering that is currently a comment.</b>
+        /// <c>MatchedRules.CollapseMultipleFractions</c> says of itself that it "is
+        /// order-dependent, since <c>Mulf(Divf, Divf)</c> has to be tried before
+        /// <c>Mulf(a, Divf)</c> or the more general rule would swallow the special one". That is
+        /// this relation, observed by hand and then maintained by hand. Computed instead, the
+        /// order it implies is derived from the patterns rather than from where somebody typed
+        /// them.
+        /// </para>
+        /// <para>
+        /// <b>Sound in one direction only.</b> <see langword="true"/> is a claim — every
+        /// expression the other matches, this matches — and every clause below is structural, so
+        /// the claim holds for all expressions rather than for the ones a test happened to
+        /// generate. <see langword="false"/> means <i>not proved</i> and never <i>disproved</i>:
+        /// a hole carrying a predicate is arbitrary code, an <c>Exact</c> literal can be equal to
+        /// a value of another runtime type (a rational that reduced to an integer), and an n-ary
+        /// <c>Gathered</c> pattern matches a family this does not attempt to reason about. Each of
+        /// those answers <see langword="false"/> and leaves the pair ordered by where it was
+        /// written, which is what the code did before.
+        /// </para>
+        /// <para>
+        /// <b>It is a matching problem, not a size comparison.</b> A hole repeated across a
+        /// pattern is an equality constraint — <c>Mulf(a, a)</c> matches strictly less than
+        /// <c>Mulf(a, b)</c> while having the same node count — so this matches this pattern
+        /// <i>against</i> the other as a term, carrying an assignment from this pattern's holes to
+        /// the other's subpatterns and requiring a repeated hole to be assigned consistently.
+        /// Comparing <see cref="NodeCount"/> would call those two equally general and get the
+        /// ordering wrong in the one case the ordering exists for.
+        /// </para>
+        /// </remarks>
+        internal bool Subsumes(MatchPattern other)
+            => other is not null
+               && SubsumesCore(other, new Dictionary<string, MatchPattern>(StringComparer.Ordinal));
+
+        /// <summary>
+        /// <see cref="Subsumes"/>, carrying the assignment from this pattern's holes to the
+        /// subpatterns of the one being subsumed. Refusing is always sound, so the base answers
+        /// <see langword="false"/> and a pattern kind that can reason about itself says so.
+        /// </summary>
+        private protected virtual bool SubsumesCore(
+            MatchPattern other, Dictionary<string, MatchPattern> assigned) => false;
+
+        /// <summary>
+        /// Whether two patterns are written the same way, used to check that a repeated hole was
+        /// assigned consistently. Structural, and stricter than semantic equality: two patterns
+        /// that mean the same thing while being written differently answer <see langword="false"/>
+        /// here, which loses a subsumption rather than inventing one.
+        /// </summary>
+        private protected virtual bool SameShapeAs(MatchPattern other)
+            => ReferenceEquals(this, other);
+
+        /// <summary>
         /// The expression this pattern stands for under <paramref name="bindings"/>, or
         /// <see langword="false"/> where those bindings do not satisfy it.
         /// </summary>
@@ -649,6 +706,50 @@ namespace AngouriMath.Core.Transformations.Matching
 
             internal override int NodeCount => 1;
 
+            /// <summary>
+            /// A hole is the most general thing a pattern can be, and it subsumes whatever it is
+            /// allowed to stand for — subject to the two constraints it may carry.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// A <c>where</c> predicate is arbitrary code over an expression, so what it admits
+            /// cannot be read off the pattern and this refuses rather than guesses.
+            /// </para>
+            /// <para>
+            /// A required type is checked against what the other pattern <i>guarantees</i> at its
+            /// root, which is <see cref="RequiredRootType"/> — a necessary condition, and here the
+            /// direction that makes it usable: a pattern whose root is always a <c>Divf</c> is
+            /// certainly matched by a hole asking for an <c>Entity</c>. A pattern that guarantees
+            /// nothing, an <c>Exact</c> literal among them, is refused: two entities can be equal
+            /// without being the same runtime type, so a literal's own type is not what it
+            /// guarantees.
+            /// </para>
+            /// <para>
+            /// Then the assignment. A hole seen for the second time must stand for the same thing
+            /// it stood for the first time, which is what makes <c>Mulf(a, a)</c> strictly less
+            /// general than <c>Mulf(a, b)</c> rather than equally general.
+            /// </para>
+            /// </remarks>
+            private protected override bool SubsumesCore(
+                MatchPattern other, Dictionary<string, MatchPattern> assigned)
+            {
+                if (where is not null) return false;
+                if (required is not null
+                    && (other.RequiredRootType is not { } guaranteed
+                        || !required.IsAssignableFrom(guaranteed)))
+                    return false;
+                if (assigned.TryGetValue(name, out var already))
+                    return already.SameShapeAs(other);
+                assigned[name] = other;
+                return true;
+            }
+
+            private protected override bool SameShapeAs(MatchPattern other)
+                => other is AnyPattern that
+                   && string.Equals(name, that.name, StringComparison.Ordinal)
+                   && required == that.required
+                   && where == that.where;
+
             internal override bool TryBuild(Bindings bindings, out Entity built)
             {
                 built = null!;
@@ -745,6 +846,17 @@ namespace AngouriMath.Core.Transformations.Matching
 
             internal override int NodeCount => 1;
 
+            /// <summary>
+            /// A literal admits exactly one value, so it subsumes only a pattern admitting no
+            /// more than that — which among the kinds here is the same literal.
+            /// </summary>
+            private protected override bool SubsumesCore(
+                MatchPattern other, Dictionary<string, MatchPattern> assigned)
+                => other is ExactPattern that && value.Equals(that.value);
+
+            private protected override bool SameShapeAs(MatchPattern other)
+                => other is ExactPattern that && value.Equals(that.value);
+
             internal override bool TryBuild(Bindings bindings, out Entity built)
             {
                 built = value;
@@ -808,6 +920,88 @@ namespace AngouriMath.Core.Transformations.Matching
             private readonly int nodeCount;
 
             internal override int NodeCount => nodeCount;
+
+            /// <summary>
+            /// A node pattern pins the node type and the arity, so it subsumes only another node
+            /// pattern of that type and arity whose children it subsumes in turn — under one
+            /// assignment, so that a hole repeated across children has to be assigned the same
+            /// subpattern in each.
+            /// </summary>
+            /// <remarks>
+            /// <b>Commutativity is a claim about this side.</b> A commutative pattern matches a
+            /// node in either order, so subsuming needs only <i>one</i> of the two pairings to
+            /// work; a non-commutative one gets the written pairing and nothing else. When the
+            /// pattern being subsumed is the commutative one, it matches both orders, so this must
+            /// cover both — and a non-commutative pattern covers both only when its two children
+            /// are interchangeable, which the written pairing already decides. The assignment is
+            /// copied before each attempt, because a pairing that fails half way must not leave
+            /// its bindings behind for the other one.
+            /// </remarks>
+            private protected override bool SubsumesCore(
+                MatchPattern other, Dictionary<string, MatchPattern> assigned)
+            {
+                if (other is not NodePattern that
+                    || nodeType != that.nodeType
+                    || children.Length != that.children.Length)
+                    return false;
+
+                if (that.commutative && !commutative)
+                {
+                    var both = new Dictionary<string, MatchPattern>(assigned, StringComparer.Ordinal);
+                    if (!InOrder(that.children, both, swapped: false)) return false;
+                    if (!InOrder(that.children, both, swapped: true)) return false;
+                    Adopt(assigned, both);
+                    return true;
+                }
+
+                if (commutative)
+                {
+                    var straight = new Dictionary<string, MatchPattern>(assigned, StringComparer.Ordinal);
+                    if (InOrder(that.children, straight, swapped: false))
+                    {
+                        Adopt(assigned, straight);
+                        return true;
+                    }
+                    var crossed = new Dictionary<string, MatchPattern>(assigned, StringComparer.Ordinal);
+                    if (InOrder(that.children, crossed, swapped: true))
+                    {
+                        Adopt(assigned, crossed);
+                        return true;
+                    }
+                    return false;
+                }
+
+                return InOrder(that.children, assigned, swapped: false);
+            }
+
+            private bool InOrder(
+                MatchPattern[] theirs, Dictionary<string, MatchPattern> assigned, bool swapped)
+            {
+                for (var i = 0; i < children.Length; i++)
+                {
+                    var theirIndex = swapped ? children.Length - 1 - i : i;
+                    if (!children[i].SubsumesCore(theirs[theirIndex], assigned)) return false;
+                }
+                return true;
+            }
+
+            private static void Adopt(
+                Dictionary<string, MatchPattern> into, Dictionary<string, MatchPattern> from)
+            {
+                foreach (var pair in from) into[pair.Key] = pair.Value;
+            }
+
+            private protected override bool SameShapeAs(MatchPattern other)
+            {
+                if (other is not NodePattern that
+                    || nodeType != that.nodeType
+                    || commutative != that.commutative
+                    || children.Length != that.children.Length)
+                    return false;
+                for (var i = 0; i < children.Length; i++)
+                    if (!children[i].SameShapeAs(that.children[i])) return false;
+                return true;
+            }
 
             internal override IEnumerable<string> BoundNames => children.SelectMany(c => c.BoundNames);
 

@@ -596,12 +596,20 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         /// <summary>
-        /// Order is part of the data. Reversing the two rules that overlap makes the general
-        /// one swallow the special one, which is what an ordered list is for and what a
-        /// <c>switch</c> gets by accident of being written top to bottom.
+        /// Order is part of the data — and <b>where one pattern subsumes another it is no longer
+        /// part of the writing</b>. Reversing this set used to make the general rule swallow the
+        /// special one; it does not any more, because the specific rule is put first by what the
+        /// two patterns are rather than by which was typed above the other.
         /// </summary>
+        /// <remarks>
+        /// This test asserted the opposite until <c>MatchedRuleSet.RulesByPriority</c> existed, and
+        /// its own comment gave the reason to change it: a <c>switch</c> gets its ordering "by
+        /// accident of being written top to bottom", and an accident is what an ordered list of
+        /// values does not have to inherit. <c>RulePriorityTest</c> is where the mechanism and its
+        /// limits are.
+        /// </remarks>
         [Fact]
-        public void TheOrderOfTheRulesIsLoadBearing()
+        public void ASubsumedRuleIsTriedFirstHoweverTheSetIsWritten()
         {
             var expr = "(a / b) * (c / d)".ToEntity();
             var asWritten = MatchedRules.CollapseMultipleFractions.FirstMatching(expr);
@@ -609,8 +617,37 @@ namespace AngouriMath.Tests.Core.Transformations
 
             var reversed = new MatchedRuleSet("reversed",
                 MatchedRules.CollapseMultipleFractions.Rules.Reverse().ToArray());
-            Assert.NotEqual("product-of-two-quotients", reversed.FirstMatching(expr)!.Name);
+            Assert.Equal("product-of-two-quotients", reversed.FirstMatching(expr)!.Name);
         }
+
+        /// <summary>
+        /// And where neither pattern subsumes the other, order is still the whole of the answer.
+        /// </summary>
+        /// <remarks>
+        /// The two rules here both match a product of two quotients, and neither is more general
+        /// than the other — one takes the quotient on the left, the other the quotient on the
+        /// right — so nothing but their order decides which fires. Asked as a set of two so that
+        /// the rule which subsumes them both is out of the way; in the real set it wins, which is
+        /// the previous test.
+        /// </remarks>
+        [Fact]
+        public void WhereNeitherRuleSubsumesTheOtherTheOrderStillDecides()
+        {
+            var expr = "(a / b) * (c / d)".ToEntity();
+            var left = Named("product-with-a-quotient-on-the-left");
+            var right = Named("product-with-a-quotient-on-the-right");
+
+            Assert.False(left.Left.Subsumes(right.Left));
+            Assert.False(right.Left.Subsumes(left.Left));
+
+            Assert.Equal(left.Name, new MatchedRuleSet("left first", left, right)
+                .FirstMatching(expr)!.Name);
+            Assert.Equal(right.Name, new MatchedRuleSet("right first", right, left)
+                .FirstMatching(expr)!.Name);
+        }
+
+        private static MatchedRule Named(string name)
+            => MatchedRules.CollapseMultipleFractions.Rules.Single(rule => rule.Name == name);
 
         /// <summary>
         /// A rule-level guard over <b>two</b> bindings at once, which no predicate on a single
