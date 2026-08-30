@@ -372,7 +372,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 // else in the complex plane: this is the definition of a negative power rather
                 // than an identity that needs one. Measured at 0 as well as away from it before
                 // the tier was written down.
-                Soundness.Sound));
+                Soundness.Sound,
+                description: "a ^ n = 1 / a ^ (-n), for a negative integer n"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.InvertNegativeMultipliers"/>, as data.
@@ -396,7 +397,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any<Real>("c", c => c.IsNegative),
                         MatchPattern.Any("b"))),
                 bound => bound["a"] - (-1 * (Real)bound["c"]) * bound["b"],
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "a + (c * b) = a - (-c) * b, for a negative real c"),
 
             // (-1) * (a - b) -> b - a
             new MatchedRule(
@@ -405,7 +407,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Exact(Integer.Create(-1)),
                     MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
                 MatchPattern.Node<Minusf>(MatchPattern.Any("b"), MatchPattern.Any("a")),
-                Soundness.Sound));
+                Soundness.Sound,
+                description: "(-1) * (a - b) = b - a"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.NormalTrigonometricForm"/>, as data.
@@ -517,7 +520,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Sinf>(MatchPattern.Any("a")),
                     MatchPattern.Node<Cosf>(MatchPattern.Any("a"))),
                 MatchPattern.Node<Tanf>(MatchPattern.Any("a")),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "sin(a) / cos(a) = tan(a)"),
 
             // cos(a) / sin(a) -> cotan(a)
             new MatchedRule(
@@ -526,7 +530,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Cosf>(MatchPattern.Any("a")),
                     MatchPattern.Node<Sinf>(MatchPattern.Any("a"))),
                 MatchPattern.Node<Cotanf>(MatchPattern.Any("a")),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "cos(a) / sin(a) = cotan(a)"),
 
             // a / sin(b) -> a * cosec(b)
             new MatchedRule(
@@ -537,7 +542,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(
                     MatchPattern.Any("a"),
                     MatchPattern.Node<Cosecantf>(MatchPattern.Any("b"))),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a / sin(b) = a * cosec(b)"),
 
             // a / cos(b) -> a * sec(b)
             new MatchedRule(
@@ -548,7 +554,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(
                     MatchPattern.Any("a"),
                     MatchPattern.Node<Secantf>(MatchPattern.Any("b"))),
-                Soundness.SoundUnderAssumptions));
+                Soundness.SoundUnderAssumptions,
+                description: "a / cos(b) = a * sec(b)"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.ExpandRules"/>, as data.
@@ -718,7 +725,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 (node, bound) => PolynomialGcd.TryCancel(bound["n"], bound["d"], out var cancelled)
                     ? cancelled
                     : node,
-                Soundness.SoundUnderAssumptions));
+                Soundness.SoundUnderAssumptions,
+                description: "n / d = (n / g) / (d / g), for g the gcd of n and d"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.ExpandFactorialDivisions"/>, as data.
@@ -847,7 +855,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 // sqrt(u)^2 is u for every complex u, so the identity itself is unconditional.
                 // What is not is the test for whether the cross term matches, which needs
                 // Simplify -- see the remark on Patterns.CollapseToPerfectSquare.
-                Soundness.SoundUnderAssumptions));
+                Soundness.SoundUnderAssumptions,
+                description: "a +- 2*sqrt(a)*sqrt(b) + b = (sqrt(a) +- sqrt(b))^2"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.RationalizeDenominator"/>, as data.
@@ -1674,7 +1683,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 "an-intersection-with-itself-is-itself",
                 MatchPattern.Node<Set.Intersectionf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 MatchPattern.Any("a"),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "A /\\ A = A"),
 
             // A /\ (B \/ C) = (A /\ B) \/ (A /\ C), and the same with the union on the left.
             // Two rules rather than one commutative pattern, because each builds its answer with
@@ -1687,7 +1697,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Any<Set>("b"), MatchPattern.Any<Set>("c"))),
                 bound => ((Set)bound["a"]).Intersect((Set)bound["b"])
                     .Unite(((Set)bound["a"]).Intersect((Set)bound["c"])),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "A /\\ (B \\/ C) = (A /\\ B) \\/ (A /\\ C)"),
 
             new MatchedRule(
                 "an-intersection-distributes-over-a-union-on-its-left",
@@ -1697,21 +1708,24 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Set>("a")),
                 bound => ((Set)bound["b"]).Intersect((Set)bound["a"])
                     .Unite(((Set)bound["c"]).Intersect((Set)bound["a"])),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "(B \\/ C) /\\ A = (B /\\ A) \\/ (C /\\ A)"),
 
             // A \/ A = A
             new MatchedRule(
                 "a-union-with-itself-is-itself",
                 MatchPattern.Node<Set.Unionf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 MatchPattern.Any("a"),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "A \\/ A = A"),
 
             // A \ A = {}
             new MatchedRule(
                 "a-set-less-itself-is-empty",
                 MatchPattern.Node<Set.SetMinusf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 bound => Set.Empty,
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "A \\ A = {}"),
 
             // { x : x in S } = S. Bound whole and taken apart in the replacement, because a
             // node pattern cannot reach inside a binder -- see the remark on this set.
@@ -1720,7 +1734,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Any<Set.ConditionalSet>(
                     "cs", set => set.Predicate is Set.Inf(var member, _) && member == set.Var),
                 bound => ((Set.Inf)((Set.ConditionalSet)bound["cs"]).Predicate).SupSet,
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "{ x : x in S } = S"),
 
             // x in {a} = (x = a)
             new MatchedRule(
@@ -1729,7 +1744,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any("x"),
                     MatchPattern.Any<Set.FiniteSet>("s", finite => finite.Count == 1)),
                 bound => bound["x"].EqualTo(((Set.FiniteSet)bound["s"]).First()),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "x in {a} = (x = a)"),
 
             // x in (a; b) is written out as the inequalities it stands for
             new MatchedRule(
@@ -1744,7 +1760,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         bound["x"], interval.Left, interval.LeftClosed,
                         interval.Right, interval.RightClosed);
                 },
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "x in (a; b) = the inequalities it stands for"),
 
             // { True, False } is the boolean domain
             new MatchedRule(
@@ -1752,7 +1769,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Any<Set.FiniteSet>(
                     "s", finite => finite == Functions.Patterns.FullBooleanSet),
                 bound => Set.SpecialSet.Create(Domain.Boolean),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "{ True, False } = the boolean domain"),
 
             // (-oo; +oo) is the domain it is an interval of
             new MatchedRule(
@@ -1761,7 +1779,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     "i", interval => interval.Left == Real.NegativeInfinity
                                      && interval.Right == Real.PositiveInfinity),
                 bound => Set.SpecialSet.Create(((Set.Interval)bound["i"]).Codomain),
-                Soundness.Sound));
+                Soundness.Sound,
+                description: "(-oo; +oo) = the domain it is an interval of"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.SortRules"/>, as data — one set per sort level.

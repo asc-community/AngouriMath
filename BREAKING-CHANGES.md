@@ -68,24 +68,30 @@ read first.
 | **Silent** | `RewriteRules.RationalizeDenominator.Rules` | `[]` — the registry could not read the set | its two rules, addressable and named |
 | **Silent** | `RewriteRules.Power.ApplyOnce("ln(1 / x)")`, and every `log(_, 1/_)` and `log(1/_, _)` whose argument is not decidably a positive real | `-ln(x)`, which is wrong on the negative reals | `ln(1 / x)`, left alone |
 | **Silent** | `RewriteRules.Boolean.ApplyOnce("a and b or a")`, and two more orientations of absorption | left alone — the arm for that orientation was never written | `a` |
-| **Silent** | `RewriteRules.DivisionPreparing.Rules[0].Name`, and every rule of thirteen sets now described from their data form | `Mulf(var any1, Divf(Integer(1), var any2))` — the `switch` arm's rendered pattern | `reciprocal-factor-becomes-a-quotient` |
+| **Silent** | `RewriteRules.DivisionPreparing.Rules[0].Name`, and every rule of nineteen sets now described from their data form | `Mulf(var any1, Divf(Integer(1), var any2))` — the `switch` arm's rendered pattern | `reciprocal-factor-becomes-a-quotient` |
 | | `RewriteRules.ExpandFactorialDivisions.Rules.Count`, and `FactorizeFactorialMultiplications` | `8` | `3` — the same rewrites, five of the eight arms being one commutative pattern |
 | | `RewriteRules.All.Sum(set => set.Rules.Count)` | `407` | `397` |
 | **Silent** | `RewriteRules.ExpandFactorialDivisions.Rules[0].Growth` | `Collects` — guessed from string length | `Unknown`; whether it collects depends on the offsets |
 
-### Thirteen rule sets describe the rules they run
+### Nineteen rule sets describe the rules they run
 
 `RewriteRuleSet.Rules` is what the registry reports a set is made of, and for most of the library's
 life it came from `RuleRegistryGenerator` reading the `switch` that defined the set. Twenty-seven of
 the thirty sets stopped running that `switch` some releases ago — they run
 `MatchedRuleSet.ApplyHere` — and went on describing it. Thirteen of them now describe what they run.
 
-Which thirteen: `CollapseMultipleFractions`, the three `CommonDenominator` sets, `DivisionPreparing`,
+Which nineteen. Thirteen had **no described arm at all**, so repointing them could only add
+metadata: `CollapseMultipleFractions`, the three `CommonDenominator` sets, `DivisionPreparing`,
 `ExpandFactorialDivisions`, `ExpandMultipleAngle`, `ExpandTrigonometric`, `Expansion`,
 `FactorizeFactorialMultiplications`, `NormalTrigonometricForm`, `PhiFunction` and
-`PolynomialLongDivision`. They were chosen because **not one of them had a described arm**, so the
-change adds metadata rather than trading it; the sets left alone — `Common` and `Power` among them —
-would lose 33 and 22 descriptions today, and are for a later change.
+`PolynomialLongDivision`. Six more are **one arm to one rule**, so their existing descriptions carry
+across unchanged and the rules that had none gain one: `CollapseTrigonometricFunctions`,
+`InvertNegativeMultipliers`, `InvertNegativePowers`, `PerfectSquare`, `PolynomialGcdCancellation` and
+`SetOperator`. `RationalizeDenominator` was already reading its data form.
+
+The seven left on the `switch` are the ones where repointing would cost something today: `Common`
+would lose 33 descriptions and `Power` 22. Porting those identities is a later change. Three more —
+the `CanonicalOrder` family — still *run* their `switch`, so describing it is not a mismatch.
 
 Four things move, and only the second changes a count:
 
@@ -93,14 +99,14 @@ Four things move, and only the second changes a count:
 |---|---|---|
 | `Rules[i].Name` | the arm's rendered pattern, `Mulf(var any1, Divf(Integer(1), var any2))` | the rule's name, `reciprocal-factor-becomes-a-quotient` |
 | `Rules.Count`, for the two factorial sets | `8` | `3` |
-| `Rules[i].Description` | `null` for all 38 of these arms | the identity, `a * (1 / b) = a / b`, for all 38 |
+| `Rules[i].Description` | `null` for 38 of these arms and set for 8 | the identity, `a * (1 / b) = a / b`, for all 59 |
 | `Rules[i].Soundness` | `null` — an arm declares no tier | the rule's own tier |
 
 **The two counts that change are not rewrites lost.** `ExpandFactorialDivisions` and
 `FactorizeFactorialMultiplications` are eight arms each that the data form writes as three: the other
 five are the same rewrite spelled once for each side a factorial can sit on, which is one commutative
 pattern. Every other repointed set is one arm to one rule. Across the registry, 407 becomes 397 while
-the number of described rules goes from **95 to 135**.
+the number of described rules goes from **95 to 147**.
 
 `Rules[i].Growth` also stops being a guess. `AsAddressable` used to infer it by comparing the lengths
 of the two rendered pattern strings — the only thing available to a generator reading source text —

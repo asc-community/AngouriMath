@@ -94,8 +94,7 @@ namespace AngouriMath.Core.Transformations
             "Rewrites negative powers as quotients.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.InvertNegativePowers.ApplyHere,
-            Patterns.InvertNegativePowersArms);
+            Matching.MatchedRules.InvertNegativePowers);
 
         /// <summary>
         /// Brings a negative numeric factor out in front of the term it multiplies.
@@ -111,8 +110,7 @@ namespace AngouriMath.Core.Transformations
             "Moves a negative numeric factor out of a product into the sign of the term.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.InvertNegativeMultipliers.ApplyHere,
-            Patterns.InvertNegativeMultipliersArms);
+            Matching.MatchedRules.InvertNegativeMultipliers);
 
         /// <summary>
         /// The arithmetic housekeeping rules — collecting like terms, flattening nested
@@ -231,8 +229,7 @@ namespace AngouriMath.Core.Transformations
             "Collapses a written-out perfect square into a squared binomial.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.PerfectSquare.ApplyHere,
-            Patterns.PerfectSquareRulesArms);
+            Matching.MatchedRules.PerfectSquare);
 
         #endregion
 
@@ -356,8 +353,7 @@ namespace AngouriMath.Core.Transformations
             "Cancels the greatest common divisor of a polynomial quotient's numerator and denominator.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.PolynomialGcdCancellation.ApplyHere,
-            Patterns.PolynomialGcdCancellationArms);
+            Matching.MatchedRules.PolynomialGcdCancellation);
 
         #endregion
 
@@ -413,8 +409,7 @@ namespace AngouriMath.Core.Transformations
             "Recognises a quotient or reciprocal of sines and cosines as a tangent, cotangent, secant or cosecant.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.CollapseTrigonometricFunctions.ApplyHere,
-            Patterns.CollapseTrigonometricFunctionsArms);
+            Matching.MatchedRules.CollapseTrigonometricFunctions);
 
         /// <summary>
         /// Opens a trigonometric function of a sum into functions of its terms.
@@ -508,8 +503,7 @@ namespace AngouriMath.Core.Transformations
             "Applies the identities of set algebra to unions, intersections and set differences.",
             TransformationRelation.Equivalence,
             Soundness.SoundUnderAssumptions,
-            Matching.MatchedRules.SetOperator.ApplyHere,
-            Patterns.SetOperatorRulesArms);
+            Matching.MatchedRules.SetOperator);
 
         /// <summary>
         /// Cancels a quotient of factorials down to the terms that survive.
