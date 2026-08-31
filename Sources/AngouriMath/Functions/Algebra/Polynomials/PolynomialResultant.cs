@@ -254,54 +254,10 @@ namespace AngouriMath.Functions
                     if (rightCoefficients.TryGetValue(power, out var coefficient))
                         matrix[rightDegree + row][row + rightDegree - power] = coefficient;
 
-            var negated = false;
-            var work = 0L;
-            var previous = MultivariatePolynomial.One(variableCount);
-            for (var pivot = 0; pivot + 1 < size; pivot++)
-            {
-                MultithreadingFunctional.ExitIfCancelled();
-                if (matrix[pivot][pivot].IsZero)
-                {
-                    var replacement = -1;
-                    for (var row = pivot + 1; row < size && replacement < 0; row++)
-                        if (!matrix[row][pivot].IsZero)
-                            replacement = row;
-                    // Nothing below the pivot to bring up means the column is a combination
-                    // of the ones before it, so the matrix is singular and its determinant
-                    // is zero. That is an answer, not a failure: the two polynomials have a
-                    // common factor.
-                    if (replacement < 0)
-                        return zero;
-                    (matrix[pivot], matrix[replacement]) = (matrix[replacement], matrix[pivot]);
-                    negated = !negated;
-                }
-                var head = matrix[pivot][pivot];
-                for (var row = pivot + 1; row < size; row++)
-                {
-                    MultithreadingFunctional.ExitIfCancelled();
-                    var leading = matrix[row][pivot];
-                    for (var column = pivot + 1; column < size; column++)
-                    {
-                        // Charged before the multiplication rather than after it, so that the
-                        // budget cannot be overshot by the one step that was going to be the
-                        // most expensive of them.
-                        work += (long)head.TermCount * matrix[row][column].TermCount
-                            + (long)leading.TermCount * matrix[pivot][column].TermCount;
-                        if (work > MaxEliminationWork)
-                            return null;
-                        if (head.Multiply(matrix[row][column]) is not { } kept
-                            || leading.Multiply(matrix[pivot][column]) is not { } removed
-                            || kept.Subtract(removed).DivideExact(previous) is not { } reduced)
-                            return null;
-                        matrix[row][column] = reduced;
-                    }
-                    matrix[row][pivot] = zero;
-                }
-                previous = head;
-            }
-
-            var determinant = matrix[size - 1][size - 1];
-            return negated ? determinant.ScaleBy(MinusOne) : determinant;
+            // The elimination itself is shared with Entity.Matrix.Determinant, which
+            // wants exactly this over an ordinary square matrix rather than a Sylvester
+            // one. https://github.com/asc-community/AngouriMath/issues/999
+            return FractionFreeDeterminant.Of(matrix, variableCount, MaxEliminationWork);
         }
     }
 }
