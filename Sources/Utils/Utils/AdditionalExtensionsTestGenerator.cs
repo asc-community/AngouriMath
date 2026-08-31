@@ -37,7 +37,13 @@ namespace Utils
 
             var com = new SourceGenerator(commonTemplate, "%bat%", "%usings%", "%namespace%", "%classheader%", "%content%");
 
-            var fullText = com.Generate("generate_additional_extensions_tests.bat", "using Xunit;\nusing AngouriMath;\nusing AngouriMath.Extensions;", "UnitTest.Extensions", "public class IntervalExtensionTest", GenerateTupleToInterval());
+            // The namespace and the trait are the committed file's, not this generator's older
+            // guesses at them: `UnitTest.Extensions` is a namespace the test project does not use,
+            // and every test class here carries an Area trait so that `dotnet test --filter` can
+            // select by area. Both had drifted, as had `MathS.Matrices.Interval` in the content
+            // template -- which does not exist, so the file could not be regenerated at all.
+            // https://github.com/asc-community/AngouriMath/issues/1034
+            var fullText = com.Generate("generate_additional_extensions_tests.bat", "using Xunit;\nusing AngouriMath;\nusing AngouriMath.Extensions;", "AngouriMath.Tests.Extensions", "[Trait(\"Area\", \"Convenience\")]\n    public class IntervalExtensionTest", GenerateTupleToInterval());
 
             File.WriteAllText("../Tests/UnitTests/Convenience/TupleToIntervalTest.cs", fullText);
         }
