@@ -40,7 +40,11 @@ namespace AngouriMath.Tests.Core.Budgets
                 // What the fall-through does with a system the bounded path declined is not
                 // what these assert; the outcome is recorded before it is reached either way.
             }
-            return Assert.Single(recording.Outcomes);
+            // The Gröbner ledger, which is what every assertion below is about. A solve now
+            // opens a second one for the whole call -- that is what bounds the elimination
+            // the Gröbner path hands over to, and is #896 -- so the outcomes are named rather
+            // than assumed to be one.
+            return Assert.Single(recording.Outcomes, outcome => outcome.Where == "Gröbner");
         }
 
         [Fact]
@@ -112,16 +116,42 @@ namespace AngouriMath.Tests.Core.Budgets
         }
 
         /// <summary>
-        /// Exhausting the bounded path is not an answer — the caller carries on and gets the
-        /// same solutions it always did.
+        /// A budget the solve fits inside changes nothing: the same solutions, by the same
+        /// path, as a caller who never mentioned a budget.
         /// </summary>
         [Fact]
-        public void ExhaustionDoesNotChangeTheAnswer()
+        public void ABudgetThatIsNotReachedChangesNothing()
         {
             var withoutBudget = MathS.Equations(Eqs("x - y + 3", "y + 2")).Solve(Vars("x", "y"));
-            using var _ = MathS.Settings.Budget.Set(new WorkBudget { Steps = 1 });
+            using var _ = MathS.Settings.Budget.Set(new WorkBudget { Steps = 1_000_000 });
             var withBudget = MathS.Equations(Eqs("x - y + 3", "y + 2")).Solve(Vars("x", "y"));
             Assert.Equal(withoutBudget, withBudget);
+        }
+
+        /// <summary>
+        /// A budget that <em>is</em> reached bounds the whole call, and the caller is told.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This test used to assert the opposite — that exhausting the bounded path left the
+        /// answer alone because the caller carried on regardless — and that was
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/896">#896</a>: the
+        /// triangularising path bounded itself and then handed the problem to an elimination
+        /// with no budget of its own, so the same <c>Solve</c> was bounded or not depending on
+        /// which internal path accepted it.
+        /// </para>
+        /// <para>
+        /// A step ceiling of one is a caller asking for one step of work. Answering anyway is
+        /// not generosity, it is ignoring what was asked; and the systems where it mattered
+        /// were the ones that ran for minutes rather than the ones that answered quickly.
+        /// </para>
+        /// </remarks>
+        [Fact]
+        public void ABudgetThatIsReachedBoundsTheWholeCall()
+        {
+            using var _ = MathS.Settings.Budget.Set(new WorkBudget { Steps = 1 });
+            Assert.Throws<AngouriMath.Core.Exceptions.NotSufficientlySupportedException>(
+                () => MathS.Equations(Eqs("x - y + 3", "y + 2")).Solve(Vars("x", "y")));
         }
 
         /// <summary>
@@ -182,7 +212,13 @@ namespace AngouriMath.Tests.Core.Budgets
             _ = MathS.Equations(Eqs("x - y + 3", "y + 2")).Solve(Vars("x", "y"));
             try { _ = MathS.Equations(Eqs("sin(x) + y", "y - 1")).Solve(Vars("x", "y")); }
             catch (Exception exception) when (exception is not Xunit.Sdk.XunitException) { }
-            Assert.Equal(2, recording.Outcomes.Count);
+            // Two solves, each opening two ledgers: the Gröbner path's and the whole call's.
+            Assert.Equal(4, recording.Outcomes.Count);
+            Assert.Equal(2, recording.Outcomes.Count(outcome => outcome.Where == "Gröbner"));
+            Assert.Equal(2, recording.Outcomes.Count(outcome => outcome.Where == "SolveSystem"));
+            // And only one of the four stopped anything. The second solve's elimination
+            // answers `sin(x) + y` without running out, so the whole-call ledger has no
+            // ceiling to report -- which is the point of listing only what stopped.
             Assert.Equal("not polynomial", Assert.Single(recording.Exhausted).Reason);
         }
     }

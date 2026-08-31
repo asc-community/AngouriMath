@@ -122,9 +122,14 @@ namespace AngouriMath.Tests.Calculus
         [InlineData(ApproachFrom.Left)]
         public void ADifferenceOfReciprocalLogarithms(ApproachFrom side)
         {
+            // The guard is against not terminating, not against being slow, so it is set far
+            // above the cost of the limit rather than near it. Measured, this takes about seven
+            // seconds; at sixty it failed intermittently once the suite grew, because a wall
+            // clock in a parallel run measures what else the machine is doing as much as what
+            // this does. Three minutes still catches a hang in a suite that takes seven.
             var task = System.Threading.Tasks.Task.Run(() =>
                 Limit("1 / ln(x + sqrt(x * x + 1)) - 1 / ln(x + 1)", "0", side));
-            Assert.True(task.Wait(System.TimeSpan.FromSeconds(60)), "the limit did not terminate");
+            Assert.True(task.Wait(System.TimeSpan.FromSeconds(180)), "the limit did not terminate");
             Assert.Equal("-1/2".ToEntity().Evaled, task.Result.Evaled);
         }
 

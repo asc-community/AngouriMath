@@ -30,6 +30,8 @@ read first.
 | | `"a in (a / 3; 3a)".ToEntity().Simplify()`, and every denominator but 2 | `a in (a / 3; 3 * a)` — left as written | `a > 0` |
 | | `MathS.Matrix(...).Determinant` on a symbolic matrix of polynomials | `a * d + -b * c`, Laplace's nested expansion | `a * d - b * c`, expanded — the same value, no larger |
 | | the same on a numeric matrix past 10x10 | did not return | 11x11 in 2 ms, 30x30 in 22 ms |
+| **Silent** | `MathS.Equations(...).Solve(...)` on a system neither internal path can finish | ran without a bound — cyclic-6 exceeded 20 s | `NotSufficientlySupportedException`, naming both paths |
+| | the same with `MathS.Settings.Budget` set below what the solve needs | answered anyway, the fall-through having no budget | raises |
 | | `"a in (a / 2; 0)".ToEntity().Simplify()`, and every interval demanding both signs | left as written | `False provided a in RR` |
 | | `new Entity[0].SumAll()`, and `Sumf.Sum` on an empty list | `AngouriBugException: At least 1 child required` | `0` |
 | | `new Entity[0].MultiplyAll()`, and `Mulf.Multiply` on an empty list | `AngouriBugException` | `1` |
@@ -938,6 +940,50 @@ cannot hold one.
 The two algorithms were compared on 300 generated matrices where both apply, as a difference
 simplified to zero rather than as trees, with **no disagreements**
 ([#999](https://github.com/asc-community/AngouriMath/issues/999)).
+### Solving a system is bounded whichever internal path takes it
+
+`Solve` on a system tries a triangularising path first, which bounds itself, and hands what it
+declines to an elimination in radicals, which had **no budget at all**. So the same call was bounded
+or unbounded depending on which internal path accepted it — cyclic-6 exceeded twenty seconds with
+nothing to stop it — and that is worse to debug than either extreme.
+
+The whole call now draws on one budget. Where it runs out, `NotSufficientlySupportedException` is
+raised, naming both paths and both ways to ask for more.
+
+| | before | now |
+|---|---|---|
+| `solvesys[a,b,c,d,f,g]` cyclic-6 | exceeded 20 s, no bound beyond it | declines, returning in about two minutes |
+| `solvesys[a,b,c,d,e]` of `a^4-1 … e^4-1` | 1024 solutions | unchanged |
+| `solvesys[a,b,c,d]` cyclic-4 | 158 solutions | unchanged |
+| `x + y = 3, x - y = 1` and every system that answered | unchanged | unchanged |
+| the same with `MathS.Settings.Budget` set below what the solve needs | answered anyway | raises |
+
+**Nothing that answered stops answering.** That was the risk, and it was measured before the change
+rather than argued about: the 1024-solution system is one the triangularising path declines on its
+quotient-dimension cap, and it declines it **in 8 milliseconds** — so bounding the whole call leaves
+the elimination essentially the whole budget. "The fast path declined" does not mean "hopeless", and
+this is what keeps that true.
+
+**The default is two ceilings, and both are measured.** A step is one candidate solution the
+elimination explores, which is what compounds — each elimination turns the next level's coefficients
+into nested radicals. The systems that answer explore very few: a symbolic 2×2 takes 2, cyclic-4
+takes 8, and the largest that answers at all takes 341. Cyclic-5 passes 100 000 without finishing. So
+the step ceiling is 10 000, with thirty-fold headroom over anything known to work.
+
+The clock is a backstop rather than the bound, and it is deliberately loose at sixty seconds, because
+a step can be arbitrarily expensive — cyclic-4 spends five seconds in eight of them. A tight clock
+was tried at five seconds and makes the same system answer or decline depending on what else the
+machine is doing, which is a worse failure than a slow answer.
+
+**The bound is cooperative and is checked once per branch**, so a call can overshoot by the cost of
+the branch that was running when the budget ran out. That is `BudgetLedger`'s stated design: an
+algorithm that does not ask cannot be bounded, and a bound enforced from outside is a thread abort in
+the middle of a rewrite. It is a bound where there was none, not a tight one.
+
+**A budget recording now sees two outcomes per solve** rather than one, named `Gröbner` and
+`SolveSystem`. What stopped each is reported separately, which is the thing
+[#896](https://github.com/asc-community/AngouriMath/issues/896) said a caller could not previously
+find out.
 
 ### A fold over an empty sequence answers instead of throwing
 

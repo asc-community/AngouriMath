@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using AngouriMath.Core.Budgets;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Extensions;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
@@ -59,6 +60,34 @@ namespace AngouriMath.Functions.Algebra
         /// Then we substitute back <br/>
         /// y = -3a + a = -2a <br/>
         /// </summary>
+        /// <summary>
+        /// What a whole system solve is allowed to spend before it declines.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Both ceilings, because neither is a bound on its own.</b> A step here is one
+        /// candidate solution the elimination explores, and that is what compounds: each
+        /// elimination turns the next level's coefficients into nested radicals. Measured, the
+        /// systems that answer explore very few — a symbolic 2×2 takes 2, cyclic-4 takes 8,
+        /// and the largest that answers at all, five uncoupled quartics with 1024 solutions,
+        /// takes 341. Cyclic-5 passes 100 000 without finishing. So 10 000 admits everything
+        /// known to work with a factor of thirty to spare and still refuses the ones that run
+        /// away.
+        /// </para>
+        /// <para>
+        /// The clock is a backstop, not the bound, because a step can be arbitrarily expensive:
+        /// cyclic-4 spends five seconds in eight of them. It is set well above what any
+        /// answering case needs — the slowest takes about five seconds unloaded — since a
+        /// tight clock makes the same system answer or decline depending on what else the
+        /// machine is doing, and a flaky answer is worse than a slow one. That was measured
+        /// too: at five seconds the uncoupled case passed alone and failed inside the suite.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/896">#896</a>
+        /// </para>
+        /// </remarks>
+        [ConstantField]
+        internal static readonly WorkBudget SystemSolveBudget =
+            new() { Steps = 10_000, Time = TimeSpan.FromSeconds(60) };
+
         internal static Matrix? SolveSystem(IEnumerable<Entity> inputEquations, ReadOnlySpan<Variable> vars)
         {
             var equations = new List<Entity>(inputEquations.Select(equation => equation.InnerSimplified));
@@ -68,23 +97,47 @@ namespace AngouriMath.Functions.Algebra
             // does -- costs nothing on an uncoupled system and does not finish on a coupled
             // one, so this is tried before the equation count is even insisted on: a Groebner
             // basis has no use for as many equations as unknowns.
-            var variables = new Variable[vars.Length];
-            vars.CopyTo(variables);
-            if (Groebner.GroebnerSystemSolver.TrySolve(equations, variables, out var triangularised))
-                return triangularised;
+            // One ledger for the whole call, drawn on by both paths. Each stage having a
+            // budget of its own is what bounded the fast path and left the fall-through
+            // unbounded, so the same `Solve` finished or did not depending on which internal
+            // path accepted it. https://github.com/asc-community/AngouriMath/issues/896
+            var ledger = BudgetLedger.For("SolveSystem", SystemSolveBudget);
+            try
+            {
+                var variables = new Variable[vars.Length];
+                vars.CopyTo(variables);
+                // The Gröbner path keeps a ledger of its own, deliberately. It uses the same
+                // mechanism for two different things -- a genuine resource ceiling, and a
+                // structural refusal like "not polynomial" -- and a ledger that has recorded
+                // any ceiling refuses every later spend. Sharing it would therefore read
+                // "declined in 8 ms because the system is uncoupled" as "the budget is gone",
+                // and the 1024-solution case that the eliminator answers cheaply would raise
+                // instead. Measured: it does exactly that.
+                //
+                // What is shared is the clock. This ledger starts when the call does, so the
+                // time the Gröbner path spends is already gone from it when the elimination
+                // begins -- which is the bound that was missing, without conflating the two
+                // meanings of "stopped".
+                if (Groebner.GroebnerSystemSolver.TrySolve(equations, variables, out var triangularised))
+                    return triangularised;
 
-            if (equations.Count != vars.Length)
-                throw new WrongNumberOfArgumentsException("Number of equations must be equal to that of vars");
-            int initVarCount = vars.Length;
+                if (equations.Count != vars.Length)
+                    throw new WrongNumberOfArgumentsException("Number of equations must be equal to that of vars");
+                int initVarCount = vars.Length;
 
-            var res = InSolveSystem(equations, vars, Sumf.Sum(equations));
-            foreach (var tuple in res)
-                if (tuple.Count != initVarCount)
-                    throw new AngouriBugException("InSolveSystem incorrect output");
-            if (res.Count == 0)
-                return null;
-            var tb = new MatrixBuilder(res, initVarCount);
-            return tb.ToMatrix();
+                var res = InSolveSystem(equations, vars, Sumf.Sum(equations), ledger);
+                foreach (var tuple in res)
+                    if (tuple.Count != initVarCount)
+                        throw new AngouriBugException("InSolveSystem incorrect output");
+                if (res.Count == 0)
+                    return null;
+                var tb = new MatrixBuilder(res, initVarCount);
+                return tb.ToMatrix();
+            }
+            finally
+            {
+                ledger.Report();
+            }
         }
 
         /// <summary>Solves system of equations</summary>
@@ -97,8 +150,26 @@ namespace AngouriMath.Functions.Algebra
         /// The system as a whole, so that a parameter standing for a free variable is given
         /// a name that none of the equations already uses
         /// </param>
-        internal static List<List<Entity>> InSolveSystem(List<Entity> equations, ReadOnlySpan<Variable> vars, Entity nameSource)
+        /// <param name="ledger">
+        /// The caller's budget, drawn on once per candidate solution explored. Optional
+        /// because the recursion passes it along and a caller may have none; where it is
+        /// absent this is unbounded, which is what it always was.
+        /// </param>
+        internal static List<List<Entity>> InSolveSystem(
+            List<Entity> equations, ReadOnlySpan<Variable> vars, Entity nameSource,
+            BudgetLedger? ledger = null)
         {
+            // Charged before the branch rather than after it, so the ceiling bounds what is
+            // done rather than what has been done. One unit per candidate solution explored is
+            // the right grain: this eliminates one variable per level, and each elimination
+            // turns the next level's coefficients into nested radicals, so the count of
+            // branches explored is what compounds. https://github.com/asc-community/AngouriMath/issues/896
+            if (ledger is not null && !ledger.Spend())
+                throw new NotSufficientlySupportedException(
+                    "this system of equations is not solvable within the budget: the "
+                    + "triangularising path declined it and eliminating in radicals has not "
+                    + "finished. Raise MathS.Settings.Budget to allow more, or pass a "
+                    + "cancellation token with MathS.Multithreading.SetLocalCancellationToken");
             var var = vars[^1];
             if (equations.Count == 1)
             {
@@ -136,7 +207,7 @@ namespace AngouriMath.Functions.Algebra
                     rest.RemoveAt(i);
 
                     foreach (var sol in sols)
-                        foreach (var j in InSolveSystem(rest.Select(eq => eq.Substitute(var, sol)).ToList(), remainingVars, nameSource))
+                        foreach (var j in InSolveSystem(rest.Select(eq => eq.Substitute(var, sol)).ToList(), remainingVars, nameSource, ledger))
                         {
                             replacements.Clear();
                             for (int varid = 0; varid < remainingVars.Length; varid++)
