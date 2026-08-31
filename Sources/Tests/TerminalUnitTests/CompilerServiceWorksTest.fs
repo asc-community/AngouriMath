@@ -13,15 +13,24 @@ open AngouriMath.Terminal.Lib.Consts
 /// AngouriMath's own bindings. The Terminal opens AggressiveOperators over the top, which
 /// deliberately rebinds the comparison operators to build expressions — that is the tool's whole
 /// point and it is not what this asks about.
-let private bareKernel () =
+let private newKernel () =
     match createKernel () with
     | Result.Error _ ->
         Assert.True(false, "the kernel did not load at all")
         raise (System.Exception())
     | Result.Ok kernel -> kernel
 
+/// One kernel for the whole class, not one per case.
+///
+/// Creating a kernel starts a compiler service, which is the most expensive thing here by a wide
+/// margin, and xUnit runs the cases in a class one after another so there is nothing to share it
+/// with. Every case below only asks the kernel to compile something and reads the answer, so
+/// nothing one of them does changes what the next one sees — the cases that *do* change a session
+/// are in OperatorsAtThePromptTest and make their own.
+let private shared = lazy (newKernel ())
+
 let private evaluates (code: string) (expected: string) =
-    match execute (bareKernel ()) code with
+    match execute shared.Value code with
     | ExecutionResult.PlainTextSuccess actual -> Assert.Equal(expected, actual)
     | other ->
         Assert.True(false, $"expected {expected}, and the kernel answered {other}")
@@ -60,7 +69,7 @@ let ``The compiler service compiles F#`` (code: string) (expected: string) =
 [<InlineData("let x: int = \"not an int\"", "typecheck error")>]
 [<InlineData("let =", "parse error")>]
 let ``The compiler service reports errors`` (code: string) (expected: string) =
-    match execute (bareKernel ()) code with
+    match execute shared.Value code with
     | ExecutionResult.Error message ->
         Assert.Contains(expected, message)
         // A position, not just a complaint: the Terminal shows these to whoever typed them.
@@ -74,7 +83,7 @@ let ``The compiler service reports errors`` (code: string) (expected: string) =
 [<InlineData("derivative \"x\" \"x3 + sin(x)\"", "3 * x ^ 2 + cos(x)")>]
 [<InlineData("integral \"x\" \"x2\"", "x ^ 3 / 3 + C")>]
 let ``AngouriMath works through the compiler service`` (code: string) (expected: string) =
-    let kernel = bareKernel ()
+    let kernel = newKernel ()
     match enableAngouriMath kernel with
     | ExecutionResult.Error reason -> Assert.True(false, $"AngouriMath did not load: {reason}")
     | _ -> ()

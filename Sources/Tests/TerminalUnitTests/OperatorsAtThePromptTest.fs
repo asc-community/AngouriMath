@@ -7,7 +7,7 @@ open AngouriMath.Terminal.Lib.FSharpInteractive
 open AngouriMath.Terminal.Lib.PreRunCode
 open AngouriMath.Terminal.Lib.Consts
 
-let private kernel () =
+let private newKernel () =
     let k =
         match createKernel () with
         | Result.Error _ ->
@@ -19,6 +19,12 @@ let private kernel () =
         Assert.True(false, $"AngouriMath did not load: {reason}")
         raise (System.Exception())
     | _ -> k
+
+/// One kernel for the cases that only read, for the reason CompilerServiceWorksTest gives: a
+/// kernel starts a compiler service and loads AngouriMath into it, and doing that once per case
+/// was thirteen full loads in this class alone. The cases that change a session — the two that
+/// `open` something — take a fresh one each, because that is the whole of what they are testing.
+let private shared = lazy (newKernel ())
 
 let private answers (k: Microsoft.DotNet.Interactive.FSharp.FSharpKernel) (code: string) (expected: string) =
     match execute k code with
@@ -39,7 +45,7 @@ let private answers (k: Microsoft.DotNet.Interactive.FSharp.FSharpKernel) (code:
 [<InlineData("seq { 1..100 } |> Seq.filter (fun x -> x % 7 = 0) |> Seq.length", "14")>]
 [<InlineData("let (|Even|Odd|) n = if n % 2 = 0 then Even else Odd\nmatch 4 with Even -> \"e\" | Odd -> \"o\"", "e")>]
 let ``Ordinary F# with a comparison in it compiles`` (code: string) (expected: string) =
-    answers (kernel ()) code expected
+    answers shared.Value code expected
 
 /// And the reading the Terminal exists for is untouched: arithmetic on anything still builds an
 /// expression, which is what the wiki documents and what makes this a symbolic prompt rather than
@@ -51,13 +57,13 @@ let ``Ordinary F# with a comparison in it compiles`` (code: string) (expected: s
 [<InlineData("solutions \"x\" \"x2 - 5x + 6 = 0\"", "{ 2, 3 }")>]
 [<InlineData("derivative \"x\" \"x3\"", "3 * x ^ 2")>]
 let ``The symbolic reading of arithmetic survives`` (code: string) (expected: string) =
-    answers (kernel ()) code expected
+    answers shared.Value code expected
 
 /// What narrowing costs, stated rather than glossed: a bare `x > 0` no longer builds an
 /// inequality. It is one line to get back, and that line is the whole of the old behaviour.
 [<Fact>]
 let ``A comparison on symbols is one open away`` () =
-    let k = kernel ()
+    let k = newKernel ()
 
     match execute k "x > 0" with
     | ExecutionResult.Error message -> Assert.Contains("comparison", message)
@@ -96,7 +102,7 @@ let ``A comparison on symbols is one open away`` () =
 /// </remarks>
 [<Fact>]
 let ``Ordinary F# is one open away, and reversible`` () =
-    let k = kernel ()
+    let k = newKernel ()
 
     // As the prompt starts: expressions, and fib does not compile.
     answers k "x + 1" "x + 1"
@@ -125,6 +131,6 @@ let ``Ordinary F# is one open away, and reversible`` () =
 let ``The prompt explains which operators it has`` () =
     // It prints rather than returns, so what is asserted is that it runs and says nothing back:
     // a returned sentence would go to AngouriMath's formatter, which would try to parse it.
-    match execute (kernel ()) "operators ()" with
+    match execute shared.Value "operators ()" with
     | ExecutionResult.VoidSuccess -> ()
     | other -> Assert.True(false, $"operators () answered {other}")
