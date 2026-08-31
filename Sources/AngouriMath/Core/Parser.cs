@@ -184,48 +184,25 @@ namespace AngouriMath.Core
         /// </summary>
         /// <remarks>
         /// <para>
-        /// A <see cref="Rational"/> prints as <c>7/2</c> and there is no rational literal in the
-        /// grammar, so re-parsing gave a <see cref="Entity.Divf"/> and the round trip was not an
-        /// identity — the value survived and the node did not. That is
-        /// https://github.com/asc-community/AngouriMath/issues/946's neighbour,
-        /// https://github.com/asc-community/AngouriMath/issues/873, answered there with "if you
-        /// have two integers on both sides of the division, it is reasonable to try to parse it
-        /// as a rational".
+        /// The rewrite itself is <see cref="Antlr.ParsingHelpers.RationalLiteral"/>, which the
+        /// <c>domain(...)</c> rule also calls — on its argument, before annotating it. That is what
+        /// lets this sweep hand back a bare <see cref="Rational"/> and read no codomain at all: a
+        /// quotient reaching here has never been annotated, because the only syntax that annotates
+        /// anything has already folded what it was given.
         /// </para>
         /// <para>
-        /// <b>A quotient that reduces to an integer is left alone</b>, deliberately. Parsing is
-        /// not simplification: turning <c>4/2</c> into <c>2</c> would discard what the caller
-        /// wrote, and <c>4/2</c> already round-trips, being a <see cref="Entity.Divf"/> before and
-        /// after. Only the non-integer case is what a <see cref="Rational"/> can print as, so only
-        /// it is what the round trip needs.
-        /// </para>
-        /// <para>
-        /// This agrees with the normalisation rather than anticipating it:
-        /// <c>Divf(1, 2).InnerSimplified</c> was already a <see cref="Rational"/>, so the parser
-        /// was the one step that disagreed.
+        /// Reading one would be wrong as well as unnecessary. An unannotated quotient carries the
+        /// default, <see cref="Domain.Complex"/>, and a rational literal the tighter
+        /// <see cref="Domain.Rational"/>, so copying it across would make <c>7/2</c> and <c>3.5</c>
+        /// structurally unequal — the round trip this exists to fix, broken from the other end.
+        /// Telling that default apart from a <c>domain(x, CC)</c> somebody wrote is what no reader
+        /// of a finished tree can do, and it cost <c>domain(1/2, CC)</c> its annotation until
+        /// the fold moved to where the annotation is applied.
+        /// https://github.com/asc-community/AngouriMath/issues/1048
         /// </para>
         /// </remarks>
         private static Entity RationalLiterals(Entity parsed)
-            => parsed.Replace(static node =>
-            {
-                if (node is not Entity.Divf(Entity.Number.Integer numerator,
-                                            Entity.Number.Integer denominator))
-                    return node;
-                if (denominator.EInteger.IsZero)
-                    return node;
-                var value = Entity.Number.Rational.Create(numerator.EInteger, denominator.EInteger);
-                if (value is Entity.Number.Integer)
-                    return node;
-                // The codomain travels with the node, and `domain(1/2, ZZ)` has already put one on
-                // the quotient by the time this runs -- so handing back a bare Rational would drop
-                // it and the domain check would silently start passing. Caught by Domains.CheckNaN.
-                //
-                // Only a codomain somebody asked for is carried. A quotient that nobody annotated
-                // has the default, Complex, while a rational literal takes the tighter Rational --
-                // so copying it unconditionally would make `7/2` and `3.5` structurally unequal,
-                // which is the round trip this change exists to fix, broken from the other end.
-                return node.Codomain == Domain.Complex ? value : value.WithCodomain(node.Codomain);
-            });
+            => parsed.Replace(static node => Antlr.ParsingHelpers.RationalLiteral(node));
 
         internal static Entity Parse(string source)
             => ParseSilent(source)

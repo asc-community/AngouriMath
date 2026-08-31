@@ -51,22 +51,23 @@ namespace AngouriMath.Tests.Common
         /// fails the test rather than sitting here describing something that stopped being true.
         /// </summary>
         /// <remarks>
-        /// The one entry is a <em>parser</em> gap, not a printing one. No input string at all
-        /// yields a <see cref="Entity.Number.Rational"/> whose codomain is
-        /// <see cref="Domain.Complex"/>: the pass that reads a quotient of two integer literals
-        /// as the rational it denotes
-        /// (<a href="https://github.com/asc-community/AngouriMath/issues/873">#873</a>) uses
-        /// <see cref="Domain.Complex"/> as its "nobody annotated this" sentinel, because that is
-        /// what an un-annotated <see cref="Entity.Divf"/> carries, and drops it. So
-        /// <c>domain(1/2, CC)</c> parses to the same node <c>1/2</c> does, and there is nothing
-        /// the printer can emit instead.
+        /// <para>
+        /// <b>Empty, and kept.</b> Its one entry was <c>domain(1/2, CC)</c>: the pass that reads a
+        /// quotient of two integer literals as the rational it denotes
+        /// (<a href="https://github.com/asc-community/AngouriMath/issues/873">#873</a>) ran over the
+        /// finished tree, where <see cref="Domain.Complex"/> is both what an un-annotated
+        /// <see cref="Entity.Divf"/> carries and what <c>domain(x, CC)</c> asks for — so it could
+        /// not tell them apart, and dropped the annotation somebody had written.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1048">#1048</a>
+        /// </para>
+        /// <para>
+        /// The fold now happens where the annotation is applied rather than after it, so no reader
+        /// has to distinguish those two, and every writable domain reads back on every node type.
+        /// The dictionary stays because the shape of the assertion is what matters: a gap recorded
+        /// here fails the day it closes, and this one did.
+        /// </para>
         /// </remarks>
-        private static readonly Dictionary<string, string> StillUnparseable = new(StringComparer.Ordinal)
-        {
-            ["domain(1/2, CC)"] =
-                "the parser's integer-quotient-to-rational pass reads Complex as `not annotated`, "
-                + "so no input produces a Rational whose codomain is Complex",
-        };
+        private static readonly Dictionary<string, string> StillUnparseable = new(StringComparer.Ordinal);
 
         /// <summary>
         /// Every node type there is, narrowed to every domain that can be written down, prints
@@ -150,6 +151,55 @@ namespace AngouriMath.Tests.Common
                     + "Domains.Classes.cs and have to name the same domain.");
                 Assert.Equal(subnode.DefaultCodomain, subnode.Codomain);
             }
+        }
+
+        /// <summary>
+        /// An annotated quotient of two integer literals is the rational it denotes, annotated —
+        /// so <c>domain(1/2, D)</c> is <c>(1/2).WithCodomain(D)</c> for every writable
+        /// <see cref="Domain"/>, including the <see cref="Domain.Complex"/> that used to read as
+        /// "nobody annotated this".
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1048">#1048</a>
+        /// </summary>
+        /// <remarks>
+        /// The fold and the annotation happen in one place now (<c>domain(...)</c>'s own parser
+        /// rule, through <c>ParsingHelpers.RationalLiteral</c>), which is what makes the two
+        /// meanings of <see cref="Domain.Complex"/> stop colliding. <see cref="Domain.Rational"/>
+        /// is in the list because it is the node's default and so prints nothing — the assertion
+        /// is on the entity either way.
+        /// </remarks>
+        [Theory]
+        [InlineData(Domain.Complex)]
+        [InlineData(Domain.Real)]
+        [InlineData(Domain.Rational)]
+        [InlineData(Domain.Integer)]
+        [InlineData(Domain.Boolean)]
+        [InlineData(Domain.Any)]
+        public void AnAnnotatedRationalLiteralIsTheRationalAnnotated(Domain domain)
+        {
+            var annotated = MathS.FromString($"1/2").WithCodomain(domain);
+            var parsed = MathS.FromString(annotated.Stringize());
+
+            Assert.IsAssignableFrom<Entity.Number.Rational>(parsed);
+            Assert.Equal(domain, parsed.Codomain);
+            Assert.Equal(annotated, parsed);
+        }
+
+        /// <summary>
+        /// And a quotient that denotes no rational literal is still a quotient, annotation or
+        /// not: parsing is not simplification, so <c>4/2</c> stays a <see cref="Entity.Divf"/>
+        /// and keeps whatever was written on it.
+        /// </summary>
+        [Theory]
+        [InlineData("domain(4/2, RR)", Domain.Real)]
+        [InlineData("domain(4/2, CC)", Domain.Complex)]
+        [InlineData("4/2", Domain.Complex)]
+        public void AQuotientThatIsNotARationalLiteralKeepsItsShape(string source, Domain expected)
+        {
+            var parsed = MathS.FromString(source);
+
+            Assert.IsAssignableFrom<Entity.Divf>(parsed);
+            Assert.Equal(expected, parsed.Codomain);
+            Assert.Equal(parsed, MathS.FromString(parsed.Stringize()));
         }
 
         /// <summary>

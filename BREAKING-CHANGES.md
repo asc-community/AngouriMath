@@ -26,6 +26,7 @@ read first.
 | | `"2 * x3 - 2".ToEntity().Factorize()`, and every polynomial whose content the rules take out | `2 * (x ^ 3 - 1)` — the remainder left whole | `2 * (x - 1) * (x ^ 2 + x + 1)` |
 | | `"3^(x+1) - 2^(x-1)".ToEntity().SolveEquation("x")`, and every equation between two powers of numeric bases | `{ ln(0.04674569822628630438865471319331845734268426895141601562 ^ (1 / ln(2))) }` — a `double` promoted to a decimal | `{ -(ln(3) + ln(2)) / (ln(3) + -ln(2)) }` |
 | **Silent** | `MathS.Abs("x").WithCodomain(Domain.Any).Stringize()`, and every node widened to `Any` from a narrower default | `abs(x)` — reads back as `Real`, losing the widening | `domain(abs(x), Any)` |
+| **Silent** | `"domain(1/2, CC)".ToEntity()`, and every quotient of two integer literals annotated with the codomain its node type does not default to | `1/2` — the annotation dropped, equal to the unannotated literal | `1/2` carrying `Codomain = Complex`, which prints and reads back as `domain(1/2, CC)` |
 | | `new Entity[0].SumAll()`, and `Sumf.Sum` on an empty list | `AngouriBugException: At least 1 child required` | `0` |
 | | `new Entity[0].MultiplyAll()`, and `Mulf.Multiply` on an empty list | `AngouriBugException` | `1` |
 | | `MathS.Vector()` and `new Entity[0].ToVector()` | `IndexOutOfRangeException` — outside the documented hierarchy | `InvalidMatrixOperationException` |
@@ -697,6 +698,48 @@ it stays an ordinary variable.
 
 `Latexize` renders the subscript as `\mathrm{Any}` rather than a `\mathbb`, since there is no set
 to render ([#1048](https://github.com/asc-community/AngouriMath/issues/1048)).
+
+### An annotated rational literal keeps the annotation, `CC` included
+
+A codomain is a property of a node rather than a node of its own, so `domain(1/2, CC)` has to become
+one `Rational` carrying `Complex` — and it did not. The pass that reads a quotient of two integer
+literals as the rational it denotes ([#873](https://github.com/asc-community/AngouriMath/issues/873))
+ran over the **finished** tree, by which point `Complex` means two things at once: it is what an
+unannotated `Divf` carries by default, and it is what `domain(x, CC)` asks for. The pass read it as
+the first and dropped it.
+
+| | before | now |
+|---|---|---|
+| `"domain(1/2, CC)".ToEntity().Codomain` | `Rational` — the annotation gone | `Complex` |
+| `"domain(1/2, CC)".ToEntity() == "1/2".ToEntity()` | `true` | `false` |
+| `(1/2).WithCodomain(Complex).Stringize().ToEntity()` | `1/2`, `Rational` — printed one node, read back another | round-trips |
+| `"domain(1/2, RR)".ToEntity()` | `Real`, correct | unchanged |
+| `"1/2".ToEntity()` | a `Rational`, `Codomain = Rational` | unchanged |
+| `"domain(4/2, CC)".ToEntity()` | a `Divf`, `Codomain = Complex` | unchanged |
+| `"domain(1/2, CC)".ToEntity().Evaled` | `1/2` — the annotation erased by evaluating | `domain(1/2, CC)`, carried through |
+| the same, `.Simplify()` | `1/2` | `domain(1/2, CC)` |
+| the same, `.Latexize()` | `\frac{1}{2}` | `{\left(\frac{1}{2}\right)}_{\mathbb{C}}` |
+| `"domain(1/2, CC) + 1".ToEntity().Evaled` | `3/2` | unchanged |
+
+**The fix is where the fold happens, not what it reads.** `domain(...)`'s own parser rule now folds
+its argument before annotating it, so the two meanings of `Complex` never meet: an annotation lands
+on a node that is already the right shape, and the sweep over the rest of the tree — which is the
+only other place the fold runs — can hand back a bare `Rational` and read no codomain at all. It is
+sound to do so because those two are the only routes, `domain(...)` being the one syntax that
+annotates anything and the sweep meeting only what it did not annotate.
+
+`Complex` on a rational literal is a **widening** — a rational is a complex number — so nothing that
+was defined becomes `NaN` and no value changes: `domain(1/2, CC) + 1` evaluates to `3/2` as before,
+and `domain(1/2, ZZ)` is still `NaN`. What changes is equality, and everything that follows from the
+node genuinely carrying the annotation now — `Evaled` and `Simplify` hand it back instead of erasing
+it, and `Latexize` writes the subscript. That is the point: an annotation the caller wrote is no
+longer indistinguishable from one they did not.
+
+This was the second of the two gaps
+[#1048](https://github.com/asc-community/AngouriMath/issues/1048) recorded, and the last entry in
+`CodomainSurvivesPrintingTest.StillUnparseable`. That dictionary is now empty and still asserted in
+both directions, so every writable domain on every node type reads back as itself, and a gap added
+to it later fails the day it closes.
 
 ### A fold over an empty sequence answers instead of throwing
 
