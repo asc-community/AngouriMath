@@ -27,6 +27,8 @@ read first.
 | | `"3^(x+1) - 2^(x-1)".ToEntity().SolveEquation("x")`, and every equation between two powers of numeric bases | `{ ln(0.04674569822628630438865471319331845734268426895141601562 ^ (1 / ln(2))) }` — a `double` promoted to a decimal | `{ -(ln(3) + ln(2)) / (ln(3) + -ln(2)) }` |
 | **Silent** | `MathS.Abs("x").WithCodomain(Domain.Any).Stringize()`, and every node widened to `Any` from a narrower default | `abs(x)` — reads back as `Real`, losing the widening | `domain(abs(x), Any)` |
 | **Silent** | `"domain(1/2, CC)".ToEntity()`, and every quotient of two integer literals annotated with the codomain its node type does not default to | `1/2` — the annotation dropped, equal to the unannotated literal | `1/2` carrying `Codomain = Complex`, which prints and reads back as `domain(1/2, CC)` |
+| | `"a in (a / 3; 3a)".ToEntity().Simplify()`, and every denominator but 2 | `a in (a / 3; 3 * a)` — left as written | `a > 0` |
+| | `"a in (a / 2; 0)".ToEntity().Simplify()`, and every interval demanding both signs | left as written | `False provided a in RR` |
 | | `new Entity[0].SumAll()`, and `Sumf.Sum` on an empty list | `AngouriBugException: At least 1 child required` | `0` |
 | | `new Entity[0].MultiplyAll()`, and `Mulf.Multiply` on an empty list | `AngouriBugException` | `1` |
 | | `MathS.Vector()` and `new Entity[0].ToVector()` | `IndexOutOfRangeException` — outside the documented hierarchy | `InvalidMatrixOperationException` |
@@ -740,6 +742,56 @@ This was the second of the two gaps
 `CodomainSurvivesPrintingTest.StillUnparseable`. That dictionary is now empty and still asserted in
 both directions, so every writable domain on every node type reads back as itself, and a gap added
 to it later fails the day it closes.
+
+### An interval bounded by its own element is decided, and `Common` terminates
+
+`a in (a / 2; 2 * a)` was `a > 0` and `a in (a / 3; 3 * a)` was left as written. The difference was
+not the mathematics — it was which candidate survived `Simplify`'s pruning.
+
+`ParaphraseInterval` writes a membership out as two comparisons with zero, and the difference it
+compares was left as a two-term sum: `a - a / 3` came back as `a + -a / 3`, which no rule about a
+sign can read. It is collected now, and the positive factor is divided out where the comparison is
+built rather than later — because `Simplify` prunes by `SimplifiedRate`, and
+`2/3 * a > 0 and 2 * a > 0` rates **26** against the membership's **25**, one point worse, so it was
+discarded before anything could take it to `a > 0`, which rates **8**. The `n = 2` case answered
+only because `1/2 * a > 0 and a > 0` happens to rate **24**.
+
+| | before | now |
+|---|---|---|
+| `"a in (a / 2; 2a)".Simplify()` | `a > 0` | unchanged |
+| `"a in (a / 3; 3a)".Simplify()` | `a in (a / 3; 3 * a)` | `a > 0` |
+| `"a in (a / 4; 4a)".Simplify()`, and every denominator through 8 | left as written | `a > 0` |
+| `"a in (a / 2; 3a)".Simplify()` | `a in (a / 2; 3 * a)` | `a > 0` |
+| `"a in (a / 7; 5a)".Simplify()` | left as written | `a > 0` |
+| `"a in (a / 2; 0)".Simplify()` | `a in (a / 2; 0)` | `False provided a in RR` |
+| `"a in (-2a; -a/2)".Simplify()` | left as written | `False provided a in RR` |
+| `"a in (a / 2; 2a + 1)".Simplify()` | `a > 0 and 1 + a > 0` | unchanged |
+| `"a in (1; 2)".Simplify()`, `"3 in (1; 5)"`, `"x in [0; 1]"`, `"a in (b; c)"` | unchanged | unchanged |
+
+The two `False` rows are answers where there were none: `a / 2 < a < 0` wants `a > 0` and `a < 0` at
+once, and so does `-2a < a < -a / 2`. The condition is there because the ordering is a claim about
+reals.
+
+**And `RewriteRules.Common` reaches a fixed point.** It was the library's only non-terminating rule
+set: a three-cycle on `-x * 1/2`, `Mulf(-1/2, x)` to `Mulf(-1, Divf(x, 2))` to `Divf(Mulf(-1, x), 2)`
+and back — three trees printing as two strings. Two of the three rules turning it are exact inverses
+on that shape: one reads `(-1 * x) / 2` as a numeric factor to collect, giving `-1/2 * x`, and the
+other reads that back as `-(x / 2)`. The first now declines a factor of `-1`, which is the sign
+rather than a number to collect.
+
+The positive case never cycled, and the reason says why the guard is where it is: `x / 2` is a
+quotient over a *leaf*, so it does not re-enter the collection rule's pattern at all. The loop
+existed only because a negation is spelled as a product.
+
+`Simplify` bounded its own iteration and never hung, so no caller saw the cycle — but a rule set is
+public, a caller may apply one by itself, and `Common` did not terminate when applied that way.
+`RuleSetTerminationTest.NeverSettle` is now empty and still asserted in both directions.
+
+**Nothing else moved.** `-x * 1/2` is `-1/2 * x` and `x * 1/2` is `x / 2`, both as before; the guard
+changes which rewrites are available, not which answer wins. The two halves of this entry ship
+together because the first is what makes the second free: the guard alone cost three interval shapes
+that were being answered by coincidence, and the collection restores them along with the rest of the
+family ([#1056](https://github.com/asc-community/AngouriMath/issues/1056)).
 
 ### A fold over an empty sequence answers instead of throwing
 

@@ -95,7 +95,15 @@ namespace AngouriMath.Functions
             Mulf(Divf(var any1, var any2), var any3) => any1 * any3 / any2,
 
             // a * {1} / b
-            Divf(Mulf(Number const1, var any1), Number const2) => const1 / const2 * any1,
+            //
+            // Not for const1 = -1, which is not a numeric factor to collect but the sign, spelled
+            // as a product because that is how the language spells a negation. Collecting it turns
+            // -x / 2 into -1/2 * x, and `a-negated-reciprocal-rational-factor-is-a-negated-division`
+            // turns that straight back -- the two are exact inverses on this shape, and the pair
+            // is what made this set the one rule set with no fixed point.
+            // https://github.com/asc-community/AngouriMath/issues/1056
+            Divf(Mulf(Number const1, var any1), Number const2) when const1 != -1
+                => const1 / const2 * any1,
 
             // a / b / c = a / (b * c)
             Divf(Divf(var any1, var any2), var any3) => any1 / (any2 * any3),

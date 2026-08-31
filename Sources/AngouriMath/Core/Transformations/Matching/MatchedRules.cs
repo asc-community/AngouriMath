@@ -2903,10 +2903,17 @@ namespace AngouriMath.Core.Transformations.Matching
                 description: "(a / b) * c = (a * c) / b"),
             new MatchedRule(
                 "a-numeric-quotient-of-a-numeric-multiple-collects-its-numbers",
-                MatchPattern.Node<Divf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any("a")), MatchPattern.Any<Number>("d")),
+                // Not for c = -1. That is not a numeric factor to collect but the sign, which the
+                // language spells as a product -- and collecting it is exactly undone by
+                // `a-negated-reciprocal-rational-factor-is-a-negated-division`, which is Sound
+                // where this is SoundUnderAssumptions. The two were the cycle in #1056.
+                MatchPattern.Node<Divf>(
+                    MatchPattern.Node<Mulf>(
+                        MatchPattern.Any<Number>("c", number => number != -1), MatchPattern.Any("a")),
+                    MatchPattern.Any<Number>("d")),
                 bound => (Number)bound["c"] / (Number)bound["d"] * bound["a"],
                 Soundness.SoundUnderAssumptions,
-                description: "(c * a) / d = (c / d) * a, for numeric c and d"),
+                description: "(c * a) / d = (c / d) * a, for numeric c and d other than -1"),
             new MatchedRule(
                 "dividing-twice-divides-by-the-product",
                 MatchPattern.Node<Divf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Any("c")),
