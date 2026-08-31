@@ -19,7 +19,7 @@ let eval (x : obj) =
     | :? Entity.Number.Complex as cx -> cx.RealPart.EDecimal.ToString() + "" + "" + cx.ImaginaryPart.EDecimal.ToString() + ""i""
     | other -> (evaled other).ToString()
 
-open AngouriMath.Interactive.AggressiveOperators
+open AngouriMath.Interactive.ArithmeticOperators
 
 let x = symbol ""x""
 let y = symbol ""y""
