@@ -14,6 +14,13 @@
     <Description>F#-based command line interface for symbolic algebra library AngouriMath</Description>
 
     <PackageTags>$(PackageTags), cli, terminal</PackageTags>
+
+    <!--
+    The same NU1608 as AngouriMath.Terminal.Lib's, reaching here through the project reference,
+    and suppressed on the same measurement. Its comment is the one to read.
+    https://github.com/asc-community/AngouriMath/issues/1100
+    -->
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
