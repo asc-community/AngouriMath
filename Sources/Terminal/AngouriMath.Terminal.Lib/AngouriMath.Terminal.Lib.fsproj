@@ -22,6 +22,26 @@
     https://github.com/asc-community/AngouriMath/issues/542
     -->
     <IsPackable>false</IsPackable>
+
+    <!--
+    NU1608: FSharp.Compiler.Service 43.9.300 requires FSharp.Core (= 9.0.300), and what is
+    resolved is the 10.1 that the F# SDK references implicitly for every F# project. Sixteen
+    occurrences in the publish run for 2.3.0 and sixteen in the one for 2.4.0, so it is neither
+    new nor going away on its own: the constraint can only be met by pinning FSharp.Core two
+    majors back, against the SDK, for every project in the graph.
+
+    Suppressed because it was measured rather than because it was noisy. A kernel built on this
+    pair runs generic inference, records, unions, sequences, async, units of measure, object
+    expressions, inline constraints, active patterns, classes and string interpolation, and
+    reports a type error and a syntax error with the right positions — sixteen of sixteen, in
+    CompilerServiceWorksTest, which is what now carries the claim. A warning nobody reads is not
+    a check; a test that runs the compiler is.
+
+    If FSharp.Core or FSharp.Compiler.Service moves, that test is what should be believed, and
+    this comment is what should be rewritten.
+    https://github.com/asc-community/AngouriMath/issues/1100
+    -->
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
