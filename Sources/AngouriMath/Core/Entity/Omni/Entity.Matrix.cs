@@ -270,23 +270,37 @@ namespace AngouriMath
             this);
             private LazyPropertyA<Matrix> t;
 
-            // We do not need to use Gaussian elimination here
-            // since we anyway get N! memory use.
-            // Gaussian elimination is also not merely no cheaper, it is wrong here:
-            // it leaves the pivots as literal divisions, so the expression it returns
-            // is undefined wherever a pivot vanishes -- at points where the
-            // determinant itself is perfectly well defined. The determinant of a
-            // matrix over a commutative ring is a polynomial in its entries, and
-            // Laplace expansion never divides, so there is nothing to exclude.
+            // Two algorithms, and which one runs is decided by the entries rather than by the
+            // size. Bareiss' fraction-free elimination is O(n^3) and Laplace expansion is
+            // O(n!), so Bareiss is tried first -- but it needs entries it can read as
+            // polynomials over the rationals, and it says so by declining rather than by
+            // guessing. https://github.com/asc-community/AngouriMath/issues/999
+            //
+            // *Ordinary* Gaussian elimination is not merely no cheaper than Laplace, it is
+            // wrong here: it leaves the pivots as literal divisions, so the expression it
+            // returns is undefined wherever a pivot vanishes -- at points where the
+            // determinant itself is perfectly well defined. The determinant of a matrix over a
+            // commutative ring is a polynomial in its entries, and neither Laplace nor Bareiss
+            // ever leaves a quotient, so there is nothing to exclude either way.
             // https://github.com/asc-community/AngouriMath/issues/992
             /// <summary>
-            /// Finds the symbolical determinant via Laplace's method
+            /// The determinant, by fraction-free elimination where the entries are polynomials
+            /// over the rationals and by Laplace expansion otherwise.
             /// </summary>
+            /// <remarks>
+            /// Both are exact and neither divides in a way that could exclude a point, so the
+            /// two agree wherever both apply; which one ran is a fact about cost, not about the
+            /// answer. Laplace is optimal for a fully symbolic matrix, whose determinant
+            /// genuinely has n! terms.
+            /// </remarks>
             public Entity? Determinant => determinant.GetValue(
-                static @this => 
+                static @this =>
                 {
-                    if (!@this.IsSquare) 
+                    if (!@this.IsSquare)
                         return null;
+                    if (Functions.PolynomialDeterminant.Of(@this.RowCount, (r, c) => @this[r, c])
+                        is { } byElimination)
+                        return byElimination.InnerSimplified;
                     return @this.InnerMatrix.DeterminantLaplace().InnerSimplified;
                 },
                 this
