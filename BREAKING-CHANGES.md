@@ -86,6 +86,8 @@ read first.
 | | `"[2; 3] / 2".ToEntity().Simplify()` | `[2; 3] / 2` | `[1; 3/2]` |
 | **Silent** | `"[2; 3) * (-1)".ToEntity().Simplify()` | `[2; 3) * (-1)` | `(-3; -2]` — reflected, ends and openness both |
 | | `"0 - [0; 1)".ToEntity().Simplify()` | `-[0; 1)` | `(-1; 0]` |
+| | `"2 * x + 4 * a".ToEntity().Factorize()`, and every sum whose whole coefficients share a divisor | `2 * x + 4 * a` — left alone | `2 * (x + 2 * a)` |
+| | `Transformation.Factorization.Name` | `… then polynomial-factorization` | `… then polynomial-factorization then numeric-content` |
 | **Silent** | `"arccotan(-1)".ToEntity().Simplify()`, and every negative argument the inverse-trigonometric table knows | `3/4 * pi` — the textbook range, and **not equal to `arccotan(-1)`**, whose value is `-pi/4` | `-1/4 * pi` |
 
 ### Every rule set describes the rules it runs
@@ -265,6 +267,38 @@ says it "will be possible once we implement quantifiers"; scaling needs none —
 factor's sign and in nothing else. Applying a non-monotonic function to an interval, which is the
 other half, is still open: `ln((0; 1))` is `(-oo; 0)` because `ln` increases, but `sin((0; 7))` needs
 to know where the turning points are.
+
+### `Factorize` takes out a common whole factor
+
+`2x + 2a` has been collected under plain `Simplify` for some time — the factorisation rules take out a
+factor that appears *identically* in every term. A factor that is only a common **divisor** was not,
+and still is not, because `2 * (x + 2 * a)` is a node larger than `4 * a + 2 * x` and
+`Entity.SimplifiedRate` will not choose it.
+
+`Factorize` now does, which is
+[#195](https://github.com/asc-community/AngouriMath/issues/195)'s "forcefully… but not peacefully":
+
+```csharp
+"2 * x + 4 * a".ToEntity().Factorize()          // was 2 * x + 4 * a, is 2 * (x + 2 * a)
+"4 * x + 6 * y + 10 * z".ToEntity().Factorize() // is 2 * (2 * x + 3 * y + 5 * z)
+"2 * x - 4 * a".ToEntity().Factorize()          // is 2 * (x - 2 * a)
+"2 * x + 4 * a".ToEntity().Simplify()           // unchanged: 4 * a + 2 * x
+```
+
+**`Simplify` is untouched**, and that is asserted rather than assumed — the peaceful behaviour is
+what a caller who did not ask to factorise still gets.
+
+Whole numbers only, and a positive content. `x/2 + a/3` has a common divisor too, but taking `1/6` out
+puts a quotient outside the sum rather than a factor, which is a different rewrite. And the sign stays
+inside: `-2x - 4a` is `2 * (-x - 2a)` rather than `-2 * (x + 2a)`, because which of those is wanted is
+a second question.
+
+A term whose coefficient is not a whole number stops the whole sum rather than contributing a 1: the
+content of `2x + a/3` is not 1, it is a thing this does not compute, and answering 1 would say there
+was nothing to take.
+
+`Transformation.NumericContentExtraction` is the step on its own, and `Transformation.Factorization`'s
+`Name` gains it — a chain names its parts.
 
 ### An equation nothing settled is no longer answered with the empty set
 

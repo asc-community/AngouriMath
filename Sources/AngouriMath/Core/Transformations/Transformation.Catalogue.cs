@@ -108,7 +108,61 @@ namespace AngouriMath.Core.Transformations
                     // And then the polynomial layer, which factors what no rule set has a rule
                     // for. Last, so that the rules keep every answer they already gave and this
                     // only ever adds one. See PolynomialFactorization.
-                    .Then(PolynomialFactorization));
+                    .Then(PolynomialFactorization)
+                    // And last of all the numeric content, which is the only step here that
+                    // `Simplify` deliberately does not get: `2 * (x + 2 * a)` is a node larger
+                    // than `4 * a + 2 * x`, so the cost model will not take it and only a caller
+                    // who asked to factorise wants it. https://github.com/asc-community/AngouriMath/issues/195
+                    .Then(NumericContentExtraction));
+
+        /// <summary>
+        /// Takes the whole number every term of a sum divides by out in front of it:
+        /// <c>2x + 4a</c> becomes <c>2 * (x + 2a)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>The "forcefully" of
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/195">#195</a>.</b> A factor
+        /// appearing <i>identically</i> in every term already comes out peacefully — <c>2x + 2a</c>
+        /// is <c>2 * (a + x)</c> under plain <see cref="Entity.Simplify(int)"/> — and a common
+        /// <b>divisor</b> does not, because the result is larger and
+        /// <c>Entity.SimplifiedRate</c> will not choose it.
+        /// </para>
+        /// <para>
+        /// Offered on its own as well as inside <see cref="FactorizationAtLevel"/>, because it is
+        /// the one step of factorisation whose answer a caller might want without the rest.
+        /// </para>
+        /// </remarks>
+        /// <remarks>
+        /// Held in a nested class rather than in a static field of this one, and that is not a
+        /// style choice. <see cref="Factorization"/> is declared <i>above</i> this and calls
+        /// <see cref="FactorizationAtLevel"/> in its own initialiser, which reads this — and a
+        /// static field initialiser runs in declaration order, so it would read <see langword="null"/>
+        /// and fail as a <c>TypeInitializationException</c> from somewhere else entirely. A nested
+        /// type initialises on first use instead, whatever order the fields are written in.
+        /// </remarks>
+        public static Transformation NumericContentExtraction => Held.Instance;
+
+        private static class Held
+        {
+            [ConstantField]
+            internal static readonly Transformation Instance = new NumericContentTransformation();
+        }
+
+        private sealed class NumericContentTransformation : Transformation
+        {
+            public override string Name => "numeric-content";
+            public override TransformationRelation Relation => TransformationRelation.Equivalence;
+            public override Soundness Soundness => Soundness.Sound;
+
+            // Never null. `Then` propagates a null from its second half as the whole chain having
+            // no answer, so a step that says "I did not apply" by returning null does not step
+            // aside -- it discards everything the steps before it produced. Returning the input
+            // unchanged is how the polynomial layer above does it and for the same reason: this
+            // only ever adds an answer to the ones already given.
+            protected override Entity? ApplyCore(Entity input)
+                => Functions.NumericContent.Extracted(input);
+        }
 
         /// <summary>
         /// The rule-based half of <see cref="FactorizationAtLevel"/>, without the polynomial
