@@ -441,12 +441,19 @@ atom returns[Entity value]
             // SpecialSet.Create(Domain). Reading it in this one position commits to a spelling
             // without deciding whether there is a universal *set*, which is #996.
             // https://github.com/asc-community/AngouriMath/issues/1048
+            // The argument is folded to a rational literal first. A codomain is a property of a
+            // node rather than a node of its own, so `1/2` annotated here and `1/2` written bare
+            // have to become the same shape before the annotation lands -- otherwise the sweep
+            // that folds the rest of the tree meets an annotated quotient it cannot tell from an
+            // unannotated one, and `domain(1/2, CC)` loses what it was asked for.
+            // https://github.com/asc-community/AngouriMath/issues/1048
+            var annotated = ParsingHelpers.RationalLiteral($args.list[0]);
             if ($args.list[1] is Variable { Name: "Any" })
-                $value = $args.list[0].WithCodomain(AngouriMath.Core.Domain.Any);
+                $value = annotated.WithCodomain(AngouriMath.Core.Domain.Any);
             else if ($args.list[1] is not SpecialSet ss)
                 throw new InvalidArgumentParseException($"Unrecognized special set {$args.list[1].Stringize()}");
             else
-                $value = $args.list[0].WithCodomain(ss.ToDomain());
+                $value = annotated.WithCodomain(ss.ToDomain());
         }
     | 'piecewise(' args = function_arguments ')'
         {
