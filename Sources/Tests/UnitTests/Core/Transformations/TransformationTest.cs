@@ -105,8 +105,10 @@ namespace AngouriMath.Tests.Core.Transformations
             var factorThenExpand = Transformation.Factorization.Then(Transformation.Expansion);
 
             // Not an inverse pair, and the names say which way round each one is.
-            Assert.Equal("expand[2] then factorize then polynomial-factorization", Shorten(expandThenFactor.Name));
-            Assert.Equal("factorize then polynomial-factorization then expand[2]", Shorten(factorThenExpand.Name));
+            Assert.Equal("expand[2] then factorize then polynomial-factorization then numeric-content",
+                Shorten(expandThenFactor.Name));
+            Assert.Equal("factorize then polynomial-factorization then numeric-content then expand[2]",
+                Shorten(factorThenExpand.Name));
 
             static string Shorten(string name)
                 => name.Replace("rewrite[PerfectSquare] then rewrite[Factorization] then inner-simplify x2", "factorize");

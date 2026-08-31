@@ -262,6 +262,7 @@ AngouriMath.Core.Transformations.Transformation.Integration(AngouriMath.Entity+V
 AngouriMath.Core.Transformations.Transformation.LimitAt(AngouriMath.Entity+Variable, AngouriMath.Entity, AngouriMath.Core.ApproachFrom) : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.Name { } : System.String
 AngouriMath.Core.Transformations.Transformation.Normalization { } : AngouriMath.Core.Transformations.Transformation
+AngouriMath.Core.Transformations.Transformation.NumericContentExtraction { } : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.PolynomialFactorization { } : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.RationalCanonicalization { } : AngouriMath.Core.Transformations.Transformation
 AngouriMath.Core.Transformations.Transformation.Rationalization { } : AngouriMath.Core.Transformations.Transformation
