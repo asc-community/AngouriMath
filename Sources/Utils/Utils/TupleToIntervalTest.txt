@@ -1,6 +1,6 @@
         [Fact] public void Test%testid%()
             => Assert.Equal(
-            MathS.Interval(%arg1%, %arg2%),
+            MathS.Interval(%arg2%, %arg1%),
             (%arg1%, %arg2%).ToInterval()
             );
 
