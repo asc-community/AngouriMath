@@ -1861,12 +1861,18 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 description: "{ True, False } = the boolean domain"),
 
-            // (-oo; +oo) is the domain it is an interval of
+            // (-oo; +oo) is the domain it is an interval of, where that domain names a set.
+            // The Any case is refused in the condition rather than left to the replacement:
+            // MatchedRule.Build swallows what the right-hand side throws, so without this the
+            // rule declined by accident on an interval widened to "no constraint" -- which is
+            // the right answer arrived at by an exception. There is no set of Domain.Any.
+            // https://github.com/asc-community/AngouriMath/issues/996
             new MatchedRule(
                 "an-unbounded-interval-is-a-whole-domain",
                 MatchPattern.Any<Set.Interval>(
                     "i", interval => interval.Left == Real.NegativeInfinity
-                                     && interval.Right == Real.PositiveInfinity),
+                                     && interval.Right == Real.PositiveInfinity
+                                     && interval.Codomain is not Domain.Any),
                 bound => Set.SpecialSet.Create(((Set.Interval)bound["i"]).Codomain),
                 Soundness.Sound,
                 description: "(-oo; +oo) = the domain it is an interval of"));

@@ -37,7 +37,14 @@ namespace AngouriMath.Functions
             Simplificator.ParaphraseInterval(var, left, leftClosed, right, rightClosed),
 
             FiniteSet potentialBB when potentialBB == FullBooleanSet => SpecialSet.Create(Domain.Boolean),
-            Interval(var left, _, var right, _) interval when left == Real.NegativeInfinity && right == Real.PositiveInfinity => SpecialSet.Create(interval.Codomain),
+            // (-oo; +oo) is the domain it is an interval of -- where that domain names a set.
+            // An interval widened to Domain.Any is left as written: "no constraint" has no set,
+            // and asking SpecialSet.Create for one threw out of `solve` on valid input.
+            // https://github.com/asc-community/AngouriMath/issues/996
+            Interval(var left, _, var right, _) interval
+                when left == Real.NegativeInfinity && right == Real.PositiveInfinity
+                     && interval.Codomain is not AngouriMath.Core.Domain.Any
+                => SpecialSet.Create(interval.Codomain),
 
             _ => x
         };

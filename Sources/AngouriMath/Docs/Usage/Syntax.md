@@ -21,13 +21,19 @@ something, so the ordinary expression is unchanged — and the default is not th
 a variable and a matrix default to `Any`, `abs` and an interval to `RR`, every boolean node to `BB`,
 each numeric literal to its own type's domain, and everything else to `CC`.
 
-Two annotations still do not survive, and both are the grammar's limit rather than the printer's.
-There is no way to write **`Any`**, because the second argument of `domain(...)` has to be one of
-the five special sets and none of them means "no restriction" — so a node *widened* to `Any` from a
-narrower default prints as though it had not been. And no input at all yields a rational literal
-whose codomain is `CC`: the pass that reads `1/2` as a rational rather than a quotient
+**`Any` is written too, and it is not a set.** `domain(abs(x), Any)` is how a node widened from a
+narrower default prints, and it reads back widened
+([#1048](https://github.com/asc-community/AngouriMath/issues/1048)). `Any` is a keyword in that one
+position and nowhere else — `Any + 1` is arithmetic on a variable called `Any`, and there is no
+`Entity` it denotes: `SpecialSet.Create(Domain.Any)` throws, deliberately. It says that a node
+imposes no restriction, which is a fact about the node and not a collection of values
+([#996](https://github.com/asc-community/AngouriMath/issues/996)).
+
+One annotation still does not survive, and it is the parser's rather than the printer's: no input
+at all yields a rational literal whose codomain is `CC`, because the pass that reads `1/2` as a
+rational rather than a quotient
 ([#873](https://github.com/asc-community/AngouriMath/issues/873)) treats `CC` as "nobody annotated
-this", because that is what an un-annotated `/` carries.
+this", which is what an un-annotated `/` carries.
 
 **LaTeX output has a round trip too, and it is checked in someone else's repository.**
 [CSharpMath.Evaluation](https://github.com/verybadcat/CSharpMath/blob/master/CSharpMath.Evaluation/Evaluation.cs)
@@ -138,6 +144,11 @@ with an operator parses.
 | special | `RR` `CC` `ZZ` `QQ` `BB` |
 | operations | `unite` `/\` … see the table above |
 
+There is **no universal set** and no literal for one. A set that constrains nothing is the
+conditional set `{ x : True }`, which prints, reads back, compares and answers membership like any
+other; `Domain.Any` is a codomain and not a candidate for the job
+([#996](https://github.com/asc-community/AngouriMath/issues/996)).
+
 ## Matrices and vectors
 
 `[1, 2, 3]` is a column vector (3 by 1), `[[1, 2], [3, 4]]` a matrix, `[1, 2, 3]T` a transpose
@@ -207,9 +218,10 @@ range in [#657](https://github.com/asc-community/AngouriMath/pull/657).
 **Structural** — `piecewise(a provided p, b provided q)`, `lambda(param, body)`,
 `apply(f, arg, ...)`, `domain(expr, set)`.
 
-`domain` takes a special set — `CC` `RR` `QQ` `ZZ` `BB` — and narrows the *codomain* of whatever
-node it wraps, which is what makes the expression evaluate to `NaN` outside it. It applies to any
-node, not only a variable, and it is what `Stringize` prints for one.
+`domain` takes a special set — `CC` `RR` `QQ` `ZZ` `BB` — or the keyword `Any`, and sets the
+*codomain* of whatever node it wraps, which is what makes the expression evaluate to `NaN` outside
+it. It applies to any node, not only a variable, and it is what `Stringize` prints for one. `Any`
+is the one spelling here that is not a set: it removes the restriction rather than naming values.
 
 **Refused by name** — `trunc` `lcm` `erf` `conjugate`. AngouriMath has none of these, and each is
 what some other CAS calls a function, so a caller reaches for it. Left alone they would be read as
