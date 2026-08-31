@@ -113,8 +113,13 @@ namespace AngouriMath.Tests.Core.Transformations
             // Named one by one and with the reason, so that a rule losing or gaining a direction
             // fails rather than moving a number. Almost all of these are one-way because their
             // replacement is arithmetic on a binding rather than a tree built around it -- see
-            // RuleReversal.ReplacementIsCode -- and exactly one is one-way for a mathematical
-            // reason: 1 does not say which angle it came from.
+            // RuleReversal.ReplacementIsCode -- and two are one-way for a mathematical reason:
+            // 1 does not say which angle it came from, and S does not say which name a set
+            // builder over it would bind, which is what dropping the binder's hole means.
+            //
+            // The second of those was ReplacementIsCode until MatchPattern.Binder let it be
+            // written as data (#1074). Its reason got *better* rather than going away: it is now
+            // one-way because of what it says, rather than because of how it was written.
             Assert.Equal(
                 new[]
                 {
@@ -123,7 +128,7 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-common-factor-is-collected-out-of-a-whole-sum: ReplacementIsCode",
                     "a-common-factor-of-two-added-products-comes-out: ReplacementIsCode",
                     "a-common-factor-of-two-subtracted-products-comes-out: ReplacementIsCode",
-                    "a-conditional-set-whose-condition-is-its-own-membership-is-that-set: ReplacementIsCode",
+                    "a-conditional-set-whose-condition-is-its-own-membership-is-that-set: ReplacementDropsHoles",
                     "a-conjunction-absorbs-a-disjunction-it-shares-an-operand-with: ReplacementIsCode",
                     "a-conjunction-chain-is-sorted-and-grouped: ReplacementIsCode",
                     "a-conjunction-drops-a-negated-copy-of-its-other-operand: ReplacementIsCode",
@@ -610,9 +615,17 @@ namespace AngouriMath.Tests.Core.Transformations
                         continue;
                     }
                     Assert.True(rule.Right.IsBuildable, $"{set.Name}/{rule.Name}: right");
-                    // The left decides only whether it reads backwards, and the type says which.
-                    Assert.Equal(rule.Left.IsBuildable,
-                        rule.Reversal is not RuleReversal.PatternCannotBeBuilt);
+                    // The left decides only whether it reads backwards. Stated as the two
+                    // implications rather than as an equivalence: `Classify` returns the *first*
+                    // reason a rule is one-way, so a rule that both drops a hole and has an
+                    // unbuildable left is reported as dropping the hole, and reading
+                    // PatternCannotBeBuilt as "exactly the unbuildable ones" fails on it.
+                    // MatchPattern.Binder made that shape real -- { x : x in S } = S has a
+                    // ConditionalSet pattern, which is not buildable, and drops the bound name.
+                    if (rule.Reversal is RuleReversal.Reversible)
+                        Assert.True(rule.Left.IsBuildable, $"{set.Name}/{rule.Name}: left");
+                    if (rule.Reversal is RuleReversal.PatternCannotBeBuilt)
+                        Assert.False(rule.Left.IsBuildable, $"{set.Name}/{rule.Name}: left");
                 }
         }
 

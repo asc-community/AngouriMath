@@ -1747,21 +1747,22 @@ namespace AngouriMath.Core.Transformations.Matching
         /// anyway, because its replacement wants the node rather than its parts.
         /// </para>
         /// <para>
-        /// The other <b>was real, and is the first limitation of the matcher this file has had to
+        /// The other <b>was real, and was the first limitation of the matcher this file had to
         /// work around.</b> <c>{ x : x in S }</c> is <c>S</c>, and the <c>switch</c> says that by
         /// deconstructing <c>ConditionalSet(var v, Inf(var v, var s))</c> — a record
         /// deconstruction, which reads the <i>stored</i> <c>Var</c> and <c>Predicate</c>. The
-        /// matcher walks <c>DirectChildren</c>, and a <see cref="Set.ConditionalSet"/> has
+        /// matcher walked <c>DirectChildren</c>, and a <see cref="Set.ConditionalSet"/> has
         /// <b>one</b> child there, its predicate, with the bound variable already renamed to a
         /// placeholder: <c>{ x : x in [0; 1] }</c> offers <c>%1 in [0; 1]</c> and nothing else.
-        /// A two-child node pattern over it cannot match, and no pattern can name the bound
-        /// variable at all.
+        /// So the rule bound the whole set and took it apart in its replacement — honest rather
+        /// than clever, but a rule whose shape was code again.
         /// </para>
         /// <para>
-        /// So that rule binds the whole set and takes it apart in its replacement, which is
-        /// honest rather than clever: the pattern says what the matcher can say, and the
-        /// condition says the rest. Reaching into a binder is
-        /// <a href="https://github.com/asc-community/AngouriMath/issues/1074">#1074</a>.
+        /// It is data now. <c>MatchPattern.Binder</c> reads a binder's declared parts, and the
+        /// repeated hole is what the <c>switch</c> wrote as <c>when v1 == v1a</c>. Only this node
+        /// type needed it: every other binder in the language publishes the name it binds as an
+        /// ordinary child.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1074">#1074</a>
         /// </para>
         /// </remarks>
         internal static MatchedRuleSet SetOperator { get; } = new(
@@ -1816,13 +1817,12 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 description: "A \\ A = {}"),
 
-            // { x : x in S } = S. Bound whole and taken apart in the replacement, because a
-            // node pattern cannot reach inside a binder -- see the remark on this set.
+            // { x : x in S } = S. The repeated "v" is what the switch wrote as `when v1 == v1a`.
             new MatchedRule(
                 "a-conditional-set-whose-condition-is-its-own-membership-is-that-set",
-                MatchPattern.Any<Set.ConditionalSet>(
-                    "cs", set => set.Predicate is Set.Inf(var member, _) && member == set.Var),
-                bound => ((Set.Inf)((Set.ConditionalSet)bound["cs"]).Predicate).SupSet,
+                MatchPattern.Binder<Set.ConditionalSet>(
+                    "v", MatchPattern.Node<Set.Inf>(MatchPattern.Any("v"), MatchPattern.Any("s"))),
+                MatchPattern.Any("s"),
                 Soundness.Sound,
                 description: "{ x : x in S } = S"),
 
