@@ -57,6 +57,8 @@ read first.
 | **Silent** | `"-1 * (y mod z)".ToEntity().Stringize()` | `-y mod z` | `-(y mod z)` |
 | | any expression mixing a number with a `Complex` argument, `Compile`d in a NativeAOT app — `"x + 1".Compile<Complex, Complex>("x")` | `UncompilableNodeException: ... The binary operator Add is not defined for the types 'System.Numerics.Complex' and 'System.Numerics.Complex'` | the compiled function, answering as it does under the JIT |
 | | `Compile` to a nullable integral return type in a NativeAOT app | `AngouriBugException: IsNaN method expected for type System.Double`, which took the process down | the compiled function |
+| **Silent** | `"(x = 1) implies (x = 2)".ToEntity().Solve("x")`, and every implication | `{ 2 } \/ BB` — truth values in the solution set of a numeric question | `{ x : not x = 1 }` |
+| | `"domain((-oo; +oo), Any) = RR".ToEntity().Solve("x")`, and every unbounded interval widened to `Any` | `NotSufficientlySupportedException: There is no special set for domain Any` | `{  }` |
 | **Silent** | an app publishing with `PublishTrimmed` or NativeAOT | `AngouriMath.dll` was copied in whole, being unmarked | it is trimmed with the rest, since the assembly now declares `IsTrimmable` |
 | **Silent** | `"domain(x, ZZ)".ToEntity().Stringize()`, and `ToString`, and `EntityJsonConverter` | `x`, which reads back with `Codomain = Any` | `domain(x, ZZ)`, which reads back narrowed |
 | **Silent** | `"domain(sqrt(-1), RR)".ToEntity().Stringize()` | `sqrt(-1)`, which evaluates to `i` when read back | `domain(sqrt(-1), RR)`, which evaluates to `NaN` |
@@ -302,6 +304,59 @@ was nothing to take.
 
 `Transformation.NumericContentExtraction` is the step on its own, and `Transformation.Factorization`'s
 `Name` gains it — a chain names its parts.
+
+### An implication is solved without naming a universe
+
+`Solve` answered `a implies b` with `Codomain \ solve(a) \/ solve(b)`, taking the complement
+inside the **statement node's** codomain. That is `Boolean` for every implication, so a numeric
+question came back with a solution set containing `True` and `False`
+([#996](https://github.com/asc-community/AngouriMath/issues/996)). A `TODO` on the line asked for a
+universal set to subtract from instead; neither is needed, because *the values of `x` where `a`
+does not hold* is `{ x : not a }`, which names no universe at all.
+
+**Was** — the domain in the answer is the codomain of the `implies` node, not anything the question
+was asked over:
+
+```
+"(x = 1) implies (x = 2)".ToEntity().Solve("x")     { 2 } \/ BB
+"x > 1 implies x > 0".ToEntity().Solve("x")         BB \ (1; +oo) \/ (0; +oo)
+"A implies B".ToEntity().Solve("A")                 BB \ { True }
+```
+
+**Is** — a set-builder for the antecedent's complement, united with what the consequent settles:
+
+```
+"(x = 1) implies (x = 2)".ToEntity().Solve("x")     { x : not x = 1 }
+"x > 1 implies x > 0".ToEntity().Solve("x")         { x : not x > 1 } \/ (0; +oo)
+"A implies B".ToEntity().Solve("A")                 { A : not A }
+```
+
+The boolean row carries the same information it did before — `BB \ { True }` and `{ A : not A }`
+are the same set — without asserting that `A` ranges over `BB`. The implication solver is no more
+complete than it was: `solve(b, x)` is still empty where `b` does not mention `x`, so
+`A implies True` is `{ A : not A }` rather than `BB`, as it was before.
+
+### An unbounded interval over no constraint is left as written
+
+`(-oo; +oo)` simplifies to the domain it is an interval of. Widened to `Domain.Any` there is no such
+domain — `Any` is a codomain and not a set — and asking for one threw out of `Solve` on input a
+caller can write ([#996](https://github.com/asc-community/AngouriMath/issues/996)).
+
+**Was**
+
+```
+"domain((-oo; +oo), Any) = RR".ToEntity().Solve("x")
+    NotSufficientlySupportedException: There is no special set for domain Any
+```
+
+**Is** — the interval is left alone, and the statement is solved:
+
+```
+"domain((-oo; +oo), Any) = RR".ToEntity().Solve("x")    {  }
+"domain((-oo; +oo), Any)".ToEntity().Simplify()         domain((-oo; +oo), Any)
+"(-oo; +oo)".ToEntity().Simplify()                      RR                        unchanged
+"domain((-oo; +oo), CC)".ToEntity().Simplify()          CC                        unchanged
+```
 
 ### An equation nothing settled is no longer answered with the empty set
 
