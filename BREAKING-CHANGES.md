@@ -59,6 +59,8 @@ read first.
 | **Silent** | `"-1 * (y mod z)".ToEntity().Stringize()` | `-y mod z` | `-(y mod z)` |
 | | any expression mixing a number with a `Complex` argument, `Compile`d in a NativeAOT app — `"x + 1".Compile<Complex, Complex>("x")` | `UncompilableNodeException: ... The binary operator Add is not defined for the types 'System.Numerics.Complex' and 'System.Numerics.Complex'` | the compiled function, answering as it does under the JIT |
 | | `Compile` to a nullable integral return type in a NativeAOT app | `AngouriBugException: IsNaN method expected for type System.Double`, which took the process down | the compiled function |
+| **Silent** | `"not (x = 1)".ToEntity().Solve("x")`, and every negation | `{  }` — no value satisfies it | `{ x : not x = 1 }` |
+| **Silent** | `"not (x > 1)".ToEntity().Solve("x")`, and every negated comparison | `{  }` | `(-oo; 1]` |
 | **Silent** | `"(x = 1) implies (x = 2)".ToEntity().Solve("x")`, and every implication | `{ 2 } \/ BB` — truth values in the solution set of a numeric question | `{ x : not x = 1 }` |
 | | `"domain((-oo; +oo), Any) = RR".ToEntity().Solve("x")`, and every unbounded interval widened to `Any` | `NotSufficientlySupportedException: There is no special set for domain Any` | `{  }` |
 | **Silent** | an app publishing with `PublishTrimmed` or NativeAOT | `AngouriMath.dll` was copied in whole, being unmarked | it is trimmed with the rest, since the assembly now declares `IsTrimmable` |
@@ -306,6 +308,42 @@ was nothing to take.
 
 `Transformation.NumericContentExtraction` is the step on its own, and `Transformation.Factorization`'s
 `Name` gains it — a chain names its parts.
+
+### A negation is no longer answered with the empty set
+
+`StatementSolver.Solve` had arms for equality, the connectives, the four comparisons, membership,
+`provided` and `piecewise` — and none for `not`, so every negation fell through to `Set.Empty`.
+The empty set is a positive claim, *no x satisfies this*, and it was false of all of them
+([#1127](https://github.com/asc-community/AngouriMath/issues/1127)). This is the defect
+[#1036](https://github.com/asc-community/AngouriMath/issues/1036) fixed for equations, left
+standing for negation.
+
+**Was** — every one of these, and 1 is not a solution of the first while 0 is:
+
+```
+"not (x = 1)".ToEntity().Solve("x")             {  }
+"not (x > 1)".ToEntity().Solve("x")             {  }
+"not (x >= 1)".ToEntity().Solve("x")            {  }
+"not not (x = 1)".ToEntity().Solve("x")         {  }
+"not (x > 1 or x < -1)".ToEntity().Solve("x")   {  }
+"not (x in RR)".ToEntity().Solve("x")           {  }
+```
+
+**Is** — the negation pushed inward as far as there is an arm for it, and named as a set-builder
+where there is not:
+
+```
+"not (x = 1)".ToEntity().Solve("x")             { x : not x = 1 }
+"not (x > 1)".ToEntity().Solve("x")             (-oo; 1]
+"not (x >= 1)".ToEntity().Solve("x")            (-oo; 1)
+"not not (x = 1)".ToEntity().Solve("x")         { 1 }
+"not (x > 1 or x < -1)".ToEntity().Solve("x")   [-1; 1]
+"not (x in RR)".ToEntity().Solve("x")           { x : not x in RR }
+```
+
+A negated comparison is answered as the comparison it is, which is what
+`RewriteRules.InequalityEquality` already says; a negated connective is pushed inward by De Morgan,
+which is the direction that reaches an arm. What neither reaches is answered as written.
 
 ### An implication is solved without naming a universe
 

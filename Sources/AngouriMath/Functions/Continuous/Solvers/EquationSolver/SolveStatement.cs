@@ -149,6 +149,55 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         }
 
         /// <summary>
+        /// What <c>not a</c> is as a statement about <paramref name="x"/>: the negation pushed
+        /// inward as far as there is an arm for it, and named as a set-builder where there is not.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// There was no arm for <see cref="Notf"/> at all, so every negation fell to
+        /// <see cref="Set.Empty"/> — <c>not (x = 1)</c>, <c>not (x &gt; 1)</c> and
+        /// <c>not (x in RR)</c> each answered "no x satisfies this", which is a positive claim and
+        /// false of all three. That is the defect
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1036">#1036</a> fixed for
+        /// equations, left standing for negation.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1127">#1127</a>
+        /// </para>
+        /// <para>
+        /// Pushing the negation inward is unambiguous <i>here</i> in a way it is not in the
+        /// simplifier, which is why it is done here and not as a rule: this switch has arms for
+        /// the connectives and for the comparisons and none for <c>not</c>, so inward is the
+        /// direction that reaches one. A negated comparison is a comparison, and
+        /// <see cref="Core.Transformations.RewriteRules.InequalityEquality"/> is where that is
+        /// already written down — asking it rather than restating it keeps the two from drifting.
+        /// </para>
+        /// <para>
+        /// What is left over is answered as written rather than as nothing: <c>not (x in RR)</c>
+        /// is <c>{ x : not x in RR }</c>, which names the non-real complex numbers exactly and
+        /// asserts of them only that they are what the statement says.
+        /// </para>
+        /// </remarks>
+        private static Set Negation(Entity statement, Entity operand, Variable x)
+        {
+            switch (operand)
+            {
+                // not not a = a
+                case Notf(var inner):
+                    return Solve(inner, x);
+                // De Morgan, in the direction that reaches an arm.
+                case Andf(var left, var right):
+                    return (Set)MathS.Union(Solve(!left, x), Solve(!right, x));
+                case Orf(var left, var right):
+                    return Conjunction(Solve(!left, x), Solve(!right, x), statement, x);
+            }
+
+            var asAComparison = Core.Transformations.RewriteRules.InequalityEquality.ApplyOnce(statement);
+            if (asAComparison is not Notf)
+                return Solve(asAComparison, x);
+
+            return new ConditionalSet(x, statement);
+        }
+
+        /// <summary>
         /// <c>a implies b</c> holds where <c>a</c> fails or where <c>b</c> holds, and the first
         /// half of that is a set-builder rather than a complement.
         /// </summary>
@@ -216,6 +265,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 Orf(var left, var right) => 
                     MathS.Union(Solve(left, x), Solve(right, x)),
                 Impliesf(var left, var right) => Implication(left, right, x),
+                Notf(var operand) => Negation(expr, operand, x),
 
                 Greaterf(var left, var right) => 
                     AnalyticalInequalitySolver.Solve(Minus(left, right), x),
