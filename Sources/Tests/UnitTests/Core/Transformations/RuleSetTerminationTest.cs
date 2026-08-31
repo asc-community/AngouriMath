@@ -137,15 +137,30 @@ namespace AngouriMath.Tests.Core.Transformations
         /// which is how the simplifier runs them.
         /// </summary>
         /// <remarks>
-        /// <c>Common</c> has a three-cycle on <c>-x * 1/2</c>:
-        /// <c>Mulf(-1/2, x)</c> to <c>Mulf(-1, Divf(x, 2))</c> to <c>Divf(Mulf(-1, x), 2)</c> and
-        /// back — three trees printing as two strings, which is why it wants writing down as
-        /// shapes. Two rules disagree about whether <c>c * x</c> or <c>(c * x) / d</c> is the
-        /// destination. <c>Simplify</c> bounds its own iteration and does not hang, so this is a
-        /// property of the set rather than a defect a caller sees today
-        /// (<a href="https://github.com/asc-community/AngouriMath/issues/1056">#1056</a>).
+        /// <para>
+        /// <b>Empty, and kept.</b> <c>Common</c> was the one entry: a three-cycle on
+        /// <c>-x * 1/2</c>, <c>Mulf(-1/2, x)</c> to <c>Mulf(-1, Divf(x, 2))</c> to
+        /// <c>Divf(Mulf(-1, x), 2)</c> and back — three trees printing as two strings, which is
+        /// why the remark wrote them as shapes.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1056">#1056</a>
+        /// </para>
+        /// <para>
+        /// The pair that turned it were exact inverses on one shape:
+        /// <c>a-numeric-quotient-of-a-numeric-multiple-collects-its-numbers</c> reads
+        /// <c>(-1 * x) / 2</c> as a numeric factor to collect, giving <c>-1/2 * x</c>, and
+        /// <c>a-negated-reciprocal-rational-factor-is-a-negated-division</c> reads that back as
+        /// <c>-(x / 2)</c>. The first now declines a factor of <c>-1</c>, which is the sign rather
+        /// than a number to collect. The positive case never cycled, because <c>x / 2</c> is a
+        /// <c>Divf</c> over a leaf and so does not re-enter the first rule's pattern at all — the
+        /// loop existed only because a negation is spelled as a product.
+        /// </para>
+        /// <para>
+        /// The list stays because the shape of the assertion is what matters: it is held in both
+        /// directions, so a set that starts cycling fails and a set that stops cycling has to
+        /// leave it, which is how this one was found to have stopped.
+        /// </para>
         /// </remarks>
-        private static readonly HashSet<string> NeverSettle = new() { "Common" };
+        private static readonly HashSet<string> NeverSettle = new();
 
         /// <summary>
         /// With the normalisation between passes — how the simplifier runs them — every set
