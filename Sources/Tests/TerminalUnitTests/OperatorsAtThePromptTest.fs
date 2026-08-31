@@ -70,23 +70,61 @@ let ``A comparison on symbols is one open away`` () =
     answers k "x > 0" "x > 0"
 
 /// <summary>
-/// The part narrowing does <b>not</b> fix, kept here so nobody reads the tests above as saying
-/// the prompt is now an F# console.
+/// <c>fib</c> compiles, which is what #1133 asked for — but not by default, and the difference is
+/// the point rather than a caveat.
 /// </summary>
 /// <remarks>
-/// Rebinding arithmetic is what the Terminal is for, and it has the same shape of cost: once
-/// <c>+</c> and <c>*</c> build expressions, a function whose branches mix an <c>Entity</c> with an
-/// <c>int</c> does not typecheck, and <c>List.sum</c> over expressions has no <c>+</c> it can use.
-/// So <c>let rec fib n = if n &lt; 2 then n else fib (n-1) + fib (n-2)</c> still does not compile —
-/// it fails on the arithmetic now rather than on the comparison. Narrowing bought back the part
-/// that was costing nothing; this part is the trade the tool actually makes.
+/// <para>
+/// Rebinding arithmetic and writing ordinary F# are <b>mutually exclusive</b>, and that was
+/// measured rather than assumed. With F#'s own operators, <c>fib 20</c> is 6765 and <c>3 / 2</c> is
+/// <c>1</c>; with arithmetic rebound, <c>3 / 2</c> is <c>3/2</c> and <c>x + 1</c> is an expression
+/// while <c>fib</c> does not typecheck. Both readings of <c>/</c> cannot be the return type of one
+/// operator.
+/// </para>
+/// <para>
+/// An overload that keeps <c>int + int</c> an <c>int</c> was tried, as a witness-constrained SRTP
+/// operator, and it does resolve the simple cases — <c>1 + 1</c> is 2, <c>x + 1</c> is an
+/// expression, <c>1 + 4.5</c> is <c>11/2</c>, all at once. It does not resolve <c>let rec</c>: the
+/// operator has to be picked while the function's own type is still being inferred, so it falls to
+/// the general case and <c>fib</c> fails anyway. A type annotation does not help, which was checked
+/// rather than assumed.
+/// </para>
+/// <para>
+/// So the answer is that a session says which reading it wants. <c>operators ()</c> at the prompt
+/// prints the two lines, and either can follow the other any number of times.
+/// </para>
 /// </remarks>
-[<Theory>]
-[<InlineData("let rec fib n = if n < 2 then n else fib (n-1) + fib (n-2)\nfib 20")>]
-[<InlineData("[ for i in 1..10 -> i * i ] |> List.sum")>]
-let ``Arithmetic on expressions still costs ordinary F#`` (code: string) =
-    match execute (kernel ()) code with
+[<Fact>]
+let ``Ordinary F# is one open away, and reversible`` () =
+    let k = kernel ()
+
+    // As the prompt starts: expressions, and fib does not compile.
+    answers k "x + 1" "x + 1"
+    answers k "3 / 2" "3/2"
+    match execute k "let rec fib n = if n < 2 then n else fib (n-1) + fib (n-2)\nfib 20" with
     | ExecutionResult.Error _ -> ()
-    | other ->
-        Assert.True(false,
-            $"this compiles now, so the remark above is out of date and should be rewritten: {other}")
+    | other -> Assert.True(false, $"fib compiles by default now, so this test is out of date: {other}")
+
+    // One line, and it does.
+    match execute k "open Microsoft.FSharp.Core.Operators" with
+    | ExecutionResult.VoidSuccess -> ()
+    | other -> Assert.True(false, $"restoring F#'s operators answered {other}")
+    answers k "let rec fib n = if n < 2 then n else fib (n-1) + fib (n-2)\nfib 20" "6765"
+    answers k "[ for i in 1..10 -> i * i ] |> List.sum" "385"
+    answers k "3 / 2" "1"
+
+    // And back, in the same session.
+    match execute k "open AngouriMath.Interactive.ArithmeticOperators" with
+    | ExecutionResult.VoidSuccess -> ()
+    | other -> Assert.True(false, $"going back answered {other}")
+    answers k "x + 1" "x + 1"
+    answers k "3 / 2" "3/2"
+
+/// And the prompt says so, rather than leaving it to be discovered.
+[<Fact>]
+let ``The prompt explains which operators it has`` () =
+    // It prints rather than returns, so what is asserted is that it runs and says nothing back:
+    // a returned sentence would go to AngouriMath's formatter, which would try to parse it.
+    match execute (kernel ()) "operators ()" with
+    | ExecutionResult.VoidSuccess -> ()
+    | other -> Assert.True(false, $"operators () answered {other}")
