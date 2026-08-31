@@ -601,6 +601,55 @@ namespace AngouriMath.Core.Transformations.Matching
             => new NodePattern(typeof(T), children, commutative: false);
 
         /// <summary>
+        /// Matches a binder — a node that declares a name and puts a body under it — binding the
+        /// declared name to <paramref name="varName"/> and matching the body against
+        /// <paramref name="body"/>. Repeating <paramref name="varName"/> inside
+        /// <paramref name="body"/> is how a rule says <i>the same variable</i>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>{ x : x in S }</c> is <c>S</c>, and the <c>switch</c> said so by deconstructing
+        /// <c>ConditionalSet(var v, Inf(var v, var s))</c> — reading the node's <i>stored</i>
+        /// parts. A pattern could not: the matcher walked <c>DirectChildren</c>, and a set builder
+        /// publishes one child there, its predicate, with the bound name already replaced by a
+        /// placeholder invented per traversal. So a two-child pattern over it never matched, and
+        /// no pattern could name the bound variable at all.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1074">#1074</a>
+        /// </para>
+        /// <para>
+        /// <b>One node type needs this, not six.</b> The issue expected every binder to be in the
+        /// same position; measuring them says otherwise. A summation, a product, an integral, a
+        /// derivative, a limit and a lambda each publish the name they bind as an ordinary child,
+        /// un-renamed, so an ordinary <see cref="Node{T}"/> already reaches it —
+        /// <c>Summationf</c> offers four children and the second is the index. Only
+        /// <see cref="Entity.Set.ConditionalSet"/> hides and renames, and only it has an
+        /// <see cref="Entity.MatchableChildren"/> override.
+        /// </para>
+        /// <para>
+        /// <b>The name position is a hole, and cannot be anything else.</b> Matching a bound name
+        /// against a written one would make the pattern read <c>{ x : … }</c> and
+        /// <c>{ y : … }</c> as different expressions, which they are not, so this refuses
+        /// anything but <see cref="Any(string)"/> there. Alpha-invariance then holds for the same
+        /// reason it holds of the <c>switch</c> arm: what is asserted is that two occurrences are
+        /// the same name, never which name.
+        /// </para>
+        /// <para>
+        /// <b>What a rule owes in return.</b> Reading inside a binder means the body arrives with
+        /// its bound name written, so a replacement that lifts part of that body out of the
+        /// binder frees an occurrence that was bound — capture, in reverse. Nothing here can check
+        /// that, because the replacement is arbitrary. <c>{ x : x in S }</c> is safe because
+        /// <c>S</c> is a sibling of the bound occurrence rather than under it; a rule taking out
+        /// something that mentions <paramref name="varName"/> would not be.
+        /// </para>
+        /// </remarks>
+        internal static MatchPattern Binder<T>(string varName, MatchPattern body) where T : Entity
+            => new NodePattern(
+                typeof(T),
+                new[] { Any(varName), body ?? throw new ArgumentNullException(nameof(body)) },
+                commutative: false,
+                binder: true);
+
+        /// <summary>
         /// Matches a two-child node of the given type whose children match <b>in either
         /// order</b>. One of these replaces the four arms a <c>switch</c> needs to say the same
         /// thing about a commutative operator.
@@ -885,7 +934,8 @@ namespace AngouriMath.Core.Transformations.Matching
             private readonly MatchPattern[] children;
             private readonly bool commutative;
 
-            internal NodePattern(Type nodeType, MatchPattern[] children, bool commutative)
+            internal NodePattern(
+                Type nodeType, MatchPattern[] children, bool commutative, bool binder = false)
             {
                 this.nodeType = nodeType;
                 this.children = children;
@@ -897,7 +947,13 @@ namespace AngouriMath.Core.Transformations.Matching
                     && children.All(child => child.IsBuildable);
                 deterministic = !commutative && children.All(child => child.IsDeterministic);
                 nodeCount = 1 + children.Sum(child => child.NodeCount);
-                canEMatch = children.All(child => child.CanEMatch);
+                // A binder's matchable shape is not the shape an e-node has -- the e-graph is
+                // built from DirectChildren and has no notion of binding at all, which is why
+                // `constructors` has no entry for one. So this reports what is true rather than
+                // relying on never being asked: an e-class holding a set builder offers no node
+                // this could match, and saying so here is the difference between a limit and an
+                // accident.
+                canEMatch = !binder && children.All(child => child.CanEMatch);
             }
 
             /// <summary>Settled here because it depends on nothing that changes afterwards.</summary>
@@ -1013,7 +1069,7 @@ namespace AngouriMath.Core.Transformations.Matching
 
             private protected override IEnumerable<Bindings> MatchCore(Entity expr, Bindings bindings)
             {
-                var actual = expr.DirectChildren;
+                var actual = expr.MatchableChildren;
                 if (actual.Count != children.Length) yield break;
 
                 foreach (var solution in MatchInOrder(actual, bindings, 0))
@@ -1054,7 +1110,7 @@ namespace AngouriMath.Core.Transformations.Matching
                 Entity expr, Bindings bindings, out Bindings result)
             {
                 result = bindings;
-                var actual = expr.DirectChildren;
+                var actual = expr.MatchableChildren;
                 if (actual.Count != children.Length) return false;
                 // Left to right, threading the bindings through. No backtracking is needed
                 // because no child offers a second answer -- that is what IsDeterministic means.
@@ -1102,7 +1158,7 @@ namespace AngouriMath.Core.Transformations.Matching
                 Entity expr, Bindings bindings, int choice, out Bindings result)
             {
                 result = bindings;
-                var actual = expr.DirectChildren;
+                var actual = expr.MatchableChildren;
                 if (actual.Count != children.Length) return false;
 
                 // `MatchCore` yields every solution in the written order first and then, for a

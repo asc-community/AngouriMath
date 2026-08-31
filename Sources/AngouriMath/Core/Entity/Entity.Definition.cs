@@ -132,6 +132,30 @@ namespace AngouriMath
         public IReadOnlyList<Entity> DirectChildren => directChildren.GetValue(static @this => @this.InitDirectChildren(), this);
         private LazyPropertyA<IReadOnlyList<Entity>> directChildren;
 
+        /// <summary>
+        /// The parts a <see cref="Core.Transformations.Matching.MatchPattern"/> takes this node
+        /// apart into. <see cref="DirectChildren"/> for every node but one.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The two differ only where a node's traversal shape is not its written shape, and
+        /// <see cref="Set.ConditionalSet"/> is the only node where that is so — measured across
+        /// every binder the language has. A summation, a product, an integral, a derivative, a
+        /// limit and a lambda all publish the name they bind as an ordinary child, un-renamed, so
+        /// a pattern can already name it and a repeated hole already says "the same variable". A
+        /// set builder publishes its predicate alone, with the bound name replaced by a
+        /// placeholder invented per traversal, so a pattern could reach neither.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1074">#1074</a>
+        /// </para>
+        /// <para>
+        /// This is the same split <see cref="VarsAndConsts"/> and <see cref="FreeVariables"/>
+        /// already make, and for the same reason: what a set builder <em>is</em> is read off its
+        /// declared parts, and what it publishes for traversal is a capture-avoiding rewriting of
+        /// them. Anything asking a question about the written expression has to ask the first.
+        /// </para>
+        /// </remarks>
+        internal virtual IReadOnlyList<Entity> MatchableChildren => DirectChildren;
+
         /// <remarks>A depth-first enumeration is required by
         /// <see cref="AngouriMath.Functions.TreeAnalyzer.GetMinimumSubtree"/></remarks>
         /// <summary>

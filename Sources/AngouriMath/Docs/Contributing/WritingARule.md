@@ -121,18 +121,19 @@ matches and silently builds nothing. `BuildableNodeTypesTest` is the list.
 
 ## Replacement: a pattern, or code
 
-**33** of the 322 rules have a pattern on both sides. The rest build their answer in code, and both
+**34** of the 322 rules have a pattern on both sides. The rest build their answer in code, and both
 are legitimate — but the choice costs two things, so make it deliberately.
 
 A pattern replacement gets:
 
-- **a direction.** `MatchedRule.Reversed` is the rule read the other way, and **32** of the 33
-  two-sided rules have one. (The thirty-third is the Pythagorean identity: `sin²+cos² = 1` forgets the
-  angle, so there is nothing to read back. See [ReversibleRules.md](ReversibleRules.md).)
+- **a direction.** `MatchedRule.Reversed` is the rule read the other way, and **32** of the 34
+  two-sided rules have one. The other two forget something: `sin²+cos² = 1` forgets the angle, and
+  `{ x : x in S } = S` forgets the name the set builder bound, so neither has anything to read back.
+  See [ReversibleRules.md](ReversibleRules.md).
 - **an exact growth**, counted from the two patterns rather than declared.
 
 A code replacement gets neither, and its growth is `Unknown` unless you declare one. That is the
-honest default — **261** rules sit at `Unknown` — but declare it where you can justify it:
+honest default — **260** rules sit at `Unknown` — but declare it where you can justify it:
 
 ```csharp
 // The Chebyshev expansion of sin(n * a) is a sum of n terms where the pattern is one node,

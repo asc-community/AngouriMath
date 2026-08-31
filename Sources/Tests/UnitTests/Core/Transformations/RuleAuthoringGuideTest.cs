@@ -80,20 +80,33 @@ namespace AngouriMath.Tests.Core.Transformations
         public void ReplacementAPatternOrCode()
         {
             var rules = MatchedRules.All.SelectMany(set => set.Rules).ToList();
-            Stated(33, rules.Count(rule => rule.Right is not null),
+            Stated(34, rules.Count(rule => rule.Right is not null),
                 "how many rules have a pattern on both sides");
             Stated(32, rules.Count(rule => rule.Reversed is not null),
                 "how many two-sided rules have a direction");
-            Stated(261, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Unknown),
+            Stated(260, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Unknown),
                 "how many rules sit at Unknown growth");
 
-            // And the thirty-third is the one the document names. Asserted by its own name rather
-            // than by the one the documentation calls it: the rule is
-            // `squared-sine-and-cosine-of-one-argument-sum-to-one` and the prose calls it the
-            // Pythagorean identity, which is right and is not what to match on.
-            var oneWay = rules.Single(rule => rule.Right is not null && rule.Reversed is null);
-            Assert.Equal(RuleReversal.ReplacementDropsHoles, oneWay.Reversal);
-            Assert.Equal("squared-sine-and-cosine-of-one-argument-sum-to-one", oneWay.Name);
+            // And the two the document names. By their own names rather than by what the prose
+            // calls them: the first is `squared-sine-and-cosine-of-one-argument-sum-to-one` and
+            // the prose calls it the Pythagorean identity, which is right and is not what to
+            // match on. Both forget something the backwards direction would have to invent -- the
+            // angle, and the name the set builder bound.
+            var oneWay = rules
+                .Where(rule => rule.Right is not null && rule.Reversed is null)
+                .Select(rule => rule.Name)
+                .OrderBy(name => name, StringComparer.Ordinal)
+                .ToArray();
+            Assert.Equal(
+                new[]
+                {
+                    "a-conditional-set-whose-condition-is-its-own-membership-is-that-set",
+                    "squared-sine-and-cosine-of-one-argument-sum-to-one",
+                },
+                oneWay);
+            Assert.All(
+                rules.Where(rule => oneWay.Contains(rule.Name) && rule.Right is not null),
+                rule => Assert.Equal(RuleReversal.ReplacementDropsHoles, rule.Reversal));
         }
 
         [Fact]
