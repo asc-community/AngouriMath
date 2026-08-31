@@ -13,6 +13,43 @@ namespace AngouriMath
     partial record Entity
     {
         /// <summary>
+        /// <paramref name="interval"/> scaled by <paramref name="factor"/>, or
+        /// <see langword="null"/> where the factor's sign is not known.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Scaling is monotone in the factor's sign and in nothing else, so this is the whole of
+        /// it: a positive factor carries both ends where they were, and a negative one
+        /// <b>reflects the interval</b> — the ends swap, and their openness swaps with them,
+        /// exactly as subtracting an interval does. <c>(0; 1] * -2</c> is <c>[-2; 0)</c>: the
+        /// included 1 becomes the included lower end -2, and the excluded 0 becomes the excluded
+        /// upper end 0.
+        /// </para>
+        /// <para>
+        /// <b>An unknown sign is answered by not answering.</b> <c>(0; 1) * k</c> for a symbolic
+        /// <c>k</c> is one interval when <c>k</c> is positive and the reflected one when it is
+        /// negative, and picking either would be choosing which. It is left alone, which is what
+        /// an unevaluated node means.
+        /// </para>
+        /// <para>
+        /// Zero never reaches here: <c>Mulf</c> answers a multiplication by zero before this is
+        /// consulted, and gives the number <c>0</c> rather than the set <c>{ 0 }</c>. That is
+        /// older than this and is left as it is — the arm it comes from is over every
+        /// <see cref="Entity"/> and not only intervals.
+        /// </para>
+        /// </remarks>
+        private static Entity? ScaledInterval(Interval interval, Entity factor, bool isExact)
+            => factor.Evaled is Real { IsFinite: true } real && !real.IsZero
+                ? real.IsPositive
+                    ? interval.New(
+                        (interval.Left * factor).InnerSimplified(isExact), interval.LeftClosed,
+                        (interval.Right * factor).InnerSimplified(isExact), interval.RightClosed)
+                    : interval.New(
+                        (interval.Right * factor).InnerSimplified(isExact), interval.RightClosed,
+                        (interval.Left * factor).InnerSimplified(isExact), interval.LeftClosed)
+                : null;
+
+        /// <summary>
         /// The value of <paramref name="expr"/> where it has one, with the condition it holds
         /// under, or <see langword="null"/> where there is no value to read.
         /// </summary>
@@ -104,6 +141,10 @@ namespace AngouriMath
                         (var n1, Integer(1)) => n1,
                         (Integer(1), var n2) => n2,
                         (var n1, var n2) when n1 == n2 => new Powf(n1, 2).InnerSimplified(isExact),
+                        // After the zero arms above, which answer a multiplication by zero for
+                        // every Entity and not only for an interval.
+                        (Interval inter, var n2) when n2 is not Set => ScaledInterval(inter, n2, isExact),
+                        (var n2, Interval inter) when n2 is not Set => ScaledInterval(inter, n2, isExact),
                         _ => null
                     },
                     (@this, a, b) => ((Mulf)@this).New(a, b), isExact);
@@ -132,6 +173,12 @@ namespace AngouriMath
                     (var n1, Powf(Rational radicand, Rational exponent)) when
                         RootExtraction.PullOutOfDenominator(radicand, exponent) is { } rationalized
                         => (n1 * rationalized).InnerSimplified(isExact),
+                    // An interval over a constant is that constant's reciprocal scaling it. Only
+                    // this direction: a constant over an interval that straddles zero is two
+                    // unbounded pieces rather than one interval, so it is not an Interval at all
+                    // and is left alone rather than answered wrongly.
+                    (Interval inter, var n2) when n2 is not Set
+                        => ScaledInterval(inter, (1 / n2).InnerSimplified(isExact), isExact),
                     _ => null
                 },
                 (@this, a, b) => ((Divf)@this).New(a, b), isExact);

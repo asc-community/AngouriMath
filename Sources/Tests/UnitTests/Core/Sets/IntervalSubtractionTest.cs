@@ -42,23 +42,22 @@ namespace AngouriMath.Tests.Core.Sets
             => Assert.Equal(expected.ToEntity(), expression.ToEntity().Simplify());
 
         /// <summary>
-        /// <b>Zero is not among them, and that is a different gap.</b> <c>0 - x</c> is negated by
-        /// an earlier arm, so <c>0 - [0; 1)</c> becomes <c>-[0; 1)</c> and stops there: negating an
-        /// interval is multiplying one, and <c>Mulf</c> has no interval case at all —
-        /// <c>(0; 1) * 2</c> is left alone too.
+        /// <b>Zero goes the other way round, and it works for a different reason.</b> <c>0 - x</c>
+        /// is negated by an earlier arm, so <c>0 - [0; 1)</c> becomes <c>-[0; 1)</c> — a
+        /// multiplication rather than a subtraction, and it reaches <c>(-1; 0]</c> through
+        /// <c>Mulf</c>'s interval case.
         /// </summary>
         /// <remarks>
-        /// Asserted as it is rather than left unmentioned, so that the boundary of this fix is
-        /// written down. Multiplying an interval is
+        /// This test asserted the opposite until that case existed: multiplying an interval was
         /// <a href="https://github.com/asc-community/AngouriMath/issues/322">#322</a>'s remaining
-        /// half and needs a sign analysis this does not: a negative multiplier turns the interval
-        /// round exactly as subtraction does, and a zero one collapses it to a point.
+        /// half, and the boundary of the subtraction fix was written down here so that it would be
+        /// found rather than discovered. <c>IntervalScalingTest</c> is where scaling is held now.
         /// </remarks>
         [Fact]
-        public void MultiplyingAnIntervalIsStillNotDone()
+        public void NegatingAnIntervalGoesThroughMultiplication()
         {
-            Assert.Equal("-[0; 1)".ToEntity().Simplify(), "0 - [0; 1)".ToEntity().Simplify());
-            Assert.Equal("(0; 1) * 2".ToEntity(), "(0; 1) * 2".ToEntity().Simplify());
+            Assert.Equal("(-1; 0]".ToEntity(), "0 - [0; 1)".ToEntity().Simplify());
+            Assert.Equal("(0; 2)".ToEntity(), "(0; 1) * 2".ToEntity().Simplify());
         }
 
         /// <summary>

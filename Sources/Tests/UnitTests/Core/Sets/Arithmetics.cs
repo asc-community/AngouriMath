@@ -16,9 +16,16 @@ namespace AngouriMath.Tests.Core.Sets
         [Theory]
         [InlineData("[2; 3] + 3", "[5; 6]")]
         [InlineData("3 + [2; 3]", "[5; 6]")]
-        [InlineData("3 * [2; 3]", "3 * [2; 3]")]
-        [InlineData("[2; 3] * 3", "[2; 3] * 3")]
-        [InlineData("[2; 3] / 2", "[2; 3] / 2")]
+        // These three recorded the absence of the capability -- `3 * [2; 3]` expecting itself back
+        // -- sitting directly under the two addition rows that answer. The asymmetry was `Sumf`
+        // and `Minusf` having interval cases while `Mulf` and `Divf` had none.
+        [InlineData("3 * [2; 3]", "[6; 9]")]
+        [InlineData("[2; 3] * 3", "[6; 9]")]
+        [InlineData("[2; 3] / 2", "[1; 3/2]")]
+        // And the half that is not just arithmetic: a negative factor reflects the interval, so
+        // the ends swap and their openness swaps with them.
+        [InlineData("[2; 3) * (-1)", "(-3; -2]")]
+        [InlineData("(2; 3] / (-1)", "[-3; -2)")]
         [InlineData("{ 1, 2, 3 } + 10", "{ 11, 12, 13 }")]
         [InlineData("10 + { 1, 2, 3 }", "{ 11, 12, 13 }")]
         [InlineData("{ 1, 2, 3 } * 10", "{ 10, 20, 30 }")]

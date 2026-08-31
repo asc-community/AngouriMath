@@ -82,6 +82,10 @@ read first.
 | **Silent** | `"5 - (0; 1)".ToEntity().Simplify()`, and every interval subtracted from something | `(5; 4)` — a left end above its right, so the empty set | `(4; 5)` |
 | **Silent** | `"4.5 in (5 - (0; 1))".ToEntity().Simplify()` | `False` | `True` |
 | **Silent** | `"5 - [0; 1)".ToEntity().Simplify()` | `[5; 4)` — the openness left where it was | `(4; 5]` |
+| | `"3 * [2; 3]".ToEntity().Simplify()`, and every interval scaled by a constant | `3 * [2; 3]` — left alone | `[6; 9]` |
+| | `"[2; 3] / 2".ToEntity().Simplify()` | `[2; 3] / 2` | `[1; 3/2]` |
+| **Silent** | `"[2; 3) * (-1)".ToEntity().Simplify()` | `[2; 3) * (-1)` | `(-3; -2]` — reflected, ends and openness both |
+| | `"0 - [0; 1)".ToEntity().Simplify()` | `-[0; 1)` | `(-1; 0]` |
 | **Silent** | `"arccotan(-1)".ToEntity().Simplify()`, and every negative argument the inverse-trigonometric table knows | `3/4 * pi` — the textbook range, and **not equal to `arccotan(-1)`**, whose value is `-pi/4` | `-1/4 * pi` |
 
 ### Every rule set describes the rules it runs
@@ -221,6 +225,46 @@ one, and `Mulf` has no interval case at all — `(0; 1) * 2` is left alone too. 
 [#322](https://github.com/asc-community/AngouriMath/issues/322)'s remaining half, and it needs a sign
 analysis this does not: a negative multiplier turns the interval round exactly as subtraction does,
 and a zero one collapses it to a point.
+
+### An interval scaled by a constant is an interval
+
+`Sumf` and `Minusf` had interval cases and `Mulf` and `Divf` had none, so `(0; 1) + 1` answered
+`(1; 2)` while `(0; 1) * 2` was handed back. Three rows of `Core/Sets/Arithmetics` recorded that
+asymmetry as the expected behaviour, directly beneath the two addition rows that answer.
+
+```csharp
+"3 * [2; 3]".ToEntity().Simplify()   // was 3 * [2; 3], is [6; 9]
+"[2; 3] / 2".ToEntity().Simplify()   // was [2; 3] / 2, is [1; 3/2]
+```
+
+**A negative factor reflects the interval**, so its ends swap and their openness swaps with them —
+exactly as subtracting one does:
+
+| | Is |
+|---|---|
+| `[2; 3) * (-1)` | `(-3; -2]` |
+| `(2; 3] / (-1)` | `[-3; -2)` |
+| `0 - [0; 1)` | `(-1; 0]` |
+
+The last of those is not a subtraction at all: `0 - x` is negated by an earlier arm, so it reaches
+`Mulf` as `-1 * [0; 1)` and is answered there. It is the case the subtraction fix above had to leave
+out, and it comes back for free.
+
+**An unknown sign is answered by not answering.** `(0; 1) * k` for a symbolic `k` is one interval
+when `k` is positive and the reflected one when it is negative, so picking either would be choosing
+which; it is left unevaluated, which is what an unevaluated node means.
+
+Two boundaries, asserted rather than left to be discovered. `(0; 1) * 0` still answers the number `0`
+rather than the set `{ 0 }` — that arm is over every `Entity` and not only intervals, and moving it
+would change matrices and finite sets with it. And `2 / (0; 1)` is left alone: a constant over an
+interval straddling zero is two unbounded pieces rather than one interval, so there is no `Interval`
+to answer with.
+
+This is [#322](https://github.com/asc-community/AngouriMath/issues/322)'s arithmetic half. Its body
+says it "will be possible once we implement quantifiers"; scaling needs none — it is monotone in the
+factor's sign and in nothing else. Applying a non-monotonic function to an interval, which is the
+other half, is still open: `ln((0; 1))` is `(-oo; 0)` because `ln` increases, but `sin((0; 7))` needs
+to know where the turning points are.
 
 ### An equation nothing settled is no longer answered with the empty set
 
