@@ -28,6 +28,8 @@ read first.
 | **Silent** | `MathS.Abs("x").WithCodomain(Domain.Any).Stringize()`, and every node widened to `Any` from a narrower default | `abs(x)` — reads back as `Real`, losing the widening | `domain(abs(x), Any)` |
 | **Silent** | `"domain(1/2, CC)".ToEntity()`, and every quotient of two integer literals annotated with the codomain its node type does not default to | `1/2` — the annotation dropped, equal to the unannotated literal | `1/2` carrying `Codomain = Complex`, which prints and reads back as `domain(1/2, CC)` |
 | | `"a in (a / 3; 3a)".ToEntity().Simplify()`, and every denominator but 2 | `a in (a / 3; 3 * a)` — left as written | `a > 0` |
+| | `MathS.Matrix(...).Determinant` on a symbolic matrix of polynomials | `a * d + -b * c`, Laplace's nested expansion | `a * d - b * c`, expanded — the same value, no larger |
+| | the same on a numeric matrix past 10x10 | did not return | 11x11 in 2 ms, 30x30 in 22 ms |
 | **Silent** | `MathS.Equations(...).Solve(...)` on a system neither internal path can finish | ran without a bound — cyclic-6 exceeded 20 s | `NotSufficientlySupportedException`, naming both paths |
 | | the same with `MathS.Settings.Budget` set below what the solve needs | answered anyway, the fall-through having no budget | raises |
 | | `"a in (a / 2; 0)".ToEntity().Simplify()`, and every interval demanding both signs | left as written | `False provided a in RR` |
@@ -59,6 +61,8 @@ read first.
 | **Silent** | `"-1 * (y mod z)".ToEntity().Stringize()` | `-y mod z` | `-(y mod z)` |
 | | any expression mixing a number with a `Complex` argument, `Compile`d in a NativeAOT app — `"x + 1".Compile<Complex, Complex>("x")` | `UncompilableNodeException: ... The binary operator Add is not defined for the types 'System.Numerics.Complex' and 'System.Numerics.Complex'` | the compiled function, answering as it does under the JIT |
 | | `Compile` to a nullable integral return type in a NativeAOT app | `AngouriBugException: IsNaN method expected for type System.Double`, which took the process down | the compiled function |
+| **Silent** | `"(x = 1) implies (x = 2)".ToEntity().Solve("x")`, and every implication | `{ 2 } \/ BB` — truth values in the solution set of a numeric question | `{ x : not x = 1 }` |
+| | `"domain((-oo; +oo), Any) = RR".ToEntity().Solve("x")`, and every unbounded interval widened to `Any` | `NotSufficientlySupportedException: There is no special set for domain Any` | `{  }` |
 | **Silent** | an app publishing with `PublishTrimmed` or NativeAOT | `AngouriMath.dll` was copied in whole, being unmarked | it is trimmed with the rest, since the assembly now declares `IsTrimmable` |
 | **Silent** | `"domain(x, ZZ)".ToEntity().Stringize()`, and `ToString`, and `EntityJsonConverter` | `x`, which reads back with `Codomain = Any` | `domain(x, ZZ)`, which reads back narrowed |
 | **Silent** | `"domain(sqrt(-1), RR)".ToEntity().Stringize()` | `sqrt(-1)`, which evaluates to `i` when read back | `domain(sqrt(-1), RR)`, which evaluates to `NaN` |
@@ -304,6 +308,59 @@ was nothing to take.
 
 `Transformation.NumericContentExtraction` is the step on its own, and `Transformation.Factorization`'s
 `Name` gains it — a chain names its parts.
+
+### An implication is solved without naming a universe
+
+`Solve` answered `a implies b` with `Codomain \ solve(a) \/ solve(b)`, taking the complement
+inside the **statement node's** codomain. That is `Boolean` for every implication, so a numeric
+question came back with a solution set containing `True` and `False`
+([#996](https://github.com/asc-community/AngouriMath/issues/996)). A `TODO` on the line asked for a
+universal set to subtract from instead; neither is needed, because *the values of `x` where `a`
+does not hold* is `{ x : not a }`, which names no universe at all.
+
+**Was** — the domain in the answer is the codomain of the `implies` node, not anything the question
+was asked over:
+
+```
+"(x = 1) implies (x = 2)".ToEntity().Solve("x")     { 2 } \/ BB
+"x > 1 implies x > 0".ToEntity().Solve("x")         BB \ (1; +oo) \/ (0; +oo)
+"A implies B".ToEntity().Solve("A")                 BB \ { True }
+```
+
+**Is** — a set-builder for the antecedent's complement, united with what the consequent settles:
+
+```
+"(x = 1) implies (x = 2)".ToEntity().Solve("x")     { x : not x = 1 }
+"x > 1 implies x > 0".ToEntity().Solve("x")         { x : not x > 1 } \/ (0; +oo)
+"A implies B".ToEntity().Solve("A")                 { A : not A }
+```
+
+The boolean row carries the same information it did before — `BB \ { True }` and `{ A : not A }`
+are the same set — without asserting that `A` ranges over `BB`. The implication solver is no more
+complete than it was: `solve(b, x)` is still empty where `b` does not mention `x`, so
+`A implies True` is `{ A : not A }` rather than `BB`, as it was before.
+
+### An unbounded interval over no constraint is left as written
+
+`(-oo; +oo)` simplifies to the domain it is an interval of. Widened to `Domain.Any` there is no such
+domain — `Any` is a codomain and not a set — and asking for one threw out of `Solve` on input a
+caller can write ([#996](https://github.com/asc-community/AngouriMath/issues/996)).
+
+**Was**
+
+```
+"domain((-oo; +oo), Any) = RR".ToEntity().Solve("x")
+    NotSufficientlySupportedException: There is no special set for domain Any
+```
+
+**Is** — the interval is left alone, and the statement is solved:
+
+```
+"domain((-oo; +oo), Any) = RR".ToEntity().Solve("x")    {  }
+"domain((-oo; +oo), Any)".ToEntity().Simplify()         domain((-oo; +oo), Any)
+"(-oo; +oo)".ToEntity().Simplify()                      RR                        unchanged
+"domain((-oo; +oo), CC)".ToEntity().Simplify()          CC                        unchanged
+```
 
 ### An equation nothing settled is no longer answered with the empty set
 
@@ -795,6 +852,56 @@ together because the first is what makes the second free: the guard alone cost t
 that were being answered by coincidence, and the collection restores them along with the rest of the
 family ([#1056](https://github.com/asc-community/AngouriMath/issues/1056)).
 
+### The determinant is computed by fraction-free elimination where it can be
+
+`Matrix.Determinant` expanded by Laplace, which is `O(n!)`. For a fully symbolic matrix that is
+optimal — the determinant genuinely has `n!` terms, and no algorithm returns it smaller in expanded
+form. For a numeric one it is pure waste: the answer is a single number and `O(n^3)` work suffices.
+
+Bareiss' fraction-free elimination now runs wherever the entries are polynomials over the rationals,
+and Laplace answers everything else. What decides it is not the size but whether the entries can be
+read, settled per matrix by trying.
+
+**The ceiling this removes**, both arms built from source on one machine:
+
+| | before | now |
+|---|---|---|
+| numeric 8×8 | 382 ms | under 1 ms |
+| numeric 10×10 | 14 415 ms | 2 ms |
+| numeric 11×11 | did not return in four minutes | 2 ms |
+| numeric 12×12 | did not return | 3 ms |
+| numeric 20×20 | did not return | 11 ms |
+| numeric 30×30 | did not return | 22 ms |
+
+**The printed form of a symbolic determinant changes**, because an elimination produces an expanded
+polynomial where Laplace produces a nested expansion. The value is the same and the expression is no
+larger in any case measured:
+
+| | before | now |
+|---|---|---|
+| `"[[a, b], [c, d]]"` | `a * d + -b * c` | `a * d - b * c` |
+| `"[[x, 1, 0], [1, x, 1], [0, 1, x]]"` | `x * (x ^ 2 + -1) + -x` | `x ^ 3 - 2 * x` |
+| `"[[a, b, 1], [c, d, 2], [1, 2, 3]]"` | `a * (d * 3 + -4) + -b * (c * 3 + -2) + c * 2 + -d` | `3 * a * d - 4 * a - 3 * b * c + 2 * b + 2 * c - d` |
+| `"[[x, 1], [1, x]]"` | `x ^ 2 + -1` | unchanged |
+| `"[[1/2, 1/3], [1/4, 1/5]]"` | `1/60` | unchanged |
+
+**No condition is introduced, and that is the point.** An ordinary Gaussian elimination leaves its
+pivots as literal divisions, so its answer is undefined wherever a pivot vanishes — at points where
+the determinant is perfectly well defined. That was
+[#992](https://github.com/asc-community/AngouriMath/issues/992), and it is why Laplace was chosen.
+Bareiss divides as well, but each division is by the *previous* pivot and is exact: the quotient is a
+determinant of a minor, so it is back in the ring. Here it is exact **and checked** — the arithmetic
+happens in `MultivariatePolynomial`, which has no quotients to leave behind, and a division that does
+not come out returns null and sends the caller to Laplace.
+
+**What is declined**, and answered by Laplace exactly as before: an entry that is not a polynomial
+over the rationals (`sin(x)`, `1 / x`, `2 ^ x`), a matrix in more than eight indeterminates, and a
+matrix mentioning `e` or `pi` — a constant is a value rather than an indeterminate, and this ring
+cannot hold one.
+
+The two algorithms were compared on 300 generated matrices where both apply, as a difference
+simplified to zero rather than as trees, with **no disagreements**
+([#999](https://github.com/asc-community/AngouriMath/issues/999)).
 ### Solving a system is bounded whichever internal path takes it
 
 `Solve` on a system tries a triangularising path first, which bounds itself, and hands what it

@@ -29,10 +29,16 @@ namespace AngouriMath
             {
                 // A set builder's Codomain is Domain.Any, which SpecialSet.Create has no
                 // member for and throws on -- so every set builder threw an AngouriBugException
-                // out of the exporter. SymPy names that set: S.UniversalSet is the one it
-                // prints ConditionSet without a third argument for, which is what "no
-                // restriction beyond the predicate" means here too.
+                // out of the exporter.
                 // https://github.com/asc-community/AngouriMath/issues/985
+                //
+                // S.UniversalSet is what SymPy prints a ConditionSet without a third argument
+                // over, so it is the right thing to emit for a predicate under no further
+                // restriction. It is a choice about the target language and not a claim about
+                // this one: SymPy has a universal set and AngouriMath does not, and an exporter
+                // to a system without one (or with a typed one, as Lean and SMT have) picks
+                // differently. Nothing here may be read back as "Domain.Any is a set".
+                // https://github.com/asc-community/AngouriMath/issues/996
                 internal override string ToSymPy()
                     => $"sympy.ConditionSet({Var.ToSymPy()}, {Predicate.ToSymPy()}, {CodomainToSymPy()})";
 

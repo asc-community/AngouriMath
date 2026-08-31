@@ -230,6 +230,46 @@ namespace AngouriMath.Tests.Convenience
             Assert.Equal("abs(x)", "(|x|)".ToEntity().Stringize());
         }
 
+        /// <summary>
+        /// The page says there is no universal set and no literal for one, and that a set
+        /// constraining nothing is written <c>{ x : True }</c>.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/996">#996</a>
+        /// </summary>
+        [Fact]
+        public void ThereIsNoUniversalSetLiteral()
+        {
+            Assert.IsType<Entity.Variable>("AA".ToEntity());
+            Assert.IsType<Entity.Variable>("UU".ToEntity());
+
+            var unconstrained = Assert.IsType<Entity.Set.ConditionalSet>("{ x : true }".ToEntity().Simplify());
+            Assert.True(unconstrained.TryContains(3, out var number) && number);
+            Assert.True(unconstrained.TryContains(Entity.Boolean.True, out var truth) && truth);
+        }
+
+        /// <summary>
+        /// The page says <c>domain(...)</c> takes the five special sets or the keyword
+        /// <c>Any</c>, that the annotation reads back, and that <c>Any</c> is a keyword in that
+        /// one position rather than a set.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1048">#1048</a>,
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/996">#996</a>
+        /// </summary>
+        [Fact]
+        public void DomainTakesTheFiveSpecialSetsOrTheKeywordAny()
+        {
+            foreach (var (name, domain) in new[]
+                     {
+                         ("CC", AngouriMath.Core.Domain.Complex), ("RR", AngouriMath.Core.Domain.Real),
+                         ("QQ", AngouriMath.Core.Domain.Rational), ("ZZ", AngouriMath.Core.Domain.Integer),
+                         ("BB", AngouriMath.Core.Domain.Boolean),
+                     })
+                Assert.Equal(domain, $"domain(x, {name})".ToEntity().Codomain);
+
+            Assert.Equal(AngouriMath.Core.Domain.Any, "domain(abs(x), Any)".ToEntity().Codomain);
+            Assert.Equal(AngouriMath.Core.Domain.Real, "abs(x)".ToEntity().Codomain);
+            Assert.IsType<Entity.Variable>("Any".ToEntity());
+            Assert.Equal("Any + 1".ToEntity(), MathS.Var("Any") + 1);
+        }
+
         // ------------------------------------------------------------ functions
 
         /// <summary>One argument to <c>log</c> is base 10, and two more names say a base outright.</summary>

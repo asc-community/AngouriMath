@@ -149,6 +149,39 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         }
 
         /// <summary>
+        /// <c>a implies b</c> holds where <c>a</c> fails or where <c>b</c> holds, and the first
+        /// half of that is a set-builder rather than a complement.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This used to read <c>expr.Codomain \ Solve(a) \/ Solve(b)</c>, taking the
+        /// complement inside the <b>statement node's</b> codomain. That is
+        /// <see cref="Domain.Boolean"/> for every <see cref="Impliesf"/>, so
+        /// <c>(x = 1) implies (x = 2)</c> was answered <c>{ 2 } \/ BB</c> — a solution set for
+        /// a numeric question containing <c>True</c> and <c>False</c>. That is exactly the
+        /// confusion between a codomain and a set that
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/996">#996</a> is about,
+        /// and a <c>TODO</c> here asked for a universal set to subtract from instead.
+        /// </para>
+        /// <para>
+        /// <b>Neither is needed.</b> "The values of <c>x</c> where <c>a</c> does not hold" is
+        /// <c>{ x : not a }</c>, which names no universe at all — a set-builder is already this
+        /// library's unconstrained set, and a complement written that way is right whatever
+        /// <c>x</c> ranges over. Which is #996's answer: what the solver wanted was the
+        /// difference, and the difference is expressible without the universe.
+        /// </para>
+        /// <para>
+        /// It does not make the implication solver complete. <c>Solve(b, x)</c> is still
+        /// <see cref="Set.Empty"/> where <c>b</c> does not mention <c>x</c>, so
+        /// <c>A implies True</c> comes back as <c>{ A : not A }</c> and not as <c>BB</c> — as it
+        /// did before, where the answer was <c>BB \ { True }</c>. What this stops is answering
+        /// with a set the question was never asked over.
+        /// </para>
+        /// </remarks>
+        private static Set Implication(Entity left, Entity right, Variable x)
+            => (Set)MathS.Union(new ConditionalSet(x, !left), Solve(right, x));
+
+        /// <summary>
         /// Where both sides of a conjunction were settled, its solution set is the
         /// intersection of theirs.
         /// </summary>
@@ -182,10 +215,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     Conjunction(Solve(left, x), Solve(right, x), expr, x),
                 Orf(var left, var right) => 
                     MathS.Union(Solve(left, x), Solve(right, x)),
-                Impliesf(var left, var right) => 
-                    MathS.Union(MathS.SetSubtraction(expr.Codomain, Solve(left, x)), Solve(right, x)),
+                Impliesf(var left, var right) => Implication(left, right, x),
 
-                // TODO: there should be universal set to subtract from when inverting
                 Greaterf(var left, var right) => 
                     AnalyticalInequalitySolver.Solve(Minus(left, right), x),
                 LessOrEqualf(var left, var right) => 

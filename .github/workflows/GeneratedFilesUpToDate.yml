@@ -1,0 +1,73 @@
+name: 'Generated Files Up To Date'
+
+# Several files in this repository are generated and checked in, and nothing rebuilt them and
+# compared -- so a template could stop matching its output and the build stayed green. The file was
+# then only discovered to be unregenerable the next time somebody actually tried.
+#
+# That had happened twice by the time this was written. `EquationSystemFunctionPattern.txt` still
+# said `Tensor?` long after the type was renamed to `Matrix?` (repaired by #1029), and
+# `TupleToIntervalTest.txt` still said `MathS.Matrices.Interval`, which does not exist -- so
+# regenerating that test file produced eighteen CS0117 errors. Both were found by hand, years apart,
+# which is the argument for this job.
+#
+# The ANTLR parser has its own job, GrammarUpToDate.yml, because it needs a Java runtime where this
+# needs a dotnet tool. Keeping them apart means neither goes red for the other's reason.
+# https://github.com/asc-community/AngouriMath/issues/1034
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "Sources/AngouriMath/**/*.tt"
+      - "Sources/AngouriMath/Convenience/CompilationExtensions.cs"
+      - "Sources/AngouriMath/Functions/Compilation/**"
+      - "Sources/Utils/**"
+      - "Sources/Tests/UnitTests/Convenience/TupleToIntervalTest.cs"
+      - "Sources/AngouriMath/AngouriMath.csproj"
+      - ".github/workflows/GeneratedFilesUpToDate.yml"
+  pull_request:
+    branches:
+      - '*'
+    paths:
+      - "Sources/AngouriMath/**/*.tt"
+      - "Sources/AngouriMath/Convenience/CompilationExtensions.cs"
+      - "Sources/AngouriMath/Functions/Compilation/**"
+      - "Sources/Utils/**"
+      - "Sources/Tests/UnitTests/Convenience/TupleToIntervalTest.cs"
+      - "Sources/AngouriMath/AngouriMath.csproj"
+      - ".github/workflows/GeneratedFilesUpToDate.yml"
+
+jobs:
+  Regenerate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '10.x'
+        dotnet-quality: 'preview'
+
+    # The one tool this needs beyond the SDK the other jobs already install.
+    - name: 'Install the T4 processor'
+      run: dotnet tool install -g dotnet-t4
+
+    - name: 'Regenerate every generated file'
+      run: bash Sources/Utils/regenerate_all.sh
+
+    # No exclusions. The templates emit the copyright header themselves, so the generated file is
+    # the committed file byte for byte and there is nothing here that could quietly grow to hide a
+    # real difference. Two of the three T4 templates did not emit it until this issue, which meant
+    # regenerating them produced files that failed the build outright -- IDE0073 is an error here.
+    - name: 'Fail if a committed generated file is not what its generator produces'
+      run: |
+        if ! git diff --exit-code --stat; then
+          echo "::error::A checked-in generated file does not match its generator."
+          echo "::error::Run Sources/Utils/regenerate_all.sh and commit the result."
+          echo "--- the difference ---"
+          git --no-pager diff
+          exit 1
+        fi
