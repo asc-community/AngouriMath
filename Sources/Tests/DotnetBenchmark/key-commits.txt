@@ -1,0 +1,33 @@
+# The commits the inter-version benchmark measures, one per line, as anything `git rev-parse`
+# resolves — a tag, a branch, a SHA. Blank lines and lines starting with # are ignored.
+#
+# https://github.com/asc-community/AngouriMath/issues/529
+#
+# What belongs here: a point somebody would want to compare against. The releases, because that
+# is what a user upgrades between, and `master`, because that is what the next release will be.
+# A commit in the middle of a range is worth adding while a regression is being hunted and worth
+# removing afterwards — the list is meant to be edited.
+#
+# Why a list rather than every commit: measuring one commit is about eight minutes of runner
+# time, so the whole list is the run's cost. Ten entries is a job; a thousand is not a job.
+#
+# Why the benchmark is not taken from these commits. Each is checked out whole, and then the
+# benchmark project alone is replaced with the one at master, so that what changes between rows
+# is the kernel and not the question being asked. That is what #529 means by replacing the
+# Program.cs. It is also why an old enough commit will not build: the benchmark at master calls
+# the public API as it is now, and v2.0.0 renamed a good deal of it. A row that does not build
+# is reported as not building rather than skipped, since "this cannot be measured any more" is
+# itself worth seeing.
+#
+# Measured, so the bound is known rather than discovered. At the time of writing v2.3.0 and later
+# build; v2.2.0 and earlier do not, because the benchmark's MatchingEngine case reaches
+# `MatchedRules` and `Patterns`, which were internal until v2.3.0. Reaching further back means
+# compiling only the inter-version case, which means conditioning the benchmark project on which
+# commit it is pointed at -- and the whole reason these columns compare is that the benchmark does
+# not vary. Left as it is; the table says which rows it could not measure.
+
+v2.1.0
+v2.2.0
+v2.3.0
+v2.4.0
+master
