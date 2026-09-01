@@ -217,7 +217,7 @@ namespace AngouriMath.Functions.Algebra
 
                 // Try to divide expr by duDx and check if result is independent of x
                 // Replace all occurrences of u's expression with a temporary variable
-                var integrandInU = (expr / duDx).Substitute(u, uSub).Simplify(1);
+                var integrandInU = InTermsOf(expr / duDx, u, uSub, x).Simplify(1);
                 if (integrandInU is Providedf(var innerExpr, _)) integrandInU = innerExpr; // TODO: singularities ignored but not handled properly
 
                 // If the result doesn't contain x anymore, we found a valid substitution
@@ -242,6 +242,53 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <paramref name="expr"/> written in terms of <paramref name="uSub"/>, where that stands
+        /// for <paramref name="u"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Ordinarily that is a plain substitution: the candidate occurs in the integrand, and
+        /// replacing it is all that is wanted.
+        /// </para>
+        /// <para>
+        /// <b>A power of the variable is the exception, and it is the one that mattered.</b>
+        /// Substituting <c>u = x^2</c> into <c>x / (x^4 + 1)</c> replaces nothing, because
+        /// <c>x^4</c> is not written as <c>(x^2)^2</c> and a substitution matches what is
+        /// written. So the integrand kept its <c>x</c>, the candidate was rejected, and
+        /// <c>int x / (x^4 + 1)</c> came back unevaluated while <c>int x^3 / (x^4 + 1)</c> —
+        /// whose substitution does occur — did not.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/233">#233</a>
+        /// </para>
+        /// <para>
+        /// So a power substitution rewrites the other powers of the variable into powers of
+        /// itself, which it can do exactly when its exponent divides theirs. Nothing is assumed
+        /// by it: the caller still checks that no <c>x</c> survives, so a rewrite that does not
+        /// clear the variable leaves the candidate rejected as before — which is what happens to
+        /// <c>x^2 / (x^4 + 1)</c>, where a bare <c>x</c> remains and the integral genuinely needs
+        /// a factorisation this does not have.
+        /// </para>
+        /// </remarks>
+        private static Entity InTermsOf(Entity expr, Entity u, Entity.Variable uSub, Entity.Variable x)
+        {
+            if (u is not Powf(var powerBase, Number.Integer exponent)
+                || powerBase != x
+                || !exponent.EInteger.CanFitInInt32())
+                return expr.Substitute(u, uSub);
+            var k = exponent.EInteger.ToInt32Checked();
+            if (k < 2)
+                return expr.Substitute(u, uSub);
+            return expr.Replace(node =>
+                node is Powf(var otherBase, Number.Integer otherExponent)
+                && otherBase == x
+                && otherExponent.EInteger.CanFitInInt32()
+                && otherExponent.EInteger.ToInt32Checked() is var n
+                && n >= k
+                && n % k == 0
+                    ? (n == k ? uSub : MathS.Pow(uSub, n / k))
+                    : node);
+        }
+
+        /// <summary>
         /// Finds potential substitution candidates u = g(x) from the expression.
         /// For example, common patterns to try:
         /// 1. f(ax + b) * a  ->  u = ax + b
@@ -261,6 +308,20 @@ namespace AngouriMath.Functions.Algebra
                         break;
                     case Powf(var @base, var exp):
                         if (@base == x) candidates.Add(node); // Power expressions x^n
+                        // And the roots of that power, which need not occur anywhere to be the
+                        // right substitution: `int x / (x^4 + 1)` wants u = x^2, and x^2 appears
+                        // nowhere in it. A divisor of the exponent is the condition for the
+                        // rewrite to be exact -- see InTermsOf -- so the candidates are exactly
+                        // the divisors, and each is still tested by whether it clears the
+                        // variable. https://github.com/asc-community/AngouriMath/issues/233
+                        if (@base == x
+                            && exp is Number.Integer power
+                            && power.EInteger.CanFitInInt32()
+                            && power.EInteger.ToInt32Checked() is var n
+                            && n > 2)
+                            for (var divisor = 2; divisor + divisor <= n; divisor++)
+                                if (n % divisor == 0)
+                                    candidates.Add(MathS.Pow(x, divisor));
                         // Exponential with non-trivial argument
                         if (@base != x && @base.ContainsNode(x)) candidates.Add(@base);
                         if (exp != x && exp.ContainsNode(x)) candidates.Add(exp);
