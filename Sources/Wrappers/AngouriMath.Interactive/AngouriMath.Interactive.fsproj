@@ -29,6 +29,7 @@
     <None Include="Repack.ps1" />
     
     <Compile Include="KernelExtension.fs" />
+    <Compile Include="ArithmeticOperators.fs" />
     <Compile Include="AggressiveOperators.fs" />
   </ItemGroup>
 

@@ -8,8 +8,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!--
+    Every test in this assembly starts an F# compiler service, and xUnit runs test classes in
+    parallel by default. Three modules here means three kernels at once, which on the macOS runner
+    stopped finishing at all: the `Test Terminal Lib` step ran for over an hour against the two
+    minutes it takes on master, while the Linux and Windows legs of the same run passed. Sharing a
+    kernel within each class was not enough on its own, because the classes still start together.
+    https://github.com/asc-community/AngouriMath/issues/1133
+    -->
+    <None Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+
     <Compile Include="Tests.fs" />
     <Compile Include="CompilerServiceWorksTest.fs" />
+    <Compile Include="OperatorsAtThePromptTest.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

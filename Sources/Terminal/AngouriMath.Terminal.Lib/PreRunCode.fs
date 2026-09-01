@@ -19,7 +19,7 @@ let eval (x : obj) =
     | :? Entity.Number.Complex as cx -> cx.RealPart.EDecimal.ToString() + "" + "" + cx.ImaginaryPart.EDecimal.ToString() + ""i""
     | other -> (evaled other).ToString()
 
-open AngouriMath.Interactive.AggressiveOperators
+open AngouriMath.Interactive.ArithmeticOperators
 
 let x = symbol ""x""
 let y = symbol ""y""
@@ -39,6 +39,25 @@ let help () =
     psi.UseShellExecute <- true
     System.Diagnostics.Process.Start psi
     $""Sending you to {url}""
+
+/// Arithmetic here builds expressions, so `3 / 2` is a rational rather than 1 and `x + 1` is
+/// an expression rather than an error. The cost is that ordinary F# whose arithmetic must stay
+/// primitive does not typecheck: `let rec fib n = if n < 2 then n else fib (n-1) + fib (n-2)`
+/// is the usual example. These two say which reading you want, at any point in a session, and
+/// either can follow the other.
+///   open Microsoft.FSharp.Core.Operators           // ordinary F#: fib compiles, 3 / 2 is 1
+///   open AngouriMath.Interactive.ArithmeticOperators  // back to expressions
+/// https://github.com/asc-community/AngouriMath/issues/1133
+let operators () =
+    // Printed rather than returned: what a cell returns is handed to AngouriMath's formatter,
+    // which parses it, and a sentence is not an expression.
+    printfn ""Arithmetic builds expressions here, so 3 / 2 is 3/2 and x + 1 is an expression.""
+    printfn ""For ordinary F# - such as""
+    printfn ""    let rec fib n = if n < 2 then n else fib (n-1) + fib (n-2)""
+    printfn ""- type""
+    printfn ""    open Microsoft.FSharp.Core.Operators""
+    printfn ""and to come back to expressions,""
+    printfn ""    open AngouriMath.Interactive.ArithmeticOperators""
 "
 
 let enableAngouriMath kernel =
