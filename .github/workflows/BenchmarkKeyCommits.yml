@@ -1,0 +1,73 @@
+name: 'Kernel Benchmark Across Key Commits'
+
+# The Kernel Benchmark measures the tip and gates it against a committed baseline, which catches a
+# step that regresses on its own. It does not catch a run of steps that are each free and are not
+# free together — which has happened here: twenty-seven rule-set conversions, each measured against
+# the commit in front of it and each within noise, summed to +13.4% on SimplifyEasy, and nothing
+# noticed until the first commit of the range was re-measured by hand.
+#
+# So this measures a list of commits in one run, on one machine, with one benchmark. That is the
+# comparison the per-commit gate cannot make.
+#
+# https://github.com/asc-community/AngouriMath/issues/529
+#
+# Weekly rather than daily, and by hand whenever it is wanted. #529 asks for daily; a run is about
+# eight minutes per commit, so a five-entry list is most of an hour of runner time, and there is
+# nothing to see on a day when nothing merged. The schedule is the floor, not the mechanism —
+# workflow_dispatch is how it gets used while a regression is being hunted.
+#
+# It does not push anything to a website. #529's last steps name AngouriMathLab/performance-reports
+# and .../performance-reports-tools as the destinations, and neither repository exists; the table is
+# an artifact of the run until they do.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Mondays, early. Nothing depends on the hour.
+    - cron: '0 4 * * 1'
+
+jobs:
+  KeyCommits:
+    runs-on: ubuntu-latest
+    # An hour is not enough for a long list and too much for an empty one; this is sized for the
+    # list as committed, and a list that outgrows it should raise this deliberately.
+    timeout-minutes: 90
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        # Every commit in the list has to be resolvable, so the whole history and the tags.
+        fetch-depth: 0
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '10.x'
+        dotnet-quality: 'preview'
+
+    # The script reports a commit that will not build rather than failing on it, so this step
+    # succeeding means "the run completed", not "every commit was measurable". The table says
+    # which were.
+    - name: 'Measure every key commit'
+      run: bash Sources/Utils/benchmark_key_commits.sh
+
+    - name: 'The table, in the log as well as the artifact'
+      if: always()
+      run: cat Sources/Tests/DotnetBenchmark/benchmark_results.csv/key-commits.md || true
+
+    # Also into the run summary, which is where somebody looking at a scheduled run will look
+    # first and is the only place the numbers survive without downloading anything.
+    - name: 'The table, in the run summary'
+      if: always()
+      run: cat Sources/Tests/DotnetBenchmark/benchmark_results.csv/key-commits.md >> "$GITHUB_STEP_SUMMARY" || true
+
+    - name: 'Retain the results'
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: key-commit-benchmark-${{ github.sha }}
+        path: Sources/Tests/DotnetBenchmark/benchmark_results.csv/**
+        if-no-files-found: warn
+        # Longer than the Kernel Benchmark's 90 days: the point of this table is comparison over
+        # time, and a history that expires in a quarter is not one.
+        retention-days: 365
