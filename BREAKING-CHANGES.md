@@ -4834,6 +4834,23 @@ Not behavioural changes, listed so that a reader working through this file has t
   the kept chain: the raw edges are mostly one rewrite recorded once per level of the candidate
   search, and `x^(-1)/(y/z)` produced 425 of them across 13 distinct steps.
   [#273](https://github.com/asc-community/AngouriMath/issues/273).
+- **An analytical solver for first-order linear ordinary differential equations.**
+  `MathS.SolveOde(equation, function, variable)`, by the integrating factor. The unknown is written
+  as an application — `apply(y, x)` — rather than a bare variable, because `derivative(y, x)` is
+  `0`: a variable does not depend on `x`. `y' + y = 1` comes back as `1 + C_1 * e ^ (-x)`, and
+  `y' + y/x = 1` as `C_1 / x + x / 2`. It returns `null` where the equation is not linear in the
+  unknown and its derivative, and where either of the two integrals has no closed form, which is
+  why `y' + y = e^(x^2)` is declined. Nothing existed before it; there is no behaviour to compare.
+  [#241](https://github.com/asc-community/AngouriMath/issues/241).
+- **Integrals wanting a substitution by a power of the variable that occurs nowhere.**
+  `int x / (x^4 + 1)` is `arctan(x^2)/2 + C`, and so for `x/(x^4 - 1)`, `x/(x^4 + 4)`,
+  `x^2/(x^6 + 1)`, `x/(x^6 + 1)`, `x^3/(x^8 + 1)` and `x^3/(x^12 + 1)`. Each was previously
+  returned unevaluated. Two things had to change: `x^2` is now offered as a candidate although
+  it is written nowhere in `x / (x^4 + 1)`, and substituting it rewrites `x^4` as `(x^2)^2` so
+  that there is something for it to replace. `int x^3 / (x^4 + 1)` worked throughout, its own
+  substitution being one that occurs, which is what made the gap hard to see. No integral that
+  was answered before is answered differently.
+  [#233](https://github.com/asc-community/AngouriMath/issues/233).
 - **A modulus node.** `Modf`, `MathS.Mod`, the `%` operator on `Entity` in C# and F#, the `mod`
   keyword in the parser, evaluation, simplification, differentiation, limits, both compilers, LaTeX
   and SymPy export. `a % b` on `Entity` is *not* `int`'s `%` — it is floored, and its documentation

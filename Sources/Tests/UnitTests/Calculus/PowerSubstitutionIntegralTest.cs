@@ -1,0 +1,131 @@
+//
+// Copyright (c) 2019-2026 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
+
+using System;
+using AngouriMath.Extensions;
+using Xunit;
+
+namespace AngouriMath.Tests.Calculus
+{
+    /// <summary>
+    /// Integrals that need a substitution by a <em>power of the variable</em> which does not occur
+    /// anywhere in the integrand.
+    /// <a href="https://github.com/asc-community/AngouriMath/issues/233">#233</a>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <c>int x / (x^4 + 1)</c> wants <c>u = x^2</c>, and <c>x^2</c> is written nowhere in it. Two
+    /// things followed from that. The candidate was never offered, because candidates were taken
+    /// from the subexpressions that occur; and had it been, substituting it would have replaced
+    /// nothing, because <c>x^4</c> is not written as <c>(x^2)^2</c> and a substitution matches
+    /// what is written. So the integrand kept its <c>x</c> and the candidate was rejected.
+    /// </para>
+    /// <para>
+    /// <c>int x^3 / (x^4 + 1)</c> worked throughout, which is what made this hard to see: its
+    /// substitution, <c>u = x^4</c>, does occur.
+    /// </para>
+    /// <para>
+    /// Every case here is checked by differentiating the answer and comparing it with the
+    /// integrand at sampled points, not by comparing printed forms. An antiderivative is only
+    /// correct if it differentiates back, and these come out with radicals and arctangents whose
+    /// printed shape says nothing about whether they do.
+    /// </para>
+    /// </remarks>
+    [Trait("Area", "Calculus")]
+    public sealed class PowerSubstitutionIntegralTest
+    {
+        /// <summary>
+        /// The sample points, chosen away from the poles of the integrands below and on both
+        /// sides of zero, since a substitution by an even power is where a sign is most easily
+        /// lost.
+        /// </summary>
+        private static readonly double[] Points = { 0.3, 0.7, 1.3, 1.9, 2.6, 3.4, -0.4, -1.7, -2.9 };
+
+        private static void DifferentiatesBack(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+
+            var derivative = integral.Differentiate("x");
+            var original = integrand.ToEntity();
+            var compared = 0;
+            foreach (var at in Points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                if (got.IsNaN || want.IsNaN)
+                    continue;
+                compared++;
+                var difference = Math.Abs((double)(got - want).RealPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, "
+                    + $"where the integrand is {want}");
+            }
+            Assert.True(compared >= 5,
+                $"only {compared} of {Points.Length} points were comparable for {integrand}, "
+                + "so this asserts almost nothing");
+        }
+
+        /// <summary>
+        /// The shape the issue is about: an odd power over an even one, where the substitution is
+        /// the root of the denominator's power.
+        /// </summary>
+        [Theory]
+        [InlineData("x/(x^4 + 1)")]
+        [InlineData("x/(x^4 - 1)")]
+        [InlineData("x/(x^4 + 4)")]
+        [InlineData("x^2/(x^6 + 1)")]
+        [InlineData("x/(x^6 + 1)")]
+        [InlineData("x^3/(x^8 + 1)")]
+        [InlineData("x^3/(x^12 + 1)")]
+        public void APowerOfTheVariableThatOccursNowhereIsStillASubstitution(string integrand)
+            => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// <c>int x / (x^4 + 1)</c> is <c>arctan(x^2)/2</c>, which is worth asserting as a form
+        /// and not only as a derivative: it is the answer the issue's link gives, and getting a
+        /// constant factor wrong would still differentiate back to something proportional.
+        /// </summary>
+        [Fact]
+        public void TheAnswerIsTheOneTheIssueNames()
+        {
+            var integral = "x/(x^4 + 1)".ToEntity().Integrate("x").Simplify();
+            Assert.Equal("arctan(x ^ 2) / 2 + C".ToEntity().Simplify(), integral);
+        }
+
+        /// <summary>
+        /// Nothing that integrated before integrates differently. These take the other paths —
+        /// a substitution that does occur, partial fractions, by parts, a logarithm — so a
+        /// change in the candidate list would show here.
+        /// </summary>
+        [Theory]
+        [InlineData("x^3/(x^4 + 1)")]
+        [InlineData("cos(x^2) * x")]
+        [InlineData("sin(x) * e^x")]
+        [InlineData("1/(x^2 + 1)")]
+        [InlineData("1/(x^4 - 1)")]
+        [InlineData("1/(x^2 - 1)")]
+        [InlineData("x * ln(x)")]
+        [InlineData("ln(x)")]
+        [InlineData("x^2")]
+        [InlineData("sin(x) * cos(x)")]
+        [InlineData("e^x * x")]
+        public void WhatIntegratedBeforeStillDoes(string integrand)
+            => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// And the rewrite does not make a candidate succeed that should not.
+        /// <c>x^2 / (x^4 + 1)</c> under <c>u = x^2</c> leaves a bare <c>x</c> behind, so it is
+        /// still rejected — that integral needs the denominator factored over the reals, which
+        /// this does not do, and it remains open on the issue.
+        /// </summary>
+        [Fact]
+        public void AnIntegralThisDoesNotReachIsStillDeclined()
+            => Assert.Contains("integral(", "x^2/(x^4 + 1)".ToEntity().Integrate("x").Stringize());
+    }
+}
