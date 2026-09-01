@@ -4826,6 +4826,14 @@ And what cannot be compiled is named rather than failing obscurely.
 
 Not behavioural changes, listed so that a reader working through this file has the whole picture.
 
+- **An analytical solver for first-order linear ordinary differential equations.**
+  `MathS.SolveOde(equation, function, variable)`, by the integrating factor. The unknown is written
+  as an application — `apply(y, x)` — rather than a bare variable, because `derivative(y, x)` is
+  `0`: a variable does not depend on `x`. `y' + y = 1` comes back as `1 + C_1 * e ^ (-x)`, and
+  `y' + y/x = 1` as `C_1 / x + x / 2`. It returns `null` where the equation is not linear in the
+  unknown and its derivative, and where either of the two integrals has no closed form, which is
+  why `y' + y = e^(x^2)` is declined. Nothing existed before it; there is no behaviour to compare.
+  [#241](https://github.com/asc-community/AngouriMath/issues/241).
 - **Integrals wanting a substitution by a power of the variable that occurs nowhere.**
   `int x / (x^4 + 1)` is `arctan(x^2)/2 + C`, and so for `x/(x^4 - 1)`, `x/(x^4 + 4)`,
   `x^2/(x^6 + 1)`, `x/(x^6 + 1)`, `x^3/(x^8 + 1)` and `x^3/(x^12 + 1)`. Each was previously

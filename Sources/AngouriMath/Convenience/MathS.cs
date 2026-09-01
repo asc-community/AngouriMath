@@ -193,6 +193,49 @@ namespace AngouriMath
         public static Set SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
 
         /// <summary>
+        /// Solves a first-order linear ordinary differential equation
+        /// <a href="https://en.wikipedia.org/wiki/Linear_differential_equation"/> by its
+        /// integrating factor, or returns <see langword="null"/> where it cannot.
+        /// </summary>
+        /// <param name="equation">
+        /// The equation, read as equal to zero, written in terms of the unknown function applied
+        /// to its variable. The unknown has to be an application — <c>apply(y, x)</c> — rather
+        /// than a bare variable, because <c>derivative(y, x)</c> is <c>0</c>: a variable does not
+        /// depend on <c>x</c>, and the library is right about that.
+        /// </param>
+        /// <param name="function">The name of the unknown function, <c>y</c> above.</param>
+        /// <param name="variable">The name it is a function of, <c>x</c> above.</param>
+        /// <returns>
+        /// The general solution, carrying one arbitrary constant, or <see langword="null"/> where
+        /// the equation is not first-order linear in the unknown, or where either of the two
+        /// integrals the method needs has no closed form.
+        /// </returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using AngouriMath.Extensions;
+        ///
+        /// // y' + y = 1
+        /// var equation = "derivative(apply(y, x), x) + apply(y, x) - 1".ToEntity();
+        /// Console.WriteLine(MathS.SolveOde(equation, "y", "x"));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 1 + C_1 * e ^ (-x)
+        /// </code>
+        /// </example>
+        /// <remarks>
+        /// Declining is a legitimate answer here and a common one: the method is exact where it
+        /// applies, and where either integral does not come out there is no approximation to
+        /// offer in its place. <c>y' + y = e^(x^2)</c> is declined for exactly that reason.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/241">#241</a>
+        /// </remarks>
+        public static Entity? SolveOde(Entity equation, Variable function, Variable variable)
+            => Functions.Algebra.OrdinaryDifferentialEquation
+                .SolveFirstOrderLinear(equation, function, variable);
+
+        /// <summary>
         /// Solves a boolean expression. That is, finds all values for
         /// <paramref name="variables"/> such that the expression turns into True when evaluated
         /// Uses a simple table of truth
