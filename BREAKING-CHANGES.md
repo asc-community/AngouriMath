@@ -4834,6 +4834,15 @@ Not behavioural changes, listed so that a reader working through this file has t
   unknown and its derivative, and where either of the two integrals has no closed form, which is
   why `y' + y = e^(x^2)` is declined. Nothing existed before it; there is no behaviour to compare.
   [#241](https://github.com/asc-community/AngouriMath/issues/241).
+- **Integrals wanting a substitution by a power of the variable that occurs nowhere.**
+  `int x / (x^4 + 1)` is `arctan(x^2)/2 + C`, and so for `x/(x^4 - 1)`, `x/(x^4 + 4)`,
+  `x^2/(x^6 + 1)`, `x/(x^6 + 1)`, `x^3/(x^8 + 1)` and `x^3/(x^12 + 1)`. Each was previously
+  returned unevaluated. Two things had to change: `x^2` is now offered as a candidate although
+  it is written nowhere in `x / (x^4 + 1)`, and substituting it rewrites `x^4` as `(x^2)^2` so
+  that there is something for it to replace. `int x^3 / (x^4 + 1)` worked throughout, its own
+  substitution being one that occurs, which is what made the gap hard to see. No integral that
+  was answered before is answered differently.
+  [#233](https://github.com/asc-community/AngouriMath/issues/233).
 - **A modulus node.** `Modf`, `MathS.Mod`, the `%` operator on `Entity` in C# and F#, the `mod`
   keyword in the parser, evaluation, simplification, differentiation, limits, both compilers, LaTeX
   and SymPy export. `a % b` on `Entity` is *not* `int`'s `%` — it is floored, and its documentation
