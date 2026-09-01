@@ -98,7 +98,7 @@ namespace AngouriMath.Tests.Calculus
         public void ADifferenceOfLikeRadicalsIsSettledByTheSeries(string expression, string expected)
         {
             var task = Task.Run(() => expression.ToEntity().Limit("x", "+oo".ToEntity()).Simplify());
-            Assert.True(task.Wait(TimeSpan.FromSeconds(30)), "the limit did not terminate");
+            Assert.True(task.Wait(LimitTermination.Guard), "the limit did not terminate");
             Assert.Equal(expected.ToEntity().Evaled, task.Result.Evaled);
         }
     }

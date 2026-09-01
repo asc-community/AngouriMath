@@ -104,7 +104,7 @@ namespace AngouriMath.Tests.Calculus
                 foreach (var destination in new Entity[] { 0, "+oo".ToEntity(), "-oo".ToEntity() })
                     foreach (var side in new[] { ApproachFrom.BothSides, ApproachFrom.Left, ApproachFrom.Right })
                         node.Limit(MathS.Var("x"), destination, side);
-            }).Wait(TimeSpan.FromSeconds(30));
+            }).Wait(LimitTermination.Guard);
 
             Assert.True(finished, $"a limit over {node.Stringize()} did not terminate");
         }

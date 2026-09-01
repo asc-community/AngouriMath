@@ -27,7 +27,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var task = Task.Run(() =>
                 expression.ToEntity().Limit("x", destination.ToEntity(), side).Simplify());
-            Assert.True(task.Wait(TimeSpan.FromSeconds(30)), $"the limit of {expression} did not terminate");
+            Assert.True(task.Wait(LimitTermination.Guard), $"the limit of {expression} did not terminate");
             return task.Result;
         }
 
