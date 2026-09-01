@@ -4826,6 +4826,14 @@ And what cannot be compiled is named rather than failing obscurely.
 
 Not behavioural changes, listed so that a reader working through this file has the whole picture.
 
+- **The branches a simplification went down and came back from.**
+  `DerivationPath.Abandoned`, beside the `Steps` it kept. The data was recorded already —
+  reconstructing the path searched the recorded edges and discarded everything not on the chain —
+  so this exposes it rather than collecting anything new. Each abandoned step carries the
+  expression it left from, which is the branch's root. Deduplicated against itself and against
+  the kept chain: the raw edges are mostly one rewrite recorded once per level of the candidate
+  search, and `x^(-1)/(y/z)` produced 425 of them across 13 distinct steps.
+  [#273](https://github.com/asc-community/AngouriMath/issues/273).
 - **A modulus node.** `Modf`, `MathS.Mod`, the `%` operator on `Entity` in C# and F#, the `mod`
   keyword in the parser, evaluation, simplification, differentiation, limits, both compilers, LaTeX
   and SymPy export. `a % b` on `Entity` is *not* `int`'s `%` — it is floored, and its documentation
