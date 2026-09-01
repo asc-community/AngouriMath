@@ -153,6 +153,7 @@ AngouriMath.Core.Serialization.EntityJsonConverter.ReadAsPropertyName(System.Tex
 AngouriMath.Core.Serialization.EntityJsonConverter.Write(System.Text.Json.Utf8JsonWriter, AngouriMath.Entity, System.Text.Json.JsonSerializerOptions) : System.Void
 AngouriMath.Core.Serialization.EntityJsonConverter.WriteAsPropertyName(System.Text.Json.Utf8JsonWriter, AngouriMath.Entity, System.Text.Json.JsonSerializerOptions) : System.Void
 AngouriMath.Core.Serialization.EntityJsonConverter.ctor()
+AngouriMath.Core.Transformations.DerivationPath.Abandoned { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Core.Transformations.DerivationStep>
 AngouriMath.Core.Transformations.DerivationPath.Explain() : System.String
 AngouriMath.Core.Transformations.DerivationPath.ExpressionsExplored { } : System.Int32
 AngouriMath.Core.Transformations.DerivationPath.Input { } : AngouriMath.Entity

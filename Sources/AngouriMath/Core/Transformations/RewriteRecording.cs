@@ -260,7 +260,10 @@ namespace AngouriMath.Core.Transformations
             // `4` before the candidate search starts, and asking how is a fair question with
             // "it did not have to do anything" as the answer.
             if (input == result)
-                return new DerivationPath(input, result, Array.Empty<DerivationStep>(), produced.Count);
+                // Nothing was abandoned to get nowhere: the input was already the answer.
+                return new DerivationPath(
+                    input, result, Array.Empty<DerivationStep>(),
+                    Array.Empty<DerivationStep>(), produced.Count);
 
             var reachedBy = new Dictionary<Entity, int>();
             var seen = new HashSet<Entity> { input };
@@ -293,17 +296,48 @@ namespace AngouriMath.Core.Transformations
             var recordedSteps = steps.ToArray();
             var path = new List<DerivationStep>(chain.Count);
             foreach (var edge in chain)
+                path.Add(Step(all, edge, recordedSteps));
+
+            // Everything the search tried and came back from. The chain above is the branch that
+            // survived, and handing it over on its own reads as though the library had walked
+            // straight to the answer -- which #273's second half is precisely about.
+            //
+            // Deduplicated, and that is not tidying. The simplifier runs the same passes over the
+            // same expressions at every level of its candidate search, so the raw edges are
+            // mostly one rewrite recorded over and over: `x^(-1)/(y/z)` produces 425 of them
+            // across 8 distinct steps, and one expression's list included the very edge the kept
+            // chain had taken. A list like that is not a record of where the search went, it is a
+            // record of how often it was asked.
+            // https://github.com/asc-community/AngouriMath/issues/273
+            var kept = new HashSet<int>(chain);
+            var seenStep = new HashSet<(Entity, Entity, string)>();
+            foreach (var edge in chain)
+                seenStep.Add((all[edge].Before, all[edge].After, all[edge].Name));
+            var abandoned = new List<DerivationStep>();
+            for (var edge = 0; edge < all.Length; edge++)
             {
-                var (before, after, ruleSet, name, from, to) = all[edge];
-                // Clamped because a recording that is still being written to can hand back
-                // fewer rewrites than an edge counted, and a torn read is not worth throwing over.
-                from = Math.Min(from, recordedSteps.Length);
-                to = Math.Min(to, recordedSteps.Length);
-                var rewrites = to > from ? new RewriteStep[to - from] : Array.Empty<RewriteStep>();
-                Array.Copy(recordedSteps, from, rewrites, 0, rewrites.Length);
-                path.Add(new DerivationStep(before, after, ruleSet, name, rewrites));
+                if (kept.Contains(edge))
+                    continue;
+                if (!seenStep.Add((all[edge].Before, all[edge].After, all[edge].Name)))
+                    continue;
+                abandoned.Add(Step(all, edge, recordedSteps));
             }
-            return new DerivationPath(input, result, path, produced.Count);
+
+            return new DerivationPath(input, result, path, abandoned, produced.Count);
+        }
+
+        /// <summary>One recorded edge as a <see cref="DerivationStep"/>, with the rewrites that
+        /// fired inside it attached.</summary>
+        private static DerivationStep Step(Edge[] all, int edge, RewriteStep[] recordedSteps)
+        {
+            var (before, after, ruleSet, name, from, to) = all[edge];
+            // Clamped because a recording that is still being written to can hand back
+            // fewer rewrites than an edge counted, and a torn read is not worth throwing over.
+            from = Math.Min(from, recordedSteps.Length);
+            to = Math.Min(to, recordedSteps.Length);
+            var rewrites = to > from ? new RewriteStep[to - from] : Array.Empty<RewriteStep>();
+            Array.Copy(recordedSteps, from, rewrites, 0, rewrites.Length);
+            return new DerivationStep(before, after, ruleSet, name, rewrites);
         }
 
         /// <summary>One recorded whole-expression step, before the rewrites inside it are attached.</summary>
@@ -321,6 +355,11 @@ namespace AngouriMath.Core.Transformations
             internal Entity After => after;
 
             internal Entity Before => before;
+
+            /// <summary>What did this step, named. Read when deduplicating the abandoned
+            /// branches, where two edges are the same step if they are between the same two
+            /// expressions and were done by the same thing.</summary>
+            internal string Name => name;
 
             internal void Deconstruct(out Entity before, out Entity after, out RewriteRuleSet? ruleSet, out string name, out int from, out int to)
                 => (before, after, ruleSet, name, from, to) = (this.before, this.after, this.ruleSet, this.name, this.from, this.to);

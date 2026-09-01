@@ -166,8 +166,11 @@ namespace AngouriMath.Core.Transformations
     /// </example>
     public sealed class DerivationPath
     {
-        internal DerivationPath(Entity input, Entity result, IReadOnlyList<DerivationStep> steps, int expressionsExplored)
-            => (Input, Result, Steps, ExpressionsExplored) = (input, result, steps, expressionsExplored);
+        internal DerivationPath(
+            Entity input, Entity result, IReadOnlyList<DerivationStep> steps,
+            IReadOnlyList<DerivationStep> abandoned, int expressionsExplored)
+            => (Input, Result, Steps, Abandoned, ExpressionsExplored)
+                = (input, result, steps, abandoned, expressionsExplored);
 
         /// <summary>Where it started.</summary>
         public Entity Input { get; }
@@ -180,6 +183,33 @@ namespace AngouriMath.Core.Transformations
         /// length zero rather than a failure.
         /// </summary>
         public IReadOnlyList<DerivationStep> Steps { get; }
+
+        /// <summary>
+        /// The steps the search took and came back from: everything it tried that is not on
+        /// <see cref="Steps"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Simplifying is a search, and <see cref="Steps"/> is only the branch that survived it.
+        /// Presented alone it reads as though the library had walked straight to the answer,
+        /// which is the half of
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/273">#273</a> that asks
+        /// to see where a method failed and went back.
+        /// </para>
+        /// <para>
+        /// Each of these carries its own <see cref="DerivationStep.Before"/>, which is the
+        /// expression the search was at when it tried this and the one it returned to — the
+        /// branch's root, in the issue's words. Several abandoned steps may share one, which is
+        /// that expression having been tried several ways.
+        /// </para>
+        /// <para>
+        /// <b>Not an error list.</b> A step here is not wrong; it is a road not taken, and often
+        /// one that leads to a perfectly correct expression that simply rated worse than the one
+        /// kept. The simplifier keeps the best candidate rather than the first, so most of these
+        /// are alternatives rather than failures.
+        /// </para>
+        /// </remarks>
+        public IReadOnlyList<DerivationStep> Abandoned { get; }
 
         /// <summary>
         /// How many distinct expressions the search produced on the way, of which
