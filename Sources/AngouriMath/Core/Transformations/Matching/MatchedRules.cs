@@ -2666,6 +2666,31 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.SoundUnderAssumptions,
                 description: "a ^ log(a, b) = b"),
 
+            // The same identity through `e`, which the rule above cannot reach: `ln(b)` is stored
+            // as log(e, b) and `e` is a Constant, not a Number, so `Any<Number>` never binds it
+            // however the logarithm is written.
+            // https://github.com/asc-community/AngouriMath/issues/994
+            //
+            // Nothing is left to discharge once the base is `e`: b^log_b(a) = a needs ln(b) to be
+            // non-zero, and e is decidably neither 0 nor 1, which is exactly what the numeric arm
+            // above cannot say about an arbitrary Number. It holds off the positive reals too --
+            // at a = -3, ln(-3) is ln(3) + i*pi and e^(ln(3) + i*pi) is -3 -- and at a = 0, where
+            // ln(0) is -oo here and e^(-oo) is 0, so both sides are 0 and no definedness moves.
+            // Labelled under assumptions rather than Sound because it is the principal branch of
+            // the logarithm that makes it true away from the reals, which is a branch convention.
+            // Written with a pattern on the right rather than the `bound => bound["a"]` its
+            // numeric sibling uses, so it is data in both directions: the constructor can then
+            // check the replacement only builds names the pattern binds, and the rule classifies
+            // as Reversible instead of ReplacementIsCode.
+            new MatchedRule(
+                "e-raised-to-a-natural-logarithm-is-the-antilogarithm",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Exact(Variable.e),
+                    MatchPattern.Node<Logf>(MatchPattern.Exact(Variable.e), MatchPattern.Any("a"))),
+                MatchPattern.Any("a"),
+                Soundness.SoundUnderAssumptions,
+                description: "e ^ ln(b) = b"),
+
             // Four `switch` arms: the power on either side of a product, and the shared base in
             // either position inside it. A commutative pattern says both halves at once.
             new MatchedRule(

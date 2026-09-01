@@ -46,7 +46,7 @@ namespace AngouriMath.Tests.Core.Transformations
         /// <c>AsAddressable</c> used to compare the lengths of the two rendered pattern strings,
         /// which is what <c>RuleRegistryGenerator</c> has to do — it reads C# source text and has
         /// no tree to count nodes on. Here there is a tree, and the proxy disagreed with it
-        /// <b>23 times in 322, in both directions</b>:
+        /// <b>23 times in 323, in both directions</b>:
         /// </para>
         /// <list type="bullet">
         /// <item>thirteen <c>Boolean</c> rules that <i>declare</i> <c>Collects</c> on a code-built
@@ -77,7 +77,7 @@ namespace AngouriMath.Tests.Core.Transformations
         /// <remarks>
         /// All thirty registry sets declare <see cref="Soundness.SoundUnderAssumptions"/>, and one
         /// conditional rule is enough to make that true of a set of a hundred. Asked per rule
-        /// instead, <b>181 of the 322 rules written as data are <see cref="Soundness.Sound"/></b> —
+        /// instead, <b>181 of the 323 rules written as data are <see cref="Soundness.Sound"/></b> —
         /// they hold for every complex argument, with nothing assumed. The counts are asserted
         /// rather than the ratio, because the interesting failure is a rule quietly changing tier.
         /// </remarks>
@@ -85,9 +85,9 @@ namespace AngouriMath.Tests.Core.Transformations
         public void SoundnessIsFinerPerRuleThanPerSet()
         {
             var rules = MatchedRules.All.SelectMany(set => set.Rules).ToList();
-            Assert.Equal(322, rules.Count);
+            Assert.Equal(323, rules.Count);
             Assert.Equal(181, rules.Count(rule => rule.Soundness is Soundness.Sound));
-            Assert.Equal(141, rules.Count(rule => rule.Soundness is Soundness.SoundUnderAssumptions));
+            Assert.Equal(142, rules.Count(rule => rule.Soundness is Soundness.SoundUnderAssumptions));
 
             // And every set still reports the weakest of them, which is what makes the set grain
             // uninformative rather than wrong.
@@ -168,7 +168,7 @@ namespace AngouriMath.Tests.Core.Transformations
             var repointed = RewriteRules.All
                 .Where(set => set.Rules.Count > 0 && set.Rules.All(rule => rule.Soundness is not null))
                 .ToList();
-            Assert.Equal(292, repointed.Sum(set => set.Rules.Count));
+            Assert.Equal(293, repointed.Sum(set => set.Rules.Count));
             Assert.All(repointed, set => Assert.All(set.Rules, rule => Assert.NotNull(rule.Description)));
         }
 
