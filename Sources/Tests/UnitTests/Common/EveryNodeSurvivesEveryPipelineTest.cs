@@ -168,7 +168,7 @@ namespace AngouriMath.Tests.Common
                     catch (AngouriMath.Core.Exceptions.AngouriMathBaseException) { /* the library's own, and legitimate */ }
                     catch (NotSupportedException) { /* documented refusal, e.g. uncompilable shapes */ }
                     catch (Exception e) { failure = e.GetType().FullName + ": " + e.Message.Split('\n')[0]; }
-                }).Wait(TimeSpan.FromSeconds(30));
+                }).Wait(LimitTermination.Guard);
 
                 if (!finished)
                     broken.Add($"{name} did not terminate");

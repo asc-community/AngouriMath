@@ -28,7 +28,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var task = Task.Run(() =>
                 expression.ToEntity().Limit("x", destination.ToEntity()).Simplify());
-            Assert.True(task.Wait(TimeSpan.FromSeconds(30)), "the limit did not terminate");
+            Assert.True(task.Wait(LimitTermination.Guard), "the limit did not terminate");
             Assert.Equal(expected.ToEntity().Evaled, task.Result.Evaled);
         }
 
@@ -88,7 +88,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var task = Task.Run(() => expression.ToEntity()
                 .Limit("x", destination.ToEntity(), ApproachFrom.BothSides));
-            Assert.True(task.Wait(TimeSpan.FromSeconds(30)), "the limit did not terminate");
+            Assert.True(task.Wait(LimitTermination.Guard), "the limit did not terminate");
             Assert.Equal(MathS.NaN, task.Result.Evaled);
         }
 
@@ -115,7 +115,7 @@ namespace AngouriMath.Tests.Calculus
         public void AComplexArgumentIsNotBounded(string expression, string destination)
         {
             var task = Task.Run(() => expression.ToEntity().Limit("x", destination.ToEntity()));
-            Assert.True(task.Wait(TimeSpan.FromSeconds(30)), "the limit did not terminate");
+            Assert.True(task.Wait(LimitTermination.Guard), "the limit did not terminate");
             Assert.IsType<Entity.Limitf>(task.Result);
         }
     }

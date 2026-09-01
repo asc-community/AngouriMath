@@ -129,7 +129,7 @@ namespace AngouriMath.Tests.Calculus
             // this does. Three minutes still catches a hang in a suite that takes seven.
             var task = System.Threading.Tasks.Task.Run(() =>
                 Limit("1 / ln(x + sqrt(x * x + 1)) - 1 / ln(x + 1)", "0", side));
-            Assert.True(task.Wait(System.TimeSpan.FromSeconds(180)), "the limit did not terminate");
+            Assert.True(task.Wait(LimitTermination.Guard), "the limit did not terminate");
             Assert.Equal("-1/2".ToEntity().Evaled, task.Result.Evaled);
         }
 

@@ -161,7 +161,7 @@ namespace AngouriMath.Tests.Convenience
         {
             var task = System.Threading.Tasks.Task.Run(
                 () => expression.ToEntity().Limit("x", destination.ToEntity()).Simplify());
-            Assert.True(task.Wait(TimeSpan.FromSeconds(30)), "the limit did not terminate");
+            Assert.True(task.Wait(LimitTermination.Guard), "the limit did not terminate");
             Assert.IsType<Entity.Limitf>(task.Result);
         }
 

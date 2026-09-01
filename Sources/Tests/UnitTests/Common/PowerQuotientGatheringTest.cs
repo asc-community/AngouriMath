@@ -83,7 +83,7 @@ namespace AngouriMath.Tests.Common
         public void AQuotientOfPowersIsStillAnsweredAsALimit(string expr)
         {
             var limit = Task.Run(() => expr.ToEntity().Limit("x", "+oo").Simplify());
-            Assert.True(limit.Wait(System.TimeSpan.FromSeconds(30)), $"{expr} did not terminate");
+            Assert.True(limit.Wait(LimitTermination.Guard), $"{expr} did not terminate");
             Assert.False(limit.Result.Nodes.Any(node => node is Entity.Limitf),
                 $"{expr} came back unevaluated: {limit.Result.Stringize()}");
         }
@@ -109,7 +109,7 @@ namespace AngouriMath.Tests.Common
         public void TheQuotientFormIsAnsweredAsTheSinglePowerFormIs(string expr)
         {
             var limit = Task.Run(() => expr.ToEntity().Limit("x", "+oo").Simplify());
-            Assert.True(limit.Wait(System.TimeSpan.FromSeconds(30)), $"{expr} did not terminate");
+            Assert.True(limit.Wait(LimitTermination.Guard), $"{expr} did not terminate");
             Assert.Equal(Entity.Number.Integer.Create(1), limit.Result);
         }
 
