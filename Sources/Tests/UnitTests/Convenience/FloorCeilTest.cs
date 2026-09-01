@@ -188,7 +188,7 @@ namespace AngouriMath.Tests.Convenience
         {
             var task = System.Threading.Tasks.Task.Run(
                 () => input.ToEntity().Limit("x", destination.ToEntity()));
-            Assert.True(task.Wait(System.TimeSpan.FromSeconds(20)),
+            Assert.True(task.Wait(LimitTermination.Guard),
                 $"limit({input}, x, {destination}) did not finish");
             Assert.NotNull(task.Result);
         }

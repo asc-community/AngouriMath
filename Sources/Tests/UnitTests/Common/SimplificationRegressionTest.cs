@@ -140,7 +140,7 @@ namespace AngouriMath.Tests.Common
         public void IntegrationTerminates(string integrand)
         {
             var task = System.Threading.Tasks.Task.Run(() => integrand.ToEntity().Integrate("x"));
-            Assert.True(task.Wait(System.TimeSpan.FromSeconds(30)),
+            Assert.True(task.Wait(LimitTermination.Guard),
                 $"integrating {integrand} did not terminate");
         }
 

@@ -31,7 +31,7 @@ namespace AngouriMath.Tests.Calculus
         /// regression here is a hang, and a hang would otherwise wedge the run instead of
         /// failing it.
         /// </summary>
-        private static readonly TimeSpan Budget = TimeSpan.FromSeconds(15);
+        private static readonly TimeSpan Budget = LimitTermination.Guard;
 
         private static Entity IntegrateWithinBudget(string integrand)
         {

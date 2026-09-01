@@ -21,7 +21,7 @@ namespace AngouriMath.Tests.Common
     [Trait("Area", "Common")]
     public sealed class AlreadyFixedIssuesTest
     {
-        private static readonly System.TimeSpan Budget = System.TimeSpan.FromSeconds(30);
+        private static readonly System.TimeSpan Budget = LimitTermination.Guard;
 
         /// <summary>
         /// Runs work that used to hang or overflow the stack, and fails if it does not

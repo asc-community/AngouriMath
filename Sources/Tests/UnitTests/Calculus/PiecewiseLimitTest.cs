@@ -103,7 +103,7 @@ namespace AngouriMath.Tests.Calculus
             var task = Task.Run(() =>
                 "piecewise(1 / x provided x < -1, x ^ 2 provided x < 0, sin(x) / x provided x < 1, ln(x), 7)"
                     .ToEntity().Limit("x", 0, ApproachFrom.Right));
-            Assert.True(task.Wait(TimeSpan.FromSeconds(30)), "the limit of a piecewise did not terminate");
+            Assert.True(task.Wait(LimitTermination.Guard), "the limit of a piecewise did not terminate");
         }
     }
 }

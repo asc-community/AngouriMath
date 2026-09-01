@@ -54,7 +54,7 @@ namespace AngouriMath.Tests.Calculus
         public void AtZeroItIsLeftUnevaluatedAndTerminates(string expression, string destination)
         {
             var task = Task.Run(() => Limit(expression, destination));
-            Assert.True(task.Wait(TimeSpan.FromSeconds(30)), "the limit did not terminate");
+            Assert.True(task.Wait(LimitTermination.Guard), "the limit did not terminate");
             Assert.IsType<Entity.Limitf>(task.Result);
         }
 
@@ -64,7 +64,7 @@ namespace AngouriMath.Tests.Calculus
         public void OneSidedAtZeroTerminatesToo(ApproachFrom side)
         {
             var task = Task.Run(() => "signum(x)".ToEntity().Limit("x", 0, side).Simplify());
-            Assert.True(task.Wait(TimeSpan.FromSeconds(30)), "the limit did not terminate");
+            Assert.True(task.Wait(LimitTermination.Guard), "the limit did not terminate");
             Assert.IsType<Entity.Limitf>(task.Result);
         }
 

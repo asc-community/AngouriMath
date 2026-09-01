@@ -78,7 +78,7 @@ namespace AngouriMath.Tests.Calculus
         public void AnOscillationIsDeclinedRatherThanGuessedAt(string expression)
         {
             var task = Task.Run(() => expression.ToEntity().Limit("x", "+oo".ToEntity()));
-            Assert.True(task.Wait(TimeSpan.FromSeconds(30)), "the limit did not terminate");
+            Assert.True(task.Wait(LimitTermination.Guard), "the limit did not terminate");
             Assert.IsType<Entity.Limitf>(task.Result);
         }
     }
