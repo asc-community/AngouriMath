@@ -37,6 +37,7 @@ read first.
 | | `new Entity[0].MultiplyAll()`, and `Mulf.Multiply` on an empty list | `AngouriBugException` | `1` |
 | | `MathS.Vector()` and `new Entity[0].ToVector()` | `IndexOutOfRangeException` — outside the documented hierarchy | `InvalidMatrixOperationException` |
 | | `"x3 - 1".ToEntity().Factorize()`, and every polynomial no rewrite rule has a rule for | `x ^ 3 - 1` — handed back whole | `(x - 1) * (x ^ 2 + x + 1)` |
+| | `"x^2/(x^4 + 1)".Integrate("x")`, and every quotient whose denominator is a biquadratic irreducible over `Q` | `integral(x ^ 2 / (x ^ 4 + 1), x)` — left unevaluated | the antiderivative, over the real quadratic factors |
 | | `Entity.DomainConditionIn(Domain)` | did not exist | the domain of definition for a **stated** reading, through the whole tree |
 | | `MathS.Polynomials.Factor("(y * x3 + 1) * (x4 - y3)", "x")`, and bivariate polynomials whose leading coefficient in the main variable is a polynomial | `null` — a refusal | `(x ^ 4 - y ^ 3) * (x ^ 3 * y + 1)` |
 | | `MathS.Polynomials.Factor("x7 - y7", "x")`, and bivariate polynomials whose substituted image over-factors | `null` — a refusal | `(x - y) * (x ^ 6 + x ^ 5 * y + … + y ^ 6)` |
@@ -2344,12 +2345,65 @@ no integration rule reads: an irreducible of degree three or more, or a quadrati
 `(x^2 + 1)^2` is declined, and the ladder that would decompose it is deliberately not built, because
 every term it produces is over `(x^2 + c)^k` and would come back unevaluated in turn.
 
+*The `x^4 + 1` half of that is no longer true: allowing those real coefficients is exactly what the
+entry below does, and `x^2/(x^4 + 1)` is now answered. The rest of the paragraph stands — an
+irreducible of degree three or more, and a repeated quadratic, are still declined, and `(x^2 + 1)^2`
+still is.*
+
 Deciding that from the factorisation rather than by trying is what keeps the cost of declining to the
 one factorisation. Splitting regardless and recursing made `(1 - x^4)/(1 + x^4 + x^8)`, whose
 factorisation holds the irreducible quartic `x^4 - x^2 + 1`, take 18s to return the same unevaluated
 integral it returns in 203ms — measured, and the reason the guard is there rather than a preference.
 
 [#919](https://github.com/asc-community/AngouriMath/issues/919).
+
+### A biquadratic denominator is decomposed over the reals
+
+The same blindness one level further along, and the last place it reaches. The step above factors
+over `Q` and stops where `Q` does, so `x^4 + 1` — irreducible over the rationals — was left whole
+and `x^2/(x^4 + 1)` came back unevaluated. Over the reals it is
+`(x^2 - sqrt(2)x + 1)(x^2 + sqrt(2)x + 1)`, and both halves are read by the rule for a linear
+numerator over a quadratic. Nothing was missing but a factorisation the rational step is right to
+refuse.
+
+```
+"x^2/(x^4 + 1)".Integrate("x")
+
+was  integral(x ^ 2 / (x ^ 4 + 1), x)
+is   -1/2 * sqrt(2) * 1/2 / 2 * ln(x ^ 2 + sqrt(2) * x + 1)
+     + 1/2 * arctan((2 * x + sqrt(2)) * 1/2 * sqrt(2)) * 1/2 * sqrt(2)
+     + 1/2 * sqrt(2) * 1/2 / 2 * ln(x ^ 2 - sqrt(2) * x + 1)
+     + 1/2 * arctan((2 * x + -sqrt(2)) * 1/2 * sqrt(2)) * 1/2 * sqrt(2) + C
+```
+
+This is the integral [#233](https://github.com/asc-community/AngouriMath/issues/233) names as
+wanting "partial fractioning", and it is the first of that issue's list to need a factorisation
+rather than a rule. `1/(x^4 + 1)`, `1/(x^4 - 2)` and `1/(x^4 + 3x^2 + 1)` come with it.
+
+**Biquadratic only, and that is a boundary rather than a first cut.** A general quartic factors into
+real quadratics through its resolvent cubic, whose roots carry Cardano's nested radicals; a
+biquadratic `x^4 + px^2 + q` is the case where the resolvent is solvable by inspection and the two
+factors stay inside one square root. Two shapes come out of it, by the sign of `p^2 - 4q`: negative
+gives `(x^2 + ax + b)(x^2 - ax + b)` with `b = sqrt(q)` and `a = sqrt(2b - p)`, and positive gives
+the even `(x^2 + u)(x^2 + v)` with `u, v = (p -+ sqrt(p^2 - 4q))/2`. Zero is `(x^2 + p/2)^2`, a
+repeated quadratic, declined for the reason the step above declines one. **A quartic with an odd
+power in it — `x^4 + x^3 + 1`, `x^4 + x + 1` — is still declined**, and so is everything of degree
+five and up that does not factor over `Q`.
+
+**No condition is attached**, on the same argument as the step above: the two factors are distinct,
+so their product is zero exactly where the original denominator is, and nothing is cancelled.
+
+It is tried **after** both rational steps, which is what keeps a denominator that factors over `Q`
+in exact arithmetic: `x^4 + 3x^2 + 2` is decomposed by the step above and never arrives here to be
+given a square root it does not need. Declining stays as cheap as it was —
+`(1 - x^4)/(1 + x^4 + x^8)` returns the same unevaluated integral in the same fraction of a second,
+because every guard here is rational arithmetic on coefficients already read.
+
+`sqrt(tan(x))`, the one remaining entry on #233's list, is **not** answered by this. It reduces
+under `u = sqrt(tan x)` to `2 * integral(u^2/(u^4 + 1), u)`, which is now integrable — but the
+substitution that gets there is a separate capability and is not built here.
+
+[#233](https://github.com/asc-community/AngouriMath/issues/233).
 
 ### A polynomial equation that factors is solved through its factors
 

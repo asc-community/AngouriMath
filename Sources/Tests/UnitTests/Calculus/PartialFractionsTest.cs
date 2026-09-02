@@ -104,17 +104,72 @@ namespace AngouriMath.Tests.Calculus
             AssertIsAntiderivative(integrand, points);
 
         /// <summary>
-        /// What is still left unevaluated rather than answered wrongly: a denominator that is
-        /// irreducible, and one that is a power of a single irreducible. The second is not a
-        /// splitting problem -- there is no coprime pair to split it into, and the ladder
-        /// over <c>f^k</c> that would decompose it produces terms over <c>(x^2 + 1)^2</c>
-        /// that no integration rule reads, so decomposing it would answer nothing.
+        /// A biquadratic denominator that is irreducible over the rationals but factors over
+        /// the reals, which is the remaining case
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/233">#233</a> names:
+        /// <c>x^4 + 1</c> is <c>(x^2 - sqrt(2)x + 1)(x^2 + sqrt(2)x + 1)</c>, and both halves
+        /// are read by the rule for a linear numerator over a quadratic.
         /// </summary>
         [Theory]
-        [InlineData("x ^ 2 / (x ^ 4 + 1)")]
+        [InlineData("x ^ 2 / (x ^ 4 + 1)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("1 / (x ^ 4 + 1)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("x ^ 3 / (x ^ 4 + 1)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("(x ^ 3 + 1) / (x ^ 4 + 1)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("(x ^ 2 + x) / (x ^ 4 + 1)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        // A leading coefficient other than one is divided out rather than refused.
+        [InlineData("1 / (2 * x ^ 4 + 2)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("1 / (3 * x ^ 4 + 12)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        public void ABiquadraticThatFactorsOnlyOverTheReals(string integrand, double[] points) =>
+            AssertIsAntiderivative(integrand, points);
+
+        /// <summary>
+        /// The other shape a biquadratic takes, where <c>p^2 - 4q</c> is positive so there are
+        /// two real roots in <c>x^2</c> and the factors are the even <c>(x^2 + u)(x^2 + v)</c>.
+        /// A negative <c>q</c> puts one factor either side of zero -- <c>x^4 - 2</c> is
+        /// <c>(x^2 - sqrt(2))(x^2 + sqrt(2))</c> -- so one half integrates to a logarithm and
+        /// the other to an arctangent, which is what makes it worth testing next to the pair
+        /// above rather than folded into them.
+        /// </summary>
+        [Theory]
+        [InlineData("1 / (x ^ 4 + 3 * x ^ 2 + 1)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("x ^ 2 / (x ^ 4 + 3 * x ^ 2 + 1)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("1 / (x ^ 4 - 2)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("x ^ 2 / (x ^ 4 - 2)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("1 / (x ^ 4 - 5 * x ^ 2 + 5)", new[] { 0.3, 3.2, -2.4 })]
+        public void ABiquadraticWithTwoRealRootsInTheSquare(string integrand, double[] points) =>
+            AssertIsAntiderivative(integrand, points);
+
+        /// <summary>
+        /// What is still left unevaluated rather than answered wrongly: a denominator that is
+        /// irreducible and not biquadratic, and one that is a power of a single irreducible.
+        /// The second is not a splitting problem -- there is no coprime pair to split it into,
+        /// and the ladder over <c>f^k</c> that would decompose it produces terms over
+        /// <c>(x^2 + 1)^2</c> that no integration rule reads, so decomposing it would answer
+        /// nothing. <c>x^2/(x^4 + 1)</c> used to be on this list and is now answered above; the
+        /// step over the reals reaches a biquadratic only, so a quartic with an odd power in it
+        /// stays here.
+        /// </summary>
+        [Theory]
         [InlineData("1 / (x ^ 3 + x ^ 2 + x + 2)")]
         [InlineData("1 / (x ^ 4 + 2 * x ^ 2 + 1)")]
+        [InlineData("1 / (x ^ 4 + x ^ 3 + 1)")]
+        [InlineData("1 / (x ^ 4 + x + 1)")]
         public void WhatCannotBeSplitIsLeftAlone(string integrand) =>
             Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
+
+        /// <summary>
+        /// The guard that keeps declining cheap, which the step over the reals must not undo:
+        /// this factorises into an irreducible quartic that nothing reads, and the whole point
+        /// of reading the factorisation is that finding that out costs one factorisation rather
+        /// than a search of every half of every split.
+        /// </summary>
+        [Fact]
+        public void DecliningStaysCheap()
+        {
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            var answer = "(1 - x ^ 4) / (1 + x ^ 4 + x ^ 8)".ToEntity().Integrate("x");
+            Assert.Contains("integral(", answer.Stringize());
+            Assert.True(clock.Elapsed < System.TimeSpan.FromSeconds(10), $"took {clock.Elapsed}");
+        }
     }
 }

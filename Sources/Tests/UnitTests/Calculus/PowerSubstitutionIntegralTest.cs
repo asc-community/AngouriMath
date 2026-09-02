@@ -119,13 +119,23 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand);
 
         /// <summary>
-        /// And the rewrite does not make a candidate succeed that should not.
-        /// <c>x^2 / (x^4 + 1)</c> under <c>u = x^2</c> leaves a bare <c>x</c> behind, so it is
-        /// still rejected — that integral needs the denominator factored over the reals, which
-        /// this does not do, and it remains open on the issue.
+        /// And the rewrite does not make a candidate succeed that should not: under
+        /// <c>u = x^2</c> each of these leaves a bare <c>x</c> behind, so the substitution
+        /// rejects them.
         /// </summary>
-        [Fact]
-        public void AnIntegralThisDoesNotReachIsStillDeclined()
-            => Assert.Contains("integral(", "x^2/(x^4 + 1)".ToEntity().Integrate("x").Stringize());
+        /// <remarks>
+        /// The witness used to be <c>x^2/(x^4 + 1)</c>, which is now answered — not by this
+        /// substitution, which still rejects it for the same reason, but by the partial fraction
+        /// step learning to factor a biquadratic denominator over the reals. A test that the
+        /// substitution declines something needs an integrand nothing else answers either, or it
+        /// stops testing the substitution the moment a neighbouring capability arrives. These
+        /// carry an odd power, which puts them out of reach of that step as well.
+        /// <see href="https://github.com/asc-community/AngouriMath/issues/233"/>.
+        /// </remarks>
+        [Theory]
+        [InlineData("x^2/(x^4 + x + 1)")]
+        [InlineData("x^2/(x^4 + x^3 + 1)")]
+        public void AnIntegralThisDoesNotReachIsStillDeclined(string integrand)
+            => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
     }
 }

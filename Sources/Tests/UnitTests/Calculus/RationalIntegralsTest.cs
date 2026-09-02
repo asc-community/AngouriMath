@@ -105,12 +105,17 @@ namespace AngouriMath.Tests.Calculus
         public void ADenominatorThatFactorsWithNoRationalRoot(string integrand, double[] points) =>
             AssertIsAntiderivative(integrand, points);
 
-        // What is out of reach is a denominator that does not factor over Q at all -- x^4 + 1
-        // is irreducible and only factors once real coefficients are allowed -- and one that
-        // is a power of a single irreducible, which has no coprime pair to split into.
-        // Recorded so the boundary is visible rather than inferred from an absence.
+        // What is out of reach is a denominator that does not factor over Q and is not a
+        // biquadratic either -- an odd power puts it past the step that factors over the reals --
+        // and one that is a power of a single irreducible, which has no coprime pair to split
+        // into. Recorded so the boundary is visible rather than inferred from an absence.
+        //
+        // x^2/(x^4 + 1) was the first entry here, on the grounds that x^4 + 1 is irreducible
+        // over Q and only factors once real coefficients are allowed. Allowing them is what the
+        // real-quadratic step now does, so it moved to PartialFractionsTest as an answer.
         [Theory]
-        [InlineData("x ^ 2 / (x ^ 4 + 1)")]
+        [InlineData("1 / (x ^ 4 + x + 1)")]
+        [InlineData("1 / (x ^ 4 + x ^ 3 + 1)")]
         [InlineData("1 / (x ^ 4 + 2 * x ^ 2 + 1)")]
         public void ADenominatorThatDoesNotFactorIsStillDeclined(string integrand) =>
             Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());

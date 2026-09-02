@@ -45,6 +45,15 @@ namespace AngouriMath.Functions.Algebra
         /// applies and leaves something that will not integrate — it takes the denominator
         /// apart differently, so a failure of the one is no evidence about the other.
         /// </para>
+        /// <para>
+        /// Both of those factor over the rationals and stop where the rationals do, which left
+        /// x^2/(x^4 + 1) unevaluated: x^4 + 1 is irreducible over Q, and over the reals it is
+        /// (x^2 - sqrt(2)x + 1)(x^2 + sqrt(2)x + 1). The third step
+        /// (<see cref="Functions.PartialFractions.TrySplitBiquadraticOverTheReals"/>) reads a
+        /// biquadratic denominator that way. It is last because it is the only one that
+        /// introduces a radical, and a denominator that factors over Q should be taken apart in
+        /// exact arithmetic by one of the two above.
+        /// </para>
         /// </remarks>
         internal static Entity? SolveByPartialFractions(Entity expr, Entity.Variable x, bool integrateByParts)
         {
@@ -62,6 +71,12 @@ namespace AngouriMath.Functions.Algebra
                 && Integration.ComputeIndefiniteIntegral(left, x, integrateByParts) is { } overOne
                 && Integration.ComputeIndefiniteIntegral(right, x, integrateByParts) is { } overOther)
                 return overOne + overOther;
+
+            if (Functions.PartialFractions.TrySplitBiquadraticOverTheReals(
+                    numerator, denominator, x, out var overOneReal, out var overOtherReal)
+                && Integration.ComputeIndefiniteIntegral(overOneReal, x, integrateByParts) is { } realFirst
+                && Integration.ComputeIndefiniteIntegral(overOtherReal, x, integrateByParts) is { } realRest)
+                return realFirst + realRest;
 
             return null;
         }
