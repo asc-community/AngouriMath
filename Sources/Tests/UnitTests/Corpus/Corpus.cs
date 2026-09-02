@@ -138,7 +138,11 @@ namespace AngouriMath.Tests.Corpus
             new("int:by-parts-cyclic", Op.Integrate, "sin(x) * e ^ x"),
             new("int:arctan-form", Op.Integrate, "1 / (1 + x ^ 2)"),
             new("int:partial-fractions", Op.Integrate, "1 / (x ^ 4 + 3 * x ^ 2 + 2)"),
-            new("int:hard", Op.Integrate, "sqrt(tan(x))", Verdict.Unsolved),
+            // Solved since the tangent substitution: u = tan(x) makes it sqrt(u)/(1 + u^2), a
+            // fractional power substitution makes that 2t^2/(1 + t^4), and the biquadratic
+            // denominator factors over the reals. It was the corpus's standing example of an
+            // integral that is out of reach. https://github.com/asc-community/AngouriMath/issues/233
+            new("int:hard", Op.Integrate, "sqrt(tan(x))"),
 
             // --- Limits: compared against the stated value ---
             new("lim:0/0", Op.Limit, "sin(x) / x", Approach: "0", Expected: "1"),
