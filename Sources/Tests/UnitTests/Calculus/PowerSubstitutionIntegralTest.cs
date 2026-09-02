@@ -90,19 +90,23 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("1/(sqrt(x) * (1 + x))")]
         [InlineData("1/(sqrt(x) * (1 + x^2))")]
         [InlineData("1/(sqrt(x) + x)")]
+        // Becomes 2u^2/(1 + u^2), which is improper; answered once the rational integrator
+        // divides an improper fraction out before decomposing it.
+        [InlineData("sqrt(x)/(x + 1)")]
         public void AFractionalPowerIsAlsoASubstitution(string integrand)
             => DifferentiatesBack(integrand);
 
         /// <summary>
         /// Where a fractional substitution reaches and the rest of the chain does not, recorded
         /// so the boundary is visible. <c>sqrt(x)/(1 + x^4)</c> becomes <c>2u^2/(1 + u^8)</c>,
-        /// whose denominator is neither factorable over the rationals nor a biquadratic; and
-        /// <c>sqrt(x)/(x + 1)</c> becomes <c>2u^2/(1 + u^2)</c>, which is improper, and dividing
-        /// an improper fraction out is not something the rational integrator does.
+        /// whose denominator is neither factorable over the rationals nor a biquadratic.
         /// </summary>
+        /// <remarks>
+        /// <c>sqrt(x)/(x + 1)</c> was here too, for becoming an improper fraction that nothing
+        /// divided out. It is answered above now that the rational integrator divides first.
+        /// </remarks>
         [Theory]
         [InlineData("sqrt(x)/(1 + x^4)")]
-        [InlineData("sqrt(x)/(x + 1)")]
         public void WhereTheChainStops(string integrand)
             => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
 

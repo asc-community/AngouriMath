@@ -40,6 +40,7 @@ read first.
 | | `"x^2/(x^4 + 1)".Integrate("x")`, and every quotient whose denominator is a biquadratic irreducible over `Q` | `integral(x ^ 2 / (x ^ 4 + 1), x)` — left unevaluated | the antiderivative, over the real quadratic factors |
 | | `"sqrt(x)/(1 + x^2)".Integrate("x")`, and every integrand a fractional power of the variable makes rational | `integral(sqrt(x) / (1 + x ^ 2), x)` — left unevaluated | the antiderivative |
 | | `"sqrt(tan(x))".Integrate("x")`, and every integrand that is a function of `tan(x)` alone and rational in it | `integral(sqrt(tan(x)), x)` — left unevaluated | the antiderivative |
+| | `"x^2/(x + 1)".Integrate("x")`, and every improper quotient of polynomials | `integral(x ^ 2 / (x + 1), x)` — left unevaluated | `x ^ 2 / 2 + -x + ln(x + 1) + C` |
 | | `Entity.DomainConditionIn(Domain)` | did not exist | the domain of definition for a **stated** reading, through the whole tree |
 | | `MathS.Polynomials.Factor("(y * x3 + 1) * (x4 - y3)", "x")`, and bivariate polynomials whose leading coefficient in the main variable is a polynomial | `null` — a refusal | `(x ^ 4 - y ^ 3) * (x ^ 3 * y + 1)` |
 | | `MathS.Polynomials.Factor("x7 - y7", "x")`, and bivariate polynomials whose substituted image over-factors | `null` — a refusal | `(x - y) * (x ^ 6 + x ^ 5 * y + … + y ^ 6)` |
@@ -2471,6 +2472,49 @@ reach. The gate reached the same verdict independently, by differentiating the a
 than by comparing it with anything.
 
 [#233](https://github.com/asc-community/AngouriMath/issues/233).
+
+### An improper quotient is divided out before it is decomposed
+
+Every step of the rational integrator wants a **proper** fraction — a numerator of lower degree
+than the denominator — and each of the three declines an improper one rather than dividing it out.
+So `x^2/(x + 1)` had no antiderivative, although it is `x - 1 + 1/(x + 1)` and every piece of that
+has been integrable throughout.
+
+```
+"x^2/(x + 1)".Integrate("x")
+
+was  integral(x ^ 2 / (x + 1), x)
+is   x ^ 2 / 2 + -x + ln(x + 1) + C
+```
+
+**The division is not new code.** `TreeAnalyzer.PolynomialLongDivision` has done it all along, for
+the simplifier's own `PolynomialLongDivision` rule set; the integrator simply never asked it. What
+changed is one call, placed before the three decompositions rather than after them.
+
+New with it, as written: `x^3/(1 + x^2)`, `x^4/(x^2 + 1)`, `(x^5 + 2)/(x^2 + 1)`,
+`(x^2 + 3x + 5)/(x + 2)`, and the exact-division cases `(x^3 + 1)/(x + 1)` and `(x^2 - 1)/(x - 1)`,
+whose proper part is zero.
+
+New with it **through a substitution**, which is where it matters more, since the substitution
+produces the improper fraction rather than the user writing one: `tan(x)^2`, `tan(x)^3` and
+`sqrt(x)/(x + 1)` were all declined for this and no other reason, each having been named as such
+in the tests that recorded the boundary. `int tan(x)^2` comes back as
+`tan(x) - arctan(tan(x)) + C` rather than the textbook `tan(x) - x`, which is the same function on
+the principal branch and is what the rewrite has to say without an assumption about which branch
+`x` is on.
+
+**A proper fraction is untouched.** The helper answers nothing for one, so the three steps below
+see exactly what they saw before: `int 1/(x + 1)` is still `ln(x + 1) + C` and `int x/(x^2 + 1)`
+still `ln(x^2 + 1)/2 + C`.
+
+**A symbolic leading coefficient is still declined.** `x^2/(a + b*x)` —
+[#180](https://github.com/asc-community/AngouriMath/issues/180)'s item 18 — would have the division
+divide by `b`, which is not decidably non-zero, and at `b = 0` the quotient is `x^2/a`, whose
+antiderivative is not the limit of the divided form. `x^2/(x + a)` is declined too, for a narrower
+reason: the leading coefficient there is `1`, but the helper does not divide a polynomial whose
+other coefficients are symbolic.
+
+[#180](https://github.com/asc-community/AngouriMath/issues/180).
 
 ### A polynomial equation that factors is solved through its factors
 
