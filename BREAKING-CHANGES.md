@@ -126,8 +126,13 @@ positive reals, on the principal branch: at `a = -3`, `ln(-3)` is `ln(3) + i*pi`
 [#241](https://github.com/asc-community/AngouriMath/issues/241)'s solver its integrating factor. It
 does not: `OrdinaryDifferentialEquation` carries its own `ExponentialOf` helper that already folds
 `e ^ ln(u)`, so the eight first-order linear equations measured across this change come back
-**byte-identical**. The rule makes that helper redundant rather than unlocking anything, and removing
-it is left as its own change.
+**byte-identical**. *An earlier version of this entry went one step further and said the rule makes
+that helper redundant, with removing it left as its own change. It does not, and the removal was
+measured rather than done: the solver asks `InnerSimplified`, which does not carry the rewrite rules,
+so `e ^ ln(x)` reaches it unfolded. Deleting the helper fails three `OrdinaryDifferentialEquationTest`
+cases, deleting only its `e ^ ln(u)` arm fails two, and calling `Simplify` at the call site instead
+still fails one — because nothing in the library folds `e ^ (k ln u)` to `u ^ k`, which is the shape
+an antiderivative of `k/x` gives. The helper stays, and its doc comment now records why.*
 
 [#1138](https://github.com/asc-community/AngouriMath/issues/1138).
 
