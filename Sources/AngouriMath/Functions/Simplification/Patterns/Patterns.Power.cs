@@ -133,6 +133,20 @@ namespace AngouriMath.Functions
             // c ^ log(c, a) = a
             Powf(Number const1, Logf(Number const1a, var any1)) when const1 == const1a => any1,
 
+            // e ^ ln(a) = a, which is the same identity and needs its own arm because the one
+            // above cannot reach it: `e` is a Variable rather than a Number, so `ln(a)` -- which
+            // is stored as log(e, a) -- never presents a numeric base however it is written.
+            // https://github.com/asc-community/AngouriMath/issues/994
+            //
+            // Assumptions: none. b^log_b(a) = a needs ln(b) to be non-zero, and e is decidably
+            // neither 0 nor 1, so there is nothing left to discharge. It is not restricted to the
+            // positive reals either, because on the principal branch ln(-3) is ln(3) + i*pi and
+            // e^(ln(3) + i*pi) is -3; and at a = 0 both sides are 0, since ln(0) is -oo here and
+            // e^(-oo) is 0. A symbolic base stays refused -- b != 1 is not decidable for it, and
+            // 1^log(1, a) is 1 rather than a.
+            Powf(var base1, Logf(var base1a, var any1))
+                when base1 == base1a && base1 == Variable.e => any1,
+
             Mulf(Powf(var any1, var any3), Mulf(var any1a, var any2)) when any1 == any1a => new Powf(any1, any3 + 1) * any2,
             Mulf(Powf(var any1, var any3), Mulf(var any2, var any1a)) when any1 == any1a => new Powf(any1, any3 + 1) * any2,
             Mulf(Mulf(var any1, var any2), Powf(var any1a, var any3)) when any1 == any1a => new Powf(any1, any3 + 1) * any2,

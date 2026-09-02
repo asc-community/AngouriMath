@@ -18,7 +18,7 @@ effect". This is how to supply those seven things.
 ## Where a rule goes
 
 `Core/Transformations/Matching/MatchedRules.cs`, as a value in a `MatchedRuleSet`. **33** sets and
-**322** rules live there today.
+**323** rules live there today.
 
 The `switch` statements in `Functions/Simplification/Patterns` are the older form. Twenty-seven of
 the thirty registered sets no longer run theirs, and **none of those twenty-seven describes it any
@@ -62,7 +62,7 @@ in a name and putting the identity in brackets after it:
 2. Tangent is sine over cosine (tan(a) = sin(a) / cos(a)), so tan(x) becomes sin(x) / cos(x).
 ```
 
-So the name has to be a clause that survives being read that way. **All 293 distinct rule names are,
+So the name has to be a clause that survives being read that way. **All 294 distinct rule names are,
 and `StepAsASentenceTest` holds them to it** — a name with a capital, a bracket or an underscore
 fails that test rather than degrading the prose quietly.
 
@@ -89,7 +89,7 @@ debugged for an afternoon.
 | `Left.ToString()` | `Divf(var a, Divf(var b, var c))` — how the matcher spells it |
 
 Write the identity with `=`, not `->`: it is an equality, and the arrow belongs to the direction the
-rule happens to be applied in. **292** rules carry one today; a new rule should.
+rule happens to be applied in. **293** rules carry one today; a new rule should.
 
 ## The pattern language
 
@@ -121,12 +121,12 @@ matches and silently builds nothing. `BuildableNodeTypesTest` is the list.
 
 ## Replacement: a pattern, or code
 
-**34** of the 322 rules have a pattern on both sides. The rest build their answer in code, and both
+**35** of the 323 rules have a pattern on both sides. The rest build their answer in code, and both
 are legitimate — but the choice costs two things, so make it deliberately.
 
 A pattern replacement gets:
 
-- **a direction.** `MatchedRule.Reversed` is the rule read the other way, and **32** of the 34
+- **a direction.** `MatchedRule.Reversed` is the rule read the other way, and **33** of the 35
   two-sided rules have one. The other two forget something: `sin²+cos² = 1` forgets the angle, and
   `{ x : x in S } = S` forgets the name the set builder bound, so neither has anything to read back.
   See [ReversibleRules.md](ReversibleRules.md).
@@ -154,7 +154,7 @@ limit, against nothing for handing the node over.
 | `SoundUnderAssumptions` | holds given something the rule does not check |
 | `Heuristic` | usually right |
 
-**181** of the 322 rules are `Sound` and **141** are conditional. Every one of the thirty registered
+**181** of the 323 rules are `Sound` and **142** are conditional. Every one of the thirty registered
 *sets* declares `SoundUnderAssumptions`, because a set's tier is the **minimum** over its rules — so
 the set grain says nothing and the rule grain says everything. A derivation reports the rule's tier
 (`RewriteStep.Soundness`), which is why getting it right matters beyond the label.

@@ -100,6 +100,36 @@ read first.
 | | `"2 * x + 4 * a".ToEntity().Factorize()`, and every sum whose whole coefficients share a divisor | `2 * x + 4 * a` — left alone | `2 * (x + 2 * a)` |
 | | `Transformation.Factorization.Name` | `… then polynomial-factorization` | `… then polynomial-factorization then numeric-content` |
 | **Silent** | `"arccotan(-1)".ToEntity().Simplify()`, and every negative argument the inverse-trigonometric table knows | `3/4 * pi` — the textbook range, and **not equal to `arccotan(-1)`**, whose value is `-pi/4` | `-1/4 * pi` |
+| | `"e ^ ln(x)".ToEntity().Simplify()`, and every exponential of a natural logarithm | `e ^ ln(x)` — left as written | `x` |
+
+### The exponential of a natural logarithm folds
+
+`"e ^ ln(x)".ToEntity().Simplify()` was `e ^ ln(x)` and is `x`; so are `e ^ ln(2 * x)`,
+`e ^ ln(x + 1)` and `e ^ ln(sin(x))`. Nothing that had a value changes value.
+
+The identity was not missing. `2 ^ log(2, x)` has simplified to `x` throughout, and the rule that
+does it could not reach `e`: `ln(a)` is stored as `log(e, a)`, `e` is a `Constant` rather than a
+`Number`, and the pattern binds its base with `Any<Number>`, so the base never matched however the
+logarithm was written. That is
+[#994](https://github.com/asc-community/AngouriMath/issues/994) — every logarithm carrying a constant
+it does not mention — showing up as a missing simplification rather than as a printed one.
+
+Nothing is assumed. `b ^ log(b, a) = a` needs `ln(b)` to be non-zero, and `e` is decidably neither
+`0` nor `1`, which is exactly what the numeric arm cannot say about an arbitrary `Number` — so a
+symbolic base stays refused, and `1 ^ log(1, x)` is still `NaN` rather than `x`. It holds off the
+positive reals, on the principal branch: at `a = -3`, `ln(-3)` is `ln(3) + i*pi` and
+`e ^ (ln(3) + i*pi)` is `-3`. At `a = 0` no definedness moves either, since this library reads
+`ln(0)` as `-oo` and `e ^ (-oo)` as `0`, so both sides are `0`. It is labelled
+`SoundUnderAssumptions` rather than `Sound` because that last part is a branch convention.
+
+**No ODE changes.** The issue was filed believing this cost
+[#241](https://github.com/asc-community/AngouriMath/issues/241)'s solver its integrating factor. It
+does not: `OrdinaryDifferentialEquation` carries its own `ExponentialOf` helper that already folds
+`e ^ ln(u)`, so the eight first-order linear equations measured across this change come back
+**byte-identical**. The rule makes that helper redundant rather than unlocking anything, and removing
+it is left as its own change.
+
+[#1138](https://github.com/asc-community/AngouriMath/issues/1138).
 
 ### Every rule set describes the rules it runs
 
