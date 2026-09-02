@@ -206,6 +206,56 @@ namespace AngouriMath.Functions.Algebra
         };
 
         /// <summary>
+        /// An integrand that is a function of <c>tan(x)</c> and of nothing else, integrated by
+        /// the substitution <c>u = tan(x)</c>, under which <c>dx</c> is <c>du/(1 + u^2)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The substitution that turns every rational function of the tangent into a rational
+        /// function, and <c>int sqrt(tan(x))</c> — the last of the five integrals
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/233">#233</a> lists — into
+        /// <c>int sqrt(u)/(1 + u^2) du</c>.
+        /// </para>
+        /// <para>
+        /// <b>Why this is not a candidate in <see cref="SolveBySubstitution"/>.</b> That one
+        /// divides the integrand by <c>du/dx</c> and asks whether any <c>x</c> is left, which
+        /// works when the substitution survives the division. Here it does not:
+        /// <c>sqrt(tan(x))</c> over the derivative of <c>sqrt(tan(x))</c> is
+        /// <c>2 tan(x) cos(x)^2</c>, which is <c>sin(2x)</c> and is simplified to it — a correct
+        /// answer to a question that has stopped being about the tangent. Rewriting the integrand
+        /// asks a different question and does not lose the shape.
+        /// </para>
+        /// <para>
+        /// The test is the rewrite itself: replace every <c>tan(x)</c> and see whether an
+        /// <c>x</c> survives. <c>tan(x) + x</c> keeps one and is declined, which is right — it is
+        /// not a function of the tangent alone. <c>cotan</c> is <b>not</b> covered, since it is
+        /// its own node rather than a reciprocal of this one, so <c>sqrt(cotan(x))</c> is still
+        /// declined.
+        /// </para>
+        /// <para>
+        /// <b>No condition is owed by the substitution</b>, but the answer inherits the
+        /// tangent's: <c>u = tan(x)</c> is undefined exactly where the integrand is, since the
+        /// integrand is a function of it, and <c>1 + u^2</c> is never zero for real <c>u</c>.
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveByTangentSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var tangent = MathS.Tan(x);
+            if (!expr.ContainsNode(tangent))
+                return null;
+
+            var uSub = Variable.CreateUnique(expr, "u_tan");
+            var inU = expr.Substitute(tangent, uSub);
+            if (inU.ContainsNode(x))
+                return null;
+
+            var integrand = (inU / (1 + MathS.Sqr(uSub))).InnerSimplified;
+            return Integration.ComputeIndefiniteIntegral(integrand, uSub, integrateByParts) is { } result
+                ? result.Substitute(uSub, tangent)
+                : null;
+        }
+
+        /// <summary>
         /// Attempts to solve an integral using u-substitution.
         /// Looks for patterns where f(g(x)) * g'(x) can be integrated as F(g(x)).
         /// </summary>
@@ -276,31 +326,69 @@ namespace AngouriMath.Functions.Algebra
         /// </para>
         /// <para>
         /// So a power substitution rewrites the other powers of the variable into powers of
-        /// itself, which it can do exactly when its exponent divides theirs. Nothing is assumed
-        /// by it: the caller still checks that no <c>x</c> survives, so a rewrite that does not
-        /// clear the variable leaves the candidate rejected as before — which is what happens to
-        /// <c>x^2 / (x^4 + 1)</c>, where a bare <c>x</c> remains and the integral genuinely needs
-        /// a factorisation this does not have.
+        /// itself. For <c>u = x^r</c> the identity is <c>x^n = u^(n/r)</c>, and the rewrite is
+        /// made wherever <c>n/r</c> is a whole number — which for a whole <c>r</c> means
+        /// <c>r</c> divides <c>n</c>, and is the only case this covered at first.
+        /// </para>
+        /// <para>
+        /// <b>A fractional <c>r</c> is the case that reaches the other way</b>, and it is what
+        /// <c>int sqrt(x)/(1 + x^2)</c> needs. There <c>u = sqrt(x)</c>, so <c>r</c> is
+        /// <c>1/2</c> and <c>n/r</c> is <c>2n</c> — a whole number for every <c>n</c>, including
+        /// the bare <c>x</c> that a whole <c>r</c> can never rewrite. The integrand becomes
+        /// <c>2u^2/(1 + u^4)</c>, which is answered.
+        /// </para>
+        /// <para>
+        /// Nothing is assumed by it: the caller still checks that no <c>x</c> survives, so a
+        /// rewrite that does not clear the variable leaves the candidate rejected as before.
         /// </para>
         /// </remarks>
         private static Entity InTermsOf(Entity expr, Entity u, Entity.Variable uSub, Entity.Variable x)
         {
-            if (u is not Powf(var powerBase, Number.Integer exponent)
-                || powerBase != x
-                || !exponent.EInteger.CanFitInInt32())
+            if (u is not Powf(var powerBase, Number.Rational exponent) || powerBase != x)
                 return expr.Substitute(u, uSub);
-            var k = exponent.EInteger.ToInt32Checked();
-            if (k < 2)
+            var r = exponent.ERational;
+            if (r.IsZero)
                 return expr.Substitute(u, uSub);
-            return expr.Replace(node =>
-                node is Powf(var otherBase, Number.Integer otherExponent)
+            // The written powers of x first, and only then a bare x that is left over. Both in
+            // one pass does not work, because Replace rewrites from the leaves up: the x inside
+            // sqrt(x) is reached before the sqrt(x) node is, so with u = sqrt(x) it becomes
+            // sqrt(u^2) rather than u, and the integrand ends up free of x and no more
+            // integrable than it started.
+            //
+            // The exponent is read as a rational rather than a whole number because the
+            // candidate is itself one of these nodes: with u = sqrt(x) the integrand still holds
+            // a sqrt(x), and leaving it alone leaves an x that rejects the candidate. Anything
+            // else -- x inside a function, or a base that is not x -- is left for the caller's
+            // check on whether x survives.
+            var written = expr.Replace(node =>
+                node is Powf(var otherBase, Number.Rational otherExponent)
                 && otherBase == x
-                && otherExponent.EInteger.CanFitInInt32()
-                && otherExponent.EInteger.ToInt32Checked() is var n
-                && n >= k
-                && n % k == 0
-                    ? (n == k ? uSub : MathS.Pow(uSub, n / k))
+                && Rewritten(otherExponent.ERational) is { } power
+                    ? power
                     : node);
+            return written.Replace(node =>
+                node == x && Rewritten(PeterO.Numbers.ERational.One) is { } bare ? bare : node);
+
+            // u^(n/r), where that is a whole power, and null where it is not. Done on the four
+            // integers rather than by dividing the rationals and asking whether the result is
+            // whole: an ERational quotient is not reduced, so 4/2 answers that question with a
+            // denominator of two and every whole r would be refused.
+            //
+            // The ceiling is against a tiny r turning a modest power of x into an enormous one,
+            // rather than against anything mathematical.
+            Entity? Rewritten(PeterO.Numbers.ERational n)
+            {
+                var scaled = n.Numerator.Multiply(r.Denominator);
+                var by = n.Denominator.Multiply(r.Numerator);
+                if (by.IsZero || !scaled.Remainder(by).IsZero)
+                    return null;
+                var whole = scaled.Divide(by);
+                if (whole.IsZero || whole.Abs().CompareTo(PeterO.Numbers.EInteger.FromInt32(64)) > 0)
+                    return null;
+                return whole.Equals(PeterO.Numbers.EInteger.One)
+                    ? uSub
+                    : MathS.Pow(uSub, Number.Integer.Create(whole));
+            }
         }
 
         /// <summary>

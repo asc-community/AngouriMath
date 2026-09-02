@@ -72,6 +72,41 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// A <em>fractional</em> power of the variable as the substitution, which is the same
+        /// rewrite read the other way: <c>u = x^r</c> means <c>x^n = u^(n/r)</c>, and where a
+        /// whole <c>r</c> can only rewrite the powers it divides, an <c>r</c> of <c>1/2</c>
+        /// rewrites every one of them — the bare <c>x</c> included, which a whole <c>r</c> never
+        /// can.
+        /// </summary>
+        /// <remarks>
+        /// <c>int sqrt(x)/(1 + x^2)</c> becomes <c>int 2u^2/(1 + u^4) du</c> under
+        /// <c>u = sqrt(x)</c>, which is answered — so this reaches what it does partly because
+        /// the denominator now factors over the reals.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/233">#233</a>
+        /// </remarks>
+        [Theory]
+        [InlineData("sqrt(x)/(1 + x^2)")]
+        [InlineData("1/(1 + sqrt(x))")]
+        [InlineData("1/(sqrt(x) * (1 + x))")]
+        [InlineData("1/(sqrt(x) * (1 + x^2))")]
+        [InlineData("1/(sqrt(x) + x)")]
+        public void AFractionalPowerIsAlsoASubstitution(string integrand)
+            => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// Where a fractional substitution reaches and the rest of the chain does not, recorded
+        /// so the boundary is visible. <c>sqrt(x)/(1 + x^4)</c> becomes <c>2u^2/(1 + u^8)</c>,
+        /// whose denominator is neither factorable over the rationals nor a biquadratic; and
+        /// <c>sqrt(x)/(x + 1)</c> becomes <c>2u^2/(1 + u^2)</c>, which is improper, and dividing
+        /// an improper fraction out is not something the rational integrator does.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(x)/(1 + x^4)")]
+        [InlineData("sqrt(x)/(x + 1)")]
+        public void WhereTheChainStops(string integrand)
+            => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
+
+        /// <summary>
         /// The shape the issue is about: an odd power over an even one, where the substitution is
         /// the root of the denominator's power.
         /// </summary>

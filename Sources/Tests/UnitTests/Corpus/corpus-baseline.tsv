@@ -3,12 +3,12 @@
 # in Corpus.cs, re-run the suite with AM_UPDATE_CORPUS_BASELINE=1, and commit both.
 # Its git history is the per-commit history of the corpus -- item 36 of
 # https://github.com/asc-community/AngouriMath/issues/746.
-# totals	Solved=39	Unsolved=1	Wrong=0	Error=0	Timeout=0	Total=40
+# totals	Solved=40	Unsolved=0	Wrong=0	Error=0	Timeout=0	Total=40
 name	op	verdict
 int:arctan-form	Integrate	Solved
 int:by-parts-cyclic	Integrate	Solved
 int:exponential	Integrate	Solved
-int:hard	Integrate	Unsolved
+int:hard	Integrate	Solved
 int:partial-fractions	Integrate	Solved
 int:power	Integrate	Solved
 int:reciprocal	Integrate	Solved

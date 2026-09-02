@@ -38,6 +38,8 @@ read first.
 | | `MathS.Vector()` and `new Entity[0].ToVector()` | `IndexOutOfRangeException` — outside the documented hierarchy | `InvalidMatrixOperationException` |
 | | `"x3 - 1".ToEntity().Factorize()`, and every polynomial no rewrite rule has a rule for | `x ^ 3 - 1` — handed back whole | `(x - 1) * (x ^ 2 + x + 1)` |
 | | `"x^2/(x^4 + 1)".Integrate("x")`, and every quotient whose denominator is a biquadratic irreducible over `Q` | `integral(x ^ 2 / (x ^ 4 + 1), x)` — left unevaluated | the antiderivative, over the real quadratic factors |
+| | `"sqrt(x)/(1 + x^2)".Integrate("x")`, and every integrand a fractional power of the variable makes rational | `integral(sqrt(x) / (1 + x ^ 2), x)` — left unevaluated | the antiderivative |
+| | `"sqrt(tan(x))".Integrate("x")`, and every integrand that is a function of `tan(x)` alone and rational in it | `integral(sqrt(tan(x)), x)` — left unevaluated | the antiderivative |
 | | `Entity.DomainConditionIn(Domain)` | did not exist | the domain of definition for a **stated** reading, through the whole tree |
 | | `MathS.Polynomials.Factor("(y * x3 + 1) * (x4 - y3)", "x")`, and bivariate polynomials whose leading coefficient in the main variable is a polynomial | `null` — a refusal | `(x ^ 4 - y ^ 3) * (x ^ 3 * y + 1)` |
 | | `MathS.Polynomials.Factor("x7 - y7", "x")`, and bivariate polynomials whose substituted image over-factors | `null` — a refusal | `(x - y) * (x ^ 6 + x ^ 5 * y + … + y ^ 6)` |
@@ -2401,7 +2403,72 @@ because every guard here is rational arithmetic on coefficients already read.
 
 `sqrt(tan(x))`, the one remaining entry on #233's list, is **not** answered by this. It reduces
 under `u = sqrt(tan x)` to `2 * integral(u^2/(u^4 + 1), u)`, which is now integrable — but the
-substitution that gets there is a separate capability and is not built here.
+substitution that gets there is a separate capability and is not built here. *It is built in the
+entry below, and `sqrt(tan(x))` is now answered.*
+
+[#233](https://github.com/asc-community/AngouriMath/issues/233).
+
+### A fractional power, and the tangent, are substitutions
+
+Two substitutions, in one entry because neither reaches `sqrt(tan(x))` without the other and
+without the entry above. That integral is the last of the five
+[#233](https://github.com/asc-community/AngouriMath/issues/233) lists, and the one it calls "very
+painful, requires different solvers" — which it is. Three capabilities in a row:
+
+```
+int sqrt(tan(x)) dx
+  --- u = tan(x),  dx = du/(1 + u^2)  ------->  int sqrt(u)/(1 + u^2) du
+  --- t = sqrt(u), a fractional power  ------->  int 2t^2/(1 + t^4) dt
+  --- 1 + t^4 factored over the reals  ------->  logarithms and arctangents
+```
+
+Take any one away and it comes back unevaluated.
+
+```
+"sqrt(tan(x))".Integrate("x")
+
+was  integral(sqrt(tan(x)), x)
+is   a sum of two logarithms and two arctangents in sqrt(tan(x)) — the shape the
+     entry above produces, with sqrt(tan(x)) where it had x
+```
+
+**The fractional power.** A power substitution rewrites the other powers of the variable into
+powers of itself: for `u = x^r` the identity is `x^n = u^(n/r)`, applied wherever `n/r` is a whole
+number. A whole `r` reaches only the powers it divides, which is what this did before. An `r` of
+`1/2` reaches every one of them — including the bare `x`, which a whole `r` never can — so
+`int sqrt(x)/(1 + x^2)` becomes `int 2u^2/(1 + u^4) du`. `1/(1 + sqrt(x))`,
+`1/(sqrt(x) * (1 + x))`, `1/(sqrt(x) * (1 + x^2))` and `1/(sqrt(x) + x)` come with it.
+
+The rewrite is made in two passes, powers first and a leftover bare `x` second, because the tree
+is rewritten from the leaves up: in one pass the `x` inside `sqrt(x)` is reached before the
+`sqrt(x)` node is, and `u = sqrt(x)` turns it into `sqrt(u^2)` rather than `u` — an integrand free
+of `x` and no more integrable than it started.
+
+**The tangent.** An integrand that is a function of `tan(x)` and of nothing else becomes a
+rational function under `u = tan(x)`, with `dx` as `du/(1 + u^2)`. The test is the rewrite itself:
+replace every `tan(x)` and see whether an `x` survives. `tan(x) + x` keeps one and is declined,
+which is right — it is answered, but by linearity over the sum.
+
+This is a step of its own rather than a candidate for the general substitution, and the reason is
+worth recording. The general one divides the integrand by `du/dx` and asks what is left, which
+works while the substitution survives the division. Here it does not: `sqrt(tan(x))` over the
+derivative of `sqrt(tan(x))` is `2 tan(x) cos(x)^2`, which is `sin(2x)` and is simplified to it —
+a correct answer to a question that has stopped being about the tangent.
+
+**What is still declined**, each by what the rewrite hands on rather than by the rewrite:
+`cotan` is its own node rather than a reciprocal of the tangent, so `sqrt(cotan(x))` never starts;
+`tan(x)^2` and `tan(x)^3` become improper fractions, and dividing an improper fraction out is not
+something the rational integrator does; `1/(1 + tan(x)^2)` becomes `1/(1 + u^2)^2`, a repeated
+irreducible quadratic. On the other side, `sqrt(x)/(1 + x^4)` becomes `2u^2/(1 + u^8)`, whose
+denominator is neither factorable over the rationals nor a biquadratic.
+
+**The rule for the tangent itself still wins**, being reached first: `int tan(x)` is
+`-ln(cos(x)) + C` and not the longer thing this would produce.
+
+**The corpus gate now reads 40 solved of 40.** Its one unsolved problem was `int:hard`, and
+`int:hard` is `sqrt(tan(x))` — chosen for that list as the standing example of an integral out of
+reach. The gate reached the same verdict independently, by differentiating the answer back rather
+than by comparing it with anything.
 
 [#233](https://github.com/asc-community/AngouriMath/issues/233).
 

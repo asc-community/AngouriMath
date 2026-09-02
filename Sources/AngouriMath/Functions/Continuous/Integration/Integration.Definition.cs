@@ -122,6 +122,11 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveLogarithmic(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // After the general substitution rather than inside it, because the general one
+            // divides by du/dx and asks what is left, and that question loses the shape here:
+            // sqrt(tan(x)) over the derivative of sqrt(tan(x)) simplifies to sin(2x), in which
+            // the substitution is no longer visible. This one rewrites rather than divides.
+            if ((answer = IndefiniteIntegralSolver.SolveByTangentSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
             // Linearity comes before integration by parts, because it decomposes the problem
             // into strictly simpler ones where by parts searches. It cannot cost an answer:
