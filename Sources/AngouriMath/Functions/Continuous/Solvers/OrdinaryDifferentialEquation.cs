@@ -147,18 +147,29 @@ namespace AngouriMath.Functions.Algebra
         /// <remarks>
         /// <para>
         /// This is not tidying, it is the difference between answering and not. The integrating
-        /// factor for <c>y' + y/x = 1</c> is <c>e^(int dx/x)</c>, which is <c>e^ln(x)</c> — and
-        /// <b><c>e^ln(x)</c> is not simplified to <c>x</c> by anything in the library</b>, neither
-        /// by <c>InnerSimplified</c> nor by <c>Simplify</c>. The factor then stays an exponential
-        /// of a logarithm, the second integral has no antiderivative for it, and the whole
-        /// equation is declined. Measured, which is how it was found: every step but that one
-        /// came out.
+        /// factor for <c>y' + y/x = 1</c> is <c>e^(int dx/x)</c>, which is <c>e^ln(x)</c>. If that
+        /// stays an exponential of a logarithm, the second integral has no antiderivative for it
+        /// and the whole equation is declined. Measured, which is how it was found: every step but
+        /// that one came out.
         /// </para>
         /// <para>
-        /// Done here rather than as a simplification rule because a rule for <c>e^ln(a) = a</c>
-        /// reaches every expression in the library and wants deciding on its own terms. Filed
-        /// separately; this is the local reading, which is sound because the exponent was built
-        /// here and is known to be an antiderivative.
+        /// <b>Every arm here is load-bearing, and the general rule does not replace any of them.</b>
+        /// <c>Simplify</c> has folded <c>e^ln(a)</c> to <c>a</c> since
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1138">#1138</a>, which is
+        /// what the paragraph above used to deny — but this method asks
+        /// <see cref="Entity.InnerSimplified"/>, and that pass does not carry the rewrite rules, so
+        /// <c>e^ln(x)</c> reaches it unfolded. Removing the whole method fails three
+        /// <c>OrdinaryDifferentialEquationTest</c> cases; removing only the <c>e^ln(u)</c> arm
+        /// fails two; and calling <c>Simplify</c> at the call site instead still fails one, because
+        /// <b>nothing in the library folds <c>e^(k ln u)</c> to <c>u^k</c></b> — the shape an
+        /// antiderivative of <c>k/x</c> gives, and the reason the two <c>Mulf</c> arms exist.
+        /// </para>
+        /// <para>
+        /// Kept local rather than promoted to a rule for the same reason it was written local: the
+        /// scaled form <c>e^(k ln u) = u^k</c> is a principal-branch identity that reaches every
+        /// expression in the library and wants deciding on its own terms. Here the exponent was
+        /// built by this method and is known to be an antiderivative, which is what makes the
+        /// local reading sound without that argument.
         /// </para>
         /// </remarks>
         private static Entity ExponentialOf(Entity exponent)
