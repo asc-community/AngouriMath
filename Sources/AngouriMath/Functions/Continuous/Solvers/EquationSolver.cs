@@ -121,6 +121,18 @@ namespace AngouriMath.Functions.Algebra
                 if (Groebner.GroebnerSystemSolver.TrySolve(equations, variables, out var triangularised))
                     return triangularised;
 
+                // Fewer equations than unknowns is not a mistake by the caller, which is what
+                // the exception below says it is. A linear system of that shape has infinitely
+                // many solutions and one family that describes them all, so it is answered as
+                // that family -- the unknowns a row reduction leaves free become parameters.
+                // Only the short count is taken here: a square system that is rank-deficient
+                // reaches the eliminator, which already answers it.
+                // https://github.com/asc-community/AngouriMath/issues/212
+                if (equations.Count < vars.Length
+                    && Functions.Algebra.AnalyticalSolving.LinearSystemSolver.TrySolve(
+                        equations, variables, out var family))
+                    return family;
+
                 if (equations.Count != vars.Length)
                     throw new WrongNumberOfArgumentsException("Number of equations must be equal to that of vars");
                 int initVarCount = vars.Length;
