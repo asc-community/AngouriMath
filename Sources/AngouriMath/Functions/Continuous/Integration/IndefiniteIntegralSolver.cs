@@ -54,11 +54,29 @@ namespace AngouriMath.Functions.Algebra
         /// introduces a radical, and a denominator that factors over Q should be taken apart in
         /// exact arithmetic by one of the two above.
         /// </para>
+        /// <para>
+        /// <b>All three of those want a proper fraction</b>, and each declines an improper one
+        /// rather than dividing it out — so <c>x^2/(x + 1)</c> had no antiderivative although
+        /// it is <c>x - 1 + 1/(x + 1)</c> and every piece of that is read. The division is the
+        /// first step here for that reason, and it is not new code:
+        /// <see cref="TreeAnalyzer.PolynomialLongDivision"/> has done it all along for the
+        /// simplifier's own rule set, and the integrator simply never asked it.
+        /// </para>
         /// </remarks>
         internal static Entity? SolveByPartialFractions(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             if (expr is not Entity.Divf(var numerator, var denominator))
                 return null;
+
+            // The helper answers null for a fraction that is already proper, so this cannot
+            // fire on one and recurse into the problem it started from. The check on the
+            // quotient is the second half of that guarantee: a division that came back with
+            // nothing taken out would hand the same fraction on and not terminate.
+            if (TreeAnalyzer.PolynomialLongDivision(numerator, denominator) is var (quotient, properPart)
+                && quotient.Evaled != Entity.Number.Integer.Create(0)
+                && Integration.ComputeIndefiniteIntegral(quotient, x, integrateByParts) is { } wholePart
+                && Integration.ComputeIndefiniteIntegral(properPart, x, integrateByParts) is { } fractionPart)
+                return wholePart + fractionPart;
 
             if (Functions.PolynomialFactoring.TrySplitOffRationalRoot(
                     numerator, denominator, x, out var simple, out var restNumerator, out var restDenominator)
