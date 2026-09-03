@@ -64,10 +64,15 @@ namespace AngouriMath.Tests.Core
         public void ASymbolicBoundIsCarried(string expression)
             => Assert.IsType<Entity.Summationf>(expression.ToEntity().Simplify());
 
-        /// <summary>A product is carried whatever its summand; only the sum has a closed form.</summary>
-        [Fact]
-        public void AProductWithASymbolicBoundIsCarried()
-            => Assert.IsType<Entity.Productf>("product(k, k, 1, n)".ToEntity().Simplify());
+        /// <summary>
+        /// A product is carried unless its body is a single term. Where the sum takes any
+        /// polynomial apart by linearity, a product has none to take it apart with.
+        /// </summary>
+        [Theory]
+        [InlineData("product(k + 1, k, 1, n)")]
+        [InlineData("product(2 ^ k, k, 1, n)")]
+        public void AProductWithASymbolicBoundIsCarried(string expression)
+            => Assert.IsType<Entity.Productf>(expression.ToEntity().Simplify());
 
         /// <summary>
         /// A polynomial summand does have a closed form, and it is given rather than carried.

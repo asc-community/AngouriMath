@@ -255,8 +255,16 @@ rather than a hundred thousand terms. The answer carries the condition it needs 
 — because below that the range is empty and the polynomial is not zero; where the bounds are
 concrete that condition is decidable and the answer is a number. A bound that is a number and not
 a whole one still stays as written, since the index runs over the integers and
-`sum(k, k, 1, 5/2)` is `1 + 2` rather than the polynomial at `5/2`. A `product` stays as written
-whatever its body.
+`sum(k, k, 1, 5/2)` is `1 + 2` rather than the polynomial at `5/2`.
+
+A `product` gets the same treatment over the narrower class its shape allows: a **monomial** in
+the index, since a product has no linearity to take a sum of terms apart with. So
+`product(k, k, 1, n)` is `factorial(n)`, `product(k ^ 2, k, 1, n)` is `factorial(n) ^ 2`, and
+`product(c, k, m, n)` is `c ^ (n - m + 1)`. Its condition is `to >= from` rather than
+`to >= from - 1`, because at the empty range itself the closed form would be `c ^ 0` — undefined
+at `c = 0`, where the empty product is `1`. Where the index appears in the body the lower bound
+must be a concrete integer of at least one, `factorial` having no value at the negative integers;
+`product(k, k, 0, n)` therefore stays as written.
 
 **The declared name means the name, and only inside the operator that declares it.** Two names
 show this, because both mean something else in this language:

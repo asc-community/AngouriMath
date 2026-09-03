@@ -121,7 +121,7 @@ namespace AngouriMath.Functions
         /// anything symbolic to go through — the symbolic case being the one the closed form
         /// exists for.
         /// </remarks>
-        private static bool IsWholeOrSymbolic(Entity bound)
+        internal static bool IsWholeOrSymbolic(Entity bound)
             => bound.Evaled is Integer || bound.Evaled is not Number;
 
         /// <summary>

@@ -153,14 +153,18 @@ namespace AngouriMath.Tests.Core
             => Assert.IsType<Entity.Summationf>(expression.ToEntity().Simplify());
 
         /// <summary>
-        /// The product is carried whatever its body, including <c>product(k, k, 1, n)</c>, whose
-        /// closed form <c>factorial(n)</c> would be a wrong answer here: the empty product is
-        /// <c>1</c> at every <c>n &lt; 1</c>, while <c>factorial</c> is undefined at the negative
-        /// integers. Answering it needs the same condition the sum carries, and is not done.
+        /// A product whose body this cannot read is carried. The ones it can are
+        /// <see cref="ClosedFormProductTest"/>'s subject — a product has no linearity, so where
+        /// the sum takes any polynomial apart the product needs a single term.
         /// </summary>
+        /// <remarks>
+        /// <c>product(k, k, 1, n)</c> was on this list, for wanting a condition of the same kind
+        /// the sum carries: the empty product is <c>1</c> at every <c>n &lt; 1</c>, while
+        /// <c>factorial</c> is undefined at the negative integers. It has that condition now.
+        /// </remarks>
         [Theory]
-        [InlineData("product(k, k, 1, n)")]
-        [InlineData("product(k ^ 2, k, 1, n)")]
+        [InlineData("product(k + 1, k, 1, n)")]
+        [InlineData("product(2 ^ k, k, 1, n)")]
         public void TheProductIsCarried(string expression)
             => Assert.IsType<Entity.Productf>(expression.ToEntity().Simplify());
 

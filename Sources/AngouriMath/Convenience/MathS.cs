@@ -6999,14 +6999,27 @@ namespace AngouriMath
         /// <summary>
         /// A product of <paramref name="expr"/> as <paramref name="var"/> runs from
         /// <paramref name="from"/> to <paramref name="to"/> inclusive. Mirrors
-        /// <see cref="Sum(Entity, Entity, Entity, Entity)"/> exactly, with an empty range
-        /// multiplying to <c>1</c>.
+        /// <see cref="Sum(Entity, Entity, Entity, Entity)"/>, with an empty range multiplying to
+        /// <c>1</c>.
         /// </summary>
         /// <param name="expr">The factor. It may mention <paramref name="var"/>.</param>
         /// <param name="var">The index, which this binds.</param>
         /// <param name="from">The first value of the index.</param>
         /// <param name="to">The last value of the index, inclusive.</param>
-        /// <returns>The product written out where it can be, and an unevaluated node otherwise.</returns>
+        /// <returns>
+        /// The product written out where the bounds are concrete integers and there are not too
+        /// many terms; a closed form where the factor is a <b>monomial</b> in the index — a
+        /// narrower class than the sum's, a product having no linearity to take a sum of terms
+        /// apart with; and an unevaluated node otherwise.
+        /// </returns>
+        /// <remarks>
+        /// The closed form's condition is <c>to &gt;= from</c> rather than the sum's
+        /// <c>to &gt;= from - 1</c>: at the empty range itself it would be <c>c ^ 0</c>, which is
+        /// undefined at <c>c = 0</c> where the empty product is <c>1</c>. Where the index is in
+        /// the factor the lower bound must be a concrete integer of at least one, since the
+        /// answer is a ratio of factorials and <c>factorial</c> has no value at the negative
+        /// integers.
+        /// </remarks>
         /// <example>
         /// <code>
         /// using System;
