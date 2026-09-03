@@ -178,8 +178,17 @@ namespace AngouriMath
             internal const int MaxExpandedTerms = 100;
 
             /// <inheritdoc/>
+            /// <remarks>
+            /// The expansion first, because it answers any summand at all where the range is
+            /// short, and the closed form only a polynomial one. What the closed form then
+            /// reaches is the two cases the expansion declines: a symbolic bound, and a concrete
+            /// range too long to write out — where it is not a fallback but the better answer,
+            /// since it computes rather than expands.
+            /// </remarks>
             protected override Entity InnerSimplify(bool isExact) =>
-                Expanded(this, Expression, Var, From, To, static (a, b) => a + b, 0, isExact) ?? this;
+                Expanded(this, Expression, Var, From, To, static (a, b) => a + b, 0, isExact)
+                ?? Functions.PolynomialSummation.ClosedForm(Expression, Var, From, To)
+                ?? this;
 
             /// <summary>
             /// Writes the operator out where its bounds are concrete integers and there are few

@@ -247,7 +247,16 @@ name being declared and the first is the body it runs over, so `sum(i, i, 1, 10)
 
 Both bounds are inclusive and the step is one. An empty range is the operator's identity —
 `sum(k, k, 5, 1)` is `0` and `product(k, k, 5, 1)` is `1` — and the range is written out only when
-both bounds are integers, so `sum(k, k, 1, n)` and `sum(k, k, 1, 5/2)` stay as they are written.
+both bounds are integers and there are not too many terms.
+
+A `sum` whose body is a **polynomial in the index** is answered in closed form instead of being
+written out, so `sum(k, k, 1, n)` is `(n + n^2)/2` and `sum(k, k, 1, 100000)` is `5000050000`
+rather than a hundred thousand terms. The answer carries the condition it needs — `to >= from - 1`
+— because below that the range is empty and the polynomial is not zero; where the bounds are
+concrete that condition is decidable and the answer is a number. A bound that is a number and not
+a whole one still stays as written, since the index runs over the integers and
+`sum(k, k, 1, 5/2)` is `1 + 2` rather than the polynomial at `5/2`. A `product` stays as written
+whatever its body.
 
 **The declared name means the name, and only inside the operator that declares it.** Two names
 show this, because both mean something else in this language:

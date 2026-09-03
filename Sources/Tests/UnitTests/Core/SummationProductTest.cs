@@ -53,13 +53,39 @@ namespace AngouriMath.Tests.Core
 
         /// <summary>
         /// A symbolic bound has no finite expansion, so the operator is carried rather than
-        /// refused — which is the reason it is a node and not a parser trick.
+        /// refused — which is the reason it is a node and not a parser trick. A summand that is
+        /// a <em>polynomial</em> in the index is the exception, having a closed form; anything
+        /// else is still carried.
         /// </summary>
+        [Theory]
+        [InlineData("sum(2 ^ k, k, 1, n)")]
+        [InlineData("sum(1 / k, k, 1, n)")]
+        [InlineData("sum(sin(k), k, 1, n)")]
+        public void ASymbolicBoundIsCarried(string expression)
+            => Assert.IsType<Entity.Summationf>(expression.ToEntity().Simplify());
+
+        /// <summary>A product is carried whatever its summand; only the sum has a closed form.</summary>
         [Fact]
-        public void ASymbolicBoundIsCarried()
+        public void AProductWithASymbolicBoundIsCarried()
+            => Assert.IsType<Entity.Productf>("product(k, k, 1, n)".ToEntity().Simplify());
+
+        /// <summary>
+        /// A polynomial summand does have a closed form, and it is given rather than carried.
+        /// The value is checked against the expansion at several bounds instead of against a
+        /// printed form, since what matters is that the two agree.
+        /// </summary>
+        [Theory]
+        [InlineData("sum(k, k, 1, n)")]
+        [InlineData("sum(k ^ 2, k, 1, n)")]
+        [InlineData("sum(2 * k + 1, k, 1, n)")]
+        public void APolynomialSummandIsGivenInClosedForm(string expression)
         {
-            var summation = "sum(k, k, 1, n)".ToEntity().Simplify();
-            Assert.IsType<Entity.Summationf>(summation);
+            var closed = expression.ToEntity().Simplify();
+            Assert.IsNotType<Entity.Summationf>(closed);
+            foreach (var at in new[] { 0, 1, 2, 5, 9 })
+                Assert.Equal(
+                    expression.ToEntity().Substitute("n", at).Simplify().Evaled,
+                    closed.Substitute("n", at).Simplify().Evaled);
         }
 
         /// <summary>
@@ -103,18 +129,33 @@ namespace AngouriMath.Tests.Core
         public void ElsewhereItIsStillTheImaginaryUnit(string expression, string expected) =>
             Assert.Equal(expected.ToEntity().Evaled, expression.ToEntity().Simplify().Evaled);
 
-        /// <summary>A declared index with a symbolic bound is still carried, not guessed at.</summary>
-        [Fact]
-        public void ADeclaredImaginaryUnitIndexWithASymbolicBoundIsCarried() =>
-            Assert.IsType<Entity.Summationf>("sum(i, i, 1, n)".ToEntity().Simplify());
-
         /// <summary>
-        /// Too many terms is left unexpanded: a thousand-term sum is a correct expansion and a
-        /// useless expression, and everything downstream then walks it.
+        /// A declared index is an index wherever it appears, closed form included: <c>sum(i, i,
+        /// 1, n)</c> is the same sum as <c>sum(k, k, 1, n)</c> and gets the same answer, rather
+        /// than being read as the imaginary unit summed over itself.
         /// </summary>
         [Fact]
+        public void ADeclaredImaginaryUnitIndexIsSummedAsAnIndex() =>
+            Assert.Equal(
+                "sum(k, k, 1, n)".ToEntity().Simplify(),
+                "sum(i, i, 1, n)".ToEntity().Simplify());
+
+        /// <summary>
+        /// Too many terms is still not written out: a thousand-term sum is a correct expansion
+        /// and a useless expression, and everything downstream then walks it.
+        /// </summary>
+        /// <remarks>
+        /// It is now <em>answered</em> rather than carried, which is not the same thing as being
+        /// written out — the closed form computes the value instead of building the terms, so
+        /// the expression this returns is a number and not a hundred thousand of them. The
+        /// assertion is therefore on the answer; that it is not an expansion follows from there
+        /// being nothing to expand.
+        /// </remarks>
+        [Fact]
         public void AVeryLongRangeIsNotWrittenOut() =>
-            Assert.IsType<Entity.Summationf>("sum(k, k, 1, 100000)".ToEntity().Simplify());
+            Assert.Equal(
+                Entity.Number.Integer.Create(5000050000L),
+                "sum(k, k, 1, 100000)".ToEntity().Simplify().Evaled);
 
         [Theory]
         [InlineData("sum(k, k, 1, n)")]
