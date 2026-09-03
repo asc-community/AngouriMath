@@ -212,6 +212,7 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-negative-integer-power-becomes-a-reciprocal: ReplacementIsCode",
                     "a-negative-minuend-comes-out-in-front: ReplacementIsCode",
                     "a-negative-subtracted-is-added: ReplacementIsCode",
+                    "a-nested-radical-is-a-sum-of-two-plain-ones: ReplacementIsCode",
                     "a-number-over-a-numeric-multiple-splits: ReplacementIsCode",
                     "a-number-plus-a-function-puts-the-function-first: ReplacementIsCode",
                     "a-number-plus-a-variable-puts-the-variable-first: ReplacementIsCode",
