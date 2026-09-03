@@ -111,6 +111,61 @@ read first.
 | | `"sum(k, k, 1, n)".ToEntity().Simplify()`, and every summation whose body is a polynomial in the index | `sum(k, k, 1, n)` — carried | `piecewise((n + n ^ 2) / 2 provided n >= 0, 0)` |
 | | `"sum(k, k, 1, 100000)".ToEntity().Simplify()`, and every concrete range past a hundred terms | `sum(k, k, 1, 100000)` — carried | `5000050000` |
 | | `"product(k, k, 1, n)".ToEntity().Simplify()`, and every product whose body is a monomial in the index | `product(k, k, 1, n)` — carried | `piecewise(n! provided n >= 1, 1)` |
+| | `"1/(x^2 + 1)^2".Integrate("x")`, and every proper rational function over a repeated irreducible quadratic | `integral(1 / (1 + x ^ 2) ^ 2, x)` — left unevaluated, after 2.9 s | `arctan(x) / 2 + C + 1/2 * x / (x ^ 2 + 1)`, in 0.11 s |
+| | `"x^2/(x^2 + 2)^2".Integrate("x")`, and every polynomial numerator over one | `integral(x ^ 2 / (x ^ 2 + 2) ^ 2, x)` — left unevaluated, after 93 s | the antiderivative, in 0.57 s |
+| | `"1/(x^2 - 1)^2".Integrate("x")`, and every repeated quadratic whose roots are real | `C - ln(x + -1) / 4 + ln(1 + 2 * x + x ^ 2) / 8 + -1/2 * x / (x ^ 2 + -1)` | `C - ln(1 + (-2) / (x + 1)) / 4 + -1/2 * x / (x ^ 2 + -1)` — the same value, one logarithm rather than two |
+
+### A repeated quadratic denominator is integrated
+
+`1/(x^2 + 1)^2` had no antiderivative, while `1/(x^2 - 1)^2` and `1/(x^2 + 2x + 1)^2` both did — a
+denominator with real roots comes apart into linear factors and never reached the gap. What was
+missing was the irreducible case
+([#180](https://github.com/asc-community/AngouriMath/issues/180)).
+
+```
+"1/(x^2 + 1)^2".Integrate("x")     was  integral(1 / (1 + x ^ 2) ^ 2, x)
+                                    is  arctan(x) / 2 + C + 1/2 * x / (x ^ 2 + 1)
+"x^2/(x^2 + 2)^2".Integrate("x")   was  integral(x ^ 2 / (x ^ 2 + 2) ^ 2, x)
+                                    is  (sqrt(2) * arctan(sqrt(2) * x / 2) * 2 + (-4) * x / (x ^ 2 + 2)) / 8
+                                          + C provided not x ^ 2 + 2 = 0
+```
+
+The condition on that second one is the library's own and it is true: the antiderivative has no
+value where the denominator vanishes. It is attached to some of these answers and not others, and I
+did not pin down what decides which — recorded as observed rather than explained.
+
+Writing `Q` for the quadratic, `u` for its derivative `2ax + b` and `D` for `4ac - b^2`, the
+identity `u^2 = 4aQ - D` turns the derivative of `u/Q^(m-1)` into an equation for the integral of
+`1/Q^m`, which is unrolled down to the single power the table already answered. It is an identity in
+`a`, `b` and `c` rather than a fact about signs, so one line serves both signs of the discriminant;
+`D = 0` is the sole exclusion, and the division by `D` is why. A numerator of higher degree is
+divided by `Q` first.
+
+**A denominator with real roots now takes this route rather than partial fractions.** The value is
+unchanged and the form is shorter — one logarithm where there were two — which is why the
+node-count metric that ranks candidates selects it. No test pinned the old spelling.
+
+**The cost, measured rather than estimated.** Where the integrand is rational this is between 26 and
+165 times faster, because `TryStandardIntegrals` runs before every search and a shape answered
+outright never enters the candidate exploration. Where the integrand is a transcendental function
+over a repeated quadratic — `sin(x)/(x^2 + 1)^2`, `e^x/(x^2 + 1)^2`, `ln(x)/(x^2 + 1)^2`, none of
+which has an elementary antiderivative — the same search now takes **3.4 to 10.8 times longer to
+conclude nothing**, because the sub-integral it used to fail on immediately now succeeds and
+integration by parts carries on from a larger expression. Both arms measured on one machine, master
+and branch, the same way:
+
+| | master | now |
+|---|---|---|
+| `1/(x^2 + 1)^2` | 2879 ms, unevaluated | **111 ms, answered** |
+| `x^2/(x^2 + 2)^2` | 92 990 ms, unevaluated | **565 ms, answered** |
+| `1/(x^4 + 1)^2` | 3811 ms | 3870 ms — the base is not quadratic, and nothing changes |
+| `ln(x)/(x^2 + 1)^2` | 15 034 ms, unevaluated | 51 072 ms, unevaluated |
+| `sin(x)/(x^2 + 1)^2` | 26 492 ms, unevaluated | 114 851 ms, unevaluated |
+| `e^x/(x^2 + 1)^2` | 7944 ms, unevaluated | 85 683 ms, unevaluated |
+
+That last group is a growth in integration by parts rather than in this rule, which those integrands
+never match; it is filed separately rather than fixed here, since bounding by-parts is a change to
+machinery every integral goes through.
 
 ### A nested radical comes apart
 

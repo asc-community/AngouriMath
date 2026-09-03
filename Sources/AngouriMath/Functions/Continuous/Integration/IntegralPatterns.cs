@@ -223,6 +223,18 @@ namespace AngouriMath.Functions.Algebra
                 && a.Evaled is Entity.Number.Complex { IsZero: false }
                     => IntegrateLinearOverQuadratic(p, q, a, b, c, denominator, x),
 
+            // ∫ N(x)/(ax^2 + bx + c)^n dx for a whole n of two or more and a proper fraction.
+            // After the single-power arms above, which already read a denominator like
+            // (x + 1)^2 -- expanded, it is a quadratic, so the perfect-square arm there answers
+            // it and nothing about that changes.
+            Entity.Divf(var numerator, Entity.Powf(var repeated, Entity.Number.Integer repetitions)) when
+                repetitions.EInteger.CanFitInInt32()
+                && repetitions.EInteger.ToInt32Checked() is var n and >= 2
+                && TreeAnalyzer.TryGetPolyQuadratic(repeated, x, out var qa, out var qb, out var qc)
+                && (!numerator.ContainsNode(x) || qa.Evaled is Entity.Number.Complex { IsZero: false })
+                && IntegrateRationalOverPowerOfQuadratic(numerator, qa, qb, qc, repeated, n, x) is { } repeatedAnswer
+                    => repeatedAnswer,
+
             // ∫ (px + q)/(bx + c) dx, the same rewrite one degree down: the quotient is the
             // constant p/b plus a remainder over the divisor. x/(x + 1) had no antiderivative.
             Entity.Divf(var numerator, var denominator) when
@@ -528,6 +540,171 @@ namespace AngouriMath.Functions.Algebra
                 new Entity.Providedf(perfectSquareCase, discriminant.EqualTo(0)),
                 new Entity.Providedf(lnCase, discriminant < 0)
             ]).InnerSimplified;
+        }
+
+        /// <summary>
+        /// ∫ k / (a x^2 + b x + c)^n dx for a whole n of two or more, by the reduction that
+        /// takes one power off the denominator at a time.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Write <c>Q</c> for the quadratic, <c>u</c> for its derivative <c>2ax + b</c> and
+        /// <c>D</c> for <c>4ac - b^2</c>. Then <c>u^2</c> is <c>4aQ - D</c>, so differentiating
+        /// <c>u / Q^(m-1)</c> gives <c>2a(3 - 2m)/Q^(m-1) + (m-1)D/Q^m</c>, and reading that as
+        /// an equation for the integral of <c>1/Q^m</c> leaves
+        /// <code>
+        /// J_m = (u / Q^(m-1) + 2a(2m - 3) J_(m-1)) / ((m - 1) D)
+        /// </code>
+        /// which is unrolled down to <c>J_1</c>, the case the table above already answers. It is
+        /// an identity in a, b and c rather than a fact about signs, so one line serves a
+        /// positive and a negative discriminant alike; <c>D = 0</c> is the only exclusion, and
+        /// the division by <c>D</c> is why.
+        /// </para>
+        /// <para>
+        /// The two shapes the reduction cannot speak for get their own arms, and each is
+        /// elementary: with <c>a = 0</c> the denominator is a linear power, and with
+        /// <c>D = 0</c> the quadratic is <c>u^2/(4a)</c> so the whole integrand is a power of
+        /// <c>u</c>. Both are already answered for a numeric quadratic — by the power rule and
+        /// by partial fractions — and the arms are here for a symbolic one, where the
+        /// discriminant's sign is not known and dropping an arm is not available.
+        /// </para>
+        /// <para>
+        /// What was missing was the irreducible case. <c>1/(x^2 - 1)^2</c> had an antiderivative
+        /// and <c>1/(x^2 + 2x + 1)^2</c> had one, because a denominator with real roots comes
+        /// apart into linear factors and never reaches here; <c>1/(x^2 + 1)^2</c> had none.
+        /// https://github.com/asc-community/AngouriMath/issues/180
+        /// </para>
+        /// </remarks>
+        private static Entity IntegrateOverPowerOfQuadratic(
+            Entity numerator, Entity a, Entity b, Entity c, int power, Entity.Variable x)
+        {
+            var quadratic = a * x * x + b * x + c;
+            var derivative = 2 * a * x + b;
+            var discriminant = 4 * a * c - b * b;
+
+            // a = 0: k/(bx + c)^n, an ordinary power -- and the constant k/c^n when b is zero
+            // too, where writing the power would divide by it. Same reason as the rule above.
+            var linearCase = TreeAnalyzer.IsZero(b)
+                ? numerator * x / MathS.Pow(c, power)
+                : numerator * MathS.Pow(b * x + c, 1 - power) / (b * (1 - power));
+
+            // D = 0: the quadratic is u^2/(4a), so the integrand is k(4a)^n / u^(2n).
+            var perfectSquareCase =
+                numerator * MathS.Pow(4 * a, power) * MathS.Pow(derivative, 1 - 2 * power)
+                    / (2 * a * (1 - 2 * power));
+
+            var sqrtDiscriminant = MathS.Sqrt(discriminant);
+            var sqrtNegDiscriminant = MathS.Sqrt(-discriminant);
+
+            return MathS.Piecewise([
+                new Entity.Providedf(linearCase, a.EqualTo(0)),
+                new Entity.Providedf(perfectSquareCase, discriminant.EqualTo(0)),
+                new Entity.Providedf(
+                    Reduce(2 * MathS.Arctan(derivative / sqrtDiscriminant) / sqrtDiscriminant),
+                    discriminant > 0),
+                new Entity.Providedf(
+                    Reduce(AntiderivativeLog((derivative - sqrtNegDiscriminant) / (derivative + sqrtNegDiscriminant))
+                            / sqrtNegDiscriminant),
+                    discriminant < 0)
+            ]).InnerSimplified;
+
+            Entity Reduce(Entity firstPower)
+            {
+                var accumulated = firstPower;
+                for (var m = 2; m <= power; m++)
+                    accumulated =
+                        (derivative / MathS.Pow(quadratic, m - 1) + 2 * a * (2 * m - 3) * accumulated)
+                            / ((m - 1) * discriminant);
+                return numerator * accumulated;
+            }
+        }
+
+        /// <summary>
+        /// ∫ (px + q)/(a x^2 + b x + c)^n dx, by the same rewrite of the numerator the single
+        /// power uses: <c>px + q = (p/2a)(2ax + b) + (q - pb/2a)</c>. The first part is the
+        /// denominator's own derivative over a power of it, which integrates as a power; the
+        /// second is the constant-numerator case above.
+        /// </summary>
+        /// <remarks>
+        /// A numerator that is already a multiple of that derivative leaves nothing of the
+        /// second part, and it is dropped rather than multiplied by zero. Multiplying is not
+        /// harmless: the reduction is a quotient by the quadratic, so <c>0 * (2x/(x^2 + 1))</c>
+        /// is <c>0 provided not 1 + x^2 = 0</c> and not <c>0</c> — correctly, since the factor
+        /// has no value there. Carrying that condition would attach it to the answer for
+        /// <c>x/(x^2 + 1)^2</c>, which had none before and is owed none.
+        /// </remarks>
+        private static Entity IntegrateLinearOverPowerOfQuadratic(
+            Entity p, Entity q, Entity a, Entity b, Entity c, Entity quadratic, int power, Entity.Variable x)
+        {
+            var alongTheDerivative = p / (2 * a) * MathS.Pow(quadratic, 1 - power) / (1 - power);
+            var constantPart = q - p * b / (2 * a);
+            return TreeAnalyzer.IsZero(constantPart)
+                ? alongTheDerivative
+                : alongTheDerivative + IntegrateOverPowerOfQuadratic(constantPart, a, b, c, power, x);
+        }
+
+        /// <summary>
+        /// ∫ N(x)/(a x^2 + b x + c)^n dx for a numerator of any degree, or <see langword="null"/>
+        /// where the fraction is improper and this is not the rule for it.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Dividing the numerator by the quadratic writes <c>N = qQ + r</c> with <c>r</c> linear
+        /// at worst, so <c>N/Q^n</c> is <c>q/Q^(n-1) + r/Q^n</c> — one power off the denominator
+        /// and two degrees off the numerator at each step, which ends. The remainder is answered
+        /// by the two helpers above and the quotient goes round again.
+        /// </para>
+        /// <para>
+        /// <b>Improper fractions are declined rather than divided out here.</b> The recursion
+        /// bottoms out at a single power, and a numerator still of degree two or more there is
+        /// exactly the improper case, which
+        /// <see cref="IndefiniteIntegralSolver.SolveByPartialFractions"/> already opens with
+        /// <see cref="TreeAnalyzer.PolynomialLongDivision"/>. Declining hands it there instead of
+        /// answering it twice, in two shapes, from two places.
+        /// </para>
+        /// <para>
+        /// This is not only reach. <c>TryStandardIntegrals</c> runs before every search, so a
+        /// shape answered here never reaches the candidate exploration that re-integrates
+        /// rewritten forms — which is where this family's cost has always been. Both
+        /// <c>x^2/(x^2 + 2)^2</c> and <c>(x^2 + 1)/(x^2 + 2)^2</c> were tens of seconds spent to
+        /// return the integral unevaluated.
+        /// </para>
+        /// </remarks>
+        private static Entity? IntegrateRationalOverPowerOfQuadratic(
+            Entity numerator, Entity a, Entity b, Entity c, Entity quadratic, int power, Entity.Variable x)
+        {
+            if (!numerator.ContainsNode(x))
+                return power == 1
+                    ? IntegrateRationalQuadratic(numerator, a, b, c, x)
+                    : IntegrateOverPowerOfQuadratic(numerator, a, b, c, power, x);
+
+            if (TreeAnalyzer.TryGetPolyLinear(numerator, x, out var p, out var q))
+                return power == 1
+                    ? IntegrateLinearOverQuadratic(p, q, a, b, c, quadratic, x)
+                    : IntegrateLinearOverPowerOfQuadratic(p, q, a, b, c, quadratic, power, x);
+
+            if (power < 2)
+                return null;
+
+            var division = TreeAnalyzer.PolynomialLongDivision(numerator, quadratic);
+            if (division is null)
+                return null;
+
+            // The quotient is what is wanted; the remainder that comes back with it is already
+            // divided by the divisor -- x^2 over x^2 + 2 answers (1, -2/(x^2 + 2)) -- so taking
+            // it as a polynomial and dividing it again is a numerator that is not one, and the
+            // next division declines. Subtracting gives the polynomial remainder whatever shape
+            // the division chose to report.
+            // Reduced before either is used: the division reports its quotient built up term by
+            // term, so x^2 over x^2 + 2 comes back as `0 + 1` rather than `1`, and the arms below
+            // ask whether a numerator is constant.
+            var quotient = division.Value.Divided.InnerSimplified;
+            var remainder = (numerator - quotient * quadratic).InnerSimplified;
+
+            return IntegrateRationalOverPowerOfQuadratic(remainder, a, b, c, quadratic, power, x) is { } head
+                   && IntegrateRationalOverPowerOfQuadratic(quotient, a, b, c, quadratic, power - 1, x) is { } rest
+                ? head + rest
+                : null;
         }
     }
 }
