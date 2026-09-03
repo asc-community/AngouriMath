@@ -210,13 +210,28 @@ namespace AngouriMath.Tests.Algebra
         /// <summary>
         /// A free variable means infinitely many solutions, which is not something a
         /// triangular basis enumerates — the ideal is not zero-dimensional, so there is no
-        /// finite set of standard monomials and the conversion declines. Fewer equations
-        /// than unknowns therefore still reaches the old refusal, unchanged.
+        /// finite set of standard monomials and the conversion declines. What this path hands
+        /// on is therefore unchanged; what happens after it is not.
         /// </summary>
+        /// <remarks>
+        /// This used to assert a <c>WrongNumberOfArgumentsException</c>, which is what the whole
+        /// call raised for a system with fewer equations than unknowns. Such a system is now
+        /// answered as the family of all its solutions where it is linear
+        /// (<a href="https://github.com/asc-community/AngouriMath/issues/212">#212</a>), so the
+        /// assertion here is only that this path declines and not that the call fails.
+        /// </remarks>
         [Fact]
-        public void AnUnderDeterminedSystemIsStillRefused()
-            => Assert.Throws<WrongNumberOfArgumentsException>(
-                () => MathS.Equations(new Entity[] { "x + y - 3" }).Solve("x", "y"));
+        public void AnUnderDeterminedSystemIsNotTriangularised()
+        {
+            Assert.False(Functions.Algebra.Groebner.GroebnerSystemSolver.TrySolve(
+                new List<Entity> { "x + y - 3" }, new Entity.Variable[] { "x", "y" }, out _));
+
+            // And the call as a whole answers it, rather than raising as it used to.
+            var solutions = MathS.Equations(new Entity[] { "x + y - 3" }).Solve("x", "y");
+            Assert.NotNull(solutions);
+            Assert.Equal(1, solutions!.RowCount);
+            Assert.Equal(2, solutions.ColumnCount);
+        }
 
         /// <summary>
         /// Eight unknowns is the ceiling of the packed representation; nine has to fall

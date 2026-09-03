@@ -41,6 +41,7 @@ read first.
 | | `"sqrt(x)/(1 + x^2)".Integrate("x")`, and every integrand a fractional power of the variable makes rational | `integral(sqrt(x) / (1 + x ^ 2), x)` — left unevaluated | the antiderivative |
 | | `"sqrt(tan(x))".Integrate("x")`, and every integrand that is a function of `tan(x)` alone and rational in it | `integral(sqrt(tan(x)), x)` — left unevaluated | the antiderivative |
 | | `"x^2/(x + 1)".Integrate("x")`, and every improper quotient of polynomials | `integral(x ^ 2 / (x + 1), x)` — left unevaluated | `x ^ 2 / 2 + -x + ln(x + 1) + C` |
+| | `MathS.Equations("2*x - 4*y - 12").Solve("x", "y")`, and every linear system with fewer equations than unknowns | `WrongNumberOfArgumentsException` | `[[6 + 2 * t_1, t_1]]` — the family of all its solutions |
 | | `Entity.DomainConditionIn(Domain)` | did not exist | the domain of definition for a **stated** reading, through the whole tree |
 | | `MathS.Polynomials.Factor("(y * x3 + 1) * (x4 - y3)", "x")`, and bivariate polynomials whose leading coefficient in the main variable is a polynomial | `null` — a refusal | `(x ^ 4 - y ^ 3) * (x ^ 3 * y + 1)` |
 | | `MathS.Polynomials.Factor("x7 - y7", "x")`, and bivariate polynomials whose substituted image over-factors | `null` — a refusal | `(x - y) * (x ^ 6 + x ^ 5 * y + … + y ^ 6)` |
@@ -2555,6 +2556,55 @@ reason: the leading coefficient there is `1`, but the helper does not divide a p
 other coefficients are symbolic.
 
 [#180](https://github.com/asc-community/AngouriMath/issues/180).
+
+### A system with fewer equations than unknowns is answered, not refused
+
+`Solve` raised `WrongNumberOfArgumentsException` for a system with fewer equations than
+unknowns — a message that says the caller called it wrongly, for a caller who did nothing wrong.
+`2x - 4y = 12` in `x` and `y` is a well-formed question; it simply has infinitely many answers.
+
+```
+MathS.Equations("2*x - 4*y - 12").Solve("x", "y")
+
+was  WrongNumberOfArgumentsException: Number of equations must be equal to that of vars
+is   [[6 + 2 * t_1, t_1]]
+```
+
+which is `x = 6 + 2t, y = t` — the answer the issue asks for in its body.
+
+**The answer type did not change.** A solution has always been a row whose i-th entry is the
+i-th unknown's value, and nothing said those entries may not mention a variable. The unknowns a
+row reduction leaves free become parameters, named the way the constant of integration is named
+in an ODE's answer, and the rest are written in terms of them. The system from the issue thread,
+three equations in five unknowns, comes back with two of them:
+
+```
+{ p + 2q + 4r + s - u = 1, 2p + 4q + 8r + 3s - 4u = 2, p + 3q + 7r + 3u = -2 }
+
+is   [[7 + 2 * t_1 + 3 * t_2, -3 + (-3) * t_1 + (-2) * t_2, t_1, 2 * t_2, t_2]]
+```
+
+**Only the short count is taken this way.** A square system that is rank-deficient still reaches
+the eliminator, which has answered it with a free parameter since
+[#550](https://github.com/asc-community/AngouriMath/issues/550); those answers are unchanged, as
+are every determined and every overdetermined system.
+
+**A contradictory short system is `null`**, the same as a contradictory square one, and that
+continues to mean *there are no solutions* rather than *no answer was found*.
+
+**What still raises.** The system has to be linear in the unknowns, checked rather than assumed
+— `x^2 + y^2 = 1` and `x*y = 1` fail the check — and the coefficients **on the unknowns** must be
+rational, so `a*x + y = 1` raises too. That last is a soundness requirement rather than a
+convenience: a row reduction has to decide whether a pivot is zero, the general test available
+is structural, and choosing a pivot that is zero without being written as `0` produces a wrong
+family rather than no answer. The **constant** term is under no such restriction, being never a
+pivot, so `2x - 4y = k` is answered with `k` symbolic.
+
+**Code that caught `WrongNumberOfArgumentsException` around `Solve`** to detect an
+underdetermined system now gets a matrix for the linear ones, and the exception only for the
+rest.
+
+[#212](https://github.com/asc-community/AngouriMath/issues/212).
 
 ### A polynomial equation that factors is solved through its factors
 
