@@ -2884,7 +2884,25 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 when: bound => Functions.Patterns.ReduceRadical(
                     (Integer)bound["radicand"], (Rational)bound["power"]) is not null,
-                description: "sqrt(8) = 2 * sqrt(2), and its like for a positive whole radicand"));
+                description: "sqrt(8) = 2 * sqrt(2), and its like for a positive whole radicand"),
+
+            // The rule above takes a whole power out from under one root; this takes a root out
+            // from under another, which is the nesting rather than the size. Sound rather than
+            // conditional: the helper refuses every radicand it cannot square its answer back
+            // to, so what fires is an identity between two non-negative reals with no branch
+            // chosen -- see the remarks on DenestRadical for why a non-negative `a` and a square
+            // discriminant are the whole of what it needs.
+            new MatchedRule(
+                "a-nested-radical-is-a-sum-of-two-plain-ones",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Any("radicand"),
+                    MatchPattern.Any<Rational>("power", ratio => ratio.ERational.Equals(
+                        PeterO.Numbers.ERational.Create(
+                            PeterO.Numbers.EInteger.One, PeterO.Numbers.EInteger.FromInt32(2))))),
+                bound => Functions.Patterns.DenestRadical(bound["radicand"])!,
+                Soundness.Sound,
+                when: bound => Functions.Patterns.DenestRadical(bound["radicand"]) is not null,
+                description: "sqrt(5 + 2*sqrt(6)) = sqrt(2) + sqrt(3)"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.CommonRules"/>, as data.

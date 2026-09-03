@@ -248,19 +248,28 @@ Long answers are truncated in the table below at 64 characters, with `…`.
 | holonomic | holonomic functions | `expr_to_holonomic exists: True` | `<no member at all matching "Holonomic">` | absent |
 | codegen | compile to a callable | `9` | `9` | answers |
 
-### Two rows have moved since the run
+### Four rows have moved since the run
 
-**concrete / symbolic summation** and **concrete / symbolic product** were both measured as
-`declines` at `6b93b401` and are answered now: `sum(k, k, 1, n)` is `(n + n^2)/2` and
-`product(k, k, 1, n)` is `factorial(n)`, each carrying a condition on the range being non-empty
-that this library's empty-range convention requires and SymPy's reversed-range convention does
-not. The rows are left as they were measured rather than edited, because the table is a record of
-one run at one commit and a hand-corrected cell would be a measurement nobody took; they will
-read `answers` when `sympyparity` is next run.
+Each was measured as `declines` at `6b93b401` and is answered now:
 
-The row between them has **not** moved. *Infinite series* is still declined —
-`sum(1 / k ^ 2, k, 1, +oo)` needs the zeta function, which the row four below records as absent,
-and an infinite bound is refused outright by both closed forms.
+| row | this library, re-measured |
+|---|---|
+| polys / factor over the rationals | `x ^ 4 - 1` is `(x + 1) * (x - 1) * (x ^ 2 + 1)` |
+| simplify / radical denesting | `sqrt(5 + 2 * sqrt(6))` is `sqrt(3) + sqrt(2)` |
+| concrete / symbolic summation | `sum(k, k, 1, n)` is `(n + n^2)/2` |
+| concrete / symbolic product | `product(k, k, 1, n)` is `factorial(n)` |
+
+The last two each carry a condition on the range being non-empty, which this library's
+empty-range convention requires and SymPy's reversed-range convention does not.
+
+**The cells are left as they were measured rather than edited.** The table is a record of one run
+at one commit, and a hand-corrected cell would be a measurement nobody took; they will read
+`answers` when `sympyparity` is next run.
+
+Two neighbours have **not** moved, and both for the same reason — a special function this library
+does not have. *Infinite series* needs `zeta`, which the row four below records as absent, and an
+infinite bound is refused outright by both closed forms; *combine logarithms* is declined here and
+by SymPy alike, so it was never a parity gap.
 
 ### Implemented, but not reachable from outside
 

@@ -107,9 +107,48 @@ read first.
 | **Silent** | `"arccotan(-1)".ToEntity().Simplify()`, and every negative argument the inverse-trigonometric table knows | `3/4 * pi` — the textbook range, and **not equal to `arccotan(-1)`**, whose value is `-pi/4` | `-1/4 * pi` |
 | | `"e ^ ln(x)".ToEntity().Simplify()`, and every exponential of a natural logarithm | `e ^ ln(x)` — left as written | `x` |
 | | `"a => a + 3".ToEntity()`, and every lambda written with an arrow | `UnhandledParseException` | `lambda(a, a + 3)` |
+| | `"sqrt(5 + 2 * sqrt(6))".ToEntity().Simplify()`, and every nested radical whose discriminant is a rational square | `sqrt(5 + 2 * sqrt(6))` — left as written | `sqrt(3) + sqrt(2)` |
 | | `"sum(k, k, 1, n)".ToEntity().Simplify()`, and every summation whose body is a polynomial in the index | `sum(k, k, 1, n)` — carried | `piecewise((n + n ^ 2) / 2 provided n >= 0, 0)` |
 | | `"sum(k, k, 1, 100000)".ToEntity().Simplify()`, and every concrete range past a hundred terms | `sum(k, k, 1, 100000)` — carried | `5000050000` |
 | | `"product(k, k, 1, n)".ToEntity().Simplify()`, and every product whose body is a monomial in the index | `product(k, k, 1, n)` — carried | `piecewise(n! provided n >= 1, 1)` |
+
+### A nested radical comes apart
+
+`sqrt(5 + 2*sqrt(6))` is a radical under a radical, and it is two plain ones added.
+
+```
+"sqrt(5 + 2 * sqrt(6))".Simplify()   was  sqrt(5 + 2 * sqrt(6))   is  sqrt(3) + sqrt(2)
+"sqrt(7 - 4 * sqrt(3))".Simplify()   was  as written              is  2 - sqrt(3)
+"sqrt(9 + 4 * sqrt(5))".Simplify()   was  as written              is  sqrt(5) + 2
+"sqrt(11 + 6 * sqrt(2))".Simplify()  was  as written              is  3 + sqrt(2)
+"sqrt(6 - 2 * sqrt(5))".Simplify()   was  as written              is  sqrt(5) - 1
+```
+
+Squaring `sqrt(x) + sqrt(y)` gives `x + y + 2*sqrt(x*y)`, so matching that against
+`a + b*sqrt(c)` makes `x` and `y` the roots of `t^2 - a*t + b^2*c/4`. They are rational exactly
+when `a^2 - b^2*c` is the square of a rational, and that is the whole test — decidable in exact
+arithmetic rather than a search. The sign of `b` chooses the sum or the difference, since squaring
+either gives `a + |b|*sqrt(c)`.
+
+**No condition is attached and none is owed.** A non-negative `a` and a non-negative discriminant
+are required before anything is built, and together they make the radicand, `x` and `y` all
+non-negative — so what fires is an identity between real numbers with no branch chosen. A negative
+`a` is refused rather than conditioned.
+
+**A radicand with no rational split is left as written**, `sqrt(1 + sqrt(2))` among them, and so
+is anything that is not `a + b*sqrt(c)`.
+
+**Where the denesting is longer, `Simplify` keeps the nested form.** `sqrt(2 + sqrt(3))` does come
+apart — to `(sqrt(6) + sqrt(2))/2` — and the nested spelling is the shorter of the two, so that is
+what comes back. The rule offers the alternative; the selection is by size, as it is everywhere
+else.
+
+One radicand is a boundary rather than a rule: `sqrt(3 + 2*sqrt(2))` is answered by the rule —
+applying the set gives `sqrt(2) + 1`, the shorter form — and `Simplify` nonetheless returns the
+nested one. There is a test pinning what happens; the cause is not established, and the obvious
+suspect was measured and ruled out.
+
+[#717](https://github.com/asc-community/AngouriMath/issues/717).
 
 ### A polynomial summand is summed in closed form
 
