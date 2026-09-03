@@ -243,8 +243,49 @@ Nodes end
 
 */
 
+/* `a => a + 3`, and `a b => a + b` for `a => b => a + b`. Lowest priority of anything, and
+   right-associative through the recursion on `expression`, so the body runs to the end of what
+   is being parsed: `a => a + 3` is `a => (a + 3)` and never `(a => a) + 3`.
+
+   The parameters are VARIABLE tokens rather than expressions, which is what makes `a 3 => 3`
+   invalid as the plan says it should be: `3` cannot match, the alternative fails, and what is
+   left is not a parse.
+
+   The body is built exactly as `lambda(...)` builds it, through Binding, so that the two spell
+   the same thing -- including the case a lambda's Variable-typed parameter cannot state
+   directly, an index called `i`. https://github.com/asc-community/AngouriMath/issues/976 */
 expression returns[Entity value]
     : s = provided_expression { $value = $s.value; }
+      ('=>' b = expression
+        {
+            /* The parameters are read back out of an ordinary expression rather than matched as
+               a list of names, and that is about what the parser can predict rather than about
+               taste. Written as `names+ '=>' body | expression`, both alternatives begin with a
+               name and stay viable through a second one -- juxtaposition being multiplication --
+               so `a b => a + b` was decided as a product before the arrow was ever reached, and
+               came back "mismatched input '=>'". Sharing the left side leaves one decision, taken
+               on the token after it.
+
+               So `a b c` arrives here as the product it parsed as, and its factors in order are
+               the parameters. Anything that is not a name fails here instead of failing to
+               parse: `a 3 => 3`, which the plan calls invalid, raises rather than being read as
+               a lambda over `a` and `3`.
+
+               Through Binding, exactly as `lambda(...)` builds it, so the two spell the same
+               thing -- including an index called `i`, which lexes as the imaginary unit and can
+               therefore never arrive as a Variable token at all.
+               https://github.com/asc-community/AngouriMath/issues/976 */
+            Entity lambdaBody = $b.value;
+            var parameters = ($value is Mulf ? Mulf.LinearChildren($value) : new[] { $value }).ToList();
+            foreach (var x in ((IEnumerable<Entity>)parameters).Reverse())
+            {
+                var bound = AngouriMath.Core.Binding.Of(x);
+                if (bound.Name is not Variable v) throw new InvalidArgumentParseException($"Lambda is expected to have valid parameters, {x} encountered instead");
+                lambdaBody = bound.In(lambdaBody).LambdaOver(v);
+            }
+            $value = lambdaBody;
+        }
+      )?
     ;
 
 
