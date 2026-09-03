@@ -466,8 +466,20 @@ namespace AngouriMath
                 {
                     (Variable v, var args) when args.All(arg => arg.Nodes.Contains(variable) is false)
                         => 0,
-                    // special case f(x) to return a raw Derivativef avoid stack overflowing InnerSimplify
-                    (Variable v, { Head: Variable variable_, Tail : LEmpty<Entity> }) when variable_ == variable => MathS.Derivative(this, variable),
+                    // An argument that *is* the variable has nothing for the chain rule to do:
+                    // its own derivative is one, so the term below would be
+                    // MathS.Derivative(this, variable) -- this very node, inside its own
+                    // expansion. A raw Derivativef is returned instead, which the caller reads
+                    // as "no progress" and leaves alone.
+                    //
+                    // This used to ask whether the *only* argument is the variable
+                    // (`Tail: LEmpty<Entity>`), and with two arguments the expansion below ran:
+                    // d/dx apply(f, x, y) came back as derivative(apply(f, x, y), x) * 1 + ...,
+                    // which is not a Derivativef but contains one, so InnerSimplify's
+                    // "not Derivativef" test read it as progress and simplified its way back
+                    // here. `apply(f, x, y).Differentiate("x")` overflowed the stack.
+                    (Variable v, var args) when args.Any(arg => arg == variable)
+                        => MathS.Derivative(this, variable),
 
                     // d/dx_i f(g_1(x_1, x_2, ..., x_n), g_2(x_1, x_2, ..., x_n), ..., g_n(x_1, x_2, ..., x_n))
                     // becomes
