@@ -13,6 +13,10 @@ notation is not in the grammar prints as its function call instead: a lambda pri
 `lambda(x, x + 1)` and not `x -> x + 1`, because `->` is the implication operator and the arrow
 form would silently come back as something else.
 
+A lambda is now also *readable* as `x => x + 1`, and it still **prints** as `lambda(x, x + 1)`.
+More than one spelling may be read; exactly one is printed, and it is the one this contract is
+about.
+
 A **codomain** is part of that. A node whose `Codomain` is not the one its type carries by default
 prints inside `domain(...)`, so `domain(x, ZZ)` prints as `domain(x, ZZ)` and reads back narrowed
 ([#1022](https://github.com/asc-community/AngouriMath/issues/1022)); it is not decoration, since
@@ -218,6 +222,12 @@ range in [#657](https://github.com/asc-community/AngouriMath/pull/657).
 **Structural** — `piecewise(a provided p, b provided q)`, `lambda(param, body)`,
 `apply(f, arg, ...)`, `domain(expr, set)`.
 
+A lambda also has an arrow form, `param => body`, with several parameters written next to each
+other: `a b => a + b` is `a => b => a + b`, which is `lambda(a, b, a + b)`. The arrow binds
+looser than everything else and its body runs to the end, so `a => a + 3` is `a => (a + 3)`.
+Every parameter must be a name — `a 3 => 3` is refused — and the body is read exactly as
+`lambda(...)` reads it, so an index called `i` means the name and not the imaginary unit.
+
 `domain` takes a special set — `CC` `RR` `QQ` `ZZ` `BB` — or the keyword `Any`, and sets the
 *codomain* of whatever node it wraps, which is what makes the expression evaluate to `NaN` outside
 it. It applies to any node, not only a variable, and it is what `Stringize` prints for one. `Any`
@@ -266,4 +276,5 @@ parameter is typed as a name, so `lambda(2, x)` is a parse error where `sum(k, 2
   individually rather than by a general rule.
 - **`%` is not the remainder.** Write `mod`.
 - **Intervals use `;`**, not `,`: `[1; 2]`. `[1, 2]` is a vector.
-- **`->` is implication**, not a lambda arrow.
+- **`->` is implication**, not a lambda arrow. The lambda arrow is `=>`, and the two are
+  different operators rather than spellings of one.

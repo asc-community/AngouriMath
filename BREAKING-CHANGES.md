@@ -105,6 +105,46 @@ read first.
 | | `Transformation.Factorization.Name` | `… then polynomial-factorization` | `… then polynomial-factorization then numeric-content` |
 | **Silent** | `"arccotan(-1)".ToEntity().Simplify()`, and every negative argument the inverse-trigonometric table knows | `3/4 * pi` — the textbook range, and **not equal to `arccotan(-1)`**, whose value is `-pi/4` | `-1/4 * pi` |
 | | `"e ^ ln(x)".ToEntity().Simplify()`, and every exponential of a natural logarithm | `e ^ ln(x)` — left as written | `x` |
+| | `"a => a + 3".ToEntity()`, and every lambda written with an arrow | `UnhandledParseException` | `lambda(a, a + 3)` |
+
+### A lambda is written with an arrow as well as a call
+
+`a => a + 3` was a parse error and is now the same entity as `lambda(a, a + 3)`. Several
+parameters are the curried form the plan in
+[#495](https://github.com/asc-community/AngouriMath/issues/495) specifies — `a b => a + b` is
+`a => b => a + b`, which is `lambda(a, b, a + b)`.
+
+```
+"a => a + 3".ToEntity()                          was  UnhandledParseException
+                                                 is   lambda(a, a + 3)
+"a b => a + b".ToEntity()                        is   lambda(a, lambda(b, a + b))
+"apply(apply(a b => a + b, 1), 2)".Simplify()    is   3
+```
+
+**Nothing that parsed before parses differently.** `=` followed by `>` was not a token and not a
+parse, so no reading of any valid input has changed; `>=`, `->`, `=` and the rest are untouched,
+and there are tests pinning them. The `Lambda` node, beta reduction and currying were all already
+there — this is the syntax for them.
+
+**The arrow is read, not printed.** A lambda still prints as `lambda(x, x + 1)`, which is what
+keeps the round trip the printed form promises: several spellings may be read, exactly one is
+printed.
+
+**Every parameter must be a name**, which is what the plan says. `a 3 => 3` is refused, and so
+are `2 => 3` and `x + 1 => 2`. Those raised `UnhandledParseException` before and now raise
+`InvalidArgumentParseException` — still invalid, differently named. Code catching the parse
+exception by type around input like that will not catch this one.
+
+An index called `i` is the name rather than the imaginary unit, matching `lambda(i, i + 1)`,
+which it gets by reading its parameters through the same `Binding` the call form uses
+([#976](https://github.com/asc-community/AngouriMath/issues/976)).
+
+**Not in this change:** the rest of that plan's syntax — `f a b` for `apply(apply(f, a), b)`,
+`sin x` without brackets, and `sin (x)` with a space. Each of those changes what juxtaposition
+means, which is the decision [#286](https://github.com/asc-community/AngouriMath/issues/286) is
+about, and none of them is free the way the arrow is.
+
+[#495](https://github.com/asc-community/AngouriMath/issues/495).
 
 ### The exponential of a natural logarithm folds
 
