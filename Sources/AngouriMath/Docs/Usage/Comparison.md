@@ -248,6 +248,21 @@ Long answers are truncated in the table below at 64 characters, with `…`.
 | holonomic | holonomic functions | `expr_to_holonomic exists: True` | `<no member at all matching "Holonomic">` | absent |
 | codegen | compile to a callable | `9` | `9` | answers |
 
+### One row has moved since the run
+
+**concrete / symbolic summation** was measured as `declines` at `6b93b401` and is answered now:
+`sum(k, k, 1, n)` is `(n + n^2)/2`, carrying the condition `n >= 0` that this library's
+empty-range convention requires and SymPy's reversed-range convention does not. The row is left
+as it was measured rather than edited, because the table is a record of one run at one commit and
+a hand-corrected cell would be a measurement nobody took; it will read `answers` when
+`sympyparity` is next run.
+
+The two rows either side of it have **not** moved. *Infinite series* is still declined —
+`sum(1 / k ^ 2, k, 1, +oo)` needs the zeta function, which the row four below records as absent.
+*Symbolic product* is still declined, and deliberately: `factorial(n)` is undefined at the
+negative integers where the empty product is `1`, so answering it needs a condition of the same
+kind the sum now carries.
+
 ### Implemented, but not reachable from outside
 
 The gap in these five is a public entry point, not an algorithm.

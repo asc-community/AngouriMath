@@ -107,6 +107,53 @@ read first.
 | **Silent** | `"arccotan(-1)".ToEntity().Simplify()`, and every negative argument the inverse-trigonometric table knows | `3/4 * pi` — the textbook range, and **not equal to `arccotan(-1)`**, whose value is `-pi/4` | `-1/4 * pi` |
 | | `"e ^ ln(x)".ToEntity().Simplify()`, and every exponential of a natural logarithm | `e ^ ln(x)` — left as written | `x` |
 | | `"a => a + 3".ToEntity()`, and every lambda written with an arrow | `UnhandledParseException` | `lambda(a, a + 3)` |
+| | `"sum(k, k, 1, n)".ToEntity().Simplify()`, and every summation whose body is a polynomial in the index | `sum(k, k, 1, n)` — carried | `piecewise((n + n ^ 2) / 2 provided n >= 0, 0)` |
+| | `"sum(k, k, 1, 100000)".ToEntity().Simplify()`, and every concrete range past a hundred terms | `sum(k, k, 1, 100000)` — carried | `5000050000` |
+
+### A polynomial summand is summed in closed form
+
+A summation wrote itself out term by term where the bounds were concrete and there were fewer
+than a hundred terms, and was carried otherwise. So a symbolic bound had no answer, and neither
+did a long concrete range — both now do, where the body is a polynomial in the index.
+
+```
+"sum(k, k, 1, n)".Simplify()        was  sum(k, k, 1, n)
+                                    is   piecewise((n + n ^ 2) / 2 provided n >= 0, 0)
+
+"sum(k, k, 1, 100000)".Simplify()   was  sum(k, k, 1, 100000)
+                                    is   5000050000
+```
+
+`sum(k^2, k, 1, n)` and `sum(k^3, k, 1, n)` come with it, as does any polynomial summand by
+linearity, a coefficient that does not mention the index — `sum(a*k^2 + b*k + c, k, 1, n)` — and a
+symbolic *lower* bound, `sum(k, k, m, n)` being `S(n) - S(m - 1)` like any other.
+
+**The condition is the entry.** `sum(k, k, 1, n)` is **not** `(n + n^2)/2` for every `n`. At
+`n = -2` the range is empty, and this library answers an empty range with the operator's identity
+— `sum(k, k, 5, 1)` is `0`, which has its own test — while the polynomial there is `1`. The
+identity holds exactly where `to >= from - 1`, so that is what is attached, with the empty-range
+value as the other branch. Where the bounds are concrete the condition is decidable and the whole
+thing collapses to a number, which is why the long range above is an integer and not a piecewise.
+
+SymPy prints the bare polynomial for the same input and is not making a mistake: it reads a
+reversed range as the negated sum over the flipped one, under which the identity needs no
+condition. The condition is what this library's different convention costs, and **code that
+expected a bare polynomial from `Simplify` gets a `Piecewise`.**
+
+**A bound that is a number and not a whole one is still carried.** The index runs over the
+integers, so `sum(k, k, 1, 5/2)` is `1 + 2`; the polynomial continued to `5/2` is `35/8`, which
+answers a different question. `+oo` is refused the same way, so an infinite series is untouched.
+
+**A product is unchanged, whatever its body.** `product(k, k, 1, n)` is still carried, and
+`factorial(n)` would be a wrong answer for it rather than a missing one: the empty product is `1`
+at every `n < 1`, and `factorial` is undefined at the negative integers. Answering it needs the
+same kind of condition the sum now carries, and is not done here.
+
+No Bernoulli numbers are involved. The sum of a degree-`d` polynomial is a polynomial of degree
+`d + 1`, so `d + 2` of its values determine it, and those values are short sums computed directly;
+interpolating them recovers the coefficients exactly in rational arithmetic.
+
+[#717](https://github.com/asc-community/AngouriMath/issues/717).
 
 ### A lambda is written with an arrow as well as a call
 

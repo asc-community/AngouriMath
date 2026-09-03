@@ -350,13 +350,26 @@ namespace AngouriMath.Tests.Convenience
         public void AnInclusiveRangeAndItsIdentity(string written, string expected) =>
             Assert.Equal(expected.ToEntity(), written.ToEntity().Simplify());
 
-        /// <summary>Written out only when both bounds are integers.</summary>
+        /// <summary>
+        /// A bound that is a number and not a whole one is left as written. The index runs over
+        /// the integers, so <c>sum(k, k, 1, 5/2)</c> is <c>1 + 2</c>; the closed form continued
+        /// to <c>5/2</c> would be <c>35/8</c>, which answers a different question.
+        /// </summary>
         [Theory]
-        [InlineData("sum(k, k, 1, n)")]
         [InlineData("sum(k, k, 1, 5/2)")]
         [InlineData("sum(k, k, 1, +oo)")]
+        [InlineData("sum(2 ^ k, k, 1, n)")]
         public void ARangeThatIsNotAnIntegerOneStaysAsWritten(string written) =>
             Assert.Equal(written.ToEntity(), written.ToEntity().Simplify());
+
+        /// <summary>
+        /// A symbolic bound is read as standing for a whole number, which is what the index of a
+        /// summation ranges over — so a polynomial summand is answered in closed form rather
+        /// than left as written.
+        /// </summary>
+        [Fact]
+        public void ASymbolicBoundOverAPolynomialIsAnswered() =>
+            Assert.NotEqual("sum(k, k, 1, n)".ToEntity(), "sum(k, k, 1, n)".ToEntity().Simplify());
 
         /// <summary>
         /// The declared name means the name inside the operator, and what it usually means

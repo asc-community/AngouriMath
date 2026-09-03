@@ -6963,12 +6963,20 @@ namespace AngouriMath
         /// <param name="to">The last value of the index, inclusive.</param>
         /// <returns>
         /// The sum written out where the bounds are concrete integers and there are not too many
-        /// terms, and an unevaluated <see cref="Entity.Summationf"/> otherwise — so a symbolic
-        /// bound is carried rather than refused.
+        /// terms; a closed form where the body is a polynomial in the index, whatever the bounds;
+        /// and an unevaluated <see cref="Entity.Summationf"/> otherwise — so a body this cannot
+        /// read is carried rather than refused.
         /// </returns>
         /// <remarks>
+        /// <para>
         /// An empty range sums to <c>0</c>, which is stated rather than left to fall out of the
         /// loop. <a href="https://github.com/asc-community/AngouriMath/issues/248">#248</a>
+        /// </para>
+        /// <para>
+        /// That convention is why a closed form carries a condition: <c>sum(k, k, 1, n)</c> is
+        /// <c>(n + n^2)/2</c> only where <c>n >= 0</c>, the range being empty and the sum
+        /// <c>0</c> below that while the polynomial is not.
+        /// </para>
         /// </remarks>
         /// <example>
         /// <code>
