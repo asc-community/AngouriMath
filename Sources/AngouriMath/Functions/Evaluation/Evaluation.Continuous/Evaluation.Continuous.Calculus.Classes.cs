@@ -226,8 +226,15 @@ namespace AngouriMath
             private protected override Entity IntrinsicCondition => Boolean.True;
 
             /// <inheritdoc/>
+            /// <remarks>
+            /// The expansion first and the closed form after, as for the sum — and the closed
+            /// form is narrower here, a product having no linearity to take a general polynomial
+            /// apart with. A monomial body is what separates.
+            /// </remarks>
             protected override Entity InnerSimplify(bool isExact) =>
-                Summationf.Expanded(this, Expression, Var, From, To, static (a, b) => a * b, 1, isExact) ?? this;
+                Summationf.Expanded(this, Expression, Var, From, To, static (a, b) => a * b, 1, isExact)
+                ?? Functions.MonomialProduct.ClosedForm(Expression, Var, From, To)
+                ?? this;
         }
 
         public partial record Limitf

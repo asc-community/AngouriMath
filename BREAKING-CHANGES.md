@@ -109,6 +109,7 @@ read first.
 | | `"a => a + 3".ToEntity()`, and every lambda written with an arrow | `UnhandledParseException` | `lambda(a, a + 3)` |
 | | `"sum(k, k, 1, n)".ToEntity().Simplify()`, and every summation whose body is a polynomial in the index | `sum(k, k, 1, n)` — carried | `piecewise((n + n ^ 2) / 2 provided n >= 0, 0)` |
 | | `"sum(k, k, 1, 100000)".ToEntity().Simplify()`, and every concrete range past a hundred terms | `sum(k, k, 1, 100000)` — carried | `5000050000` |
+| | `"product(k, k, 1, n)".ToEntity().Simplify()`, and every product whose body is a monomial in the index | `product(k, k, 1, n)` — carried | `piecewise(n! provided n >= 1, 1)` |
 
 ### A polynomial summand is summed in closed form
 
@@ -147,11 +148,48 @@ answers a different question. `+oo` is refused the same way, so an infinite seri
 **A product is unchanged, whatever its body.** `product(k, k, 1, n)` is still carried, and
 `factorial(n)` would be a wrong answer for it rather than a missing one: the empty product is `1`
 at every `n < 1`, and `factorial` is undefined at the negative integers. Answering it needs the
-same kind of condition the sum now carries, and is not done here.
+same kind of condition the sum now carries, and is not done here. *It is done in the entry below,
+which gives it that condition.*
 
 No Bernoulli numbers are involved. The sum of a degree-`d` polynomial is a polynomial of degree
 `d + 1`, so `d + 2` of its values determine it, and those values are short sums computed directly;
 interpolating them recovers the coefficients exactly in rational arithmetic.
+
+[#717](https://github.com/asc-community/AngouriMath/issues/717).
+
+### A monomial body is multiplied in closed form
+
+The same for `product`, with the narrower reach a product has: a sum of two terms is the sum of
+their sums, and a product of two terms is not the product of their products in any way that
+helps. What separates is the body that **is** one term.
+
+```
+"product(k, k, 1, n)".Simplify()      was  product(k, k, 1, n)
+                                      is   piecewise(n! provided n >= 1, 1)
+
+"product(2, k, 1, 500)".Simplify()    was  product(2, k, 1, 500)
+                                      is   3273390607896141870013189696827599152216642046043064789483291368096133796404674554883270092325904157150886684127560071009217256545885393053328527589376
+```
+
+`product(k^2, k, 1, n)` is `(n!)^2`, `product(2 * k, k, 1, n)` is `n! * 2^n`, and a constant body
+needs no factorial at all — `product(c, k, m, n)` is `c^(n - m + 1)`, symbolic lower bound and
+all.
+
+**The condition is `to >= from`, where the sum's is `to >= from - 1`,** and the one point between
+them is the whole reason. At the empty range the closed form is `c^0`, which is `1` for every `c`
+except zero and undefined there, while the empty product is `1` for every `c` including zero.
+Giving that point to the identity branch keeps a value from becoming an undefinedness, and costs
+nothing, since both branches say `1` there.
+
+**A lower bound that is not a concrete integer of at least one is declined** where the index is in
+the body, rather than conditioned. `product(k, k, a, b)` is `b!/(a-1)!` only for `a >= 1`; below
+that the range runs through zero so the product is `0`, while `(a-1)!` is undefined. That cannot
+share a branch with the empty-range case, because `a < 1` does not make the range empty — a
+piecewise reading "identity otherwise" would be wrong there. So `product(k, k, 0, n)` and
+`product(k, k, m, n)` stay as written.
+
+**What is not one term is carried**, `product(k + 1, k, 1, n)` included. As for the sum, a bound
+that is a number and not a whole one is carried too.
 
 [#717](https://github.com/asc-community/AngouriMath/issues/717).
 
