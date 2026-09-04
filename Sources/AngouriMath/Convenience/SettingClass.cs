@@ -10,6 +10,88 @@ using System.Threading;
 
 namespace AngouriMath.Convenience
 {
+    /// <summary>A setting, without its value's type — enough to ask what it currently reads as.</summary>
+    internal interface ISettingState
+    {
+        /// <summary>
+        /// The object identifying this setting's value in the calling flow, or
+        /// <see langword="null"/> where nothing is set and the default applies.
+        /// </summary>
+        object? CurrentState { get; }
+    }
+
+    /// <summary>
+    /// What every setting reads as, taken together, so that something holding a result computed
+    /// under the settings of a moment can tell whether those settings still hold.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A state and not a change count.</b> Counting changes looks equivalent and is not: a
+    /// scope opened and closed leaves every setting exactly as it found it while moving a
+    /// counter twice, and the library opens such scopes constantly — a single
+    /// <c>Simplify</c> of one unevaluated integral opened <b>3520</b> of them, all four from
+    /// numeric downcasting in <c>Number/Operators.cs</c>. A counter therefore reports
+    /// "everything has changed" continuously and is useless to a cache. Measured, not assumed:
+    /// the counter was built first and threw away the whole benefit.
+    /// </para>
+    /// <para>
+    /// The state of one setting is the <i>reference</i> to the frame on top of its stack, which
+    /// is exact rather than a hash — releasing a scope restores the very frame object that was
+    /// there before it, since the chain below a pushed frame is never rebuilt. So comparing
+    /// snapshots is a handful of reference comparisons with no chance of collision, and a
+    /// balanced open-and-close compares equal, which is the whole point.
+    /// </para>
+    /// </remarks>
+    internal static class SettingsState
+    {
+        /// <summary>
+        /// Every setting there is. Replaced rather than appended to, so that a reader can walk it
+        /// without a lock: registering happens as the settings are constructed and a reader is on
+        /// the integrator's hot path, where taking a lock per call would be contention bought for
+        /// a list that stops changing before any real work starts.
+        /// </summary>
+        [ConcurrentField] private static ISettingState[] registered = System.Array.Empty<ISettingState>();
+
+        [ConcurrentField] private static readonly object registering = new();
+
+        internal static void Register(ISettingState setting)
+        {
+            lock (registering)
+            {
+                var grown = new ISettingState[registered.Length + 1];
+                System.Array.Copy(registered, grown, registered.Length);
+                grown[^1] = setting;
+                System.Threading.Volatile.Write(ref registered, grown);
+            }
+        }
+
+        /// <summary>What every setting reads as right now, in this flow.</summary>
+        internal static object?[] Snapshot()
+        {
+            var settings = System.Threading.Volatile.Read(ref registered);
+            var snapshot = new object?[settings.Length];
+            for (var i = 0; i < snapshot.Length; i++)
+                snapshot[i] = settings[i].CurrentState;
+            return snapshot;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="snapshot"/> is still what every setting reads as. One taken
+        /// before a setting existed has a different length and is reported stale, which is what
+        /// should happen — that setting's value was not part of it.
+        /// </summary>
+        internal static bool StillHolds(object?[] snapshot)
+        {
+            var settings = System.Threading.Volatile.Read(ref registered);
+            if (snapshot.Length != settings.Length)
+                return false;
+            for (var i = 0; i < snapshot.Length; i++)
+                if (!ReferenceEquals(snapshot[i], settings[i].CurrentState))
+                    return false;
+            return true;
+        }
+    }
+
     /// <summary>
     /// This class for configuring some internal mechanisms from outside
     /// </summary>
@@ -34,7 +116,7 @@ namespace AngouriMath.Convenience
     /// chain and assign it, rather than editing one.
     /// </para>
     /// </remarks>
-    public sealed class Setting<T> where T : notnull
+    public sealed class Setting<T> : ISettingState where T : notnull
     {
         /// <summary>
         /// One pushed value, and the chain below it. Never mutated once built.
@@ -58,7 +140,20 @@ namespace AngouriMath.Convenience
         private readonly AsyncLocal<Frame?> frames = new();
         private long lastId;
 
-        internal Setting(T defaultValue) => Default = defaultValue;
+        internal Setting(T defaultValue)
+        {
+            Default = defaultValue;
+            SettingsState.Register(this);
+        }
+
+        /// <summary>
+        /// The frame this setting currently reads from, as the identity of its state. Released
+        /// in order — which <c>using</c> guarantees — a scope restores the very frame that was
+        /// on top before it, so this compares equal across a balanced open and close. Out of
+        /// order the chain above is rebuilt and this reads as a change, which is conservative
+        /// and not wrong.
+        /// </summary>
+        object? ISettingState.CurrentState => frames.Value;
 
         /// <summary>
         /// Sets the new value for the setting
@@ -98,7 +193,7 @@ namespace AngouriMath.Convenience
             if (top.Id == id)
             {
                 frames.Value = top.Next;
-                return;
+                    return;
             }
             var above = new System.Collections.Generic.List<Frame>();
             var current = top;
