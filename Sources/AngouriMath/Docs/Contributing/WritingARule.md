@@ -173,6 +173,13 @@ corpus, and each is false:
 | a hole can be filled by two spellings of one thing | `IsWholeReciprocal` takes the literal `1/3`, which is one node, and a written `1 / c`, which is three — so the delta is 0 in one and −2 in the other |
 | a hole is repeated and the replacement squares it | `a * (a * b) = a^2 * b` is `1 - |a|`: zero for a leaf and negative for anything bigger |
 
+**Every rule still at `Unknown` has been looked at, and each falls into one of the shapes above.**
+Most of them compute their answer through a helper, so there is nothing to count; the rest either
+build a comparison, attach a `Provided` sized by their own operands, or are the repeated hole that
+pays a literal to be gathered — `a ^ n * a`, `a / b / b`, `a * a`, `k + k` and their two dozen
+relatives, every one of them `1 - |a|`. So `Unknown` here is a finding rather than a gap, and a new
+`Unknown` should be one too.
+
 **The comparison set is settled, and settled as `Unknown`.** Its sixty-odd rules were gone through
 one at a time and all but seven fall into the shapes above: most build their replacement with `<` or
 `>` and so chain; the rest either attach a `Provided` sized by their own operands — the chain
