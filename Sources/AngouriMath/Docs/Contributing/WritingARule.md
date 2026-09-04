@@ -133,7 +133,7 @@ A pattern replacement gets:
 - **an exact growth**, counted from the two patterns rather than declared.
 
 A code replacement gets neither, and its growth is `Unknown` unless you declare one. That is the
-honest default — **190** rules sit at `Unknown` — but declare it where you can justify it:
+honest default — **175** rules sit at `Unknown` — but declare it where you can justify it:
 
 ```csharp
 // The Chebyshev expansion of sin(n * a) is a sum of n terms where the pattern is one node,
@@ -168,6 +168,14 @@ corpus, and each is false:
 | the replacement attaches a `Provided` built from the operands | its size grows with them while the pattern's shrinks away, so the delta changes sign: `2 - |c|` for the shared-factor cancellation, `4 - |a| - |b|` for `(a - b) / (b - a)` |
 | a hole can be filled by two spellings of one thing | `IsWholeReciprocal` takes the literal `1/3`, which is one node, and a written `1 / c`, which is three — so the delta is 0 in one and −2 in the other |
 | a hole is repeated and the replacement squares it | `a * (a * b) = a^2 * b` is `1 - |a|`: zero for a leaf and negative for anything bigger |
+
+**The comparison set is settled, and settled as `Unknown`.** Its sixty-odd rules were gone through
+one at a time and all but seven fall into the shapes above: most build their replacement with `<` or
+`>` and so chain; the rest either attach a `Provided` sized by their own operands — the chain
+implications, the two rules about comparisons that exclude each other — or compute the answer through
+a helper, as the two that push a negation through a chain do. The seven that *are* declared are the
+`EqualTo` ones, for the reason in the table. Nobody need re-derive that; if you are looking for
+declarable rules, look elsewhere.
 
 **And a declaration can expose a rule whose soundness was wrong.** Writing a growth down moves the
 rule into the set equality saturation runs, which may be the first time it has ever run. That is how
