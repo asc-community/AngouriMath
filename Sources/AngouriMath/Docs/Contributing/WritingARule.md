@@ -133,7 +133,7 @@ A pattern replacement gets:
 - **an exact growth**, counted from the two patterns rather than declared.
 
 A code replacement gets neither, and its growth is `Unknown` unless you declare one. That is the
-honest default — **175** rules sit at `Unknown` — but declare it where you can justify it:
+honest default — **154** rules sit at `Unknown` — but declare it where you can justify it:
 
 ```csharp
 // The Chebyshev expansion of sin(n * a) is a sum of n terms where the pattern is one node,
@@ -157,7 +157,11 @@ cannot argue the claim from the code, leave it `Unknown`.
 of a few shapes. A hole matched twice and written once gives `-(1 + |a|)`, which is a `Collects`
 stronger than the corpus will show you, since the corpus fills its holes with single nodes. A
 replacement holding no hole at all — a constant, or `pi/2` — collects by the whole of the pattern.
-Operators mapping one for one with every hole used once is `Rearranges`.
+Operators mapping one for one with every hole used once is `Rearranges`. A pattern that binds
+nothing — `arctan(sqrt(3)) = pi/3`, `{ True, False }` — has a fixed size on both sides, so its delta
+is a number and there is nothing to argue. And two numbers combined with `Number` arithmetic **fold
+into one node** as the replacement is built, which is worth two on its own: `(c * v) * d` collects
+where the same rule written without the cast would only rearrange.
 
 **Four shapes look declarable and are not.** Each of these measured a clean, constant delta over the
 corpus, and each is false:
@@ -168,6 +172,13 @@ corpus, and each is false:
 | the replacement attaches a `Provided` built from the operands | its size grows with them while the pattern's shrinks away, so the delta changes sign: `2 - |c|` for the shared-factor cancellation, `4 - |a| - |b|` for `(a - b) / (b - a)` |
 | a hole can be filled by two spellings of one thing | `IsWholeReciprocal` takes the literal `1/3`, which is one node, and a written `1 / c`, which is three — so the delta is 0 in one and −2 in the other |
 | a hole is repeated and the replacement squares it | `a * (a * b) = a^2 * b` is `1 - |a|`: zero for a leaf and negative for anything bigger |
+
+**Every rule still at `Unknown` has been looked at, and each falls into one of the shapes above.**
+Most of them compute their answer through a helper, so there is nothing to count; the rest either
+build a comparison, attach a `Provided` sized by their own operands, or are the repeated hole that
+pays a literal to be gathered — `a ^ n * a`, `a / b / b`, `a * a`, `k + k` and their two dozen
+relatives, every one of them `1 - |a|`. So `Unknown` here is a finding rather than a gap, and a new
+`Unknown` should be one too.
 
 **The comparison set is settled, and settled as `Unknown`.** Its sixty-odd rules were gone through
 one at a time and all but seven fall into the shapes above: most build their replacement with `<` or

@@ -1587,21 +1587,31 @@ namespace AngouriMath.Core.Transformations.Matching
                     / (1 - (Real)bound["a"] * (Real)bound["b"])).InnerSimplified),
                 Soundness.SoundUnderAssumptions,
                 when: bound => ((Real)bound["a"] * (Real)bound["b"]).Evaled is Real product && product < 1,
-                description: "arctan(a) + arctan(b) = arctan((a + b) / (1 - a*b)), while a*b < 1"),
+                description: "arctan(a) + arctan(b) = arctan((a + b) / (1 - a*b)), while a*b < 1",
+                // Both operands are matched as Real and so are leaves, and the tangent formula is
+                // folded to a single one by the InnerSimplified on it, so five nodes become two:
+                // exactly -3, for every pair the `when` admits.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "the-arctangent-of-root-three",
                 MatchPattern.Node<Arctanf>(MatchPattern.Node<Powf>(MatchPattern.Exact(Integer.Create(3)), MatchPattern.Exact(Rational.Create(1, 2)))),
                 bound => MathS.pi / 3,
                 Soundness.Sound,
-                description: "arctan(sqrt(3)) = pi/3"),
+                description: "arctan(sqrt(3)) = pi/3",
+                // The pattern binds nothing, so both sides are a fixed size and the delta is a
+                // number rather than an expression in the operands.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "the-arctangent-of-one-over-root-three",
                 MatchPattern.Node<Arctanf>(MatchPattern.Node<Divf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Node<Powf>(MatchPattern.Exact(Integer.Create(3)), MatchPattern.Exact(Rational.Create(1, 2))))),
                 bound => MathS.pi / 6,
                 Soundness.Sound,
-                description: "arctan(1 / sqrt(3)) = pi/6"),
+                description: "arctan(1 / sqrt(3)) = pi/6",
+                // The pattern binds nothing, so both sides are a fixed size and the delta is a
+                // number rather than an expression in the operands.
+                growth: RewriteRuleGrowth.Collects),
 
             // The cosecant's own condition has to be carried: 2cos(u) is a number where
             // sin(u) is zero and sin(2u) csc(u) is not.
@@ -1629,7 +1639,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["a"],
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.WithinHalfPi(bound["a"], closed: true),
-                description: "arcsin(sin(a)) = a, for a in [-pi/2; pi/2]"),
+                description: "arcsin(sin(a)) = a, for a in [-pi/2; pi/2]",
+                // The function and its inverse both go and the angle is handed back untouched, so
+                // two nodes disappear whatever the angle is: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "arccosine-of-a-cosine-inside-its-own-interval",
@@ -1637,7 +1650,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["a"],
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.WithinZeroAndPi(bound["a"], closed: true),
-                description: "arccos(cos(a)) = a, for a in [0; pi]"),
+                description: "arccos(cos(a)) = a, for a in [0; pi]",
+                // The function and its inverse both go and the angle is handed back untouched, so
+                // two nodes disappear whatever the angle is: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "arctangent-of-a-tangent-inside-its-own-interval",
@@ -1645,7 +1661,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["a"],
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.WithinHalfPi(bound["a"], closed: false),
-                description: "arctan(tan(a)) = a, for a in (-pi/2; pi/2)"),
+                description: "arctan(tan(a)) = a, for a in (-pi/2; pi/2)",
+                // The function and its inverse both go and the angle is handed back untouched, so
+                // two nodes disappear whatever the angle is: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "arccotangent-of-a-cotangent-inside-its-own-range",
@@ -1653,7 +1672,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["a"],
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.WithinArccotanRange(bound["a"]),
-                description: "arccotan(cotan(a)) = a, for a in arccotan's own range"),
+                description: "arccotan(cotan(a)) = a, for a in arccotan's own range",
+                // The function and its inverse both go and the angle is handed back untouched, so
+                // two nodes disappear whatever the angle is: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-sine-of-an-arcsine",
@@ -1967,7 +1989,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Set.FiniteSet>("s", finite => finite.Count == 1)),
                 bound => bound["x"].EqualTo(((Set.FiniteSet)bound["s"]).First()),
                 Soundness.Sound,
-                description: "x in {a} = (x = a)"),
+                description: "x in {a} = (x = a)",
+                // The singleton set goes and the membership becomes an equality, one node for one,
+                // so exactly -1. `EqualTo` is a bare `Equalsf` and does not chain.
+                growth: RewriteRuleGrowth.Collects),
 
             // x in (a; b) is written out as the inequalities it stands for
             new MatchedRule(
@@ -1992,7 +2017,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     "s", finite => finite == Functions.Patterns.FullBooleanSet),
                 bound => Set.SpecialSet.Create(Domain.Boolean),
                 Soundness.Sound,
-                description: "{ True, False } = the boolean domain"),
+                description: "{ True, False } = the boolean domain",
+                // The pattern binds nothing, so both sides are a fixed size and the delta is a
+                // number rather than an expression in the operands.
+                growth: RewriteRuleGrowth.Collects),
 
             // (-oo; +oo) is the domain it is an interval of, where that domain names a set.
             // The Any case is refused in the condition rather than left to the replacement:
@@ -2008,7 +2036,10 @@ namespace AngouriMath.Core.Transformations.Matching
                                      && interval.Codomain is not Domain.Any),
                 bound => Set.SpecialSet.Create(((Set.Interval)bound["i"]).Codomain),
                 Soundness.Sound,
-                description: "(-oo; +oo) = the domain it is an interval of"));
+                description: "(-oo; +oo) = the domain it is an interval of",
+                // The interval and its two bounds become the one node of a special set, and the
+                // bounds are matched exactly rather than bound, so the delta is a number.
+                growth: RewriteRuleGrowth.Collects));
 
         /// <summary>
         /// <see cref="Functions.Patterns.SortRules"/>, as data — one set per sort level.
@@ -2697,7 +2728,11 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Node<Logf>(MatchPattern.Any("c"), MatchPattern.Any("a")))),
                 bound => new Powf(bound["c"], bound["n"]),
                 Soundness.SoundUnderAssumptions,
-                description: "a ^ (n / log(c, a)) = c ^ n"),
+                description: "a ^ (n / log(c, a)) = c ^ n",
+                // The base is matched twice -- once as the base and once inside the logarithm -- and
+                // written not at all, and the quotient and the logarithm go with it: the delta is
+                // -(3 + 2|a|), at most -5.
+                growth: RewriteRuleGrowth.Collects),
 
             // Both orientations are written out in the `switch`, so one commutative rule fires
             // exactly where the pair did.
@@ -2800,7 +2835,10 @@ namespace AngouriMath.Core.Transformations.Matching
                             MatchPattern.Any("n")))),
                 bound => new Powf(bound["a"] / new Powf(bound["b"], bound["c"]), bound["n"]),
                 Soundness.SoundUnderAssumptions,
-                description: "a ^ n / b ^ (c * n) = (a / b ^ c) ^ n, for a positive whole c"),
+                description: "a ^ n / b ^ (c * n) = (a / b ^ c) ^ n, for a positive whole c",
+                // The exponent is matched twice and written once, and one power node goes: the delta
+                // is -(1 + |n|), at most -2 and further the larger the exponent is.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-quotient-of-powers-whose-exponents-differ-by-a-whole-factor-takes-it-into-the-dividend",
@@ -2813,7 +2851,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
                 bound => new Powf(new Powf(bound["a"], bound["c"]) / bound["b"], bound["n"]),
                 Soundness.SoundUnderAssumptions,
-                description: "a ^ (c * n) / b ^ n = (a ^ c / b) ^ n, for a positive whole c"),
+                description: "a ^ (c * n) / b ^ n = (a ^ c / b) ^ n, for a positive whole c",
+                // The exponent is matched twice and written once, and one power node goes with it:
+                // the delta is -(1 + |n|), the mirror of the rule that takes it into the divisor.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-thing-over-a-power-of-itself-is-one-power",
@@ -2970,7 +3011,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
                 bound => bound["a"] / new Powf(bound["b"], bound["n"] + bound["m"]),
                 Soundness.SoundUnderAssumptions,
-                description: "a / b ^ n / b ^ m = a / b ^ (n + m)"),
+                description: "a / b ^ n / b ^ m = a / b ^ (n + m)",
+                // The base is matched twice and written once, and one quotient and one power go:
+                // the delta is -(2 + |b|), at most -3.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-variable-times-a-power-puts-the-power-first",
@@ -3135,7 +3179,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Function>("f")), MatchPattern.Any<Function>("g")),
                 bound => bound["f"] * bound["g"] * bound["c"],
                 Soundness.SoundUnderAssumptions,
-                description: "(c * f) * g = c * (f * g), for a numeric c"),
+                description: "(c * f) * g = c * (f * g), for a numeric c",
+                // The numeric factor moves to the outside of the product and the two functions come
+                // together, which is two products either way round: the same size for every input.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "a-product-of-two-quotients-is-one-quotient",
                 MatchPattern.Node<Mulf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Divf>(MatchPattern.Any("c"), MatchPattern.Any("d"))),
@@ -3199,19 +3246,28 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Mulf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Function>("f")), MatchPattern.Any<Number>("d")),
                 bound => (Number)bound["c"] * (Number)bound["d"] * bound["f"],
                 Soundness.SoundUnderAssumptions,
-                description: "(c * f) * d = (c * d) * f, for numeric c and d"),
+                description: "(c * f) * d = (c * d) * f, for numeric c and d",
+                // The two numbers are folded into one as the replacement is built, so four nodes
+                // around the function become two: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "two-numeric-multiples-of-functions-collect-their-numbers",
                 MatchPattern.Node<Mulf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Function>("f")), MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any<Function>("g"))),
                 bound => bound["f"] * bound["g"] * ((Number)bound["c"] * (Number)bound["d"]),
                 Soundness.SoundUnderAssumptions,
-                description: "(c * f) * (d * g) = f * g * (c * d), for numeric c and d"),
+                description: "(c * f) * (d * g) = f * g * (c * d), for numeric c and d",
+                // The two numbers are folded into one as the replacement is built, so five nodes
+                // around the two functions become three: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "two-functions-in-a-sum-come-together",
                 MatchPattern.Commutative<Sumf>(MatchPattern.Node<Sumf>(MatchPattern.Any<Function>("f"), MatchPattern.Any("a")), MatchPattern.Any<Function>("g")),
                 bound => bound["f"] + bound["g"] + bound["a"],
                 Soundness.SoundUnderAssumptions,
-                description: "(f + a) + g = f + g + a, for functions f and g"),
+                description: "(f + a) + g = f + g + a, for functions f and g",
+                // The three operands are regrouped and nothing else moves: two sums stay two sums
+                // and each hole is used once on both sides.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "a-variable-times-a-number-puts-the-number-first",
                 MatchPattern.Node<Mulf>(MatchPattern.Any<Variable>("v"), MatchPattern.Any<Number>("c")),
@@ -3312,7 +3368,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 bound => Integer.Zero,
                 Soundness.Sound,
-                description: "k - k = 0"),
+                description: "k - k = 0",
+                // Everything the pattern matched goes and one node arrives, and the operand was
+                // matched twice: the delta is -2|k|, at most -2 and further the larger it is.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-factor-shared-by-a-quotient-and-a-product-added-comes-out",
                 MatchPattern.Node<Sumf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c"))),
@@ -3412,7 +3471,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(MatchPattern.Any<Number>("c"), MatchPattern.Commutative<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any("a"))),
                 bound => (Number)bound["c"] / (Number)bound["d"] / bound["a"],
                 Soundness.SoundUnderAssumptions,
-                description: "c / (d * a) = (c / d) / a, for numeric c and d"),
+                description: "c / (d * a) = (c / d) / a, for numeric c and d",
+                // The two numbers are folded into one as the replacement is built, so four nodes
+                // around the remaining hole become two: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "two-numbers-around-a-factor-collect",
                 MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any("a"))),
@@ -3519,7 +3581,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Mulf>(MatchPattern.Node<Signumf>(MatchPattern.Any("a")), MatchPattern.Node<Absf>(MatchPattern.Any("a"))),
                 bound => bound["a"],
                 Soundness.SoundUnderAssumptions,
-                description: "sgn(a) * abs(a) = a"),
+                description: "sgn(a) * abs(a) = a",
+                // Three nodes around two copies of the operand become the one copy that is left, so
+                // the delta is -(3 + |a|): at most -4.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-reciprocal-rational-factor-is-a-division",
                 MatchPattern.Commutative<Mulf>(MatchPattern.Any<Entity>("r", one => Functions.Patterns.IsWholeReciprocal(one, 1)), MatchPattern.Any("a")),
