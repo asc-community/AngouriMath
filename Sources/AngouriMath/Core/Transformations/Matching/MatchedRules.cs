@@ -1455,9 +1455,16 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Any<Entity>("x", node => node is Sumf or Minusf),
                 (node, _) => Functions.Patterns.CollectCommonFactors(node) ?? node,
                 Soundness.Sound,
-                description: "k*p + k*q + ... = k*(p + q + ...), over a whole sum rather than two of its terms",
-                // Declared, because the replacement is code and nothing counts it: the whole point of it is to be smaller.
-                growth: RewriteRuleGrowth.Collects));
+                description: "k*p + k*q + ... = k*(p + q + ...), over a whole sum rather than two of its terms"));
+                // Undeclared, and it used to say `Collects` on the grounds that the whole point of
+                // it is to be smaller. Measured against the corpus it never shrinks and sometimes
+                // grows by eight nodes: `-x + x + -1/2` becomes `x * (-1 + 1) + -1/2`, seven nodes
+                // for seven. Collects wants every firing smaller, Rearranges wants every one the
+                // same size, Expands wants every one bigger, and each of those has a
+                // counterexample here -- so Unknown is the only one of the four that is true.
+                // Making it collect for real means declining where it does not shrink, which is a
+                // change to what the rule does rather than to what it says about itself, and the
+                // folding that turns `x * (-1 + 1)` into zero would have to be checked first.
 
         /// <summary>
         /// <see cref="Functions.Patterns.TrigonometricRules"/>, as data.
