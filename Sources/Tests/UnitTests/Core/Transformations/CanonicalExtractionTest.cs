@@ -427,9 +427,14 @@ namespace AngouriMath.Tests.Core.Transformations
             var judged = Saturation.RulesUpTo(RewriteRuleGrowth.Expands).Count;
             var all = Saturation.RulesUpTo(RewriteRuleGrowth.Unknown).Count;
 
-            Assert.True(all > 4 * judged,
-                $"{judged} of {all} sound rules have a judged growth, which is a larger share "
-                + "than when this was measured -- the ceiling may now be worth more than it was");
+            // It was under a quarter and is now about a quarter: 69 of 324 when this was first
+            // measured, 85 as the declarations of #825 land. The share is meant to rise, so the
+            // guard is that it has not become the majority -- at which point the ceiling would
+            // be excluding little and this test's premise would be gone rather than merely
+            // out of date.
+            Assert.True(all > 2 * judged,
+                $"{judged} of {all} sound rules have a judged growth, which is more than half "
+                + "-- the ceiling now excludes so little that it is worth asking what it is for");
         }
 
         #endregion
