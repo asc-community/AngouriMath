@@ -3434,13 +3434,18 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(MatchPattern.Node<Absf>(MatchPattern.Any("a")), MatchPattern.Node<Absf>(MatchPattern.Any("b"))),
                 bound => new Absf(bound["a"] * bound["b"]),
                 Soundness.Sound,
-                description: "abs(a) * abs(b) = abs(a * b)"),
+                description: "abs(a) * abs(b) = abs(a * b)",
+                // Two absolute values become one and the product stays a product, so three nodes
+                // around the operands become two: exactly -1, for every input.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-quotient-of-two-absolute-values-is-the-absolute-value-of-the-quotient",
                 MatchPattern.Node<Divf>(MatchPattern.Node<Absf>(MatchPattern.Any("a")), MatchPattern.Node<Absf>(MatchPattern.Any("b"))),
                 bound => new Absf(bound["a"] / bound["b"]),
                 Soundness.SoundUnderAssumptions,
-                description: "abs(a) / abs(b) = abs(a / b)"),
+                description: "abs(a) / abs(b) = abs(a / b)",
+                // Two absolute values become one: exactly -1, for every input.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-sign-times-a-thing-over-its-own-absolute-value-cancels",
                 MatchPattern.Node<Divf>(MatchPattern.Node<Mulf>(MatchPattern.Node<Signumf>(MatchPattern.Any("a")), MatchPattern.Node<Mulf>(MatchPattern.Any("b"), MatchPattern.Any("a"))), MatchPattern.Node<Absf>(MatchPattern.Any("a"))),
@@ -3474,43 +3479,64 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Cosf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
                 bound => new Cosf((-(Real)bound["neg"]) * bound["rest"]),
                 Soundness.Sound,
-                description: "cos(-a) = cos(a)"),
+                description: "cos(-a) = cos(a)",
+                // The negative literal inside is replaced by its magnitude, one node for one, and
+                // nothing else moves: the same size whatever the argument is.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "an-even-function-of-a-negative-multiple-drops-the-sign-secant",
                 MatchPattern.Node<Secantf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
                 bound => new Secantf((-(Real)bound["neg"]) * bound["rest"]),
                 Soundness.Sound,
-                description: "sec(-a) = sec(a)"),
+                description: "sec(-a) = sec(a)",
+                // The negative literal inside is replaced by its magnitude, one node for one, and
+                // nothing else moves: the same size whatever the argument is.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "an-even-function-of-a-negative-multiple-drops-the-sign-abs",
                 MatchPattern.Node<Absf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
                 bound => new Absf((-(Real)bound["neg"]) * bound["rest"]),
                 Soundness.Sound,
-                description: "abs(-a) = abs(a)"),
+                description: "abs(-a) = abs(a)",
+                // The negative literal inside is replaced by its magnitude, one node for one, and
+                // nothing else moves: the same size whatever the argument is.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "an-odd-function-of-a-negative-multiple-negates-sin",
                 MatchPattern.Node<Sinf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
                 bound => -new Sinf((-(Real)bound["neg"]) * bound["rest"]),
                 Soundness.Sound,
-                description: "sin(-a) = -sin(a)"),
+                description: "sin(-a) = -sin(a)",
+                // The negative literal inside is replaced by its magnitude, one node for one, and
+                // the negation the replacement puts round the whole of it is two nodes more.
+                growth: RewriteRuleGrowth.Expands),
             new MatchedRule(
                 "an-odd-function-of-a-negative-multiple-negates-tan",
                 MatchPattern.Node<Tanf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
                 bound => -new Tanf((-(Real)bound["neg"]) * bound["rest"]),
                 Soundness.Sound,
-                description: "tan(-a) = -tan(a)"),
+                description: "tan(-a) = -tan(a)",
+                // The negative literal inside is replaced by its magnitude, one node for one, and
+                // the negation the replacement puts round the whole of it is two nodes more.
+                growth: RewriteRuleGrowth.Expands),
             new MatchedRule(
                 "an-odd-function-of-a-negative-multiple-negates-cotan",
                 MatchPattern.Node<Cotanf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
                 bound => -new Cotanf((-(Real)bound["neg"]) * bound["rest"]),
                 Soundness.Sound,
-                description: "cotan(-a) = -cotan(a)"),
+                description: "cotan(-a) = -cotan(a)",
+                // The negative literal inside is replaced by its magnitude, one node for one, and
+                // the negation the replacement puts round the whole of it is two nodes more.
+                growth: RewriteRuleGrowth.Expands),
             new MatchedRule(
                 "an-odd-function-of-a-negative-multiple-negates-cosecant",
                 MatchPattern.Node<Cosecantf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
                 bound => -new Cosecantf((-(Real)bound["neg"]) * bound["rest"]),
                 Soundness.Sound,
-                description: "cosec(-a) = -cosec(a)"),
+                description: "cosec(-a) = -cosec(a)",
+                // The negative literal inside is replaced by its magnitude, one node for one, and
+                // the negation the replacement puts round the whole of it is two nodes more.
+                growth: RewriteRuleGrowth.Expands),
             new MatchedRule(
                 "an-odd-function-of-a-negative-multiple-negates-signum",
                 MatchPattern.Node<Signumf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
