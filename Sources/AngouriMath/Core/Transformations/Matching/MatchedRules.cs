@@ -1545,7 +1545,11 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Sumf>(MatchPattern.Node<Arcsinf>(MatchPattern.Any("a")), MatchPattern.Node<Arccosf>(MatchPattern.Any("a"))),
                 bound => MathS.pi / 2,
                 Soundness.Sound,
-                description: "arcsin(a) + arccos(a) = pi/2"),
+                description: "arcsin(a) + arccos(a) = pi/2",
+                // Three nodes around two copies of the angle become the three of pi/2, so the
+                // delta is -2|a| -- at most -2, and further the larger the angle is. The
+                // replacement holds no operand, so nothing it is filled with can make it grow.
+                growth: RewriteRuleGrowth.Collects),
 
             // This library's arccotan is arctan(1/x) with range (-pi/2, pi/2], so the sum is
             // pi/2 for non-negative x and -pi/2 for negative x -- not pi/2 unconditionally,
@@ -1600,7 +1604,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Mulf>(MatchPattern.Node<Tanf>(MatchPattern.Any("a")), MatchPattern.Node<Cotanf>(MatchPattern.Any("a"))),
                 bound => Integer.Create(1),
                 Soundness.SoundUnderAssumptions,
-                description: "tan(a) * cotan(a) = 1"),
+                description: "tan(a) * cotan(a) = 1",
+                // The replacement is the literal 1 and the pattern is three nodes around two
+                // copies of the angle, so the delta is -(2 + 2|a|).
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "arcsine-of-a-sine-inside-its-own-interval",
@@ -1667,7 +1674,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Sumf>(MatchPattern.Node<Powf>(MatchPattern.Node<Sinf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2))), MatchPattern.Node<Powf>(MatchPattern.Node<Cosf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
                 bound => Integer.Create(1),
                 Soundness.Sound,
-                description: "sin(a)^2 + cos(a)^2 = 1"),
+                description: "sin(a)^2 + cos(a)^2 = 1",
+                // The replacement is the literal 1 and the pattern is seven nodes around two
+                // copies of the angle, so the delta is -(6 + 2|a|): at most -8.
+                growth: RewriteRuleGrowth.Collects),
 
             // Only this direction: rewriting cos^2 back as 1 - sin^2 would undo it as fast
             // as it fired.
@@ -1756,7 +1766,11 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Mulf>(MatchPattern.Node<Cosecantf>(MatchPattern.Any("a")), MatchPattern.Node<Sinf>(MatchPattern.Any("a"))),
                 bound => Integer.Create(1),
                 Soundness.SoundUnderAssumptions,
-                description: "cosec(a) * sin(a) = 1"),
+                description: "cosec(a) * sin(a) = 1",
+                // The replacement is the literal 1 and the pattern is three nodes around two
+                // copies of the angle, so the delta is -(2 + 2|a|): at most -4, and further the
+                // larger the angle is.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "an-arcsine-of-a-numeric-reciprocal-is-an-arccosecant",
