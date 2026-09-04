@@ -53,6 +53,57 @@ namespace AngouriMath.Tests.Core.Transformations
         /// The same shape as the corpus <c>MatchedRulesAgreeWithTheSwitchTest</c> builds, and for
         /// the same reason: generated inputs reach arrangements nobody would think to write down.
         /// </summary>
+        /// <summary>
+        /// Shapes the arithmetic grammar above does not build. Without them the corpus reaches
+        /// the sets about quotients and powers and none of the six about trigonometry, booleans,
+        /// sets, comparisons or factorials — so those rules' declarations would be checked by a
+        /// test that never ran them.
+        /// </summary>
+        private static readonly string[] Reached =
+        {
+            // trigonometric, and the arguments the multiple-angle and collapse rules want
+            "sin(x)", "cos(x)", "tan(x)", "cotan(x)", "sec(x)", "cosec(x)",
+            "sin(2 * x)", "cos(2 * x)", "sin(x + y)", "cos(x + y)", "sin(3 * x)", "cos(3 * x)",
+            "sin(x) * cos(x)", "cos(x) * sin(x)", "sin(x) ^ 2 + cos(x) ^ 2", "cos(x) ^ 2 + sin(x) ^ 2",
+            "sin(x) / cos(x)", "cos(x) / sin(x)", "1 / sin(x)", "1 / cos(x)", "1 / tan(x)",
+            "tan(x) * cotan(x)", "sin(x) ^ 2", "cos(x) ^ 2", "sin(x) ^ 2 - cos(x) ^ 2",
+            "arcsin(x)", "arccos(x)", "arctan(x)", "arccotan(x)",
+            "arcsin(x) + arccos(x)", "arctan(x) + arccotan(x)", "sin(arcsin(x))", "cos(arccos(x))",
+
+            // logarithms and exponentials
+            "ln(x)", "log(2, x)", "ln(x * y)", "ln(x ^ 2)", "e ^ ln(x)", "ln(e ^ x)",
+            "log(x, x)", "2 ^ x * 2 ^ y", "e ^ x * e ^ y",
+
+            // factorials, both sets
+            "x!", "(x + 1)!", "(x + 1)! / x!", "x! / (x + 1)!", "x! * (x + 1)", "(x + 1) * x!",
+            "(x + 2)! / x!",
+
+            // boolean
+            "a and b", "a or b", "not a", "not (not a)", "a implies b", "a xor b",
+            "a and not a", "a or not a", "a and a", "a or a", "a and (a or b)", "a or (a and b)",
+            "not (a and b)", "not (a or b)", "a and (b or c)", "(a and b) or (a and c)",
+            "true and a", "false or a", "true or a", "false and a",
+
+            // comparisons and the equality set
+            "x > y", "x < y", "x >= y", "x <= y", "x = y", "(x < y) or (x = y)", "(x > y) or (x = y)",
+            "not (x > y)", "not (x = y)",
+
+            // sets
+            "x in [1; 2]", "[1; 2] \\/ [3; 4]", "[1; 2] /\\ [3; 4]", "[1; 2] \\ [3; 4]",
+            "A \\/ A", "A /\\ A", "A \\/ {}", "A /\\ {}", "{ t : t > 0 }",
+
+            // powers and roots the arithmetic grammar reaches only shallowly
+            "sqrt(x) * sqrt(x)", "sqrt(x ^ 2)", "(x ^ 2) ^ 3", "x ^ 2 * x ^ 3", "x ^ 3 / x ^ 2",
+            "x ^ 2 * y ^ 2", "(x / y) ^ 2", "x ^ (1/2) * x ^ (1/2)", "(-x) ^ 2",
+            "1 / x ^ (-2)", "x ^ 0", "0 ^ x",
+
+            // polynomial shapes for the division, gcd and factorisation sets
+            "(x ^ 2 - 1) / (x - 1)", "(x ^ 2 + 2 * x + 1) / (x + 1)", "x ^ 2 - 1",
+            "x ^ 2 + 2 * x + 1", "x ^ 3 - 1", "x ^ 2 - y ^ 2", "x ^ 4 - y ^ 4",
+            "x ^ 2 + 2 * x * y + y ^ 2", "(x + y) ^ 2", "(x + y) * (x - y)",
+            "1 / (1 + sqrt(2))", "1 / (sqrt(3) - 1)", "2 / (1 + sqrt(x))",
+        };
+
         private static List<Entity> Corpus()
         {
             var level1 = new List<string>(Leaves);
@@ -71,7 +122,7 @@ namespace AngouriMath.Tests.Core.Transformations
                         level3.Add(string.Format(shape, left, right));
 
             var parsed = new List<Entity>();
-            foreach (var source in level1.Concat(level2).Concat(level3))
+            foreach (var source in level1.Concat(level2).Concat(level3).Concat(Reached))
             {
                 try { parsed.Add(source.ToEntity()); }
                 catch { /* the generator makes some strings the parser declines */ }
@@ -88,7 +139,9 @@ namespace AngouriMath.Tests.Core.Transformations
         /// </summary>
         private static Dictionary<MatchedRule, List<(Entity Before, Entity After)>> Firings()
         {
-            var corpus = Corpus();
+            // Every node, not only the root: a rule matches where its shape sits, and asking
+            // only about whole corpus expressions leaves most rules never firing at all.
+            var corpus = Corpus().SelectMany(expr => expr.Nodes).Distinct().ToList();
             var firings = new Dictionary<MatchedRule, List<(Entity, Entity)>>();
             foreach (var set in MatchedRules.All)
                 foreach (var rule in set.Rules)
@@ -148,11 +201,13 @@ namespace AngouriMath.Tests.Core.Transformations
             var fired = Firings().Where(pair => pair.Value.Count > 0).ToList();
             var declared = fired.Count(pair => pair.Key.Growth is not RewriteRuleGrowth.Unknown);
 
-            // Named as counts that move rather than as "most of them". 84 rules reach the corpus,
-            // 18 of them carrying a declaration -- so the check above is exercised, and the other
-            // 66 are the measured evidence for declaring more of them.
-            Assert.True(fired.Count >= 80, $"only {fired.Count} rules fired at all");
-            Assert.True(declared >= 15, $"only {declared} rules with a declared growth fired");
+            // Named as counts that move rather than as "most of them". 139 of the 324 rules reach
+            // the corpus and 51 of those carry a declaration, so the check above is exercised
+            // rather than passing by never running; the other 88 are the measured evidence for
+            // declaring more of them. It was 84 and 18 before the shapes in `Reached` were added
+            // and before rules were tried at every node rather than only at the root.
+            Assert.True(fired.Count >= 135, $"only {fired.Count} rules fired at all");
+            Assert.True(declared >= 48, $"only {declared} rules with a declared growth fired");
         }
     }
 }
