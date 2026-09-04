@@ -2356,7 +2356,11 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Equalsf>(MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("p", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
                 bound => bound["a"].EqualTo(bound["zero"]),
                 Soundness.SoundUnderAssumptions,
-                description: "(a ^ p = 0) = (a = 0), for a real p above zero"),
+                description: "(a ^ p = 0) = (a = 0), for a real p above zero",
+                // The power goes and its exponent with it, leaving the base against the same zero:
+                // the delta is -(1 + |p|), at most -2. `EqualTo` is a bare `Equalsf` and does not
+                // chain the way the comparison operators do.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-reciprocal-is-never-zero",
                 MatchPattern.Node<Equalsf>(MatchPattern.Node<Divf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Any("e")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
@@ -2368,7 +2372,13 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Equalsf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0)), MatchPattern.Any("a")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
                 bound => bound["a"].EqualTo(Integer.Zero),
                 Soundness.Sound,
-                description: "(k * a = 0) = (a = 0), for a positive real k"),
+                description: "(k * a = 0) = (a = 0), for a positive real k",
+                // The factor and the zero on the right both go and nothing arrives, so the delta
+                // is -(|k| + |zero|): at most -2, and further the larger either is. The
+                // replacement is built with `EqualTo`, which is a bare `Equalsf` and does not
+                // chain the way the comparison operators do -- which is why the equals rule of
+                // this family can say its growth and its five comparison siblings cannot.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-positive-factor-first-drops-out-of-a-greater-with-zero",
                 MatchPattern.Node<Greaterf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0)), MatchPattern.Any("a")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
@@ -2398,7 +2408,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Equalsf>(MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
                 bound => bound["a"].EqualTo(Integer.Zero),
                 Soundness.Sound,
-                description: "(a * k = 0) = (a = 0), for a positive real k"),
+                description: "(a * k = 0) = (a = 0), for a positive real k",
+                // The factor and the zero on the right both go, so the delta is -(|k| + |zero|).
+                // `EqualTo` does not chain, so nothing larger can arrive in their place.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-positive-factor-second-drops-out-of-a-greater-with-zero",
                 MatchPattern.Node<Greaterf>(MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
@@ -2428,7 +2441,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Equalsf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0)), MatchPattern.Any("a")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
                 bound => bound["a"].EqualTo(Integer.Zero),
                 Soundness.Sound,
-                description: "(k * a = 0) = (a = 0), for a negative real k"),
+                description: "(k * a = 0) = (a = 0), for a negative real k",
+                // The factor and the zero on the right both go, so the delta is -(|k| + |zero|).
+                // `EqualTo` does not chain, so nothing larger can arrive in their place.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-negative-factor-first-drops-out-of-a-greater-with-zero",
                 MatchPattern.Node<Greaterf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0)), MatchPattern.Any("a")), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
@@ -2458,7 +2474,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Equalsf>(MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
                 bound => bound["a"].EqualTo(Integer.Zero),
                 Soundness.Sound,
-                description: "(a * k = 0) = (a = 0), for a negative real k"),
+                description: "(a * k = 0) = (a = 0), for a negative real k",
+                // The factor and the zero on the right both go, so the delta is -(|k| + |zero|).
+                // `EqualTo` does not chain, so nothing larger can arrive in their place.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-negative-factor-second-drops-out-of-a-greater-with-zero",
                 MatchPattern.Node<Greaterf>(MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
@@ -2488,7 +2507,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Equalsf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
                 bound => bound["a"].EqualTo(Integer.Zero),
                 Soundness.Sound,
-                description: "(a / k = 0) = (a = 0), for a positive real k"),
+                description: "(a / k = 0) = (a = 0), for a positive real k",
+                // The divisor and the zero on the right both go, so the delta is -(|k| + |zero|).
+                // `EqualTo` does not chain, so nothing larger can arrive in their place.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-positive-divisor-drops-out-of-a-greater-with-zero",
                 MatchPattern.Node<Greaterf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
@@ -2518,7 +2540,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Equalsf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
                 bound => bound["a"].EqualTo(Integer.Zero),
                 Soundness.Sound,
-                description: "(a / k = 0) = (a = 0), for a negative real k"),
+                description: "(a / k = 0) = (a = 0), for a negative real k",
+                // The divisor and the zero on the right both go, so the delta is -(|k| + |zero|).
+                // `EqualTo` does not chain, so nothing larger can arrive in their place.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-negative-divisor-drops-out-of-a-greater-with-zero",
                 MatchPattern.Node<Greaterf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any<Entity>("k", one => Functions.Patterns.IsRealAbove(one, 0) is false && Functions.Patterns.IsRealBelow(one, 0))), MatchPattern.Any<Entity>("zero", one => Functions.Patterns.IsZeroReal(one))),
