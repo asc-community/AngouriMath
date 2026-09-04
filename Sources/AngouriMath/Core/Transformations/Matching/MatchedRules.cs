@@ -1755,14 +1755,20 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Minusf>(MatchPattern.Node<Powf>(MatchPattern.Node<Sinf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2))), MatchPattern.Node<Powf>(MatchPattern.Node<Cosf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
                 bound => -1 * (new Powf(new Cosf(bound["a"]), 2) - new Powf(new Sinf(bound["a"]), 2)),
                 Soundness.Sound,
-                description: "sin(a)^2 - cos(a)^2 = -(cos(a)^2 - sin(a)^2)"),
+                description: "sin(a)^2 - cos(a)^2 = -(cos(a)^2 - sin(a)^2)",
+                // The difference is written the other way round, which is the same seven nodes, and
+                // the negation round the whole of it is two more: exactly +2, for every input.
+                growth: RewriteRuleGrowth.Expands),
 
             new MatchedRule(
                 "a-squared-cosine-less-a-squared-sine-is-the-doubled-cosine",
                 MatchPattern.Node<Minusf>(MatchPattern.Node<Powf>(MatchPattern.Node<Cosf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2))), MatchPattern.Node<Powf>(MatchPattern.Node<Sinf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
                 bound => new Cosf(2 * bound["a"]),
                 Soundness.Sound,
-                description: "cos(a)^2 - sin(a)^2 = cos(2a)"),
+                description: "cos(a)^2 - sin(a)^2 = cos(2a)",
+                // Seven nodes around two copies of the angle become three around one, so the delta
+                // is -(4 + |a|): at most -5, and further the larger the angle is.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-quotient-by-a-secant-is-a-cosine",
@@ -1810,7 +1816,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => new Arccosecantf(bound["d"] / bound["n"]),
                 Soundness.SoundUnderAssumptions,
                 when: bound => bound["n"] is Number && bound["d"] is not Number,
-                description: "arcsin(1 / c) = arccosec(c), for a numeric c"),
+                description: "arcsin(1 / c) = arccosec(c), for a numeric c",
+                // One inverse function becomes another and the quotient stays a quotient with its
+                // operands the other way round, so the two are the same size whatever they are.
+                growth: RewriteRuleGrowth.Rearranges),
 
             new MatchedRule(
                 "an-arccosine-of-a-numeric-reciprocal-is-an-arcsecant",
@@ -1818,7 +1827,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => new Arcsecantf(bound["d"] / bound["n"]),
                 Soundness.SoundUnderAssumptions,
                 when: bound => bound["n"] is Number && bound["d"] is not Number,
-                description: "arccos(1 / c) = arcsec(c), for a numeric c"),
+                description: "arccos(1 / c) = arcsec(c), for a numeric c",
+                // One inverse function becomes another and the quotient stays a quotient with its
+                // operands the other way round, so the two are the same size whatever they are.
+                growth: RewriteRuleGrowth.Rearranges),
 
             new MatchedRule(
                 "an-arccosecant-of-a-numeric-reciprocal-is-an-arcsine",
@@ -1826,7 +1838,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => new Arcsinf(bound["d"] / bound["n"]),
                 Soundness.SoundUnderAssumptions,
                 when: bound => bound["n"] is Number && bound["d"] is not Number,
-                description: "arccosec(1 / c) = arcsin(c), for a numeric c"),
+                description: "arccosec(1 / c) = arcsin(c), for a numeric c",
+                // One inverse function becomes another and the quotient stays a quotient with its
+                // operands the other way round, so the two are the same size whatever they are.
+                growth: RewriteRuleGrowth.Rearranges),
 
             new MatchedRule(
                 "an-arcsecant-of-a-numeric-reciprocal-is-an-arccosine",
@@ -1834,7 +1849,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => new Arccosf(bound["d"] / bound["n"]),
                 Soundness.SoundUnderAssumptions,
                 when: bound => bound["n"] is Number && bound["d"] is not Number,
-                description: "arcsec(1 / c) = arccos(c), for a numeric c"));
+                description: "arcsec(1 / c) = arccos(c), for a numeric c",
+                // One inverse function becomes another and the quotient stays a quotient with its
+                // operands the other way round, so the two are the same size whatever they are.
+                growth: RewriteRuleGrowth.Rearranges));
 
         /// <summary>
         /// <see cref="Functions.Patterns.SetOperatorRules"/>, as data.
