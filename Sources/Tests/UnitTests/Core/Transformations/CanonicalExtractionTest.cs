@@ -417,24 +417,37 @@ namespace AngouriMath.Tests.Core.Transformations
 
         /// <summary>
         /// Where the rules actually are, asserted rather than described — the fact that decides
-        /// what the growth ceiling is worth. The great majority are unjudged, because their
-        /// replacement is code rather than a written pattern, so a ceiling below the widest
-        /// leaves most of the library out.
+        /// what the growth ceiling is worth.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This used to say that the great majority are unjudged and to guard the share at under
+        /// a quarter: 69 of 324 when it was written. The declarations of
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/825">#825</a> took it past
+        /// half — 164 of 324 — so the old premise is spent rather than merely out of date, and
+        /// the test is renamed instead of having its number loosened again.
+        /// </para>
+        /// <para>
+        /// What is worth guarding now is that the ceiling is still doing something. It is the
+        /// <c>Rearranges</c> one that the transformation catalogue actually uses, and if it ever
+        /// admits nearly everything then <see cref="Saturation.RulesUpTo"/> has stopped being a
+        /// dial and the caller who asks for the narrow set is paying for a distinction that is no
+        /// longer there.
+        /// </para>
+        /// </remarks>
         [Fact]
-        public void MostSoundRulesHaveNoJudgedGrowth()
+        public void TheGrowthCeilingStillLeavesASubstantialPartOut()
         {
+            var used = Saturation.RulesUpTo(RewriteRuleGrowth.Rearranges).Count;
             var judged = Saturation.RulesUpTo(RewriteRuleGrowth.Expands).Count;
             var all = Saturation.RulesUpTo(RewriteRuleGrowth.Unknown).Count;
 
-            // It was under a quarter and is now about a quarter: 69 of 324 when this was first
-            // measured, 85 as the declarations of #825 land. The share is meant to rise, so the
-            // guard is that it has not become the majority -- at which point the ceiling would
-            // be excluding little and this test's premise would be gone rather than merely
-            // out of date.
-            Assert.True(all > 2 * judged,
-                $"{judged} of {all} sound rules have a judged growth, which is more than half "
-                + "-- the ceiling now excludes so little that it is worth asking what it is for");
+            Assert.True(all > judged,
+                $"every one of the {all} sound rules now has a judged growth, so the ceiling "
+                + "excludes nothing at all and is no longer a dial");
+            Assert.True(all - used > all / 4,
+                $"the ceiling the catalogue uses admits {used} of {all} sound rules, leaving "
+                + $"{all - used} out -- less than a quarter, so it has stopped being a dial");
         }
 
         #endregion

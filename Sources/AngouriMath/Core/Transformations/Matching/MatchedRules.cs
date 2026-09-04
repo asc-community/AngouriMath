@@ -1635,7 +1635,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["a"],
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.WithinHalfPi(bound["a"], closed: true),
-                description: "arcsin(sin(a)) = a, for a in [-pi/2; pi/2]"),
+                description: "arcsin(sin(a)) = a, for a in [-pi/2; pi/2]",
+                // The function and its inverse both go and the angle is handed back untouched, so
+                // two nodes disappear whatever the angle is: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "arccosine-of-a-cosine-inside-its-own-interval",
@@ -1643,7 +1646,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["a"],
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.WithinZeroAndPi(bound["a"], closed: true),
-                description: "arccos(cos(a)) = a, for a in [0; pi]"),
+                description: "arccos(cos(a)) = a, for a in [0; pi]",
+                // The function and its inverse both go and the angle is handed back untouched, so
+                // two nodes disappear whatever the angle is: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "arctangent-of-a-tangent-inside-its-own-interval",
@@ -1651,7 +1657,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["a"],
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.WithinHalfPi(bound["a"], closed: false),
-                description: "arctan(tan(a)) = a, for a in (-pi/2; pi/2)"),
+                description: "arctan(tan(a)) = a, for a in (-pi/2; pi/2)",
+                // The function and its inverse both go and the angle is handed back untouched, so
+                // two nodes disappear whatever the angle is: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "arccotangent-of-a-cotangent-inside-its-own-range",
@@ -1659,7 +1668,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["a"],
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.WithinArccotanRange(bound["a"]),
-                description: "arccotan(cotan(a)) = a, for a in arccotan's own range"),
+                description: "arccotan(cotan(a)) = a, for a in arccotan's own range",
+                // The function and its inverse both go and the angle is handed back untouched, so
+                // two nodes disappear whatever the angle is: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-sine-of-an-arcsine",
@@ -3150,7 +3162,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Function>("f")), MatchPattern.Any<Function>("g")),
                 bound => bound["f"] * bound["g"] * bound["c"],
                 Soundness.SoundUnderAssumptions,
-                description: "(c * f) * g = c * (f * g), for a numeric c"),
+                description: "(c * f) * g = c * (f * g), for a numeric c",
+                // The numeric factor moves to the outside of the product and the two functions come
+                // together, which is two products either way round: the same size for every input.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "a-product-of-two-quotients-is-one-quotient",
                 MatchPattern.Node<Mulf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Divf>(MatchPattern.Any("c"), MatchPattern.Any("d"))),
