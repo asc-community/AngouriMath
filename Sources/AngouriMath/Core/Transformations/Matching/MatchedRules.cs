@@ -506,7 +506,12 @@ namespace AngouriMath.Core.Transformations.Matching
                 // p the integers below p^k sharing a factor with it are exactly the multiples of
                 // p, of which there are p^(k-1).
                 Soundness.Sound,
-                description: "phi(p ^ k) = p ^ (k - 1) * (p - 1), for a prime p"));
+                description: "phi(p ^ k) = p ^ (k - 1) * (p - 1), for a prime p",
+                // Each of the two holes is used once on both sides, and (p - 1) folds to a single
+                // integer as the replacement is built -- the cast noted above is what makes it
+                // fold. So what the replacement adds is the product and the decremented exponent,
+                // three nodes, for every input.
+                growth: RewriteRuleGrowth.Expands));
 
         /// <summary>
         /// <see cref="Functions.Patterns.CollapseTrigonometricFunctions"/>, as data.
@@ -2835,7 +2840,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Logf>(MatchPattern.Any<Number>("c"), MatchPattern.Any("a"))),
                 bound => bound["a"],
                 Soundness.SoundUnderAssumptions,
-                description: "a ^ log(a, b) = b"),
+                description: "a ^ log(a, b) = b",
+                // The base is a Number and so a leaf, and the power and the logarithm both go, so
+                // four nodes around the remaining hole disappear: exactly -4, for every input.
+                growth: RewriteRuleGrowth.Collects),
 
             // The same identity through `e`, which the rule above cannot reach: `ln(b)` is stored
             // as log(e, b) and `e` is a Constant, not a Number, so `Any<Number>` never binds it
