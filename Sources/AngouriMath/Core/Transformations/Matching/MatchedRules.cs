@@ -1695,14 +1695,19 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Minusf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Node<Powf>(MatchPattern.Node<Sinf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
                 bound => new Powf(new Cosf(bound["a"]), 2),
                 Soundness.Sound,
-                description: "1 - sin(a)^2 = cos(a)^2"),
+                description: "1 - sin(a)^2 = cos(a)^2",
+                // Five nodes around the angle become three, exactly -2 for every input.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "one-less-a-squared-cosine-is-a-squared-sine",
                 MatchPattern.Node<Minusf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Node<Powf>(MatchPattern.Node<Cosf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
                 bound => new Powf(new Sinf(bound["a"]), 2),
                 Soundness.Sound,
-                description: "1 - cos(a)^2 = sin(a)^2"),
+                description: "1 - cos(a)^2 = sin(a)^2",
+                // Five nodes around the angle become three: the difference and the literal 1 go,
+                // and the squared function stays a squared function. Exactly -2, for every input.
+                growth: RewriteRuleGrowth.Collects),
 
             // The identity divided through by cos^2. Knowing the plain one and not these made
             // the answer depend on which of the three ways an expression happened to be
@@ -1712,28 +1717,38 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Sumf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Node<Powf>(MatchPattern.Node<Tanf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
                 bound => new Powf(new Secantf(bound["a"]), 2),
                 Soundness.SoundUnderAssumptions,
-                description: "1 + tan(a)^2 = sec(a)^2"),
+                description: "1 + tan(a)^2 = sec(a)^2",
+                // Five nodes around the angle become three, exactly -2 for every input.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "one-and-a-squared-cotangent-make-a-squared-cosecant",
                 MatchPattern.Commutative<Sumf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Node<Powf>(MatchPattern.Node<Cotanf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
                 bound => new Powf(new Cosecantf(bound["a"]), 2),
                 Soundness.SoundUnderAssumptions,
-                description: "1 + cotan(a)^2 = cosec(a)^2"),
+                description: "1 + cotan(a)^2 = cosec(a)^2",
+                // Five nodes around the angle become three, exactly -2 for every input.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-squared-secant-less-a-squared-tangent-is-one",
                 MatchPattern.Node<Minusf>(MatchPattern.Node<Powf>(MatchPattern.Node<Secantf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2))), MatchPattern.Node<Powf>(MatchPattern.Node<Tanf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
                 bound => Integer.Create(1),
                 Soundness.SoundUnderAssumptions,
-                description: "sec(a)^2 - tan(a)^2 = 1"),
+                description: "sec(a)^2 - tan(a)^2 = 1",
+                // The replacement is the literal 1 and the pattern is seven nodes around two
+                // copies of the angle, so the delta is -(6 + 2|a|): at most -8.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-squared-cosecant-less-a-squared-cotangent-is-one",
                 MatchPattern.Node<Minusf>(MatchPattern.Node<Powf>(MatchPattern.Node<Cosecantf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2))), MatchPattern.Node<Powf>(MatchPattern.Node<Cotanf>(MatchPattern.Any("a")), MatchPattern.Exact(Integer.Create(2)))),
                 bound => Integer.Create(1),
                 Soundness.SoundUnderAssumptions,
-                description: "cosec(a)^2 - cotan(a)^2 = 1"),
+                description: "cosec(a)^2 - cotan(a)^2 = 1",
+                // The replacement is the literal 1 and the pattern is seven nodes around two
+                // copies of the angle, so the delta is -(6 + 2|a|): at most -8.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-squared-sine-less-a-squared-cosine-turns-round",
@@ -1754,21 +1769,29 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Node<Secantf>(MatchPattern.Any("b"))),
                 bound => bound["a"] * bound["b"].Cos(),
                 Soundness.SoundUnderAssumptions,
-                description: "x / sec(a) = x * cos(a)"),
+                description: "x / sec(a) = x * cos(a)",
+                // A quotient becomes a product and a secant a cosine, one node for one.
+                growth: RewriteRuleGrowth.Rearranges),
 
             new MatchedRule(
                 "a-quotient-by-a-cosecant-is-a-sine",
                 MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Node<Cosecantf>(MatchPattern.Any("b"))),
                 bound => bound["a"] * bound["b"].Sin(),
                 Soundness.SoundUnderAssumptions,
-                description: "x / cosec(a) = x * sin(a)"),
+                description: "x / cosec(a) = x * sin(a)",
+                // A quotient becomes a product and a cosecant a sine, one node for one, so the
+                // two are the same size whatever they are filled with.
+                growth: RewriteRuleGrowth.Rearranges),
 
             new MatchedRule(
                 "a-secant-times-a-cosine-of-one-angle-is-one",
                 MatchPattern.Commutative<Mulf>(MatchPattern.Node<Secantf>(MatchPattern.Any("a")), MatchPattern.Node<Cosf>(MatchPattern.Any("a"))),
                 bound => Integer.Create(1),
                 Soundness.SoundUnderAssumptions,
-                description: "sec(a) * cos(a) = 1"),
+                description: "sec(a) * cos(a) = 1",
+                // The replacement is the literal 1 and the pattern is three nodes around two
+                // copies of the angle, so the delta is -(2 + 2|a|): at most -4.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-cosecant-times-a-sine-of-one-angle-is-one",
@@ -2904,7 +2927,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["n"] * MathS.Log(bound["a"], bound["b"]),
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.MayTakeLogOfPower(bound["b"], bound["n"]),
-                description: "log(a, b ^ n) = n * log(a, b)"),
+                description: "log(a, b ^ n) = n * log(a, b)",
+                // A logarithm and a power become a product and a logarithm, one node for one, and
+                // each of the three holes is used once on both sides.
+                growth: RewriteRuleGrowth.Rearranges),
 
             // The condition to carry is the node's own: log(-3, -3) is 1 where a written-out
             // `a > 0` calls it undefined, and log(1, 1) is NaN where that guard calls it 1.
@@ -2928,7 +2954,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.MayGatherLogarithms(Integer.One, bound["a"], isDifference: true)
                                && Functions.Patterns.MayGatherLogarithms(Integer.One, bound["b"], isDifference: true),
-                description: "log(1 / a, 1 / b) = log(a, b)"),
+                description: "log(1 / a, 1 / b) = log(a, b)",
+                // Both reciprocals go and nothing arrives: five nodes around the two holes become
+                // one, exactly -4 for every input.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-logarithm-of-a-reciprocal-negates",
@@ -2938,7 +2967,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => -MathS.Log(bound["a"], bound["b"]),
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.MayGatherLogarithms(Integer.One, bound["b"], isDifference: true),
-                description: "log(a, 1 / b) = -log(a, b)"),
+                description: "log(a, 1 / b) = -log(a, b)",
+                // The quotient by one that spells the reciprocal becomes the product by minus one
+                // that spells the negation, two nodes for two.
+                growth: RewriteRuleGrowth.Rearranges),
 
             new MatchedRule(
                 "a-logarithm-in-a-reciprocal-base-negates",
@@ -2948,7 +2980,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => -MathS.Log(bound["a"], bound["b"]),
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.MayGatherLogarithms(Integer.One, bound["a"], isDifference: true),
-                description: "log(1 / a, b) = -log(a, b)"),
+                description: "log(1 / a, b) = -log(a, b)",
+                // The reciprocal in the base becomes the negation outside, two nodes for two.
+                growth: RewriteRuleGrowth.Rearranges),
 
             // https://github.com/asc-community/AngouriMath/issues/721
             new MatchedRule(
@@ -2959,7 +2993,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["c"].Log(bound["a"] * bound["b"]),
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.MayGatherLogarithms(bound["a"], bound["b"], isDifference: false),
-                description: "log(a, b) + log(a, c) = log(a, b * c)"),
+                description: "log(a, b) + log(a, c) = log(a, b * c)",
+                // The base is matched twice and written once, so the delta is -(1 + |a|): -2 for a
+                // base of one node and more for a larger one.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "two-logarithms-of-one-base-subtract-by-dividing-their-antilogarithms",
@@ -2969,7 +3006,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["c"].Log(bound["a"] / bound["b"]),
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.MayGatherLogarithms(bound["a"], bound["b"], isDifference: true),
-                description: "log(a, b) - log(a, c) = log(a, b / c)"),
+                description: "log(a, b) - log(a, c) = log(a, b / c)",
+                // The base is matched twice and written once, so the delta is -(1 + |a|).
+                growth: RewriteRuleGrowth.Collects),
 
             // sqrt(8) = 2 * sqrt(2). Whether it applies and what it produces are one computation,
             // so the `when` asks the same helper the replacement does.
