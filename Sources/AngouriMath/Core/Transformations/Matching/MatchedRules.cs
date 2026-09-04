@@ -1907,7 +1907,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => ((Set)bound["a"]).Intersect((Set)bound["b"])
                     .Unite(((Set)bound["a"]).Intersect((Set)bound["c"])),
                 Soundness.Sound,
-                description: "A /\\ (B \\/ C) = (A /\\ B) \\/ (A /\\ C)"),
+                description: "A /\\ (B \\/ C) = (A /\\ B) \\/ (A /\\ C)",
+                // The set that is distributed over the union is matched once and written twice, so
+                // the delta is +(1 + |A|): at least +2, and further the larger that set is.
+                growth: RewriteRuleGrowth.Expands),
 
             new MatchedRule(
                 "an-intersection-distributes-over-a-union-on-its-left",
@@ -1918,7 +1921,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => ((Set)bound["b"]).Intersect((Set)bound["a"])
                     .Unite(((Set)bound["c"]).Intersect((Set)bound["a"])),
                 Soundness.Sound,
-                description: "(B \\/ C) /\\ A = (B /\\ A) \\/ (C /\\ A)"),
+                description: "(B \\/ C) /\\ A = (B /\\ A) \\/ (C /\\ A)",
+                // The set that is distributed over the union is matched once and written twice,
+                // so the delta is +(1 + |A|): at least +2, the mirror of the rule above.
+                growth: RewriteRuleGrowth.Expands),
 
             // A \/ A = A
             new MatchedRule(
@@ -1934,7 +1940,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Set.SetMinusf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 bound => Set.Empty,
                 Soundness.Sound,
-                description: "A \\ A = {}"),
+                description: "A \\ A = {}",
+                // Everything the pattern matches goes and one node arrives, so the delta is -2|A|:
+                // at most -2, and further the larger the set is.
+                growth: RewriteRuleGrowth.Collects),
 
             // { x : x in S } = S. The repeated "v" is what the switch wrote as `when v1 == v1a`.
             new MatchedRule(
@@ -2874,7 +2883,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => new Powf(bound["c"], bound["d"]) * new Powf(bound["a"], bound["d"]),
                 Soundness.SoundUnderAssumptions,
                 when: bound => bound["d"] is Integer || bound["c"] is Real { IsPositive: true },
-                description: "(c * a) ^ d = c ^ d * a ^ d, for numeric c and d"),
+                description: "(c * a) ^ d = c ^ d * a ^ d, for numeric c and d",
+                // Both c and d are Numbers, which are leaves, so the pattern is four nodes around
+                // the remaining hole and the replacement is six: exactly +2, for every input.
+                growth: RewriteRuleGrowth.Expands),
 
             new MatchedRule(
                 "a-reciprocal-power-is-a-quotient",
@@ -2959,7 +2971,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n"))),
                 bound => new Powf(bound["a"], bound["n"]) * bound["v"],
                 Soundness.Sound,
-                description: "v * a ^ n = a ^ n * v, for a variable v"),
+                description: "v * a ^ n = a ^ n * v, for a variable v",
+                // The two operands of the product are written the other way round and nothing else
+                // moves, so the two sides are the same size whatever they are filled with.
+                growth: RewriteRuleGrowth.Rearranges),
 
             // https://github.com/asc-community/AngouriMath/issues/902
             new MatchedRule(
@@ -3404,7 +3419,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
                 bound => -bound["b"],
                 Soundness.Sound,
-                description: "a - (a + b) = -b"),
+                description: "a - (a + b) = -b",
+                // The repeated operand goes twice over and a negation of two nodes arrives in place
+                // of the difference and the sum, so the delta is -2|a|: at most -2.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-term-added-to-a-difference-that-takes-it-away",
                 MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Node<Minusf>(MatchPattern.Any("b"), MatchPattern.Any("a"))),
