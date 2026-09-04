@@ -50,14 +50,10 @@ namespace AngouriMath.Tests.Core.Transformations
             { "({0}) + ({1})", "({0}) - ({1})", "({0}) * ({1})", "({0}) / ({1})", "({0}) ^ ({1})" };
 
         /// <summary>
-        /// The same shape as the corpus <c>MatchedRulesAgreeWithTheSwitchTest</c> builds, and for
-        /// the same reason: generated inputs reach arrangements nobody would think to write down.
-        /// </summary>
-        /// <summary>
-        /// Shapes the arithmetic grammar above does not build. Without them the corpus reaches
-        /// the sets about quotients and powers and none of the six about trigonometry, booleans,
-        /// sets, comparisons or factorials — so those rules' declarations would be checked by a
-        /// test that never ran them.
+        /// Shapes the arithmetic grammar does not build. Without them the corpus reaches the sets
+        /// about quotients and powers and none of the six about trigonometry, booleans, sets,
+        /// comparisons or factorials — so those rules' declarations would be checked by a test
+        /// that never ran them.
         /// </summary>
         private static readonly string[] Reached =
         {
@@ -102,6 +98,37 @@ namespace AngouriMath.Tests.Core.Transformations
             "x ^ 2 + 2 * x + 1", "x ^ 3 - 1", "x ^ 2 - y ^ 2", "x ^ 4 - y ^ 4",
             "x ^ 2 + 2 * x * y + y ^ 2", "(x + y) ^ 2", "(x + y) * (x - y)",
             "1 / (1 + sqrt(2))", "1 / (sqrt(3) - 1)", "2 / (1 + sqrt(x))",
+
+            // Comparisons. The largest block of rules the arithmetic grammar cannot reach at all:
+            // they key on zero or a number being on the left, on both sides being the same thing,
+            // and on a negative factor or divisor standing beside a zero.
+            "0 > x", "0 < x", "0 >= x", "0 <= x", "0 = x",
+            "2 > x", "2 < x", "2 >= x", "2 <= x", "2 = x",
+            "x > x", "x < x", "x >= x", "x <= x",
+            "x / (-2) > 0", "x / (-2) < 0", "x / (-2) >= 0", "x / (-2) <= 0", "x / (-2) = 0",
+            "(-2) * x > 0", "(-2) * x < 0", "(-2) * x >= 0", "(-2) * x <= 0", "(-2) * x = 0",
+            "x * (-2) > 0", "x * (-2) < 0", "x * (-2) >= 0", "x * (-2) <= 0", "x * (-2) = 0",
+            "(x > y) and (y > z)", "(x < y) and (y < z)",
+            "not (x >= y)", "not (x <= y)", "not (x < y)", "y > x", "y >= x",
+
+            // Boolean, both directions of De Morgan and the absorptions with a negation.
+            "not a and not b", "not a or not b", "a and not b", "a or not b",
+            "not a or b", "not a and b", "a and (b and c)", "a or (b or c)",
+            "(a and b) and c", "(a or b) or c", "(a or b) and (a or c)", "(a and b) or c",
+
+            // The trigonometric reciprocal pairs and the inverses the shapes above miss.
+            "cosec(x) * sin(x)", "sin(x) * cosec(x)", "sec(x) * cos(x)", "cos(x) * sec(x)",
+            "cotan(arccotan(x))", "tan(arctan(x))", "arcsin(sin(x))", "arctan(tan(x))",
+            "sin(2 * x) * cosec(x)", "cos(2 * x) * sec(x)", "cotan(x) * tan(x)",
+
+            // Logarithms in and of reciprocals.
+            "log(1/2, x)", "log(2, 1/x)", "log(1/2, 1/x)", "log(1/x, y)", "log(x, 1/y)",
+
+            // A factorial beside a zero, and the differences and products that contain their own
+            // operand a second time.
+            "x! = 0", "(x - y) / (y - x)", "x - (x - y)", "(x - y) - x",
+            "x * y - x", "x - x * y", "x * x", "x * x * y", "x * (x * y)",
+            "sin(x) * 2", "2 * sin(x)",
         };
 
         private static List<Entity> Corpus()
@@ -201,13 +228,13 @@ namespace AngouriMath.Tests.Core.Transformations
             var fired = Firings().Where(pair => pair.Value.Count > 0).ToList();
             var declared = fired.Count(pair => pair.Key.Growth is not RewriteRuleGrowth.Unknown);
 
-            // Named as counts that move rather than as "most of them". 139 of the 324 rules reach
-            // the corpus and 51 of those carry a declaration, so the check above is exercised
-            // rather than passing by never running; the other 88 are the measured evidence for
+            // Named as counts that move rather than as "most of them". 194 of the 324 rules reach
+            // the corpus and 59 of those carry a declaration, so the check above is exercised
+            // rather than passing by never running; the rest are the measured evidence for
             // declaring more of them. It was 84 and 18 before the shapes in `Reached` were added
             // and before rules were tried at every node rather than only at the root.
-            Assert.True(fired.Count >= 135, $"only {fired.Count} rules fired at all");
-            Assert.True(declared >= 48, $"only {declared} rules with a declared growth fired");
+            Assert.True(fired.Count >= 190, $"only {fired.Count} rules fired at all");
+            Assert.True(declared >= 56, $"only {declared} rules with a declared growth fired");
         }
     }
 }
