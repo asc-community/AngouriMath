@@ -1587,7 +1587,11 @@ namespace AngouriMath.Core.Transformations.Matching
                     / (1 - (Real)bound["a"] * (Real)bound["b"])).InnerSimplified),
                 Soundness.SoundUnderAssumptions,
                 when: bound => ((Real)bound["a"] * (Real)bound["b"]).Evaled is Real product && product < 1,
-                description: "arctan(a) + arctan(b) = arctan((a + b) / (1 - a*b)), while a*b < 1"),
+                description: "arctan(a) + arctan(b) = arctan((a + b) / (1 - a*b)), while a*b < 1",
+                // Both operands are matched as Real and so are leaves, and the tangent formula is
+                // folded to a single one by the InnerSimplified on it, so five nodes become two:
+                // exactly -3, for every pair the `when` admits.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "the-arctangent-of-root-three",
@@ -2724,7 +2728,11 @@ namespace AngouriMath.Core.Transformations.Matching
                         MatchPattern.Node<Logf>(MatchPattern.Any("c"), MatchPattern.Any("a")))),
                 bound => new Powf(bound["c"], bound["n"]),
                 Soundness.SoundUnderAssumptions,
-                description: "a ^ (n / log(c, a)) = c ^ n"),
+                description: "a ^ (n / log(c, a)) = c ^ n",
+                // The base is matched twice -- once as the base and once inside the logarithm -- and
+                // written not at all, and the quotient and the logarithm go with it: the delta is
+                // -(3 + 2|a|), at most -5.
+                growth: RewriteRuleGrowth.Collects),
 
             // Both orientations are written out in the `switch`, so one commutative rule fires
             // exactly where the pair did.
@@ -2827,7 +2835,10 @@ namespace AngouriMath.Core.Transformations.Matching
                             MatchPattern.Any("n")))),
                 bound => new Powf(bound["a"] / new Powf(bound["b"], bound["c"]), bound["n"]),
                 Soundness.SoundUnderAssumptions,
-                description: "a ^ n / b ^ (c * n) = (a / b ^ c) ^ n, for a positive whole c"),
+                description: "a ^ n / b ^ (c * n) = (a / b ^ c) ^ n, for a positive whole c",
+                // The exponent is matched twice and written once, and one power node goes: the delta
+                // is -(1 + |n|), at most -2 and further the larger the exponent is.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-quotient-of-powers-whose-exponents-differ-by-a-whole-factor-takes-it-into-the-dividend",
@@ -2840,7 +2851,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
                 bound => new Powf(new Powf(bound["a"], bound["c"]) / bound["b"], bound["n"]),
                 Soundness.SoundUnderAssumptions,
-                description: "a ^ (c * n) / b ^ n = (a ^ c / b) ^ n, for a positive whole c"),
+                description: "a ^ (c * n) / b ^ n = (a ^ c / b) ^ n, for a positive whole c",
+                // The exponent is matched twice and written once, and one power node goes with it:
+                // the delta is -(1 + |n|), the mirror of the rule that takes it into the divisor.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-thing-over-a-power-of-itself-is-one-power",
@@ -2997,7 +3011,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
                 bound => bound["a"] / new Powf(bound["b"], bound["n"] + bound["m"]),
                 Soundness.SoundUnderAssumptions,
-                description: "a / b ^ n / b ^ m = a / b ^ (n + m)"),
+                description: "a / b ^ n / b ^ m = a / b ^ (n + m)",
+                // The base is matched twice and written once, and one quotient and one power go:
+                // the delta is -(2 + |b|), at most -3.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-variable-times-a-power-puts-the-power-first",
@@ -3229,7 +3246,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Mulf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Function>("f")), MatchPattern.Any<Number>("d")),
                 bound => (Number)bound["c"] * (Number)bound["d"] * bound["f"],
                 Soundness.SoundUnderAssumptions,
-                description: "(c * f) * d = (c * d) * f, for numeric c and d"),
+                description: "(c * f) * d = (c * d) * f, for numeric c and d",
+                // The two numbers are folded into one as the replacement is built, so four nodes
+                // around the function become two: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "two-numeric-multiples-of-functions-collect-their-numbers",
                 MatchPattern.Node<Mulf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Function>("f")), MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any<Function>("g"))),

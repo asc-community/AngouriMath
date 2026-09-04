@@ -133,7 +133,7 @@ A pattern replacement gets:
 - **an exact growth**, counted from the two patterns rather than declared.
 
 A code replacement gets neither, and its growth is `Unknown` unless you declare one. That is the
-honest default — **160** rules sit at `Unknown` — but declare it where you can justify it:
+honest default — **154** rules sit at `Unknown` — but declare it where you can justify it:
 
 ```csharp
 // The Chebyshev expansion of sin(n * a) is a sum of n terms where the pattern is one node,
