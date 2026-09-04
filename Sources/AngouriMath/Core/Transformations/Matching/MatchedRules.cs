@@ -1256,6 +1256,14 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 when: bound => Functions.Patterns.IsLogic(bound["k"], bound["p"], bound["q"]),
                 description: "((k and p) or (k and q)) = (k and (p or q))"),
+                // Undeclared, though the count is plain: the shared operand is matched twice and
+                // written once, so the delta is -(1 + |k|). Declaring it puts the rule among the
+                // ones equality saturation fires, and there it takes
+                // `a and b or a and not b` to `a and (b or not b)` -- which is the identity for
+                // booleans and not for what `IsLogic` lets through, since a free variable passes
+                // that guard and may be substituted with a number.
+                // `EqualitySaturationNeverChangesTheValueItClaimsToPreserve` catches it at 0.37.
+                // The growth is not what is wrong here, so it is not the thing to write down.
 
             new MatchedRule(
                 "a-conjunction-of-disjunctions-sharing-an-operand-distributes",
@@ -1266,6 +1274,7 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 when: bound => Functions.Patterns.IsLogic(bound["k"], bound["p"], bound["q"]),
                 description: "((k or p) and (k or q)) = (k or (p and q))"),
+                // Undeclared for the same reason as its dual above, and by the same count.
 
             // Absorption, and the absorption that leaves something behind. Four arms each in the
             // switch, and the negated form four more.
@@ -3132,13 +3141,21 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Sumf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Variable>("v")), MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any<Variable>("v"))),
                 bound => ((Number)bound["c"] + (Number)bound["d"]) * bound["v"],
                 Soundness.Sound,
-                description: "c * v + d * v = (c + d) * v, for numeric c and d"),
+                description: "c * v + d * v = (c + d) * v, for numeric c and d",
+                // Seven nodes become three, exactly, for every input: the pattern's holes are a
+                // Number, a Number and a Variable, each of which is a leaf, and the sum of the
+                // two numbers is folded to one leaf as the replacement is built. Nothing here
+                // can be filled with something larger.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "two-numeric-multiples-of-one-variable-subtract",
                 MatchPattern.Node<Minusf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Variable>("v")), MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any<Variable>("v"))),
                 bound => ((Number)bound["c"] - (Number)bound["d"]) * bound["v"],
                 Soundness.Sound,
-                description: "c * v - d * v = (c - d) * v, for numeric c and d"),
+                description: "c * v - d * v = (c - d) * v, for numeric c and d",
+                // Seven nodes become three, exactly, by the same count as its addition twin:
+                // three leaves in the pattern and the difference of the two numbers folded.
+                growth: RewriteRuleGrowth.Collects),
             // All four orientations are written out in the `switch`, which is what makes one commutative pattern on each side of the sum exact rather than wider.
             new MatchedRule(
                 "a-common-factor-of-two-added-products-comes-out",
@@ -3329,7 +3346,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
                 bound => bound["b"],
                 Soundness.Sound,
-                description: "a - (a - b) = b"),
+                description: "a - (a - b) = b",
+                // The whole of the pattern but one hole disappears: the delta is -(2 + 2|a|),
+                // at most -4 and further the larger the repeated operand is.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-term-taken-from-a-difference-that-already-took-it",
                 MatchPattern.Node<Minusf>(MatchPattern.Node<Minusf>(MatchPattern.Any("b"), MatchPattern.Any("a")), MatchPattern.Any("a")),
@@ -3341,7 +3361,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Minusf>(MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Any("a")),
                 bound => -bound["b"],
                 Soundness.Sound,
-                description: "(a - b) - a = -b"),
+                description: "(a - b) - a = -b",
+                // The repeated operand goes twice over and a negation of two nodes arrives, so
+                // the delta is -2|a|: at most -2, and further the larger that operand is.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-product-of-two-absolute-values-is-the-absolute-value-of-the-product",
                 MatchPattern.Node<Mulf>(MatchPattern.Node<Absf>(MatchPattern.Any("a")), MatchPattern.Node<Absf>(MatchPattern.Any("b"))),
