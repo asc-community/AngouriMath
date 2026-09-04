@@ -133,7 +133,7 @@ A pattern replacement gets:
 - **an exact growth**, counted from the two patterns rather than declared.
 
 A code replacement gets neither, and its growth is `Unknown` unless you declare one. That is the
-honest default — **171** rules sit at `Unknown` — but declare it where you can justify it:
+honest default — **165** rules sit at `Unknown` — but declare it where you can justify it:
 
 ```csharp
 // The Chebyshev expansion of sin(n * a) is a sum of n terms where the pattern is one node,
@@ -157,7 +157,11 @@ cannot argue the claim from the code, leave it `Unknown`.
 of a few shapes. A hole matched twice and written once gives `-(1 + |a|)`, which is a `Collects`
 stronger than the corpus will show you, since the corpus fills its holes with single nodes. A
 replacement holding no hole at all — a constant, or `pi/2` — collects by the whole of the pattern.
-Operators mapping one for one with every hole used once is `Rearranges`.
+Operators mapping one for one with every hole used once is `Rearranges`. A pattern that binds
+nothing — `arctan(sqrt(3)) = pi/3`, `{ True, False }` — has a fixed size on both sides, so its delta
+is a number and there is nothing to argue. And two numbers combined with `Number` arithmetic **fold
+into one node** as the replacement is built, which is worth two on its own: `(c * v) * d` collects
+where the same rule written without the cast would only rearrange.
 
 **Four shapes look declarable and are not.** Each of these measured a clean, constant delta over the
 corpus, and each is false:

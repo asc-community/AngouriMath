@@ -1594,14 +1594,20 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Arctanf>(MatchPattern.Node<Powf>(MatchPattern.Exact(Integer.Create(3)), MatchPattern.Exact(Rational.Create(1, 2)))),
                 bound => MathS.pi / 3,
                 Soundness.Sound,
-                description: "arctan(sqrt(3)) = pi/3"),
+                description: "arctan(sqrt(3)) = pi/3",
+                // The pattern binds nothing, so both sides are a fixed size and the delta is a
+                // number rather than an expression in the operands.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "the-arctangent-of-one-over-root-three",
                 MatchPattern.Node<Arctanf>(MatchPattern.Node<Divf>(MatchPattern.Exact(Integer.Create(1)), MatchPattern.Node<Powf>(MatchPattern.Exact(Integer.Create(3)), MatchPattern.Exact(Rational.Create(1, 2))))),
                 bound => MathS.pi / 6,
                 Soundness.Sound,
-                description: "arctan(1 / sqrt(3)) = pi/6"),
+                description: "arctan(1 / sqrt(3)) = pi/6",
+                // The pattern binds nothing, so both sides are a fixed size and the delta is a
+                // number rather than an expression in the operands.
+                growth: RewriteRuleGrowth.Collects),
 
             // The cosecant's own condition has to be carried: 2cos(u) is a number where
             // sin(u) is zero and sin(2u) csc(u) is not.
@@ -1967,7 +1973,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Set.FiniteSet>("s", finite => finite.Count == 1)),
                 bound => bound["x"].EqualTo(((Set.FiniteSet)bound["s"]).First()),
                 Soundness.Sound,
-                description: "x in {a} = (x = a)"),
+                description: "x in {a} = (x = a)",
+                // The singleton set goes and the membership becomes an equality, one node for one,
+                // so exactly -1. `EqualTo` is a bare `Equalsf` and does not chain.
+                growth: RewriteRuleGrowth.Collects),
 
             // x in (a; b) is written out as the inequalities it stands for
             new MatchedRule(
@@ -1992,7 +2001,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     "s", finite => finite == Functions.Patterns.FullBooleanSet),
                 bound => Set.SpecialSet.Create(Domain.Boolean),
                 Soundness.Sound,
-                description: "{ True, False } = the boolean domain"),
+                description: "{ True, False } = the boolean domain",
+                // The pattern binds nothing, so both sides are a fixed size and the delta is a
+                // number rather than an expression in the operands.
+                growth: RewriteRuleGrowth.Collects),
 
             // (-oo; +oo) is the domain it is an interval of, where that domain names a set.
             // The Any case is refused in the condition rather than left to the replacement:
@@ -2008,7 +2020,10 @@ namespace AngouriMath.Core.Transformations.Matching
                                      && interval.Codomain is not Domain.Any),
                 bound => Set.SpecialSet.Create(((Set.Interval)bound["i"]).Codomain),
                 Soundness.Sound,
-                description: "(-oo; +oo) = the domain it is an interval of"));
+                description: "(-oo; +oo) = the domain it is an interval of",
+                // The interval and its two bounds become the one node of a special set, and the
+                // bounds are matched exactly rather than bound, so the delta is a number.
+                growth: RewriteRuleGrowth.Collects));
 
         /// <summary>
         /// <see cref="Functions.Patterns.SortRules"/>, as data — one set per sort level.
@@ -3205,7 +3220,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Function>("f")), MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any<Function>("g"))),
                 bound => bound["f"] * bound["g"] * ((Number)bound["c"] * (Number)bound["d"]),
                 Soundness.SoundUnderAssumptions,
-                description: "(c * f) * (d * g) = f * g * (c * d), for numeric c and d"),
+                description: "(c * f) * (d * g) = f * g * (c * d), for numeric c and d",
+                // The two numbers are folded into one as the replacement is built, so five nodes
+                // around the two functions become three: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "two-functions-in-a-sum-come-together",
                 MatchPattern.Commutative<Sumf>(MatchPattern.Node<Sumf>(MatchPattern.Any<Function>("f"), MatchPattern.Any("a")), MatchPattern.Any<Function>("g")),
