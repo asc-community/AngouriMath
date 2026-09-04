@@ -50,9 +50,98 @@ namespace AngouriMath.Tests.Core.Transformations
             { "({0}) + ({1})", "({0}) - ({1})", "({0}) * ({1})", "({0}) / ({1})", "({0}) ^ ({1})" };
 
         /// <summary>
-        /// The same shape as the corpus <c>MatchedRulesAgreeWithTheSwitchTest</c> builds, and for
-        /// the same reason: generated inputs reach arrangements nobody would think to write down.
+        /// Shapes the arithmetic grammar does not build. Without them the corpus reaches the sets
+        /// about quotients and powers and none of the six about trigonometry, booleans, sets,
+        /// comparisons or factorials — so those rules' declarations would be checked by a test
+        /// that never ran them.
         /// </summary>
+        private static readonly string[] Reached =
+        {
+            // trigonometric, and the arguments the multiple-angle and collapse rules want
+            "sin(x)", "cos(x)", "tan(x)", "cotan(x)", "sec(x)", "cosec(x)",
+            "sin(2 * x)", "cos(2 * x)", "sin(x + y)", "cos(x + y)", "sin(3 * x)", "cos(3 * x)",
+            "sin(x) * cos(x)", "cos(x) * sin(x)", "sin(x) ^ 2 + cos(x) ^ 2", "cos(x) ^ 2 + sin(x) ^ 2",
+            "sin(x) / cos(x)", "cos(x) / sin(x)", "1 / sin(x)", "1 / cos(x)", "1 / tan(x)",
+            "tan(x) * cotan(x)", "sin(x) ^ 2", "cos(x) ^ 2", "sin(x) ^ 2 - cos(x) ^ 2",
+            "arcsin(x)", "arccos(x)", "arctan(x)", "arccotan(x)",
+            "arcsin(x) + arccos(x)", "arctan(x) + arccotan(x)", "sin(arcsin(x))", "cos(arccos(x))",
+
+            // logarithms and exponentials
+            "ln(x)", "log(2, x)", "ln(x * y)", "ln(x ^ 2)", "e ^ ln(x)", "ln(e ^ x)",
+            "log(x, x)", "2 ^ x * 2 ^ y", "e ^ x * e ^ y",
+
+            // factorials, both sets
+            "x!", "(x + 1)!", "(x + 1)! / x!", "x! / (x + 1)!", "x! * (x + 1)", "(x + 1) * x!",
+            "(x + 2)! / x!",
+
+            // boolean
+            "a and b", "a or b", "not a", "not (not a)", "a implies b", "a xor b",
+            "a and not a", "a or not a", "a and a", "a or a", "a and (a or b)", "a or (a and b)",
+            "not (a and b)", "not (a or b)", "a and (b or c)", "(a and b) or (a and c)",
+            "true and a", "false or a", "true or a", "false and a",
+
+            // comparisons and the equality set
+            "x > y", "x < y", "x >= y", "x <= y", "x = y", "(x < y) or (x = y)", "(x > y) or (x = y)",
+            "not (x > y)", "not (x = y)",
+
+            // sets
+            "x in [1; 2]", "[1; 2] \\/ [3; 4]", "[1; 2] /\\ [3; 4]", "[1; 2] \\ [3; 4]",
+            "A \\/ A", "A /\\ A", "A \\/ {}", "A /\\ {}", "{ t : t > 0 }",
+
+            // powers and roots the arithmetic grammar reaches only shallowly
+            "sqrt(x) * sqrt(x)", "sqrt(x ^ 2)", "(x ^ 2) ^ 3", "x ^ 2 * x ^ 3", "x ^ 3 / x ^ 2",
+            "x ^ 2 * y ^ 2", "(x / y) ^ 2", "x ^ (1/2) * x ^ (1/2)", "(-x) ^ 2",
+            "1 / x ^ (-2)", "x ^ 0", "0 ^ x",
+
+            // polynomial shapes for the division, gcd and factorisation sets
+            "(x ^ 2 - 1) / (x - 1)", "(x ^ 2 + 2 * x + 1) / (x + 1)", "x ^ 2 - 1",
+            "x ^ 2 + 2 * x + 1", "x ^ 3 - 1", "x ^ 2 - y ^ 2", "x ^ 4 - y ^ 4",
+            "x ^ 2 + 2 * x * y + y ^ 2", "(x + y) ^ 2", "(x + y) * (x - y)",
+            "1 / (1 + sqrt(2))", "1 / (sqrt(3) - 1)", "2 / (1 + sqrt(x))",
+
+            // Comparisons. The largest block of rules the arithmetic grammar cannot reach at all:
+            // they key on zero or a number being on the left, on both sides being the same thing,
+            // and on a negative factor or divisor standing beside a zero.
+            "0 > x", "0 < x", "0 >= x", "0 <= x", "0 = x",
+            "2 > x", "2 < x", "2 >= x", "2 <= x", "2 = x",
+            "x > x", "x < x", "x >= x", "x <= x",
+            "x / (-2) > 0", "x / (-2) < 0", "x / (-2) >= 0", "x / (-2) <= 0", "x / (-2) = 0",
+            "(-2) * x > 0", "(-2) * x < 0", "(-2) * x >= 0", "(-2) * x <= 0", "(-2) * x = 0",
+            "x * (-2) > 0", "x * (-2) < 0", "x * (-2) >= 0", "x * (-2) <= 0", "x * (-2) = 0",
+            "(x > y) and (y > z)", "(x < y) and (y < z)",
+            "not (x >= y)", "not (x <= y)", "not (x < y)", "y > x", "y >= x",
+
+            // Boolean, both directions of De Morgan and the absorptions with a negation.
+            "not a and not b", "not a or not b", "a and not b", "a or not b",
+            "not a or b", "not a and b", "a and (b and c)", "a or (b or c)",
+            "(a and b) and c", "(a or b) or c", "(a or b) and (a or c)", "(a and b) or c",
+
+            // The trigonometric reciprocal pairs and the inverses the shapes above miss.
+            "cosec(x) * sin(x)", "sin(x) * cosec(x)", "sec(x) * cos(x)", "cos(x) * sec(x)",
+            "cotan(arccotan(x))", "tan(arctan(x))", "arcsin(sin(x))", "arctan(tan(x))",
+            "sin(2 * x) * cosec(x)", "cos(2 * x) * sec(x)", "cotan(x) * tan(x)",
+
+            // Logarithms in and of reciprocals.
+            "log(1/2, x)", "log(2, 1/x)", "log(1/2, 1/x)", "log(1/x, y)", "log(x, 1/y)",
+
+            // A comparison standing where a number would. The rules about comparisons bind their
+            // operands with `Any`, so one of them can be a comparison itself -- and building the
+            // replacement with `<` or `>` then *chains*, where the same rule written with
+            // `EqualTo` would not: `(x > y) < 0` is `x > y and y < 0`, seven nodes rather than
+            // three. Without these a rule whose replacement chains looks like a clean shrink at
+            // every point the corpus reaches and is not one.
+            "(x > y) < 0", "(x > y) > 0", "(x > y) <= 0", "(x > y) >= 0",
+            "(x > y) / (-2) > 0", "(x > y) / (-2) < 0", "(x < y) / (-2) >= 0",
+            "(-2) * (x > y) > 0", "(x > y) * (-2) < 0", "0 > (x > y)", "0 < (x < y)",
+            "2 > (x > y)", "(x > y) = 0",
+
+            // A factorial beside a zero, and the differences and products that contain their own
+            // operand a second time.
+            "x! = 0", "(x - y) / (y - x)", "x - (x - y)", "(x - y) - x",
+            "x * y - x", "x - x * y", "x * x", "x * x * y", "x * (x * y)",
+            "sin(x) * 2", "2 * sin(x)",
+        };
+
         private static List<Entity> Corpus()
         {
             var level1 = new List<string>(Leaves);
@@ -71,7 +160,7 @@ namespace AngouriMath.Tests.Core.Transformations
                         level3.Add(string.Format(shape, left, right));
 
             var parsed = new List<Entity>();
-            foreach (var source in level1.Concat(level2).Concat(level3))
+            foreach (var source in level1.Concat(level2).Concat(level3).Concat(Reached))
             {
                 try { parsed.Add(source.ToEntity()); }
                 catch { /* the generator makes some strings the parser declines */ }
@@ -88,7 +177,9 @@ namespace AngouriMath.Tests.Core.Transformations
         /// </summary>
         private static Dictionary<MatchedRule, List<(Entity Before, Entity After)>> Firings()
         {
-            var corpus = Corpus();
+            // Every node, not only the root: a rule matches where its shape sits, and asking
+            // only about whole corpus expressions leaves most rules never firing at all.
+            var corpus = Corpus().SelectMany(expr => expr.Nodes).Distinct().ToList();
             var firings = new Dictionary<MatchedRule, List<(Entity, Entity)>>();
             foreach (var set in MatchedRules.All)
                 foreach (var rule in set.Rules)
@@ -148,11 +239,13 @@ namespace AngouriMath.Tests.Core.Transformations
             var fired = Firings().Where(pair => pair.Value.Count > 0).ToList();
             var declared = fired.Count(pair => pair.Key.Growth is not RewriteRuleGrowth.Unknown);
 
-            // Named as counts that move rather than as "most of them". 84 rules reach the corpus,
-            // 18 of them carrying a declaration -- so the check above is exercised, and the other
-            // 66 are the measured evidence for declaring more of them.
-            Assert.True(fired.Count >= 80, $"only {fired.Count} rules fired at all");
-            Assert.True(declared >= 15, $"only {declared} rules with a declared growth fired");
+            // Named as counts that move rather than as "most of them". 194 of the 324 rules reach
+            // the corpus and 59 of those carry a declaration, so the check above is exercised
+            // rather than passing by never running; the rest are the measured evidence for
+            // declaring more of them. It was 84 and 18 before the shapes in `Reached` were added
+            // and before rules were tried at every node rather than only at the root.
+            Assert.True(fired.Count >= 190, $"only {fired.Count} rules fired at all");
+            Assert.True(declared >= 56, $"only {declared} rules with a declared growth fired");
         }
     }
 }
