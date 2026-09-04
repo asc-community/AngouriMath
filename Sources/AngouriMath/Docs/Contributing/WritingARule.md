@@ -133,7 +133,7 @@ A pattern replacement gets:
 - **an exact growth**, counted from the two patterns rather than declared.
 
 A code replacement gets neither, and its growth is `Unknown` unless you declare one. That is the
-honest default — **255** rules sit at `Unknown` — but declare it where you can justify it:
+honest default — **190** rules sit at `Unknown` — but declare it where you can justify it:
 
 ```csharp
 // The Chebyshev expansion of sin(n * a) is a sum of n terms where the pattern is one node,
@@ -152,6 +152,30 @@ puts a rule among the ones equality saturation fires and `Unknown` keeps it out.
 shrinks when it does not tells the saturation a rewrite is safe to run when nobody established
 that. A corpus can only refute — firing without contradiction is evidence, not proof — so where you
 cannot argue the claim from the code, leave it `Unknown`.
+
+**Count the pattern against the replacement in terms of the holes**, and the answer is usually one
+of a few shapes. A hole matched twice and written once gives `-(1 + |a|)`, which is a `Collects`
+stronger than the corpus will show you, since the corpus fills its holes with single nodes. A
+replacement holding no hole at all — a constant, or `pi/2` — collects by the whole of the pattern.
+Operators mapping one for one with every hole used once is `Rearranges`.
+
+**Four shapes look declarable and are not.** Each of these measured a clean, constant delta over the
+corpus, and each is false:
+
+| | |
+|---|---|
+| the replacement is built with `<`, `>` and their kin | they **chain**: `(x > y) < 0` is `x > y and y < 0`, so a three-node replacement becomes seven. `EqualTo` does not chain, which is why the `equals` rules are declared and their comparison twins are not |
+| the replacement attaches a `Provided` built from the operands | its size grows with them while the pattern's shrinks away, so the delta changes sign: `2 - |c|` for the shared-factor cancellation, `4 - |a| - |b|` for `(a - b) / (b - a)` |
+| a hole can be filled by two spellings of one thing | `IsWholeReciprocal` takes the literal `1/3`, which is one node, and a written `1 / c`, which is three — so the delta is 0 in one and −2 in the other |
+| a hole is repeated and the replacement squares it | `a * (a * b) = a^2 * b` is `1 - |a|`: zero for a leaf and negative for anything bigger |
+
+**And a declaration can expose a rule whose soundness was wrong.** Writing a growth down moves the
+rule into the set equality saturation runs, which may be the first time it has ever run. That is how
+[#1162](https://github.com/asc-community/AngouriMath/issues/1162) was found: the boolean
+distribution's growth is plainly `-(1 + |k|)`, and declaring it made saturation fire a rule marked
+`Sound` that changes the value at `a = b = 0.37`. If
+`EqualitySaturationNeverChangesTheValueItClaimsToPreserve` fails when you declare a growth, the
+finding is about the rule and not about the number you wrote.
 
 Take `(Entity node, Bindings bound)` rather than `(Bindings bound)` where the replacement needs the
 whole matched node. Rebuilding it from the bindings makes a different object with none of the
