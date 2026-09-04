@@ -133,13 +133,25 @@ A pattern replacement gets:
 - **an exact growth**, counted from the two patterns rather than declared.
 
 A code replacement gets neither, and its growth is `Unknown` unless you declare one. That is the
-honest default — **261** rules sit at `Unknown` — but declare it where you can justify it:
+honest default — **262** rules sit at `Unknown` — but declare it where you can justify it:
 
 ```csharp
 // The Chebyshev expansion of sin(n * a) is a sum of n terms where the pattern is one node,
 // for every n this fires on.
 RewriteRuleGrowth.Expands,
 ```
+
+**A declaration is a claim about every expression the rule fires on, and it is checked.**
+`RuleGrowthAgreesWithTheCorpusTest` runs every declaration against the generated corpus and fails on
+a contradiction, so "the whole point of it is to be smaller" is not a reason — that was the stated
+reason for the one declaration this caught, and the rule it was on never shrank over fourteen
+hundred expressions and grew by as much as eight nodes.
+
+Growth is not documentation. `Saturation.RulesUpTo` selects by it, so `Collects` or `Rearranges`
+puts a rule among the ones equality saturation fires and `Unknown` keeps it out. Claiming a rule
+shrinks when it does not tells the saturation a rewrite is safe to run when nobody established
+that. A corpus can only refute — firing without contradiction is evidence, not proof — so where you
+cannot argue the claim from the code, leave it `Unknown`.
 
 Take `(Entity node, Bindings bound)` rather than `(Bindings bound)` where the replacement needs the
 whole matched node. Rebuilding it from the bindings makes a different object with none of the
