@@ -124,6 +124,17 @@ namespace AngouriMath.Tests.Core.Transformations
             // Logarithms in and of reciprocals.
             "log(1/2, x)", "log(2, 1/x)", "log(1/2, 1/x)", "log(1/x, y)", "log(x, 1/y)",
 
+            // A comparison standing where a number would. The rules about comparisons bind their
+            // operands with `Any`, so one of them can be a comparison itself -- and building the
+            // replacement with `<` or `>` then *chains*, where the same rule written with
+            // `EqualTo` would not: `(x > y) < 0` is `x > y and y < 0`, seven nodes rather than
+            // three. Without these a rule whose replacement chains looks like a clean shrink at
+            // every point the corpus reaches and is not one.
+            "(x > y) < 0", "(x > y) > 0", "(x > y) <= 0", "(x > y) >= 0",
+            "(x > y) / (-2) > 0", "(x > y) / (-2) < 0", "(x < y) / (-2) >= 0",
+            "(-2) * (x > y) > 0", "(x > y) * (-2) < 0", "0 > (x > y)", "0 < (x < y)",
+            "2 > (x > y)", "(x > y) = 0",
+
             // A factorial beside a zero, and the differences and products that contain their own
             // operand a second time.
             "x! = 0", "(x - y) / (y - x)", "x - (x - y)", "(x - y) - x",
