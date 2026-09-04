@@ -3173,7 +3173,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Number>("d")),
                 bound => (Number)bound["c"] / (Number)bound["d"] * bound["a"],
                 Soundness.SoundUnderAssumptions,
-                description: "(c * a) / d = (c / d) * a, for numeric c and d other than -1"),
+                description: "(c * a) / d = (c / d) * a, for numeric c and d other than -1",
+                // The two numbers are folded into one as the replacement is built, and every hole
+                // the pattern binds is a leaf or is used once, so two nodes go: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "dividing-twice-divides-by-the-product",
                 MatchPattern.Node<Divf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Any("c")),
@@ -3339,13 +3342,19 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Mulf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Variable>("v")), MatchPattern.Any<Number>("d")),
                 bound => (Number)bound["c"] * (Number)bound["d"] * bound["v"],
                 Soundness.Sound,
-                description: "(c * v) * d = (c * d) * v, for numeric c and d"),
+                description: "(c * v) * d = (c * d) * v, for numeric c and d",
+                // The two numbers are folded into one as the replacement is built, and every hole
+                // the pattern binds is a leaf or is used once, so two nodes go: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "two-numeric-terms-around-a-variable-collect",
                 MatchPattern.Commutative<Sumf>(MatchPattern.Node<Sumf>(MatchPattern.Any<Variable>("v"), MatchPattern.Any<Number>("c")), MatchPattern.Any<Number>("d")),
                 bound => bound["v"] + ((Number)bound["c"] + (Number)bound["d"]),
                 Soundness.Sound,
-                description: "(v + c) + d = v + (c + d), for numeric c and d"),
+                description: "(v + c) + d = v + (c + d), for numeric c and d",
+                // The two numbers are folded into one as the replacement is built, and every hole
+                // the pattern binds is a leaf or is used once, so two nodes go: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-factor-repeated-across-a-product-squares",
                 MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
@@ -3409,7 +3418,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any("a"))),
                 bound => (Number)bound["c"] * (Number)bound["d"] * bound["a"],
                 Soundness.Sound,
-                description: "c * (d * a) = (c * d) * a, for numeric c and d"),
+                description: "c * (d * a) = (c * d) * a, for numeric c and d",
+                // The two numbers are folded into one as the replacement is built, and every hole
+                // the pattern binds is a leaf or is used once, so two nodes go: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-term-repeated-across-a-sum-doubles",
                 MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
@@ -3421,7 +3433,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Minusf>(MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Any("a")),
                 bound => bound["b"],
                 Soundness.Sound,
-                description: "(a + b) - a = b"),
+                description: "(a + b) - a = b",
+                // All of the pattern but one hole disappears, and the repeated operand goes twice
+                // over: the delta is -(2 + 2|a|), at most -4.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-sum-containing-a-term-taken-from-that-term-leaves-the-rest-negated",
                 MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
@@ -3436,7 +3451,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Node<Minusf>(MatchPattern.Any("b"), MatchPattern.Any("a"))),
                 bound => bound["b"],
                 Soundness.Sound,
-                description: "a + (b - a) = b"),
+                description: "a + (b - a) = b",
+                // All of the pattern but one hole disappears, and the repeated operand goes twice
+                // over: the delta is -(2 + 2|a|), at most -4.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-term-added-to-a-difference-that-starts-from-it",
                 MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
@@ -3586,7 +3604,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Signumf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),
                 bound => -new Signumf((-(Real)bound["neg"]) * bound["rest"]),
                 Soundness.Sound,
-                description: "sgn(-a) = -sgn(a)"));
+                description: "sgn(-a) = -sgn(a)",
+                // The negative literal inside is replaced by its magnitude, one node for one, and
+                // the negation the replacement puts round the whole of it is two nodes more.
+                growth: RewriteRuleGrowth.Expands));
 
         /// <summary>
         /// Every <see cref="MatchedRuleSet"/> this class declares — the parameterless ones as

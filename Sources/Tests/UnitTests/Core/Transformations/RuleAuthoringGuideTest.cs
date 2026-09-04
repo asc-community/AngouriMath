@@ -84,7 +84,7 @@ namespace AngouriMath.Tests.Core.Transformations
                 "how many rules have a pattern on both sides");
             Stated(33, rules.Count(rule => rule.Reversed is not null),
                 "how many two-sided rules have a direction");
-            Stated(182, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Unknown),
+            Stated(175, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Unknown),
                 "how many rules sit at Unknown growth");
 
             // And the two the document names. By their own names rather than by what the prose
