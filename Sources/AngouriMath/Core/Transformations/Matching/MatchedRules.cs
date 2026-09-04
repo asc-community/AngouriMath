@@ -3211,7 +3211,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Sumf>(MatchPattern.Node<Sumf>(MatchPattern.Any<Function>("f"), MatchPattern.Any("a")), MatchPattern.Any<Function>("g")),
                 bound => bound["f"] + bound["g"] + bound["a"],
                 Soundness.SoundUnderAssumptions,
-                description: "(f + a) + g = f + g + a, for functions f and g"),
+                description: "(f + a) + g = f + g + a, for functions f and g",
+                // The three operands are regrouped and nothing else moves: two sums stay two sums
+                // and each hole is used once on both sides.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "a-variable-times-a-number-puts-the-number-first",
                 MatchPattern.Node<Mulf>(MatchPattern.Any<Variable>("v"), MatchPattern.Any<Number>("c")),
@@ -3312,7 +3315,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 bound => Integer.Zero,
                 Soundness.Sound,
-                description: "k - k = 0"),
+                description: "k - k = 0",
+                // Everything the pattern matched goes and one node arrives, and the operand was
+                // matched twice: the delta is -2|k|, at most -2 and further the larger it is.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-factor-shared-by-a-quotient-and-a-product-added-comes-out",
                 MatchPattern.Node<Sumf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c"))),
@@ -3412,7 +3418,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(MatchPattern.Any<Number>("c"), MatchPattern.Commutative<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any("a"))),
                 bound => (Number)bound["c"] / (Number)bound["d"] / bound["a"],
                 Soundness.SoundUnderAssumptions,
-                description: "c / (d * a) = (c / d) / a, for numeric c and d"),
+                description: "c / (d * a) = (c / d) / a, for numeric c and d",
+                // The two numbers are folded into one as the replacement is built, so four nodes
+                // around the remaining hole become two: exactly -2.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "two-numbers-around-a-factor-collect",
                 MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("d"), MatchPattern.Any("a"))),
@@ -3519,7 +3528,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Mulf>(MatchPattern.Node<Signumf>(MatchPattern.Any("a")), MatchPattern.Node<Absf>(MatchPattern.Any("a"))),
                 bound => bound["a"],
                 Soundness.SoundUnderAssumptions,
-                description: "sgn(a) * abs(a) = a"),
+                description: "sgn(a) * abs(a) = a",
+                // Three nodes around two copies of the operand become the one copy that is left, so
+                // the delta is -(3 + |a|): at most -4.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-reciprocal-rational-factor-is-a-division",
                 MatchPattern.Commutative<Mulf>(MatchPattern.Any<Entity>("r", one => Functions.Patterns.IsWholeReciprocal(one, 1)), MatchPattern.Any("a")),
