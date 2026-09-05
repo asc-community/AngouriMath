@@ -111,8 +111,16 @@ Power: (-2) ^ 2 * (1/2) ^ 2   ->  ((-2) * 1/2) ^ 2    ->  (-2) ^ 2 * (1/2) ^ 2
 ```
 
 `two-powers-of-one-exponent-share-a-base` collects `a ^ b * c ^ b` into `(a * c) ^ b`;
-`positive-power-of-a-product-distributes` takes it straight back. Nothing derived that. The loop is
-the evidence, and the two rule names fall out of reading which arms fired.
+`a-numeric-factor-comes-out-of-a-power-of-a-product` takes it straight back. Nothing derived that.
+The loop is the evidence.
+
+**The names do not fall out of reading the patterns, and this paragraph said they did.** It named
+`positive-power-of-a-product-distributes` as the second rule — a real rule, with exactly the right
+shape, which is in `CollapseMultipleFractions` and not in `Power`, so `ApplyHere` on `Power` can
+never reach it. The rule that actually fires is narrower than the one the shape suggests: it wants a
+*numeric* factor and a *numeric* exponent, so that `c ^ d` can be evaluated. Asking the set which of
+its own rules fires is one loop and settles it; that is the step this document skipped, in the very
+section arguing that behaviour is a better source than derivation.
 
 What this is and is not:
 

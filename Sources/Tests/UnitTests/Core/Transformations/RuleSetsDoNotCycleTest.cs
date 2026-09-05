@@ -112,14 +112,24 @@ namespace AngouriMath.Tests.Core.Transformations
         /// rather than as a set name, so that the entry says what it is excusing.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// Both are <c>Power</c> holding an inverse pair:
         /// <c>two-powers-of-one-exponent-share-a-base</c> collects <c>a ^ b * c ^ b</c> into
-        /// <c>(a * c) ^ b</c> and <c>positive-power-of-a-product-distributes</c> takes it straight
-        /// back. Neither rule is wrong and each is wanted in its own direction; a *set* containing
-        /// both has no normal form to reach, which is
+        /// <c>(a * c) ^ b</c>, and <c>a-numeric-factor-comes-out-of-a-power-of-a-product</c> takes
+        /// it straight back. Neither rule is wrong and each is wanted in its own direction; a
+        /// *set* containing both has no normal form to reach, which is
         /// <a href="https://github.com/asc-community/AngouriMath/issues/1171">#1171</a>.
         /// <see cref="Entity.Simplify()"/> is unaffected — it folds between passes, so <c>1 * x</c>
         /// collapses and the shape the second rule needs stops existing.
+        /// </para>
+        /// <para>
+        /// <b>The second rule was named wrongly here first, and the name is the whole content of
+        /// an entry like this.</b> It said <c>positive-power-of-a-product-distributes</c>, which is
+        /// a real rule with the right shape and is in <c>CollapseMultipleFractions</c>, not in
+        /// <c>Power</c> — so <see cref="MatchedRuleSet.ApplyHere"/> on <c>Power</c> can never reach
+        /// it. Asking the set which of its own rules fires is one loop and settles it; reading two
+        /// rule names off their patterns does not.
+        /// </para>
         /// </remarks>
         private static readonly string[] KnownCycles =
         {
