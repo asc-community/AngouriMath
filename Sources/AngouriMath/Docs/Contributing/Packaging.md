@@ -140,8 +140,11 @@ typeof(AngouriMath.Entity).Assembly     # measured by reflection on the built ne
   and setter are one property, so **12 distinct capabilities**: `Codomain`, `DefaultCodomain`,
   `InitDirectChildren`, `InnerSimplify`, `IntrinsicCondition`, `InvertNode`, `LatexizeNode`,
   `Priority`, `Replace`, `SortHashName`, `StringizeNode`, `ToSymPy`;
-- 13 referenced assemblies, 4 of them third-party. (`System.Console` is on the list because the
-  ANTLR-generated lexer and parser default their error streams to it.)
+- 14 referenced assemblies, 4 of them third-party. (`System.Console` is on the list because the
+  ANTLR-generated lexer and parser default their error streams to it.) This said 13 until
+  `System.Text.Json` arrived with `Core/Serialization` — a framework assembly, so no consumer's
+  restore changed, and nothing noticed for the same reason. `KernelDependenciesTest` is the gate §7
+  asked for and now holds both counts.
 
 **Twelve capabilities × 68 node types is the reason the kernel is one assembly.** A capability written
 as an abstract member of `Entity` cannot be in a different package than `Entity`, whatever anyone
@@ -335,13 +338,24 @@ analyzers, so a structural rule can be made a build error here without new infra
 
 Two gates, cheapest first:
 
-- **Rule 4, as a unit test.** Assert that `typeof(Entity).Assembly.GetReferencedAssemblies()` equals
-  the recorded list — today `Antlr4.Runtime.Standard`, `GenericTensor`, `HonkSharp`, `Numbers`,
-  `System.Collections`, `System.Collections.Concurrent`, `System.Console`, `System.Linq`,
-  `System.Linq.Expressions`, `System.Memory`, `System.Runtime`, `System.Runtime.Numerics`,
-  `System.Threading` — `Numbers` being the assembly `PeterO.Numbers` ships. It needs nothing that is
-  not already in `UnitTests`, and it fails on the commit that adds a dependency rather than on the
-  release that ships it.
+- **Rule 4, as a unit test — done, as `KernelDependenciesTest`.** It asserts that
+  `typeof(MathS).Assembly.GetReferencedAssemblies()` equals the recorded list —
+  `Antlr4.Runtime.Standard`, `GenericTensor`, `HonkSharp`, `Numbers`, `System.Collections`,
+  `System.Collections.Concurrent`, `System.Console`, `System.Linq`, `System.Linq.Expressions`,
+  `System.Memory`, `System.Runtime`, `System.Runtime.Numerics`, `System.Text.Json`,
+  `System.Threading` — `Numbers` being the assembly `PeterO.Numbers` ships, and the four
+  non-`System` ones asserted separately because they are what a restore fetches. It fails on the
+  commit that adds a dependency rather than on the release that ships it, and asserts in the other
+  direction too, so a dependency that goes away is deleted from the list rather than left there
+  asserting nothing.
+
+  Writing it found that the list above was already a version behind — `System.Text.Json` was
+  missing — and that the document elsewhere said 13 where the count was 14. That is the whole
+  argument for the gate: the drift had already happened, harmlessly, and unremarked.
+
+  **It sees one target framework**, the one `UnitTests` builds. The `netstandard2.0` leg carries
+  `System.Memory` as a package rather than a framework reference and is checked by nothing; that is
+  a real gap and its own piece of work, not a reason to loosen this one.
 - **Rules 2 and 3, from the packed nuspecs.** Assert each published package's `<dependencies>` group
   against the chain. This needs `dotnet pack` in CI, which only `Nuget.yml` does today.
 

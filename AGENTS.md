@@ -594,9 +594,17 @@ replaces had gone stale, with eight of its ten issues closed, so it was pointing
 - **A wrong answer** — [#812](https://github.com/asc-community/AngouriMath/issues/812). `abs(x) = -1` returns a non-empty set whose members do not
   satisfy it. Highest priority here by the rule at the top of this file: not answering is
   legitimate, answering wrongly is not.
-- **Decisions only a major version may take** — [#204](https://github.com/asc-community/AngouriMath/issues/204) roots versus fractional powers,
-  [#326](https://github.com/asc-community/AngouriMath/issues/326) the syntax for piecewise, [#721](https://github.com/asc-community/AngouriMath/issues/721) unifying `Codomain` with
-  `provided ... in RR`. Cheap now; after 2.0 ships each waits for 3.0. Note that
+- **Decisions only a major version may take** — [#326](https://github.com/asc-community/AngouriMath/issues/326) the syntax for piecewise,
+  and only the part of it that *removes* the incumbent form: new syntax can be added in a minor
+  while the old spelling keeps parsing. Two entries that stood here have gone, both by
+  measurement rather than by decision. [#721](https://github.com/asc-community/AngouriMath/issues/721) was done additively in
+  [#1090](https://github.com/asc-community/AngouriMath/pull/1090) — `DomainConditionIn(Domain)` is a
+  new method and `Codomain` was left alone — and the issue is closed. [#204](https://github.com/asc-community/AngouriMath/issues/204) roots versus
+  fractional powers is no longer a value question at all: `sqrt(x)` and `x ^ (1/2)` are *the same
+  entity*, `==` answers `True` and `Complexity` is 3 for both, since `1/2` started parsing as a
+  `Rational` in 2.3.0. Only the printed form differs, which is a `BREAKING-CHANGES.md` entry rather
+  than a major. **Re-measure an entry here before treating it as a constraint** — this list was
+  wrong on two of its three for months. Note that
   [#318](https://github.com/asc-community/AngouriMath/issues/318) is *not* one of these despite looking like it: `Invert` and `InvertNode` are
   `internal` and `private protected`, so changing what they return breaks nobody, and the
   parametric sets it asks for already work — what is left of it is the guard in #812.
