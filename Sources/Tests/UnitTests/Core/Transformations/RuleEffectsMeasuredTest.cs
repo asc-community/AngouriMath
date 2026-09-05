@@ -201,12 +201,12 @@ namespace AngouriMath.Tests.Core.Transformations
                 }
             }
 
-            // Named rather than counted. `k - k = 0` is declared Sound and assumes k has a value:
-            // at x = 0, `x^(-2) - x^(-2)` is undefined and `0` is not. Its sibling for the same
-            // shape, `a / a = 1`, attaches `provided a is not zero` and this one attaches nothing.
-            // Fixing it should delete the entry rather than leave a name that means nothing.
+            // Empty, and it has been used. `k - k = 0` was declared Sound and assumed k has a
+            // value: at x = 0, `x^(-2) - x^(-2)` is undefined and `0` is not. It attaches the
+            // operand's own DomainCondition now, the way its sibling `a / a = 1` always has, and
+            // the entry that named it here is gone rather than left behind meaning nothing.
             // https://github.com/asc-community/AngouriMath/issues/1169
-            var known = new[] { "a-term-subtracted-from-itself-vanishes" };
+            var known = System.Array.Empty<string>();
 
             var offending = changed.Select(c => c.Split(':')[0]).Distinct().ToList();
             var unexpected = offending.Except(known).ToList();
@@ -216,7 +216,11 @@ namespace AngouriMath.Tests.Core.Transformations
                 + "value without attaching a condition:\n"
                 + string.Join("\n", changed.Where(c => unexpected.Contains(c.Split(':')[0])).Take(20)));
 
-            Assert.Equal(known, offending.Intersect(known).ToArray());
+            // The other direction, so a name here cannot outlive what it describes.
+            var gone = known.Except(offending).ToList();
+            Assert.True(gone.Count == 0,
+                $"{gone.Count} entries above no longer offend and should be deleted:\n"
+                + string.Join("\n", gone));
         }
 
         /// <summary>

@@ -1490,7 +1490,7 @@ namespace AngouriMath.Core.Transformations.Matching
             new MatchedRule(
                 "a-term-subtracted-from-itself-vanishes",
                 MatchPattern.Node<Minusf>(MatchPattern.Any("k"), MatchPattern.Any("k")),
-                bound => Integer.Create(0),
+                bound => Integer.Create(0).Provided(bound["k"].DomainCondition),
                 Soundness.Sound,
                 description: "k - k = 0",
                 // Declared, because the replacement is code and nothing counts it: three nodes become one.
@@ -3371,7 +3371,7 @@ namespace AngouriMath.Core.Transformations.Matching
             new MatchedRule(
                 "a-term-subtracted-from-itself-vanishes",
                 MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
-                bound => Integer.Zero,
+                bound => Integer.Zero.Provided(bound["a"].DomainCondition),
                 Soundness.Sound,
                 description: "k - k = 0",
                 // Everything the pattern matched goes and one node arrives, and the operand was
