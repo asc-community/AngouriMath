@@ -65,7 +65,10 @@ namespace AngouriMath.Tests.Core.Transformations
         /// </remarks>
         private static readonly HashSet<string> SettleOnlyComposed = new() { "Power" };
 
-        private static readonly string[] Leaves = { "x", "y", "2", "-1", "1/2", "1", "0" };
+        // `-2` is here because `-1` is not enough of a negative: the four rules that take a
+        // negative factor out of a product decline a factor of -1 since #1167, so a corpus whose
+        // only negative is -1 cannot make them fire at all.
+        private static readonly string[] Leaves = { "x", "y", "2", "-1", "-2", "1/2", "1", "0" };
 
         private static readonly string[] Unary =
         {
@@ -104,6 +107,16 @@ namespace AngouriMath.Tests.Core.Transformations
                 foreach (var inner in level2)
                     level3.Add(string.Format(shape, inner));
 
+            // And binary at the third level too, sampled, because a unary-only third level never
+            // builds a quotient of quotients or a product of quotients -- the shapes where two
+            // rules of one set both fire on one node. `RulePriorityTest` measured what that
+            // costs on its own corpus: growing the third level with binary shapes took the
+            // conflicts it can see from 3 to 45. This corpus had the same blind spot.
+            foreach (var shape in Binary)
+                foreach (var left in level2.Where((_, i) => i % 17 == 0))
+                    foreach (var right in level2.Where((_, i) => i % 23 == 0))
+                        level3.Add(string.Format(shape, left, right));
+
             var parsed = new List<Entity>();
             foreach (var source in level1.Concat(level2).Concat(level3))
             {
@@ -112,6 +125,16 @@ namespace AngouriMath.Tests.Core.Transformations
             }
             return parsed;
         }
+
+        /// <summary>
+        /// The corpus is the whole strength of the two checks below, and neither of them fails
+        /// when it shrinks — a smaller corpus makes them pass sooner, which is the failure mode a
+        /// coverage number exists to stop. <b>4344</b> inputs, of which <b>1760</b> are the binary
+        /// third level (5 shapes over 22 sampled left operands and 16 sampled right ones).
+        /// </summary>
+        [Fact]
+        public void TheCorpusIsTheSizeTheseChecksWereMeasuredOn() =>
+            Assert.Equal(4344, Inputs.Count);
 
         private static bool Terminates(RewriteRuleSet set, Entity from, bool normalise, out Entity stuck)
         {
