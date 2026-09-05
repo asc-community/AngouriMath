@@ -117,6 +117,33 @@ read first.
 
 | **Silent** | `"1/x - 1/x".ToEntity().Simplify()`, and every difference of a term from itself where that term can be undefined | `0`, including at `x = 0` where neither side has a value | `0 provided not x = 0` |
 
+| **Silent** | `"(x + 1)!/(x + 1)!".ToEntity().Simplify()`, and every cancelled quotient whose repeated part can be undefined | `1 provided not (1 + x)! = 0` | `1 provided 1 + x in RR and (1 + x >= 0 or not 1 + x in ZZ)` — the same value everywhere, a condition that says why |
+
+### A cancelled quotient says its operand is defined, not only non-zero
+
+`a / a = 1` and `(keep * c) / c = keep` attached `provided c is not zero`. That excludes the zero of
+`c` and not the points where `c` has **no value at all**, and where `c` has none the quotient has none
+either — while the cancelled result does.
+
+```
+"ln(x) / ln(x)".Simplify()   was  1 provided not ln(x) = 0    at x = 0: 1, and the quotient is NaN
+```
+
+Both now conjoin the operand's own `DomainCondition`, the way `k - k = 0` does since
+[#1169](https://github.com/asc-community/AngouriMath/issues/1169).
+[#1174](https://github.com/asc-community/AngouriMath/issues/1174)
+
+**Only one shape's printed answer moves, and its value does not.** `(x + 1)!/(x + 1)!` carries the
+factorial's domain instead of `not (1 + x)! = 0`. Measured at x = -4, -3, -2, -1, 0, 2 and -3/2, the
+old condition and the new one agree with the unsimplified quotient at every point — `NaN` at the
+three gamma poles and `1` elsewhere. The old form was adequate there by accident, since `(1 + x)!` is
+`NaN` at a pole and a comparison against `NaN` is not `True`; the new one states the reason rather
+than relying on it. `x / x`, `sin(x) / sin(x)`, `(x * y) / (x * y)` and every other operand that
+cannot be undefined fold the added clause away and are unchanged.
+
+**`ln(x) / ln(x)` itself still answers `1`**, from a candidate `PolynomialLongDivision` produces
+rather than from either of these rules, and #1174 stays open for it.
+
 ### A term subtracted from itself says what it assumes
 
 `k - k = 0` was declared `Sound`, which means it holds for every value the pattern admits with
