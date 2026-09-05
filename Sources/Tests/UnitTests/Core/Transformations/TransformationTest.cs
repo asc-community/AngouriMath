@@ -842,6 +842,23 @@ namespace AngouriMath.Tests.Core.Transformations
                 Entity beforeEvaled, afterEvaled;
                 try { beforeEvaled = before.Evaled; afterEvaled = after.Evaled; }
                 catch { continue; } // a boolean/set-valued corpus entry: not this test's claim
+
+                // The `catch` above was meant to skip those entries and does not: substituting a
+                // real into `a and b` throws nothing, it hands back `0.37 and 0.37` unevaluated,
+                // and two *different* unevaluated forms of a thing with no truth value then
+                // compare unequal. That is not a value changing. `(a and b) or (a and not b)`
+                // distributing to `a and (b or not b)` failed here for that reason alone.
+                //
+                // Skipped only when *neither* side has a value. One side evaluating and the other
+                // not is a rewrite that lost one, which is exactly what this test is for.
+                var beforeHasValue = beforeEvaled is Entity.Number;
+                var afterHasValue = afterEvaled is Entity.Number;
+                if (!beforeHasValue && !afterHasValue) continue;
+                Assert.True(beforeHasValue && afterHasValue,
+                    $"{source} at {point.Stringize()}: {beforeEvaled.Stringize()} and "
+                        + $"{afterEvaled.Stringize()} -- one of them has a value and the other "
+                        + $"does not, via {output.Stringize()}");
+
                 Assert.True(beforeEvaled.EqualsImprecisely(afterEvaled),
                     $"{source} at {point.Stringize()}: {beforeEvaled.Stringize()} became "
                         + $"{afterEvaled.Stringize()} via {output.Stringize()}");
