@@ -118,6 +118,7 @@ read first.
 | **Silent** | `"1/x - 1/x".ToEntity().Simplify()`, and every difference of a term from itself where that term can be undefined | `0`, including at `x = 0` where neither side has a value | `0 provided not x = 0` |
 
 | **Silent** | `"(x + 1)!/(x + 1)!".ToEntity().Simplify()`, and every cancelled quotient whose repeated part can be undefined | `1 provided not (1 + x)! = 0` | `1 provided 1 + x in RR and (1 + x >= 0 or not 1 + x in ZZ)` — the same value everywhere, a condition that says why |
+| | `"ln(x)/ln(x)".ToEntity().Simplify()`, and every quotient divided out by a divisor that can be undefined | `1 provided not ln(x) = 0` — which is `1` at `x = 0`, where the quotient has no value | `1 provided not ln(x) = 0 and not x = 0` |
 
 ### A cancelled quotient says its operand is defined, not only non-zero
 
@@ -141,8 +142,21 @@ three gamma poles and `1` elsewhere. The old form was adequate there by accident
 than relying on it. `x / x`, `sin(x) / sin(x)`, `(x * y) / (x * y)` and every other operand that
 cannot be undefined fold the added clause away and are unchanged.
 
-**`ln(x) / ln(x)` itself still answers `1`**, from a candidate `PolynomialLongDivision` produces
-rather than from either of these rules, and #1174 stays open for it.
+**And the polynomial division carries its divisor's domain too.** `n / d = quotient + remainder` is
+only the quotient where `d` has a value: `ln(x) / ln(x)` divides out to `1 + 0 / ln(x)`, which is `1`
+at `x = 0` while the quotient it came from is undefined there, because the remainder term carries
+only `ln(x) != 0`. That candidate is the one `Simplify` rated best, so it was what a caller actually
+saw. With it fixed:
+
+```
+"ln(x) / ln(x)".Simplify()   was  1 provided not ln(x) = 0    at x = 0: 1
+                             is   1 provided not ln(x) = 0 and not x = 0    at x = 0: NaN
+```
+
+Ordinary divisions are untouched, because a divisor that cannot be undefined has a domain condition
+of `True` and it folds away — `(x^2 - 1)/(x - 1)`, `(x^3 + 1)/(x + 1)`, `x^2 / x` and `x^3 / x^2` all
+answer exactly what they did. `x!/x!` moves the same way `(x + 1)!/(x + 1)!` does, and for the same
+reason; measured at x = -4, -3, -2, -1, 0, 1, 3, 1/2 and -1/2, old and new agree at every point.
 
 ### A term subtracted from itself says what it assumes
 

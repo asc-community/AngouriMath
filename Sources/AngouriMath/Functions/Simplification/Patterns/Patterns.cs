@@ -54,10 +54,15 @@ namespace AngouriMath.Functions
             _ => x,
         };
         [AddressableRules]
+        // The division is only the quotient where the divisor has a value. `ln(x) / ln(x)` divides
+        // out to `1 + 0 / ln(x)`, which is 1 at x = 0 while the quotient it came from is undefined
+        // there -- ln(0) is a pole, and the remainder term carries only `ln(x) != 0`. The condition
+        // folds away for any divisor that cannot be undefined.
+        // https://github.com/asc-community/AngouriMath/issues/1174
         internal static Entity PolynomialLongDivision(Entity x) =>
             x is Divf(var num, var denom)
             && TreeAnalyzer.PolynomialLongDivision(num, denom) is var (divided, remainder)
-            ? divided + remainder
+            ? (divided + remainder).Provided(denom.DomainCondition)
             : x;
 
         /// <summary>

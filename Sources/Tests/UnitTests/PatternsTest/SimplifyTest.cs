@@ -93,14 +93,16 @@ namespace AngouriMath.Tests.PatternsTest
         [Fact] public void FactorialXP1OverFactorialXM1() => AssertSimplify(MathS.Factorial(1 + x) / MathS.Factorial(-1 + x), x * (1 + x));
         [Fact] public void FactorialXP1OverFactorialXM3() => AssertSimplifyIdentical(MathS.Factorial(x + 1) / MathS.Factorial(x - 3));
         [Fact] public void FactorialXOverFactorialXP1() => AssertSimplify(MathS.Factorial(x) / MathS.Factorial(x + 1), 1 / (1 + x));
-        [Fact] public void FactorialXOverFactorialX() => AssertSimplify(MathS.Factorial(x) / MathS.Factorial(x), "1 provided not x! = 0");
+        [Fact] public void FactorialXOverFactorialX() => AssertSimplify(MathS.Factorial(x) / MathS.Factorial(x), "1 provided x in RR and (x >= 0 or not x in ZZ)");
         [Fact] public void FactorialXOverFactorialXM1() => AssertSimplify(MathS.Factorial(0 + x) / MathS.Factorial(x - 1), x);
         [Fact] public void FactorialXOverFactorialXM2() => AssertSimplify(MathS.Factorial(x + 0) / MathS.Factorial(x - 2), x.Pow(2) - x);
         [Fact] public void FactorialXOverFactorialXM3() => AssertSimplifyIdentical(MathS.Factorial(x) / MathS.Factorial(x - 3));
         [Fact] public void FactorialXM1OverFactorialXP1() => AssertSimplify(MathS.Factorial(x - 1) / MathS.Factorial(x + 1), 1 / (x * (x + 1)));
         [Fact] public void FactorialXM1OverFactorialX() => AssertSimplify(MathS.Factorial(-1 + x) / MathS.Factorial(x), 1 / x);
-        // The domain condition, as above. `FactorialXOverFactorialX` keeps the older form and is
-        // not a inconsistency to fix here: a bare `x!` reaches this through a different candidate.
+        // The domain condition, as above. `FactorialXOverFactorialX` kept the older form for one
+        // commit, because a bare `x!` reached this through the candidate polynomial long division
+        // produces rather than through a cancellation rule. That division carries its divisor's
+        // domain now as well, so all three of these agree again.
         [Fact] public void FactorialXM1OverFactorialXM1() => AssertSimplify(MathS.Factorial(x - 1) / MathS.Factorial(x - 1), "1 provided x - 1 in RR and (x - 1 >= 0 or not x - 1 in ZZ)");
         [Fact] public void FactorialXM1OverFactorialXM2() => AssertSimplify(MathS.Factorial(-1 + x) / MathS.Factorial(-2 + x), x - 1);
         // Same two factors, now in ascending order: the polynomial factorer offers
