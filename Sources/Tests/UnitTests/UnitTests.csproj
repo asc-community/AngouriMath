@@ -19,6 +19,12 @@
 
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="6.0.0-alpha0002" />
+    <!--
+    For DocumentationExamplesRunTest, which compiles and runs the worked examples in the XML docs
+    rather than transcribing them. Test-only, so it reaches no consumer; the solution already
+    builds against Roslyn for RuleRegistryGenerator and the analyzers.
+    -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.14.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="Xunit.Combinatorial" Version="1.4.1" />
