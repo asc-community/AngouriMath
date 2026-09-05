@@ -19,12 +19,21 @@
 # is reported as not building rather than skipped, since "this cannot be measured any more" is
 # itself worth seeing.
 #
-# Measured, so the bound is known rather than discovered. At the time of writing v2.3.0 and later
-# build; v2.2.0 and earlier do not, because the benchmark's MatchingEngine case reaches
-# `MatchedRules` and `Patterns`, which were internal until v2.3.0. Reaching further back means
-# compiling only the inter-version case, which means conditioning the benchmark project on which
-# commit it is pointed at -- and the whole reason these columns compare is that the benchmark does
-# not vary. Left as it is; the table says which rows it could not measure.
+# How far back this reaches, and why it is further than it was. v2.3.0 and later used to be the
+# bound: v2.2.0 and earlier did not build, because the benchmark's MatchingEngine case reaches
+# `MatchedRules` and `Patterns`, which were internal until v2.3.0, and TransformationLayer names
+# `Transformation.Rationalization`, which did not exist at v2.1.0.
+#
+# Neither of those cases is executed by this run. Only CommonFunctionsInterVersion is, and it uses
+# nothing but the public API -- so the rows were being lost to files that were compiled and never
+# called. `-p:InterVersionOnly=true` compiles the case that runs and leaves the rest out, and the
+# script passes it for every row.
+#
+# The earlier note here said reaching further back would mean conditioning the project on which
+# commit it is pointed at, and that this would break the comparison because the benchmark must not
+# vary. The first half was right and the second does not follow: the flag is per-purpose, not
+# per-commit, so every column compiles the same file and runs the same file. Measured: v2.1.0 and
+# v2.2.0 build and run under it.
 
 v2.1.0
 v2.2.0

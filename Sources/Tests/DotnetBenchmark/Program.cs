@@ -79,12 +79,17 @@ namespace DotnetBenchmark
                 .Select(arg =>
                     arg switch
                     {
-                        "RAMUsageTest" => GetReportByBenchmark(typeof(RAMUsageTest), "Gen 0", "Gen 1", "Gen 2", "Allocated"),
-                        // Allocated: the class has carried [MemoryDiagnoser] all along, so the
-                        // figure was being collected on every run and then dropped here.
-                        "CommonFunctionsInterVersion" => GetReportByBenchmark(typeof(CommonFunctionsInterVersion), "Mean", "Error", "StdDev", "Allocated"),
+// Every case but the inter-version one is compiled out when the project is built for the
+// key-commit run, because a case that reaches API an older kernel did not have stops the whole
+// project compiling and takes the row with it. Only CommonFunctionsInterVersion is executed by
+// that run. https://github.com/asc-community/AngouriMath/issues/529
                         // Allocated as well as Mean: the regressions this one exists to catch
                         // show up in allocation and are invisible in the timings.
+                        "CommonFunctionsInterVersion" => GetReportByBenchmark(typeof(CommonFunctionsInterVersion), "Mean", "Error", "StdDev", "Allocated"),
+#if !INTERVERSION_ONLY
+                        // Allocated: the class has carried [MemoryDiagnoser] all along, so the
+                        // figure was being collected on every run and then dropped here.
+                        "RAMUsageTest" => GetReportByBenchmark(typeof(RAMUsageTest), "Gen 0", "Gen 1", "Gen 2", "Allocated"),
                         "TransformationLayer" => GetReportByBenchmark(typeof(TransformationLayer), "Mean", "Error", "StdDev", "Allocated"),
                         // Ratio as well: this one exists to compare two forms of the same rule,
                         // and the absolute nanoseconds matter far less than the factor between
@@ -97,6 +102,7 @@ namespace DotnetBenchmark
                         "BenchLinqCompilation" => GetReportByBenchmark(typeof(BenchLinqCompilation), "Mean", "Error", "StdDev", "Allocated"),
                         "CacheCompiledFunc" => GetReportByBenchmark(typeof(CacheCompiledFunc), "Mean", "Error", "StdDev", "Allocated"),
                         "NumbersBenchmark" => GetReportByBenchmark(typeof(NumbersBenchmark), "Mean", "Error", "StdDev"),
+#endif
                         _ => throw new($"Unexpected benchmark {arg}")
                     }).ToArray(); // active action
             Console.WriteLine();
