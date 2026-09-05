@@ -90,11 +90,18 @@ namespace AngouriMath.Functions
             //                         is i * i = -1 while the second is sqrt(1) = 1
             //
             // https://github.com/asc-community/AngouriMath/issues/801
+            // And declines the one shape the numeric-factor arm below undoes: that one takes a
+            // numeric factor back out of `(c * a) ^ d` when d is numeric too, so
+            // `1 ^ (-2) * x ^ (-2)` collected and expanded for ever. Where *both* bases are
+            // numeric there is nothing to take out afterwards and this still fires, so
+            // `2 ^ 2 * 3 ^ 2` collects and `3 ^ (-1/2) * 2 ^ (-1/2)` is still `sqrt(6) / 6`.
+            // https://github.com/asc-community/AngouriMath/issues/1171
             Mulf(Powf(var any1, var any3), Powf(var any2, var any3a))
                 when any3 == any3a
                      && (any3 is Integer
                          || (any1.Evaled is Real { IsPositive: true }
                              && any2.Evaled is Real { IsPositive: true }))
+                     && !(any3 is Number && any1 is Number != any2 is Number)
                 => new Powf(any1 * any2, any3),
             // Same condition, same reason -- sqrt(2) / sqrt(-3) is -0.8165i where
             // (2 / -3)^(1/2) is +0.8165i. https://github.com/asc-community/AngouriMath/issues/802
@@ -163,8 +170,13 @@ namespace AngouriMath.Functions
             // while the second is -0.7937 -- the negation, not the value. A positive constant
             // is safe whatever the sign of x, which is why the rule is narrowed rather than
             // removed. https://github.com/asc-community/AngouriMath/issues/752
+            // And declines when the other factor is numeric as well, because then there is nothing
+            // to take the factor out *of*: the shared-exponent arm above collects those back
+            // together, and the two looped. `(2 * 3) ^ 2` folds to 36 on its own.
+            // https://github.com/asc-community/AngouriMath/issues/1171
             Powf(Mulf(Number const1, var any1), Number const2)
-                when const2 is Integer || const1 is Real { IsPositive: true } =>
+                when (const2 is Integer || const1 is Real { IsPositive: true })
+                     && any1 is not Number =>
                 new Powf(const1, const2) * new Powf(any1, const2),
 
             // {1} ^ (-1) = 1 / {1}

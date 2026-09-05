@@ -2810,9 +2810,22 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
                 bound => new Powf(bound["a"] * bound["b"], bound["n"]),
                 Soundness.SoundUnderAssumptions,
-                when: bound => bound["n"] is Integer
-                               || (bound["a"].Evaled is Real { IsPositive: true }
-                                   && bound["b"].Evaled is Real { IsPositive: true }),
+                when: bound => (bound["n"] is Integer
+                                || (bound["a"].Evaled is Real { IsPositive: true }
+                                    && bound["b"].Evaled is Real { IsPositive: true }))
+                               // And declines the one shape its neighbour undoes.
+                               // `a-numeric-factor-comes-out-of-a-power-of-a-product` takes a
+                               // numeric factor back out of `(c * a) ^ d` when d is numeric too,
+                               // so `1 ^ (-2) * x ^ (-2)` collected and expanded for ever. The
+                               // narrower rule is the one with the opinion worth keeping there:
+                               // it exists so `c ^ d` can be evaluated, which is why it wants
+                               // both numeric. Where *both* bases are numeric there is nothing to
+                               // take out afterwards and this one still fires, so `2 ^ 2 * 3 ^ 2`
+                               // still collects and `3 ^ (-1/2) * 2 ^ (-1/2)` is still
+                               // `sqrt(6) / 6` rather than `sqrt(3) * sqrt(2) / 6`.
+                               // https://github.com/asc-community/AngouriMath/issues/1171
+                               && !(bound["n"] is Number
+                                    && bound["a"] is Number != bound["b"] is Number),
                 description: "a ^ n * b ^ n = (a * b) ^ n",
                 // The exponent is matched twice and written once, so the delta is -(1 + |n|) --
                 // -2 for an exponent of one node and more for a larger one. The same identity
@@ -2944,8 +2957,13 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any<Number>("d")),
                 bound => new Powf(bound["c"], bound["d"]) * new Powf(bound["a"], bound["d"]),
                 Soundness.SoundUnderAssumptions,
-                when: bound => bound["d"] is Integer || bound["c"] is Real { IsPositive: true },
-                description: "(c * a) ^ d = c ^ d * a ^ d, for numeric c and d",
+                // And declines when the other factor is numeric as well, because then there is
+                // nothing to take the factor out *of*: `two-powers-of-one-exponent-share-a-base`
+                // collects those back together, and the two looped. `(2 * 3) ^ 2` folds to 36 on
+                // its own. https://github.com/asc-community/AngouriMath/issues/1171
+                when: bound => (bound["d"] is Integer || bound["c"] is Real { IsPositive: true })
+                               && bound["a"] is not Number,
+                description: "(c * a) ^ d = c ^ d * a ^ d, for a numeric c and d and a symbolic a",
                 // Both c and d are Numbers, which are leaves, so the pattern is four nodes around
                 // the remaining hole and the replacement is six: exactly +2, for every input.
                 growth: RewriteRuleGrowth.Expands),
