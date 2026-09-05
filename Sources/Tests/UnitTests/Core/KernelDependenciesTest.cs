@@ -56,6 +56,22 @@ namespace AngouriMath.Tests.Core
             "Antlr4.Runtime.Standard",
         };
 
+        /// <summary>
+        /// Whether a reference is part of the framework rather than something a consumer restores.
+        /// </summary>
+        /// <remarks>
+        /// <c>netstandard</c> is on this list because it is the reference assembly the
+        /// netstandard2.0 leg resolves against, and it appears or does not depending on which leg
+        /// is loaded. The first version of this file asserted an exact set that had been measured
+        /// on one leg, passed locally on <c>net10.0</c>, and failed the <c>C# Test</c> workflow on
+        /// exactly that name. Which framework assemblies appear is a fact about the build leg;
+        /// which third-party ones appear is the packaging decision, and only the second is
+        /// asserted exactly.
+        /// </remarks>
+        private static bool IsFramework(string name) =>
+            name.StartsWith("System.", System.StringComparison.Ordinal)
+            || name is "System" or "netstandard" or "mscorlib";
+
         private static string[] Referenced() =>
             typeof(MathS).Assembly
                 .GetReferencedAssemblies()
@@ -63,53 +79,49 @@ namespace AngouriMath.Tests.Core
                 .OrderBy(name => name, System.StringComparer.Ordinal)
                 .ToArray();
 
+        /// <summary>
+        /// The framework assemblies seen so far, across the legs this has run on. A superset rather
+        /// than an equality: a leg that resolves fewer of them is not a packaging event, while one
+        /// that pulls in something new — <c>System.Text.Json</c> arriving with
+        /// <c>Core/Serialization</c> is the case in point — is exactly what wants seeing.
+        /// </summary>
+        private static readonly string[] Framework =
+        {
+            "System.Collections",
+            "System.Collections.Concurrent",
+            "System.Console",
+            "System.Linq",
+            "System.Linq.Expressions",
+            "System.Memory",
+            "System.Runtime",
+            "System.Runtime.Numerics",
+            "System.Text.Json",
+            "System.Threading",
+            "netstandard",
+        };
+
         [Fact]
         public void TheKernelReferencesNothingItIsNotRecordedAsReferencing()
         {
-            var expected = new[]
-            {
-                "Antlr4.Runtime.Standard",
-                "GenericTensor",
-                "HonkSharp",
-                "Numbers",
-                "System.Collections",
-                "System.Collections.Concurrent",
-                "System.Console",
-                "System.Linq",
-                "System.Linq.Expressions",
-                "System.Memory",
-                "System.Runtime",
-                "System.Runtime.Numerics",
-                "System.Text.Json",
-                "System.Threading",
-            };
+            var recorded = Framework.Concat(ThirdParty).ToList();
+            var added = Referenced().Except(recorded).ToList();
 
-            var actual = Referenced();
-
-            var added = actual.Except(expected).ToList();
             Assert.True(added.Count == 0,
                 $"the kernel references {added.Count} assemblies this list does not record: "
                 + string.Join(", ", added)
                 + ". Adding one is a packaging decision — see Docs/Contributing/Packaging.md §11 — "
                 + "so record it here in the same change that adds it.");
-
-            // The other direction, so the list cannot outlive what it describes: a dependency that
-            // goes away should be deleted here rather than left asserting nothing.
-            var gone = expected.Except(actual).ToList();
-            Assert.True(gone.Count == 0,
-                $"{gone.Count} assemblies are recorded here and no longer referenced, and should be "
-                + "deleted: " + string.Join(", ", gone));
         }
 
         /// <summary>
-        /// The number that matters to a consumer, separately from the framework ones, because it
-        /// is what a restore actually fetches.
+        /// The set that matters to a consumer, separately from the framework ones, because it is
+        /// what a restore actually fetches. Asserted exactly, in both directions.
         /// </summary>
         [Fact]
         public void TheThirdPartyDependenciesAreTheFourThatWereAgreed()
         {
             var actual = Referenced()
-                .Where(name => !name.StartsWith("System.", System.StringComparison.Ordinal))
+                .Where(name => !IsFramework(name))
                 .OrderBy(name => name, System.StringComparer.Ordinal)
                 .ToArray();
 

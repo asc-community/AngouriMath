@@ -144,7 +144,10 @@ typeof(AngouriMath.Entity).Assembly     # measured by reflection on the built ne
   ANTLR-generated lexer and parser default their error streams to it.) This said 13 until
   `System.Text.Json` arrived with `Core/Serialization` — a framework assembly, so no consumer's
   restore changed, and nothing noticed for the same reason. `KernelDependenciesTest` is the gate §7
-  asked for and now holds both counts.
+  asked for. It asserts the **third-party** set exactly, in both directions, and the framework ones
+  only as a set nothing may exceed — which framework assemblies a build resolves depends on the
+  target framework leg, and `netstandard` appears on the netstandard2.0 one and not on `net10.0`.
+  A leg resolving fewer of them is not a packaging event; one pulling in something new is.
 
 **Twelve capabilities × 68 node types is the reason the kernel is one assembly.** A capability written
 as an abstract member of `Entity` cannot be in a different package than `Entity`, whatever anyone
