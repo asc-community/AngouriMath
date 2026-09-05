@@ -64,9 +64,38 @@ namespace AngouriMath.Tests.Core.Transformations
             "2 * x + 3 * x", "x + x", "x - x", "x * x", "a * c + a / b",
         };
 
+        private static readonly string[] Leaves =
+            { "x", "y", "2", "-1", "-2", "1/2", "-1/2", "1", "0" };
+
+        private static readonly string[] Unary =
+            { "-({0})", "1 / ({0})", "({0}) ^ 2", "({0}) ^ (-2)", "sqrt({0})", "sin({0})", "abs({0})" };
+
+        private static readonly string[] Binary =
+            { "({0}) + ({1})", "({0}) - ({1})", "({0}) * ({1})", "({0}) / ({1})", "({0}) ^ ({1})" };
+
+        /// <summary>
+        /// The seeds above, and the generated arithmetic the growth check uses on top of them.
+        /// The seeds alone are shapes somebody thought of; the grammar reaches the arrangements
+        /// nobody would write down, which is where <c>-x / (-y)</c> came from in the first place.
+        /// </summary>
         private static IEnumerable<Entity> Corpus()
         {
-            foreach (var source in Seeds)
+            var generated = new List<string>(Leaves);
+            var level2 = new List<string>();
+            foreach (var shape in Unary)
+                foreach (var inner in generated)
+                    level2.Add(string.Format(shape, inner));
+            foreach (var shape in Binary)
+                foreach (var left in generated)
+                    foreach (var right in generated)
+                        level2.Add(string.Format(shape, left, right));
+            var level3 = new List<string>();
+            foreach (var shape in Binary)
+                foreach (var left in level2.Where((_, i) => i % 17 == 0))
+                    foreach (var right in level2.Where((_, i) => i % 23 == 0))
+                        level3.Add(string.Format(shape, left, right));
+
+            foreach (var source in Seeds.Concat(generated).Concat(level2).Concat(level3))
             {
                 Entity parsed;
                 try { parsed = source.ToEntity(); }
@@ -77,6 +106,26 @@ namespace AngouriMath.Tests.Core.Transformations
 
         /// <summary>How many rewrites to allow before calling it divergence rather than a cycle.</summary>
         private const int Steps = 64;
+
+        /// <summary>
+        /// The cycles that are known, filed and deliberately still here. Written as the whole loop
+        /// rather than as a set name, so that the entry says what it is excusing.
+        /// </summary>
+        /// <remarks>
+        /// Both are <c>Power</c> holding an inverse pair:
+        /// <c>two-powers-of-one-exponent-share-a-base</c> collects <c>a ^ b * c ^ b</c> into
+        /// <c>(a * c) ^ b</c> and <c>positive-power-of-a-product-distributes</c> takes it straight
+        /// back. Neither rule is wrong and each is wanted in its own direction; a *set* containing
+        /// both has no normal form to reach, which is
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1171">#1171</a>.
+        /// <see cref="Entity.Simplify()"/> is unaffected — it folds between passes, so <c>1 * x</c>
+        /// collapses and the shape the second rule needs stops existing.
+        /// </remarks>
+        private static readonly string[] KnownCycles =
+        {
+            "Power: 1 ^ (-2) * x ^ (-2)  ->  (1 * x) ^ (-2)  ->  1 ^ (-2) * x ^ (-2)",
+            "Power: (-2) ^ 2 * (1/2) ^ 2  ->  ((-2) * 1/2) ^ 2  ->  (-2) ^ 2 * (1/2) ^ 2",
+        };
 
         [Fact]
         public void NoRuleSetRewritesBackToATermItHasAlreadyProduced()
@@ -107,9 +156,18 @@ namespace AngouriMath.Tests.Core.Transformations
                     }
                 }
 
-            Assert.True(cycles.Count == 0,
-                $"{cycles.Count} rule sets rewrite back to a term they have already produced:\n"
-                + string.Join("\n", cycles.Distinct()));
+            var found = cycles.Distinct().ToList();
+            var unexpectedCycles = found.Except(KnownCycles).ToList();
+            Assert.True(unexpectedCycles.Count == 0,
+                $"{unexpectedCycles.Count} rule sets rewrite back to a term they have already "
+                + "produced:\n" + string.Join("\n", unexpectedCycles));
+
+            // And each known one is still there, so that fixing #1171 deletes the entry rather
+            // than leaving a loop written out here that no longer happens.
+            var goneCycles = KnownCycles.Except(found).ToList();
+            Assert.True(goneCycles.Count == 0,
+                $"{goneCycles.Count} entries above no longer cycle and should be deleted:\n"
+                + string.Join("\n", goneCycles));
         }
 
         /// <summary>
@@ -127,19 +185,15 @@ namespace AngouriMath.Tests.Core.Transformations
         [Fact]
         public void EveryRegisteredSetSettlesOnTheSeeds()
         {
-            // Named rather than counted, so that finding another one is a change to this list.
-            // NumericNeat grows `-x / (-y)` by four nodes a pass for ever: the rules that bring a
-            // negative factor out of a numerator and out of a denominator each leave the
-            // magnitude of -1 behind as a literal `1 *` factor instead of folding it, and then
-            // undo each other around it --
-            //   -1 * x / (-y)
-            //   -1 * 1 * x / (1 * y) * 1 * (-1)
-            //   -1 * 1 * 1 * x / (1 * y) * 1 * 1 * (-1)
-            // `Simplify` is not affected and answers `x / y`, because the pipeline is bounded and
-            // picks by size rather than running this set alone to a fixed point. It is a set with
-            // no fixed point on an ordinary input all the same.
-            // https://github.com/asc-community/AngouriMath/issues/1167
-            var known = new[] { "NumericNeat: -x / (-y)" };
+            // The two shapes of #1171, which are the whole-tree face of the pair in
+            // <see cref="KnownCycles"/>. Nothing else is excused: NumericNeat grew `-x / (-y)` by
+            // four nodes a pass for ever until #1167, and its entry here is gone rather than left
+            // behind meaning nothing.
+            var known = new[]
+            {
+                "Power: 1 ^ (-2) * x ^ (-2)",
+                "Power: (-2) ^ 2 * (1/2) ^ 2",
+            };
 
             var unsettled = new List<string>();
 
@@ -161,9 +215,12 @@ namespace AngouriMath.Tests.Core.Transformations
                 $"{unexpected.Count} set-and-expression pairs newly fail to reach a fixed point "
                 + $"in {Steps} passes:\n" + string.Join("\n", unexpected.Take(20)));
 
-            // And the known one is still known: fixing it should delete it from the list rather
+            // And each known one is still known: fixing it should delete it from the list rather
             // than leave a name here that no longer means anything.
-            Assert.Equal(known, unsettled.Distinct().Intersect(known).ToArray());
+            var gone = known.Except(unsettled).ToList();
+            Assert.True(gone.Count == 0,
+                $"{gone.Count} entries above now settle and should be deleted:\n"
+                + string.Join("\n", gone));
         }
 
         /// <summary>
