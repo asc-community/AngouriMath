@@ -210,12 +210,19 @@ namespace AngouriMath.Functions
             Mulf(Sumf(Variable var1, var any1), Minusf(Variable var1a, var any1a))
                 when (var1, any1) == (var1a, any1a) => new Powf(var1, 2) - new Powf(any1, 2),
 
-            // a / a
-            Divf(var any1, var any1a) when any1 == any1a => Integer.One.Provided(!any1.EqualTo(Integer.Zero)),
+            // a / a. Two assumptions, not one: that a is not zero, and that a has a value at all.
+            // `ln(x) / ln(x)` is undefined at x = 0 and `1` is not, and `not ln(x) = 0` does not
+            // exclude it -- ln(0) is -oo, so the comparison is a definite false and the condition
+            // holds. https://github.com/asc-community/AngouriMath/issues/1174
+            Divf(var any1, var any1a) when any1 == any1a =>
+                Integer.One.Provided(!any1.EqualTo(Integer.Zero) & any1.DomainCondition),
 
-            // (a * c) / c
-            Divf(Mulf(var any1, var any2), var any2a) when any2 == any2a => any1.Provided(!any2.EqualTo(Integer.Zero)),
-            Divf(Mulf(var any2, var any1), var any2a) when any2 == any2a => any1.Provided(!any2.EqualTo(Integer.Zero)),
+            // (a * c) / c. Two assumptions, not one: that c is not zero, and that c has a value
+            // at all. https://github.com/asc-community/AngouriMath/issues/1174
+            Divf(Mulf(var any1, var any2), var any2a) when any2 == any2a =>
+                any1.Provided(!any2.EqualTo(Integer.Zero) & any2.DomainCondition),
+            Divf(Mulf(var any2, var any1), var any2a) when any2 == any2a =>
+                any1.Provided(!any2.EqualTo(Integer.Zero) & any2.DomainCondition),
             Divf(Mulf(var any1, var any2), Mulf(var any2a, var any3)) when any2 == any2a => (any1 / any3).Provided(!any2.EqualTo(Integer.Zero)),
             Divf(Mulf(var any1, var any2), Mulf(var any3, var any2a)) when any2 == any2a => (any1 / any3).Provided(!any2.EqualTo(Integer.Zero)),
             Divf(Mulf(var any2, var any1), Mulf(var any2a, var any3)) when any2 == any2a => (any1 / any3).Provided(!any2.EqualTo(Integer.Zero)),

@@ -2720,9 +2720,11 @@ namespace AngouriMath.Core.Transformations.Matching
             new MatchedRule(
                 "a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero",
                 MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
-                bound => new Providedf(1, !bound["a"].EqualTo(0)),
+                // Two assumptions, not one: that a is not zero, and that a has a value at all.
+                // https://github.com/asc-community/AngouriMath/issues/1174
+                bound => new Providedf(1, !bound["a"].EqualTo(0) & bound["a"].DomainCondition),
                 Soundness.SoundUnderAssumptions,
-                description: "a / a = 1, provided a is not zero"),
+                description: "a / a = 1, provided a is not zero and is defined"),
 
             new MatchedRule(
                 "a-power-whose-exponent-divides-by-a-logarithm-of-its-own-base-changes-base",
@@ -3444,15 +3446,21 @@ namespace AngouriMath.Core.Transformations.Matching
             new MatchedRule(
                 "a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero",
                 MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
-                bound => Integer.One.Provided(!bound["a"].EqualTo(Integer.Zero)),
+                // Two assumptions, not one: that a is not zero, and that a has a value at all.
+                // https://github.com/asc-community/AngouriMath/issues/1174
+                bound => Integer.One.Provided(
+                    !bound["a"].EqualTo(Integer.Zero) & bound["a"].DomainCondition),
                 Soundness.SoundUnderAssumptions,
-                description: "a / a = 1, provided a is not zero"),
+                description: "a / a = 1, provided a is not zero and is defined"),
             new MatchedRule(
                 "a-shared-factor-cancels-out-of-a-quotient",
                 MatchPattern.Node<Divf>(MatchPattern.Commutative<Mulf>(MatchPattern.Any("keep"), MatchPattern.Any("c")), MatchPattern.Any("c")),
-                bound => bound["keep"].Provided(!bound["c"].EqualTo(Integer.Zero)),
+                // Two assumptions, not one: that c is not zero, and that c has a value at all.
+                // https://github.com/asc-community/AngouriMath/issues/1174
+                bound => bound["keep"].Provided(
+                    !bound["c"].EqualTo(Integer.Zero) & bound["c"].DomainCondition),
                 Soundness.SoundUnderAssumptions,
-                description: "(keep * c) / c = keep, provided c is not zero"),
+                description: "(keep * c) / c = keep, provided c is not zero and is defined"),
             new MatchedRule(
                 "a-shared-factor-cancels-between-two-products",
                 MatchPattern.Node<Divf>(MatchPattern.Commutative<Mulf>(MatchPattern.Any("num"), MatchPattern.Any("c")), MatchPattern.Commutative<Mulf>(MatchPattern.Any("c"), MatchPattern.Any("den"))),

@@ -87,8 +87,26 @@ namespace AngouriMath.Tests.Core.Transformations
                     foreach (var right in level2.Where((_, i) => i % 23 == 0))
                         level3.Add(string.Format(shape, left, right));
 
+            // A rule about `a op a` needs a corpus of `a op a`. `a / a = 1` and `k - k = 0` are
+            // the two rules this check exists for, and what makes either wrong is an operand that
+            // is undefined somewhere -- so the operand has to be something that can be. The
+            // corpus had `ln(x)` and never `ln(x) / ln(x)`, which is why removing the blanket
+            // exemption for a Providedf reported nothing until this went in.
+            // https://github.com/asc-community/AngouriMath/issues/1174
+            // The cancellations too, not only `a op a`: `(y * c) / c` is `y` provided c is not
+            // zero, and that condition has the same hole in it as `c / c` did.
+            var repeated = new List<string>();
+            foreach (var shape in Leaves.Concat(Unary.Select(u => string.Format(u, "x"))).Concat(Reached))
+                foreach (var op in new[]
+                {
+                    "({0}) / ({0})", "({0}) - ({0})",
+                    "(y * ({0})) / ({0})", "(({0}) * y) / ({0})",
+                    "(y * ({0})) / (({0}) * z)", "(({0}) * y) / (z * ({0}))",
+                })
+                    repeated.Add(string.Format(op, shape));
+
             var parsed = new List<Entity>();
-            foreach (var source in level1.Concat(level2).Concat(level3).Concat(Reached))
+            foreach (var source in level1.Concat(level2).Concat(level3).Concat(Reached).Concat(repeated))
             {
                 try { parsed.Add(source.ToEntity()); }
                 catch { /* the generator makes some strings the parser declines */ }
@@ -179,7 +197,9 @@ namespace AngouriMath.Tests.Core.Transformations
                 if (rule.Soundness is not Soundness.Sound) continue;
                 foreach (var (before, after) in firings)
                 {
-                    // A rule whose replacement attaches a condition is declaring the change.
+                    // A rule whose replacement attaches a condition is declaring the change, and
+                    // whether the condition is strong enough is asked separately by
+                    // ARuleThatAttachesAConditionAttachesASufficientOne.
                     if (after.Nodes.Any(n => n is Entity.Providedf)) continue;
 
                     // Arithmetic only. Substituting a real into a boolean or a set is a category
@@ -221,6 +241,95 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.True(gone.Count == 0,
                 $"{gone.Count} entries above no longer offend and should be deleted:\n"
                 + string.Join("\n", gone));
+        }
+
+        /// <summary>
+        /// <b>A condition is a claim, and this is the claim checked.</b> A rule that attaches a
+        /// <c>Provided</c> is asserting that what it excludes is <i>enough</i> — that wherever the
+        /// condition holds, the rewrite is right. Asked of every rule that attaches one, at any
+        /// tier, because attaching a condition is what states an assumption rather than leaving it
+        /// unstated.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Why this is not the check above with an exemption removed.</b> That one is asked
+        /// only of <see cref="Soundness.Sound"/> rules, and the rule this was written for —
+        /// <c>a / a = 1</c> — is <see cref="Soundness.SoundUnderAssumptions"/>, so removing the
+        /// exemption reported nothing. The tier is carrying two meanings: <i>assumes something it
+        /// never states</i>, which nothing can check, and <i>states its assumption as a
+        /// condition</i>, which is exactly this. The two need separate questions.
+        /// </para>
+        /// <para>
+        /// The condition is honoured for free rather than interpreted: a <c>Providedf</c> whose
+        /// condition is false evaluates to <c>NaN</c>, so asking whether the whole replacement has
+        /// a value at a point already accounts for it. What is left over is a replacement that has
+        /// a value where the original had none — the condition admitting a point it should have
+        /// excluded.
+        /// </para>
+        /// </remarks>
+        [Fact]
+        public void ARuleThatAttachesAConditionAttachesASufficientOne()
+        {
+            var insufficient = new List<string>();
+
+            foreach (var (rule, firings) in Firings())
+                foreach (var (before, after) in firings)
+                {
+                    if (!after.Nodes.Any(n => n is Entity.Providedf)) continue;
+                    // Asked of `before` only. A Providedf's condition *is* a Statement, so
+                    // `IsArithmetic(after)` is false for every rule that attaches one -- the guard
+                    // that keeps booleans out of the check above excludes exactly the population
+                    // this one is about. `after` needs no guard: HasValueAt answers false for
+                    // anything that does not evaluate to a finite number, which is the direction
+                    // this skips anyway.
+                    if (IsArithmetic(before) is false) continue;
+
+                    foreach (var point in CheckPoints)
+                    {
+                        var had = HasValueAt(before, point);
+                        var has = HasValueAt(after, point);
+                        if (had is null || has is null) continue;
+                        // Only the direction that invents an answer. A condition that excludes
+                        // more than it needs to loses a rewrite; one that excludes less states
+                        // something untrue.
+                        if (had is true || has is false) continue;
+                        insufficient.Add($"{rule.Name}: {before.Stringize()} -> {after.Stringize()} "
+                                         + $"at {point.Stringize()}: had no value, has one");
+                        break;
+                    }
+                }
+
+            // Named rather than counted. `a / a = 1` attaches `provided a is not zero`, which
+            // excludes the zero of a and not the points where a has no value at all -- so
+            // `ln(x) / ln(x)` answers 1 at x = 0, where `ln(0)` is -oo, `-oo = 0` is a definite
+            // false, and the condition holds. Fixing it should delete the entry rather than leave
+            // a name that means nothing.
+            // https://github.com/asc-community/AngouriMath/issues/1174
+            // Empty, and it has been used. `a / a = 1` attached `provided a is not zero`, which
+            // excludes the zero of a and not the points where a has no value at all -- so
+            // `ln(x) / ln(x)` answered 1 at x = 0, where `ln(0)` is -oo, `-oo = 0` is a definite
+            // false, and the condition held. It attaches `a`'s DomainCondition as well now.
+            //
+            // `a-quotient-of-symbolic-parts-is-grouped-pairwise` was a second entry here and went
+            // with the same change rather than needing one of its own: it computes its answer
+            // through `PairwiseGroupedQuotient`, which puts each grouped factor through the Power
+            // switch, and the `a / a` arm of that switch is one of the three spellings corrected.
+            // https://github.com/asc-community/AngouriMath/issues/1174
+            var known = System.Array.Empty<string>();
+
+            var offending = insufficient.Select(c => c.Split(':')[0]).Distinct().ToList();
+            var unexpected = offending.Except(known).ToList();
+
+            Assert.True(unexpected.Count == 0,
+                $"{unexpected.Count} rules attach a condition that admits a point where the "
+                + "original has no value and the replacement does:\n"
+                + string.Join("\n", insufficient.Where(c => unexpected.Contains(c.Split(':')[0])).Take(20)));
+
+            // The other direction, so a name here cannot outlive what it describes.
+            var gone = known.Except(offending).ToList();
+            Assert.True(gone.Count == 0,
+                $"{gone.Count} entries above now attach a sufficient condition and should be "
+                + "deleted:\n" + string.Join("\n", gone));
         }
 
         /// <summary>

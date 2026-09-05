@@ -46,7 +46,10 @@ namespace AngouriMath.Functions
         internal static Entity PowerRules(Entity x) => x switch
         {
             // {} / {} = 1 provided not {} = 0
-            Divf(var any1, var any1a) when any1 == any1a => new Providedf(1, !any1.EqualTo(0)),
+            // Two assumptions, not one: that a is not zero, and that a has a value at all.
+            // https://github.com/asc-community/AngouriMath/issues/1174
+            Divf(var any1, var any1a) when any1 == any1a =>
+                new Providedf(1, !any1.EqualTo(0) & any1.DomainCondition),
 
             // {1}^({2} / log({3}, {1})) = {3}^{2}
             Powf(var any1, Divf(var any2, Logf(var any3, var any1a))) when any1 == any1a => new Powf(any3, any2),

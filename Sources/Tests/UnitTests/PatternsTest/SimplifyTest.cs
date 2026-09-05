@@ -80,7 +80,14 @@ namespace AngouriMath.Tests.PatternsTest
         // discharges itself. Checked at x = 3, 0, -1 and -2: the new form agrees with the
         // original at all four, where `1` disagreed at every pole.
         // https://github.com/asc-community/AngouriMath/issues/1081
-        [Fact] public void FactorialXP1OverFactorialXP1() => AssertSimplify(MathS.Factorial(x + 1) / MathS.Factorial(x + 1), "1 provided not (1 + x)! = 0");
+        // And the condition is now the factorial's own domain rather than `a != 0`, because
+        // `a / a = 1` conjoins the operand's DomainCondition since
+        // https://github.com/asc-community/AngouriMath/issues/1174. The value does not move:
+        // measured at x = -4, -3, -2, -1, 0, 2 and -3/2, the old condition and the new one agree
+        // with the unsimplified quotient at every one -- NaN at the three poles and 1 elsewhere.
+        // The old form was adequate here by accident, since `(1 + x)!` is NaN at a pole and a
+        // comparison against NaN is not True; the new one says so rather than relying on it.
+        [Fact] public void FactorialXP1OverFactorialXP1() => AssertSimplify(MathS.Factorial(x + 1) / MathS.Factorial(x + 1), "1 provided 1 + x in RR and (1 + x >= 0 or not 1 + x in ZZ)");
         [Fact] public void FactorialXP1OverFactorialX() => AssertSimplify(MathS.Factorial(1 + x) / MathS.Factorial(x), 1 + x);
         [Fact] public void FactorialXP1OverFactorialXM2() => AssertSimplify(MathS.Factorial(1 + x) / MathS.Factorial(-2 + x), "x3 - x");
         [Fact] public void FactorialXP1OverFactorialXM1() => AssertSimplify(MathS.Factorial(1 + x) / MathS.Factorial(-1 + x), x * (1 + x));
@@ -92,7 +99,9 @@ namespace AngouriMath.Tests.PatternsTest
         [Fact] public void FactorialXOverFactorialXM3() => AssertSimplifyIdentical(MathS.Factorial(x) / MathS.Factorial(x - 3));
         [Fact] public void FactorialXM1OverFactorialXP1() => AssertSimplify(MathS.Factorial(x - 1) / MathS.Factorial(x + 1), 1 / (x * (x + 1)));
         [Fact] public void FactorialXM1OverFactorialX() => AssertSimplify(MathS.Factorial(-1 + x) / MathS.Factorial(x), 1 / x);
-        [Fact] public void FactorialXM1OverFactorialXM1() => AssertSimplify(MathS.Factorial(x - 1) / MathS.Factorial(x - 1), "1 provided not (-1 + x)! = 0");
+        // The domain condition, as above. `FactorialXOverFactorialX` keeps the older form and is
+        // not a inconsistency to fix here: a bare `x!` reaches this through a different candidate.
+        [Fact] public void FactorialXM1OverFactorialXM1() => AssertSimplify(MathS.Factorial(x - 1) / MathS.Factorial(x - 1), "1 provided x - 1 in RR and (x - 1 >= 0 or not x - 1 in ZZ)");
         [Fact] public void FactorialXM1OverFactorialXM2() => AssertSimplify(MathS.Factorial(-1 + x) / MathS.Factorial(-2 + x), x - 1);
         // Same two factors, now in ascending order: the polynomial factorer offers
         // (x - 1) * (x - 2) and the complexity metric cannot tell the two orders apart.
