@@ -169,7 +169,7 @@ namespace AngouriMath.Functions
             Minusf(var any1, Mulf(var any2, var any1a)) when any1 == any1a => any1 * (1 - any2),
             Minusf(Mulf(var any1, var any2), var any1a) when any1 == any1a => any1 * (any2 - 1),
             Minusf(Mulf(var any2, var any1), var any1a) when any1 == any1a => any1 * (any2 - 1),
-            Minusf(var any1, var any1a) when any1 == any1a => 0,
+            Minusf(var any1, var any1a) when any1 == any1a => Integer.Create(0).Provided(any1.DomainCondition),
 
             // {1} / {2} + {1} * {3} = {1} * (1 / {2} + {3})
             Sumf(Divf(var any1, var any2), Mulf(var any1a, var any3)) when any1 == any1a => any1 * (1 / any2 + any3),

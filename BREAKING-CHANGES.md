@@ -115,6 +115,33 @@ read first.
 | | `"x^2/(x^2 + 2)^2".Integrate("x")`, and every polynomial numerator over one | `integral(x ^ 2 / (x ^ 2 + 2) ^ 2, x)` — left unevaluated, after 93 s | the antiderivative, in 0.57 s |
 | | `"1/(x^2 - 1)^2".Integrate("x")`, and every repeated quadratic whose roots are real | `C - ln(x + -1) / 4 + ln(1 + 2 * x + x ^ 2) / 8 + -1/2 * x / (x ^ 2 + -1)` | `C - ln(1 + (-2) / (x + 1)) / 4 + -1/2 * x / (x ^ 2 + -1)` — the same value, one logarithm rather than two |
 
+| **Silent** | `"1/x - 1/x".ToEntity().Simplify()`, and every difference of a term from itself where that term can be undefined | `0`, including at `x = 0` where neither side has a value | `0 provided not x = 0` |
+
+### A term subtracted from itself says what it assumes
+
+`k - k = 0` was declared `Sound`, which means it holds for every value the pattern admits with
+nothing assumed. It assumed one: that `k` has a value.
+
+```
+"1/x - 1/x".Simplify()          was  0                    is  0 provided not x = 0
+"ln(x) - ln(x)".Simplify()      was  0                    is  0 provided not x = 0
+"x^(-2) - x^(-2)".Simplify()    was  0                    is  0 provided not x = 0
+```
+
+At `x = 0` the left side is undefined and `0` is not, so the rewrite invented an answer. Its sibling
+for the same shape, `a / a = 1`, has always attached `provided a is not zero`; this one attached
+nothing ([#1169](https://github.com/asc-community/AngouriMath/issues/1169)).
+
+**Nothing else moves.** The condition is the operand's own `DomainCondition`, which is trivially
+true for anything that cannot be undefined and folds away — `x - x`, `sin(x) - sin(x)`,
+`(x + 1) - (x + 1)`, `x * y - x * y` and `sqrt(x) - sqrt(x)` all still answer a bare `0`, and
+`x - x + y` still answers `y`. Only the three shapes above gain a condition, and each of them is one
+that was wrong.
+
+Found by `RuleEffectsMeasuredTest.NoSoundRuleChangesWhereItsResultHasAValue`, which substitutes a
+real for every free variable — **zero among them** — and compares whether both sides still evaluate
+to something finite.
+
 ### A repeated quadratic denominator is integrated
 
 `1/(x^2 + 1)^2` had no antiderivative, while `1/(x^2 - 1)^2` and `1/(x^2 + 2x + 1)^2` both did — a

@@ -57,7 +57,7 @@ namespace AngouriMath.Functions
             Minusf(var any1, Mulf(var any2, var any1a)) when any1 == any1a => any1 * (1 - any2),
             Minusf(Mulf(var any1, var any2), var any1a) when any1 == any1a => any1 * (any2 - 1),
             Minusf(Mulf(var any2, var any1), var any1a) when any1 == any1a => any1 * (any2 - 1),
-            Minusf(var any1, var any1a) when any1 == any1a => 0,
+            Minusf(var any1, var any1a) when any1 == any1a => Integer.Create(0).Provided(any1.DomainCondition),
 
             // a ^ b * c ^ b = (a * c) ^ b
             //
