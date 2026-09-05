@@ -292,7 +292,11 @@ namespace AngouriMath.Tests.Core.Transformations
                 "Power[a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero,two-powers-of-one-base-divide-by-subtracting-exponents]",
                 "Power[a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero,two-powers-of-one-exponent-share-a-quotient-of-bases]",
                 "Power[two-powers-of-one-base-divide-by-subtracting-exponents,two-powers-of-one-exponent-share-a-quotient-of-bases]",
-                // `e ^ 3 * e ^ 3` -> e ^ 6 against (e ^ 2) ^ 3. The inverse pair of #1171.
+                // `e ^ 3 * e ^ 3` -> e ^ 6 against (e ^ 2) ^ 3. Not the pair #1171 is about, which
+                // this comment used to claim: that one is `two-powers-of-one-exponent-share-a-base`
+                // against `a-numeric-factor-comes-out-of-a-power-of-a-product`, and it is a
+                // non-terminating loop rather than a one-step disagreement. This is an ordinary
+                // arm ordering, and the two share a rule name and nothing else.
                 "Power[two-powers-of-one-base-multiply-by-adding-exponents,two-powers-of-one-exponent-share-a-base]",
             };
 
