@@ -113,6 +113,60 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         /// <summary>
+        /// The same question over a whole tree rather than at the root, which is the half the
+        /// loop above cannot answer: a full pass can move its rewrite to a different node each
+        /// time and never repeat a term while still never settling.
+        /// </summary>
+        /// <remarks>
+        /// <c>UntilStable</c> reports hitting its bound as <b>no answer</b> rather than as the
+        /// last value reached, and its remarks say why — "an unbounded rewrite loop is the failure
+        /// mode this layer is supposed to make visible, and handing back a value from the middle
+        /// of one would hide exactly the case worth seeing". This is a caller taking it up on
+        /// that.
+        /// </remarks>
+        [Fact]
+        public void EveryRegisteredSetSettlesOnTheSeeds()
+        {
+            // Named rather than counted, so that finding another one is a change to this list.
+            // NumericNeat grows `-x / (-y)` by four nodes a pass for ever: the rules that bring a
+            // negative factor out of a numerator and out of a denominator each leave the
+            // magnitude of -1 behind as a literal `1 *` factor instead of folding it, and then
+            // undo each other around it --
+            //   -1 * x / (-y)
+            //   -1 * 1 * x / (1 * y) * 1 * (-1)
+            //   -1 * 1 * 1 * x / (1 * y) * 1 * 1 * (-1)
+            // `Simplify` is not affected and answers `x / y`, because the pipeline is bounded and
+            // picks by size rather than running this set alone to a fixed point. It is a set with
+            // no fixed point on an ordinary input all the same.
+            // https://github.com/asc-community/AngouriMath/issues/1167
+            var known = new[] { "NumericNeat: -x / (-y)" };
+
+            var unsettled = new List<string>();
+
+            foreach (var set in RewriteRules.All)
+            {
+                var rewriting = Transformation.Rewriting(set).UntilStable(Steps);
+                foreach (var start in Corpus())
+                {
+                    TransformationResult result;
+                    try { result = rewriting.Apply(start); }
+                    catch { continue; /* a rule declining loudly is not this test's subject */ }
+                    if (!result.Succeeded)
+                        unsettled.Add($"{set.Name}: {start.Stringize()}");
+                }
+            }
+
+            var unexpected = unsettled.Distinct().Except(known).ToList();
+            Assert.True(unexpected.Count == 0,
+                $"{unexpected.Count} set-and-expression pairs newly fail to reach a fixed point "
+                + $"in {Steps} passes:\n" + string.Join("\n", unexpected.Take(20)));
+
+            // And the known one is still known: fixing it should delete it from the list rather
+            // than leave a name here that no longer means anything.
+            Assert.Equal(known, unsettled.Distinct().Intersect(known).ToArray());
+        }
+
+        /// <summary>
         /// The loop above has to actually rewrite something, or it passes by never firing. Named
         /// as a count that moves rather than as "it works".
         /// </summary>
