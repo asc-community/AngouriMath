@@ -39,13 +39,18 @@ namespace AngouriMath.Tests.Core.Transformations
     /// nothing either way, and are not recorded as agreeing.
     /// </para>
     /// <para>
-    /// <b>And a shallower sample than it reads as.</b> The third level below is grown with unary
-    /// shapes only, so this corpus never builds a quotient of quotients or a product of quotients —
-    /// which is where a special rule and the general rule that would swallow it meet.
-    /// <c>RulePriorityTest</c> asks the same question of the same rules written as data, over a
-    /// corpus grown with binary shapes at every level, and finds <b>45</b> conflicts where this
-    /// finds three. It also names them as the rules they are between rather than as the indices
-    /// below, which is what the note on
+    /// <b>It used to be a shallower sample than it read as.</b> The third level was grown with
+    /// unary shapes only, so this corpus never built a quotient of quotients or a product of
+    /// quotients — which is where a special rule and the general rule that would swallow it meet.
+    /// This paragraph said so, and said that <c>RulePriorityTest</c> finds <b>45</b> conflicts over
+    /// a corpus grown with binary shapes at every level where this finds three. Growing this one
+    /// the same way takes it from three to <b>42</b>. The sentence was right and sat here being
+    /// right for as long as it took somebody to act on it.
+    /// </para>
+    /// <para>
+    /// Still a sample. What is fixed is that it is no longer a sample of only the shapes one
+    /// unary can build. <c>RulePriorityTest</c> also names its conflicts as the rules they are
+    /// between rather than as the indices below, which is what the note on
     /// <see cref="AConflictIsReportableAsThePatternsItIsBetween"/> asks for; a data rule has a name
     /// and a <c>switch</c> arm does not.
     /// </para>

@@ -79,12 +79,13 @@ namespace AngouriMath.Tests.Core.Transformations
         /// which is the difference that matters here.
         /// </summary>
         /// <remarks>
-        /// <see cref="RuleConfluenceTest"/> grows its third level with unary shapes only, so it
-        /// never builds a quotient of quotients or a product of quotients — and those are exactly
-        /// the shapes where a specific rule and the general rule that would swallow it both fire.
-        /// On that corpus <b>none</b> of the subsumption-ordered pairs below overlaps at all.
-        /// Growing the third level with binary shapes too finds six of them, and takes the
-        /// conflicts this sees from 3 to 45.
+        /// A third level grown with unary shapes only never builds a quotient of quotients or a
+        /// product of quotients — and those are exactly the shapes where a specific rule and the
+        /// general rule that would swallow it both fire. On such a corpus <b>none</b> of the
+        /// subsumption-ordered pairs below overlaps at all. Growing the third level with binary
+        /// shapes too finds six of them, and takes the conflicts this sees from 3 to 45.
+        /// <see cref="RuleConfluenceTest"/> was the standing example of the omission and is not
+        /// any more: grown the same way, its recorded arm orderings went from 3 to 42.
         /// </remarks>
         private static List<Entity> Expressions()
         {
