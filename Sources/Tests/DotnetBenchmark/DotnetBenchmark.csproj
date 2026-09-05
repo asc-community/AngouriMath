@@ -12,6 +12,30 @@
     <AssemblyOriginatorKeyFile>..\..\AngouriMath\key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
+  <!--
+  Set by `Sources/Utils/benchmark_key_commits.sh`, and by nothing else. The inter-version run
+  overlays this project onto an old checkout of the kernel, and the cases that reach internals
+  cannot compile against a kernel that had not made them internal-visible yet: `MatchedRules` and
+  `Patterns` were internal until v2.3.0, so the whole project failed to build for v2.2.0 and
+  earlier and those rows read "did not build" — while `CommonFunctionsInterVersion`, the only case
+  that run executes, uses nothing but the public API and would have compiled.
+
+  The flag is per-purpose, not per-commit: the script passes it for *every* row including master,
+  so what is compiled is the same in each column and the case that runs is the same file. That is
+  the property the comparison rests on, and conditioning per commit would have broken it.
+  https://github.com/asc-community/AngouriMath/issues/529
+  -->
+  <ItemGroup Condition="'$(InterVersionOnly)' == 'true'">
+    <Compile Remove="MatchingEngine.cs" />
+    <Compile Remove="TransformationLayer.cs" />
+    <Compile Remove="RAMUsageTest.cs" />
+    <Compile Remove="BenchLinqCompilation.cs" />
+    <Compile Remove="CacheCompiledFunc.cs" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(InterVersionOnly)' == 'true'">
+    <DefineConstants>$(DefineConstants);INTERVERSION_ONLY</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <None Include="..\..\.editorconfig" Link=".editorconfig" />
     <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />

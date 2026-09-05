@@ -18,6 +18,13 @@
 # calls the public API as it is now, so an old enough commit genuinely cannot be measured this
 # way, and that is worth seeing rather than silently omitting.
 #
+# What stopped older commits building was not that case, though. It was the *other* cases in the
+# same project -- MatchingEngine reaches internals that were internal until v2.3.0, and
+# TransformationLayer names Transformation.Rationalization, which did not exist at v2.1.0 -- so
+# the project failed to compile and took the row with it while the case that runs would have
+# compiled fine. `-p:InterVersionOnly=true` leaves those out. It is passed for every row, so the
+# columns still compare: the same file is compiled and the same file runs in each of them.
+#
 # Run from anywhere.
 
 set -uo pipefail
@@ -60,7 +67,12 @@ for commit in $commits; do
     cp -r "$repository/$benchmark" "$tree/Sources/Tests/"
     rm -rf "$tree/$benchmark/bin" "$tree/$benchmark/obj" "$tree/$benchmark/benchmark_results.csv"
 
-    if ! (cd "$tree/$benchmark" && dotnet build -c Release > "$results/$commit.build.log" 2>&1); then
+    # InterVersionOnly compiles the one case this run executes and leaves out the rest. A case
+    # that reaches API an older kernel did not have stops the whole project compiling and takes
+    # the row with it: MatchedRules and Patterns were internal until v2.3.0, and
+    # Transformation.Rationalization did not exist until after v2.1.0. Passed for every row
+    # including master, so what is compiled does not vary between columns.
+    if ! (cd "$tree/$benchmark" && dotnet build -c Release -p:InterVersionOnly=true > "$results/$commit.build.log" 2>&1); then
         echo "  did not build — see $results/$commit.build.log"
         echo "did not build" > "$results/$commit.status"
         continue
