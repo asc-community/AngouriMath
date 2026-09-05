@@ -53,7 +53,10 @@ namespace AngouriMath.Tests.Core.Transformations
     [Trait("Area", "Core")]
     public sealed class RuleConfluenceTest
     {
-        private static readonly string[] Leaves = { "x", "y", "2", "-1", "1/2", "0", "1", "3" };
+        // `-2` is here because `-1` is not enough of a negative: the four rules that take a
+        // negative factor out of a product decline a factor of -1 since #1167, so a corpus whose
+        // only negative is -1 cannot make them fire at all.
+        private static readonly string[] Leaves = { "x", "y", "2", "-1", "-2", "1/2", "0", "1", "3" };
 
         private static readonly string[] Unary =
         {
@@ -89,7 +92,13 @@ namespace AngouriMath.Tests.Core.Transformations
         {
             var level1 = new List<string>(Leaves);
             var level2 = Grow(level1, binary: true);
-            var level3 = Grow(level2.Where((_, i) => i % 11 == 0).ToList(), binary: false);
+            // `binary: true`, and that is the point of this line. A unary-only third level never
+            // builds a quotient of quotients or a product of quotients, which are exactly the
+            // shapes where two arms of one set both fire on one node — `RulePriorityTest`'s own
+            // remark measured the cost of the omission on its corpus, where growing the third
+            // level with binary shapes took the conflicts it could see from 3 to 45. This test is
+            // the one that remark names.
+            var level3 = Grow(level2.Where((_, i) => i % 11 == 0).ToList(), binary: true);
             var parsed = new List<Entity>();
             foreach (var source in level1.Concat(level2).Concat(level3))
             {
@@ -194,15 +203,92 @@ namespace AngouriMath.Tests.Core.Transformations
         {
             var conflicts = ConflictingPairs(out var examples);
 
+            // Forty-two, and it was three. The three were all this corpus could reach while its
+            // third level was unary: a quotient of quotients and a product of quotients are the
+            // shapes where two arms of one set both fire, and nothing built them. Each entry is
+            // an ordered pair `[first,second]` where `first` wins because it is written first,
+            // and the example beside it is a node they disagree on.
             var recorded = new[]
             {
-                // x * 1/2 -> 1/2 * x (the sort) rather than x / 2 (the quotient). Both settle to
-                // x / 2 once InnerSimplified has run.
+                // Four ways to collapse nested fractions, on `x / (1/2) * x / (1/2)` and
+                // `1 / 1 / (x / (1/2))`. Every arm is right; they differ in how far they go in
+                // one pass, and the normalisation settles them.
+                "CollapseMultipleFractions[product-of-two-quotients,product-with-a-quotient-on-the-left]",
+                "CollapseMultipleFractions[product-of-two-quotients,product-with-a-quotient-on-the-right]",
+                "CollapseMultipleFractions[product-with-a-quotient-on-the-right,product-with-a-quotient-on-the-left]",
+                "CollapseMultipleFractions[quotient-of-two-quotients,quotient-whose-denominator-is-a-quotient]",
+                "CollapseMultipleFractions[quotient-of-two-quotients,quotient-whose-numerator-is-a-quotient]",
+                "CollapseMultipleFractions[quotient-whose-numerator-is-a-quotient,quotient-whose-denominator-is-a-quotient]",
+
+                // `-x + -x`, which four arms all claim: collect the factor, read the negation as
+                // a subtraction, double the term, or add the numeric multiples. -> -(x + x),
+                // -x - x, 2 * -x, (-2) * x.
+                "Common[a-common-factor-of-two-added-products-comes-out,a-negated-term-in-a-sum-is-a-subtraction]",
+                "Common[a-common-factor-of-two-added-products-comes-out,a-term-added-to-itself-doubles]",
+                "Common[a-term-added-to-itself-doubles,a-negated-term-in-a-sum-is-a-subtraction]",
+                "Common[two-numeric-multiples-of-one-variable-add,a-common-factor-of-two-added-products-comes-out]",
+                "Common[two-numeric-multiples-of-one-variable-add,a-negated-term-in-a-sum-is-a-subtraction]",
+                "Common[two-numeric-multiples-of-one-variable-add,a-term-added-to-itself-doubles]",
+                // and `-x - -x`, the same disagreement subtracted: -(x - x) against 0.
+                "Common[a-common-factor-of-two-subtracted-products-comes-out,a-term-subtracted-from-itself-vanishes]",
+                "Common[two-numeric-multiples-of-one-variable-subtract,a-common-factor-of-two-subtracted-products-comes-out]",
+
+                // A negation in a sum beside a shared factor: `-x + x / (1/2)` -> x either way.
+                "Common[a-factor-shared-by-a-product-and-a-quotient-added-comes-out,a-negated-term-in-a-sum-is-a-subtraction]",
+                "Common[a-factor-shared-by-a-quotient-and-a-product-added-comes-out,a-negated-term-in-a-sum-is-a-subtraction]",
+
+                // The sort against the quotient: a number moved to the front rather than put
+                // under the line. `x * 1/2` -> 1/2 * x rather than x / 2, and both settle to
+                // x / 2 once InnerSimplified has run. Four spellings of one disagreement.
+                "Common[a-function-times-a-number-puts-the-number-first,a-reciprocal-rational-factor-is-a-division]",
+                "Common[a-quotient-times-a-thing-keeps-the-divisor-outermost,a-reciprocal-rational-factor-is-a-division]",
+                "Common[a-thing-times-a-quotient-keeps-the-divisor-outermost,a-reciprocal-rational-factor-is-a-division]",
                 "Common[a-variable-times-a-number-puts-the-number-first,a-reciprocal-rational-factor-is-a-division]",
+                "Common[two-numbers-around-a-factor-collect,a-reciprocal-rational-factor-is-a-division]",
+                "Common[two-numeric-factors-around-a-variable-collect,a-reciprocal-rational-factor-is-a-division]",
+
+                // `x / (1/2) * x / (1/2)`: collapse the two quotients, keep a divisor outermost,
+                // or see a thing times itself. -> x ^ 2 / (1/4), x * x / (1/2) / (1/2),
+                // (x / (1/2)) ^ 2.
+                "Common[a-product-of-two-quotients-is-one-quotient,a-quotient-times-a-thing-keeps-the-divisor-outermost]",
+                "Common[a-product-of-two-quotients-is-one-quotient,a-thing-times-a-quotient-keeps-the-divisor-outermost]",
+                "Common[a-product-of-two-quotients-is-one-quotient,a-thing-times-itself-is-its-square]",
+                "Common[a-quotient-times-a-thing-keeps-the-divisor-outermost,a-thing-times-a-quotient-keeps-the-divisor-outermost]",
+                "Common[a-quotient-times-a-thing-keeps-the-divisor-outermost,a-thing-times-itself-is-its-square]",
+                "Common[a-thing-times-a-quotient-keeps-the-divisor-outermost,a-thing-times-itself-is-its-square]",
+
+                // `-x / (-x)`: the same 1, with the condition written about -x or about x.
+                "Common[a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero,a-shared-factor-cancels-between-two-products]",
+                // `x / (1/2) / (x / (1/2))` and `1 / 1 / (x / (1/2))`: cancel the whole quotient
+                // at once, or take one division apart first.
+                "Common[dividing-by-a-quotient-multiplies-by-its-reciprocal,a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero]",
+                "Common[dividing-by-a-quotient-multiplies-by-its-reciprocal,dividing-twice-divides-by-the-product]",
+                "Common[dividing-twice-divides-by-the-product,a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero]",
+
+                // `(-1) / x * 1 / 1` -> (-1) / x against -1 / x, which print apart and are one
+                // expression.
+                "DivisionPreparing[reciprocal-factor-becomes-a-quotient,numeric-numerator-out-of-a-product]",
+
+                // Factorization repeats Common's `-x + -x` and `-x - -x` disagreement, and adds
+                // `x + 0 + x + 0` -> 2 * x against x * 2.
+                "Factorization[a-factor-shared-by-two-added-products-comes-out,a-term-added-to-itself-doubles]",
+                "Factorization[a-factor-shared-by-two-subtracted-products-comes-out,a-term-subtracted-from-itself-vanishes]",
+                "Factorization[a-term-added-to-itself-doubles,a-common-factor-is-collected-out-of-a-whole-sum]",
+
                 // (-x) ^ (-1) -> -1 / x rather than 1 / (-x).
                 "Power[a-numeric-factor-comes-out-of-a-power-of-a-product,a-reciprocal-power-is-a-quotient]",
                 // (e ^ y) ^ (-1) -> e ^ (y * (-1)) rather than 1 / e ^ y.
                 "Power[a-power-of-a-power-multiplies-the-exponents,a-reciprocal-power-is-a-quotient]",
+                // `x ^ (-1) / x ^ (-1)`: cancel the quotient, subtract the exponents, or share
+                // the exponent over a quotient of bases. The three answers carry three different
+                // conditions, which is what
+                // <a href="https://github.com/asc-community/AngouriMath/issues/1174">#1174</a> is
+                // about -- `1 provided not 1 / x = 0` excludes nothing at x = 0.
+                "Power[a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero,two-powers-of-one-base-divide-by-subtracting-exponents]",
+                "Power[a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero,two-powers-of-one-exponent-share-a-quotient-of-bases]",
+                "Power[two-powers-of-one-base-divide-by-subtracting-exponents,two-powers-of-one-exponent-share-a-quotient-of-bases]",
+                // `e ^ 3 * e ^ 3` -> e ^ 6 against (e ^ 2) ^ 3. The inverse pair of #1171.
+                "Power[two-powers-of-one-base-multiply-by-adding-exponents,two-powers-of-one-exponent-share-a-base]",
             };
 
             Assert.Equal(
