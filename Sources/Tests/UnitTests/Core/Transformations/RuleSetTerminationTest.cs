@@ -47,23 +47,32 @@ namespace AngouriMath.Tests.Core.Transformations
         /// </summary>
         /// <remarks>
         /// <para>
-        /// <c>Power</c> splits a power of a product — <c>(2 * x) ^ 2</c> to <c>2 ^ 2 * x ^ 2</c> —
-        /// and something has to fold <c>2 ^ 2</c> before the result stops being a power of a
-        /// product: a rule whose right-hand side is a fixed point only after arithmetic that the
-        /// set itself does not do.
+        /// <b>Empty, and both entries it held have been used.</b> Every registered set reaches a
+        /// fixed point on its own now; none of them needs the normalisation between passes to
+        /// stop. That is worth stating, because it is the property
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 2 asks
+        /// for and it was not true of this registry until recently.
         /// </para>
         /// <para>
-        /// <c>NumericNeat</c> was here for the same reason and is not any more. It rewrote
-        /// <c>--x</c> through a product of ones that collapsed only when the normalisation
-        /// multiplied them out, because four rules took a factor of <c>-1</c> out of a product and
-        /// left its magnitude behind as a literal <c>1 *</c>. They decline <c>-1</c> now — it is
-        /// the sign rather than a factor to take out — so the ones are never made and the set
-        /// settles on its own. That is
-        /// <a href="https://github.com/asc-community/AngouriMath/issues/1167">#1167</a>, and this
-        /// list is one of the two places that recorded it.
+        /// <c>NumericNeat</c> rewrote <c>--x</c> through a product of ones that collapsed only
+        /// when the normalisation multiplied them out, because four rules took a factor of
+        /// <c>-1</c> out of a product and left its magnitude behind as a literal <c>1 *</c>. They
+        /// decline <c>-1</c> now, it being the sign rather than a factor to take out:
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1167">#1167</a>.
+        /// </para>
+        /// <para>
+        /// <c>Power</c> split a power of a product — <c>(2 * x) ^ 2</c> to <c>2 ^ 2 * x ^ 2</c> —
+        /// and something had to fold <c>2 ^ 2</c> before the result stopped being a power of a
+        /// product. Its collector and its numeric-factor rule were an inverse pair that undid each
+        /// other, and each declines the other's shape now:
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1171">#1171</a>.
+        /// </para>
+        /// <para>
+        /// Named rather than counted, and asserted in both directions, so a set that starts
+        /// needing the normalisation fails here rather than being absorbed into a number.
         /// </para>
         /// </remarks>
-        private static readonly HashSet<string> SettleOnlyComposed = new() { "Power" };
+        private static readonly HashSet<string> SettleOnlyComposed = new();
 
         // `-2` is here because `-1` is not enough of a negative: the four rules that take a
         // negative factor out of a product decline a factor of -1 since #1167, so a corpus whose

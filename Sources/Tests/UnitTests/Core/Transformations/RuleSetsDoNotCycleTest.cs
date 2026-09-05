@@ -113,29 +113,25 @@ namespace AngouriMath.Tests.Core.Transformations
         /// </summary>
         /// <remarks>
         /// <para>
-        /// Both are <c>Power</c> holding an inverse pair:
-        /// <c>two-powers-of-one-exponent-share-a-base</c> collects <c>a ^ b * c ^ b</c> into
-        /// <c>(a * c) ^ b</c>, and <c>a-numeric-factor-comes-out-of-a-power-of-a-product</c> takes
-        /// it straight back. Neither rule is wrong and each is wanted in its own direction; a
-        /// *set* containing both has no normal form to reach, which is
+        /// <b>Empty, and it has been used.</b> Two loops were pinned here, both <c>Power</c>
+        /// alternating between <c>two-powers-of-one-exponent-share-a-base</c>, which collects
+        /// <c>a ^ n * b ^ n</c> into <c>(a * b) ^ n</c>, and
+        /// <c>a-numeric-factor-comes-out-of-a-power-of-a-product</c>, which takes a numeric factor
+        /// straight back out. Each declines the other's shape now and the entries are gone rather
+        /// than left behind meaning nothing —
         /// <a href="https://github.com/asc-community/AngouriMath/issues/1171">#1171</a>.
-        /// <see cref="Entity.Simplify()"/> is unaffected — it folds between passes, so <c>1 * x</c>
-        /// collapses and the shape the second rule needs stops existing.
         /// </para>
         /// <para>
         /// <b>The second rule was named wrongly here first, and the name is the whole content of
         /// an entry like this.</b> It said <c>positive-power-of-a-product-distributes</c>, which is
         /// a real rule with the right shape and is in <c>CollapseMultipleFractions</c>, not in
-        /// <c>Power</c> — so <see cref="MatchedRuleSet.ApplyHere"/> on <c>Power</c> can never reach
-        /// it. Asking the set which of its own rules fires is one loop and settles it; reading two
-        /// rule names off their patterns does not.
+        /// <c>Power</c> — so <see cref="MatchedRuleSet.ApplyHere"/> on <c>Power</c> could never
+        /// reach it. Asking the set which of its own rules fires is one loop and settles it;
+        /// reading two rule names off their patterns does not, and the wrong name made the fix
+        /// look like a choice between normal forms rather than a guard.
         /// </para>
         /// </remarks>
-        private static readonly string[] KnownCycles =
-        {
-            "Power: 1 ^ (-2) * x ^ (-2)  ->  (1 * x) ^ (-2)  ->  1 ^ (-2) * x ^ (-2)",
-            "Power: (-2) ^ 2 * (1/2) ^ 2  ->  ((-2) * 1/2) ^ 2  ->  (-2) ^ 2 * (1/2) ^ 2",
-        };
+        private static readonly string[] KnownCycles = System.Array.Empty<string>();
 
         [Fact]
         public void NoRuleSetRewritesBackToATermItHasAlreadyProduced()
@@ -195,15 +191,10 @@ namespace AngouriMath.Tests.Core.Transformations
         [Fact]
         public void EveryRegisteredSetSettlesOnTheSeeds()
         {
-            // The two shapes of #1171, which are the whole-tree face of the pair in
-            // <see cref="KnownCycles"/>. Nothing else is excused: NumericNeat grew `-x / (-y)` by
-            // four nodes a pass for ever until #1167, and its entry here is gone rather than left
-            // behind meaning nothing.
-            var known = new[]
-            {
-                "Power: 1 ^ (-2) * x ^ (-2)",
-                "Power: (-2) ^ 2 * (1/2) ^ 2",
-            };
+            // Empty, and both entries it held have been used. The two shapes of #1171 were the
+            // whole-tree face of the pair in <see cref="KnownCycles"/> and went with it; NumericNeat
+            // grew `-x / (-y)` by four nodes a pass for ever until #1167 and went before that.
+            var known = System.Array.Empty<string>();
 
             var unsettled = new List<string>();
 
