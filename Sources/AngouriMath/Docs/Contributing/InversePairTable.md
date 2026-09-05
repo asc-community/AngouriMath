@@ -97,6 +97,37 @@ addressability itself for 29 sets.
   that: infrastructure that cannot be exercised by the registry as it stands, which is why the first
   attempt was reverted rather than shipped.
 
+## A pair that cannot be derived can still be observed
+
+Everything above is about deriving the table — from syntax, or from `MatchPattern`. There is a third
+source, and it is neither: **run the sets and watch what comes back**.
+
+`RuleSetsDoNotCycleTest` applies each set to a fixed point over a generated corpus and fails on a term
+the set has already produced. Two of the loops it reports are one inverse pair:
+
+```
+Power: 1 ^ (-2) * x ^ (-2)    ->  (1 * x) ^ (-2)      ->  1 ^ (-2) * x ^ (-2)
+Power: (-2) ^ 2 * (1/2) ^ 2   ->  ((-2) * 1/2) ^ 2    ->  (-2) ^ 2 * (1/2) ^ 2
+```
+
+`two-powers-of-one-exponent-share-a-base` collects `a ^ b * c ^ b` into `(a * c) ^ b`;
+`positive-power-of-a-product-distributes` takes it straight back. Nothing derived that. The loop is
+the evidence, and the two rule names fall out of reading which arms fired.
+
+What this is and is not:
+
+- **It is a lower bound, and a cheap one.** A pair that never fires on the corpus is invisible to it,
+  and a pair split across two sets never meets. It cannot enumerate the table.
+- **It needs no reversibility mechanism at all**, which is the whole of what makes it available
+  today: it is behaviour observed at the top of the pipeline, not a property computed about a rule.
+- **It answers the question equality saturation actually asks.** The consumer in the opening quote
+  needs to know which rewrites undo each other *so that it stops*; a pair that provably makes a set
+  fail to terminate is exactly that, whether or not it is the whole table.
+
+Filed as [#1171](https://github.com/asc-community/AngouriMath/issues/1171), which is a design question
+rather than a bug — both rules are correct and each is wanted in its own direction. `Simplify` is
+unaffected, because it folds between passes and the shape the second rule needs stops existing.
+
 ## What is not decided here
 
 Which of the two real options — generator-level reversibility, or redirecting `Rules` to

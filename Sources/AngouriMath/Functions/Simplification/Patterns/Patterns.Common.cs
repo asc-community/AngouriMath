@@ -44,12 +44,17 @@ namespace AngouriMath.Functions
             Mulf(Real { IsNegative: true } num1, Real { IsNegative: true } num2) => (-num1) * (Entity)(-num2),
             Divf(Real { IsNegative: true } num1, Real { IsNegative: true } num2) => (-num1) / (Entity)(-num2),
 
-            Mulf(Mulf(Real { IsNegative: true } num, var any1), var any2) => -((-num) * (any1 * any2)),
-            Mulf(Mulf(var any1, Real { IsNegative: true } num), var any2) => -((-num) * (any1 * any2)),
-            Divf(Mulf(Real { IsNegative: true } num, var any1), var any2) => -((-num) * (any1 / any2)),
-            Divf(Mulf(var any1, Real { IsNegative: true } num), var any2) => -((-num) * (any1 / any2)),
-            Mulf(var any2, Mulf(Real { IsNegative: true } num, var any1)) => -((-num) * (any1 * any2)),
-            Mulf(var any2, Mulf(var any1, Real { IsNegative: true } num)) => -((-num) * (any1 * any2)),
+            // Each of these eight declines a factor of -1: its magnitude is 1, so taking it out
+            // leaves a literal `1 *` that says nothing, and the numerator arms and the denominator
+            // arms then undo each other around it -- -x / (-y) grew by four nodes a pass for ever.
+            // -1 is not a factor to take out, it is the sign, and the two arms above answer it.
+            // https://github.com/asc-community/AngouriMath/issues/1167
+            Mulf(Mulf(Real { IsNegative: true } num, var any1), var any2) when num != -1 => -((-num) * (any1 * any2)),
+            Mulf(Mulf(var any1, Real { IsNegative: true } num), var any2) when num != -1 => -((-num) * (any1 * any2)),
+            Divf(Mulf(Real { IsNegative: true } num, var any1), var any2) when num != -1 => -((-num) * (any1 / any2)),
+            Divf(Mulf(var any1, Real { IsNegative: true } num), var any2) when num != -1 => -((-num) * (any1 / any2)),
+            Mulf(var any2, Mulf(Real { IsNegative: true } num, var any1)) when num != -1 => -((-num) * (any1 * any2)),
+            Mulf(var any2, Mulf(var any1, Real { IsNegative: true } num)) when num != -1 => -((-num) * (any1 * any2)),
             // A negative factor under the line comes out as a sign in front, and what is left
             // stays under the line: a / (-b * c) is -(a / (b * c)), not -(b * (c / a)). Written
             // the latter way -- as the four rules above it are, where the negative factor is in
@@ -57,8 +62,8 @@ namespace AngouriMath.Functions
             // and Simplify takes whichever candidate is shortest, so the inverted one won
             // wherever it was smaller: 1 / (x * (-1 - 1/x)) simplified to -(1 + x), which is its
             // reciprocal.
-            Divf(var any2, Mulf(Real { IsNegative: true } num, var any1)) => -(any2 / ((-num) * any1)),
-            Divf(var any2, Mulf(var any1, Real { IsNegative: true } num)) => -(any2 / ((-num) * any1)),
+            Divf(var any2, Mulf(Real { IsNegative: true } num, var any1)) when num != -1 => -(any2 / ((-num) * any1)),
+            Divf(var any2, Mulf(var any1, Real { IsNegative: true } num)) when num != -1 => -(any2 / ((-num) * any1)),
 
             _ => x
         };

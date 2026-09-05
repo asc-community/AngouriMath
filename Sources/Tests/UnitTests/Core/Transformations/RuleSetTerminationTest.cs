@@ -46,14 +46,24 @@ namespace AngouriMath.Tests.Core.Transformations
         /// needs to be actionable.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// <c>Power</c> splits a power of a product — <c>(2 * x) ^ 2</c> to <c>2 ^ 2 * x ^ 2</c> —
         /// and something has to fold <c>2 ^ 2</c> before the result stops being a power of a
-        /// product. <c>NumericNeat</c> rewrites <c>--x</c> through a product of ones that only
-        /// collapses when the normalisation multiplies them out. Both are the same shape: a rule
-        /// whose right-hand side is a fixed point only after arithmetic that the set itself does
-        /// not do.
+        /// product: a rule whose right-hand side is a fixed point only after arithmetic that the
+        /// set itself does not do.
+        /// </para>
+        /// <para>
+        /// <c>NumericNeat</c> was here for the same reason and is not any more. It rewrote
+        /// <c>--x</c> through a product of ones that collapsed only when the normalisation
+        /// multiplied them out, because four rules took a factor of <c>-1</c> out of a product and
+        /// left its magnitude behind as a literal <c>1 *</c>. They decline <c>-1</c> now — it is
+        /// the sign rather than a factor to take out — so the ones are never made and the set
+        /// settles on its own. That is
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1167">#1167</a>, and this
+        /// list is one of the two places that recorded it.
+        /// </para>
         /// </remarks>
-        private static readonly HashSet<string> SettleOnlyComposed = new() { "Power", "NumericNeat" };
+        private static readonly HashSet<string> SettleOnlyComposed = new() { "Power" };
 
         private static readonly string[] Leaves = { "x", "y", "2", "-1", "1/2", "1", "0" };
 

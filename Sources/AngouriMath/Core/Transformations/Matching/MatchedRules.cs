@@ -1023,12 +1023,18 @@ namespace AngouriMath.Core.Transformations.Matching
                 // one node for one.
                 growth: RewriteRuleGrowth.Rearranges),
 
-            // (-a * x) * y -> -(a * (x * y)), the negative factor either way round
+            // (-a * x) * y -> -(a * (x * y)), the negative factor either way round.
+            // A factor of -1 is declined here and in the three rules below it: its magnitude is 1,
+            // so "taking the factor out" leaves a literal `1 *` behind that says nothing, and the
+            // numerator rule and the denominator rule then undo each other around it -- `-x / (-y)`
+            // grew by four nodes a pass for ever. -1 is not a factor to take out, it is the sign,
+            // and the two rules above this one already answer it.
+            // https://github.com/asc-community/AngouriMath/issues/1167
             new MatchedRule(
                 "a-negative-factor-in-a-left-product-comes-out",
                 MatchPattern.Node<Mulf>(
                     MatchPattern.Commutative<Mulf>(
-                        MatchPattern.Any<Real>("n", value => value.IsNegative),
+                        MatchPattern.Any<Real>("n", value => value.IsNegative && value != -1),
                         MatchPattern.Any("x")),
                     MatchPattern.Any("y")),
                 bound => -((-(Real)bound["n"]) * (bound["x"] * bound["y"])),
@@ -1040,12 +1046,13 @@ namespace AngouriMath.Core.Transformations.Matching
                 // 63 firings over the corpus.
                 growth: RewriteRuleGrowth.Expands),
 
-            // (-a * x) / y -> -(a * (x / y))
+            // (-a * x) / y -> -(a * (x / y)). Declines -1; see the left-product rule above, and
+            // note that this rule and the denominator one below are the pair that cycled.
             new MatchedRule(
                 "a-negative-factor-in-a-numerator-comes-out",
                 MatchPattern.Node<Divf>(
                     MatchPattern.Commutative<Mulf>(
-                        MatchPattern.Any<Real>("n", value => value.IsNegative),
+                        MatchPattern.Any<Real>("n", value => value.IsNegative && value != -1),
                         MatchPattern.Any("x")),
                     MatchPattern.Any("y")),
                 bound => -((-(Real)bound["n"]) * (bound["x"] / bound["y"])),
@@ -1056,13 +1063,13 @@ namespace AngouriMath.Core.Transformations.Matching
                 // at +2 on all 63 firings over the corpus.
                 growth: RewriteRuleGrowth.Expands),
 
-            // y * (-a * x) -> -(a * (x * y))
+            // y * (-a * x) -> -(a * (x * y)). Declines -1; see the left-product rule above.
             new MatchedRule(
                 "a-negative-factor-in-a-right-product-comes-out",
                 MatchPattern.Node<Mulf>(
                     MatchPattern.Any("y"),
                     MatchPattern.Commutative<Mulf>(
-                        MatchPattern.Any<Real>("n", value => value.IsNegative),
+                        MatchPattern.Any<Real>("n", value => value.IsNegative && value != -1),
                         MatchPattern.Any("x"))),
                 bound => -((-(Real)bound["n"]) * (bound["x"] * bound["y"])),
                 Soundness.Sound,
@@ -1074,12 +1081,14 @@ namespace AngouriMath.Core.Transformations.Matching
             // y / (-a * x) -> -(y / (a * x)). What is left stays under the line: written the
             // other way, as the numerator rules above are, the quotient came back inverted --
             // https://github.com/asc-community/AngouriMath/issues/936 and the note on the switch.
+            // Declines -1; see the left-product rule above, and note that this rule and the
+            // numerator one are the pair that cycled.
             new MatchedRule(
                 "a-negative-factor-in-a-denominator-comes-out",
                 MatchPattern.Node<Divf>(
                     MatchPattern.Any("y"),
                     MatchPattern.Commutative<Mulf>(
-                        MatchPattern.Any<Real>("n", value => value.IsNegative),
+                        MatchPattern.Any<Real>("n", value => value.IsNegative && value != -1),
                         MatchPattern.Any("x"))),
                 bound => -(bound["y"] / ((-(Real)bound["n"]) * bound["x"])),
                 Soundness.Sound,

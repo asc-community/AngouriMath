@@ -40,7 +40,13 @@ namespace AngouriMath.Tests.Core.Transformations
     [Trait("Area", "Core")]
     public sealed class RulePriorityTest
     {
-        private static readonly string[] Leaves = { "x", "y", "2", "-1", "1/2", "0", "1", "3" };
+        // `-2` earns its place by not being `-1`. Four rules that take a negative factor out of a
+        // product decline a factor of -1, which is the sign rather than a factor to take out
+        // (https://github.com/asc-community/AngouriMath/issues/1167) — so with -1 as the only
+        // negative leaf they matched nothing here and the subsumption claims about them went
+        // unwitnessed. A corpus whose only negative is the one case a rule excludes cannot
+        // exercise the rule.
+        private static readonly string[] Leaves = { "x", "y", "2", "-1", "-2", "1/2", "0", "1", "3" };
 
         private static readonly string[] Unary =
         {
@@ -135,12 +141,26 @@ namespace AngouriMath.Tests.Core.Transformations
         /// by the wider one too.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// Over all 322 rules rather than within a set, because the relation is about patterns and
         /// nothing about it stops at a set boundary: <b>961</b> ordered pairs claim subsumption,
-        /// <b>513</b> of them are put to the test by the corpus containing something the narrower
-        /// pattern matches, and none is contradicted across 56,892 nodes. The count of witnessed
-        /// claims is asserted as well — a corpus that stopped reaching these shapes would otherwise
-        /// turn this into a test that passes by asking nothing.
+        /// <b>501</b> of them are put to the test by the corpus containing something the narrower
+        /// pattern matches, and none is contradicted across <b>85,153</b> nodes. All three counts
+        /// are asserted — a corpus that stopped reaching these shapes would otherwise turn this
+        /// into a test that passes by asking nothing, and a witnessed count means nothing without
+        /// what it was measured over.
+        /// </para>
+        /// <para>
+        /// <b>Why 501 and not 513.</b> Adding <c>-2</c> to the leaves moved it, and not the way it
+        /// looks. Measured four ways: on the old leaves the <c>-1</c> guard of
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1167">#1167</a> cost 24
+        /// witnesses (513 to 489), because <c>-1</c> was the only negative leaf and the four
+        /// guarded rules then matched nothing at all. With <c>-2</c> present the guard costs
+        /// <b>nothing</b> — 501 either way — which is what says the leaf restores exactly what the
+        /// guard removed. The remaining 513-to-501 is not coverage at all: <c>level3</c> samples
+        /// every eleventh element of <c>level2</c>, so a longer <c>level2</c> lands the sample on
+        /// different expressions.
+        /// </para>
         /// </remarks>
         [Fact]
         public void SubsumptionIsNeverContradictedByMatching()
@@ -185,7 +205,11 @@ namespace AngouriMath.Tests.Core.Transformations
             }
 
             Assert.Equal(961, claims.Count);
-            Assert.Equal(513, witnessed);
+            Assert.Equal(501, witnessed);
+            // Asserted so the two figures in the remark above cannot go stale in silence: the
+            // whole point of `witnessed` is that it is a coverage number, and it means nothing
+            // without knowing what it was measured over.
+            Assert.Equal(85153, nodes.Count);
         }
 
         /// <summary>
@@ -370,22 +394,21 @@ namespace AngouriMath.Tests.Core.Transformations
                 "Common: a-common-factor-of-two-subtracted-products-comes-out | a-term-subtracted-from-itself-vanishes",
                 "Common: a-factor-shared-by-a-product-and-a-quotient-added-comes-out | a-negated-term-in-a-sum-is-a-subtraction",
                 "Common: a-factor-shared-by-a-quotient-and-a-product-added-comes-out | a-negated-term-in-a-sum-is-a-subtraction",
-                "Common: a-function-times-a-number-puts-the-number-first | a-negated-reciprocal-rational-factor-is-a-negated-division",
+                "Common: a-function-times-a-number-puts-the-number-first | a-reciprocal-rational-factor-is-a-division",
                 "Common: a-product-of-two-quotients-is-one-quotient | a-thing-times-itself-is-its-square",
-                "Common: a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero | a-difference-over-its-own-reverse-is-minus-one",
                 "Common: a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero | a-shared-factor-cancels-between-two-products",
-                "Common: a-quotient-times-a-thing-keeps-the-divisor-outermost | a-negated-reciprocal-rational-factor-is-a-negated-division",
+                "Common: a-quotient-times-a-thing-keeps-the-divisor-outermost | a-reciprocal-rational-factor-is-a-division",
                 "Common: a-quotient-times-a-thing-keeps-the-divisor-outermost | a-thing-times-a-quotient-keeps-the-divisor-outermost",
                 "Common: a-quotient-times-a-thing-keeps-the-divisor-outermost | a-thing-times-itself-is-its-square",
                 "Common: a-term-added-to-itself-doubles | a-negated-term-in-a-sum-is-a-subtraction",
-                "Common: a-thing-times-a-quotient-keeps-the-divisor-outermost | a-negated-reciprocal-rational-factor-is-a-negated-division",
+                "Common: a-thing-times-a-quotient-keeps-the-divisor-outermost | a-reciprocal-rational-factor-is-a-division",
                 "Common: a-thing-times-a-quotient-keeps-the-divisor-outermost | a-thing-times-itself-is-its-square",
                 "Common: a-variable-times-a-number-puts-the-number-first | a-reciprocal-rational-factor-is-a-division",
                 "Common: dividing-by-a-quotient-multiplies-by-its-reciprocal | a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero",
                 "Common: dividing-by-a-quotient-multiplies-by-its-reciprocal | dividing-twice-divides-by-the-product",
                 "Common: dividing-twice-divides-by-the-product | a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero",
-                "Common: two-numbers-around-a-factor-collect | a-negated-reciprocal-rational-factor-is-a-negated-division",
-                "Common: two-numeric-factors-around-a-variable-collect | a-negated-reciprocal-rational-factor-is-a-negated-division",
+                "Common: two-numbers-around-a-factor-collect | a-reciprocal-rational-factor-is-a-division",
+                "Common: two-numeric-factors-around-a-variable-collect | a-reciprocal-rational-factor-is-a-division",
                 "Common: two-numeric-multiples-of-one-variable-add | a-common-factor-of-two-added-products-comes-out",
                 "Common: two-numeric-multiples-of-one-variable-add | a-negated-term-in-a-sum-is-a-subtraction",
                 "Common: two-numeric-multiples-of-one-variable-add | a-term-added-to-itself-doubles",
@@ -394,8 +417,12 @@ namespace AngouriMath.Tests.Core.Transformations
                 "Factorization: a-factor-shared-by-two-added-products-comes-out | a-term-added-to-itself-doubles",
                 "Factorization: a-factor-shared-by-two-subtracted-products-comes-out | a-term-subtracted-from-itself-vanishes",
                 "Factorization: a-term-added-to-itself-doubles | a-common-factor-is-collected-out-of-a-whole-sum",
-                "NumericNeat: a-negative-factor-in-a-left-product-comes-out | a-negative-factor-in-a-right-product-comes-out",
-                "NumericNeat: a-negative-factor-in-a-numerator-comes-out | a-negative-factor-in-a-denominator-comes-out",
+                // NumericNeat had two entries here and has none. They were
+                // `a-negative-factor-in-a-left-product-comes-out | ...-right-...` and
+                // `a-negative-factor-in-a-numerator-comes-out | ...-denominator-...`, and the
+                // second of those is the pair that undid each other for ever on `-x / (-y)`. All
+                // four decline a factor of -1 now, so they no longer fire on one node together.
+                // https://github.com/asc-community/AngouriMath/issues/1167
                 "Power: a-numeric-factor-comes-out-of-a-power-of-a-product | a-reciprocal-power-is-a-quotient",
                 "Power: a-power-of-a-power-multiplies-the-exponents | a-reciprocal-power-is-a-quotient",
                 "Power: a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero | two-powers-of-one-base-divide-by-subtracting-exponents",
