@@ -1260,15 +1260,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["k"] & (bound["p"] | bound["q"]),
                 Soundness.Sound,
                 when: bound => Functions.Patterns.IsLogic(bound["k"], bound["p"], bound["q"]),
-                description: "((k and p) or (k and q)) = (k and (p or q))"),
-                // Undeclared, though the count is plain: the shared operand is matched twice and
-                // written once, so the delta is -(1 + |k|). Declaring it puts the rule among the
-                // ones equality saturation fires, and there it takes
-                // `a and b or a and not b` to `a and (b or not b)` -- which is the identity for
-                // booleans and not for what `IsLogic` lets through, since a free variable passes
-                // that guard and may be substituted with a number.
-                // `EqualitySaturationNeverChangesTheValueItClaimsToPreserve` catches it at 0.37.
-                // The growth is not what is wrong here, so it is not the thing to write down.
+                description: "((k and p) or (k and q)) = (k and (p or q))",
+                // The shared operand is matched twice and written once, and the three connectives
+                // stay three, so the delta is -(1 + |k|).
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-conjunction-of-disjunctions-sharing-an-operand-distributes",
@@ -1278,8 +1273,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["k"] | (bound["p"] & bound["q"]),
                 Soundness.Sound,
                 when: bound => Functions.Patterns.IsLogic(bound["k"], bound["p"], bound["q"]),
-                description: "((k or p) and (k or q)) = (k or (p and q))"),
-                // Undeclared for the same reason as its dual above, and by the same count.
+                description: "((k or p) and (k or q)) = (k or (p and q))",
+                // The same count as its dual above: -(1 + |k|).
+                growth: RewriteRuleGrowth.Collects),
 
             // Absorption, and the absorption that leaves something behind. Four arms each in the
             // switch, and the negated form four more.
