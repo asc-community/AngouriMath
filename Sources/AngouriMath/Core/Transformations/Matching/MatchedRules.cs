@@ -716,12 +716,18 @@ namespace AngouriMath.Core.Transformations.Matching
             new MatchedRule(
                 "a-quotient-of-polynomials-is-divided-out",
                 MatchPattern.Node<Divf>(MatchPattern.Any("n"), MatchPattern.Any("d")),
+                // The division is only the quotient where the divisor has a value. `ln(x) / ln(x)`
+                // divides out to `1 + 0 / ln(x)`, which is 1 at x = 0 while the quotient it came
+                // from is undefined there -- ln(0) is a pole, and the remainder term carries only
+                // `ln(x) != 0`. The condition folds away for any divisor that cannot be undefined.
+                // https://github.com/asc-community/AngouriMath/issues/1174
                 (node, bound) => TreeAnalyzer.PolynomialLongDivision(bound["n"], bound["d"])
                     is var (divided, remainder)
-                    ? divided + remainder
+                    ? (divided + remainder).Provided(bound["d"].DomainCondition)
                     : node,
                 Soundness.SoundUnderAssumptions,
-                description: "n / d = quotient + remainder, by polynomial long division"));
+                description: "n / d = quotient + remainder, by polynomial long division, "
+                    + "provided d is defined"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.PolynomialGcdCancellation"/>, as data.
