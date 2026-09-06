@@ -180,6 +180,70 @@ honest reason -- a compiled delegate over `Complex` has nothing to put on the he
 
 ---
 
+## The 1915th, and every release beside it on one machine
+
+The first column measured by `Sources/Utils/benchmark_key_commits.sh` reaching all five entries in
+`key-commits.txt`. Every figure below is the same benchmark against a different kernel, run on one
+machine within one hour — which is what the four release-pair sections further down had to
+approximate by measuring two commits at a time.
+
+`v2.1.0` and `v2.2.0` are in it for the first time. They did not build before #1178: the benchmark
+project carried cases reaching internals those kernels had not exposed, so the whole project failed
+to compile and took the row with it, while the case that runs uses nothing but the public API.
+
+### Allocation
+
+| benchmark | v2.1.0 | v2.2.0 | v2.3.0 | v2.4.0 | 1915th |
+|---|--:|--:|--:|--:|--:|
+| `CompileEasy` | 16,519 | 16,309 | 16,206 | 11,003 | 10,970 |
+| `CompileHard` | 38,542 | 38,089 | 38,355 | 20,396 | 20,434 |
+| `Derivate` | 52,823 | 52,823 | 52,823 | 52,823 | 52,823 |
+| `EvalTrig` | 1,341,377 | 1,341,377 | 1,341,377 | 1,341,377 | 1,341,377 |
+| `EvalTrigPrecise` | 12,742,205 | 12,742,205 | 12,742,205 | 12,742,205 | 12,742,205 |
+| `ParseEasy` | 18,061 | 18,061 | 18,061 | 18,109 | 18,104 |
+| `ParseHard` | 3,498,137 | 3,498,137 | 3,522,409 | 3,522,457 | 3,531,201 |
+| `SimplifyEasy` | 128,564 | 128,564 | 128,100 | 128,100 | 128,100 |
+| `SimplifyHard` | 3,733,136,616 | 3,749,449,104 | 3,620,748,288 | 3,632,015,744 | 3,655,695,192 |
+| `SolveEasy` | 20,220,106 | 20,234,998 | 8,852,269 | 8,853,671 | 8,853,834 |
+| `SolveEasyMedium` | 80,184 | 95,873 | 95,791 | 97,193 | 97,335 |
+| `SolveHard` | 1,356,525,608 | 1,486,580,536 | 1,431,859,752 | 1,446,799,616 | 1,450,058,720 |
+| `SolveMedium` | 554,368 | 658,259 | 658,099 | 661,963 | 662,923 |
+| `SolveMediumHard` | 155,191,480 | 171,395,096 | 162,305,664 | 164,549,808 | 165,055,344 |
+
+Bytes allocated. `EvalEasy`, `RunEasy`, `RunMedium` and `RunHard` allocate nothing in every column
+and are left out.
+
+**Since 2.4.0, the Simplify and Solve family is up between 0.15% and 0.65%** — `SimplifyHard`
++0.65%, `SolveMediumHard` +0.31%, `SolveHard` +0.23%. Small, consistent in sign, and real: see the
+next section for why 0.65% is far above the noise on those particular rows. It is well inside
+`PerformanceGate`'s 3% and is not a reason to hold a release; it is a reason not to claim the period
+was free. The likeliest cause is the definedness conditions added in #1176 and #1177, which give
+every cancelled quotient a larger condition tree to carry.
+
+`CompileEasy` and `CompileHard` are flat against 2.4.0 and roughly **half** what they were at 2.3.0.
+
+### The determinism claim, measured
+
+This file says allocation is deterministic — "the same commit measured twice gives the same bytes".
+The five columns above were run **twice**, and that is true for the large benchmarks and false for
+the small compile ones:
+
+| same commit, two runs | run 1 | run 2 | apart |
+|---|--:|--:|--:|
+| `SolveHard` @ v2.1.0 | 1,356,524,520 | 1,356,525,608 | **0.00008%** |
+| `SimplifyHard` @ v2.1.0 | 3,733,177,488 | 3,733,136,616 | **0.001%** |
+| `CompileEasy` @ v2.1.0 | 16,280 | 16,519 | **1.47%** |
+| `CompileEasy` @ v2.3.0 | 16,510 | 16,206 | **1.84%** |
+
+So the rule this file states holds where it matters most and needs a rider: **the compile
+benchmarks have an allocation floor of about 2%.** That is worth knowing precisely because
+`PerformanceGate` fails at 3% — for `CompileEasy` that is one and a half noise-widths of margin, not
+the comfortable threshold the number suggests. A `CompileEasy` allocation move under 2% is not
+evidence; the same move on `SolveHard` is evidence a thousand times over.
+
+Timings from the same run are in the generated table and are deliberately not reproduced here, for
+the reason the next section gives.
+
 ## The 1844th: what this file's timings can and cannot support
 
 The column for 2.4.0. Seventy-five commits from the 1769th, carrying the rule-set exchange --
