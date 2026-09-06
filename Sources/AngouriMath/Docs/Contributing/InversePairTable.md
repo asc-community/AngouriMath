@@ -141,6 +141,18 @@ What this is and is not:
   held by `SaturationAblationTest` in both directions. It is also the measured answer to what
   #746 tier 2 called "a scheduling policy for `Expands`/`Unknown` rules": on this input the
   runaway is not a tier, it is one pair.
+
+  And the pair is bounded. The two `Common` coefficient rules are confluent on plain arithmetic —
+  `2 * x * y`, `(1/2) * x` and `2 * (x * y) / 3` saturate in a handful of nodes at the widest
+  ceiling, with the trigonometric sets present and with all of them removed — so making them
+  confluent is not a branch. The runaway is the sine family (`sin(2x)`, `sin(x) cos(x)`, `sin(3x)`,
+  `sin(2x) cos(2x)`; not `cos(2x)`), and it does not exist without the trigonometric sets.
+  **The growth ceiling already withholds one direction of it.** `ExpandMultipleAngle`'s rules are
+  declared `Expands`, so `Saturation.SafeRules` — `RulesUpTo(Rearranges)` — fires only the
+  collecting direction, and every member of the family saturates there. Growth is the direction
+  marker and the ceiling is the scheduling policy, for every pair whose two directions are
+  declared; a pair whose expanding direction is unjudged is the one case it cannot protect. Held by
+  `RunawayBreadthTest`.
 - **It needs no reversibility mechanism at all**, which is the whole of what makes it available
   today: it is behaviour observed at the top of the pipeline, not a property computed about a rule.
 - **It answers the question equality saturation actually asks.** The consumer in the opening quote
