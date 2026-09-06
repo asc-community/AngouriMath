@@ -174,6 +174,14 @@ whitelist rather than the node model: `Providedf` is an ordinary two-child node,
 `Construct` a line for it was the whole fix. What remains is genuinely about the node model —
 per-node data that is not a child, of which `Codomain` is the only instance the library has today.
 
+*And narrower again, measured rather than argued.* **No written pattern can put a condition into the
+graph at all.** Only 35 of the 324 rules have a right-hand side written as a pattern, and none of
+them mentions `provided` — so a `Providedf` reaches an e-class only along the code-built path, where
+a rule extracts a witness term, runs code on it and puts the result back. That is worth knowing
+before anyone reopens this: the union that would need a meaning is not one e-matching can currently
+form. `ProvidedInAnEClassTest.NoWrittenPatternIntroducesACondition` holds it at zero, so the first
+two-sided conditional rule fails there rather than quietly making the question live again.
+
 ## What is not decided here
 
 The one question above, restated as the decision it is: **how much should ride along on an e-node
