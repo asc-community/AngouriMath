@@ -87,6 +87,18 @@ namespace AngouriMath.Tests.Core.Transformations
             Stated(152, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Unknown),
                 "how many rules sit at Unknown growth");
 
+            // The rest of the census, because `Saturation.RulesUpTo` argues from it in prose and
+            // the figures it quoted had gone stale by a factor of four -- "26 collect, 17
+            // rearrange, 9 expand and 270 unjudged", measured before the growth declarations
+            // went in. The argument survived; the arithmetic did not. A number a remark reasons
+            // from belongs somewhere that fails when it moves.
+            Stated(97, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Collects),
+                "how many rules are declared Collects");
+            Stated(45, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Rearranges),
+                "how many rules are declared Rearranges");
+            Stated(30, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Expands),
+                "how many rules are declared Expands");
+
             // And the two the document names. By their own names rather than by what the prose
             // calls them: the first is `squared-sine-and-cosine-of-one-argument-sum-to-one` and
             // the prose calls it the Pythagorean identity, which is right and is not what to

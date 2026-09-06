@@ -43,13 +43,22 @@ namespace AngouriMath.Core.Transformations
         /// one, and that is a measurement rather than a preference.</b> It reads like the value a
         /// ceiling should refuse — it means the rule's growth was not judged, because its
         /// replacement is code rather than a written pattern, so admitting it accepts a rewrite
-        /// nobody measured. But it is where the rules are: of the sound rules in
-        /// <see cref="MatchedRules"/>, <b>26 collect, 17 rearrange, 9 expand and 270 are
-        /// unjudged</b>. A ceiling that refuses the fourth value refuses 84% of the library, and
-        /// what is left cannot do much — over six expression pairs equal only through a larger
-        /// intermediate form, the <see cref="RewriteRuleGrowth.Rearranges"/> ceiling proved two,
-        /// and <see cref="RewriteRuleGrowth.Expands"/> — all nine expanding rules added — proved
-        /// <i>the same two</i>. The third was proved only with the unjudged rules admitted.
+        /// nobody measured. But it is where the rules are: of the 324 rules in
+        /// <see cref="MatchedRules"/>, <b>97 collect, 45 rearrange, 30 expand and 152 are
+        /// unjudged</b>. A ceiling that refuses the fourth value still refuses 47% of the library,
+        /// and what is left could not do much when this was written — over six expression pairs
+        /// equal only through a larger intermediate form, the
+        /// <see cref="RewriteRuleGrowth.Rearranges"/> ceiling proved two, and
+        /// <see cref="RewriteRuleGrowth.Expands"/> proved <i>the same two</i>. The third was proved
+        /// only with the unjudged rules admitted.
+        /// </para>
+        /// <para>
+        /// <b>Those figures moved and this paragraph did not.</b> It read "26 collect, 17
+        /// rearrange, 9 expand and 270 are unjudged", and 84% — measured before the growth
+        /// declarations went in, which took the unjudged count from 261 to 152. The argument
+        /// survives the correction and the arithmetic in it did not, which is the reason to state
+        /// counts rather than a conclusion drawn from them. <c>RuleAuthoringGuideTest</c> holds all
+        /// four of these now, so the next time they move this remark fails with them.
         /// </para>
         /// <para>
         /// So the dial that matters is not how far a rule may enlarge; it is whether rules nobody
