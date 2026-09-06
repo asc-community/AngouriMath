@@ -18,18 +18,32 @@ namespace AngouriMath.Core.Transformations
     /// </summary>
     internal readonly struct ENode : IEquatable<ENode>, IComparable<ENode>
     {
-        internal ENode(string op, int[] children)
+        internal ENode(string op, int[] children, Domain? codomain = null)
         {
             Op = op ?? throw new ArgumentNullException(nameof(op));
             Children = children ?? throw new ArgumentNullException(nameof(children));
+            Codomain = codomain;
         }
 
         internal string Op { get; }
         internal int[] Children { get; }
 
+        /// <summary>
+        /// The <see cref="Entity.Codomain"/> the node carries where it differs from its type's
+        /// default, and <see langword="null"/> where it does not. <b>Part of the node's identity,
+        /// deliberately.</b> An e-class is the graph's assertion that its members are equal, and
+        /// <c>abs(x)</c> is not equal to <c>domain(abs(x), Any)</c> — they evaluate differently —
+        /// so two nodes differing only here must hash apart, or the graph unions values that are
+        /// not the same value. This used to live in a side table keyed on shape alone; both then
+        /// landed in one class and extraction returned whichever was inserted last, and
+        /// <c>Rebuild</c> dropped it altogether. <c>ENodeIdentityTest</c> holds all three.
+        /// </summary>
+        internal Domain? Codomain { get; }
+
         public bool Equals(ENode other)
         {
-            if (Op != other.Op || Children.Length != other.Children.Length) return false;
+            if (Op != other.Op || Codomain != other.Codomain || Children.Length != other.Children.Length)
+                return false;
             for (var i = 0; i < Children.Length; i++)
                 if (Children[i] != other.Children[i]) return false;
             return true;
@@ -50,6 +64,8 @@ namespace AngouriMath.Core.Transformations
         {
             var byOp = string.CompareOrdinal(Op, other.Op);
             if (byOp != 0) return byOp;
+            var byCodomain = Nullable.Compare(Codomain, other.Codomain);
+            if (byCodomain != 0) return byCodomain;
             if (Children.Length != other.Children.Length)
                 return Children.Length.CompareTo(other.Children.Length);
             for (var i = 0; i < Children.Length; i++)
@@ -61,14 +77,16 @@ namespace AngouriMath.Core.Transformations
         public override int GetHashCode()
         {
             var hash = Op.GetHashCode();
+            hash = unchecked(hash * 31 + (Codomain is { } domain ? (int)domain + 1 : 0));
             foreach (var child in Children) hash = unchecked(hash * 31 + child);
             return hash;
         }
     }
 
     /// <summary>
-    /// An e-graph: e-classes over a union-find, e-nodes keyed by operator and child class,
-    /// hash-consed.
+    /// An e-graph: e-classes over a union-find, e-nodes keyed by operator, child class and
+    /// non-default codomain, hash-consed. The codomain is in the key because an e-class is an
+    /// equality claim and a codomain is something two unequal entities can differ in.
     /// </summary>
     /// <remarks>
     /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 2's e-graph,
@@ -89,18 +107,6 @@ namespace AngouriMath.Core.Transformations
         private readonly List<int> parent = new();
         private readonly Dictionary<ENode, int> hashcons = new();
         private readonly Dictionary<int, HashSet<ENode>> classes = new();
-
-        /// <summary>
-        /// The <see cref="Entity.Codomain"/> the source <see cref="Entity"/> carried at the exact
-        /// e-node a real entity was inserted as, where it differs from that node's own default --
-        /// <c>Add(string, int[])</c> has no <see cref="Entity"/> to read it from, only
-        /// <see cref="AddEntity"/> does. <c>Extract(int, Func{Entity, double})</c> re-applies it
-        /// after rebuilding through <see cref="MatchPattern.ConstructNode"/>, which builds through
-        /// a bare constructor and so restores nothing on its own -- unlike every other place this
-        /// codebase reconstructs a node, which copies it forward through a <c>New(...)</c> helper.
-        /// Caught in code review before this PR was merged.
-        /// </summary>
-        private readonly Dictionary<ENode, Domain> codomains = new();
 
         /// <summary>How many e-classes this graph currently has.</summary>
         internal int ClassCount => classes.Count;
@@ -137,8 +143,7 @@ namespace AngouriMath.Core.Transformations
 
         private int Add(string op, int[] children, Domain? codomain)
         {
-            var canonical = new ENode(op, children.Select(Find).ToArray());
-            if (codomain is { } existingDomain) codomains[canonical] = existingDomain;
+            var canonical = new ENode(op, children.Select(Find).ToArray(), codomain);
             if (hashcons.TryGetValue(canonical, out var existing))
                 return Find(existing);
             // Folding on insertion: a neutral-element application denotes exactly the value its
@@ -237,6 +242,10 @@ namespace AngouriMath.Core.Transformations
         private int? NeutralClass(ENode node)
         {
             if (node.Children.Length != 2) return null;
+            // A node carrying a codomain of its own is not the value of its other operand: folding
+            // `domain(x * 1, Any)` into x's class would union it with a plain `x`, which is the
+            // same conflation the identity above exists to prevent.
+            if (node.Codomain is not null) return null;
             foreach (var leaf in NeutralLeaves)
             {
                 if (neutralFolds.Contains((node.Op, leaf, 1)) && Holds(node.Children[1], leaf))
@@ -285,7 +294,7 @@ namespace AngouriMath.Core.Transformations
                 foreach (var pair in classes.ToList())
                     foreach (var node in pair.Value.ToList())
                     {
-                        var canonical = new ENode(node.Op, node.Children.Select(Find).ToArray());
+                        var canonical = new ENode(node.Op, node.Children.Select(Find).ToArray(), node.Codomain);
                         if (seen.TryGetValue(canonical, out var other))
                         {
                             if (Union(other, pair.Key)) changed = true;
@@ -449,7 +458,7 @@ namespace AngouriMath.Core.Transformations
                     ? TryParseLeaf(node.Op)
                     : MatchPattern.ConstructNode(OperatorType(node.Op), parts);
                 if (built is null) continue;
-                if (codomains.TryGetValue(node, out var domain)) built = built.WithCodomain(domain);
+                if (node.Codomain is { } domain) built = built.WithCodomain(domain);
                 selection.Offer(built);
             }
             visiting.Remove(id);
