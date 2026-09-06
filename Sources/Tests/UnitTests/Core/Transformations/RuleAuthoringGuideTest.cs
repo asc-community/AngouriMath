@@ -45,11 +45,16 @@ namespace AngouriMath.Tests.Core.Transformations
             Stated(33, MatchedRules.All.Count, "the number of rule sets written as data");
             Stated(324, MatchedRules.All.Sum(set => set.Rules.Count), "the number of rules written as data");
             Stated(30, RewriteRules.All.Count, "the number of registered sets");
-            Stated(27, RewriteRules.All.Count(set =>
+            // Two families register under one name and run a data set under another --
+            // CommonDenominator over MatchedRules.CommonDenominator(level), CanonicalOrder over
+            // MatchedRules.Sort(level) -- so a name match alone undercounts them. This said 27
+            // while the truth was 30 for exactly as long as the second family was unlisted here.
+            Stated(30, RewriteRules.All.Count(set =>
                     MatchedRules.All.Any(data => data.Name == set.Name)
-                    || set.Name.StartsWith("CommonDenominator", StringComparison.Ordinal)),
+                    || set.Name.StartsWith("CommonDenominator", StringComparison.Ordinal)
+                    || set.Name.StartsWith("CanonicalOrder", StringComparison.Ordinal)),
                 "how many registered sets run the matcher");
-            Stated(27, RewriteRules.All.Count(set =>
+            Stated(30, RewriteRules.All.Count(set =>
                     set.Rules.Count > 0 && set.Rules.All(rule => rule.Soundness is not null)),
                 "how many registered sets describe what they run");
         }
@@ -68,7 +73,7 @@ namespace AngouriMath.Tests.Core.Transformations
 
         [Fact]
         public void TheIdentityIsNotTheName()
-            => Stated(294,
+            => Stated(321,
                 MatchedRules.All.SelectMany(set => set.Rules).Count(rule => rule.Description is not null),
                 "how many rules carry an identity");
 

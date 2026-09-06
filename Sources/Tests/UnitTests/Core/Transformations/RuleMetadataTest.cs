@@ -22,11 +22,14 @@ namespace AngouriMath.Tests.Core.Transformations
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The registry runs one thing and describes another.</b> 27 of the 30 sets execute
-    /// <see cref="MatchedRuleSet.ApplyHere"/>, and 29 of them take their
-    /// <see cref="RewriteRuleSet.Rules"/> from <c>RuleRegistryGenerator</c> reading the
-    /// <c>switch</c> those sets no longer run. That is
-    /// <a href="https://github.com/asc-community/AngouriMath/issues/825">#825</a>'s open half.
+    /// <b>The registry used to run one thing and describe another.</b> When this was written,
+    /// 27 of the 30 sets executed <see cref="MatchedRuleSet.ApplyHere"/> while 29 took their
+    /// <see cref="RewriteRuleSet.Rules"/> from <c>RuleRegistryGenerator</c> reading a
+    /// <c>switch</c> they no longer ran — <a href="https://github.com/asc-community/AngouriMath/issues/825">#825</a>'s
+    /// open half. Both numbers are now 30 and 0: every registration passes its
+    /// <see cref="MatchedRuleSet"/> to the constructor that takes one, which runs it and
+    /// describes it from the same object. The last three to move were the <c>CanonicalOrder</c>
+    /// family, and the counts below moved with them.
     /// </para>
     /// <para>
     /// This file is about the three things that had to be true of
@@ -112,6 +115,9 @@ namespace AngouriMath.Tests.Core.Transformations
             var fromData = new[]
             {
                 nameof(RewriteRules.Boolean),
+                nameof(RewriteRules.CanonicalOrder),
+                nameof(RewriteRules.CanonicalOrderCountingConstants),
+                nameof(RewriteRules.CanonicalOrderExact),
                 nameof(RewriteRules.CollapseMultipleFractions),
                 nameof(RewriteRules.Common),
                 nameof(RewriteRules.CollapseTrigonometricFunctions),
@@ -168,7 +174,7 @@ namespace AngouriMath.Tests.Core.Transformations
             var repointed = RewriteRules.All
                 .Where(set => set.Rules.Count > 0 && set.Rules.All(rule => rule.Soundness is not null))
                 .ToList();
-            Assert.Equal(294, repointed.Sum(set => set.Rules.Count));
+            Assert.Equal(321, repointed.Sum(set => set.Rules.Count));
             Assert.All(repointed, set => Assert.All(set.Rules, rule => Assert.NotNull(rule.Description)));
         }
 

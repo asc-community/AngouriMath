@@ -20,10 +20,12 @@ effect". This is how to supply those seven things.
 `Core/Transformations/Matching/MatchedRules.cs`, as a value in a `MatchedRuleSet`. **33** sets and
 **324** rules live there today.
 
-The `switch` statements in `Functions/Simplification/Patterns` are the older form. Twenty-seven of
-the thirty registered sets no longer run theirs, and **none of those twenty-seven describes it any
-more either**; the three that remain still run theirs, so describing it is honest
-([#825](https://github.com/asc-community/AngouriMath/issues/825)).
+The `switch` statements in `Functions/Simplification/Patterns` are the older form. **All thirty
+registered sets now run as data and describe what they run**; none executes its `switch` any more.
+The last three to move were the `CanonicalOrder` family, repointed at `MatchedRules.Sort(level)` —
+which had existed as data, held to the `switch` by `MatchedRulesAgreeWithTheSwitchTest` at a hundred
+firings per level, and been run by nothing. The `switch` forms stay because that agreement test is
+what keeps the two spellings honest ([#825](https://github.com/asc-community/AngouriMath/issues/825)).
 **Do not add a rule to a `switch`.** A `switch` arm cannot carry a name, a tier, an identity or a
 direction, and everything below is about those.
 
@@ -89,7 +91,7 @@ debugged for an afternoon.
 | `Left.ToString()` | `Divf(var a, Divf(var b, var c))` — how the matcher spells it |
 
 Write the identity with `=`, not `->`: it is an equality, and the arrow belongs to the direction the
-rule happens to be applied in. **294** rules carry one today; a new rule should.
+rule happens to be applied in. **321** rules carry one today; a new rule should.
 
 ## The pattern language
 
