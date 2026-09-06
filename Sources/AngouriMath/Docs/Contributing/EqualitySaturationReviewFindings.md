@@ -189,6 +189,21 @@ beyond its bare shape.** A general "attach anything, forget nothing" representat
 special cases extended as each is found. `InversePairTable.md` leaves the same question open for its
 own mechanism, and it is arguably the same question either way.
 
+*Decided for the one live instance, by measurement rather than by preference.* `Codomain` was the
+special case, kept in a side table keyed on shape alone — and that was wrong in three places at once.
+`abs(x)` and `domain(abs(x), Any)` hashed to one e-node and so shared an e-class, which is the graph
+asserting two unequal values are equal; extraction then returned whichever had been inserted last;
+and `Rebuild` re-created every node from operator and children only, dropping the codomain on any
+union. `ENodeIdentityTest` reproduced all three before anything was changed.
+
+The rule that falls out is not "attach anything" and not "special-case each": it is that **an
+e-node's identity must include everything that makes two entities unequal**, because an e-class is
+an equality claim. `Codomain` distinguishes unequal entities, so it is now a field of `ENode` and
+part of `Equals`, `GetHashCode` and the ordering — and the side table is gone. Anything that is
+*not* part of equality (a cached hash, a cost) stays off the node. That answers the question for
+any future per-node datum too: ask whether two entities differing only in it are equal, and the
+answer says which side of the line it goes.
+
 What the fourteen closed findings say about it is worth recording, because it is not what the review
 expected. Only one of them turned out to depend on this decision at all — `Codomain`, which is still
 special-cased. The `Providedf` case, which this document originally offered as evidence that the
