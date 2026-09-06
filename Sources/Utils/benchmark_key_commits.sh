@@ -50,6 +50,17 @@ echo "measuring:"; echo "$commits" | sed 's/^/  /'
 
 for commit in $commits; do
     resolved=$(git -C "$repository" rev-parse --short "$commit" 2>/dev/null)
+
+    # A branch name resolves to whatever this checkout's copy of it points at, which is not
+    # necessarily the tip. In a worktree the local `master` belongs to whichever checkout last
+    # moved it: this measured a `master` five days behind its remote and reported it as `master`,
+    # and only the SHA printed beside the row gave it away. Say so rather than quietly measure
+    # the wrong commit.
+    upstream=$(git -C "$repository" rev-parse --short "origin/$commit" 2>/dev/null)
+    if [ -n "$upstream" ] && [ "$upstream" != "$resolved" ]; then
+        echo "=== $commit: local is $resolved, origin/$commit is $upstream -- measuring the local one" >&2
+        echo "    put the SHA you mean in key-commits.txt if that is not what you want" >&2
+    fi
     if [ -z "$resolved" ]; then
         echo "=== $commit: not a commit in this repository"
         echo "unresolved" > "$results/$commit.status"
