@@ -63,19 +63,20 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.All(names, name => Assert.True(Explanation.IsProse(name),
                 $"'{name}' is a rule name that does not read as a phrase in English"));
 
-            // And a generated one is not mistaken for prose. Which sets those are moves as the
-            // registry is repointed set by set, so they are found rather than named: a set whose
-            // rules carry no tier of their own is one still described by `RuleRegistryGenerator`,
-            // and every name it gives is a rendered pattern. Naming one instead cost a failure the
-            // day Trigonometric was repointed, which is the argument for asking.
+            // And no set is described by `RuleRegistryGenerator` any more. A set whose rules
+            // carry no tier of their own was one still described by the generator, and every name
+            // it gave was a rendered pattern rather than prose; this used to assert that such
+            // sets existed and that their names did not pass for English. The last three --
+            // the CanonicalOrder family -- were repointed at `MatchedRules.Sort`, so the
+            // population is empty, and that is asserted rather than the assertion being deleted:
+            // a set falling back to the generator would be a regression this should catch.
             var generated = RewriteRules.All
                 .Where(set => set.Rules.Count > 0 && set.Rules.All(rule => rule.Soundness is null))
-                .SelectMany(set => set.Rules)
-                .Select(rule => rule.Name)
+                .Select(set => set.Name)
                 .ToList();
-            Assert.NotEmpty(generated);
-            Assert.All(generated, name => Assert.False(Explanation.IsProse(name),
-                $"'{name}' is a rendered pattern and was taken for prose"));
+            Assert.True(generated.Count == 0,
+                "these sets are described by the generator again, and their rule names are "
+                + "rendered patterns rather than prose: " + string.Join(", ", generated));
         }
 
         /// <summary>

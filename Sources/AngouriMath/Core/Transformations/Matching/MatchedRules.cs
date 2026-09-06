@@ -2120,14 +2120,16 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Any<Sumf>("x"),
                 (node, _) => Functions.Patterns.SortAndGroup(
                     node, Sumf.LinearChildren(node), level, (a, b) => a + b),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "the terms of a sum are put in canonical order and like terms are grouped"),
 
             new MatchedRule(
                 "a-difference-chain-is-sorted-and-grouped",
                 MatchPattern.Any<Minusf>("x"),
                 (node, _) => Functions.Patterns.SortAndGroup(
                     node, Sumf.LinearChildren(node), level, (a, b) => a + b),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a difference is read as a sum, whose terms are put in canonical order and grouped"),
 
             new MatchedRule(
                 "a-product-chain-is-sorted-and-grouped",
@@ -2136,49 +2138,56 @@ namespace AngouriMath.Core.Transformations.Matching
                     node, Mulf.LinearChildren(node), level, (a, b) => a * b),
                 // Regrouping reads a quotient as a product with a negative power, which is the
                 // same value wherever the divisor is not zero.
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "the factors of a product are put in canonical order and like factors are grouped"),
 
             new MatchedRule(
                 "a-quotient-chain-is-sorted-and-grouped",
                 MatchPattern.Any<Divf>("x"),
                 (node, _) => Functions.Patterns.SortAndGroup(
                     node, Mulf.LinearChildren(node), level, (a, b) => a * b),
-                Soundness.SoundUnderAssumptions),
+                Soundness.SoundUnderAssumptions,
+                description: "a quotient is read as a product, whose factors are put in canonical order and grouped"),
 
             new MatchedRule(
                 "a-conjunction-chain-is-sorted-and-grouped",
                 MatchPattern.Any<Andf>("x"),
                 (node, _) => Functions.Patterns.SortAndGroup(
                     node, Andf.LinearChildren(node), level, (a, b) => a & b),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "the operands of a conjunction are put in canonical order and repeats are grouped"),
 
             new MatchedRule(
                 "a-disjunction-chain-is-sorted-and-grouped",
                 MatchPattern.Any<Orf>("x"),
                 (node, _) => Functions.Patterns.SortAndGroup(
                     node, Orf.LinearChildren(node), level, (a, b) => a | b),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "the operands of a disjunction are put in canonical order and repeats are grouped"),
 
             new MatchedRule(
                 "a-union-chain-is-sorted-and-grouped",
                 MatchPattern.Any<Set.Unionf>("x"),
                 (node, _) => Functions.Patterns.SortAndGroup(
                     node, Set.Unionf.LinearChildren(node), level, (a, b) => a.Unite(b)),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "the operands of a union are put in canonical order and repeats are grouped"),
 
             new MatchedRule(
                 "an-intersection-chain-is-sorted-and-grouped",
                 MatchPattern.Any<Set.Intersectionf>("x"),
                 (node, _) => Functions.Patterns.SortAndGroup(
                     node, Set.Intersectionf.LinearChildren(node), level, (a, b) => a.Intersect(b)),
-                Soundness.Sound),
+                Soundness.Sound,
+                description: "the operands of an intersection are put in canonical order and repeats are grouped"),
 
             new MatchedRule(
                 "an-exclusive-disjunction-chain-is-sorted-and-grouped",
                 MatchPattern.Any<Xorf>("x"),
                 (node, _) => Functions.Patterns.SortAndGroup(
                     node, Xorf.LinearChildren(node), level, (a, b) => a ^ b),
-                Soundness.Sound));
+                Soundness.Sound,
+                description: "the operands of an exclusive disjunction are put in canonical order and repeats are grouped"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.FractionCommonDenominatorRules"/>, as data — again one
