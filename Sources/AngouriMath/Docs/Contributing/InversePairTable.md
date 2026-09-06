@@ -125,7 +125,22 @@ section arguing that behaviour is a better source than derivation.
 What this is and is not:
 
 - **It is a lower bound, and a cheap one.** A pair that never fires on the corpus is invisible to it,
-  and a pair split across two sets never meets. It cannot enumerate the table.
+  and — for the single-set observation above — a pair split across two sets never meets. It cannot
+  enumerate the table.
+
+  *Saturation meets the cross-set case, because it runs every set at once.* The first pair found
+  that way is `ExpandMultipleAngle / sine-of-a-whole-multiple-of-an-angle` against
+  `Trigonometric / a-sine-times-a-cosine-of-one-angle-is-half-the-doubled-sine` — `sin(2x)` to
+  `2 sin x cos x` and straight back to `sin(2x) / 2`. On `sin(2x) + cos(2x)` at the widest ceiling
+  the graph reaches 254 e-nodes without saturating and extracts the input unchanged; remove either
+  direction and it saturates at about twenty. An e-graph is supposed to absorb an inverse pair, and
+  this one is not absorbed because its two forms differ by a coefficient that two `Common` rules —
+  `a-numeric-factor-floats-out-of-a-product-of-functions` and
+  `a-reciprocal-rational-factor-is-a-division` — rearrange non-confluently, so each pass produces a
+  fresh spelling rather than a merge. Found by ablation, one set and then one rule at a time, and
+  held by `SaturationAblationTest` in both directions. It is also the measured answer to what
+  #746 tier 2 called "a scheduling policy for `Expands`/`Unknown` rules": on this input the
+  runaway is not a tier, it is one pair.
 - **It needs no reversibility mechanism at all**, which is the whole of what makes it available
   today: it is behaviour observed at the top of the pipeline, not a property computed about a rule.
 - **It answers the question equality saturation actually asks.** The consumer in the opening quote
