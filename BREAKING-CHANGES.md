@@ -15,17 +15,12 @@ read first.
 
 ---
 
-## Unreleased — since 2.3.0
+## Unreleased — since 2.4.0
 
 ### At a glance
 
 | Silent? | What | Was | Is |
 |---|---|---|---|
-| **Silent** | `"limit(t * b, t, 0)".ToEntity().FreeVariables`, and every limit | `{ t, b }` — the variable it approaches along counted as free | `{ b }` |
-| **Silent** | `MathS.Polynomials.Factor("4 * x2 - 4 * y2", "x")`, and every multivariate polynomial whose content is a bare constant | `(x + y) * (x - y)` — **not equal to what it factored** | `4 * (x + y) * (x - y)` |
-| | `"2 * x3 - 2".ToEntity().Factorize()`, and every polynomial whose content the rules take out | `2 * (x ^ 3 - 1)` — the remainder left whole | `2 * (x - 1) * (x ^ 2 + x + 1)` |
-| | `"3^(x+1) - 2^(x-1)".ToEntity().SolveEquation("x")`, and every equation between two powers of numeric bases | `{ ln(0.04674569822628630438865471319331845734268426895141601562 ^ (1 / ln(2))) }` — a `double` promoted to a decimal | `{ -(ln(3) + ln(2)) / (ln(3) + -ln(2)) }` |
-| **Silent** | `MathS.Abs("x").WithCodomain(Domain.Any).Stringize()`, and every node widened to `Any` from a narrower default | `abs(x)` — reads back as `Real`, losing the widening | `domain(abs(x), Any)` |
 | **Silent** | `"domain(1/2, CC)".ToEntity()`, and every quotient of two integer literals annotated with the codomain its node type does not default to | `1/2` — the annotation dropped, equal to the unannotated literal | `1/2` carrying `Codomain = Complex`, which prints and reads back as `domain(1/2, CC)` |
 | | `"a in (a / 3; 3a)".ToEntity().Simplify()`, and every denominator but 2 | `a in (a / 3; 3 * a)` — left as written | `a > 0` |
 | | `MathS.Matrix(...).Determinant` on a symbolic matrix of polynomials | `a * d + -b * c`, Laplace's nested expansion | `a * d - b * c`, expanded — the same value, no larger |
@@ -33,57 +28,15 @@ read first.
 | **Silent** | `MathS.Equations(...).Solve(...)` on a system neither internal path can finish | ran without a bound — cyclic-6 exceeded 20 s | `NotSufficientlySupportedException`, naming both paths |
 | | the same with `MathS.Settings.Budget` set below what the solve needs | answered anyway, the fall-through having no budget | raises |
 | | `"a in (a / 2; 0)".ToEntity().Simplify()`, and every interval demanding both signs | left as written | `False provided a in RR` |
-| | `new Entity[0].SumAll()`, and `Sumf.Sum` on an empty list | `AngouriBugException: At least 1 child required` | `0` |
-| | `new Entity[0].MultiplyAll()`, and `Mulf.Multiply` on an empty list | `AngouriBugException` | `1` |
-| | `MathS.Vector()` and `new Entity[0].ToVector()` | `IndexOutOfRangeException` — outside the documented hierarchy | `InvalidMatrixOperationException` |
-| | `"x3 - 1".ToEntity().Factorize()`, and every polynomial no rewrite rule has a rule for | `x ^ 3 - 1` — handed back whole | `(x - 1) * (x ^ 2 + x + 1)` |
 | | `"x^2/(x^4 + 1)".Integrate("x")`, and every quotient whose denominator is a biquadratic irreducible over `Q` | `integral(x ^ 2 / (x ^ 4 + 1), x)` — left unevaluated | the antiderivative, over the real quadratic factors |
 | | `"sqrt(x)/(1 + x^2)".Integrate("x")`, and every integrand a fractional power of the variable makes rational | `integral(sqrt(x) / (1 + x ^ 2), x)` — left unevaluated | the antiderivative |
 | | `"sqrt(tan(x))".Integrate("x")`, and every integrand that is a function of `tan(x)` alone and rational in it | `integral(sqrt(tan(x)), x)` — left unevaluated | the antiderivative |
 | | `"x^2/(x + 1)".Integrate("x")`, and every improper quotient of polynomials | `integral(x ^ 2 / (x + 1), x)` — left unevaluated | `x ^ 2 / 2 + -x + ln(x + 1) + C` |
 | | `MathS.Equations("2*x - 4*y - 12").Solve("x", "y")`, and every linear system with fewer equations than unknowns | `WrongNumberOfArgumentsException` | `[[6 + 2 * t_1, t_1]]` — the family of all its solutions |
-| | `Entity.DomainConditionIn(Domain)` | did not exist | the domain of definition for a **stated** reading, through the whole tree |
-| | `MathS.Polynomials.Factor("(y * x3 + 1) * (x4 - y3)", "x")`, and bivariate polynomials whose leading coefficient in the main variable is a polynomial | `null` — a refusal | `(x ^ 4 - y ^ 3) * (x ^ 3 * y + 1)` |
-| | `MathS.Polynomials.Factor("x7 - y7", "x")`, and bivariate polynomials whose substituted image over-factors | `null` — a refusal | `(x - y) * (x ^ 6 + x ^ 5 * y + … + y ^ 6)` |
-| | `MathS.Polynomials.Factor("x2 + y2 + z2 + w2 + 1", "x")`, and polynomials in enough variables generally | `null` — a refusal | the polynomial itself, meaning it does not factor |
-| **Silent** | `"x! = 0".ToEntity().Simplify()` | `False`, including at `x = -1` where `x!` has a pole and the statement is `NaN` | `False provided x in RR and (x >= 0 or not x in ZZ)` |
-| **Silent** | `"x! / x!".ToEntity().Simplify()`, and the same for any factorial over itself | `1`, including at `x = -1` where the quotient is `NaN` | `1 provided not x! = 0` |
-| **Silent** | `"(y < x) or (x = y)".ToEntity().Simplify()`, and three more disjunctions of a comparison with an equality written the other way round | `x <= y` — False at `x = 3, y = 2` where the input is True | `x >= y` |
-| **Silent** | `"x6 + x y + 1 = 0".ToEntity().Solve("x")`, and every equation no solver settles | `{  }` — there are no roots | `{ x : 1 + x ^ 6 + x * y = 0 }` — these are the roots, whichever they are |
-| **Silent** | `"(x - 1) * (x6 + x y + 1) = 0".ToEntity().Solve("x")` | `{ 1 }` | `{ 1 } \/ { x : 1 + x ^ 6 + x * y = 0 }` |
-| **Silent** | `"x6 + x y + 1 = 0 and x - 1 = 0".ToEntity().Solve("x")` | `{  }` | `{ x : x ^ 6 + x * y + 1 = 0 and x - 1 = 0 }` |
-| **Silent** | `"sum(k, k, 1, n)".ToEntity().FreeVariables`, and `product` | `{ k, n }` — the bound index counted as free | `{ n }` |
-| **Silent** | `"integral(t * b, t, 0, 1)".ToEntity().FreeVariables`, and every integral with limits | `{ b, t }` | `{ b }` |
-| | `"x ^ 3 - x > 0".ToEntity().Solve("x")`, and every polynomial inequality of degree three or more | `NotSufficientlySupportedException: Only linear and quadratic polynomial inequalities are supported` | `(-1; 0) \/ (1; +oo)` — the solution set |
-| **Silent** | `"a implies (b implies c)".ToEntity().Stringize()` | `a implies b implies c`, which reads back as `(a implies b) implies c` | `a implies (b implies c)` |
-| | `"(a implies b) implies c".ToEntity().Stringize()` | `(a implies b) implies c` | `a implies b implies c` |
-| **Silent** | `@"A \ (B \ C)".ToEntity().Stringize()`, and `Latexize` | `A \ B \ C` / `A \setminus B \setminus C` | `A \ (B \ C)` / `A \setminus \left(B \setminus C\right)` |
-| **Silent** | `@"A \ (B \/ C)".ToEntity().Stringize()`, and `Latexize` | `A \ B \/ C` / `A \setminus B \cup C` | `A \ (B \/ C)` / `A \setminus \left(B \cup C\right)` |
-| **Silent** | `@"A \/ (B \ C)".ToEntity().Stringize()`, and `Latexize` | `A \/ B \ C` / `A \cup B \setminus C` | `A \/ (B \ C)` / `A \cup \left(B \setminus C\right)` |
-| **Silent** | `"(x provided p) provided q".ToEntity().Stringize()`, and `Latexize` | `x provided p provided q`, which reads back as `x provided (p provided q)` | `(x provided p) provided q` |
-| **Silent** | `"a in (b in c)".ToEntity().Stringize()`, and `Latexize` | `a in b in c` / `a \in b \in c` | `a in (b in c)` / `a \in \left(b \in c\right)` |
-| **Silent** | `"x * (y mod z)".ToEntity().Stringize()`, and `Latexize` | `x * y mod z` / `x y \bmod z` | `x * (y mod z)` / `x \left(y \bmod z\right)` |
-| **Silent** | `"-1 * (y mod z)".ToEntity().Stringize()` | `-y mod z` | `-(y mod z)` |
-| | any expression mixing a number with a `Complex` argument, `Compile`d in a NativeAOT app — `"x + 1".Compile<Complex, Complex>("x")` | `UncompilableNodeException: ... The binary operator Add is not defined for the types 'System.Numerics.Complex' and 'System.Numerics.Complex'` | the compiled function, answering as it does under the JIT |
-| | `Compile` to a nullable integral return type in a NativeAOT app | `AngouriBugException: IsNaN method expected for type System.Double`, which took the process down | the compiled function |
 | **Silent** | `"not (x = 1)".ToEntity().Solve("x")`, and every negation | `{  }` — no value satisfies it | `{ x : not x = 1 }` |
 | **Silent** | `"not (x > 1)".ToEntity().Solve("x")`, and every negated comparison | `{  }` | `(-oo; 1]` |
 | **Silent** | `"(x = 1) implies (x = 2)".ToEntity().Solve("x")`, and every implication | `{ 2 } \/ BB` — truth values in the solution set of a numeric question | `{ x : not x = 1 }` |
 | | `"domain((-oo; +oo), Any) = RR".ToEntity().Solve("x")`, and every unbounded interval widened to `Any` | `NotSufficientlySupportedException: There is no special set for domain Any` | `{  }` |
-| **Silent** | an app publishing with `PublishTrimmed` or NativeAOT | `AngouriMath.dll` was copied in whole, being unmarked | it is trimmed with the rest, since the assembly now declares `IsTrimmable` |
-| **Silent** | `"domain(x, ZZ)".ToEntity().Stringize()`, and `ToString`, and `EntityJsonConverter` | `x`, which reads back with `Codomain = Any` | `domain(x, ZZ)`, which reads back narrowed |
-| **Silent** | `"domain(sqrt(-1), RR)".ToEntity().Stringize()` | `sqrt(-1)`, which evaluates to `i` when read back | `domain(sqrt(-1), RR)`, which evaluates to `NaN` |
-| **Silent** | `"domain(x, ZZ)".ToEntity().Latexize()` | `x` | `{\left(x\right)}_{\mathbb{Z}}` |
-| **Silent** | `"x - domain(x, ZZ)".ToEntity().Simplify()`, and any sum mixing a node with a narrowed codomain and the same node without | `0` — the two were collected as one monomial | `x - domain(x, ZZ)`, left alone |
-| | every node type's own `Stringize()` and `Latexize()` overrides — `Entity.Sumf.Stringize()` and 129 more | declared on each node | declared once on `Entity`; still callable on every node, and an assembly compiled against 2.3.0 keeps working without a rebuild |
-| | `"x + 1 // done".ToEntity()`, and any input whose last line ends in a `//` comment | `UnhandledParseException: extraneous input '/'` | `x + 1` — the comment is skipped, as the block form already was |
-| | `MathS.Polynomials.Factor("x * y + y", "x")`, and any polynomial whose coefficients in the named variable share a common divisor | `null` — a refusal | `y * (x + 1)` |
-| | `MathS.Polynomials.SquareFreePart("(x - y) ^ 2 * (x + y)", "x")`, and any polynomial in more than one variable | `null` — a refusal | `x ^ 2 - y ^ 2` |
-| | `MathS.Polynomials.Factor("x ^ 2 - y ^ 2", "x")`, and polynomials in two variables of small enough bidegree | `null` — a refusal | `(x + y) * (x - y)` |
-| | a `switch` over `RewriteRuleGrowth` with no default arm | compiled | does not compile — there is a fourth value, `Unknown` |
-| **Silent** | `RewriteRules.RationalizeDenominator.Rules` | `[]` — the registry could not read the set | its two rules, addressable and named |
-| **Silent** | `RewriteRules.Power.ApplyOnce("ln(1 / x)")`, and every `log(_, 1/_)` and `log(1/_, _)` whose argument is not decidably a positive real | `-ln(x)`, which is wrong on the negative reals | `ln(1 / x)`, left alone |
-| **Silent** | `RewriteRules.Boolean.ApplyOnce("a and b or a")`, and two more orientations of absorption | left alone — the arm for that orientation was never written | `a` |
 | **Silent** | `RewriteRules.DivisionPreparing.Rules[0].Name`, and every rule of the twenty-seven sets now described from their data form | `Mulf(var any1, Divf(Integer(1), var any2))` — the `switch` arm's rendered pattern | `reciprocal-factor-becomes-a-quotient` |
 | | `RewriteRules.ExpandFactorialDivisions.Rules.Count`, and `FactorizeFactorialMultiplications` | `8` | `3` — the same rewrites, five of the eight arms being one commutative pattern |
 | | `RewriteRules.Boolean.Rules.Count` | `36` | `20` — a commutative pattern finds a shared operand wherever it sits |
@@ -114,9 +67,7 @@ read first.
 | | `"1/(x^2 + 1)^2".Integrate("x")`, and every proper rational function over a repeated irreducible quadratic | `integral(1 / (1 + x ^ 2) ^ 2, x)` — left unevaluated, after 2.9 s | `arctan(x) / 2 + C + 1/2 * x / (x ^ 2 + 1)`, in 0.11 s |
 | | `"x^2/(x^2 + 2)^2".Integrate("x")`, and every polynomial numerator over one | `integral(x ^ 2 / (x ^ 2 + 2) ^ 2, x)` — left unevaluated, after 93 s | the antiderivative, in 0.57 s |
 | | `"1/(x^2 - 1)^2".Integrate("x")`, and every repeated quadratic whose roots are real | `C - ln(x + -1) / 4 + ln(1 + 2 * x + x ^ 2) / 8 + -1/2 * x / (x ^ 2 + -1)` | `C - ln(1 + (-2) / (x + 1)) / 4 + -1/2 * x / (x ^ 2 + -1)` — the same value, one logarithm rather than two |
-
 | **Silent** | `"1/x - 1/x".ToEntity().Simplify()`, and every difference of a term from itself where that term can be undefined | `0`, including at `x = 0` where neither side has a value | `0 provided not x = 0` |
-
 | **Silent** | `"(x + 1)!/(x + 1)!".ToEntity().Simplify()`, and every cancelled quotient whose repeated part can be undefined | `1 provided not (1 + x)! = 0` | `1 provided 1 + x in RR and (1 + x >= 0 or not 1 + x in ZZ)` — the same value everywhere, a condition that says why |
 | | `"ln(x)/ln(x)".ToEntity().Simplify()`, and every quotient divided out by a divisor that can be undefined | `1 provided not ln(x) = 0` — which is `1` at `x = 0`, where the quotient has no value | `1 provided not ln(x) = 0 and not x = 0` |
 
@@ -727,6 +678,252 @@ caller can write ([#996](https://github.com/asc-community/AngouriMath/issues/996
 "domain((-oo; +oo), CC)".ToEntity().Simplify()          CC                        unchanged
 ```
 
+### An annotated rational literal keeps the annotation, `CC` included
+
+A codomain is a property of a node rather than a node of its own, so `domain(1/2, CC)` has to become
+one `Rational` carrying `Complex` — and it did not. The pass that reads a quotient of two integer
+literals as the rational it denotes ([#873](https://github.com/asc-community/AngouriMath/issues/873))
+ran over the **finished** tree, by which point `Complex` means two things at once: it is what an
+unannotated `Divf` carries by default, and it is what `domain(x, CC)` asks for. The pass read it as
+the first and dropped it.
+
+| | before | now |
+|---|---|---|
+| `"domain(1/2, CC)".ToEntity().Codomain` | `Rational` — the annotation gone | `Complex` |
+| `"domain(1/2, CC)".ToEntity() == "1/2".ToEntity()` | `true` | `false` |
+| `(1/2).WithCodomain(Complex).Stringize().ToEntity()` | `1/2`, `Rational` — printed one node, read back another | round-trips |
+| `"domain(1/2, RR)".ToEntity()` | `Real`, correct | unchanged |
+| `"1/2".ToEntity()` | a `Rational`, `Codomain = Rational` | unchanged |
+| `"domain(4/2, CC)".ToEntity()` | a `Divf`, `Codomain = Complex` | unchanged |
+| `"domain(1/2, CC)".ToEntity().Evaled` | `1/2` — the annotation erased by evaluating | `domain(1/2, CC)`, carried through |
+| the same, `.Simplify()` | `1/2` | `domain(1/2, CC)` |
+| the same, `.Latexize()` | `\frac{1}{2}` | `{\left(\frac{1}{2}\right)}_{\mathbb{C}}` |
+| `"domain(1/2, CC) + 1".ToEntity().Evaled` | `3/2` | unchanged |
+
+**The fix is where the fold happens, not what it reads.** `domain(...)`'s own parser rule now folds
+its argument before annotating it, so the two meanings of `Complex` never meet: an annotation lands
+on a node that is already the right shape, and the sweep over the rest of the tree — which is the
+only other place the fold runs — can hand back a bare `Rational` and read no codomain at all. It is
+sound to do so because those two are the only routes, `domain(...)` being the one syntax that
+annotates anything and the sweep meeting only what it did not annotate.
+
+`Complex` on a rational literal is a **widening** — a rational is a complex number — so nothing that
+was defined becomes `NaN` and no value changes: `domain(1/2, CC) + 1` evaluates to `3/2` as before,
+and `domain(1/2, ZZ)` is still `NaN`. What changes is equality, and everything that follows from the
+node genuinely carrying the annotation now — `Evaled` and `Simplify` hand it back instead of erasing
+it, and `Latexize` writes the subscript. That is the point: an annotation the caller wrote is no
+longer indistinguishable from one they did not.
+
+This was the second of the two gaps
+[#1048](https://github.com/asc-community/AngouriMath/issues/1048) recorded, and the last entry in
+`CodomainSurvivesPrintingTest.StillUnparseable`. That dictionary is now empty and still asserted in
+both directions, so every writable domain on every node type reads back as itself, and a gap added
+to it later fails the day it closes.
+
+### An interval bounded by its own element is decided, and `Common` terminates
+
+`a in (a / 2; 2 * a)` was `a > 0` and `a in (a / 3; 3 * a)` was left as written. The difference was
+not the mathematics — it was which candidate survived `Simplify`'s pruning.
+
+`ParaphraseInterval` writes a membership out as two comparisons with zero, and the difference it
+compares was left as a two-term sum: `a - a / 3` came back as `a + -a / 3`, which no rule about a
+sign can read. It is collected now, and the positive factor is divided out where the comparison is
+built rather than later — because `Simplify` prunes by `SimplifiedRate`, and
+`2/3 * a > 0 and 2 * a > 0` rates **26** against the membership's **25**, one point worse, so it was
+discarded before anything could take it to `a > 0`, which rates **8**. The `n = 2` case answered
+only because `1/2 * a > 0 and a > 0` happens to rate **24**.
+
+| | before | now |
+|---|---|---|
+| `"a in (a / 2; 2a)".Simplify()` | `a > 0` | unchanged |
+| `"a in (a / 3; 3a)".Simplify()` | `a in (a / 3; 3 * a)` | `a > 0` |
+| `"a in (a / 4; 4a)".Simplify()`, and every denominator through 8 | left as written | `a > 0` |
+| `"a in (a / 2; 3a)".Simplify()` | `a in (a / 2; 3 * a)` | `a > 0` |
+| `"a in (a / 7; 5a)".Simplify()` | left as written | `a > 0` |
+| `"a in (a / 2; 0)".Simplify()` | `a in (a / 2; 0)` | `False provided a in RR` |
+| `"a in (-2a; -a/2)".Simplify()` | left as written | `False provided a in RR` |
+| `"a in (a / 2; 2a + 1)".Simplify()` | `a > 0 and 1 + a > 0` | unchanged |
+| `"a in (1; 2)".Simplify()`, `"3 in (1; 5)"`, `"x in [0; 1]"`, `"a in (b; c)"` | unchanged | unchanged |
+
+The two `False` rows are answers where there were none: `a / 2 < a < 0` wants `a > 0` and `a < 0` at
+once, and so does `-2a < a < -a / 2`. The condition is there because the ordering is a claim about
+reals.
+
+**And `RewriteRules.Common` reaches a fixed point.** It was the library's only non-terminating rule
+set: a three-cycle on `-x * 1/2`, `Mulf(-1/2, x)` to `Mulf(-1, Divf(x, 2))` to `Divf(Mulf(-1, x), 2)`
+and back — three trees printing as two strings. Two of the three rules turning it are exact inverses
+on that shape: one reads `(-1 * x) / 2` as a numeric factor to collect, giving `-1/2 * x`, and the
+other reads that back as `-(x / 2)`. The first now declines a factor of `-1`, which is the sign
+rather than a number to collect.
+
+The positive case never cycled, and the reason says why the guard is where it is: `x / 2` is a
+quotient over a *leaf*, so it does not re-enter the collection rule's pattern at all. The loop
+existed only because a negation is spelled as a product.
+
+`Simplify` bounded its own iteration and never hung, so no caller saw the cycle — but a rule set is
+public, a caller may apply one by itself, and `Common` did not terminate when applied that way.
+`RuleSetTerminationTest.NeverSettle` is now empty and still asserted in both directions.
+
+**Nothing else moved.** `-x * 1/2` is `-1/2 * x` and `x * 1/2` is `x / 2`, both as before; the guard
+changes which rewrites are available, not which answer wins. The two halves of this entry ship
+together because the first is what makes the second free: the guard alone cost three interval shapes
+that were being answered by coincidence, and the collection restores them along with the rest of the
+family ([#1056](https://github.com/asc-community/AngouriMath/issues/1056)).
+
+### The determinant is computed by fraction-free elimination where it can be
+
+`Matrix.Determinant` expanded by Laplace, which is `O(n!)`. For a fully symbolic matrix that is
+optimal — the determinant genuinely has `n!` terms, and no algorithm returns it smaller in expanded
+form. For a numeric one it is pure waste: the answer is a single number and `O(n^3)` work suffices.
+
+Bareiss' fraction-free elimination now runs wherever the entries are polynomials over the rationals,
+and Laplace answers everything else. What decides it is not the size but whether the entries can be
+read, settled per matrix by trying.
+
+**The ceiling this removes**, both arms built from source on one machine:
+
+| | before | now |
+|---|---|---|
+| numeric 8×8 | 382 ms | under 1 ms |
+| numeric 10×10 | 14 415 ms | 2 ms |
+| numeric 11×11 | did not return in four minutes | 2 ms |
+| numeric 12×12 | did not return | 3 ms |
+| numeric 20×20 | did not return | 11 ms |
+| numeric 30×30 | did not return | 22 ms |
+
+**The printed form of a symbolic determinant changes**, because an elimination produces an expanded
+polynomial where Laplace produces a nested expansion. The value is the same and the expression is no
+larger in any case measured:
+
+| | before | now |
+|---|---|---|
+| `"[[a, b], [c, d]]"` | `a * d + -b * c` | `a * d - b * c` |
+| `"[[x, 1, 0], [1, x, 1], [0, 1, x]]"` | `x * (x ^ 2 + -1) + -x` | `x ^ 3 - 2 * x` |
+| `"[[a, b, 1], [c, d, 2], [1, 2, 3]]"` | `a * (d * 3 + -4) + -b * (c * 3 + -2) + c * 2 + -d` | `3 * a * d - 4 * a - 3 * b * c + 2 * b + 2 * c - d` |
+| `"[[x, 1], [1, x]]"` | `x ^ 2 + -1` | unchanged |
+| `"[[1/2, 1/3], [1/4, 1/5]]"` | `1/60` | unchanged |
+
+**No condition is introduced, and that is the point.** An ordinary Gaussian elimination leaves its
+pivots as literal divisions, so its answer is undefined wherever a pivot vanishes — at points where
+the determinant is perfectly well defined. That was
+[#992](https://github.com/asc-community/AngouriMath/issues/992), and it is why Laplace was chosen.
+Bareiss divides as well, but each division is by the *previous* pivot and is exact: the quotient is a
+determinant of a minor, so it is back in the ring. Here it is exact **and checked** — the arithmetic
+happens in `MultivariatePolynomial`, which has no quotients to leave behind, and a division that does
+not come out returns null and sends the caller to Laplace.
+
+**What is declined**, and answered by Laplace exactly as before: an entry that is not a polynomial
+over the rationals (`sin(x)`, `1 / x`, `2 ^ x`), a matrix in more than eight indeterminates, and a
+matrix mentioning `e` or `pi` — a constant is a value rather than an indeterminate, and this ring
+cannot hold one.
+
+The two algorithms were compared on 300 generated matrices where both apply, as a difference
+simplified to zero rather than as trees, with **no disagreements**
+([#999](https://github.com/asc-community/AngouriMath/issues/999)).
+### Solving a system is bounded whichever internal path takes it
+
+`Solve` on a system tries a triangularising path first, which bounds itself, and hands what it
+declines to an elimination in radicals, which had **no budget at all**. So the same call was bounded
+or unbounded depending on which internal path accepted it — cyclic-6 exceeded twenty seconds with
+nothing to stop it — and that is worse to debug than either extreme.
+
+The whole call now draws on one budget. Where it runs out, `NotSufficientlySupportedException` is
+raised, naming both paths and both ways to ask for more.
+
+| | before | now |
+|---|---|---|
+| `solvesys[a,b,c,d,f,g]` cyclic-6 | exceeded 20 s, no bound beyond it | declines, returning in about two minutes |
+| `solvesys[a,b,c,d,e]` of `a^4-1 … e^4-1` | 1024 solutions | unchanged |
+| `solvesys[a,b,c,d]` cyclic-4 | 158 solutions | unchanged |
+| `x + y = 3, x - y = 1` and every system that answered | unchanged | unchanged |
+| the same with `MathS.Settings.Budget` set below what the solve needs | answered anyway | raises |
+
+**Nothing that answered stops answering.** That was the risk, and it was measured before the change
+rather than argued about: the 1024-solution system is one the triangularising path declines on its
+quotient-dimension cap, and it declines it **in 8 milliseconds** — so bounding the whole call leaves
+the elimination essentially the whole budget. "The fast path declined" does not mean "hopeless", and
+this is what keeps that true.
+
+**The default is two ceilings, and both are measured.** A step is one candidate solution the
+elimination explores, which is what compounds — each elimination turns the next level's coefficients
+into nested radicals. The systems that answer explore very few: a symbolic 2×2 takes 2, cyclic-4
+takes 8, and the largest that answers at all takes 341. Cyclic-5 passes 100 000 without finishing. So
+the step ceiling is 10 000, with thirty-fold headroom over anything known to work.
+
+The clock is a backstop rather than the bound, and it is deliberately loose at sixty seconds, because
+a step can be arbitrarily expensive — cyclic-4 spends five seconds in eight of them. A tight clock
+was tried at five seconds and makes the same system answer or decline depending on what else the
+machine is doing, which is a worse failure than a slow answer.
+
+**The bound is cooperative and is checked once per branch**, so a call can overshoot by the cost of
+the branch that was running when the budget ran out. That is `BudgetLedger`'s stated design: an
+algorithm that does not ask cannot be bounded, and a bound enforced from outside is a thread abort in
+the middle of a rewrite. It is a bound where there was none, not a tight one.
+
+**A budget recording now sees two outcomes per solve** rather than one, named `Gröbner` and
+`SolveSystem`. What stopped each is reported separately, which is the thing
+[#896](https://github.com/asc-community/AngouriMath/issues/896) said a caller could not previously
+find out.
+
+## 2.4.0 — since 2.3.0
+
+Released 2026-08-28. These entries sat under “Unreleased” while 2.4.0 was tagged and
+published, so a reader on that version could not tell from this file what they had. They
+are under their own heading now, split at the tag rather than from memory: an entry is
+here if it was in this file at `v2.4.0` and above if it was added after.
+
+### At a glance
+
+| Silent? | What | Was | Is |
+|---|---|---|---|
+| **Silent** | `"limit(t * b, t, 0)".ToEntity().FreeVariables`, and every limit | `{ t, b }` — the variable it approaches along counted as free | `{ b }` |
+| **Silent** | `MathS.Polynomials.Factor("4 * x2 - 4 * y2", "x")`, and every multivariate polynomial whose content is a bare constant | `(x + y) * (x - y)` — **not equal to what it factored** | `4 * (x + y) * (x - y)` |
+| | `"2 * x3 - 2".ToEntity().Factorize()`, and every polynomial whose content the rules take out | `2 * (x ^ 3 - 1)` — the remainder left whole | `2 * (x - 1) * (x ^ 2 + x + 1)` |
+| | `"3^(x+1) - 2^(x-1)".ToEntity().SolveEquation("x")`, and every equation between two powers of numeric bases | `{ ln(0.04674569822628630438865471319331845734268426895141601562 ^ (1 / ln(2))) }` — a `double` promoted to a decimal | `{ -(ln(3) + ln(2)) / (ln(3) + -ln(2)) }` |
+| **Silent** | `MathS.Abs("x").WithCodomain(Domain.Any).Stringize()`, and every node widened to `Any` from a narrower default | `abs(x)` — reads back as `Real`, losing the widening | `domain(abs(x), Any)` |
+| | `new Entity[0].SumAll()`, and `Sumf.Sum` on an empty list | `AngouriBugException: At least 1 child required` | `0` |
+| | `new Entity[0].MultiplyAll()`, and `Mulf.Multiply` on an empty list | `AngouriBugException` | `1` |
+| | `MathS.Vector()` and `new Entity[0].ToVector()` | `IndexOutOfRangeException` — outside the documented hierarchy | `InvalidMatrixOperationException` |
+| | `"x3 - 1".ToEntity().Factorize()`, and every polynomial no rewrite rule has a rule for | `x ^ 3 - 1` — handed back whole | `(x - 1) * (x ^ 2 + x + 1)` |
+| | `Entity.DomainConditionIn(Domain)` | did not exist | the domain of definition for a **stated** reading, through the whole tree |
+| | `MathS.Polynomials.Factor("(y * x3 + 1) * (x4 - y3)", "x")`, and bivariate polynomials whose leading coefficient in the main variable is a polynomial | `null` — a refusal | `(x ^ 4 - y ^ 3) * (x ^ 3 * y + 1)` |
+| | `MathS.Polynomials.Factor("x7 - y7", "x")`, and bivariate polynomials whose substituted image over-factors | `null` — a refusal | `(x - y) * (x ^ 6 + x ^ 5 * y + … + y ^ 6)` |
+| | `MathS.Polynomials.Factor("x2 + y2 + z2 + w2 + 1", "x")`, and polynomials in enough variables generally | `null` — a refusal | the polynomial itself, meaning it does not factor |
+| **Silent** | `"x! = 0".ToEntity().Simplify()` | `False`, including at `x = -1` where `x!` has a pole and the statement is `NaN` | `False provided x in RR and (x >= 0 or not x in ZZ)` |
+| **Silent** | `"x! / x!".ToEntity().Simplify()`, and the same for any factorial over itself | `1`, including at `x = -1` where the quotient is `NaN` | `1 provided not x! = 0` |
+| **Silent** | `"(y < x) or (x = y)".ToEntity().Simplify()`, and three more disjunctions of a comparison with an equality written the other way round | `x <= y` — False at `x = 3, y = 2` where the input is True | `x >= y` |
+| **Silent** | `"x6 + x y + 1 = 0".ToEntity().Solve("x")`, and every equation no solver settles | `{  }` — there are no roots | `{ x : 1 + x ^ 6 + x * y = 0 }` — these are the roots, whichever they are |
+| **Silent** | `"(x - 1) * (x6 + x y + 1) = 0".ToEntity().Solve("x")` | `{ 1 }` | `{ 1 } \/ { x : 1 + x ^ 6 + x * y = 0 }` |
+| **Silent** | `"x6 + x y + 1 = 0 and x - 1 = 0".ToEntity().Solve("x")` | `{  }` | `{ x : x ^ 6 + x * y + 1 = 0 and x - 1 = 0 }` |
+| **Silent** | `"sum(k, k, 1, n)".ToEntity().FreeVariables`, and `product` | `{ k, n }` — the bound index counted as free | `{ n }` |
+| **Silent** | `"integral(t * b, t, 0, 1)".ToEntity().FreeVariables`, and every integral with limits | `{ b, t }` | `{ b }` |
+| | `"x ^ 3 - x > 0".ToEntity().Solve("x")`, and every polynomial inequality of degree three or more | `NotSufficientlySupportedException: Only linear and quadratic polynomial inequalities are supported` | `(-1; 0) \/ (1; +oo)` — the solution set |
+| **Silent** | `"a implies (b implies c)".ToEntity().Stringize()` | `a implies b implies c`, which reads back as `(a implies b) implies c` | `a implies (b implies c)` |
+| | `"(a implies b) implies c".ToEntity().Stringize()` | `(a implies b) implies c` | `a implies b implies c` |
+| **Silent** | `@"A \ (B \ C)".ToEntity().Stringize()`, and `Latexize` | `A \ B \ C` / `A \setminus B \setminus C` | `A \ (B \ C)` / `A \setminus \left(B \setminus C\right)` |
+| **Silent** | `@"A \ (B \/ C)".ToEntity().Stringize()`, and `Latexize` | `A \ B \/ C` / `A \setminus B \cup C` | `A \ (B \/ C)` / `A \setminus \left(B \cup C\right)` |
+| **Silent** | `@"A \/ (B \ C)".ToEntity().Stringize()`, and `Latexize` | `A \/ B \ C` / `A \cup B \setminus C` | `A \/ (B \ C)` / `A \cup \left(B \setminus C\right)` |
+| **Silent** | `"(x provided p) provided q".ToEntity().Stringize()`, and `Latexize` | `x provided p provided q`, which reads back as `x provided (p provided q)` | `(x provided p) provided q` |
+| **Silent** | `"a in (b in c)".ToEntity().Stringize()`, and `Latexize` | `a in b in c` / `a \in b \in c` | `a in (b in c)` / `a \in \left(b \in c\right)` |
+| **Silent** | `"x * (y mod z)".ToEntity().Stringize()`, and `Latexize` | `x * y mod z` / `x y \bmod z` | `x * (y mod z)` / `x \left(y \bmod z\right)` |
+| **Silent** | `"-1 * (y mod z)".ToEntity().Stringize()` | `-y mod z` | `-(y mod z)` |
+| | any expression mixing a number with a `Complex` argument, `Compile`d in a NativeAOT app — `"x + 1".Compile<Complex, Complex>("x")` | `UncompilableNodeException: ... The binary operator Add is not defined for the types 'System.Numerics.Complex' and 'System.Numerics.Complex'` | the compiled function, answering as it does under the JIT |
+| | `Compile` to a nullable integral return type in a NativeAOT app | `AngouriBugException: IsNaN method expected for type System.Double`, which took the process down | the compiled function |
+| **Silent** | an app publishing with `PublishTrimmed` or NativeAOT | `AngouriMath.dll` was copied in whole, being unmarked | it is trimmed with the rest, since the assembly now declares `IsTrimmable` |
+| **Silent** | `"domain(x, ZZ)".ToEntity().Stringize()`, and `ToString`, and `EntityJsonConverter` | `x`, which reads back with `Codomain = Any` | `domain(x, ZZ)`, which reads back narrowed |
+| **Silent** | `"domain(sqrt(-1), RR)".ToEntity().Stringize()` | `sqrt(-1)`, which evaluates to `i` when read back | `domain(sqrt(-1), RR)`, which evaluates to `NaN` |
+| **Silent** | `"domain(x, ZZ)".ToEntity().Latexize()` | `x` | `{\left(x\right)}_{\mathbb{Z}}` |
+| **Silent** | `"x - domain(x, ZZ)".ToEntity().Simplify()`, and any sum mixing a node with a narrowed codomain and the same node without | `0` — the two were collected as one monomial | `x - domain(x, ZZ)`, left alone |
+| | every node type's own `Stringize()` and `Latexize()` overrides — `Entity.Sumf.Stringize()` and 129 more | declared on each node | declared once on `Entity`; still callable on every node, and an assembly compiled against 2.3.0 keeps working without a rebuild |
+| | `"x + 1 // done".ToEntity()`, and any input whose last line ends in a `//` comment | `UnhandledParseException: extraneous input '/'` | `x + 1` — the comment is skipped, as the block form already was |
+| | `MathS.Polynomials.Factor("x * y + y", "x")`, and any polynomial whose coefficients in the named variable share a common divisor | `null` — a refusal | `y * (x + 1)` |
+| | `MathS.Polynomials.SquareFreePart("(x - y) ^ 2 * (x + y)", "x")`, and any polynomial in more than one variable | `null` — a refusal | `x ^ 2 - y ^ 2` |
+| | `MathS.Polynomials.Factor("x ^ 2 - y ^ 2", "x")`, and polynomials in two variables of small enough bidegree | `null` — a refusal | `(x + y) * (x - y)` |
+| | a `switch` over `RewriteRuleGrowth` with no default arm | compiled | does not compile — there is a fourth value, `Unknown` |
+| **Silent** | `RewriteRules.RationalizeDenominator.Rules` | `[]` — the registry could not read the set | its two rules, addressable and named |
+| **Silent** | `RewriteRules.Power.ApplyOnce("ln(1 / x)")`, and every `log(_, 1/_)` and `log(1/_, _)` whose argument is not decidably a positive real | `-ln(x)`, which is wrong on the negative reals | `ln(1 / x)`, left alone |
+| **Silent** | `RewriteRules.Boolean.ApplyOnce("a and b or a")`, and two more orientations of absorption | left alone — the arm for that orientation was never written | `a` |
+
 ### An equation nothing settled is no longer answered with the empty set
 
 `Solve` and `SolveEquation` returned an empty `FiniteSet` for two different things: an equation
@@ -1124,193 +1321,6 @@ it stays an ordinary variable.
 
 `Latexize` renders the subscript as `\mathrm{Any}` rather than a `\mathbb`, since there is no set
 to render ([#1048](https://github.com/asc-community/AngouriMath/issues/1048)).
-
-### An annotated rational literal keeps the annotation, `CC` included
-
-A codomain is a property of a node rather than a node of its own, so `domain(1/2, CC)` has to become
-one `Rational` carrying `Complex` — and it did not. The pass that reads a quotient of two integer
-literals as the rational it denotes ([#873](https://github.com/asc-community/AngouriMath/issues/873))
-ran over the **finished** tree, by which point `Complex` means two things at once: it is what an
-unannotated `Divf` carries by default, and it is what `domain(x, CC)` asks for. The pass read it as
-the first and dropped it.
-
-| | before | now |
-|---|---|---|
-| `"domain(1/2, CC)".ToEntity().Codomain` | `Rational` — the annotation gone | `Complex` |
-| `"domain(1/2, CC)".ToEntity() == "1/2".ToEntity()` | `true` | `false` |
-| `(1/2).WithCodomain(Complex).Stringize().ToEntity()` | `1/2`, `Rational` — printed one node, read back another | round-trips |
-| `"domain(1/2, RR)".ToEntity()` | `Real`, correct | unchanged |
-| `"1/2".ToEntity()` | a `Rational`, `Codomain = Rational` | unchanged |
-| `"domain(4/2, CC)".ToEntity()` | a `Divf`, `Codomain = Complex` | unchanged |
-| `"domain(1/2, CC)".ToEntity().Evaled` | `1/2` — the annotation erased by evaluating | `domain(1/2, CC)`, carried through |
-| the same, `.Simplify()` | `1/2` | `domain(1/2, CC)` |
-| the same, `.Latexize()` | `\frac{1}{2}` | `{\left(\frac{1}{2}\right)}_{\mathbb{C}}` |
-| `"domain(1/2, CC) + 1".ToEntity().Evaled` | `3/2` | unchanged |
-
-**The fix is where the fold happens, not what it reads.** `domain(...)`'s own parser rule now folds
-its argument before annotating it, so the two meanings of `Complex` never meet: an annotation lands
-on a node that is already the right shape, and the sweep over the rest of the tree — which is the
-only other place the fold runs — can hand back a bare `Rational` and read no codomain at all. It is
-sound to do so because those two are the only routes, `domain(...)` being the one syntax that
-annotates anything and the sweep meeting only what it did not annotate.
-
-`Complex` on a rational literal is a **widening** — a rational is a complex number — so nothing that
-was defined becomes `NaN` and no value changes: `domain(1/2, CC) + 1` evaluates to `3/2` as before,
-and `domain(1/2, ZZ)` is still `NaN`. What changes is equality, and everything that follows from the
-node genuinely carrying the annotation now — `Evaled` and `Simplify` hand it back instead of erasing
-it, and `Latexize` writes the subscript. That is the point: an annotation the caller wrote is no
-longer indistinguishable from one they did not.
-
-This was the second of the two gaps
-[#1048](https://github.com/asc-community/AngouriMath/issues/1048) recorded, and the last entry in
-`CodomainSurvivesPrintingTest.StillUnparseable`. That dictionary is now empty and still asserted in
-both directions, so every writable domain on every node type reads back as itself, and a gap added
-to it later fails the day it closes.
-
-### An interval bounded by its own element is decided, and `Common` terminates
-
-`a in (a / 2; 2 * a)` was `a > 0` and `a in (a / 3; 3 * a)` was left as written. The difference was
-not the mathematics — it was which candidate survived `Simplify`'s pruning.
-
-`ParaphraseInterval` writes a membership out as two comparisons with zero, and the difference it
-compares was left as a two-term sum: `a - a / 3` came back as `a + -a / 3`, which no rule about a
-sign can read. It is collected now, and the positive factor is divided out where the comparison is
-built rather than later — because `Simplify` prunes by `SimplifiedRate`, and
-`2/3 * a > 0 and 2 * a > 0` rates **26** against the membership's **25**, one point worse, so it was
-discarded before anything could take it to `a > 0`, which rates **8**. The `n = 2` case answered
-only because `1/2 * a > 0 and a > 0` happens to rate **24**.
-
-| | before | now |
-|---|---|---|
-| `"a in (a / 2; 2a)".Simplify()` | `a > 0` | unchanged |
-| `"a in (a / 3; 3a)".Simplify()` | `a in (a / 3; 3 * a)` | `a > 0` |
-| `"a in (a / 4; 4a)".Simplify()`, and every denominator through 8 | left as written | `a > 0` |
-| `"a in (a / 2; 3a)".Simplify()` | `a in (a / 2; 3 * a)` | `a > 0` |
-| `"a in (a / 7; 5a)".Simplify()` | left as written | `a > 0` |
-| `"a in (a / 2; 0)".Simplify()` | `a in (a / 2; 0)` | `False provided a in RR` |
-| `"a in (-2a; -a/2)".Simplify()` | left as written | `False provided a in RR` |
-| `"a in (a / 2; 2a + 1)".Simplify()` | `a > 0 and 1 + a > 0` | unchanged |
-| `"a in (1; 2)".Simplify()`, `"3 in (1; 5)"`, `"x in [0; 1]"`, `"a in (b; c)"` | unchanged | unchanged |
-
-The two `False` rows are answers where there were none: `a / 2 < a < 0` wants `a > 0` and `a < 0` at
-once, and so does `-2a < a < -a / 2`. The condition is there because the ordering is a claim about
-reals.
-
-**And `RewriteRules.Common` reaches a fixed point.** It was the library's only non-terminating rule
-set: a three-cycle on `-x * 1/2`, `Mulf(-1/2, x)` to `Mulf(-1, Divf(x, 2))` to `Divf(Mulf(-1, x), 2)`
-and back — three trees printing as two strings. Two of the three rules turning it are exact inverses
-on that shape: one reads `(-1 * x) / 2` as a numeric factor to collect, giving `-1/2 * x`, and the
-other reads that back as `-(x / 2)`. The first now declines a factor of `-1`, which is the sign
-rather than a number to collect.
-
-The positive case never cycled, and the reason says why the guard is where it is: `x / 2` is a
-quotient over a *leaf*, so it does not re-enter the collection rule's pattern at all. The loop
-existed only because a negation is spelled as a product.
-
-`Simplify` bounded its own iteration and never hung, so no caller saw the cycle — but a rule set is
-public, a caller may apply one by itself, and `Common` did not terminate when applied that way.
-`RuleSetTerminationTest.NeverSettle` is now empty and still asserted in both directions.
-
-**Nothing else moved.** `-x * 1/2` is `-1/2 * x` and `x * 1/2` is `x / 2`, both as before; the guard
-changes which rewrites are available, not which answer wins. The two halves of this entry ship
-together because the first is what makes the second free: the guard alone cost three interval shapes
-that were being answered by coincidence, and the collection restores them along with the rest of the
-family ([#1056](https://github.com/asc-community/AngouriMath/issues/1056)).
-
-### The determinant is computed by fraction-free elimination where it can be
-
-`Matrix.Determinant` expanded by Laplace, which is `O(n!)`. For a fully symbolic matrix that is
-optimal — the determinant genuinely has `n!` terms, and no algorithm returns it smaller in expanded
-form. For a numeric one it is pure waste: the answer is a single number and `O(n^3)` work suffices.
-
-Bareiss' fraction-free elimination now runs wherever the entries are polynomials over the rationals,
-and Laplace answers everything else. What decides it is not the size but whether the entries can be
-read, settled per matrix by trying.
-
-**The ceiling this removes**, both arms built from source on one machine:
-
-| | before | now |
-|---|---|---|
-| numeric 8×8 | 382 ms | under 1 ms |
-| numeric 10×10 | 14 415 ms | 2 ms |
-| numeric 11×11 | did not return in four minutes | 2 ms |
-| numeric 12×12 | did not return | 3 ms |
-| numeric 20×20 | did not return | 11 ms |
-| numeric 30×30 | did not return | 22 ms |
-
-**The printed form of a symbolic determinant changes**, because an elimination produces an expanded
-polynomial where Laplace produces a nested expansion. The value is the same and the expression is no
-larger in any case measured:
-
-| | before | now |
-|---|---|---|
-| `"[[a, b], [c, d]]"` | `a * d + -b * c` | `a * d - b * c` |
-| `"[[x, 1, 0], [1, x, 1], [0, 1, x]]"` | `x * (x ^ 2 + -1) + -x` | `x ^ 3 - 2 * x` |
-| `"[[a, b, 1], [c, d, 2], [1, 2, 3]]"` | `a * (d * 3 + -4) + -b * (c * 3 + -2) + c * 2 + -d` | `3 * a * d - 4 * a - 3 * b * c + 2 * b + 2 * c - d` |
-| `"[[x, 1], [1, x]]"` | `x ^ 2 + -1` | unchanged |
-| `"[[1/2, 1/3], [1/4, 1/5]]"` | `1/60` | unchanged |
-
-**No condition is introduced, and that is the point.** An ordinary Gaussian elimination leaves its
-pivots as literal divisions, so its answer is undefined wherever a pivot vanishes — at points where
-the determinant is perfectly well defined. That was
-[#992](https://github.com/asc-community/AngouriMath/issues/992), and it is why Laplace was chosen.
-Bareiss divides as well, but each division is by the *previous* pivot and is exact: the quotient is a
-determinant of a minor, so it is back in the ring. Here it is exact **and checked** — the arithmetic
-happens in `MultivariatePolynomial`, which has no quotients to leave behind, and a division that does
-not come out returns null and sends the caller to Laplace.
-
-**What is declined**, and answered by Laplace exactly as before: an entry that is not a polynomial
-over the rationals (`sin(x)`, `1 / x`, `2 ^ x`), a matrix in more than eight indeterminates, and a
-matrix mentioning `e` or `pi` — a constant is a value rather than an indeterminate, and this ring
-cannot hold one.
-
-The two algorithms were compared on 300 generated matrices where both apply, as a difference
-simplified to zero rather than as trees, with **no disagreements**
-([#999](https://github.com/asc-community/AngouriMath/issues/999)).
-### Solving a system is bounded whichever internal path takes it
-
-`Solve` on a system tries a triangularising path first, which bounds itself, and hands what it
-declines to an elimination in radicals, which had **no budget at all**. So the same call was bounded
-or unbounded depending on which internal path accepted it — cyclic-6 exceeded twenty seconds with
-nothing to stop it — and that is worse to debug than either extreme.
-
-The whole call now draws on one budget. Where it runs out, `NotSufficientlySupportedException` is
-raised, naming both paths and both ways to ask for more.
-
-| | before | now |
-|---|---|---|
-| `solvesys[a,b,c,d,f,g]` cyclic-6 | exceeded 20 s, no bound beyond it | declines, returning in about two minutes |
-| `solvesys[a,b,c,d,e]` of `a^4-1 … e^4-1` | 1024 solutions | unchanged |
-| `solvesys[a,b,c,d]` cyclic-4 | 158 solutions | unchanged |
-| `x + y = 3, x - y = 1` and every system that answered | unchanged | unchanged |
-| the same with `MathS.Settings.Budget` set below what the solve needs | answered anyway | raises |
-
-**Nothing that answered stops answering.** That was the risk, and it was measured before the change
-rather than argued about: the 1024-solution system is one the triangularising path declines on its
-quotient-dimension cap, and it declines it **in 8 milliseconds** — so bounding the whole call leaves
-the elimination essentially the whole budget. "The fast path declined" does not mean "hopeless", and
-this is what keeps that true.
-
-**The default is two ceilings, and both are measured.** A step is one candidate solution the
-elimination explores, which is what compounds — each elimination turns the next level's coefficients
-into nested radicals. The systems that answer explore very few: a symbolic 2×2 takes 2, cyclic-4
-takes 8, and the largest that answers at all takes 341. Cyclic-5 passes 100 000 without finishing. So
-the step ceiling is 10 000, with thirty-fold headroom over anything known to work.
-
-The clock is a backstop rather than the bound, and it is deliberately loose at sixty seconds, because
-a step can be arbitrarily expensive — cyclic-4 spends five seconds in eight of them. A tight clock
-was tried at five seconds and makes the same system answer or decline depending on what else the
-machine is doing, which is a worse failure than a slow answer.
-
-**The bound is cooperative and is checked once per branch**, so a call can overshoot by the cost of
-the branch that was running when the budget ran out. That is `BudgetLedger`'s stated design: an
-algorithm that does not ask cannot be bounded, and a bound enforced from outside is a thread abort in
-the middle of a rewrite. It is a bound where there was none, not a tight one.
-
-**A budget recording now sees two outcomes per solve** rather than one, named `Gröbner` and
-`SolveSystem`. What stopped each is reported separately, which is the thing
-[#896](https://github.com/asc-community/AngouriMath/issues/896) said a caller could not previously
-find out.
 
 ### A fold over an empty sequence answers instead of throwing
 
