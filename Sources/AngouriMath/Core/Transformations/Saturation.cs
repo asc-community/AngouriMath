@@ -65,6 +65,16 @@ namespace AngouriMath.Core.Transformations
         /// classified may fire at all. Naming that as the widest setting makes it a request a
         /// caller has to make on purpose, which is the most this can honestly do about it.
         /// </para>
+        /// <para>
+        /// <b>And the ceiling is the scheduling policy, not a stand-in for one.</b> When both
+        /// directions of an inverse pair are declared, <c>RulesUpTo(Rearranges)</c> keeps the
+        /// collecting one and withholds the expanding one, mechanically, for every such pair.
+        /// <c>sin(2x)</c> and <c>2 sin x cos x</c> run away at the widest ceiling and saturate at
+        /// the safe one because <c>ExpandMultipleAngle</c> declares
+        /// <see cref="RewriteRuleGrowth.Expands"/>. Growth is the direction marker. A pair whose
+        /// expanding direction is unjudged is the one case this cannot protect, and that is what
+        /// declaring a growth for a rule is for. <c>RunawayBreadthTest</c> holds this.
+        /// </para>
         /// </remarks>
         internal static IReadOnlyList<MatchedRule> RulesUpTo(RewriteRuleGrowth widest)
             => MatchedRules.All
