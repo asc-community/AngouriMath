@@ -270,6 +270,42 @@ What is left of a `SimplifyHard` level, for whoever comes next: the remaining re
 factorisation at level 2, and the opened angles expanded — at 177, 170 and 82 MB, each a
 recursive simplification of an expanded tree.
 
+## The 1935th: the solver tries the equation as written
+
+The same hook, on `SolveHard` and attributed to the stages of `AnalyticalEquationSolver.Solve`
+per recursion depth. Two things were done before any solving. The replacement machinery asked
+`Entity.Alternate(4)` — a whole level-4 simplification of the equation, the search `Simplify`
+runs — for every spelling before trying any, at every depth of its own recursion, and in the
+ordinary case solved the first spelling it got, which was the equation itself: 268 MB of the
+top-level call, 103 MB at the next depth, 20 MB below that. And the two polynomial-factoring
+attempts every equation is offered — a rational root to split off, an irreducible factorisation —
+each expanded the whole equation, a page of radicals included, to learn that a sine is not a
+monomial: 3 MB a time, twice per equation visited, eighteen visits at one depth, 268 MB in all.
+
+The loop now yields the equation as it stands and builds the alternatives only if it gets past
+that — keeping a spelling that came back as a condition as a fallback while the next is tried —
+and the coefficient extraction reads the tree before it expands anything.
+
+| benchmark | 1933rd | 1935th | allocation | time |
+|---|--:|--:|--:|--:|
+| `SolveHard` | 859,268,416 | **11,818,936** | **−98.6%** | 700 → 109 ms |
+| `SolveMediumHard` | 94,415,256 | **1,435,934** | **−98.5%** | 66.8 → 13.9 ms |
+| `SolveMedium` | 662,923 | 452,901 | −31.7% | 456 → 387 µs |
+| `SolveEasyMedium` | 97,335 | 65,232 | −33.0% | 29.7 → 19.2 µs |
+| `SimplifyHard` | 733,188,536 | 680,457,400 | −7.2% | 371 → 339 ms |
+| `SimplifyEasy` | 116,291 | 110,051 | −5.4% | 71.2 → 66.4 µs |
+
+Bytes allocated per call, same machine, both columns measured by the gate in one session; every
+other entry within 0.1%. The `Simplify` rows move through the same pre-check, which `Simplify`'s
+own factoring candidates reach. Since the 1930th, this morning's column: `SolveHard` **−99.2%**,
+`SolveMediumHard` −99.1%, `SimplifyHard` −81%. Timings carry the usual rider. The gate's baseline
+was taken from this run.
+
+One answer changes its spelling and nothing else moves: the condition on
+`(x - b)/(x + a) + c/(x + a)`'s root has its terms in the order the equation had, since the
+equation is solved as written rather than resimplified first. The `SolveHard` and
+`SolveMediumHard` answers are the same size as before, 149,153 and 37,073 nodes.
+
 ## The 1933rd: a candidate registered once
 
 The remaining registration, split by stage with the same hook: at level 4 on `SimplifyHard`,
