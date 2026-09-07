@@ -84,6 +84,17 @@ namespace AngouriMath.Core.Transformations
                 .ToList();
 
         /// <summary>
+        /// <see cref="RulesUpTo"/> at <see cref="RewriteRuleGrowth.Rearranges"/> — the rules that
+        /// never enlarge — built once, lazily: a caller inside the simplifier must not rebuild
+        /// the list per call, and the registry must not be read at this type's initialisation.
+        /// </summary>
+        internal static IReadOnlyList<MatchedRule> SafeRules => safeRules.Value;
+
+        [ConstantField]
+        private static readonly Lazy<IReadOnlyList<MatchedRule>> safeRules
+            = new(() => RulesUpTo(RewriteRuleGrowth.Rearranges));
+
+        /// <summary>
         /// Merges into <paramref name="graph"/> every equality <paramref name="rules"/> reach from
         /// what it already holds, until a pass changes nothing or <paramref name="ledger"/> stops
         /// it. Answers whether it reached that fixed point rather than the ceiling.

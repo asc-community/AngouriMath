@@ -5,6 +5,9 @@
 // Website: https://am.angouri.org.
 //
 
+using System;
+using AngouriMath.Core.Budgets;
+using AngouriMath.Core.Transformations;
 using PeterO.Numbers;
 using static AngouriMath.Entity;
 
@@ -161,16 +164,43 @@ namespace AngouriMath.Functions
                 var crossTerm = 2 * p * q;
                 if (DiffersNumerically(crossTerm, w) && DiffersNumerically(crossTerm, -w))
                     continue;
-                var product = crossTerm.Simplify();
-                var candidate =
-                    (product - w).Simplify() == 0 ? new Powf((p + q).Simplify(), 2) :
-                    (product + w).Simplify() == 0 ? new Powf((p - q).Simplify(), 2) :
-                    null;
+                // The rewrite graph first, at the ceiling of rules that never enlarge: it proves
+                // 2 * sqrt(2) * sqrt(3) and 2 * sqrt(6) equal in a millisecond where the symbolic
+                // test below runs Simplify three times over radicals. A false from it is "not
+                // proved", never "unequal", so the symbolic test still runs where the graph does
+                // not reach, and the numeric check at the end disposes of both the same way.
+                // The graph's first production caller -- #746 tier 2's item 5, measured here.
+                var sign = Saturation.ProvesEqual(crossTerm, w, Saturation.SafeRules, PerfectSquareProofBudget) ? 1
+                         : Saturation.ProvesEqual(crossTerm, -w, Saturation.SafeRules, PerfectSquareProofBudget) ? -1
+                         : 0;
+                if (sign == 0)
+                {
+                    var product = crossTerm.Simplify();
+                    sign = (product - w).Simplify() == 0 ? 1
+                         : (product + w).Simplify() == 0 ? -1
+                         : 0;
+                }
+                var candidate = sign switch
+                {
+                    1 => new Powf((p + q).Simplify(), 2),
+                    -1 => new Powf((p - q).Simplify(), 2),
+                    _ => null,
+                };
                 if (candidate is { } square && AgreesNumerically(expr, square))
                     return square;
             }
             return null;
         }
+
+        /// <summary>
+        /// What the rewrite graph may spend proving a cross term equal to its candidate: two
+        /// thousand steps and fifty milliseconds. On the corpus the safe ceiling saturates a
+        /// term of this size in under a millisecond and a few dozen e-nodes, so this is a lid
+        /// against the stall family rather than a working allowance.
+        /// https://github.com/asc-community/AngouriMath/issues/1200
+        /// </summary>
+        [ConstantField] private static readonly WorkBudget PerfectSquareProofBudget
+            = new() { Steps = 2_000, Time = TimeSpan.FromMilliseconds(50) };
 
         /// <summary>Sample points, negative first: a branch-cut error shows nowhere else.</summary>
         [ConstantField] private static readonly EDecimal[] PerfectSquareSamplePoints =
