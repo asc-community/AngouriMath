@@ -314,6 +314,15 @@ namespace AngouriMath.Functions
             out ERational[] coefficients)
         {
             coefficients = System.Array.Empty<ERational>();
+            // Read off the tree before anything is expanded. The expansion below is the cost
+            // of this whole method, and it was paid in full for an equation this cannot
+            // accept: the solver asks twice per equation it visits, on the way down through
+            // every replacement, and cos(x) + sin(x) - r with r a page of radicals was
+            // expanded twice at each of eighteen visits to be told that a sine is not a
+            // monomial. A third of SolveHard's allocation was that.
+            // https://github.com/asc-community/AngouriMath/issues/746
+            if (!MayBeAPolynomialWithRationalCoefficients(expr, x))
+                return false;
             var monomials = PolynomialSolver.GatherMonomialInformation<EInteger, TreeAnalyzer.PrimitiveInteger>(
                 Sumf.LinearChildren(expr.Expand()), x);
             if (monomials is null || monomials.Count < leastTerms)
@@ -338,6 +347,46 @@ namespace AngouriMath.Functions
 
             coefficients = found;
             return true;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> has the shape of a polynomial in <paramref name="x"/>
+        /// whose coefficients could all be rational: <paramref name="x"/> occurs only under
+        /// sums, products, quotients by something free of it, and whole non-negative powers,
+        /// and no subtree free of <paramref name="x"/> carries a symbol or a constant. A
+        /// necessary condition, read off the tree without building anything; what passes it
+        /// is still expanded and checked.
+        /// </summary>
+        /// <remarks>
+        /// A symbol in a coefficient is refused outright rather than expanded and evaluated,
+        /// because a coefficient with a symbol in it is not rational, and the one way it could
+        /// still be -- the symbol cancelling against itself across terms -- is what
+        /// <see cref="Entity.InnerSimplified"/> has already collected before anything here is
+        /// asked. A constant is refused for the same reason: pi is not rational either. An
+        /// irrational literal such as <c>sqrt(2)</c> is not refused here, since it is a power of
+        /// a rational and reads as one; the expansion still decides it.
+        /// </remarks>
+        private static bool MayBeAPolynomialWithRationalCoefficients(Entity expr, Variable x)
+        {
+            if (!expr.ContainsNode(x))
+                return expr.VarsAndConsts.Count == 0;
+            return expr switch
+            {
+                Variable => true,
+                Sumf(var augend, var addend)
+                    => MayBeAPolynomialWithRationalCoefficients(augend, x) && MayBeAPolynomialWithRationalCoefficients(addend, x),
+                Minusf(var minuend, var subtrahend)
+                    => MayBeAPolynomialWithRationalCoefficients(minuend, x) && MayBeAPolynomialWithRationalCoefficients(subtrahend, x),
+                Mulf(var multiplier, var multiplicand)
+                    => MayBeAPolynomialWithRationalCoefficients(multiplier, x) && MayBeAPolynomialWithRationalCoefficients(multiplicand, x),
+                Divf(var dividend, var divisor)
+                    => !divisor.ContainsNode(x)
+                       && MayBeAPolynomialWithRationalCoefficients(dividend, x)
+                       && MayBeAPolynomialWithRationalCoefficients(divisor, x),
+                Powf(var @base, Integer { IsNegative: false })
+                    => MayBeAPolynomialWithRationalCoefficients(@base, x),
+                _ => false
+            };
         }
 
         /// <summary>

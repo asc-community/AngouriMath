@@ -84,6 +84,7 @@ read first.
 | | `"abs(i * x)".Simplify()`, and every modulus of a numeric multiple with an exact modulus off the real line | `abs(i * x)` — left as written | `abs(x)` |
 | **Silent** | `"0 * (i * +oo)".Evaled`, and every whole zero times a complex infinity | `0` | `NaN` |
 | | `RewriteRules.Common.Rules.Count`, and `RewriteRules.All` by growth | `62`; 124 / 46 / 31 / 123 | `65`; 124 / 49 / 31 / 123 |
+| | `"(x - b) / (x + a) + c / (x + a)".SolveEquation("x")`, and every equation the replacement machinery solves whose condition is spelled from the equation as written | `{ -(-b + c) provided not a + -(-b + c) = 0 }` | `{ -(-b + c) provided not -(-b + c) + a = 0 }` — the same set, the condition's terms in the order the equation had |
 
 ### A cancelled quotient says its operand is defined, not only non-zero
 
@@ -1002,6 +1003,33 @@ machinery it is kept, because it is what stops the search. Both columns measured
 | `RewriteRules.Common.Rules.Count` | `62` | `65` |
 | `RewriteRules.All` by growth — collects / rearranges / expands / unknown | 124 / 46 / 31 / 123 | 124 / 49 / 31 / 123 |
 | `Saturation.SafeRules.Count` | `170` | `173` |
+
+### The solver tries the equation as written before asking for its alternatives
+
+Two changes inside `SolveEquation`, made for speed and measured for answers. The replacement
+machinery — solve for a subtree, then solve the subtree for `x` — used to ask
+`Entity.Alternate(4)` for every spelling of the equation before trying any of them, at every
+depth of its own recursion; that is a whole level-4 simplification, the same search `Simplify`
+runs, and in the ordinary case the first spelling it produced was the equation itself. It now
+tries the equation as it stands first and asks for the alternatives only if that does not settle
+it; a spelling that comes back as a condition rather than a finite set is kept as a fallback and
+the next spelling is tried, which is what keeps `x^4 * x^y - 2` answered with a root. And the
+two polynomial-factoring attempts every equation is offered — a rational root to split off, an
+irreducible factorisation — read the tree before they expand it: a sine is not a monomial, and
+`cos(x) + sin(x) - r` with `r` a page of radicals was being expanded twice at each of eighteen
+visits to be told so.
+
+Every solve in the suite answers as before but one, whose condition is spelled from the equation
+as written rather than from its resimplified form — the same set with its terms in the other
+order. Measured by the gate on one machine, bytes and time per call:
+
+| | Was | Is |
+|---|---|---|
+| `"(x - b) / (x + a) + c / (x + a)".SolveEquation("x")` | `{ -(-b + c) provided not a + -(-b + c) = 0 }` | `{ -(-b + c) provided not -(-b + c) + a = 0 }` |
+| `SolveHard` — the benchmark's quartic in `sin(cos(x) + sin(x) + c)` | 859,268,416 B, 700 ms | 11,818,936 B, 109 ms |
+| `SolveMediumHard` | 94,415,256 B, 66.8 ms | 1,435,934 B, 13.9 ms |
+| `SolveMedium`, `SolveEasyMedium` | 662,923 B, 456 µs; 97,335 B, 29.7 µs | 452,901 B, 387 µs; 65,232 B, 19.2 µs |
+| `SimplifyHard`, `SimplifyEasy` — the same pre-check, reached through `Simplify`'s factoring candidates | 733,188,536 B, 371 ms; 116,291 B, 71.2 µs | 680,457,400 B, 339 ms; 110,051 B, 66.4 µs |
 
 ## 2.4.0 — since 2.3.0
 

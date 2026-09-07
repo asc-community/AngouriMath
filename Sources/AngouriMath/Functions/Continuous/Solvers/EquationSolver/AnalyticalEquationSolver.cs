@@ -258,7 +258,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             {
                 var newVar = Variable.CreateTemp(expr.Vars);
                 // Here we find all possible replacements and find one that has at least one solution
-                foreach (var alt in expr.Alternate(4))
+                Set? unsettled = null;
+                foreach (var alt in SpellingsToSolveOver(expr))
                 {
                     MultithreadingFunctional.ExitIfCancelled();
                     if (!alt.ContainsNode(x))
@@ -276,9 +277,16 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         if (solutions is FiniteSet els)
                             return els.Select(ent => TryDowncast(expr, x, ent)).ToSet();
                         else if (solutions is Set { IsSetEmpty: false } set)
-                            return set;
+                            // A set that is not finite is an answer nothing settled -- a
+                            // condition, or a union with one in it -- and another spelling
+                            // may settle it: x^4 * x^y - 2 as written comes back as a
+                            // condition, and the spelling x^(4 + y) - 2 comes back as a root.
+                            // Kept in case no spelling does better.
+                            unsettled ??= set;
                     }
                 }
+                if (unsettled is { } condition)
+                    return condition;
                 // // //
             }
 
@@ -347,6 +355,28 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     is FiniteSet { IsSetEmpty: false } found ? found : Unsolved(expr, x);
 
             return Unsolved(expr, x);
+        }
+
+        /// <summary>
+        /// The spellings of an equation the replacement machinery tries, in order: the
+        /// equation as it stands, and then every alternative the simplifier can offer.
+        /// </summary>
+        /// <remarks>
+        /// The alternatives are built only if they are reached. <see cref="Entity.Alternate"/>
+        /// is a whole level-4 simplification of the equation -- the same search
+        /// <see cref="Entity.Simplify(int)"/> runs, sorted -- and the replacement loop asked
+        /// for it before trying anything, at every depth of its own recursion, when in the
+        /// ordinary case the equation as written is the spelling that solves. On SolveHard
+        /// that search was 268 MB of the top-level call and a third of each level below it,
+        /// to produce a first candidate the loop then solved and never looked past.
+        /// https://github.com/asc-community/AngouriMath/issues/746
+        /// </remarks>
+        private static IEnumerable<Entity> SpellingsToSolveOver(Entity expr)
+        {
+            yield return expr;
+            foreach (var alt in expr.Alternate(4))
+                if (alt != expr)
+                    yield return alt;
         }
 
         /// <summary>

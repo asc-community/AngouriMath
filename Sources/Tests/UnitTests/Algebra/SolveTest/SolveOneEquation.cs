@@ -183,7 +183,10 @@ namespace AngouriMath.Tests.Algebra
         // Both operands share the denominator, so they now add as (x - b + c) / (x + a)
         // rather than being cross-multiplied; the root is the same b - c, reached with its
         // terms in the other order.
-        [InlineData("(x - b) / (x + a) + c / (x + a)", 1, "{ -(-b + c) provided not a + -(-b + c) = 0 }")]
+        // The condition's terms come in the order the equation was solved in: as written,
+        // since the replacement machinery no longer resimplifies an equation before it
+        // solves it (see SpellingsToSolveOver).
+        [InlineData("(x - b) / (x + a) + c / (x + a)", 1, "{ -(-b + c) provided not -(-b + c) + a = 0 }")]
         [InlineData("(x - b) / (x + a) + c / (x + a)2", 2, "{ (-(-b + a) - sqrt((-b + a) ^ 2 - 4 * (a * -b + c))) / 2 provided not (-(-b + a) - sqrt((-b + a) ^ 2 - 4 * (a * -b + c))) / 2 + a = 0, (-(-b + a) + sqrt((-b + a) ^ 2 - 4 * (a * -b + c))) / 2 provided not (-(-b + a) + sqrt((-b + a) ^ 2 - 4 * (a * -b + c))) / 2 + a = 0 }")]
         [InlineData("(x - b) / (x + a) + c + (x - c) / (x + d)", 2, null)]
         public void CDSolver(string expr, int rootCount, string? verifyRoots) => TestSolver(expr, rootCount, verifyRoots: verifyRoots);
