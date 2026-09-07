@@ -726,6 +726,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     ? (divided + remainder).Provided(bound["d"].DomainCondition)
                     : node,
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: a quotient and a remainder can be smaller than the fraction or
+                // much larger, and the divisor's domain condition is attached besides.
                 description: "n / d = quotient + remainder, by polynomial long division, "
                     + "provided d is defined"));
 
@@ -746,6 +748,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     ? cancelled
                     : node,
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: the factor cancelled is of any size, and the two quotients are
+                // rebuilt by the helper rather than counted from the pattern.
                 description: "n / d = (n / g) / (d / g), for g the gcd of n and d"));
 
         /// <summary>
@@ -772,6 +776,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 (node, bound) => Functions.Patterns.CancelFactorials(
                     node, bound["x"], bound["y"], (Number)bound["a"], (Number)bound["b"]),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: the answer is the product of the terms between the two offsets,
+                // which collects when they are one apart and expands when they are five.
                 description: "(x + a)! / (y + b)! = the product between them, where the offsets are close"),
 
             // x! / (y + b)!
@@ -784,6 +790,7 @@ namespace AngouriMath.Core.Transformations.Matching
                 (node, bound) => Functions.Patterns.CancelFactorials(
                     node, bound["x"], bound["y"], Integer.Create(0), (Number)bound["b"]),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: as above, the answer's size is the offset's.
                 description: "x! / (y + b)! = the product between them, where the offsets are close"),
 
             // (x + a)! / y!
@@ -796,6 +803,7 @@ namespace AngouriMath.Core.Transformations.Matching
                 (node, bound) => Functions.Patterns.CancelFactorials(
                     node, bound["x"], bound["y"], (Number)bound["a"], Integer.Create(0)),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: as above, the answer's size is the offset's.
                 description: "(x + a)! / y! = the product between them, where the offsets are close"));
 
         /// <summary>
@@ -819,6 +827,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 (node, bound) => Functions.Patterns.GatherFactorial(
                     node, bound["x"], bound["y"], (Number)bound["a"], (Number)bound["b"]),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: the helper folds the offsets it gathers, so the answer is one
+                // factorial of a sum whose size is theirs -- smaller for a bare next term and
+                // not for one written with a larger offset.
                 description: "(x + a)! * (y + b) = (x + a + 1)!, where (y + b) is the next term"),
 
             // x! * (y + b)
@@ -831,6 +842,7 @@ namespace AngouriMath.Core.Transformations.Matching
                 (node, bound) => Functions.Patterns.GatherFactorial(
                     node, bound["x"], bound["y"], Integer.Create(0), (Number)bound["b"]),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: as above, the answer's size is the offset's.
                 description: "x! * (y + b) = (x + 1)!, where (y + b) is the next term"),
 
             // (x + a)! * y
@@ -843,6 +855,7 @@ namespace AngouriMath.Core.Transformations.Matching
                 (node, bound) => Functions.Patterns.GatherFactorial(
                     node, bound["x"], bound["y"], (Number)bound["a"], Integer.Create(0)),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: as above, the answer's size is the offset's.
                 description: "(x + a)! * y = (x + a + 1)!, where y is the next term"));
 
         /// <summary>
@@ -876,6 +889,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 // What is not is the test for whether the cross term matches, which needs
                 // Simplify -- see the remark on Patterns.CollapseToPerfectSquare.
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: the square built from the two roots is 5 - |cross term| against
+                // the sum, and the cross term is written in as many sizes as there are ways to
+                // write it.
                 description: "a +- 2*sqrt(a)*sqrt(b) + b = (sqrt(a) +- sqrt(b))^2"));
 
         /// <summary>
@@ -907,6 +923,8 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Divf>(MatchPattern.Any("value"), MatchPattern.Any<Rational>("d"))),
                 (node, _) => Functions.Patterns.GatherNumericCoefficientOverASurd(node),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: the helper folds the two rationals to one and scales the surd by
+                // it, and what that scaling does with the surd's own coefficient is its own.
                 description: "k * (value / d) = (k * value) / d"),
 
             // num / (a + b) -> num * (a - b) / (a^2 - b^2)
@@ -915,6 +933,9 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(MatchPattern.Any("num"), MatchPattern.Any("den")),
                 (node, _) => Functions.Patterns.MultiplyByTheConjugate(node),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: as written the conjugate is 7 + |a| + |b| nodes more, and the
+                // helper folds the numeric denominator it builds, so the corpus measured -2
+                // and +2 for the same rule.
                 description: "num / (a + b) = num * (a - b) / (a^2 - b^2)"));
 
         /// <summary>
@@ -1140,6 +1161,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => Entity.Boolean.True.Provided(bound["b"].DomainCondition),
                 Soundness.Sound,
                 when: bound => Functions.Patterns.IsLogic(bound["b"]),
+                // Left Unknown: the truth value attached carries the operand's domain condition,
+                // whose size nothing here bounds.
                 description: "(False implies b) = True"),
 
             // De Morgan, both ways round
@@ -1180,6 +1203,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => Entity.Boolean.True.Provided(Functions.Patterns.TruthCondition(bound["a"])),
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.IsLogic(bound["a"]),
+                // Left Unknown: the truth value attached carries the operand's truth condition,
+                // whose size nothing here bounds.
                 description: "((not a) or a) = True, where a has a truth value"),
 
             // Not commutative: `a or not b` is not an implication of anything.
@@ -1232,6 +1257,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => Entity.Boolean.False.Provided(bound["a"].DomainCondition),
                 Soundness.Sound,
                 when: bound => Functions.Patterns.IsLogic(bound["a"]),
+                // Left Unknown: the truth value attached carries the operand's domain condition,
+                // whose size nothing here bounds.
                 description: "(a xor a) = False"),
 
             new MatchedRule(
@@ -1253,6 +1280,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 when: bound => (bound["a"] == Entity.Boolean.True || bound["b"] == Entity.Boolean.True)
                                && Functions.Patterns.IsLogic(bound["a"], bound["b"]),
+                // Left Unknown: the truth value attached carries both operands' domain
+                // conditions, whose size nothing here bounds.
                 description: "(a or True) = True"),
 
             new MatchedRule(
@@ -1263,6 +1292,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 when: bound => (bound["a"] == Entity.Boolean.False || bound["b"] == Entity.Boolean.False)
                                && Functions.Patterns.IsLogic(bound["a"], bound["b"]),
+                // Left Unknown: the truth value attached carries both operands' domain
+                // conditions, whose size nothing here bounds.
                 description: "(a and False) = False"),
 
             // Distributivity. Eight arms of the switch, two rules here: commutative at both
@@ -1573,6 +1604,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Mulf>(MatchPattern.Node<Sinf>(MatchPattern.Any("a")), MatchPattern.Node<Cosf>(MatchPattern.Any("a"))),
                 bound => Rational.Create(1, 2) * new Sinf(2 * bound["a"]),
                 Soundness.Sound,
+                // Left Unknown: the angle is matched twice and written once, and the half and
+                // the 2 are two nodes more, so the delta is 2 - |a| -- one larger at a leaf.
+                // This is the collecting half of the inverse pair SaturationAblationTest names,
+                // and it was never "never larger".
                 description: "sin(a) * cos(a) = (1/2) * sin(2a)"),
 
             // arccos(x) is pi/2 - arcsin(x) by definition, over the whole plane, so this needs
@@ -1598,6 +1633,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => Functions.Patterns.ArctanPlusArccotan(bound["a"])!,
                 Soundness.SoundUnderAssumptions,
                 when: bound => Functions.Patterns.ArctanPlusArccotan(bound["a"]) is not null,
+                // Left Unknown: the helper answers a constant where the sign of a is decided and
+                // a piecewise sized by a where it is not.
                 description: "arctan(a) + arccotan(a) = pi/2 for a >= 0, and -pi/2 for a < 0"),
 
             // Holds as written only while ab < 1: past that the sum leaves the range arctan
@@ -1644,6 +1681,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Mulf>(MatchPattern.Node<Sinf>(MatchPattern.Node<Mulf>(MatchPattern.Exact(Integer.Create(2)), MatchPattern.Any("a"))), MatchPattern.Node<Cosecantf>(MatchPattern.Any("a"))),
                 bound => (2 * new Cosf(bound["a"])).Provided(new Cosecantf(bound["a"]).DomainCondition),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: the condition attached is the cosecant's domain condition, whose
+                // size nothing here bounds.
                 description: "sin(2a) * cosec(a) = 2 * cos(a)"),
 
             new MatchedRule(
@@ -2031,6 +2070,8 @@ namespace AngouriMath.Core.Transformations.Matching
                         interval.Right, interval.RightClosed);
                 },
                 Soundness.Sound,
+                // Left Unknown: a bounded interval becomes two comparisons joined, 1 + |x| more
+                // than the membership; a half-line becomes one comparison, two fewer.
                 description: "x in (a; b) = the inequalities it stands for"),
 
             // { True, False } is the boolean domain

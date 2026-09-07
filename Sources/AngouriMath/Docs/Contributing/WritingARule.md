@@ -191,8 +191,9 @@ the literal only, and the pair is exactly `Rearranges` and exactly `Expands`.
 **Every rule still at `Unknown` has been looked at, and each falls into one of the shapes above.**
 Most of them compute their answer through a helper, so there is nothing to count; the rest either
 build a comparison or attach a `Provided` sized by their own operands. So `Unknown` here is a
-finding rather than a gap, and a new `Unknown` should be one too — written beside the rule, as
-`Common`'s six are.
+finding rather than a gap, and a new `Unknown` should be one too — written beside the rule. Every
+rule at `Unknown` outside the three families this document settles as families — the comparison
+set, `Sort` and `CommonDenominator` — carries its reason beside it now, thirty-one rules in all.
 
 **The comparison set is settled, and settled as `Unknown`.** Its sixty-odd rules were gone through
 one at a time and all but seven fall into the shapes above: most build their replacement with `<` or
