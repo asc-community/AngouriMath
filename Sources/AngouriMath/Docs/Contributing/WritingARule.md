@@ -135,7 +135,7 @@ A pattern replacement gets:
 - **an exact growth**, counted from the two patterns rather than declared.
 
 A code replacement gets neither, and its growth is `Unknown` unless you declare one. That is the
-honest default — **152** rules sit at `Unknown` — but declare it where you can justify it:
+honest default — **136** rules sit at `Unknown` — but declare it where you can justify it:
 
 ```csharp
 // The Chebyshev expansion of sin(n * a) is a sum of n terms where the pattern is one node,
@@ -157,7 +157,12 @@ cannot argue the claim from the code, leave it `Unknown`.
 
 **Count the pattern against the replacement in terms of the holes**, and the answer is usually one
 of a few shapes. A hole matched twice and written once gives `-(1 + |a|)`, which is a `Collects`
-stronger than the corpus will show you, since the corpus fills its holes with single nodes. A
+stronger than the corpus will show you, since the corpus fills its holes with single nodes. The same
+hole beside one new node — `a + a = 2 * a`, `a * a = a ^ 2`, `a + a * b = a * (1 + b)` — gives
+`1 - |a|`: exactly as large at a leaf and smaller everywhere else, and that is `Collects` too.
+**`Collects` promises never larger, and smaller for some input**; `Rearranges` promises the same
+size for every input. "Never larger" is the half the growth ceiling relies on, and the corpus checks
+`Collects` by looking for a firing that grew, not for one that failed to shrink. A
 replacement holding no hole at all — a constant, or `pi/2` — collects by the whole of the pattern.
 Operators mapping one for one with every hole used once is `Rearranges`. A pattern that binds
 nothing — `arctan(sqrt(3)) = pi/3`, `{ True, False }` — has a fixed size on both sides, so its delta
@@ -165,22 +170,28 @@ is a number and there is nothing to argue. And two numbers combined with `Number
 into one node** as the replacement is built, which is worth two on its own: `(c * v) * d` collects
 where the same rule written without the cast would only rearrange.
 
-**Four shapes look declarable and are not.** Each of these measured a clean, constant delta over the
+**Two shapes look declarable and are not.** Each of these measured a clean, constant delta over the
 corpus, and each is false:
 
 | | |
 |---|---|
 | the replacement is built with `<`, `>` and their kin | they **chain**: `(x > y) < 0` is `x > y and y < 0`, so a three-node replacement becomes seven. `EqualTo` does not chain, which is why the `equals` rules are declared and their comparison twins are not |
-| the replacement attaches a `Provided` built from the operands | its size grows with them while the pattern's shrinks away, so the delta changes sign: `2 - |c|` for the shared-factor cancellation, `4 - |a| - |b|` for `(a - b) / (b - a)` |
-| a hole can be filled by two spellings of one thing | `IsWholeReciprocal` takes the literal `1/3`, which is one node, and a written `1 / c`, which is three — so the delta is 0 in one and −2 in the other |
-| a hole is repeated and the replacement squares it | `a * (a * b) = a^2 * b` is `1 - |a|`: zero for a leaf and negative for anything bigger |
+| the replacement attaches a `Provided` built from the operands | its size grows with them while the pattern's shrinks away, so the delta changes sign: `2 - |c|` for the shared-factor cancellation, `3 - |a| - |b|` for `(a - b) / (b - a)`, and `3 - |a|` for `a + a / b = a * (1 + 1 / b)`, which is *larger* at a leaf though the corpus never fired it |
+
+Two more used to be listed here and are not. The repeated hole that pays a literal to be gathered —
+`a * (a * b) = a ^ 2 * b`, `k + k = 2 * k` and their relatives, every one `1 - |a|` — was
+undeclarable only while `Collects` was read as "always fewer"; it is the commonest collecting shape
+there is, and `Collects` promises never larger. `Common`'s thirteen are declared, with the count in
+each one's comment; the relatives in `Power` and `Factorization` — `a ^ n * a`, `a / b / b` and
+theirs — are the next to declare, each on its own count. And the reciprocal-factor rules were said
+to admit two spellings of one thing; `IsWholeReciprocal` is `entity is Rational(...)`, so it admits
+the literal only, and the pair is exactly `Rearranges` and exactly `Expands`.
 
 **Every rule still at `Unknown` has been looked at, and each falls into one of the shapes above.**
 Most of them compute their answer through a helper, so there is nothing to count; the rest either
-build a comparison, attach a `Provided` sized by their own operands, or are the repeated hole that
-pays a literal to be gathered — `a ^ n * a`, `a / b / b`, `a * a`, `k + k` and their two dozen
-relatives, every one of them `1 - |a|`. So `Unknown` here is a finding rather than a gap, and a new
-`Unknown` should be one too.
+build a comparison or attach a `Provided` sized by their own operands. So `Unknown` here is a
+finding rather than a gap, and a new `Unknown` should be one too — written beside the rule, as
+`Common`'s six are.
 
 **The comparison set is settled, and settled as `Unknown`.** Its sixty-odd rules were gone through
 one at a time and all but seven fall into the shapes above: most build their replacement with `<` or

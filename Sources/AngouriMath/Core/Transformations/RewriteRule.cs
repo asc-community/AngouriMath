@@ -31,7 +31,17 @@ namespace AngouriMath.Core.Transformations
     /// </remarks>
     public enum RewriteRuleGrowth
     {
-        /// <summary>The replacement is written with fewer operators and operands than the pattern.</summary>
+        /// <summary>
+        /// The replacement is never written with more operators and operands than the pattern,
+        /// and with fewer for some of what the pattern matches.
+        /// </summary>
+        /// <remarks>
+        /// "Never more" is the half the growth ceiling relies on; "fewer for some" is what
+        /// separates this from <see cref="Rearranges"/>. The commonest collecting shape — a hole
+        /// matched twice and written once beside one new node, <c>a + a = 2 * a</c> — is exactly
+        /// as large at a leaf and smaller everywhere else, and a strict "always fewer" would have
+        /// left it unjudged.
+        /// </remarks>
         Collects,
 
         /// <summary>The two are written with the same number, so the rule moves things about.</summary>
