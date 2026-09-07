@@ -76,6 +76,7 @@ read first.
 | **Silent** | what `RewriteRuleGrowth.Collects` promises | fewer nodes for every input | never more, and fewer for some — every rule that was `Collects` still is |
 | | `Transformation.CanonicalizationOverGraph(budget).ApplyOrKeep("(2 / x) ^ 3 * x")`, and its like with a power of the denominator | `(2 * 1 / x) ^ 3 * x` — left as written | `8 * x ^ (-2)`; `(2 / x) ^ 3 * x ^ 2` is `8 * 1 / x` |
 | **Silent** | `RewriteRules.Power.Rules[i].Growth` for nine rules, and `Factorization`'s for four | `Unknown` | `Collects` |
+| | `Transformation.CanonicalizationOverGraph(budget).ApplyOrKeep("(x ^ 2) ^ 3 - x ^ 6")`, and every input whose repeated term only appears once a number inside it folds | `-x ^ 6 + x ^ 6` — the rule pass after the graph folded the power, too late for the graph to see the two terms as one | `0` |
 
 ### A cancelled quotient says its operand is defined, not only non-zero
 
@@ -925,6 +926,29 @@ denominator, whose exponents fold as the replacement is built.
 | `RewriteRules.Power.Rules` by growth — collects / rearranges / expands / unknown | 13 / 6 / 1 / 13 | 22 / 6 / 1 / 4 |
 | `RewriteRules.Factorization.Rules` by growth | 4 / 0 / 2 / 5 | 8 / 0 / 2 / 1 |
 | `RewriteRules.All` by growth | 111 / 46 / 31 / 136 | 124 / 46 / 31 / 123 |
+
+### The e-graph folds a rational on insertion
+
+`EGraph.Add` folds an arithmetic operator over two rational leaves into that number's class, as
+it already folded a neutral element: `1 + 1` and `2` are one e-class from the moment either is
+inserted, `3 / 3` is `1`'s, `2 ^ 10` is `1024`'s. Only where the value is itself a rational —
+`1 / 0` and `2 ^ (1/2)` stay as written — only for a whole exponent no larger than 4096 in
+magnitude, and never for a node carrying a codomain of its own. Found by running the safe ceiling
+over 3,630 generated shapes: 54 did not saturate within 20,000 steps and every one was
+constant-only arithmetic, because with nothing folding a number the rearranging rules respell it
+for ever. With the fold, 7 do not — a rational coefficient beside a variable, which stalls at a
+bounded graph with the right extraction rather than running away — and the run takes 24 seconds
+where it did not finish in 590.
+
+**Almost nothing public moves**, because `Transformation.CanonicalizationOverGraph` runs the rule
+pass on either side of the graph and that pass already folds constants: `sqrt(2) * sqrt(3)`,
+`x + 3 / 3`, `2 ^ 1000` and `1 / 0` answer exactly as before. What moves is an input the graph
+could only settle by seeing a folded number *while saturating*.
+
+| | Was | Is |
+|---|---|---|
+| `Transformation.CanonicalizationOverGraph(budget).ApplyOrKeep("(x ^ 2) ^ 3 - x ^ 6")` | `-x ^ 6 + x ^ 6` | `0` |
+| the same on `sqrt(2) * sqrt(3)`, `x + 3 / 3`, `2 - 0 + 0 * 2`, `(x + 1) * (x - 1)`, `2 ^ 1000`, `1 / 0`, `2 ^ (1/2)` | `sqrt(6)`, `1 + x`, `2`, `-1 + x ^ 2`, the 302-digit integer, `NaN`, `sqrt(2)` | the same |
 
 ## 2.4.0 — since 2.3.0
 
