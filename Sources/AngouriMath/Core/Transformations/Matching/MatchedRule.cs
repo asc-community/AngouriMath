@@ -264,14 +264,31 @@ namespace AngouriMath.Core.Transformations.Matching
         /// </summary>
         internal bool TryEMatchApply(
             EGraph graph, int classId, Func<Entity, double> cost, out int resultClassId)
+            => TryEMatchApply(graph, classId, cost, null, out resultClassId);
+
+        /// <summary>
+        /// <see cref="TryEMatchApply(EGraph, int, Func{Entity, double}, out int)"/>, charging
+        /// <paramref name="spend"/> once for every binding tried after the first. A binding tried
+        /// is a match attempt: the caller charged the first, and an attempt over a class with a
+        /// thousand members is a thousand of them and not one -- which is what let a two-second
+        /// budget run for sixty-nine. A <see langword="false"/> from <paramref name="spend"/>
+        /// ends the attempt as not matched; the caller's ledger says why.
+        /// https://github.com/asc-community/AngouriMath/issues/1199
+        /// </summary>
+        internal bool TryEMatchApply(
+            EGraph graph, int classId, Func<Entity, double> cost, Func<bool>? spend, out int resultClassId)
         {
             if (!Left.CanEMatch)
                 throw new InvalidOperationException(
                     $"'{Name}' cannot e-match; check {nameof(Left)}.{nameof(MatchPattern.CanEMatch)} first.");
 
             resultClassId = 0;
+            var first = true;
             foreach (var ebindings in Left.EMatch(graph, classId, EBindings.Empty, cost))
             {
+                if (!first && spend is not null && !spend()) return false;
+                first = false;
+
                 Bindings? entityBindings = null;
                 bool TryEntityBindings(out Bindings result)
                 {

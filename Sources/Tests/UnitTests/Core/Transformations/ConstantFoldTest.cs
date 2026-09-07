@@ -35,14 +35,18 @@ namespace AngouriMath.Tests.Core.Transformations
     /// to 7, and the run from more than ten minutes to 24 seconds.
     /// </para>
     /// <para>
-    /// <b>What is left is a stall, not a runaway.</b> The seven are a rational coefficient
-    /// beside a variable — <c>2 * x * 1/2</c>, <c>x / x * -x</c>, <c>x ^ 2 / x</c> — whose
-    /// spellings <c>1/2 * x</c>, <c>x / 2</c>, <c>x * 2 ^ (-1)</c> the <c>Rearranges</c> rules
-    /// keep exchanging. Given fifteen times the budget they still report no fixed point, but
-    /// the graph barely grows (135–583 e-nodes after thirty seconds) and every one extracts
-    /// the right answer. So the claim in <c>RunawayBreadthTest</c> that the coefficient rules
-    /// are confluent on plain arithmetic is true of the three inputs it pins and not of the
-    /// family; the honest statement is that they are bounded and correct, and not confluent.
+    /// <b>What is left is bounded by the budget and by nothing else.</b> The seven are a
+    /// rational coefficient beside a variable — <c>2 * x * 1/2</c>, <c>x / x * -x</c>,
+    /// <c>x ^ 2 / x</c> — whose spellings <c>1/2 * x</c>, <c>x / 2</c>, <c>x * 2 ^ (-1)</c> the
+    /// <c>Rearranges</c> rules keep exchanging. Measured once extraction stopped being the
+    /// cost (<a href="https://github.com/asc-community/AngouriMath/issues/1199">#1199</a>):
+    /// <c>x ^ 2 / x</c>, <c>x / x * -x</c> and <c>x / x * x * 1/2</c> are genuine runaways,
+    /// ten to twelve thousand e-nodes in thirty seconds; <c>2 * x * 1/2</c> and its relatives
+    /// plateau at some 560 e-nodes and stop only when 200,000 steps run out. An earlier
+    /// version of this remark called them stalls at 135–583 e-nodes, which was the slow
+    /// extraction and not the graph. Every one extracts the right answer regardless, and the
+    /// claim in <c>RunawayBreadthTest</c> that the coefficient rules are confluent on plain
+    /// arithmetic is true of the three inputs it pins and not of the family.
     /// </para>
     /// <para>
     /// <b>On the corpus the ceiling is cheap and finds a little more.</b> Every one of the 40
@@ -131,11 +135,12 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         /// <summary>
-        /// Pinned in both directions: an entry that starts saturating is to be deleted, and one
-        /// whose graph grows past a thousand e-nodes has stopped being a stall.
+        /// Pinned in both directions under a three-thousand-step budget: an entry that starts
+        /// saturating is to be deleted, and one whose graph passes a thousand e-nodes within
+        /// those steps has changed character. The extraction must be right either way.
         /// </summary>
         [Fact]
-        public void ACoefficientBesideAVariableStallsRatherThanRunsAway()
+        public void ACoefficientBesideAVariableIsBoundedByTheBudgetAndExtractsRight()
         {
             var stalls = new[] { "2 * x * 1/2", "x * 1/2 * 2", "x ^ 2 / x", "x / x * -x" };
             var answers = new[] { "x", "x", "x", "-x" };

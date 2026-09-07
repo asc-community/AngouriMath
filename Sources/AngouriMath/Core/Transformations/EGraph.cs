@@ -98,14 +98,6 @@ namespace AngouriMath.Core.Transformations
     /// </remarks>
     internal sealed class EGraph
     {
-        /// <summary>
-        /// How deep <see cref="Extract(int, Func{Entity, double})"/> will chain through child
-        /// classes before declining to build. A crash guard rather than a quality knob: textbook
-        /// input nests nowhere near this far, so the cap is only reached where the alternative is
-        /// an uncatchable stack overflow.
-        /// </summary>
-        private const int MaxExtractionDepth = 256;
-
         private readonly List<int> parent = new();
         private readonly Dictionary<ENode, int> hashcons = new();
         private readonly Dictionary<int, HashSet<ENode>> classes = new();
@@ -336,6 +328,7 @@ namespace AngouriMath.Core.Transformations
             left = Find(left);
             right = Find(right);
             if (left == right) return false;
+            extractMemo = null;
             parent[right] = left;
             foreach (var node in classes[right]) classes[left].Add(node);
             classes.Remove(right);
@@ -408,7 +401,25 @@ namespace AngouriMath.Core.Transformations
         /// type <see cref="MatchPattern.ConstructNode"/> does not build.
         /// </summary>
         internal Entity? Extract(int id, Func<Entity, double> cost)
-            => Extract(id, new Cheapest(cost), new Dictionary<int, Entity>(), new HashSet<int>());
+        {
+            // One extraction of the whole graph, kept for as long as the graph does not change
+            // and the cost is the same delegate. Only a union can change what an existing class
+            // extracts as -- a new class never alters an old one -- so Union is where it is
+            // dropped. Before this, every witness an e-match attempt wanted was a fresh walk,
+            // once per bound name per binding and once per predicated hole per candidate class,
+            // and one such walk of a 253-node graph took 1.9 s: the walk was top-down with a
+            // cycle guard, and a graph full of union-made cycles defeats a memo that fills only
+            // on completion. https://github.com/asc-community/AngouriMath/issues/1199
+            if (!ReferenceEquals(cost, memoCost) || extractMemo is null)
+            {
+                memoCost = cost;
+                extractMemo = ExtractAll(new Cheapest(cost));
+            }
+            return extractMemo.TryGetValue(Find(id), out var best) ? best : null;
+        }
+
+        private Dictionary<int, Entity>? extractMemo;
+        private Func<Entity, double>? memoCost;
 
         /// <summary>
         /// The least entity the e-class <paramref name="id"/> can be built as under
@@ -421,7 +432,7 @@ namespace AngouriMath.Core.Transformations
         /// well-defined expression where "the least member" is. See <see cref="EntityOrder"/>.
         /// </remarks>
         internal Entity? ExtractLeast(int id, IComparer<Entity> order)
-            => Extract(id, new Least(order), new Dictionary<int, Entity>(), new HashSet<int>());
+            => ExtractAll(new Least(order)).TryGetValue(Find(id), out var least) ? least : null;
 
         /// <summary>
         /// How <c>Extract</c> chooses between the members of one e-class. A
@@ -488,46 +499,61 @@ namespace AngouriMath.Core.Transformations
             public readonly Entity? Best => best;
         }
 
-        private Entity? Extract<TSelection>(int id, TSelection seed,
-            Dictionary<int, Entity> memo, HashSet<int> visiting)
+        /// <summary>
+        /// The best member of every class under <paramref name="seed"/>, from the leaves up: a
+        /// round recomputes each class from its children's current best, and the rounds stop
+        /// when one changes nothing. No recursion, so no depth to guard and no stack to exhaust;
+        /// a member that reaches back into its own class through a union is built from that
+        /// class's current best and offered like any other, and loses to it under any selection
+        /// that does not prefer the larger of two writings of one thing. Rounds are bounded by
+        /// the longest chain of classes, and capped at the class count for a selection that is
+        /// not monotone in its children.
+        /// </summary>
+        private Dictionary<int, Entity> ExtractAll<TSelection>(TSelection seed)
             where TSelection : struct, ISelection
         {
-            id = Find(id);
-            if (memo.TryGetValue(id, out var done)) return done;
-            // visiting is the chain currently being expanded, so its size is this call's depth.
-            // The cycle guard below bounds that chain only by the number of distinct classes,
-            // which unions grow past the input expression's own syntactic depth -- and a
-            // StackOverflowException cannot be caught, so exhausting the stack takes the process
-            // down rather than failing one call. Declining to build is the answer the cycle case
-            // already gives, and the same shape as Gruntz's own MaxDepth.
-            if (visiting.Count >= MaxExtractionDepth) return null;
-            if (!visiting.Add(id)) return null;              // a cycle; the other node will do
-            var selection = seed;
-            selection.Begin();
-            // Ordered, not as the set enumerates: where the selection ties, the answer is
-            // whichever candidate was reached first, and set order is neither specified nor
-            // stable across processes.
-            foreach (var node in NodesOf(id).OrderBy(node => node))
+            var best = new Dictionary<int, Entity>();
+            var leaves = new Dictionary<string, Entity?>();
+            // Ordered, not as the dictionary enumerates: where the selection ties, the answer is
+            // whichever candidate was reached first, and dictionary and set order are neither
+            // specified nor stable across processes.
+            var ids = classes.Keys.OrderBy(id => id).ToList();
+            for (var round = 0; round <= ids.Count; round++)
             {
-                var parts = new Entity[node.Children.Length];
-                var ok = true;
-                for (var i = 0; i < parts.Length && ok; i++)
+                var changed = false;
+                foreach (var id in ids)
                 {
-                    var part = Extract(node.Children[i], seed, memo, visiting);
-                    if (part is null) ok = false;
-                    else parts[i] = part;
+                    var selection = seed;
+                    selection.Begin();
+                    foreach (var node in classes[id].OrderBy(node => node))
+                    {
+                        var parts = new Entity[node.Children.Length];
+                        var ok = true;
+                        for (var i = 0; i < parts.Length && ok; i++)
+                            if (best.TryGetValue(Find(node.Children[i]), out var part)) parts[i] = part;
+                            else ok = false;
+                        if (!ok) continue;
+                        Entity? built;
+                        if (parts.Length == 0)
+                        {
+                            if (!leaves.TryGetValue(node.Op, out built))
+                                leaves[node.Op] = built = TryParseLeaf(node.Op);
+                        }
+                        else built = MatchPattern.ConstructNode(OperatorType(node.Op), parts);
+                        if (built is null) continue;
+                        if (node.Codomain is { } domain) built = built.WithCodomain(domain);
+                        selection.Offer(built);
+                    }
+                    var chosen = selection.Best;
+                    if (chosen is null) continue;
+                    if (!best.TryGetValue(id, out var incumbent) || !chosen.Equals(incumbent))
+                    {
+                        best[id] = chosen;
+                        changed = true;
+                    }
                 }
-                if (!ok) continue;
-                Entity? built = parts.Length == 0
-                    ? TryParseLeaf(node.Op)
-                    : MatchPattern.ConstructNode(OperatorType(node.Op), parts);
-                if (built is null) continue;
-                if (node.Codomain is { } domain) built = built.WithCodomain(domain);
-                selection.Offer(built);
+                if (!changed) break;
             }
-            visiting.Remove(id);
-            var best = selection.Best;
-            if (best is not null) memo[id] = best;
             return best;
         }
 
