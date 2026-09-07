@@ -326,6 +326,13 @@ namespace AngouriMath.Functions.Algebra
                     finally { LeaveApproach(gruntzApproach); }
                     if (byGruntz is { } && byGruntz.Evaled != MathS.NaN)
                         return byGruntz;
+                    // What the descent found is kept where nothing above did better, an
+                    // indeterminate form included: 0 / abs(0) reads as NaN, and NaN is what
+                    // stops every caller from searching further. It is not the answer, and it
+                    // is withheld where the answer is made, in Transformation.LimitAt -- not
+                    // here, where withholding it let the search above run for minutes on
+                    // (sin(x) - x) / x^3 at 0 alone.
+                    // https://github.com/asc-community/AngouriMath/issues/1186
                     return atInfinity;
                 }
                 else if (expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left) is { } fromLeft

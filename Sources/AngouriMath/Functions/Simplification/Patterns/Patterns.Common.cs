@@ -290,6 +290,12 @@ namespace AngouriMath.Functions
             Cosf(Mulf(Real { IsNegative: true } neg, var rest)) => new Cosf((-neg) * rest),
             Secantf(Mulf(Real { IsNegative: true } neg, var rest)) => new Secantf((-neg) * rest),
             Absf(Mulf(Real { IsNegative: true } neg, var rest)) => new Absf((-neg) * rest),
+            // A numeric factor that carries a phase comes out as its modulus, |i * x| = |x|: the
+            // modulus is multiplicative on the whole plane, so nothing is assumed, and it is what
+            // lets a derivative and a limit read |i / x| as 1 / |x|. Only where the modulus is
+            // exact, and never a real factor, which carries no phase.
+            // https://github.com/asc-community/AngouriMath/issues/1186
+            Absf(var argument) when TreeAnalyzer.TryTakeNumericModulusOut(argument, out var withoutThePhase) => withoutThePhase,
 
             Sinf(Mulf(Real { IsNegative: true } neg, var rest)) => -new Sinf((-neg) * rest),
             Tanf(Mulf(Real { IsNegative: true } neg, var rest)) => -new Tanf((-neg) * rest),

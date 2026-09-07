@@ -404,16 +404,38 @@ namespace AngouriMath
             // sgn is flat either side of zero and has no derivative at zero, so the
             // derivative is 0 wherever it exists. Saying so with a condition is the same
             // stance Absf takes just below, whose derivative is likewise undefined at zero.
+            //
+            // Flat only for a real-valued argument. Off the real line sgn(z) is z / |z|, which
+            // turns with z: sgn(2 + i * x) is (2 + i * x) / sqrt(4 + x^2), and nothing about
+            // it is flat. Where the argument is not shown to be real the derivative is left
+            // unevaluated rather than answered with the real-line formula.
+            // https://github.com/asc-community/AngouriMath/issues/1186
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
-                => Integer.Zero.Provided(!Argument.EqualTo(Integer.Zero));
+                => TreeAnalyzer.IsRealValued(Argument, variable)
+                    ? Integer.Zero.Provided(!Argument.EqualTo(Integer.Zero))
+                    : MathS.Derivative(this, variable);
         }
 
         partial record Absf
         {
+            // |f|' = sgn(f) * f' is a fact about a real-valued f. For a complex one |f| is
+            // sqrt(Re(f)^2 + Im(f)^2), which this library has no node to differentiate with:
+            // |i / x| is 1 / |x|, whose derivative is -sgn(x) / x^2, where the formula gives
+            // sgn(i / x) * (-i / x^2) = sgn(x) / x^2, the wrong sign -- and through l'Hopital's
+            // rule the limit of (i / x) / |i / x| at +oo read as 1 where it is i.
+            //
+            // A numeric factor off the real line is taken out first, exactly, since |c * g| is
+            // |c| * |g| on the whole plane: the derivative of |i * x| is that of |x|. Where the
+            // argument is then not shown to be real the derivative is left unevaluated.
+            // https://github.com/asc-community/AngouriMath/issues/1186
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
-                => MathS.Signum(Argument).Provided(!Argument.EqualTo(Integer.Zero)) * Argument.InnerDifferentiate(variable);
+                => TreeAnalyzer.TryTakeNumericModulusOut(Argument, out var withoutThePhase)
+                    ? withoutThePhase.InnerDifferentiate(variable)
+                    : TreeAnalyzer.IsRealValued(Argument, variable)
+                    ? MathS.Signum(Argument).Provided(!Argument.EqualTo(Integer.Zero)) * Argument.InnerDifferentiate(variable)
+                    : MathS.Derivative(this, variable);
         }
 
         partial record Floorf

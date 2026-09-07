@@ -238,39 +238,11 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// Whether the expression is real wherever it is defined, given that x is. A free variable
-        /// is read as complex by this library, so one appearing anywhere but under a modulus
-        /// settles nothing and the answer is no.
+        /// Whether the expression is real wherever it is defined, given that x is. The question
+        /// differentiation asks about a modulus and a sign, so it is answered in one place.
         /// </summary>
         private static bool IsRealValued(Entity expr, Variable x)
-        {
-            if (!expr.ContainsNode(x))
-                return expr.Evaled is Real { IsNaN: false };
-            switch (expr)
-            {
-                case Variable variable:
-                    return variable == x;
-                case Sumf(var augend, var addend):
-                    return IsRealValued(augend, x) && IsRealValued(addend, x);
-                case Minusf(var minuend, var subtrahend):
-                    return IsRealValued(minuend, x) && IsRealValued(subtrahend, x);
-                case Mulf(var multiplier, var multiplicand):
-                    return IsRealValued(multiplier, x) && IsRealValued(multiplicand, x);
-                case Divf(var dividend, var divisor):
-                    return IsRealValued(dividend, x) && IsRealValued(divisor, x);
-                // Only an integer exponent keeps a real base real: x ^ (1/2) is not real below 0.
-                case Powf(var @base, Integer):
-                    return IsRealValued(@base, x);
-                case Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf
-                     or Arctanf or Arccotanf or Signumf:
-                    return IsRealValued(expr.DirectChildren[0], x);
-                // A modulus is real whatever it is taken of.
-                case Absf:
-                    return true;
-                default:
-                    return false;
-            }
-        }
+            => TreeAnalyzer.IsRealValued(expr, x);
 
         internal static Entity? SolveAsLogarithmDivision(Entity expr, Variable x)
         {

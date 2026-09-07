@@ -778,8 +778,40 @@ namespace AngouriMath.Functions.Algebra
 
         [ThreadStatic] private static int indeterminatePowerDepth;
 
+        /// <summary>
+        /// Whether a limit's value is infinite: a real infinity anywhere inside it, or a complex
+        /// number with an infinite part, which is what <c>i * abs(x)</c> tends to and which
+        /// used to count as finite for being neither <c>+oo</c> nor <c>-oo</c> -- so
+        /// <c>i * abs(x) / x</c> was never read as oo/oo and l'Hopital's rule never saw it.
+        /// https://github.com/asc-community/AngouriMath/issues/1186
+        /// </summary>
         private static bool IsInfiniteNode(Entity expr)
-            => expr.ContainsNode("+oo") || expr.ContainsNode("-oo"); // TODO: is it correct?
+            => expr.ContainsNode("+oo") || expr.ContainsNode("-oo")
+               || expr.Nodes.Any(node => node is Complex { IsFinite: false, IsNaN: false });
+
+        /// <summary>
+        /// Whether what the machinery handed back is an indeterminate form rather than a value:
+        /// <c>0 / abs(0)</c>, <c>(+oo * 0)^2</c> -- a shape assembled out of the parts' limits
+        /// that evaluates to NaN without any part of it being NaN. NaN is the claim that there
+        /// is no limit, and a form the descent could not read is not that claim; it is the
+        /// descent saying nothing. A NaN that was decided -- <c>sin(x)</c> at <c>+oo</c>, and
+        /// <c>2 * sin(x)</c> with it -- carries the NaN node itself and is kept.
+        /// </summary>
+        /// <remarks>
+        /// Asked where the answer is made and nowhere inside: internally the form's NaN is
+        /// what stops every caller from searching further, and withholding it there let
+        /// <c>(sin(x) - x) / x^3</c> at 0 run for minutes.
+        /// https://github.com/asc-community/AngouriMath/issues/1186
+        /// </remarks>
+        internal static bool IsAnIndeterminateForm(Entity expr)
+            => expr.Evaled == MathS.NaN && !expr.Nodes.Any(node => node == MathS.NaN);
+
+        /// <summary>
+        /// Whether a limit is being taken on behalf of another: the machinery asks for the
+        /// limits of its own parts through the same public entry point a caller uses, and an
+        /// answer withheld from those is a stop signal withheld from the search.
+        /// </summary>
+        internal static bool ReadingAnApproach => approachDepth > 0;
 
         /// <summary>
         /// Whether a power assembled out of the limits of its base and its exponent is an

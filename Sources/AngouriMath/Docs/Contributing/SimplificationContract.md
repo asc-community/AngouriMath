@@ -191,6 +191,20 @@ Worked examples, each measured.
 - `|-x| -> |x|`. Negation is an isometry of the plane.
   ([#881](https://github.com/asc-community/AngouriMath/issues/881) — the library does not do this yet,
   which is a coverage gap and not a soundness one.)
+- `|c * a| -> |c| * |a|` for a number `c`. The modulus is multiplicative on the whole plane. Fired
+  only where `|c|` is a rational number, because `|1 + i|` can only be held rounded and a rounded
+  coefficient is a different value — a decision about exactness, not about soundness
+  ([#1186](https://github.com/asc-community/AngouriMath/issues/1186)).
+
+### Sound only for a real-valued argument, and the argument's realness is decided structurally
+
+- `|f|' = sgn(f) * f'` and `sgn(f)' = 0`. Not rewrite rules but the same obligation: both are facts
+  about a real-valued `f`, and `|i / x|` is `1 / |x|`, whose derivative the formula gets with the
+  wrong sign. `A` is "`f` is real on the real line", discharged by reading the tree — the variable,
+  real constants, sums, products, quotients and whole powers of those, their trigonometric
+  functions, and any modulus — and refused for a symbol, which is complex until something says
+  otherwise. Through l'Hopital's rule the wrong sign was
+  [#1186](https://github.com/asc-community/AngouriMath/issues/1186), `lim (i/x) / |i/x| = 1`.
 
 ### Unsound as written, fixed by deciding `A`
 

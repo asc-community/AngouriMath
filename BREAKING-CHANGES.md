@@ -77,6 +77,13 @@ read first.
 | | `Transformation.CanonicalizationOverGraph(budget).ApplyOrKeep("(2 / x) ^ 3 * x")`, and its like with a power of the denominator | `(2 * 1 / x) ^ 3 * x` — left as written | `8 * x ^ (-2)`; `(2 / x) ^ 3 * x ^ 2` is `8 * 1 / x` |
 | **Silent** | `RewriteRules.Power.Rules[i].Growth` for nine rules, and `Factorization`'s for four | `Unknown` | `Collects` |
 | | `Transformation.CanonicalizationOverGraph(budget).ApplyOrKeep("(x ^ 2) ^ 3 - x ^ 6")`, and every input whose repeated term only appears once a number inside it folds | `-x ^ 6 + x ^ 6` — the rule pass after the graph folded the power, too late for the graph to see the two terms as one | `0` |
+| **Silent** | `"(i/x)/abs(i/x)".Limit("x", +oo)`, and every quotient of an expression by its own modulus whose phase is not zero | `1` | `i` — the phase; `-i` at `-oo`, `-1` for the square, `3/5 + 4/5 * i` for `(3 + 4i) * x` |
+| **Silent** | `"limit((2 + i * x) / abs(2 + i * x), x, +oo)".Simplify()`, and `((1+i)/x)^2/abs((1+i)/x)^2` at `+oo` | `0`; `1` | left unevaluated — both are `i` |
+| **Silent** | `"abs(i * x)".Differentiate("x")`, and every modulus of a numeric multiple with an exact modulus | `sgn(i * x) * i provided not i * x = 0` — which is `-sgn(x)` | `sgn(x) provided not x = 0` |
+| **Silent** | `"abs(2 + i * x)".Differentiate("x")`, `sgn(2 + i * x)`, and every modulus or sign of an argument not shown real — a symbol's included | `sgn(2 + i * x) * i provided …`, `0 provided …` | left unevaluated |
+| | `"abs(i * x)".Simplify()`, and every modulus of a numeric multiple with an exact modulus off the real line | `abs(i * x)` — left as written | `abs(x)` |
+| **Silent** | `"0 * (i * +oo)".Evaled`, and every whole zero times a complex infinity | `0` | `NaN` |
+| | `RewriteRules.Common.Rules.Count`, and `RewriteRules.All` by growth | `62`; 124 / 46 / 31 / 123 | `65`; 124 / 49 / 31 / 123 |
 
 ### A cancelled quotient says its operand is defined, not only non-zero
 
@@ -949,6 +956,52 @@ could only settle by seeing a folded number *while saturating*.
 |---|---|---|
 | `Transformation.CanonicalizationOverGraph(budget).ApplyOrKeep("(x ^ 2) ^ 3 - x ^ 6")` | `-x ^ 6 + x ^ 6` | `0` |
 | the same on `sqrt(2) * sqrt(3)`, `x + 3 / 3`, `2 - 0 + 0 * 2`, `(x + 1) * (x - 1)`, `2 ^ 1000`, `1 / 0`, `2 ^ (1/2)` | `sqrt(6)`, `1 + x`, `2`, `-1 + x ^ 2`, the 302-digit integer, `NaN`, `sqrt(2)` | the same |
+
+### The limit of `z / |z|` carries the phase of `z`
+
+`(i / x) / abs(i / x)` at `+oo` answered `1`, whatever the phase; it is `i`
+([#1186](https://github.com/asc-community/AngouriMath/issues/1186)). The derivative of a modulus was
+`sgn(f) * f'` whatever `f` took values in, and that is the derivative of `|f|` only for a
+real-valued `f`: `|i / x|` is `1 / |x|`, whose derivative is `-sgn(x) / x^2`, where the formula
+gave `+sgn(x) / x^2`. l'Hopital's rule read that derivative and answered `1` for every phase, and
+three things behind it agreed with the wrong answer: a whole zero times a complex infinity
+evaluated to `0` where `0 * oo` is `NaN`, so a candidate `(2 + i * x) * abs(2 + i * x)^(-1)`
+answered `0`; a complex infinity did not count as infinite, so `i * abs(x) / x` was never read as
+oo/oo; and the descent's unread `0 / abs(0)` was handed back as `NaN`, the claim that there is no
+limit.
+
+The derivative of `abs(f)` and of `sgn(f)` is answered where `f` is shown real on the real line —
+the variable, real constants, sums, products, quotients and whole powers of those, their
+trigonometric functions, a sign, and any modulus — and left unevaluated otherwise: a symbol is
+complex until something says otherwise. A numeric factor off the real line whose modulus is exact
+comes out first, `|i * x| = |x|` and `|(3 + 4i) * x| = 5 * |x|`, which is also a `Common` rule now
+(`a-modulus-takes-a-numeric-factor-out` and its dividend and divisor forms, `Sound`, `Rearranges`;
+the modulus is multiplicative on the whole plane, so nothing is assumed). Zero times a complex
+infinity is `NaN`. A complex infinity is infinite. And an indeterminate form that reaches the
+public `Limit` — a shape assembled out of the parts' limits that evaluates to `NaN` without any
+part being `NaN` — is withheld rather than reported, so the limit stays a question; inside the
+machinery it is kept, because it is what stops the search. Both columns measured on a build,
+`10ca691f` against this change.
+
+| | Was | Is |
+|---|---|---|
+| `"(i/x)/abs(i/x)".Limit("x", +oo)` | `1` | `i` |
+| the same at `-oo` | `1` | `-i` |
+| `"(i/x)^2/abs(i/x)^2".Limit("x", +oo)`, and at `0` | `1` | `-1` |
+| `"(3 + 4i) * x / abs((3 + 4i) * x)".Limit("x", +oo)` | `1` | `3/5 + 4/5 * i` |
+| `"((1+i)/x)^2/abs((1+i)/x)^2".Limit("x", +oo)` | `1` | left unevaluated — the answer is `i`, and `\|1 + i\|` is not a rational number, so the factor stays inside |
+| `"limit((2 + i * x) / abs(2 + i * x), x, +oo)".Simplify()` | `0` | left unevaluated — the answer is `i` |
+| `"i * abs(x) / x".Limit("x", +oo)` | left unevaluated | `i` |
+| `"abs(i * x)".Differentiate("x")` | `sgn(i * x) * i provided not i * x = 0` — which is `-sgn(x)` | `sgn(x) provided not x = 0` |
+| `"abs(i / x)".Differentiate("x")` | `sgn(i / x) * (-i) / x ^ 2 provided not i / x = 0` — which is `+sgn(x) / x^2` | `-(sgn(x) provided not x = 0) / abs(x) ^ 2` |
+| `"abs(2 + i * x)".Differentiate("x")`, and `abs(a * x)` for a symbol `a` | `sgn(2 + i * x) * i provided not 2 + i * x = 0`, `sgn(a * x) * a provided not a * x = 0` | left unevaluated |
+| `"sgn(2 + i * x)".Differentiate("x")`, and `sgn(a * x)` | `0 provided not 2 + i * x = 0`, `0 provided not a * x = 0` | left unevaluated |
+| `"abs(i * x)".Simplify()`, and `abs(x / i)` | `abs(i * x)`, `abs((-i) * x)` | `abs(x)` |
+| `"0 * (i * +oo)".Evaled`, and `(2 + i * +oo) * 0` | `0` | `NaN` |
+| `"x / abs(x)".Limit("x", 0)`, `abs(x) / x` at `+oo`, `sin(x)` at `+oo`, `x ^ 2 / abs(x) ^ 2` at `0`, `"abs(x + 2)".Differentiate("x")` | `NaN`, `1`, `NaN`, `1`, `sgn(x + 2) provided not x + 2 = 0` | the same |
+| `RewriteRules.Common.Rules.Count` | `62` | `65` |
+| `RewriteRules.All` by growth — collects / rearranges / expands / unknown | 124 / 46 / 31 / 123 | 124 / 49 / 31 / 123 |
+| `Saturation.SafeRules.Count` | `170` | `173` |
 
 ## 2.4.0 — since 2.3.0
 
