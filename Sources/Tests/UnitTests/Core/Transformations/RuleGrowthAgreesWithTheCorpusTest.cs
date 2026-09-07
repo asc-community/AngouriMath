@@ -145,6 +145,12 @@ namespace AngouriMath.Tests.Core.Transformations
             // a sum or a difference of itself -- and the sign-times-absolute-value cancellation.
             "x + x * y", "x + (x + y)", "x + (x - y)", "x - (y - x)", "(y - x) - x",
             "sgn(x) * (y * x) / abs(x)",
+
+            // A power beside its own base, on either side of a product or a quotient, and a
+            // divisor repeated -- the collecting shapes of `Power` that the arithmetic grammar
+            // builds only with a power of a leaf.
+            "x ^ 2 * x", "x / x ^ 2", "x ^ 2 / x", "(2 / x) ^ 3 * x", "(2 / x) ^ 3 * x ^ 2",
+            "x / y / y", "x / y ^ 2 / y",
         };
 
         private static List<Entity> Corpus()

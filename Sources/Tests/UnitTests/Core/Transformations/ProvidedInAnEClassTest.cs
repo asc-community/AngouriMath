@@ -94,7 +94,7 @@ namespace AngouriMath.Tests.Core.Transformations
         /// before the graph is wired into anything.
         /// </summary>
         /// <remarks>
-        /// <c>SafeRules</c> is <c>RulesUpTo(Rearranges)</c>, 157 of 324 rules. The 136 sitting at
+        /// <c>SafeRules</c> is <c>RulesUpTo(Rearranges)</c>, 170 of 324 rules. The 123 sitting at
         /// <c>Unknown</c> are excluded by design, since their growth was never judged — so the
         /// ceiling that is safe to run finds little, and the ceiling that finds things admits
         /// rewrites nobody measured. That trade is the open part of tier 2, and this pins where it

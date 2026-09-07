@@ -135,7 +135,7 @@ A pattern replacement gets:
 - **an exact growth**, counted from the two patterns rather than declared.
 
 A code replacement gets neither, and its growth is `Unknown` unless you declare one. That is the
-honest default — **136** rules sit at `Unknown` — but declare it where you can justify it:
+honest default — **123** rules sit at `Unknown` — but declare it where you can justify it:
 
 ```csharp
 // The Chebyshev expansion of sin(n * a) is a sum of n terms where the pattern is one node,
@@ -181,9 +181,10 @@ corpus, and each is false:
 Two more used to be listed here and are not. The repeated hole that pays a literal to be gathered —
 `a * (a * b) = a ^ 2 * b`, `k + k = 2 * k` and their relatives, every one `1 - |a|` — was
 undeclarable only while `Collects` was read as "always fewer"; it is the commonest collecting shape
-there is, and `Collects` promises never larger. `Common`'s thirteen are declared, with the count in
-each one's comment; the relatives in `Power` and `Factorization` — `a ^ n * a`, `a / b / b` and
-theirs — are the next to declare, each on its own count. And the reciprocal-factor rules were said
+there is, and `Collects` promises never larger. `Common`'s thirteen, `Power`'s eight and
+`Factorization`'s four are declared, with the count in each one's comment — and the count is worth
+doing, since `Power`'s ninth relative, `(c / a) ^ d * a ^ e`, turned out to be `-1 - |a|` outright
+rather than one of the family. And the reciprocal-factor rules were said
 to admit two spellings of one thing; `IsWholeReciprocal` is `entity is Rational(...)`, so it admits
 the literal only, and the pair is exactly `Rearranges` and exactly `Expands`.
 

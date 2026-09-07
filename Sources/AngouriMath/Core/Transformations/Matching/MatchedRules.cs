@@ -1450,7 +1450,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
                 bound => bound["k"] * (1 + bound["q"]),
                 Soundness.Sound,
-                description: "k + k*q = k*(1 + q)"),
+                description: "k + k*q = k*(1 + q)",
+                // The shared term is matched twice and written once, and the 1 is one node more:
+                // the delta is 1 - |k|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
 
             // k + k -> 2k
             new MatchedRule(
@@ -1458,7 +1461,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Sumf>(MatchPattern.Any("k"), MatchPattern.Any("k")),
                 bound => 2 * bound["k"],
                 Soundness.Sound,
-                description: "k + k = 2k"),
+                description: "k + k = 2k",
+                // The term is matched twice and written once, and the 2 is one node more: the
+                // delta is 1 - |k|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
 
             // k*p - k*q -> k*(p - q). The outer node is a difference and stays one.
             new MatchedRule(
@@ -1480,7 +1486,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("k"), MatchPattern.Any("q"))),
                 bound => bound["k"] * (1 - bound["q"]),
                 Soundness.Sound,
-                description: "k - k*q = k*(1 - q)"),
+                description: "k - k*q = k*(1 - q)",
+                // The shared term is matched twice and written once, and the 1 is one node more:
+                // the delta is 1 - |k|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
 
             // k*q - k -> k*(q - 1)
             new MatchedRule(
@@ -1490,7 +1499,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any("k")),
                 bound => bound["k"] * (bound["q"] - 1),
                 Soundness.Sound,
-                description: "k*q - k = k*(q - 1)"),
+                description: "k*q - k = k*(q - 1)",
+                // The shared term is matched twice and written once, and the 1 is one node more:
+                // the delta is 1 - |k|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
 
             // k - k -> 0
             new MatchedRule(
@@ -2767,7 +2779,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any("a")),
                 bound => new Powf(bound["a"], bound["n"] + 1),
                 Soundness.SoundUnderAssumptions,
-                description: "a ^ n * a = a ^ (n + 1)"),
+                description: "a ^ n * a = a ^ (n + 1)",
+                // The base is matched twice and written once, and the 1 added to the exponent is
+                // one node more: the delta is 1 - |a|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "two-powers-of-one-base-multiply-by-adding-exponents",
@@ -2900,7 +2915,11 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("n"))),
                 bound => new Powf(bound["a"], 1 - bound["n"]),
                 Soundness.SoundUnderAssumptions,
-                description: "a / a ^ n = a ^ (1 - n)"),
+                description: "a / a ^ n = a ^ (1 - n)",
+                // The base is matched twice and written once, and the 1 the exponent is taken
+                // from is one node more: the delta is 1 - |a|, nothing at a leaf and a shrink
+                // beyond it.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-power-over-its-own-base-lowers-the-exponent",
@@ -2909,7 +2928,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any("a")),
                 bound => new Powf(bound["a"], bound["n"] - 1),
                 Soundness.SoundUnderAssumptions,
-                description: "a ^ n / a = a ^ (n - 1)"),
+                description: "a ^ n / a = a ^ (n - 1)",
+                // The base is matched twice and written once, and the 1 taken from the exponent
+                // is one node more: the delta is 1 - |a|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-number-raised-to-a-logarithm-of-itself-is-the-antilogarithm",
@@ -2957,7 +2979,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("rest"))),
                 bound => new Powf(bound["a"], bound["n"] + 1) * bound["rest"],
                 Soundness.SoundUnderAssumptions,
-                description: "a ^ n * (a * rest) = a ^ (n + 1) * rest"),
+                description: "a ^ n * (a * rest) = a ^ (n + 1) * rest",
+                // The base is matched twice and written once, and the 1 added to the exponent is
+                // one node more: the delta is 1 - |a|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
 
             // Taking a factor out from under a root needs that factor positive, or the root to be
             // a whole power. https://github.com/asc-community/AngouriMath/issues/752
@@ -3001,7 +3026,11 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => new Powf(bound["c"], bound["d"])
                     * new Powf(bound["a"], 1 - (Number)bound["d"]),
                 Soundness.SoundUnderAssumptions,
-                description: "(c / a) ^ d * a = c ^ d * a ^ (1 - d), for numeric c and d"),
+                description: "(c / a) ^ d * a = c ^ d * a ^ (1 - d), for numeric c and d",
+                // The two numbers are leaves and 1 - d folds to one; the base is matched twice
+                // and written once, and the second power is one node more than the quotient it
+                // replaces: the delta is 1 - |a|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "a-power-of-a-numeric-reciprocal-times-a-power-of-its-own-denominator-subtracts-the-exponents",
@@ -3013,7 +3042,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => new Powf(bound["c"], bound["d"])
                     * new Powf(bound["a"], (Number)bound["e"] - (Number)bound["d"]),
                 Soundness.SoundUnderAssumptions,
-                description: "(c / a) ^ d * a ^ e = c ^ d * a ^ (e - d), for numeric c, d and e"),
+                description: "(c / a) ^ d * a ^ e = c ^ d * a ^ (e - d), for numeric c, d and e",
+                // The three numbers are leaves and e - d folds to one; the base is matched twice
+                // and written once, and the quotient goes: the delta is -1 - |a|, at most -2.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "dividing-twice-by-one-thing-squares-it",
@@ -3022,7 +3054,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any("b")),
                 bound => bound["a"] / new Powf(bound["b"], 2),
                 Soundness.SoundUnderAssumptions,
-                description: "a / b / b = a / b ^ 2"),
+                description: "a / b / b = a / b ^ 2",
+                // The divisor is matched twice and written once, and the exponent is one node
+                // more: the delta is 1 - |b|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "dividing-by-a-power-and-then-by-its-base-raises-the-exponent",
@@ -3033,7 +3068,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Any("b")),
                 bound => bound["a"] / new Powf(bound["b"], bound["n"] + 1),
                 Soundness.SoundUnderAssumptions,
-                description: "a / b ^ n / b = a / b ^ (n + 1)"),
+                description: "a / b ^ n / b = a / b ^ (n + 1)",
+                // The divisor is matched twice and written once, and the 1 added to the exponent
+                // is one node more: the delta is 1 - |b|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "dividing-by-a-thing-and-then-by-a-power-of-it-raises-the-exponent",
@@ -3042,7 +3080,10 @@ namespace AngouriMath.Core.Transformations.Matching
                     MatchPattern.Node<Powf>(MatchPattern.Any("b"), MatchPattern.Any("n"))),
                 bound => bound["a"] / new Powf(bound["b"], bound["n"] + 1),
                 Soundness.SoundUnderAssumptions,
-                description: "a / b / b ^ n = a / b ^ (n + 1)"),
+                description: "a / b / b ^ n = a / b ^ (n + 1)",
+                // The divisor is matched twice and written once, and the 1 added to the exponent
+                // is one node more: the delta is 1 - |b|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
 
             new MatchedRule(
                 "dividing-by-two-powers-of-one-base-adds-the-exponents",
@@ -3092,6 +3133,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Logf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 (node, bound) => new Providedf(1, ((Logf)node).DomainCondition),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: the condition attached is the node's own domain condition, whose
+                // size nothing here bounds.
                 description: "log(a, a) = 1, where log(a, a) is defined"),
 
             // ln(1/b) = -ln(b) is false on the negative reals: at b = -0.63 the two differ by the
@@ -3174,6 +3217,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 Soundness.Sound,
                 when: bound => Functions.Patterns.ReduceRadical(
                     (Integer)bound["radicand"], (Rational)bound["power"]) is not null,
+                // Left Unknown: the helper answers a whole times a root, two nodes more than the
+                // pattern, or a whole alone, two fewer.
                 description: "sqrt(8) = 2 * sqrt(2), and its like for a positive whole radicand"),
 
             // The rule above takes a whole power out from under one root; this takes a root out
@@ -3192,6 +3237,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => Functions.Patterns.DenestRadical(bound["radicand"])!,
                 Soundness.Sound,
                 when: bound => Functions.Patterns.DenestRadical(bound["radicand"]) is not null,
+                // Left Unknown: the helper computes the answer, and the radicands it denests take
+                // more shapes than one count covers.
                 description: "sqrt(5 + 2*sqrt(6)) = sqrt(2) + sqrt(3)"));
 
         /// <summary>

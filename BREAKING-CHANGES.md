@@ -74,6 +74,8 @@ read first.
 | | the same on `x + x`, and `x + x * y` | `x + x`, `x * y + x` — left as written | `2 * x`, `(1 + y) * x` |
 | **Silent** | `RewriteRules.Common.Rules[i].Growth`, for sixteen rules | `Unknown` | `Collects` for fourteen, `Rearranges` and `Expands` for the reciprocal-factor pair |
 | **Silent** | what `RewriteRuleGrowth.Collects` promises | fewer nodes for every input | never more, and fewer for some — every rule that was `Collects` still is |
+| | `Transformation.CanonicalizationOverGraph(budget).ApplyOrKeep("(2 / x) ^ 3 * x")`, and its like with a power of the denominator | `(2 * 1 / x) ^ 3 * x` — left as written | `8 * x ^ (-2)`; `(2 / x) ^ 3 * x ^ 2` is `8 * 1 / x` |
+| **Silent** | `RewriteRules.Power.Rules[i].Growth` for nine rules, and `Factorization`'s for four | `Unknown` | `Collects` |
 
 ### A cancelled quotient says its operand is defined, not only non-zero
 
@@ -899,6 +901,30 @@ and answers exactly as before on every input below.
 | `RewriteRules.Common.Rules` by growth — collects / rearranges / expands / unknown | 21 / 14 / 5 / 22 | 35 / 15 / 6 / 6 |
 | `RewriteRules.All` by growth | 97 / 45 / 30 / 152 | 111 / 46 / 31 / 136 |
 | what `RewriteRuleGrowth.Collects` promises | fewer nodes for every input | never more, and fewer for some |
+
+### `Power` and `Factorization` declare the rest of the collecting family
+
+The entry above named the relatives of the `1 − |a|` shape in `Power` and `Factorization` as next.
+Nine rules of `Power` — `a ^ n * a`, `a / a ^ n`, `a ^ n / a`, `a ^ n * (a * rest)`,
+`(c / a) ^ d * a`, `(c / a) ^ d * a ^ e`, `a / b / b`, `a / b ^ n / b`, `a / b / b ^ n` — and four of
+`Factorization` — `k + k * q`, `k + k`, `k - k * q`, `k * q - k` — declare `Collects`, each on its
+own count; three more of `Power` stay `Unknown` with the reason written beside the rule. The safe
+ceiling admits 170 of 324 rules where it admitted 157.
+
+On ordinary input little moves, and for a measured reason: `x ^ 2 * x` reaches `x ^ (2 + 1)` over
+the graph, which is no smaller at a leaf, and no safe rule folds the exponent, so the input is kept;
+and `Factorization`'s four have twins in `Common` that were declared in the entry above, so
+`a + a * b` was already `(1 + b) * a`. What does move is the power of a reciprocal beside its own
+denominator, whose exponents fold as the replacement is built.
+
+| | Was | Is |
+|---|---|---|
+| `Transformation.CanonicalizationOverGraph(budget).ApplyOrKeep("(2 / x) ^ 3 * x")` | `(2 * 1 / x) ^ 3 * x` — left as written | `8 * x ^ (-2)` |
+| the same on `(2 / x) ^ 3 * x ^ 2` | `(2 * 1 / x) ^ 3 * x ^ 2` | `8 * 1 / x` |
+| the same on `x ^ 2 * x`, `x / x ^ 2`, `x ^ 2 / x`, `x / y / y`, `a + a * b`, `a + a` | `x ^ 2 * x`, `1 / x ^ 2 * x`, `1 / x * x ^ 2`, `(1 / y) ^ 2 * x`, `(1 + b) * a`, `2 * a` | the same |
+| `RewriteRules.Power.Rules` by growth — collects / rearranges / expands / unknown | 13 / 6 / 1 / 13 | 22 / 6 / 1 / 4 |
+| `RewriteRules.Factorization.Rules` by growth | 4 / 0 / 2 / 5 | 8 / 0 / 2 / 1 |
+| `RewriteRules.All` by growth | 111 / 46 / 31 / 136 | 124 / 46 / 31 / 123 |
 
 ## 2.4.0 — since 2.3.0
 
