@@ -6,10 +6,12 @@
 //
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core.Transformations.Matching;
 using AngouriMath.Extensions;
+using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Core.Transformations
 {
@@ -155,6 +157,13 @@ namespace AngouriMath.Core.Transformations
             // afterwards does not reach back and fold.
             if (NeutralClass(canonical) is { } folded)
                 return folded;
+            // And an arithmetic operator over two rational leaves denotes exactly the rational it
+            // evaluates to, so it is that number's class rather than a fresh e-node. Found by
+            // running the safe ceiling over the growth corpus: every one of the 54 inputs that did
+            // not saturate was constant-only arithmetic -- `2 - 0 + 0 * 2`, `1/2 * 2 * sin(y)` --
+            // because the rearranging rules respell a number for ever when nothing folds it.
+            if (ConstantClass(canonical) is { } evaluated)
+                return evaluated;
             var id = NewClass();
             hashcons[canonical] = id;
             classes[id].Add(canonical);
@@ -254,6 +263,61 @@ namespace AngouriMath.Core.Transformations
                     return Find(node.Children[1]);
             }
             return null;
+        }
+
+        /// <summary>
+        /// The operators a rational fold is asked of: the arithmetic ones. A function of a
+        /// rational is rarely a rational, and a factorial evaluated on insertion would be paying
+        /// for an answer nobody asked for.
+        /// </summary>
+        [ConstantField]
+        private static readonly HashSet<string> FoldableOps = new()
+        {
+            nameof(Entity.Sumf), nameof(Entity.Minusf), nameof(Entity.Mulf), nameof(Entity.Divf),
+            nameof(Entity.Powf),
+        };
+
+        /// <summary>
+        /// A power is folded only for a whole exponent no larger than this in magnitude, so that
+        /// inserting <c>2 ^ 100000000</c> does not compute it.
+        /// </summary>
+        private const int LargestFoldedExponent = 4096;
+
+        [ConcurrentField]
+        private static readonly ConcurrentDictionary<string, Rational?> rationalLeaves = new();
+
+        private static Rational? RationalLeaf(string op)
+            => rationalLeaves.GetOrAdd(op, printed => TryParseLeaf(printed) as Rational);
+
+        /// <summary>The rational the class <paramref name="id"/> holds as a plain leaf, if any.</summary>
+        private Rational? RationalOf(int id)
+        {
+            if (!classes.TryGetValue(Find(id), out var set)) return null;
+            foreach (var node in set)
+                if (node.Children.Length == 0 && node.Codomain is null && RationalLeaf(node.Op) is { } value)
+                    return value;
+            return null;
+        }
+
+        /// <summary>
+        /// If <paramref name="node"/> is an arithmetic operator over two rational leaves whose
+        /// value is itself a rational, the class of that rational -- <see langword="null"/>
+        /// otherwise, which includes a quotient by zero, an irrational root and any node carrying
+        /// a codomain of its own.
+        /// </summary>
+        private int? ConstantClass(ENode node)
+        {
+            if (node.Codomain is not null || node.Children.Length != 2 || !FoldableOps.Contains(node.Op))
+                return null;
+            if (RationalOf(node.Children[0]) is not { } left || RationalOf(node.Children[1]) is not { } right)
+                return null;
+            if (node.Op == nameof(Entity.Powf)
+                && (right is not Integer exponent || exponent.EInteger.Abs() > LargestFoldedExponent))
+                return null;
+            Entity? value;
+            try { value = MatchPattern.ConstructNode(OperatorType(node.Op), new Entity[] { left, right })?.Evaled; }
+            catch { return null; }
+            return value is Rational folded ? Add(Key(folded), Array.Empty<int>(), null) : null;
         }
 
         /// <summary>Every e-class currently in the graph.</summary>

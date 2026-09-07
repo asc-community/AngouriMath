@@ -142,10 +142,15 @@ What this is and is not:
   #746 tier 2 called "a scheduling policy for `Expands`/`Unknown` rules": on this input the
   runaway is not a tier, it is one pair.
 
-  And the pair is bounded. The two `Common` coefficient rules are confluent on plain arithmetic —
-  `2 * x * y`, `(1/2) * x` and `2 * (x * y) / 3` saturate in a handful of nodes at the widest
-  ceiling, with the trigonometric sets present and with all of them removed — so making them
-  confluent is not a branch. The runaway is the sine family (`sin(2x)`, `sin(x) cos(x)`, `sin(3x)`,
+  And the pair is bounded. The two `Common` coefficient rules settle on `2 * x * y`, `(1/2) * x`
+  and `2 * (x * y) / 3` in a handful of nodes at the widest ceiling, with the trigonometric sets
+  present and with all of them removed — so making them confluent was not what the runaway
+  needed. They are not confluent in general: over the growth corpus at the safe ceiling,
+  `2 * x * 1/2` and six relatives never report a fixed point, because the spellings of a
+  coefficient beside a variable — `1/2 * x`, `x / 2`, `x * 2 ^ (-1)` — keep being exchanged.
+  That is a stall and not a runaway (a bounded graph and the right extraction, pinned by
+  `ConstantFoldTest`); and the 54 constant-only inputs that *did* run away before the graph
+  folded a number on insertion were the same rules with nothing to stop them. The runaway is the sine family (`sin(2x)`, `sin(x) cos(x)`, `sin(3x)`,
   `sin(2x) cos(2x)`; not `cos(2x)`), and it does not exist without the trigonometric sets.
   **The growth ceiling already withholds one direction of it.** `ExpandMultipleAngle`'s rules are
   declared `Expands`, so `Saturation.SafeRules` — `RulesUpTo(Rearranges)` — fires only the
