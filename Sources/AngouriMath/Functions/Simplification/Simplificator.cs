@@ -133,7 +133,14 @@ namespace AngouriMath.Functions
                         history[ncompl] = new HashSet<Entity> { n };
                 }
                 __IterAddHistory(expr);
-                __IterAddHistory(expr.Rewrite(RewriteRules.InvertNegativePowers));
+                // Only where inverting the negative powers produced a different tree: on the
+                // same tree the second registration re-sorts it, inner-simplifies it and rates it
+                // again to add an entity the set already holds. Measured on SimplifyHard, the
+                // registrations were 862 MB of a level's 976 MB, and this input never has a
+                // negative power to invert.
+                var inverted = expr.Rewrite(RewriteRules.InvertNegativePowers);
+                if (!inverted.Equals(expr))
+                    __IterAddHistory(inverted);
 
                 MultithreadingFunctional.ExitIfCancelled();
             }
