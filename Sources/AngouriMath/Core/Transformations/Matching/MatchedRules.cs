@@ -2739,6 +2739,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 // https://github.com/asc-community/AngouriMath/issues/1174
                 bound => new Providedf(1, !bound["a"].EqualTo(0) & bound["a"].DomainCondition),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: the condition attached carries a copy of a and a's own domain
+                // condition, whose size nothing here bounds.
                 description: "a / a = 1, provided a is not zero and is defined"),
 
             new MatchedRule(
@@ -3375,13 +3377,19 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
                 bound => bound["a"] * (1 + bound["b"]),
                 Soundness.SoundUnderAssumptions,
-                description: "k + k * q = k * (1 + q)"),
+                description: "k + k * q = k * (1 + q)",
+                // The shared term is matched twice and written once, and the 1 is one node more:
+                // the delta is 1 - |k|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-term-added-to-itself-doubles",
                 MatchPattern.Node<Sumf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 bound => 2 * bound["a"],
                 Soundness.Sound,
-                description: "k + k = 2 * k"),
+                description: "k + k = 2 * k",
+                // The term is matched twice and written once, and the 2 is one node more: the
+                // delta is 1 - |k|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-common-factor-of-two-subtracted-products-comes-out",
                 MatchPattern.Node<Minusf>(MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c"))),
@@ -3396,13 +3404,19 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
                 bound => bound["a"] * (1 - bound["b"]),
                 Soundness.SoundUnderAssumptions,
-                description: "a - a * b = a * (1 - b)"),
+                description: "a - a * b = a * (1 - b)",
+                // The shared term is matched twice and written once, and the 1 is one node more:
+                // the delta is 1 - |a|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-term-taken-from-a-product-of-itself-comes-out",
                 MatchPattern.Node<Minusf>(MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Any("a")),
                 bound => bound["a"] * (bound["b"] - 1),
                 Soundness.SoundUnderAssumptions,
-                description: "a * b - a = a * (b - 1)"),
+                description: "a * b - a = a * (b - 1)",
+                // The shared term is matched twice and written once, and the 1 is one node more:
+                // the delta is 1 - |a|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-term-subtracted-from-itself-vanishes",
                 MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
@@ -3417,25 +3431,37 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Sumf>(MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c"))),
                 bound => bound["a"] * (1 / bound["b"] + bound["c"]),
                 Soundness.SoundUnderAssumptions,
-                description: "a / b + a * c = a * (1 / b + c)"),
+                description: "a / b + a * c = a * (1 / b + c)",
+                // The shared factor is matched twice and written once, and the 1 over b is one
+                // node more than the quotient it replaces: the delta is 1 - |a|.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-factor-shared-by-a-product-and-a-quotient-added-comes-out",
                 MatchPattern.Node<Sumf>(MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("c")), MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
                 bound => bound["a"] * (bound["c"] + 1 / bound["b"]),
                 Soundness.SoundUnderAssumptions,
-                description: "a * c + a / b = a * (c + 1 / b)"),
+                description: "a * c + a / b = a * (c + 1 / b)",
+                // The shared factor is matched twice and written once, and the 1 over b is one
+                // node more than the quotient it replaces: the delta is 1 - |a|.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-term-added-to-a-quotient-of-itself-comes-out",
                 MatchPattern.Commutative<Sumf>(MatchPattern.Any<Entity>("a", one => one is not Integer(1)), MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
                 bound => bound["a"] * (1 + 1 / bound["b"]),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: the 1 and the 1 over b are three nodes more against the one copy
+                // of a that goes, so the delta is 3 - |a| -- larger at a leaf, smaller only from
+                // four nodes up.
                 description: "a + a / b = a * (1 + 1 / b)"),
             new MatchedRule(
                 "a-thing-times-itself-is-its-square",
                 MatchPattern.Node<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
                 bound => new Powf(bound["a"], 2),
                 Soundness.Sound,
-                description: "a * a = a ^ 2"),
+                description: "a * a = a ^ 2",
+                // The factor is matched twice and written once, and the exponent is one node
+                // more: the delta is 1 - |a|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "two-numeric-factors-around-a-variable-collect",
                 MatchPattern.Commutative<Mulf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Number>("c"), MatchPattern.Any<Variable>("v")), MatchPattern.Any<Number>("d")),
@@ -3459,7 +3485,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Commutative<Mulf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
                 bound => new Powf(bound["a"], 2) * bound["b"],
                 Soundness.Sound,
-                description: "a * (a * b) = a ^ 2 * b"),
+                description: "a * (a * b) = a ^ 2 * b",
+                // The factor is matched twice and written once, and the exponent is one node
+                // more: the delta is 1 - |a|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-negated-term-in-a-sum-is-a-subtraction",
                 MatchPattern.Commutative<Sumf>(MatchPattern.Node<Mulf>(MatchPattern.Exact(Integer.Create(-1)), MatchPattern.Any("neg")), MatchPattern.Any("rest")),
@@ -3475,7 +3504,11 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Mulf>(MatchPattern.Node<Minusf>(MatchPattern.Any<Variable>("v"), MatchPattern.Any("a")), MatchPattern.Node<Sumf>(MatchPattern.Any<Variable>("v"), MatchPattern.Any("a"))),
                 bound => new Powf(bound["v"], 2) - new Powf(bound["a"], 2),
                 Soundness.Sound,
-                description: "(a - b) * (a + b) = a ^ 2 - b ^ 2"),
+                description: "(a - b) * (a + b) = a ^ 2 - b ^ 2",
+                // The variable is a leaf either way; the other operand is matched twice and
+                // written once, and the two exponents are two nodes more against the operator
+                // that goes: the delta is 1 - |b|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-quotient-of-a-thing-by-itself-is-one-unless-it-is-zero",
                 MatchPattern.Node<Divf>(MatchPattern.Any("a"), MatchPattern.Any("a")),
@@ -3484,6 +3517,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => Integer.One.Provided(
                     !bound["a"].EqualTo(Integer.Zero) & bound["a"].DomainCondition),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: the condition attached carries a copy of a and a's own domain
+                // condition, whose size nothing here bounds.
                 description: "a / a = 1, provided a is not zero and is defined"),
             new MatchedRule(
                 "a-shared-factor-cancels-out-of-a-quotient",
@@ -3493,24 +3528,32 @@ namespace AngouriMath.Core.Transformations.Matching
                 bound => bound["keep"].Provided(
                     !bound["c"].EqualTo(Integer.Zero) & bound["c"].DomainCondition),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: the condition attached carries a copy of c and c's own domain
+                // condition, whose size nothing here bounds.
                 description: "(keep * c) / c = keep, provided c is not zero and is defined"),
             new MatchedRule(
                 "a-shared-factor-cancels-between-two-products",
                 MatchPattern.Node<Divf>(MatchPattern.Commutative<Mulf>(MatchPattern.Any("num"), MatchPattern.Any("c")), MatchPattern.Commutative<Mulf>(MatchPattern.Any("c"), MatchPattern.Any("den"))),
                 bound => (bound["num"] / bound["den"]).Provided(!bound["c"].EqualTo(Integer.Zero)),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: the condition attached carries a copy of c, so the delta is
+                // 2 - |c| -- larger at a leaf, smaller from three nodes up.
                 description: "(num * c) / (c * den) = num / den, provided c is not zero"),
             new MatchedRule(
                 "a-difference-over-its-own-reverse-is-minus-one",
                 MatchPattern.Node<Divf>(MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Minusf>(MatchPattern.Any("b"), MatchPattern.Any("a"))),
                 (node, bound) => new Providedf(-1, !node.DirectChildren[1].EqualTo(0)),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: the condition attached carries a copy of the divisor, so the
+                // delta is 3 - |a| - |b| -- larger at two leaves, smaller from four nodes up.
                 description: "(a - b) / (b - a) = -1, provided a is not b"),
             new MatchedRule(
                 "a-sum-over-its-own-reverse-is-one",
                 MatchPattern.Node<Divf>(MatchPattern.Node<Sumf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Node<Sumf>(MatchPattern.Any("b"), MatchPattern.Any("a"))),
                 (node, bound) => new Providedf(1, !node.DirectChildren[1].EqualTo(0)),
                 Soundness.SoundUnderAssumptions,
+                // Left Unknown: the condition attached carries a copy of the divisor, so the
+                // delta is 3 - |a| - |b| -- larger at two leaves, smaller from four nodes up.
                 description: "(a + b) / (b + a) = 1, provided the sum is not zero"),
             new MatchedRule(
                 "a-number-over-a-numeric-multiple-splits",
@@ -3535,7 +3578,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
                 bound => 2 * bound["a"] + bound["b"],
                 Soundness.Sound,
-                description: "a + (a + b) = 2 * a + b"),
+                description: "a + (a + b) = 2 * a + b",
+                // The term is matched twice and written once, and the 2 is one node more: the
+                // delta is 1 - |a|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-term-taken-back-out-of-a-sum-it-is-in",
                 MatchPattern.Node<Minusf>(MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Any("a")),
@@ -3568,13 +3614,19 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Sumf>(MatchPattern.Any("a"), MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
                 bound => 2 * bound["a"] - bound["b"],
                 Soundness.Sound,
-                description: "a + (a - b) = 2 * a - b"),
+                description: "a + (a - b) = 2 * a - b",
+                // The term is matched twice and written once, and the 2 is one node more: the
+                // delta is 1 - |a|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-difference-that-takes-a-term-away-subtracted-from-it",
                 MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Node<Minusf>(MatchPattern.Any("b"), MatchPattern.Any("a"))),
                 bound => 2 * bound["a"] - bound["b"],
                 Soundness.Sound,
-                description: "a - (b - a) = 2 * a - b"),
+                description: "a - (b - a) = 2 * a - b",
+                // The term is matched twice and written once, and the 2 is one node more: the
+                // delta is 1 - |a|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-difference-that-starts-from-a-term-subtracted-from-it",
                 MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b"))),
@@ -3589,7 +3641,10 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Minusf>(MatchPattern.Node<Minusf>(MatchPattern.Any("b"), MatchPattern.Any("a")), MatchPattern.Any("a")),
                 bound => bound["b"] - 2 * bound["a"],
                 Soundness.Sound,
-                description: "(b - a) - a = b - 2 * a"),
+                description: "(b - a) - a = b - 2 * a",
+                // The term is matched twice and written once, and the 2 is one node more: the
+                // delta is 1 - |a|, nothing at a leaf and a shrink beyond it.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-term-taken-from-a-difference-that-starts-from-it",
                 MatchPattern.Node<Minusf>(MatchPattern.Node<Minusf>(MatchPattern.Any("a"), MatchPattern.Any("b")), MatchPattern.Any("a")),
@@ -3621,7 +3676,11 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Node<Divf>(MatchPattern.Node<Mulf>(MatchPattern.Node<Signumf>(MatchPattern.Any("a")), MatchPattern.Node<Mulf>(MatchPattern.Any("b"), MatchPattern.Any("a"))), MatchPattern.Node<Absf>(MatchPattern.Any("a"))),
                 bound => bound["b"].Provided(!bound["a"].EqualTo(Integer.Zero)),
                 Soundness.SoundUnderAssumptions,
-                description: "(sgn(a) * (b * a)) / abs(a) = b, provided a is not zero"),
+                description: "(sgn(a) * (b * a)) / abs(a) = b, provided a is not zero",
+                // Three copies of a go and one comes back inside the condition; the sign, the
+                // absolute value, the quotient and two products go against the three nodes the
+                // condition and its attachment add: the delta is -1 - 2|a|, at most -3.
+                growth: RewriteRuleGrowth.Collects),
             new MatchedRule(
                 "a-sign-times-an-absolute-value-of-one-thing-is-that-thing",
                 MatchPattern.Commutative<Mulf>(MatchPattern.Node<Signumf>(MatchPattern.Any("a")), MatchPattern.Node<Absf>(MatchPattern.Any("a"))),
@@ -3636,13 +3695,19 @@ namespace AngouriMath.Core.Transformations.Matching
                 MatchPattern.Commutative<Mulf>(MatchPattern.Any<Entity>("r", one => Functions.Patterns.IsWholeReciprocal(one, 1)), MatchPattern.Any("a")),
                 bound => bound["a"] / Functions.Patterns.DenominatorOf(bound["r"]),
                 Soundness.Sound,
-                description: "a * (1 / c) = a / c, for a rational c"),
+                description: "a * (1 / c) = a / c, for a rational c",
+                // The reciprocal is a single rational leaf, and its denominator is a single leaf
+                // under a quotient in place of the product: one node for one, whatever a is.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "a-negated-reciprocal-rational-factor-is-a-negated-division",
                 MatchPattern.Commutative<Mulf>(MatchPattern.Any<Entity>("r", one => Functions.Patterns.IsWholeReciprocal(one, -1)), MatchPattern.Any("a")),
                 bound => -(bound["a"] / Functions.Patterns.DenominatorOf(bound["r"])),
                 Soundness.Sound,
-                description: "a * (-1 / c) = -(a / c), for a rational c"),
+                description: "a * (-1 / c) = -(a / c), for a rational c",
+                // As above, and the negation put round the quotient is two nodes more, whatever
+                // a is.
+                growth: RewriteRuleGrowth.Expands),
             // Parity, over the whole complex plane. The poles of the odd ones sit symmetrically
             // about zero -- tan(-z) is undefined exactly where tan(z) is -- so the domain neither
             // widens nor narrows and no condition is owed.

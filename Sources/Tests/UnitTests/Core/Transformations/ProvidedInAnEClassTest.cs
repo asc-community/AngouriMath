@@ -84,15 +84,17 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         /// <summary>
-        /// <b>The safe ceiling is nearly inert on ordinary input.</b> Four of these five come back
-        /// exactly as they went in; only the Pythagorean identity moves. That is not a defect in
+        /// <b>The safe ceiling is nearly inert on ordinary input.</b> Three of these five come back
+        /// exactly as they went in; the Pythagorean identity moves, and the difference of squares
+        /// has since its rule was declared <c>Collects</c> — to <c>x ^ 2 - 1 ^ 2</c>, since no
+        /// safe rule folds a numeric power. That is not a defect in
         /// the expressions — it is what the graph can do today with the rules it is allowed to
         /// use, and it is the measurement
         /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 2 needs
         /// before the graph is wired into anything.
         /// </summary>
         /// <remarks>
-        /// <c>SafeRules</c> is <c>RulesUpTo(Rearranges)</c>, 142 of 324 rules. The 152 sitting at
+        /// <c>SafeRules</c> is <c>RulesUpTo(Rearranges)</c>, 157 of 324 rules. The 136 sitting at
         /// <c>Unknown</c> are excluded by design, since their growth was never judged — so the
         /// ceiling that is safe to run finds little, and the ceiling that finds things admits
         /// rewrites nobody measured. That trade is the open part of tier 2, and this pins where it
@@ -116,8 +118,8 @@ namespace AngouriMath.Tests.Core.Transformations
                     moved.Add($"{source} -> {extracted.Stringize()}");
             }
 
-            Assert.True(still.Count == 4 && moved.Count == 1,
-                $"the safe ceiling moved {moved.Count} of 5 and left {still.Count}; it was 1 and 4.\n"
+            Assert.True(still.Count == 3 && moved.Count == 2,
+                $"the safe ceiling moved {moved.Count} of 5 and left {still.Count}; it was 2 and 3.\n"
                 + "moved:\n" + string.Join("\n", moved)
                 + "\nunchanged:\n" + string.Join("\n", still));
         }

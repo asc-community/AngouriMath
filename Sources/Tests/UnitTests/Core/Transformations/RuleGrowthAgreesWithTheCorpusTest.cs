@@ -140,6 +140,11 @@ namespace AngouriMath.Tests.Core.Transformations
             "x! = 0", "(x - y) / (y - x)", "x - (x - y)", "(x - y) - x",
             "x * y - x", "x - x * y", "x * x", "x * x * y", "x * (x * y)",
             "sin(x) * 2", "2 * sin(x)",
+
+            // The collecting shapes that are exactly as large at a leaf -- a term beside a product,
+            // a sum or a difference of itself -- and the sign-times-absolute-value cancellation.
+            "x + x * y", "x + (x + y)", "x + (x - y)", "x - (y - x)", "(y - x) - x",
+            "sgn(x) * (y * x) / abs(x)",
         };
 
         private static List<Entity> Corpus()
@@ -211,7 +216,10 @@ namespace AngouriMath.Tests.Core.Transformations
                     var delta = Size(after) - Size(before);
                     var contradicts = rule.Growth switch
                     {
-                        RewriteRuleGrowth.Collects => delta >= 0,
+                        // Collects promises never larger and smaller for some input, so the same
+                        // size is not a contradiction: the corpus fills holes with leaves, where
+                        // `a + a = 2 * a` is exactly as large as it was.
+                        RewriteRuleGrowth.Collects => delta > 0,
                         RewriteRuleGrowth.Rearranges => delta != 0,
                         RewriteRuleGrowth.Expands => delta <= 0,
                         _ => false

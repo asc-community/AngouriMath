@@ -261,17 +261,20 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         /// <summary>
-        /// Widening the ceiling brings the difference of squares together — the narrow ceiling
-        /// leaves the product and the expansion as two forms, and the widest one canonicalises
-        /// both to the same tree.
+        /// The difference of squares used to need the widest ceiling: the narrow one left the
+        /// product and the expansion as two forms. It does not since
+        /// <c>a-difference-times-a-sum-of-one-pair-is-a-difference-of-squares</c> was declared
+        /// <c>Collects</c> on its count — <c>1 - |b|</c>, never larger — which is what admits it
+        /// to the narrow ceiling. Both ceilings canonicalise the two to one tree now, and this
+        /// used to assert the narrow one could not.
         /// </summary>
         [Fact]
-        public void TheWidestCeilingBringsTheDifferenceOfSquaresTogether()
+        public void TheNarrowCeilingBringsTheDifferenceOfSquaresTogether()
         {
             var product = "(x + y) * (x - y)".ToEntity();
             var squares = "x ^ 2 - y ^ 2".ToEntity();
 
-            Assert.NotEqual(Narrow.ApplyOrKeep(product), Narrow.ApplyOrKeep(squares));
+            Assert.Equal(Narrow.ApplyOrKeep(product), Narrow.ApplyOrKeep(squares));
             Assert.Equal(Wide.ApplyOrKeep(product), Wide.ApplyOrKeep(squares));
         }
 

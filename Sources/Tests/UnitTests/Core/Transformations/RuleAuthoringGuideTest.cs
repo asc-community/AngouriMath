@@ -89,7 +89,7 @@ namespace AngouriMath.Tests.Core.Transformations
                 "how many rules have a pattern on both sides");
             Stated(33, rules.Count(rule => rule.Reversed is not null),
                 "how many two-sided rules have a direction");
-            Stated(152, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Unknown),
+            Stated(136, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Unknown),
                 "how many rules sit at Unknown growth");
 
             // The rest of the census, because `Saturation.RulesUpTo` argues from it in prose and
@@ -97,11 +97,11 @@ namespace AngouriMath.Tests.Core.Transformations
             // rearrange, 9 expand and 270 unjudged", measured before the growth declarations
             // went in. The argument survived; the arithmetic did not. A number a remark reasons
             // from belongs somewhere that fails when it moves.
-            Stated(97, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Collects),
+            Stated(111, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Collects),
                 "how many rules are declared Collects");
-            Stated(45, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Rearranges),
+            Stated(46, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Rearranges),
                 "how many rules are declared Rearranges");
-            Stated(30, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Expands),
+            Stated(31, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Expands),
                 "how many rules are declared Expands");
 
             // And the two the document names. By their own names rather than by what the prose
