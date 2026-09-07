@@ -31,7 +31,9 @@ namespace AngouriMath.Tests.Core.Transformations
     /// <c>2 * (x * y) / 3</c> — the widest ceiling saturates in a handful of nodes, with every
     /// trigonometric set present and with all of them removed. The coefficient rules were
     /// load-bearing in the runaway only because they supplied the respellings the trigonometric
-    /// pair fed on.
+    /// pair fed on. (Measured on these three inputs; the family is not confluent in general —
+    /// <c>2 * x * 1/2</c> never reports a fixed point — but it stalls at a bounded graph with the
+    /// right extraction rather than running away, which <c>ConstantFoldTest</c> pins.)
     /// </para>
     /// <para>
     /// <b>The runaway is a family, and it is bounded to the trigonometric sets.</b> Every sine

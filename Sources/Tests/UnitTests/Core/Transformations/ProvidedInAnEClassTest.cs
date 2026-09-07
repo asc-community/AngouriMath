@@ -86,8 +86,8 @@ namespace AngouriMath.Tests.Core.Transformations
         /// <summary>
         /// <b>The safe ceiling is nearly inert on ordinary input.</b> Three of these five come back
         /// exactly as they went in; the Pythagorean identity moves, and the difference of squares
-        /// has since its rule was declared <c>Collects</c> — to <c>x ^ 2 - 1 ^ 2</c>, since no
-        /// safe rule folds a numeric power. That is not a defect in
+        /// has since its rule was declared <c>Collects</c> — to <c>x ^ 2 - 1</c>, the numeric
+        /// power folded on insertion (<c>ConstantFoldTest</c>). That is not a defect in
         /// the expressions — it is what the graph can do today with the rules it is allowed to
         /// use, and it is the measurement
         /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 2 needs
