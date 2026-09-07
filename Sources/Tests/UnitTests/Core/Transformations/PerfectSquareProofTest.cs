@@ -42,7 +42,13 @@ namespace AngouriMath.Tests.Core.Transformations
     [Trait("Area", "Core")]
     public sealed class PerfectSquareProofTest
     {
-        private static readonly WorkBudget Budget = new() { Steps = 2_000, Time = TimeSpan.FromMilliseconds(50) };
+        /// <summary>
+        /// The production caller's step ceiling with a wall that cannot fire: the first CI run
+        /// of this test spent the caller's fifty milliseconds on a cold JIT three seconds into
+        /// the process and reported the surd product unproved. Steps are what bound a proof;
+        /// a wall in a test measures the runner.
+        /// </summary>
+        private static readonly WorkBudget Budget = new() { Steps = 2_000, Time = TimeSpan.FromSeconds(30) };
 
         [Theory]
         [InlineData("2 * sqrt(2) * sqrt(3)", "2 * sqrt(6)")]
