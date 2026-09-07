@@ -270,6 +270,37 @@ What is left of a `SimplifyHard` level, for whoever comes next: the remaining re
 factorisation at level 2, and the opened angles expanded — at 177, 170 and 82 MB, each a
 recursive simplification of an expanded tree.
 
+## The 1936th: the sort key of a node is spelt once
+
+The same hook, on `SimplifyHard`, attributed this time to the registration steps of
+`Simplificator.Alternate`: the `CanonicalOrder` sort was 174 MB of the run's 735, some 2.6 MB per
+sort of a tree a few hundred nodes wide. `Entity.SortHash` builds a node's key out of the keys of
+every node below it and nothing kept them, so one sort re-spelt each subtree once per ancestor —
+and the simplifier sorts what it registers at every pass of every level, in its own run and in
+the three nested runs its candidates cost. The key is kept on the instance now: one reference per
+node, an array made on the first sort, behind a struct that is equal to every other.
+
+Four shapes were measured, and the three rejected ones are worth the lines. Three lazy slots
+per node saved the same bytes and cost every node some fifty of its own, which the gate saw as
++4–6% on every solve and derivative entry. A dictionary kept for the run, keyed by reference,
+saved the bytes and cost a lookup per node per sort: 369 ms against 266. And a bare array field
+took part in the record's equality, so a tree that had been sorted stopped equalling its unsorted
+twin and the simplifier, which recognises a repeated candidate by equality, never recognised one:
+**30 GB and 57 s**, from a change whose unit test passed. HonkSharp's `LazyPropertyA` exists for
+exactly that reason, and the struct here does what it does.
+
+| benchmark | 1935th | 1936th | allocation | time |
+|---|--:|--:|--:|--:|
+| `SimplifyHard` | 680,457,400 | **442,898,152** | **−34.9%** | 339 → 258 ms |
+| `SimplifyEasy` | 110,051 | 106,643 | −3.1% | 66.4 → 68.8 µs |
+| every solve entry, `Derivate`, `ParseEasy` | | | +0.4% to +0.9% | within noise |
+
+Bytes allocated per call, same machine, both columns measured by the gate in one session. The
+fraction of a percent on the other rows is the one reference per node. Since the 1930th:
+`SimplifyHard` **−88%**. Timings carry the usual rider; the gate's baseline was taken from this
+run. No answer moves: the key is the same string, spelt once, and equality is untouched —
+`SortKeyCacheTest` pins both, and that a `with` copy spells its own key.
+
 ## The 1935th: the solver tries the equation as written
 
 The same hook, on `SolveHard` and attributed to the stages of `AnalyticalEquationSolver.Solve`
