@@ -180,6 +180,65 @@ honest reason -- a compiled delegate over `Complex` has nothing to put on the he
 
 ---
 
+## The 1930th, and every release beside it on one machine
+
+The second column measured by `Sources/Utils/benchmark_key_commits.sh` reaching all five entries in
+`key-commits.txt`, fifteen commits after the 1915th: the same benchmark against every release and
+against `308384b2`, on one machine, on 2026-09-07, one entry per run with nothing else on the
+machine. The period covers #1191–#1203 — the codomain in the e-node's identity, twenty-nine growth
+declarations and the `Collects` contract, the constant fold on insertion, the perfect-square
+collapse asking the rewrite graph before `Simplify`, and extraction as a fixed point from the
+leaves up.
+
+### Allocation
+
+| benchmark | v2.1.0 | v2.2.0 | v2.3.0 | v2.4.0 | 1915th | 1930th |
+|---|--:|--:|--:|--:|--:|--:|
+| `CompileEasy` | 16,191 | 16,552 | 16,734 | 11,003 | 10,970 | 10,970 |
+| `CompileHard` | 38,249 | 38,379 | 38,163 | 20,434 | 20,434 | 20,737 |
+| `Derivate` | 52,823 | 52,823 | 52,823 | 52,814 | 52,823 | 52,814 |
+| `EvalTrig` | 1,341,377 | 1,341,377 | 1,341,377 | 1,341,377 | 1,341,377 | 1,341,377 |
+| `EvalTrigPrecise` | 12,742,205 | 12,742,205 | 12,742,205 | 12,742,205 | 12,742,205 | 12,742,205 |
+| `ParseEasy` | 18,061 | 18,058 | 18,061 | 18,112 | 18,104 | 18,104 |
+| `ParseHard` | 3,498,137 | 3,498,137 | 3,522,433 | 3,522,481 | 3,531,201 | 3,531,201 |
+| `SimplifyEasy` | 128,564 | 128,564 | 128,100 | 128,099 | 128,100 | 128,460 |
+| `SimplifyHard` | 3,733,175,832 | 3,749,409,536 | 3,620,748,264 | 3,632,015,744 | 3,655,695,192 | 3,662,375,240 |
+| `SolveEasy` | 20,220,106 | 20,234,998 | 8,852,269 | 8,853,671 | 8,853,834 | 8,853,834 |
+| `SolveEasyMedium` | 80,184 | 95,873 | 95,793 | 97,175 | 97,335 | 97,335 |
+| `SolveHard` | 1,356,524,264 | 1,486,585,888 | 1,431,854,144 | 1,446,793,064 | 1,450,058,720 | 1,452,700,104 |
+| `SolveMedium` | 554,368 | 658,259 | 658,099 | 661,963 | 662,923 | 662,923 |
+| `SolveMediumHard` | 155,190,904 | 171,395,096 | 162,305,664 | 164,549,808 | 165,055,344 | 165,611,184 |
+
+Bytes allocated. The four release columns are this run's own re-measurement, not the 1915th's
+figures copied across; the 1915th column is that section's. `EvalEasy`, `RunEasy`, `RunMedium`
+and `RunHard` allocate nothing in every column and are left out.
+
+**Since the 1915th: `SimplifyHard` +0.18%, `SolveHard` +0.18%, `SolveMediumHard` +0.34%, and
+those three figures are, to the digit, the cost recorded for #1192 when it repointed the three
+`CanonicalOrder` sets at their data form.** Everything after #1192 — thirteen pull requests,
+among them a new e-node identity, a constant fold and a rewrite of extraction — is therefore
+allocation-neutral on these benchmarks *if* the whole movement is #1192's. That is a reading of
+two measurements that agree, not a bisection: the two commits either side of #1192 were not
+re-measured here (an older commit builds from scratch and one run of it overran the ten minutes
+this session could give a single command). `SimplifyEasy` +360 bytes (+0.28%) is the one figure
+that reading does not cover and is unattributed.
+
+**Since 2.4.0, the pair a release publishes:** `SimplifyHard` +0.84%, `SolveMediumHard` +0.65%,
+`SolveHard` +0.41%, `SimplifyEasy` +0.28%; `CompileEasy` −0.3% and `CompileHard` +1.5%, both
+inside the compile benchmarks' 2% floor; every other row flat. All of it inside `PerformanceGate`'s
+3%, and none of it a reason to hold a release; the 1915th's rider still applies — the period since
+2.4.0 was not free, and the where is recorded above.
+
+### The determinism claim, held again
+
+`v2.4.0` was measured in the 1915th's run and again in this one: `SimplifyHard` 3,632,015,744 both
+times, `SolveMediumHard` 164,549,808 both times, `SolveHard` 1,446,799,616 against 1,446,793,064
+(0.0005%), `CompileEasy` 11,003 both times, `CompileHard` 20,396 against 20,434 (0.19%). The
+large rows reproduce to the byte or nearly; the compile rows sit inside their floor.
+
+Timings from the same run are in the generated table and are deliberately not reproduced here,
+for the reason the 1844th section gives.
+
 ## The 1915th, and every release beside it on one machine
 
 The first column measured by `Sources/Utils/benchmark_key_commits.sh` reaching all five entries in
