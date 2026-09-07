@@ -3827,6 +3827,35 @@ namespace AngouriMath.Core.Transformations.Matching
                 // The negative literal inside is replaced by its magnitude, one node for one, and
                 // nothing else moves: the same size whatever the argument is.
                 growth: RewriteRuleGrowth.Rearranges),
+            // A numeric factor that carries a phase comes out of a modulus as its own modulus,
+            // |i * x| = |x|. The modulus is multiplicative on the whole plane, so nothing is
+            // assumed; the factor is taken only where its modulus is exact, and never a real one,
+            // which carries no phase. https://github.com/asc-community/AngouriMath/issues/1186
+            new MatchedRule(
+                "a-modulus-takes-a-numeric-factor-out",
+                MatchPattern.Node<Absf>(MatchPattern.Commutative<Mulf>(MatchPattern.Any<Entity>("c", c => AngouriMath.Functions.TreeAnalyzer.ExactModulus(c) is not null), MatchPattern.Any("rest"))),
+                bound => AngouriMath.Functions.TreeAnalyzer.ExactModulus(bound["c"])! * new Absf(bound["rest"]),
+                Soundness.Sound,
+                description: "abs(c * a) = |c| * abs(a)",
+                // The factor moves from inside the modulus to outside it as one number, and the
+                // modulus stays over the rest: the same size whatever the rest is.
+                growth: RewriteRuleGrowth.Rearranges),
+            new MatchedRule(
+                "a-modulus-takes-a-numeric-dividend-out",
+                MatchPattern.Node<Absf>(MatchPattern.Node<Divf>(MatchPattern.Any<Entity>("c", c => AngouriMath.Functions.TreeAnalyzer.ExactModulus(c) is not null), MatchPattern.Any("rest"))),
+                bound => AngouriMath.Functions.TreeAnalyzer.ExactModulus(bound["c"])! / new Absf(bound["rest"]),
+                Soundness.Sound,
+                description: "abs(c / a) = |c| / abs(a)",
+                // As above: one number moves out and the modulus stays over the rest.
+                growth: RewriteRuleGrowth.Rearranges),
+            new MatchedRule(
+                "a-modulus-takes-a-numeric-divisor-out",
+                MatchPattern.Node<Absf>(MatchPattern.Node<Divf>(MatchPattern.Any("rest"), MatchPattern.Any<Entity>("c", c => AngouriMath.Functions.TreeAnalyzer.ExactModulus(c) is not null))),
+                bound => new Absf(bound["rest"]) / AngouriMath.Functions.TreeAnalyzer.ExactModulus(bound["c"])!,
+                Soundness.Sound,
+                description: "abs(a / c) = abs(a) / |c|",
+                // As above: one number moves out and the modulus stays over the rest.
+                growth: RewriteRuleGrowth.Rearranges),
             new MatchedRule(
                 "an-odd-function-of-a-negative-multiple-negates-sin",
                 MatchPattern.Node<Sinf>(MatchPattern.Node<Mulf>(MatchPattern.Any<Real>("neg", real => real.IsNegative), MatchPattern.Any("rest"))),

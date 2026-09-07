@@ -951,8 +951,18 @@ namespace AngouriMath.Core.Transformations
 
             public override Soundness Soundness => Soundness.SoundUnderAssumptions;
 
+            // An indeterminate form the machinery could not read -- 0 / abs(0) for
+            // (i / x) / abs(i / x) -- evaluates to NaN, and NaN is the claim that there is no
+            // limit. Inside the machinery that NaN is what stops the search, and the machinery
+            // reaches this entry point for the limits of its own parts, so it is kept for
+            // those; at the outermost call, where the answer is made, it is withheld, and the
+            // limit stays a question rather than a wrong answer to one.
+            // https://github.com/asc-community/AngouriMath/issues/1186
             protected override Entity? ApplyCore(Entity input)
-                => LimitFunctional.ComputeLimit(input, variable, destination, side);
+                => LimitFunctional.ComputeLimit(input, variable, destination, side) is { } limit
+                   && (LimitFunctional.ReadingAnApproach || !LimitFunctional.IsAnIndeterminateForm(limit))
+                    ? limit
+                    : null;
         }
     }
 }

@@ -107,6 +107,13 @@ namespace AngouriMath
                     (a, b) => Real.Create(CtxMultiply(a.EDecimal, b.EDecimal)),
                     (a, b) =>
                     {
+                    // A whole zero against a whole infinity is 0 * oo, which is NaN for a real
+                    // and is NaN here: the reading below, that a zero *part* times an infinite
+                    // part is zero, is for one part against another and read 0 * (i * oo) as
+                    // 0, whereupon (2 + i * x) * abs(2 + i * x)^(-1) at +oo answered 0.
+                    // https://github.com/asc-community/AngouriMath/issues/1186
+                    if (IsZero(a) && !b.IsFinite || IsZero(b) && !a.IsFinite)
+                        return Real.NaN;
                     // Define both (oo * i) and (i * oo) to be (oo i) which is (0 + oo i) instead of (NaN + oo i)
                     static EDecimal ModifiedMultiply(EDecimal a, EDecimal b) =>
                             a.IsInfinity() && b.IsZero || b.IsInfinity() && a.IsZero ? EDecimal.Zero : CtxMultiply(a, b);
