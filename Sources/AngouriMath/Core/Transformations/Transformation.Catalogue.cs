@@ -470,10 +470,17 @@ namespace AngouriMath.Core.Transformations
         /// <b>What this is not.</b> Not a canonical form <i>for the language</i> — no such thing
         /// exists here, since zero-equivalence is undecidable, and
         /// <c>Docs/Contributing/CanonicalForm.md</c> states that boundary. It is a canonical form
-        /// <i>modulo these rules and this budget</i>: equal trees mean the rules proved the two
-        /// expressions equal, different trees mean they did not, and a budget that ran out is
-        /// reported rather than hidden. Nothing in the library calls this — like
-        /// <see cref="Canonicalization"/> it is offered, not applied.
+        /// <i>modulo these rules, this budget, and the answer having settled</i>: equal trees mean
+        /// the rules proved the two expressions equal, different trees mean they did not, and a
+        /// budget that ran out is reported rather than hidden. The run stops once the least
+        /// member of the input's class has survived two passes unchanged, which is the fixed
+        /// point that matters to an extraction and comes where the graph's own may never — on
+        /// a rational coefficient beside a variable the regrouping rules add a member on every
+        /// pass for as long as they are allowed (<a href="https://github.com/asc-community/AngouriMath/issues/1200">#1200</a>),
+        /// and the answer was settled on the third. Measured on the corpus and on those inputs,
+        /// no answer moved and the nine of them went from two seconds to milliseconds. Nothing
+        /// in the library calls this — like <see cref="Canonicalization"/> it is offered, not
+        /// applied.
         /// </para>
         /// </remarks>
         /// <remarks>
@@ -673,10 +680,31 @@ namespace AngouriMath.Core.Transformations
                 graph.Rebuild();
 
                 var ledger = BudgetLedger.For(Name, budget);
-                Saturation.Run(graph, SafeRules, ledger, costModel.Cost);
+                // Stop once the answer has: after two passes in which the cheapest member of the
+                // root's class did not change, further merging can only add members this
+                // extraction would not choose. That is the fixed point a caller who extracts
+                // cares about, and on #1200's inputs it comes on the third pass where the
+                // graph's own never does. Measured on the corpus, no answer moves.
+                Entity? last = null;
+                var unchanged = 0;
+                bool Settled()
+                {
+                    var now = graph.Extract(root, costModel.Cost);
+                    unchanged = now is not null && now.Equals(last) ? unchanged + 1 : 0;
+                    last = now;
+                    return unchanged >= SettledPasses;
+                }
+                Saturation.Run(graph, SafeRules, ledger, costModel.Cost, Settled);
                 ledger.Report();
                 return graph.Extract(root, costModel.Cost) ?? input;
             }
+
+            /// <summary>
+            /// How many consecutive passes the extracted answer must survive unchanged before
+            /// the run stops on the answer rather than on the graph. Two, not one: a pass can
+            /// leave the cheapest member alone while adding what the next pass will improve on.
+            /// </summary>
+            private const int SettledPasses = 2;
         }
 
         /// <summary>
@@ -711,7 +739,18 @@ namespace AngouriMath.Core.Transformations
                 graph.Rebuild();
 
                 var ledger = BudgetLedger.For(Name, budget);
-                Saturation.Run(graph, rules, ledger, CostModel.Default.Cost);
+                // The same stop as EqualitySaturationTransformation's, on the least member
+                // rather than the cheapest, since that is what this extracts.
+                Entity? last = null;
+                var unchanged = 0;
+                bool Settled()
+                {
+                    var now = graph.ExtractLeast(root, EntityOrder.Canonical);
+                    unchanged = now is not null && now.Equals(last) ? unchanged + 1 : 0;
+                    last = now;
+                    return unchanged >= 2;
+                }
+                Saturation.Run(graph, rules, ledger, CostModel.Default.Cost, Settled);
                 ledger.Report();
 
                 // The least member, not the cheapest: a cost model ties, and a tie would make the
