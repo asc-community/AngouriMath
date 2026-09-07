@@ -270,6 +270,34 @@ What is left of a `SimplifyHard` level, for whoever comes next: the remaining re
 factorisation at level 2, and the opened angles expanded — at 177, 170 and 82 MB, each a
 recursive simplification of an expanded tree.
 
+## The 1933rd: a candidate registered once
+
+The remaining registration, split by stage with the same hook: at level 4 on `SimplifyHard`,
+363 registrations of which **298 were repeats** — a pass that changed nothing registered the same
+tree again, and each registration was a `CanonicalOrder` rewrite (the `Sort` rules, some 2.4 MB a
+time on this input) and an inner simplification before the history set declined the repeat:
+874 MB of sorting and 718 MB of simplifying to add nothing. `Alternate` now keeps a set of what it
+has registered and returns at once for a tree already in it. Same tree, same registration, so the
+candidates are what they were.
+
+| benchmark | 1931st | 1933rd | |
+|---|--:|--:|--:|
+| `SimplifyHard` | 2,027,771,744 | 733,188,536 | **−63.8%** |
+| `SolveHard` | 1,057,996,016 | 859,268,416 | **−18.8%** |
+| `SolveMediumHard` | 126,162,152 | 94,415,256 | **−25.2%** |
+| `SimplifyEasy` | 115,763 | 116,291 | +0.5% |
+
+Bytes allocated, same machine, same day as the two columns above. Since the 1930th, the morning's
+column: `SimplifyHard` **−80%**, `SolveHard` −41%, `SolveMediumHard` −43%. `SimplifyEasy`'s 528
+bytes more are the set itself, on an input with nothing to save. Timings, with the usual rider:
+`SimplifyHard` 924 → 371 ms, `SolveHard` 772 → 700 ms, `SolveMediumHard` 78 → 67 ms,
+`SimplifyEasy` 89 → 71 µs. The gate's baseline was taken from this run.
+
+Two tests were re-pinned rather than loosened: they asserted the raw rewrite recording is twenty
+times the derivation path and over a hundred steps, ratios calibrated to the re-sorting this
+removes; it is 63 against 4 now, and the claim they make — the path is a small part of what
+happened — is the same.
+
 ## The 1915th, and every release beside it on one machine
 
 The first column measured by `Sources/Utils/benchmark_key_commits.sh` reaching all five entries in

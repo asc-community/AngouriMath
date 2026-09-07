@@ -115,8 +115,17 @@ namespace AngouriMath.Functions
 
             // List of criteria for expr's complexity
             var history = new SortedDictionary<double, HashSet<Entity>>();
+            // What has been registered, so that a pass which changed nothing does not register
+            // the same tree again. Registering is a CanonicalOrder rewrite, an inner
+            // simplification and two ratings before the history set declines the repeat, and on
+            // SimplifyHard 298 of a level-4 run's 363 registrations were repeats: 874 MB of
+            // sorting and 718 MB of simplifying to add nothing. Same tree, same registration,
+            // so the set of candidates is what it was.
+            var registered = new HashSet<Entity>();
             void AddHistory(Entity expr)
             {
+                if (!registered.Add(expr))
+                    return;
 #if DEBUG
                 if (MathS.Diagnostic.CatchOnSimplify.Value(expr)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
@@ -129,7 +138,7 @@ namespace AngouriMath.Functions
                     var ncompl = Math.Min(compl2, compl1);
                     if (history.TryGetValue(ncompl, out var ncomplList))
                         ncomplList.Add(n);
-                    else 
+                    else
                         history[ncompl] = new HashSet<Entity> { n };
                 }
                 __IterAddHistory(expr);
