@@ -26,6 +26,15 @@ using the reversibility work to avoid firing a rule right next to its own invers
 whichever matcher is underneath — not a consequence of this document. This document is scoped to what
 e-matching actually buys: not materialising a term to find out whether a rule's *shape* matches.
 
+> **Answered since, by measurement rather than by a policy** (#1193, #1194). The one runaway at the
+> widest ceiling is a single inverse pair split across `ExpandMultipleAngle` and `Trigonometric`,
+> bounded to the trigonometric sets; at `RulesUpTo(Rearranges)` every member of that family
+> saturates, because `ExpandMultipleAngle` declares `Expands`. **The growth ceiling is the
+> scheduling policy**: it withholds the expanding direction of every pair whose two directions are
+> declared, and can only protect a pair whose directions *are* declared — which is what declaring a
+> growth for a code-built rule is for (#1195–#1197). `Expands` rules do not join `SafeRules`, and no
+> second mechanism is planned. See `InversePairTable.md` and `RunawayBreadthTest`.
+
 ## Where the patterns actually are
 
 `RewriteRules.All` — the public registry `Transformation.EqualitySaturation` drew `SafeRules` from
@@ -168,8 +177,11 @@ bound are extracted — narrower than falling back on the whole rule.
 
 ## What is deliberately not decided here
 
-**Whether `Growth.Expands` rules ever join `SafeRules`**, and under what scheduling policy — a
-separate document's question, once one exists to answer it.
+**Whether `Growth.Expands` rules ever join `SafeRules`** — decided since, and by measurement: they
+do not, and the growth ceiling is the scheduling policy (see the note under *What this is not
+trying to fix*, above). What the graph does need is a rational folded on insertion (#1198) and an
+extraction that is a fixed point from the leaves up rather than a recursive walk (#1202), both of
+which were found by running the safe ceiling over the corpus rather than over sixteen expressions.
 
 **Whether the local fallback (extract-then-`TryApply`, kept for `Gathered`-containing rules) is worth
 removing later** by also solving e-matching for `GatheredPattern`, or stays permanently as the honest

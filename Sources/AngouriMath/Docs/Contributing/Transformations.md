@@ -244,7 +244,11 @@ So what is left, in dependency order:
   consumer #746 tier 2 names is the inverse-pair table equality saturation needs, since a saturation
   engine keeps both results where this pipeline keeps one and so has to be told which rewrites undo
   each other. `RewriteRuleGrowth` does not answer that: it says which way a rule moves, not which
-  rule is the inverse of which.
+  rule is the inverse of which — though for a pair whose two directions are *declared*, the growth
+  ceiling already withholds the expanding one (#1194), which is as much of the table as saturation
+  has needed so far. The graph itself has its first production caller: the perfect-square collapse
+  asks `Saturation.ProvesEqual` before it asks `Simplify` (#1201), measured as a caller that meets
+  the standing performance condition rather than as a speed-up.
 - **Rendering a step as a sentence** — #746's v5.0. Everything a sentence needs is now on a step
   except one thing: *why the rewrite is allowed*. `Soundness` is declared, not checked, and a rule
   that holds only under an assumption does not say which. That is the same gap
