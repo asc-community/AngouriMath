@@ -70,6 +70,10 @@ read first.
 | **Silent** | `"1/x - 1/x".ToEntity().Simplify()`, and every difference of a term from itself where that term can be undefined | `0`, including at `x = 0` where neither side has a value | `0 provided not x = 0` |
 | **Silent** | `"(x + 1)!/(x + 1)!".ToEntity().Simplify()`, and every cancelled quotient whose repeated part can be undefined | `1 provided not (1 + x)! = 0` | `1 provided 1 + x in RR and (1 + x >= 0 or not 1 + x in ZZ)` — the same value everywhere, a condition that says why |
 | | `"ln(x)/ln(x)".ToEntity().Simplify()`, and every quotient divided out by a divisor that can be undefined | `1 provided not ln(x) = 0` — which is `1` at `x = 0`, where the quotient has no value | `1 provided not ln(x) = 0 and not x = 0` |
+| | `Transformation.CanonicalizationOverGraph(budget).ApplyOrKeep("(x + y) * (x - y)")`, and every input one of `Common`'s sixteen newly declared rules collects | `(-y + x) * (x + y)` — not the tree `x ^ 2 - y ^ 2` reaches | `-y ^ 2 + x ^ 2` — one tree for both |
+| | the same on `x + x`, and `x + x * y` | `x + x`, `x * y + x` — left as written | `2 * x`, `(1 + y) * x` |
+| **Silent** | `RewriteRules.Common.Rules[i].Growth`, for sixteen rules | `Unknown` | `Collects` for fourteen, `Rearranges` and `Expands` for the reciprocal-factor pair |
+| **Silent** | what `RewriteRuleGrowth.Collects` promises | fewer nodes for every input | never more, and fewer for some — every rule that was `Collects` still is |
 
 ### A cancelled quotient says its operand is defined, not only non-zero
 
@@ -864,6 +868,37 @@ the middle of a rewrite. It is a bound where there was none, not a tight one.
 `SolveSystem`. What stopped each is reported separately, which is the thing
 [#896](https://github.com/asc-community/AngouriMath/issues/896) said a caller could not previously
 find out.
+
+### `Collects` promises never larger, and `Common` declares sixteen growths
+
+`RewriteRuleGrowth.Collects` used to mean the replacement is written with fewer nodes than the
+pattern for every input. It now means **never more, and fewer for some** — `Rearranges` is still
+the same size for every input and `Expands` still larger for every input. Every rule that was
+`Collects` still is, and every count written beside one ("exactly −2", "at most −4") still holds; the
+promise is weaker only where nothing relied on the strong one. The reason is the commonest
+collecting shape in the library: a hole matched twice and written once beside one new node,
+`a + a = 2 * a`, `a * a = a ^ 2`, `a + a * b = a * (1 + b)`, which is `1 − |a|` — exactly as large
+at a leaf and smaller everywhere else. Under the strict reading it could not be declared at all,
+and thirteen of `Common`'s rules sat at `Unknown` for it.
+
+Sixteen of `Common`'s rules declare a growth now, so `RewriteRules.Common.Rules[i].Growth` changes
+for them, and `Saturation.RulesUpTo(Rearranges)` — the ceiling `Transformation.CanonicalizationOverGraph`
+runs at by default — admits fifteen more rules, 157 of 324 where it was 142. What that changes on
+ordinary input is what those rules do: a repeated term collects over the graph where it used to be
+left as written, and the difference of squares reaches the tree its expansion reaches.
+`Entity.Canonicalize()` runs `Transformation.Canonicalization`, the rule pass rather than the graph,
+and answers exactly as before on every input below.
+
+| | Was | Is |
+|---|---|---|
+| `Transformation.CanonicalizationOverGraph(budget).ApplyOrKeep("(x + y) * (x - y)")` | `(-y + x) * (x + y)` — not the tree `x ^ 2 - y ^ 2` reaches, `-y ^ 2 + x ^ 2` | `-y ^ 2 + x ^ 2` — one tree for both |
+| the same on `(x + 1) * (x - 1)` | `(1 + x) * (-1 + x)` | `-1 + x ^ 2` |
+| the same on `x + x` | `x + x` — left as written | `2 * x` |
+| the same on `x + x * y` | `x * y + x` — reordered, not collected | `(1 + y) * x` |
+| `RewriteRules.Common.Rules[i].Growth`, for sixteen rules | `Unknown` | `Collects` for fourteen; `Rearranges` for `a-reciprocal-rational-factor-is-a-division`, `Expands` for its negated twin |
+| `RewriteRules.Common.Rules` by growth — collects / rearranges / expands / unknown | 21 / 14 / 5 / 22 | 35 / 15 / 6 / 6 |
+| `RewriteRules.All` by growth | 97 / 45 / 30 / 152 | 111 / 46 / 31 / 136 |
+| what `RewriteRuleGrowth.Collects` promises | fewer nodes for every input | never more, and fewer for some |
 
 ## 2.4.0 — since 2.3.0
 
