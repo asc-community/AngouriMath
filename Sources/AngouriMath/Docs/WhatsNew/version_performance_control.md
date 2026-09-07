@@ -239,6 +239,37 @@ large rows reproduce to the byte or nearly; the compile rows sit inside their fl
 Timings from the same run are in the generated table and are deliberately not reproduced here,
 for the reason the 1844th section gives.
 
+## The 1931st: a candidate registered once
+
+The same afternoon, on the same machine. `Simplificator.Alternate` registered every candidate it
+generated twice — once as it was and once as `expr.Rewrite(InvertNegativePowers)`, each
+registration a `CanonicalOrder` rewrite, an inner simplification and two ratings — and on an
+input with nothing to invert the second tree is the first tree, so the second registration
+re-sorted an identical tree to offer the history set an entity it already held. Found by
+attributing `SimplifyHard`'s bytes to the steps of one level: the registrations were 862 MB of
+976. The second registration now runs only where the inversion produced a different tree, and
+`CostModel.DefaultCost` costs a subtree once per instance instead of re-walking it for every
+candidate that shares it. No answer moves — the same candidates reach a set that already
+deduplicated the repeat, and every rate is the same double.
+
+| benchmark | 1930th | 1931st | |
+|---|--:|--:|--:|
+| `SimplifyHard` | 3,662,375,240 | 2,027,771,744 | **−44.6%** |
+| `SolveHard` | 1,452,700,104 | 1,057,996,016 | **−27.2%** |
+| `SolveMediumHard` | 165,611,184 | 126,162,152 | **−23.8%** |
+| `SimplifyEasy` | 128,460 | 115,763 | −9.9% |
+
+Bytes allocated; every other row unchanged or inside its floor. The solvers move because `Solve`
+simplifies inside. Timings, one run against one run and so carrying this file's usual rider:
+`SimplifyHard` 1.60 s → 0.92 s, `SolveHard` 879 → 772 ms, `SolveMediumHard` 88 → 78 ms,
+`SimplifyEasy` 110 → 89 µs. The gate's baseline was taken from this run, which is the case its
+section above names as the one where a red gate means nothing is wrong.
+
+What is left of a `SimplifyHard` level, for whoever comes next: the remaining registration
+(431 MB), and the three expansion candidates — `res.Expand().Simplify(-level)`, the rule-based
+factorisation at level 2, and the opened angles expanded — at 177, 170 and 82 MB, each a
+recursive simplification of an expanded tree.
+
 ## The 1915th, and every release beside it on one machine
 
 The first column measured by `Sources/Utils/benchmark_key_commits.sh` reaching all five entries in

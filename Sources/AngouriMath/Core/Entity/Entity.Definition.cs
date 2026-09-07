@@ -760,6 +760,17 @@ namespace AngouriMath
         }
         private LazyPropertyA<double> simplifiedRate;
 
+        /// <summary>
+        /// <see cref="CostModel.DefaultCost"/> of this node, computed once per instance -- the
+        /// same slot <see cref="SimplifiedRate"/> fills on its unset path, so the two never
+        /// disagree. <c>DefaultCost</c> recurses through this rather than through itself: a
+        /// candidate the simplifier ranks shares most of its subtrees with the candidates
+        /// before it, and re-walking a shared subtree for every candidate was 3.66 GB of
+        /// allocation per <c>SimplifyHard</c>, some 315 whole-tree walks of 11.6 MB each.
+        /// </summary>
+        internal double DefaultCostCached
+            => simplifiedRate.GetValue(MathS.Settings.ComplexityCriteria.Default, this);
+
         /// <summary>Checks whether the given expression contains variable</summary>
         /// <example>
         /// <code>

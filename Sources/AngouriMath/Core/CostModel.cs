@@ -147,14 +147,21 @@ namespace AngouriMath.Core
         private const double HeavyWeight = 8.0;
         private const double ExtraHeavyWeight = 12.0;
 
+        // Recurses through Entity.DefaultCostCached rather than through itself, so a subtree is
+        // costed once per instance however many candidates share it; and walks children by
+        // index rather than through Nodes or a LINQ Sum, so that costing a node allocates
+        // nothing. The arithmetic is the same expression in the same order, so every rate is
+        // the same double it was -- the selection between candidates cannot move.
         internal static double DefaultCost(Entity expr) => expr switch
         {
             // Weigh provided predicates much less but nested provideds heavy
             Providedf(var inner, var predicate) =>
-                DefaultCost(inner) + 0.1 * DefaultCost(predicate) + ExtraHeavyWeight * (inner.Nodes.Count(n => n is Providedf) + predicate.Nodes.Count(n => n is Providedf)),
+                inner.DefaultCostCached + 0.1 * predicate.DefaultCostCached
+                + ExtraHeavyWeight * (ProvidedsIn(inner) + ProvidedsIn(predicate)),
             Piecewise { Cases: var cases } =>
                 cases.Sum(@case =>
-                    DefaultCost(@case.Expression) + 0.1 * DefaultCost(@case.Predicate) + ExtraHeavyWeight * (@case.Expression.Nodes.Count(n => n is Providedf) + @case.Predicate.Nodes.Count(n => n is Providedf))),
+                    @case.Expression.DefaultCostCached + 0.1 * @case.Predicate.DefaultCostCached
+                    + ExtraHeavyWeight * (ProvidedsIn(@case.Expression) + ProvidedsIn(@case.Predicate))),
             Variable => Weight, // Number of variables
             // A root in a denominator, which the rationalising rule clears out.
             // Without a weight here the two forms tie -- 1 / (sqrt(3) + 5) and
@@ -162,17 +169,47 @@ namespace AngouriMath.Core
             // whichever candidate was generated first, which is not a preference
             // so much as an accident. This states the preference instead.
             // https://github.com/asc-community/AngouriMath/issues/205
-            Divf(_, var divisor) when divisor.Nodes.Any(node => node is Powf(_, Rational and not Integer))
-                => MinorWeight + Weight + expr.DirectChildren.Sum(DefaultCost),
-            Divf => MinorWeight + expr.DirectChildren.Sum(DefaultCost), // Number of divides
-            Rational(Integer(1 or -1), _) and not Integer => Weight + expr.DirectChildren.Sum(DefaultCost), // Number of rationals with unit numerator
-            Powf(_, Real { IsNegative: true }) => HeavyWeight + expr.DirectChildren.Sum(DefaultCost), // Number of negative powers
-            Logf => TinyWeight + expr.DirectChildren.Sum(DefaultCost), // Number of logarithms
-            Phif => ExtraHeavyWeight + expr.DirectChildren.Sum(DefaultCost), // Number of phi functions
-            Real { IsNegative: true } => MajorWeight + expr.DirectChildren.Sum(DefaultCost), // Number of negative reals
-            ComparisonSign when expr.DirectChildren[0] == 0 => Weight + expr.DirectChildren.Sum(DefaultCost), // 0 < x is bad. x > 0 is good.
-            Notf(Equalsf eq) => -Weight + DefaultCost(eq), // (not x = 0) is equally complex as (x = 0)
-            _ => expr.DirectChildren.Sum(DefaultCost)
+            Divf(_, var divisor) when HasFractionalPower(divisor)
+                => MinorWeight + Weight + ChildrenCost(expr),
+            Divf => MinorWeight + ChildrenCost(expr), // Number of divides
+            Rational(Integer(1 or -1), _) and not Integer => Weight + ChildrenCost(expr), // Number of rationals with unit numerator
+            Powf(_, Real { IsNegative: true }) => HeavyWeight + ChildrenCost(expr), // Number of negative powers
+            Logf => TinyWeight + ChildrenCost(expr), // Number of logarithms
+            Phif => ExtraHeavyWeight + ChildrenCost(expr), // Number of phi functions
+            Real { IsNegative: true } => MajorWeight + ChildrenCost(expr), // Number of negative reals
+            ComparisonSign when expr.DirectChildren[0] == 0 => Weight + ChildrenCost(expr), // 0 < x is bad. x > 0 is good.
+            Notf(Equalsf eq) => -Weight + eq.DefaultCostCached, // (not x = 0) is equally complex as (x = 0)
+            _ => ChildrenCost(expr)
         } + Weight; // Number of nodes
+
+        /// <summary>The children's costs, summed in order -- what <c>DirectChildren.Sum(DefaultCost)</c> summed.</summary>
+        private static double ChildrenCost(Entity expr)
+        {
+            var children = expr.DirectChildren;
+            var sum = 0d;
+            for (var i = 0; i < children.Count; i++)
+                sum += children[i].DefaultCostCached;
+            return sum;
+        }
+
+        /// <summary>How many nodes of the tree, the root included, are a <c>Providedf</c> -- what <c>Nodes.Count(n => n is Providedf)</c> counted.</summary>
+        private static int ProvidedsIn(Entity expr)
+        {
+            var count = expr is Providedf ? 1 : 0;
+            var children = expr.DirectChildren;
+            for (var i = 0; i < children.Count; i++)
+                count += ProvidedsIn(children[i]);
+            return count;
+        }
+
+        /// <summary>Whether any node of the tree, the root included, is a power to a non-whole rational -- what the <c>Nodes.Any</c> asked.</summary>
+        private static bool HasFractionalPower(Entity expr)
+        {
+            if (expr is Powf(_, Rational and not Integer)) return true;
+            var children = expr.DirectChildren;
+            for (var i = 0; i < children.Count; i++)
+                if (HasFractionalPower(children[i])) return true;
+            return false;
+        }
     }
 }
