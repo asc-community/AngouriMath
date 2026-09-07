@@ -282,15 +282,14 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         /// <summary>
-        /// <see cref="EGraph.Extract"/> recurses through an e-class's children, and its cycle
-        /// guard bounds the chain only by the number of distinct classes -- which unions grow
-        /// past the input expression's own syntactic depth. Past the cap it declines to build,
-        /// the same answer the cycle case already gives, rather than exhausting the stack: a
-        /// <see cref="System.StackOverflowException"/> cannot be caught, so it takes the process
-        /// down instead of failing one call.
+        /// <see cref="EGraph.Extract"/> used to recurse through an e-class's children and decline
+        /// to build past 256 levels, because a <see cref="System.StackOverflowException"/> cannot
+        /// be caught. It is a fixed point from the leaves up now, with no stack to exhaust, so a
+        /// chain three hundred deep extracts as itself -- this test asserted <see langword="null"/>
+        /// for that input while the guard existed.
         /// </summary>
         [Fact]
-        public void ExtractDeclinesToBuildPastItsDepthCap()
+        public void ExtractBuildsAChainDeeperThanTheOldCap()
         {
             Entity deep = "x".ToEntity();
             for (var i = 0; i < 300; i++) deep += 1;
@@ -299,7 +298,7 @@ namespace AngouriMath.Tests.Core.Transformations
 
             var extracted = graph.Extract(root, CostModel.Default.Cost);
 
-            Assert.Null(extracted);
+            Assert.Equal(deep, extracted);
         }
 
         /// <summary>

@@ -120,6 +120,10 @@ namespace AngouriMath.Core.Transformations
                 return ledger.Spend(delta);
             }
 
+            // Handed to the e-matcher so that a binding tried is a step, not only the attempt --
+            // allocated once here rather than per attempt.
+            Func<bool> spend = () => ledger.Spend();
+
             var saturated = false;
             while (!saturated && !ledger.Exhausted)
             {
@@ -189,7 +193,7 @@ namespace AngouriMath.Core.Transformations
                             // wrote, and a predicate that throws on a shape it did not expect must
                             // decline the candidate, not escape Apply.
                             bool matched;
-                            try { matched = rule.TryEMatchApply(graph, id, witnessCost, out other); }
+                            try { matched = rule.TryEMatchApply(graph, id, witnessCost, spend, out other); }
                             catch { continue; }
                             if (!matched) continue;
                         }
