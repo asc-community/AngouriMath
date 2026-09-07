@@ -109,8 +109,18 @@ namespace AngouriMath.Core.Transformations
         /// <i>witness</i>, never the answer: what the caller finally extracts is the caller's own
         /// business, and is where a cheapest-form and a canonical-form caller differ.
         /// </param>
+        /// <param name="settled">
+        /// A caller's own stop, asked after every pass that merged something; <see langword="true"/>
+        /// ends the run without the graph's fixed point having been reached. A caller that
+        /// extracts an answer passes "the extraction has not changed for two passes": that is
+        /// the fixed point which matters to it, and it comes where the graph's own may never —
+        /// on a rational coefficient beside a variable, the regrouping rules add a fresh e-node
+        /// to the root's class on every pass while its cheapest member stopped changing on the
+        /// third (<a href="https://github.com/asc-community/AngouriMath/issues/1200">#1200</a>).
+        /// <see cref="ProvesEqual"/> passes nothing: it needs a union, not an extraction.
+        /// </param>
         internal static bool Run(EGraph graph, IReadOnlyList<MatchedRule> rules,
-            BudgetLedger ledger, Func<Entity, double> witnessCost)
+            BudgetLedger ledger, Func<Entity, double> witnessCost, Func<bool>? settled = null)
         {
             var chargedNodes = graph.NodeCount;
             bool ChargeGrowthSinceLastCall()
@@ -220,6 +230,7 @@ namespace AngouriMath.Core.Transformations
                 if (!ledger.Spend()) break;
                 graph.Rebuild();
                 if (!merged) saturated = true;
+                else if (settled is not null && settled()) break;
             }
             return saturated;
         }
