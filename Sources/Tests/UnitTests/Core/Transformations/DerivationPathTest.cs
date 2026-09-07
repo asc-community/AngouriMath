@@ -105,7 +105,10 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.True(path!.Steps.Count < path.ExpressionsExplored,
                 $"the path kept all {path.Steps.Count} of the expressions the search produced, so it "
                 + "left nothing out and there is nothing here to have chosen between");
-            Assert.True(recording.Steps.Count > 20 * path.Steps.Count,
+            // Ten times, not twenty: the twenty was calibrated when a pass that changed nothing
+            // re-registered its tree and recorded the re-sort. It is 63 against 4 now, and the
+            // claim is the same -- the path is a small part of what happened.
+            Assert.True(recording.Steps.Count > 10 * path.Steps.Count,
                 $"{recording.Steps.Count} rewrites were recorded against a {path.Steps.Count}-step path, "
                 + "which is not enough of a difference to be evidence of anything");
         }

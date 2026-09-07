@@ -75,7 +75,10 @@ namespace AngouriMath.Tests.Core.Transformations
             using var recording = RewriteRecording.Start();
             Parse("x^(-1)/(y/z)").Simplify();
 
-            Assert.True(recording.Steps.Count > 100,
+            // Fifty, not a hundred: the hundred was calibrated when a pass that changed nothing
+            // re-registered its tree and recorded the re-sort. The raw recording is 63 steps now
+            // against a 4-step derivation, which is still the point.
+            Assert.True(recording.Steps.Count > 50,
                 $"the raw recording is only {recording.Steps.Count} steps, so this proves nothing");
             Assert.True(recording.Derivation.Count < 15,
                 $"the derivation is {recording.Derivation.Count} steps: "
