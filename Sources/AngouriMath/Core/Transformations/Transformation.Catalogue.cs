@@ -607,7 +607,7 @@ namespace AngouriMath.Core.Transformations
             /// </summary>
             [ConstantField]
             private static readonly IReadOnlyList<Matching.MatchedRule> SafeRules
-                = Saturation.RulesUpTo(RewriteRuleGrowth.Rearranges);
+                = Saturation.SafeRules;
 
             /// <summary>
             /// <see cref="SafeRules"/>.Count, for <see cref="Transformation.EqualitySaturationSafeRuleCount"/>
