@@ -85,6 +85,7 @@ read first.
 | **Silent** | `"0 * (i * +oo)".Evaled`, and every whole zero times a complex infinity | `0` | `NaN` |
 | | `RewriteRules.Common.Rules.Count`, and `RewriteRules.All` by growth | `62`; 124 / 46 / 31 / 123 | `65`; 124 / 49 / 31 / 123 |
 | | `"(x - b) / (x + a) + c / (x + a)".SolveEquation("x")`, and every equation the replacement machinery solves whose condition is spelled from the equation as written | `{ -(-b + c) provided not a + -(-b + c) = 0 }` | `{ -(-b + c) provided not -(-b + c) + a = 0 }` — the same set, the condition's terms in the order the equation had |
+| | `"sum(x^k / k!, k, 0, +oo)".ToEntity().Simplify()`, and every summation to `+oo` of a polynomial in the index times a power with the index in the exponent over a factorial of the index | `sum(x ^ k / k!, k, 0, +oo)` — left as written | `e ^ x`; `sum(3^(k+2) * (k^2 + k + 1) / (k + 3)!, k, 0, +oo)` is `4/3 * e ^ 3 - 41/6` |
 
 ### A cancelled quotient says its operand is defined, not only non-zero
 
@@ -1030,6 +1031,25 @@ order. Measured by the gate on one machine, bytes and time per call:
 | `SolveMediumHard` | 94,415,256 B, 66.8 ms | 1,435,934 B, 13.9 ms |
 | `SolveMedium`, `SolveEasyMedium` | 662,923 B, 456 µs; 97,335 B, 29.7 µs | 452,901 B, 387 µs; 65,232 B, 19.2 µs |
 | `SimplifyHard`, `SimplifyEasy` — the same pre-check, reached through `Simplify`'s factoring candidates | 733,188,536 B, 371 ms; 116,291 B, 71.2 µs | 680,457,400 B, 339 ms; 110,051 B, 66.4 µs |
+
+### A series in a power over a factorial is summed in closed form
+
+`sum(x^k / k!, k, 0, +oo)` was left as written; it is `e^x`. The whole family
+`sum(p(k) * c^(k + s) / (k + a)!, k, m, +oo)` — a polynomial in the index, a power with the index in
+its exponent, a factorial of the index plus a whole number — is `e^c` times a polynomial in `c`:
+shift the index so the factorial is `j!`, and `j^n * c^j / j!` sums to `e^c` times the Touchard
+polynomial `T_n(c)`, the Stirling numbers of the second kind carrying `j^n` into falling
+factorials. A lower bound above the shifted zero subtracts finitely many exact terms. The series
+converges for every `c`, so nothing is attached. The first of the orientation-week questions of
+[#1212](https://github.com/asc-community/AngouriMath/issues/1212); question two's series is the
+second row. Both columns measured on a build, `e2476ac5` against this change.
+
+| | Was | Is |
+|---|---|---|
+| `"sum(3^(k+2) * (k^2 + k + 1) / (k + 3)!, k, 0, +oo)".ToEntity().Simplify()` | left as written | `4/3 * e ^ 3 - 41/6` |
+| `"sum(1 / (2 * n!), n, 1, +oo)".ToEntity().Simplify()` | left as written | `(e - 1) / 2` |
+| `"sum(x^k / k!, k, 0, +oo)".ToEntity().Simplify()`, and `sum(k * x^k / k!, k, 0, +oo)` | left as written | `e ^ x`, `e ^ x * x` |
+| `"sum(1 / k, k, 1, +oo)"`, `sum(k!, k, 0, +oo)`, `sum(x^k / k!, k, n, +oo)`, `sum(3^(2k) / k!, k, 0, +oo)` | left as written | the same — not of the shape, or a symbolic lower bound, or a slope other than one in the exponent |
 
 ## 2.4.0 — since 2.3.0
 

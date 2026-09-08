@@ -188,6 +188,7 @@ namespace AngouriMath
             protected override Entity InnerSimplify(bool isExact) =>
                 Expanded(this, Expression, Var, From, To, static (a, b) => a + b, 0, isExact)
                 ?? Functions.PolynomialSummation.ClosedForm(Expression, Var, From, To)
+                ?? Functions.ExponentialSeries.ClosedForm(Expression, Var, From, To)
                 ?? this;
 
             /// <summary>
