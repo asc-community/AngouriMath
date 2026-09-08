@@ -500,6 +500,7 @@ namespace AngouriMath.Core.Transformations.Matching
             [typeof(Entity.Impliesf)] = (2, static c => new Entity.Impliesf(c[0], c[1])),
             // Sets, and a condition attached to a value.
             [typeof(Entity.Set.Inf)] = (2, static c => new Entity.Set.Inf(c[0], c[1])),
+            [typeof(Entity.Dividesf)] = (2, static c => new Entity.Dividesf(c[0], c[1])),
             [typeof(Entity.Set.Unionf)] = (2, static c => new Entity.Set.Unionf(c[0], c[1])),
             [typeof(Entity.Set.Intersectionf)] = (2, static c => new Entity.Set.Intersectionf(c[0], c[1])),
             [typeof(Entity.Set.SetMinusf)] = (2, static c => new Entity.Set.SetMinusf(c[0], c[1])),

@@ -65,7 +65,7 @@ prints as `x + y + z` and reads back as `(x + y) + z` — the same number, a dif
 | 5 | `and` `&` | |
 | 6 | `not` | prefix |
 | 7 | `=` `<>` `>` `>=` `<` `<=` | chained: `a < b < c` means `a < b and b < c` |
-| 8 | `in` | |
+| 8 | `in`, `divides` | one level; `a divides b` is the statement that `b` is a whole multiple of `a` |
 | 9 | `unite` `\/`, `setsubtract` `\` | one level, so `A \/ B \ C` is `(A \/ B) \ C` |
 | 10 | `intersect` `/\` | |
 | 11 | `+` `-` | |

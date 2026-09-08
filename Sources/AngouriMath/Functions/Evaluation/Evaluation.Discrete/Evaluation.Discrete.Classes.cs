@@ -261,6 +261,29 @@ namespace AngouriMath
             }
         }
 
+        partial record Dividesf
+        {
+            // Divisibility is a statement about integers; over anything else it is NaN, the way
+            // an inequality is over a non-real number.
+            private protected override Entity IntrinsicCondition
+                => Divisor.In(MathS.Sets.Z) & Dividend.In(MathS.Sets.Z);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Divisor, Dividend,
+                    (a, b) => (a, b) switch
+                    {
+                        // 0 divides b exactly when b is 0: b = k * 0 has a solution only then.
+                        (Integer divisor, Integer dividend) when divisor.EInteger.IsZero
+                            => dividend.EInteger.IsZero ? True : False,
+                        (Integer divisor, Integer dividend)
+                            => dividend.EInteger.Remainder(divisor.EInteger).IsZero ? True : False,
+                        (Number, Number) => MathS.NaN,
+                        _ => null
+                    },
+                    (@this, a, b) => ((Dividesf)@this).New(a, b), isExact);
+        }
+
         partial record Phif
         {
             // Euler's totient function is defined for all integers in this library.

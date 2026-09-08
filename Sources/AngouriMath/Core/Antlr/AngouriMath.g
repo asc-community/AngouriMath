@@ -144,7 +144,8 @@ set_operator_union_setsubtraction returns[Entity value]
 
 in_operator returns[Entity value]
     : m1 = set_operator_union_setsubtraction { $value = $m1.value; }
-    ('in' m2 = set_operator_union_setsubtraction { $value = $value.In($m2.value); })*
+    ( 'in' m2 = set_operator_union_setsubtraction { $value = $value.In($m2.value); }
+    | 'divides' m2 = set_operator_union_setsubtraction { $value = $value.Divides($m2.value); })*
     ;
 
 

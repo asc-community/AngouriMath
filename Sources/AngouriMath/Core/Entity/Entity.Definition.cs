@@ -39,6 +39,8 @@ namespace AngouriMath.Core
         SetOperation = 0x3000,
 
         ContainsIn   = 10 | SetOperation,
+        /// <summary><c>a divides b</c> parses at the level of <c>in</c>.</summary>
+        Divides      = 10 | SetOperation,
         Union        = 20 | SetOperation,
         SetMinus     = 20 | SetOperation,
         Intersection = 40 | SetOperation,

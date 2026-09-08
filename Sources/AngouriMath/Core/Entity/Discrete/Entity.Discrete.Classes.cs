@@ -371,6 +371,34 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+
+        /// <summary>
+        /// This node represents whether the first argument divides the second: <c>a divides b</c>
+        /// is the statement that <c>b</c> is a whole multiple of <c>a</c>, which for integers is
+        /// <c>b mod a = 0</c>, and <c>0 divides b</c> exactly when <c>b</c> is 0. A statement
+        /// about integers: over anything else it is <c>NaN</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1212
+        /// </summary>
+        public sealed partial record Dividesf(Entity Divisor, Entity Dividend) : Statement, IBinaryNode
+        {
+            internal override Priority Priority => Priority.Divides;
+
+            /// <inheritdoc/>
+            public Entity NodeFirstChild => Divisor;
+
+            /// <inheritdoc/>
+            public Entity NodeSecondChild => Dividend;
+
+            internal Dividesf New(Entity divisor, Entity dividend)
+                => ReferenceEquals(Divisor, divisor) && ReferenceEquals(Dividend, dividend) ? this : new(divisor, dividend) { Codomain = Codomain };
+
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func)
+                => func(New(Divisor.Replace(func), Dividend.Replace(func)));
+
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Divisor, Dividend };
+        }
         #endregion
 
     }

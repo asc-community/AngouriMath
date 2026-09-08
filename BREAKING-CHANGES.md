@@ -89,6 +89,7 @@ read first.
 | | `"sum(N! / (k! * (N - k)!) * x^k, k, 0, N)".ToEntity().Simplify()`, and every binomial sum with a power or a cosine or sine of the index as its weight | `sum(N! / (k! * (N - k)!) * x ^ k, k, 0, N)` — left as written | `piecewise((1 + x) ^ N provided N >= 0, 0)`; with `cos(k * pi / 3)`, `piecewise(2 ^ N * cos(pi / 6) ^ N * cos(N * pi / 6) provided N >= 0, 0)` |
 | | `"ln(4/3) + ln(16/9) / 2".ToEntity().Simplify()`, and every sum of logarithms of rational literals one of which is a perfect power of another | `ln(4/3) + ln(16/9) / 2` — left as written | `2 * ln(4/3)`; the integral it came from, `integral((2x^2+x+1)/(x^3+x^2+x+1), x, 3/4, 4/3)`, answers `ln(16/9)` |
 | | `"sum(x^k, k, 0, +oo)".ToEntity().Simplify()`, and every summation of a power with the index in the exponent times something free of the index, to a bound or to `+oo` | left as written | `1 / (1 - x) provided abs(x) < 1`; `sum(2^(-k), k, 0, +oo)` is `2`, `sum(x^k, k, 0, n)` is a piecewise with the ratio 1 and the empty range as cases of their own, and `integral(2^(-floor(x)), x, 0, +oo)` is `2` |
+| **Loud** | `"divides".ToEntity()`, and every expression with a name spelt `divides` in it | the variable `divides`; `2 divides` was `2 * divides` and `3 divides 12` was `3 * divides ^ 12` | a parse error — `divides` is the keyword of the new statement `a divides b`, which reads `3 divides 12` as the statement that 12 is a multiple of 3 |
 | **Silent** | `"integral(piecewise(2x provided x <= 1/2, 2 - 2x), x, 0, 1)".ToEntity().Simplify()`, and every definite integral of a piecewise whose conditions mention the variable | `1` — the first case's antiderivative at both ends | `1/2` — split at the case boundaries; `piecewise(x provided x < 1, x^2)` from 0 to 2 was `piecewise(2 provided x < 1, 8/3)`, with the integration variable still in it, and is `17/6` |
 | **Silent** | `"integral(x - floor(x), x, 0, 3)".ToEntity().Simplify()`, and every definite integral over numeric bounds whose integrand has `floor(x)` or `ceil(x)` in it | `0` — an antiderivative that took the floor for a constant across its jumps | `3/2` — split at the jumps; `(x - floor(x))^2` from 0 to 4 was `0` and is `4/3` |
 | **Silent** | `"integral((x - floor(x))^2, x, 0, n)".ToEntity().Simplify()`, and every such integral with a symbolic bound or a condition against a symbol | `(n - floor(n)) ^ 3 / 3` — wrong for every whole `n` but 0; `piecewise(x provided x < a, 0)` from 0 to 2 was `piecewise(2 provided x < a, 0)` | left as written |
@@ -1123,6 +1124,28 @@ build, `27ed5b53` against this change.
 | `"sum(2^k, k, a, n)".ToEntity().Simplify()`, and `sum(2^k, k, 0, 200)` | left as written | `piecewise((2 ^ (n + 1) - 2 ^ a) provided (n >= a - 1), 0 provided True)`, `2^201 - 1` as a number |
 | `"integral(2^(-floor(x)), x, 0, +oo)".ToEntity().Simplify()` | left as written | `2` |
 | `"sum(2^k, k, 0, +oo)"`, `sum((-1)^k, k, 0, +oo)`, `sum(k * (1/2)^k, k, 0, +oo)`, `sum(2^k, k, 0, 5)` | left as written; `63` | the same |
+
+### `a divides b` is a statement, and `divides` a keyword
+
+Divisibility had no spelling: `b mod a = 0` states it for integers, but nothing parsed as, printed
+as, or was a divisibility statement. `Dividesf` is one, beside membership: `a divides b` in the
+grammar at the level of `in`, so its operands are arithmetic and its result a statement; the same
+words back out; `a \mid b` in LaTeX; `sympy.Eq(sympy.Mod(b, a), 0)` in the SymPy export;
+`Entity.Divides` and `MathS.NumberTheory.Divides` in code. Decided for integers, `0 divides b`
+exactly when `b` is 0; `NaN` over a number that is not an integer, the way an inequality is over a
+non-real number; carried when symbolic. The cost is the word: `divides` is a keyword now, so a
+variable of that name no longer parses, and `2 divides` — which was the product `2 * divides` — is
+a parse error rather than a different expression. Agreed on
+[#1212](https://github.com/asc-community/AngouriMath/issues/1212) after `a | b` was found to be
+`a or b` already. Both columns measured on a build, `27ed5b53` against this change.
+
+| | Was | Is |
+|---|---|---|
+| `"divides".ToEntity()` | the variable `divides` | a parse error |
+| `"2 divides".ToEntity()`, `"divides + 1"` | `2 * divides`, `divides + 1` | a parse error, the same |
+| `"3 divides 12".ToEntity()`, and `.Evaled` | `3 * divides ^ 12` | `3 divides 12`, `True` |
+| `"a divides b".ToEntity()` | `a * divides * b` | `a divides b`, a `Dividesf` |
+| `"5 divides 12".ToEntity().Evaled`, `0 divides 0`, `0 divides 5`, `3 divides 5/2` | products with a variable in them | `False`, `True`, `False`, `NaN` |
 
 ### An integral across a jump is split at the jumps, never taken through an antiderivative
 
