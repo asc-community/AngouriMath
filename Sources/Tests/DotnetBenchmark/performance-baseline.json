@@ -1,82 +1,82 @@
 {
   "comment": "Allocated bytes and mean nanoseconds per operation for the popular use cases of https://github.com/asc-community/AngouriMath/issues/746. Checked by PerformanceGate.cs; see Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md for when updating it is legitimate.",
   "benchmark": "CommonFunctionsInterVersion",
-  "commit": "263c0c1866abe824a692ccf87f9c5acd3a8adc15",
+  "commit": "9e60fae23c6b469e9df7ed5b6c0d97c3d9723e2d",
   "measuredOn": "2026-09-08",
   "runtime": ".NET 10.0.10",
   "machine": "Ubuntu 26.04 LTS, X64, 8 logical cores",
   "cases": {
     "CompileEasy": {
-      "allocatedBytes": 10970,
-      "meanNanoseconds": 189262.70155552455
+      "allocatedBytes": 11003,
+      "meanNanoseconds": 189859.54453125
     },
     "CompileHard": {
-      "allocatedBytes": 20433,
-      "meanNanoseconds": 316154.2491536458
+      "allocatedBytes": 20434,
+      "meanNanoseconds": 316725.7068917411
     },
     "Derivate": {
       "allocatedBytes": 53239,
-      "meanNanoseconds": 13995.347786458333
+      "meanNanoseconds": 13850.783842976887
     },
     "EvalEasy": {
       "allocatedBytes": 0,
-      "meanNanoseconds": 1.8789053452866418
+      "meanNanoseconds": 1.8813217676555116
     },
     "EvalTrig": {
       "allocatedBytes": 1341457,
-      "meanNanoseconds": 708454.6445963542
+      "meanNanoseconds": 709052.2509114583
     },
     "EvalTrigPrecise": {
       "allocatedBytes": 12742285,
-      "meanNanoseconds": 22644778.078125
+      "meanNanoseconds": 22498550.596153848
     },
     "ParseEasy": {
       "allocatedBytes": 18205,
-      "meanNanoseconds": 5754.018038613455
+      "meanNanoseconds": 5791.907022094727
     },
     "ParseHard": {
       "allocatedBytes": 3531505,
-      "meanNanoseconds": 1371757.569561298
+      "meanNanoseconds": 1341625.504185268
     },
     "RunEasy": {
       "allocatedBytes": 0,
-      "meanNanoseconds": 20.060955625772475
+      "meanNanoseconds": 19.97494138032198
     },
     "RunHard": {
       "allocatedBytes": 0,
-      "meanNanoseconds": 296.18873796463015
+      "meanNanoseconds": 292.6923567331754
     },
     "RunMedium": {
       "allocatedBytes": 0,
-      "meanNanoseconds": 163.0917092391423
+      "meanNanoseconds": 167.88184024606431
     },
     "SimplifyEasy": {
-      "allocatedBytes": 106643,
-      "meanNanoseconds": 68843.41984340122
+      "allocatedBytes": 79282,
+      "meanNanoseconds": 47447.33483886719
     },
     "SimplifyHard": {
-      "allocatedBytes": 442898152,
-      "meanNanoseconds": 258074398.31578946
+      "allocatedBytes": 331683360,
+      "meanNanoseconds": 189540392.27272728
     },
     "SolveEasy": {
       "allocatedBytes": 8865872,
-      "meanNanoseconds": 4825788.3984375
+      "meanNanoseconds": 4832137.7265625
     },
     "SolveEasyMedium": {
-      "allocatedBytes": 65630,
-      "meanNanoseconds": 19396.875710623604
+      "allocatedBytes": 65648,
+      "meanNanoseconds": 19311.23846200796
     },
     "SolveHard": {
       "allocatedBytes": 11884272,
-      "meanNanoseconds": 117348382.75
+      "meanNanoseconds": 117438291.36363636
     },
     "SolveMedium": {
       "allocatedBytes": 455893,
-      "meanNanoseconds": 386868.59026227676
+      "meanNanoseconds": 368671.614327567
     },
     "SolveMediumHard": {
       "allocatedBytes": 1449394,
-      "meanNanoseconds": 13927705.746875
+      "meanNanoseconds": 14419047.170833332
     }
   },
   "ungated": {
