@@ -88,6 +88,9 @@ read first.
 | | `"sum(x^k / k!, k, 0, +oo)".ToEntity().Simplify()`, and every summation to `+oo` of a polynomial in the index times a power with the index in the exponent over a factorial of the index | `sum(x ^ k / k!, k, 0, +oo)` — left as written | `e ^ x`; `sum(3^(k+2) * (k^2 + k + 1) / (k + 3)!, k, 0, +oo)` is `4/3 * e ^ 3 - 41/6` |
 | | `"sum(N! / (k! * (N - k)!) * x^k, k, 0, N)".ToEntity().Simplify()`, and every binomial sum with a power or a cosine or sine of the index as its weight | `sum(N! / (k! * (N - k)!) * x ^ k, k, 0, N)` — left as written | `piecewise((1 + x) ^ N provided N >= 0, 0)`; with `cos(k * pi / 3)`, `piecewise(2 ^ N * cos(pi / 6) ^ N * cos(N * pi / 6) provided N >= 0, 0)` |
 | | `"ln(4/3) + ln(16/9) / 2".ToEntity().Simplify()`, and every sum of logarithms of rational literals one of which is a perfect power of another | `ln(4/3) + ln(16/9) / 2` — left as written | `2 * ln(4/3)`; the integral it came from, `integral((2x^2+x+1)/(x^3+x^2+x+1), x, 3/4, 4/3)`, answers `ln(16/9)` |
+| **Silent** | `"integral(x - floor(x), x, 0, 3)".ToEntity().Simplify()`, and every definite integral over numeric bounds whose integrand has `floor(x)` or `ceil(x)` in it | `0` — an antiderivative that took the floor for a constant across its jumps | `3/2` — split at the jumps; `(x - floor(x))^2` from 0 to 4 was `0` and is `4/3` |
+| **Silent** | `"integral((x - floor(x))^2, x, 0, n)".ToEntity().Simplify()`, and every such integral with a symbolic bound | `(n - floor(n)) ^ 3 / 3` — wrong for every whole `n` but 0 | left as written |
+| | `"integral((x - floor(x)) / floor(x)!, x, 1, +oo)".ToEntity().Simplify()`, and `integral(floor(x), x, 0, 5)` | left as written | `(e - 1) / 2`, `10` |
 
 ### A cancelled quotient says its operand is defined, not only non-zero
 
@@ -1091,6 +1094,34 @@ columns measured on a build, `60545afa` against this change.
 | `"integral((2x^2+x+1)/(x^3+x^2+x+1), x, 3/4, 4/3)".ToEntity().Simplify()` | `ln(4/3) + ln(16/9) / 2` | `ln(16/9)` |
 | `"ln(16/9)"`, `ln(64)`, `ln(8) - 3 * ln(2)`, `log(3, 81) / 4` | `ln(16/9)`, `ln(64)`, `0`, `1` | the same |
 | `RewriteRules.Power.Rules.Count`, and `RewriteRules.All` by growth | `31`; 124 / 49 / 31 / 123 | `32`; 124 / 49 / 32 / 123 |
+
+### An integral across a step is split at the jumps, never taken through an antiderivative
+
+`integral(x - floor(x), x, 0, 3)` answered `0`. The rules find an antiderivative of an integrand with
+`floor(x)` in it by taking the floor for a constant — which is right between two of its jumps and
+wrong across one — and the definite integral then evaluated that antiderivative at the bounds.
+`(x - floor(x))^2` from 0 to 4 was `0` where it is `4/3`, and from 0 to a symbolic `n` was
+`(n - floor(n))^3 / 3`, which is wrong for every whole `n` but 0.
+
+An integrand with `floor(x)` or `ceil(x)` of the variable no longer goes through an antiderivative
+between two bounds. Between whole bounds it is split into unit intervals, on each of which the
+floor is `n`, the ceiling `n + 1` and `x` is `n + t`, and the integral is a sum over `n` of an
+integral over `t` with no step in it; a numeric bound that is not whole contributes the piece up to
+the nearest whole number, on which the step is one known constant; a symbolic bound is left as
+written, since an integral's bound is not whole by convention as a summation's index is. Offered
+only where every piece resolves. Question I.2 of
+[#1212](https://github.com/asc-community/AngouriMath/issues/1212). Both columns measured on a
+build, `4fd6dda5` against this change.
+
+| | Was | Is |
+|---|---|---|
+| `"integral(x - floor(x), x, 0, 3)".ToEntity().Simplify()` | `0` | `3/2` |
+| `"integral((x - floor(x))^2, x, 0, 4)".ToEntity().Simplify()` | `0` | `4/3` |
+| `"integral((x - floor(x))^2, x, 0, n)".ToEntity().Simplify()` | `(n - floor(n)) ^ 3 / 3` | left as written; with `n = 6` substituted, `2` |
+| `"integral((x - floor(x)) / floor(x)!, x, 1, +oo)".ToEntity().Simplify()` | left as written | `(e - 1) / 2` |
+| `"integral(floor(x), x, 0, 5)"`, `integral(floor(x) * x, x, 0, 3)`, `integral(floor(x) / (floor(x) + 1)!, x, 0, +oo)` | left as written | `10`, `13/2`, `1` |
+| `"integral(floor(x), x, 1/2, 2)"`, `integral(x - floor(x), x, 0, 5/2)`, `integral(ceil(x) - x, x, 1/2, 2)` | left as written | `1`, `9/8`, `5/8` |
+| `"integral(2^(-floor(x)), x, 0, +oo)"`, `integral(floor(x^2), x, 0, 2)` | left as written | the same — a geometric series has no closed form here yet; a floor of something other than the variable is not a step this reads |
 
 ## 2.4.0 — since 2.3.0
 
