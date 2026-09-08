@@ -88,6 +88,7 @@ read first.
 | | `"sum(x^k / k!, k, 0, +oo)".ToEntity().Simplify()`, and every summation to `+oo` of a polynomial in the index times a power with the index in the exponent over a factorial of the index | `sum(x ^ k / k!, k, 0, +oo)` — left as written | `e ^ x`; `sum(3^(k+2) * (k^2 + k + 1) / (k + 3)!, k, 0, +oo)` is `4/3 * e ^ 3 - 41/6` |
 | | `"sum(N! / (k! * (N - k)!) * x^k, k, 0, N)".ToEntity().Simplify()`, and every binomial sum with a power or a cosine or sine of the index as its weight | `sum(N! / (k! * (N - k)!) * x ^ k, k, 0, N)` — left as written | `piecewise((1 + x) ^ N provided N >= 0, 0)`; with `cos(k * pi / 3)`, `piecewise(2 ^ N * cos(pi / 6) ^ N * cos(N * pi / 6) provided N >= 0, 0)` |
 | | `"ln(4/3) + ln(16/9) / 2".ToEntity().Simplify()`, and every sum of logarithms of rational literals one of which is a perfect power of another | `ln(4/3) + ln(16/9) / 2` — left as written | `2 * ln(4/3)`; the integral it came from, `integral((2x^2+x+1)/(x^3+x^2+x+1), x, 3/4, 4/3)`, answers `ln(16/9)` |
+| | `"sum(x^k, k, 0, +oo)".ToEntity().Simplify()`, and every summation of a power with the index in the exponent times something free of the index, to a bound or to `+oo` | left as written | `1 / (1 - x) provided abs(x) < 1`; `sum(2^(-k), k, 0, +oo)` is `2`, `sum(x^k, k, 0, n)` is a piecewise with the ratio 1 and the empty range as cases of their own, and `integral(2^(-floor(x)), x, 0, +oo)` is `2` |
 | **Silent** | `"integral(piecewise(2x provided x <= 1/2, 2 - 2x), x, 0, 1)".ToEntity().Simplify()`, and every definite integral of a piecewise whose conditions mention the variable | `1` — the first case's antiderivative at both ends | `1/2` — split at the case boundaries; `piecewise(x provided x < 1, x^2)` from 0 to 2 was `piecewise(2 provided x < 1, 8/3)`, with the integration variable still in it, and is `17/6` |
 | **Silent** | `"integral(x - floor(x), x, 0, 3)".ToEntity().Simplify()`, and every definite integral over numeric bounds whose integrand has `floor(x)` or `ceil(x)` in it | `0` — an antiderivative that took the floor for a constant across its jumps | `3/2` — split at the jumps; `(x - floor(x))^2` from 0 to 4 was `0` and is `4/3` |
 | **Silent** | `"integral((x - floor(x))^2, x, 0, n)".ToEntity().Simplify()`, and every such integral with a symbolic bound or a condition against a symbol | `(n - floor(n)) ^ 3 / 3` — wrong for every whole `n` but 0; `piecewise(x provided x < a, 0)` from 0 to 2 was `piecewise(2 provided x < a, 0)` | left as written |
@@ -1096,6 +1097,33 @@ columns measured on a build, `60545afa` against this change.
 | `"ln(16/9)"`, `ln(64)`, `ln(8) - 3 * ln(2)`, `log(3, 81) / 4` | `ln(16/9)`, `ln(64)`, `0`, `1` | the same |
 | `RewriteRules.Power.Rules.Count`, and `RewriteRules.All` by growth | `31`; 124 / 49 / 31 / 123 | `32`; 124 / 49 / 32 / 123 |
 
+### A geometric series is summed in closed form
+
+`sum(x^k, k, 0, +oo)` was left as written, and so was every other sum of a power with the index in
+the exponent: `sum(2^(-k), k, 0, +oo)`, `sum(x^k, k, 0, n)`, and `sum(2^k, k, 0, 200)`, whose range is
+past the hundred terms that are expanded one by one. A summand that is `C * b^(m k + s)` — a base
+free of the index, an exponent that is the index times a whole number plus something free of it,
+and every other factor free of the index — is now summed as a geometric series with the ratio
+`b^m`. Between two bounds the sum is `C b^s (r^a - r^(b + 1)) / (1 - r)` where the range is not
+empty and the ratio is not 1, the number of terms times the constant where the ratio is 1, and `0`
+for an empty range; a numeric ratio picks its branch and a symbolic one is offered all three as a
+piecewise, the way a polynomial summand is offered the empty range. To `+oo` the series converges
+exactly when `|r| < 1`: a numeric ratio outside that is left as written — infinite or without a
+value, and which is not this reader's to say — and a symbolic ratio carries `provided abs(r) < 1`.
+A polynomial factor in the index, `k x^k`, is not this family and stays as written. The sum the
+step integral of `2^(-floor(x))` leaves, from question I.2 of
+[#1212](https://github.com/asc-community/AngouriMath/issues/1212). Both columns measured on a
+build, `27ed5b53` against this change.
+
+| | Was | Is |
+|---|---|---|
+| `"sum(2^(-k), k, 0, +oo)".ToEntity().Simplify()`, `sum(1 / 2^k, k, 1, +oo)`, `sum((-1/2)^k, k, 0, +oo)` | left as written | `2`, `1`, `2/3` |
+| `"sum(x^k, k, 0, +oo)".ToEntity().Simplify()`, and from 1 | left as written | `1 / (1 - x) provided abs(x) < 1`, `x / (1 - x) provided abs(x) < 1` |
+| `"sum(x^k, k, 0, n)".ToEntity().Simplify()` | left as written | `piecewise((n + 1) provided (x = 1 and n >= -1), ((1 - x ^ (n + 1)) / (1 - x)) provided (n >= -1), 0 provided True)` |
+| `"sum(2^k, k, a, n)".ToEntity().Simplify()`, and `sum(2^k, k, 0, 200)` | left as written | `piecewise((2 ^ (n + 1) - 2 ^ a) provided (n >= a - 1), 0 provided True)`, `2^201 - 1` as a number |
+| `"integral(2^(-floor(x)), x, 0, +oo)".ToEntity().Simplify()` | left as written | `2` |
+| `"sum(2^k, k, 0, +oo)"`, `sum((-1)^k, k, 0, +oo)`, `sum(k * (1/2)^k, k, 0, +oo)`, `sum(2^k, k, 0, 5)` | left as written; `63` | the same |
+
 ### An integral across a jump is split at the jumps, never taken through an antiderivative
 
 `F(b) - F(a)` is the integral only where `F` is continuous on `[a, b]`, and the definite integral
@@ -1137,7 +1165,7 @@ depend on where the jumps fall. Offered only where every piece resolves. Questio
 | `"integral((x - floor(x)) / floor(x)!, x, 1, +oo)".ToEntity().Simplify()` | left as written | `(e - 1) / 2` |
 | `"integral(floor(x), x, 0, 5)"`, `integral(floor(x) * x, x, 0, 3)`, `integral(floor(x) / (floor(x) + 1)!, x, 0, +oo)` | left as written | `10`, `13/2`, `1` |
 | `"integral(floor(x), x, 1/2, 2)"`, `integral(x - floor(x), x, 0, 5/2)`, `integral(ceil(x) - x, x, 1/2, 2)` | left as written | `1`, `9/8`, `5/8` |
-| `"integral(2^(-floor(x)), x, 0, +oo)"`, `integral(floor(x^2), x, 0, 2)` | left as written | the same — a geometric series has no closed form here yet; a floor of something other than the variable is not a step this reads |
+| `"integral(floor(x^2), x, 0, 2)"` | left as written | the same — a floor of something other than the variable is not a step this reads. `integral(2^(-floor(x)), x, 0, +oo)` was left as written here for want of a geometric series, and is `2` as of the section above |
 
 ## 2.4.0 — since 2.3.0
 

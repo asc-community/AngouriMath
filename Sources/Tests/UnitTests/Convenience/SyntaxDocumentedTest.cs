@@ -358,7 +358,7 @@ namespace AngouriMath.Tests.Convenience
         [Theory]
         [InlineData("sum(k, k, 1, 5/2)")]
         [InlineData("sum(k, k, 1, +oo)")]
-        [InlineData("sum(2 ^ k, k, 1, n)")]
+        [InlineData("sum(k ^ k, k, 1, n)")]
         public void ARangeThatIsNotAnIntegerOneStaysAsWritten(string written) =>
             Assert.Equal(written.ToEntity(), written.ToEntity().Simplify());
 

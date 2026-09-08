@@ -102,11 +102,17 @@ namespace AngouriMath.Tests.Calculus
             Assert.Equal("2".ToEntity(), value.Substitute("n", 6).Simplify());
         }
 
-        // The split is exact but the sum it leaves has no closed form here yet -- a geometric
-        // series -- so the integral stays as written rather than becoming an unevaluated sum.
+        // The split leaves a geometric series, which is summed in closed form. A sum the closed
+        // forms do not answer yet leaves the integral as written rather than an unevaluated sum:
+        // the second one is sum(n^n, n, 1, +oo), whose terms do not tend to zero, so it is +oo --
+        // the answer a divergence test would give, and there is none yet. Not a verdict that it
+        // cannot be answered; the day it is, this line moves to the value.
         [Fact]
-        public void ASumWithoutAClosedFormLeavesTheIntegralAsWritten()
-            => Assert.IsType<Integralf>("integral(2^(-floor(x)), x, 0, +oo)".ToEntity().Simplify());
+        public void TheSumTheSplitLeavesIsAnsweredOrTheIntegralStays()
+        {
+            Assert.Equal("2".ToEntity(), "integral(2^(-floor(x)), x, 0, +oo)".ToEntity().Simplify());
+            Assert.IsType<Integralf>("integral(floor(x)^floor(x), x, 1, +oo)".ToEntity().Simplify());
+        }
 
         // Not split and not integrated either: a floor of something other than the variable
         // is not a break this reads, and an integrand the unit interval cannot integrate stays.
