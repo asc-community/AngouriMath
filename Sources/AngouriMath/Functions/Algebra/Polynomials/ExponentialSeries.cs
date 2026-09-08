@@ -8,6 +8,7 @@
 using PeterO.Numbers;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
+using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Functions
 {
@@ -65,7 +66,8 @@ namespace AngouriMath.Functions
             Entity? exponent = null;
             Entity polynomial = Integer.One;
             Entity constant = Integer.One;
-            foreach (var factor in Mulf.LinearChildren(expression.InnerSimplified))
+            var summand = WithoutFactorialConditions(expression.InnerSimplified, index, start);
+            foreach (var factor in Mulf.LinearChildren(summand))
             {
                 if (!factor.ContainsNode(index))
                 {
@@ -164,6 +166,47 @@ namespace AngouriMath.Functions
                 result *= MathS.Pow(c, -a);
             return result.InnerSimplified;
         }
+
+        /// <summary>
+        /// The summand without a condition that says a factorial of the index is not zero: a
+        /// division by <c>(k + a)!</c> carries <c>provided not (k + a)! = 0</c> from the moment
+        /// it is simplified, and over a range that starts at or above <c>-a</c> the factorial is
+        /// that of a whole non-negative number, which is never zero. Any other condition is left
+        /// where it is and the summand then declines below.
+        /// </summary>
+        private static Entity WithoutFactorialConditions(Entity summand, Variable index, int start)
+        {
+            while (summand is Providedf(var body, var condition) && HoldsOverTheRange(condition, index, start))
+                summand = body;
+            return summand;
+        }
+
+        /// <summary>
+        /// Whether a condition holds for every whole <c>index >= start</c>: a factorial of
+        /// <c>index + a</c> not being zero, <c>index + a</c> being real, or being at least zero,
+        /// each where <c>start + a >= 0</c> -- the clauses a division by a factorial carries.
+        /// </summary>
+        private static bool HoldsOverTheRange(Entity condition, Variable index, int start)
+            => condition switch
+            {
+                Notf(Equalsf(Factorialf(var argument), var zero))
+                    when zero.Evaled is Integer { IsZero: true } && AtLeastZero(argument, index, start)
+                    => true,
+                Inf(var argument, var set)
+                    when set == MathS.Sets.R && AtLeastZero(argument, index, start)
+                    => true,
+                GreaterOrEqualf(var argument, var zero)
+                    when zero.Evaled is Integer { IsZero: true } && AtLeastZero(argument, index, start)
+                    => true,
+                Andf(var left, var right)
+                    => HoldsOverTheRange(left, index, start) && HoldsOverTheRange(right, index, start),
+                Orf(var left, var right)
+                    => HoldsOverTheRange(left, index, start) || HoldsOverTheRange(right, index, start),
+                _ => false,
+            };
+
+        private static bool AtLeastZero(Entity argument, Variable index, int start)
+            => TryReadShift(argument, index, out var a) && start + a >= 0;
 
         /// <summary>
         /// <paramref name="argument"/> as <c>index + shift</c> for a whole <c>shift</c>: the

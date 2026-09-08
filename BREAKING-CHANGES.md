@@ -88,6 +88,10 @@ read first.
 | | `"sum(x^k / k!, k, 0, +oo)".ToEntity().Simplify()`, and every summation to `+oo` of a polynomial in the index times a power with the index in the exponent over a factorial of the index | `sum(x ^ k / k!, k, 0, +oo)` — left as written | `e ^ x`; `sum(3^(k+2) * (k^2 + k + 1) / (k + 3)!, k, 0, +oo)` is `4/3 * e ^ 3 - 41/6` |
 | | `"sum(N! / (k! * (N - k)!) * x^k, k, 0, N)".ToEntity().Simplify()`, and every binomial sum with a power or a cosine or sine of the index as its weight | `sum(N! / (k! * (N - k)!) * x ^ k, k, 0, N)` — left as written | `piecewise((1 + x) ^ N provided N >= 0, 0)`; with `cos(k * pi / 3)`, `piecewise(2 ^ N * cos(pi / 6) ^ N * cos(N * pi / 6) provided N >= 0, 0)` |
 | | `"ln(4/3) + ln(16/9) / 2".ToEntity().Simplify()`, and every sum of logarithms of rational literals one of which is a perfect power of another | `ln(4/3) + ln(16/9) / 2` — left as written | `2 * ln(4/3)`; the integral it came from, `integral((2x^2+x+1)/(x^3+x^2+x+1), x, 3/4, 4/3)`, answers `ln(16/9)` |
+| **Silent** | `"integral(piecewise(2x provided x <= 1/2, 2 - 2x), x, 0, 1)".ToEntity().Simplify()`, and every definite integral of a piecewise whose conditions mention the variable | `1` — the first case's antiderivative at both ends | `1/2` — split at the case boundaries; `piecewise(x provided x < 1, x^2)` from 0 to 2 was `piecewise(2 provided x < 1, 8/3)`, with the integration variable still in it, and is `17/6` |
+| **Silent** | `"integral(x - floor(x), x, 0, 3)".ToEntity().Simplify()`, and every definite integral over numeric bounds whose integrand has `floor(x)` or `ceil(x)` in it | `0` — an antiderivative that took the floor for a constant across its jumps | `3/2` — split at the jumps; `(x - floor(x))^2` from 0 to 4 was `0` and is `4/3` |
+| **Silent** | `"integral((x - floor(x))^2, x, 0, n)".ToEntity().Simplify()`, and every such integral with a symbolic bound or a condition against a symbol | `(n - floor(n)) ^ 3 / 3` — wrong for every whole `n` but 0; `piecewise(x provided x < a, 0)` from 0 to 2 was `piecewise(2 provided x < a, 0)` | left as written |
+| | `"integral((x - floor(x)) / floor(x)!, x, 1, +oo)".ToEntity().Simplify()`, and `integral(floor(x), x, 0, 5)` | left as written | `(e - 1) / 2`, `10` |
 
 ### A cancelled quotient says its operand is defined, not only non-zero
 
@@ -1091,6 +1095,49 @@ columns measured on a build, `60545afa` against this change.
 | `"integral((2x^2+x+1)/(x^3+x^2+x+1), x, 3/4, 4/3)".ToEntity().Simplify()` | `ln(4/3) + ln(16/9) / 2` | `ln(16/9)` |
 | `"ln(16/9)"`, `ln(64)`, `ln(8) - 3 * ln(2)`, `log(3, 81) / 4` | `ln(16/9)`, `ln(64)`, `0`, `1` | the same |
 | `RewriteRules.Power.Rules.Count`, and `RewriteRules.All` by growth | `31`; 124 / 49 / 31 / 123 | `32`; 124 / 49 / 32 / 123 |
+
+### An integral across a jump is split at the jumps, never taken through an antiderivative
+
+`F(b) - F(a)` is the integral only where `F` is continuous on `[a, b]`, and the definite integral
+evaluated an antiderivative at its bounds whatever the integrand did in between. Three shapes jump:
+a piecewise whose conditions mention the variable, whose antiderivative the generic argument
+expansion built case by case and then handed back with the integration variable still inside it —
+the tent map `piecewise(2x provided x <= 1/2, 2 - 2x)` over `[0, 1]` answered `1` (the first case's
+antiderivative at both ends), and `piecewise(x provided x < 1, x^2)` over `[0, 2]` answered
+`piecewise(2 provided x < 1, 8/3)`; a `provided` on the variable, distributed the same way; and
+`floor(x)` or `ceil(x)`, taken for constants across their jumps — `x - floor(x)` from 0 to 3 answered
+`0`, `(x - floor(x))^2` from 0 to 4 answered `0` where it is `4/3`, and from 0 to a symbolic `n`
+answered `(n - floor(n))^3 / 3`, wrong for every whole `n` but 0.
+
+An integrand that can jump never goes through an antiderivative between two bounds now. A
+piecewise or a `provided` with finitely many breakpoints — conditions comparing the variable with
+numbers — has the range cut at the ones inside it, and on each piece is the case that holds at the
+piece's midpoint, integrated through the antiderivative and added; a `provided` whose condition
+fails on a piece makes the integral undefined and it is left as written. A floor or ceiling has
+infinitely many, evenly spaced: between whole bounds the integral is a sum over unit intervals, on
+each of which the floor is `n`, the ceiling `n + 1` and `x` is `n + t`, and the summation's closed
+forms answer the sum; a numeric bound that is not whole contributes the piece up to the nearest
+whole number. A condition against a symbol or a symbolic bound is left as written, since the pieces
+depend on where the jumps fall. Offered only where every piece resolves. Question I.2 of
+[#1212](https://github.com/asc-community/AngouriMath/issues/1212), generalised on the review of
+[#1215](https://github.com/asc-community/AngouriMath/pull/1215). Both columns measured on a build,
+`4fd6dda5` and `60545afa` against this change.
+
+| | Was | Is |
+|---|---|---|
+| `"integral(piecewise(2x provided x <= 1/2, 2 - 2x), x, 0, 1)".ToEntity().Simplify()` | `1` | `1/2` |
+| `"integral(piecewise(x provided x < 1, x^2), x, 0, 2)".ToEntity().Simplify()` | `piecewise(2 provided (x < 1), (8/3) provided True)` | `17/6` |
+| `"integral(piecewise(1 provided x < 0, 2 provided x < 1, 3), x, -1, 2)".ToEntity().Simplify()` | `piecewise(3 provided (x < 0), 6 provided (x < 1), 9 provided True)` | `6` |
+| `"integral(piecewise(x provided x < a, 0), x, 0, 2)"`, and `integral(piecewise(2x provided x <= 1/2, 2 - 2x), x, 0, t)` | `piecewise(2 provided (x < a), 0 provided True)`, `piecewise((t ^ 2) provided (x <= 1/2), (2 * t - t ^ 2) provided True)` | left as written |
+| `"integral(x provided x > 0, x, 0, 1)"`, and the same from -1 to 1 | `1/2 provided x > 0`, `0 provided x > 0` | `1/2`; left as written |
+| `"integral(sgn(x), x, -1, 2)"`, `integral(abs(x - 1), x, 0, 3)` | `1`, `5/2` | the same — the antiderivatives of a sign and a modulus are continuous |
+| `"integral(x - floor(x), x, 0, 3)".ToEntity().Simplify()` | `0` | `3/2` |
+| `"integral((x - floor(x))^2, x, 0, 4)".ToEntity().Simplify()` | `0` | `4/3` |
+| `"integral((x - floor(x))^2, x, 0, n)".ToEntity().Simplify()` | `(n - floor(n)) ^ 3 / 3` | left as written; with `n = 6` substituted, `2` |
+| `"integral((x - floor(x)) / floor(x)!, x, 1, +oo)".ToEntity().Simplify()` | left as written | `(e - 1) / 2` |
+| `"integral(floor(x), x, 0, 5)"`, `integral(floor(x) * x, x, 0, 3)`, `integral(floor(x) / (floor(x) + 1)!, x, 0, +oo)` | left as written | `10`, `13/2`, `1` |
+| `"integral(floor(x), x, 1/2, 2)"`, `integral(x - floor(x), x, 0, 5/2)`, `integral(ceil(x) - x, x, 1/2, 2)` | left as written | `1`, `9/8`, `5/8` |
+| `"integral(2^(-floor(x)), x, 0, +oo)"`, `integral(floor(x^2), x, 0, 2)` | left as written | the same — a geometric series has no closed form here yet; a floor of something other than the variable is not a step this reads |
 
 ## 2.4.0 — since 2.3.0
 

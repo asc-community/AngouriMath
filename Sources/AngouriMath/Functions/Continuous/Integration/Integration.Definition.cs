@@ -47,9 +47,18 @@ namespace AngouriMath
         /// An integrated expression. It might remain the same or be transformed into nodes with no integrals.
         /// </returns>
         public Entity Integrate(Variable x, Entity from, Entity to) =>
-            Transformation.Integration(x).Apply(this).Output is { } antiderivative
-            ? antiderivative.Substitute(x, to) - antiderivative.Substitute(x, from)
-            : new Integralf(this, x, (from, to));
+            // An integrand that can jump -- a piecewise whose conditions mention x, a floor or a
+            // ceiling of x -- never goes through an antiderivative between two bounds: the rules
+            // integrate it with the case or the step taken for a constant, which is right
+            // between two jumps and wrong across one. (x - floor(x))^2 from 0 to 4 came back as
+            // 0 that way, where it is 4/3, and the tent map over [0, 1] as 1, where it is 1/2.
+            // It is split at the jumps instead, and where that cannot be done it is left as
+            // written. See BreakpointIntegration.
+            Functions.Algebra.BreakpointIntegration.HasABreak(this, x)
+            ? Functions.Algebra.BreakpointIntegration.Split(this, x, from, to) ?? new Integralf(this, x, (from, to))
+            : Transformation.Integration(x).Apply(this).Output is { } antiderivative
+                ? antiderivative.Substitute(x, to) - antiderivative.Substitute(x, from)
+                : new Integralf(this, x, (from, to));
 
         /// <summary>
         /// Integrates numerically over <paramref name="x"/> between two bounds, without
