@@ -86,6 +86,7 @@ read first.
 | | `RewriteRules.Common.Rules.Count`, and `RewriteRules.All` by growth | `62`; 124 / 46 / 31 / 123 | `65`; 124 / 49 / 31 / 123 |
 | | `"(x - b) / (x + a) + c / (x + a)".SolveEquation("x")`, and every equation the replacement machinery solves whose condition is spelled from the equation as written | `{ -(-b + c) provided not a + -(-b + c) = 0 }` | `{ -(-b + c) provided not -(-b + c) + a = 0 }` — the same set, the condition's terms in the order the equation had |
 | | `"sum(x^k / k!, k, 0, +oo)".ToEntity().Simplify()`, and every summation to `+oo` of a polynomial in the index times a power with the index in the exponent over a factorial of the index | `sum(x ^ k / k!, k, 0, +oo)` — left as written | `e ^ x`; `sum(3^(k+2) * (k^2 + k + 1) / (k + 3)!, k, 0, +oo)` is `4/3 * e ^ 3 - 41/6` |
+| | `"sum(N! / (k! * (N - k)!) * x^k, k, 0, N)".ToEntity().Simplify()`, and every binomial sum with a power or a cosine or sine of the index as its weight | `sum(N! / (k! * (N - k)!) * x ^ k, k, 0, N)` — left as written | `piecewise((1 + x) ^ N provided N >= 0, 0)`; with `cos(k * pi / 3)`, `piecewise(2 ^ N * cos(pi / 6) ^ N * cos(N * pi / 6) provided N >= 0, 0)` |
 
 ### A cancelled quotient says its operand is defined, not only non-zero
 
@@ -1050,6 +1051,26 @@ second row. Both columns measured on a build, `e2476ac5` against this change.
 | `"sum(1 / (2 * n!), n, 1, +oo)".ToEntity().Simplify()` | left as written | `(e - 1) / 2` |
 | `"sum(x^k / k!, k, 0, +oo)".ToEntity().Simplify()`, and `sum(k * x^k / k!, k, 0, +oo)` | left as written | `e ^ x`, `e ^ x * x` |
 | `"sum(1 / k, k, 1, +oo)"`, `sum(k!, k, 0, +oo)`, `sum(x^k / k!, k, n, +oo)`, `sum(3^(2k) / k!, k, 0, +oo)` | left as written | the same — not of the shape, or a symbolic lower bound, or a slope other than one in the exponent |
+
+### A binomial sum with a power or a trigonometric weight is closed
+
+`sum(N! / (k! (N - k)!) x^k, k, 0, N)` was left as written for a symbolic `N`; it is `(1 + x)^N`,
+the binomial theorem read backwards, and with `x^k y^(N-k)` it is `(x + y)^N`. With `cos(k t)`
+the sum is the real part of `(1 + e^(it))^N`, and `1 + e^(it) = 2 cos(t/2) e^(it/2)` exactly, so it is
+`(2 cos(t/2))^N cos(N t/2)`; with `sin(k t)` the same with the sine. Both are algebra on the two
+conjugate sums and hold for every complex `t`. The top factorial is optional, since
+`sum(x^k / (k! (N - k)!))` is `(1 + x)^N / N!`, and a concrete one has folded into a number before
+the factors are read. A symbolic `N` carries `N >= 0` with the empty-range branch, for the reason
+`sum(k, k, 1, n)` does. Question II.3 of
+[#1212](https://github.com/asc-community/AngouriMath/issues/1212). Both columns measured on a
+build, `e2476ac5` against this change.
+
+| | Was | Is |
+|---|---|---|
+| `"sum(N! / (k! * (N - k)!) * cos(k * pi / 3), k, 0, N)".ToEntity().Simplify()` | left as written | `piecewise(2 ^ N * cos(pi / 6) ^ N * cos(N * pi / 6) provided N >= 0, 0)` — `3^(N/2) cos(N pi / 6)` |
+| `"sum(N! / (k! * (N - k)!) * x^k, k, 0, N)".ToEntity().Simplify()`, and with `x^k * y^(N - k)` | left as written | `piecewise((1 + x) ^ N provided N >= 0, 0)`, `piecewise((x + y) ^ N provided N >= 0, 0)` |
+| `"sum(300! / (k! * (300 - k)!), k, 0, 300)".ToEntity().Simplify()`, and every concrete range past the hundred-term expansion | left as written | `2 ^ 300`, the 91-digit integer |
+| `"sum(N! / (k! * (N - k)!) * k, k, 0, N)"`, and a trigonometric weight beside a power, a lower bound other than 0, a coefficient whose `N` is not the upper bound | left as written | the same |
 
 ## 2.4.0 — since 2.3.0
 
