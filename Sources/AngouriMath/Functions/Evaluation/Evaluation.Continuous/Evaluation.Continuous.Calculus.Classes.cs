@@ -107,6 +107,22 @@ namespace AngouriMath
             private static Entity? ConditionallySimplified(Entity e, bool isExact) => e is Integralf ? null : e.InnerSimplified(isExact);
 
             /// <summary>
+            /// The definite integral, or the node as written where the integrand can jump and
+            /// the split at its jumps declined. Not <see langword="null"/> there: null hands the
+            /// expression to the expansion below, which distributes the integral into the
+            /// cases of a piecewise and under a <c>provided</c> whether or not their
+            /// conditions mention the integration variable -- and where they do, that is an
+            /// answer with the variable still in it. See BreakpointIntegration.
+            /// </summary>
+            private static Entity? DefiniteOrDeclined(Entity expr, Variable var, Entity from, Entity to, bool isExact)
+            {
+                var result = expr.Integrate(var, from, to);
+                if (result is not Integralf)
+                    return result.InnerSimplified(isExact);
+                return Functions.Algebra.BreakpointIntegration.HasABreak(expr, var) ? result : null;
+            }
+
+            /// <summary>
             /// The antiderivative of <paramref name="expr"/> with respect to
             /// <paramref name="over"/>, by changing variables rather than by renaming.
             /// </summary>
@@ -129,7 +145,7 @@ namespace AngouriMath
                 ExpandOnTwoAndTArguments(Expression, Var, Range,
                     (a, b, c) => (a, b, c) switch
                     {
-                        (var expr, Variable var, var (from, to)) => Core.Binding.Written(var, ConditionallySimplified(expr.Integrate(var, from, to), isExact)),
+                        (var expr, Variable var, var (from, to)) => Core.Binding.Written(var, DefiniteOrDeclined(expr, var, from, to, isExact)),
                         // The rename, under the same guard as in Derivativef above: exact only
                         // where nothing of the subexpression's own variables is left over.
                         // https://github.com/asc-community/AngouriMath/issues/964
