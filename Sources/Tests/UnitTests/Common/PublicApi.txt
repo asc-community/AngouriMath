@@ -668,6 +668,27 @@ AngouriMath.Entity+Divf.ToString() : System.String
 AngouriMath.Entity+Divf.ctor(AngouriMath.Entity, AngouriMath.Entity)
 AngouriMath.Entity+Divf.op_Equality(AngouriMath.Entity+Divf, AngouriMath.Entity+Divf) : System.Boolean
 AngouriMath.Entity+Divf.op_Inequality(AngouriMath.Entity+Divf, AngouriMath.Entity+Divf) : System.Boolean
+AngouriMath.Entity+Dividesf.<Clone>$() : AngouriMath.Entity+Dividesf
+AngouriMath.Entity+Dividesf.Codomain { } : AngouriMath.Core.Domain
+AngouriMath.Entity+Dividesf.Deconstruct(AngouriMath.Entity&, AngouriMath.Entity&) : System.Void
+AngouriMath.Entity+Dividesf.Dividend { } : AngouriMath.Entity
+AngouriMath.Entity+Dividesf.Divisor { } : AngouriMath.Entity
+AngouriMath.Entity+Dividesf.EqualityContract { } : System.Type
+AngouriMath.Entity+Dividesf.Equals(AngouriMath.Entity+Dividesf) : System.Boolean
+AngouriMath.Entity+Dividesf.Equals(AngouriMath.Entity+Statement) : System.Boolean
+AngouriMath.Entity+Dividesf.Equals(System.Object) : System.Boolean
+AngouriMath.Entity+Dividesf.GetHashCode() : System.Int32
+AngouriMath.Entity+Dividesf.InitDirectChildren() : AngouriMath.Entity[]
+AngouriMath.Entity+Dividesf.InnerSimplify(System.Boolean) : AngouriMath.Entity
+AngouriMath.Entity+Dividesf.NodeFirstChild { } : AngouriMath.Entity
+AngouriMath.Entity+Dividesf.NodeSecondChild { } : AngouriMath.Entity
+AngouriMath.Entity+Dividesf.PrintMembers(System.Text.StringBuilder) : System.Boolean
+AngouriMath.Entity+Dividesf.Replace(System.Func<AngouriMath.Entity,AngouriMath.Entity>) : AngouriMath.Entity
+AngouriMath.Entity+Dividesf.Substitute(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.Entity+Dividesf.ToString() : System.String
+AngouriMath.Entity+Dividesf.ctor(AngouriMath.Entity, AngouriMath.Entity)
+AngouriMath.Entity+Dividesf.op_Equality(AngouriMath.Entity+Dividesf, AngouriMath.Entity+Dividesf) : System.Boolean
+AngouriMath.Entity+Dividesf.op_Inequality(AngouriMath.Entity+Dividesf, AngouriMath.Entity+Dividesf) : System.Boolean
 AngouriMath.Entity+Equalsf.<Clone>$() : AngouriMath.Entity+Equalsf
 AngouriMath.Entity+Equalsf.Codomain { } : AngouriMath.Core.Domain
 AngouriMath.Entity+Equalsf.Deconstruct(AngouriMath.Entity&, AngouriMath.Entity&) : System.Void
@@ -2066,6 +2087,7 @@ AngouriMath.Entity.DefiniteIntegral(AngouriMath.Entity+Variable, PeterO.Numbers.
 AngouriMath.Entity.Differentiate(AngouriMath.Entity+Variable) : AngouriMath.Entity
 AngouriMath.Entity.Differentiate(AngouriMath.Entity+Variable, System.Int32) : AngouriMath.Entity
 AngouriMath.Entity.DirectChildren { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Entity>
+AngouriMath.Entity.Divides(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.Entity.DomainCondition { } : AngouriMath.Entity
 AngouriMath.Entity.DomainConditionIn(AngouriMath.Core.Domain) : AngouriMath.Entity
 AngouriMath.Entity.EqualTo(AngouriMath.Entity) : AngouriMath.Entity
@@ -2315,6 +2337,7 @@ AngouriMath.MathS+Matrices.Matrix(System.Int32, System.Int32, AngouriMath.Entity
 AngouriMath.MathS+Matrices.PointwiseMultiplication(AngouriMath.Entity+Matrix, AngouriMath.Entity+Matrix) : AngouriMath.Entity+Matrix
 AngouriMath.MathS+Multithreading.SetLocalCancellationToken(System.Threading.CancellationToken) : System.Void
 AngouriMath.MathS+NumberTheory.CountDivisors(AngouriMath.Entity+Number+Integer) : AngouriMath.Entity+Number+Integer
+AngouriMath.MathS+NumberTheory.Divides(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS+NumberTheory.Factorize(AngouriMath.Entity+Number+Integer) : System.Collections.Generic.IEnumerable<System.ValueTuple<AngouriMath.Entity+Number+Integer,AngouriMath.Entity+Number+Integer>>
 AngouriMath.MathS+NumberTheory.GreatestCommonDivisor(AngouriMath.Entity+Number+Integer, AngouriMath.Entity+Number+Integer) : AngouriMath.Entity+Number+Integer
 AngouriMath.MathS+NumberTheory.Phi(AngouriMath.Entity) : AngouriMath.Entity
@@ -2556,6 +2579,7 @@ class AngouriMath.Entity+Cosf
 class AngouriMath.Entity+Cotanf
 class AngouriMath.Entity+Derivativef
 class AngouriMath.Entity+Divf
+class AngouriMath.Entity+Dividesf
 class AngouriMath.Entity+Equalsf
 class AngouriMath.Entity+Factorialf
 class AngouriMath.Entity+Floorf

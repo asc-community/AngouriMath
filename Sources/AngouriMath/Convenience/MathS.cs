@@ -51,6 +51,23 @@ namespace AngouriMath
             public static Entity Phi(Entity integer) => new Phif(integer);
 
             /// <summary>
+            /// The statement that <paramref name="divisor"/> divides <paramref name="dividend"/>,
+            /// written <c>a divides b</c>: for integers, that <c>b mod a = 0</c>.
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine(MathS.NumberTheory.Divides(3, 12).Evaled);
+            /// Console.WriteLine(MathS.NumberTheory.Divides(5, 12).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// True
+            /// False
+            /// </code>
+            /// </example>
+            public static Entity Divides(Entity divisor, Entity dividend) => new Dividesf(divisor, dividend);
+
+            /// <summary>
             /// Count of all divisors of an integer, including 1 or itself.
             /// </summary>
             /// <example>

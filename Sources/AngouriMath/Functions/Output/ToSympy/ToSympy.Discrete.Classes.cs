@@ -51,6 +51,14 @@ namespace AngouriMath
                 => $"{Left.ToSymPy(Left.Priority < Priority)} == {Right.ToSymPy(Right.Priority < Priority)}";
         }
 
+        partial record Dividesf
+        {
+            // SymPy has no divisibility statement; `b mod a = 0` is its definition for integers,
+            // and `Eq` keeps it a statement where `==` would force a bool.
+            internal override string ToSymPy()
+                => $"sympy.Eq(sympy.Mod({Dividend.ToSymPy()}, {Divisor.ToSymPy()}), 0)";
+        }
+
         partial record Greaterf
         {
             internal override string ToSymPy()

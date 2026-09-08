@@ -119,6 +119,13 @@ namespace AngouriMath
         /// <returns>A node</returns>
         public Entity PhiFunction() => new Phif(this);
 
+        /// <summary>
+        /// The statement that this divides <paramref name="dividend"/>: <c>a divides b</c>, which
+        /// for integers is <c>b mod a = 0</c>.
+        /// </summary>
+        /// <returns>A node</returns>
+        public Entity Divides(Entity dividend) => new Dividesf(this, dividend);
+
         internal static Entity HangOperator(Entity a, Entity b, Func<Entity, Entity, Entity> ctor)
            => a switch
            {

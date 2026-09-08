@@ -109,6 +109,13 @@ namespace AngouriMath
                 => $@"{Left.Latexize(Left.LatexPriority <= LatexPriority)} = {Right.Latexize(Right.LatexPriority <= LatexPriority)}";
         }
 
+        partial record Dividesf
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"{Divisor.Latexize(Divisor.LatexPriority < LatexPriority)} \mid {Dividend.Latexize(Dividend.LatexPriority <= LatexPriority)}";
+        }
+
         partial record Greaterf
         {
             /// <inheritdoc/>

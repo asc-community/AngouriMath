@@ -66,6 +66,17 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        partial record Dividesf
+        {
+            /// <inheritdoc/>
+            // Folded to the left like `in`, and not associative: `(a divides b) divides c` asks
+            // whether a truth value divides c.
+            private protected override string StringizeNode()
+                => $"{Divisor.Stringize(Divisor.Priority < Priority)} divides {Dividend.Stringize(Dividend.Priority <= Priority)}";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         partial record Equalsf
         {
             /// <inheritdoc/>

@@ -396,6 +396,12 @@ namespace AngouriMath
             private protected override string SortHashName(SortLevel level) => "phi_";
         }
 
+        partial record Dividesf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => level == SortLevel.LOW_LEVEL ? "divides_" : "";
+        }
+
         partial record Providedf
         {
             private protected override string SortHashName(SortLevel level) => "provided_";

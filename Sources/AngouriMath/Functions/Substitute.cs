@@ -350,6 +350,13 @@ namespace AngouriMath
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
+        partial record Dividesf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Divisor.Substitute(x, value), Dividend.Substitute(x, value));
+        }
+
         partial record Providedf
         {
             /// <inheritdoc/>
