@@ -102,8 +102,11 @@ namespace AngouriMath.Tests.Calculus
             Assert.Equal("2".ToEntity(), value.Substitute("n", 6).Simplify());
         }
 
-        // The split leaves a geometric series, which is summed in closed form; a sum the closed
-        // forms cannot answer leaves the integral as written rather than an unevaluated sum.
+        // The split leaves a geometric series, which is summed in closed form. A sum the closed
+        // forms do not answer yet leaves the integral as written rather than an unevaluated sum:
+        // the second one is sum(n^n, n, 1, +oo), whose terms do not tend to zero, so it is +oo --
+        // the answer a divergence test would give, and there is none yet. Not a verdict that it
+        // cannot be answered; the day it is, this line moves to the value.
         [Fact]
         public void TheSumTheSplitLeavesIsAnsweredOrTheIntegralStays()
         {
