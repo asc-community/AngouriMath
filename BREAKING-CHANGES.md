@@ -87,6 +87,7 @@ read first.
 | | `"(x - b) / (x + a) + c / (x + a)".SolveEquation("x")`, and every equation the replacement machinery solves whose condition is spelled from the equation as written | `{ -(-b + c) provided not a + -(-b + c) = 0 }` | `{ -(-b + c) provided not -(-b + c) + a = 0 }` — the same set, the condition's terms in the order the equation had |
 | | `"sum(x^k / k!, k, 0, +oo)".ToEntity().Simplify()`, and every summation to `+oo` of a polynomial in the index times a power with the index in the exponent over a factorial of the index | `sum(x ^ k / k!, k, 0, +oo)` — left as written | `e ^ x`; `sum(3^(k+2) * (k^2 + k + 1) / (k + 3)!, k, 0, +oo)` is `4/3 * e ^ 3 - 41/6` |
 | | `"sum(N! / (k! * (N - k)!) * x^k, k, 0, N)".ToEntity().Simplify()`, and every binomial sum with a power or a cosine or sine of the index as its weight | `sum(N! / (k! * (N - k)!) * x ^ k, k, 0, N)` — left as written | `piecewise((1 + x) ^ N provided N >= 0, 0)`; with `cos(k * pi / 3)`, `piecewise(2 ^ N * cos(pi / 6) ^ N * cos(N * pi / 6) provided N >= 0, 0)` |
+| | `"ln(4/3) + ln(16/9) / 2".ToEntity().Simplify()`, and every sum of logarithms of rational literals one of which is a perfect power of another | `ln(4/3) + ln(16/9) / 2` — left as written | `2 * ln(4/3)`; the integral it came from, `integral((2x^2+x+1)/(x^3+x^2+x+1), x, 3/4, 4/3)`, answers `ln(16/9)` |
 
 ### A cancelled quotient says its operand is defined, not only non-zero
 
@@ -1071,6 +1072,25 @@ build, `e2476ac5` against this change.
 | `"sum(N! / (k! * (N - k)!) * x^k, k, 0, N)".ToEntity().Simplify()`, and with `x^k * y^(N - k)` | left as written | `piecewise((1 + x) ^ N provided N >= 0, 0)`, `piecewise((x + y) ^ N provided N >= 0, 0)` |
 | `"sum(300! / (k! * (300 - k)!), k, 0, 300)".ToEntity().Simplify()`, and every concrete range past the hundred-term expansion | left as written | `2 ^ 300`, the 91-digit integer |
 | `"sum(N! / (k! * (N - k)!) * k, k, 0, N)"`, and a trigonometric weight beside a power, a lower bound other than 0, a coefficient whose `N` is not the upper bound | left as written | the same |
+
+### A logarithm of a perfect power takes the exponent out
+
+`ln(4/3) + ln(16/9) / 2` was left as written; it is `2 ln(4/3)`. The rule that reads `log(a, b^n)` as
+`n log(a, b)` could not see a rational literal that is a power without saying so, and `16/9` is
+`(4/3)^2`. A logarithm of a positive rational literal that is a perfect power is now offered as the
+exponent times the logarithm of the root — the largest exponent that fits, read exactly on numerators
+and denominators within 64 bits. A positive root only: `-8` is `(-2)^3`, but `ln(-8)` is
+`ln 8 + i pi` where `3 ln(-2)` is `3 ln 2 + 3 i pi`, so a negative root is refused. The form is longer
+on its own, so alone a literal stays as written; it is what lets logarithms of related literals
+collect. Question I.5 of [#1212](https://github.com/asc-community/AngouriMath/issues/1212). Both
+columns measured on a build, `60545afa` against this change.
+
+| | Was | Is |
+|---|---|---|
+| `"ln(4/3) + ln(16/9) / 2".ToEntity().Simplify()` | `ln(4/3) + ln(16/9) / 2` | `2 * ln(4/3)` |
+| `"integral((2x^2+x+1)/(x^3+x^2+x+1), x, 3/4, 4/3)".ToEntity().Simplify()` | `ln(4/3) + ln(16/9) / 2` | `ln(16/9)` |
+| `"ln(16/9)"`, `ln(64)`, `ln(8) - 3 * ln(2)`, `log(3, 81) / 4` | `ln(16/9)`, `ln(64)`, `0`, `1` | the same |
+| `RewriteRules.Power.Rules.Count`, and `RewriteRules.All` by growth | `31`; 124 / 49 / 31 / 123 | `32`; 124 / 49 / 32 / 123 |
 
 ## 2.4.0 — since 2.3.0
 
