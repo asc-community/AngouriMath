@@ -206,6 +206,7 @@ namespace AngouriMath
                 ?? Functions.PolynomialSummation.ClosedForm(Expression, Var, From, To)
                 ?? Functions.ExponentialSeries.ClosedForm(Expression, Var, From, To)
                 ?? Functions.BinomialSum.ClosedForm(Expression, Var, From, To)
+                ?? Functions.GeometricSeries.ClosedForm(Expression, Var, From, To)
                 ?? this;
 
             /// <summary>

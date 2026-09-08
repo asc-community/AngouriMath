@@ -143,7 +143,6 @@ namespace AngouriMath.Tests.Core
         /// closed form in the literature and none of them is this method's.
         /// </summary>
         [Theory]
-        [InlineData("sum(2 ^ k, k, 1, n)")]
         [InlineData("sum(1 / k, k, 1, n)")]
         [InlineData("sum(1 / k ^ 2, k, 1, n)")]
         [InlineData("sum(sin(k), k, 1, n)")]

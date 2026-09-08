@@ -58,7 +58,7 @@ namespace AngouriMath.Tests.Core
         /// else is still carried.
         /// </summary>
         [Theory]
-        [InlineData("sum(2 ^ k, k, 1, n)")]
+        [InlineData("sum(k ^ k, k, 1, n)")]
         [InlineData("sum(1 / k, k, 1, n)")]
         [InlineData("sum(sin(k), k, 1, n)")]
         public void ASymbolicBoundIsCarried(string expression)
