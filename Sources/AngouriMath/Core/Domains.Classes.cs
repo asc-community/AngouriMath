@@ -254,6 +254,38 @@ namespace AngouriMath
             internal override Domain DefaultCodomain => Domain.Complex;
         }
 
+        partial record Maximumf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Real;
+            /// <inheritdoc/>
+            internal override Domain DefaultCodomain => Domain.Real;
+        }
+
+        partial record Minimumf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Real;
+            /// <inheritdoc/>
+            internal override Domain DefaultCodomain => Domain.Real;
+        }
+
+        partial record Argmaxf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Any;
+            /// <inheritdoc/>
+            internal override Domain DefaultCodomain => Domain.Any;
+        }
+
+        partial record Argminf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Any;
+            /// <inheritdoc/>
+            internal override Domain DefaultCodomain => Domain.Any;
+        }
+
         partial record Limitf
         {
             /// <inheritdoc/>

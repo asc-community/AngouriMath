@@ -36,6 +36,42 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        public partial record Maximumf
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() =>
+                $"max({Expression.Stringize()}, {Var.Stringize()} in {Over.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Minimumf
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() =>
+                $"min({Expression.Stringize()}, {Var.Stringize()} in {Over.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Argmaxf
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() =>
+                $"argmax({Expression.Stringize()}, {Var.Stringize()} in {Over.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Argminf
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() =>
+                $"argmin({Expression.Stringize()}, {Var.Stringize()} in {Over.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Summationf
         {
             /// <inheritdoc/>

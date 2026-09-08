@@ -196,6 +196,26 @@ namespace AngouriMath
             private protected override string SortHashName(SortLevel level) => "productf_";
         }
 
+        public partial record Maximumf
+        {
+            private protected override string SortHashName(SortLevel level) => "maximumf_";
+        }
+
+        public partial record Minimumf
+        {
+            private protected override string SortHashName(SortLevel level) => "minimumf_";
+        }
+
+        public partial record Argmaxf
+        {
+            private protected override string SortHashName(SortLevel level) => "argmaxf_";
+        }
+
+        public partial record Argminf
+        {
+            private protected override string SortHashName(SortLevel level) => "argminf_";
+        }
+
         public partial record Limitf
         {
             private protected override string SortHashName(SortLevel level) => "limitf_";

@@ -137,5 +137,83 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Destination };
         }
+
+        /// <summary>
+        /// The largest value of an expression as a variable ranges over a set:
+        /// <c>max(f(t), t in S)</c>. A binder, like <see cref="Summationf"/>: the variable is
+        /// bound throughout the expression and the set.
+        /// https://github.com/asc-community/AngouriMath/issues/1212
+        /// </summary>
+        public sealed partial record Maximumf(Entity Expression, Entity Var, Entity Over) : CalculusOperator(Expression, Var)
+        {
+            /// <summary>The set the variable ranges over.</summary>
+            public Entity Over { get; init; } = Binding.Of(Var).In(Over);
+
+            private Maximumf New(Entity expression, Entity var, Entity over) =>
+                ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var) && ReferenceEquals(Over, over)
+                ? this : new(expression, var, over) { Codomain = Codomain };
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) =>
+                func(New(Expression.Replace(func), Var, Over.Replace(func)));
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Over };
+        }
+
+        /// <summary>
+        /// The smallest value of an expression as a variable ranges over a set:
+        /// <c>min(f(t), t in S)</c>. See <see cref="Maximumf"/>.
+        /// </summary>
+        public sealed partial record Minimumf(Entity Expression, Entity Var, Entity Over) : CalculusOperator(Expression, Var)
+        {
+            /// <summary>The set the variable ranges over.</summary>
+            public Entity Over { get; init; } = Binding.Of(Var).In(Over);
+
+            private Minimumf New(Entity expression, Entity var, Entity over) =>
+                ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var) && ReferenceEquals(Over, over)
+                ? this : new(expression, var, over) { Codomain = Codomain };
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) =>
+                func(New(Expression.Replace(func), Var, Over.Replace(func)));
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Over };
+        }
+
+        /// <summary>
+        /// The set of points at which an expression takes its largest value over a set:
+        /// <c>argmax(f(t), t in S)</c>. See <see cref="Maximumf"/>.
+        /// </summary>
+        public sealed partial record Argmaxf(Entity Expression, Entity Var, Entity Over) : CalculusOperator(Expression, Var)
+        {
+            /// <summary>The set the variable ranges over.</summary>
+            public Entity Over { get; init; } = Binding.Of(Var).In(Over);
+
+            private Argmaxf New(Entity expression, Entity var, Entity over) =>
+                ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var) && ReferenceEquals(Over, over)
+                ? this : new(expression, var, over) { Codomain = Codomain };
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) =>
+                func(New(Expression.Replace(func), Var, Over.Replace(func)));
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Over };
+        }
+
+        /// <summary>
+        /// The set of points at which an expression takes its smallest value over a set:
+        /// <c>argmin(f(t), t in S)</c>. See <see cref="Maximumf"/>.
+        /// </summary>
+        public sealed partial record Argminf(Entity Expression, Entity Var, Entity Over) : CalculusOperator(Expression, Var)
+        {
+            /// <summary>The set the variable ranges over.</summary>
+            public Entity Over { get; init; } = Binding.Of(Var).In(Over);
+
+            private Argminf New(Entity expression, Entity var, Entity over) =>
+                ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var) && ReferenceEquals(Over, over)
+                ? this : new(expression, var, over) { Codomain = Codomain };
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) =>
+                func(New(Expression.Replace(func), Var, Over.Replace(func)));
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Over };
+        }
     }
 }

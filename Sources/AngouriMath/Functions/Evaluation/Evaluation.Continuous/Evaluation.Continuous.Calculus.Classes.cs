@@ -176,6 +176,38 @@ namespace AngouriMath
         }
 
 
+        partial record Maximumf
+        {
+            private protected override Entity IntrinsicCondition => Boolean.True;
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => Functions.ExtremumOverSet.Value(Expression, Var, Over, largest: true) ?? this;
+        }
+
+        partial record Minimumf
+        {
+            private protected override Entity IntrinsicCondition => Boolean.True;
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => Functions.ExtremumOverSet.Value(Expression, Var, Over, largest: false) ?? this;
+        }
+
+        partial record Argmaxf
+        {
+            private protected override Entity IntrinsicCondition => Boolean.True;
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => Functions.ExtremumOverSet.Points(Expression, Var, Over, largest: true) ?? this;
+        }
+
+        partial record Argminf
+        {
+            private protected override Entity IntrinsicCondition => Boolean.True;
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => Functions.ExtremumOverSet.Points(Expression, Var, Over, largest: false) ?? this;
+        }
+
         // TODO: rewrite this part too
         public partial record Summationf
         {

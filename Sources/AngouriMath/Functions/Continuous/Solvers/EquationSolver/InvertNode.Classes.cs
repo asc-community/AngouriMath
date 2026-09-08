@@ -237,6 +237,31 @@ namespace AngouriMath
                 : Enumerable.Empty<Entity>();
         }
 
+        partial record Maximumf
+        {
+            // The unknown sits under a binder; see Summationf below.
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
+                Enumerable.Empty<Entity>();
+        }
+
+        partial record Minimumf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
+                Enumerable.Empty<Entity>();
+        }
+
+        partial record Argmaxf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
+                Enumerable.Empty<Entity>();
+        }
+
+        partial record Argminf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
+                Enumerable.Empty<Entity>();
+        }
+
         partial record Summationf
         {
             // The unknown sits under a binder, and inverting would have to solve for it inside a
