@@ -3,8 +3,10 @@
 For AI agents working on AngouriMath. Humans: [CONTRIBUTING.md](CONTRIBUTING.md) is yours, and
 everything below applies to you too.
 
-AngouriMath is a computer algebra system. The thing being built is *mathematics*, and the code is
-how it is expressed. Read this as instructions for doing mathematics well, using C# and F#.
+AngouriMath is a Math OS in the making — [#746](https://github.com/asc-community/AngouriMath/issues/746)
+says what that means — of which the computer algebra system is the part that exists. The thing being
+built is *mathematics*, and the code is how it is expressed. Read this as instructions for doing
+mathematics well, using C# and F#.
 
 ## The one rule everything else follows from
 
@@ -82,6 +84,21 @@ needed three branches on the sign of `a`; the answer is the single interval `[-|
 `min(p, q)` is `(p + q - |p - q|)/2` and `max(p, q)` is `(p + q + |p - q|)/2`. One interval, right
 for either sign and for `a = 0`, and it collapses to exactly the old output when the roots are
 concrete. Enumerating cases is usually a sign that an identity has been missed.
+
+### "Not a CAS operation" is not a reason either
+
+This is a Math OS ([#746](https://github.com/asc-community/AngouriMath/issues/746)), not a computer
+algebra system that happens to do calculus. A question is not out of scope because its notation is
+statistical, combinatorial, number-theoretic or about a sequence: an expectation over a distribution,
+a probability of an event, a recurrence and the limit of the sequence it defines, a divisibility, a
+count of the members of a set, an extremum over an interval, the inverse of a named function. Each
+of those is mathematical notation with a definition, and the definition is what to fit as a node —
+the closest symbol the mathematics already uses, not an English word and not a note saying the
+library does not do that kind of thing. `sum` and `integral` are binders that reduce to arithmetic;
+`E[f(X)]` for `X ~ U(0, 1)` reduces to an integral the same way, and a node that reduces is a node
+worth having. Where the reduction is a theorem rather than a computation, say which theorem and
+what the node would need to state it, and leave the answer unevaluated rather than absent.
+[#1212](https://github.com/asc-community/AngouriMath/issues/1212) is where this was said.
 
 ## Output has a contract too
 
