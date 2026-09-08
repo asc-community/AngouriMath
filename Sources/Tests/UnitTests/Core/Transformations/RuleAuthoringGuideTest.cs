@@ -79,7 +79,7 @@ namespace AngouriMath.Tests.Core.Transformations
 
         [Fact]
         public void ThePatternLanguage()
-            => Stated(45, MatchPattern.BuildableNodeTypes.Count, "the number of buildable node types");
+            => Stated(46, MatchPattern.BuildableNodeTypes.Count, "the number of buildable node types");
 
         [Fact]
         public void ReplacementAPatternOrCode()

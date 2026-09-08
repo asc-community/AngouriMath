@@ -525,6 +525,14 @@ namespace AngouriMath
             internal override Domain DefaultCodomain => Domain.Boolean;
         }
 
+        partial record Cardf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Integer;
+            /// <inheritdoc/>
+            internal override Domain DefaultCodomain => Domain.Integer;
+        }
+
         partial record Phif
         {
             /// <inheritdoc/>

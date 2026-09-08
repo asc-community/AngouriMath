@@ -642,6 +642,15 @@ namespace AngouriMath
                 => Enumerable.Empty<Entity>();
         }
 
+        partial record Cardf
+        {
+            // card(S) = n has every set of n elements for its solutions, which is not something
+            // the inverter can hand back.
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotSufficientlySupportedException(
+                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
+        }
+
         partial record Dividesf
         {
             // (a divides x) = value has the multiples of a for its solutions -- a set, which the

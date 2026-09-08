@@ -401,5 +401,30 @@ namespace AngouriMath
         }
         #endregion
 
+        #region Sets
+        /// <summary>
+        /// This node represents the cardinality of a set: <c>card(S)</c> is the number of
+        /// elements of <c>S</c>. Counted for a finite set whose elements are numbers, and for
+        /// an interval whose ends are; left as written for an infinite set, which has a
+        /// cardinality this library has no number for, and for a set whose elements are not
+        /// yet known to be distinct.
+        /// https://github.com/asc-community/AngouriMath/issues/1212
+        /// </summary>
+        public sealed partial record Cardf(Entity Argument) : Function, IUnaryNode
+        {
+            /// <inheritdoc/>
+            public Entity NodeChild => Argument;
+
+            internal Cardf New(Entity argument)
+                   => ReferenceEquals(argument, Argument) ? this : new(argument) { Codomain = Codomain };
+
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Argument };
+        }
+        #endregion
+
     }
 }

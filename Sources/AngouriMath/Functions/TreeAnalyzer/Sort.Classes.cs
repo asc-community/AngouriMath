@@ -422,6 +422,11 @@ namespace AngouriMath
                 => level == SortLevel.LOW_LEVEL ? "divides_" : "";
         }
 
+        partial record Cardf
+        {
+            private protected override string SortHashName(SortLevel level) => "card_";
+        }
+
         partial record Providedf
         {
             private protected override string SortHashName(SortLevel level) => "provided_";

@@ -210,5 +210,13 @@ namespace AngouriMath
             // NOTE: \operatorname is used here to distinguish the phi function from variables, consistent with sgn and other functions.
             private protected override string LatexizeNode() => $@"\operatorname{{\varphi}}\left({Argument.Latexize()}\right)";
         }
+
+        partial record Cardf
+        {
+            /// <inheritdoc/>
+            // The prefix `\#`, matching the canonical `#`. Not |S|, whose bars read back as a
+            // modulus, and a modulus of a set is not this.
+            private protected override string LatexizeNode() => $@"\#{Argument.Latexize(Argument.LatexPriority <= LatexPriority)}";
+        }
     }
 }

@@ -284,6 +284,35 @@ namespace AngouriMath
                     (@this, a, b) => ((Dividesf)@this).New(a, b), isExact);
         }
 
+        partial record Cardf
+        {
+            // A cardinality is defined for every set; what it is not is always a number here.
+            private protected override Entity IntrinsicCondition => True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
+                    a => a switch
+                    {
+                        // {x, 1} has two elements unless x is 1, so a set is counted once its
+                        // elements are numbers, which are distinct exactly when unequal.
+                        FiniteSet finite when finite.All(static element => element is Number)
+                            => Integer.Create(finite.Count),
+                        // An interval with numeric ends: one point, or none, is countable; a
+                        // proper interval is not, and there is no number for it here.
+                        Interval { Left: Real left, Right: Real right } interval => left.EDecimal.CompareTo(right.EDecimal) switch
+                        {
+                            > 0 => Integer.Zero,
+                            0 => interval.LeftClosed && interval.RightClosed ? Integer.One : Integer.Zero,
+                            _ => null
+                        },
+                        _ => null
+                    },
+                    // Not propagated into the set: card({1, 2}) is a count of the set, not a
+                    // set of counts.
+                    (@this, a) => ((Cardf)@this).New(a), isExact, propagateSet: false);
+        }
+
         partial record Phif
         {
             // Euler's totient function is defined for all integers in this library.

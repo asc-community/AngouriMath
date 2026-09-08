@@ -476,6 +476,7 @@ namespace AngouriMath.Core.Transformations.Matching
             [typeof(Entity.Roundf)] = (1, static c => new Entity.Roundf(c[0])),
             [typeof(Entity.Factorialf)] = (1, static c => new Entity.Factorialf(c[0])),
             [typeof(Entity.Phif)] = (1, static c => new Entity.Phif(c[0])),
+            [typeof(Entity.Cardf)] = (1, static c => new Entity.Cardf(c[0])),
             [typeof(Entity.Notf)] = (1, static c => new Entity.Notf(c[0])),
             // Arithmetic.
             [typeof(Entity.Sumf)] = (2, static c => new Entity.Sumf(c[0], c[1])),
