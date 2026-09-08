@@ -14,8 +14,61 @@ namespace AngouriMath
     partial record Entity
     {
         /// <summary>Hash that is convenient to sort with</summary>
-        internal string SortHash(SortLevel level) =>
-            SortHashName(level) + string.Join("_", DirectChildren.Select(child => child.SortHash(level)).Where(x => x is not ""));
+        /// <remarks>
+        /// Spelt once per instance and level, as <see cref="InnerSimplified"/> and
+        /// <see cref="SimplifiedRate"/> are computed once. The key of a node is built out of the
+        /// keys of every node below it, and the sort asks for the key of every operand of every
+        /// chain it orders, so without the memo one sort of a tree walked and re-spelt each
+        /// subtree once per ancestor -- and the simplifier sorts what it registers at every pass.
+        /// On <c>SimplifyHard</c> that was 174 MB of one run's 735, some 2.6 MB per sort of a
+        /// tree a few hundred nodes wide. A candidate shares most of its subtrees with the
+        /// candidates before it, and a shared subtree's key is now spelt once.
+        /// <para/>
+        /// Three things about the shape of the memo, each measured. It is one reference per node
+        /// and an array made on the first sort, not a lazy slot per level: three slots cost
+        /// every node some fifty bytes, which the gate saw as +4-6% on every solve and derivative
+        /// entry for a saving only the sort ever sees. It is on the instance and not in a
+        /// dictionary kept for the run: keyed by reference the dictionary saved the same bytes
+        /// and cost a lookup per node per sort, 369 ms against 266 for the same input. And the
+        /// array names its owner, because a <c>with</c> copy -- <see cref="WithCodomain"/>, a
+        /// re-differentiation -- carries the original's fields while a number's key spells its
+        /// codomain: a copy finds an array that is not its own and starts one of its own.
+        /// https://github.com/asc-community/AngouriMath/issues/746
+        /// </remarks>
+        internal string SortHash(SortLevel level)
+        {
+            var cache = sortHashes.Keys;
+            if (cache is null || !ReferenceEquals(cache[Owner], this))
+            {
+                // Two threads may each make one; both are right, and whichever lands stays.
+                cache = new object?[Owner + 1];
+                cache[Owner] = this;
+                sortHashes.Keys = cache;
+            }
+            if (cache[(int)level] is string known)
+                return known;
+            var key = SortHashName(level) + string.Join("_", DirectChildren.Select(child => child.SortHash(level)).Where(x => x is not ""));
+            cache[(int)level] = key;
+            return key;
+        }
+        /// <summary>The slot after the three levels, holding the node the array was made for.</summary>
+        private const int Owner = 3;
+        private SortKeyCache sortHashes;
+
+        /// <summary>
+        /// The keys, behind a struct that is equal to every other, for the reason
+        /// <c>LazyPropertyA</c> is: an <see cref="Entity"/> is a record and compares every
+        /// field, so a bare array here made two equal trees unequal the moment one had been
+        /// sorted -- and the simplifier, which recognises a repeated candidate by equality,
+        /// then never recognised one. Measured: 30 GB and 57 s on <c>SimplifyHard</c>.
+        /// </summary>
+        private struct SortKeyCache : IEquatable<SortKeyCache>
+        {
+            internal object?[]? Keys;
+            public bool Equals(SortKeyCache other) => true;
+            public override bool Equals(object? obj) => obj is SortKeyCache;
+            public override int GetHashCode() => 0;
+        }
         private protected abstract string SortHashName(SortLevel level);
     }
 }
