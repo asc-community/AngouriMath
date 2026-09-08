@@ -651,6 +651,12 @@ namespace AngouriMath
                             => BoundBy(index, body, from, to),
                         Productf(var body, var index, var from, var to)
                             => BoundBy(index, body, from, to),
+                        // An extremum over a set binds the variable that ranges over the set:
+                        // max(t^2 + a, t in [0; 1]) is a function of a alone.
+                        Maximumf(var body, var bound, var over) => BoundBy(bound, body, over),
+                        Minimumf(var body, var bound, var over) => BoundBy(bound, body, over),
+                        Argmaxf(var body, var bound, var over) => BoundBy(bound, body, over),
+                        Argminf(var body, var bound, var over) => BoundBy(bound, body, over),
                         // An integral binds its variable only when it has limits to bind it
                         // between. The indefinite one does not: the antiderivative of t * b over
                         // t is b * t ^ 2 / 2 + C, which is still a function of t. Nor does a

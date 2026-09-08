@@ -45,6 +45,7 @@ read first.
 | | `RewriteRules.Power.Rules.Count` | `35` | `31` |
 | | `RewriteRules.Common.Rules.Count` | `100` | `62` |
 | | `RewriteRules.All.Sum(set => set.Rules.Count)` | `407` | `313` |
+| **Loud** | `"max(x, y in S)".ToEntity()`, and `argmax`/`argmin` of any arguments | `max(x, y in S)` — the two-value max of `x` and the membership statement; `argmax(f, t in S)` was a parse error | `max(f(t), t in S)` reads as the largest value over the set: `max(sin(t)^3 cos(t), t in [0; pi/2])` is `3 sqrt(3) / 16`, and `argmax` and `argmin` are the points where it is taken |
 | **Silent** | `RewriteRules.ExpandFactorialDivisions.Rules[0].Growth` | `Collects` — guessed from string length | `Unknown`; whether it collects depends on the offsets |
 | **Silent** | `RewriteStep.Soundness` on a rewrite whose rule declares a tier — `RewriteRules.SetOperator` on `A /\ A`, and every rewrite of the nineteen sets described from their data form | `SoundUnderAssumptions` — its rule set's tier, which is the minimum over every rule in the set | `Sound` — the rule's own |
 | **Silent** | `DerivationStep.Soundness` | its rule set's tier | the weakest tier any rewrite that actually fired inside the step holds at |
@@ -247,6 +248,38 @@ nested one. There is a test pinning what happens; the cause is not established, 
 suspect was measured and ruled out.
 
 [#717](https://github.com/asc-community/AngouriMath/issues/717).
+
+### The extremum of an expression over a set, as a binder
+
+An expression had no way to name its largest value over a set. `max` and `min` took two values and
+returned the larger or smaller, and `max(f(t), t in S)` parsed as the two-value `max` of `f(t)` and
+the membership statement `t in S` — a category error that stayed unevaluated. `argmax` and `argmin`
+were not functions at all. Four binders now read the second argument as `variable in set` and bind
+the variable over the expression and the set: `Maximumf`, `Minimumf`, `Argmaxf`, `Argminf`, spelt
+`max(f, t in S)`, `min`, `argmax`, `argmin`, printed `\max_{t \in S} f` and
+`\operatorname{argmax}_{t \in S} f` in LaTeX. The two-value `max(a, b)` is untouched, and a second
+argument that is not `variable in set` — `max(x, y)`, or `max(x, 1 in S)` — stays the two-value form.
+
+The value is answered over a finite set of numbers, by evaluating at each and comparing, and over a
+closed interval with numeric ends for an expression whose extrema are all stationary — sums,
+products, whole non-negative powers, sines, cosines, exponentials with a positive base — by
+comparing the closed endpoints with the derivative's zeros inside, a periodic family of them
+enumerated where it lands in the interval. The best candidate is checked against the expression
+sampled along the interval, and the question is left as written where a sample beats it, since the
+solver's list of zeros is not guaranteed complete. An open endpoint is not a candidate, so
+`max(x, x in [0; 1))` has no maximum and stays as written; a symbolic set or end, a pole, a kink,
+and a set with a symbol in it are all left as written. `argmax` and `argmin` return the set of
+points. Question I.6 of [#1212](https://github.com/asc-community/AngouriMath/issues/1212). Both
+columns measured on a build, `27ed5b53` against this change.
+
+| | Was | Is |
+|---|---|---|
+| `"max(sin(t)^3 * cos(t), t in [0; pi/2])".ToEntity().Simplify()` | `max(sin(t)^3 * cos(t), t in [0; pi/2])` — a two-value `max` with a membership statement, unevaluated | `3/16 * sqrt(3)` |
+| `"argmax(sin(t)^3 * cos(t), t in [0; pi/2])".ToEntity()` | a parse error — `argmax` was not a function | `{ pi/3 }` once simplified |
+| `"max(x^3 - 3x, x in [-2; 2])".ToEntity().Simplify()`, and `min` | a two-value `max`/`min` with a membership statement | `2`, `-2` |
+| `"max(x^2, x in { 1, -3, 2 })".ToEntity().Simplify()`, `argmax` of the same | `max(x^2, x in { 1, -3, 2 })` | `9`, `{ -3 }` |
+| `"max(1, 2)".ToEntity().Evaled`, `max(x, y)` | `2`, `max(x, y)` | the same — the two-value form is untouched |
+| `"max(x, x in [0; 1))".ToEntity().Simplify()` | a two-value `max` with a membership statement | left as written — the value at an open end is not attained |
 
 ### A polynomial summand is summed in closed form
 

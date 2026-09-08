@@ -7014,6 +7014,33 @@ namespace AngouriMath
             => new Summationf(expr, var, from, to);
 
         /// <summary>
+        /// The largest value <paramref name="expr"/> takes as <paramref name="var"/> ranges over
+        /// <paramref name="over"/>, written <c>max(expr, var in over)</c>. Answered over a finite
+        /// set of numbers, and over a closed interval with numeric ends for an expression whose
+        /// extrema are all stationary; left as written otherwise, and where the value is not
+        /// attained. https://github.com/asc-community/AngouriMath/issues/1212
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// Console.WriteLine(MathS.Maximum("sin(t)^3 * cos(t)", "t", "[0; pi/2]").Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 3/16 * sqrt(3)
+        /// </code>
+        /// </example>
+        public static Entity Maximum(Entity expr, Entity var, Entity over) => new Maximumf(expr, var, over);
+
+        /// <summary>The smallest value; see <see cref="Maximum"/>.</summary>
+        public static Entity Minimum(Entity expr, Entity var, Entity over) => new Minimumf(expr, var, over);
+
+        /// <summary>The set of points where <see cref="Maximum"/> is taken, written <c>argmax(expr, var in over)</c>.</summary>
+        public static Entity Argmax(Entity expr, Entity var, Entity over) => new Argmaxf(expr, var, over);
+
+        /// <summary>The set of points where <see cref="Minimum"/> is taken, written <c>argmin(expr, var in over)</c>.</summary>
+        public static Entity Argmin(Entity expr, Entity var, Entity over) => new Argminf(expr, var, over);
+
+        /// <summary>
         /// A product of <paramref name="expr"/> as <paramref name="var"/> runs from
         /// <paramref name="from"/> to <paramref name="to"/> inclusive. Mirrors
         /// <see cref="Sum(Entity, Entity, Entity, Entity)"/>, with an empty range multiplying to

@@ -66,6 +66,38 @@ namespace AngouriMath
             }
         }
 
+        public partial record Maximumf
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode() =>
+                @"\max_{" + Var.Latexize() + @" \in " + Over.Latexize() + "} "
+                + Expression.Latexize(Expression.Priority < Priority.Sum);
+        }
+
+        public partial record Minimumf
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode() =>
+                @"\min_{" + Var.Latexize() + @" \in " + Over.Latexize() + "} "
+                + Expression.Latexize(Expression.Priority < Priority.Sum);
+        }
+
+        public partial record Argmaxf
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode() =>
+                @"\operatorname{argmax}_{" + Var.Latexize() + @" \in " + Over.Latexize() + "} "
+                + Expression.Latexize(Expression.Priority < Priority.Sum);
+        }
+
+        public partial record Argminf
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode() =>
+                @"\operatorname{argmin}_{" + Var.Latexize() + @" \in " + Over.Latexize() + "} "
+                + Expression.Latexize(Expression.Priority < Priority.Sum);
+        }
+
         public partial record Summationf
         {
             /// <inheritdoc/>

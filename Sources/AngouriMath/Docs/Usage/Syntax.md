@@ -211,7 +211,9 @@ are otherwise left as written. `gcd` computes over integers and rationals — `g
 `1/6` — and leaves the polynomial case alone.
 
 **Calculus** — `derivative(expr, var, order)`, `integral(expr, var)`,
-`integral(expr, var, from, to)`, `limit(expr, var, dest)`, `limitleft(...)`, `limitright(...)`.
+`integral(expr, var, from, to)`, `limit(expr, var, dest)`, `limitleft(...)`, `limitright(...)`;
+`max(expr, var in set)` and `min` for the extremum of an expression over a set, `argmax` and
+`argmin` for the set of points where it is taken — `max(a, b)` of two values is still the larger.
 
 `derivative` takes an order and `integral` does not: `derivative(f, x, 2)` is the second
 derivative, while `integral`'s third and fourth arguments are the bounds of a definite integral,

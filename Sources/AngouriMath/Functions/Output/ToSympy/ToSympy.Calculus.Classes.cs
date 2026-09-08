@@ -21,6 +21,31 @@ namespace AngouriMath
             internal override string ToSymPy() => $"sympy.integrate({Expression.ToSymPy()}, {(Range is var (from, to) ? $"({Var.ToSymPy()}, {from.ToSymPy()}, {to.ToSymPy()})" : Var.ToSymPy())})";
         }
 
+        public partial record Maximumf
+        {
+            internal override string ToSymPy() =>
+                $"sympy.maximum({Expression.ToSymPy()}, {Var.ToSymPy()}, {Over.ToSymPy()})";
+        }
+
+        public partial record Minimumf
+        {
+            internal override string ToSymPy() =>
+                $"sympy.minimum({Expression.ToSymPy()}, {Var.ToSymPy()}, {Over.ToSymPy()})";
+        }
+
+        public partial record Argmaxf
+        {
+            // SymPy has maximum and minimum but no argmax; the points are not one call.
+            internal override string ToSymPy() =>
+                throw new NotSufficientlySupportedException("SymPy has no argmax; ask for the maximum and solve for where it is taken");
+        }
+
+        public partial record Argminf
+        {
+            internal override string ToSymPy() =>
+                throw new NotSufficientlySupportedException("SymPy has no argmin; ask for the minimum and solve for where it is taken");
+        }
+
         public partial record Summationf
         {
             internal override string ToSymPy() =>
