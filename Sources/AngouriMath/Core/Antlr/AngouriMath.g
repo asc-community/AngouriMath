@@ -312,6 +312,7 @@ atom returns[Entity value]
     | SPECIALSET { $value = Entity.Set.SpecialSet.Create($SPECIALSET.text); }
     | VARIABLE { $value = Entity.Variable.CreateVariableOrConstant($VARIABLE.text); }
     | '(|' expression '|)' { $value = $expression.value.Abs(); }
+    | '#' p = atom { $value = MathS.Sets.Card($p.value); }
 
     | '[' function_arguments ']T' { $value = ParsingHelpers.TryBuildingMatrix($function_arguments.list).T; }
     | '[' function_arguments ']' { $value = ParsingHelpers.TryBuildingMatrix($function_arguments.list); }
@@ -452,6 +453,7 @@ atom returns[Entity value]
     | 'sign(' args = function_arguments ')' { Assert("sign", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
     | 'abs(' args = function_arguments ')' { Assert("abs", 1, $args.list.Count); $value = MathS.Abs($args.list[0]); }
     | 'phi(' args = function_arguments ')' { Assert("phi", 1, $args.list.Count); $value = MathS.NumberTheory.Phi($args.list[0]); }
+    | 'card(' args = function_arguments ')' { Assert("card", 1, $args.list.Count); $value = MathS.Sets.Card($args.list[0]); }
     | 'floor(' args = function_arguments ')' { Assert("floor", 1, $args.list.Count); $value = MathS.Floor($args.list[0]); }
     | 'ceil(' args = function_arguments ')' { Assert("ceil", 1, $args.list.Count); $value = MathS.Ceil($args.list[0]); }
     /* SymPy's spelling, accepted so that an expression copied from there parses. Stringize

@@ -6053,6 +6053,23 @@ namespace AngouriMath
             /// <returns>A <see cref="Set"/> with no elements</returns>
             public static Set Empty => Set.Empty;
 
+            /// <summary>
+            /// The number of elements of a set, written <c>card(S)</c>. Counted for a finite
+            /// set of numbers; left as written for an infinite set.
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine(MathS.Sets.Card(MathS.Sets.Finite(1, 2, 3)).Evaled);
+            /// Console.WriteLine(MathS.Sets.Card(MathS.Sets.R));
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 3
+            /// #RR
+            /// </code>
+            /// </example>
+            public static Entity Card(Entity set) => new Cardf(set);
+
             /// <returns>A set of all Complexes/>s</returns>
             public static Set C => SpecialSet.Create(Domain.Complex);
 

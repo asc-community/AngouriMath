@@ -97,6 +97,17 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        partial record Cardf
+        {
+            /// <inheritdoc/>
+            // Canonical is the prefix `#`; `card( )` is accepted on input. The argument takes
+            // parentheses only where it binds looser than a function call, so `#S`, `#{ 1, 2 }`
+            // and `#(A \/ B)` but `#S` inside `#S + 1`.
+            private protected override string StringizeNode() => $"#{Argument.Stringize(Argument.Priority <= Priority)}";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Signumf
         {
             /// <inheritdoc/>

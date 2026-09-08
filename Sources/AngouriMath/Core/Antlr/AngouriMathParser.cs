@@ -68,8 +68,8 @@ internal partial class AngouriMathParser : Parser {
 		T__131=132, T__132=133, T__133=134, T__134=135, T__135=136, T__136=137, 
 		T__137=138, T__138=139, T__139=140, T__140=141, T__141=142, T__142=143, 
 		T__143=144, T__144=145, T__145=146, T__146=147, T__147=148, T__148=149, 
-		NEWLINE=150, NUMBER=151, SPECIALSET=152, BOOLEAN=153, NAN=154, VARIABLE=155, 
-		COMMENT=156, WS=157;
+		T__149=150, T__150=151, NEWLINE=152, NUMBER=153, SPECIALSET=154, BOOLEAN=155, 
+		NAN=156, VARIABLE=157, COMMENT=158, WS=159;
 	public const int
 		RULE_factorial_expression = 0, RULE_power_list = 1, RULE_power_expression = 2, 
 		RULE_unary_expression = 3, RULE_mult_expression = 4, RULE_sum_expression = 5, 
@@ -93,8 +93,8 @@ internal partial class AngouriMathParser : Parser {
 		"'/\\'", "'unite'", "'\\/'", "'setsubtract'", "'\\'", "'in'", "'divides'", 
 		"'>='", "'<='", "'>'", "'<'", "'='", "'<>'", "'not'", "'and'", "'&'", 
 		"'xor'", "'or'", "'|'", "'implies'", "'->'", "'provided'", "'=>'", "','", 
-		"';'", "':'", "'+oo'", "'-oo'", "'(|'", "'|)'", "'['", "']T'", "']'", 
-		"'('", "')'", "'{'", "'}'", "'log('", "'log10('", "'log2('", "'pow('", 
+		"';'", "':'", "'+oo'", "'-oo'", "'(|'", "'|)'", "'#'", "'['", "']T'", 
+		"']'", "'('", "')'", "'{'", "'}'", "'log('", "'log10('", "'log2('", "'pow('", 
 		"'sqrt('", "'cbrt('", "'sqr('", "'ln('", "'exp('", "'sin('", "'cos('", 
 		"'tan('", "'cotan('", "'cot('", "'sec('", "'cosec('", "'csc('", "'arcsin('", 
 		"'arccos('", "'arctan('", "'arccotan('", "'arcsec('", "'arccosec('", "'arccsc('", 
@@ -108,9 +108,9 @@ internal partial class AngouriMathParser : Parser {
 		"'arcosech('", "'arcsch('", "'arccosech('", "'acsch('", "'factorial('", 
 		"'gamma('", "'derivative('", "'integral('", "'limit('", "'limitleft('", 
 		"'limitright('", "'sum('", "'product('", "'signum('", "'sgn('", "'sign('", 
-		"'abs('", "'phi('", "'floor('", "'ceil('", "'ceiling('", "'round('", "'min('", 
-		"'max('", "'argmax('", "'argmin('", "'gcd('", "'trunc('", "'lcm('", "'erf('", 
-		"'conjugate('", "'domain('", "'piecewise('", "'apply('", "'lambda('", 
+		"'abs('", "'phi('", "'card('", "'floor('", "'ceil('", "'ceiling('", "'round('", 
+		"'min('", "'max('", "'argmax('", "'argmin('", "'gcd('", "'trunc('", "'lcm('", 
+		"'erf('", "'conjugate('", "'domain('", "'piecewise('", "'apply('", "'lambda('", 
 		null, null, null, null, "'NaN'"
 	};
 	private static readonly string[] _SymbolicNames = {
@@ -126,7 +126,7 @@ internal partial class AngouriMathParser : Parser {
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, null, null, null, null, null, null, null, null, null, null, null, 
-		null, null, null, null, null, null, "NEWLINE", "NUMBER", "SPECIALSET", 
+		null, null, null, null, null, null, null, null, "NEWLINE", "NUMBER", "SPECIALSET", 
 		"BOOLEAN", "NAN", "VARIABLE", "COMMENT", "WS"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
@@ -1713,7 +1713,7 @@ internal partial class AngouriMathParser : Parser {
 			State = 312;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & -47588233445352L) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & -1L) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & 264241151L) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & -94867233439720L) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & -1L) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & 1056964607L) != 0)) {
 				{
 				State = 301;
 				_localctx.e = expression();
@@ -1868,6 +1868,7 @@ internal partial class AngouriMathParser : Parser {
 		public IToken _SPECIALSET;
 		public IToken _VARIABLE;
 		public ExpressionContext _expression;
+		public AtomContext p;
 		public Function_argumentsContext _function_arguments;
 		public Interval_argumentsContext _interval_arguments;
 		public Cset_argumentsContext cset_args;
@@ -1879,6 +1880,9 @@ internal partial class AngouriMathParser : Parser {
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode VARIABLE() { return GetToken(AngouriMathParser.VARIABLE, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ExpressionContext expression() {
 			return GetRuleContext<ExpressionContext>(0);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public AtomContext atom() {
+			return GetRuleContext<AtomContext>(0);
 		}
 		[System.Diagnostics.DebuggerNonUserCode] public Function_argumentsContext function_arguments() {
 			return GetRuleContext<Function_argumentsContext>(0);
@@ -1911,7 +1915,7 @@ internal partial class AngouriMathParser : Parser {
 		AtomContext _localctx = new AtomContext(Context, State);
 		EnterRule(_localctx, 40, RULE_atom);
 		try {
-			State = 910;
+			State = 919;
 			ErrorHandler.Sync(this);
 			switch ( Interpreter.AdaptivePredict(TokenStream,32,Context) ) {
 			case 1:
@@ -1988,1017 +1992,1027 @@ internal partial class AngouriMathParser : Parser {
 				State = 345;
 				Match(T__38);
 				State = 346;
-				_localctx._function_arguments = function_arguments();
-				State = 347;
-				Match(T__39);
-				 _localctx.value =  ParsingHelpers.TryBuildingMatrix(_localctx._function_arguments.list).T; 
+				_localctx.p = atom();
+				 _localctx.value =  MathS.Sets.Card(_localctx.p.value); 
 				}
 				break;
 			case 10:
 				EnterOuterAlt(_localctx, 10);
 				{
+				State = 349;
+				Match(T__39);
 				State = 350;
-				Match(T__38);
-				State = 351;
 				_localctx._function_arguments = function_arguments();
-				State = 352;
+				State = 351;
 				Match(T__40);
-				 _localctx.value =  ParsingHelpers.TryBuildingMatrix(_localctx._function_arguments.list); 
+				 _localctx.value =  ParsingHelpers.TryBuildingMatrix(_localctx._function_arguments.list).T; 
 				}
 				break;
 			case 11:
 				EnterOuterAlt(_localctx, 11);
 				{
+				State = 354;
+				Match(T__39);
 				State = 355;
-				Match(T__41);
+				_localctx._function_arguments = function_arguments();
 				State = 356;
-				_localctx._interval_arguments = interval_arguments();
-				State = 357;
-				Match(T__42);
-				 _localctx.value =  new Entity.Set.Interval(_localctx._interval_arguments.couple.from, false, _localctx._interval_arguments.couple.to, false); 
+				Match(T__41);
+				 _localctx.value =  ParsingHelpers.TryBuildingMatrix(_localctx._function_arguments.list); 
 				}
 				break;
 			case 12:
 				EnterOuterAlt(_localctx, 12);
 				{
-				State = 360;
-				Match(T__38);
-				State = 361;
-				_localctx._interval_arguments = interval_arguments();
-				State = 362;
+				State = 359;
 				Match(T__42);
-				 _localctx.value =  new Entity.Set.Interval(_localctx._interval_arguments.couple.from, true, _localctx._interval_arguments.couple.to, false); 
+				State = 360;
+				_localctx._interval_arguments = interval_arguments();
+				State = 361;
+				Match(T__43);
+				 _localctx.value =  new Entity.Set.Interval(_localctx._interval_arguments.couple.from, false, _localctx._interval_arguments.couple.to, false); 
 				}
 				break;
 			case 13:
 				EnterOuterAlt(_localctx, 13);
 				{
+				State = 364;
+				Match(T__39);
 				State = 365;
-				Match(T__38);
-				State = 366;
 				_localctx._interval_arguments = interval_arguments();
-				State = 367;
-				Match(T__40);
-				 _localctx.value =  new Entity.Set.Interval(_localctx._interval_arguments.couple.from, true, _localctx._interval_arguments.couple.to, true); 
+				State = 366;
+				Match(T__43);
+				 _localctx.value =  new Entity.Set.Interval(_localctx._interval_arguments.couple.from, true, _localctx._interval_arguments.couple.to, false); 
 				}
 				break;
 			case 14:
 				EnterOuterAlt(_localctx, 14);
 				{
+				State = 369;
+				Match(T__39);
 				State = 370;
-				Match(T__41);
-				State = 371;
 				_localctx._interval_arguments = interval_arguments();
-				State = 372;
-				Match(T__40);
-				 _localctx.value =  new Entity.Set.Interval(_localctx._interval_arguments.couple.from, false, _localctx._interval_arguments.couple.to, true); 
+				State = 371;
+				Match(T__41);
+				 _localctx.value =  new Entity.Set.Interval(_localctx._interval_arguments.couple.from, true, _localctx._interval_arguments.couple.to, true); 
 				}
 				break;
 			case 15:
 				EnterOuterAlt(_localctx, 15);
 				{
-				State = 375;
-				Match(T__41);
-				State = 376;
-				_localctx._expression = expression();
-				State = 377;
+				State = 374;
 				Match(T__42);
-				 _localctx.value =  _localctx._expression.value; 
+				State = 375;
+				_localctx._interval_arguments = interval_arguments();
+				State = 376;
+				Match(T__41);
+				 _localctx.value =  new Entity.Set.Interval(_localctx._interval_arguments.couple.from, false, _localctx._interval_arguments.couple.to, true); 
 				}
 				break;
 			case 16:
 				EnterOuterAlt(_localctx, 16);
 				{
+				State = 379;
+				Match(T__42);
 				State = 380;
-				Match(T__43);
+				_localctx._expression = expression();
 				State = 381;
-				_localctx.cset_args = cset_arguments();
-				State = 382;
-				Match(T__44);
-				 _localctx.value =  new ConditionalSet(_localctx.cset_args.couple.variable, _localctx.cset_args.couple.predicate); 
+				Match(T__43);
+				 _localctx.value =  _localctx._expression.value; 
 				}
 				break;
 			case 17:
 				EnterOuterAlt(_localctx, 17);
 				{
-				State = 385;
-				Match(T__43);
-				State = 386;
-				_localctx.args = function_arguments();
-				State = 387;
+				State = 384;
 				Match(T__44);
-				 _localctx.value =  new FiniteSet((IEnumerable<Entity>)_localctx.args.list); 
+				State = 385;
+				_localctx.cset_args = cset_arguments();
+				State = 386;
+				Match(T__45);
+				 _localctx.value =  new ConditionalSet(_localctx.cset_args.couple.variable, _localctx.cset_args.couple.predicate); 
 				}
 				break;
 			case 18:
 				EnterOuterAlt(_localctx, 18);
 				{
+				State = 389;
+				Match(T__44);
 				State = 390;
-				Match(T__45);
-				State = 391;
 				_localctx.args = function_arguments();
-				State = 392;
-				Match(T__42);
-				 _localctx.value =  Assert("log", (1, 2), _localctx.args.list.Count) ? MathS.Log(10, _localctx.args.list[0]) : MathS.Log(_localctx.args.list[0], _localctx.args.list[1]); 
+				State = 391;
+				Match(T__45);
+				 _localctx.value =  new FiniteSet((IEnumerable<Entity>)_localctx.args.list); 
 				}
 				break;
 			case 19:
 				EnterOuterAlt(_localctx, 19);
 				{
-				State = 395;
+				State = 394;
 				Match(T__46);
-				State = 396;
+				State = 395;
 				_localctx.args = function_arguments();
-				State = 397;
-				Match(T__42);
-				 Assert("log10", 1, _localctx.args.list.Count); _localctx.value =  MathS.Log(10, _localctx.args.list[0]); 
+				State = 396;
+				Match(T__43);
+				 _localctx.value =  Assert("log", (1, 2), _localctx.args.list.Count) ? MathS.Log(10, _localctx.args.list[0]) : MathS.Log(_localctx.args.list[0], _localctx.args.list[1]); 
 				}
 				break;
 			case 20:
 				EnterOuterAlt(_localctx, 20);
 				{
-				State = 400;
+				State = 399;
 				Match(T__47);
-				State = 401;
+				State = 400;
 				_localctx.args = function_arguments();
-				State = 402;
-				Match(T__42);
-				 Assert("log2", 1, _localctx.args.list.Count); _localctx.value =  MathS.Log(2, _localctx.args.list[0]); 
+				State = 401;
+				Match(T__43);
+				 Assert("log10", 1, _localctx.args.list.Count); _localctx.value =  MathS.Log(10, _localctx.args.list[0]); 
 				}
 				break;
 			case 21:
 				EnterOuterAlt(_localctx, 21);
 				{
-				State = 405;
+				State = 404;
 				Match(T__48);
-				State = 406;
+				State = 405;
 				_localctx.args = function_arguments();
-				State = 407;
-				Match(T__42);
-				 Assert("pow", 2, _localctx.args.list.Count); _localctx.value =  MathS.Pow(_localctx.args.list[0], _localctx.args.list[1]); 
+				State = 406;
+				Match(T__43);
+				 Assert("log2", 1, _localctx.args.list.Count); _localctx.value =  MathS.Log(2, _localctx.args.list[0]); 
 				}
 				break;
 			case 22:
 				EnterOuterAlt(_localctx, 22);
 				{
-				State = 410;
+				State = 409;
 				Match(T__49);
-				State = 411;
+				State = 410;
 				_localctx.args = function_arguments();
-				State = 412;
-				Match(T__42);
-				 Assert("sqrt", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sqrt(_localctx.args.list[0]); 
+				State = 411;
+				Match(T__43);
+				 Assert("pow", 2, _localctx.args.list.Count); _localctx.value =  MathS.Pow(_localctx.args.list[0], _localctx.args.list[1]); 
 				}
 				break;
 			case 23:
 				EnterOuterAlt(_localctx, 23);
 				{
-				State = 415;
+				State = 414;
 				Match(T__50);
-				State = 416;
+				State = 415;
 				_localctx.args = function_arguments();
-				State = 417;
-				Match(T__42);
-				 Assert("cbrt", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cbrt(_localctx.args.list[0]); 
+				State = 416;
+				Match(T__43);
+				 Assert("sqrt", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sqrt(_localctx.args.list[0]); 
 				}
 				break;
 			case 24:
 				EnterOuterAlt(_localctx, 24);
 				{
-				State = 420;
+				State = 419;
 				Match(T__51);
-				State = 421;
+				State = 420;
 				_localctx.args = function_arguments();
-				State = 422;
-				Match(T__42);
-				 Assert("sqr", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sqr(_localctx.args.list[0]); 
+				State = 421;
+				Match(T__43);
+				 Assert("cbrt", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cbrt(_localctx.args.list[0]); 
 				}
 				break;
 			case 25:
 				EnterOuterAlt(_localctx, 25);
 				{
-				State = 425;
+				State = 424;
 				Match(T__52);
-				State = 426;
+				State = 425;
 				_localctx.args = function_arguments();
-				State = 427;
-				Match(T__42);
-				 Assert("ln", 1, _localctx.args.list.Count); _localctx.value =  MathS.Ln(_localctx.args.list[0]); 
+				State = 426;
+				Match(T__43);
+				 Assert("sqr", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sqr(_localctx.args.list[0]); 
 				}
 				break;
 			case 26:
 				EnterOuterAlt(_localctx, 26);
 				{
-				State = 430;
+				State = 429;
 				Match(T__53);
-				State = 431;
+				State = 430;
 				_localctx.args = function_arguments();
-				State = 432;
-				Match(T__42);
-				 Assert("exp", 1, _localctx.args.list.Count); _localctx.value =  MathS.Pow(Entity.Constant.EulerIntrinsic, _localctx.args.list[0]); 
+				State = 431;
+				Match(T__43);
+				 Assert("ln", 1, _localctx.args.list.Count); _localctx.value =  MathS.Ln(_localctx.args.list[0]); 
 				}
 				break;
 			case 27:
 				EnterOuterAlt(_localctx, 27);
 				{
-				State = 435;
+				State = 434;
 				Match(T__54);
-				State = 436;
+				State = 435;
 				_localctx.args = function_arguments();
-				State = 437;
-				Match(T__42);
-				 Assert("sin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sin(_localctx.args.list[0]); 
+				State = 436;
+				Match(T__43);
+				 Assert("exp", 1, _localctx.args.list.Count); _localctx.value =  MathS.Pow(Entity.Constant.EulerIntrinsic, _localctx.args.list[0]); 
 				}
 				break;
 			case 28:
 				EnterOuterAlt(_localctx, 28);
 				{
-				State = 440;
+				State = 439;
 				Match(T__55);
-				State = 441;
+				State = 440;
 				_localctx.args = function_arguments();
-				State = 442;
-				Match(T__42);
-				 Assert("cos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cos(_localctx.args.list[0]); 
+				State = 441;
+				Match(T__43);
+				 Assert("sin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sin(_localctx.args.list[0]); 
 				}
 				break;
 			case 29:
 				EnterOuterAlt(_localctx, 29);
 				{
-				State = 445;
+				State = 444;
 				Match(T__56);
-				State = 446;
+				State = 445;
 				_localctx.args = function_arguments();
-				State = 447;
-				Match(T__42);
-				 Assert("tan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Tan(_localctx.args.list[0]); 
+				State = 446;
+				Match(T__43);
+				 Assert("cos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cos(_localctx.args.list[0]); 
 				}
 				break;
 			case 30:
 				EnterOuterAlt(_localctx, 30);
 				{
-				State = 450;
+				State = 449;
 				Match(T__57);
-				State = 451;
+				State = 450;
 				_localctx.args = function_arguments();
-				State = 452;
-				Match(T__42);
-				 Assert("cotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cotan(_localctx.args.list[0]); 
+				State = 451;
+				Match(T__43);
+				 Assert("tan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Tan(_localctx.args.list[0]); 
 				}
 				break;
 			case 31:
 				EnterOuterAlt(_localctx, 31);
 				{
-				State = 455;
+				State = 454;
 				Match(T__58);
-				State = 456;
+				State = 455;
 				_localctx.args = function_arguments();
-				State = 457;
-				Match(T__42);
+				State = 456;
+				Match(T__43);
 				 Assert("cotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cotan(_localctx.args.list[0]); 
 				}
 				break;
 			case 32:
 				EnterOuterAlt(_localctx, 32);
 				{
-				State = 460;
+				State = 459;
 				Match(T__59);
-				State = 461;
+				State = 460;
 				_localctx.args = function_arguments();
-				State = 462;
-				Match(T__42);
-				 Assert("sec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sec(_localctx.args.list[0]); 
+				State = 461;
+				Match(T__43);
+				 Assert("cotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cotan(_localctx.args.list[0]); 
 				}
 				break;
 			case 33:
 				EnterOuterAlt(_localctx, 33);
 				{
-				State = 465;
+				State = 464;
 				Match(T__60);
-				State = 466;
+				State = 465;
 				_localctx.args = function_arguments();
-				State = 467;
-				Match(T__42);
-				 Assert("cosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cosec(_localctx.args.list[0]); 
+				State = 466;
+				Match(T__43);
+				 Assert("sec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sec(_localctx.args.list[0]); 
 				}
 				break;
 			case 34:
 				EnterOuterAlt(_localctx, 34);
 				{
-				State = 470;
+				State = 469;
 				Match(T__61);
-				State = 471;
+				State = 470;
 				_localctx.args = function_arguments();
-				State = 472;
-				Match(T__42);
+				State = 471;
+				Match(T__43);
 				 Assert("cosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cosec(_localctx.args.list[0]); 
 				}
 				break;
 			case 35:
 				EnterOuterAlt(_localctx, 35);
 				{
-				State = 475;
+				State = 474;
 				Match(T__62);
-				State = 476;
+				State = 475;
 				_localctx.args = function_arguments();
-				State = 477;
-				Match(T__42);
-				 Assert("arcsin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arcsin(_localctx.args.list[0]); 
+				State = 476;
+				Match(T__43);
+				 Assert("cosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cosec(_localctx.args.list[0]); 
 				}
 				break;
 			case 36:
 				EnterOuterAlt(_localctx, 36);
 				{
-				State = 480;
+				State = 479;
 				Match(T__63);
-				State = 481;
+				State = 480;
 				_localctx.args = function_arguments();
-				State = 482;
-				Match(T__42);
-				 Assert("arccos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccos(_localctx.args.list[0]); 
+				State = 481;
+				Match(T__43);
+				 Assert("arcsin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arcsin(_localctx.args.list[0]); 
 				}
 				break;
 			case 37:
 				EnterOuterAlt(_localctx, 37);
 				{
-				State = 485;
+				State = 484;
 				Match(T__64);
-				State = 486;
+				State = 485;
 				_localctx.args = function_arguments();
-				State = 487;
-				Match(T__42);
-				 Assert("arctan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arctan(_localctx.args.list[0]); 
+				State = 486;
+				Match(T__43);
+				 Assert("arccos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccos(_localctx.args.list[0]); 
 				}
 				break;
 			case 38:
 				EnterOuterAlt(_localctx, 38);
 				{
-				State = 490;
+				State = 489;
 				Match(T__65);
-				State = 491;
+				State = 490;
 				_localctx.args = function_arguments();
-				State = 492;
-				Match(T__42);
-				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccotan(_localctx.args.list[0]); 
+				State = 491;
+				Match(T__43);
+				 Assert("arctan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arctan(_localctx.args.list[0]); 
 				}
 				break;
 			case 39:
 				EnterOuterAlt(_localctx, 39);
 				{
-				State = 495;
+				State = 494;
 				Match(T__66);
-				State = 496;
+				State = 495;
 				_localctx.args = function_arguments();
-				State = 497;
-				Match(T__42);
-				 Assert("arcsec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arcsec(_localctx.args.list[0]); 
+				State = 496;
+				Match(T__43);
+				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccotan(_localctx.args.list[0]); 
 				}
 				break;
 			case 40:
 				EnterOuterAlt(_localctx, 40);
 				{
-				State = 500;
+				State = 499;
 				Match(T__67);
-				State = 501;
+				State = 500;
 				_localctx.args = function_arguments();
-				State = 502;
-				Match(T__42);
-				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccosec(_localctx.args.list[0]); 
+				State = 501;
+				Match(T__43);
+				 Assert("arcsec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arcsec(_localctx.args.list[0]); 
 				}
 				break;
 			case 41:
 				EnterOuterAlt(_localctx, 41);
 				{
-				State = 505;
+				State = 504;
 				Match(T__68);
-				State = 506;
+				State = 505;
 				_localctx.args = function_arguments();
-				State = 507;
-				Match(T__42);
+				State = 506;
+				Match(T__43);
 				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccosec(_localctx.args.list[0]); 
 				}
 				break;
 			case 42:
 				EnterOuterAlt(_localctx, 42);
 				{
-				State = 510;
+				State = 509;
 				Match(T__69);
-				State = 511;
+				State = 510;
 				_localctx.args = function_arguments();
-				State = 512;
-				Match(T__42);
+				State = 511;
+				Match(T__43);
 				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccosec(_localctx.args.list[0]); 
 				}
 				break;
 			case 43:
 				EnterOuterAlt(_localctx, 43);
 				{
-				State = 515;
+				State = 514;
 				Match(T__70);
-				State = 516;
+				State = 515;
 				_localctx.args = function_arguments();
-				State = 517;
-				Match(T__42);
-				 Assert("arcsin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arcsin(_localctx.args.list[0]); 
+				State = 516;
+				Match(T__43);
+				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccosec(_localctx.args.list[0]); 
 				}
 				break;
 			case 44:
 				EnterOuterAlt(_localctx, 44);
 				{
-				State = 520;
+				State = 519;
 				Match(T__71);
-				State = 521;
+				State = 520;
 				_localctx.args = function_arguments();
-				State = 522;
-				Match(T__42);
-				 Assert("arccos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccos(_localctx.args.list[0]); 
+				State = 521;
+				Match(T__43);
+				 Assert("arcsin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arcsin(_localctx.args.list[0]); 
 				}
 				break;
 			case 45:
 				EnterOuterAlt(_localctx, 45);
 				{
-				State = 525;
+				State = 524;
 				Match(T__72);
-				State = 526;
+				State = 525;
 				_localctx.args = function_arguments();
-				State = 527;
-				Match(T__42);
-				 Assert("arctan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arctan(_localctx.args.list[0]); 
+				State = 526;
+				Match(T__43);
+				 Assert("arccos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccos(_localctx.args.list[0]); 
 				}
 				break;
 			case 46:
 				EnterOuterAlt(_localctx, 46);
 				{
-				State = 530;
+				State = 529;
 				Match(T__73);
-				State = 531;
+				State = 530;
 				_localctx.args = function_arguments();
-				State = 532;
-				Match(T__42);
-				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccotan(_localctx.args.list[0]); 
+				State = 531;
+				Match(T__43);
+				 Assert("arctan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arctan(_localctx.args.list[0]); 
 				}
 				break;
 			case 47:
 				EnterOuterAlt(_localctx, 47);
 				{
-				State = 535;
+				State = 534;
 				Match(T__74);
-				State = 536;
+				State = 535;
 				_localctx.args = function_arguments();
-				State = 537;
-				Match(T__42);
-				 Assert("arcsec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arcsec(_localctx.args.list[0]); 
+				State = 536;
+				Match(T__43);
+				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccotan(_localctx.args.list[0]); 
 				}
 				break;
 			case 48:
 				EnterOuterAlt(_localctx, 48);
 				{
-				State = 540;
+				State = 539;
 				Match(T__75);
-				State = 541;
+				State = 540;
 				_localctx.args = function_arguments();
-				State = 542;
-				Match(T__42);
-				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccosec(_localctx.args.list[0]); 
+				State = 541;
+				Match(T__43);
+				 Assert("arcsec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arcsec(_localctx.args.list[0]); 
 				}
 				break;
 			case 49:
 				EnterOuterAlt(_localctx, 49);
 				{
-				State = 545;
+				State = 544;
 				Match(T__76);
-				State = 546;
+				State = 545;
 				_localctx.args = function_arguments();
-				State = 547;
-				Match(T__42);
-				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccotan(_localctx.args.list[0]); 
+				State = 546;
+				Match(T__43);
+				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccosec(_localctx.args.list[0]); 
 				}
 				break;
 			case 50:
 				EnterOuterAlt(_localctx, 50);
 				{
-				State = 550;
+				State = 549;
 				Match(T__77);
-				State = 551;
+				State = 550;
 				_localctx.args = function_arguments();
-				State = 552;
-				Match(T__42);
+				State = 551;
+				Match(T__43);
 				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccotan(_localctx.args.list[0]); 
 				}
 				break;
 			case 51:
 				EnterOuterAlt(_localctx, 51);
 				{
-				State = 555;
+				State = 554;
 				Match(T__78);
-				State = 556;
+				State = 555;
 				_localctx.args = function_arguments();
-				State = 557;
-				Match(T__42);
-				 Assert("sin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Sinh(_localctx.args.list[0]); 
+				State = 556;
+				Match(T__43);
+				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccotan(_localctx.args.list[0]); 
 				}
 				break;
 			case 52:
 				EnterOuterAlt(_localctx, 52);
 				{
-				State = 560;
+				State = 559;
 				Match(T__79);
-				State = 561;
+				State = 560;
 				_localctx.args = function_arguments();
-				State = 562;
-				Match(T__42);
+				State = 561;
+				Match(T__43);
 				 Assert("sin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Sinh(_localctx.args.list[0]); 
 				}
 				break;
 			case 53:
 				EnterOuterAlt(_localctx, 53);
 				{
-				State = 565;
+				State = 564;
 				Match(T__80);
-				State = 566;
+				State = 565;
 				_localctx.args = function_arguments();
-				State = 567;
-				Match(T__42);
-				 Assert("cos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cosh(_localctx.args.list[0]); 
+				State = 566;
+				Match(T__43);
+				 Assert("sin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Sinh(_localctx.args.list[0]); 
 				}
 				break;
 			case 54:
 				EnterOuterAlt(_localctx, 54);
 				{
-				State = 570;
+				State = 569;
 				Match(T__81);
-				State = 571;
+				State = 570;
 				_localctx.args = function_arguments();
-				State = 572;
-				Match(T__42);
+				State = 571;
+				Match(T__43);
 				 Assert("cos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cosh(_localctx.args.list[0]); 
 				}
 				break;
 			case 55:
 				EnterOuterAlt(_localctx, 55);
 				{
-				State = 575;
+				State = 574;
 				Match(T__82);
-				State = 576;
+				State = 575;
 				_localctx.args = function_arguments();
-				State = 577;
-				Match(T__42);
-				 Assert("tan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Tanh(_localctx.args.list[0]); 
+				State = 576;
+				Match(T__43);
+				 Assert("cos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cosh(_localctx.args.list[0]); 
 				}
 				break;
 			case 56:
 				EnterOuterAlt(_localctx, 56);
 				{
-				State = 580;
+				State = 579;
 				Match(T__83);
-				State = 581;
+				State = 580;
 				_localctx.args = function_arguments();
-				State = 582;
-				Match(T__42);
+				State = 581;
+				Match(T__43);
 				 Assert("tan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Tanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 57:
 				EnterOuterAlt(_localctx, 57);
 				{
-				State = 585;
+				State = 584;
 				Match(T__84);
-				State = 586;
+				State = 585;
 				_localctx.args = function_arguments();
-				State = 587;
-				Match(T__42);
-				 Assert("cotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cotanh(_localctx.args.list[0]); 
+				State = 586;
+				Match(T__43);
+				 Assert("tan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Tanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 58:
 				EnterOuterAlt(_localctx, 58);
 				{
-				State = 590;
+				State = 589;
 				Match(T__85);
-				State = 591;
+				State = 590;
 				_localctx.args = function_arguments();
-				State = 592;
-				Match(T__42);
+				State = 591;
+				Match(T__43);
 				 Assert("cotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cotanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 59:
 				EnterOuterAlt(_localctx, 59);
 				{
-				State = 595;
+				State = 594;
 				Match(T__86);
-				State = 596;
+				State = 595;
 				_localctx.args = function_arguments();
-				State = 597;
-				Match(T__42);
+				State = 596;
+				Match(T__43);
 				 Assert("cotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cotanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 60:
 				EnterOuterAlt(_localctx, 60);
 				{
-				State = 600;
+				State = 599;
 				Match(T__87);
-				State = 601;
+				State = 600;
 				_localctx.args = function_arguments();
-				State = 602;
-				Match(T__42);
-				 Assert("sec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Sech(_localctx.args.list[0]); 
+				State = 601;
+				Match(T__43);
+				 Assert("cotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cotanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 61:
 				EnterOuterAlt(_localctx, 61);
 				{
-				State = 605;
+				State = 604;
 				Match(T__88);
-				State = 606;
+				State = 605;
 				_localctx.args = function_arguments();
-				State = 607;
-				Match(T__42);
+				State = 606;
+				Match(T__43);
 				 Assert("sec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Sech(_localctx.args.list[0]); 
 				}
 				break;
 			case 62:
 				EnterOuterAlt(_localctx, 62);
 				{
-				State = 610;
+				State = 609;
 				Match(T__89);
-				State = 611;
+				State = 610;
 				_localctx.args = function_arguments();
-				State = 612;
-				Match(T__42);
-				 Assert("cosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cosech(_localctx.args.list[0]); 
+				State = 611;
+				Match(T__43);
+				 Assert("sec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Sech(_localctx.args.list[0]); 
 				}
 				break;
 			case 63:
 				EnterOuterAlt(_localctx, 63);
 				{
-				State = 615;
+				State = 614;
 				Match(T__90);
-				State = 616;
+				State = 615;
 				_localctx.args = function_arguments();
-				State = 617;
-				Match(T__42);
+				State = 616;
+				Match(T__43);
 				 Assert("cosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cosech(_localctx.args.list[0]); 
 				}
 				break;
 			case 64:
 				EnterOuterAlt(_localctx, 64);
 				{
-				State = 620;
+				State = 619;
 				Match(T__91);
-				State = 621;
+				State = 620;
 				_localctx.args = function_arguments();
-				State = 622;
-				Match(T__42);
-				 Assert("arcsin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arsinh(_localctx.args.list[0]); 
+				State = 621;
+				Match(T__43);
+				 Assert("cosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cosech(_localctx.args.list[0]); 
 				}
 				break;
 			case 65:
 				EnterOuterAlt(_localctx, 65);
 				{
-				State = 625;
+				State = 624;
 				Match(T__92);
-				State = 626;
+				State = 625;
 				_localctx.args = function_arguments();
-				State = 627;
-				Match(T__42);
+				State = 626;
+				Match(T__43);
 				 Assert("arcsin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arsinh(_localctx.args.list[0]); 
 				}
 				break;
 			case 66:
 				EnterOuterAlt(_localctx, 66);
 				{
-				State = 630;
+				State = 629;
 				Match(T__93);
-				State = 631;
+				State = 630;
 				_localctx.args = function_arguments();
-				State = 632;
-				Match(T__42);
+				State = 631;
+				Match(T__43);
 				 Assert("arcsin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arsinh(_localctx.args.list[0]); 
 				}
 				break;
 			case 67:
 				EnterOuterAlt(_localctx, 67);
 				{
-				State = 635;
+				State = 634;
 				Match(T__94);
-				State = 636;
+				State = 635;
 				_localctx.args = function_arguments();
-				State = 637;
-				Match(T__42);
-				 throw new UnrecognizedFunctionParseException("there is no function arcsinh: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic sine is arsinh, asinh or arsh"); 
+				State = 636;
+				Match(T__43);
+				 Assert("arcsin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arsinh(_localctx.args.list[0]); 
 				}
 				break;
 			case 68:
 				EnterOuterAlt(_localctx, 68);
 				{
-				State = 640;
+				State = 639;
 				Match(T__95);
-				State = 641;
+				State = 640;
 				_localctx.args = function_arguments();
-				State = 642;
-				Match(T__42);
-				 Assert("arccos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosh(_localctx.args.list[0]); 
+				State = 641;
+				Match(T__43);
+				 throw new UnrecognizedFunctionParseException("there is no function arcsinh: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic sine is arsinh, asinh or arsh"); 
 				}
 				break;
 			case 69:
 				EnterOuterAlt(_localctx, 69);
 				{
-				State = 645;
+				State = 644;
 				Match(T__96);
-				State = 646;
+				State = 645;
 				_localctx.args = function_arguments();
-				State = 647;
-				Match(T__42);
+				State = 646;
+				Match(T__43);
 				 Assert("arccos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosh(_localctx.args.list[0]); 
 				}
 				break;
 			case 70:
 				EnterOuterAlt(_localctx, 70);
 				{
-				State = 650;
+				State = 649;
 				Match(T__97);
-				State = 651;
+				State = 650;
 				_localctx.args = function_arguments();
-				State = 652;
-				Match(T__42);
+				State = 651;
+				Match(T__43);
 				 Assert("arccos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosh(_localctx.args.list[0]); 
 				}
 				break;
 			case 71:
 				EnterOuterAlt(_localctx, 71);
 				{
-				State = 655;
+				State = 654;
 				Match(T__98);
-				State = 656;
+				State = 655;
 				_localctx.args = function_arguments();
-				State = 657;
-				Match(T__42);
-				 throw new UnrecognizedFunctionParseException("there is no function arccosh: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic cosine is arcosh, acosh or arch"); 
+				State = 656;
+				Match(T__43);
+				 Assert("arccos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosh(_localctx.args.list[0]); 
 				}
 				break;
 			case 72:
 				EnterOuterAlt(_localctx, 72);
 				{
-				State = 660;
+				State = 659;
 				Match(T__99);
-				State = 661;
+				State = 660;
 				_localctx.args = function_arguments();
-				State = 662;
-				Match(T__42);
-				 Assert("arctan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Artanh(_localctx.args.list[0]); 
+				State = 661;
+				Match(T__43);
+				 throw new UnrecognizedFunctionParseException("there is no function arccosh: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic cosine is arcosh, acosh or arch"); 
 				}
 				break;
 			case 73:
 				EnterOuterAlt(_localctx, 73);
 				{
-				State = 665;
+				State = 664;
 				Match(T__100);
-				State = 666;
+				State = 665;
 				_localctx.args = function_arguments();
-				State = 667;
-				Match(T__42);
+				State = 666;
+				Match(T__43);
 				 Assert("arctan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Artanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 74:
 				EnterOuterAlt(_localctx, 74);
 				{
-				State = 670;
+				State = 669;
 				Match(T__101);
-				State = 671;
+				State = 670;
 				_localctx.args = function_arguments();
-				State = 672;
-				Match(T__42);
+				State = 671;
+				Match(T__43);
 				 Assert("arctan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Artanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 75:
 				EnterOuterAlt(_localctx, 75);
 				{
-				State = 675;
+				State = 674;
 				Match(T__102);
-				State = 676;
+				State = 675;
 				_localctx.args = function_arguments();
-				State = 677;
-				Match(T__42);
-				 throw new UnrecognizedFunctionParseException("there is no function arctanh: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic tangent is artanh, atanh or arth"); 
+				State = 676;
+				Match(T__43);
+				 Assert("arctan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Artanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 76:
 				EnterOuterAlt(_localctx, 76);
 				{
-				State = 680;
+				State = 679;
 				Match(T__103);
-				State = 681;
+				State = 680;
 				_localctx.args = function_arguments();
-				State = 682;
-				Match(T__42);
-				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcotanh(_localctx.args.list[0]); 
+				State = 681;
+				Match(T__43);
+				 throw new UnrecognizedFunctionParseException("there is no function arctanh: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic tangent is artanh, atanh or arth"); 
 				}
 				break;
 			case 77:
 				EnterOuterAlt(_localctx, 77);
 				{
-				State = 685;
+				State = 684;
 				Match(T__104);
-				State = 686;
+				State = 685;
 				_localctx.args = function_arguments();
-				State = 687;
-				Match(T__42);
+				State = 686;
+				Match(T__43);
 				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcotanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 78:
 				EnterOuterAlt(_localctx, 78);
 				{
-				State = 690;
+				State = 689;
 				Match(T__105);
-				State = 691;
+				State = 690;
 				_localctx.args = function_arguments();
-				State = 692;
-				Match(T__42);
+				State = 691;
+				Match(T__43);
 				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcotanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 79:
 				EnterOuterAlt(_localctx, 79);
 				{
-				State = 695;
+				State = 694;
 				Match(T__106);
-				State = 696;
+				State = 695;
 				_localctx.args = function_arguments();
-				State = 697;
-				Match(T__42);
+				State = 696;
+				Match(T__43);
 				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcotanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 80:
 				EnterOuterAlt(_localctx, 80);
 				{
-				State = 700;
+				State = 699;
 				Match(T__107);
-				State = 701;
+				State = 700;
 				_localctx.args = function_arguments();
-				State = 702;
-				Match(T__42);
+				State = 701;
+				Match(T__43);
 				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcotanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 81:
 				EnterOuterAlt(_localctx, 81);
 				{
-				State = 705;
+				State = 704;
 				Match(T__108);
-				State = 706;
+				State = 705;
 				_localctx.args = function_arguments();
-				State = 707;
-				Match(T__42);
-				 throw new UnrecognizedFunctionParseException("there is no function arccotanh: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic cotangent is arcotanh, acotanh, arcoth, acoth or arcth"); 
+				State = 706;
+				Match(T__43);
+				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcotanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 82:
 				EnterOuterAlt(_localctx, 82);
 				{
-				State = 710;
+				State = 709;
 				Match(T__109);
-				State = 711;
+				State = 710;
 				_localctx.args = function_arguments();
-				State = 712;
-				Match(T__42);
-				 Assert("arcsec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arsech(_localctx.args.list[0]); 
+				State = 711;
+				Match(T__43);
+				 throw new UnrecognizedFunctionParseException("there is no function arccotanh: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic cotangent is arcotanh, acotanh, arcoth, acoth or arcth"); 
 				}
 				break;
 			case 83:
 				EnterOuterAlt(_localctx, 83);
 				{
-				State = 715;
+				State = 714;
 				Match(T__110);
-				State = 716;
+				State = 715;
 				_localctx.args = function_arguments();
-				State = 717;
-				Match(T__42);
+				State = 716;
+				Match(T__43);
 				 Assert("arcsec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arsech(_localctx.args.list[0]); 
 				}
 				break;
 			case 84:
 				EnterOuterAlt(_localctx, 84);
 				{
-				State = 720;
+				State = 719;
 				Match(T__111);
-				State = 721;
+				State = 720;
 				_localctx.args = function_arguments();
-				State = 722;
-				Match(T__42);
+				State = 721;
+				Match(T__43);
 				 Assert("arcsec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arsech(_localctx.args.list[0]); 
 				}
 				break;
 			case 85:
 				EnterOuterAlt(_localctx, 85);
 				{
-				State = 725;
+				State = 724;
 				Match(T__112);
-				State = 726;
+				State = 725;
 				_localctx.args = function_arguments();
-				State = 727;
-				Match(T__42);
-				 throw new UnrecognizedFunctionParseException("there is no function arcsech: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic secant is arsech, asech or arsch"); 
+				State = 726;
+				Match(T__43);
+				 Assert("arcsec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arsech(_localctx.args.list[0]); 
 				}
 				break;
 			case 86:
 				EnterOuterAlt(_localctx, 86);
 				{
-				State = 730;
+				State = 729;
 				Match(T__113);
-				State = 731;
+				State = 730;
 				_localctx.args = function_arguments();
-				State = 732;
-				Match(T__42);
-				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosech(_localctx.args.list[0]); 
+				State = 731;
+				Match(T__43);
+				 throw new UnrecognizedFunctionParseException("there is no function arcsech: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic secant is arsech, asech or arsch"); 
 				}
 				break;
 			case 87:
 				EnterOuterAlt(_localctx, 87);
 				{
-				State = 735;
+				State = 734;
 				Match(T__114);
-				State = 736;
+				State = 735;
 				_localctx.args = function_arguments();
-				State = 737;
-				Match(T__42);
+				State = 736;
+				Match(T__43);
 				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosech(_localctx.args.list[0]); 
 				}
 				break;
 			case 88:
 				EnterOuterAlt(_localctx, 88);
 				{
-				State = 740;
+				State = 739;
 				Match(T__115);
-				State = 741;
+				State = 740;
 				_localctx.args = function_arguments();
-				State = 742;
-				Match(T__42);
+				State = 741;
+				Match(T__43);
 				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosech(_localctx.args.list[0]); 
 				}
 				break;
 			case 89:
 				EnterOuterAlt(_localctx, 89);
 				{
-				State = 745;
+				State = 744;
 				Match(T__116);
-				State = 746;
+				State = 745;
 				_localctx.args = function_arguments();
-				State = 747;
-				Match(T__42);
-				 throw new UnrecognizedFunctionParseException("there is no function arccosech: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic cosecant is arcosech, acosech, arcsch or acsch"); 
+				State = 746;
+				Match(T__43);
+				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosech(_localctx.args.list[0]); 
 				}
 				break;
 			case 90:
 				EnterOuterAlt(_localctx, 90);
 				{
-				State = 750;
+				State = 749;
 				Match(T__117);
-				State = 751;
+				State = 750;
 				_localctx.args = function_arguments();
-				State = 752;
-				Match(T__42);
-				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosech(_localctx.args.list[0]); 
+				State = 751;
+				Match(T__43);
+				 throw new UnrecognizedFunctionParseException("there is no function arccosech: the inverse hyperbolic functions are area functions, not arc functions, so the inverse hyperbolic cosecant is arcosech, acosech, arcsch or acsch"); 
 				}
 				break;
 			case 91:
 				EnterOuterAlt(_localctx, 91);
 				{
-				State = 755;
+				State = 754;
 				Match(T__118);
-				State = 756;
+				State = 755;
 				_localctx.args = function_arguments();
-				State = 757;
-				Match(T__42);
-				 Assert("factorial", 1, _localctx.args.list.Count); _localctx.value =  MathS.Factorial(_localctx.args.list[0]); 
+				State = 756;
+				Match(T__43);
+				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosech(_localctx.args.list[0]); 
 				}
 				break;
 			case 92:
 				EnterOuterAlt(_localctx, 92);
 				{
-				State = 760;
+				State = 759;
 				Match(T__119);
-				State = 761;
+				State = 760;
 				_localctx.args = function_arguments();
-				State = 762;
-				Match(T__42);
-				 Assert("gamma", 1, _localctx.args.list.Count); _localctx.value =  MathS.Gamma(_localctx.args.list[0]); 
+				State = 761;
+				Match(T__43);
+				 Assert("factorial", 1, _localctx.args.list.Count); _localctx.value =  MathS.Factorial(_localctx.args.list[0]); 
 				}
 				break;
 			case 93:
 				EnterOuterAlt(_localctx, 93);
 				{
-				State = 765;
+				State = 764;
 				Match(T__120);
-				State = 766;
+				State = 765;
 				_localctx.args = function_arguments();
-				State = 767;
-				Match(T__42);
+				State = 766;
+				Match(T__43);
+				 Assert("gamma", 1, _localctx.args.list.Count); _localctx.value =  MathS.Gamma(_localctx.args.list[0]); 
+				}
+				break;
+			case 94:
+				EnterOuterAlt(_localctx, 94);
+				{
+				State = 769;
+				Match(T__121);
+				State = 770;
+				_localctx.args = function_arguments();
+				State = 771;
+				Match(T__43);
 
 				            if (Assert("derivative", (3, 2), _localctx.args.list.Count))
 				            {
@@ -3012,15 +3026,15 @@ internal partial class AngouriMathParser : Parser {
 				        
 				}
 				break;
-			case 94:
-				EnterOuterAlt(_localctx, 94);
+			case 95:
+				EnterOuterAlt(_localctx, 95);
 				{
-				State = 770;
-				Match(T__121);
-				State = 771;
+				State = 774;
+				Match(T__122);
+				State = 775;
 				_localctx.args = function_arguments();
-				State = 772;
-				Match(T__42);
+				State = 776;
+				Match(T__43);
 				 
 				            if (Assert("integral", (4, 2), _localctx.args.list.Count))
 				            {
@@ -3034,291 +3048,303 @@ internal partial class AngouriMathParser : Parser {
 				        
 				}
 				break;
-			case 95:
-				EnterOuterAlt(_localctx, 95);
-				{
-				State = 775;
-				Match(T__122);
-				State = 776;
-				_localctx.args = function_arguments();
-				State = 777;
-				Match(T__42);
-				 Assert("limit", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2]); 
-				}
-				break;
 			case 96:
 				EnterOuterAlt(_localctx, 96);
 				{
-				State = 780;
+				State = 779;
 				Match(T__123);
-				State = 781;
+				State = 780;
 				_localctx.args = function_arguments();
-				State = 782;
-				Match(T__42);
-				 Assert("limitleft", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], AngouriMath.Core.ApproachFrom.Left); 
+				State = 781;
+				Match(T__43);
+				 Assert("limit", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2]); 
 				}
 				break;
 			case 97:
 				EnterOuterAlt(_localctx, 97);
 				{
-				State = 785;
+				State = 784;
 				Match(T__124);
-				State = 786;
+				State = 785;
 				_localctx.args = function_arguments();
-				State = 787;
-				Match(T__42);
-				 Assert("limitright", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], AngouriMath.Core.ApproachFrom.Right); 
+				State = 786;
+				Match(T__43);
+				 Assert("limitleft", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], AngouriMath.Core.ApproachFrom.Left); 
 				}
 				break;
 			case 98:
 				EnterOuterAlt(_localctx, 98);
 				{
-				State = 790;
+				State = 789;
 				Match(T__125);
-				State = 791;
+				State = 790;
 				_localctx.args = function_arguments();
-				State = 792;
-				Match(T__42);
-				 Assert("sum", 4, _localctx.args.list.Count); _localctx.value =  MathS.Sum(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], _localctx.args.list[3]); 
+				State = 791;
+				Match(T__43);
+				 Assert("limitright", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], AngouriMath.Core.ApproachFrom.Right); 
 				}
 				break;
 			case 99:
 				EnterOuterAlt(_localctx, 99);
 				{
-				State = 795;
+				State = 794;
 				Match(T__126);
-				State = 796;
+				State = 795;
 				_localctx.args = function_arguments();
-				State = 797;
-				Match(T__42);
-				 Assert("product", 4, _localctx.args.list.Count); _localctx.value =  MathS.Product(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], _localctx.args.list[3]); 
+				State = 796;
+				Match(T__43);
+				 Assert("sum", 4, _localctx.args.list.Count); _localctx.value =  MathS.Sum(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], _localctx.args.list[3]); 
 				}
 				break;
 			case 100:
 				EnterOuterAlt(_localctx, 100);
 				{
-				State = 800;
+				State = 799;
 				Match(T__127);
-				State = 801;
+				State = 800;
 				_localctx.args = function_arguments();
-				State = 802;
-				Match(T__42);
-				 Assert("signum", 1, _localctx.args.list.Count); _localctx.value =  MathS.Signum(_localctx.args.list[0]); 
+				State = 801;
+				Match(T__43);
+				 Assert("product", 4, _localctx.args.list.Count); _localctx.value =  MathS.Product(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], _localctx.args.list[3]); 
 				}
 				break;
 			case 101:
 				EnterOuterAlt(_localctx, 101);
 				{
-				State = 805;
+				State = 804;
 				Match(T__128);
-				State = 806;
+				State = 805;
 				_localctx.args = function_arguments();
-				State = 807;
-				Match(T__42);
-				 Assert("sgn", 1, _localctx.args.list.Count); _localctx.value =  MathS.Signum(_localctx.args.list[0]); 
+				State = 806;
+				Match(T__43);
+				 Assert("signum", 1, _localctx.args.list.Count); _localctx.value =  MathS.Signum(_localctx.args.list[0]); 
 				}
 				break;
 			case 102:
 				EnterOuterAlt(_localctx, 102);
 				{
-				State = 810;
+				State = 809;
 				Match(T__129);
-				State = 811;
+				State = 810;
 				_localctx.args = function_arguments();
-				State = 812;
-				Match(T__42);
-				 Assert("sign", 1, _localctx.args.list.Count); _localctx.value =  MathS.Signum(_localctx.args.list[0]); 
+				State = 811;
+				Match(T__43);
+				 Assert("sgn", 1, _localctx.args.list.Count); _localctx.value =  MathS.Signum(_localctx.args.list[0]); 
 				}
 				break;
 			case 103:
 				EnterOuterAlt(_localctx, 103);
 				{
-				State = 815;
+				State = 814;
 				Match(T__130);
-				State = 816;
+				State = 815;
 				_localctx.args = function_arguments();
-				State = 817;
-				Match(T__42);
-				 Assert("abs", 1, _localctx.args.list.Count); _localctx.value =  MathS.Abs(_localctx.args.list[0]); 
+				State = 816;
+				Match(T__43);
+				 Assert("sign", 1, _localctx.args.list.Count); _localctx.value =  MathS.Signum(_localctx.args.list[0]); 
 				}
 				break;
 			case 104:
 				EnterOuterAlt(_localctx, 104);
 				{
-				State = 820;
+				State = 819;
 				Match(T__131);
-				State = 821;
+				State = 820;
 				_localctx.args = function_arguments();
-				State = 822;
-				Match(T__42);
-				 Assert("phi", 1, _localctx.args.list.Count); _localctx.value =  MathS.NumberTheory.Phi(_localctx.args.list[0]); 
+				State = 821;
+				Match(T__43);
+				 Assert("abs", 1, _localctx.args.list.Count); _localctx.value =  MathS.Abs(_localctx.args.list[0]); 
 				}
 				break;
 			case 105:
 				EnterOuterAlt(_localctx, 105);
 				{
-				State = 825;
+				State = 824;
 				Match(T__132);
-				State = 826;
+				State = 825;
 				_localctx.args = function_arguments();
-				State = 827;
-				Match(T__42);
-				 Assert("floor", 1, _localctx.args.list.Count); _localctx.value =  MathS.Floor(_localctx.args.list[0]); 
+				State = 826;
+				Match(T__43);
+				 Assert("phi", 1, _localctx.args.list.Count); _localctx.value =  MathS.NumberTheory.Phi(_localctx.args.list[0]); 
 				}
 				break;
 			case 106:
 				EnterOuterAlt(_localctx, 106);
 				{
-				State = 830;
+				State = 829;
 				Match(T__133);
-				State = 831;
+				State = 830;
 				_localctx.args = function_arguments();
-				State = 832;
-				Match(T__42);
-				 Assert("ceil", 1, _localctx.args.list.Count); _localctx.value =  MathS.Ceil(_localctx.args.list[0]); 
+				State = 831;
+				Match(T__43);
+				 Assert("card", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sets.Card(_localctx.args.list[0]); 
 				}
 				break;
 			case 107:
 				EnterOuterAlt(_localctx, 107);
 				{
-				State = 835;
+				State = 834;
 				Match(T__134);
-				State = 836;
+				State = 835;
 				_localctx.args = function_arguments();
-				State = 837;
-				Match(T__42);
-				 Assert("ceiling", 1, _localctx.args.list.Count); _localctx.value =  MathS.Ceil(_localctx.args.list[0]); 
+				State = 836;
+				Match(T__43);
+				 Assert("floor", 1, _localctx.args.list.Count); _localctx.value =  MathS.Floor(_localctx.args.list[0]); 
 				}
 				break;
 			case 108:
 				EnterOuterAlt(_localctx, 108);
 				{
-				State = 840;
+				State = 839;
 				Match(T__135);
-				State = 841;
+				State = 840;
 				_localctx.args = function_arguments();
-				State = 842;
-				Match(T__42);
-				 Assert("round", 1, _localctx.args.list.Count); _localctx.value =  MathS.Round(_localctx.args.list[0]); 
+				State = 841;
+				Match(T__43);
+				 Assert("ceil", 1, _localctx.args.list.Count); _localctx.value =  MathS.Ceil(_localctx.args.list[0]); 
 				}
 				break;
 			case 109:
 				EnterOuterAlt(_localctx, 109);
 				{
-				State = 845;
+				State = 844;
 				Match(T__136);
-				State = 846;
+				State = 845;
 				_localctx.args = function_arguments();
-				State = 847;
-				Match(T__42);
-				 AssertAtLeast("min", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Count == 2 && _localctx.args.list[1] is Entity.Set.Inf { Element: Variable } minRange ? MathS.Minimum(_localctx.args.list[0], minRange.Element, minRange.SupSet) : _localctx.args.list.Aggregate((a, b) => MathS.Min(a, b)); 
+				State = 846;
+				Match(T__43);
+				 Assert("ceiling", 1, _localctx.args.list.Count); _localctx.value =  MathS.Ceil(_localctx.args.list[0]); 
 				}
 				break;
 			case 110:
 				EnterOuterAlt(_localctx, 110);
 				{
-				State = 850;
+				State = 849;
 				Match(T__137);
-				State = 851;
+				State = 850;
 				_localctx.args = function_arguments();
-				State = 852;
-				Match(T__42);
-				 AssertAtLeast("max", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Count == 2 && _localctx.args.list[1] is Entity.Set.Inf { Element: Variable } maxRange ? MathS.Maximum(_localctx.args.list[0], maxRange.Element, maxRange.SupSet) : _localctx.args.list.Aggregate((a, b) => MathS.Max(a, b)); 
+				State = 851;
+				Match(T__43);
+				 Assert("round", 1, _localctx.args.list.Count); _localctx.value =  MathS.Round(_localctx.args.list[0]); 
 				}
 				break;
 			case 111:
 				EnterOuterAlt(_localctx, 111);
 				{
-				State = 855;
+				State = 854;
 				Match(T__138);
-				State = 856;
+				State = 855;
 				_localctx.args = function_arguments();
-				State = 857;
-				Match(T__42);
-				 Assert("argmax", 2, _localctx.args.list.Count); _localctx.value =  _localctx.args.list[1] is Entity.Set.Inf { Element: Variable } argmaxRange ? MathS.Argmax(_localctx.args.list[0], argmaxRange.Element, argmaxRange.SupSet) : throw new InvalidArgumentParseException("argmax expects its second argument to say which variable ranges over which set, as in argmax(f(t), t in S)"); 
+				State = 856;
+				Match(T__43);
+				 AssertAtLeast("min", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Count == 2 && _localctx.args.list[1] is Entity.Set.Inf { Element: Variable } minRange ? MathS.Minimum(_localctx.args.list[0], minRange.Element, minRange.SupSet) : _localctx.args.list.Aggregate((a, b) => MathS.Min(a, b)); 
 				}
 				break;
 			case 112:
 				EnterOuterAlt(_localctx, 112);
 				{
-				State = 860;
+				State = 859;
 				Match(T__139);
-				State = 861;
+				State = 860;
 				_localctx.args = function_arguments();
-				State = 862;
-				Match(T__42);
-				 Assert("argmin", 2, _localctx.args.list.Count); _localctx.value =  _localctx.args.list[1] is Entity.Set.Inf { Element: Variable } argminRange ? MathS.Argmin(_localctx.args.list[0], argminRange.Element, argminRange.SupSet) : throw new InvalidArgumentParseException("argmin expects its second argument to say which variable ranges over which set, as in argmin(f(t), t in S)"); 
+				State = 861;
+				Match(T__43);
+				 AssertAtLeast("max", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Count == 2 && _localctx.args.list[1] is Entity.Set.Inf { Element: Variable } maxRange ? MathS.Maximum(_localctx.args.list[0], maxRange.Element, maxRange.SupSet) : _localctx.args.list.Aggregate((a, b) => MathS.Max(a, b)); 
 				}
 				break;
 			case 113:
 				EnterOuterAlt(_localctx, 113);
 				{
-				State = 865;
+				State = 864;
 				Match(T__140);
-				State = 866;
+				State = 865;
 				_localctx.args = function_arguments();
-				State = 867;
-				Match(T__42);
-				 AssertAtLeast("gcd", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Aggregate((a, b) => MathS.Gcd(a, b)); 
+				State = 866;
+				Match(T__43);
+				 Assert("argmax", 2, _localctx.args.list.Count); _localctx.value =  _localctx.args.list[1] is Entity.Set.Inf { Element: Variable } argmaxRange ? MathS.Argmax(_localctx.args.list[0], argmaxRange.Element, argmaxRange.SupSet) : throw new InvalidArgumentParseException("argmax expects its second argument to say which variable ranges over which set, as in argmax(f(t), t in S)"); 
 				}
 				break;
 			case 114:
 				EnterOuterAlt(_localctx, 114);
 				{
-				State = 870;
+				State = 869;
 				Match(T__141);
-				State = 871;
+				State = 870;
 				_localctx.args = function_arguments();
-				State = 872;
-				Match(T__42);
-				 _localctx.value =  NotImplementedFunction("trunc", "rounding functions"); 
+				State = 871;
+				Match(T__43);
+				 Assert("argmin", 2, _localctx.args.list.Count); _localctx.value =  _localctx.args.list[1] is Entity.Set.Inf { Element: Variable } argminRange ? MathS.Argmin(_localctx.args.list[0], argminRange.Element, argminRange.SupSet) : throw new InvalidArgumentParseException("argmin expects its second argument to say which variable ranges over which set, as in argmin(f(t), t in S)"); 
 				}
 				break;
 			case 115:
 				EnterOuterAlt(_localctx, 115);
 				{
-				State = 875;
+				State = 874;
 				Match(T__142);
-				State = 876;
+				State = 875;
 				_localctx.args = function_arguments();
-				State = 877;
-				Match(T__42);
-				 _localctx.value =  NotImplementedFunction("lcm", "least common multiple as a symbolic function"); 
+				State = 876;
+				Match(T__43);
+				 AssertAtLeast("gcd", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Aggregate((a, b) => MathS.Gcd(a, b)); 
 				}
 				break;
 			case 116:
 				EnterOuterAlt(_localctx, 116);
 				{
-				State = 880;
+				State = 879;
 				Match(T__143);
-				State = 881;
+				State = 880;
 				_localctx.args = function_arguments();
-				State = 882;
-				Match(T__42);
-				 _localctx.value =  NotImplementedFunction("erf", "error function"); 
+				State = 881;
+				Match(T__43);
+				 _localctx.value =  NotImplementedFunction("trunc", "rounding functions"); 
 				}
 				break;
 			case 117:
 				EnterOuterAlt(_localctx, 117);
 				{
-				State = 885;
+				State = 884;
 				Match(T__144);
-				State = 886;
+				State = 885;
 				_localctx.args = function_arguments();
-				State = 887;
-				Match(T__42);
-				 _localctx.value =  NotImplementedFunction("conjugate", "complex conjugate as a symbolic function"); 
+				State = 886;
+				Match(T__43);
+				 _localctx.value =  NotImplementedFunction("lcm", "least common multiple as a symbolic function"); 
 				}
 				break;
 			case 118:
 				EnterOuterAlt(_localctx, 118);
 				{
-				State = 890;
+				State = 889;
 				Match(T__145);
-				State = 891;
+				State = 890;
 				_localctx.args = function_arguments();
-				State = 892;
-				Match(T__42);
+				State = 891;
+				Match(T__43);
+				 _localctx.value =  NotImplementedFunction("erf", "error function"); 
+				}
+				break;
+			case 119:
+				EnterOuterAlt(_localctx, 119);
+				{
+				State = 894;
+				Match(T__146);
+				State = 895;
+				_localctx.args = function_arguments();
+				State = 896;
+				Match(T__43);
+				 _localctx.value =  NotImplementedFunction("conjugate", "complex conjugate as a symbolic function"); 
+				}
+				break;
+			case 120:
+				EnterOuterAlt(_localctx, 120);
+				{
+				State = 899;
+				Match(T__147);
+				State = 900;
+				_localctx.args = function_arguments();
+				State = 901;
+				Match(T__43);
 				 
 				            Assert("domain", 2, _localctx.args.list.Count); 
 				            // `Any` is the unrestricted codomain. It is read here rather than lexed as a
@@ -3344,15 +3370,15 @@ internal partial class AngouriMathParser : Parser {
 				        
 				}
 				break;
-			case 119:
-				EnterOuterAlt(_localctx, 119);
+			case 121:
+				EnterOuterAlt(_localctx, 121);
 				{
-				State = 895;
-				Match(T__146);
-				State = 896;
+				State = 904;
+				Match(T__148);
+				State = 905;
 				_localctx.args = function_arguments();
-				State = 897;
-				Match(T__42);
+				State = 906;
+				Match(T__43);
 
 				            var cases = new List<Providedf>();
 				            foreach (var arg in _localctx.args.list)
@@ -3364,15 +3390,15 @@ internal partial class AngouriMathParser : Parser {
 				        
 				}
 				break;
-			case 120:
-				EnterOuterAlt(_localctx, 120);
+			case 122:
+				EnterOuterAlt(_localctx, 122);
 				{
-				State = 900;
-				Match(T__147);
-				State = 901;
+				State = 909;
+				Match(T__149);
+				State = 910;
 				_localctx.args = function_arguments();
-				State = 902;
-				Match(T__42);
+				State = 911;
+				Match(T__43);
 
 				            if (_localctx.args.list.Count < 2)
 				                throw new FunctionArgumentCountException("Should be at least one argument in apply function");
@@ -3380,15 +3406,15 @@ internal partial class AngouriMathParser : Parser {
 				        
 				}
 				break;
-			case 121:
-				EnterOuterAlt(_localctx, 121);
+			case 123:
+				EnterOuterAlt(_localctx, 123);
 				{
-				State = 905;
-				Match(T__148);
-				State = 906;
+				State = 914;
+				Match(T__150);
+				State = 915;
 				_localctx.args = function_arguments();
-				State = 907;
-				Match(T__42);
+				State = 916;
+				Match(T__43);
 
 				            if (_localctx.args.list.Count < 2)
 				                throw new FunctionArgumentCountException("Should be at least two arguments in lambda function");
@@ -3450,9 +3476,9 @@ internal partial class AngouriMathParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 912;
+			State = 921;
 			_localctx._expression = expression();
-			State = 913;
+			State = 922;
 			Match(Eof);
 			 Result = _localctx._expression.value; 
 			}
@@ -3469,7 +3495,7 @@ internal partial class AngouriMathParser : Parser {
 	}
 
 	private static int[] _serializedATN = {
-		4,1,157,917,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,
+		4,1,159,926,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,
 		7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,14,
 		2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,2,20,7,20,2,21,7,21,
 		1,0,1,0,1,0,1,0,1,0,1,0,1,0,3,0,52,8,0,1,1,1,1,1,1,1,1,4,1,58,8,1,11,1,
@@ -3533,259 +3559,262 @@ internal partial class AngouriMathParser : Parser {
 		20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,
 		20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,
 		20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,
-		20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,3,20,911,8,20,1,21,1,21,1,21,
-		1,21,1,21,0,0,22,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,
-		40,42,0,0,1055,0,51,1,0,0,0,2,69,1,0,0,0,4,71,1,0,0,0,6,101,1,0,0,0,8,
-		103,1,0,0,0,10,122,1,0,0,0,12,137,1,0,0,0,14,152,1,0,0,0,16,175,1,0,0,
-		0,18,190,1,0,0,0,20,227,1,0,0,0,22,229,1,0,0,0,24,244,1,0,0,0,26,255,1,
-		0,0,0,28,270,1,0,0,0,30,285,1,0,0,0,32,293,1,0,0,0,34,312,1,0,0,0,36,314,
-		1,0,0,0,38,320,1,0,0,0,40,910,1,0,0,0,42,912,1,0,0,0,44,45,3,40,20,0,45,
-		46,5,1,0,0,46,47,6,0,-1,0,47,52,1,0,0,0,48,49,3,40,20,0,49,50,6,0,-1,0,
-		50,52,1,0,0,0,51,44,1,0,0,0,51,48,1,0,0,0,52,1,1,0,0,0,53,54,5,2,0,0,54,
-		55,3,0,0,0,55,56,6,1,-1,0,56,58,1,0,0,0,57,53,1,0,0,0,58,59,1,0,0,0,59,
-		57,1,0,0,0,59,60,1,0,0,0,60,70,1,0,0,0,61,62,5,2,0,0,62,63,3,6,3,0,63,
-		64,6,1,-1,0,64,66,1,0,0,0,65,61,1,0,0,0,66,67,1,0,0,0,67,65,1,0,0,0,67,
-		68,1,0,0,0,68,70,1,0,0,0,69,57,1,0,0,0,69,65,1,0,0,0,70,3,1,0,0,0,71,72,
-		3,0,0,0,72,76,6,2,-1,0,73,74,3,2,1,0,74,75,6,2,-1,0,75,77,1,0,0,0,76,73,
-		1,0,0,0,76,77,1,0,0,0,77,5,1,0,0,0,78,79,5,3,0,0,79,80,3,4,2,0,80,81,6,
-		3,-1,0,81,87,1,0,0,0,82,83,5,4,0,0,83,84,3,4,2,0,84,85,6,3,-1,0,85,87,
-		1,0,0,0,86,78,1,0,0,0,86,82,1,0,0,0,87,102,1,0,0,0,88,89,5,3,0,0,89,90,
-		3,6,3,0,90,91,6,3,-1,0,91,97,1,0,0,0,92,93,5,4,0,0,93,94,3,6,3,0,94,95,
-		6,3,-1,0,95,97,1,0,0,0,96,88,1,0,0,0,96,92,1,0,0,0,97,102,1,0,0,0,98,99,
-		3,4,2,0,99,100,6,3,-1,0,100,102,1,0,0,0,101,86,1,0,0,0,101,96,1,0,0,0,
-		101,98,1,0,0,0,102,7,1,0,0,0,103,104,3,6,3,0,104,119,6,4,-1,0,105,106,
-		5,5,0,0,106,107,3,6,3,0,107,108,6,4,-1,0,108,118,1,0,0,0,109,110,5,6,0,
-		0,110,111,3,6,3,0,111,112,6,4,-1,0,112,118,1,0,0,0,113,114,5,7,0,0,114,
-		115,3,6,3,0,115,116,6,4,-1,0,116,118,1,0,0,0,117,105,1,0,0,0,117,109,1,
-		0,0,0,117,113,1,0,0,0,118,121,1,0,0,0,119,117,1,0,0,0,119,120,1,0,0,0,
-		120,9,1,0,0,0,121,119,1,0,0,0,122,123,3,8,4,0,123,134,6,5,-1,0,124,125,
-		5,4,0,0,125,126,3,8,4,0,126,127,6,5,-1,0,127,133,1,0,0,0,128,129,5,3,0,
-		0,129,130,3,8,4,0,130,131,6,5,-1,0,131,133,1,0,0,0,132,124,1,0,0,0,132,
-		128,1,0,0,0,133,136,1,0,0,0,134,132,1,0,0,0,134,135,1,0,0,0,135,11,1,0,
-		0,0,136,134,1,0,0,0,137,138,3,10,5,0,138,149,6,6,-1,0,139,140,5,8,0,0,
-		140,141,3,10,5,0,141,142,6,6,-1,0,142,148,1,0,0,0,143,144,5,9,0,0,144,
-		145,3,10,5,0,145,146,6,6,-1,0,146,148,1,0,0,0,147,139,1,0,0,0,147,143,
-		1,0,0,0,148,151,1,0,0,0,149,147,1,0,0,0,149,150,1,0,0,0,150,13,1,0,0,0,
-		151,149,1,0,0,0,152,153,3,12,6,0,153,172,6,7,-1,0,154,155,5,10,0,0,155,
-		156,3,12,6,0,156,157,6,7,-1,0,157,171,1,0,0,0,158,159,5,11,0,0,159,160,
-		3,12,6,0,160,161,6,7,-1,0,161,171,1,0,0,0,162,163,5,12,0,0,163,164,3,12,
-		6,0,164,165,6,7,-1,0,165,171,1,0,0,0,166,167,5,13,0,0,167,168,3,12,6,0,
-		168,169,6,7,-1,0,169,171,1,0,0,0,170,154,1,0,0,0,170,158,1,0,0,0,170,162,
-		1,0,0,0,170,166,1,0,0,0,171,174,1,0,0,0,172,170,1,0,0,0,172,173,1,0,0,
-		0,173,15,1,0,0,0,174,172,1,0,0,0,175,176,3,14,7,0,176,187,6,8,-1,0,177,
-		178,5,14,0,0,178,179,3,14,7,0,179,180,6,8,-1,0,180,186,1,0,0,0,181,182,
-		5,15,0,0,182,183,3,14,7,0,183,184,6,8,-1,0,184,186,1,0,0,0,185,177,1,0,
-		0,0,185,181,1,0,0,0,186,189,1,0,0,0,187,185,1,0,0,0,187,188,1,0,0,0,188,
-		17,1,0,0,0,189,187,1,0,0,0,190,191,3,16,8,0,191,211,6,9,-1,0,192,193,5,
-		16,0,0,193,205,6,9,-1,0,194,195,5,17,0,0,195,205,6,9,-1,0,196,197,5,18,
-		0,0,197,205,6,9,-1,0,198,199,5,19,0,0,199,205,6,9,-1,0,200,201,5,20,0,
-		0,201,205,6,9,-1,0,202,203,5,21,0,0,203,205,6,9,-1,0,204,192,1,0,0,0,204,
-		194,1,0,0,0,204,196,1,0,0,0,204,198,1,0,0,0,204,200,1,0,0,0,204,202,1,
-		0,0,0,205,206,1,0,0,0,206,207,3,16,8,0,207,208,6,9,-1,0,208,210,1,0,0,
-		0,209,204,1,0,0,0,210,213,1,0,0,0,211,209,1,0,0,0,211,212,1,0,0,0,212,
-		214,1,0,0,0,213,211,1,0,0,0,214,215,6,9,-1,0,215,19,1,0,0,0,216,217,5,
-		22,0,0,217,218,3,18,9,0,218,219,6,10,-1,0,219,228,1,0,0,0,220,221,5,22,
-		0,0,221,222,3,20,10,0,222,223,6,10,-1,0,223,228,1,0,0,0,224,225,3,18,9,
-		0,225,226,6,10,-1,0,226,228,1,0,0,0,227,216,1,0,0,0,227,220,1,0,0,0,227,
-		224,1,0,0,0,228,21,1,0,0,0,229,230,3,20,10,0,230,241,6,11,-1,0,231,232,
-		5,23,0,0,232,233,3,20,10,0,233,234,6,11,-1,0,234,240,1,0,0,0,235,236,5,
-		24,0,0,236,237,3,20,10,0,237,238,6,11,-1,0,238,240,1,0,0,0,239,231,1,0,
-		0,0,239,235,1,0,0,0,240,243,1,0,0,0,241,239,1,0,0,0,241,242,1,0,0,0,242,
-		23,1,0,0,0,243,241,1,0,0,0,244,245,3,22,11,0,245,252,6,12,-1,0,246,247,
-		5,25,0,0,247,248,3,22,11,0,248,249,6,12,-1,0,249,251,1,0,0,0,250,246,1,
-		0,0,0,251,254,1,0,0,0,252,250,1,0,0,0,252,253,1,0,0,0,253,25,1,0,0,0,254,
-		252,1,0,0,0,255,256,3,24,12,0,256,267,6,13,-1,0,257,258,5,26,0,0,258,259,
-		3,24,12,0,259,260,6,13,-1,0,260,266,1,0,0,0,261,262,5,27,0,0,262,263,3,
-		24,12,0,263,264,6,13,-1,0,264,266,1,0,0,0,265,257,1,0,0,0,265,261,1,0,
-		0,0,266,269,1,0,0,0,267,265,1,0,0,0,267,268,1,0,0,0,268,27,1,0,0,0,269,
-		267,1,0,0,0,270,271,3,26,13,0,271,282,6,14,-1,0,272,273,5,28,0,0,273,274,
-		3,26,13,0,274,275,6,14,-1,0,275,281,1,0,0,0,276,277,5,29,0,0,277,278,3,
-		26,13,0,278,279,6,14,-1,0,279,281,1,0,0,0,280,272,1,0,0,0,280,276,1,0,
-		0,0,281,284,1,0,0,0,282,280,1,0,0,0,282,283,1,0,0,0,283,29,1,0,0,0,284,
-		282,1,0,0,0,285,286,3,28,14,0,286,291,6,15,-1,0,287,288,5,30,0,0,288,289,
-		3,30,15,0,289,290,6,15,-1,0,290,292,1,0,0,0,291,287,1,0,0,0,291,292,1,
-		0,0,0,292,31,1,0,0,0,293,294,3,30,15,0,294,299,6,16,-1,0,295,296,5,31,
-		0,0,296,297,3,32,16,0,297,298,6,16,-1,0,298,300,1,0,0,0,299,295,1,0,0,
-		0,299,300,1,0,0,0,300,33,1,0,0,0,301,302,3,32,16,0,302,309,6,17,-1,0,303,
-		304,5,32,0,0,304,305,3,32,16,0,305,306,6,17,-1,0,306,308,1,0,0,0,307,303,
-		1,0,0,0,308,311,1,0,0,0,309,307,1,0,0,0,309,310,1,0,0,0,310,313,1,0,0,
-		0,311,309,1,0,0,0,312,301,1,0,0,0,312,313,1,0,0,0,313,35,1,0,0,0,314,315,
-		3,32,16,0,315,316,6,18,-1,0,316,317,5,33,0,0,317,318,3,32,16,0,318,319,
-		6,18,-1,0,319,37,1,0,0,0,320,321,3,32,16,0,321,322,6,19,-1,0,322,323,5,
-		34,0,0,323,324,3,32,16,0,324,325,6,19,-1,0,325,39,1,0,0,0,326,327,5,35,
-		0,0,327,911,6,20,-1,0,328,329,5,36,0,0,329,911,6,20,-1,0,330,331,5,154,
-		0,0,331,911,6,20,-1,0,332,333,5,151,0,0,333,911,6,20,-1,0,334,335,5,153,
-		0,0,335,911,6,20,-1,0,336,337,5,152,0,0,337,911,6,20,-1,0,338,339,5,155,
-		0,0,339,911,6,20,-1,0,340,341,5,37,0,0,341,342,3,32,16,0,342,343,5,38,
-		0,0,343,344,6,20,-1,0,344,911,1,0,0,0,345,346,5,39,0,0,346,347,3,34,17,
-		0,347,348,5,40,0,0,348,349,6,20,-1,0,349,911,1,0,0,0,350,351,5,39,0,0,
-		351,352,3,34,17,0,352,353,5,41,0,0,353,354,6,20,-1,0,354,911,1,0,0,0,355,
-		356,5,42,0,0,356,357,3,36,18,0,357,358,5,43,0,0,358,359,6,20,-1,0,359,
-		911,1,0,0,0,360,361,5,39,0,0,361,362,3,36,18,0,362,363,5,43,0,0,363,364,
-		6,20,-1,0,364,911,1,0,0,0,365,366,5,39,0,0,366,367,3,36,18,0,367,368,5,
-		41,0,0,368,369,6,20,-1,0,369,911,1,0,0,0,370,371,5,42,0,0,371,372,3,36,
-		18,0,372,373,5,41,0,0,373,374,6,20,-1,0,374,911,1,0,0,0,375,376,5,42,0,
-		0,376,377,3,32,16,0,377,378,5,43,0,0,378,379,6,20,-1,0,379,911,1,0,0,0,
-		380,381,5,44,0,0,381,382,3,38,19,0,382,383,5,45,0,0,383,384,6,20,-1,0,
-		384,911,1,0,0,0,385,386,5,44,0,0,386,387,3,34,17,0,387,388,5,45,0,0,388,
-		389,6,20,-1,0,389,911,1,0,0,0,390,391,5,46,0,0,391,392,3,34,17,0,392,393,
-		5,43,0,0,393,394,6,20,-1,0,394,911,1,0,0,0,395,396,5,47,0,0,396,397,3,
-		34,17,0,397,398,5,43,0,0,398,399,6,20,-1,0,399,911,1,0,0,0,400,401,5,48,
-		0,0,401,402,3,34,17,0,402,403,5,43,0,0,403,404,6,20,-1,0,404,911,1,0,0,
-		0,405,406,5,49,0,0,406,407,3,34,17,0,407,408,5,43,0,0,408,409,6,20,-1,
-		0,409,911,1,0,0,0,410,411,5,50,0,0,411,412,3,34,17,0,412,413,5,43,0,0,
-		413,414,6,20,-1,0,414,911,1,0,0,0,415,416,5,51,0,0,416,417,3,34,17,0,417,
-		418,5,43,0,0,418,419,6,20,-1,0,419,911,1,0,0,0,420,421,5,52,0,0,421,422,
-		3,34,17,0,422,423,5,43,0,0,423,424,6,20,-1,0,424,911,1,0,0,0,425,426,5,
-		53,0,0,426,427,3,34,17,0,427,428,5,43,0,0,428,429,6,20,-1,0,429,911,1,
-		0,0,0,430,431,5,54,0,0,431,432,3,34,17,0,432,433,5,43,0,0,433,434,6,20,
-		-1,0,434,911,1,0,0,0,435,436,5,55,0,0,436,437,3,34,17,0,437,438,5,43,0,
-		0,438,439,6,20,-1,0,439,911,1,0,0,0,440,441,5,56,0,0,441,442,3,34,17,0,
-		442,443,5,43,0,0,443,444,6,20,-1,0,444,911,1,0,0,0,445,446,5,57,0,0,446,
-		447,3,34,17,0,447,448,5,43,0,0,448,449,6,20,-1,0,449,911,1,0,0,0,450,451,
-		5,58,0,0,451,452,3,34,17,0,452,453,5,43,0,0,453,454,6,20,-1,0,454,911,
-		1,0,0,0,455,456,5,59,0,0,456,457,3,34,17,0,457,458,5,43,0,0,458,459,6,
-		20,-1,0,459,911,1,0,0,0,460,461,5,60,0,0,461,462,3,34,17,0,462,463,5,43,
-		0,0,463,464,6,20,-1,0,464,911,1,0,0,0,465,466,5,61,0,0,466,467,3,34,17,
-		0,467,468,5,43,0,0,468,469,6,20,-1,0,469,911,1,0,0,0,470,471,5,62,0,0,
-		471,472,3,34,17,0,472,473,5,43,0,0,473,474,6,20,-1,0,474,911,1,0,0,0,475,
-		476,5,63,0,0,476,477,3,34,17,0,477,478,5,43,0,0,478,479,6,20,-1,0,479,
-		911,1,0,0,0,480,481,5,64,0,0,481,482,3,34,17,0,482,483,5,43,0,0,483,484,
-		6,20,-1,0,484,911,1,0,0,0,485,486,5,65,0,0,486,487,3,34,17,0,487,488,5,
-		43,0,0,488,489,6,20,-1,0,489,911,1,0,0,0,490,491,5,66,0,0,491,492,3,34,
-		17,0,492,493,5,43,0,0,493,494,6,20,-1,0,494,911,1,0,0,0,495,496,5,67,0,
-		0,496,497,3,34,17,0,497,498,5,43,0,0,498,499,6,20,-1,0,499,911,1,0,0,0,
-		500,501,5,68,0,0,501,502,3,34,17,0,502,503,5,43,0,0,503,504,6,20,-1,0,
-		504,911,1,0,0,0,505,506,5,69,0,0,506,507,3,34,17,0,507,508,5,43,0,0,508,
-		509,6,20,-1,0,509,911,1,0,0,0,510,511,5,70,0,0,511,512,3,34,17,0,512,513,
-		5,43,0,0,513,514,6,20,-1,0,514,911,1,0,0,0,515,516,5,71,0,0,516,517,3,
-		34,17,0,517,518,5,43,0,0,518,519,6,20,-1,0,519,911,1,0,0,0,520,521,5,72,
-		0,0,521,522,3,34,17,0,522,523,5,43,0,0,523,524,6,20,-1,0,524,911,1,0,0,
-		0,525,526,5,73,0,0,526,527,3,34,17,0,527,528,5,43,0,0,528,529,6,20,-1,
-		0,529,911,1,0,0,0,530,531,5,74,0,0,531,532,3,34,17,0,532,533,5,43,0,0,
-		533,534,6,20,-1,0,534,911,1,0,0,0,535,536,5,75,0,0,536,537,3,34,17,0,537,
-		538,5,43,0,0,538,539,6,20,-1,0,539,911,1,0,0,0,540,541,5,76,0,0,541,542,
-		3,34,17,0,542,543,5,43,0,0,543,544,6,20,-1,0,544,911,1,0,0,0,545,546,5,
-		77,0,0,546,547,3,34,17,0,547,548,5,43,0,0,548,549,6,20,-1,0,549,911,1,
-		0,0,0,550,551,5,78,0,0,551,552,3,34,17,0,552,553,5,43,0,0,553,554,6,20,
-		-1,0,554,911,1,0,0,0,555,556,5,79,0,0,556,557,3,34,17,0,557,558,5,43,0,
-		0,558,559,6,20,-1,0,559,911,1,0,0,0,560,561,5,80,0,0,561,562,3,34,17,0,
-		562,563,5,43,0,0,563,564,6,20,-1,0,564,911,1,0,0,0,565,566,5,81,0,0,566,
-		567,3,34,17,0,567,568,5,43,0,0,568,569,6,20,-1,0,569,911,1,0,0,0,570,571,
-		5,82,0,0,571,572,3,34,17,0,572,573,5,43,0,0,573,574,6,20,-1,0,574,911,
-		1,0,0,0,575,576,5,83,0,0,576,577,3,34,17,0,577,578,5,43,0,0,578,579,6,
-		20,-1,0,579,911,1,0,0,0,580,581,5,84,0,0,581,582,3,34,17,0,582,583,5,43,
-		0,0,583,584,6,20,-1,0,584,911,1,0,0,0,585,586,5,85,0,0,586,587,3,34,17,
-		0,587,588,5,43,0,0,588,589,6,20,-1,0,589,911,1,0,0,0,590,591,5,86,0,0,
-		591,592,3,34,17,0,592,593,5,43,0,0,593,594,6,20,-1,0,594,911,1,0,0,0,595,
-		596,5,87,0,0,596,597,3,34,17,0,597,598,5,43,0,0,598,599,6,20,-1,0,599,
-		911,1,0,0,0,600,601,5,88,0,0,601,602,3,34,17,0,602,603,5,43,0,0,603,604,
-		6,20,-1,0,604,911,1,0,0,0,605,606,5,89,0,0,606,607,3,34,17,0,607,608,5,
-		43,0,0,608,609,6,20,-1,0,609,911,1,0,0,0,610,611,5,90,0,0,611,612,3,34,
-		17,0,612,613,5,43,0,0,613,614,6,20,-1,0,614,911,1,0,0,0,615,616,5,91,0,
-		0,616,617,3,34,17,0,617,618,5,43,0,0,618,619,6,20,-1,0,619,911,1,0,0,0,
-		620,621,5,92,0,0,621,622,3,34,17,0,622,623,5,43,0,0,623,624,6,20,-1,0,
-		624,911,1,0,0,0,625,626,5,93,0,0,626,627,3,34,17,0,627,628,5,43,0,0,628,
-		629,6,20,-1,0,629,911,1,0,0,0,630,631,5,94,0,0,631,632,3,34,17,0,632,633,
-		5,43,0,0,633,634,6,20,-1,0,634,911,1,0,0,0,635,636,5,95,0,0,636,637,3,
-		34,17,0,637,638,5,43,0,0,638,639,6,20,-1,0,639,911,1,0,0,0,640,641,5,96,
-		0,0,641,642,3,34,17,0,642,643,5,43,0,0,643,644,6,20,-1,0,644,911,1,0,0,
-		0,645,646,5,97,0,0,646,647,3,34,17,0,647,648,5,43,0,0,648,649,6,20,-1,
-		0,649,911,1,0,0,0,650,651,5,98,0,0,651,652,3,34,17,0,652,653,5,43,0,0,
-		653,654,6,20,-1,0,654,911,1,0,0,0,655,656,5,99,0,0,656,657,3,34,17,0,657,
-		658,5,43,0,0,658,659,6,20,-1,0,659,911,1,0,0,0,660,661,5,100,0,0,661,662,
-		3,34,17,0,662,663,5,43,0,0,663,664,6,20,-1,0,664,911,1,0,0,0,665,666,5,
-		101,0,0,666,667,3,34,17,0,667,668,5,43,0,0,668,669,6,20,-1,0,669,911,1,
-		0,0,0,670,671,5,102,0,0,671,672,3,34,17,0,672,673,5,43,0,0,673,674,6,20,
-		-1,0,674,911,1,0,0,0,675,676,5,103,0,0,676,677,3,34,17,0,677,678,5,43,
-		0,0,678,679,6,20,-1,0,679,911,1,0,0,0,680,681,5,104,0,0,681,682,3,34,17,
-		0,682,683,5,43,0,0,683,684,6,20,-1,0,684,911,1,0,0,0,685,686,5,105,0,0,
-		686,687,3,34,17,0,687,688,5,43,0,0,688,689,6,20,-1,0,689,911,1,0,0,0,690,
-		691,5,106,0,0,691,692,3,34,17,0,692,693,5,43,0,0,693,694,6,20,-1,0,694,
-		911,1,0,0,0,695,696,5,107,0,0,696,697,3,34,17,0,697,698,5,43,0,0,698,699,
-		6,20,-1,0,699,911,1,0,0,0,700,701,5,108,0,0,701,702,3,34,17,0,702,703,
-		5,43,0,0,703,704,6,20,-1,0,704,911,1,0,0,0,705,706,5,109,0,0,706,707,3,
-		34,17,0,707,708,5,43,0,0,708,709,6,20,-1,0,709,911,1,0,0,0,710,711,5,110,
-		0,0,711,712,3,34,17,0,712,713,5,43,0,0,713,714,6,20,-1,0,714,911,1,0,0,
-		0,715,716,5,111,0,0,716,717,3,34,17,0,717,718,5,43,0,0,718,719,6,20,-1,
-		0,719,911,1,0,0,0,720,721,5,112,0,0,721,722,3,34,17,0,722,723,5,43,0,0,
-		723,724,6,20,-1,0,724,911,1,0,0,0,725,726,5,113,0,0,726,727,3,34,17,0,
-		727,728,5,43,0,0,728,729,6,20,-1,0,729,911,1,0,0,0,730,731,5,114,0,0,731,
-		732,3,34,17,0,732,733,5,43,0,0,733,734,6,20,-1,0,734,911,1,0,0,0,735,736,
-		5,115,0,0,736,737,3,34,17,0,737,738,5,43,0,0,738,739,6,20,-1,0,739,911,
-		1,0,0,0,740,741,5,116,0,0,741,742,3,34,17,0,742,743,5,43,0,0,743,744,6,
-		20,-1,0,744,911,1,0,0,0,745,746,5,117,0,0,746,747,3,34,17,0,747,748,5,
-		43,0,0,748,749,6,20,-1,0,749,911,1,0,0,0,750,751,5,118,0,0,751,752,3,34,
-		17,0,752,753,5,43,0,0,753,754,6,20,-1,0,754,911,1,0,0,0,755,756,5,119,
-		0,0,756,757,3,34,17,0,757,758,5,43,0,0,758,759,6,20,-1,0,759,911,1,0,0,
-		0,760,761,5,120,0,0,761,762,3,34,17,0,762,763,5,43,0,0,763,764,6,20,-1,
-		0,764,911,1,0,0,0,765,766,5,121,0,0,766,767,3,34,17,0,767,768,5,43,0,0,
-		768,769,6,20,-1,0,769,911,1,0,0,0,770,771,5,122,0,0,771,772,3,34,17,0,
-		772,773,5,43,0,0,773,774,6,20,-1,0,774,911,1,0,0,0,775,776,5,123,0,0,776,
-		777,3,34,17,0,777,778,5,43,0,0,778,779,6,20,-1,0,779,911,1,0,0,0,780,781,
-		5,124,0,0,781,782,3,34,17,0,782,783,5,43,0,0,783,784,6,20,-1,0,784,911,
-		1,0,0,0,785,786,5,125,0,0,786,787,3,34,17,0,787,788,5,43,0,0,788,789,6,
-		20,-1,0,789,911,1,0,0,0,790,791,5,126,0,0,791,792,3,34,17,0,792,793,5,
-		43,0,0,793,794,6,20,-1,0,794,911,1,0,0,0,795,796,5,127,0,0,796,797,3,34,
-		17,0,797,798,5,43,0,0,798,799,6,20,-1,0,799,911,1,0,0,0,800,801,5,128,
-		0,0,801,802,3,34,17,0,802,803,5,43,0,0,803,804,6,20,-1,0,804,911,1,0,0,
-		0,805,806,5,129,0,0,806,807,3,34,17,0,807,808,5,43,0,0,808,809,6,20,-1,
-		0,809,911,1,0,0,0,810,811,5,130,0,0,811,812,3,34,17,0,812,813,5,43,0,0,
-		813,814,6,20,-1,0,814,911,1,0,0,0,815,816,5,131,0,0,816,817,3,34,17,0,
-		817,818,5,43,0,0,818,819,6,20,-1,0,819,911,1,0,0,0,820,821,5,132,0,0,821,
-		822,3,34,17,0,822,823,5,43,0,0,823,824,6,20,-1,0,824,911,1,0,0,0,825,826,
-		5,133,0,0,826,827,3,34,17,0,827,828,5,43,0,0,828,829,6,20,-1,0,829,911,
-		1,0,0,0,830,831,5,134,0,0,831,832,3,34,17,0,832,833,5,43,0,0,833,834,6,
-		20,-1,0,834,911,1,0,0,0,835,836,5,135,0,0,836,837,3,34,17,0,837,838,5,
-		43,0,0,838,839,6,20,-1,0,839,911,1,0,0,0,840,841,5,136,0,0,841,842,3,34,
-		17,0,842,843,5,43,0,0,843,844,6,20,-1,0,844,911,1,0,0,0,845,846,5,137,
-		0,0,846,847,3,34,17,0,847,848,5,43,0,0,848,849,6,20,-1,0,849,911,1,0,0,
-		0,850,851,5,138,0,0,851,852,3,34,17,0,852,853,5,43,0,0,853,854,6,20,-1,
-		0,854,911,1,0,0,0,855,856,5,139,0,0,856,857,3,34,17,0,857,858,5,43,0,0,
-		858,859,6,20,-1,0,859,911,1,0,0,0,860,861,5,140,0,0,861,862,3,34,17,0,
-		862,863,5,43,0,0,863,864,6,20,-1,0,864,911,1,0,0,0,865,866,5,141,0,0,866,
-		867,3,34,17,0,867,868,5,43,0,0,868,869,6,20,-1,0,869,911,1,0,0,0,870,871,
-		5,142,0,0,871,872,3,34,17,0,872,873,5,43,0,0,873,874,6,20,-1,0,874,911,
-		1,0,0,0,875,876,5,143,0,0,876,877,3,34,17,0,877,878,5,43,0,0,878,879,6,
-		20,-1,0,879,911,1,0,0,0,880,881,5,144,0,0,881,882,3,34,17,0,882,883,5,
-		43,0,0,883,884,6,20,-1,0,884,911,1,0,0,0,885,886,5,145,0,0,886,887,3,34,
-		17,0,887,888,5,43,0,0,888,889,6,20,-1,0,889,911,1,0,0,0,890,891,5,146,
-		0,0,891,892,3,34,17,0,892,893,5,43,0,0,893,894,6,20,-1,0,894,911,1,0,0,
-		0,895,896,5,147,0,0,896,897,3,34,17,0,897,898,5,43,0,0,898,899,6,20,-1,
-		0,899,911,1,0,0,0,900,901,5,148,0,0,901,902,3,34,17,0,902,903,5,43,0,0,
-		903,904,6,20,-1,0,904,911,1,0,0,0,905,906,5,149,0,0,906,907,3,34,17,0,
-		907,908,5,43,0,0,908,909,6,20,-1,0,909,911,1,0,0,0,910,326,1,0,0,0,910,
-		328,1,0,0,0,910,330,1,0,0,0,910,332,1,0,0,0,910,334,1,0,0,0,910,336,1,
-		0,0,0,910,338,1,0,0,0,910,340,1,0,0,0,910,345,1,0,0,0,910,350,1,0,0,0,
-		910,355,1,0,0,0,910,360,1,0,0,0,910,365,1,0,0,0,910,370,1,0,0,0,910,375,
-		1,0,0,0,910,380,1,0,0,0,910,385,1,0,0,0,910,390,1,0,0,0,910,395,1,0,0,
-		0,910,400,1,0,0,0,910,405,1,0,0,0,910,410,1,0,0,0,910,415,1,0,0,0,910,
-		420,1,0,0,0,910,425,1,0,0,0,910,430,1,0,0,0,910,435,1,0,0,0,910,440,1,
-		0,0,0,910,445,1,0,0,0,910,450,1,0,0,0,910,455,1,0,0,0,910,460,1,0,0,0,
-		910,465,1,0,0,0,910,470,1,0,0,0,910,475,1,0,0,0,910,480,1,0,0,0,910,485,
-		1,0,0,0,910,490,1,0,0,0,910,495,1,0,0,0,910,500,1,0,0,0,910,505,1,0,0,
-		0,910,510,1,0,0,0,910,515,1,0,0,0,910,520,1,0,0,0,910,525,1,0,0,0,910,
-		530,1,0,0,0,910,535,1,0,0,0,910,540,1,0,0,0,910,545,1,0,0,0,910,550,1,
-		0,0,0,910,555,1,0,0,0,910,560,1,0,0,0,910,565,1,0,0,0,910,570,1,0,0,0,
-		910,575,1,0,0,0,910,580,1,0,0,0,910,585,1,0,0,0,910,590,1,0,0,0,910,595,
-		1,0,0,0,910,600,1,0,0,0,910,605,1,0,0,0,910,610,1,0,0,0,910,615,1,0,0,
-		0,910,620,1,0,0,0,910,625,1,0,0,0,910,630,1,0,0,0,910,635,1,0,0,0,910,
-		640,1,0,0,0,910,645,1,0,0,0,910,650,1,0,0,0,910,655,1,0,0,0,910,660,1,
-		0,0,0,910,665,1,0,0,0,910,670,1,0,0,0,910,675,1,0,0,0,910,680,1,0,0,0,
-		910,685,1,0,0,0,910,690,1,0,0,0,910,695,1,0,0,0,910,700,1,0,0,0,910,705,
-		1,0,0,0,910,710,1,0,0,0,910,715,1,0,0,0,910,720,1,0,0,0,910,725,1,0,0,
-		0,910,730,1,0,0,0,910,735,1,0,0,0,910,740,1,0,0,0,910,745,1,0,0,0,910,
-		750,1,0,0,0,910,755,1,0,0,0,910,760,1,0,0,0,910,765,1,0,0,0,910,770,1,
-		0,0,0,910,775,1,0,0,0,910,780,1,0,0,0,910,785,1,0,0,0,910,790,1,0,0,0,
-		910,795,1,0,0,0,910,800,1,0,0,0,910,805,1,0,0,0,910,810,1,0,0,0,910,815,
-		1,0,0,0,910,820,1,0,0,0,910,825,1,0,0,0,910,830,1,0,0,0,910,835,1,0,0,
-		0,910,840,1,0,0,0,910,845,1,0,0,0,910,850,1,0,0,0,910,855,1,0,0,0,910,
-		860,1,0,0,0,910,865,1,0,0,0,910,870,1,0,0,0,910,875,1,0,0,0,910,880,1,
-		0,0,0,910,885,1,0,0,0,910,890,1,0,0,0,910,895,1,0,0,0,910,900,1,0,0,0,
-		910,905,1,0,0,0,911,41,1,0,0,0,912,913,3,32,16,0,913,914,5,0,0,1,914,915,
-		6,21,-1,0,915,43,1,0,0,0,33,51,59,67,69,76,86,96,101,117,119,132,134,147,
-		149,170,172,185,187,204,211,227,239,241,252,265,267,280,282,291,299,309,
-		312,910
+		20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,20,1,
+		20,1,20,1,20,1,20,3,20,920,8,20,1,21,1,21,1,21,1,21,1,21,0,0,22,0,2,4,
+		6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,0,0,1066,0,51,1,
+		0,0,0,2,69,1,0,0,0,4,71,1,0,0,0,6,101,1,0,0,0,8,103,1,0,0,0,10,122,1,0,
+		0,0,12,137,1,0,0,0,14,152,1,0,0,0,16,175,1,0,0,0,18,190,1,0,0,0,20,227,
+		1,0,0,0,22,229,1,0,0,0,24,244,1,0,0,0,26,255,1,0,0,0,28,270,1,0,0,0,30,
+		285,1,0,0,0,32,293,1,0,0,0,34,312,1,0,0,0,36,314,1,0,0,0,38,320,1,0,0,
+		0,40,919,1,0,0,0,42,921,1,0,0,0,44,45,3,40,20,0,45,46,5,1,0,0,46,47,6,
+		0,-1,0,47,52,1,0,0,0,48,49,3,40,20,0,49,50,6,0,-1,0,50,52,1,0,0,0,51,44,
+		1,0,0,0,51,48,1,0,0,0,52,1,1,0,0,0,53,54,5,2,0,0,54,55,3,0,0,0,55,56,6,
+		1,-1,0,56,58,1,0,0,0,57,53,1,0,0,0,58,59,1,0,0,0,59,57,1,0,0,0,59,60,1,
+		0,0,0,60,70,1,0,0,0,61,62,5,2,0,0,62,63,3,6,3,0,63,64,6,1,-1,0,64,66,1,
+		0,0,0,65,61,1,0,0,0,66,67,1,0,0,0,67,65,1,0,0,0,67,68,1,0,0,0,68,70,1,
+		0,0,0,69,57,1,0,0,0,69,65,1,0,0,0,70,3,1,0,0,0,71,72,3,0,0,0,72,76,6,2,
+		-1,0,73,74,3,2,1,0,74,75,6,2,-1,0,75,77,1,0,0,0,76,73,1,0,0,0,76,77,1,
+		0,0,0,77,5,1,0,0,0,78,79,5,3,0,0,79,80,3,4,2,0,80,81,6,3,-1,0,81,87,1,
+		0,0,0,82,83,5,4,0,0,83,84,3,4,2,0,84,85,6,3,-1,0,85,87,1,0,0,0,86,78,1,
+		0,0,0,86,82,1,0,0,0,87,102,1,0,0,0,88,89,5,3,0,0,89,90,3,6,3,0,90,91,6,
+		3,-1,0,91,97,1,0,0,0,92,93,5,4,0,0,93,94,3,6,3,0,94,95,6,3,-1,0,95,97,
+		1,0,0,0,96,88,1,0,0,0,96,92,1,0,0,0,97,102,1,0,0,0,98,99,3,4,2,0,99,100,
+		6,3,-1,0,100,102,1,0,0,0,101,86,1,0,0,0,101,96,1,0,0,0,101,98,1,0,0,0,
+		102,7,1,0,0,0,103,104,3,6,3,0,104,119,6,4,-1,0,105,106,5,5,0,0,106,107,
+		3,6,3,0,107,108,6,4,-1,0,108,118,1,0,0,0,109,110,5,6,0,0,110,111,3,6,3,
+		0,111,112,6,4,-1,0,112,118,1,0,0,0,113,114,5,7,0,0,114,115,3,6,3,0,115,
+		116,6,4,-1,0,116,118,1,0,0,0,117,105,1,0,0,0,117,109,1,0,0,0,117,113,1,
+		0,0,0,118,121,1,0,0,0,119,117,1,0,0,0,119,120,1,0,0,0,120,9,1,0,0,0,121,
+		119,1,0,0,0,122,123,3,8,4,0,123,134,6,5,-1,0,124,125,5,4,0,0,125,126,3,
+		8,4,0,126,127,6,5,-1,0,127,133,1,0,0,0,128,129,5,3,0,0,129,130,3,8,4,0,
+		130,131,6,5,-1,0,131,133,1,0,0,0,132,124,1,0,0,0,132,128,1,0,0,0,133,136,
+		1,0,0,0,134,132,1,0,0,0,134,135,1,0,0,0,135,11,1,0,0,0,136,134,1,0,0,0,
+		137,138,3,10,5,0,138,149,6,6,-1,0,139,140,5,8,0,0,140,141,3,10,5,0,141,
+		142,6,6,-1,0,142,148,1,0,0,0,143,144,5,9,0,0,144,145,3,10,5,0,145,146,
+		6,6,-1,0,146,148,1,0,0,0,147,139,1,0,0,0,147,143,1,0,0,0,148,151,1,0,0,
+		0,149,147,1,0,0,0,149,150,1,0,0,0,150,13,1,0,0,0,151,149,1,0,0,0,152,153,
+		3,12,6,0,153,172,6,7,-1,0,154,155,5,10,0,0,155,156,3,12,6,0,156,157,6,
+		7,-1,0,157,171,1,0,0,0,158,159,5,11,0,0,159,160,3,12,6,0,160,161,6,7,-1,
+		0,161,171,1,0,0,0,162,163,5,12,0,0,163,164,3,12,6,0,164,165,6,7,-1,0,165,
+		171,1,0,0,0,166,167,5,13,0,0,167,168,3,12,6,0,168,169,6,7,-1,0,169,171,
+		1,0,0,0,170,154,1,0,0,0,170,158,1,0,0,0,170,162,1,0,0,0,170,166,1,0,0,
+		0,171,174,1,0,0,0,172,170,1,0,0,0,172,173,1,0,0,0,173,15,1,0,0,0,174,172,
+		1,0,0,0,175,176,3,14,7,0,176,187,6,8,-1,0,177,178,5,14,0,0,178,179,3,14,
+		7,0,179,180,6,8,-1,0,180,186,1,0,0,0,181,182,5,15,0,0,182,183,3,14,7,0,
+		183,184,6,8,-1,0,184,186,1,0,0,0,185,177,1,0,0,0,185,181,1,0,0,0,186,189,
+		1,0,0,0,187,185,1,0,0,0,187,188,1,0,0,0,188,17,1,0,0,0,189,187,1,0,0,0,
+		190,191,3,16,8,0,191,211,6,9,-1,0,192,193,5,16,0,0,193,205,6,9,-1,0,194,
+		195,5,17,0,0,195,205,6,9,-1,0,196,197,5,18,0,0,197,205,6,9,-1,0,198,199,
+		5,19,0,0,199,205,6,9,-1,0,200,201,5,20,0,0,201,205,6,9,-1,0,202,203,5,
+		21,0,0,203,205,6,9,-1,0,204,192,1,0,0,0,204,194,1,0,0,0,204,196,1,0,0,
+		0,204,198,1,0,0,0,204,200,1,0,0,0,204,202,1,0,0,0,205,206,1,0,0,0,206,
+		207,3,16,8,0,207,208,6,9,-1,0,208,210,1,0,0,0,209,204,1,0,0,0,210,213,
+		1,0,0,0,211,209,1,0,0,0,211,212,1,0,0,0,212,214,1,0,0,0,213,211,1,0,0,
+		0,214,215,6,9,-1,0,215,19,1,0,0,0,216,217,5,22,0,0,217,218,3,18,9,0,218,
+		219,6,10,-1,0,219,228,1,0,0,0,220,221,5,22,0,0,221,222,3,20,10,0,222,223,
+		6,10,-1,0,223,228,1,0,0,0,224,225,3,18,9,0,225,226,6,10,-1,0,226,228,1,
+		0,0,0,227,216,1,0,0,0,227,220,1,0,0,0,227,224,1,0,0,0,228,21,1,0,0,0,229,
+		230,3,20,10,0,230,241,6,11,-1,0,231,232,5,23,0,0,232,233,3,20,10,0,233,
+		234,6,11,-1,0,234,240,1,0,0,0,235,236,5,24,0,0,236,237,3,20,10,0,237,238,
+		6,11,-1,0,238,240,1,0,0,0,239,231,1,0,0,0,239,235,1,0,0,0,240,243,1,0,
+		0,0,241,239,1,0,0,0,241,242,1,0,0,0,242,23,1,0,0,0,243,241,1,0,0,0,244,
+		245,3,22,11,0,245,252,6,12,-1,0,246,247,5,25,0,0,247,248,3,22,11,0,248,
+		249,6,12,-1,0,249,251,1,0,0,0,250,246,1,0,0,0,251,254,1,0,0,0,252,250,
+		1,0,0,0,252,253,1,0,0,0,253,25,1,0,0,0,254,252,1,0,0,0,255,256,3,24,12,
+		0,256,267,6,13,-1,0,257,258,5,26,0,0,258,259,3,24,12,0,259,260,6,13,-1,
+		0,260,266,1,0,0,0,261,262,5,27,0,0,262,263,3,24,12,0,263,264,6,13,-1,0,
+		264,266,1,0,0,0,265,257,1,0,0,0,265,261,1,0,0,0,266,269,1,0,0,0,267,265,
+		1,0,0,0,267,268,1,0,0,0,268,27,1,0,0,0,269,267,1,0,0,0,270,271,3,26,13,
+		0,271,282,6,14,-1,0,272,273,5,28,0,0,273,274,3,26,13,0,274,275,6,14,-1,
+		0,275,281,1,0,0,0,276,277,5,29,0,0,277,278,3,26,13,0,278,279,6,14,-1,0,
+		279,281,1,0,0,0,280,272,1,0,0,0,280,276,1,0,0,0,281,284,1,0,0,0,282,280,
+		1,0,0,0,282,283,1,0,0,0,283,29,1,0,0,0,284,282,1,0,0,0,285,286,3,28,14,
+		0,286,291,6,15,-1,0,287,288,5,30,0,0,288,289,3,30,15,0,289,290,6,15,-1,
+		0,290,292,1,0,0,0,291,287,1,0,0,0,291,292,1,0,0,0,292,31,1,0,0,0,293,294,
+		3,30,15,0,294,299,6,16,-1,0,295,296,5,31,0,0,296,297,3,32,16,0,297,298,
+		6,16,-1,0,298,300,1,0,0,0,299,295,1,0,0,0,299,300,1,0,0,0,300,33,1,0,0,
+		0,301,302,3,32,16,0,302,309,6,17,-1,0,303,304,5,32,0,0,304,305,3,32,16,
+		0,305,306,6,17,-1,0,306,308,1,0,0,0,307,303,1,0,0,0,308,311,1,0,0,0,309,
+		307,1,0,0,0,309,310,1,0,0,0,310,313,1,0,0,0,311,309,1,0,0,0,312,301,1,
+		0,0,0,312,313,1,0,0,0,313,35,1,0,0,0,314,315,3,32,16,0,315,316,6,18,-1,
+		0,316,317,5,33,0,0,317,318,3,32,16,0,318,319,6,18,-1,0,319,37,1,0,0,0,
+		320,321,3,32,16,0,321,322,6,19,-1,0,322,323,5,34,0,0,323,324,3,32,16,0,
+		324,325,6,19,-1,0,325,39,1,0,0,0,326,327,5,35,0,0,327,920,6,20,-1,0,328,
+		329,5,36,0,0,329,920,6,20,-1,0,330,331,5,156,0,0,331,920,6,20,-1,0,332,
+		333,5,153,0,0,333,920,6,20,-1,0,334,335,5,155,0,0,335,920,6,20,-1,0,336,
+		337,5,154,0,0,337,920,6,20,-1,0,338,339,5,157,0,0,339,920,6,20,-1,0,340,
+		341,5,37,0,0,341,342,3,32,16,0,342,343,5,38,0,0,343,344,6,20,-1,0,344,
+		920,1,0,0,0,345,346,5,39,0,0,346,347,3,40,20,0,347,348,6,20,-1,0,348,920,
+		1,0,0,0,349,350,5,40,0,0,350,351,3,34,17,0,351,352,5,41,0,0,352,353,6,
+		20,-1,0,353,920,1,0,0,0,354,355,5,40,0,0,355,356,3,34,17,0,356,357,5,42,
+		0,0,357,358,6,20,-1,0,358,920,1,0,0,0,359,360,5,43,0,0,360,361,3,36,18,
+		0,361,362,5,44,0,0,362,363,6,20,-1,0,363,920,1,0,0,0,364,365,5,40,0,0,
+		365,366,3,36,18,0,366,367,5,44,0,0,367,368,6,20,-1,0,368,920,1,0,0,0,369,
+		370,5,40,0,0,370,371,3,36,18,0,371,372,5,42,0,0,372,373,6,20,-1,0,373,
+		920,1,0,0,0,374,375,5,43,0,0,375,376,3,36,18,0,376,377,5,42,0,0,377,378,
+		6,20,-1,0,378,920,1,0,0,0,379,380,5,43,0,0,380,381,3,32,16,0,381,382,5,
+		44,0,0,382,383,6,20,-1,0,383,920,1,0,0,0,384,385,5,45,0,0,385,386,3,38,
+		19,0,386,387,5,46,0,0,387,388,6,20,-1,0,388,920,1,0,0,0,389,390,5,45,0,
+		0,390,391,3,34,17,0,391,392,5,46,0,0,392,393,6,20,-1,0,393,920,1,0,0,0,
+		394,395,5,47,0,0,395,396,3,34,17,0,396,397,5,44,0,0,397,398,6,20,-1,0,
+		398,920,1,0,0,0,399,400,5,48,0,0,400,401,3,34,17,0,401,402,5,44,0,0,402,
+		403,6,20,-1,0,403,920,1,0,0,0,404,405,5,49,0,0,405,406,3,34,17,0,406,407,
+		5,44,0,0,407,408,6,20,-1,0,408,920,1,0,0,0,409,410,5,50,0,0,410,411,3,
+		34,17,0,411,412,5,44,0,0,412,413,6,20,-1,0,413,920,1,0,0,0,414,415,5,51,
+		0,0,415,416,3,34,17,0,416,417,5,44,0,0,417,418,6,20,-1,0,418,920,1,0,0,
+		0,419,420,5,52,0,0,420,421,3,34,17,0,421,422,5,44,0,0,422,423,6,20,-1,
+		0,423,920,1,0,0,0,424,425,5,53,0,0,425,426,3,34,17,0,426,427,5,44,0,0,
+		427,428,6,20,-1,0,428,920,1,0,0,0,429,430,5,54,0,0,430,431,3,34,17,0,431,
+		432,5,44,0,0,432,433,6,20,-1,0,433,920,1,0,0,0,434,435,5,55,0,0,435,436,
+		3,34,17,0,436,437,5,44,0,0,437,438,6,20,-1,0,438,920,1,0,0,0,439,440,5,
+		56,0,0,440,441,3,34,17,0,441,442,5,44,0,0,442,443,6,20,-1,0,443,920,1,
+		0,0,0,444,445,5,57,0,0,445,446,3,34,17,0,446,447,5,44,0,0,447,448,6,20,
+		-1,0,448,920,1,0,0,0,449,450,5,58,0,0,450,451,3,34,17,0,451,452,5,44,0,
+		0,452,453,6,20,-1,0,453,920,1,0,0,0,454,455,5,59,0,0,455,456,3,34,17,0,
+		456,457,5,44,0,0,457,458,6,20,-1,0,458,920,1,0,0,0,459,460,5,60,0,0,460,
+		461,3,34,17,0,461,462,5,44,0,0,462,463,6,20,-1,0,463,920,1,0,0,0,464,465,
+		5,61,0,0,465,466,3,34,17,0,466,467,5,44,0,0,467,468,6,20,-1,0,468,920,
+		1,0,0,0,469,470,5,62,0,0,470,471,3,34,17,0,471,472,5,44,0,0,472,473,6,
+		20,-1,0,473,920,1,0,0,0,474,475,5,63,0,0,475,476,3,34,17,0,476,477,5,44,
+		0,0,477,478,6,20,-1,0,478,920,1,0,0,0,479,480,5,64,0,0,480,481,3,34,17,
+		0,481,482,5,44,0,0,482,483,6,20,-1,0,483,920,1,0,0,0,484,485,5,65,0,0,
+		485,486,3,34,17,0,486,487,5,44,0,0,487,488,6,20,-1,0,488,920,1,0,0,0,489,
+		490,5,66,0,0,490,491,3,34,17,0,491,492,5,44,0,0,492,493,6,20,-1,0,493,
+		920,1,0,0,0,494,495,5,67,0,0,495,496,3,34,17,0,496,497,5,44,0,0,497,498,
+		6,20,-1,0,498,920,1,0,0,0,499,500,5,68,0,0,500,501,3,34,17,0,501,502,5,
+		44,0,0,502,503,6,20,-1,0,503,920,1,0,0,0,504,505,5,69,0,0,505,506,3,34,
+		17,0,506,507,5,44,0,0,507,508,6,20,-1,0,508,920,1,0,0,0,509,510,5,70,0,
+		0,510,511,3,34,17,0,511,512,5,44,0,0,512,513,6,20,-1,0,513,920,1,0,0,0,
+		514,515,5,71,0,0,515,516,3,34,17,0,516,517,5,44,0,0,517,518,6,20,-1,0,
+		518,920,1,0,0,0,519,520,5,72,0,0,520,521,3,34,17,0,521,522,5,44,0,0,522,
+		523,6,20,-1,0,523,920,1,0,0,0,524,525,5,73,0,0,525,526,3,34,17,0,526,527,
+		5,44,0,0,527,528,6,20,-1,0,528,920,1,0,0,0,529,530,5,74,0,0,530,531,3,
+		34,17,0,531,532,5,44,0,0,532,533,6,20,-1,0,533,920,1,0,0,0,534,535,5,75,
+		0,0,535,536,3,34,17,0,536,537,5,44,0,0,537,538,6,20,-1,0,538,920,1,0,0,
+		0,539,540,5,76,0,0,540,541,3,34,17,0,541,542,5,44,0,0,542,543,6,20,-1,
+		0,543,920,1,0,0,0,544,545,5,77,0,0,545,546,3,34,17,0,546,547,5,44,0,0,
+		547,548,6,20,-1,0,548,920,1,0,0,0,549,550,5,78,0,0,550,551,3,34,17,0,551,
+		552,5,44,0,0,552,553,6,20,-1,0,553,920,1,0,0,0,554,555,5,79,0,0,555,556,
+		3,34,17,0,556,557,5,44,0,0,557,558,6,20,-1,0,558,920,1,0,0,0,559,560,5,
+		80,0,0,560,561,3,34,17,0,561,562,5,44,0,0,562,563,6,20,-1,0,563,920,1,
+		0,0,0,564,565,5,81,0,0,565,566,3,34,17,0,566,567,5,44,0,0,567,568,6,20,
+		-1,0,568,920,1,0,0,0,569,570,5,82,0,0,570,571,3,34,17,0,571,572,5,44,0,
+		0,572,573,6,20,-1,0,573,920,1,0,0,0,574,575,5,83,0,0,575,576,3,34,17,0,
+		576,577,5,44,0,0,577,578,6,20,-1,0,578,920,1,0,0,0,579,580,5,84,0,0,580,
+		581,3,34,17,0,581,582,5,44,0,0,582,583,6,20,-1,0,583,920,1,0,0,0,584,585,
+		5,85,0,0,585,586,3,34,17,0,586,587,5,44,0,0,587,588,6,20,-1,0,588,920,
+		1,0,0,0,589,590,5,86,0,0,590,591,3,34,17,0,591,592,5,44,0,0,592,593,6,
+		20,-1,0,593,920,1,0,0,0,594,595,5,87,0,0,595,596,3,34,17,0,596,597,5,44,
+		0,0,597,598,6,20,-1,0,598,920,1,0,0,0,599,600,5,88,0,0,600,601,3,34,17,
+		0,601,602,5,44,0,0,602,603,6,20,-1,0,603,920,1,0,0,0,604,605,5,89,0,0,
+		605,606,3,34,17,0,606,607,5,44,0,0,607,608,6,20,-1,0,608,920,1,0,0,0,609,
+		610,5,90,0,0,610,611,3,34,17,0,611,612,5,44,0,0,612,613,6,20,-1,0,613,
+		920,1,0,0,0,614,615,5,91,0,0,615,616,3,34,17,0,616,617,5,44,0,0,617,618,
+		6,20,-1,0,618,920,1,0,0,0,619,620,5,92,0,0,620,621,3,34,17,0,621,622,5,
+		44,0,0,622,623,6,20,-1,0,623,920,1,0,0,0,624,625,5,93,0,0,625,626,3,34,
+		17,0,626,627,5,44,0,0,627,628,6,20,-1,0,628,920,1,0,0,0,629,630,5,94,0,
+		0,630,631,3,34,17,0,631,632,5,44,0,0,632,633,6,20,-1,0,633,920,1,0,0,0,
+		634,635,5,95,0,0,635,636,3,34,17,0,636,637,5,44,0,0,637,638,6,20,-1,0,
+		638,920,1,0,0,0,639,640,5,96,0,0,640,641,3,34,17,0,641,642,5,44,0,0,642,
+		643,6,20,-1,0,643,920,1,0,0,0,644,645,5,97,0,0,645,646,3,34,17,0,646,647,
+		5,44,0,0,647,648,6,20,-1,0,648,920,1,0,0,0,649,650,5,98,0,0,650,651,3,
+		34,17,0,651,652,5,44,0,0,652,653,6,20,-1,0,653,920,1,0,0,0,654,655,5,99,
+		0,0,655,656,3,34,17,0,656,657,5,44,0,0,657,658,6,20,-1,0,658,920,1,0,0,
+		0,659,660,5,100,0,0,660,661,3,34,17,0,661,662,5,44,0,0,662,663,6,20,-1,
+		0,663,920,1,0,0,0,664,665,5,101,0,0,665,666,3,34,17,0,666,667,5,44,0,0,
+		667,668,6,20,-1,0,668,920,1,0,0,0,669,670,5,102,0,0,670,671,3,34,17,0,
+		671,672,5,44,0,0,672,673,6,20,-1,0,673,920,1,0,0,0,674,675,5,103,0,0,675,
+		676,3,34,17,0,676,677,5,44,0,0,677,678,6,20,-1,0,678,920,1,0,0,0,679,680,
+		5,104,0,0,680,681,3,34,17,0,681,682,5,44,0,0,682,683,6,20,-1,0,683,920,
+		1,0,0,0,684,685,5,105,0,0,685,686,3,34,17,0,686,687,5,44,0,0,687,688,6,
+		20,-1,0,688,920,1,0,0,0,689,690,5,106,0,0,690,691,3,34,17,0,691,692,5,
+		44,0,0,692,693,6,20,-1,0,693,920,1,0,0,0,694,695,5,107,0,0,695,696,3,34,
+		17,0,696,697,5,44,0,0,697,698,6,20,-1,0,698,920,1,0,0,0,699,700,5,108,
+		0,0,700,701,3,34,17,0,701,702,5,44,0,0,702,703,6,20,-1,0,703,920,1,0,0,
+		0,704,705,5,109,0,0,705,706,3,34,17,0,706,707,5,44,0,0,707,708,6,20,-1,
+		0,708,920,1,0,0,0,709,710,5,110,0,0,710,711,3,34,17,0,711,712,5,44,0,0,
+		712,713,6,20,-1,0,713,920,1,0,0,0,714,715,5,111,0,0,715,716,3,34,17,0,
+		716,717,5,44,0,0,717,718,6,20,-1,0,718,920,1,0,0,0,719,720,5,112,0,0,720,
+		721,3,34,17,0,721,722,5,44,0,0,722,723,6,20,-1,0,723,920,1,0,0,0,724,725,
+		5,113,0,0,725,726,3,34,17,0,726,727,5,44,0,0,727,728,6,20,-1,0,728,920,
+		1,0,0,0,729,730,5,114,0,0,730,731,3,34,17,0,731,732,5,44,0,0,732,733,6,
+		20,-1,0,733,920,1,0,0,0,734,735,5,115,0,0,735,736,3,34,17,0,736,737,5,
+		44,0,0,737,738,6,20,-1,0,738,920,1,0,0,0,739,740,5,116,0,0,740,741,3,34,
+		17,0,741,742,5,44,0,0,742,743,6,20,-1,0,743,920,1,0,0,0,744,745,5,117,
+		0,0,745,746,3,34,17,0,746,747,5,44,0,0,747,748,6,20,-1,0,748,920,1,0,0,
+		0,749,750,5,118,0,0,750,751,3,34,17,0,751,752,5,44,0,0,752,753,6,20,-1,
+		0,753,920,1,0,0,0,754,755,5,119,0,0,755,756,3,34,17,0,756,757,5,44,0,0,
+		757,758,6,20,-1,0,758,920,1,0,0,0,759,760,5,120,0,0,760,761,3,34,17,0,
+		761,762,5,44,0,0,762,763,6,20,-1,0,763,920,1,0,0,0,764,765,5,121,0,0,765,
+		766,3,34,17,0,766,767,5,44,0,0,767,768,6,20,-1,0,768,920,1,0,0,0,769,770,
+		5,122,0,0,770,771,3,34,17,0,771,772,5,44,0,0,772,773,6,20,-1,0,773,920,
+		1,0,0,0,774,775,5,123,0,0,775,776,3,34,17,0,776,777,5,44,0,0,777,778,6,
+		20,-1,0,778,920,1,0,0,0,779,780,5,124,0,0,780,781,3,34,17,0,781,782,5,
+		44,0,0,782,783,6,20,-1,0,783,920,1,0,0,0,784,785,5,125,0,0,785,786,3,34,
+		17,0,786,787,5,44,0,0,787,788,6,20,-1,0,788,920,1,0,0,0,789,790,5,126,
+		0,0,790,791,3,34,17,0,791,792,5,44,0,0,792,793,6,20,-1,0,793,920,1,0,0,
+		0,794,795,5,127,0,0,795,796,3,34,17,0,796,797,5,44,0,0,797,798,6,20,-1,
+		0,798,920,1,0,0,0,799,800,5,128,0,0,800,801,3,34,17,0,801,802,5,44,0,0,
+		802,803,6,20,-1,0,803,920,1,0,0,0,804,805,5,129,0,0,805,806,3,34,17,0,
+		806,807,5,44,0,0,807,808,6,20,-1,0,808,920,1,0,0,0,809,810,5,130,0,0,810,
+		811,3,34,17,0,811,812,5,44,0,0,812,813,6,20,-1,0,813,920,1,0,0,0,814,815,
+		5,131,0,0,815,816,3,34,17,0,816,817,5,44,0,0,817,818,6,20,-1,0,818,920,
+		1,0,0,0,819,820,5,132,0,0,820,821,3,34,17,0,821,822,5,44,0,0,822,823,6,
+		20,-1,0,823,920,1,0,0,0,824,825,5,133,0,0,825,826,3,34,17,0,826,827,5,
+		44,0,0,827,828,6,20,-1,0,828,920,1,0,0,0,829,830,5,134,0,0,830,831,3,34,
+		17,0,831,832,5,44,0,0,832,833,6,20,-1,0,833,920,1,0,0,0,834,835,5,135,
+		0,0,835,836,3,34,17,0,836,837,5,44,0,0,837,838,6,20,-1,0,838,920,1,0,0,
+		0,839,840,5,136,0,0,840,841,3,34,17,0,841,842,5,44,0,0,842,843,6,20,-1,
+		0,843,920,1,0,0,0,844,845,5,137,0,0,845,846,3,34,17,0,846,847,5,44,0,0,
+		847,848,6,20,-1,0,848,920,1,0,0,0,849,850,5,138,0,0,850,851,3,34,17,0,
+		851,852,5,44,0,0,852,853,6,20,-1,0,853,920,1,0,0,0,854,855,5,139,0,0,855,
+		856,3,34,17,0,856,857,5,44,0,0,857,858,6,20,-1,0,858,920,1,0,0,0,859,860,
+		5,140,0,0,860,861,3,34,17,0,861,862,5,44,0,0,862,863,6,20,-1,0,863,920,
+		1,0,0,0,864,865,5,141,0,0,865,866,3,34,17,0,866,867,5,44,0,0,867,868,6,
+		20,-1,0,868,920,1,0,0,0,869,870,5,142,0,0,870,871,3,34,17,0,871,872,5,
+		44,0,0,872,873,6,20,-1,0,873,920,1,0,0,0,874,875,5,143,0,0,875,876,3,34,
+		17,0,876,877,5,44,0,0,877,878,6,20,-1,0,878,920,1,0,0,0,879,880,5,144,
+		0,0,880,881,3,34,17,0,881,882,5,44,0,0,882,883,6,20,-1,0,883,920,1,0,0,
+		0,884,885,5,145,0,0,885,886,3,34,17,0,886,887,5,44,0,0,887,888,6,20,-1,
+		0,888,920,1,0,0,0,889,890,5,146,0,0,890,891,3,34,17,0,891,892,5,44,0,0,
+		892,893,6,20,-1,0,893,920,1,0,0,0,894,895,5,147,0,0,895,896,3,34,17,0,
+		896,897,5,44,0,0,897,898,6,20,-1,0,898,920,1,0,0,0,899,900,5,148,0,0,900,
+		901,3,34,17,0,901,902,5,44,0,0,902,903,6,20,-1,0,903,920,1,0,0,0,904,905,
+		5,149,0,0,905,906,3,34,17,0,906,907,5,44,0,0,907,908,6,20,-1,0,908,920,
+		1,0,0,0,909,910,5,150,0,0,910,911,3,34,17,0,911,912,5,44,0,0,912,913,6,
+		20,-1,0,913,920,1,0,0,0,914,915,5,151,0,0,915,916,3,34,17,0,916,917,5,
+		44,0,0,917,918,6,20,-1,0,918,920,1,0,0,0,919,326,1,0,0,0,919,328,1,0,0,
+		0,919,330,1,0,0,0,919,332,1,0,0,0,919,334,1,0,0,0,919,336,1,0,0,0,919,
+		338,1,0,0,0,919,340,1,0,0,0,919,345,1,0,0,0,919,349,1,0,0,0,919,354,1,
+		0,0,0,919,359,1,0,0,0,919,364,1,0,0,0,919,369,1,0,0,0,919,374,1,0,0,0,
+		919,379,1,0,0,0,919,384,1,0,0,0,919,389,1,0,0,0,919,394,1,0,0,0,919,399,
+		1,0,0,0,919,404,1,0,0,0,919,409,1,0,0,0,919,414,1,0,0,0,919,419,1,0,0,
+		0,919,424,1,0,0,0,919,429,1,0,0,0,919,434,1,0,0,0,919,439,1,0,0,0,919,
+		444,1,0,0,0,919,449,1,0,0,0,919,454,1,0,0,0,919,459,1,0,0,0,919,464,1,
+		0,0,0,919,469,1,0,0,0,919,474,1,0,0,0,919,479,1,0,0,0,919,484,1,0,0,0,
+		919,489,1,0,0,0,919,494,1,0,0,0,919,499,1,0,0,0,919,504,1,0,0,0,919,509,
+		1,0,0,0,919,514,1,0,0,0,919,519,1,0,0,0,919,524,1,0,0,0,919,529,1,0,0,
+		0,919,534,1,0,0,0,919,539,1,0,0,0,919,544,1,0,0,0,919,549,1,0,0,0,919,
+		554,1,0,0,0,919,559,1,0,0,0,919,564,1,0,0,0,919,569,1,0,0,0,919,574,1,
+		0,0,0,919,579,1,0,0,0,919,584,1,0,0,0,919,589,1,0,0,0,919,594,1,0,0,0,
+		919,599,1,0,0,0,919,604,1,0,0,0,919,609,1,0,0,0,919,614,1,0,0,0,919,619,
+		1,0,0,0,919,624,1,0,0,0,919,629,1,0,0,0,919,634,1,0,0,0,919,639,1,0,0,
+		0,919,644,1,0,0,0,919,649,1,0,0,0,919,654,1,0,0,0,919,659,1,0,0,0,919,
+		664,1,0,0,0,919,669,1,0,0,0,919,674,1,0,0,0,919,679,1,0,0,0,919,684,1,
+		0,0,0,919,689,1,0,0,0,919,694,1,0,0,0,919,699,1,0,0,0,919,704,1,0,0,0,
+		919,709,1,0,0,0,919,714,1,0,0,0,919,719,1,0,0,0,919,724,1,0,0,0,919,729,
+		1,0,0,0,919,734,1,0,0,0,919,739,1,0,0,0,919,744,1,0,0,0,919,749,1,0,0,
+		0,919,754,1,0,0,0,919,759,1,0,0,0,919,764,1,0,0,0,919,769,1,0,0,0,919,
+		774,1,0,0,0,919,779,1,0,0,0,919,784,1,0,0,0,919,789,1,0,0,0,919,794,1,
+		0,0,0,919,799,1,0,0,0,919,804,1,0,0,0,919,809,1,0,0,0,919,814,1,0,0,0,
+		919,819,1,0,0,0,919,824,1,0,0,0,919,829,1,0,0,0,919,834,1,0,0,0,919,839,
+		1,0,0,0,919,844,1,0,0,0,919,849,1,0,0,0,919,854,1,0,0,0,919,859,1,0,0,
+		0,919,864,1,0,0,0,919,869,1,0,0,0,919,874,1,0,0,0,919,879,1,0,0,0,919,
+		884,1,0,0,0,919,889,1,0,0,0,919,894,1,0,0,0,919,899,1,0,0,0,919,904,1,
+		0,0,0,919,909,1,0,0,0,919,914,1,0,0,0,920,41,1,0,0,0,921,922,3,32,16,0,
+		922,923,5,0,0,1,923,924,6,21,-1,0,924,43,1,0,0,0,33,51,59,67,69,76,86,
+		96,101,117,119,132,134,147,149,170,172,185,187,204,211,227,239,241,252,
+		265,267,280,282,291,299,309,312,919
 	};
 
 	public static readonly ATN _ATN =

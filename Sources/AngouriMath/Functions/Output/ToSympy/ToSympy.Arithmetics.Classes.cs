@@ -148,6 +148,13 @@ namespace AngouriMath
             internal override string ToSymPy() => $"sympy.totient({Argument.ToSymPy()})";
         }
 
+        public partial record Cardf
+        {
+            // SymPy has no cardinality function; a finite set answers len, and an infinite one
+            // raises, which is the same refusal this node makes by staying as written.
+            internal override string ToSymPy() => $"len({Argument.ToSymPy()})";
+        }
+
         public partial record Factorialf
         {
             internal override string ToSymPy() => "sympy.factorial(" + Argument.ToSymPy() + ")";
