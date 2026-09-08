@@ -18,6 +18,24 @@ namespace AngouriMath.Functions
     using static Entity.Number;
     internal static class Simplificator
     {
+        /// <summary>
+        /// The level a candidate offered after the loop -- the expansion, the factorisation,
+        /// the opened multiple angles -- is re-simplified at before the metric is asked: the
+        /// default, whatever level the run itself was asked for.
+        /// </summary>
+        /// <remarks>
+        /// Each re-simplification is a nested <see cref="Alternate"/>, and at the caller's own
+        /// level the three cost three nested searches of that depth: 566 MB of
+        /// <c>SimplifyHard</c>'s 735 at level 4, 77% of the run, for candidates the metric then
+        /// ranked. Measured level by level, the third and fourth levels of a nested run
+        /// register almost nothing new -- one or two trees where the first two register
+        /// dozens -- and cost the same passes. So a candidate is simplified the way every
+        /// default call simplifies, and ranked by the same metric against an outer run that
+        /// still ran at the level asked for. A caller at the default level sees no difference;
+        /// no pinned answer moved above it. https://github.com/asc-community/AngouriMath/issues/746
+        /// </remarks>
+        private static int CandidateLevel(int level) => Math.Min(Math.Abs(level), 2);
+
         internal static Entity PickSimplest(Entity one, Entity another)
             => one.SimplifiedRate < another.SimplifiedRate ? one : another;
 
@@ -316,7 +334,7 @@ namespace AngouriMath.Functions
             if (level > 0) // if level < 0 we don't check whether expanded version is better
             {
                 var expandMark = recording?.Mark() ?? 0;
-                AddHistory(Noted(recording, res, res.Expand(), nameof(Entity.Expand), expandMark).Simplify(-level));
+                AddHistory(Noted(recording, res, res.Expand(), nameof(Entity.Expand), expandMark).Simplify(-CandidateLevel(level)));
                 var factorizeMark = recording?.Mark() ?? 0;
                 // The **rule-based** factorisation, not `Entity.Factorize` -- which now also asks
                 // the polynomial layer, and whose answers must not become candidates here. The
@@ -328,7 +346,7 @@ namespace AngouriMath.Functions
                 // https://github.com/asc-community/AngouriMath/issues/1018
                 AddHistory(Noted(recording, res,
                     Transformation.RuleBasedFactorizationAtLevel(2).ApplyOrKeep(res),
-                    nameof(Entity.Factorize), factorizeMark).Simplify(-level));
+                    nameof(Entity.Factorize), factorizeMark).Simplify(-CandidateLevel(level)));
 
                 // A multiple angle written out is worth having only where the pieces then
                 // cancel, so it has to be simplified in full before the metric can be
@@ -349,7 +367,7 @@ namespace AngouriMath.Functions
                     // Expanded, and for the same reason res is expanded above: the
                     // cancellation only shows up once the products are multiplied out.
                     var openedMark = recording?.Mark() ?? 0;
-                    AddHistory(Noted(recording, openedAngles, openedAngles.Expand(), nameof(Entity.Expand), openedMark).Simplify(-level));
+                    AddHistory(Noted(recording, openedAngles, openedAngles.Expand(), nameof(Entity.Expand), openedMark).Simplify(-CandidateLevel(level)));
                 }
             }
 

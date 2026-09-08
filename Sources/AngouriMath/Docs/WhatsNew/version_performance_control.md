@@ -270,6 +270,35 @@ What is left of a `SimplifyHard` level, for whoever comes next: the remaining re
 factorisation at level 2, and the opened angles expanded — at 177, 170 and 82 MB, each a
 recursive simplification of an expanded tree.
 
+## The 1937th: a candidate is re-simplified at the default level
+
+The same hook on `SimplifyHard`, attributed to the call sites that register a candidate. After
+its level loop `Alternate` offers three more — the expansion, the rule-based factorisation and
+the opened multiple angles — and re-simplifies each in full before the metric is asked, because
+their cancellations only show once they are simplified. Each is a nested `Alternate` at the
+caller's own level, so at level 4 the three were three nested four-level searches: **566 MB of
+the run's 735**, 77%, before the sort-key cache above; and level by level, the third and fourth
+levels of a nested run registered one or two new trees where the first two registered dozens,
+for the same passes. The candidates are re-simplified at level 2 now, the default, whatever
+level the run was asked for; the run's own loop keeps its level.
+
+This is a policy and not a mechanical saving, so what it changes is stated: a caller at the
+default level sees nothing different at all, since 2 is what it always was; a caller above it
+gets a candidate simplified the way every default call simplifies, ranked by the same metric
+against an outer run that still ran at the level asked for. The callers above the default in the
+library are the solver's alternative spellings and polynomial long division's coefficients, and
+no pinned answer of either moved; nor did any other in the suite.
+
+| benchmark | 1936th | 1937th | allocation | time |
+|---|--:|--:|--:|--:|
+| `SimplifyHard` | 442,898,152 | **331,683,360** | **−25.1%** | 258 → 190 ms |
+| `SimplifyEasy` | 106,643 | **79,282** | **−25.7%** | 68.8 → 47.4 µs |
+| every other entry | | | identical to the byte | |
+
+Bytes allocated per call, same machine, both columns measured by the gate in one session. Both
+benchmarks call `Simplify(4)`, which is why both move and nothing else does. Since the 1930th:
+`SimplifyHard` **−91%**. The gate's baseline was taken from this run.
+
 ## The 1936th: the sort key of a node is spelt once
 
 The same hook, on `SimplifyHard`, attributed this time to the registration steps of
