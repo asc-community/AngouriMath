@@ -21,18 +21,23 @@ namespace AngouriMath.Core.Transformations.Matching
     /// This is what <a href="https://github.com/asc-community/AngouriMath/issues/825">#825</a>
     /// asks for and what a <c>switch</c> arm cannot be. A rule here can be listed, named in a
     /// bug report, tested by itself, and — the part that matters most —
-    /// <b>carry its own <see cref="Soundness"/></b>. Today the tier is declared per rule *set*,
-    /// and since a set's tier is the minimum over its arms, one conditional arm drags eighteen
-    /// unconditional ones down with it; that is why all thirty sets in the registry declare the
-    /// same value and the field distinguishes nothing.
+    /// <b>carry its own <see cref="Soundness"/></b>. A *set's* tier is the minimum over its arms,
+    /// so one conditional arm drags every unconditional one down with it and every set in the
+    /// registry ends up declaring the same value — which is the honest label for a set and a
+    /// useless one for a rule. A rule declares its own, and unlike the set's it distinguishes:
+    /// both tiers are well populated. No count is repeated here, because a number in a comment
+    /// drifts silently; <c>RuleAuthoringGuideTest</c> measures the live ones and fails when they
+    /// move.
     /// </para>
     /// <para>
     /// <b>Where the right-hand side is a pattern too, the rule has two directions rather than
     /// one.</b> <see cref="Reversed"/> is the same rule read the other way, and
-    /// <see cref="Reversal"/> says why a rule has no such reading when it has none. That is
+    /// <see cref="Reversal"/> says why a rule has no such reading when it has none. That was
     /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 2's first
-    /// missing piece, and <c>Docs/Contributing/ReversibleRules.md</c> is the argument for when a
-    /// reversal is licensed.
+    /// missing piece; it is delivered and it has a production consumer, since
+    /// <c>Saturation.RulesUpTo</c> uses a declared inverse pair to keep the collecting direction
+    /// and withhold the expanding one. <c>Docs/Contributing/ReversibleRules.md</c> is the argument
+    /// for when a reversal is licensed.
     /// </para>
     /// </remarks>
     internal sealed class MatchedRule

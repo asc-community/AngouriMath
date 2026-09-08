@@ -143,7 +143,7 @@ namespace AngouriMath.Tests.Core.Transformations
         /// </summary>
         /// <remarks>
         /// <para>
-        /// Over all 322 rules rather than within a set, because the relation is about patterns and
+        /// Over every rule rather than within a set, because the relation is about patterns and
         /// nothing about it stops at a set boundary: <b>961</b> ordered pairs claim subsumption,
         /// <b>501</b> of them are put to the test by the corpus containing something the narrower
         /// pattern matches, and none is contradicted across <b>85,153</b> nodes. All three counts
