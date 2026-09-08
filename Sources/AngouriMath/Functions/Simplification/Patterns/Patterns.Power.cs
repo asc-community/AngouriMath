@@ -214,6 +214,14 @@ namespace AngouriMath.Functions
             // second way in that the logarithm gathering below takes.
             Logf(var any1, Powf(var any2, var any3))
                 when MayTakeLogOfPower(any2, any3) => any3 * MathS.Log(any1, any2),
+            // The same identity for a rational literal that is a power without saying so:
+            // ln(16/9) is 2 ln(4/3), which is longer on its own and is what lets
+            // ln(4/3) + ln(16/9) / 2 collect to 2 ln(4/3). A positive root only, so the
+            // principal branch has nothing to discard; the metric decides whether the longer
+            // form is kept. https://github.com/asc-community/AngouriMath/issues/1212
+            Logf(var any1, Rational literal)
+                when TreeAnalyzer.TryPerfectPower(literal, out var root, out var exponent)
+                => Integer.Create(exponent) * MathS.Log(any1, root),
             // log_b(b) is 1 wherever it is defined at all, so the condition to carry is the
             // node's own and not one written out here. Asserting `any1 > 0` stated the real
             // reading inside the rule and was wrong in both directions at once: undefined at

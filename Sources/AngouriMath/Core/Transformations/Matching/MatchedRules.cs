@@ -3165,6 +3165,23 @@ namespace AngouriMath.Core.Transformations.Matching
                 // A logarithm and a power become a product and a logarithm, one node for one, and
                 // each of the three holes is used once on both sides.
                 growth: RewriteRuleGrowth.Rearranges),
+            // The same identity for a rational literal that is a power without saying so, with a
+            // positive root only, so that the principal branch has nothing to discard.
+            // https://github.com/asc-community/AngouriMath/issues/1212
+            new MatchedRule(
+                "a-logarithm-of-a-perfect-power-takes-the-exponent-out",
+                MatchPattern.Node<Logf>(MatchPattern.Any("a"),
+                    MatchPattern.Any<Rational>("r", r => Functions.TreeAnalyzer.TryPerfectPower(r, out _, out _))),
+                bound =>
+                {
+                    Functions.TreeAnalyzer.TryPerfectPower((Rational)bound["r"], out var root, out var exponent);
+                    return Integer.Create(exponent) * MathS.Log(bound["a"], root);
+                },
+                Soundness.Sound,
+                description: "log(a, r) = n * log(a, root) where r = root ^ n",
+                // One literal becomes a product of a literal and a logarithm of a literal: two
+                // nodes more, whatever the base is.
+                growth: RewriteRuleGrowth.Expands),
 
             // The condition to carry is the node's own: log(-3, -3) is 1 where a written-out
             // `a > 0` calls it undefined, and log(1, 1) is NaN where that guard calls it 1.

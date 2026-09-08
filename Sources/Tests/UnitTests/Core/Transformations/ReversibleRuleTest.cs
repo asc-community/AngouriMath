@@ -180,6 +180,7 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-lessorequal-with-a-number-on-the-left-turns-round: ReplacementIsCode",
                     "a-lessorequal-with-zero-on-the-left-turns-round: ReplacementIsCode",
                     "a-logarithm-in-a-reciprocal-base-negates: ReplacementIsCode",
+                    "a-logarithm-of-a-perfect-power-takes-the-exponent-out: ReplacementIsCode",
                     "a-logarithm-of-a-reciprocal-in-a-reciprocal-base-turns-round-twice: ReplacementIsCode",
                     "a-logarithm-of-a-reciprocal-negates: ReplacementIsCode",
                     "a-logarithm-of-its-own-base-is-one-where-it-is-defined: ReplacementIsCode",
