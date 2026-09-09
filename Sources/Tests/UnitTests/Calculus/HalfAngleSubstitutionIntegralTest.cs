@@ -88,6 +88,37 @@ namespace AngouriMath.Tests.Calculus
         public void ALinearDenominatorInCosine(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// The rest of the family: any quotient whose denominator is linear in the sine, the
+        /// cosine or both.
+        /// </summary>
+        /// <remarks>
+        /// Every one of these rewrote correctly and was then declined, because the rewrite leaves
+        /// a sum with a fraction in it — <c>1/(1 - sin(x))</c> becomes
+        /// <c>2/((t^2 + 1)(1 + (-2)t/(t^2 + 1)))</c> — and nothing put that over a common
+        /// denominator. <c>Simplify</c> does not; it never combines a sum, by design. Writing the
+        /// rewritten integrand as a single quotient first is what turns that into
+        /// <c>2/(t^2 - 2t + 1)</c>, which the rational integrator answers at once.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1239">#1239</a>
+        /// </remarks>
+        [Theory]
+        [InlineData("1/(1 - sin(x))")]
+        [InlineData("1/(2 + cos(x))")]
+        [InlineData("1/(1 + cos(x)/2)")]
+        [InlineData("1/(3 + 5*sin(x))")]
+        [InlineData("1/(2*cos(x) + 3*sin(x))")]
+        [InlineData("1/(sin(x) + cos(x))")]
+        public void ADenominatorLinearInEither(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// A numerator that mentions the sine too, so the rewrite produces an <b>improper</b>
+        /// rational function and the long division in front of partial fractions has to run
+        /// before anything else can. The answer carries an <c>x</c> term from the whole part.
+        /// </summary>
+        [Theory]
+        [InlineData("sin(x)/(1 + sin(x))")]
+        public void AnImproperQuotientAfterTheRewrite(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// Declined, and each for its own reason, so that the boundary is recorded rather than
         /// assumed. <c>sin(x) + x</c> is not a function of the sine alone. <c>sin(x)*sin(2*x)</c>
         /// leaves an <c>x</c> behind because <c>sin(2x)</c> is not <c>sin(x)</c> — the right
