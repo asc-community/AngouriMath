@@ -131,9 +131,10 @@ namespace AngouriMath.Tests.Core
         /// <c>5/2</c> is <c>35/8</c>. Neither is a rounding of the other.
         /// </summary>
         [Theory]
+        // `sum(k, k, 1, +oo)` used to be here and is now `+oo`: the nth-term test answers an
+        // infinite range this closed form still declines. See DivergentSeriesTest.
         [InlineData("sum(k, k, 1, 5/2)")]
         [InlineData("sum(k, k, 1, 1.5)")]
-        [InlineData("sum(k, k, 1, +oo)")]
         [InlineData("sum(k, k, -oo, n)")]
         public void ABoundThatIsNotAWholeNumberIsLeftAlone(string expression)
             => Assert.IsType<Entity.Summationf>(expression.ToEntity().Simplify());

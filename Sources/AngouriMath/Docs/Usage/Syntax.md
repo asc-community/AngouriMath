@@ -259,6 +259,14 @@ concrete that condition is decidable and the answer is a number. A bound that is
 a whole one still stays as written, since the index runs over the integers and
 `sum(k, k, 1, 5/2)` is `1 + 2` rather than the polynomial at `5/2`.
 
+A sum **to `+oo`** is answered where it converges — the geometric, exponential and binomial series
+have closed forms — and, failing that, by the **nth-term test**: terms that do not tend to zero
+mean no finite value, and a limit with a sign says which infinity, so `sum(2^k, k, 0, +oo)` and
+`sum(k, k, 1, +oo)` are `+oo`. Terms that *do* tend to zero are left as written, because that is
+the case the test says nothing about — `sum(1/k, k, 1, +oo)` diverges and `sum(1/k^2, k, 1, +oo)`
+converges and neither is decided by the size of a term. A summand that can fail to exist at some
+index is left alone too, since one undefined term makes the sum undefined rather than infinite.
+
 A `product` gets the same treatment over the narrower class its shape allows: a **monomial** in
 the index, since a product has no linearity to take a sum of terms apart with. So
 `product(k, k, 1, n)` is `factorial(n)`, `product(k ^ 2, k, 1, n)` is `factorial(n) ^ 2`, and
