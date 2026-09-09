@@ -122,7 +122,37 @@ is the primary spelling anyway and is what the library prints.
 | **Silent** | `"integral(piecewise(2x provided x <= 1/2, 2 - 2x), x, 0, 1)".ToEntity().Simplify()`, and every definite integral of a piecewise whose conditions mention the variable | `1` — the first case's antiderivative at both ends | `1/2` — split at the case boundaries; `piecewise(x provided x < 1, x^2)` from 0 to 2 was `piecewise(2 provided x < 1, 8/3)`, with the integration variable still in it, and is `17/6` |
 | **Silent** | `"integral(x - floor(x), x, 0, 3)".ToEntity().Simplify()`, and every definite integral over numeric bounds whose integrand has `floor(x)` or `ceil(x)` in it | `0` — an antiderivative that took the floor for a constant across its jumps | `3/2` — split at the jumps; `(x - floor(x))^2` from 0 to 4 was `0` and is `4/3` |
 | **Silent** | `"integral((x - floor(x))^2, x, 0, n)".ToEntity().Simplify()`, and every such integral with a symbolic bound or a condition against a symbol | `(n - floor(n)) ^ 3 / 3` — wrong for every whole `n` but 0; `piecewise(x provided x < a, 0)` from 0 to 2 was `piecewise(2 provided x < a, 0)` | left as written |
+| **Silent** | `"sum(piecewise(k provided k < a, 0), k, 0, 5)".ToEntity().Simplify()`, and every piecewise carrying a case whose predicate entails an earlier one | 32 cases, most of them unreachable | 6 — the unreachable ones are dropped, and the value at every `a` is unchanged |
 | | `"integral((x - floor(x)) / floor(x)!, x, 1, +oo)".ToEntity().Simplify()`, and `integral(floor(x), x, 0, 5)` | left as written | `(e - 1) / 2`, `10` |
+
+### A piecewise case that can never be reached is dropped
+
+A piecewise takes its **first** matching case, so a case whose predicate entails an earlier one is
+unreachable: wherever the later predicate holds the earlier one holds too, and the earlier case is
+taken. That was already applied where two predicates were *equal*; it is now applied wherever the
+entailment can be proven, which is what `2 < a` after `1 < a` is.
+
+Where it shows most is a binder distributed over a piecewise, which produces one case per **subset**
+of the conditions — `2^n` of them, the great majority unreachable. Summing
+`piecewise(k provided k < a, 0)` over `k` from 0 to 5 gave **32 cases**; six of them are reachable,
+which is one per interval that `a` can fall in, and six is what it gives now.
+
+The test is one-directional and deliberately incomplete: entailment between arbitrary predicates is
+not decidable, so the answers are "proven" and "not proven", and only the first drops a case. A
+missed entailment costs a longer answer; a wrong one would delete a reachable case and change the
+value, so nothing here is a heuristic. Comparisons of one expression against numbers are compared
+by their bounds, a conjunction is at least as strong as either half, and a disjunction is at most as
+strong as both. `>` after `>=` at the same bound is **kept**, the two differing exactly at the
+endpoint. Question I.3 of [#1212](https://github.com/asc-community/AngouriMath/issues/1212). Both
+columns measured on a build, `c2ab5da1` against this change.
+
+| | Was | Is |
+|---|---|---|
+| `"sum(piecewise(k provided k < a, 0), k, 0, 5)".ToEntity().Simplify()` | 32 cases | 6 — one per interval `a` can fall in, and the same value at every `a` |
+| `"sum(piecewise(k provided k < a, 0), k, 0, 2)".ToEntity().Simplify()` | `piecewise(3 provided (1 < a and 2 < a), 1 provided (1 < a), 2 provided (2 < a), 0 provided True)` | the same without `2 provided (2 < a)`, which `1 < a` had already caught |
+| `"piecewise(1 provided x > 1, 2 provided x > 2, 3)"`, and the same with `x < 2` before `x < 1` | 3 cases | 2 |
+| `"piecewise(1 provided x > 1, 2 provided x > 1 and x < 5, 3)"` | 3 cases | 2 — a conjunction is at least as strong as either half |
+| `"piecewise(1 provided x > 2, 2 provided x > 1, 3)"`, `piecewise(1 provided x > 1, 2 provided x >= 1, 3)` | 3 cases | the same — a looser bound after a tighter one is reachable, and so is `>=` after `>` at one bound |
 
 ### A cancelled quotient says its operand is defined, not only non-zero
 

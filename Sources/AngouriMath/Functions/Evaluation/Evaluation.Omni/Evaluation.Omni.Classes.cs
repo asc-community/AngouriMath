@@ -208,8 +208,13 @@ namespace AngouriMath
                     // https://github.com/asc-community/AngouriMath/issues/327
 
                     // A predicate that already guards an earlier case can never reach this
-                    // one: wherever it holds, the earlier case is taken.
-                    if (res.Any(seen => seen.Predicate == toAdd.Predicate))
+                    // one: wherever it holds, the earlier case is taken. Equality is the
+                    // special case; what is asked is whether this predicate *entails* an
+                    // earlier one, so that `2 < a` is dropped after `1 < a`. Distributing a
+                    // binder over a piecewise produces one case per subset of the conditions
+                    // and most of them are unreachable exactly this way.
+                    // https://github.com/asc-community/AngouriMath/issues/1212
+                    if (res.Any(seen => Functions.PredicateEntailment.Entails(toAdd.Predicate, seen.Predicate)))
                     {
                         // Not `continue` -- a decidably true predicate still ends the list,
                         // and skipping that check here would carry unreachable cases past it.
