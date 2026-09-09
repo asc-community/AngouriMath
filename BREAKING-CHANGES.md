@@ -15,6 +15,32 @@ read first.
 
 ---
 
+## Spellings known to be at risk — nothing here has changed yet
+
+Every other entry in this file is something that **has** happened, measured on two builds. This
+short section is the opposite: input that parses today, is already known to read as something other
+than what it says, and is therefore a poor thing to build on. It exists so that the warning reaches
+a caller reading this file rather than only the people reading the issue tracker.
+
+The docket of changes waiting for a major version — including these, with the migration argument
+and whatever gets decided — is
+[#1019](https://github.com/asc-community/AngouriMath/issues/1019). Deliberately not restated here,
+so that there is one list rather than two that drift apart.
+
+Measured on `281e0d0c`:
+
+| Written | Reads today as | |
+|---|---|---|
+| `2 \| 6` | `2 or 6` — a disjunction of two numbers | `\|` is an alias for `or`, and is the one spelling in the grammar that already means something *else* in mathematics: divides, "such that", "given", and the delimiter in `\|x\|` |
+| `{ x \| x > 0 }` | `{ x or x > 0 }` — a `FiniteSet` of **one** element, that element a disjunction | ordinary set-builder notation, read as a one-element set |
+| `a != b` | `a! = b` — the factorial of `a`, equated to `b` | `!=` is not a token, so the lexer takes `!` as the postfix factorial and `=` as equality ([#1225](https://github.com/asc-community/AngouriMath/issues/1225)) |
+
+All three are well-formed, silent, and unrelated to what was written. Until they are settled, write
+`or` rather than `|`, `{ x : x > 0 }` for a set builder, and `<>` rather than `!=` — each of which
+is the primary spelling anyway and is what the library prints.
+
+---
+
 ## Unreleased — since 2.4.0
 
 ### At a glance
