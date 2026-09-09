@@ -295,6 +295,95 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational function of <c>sin(x)</c> and <c>cos(x)</c>, turned into a rational function
+        /// of one variable by the half-angle substitution <c>t = tan(x/2)</c> and handed to the
+        /// machinery for those.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The Weierstrass substitution. Under <c>t = tan(x/2)</c>,
+        /// <c>sin(x) = 2t/(1 + t^2)</c>, <c>cos(x) = (1 - t^2)/(1 + t^2)</c> and
+        /// <c>dx = 2/(1 + t^2) dt</c>, so anything built from sines and cosines by the field
+        /// operations becomes a quotient of polynomials — which partial fractions already answers.
+        /// </para>
+        /// <para>
+        /// <b>What it is for.</b> A family of first-year integrals had no antiderivative at all:
+        /// <c>1/(1 + cos(x))</c>, <c>1/(1 - sin(x))</c>, <c>1/(1 + cos(x)/2)</c>,
+        /// <c>1/(b cos(x) + a sin(x))</c>. Measured against Rubi's suite, the integrals it rates
+        /// as a single table lookup were the *worst*-served difficulty band we had, and this
+        /// family is a large part of why.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// <para>
+        /// <b>The test is the rewrite itself</b>, as for the tangent above: replace every
+        /// <c>sin(x)</c> and <c>cos(x)</c> and see whether an <c>x</c> survives. That declines
+        /// <c>sin(x) + x</c>, and it declines <c>sin(x) * sin(2x)</c> as well — <c>sin(2x)</c> is
+        /// not <c>sin(x)</c>, so an <c>x</c> is left behind. The second is the right answer for
+        /// the wrong-looking reason: a product of sines is a sum by the product-to-sum identity
+        /// and wants that rather than a rational function in <c>t</c>.
+        /// </para>
+        /// <para>
+        /// <b>It runs after the tangent substitution</b>, which is the more specific tool: an
+        /// integrand that is rational in <c>tan(x)</c> comes out of that one in terms of the
+        /// tangent, where this one would answer it in terms of the half-angle and be right but
+        /// unrecognisable.
+        /// </para>
+        /// <para>
+        /// <b>The condition the answer inherits.</b> <c>tan(x/2)</c> is undefined at odd
+        /// multiples of pi, so the antiderivative this produces is an antiderivative on each
+        /// interval between them rather than across one — the constant may differ from one
+        /// interval to the next. That is the standing property of this substitution and is the
+        /// same one <see cref="SolveByTangentSubstitution"/> already carries; it is not a claim
+        /// this rule makes and does not make the value wrong where it is defined.
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveByHalfAngleSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var sine = MathS.Sin(x);
+            var cosine = MathS.Cos(x);
+            if (!expr.ContainsNode(sine) && !expr.ContainsNode(cosine))
+                return null;
+
+            var t = Variable.CreateUnique(expr, "u_half");
+            var tSquared = MathS.Sqr(t);
+            var inT = expr
+                .Substitute(sine, 2 * t / (1 + tSquared))
+                .Substitute(cosine, (1 - tSquared) / (1 + tSquared));
+            if (inT.ContainsNode(x))
+                return null;
+
+            // Simplify rather than InnerSimplified, and that is not a preference. The rewrite
+            // puts a quotient inside a quotient -- 1/cos(x) becomes 1 / ((1 - t^2)/(1 + t^2))
+            // times 2/(1 + t^2) -- and partial fractions wants a single Divf of two polynomials.
+            // InnerSimplified leaves the nesting alone, so every one of these was handed on in a
+            // shape nothing downstream could read and came back unevaluated.
+            var integrand = (inT * 2 / (1 + tSquared)).Simplify();
+
+            // Collapsing the nesting attaches a condition saying the denominator it cleared is
+            // non-zero, and that denominator is 1 + t^2 -- so 1/(1 + cos(x)) comes out as
+            // `1 provided not 1 + t^2 = 0`, which is the answer with a guard on it. The guard is
+            // dropped, and it is worth being exact about why rather than calling it vacuous:
+            // 1 + t^2 is at least 1 for every *real* t and vanishes at t = +-i, so the condition
+            // is not vacuous over the complex plane, which is this library's default codomain.
+            //
+            // It is sound to drop here because of what t is. The substitution is t = tan(x/2),
+            // which this rule only reaches by rewriting a real trigonometric integrand; the
+            // excluded points are not reachable values of it, and they do not appear in the
+            // answer, which is written back in terms of x. The same strip is made for the same
+            // reason in SolveBySubstitution.
+            //
+            // What this does *not* do is assume a condition away in general: the answer is still
+            // an antiderivative on each interval between the poles of tan(x/2), which is the
+            // standing caveat on this substitution and is recorded in the summary above.
+            if (integrand is Providedf(var inner, _))
+                integrand = inner;
+
+            return Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is { } result
+                ? result.Substitute(t, MathS.Tan(x / 2))
+                : null;
+        }
+
+        /// <summary>
         /// Attempts to solve an integral using u-substitution.
         /// Looks for patterns where f(g(x)) * g'(x) can be integrated as F(g(x)).
         /// </summary>

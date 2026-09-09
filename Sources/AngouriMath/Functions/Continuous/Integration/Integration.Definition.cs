@@ -365,6 +365,15 @@ namespace AngouriMath.Functions.Algebra
             // Expansion is bounded by MaxExpansionTermCount, which returns null rather than
             // building the terms, so putting it earlier cannot blow the tree up either.
             if ((answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { }) return answer;
+            // The half-angle substitution goes *after* linearity, and that is not a preference.
+            // It fires on anything built from sines and cosines, and it answers `cos(x) + 1` with
+            // a correct expression in tan(x/2) some forty characters long where splitting the sum
+            // answers `sin(x) + x`. Both are antiderivatives; only one is an answer anybody wants,
+            // and the F# wrapper's test pinned the readable one. So everything that decomposes the
+            // problem into pieces the ordinary rules know gets first refusal, and this sees only
+            // what is left — which is the quotients it was added for, since linearity declines a
+            // quotient and partial fractions declines one that is not a ratio of polynomials.
+            if ((answer = IndefiniteIntegralSolver.SolveByHalfAngleSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if (integrateByParts && (answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x)) is { }) return answer;
             return null;
         }
