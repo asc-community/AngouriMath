@@ -89,9 +89,12 @@ namespace AngouriMath.Core.Transformations
     /// purpose.</b> This paragraph used to say the tier was absent, on the argument that a rule's
     /// tier is a claim somebody has to argue for and cannot be derived from syntax. That argument
     /// is right and it is not a reason for the property to be missing: where the argument <i>has</i>
-    /// been made, the claim needs somewhere to live. A rule written as data declares one, and 181
-    /// of the 322 such rules are <see cref="Transformations.Soundness.Sound"/> against every set in
-    /// the registry declaring <see cref="Transformations.Soundness.SoundUnderAssumptions"/>. A rule
+    /// been made, the claim needs somewhere to live. A rule written as data declares one, and the
+    /// two tiers are both well populated — most rules are
+    /// <see cref="Transformations.Soundness.Sound"/> — against every set in the registry declaring
+    /// <see cref="Transformations.Soundness.SoundUnderAssumptions"/>, so the per-rule tier says
+    /// something the per-set one cannot. The live counts are measured by
+    /// <c>RuleAuthoringGuideTest</c> rather than quoted here, where they would drift. A rule
     /// read off a <c>switch</c> arm declares nothing, so its <see cref="Soundness"/> is
     /// <see langword="null"/> — which says the set's tier is a fallback rather than a measurement,
     /// where silently copying the set's down would have said the opposite.
@@ -209,9 +212,10 @@ namespace AngouriMath.Core.Transformations
         /// <b>A set's tier is the minimum over its rules, so reading it as every rule's tier
         /// understates most of them.</b> All thirty sets in the registry declare
         /// <see cref="Transformations.Soundness.SoundUnderAssumptions"/>, and one conditional rule
-        /// is enough to make that true of a set of a hundred. Asked per rule instead, <b>181 of the
-        /// 322 rules written as data are <see cref="Transformations.Soundness.Sound"/></b> — they
-        /// hold for every complex argument, with nothing assumed — and 141 are conditional. That
+        /// is enough to make that true of a set of a hundred. Asked per rule instead, <b>most rules
+        /// written as data are <see cref="Transformations.Soundness.Sound"/></b> — they hold for
+        /// every complex argument, with nothing assumed — and the rest are conditional, in numbers
+        /// <c>RuleAuthoringGuideTest</c> measures rather than this comment quoting them. That
         /// difference is invisible at set grain and is what a derivation needs in order to say why
         /// a particular step was allowed.
         /// </para>

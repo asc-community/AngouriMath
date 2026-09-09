@@ -342,8 +342,8 @@ namespace AngouriMath.Tests.Core.Transformations
                 // And nothing may claim a proof it has not got. This asserted `NotEqual(Sound)` --
                 // that every step was conditional -- which was true only because a step reported
                 // its *set's* tier, and a set's tier is the minimum over its rules. A step now
-                // reports the tier of the rule that fired, and 181 of the 322 rules written as
-                // data really are Sound, so the assertion is that the tier is one of the two the
+                // reports the tier of the rule that fired, and most rules written as data really
+                // are Sound, so the assertion is that the tier is one of the two the
                 // simplifier is allowed to apply rather than that it is always the weaker.
                 Assert.True(step.Soundness is Soundness.Sound or Soundness.SoundUnderAssumptions,
                     $"{step.RuleSet.Name}/{step.Rule?.Name} claims {step.Soundness}");

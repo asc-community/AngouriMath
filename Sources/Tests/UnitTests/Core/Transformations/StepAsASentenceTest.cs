@@ -172,10 +172,11 @@ namespace AngouriMath.Tests.Core.Transformations
         /// <remarks>
         /// A set's tier is the minimum over its rules, so reading it as every rewrite's tier
         /// understates most of them: all thirty sets declare
-        /// <see cref="Soundness.SoundUnderAssumptions"/> while 181 of the 322 rules written as data
-        /// are <see cref="Soundness.Sound"/>. This is the step grain
-        /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 5 records
-        /// as missing.
+        /// <see cref="Soundness.SoundUnderAssumptions"/> while most rules written as data are
+        /// <see cref="Soundness.Sound"/> — <c>RuleAuthoringGuideTest</c> holds the live counts, so
+        /// that no number here can go stale. This is the step grain
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/746">#746</a> tier 5
+        /// recorded as missing, and this test is it not being missing any more.
         /// </remarks>
         [Fact]
         public void ARewriteReportsItsOwnTierWhereItHasOne()

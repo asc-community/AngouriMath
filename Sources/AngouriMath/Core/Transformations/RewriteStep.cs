@@ -55,9 +55,10 @@ namespace AngouriMath.Core.Transformations
         /// This read the set's tier and nothing else until a rule could carry one, which made it
         /// the same answer for every step of a set — and a set's tier is the <i>minimum</i> over
         /// its rules, so one conditional rule spoke for a hundred. All thirty sets declare
-        /// <see cref="Transformations.Soundness.SoundUnderAssumptions"/> and 181 of the 322 rules
-        /// written as data are <see cref="Transformations.Soundness.Sound"/>; a step that fires one
-        /// of those 181 now says so.
+        /// <see cref="Transformations.Soundness.SoundUnderAssumptions"/> while most rules written
+        /// as data are <see cref="Transformations.Soundness.Sound"/>; a step that fires one of
+        /// those now says so. <c>RuleAuthoringGuideTest</c> measures how many, so that the figure
+        /// cannot go stale in a comment.
         /// </para>
         /// <para>
         /// The fallback is not a claim about the rule. Where <see cref="Rule"/> is null, or is an
