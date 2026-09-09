@@ -301,7 +301,11 @@ namespace AngouriMath
                     if (Functions.PolynomialDeterminant.Of(@this.RowCount, (r, c) => @this[r, c])
                         is { } byElimination)
                         return byElimination.InnerSimplified;
-                    return @this.InnerMatrix.DeterminantLaplace().InnerSimplified;
+                    // GenericTensor's Laplace determinant writes into a process-wide scratch
+                    // matrix, so two threads here silently corrupt each other's minors. See
+                    // Functions.GenTensorGuard.
+                    lock (Functions.GenTensorGuard.ScratchPool)
+                        return @this.InnerMatrix.DeterminantLaplace().InnerSimplified;
                 },
                 this
                 );
@@ -317,7 +321,10 @@ namespace AngouriMath
                     return null;
                 if (@this.Determinant == 0)
                     return null;
-                cp.InvertMatrix();
+                // Inverting goes through the adjugate, which takes its minors in the same
+                // process-wide scratch matrix the determinant does. See Functions.GenTensorGuard.
+                lock (Functions.GenTensorGuard.ScratchPool)
+                    cp.InvertMatrix();
                 return ToMatrix(new Matrix(cp).InnerSimplified);
             }, this);
             private LazyPropertyA<Matrix?> inverse;
@@ -329,13 +336,16 @@ namespace AngouriMath
             /// and then applies inner simplification
             /// </summary>
             public static Matrix operator +(Matrix m1, Matrix m2)
-                =>
-                m1.InnerMatrix.Shape != m2.InnerMatrix.Shape
-                ?
-                throw new InvalidMatrixOperationException(
-                    $"Cannot add matrices or vectors of shapes {m1.InnerMatrix.Shape} and {m2.InnerMatrix.Shape}")
-                :
-                ToMatrix(new Matrix(GenTensor.PiecewiseAdd(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified);
+            {
+                if (m1.InnerMatrix.Shape != m2.InnerMatrix.Shape)
+                    throw new InvalidMatrixOperationException(
+                        $"Cannot add matrices or vectors of shapes {m1.InnerMatrix.Shape} and {m2.InnerMatrix.Shape}");
+                // GenericTensor caches the compiled elementwise loop in an unsynchronised
+                // dictionary, so the entry has to be there before several threads read it.
+                // See Functions.GenTensorGuard.
+                Functions.GenTensorGuard.EnsurePiecewiseCacheWarmed();
+                return ToMatrix(new Matrix(GenTensor.PiecewiseAdd(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified);
+            }
 
             /// <summary>
             /// The Subtract operator. Performs an active operation
@@ -343,13 +353,14 @@ namespace AngouriMath
             /// and then applies inner simplification
             /// </summary>
             public static Matrix operator -(Matrix m1, Matrix m2)
-                =>
-                m1.InnerMatrix.Shape != m2.InnerMatrix.Shape
-                ?
-                throw new InvalidMatrixOperationException(
-                    $"Cannot subtract matrices or vectors of shapes {m1.InnerMatrix.Shape} and {m2.InnerMatrix.Shape}")
-                :
-                ToMatrix(new Matrix(GenTensor.PiecewiseSubtract(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified);
+            {
+                if (m1.InnerMatrix.Shape != m2.InnerMatrix.Shape)
+                    throw new InvalidMatrixOperationException(
+                        $"Cannot subtract matrices or vectors of shapes {m1.InnerMatrix.Shape} and {m2.InnerMatrix.Shape}");
+                // See Functions.GenTensorGuard, as for the addition above.
+                Functions.GenTensorGuard.EnsurePiecewiseCacheWarmed();
+                return ToMatrix(new Matrix(GenTensor.PiecewiseSubtract(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified);
+            }
 
             /// <summary>
             /// The Multiply operator. Performs an active operation
@@ -485,7 +496,11 @@ namespace AngouriMath
                     {
                         if (!@this.IsSquare)
                             return null;
-                        var innerSimplified = new Matrix(@this.InnerMatrix.Adjoint()).InnerSimplified;
+                        // The adjugate takes every minor in one process-wide scratch matrix.
+                        // See Functions.GenTensorGuard.
+                        Entity innerSimplified;
+                        lock (Functions.GenTensorGuard.ScratchPool)
+                            innerSimplified = new Matrix(@this.InnerMatrix.Adjoint()).InnerSimplified;
                         return ToMatrix(innerSimplified);
                     },
                     this);
