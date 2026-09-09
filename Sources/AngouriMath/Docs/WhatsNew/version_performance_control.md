@@ -180,6 +180,82 @@ honest reason -- a compiled delegate over `Complex` has nothing to put on the he
 
 ---
 
+## The 1845th and the 1954th, measured together on one machine — the pair for 2.5.0
+
+The pair the release checklist owes: `v2.4.0` (`de7189b1`, the 1845th) re-measured beside the
+release commit (`6a97c071`, the 1954th), both on 2026-09-09, on one machine, with nothing else on
+it, one entry per run. The period is the whole of 2.5.0 — 108 commits.
+
+### Allocation
+
+| benchmark | v2.4.0 | 1954th | change |
+|---|--:|--:|--:|
+| `CompileEasy` | 11,042 | 11,003 | −0.35% |
+| `CompileHard` | 20,776 | 20,473 | −1.46% |
+| `Derivate` | 52,824 | 53,240 | **+0.79%** |
+| `EvalTrig` | 1,341,377 | 1,341,457 | +0.01% |
+| `EvalTrigPrecise` | 12,742,205 | 12,742,285 | +0.00% |
+| `ParseEasy` | 18,112 | 18,264 | **+0.84%** |
+| `ParseHard` | 3,522,481 | 3,584,841 | **+1.77%** |
+| `SimplifyEasy` | 128,100 | 79,282 | **−38.11%** |
+| `SimplifyHard` | 3,632,019,136 | 331,756,152 | **−90.87%** |
+| `SolveEasy` | 8,853,735 | 8,865,872 | +0.14% |
+| `SolveEasyMedium` | 97,195 | 65,648 | **−32.46%** |
+| `SolveHard` | 1,446,794,112 | 11,883,024 | **−99.18%** |
+| `SolveMedium` | 661,994 | 455,925 | **−31.13%** |
+| `SolveMediumHard` | 164,549,808 | 1,449,266 | **−99.12%** |
+
+Bytes allocated. `EvalEasy`, `RunEasy`, `RunMedium` and `RunHard` allocate nothing in both columns
+and are left out.
+
+### The individually-measured steps compose, and that was checked rather than assumed
+
+This file records a case where they did not: the rule-set exchange was measured step by step, each
+step came back free or better, and the sum was **+13%**. So the five allocation changes in this
+release are worth checking against where the release started rather than trusting their own
+figures.
+
+`SimplifyHard` was measured at −44% ([#1205](https://github.com/asc-community/AngouriMath/pull/1205)),
+−64% ([#1207](https://github.com/asc-community/AngouriMath/pull/1207)),
+−35% ([#1210](https://github.com/asc-community/AngouriMath/pull/1210)) and
+−25% ([#1211](https://github.com/asc-community/AngouriMath/pull/1211)), each against the commit in
+front of it. Composed, those predict 9.8% of the original surviving, or −90.2%. **Measured
+end-to-end against `v2.4.0`: −90.87%**, 0.7 percentage points from the prediction. `SolveHard` was
+−98.6% for [#1209](https://github.com/asc-community/AngouriMath/pull/1209) alone and is −99.18%
+across the release. They compose here. That is a measurement, not an expectation, and the +13% case
+is why it was taken.
+
+### Three rows went up, and none is attributed
+
+`ParseHard` +1.77%, `ParseEasy` +0.84% and `Derivate` +0.79%. The parser gained three alternatives
+this release — the `divides` keyword, `#` for cardinality and the lambda arrow — which is consistent
+with the two parse rows, and `Derivate` has no such candidate. **Neither is bisected**, so both are
+recorded as unattributed rather than explained. A move nobody has attributed is a finding, not a
+footnote.
+
+### The determinism claim, held again — and its two exceptions confirmed
+
+`v2.4.0` was measured on 2026-09-07 for the 1930th and again today, two days and one run apart.
+Eleven of the fourteen rows reproduce to within **0.021%**, four of them to the byte —
+`EvalTrig`, `EvalTrigPrecise`, `ParseEasy`, `ParseHard`, `SolveMediumHard`.
+
+The only two rows that moved further are `CompileEasy` (+0.354%) and `CompileHard` (+1.674%), which
+are exactly the two `performance-baseline.json` marks **ungated**, for the reason it records there:
+their measured allocation includes the runtime building and JIT-compiling a delegate, which is not
+reproducible, at a spread of 3.6% over three runs of one unchanged build. Today's spread sits inside
+that. So this is an independent confirmation of a documented caveat rather than a new one — and it
+is worth stating that the blanket sentence "the same commit measured twice gives the same bytes"
+holds for every row this file gates and for neither of the two it does not.
+
+### Timings
+
+`SimplifyHard` −89.64%, `SolveHard` −87.29%, `SolveMediumHard` −83.83%, `SolveEasyMedium` −42.80%,
+`SimplifyEasy` −57.15%. These are reproduced here, where the 1930th's deliberately were not,
+because the 1844th section's objection is that this machine cannot resolve a move of a few per
+cent — its measured run-to-run spread on mean time is up to 51.8%. A move of 84 to 90 per cent is
+outside that band by a wide margin and agrees in sign and rough size with the allocation column
+beside it. The small rows from the same run are still not worth reading, and are not quoted.
+
 ## The 1930th, and every release beside it on one machine
 
 The second column measured by `Sources/Utils/benchmark_key_commits.sh` reaching all five entries in
