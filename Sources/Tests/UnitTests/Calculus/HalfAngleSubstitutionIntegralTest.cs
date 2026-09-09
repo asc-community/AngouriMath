@@ -108,5 +108,26 @@ namespace AngouriMath.Tests.Calculus
             // not come from this substitution — no half-angle appears in it.
             Assert.DoesNotContain("tan(x / 2)", integral.Stringize());
         }
+
+        /// <summary>
+        /// A sum this rule *could* answer and must not, because splitting it answers it better.
+        /// </summary>
+        /// <remarks>
+        /// <c>cos(x) + 1</c> is a function of the cosine alone, so the rewrite succeeds and
+        /// produces a correct antiderivative in <c>tan(x/2)</c> about forty characters long, where
+        /// linearity gives <c>sin(x) + x</c>. Both are antiderivatives and only one is an answer
+        /// anybody wants. This is why the rule runs after <c>SolveBySplittingSum</c>; it was
+        /// caught by the F# wrapper's own test, which pins the readable form, and not by anything
+        /// here — hence this.
+        /// </remarks>
+        [Theory]
+        [InlineData("cos(x) + 1")]
+        [InlineData("sin(x) + cos(x)")]
+        [InlineData("2 * cos(x)")]
+        public void ASumTheOrdinaryRulesAnswerBetter(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("tan(x / 2)", integral.Stringize());
+        }
     }
 }

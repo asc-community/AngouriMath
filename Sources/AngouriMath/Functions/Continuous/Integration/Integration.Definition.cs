@@ -350,11 +350,6 @@ namespace AngouriMath.Functions.Algebra
             // sqrt(tan(x)) over the derivative of sqrt(tan(x)) simplifies to sin(2x), in which
             // the substitution is no longer visible. This one rewrites rather than divides.
             if ((answer = IndefiniteIntegralSolver.SolveByTangentSubstitution(expr, x, integrateByParts)) is { }) return answer;
-            // The half-angle substitution after the tangent one, which is the more specific tool:
-            // an integrand rational in tan(x) should come back in terms of the tangent rather than
-            // in terms of tan(x/2). Before partial fractions because it is what *produces* the
-            // quotient of polynomials that partial fractions then takes apart.
-            if ((answer = IndefiniteIntegralSolver.SolveByHalfAngleSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
             // Linearity comes before integration by parts, because it decomposes the problem
             // into strictly simpler ones where by parts searches. It cannot cost an answer:
@@ -370,6 +365,15 @@ namespace AngouriMath.Functions.Algebra
             // Expansion is bounded by MaxExpansionTermCount, which returns null rather than
             // building the terms, so putting it earlier cannot blow the tree up either.
             if ((answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { }) return answer;
+            // The half-angle substitution goes *after* linearity, and that is not a preference.
+            // It fires on anything built from sines and cosines, and it answers `cos(x) + 1` with
+            // a correct expression in tan(x/2) some forty characters long where splitting the sum
+            // answers `sin(x) + x`. Both are antiderivatives; only one is an answer anybody wants,
+            // and the F# wrapper's test pinned the readable one. So everything that decomposes the
+            // problem into pieces the ordinary rules know gets first refusal, and this sees only
+            // what is left — which is the quotients it was added for, since linearity declines a
+            // quotient and partial fractions declines one that is not a ratio of polynomials.
+            if ((answer = IndefiniteIntegralSolver.SolveByHalfAngleSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if (integrateByParts && (answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x)) is { }) return answer;
             return null;
         }
