@@ -41,7 +41,12 @@ is the primary spelling anyway and is what the library prints.
 
 ---
 
-## Unreleased — since 2.4.0
+## 2.5.0 — since 2.4.0
+
+Released 2026-09-09. This heading was renamed from “Unreleased” *before* the tag was cut, which is
+the one thing the 2.4.0 section below records against itself: those entries sat under “Unreleased”
+while 2.4.0 was tagged and published, so a reader on that version could not tell from this file what
+they had.
 
 ### At a glance
 
@@ -124,6 +129,7 @@ is the primary spelling anyway and is what the library prints.
 | **Silent** | `"integral((x - floor(x))^2, x, 0, n)".ToEntity().Simplify()`, and every such integral with a symbolic bound or a condition against a symbol | `(n - floor(n)) ^ 3 / 3` — wrong for every whole `n` but 0; `piecewise(x provided x < a, 0)` from 0 to 2 was `piecewise(2 provided x < a, 0)` | left as written |
 | **Silent** | `"sum(piecewise(k provided k < a, 0), k, 0, 5)".ToEntity().Simplify()`, and every piecewise carrying a case whose predicate entails an earlier one | 32 cases, most of them unreachable | 6 — the unreachable ones are dropped, and the value at every `a` is unchanged |
 | | `"integral((x - floor(x)) / floor(x)!, x, 1, +oo)".ToEntity().Simplify()`, and `integral(floor(x), x, 0, 5)` | left as written | `(e - 1) / 2`, `10` |
+| **Silent** | `Determinant`, `Inverse` and `Adjugate` of a symbolic matrix, and the elementwise operators, called from more than one thread | a well-formed but **wrong** entity carrying another computation's values — 38 of 40 determinants disagreed with their single-threaded selves; the elementwise operators threw on a corrupted dictionary | the same answer a single thread gets. Unchanged on one thread; the determinant and inverse now serialise across threads where the polynomial elimination declines the matrix |
 
 ### A piecewise case that can never be reached is dropped
 
@@ -1338,6 +1344,39 @@ depend on where the jumps fall. Offered only where every piece resolves. Questio
 | `"integral(floor(x), x, 0, 5)"`, `integral(floor(x) * x, x, 0, 3)`, `integral(floor(x) / (floor(x) + 1)!, x, 0, +oo)` | left as written | `10`, `13/2`, `1` |
 | `"integral(floor(x), x, 1/2, 2)"`, `integral(x - floor(x), x, 0, 5/2)`, `integral(ceil(x) - x, x, 1/2, 2)` | left as written | `1`, `9/8`, `5/8` |
 | `"integral(floor(x^2), x, 0, 2)"` | left as written | the same — a floor of something other than the variable is not a step this reads. `integral(2^(-floor(x)), x, 0, +oo)` was left as written here for want of a geometric series, and is `2` as of the section above |
+
+### Matrix operations called from more than one thread answer correctly
+
+`MathS.Multithreading` documents concurrent use as supported, and three caches did not honour it.
+Each was a table grown under a lock and read outside one, so a reader could see a new count against
+an old array and come back with **a different element** — a well-formed number, silently wrong, with
+nothing thrown. The factorial cache
+([#1227](https://github.com/asc-community/AngouriMath/pull/1227)) and the prime cache
+([#1229](https://github.com/asc-community/AngouriMath/pull/1229)) are AngouriMath's own. The third
+is not: GenericTensor 1.0.4 hands **every caller the same scratch matrix** for a given size and then
+writes into it, reported as [GenericTensor#40](https://github.com/asc-community/GenericTensor/issues/40)
+and guarded here in [#1230](https://github.com/asc-community/AngouriMath/pull/1230).
+
+**A single-threaded caller sees no change at all**, which is why there is no was/is table: the same
+input produced these values before and produces them now. What changes is that a concurrent caller
+now gets them too. Measured on `c2c8eb83`, forty 4x4 matrices with non-polynomial entries, each
+computed once sequentially and then rebuilt and recomputed under `Parallel.For`:
+
+| | disagreements, before |
+|---|---|
+| `Determinant` | 38 of 40 |
+| `Inverse` | 18 of 40 |
+| `Adjugate` | 11 of 40 |
+| `m1 + m2`, `m1 - m2`, `PointwiseMultiplication` | threw, on a corrupted `Dictionary` |
+
+**The one thing that is visible to a working program is throughput.** `Determinant`, `Inverse` and
+`Adjugate` now serialise across threads where the polynomial elimination declines the matrix and the
+Laplace fallback is taken — a matrix of polynomials never reaches it. The elementwise operators do
+**not** serialise: the set of compiled loops this library can ask for is fixed at three, so they are
+filled once and read without a lock thereafter.
+
+The guard is a stand-in and says so in its own doc comment. It should be deleted when a GenericTensor
+release carrying [GenericTensor#41](https://github.com/asc-community/GenericTensor/pull/41) exists.
 
 ## 2.4.0 — since 2.3.0
 
