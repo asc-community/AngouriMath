@@ -224,6 +224,32 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         [System.ThreadStatic] private static bool descentTruncated;
 
+        /// <summary>
+        /// The integrals this thread is part-way through, so that asking for one again while it is
+        /// still being worked out is recognised as a cycle rather than followed round again.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Keyed on the integrand with its variable renamed to <see cref="CycleVariable"/>, which
+        /// is the whole point. <see cref="IndefiniteIntegralSolver.SolveBySubstitution"/> names
+        /// each new variable with <c>Variable.CreateUnique</c>, so a level and the level it came
+        /// from are alpha-equivalent rather than equal, and a set keyed on the integrand as
+        /// written would never see the same entry twice. Neither does <see cref="answered"/>, and
+        /// for the same reason — which is why the memo could not stop this.
+        /// </para>
+        /// <para>
+        /// This is what makes <see cref="DeepestDescent"/> a backstop instead of the mechanism.
+        /// The bound alone stops the process dying, and it is not enough on its own: the descent
+        /// branches, so 32 levels of a cycle is still an enormous search, and one Rubi integrand
+        /// took over ten minutes under the bound where <c>v2.4.0</c> passed the whole section it
+        /// is in within a minute. Declining at the first repeat costs nothing and answers at once.
+        /// </para>
+        /// </remarks>
+        [System.ThreadStatic] private static HashSet<(Entity, bool)>? inProgress;
+
+        /// <summary>The name every in-progress integrand's variable is rewritten to.</summary>
+        [ConstantField] private static readonly Entity.Variable CycleVariable = Entity.Variable.CreateVariableOrConstant("__integration_cycle_var");
+
         /// <summary>Does not add the constant of integration because this is called recursively.</summary>
         internal static Entity? ComputeIndefiniteIntegral(Entity expr, Entity.Variable x, bool integrateByParts = true)
         {
@@ -233,7 +259,22 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             }
             if (descentDepth == 0)
+            {
                 descentTruncated = false;
+                inProgress?.Clear();
+            }
+
+            // Renamed so that the same integral under two different variable names is one entry.
+            var cycleKey = (expr.Substitute(x, CycleVariable), integrateByParts);
+            var open = inProgress ??= new HashSet<(Entity, bool)>();
+            if (!open.Add(cycleKey))
+            {
+                // Already on the stack: following it again cannot reach an answer this call has
+                // not already tried, so declining is both correct and immediate.
+                descentTruncated = true;
+                return null;
+            }
+
             descentDepth++;
             try
             {
@@ -241,6 +282,7 @@ namespace AngouriMath.Functions.Algebra
             }
             finally
             {
+                open.Remove(cycleKey);
                 descentDepth--;
             }
         }
