@@ -41,6 +41,42 @@ is the primary spelling anyway and is what the library prints.
 
 ---
 
+## Unreleased — since 2.5.0
+
+### A quotient of polynomials is split into coprime blocks before a root is peeled off
+
+`SolveByPartialFractions` tried `TrySplitOffRationalRoot` before `TrySplitIntoCoprimeParts`. Both
+succeed on a denominator with two repeated factors, so the first one decided, and it is the one that
+hands on an **expanded** remainder — every level of the recursion then re-factorised what the level
+above had just factored. Swapping them is
+[#1235](https://github.com/asc-community/AngouriMath/issues/1235).
+
+**The value of every antiderivative is unchanged**, and each was checked by differentiating it back
+and comparing numerically at five points; the worst relative disagreement is 4e-16. What moves is
+the printed form of the logarithmic terms, and it moves in one direction: a logarithm of a repeated
+factor now keeps the power inside it.
+
+| | Was | Is |
+|---|---|---|
+| `"1/((1+x)^3*(2+x)^3)".ToEntity().Integrate("x")`, the term over the first factor | `6 * ln(x + 1)` | `3 * ln(x ^ 2 + 2 * x + 1)` |
+| `"1/((1+x)^2*(2+x)^2)".ToEntity().Integrate("x")` | `(-2) * ln(x + 1)` | `-ln(x ^ 2 + 2 * x + 1)` |
+| `"1/(x*(-4+x^2)^4)".ToEntity().Integrate("x")`, the term over `x - 2` | `-1/512 * ln(x + -2)` | `-1/1024 * ln(x ^ 2 + (-4) * x + 4)` |
+
+`3 * ln((x+1)^2)` and `6 * ln(x+1)` are the same number wherever the second is real, and the first
+is **also real for `x < -1`**, where the logarithm of the bare factor is not. So a caller reading the
+answer on the far side of a root gets a real expression where it used to get a complex one.
+
+**It is a large speed-up rather than a small one**, which is why it is worth a changed form:
+
+| | Was | Is |
+|---|--:|--:|
+| `1/((1+x)^3*(2+x)^4)` | 29,256 ms | 1,447 ms |
+| `1/((2+x)^3*(3+x)^4)` | 29,179 ms | 551 ms |
+| `1/(x*(-4+x^2)^4)` | 8,472 ms | 1,878 ms |
+| `1/((1+x)^3*(2+x)^3)` | 1,343 ms | 492 ms |
+
+---
+
 ## 2.5.0 — since 2.4.0
 
 Released 2026-09-09. This heading was renamed from “Unreleased” *before* the tag was cut, which is
