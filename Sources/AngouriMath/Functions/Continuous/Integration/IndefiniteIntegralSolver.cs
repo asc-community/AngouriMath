@@ -78,17 +78,38 @@ namespace AngouriMath.Functions.Algebra
                 && Integration.ComputeIndefiniteIntegral(properPart, x, integrateByParts) is { } fractionPart)
                 return wholePart + fractionPart;
 
-            if (Functions.PolynomialFactoring.TrySplitOffRationalRoot(
-                    numerator, denominator, x, out var simple, out var restNumerator, out var restDenominator)
-                && Integration.ComputeIndefiniteIntegral(simple, x, integrateByParts) is { } first
-                && Integration.ComputeIndefiniteIntegral(restNumerator / restDenominator, x, integrateByParts) is { } rest)
-                return first + rest;
-
+            // Splitting into coprime blocks comes before peeling one root off, and the order is
+            // load-bearing rather than a preference.
+            //
+            // Both succeed on a denominator with two repeated factors, so whichever runs first
+            // decides, and the one that was first is the expensive one. It takes a single root
+            // out and hands the remainder on **expanded** — for 1/((1+x)^3 * (2+x)^4) that is a
+            // degree-6 denominator written out — so every level of the recursion re-factorises
+            // what the level above had already factored, and the whole cost is in there.
+            // Measured, integrating the pieces each splitter produces for that integrand:
+            //
+            //     peel one root, then the remainder        33,318 ms
+            //     split into coprime blocks, both halves       39 ms
+            //
+            // Neither splitter is slow in itself: both return in under 16 ms. It is what they
+            // hand on that differs, and the coprime split hands on two smaller problems whose
+            // denominators are each a single repeated factor, where peeling hands on one problem
+            // barely smaller than the original.
+            // https://github.com/asc-community/AngouriMath/issues/1235
             if (Functions.PartialFractions.TrySplitIntoCoprimeParts(
                     numerator, denominator, x, out var left, out var right)
                 && Integration.ComputeIndefiniteIntegral(left, x, integrateByParts) is { } overOne
                 && Integration.ComputeIndefiniteIntegral(right, x, integrateByParts) is { } overOther)
                 return overOne + overOther;
+
+            // Still needed, and not only as a fallback: the coprime split declines a denominator
+            // that is a single repeated factor, or that has no second coprime block to split off,
+            // and those are exactly what the recursion above descends into.
+            if (Functions.PolynomialFactoring.TrySplitOffRationalRoot(
+                    numerator, denominator, x, out var simple, out var restNumerator, out var restDenominator)
+                && Integration.ComputeIndefiniteIntegral(simple, x, integrateByParts) is { } first
+                && Integration.ComputeIndefiniteIntegral(restNumerator / restDenominator, x, integrateByParts) is { } rest)
+                return first + rest;
 
             if (Functions.PartialFractions.TrySplitBiquadraticOverTheReals(
                     numerator, denominator, x, out var overOneReal, out var overOtherReal)
