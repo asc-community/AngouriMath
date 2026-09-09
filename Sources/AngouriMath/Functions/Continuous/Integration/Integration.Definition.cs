@@ -350,6 +350,11 @@ namespace AngouriMath.Functions.Algebra
             // sqrt(tan(x)) over the derivative of sqrt(tan(x)) simplifies to sin(2x), in which
             // the substitution is no longer visible. This one rewrites rather than divides.
             if ((answer = IndefiniteIntegralSolver.SolveByTangentSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // The half-angle substitution after the tangent one, which is the more specific tool:
+            // an integrand rational in tan(x) should come back in terms of the tangent rather than
+            // in terms of tan(x/2). Before partial fractions because it is what *produces* the
+            // quotient of polynomials that partial fractions then takes apart.
+            if ((answer = IndefiniteIntegralSolver.SolveByHalfAngleSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
             // Linearity comes before integration by parts, because it decomposes the problem
             // into strictly simpler ones where by parts searches. It cannot cost an answer:
