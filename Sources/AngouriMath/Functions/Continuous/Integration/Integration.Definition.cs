@@ -166,8 +166,86 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         private const int MostAnswersKept = 4096;
 
+        /// <summary>
+        /// How deep the recursive descent may go before it declines to go further.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Without this the descent has **no bound at all**, and a stack overflow is not an
+        /// exception a caller can handle: it takes the process down, so anything the process had
+        /// not finished is lost. Found by <c>work/intbench</c> against Rubi's independent test
+        /// suites, where the run died with <c>SIGABRT</c> partway through; the trace was thousands
+        /// of frames alternating <see cref="ComputeIndefiniteIntegral"/> with
+        /// <see cref="IndefiniteIntegralSolver.SolveBySubstitution"/>.
+        /// https://github.com/asc-community/AngouriMath/issues/1232
+        /// </para>
+        /// <para>
+        /// <b>Why the memo above does not already stop it, which is the part worth stating.</b>
+        /// <c>SolveBySubstitution</c> names its new variable with
+        /// <c>Variable.CreateUnique</c>, so every level integrates with respect to a *fresh*
+        /// variable. The key <c>(expr, x, integrateByParts)</c> therefore differs at every level
+        /// even when the level is the same problem renamed, and <see cref="answered"/> can never
+        /// fire on a cycle. Neither could a set of shapes already visited, for the same reason —
+        /// the shapes are alpha-equivalent rather than equal. A depth bound does not care what
+        /// the levels are called.
+        /// </para>
+        /// <para>
+        /// <b>The number, which is measured rather than picked.</b> Instrumenting the descent over
+        /// twenty-three integrands chosen from the hard end of the corpus — the ones that take
+        /// substitutions, by-parts chains and partial fractions — the deepest any *answered*
+        /// integral reaches is <b>13</b>, for <c>x^5*cosh(x)</c>. Next are <c>x^2*sqrt(5-x^2)</c>
+        /// at 8 and <c>e^(x^(1/3))</c> at 7; everything else sits at 4 or less. 32 is therefore
+        /// about two and a half times the deepest real descent seen.
+        /// </para>
+        /// <para>
+        /// <b>Why not far more, since a bound only has to stop the overflow.</b> Because this
+        /// descent branches: the remark on <see cref="answered"/> above records a single call
+        /// entering the integrator 5,330 times for 23 distinct integrands. Depth that is never
+        /// legitimately used is still searched before it is abandoned, so a bound of 64 stopped
+        /// the crash and left the run crawling. A bound has to be tight enough to be a bound.
+        /// </para>
+        /// <para>
+        /// Declining is a legitimate answer here and a wrong one is not: an unevaluated
+        /// <c>integral(...)</c> says "I could not settle this", which is true, where an aborted
+        /// process says nothing at all.
+        /// </para>
+        /// </remarks>
+        private const int DeepestDescent = 32;
+
+        /// <summary>How deep the current descent is. Per thread, like <see cref="answered"/>.</summary>
+        [System.ThreadStatic] private static int descentDepth;
+
+
+        /// <summary>
+        /// Whether anything in the current top-level call gave up on <see cref="DeepestDescent"/>
+        /// rather than on the mathematics. A <c>null</c> produced that way must not be cached as
+        /// "this cannot be integrated", because the same key may well be answerable when it is
+        /// not reached from so deep.
+        /// </summary>
+        [System.ThreadStatic] private static bool descentTruncated;
+
         /// <summary>Does not add the constant of integration because this is called recursively.</summary>
         internal static Entity? ComputeIndefiniteIntegral(Entity expr, Entity.Variable x, bool integrateByParts = true)
+        {
+            if (descentDepth >= DeepestDescent)
+            {
+                descentTruncated = true;
+                return null;
+            }
+            if (descentDepth == 0)
+                descentTruncated = false;
+            descentDepth++;
+            try
+            {
+                return ComputeIndefiniteIntegralBounded(expr, x, integrateByParts);
+            }
+            finally
+            {
+                descentDepth--;
+            }
+        }
+
+        private static Entity? ComputeIndefiniteIntegralBounded(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             expr = Normalized(expr);
 
@@ -195,7 +273,12 @@ namespace AngouriMath.Functions.Algebra
             // Only kept if those settings still hold. Working the answer out runs simplification,
             // which opens scopes of its own; one still open means this answer was computed under
             // settings the stamp does not describe.
-            if (SettingsState.StillHolds(stamp))
+            // A null that came of running out of descent, rather than of the mathematics, is not
+            // an answer about this integrand and must not be remembered as one — the same key
+            // reached from less deep may well be answerable. A non-null answer is kept whatever
+            // happened elsewhere, since an antiderivative that was found is correct regardless of
+            // how deep the search that found it went.
+            if (SettingsState.StillHolds(stamp) && (computed is not null || !descentTruncated))
             {
                 // Emptied rather than grown without end. Nothing here expires on its own — the
                 // settings holding still is the whole condition for keeping an answer — so a
