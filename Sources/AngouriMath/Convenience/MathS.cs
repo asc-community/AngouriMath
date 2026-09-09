@@ -5453,7 +5453,13 @@ namespace AngouriMath
             /// </code>
             /// </example>
             public static Matrix PointwiseMultiplication(Matrix m1, Matrix m2)
-                => (Matrix)new Matrix(GenTensor.PiecewiseMultiply(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified;
+            {
+                // GenericTensor caches the compiled elementwise loop in an unsynchronised
+                // dictionary, so the entry has to be there before several threads read it.
+                // See Functions.GenTensorGuard.
+                Functions.GenTensorGuard.EnsurePiecewiseCacheWarmed();
+                return (Matrix)new Matrix(GenTensor.PiecewiseMultiply(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified;
+            }
 
             /// <summary>
             /// Creates an instance of <see cref="Entity.Matrix"/> that is a matrix.
