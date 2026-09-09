@@ -357,7 +357,13 @@ namespace AngouriMath.Functions.Algebra
             // times 2/(1 + t^2) -- and partial fractions wants a single Divf of two polynomials.
             // InnerSimplified leaves the nesting alone, so every one of these was handed on in a
             // shape nothing downstream could read and came back unevaluated.
-            var integrand = (inT * 2 / (1 + tSquared)).Simplify();
+            // Combined into one quotient first, because the rewrite puts a quotient inside a
+            // quotient and everything downstream wants a single Divf of two polynomials. Simplify
+            // alone does not do it — it never puts a sum over a common denominator, so
+            // 1/(1 - sin(x)) rewrote to 2/((t^2 + 1)(1 + (-2)t/(t^2 + 1))) and stopped there, one
+            // distribution short of 2/(t^2 - 2t + 1), which is integrated at once.
+            // https://github.com/asc-community/AngouriMath/issues/1239
+            var integrand = Functions.SingleQuotient.Combine(inT * 2 / (1 + tSquared)).Simplify();
 
             // Collapsing the nesting attaches a condition saying the denominator it cleared is
             // non-zero, and that denominator is 1 + t^2 -- so 1/(1 + cos(x)) comes out as
