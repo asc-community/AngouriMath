@@ -356,8 +356,8 @@ namespace AngouriMath.Tests.Convenience
         /// to <c>5/2</c> would be <c>35/8</c>, which answers a different question.
         /// </summary>
         [Theory]
+        // `sum(k, k, 1, +oo)` used to be here and is now `+oo`, the terms not tending to zero.
         [InlineData("sum(k, k, 1, 5/2)")]
-        [InlineData("sum(k, k, 1, +oo)")]
         [InlineData("sum(k ^ k, k, 1, n)")]
         public void ARangeThatIsNotAnIntegerOneStaysAsWritten(string written) =>
             Assert.Equal(written.ToEntity(), written.ToEntity().Simplify());

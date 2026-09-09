@@ -239,6 +239,9 @@ namespace AngouriMath
                 ?? Functions.ExponentialSeries.ClosedForm(Expression, Var, From, To)
                 ?? Functions.BinomialSum.ClosedForm(Expression, Var, From, To)
                 ?? Functions.GeometricSeries.ClosedForm(Expression, Var, From, To)
+                // Last: a series that converges is summed above, and only what none of them
+                // answered is asked whether it diverges.
+                ?? Functions.DivergentSeries.ClosedForm(Expression, Var, From, To)
                 ?? this;
 
             /// <summary>

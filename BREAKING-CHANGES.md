@@ -90,6 +90,7 @@ read first.
 | | `"sum(N! / (k! * (N - k)!) * x^k, k, 0, N)".ToEntity().Simplify()`, and every binomial sum with a power or a cosine or sine of the index as its weight | `sum(N! / (k! * (N - k)!) * x ^ k, k, 0, N)` — left as written | `piecewise((1 + x) ^ N provided N >= 0, 0)`; with `cos(k * pi / 3)`, `piecewise(2 ^ N * cos(pi / 6) ^ N * cos(N * pi / 6) provided N >= 0, 0)` |
 | | `"ln(4/3) + ln(16/9) / 2".ToEntity().Simplify()`, and every sum of logarithms of rational literals one of which is a perfect power of another | `ln(4/3) + ln(16/9) / 2` — left as written | `2 * ln(4/3)`; the integral it came from, `integral((2x^2+x+1)/(x^3+x^2+x+1), x, 3/4, 4/3)`, answers `ln(16/9)` |
 | | `"sum(x^k, k, 0, +oo)".ToEntity().Simplify()`, and every summation of a power with the index in the exponent times something free of the index, to a bound or to `+oo` | left as written | `1 / (1 - x) provided abs(x) < 1`; `sum(2^(-k), k, 0, +oo)` is `2`, `sum(x^k, k, 0, n)` is a piecewise with the ratio 1 and the empty range as cases of their own, and `integral(2^(-floor(x)), x, 0, +oo)` is `2` |
+| | `"sum(2^k, k, 0, +oo)".ToEntity().Simplify()`, and every summation to `+oo` whose terms do not tend to zero and whose limit has a sign | left as written | `+oo`, or `-oo` where the limit is negative; `sum(k, k, 1, +oo)` is `+oo` and `integral(floor(x)^floor(x), x, 1, +oo)` is `+oo`. A vanishing limit, a limit that does not exist, and a pole in the index are each still left as written |
 | **Loud** | `"divides".ToEntity()`, and every expression with a name spelt `divides` in it | the variable `divides`; `2 divides` was `2 * divides` and `3 divides 12` was `3 * divides ^ 12` | a parse error — `divides` is the keyword of the new statement `a divides b`, which reads `3 divides 12` as the statement that 12 is a multiple of 3 |
 | **Silent** | `"card(x)".ToEntity()` and `"#x"`, and every expression with a name spelt `card` followed by a parenthesis, or a `#` | `card * x` — a variable times the parenthesis; `#` was a parse error; `card({ 1, 2, 3 })` evaluated to the set `{ card, card * 2, card * 3 }` | `#x`, the number of elements of the set `x` (`card( )` accepted, `#` canonical); `#{ 1, 2, 3 }` is `3` |
 | **Silent** | `"integral(piecewise(2x provided x <= 1/2, 2 - 2x), x, 0, 1)".ToEntity().Simplify()`, and every definite integral of a piecewise whose conditions mention the variable | `1` — the first case's antiderivative at both ends | `1/2` — split at the case boundaries; `piecewise(x provided x < 1, x^2)` from 0 to 2 was `piecewise(2 provided x < 1, 8/3)`, with the integration variable still in it, and is `17/6` |
@@ -1131,6 +1132,39 @@ columns measured on a build, `60545afa` against this change.
 | `"integral((2x^2+x+1)/(x^3+x^2+x+1), x, 3/4, 4/3)".ToEntity().Simplify()` | `ln(4/3) + ln(16/9) / 2` | `ln(16/9)` |
 | `"ln(16/9)"`, `ln(64)`, `ln(8) - 3 * ln(2)`, `log(3, 81) / 4` | `ln(16/9)`, `ln(64)`, `0`, `1` | the same |
 | `RewriteRules.Power.Rules.Count`, and `RewriteRules.All` by growth | `31`; 124 / 49 / 31 / 123 | `32`; 124 / 49 / 32 / 123 |
+
+### A series whose terms do not vanish is answered `+oo` rather than left as written
+
+`sum(2^k, k, 0, +oo)` and `sum(k, k, 1, +oo)` were left as written. They have no finite value, and
+saying nothing was the only thing missing: the **nth-term test** settles them. Terms that do not
+tend to zero mean the series diverges, and the *sign* of the limit says which infinity — where the
+terms tend to a positive `L` they are eventually all above `L / 2`, so the partial sums pass every
+bound. A negative limit gives `-oo` the same way, and the finitely many terms before that point are
+finite and cannot change it.
+
+**A limit of zero is declined, and that is the point of the test rather than a gap in it.** It is
+exactly the case the nth-term test says nothing about: `sum(1/k, k, 1, +oo)` diverges and
+`sum(1/k^2, k, 1, +oo)` converges, and the terms of both tend to 0. A limit that does not exist is
+declined too — `sum((-1)^k, k, 0, +oo)` has no value rather than an infinite one, and telling "the
+limit does not exist" apart from "the limit was not computed" is not something to infer from a
+failed computation. **And a summand that can fail to exist at some index is declined**, because one
+undefined term makes the sum undefined rather than infinite: `sum(k / (k - 5), k, 0, +oo)` has terms
+tending to 1, and the term at `k = 5` does not exist. Rather than hunt for poles, the index is
+allowed only where none can arise, so a division by anything containing it is refused outright.
+
+This runs last, after every closed form, so a series that converges is summed rather than tested.
+Asked for on the review of [#1218](https://github.com/asc-community/AngouriMath/pull/1218), where
+`integral(floor(x)^floor(x), x, 1, +oo)` splits into `sum(n^n, n, 1, +oo)` and was left as written
+for want of it. Part of [#1212](https://github.com/asc-community/AngouriMath/issues/1212). Both
+columns measured on a build, `102911be` against this change.
+
+| | Was | Is |
+|---|---|---|
+| `"sum(2^k, k, 0, +oo)".ToEntity().Simplify()`, `sum(k, k, 1, +oo)`, `sum(k^2 + 1, k, 0, +oo)`, `sum(n^n, n, 1, +oo)` | left as written | `+oo` |
+| `"sum(-k, k, 1, +oo)".ToEntity().Simplify()`, `sum(-2^k, k, 0, +oo)` | left as written | `-oo` |
+| `"integral(floor(x)^floor(x), x, 1, +oo)".ToEntity().Simplify()` | left as written | `+oo` |
+| `"sum(1/k, k, 1, +oo)"`, `sum(1/k^2, k, 1, +oo)`, `sum((-1)^k, k, 0, +oo)`, `sum(k / (k - 5), k, 0, +oo)` | left as written | the same — a vanishing limit, a limit that does not exist, and a pole in the index are each declined |
+| `"sum(2^(-k), k, 0, +oo)"`, `sum(x^k / k!, k, 0, +oo)`, `sum(2^k, k, 0, 5)` | `2`, `e^x`, `63` | the same — what converges is summed, and a finite range is a finite sum |
 
 ### A geometric series is summed in closed form
 
