@@ -43,6 +43,38 @@ is the primary spelling anyway and is what the library prints.
 
 ## Unreleased — since 2.5.0
 
+### `|` is divisibility, and was disjunction
+
+**Read this one first.** It is the only entry here that changes what existing input *means* rather
+than what an answer looks like, and it changes it **silently**: an expression that used `|` still
+parses, and answers something else.
+
+| | Was | Is |
+|---|---|---|
+| `"2 \| 6".ToEntity()` | `2 or 6`, a disjunction of two numbers | `2 divides 6`, which evaluates to `True` |
+| `"x > 0 \| x < -1".ToEntity()` | `x > 0 or x < -1` | `x > 0 divides x and 0 divides x < -1` — divisibility binds tighter than a comparison, so the operands regroup |
+| `"A \| B".ToEntity()` on booleans | `A or B` | `A divides B`, which is `NaN` — divisibility is a statement about integers |
+| `"{ x \| x > 0 }".ToEntity()` | a one-element `FiniteSet` holding `x or x > 0` | a one-element `FiniteSet` holding `(x divides x) > 0` |
+
+**`or` is unaffected and always was the primary spelling** — it is what the library prints, so a
+round-tripped expression never contained a `|` in the first place. Replacing `|` with `or` restores
+the old reading exactly, everywhere.
+
+`a | b` is the statement that `b` is a whole multiple of `a`, the same node `a divides b` has built
+since [#1220](https://github.com/asc-community/AngouriMath/pull/1220), and it takes that
+precedence. It is defined over the integers and is `NaN` over anything else, the way an inequality
+is over a non-real number. `0 | 0` is `True`; `0 | b` is otherwise `False`.
+
+**Why now, and why in one step.** `|` was the one spelling in the grammar that means something else
+in mathematics than we read it as — it is divides, "such that", "given", and the delimiter in
+`|x|`, and none of those is disjunction, which is `∨`. Proposed with a two-release migration
+through a parse error; the maintainer's decision on
+[#1212](https://github.com/asc-community/AngouriMath/issues/1212) was to make the change directly,
+since semantic versioning admits it.
+
+Measured on the suite: **7 of 8,525 tests** referenced the old reading — five boolean-solver inputs
+written `A | B`, and two that existed to record this spelling as at risk.
+
 ### A quotient of polynomials is split into coprime blocks before a root is peeled off
 
 `SolveByPartialFractions` tried `TrySplitOffRationalRoot` before `TrySplitIntoCoprimeParts`. Both

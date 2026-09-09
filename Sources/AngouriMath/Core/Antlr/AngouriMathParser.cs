@@ -91,8 +91,8 @@ internal partial class AngouriMathParser : Parser {
 	private static readonly string[] _LiteralNames = {
 		null, "'!'", "'^'", "'-'", "'+'", "'*'", "'/'", "'mod'", "'intersect'", 
 		"'/\\'", "'unite'", "'\\/'", "'setsubtract'", "'\\'", "'in'", "'divides'", 
-		"'>='", "'<='", "'>'", "'<'", "'='", "'<>'", "'not'", "'and'", "'&'", 
-		"'xor'", "'or'", "'|'", "'implies'", "'->'", "'provided'", "'=>'", "','", 
+		"'|'", "'>='", "'<='", "'>'", "'<'", "'='", "'<>'", "'not'", "'and'", 
+		"'&'", "'xor'", "'or'", "'implies'", "'->'", "'provided'", "'=>'", "','", 
 		"';'", "':'", "'+oo'", "'-oo'", "'(|'", "'|)'", "'#'", "'['", "']T'", 
 		"']'", "'('", "')'", "'{'", "'}'", "'log('", "'log10('", "'log2('", "'pow('", 
 		"'sqrt('", "'cbrt('", "'sqr('", "'ln('", "'exp('", "'sin('", "'cos('", 
@@ -939,12 +939,12 @@ internal partial class AngouriMathParser : Parser {
 			State = 175;
 			_localctx.m1 = set_operator_union_setsubtraction();
 			 _localctx.value =  _localctx.m1.value; 
-			State = 187;
+			State = 191;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			while (_la==T__13 || _la==T__14) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & 114688L) != 0)) {
 				{
-				State = 185;
+				State = 189;
 				ErrorHandler.Sync(this);
 				switch (TokenStream.LA(1)) {
 				case T__13:
@@ -965,11 +965,20 @@ internal partial class AngouriMathParser : Parser {
 					 _localctx.value =  _localctx.value.Divides(_localctx.m2.value); 
 					}
 					break;
+				case T__15:
+					{
+					State = 185;
+					Match(T__15);
+					State = 186;
+					_localctx.m2 = set_operator_union_setsubtraction();
+					 _localctx.value =  _localctx.value.Divides(_localctx.m2.value); 
+					}
+					break;
 				default:
 					throw new NoViableAltException(this);
 				}
 				}
-				State = 189;
+				State = 193;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 			}
@@ -1022,69 +1031,69 @@ internal partial class AngouriMathParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 190;
+			State = 194;
 			_localctx.m1 = in_operator();
 			 terms.Add(_localctx.m1.value); 
-			State = 211;
+			State = 215;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & 4128768L) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & 8257536L) != 0)) {
 				{
 				{
-				State = 204;
+				State = 208;
 				ErrorHandler.Sync(this);
 				switch (TokenStream.LA(1)) {
-				case T__15:
-					{
-					State = 192;
-					Match(T__15);
-					 operators.Add(">="); 
-					}
-					break;
 				case T__16:
 					{
-					State = 194;
+					State = 196;
 					Match(T__16);
-					 operators.Add("<="); 
+					 operators.Add(">="); 
 					}
 					break;
 				case T__17:
 					{
-					State = 196;
+					State = 198;
 					Match(T__17);
-					 operators.Add(">");  
+					 operators.Add("<="); 
 					}
 					break;
 				case T__18:
 					{
-					State = 198;
+					State = 200;
 					Match(T__18);
-					 operators.Add("<");  
+					 operators.Add(">");  
 					}
 					break;
 				case T__19:
 					{
-					State = 200;
+					State = 202;
 					Match(T__19);
-					 operators.Add("=");  
+					 operators.Add("<");  
 					}
 					break;
 				case T__20:
 					{
-					State = 202;
+					State = 204;
 					Match(T__20);
+					 operators.Add("=");  
+					}
+					break;
+				case T__21:
+					{
+					State = 206;
+					Match(T__21);
 					 operators.Add("<>"); 
 					}
 					break;
 				default:
 					throw new NoViableAltException(this);
 				}
-				State = 206;
+				State = 210;
 				_localctx.m2 = in_operator();
 				 terms.Add(_localctx.m2.value); 
 				}
 				}
-				State = 213;
+				State = 217;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 			}
@@ -1153,15 +1162,15 @@ internal partial class AngouriMathParser : Parser {
 		Negate_expressionContext _localctx = new Negate_expressionContext(Context, State);
 		EnterRule(_localctx, 20, RULE_negate_expression);
 		try {
-			State = 227;
+			State = 231;
 			ErrorHandler.Sync(this);
 			switch ( Interpreter.AdaptivePredict(TokenStream,20,Context) ) {
 			case 1:
 				EnterOuterAlt(_localctx, 1);
 				{
-				State = 216;
-				Match(T__21);
-				State = 217;
+				State = 220;
+				Match(T__22);
+				State = 221;
 				_localctx.op = comparison_expression();
 				 _localctx.value =  !_localctx.op.value; 
 				}
@@ -1169,9 +1178,9 @@ internal partial class AngouriMathParser : Parser {
 			case 2:
 				EnterOuterAlt(_localctx, 2);
 				{
-				State = 220;
-				Match(T__21);
-				State = 221;
+				State = 224;
+				Match(T__22);
+				State = 225;
 				_localctx.opn = negate_expression();
 				 _localctx.value =  !_localctx.opn.value; 
 				}
@@ -1179,7 +1188,7 @@ internal partial class AngouriMathParser : Parser {
 			case 3:
 				EnterOuterAlt(_localctx, 3);
 				{
-				State = 224;
+				State = 228;
 				_localctx.op = comparison_expression();
 				 _localctx.value =  _localctx.op.value; 
 				}
@@ -1232,26 +1241,17 @@ internal partial class AngouriMathParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 229;
+			State = 233;
 			_localctx.m1 = negate_expression();
 			 _localctx.value =  _localctx.m1.value; 
-			State = 241;
+			State = 245;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			while (_la==T__22 || _la==T__23) {
+			while (_la==T__23 || _la==T__24) {
 				{
-				State = 239;
+				State = 243;
 				ErrorHandler.Sync(this);
 				switch (TokenStream.LA(1)) {
-				case T__22:
-					{
-					State = 231;
-					Match(T__22);
-					State = 232;
-					_localctx.m2 = negate_expression();
-					 _localctx.value =  _localctx.value & _localctx.m2.value; 
-					}
-					break;
 				case T__23:
 					{
 					State = 235;
@@ -1261,11 +1261,20 @@ internal partial class AngouriMathParser : Parser {
 					 _localctx.value =  _localctx.value & _localctx.m2.value; 
 					}
 					break;
+				case T__24:
+					{
+					State = 239;
+					Match(T__24);
+					State = 240;
+					_localctx.m2 = negate_expression();
+					 _localctx.value =  _localctx.value & _localctx.m2.value; 
+					}
+					break;
 				default:
 					throw new NoViableAltException(this);
 				}
 				}
-				State = 243;
+				State = 247;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 			}
@@ -1317,23 +1326,23 @@ internal partial class AngouriMathParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 244;
+			State = 248;
 			_localctx.m1 = and_expression();
 			 _localctx.value =  _localctx.m1.value; 
-			State = 252;
+			State = 256;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			while (_la==T__24) {
+			while (_la==T__25) {
 				{
 				{
-				State = 246;
-				Match(T__24);
-				State = 247;
+				State = 250;
+				Match(T__25);
+				State = 251;
 				_localctx.m2 = and_expression();
 				 _localctx.value =  _localctx.value ^ _localctx.m2.value; 
 				}
 				}
-				State = 254;
+				State = 258;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 			}
@@ -1385,37 +1394,20 @@ internal partial class AngouriMathParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 255;
+			State = 259;
 			_localctx.m1 = xor_expression();
 			 _localctx.value =  _localctx.m1.value; 
 			State = 267;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			while (_la==T__25 || _la==T__26) {
+			while (_la==T__26) {
 				{
-				State = 265;
-				ErrorHandler.Sync(this);
-				switch (TokenStream.LA(1)) {
-				case T__25:
-					{
-					State = 257;
-					Match(T__25);
-					State = 258;
-					_localctx.m2 = xor_expression();
-					 _localctx.value =  _localctx.value | _localctx.m2.value; 
-					}
-					break;
-				case T__26:
-					{
-					State = 261;
-					Match(T__26);
-					State = 262;
-					_localctx.m2 = xor_expression();
-					 _localctx.value =  _localctx.value | _localctx.m2.value; 
-					}
-					break;
-				default:
-					throw new NoViableAltException(this);
+				{
+				State = 261;
+				Match(T__26);
+				State = 262;
+				_localctx.m2 = xor_expression();
+				 _localctx.value =  _localctx.value | _localctx.m2.value; 
 				}
 				}
 				State = 269;
@@ -1713,7 +1705,7 @@ internal partial class AngouriMathParser : Parser {
 			State = 312;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & -94867233439720L) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & -1L) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & 1056964607L) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & -94867229245416L) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & -1L) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & 1056964607L) != 0)) {
 				{
 				State = 301;
 				_localctx.e = expression();
@@ -1917,7 +1909,7 @@ internal partial class AngouriMathParser : Parser {
 		try {
 			State = 919;
 			ErrorHandler.Sync(this);
-			switch ( Interpreter.AdaptivePredict(TokenStream,32,Context) ) {
+			switch ( Interpreter.AdaptivePredict(TokenStream,31,Context) ) {
 			case 1:
 				EnterOuterAlt(_localctx, 1);
 				{
@@ -3507,12 +3499,12 @@ internal partial class AngouriMathParser : Parser {
 		9,5,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,5,6,148,8,6,10,6,12,6,151,
 		9,6,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,
 		7,1,7,5,7,171,8,7,10,7,12,7,174,9,7,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,
-		8,1,8,5,8,186,8,8,10,8,12,8,189,9,8,1,9,1,9,1,9,1,9,1,9,1,9,1,9,1,9,1,
-		9,1,9,1,9,1,9,1,9,1,9,3,9,205,8,9,1,9,1,9,1,9,5,9,210,8,9,10,9,12,9,213,
-		9,9,1,9,1,9,1,10,1,10,1,10,1,10,1,10,1,10,1,10,1,10,1,10,1,10,1,10,3,10,
-		228,8,10,1,11,1,11,1,11,1,11,1,11,1,11,1,11,1,11,1,11,1,11,5,11,240,8,
-		11,10,11,12,11,243,9,11,1,12,1,12,1,12,1,12,1,12,1,12,5,12,251,8,12,10,
-		12,12,12,254,9,12,1,13,1,13,1,13,1,13,1,13,1,13,1,13,1,13,1,13,1,13,5,
+		8,1,8,1,8,1,8,1,8,1,8,5,8,190,8,8,10,8,12,8,193,9,8,1,9,1,9,1,9,1,9,1,
+		9,1,9,1,9,1,9,1,9,1,9,1,9,1,9,1,9,1,9,3,9,209,8,9,1,9,1,9,1,9,5,9,214,
+		8,9,10,9,12,9,217,9,9,1,9,1,9,1,10,1,10,1,10,1,10,1,10,1,10,1,10,1,10,
+		1,10,1,10,1,10,3,10,232,8,10,1,11,1,11,1,11,1,11,1,11,1,11,1,11,1,11,1,
+		11,1,11,5,11,244,8,11,10,11,12,11,247,9,11,1,12,1,12,1,12,1,12,1,12,1,
+		12,5,12,255,8,12,10,12,12,12,258,9,12,1,13,1,13,1,13,1,13,1,13,1,13,5,
 		13,266,8,13,10,13,12,13,269,9,13,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,
 		14,1,14,1,14,5,14,281,8,14,10,14,12,14,284,9,14,1,15,1,15,1,15,1,15,1,
 		15,1,15,3,15,292,8,15,1,16,1,16,1,16,1,16,1,16,1,16,3,16,300,8,16,1,17,
@@ -3563,8 +3555,8 @@ internal partial class AngouriMathParser : Parser {
 		20,1,20,1,20,1,20,3,20,920,8,20,1,21,1,21,1,21,1,21,1,21,0,0,22,0,2,4,
 		6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,0,0,1066,0,51,1,
 		0,0,0,2,69,1,0,0,0,4,71,1,0,0,0,6,101,1,0,0,0,8,103,1,0,0,0,10,122,1,0,
-		0,0,12,137,1,0,0,0,14,152,1,0,0,0,16,175,1,0,0,0,18,190,1,0,0,0,20,227,
-		1,0,0,0,22,229,1,0,0,0,24,244,1,0,0,0,26,255,1,0,0,0,28,270,1,0,0,0,30,
+		0,0,12,137,1,0,0,0,14,152,1,0,0,0,16,175,1,0,0,0,18,194,1,0,0,0,20,231,
+		1,0,0,0,22,233,1,0,0,0,24,248,1,0,0,0,26,259,1,0,0,0,28,270,1,0,0,0,30,
 		285,1,0,0,0,32,293,1,0,0,0,34,312,1,0,0,0,36,314,1,0,0,0,38,320,1,0,0,
 		0,40,919,1,0,0,0,42,921,1,0,0,0,44,45,3,40,20,0,45,46,5,1,0,0,46,47,6,
 		0,-1,0,47,52,1,0,0,0,48,49,3,40,20,0,49,50,6,0,-1,0,50,52,1,0,0,0,51,44,
@@ -3599,31 +3591,31 @@ internal partial class AngouriMathParser : Parser {
 		171,1,0,0,0,166,167,5,13,0,0,167,168,3,12,6,0,168,169,6,7,-1,0,169,171,
 		1,0,0,0,170,154,1,0,0,0,170,158,1,0,0,0,170,162,1,0,0,0,170,166,1,0,0,
 		0,171,174,1,0,0,0,172,170,1,0,0,0,172,173,1,0,0,0,173,15,1,0,0,0,174,172,
-		1,0,0,0,175,176,3,14,7,0,176,187,6,8,-1,0,177,178,5,14,0,0,178,179,3,14,
-		7,0,179,180,6,8,-1,0,180,186,1,0,0,0,181,182,5,15,0,0,182,183,3,14,7,0,
-		183,184,6,8,-1,0,184,186,1,0,0,0,185,177,1,0,0,0,185,181,1,0,0,0,186,189,
-		1,0,0,0,187,185,1,0,0,0,187,188,1,0,0,0,188,17,1,0,0,0,189,187,1,0,0,0,
-		190,191,3,16,8,0,191,211,6,9,-1,0,192,193,5,16,0,0,193,205,6,9,-1,0,194,
-		195,5,17,0,0,195,205,6,9,-1,0,196,197,5,18,0,0,197,205,6,9,-1,0,198,199,
-		5,19,0,0,199,205,6,9,-1,0,200,201,5,20,0,0,201,205,6,9,-1,0,202,203,5,
-		21,0,0,203,205,6,9,-1,0,204,192,1,0,0,0,204,194,1,0,0,0,204,196,1,0,0,
-		0,204,198,1,0,0,0,204,200,1,0,0,0,204,202,1,0,0,0,205,206,1,0,0,0,206,
-		207,3,16,8,0,207,208,6,9,-1,0,208,210,1,0,0,0,209,204,1,0,0,0,210,213,
-		1,0,0,0,211,209,1,0,0,0,211,212,1,0,0,0,212,214,1,0,0,0,213,211,1,0,0,
-		0,214,215,6,9,-1,0,215,19,1,0,0,0,216,217,5,22,0,0,217,218,3,18,9,0,218,
-		219,6,10,-1,0,219,228,1,0,0,0,220,221,5,22,0,0,221,222,3,20,10,0,222,223,
-		6,10,-1,0,223,228,1,0,0,0,224,225,3,18,9,0,225,226,6,10,-1,0,226,228,1,
-		0,0,0,227,216,1,0,0,0,227,220,1,0,0,0,227,224,1,0,0,0,228,21,1,0,0,0,229,
-		230,3,20,10,0,230,241,6,11,-1,0,231,232,5,23,0,0,232,233,3,20,10,0,233,
-		234,6,11,-1,0,234,240,1,0,0,0,235,236,5,24,0,0,236,237,3,20,10,0,237,238,
-		6,11,-1,0,238,240,1,0,0,0,239,231,1,0,0,0,239,235,1,0,0,0,240,243,1,0,
-		0,0,241,239,1,0,0,0,241,242,1,0,0,0,242,23,1,0,0,0,243,241,1,0,0,0,244,
-		245,3,22,11,0,245,252,6,12,-1,0,246,247,5,25,0,0,247,248,3,22,11,0,248,
-		249,6,12,-1,0,249,251,1,0,0,0,250,246,1,0,0,0,251,254,1,0,0,0,252,250,
-		1,0,0,0,252,253,1,0,0,0,253,25,1,0,0,0,254,252,1,0,0,0,255,256,3,24,12,
-		0,256,267,6,13,-1,0,257,258,5,26,0,0,258,259,3,24,12,0,259,260,6,13,-1,
-		0,260,266,1,0,0,0,261,262,5,27,0,0,262,263,3,24,12,0,263,264,6,13,-1,0,
-		264,266,1,0,0,0,265,257,1,0,0,0,265,261,1,0,0,0,266,269,1,0,0,0,267,265,
+		1,0,0,0,175,176,3,14,7,0,176,191,6,8,-1,0,177,178,5,14,0,0,178,179,3,14,
+		7,0,179,180,6,8,-1,0,180,190,1,0,0,0,181,182,5,15,0,0,182,183,3,14,7,0,
+		183,184,6,8,-1,0,184,190,1,0,0,0,185,186,5,16,0,0,186,187,3,14,7,0,187,
+		188,6,8,-1,0,188,190,1,0,0,0,189,177,1,0,0,0,189,181,1,0,0,0,189,185,1,
+		0,0,0,190,193,1,0,0,0,191,189,1,0,0,0,191,192,1,0,0,0,192,17,1,0,0,0,193,
+		191,1,0,0,0,194,195,3,16,8,0,195,215,6,9,-1,0,196,197,5,17,0,0,197,209,
+		6,9,-1,0,198,199,5,18,0,0,199,209,6,9,-1,0,200,201,5,19,0,0,201,209,6,
+		9,-1,0,202,203,5,20,0,0,203,209,6,9,-1,0,204,205,5,21,0,0,205,209,6,9,
+		-1,0,206,207,5,22,0,0,207,209,6,9,-1,0,208,196,1,0,0,0,208,198,1,0,0,0,
+		208,200,1,0,0,0,208,202,1,0,0,0,208,204,1,0,0,0,208,206,1,0,0,0,209,210,
+		1,0,0,0,210,211,3,16,8,0,211,212,6,9,-1,0,212,214,1,0,0,0,213,208,1,0,
+		0,0,214,217,1,0,0,0,215,213,1,0,0,0,215,216,1,0,0,0,216,218,1,0,0,0,217,
+		215,1,0,0,0,218,219,6,9,-1,0,219,19,1,0,0,0,220,221,5,23,0,0,221,222,3,
+		18,9,0,222,223,6,10,-1,0,223,232,1,0,0,0,224,225,5,23,0,0,225,226,3,20,
+		10,0,226,227,6,10,-1,0,227,232,1,0,0,0,228,229,3,18,9,0,229,230,6,10,-1,
+		0,230,232,1,0,0,0,231,220,1,0,0,0,231,224,1,0,0,0,231,228,1,0,0,0,232,
+		21,1,0,0,0,233,234,3,20,10,0,234,245,6,11,-1,0,235,236,5,24,0,0,236,237,
+		3,20,10,0,237,238,6,11,-1,0,238,244,1,0,0,0,239,240,5,25,0,0,240,241,3,
+		20,10,0,241,242,6,11,-1,0,242,244,1,0,0,0,243,235,1,0,0,0,243,239,1,0,
+		0,0,244,247,1,0,0,0,245,243,1,0,0,0,245,246,1,0,0,0,246,23,1,0,0,0,247,
+		245,1,0,0,0,248,249,3,22,11,0,249,256,6,12,-1,0,250,251,5,26,0,0,251,252,
+		3,22,11,0,252,253,6,12,-1,0,253,255,1,0,0,0,254,250,1,0,0,0,255,258,1,
+		0,0,0,256,254,1,0,0,0,256,257,1,0,0,0,257,25,1,0,0,0,258,256,1,0,0,0,259,
+		260,3,24,12,0,260,267,6,13,-1,0,261,262,5,27,0,0,262,263,3,24,12,0,263,
+		264,6,13,-1,0,264,266,1,0,0,0,265,261,1,0,0,0,266,269,1,0,0,0,267,265,
 		1,0,0,0,267,268,1,0,0,0,268,27,1,0,0,0,269,267,1,0,0,0,270,271,3,26,13,
 		0,271,282,6,14,-1,0,272,273,5,28,0,0,273,274,3,26,13,0,274,275,6,14,-1,
 		0,275,281,1,0,0,0,276,277,5,29,0,0,277,278,3,26,13,0,278,279,6,14,-1,0,
@@ -3812,9 +3804,9 @@ internal partial class AngouriMathParser : Parser {
 		0,919,864,1,0,0,0,919,869,1,0,0,0,919,874,1,0,0,0,919,879,1,0,0,0,919,
 		884,1,0,0,0,919,889,1,0,0,0,919,894,1,0,0,0,919,899,1,0,0,0,919,904,1,
 		0,0,0,919,909,1,0,0,0,919,914,1,0,0,0,920,41,1,0,0,0,921,922,3,32,16,0,
-		922,923,5,0,0,1,923,924,6,21,-1,0,924,43,1,0,0,0,33,51,59,67,69,76,86,
-		96,101,117,119,132,134,147,149,170,172,185,187,204,211,227,239,241,252,
-		265,267,280,282,291,299,309,312,919
+		922,923,5,0,0,1,923,924,6,21,-1,0,924,43,1,0,0,0,32,51,59,67,69,76,86,
+		96,101,117,119,132,134,147,149,170,172,189,191,208,215,231,243,245,256,
+		267,280,282,291,299,309,312,919
 	};
 
 	public static readonly ATN _ATN =

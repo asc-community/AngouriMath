@@ -78,6 +78,35 @@ namespace AngouriMath.Tests.Core
             Assert.Equal(new Notf(new Dividesf("a".ToEntity(), "b".ToEntity())), "not a divides b".ToEntity());
         }
 
+        /// <summary>
+        /// <c>|</c> is the same operator as <c>divides</c>, at the same precedence, and it used to
+        /// be disjunction.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// It was the one spelling in the grammar that means something else in mathematics than we
+        /// read it as: <c>|</c> is divides, "such that", "given", and the delimiter in <c>|x|</c>,
+        /// and none of those is disjunction, which is written <c>∨</c>. Decided on
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1212">#1212</a>.
+        /// </para>
+        /// <para>
+        /// <c>or</c> is unaffected and always was the primary spelling — it is what the library
+        /// prints, so a round-tripped expression never held a <c>|</c> to begin with.
+        /// </para>
+        /// </remarks>
+        [Fact]
+        public void TheBarIsTheSameOperator()
+        {
+            Assert.Equal("2 divides 6".ToEntity(), "2 | 6".ToEntity());
+            Assert.Equal(new Dividesf(2, "x + 4".ToEntity()), "2 | x + 4".ToEntity());
+            Assert.Equal(Boolean.True, "2 | 6".ToEntity().Evaled);
+            Assert.Equal(Boolean.False, "4 | 6".ToEntity().Evaled);
+            // Same precedence as the word, so the two spellings group identically.
+            Assert.Equal("2 divides x and x > 0".ToEntity(), "2 | x and x > 0".ToEntity());
+            // And `or` still means what it always did.
+            Assert.IsType<Orf>("a or b".ToEntity());
+        }
+
         [Fact]
         public void ItPrintsAsTheBarInLatex()
         {

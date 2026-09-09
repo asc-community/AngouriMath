@@ -39,20 +39,26 @@ namespace AngouriMath.Tests.Convenience
     {
         // `|` is an alias for `or`, so a divisibility statement is read as a disjunction.
         [Fact]
-        public void TheBarIsStillDisjunction()
+        public void TheBarIsDivisibility()
         {
-            Assert.Equal("2 or 6".ToEntity(), "2 | 6".ToEntity());
-            Assert.IsType<Orf>("2 | 6".ToEntity());
+            Assert.Equal("2 divides 6".ToEntity(), "2 | 6".ToEntity());
+            Assert.IsType<Dividesf>("2 | 6".ToEntity());
+            Assert.Equal(Boolean.True, "2 | 6".ToEntity().Evaled);
+            // It was a disjunction until this changed, so `or` is what that input now needs.
+            Assert.IsType<Orf>("2 or 6".ToEntity());
         }
 
-        // Ordinary set-builder notation, read as a one-element finite set whose element is a
-        // disjunction. The library's own set builder is `{ x : x > 0 }`.
+        // Ordinary set-builder notation is still not read as a set builder — the bar changing
+        // meaning did not fix this, it changed what the one element is. The library's own set
+        // builder is `{ x : x > 0 }` and remains the spelling that works.
         [Fact]
         public void SetBuilderWithABarIsAOneElementFiniteSet()
         {
             var written = "{ x | x > 0 }".ToEntity();
             var set = Assert.IsType<Set.FiniteSet>(written);
-            Assert.Equal("x or x > 0".ToEntity(), Assert.Single(set.Elements));
+            // Divisibility binds tighter than a comparison, as `divides` always has, so the one
+            // element is `(x divides x) > 0` — a comparison whose left side is a statement.
+            Assert.Equal("x divides x > 0".ToEntity(), Assert.Single(set.Elements));
             // What was meant, and how to say it today.
             Assert.IsType<Set.ConditionalSet>("{ x : x > 0 }".ToEntity());
         }
