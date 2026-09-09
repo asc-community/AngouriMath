@@ -7,6 +7,7 @@
 
 using System;
 using System.Numerics;
+using System.Collections.Concurrent;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 using AngouriMath.Extensions;
@@ -649,17 +650,39 @@ namespace AngouriMath
 
         // Based on https://github.com/eobermuhlner/big-math/blob/ba75e9a80f040224cfeef3c2ac06390179712443/ch.obermuhlner.math.big/src/main/java/ch/obermuhlner/math/big/BigDecimalMath.java
 
-        static IEnumerable<EInteger> GenerateFactorials()
-        {
-            var i = 0;
-            var result = EInteger.One;
-            yield return result;
-            while (true)
-                yield return result *= ++i;
-        }
-        [ConstantField] static readonly IEnumerator<EInteger> factorialCacheGenerator = GenerateFactorials().GetEnumerator();
-        [ConstantField] static readonly List<EInteger> factorialCache = new List<EInteger>();
-        [ConstantField] static readonly Dictionary<int, EDecimal[]> spougeFactorialConstantsCache = new Dictionary<int, EDecimal[]>();
+        /// <summary>
+        /// The factorials computed so far, as a snapshot nobody mutates: <c>[i]</c> is <c>i!</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This was a <see cref="List{T}"/> grown in place under a lock, read without one. That is
+        /// not a safe pattern for <see cref="List{T}"/> and the failure is silent rather than an
+        /// exception: <c>Add</c> reallocates the backing array, so a reader outside the lock can
+        /// see the <em>new</em> <c>Count</c> against the <em>old</em> array and return a value for
+        /// a different index — a wrong factorial, well-formed and enormous, from a method that
+        /// cannot fail. The last <c>return</c> was outside the lock as well.
+        /// </para>
+        /// <para>
+        /// An array published by a single reference write fixes it without making readers wait.
+        /// A reader takes the reference once — that read is atomic — and then indexes an array
+        /// that is never written again, so it sees either the old complete snapshot or the new
+        /// one and never a half-grown one. The shared <see cref="IEnumerator{T}"/> that used to
+        /// carry the running product went with it: one enumerator advanced from several threads
+        /// is the same defect in a second place.
+        /// </para>
+        /// </remarks>
+        [ConcurrentField] static volatile EInteger[] factorialCache = new[] { EInteger.One };
+
+        /// <summary>What the writers of <see cref="factorialCache"/> take; readers take nothing.</summary>
+        [ConstantField] static readonly object factorialCacheLock = new object();
+
+        /// <summary>
+        /// Spouge's constants per precision. A <see cref="ConcurrentDictionary{TKey, TValue}"/>
+        /// because the reader here had the same shape as the one above — an unsynchronised
+        /// <c>TryGetValue</c> racing an <c>Add</c> made under a lock, which for
+        /// <see cref="Dictionary{TKey, TValue}"/> is undefined rather than merely stale.
+        /// </summary>
+        [ConcurrentField] static readonly ConcurrentDictionary<int, EDecimal[]> spougeFactorialConstantsCache = new ConcurrentDictionary<int, EDecimal[]>();
 
         /**
             <summary>
@@ -674,19 +697,25 @@ namespace AngouriMath
         {
             if (n < 0)
                 throw new ArgumentOutOfRangeException(nameof(n), "Illegal factorial(n) for n < 0: n = " + n);
-            if (n < factorialCache.Count)
-                return factorialCache[n];
-            lock (factorialCache)
+            // One volatile read, then an array that is never written again.
+            var cache = factorialCache;
+            if (n < cache.Length)
+                return cache[n];
+            lock (factorialCacheLock)
             {
-                if (n < factorialCache.Count)
-                    return factorialCache[n];
-                for (var i = factorialCache.Count - 1; i < n; i++)
-                {
-                    factorialCacheGenerator.MoveNext();
-                    factorialCache.Add(factorialCacheGenerator.Current);
-                }
+                // Re-read inside the lock: another writer may have published a longer one.
+                cache = factorialCache;
+                if (n < cache.Length)
+                    return cache[n];
+                var grown = new EInteger[n + 1];
+                Array.Copy(cache, grown, cache.Length);
+                var running = grown[cache.Length - 1];
+                for (var i = cache.Length; i <= n; i++)
+                    grown[i] = running *= i;
+                // The publishing write. Everything above happened to an array no reader has.
+                factorialCache = grown;
+                return grown[n];
             }
-            return factorialCache[n];
         }
 
         public static EInteger Factorial(this EInteger n) =>
@@ -759,14 +788,12 @@ namespace AngouriMath
             return result.RoundToPrecision(mathContext);
         }
 
+        // GetOrAdd may run the factory more than once for one key under contention, and that is
+        // harmless here: the constants are a pure function of `a`, so the losers are wasted work
+        // rather than a different answer. What it cannot do is hand back another key's entry.
         internal static EDecimal[] GetSpougeFactorialConstants(int a)
-        {
-            if (spougeFactorialConstantsCache.TryGetValue(a, out var list))
-                return list;
-            lock (spougeFactorialConstantsCache)
+            => spougeFactorialConstantsCache.GetOrAdd(a, static a =>
             {
-                if (spougeFactorialConstantsCache.TryGetValue(a, out list))
-                    return list;
                 var constants = new EDecimal[a];
                 var mc = EContext.ForPrecision(a * 15 / 10);
 
@@ -785,10 +812,8 @@ namespace AngouriMath
                     negative = !negative;
                 }
 
-                spougeFactorialConstantsCache.Add(a, constants);
                 return constants;
-            }
-        }
+            });
         /**
 	     * <summary>
 	     * Calculates the gamma function of the specified <see cref="EDecimal"/>.
