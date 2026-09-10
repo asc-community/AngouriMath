@@ -119,21 +119,43 @@ namespace AngouriMath.Tests.Calculus
         /// </summary>
         /// <remarks>
         /// <list type="bullet">
-        /// <item><c>sqrt(cotan(x))</c> — <c>cotan</c> is its own node rather than a reciprocal of
-        /// the tangent, so the rewrite finds nothing to replace and this never starts.</item>
-        /// <item><c>1/(1 + tan(x)^2)</c> becomes <c>1/(1 + u^2)^2</c>, a repeated irreducible
-        /// quadratic, which the partial fraction step declines because there is no rule for a
-        /// numerator over one.</item>
+        /// <item><c>sqrt(cotan(x))</c> — the cotangent is written as <c>1/tan</c> on the way in
+        /// now, so this does start; what stops it is the fractional power, which leaves a
+        /// radical in <c>u</c> rather than a rational function.</item>
         /// </list>
         /// <c>tan(x)^2</c> and <c>tan(x)^3</c> were on this list, for becoming improper rational
-        /// functions that nothing divided out. They are answered above now that the rational
-        /// integrator divides first, which is why a list like this is worth keeping as tests
-        /// rather than as prose: it fails when the boundary moves.
+        /// functions that nothing divided out; they are answered above now that the rational
+        /// integrator divides first. <c>1/(1 + tan(x)^2)</c> was on it too, for becoming
+        /// <c>1/(1 + u^2)^2</c> — and it is answered now that the substituted integrand is
+        /// combined into a single quotient rather than merely inner-simplified. That is twice
+        /// this list has moved, which is why it is worth keeping as tests rather than as prose:
+        /// it fails when the boundary moves.
         /// </remarks>
         [Theory]
         [InlineData("sqrt(cotan(x))")]
-        [InlineData("1/(1 + tan(x)^2)")]
         public void WhatIsStillDeclined(string integrand)
             => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
+
+        /// <summary>
+        /// <c>1/(1 + tan(x)^2)</c> is <c>cos(x)^2</c>, and it used to be declined for becoming
+        /// <c>1/(1 + u^2)^2</c> under the substitution. Asserted as a value, since what it comes
+        /// out as says nothing about whether it is an antiderivative.
+        /// </summary>
+        [Fact]
+        public void ARepeatedQuadraticFromTheSubstitutionIsAnswered()
+        {
+            var integrand = "1/(1 + tan(x)^2)".ToEntity();
+            var integral = integrand.Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            foreach (var at in new[] { 0.35, 0.9, 2.4 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = integrand.Substitute("x", at).EvalNumerical();
+                Assert.True(System.Math.Abs((double)(got - want).RealPart) < 1e-9,
+                    $"d/dx of the antiderivative is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
     }
 }
