@@ -633,6 +633,47 @@ namespace AngouriMath.Functions.Algebra
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
+        /// <summary>
+        /// A quotient by an exponential, handed on as the product with its reciprocal:
+        /// <c>N/b^(f(x))</c> as <c>N * b^(-f(x))</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>sin(x) * e^(-x)</c> had an antiderivative and <c>sin(x)/e^x</c> did not. They are
+        /// the same integrand, and the difference is only which node is on top: integration by
+        /// parts matches a <c>Mulf</c> and nothing else, so a quotient never reached it. The
+        /// simplifier does not turn one into the other — it keeps <c>sin(x)/e^x</c> as written —
+        /// so nothing upstream closed the gap either.
+        /// </para>
+        /// <para>
+        /// The family is wider than the trigonometric case that exposed it: <c>x/e^x</c>,
+        /// <c>ln(x)/e^x</c> and <c>sin(x)/2^x</c> were all declined for the same reason, and each
+        /// is answered once written as a product.
+        /// </para>
+        /// <para>
+        /// <b>Only an exponential denominator</b> — a base free of the variable with the variable
+        /// in the exponent. <c>x^n</c> in a denominator is a rational function and belongs to
+        /// partial fractions, which reads it as written; turning that into a negative power would
+        /// take it away from the rules that answer it. A numerator free of the variable is left
+        /// alone too, since <see cref="SolveAsPolynomialTerm"/> already takes that one.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByDividingByAnExponential(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (expr is not Divf(var numerator, var denominator))
+                return null;
+            if (!numerator.ContainsNode(x))
+                return null;
+            if (denominator is not Powf(var @base, var power))
+                return null;
+            if (@base.ContainsNode(x) || !power.ContainsNode(x))
+                return null;
+
+            return Integration.ComputeIndefiniteIntegral(
+                numerator * MathS.Pow(@base, -power), x, integrateByParts);
+        }
+
         internal static Entity? SolveByExponentialSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             var slopes = new List<EInteger>();

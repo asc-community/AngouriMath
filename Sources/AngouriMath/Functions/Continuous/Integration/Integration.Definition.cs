@@ -401,6 +401,11 @@ namespace AngouriMath.Functions.Algebra
             // The exponential substitution beside the other rewrites. It is also what integrates
             // the hyperbolic functions, which are not nodes here but quotients of exponentials.
             if ((answer = IndefiniteIntegralSolver.SolveByExponentialSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // A quotient by an exponential is the product with its reciprocal, and only that
+            // spelling reaches integration by parts. After the substitution above rather than
+            // before it, since a quotient that is rational in e^(k x) is that rule's to answer
+            // whole and comes out in better shape for it.
+            if ((answer = IndefiniteIntegralSolver.SolveByDividingByAnExponential(expr, x, integrateByParts)) is { }) return answer;
             // Last of the rewrites, because it is the only one that fires on an integrand nothing
             // is wrong with -- it clears a parameter rather than a shape -- so everything that
             // can answer the problem as written gets to try first.
