@@ -422,9 +422,9 @@ namespace AngouriMath.Functions.Algebra
         /// <para>
         /// The test is the rewrite itself: replace every <c>tan(x)</c> and see whether an
         /// <c>x</c> survives. <c>tan(x) + x</c> keeps one and is declined, which is right — it is
-        /// not a function of the tangent alone. <c>cotan</c> is <b>not</b> covered, since it is
-        /// its own node rather than a reciprocal of this one, so <c>sqrt(cotan(x))</c> is still
-        /// declined.
+        /// not a function of the tangent alone. <b>The cotangent is covered</b>, by writing it as
+        /// <c>1/tan</c> on the way in: it is the same function the other way up, and declining it
+        /// for having its own node meant <c>tan(x)^2</c> was answered and <c>cot(x)^2</c> was not.
         /// </para>
         /// <para>
         /// <b>No condition is owed by the substitution</b>, but the answer inherits the
@@ -434,6 +434,19 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         internal static Entity? SolveByTangentSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
         {
+            // The cotangent first, because it is the tangent written the other way up and this
+            // rule used to decline it for no better reason than the node being a different one.
+            // `tan(x)^2` was answered and `cot(x)^2` was not, though the second is `1/tan(x)^2`.
+            //
+            // cot(u) = 1/tan(u) wherever either is defined: both are cos(u)/sin(u), and the
+            // points where the quotient is written differently -- tan undefined at odd multiples
+            // of pi/2, where cot is zero -- are removable in the same way for both, so this
+            // neither widens nor narrows the domain of an integrand built from them.
+            expr = expr.Replace(node =>
+                node is Cotanf(var cotangentArgument)
+                    ? 1 / MathS.Tan(cotangentArgument)
+                    : node);
+
             var tangent = MathS.Tan(x);
             if (!expr.ContainsNode(tangent))
                 return null;
@@ -443,7 +456,17 @@ namespace AngouriMath.Functions.Algebra
             if (inU.ContainsNode(x))
                 return null;
 
-            var integrand = (inU / (1 + MathS.Sqr(uSub))).InnerSimplified;
+            // Combined into one quotient, not merely inner-simplified. Writing the cotangent as
+            // 1/tan puts a quotient inside a quotient -- cot(x)^2 arrives as (1/u)^2/(1 + u^2) --
+            // and `InnerSimplified` leaves that nesting standing. Everything downstream wants a
+            // single Divf of two polynomials, and it is the difference between an answer and
+            // none: `1/(u^2*(1 + u^2))` is integrated and `(1/u)^2/(1 + u^2)`, which is the same
+            // expression, is not. The half-angle and exponential substitutions comb their
+            // integrands for the same reason.
+            var integrand = Functions.SingleQuotient
+                .Combine(inU / (1 + MathS.Sqr(uSub))).Simplify();
+            if (integrand is Providedf(var withoutCondition, _))
+                integrand = withoutCondition;
             return Integration.ComputeIndefiniteIntegral(integrand, uSub, integrateByParts) is { } result
                 ? result.Substitute(uSub, tangent)
                 : null;
