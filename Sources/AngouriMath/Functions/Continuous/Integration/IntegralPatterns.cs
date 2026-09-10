@@ -510,10 +510,20 @@ namespace AngouriMath.Functions.Algebra
             // the whole piecewise with it. That is only ever reached when a is symbolic, since
             // a numeric a makes this arm decidably unreachable and it is dropped before the
             // NaN can propagate -- so k/(a x^2 + c) answered NaN while k/(2 x^2 + c) did not.
+            // And where c is zero as well, that constant is k/0: with a, b and c all zero the
+            // denominator is identically zero and there is no integrand to have an
+            // antiderivative. So the branch is not merely unreachable, it is asking about an
+            // expression that does not exist, and the piecewise leaves it out rather than
+            // carrying a NaN that swallows the cases that do exist. `1/(a*x^2)` came back as
+            // `NaN + C` -- an assertion that it has no antiderivative -- where it is `-1/(a x)`,
+            // read off the perfect-square arm below, which is exactly what a zero discriminant
+            // gives here. https://github.com/asc-community/AngouriMath/issues/718
+            var denominatorVanishesWithoutA = TreeAnalyzer.IsZero(b) && TreeAnalyzer.IsZero(c);
             var linearCase = TreeAnalyzer.IsZero(b)
                 ? numerator * x / c
                 : numerator * AntiderivativeLog(b * x + c) / b;
-            
+
+
             // For true quadratics (a ≠ 0), discriminant Δ = 4ac - b^2 determines the form
             var discriminant = 4 * a * c - b * b;
             
@@ -534,12 +544,13 @@ namespace AngouriMath.Functions.Algebra
             var lnCase = numerator * AntiderivativeLog((twoAxPlusB - sqrtNegDiscriminant) / (twoAxPlusB + sqrtNegDiscriminant)) / sqrtNegDiscriminant;
             
             // Return as piecewise based on a and discriminant
-            return MathS.Piecewise([
-                new Entity.Providedf(linearCase, a.EqualTo(0)),
-                new Entity.Providedf(arctanCase, discriminant > 0),
-                new Entity.Providedf(perfectSquareCase, discriminant.EqualTo(0)),
-                new Entity.Providedf(lnCase, discriminant < 0)
-            ]).InnerSimplified;
+            var cases = new List<Entity.Providedf>();
+            if (!denominatorVanishesWithoutA)
+                cases.Add(new Entity.Providedf(linearCase, a.EqualTo(0)));
+            cases.Add(new Entity.Providedf(arctanCase, discriminant > 0));
+            cases.Add(new Entity.Providedf(perfectSquareCase, discriminant.EqualTo(0)));
+            cases.Add(new Entity.Providedf(lnCase, discriminant < 0));
+            return MathS.Piecewise(cases).InnerSimplified;
         }
 
         /// <summary>
