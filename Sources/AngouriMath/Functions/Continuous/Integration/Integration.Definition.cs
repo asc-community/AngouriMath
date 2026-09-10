@@ -343,6 +343,24 @@ namespace AngouriMath.Functions.Algebra
             // switched it off -- which is a cycle, since by parts calls back into here.
             // `x * ln(x)` went round it until the stack ran out.
             if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x, integrateByParts)) is { }) return answer;
+            // An integrand *already written* as a sum is split here, before any search. Every
+            // rule below does speculative work on the whole sum first, and on a polynomial that
+            // costs everything: the terms of `1 + 2x + ... + 25x^24` integrate in under a
+            // millisecond between them, and the sum they add up to took 20 seconds.
+            //
+            //     degree               4     8     12     16     20     24
+            //     was              64ms  384ms  705ms  708ms  2.6s   20.1s
+            //     is               69ms   69ms  141ms  213ms  138ms  0.16s
+            //
+            // **Only a sum, and deliberately not a product with a sum in it.** Expanding one is a
+            // rewrite, and a rewrite this early takes answers away from the rules that give
+            // better ones: `x * (x^2 + 1)^3` is `(x^2 + 1)^4/8` by substitution and a written-out
+            // degree-8 polynomial by expanding, both right and only one worth reading. Three
+            // tests pinned exactly that and caught this when the split was put in front of the
+            // substitution wholesale. The expanding call stays where it was, below.
+            if (expr is Entity.Sumf or Entity.Minusf
+                && (answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { })
+                return answer;
             if ((answer = IndefiniteIntegralSolver.SolveLogarithmic(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             // After the general substitution rather than inside it, because the general one
@@ -351,19 +369,16 @@ namespace AngouriMath.Functions.Algebra
             // the substitution is no longer visible. This one rewrites rather than divides.
             if ((answer = IndefiniteIntegralSolver.SolveByTangentSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
-            // Linearity comes before integration by parts, because it decomposes the problem
-            // into strictly simpler ones where by parts searches. It cannot cost an answer:
-            // splitting returns null unless *every* term integrates, so a sum that only comes
-            // out whole still falls through to by parts below.
-            //
-            // A product with a sum in it -- sin(a+f*x)^4 * (5 - 6*sin(a+f*x)^2) -- reaches
-            // this as a product, so only the expansion here finds the two terms it is. Behind
-            // by parts it never did: the search spent the whole budget first and the caller
-            // waited over 20 seconds to be told nothing, where the split answers in 0.16.
+            // Linearity again, and this time with the expansion: a product with a sum in it --
+            // sin(a+f*x)^4 * (5 - 6*sin(a+f*x)^2) -- reaches this as a product, so only the
+            // expansion finds the two terms it is. Behind by parts it never did: the search spent
+            // the whole budget first and the caller waited over 20 seconds to be told nothing,
+            // where the split answers in 0.16.
             // https://github.com/asc-community/AngouriMath/issues/779
             //
-            // Expansion is bounded by MaxExpansionTermCount, which returns null rather than
-            // building the terms, so putting it earlier cannot blow the tree up either.
+            // It cannot cost an answer: splitting returns null unless *every* term integrates, so
+            // a sum that only comes out whole still falls through to by parts below. Expansion is
+            // bounded by MaxExpansionTermCount, which returns null rather than building the terms.
             if ((answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { }) return answer;
             // The half-angle substitution goes *after* linearity, and that is not a preference.
             // It fires on anything built from sines and cosines, and it answers `cos(x) + 1` with
