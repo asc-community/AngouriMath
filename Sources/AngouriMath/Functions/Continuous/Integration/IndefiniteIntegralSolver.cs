@@ -393,6 +393,90 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A product of sines and cosines of <b>different</b> arguments, rewritten as a sum by the
+        /// product-to-sum identities and then integrated term by term.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>sin(A)sin(B) = (cos(A - B) - cos(A + B))/2</c>,
+        /// <c>cos(A)cos(B) = (cos(A - B) + cos(A + B))/2</c>,
+        /// <c>sin(A)cos(B) = (sin(A + B) + sin(A - B))/2</c>. Each application turns two factors
+        /// into a sum of two single ones, and a sine or cosine of something linear in the variable
+        /// is a rule the integrator already has — so the whole family comes out at once.
+        /// <c>sin(x)sin(2x)</c>, <c>cos(x)cos(2x)</c>, <c>cos(3x)sin(2x)</c> and
+        /// <c>sin(x)sin(2x)sin(3x)</c> had no antiderivative between them.
+        /// </para>
+        /// <para>
+        /// <b>Why this rather than a substitution.</b> These are the shapes every substitution in
+        /// the chain declines, and rightly: there is no inner function to substitute for. A
+        /// product of trigonometric functions of unequal arguments is not a function of any one of
+        /// them, which is what <see cref="SolveByHalfAngleSubstitution"/> notices when it finds an
+        /// <c>x</c> left over after rewriting — <c>sin(2x)</c> is not <c>sin(x)</c>. The identity
+        /// is the tool, not a change of variable.
+        /// </para>
+        /// <para>
+        /// <b>It terminates.</b> Each rewrite replaces two trigonometric factors with a sum whose
+        /// terms hold one each, so the number of such factors in any one product strictly
+        /// decreases, and the recursion is over strictly simpler products. Arguments equal to each
+        /// other are left alone, since <c>sin(A)^2</c> is a power rather than a product of two
+        /// arguments and wants a reduction formula instead.
+        /// </para>
+        /// <para>
+        /// <b>Nothing is assumed and no condition is owed.</b> These are identities on the whole
+        /// complex plane, not rewrites that hold on an interval: both sides are entire, so unlike
+        /// every substitution here the answer is an antiderivative everywhere the integrand is,
+        /// with no branch to pick and no interval to be inside.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByProductToSum(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (RewriteOneProduct(expr, x) is not { } rewritten)
+                return null;
+            return Integration.ComputeIndefiniteIntegral(rewritten, x, integrateByParts);
+        }
+
+        /// <summary>
+        /// The product with one pair of trigonometric factors replaced by the sum it equals, or
+        /// <see langword="null"/> where there is no such pair.
+        /// </summary>
+        private static Entity? RewriteOneProduct(Entity expr, Entity.Variable x)
+        {
+            var factors = Mulf.LinearChildren(expr).ToList();
+            if (factors.Count < 2)
+                return null;
+
+            for (var i = 0; i < factors.Count; i++)
+                for (var j = i + 1; j < factors.Count; j++)
+                {
+                    // Both arguments have to mention the variable. A sine of a constant is a
+                    // number as far as this integral is concerned, and pairing it with a real
+                    // factor would turn one term into two for nothing.
+                    var replacement = (factors[i], factors[j]) switch
+                    {
+                        (Sinf(var a), Sinf(var b)) when a != b && a.ContainsNode(x) && b.ContainsNode(x)
+                            => (MathS.Cos(a - b) - MathS.Cos(a + b)) / 2,
+                        (Cosf(var a), Cosf(var b)) when a != b && a.ContainsNode(x) && b.ContainsNode(x)
+                            => (MathS.Cos(a - b) + MathS.Cos(a + b)) / 2,
+                        (Sinf(var a), Cosf(var b)) when a != b && a.ContainsNode(x) && b.ContainsNode(x)
+                            => (MathS.Sin(a + b) + MathS.Sin(a - b)) / 2,
+                        (Cosf(var a), Sinf(var b)) when a != b && a.ContainsNode(x) && b.ContainsNode(x)
+                            => (MathS.Sin(b + a) + MathS.Sin(b - a)) / 2,
+                        _ => (Entity?)null
+                    };
+                    if (replacement is null)
+                        continue;
+
+                    var product = replacement;
+                    for (var k = 0; k < factors.Count; k++)
+                        if (k != i && k != j)
+                            product *= factors[k];
+                    return product;
+                }
+            return null;
+        }
+
+        /// <summary>
         /// A rational function of <c>e^(k x)</c>, turned into a rational function of one variable
         /// by <c>u = e^(k x)</c>.
         /// </summary>

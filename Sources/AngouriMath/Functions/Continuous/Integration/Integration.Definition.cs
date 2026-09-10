@@ -378,6 +378,11 @@ namespace AngouriMath.Functions.Algebra
             // rational function, so it wants everything that answers a problem in its own terms to
             // have declined first.
             if ((answer = IndefiniteIntegralSolver.SolveByLinearRadicalSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // Product-to-sum among the rewrites rather than before them, because a product of
+            // trigonometric functions of *equal* arguments is a power and wants a different tool;
+            // this only fires where the arguments differ, which is exactly what every substitution
+            // above declines for want of an inner function to substitute for.
+            if ((answer = IndefiniteIntegralSolver.SolveByProductToSum(expr, x, integrateByParts)) is { }) return answer;
             // The exponential substitution beside the other rewrites. It is also what integrates
             // the hyperbolic functions, which are not nodes here but quotients of exponentials.
             if ((answer = IndefiniteIntegralSolver.SolveByExponentialSubstitution(expr, x, integrateByParts)) is { }) return answer;
