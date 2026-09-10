@@ -393,6 +393,11 @@ namespace AngouriMath.Functions.Algebra
             // rational function, so it wants everything that answers a problem in its own terms to
             // have declined first.
             if ((answer = IndefiniteIntegralSolver.SolveByLinearRadicalSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // Euler's substitutions after the linear one, and after everything that answers a
+            // radical in its own terms: what they give is correct and algebraic rather than tidy
+            // -- 4/(2(sqrt(1 + x^2) - x)^2 + 2) where a textbook writes x/sqrt(1 + x^2) -- so
+            // anything with a better form gets first refusal.
+            if ((answer = IndefiniteIntegralSolver.SolveByEulerSubstitution(expr, x, integrateByParts)) is { }) return answer;
             // Product-to-sum among the rewrites rather than before them, because a product of
             // trigonometric functions of *equal* arguments is a power and wants a different tool;
             // this only fires where the arguments differ, which is exactly what every substitution

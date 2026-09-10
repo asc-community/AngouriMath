@@ -440,6 +440,235 @@ namespace AngouriMath.Functions.Algebra
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
+        /// <summary>
+        /// Whether <paramref name="antiderivative"/> differentiates back to
+        /// <paramref name="integrand"/>, checked numerically at sample points.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// For a rule that rewrites into a form whose correctness is easy to test and hard to
+        /// reason about. It is a check on the <b>value</b> rather than on the shape, so it also
+        /// catches a <c>NaN</c> that appears after the rule returns — which is where the one
+        /// wrong answer Euler's substitution shipped came from.
+        /// </para>
+        /// <para>
+        /// <b>Agreement at a point is not proof</b>, and this does not claim to be one: two
+        /// different functions can agree at three points. What it rules out is the failure mode
+        /// that actually occurs — an answer that is <c>NaN</c>, infinite, or wrong by a factor —
+        /// and it errs towards declining, since a rule that returns nothing costs an answer while
+        /// one that returns the wrong thing costs a great deal more.
+        /// </para>
+        /// <para>
+        /// Parameters other than the variable are pinned to distinct small values so that an
+        /// integrand carrying them can be checked at all; a rewrite that is wrong for one value
+        /// of a parameter is wrong, and pinning cannot make a wrong answer look right except by
+        /// coincidence at every sample.
+        /// </para>
+        /// </remarks>
+        private static bool DifferentiatesBackTo(Entity antiderivative, Entity integrand, Entity.Variable x)
+        {
+            if (antiderivative.Nodes.Any(node => node == MathS.NaN))
+                return false;
+
+            Entity checkedAnswer = antiderivative.Differentiate(x);
+            Entity checkedIntegrand = integrand;
+            var pin = 2;
+            foreach (var variable in integrand.Vars.Concat(antiderivative.Vars))
+            {
+                if (variable == x)
+                    continue;
+                var value = Number.Rational.Create(pin, 3);
+                checkedAnswer = checkedAnswer.Substitute(variable, value);
+                checkedIntegrand = checkedIntegrand.Substitute(variable, value);
+                pin++;
+            }
+
+            var agreed = 0;
+            foreach (var at in VerificationPoints)
+            {
+                Number.Complex got, want;
+                try
+                {
+                    got = checkedAnswer.Substitute(x, at).EvalNumerical();
+                    want = checkedIntegrand.Substitute(x, at).EvalNumerical();
+                }
+                catch (Core.Exceptions.AngouriMathBaseException)
+                {
+                    continue;   // not defined here, which says nothing either way
+                }
+                if (got.IsNaN || want.IsNaN || !got.IsFinite || !want.IsFinite)
+                    continue;
+                var apart = got - want;
+                var difference = System.Math.Abs((double)apart.RealPart)
+                                 + System.Math.Abs((double)apart.ImaginaryPart);
+                var scale = System.Math.Max(1.0, System.Math.Abs((double)want.RealPart));
+                if (difference / scale > VerificationTolerance)
+                    return false;   // one disagreement is enough to decline
+                agreed++;
+            }
+            return agreed >= 2;
+        }
+
+        /// <summary>
+        /// Where <see cref="DifferentiatesBackTo"/> samples. Spread either side of zero and off
+        /// the small integers, so that a point does not land on a pole or a branch point by
+        /// accident; a sample where either side is undefined is skipped rather than counted.
+        /// </summary>
+        [ConstantField] private static readonly Entity[] VerificationPoints =
+        {
+            Number.Rational.Create(7, 20), Number.Rational.Create(-9, 20),
+            Number.Rational.Create(23, 20), Number.Rational.Create(-31, 20),
+            Number.Rational.Create(53, 20)
+        };
+
+        /// <summary>Relative, since these answers hold radicals and are not exact decimals.</summary>
+        private const double VerificationTolerance = 1e-6;
+
+        /// <summary>
+        /// A square root of a <b>quadratic</b>, rationalised by one of Euler's substitutions.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The largest single gap in the integrator: of the integrands Rubi's suites leave
+        /// unanswered, radicals are the biggest class and a quadratic under a root is most of
+        /// them. <c>1/(x*sqrt(3 + x^2))</c>, <c>x/sqrt(5 + 2x + x^2)</c>, <c>sqrt(3 - x^2)/x</c>
+        /// and <c>(1 + x + x^2)^(3/2)</c> had no antiderivative between them.
+        /// </para>
+        /// <para>
+        /// <b>Euler rather than the textbook trigonometric substitution</b>, because Euler lands
+        /// on a rational integrand in one step where the trigonometric one lands on a rational
+        /// function of sine and cosine that then needs the half-angle substitution as well. The
+        /// answers are algebraic rather than tidy — <c>4/(2(sqrt(1 + x^2) - x)^2 + 2)</c> where a
+        /// textbook writes <c>x/sqrt(1 + x^2)</c> — which is a fair trade for an answer against
+        /// none, and it is why this runs after everything that answers such a shape in its own
+        /// terms.
+        /// </para>
+        /// <para>
+        /// <b>With a positive leading coefficient</b>, <c>t = sqrt(Q) - x sqrt(a)</c> gives
+        /// <c>x = (t^2 - c)/(b - 2t sqrt(a))</c> and <c>sqrt(Q) = t + x sqrt(a)</c>.
+        /// <b>With a negative one</b> the radicand is non-negative only between two real roots, so
+        /// <c>Q = a(x - p)(x - q)</c> and <c>sqrt(Q) = t(x - p)</c> gives
+        /// <c>x = (a q - t^2 p)/(a - t^2)</c>.
+        /// </para>
+        /// <para>
+        /// <b>The rule checks its own answer before returning it</b>, by differentiating back and
+        /// comparing with the integrand at sample points. That is not belt and braces: the first
+        /// attempt at this shipped <c>NaN + C</c> for <c>x^4/(-x^2 + sqrt(10))^(9/2)</c> — a claim
+        /// that no antiderivative exists, where one does — and a guard inside the rule did not
+        /// catch it, because the <c>NaN</c> appeared afterwards in the simplification
+        /// <see cref="Entity.Integrate(Entity.Variable)"/> applies to the answer. A check on the
+        /// value catches it wherever it arises, and this is a rewrite whose correctness is easy
+        /// to test and hard to reason about, which is exactly when one earns its cost.
+        /// </para>
+        /// <para>
+        /// Which substitution applies depends on the sign of the leading coefficient, so a
+        /// coefficient whose sign cannot be decided is declined rather than guessed at.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/1244
+        /// </remarks>
+        internal static Entity? SolveByEulerSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // Every half-integer power in the tree, over one common quadratic base.
+            Entity? radicand = null;
+            var found = false;
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer)
+                    continue;
+                if (!@base.ContainsNode(x))
+                    continue;
+                if (exponent.ERational.Denominator.ToInt32Checked() != 2)
+                    return null;   // a cube root or worse over a quadratic is not this rule's
+                if (radicand is null)
+                    radicand = @base;
+                else if (radicand != @base)
+                    return null;   // two different radicands at once
+                found = true;
+            }
+            if (!found || radicand is null)
+                return null;
+
+            if (!TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var a, out var b, out var c))
+                return null;
+
+            // The sign of the leading coefficient chooses the substitution, so it has to be
+            // known. A symbolic one is declined rather than assumed positive.
+            if (a.EvaluableNumerical is not true || a.EvalNumerical() is not Number.Real leading)
+                return null;
+            if (leading == 0)
+                return null;
+
+            var t = Variable.CreateUnique(expr, "u_eul");
+            Entity xInT, rootInT;
+            if (leading > 0)
+            {
+                var rootA = MathS.Sqrt(a).InnerSimplified;
+                // The substitution has to land on a rational function with *rational*
+                // coefficients, and this is where that is decided. What the rational rules read
+                // is a polynomial over the rationals -- `TryGetRationalCoefficients` is the gate
+                // -- so an irrational sqrt(a) produces an integrand they cannot factor and will
+                // not answer, and they spend the whole budget finding that out. Measured on
+                // `x^4*sqrt(5 - x^2)`, whose roots are +-sqrt(5): master declines it in 3.1s and
+                // the substitution turned it into a 69-node integrand in sqrt(5) that had not
+                // returned after 200s. That, and not the simplifier, is where the three times
+                // corpus wall clock in the issue came from.
+                if (rootA is not Number.Rational)
+                    return null;
+                xInT = (MathS.Sqr(t) - c) / (b - 2 * t * rootA);
+                rootInT = t + xInT * rootA;
+            }
+            else
+            {
+                // Between the two real roots, which exist only where the discriminant is
+                // positive -- and where it is not, the radicand is negative everywhere and there
+                // is nothing real to integrate.
+                var discriminant = MathS.Sqr(b) - 4 * a * c;
+                if (discriminant.EvaluableNumerical is not true
+                    || discriminant.EvalNumerical() is not Number.Real disc || disc <= 0)
+                    return null;
+                var rootOfDisc = MathS.Sqrt(discriminant).InnerSimplified;
+                // The same requirement from the other side: irrational roots put irrational
+                // coefficients into the rewritten integrand, and the rational rules cannot read
+                // those. `sqrt(3 - x^2)/x` and `x^4*sqrt(5 - x^2)` are declined here rather than
+                // rewritten into something nothing downstream will answer.
+                if (rootOfDisc is not Number.Rational)
+                    return null;
+                var p = ((-b + rootOfDisc) / (2 * a)).InnerSimplified;
+                var q = ((-b - rootOfDisc) / (2 * a)).InnerSimplified;
+                xInT = (a * q - MathS.Sqr(t) * p) / (a - MathS.Sqr(t));
+                rootInT = t * (xInT - p);
+            }
+
+            // Each radical is built from rootInT by construction rather than by substituting and
+            // simplifying, for the same reason as the linear radical rule: the simplifier will
+            // not read (Q(x(t)))^(1/2) as the root we mean, and is right not to.
+            var rewritten = expr.Replace(node =>
+                node is Powf(var root, Number.Rational e) && e is not Number.Integer
+                && root == radicand && e.ERational.Numerator.CanFitInInt32()
+                    ? MathS.Pow(rootInT, e.ERational.Numerator.ToInt32Checked())
+                    : node);
+
+            rewritten = rewritten.Substitute(x, xInT);
+            if (rewritten.ContainsNode(x))
+                return null;
+
+            var dx = xInT.Differentiate(t);
+            var integrand = Functions.SingleQuotient.Combine((rewritten * dx).Simplify());
+            if (integrand is Providedf(var inner, _))
+                integrand = inner;
+
+            if (Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is not { } result)
+                return null;
+
+            // Back through t = sqrt(Q) - x sqrt(a), or t = sqrt(Q)/(x - p).
+            var back = leading > 0
+                ? MathS.Sqrt(radicand) - x * MathS.Sqrt(a)
+                : MathS.Sqrt(radicand) / (x - ((-b + MathS.Sqrt(MathS.Sqr(b) - 4 * a * c)) / (2 * a)).InnerSimplified);
+            var answer = result.Substitute(t, back);
+
+            return DifferentiatesBackTo(answer, expr, x) ? answer : null;
+        }
+
         internal static Entity? SolveByLinearRadicalSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             // Every fractional power in the tree whose base is linear in x, collected with the
