@@ -66,7 +66,7 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         internal static Entity? SolveByPartialFractions(Entity expr, Entity.Variable x, bool integrateByParts)
         {
-            if (expr is not Entity.Divf(var numerator, var denominator))
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
                 return null;
 
             // The helper answers null for a fraction that is already proper, so this cannot
@@ -155,6 +155,49 @@ namespace AngouriMath.Functions.Algebra
 
             return Integration.ComputeIndefiniteIntegral(numerator / variablePart, x, integrateByParts)
                 ?.Pipe(i => i / constantPart);
+        }
+
+        /// <summary>
+        /// Reads <paramref name="expr"/> as a numerator over a denominator, in either of the two
+        /// spellings a quotient has here.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>1/(1 + x^3)</c> is a <c>Divf</c> and <c>(1 + x^3)^(-1)</c> is a <c>Powf</c>, and
+        /// they are the same integrand. <see cref="SolveByPartialFractions"/> matched the first
+        /// and declined the second, so which of them was asked decided whether the integral came
+        /// back — and the second is not an exotic way to write it: it is what
+        /// <see cref="SolveAsPolynomialTerm"/> builds whenever it takes a factor out of a
+        /// quotient. That is why <c>a/(1 + x^3)</c> had no antiderivative while
+        /// <c>1/(1 + x^3)</c> and <c>a * (1/(1 + x^3))</c> both did.
+        /// </para>
+        /// <para>
+        /// <b>Only a negative whole power.</b> A positive one is not a quotient; a fractional or
+        /// symbolic exponent is not one either, and <c>(a/b)^(1/2)</c> is not <c>sqrt(a)/sqrt(b)</c>
+        /// on the branch cut. Nothing here rewrites a quotient back into a power, so this cannot
+        /// re-enter the mutual recursion <see cref="Integration.Normalized"/> records.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static bool TryReadAsQuotient(Entity expr, out Entity numerator, out Entity denominator)
+        {
+            switch (expr)
+            {
+                case Entity.Divf(var dividend, var divisor):
+                    (numerator, denominator) = (dividend, divisor);
+                    return true;
+                case Entity.Powf(var @base, Number.Integer power) when power.EInteger.Sign < 0:
+                    // Written out rather than as base^1 when the power is -1, since everything
+                    // downstream reads the denominator as a polynomial and a redundant power of
+                    // one is a shape it would have to see through.
+                    var reciprocated = -power;
+                    (numerator, denominator) = (Number.Integer.One,
+                        reciprocated == Number.Integer.One ? @base : MathS.Pow(@base, reciprocated));
+                    return true;
+                default:
+                    (numerator, denominator) = (expr, Number.Integer.One);
+                    return false;
+            }
         }
 
         internal static Entity? SolveAsPolynomialTerm(Entity expr, Entity.Variable x, bool integrateByParts = true) => expr switch
