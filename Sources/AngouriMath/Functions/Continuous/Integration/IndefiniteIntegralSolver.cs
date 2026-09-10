@@ -238,6 +238,32 @@ namespace AngouriMath.Functions.Algebra
             _ => null
         };
 
+        /// <summary>
+        /// Whether <paramref name="factor"/> is one of the functions integration by parts
+        /// differentiates rather than integrates when the other factor is a polynomial.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is the <b>L</b> and the <b>I</b> of LIATE, which both come before <b>A</b>. The
+        /// rule below implemented only the L, and the reason it gives for the logarithm is the
+        /// same one that holds for an inverse trigonometric function: differentiating it turns it
+        /// into something algebraic that cancels against the integrated polynomial and ends,
+        /// where integrating it puts the original integral back in front of us.
+        /// </para>
+        /// <para>
+        /// <c>x * atan(x)</c> is the case: differentiating <c>atan</c> gives <c>1/(1 + x^2)</c>
+        /// and what is left is <c>x^2/(2(1 + x^2))</c>, which is answered; integrating it first
+        /// gives an antiderivative holding <c>x*atan(x)</c> again, which is where the search went
+        /// instead and why it was left unevaluated.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static bool IsDifferentiatedBeforeAPolynomial(Entity factor)
+            => factor is Logf
+                or Entity.Arcsinf or Entity.Arccosf
+                or Entity.Arctanf or Entity.Arccotanf
+                or Entity.Arcsecantf or Entity.Arccosecantf;
+
         internal static Entity? SolveIntegratingByParts(Entity expr, Entity.Variable x)
         {
             // Standard integration by parts for polynomial × function
@@ -286,9 +312,9 @@ namespace AngouriMath.Functions.Algebra
                 // that is how integral(x * ln(x), x) recursed until the stack ran out.
                 // Differentiating the logarithm instead turns it into 1/x, which cancels
                 // against the integrated polynomial and ends. (The L-before-A of LIATE.)
-                if (f is Logf && MathS.TryPolynomial(g, x, out _)
+                if (IsDifferentiatedBeforeAPolynomial(f) && MathS.TryPolynomial(g, x, out _)
                     && TryIntegrateByPartsOnce(f, g, x) is { } logFirstF) return logFirstF;
-                if (g is Logf && MathS.TryPolynomial(f, x, out _)
+                if (IsDifferentiatedBeforeAPolynomial(g) && MathS.TryPolynomial(f, x, out _)
                     && TryIntegrateByPartsOnce(g, f, x) is { } logFirstG) return logFirstG;
 
                 // Case 1: One term is polynomial - use recursive polynomial integration by parts
