@@ -54,6 +54,49 @@ namespace AngouriMath.Functions
     internal static class PartialFractions
     {
         /// <summary>
+        /// Whether a numerator over <paramref name="factor"/> to the power
+        /// <paramref name="multiplicity"/> is a shape some integration rule answers.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is a claim about the rule set, not about polynomials, so it is kept in one place
+        /// and named rather than left as a condition in a loop — it goes stale whenever a rule is
+        /// added, and it had. Each line says which rule reads that shape.
+        /// </para>
+        /// <para>
+        /// A factor with no rule leaves the whole integral unevaluated either way, so admitting
+        /// one costs no answer and a great deal of time; that is what the guard is for and why
+        /// widening it is done by measurement rather than by leaving it open.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static bool AnIntegrationRuleReadsIt(IntegerPolynomial factor, int multiplicity)
+            => factor.Degree switch
+            {
+                // A power of a linear factor: the rule for a numerator over (a x + b)^k.
+                <= 1 => true,
+                // A quadratic, once. There is no rule for a numerator over (x^2 + c)^k.
+                2 => multiplicity == 1,
+                // A biquadratic quartic, once: TrySplitBiquadraticOverTheReals factors it into
+                // two real quadratics. Only the even-powered shape -- that rule reads
+                // x^4 + p x^2 + q and nothing else, and a general quartic has no rule.
+                4 => multiplicity == 1 && IsBiquadratic(factor),
+                _ => false
+            };
+
+        /// <summary>
+        /// Whether <paramref name="factor"/> has only even powers, so that it is a quadratic in
+        /// <c>x^2</c>.
+        /// </summary>
+        private static bool IsBiquadratic(IntegerPolynomial factor)
+        {
+            for (var power = 1; power <= factor.Degree; power += 2)
+                if (!factor[power].IsZero)
+                    return false;
+            return true;
+        }
+
+        /// <summary>
         /// <c>N/D</c> written as two fractions over coprime factors of <paramref name="denominator"/>,
         /// each a strictly smaller problem of the same kind, or <see langword="false"/> where
         /// the denominator does not factor into a coprime pair.
@@ -83,10 +126,14 @@ namespace AngouriMath.Functions
                 return false;
 
             // Every piece the decomposition would produce has to be one an integration rule
-            // reads, or the decomposition answers nothing and is not worth producing. A linear
-            // factor is read at any multiplicity, and a quadratic one only at the first: there
-            // is no rule for a numerator over (x^2 + c)^k, and none for an irreducible factor
-            // of degree three or more at all.
+            // reads, or the decomposition answers nothing and is not worth producing. What that
+            // amounts to is written out in AnIntegrationRuleReadsIt, which is a claim about the
+            // rules rather than about polynomials and goes stale when they change -- as it had:
+            // this said "none for an irreducible factor of degree three or more at all", and an
+            // irreducible *biquadratic* quartic has been read by
+            // TrySplitBiquadraticOverTheReals since #1102. So x^6 + 1 was declined although the
+            // library factors it into (x^2 + 1)(x^4 - x^2 + 1) and integrates both of those on
+            // their own.
             //
             // Deleting the guard costs no answer and a great deal of time: a piece with no
             // rule leaves the whole integral unevaluated either way, but every half of every
@@ -96,7 +143,7 @@ namespace AngouriMath.Functions
             // factorisation, which is already in hand, the cost of declining is that one
             // factorisation.
             foreach (var part in factorization.Parts)
-                if (part.Factor.Degree > 2 || (part.Factor.Degree == 2 && part.Multiplicity > 1))
+                if (!AnIntegrationRuleReadsIt(part.Factor, part.Multiplicity))
                     return false;
 
             // Each part of the factorisation is a distinct irreducible with its multiplicity,
