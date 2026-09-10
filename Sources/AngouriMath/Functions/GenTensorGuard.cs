@@ -47,7 +47,47 @@ namespace AngouriMath.Functions
         /// goes through the adjugate. <c>DeterminantGaussianSafeDivision</c> and
         /// <c>MatrixMultiply</c> do not touch the pool and are deliberately not covered.
         /// </summary>
-        [ConstantField] internal static readonly object ScratchPool = new object();
+        /// <remarks>
+        /// It is private, and the three operations below are the whole surface, because mutual
+        /// exclusion here is not a property any one caller can hold up: a single call that skips
+        /// the lock corrupts every call that takes it, and reads corrupted minors back. Exposing
+        /// the lock lets a caller reach GenericTensor without it; exposing only the operations
+        /// does not.
+        /// </remarks>
+        [ConstantField] private static readonly object ScratchPool = new object();
+
+        /// <summary>Laplace expansion, serialised on <see cref="ScratchPool"/>.</summary>
+        internal static Entity DeterminantLaplace(GenTensor matrix)
+        {
+            lock (ScratchPool)
+                return matrix.DeterminantLaplace();
+        }
+
+        /// <summary>
+        /// The adjugate, serialised on <see cref="ScratchPool"/>, and returned already read out
+        /// of the tensor rather than as one.
+        /// </summary>
+        /// <remarks>
+        /// Reading it out is what the lock has to cover, and returning a <c>GenTensor</c> would
+        /// put that read on the far side of the lock: <c>Entity.Matrix</c>'s constructor copies,
+        /// so the copy is where the elements are actually touched, and nothing here documents
+        /// whether the adjugate is a fresh tensor or the pool's own.
+        /// </remarks>
+        internal static Entity Adjoint(GenTensor matrix)
+        {
+            lock (ScratchPool)
+                return new Entity.Matrix(matrix.Adjoint()).InnerSimplified;
+        }
+
+        /// <summary>
+        /// Inversion in place, serialised on <see cref="ScratchPool"/> -- it goes through the
+        /// adjugate, so it takes its minors in the same pool.
+        /// </summary>
+        internal static void InvertMatrix(GenTensor matrix)
+        {
+            lock (ScratchPool)
+                matrix.InvertMatrix();
+        }
 
         [ConstantField] private static readonly Lazy<bool> piecewiseCache =
             new Lazy<bool>(WarmPiecewiseCache, LazyThreadSafetyMode.ExecutionAndPublication);

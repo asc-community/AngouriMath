@@ -304,8 +304,8 @@ namespace AngouriMath
                     // GenericTensor's Laplace determinant writes into a process-wide scratch
                     // matrix, so two threads here silently corrupt each other's minors. See
                     // Functions.GenTensorGuard.
-                    lock (Functions.GenTensorGuard.ScratchPool)
-                        return @this.InnerMatrix.DeterminantLaplace().InnerSimplified;
+                    return Functions.GenTensorGuard
+                        .DeterminantLaplace(@this.InnerMatrix).InnerSimplified;
                 },
                 this
                 );
@@ -323,8 +323,7 @@ namespace AngouriMath
                     return null;
                 // Inverting goes through the adjugate, which takes its minors in the same
                 // process-wide scratch matrix the determinant does. See Functions.GenTensorGuard.
-                lock (Functions.GenTensorGuard.ScratchPool)
-                    cp.InvertMatrix();
+                Functions.GenTensorGuard.InvertMatrix(cp);
                 return ToMatrix(new Matrix(cp).InnerSimplified);
             }, this);
             private LazyPropertyA<Matrix?> inverse;
@@ -498,10 +497,7 @@ namespace AngouriMath
                             return null;
                         // The adjugate takes every minor in one process-wide scratch matrix.
                         // See Functions.GenTensorGuard.
-                        Entity innerSimplified;
-                        lock (Functions.GenTensorGuard.ScratchPool)
-                            innerSimplified = new Matrix(@this.InnerMatrix.Adjoint()).InnerSimplified;
-                        return ToMatrix(innerSimplified);
+                        return ToMatrix(Functions.GenTensorGuard.Adjoint(@this.InnerMatrix));
                     },
                     this);
             private LazyPropertyA<Matrix?> adjugate;
