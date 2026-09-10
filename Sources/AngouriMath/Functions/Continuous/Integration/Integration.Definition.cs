@@ -367,6 +367,11 @@ namespace AngouriMath.Functions.Algebra
             // divides by du/dx and asks what is left, and that question loses the shape here:
             // sqrt(tan(x)) over the derivative of sqrt(tan(x)) simplifies to sin(2x), in which
             // the substitution is no longer visible. This one rewrites rather than divides.
+            // Before the tangent substitution, which would also take a power of the secant and
+            // answer it as a rational function of tan(x) -- correct, and a good deal longer than
+            // the reduction gives. Rubi's own ordering puts the reduction first for the same
+            // reason.
+            if ((answer = IndefiniteIntegralSolver.SolveBySecantPowerReduction(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByTangentSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
             // Linearity again, and this time with the expansion: a product with a sum in it --

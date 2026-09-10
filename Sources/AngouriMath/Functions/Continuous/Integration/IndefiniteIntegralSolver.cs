@@ -432,6 +432,139 @@ namespace AngouriMath.Functions.Algebra
         /// integrand is a function of it, and <c>1 + u^2</c> is never zero for real <c>u</c>.
         /// </para>
         /// </remarks>
+        /// <summary>
+        /// A whole power of the secant or cosecant, brought down two at a time by the standard
+        /// reduction until the power rule for the first or the zeroth takes over.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>1/cos(x)^2</c> was answered and <c>1/cos(x)^6</c> was not. The rule for powers of
+        /// sine and cosine reads a <b>positive</b> exponent, so a negative one — which is what a
+        /// secant or cosecant is — matched nothing above the square, and the square was answered
+        /// only because it is a standard integral in its own right.
+        /// </para>
+        /// <para>
+        /// This is Rubi's rule 4.5.1.1, ported:
+        /// <code>
+        /// Int[(b*csc[c+d*x])^n] := -b*Cos[c+d*x]*(b*Csc[c+d*x])^(n-1)/(d*(n-1))
+        ///                          + b^2*(n-2)/(n-1)*Int[(b*Csc[c+d*x])^(n-2)]
+        ///     /; GtQ[n,1] &amp;&amp; IntegerQ[2*n]
+        /// </code>
+        /// which for the secant reads
+        /// <c>∫sec^n = sec^(n-2) tan/(a(n-1)) + ((n-2)/(n-1)) ∫sec^(n-2)</c>, and for the
+        /// cosecant the same with <c>-cot</c> and the sign of the first term flipped. Each step
+        /// takes two off the exponent, so it ends at <c>n = 1</c> — a standard integral here
+        /// already — or at <c>n = 0</c>, which is <c>x</c>.
+        /// </para>
+        /// <para>
+        /// <b>Read through both spellings.</b> A secant is <c>sec(u)</c>, and it is also
+        /// <c>cos(u)^(-n)</c> and <c>1/cos(u)^n</c>; all three arrive here, and answering one of
+        /// them and not the others is the defect this file has had five times over.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveBySecantPowerReduction(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!TryReadReciprocalTrigonometricPower(expr, out var argument, out var power, out var isSecant))
+                return null;
+            if (power < 2)
+                return null;   // the first power and the zeroth are answered without a recursion
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _) || rate.Evaled == 0)
+                return null;
+
+            // sec^(n-2) tan / (a(n-1)), or -csc^(n-2) cot / (a(n-1)).
+            var reciprocal = isSecant ? MathS.Sec(argument) : MathS.Cosec(argument);
+            var partner = isSecant ? MathS.Tan(argument) : MathS.Cotan(argument);
+            // Written as the bare node where the exponent comes out one, rather than as a power
+            // of one. The rule that answers a lone secant matches the node, and `sec(x)^1` is
+            // not that node -- which is why `sec(x)^3` was declined while `sec(3x + 1)^3`, which
+            // reaches an answer another way, was not.
+            var lowered = power - 2 == 1 ? reciprocal : MathS.Pow(reciprocal, power - 2);
+            var boundary = lowered * partner / (rate * Number.Integer.Create(power - 1));
+            if (!isSecant)
+                boundary = -boundary;
+
+            var rest = Integration.ComputeIndefiniteIntegral(lowered, x, integrateByParts);
+            if (rest is null)
+                return null;
+
+            return boundary + Number.Rational.Create(power - 2, power - 1) * rest;
+        }
+
+        /// <summary>
+        /// Reads <paramref name="expr"/> as a whole power of a secant or a cosecant, however it
+        /// is written: as the node, as a negative power of cosine or sine, or as one over a
+        /// positive power of them.
+        /// </summary>
+        private static bool TryReadReciprocalTrigonometricPower(
+            Entity expr, out Entity argument, out int power, out bool isSecant)
+        {
+            argument = 0;
+            power = 0;
+            isSecant = false;
+            switch (expr)
+            {
+                case Secantf(var secantArgument):
+                    (argument, power, isSecant) = (secantArgument, 1, true);
+                    return true;
+                case Cosecantf(var cosecantArgument):
+                    (argument, power, isSecant) = (cosecantArgument, 1, false);
+                    return true;
+                case Powf(Secantf(var raisedSecant), Number.Integer secantPower)
+                    when secantPower.EInteger.Sign > 0 && secantPower.EInteger.CanFitInInt32():
+                    (argument, power, isSecant) =
+                        (raisedSecant, secantPower.EInteger.ToInt32Checked(), true);
+                    return true;
+                case Powf(Cosecantf(var raisedCosecant), Number.Integer cosecantPower)
+                    when cosecantPower.EInteger.Sign > 0 && cosecantPower.EInteger.CanFitInInt32():
+                    (argument, power, isSecant) =
+                        (raisedCosecant, cosecantPower.EInteger.ToInt32Checked(), false);
+                    return true;
+                // cos(u)^(-n) is sec(u)^n, and sin(u)^(-n) is csc(u)^n.
+                case Powf(Cosf(var loweredCosine), Number.Integer negativeCosine)
+                    when negativeCosine.EInteger.Sign < 0 && negativeCosine.EInteger.CanFitInInt32():
+                    (argument, power, isSecant) =
+                        (loweredCosine, -negativeCosine.EInteger.ToInt32Checked(), true);
+                    return true;
+                case Powf(Sinf(var loweredSine), Number.Integer negativeSine)
+                    when negativeSine.EInteger.Sign < 0 && negativeSine.EInteger.CanFitInInt32():
+                    (argument, power, isSecant) =
+                        (loweredSine, -negativeSine.EInteger.ToInt32Checked(), false);
+                    return true;
+                // And one over a positive power, which is the same thing spelled as a quotient.
+                case Divf(var one, var below) when one == Number.Integer.One:
+                    return TryReadTrigonometricDenominator(below, ref argument, ref power, ref isSecant);
+                default:
+                    return false;
+            }
+        }
+
+        private static bool TryReadTrigonometricDenominator(
+            Entity below, ref Entity argument, ref int power, ref bool isSecant)
+        {
+            switch (below)
+            {
+                case Cosf(var cosine):
+                    (argument, power, isSecant) = (cosine, 1, true);
+                    return true;
+                case Sinf(var sine):
+                    (argument, power, isSecant) = (sine, 1, false);
+                    return true;
+                case Powf(Cosf(var cosine), Number.Integer cosinePower)
+                    when cosinePower.EInteger.Sign > 0 && cosinePower.EInteger.CanFitInInt32():
+                    (argument, power, isSecant) =
+                        (cosine, cosinePower.EInteger.ToInt32Checked(), true);
+                    return true;
+                case Powf(Sinf(var sine), Number.Integer sinePower)
+                    when sinePower.EInteger.Sign > 0 && sinePower.EInteger.CanFitInInt32():
+                    (argument, power, isSecant) =
+                        (sine, sinePower.EInteger.ToInt32Checked(), false);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         internal static Entity? SolveByTangentSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             // The cotangent first, because it is the tangent written the other way up and this
