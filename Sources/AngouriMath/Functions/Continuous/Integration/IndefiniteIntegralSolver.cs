@@ -632,6 +632,21 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         internal static Entity? SolveByHalfAngleSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
         {
+            // The tangent, cotangent, secant and cosecant are their own node types, not sugar over
+            // a quotient, so a rewrite that only knows the sine and the cosine never sees them —
+            // and this rule declined every integrand built from them, cot(x)^2 and cot(x)^4 and
+            // 1/tan(x)^3 among them. Writing them out first is an identity in each case, and the
+            // poles line up on both sides: cot(u) is undefined exactly where sin(u) is zero, which
+            // is exactly where cos(u)/sin(u) is, so nothing is assumed and no domain moves.
+            expr = expr.Replace(node => node switch
+            {
+                Tanf(var argument) => MathS.Sin(argument) / MathS.Cos(argument),
+                Cotanf(var argument) => MathS.Cos(argument) / MathS.Sin(argument),
+                Secantf(var argument) => 1 / MathS.Cos(argument),
+                Cosecantf(var argument) => 1 / MathS.Sin(argument),
+                _ => node
+            });
+
             var sine = MathS.Sin(x);
             var cosine = MathS.Cos(x);
             if (!expr.ContainsNode(sine) && !expr.ContainsNode(cosine))

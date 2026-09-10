@@ -119,6 +119,24 @@ namespace AngouriMath.Tests.Calculus
         public void AnImproperQuotientAfterTheRewrite(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// The tangent, cotangent, secant and cosecant, which are their own node types rather than
+        /// sugar over a quotient — so a rewrite that knows only the sine and the cosine never saw
+        /// them, and every integrand built from them was declined.
+        /// </summary>
+        /// <remarks>
+        /// Writing them out is an identity in each case and the poles line up on both sides:
+        /// <c>cot(u)</c> is undefined exactly where <c>sin(u)</c> is zero, which is exactly where
+        /// <c>cos(u)/sin(u)</c> is. Nothing is assumed and no domain moves.
+        /// </remarks>
+        [Theory]
+        [InlineData("cot(x)^2")]
+        [InlineData("cot(x)^3")]
+        [InlineData("1/tan(x)")]
+        [InlineData("1/tan(x)^3")]
+        [InlineData("1/sec(x)^2")]
+        public void TheOtherFourTrigonometricFunctions(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// Declined, and each for its own reason, so that the boundary is recorded rather than
         /// assumed. <c>sin(x) + x</c> is not a function of the sine alone. <c>sin(x)*sin(2*x)</c>
         /// leaves an <c>x</c> behind because <c>sin(2x)</c> is not <c>sin(x)</c> — the right
