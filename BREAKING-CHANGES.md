@@ -172,6 +172,31 @@ one leaves the other, and the sub-problem could then be scaled again without end
 substitution that does not exist rather than a wrong answer, and the integrand at `a = 0` is a
 different function (`1/x^3`), answered on its own if asked that way.
 
+### `NaN` was returned as the antiderivative of something that has one
+
+**A wrong answer, not a missing one.** `1/(a*x^2)` came back as `NaN + C`, and `NaN` is this
+library's way of saying the thing does not exist. It does exist: it is `-1/(a x)`.
+
+| | Was | Is |
+|---|---|---|
+| `"1/(a*x^2)".Integrate("x")` | `NaN + C` | the antiderivative, `-1/(a x)` up to form |
+| `"1/((a + b)*x^2)".Integrate("x")`, and every symbolic constant times `x^2` | `NaN + C` | the antiderivative |
+| `"1/(a*x^2 + b*x^2)".Integrate("x")`, and the same collected differently | `NaN + C` | the antiderivative |
+
+The rule for a constant over a quadratic answers with a piecewise over the discriminant, and one of
+its branches is for `a = 0`, where the denominator is linear. With `b` and `c` both zero that branch
+computes `k/0`. A **numeric** `a` makes the branch decidably false and it is dropped before the
+`NaN` can spread, which is why `1/(2*x^2)` was always right; a symbolic `a` leaves it standing, and
+one `NaN` case takes the whole piecewise with it.
+
+The branch is now left out entirely when the denominator has neither a linear nor a constant term,
+because there it asks about an expression that does not exist — with `a`, `b` and `c` all zero the
+denominator is identically zero and there is no integrand to integrate. What is left is the
+zero-discriminant arm, which gives the right answer.
+
+Each of these was checked by differentiating it back with the parameters pinned and comparing at
+four points. Nothing that already had an antiderivative changes.
+
 ---
 
 ## 2.5.0 — since 2.4.0
