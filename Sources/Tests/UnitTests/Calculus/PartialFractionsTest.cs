@@ -158,18 +158,49 @@ namespace AngouriMath.Tests.Calculus
             Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
 
         /// <summary>
-        /// The guard that keeps declining cheap, which the step over the reals must not undo:
-        /// this factorises into an irreducible quartic that nothing reads, and the whole point
-        /// of reading the factorisation is that finding that out costs one factorisation rather
-        /// than a search of every half of every split.
+        /// The guard that keeps declining cheap, which nothing widening the split must undo:
+        /// this factorises into <c>x^4 + x + 1</c>, an irreducible quartic with an odd power in
+        /// it that no rule reads, and the whole point of reading the factorisation is that
+        /// finding that out costs one factorisation rather than a search of every half of every
+        /// split.
         /// </summary>
+        /// <remarks>
+        /// The integrand here used to be <c>(1 - x^4)/(1 + x^4 + x^8)</c>, whose quartic is
+        /// <c>x^4 - x^2 + 1</c> — <em>biquadratic</em>, and so read by
+        /// <c>TrySplitBiquadraticOverTheReals</c>. That one is answered now rather than declined,
+        /// which is the test below; the guard it was written for is real and still needs a case
+        /// that actually reaches it.
+        /// </remarks>
         [Fact]
         public void DecliningStaysCheap()
         {
             var clock = System.Diagnostics.Stopwatch.StartNew();
-            var answer = "(1 - x ^ 4) / (1 + x ^ 4 + x ^ 8)".ToEntity().Integrate("x");
+            var answer = "(1 - x ^ 4) / ((1 + x ^ 2) * (x ^ 4 + x + 1))".ToEntity().Integrate("x");
             Assert.Contains("integral(", answer.Stringize());
             Assert.True(clock.Elapsed < System.TimeSpan.FromSeconds(10), $"took {clock.Elapsed}");
+        }
+
+        /// <summary>
+        /// And the case that guard used to be written against is now answered, because its
+        /// quartic is biquadratic and there is a rule for that. Asserted as a value rather than
+        /// as a shape, since what it comes out as says nothing about whether it is right.
+        /// </summary>
+        [Fact]
+        public void ABiquadraticFactorIsSplitRatherThanDeclined()
+        {
+            var integrand = "(1 - x ^ 4) / (1 + x ^ 4 + x ^ 8)".ToEntity();
+            var integral = integrand.Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            foreach (var at in new[] { 0.23, 0.61, 1.05, 2.3 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = integrand.Substitute("x", at).EvalNumerical();
+                var difference = System.Math.Abs((double)(got - want).RealPart);
+                Assert.True(difference / System.Math.Max(1.0, System.Math.Abs((double)want.RealPart)) < 1e-9,
+                    $"d/dx of the antiderivative is {got} at x = {at}, where the integrand is {want}");
+            }
         }
     }
 }
