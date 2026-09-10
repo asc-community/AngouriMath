@@ -107,6 +107,37 @@ answer on the far side of a root gets a real expression where it used to get a c
 | `1/(x*(-4+x^2)^4)` | 8,472 ms | 1,878 ms |
 | `1/((1+x)^3*(2+x)^3)` | 1,343 ms | 492 ms |
 
+### The hyperbolic functions have antiderivatives, and so does anything rational in `e^(k x)`
+
+An integrand rational in `e^(k x)` becomes a rational function of one variable under
+`u = e^(k x)`, and nothing was doing that. `e^x/(1 + e^x)` was answered — its numerator happens to
+be the derivative of its denominator, which is what the general substitution looks for — and
+`1/(1 + e^x)` was not, which is the shape of the gap.
+
+**The hyperbolic functions are the visible half of it.** They are not nodes in this library:
+`tanh(x)` is built as `(e^(2x) - 1)/(e^(2x) + 1)` and `sech(x)` as `2/(e^x + e^(-x))`. So they were
+rational in an exponential all along, and none of the four had an antiderivative.
+
+| | Was | Is |
+|---|---|---|
+| `"tanh(x)".Integrate("x")`, and `coth`, `sech`, `csch` | `integral(tanh(x), x)` — left unevaluated | the antiderivative |
+| `"1/(1 + e^x)".Integrate("x")` | `integral(1 / (1 + e ^ x), x)` — left unevaluated | the antiderivative |
+| `"1/(e^x + e^(-x))".Integrate("x")` | left unevaluated | the antiderivative, `arctan(e^x)` up to the form below |
+| `"e^(3*x)/(e^x + 1)".Integrate("x")`, and every quotient whose exponentials have a common slope | left unevaluated | the antiderivative |
+
+**No previously-answered integral changes**, `e^x`, `x*e^x` and `e^x/(1 + e^x)` included: the rule
+runs after everything that answers a problem in its own terms. Every antiderivative above was
+checked by differentiating it back and comparing numerically at five points.
+
+**The answers come out in the exponential, and unfolded.** `∫sech(x) dx` is `2 arctan(e^x)` and
+prints as `4 * arctan(2 * e ^ x / 2) / 2`; `∫tanh(x) dx` is `ln(cosh(x))` and prints in `e^(2x)`.
+That is the rational integrator's own shape — it writes a logarithm as `ln((2ax + b - D)/(2ax + b + D))`
+and leaves the coefficient arithmetic standing — and it is what `1/(x*(x+1))` has always printed as
+too. A correct antiderivative in an unhelpful form, where there was none at all.
+
+`e^(x^2)` is still declined, and correctly: its exponent is not linear and it has no elementary
+antiderivative.
+
 ---
 
 ## 2.5.0 — since 2.4.0

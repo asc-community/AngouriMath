@@ -8,6 +8,7 @@ using HonkSharp.Fluency;
 using static AngouriMath.Entity;
 using System.Linq;
 using System.Collections.Generic;
+using PeterO.Numbers;
 
 namespace AngouriMath.Functions.Algebra
 {
@@ -389,6 +390,109 @@ namespace AngouriMath.Functions.Algebra
             return Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is { } result
                 ? result.Substitute(u, MathS.Pow(radicalBase, Number.Rational.Create(1, q)))
                 : null;
+        }
+
+        /// <summary>
+        /// A rational function of <c>e^(k x)</c>, turned into a rational function of one variable
+        /// by <c>u = e^(k x)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// With <c>u = e^(k x)</c> we have <c>dx = du/(k u)</c>, and every exponential in the
+        /// integrand becomes a whole power of <c>u</c>, so a quotient built from them is a
+        /// quotient of polynomials — which the rational integrator answers.
+        /// </para>
+        /// <para>
+        /// <b>What was missing.</b> <c>1/(1 + e^x)</c> had no antiderivative, and neither did
+        /// <c>1/(e^x + e^(-x))</c>. <c>e^x/(1 + e^x)</c> did, which is the shape of the gap: the
+        /// general substitution answers an exponential integrand only when the numerator happens
+        /// to be the derivative of something in it, and declines the rest for want of anything to
+        /// substitute for.
+        /// </para>
+        /// <para>
+        /// <b>It is also how the hyperbolic functions get integrated</b>, since they are not nodes
+        /// here — <c>tanh(x)</c> is built as <c>(e^(2x) - 1)/(e^(2x) + 1)</c> and <c>sech(x)</c>
+        /// as <c>2/(e^x + e^(-x))</c>, so both are rational functions of an exponential, and
+        /// <c>tanh</c>, <c>coth</c>, <c>sech</c> and <c>csch</c> had no antiderivative at all.
+        /// </para>
+        /// <para>
+        /// The answers come out in the exponential rather than as <c>ln(cosh(x))</c> or
+        /// <c>2 arctan(e^x)</c>, and unfolded — the rational integrator writes a logarithm as
+        /// <c>ln((2ax + b - D)/(2ax + b + D))</c> and leaves the arithmetic in the coefficients
+        /// standing. That is its shape on plain rational integrands too, not something this
+        /// rewrite introduces; <c>1/(x(x+1))</c> comes out as
+        /// <c>ln((2x + 1 - 1)/(2x + 1 + 1))</c> with nothing exponential in sight.
+        /// </para>
+        /// <para>
+        /// <b>One <c>k</c> for the whole integrand.</b> The exponents are read as linear in the
+        /// variable and their slopes taken together by greatest common divisor, so <c>e^x</c>
+        /// beside <c>e^(2x)</c> gives <c>u</c> and <c>u^2</c> under one substitution. A slope that
+        /// is not a whole number, or an exponent that is not linear — <c>e^(x^2)</c>, whose
+        /// integral is not elementary at all — is declined.
+        /// </para>
+        /// <para>
+        /// <b>No condition is owed.</b> <c>e^(k x)</c> is positive for every real <c>x</c> and
+        /// never zero, so the substitution is invertible on the whole line and introduces no
+        /// interval of its own; <c>u</c> is a genuine change of variable rather than a branch.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByExponentialSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var slopes = new List<EInteger>();
+            var offsets = new Dictionary<Entity, (EInteger Slope, Entity Offset)>();
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Powf(var @base, var exponent) || @base != MathS.e)
+                    continue;
+                if (!exponent.ContainsNode(x))
+                    continue;
+                if (!TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slope, out var offset))
+                    return null;   // not linear in x, so not a power of one exponential
+                if (slope.Evaled is not Number.Integer whole || whole.EInteger.IsZero)
+                    return null;
+                slopes.Add(whole.EInteger);
+                offsets[node] = (whole.EInteger, offset);
+            }
+            if (slopes.Count == 0)
+                return null;
+
+            var k = slopes[0].Abs();
+            foreach (var slope in slopes)
+                k = k.Gcd(slope.Abs());
+            if (k.IsZero)
+                return null;
+
+            var u = Variable.CreateUnique(expr, "u_exp");
+
+            // e^(k_i x + m_i) is e^(m_i) times u^(k_i/k), and k_i/k is a whole number by
+            // construction. Built directly rather than by substituting x and simplifying, for the
+            // same reason as the radical substitutions: (u^(1/k))^(k_i) is not something the
+            // simplifier will reduce, and is right not to.
+            var rewritten = expr.Replace(node =>
+                offsets.TryGetValue(node, out var found)
+                    ? MathS.Pow(MathS.e, found.Offset)
+                      * MathS.Pow(u, Number.Integer.Create(found.Slope / k))
+                    : node);
+
+            if (rewritten.ContainsNode(x))
+                return null;
+
+            // dx = du/(k u). Combined into one quotient and then simplified, in that order, and
+            // the order decides four of these. Combine does not cancel, so 1/(e^x + e^(-x)) leaves
+            // u/(u(u^2 + 1)) -- which the rational integrator declines although it answers
+            // 1/(u^2 + 1) at once. Simplifying first instead leaves the nesting for Combine to
+            // flatten and the common factor never meets a cancellation.
+            var integrand = Functions.SingleQuotient.Combine(
+                rewritten / (Number.Integer.Create(k) * u)).Simplify();
+            if (integrand is Providedf(var inner, _))
+                integrand = inner;
+
+            if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is not { } result)
+                return null;
+
+            var answer = result.Substitute(u, MathS.Pow(MathS.e, Number.Integer.Create(k) * x));
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
         }
 
         private static int Lcm(int a, int b)
