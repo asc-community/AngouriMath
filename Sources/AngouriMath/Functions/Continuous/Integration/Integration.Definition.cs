@@ -374,6 +374,10 @@ namespace AngouriMath.Functions.Algebra
             // what is left — which is the quotients it was added for, since linearity declines a
             // quotient and partial fractions declines one that is not a ratio of polynomials.
             if ((answer = IndefiniteIntegralSolver.SolveByHalfAngleSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // Beside the half-angle one and for the same reason: it rewrites the integrand into a
+            // rational function, so it wants everything that answers a problem in its own terms to
+            // have declined first.
+            if ((answer = IndefiniteIntegralSolver.SolveByLinearRadicalSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if (integrateByParts && (answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x)) is { }) return answer;
             return null;
         }

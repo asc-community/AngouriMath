@@ -293,6 +293,111 @@ namespace AngouriMath.Functions.Algebra
                 ? result.Substitute(uSub, tangent)
                 : null;
         }
+        /// <summary>
+        /// An integrand holding a fractional power of something <b>linear</b> in the variable,
+        /// turned into a rational function by <c>u^q = a*x + b</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Setting <c>u = (a*x + b)^(1/q)</c> gives <c>x = (u^q - b)/a</c> and
+        /// <c>dx = (q/a) u^(q-1) du</c>, and every occurrence of the radical becomes a power of
+        /// <c>u</c>. A quotient of polynomials in <c>x</c> and that radical is then a quotient of
+        /// polynomials in <c>u</c>, which the rational integrator answers.
+        /// </para>
+        /// <para>
+        /// <b>Why the general substitution does not already do this, which is the point.</b>
+        /// <see cref="SolveBySubstitution"/> rewrites <em>sub-expressions</em>: it finds
+        /// <c>1 + x</c> inside <c>x/sqrt(1 + x)</c>, replaces that, and is left with a bare
+        /// <c>x</c> it cannot express, so it declines. This substitutes for <b>x itself</b>, so
+        /// there is nothing left behind to fail on. <c>x/sqrt(1 + x)</c> and
+        /// <c>x/sqrt(2 - 3x)</c> had no antiderivative for exactly that reason.
+        /// </para>
+        /// <para>
+        /// <b>One q for the whole integrand.</b> Where several radicals share a base —
+        /// <c>sqrt(x + 1)</c> beside <c>(x + 1)^(1/3)</c> — the exponent denominators are taken
+        /// together by their least common multiple, so one substitution clears both. Radicals over
+        /// <em>different</em> linear bases are not handled: <c>sqrt(1 - x) + sqrt(1 + x)</c> needs
+        /// two substitutions at once and is declined rather than half-rewritten.
+        /// </para>
+        /// <para>
+        /// <b>No condition is owed by the rewrite.</b> <c>a</c> is non-zero, since a zero
+        /// coefficient is not a linear expression in <c>x</c> and the reader below rejects it,
+        /// and <c>u^q = a*x + b</c> is invertible wherever the radical it came from is defined.
+        /// The answer inherits the radical's own domain and adds nothing.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByLinearRadicalSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // Every fractional power in the tree whose base is linear in x, collected with the
+            // base it is over so that radicals over different bases are told apart.
+            Entity? radicalBase = null;
+            var denominators = new List<int>();
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer)
+                    continue;
+                if (!@base.ContainsNode(x))
+                    continue;
+                if (!TreeAnalyzer.TryGetPolyLinear(@base, x, out var slope, out _) || slope.Evaled == 0)
+                    return null;   // a radical over something that is not linear: not this rule's
+                if (radicalBase is null)
+                    radicalBase = @base;
+                else if (radicalBase != @base)
+                    return null;   // two different bases at once
+                if (!exponent.ERational.Denominator.CanFitInInt32())
+                    return null;
+                denominators.Add(exponent.ERational.Denominator.ToInt32Checked());
+            }
+            if (radicalBase is null || denominators.Count == 0)
+                return null;
+
+            var q = denominators.Aggregate(1, Lcm);
+            if (q < 2 || q > 12)   // beyond this the rewritten polynomial is not worth building
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(radicalBase, x, out var a, out var b))
+                return null;
+
+            var u = Variable.CreateUnique(expr, "u_rad");
+            // x = (u^q - b) / a, and dx = (q/a) u^(q-1) du.
+            var xInU = (MathS.Pow(u, q) - b) / a;
+            var dx = Number.Integer.Create(q) / a * MathS.Pow(u, q - 1);
+
+            // Each radical becomes its power of u **by construction** rather than by substituting
+            // and then simplifying. Substituting alone turns (x + 1)^(1/2) into ((u^6))^(1/2), and
+            // the simplifier is right to refuse to call that u^3 — it is |u^3| on the reals and
+            // worse off them. Building u^3 directly is sound here because u is the principal
+            // q-th root of a*x + b by definition of the substitution, and it is the difference
+            // between answering 1/(sqrt(x+1) + (x+1)^(1/3)) and handing it back.
+            var rewritten = expr.Replace(node =>
+                node is Powf(var radical, Number.Rational e) && e is not Number.Integer
+                && radical == radicalBase
+                && e.ERational.Denominator.CanFitInInt32()
+                && e.ERational.Numerator.CanFitInInt32()
+                    ? MathS.Pow(u, q / e.ERational.Denominator.ToInt32Checked()
+                                   * e.ERational.Numerator.ToInt32Checked())
+                    : node);
+
+            rewritten = rewritten.Substitute(x, xInU);
+            if (rewritten.ContainsNode(x))
+                return null;
+
+            var integrand = Functions.SingleQuotient.Combine((rewritten * dx).Simplify());
+            if (integrand is Providedf(var inner, _))
+                integrand = inner;
+
+            return Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is { } result
+                ? result.Substitute(u, MathS.Pow(radicalBase, Number.Rational.Create(1, q)))
+                : null;
+        }
+
+        private static int Lcm(int a, int b)
+        {
+            var (x, y) = (a, b);
+            while (y != 0) (x, y) = (y, x % y);
+            return a / x * b;
+        }
+
 
         /// <summary>
         /// A rational function of <c>sin(x)</c> and <c>cos(x)</c>, turned into a rational function
