@@ -148,7 +148,13 @@ namespace AngouriMath.Tests.Algebra.Polynomials
                 if (ByElimination(matrix) is not { } byElimination)
                     continue;
                 compared++;
-                var byLaplace = matrix.InnerMatrix.DeterminantLaplace().InnerSimplified;
+                // Through the guard rather than straight to GenericTensor, whose Laplace
+                // expansion takes its minors in a process-wide scratch matrix. xUnit runs test
+                // classes in parallel and MatrixConcurrencyTest expands forty matrices across
+                // every core, so an unguarded call here reads that test's minors and reports the
+                // determinant of an integer matrix as containing sin(a).
+                var byLaplace = GenTensorGuard.DeterminantLaplace(matrix.InnerMatrix)
+                    .InnerSimplified;
                 if ((byElimination - byLaplace).Simplify() != 0)
                     disagreements.Add($"{matrix.Stringize()}: "
                         + $"{byElimination.Stringize()} vs {byLaplace.Stringize()}");
