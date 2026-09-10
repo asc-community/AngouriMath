@@ -259,13 +259,33 @@ namespace AngouriMath.Functions.Algebra
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         private static bool IsDifferentiatedBeforeAPolynomial(Entity factor)
-            => factor is Logf
-                or Entity.Arcsinf or Entity.Arccosf
-                or Entity.Arctanf or Entity.Arccotanf
-                or Entity.Arcsecantf or Entity.Arccosecantf;
+            => factor switch
+            {
+                Logf or Entity.Arcsinf or Entity.Arccosf
+                    or Entity.Arctanf or Entity.Arccotanf
+                    or Entity.Arcsecantf or Entity.Arccosecantf => true,
+                // And a whole power of one, which is the same function for this purpose:
+                // differentiating ln(x)^2 gives 2ln(x)/x, whose x cancels against the integrated
+                // polynomial exactly as ln(x)'s does, leaving x*ln(x) -- one step simpler, and
+                // answered by another round of parts.
+                //
+                // A positive whole exponent, because that is when differentiating lowers the
+                // power by one and the descent is finite. A negative or fractional one is a
+                // different integrand with no reason to be the factor differentiated.
+                Powf(var repeated, Number.Integer power) when power.EInteger.Sign > 0
+                    => IsDifferentiatedBeforeAPolynomial(repeated),
+                _ => false
+            };
 
         internal static Entity? SolveIntegratingByParts(Entity expr, Entity.Variable x)
         {
+            // The measure the nested call below decreases on. Read once, since every step
+            // compares against the integrand this call started from rather than against its own
+            // immediate predecessor -- what has to shrink is the distance to an answer, and a
+            // chain of steps that each shrink by nothing would otherwise be admitted one at a
+            // time.
+            var wholeSize = expr.Nodes.Count();
+
             // Standard integration by parts for polynomial × function
             static Entity? IntegrateByPartsPolynomial(Entity polynomialToDifferentiate, Entity toIntegrate, Variable x, int currentRecursion = 0)
             {
@@ -282,7 +302,7 @@ namespace AngouriMath.Functions.Algebra
             // Generalized integration by parts: tries once with v and u both being integrable
             // ∫ v·u dx = v·∫u dx - ∫(v'·∫u dx) dx
             // Only attempts if both v and u can be integrated
-            static Entity? TryIntegrateByPartsOnce(Entity v, Entity u, Variable x)
+            static Entity? TryIntegrateByPartsOnce(Entity v, Entity u, Variable x, int wholeSize)
             {
                 // Try to integrate u
                 var integralOfU = Integration.ComputeIndefiniteIntegral(u, x, false);
@@ -297,7 +317,29 @@ namespace AngouriMath.Functions.Algebra
                 // Try to integrate the remaining term: v' · ∫u dx
                 var remaining = (derivativeOfV * integralOfU).Simplify(1);
                 if (remaining is Providedf(var inner_, _)) remaining = inner_; // TODO: signularities ignored but not handled properly
-                var remainingIntegral = Integration.ComputeIndefiniteIntegral(remaining, x, false);
+                // **By parts is allowed on what is left**, and that is the whole of this change.
+                // One step of parts often leaves an integral that needs another: `x * ln(x)^2`
+                // leaves `x * ln(x)`, which is answered by parts and by nothing else, so with
+                // parts switched off here the outer integral was declined for want of the inner
+                // one. Every power of a logarithm times a polynomial was out of reach that way.
+                //
+                // It was switched off because this recursion used to run away -- `x * ln(x)`
+                // went round until the stack ran out. What stopped that was choosing the right
+                // factor to differentiate (the L-before-A of LIATE, above), and since then the
+                // integrator has grown two bounds that hold whatever the rules do: a set of
+                // integrands already on the stack, which declines a repeat immediately, and a
+                // ceiling on the depth of the descent. Those are what makes this safe now, and
+                // they are checked on every entry rather than trusted to a flag.
+                // https://github.com/asc-community/AngouriMath/issues/718
+                // ...but only where what is left is **strictly smaller** than what we started
+                // with. That is the decrease that makes the descent finite, and it is also what
+                // keeps the search from widening: `sin(x)/(x^2 + 1)^2` has no elementary
+                // antiderivative, so every solver runs to exhaustion on it, and letting parts
+                // recurse without a measure took it from about a second to 83 -- caught by
+                // `AnIntegralWithNoAnswerStillFinishesQuickly`, which exists for exactly this.
+                // A power of a logarithm does decrease: `x * ln(x)^2` leaves `x * ln(x)`.
+                var remainingIntegral = Integration.ComputeIndefiniteIntegral(
+                    remaining, x, remaining.Nodes.Count() < wholeSize);
                 if (remainingIntegral is null) return null;
 
                 return v * integralOfU - remainingIntegral;
@@ -313,9 +355,9 @@ namespace AngouriMath.Functions.Algebra
                 // Differentiating the logarithm instead turns it into 1/x, which cancels
                 // against the integrated polynomial and ends. (The L-before-A of LIATE.)
                 if (IsDifferentiatedBeforeAPolynomial(f) && MathS.TryPolynomial(g, x, out _)
-                    && TryIntegrateByPartsOnce(f, g, x) is { } logFirstF) return logFirstF;
+                    && TryIntegrateByPartsOnce(f, g, x, wholeSize) is { } logFirstF) return logFirstF;
                 if (IsDifferentiatedBeforeAPolynomial(g) && MathS.TryPolynomial(f, x, out _)
-                    && TryIntegrateByPartsOnce(g, f, x) is { } logFirstG) return logFirstG;
+                    && TryIntegrateByPartsOnce(g, f, x, wholeSize) is { } logFirstG) return logFirstG;
 
                 // Case 1: One term is polynomial - use recursive polynomial integration by parts
                 if (MathS.TryPolynomial(f, x, out var fPoly)) return IntegrateByPartsPolynomial(fPoly, g, x);
@@ -324,13 +366,13 @@ namespace AngouriMath.Functions.Algebra
                 // Case 2: Neither is polynomial - try single-step integration by parts
                 // This handles cases like ln(abs(x)) × ln(abs(x))
                 // Try both orderings: f as v, g as u OR g as v, f as u
-                if (TryIntegrateByPartsOnce(f, g, x) is { } result1) return result1;
-                if (TryIntegrateByPartsOnce(g, f, x) is { } result2) return result2;
+                if (TryIntegrateByPartsOnce(f, g, x, wholeSize) is { } result1) return result1;
+                if (TryIntegrateByPartsOnce(g, f, x, wholeSize) is { } result2) return result2;
             }
 
             // Special case for powers of integrable functions, try integration by parts on base × base
             // e.g., ln(abs(x))^2 = ln(abs(x)) × ln(abs(x))
-            if (expr is Powf(var @base, Integer(2)) && TryIntegrateByPartsOnce(@base, @base, x) is { } result) return result;
+            if (expr is Powf(var @base, Integer(2)) && TryIntegrateByPartsOnce(@base, @base, x, wholeSize) is { } result) return result;
 
             return null;
         }
