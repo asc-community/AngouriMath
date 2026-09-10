@@ -381,6 +381,10 @@ namespace AngouriMath.Functions.Algebra
             // The exponential substitution beside the other rewrites. It is also what integrates
             // the hyperbolic functions, which are not nodes here but quotients of exponentials.
             if ((answer = IndefiniteIntegralSolver.SolveByExponentialSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // Last of the rewrites, because it is the only one that fires on an integrand nothing
+            // is wrong with -- it clears a parameter rather than a shape -- so everything that
+            // can answer the problem as written gets to try first.
+            if ((answer = IndefiniteIntegralSolver.SolveByScalingTheVariable(expr, x, integrateByParts)) is { }) return answer;
             if (integrateByParts && (answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x)) is { }) return answer;
             return null;
         }

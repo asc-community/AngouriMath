@@ -138,6 +138,40 @@ too. A correct antiderivative in an unhelpful form, where there was none at all.
 `e^(x^2)` is still declined, and correctly: its exponent is not linear and it has no elementary
 antiderivative.
 
+### A symbolic parameter no longer stops a rational integrand being integrated
+
+`1/(8 + x^3)` and `1/(16 - x^4)` are answered at once. `1/(a^3 + x^3)` and `1/(a^4 - x^4)` were not,
+and the parameter is the whole difference: the rational rules read a denominator as a polynomial
+**over the rationals**, so `a^3` is not a coefficient they can work with.
+
+Two things were in the way, and both are fixed here.
+
+**A constant factor inside the denominator stayed there.** `a * (1/(1 + x^3))` was taken apart and
+`1/(a*(1 + x^3))` — the same number — was not, because the branches that take a factor out of a
+quotient each want the whole of one side free of the variable.
+
+**And the integrand is scaled by its parameter**, `x = c t`, which puts integer coefficients back;
+the parameter comes out as a constant factor and the answer is read at `t = x/c`. Homogeneity is
+checked rather than assumed, so an integrand the scale does not separate is declined.
+
+| | Was | Is |
+|---|---|---|
+| `"1/(a^3 + x^3)".Integrate("x")`, and `1/(a^4 - x^4)`, `x^2/(a^4 + x^4)` | left unevaluated | the antiderivative |
+| `"1/(x^3*(a^3 + x^3))".Integrate("x")`, and the family `1/(x^k (a^n ± x^n))` | left unevaluated | the antiderivative |
+| `"1/(a*(1 + x^3))".Integrate("x")`, and every constant factor inside a denominator | left unevaluated | the antiderivative |
+
+Every one of them was checked by differentiating it back with the parameter pinned and comparing at
+five points. **No previously-answered integral changes**: the scaling runs last of the rewrites,
+because unlike the others it fires on an integrand nothing is wrong with.
+
+`x/((a^2 + x^2)*(b^2 + x^2))` is still declined, and deliberately — two parameters means scaling by
+one leaves the other, and the sub-problem could then be scaled again without end.
+
+**Where the answer is not defined.** `c = 0` is not a scaling, and what this produces —
+`a^(-2) G(x/a)` for `1/(a^3 + x^3)` — has no value there. That is the honest report for a
+substitution that does not exist rather than a wrong answer, and the integrand at `a = 0` is a
+different function (`1/x^3`), answered on its own if asked that way.
+
 ---
 
 ## 2.5.0 — since 2.4.0
