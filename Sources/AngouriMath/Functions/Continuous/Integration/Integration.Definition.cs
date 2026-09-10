@@ -405,6 +405,10 @@ namespace AngouriMath.Functions.Algebra
             // is wrong with -- it clears a parameter rather than a shape -- so everything that
             // can answer the problem as written gets to try first.
             if ((answer = IndefiniteIntegralSolver.SolveByScalingTheVariable(expr, x, integrateByParts)) is { }) return answer;
+            // After every rule that can answer a power in its own terms, because expanding one
+            // throws away whatever structure it had: (1 + x^2)^2 is answered as a power and only
+            // wants writing out if that fails.
+            if ((answer = IndefiniteIntegralSolver.SolveByExpandingAPower(expr, x, integrateByParts)) is { }) return answer;
             if (integrateByParts && (answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x)) is { }) return answer;
             return null;
         }

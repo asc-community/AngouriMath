@@ -753,6 +753,51 @@ namespace AngouriMath.Functions.Algebra
             return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
         }
 
+        /// <summary>
+        /// A power whose base holds the variable, written out and integrated term by term.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>(2x + 3x^2)^3</c> had no antiderivative, and it is a polynomial. The rule for a
+        /// power integrates <c>x^n</c> and asks that the base <em>be</em> the variable, so a base
+        /// that merely contains it — any polynomial but a bare <c>x</c> — matched nothing, and
+        /// nothing else in the chain writes a power out. <c>(1 + x)^3</c> was answered only
+        /// because the linear substitution reads it.
+        /// </para>
+        /// <para>
+        /// <b>It runs last</b>, after every rule that can answer a power in its own terms.
+        /// Expanding throws away whatever structure the power had — <c>(1 + x^2)^2</c> is
+        /// answered as a power, and writing it out first would replace that answer with a longer
+        /// one saying the same thing.
+        /// </para>
+        /// <para>
+        /// <b>Only a positive whole exponent</b>, where writing it out is a finite identity. A
+        /// negative one is a quotient and belongs to partial fractions; a fractional one is a
+        /// radical and does not expand at all.
+        /// </para>
+        /// <para>
+        /// The expansion is bounded by <see cref="MathS.Settings.MaxExpansionTermCount"/> like
+        /// every other, and the rule declines where the expansion is not a sum — nothing was
+        /// written out, so handing it on would ask the same question again.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByExpandingAPower(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (expr is not Powf(var @base, Number.Integer power))
+                return null;
+            if (power.EInteger.CompareTo(EInteger.One) <= 0)
+                return null;
+            if (!@base.ContainsNode(x))
+                return null;
+
+            var written = expr.Expand();
+            if (written is not Sumf and not Minusf)
+                return null;
+
+            return Integration.ComputeIndefiniteIntegral(written, x, integrateByParts);
+        }
+
         private static int Lcm(int a, int b)
         {
             var (x, y) = (a, b);
