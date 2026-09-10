@@ -60,12 +60,12 @@ prints as `x + y + z` and reads back as `(x + y) + z` — the same number, a dif
 |---|---|---|
 | 1 | `provided` | **groups to the right**: `a provided b provided c` is `a provided (b provided c)` |
 | 2 | `implies` `->` | |
-| 3 | `or` `\|` | |
+| 3 | `or` | |
 | 4 | `xor` | |
 | 5 | `and` `&` | |
 | 6 | `not` | prefix |
 | 7 | `=` `<>` `>` `>=` `<` `<=` | chained: `a < b < c` means `a < b and b < c` |
-| 8 | `in`, `divides` | one level; `a divides b` is the statement that `b` is a whole multiple of `a` |
+| 8 | `in`, `divides` `\|` | one level; `a divides b` and `a \| b` are the statement that `b` is a whole multiple of `a`, defined over the integers and `NaN` elsewhere |
 | 9 | `unite` `\/`, `setsubtract` `\` | one level, so `A \/ B \ C` is `(A \/ B) \ C` |
 | 10 | `intersect` `/\` | |
 | 11 | `+` `-` | |

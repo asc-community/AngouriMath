@@ -145,7 +145,8 @@ set_operator_union_setsubtraction returns[Entity value]
 in_operator returns[Entity value]
     : m1 = set_operator_union_setsubtraction { $value = $m1.value; }
     ( 'in' m2 = set_operator_union_setsubtraction { $value = $value.In($m2.value); }
-    | 'divides' m2 = set_operator_union_setsubtraction { $value = $value.Divides($m2.value); })*
+    | 'divides' m2 = set_operator_union_setsubtraction { $value = $value.Divides($m2.value); }
+    | '|' m2 = set_operator_union_setsubtraction { $value = $value.Divides($m2.value); })*
     ;
 
 
@@ -215,8 +216,7 @@ xor_expression returns[Entity value]
 
 or_expression returns[Entity value]
     : m1 = xor_expression { $value = $m1.value; }
-    ( 'or' m2 = xor_expression { $value = $value | $m2.value; }
-    | '|' m2 = xor_expression { $value = $value | $m2.value; })*
+    ( 'or' m2 = xor_expression { $value = $value | $m2.value; })*
     ;
 
 implies_expression returns[Entity value]
