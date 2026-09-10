@@ -121,6 +121,42 @@ namespace AngouriMath.Functions.Algebra
             return null;
         }
 
+        /// <summary>
+        /// <c>N/(c g(x))</c> integrated as <c>(1/c) * N/g(x)</c>, where <c>c</c> is whatever part
+        /// of the denominator is free of the variable.
+        /// </summary>
+        /// <remarks>
+        /// The constant is a constant wherever it stands, and the two branches above take it out
+        /// only when it is the *whole* of one side — so <c>a * (1/(1 + x^3))</c> was answered and
+        /// <c>1/(a*(1 + x^3))</c>, the same number, was not. Everything downstream reads the
+        /// denominator as a polynomial over the rationals, and a symbolic factor stops it being
+        /// one, so leaving the factor in place is not a neutral choice.
+        ///
+        /// It terminates because the denominator handed on has strictly fewer factors, and
+        /// declines at once where there is no constant factor to take.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static Entity? TakeConstantFactorOutOfDenominator(
+            Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts)
+        {
+            Entity constantPart = Number.Integer.One;
+            Entity variablePart = Number.Integer.One;
+            foreach (var factor in Entity.Mulf.LinearChildren(denominator))
+                if (factor.ContainsNode(x))
+                    variablePart *= factor;
+                else
+                    constantPart *= factor;
+
+            // Only where the denominator genuinely mixes the two. A denominator that is entirely
+            // constant, or entirely in the variable, is one of the branches below's to answer,
+            // and taking this one would hand on `N/1` and go round again.
+            if (constantPart == Number.Integer.One || variablePart == Number.Integer.One)
+                return null;
+
+            return Integration.ComputeIndefiniteIntegral(numerator / variablePart, x, integrateByParts)
+                ?.Pipe(i => i / constantPart);
+        }
+
         internal static Entity? SolveAsPolynomialTerm(Entity expr, Entity.Variable x, bool integrateByParts = true) => expr switch
         {
             Entity.Mulf(var m1, var m2) =>
@@ -131,6 +167,13 @@ namespace AngouriMath.Functions.Algebra
                 null,
 
             Entity.Divf(var div, var over) =>
+                // A denominator that is partly constant is split first, and the order matters.
+                // The branch below turns `c/g(x)` into `c * g(x)^(-1)`, and a power is a shape
+                // the rational rules do not read -- so `1/(a*(1 + x^3))` went that way and was
+                // declined, although `a * (1/(1 + x^3))`, the same number, is taken apart by the
+                // Mulf case above. Taking the constant out is both cheaper and more decisive.
+                TakeConstantFactorOutOfDenominator(div, over, x, integrateByParts) is { } withoutIt ?
+                    withoutIt :
                 !div.ContainsNode(x) ?
                     over is Entity.Powf(var @base, var power) ?
                         Integration.ComputeIndefiniteIntegral(MathS.Pow(@base, -power), x, integrateByParts)?.Pipe(i => div * i) :
@@ -492,6 +535,94 @@ namespace AngouriMath.Functions.Algebra
                 return null;
 
             var answer = result.Substitute(u, MathS.Pow(MathS.e, Number.Integer.Create(k) * x));
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// An integrand carrying one symbolic parameter, scaled by it — <c>x = c t</c> — so that
+        /// what is left to integrate has the variable alone in it.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>1/(a^3 + x^3)</c> had no antiderivative, and neither did <c>1/(a^4 - x^4)</c>,
+        /// <c>1/(a^5 + x^5)</c> or any of the family <c>1/(x^k (a^n ± x^n))</c> — while
+        /// <c>1/(8 + x^3)</c> and <c>1/(16 - x^4)</c> are answered at once. The parameter is the
+        /// whole difference: the rational rules read a denominator as a polynomial <b>over the
+        /// rationals</b>, and <c>a^3</c> is not a rational coefficient, so the factoring that
+        /// answers <c>x^3 + 8</c> has nothing to work with on <c>x^3 + a^3</c>.
+        /// </para>
+        /// <para>
+        /// <b>Scaling puts the parameter where it does no harm.</b> With <c>x = c t</c> and
+        /// <c>dx = c dt</c>, a homogeneous integrand becomes <c>c^k</c> times a function of
+        /// <c>t</c> alone: <c>1/(a^3 + x^3)</c> becomes <c>a^(-2) / (1 + t^3)</c>, whose
+        /// denominator has integer coefficients again. The parameter comes back out as a constant
+        /// factor and the answer is read at <c>t = x/c</c>.
+        /// </para>
+        /// <para>
+        /// <b>Homogeneity is checked rather than assumed</b>, and it is what makes this
+        /// terminate. The scaled integrand has to be exactly <c>c^k h(t)</c> for a whole
+        /// <c>k</c>, which is verified by dividing it out; only <c>h</c> is handed on, so the
+        /// sub-problem has one variable and cannot be scaled again. Without that check the rule
+        /// would hand on something still carrying <c>c</c> and scale it once more at every level.
+        /// </para>
+        /// <para>
+        /// <b>What it is not defined at.</b> <c>c = 0</c> is not a scaling, and the answer this
+        /// produces is undefined there rather than wrong — <c>a^(-2) G(x/a)</c> has no value at
+        /// <c>a = 0</c>, which is the honest report for a substitution that does not exist. The
+        /// integrand itself is a different function there (<c>1/(a^3 + x^3)</c> is <c>1/x^3</c>),
+        /// and is answered on its own if asked that way.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByScalingTheVariable(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // One parameter, and it is the scale. Two would each need their own and neither
+            // clears the other; none means there is nothing in the way to begin with.
+            Entity.Variable? scale = null;
+            foreach (var variable in expr.Vars)
+            {
+                if (variable == x)
+                    continue;
+                if (scale is not null)
+                    return null;
+                scale = variable;
+            }
+            if (scale is null)
+                return null;
+
+            // dx = c dt.
+            var t = Variable.CreateUnique(expr, "u_scale");
+            var scaled = (expr.Substitute(x, scale * t) * scale).Simplify();
+            if (scaled.ContainsNode(x))
+                return null;
+
+            // c^k h(t), with h read off at c = 1 and k found by dividing it out. A scaled
+            // integrand that is not of that shape is not homogeneous and is declined.
+            // The integrand with the scale set to one is the candidate h(t), and what is left
+            // over when the scaled integrand is divided by it is the candidate factor. Read off
+            // rather than searched for: if the two do separate, the quotient *is* the factor.
+            var withoutScale = scaled.Substitute(scale, Number.Integer.One).Simplify();
+            if (withoutScale.ContainsNode(scale) || withoutScale == Number.Integer.Zero)
+                return null;
+
+            var factor = (scaled / withoutScale).Simplify();
+            // Collapsing the quotient attaches the condition that the denominator it cleared is
+            // non-zero. That denominator is the integrand's own, so the condition says where the
+            // integrand is defined and nothing about this rewrite; it is dropped for the same
+            // reason the other rewrites drop theirs.
+            if (factor is Providedf(var withoutCondition, _))
+                factor = withoutCondition;
+
+            // The whole of the homogeneity check. If the scale did not separate, what is left
+            // still mentions t, and handing that on would carry the parameter into the
+            // sub-problem -- which could then be scaled again, at every level, without end.
+            if (factor.ContainsNode(t) || factor.ContainsNode(x))
+                return null;
+
+            if (Integration.ComputeIndefiniteIntegral(withoutScale, t, integrateByParts) is not { } result)
+                return null;
+
+            var answer = (factor * result).Substitute(t, x / scale);
             return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
         }
 
