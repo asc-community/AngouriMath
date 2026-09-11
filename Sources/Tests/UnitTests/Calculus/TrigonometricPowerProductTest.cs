@@ -133,6 +133,34 @@ namespace AngouriMath.Tests.Calculus
         public void ALinearArgument(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// The exponent that is <b>not</b> the one deciding the case need only be rational. It
+        /// rides through the substitution untouched, and the power rule takes <c>u^(-3/2)</c> as
+        /// readily as <c>u^(-3)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>sin(x)/sqrt(cos(x))</c> came out already, because it is <c>du</c> over a root and
+        /// the general substitution finds that; <c>sin(x)/sqrt(cos(x)^3)</c> did not, and neither
+        /// did anything with a sine power above the first over a fractional power of the cosine.
+        /// The asymmetry is the whole of it: the exponent the binomial expansion runs over has to
+        /// be a whole odd or even number, and the other one does not.
+        /// </para>
+        /// </remarks>
+        [Theory]
+        [InlineData("sin(x)/sqrt(cos(x)^3)")]
+        [InlineData("sin(x)^3/cos(x)^(3/2)")]
+        [InlineData("sin(x)^5/cos(x)^(5/2)")]
+        [InlineData("cos(x)^3/sin(x)^(7/2)")]
+        [InlineData("sqrt(sin(x))*cos(x)^3")]
+        [InlineData("sin(x)^3*cos(x)^(1/2)")]
+        [InlineData("tan(x)^3/sqrt(sec(x))")]
+        [InlineData("sin(x)*cos(x)^(2/3)")]
+        [InlineData("sin(x)^3*cos(x)^(-7/3)")]
+        [InlineData("sin(2*x)^3/cos(2*x)^(3/2)")]
+        public void AFractionalExponentOnTheOtherFunction(string integrand)
+            => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// The neighbours, each answered without this rule and each a chance for it to take an
         /// integrand it should leave alone. Both exponents even and non-negative is deliberately
         /// outside it — the tangent substitution leaves a negative power of <c>1 + u^2</c> there
@@ -153,14 +181,17 @@ namespace AngouriMath.Tests.Calculus
         public void TheNeighboursAreUntouched(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
-        /// Integrands the read must refuse: two different arguments, a non-integer power, and a
-        /// factor that is not trigonometric at all. A rule that guessed at the part it did not
-        /// recognise would answer a question it was not asked, so these must come back unanswered
-        /// or answered by something else — never wrong.
+        /// Integrands the rule must refuse: two different arguments, a power of a sum rather than
+        /// of one function, a factor that is not trigonometric at all, and — the one a fractional
+        /// exponent does <b>not</b> buy — two fractional exponents, where neither is the whole odd
+        /// or even number the expansion has to run over. A rule that guessed at the part it did
+        /// not recognise would answer a question it was not asked, so these must come back
+        /// unanswered or answered by something else, never wrong.
         /// </summary>
         [Theory]
         [InlineData("sin(x)^3*cos(2*x)^2")]
-        [InlineData("sin(x)^(1/2)*cos(x)^3")]
+        [InlineData("sin(x)^(1/2)*cos(x)^(1/2)")]
+        [InlineData("sqrt(sin(x) + cos(x))")]
         [InlineData("x*tan(x)^3*sec(x)^4")]
         [InlineData("a*sin(x)^3*cos(x)^2")]
         public void WhatTheReadRefuses(string integrand)

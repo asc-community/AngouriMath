@@ -582,31 +582,40 @@ namespace AngouriMath.Functions.Algebra
             // What is left after the substitution: u^leading times (1 + insideSign*u^2) raised to
             // expansionPower, all times sign -- which is what the substitution's own derivative
             // contributes, negative for the cosine and positive for the sine and the tangent.
+            //
+            // The exponent that decides the case must be a whole odd or even number, because it
+            // is what the binomial expansion runs over. The *other* exponent -- `leading` -- need
+            // only be rational: it rides through untouched and the power rule takes u^(-3/2) as
+            // readily as u^(-3). That asymmetry is the whole of the fractional support.
             Entity u;
-            int expansionPower, leading, insideSign, sign;
-            if (sinePower % 2 != 0 && sinePower >= 1)
+            ERational leading;
+            int expansionPower, insideSign, sign;
+            if (IsOddAndPositive(sinePower))
                 (u, expansionPower, leading, insideSign, sign) =
-                    (MathS.Cos(argument), (sinePower - 1) / 2, cosinePower, -1, -1);
-            else if (cosinePower % 2 != 0 && cosinePower >= 1)
+                    (MathS.Cos(argument), (WholeOf(sinePower) - 1) / 2, cosinePower, -1, -1);
+            else if (IsOddAndPositive(cosinePower))
                 (u, expansionPower, leading, insideSign, sign) =
-                    (MathS.Sin(argument), (cosinePower - 1) / 2, sinePower, -1, 1);
-            else if (sinePower % 2 == 0 && cosinePower % 2 == 0 && sinePower + cosinePower <= -2)
+                    (MathS.Sin(argument), (WholeOf(cosinePower) - 1) / 2, sinePower, -1, 1);
+            else if (IsEvenWhole(sinePower) && IsEvenWhole(cosinePower)
+                     && WholeOf(sinePower) + WholeOf(cosinePower) <= -2)
                 (u, expansionPower, leading, insideSign, sign) =
-                    (MathS.Tan(argument), -(sinePower + cosinePower) / 2 - 1, sinePower, 1, 1);
+                    (MathS.Tan(argument),
+                     -(WholeOf(sinePower) + WholeOf(cosinePower)) / 2 - 1, sinePower, 1, 1);
             else
                 return null;
 
             // The binomial expansion, each term integrated by the power rule -- or by the
             // logarithm at the one exponent where the power rule would divide by zero, which is
-            // reachable here whenever `leading` is negative and odd.
+            // reachable here whenever `leading` is a negative odd whole number.
             Entity total = 0;
             var coefficient = EInteger.One;
             for (var i = 0; i <= expansionPower; i++)
             {
-                var exponent = leading + 2 * i;
-                var term = exponent == -1
+                var exponent = leading + ERational.FromInt32(2 * i);
+                var raised = exponent + ERational.One;
+                var term = raised.IsZero
                     ? IntegralPatterns.AntiderivativeLog(u)
-                    : MathS.Pow(u, Number.Integer.Create(exponent + 1)) / Number.Integer.Create(exponent + 1);
+                    : MathS.Pow(u, Number.Rational.Create(raised)) / Number.Rational.Create(raised);
                 var alternating = insideSign < 0 && i % 2 != 0 ? -1 : 1;
                 total += Number.Integer.Create(coefficient) * alternating * term;
                 // The next binomial coefficient from this one: C(k, i+1) = C(k, i) * (k-i)/(i+1).
@@ -629,18 +638,18 @@ namespace AngouriMath.Functions.Algebra
         /// a question it was not asked.
         /// </remarks>
         private static bool TryReadSineCosinePowers(
-            Entity expr, out Entity argument, out int sinePower, out int cosinePower, out Entity factor)
+            Entity expr, out Entity argument, out ERational sinePower, out ERational cosinePower, out Entity factor)
         {
             Entity? common = null;
-            var sine = 0;
-            var cosine = 0;
+            var sine = ERational.Zero;
+            var cosine = ERational.Zero;
             Entity constant = 1;
-            var read = Read(expr, 1);
+            var read = Read(expr, ERational.One);
             argument = common ?? 0;
             sinePower = sine;
             cosinePower = cosine;
             factor = constant;
-            return read && common is not null && (sine != 0 || cosine != 0);
+            return read && common is not null && !(sine.IsZero && cosine.IsZero);
 
             bool Agrees(Entity candidate)
             {
@@ -652,7 +661,7 @@ namespace AngouriMath.Functions.Algebra
                 return common == candidate;
             }
 
-            bool Read(Entity node, int multiplicity)
+            bool Read(Entity node, ERational multiplicity)
             {
                 switch (node)
                 {
@@ -666,21 +675,64 @@ namespace AngouriMath.Functions.Algebra
                         return Read(left, multiplicity) && Read(right, multiplicity);
                     case Divf(var above, var below):
                         return Read(above, multiplicity) && Read(below, -multiplicity);
-                    case Powf(var @base, Number.Integer power) when power.EInteger.CanFitInInt32():
-                        return Read(@base, multiplicity * power.EInteger.ToInt32Checked());
+                    // A rational exponent, not only a whole one: `sin(x)/sqrt(cos(x)^3)` is
+                    // `sin cos^(-3/2)`, and the substitution that answers it does not care
+                    // whether the exponent it carries along is whole — the power rule takes
+                    // <c>u^(-3/2)</c> as readily as <c>u^(-3)</c>. Which of the three cases
+                    // applies still turns on a whole exponent, and that is checked there.
+                    case Powf(var @base, Number.Rational power):
+                        return Read(@base, multiplicity * power.ERational);
                     // A rational factor rides along; anything else is declined rather than
                     // carried, since carrying it would claim the rest of the product is
-                    // trigonometric when it has not been read.
-                    case Number.Rational rational:
-                        constant = multiplicity > 0
-                            ? constant * MathS.Pow(rational, multiplicity)
-                            : constant / MathS.Pow(rational, -multiplicity);
+                    // trigonometric when it has not been read. A rational *factor* and a
+                    // rational *exponent* are told apart by the case above matching first.
+                    case Number.Rational rational when node is not Powf:
+                        constant = IsWholeAndFitsAnInt(multiplicity, out var times)
+                            ? times > 0
+                                ? constant * MathS.Pow(rational, times)
+                                : constant / MathS.Pow(rational, -times)
+                            : constant * MathS.Pow(rational, Number.Rational.Create(multiplicity));
                         return true;
                     default:
                         return false;
                 }
             }
         }
+
+        /// <summary>
+        /// Whether <paramref name="value"/> is a whole number small enough to count with, and
+        /// what that number is.
+        /// </summary>
+        private static bool IsWholeAndFitsAnInt(ERational value, out int whole)
+        {
+            var lowest = value.ToLowestTerms();
+            if (lowest.Denominator.Equals(EInteger.One) && lowest.Numerator.CanFitInInt32())
+            {
+                whole = lowest.Numerator.ToInt32Checked();
+                return true;
+            }
+            whole = 0;
+            return false;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="value"/> is an odd whole number of at least one — the exponent
+        /// that lets one factor of the function go into <c>du</c> and leaves an even power, which
+        /// is a polynomial in the other function.
+        /// </summary>
+        private static bool IsOddAndPositive(ERational value)
+            => IsWholeAndFitsAnInt(value, out var whole) && whole >= 1 && whole % 2 != 0;
+
+        /// <summary>Whether <paramref name="value"/> is an even whole number.</summary>
+        private static bool IsEvenWhole(ERational value)
+            => IsWholeAndFitsAnInt(value, out var whole) && whole % 2 == 0;
+
+        /// <summary>
+        /// The whole number <paramref name="value"/> is, for a value one of the two tests above
+        /// has already said is whole.
+        /// </summary>
+        private static int WholeOf(ERational value)
+            => value.ToLowestTerms().Numerator.ToInt32Checked();
 
         /// <summary>
         /// Reads <paramref name="expr"/> as a whole power of a secant or a cosecant, however it
