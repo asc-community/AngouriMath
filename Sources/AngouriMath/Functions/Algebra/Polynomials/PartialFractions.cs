@@ -536,48 +536,83 @@ namespace AngouriMath.Functions
             var size = rhs.Length;
             if (size == 0 || matrix.Any(row => row.Length != size))
                 return false;
+            return TrySolveLinear(matrix, rhs, out values);
+        }
 
-            for (var column = 0; column < size; column++)
+        /// <summary>
+        /// Gaussian elimination on a system of any shape whose entries may be symbols: a row
+        /// that reduces to <c>0 = c</c> with <c>c</c> not decidably zero declines the system,
+        /// and an unknown no row pivots on is set to zero. A pivot is a number that is not zero
+        /// where a column has one, and otherwise an entry that does not simplify to zero — a
+        /// judgement, which is why every caller checks what it builds from the answer.
+        /// </summary>
+        internal static bool TrySolveLinear(Entity[][] matrix, Entity[] rhs, [NotNullWhen(true)] out Entity[]? values)
+        {
+            values = null;
+            var rows = rhs.Length;
+            if (rows == 0 || matrix.Length != rows)
+                return false;
+            var width = matrix[0].Length;
+            if (width == 0 || matrix.Any(row => row.Length != width))
+                return false;
+
+            var pivotColumnOfRow = new int[rows];
+            for (var row = 0; row < rows; row++)
+                pivotColumnOfRow[row] = -1;
+            var rank = 0;
+            for (var column = 0; column < width && rank < rows; column++)
             {
                 var pivot = -1;
-                for (var row = column; row < size; row++)
+                for (var row = rank; row < rows; row++)
                     if (matrix[row][column].Evaled is Complex { IsExact: true, IsZero: false })
                     {
                         pivot = row;
                         break;
                     }
                 if (pivot < 0)
-                    for (var row = column; row < size; row++)
+                    for (var row = rank; row < rows; row++)
                         if (matrix[row][column] != Integer.Zero && matrix[row][column].Evaled is not Complex { IsZero: true })
                         {
                             pivot = row;
                             break;
                         }
                 if (pivot < 0)
-                    return false;
-                if (pivot != column)
+                    continue;
+                if (pivot != rank)
                 {
-                    (matrix[pivot], matrix[column]) = (matrix[column], matrix[pivot]);
-                    (rhs[pivot], rhs[column]) = (rhs[column], rhs[pivot]);
+                    (matrix[pivot], matrix[rank]) = (matrix[rank], matrix[pivot]);
+                    (rhs[pivot], rhs[rank]) = (rhs[rank], rhs[pivot]);
                 }
-                for (var row = column + 1; row < size; row++)
+                for (var row = rank + 1; row < rows; row++)
                 {
                     if (matrix[row][column] == Integer.Zero)
                         continue;
-                    var factor = Bare(matrix[row][column] / matrix[column][column]);
-                    for (var k = column; k < size; k++)
-                        matrix[row][k] = Bare(matrix[row][k] - factor * matrix[column][k]);
-                    rhs[row] = Bare(rhs[row] - factor * rhs[column]);
+                    var factor = Bare(matrix[row][column] / matrix[rank][column]);
+                    for (var k = column; k < width; k++)
+                        matrix[row][k] = Bare(matrix[row][k] - factor * matrix[rank][k]);
+                    rhs[row] = Bare(rhs[row] - factor * rhs[rank]);
                 }
+                pivotColumnOfRow[rank] = column;
+                rank++;
             }
 
-            values = new Entity[size];
-            for (var row = size - 1; row >= 0; row--)
+            // A row with no pivot says 0 = rhs; the system is consistent only where that is
+            // decidably so.
+            for (var row = rank; row < rows; row++)
+                if (rhs[row] != Integer.Zero && rhs[row].Evaled is not Complex { IsZero: true })
+                    return false;
+
+            values = new Entity[width];
+            for (var column = 0; column < width; column++)
+                values[column] = Integer.Zero;
+            for (var row = rank - 1; row >= 0; row--)
             {
+                var column = pivotColumnOfRow[row];
                 var accumulated = rhs[row];
-                for (var k = row + 1; k < size; k++)
-                    accumulated -= matrix[row][k] * values[k];
-                values[row] = Bare(accumulated / matrix[row][row]);
+                for (var k = column + 1; k < width; k++)
+                    if (matrix[row][k] != Integer.Zero)
+                        accumulated -= matrix[row][k] * values[k];
+                values[column] = Bare(accumulated / matrix[row][column]);
             }
             return true;
         }
@@ -587,7 +622,7 @@ namespace AngouriMath.Functions
         /// acquires on the way: that condition is the generic case this decomposition is
         /// answering in, and left on it makes a term nothing downstream reads.
         /// </summary>
-        private static Entity Bare(Entity e)
+        internal static Entity Bare(Entity e)
             => e.InnerSimplified is Providedf(var inner, _) ? inner : e.InnerSimplified;
 
         /// <summary>
@@ -595,7 +630,7 @@ namespace AngouriMath.Functions
         /// few points in <paramref name="x"/> with every other symbol pinned to a fixed value.
         /// A point where either is undefined is skipped, and at least two must compare.
         /// </summary>
-        private static bool HoldsAtSampledPoints(Entity left, Entity right, Variable x)
+        internal static bool HoldsAtSampledPoints(Entity left, Entity right, Variable x)
         {
             var parameters = left.Vars.Concat(right.Vars).Where(v => v != x).Distinct().ToList();
             var pinned = 0;
