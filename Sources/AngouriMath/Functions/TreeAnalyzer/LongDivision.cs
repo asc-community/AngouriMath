@@ -88,13 +88,44 @@ namespace AngouriMath.Functions
         /// Divides one polynomial over another one:
         /// <a href="https://en.wikipedia.org/wiki/Polynomial_long_division"/>
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>As written first, and only then with the variables replaced.</b> The replacement
+        /// exists for a base that is not a variable — <c>sin(x)^2 / sin(x)</c>, where the thing
+        /// the division is in is <c>sin(x)</c> — and it works by swapping each variable's
+        /// smallest enclosing subtree for a fresh symbol. With one variable that is harmless,
+        /// because nothing in the pair contains the whole expression. With <b>two</b> it is
+        /// destructive: for <c>x / (a + b x)</c> the smallest subtree holding <c>a</c> is
+        /// <c>a + b x</c>, so the divisor is replaced wholesale by one opaque symbol, the
+        /// dividend keeps its <c>x</c>, and the two no longer share a variable to divide in.
+        /// The division then reports that it cannot be done.
+        /// </para>
+        /// <para>
+        /// What that cost: <c>int x/(a + b x) dx</c> was unanswered while
+        /// <c>int x/(2 + 3 x) dx</c> came out, and the same for every improper fraction with a
+        /// symbolic coefficient — including the one <c>int x ln(b + a x) dx</c> is left with
+        /// after integration by parts. A numeric coefficient hid the defect, which is the usual
+        /// way this one hides.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// <para>
+        /// Trying the unreplaced form first keeps both: a pair that divides as written divides
+        /// the same way it always did, and one that does not falls through to the replacement,
+        /// which is the only thing that ever answered <c>sin(x)^2 / sin(x)</c>.
+        /// </para>
+        /// </remarks>
         internal static (Entity Divided, Entity Remainder)? PolynomialLongDivision(Entity p, Entity q)
         {
             if (!p.Vars.Any() || !q.Vars.Any())
                 return null; // There are no variables to find polynomial as
+            return DivideOnePolynomial(p, q, replaceVars: false)
+                ?? DivideOnePolynomial(p, q, replaceVars: true);
+        }
 
+        private static (Entity Divided, Entity Remainder)? DivideOnePolynomial(Entity p, Entity q, bool replaceVars)
+        {
             // ---> (x^0.6 + 2x^0.3 + 1) / (x^0.3 + 1)
-            var replacementInfo = GatherAllPossiblePolynomials(p + q, replaceVars: true);
+            var replacementInfo = GatherAllPossiblePolynomials(p + q, replaceVars);
 
             var originalP = p;
             var originalQ = q;
@@ -128,6 +159,22 @@ namespace AngouriMath.Functions
             // TODO: add case where all powers are non-positive
             // for now just return polynomials unchanged
             if (maxpowP.LessThan(maxpowQ)) return null;
+
+            // The unreplaced attempt divides by the divisor's leading coefficient, so it runs
+            // only where that coefficient is a number other than zero — which is to say, where
+            // the quotient it produces is valid for every value of every symbol in it. With a
+            // symbolic leading coefficient it would not be: `x^2/(a + b x)` divided out is
+            // undefined at `b = 0`, where the integrand is `x^2/a` and perfectly ordinary, and a
+            // quotient that silently loses a value of a parameter is worse than none.
+            // `x^2/(x + a)` has leading coefficient 1 and is not that case, which is why it is
+            // answered now and was not before.
+            //
+            // A symbolic leading coefficient is a gap here rather than a decision: what it wants
+            // is the divided form beside the degenerate one, under conditions, and this function
+            // returns a pair rather than a piecewise. Item 18 of the list below is that integral,
+            // still unticked. https://github.com/asc-community/AngouriMath/issues/180
+            if (!replaceVars && (maxvalQ.Vars.Any() || maxvalQ.Evaled == Integer.Create(0)))
+                return null;
 
             var result = new Dictionary<EDecimal, Entity>();
             // possibly very long process
