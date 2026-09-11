@@ -204,7 +204,11 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("ln(abs(3x - 1))", "(3 * x - 1) / 3 * (ln(abs(3 * x - 1)) - 1) + C")] // Direct pattern with linear arg
         [InlineData("ln(abs(x + 5))", "(x + 5) * (ln(abs(x + 5)) - 1) + C")] // Direct pattern with linear arg
         [InlineData("ln(abs(2x + 4))", "(2 * x + 4) / 2 * (ln(abs(2 * x + 4)) - 1) + C")] // Direct pattern with linear arg
-        [InlineData("ln(abs(x)) / x", "integral(ln(abs(x)) / x, x)")] // Unsolvable - logarithmic integral Li(x), not expressible in elementary functions
+        // Elementary, and the note that used to sit here said it was not: it named Li(x), which
+        // is the antiderivative of 1/ln(x) and a different integrand. This one is ln|x|^2/2. The
+        // form below is that up to a constant -- with ln(x) = ln|x| + i*pi on the negative axis
+        // it is ln|x|^2/2 + pi^2/2, and differentiating it gives back ln|x|/x either side of zero.
+        [InlineData("ln(abs(x)) / x", "ln(abs(x)) * ln(x) - ln(x) ^ 2 / 2 + C")]
         [InlineData("ln(abs(x)) * ln(abs(x))", "ln(abs(x)) * x * (ln(abs(x)) - 1) - (x * (ln(abs(x)) - 1) + -x) + C")]
         [InlineData("x * ln(abs(x^2))", "x ^ 2 * (ln(abs(x ^ 2)) - 1) / 2 + C")] // Solvable via u-substitution
         [InlineData("ln(abs(sin(x))) * cos(x)", "sin(x) * (ln(abs(sin(x))) - 1) + C")] // Solvable via u-substitution
