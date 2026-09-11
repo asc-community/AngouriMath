@@ -110,6 +110,19 @@ namespace AngouriMath.Tests.Calculus
         public void ADenominatorLinearInEither(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// Every sine and cosine brings its own <c>1 + t^2</c> below the bar, and clearing them
+        /// leaves the same power of it above and below -- where the simplifier does not see
+        /// it once the denominator is a sum. Bondarenko's <c>1/(cos(x) + sin(x) + sqrt(2))</c>
+        /// came out as a quartic below the bar that nothing split, and is a quadratic once the
+        /// common <c>1 + t^2</c> is divided out.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(cos(x) + sin(x) + sqrt(2))")]
+        [InlineData("1/(cos(x) + sin(x) + 2)")]
+        [InlineData("(1 + sin(x))/(cos(x) + sin(x) + 2)")]
+        public void TheCommonFactorIsDividedOut(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// A numerator that mentions the sine too, so the rewrite produces an <b>improper</b>
         /// rational function and the long division in front of partial fractions has to run
         /// before anything else can. The answer carries an <c>x</c> term from the whole part.
