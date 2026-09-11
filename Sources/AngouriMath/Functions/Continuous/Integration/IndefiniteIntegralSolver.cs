@@ -661,7 +661,14 @@ namespace AngouriMath.Functions.Algebra
                     && next is not null && rest is not null
                     && IsRationalIn(rest, x))
                     remaining = next * rest;
-                var remainingIntegral = Integration.ComputeIndefiniteIntegral(remaining, x, partsOnTheRemainder);
+                // A remainder that is a rational function of x and one root of a quadratic goes
+                // to Euler's substitution directly, before the chain: `ln(x^2 + sqrt(1 - x^2))`
+                // against 1 leaves exactly that, and the chain spent five seconds of
+                // substitutions and reductions on it before Euler answered it in half of one.
+                // From the top only: a nested step's remainder answered this way let a doomed
+                // search above it carry on, thirty seconds where the gate leaves it at one.
+                var remainingIntegral = (Integration.AnsweringTheQuestionAsked ? SolveByEulerSubstitution(remaining, x) : null)
+                    ?? Integration.ComputeIndefiniteIntegral(remaining, x, partsOnTheRemainder);
                 if (remainingIntegral is null) return null;
 
                 return v * integralOfU - remainingIntegral;
@@ -2977,9 +2984,15 @@ namespace AngouriMath.Functions.Algebra
                 var powers = new Dictionary<Entity, int>();
                 foreach (var factor in Mulf.LinearChildren(side))
                 {
-                    var (@base, power) = factor is Powf(var b, Number.Integer e) && e.EInteger.CanFitInInt32()
-                        ? (b, e.EInteger.ToInt32Unchecked())
-                        : (factor, 1);
+                    // Nested whole powers folded, so that `((2t + 1)^2)^2` and `(2t + 1)^4` are
+                    // one factor: a substitution that squares what it built leaves the first.
+                    var @base = factor;
+                    var power = 1;
+                    while (@base is Powf(var inner, Number.Integer e) && e.EInteger.CanFitInInt32())
+                    {
+                        power *= e.EInteger.ToInt32Unchecked();
+                        @base = inner;
+                    }
                     powers[@base] = powers.TryGetValue(@base, out var already) ? already + power : power;
                 }
                 return powers;
@@ -3381,6 +3394,219 @@ namespace AngouriMath.Functions.Algebra
         /// and past this the elimination is longer than any answer.
         /// </summary>
         private const int MaximumAnsatzDegree = 12;
+
+        /// <summary>
+        /// A rational function of <c>x</c> and one square root of a quadratic in <c>x</c>,
+        /// rationalised by an Euler substitution and handed to the rational integrator.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The trigonometric substitution beside this answers <c>x^m sqrt(a + b x^2)^k</c> and
+        /// nothing wider; <c>sqrt(2 - x - x^2)/x^2</c>, <c>1/((4 + x^2) sqrt(1 + 4x^2))</c> and
+        /// <c>x sqrt(2 r x - x^2)</c> had no antiderivative, and neither did any of the
+        /// integrands that other rules reduce to a rational function of <c>x</c> and one such
+        /// root -- the nested radicals of Bondarenko's suite under <c>u = sqrt(1 + x)</c>, the
+        /// by-parts remainders of Charlwood's inverse functions.
+        /// </para>
+        /// <para>
+        /// <b>Euler's three substitutions</b>, for <c>Q = a x^2 + b x + c</c>:
+        /// </para>
+        /// <list type="bullet">
+        /// <item><c>a &gt; 0</c>: <c>sqrt(Q) = t - sqrt(a) x</c>, so <c>x = (t^2 - c)/(2 sqrt(a) t + b)</c>.</item>
+        /// <item><c>c &gt; 0</c>: <c>sqrt(Q) = x t + sqrt(c)</c>, so <c>x = (2 sqrt(c) t - b)/(a - t^2)</c>.</item>
+        /// <item><c>c = 0</c>: <c>sqrt(Q) = x t</c>, so <c>x = b/(t^2 - a)</c> -- the third substitution at
+        /// the root the quadratic has at zero.</item>
+        /// </list>
+        /// <para>
+        /// Each makes <c>x</c>, <c>sqrt(Q)</c> and <c>dx/dt</c> rational in <c>t</c>, so the
+        /// integrand becomes a rational function of <c>t</c>; whichever applies with its radical
+        /// a rational number is taken first, and a symbol in <c>a</c> or <c>c</c> takes the first
+        /// in the generic case. The result goes to the rational integrator <b>directly</b> --
+        /// long division, the splits, the Hermite reduction, the binomial rule -- and not back
+        /// into the chain: an earlier Euler rule rewrote and handed on, and its cost was in the
+        /// open search below it and in a <c>Simplify</c> it ran before it could tell whether it
+        /// applied at all (https://github.com/asc-community/AngouriMath/issues/1265). This one
+        /// decides by reading the tree, in microseconds, and finishes in one closed step or not
+        /// at all.
+        /// </para>
+        /// <para>
+        /// Bounded in the degree of the rational function it produces, since a degree the
+        /// splits cannot factor is declined by them at a cost that grows with it. Asked, not
+        /// volunteered, like every rule that lands on a search of any size.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByEulerSubstitution(Entity expr, Entity.Variable x)
+        {
+
+            // One square root of a quadratic in x, and otherwise a rational function of x.
+            Entity? radicand = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (!node.ContainsNode(x))
+                    continue;
+                switch (node)
+                {
+                    case Variable or Sumf or Minusf or Mulf or Divf:
+                        break;
+                    case Powf(_, Number.Integer):
+                        break;
+                    case Powf(var radicalBase, Number.Rational half) when half.ERational.Denominator.Equals(EInteger.FromInt32(2)):
+                        if (radicand is null)
+                            radicand = radicalBase;
+                        else if (radicand != radicalBase)
+                            return null;
+                        break;
+                    default:
+                        return null;
+                }
+            }
+            if (radicand is null
+                || !TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var a, out var b, out var c)
+                || a.Evaled is Number.Complex { IsZero: true })
+                return null;
+            // A missing linear term is the trigonometric substitution's and answered more shortly there.
+            if (b.Evaled is Number.Complex { IsZero: true } && expr.Nodes.Count(n => n == radicand) == 1
+                && TryReadAPowerTimesARadicalQuadratic(expr, x))
+                return null;
+
+            var t = Variable.CreateUnique(expr, "t_euler");
+            Entity xInT, rootInT;
+            Entity backSubstitution;
+            // A coefficient that is a number has to be a real one: `sqrt(x^2 - i)` is not a
+            // radical any of the three substitutions is about, and taking `-i` for a symbol
+            // produced `NaN` for an answer.
+            if (a.Evaled is Number.Complex and not Number.Real || b.Evaled is Number.Complex and not Number.Real
+                || c.Evaled is Number.Complex and not Number.Real)
+                return null;
+            var aValue = a.Evaled as Number.Real;
+            var cValue = c.Evaled as Number.Real;
+            Entity sqrtA = MathS.Sqrt(a).InnerSimplified;
+            Entity sqrtC = MathS.Sqrt(c).InnerSimplified;
+            var aPositive = aValue is { IsPositive: true };
+            var cPositive = cValue is { IsPositive: true };
+            var aRational = aPositive && sqrtA.Evaled is Number.Rational;
+            var cRational = cPositive && sqrtC.Evaled is Number.Rational;
+            // Whichever applies with its radical a rational number first; then a real one; then
+            // the generic case for a symbol.
+            int which;
+            if (cValue is { IsZero: true }) which = 3;
+            else if (aRational) which = 1;
+            else if (cRational) which = 2;
+            else if (aPositive) which = 1;
+            else if (cPositive) which = 2;
+            else if (aValue is null) which = 1;
+            else if (cValue is null) which = 2;
+            else return null;   // a < 0 and c < 0 with no root at zero: the radical is nowhere real
+
+            switch (which)
+            {
+                case 3:
+                    // sqrt(Q) = x t: x = b/(t^2 - a)
+                    xInT = b / (MathS.Sqr(t) - a);
+                    rootInT = xInT * t;
+                    backSubstitution = MathS.Pow(radicand, Number.Rational.Create(1, 2)) / x;
+                    break;
+                case 1:
+                    // sqrt(Q) = t - sqrt(a) x: x = (t^2 - c)/(2 sqrt(a) t + b)
+                    xInT = (MathS.Sqr(t) - c) / (2 * sqrtA * t + b);
+                    rootInT = t - sqrtA * xInT;
+                    backSubstitution = MathS.Pow(radicand, Number.Rational.Create(1, 2)) + sqrtA * x;
+                    break;
+                default:
+                    // sqrt(Q) = x t + sqrt(c): x = (2 sqrt(c) t - b)/(a - t^2)
+                    xInT = (2 * sqrtC * t - b) / (a - MathS.Sqr(t));
+                    rootInT = xInT * t + sqrtC;
+                    backSubstitution = (MathS.Pow(radicand, Number.Rational.Create(1, 2)) - sqrtC) / x;
+                    break;
+            }
+
+            var dxdt = xInT.Differentiate(t);
+            var rewritten = expr.Replace(node =>
+                node is Powf(var @base, Number.Rational half) && @base == radicand
+                    ? MathS.Pow(rootInT, Number.Integer.Create(half.ERational.Numerator))
+                    : node)
+                .Substitute(x, xInT) * dxdt;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(rewritten.InnerSimplified);
+            var cancelled = CancelCommonFactors(numerator, denominator);
+            (numerator, denominator) = Functions.SingleQuotient.Of(cancelled);
+            // Each side rebuilt as a polynomial from its coefficients, so that a factor which has
+            // collapsed to a constant -- `-1 - t^2 + 2 t t - 1 - t^2` is `-2` -- is one before
+            // the rational readers see it: one of them divided by that factor's zero leading
+            // coefficient and read a NaN. Every coefficient must be finite for the same reason.
+            if (!TreeAnalyzer.TryGetPolynomial(numerator, t, out var above) || !TreeAnalyzer.TryGetPolynomial(denominator, t, out var below))
+                return null;
+            var degree = System.Math.Max(above.Count == 0 ? 0 : (int)above.Keys.Max()!.ToInt32Checked(),
+                                         below.Count == 0 ? 0 : (int)below.Keys.Max()!.ToInt32Checked());
+            if (degree > MaximumEulerDegree)
+                return null;
+            Entity? Rebuilt(Dictionary<EInteger, Entity> read)
+            {
+                Entity? built = null;
+                foreach (var pair in read.OrderBy(pair => pair.Key))
+                {
+                    var coefficient = pair.Value.InnerSimplified;
+                    if (coefficient.Evaled is Number.Complex { IsFinite: false })
+                        return null;
+                    if (coefficient.Evaled is Number.Complex { IsZero: true })
+                        continue;
+                    var k = pair.Key.ToInt32Checked();
+                    Entity term = k == 0 ? coefficient : coefficient * (k == 1 ? t : MathS.Pow(t, k));
+                    built = built is null ? term : built + term;
+                }
+                return built ?? Number.Integer.Zero;
+            }
+            // The denominator keeps its written factors -- with `sqrt(c)` irrational only the
+            // split over written factors reads it -- and each factor is rebuilt on its own.
+            Entity? cleanDenominator = null;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                var (@base, power) = factor is Powf(var b0, Number.Integer e0) ? (b0, e0) : (factor, Number.Integer.One);
+                if (!TreeAnalyzer.TryGetPolynomial(@base, t, out var baseRead) || Rebuilt(baseRead) is not { } cleanBase)
+                    return null;
+                if (cleanBase == Number.Integer.Zero)
+                    return null;
+                Entity cleanFactor = power == Number.Integer.One ? cleanBase : MathS.Pow(cleanBase, power);
+                cleanDenominator = cleanDenominator is null ? cleanFactor : cleanDenominator * cleanFactor;
+            }
+            if (Rebuilt(above) is not { } cleanNumerator || cleanDenominator is null)
+                return null;
+            var rational = cleanNumerator / cleanDenominator;
+
+            var inT = SolveByPartialFractions(rational, t, integrateByParts: false)
+                   ?? IntegralPatterns.TryStandardIntegrals(rational, t);
+            if (inT is null)
+                return null;
+            var answer = inT.Substitute(t, backSubstitution).InnerSimplified;
+            // Not answering is legitimate; answering NaN is not.
+            return answer.Nodes.Any(n => n is Number.Complex { IsNaN: true }) ? null : answer;
+        }
+
+        /// <summary>
+        /// The largest degree, in <c>t</c>, of the rational function
+        /// <see cref="SolveByEulerSubstitution"/> hands to the rational integrator.
+        /// </summary>
+        private const int MaximumEulerDegree = 8;
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> is <c>x^m sqrt(a + b x^2)^k</c> up to a constant --
+        /// the shape the trigonometric substitution answers.
+        /// </summary>
+        private static bool TryReadAPowerTimesARadicalQuadratic(Entity expr, Entity.Variable x)
+        {
+            foreach (var (factor, _) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                    continue;
+                if (factor == x || factor is Powf(var b1, Number.Integer) && b1 == x)
+                    continue;
+                if (factor is Powf(var b2, Number.Rational) && TreeAnalyzer.TryGetPolyQuadratic(b2, x, out _, out var linear, out _)
+                    && linear.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                return false;
+            }
+            return true;
+        }
 
         /// <summary>
         /// A product of sines and cosines of <b>different</b> arguments, rewritten as a sum by the
