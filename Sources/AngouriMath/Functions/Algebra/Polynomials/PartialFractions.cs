@@ -363,5 +363,255 @@ namespace AngouriMath.Functions
         /// </summary>
         private static Entity AsFraction(RationalPolynomial numerator, RationalPolynomial denominator, Variable x)
             => numerator.IsZero ? Integer.Create(0) : numerator.ToEntity(x) / denominator.ToEntity(x);
+
+        /// <summary>
+        /// <c>N/D</c> written as one fraction per factor of <paramref name="denominator"/>,
+        /// where the denominator is <b>written</b> as a product of distinct linear and quadratic
+        /// factors whose coefficients may be symbols, or <see langword="false"/> where it is not
+        /// or the decomposition cannot be settled.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The two splits above work in exact rational arithmetic and stop where the rationals
+        /// do, and a symbol is not a rational: <c>1/((x + a)(x^2 + b))</c> has factors already in
+        /// hand and each of them is a shape the integrator reads, and it was declined because
+        /// nothing here could read the factors. This is the textbook method for it -- undetermined
+        /// coefficients -- and it is the one that survives a symbol, because it solves a linear
+        /// system in the unknown numerators rather than dividing polynomials whose coefficients
+        /// have to be compared to zero.
+        /// </para>
+        /// <para>
+        /// <b>Which pivots are safe.</b> The system's entries are polynomials in the parameters,
+        /// and a row reduction has to decide whether a pivot is zero. A number is decided by
+        /// looking; a symbolic pivot is taken only when it does not simplify to zero, which is a
+        /// judgement and not a proof, and that is why <b>the decomposition is checked before it
+        /// is returned</b>: the identity <c>N = sum P_i * D/F_i</c> is evaluated at several
+        /// points with every symbol pinned, and a split that fails it is declined rather than
+        /// handed on. A wrong pivot can cost an answer here and cannot produce a wrong one.
+        /// </para>
+        /// <para>
+        /// The generic case, as everywhere in this integrator: two factors that coincide for
+        /// one value of a parameter are coprime for every other, and the answer is the one for
+        /// those. See the note on <c>PolynomialLongDivision</c>.
+        /// </para>
+        /// <para>
+        /// Distinct factors only. A repeated symbolic quadratic has no rule to land on, and a
+        /// repeated linear factor is the sibling step's, in exact arithmetic where it applies.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static bool TrySplitOverWrittenFactors(
+            Entity numerator, Entity denominator, Variable x, [NotNullWhen(true)] out Entity? decomposition)
+        {
+            decomposition = null;
+
+            // The factors as written, each a polynomial in x of degree one or two with
+            // coefficients free of x; a factor free of x is a constant and comes out in front.
+            var factors = new List<(Entity Factor, int Degree)>();
+            Entity constant = Integer.One;
+            foreach (var part in Mulf.LinearChildren(denominator))
+            {
+                if (!part.ContainsNode(x))
+                {
+                    constant *= part;
+                    continue;
+                }
+                // A factor written as a power is a repeated factor, whatever its degree reads
+                // as: `(a + b u)^2` is a quadratic to the reader below and a repeated linear
+                // factor to the decomposition, and taking it as the former cost five seconds on
+                // `1/(a + b e^(p x))^2` for a split that nothing downstream answers.
+                if (part is Powf(_, Integer { EInteger.Sign: > 0 } repeated) && repeated != Integer.One)
+                    return false;
+                if (!TreeAnalyzer.TryGetPolynomial(part, x, out var read) || read.Count == 0)
+                    return false;
+                var degree = read.Keys.Max()!;
+                if (!degree.CanFitInInt32() || degree.ToInt32Unchecked() is not (1 or 2))
+                    return false;
+                foreach (var pair in read)
+                    if (pair.Key.Sign < 0 || pair.Value.ContainsNode(x))
+                        return false;
+                factors.Add((part.InnerSimplified, degree.ToInt32Unchecked()));
+            }
+            if (factors.Count < 2)
+                return false;
+            for (var i = 0; i < factors.Count; i++)
+                for (var j = i + 1; j < factors.Count; j++)
+                    if (factors[i].Factor == factors[j].Factor)
+                        return false;
+
+            var total = factors.Sum(f => f.Degree);
+            if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var above))
+                return false;
+            foreach (var pair in above)
+                if (pair.Key.Sign < 0 || pair.Key.CompareTo(EInteger.FromInt32(total)) >= 0 || pair.Value.ContainsNode(x))
+                    return false;
+
+            // One unknown per coefficient of each numerator P_i, of degree one less than F_i.
+            var unknowns = new List<Variable>();
+            var nameSource = numerator + denominator;
+            var numerators = new List<Entity>();
+            foreach (var (_, degree) in factors)
+            {
+                // Built without a `x^0`, which `Expand` guards with a `provided x != 0` that
+                // nothing downstream can read as a polynomial.
+                Entity? p = null;
+                for (var k = 0; k < degree; k++)
+                {
+                    var unknown = Variable.CreateUnique(nameSource, "c");
+                    nameSource += unknown;
+                    unknowns.Add(unknown);
+                    Entity term = k == 0 ? unknown : k == 1 ? unknown * x : unknown * MathS.Pow(x, k);
+                    p = p is null ? term : p + term;
+                }
+                numerators.Add(p!);
+            }
+
+            // N = sum P_i * prod_{j != i} F_j, compared coefficient by coefficient in x.
+            Entity identity = 0;
+            for (var i = 0; i < factors.Count; i++)
+            {
+                Entity cofactor = numerators[i];
+                for (var j = 0; j < factors.Count; j++)
+                    if (j != i)
+                        cofactor *= factors[j].Factor;
+                identity += cofactor;
+            }
+            if (!TreeAnalyzer.TryGetPolynomial(identity, x, out var rows))
+                return false;
+
+            var width = unknowns.Count;
+            var matrix = new Entity[total][];
+            var rhs = new Entity[total];
+            for (var power = 0; power < total; power++)
+            {
+                var row = rows.TryGetValue(EInteger.FromInt32(power), out var atPower) ? atPower : Integer.Zero;
+                matrix[power] = new Entity[width];
+                for (var column = 0; column < width; column++)
+                    matrix[power][column] = row.Differentiate(unknowns[column]).InnerSimplified;
+                rhs[power] = above.TryGetValue(EInteger.FromInt32(power), out var wanted) ? wanted : Integer.Zero;
+            }
+
+            if (!TrySolveSquare(matrix, rhs, out var values))
+                return false;
+
+            Entity sum = 0;
+            for (var i = 0; i < factors.Count; i++)
+            {
+                var p = numerators[i];
+                for (var column = 0; column < width; column++)
+                    p = p.Substitute(unknowns[column], values[column]);
+                sum += Bare(p) / factors[i].Factor;
+            }
+
+            // Checked rather than trusted, at points with every symbol pinned: a pivot that was
+            // zero without looking it would have produced a wrong decomposition, and this is
+            // what turns that into a declined one.
+            if (!HoldsAtSampledPoints(numerator / denominator, sum / constant, x))
+                return false;
+
+            decomposition = sum / constant;
+            return true;
+        }
+
+        /// <summary>
+        /// Gaussian elimination on a square system whose entries may be symbols. A pivot is a
+        /// number that is not zero where one is available in its column, and otherwise an entry
+        /// that does not simplify to zero; no such entry declines the system.
+        /// </summary>
+        private static bool TrySolveSquare(Entity[][] matrix, Entity[] rhs, [NotNullWhen(true)] out Entity[]? values)
+        {
+            values = null;
+            var size = rhs.Length;
+            if (size == 0 || matrix.Any(row => row.Length != size))
+                return false;
+
+            for (var column = 0; column < size; column++)
+            {
+                var pivot = -1;
+                for (var row = column; row < size; row++)
+                    if (matrix[row][column].Evaled is Complex { IsExact: true, IsZero: false })
+                    {
+                        pivot = row;
+                        break;
+                    }
+                if (pivot < 0)
+                    for (var row = column; row < size; row++)
+                        if (matrix[row][column] != Integer.Zero && matrix[row][column].Evaled is not Complex { IsZero: true })
+                        {
+                            pivot = row;
+                            break;
+                        }
+                if (pivot < 0)
+                    return false;
+                if (pivot != column)
+                {
+                    (matrix[pivot], matrix[column]) = (matrix[column], matrix[pivot]);
+                    (rhs[pivot], rhs[column]) = (rhs[column], rhs[pivot]);
+                }
+                for (var row = column + 1; row < size; row++)
+                {
+                    if (matrix[row][column] == Integer.Zero)
+                        continue;
+                    var factor = Bare(matrix[row][column] / matrix[column][column]);
+                    for (var k = column; k < size; k++)
+                        matrix[row][k] = Bare(matrix[row][k] - factor * matrix[column][k]);
+                    rhs[row] = Bare(rhs[row] - factor * rhs[column]);
+                }
+            }
+
+            values = new Entity[size];
+            for (var row = size - 1; row >= 0; row--)
+            {
+                var accumulated = rhs[row];
+                for (var k = row + 1; k < size; k++)
+                    accumulated -= matrix[row][k] * values[k];
+                values[row] = Bare(accumulated / matrix[row][row]);
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Simplified, and without the <c>provided pivot != 0</c> a division by a symbol
+        /// acquires on the way: that condition is the generic case this decomposition is
+        /// answering in, and left on it makes a term nothing downstream reads.
+        /// </summary>
+        private static Entity Bare(Entity e)
+            => e.InnerSimplified is Providedf(var inner, _) ? inner : e.InnerSimplified;
+
+        /// <summary>
+        /// Whether <paramref name="left"/> and <paramref name="right"/> agree, numerically, at a
+        /// few points in <paramref name="x"/> with every other symbol pinned to a fixed value.
+        /// A point where either is undefined is skipped, and at least two must compare.
+        /// </summary>
+        private static bool HoldsAtSampledPoints(Entity left, Entity right, Variable x)
+        {
+            var parameters = left.Vars.Concat(right.Vars).Where(v => v != x).Distinct().ToList();
+            var pinned = 0;
+            foreach (var parameter in parameters)
+            {
+                // Distinct values, off the integers, so that no two factors coincide by
+                // accident and a sign or a root in a coefficient stays generic.
+                var fraction = (pinned % 3) switch { 0 => "1.37", 1 => "2.71", _ => "0.83" };
+                var value = Real.Create(EDecimal.FromString(fraction).Add(EDecimal.FromInt32(pinned)));
+                left = left.Substitute(parameter, value);
+                right = right.Substitute(parameter, value);
+                pinned++;
+            }
+            var compared = 0;
+            foreach (var at in new[] { "0.29", "1.43", "3.17", "-0.61" })
+            {
+                var point = Real.Create(EDecimal.FromString(at));
+                var l = left.Substitute(x, point).EvalNumerical();
+                var r = right.Substitute(x, point).EvalNumerical();
+                if (l.IsNaN || r.IsNaN)
+                    continue;
+                var difference = (l - r).Abs().EDecimal;
+                var scale = EDecimal.Max(EDecimal.One, l.Abs().EDecimal);
+                if (difference.CompareTo(scale.Multiply(EDecimal.FromString("1e-9"))) > 0)
+                    return false;
+                compared++;
+            }
+            return compared >= 2;
+        }
     }
 }

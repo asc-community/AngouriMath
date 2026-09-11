@@ -118,8 +118,152 @@ namespace AngouriMath.Functions.Algebra
                 && Integration.ComputeIndefiniteIntegral(overOtherReal, x, integrateByParts) is { } realRest)
                 return realFirst + realRest;
 
+            // The two splits above stop where exact rational arithmetic does, and a symbol is
+            // not a rational. A denominator *written* as a product of distinct linear and
+            // quadratic factors -- `(x + a)(x^2 + b)` -- is decomposed by undetermined
+            // coefficients, checked, and each piece is a shape the rules below read.
+            if (Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, denominator, x, out var overWrittenFactors)
+                && Integration.ComputeIndefiniteIntegral(overWrittenFactors, x, integrateByParts) is { } termByTerm)
+                return termByTerm;
+
+            // Last, because everything above answers in exact arithmetic where it can: a
+            // binomial denominator the splits above could not take apart -- `x^3 + 2`, `x^5 + 1`,
+            // `a x^3 - b` -- decomposed at its roots of unity in closed form.
+            if (IntegrateAPolynomialOverABinomial(numerator, denominator, x) is { } atTheRootsOfUnity)
+                return atTheRootsOfUnity;
+
             return null;
         }
+
+        /// <summary>
+        /// A polynomial over a binomial <c>a x^n + b</c>, <c>n >= 3</c>, decomposed at the
+        /// <c>n</c>-th roots of <c>-b/a</c> and integrated term by term in closed form.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>1/(x^3 + 1)</c> had an antiderivative and <c>1/(x^3 + 2)</c> did not: the first
+        /// factors over the rationals and the coprime split takes it apart, the second does not
+        /// and nothing further was tried. The same for <c>1/(x^5 + 1)</c>, <c>1/(x^6 + 2)</c> and
+        /// every <c>1/(a x^n + b)</c> with a symbol in it, which no split over the rationals can
+        /// reach at all. Rubi's test suite has these by the dozen.
+        /// </para>
+        /// <para>
+        /// <b>The decomposition is a formula, not a computation.</b> Writing the denominator as
+        /// <c>a (x^n - c)</c> with <c>c = -b/a</c> and <c>rho^n = c</c>, the roots are
+        /// <c>rho e^(i theta_k)</c> and the residue of <c>x^m/(x^n - c)</c> at one of them is
+        /// <c>rho^(m+1-n) e^(i (m+1-n) theta_k) / n</c>. A root on the real line gives
+        /// <c>rho^(m+1-n) cos((m+1-n) theta) / n</c> over <c>x - rho cos(theta)</c>; a conjugate
+        /// pair gives, over <c>x^2 - 2 rho cos(theta) x + rho^2</c>,
+        /// </para>
+        /// <code>
+        ///     (2 rho^(m+1-n) / n) (cos((m+1-n) theta) x - rho cos((m-n) theta))
+        /// </code>
+        /// <para>
+        /// and each of those is a logarithm plus an arctangent, written out here rather than
+        /// handed back to the integrator: the quadratic is <c>(x - h)^2 + k^2</c> with
+        /// <c>h = rho cos(theta)</c> and <c>k = rho sin(theta)</c>, and
+        /// <c>int (P x + Q) / ((x - h)^2 + k^2) dx</c> is
+        /// <c>(P/2) ln((x - h)^2 + k^2) + ((Q + P h)/k) arctan((x - h)/k)</c>. Handing the pieces
+        /// back would have the quadratic rule decide the sign of a discriminant that is
+        /// <c>-4 rho^2 sin^2(theta)</c> and cannot be read as negative once <c>rho</c> is a
+        /// symbol, and answer with a piecewise for what is one branch.
+        /// </para>
+        /// <para>
+        /// <b>Which roots, by the sign of <c>c</c>.</b> For <c>c &gt; 0</c> the real
+        /// <c>rho = c^(1/n)</c> puts the roots at <c>2 pi k / n</c>; for <c>c &lt; 0</c> it is
+        /// <c>rho = (-c)^(1/n)</c> and they sit at <c>pi (2k + 1) / n</c>, so that every
+        /// <c>rho</c> and every angle is real and the answer is real on the real line. A symbol
+        /// has no sign to read, and takes the first form with <c>rho = c^(1/n)</c>: the
+        /// factorisation <c>x^n - c = prod (x - rho zeta_k)</c> is an identity for any
+        /// <c>rho</c> with <c>rho^n = c</c>, so the antiderivative is correct for every
+        /// <c>c</c> and happens to be written through a complex <c>rho</c> where <c>c</c> is
+        /// negative -- which is what Rubi's own answer for <c>1/(a + b x^3)</c> does with its
+        /// <c>(a/b)^(1/3)</c>, and is the generic case this integrator gives elsewhere.
+        /// </para>
+        /// <para>
+        /// After every split over the rationals, so that a denominator which factors exactly
+        /// keeps the exact answer it had. A proper fraction only; an improper one has been
+        /// divided out above.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static Entity? IntegrateAPolynomialOverABinomial(Entity numerator, Entity denominator, Entity.Variable x)
+        {
+            if (!TreeAnalyzer.TryGetPolynomial(denominator, x, out var below) || below.Count != 2
+                || !below.TryGetValue(EInteger.Zero, out var b))
+                return null;
+            var degree = below.Keys.First(power => !power.IsZero);
+            if (!degree.CanFitInInt32() || degree.ToInt32Unchecked() is var n && (n < 3 || n > MaximumBinomialDegree))
+                return null;
+            var a = below[degree];
+            if (a.ContainsNode(x) || b.ContainsNode(x)
+                || a.Evaled is Number.Complex { IsZero: true } || b.Evaled is Number.Complex { IsZero: true })
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var above))
+                return null;
+            foreach (var term in above)
+                if (term.Key.Sign < 0 || term.Key.CompareTo(degree) >= 0 || term.Value.ContainsNode(x))
+                    return null;
+
+            // a x^n + b = a (x^n - c). The roots are rho e^(i pi t), for t = (2k + offset)/n.
+            var c = (-b / a).InnerSimplified;
+            var offset = 0;
+            Entity rho;
+            // A symbol has no sign to read, but it has a spelling: `x^3 + a` arrives as
+            // `c = -a`, and taking `rho = a^(1/3)` with the roots at the odd multiples is the
+            // real answer for the sign the integrand was evidently written for, where
+            // `(-a)^(1/3)` would be a complex one for it. Either is correct; this one is the
+            // one a reader expects.
+            if (c.Evaled is Number.Real { IsFinite: true } sign && sign < 0
+                || c is Mulf(var leading, _) && leading.Evaled is Number.Real { IsFinite: true } negative && negative < 0)
+            {
+                rho = MathS.Pow(-c, Number.Rational.Create(1, n));
+                offset = 1;
+            }
+            else
+                rho = MathS.Pow(c, Number.Rational.Create(1, n));
+            rho = rho.InnerSimplified;
+
+            Entity total = 0;
+            for (var k = 0; k < n; k++)
+            {
+                var twiceKPlusOffset = 2 * k + offset;
+                // Past pi the roots are the conjugates of the ones before it, and each pair is
+                // taken once, at its representative below pi.
+                if (twiceKPlusOffset > n)
+                    break;
+                var theta = MathS.pi * Number.Rational.Create(twiceKPlusOffset, n);
+                foreach (var term in above)
+                {
+                    var m = term.Key.ToInt32Unchecked();
+                    var coefficient = term.Value;
+                    // rho^(m+1-n) / n, the modulus of the residue at every root.
+                    var modulus = (coefficient * MathS.Pow(rho, m + 1 - n) / n).InnerSimplified;
+                    if (twiceKPlusOffset == 0)
+                        total += modulus * IntegralPatterns.AntiderivativeLog(x - rho);
+                    else if (twiceKPlusOffset == n)
+                        total += modulus * ((m + 1 - n) % 2 == 0 ? 1 : -1) * IntegralPatterns.AntiderivativeLog(x + rho);
+                    else
+                    {
+                        var p = (2 * modulus * MathS.Cos((m + 1 - n) * theta)).InnerSimplified;
+                        var q = (-2 * modulus * rho * MathS.Cos((m - n) * theta)).InnerSimplified;
+                        var h = (rho * MathS.Cos(theta)).InnerSimplified;
+                        var kappa = (rho * MathS.Sin(theta)).InnerSimplified;
+                        var quadratic = MathS.Sqr(x) - 2 * h * x + MathS.Sqr(rho);
+                        total += p / 2 * MathS.Ln(quadratic) + (q + p * h) / kappa * MathS.Arctan((x - h) / kappa);
+                    }
+                }
+            }
+            return (total / a).InnerSimplified;
+        }
+
+        /// <summary>
+        /// The largest binomial degree <see cref="IntegrateAPolynomialOverABinomial"/> takes on.
+        /// Every root past the first two is a logarithm and an arctangent, so the answer's size
+        /// is linear in the degree; the cap keeps a stray <c>x^1000 + 1</c> from being answered
+        /// with five hundred of each. Rubi's suite goes to twelve.
+        /// </summary>
+        private const int MaximumBinomialDegree = 24;
 
         /// <summary>
         /// <c>N/(c g(x))</c> integrated as <c>(1/c) * N/g(x)</c>, where <c>c</c> is whatever part
@@ -172,6 +316,17 @@ namespace AngouriMath.Functions.Algebra
         /// <c>1/(1 + x^3)</c> and <c>a * (1/(1 + x^3))</c> both did.
         /// </para>
         /// <para>
+        /// <b>And the third spelling, a product with a negative power in it.</b>
+        /// <c>3 u (4 - u^3)^(-1)</c> is what <c>Simplify</c> makes of <c>3u/(4 - u^3)</c>, and it
+        /// is neither a <c>Divf</c> nor a bare <c>Powf</c>, so it was declined here -- and then
+        /// taken by integration by parts with <c>v' = (4 - u^3)^(-1)</c>, which integrates to a
+        /// hundred-node sum of logarithms and arctangents that the search then spent thirty
+        /// seconds failing to integrate against <c>3u</c>. Read as the quotient it is, the same
+        /// integrand is answered in a fifth of a second. The factors are gathered and one quotient
+        /// rebuilt from them, which is what makes the verdict independent of how the product
+        /// happens to be associated.
+        /// </para>
+        /// <para>
         /// <b>Only a negative whole power.</b> A positive one is not a quotient; a fractional or
         /// symbolic exponent is not one either, and <c>(a/b)^(1/2)</c> is not <c>sqrt(a)/sqrt(b)</c>
         /// on the branch cut. Nothing here rewrites a quotient back into a power, so this cannot
@@ -193,6 +348,31 @@ namespace AngouriMath.Functions.Algebra
                     var reciprocated = -power;
                     (numerator, denominator) = (Number.Integer.One,
                         reciprocated == Number.Integer.One ? @base : MathS.Pow(@base, reciprocated));
+                    return true;
+                case Entity.Mulf:
+                    Entity above = Number.Integer.One;
+                    Entity below = Number.Integer.One;
+                    foreach (var factor in Entity.Mulf.LinearChildren(expr))
+                        switch (factor)
+                        {
+                            case Entity.Powf(var @base, Number.Integer power) when power.EInteger.Sign < 0:
+                                var positive = -power;
+                                below *= positive == Number.Integer.One ? @base : MathS.Pow(@base, positive);
+                                break;
+                            case Entity.Divf(var dividend, var divisor):
+                                above *= dividend;
+                                below *= divisor;
+                                break;
+                            default:
+                                above *= factor;
+                                break;
+                        }
+                    if (below == Number.Integer.One)
+                    {
+                        (numerator, denominator) = (expr, Number.Integer.One);
+                        return false;
+                    }
+                    (numerator, denominator) = (above, below);
                     return true;
                 default:
                     (numerator, denominator) = (expr, Number.Integer.One);

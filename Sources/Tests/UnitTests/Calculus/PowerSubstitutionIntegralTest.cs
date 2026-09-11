@@ -93,22 +93,36 @@ namespace AngouriMath.Tests.Calculus
         // Becomes 2u^2/(1 + u^2), which is improper; answered once the rational integrator
         // divides an improper fraction out before decomposing it.
         [InlineData("sqrt(x)/(x + 1)")]
+        // Becomes 2u^2/(1 + u^8), a binomial denominator, decomposed at its roots of unity.
+        [InlineData("sqrt(x)/(1 + x^4)")]
         public void AFractionalPowerIsAlsoASubstitution(string integrand)
             => DifferentiatesBack(integrand);
 
         /// <summary>
-        /// Where a fractional substitution reaches and the rest of the chain does not, recorded
-        /// so the boundary is visible. <c>sqrt(x)/(1 + x^4)</c> becomes <c>2u^2/(1 + u^8)</c>,
-        /// whose denominator is neither factorable over the rationals nor a biquadratic.
+        /// Where a fractional substitution reaches and the rest of the chain does not, as a
+        /// note rather than a pin: <c>sqrt(x)/(1 + x + x^4)</c> becomes
+        /// <c>2u^2/(1 + u^2 + u^8)</c>, whose denominator is irreducible over the rationals,
+        /// not a biquadratic and not a binomial. Its antiderivative is a sum over the eight
+        /// roots of <c>w^8 + w^2 + 1</c> of <c>w ln(sqrt(x) - w)/(4 w^6 + 1)</c>, which this
+        /// library has no node to write, and that is
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1285">#1285</a> rather
+        /// than a verdict to record here — a test that pins the decline would have to be
+        /// falsified to close the issue.
         /// </summary>
         /// <remarks>
-        /// <c>sqrt(x)/(x + 1)</c> was here too, for becoming an improper fraction that nothing
-        /// divided out. It is answered above now that the rational integrator divides first.
+        /// <c>sqrt(x)/(x + 1)</c> and <c>sqrt(x)/(1 + x^4)</c> were pinned here in turn, for an
+        /// improper fraction nothing divided out and for a binomial nothing decomposed, and each
+        /// moved up into the theory above when its rule arrived.
         /// </remarks>
-        [Theory]
-        [InlineData("sqrt(x)/(1 + x^4)")]
-        public void WhereTheChainStops(string integrand)
-            => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
+        [Fact]
+        public void WhereTheChainStopsIsAnIssueNotAPin()
+        {
+            var integral = "sqrt(x)/(1 + x + x^4)".ToEntity().Integrate("x");
+            // Either answer is acceptable here: unevaluated today, and a correct antiderivative
+            // once #1285 gives it a form. What is not acceptable is a wrong one.
+            if (!integral.Stringize().Contains("integral("))
+                DifferentiatesBack("sqrt(x)/(1 + x + x^4)");
+        }
 
         /// <summary>
         /// The shape the issue is about: an odd power over an even one, where the substitution is
