@@ -430,6 +430,10 @@ namespace AngouriMath.Functions.Algebra
             // cosine rather than by rationalising it. After the linear radical, which answers a
             // root of something linear in its own terms and more shortly.
             if ((answer = IndefiniteIntegralSolver.SolveARadicalOfAQuadraticAsTrigonometric(expr, x)) is { }) return answer;
+            // And the binomial differential, a power of the variable beside a fractional power of
+            // `a + b x^n`. After the quadratic, which is the case `n = 2` and answers it through
+            // the trigonometric substitution -- a shorter answer than a root of a root.
+            if ((answer = IndefiniteIntegralSolver.SolveABinomialDifferential(expr, x)) is { }) return answer;
             // Product-to-sum among the rewrites rather than before them, because a product of
             // trigonometric functions of *equal* arguments is a power and wants a different tool;
             // this only fires where the arguments differ, which is exactly what every substitution
