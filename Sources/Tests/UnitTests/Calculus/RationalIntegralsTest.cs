@@ -105,18 +105,32 @@ namespace AngouriMath.Tests.Calculus
         public void ADenominatorThatFactorsWithNoRationalRoot(string integrand, double[] points) =>
             AssertIsAntiderivative(integrand, points);
 
+        // A repeated factor the spelling hides. Every split reads the denominator as written --
+        // the Hermite reduction wants its repeated factor written as a power -- and
+        // 1/(x^4 + 2x^2 + 1) was declined for that while 1/(x^2 + 1)^2 was answered. A
+        // denominator whose written factors are not squarefree between them is written in its
+        // irreducible factors over Q first, equal ones gathered into one power. The second
+        // spelling of each pair is what Euler's substitution hands the rational integrator.
+        [Theory]
+        [InlineData("1 / (x ^ 4 + 2 * x ^ 2 + 1)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("(x ^ 2 + 1) / (x ^ 4 - 2 * x ^ 2 + 1)", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("1 / ((x ^ 2 + 1) * (x ^ 4 + 2 * x ^ 2 + 1))", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        [InlineData("(2 - 4 * x ^ 2 + 2 * x ^ 4) / ((-1 - x ^ 2) * (1 - 2 * x - 2 * x ^ 3 - x ^ 4))", new[] { 0.3, 1.7, 3.2, -2.4 })]
+        public void ARepeatedFactorTheSpellingHides(string integrand, double[] points) =>
+            AssertIsAntiderivative(integrand, points);
+
         // What is out of reach is a denominator that does not factor over Q and is not a
-        // biquadratic either -- an odd power puts it past the step that factors over the reals --
-        // and one that is a power of a single irreducible, which has no coprime pair to split
-        // into. Recorded so the boundary is visible rather than inferred from an absence.
+        // biquadratic either -- an odd power puts it past the step that factors over the reals.
+        // Recorded so the boundary is visible rather than inferred from an absence.
         //
         // x^2/(x^4 + 1) was the first entry here, on the grounds that x^4 + 1 is irreducible
         // over Q and only factors once real coefficients are allowed. Allowing them is what the
-        // real-quadratic step now does, so it moved to PartialFractionsTest as an answer.
+        // real-quadratic step now does, so it moved to PartialFractionsTest as an answer; and
+        // 1/(x^4 + 2x^2 + 1), pinned here as a power of a single irreducible with no coprime
+        // pair to split into, is (x^2 + 1)^2 and is answered above once written so.
         [Theory]
         [InlineData("1 / (x ^ 4 + x + 1)")]
         [InlineData("1 / (x ^ 4 + x ^ 3 + 1)")]
-        [InlineData("1 / (x ^ 4 + 2 * x ^ 2 + 1)")]
         public void ADenominatorThatDoesNotFactorIsStillDeclined(string integrand) =>
             Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
     }

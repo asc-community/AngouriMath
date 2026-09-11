@@ -79,6 +79,24 @@ namespace AngouriMath.Functions.Algebra
                 && Integration.ComputeIndefiniteIntegral(properPart, x, integrateByParts) is { } fractionPart)
                 return wholePart + fractionPart;
 
+            // Every rule below reads the denominator **as written**: the Hermite reduction wants
+            // its repeated factor written as a power, the coprime split wants two written blocks.
+            // A denominator whose written factors hide either -- `(1 + t^2)(1 - 2t - 2t^3 - t^4)`
+            // is `(1 + t^2)^2 (1 - 2t - t^2)`, and Euler's substitution produces exactly that --
+            // is written in its irreducible factors over the rationals first, equal ones
+            // gathered into one power, and asked again in that spelling -- of this rule, not of
+            // the chain: the substitution rule in front of it simplifies the integrand once per
+            // candidate subtree, and a denominator written as five factors is five candidates
+            // more than one written out, each a rational function for the simplifier to
+            // factor. `1/(x^6 - 1)` did not return in thirty seconds through the chain and is
+            // under a second this way, with the chain behind it for a spelling this rule does
+            // not answer on its own -- one irreducible factor to the first power is the table's.
+            // Once: the spelling this produces refactors to itself.
+            if (TryWriteInIrreducibleFactors(denominator, x) is { } refactored
+                && (SolveByPartialFractions(numerator / refactored, x, integrateByParts)
+                    ?? Integration.ComputeIndefiniteIntegral(numerator / refactored, x, integrateByParts)) is { } overIrreducibles)
+                return overIrreducibles;
+
             // A denominator with a written repeated factor takes the Hermite reduction first:
             // the rational part of the answer in one linear solve, and what is left is a proper
             // fraction over a squarefree denominator for the splits below. `(1 + x^2)/(x (1 + x^3)^2)`
@@ -3571,6 +3589,86 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <paramref name="denominator"/> with each written factor taken into its irreducible
+        /// factors over the rationals and equal factors gathered into one power, or
+        /// <see langword="null"/> where the written factors already have that structure -- the
+        /// same count of distinct factors with the same multiplicities -- so that a
+        /// denominator which is already factored keeps its own spelling.
+        /// </summary>
+        private static Entity? TryWriteInIrreducibleFactors(Entity denominator, Entity.Variable x)
+        {
+            // Only where the written bases, each taken once, share a factor among them or
+            // repeat one inside -- a product that is not squarefree -- can the spelling be
+            // hiding what the rules below want written; written coprime squarefree bases to
+            // whatever powers are the Hermite reduction's and the coprime split's as they
+            // stand. One gcd decides that, where factoring every rational denominator cost
+            // `(4x^5 - 1)/(x^5 + x + 1)^2` four times its answer.
+            if (!HasARepeatedFactor(SquarefreePartAsWritten(denominator, x), x))
+                return null;
+            var writtenPowers = new List<int>();
+            var gathered = new Dictionary<Entity, int>();
+            Entity constant = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant *= factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var b, Number.Integer e) && e.EInteger.Sign > 0 && e.EInteger.CanFitInInt32()
+                    ? (b, e.EInteger.ToInt32Unchecked())
+                    : (factor, 1);
+                writtenPowers.Add(power);
+                if (Functions.PolynomialFactorization.FactorComplete(@base, x) is not { } factorization)
+                {
+                    // Not a polynomial with rational coefficients: kept as written.
+                    gathered[@base] = gathered.TryGetValue(@base, out var so) ? so + power : power;
+                    continue;
+                }
+                if (factorization.Constant.CompareTo(ERational.One) != 0)
+                    constant *= MathS.Pow(Number.Rational.Create(factorization.Constant), power);
+                foreach (var part in factorization.Parts)
+                {
+                    var piece = part.Factor.ToEntity(x);
+                    gathered[piece] = gathered.TryGetValue(piece, out var sofar) ? sofar + part.Multiplicity * power : part.Multiplicity * power;
+                }
+            }
+            if (gathered.Count == 0)
+                return null;
+            var same = gathered.Count == writtenPowers.Count
+                && gathered.Values.OrderBy(v => v).SequenceEqual(writtenPowers.OrderBy(v => v));
+            if (same)
+                return null;
+            Entity product = constant.InnerSimplified;
+            foreach (var pair in gathered)
+            {
+                Entity factor = pair.Value == 1 ? pair.Key : MathS.Pow(pair.Key, pair.Value);
+                product = product == Number.Integer.One ? factor : product * factor;
+            }
+            return product;
+        }
+
+        /// <summary>
+        /// Whether the polynomial <paramref name="expr"/> in <paramref name="x"/>, with rational
+        /// coefficients, shares a factor of positive degree with its derivative.
+        /// <see langword="false"/> where it is not such a polynomial.
+        /// </summary>
+        private static bool HasARepeatedFactor(Entity expr, Entity.Variable x)
+        {
+            if (!Functions.PolynomialFactoring.TryGetRationalCoefficients(
+                    expr, x, leastTerms: 2, leastDegree: 2, IntegerPolynomial.MaxDegree, out var rational))
+                return false;
+            var denominator = EInteger.One;
+            foreach (var coefficient in rational)
+                denominator = denominator.Multiply(coefficient.Denominator).Divide(denominator.Gcd(coefficient.Denominator));
+            var whole = new EInteger[rational.Length];
+            for (var i = 0; i < whole.Length; i++)
+                whole[i] = rational[i].Numerator.Multiply(denominator.Divide(rational[i].Denominator));
+            var poly = IntegerPolynomial.Create(whole);
+            return IntegerPolynomial.Gcd(poly, poly.Derivative()).Degree > 0;
+        }
+
+        /// <summary>
         /// The product of the distinct written factors of <paramref name="denominator"/>, each
         /// to the first power: the denominator of the logarithmic part of a Hermite reduction.
         /// </summary>
@@ -4306,6 +4404,266 @@ namespace AngouriMath.Functions.Algebra
                 return null;
 
             return Integration.ComputeIndefiniteIntegral(written, x, integrateByParts);
+        }
+
+        /// <summary>
+        /// Several square roots of polynomials in the variable, written as one:
+        /// <c>sqrt(1 + x^2) sqrt(1 - x^2)</c> is <c>sqrt(1 - x^4)</c>, and a root below the bar
+        /// is a root above it over its own base, <c>1/sqrt(B) = sqrt(B)/B</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>x/(sqrt(1 + x^2) sqrt(1 - x^2))</c> had no antiderivative and <c>x/sqrt(1 - x^4)</c>
+        /// is one substitution. Nothing reads two radicals: the substitution wants one subtree
+        /// to replace, Euler's rule wants one root of one quadratic, and each rule looked at
+        /// this integrand and saw two of what it takes one of. It is what by parts leaves from
+        /// <c>arcsin(x)/(1 + x^2)^(3/2)</c> and from <c>ln(x + sqrt(1 + x^2))/(1 - x^2)^(3/2)</c>,
+        /// and from every other pairing of an inverse function's radical with the one in
+        /// the power it stands over.
+        /// </para>
+        /// <para>
+        /// <b>When the identity holds.</b> On the principal branch, <c>sqrt(P) sqrt(Q) = sqrt(PQ)</c>
+        /// whenever at most one of <c>P</c> and <c>Q</c> is negative: with both negative the
+        /// left is <c>i sqrt|P| * i sqrt|Q| = -sqrt|PQ|</c> and the right is <c>+sqrt|PQ|</c>.
+        /// For <c>k</c> roots the same count applies -- <c>i^k</c> against <c>i^(k mod 2)</c> --
+        /// so the rule asks whether there is a real <c>x</c> at which two of the bases are
+        /// negative, and only rewrites when there is not. The bases are polynomials with
+        /// numeric coefficients; their real roots cut the line into intervals on each of which
+        /// every base keeps its sign, so the count at one point of each interval is the count
+        /// on the interval. Where the solver cannot give the roots, the rule declines.
+        /// </para>
+        /// <para>
+        /// A rewriting rule, unscoped: what it hands on has strictly fewer radicals than what
+        /// it was given, and it is asked one level down more often than at the top, since the
+        /// two-radical shape is what a by-parts step produces.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByCombiningRadicals(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // Two square roots holding the variable, or there is nothing to combine; counted
+            // before any of the rewriting below is paid for, since this runs on every
+            // sub-integrand of the chain.
+            if (expr.Nodes.Count(node => node is Powf(var @base, Number.Rational half)
+                    && half is not Number.Integer && half.ERational.Denominator.Equals(EInteger.FromInt32(2))
+                    && @base.ContainsNode(x)) < 2)
+                return null;
+            var rewritten = CombineRadicalsIn(expr, x);
+            if (rewritten == expr)
+                return null;
+            return Integration.ComputeIndefiniteIntegral(rewritten, x, integrateByParts);
+        }
+
+        /// <summary>
+        /// Every product or quotient in <paramref name="expr"/> with its square roots of
+        /// polynomials combined into one, innermost first; and a small power of a sum holding
+        /// such a root written out first, since <c>(sqrt(1 - x) + sqrt(1 + x))^2</c> is
+        /// <c>2 + 2 sqrt(1 - x) sqrt(1 + x)</c>, which combines, and is not a shape any rule
+        /// reads as it stands.
+        /// </summary>
+        private static Entity CombineRadicalsIn(Entity expr, Entity.Variable x)
+            => expr.Replace(node => node is Mulf or Divf ? CombineRadicalsInAQuotient(node, x) ?? node : node);
+
+        /// <summary>
+        /// A factor of a product that is a small power of a sum holding a square root of a
+        /// polynomial, written out and combined; any other factor as it is. Only as a factor:
+        /// the same power under a root, `sqrt(1 - (sqrt(1 + x) - sqrt(x))^2)`, written out is
+        /// a root of a sum with a root in it, no better than before and a search of its own.
+        /// </summary>
+        private static Entity WriteOutAPowerOfASumOfRadicals(Entity factor, Entity.Variable x)
+        {
+            if (factor is not Powf(Sumf or Minusf, Number.Integer power) || !power.EInteger.CanFitInInt32())
+                return factor;
+            var n = power.EInteger.ToInt32Unchecked();
+            if (n is < 2 or > 4)
+                return factor;
+            var sum = factor.DirectChildren.First();
+            if (!sum.Nodes.Any(node => TryReadASquareRootOfAPolynomial(node, x, out _, out _)))
+                return factor;
+            return CombineRadicalsIn(MathS.Pow(sum, n).Expand().InnerSimplified, x);
+        }
+
+        /// <summary>
+        /// The product or quotient <paramref name="expr"/> with its two or more square roots of
+        /// polynomials written as one, or <see langword="null"/> where there are fewer than two
+        /// or the identity does not hold for them.
+        /// </summary>
+        private static Entity? CombineRadicalsInAQuotient(Entity expr, Entity.Variable x)
+        {
+            // As one quotient, with a negative half-power read as the root it is below the bar,
+            // and a sum factor above the bar cancelled against the same sum below it. That is
+            // the derivative of `ln(x + sqrt(x^2 - 1))` as differentiation writes it,
+            // `(1 + x/sqrt(x^2 - 1))/(x + sqrt(x^2 - 1))`, brought to the `1/sqrt(x^2 - 1)` it
+            // is; by parts left it in the first spelling and nothing read it.
+            var asQuotient = expr.Replace(node =>
+                node is Powf(var @base, Number.Rational power) && power is not Number.Integer && power.ERational.Sign < 0
+                    ? Number.Integer.One / MathS.Pow(@base, Number.Rational.Create(power.ERational.Negate()))
+                    : node);
+            var (numerator, denominator) = Functions.SingleQuotient.Of(asQuotient);
+            var writtenOut = false;
+            Entity WrittenOut(Entity side)
+            {
+                Entity built = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    var written = WriteOutAPowerOfASumOfRadicals(factor, x);
+                    writtenOut |= written != factor;
+                    built = built == Number.Integer.One ? written : built * written;
+                }
+                return built;
+            }
+            numerator = WrittenOut(numerator);
+            denominator = WrittenOut(denominator);
+            var cancelled = CancelEqualSumFactors(numerator, denominator, out numerator, out denominator) | writtenOut;
+
+            // Every factor with an odd half-power of a polynomial base is a whole power of the
+            // base times one square root of it; the square roots are what combine.
+            var bases = new List<Entity>();
+            Entity above = Number.Integer.One;
+            Entity below = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(numerator))
+            {
+                if (TryReadASquareRootOfAPolynomial(factor, x, out var @base, out var wholePower))
+                {
+                    bases.Add(@base);
+                    above = above * MathS.Pow(@base, wholePower);
+                }
+                else
+                    above = above * factor;
+            }
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (TryReadASquareRootOfAPolynomial(factor, x, out var @base, out var wholePower))
+                {
+                    // 1/(B^q sqrt(B)) = sqrt(B)/B^(q+1)
+                    bases.Add(@base);
+                    below = below * MathS.Pow(@base, wholePower + 1);
+                }
+                else
+                    below = below * factor;
+            }
+            if (bases.Count < 2)
+            {
+                if (!cancelled)
+                    return null;
+                foreach (var @base in bases)
+                    above = above * MathS.Sqrt(@base);
+                bases.Clear();
+            }
+            else if (!AtMostOneIsNegativeOnTheReals(bases, x))
+                return null;
+
+            Entity radical = Number.Integer.One;
+            if (bases.Count > 0)
+            {
+                Entity product = Number.Integer.One;
+                foreach (var @base in bases)
+                    product = product * @base;
+                radical = MathS.Sqrt(product.Expand().InnerSimplified);
+            }
+            var rewritten = ((above * radical).InnerSimplified / below.InnerSimplified).InnerSimplified;
+            return rewritten is Providedf(var inner, _) ? inner : rewritten;
+        }
+
+        /// <summary>
+        /// A sum that is a factor of both sides, cancelled -- decided by the difference
+        /// simplifying to zero, since the two spellings of one sum need not be equal as
+        /// written. <see langword="true"/> when anything was cancelled.
+        /// </summary>
+        private static bool CancelEqualSumFactors(Entity numerator, Entity denominator, out Entity above, out Entity below)
+        {
+            var aboveFactors = Mulf.LinearChildren(numerator).ToList();
+            var belowFactors = Mulf.LinearChildren(denominator).ToList();
+            var cancelled = false;
+            for (var i = 0; i < aboveFactors.Count; i++)
+            {
+                if (aboveFactors[i] is not (Sumf or Minusf))
+                    continue;
+                for (var j = 0; j < belowFactors.Count; j++)
+                {
+                    if (belowFactors[j] is not (Sumf or Minusf))
+                        continue;
+                    if ((aboveFactors[i] - belowFactors[j]).InnerSimplified.Evaled is Number.Complex { IsZero: true })
+                    {
+                        aboveFactors.RemoveAt(i);
+                        belowFactors.RemoveAt(j);
+                        i--;
+                        cancelled = true;
+                        break;
+                    }
+                }
+            }
+            above = aboveFactors.Count == 0 ? Number.Integer.One : aboveFactors.Aggregate((l, r) => l * r);
+            below = belowFactors.Count == 0 ? Number.Integer.One : belowFactors.Aggregate((l, r) => l * r);
+            return cancelled;
+        }
+
+        /// <summary>
+        /// <c>P^(n/2)</c> with <c>n</c> odd and <c>P</c> a polynomial in <paramref name="x"/>
+        /// with numeric coefficients, as <c>P^wholePower * sqrt(P)</c>.
+        /// </summary>
+        private static bool TryReadASquareRootOfAPolynomial(Entity factor, Entity.Variable x, out Entity @base, out int wholePower)
+        {
+            @base = 0;
+            wholePower = 0;
+            if (!TryReadAHalfPower(factor, out var candidate, out var numerator) || numerator % 2 == 0)
+                return false;
+            if (!candidate.ContainsNode(x) || candidate.Vars.Any(v => v != x))
+                return false;
+            if (!TreeAnalyzer.TryGetPolynomial(candidate, x, out _))
+                return false;
+            @base = candidate;
+            // n = 2p + 1 for every odd n, negative ones included: -1 = 2(-1) + 1.
+            wholePower = (numerator - 1) / 2;
+            return true;
+        }
+
+        /// <summary>
+        /// Whether no real <paramref name="x"/> makes two of the <paramref name="bases"/>
+        /// negative at once, decided on one point of each interval between their real roots.
+        /// <see langword="false"/> where the roots cannot be had.
+        /// </summary>
+        private static bool AtMostOneIsNegativeOnTheReals(List<Entity> bases, Entity.Variable x)
+        {
+            var roots = new List<double>();
+            foreach (var @base in bases)
+            {
+                if (MathS.SolveEquation(@base, x) is not Set.FiniteSet solutions)
+                    return false;
+                foreach (var solution in solutions.Elements)
+                {
+                    if (solution.Evaled is not Number.Complex value || !value.IsFinite)
+                        return false;
+                    if (System.Math.Abs((double)value.ImaginaryPart) < 1e-9)
+                        roots.Add((double)value.RealPart);
+                }
+            }
+            roots.Sort();
+            var samples = new List<double>();
+            if (roots.Count == 0)
+                samples.Add(0.37);
+            else
+            {
+                samples.Add(roots[0] - 1);
+                samples.Add(roots[roots.Count - 1] + 1);
+                for (var i = 0; i + 1 < roots.Count; i++)
+                    if (roots[i + 1] - roots[i] > 1e-9)
+                        samples.Add((roots[i] + roots[i + 1]) / 2);
+            }
+            foreach (var at in samples)
+            {
+                var negative = 0;
+                foreach (var @base in bases)
+                {
+                    if (@base.Substitute(x, at).Evaled is not Number.Real value || !value.IsFinite)
+                        return false;
+                    if (value < 0)
+                        negative++;
+                }
+                if (negative > 1)
+                    return false;
+            }
+            return true;
         }
 
         private static int Lcm(int a, int b)
