@@ -215,6 +215,29 @@ namespace AngouriMath.Functions.Algebra
         /// <summary>How deep the current descent is. Per thread, like <see cref="answered"/>.</summary>
         [System.ThreadStatic] private static int descentDepth;
 
+        /// <summary>
+        /// Whether the integrand now being solved is the one the caller asked for, rather than
+        /// one a rule produced on the way to answering something else.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// For a rule that is the right answer to a question and a distraction as an offer. A
+        /// rule which answers a sub-integral that used to come back <see langword="null"/> does
+        /// not only add its own work: it lets the search that asked stop failing and carry on,
+        /// which is where the cost turns up — on integrands the rule never fires on.
+        /// </para>
+        /// <para>
+        /// Measured on the secant power reduction: <c>sec(x)^6*tan(x)^3</c> is declined in 637 ms
+        /// without it and does not return in 400 s with it, while the rule itself fires exactly
+        /// twice and terminates both times. The work is not the rule's; the continuation is.
+        /// https://github.com/asc-community/AngouriMath/issues/1265
+        /// </para>
+        /// <para>
+        /// One is the top: the depth is incremented before the solvers run, so a rule consulted
+        /// about the caller's own integrand sees exactly one.
+        /// </para>
+        /// </remarks>
+        internal static bool AnsweringTheQuestionAsked => descentDepth == 1;
 
         /// <summary>
         /// Whether anything in the current top-level call gave up on <see cref="DeepestDescent"/>
@@ -367,6 +390,11 @@ namespace AngouriMath.Functions.Algebra
             // divides by du/dx and asks what is left, and that question loses the shape here:
             // sqrt(tan(x)) over the derivative of sqrt(tan(x)) simplifies to sin(2x), in which
             // the substitution is no longer visible. This one rewrites rather than divides.
+            // Before the tangent substitution, which would also take a power of the secant and
+            // answer it as a rational function of tan(x) -- correct, and a good deal longer than
+            // the reduction gives. Rubi's own ordering puts the reduction first for the same
+            // reason.
+            if ((answer = IndefiniteIntegralSolver.SolveBySecantPowerReduction(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByTangentSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
             // Linearity again, and this time with the expansion: a product with a sum in it --
