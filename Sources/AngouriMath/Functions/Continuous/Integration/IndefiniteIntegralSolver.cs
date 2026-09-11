@@ -73,7 +73,7 @@ namespace AngouriMath.Functions.Algebra
             // fire on one and recurse into the problem it started from. The check on the
             // quotient is the second half of that guarantee: a division that came back with
             // nothing taken out would hand the same fraction on and not terminate.
-            if (TreeAnalyzer.PolynomialLongDivision(numerator, denominator) is var (quotient, properPart)
+            if (TreeAnalyzer.PolynomialLongDivision(numerator, denominator, genericCase: true, inTermsOf: x) is var (quotient, properPart)
                 && quotient.Evaled != Entity.Number.Integer.Create(0)
                 && Integration.ComputeIndefiniteIntegral(quotient, x, integrateByParts) is { } wholePart
                 && Integration.ComputeIndefiniteIntegral(properPart, x, integrateByParts) is { } fractionPart)
@@ -1271,8 +1271,17 @@ namespace AngouriMath.Functions.Algebra
                         rateFound = rateFound is null
                             ? (multiplicity * thisRate).InnerSimplified
                             : (rateFound + multiplicity * thisRate).InnerSimplified;
-                        // The constant part of the exponent is a factor, not a rate.
-                        polynomialPart *= MathS.Pow(@base, offset * multiplicity);
+                        // The constant part of the exponent is a factor, not a rate -- and there
+                        // is none to take when the exponent has no constant part. `MathS.Pow`
+                        // leaves `b^0` written out, and a factor of `d^0` standing in front of
+                        // the polynomial is enough to stop `TryPolynomial` reading it, so
+                        // `d^x x cos(x)` was declined where `2^x x cos(x)` came out: with a
+                        // numeric base the same dead factor is folded away and with a symbolic
+                        // one it is not. `d^x cos(x)` hid it, because a polynomial part free of
+                        // the variable is never read as a polynomial at all.
+                        // https://github.com/asc-community/AngouriMath/issues/718
+                        if (offset.Evaled is not Number.Integer(0))
+                            polynomialPart *= MathS.Pow(@base, offset * multiplicity);
                         return true;
                     case Mulf(var left, var right):
                         return Read(left, multiplicity) && Read(right, multiplicity);
@@ -1520,14 +1529,22 @@ namespace AngouriMath.Functions.Algebra
                 ? MathS.Arctan(inTermsOf * MathS.Sqrt(b) / MathS.Sqrt(a))
                 : MathS.Arcsin(inTermsOf * MathS.Sqrt(-b) / MathS.Sqrt(a));
 
-            var answer = inT.Replace(node => node switch
-            {
-                Sinf(var inner) when inner == t => sine,
-                Cosf(var inner) when inner == t => cosine,
-                Tanf(var inner) when inner == t => tangent,
-                Variable v when v == t => angle,
-                _ => node
-            });
+            // **Two passes, and the order is load-bearing.** `Replace` rewrites a node's children
+            // before the node, so a single pass that also matched a bare `t` turned `tan(t)` into
+            // `tan(arccos(...))` -- the parent no longer matched once its child had been replaced.
+            // That answer is correct and cannot be evaluated: `EvalNumerical` throws on it, so a
+            // caller gets an antiderivative it can differentiate and not one it can use. The
+            // trigonometric functions of `t` go first, and only what is left of `t` becomes the
+            // angle. https://github.com/asc-community/AngouriMath/issues/718
+            var answer = inT
+                .Replace(node => node switch
+                {
+                    Sinf(var inner) when inner == t => sine,
+                    Cosf(var inner) when inner == t => cosine,
+                    Tanf(var inner) when inner == t => tangent,
+                    _ => node
+                })
+                .Replace(node => node is Variable v && v == t ? angle : node);
             if (answer.ContainsNode(t))
                 return null;
             // The reflection, once: `sign(y)^(m+1)`, which is `sign(y)` for an even power outside
@@ -2157,8 +2174,17 @@ namespace AngouriMath.Functions.Algebra
                     continue;
                 if (!@base.ContainsNode(x))
                     continue;
+                // A radical over something that is not linear is **skipped rather than refused**,
+                // and that is where the nested ones come from. `sqrt(x + sqrt(1 + x))` holds two:
+                // the inner one is over something linear and is what the substitution is for, and
+                // the outer one is over a sum holding the inner one. Declining because of the
+                // outer one refused the whole family -- and it need not, because the substitution
+                // eliminates `x` from it anyway: with `u^2 = 1 + x` the outer base is `u^2 + u - 1`
+                // and the integrand becomes `2u sqrt(u^2 + u - 1)`, which the quadratic radical
+                // rule answers. The check that no `x` survives, below, is what makes skipping safe
+                // rather than a guess. https://github.com/asc-community/AngouriMath/issues/718
                 if (!TreeAnalyzer.TryGetPolyLinear(@base, x, out var slope, out _) || slope.Evaled == 0)
-                    return null;   // a radical over something that is not linear: not this rule's
+                    continue;
                 if (radicalBase is null)
                     radicalBase = @base;
                 else if (radicalBase != @base)

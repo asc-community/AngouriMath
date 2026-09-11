@@ -713,7 +713,7 @@ namespace AngouriMath.Functions.Algebra
             if (power < 2)
                 return null;
 
-            var division = TreeAnalyzer.PolynomialLongDivision(numerator, quadratic);
+            var division = TreeAnalyzer.PolynomialLongDivision(numerator, quadratic, genericCase: true, inTermsOf: x);
             if (division is null)
                 return null;
 

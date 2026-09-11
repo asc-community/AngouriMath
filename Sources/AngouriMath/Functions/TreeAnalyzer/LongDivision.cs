@@ -113,16 +113,28 @@ namespace AngouriMath.Functions
         /// the same way it always did, and one that does not falls through to the replacement,
         /// which is the only thing that ever answered <c>sin(x)^2 / sin(x)</c>.
         /// </para>
+        /// <para>
+        /// <b><paramref name="genericCase"/> says which of two callers is asking.</b> Dividing by
+        /// the divisor's leading coefficient loses the value of the parameter that makes it zero:
+        /// <c>x / (a + b x)</c> divided out is undefined at <c>b = 0</c>, where the quotient is
+        /// <c>x / a</c> and perfectly ordinary. For the simplifier that is a rewrite which is not
+        /// an equivalence, so it is declined; for the integrator it is the answer every
+        /// neighbouring rule already gives, since <c>int 1/(a x + b) dx</c> is
+        /// <c>ln(a x + b) / a</c> and loses <c>a = 0</c> on every call. The default is the
+        /// simplifier's, and nothing about the general pass changes by adding this.
+        /// </para>
         /// </remarks>
-        internal static (Entity Divided, Entity Remainder)? PolynomialLongDivision(Entity p, Entity q)
+        internal static (Entity Divided, Entity Remainder)? PolynomialLongDivision(
+            Entity p, Entity q, bool genericCase = false, Variable? inTermsOf = null)
         {
             if (!p.Vars.Any() || !q.Vars.Any())
                 return null; // There are no variables to find polynomial as
-            return DivideOnePolynomial(p, q, replaceVars: false)
-                ?? DivideOnePolynomial(p, q, replaceVars: true);
+            return DivideOnePolynomial(p, q, replaceVars: false, genericCase, inTermsOf)
+                ?? DivideOnePolynomial(p, q, replaceVars: true, genericCase, inTermsOf);
         }
 
-        private static (Entity Divided, Entity Remainder)? DivideOnePolynomial(Entity p, Entity q, bool replaceVars)
+        private static (Entity Divided, Entity Remainder)? DivideOnePolynomial(
+            Entity p, Entity q, bool replaceVars, bool genericCase, Variable? inTermsOf)
         {
             // ---> (x^0.6 + 2x^0.3 + 1) / (x^0.3 + 1)
             var replacementInfo = GatherAllPossiblePolynomials(p + q, replaceVars);
@@ -138,8 +150,27 @@ namespace AngouriMath.Functions
             var monoinfoP = GatherAllPossiblePolynomials(p.Expand(), replaceVars: false).MonoInfo;
             var monoinfoQ = GatherAllPossiblePolynomials(q.Expand(), replaceVars: false).MonoInfo;
 
-            // First attempt to find polynoms
-            var polyvar = monoinfoP.Keys.FirstOrDefault(monoinfoQ.ContainsKey);
+            // First attempt to find polynoms.
+            //
+            // **Which variable the division is in is the caller's to say, where it knows.** The
+            // choice was whichever variable came first, and with two symbols in play that is as
+            // likely to be a parameter as the one the caller cares about: `a x^2 / (b + a x)`
+            // divides perfectly well in `a`, giving `x - b x / (b + a x)`, which is true and
+            // useless to an integrator working in `x` — and it consumes the division, so the
+            // split that would have answered is never tried. Taking the first candidate made the
+            // verdict depend on the order `Vars` happens to report, which is not a property of
+            // the division. A caller that does not care still gets the old choice.
+            //
+            // In the replaced pass the variables are gone, swapped for temporaries standing for
+            // a subtree — `sin(x)^2 / sin(x)` divides in a symbol standing for `sin(x)` — so the
+            // test there is that the subtree behind the temporary is one the caller's variable
+            // occurs in. https://github.com/asc-community/AngouriMath/issues/718
+            var candidates = monoinfoP.Keys.Where(monoinfoQ.ContainsKey);
+            var polyvar = inTermsOf is null
+                ? candidates.FirstOrDefault()
+                : candidates.FirstOrDefault(v => v == inTermsOf
+                    || (replacementInfo.RevertReplacements.TryGetValue(v, out var behind)
+                        && behind.ContainsNode(inTermsOf)));
             // cannot divide, return unchanged
             if (polyvar is null) return null;
 
@@ -160,20 +191,27 @@ namespace AngouriMath.Functions
             // for now just return polynomials unchanged
             if (maxpowP.LessThan(maxpowQ)) return null;
 
-            // The unreplaced attempt divides by the divisor's leading coefficient, so it runs
-            // only where that coefficient is a number other than zero — which is to say, where
-            // the quotient it produces is valid for every value of every symbol in it. With a
-            // symbolic leading coefficient it would not be: `x^2/(a + b x)` divided out is
-            // undefined at `b = 0`, where the integrand is `x^2/a` and perfectly ordinary, and a
-            // quotient that silently loses a value of a parameter is worse than none.
+            // The unreplaced attempt divides by the divisor's leading coefficient, so for the
+            // simplifier it runs only where that coefficient is a number other than zero — which
+            // is to say, where the quotient it produces is valid for every value of every symbol
+            // in it. With a symbolic leading coefficient it would not be: `x^2/(a + b x)` divided
+            // out is undefined at `b = 0`, where the integrand is `x^2/a` and perfectly ordinary,
+            // and a rewrite that silently loses a value of a parameter is not an equivalence.
             // `x^2/(x + a)` has leading coefficient 1 and is not that case, which is why it is
-            // answered now and was not before.
+            // answered even for the simplifier.
             //
-            // A symbolic leading coefficient is a gap here rather than a decision: what it wants
-            // is the divided form beside the degenerate one, under conditions, and this function
-            // returns a pair rather than a piecewise. Item 18 of the list below is that integral,
-            // still unticked. https://github.com/asc-community/AngouriMath/issues/180
-            if (!replaceVars && (maxvalQ.Vars.Any() || maxvalQ.Evaled == Integer.Create(0)))
+            // **The integrator asks for the generic case, and is right to.** It is not rewriting
+            // an expression into an equal one; it is naming an antiderivative, and the rest of
+            // the integrator already names the generic one. `int 1/(a x + b) dx` comes back as
+            // `ln(a x + b) / a`, `int sin(a x) dx` as `-cos(a x) / a`, `int x^n dx` as
+            // `x^(n+1)/(n+1)` — each undefined at one value of its parameter, each given anyway.
+            // The first of those divides by the very coefficient this guard was refusing to
+            // divide by, so declining here made long division the one rule in the integrator
+            // holding out for a condition none of its neighbours carry. That cost `x/(a + b x)`,
+            // `x ln(b + a x)` and every improper fraction with a symbolic coefficient, all of
+            // which come out with the coefficients made numeric.
+            // https://github.com/asc-community/AngouriMath/issues/180
+            if (!replaceVars && ((maxvalQ.Vars.Any() && !genericCase) || maxvalQ.Evaled == Integer.Create(0)))
                 return null;
 
             var result = new Dictionary<EDecimal, Entity>();
