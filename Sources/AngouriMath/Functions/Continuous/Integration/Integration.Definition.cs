@@ -411,6 +411,12 @@ namespace AngouriMath.Functions.Algebra
             // is why the general substitution does not find it and why it pays: the integrator
             // answers an exponential times almost anything.
             if ((answer = IndefiniteIntegralSolver.SolveByLogarithmSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // And the third of Bioche's rules: a quotient of homogeneous polynomials in sine and
+            // cosine, which the tangent turns into a rational function whenever the two degrees
+            // differ by an even number. After the tangent substitution above, which answers an
+            // integrand that is a function of the tangent *alone* and gives a shorter answer for
+            // it; this one is for the rest.
+            if ((answer = IndefiniteIntegralSolver.SolveByHomogeneousTrigonometricSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
             // The tangent substitution again, and this time for a *rational* function: a repeated
             // irreducible quadratic beside a negative power of the variable is `sin^p cos^q` with

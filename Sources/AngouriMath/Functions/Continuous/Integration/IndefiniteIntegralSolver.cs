@@ -1883,6 +1883,163 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A quotient of two <b>homogeneous</b> polynomials in <c>sin(u)</c> and <c>cos(u)</c>,
+        /// integrated by <c>t = tan(u)</c> — which turns it into a rational function of <c>t</c>
+        /// whenever the two degrees differ by an even number.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>1/(cos(x) + sin(x))^6</c> took <b>231 seconds</b> to be declined and
+        /// <c>1/(b^2 cos(x)^2 + a^2 sin(x)^2)</c> was one of the Rubi sample's three timeouts.
+        /// Both are this shape, and so is <c>sin(x)/(cos(x)^3 + sin(x)^3)</c>.
+        /// </para>
+        /// <para>
+        /// <b>Why the degrees decide it.</b> Writing <c>t = tan(u)</c> and <c>c = cos(u)</c>, a
+        /// homogeneous polynomial of degree <c>n</c> in the pair is <c>c^n</c> times a polynomial
+        /// in <c>t</c> alone. So a quotient of degrees <c>n</c> over <c>d</c> is
+        /// <c>c^(n-d) N(t)/D(t)</c>, and with <c>c^2 = 1/(1 + t^2)</c> and
+        /// <c>dx = dt/(a(1 + t^2))</c>:
+        /// </para>
+        /// <code>
+        ///     f dx = [N(t)/D(t)] (1 + t^2)^((d - n)/2 - 1) dt / a
+        /// </code>
+        /// <para>
+        /// which is rational exactly when <c>d - n</c> is even. Odd is a genuine boundary rather
+        /// than a first cut: there the substitution leaves a square root of <c>1 + t^2</c> behind,
+        /// which is a different problem and not a rational one.
+        /// </para>
+        /// <para>
+        /// This is the third of Bioche's rules, and it is the one the other two do not cover:
+        /// <see cref="SolveByTangentSubstitution"/> answers an integrand that is a function of
+        /// <c>tan</c> <i>alone</i>, and <c>1/(b^2 cos^2 + a^2 sin^2)</c> is not — it is a function
+        /// of <c>tan</c> times <c>sec^2</c>, which is what the degree difference of two is saying.
+        /// </para>
+        /// <para>
+        /// <b>Where the answer holds.</b> <c>t = tan(u)</c> is a bijection on each interval
+        /// between the poles of the tangent, so the answer is an antiderivative on each of them —
+        /// the standing caveat on this substitution, shared with the half-angle one, and not
+        /// something this writes as a condition.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByHomogeneousTrigonometricSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
+                return null;
+            if (!TryReadAHomogeneousTrigonometricPolynomial(numerator, x, out var above, out var aboveDegree, out var argument)
+                || !TryReadAHomogeneousTrigonometricPolynomial(denominator, x, out var below, out var belowDegree, out var otherArgument))
+                return null;
+            // A side free of the variable is degree zero and names no argument -- `1/(cos + sin)^2`
+            // is the common case and was declined for it. Only one side may be silent; if both
+            // are, there is no integrand here.
+            argument ??= otherArgument;
+            otherArgument ??= argument;
+            if (argument is null || argument != otherArgument)
+                return null;
+            var difference = belowDegree - aboveDegree;
+            if (difference % 2 != 0)
+                return null;   // an odd difference leaves a root of 1 + t^2, which is not rational
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _) || rate.Evaled == 0)
+                return null;
+
+            var t = Variable.CreateUnique(expr, "t_homog");
+            var inT = Functions.SingleQuotient.Combine(
+                above.Substitute(HomogeneousTangent, t).Substitute(HomogeneousCosine, 1)
+                / below.Substitute(HomogeneousTangent, t).Substitute(HomogeneousCosine, 1)
+                * MathS.Pow(1 + MathS.Sqr(t), Number.Integer.Create(difference / 2 - 1))
+                / rate).Simplify();
+            if (inT is Providedf(var inner, _))
+                inT = inner;
+            if (inT.ContainsNode(x))
+                return null;
+
+            return Integration.ComputeIndefiniteIntegral(inT, t, integrateByParts) is { } result
+                ? result.Substitute(t, MathS.Tan(argument))
+                : null;
+        }
+
+        /// <summary>The two placeholders a homogeneous polynomial is rewritten over.</summary>
+        [ConstantField] private static readonly Entity.Variable HomogeneousTangent =
+            Entity.Variable.CreateVariableOrConstant("__homogeneous_tangent");
+
+        /// <summary>See <see cref="HomogeneousTangent"/>.</summary>
+        [ConstantField] private static readonly Entity.Variable HomogeneousCosine =
+            Entity.Variable.CreateVariableOrConstant("__homogeneous_cosine");
+
+        /// <summary>
+        /// Reads <paramref name="expr"/> as a homogeneous polynomial in <c>sin(u)</c> and
+        /// <c>cos(u)</c> over one common argument, rewritten with <c>sin(u)</c> as
+        /// <c>tangent * cosine</c> and <c>cos(u)</c> as <c>cosine</c> so that the caller can put
+        /// <c>cosine</c> to one and read off the polynomial in the tangent.
+        /// </summary>
+        /// <remarks>
+        /// Homogeneous means every term has the same total degree, and that is checked rather
+        /// than assumed: <c>1 + cos(u)</c> has terms of degree zero and one and is declined, which
+        /// is right — it is not this substitution's, and the half-angle one answers it.
+        /// </remarks>
+        private static bool TryReadAHomogeneousTrigonometricPolynomial(
+            Entity expr, Entity.Variable x, out Entity rewritten, out int degree, out Entity? argument)
+        {
+            rewritten = expr;
+            degree = 0;
+            argument = null;
+
+            var found = (Entity?)null;
+            var theDegree = (int?)null;
+            foreach (var term in Entity.Sumf.LinearChildren(expr.Expand()))
+            {
+                var thisDegree = 0;
+                foreach (var factor in Entity.Mulf.LinearChildren(term))
+                {
+                    var (piece, power) = factor is Powf(var @base, Number.Integer whole)
+                                         && whole.EInteger.CanFitInInt32()
+                        ? (@base, whole.EInteger.ToInt32Checked())
+                        : (factor, 1);
+                    switch (piece)
+                    {
+                        case Sinf(var a):
+                            thisDegree += power;
+                            if (found is not null && found != a) return false;
+                            found = a;
+                            break;
+                        case Cosf(var a):
+                            thisDegree += power;
+                            if (found is not null && found != a) return false;
+                            found = a;
+                            break;
+                        default:
+                            if (piece.ContainsNode(x))
+                                return false;   // anything else in the term is not this shape
+                            break;
+                    }
+                }
+                if (theDegree is null)
+                    theDegree = thisDegree;
+                else if (theDegree != thisDegree)
+                    return false;
+            }
+            if (theDegree is null)
+                return false;
+            if (found is null)
+            {
+                // No sine or cosine at all: a constant, which is homogeneous of degree zero and
+                // needs no rewriting. It names no argument, and the caller takes the other side's.
+                degree = 0;
+                return !expr.ContainsNode(x);
+            }
+
+            degree = theDegree.Value;
+            argument = found;
+            rewritten = expr.Expand().Replace(node => node switch
+            {
+                Sinf(var a) when a == found => HomogeneousTangent * HomogeneousCosine,
+                Cosf(var a) when a == found => HomogeneousCosine,
+                _ => node
+            });
+            return true;
+        }
+
+        /// <summary>
         /// An integrand that is a function of <c>tan(x)</c> and of nothing else, integrated by
         /// the substitution <c>u = tan(x)</c>, under which <c>dx</c> is <c>du/(1 + u^2)</c>.
         /// </summary>
