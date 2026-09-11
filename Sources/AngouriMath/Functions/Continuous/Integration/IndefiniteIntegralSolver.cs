@@ -910,6 +910,208 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A <b>binomial differential</b> <c>x^m (a + b x^n)^(p/q)</c>, in the case Chebyshev's
+        /// criterion makes a polynomial: where <c>(m + 1)/n</c> is a whole number of at least one.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>x^2 sqrt(1 + x^3)</c> came out and <c>x^5 sqrt(1 + x^3)</c> did not, and the two are
+        /// the same substitution. Under <c>u = (a + b x^n)^(1/q)</c> the first leaves a monomial
+        /// in <c>u</c>, which the general substitution finds because <c>x^(n-1)</c> is <c>du</c>
+        /// up to a constant; the second leaves a <b>polynomial</b>, which it does not, because
+        /// what multiplies <c>du</c> there is <c>x^3</c> rather than a constant.
+        /// </para>
+        /// <para>
+        /// Writing <c>s = (m + 1)/n</c> and substituting:
+        /// </para>
+        /// <code>
+        ///     x^n = (u^q - a)/b       x^m dx = (q/(n b)) ((u^q - a)/b)^(s-1) u^(q-1) du
+        ///     int x^m (a + b x^n)^(p/q) dx = (q/(n b)) int ((u^q - a)/b)^(s-1) u^(p+q-1) du
+        /// </code>
+        /// <para>
+        /// which is a polynomial in <c>u</c> exactly when <c>s</c> is a whole number of at least
+        /// one — the first of Chebyshev's three cases. Expanded by the binomial theorem and
+        /// integrated term by term, so the rule is <b>closed</b> and asks the integrator nothing.
+        /// </para>
+        /// <para>
+        /// <b>The other two cases are not here.</b> <c>p/q</c> whole is a whole power of a
+        /// polynomial, which expanding already answers; and <c>s + p/q</c> whole wants
+        /// <c>u = ((a + b x^n)/x^n)^(1/q)</c>, which leaves a polynomial over a power of
+        /// <c>u^q - b</c> — a rational function rather than a polynomial, so a search rather than
+        /// a closed answer. Chebyshev also proved there is no fourth case: outside those three the
+        /// integrand has no elementary antiderivative at all, which is worth knowing before
+        /// anyone goes looking.
+        /// </para>
+        /// <para>
+        /// <b>Asked, not volunteered</b>:
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1265">#1265</a>.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveABinomialDifferential(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            if (!TryReadABinomialDifferential(expr, x, out var power, out var exponent,
+                    out var inner, out var free, out var leading, out var factor))
+                return null;
+
+            // s = (m + 1)/n, whole and at least one, which is what makes the expansion finite.
+            if ((power + 1) % inner != 0)
+                return null;
+            var s = (power + 1) / inner;
+            if (s < 1)
+                return null;
+
+            var q = exponent.Denominator.ToInt32Checked();
+            var p = exponent.Numerator.ToInt32Checked();
+            var a = Number.Rational.Create(free);
+            var b = Number.Rational.Create(leading);
+
+            // (q/(n b^s)) * int (u^q - a)^(s-1) u^(p+q-1) du, the binomial expanded.
+            Entity total = 0;
+            var binomial = EInteger.One;
+            var u = Variable.CreateUnique(expr, "u_binom");
+            for (var i = 0; i <= s - 1; i++)
+            {
+                // Term i of (u^q - a)^(s-1) is C(s-1, i) u^(q i) (-a)^(s-1-i).
+                var raised = q * i + p + q;
+                if (raised == 0)
+                    return null;   // the power rule would divide by zero; not a polynomial after all
+                total += Number.Integer.Create(binomial)
+                       * MathS.Pow(-a, Number.Integer.Create(s - 1 - i))
+                       * MathS.Pow(u, Number.Integer.Create(raised)) / Number.Integer.Create(raised);
+                binomial = binomial * (s - 1 - i) / (i + 1);
+            }
+
+            var outside = Number.Integer.Create(q)
+                        / (Number.Integer.Create(inner) * MathS.Pow(b, Number.Integer.Create(s)));
+            var bracket = (a + b * MathS.Pow(x, Number.Integer.Create(inner))).InnerSimplified;
+            var back = MathS.Pow(bracket, Number.Rational.Create(EInteger.One, exponent.Denominator));
+            return (factor * outside * total.Substitute(u, back)).InnerSimplified;
+        }
+
+        /// <summary>
+        /// Reads <paramref name="expr"/> as a rational multiple of <c>x^m (a + b x^n)^(p/q)</c>,
+        /// with <c>q</c> above one and <c>n</c> at least two.
+        /// </summary>
+        /// <remarks>
+        /// A whole exponent on the bracket is a polynomial and wants expanding rather than this;
+        /// <c>n = 1</c> is a radical of something linear, which
+        /// <see cref="SolveByLinearRadicalSubstitution"/> answers in its own terms and more
+        /// shortly.
+        /// </remarks>
+        private static bool TryReadABinomialDifferential(
+            Entity expr, Entity.Variable x, out int power, out ERational exponent,
+            out int inner, out ERational free, out ERational leading, out Entity factor)
+        {
+            power = 0;
+            exponent = ERational.Zero;
+            inner = 0;
+            free = ERational.Zero;
+            leading = ERational.Zero;
+            factor = 1;
+
+            Entity? bracket = null;
+            var exponentFound = ERational.Zero;
+            var powerFound = 0;
+            Entity constantFactor = 1;
+            if (!Read(expr, 1) || bracket is null)
+                return false;
+
+            var lowest = exponentFound.ToLowestTerms();
+            if (lowest.Denominator.Equals(EInteger.One)
+                || !lowest.Numerator.CanFitInInt32() || !lowest.Denominator.CanFitInInt32())
+                return false;
+
+            // `a + b x^n`: one term free of the variable and one monomial in it.
+            Entity? constantPart = null;
+            Entity? monomial = null;
+            foreach (var term in Sumf.LinearChildren(bracket))
+                if (!term.ContainsNode(x))
+                    constantPart = constantPart is null ? term : constantPart + term;
+                else if (monomial is null)
+                    monomial = term;
+                else
+                    return false;
+            if (constantPart is null || monomial is null)
+                return false;
+            if (!TryReadAMonomial(monomial, x, out var degree, out var coefficient) || degree < 2)
+                return false;
+            if (constantPart.Evaled is not Number.Rational constantValue
+                || coefficient.Evaled is not Number.Rational coefficientValue
+                || coefficientValue.ERational.IsZero)
+                return false;
+
+            power = powerFound;
+            exponent = lowest;
+            inner = degree;
+            free = constantValue.ERational;
+            leading = coefficientValue.ERational;
+            factor = constantFactor;
+            return true;
+
+            bool Read(Entity node, int multiplicity)
+            {
+                switch (node)
+                {
+                    case Variable v when v == x:
+                        powerFound += multiplicity;
+                        return true;
+                    case Mulf(var left, var right):
+                        return Read(left, multiplicity) && Read(right, multiplicity);
+                    case Divf(var above, var below):
+                        return Read(above, multiplicity) && Read(below, -multiplicity);
+                    case Powf(var @base, Number.Integer whole)
+                        when @base == x && whole.EInteger.CanFitInInt32():
+                        powerFound += multiplicity * whole.EInteger.ToInt32Checked();
+                        return true;
+                    case Powf(var @base, Number.Rational raised) when @base.ContainsNode(x):
+                        if (bracket is not null && bracket != @base)
+                            return false;
+                        bracket = @base;
+                        exponentFound += ERational.FromInt32(multiplicity) * raised.ERational;
+                        return true;
+                    case Number.Rational rational when node is not Powf:
+                        constantFactor = multiplicity > 0
+                            ? constantFactor * MathS.Pow(rational, multiplicity)
+                            : constantFactor / MathS.Pow(rational, -multiplicity);
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        }
+
+        /// <summary>Reads <c>c * x^n</c>, giving the degree and the coefficient.</summary>
+        private static bool TryReadAMonomial(Entity term, Entity.Variable x, out int degree, out Entity coefficient)
+        {
+            degree = 0;
+            coefficient = 1;
+            switch (term)
+            {
+                case Variable v when v == x:
+                    degree = 1;
+                    return true;
+                case Powf(var @base, Number.Integer whole) when @base == x && whole.EInteger.CanFitInInt32():
+                    degree = whole.EInteger.ToInt32Checked();
+                    return true;
+                case Mulf(var left, var right) when !left.ContainsNode(x):
+                    if (!TryReadAMonomial(right, x, out degree, out var fromRight))
+                        return false;
+                    coefficient = left * fromRight;
+                    return true;
+                case Mulf(var left, var right) when !right.ContainsNode(x):
+                    if (!TryReadAMonomial(left, x, out degree, out var fromLeft))
+                        return false;
+                    coefficient = right * fromLeft;
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
         /// A power of the variable times an odd half-power of a quadratic without a linear term —
         /// <c>x^m (a + b x^2)^(k/2)</c> with <c>k</c> odd — turned into a power of the sine times
         /// a power of the cosine, which
