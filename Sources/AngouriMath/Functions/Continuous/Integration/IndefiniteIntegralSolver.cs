@@ -1322,42 +1322,52 @@ namespace AngouriMath.Functions.Algebra
         /// routes is closed and the other is a search.
         /// </para>
         /// <para>
-        /// <b>Two substitutions, chosen by the sign of the quadratic's leading coefficient.</b>
-        /// With <c>r = sqrt(|a/b|)</c>:
+        /// <b>Three substitutions, chosen by the two signs.</b> With <c>r = sqrt(|a/b|)</c>:
         /// </para>
         /// <list type="bullet">
         /// <item><description>
-        /// <c>b &gt; 0</c>: <c>x = r tan(t)</c>, under which <c>a + b x^2 = a sec(t)^2</c> and
-        /// <c>dx = r sec(t)^2 dt</c>, leaving <c>sin(t)^m cos(t)^(-m-k-2)</c>.
+        /// <c>a &gt; 0, b &gt; 0</c>: <c>x = r tan(t)</c>, under which <c>a + b x^2 = a sec(t)^2</c>
+        /// and <c>dx = r sec(t)^2 dt</c>, leaving <c>sin(t)^m cos(t)^(-m-k-2)</c>.
         /// </description></item>
         /// <item><description>
-        /// <c>b &lt; 0</c>: <c>x = r sin(t)</c>, under which <c>a + b x^2 = a cos(t)^2</c> and
-        /// <c>dx = r cos(t) dt</c>, leaving <c>sin(t)^m cos(t)^(k+1)</c>.
+        /// <c>a &gt; 0, b &lt; 0</c>: <c>x = r sin(t)</c>, under which <c>a + b x^2 = a cos(t)^2</c>
+        /// and <c>dx = r cos(t) dt</c>, leaving <c>sin(t)^m cos(t)^(k+1)</c>.
+        /// </description></item>
+        /// <item><description>
+        /// <c>a &lt; 0, b &gt; 0</c>: <c>x = r sec(t)</c>, added in
+        /// <a href="https://github.com/asc-community/AngouriMath/pull/1277">#1277</a>. Its domain
+        /// is two intervals rather than one, and the sign that makes the second one right is
+        /// written out in <see cref="IntegrateAPowerTimesARadicalQuadratic"/>.
         /// </description></item>
         /// </list>
         /// <para>
-        /// Both need <c>a</c> and <c>b</c> of known sign with <c>a</c> positive, so that the
-        /// radicand is the one the substitution assumes it is. <c>b x^2 - a</c> with both signs
-        /// the other way is the secant substitution and a third branch; it is left out rather
-        /// than guessed at, because its domain is two intervals rather than one and the answer
-        /// owes a condition this does not yet write.
+        /// Both signs negative is a radicand negative everywhere, with no real integrand to
+        /// integrate, and there is no fourth case.
         /// </para>
         /// <para>
         /// <b>Coming back.</b> The answer arrives in <c>sin(t)</c>, <c>cos(t)</c> and
-        /// <c>tan(t)</c>, each of which is algebraic in <c>x</c> under the substitution — no
-        /// <c>arctan</c> appears, because the closed core never leaves a bare <c>t</c> behind.
+        /// <c>tan(t)</c>, each of which is algebraic in <c>x</c> under the substitution, and in
+        /// <c>t</c> itself wherever the recursion bottoms out on <c>int 1 dt</c> — which is where
+        /// an <c>arcsin</c> or an <c>arctan</c> enters an otherwise algebraic answer.
         /// </para>
         /// <para>
-        /// <b>Asked, not volunteered</b>, like the rule it hands to:
-        /// <a href="https://github.com/asc-community/AngouriMath/issues/1265">#1265</a>.
+        /// <b>Volunteered, and deliberately so</b> — this is the one rule of the five that is not
+        /// scoped to <see cref="Integration.AnsweringTheQuestionAsked"/>. Scope is right for a
+        /// rule whose answers only ever let some other search carry on into ground that was
+        /// doomed, which is what
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1265">#1265</a> is about.
+        /// It is wrong for this one, because the sub-integrals it answers are the ones integration
+        /// by parts asks for and then uses: <c>int x arcsin(x) dx</c> leaves
+        /// <c>int x^2/sqrt(1 - x^2) dx</c>, which is squarely this rule's and was refused for
+        /// sitting one level down. Ungating it is worth <b>ten</b> more of the Rubi sample and
+        /// measures free — same wall clock, same timeouts, and the same 28.8 s over a probe of
+        /// integrands that are declined either way.
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveARadicalOfAQuadraticAsTrigonometric(
             Entity expr, Entity.Variable x, bool aWholePowerCounts = false)
         {
-            if (!Integration.AnsweringTheQuestionAsked)
-                return null;
             if (!TryReadAPowerTimesARadicalQuadratic(expr, x, out var power, out var half,
                     out var constant, out var middle, out var quadratic, out var factor))
                 return null;
