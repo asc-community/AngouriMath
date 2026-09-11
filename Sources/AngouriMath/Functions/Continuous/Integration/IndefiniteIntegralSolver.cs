@@ -749,7 +749,22 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _) || rate.Evaled == 0)
                 return null;
+            return IntegrateAPowerOfSineTimesAPowerOfCosine(argument, sinePower, cosinePower, factor, rate);
+        }
 
+        /// <summary>
+        /// <c>int factor * sin(argument)^p cos(argument)^q dx</c>, where <paramref name="rate"/> is
+        /// the derivative of the argument — the closed part of
+        /// <see cref="SolveByTrigonometricPowerSubstitution"/>, separated so that a rule which
+        /// <i>produces</i> such an integrand can use it without going back through the chain.
+        /// </summary>
+        /// <remarks>
+        /// <see langword="null"/> where none of the three substitutions applies, which is the same
+        /// boundary the rule above declines at.
+        /// </remarks>
+        private static Entity? IntegrateAPowerOfSineTimesAPowerOfCosine(
+            Entity argument, ERational sinePower, ERational cosinePower, Entity factor, Entity rate)
+        {
             // What is left after the substitution: u^leading times (1 + insideSign*u^2) raised to
             // expansionPower, all times sign -- which is what the substitution's own derivative
             // contributes, negative for the cosine and positive for the sine and the tangent.
@@ -794,6 +809,241 @@ namespace AngouriMath.Functions.Algebra
             }
 
             return (factor * sign * total / rate).InnerSimplified;
+        }
+
+        /// <summary>
+        /// A power of the variable times an odd half-power of a quadratic without a linear term —
+        /// <c>x^m (a + b x^2)^(k/2)</c> with <c>k</c> odd — turned into a power of the sine times
+        /// a power of the cosine, which
+        /// <see cref="IntegrateAPowerOfSineTimesAPowerOfCosine"/> answers in closed form.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>1/(1 + x^2)^(3/2)</c>, <c>x^5/sqrt(5 + x^2)</c>, <c>1/(x^2 sqrt(1 - x^2))</c> and
+        /// their kin had no antiderivative. A square root of a quadratic is the largest single
+        /// class the Rubi suites leave unanswered here, and this is the part of it that comes out
+        /// <b>closed</b>.
+        /// </para>
+        /// <para>
+        /// <b>Why the trigonometric substitution rather than Euler's.</b> Euler's rationalises the
+        /// radical and lands on a rational function, which then has to be integrated by the whole
+        /// chain — a speculative hand-off that
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1244">#1244</a> measured
+        /// at tens of seconds on integrands it never answers. This lands on <c>sin^p cos^q</c>,
+        /// which is a Laurent polynomial after one more substitution and is integrated term by
+        /// term without asking the integrator anything. Same class of integrand; one of the two
+        /// routes is closed and the other is a search.
+        /// </para>
+        /// <para>
+        /// <b>Two substitutions, chosen by the sign of the quadratic's leading coefficient.</b>
+        /// With <c>r = sqrt(|a/b|)</c>:
+        /// </para>
+        /// <list type="bullet">
+        /// <item><description>
+        /// <c>b &gt; 0</c>: <c>x = r tan(t)</c>, under which <c>a + b x^2 = a sec(t)^2</c> and
+        /// <c>dx = r sec(t)^2 dt</c>, leaving <c>sin(t)^m cos(t)^(-m-k-2)</c>.
+        /// </description></item>
+        /// <item><description>
+        /// <c>b &lt; 0</c>: <c>x = r sin(t)</c>, under which <c>a + b x^2 = a cos(t)^2</c> and
+        /// <c>dx = r cos(t) dt</c>, leaving <c>sin(t)^m cos(t)^(k+1)</c>.
+        /// </description></item>
+        /// </list>
+        /// <para>
+        /// Both need <c>a</c> and <c>b</c> of known sign with <c>a</c> positive, so that the
+        /// radicand is the one the substitution assumes it is. <c>b x^2 - a</c> with both signs
+        /// the other way is the secant substitution and a third branch; it is left out rather
+        /// than guessed at, because its domain is two intervals rather than one and the answer
+        /// owes a condition this does not yet write.
+        /// </para>
+        /// <para>
+        /// <b>Coming back.</b> The answer arrives in <c>sin(t)</c>, <c>cos(t)</c> and
+        /// <c>tan(t)</c>, each of which is algebraic in <c>x</c> under the substitution — no
+        /// <c>arctan</c> appears, because the closed core never leaves a bare <c>t</c> behind.
+        /// </para>
+        /// <para>
+        /// <b>Asked, not volunteered</b>, like the rule it hands to:
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1265">#1265</a>.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveARadicalOfAQuadraticAsTrigonometric(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            if (!TryReadAPowerTimesARadicalQuadratic(expr, x, out var power, out var half,
+                    out var constant, out var middle, out var quadratic, out var factor))
+                return null;
+
+            if (middle.IsZero)
+                return TimesTheFactor(factor,
+                    IntegrateAPowerTimesARadicalQuadratic(expr, x, power, half, constant, quadratic));
+
+            // **Completing the square, and then the same rule again.** `y = x + b/(2c)` turns
+            // `a + b x + c x^2` into `A + c y^2` with `A = a - b^2/(4c)`, which is the shape
+            // above. What the shift costs is the power of the variable outside the radical:
+            // `x^m` is `(y - h)^m`, a sum of `m + 1` terms each of which is this rule's shape
+            // again, so the answer is their sum. That needs `m` to be a non-negative whole
+            // number -- a negative one is not a finite sum -- which is why a negative power
+            // beside a shifted quadratic is declined rather than shifted.
+            if (power < 0)
+                return null;
+            var shift = middle / (ERational.FromInt32(2) * quadratic);
+            var shiftedConstant = constant - middle * middle / (ERational.FromInt32(4) * quadratic);
+            var shifted = (x + Number.Rational.Create(shift)).InnerSimplified;
+
+            Entity total = 0;
+            var binomial = EInteger.One;
+            for (var j = power; j >= 0; j--)
+            {
+                var piece = IntegrateAPowerTimesARadicalQuadratic(
+                    expr, shifted, j, half, shiftedConstant, quadratic);
+                if (piece is null)
+                    return null;
+                total += Number.Integer.Create(binomial)
+                       * MathS.Pow(-Number.Rational.Create(shift), power - j)
+                       * piece;
+                // C(m, j-1) from C(m, j): multiply by j and divide by m - j + 1.
+                binomial = binomial * j / (power - j + 1);
+            }
+            return TimesTheFactor(factor, total);
+        }
+
+        /// <summary>Multiplies an answer by the constant taken out of the integrand, or keeps a decline.</summary>
+        private static Entity? TimesTheFactor(Entity factor, Entity? answer)
+            => answer is null ? null : (factor * answer).InnerSimplified;
+
+        /// <summary>
+        /// <c>int y^m (A + c y^2)^(k/2) dy</c> for odd <c>k</c>, written back in terms of
+        /// <paramref name="inTermsOf"/> -- which is the variable itself where the quadratic had no
+        /// linear term, and the shifted variable where it did.
+        /// </summary>
+        private static Entity? IntegrateAPowerTimesARadicalQuadratic(
+            Entity expr, Entity inTermsOf, int power, int half, ERational constant, ERational quadratic)
+        {
+            // Both coefficients decided, and the constant one positive: that is what makes the
+            // radicand `A(1 + tan^2)` or `A(1 - sin^2)` rather than something whose sign the
+            // substitution would have to guess at. `c y^2 - A`, the signs the other way round, is
+            // the secant substitution -- a third branch whose domain is two intervals rather than
+            // one, so the answer owes a condition this does not write, and it is declined.
+            if (constant.Sign <= 0 || quadratic.IsZero)
+                return null;
+
+            var a = Number.Rational.Create(constant);
+            var b = Number.Rational.Create(quadratic);
+            var r = MathS.Sqrt(Number.Rational.Create(constant / quadratic.Abs()));
+
+            var t = Variable.CreateUnique(expr, "t_trig");
+            // b > 0: y = r tan(t) leaves sin^m cos^(-m-k-2); b < 0: y = r sin(t) leaves
+            // sin^m cos^(k+1). The constant is r^(m+1) A^(k/2) either way.
+            var sinePower = ERational.FromInt32(power);
+            var cosinePower = ERational.FromInt32(
+                quadratic.Sign > 0 ? -power - half - 2 : half + 1);
+            var coefficient = MathS.Pow(r, power + 1) * MathS.Pow(a, Number.Rational.Create(half, 2));
+
+            if (IntegrateAPowerOfSineTimesAPowerOfCosine(t, sinePower, cosinePower, 1, 1) is not { } inT)
+                return null;
+
+            // Back in terms of the variable. Each of the three is algebraic under the
+            // substitution, so no inverse trigonometric function appears -- and the closed core
+            // never leaves a bare `t` behind, which the check at the end confirms rather than
+            // assumes.
+            var radical = MathS.Sqrt((a + b * MathS.Sqr(inTermsOf)).InnerSimplified);
+            var (sine, cosine, tangent) = quadratic.Sign > 0
+                ? (inTermsOf * MathS.Sqrt(b) / radical,
+                   MathS.Sqrt(a) / radical,
+                   inTermsOf * MathS.Sqrt(b) / MathS.Sqrt(a))
+                : (inTermsOf * MathS.Sqrt(-b) / MathS.Sqrt(a),
+                   radical / MathS.Sqrt(a),
+                   inTermsOf * MathS.Sqrt(-b) / radical);
+
+            var answer = inT.Replace(node => node switch
+            {
+                Sinf(var inner) when inner == t => sine,
+                Cosf(var inner) when inner == t => cosine,
+                Tanf(var inner) when inner == t => tangent,
+                _ => node
+            });
+            return answer.ContainsNode(t) ? null : (coefficient * answer).InnerSimplified;
+        }
+
+        /// <summary>
+        /// Reads <paramref name="expr"/> as a rational multiple of
+        /// <c>x^m (a + b x^2)^(k/2)</c> with <c>k</c> odd, however the radical is spelled.
+        /// </summary>
+        /// <remarks>
+        /// The half-power is what makes this rule's rather than the ordinary power rule's: an even
+        /// <c>k</c> is a whole power of a polynomial, which expanding answers. The quadratic has
+        /// no linear term, so a shifted one — <c>x/sqrt(1 + x + x^2)</c> — is not read here and
+        /// wants completing the square first, which is its own step.
+        /// </remarks>
+        private static bool TryReadAPowerTimesARadicalQuadratic(
+            Entity expr, Entity.Variable x, out int power, out int half,
+            out ERational constant, out ERational middle, out ERational quadratic, out Entity factor)
+        {
+            power = 0;
+            half = 0;
+            constant = ERational.Zero;
+            middle = ERational.Zero;
+            quadratic = ERational.Zero;
+            factor = 1;
+
+            Entity? radicandFound = null;
+            var halfFound = 0;
+            var powerFound = 0;
+            Entity constantFactor = 1;
+            var read = Read(expr, 1);
+            if (!read || radicandFound is null || halfFound % 2 == 0)
+                return false;
+            if (!TreeAnalyzer.TryGetPolyQuadratic(radicandFound, x, out var square, out var linear, out var free))
+                return false;
+            if (free.Evaled is not Number.Rational freeValue
+                || linear.Evaled is not Number.Rational linearValue
+                || square.Evaled is not Number.Rational squareValue)
+                return false;
+
+            power = powerFound;
+            half = halfFound;
+            constant = freeValue.ERational;
+            middle = linearValue.ERational;
+            quadratic = squareValue.ERational;
+            factor = constantFactor;
+            return !quadratic.IsZero;
+
+            bool Read(Entity node, int multiplicity)
+            {
+                switch (node)
+                {
+                    case Variable v when v == x:
+                        powerFound += multiplicity;
+                        return true;
+                    case Mulf(var left, var right):
+                        return Read(left, multiplicity) && Read(right, multiplicity);
+                    case Divf(var above, var below):
+                        return Read(above, multiplicity) && Read(below, -multiplicity);
+                    // The radical, in any odd half power: sqrt(Q), Q^(3/2), 1/Q^(5/2).
+                    case Powf(var @base, Number.Rational exponent)
+                        when @base.ContainsNode(x)
+                             && exponent.ERational.Denominator.Equals(EInteger.FromInt32(2))
+                             && exponent.ERational.Numerator.CanFitInInt32():
+                        if (radicandFound is not null && radicandFound != @base)
+                            return false;
+                        radicandFound = @base;
+                        halfFound += multiplicity * exponent.ERational.Numerator.ToInt32Checked();
+                        return true;
+                    // A whole power of the variable, written as one.
+                    case Powf(var @base, Number.Integer exponent)
+                        when @base == x && exponent.EInteger.CanFitInInt32():
+                        powerFound += multiplicity * exponent.EInteger.ToInt32Checked();
+                        return true;
+                    case Number.Rational rational when node is not Powf:
+                        constantFactor = multiplicity > 0
+                            ? constantFactor * MathS.Pow(rational, multiplicity)
+                            : constantFactor / MathS.Pow(rational, -multiplicity);
+                        return true;
+                    default:
+                        return false;
+                }
+            }
         }
 
         /// <summary>
