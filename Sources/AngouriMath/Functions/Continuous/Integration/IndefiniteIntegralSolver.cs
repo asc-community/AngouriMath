@@ -591,7 +591,13 @@ namespace AngouriMath.Functions.Algebra
                 if (polynomialToDifferentiate == 0) return 0;
                 if (currentRecursion == MathS.Settings.MaxExpansionTermCount) return null;
 
-                var integral = Integration.ComputeIndefiniteIntegral(toIntegrate, x, false);
+                // A power of the sine times a power of the cosine goes to its closed rule
+                // directly, since that rule answers only at the top and this is one level
+                // down: `u sin(u)^3/cos(u)^2` is one step of parts against `sin^3/cos^2`, which
+                // the rule answers at once and the chain below it spent nine seconds declining
+                // through the half-angle substitution.
+                var integral = SolveByTrigonometricPowerSubstitution(toIntegrate, x, asked: true)
+                    ?? Integration.ComputeIndefiniteIntegral(toIntegrate, x, false);
                 if (integral is null) return null;
                 var differential = polynomialToDifferentiate.Differentiate(x);
                 var result = IntegrateByPartsPolynomial(differential, integral, x, currentRecursion + 1);
@@ -737,6 +743,22 @@ namespace AngouriMath.Functions.Algebra
                     return regrouped;
             }
 
+            // **A polynomial over something else is the polynomial times its reciprocal**, and
+            // Case 1 reads a product: `x/cos(x)^2` reached nothing where `x*sec(x)^2` is one
+            // step of parts, and it is what `arcsin(x)/sqrt(1 - x^2)^3` becomes under
+            // `x = sin(u)`. Asked, not volunteered, like the regrouping below and for the same
+            // reason: the reciprocal opens a search of its own.
+            // Not over an algebraic function: a polynomial over a radical or over another
+            // polynomial is the rational integrator's or Euler's, both of which have already
+            // declined it by the time this runs, and a step of parts against it opens their
+            // search again a level down -- one second more, measured, on a decline.
+            if (Integration.AnsweringTheQuestionAsked
+                && expr is Divf(var above, var below) && below.ContainsNode(x) && !IsAlgebraicIn(below, x)
+                && TryRegroupAroundThePolynomialOverTheBar(above, below, x) is var (polynomialAbove, restOfTheQuotient)
+                && polynomialAbove is not null && restOfTheQuotient is not null
+                && TrySplit(polynomialAbove, restOfTheQuotient) is { } overTheBar)
+                return overTheBar;
+
             // **And once more around the factor LIATE differentiates first, wherever it sits.**
             // The block above only runs on a product, so `arcsin(x)/(x^2*sqrt(1 - x^2))` never
             // reached this rule at all -- its top node is a quotient. Written as the product it
@@ -788,6 +810,16 @@ namespace AngouriMath.Functions.Algebra
 
             return null;
         }
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> is built from <paramref name="x"/> by the four
+        /// operations and rational powers alone: no function of <paramref name="x"/> anywhere.
+        /// </summary>
+        private static bool IsAlgebraicIn(Entity expr, Entity.Variable x)
+            => expr.Nodes.All(node =>
+                !node.ContainsNode(x)
+                || node is Variable or Sumf or Minusf or Mulf or Divf
+                || node is Powf(_, var power) && power is Number.Rational);
 
         /// <summary>
         /// Whether <paramref name="expr"/> is a quotient of polynomials in <paramref name="x"/>,
@@ -935,6 +967,26 @@ namespace AngouriMath.Functions.Algebra
                 else
                     rest = rest is null ? factor : rest * factor;
             return polynomial is null || rest is null ? (null, null) : (polynomial, rest);
+        }
+
+        /// <summary>
+        /// The polynomial factors of a quotient's numerator against the rest of the quotient:
+        /// <c>u sec(u)^2/tan(u)^2</c> is <c>u</c> and <c>sec(u)^2/tan(u)^2</c>. The polynomial
+        /// has to be in <paramref name="x"/>, or there is nothing to differentiate.
+        /// </summary>
+        private static (Entity? Polynomial, Entity? Remainder) TryRegroupAroundThePolynomialOverTheBar(
+            Entity above, Entity below, Entity.Variable x)
+        {
+            Entity? polynomial = null;
+            Entity? rest = null;
+            foreach (var factor in Mulf.LinearChildren(above))
+                if (MathS.TryPolynomial(factor, x, out _) || !factor.ContainsNode(x))
+                    polynomial = polynomial is null ? factor : polynomial * factor;
+                else
+                    rest = rest is null ? factor : rest * factor;
+            if (polynomial is null || !polynomial.ContainsNode(x))
+                return (null, null);
+            return (polynomial, rest is null ? Integer.One / below : rest / below);
         }
 
         internal static Entity? SolveLogarithmic(Entity expr, Entity.Variable x, bool integrateByParts = true) => expr switch
@@ -1181,9 +1233,9 @@ namespace AngouriMath.Functions.Algebra
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
-        internal static Entity? SolveByTrigonometricPowerSubstitution(Entity expr, Entity.Variable x)
+        internal static Entity? SolveByTrigonometricPowerSubstitution(Entity expr, Entity.Variable x, bool asked = false)
         {
-            if (!Integration.AnsweringTheQuestionAsked)
+            if (!asked && !Integration.AnsweringTheQuestionAsked)
                 return null;
             if (!TryReadSineCosinePowers(expr, out var argument, out var sinePower, out var cosinePower, out var factor))
                 return null;
@@ -1641,9 +1693,91 @@ namespace AngouriMath.Functions.Algebra
             if (!Integration.AnsweringTheQuestionAsked)
                 return null;
             if (!TryReadAnExponentialTimesATrigonometric(expr, x,
-                    out var polynomial, out var rate, out var frequency, out var onTheCosine, out var onTheSine))
+                    out var polynomial, out var rate, out var frequency, out var sinePower, out var cosinePower))
                 return null;
 
+            // One sine or one cosine, or neither, is the shape the loop closes. A power of either,
+            // or both together, is a sum of multiple angles -- `sin^3 u = (3 sin u - sin 3u)/4` --
+            // and each term of that sum is the shape again, at its own frequency, so the loop
+            // runs once per term and the answers add. `e^u sin(u)^3` is what
+            // `e^(arcsin(x)) x^3/sqrt(1 - x^2)` becomes under `x = sin(u)`, and it was declined
+            // for the cube.
+            if (sinePower + cosinePower <= 1)
+                return IntegrateAPolynomialTimesAnExponentialTimesOneTrigonometric(
+                    polynomial, rate, frequency, sinePower == 1 ? 0 : 1, sinePower == 1 ? 1 : 0, x);
+
+            Entity total = 0;
+            foreach (var (multiple, isSine, coefficient) in MultipleAngles(sinePower, cosinePower))
+            {
+                var term = IntegrateAPolynomialTimesAnExponentialTimesOneTrigonometric(
+                    (coefficient * polynomial).InnerSimplified, rate, (multiple * frequency).InnerSimplified,
+                    isSine ? 0 : 1, isSine ? 1 : 0, x);
+                if (term is null)
+                    return null;
+                total += term;
+            }
+            return total.InnerSimplified;
+        }
+
+        /// <summary>
+        /// <c>sin^s cos^c</c> of one argument as a sum of sines and cosines of its multiples:
+        /// each entry is a multiple, whether it is a sine, and its coefficient. Built by
+        /// multiplying one sine or cosine in at a time through the product-to-sum identities,
+        /// which keeps the count of terms linear in the powers.
+        /// </summary>
+        private static List<(int Multiple, bool IsSine, Entity Coefficient)> MultipleAngles(int sinePower, int cosinePower)
+        {
+            var terms = new Dictionary<(int, bool), Entity> { [(0, false)] = Number.Integer.One };
+            void Add(int k, bool isSine, Entity coefficient)
+            {
+                // sin(-k t) = -sin(k t), cos(-k t) = cos(k t), sin(0) = 0.
+                if (k < 0)
+                {
+                    k = -k;
+                    if (isSine) coefficient = -coefficient;
+                }
+                if (k == 0 && isSine)
+                    return;
+                terms[(k, isSine)] = terms.TryGetValue((k, isSine), out var already) ? already + coefficient : coefficient;
+            }
+            for (var i = 0; i < sinePower + cosinePower; i++)
+            {
+                var bySine = i < sinePower;
+                var next = new Dictionary<(int, bool), Entity>();
+                var previous = terms;
+                terms = next;
+                foreach (var pair in previous)
+                {
+                    var (k, isSine) = pair.Key;
+                    var half = (pair.Value / 2).InnerSimplified;
+                    if (bySine)
+                    {
+                        // cos(k t) sin(t) = (sin((k+1) t) - sin((k-1) t))/2
+                        // sin(k t) sin(t) = (cos((k-1) t) - cos((k+1) t))/2
+                        if (!isSine) { Add(k + 1, true, half); Add(k - 1, true, -half); }
+                        else { Add(k - 1, false, half); Add(k + 1, false, -half); }
+                    }
+                    else
+                    {
+                        // cos(k t) cos(t) = (cos((k-1) t) + cos((k+1) t))/2
+                        // sin(k t) cos(t) = (sin((k+1) t) + sin((k-1) t))/2
+                        if (!isSine) { Add(k - 1, false, half); Add(k + 1, false, half); }
+                        else { Add(k + 1, true, half); Add(k - 1, true, half); }
+                    }
+                }
+            }
+            return terms.Select(pair => (pair.Key.Item1, pair.Key.Item2, pair.Value.InnerSimplified))
+                        .Where(term => term.Item3 != Number.Integer.Zero)
+                        .ToList();
+        }
+
+        /// <summary>
+        /// <c>int P(x) e^(a x) (c cos(b x) + d sin(b x)) dx</c>, closed by as many rounds of parts
+        /// as <c>P</c> has degree.
+        /// </summary>
+        private static Entity? IntegrateAPolynomialTimesAnExponentialTimesOneTrigonometric(
+            Entity polynomial, Entity rate, Entity frequency, Entity onTheCosine, Entity onTheSine, Entity.Variable x)
+        {
             // a^2 + b^2, which is zero only when both are, and then the integrand is a polynomial.
             var scale = (MathS.Sqr(rate) + MathS.Sqr(frequency)).InnerSimplified;
             if (scale == 0)
@@ -1691,6 +1825,12 @@ namespace AngouriMath.Functions.Algebra
         private const int MaximumByPartsSteps = 64;
 
         /// <summary>
+        /// The largest total power of the sine and the cosine the rule expands into multiple
+        /// angles; past it the sum has more terms than any answer is worth.
+        /// </summary>
+        private const int MaximumTrigonometricPower = 8;
+
+        /// <summary>
         /// Reads <paramref name="expr"/> as <c>P(x) e^(a x) (c cos(b x) + d sin(b x))</c>, where
         /// <c>P</c> is a polynomial and <c>a</c> and <c>b</c> are free of the variable.
         /// </summary>
@@ -1700,13 +1840,13 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         private static bool TryReadAnExponentialTimesATrigonometric(
             Entity expr, Entity.Variable x, out Entity polynomial,
-            out Entity rate, out Entity frequency, out Entity onTheCosine, out Entity onTheSine)
+            out Entity rate, out Entity frequency, out int sinePower, out int cosinePower)
         {
             polynomial = 1;
             rate = 0;
             frequency = 0;
-            onTheCosine = 1;
-            onTheSine = 0;
+            sinePower = 0;
+            cosinePower = 0;
 
             Entity? rateFound = null;
             Entity? frequencyFound = null;
@@ -1715,9 +1855,10 @@ namespace AngouriMath.Functions.Algebra
             Entity polynomialPart = 1;
             if (!Read(expr, 1))
                 return false;
-            // At most one trigonometric factor, and it is either a sine or a cosine: a product of
-            // two is a different shape, which the product-to-sum rule takes apart first.
-            if (cosines + sines > 1 || cosines < 0 || sines < 0)
+            // Powers of the sine and the cosine, of one argument, above the bar: a reciprocal
+            // sine or cosine is a different integrand. A secant or a cosecant *below* the bar is
+            // a cosine or a sine above it and is read as one.
+            if (cosines < 0 || sines < 0 || cosines + sines > MaximumTrigonometricPower)
                 return false;
             if (!MathS.TryPolynomial(polynomialPart, x, out var asPolynomial)
                 && polynomialPart.ContainsNode(x))
@@ -1726,8 +1867,8 @@ namespace AngouriMath.Functions.Algebra
             polynomial = polynomialPart.ContainsNode(x) ? asPolynomial! : polynomialPart;
             rate = rateFound ?? 0;
             frequency = frequencyFound ?? 0;
-            onTheCosine = sines == 1 ? 0 : 1;
-            onTheSine = sines == 1 ? 1 : 0;
+            sinePower = sines;
+            cosinePower = cosines;
             // A bare polynomial is the power rule's, and a polynomial times a bare exponential or
             // a bare sine already came out; what is new is the two together. Reading them all the
             // same way costs nothing and keeps the rule one thing.
@@ -1742,6 +1883,24 @@ namespace AngouriMath.Functions.Algebra
                         return AgreesOnTheFrequency(argument);
                     case Cosf(var argument) when multiplicity == 1:
                         cosines++;
+                        return AgreesOnTheFrequency(argument);
+                    case Cosecantf(var argument) when multiplicity == -1:
+                        sines++;
+                        return AgreesOnTheFrequency(argument);
+                    case Secantf(var argument) when multiplicity == -1:
+                        cosines++;
+                        return AgreesOnTheFrequency(argument);
+                    case Powf(Sinf(var argument), Number.Integer power) when multiplicity == 1 && power.EInteger.Sign > 0 && power.EInteger.CanFitInInt32():
+                        sines += power.EInteger.ToInt32Unchecked();
+                        return AgreesOnTheFrequency(argument);
+                    case Powf(Cosf(var argument), Number.Integer power) when multiplicity == 1 && power.EInteger.Sign > 0 && power.EInteger.CanFitInInt32():
+                        cosines += power.EInteger.ToInt32Unchecked();
+                        return AgreesOnTheFrequency(argument);
+                    case Powf(Cosecantf(var argument), Number.Integer power) when multiplicity == -1 && power.EInteger.Sign > 0 && power.EInteger.CanFitInInt32():
+                        sines += power.EInteger.ToInt32Unchecked();
+                        return AgreesOnTheFrequency(argument);
+                    case Powf(Secantf(var argument), Number.Integer power) when multiplicity == -1 && power.EInteger.Sign > 0 && power.EInteger.CanFitInInt32():
+                        cosines += power.EInteger.ToInt32Unchecked();
                         return AgreesOnTheFrequency(argument);
                     case Powf(var @base, var power)
                         when !@base.ContainsNode(x) && power.ContainsNode(x) && @base != 0:
@@ -2317,6 +2476,166 @@ namespace AngouriMath.Functions.Algebra
                     return false;
             }
         }
+
+        /// <summary>
+        /// An integrand holding an inverse trigonometric function of the variable itself,
+        /// integrated by the substitution that undoes it: <c>x = sin(u)</c> for <c>arcsin(x)</c>,
+        /// <c>x = tan(u)</c> for <c>arctan(x)</c>, <c>x = cos(u)</c> and <c>x = sec(u)</c> for the
+        /// other two.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>e^(arcsin(x)) x^3/sqrt(1 - x^2)</c> had no antiderivative. Under <c>x = sin(u)</c> it
+        /// is <c>e^u sin(u)^3</c>, which the product-to-sum rewrite and the closed
+        /// exponential-times-trigonometric rule answer between them; <c>x arcsec(x)/sqrt(x^2 - 1)</c>
+        /// is <c>u sec(u)^2</c> under <c>x = sec(u)</c>, one step of parts. The general
+        /// substitution does not find these because it substitutes for a subtree and asks what
+        /// is left, and what is left here is <c>x</c> itself, which only the <b>inverse</b>
+        /// substitution removes -- the same reason <see cref="SolveByLogarithmSubstitution"/>
+        /// exists beside it.
+        /// </para>
+        /// <para>
+        /// <b>The radical goes by construction.</b> <c>sqrt(1 - x^2)</c> under <c>x = sin(u)</c>
+        /// is <c>cos(u)</c> on the principal branch, where <c>u</c> lies in <c>[-pi/2, pi/2]</c>
+        /// and the cosine is not negative; substituting and simplifying instead would leave
+        /// <c>sqrt(1 - sin(u)^2)</c>, which the simplifier is right not to call <c>cos(u)</c>.
+        /// So <c>(1 - x^2)^(k/2)</c> becomes <c>cos(u)^k</c> directly, and likewise
+        /// <c>(1 + x^2)^(k/2)</c> into <c>sec(u)^k</c> for the tangent and <c>(x^2 - 1)^(k/2)</c>
+        /// into <c>tan(u)^k</c> for the secant, each on its principal branch. That branch is the
+        /// one the inverse function is defined on, so the answer holds wherever the integrand
+        /// is read through it.
+        /// </para>
+        /// <para>
+        /// Exactly one inverse function, of the bare variable, and nothing left in <c>x</c>
+        /// afterwards; otherwise declined. Handed to the integrator in <c>u</c>, where the
+        /// trigonometric rules are.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByInverseTrigonometricSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // The one inverse function of the bare variable.
+            Entity? inverse = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not (Arcsinf or Arccosf or Arctanf or Arcsecantf))
+                    continue;
+                if (node.DirectChildren.First() != x)
+                    return null;
+                if (inverse is not null && inverse != node)
+                    return null;
+                inverse = node;
+            }
+            if (inverse is null)
+                return null;
+
+            var u = Variable.CreateUnique(expr, "u_inv");
+            // x in terms of u, dx/du, the quadratic whose root goes by construction and what it
+            // becomes, and the way back.
+            Entity xInU, dxdu, radicandBase, root;
+            switch (inverse)
+            {
+                case Arcsinf:
+                    (xInU, dxdu, radicandBase, root) = (MathS.Sin(u), MathS.Cos(u), 1 - MathS.Sqr(x), MathS.Cos(u));
+                    break;
+                case Arccosf:
+                    (xInU, dxdu, radicandBase, root) = (MathS.Cos(u), -MathS.Sin(u), 1 - MathS.Sqr(x), MathS.Sin(u));
+                    break;
+                case Arctanf:
+                    (xInU, dxdu, radicandBase, root) = (MathS.Tan(u), MathS.Sqr(MathS.Sec(u)), 1 + MathS.Sqr(x), MathS.Sec(u));
+                    break;
+                default:
+                    (xInU, dxdu, radicandBase, root) = (MathS.Sec(u), MathS.Sec(u) * MathS.Tan(u), MathS.Sqr(x) - 1, MathS.Tan(u));
+                    break;
+            }
+
+            // What the substitution is for: a radical of the quadratic it removes, or an
+            // exponential of the inverse function, which it turns into `e^u`. With neither the
+            // integrand is by parts' -- `x arcsin(x)` is `u sin(u) cos(u)` under the sine, an
+            // answer in `sin(2 arcsin(x))` where parts gives one in `x` -- and the time spent
+            // here is spent on nothing: `x arctan(x)^2 ln(1 + x^2)` cost 0.6 s of it.
+            var radicalsRemoved = 0;
+            var rewritten = expr
+                .Substitute(inverse, u)
+                .Replace(node =>
+                {
+                    if (!TryReadAHalfPower(node, out var @base, out var numerator)
+                        || !IsTheSameQuadratic(@base, radicandBase, x))
+                        return node;
+                    radicalsRemoved++;
+                    return MathS.Pow(root, numerator);
+                });
+            var exponentialOfTheInverse = expr.Nodes.Any(node =>
+                node is Powf(var @base, var power) && !@base.ContainsNode(x) && power.ContainsNode(inverse));
+            if (radicalsRemoved == 0 && !exponentialOfTheInverse)
+                return null;
+            // And nothing else of `x` under a root, which the construction did not reach:
+            // `x^3 arcsin(x)/sqrt(1 - x^4)` under the sine is a root of `1 - sin(u)^4`, worse
+            // than what it came from, and 1.4 s of declining it.
+            if (rewritten.Nodes.Any(node =>
+                    node is Powf(var @base, Number.Rational power) && power is not Number.Integer && @base.ContainsNode(x)))
+                return null;
+            rewritten = rewritten.Substitute(x, xInU);
+            if (rewritten.ContainsNode(x))
+                return null;
+
+            // As one quotient with the common factors cancelled: `x/sqrt(1 - x^2)` under the
+            // sine leaves `sin(u) cos(u)/cos(u)`, and the closed exponential-times-trigonometric
+            // rule reads a cosine above the bar and not one below it.
+            var (numerator, denominator) = Functions.SingleQuotient.Of((rewritten * dxdu).InnerSimplified);
+            var integrand = CancelCommonFactors(numerator, denominator);
+            if (integrand is Providedf(var inner, _))
+                integrand = inner;
+
+            // The same question in another variable, not a step in the search for it: asked at
+            // the top when this was, so the closed rules that answer only at the top --
+            // `e^u sin(u)^3` is the exponential-times-trigonometric rule's -- are consulted.
+            return Integration.ComputeAsAQuestionOfItsOwn(integrand, u, integrateByParts) is { } result
+                ? result.Substitute(u, inverse)
+                : null;
+        }
+
+        /// <summary>
+        /// <c>base^(n/2)</c> in either of its spellings, <c>(base)^(3/2)</c> or <c>sqrt(base)^3</c>:
+        /// the second is the first on the principal branch, since <c>Log(sqrt(z)) = Log(z)/2</c>
+        /// exactly, so <c>(z^(1/2))^n = z^(n/2)</c> for every integer <c>n</c>.
+        /// </summary>
+        private static bool TryReadAHalfPower(Entity node, out Entity @base, out int numerator)
+        {
+            @base = 0;
+            numerator = 0;
+            switch (node)
+            {
+                case Powf(var inner, Number.Rational half)
+                    when half is not Number.Integer
+                         && half.ERational.Denominator.Equals(EInteger.FromInt32(2))
+                         && half.ERational.Numerator.CanFitInInt32():
+                    @base = inner;
+                    numerator = half.ERational.Numerator.ToInt32Unchecked();
+                    return true;
+                case Powf(Powf(var inner, Number.Rational half), Number.Integer power)
+                    when half is not Number.Integer
+                         && half.ERational.Denominator.Equals(EInteger.FromInt32(2))
+                         && half.ERational.Numerator.CanFitInInt32()
+                         && power.EInteger.CanFitInInt32():
+                    @base = inner;
+                    numerator = half.ERational.Numerator.ToInt32Unchecked() * power.EInteger.ToInt32Unchecked();
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Whether <paramref name="candidate"/> is the quadratic <paramref name="wanted"/> in
+        /// <paramref name="x"/>, by coefficients rather than by spelling.
+        /// </summary>
+        private static bool IsTheSameQuadratic(Entity candidate, Entity wanted, Entity.Variable x)
+            => TreeAnalyzer.TryGetPolyQuadratic(candidate, x, out var a, out var b, out var c)
+               && TreeAnalyzer.TryGetPolyQuadratic(wanted, x, out var a2, out var b2, out var c2)
+               && (a - a2).Evaled is Number.Complex { IsZero: true }
+               && (b - b2).Evaled is Number.Complex { IsZero: true }
+               && (c - c2).Evaled is Number.Complex { IsZero: true };
 
         /// <summary>
         /// An integrand that is a function of <c>ln(x)</c> and of nothing else, integrated by the

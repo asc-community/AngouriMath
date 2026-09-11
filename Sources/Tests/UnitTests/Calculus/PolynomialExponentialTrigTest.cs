@@ -105,10 +105,56 @@ namespace AngouriMath.Tests.Calculus
         public void TheDegenerateCorners(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// A power of the sine or the cosine, or a product of the two, of one argument: a sum
+        /// of sines and cosines of its multiples, each of which is the shape the loop closes.
+        /// <c>e^x sin(x)^3</c> is what <c>e^(arcsin(x)) x^3/sqrt(1 - x^2)</c> becomes under
+        /// <c>x = sin(u)</c>, and it was declined for the cube; a secant or a cosecant under the
+        /// bar is a cosine or a sine above it and is read as one.
+        /// </summary>
+        [Theory]
+        [InlineData("e^x*sin(x)^3")]
+        [InlineData("e^x*cos(x)^2")]
+        [InlineData("e^x*sin(x)^2*cos(x)")]
+        [InlineData("e^x*sin(x)^4*cos(x)^3")]
+        [InlineData("e^(2*x)*cos(3*x)^2")]
+        [InlineData("x*e^x*cos(x)^2")]
+        [InlineData("x^2*e^(-x)*sin(2*x)^3")]
+        [InlineData("e^x/sec(x)")]
+        [InlineData("e^x/csc(x)^2")]
+        [InlineData("2^x*sin(x)^2")]
+        public void APowerOfTheSineOrTheCosine(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// The powers a symbol away from the numbers: <c>e^(a x) sin(b x)^2</c> with <c>a</c> and
+        /// <c>b</c> pinned only when differentiating back.
+        /// </summary>
+        [Fact]
+        public void ASymbolicRateAndFrequency()
+        {
+            var integrand = "e^(a*x)*sin(b*x)^2".ToEntity();
+            var integral = integrand.Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.DoesNotContain("NaN", integral.Stringize());
+
+            var derivative = integral.Substitute("C", 0).Differentiate("x").Substitute("a", 0.7).Substitute("b", 1.3);
+            var original = integrand.Substitute("a", 0.7).Substitute("b", 1.3);
+            foreach (var at in Points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                var difference = Math.Abs((double)(got - want).RealPart)
+                               + Math.Abs((double)(got - want).ImaginaryPart);
+                Assert.True(difference / Math.Max(1.0, Math.Abs((double)want.RealPart)) < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        /// <summary>
         /// What the read must refuse: a bare polynomial, which is the power rule's; a phase in
         /// the trigonometric argument, which wants the angle-sum identity first; two
-        /// trigonometric factors, which the product-to-sum rule takes apart; and a factor that is
-        /// neither polynomial nor exponential nor trigonometric.
+        /// trigonometric factors of different arguments, which the product-to-sum rule takes
+        /// apart; a factor that is neither polynomial nor exponential nor trigonometric; a
+        /// sine below the bar; and a power past the bound on the expansion.
         /// </summary>
         [Theory]
         [InlineData("x^2")]
@@ -116,6 +162,8 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x*sin(x)*cos(2*x)")]
         [InlineData("x*ln(x)*e^x")]
         [InlineData("x*e^(x^2)*cos(x)")]
+        [InlineData("e^x/sin(x)")]
+        [InlineData("e^x*sin(x)^9")]
         public void WhatTheReadRefuses(string integrand)
         {
             var integral = integrand.ToEntity().Integrate("x");

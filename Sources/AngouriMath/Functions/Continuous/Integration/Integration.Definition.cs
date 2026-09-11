@@ -267,10 +267,15 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!AnsweringTheQuestionAsked)
                 return ComputeIndefiniteIntegral(expr, x, integrateByParts);
+            // Past the entry check on purpose: a depth of zero there means a fresh question,
+            // and empties the set of integrals in progress and forgets that the descent was
+            // truncated. This is not a fresh question -- the integrand this one was made from
+            // is still open above it, and its place in that set is what stops the search below
+            // from reaching it again and following it round.
             descentDepth--;
             try
             {
-                return ComputeIndefiniteIntegral(expr, x, integrateByParts);
+                return ComputeIndefiniteIntegralGuarded(expr, x, integrateByParts);
             }
             finally
             {
@@ -325,7 +330,15 @@ namespace AngouriMath.Functions.Algebra
                 descentTruncated = false;
                 inProgress?.Clear();
             }
+            return ComputeIndefiniteIntegralGuarded(expr, x, integrateByParts);
+        }
 
+        /// <summary>
+        /// <see cref="ComputeIndefiniteIntegral"/> past its entry check: the cycle guard, the
+        /// depth, and the memo.
+        /// </summary>
+        private static Entity? ComputeIndefiniteIntegralGuarded(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
             // Renamed so that the same integral under two different variable names is one entry.
             var cycleKey = (expr.Substitute(x, CycleVariable), integrateByParts);
             var open = inProgress ??= new HashSet<(Entity, bool)>();
@@ -375,7 +388,25 @@ namespace AngouriMath.Functions.Algebra
             if (into.TryGetValue(otherScope, out var elsewhere) && elsewhere is not null)
                 return elsewhere;
 
-            var computed = ComputeIndefiniteIntegralUncached(expr, x, integrateByParts);
+            // Whether the descent ran out *inside this computation*, which is the only truncation
+            // that says anything about this key. The flag is one per thread, so it is cleared
+            // for the duration and what it held before is put back, joined with what happened
+            // here: a decline reached after some unrelated branch above was cut short is still a
+            // decline, and it used to go uncached along with everything else asked after that
+            // branch -- a term of a top-level sum re-did its declined sub-integrals for that.
+            var truncatedBefore = descentTruncated;
+            descentTruncated = false;
+            Entity? computed;
+            bool truncatedHere;
+            try
+            {
+                computed = ComputeIndefiniteIntegralUncached(expr, x, integrateByParts);
+            }
+            finally
+            {
+                truncatedHere = descentTruncated;
+                descentTruncated = truncatedBefore || truncatedHere;
+            }
 
             // Only kept if those settings still hold. Working the answer out runs simplification,
             // which opens scopes of its own; one still open means this answer was computed under
@@ -385,7 +416,7 @@ namespace AngouriMath.Functions.Algebra
             // reached from less deep may well be answerable. A non-null answer is kept whatever
             // happened elsewhere, since an antiderivative that was found is correct regardless of
             // how deep the search that found it went.
-            if (SettingsState.StillHolds(stamp) && (computed is not null || !descentTruncated))
+            if (SettingsState.StillHolds(stamp) && (computed is not null || !truncatedHere))
             {
                 // Emptied rather than grown without end. Nothing here expires on its own — the
                 // settings holding still is the whole condition for keeping an answer — so a
@@ -457,6 +488,9 @@ namespace AngouriMath.Functions.Algebra
             // is why the general substitution does not find it and why it pays: the integrator
             // answers an exponential times almost anything.
             if ((answer = IndefiniteIntegralSolver.SolveByLogarithmSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // And the inverse trigonometric functions' own, beside the logarithm's and for the
+            // same reason: `x = sin(u)` removes the `x` that substituting for `arcsin(x)` leaves.
+            if ((answer = IndefiniteIntegralSolver.SolveByInverseTrigonometricSubstitution(expr, x, integrateByParts)) is { }) return answer;
             // And the third of Bioche's rules: a quotient of homogeneous polynomials in sine and
             // cosine, which the tangent turns into a rational function whenever the two degrees
             // differ by an even number. After the tangent substitution above, which answers an

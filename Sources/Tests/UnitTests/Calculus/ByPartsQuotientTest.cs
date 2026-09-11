@@ -94,6 +94,25 @@ namespace AngouriMath.Tests.Calculus
         public void TheFactorIsTakenOutOfTheMiddle(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// A polynomial over something else is the polynomial times its reciprocal, and that is
+        /// the product the polynomial case reads: <c>x/cos(x)^2</c> reached nothing where
+        /// <c>x sec(x)^2</c> is one step of parts. The polynomial factors of the numerator are
+        /// gathered wherever they sit, so <c>u sec(u)^2/tan(u)^2</c> is <c>u</c> against the rest.
+        /// Not over an algebraic function, which is the rational integrator's or Euler's and has
+        /// already been declined by both.
+        /// </summary>
+        [Theory]
+        [InlineData("x/cos(x)^2", "x*sec(x)^2")]
+        [InlineData("x/sin(x)^2", "x*csc(x)^2")]
+        [InlineData("x*sin(x)^3/cos(x)^2", "x*sin(x)^3*sec(x)^2")]
+        [InlineData("x*sec(x)^2/tan(x)^2", "x*csc(x)^2")]
+        public void APolynomialOverTheBar(string quotient, string product)
+        {
+            DifferentiatesBack(quotient);
+            DifferentiatesBack(product);
+        }
+
+        /// <summary>
         /// <c>ln|x|/x</c>, which a recorded verdict called unsolvable and named the logarithmic
         /// integral for. It is not: <c>Li(x)</c> is the antiderivative of <c>1/ln(x)</c>, and
         /// this one is <c>ln|x|^2/2</c>. What comes out is that up to a constant — on the
