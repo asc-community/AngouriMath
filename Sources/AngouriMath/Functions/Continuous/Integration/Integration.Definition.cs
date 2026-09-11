@@ -152,8 +152,18 @@ namespace AngouriMath.Functions.Algebra
         /// which matters, because the library opens and closes thousands of balanced scopes while
         /// simplifying and a change count is therefore never still.
         /// </para>
+        /// <para>
+        /// <b>A decline is held with the scope it was made in.</b> Five rules answer only the
+        /// question asked (<see cref="AnsweringTheQuestionAsked"/>) and decline the same
+        /// integrand one level down, so a <see langword="null"/> computed at depth two says
+        /// nothing about depth one — and once held without the scope it was served to the
+        /// top-level ask: <c>sec(x)^3</c>, tried and declined inside another rule's search, then
+        /// asked for directly and declined from the cache in two milliseconds. The key carries
+        /// the scope, and a lookup takes a decline only from its own scope and an answer from
+        /// either, since an antiderivative that was found is right wherever it is asked for.
+        /// </para>
         /// </remarks>
-        [System.ThreadStatic] private static Dictionary<(Entity, Entity.Variable, bool), Entity?>? answered;
+        [System.ThreadStatic] private static Dictionary<(Entity, Entity.Variable, bool, bool), Entity?>? answered;
 
         /// <summary>The settings <see cref="answered"/> was filled under.</summary>
         [System.ThreadStatic] private static object?[]? answeredUnder;
@@ -329,9 +339,12 @@ namespace AngouriMath.Functions.Algebra
             var into = answered;
             var stamp = answeredUnder;
 
-            var key = (expr, x, integrateByParts);
+            var key = (expr, x, integrateByParts, AnsweringTheQuestionAsked);
             if (into.TryGetValue(key, out var already))
                 return already;
+            var otherScope = (expr, x, integrateByParts, !AnsweringTheQuestionAsked);
+            if (into.TryGetValue(otherScope, out var elsewhere) && elsewhere is not null)
+                return elsewhere;
 
             var computed = ComputeIndefiniteIntegralUncached(expr, x, integrateByParts);
 
@@ -478,6 +491,11 @@ namespace AngouriMath.Functions.Algebra
             // before it, since a quotient that is rational in e^(k x) is that rule's to answer
             // whole and comes out in better shape for it.
             if ((answer = IndefiniteIntegralSolver.SolveByDividingByAnExponential(expr, x, integrateByParts)) is { }) return answer;
+            // An exponential of something rational times something rational, as the derivative
+            // of `e^h N/D`: Liouville says that is the only elementary shape it can have, and
+            // an ansatz finds it or nothing does. After the substitutions, which answer the
+            // linear-exponent cases in their own terms.
+            if ((answer = IndefiniteIntegralSolver.SolveByExponentialAnsatz(expr, x)) is { }) return answer;
             // Last of the rewrites, because it is the only one that fires on an integrand nothing
             // is wrong with -- it clears a parameter rather than a shape -- so everything that
             // can answer the problem as written gets to try first.

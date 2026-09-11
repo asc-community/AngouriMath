@@ -129,14 +129,23 @@ namespace AngouriMath.Tests.Calculus
 
         /// <summary>
         /// What is not this shape and must stay declined by it rather than mis-answered: a
-        /// trinomial, a repeated binomial, a degree below three, and an improper fraction —
-        /// the last of which the division in front takes, so it is answered and not by this.
+        /// trinomial with no rational root, which no rule reads and
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1285">#1285</a> is about.
         /// </summary>
         [Theory]
         [InlineData("1/(x^3 + x + 1)")]
-        [InlineData("1/(x^3 + 2)^2")]
         public void OutsideTheShapeNothingIsClaimed(string integrand)
             => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
+
+        /// <summary>
+        /// A repeated binomial is the Hermite reduction's first, and what that leaves over the
+        /// binomial itself is this rule's: <c>1/(x^3 + 2)^2</c> is <c>x/(6(x^3 + 2))</c> plus a
+        /// third of <c>int 1/(x^3 + 2)</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(x^3 + 2)^2")]
+        [InlineData("x/(x^5 + 1)^2")]
+        public void ARepeatedBinomialIsHermitesThenThis(string integrand) => DifferentiatesBack(integrand);
 
         [Theory]
         [InlineData("x^4/(x^3 + 2)")]

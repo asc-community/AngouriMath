@@ -79,6 +79,15 @@ namespace AngouriMath.Functions.Algebra
                 && Integration.ComputeIndefiniteIntegral(properPart, x, integrateByParts) is { } fractionPart)
                 return wholePart + fractionPart;
 
+            // A denominator with a written repeated factor takes the Hermite reduction first:
+            // the rational part of the answer in one linear solve, and what is left is a proper
+            // fraction over a squarefree denominator for the splits below. `(1 + x^2)/(x (1 + x^3)^2)`
+            // reached the same answer through them after seventeen seconds of peeling and
+            // re-factoring; this way it is under a second.
+            if (Mulf.LinearChildren(denominator).Any(f => f.ContainsNode(x) && f is Powf(_, Number.Integer { EInteger.Sign: > 0 } e) && e != Number.Integer.One)
+                && IntegrateByAnsatz(null, numerator / denominator, x) is { } byHermite)
+                return byHermite;
+
             // Splitting into coprime blocks comes before peeling one root off, and the order is
             // load-bearing rather than a preference.
             //
@@ -456,8 +465,12 @@ namespace AngouriMath.Functions.Algebra
                 TakeConstantFactorOutOfDenominator(div, over, x, integrateByParts) is { } withoutIt ?
                     withoutIt :
                 !div.ContainsNode(x) ?
+                    // The exponent negated as a number rather than as a tree: `-power` on the
+                    // node `2` is `2 * (-1)`, and `sin(x)^(2 * (-1))` is a shape the closed rule
+                    // for a power of the sine does not read, so `c/sin(x)^2` went to the
+                    // half-angle substitution for what is `-c cot(x)`.
                     over is Entity.Powf(var @base, var power) ?
-                        Integration.ComputeIndefiniteIntegral(MathS.Pow(@base, -power), x, integrateByParts)?.Pipe(i => div * i) :
+                        Integration.ComputeIndefiniteIntegral(MathS.Pow(@base, (-power).InnerSimplified), x, integrateByParts)?.Pipe(i => div * i) :
                         Integration.ComputeIndefiniteIntegral(MathS.Pow(over, -1), x, integrateByParts)?.Pipe(i => div * i) :
                 !over.ContainsNode(x) ?
                     Integration.ComputeIndefiniteIntegral(div, x, integrateByParts)?.Pipe(i => i / over) :
@@ -675,6 +688,20 @@ namespace AngouriMath.Functions.Algebra
                 // Case 2: Neither is polynomial - try single-step integration by parts
                 // This handles cases like ln(abs(x)) × ln(abs(x))
                 // Try both orderings: f as v, g as u OR g as v, f as u
+                //
+                // **Only with a factor worth differentiating** -- a logarithm or an inverse
+                // function, whose derivative is algebraic, or an exponential, whose integral
+                // is itself and which the cyclic cases need. With neither, the step trades one
+                // product of transcendental factors for another of the same kind with a
+                // derivative in it, and searching that is where a decline went to spend thirty
+                // seconds: `-3 tan(x)/(4 sec(x)^2 + 5 tan(x)^2)` against `1/sin(x)^2`, both
+                // integrable, neither the right thing to differentiate. Measured on the Rubi
+                // sample with the restriction and without: the same answers, eight seconds less.
+                bool IsAnExponential(Entity factor)
+                    => factor is Powf(var @base, var power) && !@base.ContainsNode(x) && power.ContainsNode(x);
+                if (!IsDifferentiatedBeforeAPolynomial(f) && !IsDifferentiatedBeforeAPolynomial(g)
+                    && !IsAnExponential(f) && !IsAnExponential(g))
+                    return null;
                 if (TryIntegrateByPartsOnce(f, g, x, wholeSize, wholePower) is { } result1) return result1;
                 if (TryIntegrateByPartsOnce(g, f, x, wholeSize, wholePower) is { } result2) return result2;
                 return null;
@@ -3003,6 +3030,304 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An integrand <c>e^h R</c>, with <c>R</c> rational in <c>x</c> and <c>h</c> rational
+        /// in <c>x</c> or absent, integrated by the ansatz <c>F = e^h N/D</c>: <c>D</c> read
+        /// off the denominator of <c>R</c>, <c>N</c> a polynomial of unknown coefficients, and
+        /// <c>F' = e^h R</c> a linear system in them.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>e^x x/(1 + x)^2</c> is <c>(e^x/(1 + x))'</c>; <c>e^(x^2)(1 + 2x^2)</c> is
+        /// <c>(x e^(x^2))'</c>; <c>(4x^5 - 1)/(1 + x + x^5)^2</c> is <c>(-x/(1 + x + x^5))'</c>.
+        /// None had an antiderivative: the first two are not a polynomial times an exponential,
+        /// which is the shape by parts reads, and the third has a denominator nothing factors.
+        /// Each is the derivative of something of the same shape, and that is what is looked
+        /// for -- Liouville's theorem says the elementary antiderivative of <c>e^h R</c>, where
+        /// there is one, is <c>e^h</c> times a rational function, so an ansatz that fails here
+        /// fails because there is no such antiderivative and not because the shape was wrong.
+        /// For <c>h = 0</c> this is the rational part of the Hermite reduction, with the
+        /// logarithmic part required to vanish; a denominator with a repeated factor and a
+        /// logarithmic part beside it is left to the splits, as before.
+        /// </para>
+        /// <para>
+        /// <b>Which <c>D</c>.</b> Differentiating raises the multiplicity of every factor of the
+        /// denominator by one, so <c>D</c> is the denominator of <c>R</c> with each factor's
+        /// written power lowered by one, and then the denominator itself, and <c>1</c> where the
+        /// denominator is <c>1</c>. With <c>h = p/q</c> the identity is
+        /// </para>
+        /// <code>
+        ///     ((N' D - N D') q^2 + (p' q - p q') N D) D_R  =  N_R D^2 q^2
+        /// </code>
+        /// <para>
+        /// a polynomial identity in <c>x</c>, linear in the coefficients of <c>N</c>, solved by
+        /// the same elimination the symbolic partial-fraction split uses and checked the same way
+        /// before anything is returned: at sampled points with every symbol pinned. The degree
+        /// of <c>N</c> is bounded by the degrees in that identity, with a little to spare;
+        /// an unknown the system does not need is zero.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByExponentialAnsatz(Entity expr, Entity.Variable x)
+        {
+            // A sum whose terms share one exponential is read whole -- `e^(x^2) + 2x^2 e^(x^2)`
+            // is `(x e^(x^2))'` and neither term is elementary on its own, so splitting the sum
+            // first, which linearity does, loses it.
+            Entity? exponent = null;
+            Entity rest = 0;
+            foreach (var term in Sumf.LinearChildren(expr))
+            {
+                if (ReadOneExponentialTimesTheRest(term, x) is not var (h, r) || h is null)
+                    return null;
+                if (exponent is null)
+                    exponent = h;
+                else if (exponent != h)
+                    return null;
+                rest += r;
+            }
+            return exponent is null ? null : IntegrateByAnsatz(exponent, rest, x);
+        }
+
+        /// <summary>
+        /// <paramref name="term"/> as one exponential of something in <paramref name="x"/> times
+        /// everything else, or a <see langword="null"/> exponent where there is not exactly one.
+        /// </summary>
+        private static (Entity? Exponent, Entity Remainder)? ReadOneExponentialTimesTheRest(Entity term, Entity.Variable x)
+        {
+            Entity? exponent = null;
+            Entity rest = Number.Integer.One;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(term))
+            {
+                if (factor is Powf(var @base, var power) && !@base.ContainsNode(x) && power.ContainsNode(x)
+                    && power is not Number)
+                {
+                    if (exponent is not null)
+                        return null;
+                    var h = @base == MathS.e ? power : power * MathS.Ln(@base);
+                    exponent = (underneath ? -h : h).InnerSimplified;
+                    continue;
+                }
+                rest = underneath ? rest / factor : rest * factor;
+            }
+            return (exponent, rest);
+        }
+
+        /// <summary>
+        /// The ansatz of <see cref="SolveByExponentialAnsatz"/> for <c>e^h R</c>, or for
+        /// <c>R</c> alone when <paramref name="h"/> is <see langword="null"/>.
+        /// </summary>
+        internal static Entity? IntegrateByAnsatz(Entity? h, Entity rational, Entity.Variable x)
+        {
+            var (above, below) = Functions.SingleQuotient.Of(rational.InnerSimplified);
+            if (!TreeAnalyzer.TryGetPolynomial(above, x, out var numeratorRead)
+                || !TreeAnalyzer.TryGetPolynomial(below, x, out var denominatorRead)
+                || numeratorRead.Count == 0 || denominatorRead.Count == 0)
+                return null;
+            foreach (var pair in numeratorRead.Concat(denominatorRead))
+                if (pair.Key.Sign < 0 || pair.Value.ContainsNode(x))
+                    return null;
+
+            Entity p = 0, q = 1;
+            if (h is not null)
+            {
+                (p, q) = Functions.SingleQuotient.Of(h.InnerSimplified);
+                if (!TreeAnalyzer.TryGetPolynomial(p, x, out var pRead) || !TreeAnalyzer.TryGetPolynomial(q, x, out var qRead))
+                    return null;
+                foreach (var pair in pRead.Concat(qRead))
+                    if (pair.Key.Sign < 0 || pair.Value.ContainsNode(x))
+                        return null;
+            }
+
+            var degreeAbove = (int)numeratorRead.Keys.Max()!.ToInt32Checked();
+            var degreeBelow = (int)denominatorRead.Keys.Max()!.ToInt32Checked();
+            if (degreeAbove > MaximumAnsatzDegree || degreeBelow > MaximumAnsatzDegree)
+                return null;
+
+            foreach (var d in CandidateDenominators(below, x))
+            {
+                if (IntegrateByAnsatzOver(h, p, q, above, below, d, x, degreeAbove, degreeBelow) is { } answer)
+                    return answer;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// The denominators the ansatz tries, in order: the denominator with every written power
+        /// lowered by one, and the denominator as it is.
+        /// </summary>
+        private static IEnumerable<Entity> CandidateDenominators(Entity denominator, Entity.Variable x)
+        {
+            var variableFactors = Mulf.LinearChildren(denominator).Where(f => f.ContainsNode(x)).ToList();
+            // One written power on its own is tried at every level below it: with an exponential
+            // in front the antiderivative's denominator need not be one below the integrand's --
+            // `e^(1/x)(1 + x)/x^4` is `(-e^(1/x)(1 - x + x^2)/x^2)'`, two below.
+            if (variableFactors.Count == 1
+                && variableFactors[0] is Powf(var only, Number.Integer onlyPower)
+                && onlyPower.EInteger.Sign > 0 && onlyPower.EInteger.CanFitInInt32())
+            {
+                for (var level = onlyPower.EInteger.ToInt32Unchecked() - 1; level >= 0; level--)
+                    yield return level == 0 ? Number.Integer.One : level == 1 ? only : MathS.Pow(only, level);
+                yield return denominator;
+                yield break;
+            }
+            Entity lowered = Number.Integer.One;
+            foreach (var factor in variableFactors)
+                if (factor is Powf(var @base, Number.Integer power) && power.EInteger.Sign > 0)
+                {
+                    var one = power.EInteger.Subtract(EInteger.One);
+                    if (one.IsZero)
+                        continue;
+                    lowered *= one.Equals(EInteger.One) ? @base : MathS.Pow(@base, Number.Integer.Create(one));
+                }
+            yield return lowered;
+            if (denominator.ContainsNode(x))
+                yield return denominator;
+        }
+
+        /// <summary>
+        /// The product of the distinct written factors of <paramref name="denominator"/>, each
+        /// to the first power: the denominator of the logarithmic part of a Hermite reduction.
+        /// </summary>
+        private static Entity SquarefreePartAsWritten(Entity denominator, Entity.Variable x)
+        {
+            Entity product = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                    continue;
+                var @base = factor is Powf(var b, Number.Integer power) && power.EInteger.Sign > 0 ? b : factor;
+                product = product == Number.Integer.One ? @base : product * @base;
+            }
+            return product;
+        }
+
+        private static Entity? IntegrateByAnsatzOver(
+            Entity? h, Entity p, Entity q, Entity above, Entity below, Entity d, Entity.Variable x,
+            int degreeAbove, int degreeBelow)
+        {
+            var degreeD = TreeAnalyzer.TryGetPolynomial(d, x, out var dRead) && dRead.Count > 0
+                ? (int)dRead.Keys.Max()!.ToInt32Checked() : 0;
+            var degreeQ = TreeAnalyzer.TryGetPolynomial(q, x, out var qRead) && qRead.Count > 0
+                ? (int)qRead.Keys.Max()!.ToInt32Checked() : 0;
+            // Hermite's bound is `deg N < deg D`; with an exponential in front the numerator can
+            // run past it by as much as the integrand's own excess and the exponent's
+            // denominator -- `e^(x^2)(1 + 2x^2)` has `N = x` over `D = 1`. Two to spare either
+            // way, since an unknown the system does not need is set to zero and costs nothing.
+            var degreeN = System.Math.Max(degreeD - 1,
+                degreeD + System.Math.Max(degreeAbove - degreeBelow, 0) + degreeQ + 2);
+            if (degreeN > MaximumAnsatzDegree)
+                return null;
+
+            // With no exponential this is the Hermite reduction in full: `R = (N/D)' + M/D_1`,
+            // with `D_1` the product of the distinct factors and `M` a second unknown
+            // polynomial, so that a logarithmic part beside the rational one does not defeat
+            // the ansatz -- `(1 + x^2 + x^4)/((1 + x^2)(4 + x^2)^2)` has both. What is left,
+            // `M/D_1`, is a proper fraction over a squarefree denominator, which the splits
+            // answer. With an exponential there is no logarithmic part to look for.
+            Entity? squarefree = null;
+            var degreeM = -1;
+            if (h is null)
+            {
+                squarefree = SquarefreePartAsWritten(below, x);
+                var degreeSquarefree = TreeAnalyzer.TryGetPolynomial(squarefree, x, out var sRead) && sRead.Count > 0
+                    ? (int)sRead.Keys.Max()!.ToInt32Checked() : 0;
+                if (degreeSquarefree > 0 && squarefree != below)
+                    degreeM = degreeSquarefree - 1;
+                else
+                    squarefree = null;
+            }
+
+            // The identity, linear in the unknown coefficients, is built **one column at a
+            // time** as a numeric polynomial rather than once with the unknowns in it: with
+            // fourteen unknowns over a degree-eleven denominator the single symbolic expansion
+            // did not return, and the same fourteen numeric ones take a moment. The identity is
+            //
+            //     [(N' D - N D') q^2 + (p' q - p q') N D] D_R  =  N_R D^2 q^2            (exponential)
+            //     (N' D - N D') D_1 D_R + M D^2 D_R           =  N_R D^2 D_1            (Hermite)
+            //
+            // so the column for the k-th coefficient of N is the left side with N = x^k, the
+            // column for the j-th of M is x^j D^2 D_R, and the right side is the constant.
+            var dPrime = d.Differentiate(x);
+            var scale = squarefree is null ? below : squarefree * below;
+            var columns = new List<Dictionary<EInteger, Entity>>();
+            for (var k = 0; k <= degreeN; k++)
+            {
+                Entity xk = k == 0 ? Number.Integer.One : k == 1 ? x : MathS.Pow(x, k);
+                Entity xkPrime = k == 0 ? Number.Integer.Zero : k == 1 ? Number.Integer.One : k * MathS.Pow(x, k - 1);
+                Entity term = (xkPrime * d - xk * dPrime) * MathS.Sqr(q);
+                if (h is not null)
+                    term += (p.Differentiate(x) * q - p * q.Differentiate(x)) * xk * d;
+                if (!TreeAnalyzer.TryGetPolynomial(term * scale, x, out var column))
+                    return null;
+                columns.Add(column);
+            }
+            for (var j = 0; j <= degreeM; j++)
+            {
+                Entity xj = j == 0 ? Number.Integer.One : j == 1 ? x : MathS.Pow(x, j);
+                if (!TreeAnalyzer.TryGetPolynomial(xj * MathS.Sqr(d) * below, x, out var column))
+                    return null;
+                columns.Add(column);
+            }
+            var target = squarefree is null ? above * MathS.Sqr(d) * MathS.Sqr(q) : above * MathS.Sqr(d) * squarefree;
+            if (!TreeAnalyzer.TryGetPolynomial(target, x, out var targetRead))
+                return null;
+
+            var powers = columns.SelectMany(c => c.Keys).Concat(targetRead.Keys).Distinct().ToList();
+            var width = columns.Count;
+            var matrix = new Entity[powers.Count][];
+            var rhs = new Entity[powers.Count];
+            for (var row = 0; row < powers.Count; row++)
+            {
+                matrix[row] = new Entity[width];
+                for (var column = 0; column < width; column++)
+                    matrix[row][column] = columns[column].TryGetValue(powers[row], out var entry) ? entry.InnerSimplified : Number.Integer.Zero;
+                rhs[row] = targetRead.TryGetValue(powers[row], out var wanted) ? wanted.InnerSimplified : Number.Integer.Zero;
+            }
+            if (!Functions.PartialFractions.TrySolveLinear(matrix, rhs, out var values))
+                return null;
+
+            Entity solvedN = 0;
+            for (var k = 0; k <= degreeN; k++)
+                if (values[k] != Number.Integer.Zero)
+                    solvedN += values[k] * (k == 0 ? Number.Integer.One : k == 1 ? x : MathS.Pow(x, k));
+            Entity solvedM = 0;
+            for (var j = 0; j <= degreeM; j++)
+                if (values[degreeN + 1 + j] != Number.Integer.Zero)
+                    solvedM += values[degreeN + 1 + j] * (j == 0 ? Number.Integer.One : j == 1 ? x : MathS.Pow(x, j));
+            solvedN = Functions.PartialFractions.Bare(solvedN);
+            solvedM = Functions.PartialFractions.Bare(solvedM);
+
+            Entity exponential = h is null ? Number.Integer.One : MathS.Pow(MathS.e, h);
+            var rationalPart = exponential * solvedN / d;
+            var integrand = exponential * above / below;
+            if (squarefree is null)
+            {
+                if (!Functions.PartialFractions.HoldsAtSampledPoints(rationalPart.Differentiate(x), integrand, x))
+                    return null;
+                return rationalPart.InnerSimplified;
+            }
+
+            var logarithmicPart = solvedM / squarefree;
+            if (!Functions.PartialFractions.HoldsAtSampledPoints(rationalPart.Differentiate(x) + logarithmicPart, integrand, x))
+                return null;
+            if (solvedM == Number.Integer.Zero || solvedM.Evaled is Number.Complex { IsZero: true })
+                return rationalPart.InnerSimplified;
+            // The logarithmic part is a proper rational function over a squarefree denominator,
+            // and the splits are what answer that; handing it to the whole integrator instead
+            // sent one of them through every substitution and by-parts attempt there is, thirty
+            // seconds to decline what the splits decline in a few milliseconds.
+            return SolveByPartialFractions(logarithmicPart.InnerSimplified, x, integrateByParts: false) is { } rest
+                ? (rationalPart + rest).InnerSimplified
+                : null;
+        }
+
+        /// <summary>
+        /// The largest degree, of the numerator, the denominator or the ansatz polynomial, that
+        /// <see cref="SolveByExponentialAnsatz"/> takes on. The system is square in the degree,
+        /// and past this the elimination is longer than any answer.
+        /// </summary>
+        private const int MaximumAnsatzDegree = 12;
+
+        /// <summary>
         /// A product of sines and cosines of <b>different</b> arguments, rewritten as a sum by the
         /// product-to-sum identities and then integrated term by term.
         /// </summary>
@@ -3169,7 +3494,7 @@ namespace AngouriMath.Functions.Algebra
                 return null;
 
             return Integration.ComputeIndefiniteIntegral(
-                numerator * MathS.Pow(@base, -power), x, integrateByParts);
+                numerator * MathS.Pow(@base, (-power).InnerSimplified), x, integrateByParts);
         }
 
         internal static Entity? SolveByExponentialSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
