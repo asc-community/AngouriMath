@@ -361,7 +361,13 @@ namespace AngouriMath.Tests.Calculus
         }
 
         [Theory]
-        [InlineData("e^x * x^2", "e ^ x * (x ^ 2 - 2 * (x - 1)) + C")] // Polynomial times exponential (should use recursive polynomial IBP)
+        // The polynomial coefficient now comes out written out rather than factored --
+        // `x^2 - 2x + 2` where this used to say `x^2 - 2(x - 1)`, which is the same polynomial.
+        // The rule that answers it is the closed one for a polynomial times an exponential times
+        // a trigonometric function, and it collects its coefficients as a sum. Their difference
+        // simplifies to exactly 0; `EqualTo(...).Simplify()` does not settle it either way, which
+        // is why the form is pinned here at all.
+        [InlineData("e^x * x^2", "e ^ x * (x ^ 2 + (-2) * x + 2) + C")] // Polynomial times exponential (should use recursive polynomial IBP)
         [InlineData("x^3 * sin(x)", "-cos(x) * x ^ 3 + 6 * cos(x) * x + (-6) * sin(x) + 3 * sin(x) * x ^ 2 + C")] // Polynomial times trig (should use recursive polynomial IBP)
         // [InlineData("x * ln(abs(x)) ^ 2", "x ^ 2 / 2 * (ln(abs(x)) ^ 2 - ln(abs(x)) - ln(abs(x))) + x ^ 2 + C")] // TODO: ln(abs(x)) ^ 2 needs integration by parts
         public void TestPolynomialIntegrationByParts(string initial, string expected)
