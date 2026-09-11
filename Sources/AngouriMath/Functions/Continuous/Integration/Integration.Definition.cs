@@ -406,6 +406,11 @@ namespace AngouriMath.Functions.Algebra
             // alone is both rules' and the reduction's answer for it is shorter.
             if ((answer = IndefiniteIntegralSolver.SolveByTrigonometricPowerSubstitution(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByTangentSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // And the logarithm's own substitution, beside the tangent's. It goes the other way
+            // -- `x = e^u`, so it *introduces* an exponential rather than cancelling one -- which
+            // is why the general substitution does not find it and why it pays: the integrator
+            // answers an exponential times almost anything.
+            if ((answer = IndefiniteIntegralSolver.SolveByLogarithmSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
             // The tangent substitution again, and this time for a *rational* function: a repeated
             // irreducible quadratic beside a negative power of the variable is `sin^p cos^q` with
