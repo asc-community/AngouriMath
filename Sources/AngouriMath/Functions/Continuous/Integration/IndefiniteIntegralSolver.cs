@@ -382,7 +382,7 @@ namespace AngouriMath.Functions.Algebra
                 return v * integralOfU - remainingIntegral;
             }
 
-            if (expr is Entity.Mulf(var f, var g))
+            Entity? TrySplit(Entity f, Entity g)
             {
                 // Case 0: a logarithm times a polynomial. Only one of the two orders
                 // terminates. Differentiating the polynomial, which is what Case 1 does,
@@ -405,6 +405,30 @@ namespace AngouriMath.Functions.Algebra
                 // Try both orderings: f as v, g as u OR g as v, f as u
                 if (TryIntegrateByPartsOnce(f, g, x, wholeSize) is { } result1) return result1;
                 if (TryIntegrateByPartsOnce(g, f, x, wholeSize) is { } result2) return result2;
+                return null;
+            }
+
+            if (expr is Entity.Mulf(var f, var g))
+            {
+                if (TrySplit(f, g) is { } atTheTop) return atTheTop;
+
+                // **And the same again with the factors regrouped.** The split above is the top
+                // `Mulf` node's two children, which is a fact about how the product was written
+                // rather than about the integrand: `x * cos(x) * sin(x)` parses left-associated,
+                // so the two children are `x * cos(x)` and `sin(x)` -- neither a polynomial, and
+                // none of the three cases above finds anything. `x * (cos(x) * sin(x))` is the
+                // same function with the same factors, and it came out, because there the
+                // polynomial is a child.
+                //
+                // So the factors are gathered and cut once more, polynomial on one side and the
+                // rest on the other, which is the split every one of these cases is looking for
+                // and the only one associativity can hide. Tried second, so an integrand that
+                // was answered before is answered the same way.
+                // https://github.com/asc-community/AngouriMath/issues/718
+                if (TryRegroupAroundThePolynomial(expr, x) is var (polynomialPart, restPart)
+                    && polynomialPart is not null && restPart is not null
+                    && TrySplit(polynomialPart, restPart) is { } regrouped)
+                    return regrouped;
             }
 
             // Special case for powers of integrable functions, try integration by parts on base × base
@@ -412,6 +436,38 @@ namespace AngouriMath.Functions.Algebra
             if (expr is Powf(var @base, Integer(2)) && TryIntegrateByPartsOnce(@base, @base, x, wholeSize) is { } result) return result;
 
             return null;
+        }
+
+        /// <summary>
+        /// The factors of <paramref name="expr"/> cut into the polynomial ones and the rest,
+        /// where that cut is not the one the top <c>Mulf</c> node already makes.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Both halves <see langword="null"/> when there is nothing new to offer: fewer than three
+        /// factors, or all of them polynomial, or none of them. In those cases the top node's own
+        /// split is either the same cut or the only one there is.
+        /// </para>
+        /// <para>
+        /// A factor free of the variable counts as polynomial, since it is a constant here and
+        /// belongs with the part that gets differentiated — where it survives one step and
+        /// vanishes from the recursion, rather than riding along inside an integrand.
+        /// </para>
+        /// </remarks>
+        private static (Entity? Polynomial, Entity? Remainder) TryRegroupAroundThePolynomial(Entity expr, Entity.Variable x)
+        {
+            var factors = Mulf.LinearChildren(expr).ToList();
+            if (factors.Count < 3)
+                return (null, null);
+
+            Entity? polynomial = null;
+            Entity? rest = null;
+            foreach (var factor in factors)
+                if (MathS.TryPolynomial(factor, x, out _) || !factor.ContainsNode(x))
+                    polynomial = polynomial is null ? factor : polynomial * factor;
+                else
+                    rest = rest is null ? factor : rest * factor;
+            return polynomial is null || rest is null ? (null, null) : (polynomial, rest);
         }
 
         internal static Entity? SolveLogarithmic(Entity expr, Entity.Variable x, bool integrateByParts = true) => expr switch
