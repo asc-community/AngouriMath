@@ -395,8 +395,8 @@ namespace AngouriMath.Functions
         /// those. See the note on <c>PolynomialLongDivision</c>.
         /// </para>
         /// <para>
-        /// Distinct factors only. A repeated symbolic quadratic has no rule to land on, and a
-        /// repeated linear factor is the sibling step's, in exact arithmetic where it applies.
+        /// Distinct factors, where a repeated linear one counts as a single block over its whole
+        /// power. A repeated symbolic quadratic has no rule to land on and is declined.
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
@@ -419,18 +419,30 @@ namespace AngouriMath.Functions
                 // A factor written as a power is a repeated factor, whatever its degree reads
                 // as: `(a + b u)^2` is a quadratic to the reader below and a repeated linear
                 // factor to the decomposition, and taking it as the former cost five seconds on
-                // `1/(a + b e^(p x))^2` for a split that nothing downstream answers.
-                if (part is Powf(_, Integer { EInteger.Sign: > 0 } repeated) && repeated != Integer.One)
-                    return false;
-                if (!TreeAnalyzer.TryGetPolynomial(part, x, out var read) || read.Count == 0)
+                // `1/(a + b e^(p x))^2` for a split that nothing downstream answers. A repeated
+                // **linear** factor is taken as one block, `P/(a + b u)^k` with `P` of degree
+                // `k - 1`, which is the shape the rule for a numerator over a power of a linear
+                // reads; a repeated quadratic has no such rule and is declined.
+                var toRead = part;
+                var multiplicity = 1;
+                if (part is Powf(var repeatedBase, Integer { EInteger.Sign: > 0 } repeated) && repeated != Integer.One)
+                {
+                    if (!repeated.EInteger.CanFitInInt32())
+                        return false;
+                    toRead = repeatedBase;
+                    multiplicity = repeated.EInteger.ToInt32Unchecked();
+                }
+                if (!TreeAnalyzer.TryGetPolynomial(toRead, x, out var read) || read.Count == 0)
                     return false;
                 var degree = read.Keys.Max()!;
                 if (!degree.CanFitInInt32() || degree.ToInt32Unchecked() is not (1 or 2))
                     return false;
+                if (multiplicity > 1 && degree.ToInt32Unchecked() != 1)
+                    return false;
                 foreach (var pair in read)
                     if (pair.Key.Sign < 0 || pair.Value.ContainsNode(x))
                         return false;
-                factors.Add((part.InnerSimplified, degree.ToInt32Unchecked()));
+                factors.Add((part.InnerSimplified, degree.ToInt32Unchecked() * multiplicity));
             }
             if (factors.Count < 2)
                 return false;

@@ -93,17 +93,27 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand);
 
         /// <summary>
-        /// Still declined, so the boundary is recorded. The power is the numerator of a quotient
-        /// rather than the whole integrand, and this rule reads only the whole. Should something
-        /// later answer it, this moves rather than being deleted.
+        /// A power inside a quotient is not this rule's — it reads only the whole integrand —
+        /// and it is answered all the same, by the rule for a polynomial over a power of a
+        /// linear, which expands the numerator under <c>t = x</c>. Recorded here as declined
+        /// until that rule existed; the boundary moved and this moved with it.
         /// </summary>
         [Theory]
         [InlineData("(a - b*x^2)^3/x^7")]
-        public void APowerInsideAQuotientIsNotReached(string integrand)
+        public void APowerInsideAQuotientIsAnotherRules(string integrand)
         {
             var integral = integrand.ToEntity().Integrate("x");
-            if (!integral.Stringize().Contains("integral("))
-                DifferentiatesBack(integrand);
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x").Substitute("a", 1.3).Substitute("b", 0.7);
+            var original = integrand.ToEntity().Substitute("a", 1.3).Substitute("b", 0.7);
+            foreach (var at in new[] { 0.4, 1.1, 2.3 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                Assert.True(difference / Math.Max(1.0, Math.Abs((double)want.RealPart)) < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
         }
     }
 }

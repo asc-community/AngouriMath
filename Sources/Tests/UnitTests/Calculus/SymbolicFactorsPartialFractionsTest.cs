@@ -119,9 +119,34 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
-        /// A repeated factor is not this rule's — there is nothing for a symbolic repeated
-        /// quadratic to land on — and a denominator not written as a product is left to the
-        /// other splits.
+        /// A repeated <b>linear</b> factor is one block, <c>P/(a + b u)^k</c>, which the rule for
+        /// a polynomial over a power of a linear reads; Welz's <c>1/(a + b e^(p x))^2</c> is
+        /// this under <c>u = e^(p x)</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(u*(a + b*u)^2)")]
+        [InlineData("1/(u*(a + b*u)^3)")]
+        [InlineData("1/((u + a)^2*(u^2 + b))")]
+        [InlineData("1/(a + e^(p*u)*b)^2")]
+        public void ARepeatedSymbolicLinearFactor(string integrand)
+            => DifferentiatesBack(integrand, "u", ("a", 1.7), ("b", 2.3), ("p", 0.6));
+
+        /// <summary>
+        /// The rule the block above lands on: a polynomial over a power of a linear with a
+        /// symbol in it, under <c>t = a + b x</c>. <c>1/(a + b x)^2</c> was answered before as
+        /// a piecewise on a discriminant identically zero, through the quadratic rule; that
+        /// still runs first and this is what the split hands on.
+        /// </summary>
+        [Theory]
+        [InlineData("(c + d*x)/(a + b*x)^2")]
+        [InlineData("x/(a + b*x)^2")]
+        [InlineData("x^2/(a + b*x)^3")]
+        [InlineData("(1 + x + x^2)/(a + b*x)^4")]
+        public void APolynomialOverASymbolicLinearPower(string integrand)
+            => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1));
+
+        /// <summary>
+        /// A repeated symbolic quadratic has nothing to land on and is declined.
         /// </summary>
         [Theory]
         [InlineData("1/((x^2 + a)^2*(x + 1))")]

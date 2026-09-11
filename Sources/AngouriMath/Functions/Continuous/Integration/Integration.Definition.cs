@@ -399,6 +399,10 @@ namespace AngouriMath.Functions.Algebra
             // rules, because none of them reads the exponential and all of them would have to
             // decline it.
             if ((answer = IndefiniteIntegralSolver.SolveAPolynomialTimesAnExponentialAndATrigonometric(expr, x)) is { }) return answer;
+            // A half-integer power of `1 + sin` or `1 - cos` and their kin, closed by one
+            // cancellation that `a^2 = b^2` allows. Before the reductions, which do not read a
+            // fractional power at all.
+            if ((answer = IndefiniteIntegralSolver.SolveAHalfPowerOfOnePlusASine(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySecantPowerReduction(expr, x)) is { }) return answer;
             // And beside it: a power of the sine times a power of the cosine, which is every
             // product of the six trigonometric functions once tangents and secants are read as
@@ -462,6 +466,10 @@ namespace AngouriMath.Functions.Algebra
             // this only fires where the arguments differ, which is exactly what every substitution
             // above declines for want of an inner function to substitute for.
             if ((answer = IndefiniteIntegralSolver.SolveByProductToSum(expr, x, integrateByParts)) is { }) return answer;
+            // And the other way round: not a product of two arguments but anything else built
+            // from different multiples of one -- `sin(x)/cos(2x)`, `cos(x)/(sin(x) tan(x/2))` --
+            // rewritten to the one argument every trigonometric rule above reads.
+            if ((answer = IndefiniteIntegralSolver.SolveByUnifyingTrigonometricArguments(expr, x, integrateByParts)) is { }) return answer;
             // The exponential substitution beside the other rewrites. It is also what integrates
             // the hyperbolic functions, which are not nodes here but quotients of exponentials.
             if ((answer = IndefiniteIntegralSolver.SolveByExponentialSubstitution(expr, x, integrateByParts)) is { }) return answer;
