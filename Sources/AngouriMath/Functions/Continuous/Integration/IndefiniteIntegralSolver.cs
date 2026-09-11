@@ -1821,6 +1821,68 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An integrand that is a function of <c>ln(x)</c> and of nothing else, integrated by the
+        /// substitution <c>u = ln(x)</c>, under which <c>dx</c> is <c>e^u du</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>sin(ln(x))</c> had no antiderivative, and it is one substitution away from one that
+        /// does: under <c>u = ln(x)</c> it becomes <c>e^u sin(u)</c>, which is the cyclic
+        /// by-parts integral and is closed by
+        /// <see cref="SolveAPolynomialTimesAnExponentialAndATrigonometric"/>. The same for
+        /// <c>ln(x)^n</c> beside anything, and for <c>e^(1/ln(x))</c> and its kin.
+        /// </para>
+        /// <para>
+        /// <b>The substitution is an inverse one</b>, which is what makes it different from every
+        /// other substitution here and why the general one does not find it. The others divide by
+        /// <c>du/dx</c> and ask what is left; this one goes the other way — <c>x = e^u</c>, so
+        /// <c>dx</c> is <c>e^u du</c>, and the exponential is <b>introduced</b> rather than
+        /// cancelled. That only pays because the integrator answers exponentials times almost
+        /// anything.
+        /// </para>
+        /// <para>
+        /// <b>The test is the rewrite itself</b>: replace every <c>ln(x)</c> and see whether an
+        /// <c>x</c> survives. <c>ln(x) + x</c> keeps one and is declined, which is right — it is
+        /// not a function of the logarithm alone. A different base is read through first, since
+        /// <c>log(b, x)</c> is <c>ln(x)/ln(b)</c> and declining it for the spelling would be the
+        /// defect this file has had repeatedly.
+        /// </para>
+        /// <para>
+        /// <b>Where the answer holds.</b> <c>u = ln(x)</c> is a bijection from the positive reals
+        /// to the whole line, so the answer is an antiderivative for <c>x &gt; 0</c> — which is
+        /// where an integrand built from <c>ln(x)</c> is real in the first place. Nothing is
+        /// assumed that the integrand did not already assume.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByLogarithmSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // A logarithm to another base first: log(b, x) is ln(x)/ln(b), and a rule that
+            // declined it for having a different node would be answering the spelling.
+            expr = expr.Replace(node =>
+                node is Logf(var @base, var argument) && !@base.ContainsNode(x) && @base != MathS.e
+                    ? MathS.Ln(argument) / MathS.Ln(@base)
+                    : node);
+
+            var logarithm = MathS.Ln(x);
+            if (!expr.ContainsNode(logarithm))
+                return null;
+
+            var u = Variable.CreateUnique(expr, "u_log");
+            var inU = expr.Substitute(logarithm, u);
+            if (inU.ContainsNode(x))
+                return null;
+
+            var integrand = Functions.SingleQuotient.Combine(inU * MathS.Pow(MathS.e, u)).InnerSimplified;
+            if (integrand is Providedf(var inner, _))
+                integrand = inner;
+
+            return Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is { } result
+                ? result.Substitute(u, MathS.Ln(x))
+                : null;
+        }
+
+        /// <summary>
         /// An integrand that is a function of <c>tan(x)</c> and of nothing else, integrated by
         /// the substitution <c>u = tan(x)</c>, under which <c>dx</c> is <c>du/(1 + u^2)</c>.
         /// </summary>
