@@ -3780,29 +3780,49 @@ namespace AngouriMath.Functions.Algebra
 
         internal static Entity? SolveByExponentialSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
         {
-            var slopes = new List<EInteger>();
-            var offsets = new Dictionary<Entity, (EInteger Slope, Entity Offset)>();
+            // Rational slopes, so that `e^(x/2)` beside `e^x` is read: the base is `e^(k x)` with
+            // `k` the greatest common divisor of the slopes, and every exponential is a whole
+            // power of it. `e^(x/2)/sqrt(e^x - 1)` is `2/sqrt(u^2 - 1)` that way, and was declined
+            // for the half.
+            var slopes = new List<ERational>();
+            var offsets = new Dictionary<Entity, (ERational Slope, Entity Offset)>();
+            var underARadical = new HashSet<Entity>();
             foreach (var node in expr.Nodes)
             {
+                if (node is Powf(_, Number.Rational fractional) && fractional is not Number.Integer)
+                    foreach (var inside in node.Nodes)
+                        underARadical.Add(inside);
                 if (node is not Powf(var @base, var exponent) || @base != MathS.e)
                     continue;
                 if (!exponent.ContainsNode(x))
                     continue;
                 if (!TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slope, out var offset))
                     return null;   // not linear in x, so not a power of one exponential
-                if (slope.Evaled is not Number.Integer whole || whole.EInteger.IsZero)
+                if (slope.Evaled is not Number.Rational rational || rational.ERational.IsZero)
                     return null;
-                slopes.Add(whole.EInteger);
-                offsets[node] = (whole.EInteger, offset);
+                slopes.Add(rational.ERational);
+                offsets[node] = (rational.ERational, offset);
             }
             if (slopes.Count == 0)
                 return null;
 
-            var k = slopes[0].Abs();
+            var numerators = EInteger.Zero;
+            var denominators = EInteger.One;
             foreach (var slope in slopes)
-                k = k.Gcd(slope.Abs());
-            if (k.IsZero)
+            {
+                numerators = numerators.Gcd(slope.Numerator.Abs());
+                denominators = denominators.Multiply(slope.Denominator).Divide(denominators.Gcd(slope.Denominator));
+            }
+            if (numerators.IsZero)
                 return null;
+            var k = ERational.Create(numerators, denominators);
+            // The sign of the base is chosen for the radicals: with every exponential under a
+            // root of negative slope, `u = e^(-x)` makes `sqrt(1 + e^(-x))` into `sqrt(1 + u)`,
+            // where `u = e^x` would make it `sqrt(1 + 1/u)`, a root of a quotient that nothing
+            // rationalises. `u` is positive either way, since it is an exponential.
+            var slopesUnderRoots = offsets.Where(pair => underARadical.Contains(pair.Key)).Select(pair => pair.Value.Slope).ToList();
+            if (slopesUnderRoots.Count > 0 && slopesUnderRoots.All(slope => slope.Sign < 0))
+                k = k.Negate();
 
             var u = Variable.CreateUnique(expr, "u_exp");
 
@@ -3813,7 +3833,7 @@ namespace AngouriMath.Functions.Algebra
             var rewritten = expr.Replace(node =>
                 offsets.TryGetValue(node, out var found)
                     ? MathS.Pow(MathS.e, found.Offset)
-                      * MathS.Pow(u, Number.Integer.Create(found.Slope / k))
+                      * MathS.Pow(u, Number.Integer.Create(found.Slope.Divide(k).ToLowestTerms().Numerator))
                     : node);
 
             if (rewritten.ContainsNode(x))
@@ -3825,14 +3845,14 @@ namespace AngouriMath.Functions.Algebra
             // 1/(u^2 + 1) at once. Simplifying first instead leaves the nesting for Combine to
             // flatten and the common factor never meets a cancellation.
             var integrand = Functions.SingleQuotient.Combine(
-                rewritten / (Number.Integer.Create(k) * u)).Simplify();
+                rewritten / (Number.Rational.Create(k) * u)).Simplify();
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
 
             if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is not { } result)
                 return null;
 
-            var answer = result.Substitute(u, MathS.Pow(MathS.e, Number.Integer.Create(k) * x));
+            var answer = result.Substitute(u, MathS.Pow(MathS.e, (Number.Rational.Create(k) * x).InnerSimplified));
             return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
         }
 

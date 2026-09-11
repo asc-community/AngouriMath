@@ -103,6 +103,30 @@ namespace AngouriMath.Tests.Calculus
         public void SlopesTakenTogether(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// A fractional slope: the base is <c>e^(k x)</c> with <c>k</c> the greatest common
+        /// divisor of the slopes as rationals, so <c>e^(x/2)</c> beside <c>e^x</c> is read as
+        /// <c>u</c> beside <c>u^2</c>. Timofeev's <c>e^(x/2)/sqrt(e^x - 1)</c> is
+        /// <c>2/sqrt(u^2 - 1)</c> that way, and was declined for the half.
+        /// </summary>
+        [Theory]
+        [InlineData("e^(x/2)/sqrt(e^x - 1)")]
+        [InlineData("e^(x/3)/(1 + e^x)")]
+        [InlineData("1/(e^(x/2) + e^(x/3))")]
+        public void AFractionalSlope(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// The sign of the base is chosen for the radicals: with every exponential under a root
+        /// of negative slope, <c>u = e^(-x)</c> makes <c>sqrt(1 + e^(-x))</c> a root of something
+        /// linear in <c>u</c>, where <c>u = e^x</c> would make it a root of a quotient that
+        /// nothing rationalises. Bondarenko's two.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(1 + e^(-x))/(e^x - e^(-x))")]
+        [InlineData("sqrt(1 + e^(-x))/sinh(x)")]
+        [InlineData("sqrt(1 + e^x)")]
+        public void TheBaseTakesTheSignOfTheRadicand(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// What the rule must not disturb: exponentials the other rules already answer, and which
         /// are not rational in <c>e^(k x)</c> at all.
         /// </summary>
