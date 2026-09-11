@@ -270,6 +270,10 @@ namespace AngouriMath.Functions
             if (q.IsZero)
                 return false;
 
+            // A coefficient that is not finite is not a coefficient: a rewrite upstream that
+            // divided zero by zero reads as a rational NaN, and `Rational.Create` on it throws.
+            if (!p.IsFinite || !q.IsFinite)
+                return false;
             var discriminant = p.Multiply(p).Subtract(q.Multiply(ERational.FromInt32(4)));
             if (discriminant.IsZero)
                 return false;

@@ -503,6 +503,16 @@ namespace AngouriMath.Functions.Algebra
             // `a + b x^n`. After the quadratic, which is the case `n = 2` and answers it through
             // the trigonometric substitution -- a shorter answer than a root of a root.
             if ((answer = IndefiniteIntegralSolver.SolveABinomialDifferential(expr, x)) is { }) return answer;
+            // And a rational function of x and one square root of a quadratic, rationalised by
+            // Euler's substitution and finished by the rational integrator directly. After the
+            // trigonometric substitution and the binomial differential, which answer their own
+            // shapes more shortly; this is for everything else with one such root in it. Late
+            // and not scoped, and both were measured: placed before the general substitution it
+            // answered that rule's sub-integrals and let a doomed search run for thirty seconds
+            // (the #1265 failure), and scoped it declined nine integrands that reach it one
+            // level down -- the nested radicals under `u = sqrt(1 + x)`, the remainders of by
+            // parts -- each of which is closed here.
+            if ((answer = IndefiniteIntegralSolver.SolveByEulerSubstitution(expr, x)) is { }) return answer;
             // Product-to-sum among the rewrites rather than before them, because a product of
             // trigonometric functions of *equal* arguments is a power and wants a different tool;
             // this only fires where the arguments differ, which is exactly what every substitution
