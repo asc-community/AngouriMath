@@ -402,6 +402,13 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveByTrigonometricPowerSubstitution(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByTangentSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
+            // The tangent substitution again, and this time for a *rational* function: a repeated
+            // irreducible quadratic beside a negative power of the variable is `sin^p cos^q` with
+            // both exponents whole, which the recurrences close. Below partial fractions rather
+            // than beside it, so that everything the rational split answers keeps the form it
+            // gives -- this only ever sees what that declined.
+            if ((answer = IndefiniteIntegralSolver.SolveARadicalOfAQuadraticAsTrigonometric(
+                    expr, x, aWholePowerCounts: true)) is { }) return answer;
             // Linearity again, and this time with the expansion: a product with a sum in it --
             // sin(a+f*x)^4 * (5 - 6*sin(a+f*x)^2) -- reaches this as a product, so only the
             // expansion finds the two terms it is. Behind by parts it never did: the search spent
