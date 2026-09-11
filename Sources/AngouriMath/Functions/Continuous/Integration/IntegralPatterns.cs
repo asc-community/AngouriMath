@@ -163,6 +163,22 @@ namespace AngouriMath.Functions.Algebra
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
                     (arg * MathS.Arccotan(arg) + AntiderivativeLog(1 + arg * arg) / 2) / a,
 
+            // The other two, which were missing. They carry a `signum` where the first four do
+            // not, and it is not decoration: `d/dx arcsec(u)` is `1/(|u| sqrt(u^2 - 1))`, so the
+            // `u` that by parts multiplies it by leaves `sgn(u)/sqrt(u^2 - 1)` rather than
+            // `1/sqrt(u^2 - 1)`. The domain is `|u| >= 1`, two intervals, and the sign is what
+            // makes the answer hold on the left one as well as the right.
+            // https://github.com/asc-community/AngouriMath/issues/718
+            Entity.Arcsecantf(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Arcsec(arg)
+                     - MathS.Signum(arg) * AntiderivativeLog(arg + MathS.Sqrt(arg * arg - 1))) / a,
+
+            Entity.Arccosecantf(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Arccosec(arg)
+                     + MathS.Signum(arg) * AntiderivativeLog(arg + MathS.Sqrt(arg * arg - 1))) / a,
+
             // ∫ B^(px + q) * sin(mx + n) dx and its cosine twin. Integrating by parts
             // twice returns the integral it started from, so the usual machinery cycles
             // rather than terminating; solving that equation for the integral once gives
