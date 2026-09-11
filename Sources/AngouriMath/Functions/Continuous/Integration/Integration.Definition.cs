@@ -394,6 +394,11 @@ namespace AngouriMath.Functions.Algebra
             // answer it as a rational function of tan(x) -- correct, and a good deal longer than
             // the reduction gives. Rubi's own ordering puts the reduction first for the same
             // reason.
+            // A polynomial times an exponential times a sine or a cosine, which repeated by parts
+            // closes in as many rounds as the polynomial has degree. Before the trigonometric
+            // rules, because none of them reads the exponential and all of them would have to
+            // decline it.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialTimesAnExponentialAndATrigonometric(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySecantPowerReduction(expr, x)) is { }) return answer;
             // And beside it: a power of the sine times a power of the cosine, which is every
             // product of the six trigonometric functions once tangents and secants are read as

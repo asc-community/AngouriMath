@@ -1112,6 +1112,193 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A polynomial times an exponential times a sine or a cosine —
+        /// <c>P(x) e^(a x) cos(b x)</c> and its kin — integrated by the repeated by-parts that
+        /// this shape is the textbook case for, run out here rather than through the chain.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>e^x cos(x)</c> came out and <c>x e^x cos(x)</c> did not. The polynomial by-parts
+        /// integrates its <c>dv</c> with by-parts switched off, and <c>e^x cos(x)</c> is answered
+        /// by <b>nothing but</b> by-parts — the cyclic one, where the integral comes back a
+        /// multiple of itself. So the outer integral was declined for want of the inner one.
+        /// </para>
+        /// <para>
+        /// <b>Switching that flag on is not the fix, and this is measured.</b> It buys these
+        /// integrands and takes <c>x tan(x)^3 sec(x)^4</c> from 20 ms to <b>94 seconds</b> to
+        /// decline — one test, the whole of a 76% slowdown in the calculus suite. The cost and
+        /// the gain both arrive on the <i>second</i> round, integrating the antiderivative the
+        /// first produced, so no size measure separates them: what separates them is whether the
+        /// search succeeds, and that is only known by running it.
+        /// https://github.com/asc-community/AngouriMath/issues/1265
+        /// </para>
+        /// <para>
+        /// So the family is named instead of searched for. <c>int e^(a x)(c cos(b x) + d sin(b x))
+        /// dx</c> is closed:
+        /// </para>
+        /// <code>
+        ///     e^(ax) [ (a c - b d) cos(bx) + (b c + a d) sin(bx) ] / (a^2 + b^2)
+        /// </code>
+        /// <para>
+        /// and it stays in the same shape, so integrating <c>x^k</c> against it by parts lowers
+        /// <c>k</c> by one and leaves the same shape again. That terminates in <c>k + 1</c> steps
+        /// with no search at all, which is what makes this <b>closed</b>.
+        /// </para>
+        /// <para>
+        /// <c>a = 0</c> and <c>b = 0</c> are both admitted — a polynomial times a bare sine, or a
+        /// bare exponential — though those already came out, so what this adds is the two
+        /// together. Both zero is a polynomial and is declined, since it is the power rule's.
+        /// </para>
+        /// <para>
+        /// <b>Asked, not volunteered</b>:
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1265">#1265</a>.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPolynomialTimesAnExponentialAndATrigonometric(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            if (!TryReadAnExponentialTimesATrigonometric(expr, x,
+                    out var polynomial, out var rate, out var frequency, out var onTheCosine, out var onTheSine))
+                return null;
+
+            // a^2 + b^2, which is zero only when both are, and then the integrand is a polynomial.
+            var scale = (MathS.Sqr(rate) + MathS.Sqr(frequency)).InnerSimplified;
+            if (scale == 0)
+                return null;
+
+            var exponential = MathS.Pow(MathS.e, rate * x);
+            var cosine = MathS.Cos(frequency * x);
+            var sine = MathS.Sin(frequency * x);
+
+            // Integrating `e^(ax)(c cos + d sin)` leaves the same shape, so one step of by parts
+            // against `P(x)` lowers its degree and leaves this loop's own state: a polynomial and
+            // the pair of coefficients. `total` collects the boundary terms.
+            Entity total = 0;
+            var carried = polynomial;
+            var c = onTheCosine;
+            var d = onTheSine;
+            for (var step = 0; ; step++)
+            {
+                if (step > MaximumByPartsSteps)
+                    return null;   // the degree should fall every round; if it has not, decline
+                // int e^(ax) cos(bx) = e^(ax)(a cos + b sin)/(a^2+b^2), and
+                // int e^(ax) sin(bx) = e^(ax)(a sin - b cos)/(a^2+b^2). Together, for
+                // `c cos + d sin`, the cosine collects `a c - b d` and the sine `b c + a d`.
+                var nextC = ((rate * c - frequency * d) / scale).InnerSimplified;
+                var nextD = ((frequency * c + rate * d) / scale).InnerSimplified;
+                var antiderivative = exponential * (nextC * cosine + nextD * sine);
+
+                total += carried * antiderivative;
+                var derivative = carried.Differentiate(x).InnerSimplified;
+                if (derivative == 0)
+                    return total.InnerSimplified;
+                // `- int P'(x) * (that) dx`, which is this loop again with the sign folded in.
+                carried = (-derivative).InnerSimplified;
+                c = nextC;
+                d = nextD;
+            }
+        }
+
+        /// <summary>
+        /// How many rounds of by parts are admitted before the rule gives up on its own
+        /// termination. The degree of the polynomial falls every round, so a polynomial this rule
+        /// accepted cannot reach it; it is a backstop against a <c>Differentiate</c> that does not
+        /// lower the degree rather than a bound on anything expected.
+        /// </summary>
+        private const int MaximumByPartsSteps = 64;
+
+        /// <summary>
+        /// Reads <paramref name="expr"/> as <c>P(x) e^(a x) (c cos(b x) + d sin(b x))</c>, where
+        /// <c>P</c> is a polynomial and <c>a</c> and <c>b</c> are free of the variable.
+        /// </summary>
+        /// <remarks>
+        /// A base other than <c>e</c> is read through: <c>2^x</c> is <c>e^(x ln 2)</c>, so
+        /// <c>2^x x cos(x)</c> is this shape and was declined for the spelling alone.
+        /// </remarks>
+        private static bool TryReadAnExponentialTimesATrigonometric(
+            Entity expr, Entity.Variable x, out Entity polynomial,
+            out Entity rate, out Entity frequency, out Entity onTheCosine, out Entity onTheSine)
+        {
+            polynomial = 1;
+            rate = 0;
+            frequency = 0;
+            onTheCosine = 1;
+            onTheSine = 0;
+
+            Entity? rateFound = null;
+            Entity? frequencyFound = null;
+            var cosines = 0;
+            var sines = 0;
+            Entity polynomialPart = 1;
+            if (!Read(expr, 1))
+                return false;
+            // At most one trigonometric factor, and it is either a sine or a cosine: a product of
+            // two is a different shape, which the product-to-sum rule takes apart first.
+            if (cosines + sines > 1 || cosines < 0 || sines < 0)
+                return false;
+            if (!MathS.TryPolynomial(polynomialPart, x, out var asPolynomial)
+                && polynomialPart.ContainsNode(x))
+                return false;
+
+            polynomial = polynomialPart.ContainsNode(x) ? asPolynomial! : polynomialPart;
+            rate = rateFound ?? 0;
+            frequency = frequencyFound ?? 0;
+            onTheCosine = sines == 1 ? 0 : 1;
+            onTheSine = sines == 1 ? 1 : 0;
+            // A bare polynomial is the power rule's, and a polynomial times a bare exponential or
+            // a bare sine already came out; what is new is the two together. Reading them all the
+            // same way costs nothing and keeps the rule one thing.
+            return rateFound is not null || frequencyFound is not null;
+
+            bool Read(Entity node, int multiplicity)
+            {
+                switch (node)
+                {
+                    case Sinf(var argument) when multiplicity == 1:
+                        sines++;
+                        return AgreesOnTheFrequency(argument);
+                    case Cosf(var argument) when multiplicity == 1:
+                        cosines++;
+                        return AgreesOnTheFrequency(argument);
+                    case Powf(var @base, var power)
+                        when !@base.ContainsNode(x) && power.ContainsNode(x) && @base != 0:
+                        // e^(ax), and any other base through its logarithm.
+                        if (!TreeAnalyzer.TryGetPolyLinear(power, x, out var slope, out var offset))
+                            return false;
+                        var thisRate = (slope * (@base == MathS.e ? 1 : MathS.Ln(@base))).InnerSimplified;
+                        rateFound = rateFound is null
+                            ? (multiplicity * thisRate).InnerSimplified
+                            : (rateFound + multiplicity * thisRate).InnerSimplified;
+                        // The constant part of the exponent is a factor, not a rate.
+                        polynomialPart *= MathS.Pow(@base, offset * multiplicity);
+                        return true;
+                    case Mulf(var left, var right):
+                        return Read(left, multiplicity) && Read(right, multiplicity);
+                    case Divf(var above, var below):
+                        return Read(above, multiplicity) && Read(below, -multiplicity);
+                    default:
+                        if (multiplicity != 1)
+                            return false;
+                        polynomialPart *= node;
+                        return true;
+                }
+            }
+
+            bool AgreesOnTheFrequency(Entity argument)
+            {
+                if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out var offset)
+                    || offset.Evaled is not Number.Integer(0))
+                    return false;   // a phase would want the angle-sum identity first
+                if (frequencyFound is not null && frequencyFound != slope)
+                    return false;
+                frequencyFound = slope;
+                return true;
+            }
+        }
+
+        /// <summary>
         /// A power of the variable times an odd half-power of a quadratic without a linear term —
         /// <c>x^m (a + b x^2)^(k/2)</c> with <c>k</c> odd — turned into a power of the sine times
         /// a power of the cosine, which
