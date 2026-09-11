@@ -227,9 +227,7 @@ namespace AngouriMath.Functions.Algebra
 
             Entity.Powf(var @base, var power) =>
                 !power.ContainsNode(x) && @base == x ?
-                    power == -1 ?
-                        IntegralPatterns.AntiderivativeLog(@base) :
-                        MathS.Pow(x, power + 1) / (power + 1) :
+                    IntegrateAPowerOfTheVariable(@base, power, x) :
                     null,
 
             Entity.Variable v =>
@@ -237,6 +235,45 @@ namespace AngouriMath.Functions.Algebra
 
             _ => null
         };
+
+        /// <summary>
+        /// <c>x^p</c> for a <paramref name="power"/> that does not hold the variable: the power
+        /// rule, or the logarithm where the power rule would divide by zero.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>The exponent is normalised before it is read.</b> <c>x^(-3 + 1 + 1)</c> is
+        /// <c>x^(-1)</c>, but the sum is not the integer, so comparing the written form against
+        /// <c>-1</c> missed the logarithmic case and applied the power rule to it — producing
+        /// <c>x^(-3 + 1 + 1 + 1)/(-3 + 1 + 1 + 1)</c>, which is <c>x^0/0</c>, which is
+        /// <c>NaN</c>. That is a claim that no antiderivative exists where one plainly does, and
+        /// it reached the caller: <c>(a^2 + 2abx^2 + b^2x^4)^3/x^7</c> came back <c>NaN + C</c>
+        /// while the same integrand written <c>(a + bx^2)^6/x^7</c> was answered.
+        /// https://github.com/asc-community/AngouriMath/issues/1258
+        /// </para>
+        /// <para>
+        /// <b>And normalised again on the way out</b>, which is the other half and the half that
+        /// explains where such an exponent comes from. This rule used to return <c>p + 1</c>
+        /// standing as a sum, so an answer handed back in as an integrand — which is exactly what
+        /// repeated integration by parts does — accumulated one <c>+ 1</c> per round until a
+        /// round landed on <c>-1</c> spelled as a sum. The rule was feeding itself the one input
+        /// it could not read.
+        /// </para>
+        /// <para>
+        /// A <b>symbolic</b> exponent is left to the power rule as before. <c>int x^n dx</c> is
+        /// <c>x^(n+1)/(n+1)</c> for every <c>n</c> but <c>-1</c>, and this does not decide
+        /// whether an undecidable <c>n</c> is that one; what it fixes is an exponent that
+        /// <em>is</em> decidable and was read as though it were not.
+        /// </para>
+        /// </remarks>
+        private static Entity IntegrateAPowerOfTheVariable(Entity @base, Entity power, Entity.Variable x)
+        {
+            var exponent = power.InnerSimplified;
+            if (exponent == -1)
+                return IntegralPatterns.AntiderivativeLog(@base);
+            var raised = (exponent + 1).InnerSimplified;
+            return MathS.Pow(x, raised) / raised;
+        }
 
         /// <summary>
         /// Whether <paramref name="factor"/> is one of the functions integration by parts
