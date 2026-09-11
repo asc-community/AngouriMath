@@ -787,6 +787,13 @@ namespace AngouriMath.Functions.Algebra
                 (u, expansionPower, leading, insideSign, sign) =
                     (MathS.Tan(argument),
                      -(WholeOf(sinePower) + WholeOf(cosinePower)) / 2 - 1, sinePower, 1, 1);
+            // Neither substitution leaves a polynomial, and with both exponents whole there is
+            // still a closed answer -- it just holds a logarithm, which the recurrences reach and
+            // a rearranged polynomial cannot.
+            else if (IsWholeAndFitsAnInt(sinePower, out var wholeSine)
+                     && IsWholeAndFitsAnInt(cosinePower, out var wholeCosine))
+                return (factor * IntegrateSineCosineByReduction(argument, wholeSine, wholeCosine) / rate)
+                    .InnerSimplified;
             else
                 return null;
 
@@ -809,6 +816,97 @@ namespace AngouriMath.Functions.Algebra
             }
 
             return (factor * sign * total / rate).InnerSimplified;
+        }
+
+        /// <summary>
+        /// <c>int sin(t)^p cos(t)^q dt</c> for whole exponents of any sign, by the four standard
+        /// recurrences, ending on the nine integrands with both exponents in <c>{-1, 0, 1}</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>This is the boundary the polynomial route stops at.</b> The three substitutions in
+        /// <see cref="IntegrateAPowerOfSineTimesAPowerOfCosine"/> each leave a Laurent polynomial,
+        /// so they answer the cases where one exponent is odd and positive, or where both are even
+        /// and sum to at most <c>-2</c>. Everything else needs a <b>logarithm</b> somewhere, and
+        /// no rearrangement of a polynomial produces one: <c>sin^2 cos^(-3)</c> is
+        /// <c>x^2/sqrt(1 + x^2)</c> seen through the tangent substitution, and its antiderivative
+        /// holds an inverse hyperbolic sine.
+        /// </para>
+        /// <para>
+        /// The four recurrences, each of them one integration by parts written out:
+        /// </para>
+        /// <code>
+        ///  q down   I(p,q) =  sin^(p+1) cos^(q-1)/(p+q)   + ((q-1)/(p+q))     I(p, q-2)
+        ///  p down   I(p,q) = -sin^(p-1) cos^(q+1)/(p+q)   + ((p-1)/(p+q))     I(p-2, q)
+        ///  q up     I(p,q) = -sin^(p+1) cos^(q+1)/(q+1)   + ((p+q+2)/(q+1))   I(p, q+2)
+        ///  p up     I(p,q) =  sin^(p+1) cos^(q+1)/(p+1)   + ((p+q+2)/(p+1))   I(p+2, q)
+        /// </code>
+        /// <para>
+        /// <b>Termination is <c>|p| + |q|</c>, which every branch below lowers by two</b> until
+        /// both exponents are in <c>{-1, 0, 1}</c>. The downward pair divides by <c>p + q</c> and
+        /// the upward pair by <c>q + 1</c> and <c>p + 1</c>; the ordering is chosen so that the
+        /// branch taken never has a zero divisor. Raising is tried first for exactly that reason —
+        /// <c>q + 1</c> is zero only at <c>q = -1</c>, which is already in range, so an exponent
+        /// at most <c>-2</c> can always be raised, where <c>p + q</c> can vanish at any size.
+        /// </para>
+        /// <para>
+        /// It is <b>closed</b>: the recursion is on two integers walking towards a fixed set, and
+        /// it asks the integrator nothing.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        private static Entity IntegrateSineCosineByReduction(Entity argument, int sinePower, int cosinePower)
+        {
+            var sine = MathS.Sin(argument);
+            var cosine = MathS.Cos(argument);
+
+            if (sinePower >= -1 && sinePower <= 1 && cosinePower >= -1 && cosinePower <= 1)
+                return (sinePower, cosinePower) switch
+                {
+                    (0, 0) => argument,
+                    (1, 0) => -cosine,
+                    (0, 1) => sine,
+                    (1, 1) => MathS.Sqr(sine) / 2,
+                    (1, -1) => -IntegralPatterns.AntiderivativeLog(cosine),      // int tan
+                    (-1, 1) => IntegralPatterns.AntiderivativeLog(sine),         // int cot
+                    (-1, -1) => IntegralPatterns.AntiderivativeLog(MathS.Tan(argument)),
+                    // int sec and int csc, both as an inverse hyperbolic tangent. `ln|tan(t/2)|`
+                    // is the usual form of the second and is avoided deliberately: it is the one
+                    // base case whose argument is not `t` itself, and a caller substituting the
+                    // trigonometric functions back cannot express a half-angle in terms of them.
+                    // `-artanh(cos t)` is the same function and is symmetric with the first.
+                    (0, -1) => MathS.Hyperbolic.Artanh(sine),
+                    (-1, 0) => -MathS.Hyperbolic.Artanh(cosine),
+                    _ => throw new Core.Exceptions.AngouriBugException(
+                        "every pair in the base range is listed above"),
+                };
+
+            var sum = sinePower + cosinePower;
+            Entity Power(Entity of, int to) => MathS.Pow(of, Number.Integer.Create(to));
+            Entity Carried(int numerator, int denominator, int nextSine, int nextCosine)
+                => Number.Rational.Create(numerator, denominator)
+                 * IntegrateSineCosineByReduction(argument, nextSine, nextCosine);
+
+            // Raising first, because an exponent at most -2 can always be raised and lowering can
+            // be blocked by p + q being zero -- `tan(t)^2` is `sin^2 cos^(-2)`, the smallest case
+            // where it is.
+            if (cosinePower <= -2)
+                return -Power(sine, sinePower + 1) * Power(cosine, cosinePower + 1)
+                       / Number.Integer.Create(cosinePower + 1)
+                     + Carried(sum + 2, cosinePower + 1, sinePower, cosinePower + 2);
+            if (sinePower <= -2)
+                return Power(sine, sinePower + 1) * Power(cosine, cosinePower + 1)
+                       / Number.Integer.Create(sinePower + 1)
+                     + Carried(sum + 2, sinePower + 1, sinePower + 2, cosinePower);
+            // Both exponents are now at least -1, so p + q is zero only if one of them is -1 and
+            // the other 1 -- both in range, and so already answered above.
+            if (cosinePower >= 2)
+                return Power(sine, sinePower + 1) * Power(cosine, cosinePower - 1)
+                       / Number.Integer.Create(sum)
+                     + Carried(cosinePower - 1, sum, sinePower, cosinePower - 2);
+            return -Power(sine, sinePower - 1) * Power(cosine, cosinePower + 1)
+                   / Number.Integer.Create(sum)
+                 + Carried(sinePower - 1, sum, sinePower - 2, cosinePower);
         }
 
         /// <summary>
@@ -956,11 +1054,19 @@ namespace AngouriMath.Functions.Algebra
                    radical / MathS.Sqrt(a),
                    inTermsOf * MathS.Sqrt(-b) / radical);
 
+            // `t` itself appears whenever the reduction bottoms out on `int 1 dt`, and that is
+            // where an inverse trigonometric function enters an answer that is otherwise
+            // algebraic -- `int sqrt(1 - x^2)/x^2 dx` holds an arcsine for exactly this reason.
+            var angle = quadratic.Sign > 0
+                ? MathS.Arctan(inTermsOf * MathS.Sqrt(b) / MathS.Sqrt(a))
+                : MathS.Arcsin(inTermsOf * MathS.Sqrt(-b) / MathS.Sqrt(a));
+
             var answer = inT.Replace(node => node switch
             {
                 Sinf(var inner) when inner == t => sine,
                 Cosf(var inner) when inner == t => cosine,
                 Tanf(var inner) when inner == t => tangent,
+                Variable v when v == t => angle,
                 _ => node
             });
             return answer.ContainsNode(t) ? null : (coefficient * answer).InnerSimplified;
