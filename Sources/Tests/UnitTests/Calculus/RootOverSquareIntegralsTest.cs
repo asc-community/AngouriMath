@@ -68,14 +68,28 @@ namespace AngouriMath.Tests.Calculus
             AssertIsAntiderivative(integrand, points);
 
         /// <summary>
-        /// Outside the family the formula does not apply and nothing is claimed: a power of
-        /// x other than the square, and a radicand whose constant term is zero, which the
-        /// formula would divide by.
+        /// Outside the family <b>this</b> formula does not apply, and nothing is claimed by it:
+        /// a power of x other than the square, and a radicand whose constant term is zero, which
+        /// the formula would divide by.
         /// </summary>
+        /// <remarks>
+        /// Whether anything <em>else</em> answers them is not this rule's business and is not
+        /// asserted here. <c>1/(x^3 sqrt(x^2 - 1))</c> was pinned as unevaluated and is now
+        /// answered by the trigonometric substitution — an improvement rather than a change to
+        /// this rule, so what is pinned is that the answer, if there is one, is right. The second
+        /// is still unevaluated: a negative power of the variable beside a quadratic with a
+        /// linear term is outside that rule too.
+        /// </remarks>
         [Theory]
-        [InlineData("1 / (x ^ 3 * sqrt(x ^ 2 - 1))")]
-        [InlineData("1 / (x ^ 2 * sqrt(x ^ 2 + x + 1))")]
-        public void OutsideTheFamilyNothingIsClaimed(string integrand) =>
-            Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
+        [InlineData("1 / (x ^ 3 * sqrt(x ^ 2 - 1))", new[] { 1.4, 2.6, 5.1, -1.9, -3.7 })]
+        [InlineData("1 / (x ^ 2 * sqrt(x ^ 2 + x + 1))", new[] { 0.4, 1.6, 3.2 })]
+        public void OutsideTheFamilyThisFormulaClaimsNothing(string integrand, double[] points)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            if (integral.Stringize().Contains("integral("))
+                return;
+            AssertIsAntiderivative(integrand, points);
+        }
     }
 }

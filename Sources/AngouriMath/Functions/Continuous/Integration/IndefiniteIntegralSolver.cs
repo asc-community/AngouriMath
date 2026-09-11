@@ -1222,42 +1222,91 @@ namespace AngouriMath.Functions.Algebra
             => answer is null ? null : (factor * answer).InnerSimplified;
 
         /// <summary>
-        /// <c>int y^m (A + c y^2)^(k/2) dy</c> for odd <c>k</c>, written back in terms of
+        /// <c>int y^m (A + c y^2)^(k/2) dy</c>, written back in terms of
         /// <paramref name="inTermsOf"/> -- which is the variable itself where the quadratic had no
         /// linear term, and the shifted variable where it did.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Where the answer holds.</b> Each of the three substitutions is a bijection only on
+        /// the interval where the radicand is positive, and that is where the integrand is real
+        /// in the first place: everywhere for <c>A, c &gt; 0</c>, between the two roots for
+        /// <c>c &lt; 0</c>, and outside them for <c>A &lt; 0</c>. The answer is an antiderivative
+        /// on each such interval, which is the standing caveat on a trigonometric substitution
+        /// and is not something this writes as a condition.
+        /// </para>
+        /// </remarks>
         private static Entity? IntegrateAPowerTimesARadicalQuadratic(
             Entity expr, Entity inTermsOf, int power, int half, ERational constant, ERational quadratic)
         {
-            // Both coefficients decided, and the constant one positive: that is what makes the
-            // radicand `A(1 + tan^2)` or `A(1 - sin^2)` rather than something whose sign the
-            // substitution would have to guess at. `c y^2 - A`, the signs the other way round, is
-            // the secant substitution -- a third branch whose domain is two intervals rather than
-            // one, so the answer owes a condition this does not write, and it is declined.
-            if (constant.Sign <= 0 || quadratic.IsZero)
+            // Both coefficients decided and neither zero. Their two signs pick one of the three
+            // substitutions, and there is no fourth: `A + c y^2` with both positive is
+            // `A(1 + tan^2)`, with `c` negative it is `A(1 - sin^2)`, and with `A` negative it is
+            // `|A|(sec^2 - 1)`. Both negative is a radicand that is negative everywhere, which is
+            // not this rule's business.
+            if (quadratic.IsZero || constant.IsZero
+                || (constant.Sign < 0 && quadratic.Sign < 0))
                 return null;
 
-            var a = Number.Rational.Create(constant);
+            var secant = constant.Sign < 0;
+            // **The secant branch only for a genuine radical**, and that is a correctness bound
+            // rather than a scope one. It is the one substitution whose domain is two intervals,
+            // and both of them exclude `|y| < r`. Where the power is odd the integrand excludes
+            // that interval too -- it is a square root of something negative there -- so the
+            // answer is valid wherever the integrand is. Where the power is *even* the integrand
+            // is an ordinary polynomial, real on the whole line, and an answer built from
+            // `sqrt(y^2 - r^2)` is wrong on the middle: `(2x + 3x^2)^2` came back with the sign
+            // reversed at `x = -0.5`, which is a wrong answer and not a missing condition.
+            if (secant && half % 2 == 0)
+                return null;
+            var a = Number.Rational.Create(constant.Abs());
             var b = Number.Rational.Create(quadratic);
-            var r = MathS.Sqrt(Number.Rational.Create(constant / quadratic.Abs()));
+            var r = MathS.Sqrt(Number.Rational.Create(constant.Abs() / quadratic.Abs()));
 
             var t = Variable.CreateUnique(expr, "t_trig");
-            // b > 0: y = r tan(t) leaves sin^m cos^(-m-k-2); b < 0: y = r sin(t) leaves
-            // sin^m cos^(k+1). The constant is r^(m+1) A^(k/2) either way.
-            var sinePower = ERational.FromInt32(power);
+            // The three substitutions and what each leaves, with `r = sqrt(|A/c|)`:
+            //
+            //   A > 0, c > 0   y = r tan(t)   dy = r sec^2 dt   ->  sin^m cos^(-m-k-2)
+            //   A > 0, c < 0   y = r sin(t)   dy = r cos dt     ->  sin^m cos^(k+1)
+            //   A < 0, c > 0   y = r sec(t)   dy = r sec tan dt ->  sin^(k+1) cos^(-m-k-2)
+            //
+            // and the constant outside is `r^(m+1) |A|^(k/2)` in all three.
+            var sinePower = ERational.FromInt32(secant ? half + 1 : power);
             var cosinePower = ERational.FromInt32(
-                quadratic.Sign > 0 ? -power - half - 2 : half + 1);
+                secant || quadratic.Sign > 0 ? -power - half - 2 : half + 1);
             var coefficient = MathS.Pow(r, power + 1) * MathS.Pow(a, Number.Rational.Create(half, 2));
 
             if (IntegrateAPowerOfSineTimesAPowerOfCosine(t, sinePower, cosinePower, 1, 1) is not { } inT)
                 return null;
 
             // Back in terms of the variable. Each of the three is algebraic under the
-            // substitution, so no inverse trigonometric function appears -- and the closed core
-            // never leaves a bare `t` behind, which the check at the end confirms rather than
-            // assumes.
-            var radical = MathS.Sqrt((a + b * MathS.Sqr(inTermsOf)).InnerSimplified);
-            var (sine, cosine, tangent) = quadratic.Sign > 0
+            // substitution, so the answer stays algebraic except where the recursion bottoms out
+            // on `int 1 dt` -- which is where the inverse function below enters.
+            //
+            // Under the secant substitution `tan(t)^2` is `y^2/r^2 - 1`, which is the radicand
+            // over `|A|`, so the radical the integrand came in with is what goes back in.
+            var radicand = ((secant ? -a : a) + b * MathS.Sqr(inTermsOf)).InnerSimplified;
+            var radical = MathS.Sqrt(radicand);
+            // **The secant branch is written for the right interval and reflected onto the left.**
+            // It is the one substitution whose domain is two intervals, and the two are not the
+            // same calculation: `(a tan(t)^2)^(k/2)` is `a^(k/2) |tan(t)|^k`, and `tan(t)` is
+            // negative for `t` in `(pi/2, pi)`, which is where `y < -r` lands. Writing `tan(t)^k`
+            // there is wrong by a sign for odd `k`, and the sign it is wrong by depends on the
+            // power outside the radical as well, so patching the three replacements one at a time
+            // does not converge -- measured, and it does not.
+            //
+            // What is true without cases: the integrand `y^m (b y^2 - a)^(k/2)` is even or odd
+            // under `y -> -y` according to `m`, so an antiderivative `F` valid for `y > r` gives
+            // the whole answer as `sign(y)^(m+1) F(|y|)`. So everything below is written in
+            // `|y|`, where the substitution's own interval is the principal one and every sign is
+            // positive, and the reflection is applied once at the end.
+            var absolute = MathS.Abs(inTermsOf);
+            var (sine, cosine, tangent) =
+                secant
+                ? (radical / (absolute * MathS.Sqrt(b)),
+                   r / absolute,
+                   radical / MathS.Sqrt(a))
+                : quadratic.Sign > 0
                 ? (inTermsOf * MathS.Sqrt(b) / radical,
                    MathS.Sqrt(a) / radical,
                    inTermsOf * MathS.Sqrt(b) / MathS.Sqrt(a))
@@ -1268,7 +1317,9 @@ namespace AngouriMath.Functions.Algebra
             // `t` itself appears whenever the reduction bottoms out on `int 1 dt`, and that is
             // where an inverse trigonometric function enters an answer that is otherwise
             // algebraic -- `int sqrt(1 - x^2)/x^2 dx` holds an arcsine for exactly this reason.
-            var angle = quadratic.Sign > 0
+            var angle = secant
+                ? MathS.Arccos(r / absolute)
+                : quadratic.Sign > 0
                 ? MathS.Arctan(inTermsOf * MathS.Sqrt(b) / MathS.Sqrt(a))
                 : MathS.Arcsin(inTermsOf * MathS.Sqrt(-b) / MathS.Sqrt(a));
 
@@ -1280,7 +1331,14 @@ namespace AngouriMath.Functions.Algebra
                 Variable v when v == t => angle,
                 _ => node
             });
-            return answer.ContainsNode(t) ? null : (coefficient * answer).InnerSimplified;
+            if (answer.ContainsNode(t))
+                return null;
+            // The reflection, once: `sign(y)^(m+1)`, which is `sign(y)` for an even power outside
+            // the radical and nothing for an odd one. A factor constant on each interval changes
+            // an antiderivative by a constant there and nothing else.
+            if (secant && power % 2 == 0)
+                answer *= MathS.Signum(inTermsOf);
+            return (coefficient * answer).InnerSimplified;
         }
 
         /// <summary>
