@@ -1166,12 +1166,21 @@ namespace AngouriMath.Functions.Algebra
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
-        internal static Entity? SolveARadicalOfAQuadraticAsTrigonometric(Entity expr, Entity.Variable x)
+        internal static Entity? SolveARadicalOfAQuadraticAsTrigonometric(
+            Entity expr, Entity.Variable x, bool aWholePowerCounts = false)
         {
             if (!Integration.AnsweringTheQuestionAsked)
                 return null;
             if (!TryReadAPowerTimesARadicalQuadratic(expr, x, out var power, out var half,
                     out var constant, out var middle, out var quadratic, out var factor))
+                return null;
+            // An odd count is a genuine radical and is this rule's straight away. An even one is a
+            // rational function, which partial fractions answers in a form people expect -- so it
+            // reaches this only from the second call site, below that rule, with what it declined.
+            // `1/(x (1 + x^2)^2)` is the shape that gets here: a repeated irreducible quadratic
+            // beside a negative power of the variable, which the rational split does not take
+            // apart and the tangent substitution turns into `sin^(-1) cos^3`.
+            if (half % 2 == 0 && !aWholePowerCounts)
                 return null;
 
             if (middle.IsZero)
@@ -1300,7 +1309,7 @@ namespace AngouriMath.Functions.Algebra
             var powerFound = 0;
             Entity constantFactor = 1;
             var read = Read(expr, 1);
-            if (!read || radicandFound is null || halfFound % 2 == 0)
+            if (!read || radicandFound is null)
                 return false;
             if (!TreeAnalyzer.TryGetPolyQuadratic(radicandFound, x, out var square, out var linear, out var free))
                 return false;
@@ -1328,6 +1337,18 @@ namespace AngouriMath.Functions.Algebra
                         return Read(left, multiplicity) && Read(right, multiplicity);
                     case Divf(var above, var below):
                         return Read(above, multiplicity) && Read(below, -multiplicity);
+                    // A whole power of the quadratic, counted on the same scale -- `Q^2` is
+                    // `Q^(4/2)`. Whether an even count is acceptable is the caller's to decide,
+                    // and the two callers decide differently: a radical is this rule's before
+                    // anything else has tried, and a whole power is only its if the rational
+                    // machinery has already declined.
+                    case Powf(var @base, Number.Integer whole)
+                        when @base.ContainsNode(x) && @base != x && whole.EInteger.CanFitInInt32():
+                        if (radicandFound is not null && radicandFound != @base)
+                            return false;
+                        radicandFound = @base;
+                        halfFound += multiplicity * 2 * whole.EInteger.ToInt32Checked();
+                        return true;
                     // The radical, in any odd half power: sqrt(Q), Q^(3/2), 1/Q^(5/2).
                     case Powf(var @base, Number.Rational exponent)
                         when @base.ContainsNode(x)
@@ -1337,6 +1358,13 @@ namespace AngouriMath.Functions.Algebra
                             return false;
                         radicandFound = @base;
                         halfFound += multiplicity * exponent.ERational.Numerator.ToInt32Checked();
+                        return true;
+                    // The quadratic written out rather than raised, which is the power one.
+                    case Sumf or Minusf when node.ContainsNode(x):
+                        if (radicandFound is not null && radicandFound != node)
+                            return false;
+                        radicandFound = node;
+                        halfFound += multiplicity * 2;
                         return true;
                     // A whole power of the variable, written as one.
                     case Powf(var @base, Number.Integer exponent)
