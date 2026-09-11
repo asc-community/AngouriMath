@@ -395,6 +395,11 @@ namespace AngouriMath.Functions.Algebra
             // the reduction gives. Rubi's own ordering puts the reduction first for the same
             // reason.
             if ((answer = IndefiniteIntegralSolver.SolveBySecantPowerReduction(expr, x)) is { }) return answer;
+            // And beside it: a power of the sine times a power of the cosine, which is every
+            // product of the six trigonometric functions once tangents and secants are read as
+            // the pair of exponents they are. After the reduction, because a power of the secant
+            // alone is both rules' and the reduction's answer for it is shorter.
+            if ((answer = IndefiniteIntegralSolver.SolveByTrigonometricPowerSubstitution(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByTangentSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
             // Linearity again, and this time with the expansion: a product with a sum in it --
