@@ -431,11 +431,126 @@ namespace AngouriMath.Functions.Algebra
                     return regrouped;
             }
 
+            // **And once more around the factor LIATE differentiates first, wherever it sits.**
+            // The block above only runs on a product, so `arcsin(x)/(x^2*sqrt(1 - x^2))` never
+            // reached this rule at all -- its top node is a quotient. Written as the product it
+            // is, `arcsin(x) * (1/(x^2*sqrt(1 - x^2)))`, the same integrand came out. A quotient
+            // is a product with reciprocals in it, and reading it as one is the whole of this.
+            //
+            // The cut is the logarithm or inverse trigonometric factor against everything else,
+            // because that is the factor whose derivative is algebraic and cancels; taking it
+            // out of the middle of a product is the same defect as taking the polynomial out,
+            // with a different factor doing the work. `x*arcsin(x)/sqrt(1 - x^2)` needs both
+            // moves at once: read as a product, and cut at the arcsine rather than at the top.
+            //
+            // **Two bounds, and both were measured rather than added for safety.** Without them
+            // this is worth six more answers on the Rubi sample and forty per cent of its wall
+            // clock, which is what https://github.com/asc-community/AngouriMath/issues/1265 is
+            // about. With them it is worth the same six answers and three per cent.
+            //
+            // The first is scope: asked, not volunteered. The split is offered only for the
+            // caller's own integrand, never for one another rule produced on the way somewhere.
+            // A by-parts step produces quotients holding logarithms by the dozen, and each of
+            // those opening a fresh by-parts attempt is where the time went --
+            // `cos(x)^3*ln(sin(x))` is answered in 1.7 s by master and took 45 s without this,
+            // although the rule never fires on it at the top at all.
+            //
+            // The second is in the regrouping: exactly one factor to differentiate, never two.
+            if (Integration.AnsweringTheQuestionAsked
+                && TryRegroupAroundTheDifferentiatedFactor(expr) is var (differentiated, others)
+                && differentiated is not null && others is not null
+                && TrySplit(differentiated, others) is { } byLiate)
+                return byLiate;
+
             // Special case for powers of integrable functions, try integration by parts on base × base
             // e.g., ln(abs(x))^2 = ln(abs(x)) × ln(abs(x))
             if (expr is Powf(var @base, Integer(2)) && TryIntegrateByPartsOnce(@base, @base, x, wholeSize) is { } result) return result;
 
             return null;
+        }
+
+        /// <summary>
+        /// The factors of <paramref name="expr"/> read as a product — a quotient contributing its
+        /// denominator's factors as reciprocals — cut into the one
+        /// <see cref="IsDifferentiatedBeforeAPolynomial"/> recognises and everything else.
+        /// </summary>
+        /// <remarks>
+        /// Both halves <see langword="null"/> when there is no such factor, or when it is the
+        /// whole integrand and there is nothing to put on the other side. One factor is taken,
+        /// not all of them: it is the one that gets differentiated, and differentiating a product
+        /// of two logarithms is not a step towards anything.
+        /// </remarks>
+        private static (Entity? Differentiated, Entity? Others) TryRegroupAroundTheDifferentiatedFactor(Entity expr)
+        {
+            var factors = FactorsOfTheIntegrand(expr);
+            if (factors.Count < 2)
+                return (null, null);
+
+            // Exactly one, and that is a bound rather than a tidiness. With two logarithms or
+            // inverse trigonometric factors there is no reason to differentiate one rather than
+            // the other, so the choice is a guess -- and what is left still holds the other one,
+            // so the step has not made the problem smaller. Measured on
+            // `x*arctan(x)*ln(x + sqrt(1 + x^2))/sqrt(1 + x^2)`: declined in 66 ms without this
+            // rule and in 39 s with it choosing one of the two.
+            if (factors.Count(pair => !pair.Underneath && IsDifferentiatedBeforeAPolynomial(pair.Factor)) != 1)
+                return (null, null);
+
+            Entity? differentiated = null;
+            Entity? above = null;
+            Entity? below = null;
+            foreach (var (factor, underneath) in factors)
+                if (differentiated is null && !underneath && IsDifferentiatedBeforeAPolynomial(factor))
+                    differentiated = factor;
+                else if (underneath)
+                    below = below is null ? factor : below * factor;
+                else
+                    above = above is null ? factor : above * factor;
+
+            if (differentiated is null || (above is null && below is null))
+                return (null, null);
+            // **Put the rest back together as one quotient**, numerator over denominator, rather
+            // than as a product of reciprocals. Which of the two it is decides whether the rules
+            // below read it: `1/(x^2*sqrt(1 - x^2))` is answered and
+            // `(1/x^2) * (1/sqrt(1 - x^2))` is not, and handing on the second shape means this
+            // rule reproduces, inside itself, exactly the spelling defect it exists to remove.
+            var others = below is null ? above! : above is null ? 1 / below : above / below;
+            return (differentiated, others);
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> read as a product of factors, each paired with whether it sits
+        /// under a division bar.
+        /// </summary>
+        /// <remarks>
+        /// <c>a/(b*c)</c> comes back as <c>a</c> above and <c>b</c>, <c>c</c> below — which is
+        /// what lets a rule that reasons about factors see through a quotient, where
+        /// <see cref="Mulf.LinearChildren"/> stops at it. The flag is kept rather than folded
+        /// into a reciprocal so that the caller can rebuild one quotient instead of a product of
+        /// them.
+        /// </remarks>
+        private static List<(Entity Factor, bool Underneath)> FactorsOfTheIntegrand(Entity expr)
+        {
+            var factors = new List<(Entity, bool)>();
+            Gather(expr, underneath: false);
+            return factors;
+
+            void Gather(Entity node, bool underneath)
+            {
+                switch (node)
+                {
+                    case Mulf(var left, var right):
+                        Gather(left, underneath);
+                        Gather(right, underneath);
+                        break;
+                    case Divf(var numerator, var denominator):
+                        Gather(numerator, underneath);
+                        Gather(denominator, !underneath);
+                        break;
+                    default:
+                        factors.Add((node, underneath));
+                        break;
+                }
+            }
         }
 
         /// <summary>
