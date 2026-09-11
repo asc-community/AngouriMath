@@ -520,6 +520,169 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An integrand that is a power of the sine times a power of the cosine, of one common
+        /// argument linear in the variable, turned into a polynomial by whichever of
+        /// <c>u = cos</c>, <c>u = sin</c> and <c>u = tan</c> the two exponents admit.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Everything built from the six trigonometric functions is a <c>sin^p cos^q</c></b>,
+        /// and reading it that way is what makes one rule out of a family Rubi spreads over
+        /// several sections: <c>tan^m sec^n</c> is <c>sin^m cos^(-m-n)</c>, <c>cot^m csc^n</c> is
+        /// <c>cos^m sin^(-m-n)</c>, a power of the secant alone is <c>cos^(-n)</c>. The exponents
+        /// are integers of either sign, so the same three cases below cover all of them.
+        /// </para>
+        /// <para>
+        /// <b>Which substitution, and why exactly these three.</b> Each one has to leave a
+        /// <i>Laurent polynomial</i> — a sum of powers of <c>u</c>, integrated term by term —
+        /// because that is what makes the rule closed. It asks the integrator nothing.
+        /// </para>
+        /// <list type="bullet">
+        /// <item><description>
+        /// <c>p</c> odd and at least one: <c>u = cos</c>, <c>du = -sin dx</c>, so one sine goes
+        /// into <c>du</c> and <c>sin^(p-1)</c> is <c>(1 - u^2)^((p-1)/2)</c>. Leaves
+        /// <c>-(1 - u^2)^((p-1)/2) u^q</c>, and <c>q</c> may be anything.
+        /// </description></item>
+        /// <item><description>
+        /// <c>q</c> odd and at least one: <c>u = sin</c>, the mirror of it.
+        /// </description></item>
+        /// <item><description>
+        /// both even and <c>p + q</c> at most <c>-2</c>: <c>u = tan</c>, under which
+        /// <c>cos^2 = 1/(1 + u^2)</c> and <c>dx = du/(1 + u^2)</c>, leaving
+        /// <c>u^p (1 + u^2)^(-(p+q)/2 - 1)</c> — a polynomial exactly when <c>p + q</c> is at
+        /// most <c>-2</c>, which is the condition. <c>tan^2 sec^4</c> is this case and neither
+        /// of the others.
+        /// </description></item>
+        /// </list>
+        /// <para>
+        /// <b>What is deliberately left out</b>: both exponents even with <c>p + q</c> at least
+        /// zero, where the tangent substitution leaves a negative power of <c>1 + u^2</c> rather
+        /// than a polynomial. Those are the ordinary <c>sin^2 cos^4</c> shapes, which the
+        /// power-reduction rules already answer, so the boundary costs nothing. A power of the
+        /// secant or cosecant alone reaches <see cref="SolveBySecantPowerReduction"/> first,
+        /// which gives a shorter answer for it.
+        /// </para>
+        /// <para>
+        /// <b>Asked, not volunteered</b>, for the reason in
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1265">#1265</a>: a rule
+        /// that answers a sub-integral which used to come back unanswered lets the search that
+        /// asked for it carry on, and that cost lands on integrands the rule never fires on.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByTrigonometricPowerSubstitution(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            if (!TryReadSineCosinePowers(expr, out var argument, out var sinePower, out var cosinePower, out var factor))
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _) || rate.Evaled == 0)
+                return null;
+
+            // What is left after the substitution: u^leading times (1 + insideSign*u^2) raised to
+            // expansionPower, all times sign -- which is what the substitution's own derivative
+            // contributes, negative for the cosine and positive for the sine and the tangent.
+            Entity u;
+            int expansionPower, leading, insideSign, sign;
+            if (sinePower % 2 != 0 && sinePower >= 1)
+                (u, expansionPower, leading, insideSign, sign) =
+                    (MathS.Cos(argument), (sinePower - 1) / 2, cosinePower, -1, -1);
+            else if (cosinePower % 2 != 0 && cosinePower >= 1)
+                (u, expansionPower, leading, insideSign, sign) =
+                    (MathS.Sin(argument), (cosinePower - 1) / 2, sinePower, -1, 1);
+            else if (sinePower % 2 == 0 && cosinePower % 2 == 0 && sinePower + cosinePower <= -2)
+                (u, expansionPower, leading, insideSign, sign) =
+                    (MathS.Tan(argument), -(sinePower + cosinePower) / 2 - 1, sinePower, 1, 1);
+            else
+                return null;
+
+            // The binomial expansion, each term integrated by the power rule -- or by the
+            // logarithm at the one exponent where the power rule would divide by zero, which is
+            // reachable here whenever `leading` is negative and odd.
+            Entity total = 0;
+            var coefficient = EInteger.One;
+            for (var i = 0; i <= expansionPower; i++)
+            {
+                var exponent = leading + 2 * i;
+                var term = exponent == -1
+                    ? IntegralPatterns.AntiderivativeLog(u)
+                    : MathS.Pow(u, Number.Integer.Create(exponent + 1)) / Number.Integer.Create(exponent + 1);
+                var alternating = insideSign < 0 && i % 2 != 0 ? -1 : 1;
+                total += Number.Integer.Create(coefficient) * alternating * term;
+                // The next binomial coefficient from this one: C(k, i+1) = C(k, i) * (k-i)/(i+1).
+                coefficient = coefficient * (expansionPower - i) / (i + 1);
+            }
+
+            return (factor * sign * total / rate).InnerSimplified;
+        }
+
+        /// <summary>
+        /// Reads <paramref name="expr"/> as a rational multiple of <c>sin(u)^p cos(u)^q</c> over
+        /// one common argument, however the six trigonometric functions spell it.
+        /// </summary>
+        /// <remarks>
+        /// A tangent contributes <c>(+1, -1)</c>, a secant <c>(0, -1)</c>, a cosecant
+        /// <c>(-1, 0)</c> and a cotangent <c>(-1, +1)</c>, so a product of any of them over one
+        /// argument is a pair of integers. Anything else in the product — a second argument, a
+        /// non-integer power, a function of the variable that is not one of the six — makes the
+        /// whole read fail, because a rule that guesses at the part it did not recognise answers
+        /// a question it was not asked.
+        /// </remarks>
+        private static bool TryReadSineCosinePowers(
+            Entity expr, out Entity argument, out int sinePower, out int cosinePower, out Entity factor)
+        {
+            Entity? common = null;
+            var sine = 0;
+            var cosine = 0;
+            Entity constant = 1;
+            var read = Read(expr, 1);
+            argument = common ?? 0;
+            sinePower = sine;
+            cosinePower = cosine;
+            factor = constant;
+            return read && common is not null && (sine != 0 || cosine != 0);
+
+            bool Agrees(Entity candidate)
+            {
+                if (common is null)
+                {
+                    common = candidate;
+                    return true;
+                }
+                return common == candidate;
+            }
+
+            bool Read(Entity node, int multiplicity)
+            {
+                switch (node)
+                {
+                    case Sinf(var a): sine += multiplicity; return Agrees(a);
+                    case Cosf(var a): cosine += multiplicity; return Agrees(a);
+                    case Tanf(var a): sine += multiplicity; cosine -= multiplicity; return Agrees(a);
+                    case Cotanf(var a): sine -= multiplicity; cosine += multiplicity; return Agrees(a);
+                    case Secantf(var a): cosine -= multiplicity; return Agrees(a);
+                    case Cosecantf(var a): sine -= multiplicity; return Agrees(a);
+                    case Mulf(var left, var right):
+                        return Read(left, multiplicity) && Read(right, multiplicity);
+                    case Divf(var above, var below):
+                        return Read(above, multiplicity) && Read(below, -multiplicity);
+                    case Powf(var @base, Number.Integer power) when power.EInteger.CanFitInInt32():
+                        return Read(@base, multiplicity * power.EInteger.ToInt32Checked());
+                    // A rational factor rides along; anything else is declined rather than
+                    // carried, since carrying it would claim the rest of the product is
+                    // trigonometric when it has not been read.
+                    case Number.Rational rational:
+                        constant = multiplicity > 0
+                            ? constant * MathS.Pow(rational, multiplicity)
+                            : constant / MathS.Pow(rational, -multiplicity);
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        }
+
+        /// <summary>
         /// Reads <paramref name="expr"/> as a whole power of a secant or a cosecant, however it
         /// is written: as the node, as a negative power of cosine or sine, or as one over a
         /// positive power of them.
