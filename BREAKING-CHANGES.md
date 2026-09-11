@@ -197,6 +197,36 @@ zero-discriminant arm, which gives the right answer.
 Each of these was checked by differentiating it back with the parameters pinned and comparing at
 four points. Nothing that already had an antiderivative changes.
 
+### `NaN` again, from an exponent that was read as written rather than as a number
+
+**A wrong answer, and a second one of the same kind.** `(a^2 + 2abx^2 + b^2x^4)^3/x^7` came back as
+`NaN + C` while `(a + bx^2)^6/x^7` — the same integrand with its base not written out — was
+answered. Unrelated to the entry above: that one was the quadratic rule's `a = 0` branch, and this
+reproduces with it fixed.
+
+| | Was | Is |
+|---|---|---|
+| `"(a^2 + 2*a*b*x^2 + b^2*x^4)^3/x^7".Integrate("x")` | `NaN + C` | the antiderivative |
+| `"(a^2 + 2*a*b*x^2 + b^2*x^4)^3/x^9".Integrate("x")` | `NaN + C` | the antiderivative |
+| `"(a^2 + 2*a*b*x + b^2*x^2)^3/x^7".Integrate("x")`, the same shape in one variable | `NaN + C` | the antiderivative |
+
+The power rule recognised the exponent `-1` — the one case where the antiderivative is a logarithm
+rather than a power — only when it was spelled as the integer. It also returned `x^(p + 1)/(p + 1)`
+with that sum left standing, and repeated integration by parts hands an antiderivative back in as
+an integrand, so a later round arrived carrying `x^(-3 + 1 + 1)`. That is `x^(-1)` and wants the
+logarithm; read as written it is not `-1`, so the power rule applied and produced
+`x^(-3 + 1 + 1 + 1)/(-3 + 1 + 1 + 1)`, which is `x^0/0`. The rule was feeding itself the one input
+it could not read.
+
+The exponent is now normalised both when it is read and when it is written back out. A **symbolic**
+exponent is unaffected: `int x^n dx` is still `x^(n+1)/(n+1)`, since whether an undecidable `n` is
+`-1` is not something this decides — what changed is an exponent that *is* decidable and was being
+read as though it were not.
+
+Each of these was checked by differentiating it back with the parameters pinned and comparing at
+four points. The Rubi sample is unchanged at 231 of 463 with no wrong answers, so nothing that
+already had an antiderivative moves.
+
 ---
 
 ## 2.5.0 — since 2.4.0
