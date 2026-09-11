@@ -426,6 +426,10 @@ namespace AngouriMath.Functions.Algebra
             // rational function, so it wants everything that answers a problem in its own terms to
             // have declined first.
             if ((answer = IndefiniteIntegralSolver.SolveByLinearRadicalSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // A square root of a quadratic, answered as a power of the sine times a power of the
+            // cosine rather than by rationalising it. After the linear radical, which answers a
+            // root of something linear in its own terms and more shortly.
+            if ((answer = IndefiniteIntegralSolver.SolveARadicalOfAQuadraticAsTrigonometric(expr, x)) is { }) return answer;
             // Product-to-sum among the rewrites rather than before them, because a product of
             // trigonometric functions of *equal* arguments is a power and wants a different tool;
             // this only fires where the arguments differ, which is exactly what every substitution
