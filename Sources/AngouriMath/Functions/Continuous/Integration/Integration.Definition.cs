@@ -250,6 +250,35 @@ namespace AngouriMath.Functions.Algebra
         internal static bool AnsweringTheQuestionAsked => descentDepth == 1;
 
         /// <summary>
+        /// <paramref name="expr"/> integrated as a question in its own right rather than as a
+        /// step in the search for the current one: the term of a sum asked at the top is asked at
+        /// the top.
+        /// </summary>
+        /// <remarks>
+        /// Linearity splits the integrand before anything else, and every term it produced was
+        /// one level down — where the five scoped rules decline. So <c>(x^3 - 1)/(2 + x^3)^(1/3)</c>
+        /// was declined although each of its two terms is a binomial differential the rule
+        /// answers when asked directly. A term of a top-level sum is strictly smaller than the
+        /// sum and is not a continuation of any rule's search, which is what the scope exists to
+        /// stop; taken at the top it costs nothing the scope was measured to save. Only from the
+        /// top: one level down the terms stay one level down, as before.
+        /// </remarks>
+        internal static Entity? ComputeAsAQuestionOfItsOwn(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!AnsweringTheQuestionAsked)
+                return ComputeIndefiniteIntegral(expr, x, integrateByParts);
+            descentDepth--;
+            try
+            {
+                return ComputeIndefiniteIntegral(expr, x, integrateByParts);
+            }
+            finally
+            {
+                descentDepth++;
+            }
+        }
+
+        /// <summary>
         /// Whether anything in the current top-level call gave up on <see cref="DeepestDescent"/>
         /// rather than on the mathematics. A <c>null</c> produced that way must not be cached as
         /// "this cannot be integrated", because the same key may well be answerable when it is

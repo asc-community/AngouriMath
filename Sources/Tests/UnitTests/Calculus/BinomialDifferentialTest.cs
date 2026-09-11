@@ -12,8 +12,9 @@ using Xunit;
 namespace AngouriMath.Tests.Calculus
 {
     /// <summary>
-    /// The binomial differential <c>x^m (a + b x^n)^(p/q)</c>, in the case Chebyshev's criterion
-    /// makes a polynomial.
+    /// The binomial differential <c>x^m (a + b x^n)^(p/q)</c>, in the two of Chebyshev's three
+    /// cases that are not a whole power: where the substitution leaves a polynomial or a
+    /// rational function of <c>u</c>, and the third case taken to those through <c>x = 1/y</c>.
     /// <a href="https://github.com/asc-community/AngouriMath/issues/718">#718</a>
     /// </summary>
     /// <remarks>
@@ -101,16 +102,43 @@ namespace AngouriMath.Tests.Calculus
         public void AFactorAndACoefficient(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
-        /// Outside Chebyshev's first case. <c>s</c> not whole is either his second or third case
-        /// or — and this is the part worth knowing before anyone goes looking — no elementary
-        /// antiderivative at all, which he proved. These must be declined or answered by another
-        /// rule, never wrong.
+        /// <c>s = (m + 1)/n</c> whole and at most zero, where the substitution leaves a rational
+        /// function of <c>u</c> rather than a polynomial: <c>sqrt(1 + x^3)/x</c> is
+        /// <c>(2/3) int u^2/(u^2 - 1) du</c>. Charlwood's, Bronstein's and four of Welz's.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(1 + x^3)/x")]
+        [InlineData("1/(x*sqrt(1 - x^3))")]
+        [InlineData("sqrt(1 + x^4)/(x*(1 + x^4))")]
+        [InlineData("(1 - x^3)^(1/3)/x")]
+        [InlineData("(1 - x^3)^(2/3)/x")]
+        [InlineData("1/(x*(1 - x^2)^(1/3))")]
+        [InlineData("1/(x*(1 + x^3)^(1/3))")]
+        [InlineData("sqrt(1 + x^2)/x^3")]
+        public void WhereTheSubstitutionLeavesARationalFunction(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// Chebyshev's third case, <c>s + p/q</c> whole, taken to the second by <c>x = 1/y</c>:
+        /// <c>x^6 (3 + 4x^4)^(1/4)</c> and <c>(x^3 - 1)/(2 + x^3)^(1/3)</c> are Timofeev's, and the
+        /// second is a sum whose terms are each this shape.
+        /// </summary>
+        [Theory]
+        [InlineData("x^6*(3 + 4*x^4)^(1/4)")]
+        [InlineData("x^3/(2 + x^3)^(1/3)")]
+        [InlineData("1/(2 + x^3)^(1/3)")]
+        [InlineData("(x^3 - 1)/(2 + x^3)^(1/3)")]
+        [InlineData("x^2*(1 + x^2)^(-3/2)")]
+        public void TheThirdCaseThroughTheReciprocal(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// Outside all three of Chebyshev's cases there is — and this is the part worth knowing
+        /// before anyone goes looking — no elementary antiderivative at all, which he proved.
+        /// These must be declined or answered by another rule, never wrong.
         /// </summary>
         [Theory]
         [InlineData("sqrt(1 + x^3)")]
         [InlineData("x*sqrt(1 + x^3)")]
         [InlineData("x^3*sqrt(1 + x^3)")]
-        [InlineData("1/(x*(1 + x^3)^(1/3))")]
         public void OutsideTheFirstCase(string integrand)
         {
             var integral = integrand.ToEntity().Integrate("x");

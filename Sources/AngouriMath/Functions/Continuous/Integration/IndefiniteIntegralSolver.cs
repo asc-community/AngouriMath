@@ -18,7 +18,7 @@ namespace AngouriMath.Functions.Algebra
         {
             var splitted = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, e => e.ContainsNode(x));
             if (splitted is null || splitted.Count < 2) return null; // nothing to do, let other solvers do the work
-            return splitted.Select(e => Integration.ComputeIndefiniteIntegral(e, x, integrateByParts)).Aggregate((e1, e2) => (e1, e2) switch {
+            return splitted.Select(e => Integration.ComputeAsAQuestionOfItsOwn(e, x, integrateByParts)).Aggregate((e1, e2) => (e1, e2) switch {
                 (null, _) or (_, null) => null,
                 (var int1, var int2) => int1 + int2
             });
@@ -761,6 +761,20 @@ namespace AngouriMath.Functions.Algebra
                 && TrySplit(differentiated, others) is { } byLiate)
                 return byLiate;
 
+            // **A bare logarithm or inverse function of something that is not linear**, by
+            // parts against 1: `int f(g) dx = x f(g) - int x g' f'(g) dx`, and the remainder is
+            // algebraic. A linear argument is the table's; anything else reached no rule at all,
+            // since this one runs on a product and the integrand is a single node.
+            // `arctan(x sqrt(1 - x^2))` had no antiderivative and is one step of this.
+            // Asked, not volunteered, like the regrouping above: the remainder can be a radical
+            // the search spends seconds on, and a rule that produced this shape on its way
+            // somewhere is not owed that search.
+            if (Integration.AnsweringTheQuestionAsked && IsDifferentiatedBeforeAPolynomial(expr)
+                && expr is not Powf
+                && !(expr.DirectChildren.LastOrDefault() is { } argument && TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out _))
+                && TryIntegrateByPartsOnce(expr, Integer.One, x, wholeSize, wholePower) is { } againstOne)
+                return againstOne;
+
             // Special case for powers of integrable functions, try integration by parts on base × base
             // e.g., ln(abs(x))^2 = ln(abs(x)) × ln(abs(x))
             if (expr is Powf(var @base, Integer(2)) && TryIntegrateByPartsOnce(@base, @base, x, wholeSize, wholePower) is { } result) return result;
@@ -1329,8 +1343,9 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// A <b>binomial differential</b> <c>x^m (a + b x^n)^(p/q)</c>, in the case Chebyshev's
-        /// criterion makes a polynomial: where <c>(m + 1)/n</c> is a whole number of at least one.
+        /// A <b>binomial differential</b> <c>x^m (a + b x^n)^(p/q)</c>, in the two of Chebyshev's
+        /// three cases that are not a whole power: <c>(m + 1)/n</c> whole, or
+        /// <c>(m + 1)/n + p/q</c> whole.
         /// </summary>
         /// <remarks>
         /// <para>
@@ -1348,18 +1363,22 @@ namespace AngouriMath.Functions.Algebra
         ///     int x^m (a + b x^n)^(p/q) dx = (q/(n b)) int ((u^q - a)/b)^(s-1) u^(p+q-1) du
         /// </code>
         /// <para>
-        /// which is a polynomial in <c>u</c> exactly when <c>s</c> is a whole number of at least
-        /// one — the first of Chebyshev's three cases. Expanded by the binomial theorem and
-        /// integrated term by term, so the rule is <b>closed</b> and asks the integrator nothing.
+        /// which is a polynomial in <c>u</c> when <c>s</c> is a whole number of at least one,
+        /// expanded by the binomial theorem and integrated term by term; and a <b>rational
+        /// function</b> of <c>u</c> when <c>s</c> is a whole number of at most zero, which the
+        /// rational integrator answers — <c>sqrt(1 + x^3)/x</c> is <c>(2/3) int u^2/(u^2 - 1) du</c>,
+        /// and <c>1/(x sqrt(1 - x^3))</c> is <c>(2/3) int 1/(u^2 - 1) du</c>. Both were declined
+        /// for <c>s = 0</c>, which the rule read as "not a polynomial" and left at that.
         /// </para>
         /// <para>
-        /// <b>The other two cases are not here.</b> <c>p/q</c> whole is a whole power of a
-        /// polynomial, which expanding already answers; and <c>s + p/q</c> whole wants
-        /// <c>u = ((a + b x^n)/x^n)^(1/q)</c>, which leaves a polynomial over a power of
-        /// <c>u^q - b</c> — a rational function rather than a polynomial, so a search rather than
-        /// a closed answer. Chebyshev also proved there is no fourth case: outside those three the
-        /// integrand has no elementary antiderivative at all, which is worth knowing before
-        /// anyone goes looking.
+        /// <b>The third case comes down to the second.</b> Where <c>s + p/q</c> is whole instead,
+        /// <c>x = 1/y</c> turns <c>x^m (a + b x^n)^(p/q) dx</c> into
+        /// <c>-y^m' (b + a y^n)^(p/q) dy</c> with <c>m' = -m - 2 - n p/q</c>, a whole number, and
+        /// <c>(m' + 1)/n = -(s + p/q)</c>, whole — so it is the second case in <c>y</c>, with the
+        /// roles of <c>a</c> and <c>b</c> exchanged, and <c>y = 1/x</c> put back afterwards.
+        /// <c>x^6 (3 + 4x^4)^(1/4)</c> and <c>(x^3 - 1)/(2 + x^3)^(1/3)</c> are this. Chebyshev
+        /// proved there is no fourth case: outside these the integrand has no elementary
+        /// antiderivative at all, which is worth knowing before anyone goes looking.
         /// </para>
         /// <para>
         /// <b>Asked, not volunteered</b>:
@@ -1375,22 +1394,63 @@ namespace AngouriMath.Functions.Algebra
                     out var inner, out var free, out var leading, out var factor))
                 return null;
 
-            // s = (m + 1)/n, whole and at least one, which is what makes the expansion finite.
+            // The second case: s = (m + 1)/n whole.
+            if ((power + 1) % inner == 0)
+                return IntegrateABinomialDifferentialInTheSecondCase(
+                    power, inner, exponent, free, leading, x, factor);
+
+            // The third: s + p/q whole, taken to the second by x = 1/y.
+            var sPlusP = ERational.Create(power + 1, inner).Add(exponent);
+            if (!sPlusP.IsInteger())
+                return null;
+            var nTimesP = exponent.Multiply(EInteger.FromInt32(inner));
+            if (!nTimesP.IsInteger() || !nTimesP.Numerator.CanFitInInt32())
+                return null;
+            var reflectedPower = -power - 2 - nTimesP.ToLowestTerms().Numerator.ToInt32Unchecked();
+            var y = Variable.CreateUnique(expr, "y_binom");
+            if (IntegrateABinomialDifferentialInTheSecondCase(
+                    reflectedPower, inner, exponent, leading, free, y, Number.Integer.MinusOne) is not { } inY)
+                return null;
+            return (factor * inY.Substitute(y, 1 / x)).InnerSimplified;
+        }
+
+        /// <summary>
+        /// <c>int factor * v^m (a + b v^n)^(p/q) dv</c> with <c>(m + 1)/n</c> whole: a polynomial
+        /// in <c>u = (a + b v^n)^(1/q)</c> expanded term by term for <c>s >= 1</c>, and a rational
+        /// function of <c>u</c> handed to the rational integrator for <c>s &lt;= 0</c>.
+        /// </summary>
+        private static Entity? IntegrateABinomialDifferentialInTheSecondCase(
+            int power, int inner, ERational exponent, ERational free, ERational leading,
+            Entity.Variable v, Entity factor)
+        {
             if ((power + 1) % inner != 0)
                 return null;
             var s = (power + 1) / inner;
-            if (s < 1)
-                return null;
-
             var q = exponent.Denominator.ToInt32Checked();
             var p = exponent.Numerator.ToInt32Checked();
             var a = Number.Rational.Create(free);
             var b = Number.Rational.Create(leading);
+            var u = Variable.CreateUnique(v + factor, "u_binom");
+            var outside = Number.Integer.Create(q)
+                        / (Number.Integer.Create(inner) * MathS.Pow(b, Number.Integer.Create(s)));
+            var bracket = (a + b * MathS.Pow(v, Number.Integer.Create(inner))).InnerSimplified;
+            var back = MathS.Pow(bracket, Number.Rational.Create(EInteger.One, exponent.Denominator));
+
+            if (s < 1)
+            {
+                // (q/(n b^s)) int u^(p+q-1) / (u^q - a)^(1-s) du: a rational function of u.
+                var overPower = 1 - s;
+                Entity denominator = overPower == 1 ? MathS.Pow(u, q) - a : MathS.Pow(MathS.Pow(u, q) - a, overPower);
+                Entity numerator = p + q - 1 == 0 ? Number.Integer.One : MathS.Pow(u, p + q - 1);
+                var rational = (numerator / denominator).InnerSimplified;
+                if (Integration.ComputeIndefiniteIntegral(rational, u, integrateByParts: false) is not { } inU)
+                    return null;
+                return (factor * outside * inU.Substitute(u, back)).InnerSimplified;
+            }
 
             // (q/(n b^s)) * int (u^q - a)^(s-1) u^(p+q-1) du, the binomial expanded.
             Entity total = 0;
             var binomial = EInteger.One;
-            var u = Variable.CreateUnique(expr, "u_binom");
             for (var i = 0; i <= s - 1; i++)
             {
                 // Term i of (u^q - a)^(s-1) is C(s-1, i) u^(q i) (-a)^(s-1-i).
@@ -1402,11 +1462,6 @@ namespace AngouriMath.Functions.Algebra
                        * MathS.Pow(u, Number.Integer.Create(raised)) / Number.Integer.Create(raised);
                 binomial = binomial * (s - 1 - i) / (i + 1);
             }
-
-            var outside = Number.Integer.Create(q)
-                        / (Number.Integer.Create(inner) * MathS.Pow(b, Number.Integer.Create(s)));
-            var bracket = (a + b * MathS.Pow(x, Number.Integer.Create(inner))).InnerSimplified;
-            var back = MathS.Pow(bracket, Number.Rational.Create(EInteger.One, exponent.Denominator));
             return (factor * outside * total.Substitute(u, back)).InnerSimplified;
         }
 
