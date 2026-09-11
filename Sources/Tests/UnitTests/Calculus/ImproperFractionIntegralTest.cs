@@ -104,32 +104,34 @@ namespace AngouriMath.Tests.Calculus
             => Assert.Equal(expected.ToEntity(), integrand.ToEntity().Integrate("x"));
 
         /// <summary>
-        /// A denominator whose <b>leading coefficient</b> is symbolic is still declined, and this
-        /// records a gap rather than a decision.
+        /// A denominator whose <b>leading coefficient</b> is symbolic is divided out too, for the
+        /// integrator — and this test recorded the opposite until it was.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// Dividing out would divide by <c>b</c>, which is not decidably non-zero — and at
-        /// <c>b = 0</c> the quotient is <c>x^2/a</c>, whose antiderivative is not the limit of
-        /// the divided form. So the divided answer alone would be wrong for one value of a
-        /// parameter, which is why it is not given.
+        /// The verdict here was that dividing by <c>b</c> loses <c>b = 0</c>, where the quotient
+        /// is <c>x^2/a</c> and the divided answer is not its limit, so no answer was the honest
+        /// one. The first half is true. The second was measured against the wrong neighbours:
+        /// <c>int 1/(a x + b) dx</c> is <c>ln(a x + b)/a</c>, <c>int sin(a x) dx</c> is
+        /// <c>-cos(a x)/a</c>, <c>int x^n dx</c> is <c>x^(n+1)/(n+1)</c> — each undefined at one
+        /// value of its parameter and each given by this integrator without a condition. Long
+        /// division was the one rule holding out, and the first of those divides by the very
+        /// coefficient it refused. It now asks the division for the generic case; the simplifier,
+        /// whose rewrite has to be an equivalence, gets the old answer. The cases live in
+        /// <see cref="SymbolicParameterIntegralTest"/>.
         /// </para>
         /// <para>
-        /// <b>What is owed is the piecewise, not the decline.</b>
-        /// <see href="https://github.com/asc-community/AngouriMath/issues/180"/> lists
-        /// <c>x^2/(a + b*x)</c> as item 18 of the integrals this library should answer, and it is
-        /// still unticked — it is a target, not a settled refusal. The answer it wants is the
-        /// divided form under <c>b != 0</c> beside <c>x^3/(3a)</c> under <c>b = 0</c>, which is
-        /// how the constant-over-a-quadratic rule already reports its own degenerate branch.
-        /// Until that is built these stay unevaluated, which is the honest report.
+        /// Item 18 of <see href="https://github.com/asc-community/AngouriMath/issues/180"/> is
+        /// this integral. What it asked for is answered; the piecewise with the degenerate branch
+        /// beside it is a further step no neighbouring rule takes either.
         /// </para>
         /// </remarks>
         [Theory]
         [InlineData("x^2/(a + b*x)")]
         [InlineData("x^2/(2 + b*x)")]
         [InlineData("x^3/(a + b*x)")]
-        public void ASymbolicLeadingCoefficientIsDeclined(string integrand)
-            => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
+        public void ASymbolicLeadingCoefficientIsDividedOut(string integrand)
+            => Assert.DoesNotContain("integral(", integrand.ToEntity().Integrate("x").Stringize());
 
         /// <summary>
         /// A symbolic coefficient that is <b>not</b> the leading one carries none of that
