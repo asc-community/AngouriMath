@@ -80,6 +80,29 @@ namespace AngouriMath.Tests.Calculus
         public void AnExponentialTimesARationalFunction(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// The same ansatz in the half-angle tangent, for <c>e^(a x)</c> times a rational
+        /// function of the sine and cosine: Timofeev's <c>e^x (1 - sin(x))/(1 - cos(x))</c> is
+        /// <c>-e^x cot(x/2)</c>, which nothing here read -- the exponential-times-trigonometric
+        /// rule wants a polynomial in the two, the half-angle substitution wants no exponential,
+        /// and by parts goes round in a circle. Under <c>t = tan(x/2)</c> it is
+        /// <c>e^x (1 - t)^2/(2 t^2)</c> and the ansatz <c>e^x P(t)/Q(t)</c> has <c>Q = t</c>,
+        /// <c>P = -1</c>. The non-elementary neighbours are pinned as declined: <c>e^x/(1 + cos(x))</c>
+        /// needs the sine beside it, and <c>e^x tan(x/2)</c> has no such <c>P/Q</c> at all.
+        /// </summary>
+        [Theory]
+        [InlineData("e^x*(1 - sin(x))/(1 - cos(x))")]
+        [InlineData("e^x*(1 + sin(x))/(1 + cos(x))")]
+        [InlineData("e^(2*x)*(1 + 2*sin(x))/(1 + cos(x))")]
+        [InlineData("e^x*cos(x)")]
+        public void AnExponentialTimesARationalFunctionOfTheSineAndCosine(string integrand) => DifferentiatesBack(integrand);
+
+        [Theory]
+        [InlineData("e^x/(1 + cos(x))")]
+        [InlineData("e^x*tan(x/2)")]
+        public void ItsNonElementaryNeighboursAreDeclined(string integrand)
+            => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
+
+        /// <summary>
         /// The exact forms, so that the ansatz is seen to find the short answer and not a
         /// longer equivalent.
         /// </summary>
