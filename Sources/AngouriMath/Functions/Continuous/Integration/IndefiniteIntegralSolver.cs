@@ -4741,13 +4741,28 @@ namespace AngouriMath.Functions.Algebra
                     return forPositiveX;
 
                 // Extended to x < 0 by parity, or not at all.
-                var reflected = expr.Substitute(x, -x);
-                if (Functions.PartialFractions.HoldsAtSampledPoints(reflected, -expr, x))
-                    return forPositiveX.Substitute(x, MathS.Abs(x));
-                if (Functions.PartialFractions.HoldsAtSampledPoints(reflected, expr, x))
-                    return MathS.Signum(x) * forPositiveX.Substitute(x, MathS.Abs(x));
-                return null;
+                return ExtendedByParity(expr, forPositiveX, x);
             }
+            return null;
+        }
+
+        /// <summary>
+        /// <paramref name="forPositive"/>, an antiderivative of <paramref name="integrand"/> for
+        /// <paramref name="x"/> positive, extended to the other side by parity, which is exact:
+        /// an odd integrand has an even antiderivative, so <c>F(|x|)</c> serves on both sides,
+        /// and an even one has an odd antiderivative, <c>sgn(x) F(|x|)</c>. An integrand of
+        /// neither parity is declined rather than answered on half the line.
+        /// </summary>
+        private static Entity? ExtendedByParity(Entity integrand, Entity forPositive, Entity.Variable x)
+        {
+            // In the generic case, as every rule answers: the conditions a simplification
+            // attached on the way -- each denominator nonzero -- are not part of the answer.
+            forPositive = Functions.PartialFractions.Bare(forPositive);
+            var reflected = integrand.Substitute(x, -x);
+            if (Functions.PartialFractions.HoldsAtSampledPoints(reflected, -integrand, x))
+                return forPositive.Substitute(x, MathS.Abs(x));
+            if (Functions.PartialFractions.HoldsAtSampledPoints(reflected, integrand, x))
+                return MathS.Signum(x) * forPositive.Substitute(x, MathS.Abs(x));
             return null;
         }
 
@@ -5315,14 +5330,27 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         internal static Entity? SolveByCombiningRadicals(Entity expr, Entity.Variable x, bool integrateByParts)
         {
+            // A secant or cosecant under a root is the reciprocal of a cosine or sine there:
+            // `sqrt(sec(x)^4 - 1)` is a root of `(1 - cos(x)^4)/cos(x)^4`, a quotient whose
+            // denominator is an even power, and comes apart as `sqrt(1 - cos(x)^4)/cos(x)^2`;
+            // as written it is a root of a sum of secants that no rule reads.
+            if (expr.Nodes.Any(node => node is Powf(var radicalBase, Number.Rational r) && r is not Number.Integer
+                    && radicalBase.Nodes.Any(inner => inner is Secantf or Cosecantf)))
+                expr = expr.Replace(node => node switch
+                {
+                    Secantf(var argument) => 1 / MathS.Cos(argument),
+                    Cosecantf(var argument) => 1 / MathS.Sin(argument),
+                    _ => node,
+                });
             // Two square roots holding the variable, or there is nothing to combine; counted
             // before any of the rewriting below is paid for, since this runs on every
             // sub-integrand of the chain.
-            // A root of a quotient counts as the two roots it splits into.
+            // A root of a quotient counts as the two roots it splits into -- a sum with a
+            // quotient in it, `1/cos(x)^4 - 1`, being a quotient once combined.
             if (expr.Nodes.Sum(node => node is Powf(var @base, Number.Rational half)
                     && half is not Number.Integer && half.ERational.Denominator.Equals(EInteger.FromInt32(2))
                     && @base.ContainsNode(x)
-                        ? (@base is Divf || Functions.SingleQuotient.Of(@base).Denominator != Number.Integer.One ? 2 : 1)
+                        ? (@base is Divf || Functions.SingleQuotient.Of(AsOneQuotient(@base)).Denominator != Number.Integer.One ? 2 : 1)
                         : 0) < 2)
                 return null;
             var rewritten = CombineRadicalsIn(expr, x);
@@ -5362,9 +5390,38 @@ namespace AngouriMath.Functions.Algebra
                 if (node is not Powf(var @base, Number.Rational power) || power is Number.Integer
                     || !power.ERational.Denominator.Equals(EInteger.FromInt32(2)) || !@base.ContainsNode(x))
                     return node;
-                var (above, below) = Functions.SingleQuotient.Of(@base);
+                var (above, below) = Functions.SingleQuotient.Of(AsOneQuotient(@base));
                 if (below == Number.Integer.One || !below.ContainsNode(x))
                     return node;
+                // A denominator that is an even power of anything real is not negative, so the
+                // split is exact whatever the numerator, and the root of the denominator is a
+                // whole power where the exponents allow: `sqrt(N/cos(x)^4)` is `sqrt(N)/cos(x)^2`.
+                if (Mulf.LinearChildren(below).All(factor => !factor.ContainsNode(x)
+                        || factor is Powf(_, Number.Integer even) && even.EInteger.IsEven && even.EInteger.Sign > 0)
+                    && power.ERational.Numerator.CanFitInInt32())
+                {
+                    var p = power.ERational.Numerator.ToInt32Unchecked();
+                    Entity rootOfBelow = Number.Integer.One;
+                    var whole = true;
+                    foreach (var factor in Mulf.LinearChildren(below))
+                    {
+                        if (!factor.ContainsNode(x))
+                        {
+                            rootOfBelow *= MathS.Pow(factor, power);
+                            continue;
+                        }
+                        var (f, twoK) = ((Powf)factor).DirectChildren is var children ? (children[0], ((Number.Integer)children[1]).EInteger.ToInt32Unchecked()) : default;
+                        // (f^(2k))^(p/2) = |f|^(k p), and f^(k p) only for an even k p.
+                        if ((twoK / 2 * p) % 2 != 0)
+                        {
+                            whole = false;
+                            break;
+                        }
+                        rootOfBelow *= MathS.Pow(f, twoK / 2 * p);
+                    }
+                    if (whole)
+                        return MathS.Pow(above, power) / rootOfBelow;
+                }
                 if (!TreeAnalyzer.TryGetPolynomial(above, x, out var aboveRead) || !TreeAnalyzer.TryGetPolynomial(below, x, out var belowRead)
                     || above.Vars.Any(v => v != x) || below.Vars.Any(v => v != x))
                     return node;
@@ -5381,6 +5438,16 @@ namespace AngouriMath.Functions.Algebra
                     return node;
                 return MathS.Pow(above, power) / MathS.Pow(below, power);
             });
+
+        /// <summary>
+        /// <paramref name="expr"/> as one quotient where it is a sum with a quotient among its
+        /// terms -- <c>1/cos(x)^4 - 1</c> is <c>(1 - cos(x)^4)/cos(x)^4</c> -- and as it is
+        /// otherwise, so that the combining is paid for only where it changes anything.
+        /// </summary>
+        private static Entity AsOneQuotient(Entity expr)
+            => expr is Sumf or Minusf && Sumf.LinearChildren(expr).Any(term => term is Divf || term is Powf(_, Number.Integer { IsNegative: true }))
+                ? Functions.SingleQuotient.Combine(expr)
+                : expr;
 
         /// <summary>
         /// A factor of a product that is a small power of a sum holding a square root of a
@@ -5828,7 +5895,10 @@ namespace AngouriMath.Functions.Algebra
                 Entity term = degree == 0 ? pair.Value : degree == 1 ? pair.Value * u : pair.Value * MathS.Pow(u, degree);
                 rest = rest == Number.Integer.Zero ? term : rest + term;
             }
-            return k == 0 ? MathS.Pow(rest.InnerSimplified, exponent) : MathS.Pow(u, k * p) * MathS.Pow(rest.InnerSimplified, exponent);
+            // `u` rather than `u^1`, which the substitution rule's power rewriting does not read
+            // as a power of u: `1/(u^1 sqrt(3 - 3u^2 + u^4))` was refused the candidate `u^2`.
+            Entity taken = k * p == 1 ? u : MathS.Pow(u, k * p);
+            return k == 0 ? MathS.Pow(rest.InnerSimplified, exponent) : taken * MathS.Pow(rest.InnerSimplified, exponent);
         }
 
         /// <summary>
@@ -5979,9 +6049,17 @@ namespace AngouriMath.Functions.Algebra
         {
             // Try to find a suitable substitution u = g(x)
             // We need to identify a composite function and check if du/dx appears in the integrand
-            var candidates = FindSubstitutionCandidates(expr, x);
+            var candidates = FindSubstitutionCandidates(expr, x).ToList();
+            // Every candidate as written first, and only then the sines and cosines again
+            // with the even powers of their complement written in u: `cos(x)/sin(x)` under
+            // `u = cos(x)` that way is `ln(1 - cos(x)^2)/2`, and under the sine it is written
+            // with, `ln(sin(x))`, which is the answer to give.
+            var firstPass = new Dictionary<Entity, Entity>();
+            foreach (var complementEvenPowers in new[] { false, true })
             foreach (var u in candidates)
             {
+                if (complementEvenPowers && !firstPass.ContainsKey(u))
+                    continue;
                 var duDx = u.Differentiate(x).InnerSimplified;
 
                 // A candidate that does not vary with x is no substitution at all, and its
@@ -5998,8 +6076,39 @@ namespace AngouriMath.Functions.Algebra
 
                 // Try to divide expr by duDx and check if result is independent of x
                 // Replace all occurrences of u's expression with a temporary variable
-                var integrandInU = InTermsOf(expr / duDx, u, uSub, x).Simplify(1);
-                if (integrandInU is Providedf(var innerExpr, _)) integrandInU = innerExpr; // TODO: singularities ignored but not handled properly
+                // For a power of x, the quotient is collected before the powers of x are
+                // rewritten: the rewriting reads written powers, and `1/(x sqrt(P))` over `2x`
+                // holds two bare x's that are `x^2` only once collected -- and a bare x is not
+                // a power of x^2, so the candidate was refused.
+                // Under u = cos(a), an even power of sin(a) is a power of 1 - u^2, and the odd
+                // ones are a sine times one; the same the other way round. Written so after the
+                // division by du/dx has taken one sine out of `sin(x)/sqrt(1 - sin(x)^6)`, since
+                // that is where the sixth power becomes a polynomial in u.
+                Entity integrandInU;
+                if (complementEvenPowers)
+                {
+                    // From what the first pass computed, not computed again.
+                    var complemented = WithTheComplementInEvenPowers(firstPass[u], u, uSub);
+                    if (complemented == firstPass[u])
+                        continue;   // nothing the first pass did not see
+                    integrandInU = complemented.Simplify(1);
+                    if (integrandInU is Providedf(var innerComplemented, _)) integrandInU = innerComplemented;
+                }
+                else
+                {
+                    // For a power of x of a numeric integrand of modest size, from the
+                    // quotient written as one with its powers of x collected. Numeric and
+                    // modest only: a symbolic partial fraction written as one quotient is a
+                    // page, and its simplification took twelve minutes of one test.
+                    var quotient = u is Powf(var powerOfX, Number.Rational) && powerOfX == x
+                        && expr.Complexity <= LargestIntegrandOfferedSums && !expr.Vars.Any(v => v != x)
+                        ? WithThePowersOfXCollected(Functions.SingleQuotient.Combine(expr / duDx), x)
+                        : expr / duDx;
+                    integrandInU = InTermsOf(quotient, u, uSub, x).Simplify(1);
+                    if (integrandInU is Providedf(var innerExpr, _)) integrandInU = innerExpr; // TODO: singularities ignored but not handled properly
+                    if (u is Sinf or Cosf && integrandInU.ContainsNode(x))
+                        firstPass[u] = integrandInU;
+                }
 
                 // If the result doesn't contain x anymore, we found a valid substitution
                 // and we can integrate with respect to u (treating u as a variable)
@@ -6014,12 +6123,109 @@ namespace AngouriMath.Functions.Algebra
                 if (integrandInU.Nodes.Any(node => node == MathS.NaN))
                     continue;
 
-                if (!integrandInU.ContainsNode(x) && Integration.ComputeIndefiniteIntegral(integrandInU, uSub, integrateByParts) is { } resultInU)
+                if (integrandInU.ContainsNode(x))
+                    continue;
+                if (Integration.ComputeIndefiniteIntegral(integrandInU, uSub, integrateByParts) is { } resultInU)
                     // Substitute back: replace u with g(x)
                     return resultInU.Substitute(uSub, u);
+
+                // A power of u under a root -- `1/sqrt(u^2 (3 - 3u^2 + u^4))`, which is
+                // `sin(x)/sqrt(1 - sin(x)^6)` under `u = cos(x)` -- comes out of the root as
+                // `|u|`, and the rule for that takes `|u| = u`: what it answers holds for
+                // `u > 0`, and is extended to `u < 0` by parity where the integrand has one, as
+                // the reciprocal substitution extends its own. Nothing is known of the sign
+                // of a cosine, and this is what makes that not matter.
+                var factored = FactorANonnegativeVariableOutOfRadicals(integrandInU, uSub);
+                if (factored != integrandInU && !factored.ContainsNode(x)
+                    && Integration.ComputeIndefiniteIntegral(factored, uSub, integrateByParts) is { } forPositiveU
+                    && !forPositiveU.Nodes.Any(node => node == MathS.NaN))
+                {
+                    // An even root is not negative, and what holds for u > 0 is the answer as
+                    // it stands; `sqrt(x^(1/3))` under `1/(sqrt(x) - x^(-1/3))` was extended by
+                    // parity it did not need, to an answer with a sign function in it.
+                    if (u is Powf(_, Number.Rational root) && root.ERational.Denominator.IsEven)
+                        return Functions.PartialFractions.Bare(forPositiveU).Substitute(uSub, u);
+                    if (ExtendedByParity(integrandInU, forPositiveU, uSub) is { } onBothSides)
+                        return onBothSides.Substitute(uSub, u);
+                }
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Every product in <paramref name="expr"/> with its powers of <paramref name="x"/>
+        /// gathered into one: <c>x sqrt(P) 2 x</c> is <c>2 x^2 sqrt(P)</c>. The power rewriting
+        /// of a substitution <c>u = x^r</c> reads written powers, and the quotient of an
+        /// integrand by <c>du/dx</c> writes the differential's power beside the integrand's,
+        /// where neither alone is a power of <c>u</c>.
+        /// </summary>
+        private static Entity WithThePowersOfXCollected(Entity expr, Entity.Variable x)
+            => expr.Replace(node =>
+            {
+                if (node is not Mulf)
+                    return node;
+                var factors = Mulf.LinearChildren(node).ToList();
+                Entity total = Number.Integer.Zero;
+                var powers = 0;
+                var rest = new List<Entity>();
+                foreach (var factor in factors)
+                {
+                    if (factor == x)
+                    {
+                        total += 1;
+                        powers++;
+                    }
+                    else if (factor is Powf(var @base, Number.Rational exponent) && @base == x)
+                    {
+                        total += exponent;
+                        powers++;
+                    }
+                    else
+                        rest.Add(factor);
+                }
+                if (powers < 2)
+                    return node;
+                var collected = total.InnerSimplified;
+                Entity product = collected == Number.Integer.One ? x : MathS.Pow(x, collected);
+                foreach (var factor in rest)
+                    product *= factor;
+                return product;
+            });
+
+        /// <summary>
+        /// For <paramref name="u"/> a sine or a cosine, every even power of the other function
+        /// of the same argument in <paramref name="expr"/> written as a power of
+        /// <c>1 - uSub^2</c>, and every odd one as the function times such a power; the
+        /// expression itself where there is nothing to write.
+        /// </summary>
+        private static Entity WithTheComplementInEvenPowers(Entity expr, Entity u, Entity.Variable uSub)
+        {
+            Entity argument;
+            Entity complement;
+            switch (u)
+            {
+                case Sinf(var a):
+                    argument = a;
+                    complement = MathS.Cos(a);
+                    break;
+                case Cosf(var a):
+                    argument = a;
+                    complement = MathS.Sin(a);
+                    break;
+                default:
+                    return expr;
+            }
+            var oneMinusSquare = 1 - MathS.Sqr(uSub);
+            return expr.Replace(node =>
+            {
+                if (node is not Powf(var @base, Number.Integer power) || @base != complement
+                    || !power.EInteger.CanFitInInt32() || power.EInteger.ToInt32Unchecked() is var n && n < 2)
+                    return node;
+                var half = n / 2;
+                Entity even = half == 1 ? oneMinusSquare : MathS.Pow(oneMinusSquare, half);
+                return n % 2 == 0 ? even : complement * even;
+            });
         }
 
         /// <summary>
@@ -6123,6 +6329,7 @@ namespace AngouriMath.Functions.Algebra
         private static IEnumerable<Entity> FindSubstitutionCandidates(Entity expr, Entity.Variable x)
         {
             var candidates = new List<Entity>();
+            var complements = new List<Entity>();
             // A sum is no candidate for a rational function: whatever `u = g(x)` with `g` a
             // polynomial would find in one, partial fractions find without it, and each
             // candidate costs one simplification of the quotient -- which, with an irrational
@@ -6182,6 +6389,17 @@ namespace AngouriMath.Functions.Algebra
                         candidates.Add(node); // Trigonometric function itself (for cases like sin(x)*cos(x))
                         if (node.DirectChildren[0] != x && node.DirectChildren[0].ContainsNode(x))
                             candidates.Add(node.DirectChildren[0]); // Trigonometric functions with non-trivial arguments
+                        // And the other of the pair, which need not be written to be the
+                        // substitution: `sin(x)/sqrt(1 - sin(x)^6)` wants `u = cos(x)`, under
+                        // which the sine that is left is the differential and the even powers
+                        // of it are `1 - u^2`. Only for a sine or cosine, whose complement is
+                        // reached through even powers alone; and after everything written,
+                        // since `cos(x)/sin(x)` under `u = cos(x)` is `ln(1 - cos(x)^2)/2`, and
+                        // under the sine it is written with, `ln(sin(x))`.
+                        if (node is Sinf(var sineArgument) && sineArgument.ContainsNode(x))
+                            complements.Add(MathS.Cos(sineArgument));
+                        else if (node is Cosf(var cosineArgument) && cosineArgument.ContainsNode(x))
+                            complements.Add(MathS.Sin(cosineArgument));
                         break;
                     case Powf(var @base, var exp):
                         if (@base == x && (exp is not Number.Integer whole || !whole.EInteger.CanFitInInt32() || APowerCanBeExact(whole.EInteger.ToInt32Unchecked())))
@@ -6213,7 +6431,11 @@ namespace AngouriMath.Functions.Algebra
                         break;
                 }
             // Sort by complexity - try simpler substitutions first
-            return candidates.OrderBy(c => c.Complexity).Distinct();
+            var ordered = candidates.OrderBy(c => c.Complexity).Distinct().ToList();
+            foreach (var complement in complements)
+                if (!ordered.Contains(complement))
+                    ordered.Add(complement);
+            return ordered;
         }
     }
 }
