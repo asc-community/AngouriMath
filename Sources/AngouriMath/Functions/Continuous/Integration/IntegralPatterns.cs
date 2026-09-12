@@ -540,8 +540,15 @@ namespace AngouriMath.Functions.Algebra
                 : numerator * AntiderivativeLog(b * x + c) / b;
 
 
-            // For true quadratics (a ≠ 0), discriminant Δ = 4ac - b^2 determines the form
-            var discriminant = 4 * a * c - b * b;
+            // For true quadratics (a ≠ 0), discriminant Δ = 4ac - b^2 determines the form --
+            // expanded, so that a square of a symbolic linear is seen for one: `(a w + b)^2`
+            // is `a^2 w^2 + 2ab w + b^2`, whose discriminant `4a^2 b^2 - (2ab)^2` is zero only
+            // once it is written out, and unwritten it was a piecewise of three arms, two of
+            // them dividing by that zero, that nothing downstream could read.
+            var discriminant = (4 * a * c - b * b).Expand().InnerSimplified;
+            if (TreeAnalyzer.IsZero(discriminant))
+                // The perfect square, in the generic case as every rule answers: -2k/(2ax + b).
+                return (-2 * numerator / (2 * a * x + b)).InnerSimplified;
             
             // Case 1: Δ > 0 (no real roots, use arctan)
             // Result: (2k/√Δ) * arctan((2ax + b)/√Δ)

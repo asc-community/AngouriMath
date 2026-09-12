@@ -129,6 +129,44 @@ namespace AngouriMath.Tests.Calculus
         /// measured by quadrature at <c>-3.66</c> against an answer's <c>-4.68</c>. Should any
         /// later be answered by something else, these move rather than being deleted.
         /// </summary>
+        /// <summary>
+        /// A root of a quotient of two linears is a base of its own kind: under
+        /// <c>u = sqrt((1 + x)/(3 + 2x))</c>, <c>x = (3u^2 - 1)/(1 - 2u^2)</c> is rational, and
+        /// the answer holds wherever the root is real -- below <c>-3/2</c> too, where both
+        /// linears are negative and the root of each is not, which is why the split into a
+        /// root over a root is declined for it and rightly. Differentiated back on both sides.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt((1 + x)/(3 + 2*x))", new[] { -4.0, -2.5, -1.8, -0.5, 0.7, 2.1 })]
+        [InlineData("sqrt((x - 1)/(x + 1))/x", new[] { -4.0, -2.5, -1.8, 1.4, 2.6, 5.0 })]
+        [InlineData("((2*x + 1)/(x - 3))^(1/3)", new[] { -4.0, -2.5, -1.8, 4.0, 5.5, 9.0 })]
+        public void ARootOfAQuotientOfLinears(string integrand, double[] points)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity();
+            foreach (var at in points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        /// <summary>
+        /// A whole power below the bar one level down: under <c>u = sqrt(1 - x)</c> this is
+        /// <c>2u/(u^7 (u^2 - 1)^5)</c>, and the normalisation writes the power below as
+        /// <c>(u^2 - 1)^(5 * (-1))</c>, an exponent that is a product of numbers and not a
+        /// number, which the rational readers read evaluated now and read as nothing before.
+        /// </summary>
+        [Theory]
+        [InlineData("1/((1 - x)^(7/2)*x^5)")]
+        public void AWholePowerBelowTheBarOneLevelDown(string integrand) => DifferentiatesBack(integrand);
+
         [Theory]
         [InlineData("1/(sqrt(x) + sqrt(x + 1) + sqrt(x + 2))")]
         [InlineData("x^(1/3)/sqrt(x + 1)")]
