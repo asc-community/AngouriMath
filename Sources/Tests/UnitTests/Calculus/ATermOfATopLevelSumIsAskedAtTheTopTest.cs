@@ -37,6 +37,31 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// The terms as written first, and expanded only if one of those fails: expanding
+        /// <c>(1 + 1/x)/(x + ln(x))^(3/2)</c> writes it as two terms, neither of which is the
+        /// substitution <c>u = x + ln(x)</c> the unexpanded one is, and Bronstein's
+        /// <c>1/x + (1 + 1/x)/(x + ln(x))^(3/2)</c> was declined for that while each of its two
+        /// terms alone was answered.
+        /// </summary>
+        [Theory]
+        [InlineData("1/x + (1 + 1/x)/(x + ln(x))^(3/2)")]
+        [InlineData("(1 + 1/x)/(x + ln(x))^(3/2) - 1/x^2")]
+        public void TheTermsAsWrittenBeforeExpanded(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity();
+            foreach (var at in new[] { 0.7, 1.3, 2.4 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                var difference = System.Math.Abs((double)(got - want).RealPart);
+                Assert.True(difference < 1e-8, $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        /// <summary>
         /// Each term alone is answered, which is what makes the sum's decline a defect of the
         /// split and not of the rules.
         /// </summary>
