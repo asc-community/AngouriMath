@@ -458,6 +458,21 @@ namespace AngouriMath.Functions.Algebra
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
+        /// <summary>
+        /// A rational function with rational coefficients whose denominator the splits above
+        /// could not take apart -- irreducible over the rationals past degree two, or with
+        /// real factors that carry the roots of something worse -- integrated by the Hermite
+        /// reduction and the Rothstein–Trager resultant, in real terms. See
+        /// <see cref="RothsteinTrager"/>. After <see cref="SolveByPartialFractions"/>, so that
+        /// everything that answers keeps the form it gives.
+        /// </summary>
+        internal static Entity? SolveByRothsteinTrager(Entity expr, Entity.Variable x)
+        {
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
+                return null;
+            return RothsteinTrager.Integrate(numerator, denominator, x);
+        }
+
         private static bool TryReadAsQuotient(Entity expr, out Entity numerator, out Entity denominator)
         {
             switch (expr)
