@@ -638,8 +638,11 @@ namespace AngouriMath.Functions.Algebra
             // Only attempts if both v and u can be integrated
             static Entity? TryIntegrateByPartsOnce(Entity v, Entity u, Variable x, int wholeSize, int wholePower)
             {
-                // Try to integrate u
-                var integralOfU = Integration.ComputeIndefiniteIntegral(u, x, false);
+                // Try to integrate u -- inner-simplified, as the public entry simplifies what
+                // the integrator returns: the table answers `x/sqrt(1 + x^2)` as a piecewise on
+                // a coefficient's sign whose conditions are decided, `0 = 0`, and a remainder
+                // holding that piecewise is read by nothing.
+                var integralOfU = Integration.ComputeIndefiniteIntegral(u, x, false)?.InnerSimplified;
                 if (integralOfU is null) return null;
 
                 // Differentiate v
@@ -819,6 +822,52 @@ namespace AngouriMath.Functions.Algebra
                 && TrySplit(differentiated, others) is { } byLiate)
                 return byLiate;
 
+            // **Two factors to differentiate, taken together**, against an algebraic rest whose
+            // integral is closed: `x arctan(x) ln(x + sqrt(1 + x^2))/sqrt(1 + x^2)` is the product
+            // of the two transcendental factors against `x/sqrt(1 + x^2)`, whose integral is
+            // `sqrt(1 + x^2)`, and the remainder `sqrt(1 + x^2) (f g)'` is `arctan(x)` plus
+            // `ln(x + sqrt(1 + x^2))/sqrt(1 + x^2)`, each with one such factor and each answered.
+            // The regrouping above refuses two for the reason in its remark -- choosing one
+            // to differentiate is a guess, and the remainder still holds the other -- which
+            // taking both together does not have: the product's derivative has one factor
+            // per term. Only against an algebraic rest, which is where the integral of the
+            // rest is closed and the remainder is smaller than what it came from.
+            // The remainder's terms are asked at the top, each being a term of a sum asked at
+            // the top and each holding one transcendental factor where the integrand held two:
+            // `arctan(x)` alone is by parts against one, which answers only at the top.
+            if (Integration.AnsweringTheQuestionAsked
+                && TryRegroupAroundBothDifferentiatedFactors(expr) is var (bothOfThem, algebraicRest)
+                && bothOfThem is not null && algebraicRest is not null
+                && IsAlgebraicIn(algebraicRest, x)
+                && Integration.ComputeIndefiniteIntegral(algebraicRest, x, false)?.InnerSimplified is { } integralOfTheRest)
+            {
+                var remaining = (bothOfThem.Differentiate(x) * integralOfTheRest).Simplify(1);
+                if (remaining is Providedf(var bareRemaining, _))
+                    remaining = bareRemaining;
+                // Distributed over the sum the product rule left -- the derivative of the pair
+                // is a sum and the integral of the rest multiplies it -- and no further: written
+                // out in full, `arctan(x) (1 + x/sqrt(x^2 + 1))` comes apart into two terms
+                // neither of which is elementary, where together they are `arctan(x)`.
+                var terms = DistributedOverTheSum(remaining);
+                Entity? total = null;
+                foreach (var written in terms)
+                {
+                    // With the radicals differentiation left beside each other combined and
+                    // cancelled first -- `(sqrt(x^2 + 1) + x)/(x + sqrt(x^2 + 1))` is one, and a
+                    // term carrying it was thirty seconds of search where `arctan(x)` alone is
+                    // a step of parts.
+                    var term = CombineRadicalsIn(written, x);
+                    if (Integration.ComputeAsAQuestionOfItsOwn(term, x, integrateByParts: true) is not { } termIntegral)
+                    {
+                        total = null;
+                        break;
+                    }
+                    total = total is null ? termIntegral : total + termIntegral;
+                }
+                if (total is not null)
+                    return bothOfThem * integralOfTheRest - total;
+            }
+
             // **A bare logarithm or inverse function of something that is not linear**, by
             // parts against 1: `int f(g) dx = x f(g) - int x g' f'(g) dx`, and the remainder is
             // algebraic. A linear argument is the table's; anything else reached no rule at all,
@@ -928,6 +977,54 @@ namespace AngouriMath.Functions.Algebra
             // rule reproduces, inside itself, exactly the spelling defect it exists to remove.
             var others = below is null ? above! : above is null ? 1 / below : above / below;
             return (differentiated, others);
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> as the terms of its top-level sum, with a product of a sum
+        /// and other factors distributed one level: <c>(a + b) c</c> is <c>a c</c> and <c>b c</c>,
+        /// and <c>a</c> is left as written.
+        /// </summary>
+        private static List<Entity> DistributedOverTheSum(Entity expr)
+        {
+            if (expr is Sumf or Minusf)
+                return Sumf.LinearChildren(expr).ToList();
+            var factors = Mulf.LinearChildren(expr).ToList();
+            var sum = factors.FirstOrDefault(factor => factor is Sumf or Minusf);
+            if (sum is null)
+                return new List<Entity> { expr };
+            Entity rest = Number.Integer.One;
+            foreach (var factor in factors)
+                if (!ReferenceEquals(factor, sum))
+                    rest = rest * factor;
+            return Sumf.LinearChildren(sum).Select(term => term * rest).ToList();
+        }
+
+        /// <summary>
+        /// The two factors LIATE would differentiate, as one product, against the rest of the
+        /// integrand as one quotient; <c>(null, null)</c> where there are not exactly two above
+        /// the bar or nothing else beside them.
+        /// </summary>
+        private static (Entity? Both, Entity? Others) TryRegroupAroundBothDifferentiatedFactors(Entity expr)
+        {
+            var factors = FactorsOfTheIntegrand(expr);
+            if (factors.Count < 3)
+                return (null, null);
+            if (factors.Count(pair => !pair.Underneath && IsDifferentiatedBeforeAPolynomial(pair.Factor)) != 2)
+                return (null, null);
+            Entity? both = null;
+            Entity? above = null;
+            Entity? below = null;
+            foreach (var (factor, underneath) in factors)
+                if (!underneath && IsDifferentiatedBeforeAPolynomial(factor))
+                    both = both is null ? factor : both * factor;
+                else if (underneath)
+                    below = below is null ? factor : below * factor;
+                else
+                    above = above is null ? factor : above * factor;
+            if (both is null || (above is null && below is null))
+                return (null, null);
+            var others = below is null ? above! : above is null ? 1 / below : above / below;
+            return (both, others);
         }
 
         /// <summary>
@@ -5263,6 +5360,7 @@ namespace AngouriMath.Functions.Algebra
             Entity above = Number.Integer.One;
             Entity below = Number.Integer.One;
             var halves = new Dictionary<Entity, int>();      // base -> exponent in halves
+            var halfExponents = new Dictionary<Entity, int>();
             var others = new List<(Entity Factor, bool Below)>();
             var gathered = false;
             foreach (var (side, isBelow) in new[] { (numerator, false), (denominator, true) })
@@ -5270,7 +5368,10 @@ namespace AngouriMath.Functions.Algebra
                 {
                     var sign = isBelow ? -1 : 1;
                     if (TryReadASquareRootOfAPolynomial(factor, x, out var @base, out var wholePower))
+                    {
+                        gathered |= halves.ContainsKey(@base);
                         halves[@base] = halves.TryGetValue(@base, out var so) ? so + sign * (2 * wholePower + 1) : sign * (2 * wholePower + 1);
+                    }
                     else if (factor is Powf(var b, Number.Integer k) && k.EInteger.CanFitInInt32() && halves.ContainsKey(b))
                     {
                         halves[b] += sign * 2 * k.EInteger.ToInt32Unchecked();
@@ -5315,22 +5416,33 @@ namespace AngouriMath.Functions.Algebra
                     else if (whole < 0) below = below * MathS.Pow(pair.Key, -whole);
                     continue;
                 }
-                // n = 2q + 1 for every odd n, negative ones included: -1 = 2(-1) + 1.
-                var q = (n - 1) / 2;
                 bases.Add(pair.Key);
-                if (q > 0) above = above * MathS.Pow(pair.Key, q);
-                else if (q < 0) below = below * MathS.Pow(pair.Key, -q);
+                halfExponents[pair.Key] = n;
             }
             if (bases.Count < 2 || !AtMostOneIsNegativeOnTheReals(bases, x))
             {
                 // Nothing to combine, or roots that must not be: what was cancelled or
-                // gathered is still worth handing on, each root on its own.
+                // gathered is still worth handing on, each root on its own -- as the one
+                // power `P^(n/2)` it is, since `sqrt(P)/P` beside a logarithm of `x + sqrt(P)` is
+                // not the `1/sqrt(P)` the substitution for that logarithm reads.
                 if (!cancelled && !gathered)
                     return null;
                 foreach (var @base in bases)
-                    above = above * MathS.Sqrt(@base);
+                {
+                    var n = halfExponents[@base];
+                    if (n > 0) above = above * MathS.Pow(@base, Number.Rational.Create(n, 2));
+                    else below = below * MathS.Pow(@base, Number.Rational.Create(-n, 2));
+                }
                 bases.Clear();
             }
+            else
+                foreach (var @base in bases)
+                {
+                    // n = 2q + 1 for every odd n, negative ones included: -1 = 2(-1) + 1.
+                    var q = (halfExponents[@base] - 1) / 2;
+                    if (q > 0) above = above * MathS.Pow(@base, q);
+                    else if (q < 0) below = below * MathS.Pow(@base, -q);
+                }
 
             Entity radical = Number.Integer.One;
             if (bases.Count > 0)
@@ -5347,7 +5459,10 @@ namespace AngouriMath.Functions.Algebra
         /// <summary>
         /// A sum that is a factor of both sides, cancelled -- decided by the difference
         /// simplifying to zero, since the two spellings of one sum need not be equal as
-        /// written. <see langword="true"/> when anything was cancelled.
+        /// written: `x + sqrt(1 + x^2)` against `sqrt(x^2 + 1) + x` is not zero as written,
+        /// and where the cheap normalisation leaves it, the full one is asked, a by-parts
+        /// remainder that keeps such a pair uncancelled costing ten seconds of substitution
+        /// candidates otherwise. <see langword="true"/> when anything was cancelled.
         /// </summary>
         private static bool CancelEqualSumFactors(Entity numerator, Entity denominator, out Entity above, out Entity below)
         {
@@ -5362,7 +5477,8 @@ namespace AngouriMath.Functions.Algebra
                 {
                     if (belowFactors[j] is not (Sumf or Minusf))
                         continue;
-                    if ((aboveFactors[i] - belowFactors[j]).InnerSimplified.Evaled is Number.Complex { IsZero: true })
+                    if ((aboveFactors[i] - belowFactors[j]).InnerSimplified.Evaled is Number.Complex { IsZero: true }
+                        || (aboveFactors[i] - belowFactors[j]).Simplify().Evaled is Number.Complex { IsZero: true })
                     {
                         aboveFactors.RemoveAt(i);
                         belowFactors.RemoveAt(j);
@@ -5802,6 +5918,12 @@ namespace AngouriMath.Functions.Algebra
             }
         }
 
+        /// <summary>The largest integrand the substitution rule offers its sums as candidates for.</summary>
+        private const int LargestIntegrandOfferedSums = 120;
+
+        /// <summary>The largest sum the substitution rule offers as a candidate.</summary>
+        private const int LargestSumOffered = 30;
+
         /// <summary>
         /// Finds potential substitution candidates u = g(x) from the expression.
         /// For example, common patterns to try:
@@ -5826,6 +5948,12 @@ namespace AngouriMath.Functions.Algebra
             // substitution and by parts handed down.
             var rational = IsRationalIn(expr, x);
             var polynomial = rational && TreeAnalyzer.TryGetPolynomial(expr, x, out _);
+            // Nor a sum past a certain size: each sum candidate is one simplification of the
+            // quotient, and the sums in the hundred-node remainders a by-parts step hands
+            // down -- `x^3 + 3x^2 sqrt(x^2 + 1) + 3x (x^2 + 1) + (x^2 + 1)^(3/2)` was one -- are
+            // seconds apiece for nothing; one such remainder of
+            // `x ln(1 + x^2) ln(x + sqrt(1 + x^2))/sqrt(1 + x^2)` spent twelve seconds here.
+            var large = expr.Complexity > LargestIntegrandOfferedSums;
             // For a rational function `u = x^k` is exact only when every exponent below the bar
             // is a multiple of k and every one above is k - 1 more than one -- the x^(k-1) of
             // du -- so the candidate is read off the exponents before the quotient is
@@ -5875,7 +6003,7 @@ namespace AngouriMath.Functions.Algebra
                         candidates.Add(node); // Logarithm itself (for cases like 1/(x*ln(x)))
                         if (antilog != x && antilog.ContainsNode(x)) candidates.Add(antilog); // Also add the argument if it's not just x
                         break;
-                    case Sumf(var aug, var add) when !rational:
+                    case Sumf(var aug, var add) when !rational && !large && node.Complexity <= LargestSumOffered:
                         if (aug.ContainsNode(x) || add.ContainsNode(x)) candidates.Add(node); // Linear expressions ax + b
                         break;
                 }
