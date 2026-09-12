@@ -4241,8 +4241,11 @@ namespace AngouriMath.Functions.Algebra
         internal static Entity? SolveByEulerSubstitution(Entity expr, Entity.Variable x)
         {
 
-            // One square root of a quadratic in x, and otherwise a rational function of x.
+            // One square root of a quadratic in x, and otherwise a rational function of x --
+            // or, besides those, powers of `x + sqrt(Q)` and `sqrt(Q) - x` to any exponent,
+            // which the first substitution makes powers of `t`: see below.
             Entity? radicand = null;
+            var powersOfTheSubstitution = new List<Powf>();
             foreach (var node in expr.Nodes)
             {
                 if (!node.ContainsNode(x))
@@ -4253,16 +4256,29 @@ namespace AngouriMath.Functions.Algebra
                         break;
                     case Powf(_, Number.Integer):
                         break;
-                    case Powf(var radicalBase, Number.Rational half) when half.ERational.Denominator.Equals(EInteger.FromInt32(2)):
+                    case Powf(var radicalBase, Number.Rational half) when half.ERational.Denominator.Equals(EInteger.FromInt32(2))
+                            && radicalBase.Nodes.All(inner => inner is not Powf(_, Number.Rational r) || r is Number.Integer):
                         if (radicand is null)
                             radicand = radicalBase;
                         else if (radicand != radicalBase)
                             return null;
                         break;
+                    case Powf(var @base, var exponent) when !exponent.ContainsNode(x) && @base.Nodes.Any(inner => inner is Powf(_, Number.Rational)):
+                        powersOfTheSubstitution.Add((Powf)node);
+                        break;
                     default:
                         return null;
                 }
             }
+            // The radical inside such a power is the radical: `(x + sqrt(1 + x^2))^b` holds it.
+            if (radicand is null)
+                foreach (var power in powersOfTheSubstitution)
+                    foreach (var inner in power.Base.Nodes)
+                        if (inner is Powf(var innerBase, Number.Rational innerHalf) && innerHalf.ERational.Denominator.Equals(EInteger.FromInt32(2)) && innerBase.ContainsNode(x))
+                        {
+                            if (radicand is null) radicand = innerBase;
+                            else if (radicand != innerBase) return null;
+                        }
             if (radicand is null
                 || !TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var a, out var b, out var c)
                 || a.Evaled is Number.Complex { IsZero: true })
@@ -4323,12 +4339,81 @@ namespace AngouriMath.Functions.Algebra
                     break;
             }
 
+            // **A power of the substitution itself.** With `t = sqrt(Q) + sqrt(a) x`, a factor
+            // `(x + sqrt(Q))^b` is `t^b` for `a = 1`, exactly and for any `b`, and `sqrt(Q) - x`
+            // is `c/t`, since `(sqrt(Q) + x)(sqrt(Q) - x) = Q - x^2 = b x + c` -- `c/t` when the
+            // linear term is absent. Welz's `(x + sqrt(b + x^2))^a` and Bondarenko's
+            // `1/(1 + sqrt(x + sqrt(1 + x^2)))` are both this: the first becomes Laurent
+            // monomials in `t` to the power `a`, the second a rational function of `sqrt(t)`,
+            // and each is handed to the chain in `t` rather than to the rational integrator,
+            // since neither is a quotient of polynomials.
+            var powered = false;
+            if (powersOfTheSubstitution.Count > 0)
+            {
+                if (which != 1 || !(a.Evaled is Number.Integer { IsZero: false } aOne && aOne.EInteger.Equals(EInteger.One)))
+                    return null;
+                // `x - sqrt(Q)` is the same substitution with the root's sign flipped:
+                // `t = x - sqrt(Q)` gives the same `x(t)`, `sqrt(Q) = x - t` in place of `t - x`,
+                // and `t = x - sqrt(Q)` on the way back. Both signs in one integrand is neither.
+                var root = MathS.Pow(radicand, Number.Rational.Create(1, 2));
+                var flipped = (bool?)null;
+                foreach (var power in powersOfTheSubstitution)
+                {
+                    var plus = (power.Base - (x + root)).Simplify().Evaled is Number.Complex { IsZero: true };
+                    var minus = (power.Base - (x - root)).Simplify().Evaled is Number.Complex { IsZero: true };
+                    if (!plus && !minus)
+                        return null;
+                    if (flipped is null)
+                        flipped = minus;
+                    else if (flipped != minus)
+                        return null;
+                    expr = expr.Substitute(power, MathS.Pow(t, power.Exponent));
+                }
+                if (flipped == true)
+                {
+                    rootInT = xInT - t;
+                    backSubstitution = x - root;
+                }
+                powered = true;
+            }
+
             var dxdt = xInT.Differentiate(t);
             var rewritten = expr.Replace(node =>
                 node is Powf(var @base, Number.Rational half) && @base == radicand
                     ? MathS.Pow(rootInT, Number.Integer.Create(half.ERational.Numerator))
                     : node)
                 .Substitute(x, xInT) * dxdt;
+            if (powered)
+            {
+                if (rewritten.ContainsNode(x))
+                    return null;
+                // With the written factors cancelled first: `1/sqrt(Q)` brings `(t^2 + c)` below
+                // the bar and `dx/dt` brings it above, and beside a symbolic power of `t`
+                // nothing later cancels them.
+                var (poweredAbove, poweredBelow) = Functions.SingleQuotient.Of(rewritten.InnerSimplified);
+                // The powers of t with an exponent that is not a whole number are set aside,
+                // and what is left -- two polynomials in t -- is cancelled by their gcd, since
+                // the two spellings of `t^2 + c` the substitution produces are not equal as
+                // written; then they are put back.
+                Entity setAside = Number.Integer.One;
+                Entity polynomialAbove = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(poweredAbove))
+                    if (factor is Powf(var pb, var pe) && pb == t && pe is not Number.Integer)
+                        setAside = setAside * factor;
+                    else
+                        polynomialAbove = polynomialAbove * factor;
+                Entity cancelledPowered = polynomialAbove / poweredBelow;
+                if (Functions.PolynomialGcd.TryCancel(polynomialAbove.InnerSimplified, poweredBelow.InnerSimplified, out var poweredByGcd) && poweredByGcd is not null)
+                    cancelledPowered = Functions.PartialFractions.Bare(poweredByGcd);
+                var poweredInT = Functions.SingleQuotient.Combine(setAside * cancelledPowered).Simplify();
+                if (poweredInT is Providedf(var bareInT, _))
+                    poweredInT = bareInT;
+                var inTByTheChain = Integration.ComputeIndefiniteIntegral(poweredInT, t, integrateByParts: true);
+                if (inTByTheChain is null)
+                    return null;
+                var poweredAnswer = inTByTheChain.Substitute(t, backSubstitution).InnerSimplified;
+                return poweredAnswer.Nodes.Any(n => n is Number.Complex { IsNaN: true }) ? null : poweredAnswer;
+            }
             var (numerator, denominator) = Functions.SingleQuotient.Of(rewritten.InnerSimplified);
             var cancelled = CancelCommonFactors(numerator, denominator);
             (numerator, denominator) = Functions.SingleQuotient.Of(cancelled);

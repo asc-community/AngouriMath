@@ -126,6 +126,28 @@ namespace AngouriMath.Tests.Calculus
         public void CancelledByTheGcdWhereTheSpellingsDiffer(string integrand, double[] points) => DifferentiatesBack(integrand, points);
 
         /// <summary>
+        /// A power of the substitution itself. With <c>t = sqrt(Q) + x</c>, a factor
+        /// <c>(x + sqrt(Q))^b</c> is <c>t^b</c> exactly and for any <c>b</c>, and with the root's
+        /// sign flipped, <c>t = x - sqrt(Q)</c>, so is <c>(x - sqrt(Q))^b</c>: Welz's
+        /// <c>(x + sqrt(b + x^2))^a</c> becomes Laurent monomials in <c>t</c> to the power <c>a</c>,
+        /// and Bondarenko's <c>1/(1 + sqrt(x + sqrt(1 + x^2)))</c> a rational function of
+        /// <c>sqrt(t)</c>; each is handed to the chain in <c>t</c>, since neither is a quotient
+        /// of polynomials. The parameters are pinned only when differentiating back; the
+        /// flipped-sign answers are complex at real points and are compared as such.
+        /// </summary>
+        [Theory]
+        [InlineData("(x + sqrt(1 + x^2))^3", new[] { 0.3, 0.9, 1.7, 2.6 })]
+        [InlineData("(x + sqrt(b + x^2))^a", new[] { 0.3, 0.9, 1.7, 2.6 })]
+        [InlineData("(x - sqrt(a + x^2))^b", new[] { 0.3, 0.9, 1.7, 2.6 })]
+        [InlineData("(x - sqrt(a + x^2))^b/sqrt(a + x^2)", new[] { 0.3, 0.9, 1.7, 2.6 })]
+        [InlineData("sqrt(x + sqrt(a^2 + x^2))/sqrt(a^2 + x^2)", new[] { 0.3, 0.9, 1.7, 2.6 })]
+        [InlineData("sqrt(x + sqrt(a^2 + x^2))/x", new[] { 0.3, 0.9, 1.7, 2.6 })]
+        [InlineData("1/(x*sqrt(a^2 + x^2)*sqrt(x + sqrt(a^2 + x^2)))", new[] { 0.3, 0.9, 1.7, 2.6 })]
+        [InlineData("1/(1 + sqrt(x + sqrt(1 + x^2)))", new[] { 0.3, 0.9, 1.7, 2.6 })]
+        public void APowerOfTheSubstitutionItself(string integrand, double[] points)
+            => DifferentiatesBack(integrand, points, ("a", 1.7), ("b", 0.7));
+
+        /// <summary>
         /// A complex constant under the root is none of the three substitutions', and taking
         /// <c>-i</c> for a symbol once answered <c>NaN</c>; a rational function of the root
         /// whose Euler form is past the degree the splits can factor is declined too, and not
