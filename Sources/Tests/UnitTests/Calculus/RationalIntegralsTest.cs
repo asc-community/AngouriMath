@@ -95,6 +95,28 @@ namespace AngouriMath.Tests.Calculus
         public void ARepeatedRationalRootDecomposesToo(string integrand, double[] points) =>
             AssertIsAntiderivative(integrand, points);
 
+        // A numerator that is a constant multiple of the denominator's derivative is the
+        // logarithm of the denominator whatever the denominator is. Welz's quartic was answered
+        // by the substitution rule with u the denominator, until sums stopped being that rule's
+        // candidates for a rational function -- each cost a simplification of the quotient, and
+        // (1 + t^2)/((sqrt(2) - 1)t^2 + 2t + 1 + sqrt(2)) spent eight seconds on them -- so
+        // the case is read here, where it is one division.
+        [Theory]
+        [InlineData("(3 - 3*x + 30*x^2 + 160*x^3)/(9 + 24*x - 12*x^2 + 80*x^3 + 320*x^4)", new[] { 0.3, 1.7, 3.2 })]
+        [InlineData("(x^3 + 1)/(x^4 + 4*x + 2)", new[] { 0.3, 1.7, 3.2 })]
+        [InlineData("(2*x + 1)/(x^2 + x + 1)", new[] { 0.3, 1.7, -0.6 })]
+        public void TheLogarithmicDerivative(string integrand, double[] points) =>
+            AssertIsAntiderivative(integrand, points);
+
+        // The candidate the substitution rule no longer offers for a rational function, answered
+        // all the same, and the case the restriction is for.
+        [Theory]
+        [InlineData("(1 + x^2)/((sqrt(2) - 1)*x^2 + 2*x + 1 + sqrt(2))", new[] { 0.3, 1.7, 3.2 })]
+        [InlineData("x*(x^2 + 1)^3", new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("(2*x + 1)/(x^2 + x + 1)^3", new[] { 0.3, 1.7, -0.6 })]
+        public void ARationalFunctionWithoutSumCandidates(string integrand, double[] points) =>
+            AssertIsAntiderivative(integrand, points);
+
         // A denominator that factors over Q with no rational root anywhere in it, which the
         // split at a root cannot get a foothold on. x^4 + 3x^2 + 2 is (x^2 + 1)(x^2 + 2) and
         // x^4 + 4 is (x^2 - 2x + 2)(x^2 + 2x + 2); the split at a coprime pair of factors

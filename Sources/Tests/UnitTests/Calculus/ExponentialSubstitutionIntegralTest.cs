@@ -127,6 +127,20 @@ namespace AngouriMath.Tests.Calculus
         public void TheBaseTakesTheSignOfTheRadicand(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// <c>u = e^(k x)</c> is positive, and a root holding a power of it gives that power up:
+        /// <c>sqrt(e^(2x) + e^(3x))</c> is <c>sqrt(u^2 (1 + u))</c> under <c>u = e^x</c>, and the
+        /// simplifier is right not to call that <c>u sqrt(1 + u)</c> for a <c>u</c> it knows
+        /// nothing about -- the substitution knows exactly this about its own. The identity
+        /// <c>(a b)^r = a^r b^r</c> is exact whenever <c>a</c> is a non-negative real.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(e^(2*x) + e^(3*x))")]
+        [InlineData("e^x/sqrt(e^(2*x) - e^x)")]
+        [InlineData("e^(2*x)/sqrt(e^(4*x) + e^(2*x))")]
+        [InlineData("sqrt(1 + tanh(4*x))")]
+        public void APowerOfThePositiveBaseLeavesTheRoot(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// What the rule must not disturb: exponentials the other rules already answer, and which
         /// are not rational in <c>e^(k x)</c> at all.
         /// </summary>

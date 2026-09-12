@@ -79,6 +79,17 @@ namespace AngouriMath.Functions.Algebra
                 && Integration.ComputeIndefiniteIntegral(properPart, x, integrateByParts) is { } fractionPart)
                 return wholePart + fractionPart;
 
+            // A numerator that is a constant multiple of the denominator's derivative is the
+            // logarithm of the denominator, whatever the denominator is: Welz's
+            // `(3 - 3x + 30x^2 + 160x^3)/(9 + 24x - 12x^2 + 80x^3 + 320x^4)` is `ln(D)/8`, and
+            // the substitution rule found it as `u = D` while sums were still its candidates.
+            if (denominator.ContainsNode(x)
+                && TreeAnalyzer.PolynomialLongDivision(numerator, denominator.Differentiate(x).InnerSimplified, genericCase: true, inTermsOf: x)
+                    is var (multiple, leftover)
+                && !multiple.ContainsNode(x)
+                && (leftover is Divf(var leftoverTop, _) ? leftoverTop : leftover).InnerSimplified.Evaled is Number.Complex { IsZero: true })
+                return (multiple * MathS.Ln(denominator)).InnerSimplified;
+
             // Every rule below reads the denominator **as written**: the Hermite reduction wants
             // its repeated factor written as a power, the coprime split wants two written blocks.
             // A denominator whose written factors hide either -- `(1 + t^2)(1 - 2t - 2t^3 - t^4)`
@@ -2980,18 +2991,38 @@ namespace AngouriMath.Functions.Algebra
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
-        internal static Entity? SolveByLinearRadicalSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        internal static Entity? SolveByLinearRadicalSubstitution(Entity expr, Entity.Variable x, bool integrateByParts, bool variableIsNonnegative = false)
         {
             // Every fractional power in the tree whose base is linear in x, collected with the
             // base it is over so that radicals over different bases are told apart.
+            //
+            // **Two bases, when both are square roots.** `sqrt(u)/(u sqrt(1 + u))` -- what
+            // `sqrt(1 + tanh(4x))` becomes under `u = e^(8x)` -- was declined here for the second
+            // base, and it is one substitution: with `s = sqrt(u)` the other root is
+            // `sqrt(1 + s^2)`, a root of a quadratic, which the rules for those answer. So a
+            // second base is admitted where every radical is a square root; its radicals are
+            // substituted rather than built, and what they become is the next rule's. A third
+            // base, or a cube root beside a second base, is declined as before.
+            //
+            // And only where the two bases are not both negative anywhere on the reals, unless
+            // the caller knows its variable to be non-negative. Where both are, the integrand
+            // is real -- `sqrt(x - 1) sqrt(x - 2)` below 1 is `-sqrt((1 - x)(2 - x))` -- and the
+            // answer, built through an imaginary `u`, is not its antiderivative there: measured
+            // by quadrature over [-1.5, 0.3], -3.66 against the answer's -4.68, with the two
+            // agreeing to twelve digits above 2. The exponential substitution's `u = e^(k x)`
+            // never is negative, and it says so.
             Entity? radicalBase = null;
+            Entity? otherBase = null;
             var denominators = new List<int>();
+            var allSquareRoots = true;
             foreach (var node in expr.Nodes)
             {
                 if (node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer)
                     continue;
                 if (!@base.ContainsNode(x))
                     continue;
+                if (!exponent.ERational.Denominator.Equals(EInteger.FromInt32(2)))
+                    allSquareRoots = false;
                 // A radical over something that is not linear is **skipped rather than refused**,
                 // and that is where the nested ones come from. `sqrt(x + sqrt(1 + x))` holds two:
                 // the inner one is over something linear and is what the substitution is for, and
@@ -3006,12 +3037,23 @@ namespace AngouriMath.Functions.Algebra
                 if (radicalBase is null)
                     radicalBase = @base;
                 else if (radicalBase != @base)
-                    return null;   // two different bases at once
+                {
+                    if (otherBase is null)
+                        otherBase = @base;
+                    else if (otherBase != @base)
+                        return null;   // three different bases at once
+                    continue;
+                }
                 if (!exponent.ERational.Denominator.CanFitInInt32())
                     return null;
                 denominators.Add(exponent.ERational.Denominator.ToInt32Checked());
             }
             if (radicalBase is null || denominators.Count == 0)
+                return null;
+            if (otherBase is not null && !allSquareRoots)
+                return null;
+            if (otherBase is not null && !variableIsNonnegative
+                && !AtMostOneIsNegativeOnTheReals(new List<Entity> { radicalBase, otherBase }, x))
                 return null;
 
             var q = denominators.Aggregate(1, Lcm);
@@ -3047,6 +3089,11 @@ namespace AngouriMath.Functions.Algebra
             var integrand = Functions.SingleQuotient.Combine((rewritten * dx).Simplify());
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
+            // For an even q the principal root is not negative wherever it is real, and a root
+            // holding a power of u gives that power up: `1/sqrt(t + t^(3/2))` under `u = sqrt(t)`
+            // is `2u/sqrt(u^2 + u^3)`, a root of a cubic, and is `2/sqrt(1 + u)`.
+            if (q % 2 == 0)
+                integrand = FactorANonnegativeVariableOutOfRadicals(integrand, u);
 
             return Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is { } result
                 ? result.Substitute(u, MathS.Pow(radicalBase, Number.Rational.Create(1, q)))
@@ -4265,12 +4312,26 @@ namespace AngouriMath.Functions.Algebra
                 rewritten / (Number.Rational.Create(k) * u)).Simplify();
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
+            // u is an exponential, so it is positive, and a root holding a power of it gives
+            // that power up: `sqrt(1 + tanh(4x))` is a root of `2u/(1 + u)` here and nothing
+            // rationalises that; as `sqrt(2) sqrt(u)/sqrt(1 + u)` it is one substitution more.
+            integrand = FactorANonnegativeVariableOutOfRadicals(integrand, u);
 
+            // What that leaves can be two square roots of linears in u -- `sqrt(u)/(u sqrt(1 + u))`
+            // for `sqrt(1 + tanh(4x))` -- which the linear-radical substitution answers only
+            // when told that u is not negative, as an exponential is; asked directly, so that
+            // it is told.
+            if (SolveByLinearRadicalSubstitution(integrand, u, integrateByParts, variableIsNonnegative: true) is { } byARoot)
+                return Finished(byARoot);
             if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is not { } result)
                 return null;
+            return Finished(result);
 
-            var answer = result.Substitute(u, MathS.Pow(MathS.e, (Number.Rational.Create(k) * x).InnerSimplified));
-            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+            Entity? Finished(Entity result)
+            {
+                var answer = result.Substitute(u, MathS.Pow(MathS.e, (Number.Rational.Create(k) * x).InnerSimplified));
+                return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+            }
         }
 
         /// <summary>
@@ -4666,6 +4727,93 @@ namespace AngouriMath.Functions.Algebra
             return true;
         }
 
+        /// <summary>
+        /// The radicals of <paramref name="expr"/> with every power of <paramref name="u"/>
+        /// that a radical can hold taken out of it, for a <paramref name="u"/> that is not
+        /// negative: <c>(u^2 (1 + u))^(1/2)</c> is <c>u sqrt(1 + u)</c>, and
+        /// <c>(2u/(1 + u))^(1/2)</c> is <c>sqrt(2u)/sqrt(1 + u)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// For the substitutions whose variable is one by construction -- <c>u = e^(k x)</c>,
+        /// <c>u = (a x + b)^(1/q)</c> with <c>q</c> even, <c>u = x^(1/q)</c> likewise -- and
+        /// for no one else: the simplifier is right not to call <c>sqrt(u^2 (1 + u))</c>
+        /// <c>u sqrt(1 + u)</c> for a <c>u</c> it knows nothing about, and the substitution
+        /// knows exactly this about its own. Two identities, each exact for <c>u &gt;= 0</c>:
+        /// <c>(a b)^r = a^r b^r</c> whenever <c>a</c> is a non-negative real, since then
+        /// <c>arg(a b) = arg(b)</c>; and <c>(P/Q)^r = P^r/Q^r</c> whenever <c>Q</c> is a positive
+        /// real, for the same reason -- which a polynomial in <c>u</c> with non-negative
+        /// coefficients and a positive constant term is, at every <c>u &gt;= 0</c>.
+        /// </para>
+        /// <para>
+        /// Without it <c>1/sqrt(t + t^(3/2))</c> under <c>u = sqrt(t)</c> is
+        /// <c>2u/sqrt(u^2 + u^3)</c>, a root of a cubic, and with it <c>2/sqrt(1 + u)</c>;
+        /// <c>sqrt(1 + tanh(4x))</c> under <c>u = e^(8x)</c> is a root of <c>2u/(1 + u)</c>,
+        /// which nothing rationalises, and with it <c>sqrt(2) sqrt(u)/sqrt(1 + u)</c>.
+        /// </para>
+        /// </remarks>
+        private static Entity FactorANonnegativeVariableOutOfRadicals(Entity expr, Entity.Variable u)
+            => expr.Replace(node =>
+            {
+                if (node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer
+                    || !@base.ContainsNode(u)
+                    || !exponent.ERational.Denominator.CanFitInInt32() || !exponent.ERational.Numerator.CanFitInInt32())
+                    return node;
+                var p = exponent.ERational.Numerator.ToInt32Unchecked();
+                var q = exponent.ERational.Denominator.ToInt32Unchecked();
+
+                // A quotient whose denominator is positive at every u >= 0 comes apart first.
+                var (above, below) = Functions.SingleQuotient.Of(@base);
+                Entity result;
+                if (below != Number.Integer.One && below.ContainsNode(u) && IsPositiveForNonnegative(below, u))
+                    result = Factored(above, u, p, q) / Factored(below, u, p, q);
+                else if (below == Number.Integer.One)
+                    result = Factored(above, u, p, q);
+                else
+                    return node;
+                return result;
+            });
+
+        /// <summary>
+        /// <c>P^(p/q)</c> with the largest <c>u^(k q)</c> dividing the polynomial <c>P</c> taken
+        /// out as <c>u^(k p)</c>; <c>P^(p/q)</c> as it is where <c>P</c> is not a polynomial in
+        /// <paramref name="u"/> or holds no such power.
+        /// </summary>
+        private static Entity Factored(Entity polynomial, Entity.Variable u, int p, int q)
+        {
+            var exponent = Number.Rational.Create(p, q);
+            if (!polynomial.ContainsNode(u) || !TreeAnalyzer.TryGetPolynomial(polynomial, u, out var monomials) || monomials.Count == 0)
+                return MathS.Pow(polynomial, exponent);
+            var lowest = monomials.Keys.Min()!;
+            if (!lowest.CanFitInInt32())
+                return MathS.Pow(polynomial, exponent);
+            // Rebuilt from its monomials even where nothing comes out, so that a numerator a
+            // quotient split left as `2(u + 1) - 2` is the `2u` the next rule reads.
+            var k = System.Math.Max(0, lowest.ToInt32Unchecked() / q);
+            Entity rest = Number.Integer.Zero;
+            foreach (var pair in monomials.OrderBy(pair => pair.Key))
+            {
+                var degree = pair.Key.ToInt32Unchecked() - k * q;
+                Entity term = degree == 0 ? pair.Value : degree == 1 ? pair.Value * u : pair.Value * MathS.Pow(u, degree);
+                rest = rest == Number.Integer.Zero ? term : rest + term;
+            }
+            return k == 0 ? MathS.Pow(rest.InnerSimplified, exponent) : MathS.Pow(u, k * p) * MathS.Pow(rest.InnerSimplified, exponent);
+        }
+
+        /// <summary>
+        /// Whether the polynomial <paramref name="expr"/> in <paramref name="u"/> is positive at
+        /// every <c>u &gt;= 0</c> for the plain reason that every coefficient is a positive
+        /// number and the constant term is among them.
+        /// </summary>
+        private static bool IsPositiveForNonnegative(Entity expr, Entity.Variable u)
+        {
+            if (!TreeAnalyzer.TryGetPolynomial(expr, u, out var monomials) || monomials.Count == 0)
+                return false;
+            if (!monomials.TryGetValue(EInteger.Zero, out var constant) || constant.Evaled is not Number.Real { IsPositive: true })
+                return false;
+            return monomials.Values.All(coefficient => coefficient.Evaled is Number.Real { IsPositive: true });
+        }
+
         private static int Lcm(int a, int b)
         {
             var (x, y) = (a, b);
@@ -4763,6 +4911,29 @@ namespace AngouriMath.Functions.Algebra
             // standing caveat on this substitution and is recorded in the summary above.
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
+
+            // Every sine and cosine brought its own `1 + t^2` below the bar, and clearing them
+            // puts the same power of it above and below -- where the simplifier does not see
+            // it once the denominator is a sum, `(1 + t^2)(1 - t^2 + 2t) + sqrt(2)(1 + t^2)^2`
+            // for `1/(cos(x) + sin(x) + sqrt(2))`. Divided out by long division, as many times
+            // as both sides allow: what is left is `2/((sqrt(2) - 1)t^2 + 2t + 1 + sqrt(2))`, a
+            // quadratic below the bar, which was a quartic nothing split.
+            var (numerator, denominator) = Functions.SingleQuotient.Of(integrand);
+            var divided = false;
+            // The remainder comes back over the divisor, `0/(1 + t^2)` when there is none.
+            static bool NoRemainder(Entity rest)
+                => rest is Divf(var top, _) ? NoRemainder(top) : rest.Evaled is Number.Complex { IsZero: true };
+            while (TreeAnalyzer.PolynomialLongDivision(numerator, 1 + tSquared, inTermsOf: t) is var (aboveQuotient, aboveRest)
+                   && NoRemainder(aboveRest)
+                   && TreeAnalyzer.PolynomialLongDivision(denominator, 1 + tSquared, inTermsOf: t) is var (belowQuotient, belowRest)
+                   && NoRemainder(belowRest))
+            {
+                numerator = aboveQuotient.InnerSimplified;
+                denominator = belowQuotient.InnerSimplified;
+                divided = true;
+            }
+            if (divided)
+                integrand = (numerator / denominator).InnerSimplified;
 
             return Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is { } result
                 ? result.Substitute(t, MathS.Tan(x / 2))
@@ -4915,6 +5086,15 @@ namespace AngouriMath.Functions.Algebra
         private static IEnumerable<Entity> FindSubstitutionCandidates(Entity expr, Entity.Variable x)
         {
             var candidates = new List<Entity>();
+            // A sum is no candidate for a rational function: whatever `u = g(x)` with `g` a
+            // polynomial would find in one, partial fractions find without it, and each
+            // candidate costs one simplification of the quotient -- which, with an irrational
+            // constant in the coefficients, is where `(1 + t^2)/((sqrt(2) - 1) t^2 + 2t + 1 + sqrt(2))`
+            // spent eight seconds being declined by this rule before the rational integrator
+            // answered it in a few milliseconds. The base of a written power stays a candidate,
+            // since `x (x^2 + 1)^3` is answered as a power that way and as a degree-eight
+            // polynomial otherwise.
+            var rational = IsRationalIn(expr, x);
             foreach (var node in expr.Nodes) // Look for composite functions (functions of functions)
                 switch (node)
                 {
@@ -4947,7 +5127,7 @@ namespace AngouriMath.Functions.Algebra
                         candidates.Add(node); // Logarithm itself (for cases like 1/(x*ln(x)))
                         if (antilog != x && antilog.ContainsNode(x)) candidates.Add(antilog); // Also add the argument if it's not just x
                         break;
-                    case Sumf(var aug, var add):
+                    case Sumf(var aug, var add) when !rational:
                         if (aug.ContainsNode(x) || add.ContainsNode(x)) candidates.Add(node); // Linear expressions ax + b
                         break;
                 }

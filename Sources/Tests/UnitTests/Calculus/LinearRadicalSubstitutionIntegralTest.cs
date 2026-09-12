@@ -65,6 +65,19 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// For an even <c>q</c> the principal root <c>u = (a x + b)^(1/q)</c> is not negative
+        /// wherever it is real, and a root holding a power of <c>u</c> gives that power up:
+        /// <c>1/sqrt(x + x^(3/2))</c> under <c>u = sqrt(x)</c> is <c>2u/sqrt(u^2 + u^3)</c>, a
+        /// root of a cubic that nothing reads, and is <c>2/sqrt(1 + u)</c>. Apostol's
+        /// <c>x/sqrt(1 + x^2 + (1 + x^2)^(3/2))</c> is the same one step further in.
+        /// </summary>
+        [Theory]
+        [InlineData("1/sqrt(x + x^(3/2))")]
+        [InlineData("sqrt(x)/sqrt(x + x^2)")]
+        [InlineData("x/sqrt(1 + x^2 + (1 + x^2)^(3/2))")]
+        public void APowerOfTheRootLeavesTheRadical(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// A polynomial over a square root of something linear. None of these had an
         /// antiderivative, and each is a first-year exercise.
         /// </summary>
@@ -90,17 +103,37 @@ namespace AngouriMath.Tests.Calculus
         public void TwoRootsOverOneBase(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
-        /// Declined, so the boundary is recorded rather than assumed.
+        /// Two bases, when every radical is a square root: <c>sqrt(x)/(x sqrt(1 + x))</c> is what
+        /// <c>sqrt(1 + tanh(4x))</c> becomes under <c>u = e^(8x)</c>, and with <c>s = sqrt(x)</c>
+        /// the other root is <c>sqrt(1 + s^2)</c>, a root of a quadratic, which the rules for
+        /// those answer. <c>sqrt(1 - x) + sqrt(1 + x)</c> was pinned here as declined for the
+        /// second base; it is answered now, by linearity before this rule and by this rule
+        /// when the sum is not at the top. What the rule hands on still has to be answered:
+        /// <c>1/(sqrt(1 - x) + sqrt(1 + x))</c> becomes a root of <c>2 - u^2</c>, whose Euler
+        /// form has <c>sqrt(2)</c> in its coefficients, and the rational integrator stops at
+        /// those; <c>3 + x</c> beside <c>1 - x</c> becomes a root of <c>4 - u^2</c> and comes out.
         /// </summary>
-        /// <remarks>
-        /// A radical over a <em>quadratic</em> is a different substitution and is not this rule's;
-        /// two radicals over <em>different</em> linear bases would need two substitutions at once,
-        /// and half-rewriting is worse than declining. Should either later be answered by
-        /// something else, these move rather than being deleted.
-        /// </remarks>
         [Theory]
-        [InlineData("sqrt(1 - x) + sqrt(1 + x)")]
-        public void DifferentBasesAreDeclined(string integrand)
+        [InlineData("sqrt(x)/(x*sqrt(1 + x))")]
+        [InlineData("sqrt(x)/sqrt(1 + x)")]
+        [InlineData("1/(sqrt(x) + sqrt(x + 1))")]
+        [InlineData("1/(sqrt(1 - x) + sqrt(3 + x))")]
+        public void ASecondBaseUnderASquareRoot(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// Declined, so the boundary is recorded rather than assumed: three bases, or a cube
+        /// root beside a second base, would need more than the one substitution and the
+        /// quadratic-radical rules behind it; and two bases that are both negative somewhere
+        /// on the reals, where the integrand is real and the answer built through an imaginary
+        /// <c>u</c> is not its antiderivative -- <c>sqrt(x - 1) sqrt(x - 2)</c> below <c>1</c>,
+        /// measured by quadrature at <c>-3.66</c> against an answer's <c>-4.68</c>. Should any
+        /// later be answered by something else, these move rather than being deleted.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(sqrt(x) + sqrt(x + 1) + sqrt(x + 2))")]
+        [InlineData("x^(1/3)/sqrt(x + 1)")]
+        [InlineData("x/(sqrt(x - 1)*sqrt(x - 2))")]
+        public void ThreeBasesOrACubeRootBesideASecondAreDeclined(string integrand)
         {
             var integral = integrand.ToEntity().Integrate("x");
             Assert.DoesNotContain("u_rad", integral.Stringize());
