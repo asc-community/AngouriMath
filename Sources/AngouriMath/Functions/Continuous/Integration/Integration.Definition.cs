@@ -503,6 +503,11 @@ namespace AngouriMath.Functions.Algebra
             // it; this one is for the rest.
             if ((answer = IndefiniteIntegralSolver.SolveByHomogeneousTrigonometricSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
+            // What the rational splits could not take apart: a denominator irreducible over
+            // the rationals past degree two, or one whose real factors carry the roots of a
+            // cubic. The residues decide the field the answer needs, not the roots of the
+            // denominator, and the Rothstein-Trager resultant finds them.
+            if ((answer = IndefiniteIntegralSolver.SolveByRothsteinTrager(expr, x)) is { }) return answer;
             // The tangent substitution again, and this time for a *rational* function: a repeated
             // irreducible quadratic beside a negative power of the variable is `sin^p cos^q` with
             // both exponents whole, which the recurrences close. Below partial fractions rather
