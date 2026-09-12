@@ -552,6 +552,9 @@ namespace AngouriMath.Functions.Algebra
             // level down -- the nested radicals under `u = sqrt(1 + x)`, the remainders of by
             // parts -- each of which is closed here.
             if ((answer = IndefiniteIntegralSolver.SolveByEulerSubstitution(expr, x)) is { }) return answer;
+            // And a root of a palindromic quartic, which is a root of a quadratic in x -+ 1/x:
+            // Charlwood's `(1 + x^2)/((1 - x^2) sqrt(1 + x^4))` is `-du/(u sqrt(u^2 + 2))`.
+            if ((answer = IndefiniteIntegralSolver.SolveByReciprocalSubstitution(expr, x)) is { }) return answer;
             // Product-to-sum among the rewrites rather than before them, because a product of
             // trigonometric functions of *equal* arguments is a power and wants a different tool;
             // this only fires where the arguments differ, which is exactly what every substitution
