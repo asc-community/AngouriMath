@@ -581,6 +581,10 @@ namespace AngouriMath.Functions.Algebra
             // the same kind of ansatz in the half-angle tangent: `e^x (1 - sin(x))/(1 - cos(x))`
             // is `-e^x cot(x/2)`.
             if ((answer = IndefiniteIntegralSolver.SolveByExponentialHalfAngleAnsatz(expr, x)) is { }) return answer;
+            // And one level up the tower: an exponential -- of something that may hold ln(x)
+            // -- times a rational function of x and ln(x). `(-1 + (1 - x) ln(x))/(e^x ln(x)^2)`
+            // is `(x e^(-x)/ln(x))'`.
+            if ((answer = IndefiniteIntegralSolver.SolveByLogarithmTowerAnsatz(expr, x)) is { }) return answer;
             // Last of the rewrites, because it is the only one that fires on an integrand nothing
             // is wrong with -- it clears a parameter rather than a shape -- so everything that
             // can answer the problem as written gets to try first.

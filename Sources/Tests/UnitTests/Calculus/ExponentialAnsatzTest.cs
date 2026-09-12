@@ -103,6 +103,33 @@ namespace AngouriMath.Tests.Calculus
             => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
 
         /// <summary>
+        /// One level up the tower: an exponential -- of something that may hold <c>ln(x)</c> --
+        /// times a rational function of <c>x</c> and <c>ln(x)</c>. Hearn's
+        /// <c>(-1 + (1 - x) ln(x))/(e^x ln(x)^2)</c> is <c>(x e^(-x)/ln(x))'</c> and Hebisch's
+        /// <c>e^(x + 1/ln(x)) (-1 + (1 + x) ln(x)^2)/ln(x)^2</c> is <c>(x e^(x + 1/ln(x)))'</c>;
+        /// neither is reached by parts or by a substitution, since the logarithm is not a
+        /// whole subtree to replace. With <c>L</c> for <c>ln(x)</c> and <c>L' = 1/x</c> the
+        /// derivative of <c>e^h P(x, L)/(D L^k)</c> over <c>e^h</c> is rational in the two, and
+        /// the identity is linear in <c>P</c>'s coefficients, one equation per <c>x^i L^j</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("(-1 + (1 - x)*ln(x))/(e^x*ln(x)^2)")]
+        [InlineData("e^(x + 1/ln(x))*(-1 + (1 + x)*ln(x)^2)/ln(x)^2")]
+        [InlineData("e^x*(1/ln(x) - 1/(x*ln(x)^2))")]
+        [InlineData("e^x*(x*ln(x) + 1)/x")]
+        public void OneLevelUpTheTower(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// The tower's non-elementary neighbours, pinned as declined: <c>e^x ln(x)</c> and
+        /// <c>e^x/ln(x)</c> have no such <c>P/(D L^k)</c>, and answering them would be wrong.
+        /// </summary>
+        [Theory]
+        [InlineData("e^x*ln(x)")]
+        [InlineData("e^x/ln(x)")]
+        public void TheTowersNonElementaryNeighboursAreDeclined(string integrand)
+            => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
+
+        /// <summary>
         /// The exact forms, so that the ansatz is seen to find the short answer and not a
         /// longer equivalent.
         /// </summary>
