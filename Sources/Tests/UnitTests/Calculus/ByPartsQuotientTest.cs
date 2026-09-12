@@ -139,17 +139,31 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
-        /// Two factors to differentiate is <b>not</b> this rule's, and the bound is what keeps it
-        /// cheap rather than what keeps it tidy: with two, there is no reason to pick one, and
-        /// what is left still holds the other, so the step has made nothing smaller.
+        /// Two factors to differentiate, taken together against an algebraic rest whose integral
+        /// is closed: <c>x arctan(x) ln(x + sqrt(1 + x^2))/sqrt(1 + x^2)</c> is the two
+        /// transcendental factors against <c>x/sqrt(1 + x^2)</c>, whose integral is
+        /// <c>sqrt(1 + x^2)</c>, and the remainder <c>sqrt(1 + x^2) (f g)'</c> has one such
+        /// factor per term. Picking one of the two to differentiate is a guess, and what is
+        /// left still holds the other; the product's derivative does not.
+        /// </summary>
+        [Theory]
+        [InlineData("x*arctan(x)*ln(x + sqrt(1 + x^2))/sqrt(1 + x^2)")]
+        [InlineData("x*ln(1 + x^2)*ln(x + sqrt(1 + x^2))/sqrt(1 + x^2)")]
+        public void BothFactorsAreTakenTogetherAgainstAnAlgebraicRest(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// Two factors to differentiate against a rest whose integral is not algebraic is not
+        /// this rule's, and the bound is what keeps it cheap rather than what keeps it tidy:
+        /// <c>1/x</c> integrates to a logarithm, so the remainder holds three transcendental
+        /// factors where the integrand held two, and the step has made nothing smaller.
         /// </summary>
         /// <remarks>
         /// Bounded by the integrator's own budget rather than by a wall clock, which measures the
-        /// runner. Without the bound this integrand took 39 s to be declined where it takes about
-        /// sixty milliseconds; here what is pinned is only that the verdict is not a wrong answer.
+        /// runner. Without the bound the first of the theory above took 39 s to be declined where
+        /// it takes about sixty milliseconds; here what is pinned is only that the verdict is not
+        /// a wrong answer.
         /// </remarks>
         [Theory]
-        [InlineData("x*arctan(x)*ln(x + sqrt(1 + x^2))/sqrt(1 + x^2)")]
         [InlineData("ln(x)*arctan(x)/x")]
         public void TwoFactorsToDifferentiateIsNotThisRules(string integrand)
         {
