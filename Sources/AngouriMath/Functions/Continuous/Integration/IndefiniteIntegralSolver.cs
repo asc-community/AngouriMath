@@ -5216,6 +5216,21 @@ namespace AngouriMath.Functions.Algebra
                     gathered = true;
                 }
             }
+            // **Over the irreducible factors**, where that cancels something: `sqrt(1 - x^4)`
+            // over `sqrt(1 - x^2)` -- what by parts leaves from `x^3 arcsin(x)/sqrt(1 - x^4)` --
+            // is `sqrt(1 + x^2)`, and the two roots as written share nothing. Each base with
+            // an odd exponent is factored over the rationals, with the constant folded into
+            // the first factor so that no `sqrt(-1)` is set free, and the root split over the
+            // factors where that is exact -- at most one of them negative anywhere on the
+            // reals; the whole polynomial factors beside them are factored the same way. The
+            // refinement is kept only where it leaves fewer roots than it found, since
+            // otherwise it only respells the integrand.
+            if (TryRefineOverIrreducibleFactors(halves, others, x) is var (refinedHalves, refinedOthers))
+            {
+                halves = refinedHalves;
+                others = refinedOthers;
+                gathered = true;
+            }
             foreach (var (factor, isBelow) in others)
                 if (isBelow) below = below * factor;
                 else above = above * factor;
@@ -5257,6 +5272,90 @@ namespace AngouriMath.Functions.Algebra
             }
             var rewritten = ((above * radical).InnerSimplified / below.InnerSimplified).InnerSimplified;
             return rewritten is Providedf(var inner, _) ? inner : rewritten;
+        }
+
+        /// <summary>
+        /// The bases with an odd exponent in halves, and the whole polynomial factors beside
+        /// them, taken into their irreducible factors over the rationals and gathered again
+        /// by factor; <see langword="null"/> where that leaves no fewer roots than it found.
+        /// </summary>
+        private static (Dictionary<Entity, int> Halves, List<(Entity Factor, bool Below)> Others)? TryRefineOverIrreducibleFactors(
+            Dictionary<Entity, int> halves, List<(Entity Factor, bool Below)> others, Entity.Variable x)
+        {
+            if (!halves.Values.Any(n => n % 2 != 0))
+                return null;
+            var refined = new Dictionary<Entity, int>();
+            var keptOthers = new List<(Entity Factor, bool Below)>();
+            void Add(Entity factor, int n) => refined[factor] = refined.TryGetValue(factor, out var so) ? so + n : n;
+            foreach (var pair in halves)
+            {
+                // The constant goes into whichever factor lets the split be exact: `1 - x^4` is
+                // `-(x + 1)(x - 1)(x^2 + 1)`, and with the sign on `x + 1` two factors are
+                // negative inside the unit interval, where with it on `x - 1` -- `(1 - x)` --
+                // at most one is anywhere.
+                var placements = IrreducibleFactorsWithTheSignPlaced(pair.Key, x);
+                List<Entity>? parts = null;
+                if (placements is not null && placements.Count > 0 && placements[0].Count > 1)
+                    parts = pair.Value % 2 == 0
+                        ? placements[0]
+                        : placements.FirstOrDefault(candidate => AtMostOneIsNegativeOnTheReals(candidate, x));
+                if (parts is null)
+                {
+                    Add(pair.Key, pair.Value);
+                    continue;
+                }
+                foreach (var part in parts)
+                    Add(part, pair.Value);
+            }
+            foreach (var (factor, isBelow) in others)
+            {
+                var (@base, power) = factor is Powf(var b, Number.Integer e) && e.EInteger.CanFitInInt32() && e.EInteger.Sign > 0
+                    ? (b, e.EInteger.ToInt32Unchecked()) : (factor, 1);
+                // A whole factor splits freely; the sign goes where it meets a root already read.
+                var placements = @base.ContainsNode(x) ? IrreducibleFactorsWithTheSignPlaced(@base, x) : null;
+                var parts = placements?.FirstOrDefault(candidate => candidate.Count(refined.ContainsKey) == candidate.Count)
+                            ?? placements?.FirstOrDefault(candidate => candidate.Any(refined.ContainsKey));
+                if (parts is null)
+                {
+                    keptOthers.Add((factor, isBelow));
+                    continue;
+                }
+                foreach (var part in parts)
+                    Add(part, (isBelow ? -2 : 2) * power);
+            }
+            var rootsBefore = halves.Values.Count(n => n % 2 != 0);
+            var rootsAfter = refined.Values.Count(n => n % 2 != 0);
+            return rootsAfter < rootsBefore ? (refined, keptOthers) : null;
+        }
+
+        /// <summary>
+        /// The irreducible factors over the rationals of the polynomial <paramref name="polynomial"/>
+        /// in <paramref name="x"/>, each repeated by its multiplicity, with the constant of the
+        /// factorization multiplied into one of them -- one list per choice of which, so that
+        /// the product is the polynomial exactly and a negative constant is never a factor of
+        /// its own. <see langword="null"/> where it is not such a polynomial.
+        /// </summary>
+        private static List<List<Entity>>? IrreducibleFactorsWithTheSignPlaced(Entity polynomial, Entity.Variable x)
+        {
+            if (polynomial.Vars.Any(v => v != x))
+                return null;
+            if (Functions.PolynomialFactorization.FactorComplete(polynomial, x) is not { } factorization || factorization.Parts.Count == 0)
+                return null;
+            var parts = new List<Entity>();
+            foreach (var part in factorization.Parts)
+                for (var i = 0; i < part.Multiplicity; i++)
+                    parts.Add(part.Factor.ToEntity(x));
+            if (factorization.Constant.CompareTo(ERational.One) == 0)
+                return new List<List<Entity>> { parts };
+            var constant = Number.Rational.Create(factorization.Constant);
+            var placements = new List<List<Entity>>();
+            for (var i = 0; i < parts.Count; i++)
+            {
+                var placed = new List<Entity>(parts);
+                placed[i] = (constant * parts[i]).InnerSimplified;
+                placements.Add(placed);
+            }
+            return placements;
         }
 
         /// <summary>
