@@ -3692,6 +3692,192 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An exponential times a rational function of <c>x</c> and <c>ln(x)</c>, with the
+        /// logarithm allowed in the exponent too, closed by an ansatz
+        /// <c>F = e^h P(x, L)/(D(x) L^k)</c> with <c>L = ln(x)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Hearn's <c>(-1 + (1 - x) ln(x))/(e^x ln(x)^2)</c> is <c>(x e^(-x)/ln(x))'</c> and Hebisch's
+        /// <c>e^(x + 1/ln(x)) (-1 + (1 + x) ln(x)^2)/ln(x)^2</c> is <c>(x e^(x + 1/ln(x)))'</c>; neither
+        /// had an antiderivative, and neither is reached by parts or by any substitution,
+        /// since the logarithm is not a whole subtree to replace. They are the exponential
+        /// ansatz one level up the tower: <c>x</c> and <c>ln(x)</c> are algebraically
+        /// independent, so with <c>L</c> standing for <c>ln(x)</c> and <c>L' = 1/x</c>, the
+        /// derivative of the ansatz divided by <c>e^h</c> is a rational function of <c>x</c> and
+        /// <c>L</c>, and asking it to equal the integrand's is one polynomial identity in the
+        /// two -- linear in the coefficients of <c>P</c>, one equation per monomial
+        /// <c>x^i L^j</c>. The identity is exact, so a solution is an answer and its absence a
+        /// decline; the derivative of what comes out is checked against the integrand at
+        /// sampled points all the same.
+        /// </para>
+        /// <para>
+        /// The denominator is tried from the integrand's: its <c>x</c>-part as the exponential
+        /// ansatz tries its denominators, times <c>L^k</c> for every <c>k</c> from zero up to
+        /// the written power, smallest first so that the answer carries no common factor. Degrees are bounded like the other
+        /// ansatz's, and the columns are built one monomial at a time by differentiating the
+        /// candidate and clearing one common denominator, so nothing here is expanded with
+        /// unknowns in it.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByLogarithmTowerAnsatz(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var logarithm = MathS.Ln(x);
+            if (!expr.ContainsNode(logarithm))
+                return null;
+            if (ReadOneExponentialTimesTheRest(expr, x) is not var (exponent, rest) || exponent is null)
+                return null;
+
+            // Rational in x and L, and nothing else of x, on both sides.
+            var L = Variable.CreateUnique(expr, "L_tower");
+            var restInL = rest.Substitute(logarithm, L);
+            var exponentInL = exponent.Substitute(logarithm, L);
+            static bool IsRationalInBoth(Entity e, Entity.Variable x, Entity.Variable L)
+                => e.Nodes.All(node => !(node.ContainsNode(x) || node.ContainsNode(L))
+                    || node is Variable or Sumf or Minusf or Mulf or Divf
+                    || node is Powf(_, Number.Integer));
+            if (!IsRationalInBoth(restInL, x, L) || !IsRationalInBoth(exponentInL, x, L))
+                return null;
+            if (!exponentInL.ContainsNode(x) && !exponentInL.ContainsNode(L))
+                return null;
+
+            var (above, below) = Functions.SingleQuotient.Of(restInL.InnerSimplified);
+            if (!TryReadInBoth(above, x, L, out var aboveRead) || !TryReadInBoth(below, x, L, out var belowRead))
+                return null;
+            var degreeAboveX = aboveRead.Keys.Max(k => k.Item1);
+            var degreeAboveL = aboveRead.Keys.Max(k => k.Item2);
+            var degreeBelowX = belowRead.Keys.Max(k => k.Item1);
+            var degreeBelowL = belowRead.Keys.Max(k => k.Item2);
+            if (degreeAboveX > MaximumAnsatzDegree || degreeBelowX > MaximumAnsatzDegree
+                || degreeAboveL > MaximumTowerDegree || degreeBelowL > MaximumTowerDegree)
+                return null;
+
+            // The denominator's x-part and L-part, read off the written factors.
+            Entity xPart = Number.Integer.One;
+            var lPower = 0;
+            foreach (var factor in Mulf.LinearChildren(below))
+            {
+                if (factor == L) { lPower += 1; continue; }
+                if (factor is Powf(var b, Number.Integer e) && b == L && e.EInteger.CanFitInInt32()) { lPower += e.EInteger.ToInt32Unchecked(); continue; }
+                if (factor.ContainsNode(L))
+                    return null;   // L inside a written factor with x: not a shape this reads
+                xPart = xPart * factor;
+            }
+
+            var hPrime = exponentInL.Differentiate(x) + exponentInL.Differentiate(L) / x;
+            var degreePX = System.Math.Max(degreeBelowX, degreeBelowX + degreeAboveX - degreeBelowX + 2);
+            var degreePL = System.Math.Max(lPower, degreeAboveL + 1);
+            if (degreePX > MaximumAnsatzDegree || degreePL > MaximumTowerDegree)
+                return null;
+
+            // The smallest power of L first, so that the answer found is the one without a
+            // common factor of L above and below.
+            var lPowers = new List<int>();
+            for (var k = 0; k <= lPower; k++)
+                lPowers.Add(k);
+            foreach (var d in CandidateDenominators(xPart, x))
+                foreach (var k in lPowers)
+                {
+                    var denominator = (k == 0 ? d : d * MathS.Pow(L, k));
+                    // The derivative of e^h x^i L^j / (d L^k), over e^h, has denominator dividing
+                    // x d^2 L^(k+1) times whatever h' brought; clearing by that and the
+                    // integrand's denominator gives polynomials on both sides.
+                    var (hAbove, hBelow) = Functions.SingleQuotient.Of(hPrime.InnerSimplified);
+                    var clearing = x * MathS.Sqr(denominator) * L * hBelow;
+                    var columns = new List<Dictionary<(int, int), Entity>>();
+                    var monomialsOfP = new List<(int, int)>();
+                    var failed = false;
+                    for (var i = 0; i <= degreePX && !failed; i++)
+                        for (var j = 0; j <= degreePL; j++)
+                        {
+                            // The candidate with its powers of L folded into one, so that its
+                            // derivative is a Laurent monomial and not a quotient rule on L/L.
+                            Entity candidate = MathS.Pow(x, i) * (j - k == 0 ? Number.Integer.One : MathS.Pow(L, j - k)) / d;
+                            var derivative = hPrime * candidate + candidate.Differentiate(x) + candidate.Differentiate(L) / x;
+                            var cleared = Functions.PartialFractions.Bare(
+                                Functions.SingleQuotient.Combine(derivative * clearing * below).Simplify().Expand());
+                            if (!TryReadInBoth(cleared, x, L, out var column))
+                            {
+                                failed = true;
+                                break;
+                            }
+                            columns.Add(column);
+                            monomialsOfP.Add((i, j));
+                        }
+                    if (failed)
+                        continue;
+                    if (!TryReadInBoth(Functions.PartialFractions.Bare((above * clearing).Simplify().Expand()), x, L, out var target))
+                        continue;
+
+                    var monomials = columns.SelectMany(c => c.Keys).Concat(target.Keys).Distinct().OrderBy(m => m).ToList();
+                    var matrix = new Entity[monomials.Count][];
+                    var rhs = new Entity[monomials.Count];
+                    for (var row = 0; row < monomials.Count; row++)
+                    {
+                        matrix[row] = new Entity[columns.Count];
+                        for (var c = 0; c < columns.Count; c++)
+                            matrix[row][c] = columns[c].TryGetValue(monomials[row], out var entry) ? entry : Number.Integer.Zero;
+                        rhs[row] = target.TryGetValue(monomials[row], out var wanted) ? wanted : Number.Integer.Zero;
+                    }
+                    if (!Functions.PartialFractions.TrySolveLinear(matrix, rhs, out var values) || values is null)
+                        continue;
+                    Entity numerator = Number.Integer.Zero;
+                    for (var c = 0; c < values.Length; c++)
+                    {
+                        var value = values[c].InnerSimplified;
+                        if (value.Evaled is Number.Complex { IsZero: true })
+                            continue;
+                        var (i, j) = monomialsOfP[c];
+                        numerator += value * MathS.Pow(x, i) * MathS.Pow(L, j);
+                    }
+                    if (numerator.Evaled is Number.Complex { IsZero: true })
+                        continue;
+                    // The generic case, as the integrator answers everywhere: the condition
+                    // simplifying attaches, `not ln(x) = 0`, is the integrand's own pole.
+                    var answer = Functions.PartialFractions.Bare(
+                        (MathS.Pow(MathS.e, exponent) * (numerator / denominator).Substitute(L, logarithm)).InnerSimplified);
+                    if (!Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
+                        continue;
+                    return answer;
+                }
+            return null;
+        }
+
+        /// <summary>The largest power of the logarithm the tower ansatz reads or tries.</summary>
+        private const int MaximumTowerDegree = 4;
+
+        /// <summary>
+        /// <paramref name="expr"/> as a polynomial in <paramref name="x"/> and <paramref name="L"/>
+        /// with coefficients free of both, keyed by the pair of degrees.
+        /// </summary>
+        private static bool TryReadInBoth(Entity expr, Entity.Variable x, Entity.Variable L, out Dictionary<(int, int), Entity> read)
+        {
+            read = new Dictionary<(int, int), Entity>();
+            if (!TreeAnalyzer.TryGetPolynomial(expr, x, out var inX))
+                return false;
+            foreach (var pair in inX)
+            {
+                if (pair.Key.Sign < 0 || !pair.Key.CanFitInInt32())
+                    return false;
+                if (!TreeAnalyzer.TryGetPolynomial(pair.Value, L, out var inL))
+                    return false;
+                foreach (var inner in inL)
+                {
+                    if (inner.Key.Sign < 0 || !inner.Key.CanFitInInt32() || inner.Value.ContainsNode(x) || inner.Value.ContainsNode(L))
+                        return false;
+                    var key = (pair.Key.ToInt32Unchecked(), inner.Key.ToInt32Unchecked());
+                    read[key] = read.TryGetValue(key, out var already) ? already + inner.Value : inner.Value;
+                }
+            }
+            if (read.Count == 0)
+                read[(0, 0)] = Number.Integer.Zero;
+            return true;
+        }
+
+        /// <summary>
         /// <paramref name="term"/> as one exponential of something in <paramref name="x"/> times
         /// everything else, or a <see langword="null"/> exponent where there is not exactly one.
         /// </summary>
