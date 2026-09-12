@@ -5051,9 +5051,12 @@ namespace AngouriMath.Functions.Algebra
             // Two square roots holding the variable, or there is nothing to combine; counted
             // before any of the rewriting below is paid for, since this runs on every
             // sub-integrand of the chain.
-            if (expr.Nodes.Count(node => node is Powf(var @base, Number.Rational half)
+            // A root of a quotient counts as the two roots it splits into.
+            if (expr.Nodes.Sum(node => node is Powf(var @base, Number.Rational half)
                     && half is not Number.Integer && half.ERational.Denominator.Equals(EInteger.FromInt32(2))
-                    && @base.ContainsNode(x)) < 2)
+                    && @base.ContainsNode(x)
+                        ? (@base is Divf || Functions.SingleQuotient.Of(@base).Denominator != Number.Integer.One ? 2 : 1)
+                        : 0) < 2)
                 return null;
             var rewritten = CombineRadicalsIn(expr, x);
             if (rewritten == expr)
@@ -5069,7 +5072,48 @@ namespace AngouriMath.Functions.Algebra
         /// reads as it stands.
         /// </summary>
         private static Entity CombineRadicalsIn(Entity expr, Entity.Variable x)
-            => expr.Replace(node => node is Mulf or Divf ? CombineRadicalsInAQuotient(node, x) ?? node : node);
+            => SplitRootsOfQuotientsIn(expr, x).Replace(node => node is Mulf or Divf ? CombineRadicalsInAQuotient(node, x) ?? node : node);
+
+        /// <summary>
+        /// Every root of a quotient of polynomials in <paramref name="expr"/> written as a
+        /// quotient of roots, where that is exact: <c>sqrt(P/Q) = sqrt(P)/sqrt(Q)</c> on the
+        /// principal branch unless <c>Q &lt; 0 &lt; P</c>, where the left is <c>i sqrt(P/|Q|)</c>
+        /// and the right <c>-i sqrt(P/|Q|)</c> -- with both negative the two <c>i</c>s cancel and
+        /// with <c>P</c> negative alone they agree. So the rule asks whether there is a real
+        /// <c>x</c> with <c>Q(x) &lt; 0 &lt; P(x)</c>, on one point of each interval between the
+        /// real roots, and splits only where there is not.
+        /// </summary>
+        /// <remarks>
+        /// Charlwood's <c>arcsin(x/sqrt(1 - x^2))</c> by parts against one leaves
+        /// <c>x (1 - x^2)^(-3/2)/sqrt((1 - 2x^2)/(1 - x^2))</c>, a root of a quotient that no
+        /// rule reads; split, it is <c>x/((1 - x^2) sqrt(1 - 2x^2))</c>, which Euler answers.
+        /// <c>1 - x^2 &lt; 0</c> only past <c>1</c>, where <c>1 - 2x^2</c> is negative too.
+        /// </remarks>
+        private static Entity SplitRootsOfQuotientsIn(Entity expr, Entity.Variable x)
+            => expr.Replace(node =>
+            {
+                if (node is not Powf(var @base, Number.Rational power) || power is Number.Integer
+                    || !power.ERational.Denominator.Equals(EInteger.FromInt32(2)) || !@base.ContainsNode(x))
+                    return node;
+                var (above, below) = Functions.SingleQuotient.Of(@base);
+                if (below == Number.Integer.One || !below.ContainsNode(x))
+                    return node;
+                if (!TreeAnalyzer.TryGetPolynomial(above, x, out var aboveRead) || !TreeAnalyzer.TryGetPolynomial(below, x, out var belowRead)
+                    || above.Vars.Any(v => v != x) || below.Vars.Any(v => v != x))
+                    return node;
+                // Quadratics at most on either side: those are what the rules behind this read,
+                // and a root of a sextic set free is a search that ends nowhere --
+                // `sin(x)/sqrt(1 - sin(x)^6)` under the tangent is one, and went from a
+                // twenty-millisecond decline to a twenty-second one.
+                static int Degree(Dictionary<EInteger, Entity> read) => read.Count == 0 ? 0 : read.Keys.Max()!.ToInt32Checked();
+                if (Degree(aboveRead) > 2 || Degree(belowRead) > 2)
+                    return node;
+                // Kept as written, so that the base of the root below matches the same base
+                // written beside it as a whole power, for the gathering that follows.
+                if (!OnEveryRealInterval(new List<Entity> { above, below }, x, signs => !(signs[1] < 0 && signs[0] > 0)))
+                    return node;
+                return MathS.Pow(above, power) / MathS.Pow(below, power);
+            });
 
         /// <summary>
         /// A factor of a product that is a small power of a sum holding a square root of a
@@ -5124,41 +5168,84 @@ namespace AngouriMath.Functions.Algebra
             var cancelled = CancelEqualSumFactors(numerator, denominator, out numerator, out denominator) | writtenOut;
 
             // Every factor with an odd half-power of a polynomial base is a whole power of the
-            // base times one square root of it; the square roots are what combine.
+            // base times one square root of it; the square roots are what combine. A whole
+            // power of the same base, written beside it, is gathered in first: `P * P^(-1/2)`
+            // is `P^(1/2)` exactly, since a whole power combines with any principal power of
+            // the same base -- `(1 - x^2) sqrt(1 - 2x^2)/sqrt(1 - x^2)` is
+            // `sqrt(1 - x^2) sqrt(1 - 2x^2)`, and what a root of a quotient splits into is
+            // often beside its own base that way.
             var bases = new List<Entity>();
             Entity above = Number.Integer.One;
             Entity below = Number.Integer.One;
-            foreach (var factor in Mulf.LinearChildren(numerator))
-            {
-                if (TryReadASquareRootOfAPolynomial(factor, x, out var @base, out var wholePower))
+            var halves = new Dictionary<Entity, int>();      // base -> exponent in halves
+            var others = new List<(Entity Factor, bool Below)>();
+            var gathered = false;
+            foreach (var (side, isBelow) in new[] { (numerator, false), (denominator, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
                 {
-                    bases.Add(@base);
-                    above = above * MathS.Pow(@base, wholePower);
+                    var sign = isBelow ? -1 : 1;
+                    if (TryReadASquareRootOfAPolynomial(factor, x, out var @base, out var wholePower))
+                        halves[@base] = halves.TryGetValue(@base, out var so) ? so + sign * (2 * wholePower + 1) : sign * (2 * wholePower + 1);
+                    else if (factor is Powf(var b, Number.Integer k) && k.EInteger.CanFitInInt32() && halves.ContainsKey(b))
+                    {
+                        halves[b] += sign * 2 * k.EInteger.ToInt32Unchecked();
+                        gathered = true;
+                    }
+                    else if (factor.ContainsNode(x) && halves.ContainsKey(factor))
+                    {
+                        halves[factor] += sign * 2;
+                        gathered = true;
+                    }
+                    else
+                        others.Add((factor, isBelow));
                 }
-                else
-                    above = above * factor;
-            }
-            foreach (var factor in Mulf.LinearChildren(denominator))
+            // A whole power read before its root came: gathered on a second pass.
+            foreach (var (factor, isBelow) in others.ToList())
             {
-                if (TryReadASquareRootOfAPolynomial(factor, x, out var @base, out var wholePower))
+                var sign = isBelow ? -1 : 1;
+                if (factor is Powf(var b, Number.Integer k) && k.EInteger.CanFitInInt32() && halves.ContainsKey(b))
                 {
-                    // 1/(B^q sqrt(B)) = sqrt(B)/B^(q+1)
-                    bases.Add(@base);
-                    below = below * MathS.Pow(@base, wholePower + 1);
+                    halves[b] += sign * 2 * k.EInteger.ToInt32Unchecked();
+                    others.Remove((factor, isBelow));
+                    gathered = true;
                 }
-                else
-                    below = below * factor;
+                else if (factor.ContainsNode(x) && halves.ContainsKey(factor))
+                {
+                    halves[factor] += sign * 2;
+                    others.Remove((factor, isBelow));
+                    gathered = true;
+                }
             }
-            if (bases.Count < 2)
+            foreach (var (factor, isBelow) in others)
+                if (isBelow) below = below * factor;
+                else above = above * factor;
+            foreach (var pair in halves)
             {
-                if (!cancelled)
+                var n = pair.Value;
+                if (n % 2 == 0)
+                {
+                    // A whole power after all: no root left of this base.
+                    var whole = n / 2;
+                    if (whole > 0) above = above * MathS.Pow(pair.Key, whole);
+                    else if (whole < 0) below = below * MathS.Pow(pair.Key, -whole);
+                    continue;
+                }
+                // n = 2q + 1 for every odd n, negative ones included: -1 = 2(-1) + 1.
+                var q = (n - 1) / 2;
+                bases.Add(pair.Key);
+                if (q > 0) above = above * MathS.Pow(pair.Key, q);
+                else if (q < 0) below = below * MathS.Pow(pair.Key, -q);
+            }
+            if (bases.Count < 2 || !AtMostOneIsNegativeOnTheReals(bases, x))
+            {
+                // Nothing to combine, or roots that must not be: what was cancelled or
+                // gathered is still worth handing on, each root on its own.
+                if (!cancelled && !gathered)
                     return null;
                 foreach (var @base in bases)
                     above = above * MathS.Sqrt(@base);
                 bases.Clear();
             }
-            else if (!AtMostOneIsNegativeOnTheReals(bases, x))
-                return null;
 
             Entity radical = Number.Integer.One;
             if (bases.Count > 0)
@@ -5231,6 +5318,15 @@ namespace AngouriMath.Functions.Algebra
         /// <see langword="false"/> where the roots cannot be had.
         /// </summary>
         private static bool AtMostOneIsNegativeOnTheReals(List<Entity> bases, Entity.Variable x)
+            => OnEveryRealInterval(bases, x, signs => signs.Count(sign => sign < 0) <= 1);
+
+        /// <summary>
+        /// Whether <paramref name="holds"/> is true of the signs of the polynomials
+        /// <paramref name="bases"/> on every interval between their real roots -- one point of
+        /// each interval decides it, since no base changes sign inside one. <see langword="false"/>
+        /// where the roots cannot be had.
+        /// </summary>
+        private static bool OnEveryRealInterval(List<Entity> bases, Entity.Variable x, System.Func<List<int>, bool> holds)
         {
             var roots = new List<double>();
             foreach (var @base in bases)
@@ -5259,15 +5355,14 @@ namespace AngouriMath.Functions.Algebra
             }
             foreach (var at in samples)
             {
-                var negative = 0;
+                var signs = new List<int>();
                 foreach (var @base in bases)
                 {
                     if (@base.Substitute(x, at).Evaled is not Number.Real value || !value.IsFinite)
                         return false;
-                    if (value < 0)
-                        negative++;
+                    signs.Add(value < 0 ? -1 : value > 0 ? 1 : 0);
                 }
-                if (negative > 1)
+                if (!holds(signs))
                     return false;
             }
             return true;

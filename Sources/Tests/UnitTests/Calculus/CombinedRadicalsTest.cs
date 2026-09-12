@@ -89,6 +89,40 @@ namespace AngouriMath.Tests.Calculus
         public void OneBaseMayBeNegative(string integrand) => DifferentiatesBack(integrand, new[] { 1.2, 1.6, 2.3, 3.1 });
 
         /// <summary>
+        /// A root of a quotient of polynomials written as a quotient of roots, where that is
+        /// exact: <c>sqrt(P/Q) = sqrt(P)/sqrt(Q)</c> unless <c>Q &lt; 0 &lt; P</c> somewhere on the
+        /// reals. Charlwood's <c>arcsin(x/sqrt(1 - x^2))</c> by parts against one leaves
+        /// <c>x (1 - x^2)^(-3/2)/sqrt((1 - 2x^2)/(1 - x^2))</c>, which no rule reads and which
+        /// split is <c>x/((1 - x^2) sqrt(1 - 2x^2))</c>. Checked where the arcsine is real,
+        /// <c>|x| &lt; 1/sqrt(2)</c>, on both sides of zero.
+        /// </summary>
+        [Theory]
+        [InlineData("arcsin(x/sqrt(1 - x^2))")]
+        [InlineData("x*(1 - x^2)^(-3/2)/sqrt((1 - 2*x^2)/(1 - x^2))")]
+        public void ARootOfAQuotientIsSplit(string integrand) => DifferentiatesBack(integrand, new[] { -0.6, -0.3, 0.2, 0.45, 0.65 });
+
+        /// <summary>
+        /// <c>sqrt((1 + x)/(3 + 2x))</c> is not answered: <c>3 + 2x &lt; 0 &lt; 1 + x</c> nowhere, so
+        /// the split is exact, but the two roots it leaves are both negative below
+        /// <c>-3/2</c> and no rule takes them further; and <c>x/((1 - x^2) sqrt((1 - 2x^2)/(1 - x^2)))</c>
+        /// splits and gathers to <c>x/(sqrt(1 - x^2) sqrt(1 - 2x^2))</c>, two roots both
+        /// negative past <c>1</c>, where the integrand is real, so those are not combined
+        /// either. Either verdict but a wrong answer.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt((1 + x)/(3 + 2*x))")]
+        [InlineData("sqrt((1 + x^2)/(1 - x^2))")]
+        [InlineData("x/((1 - x^2)*sqrt((1 - 2*x^2)/(1 - x^2)))")]
+        public void ARootOfAQuotientTheRulesBehindCannotUse(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            if (integral.Stringize().Contains("integral("))
+                return;
+            DifferentiatesBack(integrand, new[] { -0.7, -0.3, 0.2, 0.55, 0.85 });
+        }
+
+        /// <summary>
         /// A small power of a sum of radicals, as a factor, is written out first:
         /// Bondarenko's <c>1/(sqrt(1 - x) + sqrt(1 + x))^2</c> is <c>1/(2 + 2 sqrt(1 - x^2))</c>,
         /// which Euler's substitution answers.
