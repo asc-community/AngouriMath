@@ -123,6 +123,37 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// Over the irreducible factors, where that cancels something: <c>sqrt(1 - x^4)</c> over
+        /// <c>sqrt(1 - x^2)</c> -- what by parts leaves from Charlwood's <c>x^3 arcsin(x)/sqrt(1 - x^4)</c>
+        /// -- is <c>sqrt(1 + x^2)</c>, and the two roots as written share nothing. The sign of
+        /// the factorization goes into whichever factor lets the split be exact: <c>1 - x^4</c>
+        /// is <c>-(x + 1)(x - 1)(x^2 + 1)</c>, and with the sign on <c>x + 1</c> two factors are
+        /// negative inside the unit interval, where with it on <c>x - 1</c> at most one is
+        /// anywhere.
+        /// </summary>
+        [Theory]
+        [InlineData("x^3*arcsin(x)/sqrt(1 - x^4)")]
+        [InlineData("sqrt(1 - x^4)/sqrt(1 - x^2)")]
+        public void OverTheIrreducibleFactors(string integrand) => DifferentiatesBack(integrand, InsideTheUnitInterval);
+
+        /// <summary>
+        /// <c>sqrt(x^4 - 1)/sqrt(x^2 - 1)</c> does not split: <c>x^4 - 1</c> is <c>(x - 1)(x + 1)(x^2 + 1)</c>
+        /// and below <c>-1</c> two of those are negative whichever carries the sign, where the
+        /// integrand is real. Either verdict but a wrong answer, on both sides.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(x^4 - 1)/sqrt(x^2 - 1)")]
+        [InlineData("x^3*arcsec(x)/sqrt(x^4 - 1)")]
+        public void WhereNoPlacementOfTheSignSplitsExactly(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            if (integral.Stringize().Contains("integral("))
+                return;
+            DifferentiatesBack(integrand, new[] { -3.1, -2.2, -1.4, 1.3, 2.1, 3.4 });
+        }
+
+        /// <summary>
         /// A small power of a sum of radicals, as a factor, is written out first:
         /// Bondarenko's <c>1/(sqrt(1 - x) + sqrt(1 + x))^2</c> is <c>1/(2 + 2 sqrt(1 - x^2))</c>,
         /// which Euler's substitution answers.
