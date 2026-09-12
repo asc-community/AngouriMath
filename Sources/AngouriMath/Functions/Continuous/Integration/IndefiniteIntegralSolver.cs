@@ -4332,6 +4332,22 @@ namespace AngouriMath.Functions.Algebra
             var (numerator, denominator) = Functions.SingleQuotient.Of(rewritten.InnerSimplified);
             var cancelled = CancelCommonFactors(numerator, denominator);
             (numerator, denominator) = Functions.SingleQuotient.Of(cancelled);
+            // And by the polynomial gcd where the written factors do not match: the third
+            // substitution leaves `(2t)^2 - 2(t^2 + 1)` above and `2t^2 - (t^2 + 1)` below for
+            // `1/((1 + x^2)^2 sqrt(x^2 - 1))`, one factor twice the other, and the degree read
+            // off the uncancelled quotient was ten where the bound is eight. Only where the
+            // bound would otherwise refuse it, since the gcd hands back expanded sides and the
+            // rational integrator does better with the written ones.
+            // ...and only where the uncancelled degree is within twice the bound: the gcd of
+            // two polynomials of degree thirty with the coefficients a power eleven over two
+            // produces did not return in ninety seconds for `1/((3 - 2x + x^2)^(11/2) (1 + x + 2x^2)^5)`,
+            // which the bound alone declined in a moment.
+            if (TreeAnalyzer.TryGetPolynomial(numerator, t, out var beforeAbove) && TreeAnalyzer.TryGetPolynomial(denominator, t, out var beforeBelow)
+                && System.Math.Max(beforeAbove.Count == 0 ? 0 : (int)beforeAbove.Keys.Max()!.ToInt32Checked(),
+                                   beforeBelow.Count == 0 ? 0 : (int)beforeBelow.Keys.Max()!.ToInt32Checked()) is var uncancelled
+                && uncancelled > MaximumEulerDegree && uncancelled <= 2 * MaximumEulerDegree
+                && Functions.PolynomialGcd.TryCancel(numerator, denominator, out var byGcd) && byGcd is not null)
+                (numerator, denominator) = Functions.SingleQuotient.Of(Functions.PartialFractions.Bare(byGcd));
             // Each side rebuilt as a polynomial from its coefficients, so that a factor which has
             // collapsed to a constant -- `-1 - t^2 + 2 t t - 1 - t^2` is `-2` -- is one before
             // the rational readers see it: one of them divided by that factor's zero leading
@@ -5621,10 +5637,31 @@ namespace AngouriMath.Functions.Algebra
             // candidate costs one simplification of the quotient -- which, with an irrational
             // constant in the coefficients, is where `(1 + t^2)/((sqrt(2) - 1) t^2 + 2t + 1 + sqrt(2))`
             // spent eight seconds being declined by this rule before the rational integrator
-            // answered it in a few milliseconds. The base of a written power stays a candidate,
-            // since `x (x^2 + 1)^3` is answered as a power that way and as a degree-eight
-            // polynomial otherwise.
+            // answered it in a few milliseconds. The base of a written power stays a candidate
+            // for a *polynomial*, since `x (x^2 + 1)^3` is answered as a power that way and as
+            // a degree-eight polynomial otherwise; for a quotient it goes the way of the sums --
+            // `(t^2 + t + 1)^2` below the bar is one more simplification of a rational function
+            // for nothing, and Timofeev's `(1 + x^4)/((1 + x + x^2) sqrt(2 + x + x^2))` spent
+            // thirteen of its fourteen seconds on those, over the rational functions Euler's
+            // substitution and by parts handed down.
             var rational = IsRationalIn(expr, x);
+            var polynomial = rational && TreeAnalyzer.TryGetPolynomial(expr, x, out _);
+            // For a rational function `u = x^k` is exact only when every exponent below the bar
+            // is a multiple of k and every one above is k - 1 more than one -- the x^(k-1) of
+            // du -- so the candidate is read off the exponents before the quotient is
+            // simplified for it. Each simplification it saves is one to two seconds on the
+            // degree-eight rational functions Euler's substitution hands down.
+            HashSet<int>? exponentsAbove = null, exponentsBelow = null;
+            if (rational && TryReadAsQuotient(expr, out var aboveForPowers, out var belowForPowers)
+                && TreeAnalyzer.TryGetPolynomial(aboveForPowers, x, out var aboveRead)
+                && TreeAnalyzer.TryGetPolynomial(belowForPowers, x, out var belowRead))
+            {
+                exponentsAbove = new HashSet<int>(aboveRead.Keys.Where(k => k.CanFitInInt32()).Select(k => k.ToInt32Unchecked()));
+                exponentsBelow = new HashSet<int>(belowRead.Keys.Where(k => k.CanFitInInt32()).Select(k => k.ToInt32Unchecked()));
+            }
+            bool APowerCanBeExact(int k)
+                => exponentsAbove is null || exponentsBelow is null
+                   || (exponentsBelow.All(e => e % k == 0) && exponentsAbove.All(e => e % k == k - 1));
             foreach (var node in expr.Nodes) // Look for composite functions (functions of functions)
                 switch (node)
                 {
@@ -5634,7 +5671,8 @@ namespace AngouriMath.Functions.Algebra
                             candidates.Add(node.DirectChildren[0]); // Trigonometric functions with non-trivial arguments
                         break;
                     case Powf(var @base, var exp):
-                        if (@base == x) candidates.Add(node); // Power expressions x^n
+                        if (@base == x && (exp is not Number.Integer whole || !whole.EInteger.CanFitInInt32() || APowerCanBeExact(whole.EInteger.ToInt32Unchecked())))
+                            candidates.Add(node); // Power expressions x^n
                         // And the roots of that power, which need not occur anywhere to be the
                         // right substitution: `int x / (x^4 + 1)` wants u = x^2, and x^2 appears
                         // nowhere in it. A divisor of the exponent is the condition for the
@@ -5647,10 +5685,10 @@ namespace AngouriMath.Functions.Algebra
                             && power.EInteger.ToInt32Checked() is var n
                             && n > 2)
                             for (var divisor = 2; divisor + divisor <= n; divisor++)
-                                if (n % divisor == 0)
+                                if (n % divisor == 0 && APowerCanBeExact(divisor))
                                     candidates.Add(MathS.Pow(x, divisor));
                         // Exponential with non-trivial argument
-                        if (@base != x && @base.ContainsNode(x)) candidates.Add(@base);
+                        if (@base != x && @base.ContainsNode(x) && (!rational || polynomial)) candidates.Add(@base);
                         if (exp != x && exp.ContainsNode(x)) candidates.Add(exp);
                         break;
                     case Logf(_, var antilog):
