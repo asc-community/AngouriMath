@@ -4073,6 +4073,198 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational function of <c>x</c> and one square root of a <b>palindromic quartic</b>
+        /// <c>a x^4 + b x^2 + a</c>, integrated by <c>u = x - 1/x</c> or <c>u = x + 1/x</c>: the
+        /// quartic is <c>x^2</c> times a quadratic in <c>u</c>, and the rest becomes a rational
+        /// function of <c>u</c> where it is one.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Charlwood's <c>(1 + x^2)/((1 - x^2) sqrt(1 + x^4))</c> had no antiderivative. A root of
+        /// a quartic is nothing Euler's substitutions or the trigonometric ones read, and it is
+        /// not a binomial. But <c>1 + x^4 = x^2 (x^2 + 1/x^2) = x^2 ((x - 1/x)^2 + 2)</c>, and with
+        /// <c>u = x - 1/x</c>, <c>du = (1 + 1/x^2) dx</c>, the integrand is <c>-du/(u sqrt(u^2 + 2))</c>
+        /// -- a root of a quadratic over a rational function, which Euler answers. Its
+        /// companion <c>(1 - x^2)/((1 + x^2) sqrt(1 + x^4))</c> wants <c>u = x + 1/x</c>, under
+        /// which <c>x^2 + 1/x^2</c> is <c>u^2 - 2</c>. Both are tried.
+        /// </para>
+        /// <para>
+        /// <b>The algebra.</b> With <c>u = x + s/x</c> for <c>s = -1</c> or <c>+1</c>:
+        /// <c>x^2 + 1/x^2 = u^2 - 2s</c>, so <c>Q = a x^4 + b x^2 + a = x^2 (a u^2 + b - 2 a s)</c>;
+        /// and <c>dx = x^2 du/(x^2 - s)</c>. For <c>N/(D sqrt(Q))</c> the integrand is then
+        /// <c>[N x/(D (x^2 - s))] du/sqrt(a u^2 + b - 2as)</c>, and for <c>N sqrt(Q)/D</c> it is
+        /// <c>[N x^3/(D (x^2 - s))] sqrt(a u^2 + b - 2as) du</c>. The bracket is a rational
+        /// function of <c>x</c>; the rule asks whether it is one of <c>u</c>, by undetermined
+        /// coefficients on <c>P(u)/S(u)</c> and a check at sampled points, and declines where
+        /// it is not -- which is the only way this can fail, and is exact.
+        /// </para>
+        /// <para>
+        /// <b>The sign of <c>x</c>.</b> <c>sqrt(Q) = |x| sqrt(a u^2 + b - 2as)</c>, and the rule
+        /// takes <c>|x| = x</c>: what comes out is an antiderivative for <c>x &gt; 0</c>. It is
+        /// made one everywhere by parity, which is exact: an odd integrand has an even
+        /// antiderivative, so <c>F(|x|)</c> serves on both sides, and an even one has an odd
+        /// antiderivative, <c>sgn(x) F(|x|)</c>. An integrand of neither parity is declined
+        /// rather than answered on half the line.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByReciprocalSubstitution(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+
+            // Exactly one radical, a square root of a palindromic quartic, as a factor above or
+            // below the bar; polynomials elsewhere.
+            Entity? quartic = null;
+            var rootBelow = false;
+            Entity above = Number.Integer.One;
+            Entity below = Number.Integer.One;
+            foreach (var (side, isBelow) in new[] { (numerator, false), (denominator, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (factor is Powf(var @base, Number.Rational half) && half is not Number.Integer && @base.ContainsNode(x))
+                    {
+                        if (quartic is not null || half.ERational.Denominator.CompareTo(EInteger.FromInt32(2)) != 0
+                            || half.ERational.Numerator.Abs().CompareTo(EInteger.One) != 0)
+                            return null;
+                        quartic = @base;
+                        rootBelow = isBelow != (half.ERational.Sign < 0);
+                        continue;
+                    }
+                    if (factor.ContainsNode(x) && !TreeAnalyzer.TryGetPolynomial(factor, x, out _))
+                        return null;
+                    if (isBelow) below = below * factor;
+                    else above = above * factor;
+                }
+            if (quartic is null || !TreeAnalyzer.TryGetPolynomial(quartic, x, out var read))
+                return null;
+            Entity Coefficient(int degree) => read.TryGetValue(EInteger.FromInt32(degree), out var c) ? c : Number.Integer.Zero;
+            if (read.Keys.Any(k => !k.CanFitInInt32() || k.ToInt32Unchecked() is not (0 or 2 or 4)))
+                return null;
+            var a = Coefficient(4);
+            var b = Coefficient(2);
+            var c = Coefficient(0);
+            if (a.Evaled is not Number.Real { IsZero: false } || (a - c).Evaled is not Number.Complex { IsZero: true }
+                || b.Evaled is not Number.Real)
+                return null;
+
+            foreach (var sign in new[] { -1, 1 })
+            {
+                // R(x) = N x^k / (D (x^2 - s)), k = 1 with the root below, 3 above.
+                var bracket = above * (rootBelow ? x : MathS.Pow(x, 3)) / (below * (MathS.Sqr(x) - sign));
+                if (!TryWriteInTheReciprocalVariable(bracket, x, sign, out var u, out var inU))
+                    continue;
+                var quadratic = a * MathS.Sqr(u) + (b - 2 * sign * a);
+                var integrand = (inU * MathS.Pow(quadratic, Number.Rational.Create(rootBelow ? -1 : 1, 2))).InnerSimplified;
+                if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts: true) is not { } inTermsOfU)
+                    continue;
+                var forPositiveX = inTermsOfU.Substitute(u, x + Number.Integer.Create(sign) / x);
+                if (forPositiveX.Nodes.Any(node => node == MathS.NaN))
+                    continue;
+
+                // Extended to x < 0 by parity, or not at all.
+                var reflected = expr.Substitute(x, -x);
+                if (Functions.PartialFractions.HoldsAtSampledPoints(reflected, -expr, x))
+                    return forPositiveX.Substitute(x, MathS.Abs(x));
+                if (Functions.PartialFractions.HoldsAtSampledPoints(reflected, expr, x))
+                    return MathS.Signum(x) * forPositiveX.Substitute(x, MathS.Abs(x));
+                return null;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// The rational function <paramref name="bracket"/> of <paramref name="x"/> written as
+        /// one of <c>u = x + sign/x</c>, by undetermined coefficients on <c>P(u)/S(u)</c> and a
+        /// check at sampled points; <see langword="false"/> where it is not one.
+        /// </summary>
+        private static bool TryWriteInTheReciprocalVariable(Entity bracket, Entity.Variable x, int sign, out Entity.Variable u, out Entity inU)
+        {
+            u = Variable.CreateUnique(bracket, "u_recip");
+            inU = Number.Integer.Zero;
+            var simplified = bracket.InnerSimplified;
+            if (simplified is Providedf(var bare, _))
+                simplified = bare;
+            var (top, bottom) = Functions.SingleQuotient.Of(simplified);
+            if (!TreeAnalyzer.TryGetPolynomial(top, x, out var topRead) || !TreeAnalyzer.TryGetPolynomial(bottom, x, out var bottomRead))
+                return false;
+            var degree = System.Math.Max(
+                topRead.Count == 0 ? 0 : topRead.Keys.Max()!.ToInt32Checked(),
+                bottomRead.Count == 0 ? 0 : bottomRead.Keys.Max()!.ToInt32Checked());
+            if (degree > MaximumReciprocalDegree)
+                return false;
+
+            // A(x) S(u) = B(x) P(u), multiplied through by x^m so that u^j is the polynomial
+            // x^(m-j) (x^2 + s)^j: one linear identity in x per monomial, in the coefficients
+            // of P and S. Homogeneous, so one coefficient of S is set to one -- each in turn,
+            // since the right one is whichever S has.
+            var m = degree;
+            var powersOfU = new List<Entity>();
+            for (var j = 0; j <= m; j++)
+                powersOfU.Add(Functions.PartialFractions.Bare((MathS.Pow(x, m - j) * MathS.Pow(MathS.Sqr(x) + sign, j)).Expand()));
+            var columns = new List<Dictionary<EInteger, Entity>>();
+            // Expanding attaches the conditions it cleared denominators under; the columns are
+            // polynomials and want none of them.
+            for (var i = 0; i <= m; i++)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(Functions.PartialFractions.Bare((-bottom * powersOfU[i]).Expand()), x, out var column)) return false;
+                columns.Add(column);
+            }
+            for (var j = 0; j <= m; j++)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(Functions.PartialFractions.Bare((top * powersOfU[j]).Expand()), x, out var column)) return false;
+                columns.Add(column);
+            }
+            var monomials = columns.SelectMany(column => column.Keys).Distinct().OrderBy(k => k).ToList();
+            for (var fixedS = 0; fixedS <= m; fixedS++)
+            {
+                var fixedColumn = m + 1 + fixedS;
+                var unknowns = Enumerable.Range(0, 2 * (m + 1)).Where(k => k != fixedColumn).ToList();
+                var matrix = new Entity[monomials.Count][];
+                var rhs = new Entity[monomials.Count];
+                for (var row = 0; row < monomials.Count; row++)
+                {
+                    matrix[row] = new Entity[unknowns.Count];
+                    for (var k = 0; k < unknowns.Count; k++)
+                        matrix[row][k] = columns[unknowns[k]].TryGetValue(monomials[row], out var entry) ? entry : Number.Integer.Zero;
+                    rhs[row] = columns[fixedColumn].TryGetValue(monomials[row], out var fixedEntry) ? -fixedEntry : Number.Integer.Zero;
+                }
+                var solved = Functions.PartialFractions.TrySolveLinear(matrix, rhs, out var values);
+                if (!solved || values is null)
+                    continue;
+                Entity p = Number.Integer.Zero;
+                Entity q = Number.Integer.Zero;
+                for (var k = 0; k < unknowns.Count; k++)
+                {
+                    var index = unknowns[k];
+                    var value = values[k].InnerSimplified;
+                    if (value.Evaled is Number.Complex { IsZero: true })
+                        continue;
+                    if (index <= m)
+                        p += value * MathS.Pow(u, index);
+                    else
+                        q += value * MathS.Pow(u, index - m - 1);
+                }
+                q += MathS.Pow(u, fixedS);
+                if (p.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                var candidate = (p / q).InnerSimplified;
+                if (candidate is Providedf(var inner, _))
+                    candidate = inner;
+                // Checked as a fact about the function, not the arithmetic.
+                if (!Functions.PartialFractions.HoldsAtSampledPoints(bracket, candidate.Substitute(u, x + Number.Integer.Create(sign) / x), x))
+                    continue;
+                inU = candidate;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>The largest degree the reciprocal substitution rewrites; past it the system is not worth building.</summary>
+        private const int MaximumReciprocalDegree = 6;
+
+        /// <summary>
         /// The largest degree, in <c>t</c>, of the rational function
         /// <see cref="SolveByEulerSubstitution"/> hands to the rational integrator.
         /// </summary>
