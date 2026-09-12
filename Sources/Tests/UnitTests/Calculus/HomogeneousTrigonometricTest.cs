@@ -102,9 +102,26 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, points);
 
         /// <summary>
-        /// What the read must refuse: a polynomial that is not homogeneous, and a degree
-        /// difference that is odd — there the substitution leaves a square root of <c>1 + t^2</c>
-        /// behind, which is a different problem.
+        /// Homogeneous up to parity is homogeneous: a term two degrees short of the highest is
+        /// the same term times <c>sin^2 + cos^2</c>, which is one. <c>sin + sin^2 cos</c> has
+        /// degrees one and three and is <c>sin (sin^2 + cos^2) + sin^2 cos</c>, of degree three
+        /// throughout; it is what Timofeev's <c>cos(x)/(sin(x)(2 + sin(2x)))</c> has below the
+        /// bar once its arguments are unified, and it was declined for the spelling.
+        /// </summary>
+        [Theory]
+        [InlineData("cos(x)/(sin(x) + sin(x)^2*cos(x))", new[] { 0.3, 0.8, 1.2, 2.0 })]
+        [InlineData("cos(x)/(sin(x)*(2 + sin(2*x)))", new[] { 0.3, 0.8, 1.2, 2.0 })]
+        [InlineData("1/(1 + sin(x)^2)", new[] { 0.3, 0.8, 1.2, -0.5 })]
+        [InlineData("(1 + sin(x)^2)/(1 + cos(x)^2)", new[] { 0.3, 0.8, 1.2, -0.5 })]
+        [InlineData("1/(sin(x)^2 + 2*sin(x)*cos(x))", new[] { 0.3, 0.8, 1.2, 2.0 })]
+        public void HomogeneousUpToParity(string integrand, double[] points)
+            => DifferentiatesBack(integrand, points);
+
+        /// <summary>
+        /// What the read must refuse: a polynomial whose degrees differ by an odd number, which
+        /// no power of <c>sin^2 + cos^2</c> bridges, and a degree difference that is odd — there
+        /// the substitution leaves a square root of <c>1 + t^2</c> behind, which is a different
+        /// problem.
         /// </summary>
         [Theory]
         [InlineData("1/(1 + cos(x))", new[] { 0.3, 0.8, 1.2, -0.5 })]
