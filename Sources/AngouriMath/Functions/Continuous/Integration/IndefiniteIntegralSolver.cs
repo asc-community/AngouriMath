@@ -1609,15 +1609,17 @@ namespace AngouriMath.Functions.Algebra
         /// antiderivative at all, which is worth knowing before anyone goes looking.
         /// </para>
         /// <para>
-        /// <b>Asked, not volunteered</b>:
-        /// <a href="https://github.com/asc-community/AngouriMath/issues/1265">#1265</a>.
+        /// Closed in one step: the polynomial case is a sum of powers, and the rational case
+        /// goes to the rational integrator directly, not back into the chain -- which is what
+        /// lets it be volunteered at any depth rather than asked at the top only
+        /// (<a href="https://github.com/asc-community/AngouriMath/issues/1265">#1265</a>):
+        /// <c>tan(x)/sqrt(1 + sec(x)^3)</c> is <c>1/(u sqrt(1 + u^3))</c> under <c>u = sec(x)</c>,
+        /// one level down, and was declined there.
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveABinomialDifferential(Entity expr, Entity.Variable x)
         {
-            if (!Integration.AnsweringTheQuestionAsked)
-                return null;
             if (!TryReadABinomialDifferential(expr, x, out var power, out var exponent,
                     out var inner, out var free, out var leading, out var factor))
                 return null;
@@ -1670,8 +1672,14 @@ namespace AngouriMath.Functions.Algebra
                 var overPower = 1 - s;
                 Entity denominator = overPower == 1 ? MathS.Pow(u, q) - a : MathS.Pow(MathS.Pow(u, q) - a, overPower);
                 Entity numerator = p + q - 1 == 0 ? Number.Integer.One : MathS.Pow(u, p + q - 1);
+                // To the rational integrator directly rather than back into the chain, so that
+                // this closes in one step wherever it is asked -- below the secant substitution
+                // for `tan(x)/sqrt(1 + sec(x)^3)`, which is `1/(u sqrt(1 + u^3))` one level down
+                // -- instead of opening the search that had it confined to the top level.
                 var rational = (numerator / denominator).InnerSimplified;
-                if (Integration.ComputeIndefiniteIntegral(rational, u, integrateByParts: false) is not { } inU)
+                if ((IntegralPatterns.TryStandardIntegrals(rational, u)
+                     ?? SolveByPartialFractions(rational, u, integrateByParts: false)
+                     ?? SolveByRothsteinTrager(rational, u)) is not { } inU)
                     return null;
                 return (factor * outside * inU.Substitute(u, back)).InnerSimplified;
             }
@@ -4657,18 +4665,24 @@ namespace AngouriMath.Functions.Algebra
         /// made one everywhere by parity, which is exact: an odd integrand has an even
         /// antiderivative, so <c>F(|x|)</c> serves on both sides, and an even one has an odd
         /// antiderivative, <c>sgn(x) F(|x|)</c>. An integrand of neither parity is declined
-        /// rather than answered on half the line.
+        /// rather than answered on half the line -- unless the caller knows its variable is
+        /// positive, as the exponential substitution does of <c>u = e^x</c>, and says so.
+        /// </para>
+        /// <para>
+        /// A half-odd power of the quartic, <c>Q^(3/2)</c>, is <c>Q sqrt(Q)</c>, a whole power
+        /// beside the root, and is read as that: <c>sinh(x)^2 sinh(2x)/(1 - sinh(x)^2)^(3/2)</c>
+        /// under <c>u = e^x</c> is a rational function over <c>(6u^2 - u^4 - 1)^(3/2)</c>.
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
-        internal static Entity? SolveByReciprocalSubstitution(Entity expr, Entity.Variable x)
+        internal static Entity? SolveByReciprocalSubstitution(Entity expr, Entity.Variable x, bool variableIsPositive = false)
         {
-            if (!Integration.AnsweringTheQuestionAsked)
+            if (!Integration.AnsweringTheQuestionAsked && !variableIsPositive)
                 return null;
             var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
 
-            // Exactly one radical, a square root of a palindromic quartic, as a factor above or
-            // below the bar; polynomials elsewhere.
+            // Exactly one radical, a half-odd power of a palindromic quartic, as a factor above
+            // or below the bar; polynomials elsewhere.
             Entity? quartic = null;
             var rootBelow = false;
             Entity above = Number.Integer.One;
@@ -4679,10 +4693,18 @@ namespace AngouriMath.Functions.Algebra
                     if (factor is Powf(var @base, Number.Rational half) && half is not Number.Integer && @base.ContainsNode(x))
                     {
                         if (quartic is not null || half.ERational.Denominator.CompareTo(EInteger.FromInt32(2)) != 0
-                            || half.ERational.Numerator.Abs().CompareTo(EInteger.One) != 0)
+                            || !half.ERational.Numerator.CanFitInInt32())
                             return null;
                         quartic = @base;
-                        rootBelow = isBelow != (half.ERational.Sign < 0);
+                        var n = half.ERational.Numerator.ToInt32Unchecked();
+                        rootBelow = isBelow != (n < 0);
+                        // Q^(n/2) = Q^((|n| - 1)/2) sqrt(Q), the whole power on the root's side.
+                        var whole = (System.Math.Abs(n) - 1) / 2;
+                        if (whole > 0)
+                        {
+                            if (rootBelow) below = below * MathS.Pow(@base, whole);
+                            else above = above * MathS.Pow(@base, whole);
+                        }
                         continue;
                     }
                     if (factor.ContainsNode(x) && !TreeAnalyzer.TryGetPolynomial(factor, x, out _))
@@ -4715,6 +4737,8 @@ namespace AngouriMath.Functions.Algebra
                 var forPositiveX = inTermsOfU.Substitute(u, x + Number.Integer.Create(sign) / x);
                 if (forPositiveX.Nodes.Any(node => node == MathS.NaN))
                     continue;
+                if (variableIsPositive)
+                    return forPositiveX;
 
                 // Extended to x < 0 by parity, or not at all.
                 var reflected = expr.Substitute(x, -x);
@@ -4745,6 +4769,20 @@ namespace AngouriMath.Functions.Algebra
             var degree = System.Math.Max(
                 topRead.Count == 0 ? 0 : topRead.Keys.Max()!.ToInt32Checked(),
                 bottomRead.Count == 0 ? 0 : bottomRead.Keys.Max()!.ToInt32Checked());
+            // Cancelled by the polynomial gcd where the written bracket runs past the bound
+            // but not far past it: the exponential substitution hands the quartic to a whole
+            // power beside its root, and `(u^2 - 1)^2 (u^4 - 1) u^3/(u^5 Q (u^2 + 1))` is
+            // degree eleven as written and `-(u^2 - 1)^3/(u^3 (u^2 + 1/u^2 - 6))` in lowest terms.
+            if (degree > MaximumReciprocalDegree && degree <= 2 * MaximumReciprocalDegree
+                && Functions.PolynomialGcd.TryCancel(top, bottom, out var byGcd) && byGcd is not null)
+            {
+                (top, bottom) = Functions.SingleQuotient.Of(Functions.PartialFractions.Bare(byGcd));
+                if (!TreeAnalyzer.TryGetPolynomial(top, x, out topRead) || !TreeAnalyzer.TryGetPolynomial(bottom, x, out bottomRead))
+                    return false;
+                degree = System.Math.Max(
+                    topRead.Count == 0 ? 0 : topRead.Keys.Max()!.ToInt32Checked(),
+                    bottomRead.Count == 0 ? 0 : bottomRead.Keys.Max()!.ToInt32Checked());
+            }
             if (degree > MaximumReciprocalDegree)
                 return false;
 
@@ -5094,6 +5132,10 @@ namespace AngouriMath.Functions.Algebra
             // it is told.
             if (SolveByLinearRadicalSubstitution(integrand, u, integrateByParts, variableIsNonnegative: true) is { } byARoot)
                 return Finished(byARoot);
+            // The reciprocal substitution, told the same: a hyperbolic function under a root
+            // is a palindromic quartic under it here, and `u - 1/u` is `2 sinh(x)`.
+            if (SolveByReciprocalSubstitution(integrand, u, variableIsPositive: true) is { } byTheReciprocal)
+                return Finished(byTheReciprocal);
             if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is not { } result)
                 return null;
             return Finished(result);
@@ -5746,8 +5788,13 @@ namespace AngouriMath.Functions.Algebra
                 var p = exponent.ERational.Numerator.ToInt32Unchecked();
                 var q = exponent.ERational.Denominator.ToInt32Unchecked();
 
-                // A quotient whose denominator is positive at every u >= 0 comes apart first.
-                var (above, below) = Functions.SingleQuotient.Of(@base);
+                // A quotient whose denominator is positive at every u >= 0 comes apart first --
+                // written as one quotient, since a sum with a quotient in it,
+                // `1 - (u - 1/u)^2/4`, is `(4u^2 - (u^2 - 1)^2)/(4u^2)` and reads as nothing
+                // until it is: `sinh(x)^2 sinh(2x)/(1 - sinh(x)^2)^(3/2)` under `u = e^x` is that
+                // to the three halves, and is a palindromic quartic to the three halves over
+                // `8u^3` once it is written out, which the reciprocal substitution answers.
+                var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(@base));
                 Entity result;
                 if (below != Number.Integer.One && below.ContainsNode(u) && IsPositiveForNonnegative(below, u))
                     result = Factored(above, u, p, q) / Factored(below, u, p, q);
@@ -5786,14 +5833,14 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// Whether the polynomial <paramref name="expr"/> in <paramref name="u"/> is positive at
-        /// every <c>u &gt;= 0</c> for the plain reason that every coefficient is a positive
-        /// number and the constant term is among them.
+        /// every <c>u &gt; 0</c> for the plain reason that every coefficient is a positive
+        /// number. Without a constant term it is zero at <c>u = 0</c>, where a quotient by it
+        /// is undefined on both sides of the identity that asks this, so that costs nothing:
+        /// <c>4u^2</c> is what the combined denominator of <c>1 - (u - 1/u)^2/4</c> is.
         /// </summary>
         private static bool IsPositiveForNonnegative(Entity expr, Entity.Variable u)
         {
             if (!TreeAnalyzer.TryGetPolynomial(expr, u, out var monomials) || monomials.Count == 0)
-                return false;
-            if (!monomials.TryGetValue(EInteger.Zero, out var constant) || constant.Evaled is not Number.Real { IsPositive: true })
                 return false;
             return monomials.Values.All(coefficient => coefficient.Evaled is Number.Real { IsPositive: true });
         }

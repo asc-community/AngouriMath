@@ -101,6 +101,18 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, points);
 
         /// <summary>
+        /// The binomial differential one level down: <c>tan(x)/sqrt(1 + sec(x)^3)</c> is
+        /// <c>1/(u sqrt(1 + u^3))</c> under <c>u = sec(x)</c>, Chebyshev's second case, and was
+        /// declined there while the rule was asked at the top only. Its rational case goes to
+        /// the rational integrator directly now rather than back into the chain, which is what
+        /// lets it be volunteered at any depth.
+        /// </summary>
+        [Theory]
+        [InlineData("tan(x)/sqrt(1 + sec(x)^3)", new[] { 0.3, 0.7, 1.1, -0.5 })]
+        public void ABinomialDifferentialBelowTheTop(string integrand, double[] points)
+            => DifferentiatesBack(integrand, points);
+
+        /// <summary>
         /// And the integrands that are declined either way, which must stay <b>cheaply</b>
         /// declined — that is the whole risk the scope was guarding against, and the measurement
         /// says it does not arise for this rule.

@@ -75,6 +75,17 @@ namespace AngouriMath.Tests.Calculus
         public void ARootOfAPalindromicQuartic(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// A hyperbolic function under the root is a palindromic quartic under it once
+        /// <c>u = e^x</c> is in: <c>1 - sinh(x)^2</c> is <c>(6u^2 - u^4 - 1)/(4u^2)</c>, and
+        /// <c>u - 1/u</c> is <c>2 sinh(x)</c>. The exponential substitution asks this rule
+        /// directly, saying that <c>u</c> is positive, so no parity extension is needed; and
+        /// the quartic here is to the three halves, read as the quartic beside its root.
+        /// </summary>
+        [Theory]
+        [InlineData("sinh(x)^2*sinh(2*x)/(1 - sinh(x)^2)^(3/2)")]
+        public void AHyperbolicFunctionUnderTheRoot(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// The extension by parity is the claim, so it is pinned as a fact: the even integrand's
         /// antiderivative is odd, and the answer carries a <c>sgn(x)</c> for it.
         /// </summary>
