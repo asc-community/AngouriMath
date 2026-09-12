@@ -577,6 +577,10 @@ namespace AngouriMath.Functions.Algebra
             // an ansatz finds it or nothing does. After the substitutions, which answer the
             // linear-exponent cases in their own terms.
             if ((answer = IndefiniteIntegralSolver.SolveByExponentialAnsatz(expr, x)) is { }) return answer;
+            // And an exponential times a rational function of the sine and cosine, closed by
+            // the same kind of ansatz in the half-angle tangent: `e^x (1 - sin(x))/(1 - cos(x))`
+            // is `-e^x cot(x/2)`.
+            if ((answer = IndefiniteIntegralSolver.SolveByExponentialHalfAngleAnsatz(expr, x)) is { }) return answer;
             // Last of the rewrites, because it is the only one that fires on an integrand nothing
             // is wrong with -- it clears a parameter rather than a shape -- so everything that
             // can answer the problem as written gets to try first.

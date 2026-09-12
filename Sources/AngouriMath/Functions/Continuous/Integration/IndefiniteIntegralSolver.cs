@@ -3566,6 +3566,132 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>e^(a x)</c> times a rational function of <c>sin(x)</c> and <c>cos(x)</c>, closed by
+        /// an ansatz in the half-angle tangent: <c>F = e^(a x) P(t)/Q(t)</c> with <c>t = tan(x/2)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Timofeev's <c>e^x (1 - sin(x))/(1 - cos(x))</c> had no antiderivative, and it is
+        /// <c>-e^x cot(x/2)</c>. Nothing here reads it: the exponential times a trigonometric
+        /// rule wants a polynomial in sine and cosine, the half-angle substitution wants no
+        /// exponential, and by parts goes round in a circle. Under <c>t = tan(x/2)</c> the
+        /// trigonometric part is a rational function <c>r(t)</c>, and the integrand is
+        /// <c>e^(a x) r(t)</c> with <c>dt/dx = (1 + t^2)/2</c>; differentiating the ansatz,
+        /// </para>
+        /// <code>
+        ///     F' = e^(a x) [a P/Q + (P'Q - P Q') (1 + t^2)/(2 Q^2)]
+        /// </code>
+        /// <para>
+        /// and asking that it equal <c>e^(a x) n(t)/d(t)</c> is one polynomial identity,
+        /// <c>[a P Q + (P'Q - P Q')(1 + t^2)/2] d = n Q^2</c>, linear in the coefficients of
+        /// <c>P</c>. <c>Q</c> is tried from <c>d</c>'s written factors, as the exponential ansatz
+        /// tries its denominators; the identity is exact, so a solution is an answer and the
+        /// absence of one a decline. Timofeev's has <c>r = (1 - t)^2/(2 t^2)</c>, <c>Q = t</c>,
+        /// <c>P = -1</c>.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByExponentialHalfAngleAnsatz(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            if (ReadOneExponentialTimesTheRest(expr, x) is not var (exponent, rest) || exponent is null)
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(exponent, x, out var a, out _) || a.ContainsNode(x) || a.Evaled is Number.Complex { IsZero: true })
+                return null;
+            // The rest is built from sin(x) and cos(x) by the field operations, and no other
+            // function of x: written over the two, then in the half-angle tangent.
+            var sine = MathS.Sin(x);
+            var cosine = MathS.Cos(x);
+            var overTheTwo = rest.Replace(node => node switch
+            {
+                Tanf(var arg) when arg == x => sine / cosine,
+                Cotanf(var arg) when arg == x => cosine / sine,
+                Secantf(var arg) when arg == x => 1 / cosine,
+                Cosecantf(var arg) when arg == x => 1 / sine,
+                _ => node
+            });
+            if (overTheTwo.Nodes.Any(node => node.ContainsNode(x) && node is not (Variable or Sumf or Minusf or Mulf or Divf or Sinf or Cosf)
+                                              && !(node is Powf(_, Number.Integer))))
+                return null;
+            if (overTheTwo.Nodes.Any(node => node is Sinf(var arg) && arg != x || node is Cosf(var arg2) && arg2 != x))
+                return null;
+
+            var t = Variable.CreateUnique(expr, "t_half");
+            var tSquared = MathS.Sqr(t);
+            var inT = Functions.SingleQuotient.Combine(
+                overTheTwo.Substitute(sine, 2 * t / (1 + tSquared)).Substitute(cosine, (1 - tSquared) / (1 + tSquared))).Simplify();
+            if (inT is Providedf(var inner, _))
+                inT = inner;
+            if (inT.ContainsNode(x))
+                return null;
+            var (n, d) = Functions.SingleQuotient.Of(inT);
+            if (!TreeAnalyzer.TryGetPolynomial(n, t, out var nRead) || !TreeAnalyzer.TryGetPolynomial(d, t, out var dRead))
+                return null;
+            var degreeN = nRead.Count == 0 ? 0 : nRead.Keys.Max()!.ToInt32Checked();
+            var degreeD = dRead.Count == 0 ? 0 : dRead.Keys.Max()!.ToInt32Checked();
+            if (degreeN > MaximumAnsatzDegree || degreeD > MaximumAnsatzDegree)
+                return null;
+
+            var half = Number.Rational.Create(1, 2);
+            foreach (var q in CandidateDenominators(d, t))
+            {
+                var degreeQ = TreeAnalyzer.TryGetPolynomial(q, t, out var qRead) && qRead.Count > 0
+                    ? qRead.Keys.Max()!.ToInt32Checked() : 0;
+                // The bracket has degree deg P + max(deg Q + 1, ...) against n Q^2 / d.
+                var degreeP = System.Math.Max(degreeQ, degreeQ + degreeN - degreeD + 2);
+                if (degreeP > MaximumAnsatzDegree)
+                    continue;
+                var qPrime = q.Differentiate(t);
+                var columns = new List<Dictionary<EInteger, Entity>>();
+                var failed = false;
+                for (var k = 0; k <= degreeP; k++)
+                {
+                    Entity tk = k == 0 ? Number.Integer.One : k == 1 ? t : MathS.Pow(t, k);
+                    Entity tkPrime = k == 0 ? Number.Integer.Zero : k == 1 ? Number.Integer.One : k * MathS.Pow(t, k - 1);
+                    var bracket = a * tk * q + (tkPrime * q - tk * qPrime) * (1 + tSquared) * half;
+                    if (!TreeAnalyzer.TryGetPolynomial(Functions.PartialFractions.Bare((bracket * d).Expand()), t, out var column))
+                    {
+                        failed = true;
+                        break;
+                    }
+                    columns.Add(column);
+                }
+                if (failed)
+                    continue;
+                if (!TreeAnalyzer.TryGetPolynomial(Functions.PartialFractions.Bare((n * MathS.Sqr(q)).Expand()), t, out var target))
+                    continue;
+                var monomials = columns.SelectMany(column => column.Keys).Concat(target.Keys).Distinct().OrderBy(k => k).ToList();
+                var matrix = new Entity[monomials.Count][];
+                var rhs = new Entity[monomials.Count];
+                for (var row = 0; row < monomials.Count; row++)
+                {
+                    matrix[row] = new Entity[columns.Count];
+                    for (var k = 0; k < columns.Count; k++)
+                        matrix[row][k] = columns[k].TryGetValue(monomials[row], out var entry) ? entry : Number.Integer.Zero;
+                    rhs[row] = target.TryGetValue(monomials[row], out var wanted) ? wanted : Number.Integer.Zero;
+                }
+                if (!Functions.PartialFractions.TrySolveLinear(matrix, rhs, out var values) || values is null)
+                    continue;
+                Entity polynomial = Number.Integer.Zero;
+                for (var k = 0; k < values.Length; k++)
+                {
+                    var value = values[k].InnerSimplified;
+                    if (value.Evaled is Number.Complex { IsZero: true })
+                        continue;
+                    polynomial += value * (k == 0 ? Number.Integer.One : k == 1 ? t : MathS.Pow(t, k));
+                }
+                var tangent = MathS.Tan(x / 2);
+                var answer = (MathS.Pow(MathS.e, exponent) * polynomial / q).Substitute(t, tangent);
+                // The solve can answer a system it only nearly satisfies; the derivative decides.
+                if (!Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
+                    continue;
+                return answer.InnerSimplified;
+            }
+            return null;
+        }
+
+        /// <summary>
         /// <paramref name="term"/> as one exponential of something in <paramref name="x"/> times
         /// everything else, or a <see langword="null"/> exponent where there is not exactly one.
         /// </summary>
