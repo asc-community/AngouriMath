@@ -2821,7 +2821,10 @@ namespace AngouriMath.Functions.Algebra
 
             var found = (Entity?)null;
             var theDegree = (int?)null;
-            foreach (var term in Entity.Sumf.LinearChildren(expr.Expand()))
+            // The terms with their degrees, for the parity case below.
+            var terms = new List<(Entity Term, int Degree)>();
+            var expanded = expr.Expand();
+            foreach (var term in Entity.Sumf.LinearChildren(expanded))
             {
                 var thisDegree = 0;
                 foreach (var factor in Entity.Mulf.LinearChildren(term))
@@ -2848,10 +2851,11 @@ namespace AngouriMath.Functions.Algebra
                             break;
                     }
                 }
+                terms.Add((term, thisDegree));
                 if (theDegree is null)
                     theDegree = thisDegree;
                 else if (theDegree != thisDegree)
-                    return false;
+                    theDegree = -1;   // not homogeneous as written; the parity case below
             }
             if (theDegree is null)
                 return false;
@@ -2863,9 +2867,31 @@ namespace AngouriMath.Functions.Algebra
                 return !expr.ContainsNode(x);
             }
 
-            degree = theDegree.Value;
+            // **Homogeneous up to parity is homogeneous**: a term two degrees short of the
+            // highest is the same term times `sin^2 + cos^2`, which is one. `sin + sin^2 cos`
+            // has degrees one and three and is `sin (sin^2 + cos^2) + sin^2 cos`, of degree
+            // three throughout; it is what `cos(x)/(sin(x)(2 + sin(2x)))` has below the bar once
+            // its arguments are unified, and it was declined here for the spelling. A term an
+            // odd number short is a genuine boundary -- no power of one bridges it.
+            var highest = terms.Max(pair => pair.Degree);
+            if (theDegree == -1)
+            {
+                if (terms.Any(pair => (highest - pair.Degree) % 2 != 0))
+                    return false;
+                var pythagorean = MathS.Sqr(MathS.Sin(found)) + MathS.Sqr(MathS.Cos(found));
+                Entity raised = Number.Integer.Zero;
+                foreach (var (term, thisDegree) in terms)
+                {
+                    var levels = (highest - thisDegree) / 2;
+                    var lifted = levels == 0 ? term : term * MathS.Pow(pythagorean, levels);
+                    raised = raised == Number.Integer.Zero ? lifted : raised + lifted;
+                }
+                expanded = raised.Expand();
+            }
+
+            degree = highest;
             argument = found;
-            rewritten = expr.Expand().Replace(node => node switch
+            rewritten = expanded.Replace(node => node switch
             {
                 Sinf(var a) when a == found => HomogeneousTangent * HomogeneousCosine,
                 Cosf(var a) when a == found => HomogeneousCosine,
