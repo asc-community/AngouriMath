@@ -475,12 +475,21 @@ namespace AngouriMath.Functions.Algebra
 
         private static bool TryReadAsQuotient(Entity expr, out Entity numerator, out Entity denominator)
         {
+            // An exponent read evaluated: the normalisation writes `(u^2 - 1)^5` below the bar
+            // as `(u^2 - 1)^(5 * (-1))`, a power whose exponent is a product of two numbers and
+            // not a number, and `1/((1 - x)^(7/2) x^5)` was declined for it one level down.
             switch (expr)
             {
                 case Entity.Divf(var dividend, var divisor):
                     (numerator, denominator) = (dividend, divisor);
                     return true;
-                case Entity.Powf(var @base, Number.Integer power) when power.EInteger.Sign < 0:
+                // A whole power of a quotient is the quotient of the powers: `(u/(1 - 2u^2))^2`,
+                // which is how the simplifier writes the image of `sqrt((1 + x)/(3 + 2x))`
+                // under the root as the variable, read as nothing before.
+                case Entity.Powf(Entity.Divf(var dividend, var divisor), var exponent) when exponent.Evaled is Number.Integer { EInteger.Sign: > 0 } power && power != Number.Integer.One:
+                    (numerator, denominator) = (MathS.Pow(dividend, power), MathS.Pow(divisor, power));
+                    return true;
+                case Entity.Powf(var @base, var exponent) when exponent.Evaled is Number.Integer { EInteger.Sign: < 0 } power:
                     // Written out rather than as base^1 when the power is -1, since everything
                     // downstream reads the denominator as a polynomial and a redundant power of
                     // one is a shape it would have to see through.
@@ -494,9 +503,13 @@ namespace AngouriMath.Functions.Algebra
                     foreach (var factor in Entity.Mulf.LinearChildren(expr))
                         switch (factor)
                         {
-                            case Entity.Powf(var @base, Number.Integer power) when power.EInteger.Sign < 0:
+                            case Entity.Powf(var @base, var exponent) when exponent.Evaled is Number.Integer { EInteger.Sign: < 0 } power:
                                 var positive = -power;
                                 below *= positive == Number.Integer.One ? @base : MathS.Pow(@base, positive);
+                                break;
+                            case Entity.Powf(Entity.Divf(var dividend, var divisor), var exponent) when exponent.Evaled is Number.Integer { EInteger.Sign: > 0 } power:
+                                above *= MathS.Pow(dividend, power);
+                                below *= MathS.Pow(divisor, power);
                                 break;
                             case Entity.Divf(var dividend, var divisor):
                                 above *= dividend;
@@ -3206,8 +3219,22 @@ namespace AngouriMath.Functions.Algebra
                 // and the integrand becomes `2u sqrt(u^2 + u - 1)`, which the quadratic radical
                 // rule answers. The check that no `x` survives, below, is what makes skipping safe
                 // rather than a guess. https://github.com/asc-community/AngouriMath/issues/718
+                // A quotient of two linears is a base of its own kind: `sqrt((1 + x)/(3 + 2x))`
+                // under `u = sqrt((1 + x)/(3 + 2x))` has `x = (3u^2 - 1)/(1 - 2u^2)`, rational,
+                // and the answer holds wherever the root is real -- below `-3/2` too, where
+                // both linears are negative and the root of each is not. Split into a root
+                // over a root it is declined for that, and rightly.
                 if (!TreeAnalyzer.TryGetPolyLinear(@base, x, out var slope, out _) || slope.Evaled == 0)
+                {
+                    if (radicalBase is null && IsAQuotientOfLinears(@base, x))
+                    {
+                        radicalBase = @base;
+                        if (!exponent.ERational.Denominator.CanFitInInt32())
+                            return null;
+                        denominators.Add(exponent.ERational.Denominator.ToInt32Checked());
+                    }
                     continue;
+                }
                 if (radicalBase is null)
                     radicalBase = @base;
                 else if (radicalBase != @base)
@@ -3233,13 +3260,27 @@ namespace AngouriMath.Functions.Algebra
             var q = denominators.Aggregate(1, Lcm);
             if (q < 2 || q > 12)   // beyond this the rewritten polynomial is not worth building
                 return null;
-            if (!TreeAnalyzer.TryGetPolyLinear(radicalBase, x, out var a, out var b))
-                return null;
 
             var u = Variable.CreateUnique(expr, "u_rad");
-            // x = (u^q - b) / a, and dx = (q/a) u^(q-1) du.
-            var xInU = (MathS.Pow(u, q) - b) / a;
-            var dx = Number.Integer.Create(q) / a * MathS.Pow(u, q - 1);
+            Entity xInU;
+            Entity dx;
+            if (TreeAnalyzer.TryGetPolyLinear(radicalBase, x, out var a, out var b))
+            {
+                // x = (u^q - b) / a, and dx = (q/a) u^(q-1) du.
+                xInU = (MathS.Pow(u, q) - b) / a;
+                dx = Number.Integer.Create(q) / a * MathS.Pow(u, q - 1);
+            }
+            else
+            {
+                if (otherBase is not null)
+                    return null;
+                // u^q = (a x + b)/(c x + d), so x = (d u^q - b)/(a - c u^q).
+                var (above, below) = Functions.SingleQuotient.Of(radicalBase);
+                if (!TreeAnalyzer.TryGetPolyLinear(above, x, out a, out b) || !TreeAnalyzer.TryGetPolyLinear(below, x, out var c, out var d))
+                    return null;
+                xInU = ((d * MathS.Pow(u, q) - b) / (a - c * MathS.Pow(u, q))).InnerSimplified;
+                dx = xInU.Differentiate(u).InnerSimplified;
+            }
 
             // Each radical becomes its power of u **by construction** rather than by substituting
             // and then simplifying. Substituting alone turns (x + 1)^(1/2) into ((u^6))^(1/2), and
@@ -3272,6 +3313,19 @@ namespace AngouriMath.Functions.Algebra
             return Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is { } result
                 ? result.Substitute(u, MathS.Pow(radicalBase, Number.Rational.Create(1, q)))
                 : null;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> is a quotient of two polynomials linear in
+        /// <paramref name="x"/>, the one below with a slope.
+        /// </summary>
+        private static bool IsAQuotientOfLinears(Entity expr, Entity.Variable x)
+        {
+            var (above, below) = Functions.SingleQuotient.Of(expr);
+            return below != Number.Integer.One
+                && TreeAnalyzer.TryGetPolyLinear(above, x, out _, out _)
+                && TreeAnalyzer.TryGetPolyLinear(below, x, out var slope, out _)
+                && slope.Evaled is not Number.Complex { IsZero: true };
         }
 
         /// <summary>
@@ -6116,6 +6170,19 @@ namespace AngouriMath.Functions.Algebra
                         : expr / duDx;
                     integrandInU = InTermsOf(quotient, u, uSub, x).Simplify(1);
                     if (integrandInU is Providedf(var innerExpr, _)) integrandInU = innerExpr; // TODO: singularities ignored but not handled properly
+                    // A factor written on both sides of the bar cancelled, where x survived:
+                    // the one-level simplification leaves `u/((a w + b)^2 p u)` as it is, and
+                    // the candidate was refused for the u it did not cancel.
+                    if (integrandInU.ContainsNode(x))
+                    {
+                        var (top, bottom) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(integrandInU));
+                        var cancelled = CancelCommonFactors(top, bottom);
+                        if (cancelled != integrandInU && !cancelled.ContainsNode(x))
+                        {
+                            integrandInU = cancelled.Simplify(1);
+                            if (integrandInU is Providedf(var innerCancelled, _)) integrandInU = innerCancelled;
+                        }
+                    }
                     if (u is Sinf or Cosf && integrandInU.ContainsNode(x))
                         firstPass[u] = integrandInU;
                 }

@@ -81,6 +81,22 @@ namespace AngouriMath.Tests.Calculus
             string integrand, string coefficients, double[] points) =>
             AssertIsAntiderivative(integrand, coefficients, points);
 
+        /// <summary>
+        /// The square of a symbolic linear is a quadratic whose discriminant is zero only once
+        /// it is written out, and it was answered as a piecewise of three arms, two of them
+        /// dividing by that zero, that nothing downstream could read: the exponential
+        /// substitution's image of Welz's <c>x/(a e^(px) + b e^(-px))^2</c> is one. The
+        /// perfect square is answered as such, in the generic case.
+        /// </summary>
+        [Theory]
+        [InlineData("1 / (a * x + b) ^ 2", "a = 2, b = 3", new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("1 / (2 * (a * x + b) ^ 2)", "a = 2, b = 3", new[] { 0.3, 1.7, -0.6 })]
+        public void ASquareOfASymbolicLinear(string integrand, string coefficients, double[] points)
+        {
+            Assert.DoesNotContain("piecewise", integrand.ToEntity().Integrate("x").Stringize());
+            AssertIsAntiderivative(integrand, coefficients, points);
+        }
+
         // A linear numerator over the same shape goes through the same arm, one rewrite later.
         [Theory]
         [InlineData("x / (a ^ 2 + b ^ 2 * x ^ 2)", "a = 2, b = 3", new[] { 0.3, 1.7, -0.6 })]
