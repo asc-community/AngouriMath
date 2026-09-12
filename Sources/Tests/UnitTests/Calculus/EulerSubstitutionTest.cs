@@ -126,6 +126,18 @@ namespace AngouriMath.Tests.Calculus
         public void CancelledByTheGcdWhereTheSpellingsDiffer(string integrand, double[] points) => DifferentiatesBack(integrand, points);
 
         /// <summary>
+        /// The Rothstein-Trager resultant behind the splits, for a rational function in
+        /// <c>t</c> whose denominator they cannot take apart: <c>x/(1 + x sqrt(1 - x^2))</c> is
+        /// one over a quartic in <c>t</c> irreducible over the rationals, with its residues in
+        /// a quadratic field. It is the by-parts remainder of Charlwood's
+        /// <c>arctan(x + sqrt(1 - x^2))</c>, which is answered through it.
+        /// </summary>
+        [Theory]
+        [InlineData("x/(1 + x*sqrt(1 - x^2))", new[] { -0.8, -0.4, 0.3, 0.6, 0.9 })]
+        [InlineData("x/(2 + 2*x*sqrt(1 - x^2))", new[] { -0.8, -0.4, 0.3, 0.6, 0.9 })]
+        public void TheResultantBehindTheSplits(string integrand, double[] points) => DifferentiatesBack(integrand, points);
+
+        /// <summary>
         /// A power of the substitution itself. With <c>t = sqrt(Q) + x</c>, a factor
         /// <c>(x + sqrt(Q))^b</c> is <c>t^b</c> exactly and for any <c>b</c>, and with the root's
         /// sign flipped, <c>t = x - sqrt(Q)</c>, so is <c>(x - sqrt(Q))^b</c>: Welz's
