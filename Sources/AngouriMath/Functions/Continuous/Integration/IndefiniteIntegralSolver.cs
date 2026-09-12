@@ -40,7 +40,44 @@ namespace AngouriMath.Functions.Algebra
             }
             var splitted = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, e => e.ContainsNode(x));
             if (splitted is null || splitted.Count < 2) return null; // nothing to do, let other solvers do the work
-            return Integrated(splitted);
+            if (Integrated(splitted) is { } termByExpandedTerm)
+                return termByExpandedTerm;
+            // The expanded terms gathered again by what is not polynomial in them, and each
+            // group asked as one term: Hearn's
+            // `(-2 sqrt(1 + x^3) + 5x^4 sqrt(1 + x^3) - 3x^2 sqrt(1 - 2x + x^5))/(2 sqrt(1 + x^3) sqrt(1 - 2x + x^5))`
+            // expands to `-1/sqrt(P)`, `5x^4/(2 sqrt(P))` and `-3x^2/(2 sqrt(1 + x^3))`, of which
+            // the first two are not elementary apart and are `P'/(2 sqrt(P))` together. Only
+            // where the gathering joins something and separates something: with every term
+            // in a group of its own this is the split above, which has just failed, and with
+            // every term in one group it is the integrand. And asked, not volunteered: each
+            // group is a search of its own, and one level down the sums are what by parts
+            // and the substitutions hand on, where the groups cost sixteen seconds of the
+            // corpus for nothing.
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var groups = new List<(Entity Shared, Entity Polynomial)>();
+            foreach (var term in splitted)
+            {
+                var (above, below) = Functions.SingleQuotient.Of(term);
+                Entity polynomial = Number.Integer.One;
+                Entity shared = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(above))
+                    if (!factor.ContainsNode(x) || TreeAnalyzer.TryGetPolynomial(factor, x, out _))
+                        polynomial = polynomial * factor;
+                    else
+                        shared = shared * factor;
+                shared = (shared / below).InnerSimplified;
+                var index = groups.FindIndex(group => group.Shared == shared);
+                if (index < 0)
+                    groups.Add((shared, polynomial));
+                else
+                    groups[index] = (shared, groups[index].Polynomial + polynomial);
+            }
+            // Two groups at least: one group is the integrand gathered back into itself, and
+            // that has been asked.
+            if (groups.Count >= splitted.Count || groups.Count < 2)
+                return null;
+            return Integrated(groups.Select(group => (group.Polynomial.InnerSimplified * group.Shared).InnerSimplified).ToList());
 
             Entity? Integrated(List<Entity> terms)
                 => terms.Select(e => Integration.ComputeAsAQuestionOfItsOwn(e, x, integrateByParts)).Aggregate((e1, e2) => (e1, e2) switch {
