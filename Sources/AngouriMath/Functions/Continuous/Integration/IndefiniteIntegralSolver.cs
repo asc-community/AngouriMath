@@ -16,13 +16,41 @@ namespace AngouriMath.Functions.Algebra
     {
         internal static Entity? SolveBySplittingSum(Entity expr, Entity.Variable x, bool integrateByParts)
         {
+            // The terms as written first, and expanded only if one of those fails: expanding
+            // `(1 + 1/x)/(x + ln(x))^(3/2)` writes it as two terms, neither of which is the
+            // substitution `u = x + ln(x)` the unexpanded one is, and Bronstein's
+            // `1/x + (1 + 1/x)/(x + ln(x))^(3/2)` was declined for that while each of its two
+            // terms alone was answered.
+            if (expr is Sumf or Minusf)
+            {
+                // In the order the expanding gather uses -- the terms in the variable, then
+                // what is free of it as one term -- so that the answer reads the same either way.
+                // And only for terms of modest size: a partial-fraction term whose coefficient
+                // is a page of unsimplified symbols took sixty seconds of every rule
+                // simplifying the page for itself, where the expanding gather below tidies
+                // its terms as it goes and takes half a second on the same sum.
+                var inTheVariable = Sumf.LinearChildren(expr).Where(term => term.ContainsNode(x)).ToList();
+                var free = Sumf.LinearChildren(expr).Where(term => !term.ContainsNode(x)).ToList();
+                var asWritten = new List<Entity>(inTheVariable);
+                if (free.Count > 0)
+                    asWritten.Add(free.Aggregate((l, r) => l + r));
+                if (asWritten.Count >= 2 && asWritten.All(term => term.Complexity <= LargestTermTakenAsWritten)
+                    && Integrated(asWritten) is { } termByTerm)
+                    return termByTerm;
+            }
             var splitted = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, e => e.ContainsNode(x));
             if (splitted is null || splitted.Count < 2) return null; // nothing to do, let other solvers do the work
-            return splitted.Select(e => Integration.ComputeAsAQuestionOfItsOwn(e, x, integrateByParts)).Aggregate((e1, e2) => (e1, e2) switch {
-                (null, _) or (_, null) => null,
-                (var int1, var int2) => int1 + int2
-            });
+            return Integrated(splitted);
+
+            Entity? Integrated(List<Entity> terms)
+                => terms.Select(e => Integration.ComputeAsAQuestionOfItsOwn(e, x, integrateByParts)).Aggregate((e1, e2) => (e1, e2) switch {
+                    (null, _) or (_, null) => null,
+                    (var int1, var int2) => int1 + int2
+                });
         }
+
+        /// <summary>The largest term a sum is split over as written, before the expanding gather.</summary>
+        private const int LargestTermTakenAsWritten = 60;
 
         /// <summary>
         /// A quotient of polynomials, split into two smaller quotients and integrated in two
@@ -5941,6 +5969,22 @@ namespace AngouriMath.Functions.Algebra
             bool APowerCanBeExact(int k)
                 => exponentsAbove is null || exponentsBelow is null
                    || (exponentsBelow.All(e => e % k == 0) && exponentsAbove.All(e => e % k == k - 1));
+            // The reciprocal, where it is under a root: `sqrt(1/x + sqrt(1 + 1/x))` is
+            // `sqrt(u + sqrt(1 + u))` over `-u^2` under `u = 1/x`, a nested radical of something
+            // linear, and `1/x` is written as a quotient that no power candidate reads. Under a
+            // root only -- offered for every `/x`, it opened a search on `(x^2 - 10)^(5/2)/x` and
+            // `x ln(x)/sqrt(1 + x^2)` that did not return, where each is a second's work
+            // without it. And not beside a root of a polynomial in the variable: under the
+            // reciprocal that root becomes a root of a reciprocal, which offers the reciprocal
+            // back, and `x^(-1/2)` is a candidate of its own that leads the same way -- on the
+            // by-parts remainder of `arcsin(sqrt(1 + x) - sqrt(x))` the two alternated to the
+            // depth limit, forty seconds where declining takes three.
+            if (!rational && expr.Nodes.Any(node => node is Powf(var radicalBase, Number.Rational radicalPower) && radicalPower is not Number.Integer
+                    && radicalBase.Nodes.Any(inner => inner is Divf(_, var divisor) && (divisor == x || divisor is Powf(var pb, Number.Integer) && pb == x)))
+                && !expr.Nodes.Any(node => node is Powf(var polynomialBase, Number.Rational rootPower) && rootPower is not Number.Integer
+                    && polynomialBase.ContainsNode(x) && TreeAnalyzer.TryGetPolynomial(polynomialBase, x, out var radicand)
+                    && radicand.Keys.Any(degree => degree.Sign > 0)))
+                candidates.Add(MathS.Pow(x, -1));
             foreach (var node in expr.Nodes) // Look for composite functions (functions of functions)
                 switch (node)
                 {

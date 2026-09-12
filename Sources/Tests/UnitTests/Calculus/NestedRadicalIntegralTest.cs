@@ -117,6 +117,28 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, points);
 
         /// <summary>
+        /// The same shape in <c>1/x</c>: Bondarenko's <c>sqrt(1/x + sqrt(1 + 1/x))</c> is
+        /// <c>sqrt(u + sqrt(1 + u))</c> over <c>-u^2</c> under <c>u = 1/x</c>, and <c>1/x</c> is
+        /// written as a quotient that no power candidate of the substitution rule read. The
+        /// reciprocal is offered only where it sits under a root: offered for every <c>/x</c>
+        /// it opened searches on <c>(x^2 - 10)^(5/2)/x</c> and <c>x ln(x)/sqrt(1 + x^2)</c> that
+        /// did not return, and those two are pinned here as still quick. And not beside a root
+        /// of a polynomial in the variable: under the reciprocal that root becomes a root of a
+        /// reciprocal, which offers the reciprocal back, and <c>x^(-1/2)</c> is a candidate of
+        /// its own that leads the same way -- on the by-parts remainder of
+        /// <c>arcsin(sqrt(1 + x) - sqrt(x))</c> the two alternated to the depth limit, forty
+        /// seconds here and three and a half minutes on the CI runner, where declining takes
+        /// three seconds. That one is pinned in <see cref="ABareInverseFunctionByPartsTest"/>.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(1/x + sqrt(1 + 1/x))", new[] { 0.3, 0.9, 1.7 })]
+        [InlineData("sqrt(1 + 1/x)/x^2", new[] { 0.3, 0.9, 1.7 })]
+        [InlineData("(x^2 - 10)^(5/2)/x", new[] { 3.3, 3.9, 4.7 })]
+        [InlineData("x*ln(x)/sqrt(1 + x^2)", new[] { 0.3, 0.9, 1.7 })]
+        public void TheReciprocalUnderARoot(string integrand, double[] points)
+            => DifferentiatesBack(integrand, points);
+
+        /// <summary>
         /// What the substitution answered before, and must keep answering: one radical over a
         /// linear base, and a radical over a radical of the variable itself.
         /// </summary>

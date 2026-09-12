@@ -114,14 +114,17 @@ namespace AngouriMath.Tests.Calculus
             => Assert.Equal(expected.ToEntity(), integrand.ToEntity().Integrate("x"));
 
         /// <summary>
-        /// What is still declined, recorded so the boundary is visible rather than inferred from
-        /// an absence. Each is declined by what the rewrite hands on, not by the rewrite itself:
+        /// What was declined, recorded so the boundary is visible rather than inferred from
+        /// an absence, and moved here as it is answered. Each was declined by what the rewrite
+        /// hands on, not by the rewrite itself:
         /// </summary>
         /// <remarks>
         /// <list type="bullet">
-        /// <item><c>sqrt(cotan(x))</c> — the cotangent is written as <c>1/tan</c> on the way in
-        /// now, so this does start; what stops it is the fractional power, which leaves a
-        /// radical in <c>u</c> rather than a rational function.</item>
+        /// <item><c>sqrt(cotan(x))</c> — the cotangent is written as <c>1/tan</c> on the way in,
+        /// so this does start; what stopped it was the fractional power, which leaves
+        /// <c>sqrt(1/u)/(1 + u^2)</c>, a radical of a reciprocal. The substitution rule offers
+        /// <c>1/u</c> where it sits under a root now, and that is <c>sqrt(v)/(1 + v^2)</c> over
+        /// <c>v^2</c>, the same shape as <c>sqrt(tan(x))</c> itself.</item>
         /// </list>
         /// <c>tan(x)^2</c> and <c>tan(x)^3</c> were on this list, for becoming improper rational
         /// functions that nothing divided out; they are answered above now that the rational
@@ -133,8 +136,7 @@ namespace AngouriMath.Tests.Calculus
         /// </remarks>
         [Theory]
         [InlineData("sqrt(cotan(x))")]
-        public void WhatIsStillDeclined(string integrand)
-            => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
+        public void WhatWasDeclinedAndIsAnswered(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
         /// <c>1/(1 + tan(x)^2)</c> is <c>cos(x)^2</c>, and it used to be declined for becoming
