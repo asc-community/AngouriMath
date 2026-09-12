@@ -458,6 +458,11 @@ namespace AngouriMath.Functions.Algebra
                 && (answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { })
                 return answer;
             if ((answer = IndefiniteIntegralSolver.SolveLogarithmic(expr, x, integrateByParts)) is { }) return answer;
+            // Two or more square roots of polynomials written as one, before the substitution
+            // looks for the one subtree it replaces: `x/(sqrt(1 + x^2) sqrt(1 - x^2))` is
+            // `x/sqrt(1 - x^4)`, which the substitution answers, and it is what by parts leaves
+            // from `arcsin(x)/(1 + x^2)^(3/2)`.
+            if ((answer = IndefiniteIntegralSolver.SolveByCombiningRadicals(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             // After the general substitution rather than inside it, because the general one
             // divides by du/dx and asks what is left, and that question loses the shape here:

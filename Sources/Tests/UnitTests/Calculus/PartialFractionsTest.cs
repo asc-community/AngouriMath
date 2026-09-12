@@ -141,17 +141,16 @@ namespace AngouriMath.Tests.Calculus
 
         /// <summary>
         /// What is still left unevaluated rather than answered wrongly: a denominator that is
-        /// irreducible and not biquadratic, and one that is a power of a single irreducible.
-        /// The second is not a splitting problem -- there is no coprime pair to split it into,
-        /// and the ladder over <c>f^k</c> that would decompose it produces terms over
-        /// <c>(x^2 + 1)^2</c> that no integration rule reads, so decomposing it would answer
-        /// nothing. <c>x^2/(x^4 + 1)</c> used to be on this list and is now answered above; the
-        /// step over the reals reaches a biquadratic only, so a quartic with an odd power in it
-        /// stays here.
+        /// irreducible and not biquadratic. <c>x^2/(x^4 + 1)</c> used to be on this list and is
+        /// now answered above; the step over the reals reaches a biquadratic only, so a
+        /// quartic with an odd power in it stays here. <c>1/(x^4 + 2x^2 + 1)</c> was here too,
+        /// as a power of a single irreducible with no coprime pair to split into -- it is
+        /// <c>(x^2 + 1)^2</c>, which the Hermite reduction answers once the repeated factor is
+        /// written, and the denominator is now written that way first; see
+        /// <c>RationalIntegralsTest.ARepeatedFactorTheSpellingHides</c>.
         /// </summary>
         [Theory]
         [InlineData("1 / (x ^ 3 + x ^ 2 + x + 2)")]
-        [InlineData("1 / (x ^ 4 + 2 * x ^ 2 + 1)")]
         [InlineData("1 / (x ^ 4 + x ^ 3 + 1)")]
         [InlineData("1 / (x ^ 4 + x + 1)")]
         public void WhatCannotBeSplitIsLeftAlone(string integrand) =>
