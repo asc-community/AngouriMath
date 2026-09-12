@@ -5356,7 +5356,14 @@ namespace AngouriMath.Functions.Algebra
             var rewritten = CombineRadicalsIn(expr, x);
             if (rewritten == expr)
                 return null;
-            return Integration.ComputeIndefiniteIntegral(rewritten, x, integrateByParts);
+            // The rewriting is exact and the rewritten integrand is the question asked in
+            // another spelling, so at the top it is asked as one: the rules scoped to the
+            // question -- the parity extension under a substitution, for one, which
+            // `sec(x)/sqrt(sec(x)^4 - 1)` needs after the secant is written as a cosine here --
+            // answer it then and not one level down.
+            return Integration.AnsweringTheQuestionAsked
+                ? Integration.ComputeAsAQuestionOfItsOwn(rewritten, x, integrateByParts)
+                : Integration.ComputeIndefiniteIntegral(rewritten, x, integrateByParts);
         }
 
         /// <summary>
@@ -6096,11 +6103,14 @@ namespace AngouriMath.Functions.Algebra
                 }
                 else
                 {
-                    // For a power of x of a numeric integrand of modest size, from the
+                    // For a whole power of x of a numeric integrand of modest size, from the
                     // quotient written as one with its powers of x collected. Numeric and
                     // modest only: a symbolic partial fraction written as one quotient is a
-                    // page, and its simplification took twelve minutes of one test.
-                    var quotient = u is Powf(var powerOfX, Number.Rational) && powerOfX == x
+                    // page, and its simplification took twelve minutes of one test. Whole
+                    // only: `x^(-1/2)` collected the same way admitted a substitution the
+                    // by-parts remainder of `arcsin(sqrt(1 + x) - sqrt(x))` was refused before,
+                    // and a minute of search below it.
+                    var quotient = u is Powf(var powerOfX, Number.Integer { EInteger.Sign: > 0 } wholePower) && powerOfX == x && wholePower != Number.Integer.One
                         && expr.Complexity <= LargestIntegrandOfferedSums && !expr.Vars.Any(v => v != x)
                         ? WithThePowersOfXCollected(Functions.SingleQuotient.Combine(expr / duDx), x)
                         : expr / duDx;
@@ -6135,6 +6145,11 @@ namespace AngouriMath.Functions.Algebra
                 // `u > 0`, and is extended to `u < 0` by parity where the integrand has one, as
                 // the reciprocal substitution extends its own. Nothing is known of the sign
                 // of a cosine, and this is what makes that not matter.
+                // Asked, not volunteered: the factored form is a second search per candidate,
+                // and one level down the by-parts remainder of `arcsin(sqrt(1 + x) - sqrt(x))`
+                // spent a minute in them.
+                if (!Integration.AnsweringTheQuestionAsked)
+                    continue;
                 var factored = FactorANonnegativeVariableOutOfRadicals(integrandInU, uSub);
                 if (factored != integrandInU && !factored.ContainsNode(x)
                     && Integration.ComputeIndefiniteIntegral(factored, uSub, integrateByParts) is { } forPositiveU
