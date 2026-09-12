@@ -5790,9 +5790,16 @@ namespace AngouriMath.Functions.Algebra
             // linear, and `1/x` is written as a quotient that no power candidate reads. Under a
             // root only -- offered for every `/x`, it opened a search on `(x^2 - 10)^(5/2)/x` and
             // `x ln(x)/sqrt(1 + x^2)` that did not return, where each is a second's work
-            // without it.
+            // without it. And not beside a root of a polynomial in the variable: under the
+            // reciprocal that root becomes a root of a reciprocal, which offers the reciprocal
+            // back, and `x^(-1/2)` is a candidate of its own that leads the same way -- on the
+            // by-parts remainder of `arcsin(sqrt(1 + x) - sqrt(x))` the two alternated to the
+            // depth limit, forty seconds where declining takes three.
             if (!rational && expr.Nodes.Any(node => node is Powf(var radicalBase, Number.Rational radicalPower) && radicalPower is not Number.Integer
-                    && radicalBase.Nodes.Any(inner => inner is Divf(_, var divisor) && (divisor == x || divisor is Powf(var pb, Number.Integer) && pb == x))))
+                    && radicalBase.Nodes.Any(inner => inner is Divf(_, var divisor) && (divisor == x || divisor is Powf(var pb, Number.Integer) && pb == x)))
+                && !expr.Nodes.Any(node => node is Powf(var polynomialBase, Number.Rational rootPower) && rootPower is not Number.Integer
+                    && polynomialBase.ContainsNode(x) && TreeAnalyzer.TryGetPolynomial(polynomialBase, x, out var radicand)
+                    && radicand.Keys.Any(degree => degree.Sign > 0)))
                 candidates.Add(MathS.Pow(x, -1));
             foreach (var node in expr.Nodes) // Look for composite functions (functions of functions)
                 switch (node)
