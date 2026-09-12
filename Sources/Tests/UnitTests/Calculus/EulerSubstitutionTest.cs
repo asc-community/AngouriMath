@@ -110,6 +110,22 @@ namespace AngouriMath.Tests.Calculus
         public void ReachedOneLevelDown(string integrand, double[] points) => DifferentiatesBack(integrand, points);
 
         /// <summary>
+        /// The rational function in <c>t</c> cancelled by the polynomial gcd where its written
+        /// factors do not match: the first substitution leaves <c>(2t)^2 - 2(t^2 + 1)</c> above
+        /// and <c>2t^2 - (t^2 + 1)</c> below for Welz's <c>1/((1 + x^2)^2 sqrt(x^2 - 1))</c>, one
+        /// twice the other, and the degree read off the uncancelled quotient was ten where the
+        /// bound is eight. Only where the bound would otherwise refuse it, and only up to twice
+        /// the bound: the gcd of two degree-thirty polynomials did not return, where the bound
+        /// alone declined `1/((3 - 2x + x^2)^(11/2) (1 + x + 2x^2)^5)` in a moment.
+        /// </summary>
+        [Theory]
+        [InlineData("1/((1 + x^2)^2*sqrt(x^2 - 1))", new[] { 1.3, 1.9, 2.7, 3.6 })]
+        [InlineData("1/((3*x^2 - 4)^2*sqrt(x^2 - 1))", new[] { 1.3, 1.9, 2.7, 3.6 })]
+        [InlineData("1/((x^2 + 2)^2*sqrt(x^2 + 1))", new[] { 0.3, 0.9, 1.7, 2.6 })]
+        [InlineData("(1 + x^4)/((1 + x + x^2)*sqrt(2 + x + x^2))", new[] { 0.3, 0.9, 1.7, 2.6 })]
+        public void CancelledByTheGcdWhereTheSpellingsDiffer(string integrand, double[] points) => DifferentiatesBack(integrand, points);
+
+        /// <summary>
         /// A complex constant under the root is none of the three substitutions', and taking
         /// <c>-i</c> for a symbol once answered <c>NaN</c>; a rational function of the root
         /// whose Euler form is past the degree the splits can factor is declined too, and not
@@ -118,6 +134,7 @@ namespace AngouriMath.Tests.Calculus
         [Theory]
         [InlineData("1/((1 + x)^2*sqrt(2)*sqrt(-i + x^2))")]
         [InlineData("ln(x^2 + sqrt(1 - x^2))")]
+        [InlineData("1/((3 - 2*x + x^2)^(11/2)*(1 + x + 2*x^2)^5)")]
         public void DeclinedRatherThanWrongOrSlow(string integrand)
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();

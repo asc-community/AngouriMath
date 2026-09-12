@@ -108,12 +108,19 @@ namespace AngouriMath.Tests.Calculus
         public void TheLogarithmicDerivative(string integrand, double[] points) =>
             AssertIsAntiderivative(integrand, points);
 
-        // The candidate the substitution rule no longer offers for a rational function, answered
-        // all the same, and the case the restriction is for.
+        // The candidates the substitution rule no longer offers for a rational function --
+        // a sum, the base of a written power below the bar, and a power of x that the
+        // exponents say cannot be exact -- answered all the same, and the cases the
+        // restriction is for. `x/(x^6 + 1)` and `x^2/(x^6 + 1)` are the powers that are exact,
+        // u = x^2 and u = x^3, and stay candidates.
         [Theory]
         [InlineData("(1 + x^2)/((sqrt(2) - 1)*x^2 + 2*x + 1 + sqrt(2))", new[] { 0.3, 1.7, 3.2 })]
         [InlineData("x*(x^2 + 1)^3", new[] { 0.3, 1.7, -0.6 })]
         [InlineData("(2*x + 1)/(x^2 + x + 1)^3", new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("x/(x^6 + 1)", new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("x^2/(x^6 + 1)", new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("x^5/(x^4 + 1)", new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("x^3/(x^4 + 1)", new[] { 0.3, 1.7, -0.6 })]
         public void ARationalFunctionWithoutSumCandidates(string integrand, double[] points) =>
             AssertIsAntiderivative(integrand, points);
 
