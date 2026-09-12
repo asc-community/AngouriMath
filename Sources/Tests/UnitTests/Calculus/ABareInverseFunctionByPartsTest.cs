@@ -68,9 +68,20 @@ namespace AngouriMath.Tests.Calculus
         /// <c>arcsin(x^2)</c>, whose remainder <c>2x^2/sqrt(1 - x^4)</c> is elliptic: declined or
         /// answered, never wrong, and not slowly.
         /// </summary>
+        /// <summary>
+        /// Charlwood's <c>arctan(x + sqrt(1 - x^2))</c>, whose remainder is a sum whose expanded
+        /// terms carry a root over the same root -- cancelled as written now, before the
+        /// chain's normalisation collects it into a zero power nothing reads -- and each of
+        /// which is Euler's, one of them through the Rothstein-Trager resultant behind the
+        /// splits. And its companion with the root below the bar.
+        /// </summary>
+        [Theory]
+        [InlineData("atan(x + sqrt(1 - x^2))")]
+        [InlineData("x*atan(x + sqrt(1 - x^2))/sqrt(1 - x^2)")]
+        public void TheRemainderIsEulersThroughTheResultant(string integrand) => DifferentiatesBack(integrand);
+
         [Theory]
         [InlineData("asin(x^2)")]
-        [InlineData("atan(x + sqrt(1 - x^2))")]
         [InlineData("ln(1 + x*sqrt(1 + x^2))")]
         [InlineData("asin(x/sqrt(1 - x^2))")]
         [InlineData("asin(sqrt(1 + x) - sqrt(x))")]
