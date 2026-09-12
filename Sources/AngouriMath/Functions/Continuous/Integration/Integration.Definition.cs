@@ -560,6 +560,10 @@ namespace AngouriMath.Functions.Algebra
             // And a root of a palindromic quartic, which is a root of a quadratic in x -+ 1/x:
             // Charlwood's `(1 + x^2)/((1 - x^2) sqrt(1 + x^4))` is `-du/(u sqrt(u^2 + 2))`.
             if ((answer = IndefiniteIntegralSolver.SolveByReciprocalSubstitution(expr, x)) is { }) return answer;
+            // A rational function of x and one cube root of a polynomial: no substitution
+            // rationalises it, and the elementary ones are logarithms of `L - y` for linear L
+            // whose cube agrees with the polynomial at the poles, found by an ansatz.
+            if ((answer = CubeRootLogarithmAnsatz.Integrate(expr, x)) is { }) return answer;
             // Product-to-sum among the rewrites rather than before them, because a product of
             // trigonometric functions of *equal* arguments is a power and wants a different tool;
             // this only fires where the arguments differ, which is exactly what every substitution
