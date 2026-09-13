@@ -146,11 +146,15 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1));
 
         /// <summary>
-        /// A repeated symbolic quadratic has nothing to land on and is declined.
+        /// A repeated symbolic quadratic was declined: the coefficients of its decomposition
+        /// are a linear system with <c>a</c> in every entry, whose zero test on entities is
+        /// numeric. Solved over polynomials in <c>a</c>, fraction-free, the system is exact
+        /// and the answer is a piecewise on the sign of <c>a</c> -- checked on both sides of it.
         /// </summary>
         [Theory]
-        [InlineData("1/((x^2 + a)^2*(x + 1))")]
-        public void ARepeatedSymbolicQuadraticIsDeclined(string integrand)
-            => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
+        [InlineData("1/((x^2 + a)^2*(x + 1))", 1.7)]
+        [InlineData("1/((x^2 + a)^2*(x + 1))", -0.7)]
+        public void ARepeatedSymbolicQuadratic(string integrand, double a)
+            => DifferentiatesBack(integrand, "x", ("a", a));
     }
 }
