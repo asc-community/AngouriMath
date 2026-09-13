@@ -463,6 +463,11 @@ namespace AngouriMath.Functions.Algebra
             // `x/sqrt(1 - x^4)`, which the substitution answers, and it is what by parts leaves
             // from `arcsin(x)/(1 + x^2)^(3/2)`.
             if ((answer = IndefiniteIntegralSolver.SolveByCombiningRadicals(expr, x, integrateByParts)) is { }) return answer;
+            // And a fractional power of a quotient whose denominator is positive for every
+            // real x, written as the two powers it is: `((2 + x^2)/x^2)^(7/9)` is nothing any
+            // rule reads as written. Beside the rule above, which does the like for the roots
+            // it combines; at the top only, since it lands on the chain.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingAPowerOfAQuotientApart(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             // After the general substitution rather than inside it, because the general one
             // divides by du/dx and asks what is left, and that question loses the shape here:

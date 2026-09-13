@@ -160,5 +160,31 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x^3*sqrt(1 + x^2)")]
         [InlineData("1/(1 + x^2)^(3/2)")]
         public void TheNeighboursAreUntouched(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// A fractional power of a quotient whose denominator is positive for every real
+        /// <c>x</c> is written as the two powers it is, and only then is a binomial seen:
+        /// Timofeev's <c>((2 + x^2)/x^2)^(7/9)/(2 + x^2)^(3/2)</c> is
+        /// <c>x^(-14/9) (2 + x^2)^(-13/18)</c> so written, under <c>u = x^(1/9)</c>. The power
+        /// of <c>x^2</c> taken out is a power of <c>|x|</c>, so the answer for <c>x &gt; 0</c> is
+        /// extended by parity -- the integrand is even and the antiderivative odd -- and both
+        /// sides are checked.
+        /// </summary>
+        [Theory]
+        [InlineData("((2 + x^2)/x^2)^(7/9)/(2 + x^2)^(3/2)")]
+        [InlineData("((1 + x^2)/x^2)^(1/4)/(1 + x^2)^(3/2)")]
+        public void APowerOfAQuotientIsWrittenApart(string integrand)
+        {
+            DifferentiatesBack(integrand);
+            var derivative = integrand.ToEntity().Integrate("x").Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity();
+            foreach (var at in new[] { -0.83, -0.35 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart) < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
     }
 }
