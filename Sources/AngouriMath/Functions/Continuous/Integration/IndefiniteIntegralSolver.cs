@@ -21,7 +21,14 @@ namespace AngouriMath.Functions.Algebra
             // substitution `u = x + ln(x)` the unexpanded one is, and Bronstein's
             // `1/x + (1 + 1/x)/(x + ln(x))^(3/2)` was declined for that while each of its two
             // terms alone was answered.
-            if (expr is Sumf or Minusf)
+            // And a sum over a denominator likewise, each written term over it with a factor
+            // written on both sides cancelled: `(ln(x^2 + 1) (x^2 + 1) - x^2)/(2 (x^2 + 1))` is
+            // what parts leaves from `x ln(1 + x^2) arctan(x)`, and expanded its first term is
+            // `x^2 ln(x^2 + 1)/(2 (x^2 + 1))` and its second `ln(x^2 + 1)/(2 (x^2 + 1))`, neither
+            // elementary, where as written it is `ln(x^2 + 1)/2`.
+            var (writtenSum, over) = expr is Divf(var writtenNumerator, var writtenDenominator) && writtenNumerator is Sumf or Minusf && writtenDenominator.ContainsNode(x)
+                ? (writtenNumerator, writtenDenominator) : (expr, Number.Integer.One as Entity);
+            if (writtenSum is Sumf or Minusf)
             {
                 // In the order the expanding gather uses -- the terms in the variable, then
                 // what is free of it as one term -- so that the answer reads the same either way.
@@ -29,11 +36,13 @@ namespace AngouriMath.Functions.Algebra
                 // is a page of unsimplified symbols took sixty seconds of every rule
                 // simplifying the page for itself, where the expanding gather below tidies
                 // its terms as it goes and takes half a second on the same sum.
-                var inTheVariable = Sumf.LinearChildren(expr).Where(term => term.ContainsNode(x)).ToList();
-                var free = Sumf.LinearChildren(expr).Where(term => !term.ContainsNode(x)).ToList();
+                var inTheVariable = Sumf.LinearChildren(writtenSum).Where(term => term.ContainsNode(x)).ToList();
+                var free = Sumf.LinearChildren(writtenSum).Where(term => !term.ContainsNode(x)).ToList();
                 var asWritten = new List<Entity>(inTheVariable);
                 if (free.Count > 0)
                     asWritten.Add(free.Aggregate((l, r) => l + r));
+                if (over != Number.Integer.One)
+                    asWritten = asWritten.Select(term => CancelCommonFactors(term, over)).ToList();
                 if (asWritten.Count >= 2 && asWritten.All(term => term.Complexity <= LargestTermTakenAsWritten)
                     && Integrated(asWritten) is { } termByTerm)
                     return termByTerm;
@@ -905,6 +914,30 @@ namespace AngouriMath.Functions.Algebra
             var wholePower = HighestDifferentiatedPower(expr);
 
             // Standard integration by parts for polynomial × function
+            // The antiderivative of u is fixed up to a constant, and the constant is chosen so
+            // that what v' divides by divides it: against `arctan(x)^2 ln(1 + x^2)` the
+            // antiderivative of `x` is `(1 + x^2)/2` and not `x^2/2`, and the remainder is
+            // `arctan(x) ln(1 + x^2) + x arctan(x)^2`, two products each answered by parts, where
+            // with `x^2/2` it was two quotients by `1 + x^2` that are elementary only together.
+            // Rubi's `x^m` rules do the same. For a polynomial antiderivative and a polynomial
+            // divisor, where the division leaves a constant.
+            static Entity WithTheConstantMatchedTo(Entity antiderivative, Entity derivativeOfV, Variable x)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(antiderivative, x, out _))
+                    return antiderivative;
+                var divisors = Sumf.LinearChildren(Functions.PartialFractions.Bare(derivativeOfV))
+                    .Select(term => Functions.SingleQuotient.Of(term).Denominator)
+                    .Where(below => below.ContainsNode(x) && TreeAnalyzer.TryGetPolynomial(below, x, out _))
+                    .Distinct().ToList();
+                if (divisors.Count != 1)
+                    return antiderivative;
+                if (TreeAnalyzer.PolynomialLongDivision(antiderivative, divisors[0], genericCase: true, inTermsOf: x) is var (_, leftOver)
+                    && Functions.SingleQuotient.Of(leftOver) is var (leftOverTop, _) && !leftOverTop.ContainsNode(x)
+                    && leftOverTop.Evaled is Number.Complex { IsZero: false } constant)
+                    return (antiderivative + (-constant).Evaled).InnerSimplified;
+                return antiderivative;
+            }
+
             static Entity? IntegrateByPartsPolynomial(Entity polynomialToDifferentiate, Entity toIntegrate, Variable x, int currentRecursion = 0)
             {
                 if (polynomialToDifferentiate == 0) return 0;
@@ -940,6 +973,13 @@ namespace AngouriMath.Functions.Algebra
                 if (derivativeOfV is Providedf(var inner, _)) derivativeOfV = inner; // TODO: signularities ignored but not handled properly
                 if (derivativeOfV == Integer.Zero)
                     return v * integralOfU; // If v is constant, we're done
+                // The antiderivative of u is fixed up to a constant, and the constant is
+                // chosen so that what v' divides by divides it: against `arctan(x)^2 ln(1 + x^2)`
+                // the antiderivative of `x` is `(1 + x^2)/2` and not `x^2/2`, and the remainder is
+                // `arctan(x) ln(1 + x^2) + x arctan(x)^2`, two products each answered by parts,
+                // where with `x^2/2` it was two quotients by `1 + x^2` that are elementary only
+                // together. Rubi's `x^m` rules do the same.
+                integralOfU = WithTheConstantMatchedTo(integralOfU, derivativeOfV, x);
 
                 // Try to integrate the remaining term: v' · ∫u dx
                 var remaining = (derivativeOfV * integralOfU).Simplify(1);
@@ -1131,7 +1171,12 @@ namespace AngouriMath.Functions.Algebra
                 && IsAlgebraicIn(algebraicRest, x)
                 && Integration.ComputeIndefiniteIntegral(algebraicRest, x, false)?.InnerSimplified is { } integralOfTheRest)
             {
-                var remaining = (bothOfThem.Differentiate(x) * integralOfTheRest).Simplify(1);
+                // The derivative as differentiation writes it: simplified first, `1 + x^2` is
+                // `x^2 + 1`, a spelling the substitution for `ln(x + sqrt(1 + x^2))` then did not
+                // read against the `sqrt(1 + x^2)` beside it.
+                var derivativeOfBoth = bothOfThem.Differentiate(x);
+                integralOfTheRest = WithTheConstantMatchedTo(integralOfTheRest, derivativeOfBoth, x);
+                var remaining = (derivativeOfBoth * integralOfTheRest).Simplify(1);
                 if (remaining is Providedf(var bareRemaining, _))
                     remaining = bareRemaining;
                 // Distributed over the sum the product rule left -- the derivative of the pair
@@ -1166,6 +1211,23 @@ namespace AngouriMath.Functions.Algebra
             // Asked, not volunteered, like the regrouping above: the remainder can be a radical
             // the search spends seconds on, and a rule that produced this shape on its way
             // somewhere is not owed that search.
+            // And with two such factors, one of them differentiated and the other integrated
+            // beside the rest, either way round: `x ln(1 + x^2) arctan(x)` is not elementary
+            // by the two together -- the remainder holds `ln(1 + x^2)/(1 + x^2)`, which is not
+            // -- and is by parts against `x ln(1 + x^2)`, whose integral is a substitution,
+            // with the arctangent differentiated: the remainder is then rational and a
+            // logarithm over a quadratic. Measured on the total power, which the step lowers.
+            if (Integration.AnsweringTheQuestionAsked
+                && TryRegroupAroundBothDifferentiatedFactors(expr) is var (twoOfThem, restBesideThem)
+                && twoOfThem is not null && restBesideThem is not null)
+                foreach (var differentiatedOne in Mulf.LinearChildren(twoOfThem))
+                {
+                    var integratedOne = Mulf.LinearChildren(twoOfThem).First(factor => factor != differentiatedOne);
+                    var integrated = restBesideThem == Integer.One ? integratedOne : integratedOne * restBesideThem;
+                    if (TryIntegrateByPartsOnce(differentiatedOne, integrated, x, wholeSize, wholePower) is { } oneOfTheTwo)
+                        return oneOfTheTwo;
+                }
+
             if (Integration.AnsweringTheQuestionAsked && IsDifferentiatedBeforeAPolynomial(expr)
                 && expr is not Powf
                 && !(expr.DirectChildren.LastOrDefault() is { } argument && TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out _))
@@ -1201,22 +1263,36 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// The highest power of a factor <see cref="IsDifferentiatedBeforeAPolynomial"/>
-        /// recognises among the factors of <paramref name="expr"/>, or zero where there is none:
-        /// the first component of the measure integration by parts descends on.
+        /// The total power of the factors <see cref="IsDifferentiatedBeforeAPolynomial"/>
+        /// recognises among the factors of <paramref name="expr"/> -- of each term of it, the
+        /// largest, where it is a sum or a sum over a denominator -- or zero where there is
+        /// none: the first component of the measure integration by parts descends on.
         /// </summary>
+        /// <remarks>
+        /// The total and not the highest: <c>arctan(x) ln(1 + x^2)</c> is two, and one step of
+        /// parts leaves <c>2x^2 arctan(x)/(1 + x^2) - x ln(1 + x^2)/(1 + x^2)</c>, each term of
+        /// which is one -- the step differentiated one of the two away, and that is the
+        /// descent it made, where the highest power read one on both sides and declined the
+        /// larger remainder. A step that lowers the total may grow the expression, and a
+        /// step that keeps it must shrink the expression, as before.
+        /// </remarks>
         private static int HighestDifferentiatedPower(Entity expr)
         {
+            var (numerator, denominator) = expr is Divf(var top, var bottom) ? (top, bottom) : (expr, Number.Integer.One as Entity);
             var highest = 0;
-            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            foreach (var term in Sumf.LinearChildren(numerator))
             {
-                if (underneath || !IsDifferentiatedBeforeAPolynomial(factor))
-                    continue;
-                var power = factor is Powf(_, Number.Integer exponent) && exponent.EInteger.CanFitInInt32()
-                    ? exponent.EInteger.ToInt32Unchecked()
-                    : 1;
-                if (power > highest)
-                    highest = power;
+                var total = 0;
+                foreach (var (factor, underneath) in FactorsOfTheIntegrand(denominator == Number.Integer.One ? term : term / denominator))
+                {
+                    if (underneath || !IsDifferentiatedBeforeAPolynomial(factor))
+                        continue;
+                    total += factor is Powf(_, Number.Integer exponent) && exponent.EInteger.CanFitInInt32()
+                        ? exponent.EInteger.ToInt32Unchecked()
+                        : 1;
+                }
+                if (total > highest)
+                    highest = total;
             }
             return highest;
         }
@@ -1291,13 +1367,16 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// The two factors LIATE would differentiate, as one product, against the rest of the
-        /// integrand as one quotient; <c>(null, null)</c> where there are not exactly two above
-        /// the bar or nothing else beside them.
+        /// integrand as one quotient -- <c>1</c> where there is nothing beside them, since
+        /// <c>arctan(x) ln(1 + x^2)</c> against <c>1</c> is one step of parts whose remainder,
+        /// <c>x ln(1 + x^2)/(1 + x^2) + 2x^2 arctan(x)/(1 + x^2)</c>, is two terms each of which
+        /// is answered on its own; <c>(null, null)</c> where there are not exactly two above
+        /// the bar.
         /// </summary>
         private static (Entity? Both, Entity? Others) TryRegroupAroundBothDifferentiatedFactors(Entity expr)
         {
             var factors = FactorsOfTheIntegrand(expr);
-            if (factors.Count < 3)
+            if (factors.Count < 2)
                 return (null, null);
             if (factors.Count(pair => !pair.Underneath && IsDifferentiatedBeforeAPolynomial(pair.Factor)) != 2)
                 return (null, null);
@@ -1311,8 +1390,10 @@ namespace AngouriMath.Functions.Algebra
                     below = below is null ? factor : below * factor;
                 else
                     above = above is null ? factor : above * factor;
-            if (both is null || (above is null && below is null))
+            if (both is null)
                 return (null, null);
+            if (above is null && below is null)
+                return (both, Integer.One);
             var others = below is null ? above! : above is null ? 1 / below : above / below;
             return (both, others);
         }
@@ -1412,10 +1493,65 @@ namespace AngouriMath.Functions.Algebra
                     Integration.ComputeIndefiniteIntegral(MathS.Ln(arg) / MathS.Ln(@base), x, integrateByParts) :
                 arg is Entity.Powf(var y, var pow) ? // log(b, y^p) = ln(y^p) / ln(b) = ln(p) / ln(b) * ln(y)
                     Integration.ComputeIndefiniteIntegral(pow / MathS.Ln(@base) * MathS.Ln(y), x, integrateByParts) :
-                    null,
+                    SolveALogarithmOrAnArctangentOfAPolynomial(expr, x),
+
+            Entity.Arctanf or Entity.Arccotanf => SolveALogarithmOrAnArctangentOfAPolynomial(expr, x),
 
             _ => null
         };
+
+        /// <summary>
+        /// The logarithm, arctangent or arccotangent of a polynomial in <paramref name="x"/>,
+        /// by parts against one, closed: <c>x f(P) - int x f'(P) P'</c>, whose remainder is a
+        /// rational function -- <c>x P'/P</c>, <c>x P'/(1 + P^2)</c> -- and goes to the rational
+        /// integrator directly.
+        /// </summary>
+        /// <remarks>
+        /// By parts against one is a rule of the top: a nested step's remainder answered that
+        /// way let a doomed search above it carry on. So <c>ln(1 + x^2)</c> one level down had no
+        /// antiderivative, and every remainder that held it -- what parts leaves from
+        /// <c>arctan(x) ln(1 + x^2)</c> with the arctangent differentiated, for one -- was
+        /// declined for want of it. This is the same step for the one shape whose remainder is
+        /// closed, and it is closed itself, so it is answered at any depth.
+        /// </remarks>
+        private static Entity? SolveALogarithmOrAnArctangentOfAPolynomial(Entity expr, Entity.Variable x)
+        {
+            Entity argument;
+            Entity derivativeOfTheFunction;
+            switch (expr)
+            {
+                case Logf(var @base, var arg) when @base == MathS.e:
+                    argument = arg;
+                    derivativeOfTheFunction = 1 / arg;
+                    break;
+                case Arctanf(var arg):
+                    argument = arg;
+                    derivativeOfTheFunction = 1 / (1 + MathS.Sqr(arg));
+                    break;
+                case Arccotanf(var arg):
+                    argument = arg;
+                    derivativeOfTheFunction = -1 / (1 + MathS.Sqr(arg));
+                    break;
+                default:
+                    return null;
+            }
+            // A linear argument is the table's, and answered more shortly there.
+            if (!argument.ContainsNode(x) || !TreeAnalyzer.TryGetPolynomial(argument, x, out var read)
+                || TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out _) || read.Keys.Any(k => !k.CanFitInInt32()))
+                return null;
+            var remainder = Functions.PartialFractions.Bare(x * argument.Differentiate(x) * derivativeOfTheFunction);
+            if (!TryReadAsQuotient(remainder, out var above, out var below)
+                || !TreeAnalyzer.TryGetPolynomial(above, x, out _) || !TreeAnalyzer.TryGetPolynomial(below, x, out _))
+                return null;
+            var rational = above / below;
+            var integratedRemainder = SolveByPartialFractions(rational, x, integrateByParts: false)
+                ?? IntegralPatterns.TryStandardIntegrals(rational, x)
+                ?? SolveByRothsteinTrager(rational, x);
+            if (integratedRemainder is null)
+                return null;
+            var answer = (x * expr - integratedRemainder).InnerSimplified;
+            return answer.Nodes.Any(node => node is Number.Complex { IsNaN: true }) ? null : answer;
+        }
 
         internal static Entity? SolveExponential(Entity expr, Entity.Variable x, bool integrateByParts = true) => expr switch
         {

@@ -152,6 +152,46 @@ namespace AngouriMath.Tests.Calculus
         public void BothFactorsAreTakenTogetherAgainstAnAlgebraicRest(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// The two factors against nothing, whose integral is <c>x</c> -- <c>arctan(x) ln(1 + x^2)</c>
+        /// -- and against a polynomial whose antiderivative is chosen with the constant that makes
+        /// the derivative's denominator divide it: against <c>arctan(x)^2 ln(1 + x^2)</c> the
+        /// antiderivative of <c>x</c> is <c>(1 + x^2)/2</c>, and the remainder is
+        /// <c>arctan(x) ln(1 + x^2) + x arctan(x)^2</c>, two products each answered by parts,
+        /// where with <c>x^2/2</c> it was two quotients by <c>1 + x^2</c> elementary only
+        /// together. Charlwood's <c>x arctan(x)^2 ln(1 + x^2)</c>, thirteen of Rubi's steps.
+        /// </summary>
+        [Theory]
+        [InlineData("arctan(x)*ln(1 + x^2)")]
+        [InlineData("x*arctan(x)^2*ln(1 + x^2)")]
+        public void BothFactorsAgainstAPolynomialWithTheConstantMatched(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// And one of the two differentiated and the other integrated beside the rest, either
+        /// way round, where the two together are not elementary: <c>x ln(1 + x^2) arctan(x)</c>
+        /// taken together leaves <c>ln(1 + x^2)/(1 + x^2)</c>, which is not, and by parts against
+        /// <c>x ln(1 + x^2)</c>, whose integral is a substitution, with the arctangent
+        /// differentiated, the remainder is <c>ln(1 + x^2)/2 - x^2/(2 (1 + x^2))</c>. Measured on
+        /// the total power of the transcendental factors, which the step lowers from two to one,
+        /// where the highest power read one on both sides and declined the larger remainder.
+        /// </summary>
+        [Theory]
+        [InlineData("x*ln(1 + x^2)*arctan(x)")]
+        public void OneOfTheTwoDifferentiatedAndTheOtherIntegrated(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// A logarithm or an arctangent of a polynomial, by parts against one, closed: the
+        /// remainder is rational and goes to the rational integrator directly, so it is
+        /// answered at any depth -- <c>ln(1 + x^2)</c> one level down had no antiderivative,
+        /// and every remainder that held it was declined for want of it.
+        /// </summary>
+        [Theory]
+        [InlineData("ln(1 + x^2)")]
+        [InlineData("arctan(x^2)")]
+        [InlineData("arccotan(x^2 + 1)")]
+        [InlineData("ln(x^4 + 1)")]
+        public void ALogarithmOrAnArctangentOfAPolynomialIsClosed(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// Two factors to differentiate against a rest whose integral is not algebraic is not
         /// this rule's, and the bound is what keeps it cheap rather than what keeps it tidy:
         /// <c>1/x</c> integrates to a logarithm, so the remainder holds three transcendental
