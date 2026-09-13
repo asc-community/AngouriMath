@@ -4469,6 +4469,79 @@ namespace AngouriMath.Functions.Algebra
         private const int MaximumAnsatzDegree = 12;
 
         /// <summary>
+        /// A constant over a linear beside the square root of a quadratic,
+        /// <c>K/((x - p) sqrt(Q))</c>, by the reciprocal of the linear: with <c>t = 1/(x - p)</c>
+        /// the root becomes one of a quadratic in <c>t</c> alone, and the table answers that.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>Q(p + 1/t) = (Q(p) t^2 + Q'(p) t + a)/t^2</c>, so <c>sqrt(Q) = sqrt(R(t))/|t|</c>
+        /// with <c>R(t) = Q(p) t^2 + Q'(p) t + a</c>, and <c>dx = -dt/t^2</c>: the integrand is
+        /// <c>-K sgn(t) dt/sqrt(R(t))</c>, whose integral is the table's, an arcsine or a
+        /// logarithm by the sign of <c>Q(p)</c> -- a piecewise where that sign is a symbol's.
+        /// The sign of <c>t</c> is the sign of <c>x - p</c>, and the antiderivative is
+        /// <c>-K sgn(x - p) G(1/(x - p))</c> on both sides of <c>p</c>, exactly.
+        /// </para>
+        /// <para>
+        /// This is the shape the Euler substitution answers at length, as a partial-fraction
+        /// decomposition in <c>t</c>, and declines for a leading coefficient that is a
+        /// symbol of the wrong sign: Hearn's <c>1/(r sqrt(-alpha^2 - epsilon^2 + 2h r^2 - 2k r^4))</c>
+        /// is <c>1/(2u sqrt(-alpha^2 - epsilon^2 + 2h u - 2k u^2))</c> under <c>u = r^2</c>, with
+        /// <c>-2k</c> in front and <c>-alpha^2 - epsilon^2</c> behind, and neither Euler's first
+        /// nor second substitution has a real radical to take. Here <c>Q(0)</c> is
+        /// <c>-alpha^2 - epsilon^2</c>, the arcsine arm, and the answer is Rubi's. Closed, and
+        /// volunteered at any depth for it: the reciprocal substitution and <c>u = x^2</c> both
+        /// hand it what they make.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveALinearBesideTheRootOfAQuadratic(Entity expr, Entity.Variable x)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            if (numerator.ContainsNode(x))
+                return null;
+            Entity? radicand = null;
+            Entity? linear = null;
+            Entity constant = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = constant * factor;
+                    continue;
+                }
+                if (factor is Powf(var @base, Number.Rational half) && half == Number.Rational.Create(1, 2) && radicand is null)
+                    radicand = @base;
+                else if (linear is null && TreeAnalyzer.TryGetPolyLinear(factor, x, out var slope, out _)
+                    && slope.Evaled is not Number.Complex { IsZero: true })
+                    linear = factor;
+                else
+                    return null;
+            }
+            if (radicand is null || linear is null
+                || !TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var a, out var b, out var c)
+                || a.Evaled is Number.Complex { IsZero: true }
+                || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var m, out var n))
+                return null;
+            // A coefficient that is a number is a real one, as in every rule about a real root.
+            foreach (var coefficient in new[] { a, b, c, m, n, numerator, constant })
+                if (coefficient.Evaled is Number.Complex and not Number.Real)
+                    return null;
+
+            // (x - p) with p = -n/m, and K = numerator/(m constant).
+            var p = (-n / m).InnerSimplified;
+            var k = (numerator / (m * constant)).InnerSimplified;
+            var atP = (a * p * p + b * p + c).InnerSimplified;
+            var slopeAtP = (2 * a * p + b).InnerSimplified;
+            var t = Variable.CreateUnique(expr, "t_recip");
+            var inT = 1 / MathS.Pow(atP * MathS.Sqr(t) + slopeAtP * t + a, Number.Rational.Create(1, 2));
+            if (IntegralPatterns.TryStandardIntegrals(inT, t) is not { } g)
+                return null;
+            var answer = (-k * MathS.Signum(x - p) * g.Substitute(t, 1 / (x - p))).InnerSimplified;
+            return answer.Nodes.Any(node => node is Number.Complex { IsNaN: true }) ? null : answer;
+        }
+
+        /// <summary>
         /// A rational function of <c>x</c> and one square root of a quadratic in <c>x</c>,
         /// rationalised by an Euler substitution and handed to the rational integrator.
         /// </summary>
@@ -4586,7 +4659,24 @@ namespace AngouriMath.Functions.Algebra
             else if (cPositive) which = 2;
             else if (aValue is null) which = 1;
             else if (cValue is null) which = 2;
-            else return null;   // a < 0 and c < 0 with no root at zero: the radical is nowhere real
+            else if (aValue.IsNegative && cValue.IsNegative && b.Evaled is Number.Real)
+            {
+                // a < 0 and c < 0: the radical is real between the roots where there are two,
+                // and none of the three substitutions reads that. Shifted to the vertex,
+                // x = y - b/(2a), the quadratic is a y^2 + c' with c' = c - b^2/(4a), positive
+                // exactly when the roots are real, and that is the second substitution's:
+                // `1/(x sqrt(-5 + 10x - 4x^2))`, Hearn's under u = r^2.
+                var shift = (-b / (2 * a)).InnerSimplified;
+                if ((c - b * b / (4 * a)).Evaled is not Number.Real { IsPositive: true })
+                    return null;
+                var y = Variable.CreateUnique(expr, "y_euler");
+                if (SolveByEulerSubstitution(expr.Substitute(x, y + shift), y) is not { } inY)
+                    return null;
+                // The radicand comes back written as `Q(x - s + s)`; it is written as `Q(x)`.
+                var writtenBack = radicand.Substitute(x, y + shift).Substitute(y, x - shift);
+                return inY.Substitute(y, x - shift).Replace(node => node == writtenBack ? radicand : node).InnerSimplified;
+            }
+            else return null;   // a < 0 and c < 0 with no real root: the radical is nowhere real
 
             switch (which)
             {
@@ -4750,9 +4840,12 @@ namespace AngouriMath.Functions.Algebra
             // The Rothstein-Trager resultant behind the splits, for a denominator they cannot
             // take apart: `1/(1 + x sqrt(1 - x^2))` is one over a quartic in t irreducible over
             // the rationals, whose residues are in a quadratic field.
+            // ...and a polynomial in t, which none of those reads: `1/(x sqrt(3x - x^2))` under
+            // the third substitution is the constant -2/3.
             var inT = SolveByPartialFractions(rational, t, integrateByParts: false)
                    ?? IntegralPatterns.TryStandardIntegrals(rational, t)
-                   ?? SolveByRothsteinTrager(rational, t);
+                   ?? SolveByRothsteinTrager(rational, t)
+                   ?? (cleanDenominator.Evaled is Number ? Integration.ComputeIndefiniteIntegral(rational, t, integrateByParts: false) : null);
             if (inT is null)
                 return null;
             var answer = inT.Substitute(t, backSubstitution).InnerSimplified;
@@ -6252,15 +6345,17 @@ namespace AngouriMath.Functions.Algebra
                 }
                 else
                 {
-                    // For a whole power of x of a numeric integrand of modest size, from the
-                    // quotient written as one with its powers of x collected. Numeric and
-                    // modest only: a symbolic partial fraction written as one quotient is a
-                    // page, and its simplification took twelve minutes of one test. Whole
-                    // only: `x^(-1/2)` collected the same way admitted a substitution the
-                    // by-parts remainder of `arcsin(sqrt(1 + x) - sqrt(x))` was refused before,
-                    // and a minute of search below it.
+                    // For a whole power of x of an integrand of modest size, from the quotient
+                    // written as one with its powers of x collected. Modest only, and for one
+                    // with symbols in it small: a symbolic partial fraction written as one
+                    // quotient is a page, and its simplification took twelve minutes of one
+                    // test, where Hearn's `1/(r sqrt(-alpha^2 - epsilon^2 + 2h r^2 - 2k r^4))`
+                    // is a line and `u = r^2` is its substitution. Whole only: `x^(-1/2)`
+                    // collected the same way admitted a substitution the by-parts remainder of
+                    // `arcsin(sqrt(1 + x) - sqrt(x))` was refused before, and a minute of search
+                    // below it.
                     var quotient = u is Powf(var powerOfX, Number.Integer { EInteger.Sign: > 0 } wholePower) && powerOfX == x && wholePower != Number.Integer.One
-                        && expr.Complexity <= LargestIntegrandOfferedSums && !expr.Vars.Any(v => v != x)
+                        && expr.Complexity <= (expr.Vars.Any(v => v != x) ? LargestSymbolicIntegrandCollected : LargestIntegrandOfferedSums)
                         ? WithThePowersOfXCollected(Functions.SingleQuotient.Combine(expr / duDx), x)
                         : expr / duDx;
                     integrandInU = InTermsOf(quotient, u, uSub, x).Simplify(1);
@@ -6515,6 +6610,12 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>The largest integrand the substitution rule offers its sums as candidates for.</summary>
         private const int LargestIntegrandOfferedSums = 120;
+
+        /// <summary>
+        /// The largest integrand with symbols in it whose quotient by <c>du/dx</c> is written
+        /// as one with its powers of <c>x</c> collected, for <c>u</c> a power of <c>x</c>.
+        /// </summary>
+        private const int LargestSymbolicIntegrandCollected = 40;
 
         /// <summary>The largest sum the substitution rule offers as a candidate.</summary>
         private const int LargestSumOffered = 30;

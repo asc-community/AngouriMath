@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using PeterO.Numbers;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 
@@ -94,6 +95,10 @@ namespace AngouriMath.Functions
                     var (bn, bd) = Of(@base);
                     if (bd == Integer.One && power.EInteger.Sign >= 0)
                         return (expr, Integer.One);
+                    // The first power is the base itself: `A^(-1)` is `1/A`, not `1^1/A^1`,
+                    // which nothing reading the factors of the denominator took for `A`.
+                    if (power.EInteger.Equals(EInteger.FromInt32(-1)))
+                        return (bd, bn);
                     return power.EInteger.Sign >= 0
                         ? (MathS.Pow(bn, power), MathS.Pow(bd, power))
                         : (MathS.Pow(bd, -power), MathS.Pow(bn, -power));
