@@ -3376,6 +3376,20 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Whether <paramref name="expr"/> is a polynomial in one sine or one cosine of one
+        /// argument holding <paramref name="x"/>, and nothing else of <paramref name="x"/>.
+        /// </summary>
+        private static bool IsAPolynomialInOneTrigonometricFunction(Entity expr, Entity.Variable x)
+        {
+            var functions = expr.Nodes.Where(node => node is Sinf or Cosf && node.ContainsNode(x)).Distinct().ToList();
+            if (functions.Count != 1)
+                return false;
+            var placeholder = Variable.CreateUnique(expr, "trig");
+            var inPlaceholder = expr.Substitute(functions[0], placeholder);
+            return !inPlaceholder.ContainsNode(x) && TreeAnalyzer.TryGetPolynomial(inPlaceholder, placeholder, out _);
+        }
+
+        /// <summary>
         /// An integrand whose trigonometric functions have <b>different multiples</b> of one
         /// argument — <c>sin(x)/cos(2x)</c>, <c>cos(x)/(sin(x) tan(x/2))</c> — rewritten so that
         /// every one of them is of the same argument, and handed on.
@@ -3426,6 +3440,14 @@ namespace AngouriMath.Functions.Algebra
                     case Variable or Sumf or Minusf or Mulf or Divf:
                     case Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf:
                     case Powf(_, Number.Integer):
+                        break;
+                    // A fractional power of a polynomial in *one* function of one argument is
+                    // let through: `(2 - 3 sin(x)^2)^(3/5) sin(4x)` is, under the sine, a sum of
+                    // binomial differentials once the multiple is written out, and the binomial
+                    // rule answers those at any depth now. A root of a product of two functions
+                    // is not -- `sqrt(cos(x) sin(x)^3)` beside `sin(2x)` was thirty seconds to
+                    // decline let through -- and nor is anything else.
+                    case Powf(var radicalBase, Number.Rational) when IsAPolynomialInOneTrigonometricFunction(radicalBase, x):
                         break;
                     default:
                         return null;
