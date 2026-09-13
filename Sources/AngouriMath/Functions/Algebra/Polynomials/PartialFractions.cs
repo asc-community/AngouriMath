@@ -551,6 +551,59 @@ namespace AngouriMath.Functions
         /// judgement, which is why every caller checks what it builds from the answer.
         /// </summary>
         internal static bool TrySolveLinear(Entity[][] matrix, Entity[] rhs, [NotNullWhen(true)] out Entity[]? values)
+            => TrySolveLinear(matrix, rhs, symbolsMayCancel: false, out values);
+
+        /// <summary>
+        /// <see cref="TrySolveLinear(Entity[][], Entity[], out Entity[])"/>, and where the
+        /// entries carry symbols, with the symbols pinned first: solved exactly at two sets of
+        /// rationals, and where the two solutions agree the unknowns are constants and that is
+        /// the answer. Where they differ, the symbolic elimination is run on the columns the
+        /// pinned solutions needed and no others, with a difference of symbols that simplifies
+        /// to zero taken as zero -- <c>2a - 2a</c> is not a number as written, and the plain
+        /// elimination declines a system it leaves in.
+        /// </summary>
+        internal static bool TrySolveLinearWithSymbols(Entity[][] matrix, Entity[] rhs, [NotNullWhen(true)] out Entity[]? values)
+        {
+            values = null;
+            var symbols = matrix.SelectMany(row => row).Concat(rhs).SelectMany(entry => entry.Vars).Distinct().ToList();
+            if (symbols.Count == 0)
+                return TrySolveLinear(Copy(matrix), (Entity[])rhs.Clone(), out values);
+            Entity Pin(Entity entry, int seed)
+            {
+                for (var i = 0; i < symbols.Count; i++)
+                    entry = entry.Substitute(symbols[i], Rational.Create(ERational.Create(EInteger.FromInt32(7 + 4 * i + 3 * seed), EInteger.FromInt32(3 + seed))));
+                return Bare(entry);
+            }
+            Entity[][] Pinned(int seed) => matrix.Select(row => row.Select(entry => Pin(entry, seed)).ToArray()).ToArray();
+            Entity[] PinnedRhs(int seed) => rhs.Select(entry => Pin(entry, seed)).ToArray();
+            if (!TrySolveLinear(Pinned(0), PinnedRhs(0), out var first) || !TrySolveLinear(Pinned(1), PinnedRhs(1), out var second))
+                return false;
+            var width = matrix[0].Length;
+            if (Enumerable.Range(0, width).All(k => first[k] == second[k]))
+            {
+                values = first;
+                return true;
+            }
+            var support = Enumerable.Range(0, width).Where(k => first[k] != Integer.Zero || second[k] != Integer.Zero).ToList();
+            var reduced = matrix.Select(row => support.Select(k => row[k]).ToArray()).ToArray();
+            if (!TrySolveLinear(reduced, (Entity[])rhs.Clone(), symbolsMayCancel: true, out var onSupport))
+                return false;
+            values = new Entity[width];
+            for (var k = 0; k < width; k++)
+                values[k] = Integer.Zero;
+            for (var i = 0; i < support.Count; i++)
+                values[support[i]] = onSupport[i];
+            return true;
+        }
+
+        private static Entity[][] Copy(Entity[][] matrix) => matrix.Select(row => (Entity[])row.Clone()).ToArray();
+
+        /// <summary>Zero as written or as a number, or, where <paramref name="simplify"/> and it has symbols, once simplified.</summary>
+        private static bool IsZero(Entity entry, bool simplify)
+            => entry == Integer.Zero || entry.Evaled is Complex { IsZero: true }
+            || (simplify && entry.Evaled is not Complex && entry.Simplify().Evaled is Complex { IsZero: true });
+
+        private static bool TrySolveLinear(Entity[][] matrix, Entity[] rhs, bool symbolsMayCancel, [NotNullWhen(true)] out Entity[]? values)
         {
             values = null;
             var rows = rhs.Length;
@@ -575,7 +628,7 @@ namespace AngouriMath.Functions
                     }
                 if (pivot < 0)
                     for (var row = rank; row < rows; row++)
-                        if (matrix[row][column] != Integer.Zero && matrix[row][column].Evaled is not Complex { IsZero: true })
+                        if (!IsZero(matrix[row][column], symbolsMayCancel))
                         {
                             pivot = row;
                             break;
@@ -603,7 +656,7 @@ namespace AngouriMath.Functions
             // A row with no pivot says 0 = rhs; the system is consistent only where that is
             // decidably so.
             for (var row = rank; row < rows; row++)
-                if (rhs[row] != Integer.Zero && rhs[row].Evaled is not Complex { IsZero: true })
+                if (!IsZero(rhs[row], symbolsMayCancel))
                     return false;
 
             values = new Entity[width];

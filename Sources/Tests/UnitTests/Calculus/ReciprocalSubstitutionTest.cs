@@ -36,7 +36,7 @@ namespace AngouriMath.Tests.Calculus
         /// <summary>Both sides of zero, away from the poles at <c>+-1</c>.</summary>
         private static readonly double[] Points = { -2.7, -1.6, -0.6, -0.3, 0.4, 0.7, 1.5, 2.3 };
 
-        private static void DifferentiatesBack(string integrand)
+        private static void DifferentiatesBack(string integrand, params (string symbol, double value)[] pinned)
         {
             var integral = integrand.ToEntity().Integrate("x");
             Assert.DoesNotContain("integral(", integral.Stringize());
@@ -44,6 +44,11 @@ namespace AngouriMath.Tests.Calculus
 
             var derivative = integral.Substitute("C", 0).Differentiate("x");
             var original = integrand.ToEntity();
+            foreach (var (symbol, value) in pinned)
+            {
+                derivative = derivative.Substitute(symbol, value);
+                original = original.Substitute(symbol, value);
+            }
             var compared = 0;
             foreach (var at in Points)
             {
@@ -73,6 +78,28 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sqrt(1 + x^4)/(1 - x^4)")]
         [InlineData("(x^2 + 1)/(x*sqrt(x^4 + 3*x^2 + 1))")]
         public void ARootOfAPalindromicQuartic(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// The odd terms too: <c>a x^4 + d x^3 + b x^2 + s d x + a</c> is <c>x^2</c> times
+        /// <c>a u^2 + d u + b - 2as</c> under <c>u = x + s/x</c>, and the odd terms fix which
+        /// sign it is. Such an integrand has no parity, so the answer for <c>x &gt; 0</c> is
+        /// extended by the sign of <c>x</c> instead, which is exact: the root is
+        /// <c>|x| sqrt(q(u))</c> on both sides. Both sides are checked.
+        /// </summary>
+        [Theory]
+        [InlineData("(1 - x^2)/((1 + x + x^2)*sqrt(1 + x + 3*x^2 + x^3 + x^4))")]
+        [InlineData("(1 + x^2)/(x*sqrt(1 - x + 3*x^2 + x^3 + x^4))")]
+        public void APalindromicQuarticWithOddTerms(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// Timofeev's, with symbols for coefficients: the quartic is read with <c>2a - 2a</c>
+        /// taken as zero, and the bracket <c>-x/(1 + 2ax + x^2)</c> is written as
+        /// <c>-1/(u + 2a)</c> by a solve that pins the symbols first to find which
+        /// coefficients there are, and solves for those symbolically.
+        /// </summary>
+        [Fact]
+        public void TheCoefficientsMayBeSymbols()
+            => DifferentiatesBack("(1 - x^2)/((1 + 2*a*x + x^2)*sqrt(1 + 2*a*x + 2*b*x^2 + 2*a*x^3 + x^4))", ("a", 0.3), ("b", 0.5));
 
         /// <summary>
         /// A hyperbolic function under the root is a palindromic quartic under it once

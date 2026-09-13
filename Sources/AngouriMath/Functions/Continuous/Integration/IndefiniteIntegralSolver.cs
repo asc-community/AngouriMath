@@ -4762,9 +4762,10 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// A rational function of <c>x</c> and one square root of a <b>palindromic quartic</b>
-        /// <c>a x^4 + b x^2 + a</c>, integrated by <c>u = x - 1/x</c> or <c>u = x + 1/x</c>: the
-        /// quartic is <c>x^2</c> times a quadratic in <c>u</c>, and the rest becomes a rational
-        /// function of <c>u</c> where it is one.
+        /// <c>a x^4 + d x^3 + b x^2 + s d x + a</c>, integrated by <c>u = x - 1/x</c> or
+        /// <c>u = x + 1/x</c> as <c>s</c> is <c>-1</c> or <c>+1</c>: the quartic is <c>x^2</c>
+        /// times a quadratic in <c>u</c>, and the rest becomes a rational function of <c>u</c>
+        /// where it is one.
         /// </summary>
         /// <remarks>
         /// <para>
@@ -4778,22 +4779,29 @@ namespace AngouriMath.Functions.Algebra
         /// </para>
         /// <para>
         /// <b>The algebra.</b> With <c>u = x + s/x</c> for <c>s = -1</c> or <c>+1</c>:
-        /// <c>x^2 + 1/x^2 = u^2 - 2s</c>, so <c>Q = a x^4 + b x^2 + a = x^2 (a u^2 + b - 2 a s)</c>;
+        /// <c>x^2 + 1/x^2 = u^2 - 2s</c> and <c>x + s/x = u</c>, so
+        /// <c>Q = a x^4 + d x^3 + b x^2 + s d x + a = x^2 (a u^2 + d u + b - 2 a s)</c>;
         /// and <c>dx = x^2 du/(x^2 - s)</c>. For <c>N/(D sqrt(Q))</c> the integrand is then
-        /// <c>[N x/(D (x^2 - s))] du/sqrt(a u^2 + b - 2as)</c>, and for <c>N sqrt(Q)/D</c> it is
-        /// <c>[N x^3/(D (x^2 - s))] sqrt(a u^2 + b - 2as) du</c>. The bracket is a rational
+        /// <c>[N x/(D (x^2 - s))] du/sqrt(a u^2 + d u + b - 2as)</c>, and for <c>N sqrt(Q)/D</c> it
+        /// is <c>[N x^3/(D (x^2 - s))] sqrt(a u^2 + d u + b - 2as) du</c>. Odd terms fix the
+        /// sign: Timofeev's <c>(1 - x^2)/((1 + 2ax + x^2) sqrt(1 + 2ax + 2bx^2 + 2ax^3 + x^4))</c>
+        /// is one of <c>u = x + 1/x</c> only, <c>-du/((u + 2a) sqrt(u^2 + 2au + 2b - 2))</c>, and
+        /// its coefficients are symbols. The bracket is a rational
         /// function of <c>x</c>; the rule asks whether it is one of <c>u</c>, by undetermined
         /// coefficients on <c>P(u)/S(u)</c> and a check at sampled points, and declines where
         /// it is not -- which is the only way this can fail, and is exact.
         /// </para>
         /// <para>
-        /// <b>The sign of <c>x</c>.</b> <c>sqrt(Q) = |x| sqrt(a u^2 + b - 2as)</c>, and the rule
-        /// takes <c>|x| = x</c>: what comes out is an antiderivative for <c>x &gt; 0</c>. It is
-        /// made one everywhere by parity, which is exact: an odd integrand has an even
-        /// antiderivative, so <c>F(|x|)</c> serves on both sides, and an even one has an odd
-        /// antiderivative, <c>sgn(x) F(|x|)</c>. An integrand of neither parity is declined
-        /// rather than answered on half the line -- unless the caller knows its variable is
-        /// positive, as the exponential substitution does of <c>u = e^x</c>, and says so.
+        /// <b>The sign of <c>x</c>.</b> <c>sqrt(Q) = |x| sqrt(a u^2 + d u + b - 2as)</c>, and the
+        /// rule takes <c>|x| = x</c>: what comes out is an antiderivative for <c>x &gt; 0</c>. It
+        /// is made one everywhere by parity where the integrand has one, which is exact: an
+        /// odd integrand has an even antiderivative, so <c>F(|x|)</c> serves on both sides, and
+        /// an even one has an odd antiderivative, <c>sgn(x) F(|x|)</c>. An integrand of neither
+        /// parity -- every one with odd terms under the root -- is answered by the sign of
+        /// <c>x</c> instead: the integrand in <c>u</c> is <c>sgn(x) R(u) du/sqrt(q(u))</c> on both
+        /// sides, so <c>sgn(x) G(x + s/x)</c> is an antiderivative on both, and is what is
+        /// returned. A caller that knows its variable is positive, as the exponential
+        /// substitution does of <c>u = e^x</c>, says so and gets <c>G(x + s/x)</c> bare.
         /// </para>
         /// <para>
         /// A half-odd power of the quartic, <c>Q^(3/2)</c>, is <c>Q sqrt(Q)</c>, a whole power
@@ -4842,22 +4850,34 @@ namespace AngouriMath.Functions.Algebra
             if (quartic is null || !TreeAnalyzer.TryGetPolynomial(quartic, x, out var read))
                 return null;
             Entity Coefficient(int degree) => read.TryGetValue(EInteger.FromInt32(degree), out var c) ? c : Number.Integer.Zero;
-            if (read.Keys.Any(k => !k.CanFitInInt32() || k.ToInt32Unchecked() is not (0 or 2 or 4)))
+            if (read.Keys.Any(k => !k.CanFitInInt32() || k.ToInt32Unchecked() is not (0 or 1 or 2 or 3 or 4)))
                 return null;
             var a = Coefficient(4);
             var b = Coefficient(2);
             var c = Coefficient(0);
-            if (a.Evaled is not Number.Real { IsZero: false } || (a - c).Evaled is not Number.Complex { IsZero: true }
-                || b.Evaled is not Number.Real)
+            // The odd terms: `d x^3 + e x` is `x^2 (d x + e/x)`, which is `d x^2 u` under
+            // `u = x + s/x` exactly when `e = s d`. Timofeev's
+            // `sqrt(1 + 2ax + 2bx^2 + 2ax^3 + x^4)` is one, under `u = x + 1/x`, and its
+            // coefficients are symbols: a coefficient is a real number or not a number at all.
+            var d = Coefficient(3);
+            var e = Coefficient(1);
+            static bool IsRealOrSymbolic(Entity coefficient) => coefficient.Evaled is Number.Real || coefficient.Evaled is not Number;
+            // `2a - 2a` is not collected by the inner simplification; the full one is asked
+            // only where the difference is not a number already.
+            static bool IsIdenticallyZero(Entity difference) => difference.Evaled is Number number ? number == 0 : TreeAnalyzer.IsZero(difference.Simplify());
+            if (a.Evaled is not Number.Real { IsZero: false } || !IsIdenticallyZero(a - c)
+                || !IsRealOrSymbolic(b) || !IsRealOrSymbolic(d) || !IsRealOrSymbolic(e))
                 return null;
 
             foreach (var sign in new[] { -1, 1 })
             {
+                if (!IsIdenticallyZero(e - sign * d))
+                    continue;
                 // R(x) = N x^k / (D (x^2 - s)), k = 1 with the root below, 3 above.
                 var bracket = above * (rootBelow ? x : MathS.Pow(x, 3)) / (below * (MathS.Sqr(x) - sign));
                 if (!TryWriteInTheReciprocalVariable(bracket, x, sign, out var u, out var inU))
                     continue;
-                var quadratic = a * MathS.Sqr(u) + (b - 2 * sign * a);
+                var quadratic = a * MathS.Sqr(u) + d * u + (b - 2 * sign * a);
                 var integrand = (inU * MathS.Pow(quadratic, Number.Rational.Create(rootBelow ? -1 : 1, 2))).InnerSimplified;
                 if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts: true) is not { } inTermsOfU)
                     continue;
@@ -4867,8 +4887,10 @@ namespace AngouriMath.Functions.Algebra
                 if (variableIsPositive)
                     return forPositiveX;
 
-                // Extended to x < 0 by parity, or not at all.
-                return ExtendedByParity(expr, forPositiveX, x);
+                // Extended to x < 0 by parity where the integrand has one, and by the sign
+                // of x otherwise: sqrt(Q) is |x| sqrt(q(u)) on both sides, so the integrand
+                // in u carries a factor sgn(x) there, and sgn(x) G(u(x)) is exact everywhere.
+                return ExtendedByParity(expr, forPositiveX, x) ?? MathS.Signum(x) * forPositiveX;
             }
             return null;
         }
@@ -4963,7 +4985,7 @@ namespace AngouriMath.Functions.Algebra
                         matrix[row][k] = columns[unknowns[k]].TryGetValue(monomials[row], out var entry) ? entry : Number.Integer.Zero;
                     rhs[row] = columns[fixedColumn].TryGetValue(monomials[row], out var fixedEntry) ? -fixedEntry : Number.Integer.Zero;
                 }
-                var solved = Functions.PartialFractions.TrySolveLinear(matrix, rhs, out var values);
+                var solved = Functions.PartialFractions.TrySolveLinearWithSymbols(matrix, rhs, out var values);
                 if (!solved || values is null)
                     continue;
                 Entity p = Number.Integer.Zero;
