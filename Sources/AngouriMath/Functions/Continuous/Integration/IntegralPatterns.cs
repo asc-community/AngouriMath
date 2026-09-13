@@ -538,6 +538,12 @@ namespace AngouriMath.Functions.Algebra
             var linearCase = TreeAnalyzer.IsZero(b)
                 ? numerator * x / c
                 : numerator * AntiderivativeLog(b * x + c) / b;
+            // A decidably linear denominator is the linear case and nothing else: read as a
+            // quadratic with `a = 0`, a constant denominator has a zero discriminant, and the
+            // perfect-square arm below answered `-2k/(0 x + 0)` -- NaN for `-2/3`, which is what
+            // Euler's third substitution makes of `1/(x sqrt(3x - x^2))`.
+            if (TreeAnalyzer.IsZero(a))
+                return denominatorVanishesWithoutA ? MathS.NaN : linearCase.InnerSimplified;
 
 
             // For true quadratics (a ≠ 0), discriminant Δ = 4ac - b^2 determines the form --

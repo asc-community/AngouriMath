@@ -160,6 +160,22 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, points, ("a", 1.7), ("b", 0.7));
 
         /// <summary>
+        /// A negative leading coefficient beside a negative constant: the radical is real
+        /// between the two roots, and none of the three substitutions reads that. Shifted to
+        /// the vertex the quadratic has no linear term and a positive constant, the second
+        /// substitution's. And the third substitution can make a polynomial of the integrand
+        /// -- <c>1/(x^2 sqrt(3x - x^2))</c> is <c>-2(t^2 + 1)/9</c> -- which none of the rational
+        /// readers behind it took, and the table answered <c>NaN</c> for a constant read as
+        /// <c>k/(0 x^2 + 0 x + 3)</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("x^2/sqrt(-5 + 10*x - 4*x^2)", new[] { 0.8, 1.0, 1.3, 1.6 })]
+        [InlineData("sqrt(-1 + 3*x - x^2)/x", new[] { 0.5, 1.0, 1.7, 2.4 })]
+        [InlineData("1/((x + 1)*sqrt(-1 + 3*x - x^2))", new[] { 0.5, 1.0, 1.7, 2.4 })]
+        [InlineData("1/(x^2*sqrt(3*x - x^2))", new[] { 0.5, 1.0, 1.7, 2.4 })]
+        public void TheNegativeLeadingCoefficientBetweenTheRoots(string integrand, double[] points) => DifferentiatesBack(integrand, points);
+
+        /// <summary>
         /// A complex constant under the root is none of the three substitutions', and taking
         /// <c>-i</c> for a symbol once answered <c>NaN</c>; a rational function of the root
         /// whose Euler form is past the degree the splits can factor is declined too, and not
