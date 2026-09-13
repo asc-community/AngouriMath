@@ -105,5 +105,31 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sin(x)/cos(x)^2")]
         [InlineData("sin(x)*cos(x)")]
         public void OneArgumentIsLeftToTheOthers(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// A fractional power of a polynomial in one function of the argument is let through:
+        /// Timofeev's <c>(2 - 3 sin(x)^2)^(3/5) sin(4x)</c> is, with the multiple written out
+        /// and under the sine, <c>4u(1 - 2u^2)(2 - 3u^2)^(3/5)</c>, two binomial differentials.
+        /// A root of a product of two functions is not let through, and stays declined at
+        /// the cost it had -- <c>sqrt(cos(x) sin(x)^3)</c> beside <c>sin(2x)</c> was thirty
+        /// seconds to decline once it was.
+        /// </summary>
+        [Theory]
+        [InlineData("(2 - 3*sin(x)^2)^(3/5)*sin(4*x)")]
+        [InlineData("sqrt(1 + cos(x))*sin(2*x)")]
+        public void AFractionalPowerOfOneFunction(string integrand) => DifferentiatesBack(integrand);
+
+        /// <remarks>
+        /// Bounded by the integrator's own budget rather than a wall clock that measures the
+        /// runner; what is pinned is that the verdict is not a wrong answer and comes in a
+        /// moment, where letting the root through made it thirty seconds.
+        /// </remarks>
+        [Theory]
+        [InlineData("(-2*sin(2*x) + sqrt(cos(x)*sin(x)^3))/(sqrt(tan(x)) - sqrt(cos(x)^3*sin(x)))")]
+        public void ARootOfAProductOfTwoFunctionsIsNotLetThrough(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("NaN", integral.Stringize());
+        }
     }
 }
