@@ -87,6 +87,36 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// What is polynomial in a term is what has no root of the variable in it, a
+        /// logarithm of <c>x</c> being an indeterminate as far as gathering and cancelling go:
+        /// Bronstein's expands to three terms with no root and one with, and the three are
+        /// <c>1/x</c> together -- <c>(x + L)^2</c> over <c>x (x + L)^2</c> with <c>L</c> for the
+        /// logarithm, cancelled as such -- and nothing apart; the one with the root is over
+        /// the same denominator, written in its square-free factors so that the substitution
+        /// <c>u = x + ln(x)</c> is visible in it. The answer is <c>ln(x) - 2/sqrt(x + ln(x))</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("(x^2 + 2*x*ln(x) + ln(x)^2 + (1 + x)*sqrt(x + ln(x)))/(x^3 + 2*x^2*ln(x) + x*ln(x)^2)")]
+        [InlineData("(x^2 + 2*x*ln(x) + ln(x)^2 + (1 + x)*sqrt(x + ln(x)))/(x*(x + ln(x))^2)")]
+        [InlineData("(sin(x)^2 + 2*x*sin(x) + x^2 + (1 + cos(x))*sqrt(x + sin(x)))/(x + sin(x))^2")]
+        [InlineData("(sin(x)^2 + 2*x*sin(x) + x^2 + (1 + cos(x))*sqrt(x + sin(x)))/(x^2 + 2*x*sin(x) + sin(x)^2)")]
+        public void TheExpandedTermsCancelledWithTheFunctionsAsIndeterminates(string integrand)
+            => TheExpandedTermsGatheredOverASharedRadical(integrand);
+
+        /// <summary>
+        /// And a quotient that is one such cancellation whole, with no radical to gather by:
+        /// <c>(x^2 + 2x sin(x) + sin(x)^2)/(x + sin(x))^2</c> is <c>1</c>, and split its terms
+        /// are not elementary apart. The rule for it asks only where the writing changed
+        /// something, so a quotient nothing cancels in is not asked again as itself.
+        /// </summary>
+        [Theory]
+        [InlineData("(sin(x)^2 + 2*x*sin(x) + x^2)/(x + sin(x))^2")]
+        [InlineData("(ln(x)^2 + 2*x*ln(x) + x^2)/(x^3 + 2*x^2*ln(x) + x*ln(x)^2)")]
+        [InlineData("(1 + x)*sqrt(x + ln(x))/(x^3 + 2*x^2*ln(x) + x*ln(x)^2)")]
+        public void AQuotientCancelledWithTheFunctionsAsIndeterminates(string integrand)
+            => TheExpandedTermsGatheredOverASharedRadical(integrand);
+
+        /// <summary>
         /// Each term alone is answered, which is what makes the sum's decline a defect of the
         /// split and not of the rules.
         /// </summary>
