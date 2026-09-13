@@ -79,6 +79,37 @@ namespace AngouriMath.Tests.Calculus
         public void TheComplementOfTheWrittenFunction(string integrand) => DifferentiatesBack(integrand, BothSigns);
 
         /// <summary>
+        /// The other four functions of the argument are written as quotients of the sine
+        /// and cosine before the complement's even powers are: <c>sin(x)/sqrt(sec(x) - 1)</c>
+        /// under <c>u = cos(x)</c> is <c>-1/sqrt(1/u - 1)</c>, a root of a quotient of linears,
+        /// and with the secant left standing it kept its <c>x</c>. Charlwood's arctangent is
+        /// that remainder by parts. Where the cosine is positive, which is where the root is
+        /// real.
+        /// </summary>
+        [Theory]
+        [InlineData("sin(x)/sqrt(sec(x) - 1)")]
+        [InlineData("atan(sqrt(sec(x) - 1))*sin(x)")]
+        public void TheOtherFunctionsAreWrittenAsSineAndCosine(string integrand)
+            => DifferentiatesBack(integrand, new[] { -1.4, -1.1, -0.4, 0.4, 1.1, 1.4 });
+
+        /// <summary>
+        /// And not where that writing puts an odd power of the complement under a root: the
+        /// simplification the substitution runs takes <c>sqrt(.../cos(x)^2)</c> as
+        /// <c>.../cos(x)</c>, its value where the cosine is positive and its negative
+        /// elsewhere, and Timofeev's was answered wrongly on half the line that way. Declined
+        /// or right on both sides, never wrong.
+        /// </summary>
+        [Theory]
+        [InlineData("(sec(x)^2 - 3*sqrt(4*sec(x)^2 + 5*tan(x)^2)*tan(x))/(sin(x)^2*(4*sec(x)^2 + 5*tan(x)^2)^(3/2))")]
+        public void AnOddComplementUnderARootIsNotWrittenSo(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            if (integral.Stringize().Contains("integral("))
+                return;   // declined is a legitimate verdict; a wrong answer is not
+            DifferentiatesBack(integrand, new[] { -2.6, -2.0, -0.4, 0.4, 2.0, 2.6 });
+        }
+
+        /// <summary>
         /// The same collecting of powers, for a power of <c>x</c> itself: under <c>u = x^8</c>
         /// the quotient by <c>du/dx</c> writes <c>x^7</c> beside the integrand's <c>x</c>, and
         /// only collected is it <c>x^8</c>. Bronstein's, on both sides of zero.
