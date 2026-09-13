@@ -557,6 +557,7 @@ namespace AngouriMath.Functions.Algebra
             // level down -- the nested radicals under `u = sqrt(1 + x)`, the remainders of by
             // parts -- each of which is closed here.
             if ((answer = IndefiniteIntegralSolver.SolveALinearBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByEulerSubstitution(expr, x)) is { }) return answer;
             // And a root of a palindromic quartic, which is a root of a quadratic in x -+ 1/x:
             // Charlwood's `(1 + x^2)/((1 - x^2) sqrt(1 + x^4))` is `-du/(u sqrt(u^2 + 2))`.
