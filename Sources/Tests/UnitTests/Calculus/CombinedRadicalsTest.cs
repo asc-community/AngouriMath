@@ -183,6 +183,52 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// A root above the bar over a root below it combines as the quotient it is where the
+        /// product would not: <c>sqrt(x^4 - 1)/sqrt(x^2 - 1)</c> has two negative bases inside
+        /// the unit interval, where <c>sqrt(P) sqrt(Q)</c> is <c>-sqrt(PQ)</c>, and is
+        /// <c>sqrt(x^2 + 1)</c> there all the same, since the two <c>i</c>s cancel in a quotient.
+        /// Checked inside the interval and outside it. And with a root below the bar alone
+        /// negative -- <c>sqrt(x^2 + 1)/sqrt(x^2 - 1)</c> inside the interval, where
+        /// <c>1/sqrt(Q)</c> is <c>-i/sqrt|Q|</c> and <c>sqrt(1/Q)</c> is <c>+i/sqrt|Q|</c> -- the
+        /// identity fails, and the rule leaves it: either verdict but a wrong answer.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(x^4 - 1)/sqrt(x^2 - 1)")]
+        [InlineData("x*sqrt(x^4 - 1)/sqrt(x^2 - 1)")]
+        [InlineData("sqrt(x^4 - 1)/(x^2*sqrt(1 - 1/x^2))")]
+        public void RootsCombinedAsAQuotient(string integrand)
+            => DifferentiatesBack(integrand, new[] { -2.6, -1.5, -0.7, -0.3, 0.2, 0.55, 0.85, 1.4, 2.3 });
+
+        [Theory]
+        [InlineData("sqrt(x^2 + 1)/sqrt(x^2 - 1)")]
+        [InlineData("sqrt(x^2 + 1)/(x*sqrt(x^2 - 1))")]
+        public void ARootBelowTheBarAloneNegativeIsNotCombined(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            if (integral.Stringize().Contains("integral("))
+                return;   // unanswered is a legitimate verdict; a wrong answer is not
+            DifferentiatesBack(integrand, new[] { -2.6, -1.5, -0.7, -0.3, 0.2, 0.55, 0.85, 1.4, 2.3 });
+        }
+
+        /// <summary>
+        /// The quotient identity at a point inside the unit interval, where both bases are
+        /// negative: <c>sqrt(-15/16)/sqrt(-3/4)</c> is <c>sqrt(5/4)</c>, which is
+        /// <c>sqrt((x^4 - 1)/(x^2 - 1))</c> there; and <c>1/sqrt(-3/4)</c> is
+        /// <c>-sqrt(1/(-3/4))</c>, which is why a root below the bar alone negative is not.
+        /// </summary>
+        [Fact]
+        public void TheQuotientIdentityHoldsWithTwoNegativeBasesAndFailsWithOneBelow()
+        {
+            var left = "sqrt(x^4 - 1)/sqrt(x^2 - 1)".ToEntity().Substitute("x", 0.5).EvalNumerical();
+            var right = "sqrt((x^4 - 1)/(x^2 - 1))".ToEntity().Substitute("x", 0.5).EvalNumerical();
+            Assert.True(Math.Abs((double)(left - right).RealPart) + Math.Abs((double)(left - right).ImaginaryPart) < 1e-12, $"{left} against {right}");
+            var below = "1/sqrt(x^2 - 1)".ToEntity().Substitute("x", 0.5).EvalNumerical();
+            var underOneRoot = "sqrt(1/(x^2 - 1))".ToEntity().Substitute("x", 0.5).EvalNumerical();
+            Assert.True(Math.Abs((double)(below + underOneRoot).ImaginaryPart) < 1e-12, $"{below} against {underOneRoot}");
+        }
+
+        /// <summary>
         /// The identity itself, at a point where both bases are negative, so that the
         /// condition the rule checks is pinned as a fact and not as a convention:
         /// <c>sqrt(-1) sqrt(-2)</c> is <c>-sqrt(2)</c> and <c>sqrt(2)</c> is not.
