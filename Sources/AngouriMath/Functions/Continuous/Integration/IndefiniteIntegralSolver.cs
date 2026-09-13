@@ -6215,6 +6215,81 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A fractional power of a quotient whose denominator is positive for every real
+        /// <paramref name="x"/> is written as the power of the numerator over the power of the
+        /// denominator, a power of an even power of <c>x</c> among them as a power of <c>x</c>
+        /// for <c>x &gt; 0</c>, and the integrand so written is asked of the chain; where a
+        /// power of <c>x</c> was taken so, the answer is extended to <c>x &lt; 0</c> by parity.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>(P/Q)^r = P^r/Q^r</c> whenever <c>Q</c> is a positive real, since then
+        /// <c>arg(P/Q) = arg(P)</c>; a polynomial in <c>x^2</c> with positive coefficients is one
+        /// at every real <c>x</c> but zero, where the quotient was undefined anyway. Timofeev's
+        /// <c>((2 + x^2)/x^2)^(7/9)/(2 + x^2)^(3/2)</c> is nothing any rule reads as written, and
+        /// <c>x^(-14/9) (2 + x^2)^(7/9 - 3/2)</c> once the quotient is written apart, a binomial
+        /// differential under <c>u = x^(1/9)</c>. The simplifier is right not to write it so
+        /// for an <c>x</c> it knows nothing about; the integrator knows its variable is real.
+        /// </para>
+        /// <para>
+        /// <c>(x^2)^(-7/9)</c> is <c>|x|^(-14/9)</c>, and is written as <c>x^(-14/9)</c>: what comes
+        /// out is an antiderivative for <c>x &gt; 0</c>, made one everywhere by parity, which is
+        /// exact, or not at all. Asked at the top only, as every rule that lands on the open
+        /// chain is.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByWritingAPowerOfAQuotientApart(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var tookAPowerOfX = false;
+            var written = expr.Replace(node =>
+            {
+                if (node is not Powf(Divf(var above, var below), Number.Rational exponent) || exponent is Number.Integer
+                    || !below.ContainsNode(x) || !IsPositiveForReal(below, x))
+                    return node;
+                return MathS.Pow(above, exponent) * PowerOfAPositive(below, -exponent);
+            });
+            if (written == expr)
+                return null;
+            var forPositive = Integration.ComputeIndefiniteIntegral(written.InnerSimplified, x, integrateByParts: true);
+            if (forPositive is null || forPositive.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            return tookAPowerOfX ? ExtendedByParity(expr, forPositive, x) : forPositive;
+
+            // Q^r for a Q positive at every real x: a monomial `c x^(2k)` is `c^r x^(2kr)` for x > 0.
+            Entity PowerOfAPositive(Entity positive, Number.Rational exponent)
+            {
+                if (TreeAnalyzer.TryGetPolynomial(positive, x, out var monomials) && monomials.Count == 1)
+                {
+                    var (degree, coefficient) = (monomials.Keys.First(), monomials.Values.First());
+                    if (degree.Sign > 0)
+                    {
+                        tookAPowerOfX = true;
+                        var power = MathS.Pow(x, (Number.Integer.Create(degree) * exponent).InnerSimplified);
+                        return coefficient.Evaled is Number.Integer { IsZero: false } one && one.EInteger.Equals(EInteger.One)
+                            ? power
+                            : MathS.Pow(coefficient, exponent) * power;
+                    }
+                }
+                return MathS.Pow(positive, exponent);
+            }
+        }
+
+        /// <summary>
+        /// Whether the polynomial <paramref name="expr"/> in <paramref name="x"/> is positive at
+        /// every real <paramref name="x"/> but possibly zero, for the plain reason that every
+        /// monomial is an even power with a positive coefficient.
+        /// </summary>
+        private static bool IsPositiveForReal(Entity expr, Entity.Variable x)
+        {
+            if (!TreeAnalyzer.TryGetPolynomial(expr, x, out var monomials) || monomials.Count == 0)
+                return false;
+            return monomials.All(pair => pair.Key.IsEven && pair.Value.Evaled is Number.Real { IsPositive: true });
+        }
+
+        /// <summary>
         /// The radicals of <paramref name="expr"/> with every power of <paramref name="u"/>
         /// that a radical can hold taken out of it, for a <paramref name="u"/> that is not
         /// negative: <c>(u^2 (1 + u))^(1/2)</c> is <c>u sqrt(1 + u)</c>, and
