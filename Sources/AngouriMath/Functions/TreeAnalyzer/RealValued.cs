@@ -47,6 +47,12 @@ namespace AngouriMath.Functions
                 // Only an integer exponent keeps a real base real: x ^ (1/2) is not real below 0.
                 case Powf(var @base, Integer):
                     return IsRealValued(@base, x);
+                // A positive constant base is real to any real exponent: e^x, and so
+                // `e^x - 1/e^x - 2`, whose sign the antiderivative of a hyperbolic integrand
+                // carries under `u = e^x`.
+                case Powf(var constantBase, var exponent) when !constantBase.ContainsNode(x)
+                        && constantBase.Evaled is Real { IsNaN: false, IsPositive: true }:
+                    return IsRealValued(exponent, x);
                 case Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf
                      or Arctanf or Arccotanf or Signumf:
                     return IsRealValued(expr.DirectChildren[0], x);

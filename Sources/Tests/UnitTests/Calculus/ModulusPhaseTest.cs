@@ -87,6 +87,11 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("abs(x / i)", "sgn(x) provided not x = 0")]
         [InlineData("abs(x + 2)", "sgn(x + 2) provided not x + 2 = 0")]
         [InlineData("sgn(x + 2)", "0 provided not x + 2 = 0")]
+        // A positive constant base is real to a real exponent: the sign of e^x - 1/e^x - 2 is
+        // what the antiderivative of a hyperbolic integrand carries under u = e^x, and its
+        // derivative was left unevaluated, which no numeric check of that antiderivative got past.
+        [InlineData("sgn(e^x - 2)", "0 provided not e^x - 2 = 0")]
+        [InlineData("sgn(2^x + 1/2^x - 2)", "0 provided not 2^x + 1/2^x - 2 = 0")]
         public void TheDerivativeOfARealValuedModulusIsTheSignRule(string expr, string expected)
             => Assert.Equal(expected.ToEntity(), expr.ToEntity().Differentiate(x));
 
@@ -107,6 +112,8 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("abs(a * x)")]
         [InlineData("sgn(2 + i * x)")]
         [InlineData("sgn(a * x)")]
+        [InlineData("sgn((-2)^x)")]
+        [InlineData("sgn(x^x)")]
         public void TheDerivativeOfAModulusNotShownRealIsLeftUnevaluated(string expr)
             => Assert.IsType<Derivativef>(expr.ToEntity().Differentiate(x));
 

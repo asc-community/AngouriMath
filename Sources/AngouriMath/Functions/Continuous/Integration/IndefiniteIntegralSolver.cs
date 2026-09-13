@@ -4542,6 +4542,151 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A polynomial over a product of distinct linears, beside the square root of a
+        /// quadratic above or below the bar, taken apart as the rational function it is over
+        /// that root: <c>N sqrt(Q)/D</c> is <c>N Q/(D sqrt(Q))</c>, and <c>P/D</c> is a polynomial
+        /// plus a constant over each linear, so the integrand is a polynomial over the root
+        /// plus one <c>K/((x - p) sqrt(Q))</c> per linear -- the rule before this one's shape,
+        /// each.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Moses' <c>sqrt(A^2 + B^2 (1 - y^2))/(1 - y^2)</c>: the root is of <c>A^2 + B^2 - B^2 y^2</c>,
+        /// so this is <c>(A^2 + B^2 - B^2 y^2)/((1 - y^2) sqrt(Q))</c>, whose rational part is
+        /// <c>B^2 + (A^2)/(1 - y^2)</c>, and <c>1/(1 - y^2)</c> is a half over <c>1 - y</c> and a
+        /// half over <c>1 + y</c>. Each piece is a line of the table, and the whole was declined:
+        /// the Euler substitution takes the generic first substitution for a symbolic leading
+        /// coefficient, with <c>sqrt(-B^2)</c> in it.
+        /// </para>
+        /// <para>
+        /// Only where there is something to take apart -- at least two pieces, each strictly
+        /// smaller: a polynomial over the root alone, or one linear with nothing divided out,
+        /// is the rule before this one's or the chain's already, and asking again would be
+        /// asking the same question. The polynomial part goes to the chain, for
+        /// <c>x^n/sqrt(Q)</c> is the trigonometric substitution's or Euler's by its shape; the
+        /// linears are closed.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveARationalFunctionBesideTheRootOfAQuadratic(Entity expr, Entity.Variable x)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Entity? radicand = null;
+            var rootBelow = false;
+            var wholePower = 0;
+            Entity above = Number.Integer.One;
+            Entity below = Number.Integer.One;
+            foreach (var (side, isBelow) in new[] { (numerator, false), (denominator, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (factor is Powf(var @base, Number.Rational half) && half is not Number.Integer && @base.ContainsNode(x))
+                    {
+                        if (radicand is not null || half.ERational.Denominator.CompareTo(EInteger.FromInt32(2)) != 0
+                            || !half.ERational.Numerator.CanFitInInt32())
+                            return null;
+                        radicand = @base;
+                        var n = half.ERational.Numerator.ToInt32Unchecked();
+                        rootBelow = isBelow != (n < 0);
+                        // Q^(n/2) is Q^((|n| - 1)/2) sqrt(Q) on the side it is on.
+                        wholePower = (System.Math.Abs(n) - 1) / 2;
+                        if (wholePower > 0)
+                        {
+                            if (rootBelow) below = below * MathS.Pow(@base, wholePower);
+                            else above = above * MathS.Pow(@base, wholePower);
+                        }
+                        continue;
+                    }
+                    if (factor.ContainsNode(x) && !TreeAnalyzer.TryGetPolynomial(factor, x, out _))
+                        return null;
+                    if (isBelow) below = below * factor;
+                    else above = above * factor;
+                }
+            if (radicand is null || !TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var a, out _, out _)
+                || a.Evaled is Number.Complex { IsZero: true })
+                return null;
+            // Written over the root: N sqrt(Q)/D is N Q/(D sqrt(Q)).
+            if (!rootBelow)
+                above = above * radicand;
+            if (!below.ContainsNode(x))
+                return null;
+
+            // The denominator as distinct linears: factored over the integers where it is
+            // numeric, and as written otherwise.
+            var factors = new List<Entity>();
+            Entity constant = Number.Integer.One;
+            var written = Functions.PolynomialFactoring.TryFactor(below, x, out var factored) && factored is not null ? factored : below;
+            foreach (var factor in Mulf.LinearChildren(written))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = constant * factor;
+                    continue;
+                }
+                if (!TreeAnalyzer.TryGetPolyLinear(factor, x, out var slope, out _) || slope.Evaled is Number.Complex { IsZero: true })
+                    return null;
+                factors.Add(factor);
+            }
+            // Distinct: two factors with the same root are one repeated, which is not this.
+            for (var i = 0; i < factors.Count; i++)
+                for (var j = i + 1; j < factors.Count; j++)
+                    if (!TryReadAsQuotient(factors[i] / factors[j], out var top, out var bottom)
+                        || Functions.PolynomialGcd.TryCancel(top, bottom, out _))
+                        return null;
+            var linears = factors.Aggregate(Number.Integer.One as Entity, (product, factor) => product * factor);
+
+            // P/D as a polynomial plus a proper part, the proper part over each linear.
+            Entity polynomialPart = Number.Integer.Zero;
+            Entity properNumerator = above;
+            if (TreeAnalyzer.PolynomialLongDivision(above, linears, genericCase: true, inTermsOf: x) is var (quotient, proper)
+                && quotient.Evaled is not Number.Complex { IsZero: true })
+            {
+                polynomialPart = quotient;
+                var (properTop, properBottom) = Functions.SingleQuotient.Of(proper);
+                if (properBottom != linears && !TryReadAsQuotient(proper, out properTop, out properBottom))
+                    return null;
+                properNumerator = properTop;
+                if (properNumerator.ContainsNode(x) && !TreeAnalyzer.TryGetPolynomial(properNumerator, x, out _))
+                    return null;
+            }
+            var pieces = new List<Entity>();
+            if (polynomialPart.Evaled is not Number.Complex { IsZero: true })
+                pieces.Add(polynomialPart);
+            if (properNumerator.Evaled is not Number.Complex { IsZero: true })
+            {
+                if (factors.Count == 1)
+                    pieces.Add(properNumerator / factors[0]);
+                else if (Functions.PartialFractions.TrySplitOverWrittenFactors(properNumerator, linears, x, out var decomposition) && decomposition is not null)
+                {
+                    // The split comes back as a sum over a constant; the constant goes to each term.
+                    var (terms, over) = decomposition is Divf(var splitTop, var splitBottom) && !splitBottom.ContainsNode(x)
+                        ? (splitTop, splitBottom) : (decomposition, Number.Integer.One as Entity);
+                    foreach (var term in Sumf.LinearChildren(terms))
+                        if (term.Evaled is not Number.Complex { IsZero: true })
+                            pieces.Add(term / over);
+                }
+                else
+                    return null;
+            }
+            if (pieces.Count < 2)
+                return null;   // nothing was taken apart
+
+            var root = MathS.Pow(radicand, Number.Rational.Create(1, 2));
+            Entity answer = Number.Integer.Zero;
+            foreach (var piece in pieces)
+            {
+                // Written as `coefficient / sqrt(Q)`, the shape the table reads for a constant.
+                var overTheRoot = (piece / constant).InnerSimplified / root;
+                var integrated = SolveALinearBesideTheRootOfAQuadratic(overTheRoot, x)
+                    ?? (piece.ContainsNode(x) && !TreeAnalyzer.TryGetPolynomial(piece, x, out _) ? null : Integration.ComputeIndefiniteIntegral(overTheRoot, x, integrateByParts: false));
+                if (integrated is null)
+                    return null;
+                answer = answer + integrated;
+            }
+            answer = answer.InnerSimplified;
+            return answer.Nodes.Any(node => node is Number.Complex { IsNaN: true }) ? null : answer;
+        }
+
+        /// <summary>
         /// A rational function of <c>x</c> and one square root of a quadratic in <c>x</c>,
         /// rationalised by an Euler substitution and handed to the rational integrator.
         /// </summary>
