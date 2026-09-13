@@ -559,6 +559,8 @@ namespace AngouriMath.Functions
             var width = matrix[0].Length;
             if (width == 0 || matrix.Any(row => row.Length != width))
                 return false;
+            if (TrySolveOverPolynomials(matrix, rhs, out values))
+                return true;
 
             var pivotColumnOfRow = new int[rows];
             for (var row = 0; row < rows; row++)
@@ -617,6 +619,131 @@ namespace AngouriMath.Functions
                     if (matrix[row][k] != Integer.Zero)
                         accumulated -= matrix[row][k] * values[k];
                 values[column] = Bare(accumulated / matrix[row][column]);
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// The system whose entries are polynomials over <c>Q</c> in some symbols, solved
+        /// exactly as such: fraction-free Gauss-Jordan elimination, so that every entry on
+        /// the way is a minor of the augmented matrix and every zero is a zero, and each
+        /// unknown comes out as one polynomial over the last pivot, in lowest terms.
+        /// Declined, for the elimination on entities, where an entry is not such a
+        /// polynomial -- a number outside <c>Q</c>, a symbol under a root or below the bar
+        /// -- or where the system has no symbols at all and the entities are exact already.
+        /// </summary>
+        /// <remarks>
+        /// The elimination on entities does not collect terms, so with symbols in the entries
+        /// its zero test is numeric and its answers are what the arithmetic wrote:
+        /// <c>1/((x + 1) sqrt(x^2 + x + b))</c> through the Euler substitution came back
+        /// correct in 24 KB, with partial-fraction coefficients like <c>(2b - 2b)</c> beside
+        /// terms that were zero, and <c>1/((x + a) sqrt(x^2 + b x + c))</c> in 77 KB. Bareiss'
+        /// elimination keeps every intermediate a polynomial, divided exactly by the previous
+        /// pivot, and the Gauss-Jordan form of it (Nakos, Turner and Williams, 1997) reduces
+        /// above the pivot too, so at the end each pivot row reads <c>d x_k = n_k</c> with
+        /// <c>d</c> the last pivot -- one fraction per unknown, no back-substitution to
+        /// compound them.
+        /// </remarks>
+        private static bool TrySolveOverPolynomials(Entity[][] matrix, Entity[] rhs, [NotNullWhen(true)] out Entity[]? values)
+        {
+            values = null;
+            var symbols = matrix.SelectMany(row => row).Concat(rhs).SelectMany(entry => entry.Vars).Distinct()
+                .OrderBy(variable => variable.Name, System.StringComparer.Ordinal).ToList();
+            if (symbols.Count == 0 || symbols.Count > MultivariatePolynomial.MaxVariables)
+                return false;
+            var indices = new Dictionary<Variable, int>(symbols.Count);
+            for (var i = 0; i < symbols.Count; i++)
+                indices[symbols[i]] = i;
+            var rows = rhs.Length;
+            var width = matrix[0].Length;
+            // The augmented matrix, the right-hand side its last column.
+            var augmented = new MultivariatePolynomial[rows][];
+            for (var row = 0; row < rows; row++)
+            {
+                augmented[row] = new MultivariatePolynomial[width + 1];
+                for (var column = 0; column <= width; column++)
+                {
+                    var entry = column < width ? matrix[row][column] : rhs[row];
+                    if (MultivariatePolynomial.TryParse(entry, indices) is not { } parsed)
+                        return false;
+                    augmented[row][column] = parsed;
+                }
+            }
+
+            var pivotColumnOfRow = new int[rows];
+            var previous = MultivariatePolynomial.One(symbols.Count);
+            var rank = 0;
+            for (var column = 0; column < width && rank < rows; column++)
+            {
+                var pivot = -1;
+                for (var row = rank; row < rows; row++)
+                    if (!augmented[row][column].IsZero)
+                    {
+                        pivot = row;
+                        break;
+                    }
+                if (pivot < 0)
+                    continue;
+                if (pivot != rank)
+                    (augmented[pivot], augmented[rank]) = (augmented[rank], augmented[pivot]);
+                var pivotValue = augmented[rank][column];
+                for (var row = 0; row < rows; row++)
+                {
+                    if (row == rank)
+                        continue;
+                    var factor = augmented[row][column];
+                    for (var k = 0; k <= width; k++)
+                    {
+                        // (pivot * entry - factor * pivotRowEntry) / previous, exactly.
+                        var scaled = pivotValue.Multiply(augmented[row][k], MultivariatePolynomial.MaxIntermediateTerms);
+                        var crossed = factor.IsZero ? MultivariatePolynomial.Zero(symbols.Count) : factor.Multiply(augmented[rank][k], MultivariatePolynomial.MaxIntermediateTerms);
+                        if (scaled is null || crossed is null)
+                            return false;
+                        var divided = scaled.Subtract(crossed).DivideExact(previous, MultivariatePolynomial.MaxIntermediateTerms);
+                        if (divided is null)
+                            return false;
+                        augmented[row][k] = divided;
+                    }
+                }
+                pivotColumnOfRow[rank] = column;
+                previous = pivotValue;
+                rank++;
+            }
+
+            // A row with no pivot says 0 = rhs, and here that is decided exactly.
+            for (var row = rank; row < rows; row++)
+                if (!augmented[row][width].IsZero)
+                    return false;
+
+            values = new Entity[width];
+            for (var column = 0; column < width; column++)
+                values[column] = Integer.Zero;
+            for (var row = 0; row < rank; row++)
+            {
+                var column = pivotColumnOfRow[row];
+                var numerator = augmented[row][width];
+                var denominator = augmented[row][column];
+                if (numerator.IsZero)
+                    continue;
+                if (numerator.DivideExact(denominator) is { } exact)
+                {
+                    values[column] = exact.ToEntity(symbols);
+                    continue;
+                }
+                // Both sides primitive with a positive leading coefficient, the rational
+                // they were scaled by in front: `-300/(-600a - 600)` is `1/2 * 1/(a + 1)`.
+                var primitiveNumerator = numerator.Normalized();
+                var primitiveDenominator = denominator.Normalized();
+                if (numerator.DivideExact(primitiveNumerator) is not { IsConstant: true } numeratorScale
+                    || denominator.DivideExact(primitiveDenominator) is not { IsConstant: true } denominatorScale)
+                    return false;
+                var scale = numeratorScale.ToEntity(symbols) / denominatorScale.ToEntity(symbols);
+                var top = primitiveNumerator.ToEntity(symbols);
+                var bottom = primitiveDenominator.ToEntity(symbols);
+                var fraction = PolynomialGcd.TryCancel(top, bottom, out var cancelled) && cancelled is not null
+                    ? Bare(cancelled)
+                    : top / bottom;
+                values[column] = Bare(scale * fraction);
             }
             return true;
         }

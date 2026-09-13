@@ -136,6 +136,27 @@ namespace AngouriMath.Tests.Calculus
             AssertIsAntiderivative(integrand, coefficients, points);
 
         /// <summary>
+        /// A linear beside the root of a quadratic, all coefficients symbols: through the
+        /// Euler substitution this is a rational function of <c>t</c> whose partial-fraction
+        /// coefficients are a linear system with the symbols in every entry. Solved on
+        /// entities, whose arithmetic collects nothing, the answer was correct and 77 KB,
+        /// with <c>(2b - 2b)</c> among the coefficients; solved over polynomials in the
+        /// symbols, fraction-free, it is one arctangent or one logarithm per arm of a
+        /// piecewise on the discriminant, and under 4 KB. Both arms are checked, and the
+        /// size is the claim.
+        /// </summary>
+        [Theory]
+        [InlineData("1 / ((x + a) * sqrt(x ^ 2 + b * x + c))", "a = 1, b = 1, c = 3", new[] { 0.3, 1.7 })]
+        [InlineData("1 / ((x + a) * sqrt(x ^ 2 + b * x + c))", "a = 1, b = 1, c = -3", new[] { 1.7, 2.6 })]
+        [InlineData("1 / ((x + 1) * sqrt(x ^ 2 + x + b))", "b = 3", new[] { 0.3, 1.7 })]
+        public void ALinearBesideTheRootOfAQuadratic(string integrand, string coefficients, double[] points)
+        {
+            AssertIsAntiderivative(integrand, coefficients, points);
+            var length = integrand.ToEntity().Integrate("x").Stringize().Length;
+            Assert.True(length < 4000, $"{length} characters of answer for {integrand}");
+        }
+
+        /// <summary>
         /// The degenerate arm is not merely non-NaN, it is the right answer: where the
         /// leading coefficient really is zero and there is no x term, the integrand is the
         /// constant k/c and its antiderivative is kx/c. The old code claimed (k/b) ln|bx + c|
