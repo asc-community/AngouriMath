@@ -3966,6 +3966,153 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>N B^r</c>, for a fractional <c>r</c> and an <c>N</c> and a <c>B</c> that are
+        /// polynomials in <paramref name="x"/> and the functions of it in them, answered as
+        /// <c>P(x) B^(r + 1)</c> for a polynomial <c>P</c> where there is one: the derivative of
+        /// that is <c>B^r (P' B + (r + 1) P B')</c>, and <c>P' B + (r + 1) P B' = N</c> is a linear
+        /// system in the coefficients of <c>P</c> once the functions of <c>x</c> are taken for
+        /// indeterminates.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Bronstein's <c>(5x^2 + 3 (e^x + x)^(1/3) + e^x (3x + 2x^2))/(x (e^x + x)^(1/3))</c> is
+        /// <c>3/x + (5x + e^x (2x + 3))/(e^x + x)^(1/3)</c>, and the second is
+        /// <c>3x (e^x + x)^(2/3)</c>: with <c>P = c_0 + c_1 x</c> and <c>r = -1/3</c>,
+        /// <c>c_1 (e^x + x) + (2/3)(c_0 + c_1 x)(e^x + 1) = 5x + e^x (2x + 3)</c> is
+        /// <c>c_1 = 3</c>, <c>c_0 = 0</c>. Nothing else read it: the substitution
+        /// <c>u = e^x + x</c> wants <c>1 + e^x</c> beside the root and finds <c>5x + e^x (2x + 3)</c>.
+        /// </para>
+        /// <para>
+        /// The degree of <c>P</c> is the degree of <c>N</c> in <c>x</c>, the functions of <c>x</c>
+        /// held constant, and one more; the system is exact, over the rationals, and its
+        /// solution is checked by differentiating back at sampled points, since an identity
+        /// between two functions taken for independent indeterminates -- <c>e^x</c> and
+        /// <c>e^(2x)</c>, say -- can fail to be found and cannot be found wrongly, but a
+        /// derivative the reader did not expect can. Closed, and volunteered at any depth.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByAPolynomialTimesAPowerOfTheBase(Entity expr, Entity.Variable x)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Entity? radicalBase = null;
+            Number.Rational? exponent = null;
+            Entity rest = Number.Integer.One;
+            Entity constantBelow = Number.Integer.One;
+            foreach (var (side, isBelow) in new[] { (numerator, false), (denominator, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (factor is Powf(var @base, Number.Rational power) && power is not Number.Integer && @base.ContainsNode(x))
+                    {
+                        if (radicalBase is not null)
+                            return null;
+                        radicalBase = @base;
+                        exponent = isBelow ? Number.Rational.Create(power.ERational.Negate()) : power;
+                        continue;
+                    }
+                    if (!factor.ContainsNode(x))
+                    {
+                        if (isBelow) constantBelow = constantBelow * factor;
+                        else rest = rest * factor;
+                        continue;
+                    }
+                    if (isBelow || HasARadicalOf(factor, x))
+                        return null;
+                    rest = rest * factor;
+                }
+            if (radicalBase is null || exponent is null || HasARadicalOf(radicalBase, x)
+                || !radicalBase.Nodes.Any(node => node.ContainsNode(x) && node is not (Variable or Sumf or Minusf or Mulf or Divf or Powf(_, Number.Integer))))
+                return null;
+
+            // The degree of N in x with the functions of x held constant.
+            var atoms = new Dictionary<Entity, Entity.Variable>();
+            var named = expr;
+            Entity WithAtoms(Entity e) => e.Replace(node =>
+            {
+                if (!node.ContainsNode(x) || node is Variable or Sumf or Minusf or Mulf or Divf || node is Powf(_, Number.Integer { IsNegative: false }))
+                    return node;
+                if (!atoms.TryGetValue(node, out var atom))
+                {
+                    atom = Variable.CreateUnique(named, "atom");
+                    named = named + atom;
+                    atoms[node] = atom;
+                }
+                return atom;
+            });
+            var n = WithAtoms(rest);
+            if (!TreeAnalyzer.TryGetPolynomial(n, x, out var nRead) || nRead.Keys.Any(k => !k.CanFitInInt32()))
+                return null;
+            var degree = (nRead.Count == 0 ? 0 : nRead.Keys.Max()!.ToInt32Unchecked()) + 1;
+            if (degree > 4)
+                return null;
+
+            // P' B + (r + 1) P B' - N, linear in the unknowns; written with the functions of x
+            // as indeterminates, as one polynomial, whose every coefficient must vanish.
+            var unknowns = new List<Entity.Variable>();
+            for (var k = 0; k <= degree; k++)
+            {
+                var unknown = Variable.CreateUnique(named, "c" + k);
+                named = named + unknown;
+                unknowns.Add(unknown);
+            }
+            Entity polynomial = Number.Integer.Zero;
+            for (var k = 0; k <= degree; k++)
+                polynomial = polynomial + unknowns[k] * (k == 0 ? Number.Integer.One : k == 1 ? x : MathS.Pow(x, k));
+            var rPlusOne = Number.Rational.Create(exponent.ERational.Add(ERational.One));
+            var identity = polynomial.Differentiate(x) * radicalBase + rPlusOne * polynomial * radicalBase.Differentiate(x) - rest / constantBelow;
+            var (top, bottom) = Functions.SingleQuotient.Of(Functions.PartialFractions.Bare(WithAtoms(Functions.PartialFractions.Bare(identity))));
+            if (bottom.ContainsNode(x) && !TreeAnalyzer.TryGetPolynomial(bottom, x, out _))
+                return null;
+            var variables = top.Vars.Where(v => !unknowns.Contains(v)).OrderBy(v => v.Name, System.StringComparer.Ordinal).ToList();
+            if (variables.Count == 0 || variables.Count > MultivariatePolynomial.MaxVariables)
+                return null;
+            var indices = new Dictionary<Variable, int>();
+            for (var i = 0; i < variables.Count; i++)
+                indices[variables[i]] = i;
+            // top = E_0 + sum_k c_k E_k.
+            Entity AtUnit(int which)
+            {
+                var e = top;
+                for (var k = 0; k <= degree; k++)
+                    e = e.Substitute(unknowns[k], k == which ? Number.Integer.One : Number.Integer.Zero);
+                return Functions.PartialFractions.Bare(e);
+            }
+            if (MultivariatePolynomial.TryParse(AtUnit(-1), indices) is not { } constantPart)
+                return null;
+            var columns = new List<MultivariatePolynomial>();
+            for (var k = 0; k <= degree; k++)
+            {
+                if (MultivariatePolynomial.TryParse(AtUnit(k), indices) is not { } column)
+                    return null;
+                columns.Add(column.Subtract(constantPart));
+            }
+            var monomials = columns.SelectMany(column => column.Terms.Select(term => term.Key)).Concat(constantPart.Terms.Select(term => term.Key)).Distinct().ToList();
+            var matrix = new Entity[monomials.Count][];
+            var rhs = new Entity[monomials.Count];
+            for (var row = 0; row < monomials.Count; row++)
+            {
+                matrix[row] = new Entity[degree + 1];
+                for (var k = 0; k <= degree; k++)
+                    matrix[row][k] = columns[k].Terms.FirstOrDefault(term => term.Key == monomials[row]).Value is { } c ? Number.Rational.Create(c) : Number.Integer.Zero;
+                rhs[row] = constantPart.Terms.FirstOrDefault(term => term.Key == monomials[row]).Value is { } d ? Number.Rational.Create(d.Negate()) : Number.Integer.Zero;
+            }
+            if (!Functions.PartialFractions.TrySolveLinear(matrix, rhs, out var values) || values is null)
+                return null;
+            Entity p = Number.Integer.Zero;
+            for (var k = 0; k <= degree; k++)
+                if (values[k].Evaled is Number.Complex { IsZero: false })
+                    p = p + values[k] * (k == 0 ? Number.Integer.One : k == 1 ? x : MathS.Pow(x, k));
+            if (p == Number.Integer.Zero)
+                return null;
+            var answer = (p * MathS.Pow(radicalBase, rPlusOne)).InnerSimplified;
+            // Checked as a fact about the function, since two functions taken for
+            // independent indeterminates may not be.
+            if (!Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
+                return null;
+            return answer;
+        }
+
+        /// <summary>
         /// An integrand <c>e^h R</c>, with <c>R</c> rational in <c>x</c> and <c>h</c> rational
         /// in <c>x</c> or absent, integrated by the ansatz <c>F = e^h N/D</c>: <c>D</c> read
         /// off the denominator of <c>R</c>, <c>N</c> a polynomial of unknown coefficients, and

@@ -251,6 +251,9 @@ namespace AngouriMath.Functions
             return new(VariableCount, result);
         }
 
+        /// <summary>The terms, each as its packed monomial and its coefficient.</summary>
+        internal IEnumerable<KeyValuePair<ulong, ERational>> Terms => terms;
+
         /// <summary>
         /// Read as a polynomial in <paramref name="variable"/> alone: the power of that
         /// variable mapped to the coefficient, itself a polynomial in the others.
