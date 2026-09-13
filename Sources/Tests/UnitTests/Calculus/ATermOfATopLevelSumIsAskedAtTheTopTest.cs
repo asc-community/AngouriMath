@@ -62,6 +62,31 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// The expanded terms gathered again by what is not polynomial in them, and each
+        /// group asked as one term: Hearn's expands to <c>-1/sqrt(P)</c>, <c>5x^4/(2 sqrt(P))</c>
+        /// and <c>-3x^2/(2 sqrt(1 + x^3))</c>, of which the first two are not elementary apart
+        /// and are <c>P'/(2 sqrt(P))</c> together. At the top only, and only where the gathering
+        /// both joins and separates something.
+        /// </summary>
+        [Theory]
+        [InlineData("(-2*sqrt(1 + x^3) + 5*x^4*sqrt(1 + x^3) - 3*x^2*sqrt(1 - 2*x + x^5))/(2*sqrt(1 + x^3)*sqrt(1 - 2*x + x^5))")]
+        [InlineData("(1 + 3*x^2)/sqrt(1 + x + x^3) + 2*x/sqrt(1 + x^2)")]
+        public void TheExpandedTermsGatheredOverASharedRadical(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity();
+            foreach (var at in new[] { 0.7, 1.3, 2.4 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                var difference = System.Math.Abs((double)(got - want).RealPart);
+                Assert.True(difference < 1e-8, $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        /// <summary>
         /// Each term alone is answered, which is what makes the sum's decline a defect of the
         /// split and not of the rules.
         /// </summary>
