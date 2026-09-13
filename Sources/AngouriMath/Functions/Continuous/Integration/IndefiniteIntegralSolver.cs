@@ -40,7 +40,16 @@ namespace AngouriMath.Functions.Algebra
             }
             var splitted = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, e => e.ContainsNode(x));
             if (splitted is null || splitted.Count < 2) return null; // nothing to do, let other solvers do the work
-            return Integrated(splitted);
+            // Each expanded term with a factor written on both sides of its bar cancelled:
+            // `x sqrt(1 - x^2)/(sqrt(1 - x^2)(2 + 2x sqrt(1 - x^2)))` is what the expansion makes
+            // of one term of the by-parts remainder of `arctan(x + sqrt(1 - x^2))`, and the
+            // chain's own normalisation collects that root over itself into `(1 - x^2)^0`, a
+            // factor no rule that reads a root of a quadratic sees through.
+            return Integrated(splitted.Select(term =>
+            {
+                var (above, below) = Functions.SingleQuotient.Of(term);
+                return below == Number.Integer.One ? term : CancelCommonFactors(above, below);
+            }).ToList());
 
             Entity? Integrated(List<Entity> terms)
                 => terms.Select(e => Integration.ComputeAsAQuestionOfItsOwn(e, x, integrateByParts)).Aggregate((e1, e2) => (e1, e2) switch {
@@ -4624,8 +4633,12 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             var rational = cleanNumerator / cleanDenominator;
 
+            // The Rothstein-Trager resultant behind the splits, for a denominator they cannot
+            // take apart: `1/(1 + x sqrt(1 - x^2))` is one over a quartic in t irreducible over
+            // the rationals, whose residues are in a quadratic field.
             var inT = SolveByPartialFractions(rational, t, integrateByParts: false)
-                   ?? IntegralPatterns.TryStandardIntegrals(rational, t);
+                   ?? IntegralPatterns.TryStandardIntegrals(rational, t)
+                   ?? SolveByRothsteinTrager(rational, t);
             if (inT is null)
                 return null;
             var answer = inT.Substitute(t, backSubstitution).InnerSimplified;
