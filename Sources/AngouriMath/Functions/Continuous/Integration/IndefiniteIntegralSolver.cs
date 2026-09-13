@@ -65,29 +65,42 @@ namespace AngouriMath.Functions.Algebra
             // corpus for nothing.
             if (!Integration.AnsweringTheQuestionAsked)
                 return null;
-            var groups = new List<(Entity Shared, Entity Polynomial)>();
+            // What is polynomial in a term is what has no root of the variable in it: a
+            // logarithm or an exponential of x is an indeterminate as far as gathering and
+            // cancelling go. Bronstein's
+            // `(x^2 + 2x ln(x) + ln(x)^2 + (1 + x) sqrt(x + ln(x)))/(x^3 + 2x^2 ln(x) + x ln(x)^2)`
+            // expands to three terms with no root and one with, and the three are `1/x`
+            // together -- `(x + L)^2` over `x (x + L)^2` with `L` for the logarithm -- and
+            // nothing apart.
+            var groups = new List<(Entity Radicals, Entity Below, Entity Polynomial)>();
             foreach (var term in splitted)
             {
                 var (above, below) = Functions.SingleQuotient.Of(term);
                 Entity polynomial = Number.Integer.One;
-                Entity shared = Number.Integer.One;
+                Entity radicals = Number.Integer.One;
                 foreach (var factor in Mulf.LinearChildren(above))
-                    if (!factor.ContainsNode(x) || TreeAnalyzer.TryGetPolynomial(factor, x, out _))
+                    if (!factor.ContainsNode(x) || !HasARadicalOf(factor, x))
                         polynomial = polynomial * factor;
                     else
-                        shared = shared * factor;
-                shared = (shared / below).InnerSimplified;
-                var index = groups.FindIndex(group => group.Shared == shared);
+                        radicals = radicals * factor;
+                var index = groups.FindIndex(group => group.Radicals == radicals && group.Below == below);
                 if (index < 0)
-                    groups.Add((shared, polynomial));
+                    groups.Add((radicals, below, polynomial));
                 else
-                    groups[index] = (shared, groups[index].Polynomial + polynomial);
+                    groups[index] = (radicals, below, groups[index].Polynomial + polynomial);
             }
             // Two groups at least: one group is the integrand gathered back into itself, and
             // that has been asked.
             if (groups.Count >= splitted.Count || groups.Count < 2)
                 return null;
-            return Integrated(groups.Select(group => (group.Polynomial.InnerSimplified * group.Shared).InnerSimplified).ToList());
+            return Integrated(groups.Select(group =>
+            {
+                // Each group's quotient cancelled with the functions of x as indeterminates,
+                // and its denominator written in square-free factors the same way, so that
+                // `x (x + ln(x))^2` is seen as the factors it is.
+                var (top, bottom) = CancelledWithFunctionsAsIndeterminates(group.Polynomial.InnerSimplified, group.Below, x, expr);
+                return ((top * group.Radicals).InnerSimplified / bottom).InnerSimplified;
+            }).ToList());
 
             Entity? Integrated(List<Entity> terms)
                 => terms.Select(e => Integration.ComputeAsAQuestionOfItsOwn(e, x, integrateByParts)).Aggregate((e1, e2) => (e1, e2) switch {
@@ -98,6 +111,180 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>The largest term a sum is split over as written, before the expanding gather.</summary>
         private const int LargestTermTakenAsWritten = 60;
+
+        /// <summary>
+        /// A quotient whose numerator and denominator are polynomials in <paramref name="x"/>
+        /// and in the functions of <paramref name="x"/> in them, cancelled by their greatest
+        /// common divisor with those functions taken for indeterminates, and the denominator
+        /// written in its square-free factors the same way; the quotient so written is asked.
+        /// </summary>
+        /// <remarks>
+        /// <c>(x^2 + 2x sin(x) + sin(x)^2)/(x + sin(x))^2</c> is <c>1</c>, and no rule saw that:
+        /// split, its three terms are not elementary apart, and as it stands nothing reads a
+        /// quotient of polynomials in a sine. With <c>S</c> for the sine it is
+        /// <c>(x + S)^2/(x + S)^2</c>. Exact in the generic case, as everywhere in this
+        /// integrator: the cancelled factor is taken nonzero. Only where the writing changes
+        /// something, so that it cannot ask what it was asked.
+        /// </remarks>
+        internal static Entity? SolveByCancellingWithFunctionsAsIndeterminates(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator) || !denominator.ContainsNode(x)
+                || !denominator.Nodes.Any(node => node.ContainsNode(x) && node is not (Variable or Sumf or Minusf or Mulf or Divf or Powf(_, Number.Integer))))
+                return null;
+            var (top, bottom) = CancelledWithFunctionsAsIndeterminates(numerator, denominator, x, expr);
+            if (top == numerator && bottom == denominator)
+                return null;
+            var written = Functions.PartialFractions.Bare(top / bottom);
+            if (written == expr)
+                return null;
+            return Integration.AnsweringTheQuestionAsked
+                ? Integration.ComputeAsAQuestionOfItsOwn(written, x, integrateByParts)
+                : Integration.ComputeIndefiniteIntegral(written, x, integrateByParts);
+        }
+
+        /// <summary>Whether <paramref name="expr"/> holds a fractional power of something in <paramref name="x"/>.</summary>
+        private static bool HasARadicalOf(Entity expr, Entity.Variable x)
+            => expr.Nodes.Any(node => node is Powf(var @base, Number.Rational power) && power is not Number.Integer && @base.ContainsNode(x));
+
+        /// <summary>
+        /// <paramref name="numerator"/> over <paramref name="denominator"/> with every function
+        /// of <paramref name="x"/> that is not a polynomial in it -- a logarithm, an
+        /// exponential, a trigonometric function -- taken for an indeterminate: the two
+        /// cancelled by their greatest common divisor as polynomials in <paramref name="x"/>
+        /// and those, and the denominator written as its square-free factorisation, each
+        /// factor to its multiplicity, each sum written in the order <paramref name="writtenIn"/>
+        /// writes it where it writes it at all. Unchanged where either is not such a
+        /// polynomial, or where nothing cancels and nothing factors.
+        /// </summary>
+        /// <remarks>
+        /// The generic case, as everywhere in this integrator: the cancelled factor is taken
+        /// nonzero, and the identity <c>ln(x) = L</c> is not used -- a cancellation valid for
+        /// every value of <c>L</c> is valid for that one.
+        /// </remarks>
+        private static (Entity Numerator, Entity Denominator) CancelledWithFunctionsAsIndeterminates(Entity numerator, Entity denominator, Entity.Variable x, Entity writtenIn)
+        {
+            if (!denominator.ContainsNode(x))
+                return (numerator, denominator);
+            var atoms = new Dictionary<Entity, Entity.Variable>();
+            // Each name unique against the expression and against the atoms named before it.
+            var named = numerator + denominator;
+            Entity WithAtoms(Entity expr) => expr.Replace(node =>
+            {
+                if (!node.ContainsNode(x) || node is Variable or Sumf or Minusf or Mulf or Divf
+                    || node is Powf(_, Number.Integer { IsNegative: false }))
+                    return node;
+                if (!atoms.TryGetValue(node, out var atom))
+                {
+                    atom = Variable.CreateUnique(named, "atom");
+                    named = named + atom;
+                    atoms[node] = atom;
+                }
+                return atom;
+            });
+            var top = WithAtoms(numerator);
+            var bottom = WithAtoms(denominator);
+            if (top.Nodes.Any(node => node is Powf(_, Number.Rational r) && r is not Number.Integer)
+                || bottom.Nodes.Any(node => node is Powf(_, Number.Rational r) && r is not Number.Integer))
+                return (numerator, denominator);
+            var variables = top.Vars.Concat(bottom.Vars).Distinct().OrderBy(v => v.Name, System.StringComparer.Ordinal).ToList();
+            if (variables.Count == 0 || variables.Count > MultivariatePolynomial.MaxVariables)
+                return (numerator, denominator);
+            var indices = new Dictionary<Variable, int>();
+            for (var i = 0; i < variables.Count; i++)
+                indices[variables[i]] = i;
+            if (MultivariatePolynomial.TryParse(top, indices) is not { } above || MultivariatePolynomial.TryParse(bottom, indices) is not { } below
+                || below.IsConstant)
+                return (numerator, denominator);
+            var order = Enumerable.Range(0, variables.Count).ToList();
+            var cancelled = false;
+            if (Functions.PolynomialGcd.Gcd(above, below, order, 0) is { IsConstant: false } divisor
+                && above.DivideExact(divisor) is { } reducedAbove && below.DivideExact(divisor) is { } reducedBelow)
+            {
+                above = reducedAbove;
+                below = reducedBelow;
+                cancelled = true;
+            }
+            // The square-free factorisation of the denominator in x: Yun's, with the gcds
+            // this file already has.
+            var factors = new List<(MultivariatePolynomial Factor, int Multiplicity)>();
+            var xIndex = indices.TryGetValue(x, out var xi) ? xi : -1;
+            if (xIndex >= 0 && Functions.PolynomialGcd.Gcd(below, below.DerivativeIn(xIndex), order, 0) is { IsConstant: false } repeated
+                && below.DivideExact(repeated) is { } squareFree)
+            {
+                var c = repeated;
+                var w = squareFree;
+                var multiplicity = 1;
+                while (!w.IsConstant && multiplicity < 16)
+                {
+                    if (Functions.PolynomialGcd.Gcd(w, c, order, 0) is not { } y || w.DivideExact(y) is not { } z || c.DivideExact(y) is not { } nextC)
+                    {
+                        factors.Clear();
+                        break;
+                    }
+                    if (!z.IsConstant)
+                        factors.Add((z, multiplicity));
+                    w = y;
+                    c = nextC;
+                    multiplicity++;
+                }
+                if (factors.Count > 0 && !c.IsConstant)
+                    factors.Clear();
+            }
+            // Written back, and a sum that the integrand already writes in some order is
+            // written in that order: the factor `ln(x) + x` beside the root of `x + ln(x)` is
+            // not the substitution the root is, and the same sum is.
+            var writtenSums = writtenIn.Nodes.Where(node => node is Sumf or Minusf)
+                .Select(node => (Node: node, Terms: new HashSet<Entity>(Sumf.LinearChildren(node)))).ToList();
+            // Nothing cancelled and nothing factored: the quotient as it was, and not the
+            // same quotient respelled, which a rule asking whether anything changed would take
+            // for a change.
+            var factored = factors.Count >= 2 || factors.Any(pair => pair.Multiplicity > 1);
+            if (!cancelled && !factored)
+                return (numerator, denominator);
+            // Written back outermost first: an atom holds the atoms inside it by name.
+            Entity Back(Entity mapped)
+            {
+                foreach (var pair in atoms.Reverse())
+                    mapped = mapped.Substitute(pair.Value, pair.Key);
+                return mapped.Replace(node =>
+                {
+                    if (node is not (Sumf or Minusf))
+                        return node;
+                    var terms = new HashSet<Entity>(Sumf.LinearChildren(node));
+                    foreach (var (written, writtenTerms) in writtenSums)
+                        if (writtenTerms.SetEquals(terms))
+                            return written;
+                    return node;
+                });
+            }
+            Entity factoredBelow;
+            if (factors.Count > 0)
+            {
+                // The content -- the rational the factors were normalised by -- goes in front.
+                MultivariatePolynomial? product = MultivariatePolynomial.One(variables.Count);
+                foreach (var (factor, multiplicity) in factors)
+                    for (var i = 0; i < multiplicity && product is not null; i++)
+                        product = product.Multiply(factor);
+                if (product is null || below.DivideExact(product) is not { IsConstant: true } content)
+                    factoredBelow = Back(below.ToEntity(variables));
+                else
+                {
+                    factoredBelow = content.ToEntity(variables);
+                    foreach (var (factor, multiplicity) in factors)
+                    {
+                        var written = Back(factor.ToEntity(variables));
+                        factoredBelow = factoredBelow == Number.Integer.One ? (multiplicity == 1 ? written : MathS.Pow(written, multiplicity))
+                            : factoredBelow * (multiplicity == 1 ? written : MathS.Pow(written, multiplicity));
+                    }
+                }
+            }
+            else
+                factoredBelow = Back(below.ToEntity(variables));
+            // The numerator as it was written where nothing cancelled in it: rebuilt from its
+            // monomials it is expanded, and `(1 + x) sqrt(x + ln(x))` expanded is two terms
+            // neither of which is the substitution the product is.
+            return (cancelled ? Back(above.ToEntity(variables)) : numerator, factoredBelow);
+        }
 
         /// <summary>
         /// A quotient of polynomials, split into two smaller quotients and integrated in two
