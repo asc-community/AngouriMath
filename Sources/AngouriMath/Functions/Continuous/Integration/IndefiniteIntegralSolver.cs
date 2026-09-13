@@ -6311,8 +6311,26 @@ namespace AngouriMath.Functions.Algebra
                 default:
                     return expr;
             }
+            // The other four functions of the argument as quotients of the sine and cosine
+            // first, and the substituted function as u again where that has written it anew:
+            // `sin(x)/sqrt(sec(x) - 1)` under `u = cos(x)` is `-1/sqrt(1/u - 1)`, and with the
+            // secant left standing it kept its x.
+            var written = expr.Replace(node => node switch
+            {
+                Secantf(var a) when a == argument => 1 / MathS.Cos(a),
+                Cosecantf(var a) when a == argument => 1 / MathS.Sin(a),
+                Tanf(var a) when a == argument => MathS.Sin(a) / MathS.Cos(a),
+                Cotanf(var a) when a == argument => MathS.Cos(a) / MathS.Sin(a),
+                _ => node,
+            }).Substitute(u, uSub);
+            // Not where that has put the complement under a root: `sqrt(4/cos(x)^2 + ...)`
+            // under `u = sin(x)` is a root of a quotient by `cos(x)^2`, and the simplification
+            // the substitution runs takes that root as `.../cos(x)`, which is its value where
+            // the cosine is positive and its negative elsewhere -- Timofeev's
+            // `(sec(x)^2 - 3 sqrt(4 sec(x)^2 + 5 tan(x)^2) tan(x))/(sin(x)^2 (...)^(3/2))` was
+            // answered wrongly on half the line that way.
             var oneMinusSquare = 1 - MathS.Sqr(uSub);
-            return expr.Replace(node =>
+            var rewritten = written.Replace(node =>
             {
                 if (node is not Powf(var @base, Number.Integer power) || @base != complement
                     || !power.EInteger.CanFitInInt32() || power.EInteger.ToInt32Unchecked() is var n && n < 2)
@@ -6321,6 +6339,11 @@ namespace AngouriMath.Functions.Algebra
                 Entity even = half == 1 ? oneMinusSquare : MathS.Pow(oneMinusSquare, half);
                 return n % 2 == 0 ? even : complement * even;
             });
+            // An even power of the complement under a root is gone by now; one still there is
+            // odd, and is refused rather than left to the simplification.
+            return rewritten.Nodes.Any(node => node is Powf(var radicalBase, Number.Rational r) && r is not Number.Integer && radicalBase.ContainsNode(complement))
+                ? expr
+                : rewritten;
         }
 
         /// <summary>

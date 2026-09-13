@@ -86,14 +86,17 @@ namespace AngouriMath.Tests.Calculus
         public void EvenInTheSmallerArgument(string integrand, string variable) => DifferentiatesBack(integrand, variable);
 
         /// <summary>
-        /// A product of two arguments is product-to-sum's and keeps the answer it had, in sines
-        /// and cosines of sums rather than in powers.
+        /// A product of two arguments where the double angle collapses under the
+        /// substitution: <c>sin(x) sin(2x)</c> over <c>cos(x)</c> is <c>2 sin(x)^2</c> once the
+        /// simplification has written the double angle out, and the second pass of the
+        /// substitution reads the sine that wrote as <c>u</c> again, so the answer is
+        /// <c>2 sin(x)^3/3</c> and not product-to-sum's cosines of <c>x + 2x</c> any more.
         /// </summary>
         [Fact]
-        public void AProductIsStillProductToSums()
+        public void AProductWhoseDoubleAngleCollapses()
         {
             var integral = "sin(x)*sin(2*x)".ToEntity().Integrate("x").Stringize();
-            Assert.Contains("sin(x + 2 * x)", integral);
+            Assert.Contains("sin(x) ^ 3", integral);
             DifferentiatesBack("sin(x)*sin(2*x)");
         }
 
