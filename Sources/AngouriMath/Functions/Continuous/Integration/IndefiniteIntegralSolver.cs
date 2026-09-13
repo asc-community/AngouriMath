@@ -5980,7 +5980,32 @@ namespace AngouriMath.Functions.Algebra
                 bases.Add(pair.Key);
                 halfExponents[pair.Key] = n;
             }
-            if (bases.Count < 2 || !AtMostOneIsNegativeOnTheReals(bases, x))
+            // Roots above and below the bar that do not combine as a product may combine as
+            // the quotient they are: `sqrt(x^4 - 1)/sqrt(x^2 - 1)` has two negative bases inside
+            // the unit interval, where `sqrt(P) sqrt(Q)` is `-sqrt(PQ)`, and is `sqrt(x^2 + 1)`
+            // there all the same, since the two `i`s cancel in a quotient. Taken only where the
+            // quotient under the one root cancels to a polynomial, so that what is handed on
+            // has strictly fewer roots than what came in.
+            // The signs of the bases on the intervals between their real roots, found once
+            // for both questions: the roots are a solve per base, and asking twice on every
+            // sub-integrand of a search that declines was three seconds of one.
+            var signTable = bases.Count >= 2 ? SignsOnEveryRealInterval(bases, x) : null;
+            var combineAsAProduct = signTable is not null && signTable.All(signs => signs.Count(sign => sign < 0) <= 1);
+            if (bases.Count >= 2 && signTable is not null && !combineAsAProduct
+                && CombinedAsAQuotient(bases, halfExponents, signTable, x) is { } asOneRoot)
+            {
+                var (rootOfAPolynomial, rest) = asOneRoot;
+                // One root of each base is in the quotient; n = 2q + 1 above and n = 2q - 1 below.
+                foreach (var @base in bases)
+                {
+                    var n = halfExponents[@base];
+                    var q = n > 0 ? (n - 1) / 2 : (n + 1) / 2;
+                    if (q > 0) above = above * MathS.Pow(@base, q);
+                    else if (q < 0) below = below * MathS.Pow(@base, -q);
+                }
+                return Functions.PartialFractions.Bare(Functions.PartialFractions.Bare(above * rootOfAPolynomial * rest) / Functions.PartialFractions.Bare(below));
+            }
+            if (bases.Count < 2 || !combineAsAProduct)
             {
                 // Nothing to combine, or roots that must not be: what was cancelled or
                 // gathered is still worth handing on, each root on its own -- as the one
@@ -6167,22 +6192,80 @@ namespace AngouriMath.Functions.Algebra
             => OnEveryRealInterval(bases, x, signs => signs.Count(sign => sign < 0) <= 1);
 
         /// <summary>
+        /// The square roots with the bases <paramref name="bases"/>, those with a positive
+        /// exponent in <paramref name="halfExponents"/> above the bar and the others below,
+        /// written as one square root of the quotient of their bases, where that is exact and
+        /// the quotient cancels to a polynomial: the root of that polynomial, and the rational
+        /// function the cancellation left beside it; <see langword="null"/> otherwise.
+        /// </summary>
+        /// <remarks>
+        /// With <c>a</c> of the bases above negative and <c>b</c> of those below, the left side is
+        /// <c>i^a (1/i)^b = i^(a - b)</c> times the root of the moduli and the right is
+        /// <c>i^((a + b) mod 2)</c> times it, so the identity holds exactly where
+        /// <c>a - b</c> and <c>(a + b) mod 2</c> agree modulo four -- one negative on each side,
+        /// or none, or two above beside one below. Asked on every interval between the real
+        /// roots, as the product rule asks its own question.
+        /// </remarks>
+        private static (Entity Root, Entity Beside)? CombinedAsAQuotient(List<Entity> bases, Dictionary<Entity, int> halfExponents, List<List<int>> signTable, Entity.Variable x)
+        {
+            var aboveBases = bases.Where(b => halfExponents[b] > 0).ToList();
+            var belowBases = bases.Where(b => halfExponents[b] < 0).ToList();
+            if (aboveBases.Count == 0 || belowBases.Count == 0)
+                return null;
+            foreach (var signs in signTable)
+            {
+                var a = 0;
+                var b = 0;
+                for (var i = 0; i < bases.Count; i++)
+                    if (signs[i] < 0)
+                    {
+                        if (halfExponents[bases[i]] > 0) a++;
+                        else b++;
+                    }
+                if (((a - b) % 4 + 4) % 4 != (a + b) % 2)
+                    return null;
+            }
+            Entity top = Number.Integer.One;
+            Entity bottom = Number.Integer.One;
+            foreach (var @base in aboveBases) top = top * @base;
+            foreach (var @base in belowBases) bottom = bottom * @base;
+            if (!Functions.PolynomialGcd.TryCancel(top.Expand().InnerSimplified, bottom.Expand().InnerSimplified, out var cancelled) || cancelled is null)
+                return null;
+            var (polynomial, remaining) = Functions.SingleQuotient.Of(Functions.PartialFractions.Bare(cancelled));
+            if (remaining.ContainsNode(x) || !TreeAnalyzer.TryGetPolynomial(polynomial, x, out _))
+                return null;
+            // sqrt(P/c) for a constant c is sqrt(P)/sqrt(c), exactly, for c > 0; a negative c
+            // is left under the root with the polynomial.
+            if (remaining.Evaled is Number.Real { IsPositive: true })
+                return (MathS.Sqrt(polynomial.InnerSimplified), 1 / MathS.Sqrt(remaining));
+            return (MathS.Sqrt((polynomial / remaining).InnerSimplified), Number.Integer.One);
+        }
+
+        /// <summary>
         /// Whether <paramref name="holds"/> is true of the signs of the polynomials
         /// <paramref name="bases"/> on every interval between their real roots -- one point of
         /// each interval decides it, since no base changes sign inside one. <see langword="false"/>
         /// where the roots cannot be had.
         /// </summary>
         private static bool OnEveryRealInterval(List<Entity> bases, Entity.Variable x, System.Func<List<int>, bool> holds)
+            => SignsOnEveryRealInterval(bases, x) is { } table && table.All(holds);
+
+        /// <summary>
+        /// The signs of the polynomials <paramref name="bases"/>, one list per interval between
+        /// their real roots, in the order of <paramref name="bases"/>; <see langword="null"/>
+        /// where the roots cannot be had.
+        /// </summary>
+        private static List<List<int>>? SignsOnEveryRealInterval(List<Entity> bases, Entity.Variable x)
         {
             var roots = new List<double>();
             foreach (var @base in bases)
             {
                 if (MathS.SolveEquation(@base, x) is not Set.FiniteSet solutions)
-                    return false;
+                    return null;
                 foreach (var solution in solutions.Elements)
                 {
                     if (solution.Evaled is not Number.Complex value || !value.IsFinite)
-                        return false;
+                        return null;
                     if (System.Math.Abs((double)value.ImaginaryPart) < 1e-9)
                         roots.Add((double)value.RealPart);
                 }
@@ -6199,19 +6282,19 @@ namespace AngouriMath.Functions.Algebra
                     if (roots[i + 1] - roots[i] > 1e-9)
                         samples.Add((roots[i] + roots[i + 1]) / 2);
             }
+            var table = new List<List<int>>();
             foreach (var at in samples)
             {
                 var signs = new List<int>();
                 foreach (var @base in bases)
                 {
                     if (@base.Substitute(x, at).Evaled is not Number.Real value || !value.IsFinite)
-                        return false;
+                        return null;
                     signs.Add(value < 0 ? -1 : value > 0 ? 1 : 0);
                 }
-                if (!holds(signs))
-                    return false;
+                table.Add(signs);
             }
-            return true;
+            return table;
         }
 
         /// <summary>
@@ -6234,29 +6317,65 @@ namespace AngouriMath.Functions.Algebra
         /// <para>
         /// <c>(x^2)^(-7/9)</c> is <c>|x|^(-14/9)</c>, and is written as <c>x^(-14/9)</c>: what comes
         /// out is an antiderivative for <c>x &gt; 0</c>, made one everywhere by parity, which is
-        /// exact, or not at all. Asked at the top only, as every rule that lands on the open
-        /// chain is.
+        /// exact, or not at all. Asked at the top and one level below it, where the remainder
+        /// by parts leaves is asked, and no deeper, since it lands on the open chain.
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveByWritingAPowerOfAQuotientApart(Entity expr, Entity.Variable x)
         {
-            if (!Integration.AnsweringTheQuestionAsked)
+            // At the top and one below it, where the remainder by parts leaves is asked --
+            // Charlwood's `x^3 arcsec(x)/sqrt(x^4 - 1)` leaves a root of `1 - 1/x^2` there --
+            // and no deeper: unscoped, it fed the search on `arcsin(sqrt(1 + x) - sqrt(x))`,
+            // thirty levels of the same root written apart and combined again, five seconds
+            // where declining takes one.
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
                 return null;
             var tookAPowerOfX = false;
             var written = expr.Replace(node =>
             {
-                if (node is not Powf(Divf(var above, var below), Number.Rational exponent) || exponent is Number.Integer
-                    || !below.ContainsNode(x) || !IsPositiveForReal(below, x))
+                if (node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer || !@base.ContainsNode(x))
                     return node;
-                return MathS.Pow(above, exponent) * PowerOfAPositive(below, -exponent);
+                // As one quotient where it is a sum with a quotient in it: `1 - 1/x^2` is
+                // `(x^2 - 1)/x^2`, the derivative of the arcsecant as it is written.
+                var (above, below) = Functions.SingleQuotient.Of(AsOneQuotient(@base));
+                if (below != Number.Integer.One && below.ContainsNode(x) && IsPositiveForReal(below, x) && OfModestDegree(above))
+                    return MathS.Pow(above, exponent) * PowerOfAPositive(below, -exponent);
+                // And a polynomial every monomial of which an even power of x divides: the root
+                // of `x^4 + x^2` is `|x| sqrt(x^2 + 1)`, exactly, since `x^2` is not negative --
+                // what the roots of Charlwood's `x^3 arcsec(x)/sqrt(x^4 - 1)` by parts combine to.
+                if (TreeAnalyzer.TryGetPolynomial(@base, x, out var monomials) && monomials.Count > 1 && OfModestDegree(@base)
+                    && monomials.Keys.Min() is { } lowest && lowest.CanFitInInt32() && lowest.ToInt32Unchecked() / 2 is var k and > 0)
+                {
+                    Entity rest = Number.Integer.Zero;
+                    foreach (var pair in monomials.OrderBy(pair => pair.Key))
+                    {
+                        var degree = pair.Key.ToInt32Unchecked() - 2 * k;
+                        Entity term = degree == 0 ? pair.Value : degree == 1 ? pair.Value * x : pair.Value * MathS.Pow(x, degree);
+                        rest = rest == Number.Integer.Zero ? term : rest + term;
+                    }
+                    return PowerOfAPositive(MathS.Pow(x, 2 * k), exponent) * MathS.Pow(rest.InnerSimplified, exponent);
+                }
+                return node;
             });
             if (written == expr)
                 return null;
-            var forPositive = Integration.ComputeIndefiniteIntegral(written.InnerSimplified, x, integrateByParts: true);
+            // Bare: the simplification attaches `provided not x = 0` where it cancels a power
+            // of x, and a condition on the integrand is a shape no rule reads.
+            var forPositive = Integration.ComputeIndefiniteIntegral(Functions.PartialFractions.Bare(written), x, integrateByParts: true);
             if (forPositive is null || forPositive.Nodes.Any(node => node == MathS.NaN))
                 return null;
             return tookAPowerOfX ? ExtendedByParity(expr, forPositive, x) : forPositive;
+
+            // What is set free under the root is a polynomial of degree four at most: the
+            // shapes the rules behind this read stop there, and a root of a sextic or a
+            // twelfth-degree polynomial set free is a search that ends nowhere -- the
+            // half-angle form of `cos(x)^2/sqrt(1 + cos(x)^2 + cos(x)^4)`, a root of a sum of
+            // quotients by `(u^2 + 1)^6`, was fourteen seconds of one.
+            bool OfModestDegree(Entity polynomial)
+                => !polynomial.ContainsNode(x)
+                   || TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read) && read.Count > 0
+                      && read.Keys.Max()!.CompareTo(EInteger.FromInt32(4)) <= 0;
 
             // Q^r for a Q positive at every real x: a monomial `c x^(2k)` is `c^r x^(2kr)` for x > 0.
             Entity PowerOfAPositive(Entity positive, Number.Rational exponent)
@@ -6613,8 +6732,22 @@ namespace AngouriMath.Functions.Algebra
                 if (integrandInU.ContainsNode(x))
                     continue;
                 if (Integration.ComputeIndefiniteIntegral(integrandInU, uSub, integrateByParts) is { } resultInU)
+                {
+                    // An even root is not negative wherever it is real, so a sign or a modulus
+                    // of it that a rule below put in -- the answer for u > 0 extended by parity
+                    // -- is the root itself: `sqrt(x)/sqrt(x + x^2)` under `u = sqrt(x)` is
+                    // `2u^2/sqrt(u^2 + u^4)`, answered as `2 sgn(u) sqrt(1 + |u|^2)`, and
+                    // `sgn(sqrt(x))` is a sign nothing differentiates.
+                    if (u is Powf(_, Number.Rational evenRoot) && evenRoot.ERational.Denominator.IsEven)
+                        resultInU = resultInU.Replace(node => node switch
+                        {
+                            Signumf(var argument) when argument == uSub => Number.Integer.One,
+                            Absf(var argument) when argument == uSub => uSub,
+                            _ => node,
+                        });
                     // Substitute back: replace u with g(x)
                     return resultInU.Substitute(uSub, u);
+                }
 
                 // A power of u under a root -- `1/sqrt(u^2 (3 - 3u^2 + u^4))`, which is
                 // `sin(x)/sqrt(1 - sin(x)^6)` under `u = cos(x)` -- comes out of the root as

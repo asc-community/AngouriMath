@@ -250,6 +250,13 @@ namespace AngouriMath.Functions.Algebra
         internal static bool AnsweringTheQuestionAsked => descentDepth == 1;
 
         /// <summary>
+        /// The question asked or one step below it: the remainder by parts leaves, the
+        /// integrand a substitution makes. For a rewriting rule that lands on the chain and is
+        /// wanted there and no deeper, where the same rewriting fed a search that did not return.
+        /// </summary>
+        internal static bool AnsweringTheQuestionAskedOrOneBelow => descentDepth <= 2;
+
+        /// <summary>
         /// <paramref name="expr"/> integrated as a question in its own right rather than as a
         /// step in the search for the current one: the term of a sum asked at the top is asked at
         /// the top.

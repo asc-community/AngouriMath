@@ -98,6 +98,18 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, points);
 
         /// <summary>
+        /// Charlwood's <c>x^3 arcsec(x)/sqrt(x^4 - 1)</c>, by parts: the remainder is
+        /// <c>sqrt(x^4 - 1)/(2 x^2 sqrt(1 - 1/x^2))</c>, with the derivative of the arcsecant
+        /// as it is written, which is <c>sqrt(x^2 + 1)/(2|x|)</c> once the root of the quotient
+        /// is split, the two roots combined as the quotient they are, and the even power of
+        /// <c>x</c> taken out of the root -- three rewritings, each exact, and none of which
+        /// read it before. Both intervals of the arcsecant.
+        /// </summary>
+        [Theory]
+        [InlineData("x^3*asec(x)/sqrt(x^4 - 1)", new[] { 1.4, 2.6, 5.1, -1.9, -3.7 })]
+        public void ByPartsAgainstARootOfAQuartic(string integrand, double[] points) => DifferentiatesBack(integrand, points);
+
+        /// <summary>
         /// A non-linear argument is not this row's: <c>arcsec(x^2)</c> would want the chain rule
         /// undone first, and the table reads a linear argument only.
         /// </summary>
