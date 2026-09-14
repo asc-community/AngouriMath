@@ -46,6 +46,38 @@ namespace AngouriMath.Tests.Calculus
         public void ALinearNumeratorOverAQuadratic(string integrand, double[] points) =>
             AssertIsAntiderivative(integrand, points);
 
+        // The same with the coefficients symbols: a piecewise on the sign of the discriminant
+        // and an arm for a vanishing leading coefficient, which is (px + q)/(bx + c) and not
+        // the rewrite that divided by it. Timofeev's (b1 + c1 x)/(a + 2b x + c x^2) and
+        // (B + A x)/(c + 2b x + a x^2)^2 had no antiderivative for the symbol in front; the
+        // arms are checked with the symbols pinned to each case.
+        [Theory]
+        [InlineData("(q + p * x) / (c + b * x + a * x ^ 2)", 1.0, new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("(q + p * x) / (c + b * x + a * x ^ 2)", -1.0, new[] { 0.3, 0.5, -0.6 })]
+        [InlineData("(q + p * x) / (c + b * x + a * x ^ 2)", 0.0, new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("(q + p * x) / (c + b * x + a * x ^ 2) ^ 2", 1.0, new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("(q + p * x) / (c + b * x + a * x ^ 2) ^ 2", 0.0, new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("(q + p * x) / (c + b * x + a * x ^ 2) ^ 3", 1.0, new[] { 0.3, 1.7, -0.6 })]
+        public void ALinearNumeratorOverASymbolicQuadratic(string integrand, double leading, double[] points)
+        {
+            var f = integrand.ToEntity();
+            var antiderivative = f.Integrate("x");
+            Assert.DoesNotContain("integral(", antiderivative.Stringize());
+            Entity pinned = antiderivative.Substitute("C", 0);
+            foreach (var (name, value) in new[] { ("a", leading), ("b", 0.7), ("c", 1.9), ("p", 1.3), ("q", -0.4) })
+            {
+                pinned = pinned.Substitute(name, value);
+                f = f.Substitute(name, value);
+            }
+            var derivative = pinned.Simplify().Differentiate("x");
+            foreach (var point in points)
+            {
+                var expected = f.Substitute("x", point).EvalNumerical().RealPart.EDecimal.ToDouble();
+                var actual = derivative.Substitute("x", point).EvalNumerical().RealPart.EDecimal.ToDouble();
+                Assert.Equal(expected, actual, 6);
+            }
+        }
+
         // (px + q) / (bx + c), the same rewrite one degree down.
         [Theory]
         [InlineData("x / (x + 1)", new[] { 0.3, 1.7 })]

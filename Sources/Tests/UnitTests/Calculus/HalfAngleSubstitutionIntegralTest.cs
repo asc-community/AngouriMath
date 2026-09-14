@@ -123,6 +123,39 @@ namespace AngouriMath.Tests.Calculus
         public void TheOtherFourAreReadAsQuotientsOfTheTwo(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// One argument linear in x for every function, <c>a x + b</c> as well as <c>x</c>:
+        /// <c>t = tan((a x + b)/2)</c> and <c>dx = 2 dt/(a (1 + t^2))</c>. Hearn's
+        /// <c>sin(a x)/(b + c sin(a x))^2</c> was declined for the <c>a</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(2 + cos(3*x))")]
+        [InlineData("1/(3 + 5*sin(2*x + 1))")]
+        [InlineData("sin(2*x)/(2 + cos(2*x))^2")]
+        public void ALinearArgument(string integrand) => DifferentiatesBack(integrand);
+
+        [Fact]
+        public void ALinearArgumentWithSymbols()
+        {
+            var integrand = "sin(a*x)/(b + c*sin(a*x))^2".ToEntity();
+            var integral = integrand.Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Entity pinned = integral.Substitute("C", 0);
+            Entity original = integrand;
+            foreach (var (name, value) in new[] { ("a", 1.5), ("b", 3.0), ("c", 2.0) })
+            {
+                pinned = pinned.Substitute(name, value);
+                original = original.Substitute(name, value);
+            }
+            var derivative = pinned.Simplify().Differentiate("x");
+            foreach (var at in new[] { 0.4, 0.9, 1.3, 1.9 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-7, $"{integrand} at {at}: {got} for {want}");
+            }
+        }
+
+        /// <summary>
         /// Every sine and cosine brings its own <c>1 + t^2</c> below the bar, and clearing them
         /// leaves the same power of it above and below -- where the simplifier does not see
         /// it once the denominator is a sum. Bondarenko's <c>1/(cos(x) + sin(x) + sqrt(2))</c>

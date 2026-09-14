@@ -161,6 +161,21 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// An exponential of a linear times a polynomial times an odd half power of a
+        /// quadratic: Timofeev's <c>e^x (1 - x - x^2)/sqrt(1 - x^2)</c> is <c>(e^x sqrt(1 - x^2))'</c>,
+        /// found by the ansatz <c>e^(a x) R Q^(k + 1/2)</c> with no remainder; and
+        /// <c>e^x x/sqrt(1 + x^2)</c>, which has no elementary antiderivative, is declined.
+        /// </summary>
+        [Theory]
+        [InlineData("e^x*(1 - x - x^2)/sqrt(1 - x^2)")]
+        [InlineData("e^(2*x)*(2*x^2 + x + 2)/sqrt(x^2 + 1)")]
+        public void AnExponentialTimesARootOfAQuadratic(string integrand) => DifferentiatesBack(integrand);
+
+        [Fact]
+        public void AnExponentialTimesARootOfAQuadraticIsDeclinedWhereThereIsNone()
+            => Assert.Contains("integral(", "e^x*x/sqrt(1 + x^2)".ToEntity().Integrate("x").Stringize());
+
+        /// <summary>
         /// What has no elementary antiderivative is declined, not answered: the ansatz finds
         /// no <c>N</c>, which by Liouville is the proof.
         /// </summary>

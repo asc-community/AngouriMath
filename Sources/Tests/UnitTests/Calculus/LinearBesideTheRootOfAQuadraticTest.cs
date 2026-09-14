@@ -116,6 +116,23 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, points, ("alpha", 0.6), ("k", 0.7), ("pe", leading), ("a", leading), ("b", 0.7), ("c", 0.6));
 
         /// <summary>
+        /// The same reduction for any odd half power: Stewart's <c>x^2/(a^2 - x^2)^(3/2)</c>,
+        /// Apostol's <c>(a^2 - x^2)^(5/2)</c> and Timofeev's <c>x^2 sqrt(2 r x - x^2)</c>, each
+        /// with a symbol in the radicand and each declined by the trigonometric substitution
+        /// for it. Checked with the symbol of either sign, since <c>arcsin(x/sqrt(a^2))</c> is
+        /// what the table writes and it is right for both.
+        /// </summary>
+        [Theory]
+        [InlineData("x^2/(a^2 - x^2)^(3/2)", new[] { -0.9, -0.4, 0.3, 0.8 }, 1.3)]
+        [InlineData("x^2/(a^2 - x^2)^(3/2)", new[] { -0.9, -0.4, 0.3, 0.8 }, -1.3)]
+        [InlineData("(a^2 - x^2)^(5/2)", new[] { -0.9, -0.4, 0.3, 0.8 }, 1.3)]
+        [InlineData("x^3/(a^2 + x^2)^(5/2)", new[] { -0.9, -0.4, 0.3, 0.8 }, 1.3)]
+        [InlineData("x^2*sqrt(2*a*x - x^2)", new[] { 0.3, 0.8, 1.4, 2.1 }, 1.3)]
+        [InlineData("x^3*sqrt(2*a*x - x^2)", new[] { 0.3, 0.8, 1.4, 2.1 }, 1.3)]
+        public void AnyOddHalfPowerWithASymbol(string integrand, double[] points, double a)
+            => DifferentiatesBack(integrand, points, ("a", a));
+
+        /// <summary>
         /// The sign of <c>x - p</c> is not decoration: the antiderivative is exact on both
         /// sides of the pole, and the two one-sided pieces are not the same formula.
         /// </summary>

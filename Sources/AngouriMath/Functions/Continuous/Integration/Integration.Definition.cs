@@ -448,6 +448,9 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x, integrateByParts)) is { }) return answer;
             // A power of an exponential with a positive base is the exponential of the product,
             // exactly, and only that spelling is one the exponential rules read.
+            // A power of x times a power of its logarithm, by the closed reduction: exact,
+            // and by parts n times where the exponent is a symbol was not taken.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAPowerOfTheLogarithm(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;
             // A polynomial times a rational function of exponentials, by parts against the
             // whole rational function, before anything splits the sum: the general parts rule
@@ -596,11 +599,14 @@ namespace AngouriMath.Functions.Algebra
             // (the #1265 failure), and scoped it declined nine integrands that reach it one
             // level down -- the nested radicals under `u = sqrt(1 + x)`, the remainders of by
             // parts -- each of which is closed here.
-            // A polynomial over the root of a quadratic, reduced to `R sqrt(Q) + K/sqrt(Q)`
-            // by one solve, and the last term the table's -- a piecewise on the sign of a
-            // symbolic leading coefficient, where the substitutions in front have no sign
-            // to go on.
-            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverTheRootOfAQuadratic(expr, x)) is { }) return answer;
+            // A polynomial times an odd half power of a quadratic, reduced to
+            // `R Q^(k + 1/2) + K/sqrt(Q)` by one solve, and the last term the table's -- a
+            // piecewise on the sign of a symbolic leading coefficient, where the
+            // substitutions in front have no sign to go on.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialTimesAnOddHalfPowerOfAQuadratic(expr, x)) is { }) return answer;
+            // And the same with an exponential of a linear in front, an ansatz with no
+            // remainder: `e^x (1 - x - x^2)/sqrt(1 - x^2)` is `(e^x sqrt(1 - x^2))'`.
+            if ((answer = IndefiniteIntegralSolver.SolveAnExponentialTimesAnOddHalfPowerOfAQuadratic(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveALinearBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByEulerSubstitution(expr, x)) is { }) return answer;

@@ -131,5 +131,36 @@ namespace AngouriMath.Tests.Calculus
                 return;
             DifferentiatesBack(integrand);
         }
+
+        /// <summary>
+        /// A power of x times a whole power of its logarithm, by the closed reduction rather
+        /// than by parts n times: Timofeev's <c>x^m ln(x)^2</c>, where by parts took the first
+        /// step and not the second with the symbol in the exponent, and <c>ln(x)^2/x^(5/2)</c>;
+        /// and the exponent <c>-1</c>, where the reduction divides by <c>m + 1</c> and the
+        /// answer is a power of the logarithm instead.
+        /// </summary>
+        [Theory]
+        [InlineData("ln(x)^2/x^(5/2)")]
+        [InlineData("x^(1/3)*ln(x)^2")]
+        [InlineData("x^2*ln(x)^3")]
+        [InlineData("ln(x)^3/x")]
+        [InlineData("x*ln(x)")]
+        public void APowerTimesAPowerOfTheLogarithm(string integrand) => DifferentiatesBack(integrand);
+
+        [Fact]
+        public void APowerTimesAPowerOfTheLogarithmWithASymbolicExponent()
+        {
+            var integrand = "x^m*ln(x)^2".ToEntity();
+            var integral = integrand.Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Substitute("m", 2.5).Differentiate("x");
+            var original = integrand.Substitute("m", 2.5);
+            foreach (var at in Points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-8, $"{integrand} at {at}: {got} for {want}");
+            }
+        }
     }
 }

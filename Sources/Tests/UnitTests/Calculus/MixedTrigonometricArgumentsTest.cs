@@ -146,6 +146,34 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sin(x)/(cos(x) + cos(3*x))^4")]
         public void ADegreeUpToSixteen(string integrand) => DifferentiatesBack(integrand);
 
+        /// <summary>
+        /// An offset free of x is written out by the addition formula: Timofeev's
+        /// <c>tan(x) tan(x - a)</c> is a rational function of <c>tan(x)</c> once <c>tan(x - a)</c>
+        /// is <c>(tan(x) - tan(a))/(1 + tan(x) tan(a))</c>, and <c>cos(a)</c> beside <c>sin(x)</c>
+        /// is a coefficient to the homogeneous reader, not a second argument.
+        /// </summary>
+        [Theory]
+        [InlineData("sin(x)*sin(x + 1)")]
+        [InlineData("cos(x)*cos(2*x + 1)")]
+        [InlineData("1/(sin(x) + cos(x + pi/4))")]
+        public void AnOffsetIsWrittenOut(string integrand) => DifferentiatesBack(integrand);
+
+        [Fact]
+        public void AnOffsetThatIsASymbol()
+        {
+            var integrand = "tan(x)*tan(x - a)".ToEntity();
+            var integral = integrand.Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Substitute("a", 0.4).Simplify().Differentiate("x");
+            var original = integrand.Substitute("a", 0.4);
+            foreach (var at in Points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-7, $"{integrand} at {at}: {got} for {want}");
+            }
+        }
+
         /// <remarks>
         /// Bounded by the integrator's own budget rather than a wall clock that measures the
         /// runner; what is pinned is that the verdict is not a wrong answer and comes in a
