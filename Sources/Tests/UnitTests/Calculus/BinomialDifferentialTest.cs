@@ -186,5 +186,33 @@ namespace AngouriMath.Tests.Calculus
                     $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
             }
         }
+
+        /// <summary>
+        /// An even power on either side of the bar comes out of the root as well, since it is
+        /// not negative: <c>sqrt(sin(x)/cos(x)^5)</c> is <c>sqrt(sin(x)/cos(x))/cos(x)^2</c> and
+        /// <c>sqrt(sin(x)^5/cos(x))</c> is <c>sin(x)^2 sqrt(sin(x)/cos(x))</c>, exactly, and the
+        /// quotient set free is the tangent -- Timofeev's, binomials under <c>sqrt(tan(x))</c>
+        /// from there. <c>tan(x)^2</c> under the root of <c>sqrt(tan(x) tan(2x))</c> is
+        /// <c>|tan(x)|</c>, and the answer for a positive tangent is extended by parity, so it
+        /// is checked on both signs. What is neither even nor positive stays under the root.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(sin(x)/cos(x)^5)", new[] { 0.21, 0.52, 0.83, 1.1, 1.4 })]
+        [InlineData("sqrt(sin(x)^5/cos(x))", new[] { 0.21, 0.52, 0.83, 1.1, 1.4 })]
+        [InlineData("sqrt(tan(x)*tan(2*x))", new[] { -0.7, -0.35, 0.21, 0.52, 0.7 })]
+        public void AnEvenPowerComesOutOfTheRootOnEitherSide(string integrand, double[] points)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity();
+            foreach (var at in points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart) < 1e-8 * Math.Max(1, Math.Abs((double)want.RealPart)),
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
     }
 }

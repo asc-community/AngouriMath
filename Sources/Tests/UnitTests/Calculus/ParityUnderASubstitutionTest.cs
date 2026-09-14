@@ -153,6 +153,21 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, new[] { -1.3, -0.9, -0.5, 0.4, 0.8, 1.2 });
 
         /// <summary>
+        /// And across the bar: under <c>u = x^5</c> the quotient by <c>du/dx</c> is
+        /// <c>x^9 sqrt(1 + x^5 + x^10)/(5x^4)</c>, and the power above the bar against the one
+        /// below is <c>x^5</c> only once collected -- Timofeev's, and <c>x^3 sqrt(1 + x^2 + x^4)</c>
+        /// under the square the same. The cotangent of the argument under a sine is the
+        /// cosine over the sine: <c>cot(x) sin(x)^9/(2 - 5 sin(x)^3)^(4/3)</c> is
+        /// <c>u^8/(2 - 5u^3)^(4/3)</c>, a binomial.
+        /// </summary>
+        [Theory]
+        [InlineData("x^9*sqrt(1 + x^5 + x^10)", new[] { -1.3, -0.9, -0.5, 0.4, 0.8, 1.2 })]
+        [InlineData("x^3*sqrt(1 + x^2 + x^4)", new[] { -1.3, -0.9, -0.5, 0.4, 0.8, 1.2 })]
+        [InlineData("cot(x)*sin(x)^9/(2 - 5*sin(x)^3)^(4/3)", new[] { 0.2, 0.4, 0.55, 0.7, 2.6, 2.9 })]
+        public void ThePowersAreCollectedAcrossTheBar(string integrand, double[] points)
+            => DifferentiatesBack(integrand, points);
+
+        /// <summary>
         /// An even root is not negative, and what holds for it positive is the answer as it
         /// stands: <c>sqrt(x^(1/3))</c> here was extended by a parity it did not need, to an
         /// answer with a sign function in it that nothing could differentiate.

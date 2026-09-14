@@ -160,17 +160,18 @@ namespace AngouriMath.Tests.Calculus
 
         /// <summary>
         /// <c>ln(A - By)</c> and <c>ln(By - A)</c> have the same derivative, and the one that
-        /// is positive where the radicand is, at a sample point, is the one written:
-        /// <c>x^3/sqrt(x^4 + x^2 + 1)</c>, matched at infinity with the constant norm
-        /// <c>-3/4</c>, is <c>ln(sqrt(x^4 + x^2 + 1) - x^2 - 1/2)/4 + sqrt(x^4 + x^2 + 1)/2</c>,
-        /// where <c>x^2 + 1/2 - sqrt(x^4 + x^2 + 1)</c> is negative for every real <c>x</c>.
+        /// is positive where the radicand is, at a sample point, is the one written.
         /// </summary>
         [Fact]
         public void TheArgumentOfTheLogarithmIsWrittenPositive()
         {
-            DifferentiatesBack("x^3/sqrt(x^4+x^2+1)", new[] { -2.0, -1.0, -0.5, 0.5, 1.0, 2.0 });
-            var integral = "x^3/sqrt(x^4+x^2+1)".ToEntity().Integrate("x");
-            Assert.Contains("ln(sqrt(x ^ 4 + x ^ 2 + 1) - ", integral.Stringize());
+            // `x^3/sqrt(x^4 + x^2 + 1)` itself is the substitution's now, `u = x^2`; a radicand
+            // with odd powers in it is not, and `(2x + 1)/sqrt((x^2 + x)^2 + 1)` is the ansatz's,
+            // matched at infinity with the constant norm `-1`: `ln(sqrt(...) - x^2 - x)`, where
+            // `x^2 + x - sqrt(...)` is negative for every real x.
+            DifferentiatesBack("(2*x+1)/sqrt(x^4+2*x^3+x^2+1)", new[] { -2.0, -1.0, -0.5, 0.5, 1.0, 2.0 });
+            var integral = "(2*x+1)/sqrt(x^4+2*x^3+x^2+1)".ToEntity().Integrate("x");
+            Assert.Contains("ln(sqrt(x ^ 4 + 2 * x ^ 3 + x ^ 2 + 1) - ", integral.Stringize());
             var atOne = integral.Substitute("C", 0).Substitute("x", 1).EvalNumerical();
             Assert.True(atOne.ImaginaryPart.EvalNumerical().Abs() < 1e-12, $"not real at 1: {atOne}");
         }
