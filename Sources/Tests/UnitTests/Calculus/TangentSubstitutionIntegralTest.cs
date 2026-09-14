@@ -98,6 +98,43 @@ namespace AngouriMath.Tests.Calculus
         public void AnEvenPowerOfTheOthersIsWrittenInTheTangent(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// An odd power of the sine or the cosine is its sign times a function of the tangent,
+        /// <c>cos(x) = sgn(cos(x))/sqrt(1 + tan^2)</c> and <c>sin(x) = tan(x) cos(x)</c>, the sign a
+        /// constant between the zeros of the cosine; and the double angle is the tangent's too,
+        /// <c>sin(2x) = 2 tan/(1 + tan^2)</c>. Timofeev's <c>sin(x)^7/sin(2x)^(7/2)</c> is
+        /// <c>sgn(cos(x)) tan^(7/2)/(2^(7/2) (1 + tan^2))</c> so, and the sign goes back in as
+        /// <c>sgn(cos(x))</c> -- checked on both signs of it, where the root is real.
+        /// </summary>
+        [Theory]
+        [InlineData("sin(x)^7/sin(2*x)^(7/2)", new[] { -2.6, -2.2, 0.4, 0.8, 1.1, 1.4 })]
+        [InlineData("sin(x)^3/sqrt(sin(2*x))", new[] { -2.6, -2.2, 0.4, 0.8, 1.1, 1.4 })]
+        [InlineData("cos(x)/sqrt(sin(2*x))", new[] { -2.6, -2.2, 0.4, 0.8, 1.1, 1.4 })]
+        public void AnOddPowerIsItsSignTimesAFunctionOfTheTangent(string integrand, double[] points)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity();
+            foreach (var at in points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                var difference = System.Math.Abs((double)(got - want).RealPart) + System.Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = System.Math.Max(1.0, System.Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-8, $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        /// <summary>
+        /// What the sign does not make elementary stays declined, and quickly:
+        /// <c>sqrt(tan(x)) sin(x)</c> is <c>u^(3/2) (1 + u^2)^(-3/2)</c>, no binomial case.
+        /// </summary>
+        [Fact]
+        public void WhatTheSignDoesNotMakeElementaryIsDeclined()
+            => Assert.Contains("integral(", "sqrt(tan(x))*sin(x)".ToEntity().Integrate("x").Stringize());
+
+        /// <summary>
         /// A power of the tangent, which the rewrite turns into an <b>improper</b> rational
         /// function — <c>u^2/(1 + u^2)</c> and <c>u^3/(1 + u^2)</c>. These were declined while
         /// nothing divided an improper fraction out; they are answered now that the rational

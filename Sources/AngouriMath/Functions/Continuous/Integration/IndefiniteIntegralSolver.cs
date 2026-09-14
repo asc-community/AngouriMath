@@ -3491,7 +3491,9 @@ namespace AngouriMath.Functions.Algebra
                     : node);
 
             var tangent = MathS.Tan(x);
-            if (!expr.ContainsNode(tangent))
+            // Or a sine or a cosine under a root, for the writing by the sign below; a rational
+            // function of those is the half-angle substitution's.
+            if (!expr.ContainsNode(tangent) && !(HasARadicalOf(expr, x) && expr.Nodes.Any(node => node is Sinf or Cosf && node.ContainsNode(x))))
                 return null;
 
             // An even power of the secant, cosine, sine or cosecant of x is a rational function
@@ -3516,10 +3518,91 @@ namespace AngouriMath.Functions.Algebra
                 _ => node,
             });
 
+            // The double angle is the tangent's too, exactly: `sin(2x) = 2 tan/(1 + tan^2)` and
+            // `cos(2x) = (1 - tan^2)/(1 + tan^2)`.
+            static bool IsTwice(Entity argument, Entity.Variable x)
+                => TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out var intercept)
+                   && slope.Evaled == Number.Integer.Create(2) && intercept.Evaled == Number.Integer.Zero;
+            expr = expr.Replace(node => node switch
+            {
+                Sinf(var a) when IsTwice(a, x) => 2 * tangent / secantSquared,
+                Cosf(var a) when IsTwice(a, x) => (1 - MathS.Sqr(tangent)) / secantSquared,
+                _ => node,
+            });
+
             var uSub = Variable.CreateUnique(expr, "u_tan");
             var inU = expr.Substitute(tangent, uSub);
             if (inU.ContainsNode(x))
-                return null;
+            {
+                // An odd power of the sine or the cosine is its sign times a function of the
+                // tangent: `cos(x) = sgn(cos(x))/sqrt(1 + tan^2)` and `sin(x) = tan(x) cos(x)`,
+                // the sign a constant between the zeros of the cosine. Timofeev's
+                // `sin(x)^7/sin(2x)^(7/2)` is `sgn(cos(x)) u^(7/2)/(2^(7/2) (1 + u^2))` so, a
+                // binomial under `t = sqrt(u)`; the sign goes back in as `sgn(cos(x))`. Only
+                // where that leaves the tangent alone and something algebraic in it.
+                var sign = Variable.CreateUnique(expr, "sgn_cos");
+                var rootOfSecantSquared = MathS.Sqrt(secantSquared);
+                var odd = expr.Replace(node => node switch
+                {
+                    Cosf(var a) when a == x => sign / rootOfSecantSquared,
+                    Sinf(var a) when a == x => sign * tangent / rootOfSecantSquared,
+                    Powf(Cosf(var a), Number.Integer k) when a == x && k.EInteger.CanFitInInt32() && !k.EInteger.IsEven
+                        => MathS.Pow(sign / rootOfSecantSquared, k),
+                    Powf(Sinf(var a), Number.Integer k) when a == x && k.EInteger.CanFitInInt32() && !k.EInteger.IsEven
+                        => MathS.Pow(sign * tangent / rootOfSecantSquared, k),
+                    _ => node,
+                }).Substitute(tangent, uSub);
+                if (odd.ContainsNode(x) || !IsAlgebraicIn(odd, uSub))
+                    return null;
+                // The sign is 1 or -1, and the integrand is even or odd in it: with the sign
+                // one, the function of u to integrate, and the sign in front where the two
+                // differ. Decided at a point, since the two are the same expression up to it.
+                var withOne = Functions.PartialFractions.Bare(odd.Substitute(sign, Number.Integer.One));
+                var withMinusOne = Functions.PartialFractions.Bare(odd.Substitute(sign, Number.Integer.MinusOne));
+                var at = Number.Rational.Create(37, 100);
+                var valueWithOne = withOne.Substitute(uSub, at).EvalNumerical();
+                var valueWithMinusOne = withMinusOne.Substitute(uSub, at).EvalNumerical();
+                bool oddInTheSign;
+                if ((valueWithOne - valueWithMinusOne).Abs() < 1e-9 * (1 + valueWithOne.Abs()))
+                    oddInTheSign = false;
+                else if ((valueWithOne + valueWithMinusOne).Abs() < 1e-9 * (1 + valueWithOne.Abs()))
+                    oddInTheSign = true;
+                else
+                    return null;
+                // A fractional power of a quotient by `1 + u^2`, or of a positive number times
+                // something, comes apart exactly: the denominator is positive and so is the
+                // number, and a positive real factor leaves the argument of the rest alone.
+                for (var round = 0; round < 4; round++)
+                {
+                    var apart = withOne.Replace(node =>
+                    {
+                        if (node is not Powf(var @base, Number.Rational fraction) || fraction is Number.Integer || !@base.ContainsNode(uSub))
+                            return node;
+                        var (top, bottom) = Functions.SingleQuotient.Of(@base);
+                        if (bottom != Number.Integer.One && IsPositiveForReal(bottom, uSub))
+                            return MathS.Pow(top, fraction) * MathS.Pow(bottom, Number.Rational.Create(fraction.ERational.Negate()));
+                        if (@base is Mulf && Mulf.LinearChildren(@base).FirstOrDefault(factor => !factor.ContainsNode(uSub) && factor.Evaled is Number.Real { IsPositive: true }) is { } positive)
+                        {
+                            var rest = Mulf.LinearChildren(@base).Where(factor => factor != positive).Aggregate(Number.Integer.One as Entity, (product, factor) => product * factor);
+                            return MathS.Pow(positive, fraction) * MathS.Pow(rest, fraction);
+                        }
+                        return node;
+                    });
+                    if (apart == withOne)
+                        break;
+                    withOne = apart;
+                }
+                var signed = Functions.SingleQuotient.Combine(withOne / secantSquared.Substitute(tangent, uSub)).Simplify();
+                if (signed is Providedf(var bareSigned, _))
+                    signed = bareSigned;
+                if (signed.ContainsNode(x) || signed.Nodes.Any(node => node == MathS.NaN))
+                    return null;
+                if (Integration.ComputeIndefiniteIntegral(signed, uSub, integrateByParts) is not { } signedResult
+                    || signedResult.Nodes.Any(node => node == MathS.NaN))
+                    return null;
+                var back = signedResult.Substitute(uSub, tangent);
+                return oddInTheSign ? MathS.Signum(MathS.Cos(x)) * back : back;
+            }
 
             // Combined into one quotient, not merely inner-simplified. Writing the cotangent as
             // 1/tan puts a quotient inside a quotient -- cot(x)^2 arrives as (1/u)^2/(1 + u^2) --
