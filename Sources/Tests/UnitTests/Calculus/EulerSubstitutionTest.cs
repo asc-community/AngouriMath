@@ -195,11 +195,13 @@ namespace AngouriMath.Tests.Calculus
 
         /// <summary>
         /// The shapes the rule leaves to the rules that answer them more shortly keep their
-        /// answers: a power of the variable times a root with no linear term, and a root of
-        /// something linear.
+        /// answers: a power of the variable times a root with no linear term -- the
+        /// substitution <c>u = x^2</c> now that the powers of <c>x</c> are collected across the
+        /// bar, <c>u/(2 sqrt(1 + u))</c>, where the trigonometric substitution answered it in
+        /// powers of <c>1/sqrt(1 + x^2)</c> before -- and a root of something linear.
         /// </summary>
         [Theory]
-        [InlineData("x^3/sqrt(1 + x^2)", "-((1 / sqrt(1 + x ^ 2)) ^ (-3) / (-3) + -1 / (1 / sqrt(1 + x ^ 2)) / (-1)) + C")]
+        [InlineData("x^3/sqrt(1 + x^2)", "2 * ((sqrt(1 + x ^ 2)) ^ 3 / 3 + -sqrt(1 + x ^ 2)) / 2 + C")]
         [InlineData("sqrt(1 + 2*x)", "(1 + 2 * x) ^ (3/2) / (3/2) / 2 + C")]
         public void TheNeighboursKeepTheirForms(string integrand, string expected)
             => Assert.Equal(expected, integrand.ToEntity().Integrate("x").Stringize());

@@ -483,6 +483,9 @@ namespace AngouriMath.Functions.Algebra
             // `x/sqrt(1 - x^4)`, which the substitution answers, and it is what by parts leaves
             // from `arcsin(x)/(1 + x^2)^(3/2)`.
             if ((answer = IndefiniteIntegralSolver.SolveByCombiningRadicals(expr, x, integrateByParts)) is { }) return answer;
+            // A square root of a polynomial with a repeated factor, the factor taken out of
+            // the root with its sign: `sqrt((x - 3)^2 (x + 1))` is `sgn(x - 3) (x - 3) sqrt(x + 1)`.
+            if ((answer = IndefiniteIntegralSolver.SolveByTakingASquareFactorOutOfARoot(expr, x, integrateByParts)) is { }) return answer;
             // And a fractional power of a quotient whose denominator is positive for every
             // real x, written as the two powers it is: `((2 + x^2)/x^2)^(7/9)` is nothing any
             // rule reads as written. Beside the rule above, which does the like for the roots

@@ -63,6 +63,25 @@ namespace AngouriMath.Tests.Calculus
                 $"only {compared} of {points.Length} points were comparable for {integrand}");
         }
 
+        /// <summary>
+        /// A square root of a polynomial with a repeated factor, the factor taken out of the
+        /// root with its sign: <c>sqrt(9 + 3x - 5x^2 + x^3)</c> is <c>sqrt((x - 3)^2 (x + 1))</c>,
+        /// which is <c>sgn(x - 3) (x - 3) sqrt(x + 1)</c>, and the sign is a constant on each side
+        /// of <c>3</c> that comes out in front of the integral. Timofeev's
+        /// <c>1/sqrt(9 + 3x - 5x^2 + x^3)</c> and <c>1/(9 + 3x - 5x^2 + x^3)^(3/2)</c>, checked on
+        /// both sides of the repeated root.
+        /// </summary>
+        [Theory]
+        [InlineData("1/sqrt(9 + 3*x - 5*x^2 + x^3)")]
+        [InlineData("1/(9 + 3*x - 5*x^2 + x^3)^(3/2)")]
+        [InlineData("x/sqrt(x^4 + 2*x^3 + x^2)")]
+        [InlineData("sqrt(x^3 + 2*x^2 + x)")]
+        public void ARepeatedFactorComesOutOfTheRootWithItsSign(string integrand)
+        {
+            DifferentiatesBack(integrand, new[] { 0.3, 1.1, 2.4, 3.6, 5.2 });
+            Assert.Contains("sgn(", integrand.ToEntity().Integrate("x").Stringize());
+        }
+
         /// <summary>Inside <c>(-1, 1)</c>, where <c>sqrt(1 - x^2)</c> is real.</summary>
         private static readonly double[] InsideTheUnitInterval = { -0.7, -0.3, 0.2, 0.55, 0.85 };
 
