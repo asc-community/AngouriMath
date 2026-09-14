@@ -587,9 +587,11 @@ namespace AngouriMath.Functions.Algebra
             // rationalises it, and the elementary ones are logarithms of `L - y` for linear L
             // whose cube agrees with the polynomial at the poles, found by an ansatz.
             if ((answer = CubeRootLogarithmAnsatz.Integrate(expr, x)) is { }) return answer;
-            // And of one square root of a squarefree cubic or quartic, which is elliptic: the
-            // elementary ones are logarithms and arctangents of `A - B y` whose A/B agrees with
-            // a branch of y at the poles, found by an ansatz over Padé approximants.
+            // And of one square root of a squarefree quadratic, cubic or quartic -- the latter
+            // two elliptic, the first rational but with residues Euler's substitutions leave in
+            // a field of degree four: the elementary ones are logarithms and arctangents of
+            // `A - B y` whose A/B agrees with a branch of y at the poles, found by an ansatz
+            // over Padé approximants.
             if ((answer = SquareRootLogarithmAnsatz.Integrate(expr, x)) is { }) return answer;
             // Product-to-sum among the rewrites rather than before them, because a product of
             // trigonometric functions of *equal* arguments is a power and wants a different tool;

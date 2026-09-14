@@ -14,9 +14,10 @@ using static AngouriMath.Functions.Algebra.CubeRootLogarithmAnsatz;
 namespace AngouriMath.Functions.Algebra
 {
     /// <summary>
-    /// A rational function of <c>x</c> and one square root <c>y = sqrt(P(x))</c> of a cubic or
-    /// a quartic, integrated by an ansatz over logarithms of <c>A - B y</c> and arctangents of
-    /// <c>A/(B y)</c> for polynomials <c>A</c> and <c>B</c>, and a rational part in <c>y</c>.
+    /// A rational function of <c>x</c> and one square root <c>y = sqrt(P(x))</c> of a quadratic,
+    /// a cubic or a quartic, integrated by an ansatz over logarithms of <c>A - B y</c> and
+    /// arctangents of <c>A/(B y)</c> for polynomials <c>A</c> and <c>B</c>, and a rational
+    /// part in <c>y</c>.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -39,9 +40,18 @@ namespace AngouriMath.Functions.Algebra
     /// and matched coefficient by coefficient, and solved exactly over the rationals.
     /// </para>
     /// <para>
-    /// The rationals only: a pole where <c>P</c> is neither a square nor the negative of one
-    /// wants the field of its square root, and is left for now. The answer is checked against
-    /// the integrand at sampled points before it is returned.
+    /// An irreducible quadratic factor of the denominator is a pair of conjugate places, at
+    /// which the branch begins with a line <c>alpha + beta x</c> over the rationals or a
+    /// <c>Q(sqrt(d))</c> of its own, lifted to any power of the factor; what such a candidate
+    /// contributes to the system is the conjugate difference of its logarithms over
+    /// <c>sqrt(d)</c>, which is rational, so that candidates over different fields sit in one
+    /// system over the rationals. For a quadratic <c>P</c> the curve is rational and Euler's
+    /// substitutions answer in principle, but through a rational function whose residues can
+    /// lie in a field of degree four -- Timofeev's <c>(3 + x)/((1 + x^2) sqrt(1 + x + x^2))</c>
+    /// -- and here it is a logarithm and an arctangent of <c>(1 +- x)/(sqrt(2) y)</c>. A
+    /// rational pole where <c>P</c> is neither a square nor the negative of one wants the field
+    /// of its square root, and is left for now. The answer is checked against the integrand at
+    /// sampled points before it is returned.
     /// https://github.com/asc-community/AngouriMath/issues/718
     /// </para>
     /// </remarks>
@@ -99,8 +109,7 @@ namespace AngouriMath.Functions.Algebra
             var places = PlacesOf(radicand, denominatorAsWritten, x);
             if (places is null)
                 return null;
-            var (field, p, yOfPlaces, generators, firstRational, eFactors, eScale, columns, targetMultiplier, constantValue) = places;
-            var c = field.C;
+            var (field, p, yOfPlaces, generators, firstRational, eFactors, eScale, columns, targetMultiplier) = places;
             var target = Pair.Read(numerator, x, y, p);
             if (target is null)
                 return null;
@@ -158,8 +167,6 @@ namespace AngouriMath.Functions.Algebra
                     below = denominatorAsWritten;
                 answer += rationalPart.ToEntity(x) * yOfPlaces / below;
             }
-            if (constantValue is not null)
-                answer = answer.Substitute(c, MathS.Sqrt(constantValue));
             var written = Functions.PartialFractions.Bare(answer.Substitute(yOfPlaces, MathS.Sqrt(radicand)));
             if (written.Nodes.Any(node => node == MathS.NaN))
                 return null;
@@ -190,7 +197,7 @@ namespace AngouriMath.Functions.Algebra
         [System.ThreadStatic] private static Dictionary<(Entity, Entity, Variable), Places?>? placesCache;
 
         private sealed record Places(Field Field, XPoly P, Variable Y, List<Generator> Generators, int FirstRational, List<XPoly> EFactors, ERational EScale,
-            List<Dictionary<(int, int), Entity>> Columns, List<XPoly> TargetMultiplier, Entity? ConstantValue);
+            List<Dictionary<(int, int), Entity>> Columns, List<XPoly> TargetMultiplier);
 
         private static Places? ComputePlaces(Entity radicand, Entity denominatorAsWritten, Variable x)
         {
@@ -198,7 +205,7 @@ namespace AngouriMath.Functions.Algebra
             var c = Variable.CreateUnique(radicand, "c");
             var field = new Field(c);
             var p = XPoly.Read(radicand, x, field);
-            if (p is null || p.Degree < 3 || p.Degree > MaxRadicandDegree)
+            if (p is null || p.Degree < 2 || p.Degree > MaxRadicandDegree)
                 return null;
             if (p.Coefficients.Values.Any(coefficient => coefficient.Evaled is not Rational))
                 return null;
@@ -221,14 +228,18 @@ namespace AngouriMath.Functions.Algebra
             var roots = RationalRoots(radicand, x, out _);
             if (poles is null || roots is null)
                 return null;
-            var candidates = new List<(XPoly A, XPoly B, bool Imaginary)>();
-            void Offer(XPoly a, XPoly b, bool imaginary)
+            // A candidate over Q(sqrt(d)) carries the field it lives in, its own: two places
+            // may want two different d -- Timofeev's `(1 + 2x)/((4 + 4x + 3x^2) sqrt(x^2 + 6x - 1))`
+            // has `sqrt(7)(1 + x)` and `sqrt(7/2)(2 - x)` -- and what each contributes to the
+            // system is rational, the conjugate difference of its logarithms.
+            var candidates = new List<(XPoly A, XPoly B, bool Imaginary, Field Field, EInteger D)>();
+            void Offer(XPoly a, XPoly b, bool imaginary, Field over, EInteger d)
             {
                 if (a.IsZero || b.IsZero)
                     return;
-                if (candidates.Any(pair => pair.Imaginary == imaginary && pair.A.Multiply(b).SameAs(pair.B.Multiply(a))))
+                if (candidates.Any(pair => pair.Imaginary == imaginary && pair.D.Equals(d) && pair.A.Multiply(b).SameAs(pair.B.Multiply(a))))
                     return;
-                candidates.Add((a, b, imaginary));
+                candidates.Add((a, b, imaginary, over, d));
             }
             foreach (var a in poles)
             {
@@ -246,22 +257,22 @@ namespace AngouriMath.Functions.Algebra
                 if (series is null)
                     continue;
                 foreach (var (aPoly, bPoly) in Approximants(series, field))
-                    Offer(Unshifted(aPoly, at.ERational, field), Unshifted(bPoly, at.ERational, field), imaginary);
+                    Offer(Unshifted(aPoly, at.ERational, field), Unshifted(bPoly, at.ERational, field), imaginary, field, EInteger.One);
             }
-            if (p.Degree == 4 && p[4].Evaled is Rational leading && leading.ERational.Sign > 0
+            if (p.Degree % 2 == 0 && p[p.Degree].Evaled is Rational leading && leading.ERational.Sign > 0
                 && TryRationalSquareRoot(leading.ERational) is { } leadingRoot)
             {
-                // At infinity, in t = 1/x: y = x^2 sqrt(P(1/t) t^4), and P(1/t) t^4 is the
-                // reversed polynomial, whose square root's series in t begins with the root of
-                // the leading coefficient.
+                // At infinity, in t = 1/x: y = x^(n/2) sqrt(P(1/t) t^n) for the degree n, and
+                // P(1/t) t^n is the reversed polynomial, whose square root's series in t begins
+                // with the root of the leading coefficient.
                 var reversed = new Dictionary<int, ERational>();
-                for (var k = 0; k <= 4; k++)
+                for (var k = 0; k <= p.Degree; k++)
                     if (p[k].Evaled is Rational coefficient)
-                        reversed[4 - k] = coefficient.ERational;
+                        reversed[p.Degree - k] = coefficient.ERational;
                 var series = SeriesOfTheRoot(reversed, leadingRoot, false, 4 * MaxMultiplierDegreeAtInfinity + 4);
                 if (series is not null)
-                    foreach (var (aPoly, bPoly) in ApproximantsAtInfinity(series, field))
-                        Offer(aPoly, bPoly, false);
+                    foreach (var (aPoly, bPoly) in ApproximantsAtInfinity(series, p.Degree / 2, field))
+                        Offer(aPoly, bPoly, false, field, EInteger.One);
             }
             // An irreducible quadratic factor q = x^2 + q_1 x + q_0 of the denominator is a pair
             // of conjugate places, and the branch of y there begins with a line L = alpha + beta x
@@ -278,7 +289,6 @@ namespace AngouriMath.Functions.Algebra
             foreach (var quadratic in quadraticFactors)
                 if (XPoly.Read(quadratic, x, field) is { Degree: 2 } q && q[2].Evaled is Rational leadingOfQ)
                     quadratics.Add(q.Scale(Rational.Create(ERational.One.Divide(leadingOfQ.ERational))));
-            Entity? constantValue = null;
             foreach (var q in quadratics)
             {
                 if (DivideByMonic(p, q) is not (_, { } remainder) || remainder.IsZero
@@ -310,21 +320,17 @@ namespace AngouriMath.Functions.Algebra
                         // for alpha^2 = r_0.
                         if (SquareFreePart(u.IsZero ? rem0 : u) is not var (d, s))
                             continue;
-                        Entity rootOfD;
-                        if (d.Equals(EInteger.One))
-                            rootOfD = Integer.One;
-                        else
+                        // The field of the line: the rationals, or Q(c) with c^2 = d.
+                        var over = field;
+                        Entity rootOfD = Integer.One;
+                        if (!d.Equals(EInteger.One))
                         {
-                            var wanted = Rational.Create(ERational.FromEInteger(d));
-                            if (constantValue is null)
-                            {
-                                constantValue = wanted;
-                                field.Modulus = RationalPolynomial.Create(new[] { ERational.FromEInteger(d).Negate(), ERational.Zero, ERational.One });
-                            }
-                            else if (constantValue != wanted)
-                                continue;
-                            rootOfD = c;
+                            var cOfLine = Variable.CreateUnique(radicand, "c");
+                            over = new Field(cOfLine) { Modulus = RationalPolynomial.Create(new[] { ERational.FromEInteger(d).Negate(), ERational.Zero, ERational.One }) };
+                            rootOfD = cOfLine;
                         }
+                        var pOver = XPoly.FromCoefficients(over, p.Coefficients);
+                        var qOver = XPoly.FromCoefficients(over, q.Coefficients);
                         // 1/(s sqrt(d)) is sqrt(d)/(s d).
                         Entity generator = Rational.Create(s) * rootOfD;
                         Entity inverseOfGenerator = Rational.Create(ERational.One.Divide(s.Multiply(ERational.FromEInteger(d))).ToLowestTerms()) * rootOfD;
@@ -334,41 +340,41 @@ namespace AngouriMath.Functions.Algebra
                         {
                             alpha = generator;
                             beta = Integer.Zero;
-                            inverseOfTwice = XPoly.FromCoefficients(field, new Dictionary<int, Entity> { [0] = inverseOfGenerator / 2 });
+                            inverseOfTwice = XPoly.FromCoefficients(over, new Dictionary<int, Entity> { [0] = inverseOfGenerator / 2 });
                         }
                         else
                         {
                             beta = generator;
-                            alpha = field.Normalize(Rational.Create(rem1.Add(u.Multiply(q1.ERational)).Divide(ERational.FromInt32(2)).ToLowestTerms()) * inverseOfGenerator);
+                            alpha = over.Normalize(Rational.Create(rem1.Add(u.Multiply(q1.ERational)).Divide(ERational.FromInt32(2)).ToLowestTerms()) * inverseOfGenerator);
                             // (2L)^(-1) modulo q is ((alpha - beta q_1) - beta x)/(2N) for the norm
                             // N = alpha^2 - alpha beta q_1 + beta^2 q_0 of the line, a rational.
-                            var norm = field.Normalize(alpha * alpha - alpha * beta * q1 + beta * beta * q0);
+                            var norm = over.Normalize(alpha * alpha - alpha * beta * q1 + beta * beta * q0);
                             if (norm.Evaled is not Rational normValue || normValue.ERational.IsZero)
                                 continue;
                             var overTwiceNorm = Rational.Create(ERational.One.Divide(normValue.ERational.Multiply(ERational.FromInt32(2))).ToLowestTerms());
-                            inverseOfTwice = XPoly.FromCoefficients(field, new Dictionary<int, Entity>
+                            inverseOfTwice = XPoly.FromCoefficients(over, new Dictionary<int, Entity>
                             {
-                                [0] = field.Normalize((alpha - beta * q1) * overTwiceNorm),
-                                [1] = field.Normalize(-beta * overTwiceNorm),
+                                [0] = over.Normalize((alpha - beta * q1) * overTwiceNorm),
+                                [1] = over.Normalize(-beta * overTwiceNorm),
                             });
                         }
-                        var line = XPoly.FromCoefficients(field, new Dictionary<int, Entity> { [0] = alpha, [1] = beta });
-                        var signedP = imaginary ? p.Scale(-1) : p;
+                        var line = XPoly.FromCoefficients(over, new Dictionary<int, Entity> { [0] = alpha, [1] = beta });
+                        var signedP = imaginary ? pOver.Scale(-1) : pOver;
                         var branch = line;
-                        var qPower = q;
+                        var qPower = qOver;
                         for (var k = 1; k <= MaxQuadraticOrder; k++)
                         {
-                            foreach (var (aPoly, bPoly) in ApproximantsModulo(branch, qPower, 2 * k, field))
-                                Offer(aPoly, bPoly, imaginary);
+                            foreach (var (aPoly, bPoly) in ApproximantsModulo(branch, qPower, 2 * k, over))
+                                Offer(aPoly, bPoly, imaginary, over, d);
                             if (k == MaxQuadraticOrder)
                                 break;
                             // Hensel: L_(k+1) = L_k + q^k delta, delta = ((P - L_k^2)/q^k) (2L)^(-1) modulo q.
                             if (DivideByMonic(signedP.Subtract(branch.Multiply(branch)), qPower) is not ({ } lifted, { IsZero: true }))
                                 break;
-                            if (DivideByMonic(lifted.Multiply(inverseOfTwice), q) is not (_, { } deltaOfLift))
+                            if (DivideByMonic(lifted.Multiply(inverseOfTwice), qOver) is not (_, { } deltaOfLift))
                                 break;
                             branch = branch.Add(qPower.Multiply(deltaOfLift));
-                            qPower = qPower.Multiply(q);
+                            qPower = qPower.Multiply(qOver);
                         }
                     }
                 }
@@ -396,53 +402,79 @@ namespace AngouriMath.Functions.Algebra
                     MathS.Ln(root.Sign < 0 ? x + Rational.Create(root.Negate()) : x - Rational.Create(root))));
             foreach (var q in quadratics)
                 generators.Add(new Generator(Pair.Constant(q.Derivative()).AsYPoly(p), new List<XPoly> { q }, 1, MathS.Ln(q.ToEntity(x))));
-            var pp = Pair.Constant(p);
-            var ppPrime = Pair.Constant(pPrime);
-            var yOnly = Pair.Y(field);
-            foreach (var (aPoly, bPoly, imaginary) in candidates)
+            foreach (var (aPoly, bPoly, imaginary, over, d) in candidates)
             {
+                // In the candidate's field, with P and its derivative read into it.
+                var pOver = XPoly.FromCoefficients(over, p.Coefficients);
+                var pp = Pair.Constant(pOver);
+                var ppPrime = Pair.Constant(pOver.Derivative());
+                var yOnly = Pair.Y(over);
                 var a = Pair.Constant(aPoly);
                 var b = Pair.Constant(bPoly);
                 var aPrime = Pair.Constant(aPoly.Derivative());
                 var bPrime = Pair.Constant(bPoly.Derivative());
-                var aEntity = aPoly.ToEntity(x);
-                var bEntity = bPoly.ToEntity(x);
-                var normOfB = bPoly.Multiply(bPoly).Multiply(p);
-                var norm = imaginary ? aPoly.Multiply(aPoly).Add(normOfB) : aPoly.Multiply(aPoly).Subtract(normOfB);
-                if (norm.IsZero || FactorOverThePlaces(norm, linearFactors, quadratics, field) is not (var factors, var scale, null))
+                var overQ = d.Equals(EInteger.One);
+                Entity rootOfD = overQ ? Integer.One : MathS.Sqrt(Rational.Create(ERational.FromEInteger(d)));
+                var aEntity = overQ ? aPoly.ToEntity(x) : aPoly.ToEntity(x).Substitute(over.C, rootOfD);
+                var bEntity = overQ ? bPoly.ToEntity(x) : bPoly.ToEntity(x).Substitute(over.C, rootOfD);
+                var normOfB = bPoly.Multiply(bPoly).Multiply(pOver);
+                var normOver = imaginary ? aPoly.Multiply(aPoly).Add(normOfB) : aPoly.Multiply(aPoly).Subtract(normOfB);
+                if (normOver.IsZero || Rationals(normOver) is not { } normRationals)
+                    continue;
+                var norm = XPoly.FromCoefficients(field, RationalsAsCoefficients(normRationals));
+                if (FactorOverThePlaces(norm, linearFactors, quadratics, field) is not (var factors, var scale, null))
                     continue;
                 var denominator = new List<XPoly> { p };
                 denominator.AddRange(factors);
+                // Over Q(sqrt(d)) the generator is the conjugate difference of the two
+                // logarithms, divided by sqrt(d), so that its derivative is rational: what the
+                // conjugate sum would add is the logarithm of the norm, a place's, already
+                // there. An arctangent's derivative is sqrt(d) times a rational one, and it is
+                // divided by sqrt(d) the same way.
+                Pair overD(Pair top) => overQ ? top : top.Scale(over.C / Rational.Create(ERational.FromEInteger(d)));
                 if (!imaginary)
                 {
                     // (ln(A - By))' = (A' - B'y - B P'/(2y))/(A - By); times (A + By)/(A + By)
                     // and 2P/(2P): [(2P A' - (2P B' + B P') y)(A + By)]/(2P (A^2 - B^2 P)).
-                    var top = pp.Multiply(aPrime, p).Scale(2)
-                        .Subtract(pp.Multiply(bPrime, p).Scale(2).Add(b.Multiply(ppPrime, p)).Multiply(yOnly, p))
-                        .Multiply(a.Add(b.Multiply(yOnly, p)), p);
+                    Pair Top(Pair aa, Pair aaPrime) => pp.Multiply(aaPrime, pOver).Scale(2)
+                        .Subtract(pp.Multiply(bPrime, pOver).Scale(2).Add(b.Multiply(ppPrime, pOver)).Multiply(yOnly, pOver))
+                        .Multiply(aa.Add(b.Multiply(yOnly, pOver)), pOver);
+                    var top = Top(a, aPrime);
+                    Entity argument;
+                    if (overQ)
+                    {
+                        argument = aEntity - bEntity * y;
+                    }
+                    else
+                    {
+                        top = overD(top.Subtract(Top(a.Scale(-1), aPrime.Scale(-1))));
+                        argument = (aEntity - bEntity * y) / (-aEntity - bEntity * y);
+                    }
+                    if (RationalPair(top, field, pOver) is not { } rationalTop)
+                        continue;
                     // ln(A - By) and ln(By - A) have the same derivative; the one that is
                     // positive where the radicand is, at a sample point, is the one written,
                     // so that `x^3/sqrt(x^4 + x^2 + 1)` reads `ln(sqrt(x^4 + x^2 + 1) - x^2 - 1/2)`
                     // and not the logarithm of what is negative for every real x.
-                    var argument = aEntity - bEntity * y;
-                    if (sampleWhereRadicandIsPositive is { } sample)
-                    {
-                        var atSample = argument.Substitute(y, MathS.Sqrt(radicand)).Substitute(x, sample);
-                        if (constantValue is not null)
-                            atSample = atSample.Substitute(c, MathS.Sqrt(constantValue));
-                        if (atSample.Evaled is Real { IsNegative: true })
-                            argument = bEntity * y - aEntity;
-                    }
-                    generators.Add(new Generator(top.Scale(Rational.Create(ERational.One.Divide(scale))).AsYPoly(p), denominator, 2, MathS.Ln(argument)));
+                    if (sampleWhereRadicandIsPositive is { } sample
+                        && argument.Substitute(y, MathS.Sqrt(radicand)).Substitute(x, sample).Evaled is Real { IsNegative: true })
+                        argument = overQ ? bEntity * y - aEntity : (aEntity - bEntity * y) / (aEntity + bEntity * y);
+                    Entity term = overQ ? MathS.Ln(argument) : MathS.Ln(argument) / rootOfD;
+                    generators.Add(new Generator(rationalTop.Scale(Rational.Create(ERational.One.Divide(scale))).AsYPoly(p), denominator, 2, term));
                 }
                 else
                 {
                     // (arctan(A/(By)))' = (A' B y - A B' y - A B P'/(2y))/(A^2 + B^2 P);
                     // times 2P/(2P): y (2P (A' B - A B') - A B P')/(2P (A^2 + B^2 P)).
-                    var top = pp.Multiply(aPrime.Multiply(b, p).Subtract(a.Multiply(bPrime, p)), p).Scale(2)
-                        .Subtract(a.Multiply(b, p).Multiply(ppPrime, p))
-                        .Multiply(yOnly, p);
-                    generators.Add(new Generator(top.Scale(Rational.Create(ERational.One.Divide(scale))).AsYPoly(p), denominator, 2, MathS.Arctan(aEntity / (bEntity * y))));
+                    var top = overD(pp.Multiply(aPrime.Multiply(b, pOver).Subtract(a.Multiply(bPrime, pOver)), pOver).Scale(2)
+                        .Subtract(a.Multiply(b, pOver).Multiply(ppPrime, pOver))
+                        .Multiply(yOnly, pOver));
+                    if (RationalPair(top, field, pOver) is not { } rationalTop)
+                        continue;
+                    Entity term = MathS.Arctan(aEntity / (bEntity * y));
+                    if (!overQ)
+                        term /= rootOfD;
+                    generators.Add(new Generator(rationalTop.Scale(Rational.Create(ERational.One.Divide(scale))).AsYPoly(p), denominator, 2, term));
                 }
             }
             // The rational part: y x^k / E.
@@ -458,7 +490,7 @@ namespace AngouriMath.Functions.Algebra
                 // (y x^k / E)' = y [P' x^k E + 2P (k x^(k-1) E - x^k E')] / (2 P E^2)
                 var inside = pPrime.Multiply(xk).Multiply(e)
                     .Add(p.Multiply(xk.Derivative().Multiply(e).Subtract(xk.Multiply(ePrime))).Scale(2));
-                generators.Add(new Generator(Pair.Constant(inside).Multiply(yOnly, p).Scale(Rational.Create(ERational.One.Divide(eScale.Multiply(eScale)))).AsYPoly(p), eSquared, 2, y * MathS.Pow(x, k) / eEntity));
+                generators.Add(new Generator(Pair.Constant(inside).Multiply(Pair.Y(field), p).Scale(Rational.Create(ERational.One.Divide(eScale.Multiply(eScale)))).AsYPoly(p), eSquared, 2, y * MathS.Pow(x, k) / eEntity));
             }
 
             // Everything over one denominator.
@@ -501,7 +533,7 @@ namespace AngouriMath.Functions.Algebra
                         column[(j, pair.Key)] = field.Normalize(pair.Value / generator.Constant);
                 columns.Add(column);
             }
-            return new Places(field, p, y, generators, firstRational, eFactors, eScale, columns, Multiplier(eFactors), constantValue);
+            return new Places(field, p, y, generators, firstRational, eFactors, eScale, columns, Multiplier(eFactors));
         }
 
         /// <summary>
@@ -540,6 +572,31 @@ namespace AngouriMath.Functions.Algebra
                 leftover = XPoly.FromCoefficients(field, coefficients);
             }
             return (factors, scale, leftover);
+        }
+
+        /// <summary>A pair read into the base field, where both its parts are rational; null where one is not.</summary>
+        private static Pair? RationalPair(Pair pair, Field field, XPoly p)
+        {
+            var parts = new XPoly[2];
+            for (var j = 0; j < 2; j++)
+            {
+                if (pair[j].IsZero)
+                    parts[j] = XPoly.Zero(field);
+                else if (Rationals(pair[j]) is { } rationals)
+                    parts[j] = XPoly.FromCoefficients(field, RationalsAsCoefficients(rationals));
+                else
+                    return null;
+            }
+            return Pair.Of(parts[0], parts[1]);
+        }
+
+        private static Dictionary<int, Entity> RationalsAsCoefficients(ERational[] rationals)
+        {
+            var coefficients = new Dictionary<int, Entity>();
+            for (var k = 0; k < rationals.Length; k++)
+                if (!rationals[k].IsZero)
+                    coefficients[k] = Rational.Create(rationals[k]);
+            return coefficients;
         }
 
         /// <summary>The coefficients by power, where every one is rational.</summary>
@@ -815,17 +872,17 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// The approximants at infinity: <c>A(x) - B(x) y(x) = O(x^(-order))</c> for
-        /// <c>y = x^2 (s + s_1/x + s_2/x^2 + ...)</c>, with the degree of <c>A</c> two more than
-        /// that of <c>B</c>.
+        /// <c>y = x^h (s + s_1/x + s_2/x^2 + ...)</c>, <c>h</c> half the radicand's degree, with
+        /// the degree of <c>A</c> that much more than the degree of <c>B</c>.
         /// </summary>
-        private static IEnumerable<(XPoly A, XPoly B)> ApproximantsAtInfinity(List<ERational> series, Field field)
+        private static IEnumerable<(XPoly A, XPoly B)> ApproximantsAtInfinity(List<ERational> series, int half, Field field)
         {
             for (var degreeB = 0; degreeB <= MaxMultiplierDegreeAtInfinity; degreeB++)
             {
-                var degreeA = degreeB + 2;
-                // In t = 1/x: A = sum a_i t^(-i), B y = sum_i b_i t^(-i) sum_j s_j t^(j-2). The
+                var degreeA = degreeB + half;
+                // In t = 1/x: A = sum a_i t^(-i), B y = sum_i b_i t^(-i) sum_j s_j t^(j-h). The
                 // coefficient of t^(-m) for m from degreeA down to degreeA - (degreeA + degreeB):
-                // a_m - sum_i b_i s_(i + 2 - m) = 0 -- as many equations as unknowns less one.
+                // a_m - sum_i b_i s_(i + h - m) = 0 -- as many equations as unknowns less one.
                 var unknowns = degreeA + 1 + degreeB + 1;
                 var rows = new List<Entity[]>();
                 for (var m = degreeA; m > degreeA - (unknowns - 1); m--)
@@ -837,7 +894,7 @@ namespace AngouriMath.Functions.Algebra
                         row[m] = Integer.One;
                     for (var i = 0; i <= degreeB; i++)
                     {
-                        var j = i + 2 - m;
+                        var j = i + half - m;
                         if (j >= 0 && j < series.Count)
                             row[degreeA + 1 + i] = Rational.Create(series[j].Negate());
                         else if (j >= series.Count)
@@ -1023,6 +1080,7 @@ namespace AngouriMath.Functions.Algebra
             internal XPoly this[int j] => parts[j];
 
             internal static Pair Constant(XPoly inX) => new(inX, XPoly.Zero(inX.Field));
+            internal static Pair Of(XPoly a, XPoly b) => new(a, b);
             internal static Pair Y(Field field) => new(XPoly.Zero(field), XPoly.One(field));
 
             internal static Pair? Read(Entity expr, Variable x, Variable y, XPoly p)
