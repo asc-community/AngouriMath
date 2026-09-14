@@ -604,6 +604,10 @@ namespace AngouriMath.Functions.Algebra
             // an ansatz finds it or nothing does. After the substitutions, which answer the
             // linear-exponent cases in their own terms.
             if ((answer = IndefiniteIntegralSolver.SolveByExponentialAnsatz(expr, x)) is { }) return answer;
+            // A polynomial times a fractional power of a base that holds a function of x,
+            // answered as a polynomial times the next power of the base: a linear system in
+            // the polynomial's coefficients, exact, and volunteered at any depth.
+            if ((answer = IndefiniteIntegralSolver.SolveByAPolynomialTimesAPowerOfTheBase(expr, x)) is { }) return answer;
             // And an exponential times a rational function of the sine and cosine, closed by
             // the same kind of ansatz in the half-angle tangent: `e^x (1 - sin(x))/(1 - cos(x))`
             // is `-e^x cot(x/2)`.
