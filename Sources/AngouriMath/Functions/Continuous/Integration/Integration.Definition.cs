@@ -486,6 +486,9 @@ namespace AngouriMath.Functions.Algebra
             // A square root of a polynomial with a repeated factor, the factor taken out of
             // the root with its sign: `sqrt((x - 3)^2 (x + 1))` is `sgn(x - 3) (x - 3) sqrt(x + 1)`.
             if ((answer = IndefiniteIntegralSolver.SolveByTakingASquareFactorOutOfARoot(expr, x, integrateByParts)) is { }) return answer;
+            // A sum of two roots below the bar, multiplied above and below by its conjugate:
+            // `1/(sqrt(A) - sqrt(B))` is `(sqrt(A) + sqrt(B))/(A - B)`.
+            if ((answer = IndefiniteIntegralSolver.SolveByRationalisingASumOfRoots(expr, x, integrateByParts)) is { }) return answer;
             // And a fractional power of a quotient whose denominator is positive for every
             // real x, written as the two powers it is: `((2 + x^2)/x^2)^(7/9)` is nothing any
             // rule reads as written. Beside the rule above, which does the like for the roots
