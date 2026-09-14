@@ -256,6 +256,63 @@ cent — its measured run-to-run spread on mean time is up to 51.8%. A move of 8
 outside that band by a wide margin and agrees in sign and rough size with the allocation column
 beside it. The small rows from the same run are still not worth reading, and are not quoted.
 
+## The 2050th: numerical evaluation, four changes in the numbers themselves
+
+[#1338](https://github.com/asc-community/AngouriMath/issues/1338) asked where an `EvalNumerical`
+spends its time and whether the width of the numbers is the reason. Three rows were added for
+the question (the 2049th, [#1341](https://github.com/asc-community/AngouriMath/pull/1341)): a
+polynomial and `ln(1 + x^2) arctan(x)` evaluated at a fresh decimal point each call, and the
+polynomial again at fifteen digits. Measured first, the width was not the reason -- fifteen
+digits against a hundred bought four times, not the forty the digit count suggests -- and the
+per-node cost was found in four places, each measured against these rows and against the
+primitives alone:
+
+- **The rational search.** Every arithmetic operation on a `Real` ends in `Real.Create`, which
+  looks for a small rational the result might be by a continued fraction in hundred-digit
+  arithmetic, fifteen divisions deep -- twenty microseconds a time, most of the cost of a node,
+  and almost every result of an evaluation is not a small rational. The same continued fraction
+  is run first in a double read off the leading bits of the mantissa, a third of a microsecond,
+  carrying the error each level's inversion multiplies it by, which decides reliably that a value
+  is *not* within the exact search's tolerance of a rational within the bound; where its error has
+  grown past deciding, a value near a small rational, in `System.Decimal`; and only a value neither
+  rules out reaches the exact search, which then decides as before.
+- **Powers.** A cube was three multiplications and a tenth power nine, each with the rational
+  search on its result, since the binary power computed its half twice; the half is squared
+  now, a whole power of an inexact decimal is one `Pow` on the decimal, and a half power of a
+  nonnegative one is its square root -- Newton's iteration, seventy times faster than the
+  exponential of half its logarithm it was.
+- **Sine and cosine.** The Taylor series at the argument as it came, sixty terms for an argument
+  up to pi, and the sine as `sqrt(1 - cos^2)`, which loses half the digits where the sine is
+  small; now the argument reduced to `[-pi/2, pi/2]` and halved below a twentieth, two series of
+  a dozen terms, and the double-angle formulas back up with eight guard digits.
+- **Arctangent and arcsine.** The arctangent was the arcsine of `x/sqrt(1 + x^2)`, a series
+  that converges like `x^(2n)/n^(3/2)`: two milliseconds for an argument of a third. It is
+  reduced to `[0, 1]`, halved by `2 arctan(x/(1 + sqrt(1 + x^2)))` below a twentieth, and summed
+  as its own series; the arcsine is the arctangent of `x/sqrt((1 - x)(1 + x))`.
+
+| benchmark | 2049th | 2050th | allocation | time |
+|---|--:|--:|--:|--:|
+| `EvalPolynomialFresh` | 650,888 | **14,000** | **−97.8%** | 349 → 9.4 µs |
+| `EvalPolynomialFresh15Digits` | 265,816 | **12,280** | **−95.4%** | 83.7 → 9.0 µs |
+| `EvalTranscendentalFresh` | 5,668,395 | **2,247,769** | **−60.3%** | 3.25 → 1.32 ms |
+| `EvalTrig` | 1,341,457 | **1,190,217** | **−11.3%** | 709 → 555 µs |
+| `EvalTrigPrecise` | 12,742,285 | **7,933,690** | **−37.7%** | 22.5 → 13.8 ms |
+| `SolveEasy` | 8,865,872 | **6,280,444** | **−29.2%** | 4.83 → 3.54 ms |
+| `SimplifyHard` | 331,683,360 | **314,496,408** | −5.2% | 190 → 178 ms |
+| every other entry | | | within 1.5% | |
+
+Bytes allocated per call, same machine, both columns measured by the gate in one session. The
+solver and the simplifier move because both evaluate numerically underneath. What the last
+digits do is stated, since twenty pinned hundred-digit values in `NumericDigits` changed in
+their last one to three digits: against mpmath at a hundred and thirty digits, `sin(1)`,
+`cos(1)` and `tan(1)` were two, three and one units off in the last place and are exact now, the
+complex sines, cosines and tangents were about twenty units off and are within two, the complex
+arcsine's real part is five units off where it was three, and the complex power is 289 off either
+way, its own path; a new test holds eighteen values of the six functions to ninety-eight digits. The gate's baseline was taken from this run.
+What is left of the cost is the evaluator's own overhead, `InnerSimplify` per node with its
+domain check and its lazy caches, and PeterO's `Log` and `Exp` at three hundred microseconds a
+call, which are the next things to measure.
+
 ## The 1930th, and every release beside it on one machine
 
 The second column measured by `Sources/Utils/benchmark_key_commits.sh` reaching all five entries in

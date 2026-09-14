@@ -337,87 +337,122 @@ namespace AngouriMath
 
         /// <summary>Analogy of <see cref="Math.Cos(double)"/></summary>
         public static EDecimal Cos(this EDecimal x, EContext context)
+            => x.IsFinite ? SinAndCos(x, context).Cos : EDecimal.NaN;
+
+        /// <summary>
+        /// <paramref name="context"/> with <paramref name="digits"/> more of precision, the same
+        /// instance every time for the same context: <see cref="ConstantCache"/> is keyed by the
+        /// context instance, so a working context built afresh on every call would have pi
+        /// recomputed on every call, and would leave an entry behind each time.
+        /// </summary>
+        private static EContext WithGuardDigits(EContext context, int digits)
         {
-            if (!x.IsFinite) return EDecimal.NaN;
+            var table = digits == 8 ? eightMoreDigits : fiveMoreDigits;
+            return table.GetValue(context, c => c.WithPrecision(c.Precision.ToInt32Checked() + digits));
+        }
+        [ConstantField] private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<EContext, EContext> eightMoreDigits = new();
+        [ConstantField] private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<EContext, EContext> fiveMoreDigits = new();
 
-            // TODO: this check should be here to improve the performance a little bit, but tests won't work with that
-            // if (Utils.IsGoodAsDouble(x)) return EDecimal.FromDouble(Math.Cos(x.ToDouble()));
-
-            // Of course this will fail! Math.Cos works with double - only ~15 digits of accuracy.
-            // We have precision of 100 by default - which is over 95 digits of accuracy,
-            // albeit the last few digits are off. You have rejected the use of double early on
-            // - as well as the entirety of System.Math.                        -- Happypig375
-
-            var consts = ConstantCache.Lookup(context);
+        /// <summary>
+        /// The sine and the cosine of <paramref name="x"/> together, each to the precision of
+        /// <paramref name="context"/>: the argument reduced to <c>[-pi, pi]</c> and then halved
+        /// until it is below a twentieth, two Taylor series of a dozen terms there, and the
+        /// double-angle formulas back up.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The series alone, on an argument up to <c>pi</c>, is sixty terms at a hundred digits
+        /// and its cost was most of a <c>sin(x)</c>; halved six times the argument is below a
+        /// twentieth and fifteen terms are enough, and a doubling is a multiplication. Each
+        /// doubling multiplies the absolute error by about four, so the work is done with
+        /// eight digits more than asked for and rounded at the end.
+        /// </para>
+        /// <para>
+        /// The sine is its own series and not <c>sqrt(1 - cos^2)</c>, which it was: that loses
+        /// half the digits wherever the sine is small, and <c>sin(10^-10)</c> came back to fifty
+        /// digits at a hundred. https://github.com/asc-community/AngouriMath/issues/1338
+        /// </para>
+        /// </remarks>
+        internal static (EDecimal Sin, EDecimal Cos) SinAndCos(EDecimal x, EContext context)
+        {
+            var working = WithGuardDigits(context, 8);
+            var consts = ConstantCache.Lookup(working);
 
             //truncating to  [-2*PI;2*PI]
-            TruncateToPeriodicInterval(ref x, consts, context);
-
-            // now x in (-2pi,2pi)
-            if (x.GreaterThanOrEquals(consts.Pi) && x.LessThanOrEquals(consts.TwoPi))
-                return -Cos(x.Subtract(consts.Pi, context), context);
-            if (x.GreaterThanOrEquals(-consts.TwoPi) && x.LessThanOrEquals(-consts.Pi))
-                return -Cos(x.Add(consts.Pi, context), context);
-
-            x = x.Multiply(x, context);
-            //y=1-x/2!+x^2/4!-x^3/6!...
-            var xx = -x.Multiply(consts.Half, context);
-            var y = xx.Increment();
-            var cachedY = y.Decrement();//init cache  with different value
-            for (var i = 1; !cachedY.Equals(y); i++)
+            TruncateToPeriodicInterval(ref x, consts, working);
+            // now x in (-2pi, 2pi); into [-pi, pi], with the signs the shift costs
+            var negateCos = false;
+            if (x.GreaterThan(consts.Pi))
             {
-                cachedY = y;
-                EDecimal factor = i * ((i << 1) + 3) + 1; //2i^2+2i+i+1=2i^2+3i+1
-                factor = -consts.Half.Divide(factor, context);
-                xx = xx.Multiply(x.Multiply(factor, context), context);
-                y = y.Add(xx, context);
+                x = x.Subtract(consts.TwoPi, working);
+            }
+            else if (x.LessThan(-consts.Pi))
+            {
+                x = x.Add(consts.TwoPi, working);
+            }
+            if (x.GreaterThan(consts.HalfPi))
+            {
+                // sin(x) = sin(pi - x), cos(x) = -cos(pi - x)
+                x = consts.Pi.Subtract(x, working);
+                negateCos = true;
+            }
+            else if (x.LessThan(-consts.HalfPi))
+            {
+                // sin(x) = sin(-pi - x), cos(x) = -cos(-pi - x)
+                x = consts.Pi.Negate().Subtract(x, working);
+                negateCos = true;
             }
 
-            return y;
+            // Halve until |x| < 1/20.
+            var halvings = 0;
+            var twentieth = EDecimal.Create(5, -2);
+            while (x.Abs().GreaterThan(twentieth))
+            {
+                x = x.Multiply(consts.Half, working);
+                halvings++;
+            }
+
+            var xx = x.Multiply(x, working);
+            // sin: x - x^3/3! + ...; cos: 1 - x^2/2! + ...
+            var sinTerm = x;
+            var sin = x;
+            var cosTerm = EDecimal.One;
+            var cos = EDecimal.One;
+            for (var i = 1; i < 200; i++)
+            {
+                cosTerm = -cosTerm.Multiply(xx, working).Divide((2 * i - 1) * (2 * i), working);
+                sinTerm = -sinTerm.Multiply(xx, working).Divide((2 * i) * (2 * i + 1), working);
+                var nextCos = cos.Add(cosTerm, working);
+                var nextSin = sin.Add(sinTerm, working);
+                var settled = nextCos.Equals(cos) && nextSin.Equals(sin);
+                cos = nextCos;
+                sin = nextSin;
+                if (settled)
+                    break;
+            }
+            for (var i = 0; i < halvings; i++)
+            {
+                // sin(2y) = 2 sin(y) cos(y), cos(2y) = 2 cos(y)^2 - 1
+                var doubledSin = sin.Multiply(cos, working).Multiply(2, working);
+                cos = cos.Multiply(cos, working).Multiply(2, working).Decrement();
+                sin = doubledSin;
+            }
+            if (negateCos)
+                cos = -cos;
+            return (sin.RoundToPrecision(context), cos.RoundToPrecision(context));
         }
 
         /// <summary>Analogy of <see cref="Math.Tan(double)"/></summary>
         public static EDecimal Tan(this EDecimal x, EContext context)
         {
             if (!x.IsFinite) return EDecimal.NaN;
-            var consts = ConstantCache.Lookup(context);
-            var cos = Cos(x, context);
+            var (sin, cos) = SinAndCos(x, context);
             if (cos.IsZero) return EDecimal.NaN;
-            //calculate sin using cos
-            var sin = CalculateSinFromCos(x, cos, consts, context);
             return sin.Divide(cos, context);
         }
-        /// <summary>Helper function for calculating sin(x) from cos(x)</summary>
-        static EDecimal CalculateSinFromCos(EDecimal x, EDecimal cos, ConstantCache consts, EContext context)
-        {
-            static bool IsSignOfSinePositive(EDecimal x, ConstantCache consts, EContext context)
-            {
-                //truncating to  [-2*PI;2*PI]
-                TruncateToPeriodicInterval(ref x, consts, context);
-
-                //now x in [-2*PI;2*PI]
-                if (x.GreaterThanOrEquals(-consts.TwoPi) && x.LessThanOrEquals(-consts.Pi)) return true;
-                if (x.GreaterThanOrEquals(-consts.Pi) && (x.IsNegative || x.IsZero)) return false;
-                if (!x.IsNegative && x.LessThanOrEquals(consts.Pi)) return true;
-                if (x.GreaterThanOrEquals(consts.Pi) && x.LessThanOrEquals(consts.TwoPi)) return false;
-
-                throw new AngouriBugException("Should not be reached");
-            }
-
-            var moduleOfSin = cos.MultiplyAndAdd(-cos, EDecimal.One, context).Sqrt(context);
-            var sineIsPositive = IsSignOfSinePositive(x, consts, context);
-            if (sineIsPositive) return moduleOfSin;
-            return -moduleOfSin;
-        }
-
         /// <summary>Analogy of <see cref="Math.Sin(double)"/></summary>
         public static EDecimal Sin(this EDecimal x, EContext context)
-        {
-            if (!x.IsFinite) return EDecimal.NaN;
-            var consts = ConstantCache.Lookup(context);
-            var cos = Cos(x, context);
-            return CalculateSinFromCos(x, cos, consts, context);
-        }
+            => x.IsFinite ? SinAndCos(x, context).Sin : EDecimal.NaN;
 
         public static EDecimal Signum(this EDecimal x, EContext _)
             => x.Sign;
@@ -485,6 +520,13 @@ namespace AngouriMath
         }
 
         /// <summary>Analogy of <see cref="Math.Asin(double)"/></summary>
+        /// <remarks>
+        /// <c>arcsin(x) = arctan(x/sqrt(1 - x^2))</c>, with <c>1 - x^2</c> as <c>(1 - x)(1 + x)</c>
+        /// so that nothing cancels near the ends: <c>1 - x</c> is exact for an <c>x</c> of the
+        /// context's width. The series it was, in <c>x</c> directly, converges like
+        /// <c>x^(2n)/n^(3/2)</c> and took a hundred terms at a hundred digits for an
+        /// argument of a third.
+        /// </remarks>
         public static EDecimal Arcsin(this EDecimal x, EContext context)
         {
             if (x.GreaterThan(EDecimal.One) || x.LessThan(-EDecimal.One))
@@ -493,44 +535,28 @@ namespace AngouriMath
 
             //known values
             if (x.IsZero) return x;
+            if (x.Equals(EDecimal.One)) return consts.HalfPi;
+            if (x.Equals(-EDecimal.One)) return -consts.HalfPi;
             if ((x - EDecimal.One).Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange))
                 return consts.HalfPi;
             //asin function is odd function
             if (x.IsNegative) return -Arcsin(-x, context);
 
-            //my optimize trick here
-
-            // used a math formula to speed up :
-            // asin(x)=0.5*(pi/2-asin(1-2*x*x)) 
-            // if x>=0 is true
-
-            var newX = x.Multiply(-2, context).MultiplyAndAdd(x, EDecimal.One, context);
-
-            //for calculating new value near to zero than current
-            //because we gain more speed with values near to zero
-            if (x.Abs().GreaterThan(newX.Abs()))
-            {
-                var t = Arcsin(newX, context);
-                return consts.Half.Multiply(consts.HalfPi.Subtract(t, context), context);
-            }
-
-            var result = x;
-            EDecimal cachedResult;
-            var i = 1;
-            var y = result;
-            var xx = x.Multiply(x, context);
-
-            do
-            {
-                cachedResult = result;
-                result = consts.Half.Divide(-i, context).Increment().Multiply(xx, context).Multiply(result, context);
-                y = result.Divide((i << 1) + 1, context).Add(y, context);
-                i++;
-            } while (!cachedResult.Equals(result));
-            return y;
+            var working = WithGuardDigits(context, 5);
+            var oneMinusSquare = EDecimal.One.Subtract(x, working).Multiply(EDecimal.One.Add(x, working), working);
+            return Arctan(x.Divide(oneMinusSquare.Sqrt(working), working), working).RoundToPrecision(context);
         }
 
         /// <summary>Analogy of <see cref="Math.Atan(double)"/></summary>
+        /// <remarks>
+        /// Reduced to <c>[0, 1]</c> by <c>arctan(x) = pi/2 - arctan(1/x)</c>, then halved --
+        /// <c>arctan(x) = 2 arctan(x/(1 + sqrt(1 + x^2)))</c> -- until the argument is below a
+        /// twentieth, where the series <c>x - x^3/3 + x^5/5 - ...</c> is forty terms at a hundred
+        /// digits, each a multiplication and a division by a small integer; the halvings come
+        /// back as a power of two, which costs no digits. It was the arcsine of
+        /// <c>x/sqrt(1 + x^2)</c>, two milliseconds at a hundred digits for an argument of a
+        /// third. https://github.com/asc-community/AngouriMath/issues/1338
+        /// </remarks>
         public static EDecimal Arctan(this EDecimal x, EContext context)
         {
             if (x.IsNaN()) return EDecimal.NaN;
@@ -538,7 +564,32 @@ namespace AngouriMath
             if (x.IsInfinity()) return x.Sign * consts.HalfPi;
             if (x.IsZero) return x;
             if (x.Equals(EDecimal.One)) return consts.QuarterPi;
-            return Arcsin(x.Divide(x.MultiplyAndAdd(x, EDecimal.One, context).Sqrt(context), context), context);
+            if (x.IsNegative) return -Arctan(-x, context);
+            var working = WithGuardDigits(context, 5);
+            if (x.GreaterThan(EDecimal.One))
+                return ConstantCache.Lookup(working).HalfPi.Subtract(Arctan(EDecimal.One.Divide(x, working), working), working).RoundToPrecision(context);
+
+            var halvings = 0;
+            var twentieth = EDecimal.Create(5, -2);
+            while (x.GreaterThan(twentieth))
+            {
+                x = x.Divide(EDecimal.One.Add(x.MultiplyAndAdd(x, EDecimal.One, working).Sqrt(working), working), working);
+                halvings++;
+            }
+            var xx = x.Multiply(x, working);
+            var power = x;
+            var sum = x;
+            for (var i = 1; i < 400; i++)
+            {
+                power = -power.Multiply(xx, working);
+                var next = sum.Add(power.Divide(2 * i + 1, working), working);
+                if (next.Equals(sum))
+                    break;
+                sum = next;
+            }
+            if (halvings > 0)
+                sum = sum.Multiply(EDecimal.FromInt32(1 << halvings), working);
+            return sum.RoundToPrecision(context);
         }
         /// <summary>Analogy of <see cref="Math.Acos(double)"/></summary>
         public static EDecimal Acos(this EDecimal x, EContext context)

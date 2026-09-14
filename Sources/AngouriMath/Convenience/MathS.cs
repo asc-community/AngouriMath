@@ -5710,6 +5710,23 @@ namespace AngouriMath
             /// cases with room to spare. Never looser than the setting's own default, so that
             /// lowering the precision cannot silently widen the tolerance.
             /// </remarks>
+            /// <summary>
+            /// <see cref="DowncastingTolerance"/> as a double, for the cheap check in front of
+            /// the exact one: the conversion of the decimal costs more than the check.
+            /// </summary>
+            internal static double DowncastingToleranceAsDouble
+            {
+                get
+                {
+                    if (PrecisionErrorZeroRange.IsOverriden)
+                        return PrecisionErrorZeroRange.Value.ToDouble();
+                    var precision = DecimalPrecisionContext.Value.Precision;
+                    if (precision.IsZero || !precision.CanFitInInt32())
+                        return 1e-16;
+                    return System.Math.Min(System.Math.Pow(10, -(precision.ToInt32Unchecked() / 2)), 1e-16);
+                }
+            }
+
             internal static EDecimal DowncastingTolerance
             {
                 get

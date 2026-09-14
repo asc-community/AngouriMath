@@ -61,6 +61,12 @@ namespace AngouriMath
 
                     if (!value.IsFinite)
                         return new Real(value);
+                    // Decided cheaply before the hundred-digit splitting and the search below:
+                    // a value that is not near any small rational -- which is what an
+                    // evaluation produces at almost every node -- is a Real and nothing else.
+                    // https://github.com/asc-community/AngouriMath/issues/1338
+                    if (!Rational.MayBeASmallRational(value, MathS.Settings.FloatToRationalIterCount, MathS.Settings.DowncastingToleranceAsDouble))
+                        return new Real(value);
                     var (intPart, intRest) = value.SplitDecimal();
                     // If the difference between value & round(value) is zero (see Number.IsZero), we consider value as an integer
                     var tolerance = MathS.Settings.DowncastingTolerance;

@@ -1,0 +1,104 @@
+//
+// Copyright (c) 2019-2026 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
+
+using AngouriMath;
+using AngouriMath.Extensions;
+using PeterO.Numbers;
+using Xunit;
+using static AngouriMath.Entity.Number;
+
+namespace AngouriMath.Tests.Core
+{
+    /// <summary>
+    /// The elementary functions at a hundred digits against reference values (mpmath at a
+    /// hundred and twenty), to ninety-eight digits: the trigonometric functions are argument
+    /// halving and short series now, the arctangent its own series and the arcsine the
+    /// arctangent's, and each is checked where its predecessor lost digits -- the sine near
+    /// zero, the arcsine near one, the arctangent far out.
+    /// <a href="https://github.com/asc-community/AngouriMath/issues/1338">#1338</a>
+    /// </summary>
+    [Trait("Area", "Core")]
+    public sealed class HighPrecisionFunctionsTest
+    {
+        private static void AgreesTo98Digits(Entity expression, string reference)
+        {
+            var got = expression.EvalNumerical();
+            Assert.True(got is Real, $"{expression} evaluated to {got}, not a real");
+            var want = EDecimal.FromString(reference);
+            var context = new EContext(110, ERounding.HalfUp, -200, 2000, false);
+            var difference = ((Real)got).EDecimal.Subtract(want, context).Abs();
+            var scale = want.Abs();
+            var relative = difference.Divide(scale, context);
+            Assert.True(relative.CompareTo(EDecimal.Create(1, -97)) < 0,
+                $"{expression} is {got} and should be {reference}: relative error {relative}");
+        }
+
+        [Theory]
+        [InlineData("sin(0.37)", "0.361615431964961978037292469127154274696845151425682771086194418360140139217306430899962671433495691370857")]
+        [InlineData("sin(1.7)", "0.991664810452468615346133398647875652406819571167123725327102491023305035733742936829620236666377682012327")]
+        [InlineData("sin(-2.9)", "-0.239249329213982328184256918739575372215552930299618774116210265880710778671232942508115049276324462128351")]
+        [InlineData("sin(10.5)", "-0.879695759971670098018508684825996034694780506297492734472544018573425918530651444976401779597118657421823")]
+        [InlineData("sin(3)", "0.141120008059867222100744802808110279846933264252265584151882641232422009967014471911282172853449863750414")]
+        [InlineData("cos(0.37)", "0.932327345606034423203812904490877885689405282263576632805449177245576067326844337659367361595858588791846")]
+        [InlineData("cos(1.7)", "-0.128844494295524684087642857334873514101640079645202976331782139942894356545082000333290557186582283470409")]
+        [InlineData("cos(-2.9)", "-0.970958165149590521781106669345532179117614759424239542138670992453273283056746079014115234944011412994284")]
+        [InlineData("cos(10.5)", "-0.475536927995992535523811490148858726078717741593479642557859450133182014859695562386622463538202509444257")]
+        [InlineData("tan(0.37)", "0.387863161655849052224444566371827968609315309826965860174746100134967076947711249291126396972000086713446")]
+        [InlineData("tan(1.7)", "-7.6966021394591584141281929682986609163652899143076475629457414231809781368970775977290877390625456458864")]
+        [InlineData("arcsin(0.37)", "0.379009020695950814074873624644761613369247292477933770476829074410249291201750337690532903117708726084071")]
+        [InlineData("arcsin(-0.5)", "-0.523598775598298873077107230546583814032861566562517636829157432051302734381034833104672470890352844663691")]
+        [InlineData("arctan(0.37)", "0.354379919123437809830726351143989290433304513586222681812525656922795656839750947554131332616663954914309")]
+        [InlineData("arctan(3.7)", "1.30683260316919205666262523215099008155312636607424143926882689069704014069633292419956191884840311712425")]
+        [InlineData("arctan(-0.05)", "-0.0499583957219427614100062870348448814912770804235071744108534548299835954767103350612648887048501265496759")]
+        [InlineData("arctan(1000000)", "1.57079532679489661956465502497288477543191817587802910085255166123336419159909287837939647811679057972306")]
+        [InlineData("arccos(0.37)", "1.191787306098945805156448066994989828729337407209619140010643221743658911941354161623484509553349807907")]
+        public void TheElementaryFunctionsAtAHundredDigits(string expression, string reference)
+            => AgreesTo98Digits(expression.ToEntity(), reference);
+
+        /// <summary>
+        /// Where the old implementations lost digits: the sine as <c>sqrt(1 - cos^2)</c> kept
+        /// fifty of a hundred near zero, the cosine a hair from a right angle, and the arcsine
+        /// near one.
+        /// </summary>
+        [Theory]
+        [InlineData("sin(0.0000000001)", "0.0000000000999999999999999999998333333333333333333334166666666666666666666468253968253968253968281525573192239858907")]
+        [InlineData("cos(1.5707963)", "0.0000000267948966192313184853334619029956637318894971745136916953499296022105640375379488696852156030209360627392")]
+        [InlineData("arcsin(0.999999)", "1.56938211311467236746824989586709579363455866391912675020764163786452703997753443323569614111361345619033")]
+        public void WhereDigitsWereLost(string expression, string reference)
+            => AgreesTo98Digits(expression.ToEntity(), reference);
+
+        /// <summary>
+        /// A whole power and a half power of a decimal, which are one call on the decimal now
+        /// and were a chain of multiplications or an exponential of a logarithm.
+        /// </summary>
+        [Theory]
+        [InlineData("1.7^3", "4.913")]
+        [InlineData("1.7^(-3)", "0.203541624262161612049664156319967433340118054142072053734988805210665581111337268471402401791166293507022")]
+        [InlineData("sqrt(1.7)", "1.30384048104052974291659431148583688330561875578201309179007936989676538557639789654518352888678849773386")]
+        [InlineData("1.7^(3/2)", "2.21652881776890056295821032952592270161955188482942225604313492882450115547987642412681199910754044614756")]
+        [InlineData("1.7^(-1/2)", "0.766964988847370437009761359697551107826834562224713583405929041115744344456704645026578546403993233961094")]
+        public void WholeAndHalfPowersOfADecimal(string expression, string reference)
+            => AgreesTo98Digits(expression.ToEntity(), reference);
+
+        /// <summary>
+        /// The downcasting to a rational is decided cheaply first and exactly after: what was
+        /// a rational is still one, and what is not is not.
+        /// </summary>
+        [Theory]
+        [InlineData("0.5", true)]
+        [InlineData("2.07", true)]
+        [InlineData("0.333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333", true)]
+        [InlineData("3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798", false)]
+        [InlineData("0.37000000000001234", false)]
+        [InlineData("1234567.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001", true)]
+        public void TheRationalSearchStillAgrees(string number, bool isRational)
+        {
+            var found = Rational.FindRational(EDecimal.FromString(number));
+            Assert.Equal(isRational, found is not null);
+        }
+    }
+}

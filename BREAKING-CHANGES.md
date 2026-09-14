@@ -75,6 +75,27 @@ since semantic versioning admits it.
 Measured on the suite: **7 of 8,525 tests** referenced the old reading — five boolean-solver inputs
 written `A | B`, and two that existed to record this spelling as at risk.
 
+### The last digits of an evaluated sine, cosine, tangent, arcsine or arctangent
+
+**Silent, and in the hundredth digit.** `EvalNumerical` at the default hundred digits gives the
+correctly rounded value of these functions now, where it gave the last digits of a series that
+had stopped a few units short. Measured on `3a5e2798` and on this change, against mpmath at a
+hundred and thirty digits:
+
+| | Was | Is |
+|---|---|---|
+| `sin(1)` | `…435430526957` (2 units below the true value in the last place) | `…435430526959` (exact) |
+| `cos(1)` | `…560871830896` (3 above) | `…560871830893` (exact) |
+| `tan(1)` | `…965202242983` (1 below) | `…965202242984` (exact) |
+| `sin`, `cos`, `tan` of `3 ± 2i` | 16 to 21 units off in one part | within 2 |
+| `arcsin`, `arccos` of `3 ± 2i` | 3 units off in the real part, 14 in the imaginary | 5 and 14 -- the imaginary part is the composition's own rounding, and the real part is two units worse |
+| `(3 + 2i)^(3 + 2i)` | 289 units off | 289 -- the complex power's own path, untouched |
+
+Of the twenty values pinned in `NumericDigits`, seventeen moved towards the true value or stayed,
+and the complex arcsine's real part moved two units away. A caller comparing a hundred-digit
+result to a pinned string will see the last digits differ; a caller comparing to a tolerance
+will not. [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
+
 ### A quotient of polynomials is split into coprime blocks before a root is peeled off
 
 `SolveByPartialFractions` tried `TrySplitOffRationalRoot` before `TrySplitIntoCoprimeParts`. Both
