@@ -327,6 +327,16 @@ namespace AngouriMath.Functions.Algebra
 
             internal Entity Normalize(Entity value)
             {
+                // A quadratic modulus, c^2 = -m_1 c - m_0, read off the tree: what the
+                // arithmetic here builds is sums and products of `a + b c`, and expanding
+                // each to find that out again was most of the square-root ansatz's time.
+                if (Modulus is { Degree: 2 } quadratic && TryReadOverAQuadratic(value, C, quadratic, out var a0, out var a1))
+                    return a1.IsZero ? Rational.Create(a0)
+                        : a0.IsZero ? Rational.Create(a1) * C
+                        : Rational.Create(a0) + Rational.Create(a1) * C;
+                // And a rational read the same way, before any constant has been needed.
+                if (Modulus is null && !value.ContainsNode(C) && TryReadOverAQuadratic(value, C, PlainSquare, out var r0, out _))
+                    return Rational.Create(r0);
                 var bare = Functions.PartialFractions.Bare(value);
                 if (!bare.ContainsNode(C) || Modulus is null)
                     return bare.Vars.Any() ? Canonical(bare) : bare;
@@ -340,6 +350,85 @@ namespace AngouriMath.Functions.Algebra
 
             internal static bool IsZero(Entity value)
                 => value == Integer.Zero || value.Evaled is Complex { IsZero: true };
+
+            /// <summary><c>c^2</c>, the modulus the rational reader is given where there is none.</summary>
+            [ConstantField] private static readonly RationalPolynomial PlainSquare = RationalPolynomial.Create(new[] { ERational.Zero, ERational.Zero, ERational.One });
+
+            /// <summary>
+            /// <paramref name="value"/> as <c>a_0 + a_1 c</c> modulo the monic quadratic
+            /// <paramref name="modulus"/> in <paramref name="c"/>, read off the tree without
+            /// expanding: sums, differences, products, quotients by rationals and small whole
+            /// powers of rationals and <c>c</c>. False for any other shape.
+            /// </summary>
+            internal static bool TryReadOverAQuadratic(Entity value, Variable c, RationalPolynomial modulus, out ERational a0, out ERational a1)
+            {
+                a0 = ERational.Zero;
+                a1 = ERational.Zero;
+                var m0 = modulus[0];
+                var m1 = modulus[1];
+                switch (value)
+                {
+                    case Rational r:
+                        a0 = r.ERational;
+                        return true;
+                    case Variable v:
+                        if (v != c)
+                            return false;
+                        a1 = ERational.One;
+                        return true;
+                    case Sumf(var l, var r):
+                    {
+                        if (!TryReadOverAQuadratic(l, c, modulus, out var l0, out var l1) || !TryReadOverAQuadratic(r, c, modulus, out var r0, out var r1))
+                            return false;
+                        a0 = l0.Add(r0).ToLowestTerms();
+                        a1 = l1.Add(r1).ToLowestTerms();
+                        return true;
+                    }
+                    case Minusf(var l, var r):
+                    {
+                        if (!TryReadOverAQuadratic(l, c, modulus, out var l0, out var l1) || !TryReadOverAQuadratic(r, c, modulus, out var r0, out var r1))
+                            return false;
+                        a0 = l0.Subtract(r0).ToLowestTerms();
+                        a1 = l1.Subtract(r1).ToLowestTerms();
+                        return true;
+                    }
+                    case Mulf(var l, var r):
+                    {
+                        if (!TryReadOverAQuadratic(l, c, modulus, out var l0, out var l1) || !TryReadOverAQuadratic(r, c, modulus, out var r0, out var r1))
+                            return false;
+                        // (l0 + l1 c)(r0 + r1 c), with c^2 = -m1 c - m0.
+                        var cross = l1.Multiply(r1);
+                        a0 = l0.Multiply(r0).Subtract(m0.Multiply(cross)).ToLowestTerms();
+                        a1 = l0.Multiply(r1).Add(l1.Multiply(r0)).Subtract(m1.Multiply(cross)).ToLowestTerms();
+                        return true;
+                    }
+                    case Divf(var l, var r):
+                    {
+                        if (!TryReadOverAQuadratic(l, c, modulus, out var l0, out var l1) || !TryReadOverAQuadratic(r, c, modulus, out var r0, out var r1)
+                            || !r1.IsZero || r0.IsZero)
+                            return false;
+                        a0 = l0.Divide(r0).ToLowestTerms();
+                        a1 = l1.Divide(r0).ToLowestTerms();
+                        return true;
+                    }
+                    case Powf(var b, Integer k) when k.EInteger.CanFitInInt32() && k.EInteger.Sign >= 0 && k.EInteger.ToInt32Unchecked() <= 8:
+                    {
+                        if (!TryReadOverAQuadratic(b, c, modulus, out var b0, out var b1))
+                            return false;
+                        a0 = ERational.One;
+                        for (var i = 0; i < k.EInteger.ToInt32Unchecked(); i++)
+                        {
+                            var cross = a1.Multiply(b1);
+                            var next0 = a0.Multiply(b0).Subtract(m0.Multiply(cross)).ToLowestTerms();
+                            a1 = a0.Multiply(b1).Add(a1.Multiply(b0)).Subtract(m1.Multiply(cross)).ToLowestTerms();
+                            a0 = next0;
+                        }
+                        return true;
+                    }
+                    default:
+                        return false;
+                }
+            }
 
             /// <summary>
             /// A coefficient with symbols in it as one canonical polynomial in them, so that
@@ -818,9 +907,13 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         private static bool TrySolveOverTheExtension(
             Entity[][] matrix, Entity[] rhs, Variable c, ERational m, out RationalPolynomial[] values)
+            => TrySolveOverTheExtension(matrix, rhs, c, RationalPolynomial.Create(new[] { m.Negate(), ERational.Zero, ERational.Zero, ERational.One }), out values);
+
+        /// <summary>The same over <c>Q(c)</c> with <c>c</c> a root of <paramref name="modulus"/>.</summary>
+        internal static bool TrySolveOverTheExtension(
+            Entity[][] matrix, Entity[] rhs, Variable c, RationalPolynomial modulus, out RationalPolynomial[] values)
         {
             values = System.Array.Empty<RationalPolynomial>();
-            var modulus = RationalPolynomial.Create(new[] { m.Negate(), ERational.Zero, ERational.Zero, ERational.One });
             var rows = rhs.Length;
             var width = matrix[0].Length;
             var a = new RationalPolynomial[rows][];
@@ -934,6 +1027,8 @@ namespace AngouriMath.Functions.Algebra
 
         private static RationalPolynomial? Read(Entity entry, Variable c, RationalPolynomial modulus)
         {
+            if (modulus.Degree == 2 && Field.TryReadOverAQuadratic(entry, c, modulus, out var a0, out var a1))
+                return RationalPolynomial.Create(new[] { a0, a1 });
             if (!PolynomialFactoring.TryGetRationalCoefficients(entry, c, 1, 0, 12, out var coefficients))
                 return null;
             var poly = RationalPolynomial.Create(coefficients);

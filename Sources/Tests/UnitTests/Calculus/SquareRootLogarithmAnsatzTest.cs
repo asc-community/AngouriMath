@@ -113,13 +113,77 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// An irreducible quadratic factor of the denominator is a pair of conjugate places,
+        /// and where the radicand is a constant modulo it the branch begins with a linear
+        /// <c>L</c>, <c>L^2 = m</c> modulo the quadratic: Welz's
+        /// <c>x/((8 + x^3) sqrt(x^3 - 1))</c> has <c>sqrt(3)(x - 1)</c> at <c>x^2 - 2x + 4</c>,
+        /// where <c>x^3 - 1</c> is <c>-9</c>, beside two arctangents at the pole <c>-2</c>; and
+        /// <c>(x^2 - 1)/((x^2 + 1) sqrt(x^3 + x^2 + x))</c> has <c>x</c> at <c>x^2 + 1</c>,
+        /// <c>2 ln(sqrt(x^3 + x^2 + x) - x) - ln(x) - ln(x^2 + 1)</c>, over the rationals.
+        /// </summary>
+        [Fact]
+        public void ALogarithmAtAQuadraticFactor()
+        {
+            DifferentiatesBack("x/((8+x^3)*sqrt(-1+x^3))", new[] { 1.3, 1.7, 2.2, 3.0, 4.0, 5.5 });
+            var welz = "x/((8+x^3)*sqrt(-1+x^3))".ToEntity().Integrate("x").Stringize();
+            Assert.Contains("sqrt(3)", welz);
+            Assert.Contains("arctan(", welz);
+            Assert.Contains("ln(x ^ 2 + (-2) * x + 4)", welz);
+
+            DifferentiatesBack("(x^2-1)/((x^2+1)*sqrt(x^3+x^2+x))", new[] { 0.2, 0.5, 0.8, 1.6, 2.4, 3.5 });
+            var rational = "(x^2-1)/((x^2+1)*sqrt(x^3+x^2+x))".ToEntity().Integrate("x").Stringize();
+            Assert.Contains("ln(sqrt(x ^ 3 + x ^ 2 + x) - x)", rational);
+            Assert.DoesNotContain("sqrt(3)", rational);
+        }
+
+        /// <summary>
+        /// Where the radicand is not a constant modulo the quadratic the line is still there,
+        /// its slope a root of a quadratic, and the branch is lifted to the fifth power of
+        /// the factor: Hearn's <c>(2x^6 + 4x^5 + 7x^4 - 3x^3 - x^2 - 8x - 8)/((2x^2 - 1)^2 sqrt(x^4 + 4x^3 + 2x^2 + 1))</c>
+        /// has <c>1/2 + 2x</c> at <c>x^2 - 1/2</c>, where the radicand is <c>9/4 + 2x</c>, and
+        /// the answer is one logarithm of <c>A - B y</c> with <c>A</c> of degree five and <c>B</c>
+        /// of degree three, whose norm is <c>-4(2x^2 - 1)^5</c>, beside <c>ln(2x^2 - 1)</c> and
+        /// the rational part <c>(2x + 1) y/(4(x^2 - 1/2))</c>.
+        /// </summary>
+        [Fact]
+        public void ALogarithmLiftedAtAQuadraticFactor()
+        {
+            var integrand = "(-8-8*x-x^2-3*x^3+7*x^4+4*x^5+2*x^6)/((-1+2*x^2)^2*sqrt(1+2*x^2+4*x^3+x^4))";
+            DifferentiatesBack(integrand, new[] { -0.5, 0.2, 0.5, 1.0, 2.0, 3.0 });
+            var integral = integrand.ToEntity().Integrate("x").Stringize();
+            Assert.Contains("ln(x ^ 2 + -1/2)", integral);
+            Assert.Contains("x ^ 5", integral);
+            Assert.Equal(2, integral.Split("ln(").Length - 1);
+        }
+
+        /// <summary>
+        /// <c>ln(A - By)</c> and <c>ln(By - A)</c> have the same derivative, and the one that
+        /// is positive where the radicand is, at a sample point, is the one written:
+        /// <c>x^3/sqrt(x^4 + x^2 + 1)</c>, matched at infinity with the constant norm
+        /// <c>-3/4</c>, is <c>ln(sqrt(x^4 + x^2 + 1) - x^2 - 1/2)/4 + sqrt(x^4 + x^2 + 1)/2</c>,
+        /// where <c>x^2 + 1/2 - sqrt(x^4 + x^2 + 1)</c> is negative for every real <c>x</c>.
+        /// </summary>
+        [Fact]
+        public void TheArgumentOfTheLogarithmIsWrittenPositive()
+        {
+            DifferentiatesBack("x^3/sqrt(x^4+x^2+1)", new[] { -2.0, -1.0, -0.5, 0.5, 1.0, 2.0 });
+            var integral = "x^3/sqrt(x^4+x^2+1)".ToEntity().Integrate("x");
+            Assert.Contains("ln(sqrt(x ^ 4 + x ^ 2 + 1) - ", integral.Stringize());
+            var atOne = integral.Substitute("C", 0).Substitute("x", 1).EvalNumerical();
+            Assert.True(atOne.ImaginaryPart.EvalNumerical().Abs() < 1e-12, $"not real at 1: {atOne}");
+        }
+
+        /// <summary>
         /// And what is elliptic is declined: <c>1/((x - 1) sqrt(x^3 + 1))</c>, where the
         /// radicand is <c>2</c> at the pole and no branch is rational, and
-        /// <c>x/((x - 2) sqrt(1 + x^3))</c>, which is <c>1/sqrt(1 + x^3)</c> beside Welz's.
+        /// <c>x/((x - 2) sqrt(1 + x^3))</c>, which is <c>1/sqrt(1 + x^3)</c> beside Welz's; and
+        /// at <c>x^2 + 1</c>, where <c>x^3 + x^2 + x + 2</c> is <c>1</c>, the line <c>x</c>
+        /// has the norm <c>(x + 2)(x^2 + 1)</c>, and <c>x + 2</c> is no place of the integrand.
         /// </summary>
         [Theory]
         [InlineData("1/((x-1)*sqrt(x^3+1))")]
         [InlineData("x/((x-2)*sqrt(1+x^3))")]
+        [InlineData("1/((x^2+1)*sqrt(x^3+x^2+x+2))")]
         public void TheEllipticIsDeclined(string integrand)
         {
             var integral = integrand.ToEntity().Integrate("x");
