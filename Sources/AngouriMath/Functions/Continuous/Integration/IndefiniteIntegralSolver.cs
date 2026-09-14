@@ -3494,6 +3494,28 @@ namespace AngouriMath.Functions.Algebra
             if (!expr.ContainsNode(tangent))
                 return null;
 
+            // An even power of the secant, cosine, sine or cosecant of x is a rational function
+            // of the tangent, exactly and wherever it is defined: `sec^2 = 1 + tan^2`,
+            // `cos^2 = 1/(1 + tan^2)`, `sin^2 = tan^2/(1 + tan^2)`. Timofeev's
+            // `(sec^2 - 3 tan sqrt(4 sec^2 + 5 tan^2))/(sin^2 (4 sec^2 + 5 tan^2)^(3/2))` is
+            // `((1 + u^2) - 3u sqrt(4 + 9u^2))/(u^2 (4 + 9u^2)^(3/2))` under the tangent, and was
+            // declined for the secant and the sine that survived the rewriting. An odd power is
+            // not a function of the tangent -- its sign is not -- and is left, to survive and
+            // decline as before.
+            var secantSquared = 1 + MathS.Sqr(tangent);
+            expr = expr.Replace(node => node switch
+            {
+                Powf(Secantf(var a), Number.Integer even) when a == x && even.EInteger.IsEven && even.EInteger.Sign > 0
+                    => MathS.Pow(secantSquared, even.EInteger.ToInt32Checked() / 2),
+                Powf(Cosf(var a), Number.Integer even) when a == x && even.EInteger.IsEven && even.EInteger.Sign > 0
+                    => MathS.Pow(secantSquared, -(even.EInteger.ToInt32Checked() / 2)),
+                Powf(Sinf(var a), Number.Integer even) when a == x && even.EInteger.IsEven && even.EInteger.Sign > 0
+                    => MathS.Pow(MathS.Sqr(tangent) / secantSquared, even.EInteger.ToInt32Checked() / 2),
+                Powf(Cosecantf(var a), Number.Integer even) when a == x && even.EInteger.IsEven && even.EInteger.Sign > 0
+                    => MathS.Pow(secantSquared / MathS.Sqr(tangent), even.EInteger.ToInt32Checked() / 2),
+                _ => node,
+            });
+
             var uSub = Variable.CreateUnique(expr, "u_tan");
             var inU = expr.Substitute(tangent, uSub);
             if (inU.ContainsNode(x))
