@@ -76,6 +76,32 @@ namespace DotnetBenchmark
         private static readonly EContext fiveHundredDigits =
             new(500, ERounding.HalfUp, -500, 5000, false);
 
+        // Numerical evaluation of an expression at a point, which is what a plot or a
+        // root-finder asks for thousands of times: the expression is built once and the
+        // point substituted afresh on every call, so the per-node cost of the evaluation is
+        // what is measured and not the cache of a previous answer. A polynomial, for the
+        // arithmetic alone, and a logarithm times an arctangent, for the series behind the
+        // transcendental functions; the polynomial once more at fifteen digits, since how
+        // much of the cost is the width of the numbers and how much is the evaluator's own
+        // overhead is the question https://github.com/asc-community/AngouriMath/issues/1338
+        // asks. The point is a decimal that is not within the downcasting tolerance of a
+        // small rational -- an exact `37/100` would be evaluated in rational arithmetic and
+        // never touch a decimal, and a binary double's fifty-three-digit expansion of 0.37
+        // is not what anybody means by it.
+        [Benchmark] public void EvalPolynomialFresh() => evalPolynomial.Substitute(evalX, evalAt).EvalNumerical();
+        [Benchmark] public void EvalTranscendentalFresh() => evalTranscendental.Substitute(evalX, evalAt).EvalNumerical();
+        [Benchmark] public void EvalPolynomialFresh15Digits()
+        {
+            using var _ = MathS.Settings.DecimalPrecisionContext.Set(fifteenDigits);
+            evalPolynomial.Substitute(evalX, evalAt).EvalNumerical();
+        }
+        private static readonly Entity.Variable evalX = MathS.Var("x");
+        private static readonly Entity evalAt = Entity.Number.Real.Create(EDecimal.FromString("0.37000000000001234"));
+        private static readonly Entity evalPolynomial = "x^3 + 2*x^2 - x + 1";
+        private static readonly Entity evalTranscendental = "ln(1 + x^2)*arctan(x)";
+        private static readonly EContext fifteenDigits =
+            new(15, ERounding.HalfUp, -100, 1000, false);
+
         // Testing compilation
         [Benchmark] public void CompileEasy() => toCompileEasy.Compile<Complex, Complex>("x");
         private static readonly Entity toCompileEasy = "x + x / 2 + sin(x)";
