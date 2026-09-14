@@ -141,6 +141,80 @@ namespace AngouriMath.Tests.Calculus
         public void APowerOfThePositiveBaseLeavesTheRoot(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// A polynomial times a rational function of exponentials, by parts against the whole
+        /// rational function: <c>x tanh(x)^2</c> is <c>x ((e^(2x) - 1)/(e^(2x) + 1))^2</c>, whose
+        /// antiderivative under <c>u = e^(2x)</c> is <c>x - tanh(x)</c>, and what parts leaves is
+        /// that, a degree lower. The general parts rule split the sum and each term's
+        /// antiderivative kept a logarithm the sum's does not -- twenty-five seconds of
+        /// dilogarithms. Where the antiderivative keeps a logarithm of an exponential's sum the
+        /// integrand is declined at once: <c>x/(e^x + 1)</c> is not elementary.
+        /// </summary>
+        [Theory]
+        [InlineData("x*tanh(x)^2")]
+        [InlineData("x*coth(x)^2")]
+        [InlineData("x*sech(x)^2")]
+        [InlineData("x*e^(2*x)/(e^(2*x) + 1)^2")]
+        public void APolynomialTimesARationalFunctionOfTheExponential(string integrand) => DifferentiatesBack(integrand);
+
+        [Theory]
+        [InlineData("x/(e^x + 1)")]
+        [InlineData("x*e^(2*x)/(e^x + 1)")]
+        [InlineData("x^2*e^x/(e^x + 1)^2")]
+        [InlineData("x^2*sech(x)^2")]
+        public void ADilogarithmIsDeclinedAtOnce(string integrand)
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.Contains("integral(", integral.Stringize());
+            Assert.True(watch.ElapsedMilliseconds < 20_000, $"{integrand} took {watch.ElapsedMilliseconds} ms to decline");
+        }
+
+        /// <summary>
+        /// A power of an exponential with a positive base is the exponential of the product,
+        /// exactly, and only that spelling is one the exponential rules read: Timofeev's
+        /// <c>(cos(x/2) + sin(x/2))/(e^x)^(1/3)</c>, <c>cos(3x/2)/(3^(3x))^(1/4)</c> and
+        /// <c>cos(x/3)^3/sqrt(e^x)</c>; and <c>cosh(x) + sinh(x)</c>, a sum of quotients of
+        /// exponentials that is <c>e^x</c>, collapses to it with the exponentials as
+        /// indeterminates, so that <c>e^(m x)/(cosh(x) + sinh(x))</c> is <c>e^((m - 1) x)/(m - 1)</c>.
+        /// The symbolic <c>1/(a^2 + b^2 cosh(x)^2)</c> is a piecewise on the discriminant of
+        /// the quadratic in <c>u^2</c>, asked as a question of its own in <c>u</c> and with the
+        /// power of a product the simplifier writes distributed, <c>a^2 u^2</c> for <c>(a u)^2</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("(cos(x/2) + sin(x/2))/(e^x)^(1/3)")]
+        [InlineData("cos(3*x/2)/(3^(3*x))^(1/4)")]
+        [InlineData("cos(x/3)^3/sqrt(e^x)")]
+        public void APowerOfAnExponentialIsFlattened(string integrand) => DifferentiatesBack(integrand);
+
+        [Fact]
+        public void TheHyperbolicSumThatIsAnExponential()
+        {
+            var integral = "e^(m*x)/(cosh(x) + sinh(x))".ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var pinned = integral.Substitute("m", 3).Substitute("C", 0).Differentiate("x");
+            var original = "e^(3*x)/(cosh(x) + sinh(x))".ToEntity();
+            foreach (var at in Points)
+                Assert.True(Math.Abs((double)(pinned.Substitute("x", at).EvalNumerical() - original.Substitute("x", at).EvalNumerical()).RealPart) < 1e-9, $"at {at}");
+        }
+
+        [Theory]
+        [InlineData("1/(a^2 + b^2*cosh(x)^2)")]
+        [InlineData("1/(a^2 - b^2*cosh(x)^2)")]
+        public void ASymbolicQuadraticInTheHyperbolicCosine(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var pinned = integral.Substitute("a", 3).Substitute("b", 2).Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity().Substitute("a", 3).Substitute("b", 2);
+            foreach (var at in Points)
+            {
+                var got = pinned.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-8 && Math.Abs((double)(got - want).ImaginaryPart) < 1e-8, $"{integrand} at {at}: {got} for {want}");
+            }
+        }
+
+        /// <summary>
         /// What the rule must not disturb: exponentials the other rules already answer, and which
         /// are not rational in <c>e^(k x)</c> at all.
         /// </summary>
