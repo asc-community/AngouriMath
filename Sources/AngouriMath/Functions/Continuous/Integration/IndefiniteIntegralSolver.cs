@@ -4835,6 +4835,352 @@ namespace AngouriMath.Functions.Algebra
         private const int MaximumTowerDegree = 4;
 
         /// <summary>
+        /// A rational function of <c>x</c> and of <c>sin(x)</c> and <c>cos(x)</c> together, with
+        /// an exponential <c>e^(a x)</c> in front or not, closed by the ansatz
+        /// <c>F = e^(a x) P/Q</c> with <c>P</c> and <c>Q</c> polynomials in the three.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Timofeev's <c>x^2/(x cos(x) - sin(x))^2</c> is <c>((x sin(x) + cos(x))/(x cos(x) - sin(x)))'</c>
+        /// and <c>(2x + sin(2x))/(cos(x) + x sin(x))^2</c> is <c>(2x sin(x)/(x sin(x) + cos(x)))'</c>;
+        /// neither had an antiderivative. Nothing reads them: the half-angle substitution
+        /// wants no bare <c>x</c>, by parts goes round in a circle, and no subtree is a
+        /// substitution. They are the logarithm tower's ansatz with the sine and cosine for
+        /// the logarithm. The ring of polynomials in <c>x</c>, <c>sin(x)</c> and <c>cos(x)</c>
+        /// is <c>Q[x, s, c]/(s^2 + c^2 - 1)</c>, an integral domain with the basis
+        /// <c>x^i c^k</c>, <c>x^i s c^k</c>, and it is closed under the derivative --
+        /// <c>(s c^k)' = c^(k+1) - k (1 - c^2) c^(k-1)</c> -- so <c>F' = N/D</c> is the identity
+        /// <c>(a P Q + P' Q - P Q') D = N Q^2</c> in that ring, one equation per basis element
+        /// and linear in the coefficients of <c>P</c>. Exact, so a solution is an answer and
+        /// its absence a decline; the derivative of what comes out is checked against the
+        /// integrand at sampled points all the same. <c>Q</c> is tried from the integrand's
+        /// written denominator as the other ansätze try theirs, the factors with their powers
+        /// lowered by one and then as they are. The half-angle tangent was tried for the
+        /// tower first, and every substitution of it leaves powers of <c>1 + t^2</c> above and
+        /// below that nothing cancels; the ring needs no substitution.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByTrigonometricTowerAnsatz(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var sine = MathS.Sin(x);
+            var cosine = MathS.Cos(x);
+            if (!expr.ContainsNode(sine) && !expr.ContainsNode(cosine)
+                && !expr.Nodes.Any(node => node is Tanf(var a) && a == x || node is Cotanf(var b) && b == x
+                                          || node is Secantf(var c) && c == x || node is Cosecantf(var d) && d == x))
+                return null;
+            if (ReadOneExponentialTimesTheRest(expr, x) is not var (exponent, rest))
+                return null;
+            Entity a = Number.Integer.Zero;
+            if (exponent is not null)
+            {
+                if (!TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slope, out _) || slope.ContainsNode(x))
+                    return null;
+                a = slope;
+            }
+            var overTheTwo = rest.Replace(node => node switch
+            {
+                Tanf(var arg) when arg == x => sine / cosine,
+                Cotanf(var arg) when arg == x => cosine / sine,
+                Secantf(var arg) when arg == x => 1 / cosine,
+                Cosecantf(var arg) when arg == x => 1 / sine,
+                _ => node
+            });
+            // Rational in x and the two, and of the two only with the argument x or a whole
+            // multiple of it; and x bare somewhere, or this is the half-angle substitution's
+            // and it has declined.
+            if (overTheTwo.Nodes.Any(node => node.ContainsNode(x) && node is not (Variable or Sumf or Minusf or Mulf or Divf or Sinf or Cosf)
+                                              && !(node is Powf(_, Number.Integer))))
+                return null;
+            var s = Variable.CreateUnique(expr, "s_tower");
+            var c = Variable.CreateUnique(expr, "c_tower");
+            // A multiple angle is a polynomial in the two: `sin(2x)` is `2 s c`, and
+            // Timofeev's `(2x + sin(2x))/(cos(x) + x sin(x))^2` is `(2x sin(x)/(x sin(x) + cos(x)))'`.
+            static bool IsAWholeMultiple(Entity argument, Entity.Variable x, out int k)
+            {
+                k = 0;
+                if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out var intercept)
+                    || intercept.Evaled is not Number.Complex { IsZero: true }
+                    || slope.Evaled is not Number.Integer whole || whole.EInteger.Sign <= 0 || whole.EInteger.CompareTo(EInteger.FromInt32(MaximumTrigonometricTowerDegree)) > 0)
+                    return false;
+                k = whole.EInteger.ToInt32Checked();
+                return true;
+            }
+            var inTheThree = overTheTwo.Replace(node =>
+            {
+                if (node is Sinf(var argument) && IsAWholeMultiple(argument, x, out var k))
+                    return MultipleAngle(k, s, c).Sine;
+                if (node is Cosf(var argument2) && IsAWholeMultiple(argument2, x, out var k2))
+                    return MultipleAngle(k2, s, c).Cosine;
+                return node;
+            });
+            if (inTheThree.Nodes.Any(node => node is Sinf(var arg) && arg.ContainsNode(x) || node is Cosf(var arg2) && arg2.ContainsNode(x)))
+                return null;
+            if (!inTheThree.ContainsNode(x) || !(inTheThree.ContainsNode(s) || inTheThree.ContainsNode(c)))
+                return null;
+
+            var (above, below) = Functions.SingleQuotient.Of(inTheThree);
+            if (!TrigonometricPolynomial.TryRead(above, x, s, c, out var n) || !TrigonometricPolynomial.TryRead(below, x, s, c, out var d))
+                return null;
+            if (n.DegreeInX > MaximumTrigonometricTowerDegree || d.DegreeInX > MaximumTrigonometricTowerDegree
+                || n.TrigonometricDegree > MaximumTrigonometricTowerDegree || d.TrigonometricDegree > MaximumTrigonometricTowerDegree)
+                return null;
+
+            // The denominators tried, from the written factors that hold any of the three.
+            var factors = Mulf.LinearChildren(below).Where(f => f.ContainsNode(x) || f.ContainsNode(s) || f.ContainsNode(c)).ToList();
+            var candidates = new List<Entity>();
+            Entity lowered = Number.Integer.One;
+            foreach (var factor in factors)
+                if (factor is Powf(var @base, Number.Integer power) && power.EInteger.Sign > 0 && power.EInteger.CanFitInInt32())
+                {
+                    var one = power.EInteger.ToInt32Unchecked() - 1;
+                    if (one > 0)
+                        lowered *= one == 1 ? @base : MathS.Pow(@base, one);
+                }
+            candidates.Add(lowered);
+            if (factors.Count > 0)
+                candidates.Add(below);
+
+            foreach (var candidate in candidates.Distinct())
+            {
+                if (!TrigonometricPolynomial.TryRead(candidate, x, s, c, out var q))
+                    continue;
+                var degreePX = System.Math.Max(q.DegreeInX, n.DegreeInX + 2);
+                var degreePT = System.Math.Max(q.TrigonometricDegree, n.TrigonometricDegree + 1);
+                if (degreePX > MaximumTrigonometricTowerDegree || degreePT > MaximumTrigonometricTowerDegree + 1)
+                    continue;
+                var qPrime = q.Derivative();
+                var qSquared = q.Times(q);
+                var target = n.Times(qSquared);
+                var columns = new List<TrigonometricPolynomial>();
+                var monomialsOfP = new List<(int X, int C, int S)>();
+                for (var i = 0; i <= degreePX; i++)
+                    for (var k = 0; k <= degreePT; k++)
+                        for (var flag = 0; flag <= 1; flag++)
+                        {
+                            if (k + flag > degreePT)
+                                continue;
+                            var m = TrigonometricPolynomial.Monomial(i, k, flag);
+                            // (a m Q + m' Q - m Q') D, the coefficient of this unknown.
+                            var bracket = m.Derivative().Times(q).Minus(m.Times(qPrime));
+                            if (a.Evaled is not Number.Complex { IsZero: true })
+                                bracket = bracket.Plus(m.Times(q).Scaled(a));
+                            columns.Add(bracket.Times(d));
+                            monomialsOfP.Add((i, k, flag));
+                        }
+                var keys = columns.SelectMany(column => column.Terms.Keys).Concat(target.Terms.Keys).Distinct().OrderBy(key => key).ToList();
+                var matrix = new Entity[keys.Count][];
+                var rhs = new Entity[keys.Count];
+                for (var row = 0; row < keys.Count; row++)
+                {
+                    matrix[row] = new Entity[columns.Count];
+                    for (var column = 0; column < columns.Count; column++)
+                        matrix[row][column] = columns[column].Terms.TryGetValue(keys[row], out var entry) ? entry : Number.Integer.Zero;
+                    rhs[row] = target.Terms.TryGetValue(keys[row], out var wanted) ? wanted : Number.Integer.Zero;
+                }
+                if (!Functions.PartialFractions.TrySolveLinear(matrix, rhs, out var values) || values is null)
+                    continue;
+                Entity numerator = Number.Integer.Zero;
+                for (var column = 0; column < values.Length; column++)
+                {
+                    var value = values[column].InnerSimplified;
+                    if (value.Evaled is Number.Complex { IsZero: true })
+                        continue;
+                    var (i, k, flag) = monomialsOfP[column];
+                    numerator += value * TrigonometricPolynomial.Monomial(i, k, flag).ToEntity(x, s, c);
+                }
+                if (numerator.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                var quotient = (numerator / candidate).Substitute(s, sine).Substitute(c, cosine);
+                var answer = Functions.PartialFractions.Bare(
+                    (exponent is null ? quotient : MathS.Pow(MathS.e, exponent) * quotient).InnerSimplified);
+                if (!Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
+                    continue;
+                return answer;
+            }
+            return null;
+        }
+
+        /// <summary>The largest degree in x or in the two the trigonometric tower ansatz reads or tries.</summary>
+        private const int MaximumTrigonometricTowerDegree = 6;
+
+        /// <summary>
+        /// <c>sin(k x)</c> and <c>cos(k x)</c> as polynomials in <paramref name="s"/> and
+        /// <paramref name="c"/>, by <c>sin((k + 1)x) = sin(kx) cos(x) + cos(kx) sin(x)</c> and
+        /// <c>cos((k + 1)x) = cos(kx) cos(x) - sin(kx) sin(x)</c>.
+        /// </summary>
+        private static (Entity Sine, Entity Cosine) MultipleAngle(int k, Entity.Variable s, Entity.Variable c)
+        {
+            Entity sine = s;
+            Entity cosine = c;
+            for (var i = 1; i < k; i++)
+                (sine, cosine) = (sine * c + cosine * s, cosine * c - sine * s);
+            return (sine, cosine);
+        }
+
+        /// <summary>
+        /// A polynomial in <c>x</c>, <c>sin(x)</c> and <c>cos(x)</c> with every <c>sin^2</c>
+        /// written as <c>1 - cos^2</c>, so that the basis is <c>x^i cos^k</c> and
+        /// <c>x^i sin cos^k</c>: keyed by the degree in x, the degree in the cosine and the
+        /// sine's presence, with coefficients free of the three. Two are equal as functions
+        /// exactly when their terms are.
+        /// </summary>
+        private sealed class TrigonometricPolynomial
+        {
+            internal readonly Dictionary<(int X, int C, int S), Entity> Terms = new();
+
+            internal int DegreeInX => Terms.Count == 0 ? 0 : Terms.Keys.Max(key => key.X);
+            internal int TrigonometricDegree => Terms.Count == 0 ? 0 : Terms.Keys.Max(key => key.C + key.S);
+
+            internal static TrigonometricPolynomial Monomial(int i, int k, int flag)
+            {
+                var monomial = new TrigonometricPolynomial();
+                monomial.Terms[(i, k, flag)] = Number.Integer.One;
+                return monomial;
+            }
+
+            private void Add((int X, int C, int S) key, Entity coefficient)
+            {
+                var sum = Terms.TryGetValue(key, out var already) ? (already + coefficient).InnerSimplified : coefficient;
+                if (sum.Evaled is Number.Complex { IsZero: true })
+                    Terms.Remove(key);
+                else
+                    Terms[key] = sum;
+            }
+
+            internal TrigonometricPolynomial Plus(TrigonometricPolynomial other)
+            {
+                var sum = new TrigonometricPolynomial();
+                foreach (var pair in Terms) sum.Add(pair.Key, pair.Value);
+                foreach (var pair in other.Terms) sum.Add(pair.Key, pair.Value);
+                return sum;
+            }
+
+            internal TrigonometricPolynomial Minus(TrigonometricPolynomial other) => Plus(other.Scaled(Number.Integer.MinusOne));
+
+            internal TrigonometricPolynomial Scaled(Entity by)
+            {
+                var scaled = new TrigonometricPolynomial();
+                foreach (var pair in Terms) scaled.Add(pair.Key, (by * pair.Value).InnerSimplified);
+                return scaled;
+            }
+
+            internal TrigonometricPolynomial Times(TrigonometricPolynomial other)
+            {
+                var product = new TrigonometricPolynomial();
+                foreach (var leftPair in Terms)
+                    foreach (var rightPair in other.Terms)
+                    {
+                        var (left, right) = (leftPair.Key, rightPair.Key);
+                        var coefficient = (leftPair.Value * rightPair.Value).InnerSimplified;
+                        var i = left.X + right.X;
+                        var k = left.C + right.C;
+                        if (left.S + right.S == 2)
+                        {
+                            // sin^2 is 1 - cos^2.
+                            product.Add((i, k, 0), coefficient);
+                            product.Add((i, k + 2, 0), (-coefficient).InnerSimplified);
+                        }
+                        else
+                            product.Add((i, k, left.S + right.S), coefficient);
+                    }
+                return product;
+            }
+
+            /// <summary>The derivative in x, with <c>(sin cos^k)' = cos^(k+1) - k (1 - cos^2) cos^(k-1)</c>.</summary>
+            internal TrigonometricPolynomial Derivative()
+            {
+                var derivative = new TrigonometricPolynomial();
+                foreach (var pair in Terms)
+                {
+                    var (i, k, flag) = pair.Key;
+                    var coefficient = pair.Value;
+                    if (i > 0)
+                        derivative.Add((i - 1, k, flag), (i * coefficient).InnerSimplified);
+                    if (flag == 0)
+                    {
+                        // (cos^k)' = -k sin cos^(k-1)
+                        if (k > 0)
+                            derivative.Add((i, k - 1, 1), (-k * coefficient).InnerSimplified);
+                    }
+                    else
+                    {
+                        derivative.Add((i, k + 1, 0), coefficient);
+                        if (k > 0)
+                        {
+                            derivative.Add((i, k - 1, 0), (-k * coefficient).InnerSimplified);
+                            derivative.Add((i, k + 1, 0), (k * coefficient).InnerSimplified);
+                        }
+                    }
+                }
+                return derivative;
+            }
+
+            internal Entity ToEntity(Entity.Variable x, Entity.Variable s, Entity.Variable c)
+            {
+                Entity sum = Number.Integer.Zero;
+                foreach (var pair in Terms.OrderBy(pair => pair.Key))
+                {
+                    var (i, k, flag) = pair.Key;
+                    Entity term = pair.Value;
+                    if (i > 0) term *= i == 1 ? x : MathS.Pow(x, i);
+                    if (flag == 1) term *= s;
+                    if (k > 0) term *= k == 1 ? c : MathS.Pow(c, k);
+                    sum = sum == Number.Integer.Zero ? term : sum + term;
+                }
+                return sum;
+            }
+
+            /// <summary>
+            /// <paramref name="expr"/>, a polynomial in the three as written, read into the
+            /// basis; <see langword="false"/> where it is not one.
+            /// </summary>
+            internal static bool TryRead(Entity expr, Entity.Variable x, Entity.Variable s, Entity.Variable c, out TrigonometricPolynomial read)
+            {
+                read = new TrigonometricPolynomial();
+                if (!TreeAnalyzer.TryGetPolynomial(expr.Expand(), x, out var inX))
+                    return false;
+                foreach (var pairInX in inX)
+                {
+                    var powerOfX = pairInX.Key;
+                    var coefficientInX = pairInX.Value;
+                    if (powerOfX.Sign < 0 || !powerOfX.CanFitInInt32())
+                        return false;
+                    if (!TreeAnalyzer.TryGetPolynomial(coefficientInX, s, out var inS))
+                        return false;
+                    foreach (var pairInS in inS)
+                    {
+                        var powerOfS = pairInS.Key;
+                        var coefficientInS = pairInS.Value;
+                        if (powerOfS.Sign < 0 || !powerOfS.CanFitInInt32())
+                            return false;
+                        if (!TreeAnalyzer.TryGetPolynomial(coefficientInS, c, out var inC))
+                            return false;
+                        foreach (var pair in inC)
+                        {
+                            var powerOfC = pair.Key;
+                            var coefficient = pair.Value;
+                            if (powerOfC.Sign < 0 || !powerOfC.CanFitInInt32() || coefficient.ContainsNode(x) || coefficient.ContainsNode(s) || coefficient.ContainsNode(c))
+                                return false;
+                            // sin^(2m + f) is (1 - cos^2)^m sin^f.
+                            var j = powerOfS.ToInt32Unchecked();
+                            var term = Monomial(powerOfX.ToInt32Unchecked(), powerOfC.ToInt32Unchecked(), j % 2).Scaled(coefficient);
+                            var oneMinusCosineSquared = new TrigonometricPolynomial();
+                            oneMinusCosineSquared.Terms[(0, 0, 0)] = Number.Integer.One;
+                            oneMinusCosineSquared.Terms[(0, 2, 0)] = Number.Integer.MinusOne;
+                            for (var m = 0; m < j / 2; m++)
+                                term = term.Times(oneMinusCosineSquared);
+                            read = read.Plus(term);
+                        }
+                    }
+                }
+                return true;
+            }
+        }
+
+        /// <summary>
         /// <paramref name="expr"/> as a polynomial in <paramref name="x"/> and <paramref name="L"/>
         /// with coefficients free of both, keyed by the pair of degrees.
         /// </summary>
@@ -6225,13 +6571,22 @@ namespace AngouriMath.Functions.Algebra
             if (factors.Count < 2)
                 return null;
 
+            // A whole power of a sine or a cosine is that many factors: Hearn's
+            // `cos(x)^2 sin(2x + 3)` is `cos(x) (cos(x) sin(2x + 3))`, and one pair at a time
+            // still leaves fewer trigonometric factors than it found.
+            static (Entity Base, int Power) Unpowered(Entity factor)
+                => factor is Powf(var @base, Number.Integer n) && @base is Sinf or Cosf && n.EInteger.Sign > 0 && n.EInteger.CanFitInInt32()
+                    ? (@base, n.EInteger.ToInt32Checked())
+                    : (factor, 1);
             for (var i = 0; i < factors.Count; i++)
                 for (var j = i + 1; j < factors.Count; j++)
                 {
+                    var (first, firstPower) = Unpowered(factors[i]);
+                    var (second, secondPower) = Unpowered(factors[j]);
                     // Both arguments have to mention the variable. A sine of a constant is a
                     // number as far as this integral is concerned, and pairing it with a real
                     // factor would turn one term into two for nothing.
-                    var replacement = (factors[i], factors[j]) switch
+                    var replacement = (first, second) switch
                     {
                         (Sinf(var a), Sinf(var b)) when a != b && a.ContainsNode(x) && b.ContainsNode(x)
                             => (MathS.Cos(a - b) - MathS.Cos(a + b)) / 2,
@@ -6247,6 +6602,10 @@ namespace AngouriMath.Functions.Algebra
                         continue;
 
                     var product = replacement;
+                    if (firstPower > 1)
+                        product *= firstPower == 2 ? first : MathS.Pow(first, firstPower - 1);
+                    if (secondPower > 1)
+                        product *= secondPower == 2 ? second : MathS.Pow(second, secondPower - 1);
                     for (var k = 0; k < factors.Count; k++)
                         if (k != i && k != j)
                             product *= factors[k];
