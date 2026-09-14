@@ -592,6 +592,11 @@ namespace AngouriMath.Functions.Algebra
             // (the #1265 failure), and scoped it declined nine integrands that reach it one
             // level down -- the nested radicals under `u = sqrt(1 + x)`, the remainders of by
             // parts -- each of which is closed here.
+            // A polynomial over the root of a quadratic, reduced to `R sqrt(Q) + K/sqrt(Q)`
+            // by one solve, and the last term the table's -- a piecewise on the sign of a
+            // symbolic leading coefficient, where the substitutions in front have no sign
+            // to go on.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverTheRootOfAQuadratic(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveALinearBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByEulerSubstitution(expr, x)) is { }) return answer;

@@ -99,6 +99,23 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, points, ("alpha", 0.6), ("epsilon", 0.5), ("h", 2.0), ("k", 0.6));
 
         /// <summary>
+        /// A polynomial over the root, with the leading coefficient a symbol: reduced to
+        /// <c>R sqrt(Q) + K/sqrt(Q)</c> by one solve, the last term the table's piecewise on
+        /// the sign of the leading coefficient. Hearn's <c>r/sqrt(-alpha^2 - 2k r + 2pe r^2)</c>
+        /// had no antiderivative, with <c>2pe</c> in front and no sign to go on; checked on
+        /// both signs of the leading coefficient, and with it zero, where the arm is the
+        /// polynomial over the root of a linear and not the reduction that divided by it.
+        /// </summary>
+        [Theory]
+        [InlineData("x/sqrt(-alpha^2 - 2*k*x + 2*pe*x^2)", new[] { 2.0, 2.5, 3.0, 3.5 }, 1.0)]
+        [InlineData("x/sqrt(-alpha^2 - 2*k*x + 2*pe*x^2)", new[] { -1.5, -1.2, -0.8, -0.5 }, -0.4)]
+        [InlineData("x/sqrt(-alpha^2 - 2*k*x + 2*pe*x^2)", new[] { -3.0, -2.5, -2.0, -1.5 }, 0.0)]
+        [InlineData("x^2/sqrt(c + b*x + a*x^2)", new[] { 0.7, 1.1, 1.6, 2.2 }, 1.0)]
+        [InlineData("(x^3 + 2*x)/sqrt(c + b*x + a*x^2)", new[] { 0.7, 1.1, 1.6, 2.2 }, 1.0)]
+        public void APolynomialOverTheRootWithASymbolInFront(string integrand, double[] points, double leading)
+            => DifferentiatesBack(integrand, points, ("alpha", 0.6), ("k", 0.7), ("pe", leading), ("a", leading), ("b", 0.7), ("c", 0.6));
+
+        /// <summary>
         /// The sign of <c>x - p</c> is not decoration: the antiderivative is exact on both
         /// sides of the pole, and the two one-sided pieces are not the same formula.
         /// </summary>

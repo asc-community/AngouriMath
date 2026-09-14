@@ -115,6 +115,31 @@ namespace AngouriMath.Tests.Calculus
         public void ASumOfTwoRootsIsRationalised(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// The radicands need not be polynomials in x: Timofeev's
+        /// <c>cos(3x)/(sqrt(3 cos(x)^2 - sin(x)^2) - sqrt(8 cos(x)^2 - 1))</c> has the
+        /// difference of the radicands, <c>4 cos(x)^2</c> by Pythagoras, below once it is
+        /// respelled, and each root beside it is a root of a quadratic in the sine under
+        /// <c>u = sin(x)</c> -- once the unifier lets a radicand in both functions through,
+        /// which it does where the cosine is in even powers only.
+        /// </summary>
+        [Fact]
+        public void TheRadicandsMayBeTrigonometric()
+        {
+            var integrand = "cos(3*x)/(sqrt(3*cos(x)^2 - sin(x)^2) - sqrt(8*cos(x)^2 - 1))";
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity();
+            foreach (var at in new[] { 0.1, 0.2, 0.3, 0.4 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart) < 1e-8 * Math.Max(1, Math.Abs((double)want.RealPart)),
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        /// <summary>
         /// Two bases, when every radical is a square root: <c>sqrt(x)/(x sqrt(1 + x))</c> is what
         /// <c>sqrt(1 + tanh(4x))</c> becomes under <c>u = e^(8x)</c>, and with <c>s = sqrt(x)</c>
         /// the other root is <c>sqrt(1 + s^2)</c>, a root of a quadratic, which the rules for
