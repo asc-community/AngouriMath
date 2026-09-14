@@ -133,6 +133,30 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// A power of the inverse function above the first, with no radical: parts on
+        /// <c>x^3 arccsc(x)^2</c> leaves <c>x^2 arccsc(x)/sqrt(x^2 - 1)</c> and stalls, where under
+        /// <c>x = csc(u)</c> it is <c>-u^2 csc(u)^4 cot(u)</c>; Timofeev's <c>arccos(x)^2/x^5</c>,
+        /// <c>arcsec(x)^4/x^5</c> and <c>x^3 arctan(x)^2/(1 + x^2)^3</c> the same, and the
+        /// cosecant and the cotangent are read now beside the four. The trigonometric
+        /// functions of the inverse are written back in <c>x</c> on the principal branch:
+        /// <c>tan(arcsec(x))</c> is <c>x sqrt(1 - 1/x^2)</c>, and no <c>sec(arcsec</c> is left.
+        /// </summary>
+        [Theory]
+        [InlineData("arccos(x)^2/x^5", new[] { -0.7, -0.3, 0.2, 0.55, 0.85 })]
+        [InlineData("x^3*arccsc(x)^2", new[] { 1.3, 1.8, 2.5, 3.7, 5.0 })]
+        [InlineData("arcsec(x)^4/x^5", new[] { 1.3, 1.8, 2.5, 3.7, 5.0 })]
+        [InlineData("x^3*arctan(x)^2/(1 + x^2)^3", new[] { -1.6, -0.4, 0.3, 1.1, 2.4 })]
+        [InlineData("arccsc(x)^4/(x^2*sqrt(x^2 - 1))", new[] { 1.3, 1.8, 2.5, 3.7, 5.0 })]
+        [InlineData("x*arccotan(x)^2", new[] { -1.6, -0.4, 0.3, 1.1, 2.4 })]
+        public void APowerOfTheInverseAboveTheFirst(string integrand, double[] points)
+        {
+            DifferentiatesBack(integrand, points);
+            var integral = integrand.ToEntity().Integrate("x").Stringize();
+            foreach (var composition in new[] { "sin(arc", "cos(arc", "tan(arc", "sec(arc", "csc(arc", "cotan(arc" })
+                Assert.DoesNotContain(composition, integral);
+        }
+
+        /// <summary>
         /// <c>x arcsin(x)</c> is answered in <c>x</c>, not in <c>sin(2 arcsin(x))</c>: the
         /// substitution declines it, and by parts gives the answer the reader expects.
         /// </summary>

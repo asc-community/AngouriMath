@@ -3092,7 +3092,7 @@ namespace AngouriMath.Functions.Algebra
             Entity? inverse = null;
             foreach (var node in expr.Nodes)
             {
-                if (node is not (Arcsinf or Arccosf or Arctanf or Arcsecantf))
+                if (node is not (Arcsinf or Arccosf or Arctanf or Arcsecantf or Arccosecantf or Arccotanf))
                     continue;
                 if (node.DirectChildren.First() != x)
                     return null;
@@ -3104,6 +3104,10 @@ namespace AngouriMath.Functions.Algebra
                 return null;
 
             var u = Variable.CreateUnique(expr, "u_inv");
+            // The sign of u, where the root's sign is that: a constant on each half of the
+            // range, carried through the integration as a symbol and written back as the sign
+            // of x, which it is for the cosecant and the cotangent.
+            var signOfU = Variable.CreateUnique(expr, "s_inv");
             // x in terms of u, dx/du, the quadratic whose root goes by construction and what it
             // becomes, and the way back.
             Entity xInU, dxdu, radicandBase, root;
@@ -3117,6 +3121,17 @@ namespace AngouriMath.Functions.Algebra
                     break;
                 case Arctanf:
                     (xInU, dxdu, radicandBase, root) = (MathS.Tan(u), MathS.Sqr(MathS.Sec(u)), 1 + MathS.Sqr(x), MathS.Sec(u));
+                    break;
+                case Arccotanf:
+                    // The range here is (-pi/2, pi/2], where the cosecant is not negative on
+                    // the positive half and negative on the other: the root is kept as `|csc|`,
+                    // which is `csc(u) sgn(u)`, so the answer holds on both.
+                    (xInU, dxdu, radicandBase, root) = (MathS.Cotan(u), -MathS.Sqr(MathS.Cosec(u)), 1 + MathS.Sqr(x), MathS.Cosec(u) * signOfU);
+                    break;
+                case Arccosecantf:
+                    // arccsc has the range [-pi/2, 0) ∪ (0, pi/2], where the cotangent has the
+                    // sign of u: `sqrt(x^2 - 1)` is `cot(u) sgn(u)`.
+                    (xInU, dxdu, radicandBase, root) = (MathS.Cosec(u), -MathS.Cosec(u) * MathS.Cotan(u), MathS.Sqr(x) - 1, MathS.Cotan(u) * signOfU);
                     break;
                 default:
                     (xInU, dxdu, radicandBase, root) = (MathS.Sec(u), MathS.Sec(u) * MathS.Tan(u), MathS.Sqr(x) - 1, MathS.Tan(u));
@@ -3141,7 +3156,17 @@ namespace AngouriMath.Functions.Algebra
                 });
             var exponentialOfTheInverse = expr.Nodes.Any(node =>
                 node is Powf(var @base, var power) && !@base.ContainsNode(x) && power.ContainsNode(inverse));
-            if (radicalsRemoved == 0 && !exponentialOfTheInverse)
+            // Or a power of the inverse function above the first: parts on `x^3 arccsc(x)^2`
+            // leaves `x^2 arccsc(x)/sqrt(x^2 - 1)` and stalls, where under `x = csc(u)` it is
+            // `-u^2 csc(u)^4 cot(u)`, two steps of parts against a power of the cosecant.
+            var powerOfTheInverse = expr.Nodes.Any(node =>
+                node is Powf(var @base, Number.Integer power) && @base == inverse && power.EInteger.CompareTo(EInteger.One) > 0);
+            if (radicalsRemoved == 0 && !exponentialOfTheInverse && !powerOfTheInverse)
+                return null;
+            // The cosecant and the cotangent carry the sign of u into the root, and a first
+            // power of either beside a root is parts' -- `arccot(x)/(1 + x^2)^(3/2)` is
+            // `x arccot(x)/sqrt(1 + x^2) + 1/sqrt(1 + x^2)` there, with no sign in it.
+            if (inverse is Arccosecantf or Arccotanf && !exponentialOfTheInverse && !powerOfTheInverse)
                 return null;
             // And nothing else of `x` under a root, which the construction did not reach:
             // `x^3 arcsin(x)/sqrt(1 - x^4)` under the sine is a root of `1 - sin(u)^4`, worse
@@ -3160,13 +3185,82 @@ namespace AngouriMath.Functions.Algebra
             var integrand = CancelCommonFactors(numerator, denominator);
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
+            // A cosecant or a secant left below the bar is a sine or a cosine above it:
+            // `arccsc(x)^4/(x^2 sqrt(x^2 - 1))` under the cosecant is `-u^4/csc(u)`, which parts
+            // does not read, and `-u^4 sin(u)`, which it does.
+            if (integrand.Nodes.Any(node => node is Cosecantf or Secantf))
+            {
+                var asSinesAndCosines = integrand.Replace(node => node switch
+                {
+                    Cosecantf(var argument) => 1 / MathS.Sin(argument),
+                    Secantf(var argument) => 1 / MathS.Cos(argument),
+                    _ => node,
+                });
+                var (top, bottom) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(asSinesAndCosines));
+                integrand = CancelCommonFactors(top, bottom);
+                if (integrand is Providedf(var innerCombined, _))
+                    integrand = innerCombined;
+            }
 
             // The same question in another variable, not a step in the search for it: asked at
             // the top when this was, so the closed rules that answer only at the top --
             // `e^u sin(u)^3` is the exponential-times-trigonometric rule's -- are consulted.
-            return Integration.ComputeAsAQuestionOfItsOwn(integrand, u, integrateByParts) is { } result
-                ? result.Substitute(u, inverse)
-                : null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(integrand, u, integrateByParts) is not { } result)
+                return null;
+            if (result.ContainsNode(signOfU))
+                // The sign squared is one, and the sign itself is the sign of x.
+                result = result
+                    .Replace(node => node is Powf(var b, Number.Integer k) && b == signOfU ? (k.EInteger.IsEven ? Number.Integer.One : signOfU) : node)
+                    .Substitute(signOfU, MathS.Signum(x));
+            return TrigonometryOfTheInverseInX(result.Substitute(u, inverse), inverse, x);
+        }
+
+        /// <summary>
+        /// A trigonometric function of the inverse function of <paramref name="x"/> written
+        /// in <paramref name="x"/>, on the principal branch: <c>cos(arcsin(x))</c> is
+        /// <c>sqrt(1 - x^2)</c> there, since the cosine is not negative on
+        /// <c>[-pi/2, pi/2]</c>; <c>tan(arcsec(x))</c> is <c>x sqrt(1 - 1/x^2)</c>, the sine
+        /// not negative on <c>[0, pi]</c>; and the cosine of <c>arccot(x)</c>, whose range
+        /// here is <c>(-pi/2, pi/2]</c>, is <c>|x|/sqrt(1 + x^2)</c>. Whatever is not one of
+        /// these compositions, a multiple angle among them, is left as it is.
+        /// </summary>
+        private static Entity TrigonometryOfTheInverseInX(Entity result, Entity inverse, Entity.Variable x)
+        {
+            Entity sine, cosine;
+            switch (inverse)
+            {
+                case Arcsinf:
+                    (sine, cosine) = (x, MathS.Sqrt(1 - MathS.Sqr(x)));
+                    break;
+                case Arccosf:
+                    (sine, cosine) = (MathS.Sqrt(1 - MathS.Sqr(x)), x);
+                    break;
+                case Arctanf:
+                    (sine, cosine) = (x / MathS.Sqrt(1 + MathS.Sqr(x)), 1 / MathS.Sqrt(1 + MathS.Sqr(x)));
+                    break;
+                case Arccotanf:
+                    (sine, cosine) = (MathS.Abs(x) / (x * MathS.Sqrt(1 + MathS.Sqr(x))), MathS.Abs(x) / MathS.Sqrt(1 + MathS.Sqr(x)));
+                    break;
+                case Arcsecantf:
+                    (sine, cosine) = (MathS.Sqrt(1 - 1 / MathS.Sqr(x)), 1 / x);
+                    break;
+                case Arccosecantf:
+                    (sine, cosine) = (1 / x, MathS.Sqrt(1 - 1 / MathS.Sqr(x)));
+                    break;
+                default:
+                    return result;
+            }
+            var written = result.Replace(node => node switch
+            {
+                Sinf(var argument) when argument == inverse => sine,
+                Cosf(var argument) when argument == inverse => cosine,
+                Tanf(var argument) when argument == inverse => sine / cosine,
+                Cotanf(var argument) when argument == inverse => cosine / sine,
+                Secantf(var argument) when argument == inverse => 1 / cosine,
+                Cosecantf(var argument) when argument == inverse => 1 / sine,
+                _ => node,
+            });
+            return written == result ? result : written.InnerSimplified;
         }
 
         /// <summary>
