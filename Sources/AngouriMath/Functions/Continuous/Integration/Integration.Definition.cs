@@ -604,6 +604,9 @@ namespace AngouriMath.Functions.Algebra
             // piecewise on the sign of a symbolic leading coefficient, where the
             // substitutions in front have no sign to go on.
             if ((answer = IndefiniteIntegralSolver.SolveAPolynomialTimesAnOddHalfPowerOfAQuadratic(expr, x)) is { }) return answer;
+            // And with a power of x below, two remainders: `sqrt(a^2 - x^2)/x^2` is
+            // `-sqrt(a^2 - x^2)/x - arcsin(x/a)`.
+            if ((answer = IndefiniteIntegralSolver.SolveAPolynomialOverAPowerOfXTimesAnOddHalfPowerOfAQuadratic(expr, x)) is { }) return answer;
             // And the same with an exponential of a linear in front, an ansatz with no
             // remainder: `e^x (1 - x - x^2)/sqrt(1 - x^2)` is `(e^x sqrt(1 - x^2))'`.
             if ((answer = IndefiniteIntegralSolver.SolveAnExponentialTimesAnOddHalfPowerOfAQuadratic(expr, x)) is { }) return answer;
