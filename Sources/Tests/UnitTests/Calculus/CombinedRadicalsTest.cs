@@ -184,21 +184,24 @@ namespace AngouriMath.Tests.Calculus
 
         /// <summary>
         /// <c>sqrt(x - 1) sqrt(x - 2)</c> is <c>-sqrt((x - 1)(x - 2))</c> below <c>1</c>, where both
-        /// bases are negative, so the rule must not combine them. Either verdict but a wrong
-        /// answer: whatever comes back is differentiated back below <c>1</c> as well as above
-        /// <c>2</c>.
+        /// bases are negative, so the two do not combine as they stand; they combine up to
+        /// the sign <c>(1 + sgn(x - 1) + sgn(x - 2) - sgn(x - 1) sgn(x - 2))/2</c>, which is
+        /// <c>-1</c> there and <c>1</c> elsewhere, exactly, and a constant between the roots
+        /// that goes in front of the integral. Timofeev's
+        /// <c>sqrt(x - 5) sqrt(x + 3)/((x - 1)(x^2 - 25))</c> had no antiderivative for it. The
+        /// answer is differentiated back below <c>1</c> as well as above <c>2</c>, and between
+        /// them, where the integrand is not real and the identity holds all the same.
         /// </summary>
         [Theory]
         [InlineData("sqrt(x - 1)*sqrt(x - 2)")]
         [InlineData("1/(sqrt(x - 1)*sqrt(x - 2))")]
         [InlineData("x/(sqrt(x - 1)*sqrt(x - 2))")]
-        public void TwoNegativeBasesAreNotCombined(string integrand)
+        [InlineData("sqrt(x - 5)*sqrt(x + 3)/((x - 1)*(x^2 - 25))")]
+        public void TwoNegativeBasesAreCombinedWithASign(string integrand)
         {
             var integral = integrand.ToEntity().Integrate("x");
-            Assert.DoesNotContain("NaN", integral.Stringize());
-            if (integral.Stringize().Contains("integral("))
-                return;   // unanswered is a legitimate verdict; a wrong answer is not
-            DifferentiatesBack(integrand, new[] { -1.5, -0.4, 0.3, 2.4, 3.1, 4.7 });
+            Assert.Contains("sgn(", integral.Stringize());
+            DifferentiatesBack(integrand, new[] { -6.5, -4.4, -1.5, -0.4, 0.3, 1.6, 2.4, 3.1, 4.7, 5.6, 7.2 });
         }
 
         /// <summary>
