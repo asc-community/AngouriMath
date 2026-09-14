@@ -97,15 +97,16 @@ namespace AngouriMath.Tests.Calculus
         /// simplification the substitution runs takes <c>sqrt(.../cos(x)^2)</c> as
         /// <c>.../cos(x)</c>, its value where the cosine is positive and its negative
         /// elsewhere, and Timofeev's was answered wrongly on half the line that way. Declined
-        /// or right on both sides, never wrong.
+        /// or right on both sides, never wrong -- and answered now, by the tangent
+        /// substitution, which writes its even powers of the secant and the sine as the
+        /// rational functions of the tangent they are, exactly.
         /// </summary>
         [Theory]
         [InlineData("(sec(x)^2 - 3*sqrt(4*sec(x)^2 + 5*tan(x)^2)*tan(x))/(sin(x)^2*(4*sec(x)^2 + 5*tan(x)^2)^(3/2))")]
         public void AnOddComplementUnderARootIsNotWrittenSo(string integrand)
         {
             var integral = integrand.ToEntity().Integrate("x");
-            if (integral.Stringize().Contains("integral("))
-                return;   // declined is a legitimate verdict; a wrong answer is not
+            Assert.DoesNotContain("integral(", integral.Stringize());
             DifferentiatesBack(integrand, new[] { -2.6, -2.0, -0.4, 0.4, 2.0, 2.6 });
         }
 

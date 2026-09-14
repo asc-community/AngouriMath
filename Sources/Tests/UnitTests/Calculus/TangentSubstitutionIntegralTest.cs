@@ -83,6 +83,21 @@ namespace AngouriMath.Tests.Calculus
         public void AFunctionOfTheTangentAlone(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// An even power of the secant, cosine, sine or cosecant is a rational function of the
+        /// tangent, exactly and wherever it is defined, and is written as one before the test:
+        /// <c>sec^2 = 1 + tan^2</c>, <c>cos^2 = 1/(1 + tan^2)</c>, <c>sin^2 = tan^2/(1 + tan^2)</c>.
+        /// Timofeev's is <c>((1 + u^2) - 3u sqrt(4 + 9u^2))/(u^2 (4 + 9u^2)^(3/2))</c> under the
+        /// tangent, and was declined for the secant and the sine that survived. An odd power
+        /// is not a function of the tangent, and is left to decline as before.
+        /// </summary>
+        [Theory]
+        [InlineData("sec(x)^2*sqrt(tan(x))")]
+        [InlineData("sin(x)^2/(1 + tan(x))")]
+        [InlineData("csc(x)^4*tan(x)^(3/2)")]
+        [InlineData("(sec(x)^2 - 3*sqrt(4*sec(x)^2 + 5*tan(x)^2)*tan(x))/(sin(x)^2*(4*sec(x)^2 + 5*tan(x)^2)^(3/2))")]
+        public void AnEvenPowerOfTheOthersIsWrittenInTheTangent(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// A power of the tangent, which the rewrite turns into an <b>improper</b> rational
         /// function — <c>u^2/(1 + u^2)</c> and <c>u^3/(1 + u^2)</c>. These were declined while
         /// nothing divided an improper fraction out; they are answered now that the rational
