@@ -612,6 +612,10 @@ namespace AngouriMath.Functions
             var width = matrix[0].Length;
             if (width == 0 || matrix.Any(row => row.Length != width))
                 return false;
+            if (TrySolveOverRationals(matrix, rhs, out values, out var everyEntryRational))
+                return true;
+            if (everyEntryRational)
+                return false;
             if (TrySolveOverPolynomials(matrix, rhs, out values))
                 return true;
 
@@ -697,6 +701,78 @@ namespace AngouriMath.Functions
         /// <c>d</c> the last pivot -- one fraction per unknown, no back-substitution to
         /// compound them.
         /// </remarks>
+        /// <summary>
+        /// Gauss-Jordan elimination over the rationals, for a system whose every entry is one:
+        /// a row reducing to <c>0 = c</c> with <c>c</c> not zero declines the system, and an
+        /// unknown no row pivots on is set to zero. Exact, and free of the entity arithmetic
+        /// the elimination below runs on -- a system of fifteen rows of the series
+        /// coefficients of a square root took a minute there and takes a moment here. Where
+        /// every entry is rational the verdict is final, and <paramref name="everyEntryRational"/>
+        /// says so; where one is not, nothing is decided.
+        /// </summary>
+        private static bool TrySolveOverRationals(Entity[][] matrix, Entity[] rhs, [NotNullWhen(true)] out Entity[]? values, out bool everyEntryRational)
+        {
+            values = null;
+            everyEntryRational = false;
+            var rows = rhs.Length;
+            var width = matrix[0].Length;
+            var augmented = new ERational[rows][];
+            for (var row = 0; row < rows; row++)
+            {
+                augmented[row] = new ERational[width + 1];
+                for (var column = 0; column <= width; column++)
+                {
+                    var entry = column < width ? matrix[row][column] : rhs[row];
+                    if (entry.Evaled is not Rational rational)
+                        return false;
+                    augmented[row][column] = rational.ERational;
+                }
+            }
+            everyEntryRational = true;
+            var pivotColumnOfRow = new int[rows];
+            var rank = 0;
+            for (var column = 0; column < width && rank < rows; column++)
+            {
+                var pivot = -1;
+                for (var row = rank; row < rows; row++)
+                    if (!augmented[row][column].IsZero)
+                    {
+                        pivot = row;
+                        break;
+                    }
+                if (pivot < 0)
+                    continue;
+                if (pivot != rank)
+                    (augmented[pivot], augmented[rank]) = (augmented[rank], augmented[pivot]);
+                // Reduced after every operation: the arithmetic does not, and a fraction
+                // that is not grows with every row it is used against.
+                var pivotValue = augmented[rank][column];
+                for (var k = 0; k <= width; k++)
+                    augmented[rank][k] = augmented[rank][k].Divide(pivotValue).ToLowestTerms();
+                for (var row = 0; row < rows; row++)
+                {
+                    if (row == rank)
+                        continue;
+                    var factor = augmented[row][column];
+                    if (factor.IsZero)
+                        continue;
+                    for (var k = 0; k <= width; k++)
+                        augmented[row][k] = augmented[row][k].Subtract(factor.Multiply(augmented[rank][k])).ToLowestTerms();
+                }
+                pivotColumnOfRow[rank] = column;
+                rank++;
+            }
+            for (var row = rank; row < rows; row++)
+                if (!augmented[row][width].IsZero)
+                    return false;
+            values = new Entity[width];
+            for (var column = 0; column < width; column++)
+                values[column] = Integer.Zero;
+            for (var row = 0; row < rank; row++)
+                values[pivotColumnOfRow[row]] = Rational.Create(augmented[row][width].ToLowestTerms());
+            return true;
+        }
+
         private static bool TrySolveOverPolynomials(Entity[][] matrix, Entity[] rhs, [NotNullWhen(true)] out Entity[]? values)
         {
             values = null;
