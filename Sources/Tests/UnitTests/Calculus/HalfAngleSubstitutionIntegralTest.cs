@@ -110,6 +110,19 @@ namespace AngouriMath.Tests.Calculus
         public void ADenominatorLinearInEither(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// The other four functions of x are quotients of the two, wherever either is defined,
+        /// and are read as such: Timofeev's <c>1/(3 + 2 sec(x))</c> is <c>cos(x)/(3 cos(x) + 2)</c>,
+        /// and with the secant left standing it had no sine or cosine for the substitution to
+        /// read.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(3 + 2*sec(x))")]
+        [InlineData("1/(sec(x) + tan(x))")]
+        [InlineData("1/(2 + csc(x))")]
+        [InlineData("1/(1 + cot(x))")]
+        public void TheOtherFourAreReadAsQuotientsOfTheTwo(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// Every sine and cosine brings its own <c>1 + t^2</c> below the bar, and clearing them
         /// leaves the same power of it above and below -- where the simplifier does not see
         /// it once the denominator is a sum. Bondarenko's <c>1/(cos(x) + sin(x) + sqrt(2))</c>
