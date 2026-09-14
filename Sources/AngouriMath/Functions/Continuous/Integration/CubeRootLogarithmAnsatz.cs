@@ -318,7 +318,7 @@ namespace AngouriMath.Functions.Algebra
         /// A coefficient with <c>c</c> in it is kept as a polynomial in <c>c</c> of degree
         /// below three, so that products stay small and equal ones read equal.
         /// </summary>
-        private sealed class Field
+        internal sealed class Field
         {
             internal Field(Variable c) => C = c;
 
@@ -364,7 +364,7 @@ namespace AngouriMath.Functions.Algebra
         /// Arithmetic here never asks the expander, whose term limit a product of a dozen
         /// factors runs past before it collects anything.
         /// </summary>
-        private sealed class XPoly
+        internal sealed class XPoly
         {
             private XPoly(Field field, Dictionary<int, Entity> coefficients)
             {
@@ -396,6 +396,9 @@ namespace AngouriMath.Functions.Algebra
                 }
                 return Build(field, raw);
             }
+
+            /// <summary>From its coefficients by power, each free of <c>x</c>.</summary>
+            internal static XPoly FromCoefficients(Field field, Dictionary<int, Entity> raw) => Build(field, raw);
 
             private static XPoly Build(Field field, Dictionary<int, Entity> raw)
             {
@@ -474,7 +477,7 @@ namespace AngouriMath.Functions.Algebra
         /// A polynomial in <c>x</c> and <c>y</c> reduced by <c>y^3 = P</c>: three
         /// <see cref="XPoly"/>, the coefficients of <c>1</c>, <c>y</c> and <c>y^2</c>.
         /// </summary>
-        private sealed class YPoly
+        internal sealed class YPoly
         {
             private readonly XPoly[] parts;
             private YPoly(XPoly[] parts) => this.parts = parts;
@@ -482,6 +485,9 @@ namespace AngouriMath.Functions.Algebra
             internal XPoly this[int j] => parts[j];
 
             internal static YPoly Constant(XPoly inX) => new(new[] { inX, XPoly.Zero(inX.Field), XPoly.Zero(inX.Field) });
+
+            /// <summary><c>a + b y</c>, with no <c>y^2</c> part.</summary>
+            internal static YPoly Linear(XPoly a, XPoly b) => new(new[] { a, b, XPoly.Zero(a.Field) });
 
             /// <summary><c>y^j</c>, for <c>j</c> at most two.</summary>
             internal static YPoly Monomial(int j, XPoly p)
@@ -531,7 +537,7 @@ namespace AngouriMath.Functions.Algebra
             }
         }
 
-        private readonly struct Generator
+        internal readonly struct Generator
         {
             internal Generator(YPoly numerator, List<XPoly> denominator, int constant, Entity term)
             {
@@ -553,8 +559,15 @@ namespace AngouriMath.Functions.Algebra
         /// <paramref name="x"/> alone: a power of <paramref name="y"/> below the bar is moved
         /// above it by <c>1/y = y^2/P</c>.
         /// </summary>
-        private static bool TryReadOverThePolynomialDenominator(
+        internal static bool TryReadOverThePolynomialDenominator(
             Entity expr, Variable x, Variable y, Entity p, out Entity numerator, out Entity denominator)
+            => TryReadOverThePolynomialDenominator(expr, x, y, p, 3, out numerator, out denominator);
+
+        /// <summary>
+        /// The same for <c>y</c> a root of index <paramref name="rootIndex"/> of <c>P</c>.
+        /// </summary>
+        internal static bool TryReadOverThePolynomialDenominator(
+            Entity expr, Variable x, Variable y, Entity p, int rootIndex, out Entity numerator, out Entity denominator)
         {
             numerator = Integer.One;
             denominator = Integer.One;
@@ -589,12 +602,12 @@ namespace AngouriMath.Functions.Algebra
                     above *= factor;
                     continue;
                 }
-                // y^n below the bar is y^(3m - n)/P^m above it.
+                // y^n below the bar is y^(rm - n)/P^m above it, for y^r = P.
                 var power = factor == y ? 1 : factor is Powf(var b, Integer n) && b == y && n.EInteger.CanFitInInt32() ? n.EInteger.ToInt32Unchecked() : 0;
                 if (power > 0)
                 {
-                    var m = (power + 2) / 3;
-                    var left = 3 * m - power;
+                    var m = (power + rootIndex - 1) / rootIndex;
+                    var left = rootIndex * m - power;
                     if (left > 0)
                         above *= MathS.Pow(y, left);
                     below *= MathS.Pow(p, m);
@@ -614,7 +627,7 @@ namespace AngouriMath.Functions.Algebra
         /// irreducible quadratic factors over the rationals; where the coefficients carry
         /// symbols, the roots of its written linear factors and no quadratics.
         /// </summary>
-        private static List<Entity>? RationalRoots(Entity poly, Variable x, out List<Entity> quadratics)
+        internal static List<Entity>? RationalRoots(Entity poly, Variable x, out List<Entity> quadratics)
         {
             quadratics = new List<Entity>();
             var roots = new List<Entity>();
@@ -880,7 +893,7 @@ namespace AngouriMath.Functions.Algebra
         /// logarithm and three quarters of another for every <c>q</c>. Where they differ the
         /// symbolic solver is asked, on the columns the pinned solution needed and no others.
         /// </summary>
-        private static bool TrySolveWithSymbols(Entity[][] matrix, Entity[] rhs, Variable c, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity[]? values)
+        internal static bool TrySolveWithSymbols(Entity[][] matrix, Entity[] rhs, Variable c, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity[]? values)
         {
             values = null;
             var symbols = matrix.SelectMany(row => row).Concat(rhs).SelectMany(entry => entry.Vars).Where(v => v != c).Distinct().ToList();
