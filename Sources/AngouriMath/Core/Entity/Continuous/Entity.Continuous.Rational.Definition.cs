@@ -134,15 +134,16 @@ namespace AngouriMath
                     // 0.5 comes back as 1/2: twenty microseconds a time, most of the cost of a
                     // numerical evaluation (https://github.com/asc-community/AngouriMath/issues/1338).
                     // Almost every result is not a small rational, and that is decided first in
-                    // System.Decimal, whose twenty-eight digits are enough to say so reliably;
-                    // only a value the cheap search does not rule out reaches the exact one.
+                    // a double and then a double-double, whose thirty-two digits are enough to
+                    // say so reliably; only a value the cheap search does not rule out reaches
+                    // the exact one.
                     if (!MayBeASmallRational(num, iterCount))
                         return null;
                     return FindRationalExactly(num, iterCount);
                 }
 
                 /// <summary>The continued fraction in the decimal's own arithmetic, level by level.</summary>
-                private static Rational? FindRationalExactly(EDecimal num, int iterCount)
+                internal static Rational? FindRationalExactly(EDecimal num, int iterCount)
                 {
                     if (iterCount <= 0)
                         return null;
@@ -175,8 +176,9 @@ namespace AngouriMath
                 /// Whether <paramref name="num"/> may be within the exact search's tolerance of a
                 /// rational with a numerator and a denominator within
                 /// <see cref="MathS.Settings.MaxAbsNumeratorOrDenominatorValue"/>, decided by the
-                /// same continued fraction in <see cref="double"/>. A <see langword="false"/> is
-                /// reliable; a <see langword="true"/> is only a reason to run the exact search.
+                /// same continued fraction in <see cref="double"/> and, where the double cannot
+                /// tell, in a double-double. A <see langword="false"/> is reliable; a
+                /// <see langword="true"/> is only a reason to run the exact search.
                 /// </summary>
                 /// <remarks>
                 /// <para>
@@ -186,15 +188,22 @@ namespace AngouriMath
                 /// representation error, two to the minus fifty-two, times the square of that
                 /// level's convergent denominator; the tolerance here is the exact one widened by
                 /// that bound, so a value the exact search would accept is never refused, and
-                /// where the bound has grown past a tenth the double can no longer tell and the
-                /// question is handed to the exact search. A false yes costs the exact search,
-                /// which then refuses; it was what every value paid.
+                /// where the bound has grown past a tenth the double can no longer tell. A
+                /// double-double -- a pair of doubles, a hundred and six bits -- starts from an
+                /// error of ten to the minus twenty-eight, which the square of any denominator
+                /// within the bound leaves below ten to the minus twelve, so it decides every
+                /// value the double could not. A false yes costs the exact search, which then
+                /// refuses; it was what every value paid.
                 /// </para>
                 /// <para>
-                /// The double is read off the mantissa's leading bits and the exponent directly:
+                /// Both are read off the mantissa's leading bits and the exponent directly:
                 /// PeterO's own conversions to a double or a decimal round the whole
                 /// hundred-digit mantissa and cost two to three microseconds, as much as the
-                /// arithmetic they were meant to spare.
+                /// arithmetic they were meant to spare. The decimal ran fifteen divisions of
+                /// <see cref="decimal"/> where the double-double runs fifteen of a few
+                /// floating-point operations each, and a value near a short decimal -- a
+                /// polynomial at 0.37000000000001234 is near one at every node -- paid two
+                /// microseconds in it.
                 /// </para>
                 /// </remarks>
                 internal static bool MayBeASmallRational(EDecimal num, int iterCount, double integerTolerance = 0)
@@ -203,24 +212,21 @@ namespace AngouriMath
                     // In a double first, which is a third of a microsecond and settles most
                     // values; where the double's error has grown past deciding -- a value
                     // near a small rational, whose partial quotients are large early -- the
-                    // same search in a decimal, whose twenty-eight digits keep the error below
-                    // the tolerance for every denominator within the bound; and only then the
-                    // exact one.
-                    if (!TryReadAsDouble(num, out var value))
+                    // same search in the double-double the value was read as; and only then
+                    // the exact one.
+                    if (!TryReadAsDoubleDouble(num, out var high, out var low))
                         return true;
-                    value = Math.Abs(value);
+                    if (high < 0)
+                        (high, low) = (-high, -low);
                     // Within the caller's tolerance of an integer -- Real.Create's, which
                     // rounds a residual of exact cancellation such as sin(pi)'s onto zero.
-                    var nearestInteger = Math.Round(value);
-                    if (Math.Abs(value - nearestInteger) <= integerTolerance)
+                    var nearestInteger = Math.Round(high);
+                    if (Math.Abs(high - nearestInteger) <= integerTolerance)
                         return true;
-                    var byDouble = ContinuedFractionMayTerminate(value, iterCount, bound, out var undecided);
+                    var byDouble = ContinuedFractionMayTerminate(high, iterCount, bound, out var undecided);
                     if (!undecided)
                         return byDouble;
-                    decimal asDecimal;
-                    try { asDecimal = Math.Abs(num.ToDecimal()); }
-                    catch (OverflowException) { return true; }
-                    return ContinuedFractionMayTerminateInDecimal(asDecimal, iterCount, (decimal)bound);
+                    return ContinuedFractionMayTerminate(high, low, iterCount, bound);
                 }
 
                 /// <summary>
@@ -244,7 +250,7 @@ namespace AngouriMath
                     // this epsilon on twelve thousand rationals within the bound and on as many
                     // values within ten to the minus ten of one against the exact search: none
                     // refused.
-                    const double epsilon = 1e-15;   // the reading's error, two powers of ten and the double's own
+                    const double epsilon = 1e-15;   // the reading's error, an ulp, and margin
                     double previousDenominator = 1, denominator = 0;
                     var rest = value;
                     var error = epsilon * value + 1e-300;
@@ -274,70 +280,177 @@ namespace AngouriMath
                     return false;
                 }
 
-                /// <summary>The same in a decimal, whose error never grows past deciding within the bound.</summary>
-                private static bool ContinuedFractionMayTerminateInDecimal(decimal value, int iterCount, decimal bound)
+                /// <summary>
+                /// The same in a double-double <paramref name="high"/> + <paramref name="low"/>,
+                /// whose error stays below deciding for every denominator within the bound.
+                /// </summary>
+                private static bool ContinuedFractionMayTerminate(double high, double low, int iterCount, double bound)
                 {
-                    decimal previousDenominator = 1, denominator = 0;
-                    var rest = value;
+                    // The reading's relative error -- the mantissa past its hundred and sixth
+                    // bit, two powers of ten from the table, each a few hundred roundings of
+                    // the hundred and fourth bit, and the products' own -- and a division's.
+                    const double epsilonRead = 1e-28;
+                    const double epsilonDivide = 1e-31;
+                    double previousDenominator = 1, denominator = 0;
+                    var error = epsilonRead * high + 1e-300;
                     for (var i = 0; i < iterCount; i++)
                     {
-                        var integral = decimal.Floor(rest);
+                        var integral = Math.Floor(high);
+                        if (integral == high && low < 0)
+                            integral -= 1;
                         if (integral > bound)
                             return false;
-                        var fractional = rest - integral;
+                        var (fractional, fractionalLow) = Subtract(high, low, integral);
                         var nextDenominator = integral * denominator + previousDenominator;
                         if (nextDenominator > bound)
                             return false;
-                        var error = nextDenominator * nextDenominator * 1e-27m;
-                        if (fractional <= integral * 1e-16m + error || 1 - fractional <= error || (integral == 0 && fractional == 0))
+                        if (error > 0.1)
                             return true;
-                        if (fractional < 1e-27m)
+                        if (fractional <= integral * 1e-16 + error || 1 - fractional <= error || (integral == 0 && fractional == 0))
                             return true;
+                        error = error / (fractional * fractional) + epsilonDivide / fractional;
                         (previousDenominator, denominator) = (denominator, nextDenominator);
-                        rest = 1m / fractional;
+                        (high, low) = Reciprocal(fractional, fractionalLow);
                     }
                     return false;
                 }
 
-                /// <summary>
-                /// <paramref name="num"/> as a double to within a few units in the last place,
-                /// from the leading bits of its mantissa and its exponent, without rounding the
-                /// whole mantissa; <see langword="false"/> where the value is outside a double's
-                /// range.
-                /// </summary>
-                private static bool TryReadAsDouble(EDecimal num, out double value)
+                // Double-double arithmetic: a value as the unevaluated sum of two doubles, the
+                // low one within half an ulp of the high one, which is a hundred and six bits.
+                // Dekker's error-free transformations, without a fused multiply-add, which
+                // netstandard2.0 does not have.
+
+                /// <summary>The sum and its rounding error, exactly.</summary>
+                private static (double Sum, double Error) TwoSum(double a, double b)
                 {
-                    value = 0;
+                    var sum = a + b;
+                    var bVirtual = sum - a;
+                    var error = (a - (sum - bVirtual)) + (b - bVirtual);
+                    return (sum, error);
+                }
+
+                /// <summary>The sum and its rounding error, where |a| is at least |b|.</summary>
+                private static (double Sum, double Error) QuickTwoSum(double a, double b)
+                {
+                    var sum = a + b;
+                    return (sum, b - (sum - a));
+                }
+
+                /// <summary>The product and its rounding error, exactly.</summary>
+                private static (double Product, double Error) TwoProduct(double a, double b)
+                {
+                    var product = a * b;
+                    const double splitter = 134217729.0;   // 2^27 + 1
+                    var t = splitter * a;
+                    var aHigh = t - (t - a);
+                    var aLow = a - aHigh;
+                    t = splitter * b;
+                    var bHigh = t - (t - b);
+                    var bLow = b - bHigh;
+                    var error = ((aHigh * bHigh - product) + aHigh * bLow + aLow * bHigh) + aLow * bLow;
+                    return (product, error);
+                }
+
+                /// <summary>A double-double minus a double.</summary>
+                private static (double High, double Low) Subtract(double high, double low, double subtrahend)
+                {
+                    var (sum, error) = TwoSum(high, -subtrahend);
+                    return QuickTwoSum(sum, error + low);
+                }
+
+                /// <summary>A double-double times a double-double.</summary>
+                private static (double High, double Low) Multiply(double aHigh, double aLow, double bHigh, double bLow)
+                {
+                    var (product, error) = TwoProduct(aHigh, bHigh);
+                    return QuickTwoSum(product, error + aHigh * bLow + aLow * bHigh);
+                }
+
+                /// <summary>One over a double-double, by two Newton corrections of the double's quotient.</summary>
+                private static (double High, double Low) Reciprocal(double high, double low)
+                {
+                    var quotient = 1 / high;
+                    // The remainder 1 - quotient * (high + low), in a double-double.
+                    var (product, productError) = TwoProduct(quotient, high);
+                    var (remainder, remainderError) = TwoSum(1, -product);
+                    remainderError -= productError + quotient * low;
+                    var correction = (remainder + remainderError) / high;
+                    return QuickTwoSum(quotient, correction);
+                }
+
+                /// <summary>
+                /// Ten to every power from -<see cref="PowersOfTenRange"/> to
+                /// <see cref="PowersOfTenRange"/> as double-doubles, the positive ones by
+                /// repeated multiplication -- an error within a rounding of the hundred and
+                /// fourth bit each, so under two to the minus ninety-five at the end of the
+                /// table -- and the negative ones their reciprocals.
+                /// </summary>
+                private const int PowersOfTenRange = 512;
+                [ConstantField] private static readonly (double[] High, double[] Low) powersOfTen = BuildPowersOfTen();
+                private static (double[] High, double[] Low) BuildPowersOfTen()
+                {
+                    var high = new double[2 * PowersOfTenRange + 1];
+                    var low = new double[2 * PowersOfTenRange + 1];
+                    double h = 1, l = 0;
+                    for (var n = 0; n <= PowersOfTenRange; n++)
+                    {
+                        high[PowersOfTenRange + n] = h;
+                        low[PowersOfTenRange + n] = l;
+                        (high[PowersOfTenRange - n], low[PowersOfTenRange - n]) = n == 0 ? (1d, 0d) : Reciprocal(h, l);
+                        (h, l) = Multiply(h, l, 10, 0);
+                    }
+                    return (high, low);
+                }
+
+                /// <summary>
+                /// <paramref name="num"/> as a double-double to within ten to the minus
+                /// twenty-eight relative, from the leading hundred and six bits of its mantissa
+                /// and its exponent, without rounding the whole mantissa; <see langword="false"/>
+                /// where the value or its exponent is outside what the reading covers.
+                /// </summary>
+                private static bool TryReadAsDoubleDouble(EDecimal num, out double high, out double low)
+                {
+                    high = low = 0;
                     if (!num.IsFinite)
                         return false;
                     var exponent = num.Exponent;
                     if (!exponent.CanFitInInt32())
                         return false;
                     var decimalExponent = exponent.ToInt32Unchecked();
+                    if (decimalExponent > 2 * PowersOfTenRange || decimalExponent < -2 * PowersOfTenRange)
+                        return false;
                     var mantissa = num.UnsignedMantissa;
+                    if (mantissa.IsZero)
+                        return true;
                     var bits = mantissa.GetUnsignedBitLengthAsInt64();
-                    var shift = bits > 62 ? (int)(bits - 62) : 0;
-                    var top = (double)(shift == 0 ? mantissa : mantissa.ShiftRight(shift)).ToInt64Checked();
+                    // The value's magnitude, within a double's range with room for the four
+                    // partial products below.
+                    var magnitude = (bits + 1) * 0.30102999566398120 + decimalExponent;
+                    if (magnitude > 290 || magnitude < -290)
+                        return false;
+                    var shift = bits > 106 ? (int)(bits - 106) : 0;
+                    var top = shift == 0 ? mantissa : mantissa.ShiftRight(shift);
+                    var upper = top.ShiftRight(53);
+                    var lower = top.Subtract(upper.ShiftLeft(53));
+                    // upper * 2^53 is exact in a double, and the sum with the lower fifty-three
+                    // bits is exact in the pair.
+                    (high, low) = TwoSum((double)upper.ToInt64Checked() * 9007199254740992.0, (double)lower.ToInt64Checked());
                     // The binary shift and the decimal exponent applied in two halves each, in
                     // turn, since either alone can be far outside a double's range while the
                     // value is not -- a five-hundred-digit mantissa is shifted by sixteen
-                    // hundred bits -- and a power of ten with a whole exponent is a unit or so
-                    // in the last place where one with a fractional exponent is several.
-                    var magnitude = decimalExponent + shift * 0.30102999566398120 + 18;
-                    if (magnitude > 290 || magnitude < -290)
-                        return false;
-                    // Math.ScaleB is not in netstandard2.0; a power of two with a whole
-                    // exponent is exact in a double, and past its range the value is not
-                    // this filter's to decide.
+                    // hundred bits. A power of two with a whole exponent is exact, so scaling
+                    // by it is; a power of ten comes from the table.
                     var halfExponent = decimalExponent / 2;
                     var halfShift = shift / 2;
-                    value = top * Math.Pow(10, halfExponent);
-                    value *= Math.Pow(2, halfShift);
-                    value *= Math.Pow(10, decimalExponent - halfExponent);
-                    value *= Math.Pow(2, shift - halfShift);
+                    (high, low) = Multiply(high, low, powersOfTen.High[PowersOfTenRange + halfExponent], powersOfTen.Low[PowersOfTenRange + halfExponent]);
+                    var scale = Math.Pow(2, halfShift);
+                    (high, low) = (high * scale, low * scale);
+                    var restExponent = decimalExponent - halfExponent;
+                    (high, low) = Multiply(high, low, powersOfTen.High[PowersOfTenRange + restExponent], powersOfTen.Low[PowersOfTenRange + restExponent]);
+                    scale = Math.Pow(2, shift - halfShift);
+                    (high, low) = (high * scale, low * scale);
                     if (num.IsNegative)
-                        value = -value;
-                    return !double.IsInfinity(value) && !double.IsNaN(value);
+                        (high, low) = (-high, -low);
+                    return !double.IsInfinity(high) && !double.IsNaN(high);
                 }
 
                 internal static bool TryParse(string s,

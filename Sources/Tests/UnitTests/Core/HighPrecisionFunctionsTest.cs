@@ -100,5 +100,54 @@ namespace AngouriMath.Tests.Core
             var found = Rational.FindRational(EDecimal.FromString(number));
             Assert.Equal(isRational, found is not null);
         }
+
+        /// <summary>
+        /// The cheap decision against the exact search on twelve thousand rationals within the
+        /// bound, on as many values a little off one -- within ten to the minus ten to ten to
+        /// the minus fifteen, which is where the double can no longer tell and the
+        /// double-double must -- and on as many random hundred-digit values: the filter never
+        /// refuses a value the exact search accepts, and the two agree on every one.
+        /// </summary>
+        [Fact]
+        public void TheCheapDecisionAgreesWithTheExactSearch()
+        {
+            var random = new System.Random(1338);
+            var context = MathS.Settings.DecimalPrecisionContext.Value;
+            var iterCount = MathS.Settings.FloatToRationalIterCount.Value;
+            var bound = 100_000_000;
+            var refused = 0;
+            var checkedCount = 0;
+            void Check(EDecimal value)
+            {
+                var exact = Rational.FindRationalExactly(value, iterCount);
+                var cheap = Rational.MayBeASmallRational(value, iterCount);
+                var found = Rational.FindRational(value);
+                checkedCount++;
+                if (exact is not null && !cheap)
+                    refused++;
+                Assert.Equal(exact is not null, found is not null);
+                if (exact is not null)
+                    Assert.Equal(exact, found);
+            }
+            for (var i = 0; i < 12000; i++)
+            {
+                var denominator = 1 + random.Next(bound);
+                var numerator = random.Next(bound);
+                var value = EDecimal.FromInt32(numerator).Divide(EDecimal.FromInt32(denominator), context);
+                Check(value);
+                // Off by ten to the minus ten to fifteen: the double loses the question there.
+                var offset = EDecimal.FromDouble(random.NextDouble()).Multiply(EDecimal.Create(1, -10 - random.Next(6)), context);
+                Check(value.Add(offset, context));
+            }
+            for (var i = 0; i < 12000; i++)
+            {
+                var digits = new System.Text.StringBuilder("0.");
+                for (var d = 0; d < 100; d++)
+                    digits.Append((char)('0' + random.Next(10)));
+                Check(EDecimal.FromString(digits.ToString()).Multiply(EDecimal.FromInt32(1 + random.Next(1000)), context));
+            }
+            Assert.Equal(0, refused);
+            Assert.Equal(36000, checkedCount);
+        }
     }
 }
