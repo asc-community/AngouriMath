@@ -551,6 +551,11 @@ namespace AngouriMath.Functions.Algebra
             // what is left — which is the quotients it was added for, since linearity declines a
             // quotient and partial fractions declines one that is not a ratio of polynomials.
             if ((answer = IndefiniteIntegralSolver.SolveByHalfAngleSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // The substitution by a sine or a cosine where an odd power of the complement is
+            // left: its sign times a root, the sign a constant between the complement's zeros.
+            // After the half-angle substitution, which answers the rational functions of the
+            // two more shortly.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheSignOfTheComplement(expr, x, integrateByParts)) is { }) return answer;
             // Beside the half-angle one and for the same reason: it rewrites the integrand into a
             // rational function, so it wants everything that answers a problem in its own terms to
             // have declined first.

@@ -110,6 +110,38 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// An odd power of the complement left standing after the division by <c>du/dx</c> is
+        /// its sign times a power of <c>sqrt(1 - u^2)</c>, and the sign is a constant between the
+        /// zeros of the complement: Charlwood's <c>ln(sin(x)) sqrt(1 + sin(x))</c> by parts leaves
+        /// <c>-2 cos(x)^2/(sin(x) sqrt(1 + sin(x)))</c>, which is <c>-2 sgn(cos(x)) sqrt(1 - u)/u</c>
+        /// under the sine, and his <c>cos(x)^2/sqrt(1 + cos(x)^2 + cos(x)^4)</c> is
+        /// <c>-sgn(sin(x)) u^2/sqrt(1 - u^6)</c> under the cosine once the roots combine. Checked
+        /// on both signs of the complement.
+        /// </summary>
+        [Theory]
+        [InlineData("cos(x)^2/(sin(x)*sqrt(1 + sin(x)))", new[] { 0.4, 0.8, 1.1, 2.0, 2.6 })]
+        [InlineData("ln(sin(x))*sqrt(1 + sin(x))", new[] { 0.4, 0.8, 1.1, 2.0, 2.6 })]
+        [InlineData("sin(x)^2/(cos(x)*sqrt(1 + cos(x)))", new[] { -2.6, -1.1, -0.4, 0.4, 1.1, 2.6 })]
+        [InlineData("cos(x)^2/sqrt(1 + cos(x)^2 + cos(x)^4)", new[] { -2.6, -1.1, -0.4, 0.4, 1.1, 2.6 })]
+        public void TheSignOfAnOddComplement(string integrand, double[] points) => DifferentiatesBack(integrand, points);
+
+        /// <summary>
+        /// And not for a rational function of the sine and cosine, which the half-angle
+        /// substitution answers, nor beside a logarithm of <c>u</c>: <c>1/(1 + sin(x))</c> stays
+        /// the tangent of the half angle, and <c>ln(sin(x))/(1 + sin(x))</c> is by parts against
+        /// it, where the sign beside a root of <c>1 - u^2</c> made the first a root the second
+        /// could not integrate against.
+        /// </summary>
+        [Theory]
+        [InlineData("ln(sin(x))/(1 + sin(x))", new[] { 0.4, 0.8, 1.1, 2.0, 2.6 })]
+        [InlineData("1/(cos(x) + sin(x))", new[] { 0.4, 0.8, 1.1, 2.0, 2.6 })]
+        public void WhereTheHalfAngleAnswersFirst(string integrand, double[] points)
+        {
+            DifferentiatesBack(integrand, points);
+            Assert.DoesNotContain("sgn(", integrand.ToEntity().Integrate("x").Stringize());
+        }
+
+        /// <summary>
         /// The same collecting of powers, for a power of <c>x</c> itself: under <c>u = x^8</c>
         /// the quotient by <c>du/dx</c> writes <c>x^7</c> beside the integrand's <c>x</c>, and
         /// only collected is it <c>x^8</c>. Bronstein's, on both sides of zero.
