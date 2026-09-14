@@ -256,6 +256,40 @@ cent — its measured run-to-run spread on mean time is up to 51.8%. A move of 8
 outside that band by a wide margin and agrees in sign and rough size with the allocation column
 beside it. The small rows from the same run are still not worth reading, and are not quoted.
 
+## The 2052nd: the rational search decided in a double-double where the double could not
+
+The 2050th left `EvalPolynomialFresh` at 9.4 µs, of which the arithmetic is about one: the
+polynomial `x^3 + 2x^2 - x + 1` at `0.37000000000001234` has a value near a short decimal at
+every node -- `0.324453` and twenty-three units in the fourteenth place at `x^3 + 2x^2` -- and
+a value near a rational whose denominator is within the bound is exactly what the double's
+continued fraction cannot settle: its error, an ulp times the square of the convergent's
+denominator, passes a tenth at a denominator of forty million, where the bound is a hundred.
+Such a value went on to `System.Decimal`, where fifteen divisions of a `decimal` cost two
+microseconds, and three of the polynomial's eight nodes paid them.
+
+The second pass is now the same continued fraction in a double-double -- the value read as
+two doubles, a hundred and six bits, from the leading bits of the mantissa and a table of
+powers of ten, with Dekker's error-free sum and product and no fused multiply-add, since
+netstandard2.0 has none. Its error starts at ten to the minus twenty-eight and the square of
+any denominator within the bound leaves it below ten to the minus twelve, so it decides every
+value the double could not, and the exact search runs only on a value it accepts. The
+decisions are the exact search's on thirty-six thousand values -- twelve thousand rationals
+within the bound, as many within ten to the minus ten to fifteen of one, as many random
+hundred-digit values -- which is a test now.
+
+| benchmark | 2050th | 2052nd | allocation | time |
+|---|--:|--:|--:|--:|
+| `EvalPolynomialFresh` | 14,000 | **12,328** | −11.9% | 9.41 → **4.09 µs** |
+| `EvalPolynomialFresh15Digits` | 12,280 | **11,656** | −5.1% | 8.95 → **4.15 µs** |
+| every other entry | | | within 1.1% | |
+
+Bytes allocated per call, same machine, both columns by the gate in one session; a
+`Real.Create` on such a value is 0.46 µs where it was 2.36, and 0.22 where it was 0.17 on a
+value the double settles, the price of reading a hundred and six bits rather than sixty-two.
+The gate's baseline was taken from this run. What is left of the 4.1 µs is the evaluator: six
+operator nodes at 0.3 to 0.5 µs each -- `InnerSimplify` with its domain check and lazy caches
+around a tenth of a microsecond of arithmetic -- and the substitution, 0.7 µs.
+
 ## The 2050th: numerical evaluation, four changes in the numbers themselves
 
 [#1338](https://github.com/asc-community/AngouriMath/issues/1338) asked where an `EvalNumerical`
