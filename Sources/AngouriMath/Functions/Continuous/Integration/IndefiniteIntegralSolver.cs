@@ -379,6 +379,20 @@ namespace AngouriMath.Functions.Algebra
                     ?? Integration.ComputeIndefiniteIntegral(numerator / refactored, x, integrateByParts)) is { } overIrreducibles)
                 return overIrreducibles;
 
+            // And a written base that is a polynomial with rational coefficients spelled some
+            // other way -- `2 + (u^2 - 3)^2 - (u^2 - 3)`, which is what the linear-radical
+            // substitution makes of `1 + x + 2x^2` under `u = sqrt(3 - 2x)` -- is written as its
+            // polynomial, once: the splits below read the bases as written, and Welz's
+            // `1/((3 - 2x)^(11/2) (1 + x + 2x^2)^5)` was answered as `1/(u^10 (u^4 - 7u^2 + 14)^5)`
+            // and declined as it came. For a polynomial numerator only, since the respelling
+            // is asked of the whole chain and a numerator with a root in it is not this
+            // rule's to begin with.
+            if (Functions.PolynomialFactoring.TryGetRationalCoefficients(numerator, x, 1, 0, 64, out _)
+                && TryWriteBasesAsPolynomials(denominator, x) is { } respelled
+                && (SolveByPartialFractions(numerator / respelled, x, integrateByParts)
+                    ?? Integration.ComputeIndefiniteIntegral(numerator / respelled, x, integrateByParts)) is { } overPolynomials)
+                return overPolynomials;
+
             // A denominator with a written repeated factor takes the Hermite reduction first:
             // the rational part of the answer in one linear solve, and what is left is a proper
             // fraction over a squarefree denominator for the splits below. `(1 + x^2)/(x (1 + x^3)^2)`
@@ -4787,6 +4801,126 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Whether <c>sum values_k columns_k = target</c> holds coefficient by coefficient in
+        /// rational arithmetic; false where a coefficient or a value is not rational.
+        /// </summary>
+        private static bool IdentityHoldsExactly(List<Dictionary<EInteger, Entity>> columns, Entity[] values, Dictionary<EInteger, Entity> target)
+        {
+            var sums = new Dictionary<EInteger, ERational>();
+            for (var k = 0; k < columns.Count; k++)
+            {
+                if (values[k].Evaled is not Number.Rational value)
+                    return false;
+                if (value.ERational.IsZero)
+                    continue;
+                foreach (var pair in columns[k])
+                {
+                    if (pair.Value.Evaled is not Number.Rational coefficient)
+                        return false;
+                    var term = coefficient.ERational.Multiply(value.ERational);
+                    sums[pair.Key] = sums.TryGetValue(pair.Key, out var so) ? so.Add(term).ToLowestTerms() : term.ToLowestTerms();
+                }
+            }
+            foreach (var pair in target)
+            {
+                if (pair.Value.Evaled is not Number.Rational wanted)
+                    return false;
+                var have = sums.TryGetValue(pair.Key, out var sum) ? sum : ERational.Zero;
+                if (!have.Subtract(wanted.ERational).ToLowestTerms().IsZero)
+                    return false;
+                sums.Remove(pair.Key);
+            }
+            return sums.Values.All(sum => sum.IsZero);
+        }
+
+        /// <summary>The product of two polynomials given as coefficients by power, each coefficient simplified.</summary>
+        private static Dictionary<EInteger, Entity> PolynomialProduct(Dictionary<EInteger, Entity> left, Dictionary<EInteger, Entity> right)
+        {
+            // Over the rationals in rational arithmetic: sixty columns of degree a hundred
+            // and twenty as expressions simplified coefficient by coefficient did not return.
+            if (AsRationals(left) is { } leftRationals && AsRationals(right) is { } rightRationals)
+            {
+                var rationalProduct = new Dictionary<EInteger, ERational>();
+                foreach (var l in leftRationals)
+                    foreach (var r in rightRationals)
+                    {
+                        var power = l.Key + r.Key;
+                        var term = l.Value.Multiply(r.Value);
+                        rationalProduct[power] = rationalProduct.TryGetValue(power, out var so) ? so.Add(term).ToLowestTerms() : term.ToLowestTerms();
+                    }
+                var written = new Dictionary<EInteger, Entity>();
+                foreach (var pair in rationalProduct)
+                    if (!pair.Value.IsZero)
+                        written[pair.Key] = Number.Rational.Create(pair.Value);
+                return written;
+            }
+            var sums = new Dictionary<EInteger, List<Entity>>();
+            foreach (var l in left)
+                foreach (var r in right)
+                {
+                    var power = l.Key + r.Key;
+                    if (!sums.TryGetValue(power, out var terms))
+                        sums[power] = terms = new List<Entity>();
+                    terms.Add(l.Value * r.Value);
+                }
+            var product = new Dictionary<EInteger, Entity>();
+            foreach (var pair in sums)
+            {
+                Entity sum = pair.Value[0];
+                for (var i = 1; i < pair.Value.Count; i++)
+                    sum += pair.Value[i];
+                var simplified = sum.InnerSimplified;
+                if (simplified != Number.Integer.Zero && simplified.Evaled is not Number.Complex { IsZero: true })
+                    product[pair.Key] = simplified;
+            }
+            return product;
+        }
+
+        /// <summary>The coefficients as rationals, or null where one is not.</summary>
+        private static Dictionary<EInteger, ERational>? AsRationals(Dictionary<EInteger, Entity> poly)
+        {
+            var rationals = new Dictionary<EInteger, ERational>();
+            foreach (var pair in poly)
+            {
+                if (pair.Value.Evaled is not Number.Rational rational)
+                    return null;
+                rationals[pair.Key] = rational.ERational;
+            }
+            return rationals;
+        }
+
+        private static Dictionary<EInteger, Entity> PolynomialSum(Dictionary<EInteger, Entity> left, Dictionary<EInteger, Entity> right)
+        {
+            var sum = new Dictionary<EInteger, Entity>(left);
+            foreach (var pair in right)
+            {
+                var value = sum.TryGetValue(pair.Key, out var so) ? (so + pair.Value).InnerSimplified : pair.Value;
+                if (value == Number.Integer.Zero || value.Evaled is Number.Complex { IsZero: true })
+                    sum.Remove(pair.Key);
+                else
+                    sum[pair.Key] = value;
+            }
+            return sum;
+        }
+
+        private static Dictionary<EInteger, Entity> PolynomialDifference(Dictionary<EInteger, Entity> left, Dictionary<EInteger, Entity> right)
+        {
+            var negated = new Dictionary<EInteger, Entity>();
+            foreach (var pair in right)
+                negated[pair.Key] = (-pair.Value).InnerSimplified;
+            return PolynomialSum(left, negated);
+        }
+
+        private static Dictionary<EInteger, Entity> PolynomialDerivative(Dictionary<EInteger, Entity> poly)
+        {
+            var derivative = new Dictionary<EInteger, Entity>();
+            foreach (var pair in poly)
+                if (!pair.Key.IsZero)
+                    derivative[pair.Key - 1] = (Number.Integer.Create(pair.Key) * pair.Value).InnerSimplified;
+            return derivative;
+        }
+
+        /// <summary>
         /// The denominators the ansatz tries, in order: the denominator with every written power
         /// lowered by one, and the denominator as it is.
         /// </summary>
@@ -4826,6 +4960,45 @@ namespace AngouriMath.Functions.Algebra
         /// same count of distinct factors with the same multiplicities -- so that a
         /// denominator which is already factored keeps its own spelling.
         /// </summary>
+        /// <summary>
+        /// <paramref name="denominator"/> with each written base that is a polynomial in
+        /// <paramref name="x"/> with rational coefficients, of degree at least two and not a
+        /// sum of monomials as it stands, written as that sum; null where every base already is.
+        /// </summary>
+        private static Entity? TryWriteBasesAsPolynomials(Entity denominator, Entity.Variable x)
+        {
+            var changed = false;
+            Entity product = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                var (@base, power) = factor is Powf(var b, Number.Integer e) ? (b, (Entity)e) : (factor, Number.Integer.One);
+                if (@base.ContainsNode(x) && @base is not Variable && !IsASumOfMonomials(@base, x)
+                    && Functions.PolynomialFactoring.TryGetRationalCoefficients(@base, x, 1, 2, 64, out var coefficients))
+                {
+                    var written = Functions.RationalPolynomial.Create(coefficients).ToEntity(x);
+                    if (written != @base)
+                    {
+                        changed = true;
+                        @base = written;
+                    }
+                }
+                product *= power == Number.Integer.One ? @base : MathS.Pow(@base, power);
+            }
+            return changed ? product : null;
+        }
+
+        /// <summary>Whether <paramref name="expr"/> is written as a sum of rational multiples of powers of <paramref name="x"/>.</summary>
+        private static bool IsASumOfMonomials(Entity expr, Entity.Variable x)
+        {
+            foreach (var term in Sumf.LinearChildren(expr))
+            {
+                var bare = term is Mulf(var l, var r) && !l.ContainsNode(x) ? r : term is Mulf(var l2, var r2) && !r2.ContainsNode(x) ? l2 : term;
+                if (bare.ContainsNode(x) && bare != x && bare is not Powf(Variable, Number.Integer))
+                    return false;
+            }
+            return true;
+        }
+
         private static Entity? TryWriteInIrreducibleFactors(Entity denominator, Entity.Variable x)
         {
             // Only where the written bases, each taken once, share a factor among them or
@@ -4962,30 +5135,39 @@ namespace AngouriMath.Functions.Algebra
             //
             // so the column for the k-th coefficient of N is the left side with N = x^k, the
             // column for the j-th of M is x^j D^2 D_R, and the right side is the constant.
-            var dPrime = d.Differentiate(x);
-            var scale = squarefree is null ? below : squarefree * below;
+            // In coefficient arithmetic rather than by expanding the products as expressions:
+            // the expander estimates a product's terms before it collects them and declines
+            // past two thousand, and `(u^4 - 7u^2 + 14)^10` beside its own powers is past that
+            // long before the twenty-odd terms it collects to -- Welz's
+            // `1/((3 - 2x)^(11/2) (1 + x + 2x^2)^5)` under `u = sqrt(3 - 2x)`.
+            if (!TreeAnalyzer.TryGetPolynomial(d, x, out var dPoly) || !TreeAnalyzer.TryGetPolynomial(q, x, out var qPoly)
+                || !TreeAnalyzer.TryGetPolynomial(p, x, out var pPoly) || !TreeAnalyzer.TryGetPolynomial(below, x, out var belowPoly)
+                || !TreeAnalyzer.TryGetPolynomial(above, x, out var abovePoly))
+                return null;
+            Dictionary<EInteger, Entity>? squarefreePoly = null;
+            if (squarefree is not null && !TreeAnalyzer.TryGetPolynomial(squarefree, x, out squarefreePoly))
+                return null;
+            var dPrimePoly = PolynomialDerivative(dPoly);
+            var qSquared = PolynomialProduct(qPoly, qPoly);
+            var dSquared = PolynomialProduct(dPoly, dPoly);
+            var scale = squarefreePoly is null ? belowPoly : PolynomialProduct(squarefreePoly, belowPoly);
+            var wronskian = h is null ? null : PolynomialDifference(PolynomialProduct(PolynomialDerivative(pPoly), qPoly), PolynomialProduct(pPoly, PolynomialDerivative(qPoly)));
             var columns = new List<Dictionary<EInteger, Entity>>();
             for (var k = 0; k <= degreeN; k++)
             {
-                Entity xk = k == 0 ? Number.Integer.One : k == 1 ? x : MathS.Pow(x, k);
-                Entity xkPrime = k == 0 ? Number.Integer.Zero : k == 1 ? Number.Integer.One : k * MathS.Pow(x, k - 1);
-                Entity term = (xkPrime * d - xk * dPrime) * MathS.Sqr(q);
-                if (h is not null)
-                    term += (p.Differentiate(x) * q - p * q.Differentiate(x)) * xk * d;
-                if (!TreeAnalyzer.TryGetPolynomial(term * scale, x, out var column))
-                    return null;
-                columns.Add(column);
+                var xk = new Dictionary<EInteger, Entity> { [k] = Number.Integer.One };
+                var xkPrime = k == 0 ? new Dictionary<EInteger, Entity>() : new Dictionary<EInteger, Entity> { [k - 1] = Number.Integer.Create(k) };
+                var term = PolynomialProduct(PolynomialDifference(PolynomialProduct(xkPrime, dPoly), PolynomialProduct(xk, dPrimePoly)), qSquared);
+                if (wronskian is not null)
+                    term = PolynomialSum(term, PolynomialProduct(PolynomialProduct(wronskian, xk), dPoly));
+                columns.Add(PolynomialProduct(term, scale));
             }
+            var dSquaredBelow = PolynomialProduct(dSquared, belowPoly);
             for (var j = 0; j <= degreeM; j++)
-            {
-                Entity xj = j == 0 ? Number.Integer.One : j == 1 ? x : MathS.Pow(x, j);
-                if (!TreeAnalyzer.TryGetPolynomial(xj * MathS.Sqr(d) * below, x, out var column))
-                    return null;
-                columns.Add(column);
-            }
-            var target = squarefree is null ? above * MathS.Sqr(d) * MathS.Sqr(q) : above * MathS.Sqr(d) * squarefree;
-            if (!TreeAnalyzer.TryGetPolynomial(target, x, out var targetRead))
-                return null;
+                columns.Add(PolynomialProduct(new Dictionary<EInteger, Entity> { [j] = Number.Integer.One }, dSquaredBelow));
+            var targetRead = squarefreePoly is null
+                ? PolynomialProduct(PolynomialProduct(abovePoly, dSquared), qSquared)
+                : PolynomialProduct(PolynomialProduct(abovePoly, dSquared), squarefreePoly);
 
             var powers = columns.SelectMany(c => c.Keys).Concat(targetRead.Keys).Distinct().ToList();
             var width = columns.Count;
@@ -5015,15 +5197,19 @@ namespace AngouriMath.Functions.Algebra
             Entity exponential = h is null ? Number.Integer.One : MathS.Pow(MathS.e, h);
             var rationalPart = exponential * solvedN / d;
             var integrand = exponential * above / below;
+            // Over the rationals the identity is checked coefficient by coefficient, exactly,
+            // which is what the solve established; the sampled check is for symbols, and on a
+            // rational part of degree fifty-eight it was four seconds of differentiating.
+            var checkedExactly = IdentityHoldsExactly(columns, values, targetRead);
             if (squarefree is null)
             {
-                if (!Functions.PartialFractions.HoldsAtSampledPoints(rationalPart.Differentiate(x), integrand, x))
+                if (!checkedExactly && !Functions.PartialFractions.HoldsAtSampledPoints(rationalPart.Differentiate(x), integrand, x))
                     return null;
                 return rationalPart.InnerSimplified;
             }
 
             var logarithmicPart = solvedM / squarefree;
-            if (!Functions.PartialFractions.HoldsAtSampledPoints(rationalPart.Differentiate(x) + logarithmicPart, integrand, x))
+            if (!checkedExactly && !Functions.PartialFractions.HoldsAtSampledPoints(rationalPart.Differentiate(x) + logarithmicPart, integrand, x))
                 return null;
             if (solvedM == Number.Integer.Zero || solvedM.Evaled is Number.Complex { IsZero: true })
                 return rationalPart.InnerSimplified;
@@ -5038,10 +5224,12 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// The largest degree, of the numerator, the denominator or the ansatz polynomial, that
-        /// <see cref="SolveByExponentialAnsatz"/> takes on. The system is square in the degree,
-        /// and past this the elimination is longer than any answer.
+        /// <see cref="SolveByExponentialAnsatz"/> and the Hermite reduction take on. Twelve
+        /// while the system was eliminated as expressions; over the rationals it is lifted
+        /// p-adically, and sixty-three unknowns -- Welz's <c>1/((3 - 2x)^(21/2) (1 + x + 2x^2)^10)</c>
+        /// under <c>u = sqrt(3 - 2x)</c> -- are fifty milliseconds.
         /// </summary>
-        private const int MaximumAnsatzDegree = 12;
+        private const int MaximumAnsatzDegree = 64;
 
         /// <summary>
         /// A constant over a linear beside the square root of a quadratic,

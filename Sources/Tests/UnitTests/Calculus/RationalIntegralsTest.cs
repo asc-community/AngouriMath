@@ -148,6 +148,35 @@ namespace AngouriMath.Tests.Calculus
         public void ARepeatedFactorTheSpellingHides(string integrand, double[] points) =>
             AssertIsAntiderivative(integrand, points);
 
+        /// <summary>
+        /// A written base that is a polynomial spelled some other way -- what the
+        /// linear-radical substitution makes of <c>1 + x + 2x^2</c> under <c>u = sqrt(3 - 2x)</c>
+        /// -- is written as its polynomial before the splits read it; and the Hermite
+        /// reduction of a high power is built in coefficient arithmetic and solved by p-adic
+        /// lifting, where the expander's term estimate declined the products and the
+        /// Gauss-Jordan over the rationals took minutes: Welz's
+        /// <c>1/((3 - 2x)^(11/2) (1 + x + 2x^2)^5)</c> and <c>1/((3 - 2x)^(21/2) (1 + x + 2x^2)^10)</c>,
+        /// the latter a system of sixty-three unknowns.
+        /// </summary>
+        [Theory]
+        [InlineData("-8 / (u ^ 6 * (2 + (u ^ 2 - 3) ^ 2 - (u ^ 2 - 3)) ^ 3)", new[] { 0.3, 0.7, 1.4, 2.2, -1.1 })]
+        [InlineData("1 / (u ^ 10 * (u ^ 4 - 7 * u ^ 2 + 14) ^ 5)", new[] { 0.3, 0.7, 1.4, 2.2, -1.1 })]
+        [InlineData("1 / (u ^ 20 * (u ^ 4 - 7 * u ^ 2 + 14) ^ 10)", new[] { 0.7, 1.4, 2.2, -1.1 })]
+        public void AHighPowerOfAWrittenBase(string integrand, double[] points)
+        {
+            var f = integrand.ToEntity();
+            var antiderivative = f.Integrate("u");
+            Assert.DoesNotContain("integral(", antiderivative.Stringize());
+            var derivative = antiderivative.Substitute("C", 0).Differentiate("u");
+            foreach (var point in points)
+            {
+                var expected = f.Substitute("u", point).EvalNumerical().RealPart.EDecimal.ToDouble();
+                var actual = derivative.Substitute("u", point).EvalNumerical().RealPart.EDecimal.ToDouble();
+                Assert.True(System.Math.Abs(expected - actual) <= 1e-7 * System.Math.Max(1, System.Math.Abs(expected)),
+                    $"at {point}: {actual} for {expected}");
+            }
+        }
+
         // What is out of reach is a denominator that does not factor over Q and is not a
         // biquadratic either -- an odd power puts it past the step that factors over the reals.
         // Recorded so the boundary is visible rather than inferred from an absence.

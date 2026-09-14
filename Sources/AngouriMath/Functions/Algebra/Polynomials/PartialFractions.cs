@@ -681,26 +681,267 @@ namespace AngouriMath.Functions
         }
 
         /// <summary>
-        /// The system whose entries are polynomials over <c>Q</c> in some symbols, solved
-        /// exactly as such: fraction-free Gauss-Jordan elimination, so that every entry on
-        /// the way is a minor of the augmented matrix and every zero is a zero, and each
-        /// unknown comes out as one polynomial over the last pivot, in lowest terms.
-        /// Declined, for the elimination on entities, where an entry is not such a
-        /// polynomial -- a number outside <c>Q</c>, a symbol under a root or below the bar
-        /// -- or where the system has no symbols at all and the entities are exact already.
+        /// The width past which a rational system is solved by p-adic lifting: the reduced
+        /// fractions of Gauss-Jordan grow with every row they meet, and a system of sixty-three
+        /// unknowns over a hundred and thirty-eight rows -- the Hermite reduction of Welz's
+        /// <c>1/((3 - 2x)^(21/2) (1 + x + 2x^2)^10)</c> -- took two and a half minutes there,
+        /// and fraction-free elimination longer.
         /// </summary>
-        /// <remarks>
-        /// The elimination on entities does not collect terms, so with symbols in the entries
-        /// its zero test is numeric and its answers are what the arithmetic wrote:
-        /// <c>1/((x + 1) sqrt(x^2 + x + b))</c> through the Euler substitution came back
-        /// correct in 24 KB, with partial-fraction coefficients like <c>(2b - 2b)</c> beside
-        /// terms that were zero, and <c>1/((x + a) sqrt(x^2 + b x + c))</c> in 77 KB. Bareiss'
-        /// elimination keeps every intermediate a polynomial, divided exactly by the previous
-        /// pivot, and the Gauss-Jordan form of it (Nakos, Turner and Williams, 1997) reduces
-        /// above the pivot too, so at the end each pivot row reads <c>d x_k = n_k</c> with
-        /// <c>d</c> the last pivot -- one fraction per unknown, no back-substitution to
-        /// compound them.
-        /// </remarks>
+        private const int LiftFrom = 24;
+
+        /// <summary>The prime the lifting works modulo, below <c>2^31</c> so that a product of two residues fits a <see cref="long"/>.</summary>
+        private const long LiftingPrime = 2147483647;
+
+        /// <summary>
+        /// Dixon's p-adic lifting on the system with every row scaled to integers: the rank
+        /// and a square nonsingular subsystem are found modulo a prime, its solution is lifted
+        /// digit by digit in that prime, each digit one solve modulo the prime, and the
+        /// rationals are reconstructed from the digits (Wang) and checked against every row
+        /// exactly. An unknown outside the pivot columns is zero, as in the eliminations.
+        /// </summary>
+        private static bool TrySolveByLifting(ERational[][] augmented, int rows, int width, [NotNullWhen(true)] out Entity[]? values)
+        {
+            values = null;
+            var a = new EInteger[rows][];
+            for (var row = 0; row < rows; row++)
+            {
+                var common = EInteger.One;
+                for (var column = 0; column <= width; column++)
+                {
+                    var reduced = augmented[row][column].ToLowestTerms();
+                    augmented[row][column] = reduced;
+                    common = common.Multiply(reduced.Denominator).Divide(common.Gcd(reduced.Denominator));
+                }
+                a[row] = new EInteger[width + 1];
+                for (var column = 0; column <= width; column++)
+                    a[row][column] = augmented[row][column].Multiply(ERational.FromEInteger(common)).ToLowestTerms().Numerator;
+            }
+            var prime = EInteger.FromInt64(LiftingPrime);
+            static long Mod(EInteger value, EInteger prime)
+            {
+                var remainder = value.Remainder(prime);
+                if (remainder.Sign < 0)
+                    remainder = remainder.Add(prime);
+                return remainder.ToInt64Checked();
+            }
+            static long Inverse(long value)
+            {
+                // Extended Euclid modulo the prime.
+                long t = 0, newT = 1, r = LiftingPrime, newR = value % LiftingPrime;
+                if (newR < 0) newR += LiftingPrime;
+                while (newR != 0)
+                {
+                    var quotient = r / newR;
+                    (t, newT) = (newT, t - quotient * newT);
+                    (r, newR) = (newR, r - quotient * newR);
+                }
+                return t < 0 ? t + LiftingPrime : t;
+            }
+
+            // The rank and the pivot rows and columns, modulo the prime.
+            var modular = new long[rows][];
+            for (var row = 0; row < rows; row++)
+            {
+                modular[row] = new long[width + 1];
+                for (var column = 0; column <= width; column++)
+                    modular[row][column] = Mod(a[row][column], prime);
+            }
+            var rowOrder = Enumerable.Range(0, rows).ToArray();
+            var pivotColumns = new List<int>();
+            var rank = 0;
+            for (var column = 0; column < width && rank < rows; column++)
+            {
+                var pivot = -1;
+                for (var row = rank; row < rows; row++)
+                    if (modular[row][column] != 0)
+                    {
+                        pivot = row;
+                        break;
+                    }
+                if (pivot < 0)
+                    continue;
+                (modular[pivot], modular[rank]) = (modular[rank], modular[pivot]);
+                (rowOrder[pivot], rowOrder[rank]) = (rowOrder[rank], rowOrder[pivot]);
+                var inverse = Inverse(modular[rank][column]);
+                for (var k = 0; k <= width; k++)
+                    modular[rank][k] = modular[rank][k] * inverse % LiftingPrime;
+                for (var row = 0; row < rows; row++)
+                {
+                    if (row == rank || modular[row][column] == 0)
+                        continue;
+                    var factor = modular[row][column];
+                    for (var k = 0; k <= width; k++)
+                        modular[row][k] = ((modular[row][k] - factor * modular[rank][k]) % LiftingPrime + LiftingPrime) % LiftingPrime;
+                }
+                pivotColumns.Add(column);
+                rank++;
+            }
+            for (var row = rank; row < rows; row++)
+                if (modular[row][width] != 0)
+                    return false;
+            if (rank == 0)
+            {
+                for (var row = 0; row < rows; row++)
+                    if (!a[row][width].IsZero)
+                        return false;
+                values = new Entity[width];
+                for (var column = 0; column < width; column++)
+                    values[column] = Integer.Zero;
+                return true;
+            }
+
+            // The square subsystem S x = t on the pivot rows and columns, and S^(-1) modulo
+            // the prime by Gauss-Jordan on [S | I].
+            var pivotRows = rowOrder.Take(rank).ToArray();
+            var s = new EInteger[rank][];
+            var t = new EInteger[rank];
+            for (var i = 0; i < rank; i++)
+            {
+                s[i] = new EInteger[rank];
+                for (var j = 0; j < rank; j++)
+                    s[i][j] = a[pivotRows[i]][pivotColumns[j]];
+                t[i] = a[pivotRows[i]][width];
+            }
+            var inverseModular = new long[rank][];
+            {
+                var work = new long[rank][];
+                for (var i = 0; i < rank; i++)
+                {
+                    work[i] = new long[2 * rank];
+                    for (var j = 0; j < rank; j++)
+                        work[i][j] = Mod(s[i][j], prime);
+                    work[i][rank + i] = 1;
+                }
+                for (var column = 0; column < rank; column++)
+                {
+                    var pivot = -1;
+                    for (var row = column; row < rank; row++)
+                        if (work[row][column] != 0)
+                        {
+                            pivot = row;
+                            break;
+                        }
+                    if (pivot < 0)
+                        return false;
+                    (work[pivot], work[column]) = (work[column], work[pivot]);
+                    var inverse = Inverse(work[column][column]);
+                    for (var k = 0; k < 2 * rank; k++)
+                        work[column][k] = work[column][k] * inverse % LiftingPrime;
+                    for (var row = 0; row < rank; row++)
+                    {
+                        if (row == column || work[row][column] == 0)
+                            continue;
+                        var factor = work[row][column];
+                        for (var k = 0; k < 2 * rank; k++)
+                            work[row][k] = ((work[row][k] - factor * work[column][k]) % LiftingPrime + LiftingPrime) % LiftingPrime;
+                    }
+                }
+                for (var i = 0; i < rank; i++)
+                {
+                    inverseModular[i] = new long[rank];
+                    for (var j = 0; j < rank; j++)
+                        inverseModular[i][j] = work[i][rank + j];
+                }
+            }
+
+            // The lifting: residual r_0 = t; digit x_i = S^(-1) r_i mod p; r_(i+1) = (r_i - S x_i)/p.
+            var residual = (EInteger[])t.Clone();
+            var lifted = new EInteger[rank];
+            for (var i = 0; i < rank; i++)
+                lifted[i] = EInteger.Zero;
+            var primePower = EInteger.One;
+            var solution = new ERational[rank];
+            for (var step = 0; step < 4096; step++)
+            {
+                var residualModular = new long[rank];
+                for (var i = 0; i < rank; i++)
+                    residualModular[i] = Mod(residual[i], prime);
+                var digit = new long[rank];
+                for (var i = 0; i < rank; i++)
+                {
+                    long sum = 0;
+                    for (var j = 0; j < rank; j++)
+                        sum = (sum + inverseModular[i][j] * residualModular[j]) % LiftingPrime;
+                    digit[i] = sum;
+                }
+                for (var i = 0; i < rank; i++)
+                    lifted[i] = lifted[i].Add(primePower.Multiply(EInteger.FromInt64(digit[i])));
+                primePower = primePower.Multiply(prime);
+                var next = new EInteger[rank];
+                for (var i = 0; i < rank; i++)
+                {
+                    var accumulated = residual[i];
+                    for (var j = 0; j < rank; j++)
+                        if (digit[j] != 0)
+                            accumulated = accumulated.Subtract(s[i][j].Multiply(EInteger.FromInt64(digit[j])));
+                    next[i] = accumulated.Divide(prime);
+                }
+                residual = next;
+                // Every few digits, a reconstruction and an exact check.
+                if (step % 8 != 7)
+                    continue;
+                var reconstructed = true;
+                for (var i = 0; i < rank && reconstructed; i++)
+                    reconstructed = TryReconstructRational(lifted[i], primePower, out solution[i]);
+                if (!reconstructed)
+                    continue;
+                var holds = true;
+                for (var i = 0; i < rank && holds; i++)
+                {
+                    var sum = ERational.Zero;
+                    for (var j = 0; j < rank; j++)
+                        sum = sum.Add(solution[j].Multiply(ERational.FromEInteger(s[i][j])));
+                    holds = sum.Subtract(ERational.FromEInteger(t[i])).ToLowestTerms().IsZero;
+                }
+                if (holds)
+                    break;
+                if (step >= 4088)
+                    return false;
+            }
+            if (solution.Any(value => value is null))
+                return false;
+            // The other rows, exactly.
+            for (var row = 0; row < rows; row++)
+            {
+                var sum = ERational.Zero;
+                for (var j = 0; j < rank; j++)
+                    sum = sum.Add(solution[j].Multiply(ERational.FromEInteger(a[row][pivotColumns[j]])));
+                if (!sum.Subtract(ERational.FromEInteger(a[row][width])).ToLowestTerms().IsZero)
+                    return false;
+            }
+            values = new Entity[width];
+            for (var column = 0; column < width; column++)
+                values[column] = Integer.Zero;
+            for (var j = 0; j < rank; j++)
+                values[pivotColumns[j]] = Rational.Create(solution[j].ToLowestTerms());
+            return true;
+        }
+
+        /// <summary>
+        /// The rational <c>n/d</c> with <c>|n|, d &lt;= sqrt(m/2)</c> and <c>n = d u</c> modulo
+        /// <paramref name="m"/>, by the extended Euclidean algorithm on <c>m</c> and <c>u</c>
+        /// stopped at the bound (Wang's reconstruction); false where there is none yet.
+        /// </summary>
+        private static bool TryReconstructRational(EInteger u, EInteger m, out ERational value)
+        {
+            value = ERational.Zero;
+            var bound = m.Divide(EInteger.FromInt32(2)).Sqrt();
+            var (r0, r1) = (m, u.Remainder(m));
+            if (r1.Sign < 0)
+                r1 = r1.Add(m);
+            var (t0, t1) = (EInteger.Zero, EInteger.One);
+            while (r1.CompareTo(bound) > 0)
+            {
+                var quotient = r0.Divide(r1);
+                (r0, r1) = (r1, r0.Subtract(quotient.Multiply(r1)));
+                (t0, t1) = (t1, t0.Subtract(quotient.Multiply(t1)));
+            }
+            if (t1.IsZero || t1.Abs().CompareTo(bound) > 0)
+                return false;
+            value = ERational.Create(t1.Sign < 0 ? r1.Negate() : r1, t1.Abs()).ToLowestTerms();
+            return true;
+        }
+
         /// <summary>
         /// Gauss-Jordan elimination over the rationals, for a system whose every entry is one:
         /// a row reducing to <c>0 = c</c> with <c>c</c> not zero declines the system, and an
@@ -729,6 +970,8 @@ namespace AngouriMath.Functions
                 }
             }
             everyEntryRational = true;
+            if (width > LiftFrom)
+                return TrySolveByLifting(augmented, rows, width, out values);
             var pivotColumnOfRow = new int[rows];
             var rank = 0;
             for (var column = 0; column < width && rank < rows; column++)
@@ -773,6 +1016,27 @@ namespace AngouriMath.Functions
             return true;
         }
 
+        /// <summary>
+        /// The system whose entries are polynomials over <c>Q</c> in some symbols, solved
+        /// exactly as such: fraction-free Gauss-Jordan elimination, so that every entry on
+        /// the way is a minor of the augmented matrix and every zero is a zero, and each
+        /// unknown comes out as one polynomial over the last pivot, in lowest terms.
+        /// Declined, for the elimination on entities, where an entry is not such a
+        /// polynomial -- a number outside <c>Q</c>, a symbol under a root or below the bar
+        /// -- or where the system has no symbols at all and the entities are exact already.
+        /// </summary>
+        /// <remarks>
+        /// The elimination on entities does not collect terms, so with symbols in the entries
+        /// its zero test is numeric and its answers are what the arithmetic wrote:
+        /// <c>1/((x + 1) sqrt(x^2 + x + b))</c> through the Euler substitution came back
+        /// correct in 24 KB, with partial-fraction coefficients like <c>(2b - 2b)</c> beside
+        /// terms that were zero, and <c>1/((x + a) sqrt(x^2 + b x + c))</c> in 77 KB. Bareiss'
+        /// elimination keeps every intermediate a polynomial, divided exactly by the previous
+        /// pivot, and the Gauss-Jordan form of it (Nakos, Turner and Williams, 1997) reduces
+        /// above the pivot too, so at the end each pivot row reads <c>d x_k = n_k</c> with
+        /// <c>d</c> the last pivot -- one fraction per unknown, no back-substitution to
+        /// compound them.
+        /// </remarks>
         private static bool TrySolveOverPolynomials(Entity[][] matrix, Entity[] rhs, [NotNullWhen(true)] out Entity[]? values)
         {
             values = null;
