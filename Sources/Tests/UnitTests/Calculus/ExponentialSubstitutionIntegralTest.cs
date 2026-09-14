@@ -215,6 +215,36 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// Any one base free of x, not only e: Timofeev's <c>1/sqrt(a^(2x) - 1)</c> is
+        /// <c>1/(u ln(a) sqrt(u^2 - 1))</c> under <c>u = a^x</c>, with <c>dx = du/(u ln a)</c>.
+        /// And <c>e^(e^x) e^x</c>, which arrives as <c>e^(e^x + x)</c>: the general substitution
+        /// writes an exponential of a sum as the product for its search, and <c>u = e^x</c>
+        /// then leaves <c>e^u</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(1 + 2^x)")]
+        [InlineData("3^x*sqrt(1 + 3^x)")]
+        [InlineData("e^(e^x + x)")]
+        [InlineData("e^(e^x)*e^x")]
+        public void AnyBaseAndAnExponentOfASum(string integrand) => DifferentiatesBack(integrand);
+
+        [Fact]
+        public void ASymbolicBase()
+        {
+            var integrand = "1/sqrt(-1 + a^(2*x))".ToEntity();
+            var integral = integrand.Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Substitute("a", 3).Simplify().Differentiate("x");
+            var original = integrand.Substitute("a", 3);
+            foreach (var at in new[] { 0.3, 0.7, 1.2, 1.9 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-8 && Math.Abs((double)(got - want).ImaginaryPart) < 1e-8, $"{integrand} at {at}: {got} for {want}");
+            }
+        }
+
+        /// <summary>
         /// What the rule must not disturb: exponentials the other rules already answer, and which
         /// are not rational in <c>e^(k x)</c> at all.
         /// </summary>

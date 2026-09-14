@@ -236,7 +236,7 @@ namespace AngouriMath.Functions.Algebra
                 numerator.ContainsNode(x)
                 && TreeAnalyzer.TryGetPolyLinear(numerator, x, out var p, out var q)
                 && TreeAnalyzer.TryGetPolyQuadratic(denominator, x, out var a, out var b, out var c)
-                && a.Evaled is Entity.Number.Complex { IsZero: false }
+                && !TreeAnalyzer.IsZero(a)
                     => IntegrateLinearOverQuadratic(p, q, a, b, c, denominator, x),
 
             // ∫ N(x)/(ax^2 + bx + c)^n dx for a whole n of two or more and a proper fraction.
@@ -247,7 +247,7 @@ namespace AngouriMath.Functions.Algebra
                 repetitions.EInteger.CanFitInInt32()
                 && repetitions.EInteger.ToInt32Checked() is var n and >= 2
                 && TreeAnalyzer.TryGetPolyQuadratic(repeated, x, out var qa, out var qb, out var qc)
-                && (!numerator.ContainsNode(x) || qa.Evaled is Entity.Number.Complex { IsZero: false })
+                && (!numerator.ContainsNode(x) || !TreeAnalyzer.IsZero(qa))
                 && IntegrateRationalOverPowerOfQuadratic(numerator, qa, qb, qc, repeated, n, x) is { } repeatedAnswer
                     => repeatedAnswer,
 
@@ -511,10 +511,58 @@ namespace AngouriMath.Functions.Algebra
         /// px + q = (p/2a)(2ax + b) + (q - pb/2a). The first part integrates to a logarithm
         /// and the second is the constant-numerator case above.
         /// </summary>
+        /// <remarks>
+        /// With <c>a</c> a symbol the constant-numerator case is a piecewise with an arm for
+        /// <c>a = 0</c>, and on that arm the multiple of the derivative, which divided by
+        /// <c>a</c>, is not the integrand's: there it is <c>(px + q)/(bx + c)</c>, which is
+        /// <c>px/b + (q - pc/b) ln(bx + c)/b</c>. Timofeev's <c>(b1 + c1 x)/(a + 2b x + c x^2)</c>
+        /// had no antiderivative, with the arm declined for the symbol in front.
+        /// </remarks>
         private static Entity IntegrateLinearOverQuadratic(
             Entity p, Entity q, Entity a, Entity b, Entity c, Entity denominator, Entity.Variable x)
-            => p / (2 * a) * AntiderivativeLog(denominator)
-               + IntegrateRationalQuadratic(q - p * b / (2 * a), a, b, c, x);
+            => WithTheArmForAZeroLeadingCoefficient(
+                IntegrateRationalQuadratic(q - p * b / (2 * a), a, b, c, x),
+                a,
+                p / (2 * a) * AntiderivativeLog(denominator),
+                LinearOverPowerOfLinear(p, q, b, c, 1, x));
+
+        /// <summary>
+        /// <paramref name="answer"/> with <paramref name="added"/> added to every arm but the
+        /// one for a vanishing <paramref name="a"/>, which is replaced by
+        /// <paramref name="onTheLinearArm"/>; <paramref name="added"/> divided by
+        /// <paramref name="a"/> and is not the integrand's there.
+        /// </summary>
+        private static Entity WithTheArmForAZeroLeadingCoefficient(Entity answer, Entity a, Entity added, Entity onTheLinearArm)
+        {
+            if (answer is not Entity.Piecewise piecewise)
+                return added + answer;
+            // The arm's predicate is simplified with the piecewise; the coefficient as read is not.
+            var leading = a.InnerSimplified;
+            var arms = new List<Entity.Providedf>();
+            foreach (var arm in piecewise.Cases)
+                arms.Add(arm.Predicate is Entity.Equalsf(var left, var right)
+                         && (left.InnerSimplified == leading && TreeAnalyzer.IsZero(right) || right.InnerSimplified == leading && TreeAnalyzer.IsZero(left))
+                    ? new Entity.Providedf(onTheLinearArm, arm.Predicate)
+                    : new Entity.Providedf(added + arm.Expression, arm.Predicate));
+            return MathS.Piecewise(arms).InnerSimplified;
+        }
+
+        /// <summary>
+        /// ∫ (px + q)/(bx + c)^n dx, with <c>u = bx + c</c>: <c>(p/b) u + (q - pc/b)</c> over
+        /// <c>u^n</c>, by <c>du/b</c>. For <c>b = 0</c> the integrand is a linear over a constant.
+        /// </summary>
+        private static Entity LinearOverPowerOfLinear(Entity p, Entity q, Entity b, Entity c, int n, Entity.Variable x)
+        {
+            if (TreeAnalyzer.IsZero(b))
+                return (p * x * x / 2 + q * x) / MathS.Pow(c, n);
+            var u = b * x + c;
+            var alongU = n == 1 ? p * x / b
+                : n == 2 ? p / (b * b) * AntiderivativeLog(u)
+                : p / (b * b) * MathS.Pow(u, 2 - n) / (2 - n);
+            var constant = q - p * c / b;
+            var overU = n == 1 ? constant * AntiderivativeLog(u) / b : constant * MathS.Pow(u, 1 - n) / (b * (1 - n));
+            return alongU + overU;
+        }
 
         private static Entity IntegrateRationalQuadratic(Entity numerator, Entity a, Entity b, Entity c, Entity.Variable x)
         {
@@ -678,9 +726,13 @@ namespace AngouriMath.Functions.Algebra
         {
             var alongTheDerivative = p / (2 * a) * MathS.Pow(quadratic, 1 - power) / (1 - power);
             var constantPart = q - p * b / (2 * a);
-            return TreeAnalyzer.IsZero(constantPart)
-                ? alongTheDerivative
-                : alongTheDerivative + IntegrateOverPowerOfQuadratic(constantPart, a, b, c, power, x);
+            if (TreeAnalyzer.IsZero(constantPart))
+                return alongTheDerivative;
+            return WithTheArmForAZeroLeadingCoefficient(
+                IntegrateOverPowerOfQuadratic(constantPart, a, b, c, power, x),
+                a,
+                alongTheDerivative,
+                LinearOverPowerOfLinear(p, q, b, c, power, x));
         }
 
         /// <summary>
