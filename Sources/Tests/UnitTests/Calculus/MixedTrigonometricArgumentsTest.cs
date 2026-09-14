@@ -122,6 +122,19 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sqrt(1 + cos(x))*sin(2*x)")]
         public void AFractionalPowerOfOneFunction(string integrand) => DifferentiatesBack(integrand);
 
+        /// <summary>
+        /// A whole power of a sine or a cosine is that many factors to the product-to-sum
+        /// identities: Hearn's <c>cos(x)^2 sin(2x + 3)</c> is <c>cos(x) (cos(x) sin(2x + 3))</c>,
+        /// and the pair is a sum of two sines of shifted arguments, which no unifier reads
+        /// -- the shift is the difference from the double angle -- and the power kept the
+        /// factor from being paired.
+        /// </summary>
+        [Theory]
+        [InlineData("cos(x)^2*sin(2*x + 3)")]
+        [InlineData("cos(x)^2*sin(2*x + 3)*sin(x)")]
+        [InlineData("sin(x)^3*cos(3*x + 1)")]
+        public void APowerIsPairedFactorByFactor(string integrand) => DifferentiatesBack(integrand);
+
         /// <remarks>
         /// Bounded by the integrator's own budget rather than a wall clock that measures the
         /// runner; what is pinned is that the verdict is not a wrong answer and comes in a

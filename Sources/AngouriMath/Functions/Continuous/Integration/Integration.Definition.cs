@@ -642,6 +642,10 @@ namespace AngouriMath.Functions.Algebra
             // -- times a rational function of x and ln(x). `(-1 + (1 - x) ln(x))/(e^x ln(x)^2)`
             // is `(x e^(-x)/ln(x))'`.
             if ((answer = IndefiniteIntegralSolver.SolveByLogarithmTowerAnsatz(expr, x)) is { }) return answer;
+            // And the same tower with the sine and cosine for the logarithm: a rational
+            // function of x and of sin(x) and cos(x) together. `x^2/(x cos(x) - sin(x))^2` is
+            // `((x sin(x) + cos(x))/(x cos(x) - sin(x)))'`.
+            if ((answer = IndefiniteIntegralSolver.SolveByTrigonometricTowerAnsatz(expr, x)) is { }) return answer;
             // Last of the rewrites, because it is the only one that fires on an integrand nothing
             // is wrong with -- it clears a parameter rather than a shape -- so everything that
             // can answer the problem as written gets to try first.
