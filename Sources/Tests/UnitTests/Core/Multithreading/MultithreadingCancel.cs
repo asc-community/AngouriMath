@@ -19,10 +19,12 @@ namespace AngouriMath.Tests.Core.Multithreading
     [Trait("Area", "Core")]
     public sealed class MultithreadingCancel
     {
+        // Thirty solves rather than ten: warm, ten were a second and a tenth on a desktop
+        // against a cancellation at three quarters of a second.
         private static void SomeLongLastingTask()
         {
             Entity t;
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 30; i++)
                 t = 
             "b c d e f g a e cos(x ^ 4 + 3)1 + a f c d cos(x ^ 4 + 2)2 - k d cos(x ^ 4 + 3)2 + sin(x ^ 4 + 3) + e = 0"
             .Solve("x");
@@ -72,15 +74,25 @@ namespace AngouriMath.Tests.Core.Multithreading
         {
             Assert.True(MakesSenseToPerformTest, $"The given task completed too soon, consider lowering the constant {ShouldLastAtLeast}");
 
+            // Each task on a thread of its own rather than on the pool: the tasks are
+            // processor-bound, and on a runner with two cores four of them hold every pool
+            // thread, so the timer behind CancelAfter -- a pool work item queued behind
+            // them -- does not run until one of them has finished, and that one has then
+            // run to completion uncancelled. Reproduced with these tasks in a console under
+            // DOTNET_PROCESSOR_COUNT=2: fifteen of twenty-four ran to completion, none once
+            // on their own threads.
+            static Task OnItsOwnThread(Action action, CancellationToken token)
+                => Task.Factory.StartNew(action, token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+
             (CancellationTokenSource, Task) GenTask(int c)
             {
                 var cts = new CancellationTokenSource();
                 var token = cts.Token;
                 MathS.Multithreading.SetLocalCancellationToken(token);
-                var task = Task.Run(async
-                    () => {
+                var task = OnItsOwnThread(() =>
+                    {
                         if (generateChild)
-                            await Task.Run(SomeLongLastingTask);
+                            OnItsOwnThread(SomeLongLastingTask, token).GetAwaiter().GetResult();
                         SomeLongLastingTask();
                     }, token);
                 var res = (cts, task);
