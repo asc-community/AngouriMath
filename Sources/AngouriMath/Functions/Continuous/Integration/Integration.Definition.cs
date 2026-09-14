@@ -565,6 +565,10 @@ namespace AngouriMath.Functions.Algebra
             // problem into pieces the ordinary rules know gets first refusal, and this sees only
             // what is left — which is the quotients it was added for, since linearity declines a
             // quotient and partial fractions declines one that is not a ratio of polynomials.
+            // Bioche's first two rules before the third: a rational function of the two that
+            // is odd in one of them is a rational function of the other, smaller than the
+            // half-angle tangent's and answered more shortly.
+            if ((answer = IndefiniteIntegralSolver.SolveByBiochesOddSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByHalfAngleSubstitution(expr, x, integrateByParts)) is { }) return answer;
             // The substitution by a sine or a cosine where an odd power of the complement is
             // left: its sign times a root, the sign a constant between the complement's zeros.

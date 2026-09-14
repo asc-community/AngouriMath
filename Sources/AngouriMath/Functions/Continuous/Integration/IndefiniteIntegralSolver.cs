@@ -4359,7 +4359,7 @@ namespace AngouriMath.Functions.Algebra
         /// The largest degree, in the sine and cosine of the common argument, that the rewriting
         /// is allowed to produce anywhere in the integrand.
         /// </summary>
-        private const int MaximumUnifiedDegree = 8;
+        private const int MaximumUnifiedDegree = 16;
 
         /// <summary>
         /// An upper bound on the degree in <c>sin(g x)</c> and <c>cos(g x)</c> that rewriting
@@ -7430,16 +7430,33 @@ namespace AngouriMath.Functions.Algebra
                         : 0) < 2)
                 return null;
             var rewritten = CombineRadicalsIn(expr, x);
-            if (rewritten == expr)
-                return null;
             // The rewriting is exact and the rewritten integrand is the question asked in
             // another spelling, so at the top it is asked as one: the rules scoped to the
             // question -- the parity extension under a substitution, for one, which
             // `sec(x)/sqrt(sec(x)^4 - 1)` needs after the secant is written as a cosine here --
             // answer it then and not one level down.
-            return Integration.AnsweringTheQuestionAsked
-                ? Integration.ComputeAsAQuestionOfItsOwn(rewritten, x, integrateByParts)
-                : Integration.ComputeIndefiniteIntegral(rewritten, x, integrateByParts);
+            if (rewritten != expr
+                && (Integration.AnsweringTheQuestionAsked
+                    ? Integration.ComputeAsAQuestionOfItsOwn(rewritten, x, integrateByParts)
+                    : Integration.ComputeIndefiniteIntegral(rewritten, x, integrateByParts)) is { } answer)
+                return answer;
+            // Two roots that combine only up to a sign, `sqrt(x - 1) sqrt(x + 1)`: the sign is
+            // a constant between the real roots of the bases and goes in front of the
+            // integral, at the top, where the answer is the caller's. After the exact
+            // rewriting has had its turn, since a quotient with those two roots below may be
+            // answered by the cancellation alone -- Hearn's
+            // `(5x^4 sqrt(1 + x^3) - 3x^2 sqrt(1 - 2x + x^5) - 2 sqrt(1 + x^3))/(2 sqrt(1 + x^3) sqrt(1 - 2x + x^5))`
+            // is, and combined under one root with the sign in front it ran the budget out;
+            // so only where the one root is the only one left.
+            if (Integration.AnsweringTheQuestionAsked && expr is Mulf or Divf
+                && CombineRadicalsInAQuotient(SplitRootsOfQuotientsIn(expr, x), x, out var sign, withASign: true) is { } signed
+                && sign is not null
+                && signed.Nodes.Where(node => node is Powf(var @base, Number.Rational r) && r is not Number.Integer && @base.ContainsNode(x))
+                    .Select(node => ((Powf)node).Base).Distinct().Count() == 1
+                && Integration.ComputeAsAQuestionOfItsOwn(signed, x, integrateByParts) is { } result
+                && !result.Nodes.Any(node => node == MathS.NaN))
+                return sign * result;
+            return null;
         }
 
         /// <summary>
@@ -7450,7 +7467,7 @@ namespace AngouriMath.Functions.Algebra
         /// reads as it stands.
         /// </summary>
         private static Entity CombineRadicalsIn(Entity expr, Entity.Variable x)
-            => SplitRootsOfQuotientsIn(expr, x).Replace(node => node is Mulf or Divf ? CombineRadicalsInAQuotient(node, x) ?? node : node);
+            => SplitRootsOfQuotientsIn(expr, x).Replace(node => node is Mulf or Divf ? CombineRadicalsInAQuotient(node, x, out _) ?? node : node);
 
         /// <summary>
         /// Every root of a quotient of polynomials in <paramref name="expr"/> written as a
@@ -7556,8 +7573,9 @@ namespace AngouriMath.Functions.Algebra
         /// polynomials written as one, or <see langword="null"/> where there are fewer than two
         /// or the identity does not hold for them.
         /// </summary>
-        private static Entity? CombineRadicalsInAQuotient(Entity expr, Entity.Variable x)
+        private static Entity? CombineRadicalsInAQuotient(Entity expr, Entity.Variable x, out Entity? signInFront, bool withASign = false)
         {
+            signInFront = null;
             // As one quotient, with a negative half-power read as the root it is below the bar,
             // and a sum factor above the bar cancelled against the same sum below it. That is
             // the derivative of `ln(x + sqrt(x^2 - 1))` as differentiation writes it,
@@ -7680,6 +7698,21 @@ namespace AngouriMath.Functions.Algebra
             // sub-integrand of a search that declines was three seconds of one.
             var signTable = bases.Count >= 2 ? SignsOnEveryRealInterval(bases, x) : null;
             var combineAsAProduct = signTable is not null && signTable.All(signs => signs.Count(sign => sign < 0) <= 1);
+            // Two roots whose bases are both negative somewhere: `sqrt(x - 1) sqrt(x + 1)` is
+            // `sqrt(x^2 - 1)` past 1 and `-sqrt(x^2 - 1)` before -1, the two `i`s multiplying
+            // to -1. So `sqrt(P) sqrt(Q)` is `s sqrt(P Q)` with `s = (1 + sgn P + sgn Q - sgn P sgn Q)/2`,
+            // which is -1 where both are negative and 1 elsewhere -- exactly, on every real
+            // x -- and the same `s` serves the reciprocals and the quotient, being its own
+            // reciprocal. The sign is a constant between the real roots of the bases, so it
+            // goes in front of the integral; at the top only, where the caller can put it
+            // there.
+            if (withASign && !combineAsAProduct && bases.Count == 2 && signTable is not null
+                && signTable.Any(signs => signs.All(s => s < 0)))
+            {
+                var (first, second) = (MathS.Signum(bases[0]), MathS.Signum(bases[1]));
+                signInFront = (1 + first + second - first * second) / 2;
+                combineAsAProduct = true;
+            }
             if (bases.Count >= 2 && signTable is not null && !combineAsAProduct
                 && CombinedAsAQuotient(bases, halfExponents, signTable, x) is { } asOneRoot)
             {
@@ -8244,6 +8277,140 @@ namespace AngouriMath.Functions.Algebra
             return a / x * b;
         }
 
+
+        /// <summary>
+        /// Bioche's first two rules: a rational function of <c>sin(x)</c> and <c>cos(x)</c>
+        /// that is odd in the sine is a rational function of <c>u = cos(x)</c> times
+        /// <c>sin(x) dx = -du</c>, and one odd in the cosine the mirror of it.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Bondarenko's <c>1/(cos(x) + cos(3x))^5</c> is <c>1/(4 cos(x)^3 - 2 cos(x))^5</c>, odd in
+        /// the cosine, and under <c>u = sin(x)</c> it is <c>1/((1 - u^2)^3 (2 - 4u^2)^5)</c>, a
+        /// rational function with a denominator of degree sixteen; the half-angle
+        /// substitution, which answers any rational function of the two, makes one of
+        /// degree thirty in the tangent of the half angle and did not return within the
+        /// budget. The parity is read off the polynomials: with <c>N/D</c> the integrand over
+        /// the two and <c>f</c> the function it is odd in, <c>N/(D f)</c> is even in <c>f</c>
+        /// exactly when, after clearing <c>D</c> against <c>D(-f)</c> where <c>D</c> is neither
+        /// even nor odd, every power of <c>f</c> above is odd and every one below is even --
+        /// and then each <c>f^2</c> is <c>1 - u^2</c>. Exact, and the substitution is a
+        /// bijection on each interval between the zeros of <c>f</c>, the standing caveat on
+        /// every trigonometric substitution here.
+        /// </para>
+        /// <para>
+        /// In front of the half-angle substitution, for the smaller rational function and
+        /// the shorter answer -- <c>sin(x)/(1 + cos(x)^2)</c> is <c>-arctan(cos(x))</c> here and
+        /// a page in the half-angle tangent -- and behind everything that answers a power
+        /// product or a homogeneous quotient in its own terms.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByBiochesOddSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var sine = MathS.Sin(x);
+            var cosine = MathS.Cos(x);
+            if (!expr.Nodes.Any(node => node is Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf && node.ContainsNode(x)))
+                return null;
+            var overTheTwo = expr.Replace(node => node switch
+            {
+                Tanf(var arg) when arg == x => sine / cosine,
+                Cotanf(var arg) when arg == x => cosine / sine,
+                Secantf(var arg) when arg == x => 1 / cosine,
+                Cosecantf(var arg) when arg == x => 1 / sine,
+                _ => node
+            });
+            if (overTheTwo.Nodes.Any(node => node.ContainsNode(x) && node is not (Variable or Sumf or Minusf or Mulf or Divf or Sinf or Cosf)
+                                              && !(node is Powf(_, Number.Integer))))
+                return null;
+            if (overTheTwo.Nodes.Any(node => node is Sinf(var arg) && arg != x || node is Cosf(var arg2) && arg2 != x))
+                return null;
+            var s = Variable.CreateUnique(expr, "s_bioche");
+            var c = Variable.CreateUnique(expr, "c_bioche");
+            var inTheTwo = Functions.SingleQuotient.Combine(overTheTwo.Substitute(sine, s).Substitute(cosine, c));
+            if (inTheTwo.ContainsNode(x))
+                return null;   // x bare beside the two is not this rule's
+            var (above, below) = Functions.SingleQuotient.Of(inTheTwo);
+            above = above.Expand();
+            below = below.Expand();
+            if (!TreeAnalyzer.TryGetPolynomial(above, s, out _) || !TreeAnalyzer.TryGetPolynomial(below, s, out _)
+                || !TreeAnalyzer.TryGetPolynomial(above, c, out _) || !TreeAnalyzer.TryGetPolynomial(below, c, out _))
+                return null;
+
+            foreach (var (odd, even, back, sign) in new[] { (c, s, sine, 1), (s, c, cosine, -1) })
+            {
+                // N/(D f) even in f: with D even, N is odd and one f comes out of it; with D
+                // odd, N is even and D f is; with D neither, both are cleared against D(-f).
+                var parityOfBelow = ParityIn(below, odd);
+                Entity numerator;
+                Entity denominator;
+                bool oneFOutOfTheNumerator;
+                if (parityOfBelow == 1)
+                {
+                    numerator = above;
+                    denominator = below;
+                    oneFOutOfTheNumerator = true;
+                }
+                else if (parityOfBelow == -1)
+                {
+                    numerator = above;
+                    denominator = (below * odd).Expand();
+                    oneFOutOfTheNumerator = false;
+                }
+                else
+                {
+                    var mirrored = below.Substitute(odd, -odd).Expand();
+                    numerator = (above * mirrored).Expand();
+                    denominator = (below * mirrored).Expand();
+                    oneFOutOfTheNumerator = true;
+                }
+                if (ParityIn(numerator, odd) != (oneFOutOfTheNumerator ? -1 : 1) || ParityIn(denominator, odd) != 1)
+                    continue;
+                var u = Variable.CreateUnique(expr, "u_bioche");
+                var oneMinusUSquared = 1 - MathS.Sqr(u);
+                if (InU(numerator, odd, even, u, oneMinusUSquared, oneFOutOfTheNumerator) is not { } aboveInU
+                    || InU(denominator, odd, even, u, oneMinusUSquared, dividedByOdd: false) is not { } belowInU)
+                    continue;
+                var integrand = Functions.PartialFractions.Bare(aboveInU / belowInU);
+                if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is not { } result
+                    || result.Nodes.Any(node => node == MathS.NaN))
+                    continue;
+                var answer = result.Substitute(u, back);
+                return sign == 1 ? answer : -answer;
+            }
+            return null;
+
+            // 1 for even in f, -1 for odd, 0 for neither; a zero polynomial is both.
+            static int ParityIn(Entity polynomial, Entity.Variable f)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, f, out var read))
+                    return 0;
+                var evenPowers = read.Keys.Any(k => k.IsEven);
+                var oddPowers = read.Keys.Any(k => !k.IsEven);
+                return evenPowers && oddPowers ? 0 : oddPowers ? -1 : 1;
+            }
+
+            // The polynomial with every f^2 written as 1 - u^2 and the other function as u,
+            // one f divided out first where asked.
+            static Entity? InU(Entity polynomial, Entity.Variable f, Entity.Variable other, Entity.Variable u, Entity oneMinusUSquared, bool dividedByOdd)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, f, out var read))
+                    return null;
+                Entity sum = Number.Integer.Zero;
+                foreach (var pair in read)
+                {
+                    if (pair.Key.Sign < 0 || !pair.Key.CanFitInInt32())
+                        return null;
+                    var power = pair.Key.ToInt32Unchecked() - (dividedByOdd ? 1 : 0);
+                    if (power < 0 || power % 2 != 0)
+                        return null;
+                    var half = power / 2;
+                    var term = pair.Value.Substitute(other, u) * (half == 0 ? Number.Integer.One : half == 1 ? oneMinusUSquared : MathS.Pow(oneMinusUSquared, half));
+                    sum = sum == Number.Integer.Zero ? term : sum + term;
+                }
+                return sum;
+            }
+        }
 
         /// <summary>
         /// A rational function of <c>sin(x)</c> and <c>cos(x)</c>, turned into a rational function

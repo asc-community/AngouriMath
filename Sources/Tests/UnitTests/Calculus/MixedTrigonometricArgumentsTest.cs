@@ -135,6 +135,17 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sin(x)^3*cos(3*x + 1)")]
         public void APowerIsPairedFactorByFactor(string integrand) => DifferentiatesBack(integrand);
 
+        /// <summary>
+        /// Bondarenko's <c>1/(cos(x) + cos(3x))^5</c>, which the bound on the degree the
+        /// rewriting produces refused at fifteen: with Bioche's odd rule in front of the
+        /// half-angle substitution the rewritten integrand is a rational function of the sine
+        /// of degree sixteen, answered in a moment, and the bound is sixteen.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(cos(x) + cos(3*x))^5")]
+        [InlineData("sin(x)/(cos(x) + cos(3*x))^4")]
+        public void ADegreeUpToSixteen(string integrand) => DifferentiatesBack(integrand);
+
         /// <remarks>
         /// Bounded by the integrator's own budget rather than a wall clock that measures the
         /// runner; what is pinned is that the verdict is not a wrong answer and comes in a
