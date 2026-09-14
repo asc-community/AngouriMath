@@ -117,7 +117,9 @@ namespace AngouriMath.Tests.Calculus
         /// and where the radicand is a constant modulo it the branch begins with a linear
         /// <c>L</c>, <c>L^2 = m</c> modulo the quadratic: Welz's
         /// <c>x/((8 + x^3) sqrt(x^3 - 1))</c> has <c>sqrt(3)(x - 1)</c> at <c>x^2 - 2x + 4</c>,
-        /// where <c>x^3 - 1</c> is <c>-9</c>, beside two arctangents at the pole <c>-2</c>; and
+        /// where <c>x^3 - 1</c> is <c>-9</c>, beside two arctangents at the pole <c>-2</c> -- one
+        /// logarithm, the conjugate difference over <c>sqrt(3)</c>, since the conjugate sum is
+        /// the logarithm of the norm and that is the places'; and
         /// <c>(x^2 - 1)/((x^2 + 1) sqrt(x^3 + x^2 + x))</c> has <c>x</c> at <c>x^2 + 1</c>,
         /// <c>2 ln(sqrt(x^3 + x^2 + x) - x) - ln(x) - ln(x^2 + 1)</c>, over the rationals.
         /// </summary>
@@ -128,7 +130,7 @@ namespace AngouriMath.Tests.Calculus
             var welz = "x/((8+x^3)*sqrt(-1+x^3))".ToEntity().Integrate("x").Stringize();
             Assert.Contains("sqrt(3)", welz);
             Assert.Contains("arctan(", welz);
-            Assert.Contains("ln(x ^ 2 + (-2) * x + 4)", welz);
+            Assert.Equal(1, welz.Split("ln(").Length - 1);
 
             DifferentiatesBack("(x^2-1)/((x^2+1)*sqrt(x^3+x^2+x))", new[] { 0.2, 0.5, 0.8, 1.6, 2.4, 3.5 });
             var rational = "(x^2-1)/((x^2+1)*sqrt(x^3+x^2+x))".ToEntity().Integrate("x").Stringize();
@@ -171,6 +173,27 @@ namespace AngouriMath.Tests.Calculus
             Assert.Contains("ln(sqrt(x ^ 4 + x ^ 2 + 1) - ", integral.Stringize());
             var atOne = integral.Substitute("C", 0).Substitute("x", 1).EvalNumerical();
             Assert.True(atOne.ImaginaryPart.EvalNumerical().Abs() < 1e-12, $"not real at 1: {atOne}");
+        }
+
+        /// <summary>
+        /// A quadratic radicand too, where Euler's substitution leaves a rational function
+        /// whose residues lie in a field of degree four: Timofeev's
+        /// <c>(3 + x)/((1 + x^2) sqrt(1 + x + x^2))</c> is a logarithm and an arctangent of
+        /// <c>(1 +- x)/(sqrt(2) sqrt(1 + x + x^2))</c>, the line <c>(1 + x)/sqrt(2)</c> at
+        /// <c>x^2 + 1</c>; his <c>(1 + 2x)/((4 + 4x + 3x^2) sqrt(x^2 + 6x - 1))</c> has its two
+        /// lines over two different fields, <c>sqrt(7)(1 + x)</c> and <c>sqrt(7/2)(2 - x)</c>,
+        /// each contributing the conjugate difference of its logarithms, which is rational.
+        /// </summary>
+        [Theory]
+        [InlineData("(3+x)/((1+x^2)*sqrt(1+x+x^2))", new[] { -2.0, -0.5, 0.3, 1.0, 2.0, 4.0 }, "sqrt(2)")]
+        [InlineData("x/((4+x+x^2)*sqrt(5+4*x+4*x^2))", new[] { -2.0, -0.5, 0.3, 1.0, 2.0, 4.0 }, "sqrt(165)")]
+        [InlineData("(1+2*x)/((4+4*x+3*x^2)*sqrt(-1+6*x+x^2))", new[] { 0.5, 1.0, 2.0, 3.0, 5.0, -7.0 }, "sqrt(7)")]
+        [InlineData("(-2+x)/((17-18*x+5*x^2)*sqrt(13-22*x+10*x^2))", new[] { -2.0, -0.5, 0.3, 1.0, 2.0, 4.0 }, "sqrt(35)")]
+        [InlineData("(3+2*x)/((3+2*x+x^2)^2*sqrt(4+2*x+x^2))", new[] { -2.0, -0.5, 0.3, 1.0, 2.0, 4.0 }, "sqrt(2)")]
+        public void AQuadraticRadicandWithResiduesInAQuarticField(string integrand, double[] points, string constant)
+        {
+            DifferentiatesBack(integrand, points);
+            Assert.Contains(constant, integrand.ToEntity().Integrate("x").Stringize());
         }
 
         /// <summary>

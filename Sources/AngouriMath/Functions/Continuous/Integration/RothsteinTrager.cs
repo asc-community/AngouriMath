@@ -136,22 +136,34 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         private static Entity? LogarithmicPart(RationalPolynomial above, RationalPolynomial below, Variable x)
         {
-            var t = Variable.CreateUnique(above.ToEntity(x) + below.ToEntity(x), "t");
             var derivative = Derivative(below);
-            var resultant = MathS.Polynomials.Resultant(
-                below.ToEntity(x), above.ToEntity(x) - t * derivative.ToEntity(x), x);
-            if (resultant is null
-                || !PolynomialFactoring.TryGetRationalCoefficients(resultant, t, 1, 1, MaxDegree, out var resultantCoefficients))
+            // The resultant in t of D and A - t D' has degree at most that of D in t, and is
+            // found by evaluating it at that many rational t and interpolating: each value is
+            // one numeric Sylvester determinant. As a determinant with polynomial entries
+            // eliminated fraction-free it was thirteen seconds for a denominator of degree six
+            // with four-digit coefficients, Timofeev's `(1 + 2x)/((4 + 4x + 3x^2) sqrt(x^2 + 6x - 1))`
+            // under Euler's substitution, asked several times over.
+            if (ResultantInT(below, above, derivative) is not { } resultantPolynomial || resultantPolynomial.IsZero)
                 return null;
-            if (SquareFree(RationalPolynomial.Create(resultantCoefficients)) is not { } residueParts)
+            if (SquareFree(resultantPolynomial) is not { } residueParts)
                 return null;
 
-            Entity total = Integer.Create(0);
+            // Every residue field first, and the residues only then: a residue in a field of
+            // degree above two declines the whole, and the conjugate pair of a quadratic factor
+            // beside it was twelve seconds of gcds over the extension before the quartic factor
+            // was reached and declined it.
+            var factored = new List<(IReadOnlyList<SquareFreeDecomposition.SquareFreePart> Factors, int Multiplicity)>();
             foreach (var part in residueParts)
             {
                 var factors = PolynomialFactorization.FactorPrimitive(ToInteger(part.Factor).PrimitivePart());
-                if (factors is null)
+                if (factors is null || factors.Any(irreducible => irreducible.Factor.Degree > 2))
                     return null;
+                factored.Add((factors, part.Multiplicity));
+            }
+            Entity total = Integer.Create(0);
+            foreach (var (factors, multiplicity) in factored)
+            {
+                var part = (Multiplicity: multiplicity, Factors: factors);
                 foreach (var irreducible in factors)
                 {
                     var f = irreducible.Factor;
@@ -315,6 +327,135 @@ namespace AngouriMath.Functions.Algebra
 
         private static EInteger Lcm(EInteger a, EInteger b)
             => a.IsZero || b.IsZero ? EInteger.Zero : a.Multiply(b).Abs().Divide(a.Gcd(b));
+
+        /// <summary>
+        /// <c>Res_x(D, A - t D')</c> as a polynomial in <c>t</c>: of degree at most <c>deg D</c>,
+        /// evaluated at <c>deg D + 1</c> integers and interpolated.
+        /// </summary>
+        private static RationalPolynomial? ResultantInT(RationalPolynomial d, RationalPolynomial a, RationalPolynomial dPrime)
+        {
+            var degree = d.Degree;
+            if (degree < 1)
+                return null;
+            var points = new ERational[degree + 1];
+            var values = new ERational[degree + 1];
+            for (var k = 0; k <= degree; k++)
+            {
+                var t = ERational.FromInt32(k);
+                var shifted = a.Subtract(dPrime.ScaleBy(t));
+                if (SylvesterDeterminant(d, shifted, degree - 1) is not { } value)
+                    return null;
+                points[k] = t;
+                values[k] = value;
+            }
+            // Newton's divided differences, then the polynomial.
+            var coefficients = (ERational[])values.Clone();
+            for (var level = 1; level <= degree; level++)
+                for (var k = degree; k >= level; k--)
+                    coefficients[k] = coefficients[k].Subtract(coefficients[k - 1]).Divide(points[k].Subtract(points[k - level])).ToLowestTerms();
+            var result = RationalPolynomial.Zero;
+            for (var k = degree; k >= 0; k--)
+            {
+                // result = result * (t - points[k]) + coefficients[k]
+                var shiftedUp = new ERational[result.Degree + 2];
+                for (var i = 0; i < shiftedUp.Length; i++)
+                    shiftedUp[i] = ERational.Zero;
+                for (var i = 0; i <= result.Degree; i++)
+                {
+                    shiftedUp[i + 1] = shiftedUp[i + 1].Add(result[i]);
+                    shiftedUp[i] = shiftedUp[i].Subtract(result[i].Multiply(points[k]));
+                }
+                shiftedUp[0] = shiftedUp[0].Add(coefficients[k]);
+                result = RationalPolynomial.Create(shiftedUp);
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// The Sylvester determinant of <paramref name="f"/> and <paramref name="g"/>, the
+        /// latter taken to be of degree <paramref name="degreeOfG"/> whatever its leading
+        /// coefficients happen to be at this <c>t</c>, by fraction-free elimination over the
+        /// integers after scaling every row.
+        /// </summary>
+        private static ERational? SylvesterDeterminant(RationalPolynomial f, RationalPolynomial g, int degreeOfG)
+        {
+            var m = f.Degree;
+            var n = degreeOfG;
+            if (m < 0 || n < 0)
+                return null;
+            var size = m + n;
+            if (size == 0)
+                return ERational.One;
+            var rows = new ERational[size][];
+            for (var row = 0; row < n; row++)
+            {
+                rows[row] = new ERational[size];
+                for (var column = 0; column < size; column++)
+                    rows[row][column] = ERational.Zero;
+                for (var k = 0; k <= m; k++)
+                    rows[row][row + k] = f[m - k];
+            }
+            for (var row = 0; row < m; row++)
+            {
+                rows[n + row] = new ERational[size];
+                for (var column = 0; column < size; column++)
+                    rows[n + row][column] = ERational.Zero;
+                for (var k = 0; k <= n; k++)
+                    rows[n + row][row + k] = g[n - k];
+            }
+            // Rows scaled to integers, the scale taken out of the determinant at the end.
+            var scale = ERational.One;
+            var a = new EInteger[size][];
+            for (var row = 0; row < size; row++)
+            {
+                var common = EInteger.One;
+                for (var column = 0; column < size; column++)
+                {
+                    var reduced = rows[row][column].ToLowestTerms();
+                    rows[row][column] = reduced;
+                    common = common.Multiply(reduced.Denominator).Divide(common.Gcd(reduced.Denominator));
+                }
+                scale = scale.Multiply(ERational.FromEInteger(common));
+                a[row] = new EInteger[size];
+                for (var column = 0; column < size; column++)
+                    a[row][column] = rows[row][column].Multiply(ERational.FromEInteger(common)).ToLowestTerms().Numerator;
+            }
+            var sign = 1;
+            var previous = EInteger.One;
+            for (var column = 0; column < size; column++)
+            {
+                var pivot = -1;
+                for (var row = column; row < size; row++)
+                    if (!a[row][column].IsZero)
+                    {
+                        pivot = row;
+                        break;
+                    }
+                if (pivot < 0)
+                    return ERational.Zero;
+                if (pivot != column)
+                {
+                    (a[pivot], a[column]) = (a[column], a[pivot]);
+                    sign = -sign;
+                }
+                var pivotValue = a[column][column];
+                for (var row = column + 1; row < size; row++)
+                {
+                    var factor = a[row][column];
+                    for (var k = column; k < size; k++)
+                    {
+                        var crossed = pivotValue.Multiply(a[row][k]).Subtract(factor.Multiply(a[column][k]));
+                        a[row][k] = crossed.IsZero ? EInteger.Zero : crossed.Divide(previous);
+                    }
+                }
+                previous = pivotValue;
+            }
+            // Bareiss leaves the determinant in the last pivot.
+            var determinant = ERational.FromEInteger(a[size - 1][size - 1]);
+            if (sign < 0)
+                determinant = determinant.Negate();
+            return determinant.Divide(scale).ToLowestTerms();
+        }
 
         private static RationalPolynomial Derivative(RationalPolynomial poly)
         {
