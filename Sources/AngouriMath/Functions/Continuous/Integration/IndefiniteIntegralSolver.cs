@@ -7225,6 +7225,22 @@ namespace AngouriMath.Functions.Algebra
                     continue;
                 var duDx = u.Differentiate(x).InnerSimplified;
 
+                // Under u = x^k the rewriting below takes x^m to u^(m/k) where that is whole
+                // and leaves it where it is not, so a polynomial under a root with a power of
+                // x that k does not divide keeps its x whatever else happens, and the
+                // candidate is refused before its quotient is collected and simplified:
+                // Hearn's `(2x^6 + ...)/((2x^2 - 1)^2 sqrt(x^4 + 4x^3 + 2x^2 + 1))` paid a
+                // second each for x^3, x^4, x^5 and x^6 to be told so.
+                if (u is Powf(var xOfPower, Number.Integer { EInteger.Sign: > 0 } k) && xOfPower == x && k != Number.Integer.One
+                    && ARadicandHasAPowerNotDivisibleBy(expr, x, k.EInteger))
+                    continue;
+                // A sum that stands nowhere but inside a longer sum is a node of the tree
+                // and not a subexpression anyone wrote: `1 + 2x^2` and `1 + 2x^2 + 4x^3` are
+                // the left-nested partial sums of Hearn's radicand `1 + 2x^2 + 4x^3 + x^4`,
+                // and each was half a second of rewriting and simplifying to be refused.
+                if (u is Sumf && IsOnlyAPartialSum(expr, u))
+                    continue;
+
                 // A candidate that does not vary with x is no substitution at all, and its
                 // derivative is zero: dividing the integrand by it gives NaN, which then
                 // contains no x and so passes the test below and is returned as the answer.
@@ -7522,6 +7538,36 @@ namespace AngouriMath.Functions.Algebra
                     return signedInU.Substitute(sign, MathS.Signum(complement)).Substitute(uSub, u);
             }
             return null;
+        }
+
+        /// <summary>
+        /// Whether every occurrence of the sum <paramref name="u"/> in <paramref name="expr"/>
+        /// is as a summand of a longer sum.
+        /// </summary>
+        private static bool IsOnlyAPartialSum(Entity expr, Entity u)
+        {
+            if (expr == u)
+                return false;
+            foreach (var node in expr.Nodes)
+                if (node is not Sumf && node.DirectChildren.Any(child => child == u))
+                    return false;
+            return true;
+        }
+
+        /// <summary>
+        /// Whether a polynomial in <paramref name="x"/> of degree at least two under a
+        /// fractional power has a power of <paramref name="x"/> that <paramref name="k"/>
+        /// does not divide.
+        /// </summary>
+        private static bool ARadicandHasAPowerNotDivisibleBy(Entity expr, Entity.Variable x, PeterO.Numbers.EInteger k)
+        {
+            foreach (var node in expr.Nodes)
+                if (node is Powf(var radicand, Number.Rational exponent) && exponent is not Number.Integer && radicand.ContainsNode(x)
+                    && TreeAnalyzer.TryGetPolynomial(radicand, x, out var monomials) && monomials.Count >= 2)
+                    foreach (var power in monomials.Keys)
+                        if (!power.Remainder(k).IsZero)
+                            return true;
+            return false;
         }
 
         /// <summary>
