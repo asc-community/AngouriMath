@@ -3949,6 +3949,26 @@ namespace AngouriMath.Functions.Algebra
         private static bool IsAPolynomialInOneTrigonometricFunction(Entity expr, Entity.Variable x)
         {
             var functions = expr.Nodes.Where(node => node is Sinf or Cosf && node.ContainsNode(x)).Distinct().ToList();
+            if (functions.Count == 2)
+            {
+                // A polynomial in the sine and the cosine of one argument with the cosine only
+                // in even powers is a polynomial in the sine, by Pythagoras, and the other way
+                // about: Timofeev's `sqrt(3 cos(x)^2 - sin(x)^2)` is `sqrt(3 - 4 sin(x)^2)`,
+                // and beside `cos(3x)` it was declined for the two functions under the root.
+                if (TrigonometricArgument(functions[0]) != TrigonometricArgument(functions[1]) || functions[0].GetType() == functions[1].GetType())
+                    return false;
+                var first = Variable.CreateUnique(expr, "trig_1");
+                var second = Variable.CreateUnique(expr, "trig_2");
+                var inBoth = expr.Substitute(functions[0], first).Substitute(functions[1], second);
+                if (inBoth.ContainsNode(x))
+                    return false;
+                var expanded = inBoth.Expand();
+                return IsEvenIn(expanded, first, second) || IsEvenIn(expanded, second, first);
+
+                static bool IsEvenIn(Entity polynomial, Entity.Variable even, Entity.Variable other)
+                    => TreeAnalyzer.TryGetPolynomial(polynomial, even, out var read)
+                       && read.All(pair => pair.Key.IsEven && pair.Key.Sign >= 0 && TreeAnalyzer.TryGetPolynomial(pair.Value, other, out _));
+            }
             if (functions.Count != 1)
                 return false;
             var placeholder = Variable.CreateUnique(expr, "trig");
@@ -4105,7 +4125,64 @@ namespace AngouriMath.Functions.Algebra
             // folds `2sc` back into `sin(2x)` and hands this rule its own input.
             var (numerator, denominator) = Functions.SingleQuotient.Of(rewritten.InnerSimplified);
             var cancelled = CancelCommonFactors(numerator, denominator);
-            return Integration.ComputeIndefiniteIntegral(cancelled, x, integrateByParts: false);
+            // A radicand in both functions with one of them in even powers only is written
+            // in the other by Pythagoras, in each way that is open where both are even:
+            // Timofeev's `sin(5x)/(5 cos(x)^2 + 9 sin(x)^2)^(5/2)` is a polynomial in the
+            // cosine times the sine over `(9 - 4 cos(x)^2)^(5/2)`, `u = cos(x)`'s at once, and
+            // handed on with the two functions under the root it ran the budget out.
+            foreach (var spelling in RadicandsInOneFunction(cancelled, sine, cosine))
+                if (Integration.ComputeIndefiniteIntegral(spelling, x, integrateByParts: false) is { } answer)
+                    return answer;
+            return null;
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> with every fractional-power base that is a polynomial in
+        /// <paramref name="sine"/> and <paramref name="cosine"/> together, one of them in even
+        /// powers only, written in the other; the spelling in the cosine first and then in
+        /// the sine where both are open, and <paramref name="expr"/> itself where there is
+        /// nothing to write.
+        /// </summary>
+        private static IEnumerable<Entity> RadicandsInOneFunction(Entity expr, Entity sine, Entity cosine)
+        {
+            var bases = expr.Nodes.Where(node => node is Powf(var @base, Number.Rational r) && r is not Number.Integer
+                && @base.ContainsNode(sine) && @base.ContainsNode(cosine)).Select(node => ((Powf)node).Base).Distinct().ToList();
+            if (bases.Count == 0)
+            {
+                yield return expr;
+                yield break;
+            }
+            var s = Variable.CreateUnique(expr, "s_rad");
+            var c = Variable.CreateUnique(expr, "c_rad");
+            Entity? InTheOther(Entity @base, Entity.Variable even, Entity.Variable other, Entity evenSquaredAs)
+            {
+                var inBoth = @base.Substitute(sine, s).Substitute(cosine, c).Expand();
+                if (!TreeAnalyzer.TryGetPolynomial(inBoth, even, out var read)
+                    || !read.All(pair => pair.Key.IsEven && pair.Key.Sign >= 0 && TreeAnalyzer.TryGetPolynomial(pair.Value, other, out _)))
+                    return null;
+                Entity written = Number.Integer.Zero;
+                foreach (var pair in read)
+                {
+                    var half = pair.Key.ToInt32Checked() / 2;
+                    written += pair.Value * (half == 0 ? Number.Integer.One : MathS.Pow(evenSquaredAs, half));
+                }
+                return written.Expand().InnerSimplified.Substitute(s, sine).Substitute(c, cosine);
+            }
+            var any = false;
+            foreach (var (even, other, evenSquaredAs) in new[] { (s, c, 1 - MathS.Sqr(c)), (c, s, 1 - MathS.Sqr(s)) })
+            {
+                var respelled = new Dictionary<Entity, Entity>();
+                foreach (var @base in bases)
+                    if (InTheOther(@base, even, other, evenSquaredAs) is { } written && written != @base)
+                        respelled[@base] = written;
+                if (respelled.Count == 0)
+                    continue;
+                any = true;
+                yield return expr.Replace(node => node is Powf(var @base, Number.Rational r) && r is not Number.Integer && respelled.TryGetValue(@base, out var written)
+                    ? MathS.Pow(written, r) : node);
+            }
+            if (!any)
+                yield return expr;
         }
 
         /// <summary>
@@ -5703,6 +5780,121 @@ namespace AngouriMath.Functions.Algebra
         private const int MaximumAnsatzDegree = 64;
 
         /// <summary>
+        /// A polynomial over the square root of a quadratic, <c>N/sqrt(Q)</c>, reduced to
+        /// <c>R sqrt(Q) + K/sqrt(Q)</c>: <c>N = R' Q + R Q'/2 + K</c> is a linear system in the
+        /// coefficients of <c>R</c> and in <c>K</c>, square and exact, and <c>K/sqrt(Q)</c> is
+        /// the table's, an arcsine or a logarithm by the sign of the leading coefficient --
+        /// a piecewise where that sign is a symbol's.
+        /// </summary>
+        /// <remarks>
+        /// Hearn's <c>r/sqrt(-alpha^2 - 2k r + 2pe r^2)</c> had no antiderivative: with the
+        /// leading coefficient a product of symbols the trigonometric substitution has no
+        /// sign to go on and Euler's takes a root of it, while <c>1/sqrt(Q)</c> alone was
+        /// answered, as a piecewise on the sign of <c>2pe</c>. The reduction is what every
+        /// table does before that line; here it is one solve. Numeric coefficients reach
+        /// this only from a sub-integral, since the substitutions in front answer them.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPolynomialOverTheRootOfAQuadratic(Entity expr, Entity.Variable x)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Entity? radicand = null;
+            Entity constant = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = constant * factor;
+                    continue;
+                }
+                if (factor is Powf(var @base, Number.Rational half) && half == Number.Rational.Create(1, 2) && radicand is null)
+                    radicand = @base;
+                else
+                    return null;
+            }
+            if (radicand is null || !TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var a, out var b, out var c)
+                || a.Evaled is Number.Complex { IsZero: true }
+                || !TreeAnalyzer.TryGetPolynomial(numerator, x, out var nRead) || nRead.Keys.Any(k => k.Sign < 0 || !k.CanFitInInt32())
+                || nRead.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                return null;
+            var degree = nRead.Count == 0 ? 0 : nRead.Keys.Max()!.ToInt32Unchecked();
+            if (degree < 1 || degree > 8)
+                return null;
+            foreach (var coefficient in new[] { a, b, c, constant }.Concat(nRead.Values))
+                if (coefficient.Evaled is Number.Complex and not Number.Real)
+                    return null;
+
+            // N = R' Q + R Q'/2 + K, one equation per power of x: the unknowns are the
+            // coefficients r_0 .. r_(n-1) of R and K last.
+            var unknowns = degree + 1;
+            var columns = new List<Dictionary<EInteger, Entity>>();
+            var q = new Dictionary<EInteger, Entity> { [EInteger.Zero] = c, [EInteger.One] = b, [EInteger.FromInt32(2)] = a };
+            var halfQPrime = new Dictionary<EInteger, Entity> { [EInteger.Zero] = (b / 2).InnerSimplified, [EInteger.One] = a };
+            for (var k = 0; k < degree; k++)
+            {
+                var monomial = new Dictionary<EInteger, Entity> { [EInteger.FromInt32(k)] = Number.Integer.One };
+                columns.Add(PolynomialSum(PolynomialProduct(PolynomialDerivative(monomial), q), PolynomialProduct(monomial, halfQPrime)));
+            }
+            columns.Add(new Dictionary<EInteger, Entity> { [EInteger.Zero] = Number.Integer.One });
+            var rows = degree + 1;
+            var matrix = new Entity[rows][];
+            var rhs = new Entity[rows];
+            for (var row = 0; row < rows; row++)
+            {
+                var power = EInteger.FromInt32(row);
+                matrix[row] = new Entity[unknowns];
+                for (var column = 0; column < unknowns; column++)
+                    matrix[row][column] = columns[column].TryGetValue(power, out var entry) ? entry : Number.Integer.Zero;
+                rhs[row] = nRead.TryGetValue(power, out var wanted) ? (wanted / constant).InnerSimplified : Number.Integer.Zero;
+            }
+            if (!Functions.PartialFractions.TrySolveLinear(matrix, rhs, out var values) || values is null)
+                return null;
+            Entity r = Number.Integer.Zero;
+            for (var k = 0; k < degree; k++)
+            {
+                var value = values[k].InnerSimplified;
+                if (value.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                r = r + value * (k == 0 ? Number.Integer.One : k == 1 ? x : MathS.Pow(x, k));
+            }
+            var kValue = values[degree].InnerSimplified;
+            var root = MathS.Pow(radicand, Number.Rational.Create(1, 2));
+            Entity reduced = r == Number.Integer.Zero ? Number.Integer.Zero : r * root;
+            Entity answer;
+            if (kValue.Evaled is Number.Complex { IsZero: true })
+                answer = reduced;
+            else if (IntegralPatterns.TryStandardIntegrals(1 / root, x) is not { } table)
+                return null;
+            else if (table is Piecewise piecewise)
+            {
+                // The table's arm for a vanishing leading coefficient is not this
+                // reduction's, which divided by it: on that arm the integrand is a polynomial
+                // over the root of a linear, and the chain answers it as that.
+                var arms = new List<Providedf>();
+                foreach (var arm in piecewise.Cases)
+                {
+                    if (arm.Predicate == a.EqualTo(0))
+                    {
+                        var overALinear = numerator / (constant * MathS.Pow(b * x + c, Number.Rational.Create(1, 2)));
+                        if (Integration.ComputeIndefiniteIntegral(overALinear.InnerSimplified, x, integrateByParts: false) is not { } onTheArm)
+                            return null;
+                        arms.Add(new Providedf(onTheArm, arm.Predicate));
+                    }
+                    else
+                        arms.Add(new Providedf(reduced + kValue * arm.Expression, arm.Predicate));
+                }
+                answer = MathS.Piecewise(arms);
+            }
+            else
+                answer = reduced + kValue * table;
+            answer = answer.InnerSimplified;
+            if (answer.Nodes.Any(node => node is Number.Complex { IsNaN: true })
+                || !Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
+                return null;
+            return answer;
+        }
+
+        /// <summary>
         /// A constant over a linear beside the square root of a quadratic,
         /// <c>K/((x - p) sqrt(Q))</c>, by the reciprocal of the linear: with <c>t = 1/(x - p)</c>
         /// the root becomes one of a quadratic in <c>t</c> alone, and the table answers that.
@@ -7178,7 +7370,9 @@ namespace AngouriMath.Functions.Algebra
                     var second = terms[1];
                     conjugate = first - second;
                     product = (SquareOf(first) - SquareOf(second)).InnerSimplified;
-                    if (!TreeAnalyzer.TryGetPolynomial(product, x, out _) || product.Evaled is Number.Complex { IsZero: true })
+                    // Not the same radicand twice: the difference is zero, the factor is zero
+                    // or a multiple of one root, and neither is this rule's.
+                    if (product.Evaled is Number.Complex { IsZero: true } || product.Simplify().Evaled is Number.Complex { IsZero: true })
                         return null;
                     continue;
                 }
@@ -7189,11 +7383,15 @@ namespace AngouriMath.Functions.Algebra
             var respelled = Functions.PartialFractions.Bare(numerator * conjugate / (product * rest));
             return Integration.ComputeAsAQuestionOfItsOwn(respelled, x, integrateByParts);
 
+            // The radicand need not be a polynomial in x: Timofeev's
+            // `cos(3x)/(sqrt(3 cos(x)^2 - sin(x)^2) - sqrt(8 cos(x)^2 - 1))` has the difference
+            // of the radicands, `4 cos(x)^2` by Pythagoras, below once it is respelled, and
+            // each root beside it is a root of a quadratic in the sine under `u = sin(x)`.
             bool IsARootOfAPolynomial(Entity term)
             {
                 var (coefficient, root) = term is Mulf(var l, var r) && !l.ContainsNode(x) ? (l, r) : (Number.Integer.One as Entity, term);
                 return root is Powf(var radicand, Number.Rational half) && half.ERational.Denominator.Equals(EInteger.FromInt32(2))
-                    && half.ERational.Numerator.Equals(EInteger.One) && radicand.ContainsNode(x) && TreeAnalyzer.TryGetPolynomial(radicand, x, out _)
+                    && half.ERational.Numerator.Equals(EInteger.One) && radicand.ContainsNode(x)
                     && !coefficient.ContainsNode(x);
             }
 
