@@ -7369,6 +7369,79 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// The substitution <c>u = sin(a)</c> or <c>u = cos(a)</c> where an odd power of the
+        /// complement is left standing after the division by <c>du/dx</c>: that power is the
+        /// sign of the complement times a power of <c>sqrt(1 - u^2)</c>, and the sign is a
+        /// constant on every interval between the zeros of the complement, so the integrand
+        /// is that constant times an algebraic function of <c>u</c>, which is integrated, and
+        /// the sign goes back in as <c>sgn(cos(a))</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Charlwood's <c>ln(sin(x)) sqrt(1 + sin(x))</c> by parts leaves
+        /// <c>-2 cos(x)^2/(sin(x) sqrt(1 + sin(x)))</c>, which under the sine is
+        /// <c>-2 cos(x)/(u sqrt(1 + u)) du</c>, a cosine over: it is <c>-2 sgn(cos(x)) sqrt(1 - u)/u</c>,
+        /// whose integral is <c>-4 sqrt(1 - u) + 4 atanh(sqrt(1 - u))</c> times the sign. And
+        /// Charlwood's <c>cos(x)^2/sqrt(1 + cos(x)^2 + cos(x)^4)</c> under the cosine is
+        /// <c>-u^2/(sin(x) sqrt(1 + u^2 + u^4))</c>, which is <c>-sgn(sin(x)) u^2/sqrt(1 - u^6)</c>
+        /// once the roots combine, and <c>-sgn(sin(x)) arcsin(u^3)/3</c>. Exact wherever the
+        /// complement is not zero, the generic case.
+        /// </para>
+        /// <para>
+        /// A rule of its own and late, after the half-angle substitution: inside the general
+        /// substitution it answered <c>1/(1 + sin(x))</c> as a sign times a root where the
+        /// half-angle substitution gives the tangent of the half angle, and the remainder by
+        /// parts left beside that root was nine seconds of search for
+        /// <c>ln(sin(x))/(1 + sin(x))</c>, which the tangent answers in a moment. Only where
+        /// the complement is a factor of the product and what is left is algebraic in
+        /// <c>u</c>: inside a sum, <c>1/(cos(x) + sin(x))</c>, or beside a logarithm of <c>u</c>,
+        /// the search with the sign in it ended nowhere.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByTheSignOfTheComplement(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // For an integrand with a root in it: a rational function of the sine and cosine
+            // is the half-angle substitution's, answered before this, and Jeffrey's
+            // `(-1 + 4 cos(x) + 5 cos(x)^2)/(-1 - 4 cos(x) - 3 cos(x)^2 + 4 cos(x)^3)` paid half
+            // a second here on the way to it.
+            if (!HasARadicalOf(expr, x))
+                return null;
+            foreach (var u in expr.Nodes.Where(node => node is Sinf or Cosf && node.ContainsNode(x)).Distinct().ToList())
+            {
+                var argument = u is Sinf(var sa) ? sa : ((Cosf)u).Argument;
+                if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out _))
+                    continue;
+                var complement = u is Sinf ? MathS.Cos(argument) : MathS.Sin(argument);
+                var duDx = u.Differentiate(x).InnerSimplified;
+                if (duDx.Evaled == 0)
+                    continue;
+                var uSub = Variable.CreateUnique(expr, "u_sgn");
+                var inU = WithTheComplementInEvenPowers(InTermsOf(expr / duDx, u, uSub, x).Simplify(1), u, uSub);
+                if (inU is Providedf(var bare, _)) inU = bare;
+                if (!inU.ContainsNode(complement))
+                    continue;
+                // The complement as a factor of the product only, and what is left algebraic.
+                var (top, bottom) = Functions.SingleQuotient.Of(inU);
+                if (!Mulf.LinearChildren(top).Concat(Mulf.LinearChildren(bottom))
+                        .All(factor => !factor.ContainsNode(complement) || factor == complement || factor is Powf(var oddBase, Number.Integer) && oddBase == complement))
+                    continue;
+                var sign = Variable.CreateUnique(inU, "sgn_c");
+                var withTheSign = inU.Replace(node => node == complement ? sign * MathS.Sqrt(1 - MathS.Sqr(uSub)) : node);
+                if (withTheSign.ContainsNode(x) || !IsAlgebraicIn(withTheSign, uSub))
+                    continue;
+                withTheSign = withTheSign.Simplify(1);
+                if (withTheSign is Providedf(var innerSigned, _)) withTheSign = innerSigned;
+                if (withTheSign.ContainsNode(x) || withTheSign.Nodes.Any(node => node == MathS.NaN))
+                    continue;
+                if (Integration.ComputeIndefiniteIntegral(withTheSign, uSub, integrateByParts) is { } signedInU
+                    && !signedInU.Nodes.Any(node => node == MathS.NaN))
+                    return signedInU.Substitute(sign, MathS.Signum(complement)).Substitute(uSub, u);
+            }
+            return null;
+        }
+
+        /// <summary>
         /// <paramref name="expr"/> written in terms of <paramref name="uSub"/>, where that stands
         /// for <paramref name="u"/>.
         /// </summary>
