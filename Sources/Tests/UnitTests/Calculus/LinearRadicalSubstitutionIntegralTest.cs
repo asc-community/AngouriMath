@@ -103,6 +103,18 @@ namespace AngouriMath.Tests.Calculus
         public void TwoRootsOverOneBase(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// A sum or difference of two square roots below the bar is multiplied above and
+        /// below by its conjugate, the product being the difference of the radicands:
+        /// Timofeev's <c>(1 + x)/(sqrt(x^2 + 2x + 4) - sqrt(x^2 + x + 1))</c> is
+        /// <c>(1 + x)(sqrt(x^2 + 2x + 4) + sqrt(x^2 + x + 1))/(x + 3)</c>, two of Euler's; and
+        /// <c>1/(sqrt(x + 1) + sqrt(x))</c> is <c>sqrt(x + 1) - sqrt(x)</c>, two powers.
+        /// </summary>
+        [Theory]
+        [InlineData("(1 + x)/(sqrt(4 + 2*x + x^2) - sqrt(1 + x + x^2))")]
+        [InlineData("1/(sqrt(x + 1) + sqrt(x))")]
+        public void ASumOfTwoRootsIsRationalised(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// Two bases, when every radical is a square root: <c>sqrt(x)/(x sqrt(1 + x))</c> is what
         /// <c>sqrt(1 + tanh(4x))</c> becomes under <c>u = e^(8x)</c>, and with <c>s = sqrt(x)</c>
         /// the other root is <c>sqrt(1 + s^2)</c>, a root of a quadratic, which the rules for

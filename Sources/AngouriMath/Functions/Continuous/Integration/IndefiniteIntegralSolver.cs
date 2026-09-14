@@ -6774,6 +6774,68 @@ namespace AngouriMath.Functions.Algebra
             return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
         }
 
+        /// <summary>
+        /// A denominator factor that is a sum or difference of two square roots of
+        /// polynomials, multiplied above and below by its conjugate:
+        /// <c>(1 + x)/(sqrt(x^2 + 2x + 4) - sqrt(x^2 + x + 1))</c> is
+        /// <c>(1 + x)(sqrt(x^2 + 2x + 4) + sqrt(x^2 + x + 1))/(x + 3)</c>, the product of the
+        /// pair being the difference of the radicands -- and each of the two terms is then a
+        /// root of a quadratic beside a rational function, Euler's. Timofeev's.
+        /// </summary>
+        /// <remarks>
+        /// Two roots only: a polynomial beside one root, <c>x + sqrt(x^2 + 1)</c>, is Euler's
+        /// substitution itself, and answered more shortly as that. The conjugate is nonzero
+        /// wherever the factor is, and <c>(a - b)(a + b) = a^2 - b^2</c> holds for the
+        /// principal roots as for any values, so nothing is assumed about signs. Once: the
+        /// respelling has no such factor left.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByRationalisingASumOfRoots(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator) || !denominator.ContainsNode(x))
+                return null;
+            Entity? conjugate = null;
+            Entity? product = null;
+            Entity rest = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (conjugate is null && factor is Sumf or Minusf && Sumf.LinearChildren(factor).ToList() is { Count: 2 } terms
+                    && terms.All(term => IsARootOfAPolynomial(term)))
+                {
+                    // The conjugate flips the sign of the second term; the product is the
+                    // difference of the squares, each square a polynomial.
+                    var first = terms[0];
+                    var second = terms[1];
+                    conjugate = first - second;
+                    product = (SquareOf(first) - SquareOf(second)).InnerSimplified;
+                    if (!TreeAnalyzer.TryGetPolynomial(product, x, out _) || product.Evaled is Number.Complex { IsZero: true })
+                        return null;
+                    continue;
+                }
+                rest = rest * factor;
+            }
+            if (conjugate is null || product is null)
+                return null;
+            var respelled = Functions.PartialFractions.Bare(numerator * conjugate / (product * rest));
+            return Integration.ComputeAsAQuestionOfItsOwn(respelled, x, integrateByParts);
+
+            bool IsARootOfAPolynomial(Entity term)
+            {
+                var (coefficient, root) = term is Mulf(var l, var r) && !l.ContainsNode(x) ? (l, r) : (Number.Integer.One as Entity, term);
+                return root is Powf(var radicand, Number.Rational half) && half.ERational.Denominator.Equals(EInteger.FromInt32(2))
+                    && half.ERational.Numerator.Equals(EInteger.One) && radicand.ContainsNode(x) && TreeAnalyzer.TryGetPolynomial(radicand, x, out _)
+                    && !coefficient.ContainsNode(x);
+            }
+
+            Entity SquareOf(Entity term)
+            {
+                var (coefficient, root) = term is Mulf(var l, var r) && !l.ContainsNode(x) ? (l, r) : (Number.Integer.One as Entity, term);
+                return root is Powf(var radicand, Number.Rational half) && half.ERational.Numerator.Equals(EInteger.One) && half.ERational.Denominator.Equals(EInteger.FromInt32(2))
+                    ? MathS.Sqr(coefficient) * radicand
+                    : MathS.Sqr(term);
+            }
+        }
+
         internal static Entity? SolveByCombiningRadicals(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             // A secant or cosecant under a root is the reciprocal of a cosine or sine there:
