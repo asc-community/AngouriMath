@@ -22,6 +22,18 @@
       "allocatedBytes": 0,
       "meanNanoseconds": 1.8813217676555116
     },
+    "EvalPolynomialFresh": {
+      "allocatedBytes": 650888,
+      "meanNanoseconds": 348863.79150390625
+    },
+    "EvalPolynomialFresh15Digits": {
+      "allocatedBytes": 265816,
+      "meanNanoseconds": 83712.6138671875
+    },
+    "EvalTranscendentalFresh": {
+      "allocatedBytes": 5668395,
+      "meanNanoseconds": 3248098.8828125
+    },
     "EvalTrig": {
       "allocatedBytes": 1341457,
       "meanNanoseconds": 709052.2509114583
