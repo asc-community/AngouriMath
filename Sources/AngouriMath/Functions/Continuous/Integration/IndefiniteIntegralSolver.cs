@@ -3488,23 +3488,30 @@ namespace AngouriMath.Functions.Algebra
                                          && whole.EInteger.CanFitInInt32()
                         ? (@base, whole.EInteger.ToInt32Checked())
                         : (factor, 1);
-                    switch (piece)
+                    // The secant and the cosecant are the cosine and the sine to the power
+                    // minus one, and the tangent and the cotangent are of degree zero, so a
+                    // sum with them in it is homogeneous or not by the same count:
+                    // Timofeev's `1/(2 sec(x) + sin(x))^2` has `4 sec^2 + 4 sec sin + sin^2`
+                    // below, of degrees -2, 0 and 2, homogeneous up to parity.
+                    var (argumentOfThis, degreeOfThis) = piece switch
                     {
-                        case Sinf(var a):
-                            thisDegree += power;
-                            if (found is not null && found != a) return false;
-                            found = a;
-                            break;
-                        case Cosf(var a):
-                            thisDegree += power;
-                            if (found is not null && found != a) return false;
-                            found = a;
-                            break;
-                        default:
-                            if (piece.ContainsNode(x))
-                                return false;   // anything else in the term is not this shape
-                            break;
+                        Sinf(var a) => (a, power),
+                        Cosf(var a) => (a, power),
+                        Secantf(var a) => (a, -power),
+                        Cosecantf(var a) => (a, -power),
+                        Tanf(var a) => (a, 0),
+                        Cotanf(var a) => (a, 0),
+                        _ => (null, 0),
+                    };
+                    if (argumentOfThis is null)
+                    {
+                        if (piece.ContainsNode(x))
+                            return false;   // anything else in the term is not this shape
+                        continue;
                     }
+                    if (found is not null && found != argumentOfThis) return false;
+                    found = argumentOfThis;
+                    thisDegree += degreeOfThis;
                 }
                 terms.Add((term, thisDegree));
                 if (theDegree is null)
@@ -3550,6 +3557,10 @@ namespace AngouriMath.Functions.Algebra
             {
                 Sinf(var a) when a == found => HomogeneousTangent * HomogeneousCosine,
                 Cosf(var a) when a == found => HomogeneousCosine,
+                Secantf(var a) when a == found => 1 / HomogeneousCosine,
+                Cosecantf(var a) when a == found => 1 / (HomogeneousTangent * HomogeneousCosine),
+                Tanf(var a) when a == found => HomogeneousTangent,
+                Cotanf(var a) when a == found => 1 / HomogeneousTangent,
                 _ => node
             });
             return true;
@@ -7724,6 +7735,30 @@ namespace AngouriMath.Functions.Algebra
         {
             var sine = MathS.Sin(x);
             var cosine = MathS.Cos(x);
+            // The other four functions of x as quotients of the two, wherever either is
+            // defined: Timofeev's `1/(3 + 2 sec(x))` is `cos(x)/(3 cos(x) + 2)`, and with the
+            // secant left standing it had no sine or cosine for the substitution to read.
+            // Only where one of the four is a term of a sum and the whole is rational in the
+            // two, which is the shape this rule is for; a product of their powers is the power
+            // rules' after this one has declined it, and read here `sec(x)^3 tan(x)^2` was
+            // answered in the half-angle tangent, a page long, where the reduction gives it
+            // in three terms -- and `tan(x)/(a^3 + b^3 tan(x)^2)^(1/3)` spent three seconds
+            // on a cube root of a rational function of t before declining.
+            static bool IsOneOfTheFour(Entity node, Entity.Variable x)
+                => node is Secantf(var a) && a == x || node is Cosecantf(var b) && b == x
+                   || node is Tanf(var c) && c == x || node is Cotanf(var d) && d == x;
+            if (expr.Nodes.Any(node => node is Sumf or Minusf && node.DirectChildren.Any(term => term.Nodes.Any(inner => IsOneOfTheFour(inner, x))))
+                && expr.Nodes.All(node => !node.ContainsNode(x)
+                    || node is Variable or Sumf or Minusf or Mulf or Divf or Sinf or Cosf or Secantf or Cosecantf or Tanf or Cotanf
+                    || node is Powf(_, Number.Integer)))
+                expr = expr.Replace(node => node switch
+                {
+                    Secantf(var a) when a == x => 1 / cosine,
+                    Cosecantf(var a) when a == x => 1 / sine,
+                    Tanf(var a) when a == x => sine / cosine,
+                    Cotanf(var a) when a == x => cosine / sine,
+                    _ => node,
+                });
             if (!expr.ContainsNode(sine) && !expr.ContainsNode(cosine))
                 return null;
 

@@ -137,6 +137,20 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// The secant and the cosecant are the cosine and the sine to the power minus one, and
+        /// the tangent is of degree zero, so a sum with them in it is homogeneous by the same
+        /// count: Timofeev's <c>1/(2 sec(x) + sin(x))^2</c> has <c>4 sec^2 + 4 sec sin + sin^2</c>
+        /// below, of degrees -2, 0 and 2, and both were declined for the secant's node.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(2*sec(x) + sin(x))^2", new[] { 0.3, 0.8, 1.2, -0.5 })]
+        [InlineData("1/(cos(x) + 2*sec(x))^2", new[] { 0.3, 0.8, 1.2, -0.5 })]
+        [InlineData("sin(x)/(2*sec(x) + sin(x))", new[] { 0.3, 0.8, 1.2, -0.5 })]
+        [InlineData("1/(csc(x) + tan(x)*cos(x))^2", new[] { 0.3, 0.8, 1.2, -0.5 })]
+        public void TheSecantAndTheCosecantCountNegatively(string integrand, double[] points)
+            => DifferentiatesBack(integrand, points);
+
+        /// <summary>
         /// Two different arguments, which is not one substitution's — declined rather than
         /// guessed at.
         /// </summary>
