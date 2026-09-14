@@ -401,6 +401,10 @@ namespace AngouriMath
             /// <param name="power">The power of the exponential, base^power</param>
             public static Complex Pow(Complex @base, Complex power)
             {
+                // The half is computed once and squared, not computed twice: as it was, a
+                // cube was three multiplications and a tenth power was nine, each with the
+                // rational search on its result, and the recursion was linear in the exponent
+                // where it should be logarithmic.
                 static Complex BinaryIntPow(Complex num, EInteger val)
                 {
                     if (val.IsZero)
@@ -410,12 +414,41 @@ namespace AngouriMath
                     if (val.Equals(-1))
                         return 1 / num;
                     var divRem = val.DivRem(2); // divRem[0] == val / 2, divRem[1] == val % 2
-                    return BinaryIntPow(num, divRem[0]) * BinaryIntPow(num, divRem[0]) * BinaryIntPow(num, divRem[1]);
+                    var half = BinaryIntPow(num, divRem[0]);
+                    var squared = half * half;
+                    return divRem[1].IsZero ? squared : squared * BinaryIntPow(num, divRem[1]);
                 }
                 // TODO: make it more detailed (e. g. +oo ^ +oo = +oo)
                 if (@base.IsFinite && power is Integer { EInteger: var pow })
+                {
+                    // A real base that is not exact -- a decimal, which is what a numerical
+                    // evaluation multiplies -- is raised in one call on the decimal, with one
+                    // rational search on the result instead of one per multiplication; an
+                    // exact base keeps the exact arithmetic. Zero and the huge exponents keep
+                    // the path that already answers them.
+                    if (@base is Real { IsExact: false, EDecimal: var decimalBase } && !decimalBase.IsZero
+                        && pow.Abs().CompareTo(EInteger.FromInt32(1 << 20)) <= 0)
+                    {
+                        var wholeContext = MathS.Settings.DecimalPrecisionContext;
+                        var raised = decimalBase.Pow(pow.Abs().ToInt32Checked(), wholeContext);
+                        return Real.Create(pow.Sign < 0 ? EDecimal.One.Divide(raised, wholeContext) : raised);
+                    }
                     return BinaryIntPow(@base, pow);
+                }
 
+                // A half power of a nonnegative decimal is its square root, not its exponential
+                // of half its logarithm -- Newton's iteration against two series, seventy times
+                // the time at a hundred digits -- and not a search for an exact root either,
+                // which an inexact decimal has no use for.
+                if (@base is Real { IsExact: false, EDecimal: { IsNegative: false } rootBase } && power is Rational { ERational: var halfPower }
+                    && halfPower.Denominator.Equals(EInteger.FromInt32(2)) && halfPower.Numerator.Abs().CompareTo(EInteger.FromInt32(1 << 20)) <= 0)
+                {
+                    var halfContext = MathS.Settings.DecimalPrecisionContext;
+                    var root = rootBase.Sqrt(halfContext);
+                    var n = halfPower.Numerator.Abs().ToInt32Checked();
+                    var raised = n == 1 ? root : root.Pow(n, halfContext);
+                    return Real.Create(halfPower.Numerator.Sign < 0 ? EDecimal.One.Divide(raised, halfContext) : raised);
+                }
                 if (@base.IsFinite && power is Rational r && r.ERational.Denominator.Abs() < 10 // there should be a minimal threshold to avoid long searches
                     && CanHaveARealRoot(@base, r.ERational.Denominator.Abs())
                     && FindGoodRoot(@base, r.ERational.Denominator) is { } goodRoot)
