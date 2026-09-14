@@ -228,6 +228,16 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("e^(e^x)*e^x")]
         public void AnyBaseAndAnExponentOfASum(string integrand) => DifferentiatesBack(integrand);
 
+        /// <summary>
+        /// A whole power of a sum of exponentials is left to this substitution by the general
+        /// one, whose search spent twenty-two seconds declining every sum in
+        /// <c>tanh(x)^5/sech(x)^4</c>, a rational function of <c>e^x</c> answered here in a few.
+        /// </summary>
+        [Theory]
+        [InlineData("tanh(x)^5/sech(x)^4")]
+        [InlineData("tanh(x)^3*cosh(x)^2")]
+        public void APowerOfASumOfExponentials(string integrand) => DifferentiatesBack(integrand);
+
         [Fact]
         public void ASymbolicBase()
         {

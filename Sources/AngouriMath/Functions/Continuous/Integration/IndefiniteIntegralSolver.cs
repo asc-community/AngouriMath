@@ -5861,6 +5861,150 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// The same reduction with a power of x below: <c>P Q^(m/2)/x^n</c> is
+        /// <c>R Q^(k + 1/2)/x^(n - 1) + K_1/sqrt(Q) + K_2/(x sqrt(Q))</c>, the two remainders the
+        /// table's and the linear-beside-the-root rule's.
+        /// </summary>
+        /// <remarks>
+        /// With <c>s = k + 1/2</c> the derivative of <c>R Q^s/x^(n - 1)</c> is
+        /// <c>Q^(s - 1) x^(-n) ((R' x - (n - 1) R) Q + s R Q' x)</c>, and the two remainders
+        /// over the same <c>Q^(s - 1) x^(-n)</c> are <c>K_1 Q^(-k) x^n</c> and
+        /// <c>K_2 Q^(-k) x^(n - 1)</c>, polynomials both; the identity is one equation per
+        /// power of x, linear in the coefficients of <c>R</c> and in the two constants.
+        /// Stewart's <c>sqrt(x^2 - a^2)/x^4</c> and <c>sqrt(a^2 - x^2)/x^2</c> had no
+        /// antiderivative, with the symbol in the radicand; the second is
+        /// <c>-sqrt(a^2 - x^2)/x - arcsin(x/a)</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPolynomialOverAPowerOfXTimesAnOddHalfPowerOfAQuadratic(Entity expr, Entity.Variable x)
+        {
+            Entity? radicand = null;
+            var m = 0;
+            var n = 0;
+            Entity polynomial = Number.Integer.One;
+            Entity constant = Number.Integer.One;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (factor is Powf(var @base, Number.Rational exponent) && exponent is not Number.Integer
+                    && exponent.ERational.Denominator.Equals(EInteger.FromInt32(2)) && exponent.ERational.Numerator.CanFitInInt32()
+                    && radicand is null)
+                {
+                    radicand = @base;
+                    m = exponent.ERational.Numerator.ToInt32Unchecked() * (underneath ? -1 : 1);
+                    continue;
+                }
+                if (underneath)
+                {
+                    if (factor == x && n == 0)
+                        n = 1;
+                    else if (factor is Powf(var xOf, Number.Integer whole) && xOf == x && whole.EInteger.Sign > 0 && whole.EInteger.CanFitInInt32() && n == 0)
+                        n = whole.EInteger.ToInt32Unchecked();
+                    else
+                        return null;
+                    continue;
+                }
+                polynomial = polynomial * factor;
+            }
+            if (n == 0 || n > 8 || radicand is null || !TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var a, out var b, out var c)
+                || TreeAnalyzer.IsZero(a) || TreeAnalyzer.IsZero(c)
+                || !TreeAnalyzer.TryGetPolynomial(polynomial.Expand(), x, out var pRead) || pRead.Keys.Any(k => k.Sign < 0 || !k.CanFitInInt32())
+                || pRead.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                return null;
+            var degreeOfP = pRead.Count == 0 ? 0 : pRead.Keys.Max()!.ToInt32Unchecked();
+            if (degreeOfP >= n || degreeOfP > 8 || m > 9 || m < -9)
+                return null;   // a proper quotient by the power; anything else is the rule before this one's after a division
+            foreach (var coefficient in new[] { a, b, c, constant }.Concat(pRead.Values))
+                if (coefficient.Evaled is Number.Complex and not Number.Real)
+                    return null;
+
+            var q = new Dictionary<EInteger, Entity> { [EInteger.Zero] = c, [EInteger.One] = b, [EInteger.FromInt32(2)] = a };
+            var qPrime = new Dictionary<EInteger, Entity> { [EInteger.Zero] = b, [EInteger.One] = (2 * a).InnerSimplified };
+            Dictionary<EInteger, Entity> PowerOfQ(int power)
+            {
+                var result = new Dictionary<EInteger, Entity> { [EInteger.Zero] = Number.Integer.One };
+                for (var i = 0; i < power; i++)
+                    result = PolynomialProduct(result, q);
+                return result;
+            }
+            static Dictionary<EInteger, Entity> Monomial(int power) => new() { [EInteger.FromInt32(power)] = Number.Integer.One };
+            static Dictionary<EInteger, Entity> Scaled(Dictionary<EInteger, Entity> poly, Entity by)
+            {
+                var scaled = new Dictionary<EInteger, Entity>();
+                foreach (var pair in poly)
+                    scaled[pair.Key] = (by * pair.Value).InnerSimplified;
+                return scaled;
+            }
+            var positive = m >= -1;
+            var jPrime = positive ? (m + 1) / 2 : 0;
+            var k = positive ? 0 : (m + 1) / 2;   // s = k + 1/2, and m = 2k - 1 for a negative m
+            var sValue = Number.Rational.Create(2 * k + 1, 2);
+            var target = positive ? PolynomialProduct(pRead, PowerOfQ(jPrime)) : pRead;
+            var degreeOfTarget = target.Count == 0 ? 0 : target.Keys.Max()!.ToInt32Unchecked();
+            var degreeOfR = System.Math.Max(degreeOfTarget, 2 * (-k) + n) + 1;
+            var columns = new List<Dictionary<EInteger, Entity>>();
+            for (var i = 0; i <= degreeOfR; i++)
+            {
+                // ((i - n + 1) x^i) Q + s x^(i + 1) Q'
+                var column = PolynomialSum(
+                    Scaled(PolynomialProduct(Monomial(i), q), Number.Integer.Create(i - n + 1)),
+                    Scaled(PolynomialProduct(Monomial(i + 1), qPrime), sValue));
+                columns.Add(column);
+            }
+            var qToMinusK = PowerOfQ(-k);
+            columns.Add(PolynomialProduct(qToMinusK, Monomial(n)));
+            columns.Add(PolynomialProduct(qToMinusK, Monomial(n - 1)));
+            var rows = columns.SelectMany(column => column.Keys).Concat(target.Keys).Max()!.ToInt32Unchecked() + 1;
+            var matrix = new Entity[rows][];
+            var rhs = new Entity[rows];
+            for (var row = 0; row < rows; row++)
+            {
+                var power = EInteger.FromInt32(row);
+                matrix[row] = new Entity[columns.Count];
+                for (var column = 0; column < columns.Count; column++)
+                    matrix[row][column] = columns[column].TryGetValue(power, out var entry) ? entry : Number.Integer.Zero;
+                rhs[row] = target.TryGetValue(power, out var wanted) ? wanted : Number.Integer.Zero;
+            }
+            if (!Functions.PartialFractions.TrySolveLinear(matrix, rhs, out var values) || values is null)
+                return null;
+            Entity r = Number.Integer.Zero;
+            for (var i = 0; i <= degreeOfR; i++)
+            {
+                var value = values[i].InnerSimplified;
+                if (value.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                r = r + value * (i == 0 ? Number.Integer.One : i == 1 ? x : MathS.Pow(x, i));
+            }
+            var k1 = values[degreeOfR + 1].InnerSimplified;
+            var k2 = values[degreeOfR + 2].InnerSimplified;
+            var root = MathS.Pow(radicand, Number.Rational.Create(1, 2));
+            Entity answer = r == Number.Integer.Zero
+                ? Number.Integer.Zero
+                : r * MathS.Pow(radicand, sValue) / (n == 1 ? Number.Integer.One : n == 2 ? x : MathS.Pow(x, n - 1));
+            if (k1.Evaled is not Number.Complex { IsZero: true })
+            {
+                if (IntegralPatterns.TryStandardIntegrals(1 / root, x) is not { } table || table is Piecewise && a.Evaled is not Number)
+                    return null;
+                answer = answer + k1 * table;
+            }
+            if (k2.Evaled is not Number.Complex { IsZero: true })
+            {
+                if (SolveALinearBesideTheRootOfAQuadratic(1 / (x * root), x) is not { } besideTheRoot || besideTheRoot is Piecewise && a.Evaled is not Number)
+                    return null;
+                answer = answer + k2 * besideTheRoot;
+            }
+            answer = (constant * answer).InnerSimplified;
+            if (answer.Nodes.Any(node => node is Number.Complex { IsNaN: true })
+                || !Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
+                return null;
+            return answer;
+        }
+
+        /// <summary>
         /// An exponential of a linear times a polynomial times an odd half power of a
         /// quadratic, <c>e^(a x + b) P Q^(m/2)</c>, closed by the ansatz <c>F = e^(a x + b) R Q^(k + 1/2)</c>
         /// with <c>m = 2k - 1</c>: <c>F' = e^(a x + b) Q^(k - 1/2) (a R Q + R' Q + (k + 1/2) R Q')</c>,
@@ -8797,11 +8941,59 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Whether <paramref name="expr"/> is built from exponentials <c>b^(k x + c)</c>, with
+        /// <c>b</c> free of x, by the field operations and whole powers, with at least one such
+        /// exponential and nothing else of x.
+        /// </summary>
+        private static bool IsARationalFunctionOfExponentials(Entity expr, Entity.Variable x)
+        {
+            var anExponential = false;
+            foreach (var node in expr.Nodes)
+            {
+                if (!node.ContainsNode(x))
+                    continue;
+                switch (node)
+                {
+                    case Variable or Sumf or Minusf or Mulf or Divf:
+                    case Powf(_, Number.Integer):
+                        continue;
+                    // With a rational slope, as the exponential substitution requires: with a
+                    // symbol for the slope that substitution declines, and this search is
+                    // what answers `1/(a + b e^(p x))^2`.
+                    case Powf(var @base, var exponent) when !@base.ContainsNode(x)
+                        && TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slope, out _) && slope.Evaled is Number.Rational:
+                        anExponential = true;
+                        continue;
+                    default:
+                        return false;
+                }
+            }
+            // A bare x outside every exponential is a polynomial factor, which is by parts'
+            // and not the exponential substitution's: `x e^x` keeps its search.
+            if (!anExponential)
+                return false;
+            var stripped = expr.Replace(node => node is Powf(var @base, var exponent) && !@base.ContainsNode(x) && exponent.ContainsNode(x) ? Number.Integer.One : node);
+            return !stripped.ContainsNode(x);
+        }
+
+        /// <summary>
         /// Attempts to solve an integral using u-substitution.
         /// Looks for patterns where f(g(x)) * g'(x) can be integrated as F(g(x)).
         /// </summary>
         internal static Entity? SolveBySubstitution(Entity expr, Entity.Variable x, bool integrateByParts = true)
         {
+            // A rational function of exponentials of linears in x with a whole power of a
+            // sum of them in it is the exponential substitution's, exactly and at once, and
+            // this search is not the tool for it: `tanh(x)^5/sech(x)^4` arrives as a fifth
+            // power of a quotient of sums of `e^(2x)` over a fourth of one of `e^(-x)`, every sum a
+            // candidate, and the search spent twenty-two seconds simplifying the quotient of
+            // the integrand by each candidate's derivative to decline them all, where
+            // `u = e^x` answers it in two. Without such a power -- `e^x/(1 + e^x)` -- the
+            // search is quick and its answer, `ln(1 + e^x)`, the one to give.
+            if (IsARationalFunctionOfExponentials(expr, x)
+                && expr.Nodes.Any(node => node is Powf(var sum, Number.Integer power) && sum is Sumf or Minusf or Mulf or Divf && sum.ContainsNode(x)
+                                          && power.EInteger.Abs().CompareTo(EInteger.FromInt32(2)) >= 0))
+                return null;
             // An exponential of a sum is the product of the exponentials, for this search
             // only: `e^(e^x) e^x` arrives as `e^(e^x + x)`, in which `e^x` is a candidate whose
             // derivative divides nothing, and written apart it is `e^u du`. Where two or more

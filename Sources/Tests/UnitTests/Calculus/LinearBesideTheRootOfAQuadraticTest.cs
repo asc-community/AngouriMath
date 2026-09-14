@@ -133,6 +133,20 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, points, ("a", a));
 
         /// <summary>
+        /// With a power of x below: two remainders, <c>K_1/sqrt(Q)</c> and <c>K_2/(x sqrt(Q))</c>.
+        /// Stewart's <c>sqrt(x^2 - a^2)/x^4</c> and <c>sqrt(a^2 - x^2)/x^2</c>, the second
+        /// <c>-sqrt(a^2 - x^2)/x - arcsin(x/a)</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(a^2 - x^2)/x^2", new[] { -0.9, -0.4, 0.3, 0.8 }, 1.3)]
+        [InlineData("sqrt(x^2 - a^2)/x^4", new[] { -3.0, -2.0, 1.5, 2.5 }, 1.3)]
+        [InlineData("sqrt(x^2 + a^2)/x^2", new[] { -3.0, -2.0, 1.5, 2.5 }, 1.3)]
+        [InlineData("(x + 1)*sqrt(2*x^2 + 3)/x^3", new[] { -3.0, -2.0, 1.5, 2.5 }, 1.3)]
+        [InlineData("1/(x^2*(a^2 - x^2)^(3/2))", new[] { -0.9, -0.4, 0.3, 0.8 }, 1.3)]
+        public void AnOddHalfPowerOverAPowerOfX(string integrand, double[] points, double a)
+            => DifferentiatesBack(integrand, points, ("a", a));
+
+        /// <summary>
         /// The sign of <c>x - p</c> is not decoration: the antiderivative is exact on both
         /// sides of the pole, and the two one-sided pieces are not the same formula.
         /// </summary>
