@@ -3573,9 +3573,20 @@ namespace AngouriMath.Functions.Algebra
                 // differ. Decided at a point, since the two are the same expression up to it.
                 var withOne = Functions.PartialFractions.Bare(odd.Substitute(sign, Number.Integer.One));
                 var withMinusOne = Functions.PartialFractions.Bare(odd.Substitute(sign, Number.Integer.MinusOne));
+                // With every symbol pinned to a rational too: Moses's `sqrt(A^2 + B^2 sin(x)^2)/sin(x)`
+                // was an exception out of the evaluation, with A and B still in it.
                 var at = Number.Rational.Create(37, 100);
-                var valueWithOne = withOne.Substitute(uSub, at).EvalNumerical();
-                var valueWithMinusOne = withMinusOne.Substitute(uSub, at).EvalNumerical();
+                var atOne = withOne.Substitute(uSub, at);
+                var atMinusOne = withMinusOne.Substitute(uSub, at);
+                var pinned = 0;
+                foreach (var symbol in atOne.Vars.Concat(atMinusOne.Vars).Distinct().ToList())
+                {
+                    var value = Number.Rational.Create(7 + 4 * pinned++, 3);
+                    atOne = atOne.Substitute(symbol, value);
+                    atMinusOne = atMinusOne.Substitute(symbol, value);
+                }
+                if (atOne.Evaled is not Number.Complex valueWithOne || atMinusOne.Evaled is not Number.Complex valueWithMinusOne)
+                    return null;
                 bool oddInTheSign;
                 if ((valueWithOne - valueWithMinusOne).Abs() < 1e-9 * (1 + valueWithOne.Abs()))
                     oddInTheSign = false;

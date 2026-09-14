@@ -135,6 +135,19 @@ namespace AngouriMath.Tests.Calculus
             => Assert.Contains("integral(", "sqrt(tan(x))*sin(x)".ToEntity().Integrate("x").Stringize());
 
         /// <summary>
+        /// The parity of the integrand in the sign is decided at a point, and with symbols
+        /// in the integrand they are pinned to rationals first: Moses's
+        /// <c>sqrt(A^2 + B^2 sin(x)^2)/sin(x)</c> was an exception out of the evaluation
+        /// with <c>A</c> and <c>B</c> still in it. Declined, and not thrown.
+        /// </summary>
+        [Fact]
+        public void SymbolsArePinnedBeforeTheParityIsDecided()
+        {
+            var integral = "sqrt(A^2+B^2*sin(x)^2)/sin(x)".ToEntity().Integrate("x");
+            Assert.NotNull(integral);
+        }
+
+        /// <summary>
         /// A power of the tangent, which the rewrite turns into an <b>improper</b> rational
         /// function — <c>u^2/(1 + u^2)</c> and <c>u^3/(1 + u^2)</c>. These were declined while
         /// nothing divided an improper fraction out; they are answered now that the rational
