@@ -446,6 +446,15 @@ namespace AngouriMath.Functions.Algebra
             // switched it off -- which is a cycle, since by parts calls back into here.
             // `x * ln(x)` went round it until the stack ran out.
             if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x, integrateByParts)) is { }) return answer;
+            // A power of an exponential with a positive base is the exponential of the product,
+            // exactly, and only that spelling is one the exponential rules read.
+            if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;
+            // A polynomial times a rational function of exponentials, by parts against the
+            // whole rational function, before anything splits the sum: the general parts rule
+            // takes each term on its own, and each term's antiderivative keeps a logarithm the
+            // sum's does not -- `x tanh(x)^2` was twenty-five seconds of dilogarithms that way.
+            // Closed, and declining in a moment where the antiderivative keeps a logarithm.
+            if (integrateByParts && (answer = IndefiniteIntegralSolver.SolveAPolynomialTimesARationalFunctionOfAnExponential(expr, x, integrateByParts)) is { }) return answer;
             // An integrand *already written* as a sum is split here, before any search. Every
             // rule below does speculative work on the whole sum first, and on a polynomial that
             // costs everything: the terms of `1 + 2x + ... + 25x^24` integrate in under a

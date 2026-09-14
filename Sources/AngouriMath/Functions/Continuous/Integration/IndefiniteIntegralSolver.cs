@@ -247,8 +247,13 @@ namespace AngouriMath.Functions.Algebra
             // Nothing cancelled and nothing factored: the quotient as it was, and not the
             // same quotient respelled, which a rule asking whether anything changed would take
             // for a change.
+            // ...or the denominator collapsed to one term as a polynomial in the atoms where
+            // it was written as a sum: `cosh(x) + sinh(x)` is `(A + B)/2 + (A - B)/2` for the
+            // exponentials `A` and `B`, which is `A`, and Timofeev's `e^(m x)/(cosh(x) + sinh(x))`
+            // was declined as a quotient by a sum.
+            var collapsed = denominator is Sumf or Minusf && below.Terms.Count() == 1;
             var factored = factors.Count >= 2 || factors.Any(pair => pair.Multiplicity > 1);
-            if (!cancelled && !factored)
+            if (!cancelled && !factored && !collapsed)
                 return (numerator, denominator);
             // Written back outermost first: an atom holds the atoms inside it by name.
             Entity Back(Entity mapped)
@@ -6321,6 +6326,93 @@ namespace AngouriMath.Functions.Algebra
                 numerator * MathS.Pow(@base, (-power).InnerSimplified), x, integrateByParts);
         }
 
+        /// <summary>
+        /// A polynomial in <c>x</c> times a rational function of exponentials of <c>x</c>,
+        /// by parts against the whole rational function: <c>x tanh(x)^2</c> is
+        /// <c>x ((e^(2x) - 1)/(e^(2x) + 1))^2</c>, whose antiderivative under <c>u = e^(2x)</c> is
+        /// <c>x - tanh(x)</c>, a polynomial and a rational function of the exponential again,
+        /// and what parts leaves is <c>x - tanh(x)</c> itself, a degree lower in <c>x</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The general parts rule splits the sum <c>(x + x e^(4x))/(e^(2x) + 1)^2</c> and takes
+        /// each term on its own, and each term's antiderivative in <c>u</c> holds a logarithm
+        /// of <c>e^(2x) + 1</c> -- the two cancel in the sum and neither on its own -- so each
+        /// leaves <c>x ln(e^(2x) + 1)</c> behind, a dilogarithm, and twenty-five seconds of
+        /// search that found nothing. Here the rational function goes to the exponential
+        /// substitution whole, and where its antiderivative keeps a logarithm of an
+        /// exponential's sum the integrand is declined at once: <c>x/(e^x + 1)</c> is not
+        /// elementary, and this says so in a millisecond.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        /// <summary>
+        /// A power of an exponential of <c>x</c> with a positive constant base, written as the
+        /// exponential of the product: <c>(e^x)^(1/3)</c> is <c>e^(x/3)</c> and <c>(3^(3x))^(1/4)</c>
+        /// is <c>3^(3x/4)</c>, exactly, since the base is positive; and it is only in that
+        /// spelling that the exponential rules read them. Timofeev's
+        /// <c>(cos(x/2) + sin(x/2))/(e^x)^(1/3)</c> and <c>cos(3x/2)/(3^(3x))^(1/4)</c>.
+        /// </summary>
+        internal static Entity? SolveByFlatteningAPowerOfAnExponential(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var flattened = expr.Replace(node =>
+                node is Powf(Powf(var @base, var inner), var outer)
+                && !@base.ContainsNode(x) && inner.ContainsNode(x) && !outer.ContainsNode(x)
+                && (@base == MathS.e || @base.Evaled is Number.Real { IsPositive: true })
+                && outer.Evaled is Number.Real
+                    ? MathS.Pow(@base, (outer * inner).InnerSimplified)
+                    : node);
+            // The same question in another spelling, asked as one of its own, so that the
+            // closed rules that answer only at the top -- the exponential times a
+            // trigonometric -- are consulted for it.
+            return flattened == expr ? null : Integration.ComputeAsAQuestionOfItsOwn(flattened, x, integrateByParts);
+        }
+
+        internal static Entity? SolveAPolynomialTimesARationalFunctionOfAnExponential(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // The polynomial factors above the bar, and the rest, which holds x in exponents only.
+            var (above, below) = Functions.SingleQuotient.Of(expr);
+            Entity polynomial = Number.Integer.One;
+            Entity restAbove = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(above))
+            {
+                if (factor.ContainsNode(x) && !factor.Nodes.Any(node => node is Powf(var b, var e) && b == MathS.e && e.ContainsNode(x))
+                    && TreeAnalyzer.TryGetPolynomial(factor, x, out var read) && read.Keys.All(k => k.Sign >= 0) && read.Values.All(c => !c.ContainsNode(x)))
+                    polynomial = polynomial * factor;
+                else
+                    restAbove = restAbove * factor;
+            }
+            if (!polynomial.ContainsNode(x))
+                return null;
+            var rest = (restAbove / below).InnerSimplified;
+            // A rational function, with the exponential below the bar somewhere: a polynomial
+            // times an exponential alone is parts', and keeps its form there.
+            if (!rest.ContainsNode(x) || !rest.Nodes.Any(node => node is Divf(_, var d) && d.ContainsNode(x) || node is Powf(var b, Number.Integer { IsNegative: true }) && b.ContainsNode(x)))
+                return null;
+            var placeholder = Variable.CreateUnique(expr, "u_exp");
+            var withoutExponentials = rest.Replace(node =>
+                node is Powf(var b, var e) && b == MathS.e && e.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(e, x, out _, out _) ? placeholder : node);
+            if (withoutExponentials.ContainsNode(x) || withoutExponentials.Nodes.Any(node => node is Powf(_, Number.Rational r) && r is not Number.Integer && node.ContainsNode(placeholder)))
+                return null;
+
+            if (SolveByExponentialSubstitution(rest, x, integrateByParts: false) is not { } antiderivative)
+                return null;
+            // ln(e^(k x)) is k x; any other logarithm of the exponential's sums makes the next
+            // step a dilogarithm.
+            antiderivative = Functions.PartialFractions.Bare(antiderivative.Replace(node =>
+                node is Logf(var @base, var argument) && @base == MathS.e && argument is Powf(var b, var e) && b == MathS.e ? e : node));
+            if (antiderivative.Nodes.Any(node => node is Logf && node.ContainsNode(x)))
+                return null;
+            var derivative = polynomial.Differentiate(x).InnerSimplified;
+            if (derivative.Evaled is Number.Complex { IsZero: true })
+                return polynomial * antiderivative;
+            var remainder = Functions.PartialFractions.Bare((derivative * antiderivative).InnerSimplified);
+            if (Integration.ComputeIndefiniteIntegral(remainder, x, integrateByParts) is not { } integrated)
+                return null;
+            var answer = polynomial * antiderivative - integrated;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
         internal static Entity? SolveByExponentialSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             // Rational slopes, so that `e^(x/2)` beside `e^x` is read: the base is `e^(k x)` with
@@ -6391,6 +6483,18 @@ namespace AngouriMath.Functions.Algebra
                 rewritten / (Number.Rational.Create(k) * u)).Simplify();
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
+            // A whole power of a product is written as the product of the powers: the
+            // simplifier writes `4a^2 u^2` as `(a u)^2 4`, and no rational reader sees the `u^2`
+            // inside -- Timofeev's `1/(a^2 + b^2 cosh(x)^2)` was declined in that spelling and
+            // is answered in the other.
+            for (var round = 0; round < 4; round++)
+            {
+                var distributed = integrand.Replace(node =>
+                    node is Powf(Mulf(var l, var r), Number.Integer power) ? MathS.Pow(l, power) * MathS.Pow(r, power) : node);
+                if (distributed == integrand)
+                    break;
+                integrand = distributed;
+            }
             // u is an exponential, so it is positive, and a root holding a power of it gives
             // that power up: `sqrt(1 + tanh(4x))` is a root of `2u/(1 + u)` here and nothing
             // rationalises that; as `sqrt(2) sqrt(u)/sqrt(1 + u)` it is one substitution more.
@@ -6406,7 +6510,12 @@ namespace AngouriMath.Functions.Algebra
             // is a palindromic quartic under it here, and `u - 1/u` is `2 sinh(x)`.
             if (SolveByReciprocalSubstitution(integrand, u, variableIsPositive: true) is { } byTheReciprocal)
                 return Finished(byTheReciprocal);
-            if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is not { } result)
+            // The same question in u, not a step in the search for it: asked at the top when
+            // this was, so the rules that answer only there -- the symbolic quadratic
+            // denominator, a piecewise on its discriminant -- are consulted. Timofeev's
+            // `1/(a^2 + b^2 cosh(x)^2)` is `4u/(4a^2 u^2 + b^2 (u^2 + 1)^2)`, answered at the top
+            // and declined one level down.
+            if (Integration.ComputeAsAQuestionOfItsOwn(integrand, u, integrateByParts) is not { } result)
                 return null;
             return Finished(result);
 
