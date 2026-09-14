@@ -25,12 +25,16 @@ namespace AngouriMath
                 /// <summary>
                 /// Constructor does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting.
                 /// </summary>
-                private protected Real(EDecimal @decimal) : base(null, null) => EDecimal = @decimal;
+                private protected Real(EDecimal @decimal) : base(null, null) => storedDecimal = @decimal;
+
+                /// <summary>A rational holds no decimal of its own; it writes one out when asked.</summary>
+                private protected Real() : base(null, null) { }
 
                 /// <summary>
                 /// The PeterO number representation in <see cref="PeterO.Numbers.EDecimal"/>
                 /// </summary>
-                public EDecimal EDecimal { get; }
+                public virtual EDecimal EDecimal => storedDecimal!;
+                private readonly EDecimal? storedDecimal;
 
                 /// <summary>
                 /// Deconstructs as record

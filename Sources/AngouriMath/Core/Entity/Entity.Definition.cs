@@ -106,6 +106,24 @@ namespace AngouriMath
     public abstract partial record Entity : ILatexizeable
     {
         /// <summary>
+        /// Two entities are equal when they are the same kind of node with equal parts, which
+        /// each node's own record comparison decides; what this level of the record holds
+        /// is caches -- the children, the variables, the evaluated value, a dozen
+        /// <see cref="LazyPropertyA{T}"/> fields and the sort keys -- and every one of them
+        /// is equal to every other by construction, so comparing them is a dozen calls into
+        /// <see cref="EqualityComparer{T}"/> that can only answer yes, and the hash a dozen
+        /// that can only add zero. The record's synthesized members made them; the solver,
+        /// which keeps its candidates in sets keyed by the tree, took 112 ms on the hardest
+        /// benchmark with them and 64 without
+        /// (https://github.com/asc-community/AngouriMath/issues/1338).
+        /// </summary>
+        public virtual bool Equals(Entity? other)
+            => ReferenceEquals(this, other) || (other is not null && EqualityContract == other.EqualityContract);
+
+        /// <summary>The same for the hash: the node's kind, with each node's parts combined in by its own record.</summary>
+        public override int GetHashCode() => EqualityContract.GetHashCode();
+
+        /// <summary>
         /// Returns the array of the direct children. Will be
         /// only called once, so no need to cache anything.
         /// </summary>
