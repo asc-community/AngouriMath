@@ -582,6 +582,9 @@ namespace AngouriMath.Functions.Algebra
             // rational function, so it wants everything that answers a problem in its own terms to
             // have declined first.
             if ((answer = IndefiniteIntegralSolver.SolveByLinearRadicalSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // Two linear bases under roots of different orders, which the rule above declines:
+            // the root of their quotient rationalises them where the powers left are whole.
+            if ((answer = IndefiniteIntegralSolver.SolveByAQuotientOfTwoLinearRadicals(expr, x, integrateByParts)) is { }) return answer;
             // A square root of a quadratic, answered as a power of the sine times a power of the
             // cosine rather than by rationalising it. After the linear radical, which answers a
             // root of something linear in its own terms and more shortly.

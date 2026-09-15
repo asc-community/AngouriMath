@@ -194,7 +194,6 @@ namespace AngouriMath.Tests.Calculus
         /// </summary>
         [Theory]
         [InlineData("sqrt(x - 1)*sqrt(x - 2)")]
-        [InlineData("1/(sqrt(x - 1)*sqrt(x - 2))")]
         [InlineData("x/(sqrt(x - 1)*sqrt(x - 2))")]
         [InlineData("sqrt(x - 5)*sqrt(x + 3)/((x - 1)*(x^2 - 25))")]
         public void TwoNegativeBasesAreCombinedWithASign(string integrand)
@@ -202,6 +201,21 @@ namespace AngouriMath.Tests.Calculus
             var integral = integrand.ToEntity().Integrate("x");
             Assert.Contains("sgn(", integral.Stringize());
             DifferentiatesBack(integrand, new[] { -6.5, -4.4, -1.5, -0.4, 0.3, 1.6, 2.4, 3.1, 4.7, 5.6, 7.2 });
+        }
+
+        /// <summary>
+        /// The same two bases where the combining rule declines at the top: the rule for two
+        /// linear radicals answers through the quotient of the two roots,
+        /// <c>sqrt(x - 1)/sqrt(x - 2)</c>, and needs no sign, since a whole power of a quotient
+        /// of principal roots is the quotient of the powers for every complex <c>x</c>.
+        /// Differentiated back on both sides of the roots and between them.
+        /// </summary>
+        [Fact]
+        public void AQuotientOfTwoSquareRootsNeedsNoSign()
+        {
+            var integral = "1/(sqrt(x - 1)*sqrt(x - 2))".ToEntity().Integrate("x");
+            Assert.DoesNotContain("sgn(", integral.Stringize());
+            DifferentiatesBack("1/(sqrt(x - 1)*sqrt(x - 2))", new[] { -6.5, -4.4, -1.5, -0.4, 0.3, 1.6, 2.4, 3.1, 4.7, 5.6, 7.2 });
         }
 
         /// <summary>
