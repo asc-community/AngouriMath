@@ -480,6 +480,11 @@ namespace AngouriMath.Functions.Algebra
             // functions as indeterminates and its denominator factored the same way:
             // `(x^2 + 2x sin(x) + sin(x)^2)/(x + sin(x))^2` is `1`, and nothing else reads it.
             if ((answer = IndefiniteIntegralSolver.SolveByCancellingWithFunctionsAsIndeterminates(expr, x, integrateByParts)) is { }) return answer;
+            // A constant multiple of D'/D for a sum D below the bar holding a root, decided at
+            // sampled points: Hearn's quotient of two roots' derivatives over their sum was a
+            // search past the budget for want of the radical algebra the substitution would
+            // have needed.
+            if ((answer = IndefiniteIntegralSolver.SolveALogarithmicDerivativeOfARadicalSum(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveLogarithmic(expr, x, integrateByParts)) is { }) return answer;
             // Two or more square roots of polynomials written as one, before the substitution
             // looks for the one subtree it replaces: `x/(sqrt(1 + x^2) sqrt(1 - x^2))` is
