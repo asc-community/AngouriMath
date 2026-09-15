@@ -90,6 +90,27 @@ namespace AngouriMath.Tests.Calculus
         public void ThePositiveConstant(string integrand, double[] points) => DifferentiatesBack(integrand, points);
 
         /// <summary>
+        /// A constant factor that is not a rational number in front of the quotient --
+        /// <c>sqrt(2)</c>, <c>pi</c>, a symbol -- is taken out before the quotient is asked, as
+        /// a question of its own: with the root of two inside the quotient, a radical beside
+        /// the radical, Euler's substitution declined. The tangent substitution hands on
+        /// exactly that for Timofeev's <c>sqrt(cot(2x)/cot(x))</c>, and a rational one is
+        /// left in place, every rule reading it.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(2)*sqrt(1 - x^2)/(x^2 + 1)", new[] { 0.1, 0.3, 0.5, 0.7, 0.9 })]
+        [InlineData("pi*sqrt(1 - x^2)/(x^2 + 1)", new[] { 0.1, 0.3, 0.5, 0.7, 0.9 })]
+        [InlineData("sqrt(cot(2*x)/cot(x))", new[] { 0.1, 0.3, 0.5, 0.7 })]
+        [InlineData("sqrt(3)*sqrt(x^2 + 1)/(2*x^2 + 3)", new[] { 0.1, 0.3, 0.5, 0.7, 0.9 })]
+        public void AConstantFactorInFront(string integrand, double[] points) => DifferentiatesBack(integrand, points);
+
+        /// <summary>The same with a symbol in front, pinned: <c>a sqrt(1 - x^2)/(x^2 + 1)</c>, and Timofeev's <c>tan(x)/(a^3 + b^3 tan(x)^2)^(1/3)</c>.</summary>
+        [Theory]
+        [InlineData("a*sqrt(1 - x^2)/(x^2 + 1)", new[] { 0.1, 0.3, 0.5, 0.7, 0.9 })]
+        [InlineData("tan(x)/(a^3 + b^3*tan(x)^2)^(1/3)", new[] { 0.1, 0.3, 0.5, 0.7, 0.9 })]
+        public void ASymbolInFront(string integrand, double[] points) => DifferentiatesBack(integrand, points, ("a", 1.7), ("b", 2.3));
+
+        /// <summary>
         /// The third, at the root the quadratic has at zero: Timofeev's <c>x sqrt(2 r x - x^2)</c>,
         /// with <c>r</c> a symbol.
         /// </summary>
