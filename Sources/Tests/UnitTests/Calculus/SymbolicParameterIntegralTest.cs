@@ -143,6 +143,20 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, ("a", 1.7), ("b", 2.3));
 
         /// <summary>
+        /// A logarithmic derivative with a symbol in the exponent: the numerator a constant
+        /// multiple of the denominator's derivative, read term by term since the derivative
+        /// of <c>x^n</c> is written <c>x^n n / x</c> and no simplification of the quotient reads
+        /// it. Timofeev's <c>(x^(n - 1) - 1)/(x^n - n x)</c>, and over a square of the
+        /// denominator.
+        /// </summary>
+        [Theory]
+        [InlineData("(x^(n - 1) - 1)/(x^n - n*x)")]
+        [InlineData("(2*x^(2*n - 1) - x^(n - 1))/(x^(2*n) - x^n + 3)")]
+        [InlineData("(x^(n - 1) - 1)/(x^n - n*x)^2")]
+        public void ALogarithmicDerivativeWithASymbolicExponent(string integrand)
+            => DifferentiatesBack(integrand, ("n", 2.5));
+
+        /// <summary>
         /// The numeric spellings, which came out before and must keep coming out the same way.
         /// </summary>
         [Theory]
