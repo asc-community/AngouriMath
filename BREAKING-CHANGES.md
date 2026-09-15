@@ -96,6 +96,31 @@ and the complex arcsine's real part moved two units away. A caller comparing a h
 result to a pinned string will see the last digits differ; a caller comparing to a tolerance
 will not. [#1338](https://github.com/asc-community/AngouriMath/issues/1338).
 
+### The last digits of an evaluated logarithm, exponential, real power or complex power
+
+**Silent, and in the hundredth digit.** `ln`, `log`, `e^x`, a real base to a real power and the
+complex power and inverse trigonometric functions that are built on them are series in fixed
+point now rather than PeterO's `Log`, `Exp` and `Pow`, and `e^x` is the exponential of `x` rather
+than the constant's hundred digits raised to `x`. Measured on `eb2a5ac2` and on this change,
+against mpmath at a hundred and forty digits, in units of the last of a hundred places:
+
+| | Was | Is |
+|---|---|---|
+| `ln(pi)` | 5.3 off | 0.3 |
+| `log(-2, 3 + 2i)` | 7.7 in the real part, 33.5 in the imaginary | 0.7 and 0.5 |
+| `arcsin`, `arccos` of `3`, `4`, `i`, `3 ± 2i` | 5 to 28 off in the imaginary part | within 1.4 |
+| `arctan(3 + 2i)` | 33 off in the imaginary part | 3.1 |
+| `2^i` | 1.3 and 1.2 | 0.3 and 0.2 |
+| `(3 ± 2i)^(3 ± 2i)` | 22 to 289 off | 0.5 to 5.6 |
+| `e^700` | 97 correct digits | 100 |
+
+Nineteen of the values pinned in `NumericDigits` moved, every one towards the true value. A caller
+comparing a hundred-digit result to a pinned string will see the last digits differ; a caller
+comparing to a tolerance will not. A value within ten to the minus fifty of an integer -- half
+the working digits, or `MathS.Settings.PrecisionErrorZeroRange` where a caller has set it -- is
+still that integer, so `e^(-123.456)` is 0 as it was.
+[#1338](https://github.com/asc-community/AngouriMath/issues/1338).
+
 ### A quotient of polynomials is split into coprime blocks before a root is peeled off
 
 `SolveByPartialFractions` tried `TrySplitOffRationalRoot` before `TrySplitIntoCoprimeParts`. Both

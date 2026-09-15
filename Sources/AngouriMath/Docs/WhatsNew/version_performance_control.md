@@ -256,6 +256,43 @@ cent — its measured run-to-run spread on mean time is up to 51.8%. A move of 8
 outside that band by a wide margin and agrees in sign and rough size with the allocation column
 beside it. The small rows from the same run are still not worth reading, and are not quoted.
 
+## The 2054th: the logarithm and the exponential as series in fixed point
+
+`EvalTranscendentalFresh` -- `ln(1 + x^2) arctan(x)` at a fresh point -- was 1.3 ms after the
+2050th, and a `ln` alone 0.7 ms: PeterO's `Log` is seven hundred microseconds at a hundred
+digits and its `Exp` three hundred, and `ln(x)` arrived as `log_e(x)`, which was two of them
+and a division. A series in `EDecimal` pays for each term an alignment of exponents, an exact
+sum and a rounding, two to three microseconds a term at a hundred digits, which is what those
+are made of.
+
+The logarithm and the exponential are their own series now, run in fixed point: an `EInteger`
+holding the value times `2^bits`, with the context's digits in bits and forty-eight over, where
+a product is a big-integer multiply and a shift, a division by a term's index an integer
+division and a sum an addition -- a third of a microsecond a term -- and the value is a decimal
+again exactly, by `5^bits` and a move of the point. `ln x` is `2 artanh((m - 1)/(m + 1))` with
+`m` the mantissa brought between `1/sqrt(2)` and `sqrt(2)` by powers of ten and two, seventy
+terms; `e^x` is `x = k ln 2 + r`, `r` halved ten times, twenty-five terms, ten squarings and the
+power of two back. `ln 2` and `ln 10` are in the constant cache, per context. `log_b(x)` is
+`ln x / ln b` with the base `e` recognised, a nonnegative real to a real power is
+`exp(power ln base)` with eight guard digits, and `e` to any real power is the exponential of
+the power -- `e^700` came back to ninety-seven digits as the constant's hundred raised to the
+seven hundredth. The hyperbolic functions and the complex logarithm, exponential, power and
+inverse trigonometric functions go through the same two.
+
+| benchmark | 2053rd | 2054th | allocation | time |
+|---|--:|--:|--:|--:|
+| `EvalTranscendentalFresh` | 2,246,889 | **423,032** | **−81.2%** | 1.33 ms → **245 µs** |
+| `SimplifyHard` | 302,423,792 | **189,726,120** | **−37.3%** | 172 → **109 ms** |
+| `SolveEasy` | 6,284,124 | **4,425,194** | **−29.6%** | 3.55 → **2.88 ms** |
+| every other entry | | | within 1.5% | |
+
+Bytes allocated per call, same machine, both columns by the gate in one session; the gate's
+baseline was taken from this run. The simplifier and the solver move because they evaluate
+exponentials and logarithms numerically underneath, to compare candidates. Alone: `ln(x)` at
+a hundred digits is 35 µs where it was 685, `e^x` 30 where it was 740, `sinh(x)` 62 where it
+was 1,570, and at five hundred digits `ln(x)` is 2.9 ms where it was 15.4. Nineteen pinned
+hundred-digit values moved, every one towards mpmath's; `BREAKING-CHANGES.md` has the table.
+
 ## The 2053rd: equality without the caches, and a rational's decimal written out when asked
 
 Two things found under the evaluator's remaining cost, each measured alone and each reaching
