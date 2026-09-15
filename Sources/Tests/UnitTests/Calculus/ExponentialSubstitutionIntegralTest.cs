@@ -78,6 +78,40 @@ namespace AngouriMath.Tests.Calculus
         public void TheHyperbolicFunctions(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// A root of hyperbolic functions of both signs of the exponent is under <c>u = e^x</c>
+        /// a root of a quartic that nothing rationalises; under <c>u = tanh(x)</c> the
+        /// hyperbolic functions are the shapes their trigonometric twins are under the
+        /// tangent, <c>cosh(x)</c> being <c>(1 - u^2)^(-1/2)</c> and <c>sinh(x)</c> being
+        /// <c>u (1 - u^2)^(-1/2)</c> for every real <c>x</c>. Timofeev's hyperbolic twin of his
+        /// 560 was a minute of Euler's substitution on that quartic, and <c>sech^(3/4) tanh^5</c>
+        /// and <c>cosh^(1/3) sinh^3</c> had no antiderivative at all. Checked on both signs of
+        /// <c>x</c> where the root is real, and where the hyperbolic sine of <c>2x</c> is
+        /// positive for the roots of it.
+        /// </summary>
+        [Theory]
+        [InlineData("cosh(x)*(tanh(x) - cosh(2*x))/((sinh(x)^2 + sinh(2*x))*sqrt(sinh(2*x)))", new[] { 0.3, 0.7, 1.2, 1.9 })]
+        [InlineData("sinh(x)^3/sqrt(sinh(2*x))", new[] { 0.3, 0.7, 1.2, 1.9 })]
+        [InlineData("sech(x)^(3/4)*tanh(x)^5", new[] { -1.4, -0.5, 0.3, 0.7, 1.2 })]
+        [InlineData("cosh(x)^(1/3)*sinh(x)^3", new[] { -1.4, -0.5, 0.3, 0.7, 1.2 })]
+        [InlineData("sech(x)^(3/2)*tanh(x)", new[] { -1.4, -0.5, 0.3, 0.7, 1.2 })]
+        public void ARootOfHyperbolicFunctionsUnderTheHyperbolicTangent(string integrand, double[] points)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity();
+            foreach (var at in points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                var difference = System.Math.Abs((double)(got - want).RealPart) + System.Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = System.Math.Max(1.0, System.Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-8, $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        /// <summary>
         /// Timofeev's <c>arccot(cosh x) cosh x/sinh^4 x</c>, a step of parts against
         /// <c>cosh/sinh^4</c>. Three things stood in the way, each a search past the budget:
         /// the sum <c>e^x + e^-x</c> above the bar was expanded into two terms though it is the

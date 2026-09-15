@@ -7923,6 +7923,314 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An integrand that is a function of <c>e^x</c> with a root in it, integrated by the
+        /// substitution <c>u = tanh(x)</c>, the hyperbolic counterpart of the tangent's.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The library writes the hyperbolic functions as exponentials, and a root of one of
+        /// them -- Timofeev's <c>cosh(x)(tanh(x) - cosh(2x))/((sinh(x)^2 + sinh(2x)) sqrt(sinh(2x)))</c>
+        /// -- is under <c>u = e^x</c> a root of <c>(u^4 - 1)/u^2</c>, a quartic that nothing
+        /// rationalises, where its trigonometric twin is a rational function of the tangent
+        /// with <c>sqrt(2u/(1 - u^2))</c> in it and is answered. Under <c>u = tanh(x)</c> the
+        /// hyperbolic functions are the same shapes: <c>cosh(x)</c> is <c>(1 - u^2)^(-1/2)</c>
+        /// and <c>sinh(x)</c> is <c>u (1 - u^2)^(-1/2)</c>, exactly and for every real <c>x</c>,
+        /// since the hyperbolic cosine is positive -- no sign to carry, where the tangent
+        /// substitution carries <c>sgn(cos(x))</c>. So <c>e^x</c> is <c>(1 + u)/w</c> and
+        /// <c>e^-x</c> is <c>(1 - u)/w</c> for <c>w = sqrt(1 - u^2)</c>, the integrand is
+        /// rational in <c>u</c> and <c>w</c> apart from its own roots, and <c>dx = du/(1 - u^2)</c>.
+        /// Every quotient -- each radicand, and the whole -- is brought over one bar with
+        /// <c>w^2 = 1 - u^2</c> reduced and the denominator cleared of <c>w</c> by its
+        /// conjugate, and the polynomials cancelled by their greatest common divisor, so that
+        /// <c>e^x + e^-x</c> comes out as <c>2/w</c> and <c>sinh(2x)</c> as <c>2u/(1 - u^2)</c>;
+        /// a radicand over a power of <c>1 - u^2</c> gives that power up to <c>w</c>, where it
+        /// meets the rest, and a radicand that is a power of <c>1 - u^2</c> and <c>w</c> alone
+        /// is a root of <c>1 - u^2</c> of another index -- <c>sech(x)^(3/4)</c> is
+        /// <c>(1 - u^2)^(3/8)</c>.
+        /// </para>
+        /// <para>
+        /// Only with a root in the integrand whose radicand holds exponentials of both signs
+        /// -- as a Laurent polynomial in <c>e^x</c>, a polynomial over a power with a power on
+        /// either side of it, or a rational function over anything else -- which is where
+        /// <c>u = e^x</c> leaves a root of a quartic or of a quotient; with one sign only,
+        /// <c>sqrt(e^x - 1)</c> or <c>sqrt(1 + tanh(x))</c>, the exponential substitution answers
+        /// with a root of a linear, and is left to.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByHyperbolicTangentSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // At the top or one below it -- the terms of a sum split as written are one below --
+            // since it lands on the chain: asked at every level by every rule that hands a
+            // hyperbolic integrand on, it was a search at every depth.
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow || !HasARadicalOf(expr, x))
+                return null;
+            // Every x in an exponential e^(k x) with k a whole number, and in nothing else.
+            var exponentials = new Dictionary<Entity, EInteger>();
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Powf(var @base, var exponent) || !exponent.ContainsNode(x))
+                    continue;
+                if (@base != MathS.e || !TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slope, out var offset)
+                    || !TreeAnalyzer.IsZero(offset) || slope.Evaled is not Number.Integer k || k.EInteger.IsZero)
+                    return null;
+                exponentials[node] = k.EInteger;
+            }
+            if (exponentials.Count == 0)
+                return null;
+            // And a radicand that holds exponentials of both signs -- as a Laurent polynomial
+            // in v = e^x, a polynomial over a power of v of lower degree -- which is where
+            // `u = e^x` leaves a root of a quartic; with one sign only, `sqrt(e^x - 1)` or
+            // `sqrt(1 + tanh(x))`, the exponential substitution after this rule answers with a
+            // root of a linear.
+            var v = Variable.CreateUnique(expr, "v_exp");
+            var bothSigns = false;
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Powf(var radicand, Number.Rational root) || root is Number.Integer || !radicand.ContainsNode(x))
+                    continue;
+                var inV = radicand.Replace(inner => exponentials.TryGetValue(inner, out var k) ? k.Equals(EInteger.One) ? v : MathS.Pow(v, Number.Integer.Create(k)) : inner);
+                var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(inV));
+                if (!TreeAnalyzer.TryGetPolynomial(above.Expand().InnerSimplified, v, out var aboveMonomials) || aboveMonomials.Keys.Max() is not { } aboveDegree
+                    || !TreeAnalyzer.TryGetPolynomial(below.Expand().InnerSimplified, v, out var belowMonomials) || belowMonomials.Keys.Max() is not { } belowDegree
+                    || belowDegree.Sign == 0)
+                    continue;
+                // Over a power of v, a Laurent polynomial: both signs where the numerator has
+                // a power on either side of that one. Over anything else -- `sech(x)` is
+                // `2v/(v^2 + 1)` -- a root of a rational function of v that `u = e^x` leaves a
+                // root of a quotient.
+                if (belowMonomials.Count != 1 || aboveDegree.CompareTo(belowDegree) > 0 && aboveMonomials.Keys.Min() is { } lowest && lowest.CompareTo(belowDegree) < 0)
+                    bothSigns = true;
+            }
+            if (!bothSigns)
+                return null;
+
+            var u = Variable.CreateUnique(expr, "u_tanh");
+            var w = Variable.CreateUnique(expr, "w_tanh");
+            var oneMinusUSquared = 1 - MathS.Sqr(u);
+            // e^(kx) is (1 + u)^k/w^k for k positive and (1 - u)^(-k)/w^(-k) for k negative, with
+            // w for sqrt(1 - u^2): the integrand is then rational in u and w, and w^2 is
+            // 1 - u^2. Every quotient -- each radicand, and the whole -- is brought over one
+            // bar with its numerator and denominator reduced to A + B w, and the denominator
+            // cleared of w by its conjugate, so that what is left is E/G + F w/G with E, F
+            // and G polynomials in u; w is the root again at the end.
+            var rewritten = expr.Replace(node =>
+                exponentials.TryGetValue(node, out var k)
+                    ? MathS.Pow(k.Sign > 0 ? 1 + u : 1 - u, Number.Integer.Create(k.Abs())) * MathS.Pow(w, Number.Integer.Create(k.Abs().Negate()))
+                    : node);
+            if (rewritten.ContainsNode(x))
+                return null;
+            Entity? Rationalized(Entity e)
+            {
+                var (top, bottom) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(e));
+                if (Reduced(top) is not var (a, b) || Reduced(bottom) is not var (c, d))
+                    return null;
+                if (TreeAnalyzer.IsZero(d))
+                    return Over(a, b, c);
+                // (A + Bw)(C - Dw) over C^2 - D^2 w^2.
+                return Over(Functions.PartialFractions.Bare((a * c - b * d * oneMinusUSquared).Expand().InnerSimplified),
+                            Functions.PartialFractions.Bare((b * c - a * d).Expand().InnerSimplified),
+                            Functions.PartialFractions.Bare((c * c - d * d * oneMinusUSquared).Expand().InnerSimplified));
+            }
+            // E/G + F w/G with the greatest common divisor of the three divided out: the
+            // conjugate squares every degree, and `sinh(2x)` arrives as
+            // `(4u - 4u^3)/(2 - 4u^2 + 2u^4)`, which is `2u/(1 - u^2)`. Over the rationals in
+            // u alone, by Euclid; with a symbol in a coefficient the quotients are left as
+            // they are.
+            Entity Over(Entity e, Entity f, Entity g)
+            {
+                if (AsRationalPolynomial(e) is { } eP && AsRationalPolynomial(f) is { } fP && AsRationalPolynomial(g) is { } gP && !gP.IsZero)
+                {
+                    var divisor = Gcd(Gcd(eP, fP), gP);
+                    if (!divisor.IsConstant)
+                    {
+                        eP = Quotient(eP, divisor);
+                        fP = Quotient(fP, divisor);
+                        gP = Quotient(gP, divisor);
+                    }
+                    // Monic below the bar.
+                    var leading = gP.Leading;
+                    var gEntity = gP.ScaleBy(ERational.One.Divide(leading)).ToEntity(u);
+                    var rationalPart = eP.IsZero ? Number.Integer.Zero : eP.ScaleBy(ERational.One.Divide(leading)).ToEntity(u) / gEntity;
+                    return fP.IsZero ? rationalPart : rationalPart + fP.ScaleBy(ERational.One.Divide(leading)).ToEntity(u) / gEntity * w;
+                }
+                var rational = TreeAnalyzer.IsZero(e) ? Number.Integer.Zero : e / g;
+                return TreeAnalyzer.IsZero(f) ? rational : rational + f / g * w;
+            }
+            RationalPolynomial? AsRationalPolynomial(Entity polynomial)
+            {
+                if (TreeAnalyzer.IsZero(polynomial))
+                    return RationalPolynomial.Zero;
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, u, out var monomials) || monomials.Keys.Max() is not { } top)
+                    return null;
+                var coefficients = new ERational[top.ToInt32Checked() + 1];
+                for (var i = 0; i < coefficients.Length; i++)
+                    coefficients[i] = ERational.Zero;
+                foreach (var pair in monomials)
+                {
+                    if (pair.Value.Evaled is not Number.Rational coefficient)
+                        return null;
+                    coefficients[pair.Key.ToInt32Checked()] = coefficient.ERational;
+                }
+                return RationalPolynomial.Create(coefficients);
+            }
+            static RationalPolynomial Gcd(RationalPolynomial left, RationalPolynomial right)
+            {
+                while (!right.IsZero)
+                {
+                    left.TryDivide(right, out _, out var remainder);
+                    (left, right) = (right, remainder);
+                }
+                return left;
+            }
+            static RationalPolynomial Quotient(RationalPolynomial dividend, RationalPolynomial divisor)
+                => dividend.TryDivide(divisor, out var quotient, out _) ? quotient : dividend;
+            // A polynomial in u and w as A + B w, by w^2 = 1 - u^2.
+            (Entity, Entity)? Reduced(Entity polynomial)
+            {
+                // Bare: the simplification attaches `provided not 1 - u^2 = 0` where a power of
+                // w cancelled, and a condition is nothing a polynomial reader reads.
+                var expanded = Functions.PartialFractions.Bare(polynomial.Expand().InnerSimplified);
+                if (!expanded.ContainsNode(w))
+                    return (expanded, Number.Integer.Zero);
+                if (!TreeAnalyzer.TryGetPolynomial(expanded, w, out var byPowerOfW))
+                    return null;
+                Entity even = Number.Integer.Zero;
+                Entity odd = Number.Integer.Zero;
+                foreach (var pair in byPowerOfW)
+                {
+                    var power = pair.Key.ToInt32Checked();
+                    var lifted = pair.Value * MathS.Pow(oneMinusUSquared, power / 2);
+                    if (power % 2 == 0) even += lifted;
+                    else odd += lifted;
+                }
+                return (Functions.PartialFractions.Bare(even.Expand().InnerSimplified), Functions.PartialFractions.Bare(odd.Expand().InnerSimplified));
+            }
+            // A polynomial in u that is a constant times a power of `1 - u^2`, coefficient by
+            // coefficient; the power is zero for a constant.
+            bool IsAConstantTimesAPowerOfOneMinusUSquared(Entity polynomial, out Entity constant, out int power)
+            {
+                constant = polynomial;
+                power = 0;
+                if (!polynomial.ContainsNode(u))
+                    return true;
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, u, out var monomials) || monomials.Keys.Max() is not { } degree || !degree.IsEven
+                    || !TreeAnalyzer.TryGetPolynomial(MathS.Pow(oneMinusUSquared, degree.ToInt32Checked() / 2).Expand(), u, out var reference)
+                    || reference.Count != monomials.Count)
+                    return false;
+                Entity? ratio = null;
+                foreach (var pair in monomials)
+                {
+                    if (!reference.TryGetValue(pair.Key, out var expected))
+                        return false;
+                    var here = (pair.Value / expected).InnerSimplified;
+                    if (ratio is null)
+                        ratio = here;
+                    else if (ratio != here)
+                        return false;
+                }
+                if (ratio is null || ratio.ContainsNode(u))
+                    return false;
+                constant = ratio;
+                power = degree.ToInt32Checked() / 2;
+                return true;
+            }
+            // Each root, its radicand rationalised, stands as an atom of its own through the
+            // polynomial work -- the gcd cancellation read `sqrt(2u/(1 - u^2))` as a
+            // polynomial in u and answered `0 provided ...` -- and is put back at the end.
+            // A radicand over a power of `1 - u^2` gives that power up to w, where it meets the
+            // rest: `sqrt(sinh(2x))` is `sqrt(2u/(1 - u^2))`, which is `sqrt(2u)/w`, and beside
+            // the `1/w` of the cosh in front the roots of `1 - u^2` cancel and `sqrt(2u)` is
+            // all that is left -- a root of a polynomial, one substitution. And a radicand
+            // that is a constant times a power of `1 - u^2` and of w outright -- `sech(x)` is
+            // `w`, `cosh(x)` is `w/(1 - u^2)` -- is a root of `1 - u^2` of another index, an
+            // atom of its own.
+            var atoms = new Dictionary<Entity, Entity>();
+            var combined = rewritten.Replace(node =>
+            {
+                if (node is not Powf(var radicand, Number.Rational root) || root is Number.Integer || !radicand.ContainsNode(u) && !radicand.ContainsNode(w)
+                    || Rationalized(radicand) is not { } rationalRadicand)
+                    return node;
+                var atom = Variable.CreateUnique(expr, $"r{atoms.Count}_tanh");
+                // Constant times w^k times a power of 1 - u^2: the whole radicand as one power.
+                Entity? constantFactor = Number.Integer.One;
+                var ofOneMinusUSquared = ERational.Zero;
+                foreach (var factor in Mulf.LinearChildren(Functions.PartialFractions.Bare(rationalRadicand.InnerSimplified)))
+                {
+                    var (factorBase, factorPower) = factor is Powf(var inner, Number.Integer whole) ? (inner, whole.EInteger) : (factor, EInteger.One);
+                    if (factorBase == w)
+                        ofOneMinusUSquared = ofOneMinusUSquared.Add(ERational.Create(factorPower, EInteger.FromInt32(2)));
+                    else if (!factorBase.ContainsNode(w) && IsAConstantTimesAPowerOfOneMinusUSquared(factorBase, out var constant, out var power))
+                    {
+                        ofOneMinusUSquared = ofOneMinusUSquared.Add(ERational.FromEInteger(factorPower.Multiply(EInteger.FromInt32(power))));
+                        constantFactor = constantFactor * MathS.Pow(constant, Number.Integer.Create(factorPower));
+                    }
+                    else
+                    {
+                        constantFactor = null;
+                        break;
+                    }
+                }
+                if (constantFactor is not null)
+                {
+                    var exponent = Number.Rational.Create(ofOneMinusUSquared.Multiply(root.ERational).ToLowestTerms());
+                    atoms[atom] = MathS.Pow(constantFactor.InnerSimplified, root) * (exponent == Number.Integer.Zero ? Number.Integer.One : MathS.Pow(oneMinusUSquared, exponent));
+                    return atom;
+                }
+                var (radicandTop, radicandBottom) = Functions.SingleQuotient.Of(rationalRadicand);
+                Entity ofW = Number.Integer.One;
+                if (!radicandTop.ContainsNode(w) && !radicandBottom.ContainsNode(w)
+                    && IsAConstantTimesAPowerOfOneMinusUSquared(radicandBottom, out var bottomConstant, out var m) && m > 0)
+                {
+                    var wPower = root.ERational.Multiply(ERational.FromInt32(-2 * m)).ToLowestTerms();
+                    if (wPower.Denominator.Equals(EInteger.One))
+                    {
+                        rationalRadicand = bottomConstant.Evaled is Number.Rational number
+                            ? (radicandTop * Number.Rational.Create(ERational.One.Divide(number.ERational))).InnerSimplified
+                            : (radicandTop / bottomConstant).InnerSimplified;
+                        ofW = MathS.Pow(w, Number.Integer.Create(wPower.Numerator));
+                    }
+                }
+                atoms[atom] = rationalRadicand.ContainsNode(w)
+                    ? MathS.Pow(rationalRadicand.Substitute(w, MathS.Sqrt(oneMinusUSquared)), root)
+                    : MathS.Pow(rationalRadicand, root);
+                return ofW == Number.Integer.One ? atom : atom * ofW;
+            });
+            // The atoms as factors of the whole, and the rest rationalised apart from them: an
+            // atom inside a sum is declined, and an atom among the factors would otherwise be
+            // squared by the conjugate and never reduced.
+            var (wholeTop, wholeBottom) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(combined / oneMinusUSquared));
+            Entity atomFactors = Number.Integer.One;
+            Entity? restTop = null;
+            Entity? restBottom = null;
+            foreach (var (side, below) in new[] { (wholeTop, false), (wholeBottom, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    var factorBase = factor is Powf(var inner, Number.Integer) ? inner : factor;
+                    if (atoms.ContainsKey(factorBase))
+                        atomFactors = below ? atomFactors / factor : atomFactors * factor;
+                    else if (atoms.Keys.Any(factor.ContainsNode))
+                        return null;
+                    else if (below)
+                        restBottom = restBottom is null ? factor : restBottom * factor;
+                    else
+                        restTop = restTop is null ? factor : restTop * factor;
+                }
+            if (Rationalized((restTop ?? Number.Integer.One) / (restBottom ?? Number.Integer.One)) is not { } rationalised)
+                return null;
+            var integrand = (rationalised * atomFactors).Substitute(w, MathS.Sqrt(oneMinusUSquared));
+            foreach (var pair in atoms)
+                integrand = integrand.Substitute(pair.Key, pair.Value);
+            integrand = integrand.InnerSimplified;
+            if (integrand.ContainsNode(x) || integrand.ContainsNode(w) || integrand.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(integrand, u, integrateByParts) is not { } result)
+                return null;
+            var answer = result.Substitute(u, MathS.Hyperbolic.Tanh(x));
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
         /// An integrand carrying one symbolic parameter, scaled by it — <c>x = c t</c> — so that
         /// what is left to integrate has the variable alone in it.
         /// </summary>
@@ -9695,6 +10003,14 @@ namespace AngouriMath.Functions.Algebra
             if (IsARationalFunctionOfExponentials(expr, x)
                 && expr.Nodes.Any(node => node is Powf(var sum, Number.Integer power) && sum is Sumf or Minusf or Mulf or Divf && sum.ContainsNode(x)
                                           && power.EInteger.Abs().CompareTo(EInteger.FromInt32(2)) >= 0))
+                return null;
+            // And a function of exponentials with a root in it, past a modest size, the same:
+            // Timofeev's `cosh(x)(tanh(x) - cosh(2x))/((sinh(x)^2 + sinh(2x)) sqrt(sinh(2x)))`
+            // is a dozen sums of exponentials, each a candidate, and a minute of simplifying
+            // to decline them all; `u = e^x` and the hyperbolic tangent are the substitutions
+            // for it, and they follow this rule.
+            if (expr.Complexity > LargestSymbolicIntegrandCollected && HasARadicalOf(expr, x)
+                && !expr.Replace(node => node is Powf(var @base, var exponent) && !@base.ContainsNode(x) && exponent.ContainsNode(x) ? Number.Integer.One : node).ContainsNode(x))
                 return null;
             // An exponential of a sum is the product of the exponentials, for this search
             // only: `e^(e^x) e^x` arrives as `e^(e^x + x)`, in which `e^x` is a candidate whose

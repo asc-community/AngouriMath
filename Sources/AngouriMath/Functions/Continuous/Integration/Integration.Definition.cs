@@ -562,6 +562,14 @@ namespace AngouriMath.Functions.Algebra
             // It cannot cost an answer: splitting returns null unless *every* term integrates, so
             // a sum that only comes out whole still falls through to by parts below. Expansion is
             // bounded by MaxExpansionTermCount, which returns null rather than building the terms.
+            // A root of exponentials of both signs is under `u = e^x` a root of a quartic that
+            // nothing rationalises, and under the hyperbolic tangent the hyperbolic functions
+            // are the shapes their trigonometric twins are under the tangent. Before the
+            // expanding split, which wrote `tanh(x)^5` as six terms and sent each through the
+            // substitution on its own; and before the exponential substitution, which
+            // answered Timofeev's hyperbolic 560 in a minute through Euler's substitution on
+            // that quartic.
+            if ((answer = IndefiniteIntegralSolver.SolveByHyperbolicTangentSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { }) return answer;
             // The half-angle substitution goes *after* linearity, and that is not a preference.
             // It fires on anything built from sines and cosines, and it answers `cos(x) + 1` with
