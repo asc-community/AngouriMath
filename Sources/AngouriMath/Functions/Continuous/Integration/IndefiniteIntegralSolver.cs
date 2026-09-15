@@ -9185,6 +9185,95 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A quotient whose numerator is a constant multiple of its denominator's derivative,
+        /// with a symbolic exponent about: <c>c ln(D)</c>, the constant read off the terms.
+        /// </summary>
+        /// <remarks>
+        /// The general substitution answers <c>(x^2 - 1)/(x^3 - 3x)</c> under <c>u = x^3 - 3x</c>,
+        /// where the one-level simplification of the quotient by <c>du/dx</c> divides the two
+        /// polynomials; with a symbol in the exponent -- Timofeev's
+        /// <c>(x^(n - 1) - 1)/(x^n - n x)</c> -- the derivative is written <c>x^n n / x - n</c>,
+        /// and neither that quotient nor <c>(x^(n-1) - 1)/(n x^(n-1) - n)</c> is anything the
+        /// simplifier reduces. So the numerator and the derivative are read term by term as
+        /// a coefficient times a power of <c>x</c>, the powers of <c>x</c> in a term merged
+        /// into one, the terms matched by exponent, and the coefficients' quotients asked to
+        /// be one constant. https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveALogarithmicDerivativeWithASymbolicExponent(Entity expr, Entity.Variable x)
+        {
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator) || !denominator.ContainsNode(x))
+                return null;
+            if (!expr.Nodes.Any(node => node is Powf(var @base, var exponent) && @base.ContainsNode(x) && !exponent.ContainsNode(x) && exponent.Vars.Any()))
+                return null;
+            // Over a whole power of the denominator, `c D' / D^k`, the answer is a power too.
+            var wholePower = 1;
+            if (denominator is Powf(var powered, Number.Integer { EInteger.Sign: > 0 } k) && k.EInteger.CanFitInInt32() && k != Number.Integer.One)
+            {
+                denominator = powered;
+                wholePower = k.EInteger.ToInt32Checked();
+            }
+            var above = TermsAsPowersOfX(numerator, x);
+            var derivative = TermsAsPowersOfX(denominator.Differentiate(x), x);
+            if (above is null || derivative is null || above.Count != derivative.Count)
+                return null;
+            Entity? constant = null;
+            foreach (var (coefficient, exponent) in above)
+            {
+                var matching = derivative.Where(term => Bare((term.Exponent - exponent).Simplify()) == Number.Integer.Zero).ToList();
+                if (matching.Count != 1)
+                    return null;
+                var ratio = Bare((coefficient / matching[0].Coefficient).Simplify());
+                if (ratio.ContainsNode(x) || ratio.Nodes.Any(node => node == MathS.NaN))
+                    return null;
+                if (constant is null)
+                    constant = ratio;
+                else if (Bare((constant - ratio).Simplify()) != Number.Integer.Zero)
+                    return null;
+            }
+            if (constant is null)
+                return null;
+            return wholePower == 1
+                ? constant * MathS.Ln(denominator)
+                : constant / (1 - wholePower) * MathS.Pow(denominator, 1 - wholePower);
+
+            // A quotient of symbols simplifies under `provided not n = 0`, the integrand's
+            // own condition; the value is what is compared.
+            static Entity Bare(Entity simplified) => simplified is Providedf(var inner, _) ? inner : simplified;
+
+            // Each term of a sum as a coefficient free of x times one power of x, the powers
+            // of x in the term merged; null where a term holds x elsewhere.
+            static List<(Entity Coefficient, Entity Exponent)>? TermsAsPowersOfX(Entity expr, Entity.Variable x)
+            {
+                // The derivative arrives under `provided not x = 0`, a condition of the
+                // integrand's own domain, and the terms are read beneath it.
+                if (expr is Providedf(var bare, _))
+                    expr = bare;
+                var terms = new List<(Entity, Entity)>();
+                foreach (var term in Sumf.LinearChildren(expr))
+                {
+                    var (numerator, denominator) = Functions.SingleQuotient.Of(term);
+                    Entity exponent = Number.Integer.Zero;
+                    Entity coefficient = Number.Integer.One;
+                    foreach (var (side, underneath) in new[] { (numerator, false), (denominator, true) })
+                        foreach (var factor in Mulf.LinearChildren(side))
+                        {
+                            Entity? power = factor == x ? Number.Integer.One : factor is Powf(var @base, var e) && @base == x ? e : null;
+                            if (power is null)
+                            {
+                                if (factor.ContainsNode(x))
+                                    return null;
+                                coefficient = underneath ? coefficient / factor : coefficient * factor;
+                            }
+                            else
+                                exponent = underneath ? exponent - power : exponent + power;
+                        }
+                    terms.Add((coefficient, exponent.InnerSimplified));
+                }
+                return terms;
+            }
+        }
+
+        /// <summary>
         /// Attempts to solve an integral using u-substitution.
         /// Looks for patterns where f(g(x)) * g'(x) can be integrated as F(g(x)).
         /// </summary>

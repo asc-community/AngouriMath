@@ -498,6 +498,9 @@ namespace AngouriMath.Functions.Algebra
             // it combines; at the top only, since it lands on the chain.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAPowerOfAQuotientApart(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // A logarithmic derivative the substitution above could not read for a symbol in
+            // an exponent: `(x^(n-1) - 1)/(x^n - n x)`.
+            if ((answer = IndefiniteIntegralSolver.SolveALogarithmicDerivativeWithASymbolicExponent(expr, x)) is { }) return answer;
             // After the general substitution rather than inside it, because the general one
             // divides by du/dx and asks what is left, and that question loses the shape here:
             // sqrt(tan(x)) over the derivative of sqrt(tan(x)) simplifies to sin(2x), in which
