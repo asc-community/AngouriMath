@@ -211,5 +211,59 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("e^(x^2)/x + 2*e^(x^2)*x*ln(x) + (-2 + ln(x))/(x + ln(x)^2)^2 + (1 + 1/x + 2*ln(x)/x)/(x + ln(x)^2)")]
         [InlineData("e^(x^2)/x + 2*e^(x^2)*x*ln(x)")]
         public void ATowerOfExponentialsAndLogarithms(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// <see cref="DifferentiatesBack"/> with every symbol but <c>x</c> pinned to a distinct
+        /// value off the integers, so that a symbolic base or slope is a number on both sides.
+        /// </summary>
+        private static void DifferentiatesBackWithParametersPinned(string integrand, double[] points)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity();
+            var pinned = 0;
+            foreach (var parameter in original.Vars)
+            {
+                if (parameter.Name == "x")
+                    continue;
+                var value = new[] { 1.3, 2.1, 0.7, 1.9, 3.1, 0.4 }[pinned++ % 6] + pinned / 6;
+                derivative = derivative.Substitute(parameter, value);
+                original = original.Substitute(parameter, value);
+            }
+            var compared = 0;
+            foreach (var at in points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                if (got.IsNaN || want.IsNaN)
+                    continue;
+                compared++;
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+            Assert.True(compared >= 3, $"only {compared} of {points.Length} points were comparable for {integrand}");
+        }
+
+        /// <summary>
+        /// A base other than <c>e</c>: <c>F^u</c> is read as <c>e^(u ln F)</c>, and the identity
+        /// has <c>ln F</c> -- or <c>ln 2</c>, a number that is not exact -- in every coefficient,
+        /// which the elimination treats as a symbol of its own; both were declined where
+        /// <c>e^(k u)</c> is answered. The answer is written back in the base: Rubi's
+        /// <c>F^(a + b x + c x^3)(b + 3 c x^2)</c> is <c>F^(a + b x + c x^3)/ln F</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("F^(a + b*x + c*x^3)*(b + 3*c*x^2)", "F ^ (a + b * x + c * x ^ 3)")]
+        [InlineData("2^(x + c*x^3)*(1 + 3*c*x^2)", "2 ^ (x + c * x ^ 3)")]
+        [InlineData("f^(a + b/x)/x^4", "f ^ (a + b / x)")]
+        [InlineData("2^(1/x)/x^4", "2 ^ (1 / x)")]
+        public void ABaseOtherThanE(string integrand, string writtenInTheBase)
+        {
+            DifferentiatesBackWithParametersPinned(integrand, Points);
+            Assert.Contains(writtenInTheBase, integrand.ToEntity().Integrate("x").Stringize());
+        }
     }
 }

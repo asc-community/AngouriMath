@@ -5293,7 +5293,26 @@ namespace AngouriMath.Functions.Algebra
                     return null;
                 rest += r;
             }
-            return exponent is null ? null : IntegrateByAnsatz(exponent, rest, x);
+            return exponent is null || IntegrateByAnsatz(exponent, rest, x) is not { } answer ? null : InTheBaseWritten(answer, expr, x);
+        }
+
+        /// <summary>
+        /// <paramref name="answer"/> with the exponential written in the base the integrand
+        /// wrote it in: the ansatz reads <c>F^u</c> as <c>e^(u ln F)</c> and builds its answer
+        /// on that, and <c>F^(a + b x + c x^3)/ln(F)</c> is the answer to give for Rubi's
+        /// <c>F^(a + b x + c x^3)(b + 3 c x^2)</c>, not <c>e^((a + b x + c x^3) ln F)/ln(F)</c>.
+        /// </summary>
+        private static Entity InTheBaseWritten(Entity answer, Entity integrand, Entity.Variable x)
+        {
+            var written = new Dictionary<Entity, Entity>();
+            foreach (var node in integrand.Nodes)
+                if (node is Powf(var @base, var power) && @base != MathS.e && !@base.ContainsNode(x) && power.ContainsNode(x) && power is not Number)
+                {
+                    written[(power * MathS.Ln(@base)).InnerSimplified] = node;
+                    written[(-power * MathS.Ln(@base)).InnerSimplified] = MathS.Pow(@base, -power);
+                }
+            return written.Count == 0 ? answer
+                : answer.Replace(node => node is Powf(var e, var exponent) && e == MathS.e && written.TryGetValue(exponent, out var asWritten) ? asWritten : node);
         }
 
         /// <summary>
@@ -5579,6 +5598,212 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>The largest power of the logarithm the tower ansatz reads or tries.</summary>
         private const int MaximumTowerDegree = 4;
+
+        /// <summary>
+        /// A product of powers times a sum that is the derivative of the product with some of
+        /// the powers raised by one: <c>e^x x^2 ln(x)^2 (3 + (3 + x) ln(x))</c> is
+        /// <c>(e^x x^3 ln(x)^3)'</c>, and Rubi's
+        /// <c>F^(c (a + b x)) x^m ln(d x)^n (p + p n + p (1 + m + b c x ln F) ln(d x))</c> is
+        /// <c>(p F^(c (a + b x)) x^(m + 1) ln(d x)^(n + 1))'</c>, for symbols <c>m</c> and <c>n</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The product rule on <c>G = K prod f_i^(e_i)</c> gives <c>G' = G sum e_i f_i'/f_i</c>,
+        /// so an integrand of that shape is a product of the same powers, each lowered where
+        /// its base's derivative divides it, times a sum. Read the other way: the sum in the
+        /// integrand names the powers to raise. Every subset of the powers with a base holding
+        /// <c>x</c> and an exponent free of it is tried raised by one, the exponentials kept,
+        /// and the integrand divided by the candidate's derivative must be a constant: decided
+        /// at sampled points first, with every symbol pinned, and where it is, the constant is
+        /// the quotient of the two sums simplified -- <c>p</c> above -- and the answer is checked
+        /// by differentiating it back. Nothing else reads a symbolic exponent: the Risch-Norman
+        /// ansatz wants whole powers of its monomials, and splitting the sum loses it, since
+        /// <c>F^(c(a + bx)) x^m ln(dx)^n</c> on its own is not elementary.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAsTheDerivativeOfAProductOfPowers(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            Entity constant = Number.Integer.One;
+            Entity? bracket = null;
+            var raisable = new List<(Entity Base, Entity Exponent)>();
+            var logarithmicDerivativesKept = new List<Entity>();
+            Entity kept = Number.Integer.One;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (factor is Sumf or Minusf)
+                {
+                    if (bracket is not null || underneath)
+                        return null;
+                    bracket = factor;
+                    continue;
+                }
+                if (factor is Powf(var @base, var exponent) && !exponent.ContainsNode(x))
+                {
+                    raisable.Add((@base, underneath ? (-exponent).InnerSimplified : exponent));
+                    continue;
+                }
+                if (factor is Powf(var constantBase, var power) && !constantBase.ContainsNode(x))
+                {
+                    var h = constantBase == MathS.e ? power : power * MathS.Ln(constantBase);
+                    var derivative = Functions.PartialFractions.Bare(h.Differentiate(x).InnerSimplified);
+                    logarithmicDerivativesKept.Add(underneath ? -derivative : derivative);
+                    kept = underneath ? kept / factor : kept * factor;
+                    continue;
+                }
+                raisable.Add((factor, underneath ? Number.Integer.MinusOne : Number.Integer.One));
+            }
+            if (bracket is null || raisable.Count == 0 || raisable.Count > 4)
+                return null;
+            for (var subset = 1; subset < 1 << raisable.Count; subset++)
+            {
+                Entity candidate = kept;
+                Entity productOfRaisedBases = Number.Integer.One;
+                Entity logarithmicDerivative = Number.Integer.Zero;
+                foreach (var derivative in logarithmicDerivativesKept)
+                    logarithmicDerivative += derivative;
+                for (var i = 0; i < raisable.Count; i++)
+                {
+                    var (@base, exponent) = raisable[i];
+                    var raised = (subset & (1 << i)) != 0;
+                    var newExponent = raised ? (exponent + 1).InnerSimplified : exponent;
+                    if (raised)
+                        productOfRaisedBases *= @base;
+                    if (newExponent.Evaled is Number.Complex { IsZero: true })
+                        continue;   // a power raised to nothing: not a factor of the candidate
+                    candidate *= newExponent == Number.Integer.One ? @base : MathS.Pow(@base, newExponent);
+                    logarithmicDerivative += newExponent * @base.Differentiate(x) / @base;
+                }
+                if (candidate == kept)
+                    continue;
+                // The bracket the candidate's derivative has, against the integrand's: the
+                // candidate is the integrand's powers with the raised bases in besides, so
+                // G' is (integrand without its bracket) (product of raised bases) (sum of the
+                // logarithmic derivatives), and the constant is the quotient of the brackets.
+                var bracketOfTheDerivative = Functions.PartialFractions.Bare((productOfRaisedBases * logarithmicDerivative).InnerSimplified);
+                if (!AreProportionalAtSampledPoints(bracket, bracketOfTheDerivative, x))
+                    continue;
+                // The constant is the quotient of one monomial's coefficients, the two
+                // brackets read as polynomials in x and in the transcendental atoms holding
+                // it -- `ln(d x)` -- each an indeterminate; or, where they do not read so,
+                // the quotient of the brackets simplified.
+                if (!TryReadTheRatioOfBrackets(bracket, bracketOfTheDerivative, x, out var k))
+                {
+                    k = Functions.SingleQuotient.Combine(bracket / bracketOfTheDerivative).Simplify();
+                    if (k is Providedf(var inner, _))
+                        k = inner;
+                }
+                k = Functions.PartialFractions.Bare((constant * k).InnerSimplified);
+                if (k.ContainsNode(x) || k.Nodes.Any(node => node == MathS.NaN))
+                    continue;
+                var answer = (k * candidate).InnerSimplified;
+                bool holds;
+                using (MathS.Settings.DowncastingEnabled.Set(false))
+                    holds = Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x);
+                if (holds)
+                    return answer;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// The constant <c>k</c> with <paramref name="left"/> equal to <c>k</c> times
+        /// <paramref name="right"/>, read off one monomial with both written as polynomials
+        /// in <paramref name="x"/> and in every atom holding it -- a logarithm, an exponential
+        /// -- as an indeterminate; false where either does not read so, or the monomial is
+        /// missing from <paramref name="left"/>. Whether the constant holds for every
+        /// monomial is the caller's to check.
+        /// </summary>
+        private static bool TryReadTheRatioOfBrackets(Entity left, Entity right, Entity.Variable x, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? k)
+        {
+            k = null;
+            var atoms = new List<(Entity Atom, Entity.Variable Symbol)>();
+            Entity everything = left + right;
+            Entity InAtoms(Entity entry) => entry.Replace(node =>
+            {
+                if (!node.ContainsNode(x) || node == x || node is Sumf or Minusf or Mulf or Divf || node is Powf(_, Number.Integer { EInteger.Sign: >= 0 }))
+                    return node;
+                foreach (var (atom, symbol) in atoms)
+                    if (atom == node)
+                        return symbol;
+                var fresh = Variable.CreateUnique(everything, "t_atom");
+                atoms.Add((node, fresh));
+                everything += fresh;
+                return fresh;
+            });
+            var leftInAtoms = InAtoms(left);
+            var rightInAtoms = InAtoms(right);
+            var variables = new List<Entity.Variable> { x };
+            variables.AddRange(atoms.Select(pair => pair.Symbol));
+            if (!TryReadInAll(leftInAtoms, variables, out var leftRead) || !TryReadInAll(rightInAtoms, variables, out var rightRead))
+                return false;
+            // A monomial whose coefficient on the right is a number first, so that the
+            // constant is the left coefficient over it and not a quotient of symbols to be
+            // cancelled; the quotient is simplified either way, and it is small.
+            foreach (var numbersFirst in new[] { true, false })
+                foreach (var pair in rightRead)
+                {
+                    if (pair.Value.Evaled is Number.Complex { IsZero: true } || numbersFirst != pair.Value.Evaled is Number.Rational)
+                        continue;
+                    if (!leftRead.TryGetValue(pair.Key, out var above))
+                        return false;
+                    k = Functions.PartialFractions.Bare((above / pair.Value).Simplify());
+                    return true;
+                }
+            return false;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="left"/> is a constant multiple of <paramref name="right"/>,
+        /// decided at sampled points with every symbol pinned; false where fewer than two
+        /// points evaluate.
+        /// </summary>
+        private static bool AreProportionalAtSampledPoints(Entity left, Entity right, Entity.Variable x)
+        {
+            // Sampled in decimals: a pinned symbol is a small rational, and a symbolic
+            // exponent pinned so makes `(F^(g (e + f x)))^n` an exact rational power whose
+            // numerator has more digits than there is time for.
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+            var parameters = left.Vars.Concat(right.Vars).Where(v => v != x).Distinct().ToList();
+            var pinned = 0;
+            foreach (var parameter in parameters)
+            {
+                var fraction = (pinned % 3) switch { 0 => "1.37", 1 => "2.71", _ => "0.83" };
+                var value = Number.Real.Create(EDecimal.FromString(fraction).Add(EDecimal.FromInt32(pinned)));
+                left = left.Substitute(parameter, value);
+                right = right.Substitute(parameter, value);
+                pinned++;
+            }
+            Number.Complex? ratio = null;
+            var compared = 0;
+            foreach (var at in new[] { "0.29", "1.43", "3.17", "0.61" })
+            {
+                var point = Number.Real.Create(EDecimal.FromString(at));
+                var l = left.Substitute(x, point).EvalNumerical();
+                var r = right.Substitute(x, point).EvalNumerical();
+                if (l.IsNaN || r.IsNaN || r.Abs().EDecimal.CompareTo(EDecimal.FromString("1e-30")) < 0)
+                    continue;
+                var here = l / r;
+                if (ratio is null)
+                    ratio = here;
+                else
+                {
+                    var difference = (here - ratio).Abs().EDecimal;
+                    var scale = EDecimal.Max(EDecimal.One, ratio.Abs().EDecimal);
+                    if (difference.CompareTo(scale.Multiply(EDecimal.FromString("1e-9"))) > 0)
+                        return false;
+                }
+                compared++;
+            }
+            return compared >= 2;
+        }
 
         /// <summary>
         /// A rational function of <c>x</c> and of exponentials and logarithms built over it,
@@ -8395,10 +8620,17 @@ namespace AngouriMath.Functions.Algebra
             // for the half.
             // Any one base free of x, not only e: Timofeev's `1/sqrt(a^(2x) - 1)` is
             // `1/(u ln(a) sqrt(u^2 - 1))` under `u = a^x`, with `dx = du/(u ln a)`.
+            // Numeric bases that are whole powers of one base are written in it first:
+            // Rubi's `2^x/sqrt(a + b/4^x)` is `2^x/sqrt(a + b/2^(2x))`, and rational in `u = 2^x`.
+            expr = WithNumericBasesUnified(expr, x);
+            // And the slopes need only be rational multiples of one another: with a symbol
+            // for the slope, `F^(c + d x)` beside `F^(2c + 2dx)`, the base is `F^(d x)` and
+            // `dx = du/(d u ln F)`. Rubi's `F^(c + d x) x/(a + b F^(c + d x))^2`.
             var slopes = new List<ERational>();
             var offsets = new Dictionary<Entity, (ERational Slope, Entity Offset)>();
             var underARadical = new HashSet<Entity>();
             Entity? commonBase = null;
+            Entity? slopeUnit = null;
             foreach (var node in expr.Nodes)
             {
                 if (node is Powf(_, Number.Rational fractional) && fractional is not Number.Integer)
@@ -8414,16 +8646,32 @@ namespace AngouriMath.Functions.Algebra
                     return null;
                 if (!TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slope, out var offset))
                     return null;   // not linear in x, so not a power of one exponential
-                if (slope.Evaled is not Number.Rational rational || rational.ERational.IsZero)
-                    return null;
-                slopes.Add(rational.ERational);
-                offsets[node] = (rational.ERational, offset);
+                ERational multiple;
+                if (slope.Evaled is Number.Rational rational)
+                {
+                    if (rational.ERational.IsZero || slopeUnit is not null)
+                        return null;
+                    multiple = rational.ERational;
+                }
+                else
+                {
+                    if (slopes.Count > 0 && slopeUnit is null)
+                        return null;
+                    slopeUnit ??= slope;
+                    if (Functions.PartialFractions.Bare((slope / slopeUnit).Simplify()).Evaled is not Number.Rational ratio || ratio.ERational.IsZero)
+                        return null;
+                    multiple = ratio.ERational;
+                }
+                slopes.Add(multiple);
+                offsets[node] = (multiple, offset);
             }
             if (slopes.Count == 0 || commonBase is null)
                 return null;
             if (commonBase != MathS.e && (commonBase.Evaled is Number.Complex and not Number.Real || commonBase.Evaled is Number.Real { IsNegative: true } || TreeAnalyzer.IsZero(commonBase)))
                 return null;   // a base that is not a positive real is not an exponential of the kind substituted for
             var logarithmOfTheBase = commonBase == MathS.e ? Number.Integer.One : MathS.Ln(commonBase);
+            if (slopeUnit is not null)
+                logarithmOfTheBase = (logarithmOfTheBase * slopeUnit).InnerSimplified;
 
             var numerators = EInteger.Zero;
             var denominators = EInteger.One;
@@ -8463,8 +8711,12 @@ namespace AngouriMath.Functions.Algebra
             // u/(u(u^2 + 1)) -- which the rational integrator declines although it answers
             // 1/(u^2 + 1) at once. Simplifying first instead leaves the nesting for Combine to
             // flatten and the common factor never meets a cancellation.
+            // The logarithm of the base stays outside: simplified into the quotient,
+            // `1/((a + b u)^2 ln F)` is a quadratic below the bar with `ln F` in every
+            // coefficient, and the symbolic quadratic rule answers that as a piecewise on
+            // whether `b^2 ln F` is zero, where `1/(a + b u)^2` is `-1/(b (a + b u))`.
             var integrand = Functions.SingleQuotient.Combine(
-                rewritten / (Number.Rational.Create(k) * u * logarithmOfTheBase)).Simplify();
+                rewritten / (Number.Rational.Create(k) * u)).Simplify();
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
             // A whole power of a product is written as the product of the powers: the
@@ -8509,9 +8761,129 @@ namespace AngouriMath.Functions.Algebra
 
             Entity? Finished(Entity result)
             {
-                var answer = result.Substitute(u, MathS.Pow(commonBase, (Number.Rational.Create(k) * x).InnerSimplified));
+                var rate = slopeUnit is null ? Number.Rational.Create(k)
+                    : Functions.PartialFractions.Bare((Number.Rational.Create(k) * slopeUnit).Simplify());
+                var answer = result.Substitute(u, MathS.Pow(commonBase, (rate * x).InnerSimplified));
+                if (logarithmOfTheBase != Number.Integer.One)
+                    answer /= logarithmOfTheBase;
                 return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
             }
+        }
+
+        /// <summary>
+        /// A product with a whole negative power of a polynomial in <paramref name="x"/> of
+        /// two or more terms among its factors, with every such power written below the bar
+        /// and asked again as a question of its own: <c>u^2 (a u^2 + b)^(-3)</c> as
+        /// <c>u^2/(a u^2 + b)^3</c>. The gathering of powers on the way into the chain writes
+        /// <c>u^3/((a u^2 + b)^3 u)</c> -- the exponential substitution's quotient for Rubi's
+        /// <c>1/(b/f^x + a f^x)^3</c> -- in the first spelling, a product with a power in it,
+        /// which no rational rule reads, where the second is a quotient every one of them
+        /// reads; the symbolic quadratic was declined for it. A power of the variable alone
+        /// is left as it is, since that spelling is read, and <see cref="SolveAsPolynomialTerm"/>
+        /// writes <c>1/x^n</c> back into it; and a lone power, <c>(a u^2 + b)^(-3)</c>, is the
+        /// closed rules' as written. Where the quotient was the question one level up -- the
+        /// constant-over-a-power branch of <see cref="SolveAsPolynomialTerm"/> asks the power
+        /// -- the cycle guard declines it and the chain goes on. A rational function of
+        /// <paramref name="x"/> only: the rewrite is another pass through the chain, and for
+        /// anything else it was a search that found nothing the spelling had hidden.
+        /// </summary>
+        internal static Entity? SolveWithPolynomialPowersBelowTheBar(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (expr is not (Mulf or Divf) || !IsARationalFunction(expr, x))
+                return null;
+            var rewritten = WithPolynomialPowersBelowTheBar(expr, x);
+            return rewritten == expr ? null : Integration.ComputeAsAQuestionOfItsOwn(rewritten, x, integrateByParts);
+        }
+
+        /// <summary>Whether every node of <paramref name="expr"/> holding <paramref name="x"/> is a sum, a product, a quotient or a whole power.</summary>
+        private static bool IsARationalFunction(Entity expr, Entity.Variable x)
+            => expr.Nodes.All(node => !node.ContainsNode(x) || node is Variable or Sumf or Minusf or Mulf or Divf || node is Powf(_, Number.Integer));
+
+        /// <summary>
+        /// <paramref name="expr"/> with every whole negative power of a polynomial in
+        /// <paramref name="x"/> of two or more terms among its factors written below the bar,
+        /// or <paramref name="expr"/> itself where there is none.
+        /// </summary>
+        private static Entity WithPolynomialPowersBelowTheBar(Entity expr, Entity.Variable x)
+        {
+            var (above, below) = expr is Divf(var over, var under) ? (over, under) : (expr, (Entity)Number.Integer.One);
+            Entity kept = Number.Integer.One;
+            var moved = false;
+            foreach (var factor in Mulf.LinearChildren(above))
+            {
+                if (factor is Powf(var @base, Number.Integer { EInteger.Sign: < 0 } power) && @base.ContainsNode(x)
+                    && TreeAnalyzer.TryGetPolynomial(@base, x, out var read) && read.Count >= 2)
+                {
+                    below = below == Number.Integer.One ? MathS.Pow(@base, -power) : below * MathS.Pow(@base, -power);
+                    moved = true;
+                }
+                else
+                    kept = kept == Number.Integer.One ? factor : kept * factor;
+            }
+            return moved ? kept / below : expr;
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> with every exponential of <paramref name="x"/> whose base is a
+        /// positive rational written in one base, where the bases are whole powers of one:
+        /// <c>4^x</c> beside <c>2^x</c> is <c>2^(2x)</c>, and <c>2^x</c> beside <c>sqrt(2)^x</c>
+        /// is <c>sqrt(2)^(2x)</c>. The common base is the smallest of them above one or a whole
+        /// root of it; where no such base exists, or the bases are not all rationals,
+        /// <paramref name="expr"/> as it came.
+        /// </summary>
+        private static Entity WithNumericBasesUnified(Entity expr, Entity.Variable x)
+        {
+            var bases = new List<ERational>();
+            foreach (var node in expr.Nodes)
+                if (node is Powf(var @base, var exponent) && !@base.ContainsNode(x) && exponent.ContainsNode(x) && exponent is not Number)
+                {
+                    if (@base.Evaled is not Number.Rational rational || rational.ERational.Sign <= 0 || rational.ERational.Equals(ERational.One))
+                        return expr;
+                    var written = rational.ERational.ToLowestTerms();
+                    if (!bases.Contains(written))
+                        bases.Add(written);
+                }
+            if (bases.Count < 2)
+                return expr;
+            // Every base above one, so that the powers are whole and positive where they exist.
+            var aboveOne = bases.Select(b => b.CompareTo(ERational.One) < 0 ? ERational.One.Divide(b) : b).ToList();
+            var smallest = aboveOne.OrderBy(b => b).First();
+            Entity? common = null;
+            var powers = new Dictionary<ERational, int>();
+            for (var root = 1; root <= 4 && common is null; root++)
+            {
+                var candidate = MathS.Pow(Number.Rational.Create(smallest), Number.Rational.Create(1, root)).Evaled;
+                if (candidate is not Number.Rational candidateRational)
+                    continue;
+                powers.Clear();
+                var all = true;
+                foreach (var @base in bases)
+                {
+                    var power = 0;
+                    Entity accumulated = Number.Integer.One;
+                    while (power < 64 && ((Number.Rational)accumulated).ERational.CompareTo(@base.CompareTo(ERational.One) < 0 ? ERational.One.Divide(@base) : @base) < 0)
+                    {
+                        accumulated = (accumulated * candidateRational).Evaled;
+                        power++;
+                    }
+                    var matches = ((Number.Rational)accumulated).ERational.Equals(@base.CompareTo(ERational.One) < 0 ? ERational.One.Divide(@base) : @base);
+                    if (!matches)
+                    {
+                        all = false;
+                        break;
+                    }
+                    powers[@base] = @base.CompareTo(ERational.One) < 0 ? -power : power;
+                }
+                if (all)
+                    common = candidateRational;
+            }
+            if (common is null)
+                return expr;
+            return expr.Replace(node =>
+                node is Powf(var @base, var exponent) && !@base.ContainsNode(x) && exponent.ContainsNode(x) && exponent is not Number
+                && @base.Evaled is Number.Rational rational && powers.TryGetValue(rational.ERational.ToLowestTerms(), out var power)
+                    ? MathS.Pow(common, power == 1 ? exponent : (Number.Integer.Create(power) * exponent).InnerSimplified)
+                    : node);
         }
 
         /// <summary>

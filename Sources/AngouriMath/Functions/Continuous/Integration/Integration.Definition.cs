@@ -473,6 +473,10 @@ namespace AngouriMath.Functions.Algebra
             // degree-8 polynomial by expanding, both right and only one worth reading. Three
             // tests pinned exactly that and caught this when the split was put in front of the
             // substitution wholesale. The expanding call stays where it was, below.
+            // A product of powers times a sum that is the derivative of the product with some
+            // of the powers raised by one -- `e^x x^2 ln(x)^2 (3 + (3 + x) ln(x))` -- read off
+            // the sum, for symbolic exponents too. Before the split, which loses it.
+            if ((answer = IndefiniteIntegralSolver.SolveAsTheDerivativeOfAProductOfPowers(expr, x)) is { }) return answer;
             // A rational function of x and of a tower of exponentials and logarithms over it,
             // by the Risch-Norman ansatz: a rational function of the same plus logarithms of
             // the denominator's factors, the coefficients unknown and solved for. Before the
@@ -551,6 +555,17 @@ namespace AngouriMath.Functions.Algebra
             // it; this one is for the rest.
             if ((answer = IndefiniteIntegralSolver.SolveByHomogeneousTrigonometricSubstitution(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
+            // A whole negative power of a polynomial of several terms among the factors,
+            // written below the bar and asked again: the gathering on the way in writes
+            // `u^3/((a u^2 + b)^3 u)` as `u^2 (a u^2 + b)^(-3)`, a product with a power in it
+            // that the symbolic quadratic rule does not read, where `u^2/(a u^2 + b)^3` is
+            // answered at once. After the partial fractions, which read the product spelling
+            // and cancel first: Timofeev's `sin(x)^6 tan(x)/cos(2x)^(3/4)` under its root is
+            // a product whose bracket cancels the power, a line there and a page as a
+            // quotient over the quartic asked from the top; and after the substitution
+            // search, whose `u/(a u^2 + b)^2` is `-1/(2a (a u^2 + b))` where the symbolic
+            // quadratic answers with a piecewise on the discriminant.
+            if ((answer = IndefiniteIntegralSolver.SolveWithPolynomialPowersBelowTheBar(expr, x, integrateByParts)) is { }) return answer;
             // What the rational splits could not take apart: a denominator irreducible over
             // the rationals past degree two, or one whose real factors carry the roots of a
             // cubic. The residues decide the field the answer needs, not the roots of the
