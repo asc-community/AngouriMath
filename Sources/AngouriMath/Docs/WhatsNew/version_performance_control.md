@@ -256,6 +256,40 @@ cent — its measured run-to-run spread on mean time is up to 51.8%. A move of 8
 outside that band by a wide margin and agrees in sign and rough size with the allocation column
 beside it. The small rows from the same run are still not worth reading, and are not quoted.
 
+## The 2074th: the logarithm and the arctangent reduced by a table, the cosine from the sine, the square root an integer one
+
+After the 2072nd the remaining factor to mpmath was the term count: eighty artanh terms for a
+logarithm at a hundred digits, forty-seven for an arctangent after three square-root
+halvings, and two series -- the sine's and the cosine's -- for either. The logarithm's
+mantissa, already within `[1/sqrt 2, sqrt 2]`, is divided by the nearest `1 + j/64`, whose
+logarithm the constant cache holds (built outward from `ln 1 = 0` when first asked, one short
+series a step), so the series runs on a quotient within 1/128 of one: twenty-five terms. The
+arctangent's argument, within `[0, 1]`, is brought within 1/128 of zero by the nearest `j/64`
+the same way, `arctan x = arctan c + arctan((x - c)/(1 + xc))`: thirty terms and no square
+root. The cosine at the sine's reduced argument, which is within a twentieth of zero, is
+`sqrt(1 - sin^2)` and cancels nothing; the other way round is what lost half the digits in the
+2050th. And the square root of a decimal is the integer square root of its mantissa padded to
+twice the digits, with a sticky digit so the rounding to the context is the correct one in
+every mode, as PeterO's is -- Newton from the root of the top half of the bits, three
+divisions at the full width where a power of two above the root took one per bit of the
+exponent. The hundred-digit values are the ones pinned before, to the last digit.
+
+| benchmark | 2073rd | 2074th | allocation | time |
+|---|--:|--:|--:|--:|
+| `EvalTranscendentalFresh` | 59,136 | **34,608** | **−41.5%** | 33 → **16 µs** |
+| `EvalTrig` | 82,104 | **69,792** | **−15.0%** | 37 → **32 µs** |
+| `EvalTrigPrecise` | 525,289 | **336,360** | **−36.0%** | 617 → **406 µs** |
+| `SolveEasy` | 981,996 | **783,622** | **−20.2%** | 491 → **390 µs** |
+| `SolveHard` | 11,708,080 | **10,053,640** | **−14.1%** | 68 → 70 ms |
+| every other entry | | | within 1.3% | |
+
+Bytes allocated per call, same machine, both columns by the gate in one session; the gate's
+baseline was taken from this run. Alone, one probe on both builds: at a hundred digits `ln`
+18.0 → 8.4 µs, `arctan` 24.6 → 7.7, `sin` 15.2 → 13.1; at five hundred `ln` 777 → 241 µs,
+`sin` 228 → 141, and the square root 41 → 22 (PeterO's against the integer one); at two
+thousand digits the square root 441 → 174 µs. mpmath at a hundred digits is `ln` 4.5, `arctan`
+3.9, `sin` 5.6.
+
 ## The 2073rd: the rational pre-check confirms a maybe, and reads two thousand digits
 
 `EvalTrig` is `sin 1 + cos 1 + tan 1`, and after the 2072nd fifty of its eighty-three

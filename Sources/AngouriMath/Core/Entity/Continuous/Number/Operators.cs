@@ -320,7 +320,7 @@ namespace AngouriMath
                 else
                 {
                     var ratio = small.Divide(large, context);
-                    return ratio.MultiplyAndAdd(ratio, EDecimal.One, context).Sqrt(context).Multiply(large, context);
+                    return ratio.MultiplyAndAdd(ratio, EDecimal.One, context).SqrtByIntegerRoot(context).Multiply(large, context);
                 }
             }
 
@@ -332,8 +332,8 @@ namespace AngouriMath
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,7dc9c2ee4f99814a
                 if (num is Real { EDecimal: var real })
                     if (real.IsNegative)
-                        return Complex.Create(0, real.Negate().Sqrt(context));
-                    else return Real.Create(real.Sqrt(context));
+                        return Complex.Create(0, real.Negate().SqrtByIntegerRoot(context));
+                    else return Real.Create(real.SqrtByIntegerRoot(context));
                 else
                 {
 
@@ -369,12 +369,12 @@ namespace AngouriMath
                     EDecimal x, y;
                     if (!re.IsNegative)
                     {
-                        x = Hypot(re, im, context).Add(re, context).Divide(2, context).Sqrt(context);
+                        x = Hypot(re, im, context).Add(re, context).Divide(2, context).SqrtByIntegerRoot(context);
                         y = im.Divide(x.Multiply(2, context), context);
                     }
                     else
                     {
-                        y = Hypot(re, im, context).Subtract(re, context).Divide(2, context).Sqrt(context);
+                        y = Hypot(re, im, context).Subtract(re, context).Divide(2, context).SqrtByIntegerRoot(context);
                         if (im.IsNegative) y = -y;
                         x = im.Divide(y.Multiply(2, context), context);
                     }
@@ -451,7 +451,7 @@ namespace AngouriMath
                     && halfPower.Denominator.Equals(EInteger.FromInt32(2)) && halfPower.Numerator.Abs().CompareTo(EInteger.FromInt32(1 << 20)) <= 0)
                 {
                     var halfContext = MathS.Settings.DecimalPrecisionContext;
-                    var root = rootBase.Sqrt(halfContext);
+                    var root = rootBase.SqrtByIntegerRoot(halfContext);
                     var n = halfPower.Numerator.Abs().ToInt32Checked();
                     var raised = n == 1 ? root : root.Pow(n, halfContext);
                     return Real.Create(halfPower.Numerator.Sign < 0 ? EDecimal.One.Divide(raised, halfContext) : raised);
@@ -737,11 +737,11 @@ namespace AngouriMath
                 var (x, y) = (num.RealPart.EDecimal, num.ImaginaryPart.EDecimal);
                 var xp1 = x.Increment();
                 var xm1 = x.Decrement();
-                var rho = xp1.MultiplyAndAdd(xp1, y.Multiply(y, context), context).Sqrt(context);
-                var sigma = xm1.MultiplyAndAdd(xm1, y.Multiply(y, context), context).Sqrt(context);
+                var rho = xp1.MultiplyAndAdd(xp1, y.Multiply(y, context), context).SqrtByIntegerRoot(context);
+                var sigma = xm1.MultiplyAndAdd(xm1, y.Multiply(y, context), context).SqrtByIntegerRoot(context);
                 var alpha = rho.Add(sigma, context).Divide(2, context);
                 return (rho.Subtract(sigma, context).Divide(2, context),
-                    alpha.MultiplyAndSubtract(alpha, EDecimal.One, context).Sqrt(context).Add(alpha, context).NaturalLogarithm(context).Multiply((y.IsNegative || y.IsZero) ? -1 : 1, context));
+                    alpha.MultiplyAndSubtract(alpha, EDecimal.One, context).SqrtByIntegerRoot(context).Add(alpha, context).NaturalLogarithm(context).Multiply((y.IsNegative || y.IsZero) ? -1 : 1, context));
             }
 
             /// <summary>Calculates the exact value of arcsine of num</summary>
