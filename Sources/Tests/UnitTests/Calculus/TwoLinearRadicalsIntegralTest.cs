@@ -27,12 +27,20 @@ namespace AngouriMath.Tests.Calculus
     public sealed class TwoLinearRadicalsIntegralTest
     {
         private static void DifferentiatesBack(string integrand, params double[] points)
+            => DifferentiatesBackPinned(integrand, points);
+
+        private static void DifferentiatesBackPinned(string integrand, double[] points, params (string, double)[] pins)
         {
             var integral = integrand.ToEntity().Integrate("x");
             Assert.DoesNotContain("integral(", integral.Stringize());
 
             var derivative = integral.Substitute("C", 0).Differentiate("x");
-            var original = integrand.ToEntity();
+            Entity original = integrand.ToEntity();
+            foreach (var (name, value) in pins)
+            {
+                derivative = derivative.Substitute(name, value);
+                original = original.Substitute(name, value);
+            }
             var compared = 0;
             foreach (var at in points)
             {
@@ -58,6 +66,20 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("(x - 1)^(2/3) * (x + 1)^(1/3)")]
         public void TwoRootsOfTheSameOrder(string integrand)
             => DifferentiatesBack(integrand, 1.3, 1.7, 2.4, 3.1, -1.5, -2.7);
+
+        /// <summary>
+        /// Two square roots of linears with symbolic coefficients, Hearn's
+        /// <c>sqrt(a + b x) sqrt(c + d x)</c>: the terms are read as written so that the cube
+        /// of the quadratic the derivative of <c>x(t)</c> carries stays a cube, and the power
+        /// of a quadratic with a symbolic leading coefficient is made monic before the
+        /// rational rules see it.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(a + b*x)*sqrt(c + d*x)")]
+        [InlineData("x/(sqrt(a + b*x)*sqrt(c + d*x))")]
+        [InlineData("1/(sqrt(a + b*x)*sqrt(c + d*x))")]
+        public void SymbolicCoefficients(string integrand)
+            => DifferentiatesBackPinned(integrand, new[] { 0.3, 0.9, 1.7, 2.6 }, ("a", 1.7), ("b", 2.3), ("c", 0.6), ("d", 1.1));
 
         /// <summary>Roots of different orders sharing a common one: Timofeev's 315, a sixth root of the quotient.</summary>
         [Fact]
