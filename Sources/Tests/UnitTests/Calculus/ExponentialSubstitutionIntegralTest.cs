@@ -342,5 +342,80 @@ namespace AngouriMath.Tests.Calculus
             var integral = integrand.ToEntity().Integrate("x");
             Assert.DoesNotContain("u_exp", integral.Stringize());
         }
+
+        /// <summary>
+        /// <see cref="DifferentiatesBack"/> with every symbol but <c>x</c> pinned to a distinct
+        /// value off the integers, so that a symbolic base or slope is a number on both sides.
+        /// </summary>
+        private static void DifferentiatesBackWithParametersPinned(string integrand, double[] points)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity();
+            var pinned = 0;
+            foreach (var parameter in original.Vars)
+            {
+                if (parameter.Name == "x")
+                    continue;
+                var value = new[] { 1.3, 2.1, 0.7, 1.9, 3.1, 0.4 }[pinned++ % 6] + pinned / 6;
+                derivative = derivative.Substitute(parameter, value);
+                original = original.Substitute(parameter, value);
+            }
+            var compared = 0;
+            foreach (var at in points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                if (got.IsNaN || want.IsNaN)
+                    continue;
+                compared++;
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+            Assert.True(compared >= 3, $"only {compared} of {points.Length} points were comparable for {integrand}");
+        }
+
+        /// <summary>
+        /// Numeric bases that are whole powers of one base are written in it: Rubi's
+        /// <c>2^x/sqrt(a + b/4^x)</c> is <c>2^x/sqrt(a + b/2^(2x))</c>, rational in
+        /// <c>u = 2^x</c> with a root of a linear, and was declined for its two bases.
+        /// </summary>
+        [Theory]
+        [InlineData("2^x/sqrt(a + b/4^x)")]
+        [InlineData("4^x/sqrt(a + b/2^x)")]
+        [InlineData("8^x/(1 + 2^x)")]
+        public void BasesThatArePowersOfOne(string integrand)
+            => DifferentiatesBackWithParametersPinned(integrand, new[] { -0.5, 0.23, 0.61, 1.05, 1.7 });
+
+        /// <summary>
+        /// The slopes need only be rational multiples of one another: with a symbol for the
+        /// slope, <c>F^(c + d x)</c> beside <c>F^(2 d x)</c>, the base is <c>F^(d x)</c> and
+        /// <c>dx = du/(d u ln F)</c>. Rubi's <c>F^(c + d x) x/(a + b F^(c + d x))^2</c> is what
+        /// by parts leaves of it. The logarithm of the base stays outside the quotient
+        /// integrated: simplified into it, <c>1/((a + b u)^2 ln F)</c> was a quadratic with
+        /// <c>ln F</c> in every coefficient, answered as a piecewise on whether <c>b^2 ln F</c>
+        /// is zero, where <c>1/(a + b u)^2</c> is <c>-1/(b (a + b u))</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("F^(c + d*x)/(a + b*F^(c + d*x))^2")]
+        [InlineData("F^(2*d*x)/(1 + F^(d*x))")]
+        [InlineData("F^(c + d*x)*x/(a + b*F^(c + d*x))^2")]
+        public void ASymbolicSlope(string integrand)
+            => DifferentiatesBackWithParametersPinned(integrand, new[] { -0.5, 0.23, 0.61, 1.05, 1.7 });
+
+        /// <summary>
+        /// A quotient the gathering on the chain's entry writes as a product with a negative
+        /// power -- <c>u^3/((a u^2 + b)^3 u)</c> as <c>u^2 (a u^2 + b)^(-3)</c> -- is written
+        /// back below the bar where the rational rules read it: Rubi's <c>1/(b/f^x + a f^x)^3</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(b/f^x + a*f^x)^3")]
+        [InlineData("1/(2/3^x + 5*3^x)^3")]
+        public void ANegativePowerOfTheQuadraticIsWrittenBelowTheBar(string integrand)
+            => DifferentiatesBackWithParametersPinned(integrand, new[] { -0.5, 0.23, 0.61, 1.05, 1.7 });
     }
 }

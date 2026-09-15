@@ -614,6 +614,8 @@ namespace AngouriMath.Functions
                 return false;
             if (TrySolveOverRationals(matrix, rhs, out values, out var everyEntryRational))
                 return true;
+            if (WithTheAtomsAsSymbols(matrix, rhs, symbolsMayCancel, out values))
+                return true;
             if (everyEntryRational)
                 return false;
             if (TrySolveOverPolynomials(matrix, rhs, out values))
@@ -677,6 +679,61 @@ namespace AngouriMath.Functions
                         accumulated -= matrix[row][k] * values[k];
                 values[column] = Bare(accumulated / matrix[row][column]);
             }
+            return true;
+        }
+
+        /// <summary>
+        /// The system with every entry written as a polynomial over <c>Q</c> in symbols, each
+        /// atom that is not one -- a function of the parameters, <c>ln(F)</c>; a root of one,
+        /// <c>sqrt(b)</c>; a constant that is not exact, <c>ln(2)</c> or <c>pi</c> -- standing
+        /// as a symbol of its own, solved as such, and the atoms written back. The polynomial
+        /// elimination declines an entry that is not a polynomial in symbols, and the one on
+        /// entities that follows does not collect terms, so its zero test is numeric: an
+        /// inexact number is never a pivot and never decidably zero once a pivot has been
+        /// through its row, and a function of a symbol is neither. So the ansatz for
+        /// <c>2^(x + c x^3)(1 + 3 c x^2)</c>, whose identity has <c>ln(2)</c> in every
+        /// coefficient, and Rubi's <c>F^(a + b x + c x^3)(b + 3 c x^2)</c> with <c>ln(F)</c>
+        /// in every one, were declined where <c>e^(k (x + c x^3))(1 + 3 c x^2)</c> is answered.
+        /// The innermost atoms, so that <c>3 ln(2)</c> is three times the symbol for <c>ln(2)</c>,
+        /// and an atom holding another is written in that one's symbol; false where there is
+        /// no atom, and the callers go on to the elimination on entities.
+        /// </summary>
+        private static bool WithTheAtomsAsSymbols(Entity[][] matrix, Entity[] rhs, bool symbolsMayCancel, [NotNullWhen(true)] out Entity[]? values)
+        {
+            values = null;
+            var atoms = new List<(Entity Atom, Variable Symbol)>();
+            Entity everything = Integer.Zero;
+            foreach (var row in matrix)
+                foreach (var entry in row)
+                    everything += entry;
+            foreach (var entry in rhs)
+                everything += entry;
+            Entity AsSymbols(Entity entry) => entry.Replace(node =>
+            {
+                if (node is Number or Variable or Sumf or Minusf or Mulf or Divf or Powf(_, Integer))
+                    return node;
+                foreach (var (atom, symbol) in atoms)
+                    if (atom == node)
+                        return symbol;
+                var fresh = Variable.CreateUnique(everything, "k_atom");
+                atoms.Add((node, fresh));
+                everything += fresh;
+                return fresh;
+            });
+            var written = matrix.Select(row => row.Select(AsSymbols).ToArray()).ToArray();
+            var writtenRhs = rhs.Select(AsSymbols).ToArray();
+            if (atoms.Count == 0)
+                return false;
+            if (!TrySolveLinear(written, writtenRhs, symbolsMayCancel, out var inSymbols))
+                return false;
+            values = inSymbols.Select(value =>
+            {
+                // Outermost first: an atom written in another's symbol has that symbol
+                // written back after it.
+                for (var i = atoms.Count - 1; i >= 0; i--)
+                    value = value.Substitute(atoms[i].Symbol, atoms[i].Atom);
+                return value;
+            }).ToArray();
             return true;
         }
 
