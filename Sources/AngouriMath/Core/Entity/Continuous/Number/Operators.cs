@@ -386,7 +386,7 @@ namespace AngouriMath
             public static Complex Exp(Complex x)
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
-                var expReal = x.RealPart.EDecimal.Exp(context);
+                var expReal = x.RealPart.EDecimal.Exponential(context);
                 var imaginary = x.ImaginaryPart.EDecimal;
                 if (imaginary.IsZero)
                     return expReal;
@@ -418,6 +418,13 @@ namespace AngouriMath
                     var squared = half * half;
                     return divRem[1].IsZero ? squared : squared * BinaryIntPow(num, divRem[1]);
                 }
+                // e to a real power is the exponential of the power: raising the constant's
+                // hundred digits loses to the power what it multiplies their error by --
+                // e^700 came back to ninety-seven digits -- and the exponential is a series
+                // where the power was a logarithm and a series.
+                if (@base is Real { EDecimal: var maybeE } && power is Real { EDecimal: var realExponent }
+                    && maybeE.Equals(InternalAMExtensions.ConstantCache.Lookup(MathS.Settings.DecimalPrecisionContext).E))
+                    return Real.Create(realExponent.Exponential(MathS.Settings.DecimalPrecisionContext));
                 // TODO: make it more detailed (e. g. +oo ^ +oo = +oo)
                 if (@base.IsFinite && power is Integer { EInteger: var pow })
                 {
@@ -456,7 +463,7 @@ namespace AngouriMath
 
                 var context = MathS.Settings.DecimalPrecisionContext;
                 if (@base is Real { EDecimal: { IsNegative: false } realBase } && power is Real { EDecimal: var realPower })
-                    return realBase.Pow(realPower, context);
+                    return PowerOfReals(realBase, realPower, context);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,7dc9c2ee4f99814a
                 // NOTE: System.Numerics.Complex.Pow(0, System.Numerics.Complex(-2, 1)) gives 0 + 0i despite being mathematically undefined
                 // NOTE: System.Numerics.Complex.Pow(0, 0) gives 1 + 0i despite being mathematically undefined
@@ -472,8 +479,8 @@ namespace AngouriMath
 
                 var rho = @base.Abs().EDecimal;
                 var theta = baseImaginary.Arctan2(baseReal, context);
-                var newRho = powerReal.MultiplyAndAdd(theta, powerImaginary.Multiply(rho.Log(context), context), context);
-                var t = rho.Pow(powerReal, context).Multiply(powerImaginary.Multiply(-theta, context).Exp(context), context);
+                var newRho = powerReal.MultiplyAndAdd(theta, powerImaginary.Multiply(rho.NaturalLogarithm(context), context), context);
+                var t = PowerOfReals(rho, powerReal, context).Multiply(powerImaginary.Multiply(-theta, context).Exponential(context), context);
 
                 return Complex.Create(t.Multiply(newRho.Cos(context), context), t.Multiply(newRho.Sin(context), context));
             }
@@ -493,9 +500,36 @@ namespace AngouriMath
                 if (x is Real real && real.EDecimal.CompareTo(EDecimal.Zero) > 0
                     && @base is Real realBase && realBase.EDecimal.CompareTo(EDecimal.Zero) > 0
                     && realBase.EDecimal.CompareTo(EDecimal.One) != 0)
-                    return real.EDecimal.LogN(realBase.EDecimal, MathS.Settings.DecimalPrecisionContext);
+                    return LogOfReals(real.EDecimal, realBase.EDecimal, MathS.Settings.DecimalPrecisionContext);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
                 return Ln(x) / Ln(@base);
+            }
+
+            /// <summary>
+            /// <c>base^power</c> for a nonnegative real base and a real power, as
+            /// <c>exp(power ln base)</c> with the logarithm and the product carrying eight
+            /// guard digits. Zero, an infinity and NaN are PeterO's answers.
+            /// </summary>
+            private static EDecimal PowerOfReals(EDecimal @base, EDecimal power, EContext context)
+            {
+                if (@base.IsZero || !@base.IsFinite || !power.IsFinite)
+                    return @base.Pow(power, context);
+                var working = InternalAMExtensions.WithGuardDigits(context, 8);
+                return power.Multiply(@base.NaturalLogarithm(working), working).Exponential(working).RoundToPrecision(context);
+            }
+
+            /// <summary>
+            /// <c>log_base(x)</c> for positive reals as <c>ln x / ln base</c>, with the base
+            /// <c>e</c> -- the value the constant evaluates to in this context -- recognised, so
+            /// that <c>ln(x)</c>, which arrives here as a logarithm to the base <c>e</c>, is one
+            /// logarithm and not two and a division.
+            /// </summary>
+            private static EDecimal LogOfReals(EDecimal x, EDecimal @base, EContext context)
+            {
+                var log = x.NaturalLogarithm(context);
+                if (@base.Equals(InternalAMExtensions.ConstantCache.Lookup(context).E))
+                    return log;
+                return log.Divide(@base.NaturalLogarithm(context), context);
             }
 
             /// <summary>
@@ -528,12 +562,12 @@ namespace AngouriMath
                 var keep = (context.Precision.IsZero ? EInteger.FromInt32(100) : context.Precision).Add(10);
                 var digits = n.GetDigitCountAsEInteger();
                 if (digits.CompareTo(keep) <= 0)
-                    return EDecimal.FromEInteger(n).Log(context);
+                    return EDecimal.FromEInteger(n).NaturalLogarithm(context);
                 var shift = digits.Subtract(keep);
                 // Create(n, -shift) is n with its decimal point moved, not a division:
                 // the digits are untouched, only the exponent comes back into range.
-                return EDecimal.Create(n, shift.Negate()).Log(context)
-                    .Add(EDecimal.FromInt32(10).Log(context)
+                return EDecimal.Create(n, shift.Negate()).NaturalLogarithm(context)
+                    .Add(EDecimal.FromInt32(10).NaturalLogarithm(context)
                         .Multiply(EDecimal.FromEInteger(shift), context), context);
             }
 
@@ -544,9 +578,9 @@ namespace AngouriMath
                 if (LostToExponentRange(x) && x is Rational { ERational: { Sign: > 0 } ratio })
                     return LnOfRatio(ratio, context);
                 if (x is Real { EDecimal: { IsNegative: false } real })
-                    return real.Log(context);
+                    return real.NaturalLogarithm(context);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
-                return Complex.Create(x.Abs().EDecimal.Log(context), x.ImaginaryPart.EDecimal.Arctan2(x.RealPart.EDecimal, context));
+                return Complex.Create(x.Abs().EDecimal.NaturalLogarithm(context), x.ImaginaryPart.EDecimal.Arctan2(x.RealPart.EDecimal, context));
             }
 
             /// <summary>Calculates the exact value of sine of num</summary>
@@ -560,7 +594,7 @@ namespace AngouriMath
                 // We need both sinh and cosh of imaginary part.
                 // To avoid multiple calls to Exp with the same value,
                 // we compute them both here from a single call to Exp.
-                var p = im.Exp(context);
+                var p = im.Exponential(context);
                 var q = EDecimal.One.Divide(p, context);
                 var sinh = p.Subtract(q, context).Divide(2, context);
                 var cosh = p.Add(q, context).Divide(2, context);
@@ -621,7 +655,7 @@ namespace AngouriMath
                     return real.Cos(context);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
                 var (re, im) = (num.RealPart.EDecimal, num.ImaginaryPart.EDecimal);
-                var p = im.Exp(context);
+                var p = im.Exponential(context);
                 var q = EDecimal.One.Divide(p, context);
                 var sinh = p.Subtract(q, context).Divide(2, context);
                 var cosh = p.Add(q, context).Divide(2, context);
@@ -649,7 +683,7 @@ namespace AngouriMath
 
                 var x2 = num.RealPart.EDecimal.Multiply(2, context);
                 var y2 = num.ImaginaryPart.EDecimal.Multiply(2, context);
-                var p = y2.Exp(context);
+                var p = y2.Exponential(context);
                 var q = EDecimal.One.Divide(p, context);
                 var cosh = p.Add(q, context).Divide(2, context);
                 if (num.ImaginaryPart.EDecimal.Abs().LessThanOrEquals(4))
@@ -707,7 +741,7 @@ namespace AngouriMath
                 var sigma = xm1.MultiplyAndAdd(xm1, y.Multiply(y, context), context).Sqrt(context);
                 var alpha = rho.Add(sigma, context).Divide(2, context);
                 return (rho.Subtract(sigma, context).Divide(2, context),
-                    alpha.MultiplyAndSubtract(alpha, EDecimal.One, context).Sqrt(context).Add(alpha, context).Log(context).Multiply((y.IsNegative || y.IsZero) ? -1 : 1, context));
+                    alpha.MultiplyAndSubtract(alpha, EDecimal.One, context).Sqrt(context).Add(alpha, context).NaturalLogarithm(context).Multiply((y.IsNegative || y.IsZero) ? -1 : 1, context));
             }
 
             /// <summary>Calculates the exact value of arcsine of num</summary>

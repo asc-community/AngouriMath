@@ -198,9 +198,31 @@ namespace AngouriMath
                 HalfPi = Pi.Multiply(Half, context);
                 QuarterPi = HalfPi.Multiply(Half, context);
                 E = EDecimal.One.Exp(context);
+                // The fixed point the logarithm's and the exponential's series run in: the
+                // context's digits in bits, and forty-eight bits over for the series' own
+                // truncations and the exponential's ten squarings.
+                FixedBits = (int)(context.Precision.ToInt32Checked() * 3.32192809488736 + 48);
+                FixedOne = EInteger.One.ShiftLeft(FixedBits);
+                FiveToFixedBits = EInteger.FromInt32(5).Pow(FixedBits);
+                FixedSqrt2 = ToFixed(EDecimal.FromString("1.41421356237309504880168872420969807856967187537694"), FixedBits);
+                // ln 2 = 2 artanh(1/3), and ln 10 = ln 8 + ln 5/4 = 3 ln 2 + 2 artanh(1/9).
+                FixedLn2 = TwiceArtanh(FixedOne.Divide(3), FixedBits);
+                FixedLn10 = FixedLn2.Multiply(3).Add(TwiceArtanh(FixedOne.Divide(9), FixedBits));
             }
             /// <summary>Represents <see cref="Math.PI"/></summary>
             public EDecimal Pi { get; }
+            /// <summary>The bits after the point of the fixed-point numbers below</summary>
+            public int FixedBits { get; }
+            /// <summary>One, in fixed point: 2 to the <see cref="FixedBits"/></summary>
+            public EInteger FixedOne { get; }
+            /// <summary>5 to the <see cref="FixedBits"/>, by which a fixed-point number is a decimal exactly</summary>
+            public EInteger FiveToFixedBits { get; }
+            /// <summary>The square root of 2, in fixed point, to fifty digits</summary>
+            public EInteger FixedSqrt2 { get; }
+            /// <summary>The natural logarithm of 2, in fixed point</summary>
+            public EInteger FixedLn2 { get; }
+            /// <summary>The natural logarithm of 10, in fixed point</summary>
+            public EInteger FixedLn10 { get; }
             /// <summary>Represents 2 * <see cref="Math.PI"/></summary>
             public EDecimal TwoPi { get; }
             /// <summary>Represents <see cref="Math.PI"/> / 2</summary>
@@ -345,13 +367,20 @@ namespace AngouriMath
         /// context instance, so a working context built afresh on every call would have pi
         /// recomputed on every call, and would leave an entry behind each time.
         /// </summary>
-        private static EContext WithGuardDigits(EContext context, int digits)
+        internal static EContext WithGuardDigits(EContext context, int digits)
         {
-            var table = digits == 8 ? eightMoreDigits : fiveMoreDigits;
+            var table = digits switch
+            {
+                5 => fiveMoreDigits,
+                8 => eightMoreDigits,
+                12 => twelveMoreDigits,
+                _ => throw new AngouriBugException("A guard-digit count without its table"),
+            };
             return table.GetValue(context, c => c.WithPrecision(c.Precision.ToInt32Checked() + digits));
         }
         [ConstantField] private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<EContext, EContext> eightMoreDigits = new();
         [ConstantField] private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<EContext, EContext> fiveMoreDigits = new();
+        [ConstantField] private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<EContext, EContext> twelveMoreDigits = new();
 
         /// <summary>
         /// The sine and the cosine of <paramref name="x"/> together, each to the precision of
@@ -642,10 +671,168 @@ namespace AngouriMath
         }
 
 
+        // The logarithm and the exponential are series, and a series in EDecimal pays for
+        // each term an alignment of exponents, an exact sum and a rounding -- two to three
+        // microseconds a term at a hundred digits, which is why PeterO's Log and Exp are
+        // three hundred to seven hundred microseconds. The series here run in fixed point:
+        // an EInteger holding the value times 2^FixedBits, where a product is a big-integer
+        // multiply and a shift, a division by a term's index an integer division, and a sum
+        // an addition -- a third of a microsecond a term -- and the value is a decimal
+        // again exactly, by multiplying with 5^FixedBits and moving the point.
+        // https://github.com/asc-community/AngouriMath/issues/1338
+
+        /// <summary><paramref name="x"/> times 2^<paramref name="bits"/>, truncated to an integer.</summary>
+        private static EInteger ToFixed(EDecimal x, int bits)
+        {
+            var exponent = x.Exponent.ToInt32Checked();
+            var mantissa = x.Mantissa;
+            return exponent >= 0
+                ? mantissa.Multiply(EInteger.FromInt32(10).Pow(exponent)).ShiftLeft(bits)
+                : mantissa.ShiftLeft(bits).Divide(EInteger.FromInt32(10).Pow(-exponent));
+        }
+
+        /// <summary>A fixed-point <paramref name="n"/> as a decimal, exactly, rounded to <paramref name="working"/>.</summary>
+        private static EDecimal FromFixed(EInteger n, ConstantCache consts, EContext working)
+            => EDecimal.Create(n.Multiply(consts.FiveToFixedBits), -consts.FixedBits).RoundToPrecision(working);
+
+        /// <summary>
+        /// The product of two fixed-point numbers, truncated towards zero -- a shift alone
+        /// floors, and a negative term of a series floored never reaches zero.
+        /// </summary>
+        private static EInteger MultiplyFixed(EInteger a, EInteger b, int bits)
+        {
+            var product = a.Multiply(b);
+            return product.Sign < 0 ? product.Negate().ShiftRight(bits).Negate() : product.ShiftRight(bits);
+        }
+
+        /// <summary>
+        /// <c>2 artanh(y)</c> as its series <c>2 (y + y^3/3 + y^5/5 + ...)</c>, which is
+        /// <c>ln((1 + y)/(1 - y))</c>, in fixed point; for <c>|y|</c> below <c>0.18</c>,
+        /// seventy terms at a hundred digits.
+        /// </summary>
+        private static EInteger TwiceArtanh(EInteger y, int bits)
+        {
+            var square = MultiplyFixed(y, y, bits);
+            var term = y;
+            var sum = y;
+            for (var k = 1; k < 100000; k++)
+            {
+                term = MultiplyFixed(term, square, bits);
+                if (term.IsZero)
+                    break;
+                sum = sum.Add(term.Divide(2 * k + 1));
+            }
+            return sum.ShiftLeft(1);
+        }
+
+        [ConstantField] private static readonly EDecimal sqrt2 = EDecimal.FromString("1.4142135623730950488");
+        [ConstantField] private static readonly EDecimal halfSqrt2 = EDecimal.FromString("0.70710678118654752440");
+
+        /// <summary>
+        /// The natural logarithm of <paramref name="x"/> to the precision of
+        /// <paramref name="context"/>: the argument written as a mantissa times a power of ten
+        /// and of two, the mantissa brought between <c>1/sqrt(2)</c> and <c>sqrt(2)</c>, and
+        /// <c>2 artanh((m - 1)/(m + 1))</c> there, a series in a square below <c>0.03</c>, in
+        /// fixed point. PeterO's <see cref="EDecimal.Log(EContext)"/> is seven hundred
+        /// microseconds at a hundred digits; this is about twenty. An argument within
+        /// <c>[1/sqrt(2), sqrt(2)]</c> goes to the series as it is, so a value near 1 keeps
+        /// every digit rather than losing them to <c>ln 10 - 3 ln 2 - ...</c> cancelling.
+        /// Zero, a negative, an infinity and NaN are PeterO's answers.
+        /// https://github.com/asc-community/AngouriMath/issues/1338
+        /// </summary>
+        public static EDecimal NaturalLogarithm(this EDecimal x, EContext context)
+        {
+            if (!x.IsFinite || x.IsNegative || x.IsZero)
+                return x.Log(context);
+            var working = WithGuardDigits(context, 8);
+            var consts = ConstantCache.Lookup(working);
+            var bits = consts.FixedBits;
+            EInteger mantissa;
+            var tens = 0;
+            var twos = 0;
+            if (x.CompareTo(sqrt2) <= 0 && x.CompareTo(halfSqrt2) >= 0)
+                mantissa = ToFixed(x, bits);
+            else
+            {
+                // m * 10^tens with 1 <= m < 10, by moving the point: the digits are untouched;
+                // then halved, exactly, until it is at most sqrt(2).
+                tens = x.Exponent.Add(x.Precision()).Subtract(1).ToInt32Checked();
+                mantissa = ToFixed(x.MovePointLeft(tens), bits);
+                while (mantissa.CompareTo(consts.FixedSqrt2) > 0)
+                {
+                    mantissa = mantissa.ShiftRight(1);
+                    twos++;
+                }
+            }
+            var y = mantissa.Subtract(consts.FixedOne).ShiftLeft(bits).Divide(mantissa.Add(consts.FixedOne));
+            var log = TwiceArtanh(y, bits);
+            if (twos != 0)
+                log = log.Add(consts.FixedLn2.Multiply(twos));
+            if (tens != 0)
+                log = log.Add(consts.FixedLn10.Multiply(tens));
+            return FromFixed(log, consts, working).RoundToPrecision(context);
+        }
+
+        /// <summary>
+        /// <c>e</c> to the <paramref name="x"/> to the precision of <paramref name="context"/>:
+        /// <c>x = k ln 2 + r</c> with <c>|r|</c> at most half of <c>ln 2</c>, <c>r</c> halved
+        /// ten times, the Taylor series there -- twenty-five terms at a hundred digits -- and
+        /// ten squarings and the power of two back, in fixed point. PeterO's
+        /// <see cref="EDecimal.Exp(EContext)"/> is three hundred microseconds at a hundred
+        /// digits; this is about ten. An argument beyond a thousand in magnitude, and an
+        /// infinity or NaN, are PeterO's answers.
+        /// https://github.com/asc-community/AngouriMath/issues/1338
+        /// </summary>
+        public static EDecimal Exponential(this EDecimal x, EContext context)
+        {
+            if (!x.IsFinite || x.Abs().CompareTo(EDecimal.FromInt32(1000)) > 0)
+                return x.Exp(context);
+            if (x.IsZero)
+                return EDecimal.One;
+            // Twelve guard digits: the ten squarings each double the error, three digits,
+            // and the reduction by up to fifteen hundred times ln 2 costs four.
+            var working = WithGuardDigits(context, 12);
+            var consts = ConstantCache.Lookup(working);
+            var bits = consts.FixedBits;
+            var fixedX = ToFixed(x, bits);
+            var k = fixedX.Divide(consts.FixedLn2);
+            var r = fixedX.Subtract(consts.FixedLn2.Multiply(k));
+            var halfLn2 = consts.FixedLn2.ShiftRight(1);
+            if (r.CompareTo(halfLn2) > 0)
+            {
+                k = k.Add(1);
+                r = r.Subtract(consts.FixedLn2);
+            }
+            else if (r.CompareTo(halfLn2.Negate()) < 0)
+            {
+                k = k.Subtract(1);
+                r = r.Add(consts.FixedLn2);
+            }
+            const int halvings = 10;
+            r = r.Sign < 0 ? r.Negate().ShiftRight(halvings).Negate() : r.ShiftRight(halvings);
+            var term = consts.FixedOne;
+            var sum = consts.FixedOne;
+            for (var n = 1; n < 100000; n++)
+            {
+                term = MultiplyFixed(term, r, bits).Divide(n);
+                if (term.IsZero)
+                    break;
+                sum = sum.Add(term);
+            }
+            for (var i = 0; i < halvings; i++)
+                sum = MultiplyFixed(sum, sum, bits);
+            var power = k.ToInt32Checked();
+            if (power >= 0)
+                return FromFixed(sum.ShiftLeft(power), consts, working).RoundToPrecision(context);
+            return FromFixed(sum, consts, working)
+                .Divide(EDecimal.FromEInteger(EInteger.One.ShiftLeft(-power)), working)
+                .RoundToPrecision(context);
+        }
+
         /// <summary>Analogy of <see cref="Math.Sinh(double)"/></summary>
         public static EDecimal Sinh(this EDecimal x, EContext context)
         {
-            var y = x.Exp(context);
+            var y = x.Exponential(context);
             var yy = EDecimal.One.Divide(y, context);
             return y.Subtract(yy, context).Divide(2, context);
         }
@@ -653,7 +840,7 @@ namespace AngouriMath
         /// <summary>Analogy of <see cref="Math.Cosh(double)"/></summary>
         public static EDecimal Cosh(this EDecimal x, EContext context)
         {
-            var y = x.Exp(context);
+            var y = x.Exponential(context);
             var yy = EDecimal.One.Divide(y, context);
             return y.Add(yy, context).Divide(2, context);
         }
@@ -665,7 +852,7 @@ namespace AngouriMath
                 return EDecimal.NaN;
             if (x.IsInfinity())
                 return x.Sign;
-            var y = x.Exp(context);
+            var y = x.Exponential(context);
             var yy = EDecimal.One.Divide(y, context);
             return y.Subtract(yy, context).Divide(y.Add(yy, context), context);
         }
