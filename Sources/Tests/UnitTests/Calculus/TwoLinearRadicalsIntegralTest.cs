@@ -75,5 +75,15 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("1/((-1+x)^3*(2+x)^5)^(1/4)", new[] { 1.29, 1.77, 2.41, -2.5, -3.2 })]
         public void ARootOfAProductOfPowersOfLinears(string integrand, double[] points)
             => DifferentiatesBack(integrand, points);
+
+        /// <summary>
+        /// A root of a polynomial whose linear factors already stand under roots of their own
+        /// elsewhere: <c>(1 - x^2)^(1/4)</c> beside <c>sqrt(1 - x)</c> and <c>sqrt(1 + x)</c>,
+        /// Timofeev's 314, is <c>((1 - x)(1 + x))^(1/4)</c> and comes apart on <c>(-1, 1)</c>;
+        /// a root of a quadratic on its own is left as written, Euler's.
+        /// </summary>
+        [Fact]
+        public void AFactoredRootBesideItsFactorsRoots()
+            => DifferentiatesBack("x^2*(1-x^2)^(1/4)*sqrt(1+x)/(sqrt(1-x)*(sqrt(1-x)-sqrt(1+x)))", 0.31, 0.57, 0.83, -0.2, -0.6);
     }
 }
