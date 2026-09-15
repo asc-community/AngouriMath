@@ -512,6 +512,10 @@ namespace AngouriMath.Functions.Algebra
             // rule reads as written. Beside the rule above, which does the like for the roots
             // it combines; at the top only, since it lands on the chain.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAPowerOfAQuotientApart(expr, x)) is { }) return answer;
+            // A rational function times a whole power of `A + B ln(R)` or `A + B arctan(R)`,
+            // R rational: one step of parts, closed, before the substitution search, which
+            // spent its budget on Rubi's `(f + g x)(A + B ln(e (a + b x)^2/(c + d x)^2))`.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesAPowerOfALogarithm(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             // A logarithmic derivative the substitution above could not read for a symbol in
             // an exponent: `(x^(n-1) - 1)/(x^n - n x)`.
