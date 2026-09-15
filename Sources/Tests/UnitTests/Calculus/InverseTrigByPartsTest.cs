@@ -114,5 +114,32 @@ namespace AngouriMath.Tests.Calculus
             if (!integral.Stringize().Contains("integral("))
                 DifferentiatesBack(integrand);
         }
+
+        /// <summary>
+        /// The secant substitution answers <c>1/(x^2 (x^2 - 1)^(5/2))</c> in <c>|x|</c> and
+        /// <c>sgn(x)</c>, and a step of parts against it -- Timofeev's
+        /// <c>arccsc(x)/(x^2 (x^2 - 1)^(5/2))</c> -- left a remainder with <c>|x|^4</c>,
+        /// <c>|x|^2</c> and <c>sgn(x)/|x|</c> in it that no rule read, where they are <c>x^4</c>,
+        /// <c>x^2</c> and <c>1/x</c>: <c>|a|^k</c> is <c>sgn(a)^k a^k</c> for a real <c>a</c>, and
+        /// the signs and moduli of one argument are gathered so on every entry to the chain.
+        /// Checked on both sides of the origin, where the arccosecant is real.
+        /// </summary>
+        [Fact]
+        public void TheModuliAndSignsOfTheSecantSubstitutionAreGathered()
+        {
+            var integrand = "acsc(x)/(x^2*(x^2 - 1)^(5/2))".ToEntity();
+            var integral = integrand.Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            foreach (var at in new[] { -3.7, -1.6, 1.3, 2.4, 5.1 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = integrand.Substitute("x", at).EvalNumerical();
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-8, $"d/dx of the antiderivative is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
     }
 }

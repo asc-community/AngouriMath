@@ -246,6 +246,71 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// The signs and moduli of one real-valued argument among the factors of a product
+        /// gathered into a power of the argument and at most one sign: <c>|a|^k</c> is
+        /// <c>sgn(a)^k a^k</c> for a real <c>a</c>, so <c>sgn(a)^m |a|^k</c> is
+        /// <c>sgn(a)^((m + k) mod 2) a^k</c>, and <c>sgn(a)^2</c> is <c>1</c> -- away from
+        /// <c>a = 0</c>, which is the generic case every rule answers in.
+        /// </summary>
+        /// <remarks>
+        /// The secant substitution answers <c>1/(x^2 (x^2 - 1)^(5/2))</c> in <c>|x|</c> and
+        /// <c>sgn(x)</c>, and a step of parts against it -- Timofeev's
+        /// <c>arccsc(x)/(x^2 (x^2 - 1)^(5/2))</c> -- leaves a remainder with <c>|x|^4</c>,
+        /// <c>|x|^2</c> and <c>sgn(x)/|x|</c> in it that no rule reads, where it is
+        /// <c>x^4</c>, <c>x^2</c> and <c>1/x</c>. Applied with the gathering of powers on every
+        /// entry to the chain, for the same reason: the shape is the integrator's own.
+        /// </remarks>
+        internal static Entity GatherSignsAndModuli(Entity node, Entity.Variable x)
+        {
+            if (node is not (Mulf or Divf))
+                return node;
+            var signs = new Dictionary<Entity, EInteger>();
+            var moduli = new Dictionary<Entity, EInteger>();
+            var rest = new List<Entity>();
+            foreach (var factor in Mulf.LinearChildren(node))
+            {
+                var (@base, exponent) = factor is Powf(var inner, Number.Integer whole) ? (inner, whole.EInteger) : (factor, EInteger.One);
+                if (@base is Signumf(var signed) && signed.ContainsNode(x))
+                    signs[signed] = signs.TryGetValue(signed, out var m) ? m.Add(exponent) : exponent;
+                else if (@base is Absf(var measured) && measured.ContainsNode(x))
+                    moduli[measured] = moduli.TryGetValue(measured, out var k) ? k.Add(exponent) : exponent;
+                else
+                    rest.Add(factor);
+            }
+            // Something to gather: a modulus beside a sign of the same argument, or a power
+            // of either beyond the first.
+            var arguments = signs.Keys.Concat(moduli.Keys).Distinct().ToList();
+            if (!arguments.Any(argument =>
+                    signs.TryGetValue(argument, out var m) && moduli.ContainsKey(argument)
+                    || signs.TryGetValue(argument, out m) && m.Abs().CompareTo(EInteger.One) > 0
+                    || moduli.TryGetValue(argument, out var k) && k.Abs().CompareTo(EInteger.One) > 0))
+                return node;
+            Entity? rebuilt = null;
+            void Multiply(Entity factor) => rebuilt = rebuilt is null ? factor : rebuilt * factor;
+            foreach (var argument in arguments)
+            {
+                signs.TryGetValue(argument, out var m);
+                moduli.TryGetValue(argument, out var k);
+                m ??= EInteger.Zero;
+                k ??= EInteger.Zero;
+                if (!TreeAnalyzer.IsRealValued(argument, x))
+                {
+                    // Not gathered: |a| is sgn(a) a only for a real a.
+                    if (!m.IsZero) Multiply(m.Equals(EInteger.One) ? MathS.Signum(argument) : MathS.Pow(MathS.Signum(argument), Number.Integer.Create(m)));
+                    if (!k.IsZero) Multiply(k.Equals(EInteger.One) ? MathS.Abs(argument) : MathS.Pow(MathS.Abs(argument), Number.Integer.Create(k)));
+                    continue;
+                }
+                if (!m.Add(k).IsEven)
+                    Multiply(MathS.Signum(argument));
+                if (!k.IsZero)
+                    Multiply(k.Equals(EInteger.One) ? argument : MathS.Pow(argument, Number.Integer.Create(k)));
+            }
+            foreach (var factor in rest)
+                Multiply(factor);
+            return rebuilt ?? Number.Integer.One;
+        }
+
+        /// <summary>
         /// Whether a sum among the factors above the bar is a constant multiple of the
         /// derivative of a factor below it that is not a polynomial in <paramref name="x"/>.
         /// </summary>
@@ -10732,11 +10797,12 @@ namespace AngouriMath.Functions.Algebra
             // back, and `x^(-1/2)` is a candidate of its own that leads the same way -- on the
             // by-parts remainder of `arcsin(sqrt(1 + x) - sqrt(x))` the two alternated to the
             // depth limit, forty seconds where declining takes three.
+            var besideARootOfAPolynomial = expr.Nodes.Any(node => node is Powf(var polynomialBase, Number.Rational rootPower) && rootPower is not Number.Integer
+                    && polynomialBase.ContainsNode(x) && TreeAnalyzer.TryGetPolynomial(polynomialBase, x, out var radicand)
+                    && radicand.Keys.Any(degree => degree.Sign > 0));
             if (!rational && expr.Nodes.Any(node => node is Powf(var radicalBase, Number.Rational radicalPower) && radicalPower is not Number.Integer
                     && radicalBase.Nodes.Any(inner => inner is Divf(_, var divisor) && (divisor == x || divisor is Powf(var pb, Number.Integer) && pb == x)))
-                && !expr.Nodes.Any(node => node is Powf(var polynomialBase, Number.Rational rootPower) && rootPower is not Number.Integer
-                    && polynomialBase.ContainsNode(x) && TreeAnalyzer.TryGetPolynomial(polynomialBase, x, out var radicand)
-                    && radicand.Keys.Any(degree => degree.Sign > 0)))
+                && !besideARootOfAPolynomial)
                 candidates.Add(MathS.Pow(x, -1));
             foreach (var node in expr.Nodes) // Look for composite functions (functions of functions)
                 switch (node)
@@ -10758,7 +10824,16 @@ namespace AngouriMath.Functions.Algebra
                             complements.Add(MathS.Sin(cosineArgument));
                         break;
                     case Powf(var @base, var exp):
-                        if (@base == x && (exp is not Number.Integer whole || !whole.EInteger.CanFitInInt32() || APowerCanBeExact(whole.EInteger.ToInt32Unchecked())))
+                        // A whole negative power beside a root of a polynomial in the variable
+                        // is the reciprocal that the guard above declines, and for its reason:
+                        // as a power candidate `x^(-1)` took `sqrt(u - 1)/(u sqrt(u^2 - u))` to
+                        // `sqrt(1/u - 1)/(u sqrt(1/u^2 - 1/u))` and back, sixteen levels of
+                        // `1/(1/(1/x))` in the answer to Timofeev's `arccsc(x)/(x^2 (x^2 - 1)^(5/2))`.
+                        // Beside a root of anything else it stays: Bronstein's
+                        // `(5x^2 + 3(e^x + x)^(1/3) + e^x (3x + 2x^2))/(x (e^x + x)^(1/3))` is answered
+                        // through it.
+                        if (@base == x && (exp is not Number.Integer whole || !whole.EInteger.CanFitInInt32()
+                                           || (whole.EInteger.Sign > 0 || !besideARootOfAPolynomial) && APowerCanBeExact(whole.EInteger.ToInt32Unchecked())))
                             candidates.Add(node); // Power expressions x^n
                         // And the roots of that power, which need not occur anywhere to be the
                         // right substitution: `int x / (x^4 + 1)` wants u = x^2, and x^2 appears

@@ -116,8 +116,8 @@ namespace AngouriMath.Functions.Algebra
         /// builds and leaves the rest of the tree alone.
         /// </para>
         /// </remarks>
-        private static Entity Normalized(Entity expr) =>
-            expr.Replace(Patterns.GatherPowersOfOneBase);
+        private static Entity Normalized(Entity expr, Entity.Variable x) =>
+            expr.Replace(Patterns.GatherPowersOfOneBase).Replace(node => IndefiniteIntegralSolver.GatherSignsAndModuli(node, x));
 
         /// <summary>
         /// The integrals already answered under the settings in force, so that the same question
@@ -371,7 +371,7 @@ namespace AngouriMath.Functions.Algebra
 
         private static Entity? ComputeIndefiniteIntegralBounded(Entity expr, Entity.Variable x, bool integrateByParts)
         {
-            expr = Normalized(expr);
+            expr = Normalized(expr, x);
 
             if (answered is null || answeredUnder is null || !SettingsState.StillHolds(answeredUnder))
             {
