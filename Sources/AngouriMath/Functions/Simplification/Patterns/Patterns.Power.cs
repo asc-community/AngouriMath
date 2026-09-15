@@ -353,11 +353,17 @@ namespace AngouriMath.Functions
             Entity? result = null;
             foreach (var (@base, exponent) in factors)
             {
-                var factor = exponent switch
+                // An exponent read off a factor below the bar is a tree, `3/2 * (-1)`, and is
+                // written as the number it is: every integration rule reads a fractional
+                // power as a `Powf` of a `Rational`, and `(tan(x) tan(2x))^(3/2)` below the bar
+                // came through here as a power of `3/2 * (-1)` that none of them read --
+                // Timofeev's 606, eight seconds of declines for what the rules answer in one.
+                var written = exponent is null or Number ? exponent : exponent.Evaled is Number folded ? folded : exponent;
+                var factor = written switch
                 {
                     null => @base,
                     Integer(1) => @base,
-                    _ => new Powf(@base, exponent)
+                    _ => new Powf(@base, written)
                 };
                 result = result is null ? factor : result * factor;
             }

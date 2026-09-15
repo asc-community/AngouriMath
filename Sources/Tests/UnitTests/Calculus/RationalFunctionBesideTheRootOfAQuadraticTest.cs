@@ -89,5 +89,22 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("(x + 1)/(x*sqrt(a*x^2 + b*x + c))", new[] { -4.0, -3.0, 1.6, 2.5 }, 1.0, 1.0, -3.0)]
         public void TheCoefficientsMayBeSymbols(string integrand, double[] points, double first, double second, double third)
             => DifferentiatesBack(integrand, points, ("A", first), ("B", second), ("a", first), ("b", second), ("c", third));
+
+        /// <summary>
+        /// The quadratic standing whole beside its own root, up to a constant, is one power of
+        /// one base -- <c>sqrt(2) x^2 (1 - x^2)^(-3/2)</c> here -- and is answered as that, without
+        /// a sign. Taken apart over <c>1 - x</c> and <c>1 + x</c> it was answered with
+        /// <c>sgn(x - 1)</c> and <c>sgn(x + 1)</c> in each piece, and the derivative of a sign
+        /// of a root is not read, so the by-parts remainder of Timofeev's
+        /// <c>arcsin(sqrt((x - a)/(x + a)))</c>, which is this under <c>u = sqrt(1 - 2a/(x + a))</c>,
+        /// made an answer nothing could check.
+        /// </summary>
+        [Fact]
+        public void TheQuadraticBesideItsOwnRootIsOnePower()
+        {
+            var integral = DifferentiatesBack("x^2*(1/2 - x^2/2)^(-1/2)/(1 - x^2)", new[] { -0.8, -0.4, 0.3, 0.6, 0.9 });
+            Assert.DoesNotContain("sgn(", integral.Stringize());
+            DifferentiatesBack("asin(sqrt((-a + x)/(a + x)))", new[] { 1.3, 2.0, 3.5, 5.0 }, ("a", 1.0));
+        }
     }
 }
