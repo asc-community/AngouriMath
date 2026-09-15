@@ -205,6 +205,9 @@ namespace AngouriMath
                 FixedOne = EInteger.One.ShiftLeft(FixedBits);
                 FiveToFixedBits = EInteger.FromInt32(5).Pow(FixedBits);
                 FixedSqrt2 = ToFixed(EDecimal.FromString("1.41421356237309504880168872420969807856967187537694"), FixedBits);
+                FixedPi = ToFixed(Pi, FixedBits);
+                FixedTwoPi = FixedPi.ShiftLeft(1);
+                FixedHalfPi = FixedPi.ShiftRight(1);
                 // ln 2 = 2 artanh(1/3), and ln 10 = ln 8 + ln 5/4 = 3 ln 2 + 2 artanh(1/9).
                 FixedLn2 = TwiceArtanh(FixedOne.Divide(3), FixedBits);
                 FixedLn10 = FixedLn2.Multiply(3).Add(TwiceArtanh(FixedOne.Divide(9), FixedBits));
@@ -219,6 +222,12 @@ namespace AngouriMath
             public EInteger FiveToFixedBits { get; }
             /// <summary>The square root of 2, in fixed point, to fifty digits</summary>
             public EInteger FixedSqrt2 { get; }
+            /// <summary>Pi in fixed point, to the context's digits</summary>
+            public EInteger FixedPi { get; }
+            /// <summary>2 pi in fixed point</summary>
+            public EInteger FixedTwoPi { get; }
+            /// <summary>Pi / 2 in fixed point</summary>
+            public EInteger FixedHalfPi { get; }
             /// <summary>The natural logarithm of 2, in fixed point</summary>
             public EInteger FixedLn2 { get; }
             /// <summary>The natural logarithm of 10, in fixed point</summary>
@@ -406,69 +415,68 @@ namespace AngouriMath
         {
             var working = WithGuardDigits(context, 8);
             var consts = ConstantCache.Lookup(working);
+            var bits = consts.FixedBits;
+            var one = consts.FixedOne;
 
-            //truncating to  [-2*PI;2*PI]
-            TruncateToPeriodicInterval(ref x, consts, working);
-            // now x in (-2pi, 2pi); into [-pi, pi], with the signs the shift costs
+            // In fixed point from here: the reduction is integer arithmetic on pi's digits,
+            // and a halving is a shift.
+            var fixedX = ToFixed(x, bits);
+            // Into [-pi, pi]: the nearest multiple of 2 pi off.
+            var shifted = fixedX.Add(consts.FixedPi);
+            var turns = shifted.Divide(consts.FixedTwoPi);
+            if (shifted.Sign < 0 && !shifted.Remainder(consts.FixedTwoPi).IsZero)
+                turns = turns.Subtract(1);   // the division truncates, and this floors
+            if (!turns.IsZero)
+                fixedX = fixedX.Subtract(consts.FixedTwoPi.Multiply(turns));
+            // Into [-pi/2, pi/2], with the sign the fold costs the cosine.
             var negateCos = false;
-            if (x.GreaterThan(consts.Pi))
-            {
-                x = x.Subtract(consts.TwoPi, working);
-            }
-            else if (x.LessThan(-consts.Pi))
-            {
-                x = x.Add(consts.TwoPi, working);
-            }
-            if (x.GreaterThan(consts.HalfPi))
+            if (fixedX.CompareTo(consts.FixedHalfPi) > 0)
             {
                 // sin(x) = sin(pi - x), cos(x) = -cos(pi - x)
-                x = consts.Pi.Subtract(x, working);
+                fixedX = consts.FixedPi.Subtract(fixedX);
                 negateCos = true;
             }
-            else if (x.LessThan(-consts.HalfPi))
+            else if (fixedX.CompareTo(consts.FixedHalfPi.Negate()) < 0)
             {
                 // sin(x) = sin(-pi - x), cos(x) = -cos(-pi - x)
-                x = consts.Pi.Negate().Subtract(x, working);
+                fixedX = consts.FixedPi.Negate().Subtract(fixedX);
                 negateCos = true;
             }
 
             // Halve until |x| < 1/20.
             var halvings = 0;
-            var twentieth = EDecimal.Create(5, -2);
-            while (x.Abs().GreaterThan(twentieth))
+            var twentieth = one.Divide(20);
+            while (fixedX.Abs().CompareTo(twentieth) > 0)
             {
-                x = x.Multiply(consts.Half, working);
+                fixedX = fixedX.Sign < 0 ? fixedX.Negate().ShiftRight(1).Negate() : fixedX.ShiftRight(1);
                 halvings++;
             }
 
-            var xx = x.Multiply(x, working);
+            var square = MultiplyFixed(fixedX, fixedX, bits);
             // sin: x - x^3/3! + ...; cos: 1 - x^2/2! + ...
-            var sinTerm = x;
-            var sin = x;
-            var cosTerm = EDecimal.One;
-            var cos = EDecimal.One;
-            for (var i = 1; i < 200; i++)
+            var sinTerm = fixedX;
+            var sin = fixedX;
+            var cosTerm = one;
+            var cos = one;
+            for (var i = 1; i < 100000; i++)
             {
-                cosTerm = -cosTerm.Multiply(xx, working).Divide((2 * i - 1) * (2 * i), working);
-                sinTerm = -sinTerm.Multiply(xx, working).Divide((2 * i) * (2 * i + 1), working);
-                var nextCos = cos.Add(cosTerm, working);
-                var nextSin = sin.Add(sinTerm, working);
-                var settled = nextCos.Equals(cos) && nextSin.Equals(sin);
-                cos = nextCos;
-                sin = nextSin;
-                if (settled)
+                cosTerm = MultiplyFixed(cosTerm, square, bits).Negate().Divide((2 * i - 1) * (2 * i));
+                sinTerm = MultiplyFixed(sinTerm, square, bits).Negate().Divide((2 * i) * (2 * i + 1));
+                if (cosTerm.IsZero && sinTerm.IsZero)
                     break;
+                cos = cos.Add(cosTerm);
+                sin = sin.Add(sinTerm);
             }
             for (var i = 0; i < halvings; i++)
             {
                 // sin(2y) = 2 sin(y) cos(y), cos(2y) = 2 cos(y)^2 - 1
-                var doubledSin = sin.Multiply(cos, working).Multiply(2, working);
-                cos = cos.Multiply(cos, working).Multiply(2, working).Decrement();
+                var doubledSin = MultiplyFixed(sin, cos, bits).ShiftLeft(1);
+                cos = MultiplyFixed(cos, cos, bits).ShiftLeft(1).Subtract(one);
                 sin = doubledSin;
             }
             if (negateCos)
-                cos = -cos;
-            return (sin.RoundToPrecision(context), cos.RoundToPrecision(context));
+                cos = cos.Negate();
+            return (FromFixed(sin, consts, working).RoundToPrecision(context), FromFixed(cos, consts, working).RoundToPrecision(context));
         }
 
         /// <summary>Analogy of <see cref="Math.Tan(double)"/></summary>
@@ -533,21 +541,6 @@ namespace AngouriMath
         }
 
         /// <summary>Truncates <paramref name="x"/> to [-2*<see cref="Math.PI"/>, 2*<see cref="Math.PI"/>] </summary>
-        private static void TruncateToPeriodicInterval(ref EDecimal x, ConstantCache consts, EContext context)
-        {
-            while (x.GreaterThanOrEquals(consts.TwoPi))
-            {
-                var divide = x.Divide(consts.TwoPi, context).Floor().Abs();
-                x = divide.MultiplyAndAdd(-consts.TwoPi, x, context);
-            }
-
-            while (x.LessThanOrEquals(-consts.TwoPi))
-            {
-                var divide = x.Divide(consts.TwoPi, context).Floor().Abs();
-                x = divide.MultiplyAndAdd(consts.TwoPi, x, context);
-            }
-        }
-
         /// <summary>Analogy of <see cref="Math.Asin(double)"/></summary>
         /// <remarks>
         /// <c>arcsin(x) = arctan(x/sqrt(1 - x^2))</c>, with <c>1 - x^2</c> as <c>(1 - x)(1 + x)</c>
@@ -598,27 +591,33 @@ namespace AngouriMath
             if (x.GreaterThan(EDecimal.One))
                 return ConstantCache.Lookup(working).HalfPi.Subtract(Arctan(EDecimal.One.Divide(x, working), working), working).RoundToPrecision(context);
 
+            // In fixed point from here: the square root of a fixed-point number is the
+            // integer square root of it shifted up, exactly floored, and the halvings come
+            // back as a shift.
+            var workingConsts = ConstantCache.Lookup(working);
+            var bits = workingConsts.FixedBits;
+            var one = workingConsts.FixedOne;
+            var fixedX = ToFixed(x, bits);
             var halvings = 0;
-            var twentieth = EDecimal.Create(5, -2);
-            while (x.GreaterThan(twentieth))
+            var twentieth = one.Divide(20);
+            while (fixedX.CompareTo(twentieth) > 0)
             {
-                x = x.Divide(EDecimal.One.Add(x.MultiplyAndAdd(x, EDecimal.One, working).Sqrt(working), working), working);
+                var root = one.Add(MultiplyFixed(fixedX, fixedX, bits)).ShiftLeft(bits).Sqrt();
+                fixedX = fixedX.ShiftLeft(bits).Divide(one.Add(root));
                 halvings++;
             }
-            var xx = x.Multiply(x, working);
-            var power = x;
-            var sum = x;
-            for (var i = 1; i < 400; i++)
+            var square = MultiplyFixed(fixedX, fixedX, bits);
+            var power = fixedX;
+            var sum = fixedX;
+            for (var i = 1; i < 100000; i++)
             {
-                power = -power.Multiply(xx, working);
-                var next = sum.Add(power.Divide(2 * i + 1, working), working);
-                if (next.Equals(sum))
+                power = MultiplyFixed(power, square, bits).Negate();
+                var term = power.Divide(2 * i + 1);
+                if (term.IsZero)
                     break;
-                sum = next;
+                sum = sum.Add(term);
             }
-            if (halvings > 0)
-                sum = sum.Multiply(EDecimal.FromInt32(1 << halvings), working);
-            return sum.RoundToPrecision(context);
+            return FromFixed(sum.ShiftLeft(halvings), workingConsts, working).RoundToPrecision(context);
         }
         /// <summary>Analogy of <see cref="Math.Acos(double)"/></summary>
         public static EDecimal Acos(this EDecimal x, EContext context)

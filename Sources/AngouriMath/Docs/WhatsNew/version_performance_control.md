@@ -256,6 +256,32 @@ cent — its measured run-to-run spread on mean time is up to 51.8%. A move of 8
 outside that band by a wide margin and agrees in sign and rough size with the allocation column
 beside it. The small rows from the same run are still not worth reading, and are not quoted.
 
+## The 2055th: the sine, cosine and arctangent in the same fixed point
+
+The 2050th made the trigonometric functions argument reduction and short series, in
+`EDecimal`; the 2054th found that a series in `EDecimal` pays two to three microseconds a term
+for the alignment in each addition and moved the logarithm and the exponential to fixed point.
+The sine, the cosine and the arctangent are there too now: the reduction to `[-pi, pi]` is an
+integer division by `2 pi` in fixed point, the folds and halvings are subtractions and shifts,
+the square root in the arctangent's halving `x/(1 + sqrt(1 + x^2))` is the integer square root
+of the value shifted up, exactly floored, and the halvings come back as a shift. The arcsine
+and arccosine are the arctangent's, and the tangent the quotient. The hundred-digit values
+are the ones pinned before, to the last digit.
+
+| benchmark | 2054th | 2055th | allocation | time |
+|---|--:|--:|--:|--:|
+| `EvalTrig` | 1,192,089 | **260,728** | **−78.1%** | 552 → **153 µs** |
+| `EvalTrigPrecise` | 7,935,226 | **2,525,707** | **−68.2%** | 13.8 → **2.16 ms** |
+| `EvalTranscendentalFresh` | 423,032 | **128,664** | **−69.6%** | 245 → **83 µs** |
+| `SolveEasy` | 4,425,194 | **1,675,487** | **−62.1%** | 2.88 → **1.19 ms** |
+| every other entry | | | within 1.5% | |
+
+Bytes allocated per call, same machine, both columns by the gate in one session; the gate's
+baseline was taken from this run. Alone, at a hundred digits: `sin(x)` is 45 µs where it was
+176, `arctan(x)` 46 where it was 202, `arcsin(x)` 59 where it was 238; at five hundred digits
+`arctan(x)` is 1.2 ms where it was 9.3. Against the 2049th, before any of this, `EvalTrig` is
+709 → 153 µs and `EvalTrigPrecise` 22.5 → 2.2 ms.
+
 ## The 2054th: the logarithm and the exponential as series in fixed point
 
 `EvalTranscendentalFresh` -- `ln(1 + x^2) arctan(x)` at a fresh point -- was 1.3 ms after the

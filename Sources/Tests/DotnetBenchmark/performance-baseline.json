@@ -1,94 +1,94 @@
 {
   "comment": "Allocated bytes and mean nanoseconds per operation for the popular use cases of https://github.com/asc-community/AngouriMath/issues/746. Checked by PerformanceGate.cs; see Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md for when updating it is legitimate.",
   "benchmark": "CommonFunctionsInterVersion",
-  "commit": "bfb60e9cdcdc855c13b5ac58001db0ec98e3f3b2",
+  "commit": "95082e2f814874b99f152fbb1072fc977735337f",
   "measuredOn": "2026-09-15",
   "runtime": ".NET 10.0.10",
   "machine": "Ubuntu 26.04 LTS, X64, 8 logical cores",
   "cases": {
     "CompileEasy": {
-      "allocatedBytes": 11023,
-      "meanNanoseconds": 184521.07338867188
+      "allocatedBytes": 11031,
+      "meanNanoseconds": 184131.37203543526
     },
     "CompileHard": {
-      "allocatedBytes": 20737,
-      "meanNanoseconds": 309526.83076171874
+      "allocatedBytes": 20434,
+      "meanNanoseconds": 310381.04733072914
     },
     "Derivate": {
-      "allocatedBytes": 53099,
-      "meanNanoseconds": 14289.474793570382
+      "allocatedBytes": 53111,
+      "meanNanoseconds": 14270.049594116212
     },
     "EvalEasy": {
       "allocatedBytes": 0,
-      "meanNanoseconds": 1.8900332285889558
+      "meanNanoseconds": 1.883551713079214
     },
     "EvalPolynomialFresh": {
       "allocatedBytes": 12328,
-      "meanNanoseconds": 4151.610092798869
+      "meanNanoseconds": 4164.772733835073
     },
     "EvalPolynomialFresh15Digits": {
       "allocatedBytes": 11656,
-      "meanNanoseconds": 4141.208742959158
+      "meanNanoseconds": 4157.980944497244
     },
     "EvalTranscendentalFresh": {
-      "allocatedBytes": 423032,
-      "meanNanoseconds": 245377.50509207588
+      "allocatedBytes": 128664,
+      "meanNanoseconds": 83463.06102643695
     },
     "EvalTrig": {
-      "allocatedBytes": 1192089,
-      "meanNanoseconds": 551794.5797293527
+      "allocatedBytes": 260728,
+      "meanNanoseconds": 153426.1548339844
     },
     "EvalTrigPrecise": {
-      "allocatedBytes": 7935226,
-      "meanNanoseconds": 13781485.40625
+      "allocatedBytes": 2525707,
+      "meanNanoseconds": 2164306.404296875
     },
     "ParseEasy": {
-      "allocatedBytes": 18125,
-      "meanNanoseconds": 5981.867161090558
+      "allocatedBytes": 18104,
+      "meanNanoseconds": 5932.770784231333
     },
     "ParseHard": {
       "allocatedBytes": 3555057,
-      "meanNanoseconds": 1367037.3726283482
+      "meanNanoseconds": 1392708.7341145833
     },
     "RunEasy": {
       "allocatedBytes": 0,
-      "meanNanoseconds": 20.056596242464504
+      "meanNanoseconds": 20.095689982175827
     },
     "RunHard": {
       "allocatedBytes": 0,
-      "meanNanoseconds": 295.51566811970304
+      "meanNanoseconds": 295.40826177597046
     },
     "RunMedium": {
       "allocatedBytes": 0,
-      "meanNanoseconds": 163.17946696281433
+      "meanNanoseconds": 162.8344373519604
     },
     "SimplifyEasy": {
       "allocatedBytes": 78578,
-      "meanNanoseconds": 45092.335445149736
+      "meanNanoseconds": 44253.979728190105
     },
     "SimplifyHard": {
-      "allocatedBytes": 189726120,
-      "meanNanoseconds": 109370614.94736843
+      "allocatedBytes": 189604392,
+      "meanNanoseconds": 111491250.2413793
     },
     "SolveEasy": {
-      "allocatedBytes": 4425194,
-      "meanNanoseconds": 2884867.8782552085
+      "allocatedBytes": 1675487,
+      "meanNanoseconds": 1185599.8670479911
     },
     "SolveEasyMedium": {
       "allocatedBytes": 65184,
-      "meanNanoseconds": 18597.25531768799
+      "meanNanoseconds": 18840.902629307337
     },
     "SolveHard": {
       "allocatedBytes": 11706656,
-      "meanNanoseconds": 64677752.72
+      "meanNanoseconds": 63240162.666666664
     },
     "SolveMedium": {
-      "allocatedBytes": 446445,
-      "meanNanoseconds": 266309.50540597097
+      "allocatedBytes": 446414,
+      "meanNanoseconds": 259625.15890066963
     },
     "SolveMediumHard": {
       "allocatedBytes": 1367798,
-      "meanNanoseconds": 8561109.407291668
+      "meanNanoseconds": 8776522.877083333
     }
   },
   "ungated": {
