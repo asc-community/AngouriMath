@@ -110,6 +110,23 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sin(x)^3/sqrt(sin(2*x))", new[] { -2.6, -2.2, 0.4, 0.8, 1.1, 1.4 })]
         [InlineData("cos(x)/sqrt(sin(2*x))", new[] { -2.6, -2.2, 0.4, 0.8, 1.1, 1.4 })]
         public void AnOddPowerIsItsSignTimesAFunctionOfTheTangent(string integrand, double[] points)
+            => DifferentiatesBackAtEveryPoint(integrand, points);
+
+        /// <summary>
+        /// Timofeev's 606 and 560. <c>tan(x) tan(2x)</c> is <c>2 u^2/(1 - u^2)</c> under the
+        /// substitution, and its <c>3/2</c>th power below the bar came out of the
+        /// simplification as a power of <c>3/2 * (-1)</c>, an exponent no rule read; and
+        /// <c>1/(1 - u^2) - 1</c> combined into one quotient kept the numerator
+        /// <c>1 - (1 - u^2)</c>, in which the even power of <c>u</c> the parity trick needs was not
+        /// visible. Checked on both signs of the tangent, where the root is real.
+        /// </summary>
+        [Theory]
+        [InlineData("(-cos(2*x) + 2*tan(x)^2)/(cos(x)^2*(tan(x)*tan(2*x))^(3/2))", new[] { -0.7, -0.3, 0.25, 0.5, 0.7 })]
+        [InlineData("cos(x)^3*(cos(2*x) - 3*tan(x))/((sin(x)^2 - sin(2*x))*sin(2*x)^(3/2))", new[] { -2.6, -2.2, 0.3, 0.6, 0.9, 1.2 })]
+        public void APowerOfAQuotientOfTangents(string integrand, double[] points)
+            => DifferentiatesBackAtEveryPoint(integrand, points);
+
+        private static void DifferentiatesBackAtEveryPoint(string integrand, double[] points)
         {
             var integral = integrand.ToEntity().Integrate("x");
             Assert.DoesNotContain("integral(", integral.Stringize());

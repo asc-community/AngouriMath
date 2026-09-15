@@ -6645,6 +6645,14 @@ namespace AngouriMath.Functions.Algebra
             if (radicand is null || !TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var a, out _, out _)
                 || a.Evaled is Number.Complex { IsZero: true })
                 return null;
+            // The quadratic standing whole beside its own root, up to a constant, is one power
+            // of one base: `u^2 (1/2 - u^2/2)^(-1/2) / (1 - u^2)` is `sqrt(2) u^2 (1 - u^2)^(-3/2)`,
+            // and is asked as that. Taken apart over the linears of `1 - u^2` instead, each
+            // piece's answer carries a sign, `sgn(u - 1)`, of which the whole has no need --
+            // and whose derivative is not read where the argument is not shown to be real, so
+            // the answer to Timofeev's `arcsin(sqrt((x - a)/(x + a)))` could not be checked.
+            if (WithTheQuadraticAsItsRoot(expr, radicand, x) is { } gathered)
+                return Integration.ComputeIndefiniteIntegral(gathered, x, integrateByParts: false);
             // Written over the root: N sqrt(Q)/D is N Q/(D sqrt(Q)).
             if (!rootBelow)
                 above = above * radicand;
@@ -6725,6 +6733,50 @@ namespace AngouriMath.Functions.Algebra
             }
             answer = answer.InnerSimplified;
             return answer.Nodes.Any(node => node is Number.Complex { IsNaN: true }) ? null : answer;
+        }
+
+        /// <summary>
+        /// The product with a whole power of a constant multiple of <paramref name="radicand"/>
+        /// written as that constant's power times the power of <paramref name="radicand"/>
+        /// itself, so that the normalisation gathers it with the root; null where no factor is
+        /// such a multiple, the factor that is <paramref name="radicand"/> as written included,
+        /// since that one the normalisation has gathered already.
+        /// </summary>
+        private static Entity? WithTheQuadraticAsItsRoot(Entity expr, Entity radicand, Entity.Variable x)
+        {
+            if (!TreeAnalyzer.TryGetPolynomial(radicand, x, out var radicandMonomials))
+                return null;
+            var found = false;
+            Entity? rebuilt = null;
+            foreach (var factor in Mulf.LinearChildren(expr))
+            {
+                var (@base, power) = factor is Powf(var inner, Number.Integer whole) ? (inner, whole) : (factor, Number.Integer.One);
+                Entity written = factor;
+                if (!found && @base != radicand && @base.ContainsNode(x) && ConstantRatio(@base) is { } ratio)
+                {
+                    found = true;
+                    written = MathS.Pow(ratio, power) * MathS.Pow(radicand, power);
+                }
+                rebuilt = rebuilt is null ? written : rebuilt * written;
+            }
+            return found ? rebuilt : null;
+
+            Entity? ConstantRatio(Entity polynomial)
+            {
+                if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out var monomials) || monomials.Count != radicandMonomials.Count)
+                    return null;
+                Entity? ratio = null;
+                foreach (var pair in monomials)
+                {
+                    if (!radicandMonomials.TryGetValue(pair.Key, out var reference))
+                        return null;
+                    var here = (pair.Value / reference).InnerSimplified;
+                    if (here.ContainsNode(x) || (ratio is not null && here != ratio))
+                        return null;
+                    ratio ??= here;
+                }
+                return ratio;
+            }
         }
 
         /// <summary>
@@ -8170,9 +8222,15 @@ namespace AngouriMath.Functions.Algebra
         /// otherwise, so that the combining is paid for only where it changes anything.
         /// </summary>
         private static Entity AsOneQuotient(Entity expr)
-            => expr is Sumf or Minusf && Sumf.LinearChildren(expr).Any(term => term is Divf || term is Powf(_, Number.Integer { IsNegative: true }))
-                ? Functions.SingleQuotient.Combine(expr)
-                : expr;
+        {
+            if (expr is not (Sumf or Minusf) || !Sumf.LinearChildren(expr).Any(term => term is Divf || term is Powf(_, Number.Integer { IsNegative: true })))
+                return expr;
+            // The numerator the combining writes, `1 - (1 - u^2)` for `1/(1 - u^2) - 1`, as the
+            // polynomial it is, `u^2`: the even power of u below is read as written, and was
+            // not read there -- Timofeev's `(tan(x) tan(2x))^(3/2)` under the tangent.
+            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr));
+            return above.Expand().InnerSimplified / below;
+        }
 
         /// <summary>
         /// A factor of a product that is a small power of a sum holding a square root of a
