@@ -688,6 +688,38 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// The same for a numerator that is a product with a constant factor in it:
+        /// <c>sqrt(2) sqrt(1 - t^2)/(t^2 + 1)</c> is <c>sqrt(2)</c> times a quotient Euler's
+        /// substitution answers, and with the root of two inside the quotient -- a radical
+        /// beside the radical -- it and the rules beside it declined. The tangent
+        /// substitution hands on exactly that for Timofeev's <c>sqrt(cot(2x)/cot(x))</c>.
+        /// </summary>
+        private static Entity? TakeConstantFactorOutOfNumerator(
+            Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts)
+        {
+            Entity constantPart = Number.Integer.One;
+            Entity variablePart = Number.Integer.One;
+            foreach (var factor in Entity.Mulf.LinearChildren(numerator))
+                if (factor.ContainsNode(x))
+                    variablePart *= factor;
+                else
+                    constantPart *= factor;
+            if (constantPart == Number.Integer.One || variablePart == Number.Integer.One)
+                return null;
+            // A rational constant is read by every rule that reads the quotient, and is left
+            // where it is: taken out, the `-1` in front of what the tangent substitution makes
+            // of Timofeev's 568 sent the quotient down a search that did not return, where the
+            // rule for combining radicals answers it with the sign in place in three seconds.
+            if (constantPart.Evaled is Number.Rational)
+                return null;
+            // As a question of its own: the quotient without its constant is the question
+            // asked, strictly smaller and no continuation of any search, and one level down
+            // the rules scoped to the top would not see it.
+            return Integration.ComputeAsAQuestionOfItsOwn(variablePart / denominator, x, integrateByParts)
+                ?.Pipe(i => constantPart * i);
+        }
+
+        /// <summary>
         /// Reads <paramref name="expr"/> as a numerator over a denominator, in either of the two
         /// spellings a quotient has here.
         /// </summary>
@@ -811,6 +843,8 @@ namespace AngouriMath.Functions.Algebra
                 // Mulf case above. Taking the constant out is both cheaper and more decisive.
                 TakeConstantFactorOutOfDenominator(div, over, x, integrateByParts) is { } withoutIt ?
                     withoutIt :
+                TakeConstantFactorOutOfNumerator(div, over, x, integrateByParts) is { } withoutItAbove ?
+                    withoutItAbove :
                 !div.ContainsNode(x) ?
                     // The exponent negated as a number rather than as a tree: `-power` on the
                     // node `2` is `2 * (-1)`, and `sin(x)^(2 * (-1))` is a shape the closed rule
@@ -8858,7 +8892,8 @@ namespace AngouriMath.Functions.Algebra
         /// <summary>
         /// Bioche's first two rules: a rational function of <c>sin(x)</c> and <c>cos(x)</c>
         /// that is odd in the sine is a rational function of <c>u = cos(x)</c> times
-        /// <c>sin(x) dx = -du</c>, and one odd in the cosine the mirror of it.
+        /// <c>sin(x) dx = -du</c>, and one odd in the cosine the mirror of it; with radicals
+        /// of polynomials in the two even in the function admitted as coefficients.
         /// </summary>
         /// <remarks>
         /// <para>
@@ -8897,13 +8932,29 @@ namespace AngouriMath.Functions.Algebra
                 Cosecantf(var arg) when arg == x => 1 / sine,
                 _ => node
             });
+            // A radical of a polynomial in the two stands as a symbol while the parity is read:
+            // Moses's `sqrt(A^2 + B^2 sin(x)^2)/sin(x)` is odd in the sine with the root even in
+            // it, and under `u = cos(x)` the root is `sqrt(A^2 + B^2 (1 - u^2))`. The symbol
+            // is a coefficient to the polynomials below, and is written in u with them.
+            var s = Variable.CreateUnique(expr, "s_bioche");
+            var c = Variable.CreateUnique(expr, "c_bioche");
+            var radicals = new List<(Variable Symbol, Entity Base, Number.Rational Exponent)>();
+            overTheTwo = overTheTwo.Replace(node =>
+            {
+                if (node is not Powf(var radicand, Number.Rational exponent) || exponent is Number.Integer || !radicand.ContainsNode(x))
+                    return node;
+                var symbol = Variable.CreateUnique(expr, "r_bioche" + radicals.Count);
+                radicals.Add((symbol, radicand.Substitute(sine, s).Substitute(cosine, c), exponent));
+                return symbol;
+            });
+            if (radicals.Any(radical => radical.Base.ContainsNode(x)
+                                        || !TreeAnalyzer.TryGetPolynomial(radical.Base, s, out _) || !TreeAnalyzer.TryGetPolynomial(radical.Base, c, out _)))
+                return null;
             if (overTheTwo.Nodes.Any(node => node.ContainsNode(x) && node is not (Variable or Sumf or Minusf or Mulf or Divf or Sinf or Cosf)
                                               && !(node is Powf(_, Number.Integer))))
                 return null;
             if (overTheTwo.Nodes.Any(node => node is Sinf(var arg) && arg != x || node is Cosf(var arg2) && arg2 != x))
                 return null;
-            var s = Variable.CreateUnique(expr, "s_bioche");
-            var c = Variable.CreateUnique(expr, "c_bioche");
             var inTheTwo = Functions.SingleQuotient.Combine(overTheTwo.Substitute(sine, s).Substitute(cosine, c));
             if (inTheTwo.ContainsNode(x))
                 return null;   // x bare beside the two is not this rule's
@@ -8916,6 +8967,9 @@ namespace AngouriMath.Functions.Algebra
 
             foreach (var (odd, even, back, sign) in new[] { (c, s, sine, 1), (s, c, cosine, -1) })
             {
+                // Every radical even in f, or it is not a function of u.
+                if (radicals.Any(radical => ParityIn(radical.Base, odd) != 1))
+                    continue;
                 // N/(D f) even in f: with D even, N is odd and one f comes out of it; with D
                 // odd, N is even and D f is; with D neither, both are cleared against D(-f).
                 var parityOfBelow = ParityIn(below, odd);
@@ -8948,6 +9002,20 @@ namespace AngouriMath.Functions.Algebra
                 if (InU(numerator, odd, even, u, oneMinusUSquared, oneFOutOfTheNumerator) is not { } aboveInU
                     || InU(denominator, odd, even, u, oneMinusUSquared, dividedByOdd: false) is not { } belowInU)
                     continue;
+                var radicalsInU = new List<(Variable Symbol, Entity InU)>();
+                foreach (var (symbol, radicand, exponent) in radicals)
+                {
+                    if (InU(radicand, odd, even, u, oneMinusUSquared, dividedByOdd: false) is not { } radicandInU)
+                        break;
+                    radicalsInU.Add((symbol, MathS.Pow(radicandInU, exponent)));
+                }
+                if (radicalsInU.Count != radicals.Count)
+                    continue;
+                foreach (var (symbol, radical) in radicalsInU)
+                {
+                    aboveInU = aboveInU.Substitute(symbol, radical);
+                    belowInU = belowInU.Substitute(symbol, radical);
+                }
                 var integrand = Functions.PartialFractions.Bare(aboveInU / belowInU);
                 if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is not { } result
                     || result.Nodes.Any(node => node == MathS.NaN))

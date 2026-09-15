@@ -75,6 +75,18 @@ namespace AngouriMath.Tests.Calculus
         public void OddInOneOfTheTwo(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// With a radical of a polynomial in the two, even in the function the integrand is
+        /// odd in, admitted as a coefficient: Moses's <c>sqrt(A^2 + B^2 sin(x)^2)/sin(x)</c>
+        /// with <c>A</c> and <c>B</c> pinned, and the numeric spelling of it.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(3 + 2*sin(x)^2)/sin(x)")]
+        [InlineData("sqrt(1.7^2 + 2.3^2*sin(x)^2)/sin(x)")]
+        [InlineData("sin(x)^3*sqrt(1 + cos(x)^2)")]
+        [InlineData("cos(x)/sqrt(1 + sin(x)^2)")]
+        public void ARadicalEvenInTheFunction(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// The answer is in the function substituted for and not in the half-angle tangent,
         /// which is the point of the rule's place in front of that substitution.
         /// </summary>
