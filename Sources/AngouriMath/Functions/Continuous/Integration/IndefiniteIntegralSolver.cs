@@ -8612,6 +8612,23 @@ namespace AngouriMath.Functions.Algebra
                 var (above, below) = Functions.SingleQuotient.Of(AsOneQuotient(@base));
                 if (below != Number.Integer.One && below.ContainsNode(x) && IsPositiveForReal(below, x) && OfModestDegree(above))
                     return MathS.Pow(above, exponent) * PowerOfAPositive(below, -exponent);
+                // A polynomial with rational roots is the product of its linear factors, and
+                // the product is what the splitting below reads: `(1 - x^2)^(1/4)` is
+                // `((1 - x)(1 + x))^(1/4)`, which comes apart on `(-1, 1)` where the root is
+                // real, and beside `sqrt(1 - x)` and `sqrt(1 + x)` -- Timofeev's 314 -- the
+                // two linear radicals are then one rule's. Only there: only where every
+                // factor found already stands under a fractional power of its own elsewhere
+                // in the integrand, so that the splitting joins what is written apart. For a
+                // root of a quadratic on its own, `sqrt(1 - x^2)`, Euler's substitution and
+                // the trigonometric one are the answer, and written apart it went to the
+                // rule for two linear radicals and its rational function of a higher degree:
+                // six more of the suite's problems timed out, Charlwood's 41, 92, 152 and 155
+                // among them.
+                if (above is not Mulf && TreeAnalyzer.TryGetPolynomial(above, x, out _)
+                    && Functions.PolynomialFactoring.TryFactor(above, x, out var factoredAbove)
+                    && Mulf.LinearChildren(factoredAbove).Where(factor => factor.ContainsNode(x)).ToList() is { Count: >= 2 } linearFactors
+                    && linearFactors.All(factor => StandsUnderAFractionalPowerElsewhere(factor is Powf(var g, Number.Integer) ? g : factor, node)))
+                    above = WithANegativeConstantInsideAFactor(factoredAbove);
                 // A denominator with an odd power in it is the even part times what is left,
                 // and the even part is not negative: `sqrt(sin(x)/cos(x)^5)` is
                 // `sqrt(sin(x)/cos(x)) sqrt(1/cos(x)^4)`, which is `sqrt(tan(x))/cos(x)^2`
@@ -8713,6 +8730,39 @@ namespace AngouriMath.Functions.Algebra
             // ...and what is not a polynomial in x at all -- a sine -- is not a degree to bound.
             bool OfModestDegreeOrNotAPolynomial(Entity numerator)
                 => !TreeAnalyzer.TryGetPolynomial(numerator, x, out _) || OfModestDegree(numerator);
+
+            // Whether `linear`, or its negative, is the base of a fractional power somewhere
+            // in the integrand other than `root` itself.
+            bool StandsUnderAFractionalPowerElsewhere(Entity linear, Entity root)
+            {
+                var negated = (-linear).Expand();
+                return expr.Nodes.Any(other => other != root && other is Powf(var b, Number.Rational r) && r is not Number.Integer
+                                               && (b == linear || b == negated || (b - linear).Expand().Evaled is Number.Complex { IsZero: true } || (b + linear).Expand().Evaled is Number.Complex { IsZero: true }));
+            }
+
+            // `-(x - 1) (x + 1)`, which is how the factoring writes `1 - x^2`, as
+            // `(1 - x) (x + 1)`: a negative constant multiplied into the first factor that is
+            // not a power, since the splitting below asks the constant to be positive.
+            Entity WithANegativeConstantInsideAFactor(Entity product)
+            {
+                Entity constant = Number.Integer.One;
+                var factors = new List<Entity>();
+                foreach (var factor in Mulf.LinearChildren(product))
+                    if (factor.ContainsNode(x))
+                        factors.Add(factor);
+                    else
+                        constant = constant * factor;
+                if (constant.Evaled is not Number.Real { IsNegative: true })
+                    return product;
+                var bare = factors.FindIndex(factor => factor is not Powf);
+                if (bare < 0)
+                    return product;
+                factors[bare] = (constant * factors[bare]).Expand();
+                Entity rebuilt = factors[0];
+                for (var i = 1; i < factors.Count; i++)
+                    rebuilt = rebuilt * factors[i];
+                return rebuilt;
+            }
 
             // Whether `(c g_1^(n_1) ... g_k^(n_k))^(p/q)` with q even is `c^(p/q) g_1^(n_1 p/q) ...`
             // wherever the root is real: the polynomial factors are real, and on each interval
