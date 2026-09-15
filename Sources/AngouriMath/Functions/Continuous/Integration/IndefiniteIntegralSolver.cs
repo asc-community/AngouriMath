@@ -669,18 +669,45 @@ namespace AngouriMath.Functions.Algebra
         private static Entity? TakeConstantFactorOutOfDenominator(
             Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts)
         {
-            Entity constantPart = Number.Integer.One;
-            Entity variablePart = Number.Integer.One;
+            Entity? constantPart = null;
+            Entity? variablePart = null;
             foreach (var factor in Entity.Mulf.LinearChildren(denominator))
-                if (factor.ContainsNode(x))
-                    variablePart *= factor;
+                if (!factor.ContainsNode(x))
+                    constantPart = constantPart is null ? factor : constantPart * factor;
+                // A whole power of a polynomial with a symbolic leading coefficient is that
+                // coefficient's power times the power of the monic polynomial: `t^2/(b - d t^2)^3`
+                // is `1/(-d)^3` times `t^2/(t^2 - b/d)^3`, and the rational rules with a symbol
+                // in the leading place answer the first power and not the third -- the
+                // quotient of two linear radicals hands on exactly this for Hearn's
+                // `sqrt(a + b x) sqrt(c + d x)`. The first power is left as written, its table
+                // rules reading the coefficient where it is. Built without a stray `1 *`, since
+                // the table rules read the shape as written.
+                else if (factor is Powf(var polynomial, Number.Integer power) && power.EInteger.CompareTo(EInteger.FromInt32(2)) >= 0
+                         && TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read) && read.Count > 1
+                         && read.Keys.Max() is { } top && read[top] is var leading && !leading.ContainsNode(x) && leading.Evaled is not Number)
+                {
+                    var leadingPower = MathS.Pow(leading, power);
+                    constantPart = constantPart is null ? leadingPower : constantPart * leadingPower;
+                    Entity? monic = null;
+                    foreach (var pair in read.OrderBy(pair => pair.Key))
+                    {
+                        Entity coefficient = pair.Key.Equals(top) ? Number.Integer.One : (pair.Value / leading).InnerSimplified;
+                        var degree = pair.Key.ToInt32Checked();
+                        Entity term = degree == 0 ? coefficient
+                            : coefficient == Number.Integer.One ? (degree == 1 ? x : MathS.Pow(x, degree))
+                            : coefficient * (degree == 1 ? x : MathS.Pow(x, degree));
+                        monic = monic is null ? term : monic + term;
+                    }
+                    var monicPower = MathS.Pow(monic!, power);
+                    variablePart = variablePart is null ? monicPower : variablePart * monicPower;
+                }
                 else
-                    constantPart *= factor;
+                    variablePart = variablePart is null ? factor : variablePart * factor;
 
             // Only where the denominator genuinely mixes the two. A denominator that is entirely
             // constant, or entirely in the variable, is one of the branches below's to answer,
             // and taking this one would hand on `N/1` and go round again.
-            if (constantPart == Number.Integer.One || variablePart == Number.Integer.One)
+            if (constantPart is null || variablePart is null)
                 return null;
 
             return Integration.ComputeIndefiniteIntegral(numerator / variablePart, x, integrateByParts)
@@ -4053,33 +4080,81 @@ namespace AngouriMath.Functions.Algebra
             rewritten = rewritten.Substitute(x, xInT);
             if (rewritten.ContainsNode(x))
                 return null;
-            var quotient = Functions.SingleQuotient.Combine((rewritten * dx).Simplify());
-            if (quotient is Providedf(var inner, _))
-                quotient = inner;
-            var (above, below) = Functions.SingleQuotient.Of(quotient);
-            if (!TreeAnalyzer.TryGetPolynomial(above, w, out var aboveMonomials) || !TreeAnalyzer.TryGetPolynomial(below, w, out var belowMonomials))
-                return null;
-            // The powers of w above the line agree modulo q, and so do those below, and the
-            // two residues agree: then every power left after t^q's worth is taken is whole.
-            if (Residue(aboveMonomials.Keys, q) is not { } residueAbove || Residue(belowMonomials.Keys, q) is not { } residueBelow || residueAbove != residueBelow)
-                return null;
-            Entity rebuilt = WithWholePowersOfTheSecond(aboveMonomials, residueAbove, q, secondInT)
-                / WithWholePowersOfTheSecond(belowMonomials, residueBelow, q, secondInT);
-            // A rational function of t; the condition the rebuilding attaches -- a power of a
-            // quotient is defined where the quotient is -- is the substitution's, not the
-            // integrand's, whose own domain the answer inherits.
-            var integrand = Functions.SingleQuotient.Combine(rebuilt.Simplify());
-            if (integrand is Providedf(var rational, _))
-                integrand = rational;
-            if (integrand.ContainsNode(w))
-                return null;
-            // t as the quotient of the two principal roots, not the root of the quotient: then
-            // t^p is (a x + b)^(p/q) over (c x + d)^(p/q) for every complex x, and the identity
-            // the rewriting rests on holds off the real line too.
+            // The powers of w read off the terms as written first, which keeps a power of a
+            // quadratic the derivative of x(t) carries as the power it is: for Hearn's
+            // `sqrt(a + b x) sqrt(c + d x)` the rational function is `t^2 / (b - d t^2)^3`, and
+            // read after simplification it is over a quartic times the quadratic, which the
+            // rational rules with symbols in the coefficients do not take apart. Where a term
+            // holds w other than as a factor, the terms are read as polynomials in w after
+            // simplification, as before.
             var root = Number.Rational.Create(1, q);
-            return Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is { } result
-                ? result.Substitute(t, MathS.Pow(first, root) / MathS.Pow(second, root))
-                : null;
+            var back = MathS.Pow(first, root) / MathS.Pow(second, root);
+            foreach (var simplified in new[] { false, true })
+            {
+                var product = rewritten * dx;
+                if (simplified)
+                {
+                    product = product.Simplify();
+                    if (product is Providedf(var bareProduct, _))
+                        product = bareProduct;
+                }
+                var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(product));
+                var aboveTerms = simplified ? TermsAsPolynomialInW(above, w) : TermsByFactorsOfW(above, w);
+                var belowTerms = simplified ? TermsAsPolynomialInW(below, w) : TermsByFactorsOfW(below, w);
+                if (aboveTerms is null || belowTerms is null)
+                    continue;
+                // The powers of w above the line agree modulo q, and so do those below, and the
+                // two residues agree: then every power left after t^q's worth is taken is whole.
+                if (Residue(aboveTerms.Select(term => term.Power), q) is not { } residueAbove
+                    || Residue(belowTerms.Select(term => term.Power), q) is not { } residueBelow || residueAbove != residueBelow)
+                    continue;
+                Entity rebuilt = WithWholePowersOfTheSecond(aboveTerms, residueAbove, q, secondInT)
+                    / WithWholePowersOfTheSecond(belowTerms, residueBelow, q, secondInT);
+                // A rational function of t; the condition the rebuilding attaches -- a power of
+                // a quotient is defined where the quotient is -- is the substitution's, not the
+                // integrand's, whose own domain the answer inherits.
+                var integrand = Functions.SingleQuotient.Combine(simplified ? rebuilt.Simplify() : rebuilt.InnerSimplified);
+                if (integrand is Providedf(var rational, _))
+                    integrand = rational;
+                if (integrand.ContainsNode(w))
+                    continue;
+                // t as the quotient of the two principal roots, not the root of the quotient:
+                // then t^p is (a x + b)^(p/q) over (c x + d)^(p/q) for every complex x, and the
+                // identity the rewriting rests on holds off the real line too.
+                if (Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is { } result)
+                    return result.Substitute(t, back);
+            }
+            return null;
+
+            // Each additive term as its power of w and the rest, w taken as a factor of the
+            // term and nowhere else; null where a term holds w inside a sum or a power.
+            static List<(EInteger Power, Entity Coefficient)>? TermsByFactorsOfW(Entity expr, Variable w)
+            {
+                var terms = new List<(EInteger, Entity)>();
+                foreach (var term in Sumf.LinearChildren(expr))
+                {
+                    var power = EInteger.Zero;
+                    Entity? coefficient = null;
+                    foreach (var factor in Mulf.LinearChildren(term))
+                    {
+                        if (factor == w)
+                            power = power.Add(1);
+                        else if (factor is Powf(var b, Number.Integer e) && b == w)
+                            power = power.Add(e.EInteger);
+                        else if (factor.ContainsNode(w))
+                            return null;
+                        else
+                            coefficient = coefficient is null ? factor : coefficient * factor;
+                    }
+                    terms.Add((power, coefficient ?? Number.Integer.One));
+                }
+                return terms;
+            }
+
+            static List<(EInteger Power, Entity Coefficient)>? TermsAsPolynomialInW(Entity expr, Variable w)
+                => TreeAnalyzer.TryGetPolynomial(expr, w, out var monomials)
+                    ? monomials.Select(pair => (pair.Key, pair.Value)).ToList()
+                    : null;
 
             static int? Residue(IEnumerable<EInteger> exponents, int q)
             {
@@ -4099,15 +4174,16 @@ namespace AngouriMath.Functions.Algebra
 
             // w^e with e = residue + m q is (second)^m, the residue's worth cancelling between
             // the two lines.
-            static Entity WithWholePowersOfTheSecond(Dictionary<EInteger, Entity> monomials, int residue, int q, Entity secondInT)
+            static Entity WithWholePowersOfTheSecond(List<(EInteger Power, Entity Coefficient)> terms, int residue, int q, Entity secondInT)
             {
-                Entity sum = 0;
-                foreach (var pair in monomials)
+                Entity? sum = null;
+                foreach (var (power, coefficient) in terms)
                 {
-                    var m = (pair.Key.ToInt32Checked() - residue) / q;
-                    sum += pair.Value * MathS.Pow(secondInT, m);
+                    var m = (power.ToInt32Checked() - residue) / q;
+                    Entity term = m == 0 ? coefficient : coefficient * MathS.Pow(secondInT, m);
+                    sum = sum is null ? term : sum + term;
                 }
-                return sum;
+                return sum ?? Number.Integer.Zero;
             }
         }
 

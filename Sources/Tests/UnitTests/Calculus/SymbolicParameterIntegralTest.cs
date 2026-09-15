@@ -157,6 +157,20 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, ("n", 2.5));
 
         /// <summary>
+        /// A whole power of a quadratic with a symbolic leading coefficient below the line is
+        /// the coefficient's power times the power of the monic quadratic: <c>t^2/(b - d t^2)^3</c>
+        /// was declined where <c>t^2/(t^2 - b/d)^3</c> is answered. The first power is left as
+        /// written, its table rules reading the coefficient where it is.
+        /// </summary>
+        [Theory]
+        [InlineData("x^2/(b - d*x^2)^3")]
+        [InlineData("x^2/(b - d*x^2)^2")]
+        [InlineData("x^2/(1 - d*x^2)^3")]
+        [InlineData("x/(a*x^2 + b)^2")]
+        public void APowerOfAQuadraticWithASymbolicLeadingCoefficient(string integrand)
+            => DifferentiatesBack(integrand, ("a", 1.7), ("b", 2.3), ("d", 0.6));
+
+        /// <summary>
         /// The numeric spellings, which came out before and must keep coming out the same way.
         /// </summary>
         [Theory]
