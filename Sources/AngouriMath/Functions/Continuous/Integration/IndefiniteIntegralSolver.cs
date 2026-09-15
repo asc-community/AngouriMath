@@ -3932,6 +3932,152 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Fractional powers of two different linears in the variable, <c>(a x + b)^(p/q)</c>
+        /// beside <c>(c x + d)^(r/q)</c>, rationalised by <c>t = ((a x + b)/(c x + d))^(1/q)</c>
+        /// where every term of the integrand carries a whole power of the second linear once
+        /// the first is written through <c>t</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// With <c>t^q = (a x + b)/(c x + d)</c>, <c>x = (d t^q - b)/(a - c t^q)</c> and
+        /// <c>c x + d = (a d - b c)/(a - c t^q)</c>, both rational in <c>t</c>; and
+        /// <c>(a x + b)^(p/q) = t^p (c x + d)^(p/q)</c>. So each term of the integrand is a
+        /// power of <c>t</c> times a power of the second linear, and where that power's
+        /// numerator is the same modulo <c>q</c> across the terms above the line and across
+        /// those below, the powers left are whole and the integrand is rational in <c>t</c>.
+        /// <c>1/((x - 1)^4 (x + 1)^2)^(1/3)</c> is <c>(x - 1)^(-4/3) (x + 1)^(-2/3)</c>: with
+        /// <c>t^3 = (x - 1)/(x + 1)</c> it is <c>t^(-4) (x + 1)^(-2)</c>, and
+        /// <c>x (1 + x)^(2/3) sqrt(1 - x)</c> over a sum of two such products is the same with
+        /// <c>q = 6</c>, every product there carrying <c>(1 - x)^(7/6)</c>.
+        /// </para>
+        /// <para>
+        /// <b>Where it holds: everywhere.</b> <c>t</c> is written back as the quotient of the
+        /// two principal roots, <c>(a x + b)^(1/q) / (c x + d)^(1/q)</c>, and not as the root of
+        /// the quotient: a whole power of a quotient is the quotient of the powers, so
+        /// <c>t^p</c> is <c>(a x + b)^(p/q) / (c x + d)^(p/q)</c> for every complex <c>x</c>,
+        /// where the root of the quotient agrees with that only where the two linears have the
+        /// same sign. Written the first way the answer to Timofeev's 315 held on <c>(-1, 1)</c>
+        /// and failed above 1, where <c>sqrt(1 - x)</c> is imaginary.
+        /// </para>
+        /// <para>
+        /// After <see cref="SolveByLinearRadicalSubstitution"/>, which answers one linear base
+        /// and declines two of different roots; this is those.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveByAQuotientOfTwoLinearRadicals(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Entity? first = null;
+            Entity? second = null;
+            var denominators = new List<int>();
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer)
+                    continue;
+                if (!@base.ContainsNode(x))
+                    continue;
+                if (!TreeAnalyzer.TryGetPolyLinear(@base, x, out var slope, out _) || slope.Evaled == 0)
+                    return null;
+                if (!exponent.ERational.Denominator.CanFitInInt32() || !exponent.ERational.Numerator.CanFitInInt32())
+                    return null;
+                denominators.Add(exponent.ERational.Denominator.ToInt32Checked());
+                if (first is null)
+                    first = @base;
+                else if (first != @base)
+                {
+                    if (second is null)
+                        second = @base;
+                    else if (second != @base)
+                        return null;
+                }
+            }
+            if (first is null || second is null)
+                return null;
+            var q = denominators.Aggregate(1, Lcm);
+            if (q < 2 || q > 12)
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(first, x, out var a, out var b) || !TreeAnalyzer.TryGetPolyLinear(second, x, out var c, out var d))
+                return null;
+
+            var t = Variable.CreateUnique(expr, "t_rad");
+            var w = Variable.CreateUnique(expr, "w_rad");
+            var tq = MathS.Pow(t, q);
+            var xInT = ((d * tq - b) / (a - c * tq)).InnerSimplified;
+            var secondInT = ((a * d - b * c) / (a - c * tq)).InnerSimplified;
+            var dx = xInT.Differentiate(t).InnerSimplified;
+
+            // Each radical becomes its powers by construction, as in the linear rule: the
+            // first linear's (p/q')-th power is t^k w^k and the second's is w^k, k = p q/q',
+            // with w standing for the second linear's q-th root.
+            var rewritten = expr.Replace(node =>
+            {
+                if (node is not Powf(var radical, Number.Rational e) || e is Number.Integer || (radical != first && radical != second))
+                    return node;
+                var k = q / e.ERational.Denominator.ToInt32Checked() * e.ERational.Numerator.ToInt32Checked();
+                return radical == first ? MathS.Pow(t, k) * MathS.Pow(w, k) : MathS.Pow(w, k);
+            });
+            rewritten = rewritten.Substitute(x, xInT);
+            if (rewritten.ContainsNode(x))
+                return null;
+            var quotient = Functions.SingleQuotient.Combine((rewritten * dx).Simplify());
+            if (quotient is Providedf(var inner, _))
+                quotient = inner;
+            var (above, below) = Functions.SingleQuotient.Of(quotient);
+            if (!TreeAnalyzer.TryGetPolynomial(above, w, out var aboveMonomials) || !TreeAnalyzer.TryGetPolynomial(below, w, out var belowMonomials))
+                return null;
+            // The powers of w above the line agree modulo q, and so do those below, and the
+            // two residues agree: then every power left after t^q's worth is taken is whole.
+            if (Residue(aboveMonomials.Keys, q) is not { } residueAbove || Residue(belowMonomials.Keys, q) is not { } residueBelow || residueAbove != residueBelow)
+                return null;
+            Entity rebuilt = WithWholePowersOfTheSecond(aboveMonomials, residueAbove, q, secondInT)
+                / WithWholePowersOfTheSecond(belowMonomials, residueBelow, q, secondInT);
+            // A rational function of t; the condition the rebuilding attaches -- a power of a
+            // quotient is defined where the quotient is -- is the substitution's, not the
+            // integrand's, whose own domain the answer inherits.
+            var integrand = Functions.SingleQuotient.Combine(rebuilt.Simplify());
+            if (integrand is Providedf(var rational, _))
+                integrand = rational;
+            if (integrand.ContainsNode(w))
+                return null;
+            // t as the quotient of the two principal roots, not the root of the quotient: then
+            // t^p is (a x + b)^(p/q) over (c x + d)^(p/q) for every complex x, and the identity
+            // the rewriting rests on holds off the real line too.
+            var root = Number.Rational.Create(1, q);
+            return Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is { } result
+                ? result.Substitute(t, MathS.Pow(first, root) / MathS.Pow(second, root))
+                : null;
+
+            static int? Residue(IEnumerable<EInteger> exponents, int q)
+            {
+                int? residue = null;
+                foreach (var exponent in exponents)
+                {
+                    if (!exponent.CanFitInInt32())
+                        return null;
+                    var r = ((exponent.ToInt32Checked() % q) + q) % q;
+                    if (residue is null)
+                        residue = r;
+                    else if (residue != r)
+                        return null;
+                }
+                return residue ?? 0;
+            }
+
+            // w^e with e = residue + m q is (second)^m, the residue's worth cancelling between
+            // the two lines.
+            static Entity WithWholePowersOfTheSecond(Dictionary<EInteger, Entity> monomials, int residue, int q, Entity secondInT)
+            {
+                Entity sum = 0;
+                foreach (var pair in monomials)
+                {
+                    var m = (pair.Key.ToInt32Checked() - residue) / q;
+                    sum += pair.Value * MathS.Pow(secondInT, m);
+                }
+                return sum;
+            }
+        }
+
+        /// <summary>
         /// Whether <paramref name="expr"/> is a quotient of two polynomials linear in
         /// <paramref name="x"/>, the one below with a slope.
         /// </summary>
@@ -8436,7 +8582,11 @@ namespace AngouriMath.Functions.Algebra
                 // and the even part is not negative: `sqrt(sin(x)/cos(x)^5)` is
                 // `sqrt(sin(x)/cos(x)) sqrt(1/cos(x)^4)`, which is `sqrt(tan(x))/cos(x)^2`
                 // exactly -- Timofeev's, and the binomial rule's from there.
-                if (OfModestDegreeOrNotAPolynomial(above) && OfModestDegreeOrNotAPolynomial(below))
+                // The degree bound is on what is left under the root, and where every
+                // polynomial factor comes out nothing polynomial is left.
+                var oddRoot = !exponent.ERational.Denominator.IsEven;
+                var everyFactorComesOut = oddRoot || AnEvenRootOfAProductSplits(above, below, exponent.ERational.Denominator);
+                if (everyFactorComesOut || OfModestDegreeOrNotAPolynomial(above) && OfModestDegreeOrNotAPolynomial(below))
                 {
                     // On either side of the bar: `sqrt(sin(x)^5/cos(x))` is `sin(x)^2 sqrt(sin(x)/cos(x))`.
                     Entity taken = Number.Integer.One;
@@ -8445,6 +8595,23 @@ namespace AngouriMath.Functions.Algebra
                     foreach (var (side, underneath) in new[] { (above, false), (below, true) })
                         foreach (var factor in Mulf.LinearChildren(side))
                         {
+                            // Under an odd root every real factor comes out as it is: the real
+                            // root of a product is the product of the real roots, and that is
+                            // the root a negative real has here -- `(-8)^(1/3)` is `-2`. So
+                            // `((x - 1)^4 (x + 1)^2)^(1/3)` is `(x - 1)^(4/3) (x + 1)^(2/3)`
+                            // for every real x, Timofeev's 318 as the rule for two linear
+                            // radicals reads it. A polynomial factor, which is real; a root
+                            // among the factors is complex somewhere, and there the roots of
+                            // a product and the product of the roots part.
+                            // And under an even root the same where the split has been checked
+                            // to hold on every real interval, see AnEvenRootOfAProductSplits.
+                            if (everyFactorComesOut && factor.ContainsNode(x)
+                                && (factor is Powf(var polynomial, Number.Integer wholePower) && wholePower.EInteger.Sign > 0 ? (polynomial, wholePower.EInteger) : (factor, EInteger.One)) is var (realFactor, times)
+                                && TreeAnalyzer.TryGetPolynomial(realFactor, x, out _))
+                            {
+                                taken = taken * MathS.Pow(realFactor, (Number.Integer.Create(underneath ? times.Negate() : times) * exponent).InnerSimplified);
+                                continue;
+                            }
                             // g^(2m r) is |g|^(2 m r): g itself where that power is even or g is
                             // positive, and for x the answer for x > 0 extended by parity;
                             // otherwise the factor stays where it is.
@@ -8512,6 +8679,47 @@ namespace AngouriMath.Functions.Algebra
             // ...and what is not a polynomial in x at all -- a sine -- is not a degree to bound.
             bool OfModestDegreeOrNotAPolynomial(Entity numerator)
                 => !TreeAnalyzer.TryGetPolynomial(numerator, x, out _) || OfModestDegree(numerator);
+
+            // Whether `(c g_1^(n_1) ... g_k^(n_k))^(p/q)` with q even is `c^(p/q) g_1^(n_1 p/q) ...`
+            // wherever the root is real: the polynomial factors are real, and on each interval
+            // between their roots the product's argument is pi times the sum of the n_i of the
+            // negative ones. Where that sum is odd the product is negative and its even root is
+            // not real, so the integrand is not asked about there; where it is even the root is
+            // real and positive, and the product of the principal powers agrees with it exactly
+            // when their phases, pi n_i / q each, add up to a whole turn: the sum a multiple of
+            // 2q. Not of q: `sqrt(t^2)` is `|t|`, and `t^(2/2)` is `t`, half a turn out below
+            // zero -- which Timofeev's `sqrt(tan(x) tan(2x))` found. The constant must be
+            // positive, since a negative one would take the phase the other way.
+            // `((x - 1)^3 (x + 2)^5)^(1/4)` splits: above 1 both are positive, below -2 both
+            // negative with 3 + 5 a multiple of 8, and between the product is negative.
+            bool AnEvenRootOfAProductSplits(Entity above, Entity below, EInteger q)
+            {
+                var factors = new List<(Entity Polynomial, EInteger Times)>();
+                foreach (var side in new[] { above, below })
+                    foreach (var factor in Mulf.LinearChildren(side))
+                    {
+                        if (!factor.ContainsNode(x))
+                        {
+                            if (factor.Evaled is not Number.Real { IsPositive: true })
+                                return false;
+                            continue;
+                        }
+                        var (polynomial, times) = factor is Powf(var g, Number.Integer n) && n.EInteger.Sign > 0 ? (g, n.EInteger) : (factor, EInteger.One);
+                        if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out _))
+                            return false;
+                        factors.Add((polynomial, times));
+                    }
+                if (factors.Count < 2)
+                    return false;
+                return OnEveryRealInterval(factors.Select(f => f.Polynomial).ToList(), x, signs =>
+                {
+                    var negativeTimes = EInteger.Zero;
+                    for (var i = 0; i < signs.Count; i++)
+                        if (signs[i] < 0)
+                            negativeTimes = negativeTimes.Add(factors[i].Times);
+                    return !negativeTimes.IsEven || negativeTimes.Remainder(q.ShiftLeft(1)).IsZero;
+                });
+            }
 
             // Q^r for a Q positive at every real x: a monomial `c x^(2k)` is `c^r x^(2kr)` for x > 0.
             Entity PowerOfAPositive(Entity positive, Number.Rational exponent)
