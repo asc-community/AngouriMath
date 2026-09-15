@@ -78,6 +78,36 @@ namespace AngouriMath.Tests.Calculus
         public void TheHyperbolicFunctions(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// Timofeev's <c>arccot(cosh x) cosh x/sinh^4 x</c>, a step of parts against
+        /// <c>cosh/sinh^4</c>. Three things stood in the way, each a search past the budget:
+        /// the sum <c>e^x + e^-x</c> above the bar was expanded into two terms though it is the
+        /// derivative of the factor below it; under <c>u = e^x</c> the rational function beside
+        /// the arccotangent was expanded into terms before parts saw the whole, and each
+        /// term's antiderivative keeps a logarithm the whole's does not; and the whole's,
+        /// <c>8(u^4 + u^2)/(u^2 - 1)^4</c>, was written with that logarithm three times over
+        /// with coefficients summing to zero. Checked where the hyperbolic sine is not zero.
+        /// </summary>
+        [Fact]
+        public void AnInverseFunctionOfAHyperbolicOneTimesARationalFunctionOfThem()
+        {
+            var integrand = "acot(cosh(x))*cosh(x)/sinh(x)^4".ToEntity();
+            var integral = integrand.Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            foreach (var at in new[] { -1.7, -0.6, 0.4, 1.1, 2.3 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = integrand.Substitute("x", at).EvalNumerical();
+                var difference = System.Math.Abs((double)(got - want).RealPart) + System.Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = System.Math.Max(1.0, System.Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-8, $"d/dx of the antiderivative is {got} at x = {at}, where the integrand is {want}");
+            }
+            // And the antiderivative of `cosh/sinh^4` itself, `-1/(3 sinh^3)`, carries no
+            // logarithm: `8(u^4 + u^2)/(u^2 - 1)^4` under `u = e^x`, whose reduction wrote one.
+            Assert.DoesNotContain("ln(", "cosh(x)/sinh(x)^4".ToEntity().Integrate("x").Stringize());
+        }
+
+        /// <summary>
         /// Quotients written in the exponential directly. <c>e^x/(1 + e^x)</c> was already
         /// answered — its numerator is the derivative of its denominator, which is what the
         /// general substitution looks for — and is here so that the rule cannot break it.

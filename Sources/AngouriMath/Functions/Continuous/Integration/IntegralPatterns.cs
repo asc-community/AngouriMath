@@ -248,7 +248,8 @@ namespace AngouriMath.Functions.Algebra
                 && repetitions.EInteger.ToInt32Checked() is var n and >= 2
                 && TreeAnalyzer.TryGetPolyQuadratic(repeated, x, out var qa, out var qb, out var qc)
                 && (!numerator.ContainsNode(x) || !TreeAnalyzer.IsZero(qa))
-                && IntegrateRationalOverPowerOfQuadratic(numerator, qa, qb, qc, repeated, n, x) is { } repeatedAnswer
+                && IntegrateRationalOverPowerOfQuadratic(numerator, qa, qb, qc, repeated, n, x,
+                        withoutTheFirstPower: TheFirstPowerCancels(numerator, qa, qb, qc, repeated, n, x)) is { } repeatedAnswer
                     => repeatedAnswer,
 
             // ∫ (px + q)/(bx + c) dx, the same rewrite one degree down: the quotient is the
@@ -664,7 +665,7 @@ namespace AngouriMath.Functions.Algebra
         /// </para>
         /// </remarks>
         private static Entity IntegrateOverPowerOfQuadratic(
-            Entity numerator, Entity a, Entity b, Entity c, int power, Entity.Variable x)
+            Entity numerator, Entity a, Entity b, Entity c, int power, Entity.Variable x, bool withoutTheFirstPower = false)
         {
             var quadratic = a * x * x + b * x + c;
             var derivative = 2 * a * x + b;
@@ -684,16 +685,17 @@ namespace AngouriMath.Functions.Algebra
             var sqrtDiscriminant = MathS.Sqrt(discriminant);
             var sqrtNegDiscriminant = MathS.Sqrt(-discriminant);
 
+            // The first power's antiderivative is what the reduction bottoms out on, and where
+            // the caller has found that it cancels across every piece it is left out here.
+            Entity firstPowerArctan = withoutTheFirstPower ? Entity.Number.Integer.Zero
+                : 2 * MathS.Arctan(derivative / sqrtDiscriminant) / sqrtDiscriminant;
+            Entity firstPowerLog = withoutTheFirstPower ? Entity.Number.Integer.Zero
+                : AntiderivativeLog((derivative - sqrtNegDiscriminant) / (derivative + sqrtNegDiscriminant)) / sqrtNegDiscriminant;
             return MathS.Piecewise([
                 new Entity.Providedf(linearCase, a.EqualTo(0)),
                 new Entity.Providedf(perfectSquareCase, discriminant.EqualTo(0)),
-                new Entity.Providedf(
-                    Reduce(2 * MathS.Arctan(derivative / sqrtDiscriminant) / sqrtDiscriminant),
-                    discriminant > 0),
-                new Entity.Providedf(
-                    Reduce(AntiderivativeLog((derivative - sqrtNegDiscriminant) / (derivative + sqrtNegDiscriminant))
-                            / sqrtNegDiscriminant),
-                    discriminant < 0)
+                new Entity.Providedf(Reduce(firstPowerArctan), discriminant > 0),
+                new Entity.Providedf(Reduce(firstPowerLog), discriminant < 0)
             ]).InnerSimplified;
 
             Entity Reduce(Entity firstPower)
@@ -722,14 +724,14 @@ namespace AngouriMath.Functions.Algebra
         /// <c>x/(x^2 + 1)^2</c>, which had none before and is owed none.
         /// </remarks>
         private static Entity IntegrateLinearOverPowerOfQuadratic(
-            Entity p, Entity q, Entity a, Entity b, Entity c, Entity quadratic, int power, Entity.Variable x)
+            Entity p, Entity q, Entity a, Entity b, Entity c, Entity quadratic, int power, Entity.Variable x, bool withoutTheFirstPower = false)
         {
             var alongTheDerivative = p / (2 * a) * MathS.Pow(quadratic, 1 - power) / (1 - power);
             var constantPart = q - p * b / (2 * a);
             if (TreeAnalyzer.IsZero(constantPart))
                 return alongTheDerivative;
             return WithTheArmForAZeroLeadingCoefficient(
-                IntegrateOverPowerOfQuadratic(constantPart, a, b, c, power, x),
+                IntegrateOverPowerOfQuadratic(constantPart, a, b, c, power, x, withoutTheFirstPower),
                 a,
                 alongTheDerivative,
                 LinearOverPowerOfLinear(p, q, b, c, power, x));
@@ -763,17 +765,17 @@ namespace AngouriMath.Functions.Algebra
         /// </para>
         /// </remarks>
         private static Entity? IntegrateRationalOverPowerOfQuadratic(
-            Entity numerator, Entity a, Entity b, Entity c, Entity quadratic, int power, Entity.Variable x)
+            Entity numerator, Entity a, Entity b, Entity c, Entity quadratic, int power, Entity.Variable x, bool withoutTheFirstPower = false)
         {
             if (!numerator.ContainsNode(x))
                 return power == 1
-                    ? IntegrateRationalQuadratic(numerator, a, b, c, x)
-                    : IntegrateOverPowerOfQuadratic(numerator, a, b, c, power, x);
+                    ? withoutTheFirstPower ? Entity.Number.Integer.Zero : IntegrateRationalQuadratic(numerator, a, b, c, x)
+                    : IntegrateOverPowerOfQuadratic(numerator, a, b, c, power, x, withoutTheFirstPower);
 
             if (TreeAnalyzer.TryGetPolyLinear(numerator, x, out var p, out var q))
                 return power == 1
-                    ? IntegrateLinearOverQuadratic(p, q, a, b, c, quadratic, x)
-                    : IntegrateLinearOverPowerOfQuadratic(p, q, a, b, c, quadratic, power, x);
+                    ? withoutTheFirstPower ? p / (2 * a) * AntiderivativeLog(quadratic) : IntegrateLinearOverQuadratic(p, q, a, b, c, quadratic, x)
+                    : IntegrateLinearOverPowerOfQuadratic(p, q, a, b, c, quadratic, power, x, withoutTheFirstPower);
 
             if (power < 2)
                 return null;
@@ -793,10 +795,76 @@ namespace AngouriMath.Functions.Algebra
             var quotient = division.Value.Divided.InnerSimplified;
             var remainder = (numerator - quotient * quadratic).InnerSimplified;
 
-            return IntegrateRationalOverPowerOfQuadratic(remainder, a, b, c, quadratic, power, x) is { } head
-                   && IntegrateRationalOverPowerOfQuadratic(quotient, a, b, c, quadratic, power - 1, x) is { } rest
+            return IntegrateRationalOverPowerOfQuadratic(remainder, a, b, c, quadratic, power, x, withoutTheFirstPower) is { } head
+                   && IntegrateRationalOverPowerOfQuadratic(quotient, a, b, c, quadratic, power - 1, x, withoutTheFirstPower) is { } rest
                 ? head + rest
                 : null;
+        }
+
+        /// <summary>
+        /// Whether, for a quadratic whose coefficients are real numbers with a nonzero leading
+        /// one and a nonzero discriminant, the first power's antiderivative -- the logarithm or
+        /// the arctangent every reduction above bottoms out on -- has coefficient zero once the
+        /// pieces of ∫ N(x)/Q^n are added up.
+        /// </summary>
+        /// <remarks>
+        /// The reduction answers each constant over a power of the quadratic on its own, down
+        /// to that first power, so a numerator of degree four over a fourth power arrives as
+        /// three reductions each carrying the logarithm, with coefficients that sum to zero
+        /// where the antiderivative is rational: <c>8(x^4 + x^2)/(x^2 - 1)^4</c> is
+        /// <c>-8x^3/(3(x^2 - 1)^3)</c>, and it was written with <c>ln((x - 1)/(x + 1))</c> three
+        /// times over. Correct, and read by nothing: integration by parts against it -- it is
+        /// <c>cosh(x)/sinh(x)^4</c> under <c>u = e^x</c>, and Timofeev's
+        /// <c>arccot(cosh x) cosh x/sinh^4 x</c> is a step of parts against that -- spent four
+        /// seconds simplifying the logarithms out of the remainder. The coefficient is a number
+        /// and is added up here before anything is written; the writing itself is unchanged.
+        /// </remarks>
+        private static bool TheFirstPowerCancels(
+            Entity numerator, Entity a, Entity b, Entity c, Entity quadratic, int power, Entity.Variable x)
+        {
+            if (a.Evaled is not Entity.Number.Real { IsZero: false } || b.Evaled is not Entity.Number.Real || c.Evaled is not Entity.Number.Real)
+                return false;
+            var discriminant = (4 * a * c - b * b).InnerSimplified;
+            if (TreeAnalyzer.IsZero(discriminant))
+                return false;
+            Entity first = Entity.Number.Integer.Zero;
+            return Gather(numerator, power) && TreeAnalyzer.IsZero(first.InnerSimplified);
+
+            bool Gather(Entity above, int n)
+            {
+                if (!above.ContainsNode(x))
+                {
+                    ConstantOverPower(above, n);
+                    return true;
+                }
+                if (TreeAnalyzer.TryGetPolyLinear(above, x, out var p, out var q))
+                {
+                    // px + q is (p/2a)(2ax + b) + (q - pb/2a): the first part is the
+                    // derivative over the power, which carries no first power.
+                    var constantPart = (q - p * b / (2 * a)).InnerSimplified;
+                    if (!TreeAnalyzer.IsZero(constantPart))
+                        ConstantOverPower(constantPart, n);
+                    return true;
+                }
+                if (n < 2)
+                    return false;
+                var division = TreeAnalyzer.PolynomialLongDivision(above, quadratic, genericCase: true, inTermsOf: x);
+                if (division is null)
+                    return false;
+                var quotient = division.Value.Divided.InnerSimplified;
+                var remainder = (above - quotient * quadratic).InnerSimplified;
+                return Gather(remainder, n) && Gather(quotient, n - 1);
+            }
+
+            // J_m = (Q'/Q^(m-1) + 2a(2m - 3) J_(m-1))/((m - 1) D), unrolled to J_1: the
+            // multiple of J_1 is the product of the scalings.
+            void ConstantOverPower(Entity k, int n)
+            {
+                Entity ofFirst = Entity.Number.Integer.One;
+                for (var m = 2; m <= n; m++)
+                    ofFirst = ofFirst * (2 * a * (2 * m - 3)) / ((m - 1) * discriminant);
+                first += k * ofFirst;
+            }
         }
     }
 }
