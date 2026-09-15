@@ -47,6 +47,31 @@ namespace AngouriMath.Functions.Algebra
                     && Integrated(asWritten) is { } termByTerm)
                     return termByTerm;
             }
+            // A sum above the bar that is the derivative of a factor below it is not expanded:
+            // `(e^x + e^-x)/(e^x - e^-x)^4` -- `cosh/sinh^4` as the library writes it -- is
+            // `f'/f^4`, one substitution, and expanded it is two terms whose antiderivatives
+            // carry logarithms that cancel only together. Beside another factor the pair is
+            // what parts reads: Timofeev's `arccot(cosh x) cosh x/sinh^4 x` was expanded into
+            // two products first, each of them a step of parts with a logarithm-laden `v` and
+            // a remainder that took thirty seconds to decline.
+            if (IsADerivativeOfAFactorBelowTheBar(expr, x))
+                return null;
+            // A logarithm or an inverse trigonometric function times a rational function of x
+            // goes to parts against the whole rational function before the rational function
+            // is expanded into terms: each term's antiderivative keeps a logarithm the whole's
+            // does not, and a step of parts against a term is a remainder with that logarithm
+            // beside the derivative of the other function, a dilogarithm's shape that every
+            // rule below spends itself declining. Timofeev's `arccot(cosh x) cosh x/sinh^4 x`
+            // under `u = e^x` is `8 arccot((u + 1/u)/2) (u^4 + u^2)/(u^2 - 1)^4`, answered by one
+            // step of parts against the rational function and ten seconds of declines on its
+            // two terms first. The same stance as the polynomial times a rational function of
+            // an exponential, at the top of the chain. Where parts is allowed at all: a step
+            // of parts hands its own integral down with parts switched off, and Timofeev's
+            // `arcsin(sinh x) sech^4 x` -- `arcsin((u - 1/u)/2) u^3/(u^2 + 1)^4` -- has a first
+            // pairing that differentiates `u^3` and is meant to decline in a moment, where
+            // parts on what it hands down was a two-minute search.
+            if (integrateByParts && IsAnInverseFunctionTimesARationalFunction(expr, x) && SolveIntegratingByParts(expr, x) is { } byParts)
+                return byParts;
             var splitted = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, e => e.ContainsNode(x));
             if (splitted is null || splitted.Count < 2) return null; // nothing to do, let other solvers do the work
             // Each expanded term with a factor written on both sides of its bar cancelled:
@@ -120,6 +145,64 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>The largest term a sum is split over as written, before the expanding gather.</summary>
         private const int LargestTermTakenAsWritten = 60;
+
+        /// <summary>
+        /// Whether the integrand is one logarithm or inverse trigonometric function of
+        /// <paramref name="x"/>, or a whole power of one, times a rational function of
+        /// <paramref name="x"/> that is not a polynomial.
+        /// </summary>
+        private static bool IsAnInverseFunctionTimesARationalFunction(Entity expr, Entity.Variable x)
+        {
+            var (above, below) = Functions.SingleQuotient.Of(expr);
+            if (!below.ContainsNode(x))
+                return false;
+            var inverse = 0;
+            foreach (var factor in Mulf.LinearChildren(above).Concat(Mulf.LinearChildren(below)))
+            {
+                if (!factor.ContainsNode(x))
+                    continue;
+                var @base = factor is Powf(var inner, Number.Integer) ? inner : factor;
+                if (@base is Logf or Arcsinf or Arccosf or Arctanf or Arccotanf or Arcsecantf or Arccosecantf)
+                    inverse++;
+                else if (!IsRationalIn(factor, x))
+                    return false;
+            }
+            return inverse == 1;
+        }
+
+        /// <summary>
+        /// Whether a sum among the factors above the bar is a constant multiple of the
+        /// derivative of a factor below it that is not a polynomial in <paramref name="x"/>.
+        /// </summary>
+        private static bool IsADerivativeOfAFactorBelowTheBar(Entity expr, Entity.Variable x)
+        {
+            var (above, below) = Functions.SingleQuotient.Of(expr);
+            if (below == Number.Integer.One)
+                return false;
+            var sums = Mulf.LinearChildren(above).Where(factor => factor is Sumf or Minusf && factor.ContainsNode(x)).ToList();
+            if (sums.Count == 0)
+                return false;
+            foreach (var factor in Mulf.LinearChildren(below))
+            {
+                var @base = factor is Powf(var inner, Number.Integer) ? inner : factor;
+                if (!@base.ContainsNode(x) || TreeAnalyzer.TryGetPolynomial(@base, x, out _))
+                    continue;
+                var derivative = @base.Differentiate(x).InnerSimplified;
+                if (derivative is Providedf(var bare, _))
+                    derivative = bare;
+                foreach (var sum in sums)
+                {
+                    var ratio = (sum / derivative).InnerSimplified;
+                    if (ratio.ContainsNode(x) && ratio.Complexity <= LargestTermTakenAsWritten)
+                        ratio = ratio.Simplify();
+                    if (ratio is Providedf(var bareRatio, _))
+                        ratio = bareRatio;
+                    if (!ratio.ContainsNode(x))
+                        return true;
+                }
+            }
+            return false;
+        }
 
         /// <summary>
         /// A quotient whose numerator and denominator are polynomials in <paramref name="x"/>
@@ -7816,8 +7899,12 @@ namespace AngouriMath.Functions.Algebra
             if (SolveByLinearRadicalSubstitution(integrand, u, integrateByParts, variableIsNonnegative: true) is { } byARoot)
                 return Finished(byARoot);
             // The reciprocal substitution, told the same: a hyperbolic function under a root
-            // is a palindromic quartic under it here, and `u - 1/u` is `2 sinh(x)`.
-            if (SolveByReciprocalSubstitution(integrand, u, variableIsPositive: true) is { } byTheReciprocal)
+            // is a palindromic quartic under it here, and `u - 1/u` is `2 sinh(x)`. Under a
+            // root only: a rational function of u is the rational rules' below, in one closed
+            // step, and `cosh/sinh^4` -- `8u (u^2 + 1)/(u^2 - 1)^4` -- came back from here as
+            // a reduction over `1/(u^2 - 1)^k` with a logarithm at the bottom, which is
+            // `-1/(3 sinh^3)` after four seconds of simplifying the product it stands in.
+            if (HasARadicalOf(integrand, u) && SolveByReciprocalSubstitution(integrand, u, variableIsPositive: true) is { } byTheReciprocal)
                 return Finished(byTheReciprocal);
             // The same question in u, not a step in the search for it: asked at the top when
             // this was, so the rules that answer only there -- the symbolic quadratic

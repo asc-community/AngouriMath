@@ -151,5 +151,24 @@ namespace AngouriMath.Tests.Calculus
         [Fact]
         public void AnImproperFractionIsAnsweredByTheDivisionThatAlreadyExisted() =>
             AssertIsAntiderivative("x ^ 4 / (x ^ 2 + 1) ^ 2", 0.37, 1.4, -0.83);
+
+        /// <summary>
+        /// The reduction answers each constant over a power of the quadratic on its own, down
+        /// to the first power, so a numerator of degree four over a fourth power is three
+        /// reductions each carrying the logarithm the first power is, with coefficients that
+        /// sum to zero where the antiderivative is rational: <c>8(x^4 + x^2)/(x^2 - 1)^4</c> is
+        /// <c>-8x^3/(3(x^2 - 1)^3)</c>, and it was written with <c>ln((x - 1)/(x + 1))</c> three
+        /// times over. The coefficient is added up before anything is written. Where it is
+        /// not zero the logarithm or the arctangent stays, as for <c>1/(x^2 + 1)^3</c> above.
+        /// </summary>
+        [Theory]
+        [InlineData("8 * (x ^ 4 + x ^ 2) / (x ^ 2 - 1) ^ 4", new[] { 0.37, 1.4, -0.83, 2.6 })]
+        [InlineData("(x ^ 2 - 1) / (x ^ 2 + 1) ^ 2", new[] { 0.37, 1.4, -0.83, 2.6 })]
+        public void ALogarithmWhoseCoefficientsSumToZeroIsNotWritten(string integrand, double[] points)
+        {
+            var antiderivative = AssertIsAntiderivative(integrand, points);
+            Assert.DoesNotContain("ln(", antiderivative.Stringize());
+            Assert.DoesNotContain("arctan(", antiderivative.Stringize());
+        }
     }
 }
