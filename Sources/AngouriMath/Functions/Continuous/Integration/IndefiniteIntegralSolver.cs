@@ -9825,6 +9825,28 @@ namespace AngouriMath.Functions.Algebra
                             if (integrandInU is Providedf(var innerCancelled, _)) integrandInU = innerCancelled;
                         }
                     }
+                    // A polynomial in x left over under a candidate that is itself a polynomial
+                    // is written in the candidate where it is one in it: `(1 - x)^2` is
+                    // `1 - 2x + x^2`, and that is `u` for Apostol's `(1 - 2x + x^2)^(1/5)/(1 - x)`,
+                    // whose quotient by du/dx is `-u^(1/5)/(2 (1 - x)^2)` and was refused for
+                    // the square that is not spelled as the candidate.
+                    // For a quotient of modest size: Welz's `1/((3 - 2x)^(41/2) (1 + x + 2x^2)^20)`
+                    // offers its quadratic, and expanding the twentieth power to be told it
+                    // is not a polynomial in the other was twenty seconds.
+                    if (integrandInU.ContainsNode(x) && u is Sumf or Minusf && integrandInU.Complexity <= LargestSymbolicIntegrandCollected
+                        && TreeAnalyzer.TryGetPolynomial(u, x, out var candidateMonomials) && candidateMonomials.Keys.Max() is { } candidateDegree
+                        && candidateDegree.CompareTo(EInteger.FromInt32(2)) >= 0)
+                    {
+                        // Over one bar, so that `(1 - x)(2x - 2)` is one polynomial and not two
+                        // linears on either side of a nested division.
+                        var (aboveTheBar, belowTheBar) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(integrandInU));
+                        var inTheCandidate = WithPolynomialsInTheCandidate(aboveTheBar, u, uSub, x) / WithPolynomialsInTheCandidate(belowTheBar, u, uSub, x);
+                        if (inTheCandidate.ContainsNode(x) == false || inTheCandidate != aboveTheBar / belowTheBar)
+                        {
+                            integrandInU = inTheCandidate.Simplify(1);
+                            if (integrandInU is Providedf(var innerInTheCandidate, _)) integrandInU = innerInTheCandidate;
+                        }
+                    }
                     if (u is Sinf or Cosf && integrandInU.ContainsNode(x))
                         firstPass[u] = integrandInU;
                 }
@@ -10194,6 +10216,59 @@ namespace AngouriMath.Functions.Algebra
                 return whole.Equals(PeterO.Numbers.EInteger.One)
                     ? uSub
                     : MathS.Pow(uSub, Number.Integer.Create(whole));
+            }
+        }
+
+        /// <summary>
+        /// Every polynomial in <paramref name="x"/> in <paramref name="expr"/> of degree at least
+        /// that of the polynomial <paramref name="u"/> that is a polynomial in <paramref name="u"/>
+        /// with constant coefficients, written as that polynomial in <paramref name="uSub"/>:
+        /// <c>F = r_0 + r_1 u + r_2 u^2 + ...</c> by repeated division, taken where every
+        /// remainder is a constant.
+        /// </summary>
+        private static Entity WithPolynomialsInTheCandidate(Entity expr, Entity u, Entity.Variable uSub, Entity.Variable x)
+        {
+            if (!TreeAnalyzer.TryGetPolynomial(u, x, out var candidateMonomials) || candidateMonomials.Keys.Max() is not { } candidateDegree)
+                return expr;
+            var degree = candidateDegree.ToInt32Checked();
+            return expr.Replace(node =>
+            {
+                // Small powers only: a written power is expanded to be read, and a large one
+                // is a large polynomial to divide for nothing.
+                if (node == x || !node.ContainsNode(x)
+                    || node.Nodes.Any(inner => inner is Powf(_, var exponent) && (exponent is not Number.Integer wholePower || wholePower.EInteger.Abs().CompareTo(EInteger.FromInt32(4)) > 0))
+                    || !TreeAnalyzer.TryGetPolynomial(node, x, out var monomials)
+                    || monomials.Keys.Max() is not { } top || top.ToInt32Checked() < degree || top.ToInt32Checked() > 4 * degree)
+                    return node;
+                Entity? written = null;
+                var rest = node;
+                for (var power = 0; ; power++)
+                {
+                    if (!rest.ContainsNode(x))
+                    {
+                        var last = rest.InnerSimplified;
+                        if (!TreeAnalyzer.IsZero(last))
+                            written = Term(written, last, power);
+                        return written ?? Number.Integer.Zero;
+                    }
+                    if (TreeAnalyzer.PolynomialLongDivision(rest, u, genericCase: true, inTermsOf: x) is not var (quotient, _))
+                        return node;
+                    var divided = quotient.Expand().InnerSimplified;
+                    var remainder = (rest - divided * u).Expand().InnerSimplified;
+                    if (remainder.ContainsNode(x))
+                        return node;
+                    if (!TreeAnalyzer.IsZero(remainder))
+                        written = Term(written, remainder, power);
+                    rest = divided;
+                }
+            });
+
+            Entity Term(Entity? sum, Entity coefficient, int power)
+            {
+                Entity term = power == 0 ? coefficient
+                    : coefficient == Number.Integer.One ? MathS.Pow(uSub, power)
+                    : coefficient * MathS.Pow(uSub, power);
+                return sum is null ? term : sum + term;
             }
         }
 

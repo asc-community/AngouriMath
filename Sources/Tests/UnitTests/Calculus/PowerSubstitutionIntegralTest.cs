@@ -190,5 +190,19 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x^2/(x^4 + x^3 + 1)")]
         public void AnIntegralThisDoesNotReachIsStillDeclined(string integrand)
             => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
+
+        /// <summary>
+        /// A polynomial candidate matches what is written, and a polynomial in it that is
+        /// spelled otherwise is not: Apostol's <c>(1 - 2x + x^2)^(1/5)/(1 - x)</c> under
+        /// <c>u = 1 - 2x + x^2</c> has the quotient by <c>du/dx</c> equal to
+        /// <c>-u^(1/5)/(2 (1 - x)^2)</c>, and <c>(1 - x)^2</c> is <c>u</c>. What is left as a
+        /// polynomial in x is written in the candidate where it is a polynomial in it, and the
+        /// answer is <c>-5/2 (1 - 2x + x^2)^(1/5)</c>. Real on both sides of the pole: the fifth
+        /// root of a square is a real of either sign's square.
+        /// </summary>
+        [Theory]
+        [InlineData("(1 - 2*x + x^2)^(1/5)/(1 - x)")]
+        [InlineData("(x^4 + 2*x^2 + 1)^(1/3)*x/(x^2 + 1)")]
+        public void APolynomialLeftOverIsWrittenInTheCandidate(string integrand) => DifferentiatesBack(integrand);
     }
 }
