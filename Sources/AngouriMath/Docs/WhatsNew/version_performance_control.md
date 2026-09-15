@@ -256,6 +256,41 @@ cent — its measured run-to-run spread on mean time is up to 51.8%. A move of 8
 outside that band by a wide margin and agrees in sign and rough size with the allocation column
 beside it. The small rows from the same run are still not worth reading, and are not quoted.
 
+## The 2072nd: the fixed-point series on the BCL's integers
+
+The 2054th and 2055th put the logarithm, the exponential, the sine, the cosine and the
+arctangent into fixed point, on PeterO's `EInteger`. Measured against mpmath on the same
+machine, the transcendental rows were still nine to seventeen times behind, and the reason is
+the integer type: one multiply of two hundred-digit integers is 1,271 ns in `EInteger` and
+109 ns in `System.Numerics.BigInteger` (at five hundred digits 8,087 against 1,364; at two
+thousand 75,850 against 12,036), and the BCL's is at parity with CPython's `int`, which is
+what mpmath's digits live in. The series run on `BigInteger` now, converted once on the way
+in and once on the way out as two's-complement bytes, and the way out no longer multiplies by
+`5^bits` and asks `EDecimal` to round a number of four times the digits: the fixed-point
+integer is scaled to a power of ten six digits past the precision in `BigInteger`, and only
+the rounding is `EDecimal`'s. The hundred-digit values are the ones pinned before, to the
+last digit.
+
+| benchmark | 2055th | 2072nd | allocation | time |
+|---|--:|--:|--:|--:|
+| `EvalTrig` | 260,728 | **164,728** | **−36.8%** | 153 → **83 µs** |
+| `EvalTrigPrecise` | 2,525,707 | **718,778** | **−71.5%** | 2.16 → **1.05 ms** |
+| `EvalTranscendentalFresh` | 128,664 | **59,136** | **−54.0%** | 83 → **33 µs** |
+| `SolveEasy` | 1,675,487 | **981,996** | **−41.4%** | 1.19 → **0.49 ms** |
+| `SimplifyHard` | 189,604,392 | **182,277,112** | **−3.9%** | 111 → 117 ms |
+| every other entry | | | within 0.1% | |
+
+Bytes allocated per call, same machine, both columns by the gate in one session; the gate's
+baseline was taken from this run. Alone, by one probe on both builds, each row the best of
+seven batches with tiered compilation off: at a hundred digits `sin(x)` is 15.2 µs where it
+was 46.9, `ln(x)` 18.0 where it was 52.4, `e^x` 10.0 where it was 32.3, `arctan(x)` 24.6
+where it was 48.8; at five hundred digits `sin(x)` 228 µs where it was 1,273, `ln(x)` 777
+where it was 3,921, `e^x` 548 where it was 2,774; at two thousand digits `sin(x)` 11.7 ms
+where it was 40.7 and `ln(x)` 26 where it was 121. mpmath at a hundred digits is 5.6, 4.5,
+4.3 and 3.9 µs for the same four, so the remaining factor of three to six is the term count
+-- eighty artanh terms for a logarithm, twenty-five for a sine -- which argument reduction
+past what is done now would cut.
+
 ## The 2055th: the sine, cosine and arctangent in the same fixed point
 
 The 2050th made the trigonometric functions argument reduction and short series, in
