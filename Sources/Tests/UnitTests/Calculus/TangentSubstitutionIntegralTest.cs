@@ -126,6 +126,20 @@ namespace AngouriMath.Tests.Calculus
         public void APowerOfAQuotientOfTangents(string integrand, double[] points)
             => DifferentiatesBackAtEveryPoint(integrand, points);
 
+        /// <summary>
+        /// An odd root of a product of powers of the sine and the cosine is the product of the
+        /// roots, exactly on the reals, and where the powers that come out sum to an even
+        /// integer the product is a function of the tangent: Timofeev's 569 is
+        /// <c>(sin^(1/3) cos^(-7/3) - 3 tan)/(cos^(10/3) sin^(2/3))</c>, a polynomial in the cube
+        /// root of the tangent under the substitution, and was a search past its budget as
+        /// written. Checked on both signs of the tangent, where every root is real.
+        /// </summary>
+        [Theory]
+        [InlineData("((sin(x)/cos(x)^7)^(1/3) - 3*tan(x))/(cos(x)^5*sin(x))^(2/3)", new[] { -1.1, -0.6, 0.3, 0.8, 1.2 })]
+        [InlineData("(cos(x)^5*sin(x))^(2/3)", new[] { -1.1, -0.6, 0.3, 0.8, 1.2 })]
+        public void AnOddRootOfAProductOfPowers(string integrand, double[] points)
+            => DifferentiatesBackAtEveryPoint(integrand, points);
+
         private static void DifferentiatesBackAtEveryPoint(string integrand, double[] points)
         {
             var integral = integrand.ToEntity().Integrate("x");
