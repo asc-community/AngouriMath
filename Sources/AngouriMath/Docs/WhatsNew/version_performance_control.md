@@ -256,6 +256,47 @@ cent — its measured run-to-run spread on mean time is up to 51.8%. A move of 8
 outside that band by a wide margin and agrees in sign and rough size with the allocation column
 beside it. The small rows from the same run are still not worth reading, and are not quoted.
 
+## The 2053rd: equality without the caches, and a rational's decimal written out when asked
+
+Two things found under the evaluator's remaining cost, each measured alone and each reaching
+further than the evaluator.
+
+**Equality.** An `Entity` is a record, and a record compares every field: at this level of the
+record the fields are caches -- the children, the variables, the evaluated value, eleven
+`LazyPropertyA` slots and the sort keys -- each equal to every other by construction, so the
+synthesized comparison was a dozen calls into `EqualityComparer<T>` that could only answer
+yes, and the synthesized hash a dozen that could only add zero. The base record now declares
+its own `Equals` and `GetHashCode`, the node's kind and nothing else; each node's own record
+still compares and hashes its parts. `Equals` on two equal twenty-node trees is 0.085 µs where
+it was 0.165, the hash 0.14 where it was 0.25 -- and the solver, which keeps its candidates in
+sets keyed by the tree, is where that lands.
+
+**A rational's decimal.** `Rational(ERational)` wrote its value out as a hundred-digit
+`EDecimal` in the constructor, for every integer and fraction the simplifier and the solver
+make and almost never ask the decimal of: `Integer.Create` was 0.11 µs and 872 bytes,
+`Rational.Create(3, 7)` 0.83 µs -- a division at a hundred digits and then, because the
+denominator turned out to be one, an `Integer` and the division again. The decimal is a lazy
+property now, written out in the precision of the moment it is first asked for rather than
+of the moment the rational was made; the tests pinning hundred-digit values see no change.
+`Integer.Create` is 0.022 µs, `Rational.Create(3, 7)` 0.056, and a `Sumf` of two integers
+evaluates in 0.19 µs where it was 0.38.
+
+| benchmark | 2052nd | 2053rd | allocation | time |
+|---|--:|--:|--:|--:|
+| `SolveHard` | 12,285,384 | **11,714,880** | −4.6% | 116 → **70 ms** |
+| `SolveMediumHard` | 1,414,142 | **1,365,686** | −3.4% | 14.5 → **7.9 ms** |
+| `SolveMedium` | 452,357 | 444,046 | −1.8% | 392 → **267 µs** |
+| `SimplifyHard` | 314,203,712 | **302,423,792** | −3.7% | 180 → 172 ms |
+| `ParseEasy` | 18,456 | 18,125 | −1.8% | 6.18 → 5.93 µs |
+| `SolveEasyMedium` | 65,630 | 64,974 | −1.0% | 19.3 → 18.5 µs |
+| every other entry | | | within 1% | |
+
+Bytes allocated per call, same machine, both columns by the gate in one session; the gate's
+baseline was taken from this run. The timings are the gate's, one run each, so they were
+re-measured both arms in one process: `SolveHard` 112 → 64 ms and `SolveMediumHard` 14.7 →
+8.1 ms; and with the lazy decimal alone, `SolveHard` is 110 ms -- the solver's gain is the
+equality, and the decimal's is in what makes numbers.
+
 ## The 2052nd: the rational search decided in a double-double where the double could not
 
 The 2050th left `EvalPolynomialFresh` at 9.4 µs, of which the arithmetic is about one: the

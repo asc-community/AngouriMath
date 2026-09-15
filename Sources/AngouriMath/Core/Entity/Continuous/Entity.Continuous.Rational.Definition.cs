@@ -27,8 +27,17 @@ namespace AngouriMath
                 /// Constructor does not downcast automatically.
                 /// Use <see cref="Create(EInteger, EInteger)"/> or <see cref="Create(ERational)"/> for automatic downcasting.
                 /// </summary>
-                private protected Rational(ERational value)
-                    : base(value.ToEDecimal(MathS.Settings.DecimalPrecisionContext)) => ERational = value;
+                private protected Rational(ERational value) => ERational = value;
+
+                /// <summary>
+                /// The value written out in the decimal precision of the moment it is first
+                /// asked for, not of the moment the rational was made: an integer's exact
+                /// form is the <see cref="ERational"/>, and writing a hundred digits out for
+                /// every integer and fraction the simplifier makes was a third of the cost of
+                /// making one (https://github.com/asc-community/AngouriMath/issues/1338).
+                /// </summary>
+                public override EDecimal EDecimal => edecimal.GetValue(static @this => @this.ERational.ToEDecimal(MathS.Settings.DecimalPrecisionContext), this);
+                private LazyPropertyA<EDecimal> edecimal;
 
                 internal override Priority Priority => Priority.Div;
 

@@ -1376,6 +1376,7 @@ AngouriMath.Entity+Number+Rational.Create(PeterO.Numbers.ERational) : AngouriMat
 AngouriMath.Entity+Number+Rational.Deconstruct(AngouriMath.Entity+Number+Integer&, AngouriMath.Entity+Number+Integer&) : System.Void
 AngouriMath.Entity+Number+Rational.Deconstruct(PeterO.Numbers.ERational&) : System.Void
 AngouriMath.Entity+Number+Rational.Denominator { } : AngouriMath.Entity+Number+Integer
+AngouriMath.Entity+Number+Rational.EDecimal { } : PeterO.Numbers.EDecimal
 AngouriMath.Entity+Number+Rational.ERational { } : PeterO.Numbers.ERational
 AngouriMath.Entity+Number+Rational.EqualityContract { } : System.Type
 AngouriMath.Entity+Number+Rational.Equals(AngouriMath.Entity+Number+Rational) : System.Boolean
