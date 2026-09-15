@@ -609,6 +609,9 @@ namespace AngouriMath.Functions.Algebra
             // `a + b x^n`. After the quadratic, which is the case `n = 2` and answers it through
             // the trigonometric substitution -- a shorter answer than a root of a root.
             if ((answer = IndefiniteIntegralSolver.SolveABinomialDifferential(expr, x)) is { }) return answer;
+            // A rational function of x^n beside `(c + d x^n)^(k - 1/n)`, rationalised by
+            // `u = x/(c + d x^n)^(1/n)`: Timofeev's `1/((1 + x^4)(2 + x^4)^(1/4))` is `1/(1 + u^4)`.
+            if ((answer = IndefiniteIntegralSolver.SolveByDividingByTheRoot(expr, x)) is { }) return answer;
             // And a rational function of x and one square root of a quadratic, rationalised by
             // Euler's substitution and finished by the rational integrator directly. After the
             // trigonometric substitution and the binomial differential, which answer their own

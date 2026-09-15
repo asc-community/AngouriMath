@@ -214,5 +214,33 @@ namespace AngouriMath.Tests.Calculus
                     $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
             }
         }
+
+        /// <summary>
+        /// A rational function of <c>x^n</c> beside <c>(c + d x^n)^(k - 1/n)</c>, rationalised by
+        /// <c>u = x/(c + d x^n)^(1/n)</c>: <c>u^n</c> is <c>x^n/(c + d x^n)</c>, and
+        /// <c>dx/(c + d x^n)^(1/n)</c> is <c>(c + d x^n) du/c</c>. Timofeev's
+        /// <c>1/((1 + x^4)(2 + x^4)^(1/4))</c> is <c>1/(1 + u^4)</c> that way, and Welz's
+        /// <c>1/((1 - x^3)(a + b x^3)^(1/3))</c> is <c>1/(1 - (a + b) u^3)</c> with the symbols
+        /// still in it. Checked on both signs of <c>x</c>, with the symbols pinned.
+        /// </summary>
+        [Theory]
+        [InlineData("1/((1 + x^4)*(2 + x^4)^(1/4))", new[] { -1.7, -0.6, 0.3, 0.9, 2.2 })]
+        [InlineData("(1 + x^4)^(3/4)/(2 + x^4)^2", new[] { -1.7, -0.6, 0.3, 0.9, 2.2 })]
+        [InlineData("x^4/((1 + x^4)*(2 + x^4)^(1/4))", new[] { -1.7, -0.6, 0.3, 0.9, 2.2 })]
+        [InlineData("1/((1 - x^3)*(a + b*x^3)^(1/3))", new[] { -1.7, -0.6, 0.3, 0.9, 2.2 })]
+        public void ARationalFunctionOfThePowerBesideTheRootOfItsBinomial(string integrand, double[] points)
+        {
+            var integral = integrand.ToEntity().Integrate("x").Substitute("a", 2).Substitute("b", 3);
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity().Substitute("a", 2).Substitute("b", 3);
+            foreach (var at in points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart) < 1e-8 * Math.Max(1, Math.Abs((double)want.RealPart)),
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
     }
 }
