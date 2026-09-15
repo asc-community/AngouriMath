@@ -202,36 +202,44 @@ namespace AngouriMath
                 // context's digits in bits, and forty-eight bits over for the series' own
                 // truncations and the exponential's ten squarings.
                 FixedBits = (int)(context.Precision.ToInt32Checked() * 3.32192809488736 + 48);
-                FixedOne = EInteger.One.ShiftLeft(FixedBits);
-                FiveToFixedBits = EInteger.FromInt32(5).Pow(FixedBits);
+                FixedOne = BigInteger.One << FixedBits;
                 FixedSqrt2 = ToFixed(EDecimal.FromString("1.41421356237309504880168872420969807856967187537694"), FixedBits);
                 FixedPi = ToFixed(Pi, FixedBits);
-                FixedTwoPi = FixedPi.ShiftLeft(1);
-                FixedHalfPi = FixedPi.ShiftRight(1);
+                FixedTwoPi = FixedPi << 1;
+                FixedHalfPi = FixedPi >> 1;
                 // ln 2 = 2 artanh(1/3), and ln 10 = ln 8 + ln 5/4 = 3 ln 2 + 2 artanh(1/9).
-                FixedLn2 = TwiceArtanh(FixedOne.Divide(3), FixedBits);
-                FixedLn10 = FixedLn2.Multiply(3).Add(TwiceArtanh(FixedOne.Divide(9), FixedBits));
+                FixedLn2 = TwiceArtanh(FixedOne / 3, FixedBits);
+                FixedLn10 = FixedLn2 * 3 + TwiceArtanh(FixedOne / 9, FixedBits);
             }
             /// <summary>Represents <see cref="Math.PI"/></summary>
             public EDecimal Pi { get; }
             /// <summary>The bits after the point of the fixed-point numbers below</summary>
             public int FixedBits { get; }
             /// <summary>One, in fixed point: 2 to the <see cref="FixedBits"/></summary>
-            public EInteger FixedOne { get; }
-            /// <summary>5 to the <see cref="FixedBits"/>, by which a fixed-point number is a decimal exactly</summary>
-            public EInteger FiveToFixedBits { get; }
+            public BigInteger FixedOne { get; }
+            /// <summary>
+            /// 10 to <paramref name="power"/>, kept once each: a fixed-point number is read
+            /// back as a decimal by one of a few powers near the context's digits.
+            /// </summary>
+            public BigInteger TenTo(int power)
+            {
+                if (!powersOfTen.TryGetValue(power, out var result))
+                    powersOfTen[power] = result = BigInteger.Pow(BigTen, power);
+                return result;
+            }
+            private readonly Dictionary<int, BigInteger> powersOfTen = new();
             /// <summary>The square root of 2, in fixed point, to fifty digits</summary>
-            public EInteger FixedSqrt2 { get; }
+            public BigInteger FixedSqrt2 { get; }
             /// <summary>Pi in fixed point, to the context's digits</summary>
-            public EInteger FixedPi { get; }
+            public BigInteger FixedPi { get; }
             /// <summary>2 pi in fixed point</summary>
-            public EInteger FixedTwoPi { get; }
+            public BigInteger FixedTwoPi { get; }
             /// <summary>Pi / 2 in fixed point</summary>
-            public EInteger FixedHalfPi { get; }
+            public BigInteger FixedHalfPi { get; }
             /// <summary>The natural logarithm of 2, in fixed point</summary>
-            public EInteger FixedLn2 { get; }
+            public BigInteger FixedLn2 { get; }
             /// <summary>The natural logarithm of 10, in fixed point</summary>
-            public EInteger FixedLn10 { get; }
+            public BigInteger FixedLn10 { get; }
             /// <summary>Represents 2 * <see cref="Math.PI"/></summary>
             public EDecimal TwoPi { get; }
             /// <summary>Represents <see cref="Math.PI"/> / 2</summary>
@@ -422,33 +430,33 @@ namespace AngouriMath
             // and a halving is a shift.
             var fixedX = ToFixed(x, bits);
             // Into [-pi, pi]: the nearest multiple of 2 pi off.
-            var shifted = fixedX.Add(consts.FixedPi);
-            var turns = shifted.Divide(consts.FixedTwoPi);
-            if (shifted.Sign < 0 && !shifted.Remainder(consts.FixedTwoPi).IsZero)
-                turns = turns.Subtract(1);   // the division truncates, and this floors
+            var shifted = fixedX + consts.FixedPi;
+            var turns = BigInteger.DivRem(shifted, consts.FixedTwoPi, out var rest);
+            if (shifted.Sign < 0 && !rest.IsZero)
+                turns -= 1;   // the division truncates, and this floors
             if (!turns.IsZero)
-                fixedX = fixedX.Subtract(consts.FixedTwoPi.Multiply(turns));
+                fixedX -= consts.FixedTwoPi * turns;
             // Into [-pi/2, pi/2], with the sign the fold costs the cosine.
             var negateCos = false;
-            if (fixedX.CompareTo(consts.FixedHalfPi) > 0)
+            if (fixedX > consts.FixedHalfPi)
             {
                 // sin(x) = sin(pi - x), cos(x) = -cos(pi - x)
-                fixedX = consts.FixedPi.Subtract(fixedX);
+                fixedX = consts.FixedPi - fixedX;
                 negateCos = true;
             }
-            else if (fixedX.CompareTo(consts.FixedHalfPi.Negate()) < 0)
+            else if (fixedX < -consts.FixedHalfPi)
             {
                 // sin(x) = sin(-pi - x), cos(x) = -cos(-pi - x)
-                fixedX = consts.FixedPi.Negate().Subtract(fixedX);
+                fixedX = -consts.FixedPi - fixedX;
                 negateCos = true;
             }
 
             // Halve until |x| < 1/20.
             var halvings = 0;
-            var twentieth = one.Divide(20);
-            while (fixedX.Abs().CompareTo(twentieth) > 0)
+            var twentieth = one / 20;
+            while (BigInteger.Abs(fixedX) > twentieth)
             {
-                fixedX = fixedX.Sign < 0 ? fixedX.Negate().ShiftRight(1).Negate() : fixedX.ShiftRight(1);
+                fixedX = HalveFixed(fixedX);
                 halvings++;
             }
 
@@ -460,22 +468,22 @@ namespace AngouriMath
             var cos = one;
             for (var i = 1; i < 100000; i++)
             {
-                cosTerm = MultiplyFixed(cosTerm, square, bits).Negate().Divide((2 * i - 1) * (2 * i));
-                sinTerm = MultiplyFixed(sinTerm, square, bits).Negate().Divide((2 * i) * (2 * i + 1));
+                cosTerm = -MultiplyFixed(cosTerm, square, bits) / ((2 * i - 1) * (2 * i));
+                sinTerm = -MultiplyFixed(sinTerm, square, bits) / ((2 * i) * (2 * i + 1));
                 if (cosTerm.IsZero && sinTerm.IsZero)
                     break;
-                cos = cos.Add(cosTerm);
-                sin = sin.Add(sinTerm);
+                cos += cosTerm;
+                sin += sinTerm;
             }
             for (var i = 0; i < halvings; i++)
             {
                 // sin(2y) = 2 sin(y) cos(y), cos(2y) = 2 cos(y)^2 - 1
-                var doubledSin = MultiplyFixed(sin, cos, bits).ShiftLeft(1);
-                cos = MultiplyFixed(cos, cos, bits).ShiftLeft(1).Subtract(one);
+                var doubledSin = MultiplyFixed(sin, cos, bits) << 1;
+                cos = (MultiplyFixed(cos, cos, bits) << 1) - one;
                 sin = doubledSin;
             }
             if (negateCos)
-                cos = cos.Negate();
+                cos = -cos;
             return (FromFixed(sin, consts, working).RoundToPrecision(context), FromFixed(cos, consts, working).RoundToPrecision(context));
         }
 
@@ -599,11 +607,11 @@ namespace AngouriMath
             var one = workingConsts.FixedOne;
             var fixedX = ToFixed(x, bits);
             var halvings = 0;
-            var twentieth = one.Divide(20);
-            while (fixedX.CompareTo(twentieth) > 0)
+            var twentieth = one / 20;
+            while (fixedX > twentieth)
             {
-                var root = one.Add(MultiplyFixed(fixedX, fixedX, bits)).ShiftLeft(bits).Sqrt();
-                fixedX = fixedX.ShiftLeft(bits).Divide(one.Add(root));
+                var root = IntegerSquareRoot((one + MultiplyFixed(fixedX, fixedX, bits)) << bits);
+                fixedX = (fixedX << bits) / (one + root);
                 halvings++;
             }
             var square = MultiplyFixed(fixedX, fixedX, bits);
@@ -611,13 +619,13 @@ namespace AngouriMath
             var sum = fixedX;
             for (var i = 1; i < 100000; i++)
             {
-                power = MultiplyFixed(power, square, bits).Negate();
-                var term = power.Divide(2 * i + 1);
+                power = -MultiplyFixed(power, square, bits);
+                var term = power / (2 * i + 1);
                 if (term.IsZero)
                     break;
-                sum = sum.Add(term);
+                sum += term;
             }
-            return FromFixed(sum.ShiftLeft(halvings), workingConsts, working).RoundToPrecision(context);
+            return FromFixed(sum << halvings, workingConsts, working).RoundToPrecision(context);
         }
         /// <summary>Analogy of <see cref="Math.Acos(double)"/></summary>
         public static EDecimal Acos(this EDecimal x, EContext context)
@@ -674,34 +682,90 @@ namespace AngouriMath
         // each term an alignment of exponents, an exact sum and a rounding -- two to three
         // microseconds a term at a hundred digits, which is why PeterO's Log and Exp are
         // three hundred to seven hundred microseconds. The series here run in fixed point:
-        // an EInteger holding the value times 2^FixedBits, where a product is a big-integer
+        // an integer holding the value times 2^FixedBits, where a product is a big-integer
         // multiply and a shift, a division by a term's index an integer division, and a sum
-        // an addition -- a third of a microsecond a term -- and the value is a decimal
-        // again exactly, by multiplying with 5^FixedBits and moving the point.
+        // an addition -- a tenth of a microsecond a term -- and the value is a decimal again
+        // by scaling to a power of ten a few digits past the precision and rounding.
         // https://github.com/asc-community/AngouriMath/issues/1338
 
+        // The fixed-point integers are System.Numerics.BigInteger, not EInteger: a multiply
+        // of two hundred-digit integers is 109 ns there and 1,271 ns in PeterO's, a division
+        // 193 against 953, and the series are made of those -- sin(0.37) at a hundred digits
+        // was 44 µs on EInteger where mpmath, on CPython's integers, which are as fast as the
+        // BCL's, is 5.7. The decimal is converted once on the way in and once on the way out,
+        // as two's-complement bytes, which both types read and write.
+        // https://github.com/asc-community/AngouriMath/issues/1338
+
+        /// <summary>The integer as the BCL's, by its two's-complement bytes.</summary>
+        private static BigInteger ToBig(EInteger n) => new(n.ToBytes(littleEndian: true));
+
+        /// <summary>The integer as PeterO's, by its two's-complement bytes.</summary>
+        private static EInteger ToEInteger(BigInteger n) => EInteger.FromBytes(n.ToByteArray(), littleEndian: true);
+
+        [ConstantField] private static readonly BigInteger BigTen = new(10);
+
         /// <summary><paramref name="x"/> times 2^<paramref name="bits"/>, truncated to an integer.</summary>
-        private static EInteger ToFixed(EDecimal x, int bits)
+        private static BigInteger ToFixed(EDecimal x, int bits)
         {
             var exponent = x.Exponent.ToInt32Checked();
-            var mantissa = x.Mantissa;
+            var mantissa = ToBig(x.Mantissa);
             return exponent >= 0
-                ? mantissa.Multiply(EInteger.FromInt32(10).Pow(exponent)).ShiftLeft(bits)
-                : mantissa.ShiftLeft(bits).Divide(EInteger.FromInt32(10).Pow(-exponent));
+                ? (mantissa * BigInteger.Pow(BigTen, exponent)) << bits
+                : (mantissa << bits) / BigInteger.Pow(BigTen, -exponent);
         }
 
-        /// <summary>A fixed-point <paramref name="n"/> as a decimal, exactly, rounded to <paramref name="working"/>.</summary>
-        private static EDecimal FromFixed(EInteger n, ConstantCache consts, EContext working)
-            => EDecimal.Create(n.Multiply(consts.FiveToFixedBits), -consts.FixedBits).RoundToPrecision(working);
+        /// <summary>
+        /// A fixed-point <paramref name="n"/> as a decimal to <paramref name="working"/>'s
+        /// digits. The scaling to a power of ten is done in <see cref="BigInteger"/>, with
+        /// six digits over the precision, and only the rounding is left to
+        /// <see cref="EDecimal"/>: the exact reading, <c>n 5^bits</c> over
+        /// <c>10^bits</c>, costs a multiply and a rounding of four times the digits.
+        /// https://github.com/asc-community/AngouriMath/issues/1338
+        /// </summary>
+        private static EDecimal FromFixed(BigInteger n, ConstantCache consts, EContext working)
+        {
+            var bits = consts.FixedBits;
+            // The value is n / 2^bits, so its leading digit is near 10^(log10(2) (bitlen n - bits)).
+            // The byte length overestimates the bit length by up to seven, which only asks for
+            // up to two digits more than the six.
+            var magnitude = (int)Math.Floor((n.ToByteArray().Length * 8 - bits) * 0.30102999566398120);
+            var digits = working.Precision.ToInt32Checked() + 6 - magnitude;
+            var mantissa = digits >= 0
+                ? (n * consts.TenTo(digits)) >> bits
+                : (n >> bits) / consts.TenTo(-digits);
+            return EDecimal.Create(ToEInteger(mantissa), -digits).RoundToPrecision(working);
+        }
 
         /// <summary>
         /// The product of two fixed-point numbers, truncated towards zero -- a shift alone
         /// floors, and a negative term of a series floored never reaches zero.
         /// </summary>
-        private static EInteger MultiplyFixed(EInteger a, EInteger b, int bits)
+        private static BigInteger MultiplyFixed(BigInteger a, BigInteger b, int bits)
         {
-            var product = a.Multiply(b);
-            return product.Sign < 0 ? product.Negate().ShiftRight(bits).Negate() : product.ShiftRight(bits);
+            var product = a * b;
+            return product.Sign < 0 ? -((-product) >> bits) : product >> bits;
+        }
+
+        /// <summary>Half of a fixed-point number, truncated towards zero.</summary>
+        private static BigInteger HalveFixed(BigInteger a)
+            => a.Sign < 0 ? -((-a) >> 1) : a >> 1;
+
+        /// <summary>The integer square root, floored: Newton's iteration from a power of two above it.</summary>
+        private static BigInteger IntegerSquareRoot(BigInteger n)
+        {
+            if (n.Sign <= 0)
+                return BigInteger.Zero;
+            // From a power of two at or above the root, so that the iteration descends:
+            // the byte count is a bound on the bit length that netstandard2.0's BigInteger
+            // can give without a logarithm.
+            var root = BigInteger.One << (n.ToByteArray().Length * 4 + 1);
+            while (true)
+            {
+                var next = (root + n / root) >> 1;
+                if (next >= root)
+                    return root;
+                root = next;
+            }
         }
 
         /// <summary>
@@ -709,7 +773,7 @@ namespace AngouriMath
         /// <c>ln((1 + y)/(1 - y))</c>, in fixed point; for <c>|y|</c> below <c>0.18</c>,
         /// seventy terms at a hundred digits.
         /// </summary>
-        private static EInteger TwiceArtanh(EInteger y, int bits)
+        private static BigInteger TwiceArtanh(BigInteger y, int bits)
         {
             var square = MultiplyFixed(y, y, bits);
             var term = y;
@@ -719,9 +783,9 @@ namespace AngouriMath
                 term = MultiplyFixed(term, square, bits);
                 if (term.IsZero)
                     break;
-                sum = sum.Add(term.Divide(2 * k + 1));
+                sum += term / (2 * k + 1);
             }
-            return sum.ShiftLeft(1);
+            return sum << 1;
         }
 
         [ConstantField] private static readonly EDecimal sqrt2 = EDecimal.FromString("1.4142135623730950488");
@@ -746,7 +810,7 @@ namespace AngouriMath
             var working = WithGuardDigits(context, 8);
             var consts = ConstantCache.Lookup(working);
             var bits = consts.FixedBits;
-            EInteger mantissa;
+            BigInteger mantissa;
             var tens = 0;
             var twos = 0;
             if (x.CompareTo(sqrt2) <= 0 && x.CompareTo(halfSqrt2) >= 0)
@@ -757,18 +821,18 @@ namespace AngouriMath
                 // then halved, exactly, until it is at most sqrt(2).
                 tens = x.Exponent.Add(x.Precision()).Subtract(1).ToInt32Checked();
                 mantissa = ToFixed(x.MovePointLeft(tens), bits);
-                while (mantissa.CompareTo(consts.FixedSqrt2) > 0)
+                while (mantissa > consts.FixedSqrt2)
                 {
-                    mantissa = mantissa.ShiftRight(1);
+                    mantissa >>= 1;
                     twos++;
                 }
             }
-            var y = mantissa.Subtract(consts.FixedOne).ShiftLeft(bits).Divide(mantissa.Add(consts.FixedOne));
+            var y = ((mantissa - consts.FixedOne) << bits) / (mantissa + consts.FixedOne);
             var log = TwiceArtanh(y, bits);
             if (twos != 0)
-                log = log.Add(consts.FixedLn2.Multiply(twos));
+                log += consts.FixedLn2 * twos;
             if (tens != 0)
-                log = log.Add(consts.FixedLn10.Multiply(tens));
+                log += consts.FixedLn10 * tens;
             return FromFixed(log, consts, working).RoundToPrecision(context);
         }
 
@@ -794,35 +858,34 @@ namespace AngouriMath
             var consts = ConstantCache.Lookup(working);
             var bits = consts.FixedBits;
             var fixedX = ToFixed(x, bits);
-            var k = fixedX.Divide(consts.FixedLn2);
-            var r = fixedX.Subtract(consts.FixedLn2.Multiply(k));
-            var halfLn2 = consts.FixedLn2.ShiftRight(1);
-            if (r.CompareTo(halfLn2) > 0)
+            var k = BigInteger.DivRem(fixedX, consts.FixedLn2, out var r);
+            var halfLn2 = consts.FixedLn2 >> 1;
+            if (r > halfLn2)
             {
-                k = k.Add(1);
-                r = r.Subtract(consts.FixedLn2);
+                k += 1;
+                r -= consts.FixedLn2;
             }
-            else if (r.CompareTo(halfLn2.Negate()) < 0)
+            else if (r < -halfLn2)
             {
-                k = k.Subtract(1);
-                r = r.Add(consts.FixedLn2);
+                k -= 1;
+                r += consts.FixedLn2;
             }
             const int halvings = 10;
-            r = r.Sign < 0 ? r.Negate().ShiftRight(halvings).Negate() : r.ShiftRight(halvings);
+            r = r.Sign < 0 ? -((-r) >> halvings) : r >> halvings;
             var term = consts.FixedOne;
             var sum = consts.FixedOne;
             for (var n = 1; n < 100000; n++)
             {
-                term = MultiplyFixed(term, r, bits).Divide(n);
+                term = MultiplyFixed(term, r, bits) / n;
                 if (term.IsZero)
                     break;
-                sum = sum.Add(term);
+                sum += term;
             }
             for (var i = 0; i < halvings; i++)
                 sum = MultiplyFixed(sum, sum, bits);
-            var power = k.ToInt32Checked();
+            var power = (int)k;
             if (power >= 0)
-                return FromFixed(sum.ShiftLeft(power), consts, working).RoundToPrecision(context);
+                return FromFixed(sum << power, consts, working).RoundToPrecision(context);
             return FromFixed(sum, consts, working)
                 .Divide(EDecimal.FromEInteger(EInteger.One.ShiftLeft(-power)), working)
                 .RoundToPrecision(context);

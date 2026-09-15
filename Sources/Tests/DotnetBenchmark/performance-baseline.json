@@ -1,94 +1,94 @@
 {
   "comment": "Allocated bytes and mean nanoseconds per operation for the popular use cases of https://github.com/asc-community/AngouriMath/issues/746. Checked by PerformanceGate.cs; see Sources/AngouriMath/Docs/WhatsNew/version_performance_control.md for when updating it is legitimate.",
   "benchmark": "CommonFunctionsInterVersion",
-  "commit": "95082e2f814874b99f152fbb1072fc977735337f",
+  "commit": "a0e37c57f2bff5b7b489045a829b93094be44980",
   "measuredOn": "2026-09-15",
   "runtime": ".NET 10.0.10",
   "machine": "Ubuntu 26.04 LTS, X64, 8 logical cores",
   "cases": {
     "CompileEasy": {
       "allocatedBytes": 11031,
-      "meanNanoseconds": 184131.37203543526
+      "meanNanoseconds": 187188.48854166668
     },
     "CompileHard": {
       "allocatedBytes": 20434,
-      "meanNanoseconds": 310381.04733072914
+      "meanNanoseconds": 313336.8848632813
     },
     "Derivate": {
       "allocatedBytes": 53111,
-      "meanNanoseconds": 14270.049594116212
+      "meanNanoseconds": 14254.605079142253
     },
     "EvalEasy": {
       "allocatedBytes": 0,
-      "meanNanoseconds": 1.883551713079214
+      "meanNanoseconds": 1.8936276791187434
     },
     "EvalPolynomialFresh": {
       "allocatedBytes": 12328,
-      "meanNanoseconds": 4164.772733835073
+      "meanNanoseconds": 4188.053805033366
     },
     "EvalPolynomialFresh15Digits": {
       "allocatedBytes": 11656,
-      "meanNanoseconds": 4157.980944497244
+      "meanNanoseconds": 4163.698484693255
     },
     "EvalTranscendentalFresh": {
-      "allocatedBytes": 128664,
-      "meanNanoseconds": 83463.06102643695
+      "allocatedBytes": 59136,
+      "meanNanoseconds": 32775.32282802037
     },
     "EvalTrig": {
-      "allocatedBytes": 260728,
-      "meanNanoseconds": 153426.1548339844
+      "allocatedBytes": 164728,
+      "meanNanoseconds": 82560.51665387835
     },
     "EvalTrigPrecise": {
-      "allocatedBytes": 2525707,
-      "meanNanoseconds": 2164306.404296875
+      "allocatedBytes": 718778,
+      "meanNanoseconds": 1049946.529575893
     },
     "ParseEasy": {
-      "allocatedBytes": 18104,
-      "meanNanoseconds": 5932.770784231333
+      "allocatedBytes": 18125,
+      "meanNanoseconds": 6187.999439038728
     },
     "ParseHard": {
-      "allocatedBytes": 3555057,
-      "meanNanoseconds": 1392708.7341145833
+      "allocatedBytes": 3555058,
+      "meanNanoseconds": 1389899.094029018
     },
     "RunEasy": {
       "allocatedBytes": 0,
-      "meanNanoseconds": 20.095689982175827
+      "meanNanoseconds": 20.08104038039843
     },
     "RunHard": {
       "allocatedBytes": 0,
-      "meanNanoseconds": 295.40826177597046
+      "meanNanoseconds": 296.0797004699707
     },
     "RunMedium": {
       "allocatedBytes": 0,
-      "meanNanoseconds": 162.8344373519604
+      "meanNanoseconds": 163.28495715214655
     },
     "SimplifyEasy": {
       "allocatedBytes": 78578,
-      "meanNanoseconds": 44253.979728190105
+      "meanNanoseconds": 45234.654259314906
     },
     "SimplifyHard": {
-      "allocatedBytes": 189604392,
-      "meanNanoseconds": 111491250.2413793
+      "allocatedBytes": 182277112,
+      "meanNanoseconds": 117284414.35714285
     },
     "SolveEasy": {
-      "allocatedBytes": 1675487,
-      "meanNanoseconds": 1185599.8670479911
+      "allocatedBytes": 981996,
+      "meanNanoseconds": 489748.97991071426
     },
     "SolveEasyMedium": {
       "allocatedBytes": 65184,
-      "meanNanoseconds": 18840.902629307337
+      "meanNanoseconds": 18883.072003173827
     },
     "SolveHard": {
-      "allocatedBytes": 11706656,
-      "meanNanoseconds": 63240162.666666664
+      "allocatedBytes": 11706992,
+      "meanNanoseconds": 64872788.86363637
     },
     "SolveMedium": {
-      "allocatedBytes": 446414,
-      "meanNanoseconds": 259625.15890066963
+      "allocatedBytes": 446445,
+      "meanNanoseconds": 265146.4944786659
     },
     "SolveMediumHard": {
-      "allocatedBytes": 1367798,
-      "meanNanoseconds": 8776522.877083333
+      "allocatedBytes": 1367804,
+      "meanNanoseconds": 8406241.805208333
     }
   },
   "ungated": {
