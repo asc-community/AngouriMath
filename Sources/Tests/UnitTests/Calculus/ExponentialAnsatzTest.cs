@@ -194,5 +194,22 @@ namespace AngouriMath.Tests.Calculus
         [Fact]
         public void APolynomialTimesAnExponentialKeepsItsForm()
             => Assert.Equal("x * e ^ x + -e ^ x + C", "x*e^x".ToEntity().Integrate("x").Stringize());
+
+        /// <summary>
+        /// The Risch-Norman ansatz, one level up: a rational function of <c>x</c> and of a
+        /// tower of exponentials and logarithms, integrated as a rational function of the
+        /// same plus logarithms of the denominator's factors, with the coefficients unknown and
+        /// solved for. Hearn's <c>e^(1 - x e^(x^2) + 2x^2)(x + 2x^3)/(1 - x e^(x^2))^2</c> is
+        /// <c>(e^(1 - x e^(x^2))/(1 - x e^(x^2)))'</c>, an exponential of something with an
+        /// exponential in it; his
+        /// <c>e^(x^2)/x + 2x e^(x^2) ln(x) + (ln(x) - 2)/(x + ln(x)^2)^2 + (1 + 1/x + 2 ln(x)/x)/(x + ln(x)^2)</c>
+        /// is <c>(e^(x^2) ln(x) - ln(x)/(x + ln(x)^2) + ln(x + ln(x)^2))'</c>, a sum whose terms are
+        /// not elementary apart, so that every split loses it. Read whole, before the split.
+        /// </summary>
+        [Theory]
+        [InlineData("e^(1 - e^(x^2)*x + 2*x^2)*(x + 2*x^3)/(1 - e^(x^2)*x)^2")]
+        [InlineData("e^(x^2)/x + 2*e^(x^2)*x*ln(x) + (-2 + ln(x))/(x + ln(x)^2)^2 + (1 + 1/x + 2*ln(x)/x)/(x + ln(x)^2)")]
+        [InlineData("e^(x^2)/x + 2*e^(x^2)*x*ln(x)")]
+        public void ATowerOfExponentialsAndLogarithms(string integrand) => DifferentiatesBack(integrand);
     }
 }

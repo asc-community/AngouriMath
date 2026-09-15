@@ -473,6 +473,12 @@ namespace AngouriMath.Functions.Algebra
             // degree-8 polynomial by expanding, both right and only one worth reading. Three
             // tests pinned exactly that and caught this when the split was put in front of the
             // substitution wholesale. The expanding call stays where it was, below.
+            // A rational function of x and of a tower of exponentials and logarithms over it,
+            // by the Risch-Norman ansatz: a rational function of the same plus logarithms of
+            // the denominator's factors, the coefficients unknown and solved for. Before the
+            // split, since Hearn's `e^(x^2)/x + 2x e^(x^2) ln(x) + ...` is a sum whose terms are
+            // not elementary apart; at the top only, and only for a tower no closed rule reads.
+            if ((answer = IndefiniteIntegralSolver.SolveByRischNormanAnsatz(expr, x)) is { }) return answer;
             if (expr is Entity.Sumf or Entity.Minusf
                 && (answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { })
                 return answer;

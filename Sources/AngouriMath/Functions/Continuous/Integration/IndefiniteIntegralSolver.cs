@@ -5581,6 +5581,350 @@ namespace AngouriMath.Functions.Algebra
         private const int MaximumTowerDegree = 4;
 
         /// <summary>
+        /// A rational function of <c>x</c> and of exponentials and logarithms built over it,
+        /// integrated by the Risch-Norman ansatz: <c>F = P/Q + sum c_j ln(q_j)</c> with <c>P</c> a
+        /// polynomial of unknown coefficients in <c>x</c> and the transcendental monomials, <c>Q</c>
+        /// tried from the integrand's denominator, and the <c>q_j</c> its factors.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Hearn's <c>e^(1 - x e^(x^2) + 2x^2)(x + 2x^3)/(1 - x e^(x^2))^2</c> is
+        /// <c>(e^(1 - x e^(x^2))/(1 - x e^(x^2)))'</c>, and his
+        /// <c>e^(x^2)/x + 2x e^(x^2) ln(x) + (ln(x) - 2)/(x + ln(x)^2)^2 + (1 + 1/x + 2 ln(x)/x)/(x + ln(x)^2)</c>
+        /// is <c>(e^(x^2) ln(x) - ln(x)/(x + ln(x)^2) + ln(x + ln(x)^2))'</c>. Neither had an
+        /// antiderivative: the first is an exponential of something with an exponential in it,
+        /// and the second a sum whose terms are not elementary apart -- <c>e^(x^2)/x</c> is
+        /// not -- so that every split loses it. With <c>t_1 = e^(x^2)</c>, <c>t_2 = ln(x)</c>,
+        /// <c>t_3 = e^(1 - x t_1 + 2x^2)</c> for indeterminates, each with the derivative it has
+        /// -- <c>2x t_1</c>, <c>1/x</c>, <c>(4x - t_1 - 2x^2 t_1) t_3</c> -- the integrand is a
+        /// rational function of <c>x</c> and the <c>t</c>, and Liouville's theorem says its
+        /// elementary antiderivative, where there is one, is a rational function of the same
+        /// plus logarithms with constant coefficients. The rational part's denominator divides
+        /// the integrand's with each factor's power lowered by one, the exponential monomials
+        /// excepted, which may stand to any power; the logarithms' arguments are the
+        /// denominator's factors. So <c>F' = f</c>, over one denominator, is a polynomial
+        /// identity in <c>x</c> and the <c>t</c>, linear in the unknown coefficients of <c>P</c>
+        /// and the <c>c_j</c>: one equation per monomial, solved by the elimination the other
+        /// ansätze use. The identity is exact, so a solution is an answer and its absence a
+        /// decline; the derivative of what comes out is checked against the integrand at
+        /// sampled points all the same. This is the parallel Risch algorithm of Norman and
+        /// Moore as a heuristic, with the degrees bounded as the tower ansätze bound theirs.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByRischNormanAnsatz(Entity expr, Entity.Variable x)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // The transcendental monomials: every exponential and natural logarithm of
+            // something in x, innermost first, each read in the indeterminates of the ones
+            // inside it.
+            var towers = expr.Nodes
+                .Where(node => node.ContainsNode(x) && (node is Powf(var b, var e) && b == MathS.e && e.ContainsNode(x)
+                                                       || node is Logf(var lb, var arg) && lb == MathS.e && arg.ContainsNode(x)))
+                .Distinct()
+                .OrderBy(node => node.Nodes.Count())
+                .ToList();
+            if (towers.Count == 0 || towers.Count > 3)
+                return null;
+            // Only a tower the closed rules do not read: an exponential of something that is
+            // not linear in x -- of a polynomial, or of something with an exponential or a
+            // logarithm in it -- or a logarithm of something other than x. Exponentials of
+            // linears, however many, are the exponential substitution's, and `ln(x)` beside
+            // them the logarithm tower's; this rule before the splits took twenty seconds on
+            // `e^x (1 + sinh(x))/(1 + cosh(x))` to decline what those answer in a moment.
+            static bool IsPlain(Entity tower, Entity.Variable x)
+                => tower is Powf(_, var g) && TreeAnalyzer.TryGetPolyLinear(g, x, out _, out _)
+                   || tower is Logf(_, var argument) && argument == x;
+            if (towers.All(tower => IsPlain(tower, x)))
+                return null;
+            var monomials = new List<(Entity.Variable Indeterminate, Entity Written, Entity Derivative)>();
+            var map = new Dictionary<Entity, Entity>();
+            Entity InIndeterminates(Entity e) => e.Replace(node => map.TryGetValue(node, out var t) ? t : node);
+            foreach (var tower in towers)
+            {
+                var written = InIndeterminates(tower);
+                if (map.ContainsKey(written))
+                    continue;
+                var t = Variable.CreateUnique(expr, $"t{monomials.Count + 1}_rn");
+                // t' in x and the indeterminates so far: e^g has g' e^g, and ln(g) has g'/g.
+                Entity derivative = written switch
+                {
+                    Powf(_, var g) => Derived(g) * t,
+                    Logf(_, var g) => Derived(g) / g,
+                    _ => Number.Integer.Zero,
+                };
+                map[written] = t;
+                monomials.Add((t, written, derivative));
+            }
+            Entity Derived(Entity g)
+            {
+                var result = g.Differentiate(x);
+                foreach (var (t, _, derivative) in monomials)
+                    if (g.ContainsNode(t))
+                        result += g.Differentiate(t) * derivative;
+                return result.InnerSimplified;
+            }
+            var variables = new List<Entity.Variable> { x };
+            variables.AddRange(monomials.Select(m => m.Indeterminate));
+            var integrand = InIndeterminates(expr);
+            if (integrand.Nodes.Any(node => variables.Any(node.ContainsNode) && node is not (Variable or Sumf or Minusf or Mulf or Divf) && node is not Powf(_, Number.Integer)))
+                return null;
+            // With x itself in it beside the towers: a function of exponentials alone --
+            // `e^x sech(e^x)` -- is the exponential substitution's, and three seconds of a
+            // system that has no arctangent to offer.
+            if (!integrand.ContainsNode(x))
+                return null;
+            // Rational in everything: read as a quotient of polynomials, cancelled by the
+            // greatest common divisor with the indeterminates as variables -- a sum brought
+            // over one bar carries every term's denominator, and the degrees decide the size
+            // of the system.
+            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(integrand).InnerSimplified);
+            if (Functions.PolynomialGcd.TryCancel(above.Expand().InnerSimplified, below.Expand().InnerSimplified, out var cancelled) && cancelled is not null)
+                (above, below) = Functions.SingleQuotient.Of(Functions.PartialFractions.Bare(cancelled));
+            if (!TryReadInAll(above, variables, out var aboveRead) || !TryReadInAll(below, variables, out var belowRead))
+                return null;
+            var degreeAbove = aboveRead.Keys.Select(k => k.Max()).DefaultIfEmpty(0).Max();
+            var degreeBelow = belowRead.Keys.Select(k => k.Max()).DefaultIfEmpty(0).Max();
+            if (degreeAbove > MaximumAnsatzDegree || degreeBelow > MaximumAnsatzDegree)
+                return null;
+
+            // The denominator's factors with their powers, the exponential indeterminates
+            // apart, which may stand to any power in the answer's denominator: of each term of
+            // the integrand as written, the highest power of each factor -- the least common
+            // multiple, where bringing the sum over one bar multiplies the terms' denominators
+            // together.
+            var factors = new List<(Entity Factor, int Power)>();
+            foreach (var term in Sumf.LinearChildren(integrand))
+            {
+                var (_, termBelow) = Functions.SingleQuotient.Of(term);
+                foreach (var factor in Mulf.LinearChildren(termBelow))
+                {
+                    var (@base, power) = factor is Powf(var inner, Number.Integer whole) && whole.EInteger.CanFitInInt32() ? (inner, whole.EInteger.ToInt32Unchecked()) : (factor, 1);
+                    if (!variables.Any(@base.ContainsNode))
+                        continue;
+                    if (@base is Variable v && monomials.Any(m => m.Indeterminate == v && m.Written is Powf))
+                        continue;
+                    var index = factors.FindIndex(f => f.Factor == @base);
+                    if (index >= 0)
+                        factors[index] = (@base, System.Math.Max(factors[index].Power, power));
+                    else
+                        factors.Add((@base, power));
+                }
+            }
+            // The derivative of a generator, with the tower's derivatives in it, over the
+            // indeterminates: symbolic in the indeterminates, since each has the derivative
+            // the chain rule gives it.
+            Entity Differentiated(Entity generator)
+            {
+                var result = generator.Differentiate(x);
+                foreach (var (t, _, derivative) in monomials)
+                    if (generator.ContainsNode(t))
+                        result += generator.Differentiate(t) * derivative;
+                return result;
+            }
+            var exponentialIndeterminates = monomials.Where(m => m.Written is Powf).Select(m => m.Indeterminate).ToList();
+            // Q: the factors with their powers lowered by one, and then as they are; each
+            // exponential indeterminate to every power from zero up to the numerator's degree
+            // in it plus one, since a power of an exponential above the bar is one below in
+            // the answer -- Hearn's has e^(2x^2) above and 1/e^(2x^2) in its answer.
+            var qCandidates = new List<Entity>();
+            foreach (var lowered in new[] { true, false })
+            {
+                Entity q = Number.Integer.One;
+                foreach (var (factor, power) in factors)
+                {
+                    var p = lowered ? power - 1 : power;
+                    if (p > 0)
+                        q = q * (p == 1 ? factor : MathS.Pow(factor, p));
+                }
+                qCandidates.Add(q);
+            }
+            qCandidates = qCandidates.Distinct().ToList();
+            var exponentialBounds = exponentialIndeterminates.Select(t =>
+            {
+                var index = variables.IndexOf(t);
+                var aboveDegree = aboveRead.Keys.Select(k => k[index]).DefaultIfEmpty(0).Max();
+                return System.Math.Min(MaximumTowerDegree, aboveDegree + 2);
+            }).ToList();
+            var logarithmGenerators = factors.Select(f => f.Factor).Distinct().ToList();
+            foreach (var q in qCandidates)
+                foreach (var exponentPowers in Combinations(exponentialBounds))
+                {
+                    Entity denominator = q;
+                    for (var i = 0; i < exponentialIndeterminates.Count; i++)
+                        if (exponentPowers[i] > 0)
+                            denominator = denominator * MathS.Pow(exponentialIndeterminates[i], exponentPowers[i]);
+                    // The generators: x^a prod t^b over the denominator, and the logarithms of
+                    // the denominator's factors. Everything is brought over one denominator,
+                    // `denominator^2 * below` times the logarithms' arguments and the ln-towers'
+                    // arguments (whose derivatives have them below), by exact products of
+                    // polynomials: (m/Q)' is (m' Q - m Q')/Q^2 and (ln q)' is q'/q, so the
+                    // columns are polynomials without a quotient to simplify.
+                    var monomialGenerators = new List<Entity>();
+                    var bounds = new List<int>();
+                    for (var i = 0; i < variables.Count; i++)
+                    {
+                        var index = i;
+                        var degree = aboveRead.Keys.Concat(belowRead.Keys).Select(k => k[index]).DefaultIfEmpty(0).Max();
+                        bounds.Add(i == 0 ? System.Math.Min(MaximumAnsatzDegree, degree + 1) : System.Math.Min(MaximumTowerDegree, degree + 1));
+                    }
+                    foreach (var powers in Combinations(bounds))
+                    {
+                        Entity monomial = Number.Integer.One;
+                        for (var i = 0; i < variables.Count; i++)
+                            if (powers[i] > 0)
+                                monomial = monomial == Number.Integer.One ? MathS.Pow(variables[i], powers[i]) : monomial * MathS.Pow(variables[i], powers[i]);
+                        monomialGenerators.Add(monomial);
+                    }
+                    if (monomialGenerators.Count + logarithmGenerators.Count > 200)
+                        continue;
+                    Entity towersBelow = Number.Integer.One;
+                    foreach (var (_, written, _) in monomials)
+                        if (written is Logf(_, var g))
+                            towersBelow = towersBelow * g;
+                    Entity logArguments = Number.Integer.One;
+                    foreach (var argument in logarithmGenerators)
+                        logArguments = logArguments * argument;
+                    var denominatorPrime = Differentiated(denominator);
+                    var generators = new List<Entity>();
+                    var columns = new List<Dictionary<int[], Entity>>();
+                    var failed = false;
+                    foreach (var monomial in monomialGenerators)
+                    {
+                        generators.Add(monomial / denominator);
+                        var numerator = (Differentiated(monomial) * denominator - monomial * denominatorPrime) * below * logArguments * towersBelow;
+                        if (!TryReadInAll(Functions.PartialFractions.Bare(numerator.Expand().InnerSimplified), variables, out var column))
+                        {
+                            failed = true;
+                            break;
+                        }
+                        columns.Add(column);
+                    }
+                    if (!failed)
+                        foreach (var argument in logarithmGenerators)
+                        {
+                            generators.Add(MathS.Ln(argument));
+                            Entity others = Number.Integer.One;
+                            foreach (var other in logarithmGenerators)
+                                if (other != argument)
+                                    others = others * other;
+                            var numerator = Differentiated(argument) * MathS.Sqr(denominator) * below * others * towersBelow;
+                            if (!TryReadInAll(Functions.PartialFractions.Bare(numerator.Expand().InnerSimplified), variables, out var column))
+                            {
+                                failed = true;
+                                break;
+                            }
+                            columns.Add(column);
+                        }
+                    if (failed)
+                        continue;
+                    var targetNumerator = above * MathS.Sqr(denominator) * logArguments * towersBelow;
+                    if (!TryReadInAll(Functions.PartialFractions.Bare(targetNumerator.Expand().InnerSimplified), variables, out var target))
+                        continue;
+                    var keys = columns.SelectMany(c => c.Keys).Concat(target.Keys).Distinct(new IntArrayComparer()).ToList();
+                    var matrix = new Entity[keys.Count][];
+                    var rhs = new Entity[keys.Count];
+                    for (var row = 0; row < keys.Count; row++)
+                    {
+                        matrix[row] = new Entity[columns.Count];
+                        for (var c = 0; c < columns.Count; c++)
+                            matrix[row][c] = columns[c].TryGetValue(keys[row], out var entry) ? entry : Number.Integer.Zero;
+                        rhs[row] = target.TryGetValue(keys[row], out var wanted) ? wanted : Number.Integer.Zero;
+                    }
+                    if (!Functions.PartialFractions.TrySolveLinear(matrix, rhs, out var values) || values is null)
+                        continue;
+                    Entity answer = Number.Integer.Zero;
+                    for (var c = 0; c < values.Length; c++)
+                    {
+                        var value = values[c].InnerSimplified;
+                        if (value.Evaled is Number.Complex { IsZero: true })
+                            continue;
+                        answer += value * generators[c];
+                    }
+                    if (answer == Number.Integer.Zero)
+                        continue;
+                    // Back in the functions, outermost first.
+                    for (var i = monomials.Count - 1; i >= 0; i--)
+                        answer = answer.Substitute(monomials[i].Indeterminate, monomials[i].Written);
+                    answer = Functions.PartialFractions.Bare(answer.InnerSimplified);
+                    if (!Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
+                        continue;
+                    return answer;
+                }
+            return null;
+
+            static IEnumerable<int[]> Combinations(List<int> bounds)
+            {
+                var current = new int[bounds.Count];
+                while (true)
+                {
+                    yield return (int[])current.Clone();
+                    var i = 0;
+                    while (i < bounds.Count)
+                    {
+                        current[i]++;
+                        if (current[i] <= bounds[i])
+                            break;
+                        current[i] = 0;
+                        i++;
+                    }
+                    if (i == bounds.Count)
+                        yield break;
+                }
+            }
+        }
+
+        private sealed class IntArrayComparer : IEqualityComparer<int[]>
+        {
+            public bool Equals(int[]? a, int[]? b) => a is not null && b is not null && a.SequenceEqual(b);
+            public int GetHashCode(int[] a)
+            {
+                var hash = 17;
+                foreach (var v in a)
+                    hash = hash * 31 + v;
+                return hash;
+            }
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> as a polynomial in all of <paramref name="variables"/> with
+        /// coefficients free of them, keyed by the powers in the variables' order.
+        /// </summary>
+        private static bool TryReadInAll(Entity expr, List<Entity.Variable> variables, out Dictionary<int[], Entity> read)
+        {
+            read = new Dictionary<int[], Entity>(new IntArrayComparer());
+            var result = read;
+            bool Read(Entity e, int index, int[] prefix)
+            {
+                if (index == variables.Count)
+                {
+                    if (variables.Any(e.ContainsNode))
+                        return false;
+                    result[prefix] = result.TryGetValue(prefix, out var already) ? already + e : e;
+                    return true;
+                }
+                if (!TreeAnalyzer.TryGetPolynomial(e, variables[index], out var monomials))
+                    return false;
+                foreach (var pair in monomials)
+                {
+                    if (pair.Key.Sign < 0 || !pair.Key.CanFitInInt32())
+                        return false;
+                    var next = (int[])prefix.Clone();
+                    next[index] = pair.Key.ToInt32Unchecked();
+                    if (!Read(pair.Value, index + 1, next))
+                        return false;
+                }
+                return true;
+            }
+            if (!Read(expr, 0, new int[variables.Count]))
+                return false;
+            if (read.Count == 0)
+                read[new int[variables.Count]] = Number.Integer.Zero;
+            return true;
+        }
+
+        /// <summary>
         /// A rational function of <c>x</c> and of <c>sin(x)</c> and <c>cos(x)</c> together, with
         /// an exponential <c>e^(a x)</c> in front or not, closed by the ansatz
         /// <c>F = e^(a x) P/Q</c> with <c>P</c> and <c>Q</c> polynomials in the three.
