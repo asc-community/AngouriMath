@@ -2257,6 +2257,114 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational function of <c>x^n</c> times <c>(c + d x^n)^(k - 1/n)</c> for a whole
+        /// <c>k</c>, rationalised by <c>u = x/(c + d x^n)^(1/n)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>du/dx</c> is <c>c (c + d x^n)^(-(n + 1)/n)</c>, so <c>dx/(c + d x^n)^(1/n)</c> is
+        /// <c>(c + d x^n) du/c</c>; and <c>u^n = x^n/(c + d x^n)</c> gives <c>x^n = c u^n/(1 - d u^n)</c>
+        /// and <c>c + d x^n = c/(1 - d u^n)</c>, so everything in <c>x^n</c> is rational in
+        /// <c>u^n</c> and the integrand is a rational function of <c>u</c>. Timofeev's
+        /// <c>1/((1 + x^4)(2 + x^4)^(1/4))</c> is <c>1/(1 + u^4)</c> under it, and his
+        /// <c>(1 + x^4)^(3/4)/(2 + x^4)^2</c>, whose root is <c>(1 + x^4)^(1 - 1/4)</c>, is
+        /// rational the same way; Welz's <c>1/((1 - x^3)(a + b x^3)^(1/3))</c> is
+        /// <c>1/(1 - (a + b) u^3)</c>. Rubi's rule for <c>(c + d x^n)^p/(a + b x^n)</c> at
+        /// <c>p = -1/n</c> is this substitution.
+        /// </para>
+        /// <para>
+        /// The identity holds wherever the root is real, which is where the answer is
+        /// asked; <c>u</c> goes back in as <c>x (c + d x^n)^(-1/n)</c>.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByDividingByTheRoot(Entity expr, Entity.Variable x)
+        {
+            // One fractional power of a binomial `c + d x^n` with exponent `k - 1/n`, and the
+            // rest a rational function of x^n.
+            Entity? radicand = null;
+            Entity? c = null, d = null;
+            var n = 0;
+            var k = EInteger.Zero;
+            Entity rest = Number.Integer.One;
+            var (above, below) = Functions.SingleQuotient.Of(expr);
+            foreach (var (side, isBelow) in new[] { (above, false), (below, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (factor is Powf(var @base, Number.Rational exponent) && exponent is not Number.Integer && @base.ContainsNode(x))
+                    {
+                        var signed = isBelow ? exponent.ERational.Negate() : exponent.ERational;
+                        if (radicand is not null || !TryReadAsABinomialIn(@base, x, out var readC, out var readD, out var readN)
+                            || readN < 2 || !signed.Denominator.Equals(EInteger.FromInt32(readN)))
+                            return null;
+                        // The numerator of the exponent is k n - 1.
+                        var shifted = signed.Numerator.Add(EInteger.One);
+                        if (!shifted.Remainder(EInteger.FromInt32(readN)).IsZero)
+                            return null;
+                        radicand = @base;
+                        c = readC;
+                        d = readD;
+                        n = readN;
+                        k = shifted.Divide(EInteger.FromInt32(readN));
+                        continue;
+                    }
+                    if (factor.ContainsNode(x) && !IsRationalIn(factor, x))
+                        return null;
+                    rest = rest == Number.Integer.One ? (isBelow ? 1 / factor : factor) : isBelow ? rest / factor : rest * factor;
+                }
+            if (radicand is null || c is null || d is null || TreeAnalyzer.IsZero(c) || TreeAnalyzer.IsZero(d))
+                return null;
+            // The rest as a rational function of x^n: written in a stand-in for x^n where every
+            // power of x is a multiple of n, and declined otherwise.
+            var xToTheN = Variable.CreateUnique(expr, "x_n");
+            var inXToTheN = rest.Replace(node =>
+                node is Powf(var xAgain, Number.Integer power) && xAgain == x && power.EInteger.Remainder(EInteger.FromInt32(n)).IsZero
+                    ? MathS.Pow(xToTheN, Number.Integer.Create(power.EInteger.Divide(EInteger.FromInt32(n))))
+                    : node);
+            if (inXToTheN.ContainsNode(x))
+                return null;
+            var u = Variable.CreateUnique(expr, "u_root");
+            var uToTheN = MathS.Pow(u, n);
+            var oneMinusDUToTheN = 1 - d * uToTheN;
+            var binomialInU = c / oneMinusDUToTheN;
+            var integrand = Functions.SingleQuotient.Combine(
+                inXToTheN.Substitute(xToTheN, c * uToTheN / oneMinusDUToTheN)
+                * (k.IsZero ? Number.Integer.One : MathS.Pow(binomialInU, Number.Integer.Create(k)))
+                / oneMinusDUToTheN).Simplify();
+            if (integrand is Providedf(var inner, _))
+                integrand = inner;
+            if (integrand.ContainsNode(x) || integrand.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(integrand, u, integrateByParts: false) is not { } result)
+                return null;
+            var answer = result.Substitute(u, x * MathS.Pow(radicand, Number.Rational.Create(-1, n)));
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// Reads <paramref name="expr"/> as <c>c + d x^n</c> with <c>c</c> and <c>d</c> free of
+        /// <paramref name="x"/>.
+        /// </summary>
+        private static bool TryReadAsABinomialIn(Entity expr, Entity.Variable x, out Entity c, out Entity d, out int n)
+        {
+            c = d = Number.Integer.Zero;
+            n = 0;
+            if (!TreeAnalyzer.TryGetPolynomial(expr, x, out var monomials) || monomials.Count != 2
+                || !monomials.TryGetValue(EInteger.Zero, out var constant))
+                return false;
+            foreach (var pair in monomials)
+                if (!pair.Key.IsZero)
+                {
+                    if (!pair.Key.CanFitInInt32() || pair.Value.ContainsNode(x))
+                        return false;
+                    n = pair.Key.ToInt32Checked();
+                    d = pair.Value;
+                }
+            c = constant;
+            return !c.ContainsNode(x) && n >= 1;
+        }
+
+        /// <summary>
         /// A <b>binomial differential</b> <c>x^m (a + b x^n)^(p/q)</c>, in the two of Chebyshev's
         /// three cases that are not a whole power: <c>(m + 1)/n</c> whole, or
         /// <c>(m + 1)/n + p/q</c> whole.
