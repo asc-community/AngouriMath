@@ -156,5 +156,48 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("1/((x^2 + a)^2*(x + 1))", -0.7)]
         public void ARepeatedSymbolicQuadratic(string integrand, double a)
             => DifferentiatesBack(integrand, "x", ("a", a));
+
+        /// <summary>
+        /// Linear factors with symbols in their coefficients are decomposed by the derivatives
+        /// at the roots, and the answer is a line: solved as a system, fraction-free,
+        /// <c>1/((a + b x)(f + g x)^3)</c> came out twenty kilobytes long with
+        /// <c>210 a^8 b^2 f^24 g^14</c> in every term, and its fourth power did not evaluate.
+        /// </summary>
+        [Theory]
+        [InlineData("1/((a + b*x)*(f + g*x)^3)")]
+        [InlineData("1/((a + b*x)*(f + g*x)^4)")]
+        [InlineData("x^2/((a + b*x)*(c + d*x)*(f + g*x)^2)")]
+        public void RepeatedSymbolicLinearFactorsAreDecomposedByDerivatives(string integrand)
+        {
+            DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1), ("f", 3.1), ("g", 0.7));
+            Assert.True(integrand.ToEntity().Integrate("x").Stringize().Length < 4000, "the answer is a page");
+        }
+
+        /// <summary>
+        /// Two linear factors with one root are one factor: <c>(a + b x)(a + x b)^2</c> is
+        /// how the rules that make a factor monic and gather its powers write it, and as
+        /// two distinct factors the decomposition had no answer, its coefficients being
+        /// values at a root of the other.
+        /// </summary>
+        [Theory]
+        [InlineData("1/((a + b*x)*(a*g + b*g*x)^2)")]
+        [InlineData("1/((c + d*x)*(a + b*x)*(a*g + b*g*x)^2)")]
+        public void ProportionalLinearFactorsAreOneFactor(string integrand)
+            => DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1), ("g", 0.7));
+
+        /// <summary>
+        /// A written power of a linear is integrated as the power it is: expanded,
+        /// <c>(f/g + x)^2</c> is a quadratic whose discriminant is zero in a spelling the
+        /// quadratic rule did not read as zero, and <c>1/(f/g + x)^2</c> was a piecewise on it.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(f/g + x)^2")]
+        [InlineData("1/(f/g + x)^3")]
+        [InlineData("b/(a - b*f/g)^2/(f/g + x)^2")]
+        public void AWrittenPowerOfALinearIsNotAQuadratic(string integrand)
+        {
+            DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("f", 3.1), ("g", 0.7));
+            Assert.DoesNotContain("piecewise", integrand.ToEntity().Integrate("x").Stringize());
+        }
     }
 }

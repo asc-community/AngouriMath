@@ -448,6 +448,35 @@ namespace AngouriMath.Functions
                         return false;
                 factors.Add((part.InnerSimplified, degree.ToInt32Unchecked() * multiplicity));
             }
+            // Two linear factors with one root are one factor: `(a + b x)(a + x b)^2` is
+            // written so by the rules that make a factor monic and gather its powers, and
+            // as two distinct factors the decomposition has no answer -- its coefficients
+            // are values at a root of the other factor -- where `(a + b x)^3` is a line.
+            // `(alpha_2 + beta_2 x)` is `(beta_2/beta_1)(alpha_1 + beta_1 x)`, the quotient
+            // going out in front.
+            var merged = false;
+            for (var i = 0; i < factors.Count; i++)
+                for (var j = factors.Count - 1; j > i; j--)
+                {
+                    if (!TryReadLinear(factors[i].Factor, x, out var alpha1, out var beta1, out var power1)
+                        || !TryReadLinear(factors[j].Factor, x, out var alpha2, out var beta2, out var power2))
+                        continue;
+                    var crossed = Bare((alpha1 * beta2 - alpha2 * beta1).InnerSimplified);
+                    if (crossed.Evaled is not Complex { IsZero: true } && (crossed.Vars.Any() ? Bare(crossed.Simplify()).Evaled is not Complex { IsZero: true } : true))
+                        continue;
+                    var linear = factors[i].Factor is Powf(var repeatedBase, _) ? repeatedBase : factors[i].Factor;
+                    constant *= MathS.Pow(Bare((beta2 / beta1).InnerSimplified), power2);
+                    factors[i] = (MathS.Pow(linear, power1 + power2), power1 + power2);
+                    factors.RemoveAt(j);
+                    merged = true;
+                }
+            // One factor once merged is one block, the numerator over the power as it is,
+            // which the rule for a polynomial over a power of a linear reads.
+            if (factors.Count == 1 && merged)
+            {
+                decomposition = numerator / (constant == Integer.One ? factors[0].Factor : constant * factors[0].Factor);
+                return HoldsAtSampledPoints(numerator / denominator, decomposition, x);
+            }
             if (factors.Count < 2)
                 return false;
             for (var i = 0; i < factors.Count; i++)
@@ -461,6 +490,19 @@ namespace AngouriMath.Functions
             foreach (var pair in above)
                 if (pair.Key.Sign < 0 || pair.Key.CompareTo(EInteger.FromInt32(total)) >= 0 || pair.Value.ContainsNode(x))
                     return false;
+
+            // Linear factors with a symbol in a coefficient, by the derivatives: over
+            // `(x - r)^k` the coefficient of `1/(x - r)^j` is the `(k - j)`th derivative of the
+            // rest at `r` over `(k - j)!`, a small expression in the symbols, where the
+            // system below solved fraction-free hands back each coefficient as a quotient of
+            // determinants -- `1/((a + b x)(f + g x)^3)` came out with `210 a^8 b^2 f^24 g^14`
+            // in every term and twenty kilobytes of answer, right and unreadable, and its
+            // fourth power did not evaluate. Numeric coefficients keep the system, which is
+            // exact over the rationals and answers them as before.
+            if (factors.All(f => TreeAnalyzer.TryGetPolynomial(f.Factor is Powf(var b, _) ? b : f.Factor, x, out var linear) && linear.Count > 0 && linear.Keys.Max()!.Equals(EInteger.One))
+                && (numerator + denominator).Vars.Any(v => v != x)
+                && TrySplitOverSymbolicLinearFactors(numerator, denominator, constant, factors, x, out decomposition))
+                return true;
 
             // One unknown per coefficient of each numerator P_i, of degree one less than F_i.
             var unknowns = new List<Variable>();
@@ -525,6 +567,121 @@ namespace AngouriMath.Functions
             if (!HoldsAtSampledPoints(numerator / denominator, sum / constant, x))
                 return false;
 
+            decomposition = sum / constant;
+            return true;
+        }
+
+        /// <summary>
+        /// A constant that is a quotient of polynomials in the symbols, over one bar and in
+        /// lowest terms by the polynomial gcd; over one bar as expanded where the gcd
+        /// declines, and zero where the numerator is.
+        /// </summary>
+        internal static Entity InLowestTermsOverTheSymbols(Entity constant)
+        {
+            var (above, below) = SingleQuotient.Of(SingleQuotient.Combine(constant).InnerSimplified);
+            var expandedAbove = Bare(above.Expand().InnerSimplified);
+            // Zero as a value, decided at two sets of pinned symbols: `b (a + b (-a/b))` is
+            // zero and neither the expansion nor the evaluation of numbers says so.
+            if (expandedAbove == Integer.Zero || expandedAbove.Evaled is Complex { IsZero: true } || IsZeroAtPinnedSymbols(expandedAbove))
+                return Integer.Zero;
+            var expandedBelow = Bare(below.Expand().InnerSimplified);
+            if (PolynomialGcd.TryCancel(expandedAbove, expandedBelow, out var cancelled))
+                return Bare(cancelled);
+            return expandedBelow == Integer.One ? expandedAbove : expandedAbove / expandedBelow;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="expr"/>, free of every variable but symbols, is zero at
+        /// two sets of values for them, off the integers and distinct; a value that is not
+        /// a number at either counts as not zero.
+        /// </summary>
+        private static bool IsZeroAtPinnedSymbols(Entity expr)
+        {
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+            var symbols = expr.Vars.ToList();
+            foreach (var seed in new[] { 0, 1 })
+            {
+                var pinned = expr;
+                var i = 0;
+                foreach (var symbol in symbols)
+                {
+                    var value = Real.Create(EDecimal.FromString((i % 3) switch { 0 => "1.37", 1 => "2.71", _ => "0.83" }).Add(EDecimal.FromInt32(i + 5 * seed)));
+                    pinned = pinned.Substitute(symbol, value);
+                    i++;
+                }
+                if (pinned.Evaled is not Complex value_ || value_.IsNaN || value_.Abs().EDecimal.CompareTo(EDecimal.FromString("1e-30")) > 0)
+                    return false;
+            }
+            return true;
+        }
+
+        /// <summary>A written factor as <c>(alpha + beta x)^power</c>, for a linear base with coefficients free of <paramref name="x"/>.</summary>
+        private static bool TryReadLinear(Entity factor, Variable x, out Entity alpha, out Entity beta, out int power)
+        {
+            alpha = beta = Integer.Zero;
+            power = 1;
+            var @base = factor;
+            if (factor is Powf(var repeatedBase, Integer { EInteger.Sign: > 0 } repeated) && repeated.EInteger.CanFitInInt32())
+            {
+                @base = repeatedBase;
+                power = repeated.EInteger.ToInt32Unchecked();
+            }
+            if (!TreeAnalyzer.TryGetPolynomial(@base, x, out var read) || read.Count == 0 || !read.Keys.Max()!.Equals(EInteger.One)
+                || read.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                return false;
+            beta = read[EInteger.One];
+            alpha = read.TryGetValue(EInteger.Zero, out var constantTerm) ? constantTerm : Integer.Zero;
+            return true;
+        }
+
+        /// <summary>
+        /// <see cref="TrySplitOverWrittenFactors"/> for linear factors only, each with its
+        /// multiplicity: the coefficient of <c>1/F^j</c> for <c>F = alpha + beta x</c> of
+        /// multiplicity <c>k</c> is <c>beta^(j-k) h^(k-j)(r)/(k-j)!</c> with <c>r = -alpha/beta</c>
+        /// and <c>h</c> the numerator over the other factors. Checked at sampled points like
+        /// the system's answer.
+        /// </summary>
+        private static bool TrySplitOverSymbolicLinearFactors(
+            Entity numerator, Entity denominator, Entity constant, List<(Entity Factor, int Degree)> factors, Variable x,
+            [NotNullWhen(true)] out Entity? decomposition)
+        {
+            decomposition = null;
+            Entity sum = 0;
+            for (var i = 0; i < factors.Count; i++)
+            {
+                var (written, multiplicity) = factors[i];
+                var factor = written is Powf(var repeatedBase, _) ? repeatedBase : written;
+                if (!TreeAnalyzer.TryGetPolynomial(factor, x, out var read))
+                    return false;
+                var beta = read[EInteger.One];
+                var alpha = read.TryGetValue(EInteger.Zero, out var constantTerm) ? constantTerm : Integer.Zero;
+                var root = Bare((-alpha / beta).InnerSimplified);
+                Entity rest = numerator;
+                for (var j = 0; j < factors.Count; j++)
+                    if (j != i)
+                        rest /= factors[j].Factor;
+                var derivative = rest;
+                var factorial = EInteger.One;
+                for (var order = 0; order < multiplicity; order++)
+                {
+                    if (order > 0)
+                    {
+                        derivative = derivative.Differentiate(x);
+                        factorial = factorial.Multiply(order);
+                    }
+                    var j = multiplicity - order;
+                    var value = Bare(derivative.Substitute(x, root).InnerSimplified);
+                    var coefficient = InLowestTermsOverTheSymbols(MathS.Pow(beta, j - multiplicity) * value / Integer.Create(factorial));
+                    if (coefficient.Nodes.Any(node => node == MathS.NaN) || coefficient.ContainsNode(x))
+                        return false;
+                    if (coefficient == Integer.Zero || coefficient.Evaled is Complex { IsZero: true })
+                        continue;
+                    var term = j == 1 ? coefficient / factor : coefficient / MathS.Pow(factor, j);
+                    sum += term;
+                }
+            }
+            if (!HoldsAtSampledPoints(numerator / denominator, sum / constant, x))
+                return false;
             decomposition = sum / constant;
             return true;
         }
@@ -1213,6 +1370,12 @@ namespace AngouriMath.Functions
         /// </summary>
         internal static bool HoldsAtSampledPoints(Entity left, Entity right, Variable x)
         {
+            // In decimals: a pinned value is a small rational, which the downcasting keeps
+            // exact through every operation, and a symbolic answer with powers in it
+            // evaluated so was a minute of gcd on integers of thousands of digits -- Rubi's
+            // `(A + B ln(e ((a + b x)/(c + d x))^n))/(a + b x)^3` never returned from its
+            // check. Off the downcasting, a decimal stays a decimal of a hundred digits.
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
             var parameters = left.Vars.Concat(right.Vars).Where(v => v != x).Distinct().ToList();
             var pinned = 0;
             foreach (var parameter in parameters)

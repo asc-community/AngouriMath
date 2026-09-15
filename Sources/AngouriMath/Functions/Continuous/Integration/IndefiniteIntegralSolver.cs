@@ -572,7 +572,12 @@ namespace AngouriMath.Functions.Algebra
             // fire on one and recurse into the problem it started from. The check on the
             // quotient is the second half of that guarantee: a division that came back with
             // nothing taken out would hand the same fraction on and not terminate.
-            if (TreeAnalyzer.PolynomialLongDivision(numerator, denominator, genericCase: true, inTermsOf: x) is var (quotient, properPart)
+            // And only for a fraction that is improper by its degrees: asked to divide `x^2`
+            // by `(a + b x)(c + d x)(f/g + x)^2`, the division read the divisor through its
+            // other spelling and came back with a quotient of the first degree carrying a
+            // condition, and the two halves integrated to a page of piecewise.
+            if (!IsProperByDegree(numerator, denominator, x)
+                && TreeAnalyzer.PolynomialLongDivision(numerator, denominator, genericCase: true, inTermsOf: x) is var (quotient, properPart)
                 && quotient.Evaled != Entity.Number.Integer.Create(0)
                 && Integration.ComputeIndefiniteIntegral(quotient, x, integrateByParts) is { } wholePart
                 && Integration.ComputeIndefiniteIntegral(properPart, x, integrateByParts) is { } fractionPart)
@@ -588,6 +593,20 @@ namespace AngouriMath.Functions.Algebra
                 && !multiple.ContainsNode(x)
                 && (leftover is Divf(var leftoverTop, _) ? leftoverTop : leftover).InnerSimplified.Evaled is Number.Complex { IsZero: true })
                 return (multiple * MathS.Ln(denominator)).InnerSimplified;
+
+            // Written linear factors with symbols in their coefficients, two or more, one of
+            // them to a power: decomposed over the written factors, the coefficients read
+            // off derivatives at the roots and each a line. First, before the respellings
+            // below and the Hermite reduction, whose solve hands back its coefficients as
+            // quotients of determinants -- `1/((a + b x)(f + g x)^3)` came out twenty
+            // kilobytes long that way -- and before a respelling sends the quotient round
+            // the chain, where the substitution search answers `x^2/((a + b x)(c + d x)(f + g x)^2)`
+            // as a page of piecewise.
+            if (Mulf.LinearChildren(denominator).Any(f => f.ContainsNode(x) && f is Powf(_, Number.Integer { EInteger.Sign: > 0 } e) && e != Number.Integer.One)
+                && IsAProductOfSymbolicLinearFactors(denominator, x)
+                && Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, denominator, x, out var overSymbolicLinears)
+                && Integration.ComputeIndefiniteIntegral(overSymbolicLinears, x, integrateByParts) is { } overTheLinears)
+                return overTheLinears;
 
             // Every rule below reads the denominator **as written**: the Hermite reduction wants
             // its repeated factor written as a power, the coprime split wants two written blocks.
@@ -8795,6 +8814,390 @@ namespace AngouriMath.Functions.Algebra
             return rewritten == expr ? null : Integration.ComputeAsAQuestionOfItsOwn(rewritten, x, integrateByParts);
         }
 
+        /// <summary>
+        /// A rational function of <paramref name="x"/> times a whole power of a factor whose
+        /// derivative is rational -- <c>A + B ln(R)</c> or <c>A + B arctan(R)</c> with <c>R</c>
+        /// rational in <paramref name="x"/> -- by parts with the power differentiated:
+        /// <c>F^p Q = (F^p int Q)' - p F^(p-1) F' int Q</c>, and the remainder is a rational
+        /// function times the next lower power, rational outright for the first. Rubi's
+        /// <c>(f + g x)^m (A + B ln(e ((a + b x)/(c + d x))^n))^p</c> for whole <c>m</c> and
+        /// <c>p</c>, of which <c>(f + g x)(A + B ln(e (a + b x)^2/(c + d x)^2))</c> and
+        /// <c>(A + B ln(e (a + b x)/(c + d x)))/(f + g x)^5</c> were a substitution search past
+        /// its budget on the symbols, simplifying the integrand over each candidate's
+        /// derivative, before the same step of parts was reached below it.
+        /// </summary>
+        /// <remarks>
+        /// The step is exact and closed: what is integrated is rational, what is left is
+        /// asked as a question of its own with the power one lower, and the power is what
+        /// the recursion decreases on. At any depth where the rational function holds
+        /// <c>x</c>, since the step is closed and its own remainder is two levels down once
+        /// a constant has been taken out in front; against a constant alone it is by parts
+        /// against one, asked at the top or one below it like the rest of by parts.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveARationalFunctionTimesAPowerOfALogarithm(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // A whole negative power of a product is the product of the powers: the constant
+            // over a product is handed on as `((a + b x)(c + d x)(A + B ln(...)))^(-1)`, one
+            // factor with everything in it.
+            expr = WithNegativePowersOfProductsApart(expr);
+            Entity? differentiated = null;
+            Entity writtenPower = Number.Integer.One;
+            Entity rational = Number.Integer.One;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x) || IsARationalFunction(factor, x))
+                {
+                    rational = underneath ? rational / factor : rational * factor;
+                    continue;
+                }
+                if (differentiated is not null)
+                    return null;
+                var (@base, exponent) = factor is Powf(var b, var p) && !p.ContainsNode(x) ? (b, p) : (factor, Number.Integer.One);
+                if (!@base.Nodes.Any(node => node is Logf or Arctanf or Arccotanf && node.ContainsNode(x)))
+                    return null;
+                differentiated = @base;
+                writtenPower = underneath ? (-exponent).InnerSimplified : exponent;
+            }
+            if (differentiated is null)
+                return null;
+            // Against a constant alone this is by parts against one, which is asked at the
+            // top or one below and not volunteered: offered at every depth, `ln(x)^2` was
+            // answered inside a by-parts search that its decline used to cut short, and
+            // Bronstein's `(x^2 + 2x ln x + ln^2 x + (1 + x) sqrt(x + ln x))/(x (x + ln x)^2)`
+            // went from a second to twelve.
+            if (!rational.ContainsNode(x) && !Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            // Differentiated with each logarithm of a product written as the sum of the
+            // logarithms of its factors, the constant dropped: the derivative of
+            // `ln(e (a + b x)^2/(c + d x)^2)` is then `2b/(a + b x) - 2d/(c + d x)`, where the
+            // quotient rule on the argument as written gives a quotient of quartics that the
+            // partial fractions below spend their budget on.
+            // And term by term, each term of the sum differentiated on its own: simplified
+            // whole, `b/(a + b x) - d/(c + d x)` is brought over one bar, and the pieces below
+            // then hold a quadratic with symbols in it.
+            var derivativeTerms = new List<Entity>();
+            foreach (var term in TermsDistributed(WithLogarithmsOfProductsApart(differentiated, x)))
+            {
+                var termDerivative = Functions.PartialFractions.Bare(term.Differentiate(x).InnerSimplified);
+                if (termDerivative == Number.Integer.Zero || termDerivative.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                if (!IsARationalFunction(termDerivative, x))
+                    return null;
+                derivativeTerms.AddRange(TermsDistributed(termDerivative));
+            }
+            if (derivativeTerms.Count == 0)
+                return null;
+            // The rational function a constant multiple of the derivative: `F^p F'` for any
+            // power, `F^(p + 1)/(p + 1)`, or `ln F` for the reciprocal. Rubi's
+            // `(A + B ln(e (a + b x)^n/(c + d x)^n))/((a + b x)(c + d x))` is
+            // `(A + B ln(...))^2/(2 B n (b c - a d))`, which the substitution search spent its
+            // budget simplifying towards. Decided at sampled points, then the constant read
+            // exactly and the answer differentiated back.
+            Entity derivative = Number.Integer.Zero;
+            foreach (var term in derivativeTerms)
+                derivative += term;
+            if (AreProportionalAtSampledPoints(rational, derivative, x))
+            {
+                var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(rational / derivative).InnerSimplified);
+                if (TryReadTheRatioOfBrackets(above, below, x, out var ratio) && !ratio.ContainsNode(x))
+                {
+                    var nextPower = (writtenPower + 1).InnerSimplified;
+                    var reciprocal = nextPower.Evaled is Number.Complex { IsZero: true };
+                    // Checked with the plain logarithm, whose derivative evaluates at the
+                    // points; given with the modulus where the codomain asks for it, as
+                    // the table gives `ln|f|` for `f'/f`.
+                    var primitive = reciprocal ? ratio * MathS.Ln(differentiated) : ratio * MathS.Pow(differentiated, nextPower) / nextPower;
+                    if (Functions.PartialFractions.HoldsAtSampledPoints(primitive.Differentiate(x), expr, x))
+                        return (reciprocal ? ratio * IntegralPatterns.AntiderivativeLog(differentiated) : primitive).InnerSimplified;
+                }
+            }
+            if (writtenPower is not Number.Integer { EInteger.Sign: > 0 } wholePower || wholePower.EInteger.CompareTo(EInteger.FromInt32(8)) > 0)
+                return null;
+            var power = wholePower.EInteger.ToInt32Checked();
+            if (Integration.ComputeIndefiniteIntegral(rational, x, integrateByParts: false) is not { } integralOfTheRational)
+                return null;
+            integralOfTheRational = Functions.PartialFractions.Bare(integralOfTheRational.InnerSimplified);
+            if (!IsARationalFunction(integralOfTheRational, x))
+                return null;   // a logarithm from the rational part: the remainder would hold two
+            // The antiderivative of the rational function is fixed up to a constant, and the
+            // constant is chosen so that it vanishes at a pole of the derivative, which the
+            // remainder then does not have: for `(A + B ln((a + b x)/(c + d x)))^2/(c + d x)^2`
+            // the antiderivative of `1/(c + d x)^2` is `(a + b x)/((b c - a d)(c + d x))` and
+            // not `-1/(d (c + d x))`, and the remainder is `(A + B ln(...))/(c + d x)^2`, one
+            // step more of the same, where with the other constant it held
+            // `(A + B ln(...))/(a + b x)`, which is a dilogarithm on its own. Rubi's constant.
+            integralOfTheRational = MatchedToAPoleOf(integralOfTheRational, derivativeTerms, x);
+            // Term by term over the sum the logarithmic derivative is, each term a rational
+            // function over one factor: brought over one bar, `x (b c - a d)/((a + b x)(c + d x))`
+            // was a quadratic below the bar with symbols in it, answered as a piecewise on
+            // its discriminant, where `b x/(a + b x)` and `d x/(c + d x)` are each a line.
+            // For a higher power the derivative stays whole: the pole the antiderivative was
+            // matched to cancels only against the derivative as one fraction,
+            // `n (b c - a d)/((a + b x)(c + d x))` times `(a + b x)/((b c - a d)(c + d x))`, and
+            // the pieces of the split each keep a logarithm of their own.
+            // Each piece as its partial fractions over the written linear factors, whole part
+            // apart: the pole the antiderivative was matched to has a zero residue and drops
+            // out, and every piece is a constant over one power of one factor, which is a
+            // line to integrate beside the power of the logarithm. Combined and cancelled
+            // instead, the product kept the pole's factor in the numerator, `-d^2 (a + b x)`
+            // over `(a + b x)(c + d x)^2`, and sent the piece down the substitution search.
+            // For a higher power the fractions of all the terms are collected first, like
+            // over like: the `1/(c + d x)` fractions of the two terms cancel between them,
+            // and each on its own beside the power of the logarithm is a dilogarithm.
+            var remainders = new List<Entity>();
+            if (power == 1)
+                foreach (var term in derivativeTerms)
+                    remainders.Add(AsPartialFractions(term * integralOfTheRational, x));
+            else
+            {
+                // Keyed by the part of the denominator holding x; the constants go with the
+                // coefficient, which is then a quotient of polynomials in the symbols and is
+                // put in lowest terms -- `d^10 (a d - b c)^3` over `d^8 (a d - b c)^2` is
+                // `d^2 (a d - b c)` -- since the pieces come from the derivatives at the roots
+                // with nothing cancelled.
+                var collected = new List<(Entity Below, Entity Above)>();
+                foreach (var term in derivativeTerms)
+                    foreach (var fraction in TermsDistributed(AsPartialFractions(term * integralOfTheRational, x)))
+                    {
+                        var (fractionAbove, fractionBelow) = Functions.SingleQuotient.Of(fraction);
+                        Entity holdingX = Number.Integer.One, constantBelow = Number.Integer.One;
+                        foreach (var factor in Mulf.LinearChildren(fractionBelow))
+                            if (factor.ContainsNode(x))
+                                holdingX = holdingX == Number.Integer.One ? factor : holdingX * factor;
+                            else
+                                constantBelow = constantBelow == Number.Integer.One ? factor : constantBelow * factor;
+                        var coefficientPart = constantBelow == Number.Integer.One ? fractionAbove : fractionAbove / constantBelow;
+                        var at = collected.FindIndex(pair => pair.Below == holdingX);
+                        if (at >= 0)
+                            collected[at] = (holdingX, collected[at].Above + coefficientPart);
+                        else
+                            collected.Add((holdingX, coefficientPart));
+                    }
+                foreach (var (fractionBelow, fractionAbove) in collected)
+                {
+                    var coefficient = Functions.PartialFractions.InLowestTermsOverTheSymbols(fractionAbove);
+                    if (coefficient == Number.Integer.Zero || coefficient.Evaled is Number.Complex { IsZero: true })
+                        continue;
+                    var piece = fractionBelow == Number.Integer.One ? coefficient : coefficient / fractionBelow;
+                    remainders.Add(Number.Integer.Create(power) * MathS.Pow(differentiated, power - 1) * piece);
+                }
+            }
+            Entity? integratedRemainder = null;
+            foreach (var remainder in remainders)
+            {
+                if (Integration.ComputeAsAQuestionOfItsOwn(remainder, x, integrateByParts) is not { } integratedPiece)
+                    return null;
+                integratedRemainder = integratedRemainder is null ? integratedPiece : integratedRemainder + integratedPiece;
+            }
+            if (integratedRemainder is null)
+                return null;
+            var answer = MathS.Pow(differentiated, power) * integralOfTheRational - integratedRemainder;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> with every whole negative power of a product among its
+        /// factors written as the product of the powers: <c>(X Y)^(-2)</c> is
+        /// <c>X^(-2) Y^(-2)</c>.
+        /// </summary>
+        private static Entity WithNegativePowersOfProductsApart(Entity expr)
+        {
+            static Entity Distributed(Entity inner, Number.Integer exponent)
+            {
+                var (above, below) = Functions.SingleQuotient.Of(inner);
+                Entity result = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(above))
+                    result = result == Number.Integer.One ? MathS.Pow(factor, exponent) : result * MathS.Pow(factor, exponent);
+                if (below != Number.Integer.One)
+                    foreach (var factor in Mulf.LinearChildren(below))
+                        result = result * MathS.Pow(factor, Number.Integer.Create(-exponent.EInteger));
+                return result;
+            }
+            Entity Apart(Entity node) => node switch
+            {
+                Mulf(var left, var right) => Apart(left) * Apart(right),
+                Divf(var above, var below) => Apart(above) / Apart(below),
+                Powf(var inner, Number.Integer { EInteger.Sign: < 0 } exponent) when inner is Mulf or Divf => Distributed(inner, exponent),
+                _ => node,
+            };
+            return Apart(expr);
+        }
+
+        /// <summary>
+        /// <paramref name="product"/> brought over one bar and written as its whole part plus
+        /// its partial fractions over the written linear factors of the denominator, the
+        /// symbolic ones by the derivatives at the roots; <paramref name="product"/> over one
+        /// bar as it came where the denominator is not such a product.
+        /// </summary>
+        private static Entity AsPartialFractions(Entity product, Entity.Variable x)
+        {
+            var combined = Functions.SingleQuotient.Combine(product).InnerSimplified;
+            var (above, below) = Functions.SingleQuotient.Of(combined);
+            if (below == Number.Integer.One || !below.ContainsNode(x))
+                return combined;
+            above = Functions.PartialFractions.Bare(above.Expand().InnerSimplified);
+            if (!TreeAnalyzer.TryGetPolynomial(above, x, out var aboveRead) || !TreeAnalyzer.TryGetPolynomial(below, x, out var belowRead)
+                || aboveRead.Count == 0 || belowRead.Count == 0)
+                return combined;
+            Entity whole = Number.Integer.Zero;
+            var proper = above;
+            if (aboveRead.Keys.Max()!.CompareTo(belowRead.Keys.Max()!) >= 0)
+            {
+                // The division hands back the remainder over the divisor already, as the
+                // proper fraction it is.
+                if (TreeAnalyzer.PolynomialLongDivision(above, below, genericCase: true, inTermsOf: x) is not var (divided, remainder))
+                    return combined;
+                whole = Functions.PartialFractions.Bare(divided.InnerSimplified);
+                if (whole.Evaled is Number.Complex { IsZero: true })
+                    whole = Number.Integer.Zero;
+                (proper, below) = Functions.SingleQuotient.Of(Functions.PartialFractions.Bare(remainder.InnerSimplified));
+            }
+            if (proper == Number.Integer.Zero || proper.Evaled is Number.Complex { IsZero: true })
+                return whole;
+            Entity fractions;
+            if (below == Number.Integer.One)
+                fractions = proper;
+            else if (Functions.PartialFractions.TrySplitOverWrittenFactors(proper, below, x, out var decomposition))
+            {
+                // The decomposition comes as its sum over the denominator's constant; each
+                // fraction over the constant on its own, so that the terms are read apart.
+                fractions = decomposition is Divf(var sum, var constant) && sum is Sumf or Minusf
+                    ? Sumf.LinearChildren(sum).Select(fraction => fraction / constant).Aggregate((so, next) => so + next)
+                    : decomposition;
+            }
+            else
+                fractions = proper / below;
+            return whole == Number.Integer.Zero ? fractions : whole + fractions;
+        }
+
+        /// <summary>
+        /// <paramref name="antiderivative"/> plus the constant that makes it vanish at a root
+        /// of a linear factor below the bar of one of <paramref name="derivativeTerms"/>, the
+        /// first such root at which it is finite; <paramref name="antiderivative"/> itself
+        /// where there is none.
+        /// </summary>
+        private static Entity MatchedToAPoleOf(Entity antiderivative, List<Entity> derivativeTerms, Entity.Variable x)
+        {
+            var (_, ownDenominator) = Functions.SingleQuotient.Of(antiderivative);
+            foreach (var term in derivativeTerms)
+            {
+                var (_, below) = Functions.SingleQuotient.Of(term);
+                foreach (var factor in Mulf.LinearChildren(below))
+                {
+                    var linear = factor is Powf(var repeatedBase, Number.Integer) ? repeatedBase : factor;
+                    if (!linear.ContainsNode(x))
+                        continue;
+                    if (!TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out var offset) || slope.Evaled is Number.Complex { IsZero: true })
+                    {
+                        // A factor of higher degree, for a polynomial antiderivative: the
+                        // constant is what the division leaves, so that the factor divides
+                        // the antiderivative. Against `ln(1 + x^2)` the antiderivative of `x`
+                        // is `(1 + x^2)/2`, and the remainder is then a polynomial.
+                        if (!ownDenominator.ContainsNode(x) && TreeAnalyzer.TryGetPolynomial(linear, x, out _)
+                            && TreeAnalyzer.PolynomialLongDivision(antiderivative, linear, genericCase: true, inTermsOf: x) is var (_, left)
+                            && Functions.SingleQuotient.Of(Functions.PartialFractions.Bare(left.InnerSimplified)) is var (leftAbove, _)
+                            && !leftAbove.ContainsNode(x))
+                        {
+                            var constant = Functions.PartialFractions.Bare(leftAbove.InnerSimplified);
+                            if (!constant.ContainsNode(x) && !constant.Nodes.Any(node => node == MathS.NaN)
+                                && constant != Number.Integer.Zero && constant.Evaled is not Number.Complex { IsZero: true })
+                                return antiderivative - constant;
+                        }
+                        continue;
+                    }
+                    var root = Functions.PartialFractions.Bare((-offset / slope).InnerSimplified);
+                    // A pole the antiderivative shares is not one it can vanish at.
+                    var ownValueBelow = Functions.PartialFractions.Bare(ownDenominator.Substitute(x, root).Simplify());
+                    if (ownValueBelow.Evaled is Number.Complex { IsZero: true } || ownValueBelow == Number.Integer.Zero)
+                        continue;
+                    var value = Functions.PartialFractions.Bare(antiderivative.Substitute(x, root).Simplify());
+                    if (value.Nodes.Any(node => node == MathS.NaN) || value.ContainsNode(x))
+                        continue;
+                    return value == Number.Integer.Zero || value.Evaled is Number.Complex { IsZero: true }
+                        ? antiderivative
+                        : antiderivative - value;
+                }
+            }
+            return antiderivative;
+        }
+
+        /// <summary>
+        /// The terms of <paramref name="expr"/> with every product distributed over the sums
+        /// among its factors: <c>B (ln(a + b x) - ln(c + d x))</c> is two terms.
+        /// </summary>
+        private static List<Entity> TermsDistributed(Entity expr)
+        {
+            if (expr is Sumf or Minusf)
+                return Sumf.LinearChildren(expr).SelectMany(TermsDistributed).ToList();
+            if (expr is not Mulf)
+                return new List<Entity> { expr };
+            var terms = new List<Entity> { Number.Integer.One };
+            foreach (var factor in Mulf.LinearChildren(expr))
+            {
+                var factorTerms = TermsDistributed(factor);
+                var next = new List<Entity>();
+                foreach (var so in terms)
+                    foreach (var part in factorTerms)
+                        next.Add(so == Number.Integer.One ? part : so * part);
+                terms = next;
+            }
+            return terms;
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> with every natural logarithm of a product of powers written
+        /// as the sum of the logarithms of the factors holding <paramref name="x"/>, each
+        /// times its power, and the constant factors dropped. Equal to the original up to a
+        /// constant on each interval where both are defined, which is all a derivative sees.
+        /// </summary>
+        private static Entity WithLogarithmsOfProductsApart(Entity expr, Entity.Variable x)
+            => expr.Replace(node =>
+            {
+                if (node is not Logf(var @base, var argument) || @base != MathS.e || !argument.ContainsNode(x) || argument is not (Mulf or Divf or Powf))
+                    return node;
+                Entity sum = Number.Integer.Zero;
+                foreach (var (factor, underneath) in FactorsOfTheIntegrand(argument))
+                {
+                    if (!factor.ContainsNode(x))
+                        continue;
+                    var (inner, power) = factor is Powf(var b, var p) && !p.ContainsNode(x) ? (b, p) : (factor, (Entity)Number.Integer.One);
+                    var term = power == Number.Integer.One ? MathS.Ln(inner) : power * MathS.Ln(inner);
+                    sum = underneath ? sum - term : sum + term;
+                }
+                return sum;
+            });
+
+        /// <summary>
+        /// Whether <paramref name="denominator"/> is written as a product of two or more
+        /// distinct linear factors in <paramref name="x"/>, to whole powers, with a symbol in
+        /// a coefficient somewhere.
+        /// </summary>
+        private static bool IsAProductOfSymbolicLinearFactors(Entity denominator, Entity.Variable x)
+        {
+            var linears = 0;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                    continue;
+                var @base = factor is Powf(var b, Number.Integer { EInteger.Sign: > 0 }) ? b : factor;
+                if (!TreeAnalyzer.TryGetPolynomial(@base, x, out var read) || read.Count == 0 || !read.Keys.Max()!.Equals(EInteger.One)
+                    || read.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                    return false;
+                linears++;
+            }
+            return linears >= 2 && denominator.Vars.Any(v => v != x);
+        }
+
+        /// <summary>
+        /// Whether both read as polynomials in <paramref name="x"/> with the numerator's
+        /// degree below the denominator's; false where either does not read.
+        /// </summary>
+        private static bool IsProperByDegree(Entity numerator, Entity denominator, Entity.Variable x)
+            => TreeAnalyzer.TryGetPolynomial(numerator, x, out var above) && above.Count > 0
+               && TreeAnalyzer.TryGetPolynomial(denominator, x, out var below) && below.Count > 0
+               && above.Keys.Max()!.CompareTo(below.Keys.Max()!) < 0;
+
         /// <summary>Whether every node of <paramref name="expr"/> holding <paramref name="x"/> is a sum, a product, a quotient or a whole power.</summary>
         private static bool IsARationalFunction(Entity expr, Entity.Variable x)
             => expr.Nodes.All(node => !node.ContainsNode(x) || node is Variable or Sumf or Minusf or Mulf or Divf || node is Powf(_, Number.Integer));
@@ -10956,6 +11359,12 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         internal static Entity? SolveBySubstitution(Entity expr, Entity.Variable x, bool integrateByParts = true)
         {
+            // A rational function over written linear factors with symbols in their
+            // coefficients is the partial fractions', which read the coefficients off the
+            // roots: `x^2/((a + b x)(c + d x)(f + g x)^2)` under `u = f/g + x` here was a
+            // page of piecewise on the discriminant of the quadratic the other two make.
+            if (IsARationalFunction(expr, x) && TryReadAsQuotient(expr, out _, out var writtenBelow) && IsAProductOfSymbolicLinearFactors(writtenBelow, x))
+                return null;
             // A rational function of exponentials of linears in x with a whole power of a
             // sum of them in it is the exponential substitution's, exactly and at once, and
             // this search is not the tool for it: `tanh(x)^5/sech(x)^4` arrives as a fifth

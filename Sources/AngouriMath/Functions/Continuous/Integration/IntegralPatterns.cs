@@ -139,6 +139,17 @@ namespace AngouriMath.Functions.Algebra
                 @base == MathS.e && TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
                     (arg / a) * (MathS.Ln(MathS.Abs(arg)) - 1),
 
+            // ∫ k/(bx + c)^n dx for a written power of a linear, as the power it is: expanded,
+            // `(f/g + x)^2` is a quadratic whose discriminant `4f^2/g^2 - 4(1/g)^2 f^2` is zero
+            // in a spelling the arm below does not read as zero, and `1/(f/g + x)^2` came back
+            // as a piecewise on it.
+            Entity.Divf(var numerator, Entity.Powf(var linear, Entity.Number.Integer exponent)) when
+                !numerator.ContainsNode(x)
+                && exponent.EInteger.CompareTo(EInteger.FromInt32(2)) >= 0
+                && TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out _)
+                && slope.Evaled is Entity.Number.Complex { IsZero: false }
+                    => numerator * MathS.Pow(linear, 1 - exponent) / (slope * (1 - exponent)),
+
             Entity.Divf(var numerator, var denominator) when
                 !numerator.ContainsNode(x)
                 && TreeAnalyzer.TryGetPolyQuadratic(denominator, x, out var a, out var b, out var c) // ∫ k/(ax^2 + bx + c) dx
