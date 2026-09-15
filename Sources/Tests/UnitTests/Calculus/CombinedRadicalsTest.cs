@@ -277,5 +277,32 @@ namespace AngouriMath.Tests.Calculus
             Assert.True(Math.Abs((double)(left + right).RealPart) < 1e-12, $"{left} against {right}");
             Assert.True(Math.Abs((double)left.RealPart + Math.Sqrt(2)) < 1e-12, $"{left}");
         }
+
+        /// <summary>
+        /// A constant multiple of <c>D'/D</c> for a sum <c>D</c> below the bar holding a root,
+        /// decided at sampled points and answered as that multiple of <c>ln(D)</c>. Hearn's
+        /// <c>x((x^2 - 1) sqrt(x^2 - 4) + (x^2 - 4) sqrt(x^2 - 1))/((x^2 - 1)(x^2 - 4)(1 + sqrt(x^2 - 4) + sqrt(x^2 - 1)))</c>
+        /// is the derivative of its denominator over it, and the substitution that reads
+        /// <c>u = D</c> was declined for the quotient by <c>D'</c> it could not simplify, a
+        /// search past the budget. The answer is checked against the integrand before it is
+        /// returned, so a quotient that is not constant -- the second row, one root's
+        /// derivative missing -- goes the way it went.
+        /// </summary>
+        [Theory]
+        [InlineData("x*(-sqrt(-4+x^2)+x^2*sqrt(-4+x^2)-4*sqrt(-1+x^2)+x^2*sqrt(-1+x^2))/((4-5*x^2+x^4)*(1+sqrt(-4+x^2)+sqrt(-1+x^2)))", "ln(1 + sqrt(-4 + x ^ 2) + sqrt(-1 + x ^ 2)) + C")]
+        [InlineData("3*(1/(2*sqrt(x)) + 1)/(sqrt(x) + x)", "3 * ln(sqrt(x) + x) + C")]
+        public void ADerivativeOfARadicalSumOverIt(string integrand, string expected)
+        {
+            Assert.Equal(expected.ToEntity(), integrand.ToEntity().Integrate("x"));
+            DifferentiatesBack(integrand, new[] { 2.3, 3.1, 4.7, 6.2 });
+        }
+
+        [Fact]
+        public void AQuotientThatIsNotConstantIsNotALogarithm()
+        {
+            var integral = "x/(sqrt(x) + x + 1)".ToEntity().Integrate("x");
+            Assert.DoesNotContain("ln(sqrt(x) + x + 1)", integral.Stringize());
+            DifferentiatesBack("x/(sqrt(x) + x + 1)", new[] { 0.3, 1.1, 2.3, 4.7 });
+        }
     }
 }

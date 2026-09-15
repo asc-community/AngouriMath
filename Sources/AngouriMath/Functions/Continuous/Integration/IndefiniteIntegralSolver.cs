@@ -171,6 +171,81 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An integrand that is a constant multiple of <c>D'/D</c> for a sum <c>D</c> below the
+        /// bar holding a root, decided at sampled points and answered as that multiple of
+        /// <c>ln(D)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Hearn's <c>x((x^2 - 1) sqrt(x^2 - 4) + (x^2 - 4) sqrt(x^2 - 1))/((x^2 - 1)(x^2 - 4)(1 + sqrt(x^2 - 4) + sqrt(x^2 - 1)))</c>
+        /// is <c>(x/sqrt(x^2 - 4) + x/sqrt(x^2 - 1))/(1 + sqrt(x^2 - 4) + sqrt(x^2 - 1))</c>, the
+        /// derivative of its denominator over it, and the substitution that reads
+        /// <c>u = D</c> was declined for the quotient by <c>D'</c> it could not simplify --
+        /// <c>(x^2 - 1) sqrt(x^2 - 4)/((x^2 - 1)(x^2 - 4))</c> is <c>1/sqrt(x^2 - 4)</c> only
+        /// with the root's square read as the radicand -- and the search around it ran past
+        /// the budget. The quotient <c>f D/D'</c> is evaluated at points instead: where it is
+        /// the same rational number at each, <c>f</c> is that number times <c>D'/D</c>, and the
+        /// answer is checked against the integrand at sampled points before it is returned,
+        /// as the ansätze check theirs.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveALogarithmicDerivativeOfARadicalSum(Entity expr, Entity.Variable x)
+        {
+            var (_, below) = Functions.SingleQuotient.Of(expr);
+            if (below == Number.Integer.One)
+                return null;
+            foreach (var factor in Mulf.LinearChildren(below))
+            {
+                if (factor is not (Sumf or Minusf) || !factor.ContainsNode(x) || !HasARadicalOf(factor, x))
+                    continue;
+                var derivative = factor.Differentiate(x).InnerSimplified;
+                if (derivative is Providedf(var bare, _))
+                    derivative = bare;
+                var quotient = expr * factor / derivative;
+                Number? constant = null;
+                var agreed = 0;
+                foreach (var at in new[] { "2.29", "3.43", "5.71", "0.37", "-2.61", "-4.13" })
+                {
+                    Entity value;
+                    try
+                    {
+                        value = quotient.Substitute(x, Number.Real.Create(EDecimal.FromString(at))).EvalNumerical();
+                    }
+                    catch (System.Exception)
+                    {
+                        continue;
+                    }
+                    if (value is not Number.Real real || !real.EDecimal.IsFinite)
+                        continue;
+                    if (constant is null)
+                    {
+                        // The number as a rational, where it is one within the evaluation's
+                        // precision; otherwise this is not the shape.
+                        if (Number.Real.Create(real.EDecimal) is not Number.Rational rational)
+                            break;
+                        constant = rational;
+                        agreed = 1;
+                        continue;
+                    }
+                    if ((real - constant).Evaled is not Number.Real realDifference || constant.Evaled is not Number.Real realConstant
+                        || realDifference.EDecimal.Abs().CompareTo(EDecimal.FromString("1e-20").Multiply(EDecimal.Max(EDecimal.One, realConstant.EDecimal.Abs()))) > 0)
+                    {
+                        agreed = 0;
+                        break;
+                    }
+                    agreed++;
+                }
+                if (constant is null || agreed < 3 || TreeAnalyzer.IsZero(constant))
+                    continue;
+                Entity answer = constant == Number.Integer.One ? MathS.Ln(factor) : constant * MathS.Ln(factor);
+                if (Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
+                    return answer;
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Whether a sum among the factors above the bar is a constant multiple of the
         /// derivative of a factor below it that is not a polynomial in <paramref name="x"/>.
         /// </summary>
