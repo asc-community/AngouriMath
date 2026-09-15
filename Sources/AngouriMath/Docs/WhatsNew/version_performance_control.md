@@ -256,6 +256,32 @@ cent — its measured run-to-run spread on mean time is up to 51.8%. A move of 8
 outside that band by a wide margin and agrees in sign and rough size with the allocation column
 beside it. The small rows from the same run are still not worth reading, and are not quoted.
 
+## The 2073rd: the rational pre-check confirms a maybe, and reads two thousand digits
+
+`EvalTrig` is `sin 1 + cos 1 + tan 1`, and after the 2072nd fifty of its eighty-three
+microseconds were `Real.Create` deciding that sin 1 is not a small rational -- while cos 1 was
+decided in a fifth of one. The cheap decision of the 2052nd runs the continued fraction in a
+double first and says "may be" where a remainder is within the double's own error of the next
+integer; for sin 1 that is the twelfth level, where the error has grown to a hundredth, and
+the answer went straight to the exact hundred-digit search instead of to the double-double,
+whose error there is ten to the minus twelve and which refuses in under a microsecond. A
+double's yes is confirmed in the double-double now, always. And the reading of a value into
+the double-double scaled by two halves of its binary shift, of which half of a thousand-digit
+value's is `2^1608`, an infinity: every `Real.Create` past about six hundred and fifty digits
+went to the exact search, 5.7 ms each at two thousand. The scaling is in as many pieces as
+keep each factor in range, up to four thousand digits. Nothing a value downcasts to changes;
+the twelve-thousand-rational agreement test and a two-thousand-digit one say so.
+
+| benchmark | 2072nd | 2073rd | allocation | time |
+|---|--:|--:|--:|--:|
+| `EvalTrig` | 164,728 | **82,104** | **−50.2%** | 83 → **37 µs** |
+| `EvalTrigPrecise` | 718,778 | **525,289** | **−26.9%** | 1.05 → **0.62 ms** |
+| every other entry | | | 0.0% | |
+
+Bytes allocated per call, same machine, both columns by the gate in one session; the gate's
+baseline was taken from this run. Alone: `Real.Create` of sin 1's hundred digits 49 → 0.5 µs,
+of two thousand digits 5,660 → 0.3 µs; `sin 1` now costs what `cos 1` does.
+
 ## The 2072nd: the fixed-point series on the BCL's integers
 
 The 2054th and 2055th put the logarithm, the exponential, the sine, the cosine and the
