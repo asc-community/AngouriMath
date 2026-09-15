@@ -3677,6 +3677,22 @@ namespace AngouriMath.Functions.Algebra
                     ? 1 / MathS.Tan(cotangentArgument)
                     : node);
 
+            // An odd root of a product of powers of the sine and the cosine is the product of
+            // the roots, exactly on the reals: the odd root is the real one, an odd function,
+            // so `(ab)^(1/3)` is `a^(1/3) b^(1/3)` whatever the signs, and `(s^k)^(p/q)` is
+            // `s^(kp/q)` under the same convention. Timofeev's
+            // `((sin/cos^7)^(1/3) - 3 tan)/(cos^5 sin)^(2/3)` is
+            // `(sin^(1/3) cos^(-7/3) - 3 tan)/(cos^(10/3) sin^(2/3))` so, a polynomial in the
+            // cube root of the tangent under the substitution, and was a search past its
+            // budget as written. Only here, where the factors are read next: split in the
+            // open chain the same roots sent `(sin cos^2)^(1/3)` into a thirty-second search.
+            expr = expr.Replace(node =>
+                node is Powf(var product, Number.Rational fraction) && fraction is not Number.Integer
+                && !fraction.ERational.Denominator.IsEven && product is Mulf or Divf
+                && WithTheOddRootOnEachFactor(product, fraction, x) is { } apart
+                    ? apart
+                    : node);
+
             var tangent = MathS.Tan(x);
             // Or a sine or a cosine under a root, for the writing by the sign below; a rational
             // function of those is the half-angle substitution's.
@@ -3821,6 +3837,56 @@ namespace AngouriMath.Functions.Algebra
                 ? result.Substitute(uSub, tangent)
                 : null;
         }
+        /// <summary>
+        /// <c>(prod f_i^(k_i))^(p/q)</c>, <c>q</c> odd, as <c>prod f_i^(k_i p/q)</c> where every
+        /// <c>f_i</c> is a trigonometric function of <paramref name="x"/> itself or free of it,
+        /// and the powers of the sine and the cosine that come out sum to an even integer --
+        /// then the product is <c>tan^a (1 + tan^2)^k</c> with <c>k</c> whole, a function of the
+        /// tangent. Null otherwise: <c>(2 sin/cos^3)^(1/3)</c> is <c>(2 u (1 + u^2))^(1/3)</c> read
+        /// whole and is answered so, where <c>2^(1/3) sin^(1/3)/cos</c> is not a function of
+        /// the tangent and goes the long way round.
+        /// </summary>
+        private static Entity? WithTheOddRootOnEachFactor(Entity product, Number.Rational fraction, Entity.Variable x)
+        {
+            Entity? rebuilt = null;
+            var total = ERational.Zero;
+            foreach (var factor in Mulf.LinearChildren(product))
+            {
+                var @base = factor;
+                var exponent = EInteger.One;
+                while (@base is Powf(var inner, Number.Integer whole))
+                {
+                    exponent = exponent.Multiply(whole.EInteger);
+                    @base = inner;
+                }
+                var trigonometric = @base switch
+                {
+                    Sinf(var a) => a,
+                    Cosf(var a) => a,
+                    Tanf(var a) => a,
+                    Secantf(var a) => a,
+                    Cosecantf(var a) => a,
+                    Cotanf(var a) => a,
+                    _ => null,
+                };
+                if (trigonometric is not null ? trigonometric != x : @base.ContainsNode(x))
+                    return null;
+                var each = fraction.ERational.Multiply(ERational.FromEInteger(exponent));
+                // The sine and the cosine count one, their reciprocals minus one, and the
+                // tangent, a sine over a cosine, nothing.
+                total = total.Add(each.Multiply(@base switch
+                {
+                    Sinf or Cosf => ERational.One,
+                    Secantf or Cosecantf => ERational.FromInt32(-1),
+                    _ => ERational.Zero,
+                }));
+                var power = MathS.Pow(@base, Number.Rational.Create(each));
+                rebuilt = rebuilt is null ? power : rebuilt * power;
+            }
+            var reduced = total.ToLowestTerms();
+            return reduced.Denominator.Equals(EInteger.One) && reduced.Numerator.IsEven ? rebuilt : null;
+        }
+
         /// <summary>
         /// An integrand holding a fractional power of something <b>linear</b> in the variable,
         /// turned into a rational function by <c>u^q = a*x + b</c>.
