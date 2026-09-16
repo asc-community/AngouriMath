@@ -157,6 +157,28 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// An even polynomial over a symbolic biquadratic, by the two roots in <c>x^2</c>
+        /// written with the root of the discriminant and <c>1/(x^2 - r)</c> as
+        /// <c>atan(x/sqrt(-r))/sqrt(-r)</c> for any <c>r</c>. Checked with the discriminant
+        /// negative (conjugate roots, the two terms summing to a real function), positive with
+        /// both roots negative (real arctangents) and positive with both roots positive (the
+        /// hyperbolic case through an imaginary argument), and with a higher even degree
+        /// divided down.
+        /// </summary>
+        [Theory]
+        [InlineData("x ^ 2 / (a + b * x ^ 2 + c * x ^ 4)", "a = 1.7, b = 2.3, c = 2.9", new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("1 / (a + b * x ^ 2 + c * x ^ 4)", "a = 1, b = 5, c = 1", new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("(d + e * x ^ 2) / (a + b * x ^ 2 + c * x ^ 4)", "a = 1, b = -5, c = 1, d = 0.4, e = 1.1", new[] { 0.3, 1.7 })]
+        [InlineData("x ^ 6 / (a + b * x ^ 2 + c * x ^ 4)", "a = 1.7, b = 2.3, c = 2.9", new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("1 / (a + b + 2 * a * x ^ 2 + a * x ^ 4)", "a = 1.7, b = 2.3", new[] { 0.3, 1.7, -0.6 })]
+        public void AnEvenPolynomialOverASymbolicBiquadratic(string integrand, string coefficients, double[] points)
+        {
+            AssertIsAntiderivative(integrand, coefficients, points);
+            var length = integrand.ToEntity().Integrate("x").Stringize().Length;
+            Assert.True(length < 1500, $"{length} characters of answer for {integrand}");
+        }
+
+        /// <summary>
         /// The degenerate arm is not merely non-NaN, it is the right answer: where the
         /// leading coefficient really is zero and there is no x term, the integrand is the
         /// constant k/c and its antiderivative is kx/c. The old code claimed (k/b) ln|bx + c|

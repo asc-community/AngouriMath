@@ -1138,6 +1138,98 @@ namespace AngouriMath.Functions.Algebra
         };
 
         /// <summary>
+        /// A polynomial in <c>x^2</c> over <c>a + b x^2 + c x^4</c> with a symbol in it, by the
+        /// two roots in <c>x^2</c>: with <c>q = sqrt(b^2 - 4 a c)</c> and
+        /// <c>r = (-b ± q)/(2c)</c>, <c>(d + e x^2)/(a + b x^2 + c x^4)</c> is
+        /// <c>(d + e r_1)/(q (x^2 - r_1)) - (d + e r_2)/(q (x^2 - r_2))</c>, and
+        /// <c>1/(x^2 - r)</c> is <c>atan(x/sqrt(-r))/sqrt(-r)</c> for any complex <c>r</c>. A
+        /// higher even degree is divided down first, and an odd numerator is left to the
+        /// substitution <c>u = x^2</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The partial fractions read written factors, and <c>a + b x^2 + c x^4</c> is written
+        /// as one; over the rationals it is factored, over symbols it was declined, and Rubi's
+        /// quartic files -- <c>(d x)^m (a + b x^2 + c x^4)^p</c> and the next four -- lost the
+        /// even numerators to it: <c>x^2/(a + b x^2 + c x^4)</c>, <c>(d + e x^2)/(...)</c>.
+        /// </para>
+        /// <para>
+        /// Exact wherever the two roots differ, which is the generic case; a discriminant
+        /// that is zero as written declines, the square of a quadratic being another shape.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAnEvenPolynomialOverASymbolicBiquadratic(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(denominator, x, out var below) || below.Count == 0
+                || !below.ContainsKey(EInteger.FromInt32(4)) || below.Keys.Any(power => !(power.IsZero || power.Equals(EInteger.FromInt32(2)) || power.Equals(EInteger.FromInt32(4))))
+                || below.Values.Any(coefficient => coefficient.ContainsNode(x))
+                || !denominator.Vars.Any(v => v != x))
+                return null;
+            var a = below.TryGetValue(EInteger.Zero, out var a0) ? a0 : Number.Integer.Zero;
+            var b = below.TryGetValue(EInteger.FromInt32(2), out var b0) ? b0 : Number.Integer.Zero;
+            var c = below[EInteger.FromInt32(4)];
+            if (a == Number.Integer.Zero || a.Evaled is Number.Complex { IsZero: true })
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var above) || above.Count == 0
+                || above.Keys.Any(power => power.Sign < 0 || !power.IsEven) || above.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                return null;
+
+            var discriminant = Functions.PartialFractions.Bare((b * b - 4 * a * c).Simplify());
+            if (discriminant == Number.Integer.Zero || discriminant.Evaled is Number.Complex { IsZero: true })
+                return null;
+
+            // The numerator in w = x^2, divided down by c w^2 + b w + a to a remainder d + e w.
+            var degree = above.Keys.Max()!.ToInt32Checked() / 2;
+            var inW = new Entity[degree + 1];
+            for (var k = 0; k <= degree; k++)
+                inW[k] = above.TryGetValue(EInteger.FromInt32(2 * k), out var at) ? at : Number.Integer.Zero;
+            Entity polynomialPart = Number.Integer.Zero;
+            for (var k = degree; k >= 2; k--)
+            {
+                var lead = Functions.PartialFractions.InLowestTermsOverTheSymbols(inW[k] / c);
+                if (lead == Number.Integer.Zero)
+                    continue;
+                polynomialPart += lead * MathS.Pow(x, 2 * (k - 2));
+                inW[k - 1] = Functions.PartialFractions.InLowestTermsOverTheSymbols(inW[k - 1] - lead * b);
+                inW[k - 2] = Functions.PartialFractions.InLowestTermsOverTheSymbols(inW[k - 2] - lead * a);
+            }
+            var d = inW[0];
+            var e = degree >= 1 ? inW[1] : Number.Integer.Zero;
+
+            var q = MathS.Sqrt(discriminant);
+            var firstRoot = (-b + q) / (2 * c);
+            var secondRoot = (-b - q) / (2 * c);
+            Entity total = Number.Integer.Zero;
+            if (polynomialPart != Number.Integer.Zero)
+            {
+                if (Integration.ComputeIndefiniteIntegral(polynomialPart, x, integrateByParts) is not { } whole)
+                    return null;
+                total += whole;
+            }
+            // `1/(x^2 - r)` is `atan(x/s)/s` with `s = sqrt(-r)` for every complex `r` but zero:
+            // `d/dx atan(x/s)/s` is `1/(s^2 + x^2)` whatever `s` is, and for a positive `r` the
+            // arctangent of an imaginary argument is the hyperbolic one, `-atanh(x/sqrt(r))/sqrt(r)`,
+            // with a constant imaginary part on each side of the poles that a derivative does not
+            // see. The roots are conjugate where the discriminant is negative -- the ordinary
+            // case with real coefficients -- and the two terms then sum to a real function; a
+            // piecewise on the sign of a root, as the quadratic rule would write, has no
+            // value there at all.
+            foreach (var (root, sign) in new[] { (firstRoot, 1), (secondRoot, -1) })
+            {
+                var coefficient = ((d + e * root) / q).InnerSimplified;
+                if (coefficient == Number.Integer.Zero)
+                    continue;
+                var s = MathS.Sqrt(-root);
+                var part = MathS.Arctan(x / s) / s;
+                total += sign == 1 ? coefficient * part : -coefficient * part;
+            }
+            return total;
+        }
+
+        /// <summary>
         /// <c>x^p</c> for a <paramref name="power"/> that does not hold the variable: the power
         /// rule, or the logarithm where the power rule would divide by zero.
         /// </summary>
