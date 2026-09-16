@@ -595,7 +595,22 @@ whatever else it delivered:
 
 So the release checklist is: the suite and the harnesses in `work/` green, a `BREAKING-CHANGES.md`
 entry for every changed answer measured on real builds, **a performance column measured against the
-previous one on the same machine**, and a version number that does not contradict #746.
+previous one on the same machine**, a version number that does not contradict #746 — and **the
+website brought to the release**, which is a separate repository and so is not carried by anything
+here. [am.angouri.org](https://am.angouri.org) is generated from
+[asc-community/AngouriMathSite](https://github.com/asc-community/AngouriMathSite): its *What's new*
+page gets a block cut from the release's notes with the `BREAKING-CHANGES.md` link pinned to the tag,
+and its quickstart names the release as current. Four releases went out without that between
+2026-08-12 and 2026-09-09, and the page said 2.1.0 while the package said 2.5.0 — the maintainer's
+words on [#1019](https://github.com/asc-community/AngouriMath/issues/1019) are *"each release also
+needs to update the website"*, and this line is where that is kept.
+
+**Every major version gets an architectural review**, and the docket for the next one is
+[#1019](https://github.com/asc-community/AngouriMath/issues/1019): the API refactored to the best
+abstraction the work since the last major has moved it to, and duplicated functionality — the same
+computation written twice, or two types standing for one concept — found and synthesised, since the
+major is where the surviving one may take the other's name. What the docket says about who does the
+v3 pass and how is a maintainer decision recorded there, not here.
 
 ## Where the work is
 
