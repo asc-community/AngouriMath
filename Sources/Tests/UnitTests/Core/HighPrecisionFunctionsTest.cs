@@ -183,5 +183,54 @@ namespace AngouriMath.Tests.Core
             Assert.Equal(0, refused);
             Assert.Equal(36000, checkedCount);
         }
+
+        /// <summary>
+        /// A value the double cannot refuse -- sin 1, whose twelfth remainder is within the
+        /// double's error of the next integer -- is refused by the double-double, and never
+        /// reaches the exact search. https://github.com/asc-community/AngouriMath/issues/1338
+        /// </summary>
+        [Fact]
+        public void TheDoubleDoubleRefusesWhatTheDoubleCannot()
+        {
+            var sin1 = EDecimal.FromString("0.8414709848078965066525023216302989996225630607983710656727517099919104043912396689486397435430526958");
+            Assert.False(Rational.MayBeASmallRational(sin1, MathS.Settings.FloatToRationalIterCount));
+            Assert.Null(Rational.FindRational(sin1));
+        }
+
+        /// <summary>
+        /// The cheap decision reads a value of two thousand digits too: two halves of its
+        /// binary shift were each past a double's range, and every such value went to the
+        /// exact search. The decision and the search still agree there, on rationals and on
+        /// random digits. https://github.com/asc-community/AngouriMath/issues/1338
+        /// </summary>
+        [Fact]
+        public void TheCheapDecisionReadsTwoThousandDigits()
+        {
+            var context = new EContext(2000, ERounding.HalfUp, -5000, 5000, false);
+            using var _ = MathS.Settings.DecimalPrecisionContext.Set(context);
+            var iterCount = MathS.Settings.FloatToRationalIterCount.Value;
+            var random = new System.Random(2000);
+            var readable = 0;
+            for (var i = 0; i < 200; i++)
+            {
+                var denominator = 1 + random.Next(100_000_000);
+                var numerator = random.Next(100_000_000);
+                var value = EDecimal.FromInt32(numerator).Divide(EDecimal.FromInt32(denominator), context);
+                var exact = Rational.FindRationalExactly(value, iterCount);
+                if (exact is not null)
+                    Assert.True(Rational.MayBeASmallRational(value, iterCount));
+                Assert.Equal(exact, Rational.FindRational(value));
+                var digits = new System.Text.StringBuilder("0.");
+                for (var d = 0; d < 2000; d++)
+                    digits.Append((char)('0' + random.Next(10)));
+                var noise = EDecimal.FromString(digits.ToString());
+                if (!Rational.MayBeASmallRational(noise, iterCount))
+                    readable++;
+                Assert.Null(Rational.FindRational(noise));
+            }
+            // Random digits are refused by the cheap decision almost always; a reading
+            // that could not cover the width would refuse none.
+            Assert.True(readable > 150, $"{readable} of 200 refused cheaply");
+        }
     }
 }

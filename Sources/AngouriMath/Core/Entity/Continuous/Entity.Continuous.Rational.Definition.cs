@@ -218,11 +218,9 @@ namespace AngouriMath
                 internal static bool MayBeASmallRational(EDecimal num, int iterCount, double integerTolerance = 0)
                 {
                     var bound = EDecimal.FromEInteger(MathS.Settings.MaxAbsNumeratorOrDenominatorValue.Value).ToDouble();
-                    // In a double first, which is a third of a microsecond and settles most
-                    // values; where the double's error has grown past deciding -- a value
-                    // near a small rational, whose partial quotients are large early -- the
-                    // same search in the double-double the value was read as; and only then
-                    // the exact one.
+                    // In a double first, which is a third of a microsecond and refuses most
+                    // values; what it does not refuse, the same search in the double-double
+                    // the value was read as; and only then the exact one.
                     if (!TryReadAsDoubleDouble(num, out var high, out var low))
                         return true;
                     if (high < 0)
@@ -232,23 +230,28 @@ namespace AngouriMath
                     var nearestInteger = Math.Round(high);
                     if (Math.Abs(high - nearestInteger) <= integerTolerance)
                         return true;
-                    var byDouble = ContinuedFractionMayTerminate(high, iterCount, bound, out var undecided);
-                    if (!undecided)
-                        return byDouble;
+                    if (!ContinuedFractionMayTerminate(high, iterCount, bound))
+                        return false;
+                    // A yes from the double is only a maybe: its tolerance is the exact one
+                    // widened by its error, and by the twelfth level of a value like sin 1
+                    // that error is a hundredth, so the remainder there was within it of the
+                    // next integer about once in a hundred values -- each of which then paid
+                    // the fifty microseconds of the exact search to be refused. The
+                    // double-double's error at that level is ten to the minus twelve, and it
+                    // decides. https://github.com/asc-community/AngouriMath/issues/1338
                     return ContinuedFractionMayTerminate(high, low, iterCount, bound);
                 }
 
                 /// <summary>
                 /// The continued fraction of <paramref name="value"/> in a double: whether it may
                 /// reach a level the exact search accepts within <paramref name="iterCount"/>
-                /// levels and with every convergent denominator within <paramref name="bound"/>.
-                /// <paramref name="undecided"/> is set where the double's error -- its
-                /// representation error times the square of a convergent's denominator -- has
-                /// grown past a tenth before the question was settled.
+                /// levels and with every convergent denominator within <paramref name="bound"/>;
+                /// a yes as well where the double's error -- its representation error times the
+                /// square of a convergent's denominator -- has grown past a tenth before the
+                /// question was settled.
                 /// </summary>
-                private static bool ContinuedFractionMayTerminate(double value, int iterCount, double bound, out bool undecided)
+                private static bool ContinuedFractionMayTerminate(double value, int iterCount, double bound)
                 {
-                    undecided = false;
                     if (value > 1e300)
                         return false;
                     // The convergents' denominators, k_n = a_n k_(n-1) + k_(n-2) from k_(-2) = 1 and
@@ -273,10 +276,7 @@ namespace AngouriMath
                         if (nextDenominator > bound)
                             return false;
                         if (error > 0.1)
-                        {
-                            undecided = true;
                             return true;
-                        }
                         // Within the error of a remainder the exact search accepts, or of the
                         // next integer, where the true integral part is one more and the true
                         // remainder small.
@@ -296,8 +296,9 @@ namespace AngouriMath
                 private static bool ContinuedFractionMayTerminate(double high, double low, int iterCount, double bound)
                 {
                     // The reading's relative error -- the mantissa past its hundred and sixth
-                    // bit, two powers of ten from the table, each a few hundred roundings of
-                    // the hundred and fourth bit, and the products' own -- and a division's.
+                    // bit, the powers of ten from the table, together a rounding of the
+                    // hundred and fourth bit for each of the digits of the exponent (see
+                    // ScalingSteps), and the products' own -- and a division's.
                     const double epsilonRead = 1e-28;
                     const double epsilonDivide = 1e-31;
                     double previousDenominator = 1, denominator = 0;
@@ -394,6 +395,14 @@ namespace AngouriMath
                 /// table -- and the negative ones their reciprocals.
                 /// </summary>
                 private const int PowersOfTenRange = 512;
+                /// <summary>
+                /// How many times the table's range the reading covers: a power of ten in the
+                /// table carries a rounding of the hundred and sixth bit for each of the
+                /// multiplications that built it, so the reading's error grows with the
+                /// exponent, and the ten to the minus twenty-eight the search assumes has room
+                /// for four thousand digits.
+                /// </summary>
+                private const int ScalingSteps = 8;
                 [ConstantField] private static readonly (double[] High, double[] Low) powersOfTen = BuildPowersOfTen();
                 private static (double[] High, double[] Low) BuildPowersOfTen()
                 {
@@ -425,7 +434,7 @@ namespace AngouriMath
                     if (!exponent.CanFitInInt32())
                         return false;
                     var decimalExponent = exponent.ToInt32Unchecked();
-                    if (decimalExponent > 2 * PowersOfTenRange || decimalExponent < -2 * PowersOfTenRange)
+                    if (decimalExponent > ScalingSteps * PowersOfTenRange || decimalExponent < -ScalingSteps * PowersOfTenRange)
                         return false;
                     var mantissa = num.UnsignedMantissa;
                     if (mantissa.IsZero)
@@ -443,20 +452,31 @@ namespace AngouriMath
                     // upper * 2^53 is exact in a double, and the sum with the lower fifty-three
                     // bits is exact in the pair.
                     (high, low) = TwoSum((double)upper.ToInt64Checked() * 9007199254740992.0, (double)lower.ToInt64Checked());
-                    // The binary shift and the decimal exponent applied in two halves each, in
-                    // turn, since either alone can be far outside a double's range while the
-                    // value is not -- a five-hundred-digit mantissa is shifted by sixteen
-                    // hundred bits. A power of two with a whole exponent is exact, so scaling
-                    // by it is; a power of ten comes from the table.
-                    var halfExponent = decimalExponent / 2;
-                    var halfShift = shift / 2;
-                    (high, low) = Multiply(high, low, powersOfTen.High[PowersOfTenRange + halfExponent], powersOfTen.Low[PowersOfTenRange + halfExponent]);
-                    var scale = Math.Pow(2, halfShift);
-                    (high, low) = (high * scale, low * scale);
-                    var restExponent = decimalExponent - halfExponent;
-                    (high, low) = Multiply(high, low, powersOfTen.High[PowersOfTenRange + restExponent], powersOfTen.Low[PowersOfTenRange + restExponent]);
-                    scale = Math.Pow(2, shift - halfShift);
-                    (high, low) = (high * scale, low * scale);
+                    // The binary shift and the decimal exponent applied in pieces, in turn,
+                    // since either alone can be far outside a double's range while the value is
+                    // not -- a five-hundred-digit mantissa is shifted by sixteen hundred bits.
+                    // A power of two with a whole exponent is exact, so scaling by it is; a
+                    // power of ten comes from the table. Two pieces reach five hundred digits;
+                    // past that, as many as keep each power of ten within the table and each
+                    // power of two within a double -- two halves of a thousand-digit value's
+                    // shift were 2^1608 each, an infinity, and every value at a thousand
+                    // digits went to the exact search.
+                    // https://github.com/asc-community/AngouriMath/issues/1338
+                    var pieces = Math.Max(2, Math.Max(
+                        (Math.Abs(decimalExponent) + PowersOfTenRange - 1) / PowersOfTenRange,
+                        (shift + 1000 - 1) / 1000));
+                    var exponentLeft = decimalExponent;
+                    var shiftLeft = shift;
+                    for (var piece = pieces; piece > 0; piece--)
+                    {
+                        var exponentPiece = exponentLeft / piece;
+                        var shiftPiece = shiftLeft / piece;
+                        (high, low) = Multiply(high, low, powersOfTen.High[PowersOfTenRange + exponentPiece], powersOfTen.Low[PowersOfTenRange + exponentPiece]);
+                        var scale = Math.Pow(2, shiftPiece);
+                        (high, low) = (high * scale, low * scale);
+                        exponentLeft -= exponentPiece;
+                        shiftLeft -= shiftPiece;
+                    }
                     if (num.IsNegative)
                         (high, low) = (-high, -low);
                     return !double.IsInfinity(high) && !double.IsNaN(high);
