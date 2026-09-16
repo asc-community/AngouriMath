@@ -9198,9 +9198,8 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// Whether <paramref name="denominator"/> is written as a product of two or more
-        /// distinct factors in <paramref name="x"/>, at least one of them linear and to a
-        /// whole power, the rest linear or quadratic to the first power, with a symbol in a
-        /// coefficient somewhere.
+        /// distinct factors in <paramref name="x"/>, at least one of them linear, each linear
+        /// or quadratic and to a whole power, with a symbol in a coefficient somewhere.
         /// </summary>
         /// <remarks>
         /// A quadratic beside the linears is allowed since the decomposition takes the linear
@@ -9225,7 +9224,7 @@ namespace AngouriMath.Functions.Algebra
                     return false;
                 if (read.Keys.Max()!.Equals(EInteger.One))
                     linears++;
-                else if (read.Keys.Max()!.Equals(EInteger.FromInt32(2)) && @base == factor)
+                else if (read.Keys.Max()!.Equals(EInteger.FromInt32(2)))
                     quadratics++;
                 else
                     return false;
