@@ -294,6 +294,15 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         }
 
 
+        /// <summary>Whether a monomial's power, integer, rational or decimal, is one.</summary>
+        private static bool IsOne<T>(T power) => power switch
+        {
+            EInteger whole => whole.Equals(EInteger.One),
+            ERational rational => rational.Equals(ERational.One),
+            EDecimal decimalPower => decimalPower.CompareTo(EDecimal.One) == 0,
+            _ => false,
+        };
+
         internal static (Entity FreeMono, TPrimitive Power)? ParseMonomial<T, TPrimitive>(Variable aVar, Entity expr)
             where TPrimitive : TreeAnalyzer.IPrimitive<T>, new()
         {
@@ -315,16 +324,17 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         return null;
                     if (mp == aVar)
                         power.Add(value);
-                    // (x^q)^v is x^(q v) for a whole v, and for a fractional v only where x is
-                    // not negative: (x^2)^(3/2) is |x|^3, and read as x^3 it let the long
+                    // (x^q)^v is x^(q v) for a whole v, and for a fractional v only where x^q
+                    // is not negative: (x^2)^(3/2) is |x|^3, and read as x^3 it let the long
                     // division make u^2 of (u^2)^(3/2)/u, whereupon (sin(x)^2)^(3/2) under
                     // u = cos(x) was integrated as sin(x)^3, wrong on every other half-turn.
+                    // Any q but one is refused, an odd one too: (u^3)^(3/2)/u is not u^(7/2)
+                    // at u = -1, where the first is i and the second -i, and Simplify does not
+                    // change a value off the real line either (#752).
                     // https://github.com/asc-community/AngouriMath/issues/1387
                     else if (ParseMonomial<T, TPrimitive>(aVar, @base) is var (tmpFree, q))
                     {
-                        var one = new TPrimitive();
-                        one.Add(Integer.One);
-                        if (value is not Integer && !Equals(q.Value, one.Value))
+                        if (value is not Integer && !IsOne(q.Value))
                             return null;
                         freeMono *= MathS.Pow(tmpFree, value);
                         power.AddMp(q.Value, value);

@@ -91,7 +91,9 @@ namespace AngouriMath.Tests.PatternsTest
         /// A third leak of the same identity: the polynomial parser read <c>(u^2)^(3/2)</c> as
         /// <c>u^3</c>, and through the long-division rule <c>(u^2)^(3/2)/u</c> simplified to
         /// <c>u^2</c> and <c>sqrt(u^2)/(-u)</c> to <c>-1</c>, wrong for every negative <c>u</c>.
-        /// Checked at negative and positive values against the expression it came from.
+        /// An odd inner power is not read either: <c>(u^3)^(3/2)</c> is <c>i</c> at <c>u = -1</c>
+        /// and <c>u^(9/2)</c> is <c>-i</c> there. Checked at negative and positive values
+        /// against the expression it came from.
         /// https://github.com/asc-community/AngouriMath/issues/1387
         /// </summary>
         [Theory]
@@ -99,6 +101,8 @@ namespace AngouriMath.Tests.PatternsTest
         [InlineData("sqrt(u^2)/(-u)")]
         [InlineData("(u^2)^(5/2)/u^3")]
         [InlineData("(u^4)^(1/2)*u")]
+        [InlineData("(u^3)^(3/2)/u")]
+        [InlineData("(u^3)^(1/2)/u")]
         public void ARootOfAnEvenPowerKeepsItsValue(string expr)
         {
             var simplified = expr.ToEntity().Simplify();

@@ -135,12 +135,15 @@ namespace AngouriMath.Tests.Calculus
         /// <summary>
         /// A fractional power of an even power is a power of the modulus, not of the
         /// function: <c>(sin^2)^(3/2)</c> is <c>|sin|^3</c>, and read as <c>sin^3</c> it was
-        /// integrated as one, wrong on every other half-turn. Each of these is either
-        /// declined or right at points on both sides of a zero of the function.
+        /// integrated as one, wrong on every other half-turn; and <c>(2 tan^3)^(3/2)</c>, an
+        /// odd inner power, was integrated as <c>2^(3/2) tan^(9/2)</c>, wrong wherever the
+        /// tangent is negative, which the corpus's sample points all missed. Each of these is
+        /// either declined or right at points on both sides of a zero of the function.
         /// https://github.com/asc-community/AngouriMath/issues/1387
         /// </summary>
         [Theory]
         [InlineData("(sin(x)^2)^(3/2)")]
+        [InlineData("(2*tan(x)^3)^(3/2)")]
         [InlineData("x*sqrt(sin(x)^2)")]
         [InlineData("(csc(x)^2)^(3/2)")]
         [InlineData("1/(csc(x)^2)^(7/2)")]
