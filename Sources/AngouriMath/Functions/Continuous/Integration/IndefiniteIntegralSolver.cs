@@ -1138,6 +1138,108 @@ namespace AngouriMath.Functions.Algebra
         };
 
         /// <summary>
+        /// A polynomial numerator over a denominator with a power of a linear in it beside a
+        /// factor that is not a polynomial -- <c>P(x)/((a + b x)^k S(x))</c> -- with the
+        /// polynomial written in powers of the linear at its root: what the power divides goes
+        /// over <c>S</c> alone, and each lower power over its own power of the linear.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>P(x) = p_0 + p_1 (a + b x) + ... + (a + b x)^k Q(x)</c> is a polynomial identity,
+        /// its coefficients the Taylor coefficients of <c>P</c> at <c>-a/b</c> over the powers
+        /// of <c>b</c>, so the integrand is <c>Q/S + sum p_j /((a + b x)^(k-j) S)</c> exactly and
+        /// everywhere. <c>(A + B x + C x^2 + D x^3)/((a + b x) sqrt(c + d x))</c> was answered
+        /// through the substitution <c>u = sqrt(c + d x)</c> term by term, a cubic in
+        /// <c>u^2 - c</c> over a symbolic quadratic in <c>u</c> each time, in a hundred kilobytes
+        /// of piecewise that did not evaluate within the corpus's budget; reduced, it is a
+        /// quadratic over the root, three powers, and one <c>p_0/((a + b x) sqrt(c + d x))</c>.
+        /// </para>
+        /// <para>
+        /// Only beside a factor that is not a polynomial in <c>x</c>: a quotient of polynomials
+        /// is the partial fractions' and they do this and more.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByReducingThePolynomialOverALinearFactor(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var polynomial) || polynomial.Count == 0
+                || polynomial.Keys.Any(power => power.Sign < 0) || polynomial.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                return null;
+            var degree = polynomial.Keys.Max()!;
+            if (!degree.CanFitInInt32() || degree.ToInt32Unchecked() < 1)
+                return null;
+
+            Entity? linear = null;
+            var multiplicity = 0;
+            Entity rest = Number.Integer.One;
+            var somethingElse = false;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    rest *= factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var repeated, Number.Integer { EInteger.Sign: > 0 } times) && times.EInteger.CanFitInInt32()
+                    ? (repeated, times.EInteger.ToInt32Unchecked()) : (factor, 1);
+                if (linear is null && TreeAnalyzer.TryGetPolynomial(@base, x, out var read) && read.Count > 0
+                    && read.Keys.Max()!.Equals(EInteger.One) && read.Values.All(coefficient => !coefficient.ContainsNode(x)))
+                {
+                    linear = @base;
+                    multiplicity = power;
+                    continue;
+                }
+                if (!TreeAnalyzer.TryGetPolynomial(factor, x, out _))
+                    somethingElse = true;
+                rest *= factor;
+            }
+            if (linear is null || !somethingElse)
+                return null;
+
+            if (!TreeAnalyzer.TryGetPolynomial(linear, x, out var line))
+                return null;
+            var beta = line[EInteger.One];
+            var alpha = line.TryGetValue(EInteger.Zero, out var constantTerm) ? constantTerm : Number.Integer.Zero;
+            var root = Functions.PartialFractions.Bare((-alpha / beta).InnerSimplified);
+            var count = degree.ToInt32Unchecked() + 1;
+            if (Functions.PartialFractions.TaylorCoefficientsAtTheRoot(numerator, root, count, x) is not { } coefficients)
+                return null;
+
+            Entity total = Number.Integer.Zero;
+            for (var order = 0; order < multiplicity && order < count; order++)
+            {
+                if (coefficients[order] == Number.Integer.Zero)
+                    continue;
+                var over = multiplicity - order;
+                var coefficient = Functions.PartialFractions.InLowestTermsOverTheSymbols(coefficients[order] / MathS.Pow(beta, order));
+                var piece = coefficient / ((over == 1 ? linear : MathS.Pow(linear, over)) * rest);
+                if (Integration.ComputeIndefiniteIntegral(piece, x, integrateByParts) is not { } integrated)
+                    return null;
+                total += integrated;
+            }
+            Entity quotient = Number.Integer.Zero;
+            var offset = x - root;
+            for (var order = multiplicity; order < count; order++)
+            {
+                if (coefficients[order] == Number.Integer.Zero)
+                    continue;
+                var coefficient = Functions.PartialFractions.InLowestTermsOverTheSymbols(coefficients[order] / MathS.Pow(beta, multiplicity));
+                var shift = order - multiplicity;
+                quotient += shift == 0 ? coefficient : shift == 1 ? coefficient * offset : coefficient * MathS.Pow(offset, shift);
+            }
+            if (quotient != Number.Integer.Zero)
+            {
+                var expanded = Functions.PartialFractions.Bare(quotient.Expand().InnerSimplified);
+                if (Integration.ComputeIndefiniteIntegral(expanded / rest, x, integrateByParts) is not { } integrated)
+                    return null;
+                total += integrated;
+            }
+            return total;
+        }
+
+        /// <summary>
         /// <c>x^p</c> for a <paramref name="power"/> that does not hold the variable: the power
         /// rule, or the logarithm where the power rule would divide by zero.
         /// </summary>

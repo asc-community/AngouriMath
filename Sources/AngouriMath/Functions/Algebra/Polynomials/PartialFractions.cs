@@ -824,7 +824,7 @@ namespace AngouriMath.Functions
         /// <paramref name="polynomial"/> in <paramref name="x"/> at <paramref name="root"/>,
         /// each in lowest terms over the symbols; null where it does not read as one.
         /// </summary>
-        private static Entity[]? TaylorCoefficientsAtTheRoot(Entity polynomial, Entity root, int count, Variable x)
+        internal static Entity[]? TaylorCoefficientsAtTheRoot(Entity polynomial, Entity root, int count, Variable x)
         {
             var offset = Variable.CreateUnique(polynomial + root, "t");
             var shifted = Bare(polynomial.Substitute(x, root + offset).Expand().InnerSimplified);

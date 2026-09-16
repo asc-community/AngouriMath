@@ -193,6 +193,26 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// A polynomial over a power of a linear beside a radical is written in powers of the
+        /// linear at its root, so that what the power divides goes over the radical alone:
+        /// <c>(A + B x + C x^2 + D x^3)/((a + b x) sqrt(c + d x))</c> went through the
+        /// substitution <c>u = sqrt(c + d x)</c> term by term, a cubic in <c>u^2 - c</c> over a
+        /// symbolic quadratic each time, in a hundred kilobytes of piecewise that did not
+        /// evaluate within the corpus's budget; reduced it is a quadratic over the root and
+        /// one <c>p_0/((a + b x) sqrt(c + d x))</c>, under four kilobytes.
+        /// </summary>
+        [Theory]
+        [InlineData("(A + B*x + F*x^2 + G*x^3)/((a + b*x)*sqrt(c + d*x))")]
+        [InlineData("x^3/((a + b*x)*sqrt(c + d*x))")]
+        [InlineData("(A + B*x + F*x^2)/((a + b*x)*(c + d*x)^(1/3))")]
+        public void APolynomialOverALinearBesideARadicalIsReduced(string integrand)
+        {
+            DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1), ("A", 0.5), ("B", 1.3), ("F", 0.7), ("G", 2.1));
+            var length = integrand.ToEntity().Integrate("x").Stringize().Length;
+            Assert.True(length < 4000, $"{length} characters of answer for {integrand}");
+        }
+
+        /// <summary>
         /// Two linear factors with one root are one factor: <c>(a + b x)(a + x b)^2</c> is
         /// how the rules that make a factor monic and gather its powers write it, and as
         /// two distinct factors the decomposition had no answer, its coefficients being
