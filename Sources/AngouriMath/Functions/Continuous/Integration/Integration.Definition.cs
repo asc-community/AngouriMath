@@ -446,6 +446,10 @@ namespace AngouriMath.Functions.Algebra
             // switched it off -- which is a cycle, since by parts calls back into here.
             // `x * ln(x)` went round it until the stack ran out.
             if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x, integrateByParts)) is { }) return answer;
+            // A product of powers of the variable with a power of a constant multiple of it
+            // among them, `(c x)^m x^n`, by the power rule with the written power kept as
+            // it is. Beside the polynomial term, since that is what it is.
+            if ((answer = IndefiniteIntegralSolver.SolveAProductOfPowersOfTheVariable(expr, x)) is { }) return answer;
             // A power of an exponential with a positive base is the exponential of the product,
             // exactly, and only that spelling is one the exponential rules read.
             // A power of x times a power of its logarithm, by the closed reduction: exact,

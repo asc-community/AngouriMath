@@ -1138,6 +1138,81 @@ namespace AngouriMath.Functions.Algebra
         };
 
         /// <summary>
+        /// A product of powers of the variable and of constant multiples of it,
+        /// <c>(c x)^m (d x)^k x^n</c> times a constant, with at least one written multiple:
+        /// <c>(c x)^m (d x)^k x^(n+1)/(m + k + n + 1)</c>, and the logarithm where the sum of
+        /// the exponents is minus one.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The written power is kept as it is, which is what makes this exact: for every
+        /// <c>x</c> but zero, <c>d/dx (c x)^m</c> is <c>m (c x)^m / x</c>, since
+        /// <c>(c x)^(m-1)</c> is <c>(c x)^m / (c x)</c> whatever the branch, and each factor
+        /// contributes its exponent over <c>x</c>. Opening <c>(c x)^m</c> into <c>c^m x^m</c>
+        /// would need <c>c</c> or <c>x</c> positive. Rubi's <c>(e x)^m (a + b x^n)^p (c + d x^n)^q</c>
+        /// with symbolic <c>m</c> and <c>n</c>, expanded, is a sum of these and was declined
+        /// term by term, the power rule reading <c>x^p</c> and nothing else.
+        /// </para>
+        /// <para>
+        /// A power of <c>x</c> alone is left to the power rule, which answers it as before.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAProductOfPowersOfTheVariable(Entity expr, Entity.Variable x)
+        {
+            Entity constant = Number.Integer.One;
+            Entity written = Number.Integer.One;
+            Entity plain = Number.Integer.Zero;
+            Entity exponents = Number.Integer.Zero;
+            var multiples = 0;
+            foreach (var factor in Mulf.LinearChildren(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant *= factor;
+                    continue;
+                }
+                if (factor == x)
+                {
+                    plain += Number.Integer.One;
+                    continue;
+                }
+                if (factor is not Powf(var @base, var power) || power.ContainsNode(x))
+                    return null;
+                // A whole power of a power is the power of the product of the exponents,
+                // exactly: `(x^n)^2` is `x^n x^n`. The expansion of `(a + b x^n)^2` writes it so.
+                while (power is Number.Integer && @base is Powf(var inner, var innerPower) && !innerPower.ContainsNode(x))
+                {
+                    power = (innerPower * power).InnerSimplified;
+                    @base = inner;
+                }
+                if (@base == x)
+                {
+                    plain += power;
+                    continue;
+                }
+                if (@base is not Mulf(var left, var right)
+                    || !(left == x && !right.ContainsNode(x) || right == x && !left.ContainsNode(x)))
+                    return null;
+                written *= MathS.Pow(@base, power);
+                exponents += power;
+                multiples++;
+            }
+            if (multiples == 0)
+                return null;
+            // Where the exponents sum to minus one the integrand is `K/x` for the constant
+            // `K = (c x)^m (d x)^k x^(n+1)`, whose derivative is `K (m + k + n + 1)/x`, zero.
+            // Simplified rather than normalised, since the sum is of symbols that cancel:
+            // `(c x)^m / x^(m+1)` has `m - (m + 1) + 1`, which the normalisation leaves as
+            // written and which would have gone on to divide by itself.
+            var raised = Functions.PartialFractions.Bare((plain + 1).Simplify());
+            var overAll = Functions.PartialFractions.Bare((exponents + raised).Simplify());
+            if (overAll == Number.Integer.Zero || overAll.Evaled is Number.Complex { IsZero: true })
+                return constant * written * MathS.Pow(x, raised) * IntegralPatterns.AntiderivativeLog(x);
+            return constant * written * MathS.Pow(x, raised) / overAll;
+        }
+
+        /// <summary>
         /// <c>x^p</c> for a <paramref name="power"/> that does not hold the variable: the power
         /// rule, or the logarithm where the power rule would divide by zero.
         /// </summary>
