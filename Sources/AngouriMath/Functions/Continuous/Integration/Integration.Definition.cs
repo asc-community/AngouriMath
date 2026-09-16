@@ -515,6 +515,11 @@ namespace AngouriMath.Functions.Algebra
             // A rational function times a whole power of `A + B ln(R)` or `A + B arctan(R)`,
             // R rational: one step of parts, closed, before the substitution search, which
             // spent its budget on Rubi's `(f + g x)(A + B ln(e (a + b x)^2/(c + d x)^2))`.
+            // Powers of the two linears of `ln(K (L1/L2)^n)` beside a power of it, by
+            // t = L1/L2: a rational function of t beside a logarithm of t, one closed step
+            // where the rule below went step by step with the coefficients growing to
+            // b^205, and the search after it went past its budget.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheQuotientOfTheLogarithmsLinears(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesAPowerOfALogarithm(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             // A logarithmic derivative the substitution above could not read for a symbol in

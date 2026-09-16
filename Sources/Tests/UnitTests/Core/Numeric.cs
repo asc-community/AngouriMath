@@ -369,5 +369,43 @@ namespace AngouriMath.Tests.Core
         
         
         
+
+        /// <summary>
+        /// The principal root of a negative real is the root of the modulus times i, exactly:
+        /// through the polar form it carried a real part of 6e-102 from cos(pi/2), and its
+        /// square then lay a hair below the negative axis, where ln reads -i pi for the +i pi
+        /// the number has. And a whole power written as a decimal -- which is how 2 arrives
+        /// with the downcasting off -- is the exact multiplication, not the polar form.
+        /// https://github.com/asc-community/AngouriMath/issues/1378
+        /// </summary>
+        [Theory]
+        [InlineData("(-0.473)^(1/2)", "0", "0.6877499545619759617491613953754659852862020677583601831091659395819946673286686341485665164548954945")]
+        [InlineData("(-4)^(1/2)", "0", "2")]
+        [InlineData("(-4)^(3/2)", "0", "-8")]
+        [InlineData("(-4)^(-3/2)", "0", "0.125")]
+        [InlineData("(-2.5)^2", "6.25", "0")]
+        [InlineData("(0.6877i)^2", "-0.47293129", "0")]
+        [InlineData("((-0.473)^(1/2))^2", "-0.473", "0")]
+        public void ARootOfANegativeRealIsExactlyImaginary(string expression, string realPart, string imaginaryPart)
+        {
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+            var value = (Complex)expression.ToEntity().EvalNumerical();
+            Assert.True(value.RealPart.EDecimal.CompareTo(PeterO.Numbers.EDecimal.FromString(realPart)) == 0, $"real part {value.RealPart} for {realPart}");
+            Assert.True(value.ImaginaryPart.EDecimal.CompareTo(PeterO.Numbers.EDecimal.FromString(imaginaryPart)) == 0, $"imaginary part {value.ImaginaryPart} for {imaginaryPart}");
+        }
+
+        /// <summary>
+        /// The logarithm of that square is the logarithm of the negative real it is, on the
+        /// principal branch: <c>ln(-0.473)</c> has imaginary part <c>+pi</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1378
+        /// </summary>
+        [Fact]
+        public void TheLogarithmOfTheSquareOfARootOfANegativeRealTakesThePrincipalBranch()
+        {
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+            var value = (Complex)"ln(((-0.473)^(1/2))^2)".ToEntity().EvalNumerical();
+            var pi = (Real)MathS.pi.EvalNumerical();
+            Assert.True(value.ImaginaryPart.EDecimal.Subtract(pi.EDecimal).Abs().CompareTo(PeterO.Numbers.EDecimal.Create(1, -90)) < 0, $"imaginary part {value.ImaginaryPart}");
+        }
     }
 }
