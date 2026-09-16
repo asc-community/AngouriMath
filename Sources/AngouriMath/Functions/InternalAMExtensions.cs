@@ -8,6 +8,7 @@
 using System;
 using System.Numerics;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 using AngouriMath.Extensions;
@@ -228,6 +229,45 @@ namespace AngouriMath
                 return result;
             }
             private readonly Dictionary<int, BigInteger> powersOfTen = new();
+            /// <summary>
+            /// <c>ln(1 + j/64)</c> in fixed point, for <paramref name="sixtyFourths"/> = j
+            /// from -19 to 27, which covers <c>[1/sqrt 2, sqrt 2]</c>: the logarithm's
+            /// argument is divided by the nearest of these before its series, so that the
+            /// series' argument is within 1/256. Built outward from <c>ln 1 = 0</c> when first
+            /// asked, one short series a step -- <c>ln((64 + j)/(63 + j)) = 2 artanh(1/(127 + 2j))</c>
+            /// above one and <c>ln((64 - k)/(65 - k)) = -2 artanh(1/(129 - 2k))</c> below it.
+            /// </summary>
+            public BigInteger FixedLnOfOnePlus(int sixtyFourths)
+            {
+                if (sixtyFourths >= 0)
+                {
+                    while (lnAbove.Count <= sixtyFourths)
+                        lnAbove.Add(lnAbove[lnAbove.Count - 1] + TwiceArtanh(FixedOne / (127 + 2 * lnAbove.Count), FixedBits));
+                    return lnAbove[sixtyFourths];
+                }
+                while (lnBelow.Count <= -sixtyFourths)
+                    lnBelow.Add(lnBelow[lnBelow.Count - 1] - TwiceArtanh(FixedOne / (129 - 2 * lnBelow.Count), FixedBits));
+                return lnBelow[-sixtyFourths];
+            }
+            private readonly List<BigInteger> lnAbove = new() { BigInteger.Zero };
+            private readonly List<BigInteger> lnBelow = new() { BigInteger.Zero };
+            /// <summary>
+            /// <c>arctan(j/64)</c> in fixed point for <paramref name="sixtyFourths"/> = j from
+            /// 0 to 64: the arctangent's argument is brought within 1/128 of zero by the
+            /// nearest of these, <c>arctan x = arctan c + arctan((x - c)/(1 + xc))</c>. Built
+            /// up from <c>arctan 0 = 0</c> when first asked, one short series a step:
+            /// <c>arctan(j/64) - arctan((j - 1)/64) = arctan(64/(4096 + j(j - 1)))</c>.
+            /// </summary>
+            public BigInteger FixedArctanOf(int sixtyFourths)
+            {
+                while (arctans.Count <= sixtyFourths)
+                {
+                    var j = arctans.Count;
+                    arctans.Add(arctans[j - 1] + ArctanSeries((FixedOne << 6) / (4096 + j * (j - 1)), FixedBits));
+                }
+                return arctans[sixtyFourths];
+            }
+            private readonly List<BigInteger> arctans = new() { BigInteger.Zero };
             /// <summary>The square root of 2, in fixed point, to fifty digits</summary>
             public BigInteger FixedSqrt2 { get; }
             /// <summary>Pi in fixed point, to the context's digits</summary>
@@ -461,20 +501,19 @@ namespace AngouriMath
             }
 
             var square = MultiplyFixed(fixedX, fixedX, bits);
-            // sin: x - x^3/3! + ...; cos: 1 - x^2/2! + ...
+            // sin: x - x^3/3! + ...; and the cosine is sqrt(1 - sin^2), which at |x| < 1/20
+            // is within 1/800 of one and cancels nothing -- the other way round, the sine
+            // from the cosine, is what lost half the digits (see the remarks).
             var sinTerm = fixedX;
             var sin = fixedX;
-            var cosTerm = one;
-            var cos = one;
             for (var i = 1; i < 100000; i++)
             {
-                cosTerm = -MultiplyFixed(cosTerm, square, bits) / ((2 * i - 1) * (2 * i));
                 sinTerm = -MultiplyFixed(sinTerm, square, bits) / ((2 * i) * (2 * i + 1));
-                if (cosTerm.IsZero && sinTerm.IsZero)
+                if (sinTerm.IsZero)
                     break;
-                cos += cosTerm;
                 sin += sinTerm;
             }
+            var cos = IntegerSquareRoot((one - MultiplyFixed(sin, sin, bits)) << bits);
             for (var i = 0; i < halvings; i++)
             {
                 // sin(2y) = 2 sin(y) cos(y), cos(2y) = 2 cos(y)^2 - 1
@@ -574,18 +613,20 @@ namespace AngouriMath
 
             var working = WithGuardDigits(context, 5);
             var oneMinusSquare = EDecimal.One.Subtract(x, working).Multiply(EDecimal.One.Add(x, working), working);
-            return Arctan(x.Divide(oneMinusSquare.Sqrt(working), working), working).RoundToPrecision(context);
+            return Arctan(x.Divide(oneMinusSquare.SqrtByIntegerRoot(working), working), working).RoundToPrecision(context);
         }
 
         /// <summary>Analogy of <see cref="Math.Atan(double)"/></summary>
         /// <remarks>
-        /// Reduced to <c>[0, 1]</c> by <c>arctan(x) = pi/2 - arctan(1/x)</c>, then halved --
-        /// <c>arctan(x) = 2 arctan(x/(1 + sqrt(1 + x^2)))</c> -- until the argument is below a
-        /// twentieth, where the series <c>x - x^3/3 + x^5/5 - ...</c> is forty terms at a hundred
-        /// digits, each a multiplication and a division by a small integer; the halvings come
-        /// back as a power of two, which costs no digits. It was the arcsine of
-        /// <c>x/sqrt(1 + x^2)</c>, two milliseconds at a hundred digits for an argument of a
-        /// third. https://github.com/asc-community/AngouriMath/issues/1338
+        /// Reduced to <c>[0, 1]</c> by <c>arctan(x) = pi/2 - arctan(1/x)</c>, then to within
+        /// 1/128 of zero by the nearest <c>c = j/64</c> -- <c>arctan x = arctan c +
+        /// arctan((x - c)/(1 + xc))</c>, with <c>arctan c</c> from the constant cache -- where
+        /// the series <c>y - y^3/3 + y^5/5 - ...</c> is thirty terms at a hundred digits, each
+        /// a multiplication and a division by a small integer. It was halved to a twentieth
+        /// by <c>arctan(x) = 2 arctan(x/(1 + sqrt(1 + x^2)))</c>, three square roots and
+        /// forty-seven terms; before that the arcsine of <c>x/sqrt(1 + x^2)</c>, two
+        /// milliseconds at a hundred digits for an argument of a third.
+        /// https://github.com/asc-community/AngouriMath/issues/1338
         /// </remarks>
         public static EDecimal Arctan(this EDecimal x, EContext context)
         {
@@ -599,24 +640,28 @@ namespace AngouriMath
             if (x.GreaterThan(EDecimal.One))
                 return ConstantCache.Lookup(working).HalfPi.Subtract(Arctan(EDecimal.One.Divide(x, working), working), working).RoundToPrecision(context);
 
-            // In fixed point from here: the square root of a fixed-point number is the
-            // integer square root of it shifted up, exactly floored, and the halvings come
-            // back as a shift.
+            // In fixed point from here. The nearest sixty-fourth is exact in fixed point
+            // (FixedBits is at least six), so the table's entry is the arctangent of it.
             var workingConsts = ConstantCache.Lookup(working);
             var bits = workingConsts.FixedBits;
             var one = workingConsts.FixedOne;
             var fixedX = ToFixed(x, bits);
-            var halvings = 0;
-            var twentieth = one / 20;
-            while (fixedX > twentieth)
-            {
-                var root = IntegerSquareRoot((one + MultiplyFixed(fixedX, fixedX, bits)) << bits);
-                fixedX = (fixedX << bits) / (one + root);
-                halvings++;
-            }
-            var square = MultiplyFixed(fixedX, fixedX, bits);
-            var power = fixedX;
-            var sum = fixedX;
+            var j = (int)(((fixedX << 6) + (one >> 1)) >> bits);
+            var c = (one >> 6) * j;
+            var y = ((fixedX - c) << bits) / (one + MultiplyFixed(fixedX, c, bits));
+            var sum = ArctanSeries(y, bits) + workingConsts.FixedArctanOf(j);
+            return FromFixed(sum, workingConsts, working).RoundToPrecision(context);
+        }
+
+        /// <summary>
+        /// <c>y - y^3/3 + y^5/5 - ...</c> in fixed point, which is <c>arctan y</c>; for
+        /// <c>|y|</c> within 1/128, thirty terms at a hundred digits.
+        /// </summary>
+        private static BigInteger ArctanSeries(BigInteger y, int bits)
+        {
+            var square = MultiplyFixed(y, y, bits);
+            var power = y;
+            var sum = y;
             for (var i = 1; i < 100000; i++)
             {
                 power = -MultiplyFixed(power, square, bits);
@@ -625,7 +670,7 @@ namespace AngouriMath
                     break;
                 sum += term;
             }
-            return FromFixed(sum << halvings, workingConsts, working).RoundToPrecision(context);
+            return sum;
         }
         /// <summary>Analogy of <see cref="Math.Acos(double)"/></summary>
         public static EDecimal Acos(this EDecimal x, EContext context)
@@ -750,15 +795,36 @@ namespace AngouriMath
         private static BigInteger HalveFixed(BigInteger a)
             => a.Sign < 0 ? -((-a) >> 1) : a >> 1;
 
-        /// <summary>The integer square root, floored: Newton's iteration from a power of two above it.</summary>
+        /// <summary>
+        /// The integer square root, floored. The root of the top half of the bits, shifted
+        /// back, is right to a quarter of them; one Newton step from a value on either side
+        /// lands at or above the root (<c>(r + n/r)/2 &gt;= sqrt(n)</c>) with the error
+        /// squared, the next one squares it again, and the iteration then descends to the
+        /// floor and stops -- three divisions at the full width and three at a quarter of it,
+        /// where a power of two above the root took one division per bit of the exponent.
+        /// </summary>
         private static BigInteger IntegerSquareRoot(BigInteger n)
         {
             if (n.Sign <= 0)
                 return BigInteger.Zero;
-            // From a power of two at or above the root, so that the iteration descends:
-            // the byte count is a bound on the bit length that netstandard2.0's BigInteger
+            // The byte count is a bound on the bit length that netstandard2.0's BigInteger
             // can give without a logarithm.
-            var root = BigInteger.One << (n.ToByteArray().Length * 4 + 1);
+            var bytes = n.ToByteArray().Length;
+            BigInteger root;
+            if (bytes <= 8)
+            {
+                // Fits a double's exponent; its square root is within one of the floor.
+                root = new BigInteger(Math.Sqrt((double)n));
+                while (root * root > n)
+                    root -= 1;
+                while ((root + 1) * (root + 1) <= n)
+                    root += 1;
+                return root;
+            }
+            // A multiple of sixteen, so that its half is a whole number of bits.
+            var shift = (bytes / 2) * 8;
+            root = IntegerSquareRoot(n >> shift) << (shift / 2);
+            root = (root + n / root) >> 1;
             while (true)
             {
                 var next = (root + n / root) >> 1;
@@ -769,9 +835,47 @@ namespace AngouriMath
         }
 
         /// <summary>
+        /// The square root of a nonnegative finite <paramref name="x"/> to
+        /// <paramref name="context"/>, correctly rounded in its rounding mode, as PeterO's
+        /// <see cref="EDecimal.Sqrt(EContext)"/> is: the mantissa, made a whole number of
+        /// twice the digits and more by an even power of ten, has its integer square root
+        /// taken -- exactly floored, so the true root lies within one unit above it -- and a
+        /// sticky digit appended, 1 where the root was inexact, so that the rounding to the
+        /// context decides every tie as the true root would. PeterO's is Newton's iteration
+        /// in decimal; this is the integer one, faster by the same factor as the series above
+        /// it are. Zero, a negative, an infinity and NaN are PeterO's answers.
+        /// https://github.com/asc-community/AngouriMath/issues/1338
+        /// </summary>
+        public static EDecimal SqrtByIntegerRoot(this EDecimal x, EContext context)
+        {
+            if (!x.IsFinite || x.IsNegative || x.IsZero)
+                return x.Sqrt(context);
+            var exponent = x.Exponent.ToInt32Checked();
+            var mantissa = ToBig(x.Mantissa);
+            var digits = x.Precision().ToInt32Checked();
+            if ((exponent & 1) != 0)
+            {
+                // sqrt(m 10^e) = sqrt(10 m) 10^((e - 1)/2): the power taken out must be even.
+                mantissa *= BigTen;
+                exponent -= 1;
+                digits += 1;
+            }
+            // Padded so that the root has two digits past the context's precision, for the
+            // rounding to read, and then one more for the sticky digit.
+            var precision = context.Precision.ToInt32Checked();
+            var padding = Math.Max(0, (2 * (precision + 2) - digits + 1) / 2);
+            if (padding > 0)
+                mantissa *= BigInteger.Pow(BigTen, 2 * padding);
+            var root = IntegerSquareRoot(mantissa);
+            var sticky = root * root == mantissa ? BigInteger.Zero : BigInteger.One;
+            return EDecimal.Create(ToEInteger(root * BigTen + sticky), exponent / 2 - padding - 1).RoundToPrecision(context);
+        }
+
+        /// <summary>
         /// <c>2 artanh(y)</c> as its series <c>2 (y + y^3/3 + y^5/5 + ...)</c>, which is
-        /// <c>ln((1 + y)/(1 - y))</c>, in fixed point; for <c>|y|</c> below <c>0.18</c>,
-        /// seventy terms at a hundred digits.
+        /// <c>ln((1 + y)/(1 - y))</c>, in fixed point: twenty-five terms at a hundred digits
+        /// for <c>|y|</c> within <c>1/256</c>, which the logarithm's reduction reaches, and a
+        /// hundred and thirty for the third that gives <c>ln 2</c>.
         /// </summary>
         private static BigInteger TwiceArtanh(BigInteger y, int bits)
         {
@@ -795,12 +899,16 @@ namespace AngouriMath
         /// The natural logarithm of <paramref name="x"/> to the precision of
         /// <paramref name="context"/>: the argument written as a mantissa times a power of ten
         /// and of two, the mantissa brought between <c>1/sqrt(2)</c> and <c>sqrt(2)</c>, and
-        /// <c>2 artanh((m - 1)/(m + 1))</c> there, a series in a square below <c>0.03</c>, in
-        /// fixed point. PeterO's <see cref="EDecimal.Log(EContext)"/> is seven hundred
-        /// microseconds at a hundred digits; this is about twenty. An argument within
-        /// <c>[1/sqrt(2), sqrt(2)]</c> goes to the series as it is, so a value near 1 keeps
-        /// every digit rather than losing them to <c>ln 10 - 3 ln 2 - ...</c> cancelling.
-        /// Zero, a negative, an infinity and NaN are PeterO's answers.
+        /// the mantissa divided by the nearest <c>t = 1 + j/64</c>, whose logarithm the
+        /// constant cache holds, and <c>2 artanh((q - 1)/(q + 1))</c> for the quotient, a
+        /// series in a square below <c>1/65536</c> -- twenty-five terms at a hundred digits
+        /// where the series straight from <c>[1/sqrt(2), sqrt(2)]</c> was eighty -- in fixed
+        /// point. PeterO's <see cref="EDecimal.Log(EContext)"/> is seven hundred microseconds
+        /// at a hundred digits; this is under ten. An argument within
+        /// <c>[1/sqrt(2), sqrt(2)]</c> goes to the reduction as it is, and one within 1/128 of
+        /// 1 to the series as it is, so a value near 1 keeps every digit rather than losing
+        /// them to <c>ln 10 - 3 ln 2 - ...</c> cancelling. Zero, a negative, an infinity and
+        /// NaN are PeterO's answers.
         /// https://github.com/asc-community/AngouriMath/issues/1338
         /// </summary>
         public static EDecimal NaturalLogarithm(this EDecimal x, EContext context)
@@ -827,8 +935,16 @@ namespace AngouriMath
                     twos++;
                 }
             }
-            var y = ((mantissa - consts.FixedOne) << bits) / (mantissa + consts.FixedOne);
+            // The nearest 1 + j/64, exact in fixed point (FixedBits is at least six), and the
+            // mantissa over it, within 1/128 of one.
+            var one = consts.FixedOne;
+            var j = (int)((((mantissa - one) << 6) + (one >> 1)) >> bits);
+            if (j != 0)
+                mantissa = (mantissa << bits) / (one + (one >> 6) * j);
+            var y = ((mantissa - one) << bits) / (mantissa + one);
             var log = TwiceArtanh(y, bits);
+            if (j != 0)
+                log += consts.FixedLnOfOnePlus(j);
             if (twos != 0)
                 log += consts.FixedLn2 * twos;
             if (tens != 0)
