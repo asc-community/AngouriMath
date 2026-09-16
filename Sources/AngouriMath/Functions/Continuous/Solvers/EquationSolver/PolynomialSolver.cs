@@ -315,8 +315,17 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         return null;
                     if (mp == aVar)
                         power.Add(value);
+                    // (x^q)^v is x^(q v) for a whole v, and for a fractional v only where x is
+                    // not negative: (x^2)^(3/2) is |x|^3, and read as x^3 it let the long
+                    // division make u^2 of (u^2)^(3/2)/u, whereupon (sin(x)^2)^(3/2) under
+                    // u = cos(x) was integrated as sin(x)^3, wrong on every other half-turn.
+                    // https://github.com/asc-community/AngouriMath/issues/1387
                     else if (ParseMonomial<T, TPrimitive>(aVar, @base) is var (tmpFree, q))
                     {
+                        var one = new TPrimitive();
+                        one.Add(Integer.One);
+                        if (value is not Integer && !Equals(q.Value, one.Value))
+                            return null;
                         freeMono *= MathS.Pow(tmpFree, value);
                         power.AddMp(q.Value, value);
                     }
