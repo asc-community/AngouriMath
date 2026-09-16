@@ -1364,9 +1364,48 @@ namespace AngouriMath.Functions
             => e.InnerSimplified is Providedf(var inner, _) ? inner : e.InnerSimplified;
 
         /// <summary>
+        /// Whether the derivative of <paramref name="antiderivative"/> is
+        /// <paramref name="integrand"/>, numerically, at a few points in <paramref name="x"/>
+        /// with every other symbol pinned to a fixed value first -- pinned before the
+        /// differentiation, since <c>sgn(f)'</c> and <c>|f|'</c> are answered only where
+        /// <c>f</c> is shown real-valued, which a symbol that might be complex prevents and a
+        /// number does not: an answer with <c>sgn(tanh(c + d x))</c> in it, right, was
+        /// unevaluable differentiated with <c>c</c> and <c>d</c> in it and threw out of the
+        /// integrator.
+        /// </summary>
+        internal static bool DerivativeHoldsAtSampledPoints(Entity antiderivative, Entity integrand, Variable x)
+        {
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+            var (pinnedAntiderivative, pinnedIntegrand) = Pinned(antiderivative, integrand, x);
+            return HoldsAtSampledPoints(Bare(pinnedAntiderivative).Differentiate(x), pinnedIntegrand, x);
+        }
+
+        /// <summary>
+        /// The two with every symbol but <paramref name="x"/> pinned to a fixed value:
+        /// distinct values, off the integers, so that no two factors coincide by accident and
+        /// a sign or a root in a coefficient stays generic.
+        /// </summary>
+        private static (Entity, Entity) Pinned(Entity left, Entity right, Variable x)
+        {
+            var parameters = left.Vars.Concat(right.Vars).Where(v => v != x).Distinct().ToList();
+            var pinned = 0;
+            foreach (var parameter in parameters)
+            {
+                var fraction = (pinned % 3) switch { 0 => "1.37", 1 => "2.71", _ => "0.83" };
+                var value = Real.Create(EDecimal.FromString(fraction).Add(EDecimal.FromInt32(pinned)));
+                left = left.Substitute(parameter, value);
+                right = right.Substitute(parameter, value);
+                pinned++;
+            }
+            return (left, right);
+        }
+
+        /// <summary>
         /// Whether <paramref name="left"/> and <paramref name="right"/> agree, numerically, at a
         /// few points in <paramref name="x"/> with every other symbol pinned to a fixed value.
-        /// A point where either is undefined is skipped, and at least two must compare.
+        /// A point where either is undefined, or cannot be evaluated -- a derivative left
+        /// unevaluated, of a sign whose argument is not shown real -- is skipped, and at least
+        /// two must compare.
         /// </summary>
         internal static bool HoldsAtSampledPoints(Entity left, Entity right, Variable x)
         {
@@ -1376,24 +1415,22 @@ namespace AngouriMath.Functions
             // `(A + B ln(e ((a + b x)/(c + d x))^n))/(a + b x)^3` never returned from its
             // check. Off the downcasting, a decimal stays a decimal of a hundred digits.
             using var _ = MathS.Settings.DowncastingEnabled.Set(false);
-            var parameters = left.Vars.Concat(right.Vars).Where(v => v != x).Distinct().ToList();
-            var pinned = 0;
-            foreach (var parameter in parameters)
-            {
-                // Distinct values, off the integers, so that no two factors coincide by
-                // accident and a sign or a root in a coefficient stays generic.
-                var fraction = (pinned % 3) switch { 0 => "1.37", 1 => "2.71", _ => "0.83" };
-                var value = Real.Create(EDecimal.FromString(fraction).Add(EDecimal.FromInt32(pinned)));
-                left = left.Substitute(parameter, value);
-                right = right.Substitute(parameter, value);
-                pinned++;
-            }
+            (left, right) = Pinned(left, right, x);
             var compared = 0;
             foreach (var at in new[] { "0.29", "1.43", "3.17", "-0.61" })
             {
                 var point = Real.Create(EDecimal.FromString(at));
-                var l = left.Substitute(x, point).EvalNumerical();
-                var r = right.Substitute(x, point).EvalNumerical();
+                Number.Complex l;
+                Number.Complex r;
+                try
+                {
+                    l = left.Substitute(x, point).EvalNumerical();
+                    r = right.Substitute(x, point).EvalNumerical();
+                }
+                catch (Core.Exceptions.CannotEvalException)
+                {
+                    continue;
+                }
                 if (l.IsNaN || r.IsNaN)
                     continue;
                 var difference = (l - r).Abs().EDecimal;

@@ -417,5 +417,78 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("1/(2/3^x + 5*3^x)^3")]
         public void ANegativePowerOfTheQuadraticIsWrittenBelowTheBar(string integrand)
             => DifferentiatesBackWithParametersPinned(integrand, new[] { -0.5, 0.23, 0.61, 1.05, 1.7 });
+
+        /// <summary>
+        /// A rational function of the hyperbolic tangent with a symbol among its coefficients,
+        /// by <c>u = tanh(y)</c> with the written factors kept: Rubi's
+        /// <c>1/(a + b coth(c + d x)^2)^2</c> is <c>u^4/((b + a u^2)^2 (1 - u^2))</c> there,
+        /// where under <c>u = e^x</c> it was a symbolic palindromic quartic squared and a
+        /// timeout. The argument may be any linear form, and the secant's odd exponential
+        /// cancels in an even integrand.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(a + b*coth(x)^2)^2")]
+        [InlineData("1/(a + b*coth(2*x + 1)^2)^2")]
+        [InlineData("1/(a + b*coth(d*x)^2)^2")]
+        [InlineData("1/(a + b*coth(c + d*x)^2)^2")]
+        [InlineData("sech(x)^4/(a + b*sech(x)^2)^2")]
+        [InlineData("sech(c + d*x)^4/(a + b*sech(c + d*x)^2)^2")]
+        public void ARationalFunctionOfTheHyperbolicTangent(string integrand)
+            => DifferentiatesBackWithParametersPinned(integrand, new[] { -0.5, 0.23, 0.61, 1.05, 1.7 });
+
+        /// <summary>
+        /// A cubed symbolic quadratic beside a quadratic with real roots was integrated to a
+        /// wrong answer -- the Hermite ansatz's logarithmic part, with coefficients that are
+        /// quotients of forty-fifth-degree polynomials in the symbols, was integrated wrongly
+        /// as a sum where each term is right alone -- and is declined or right now, since the
+        /// answer is checked at sampled points where it was not.
+        /// https://github.com/asc-community/AngouriMath/issues/1369
+        /// </summary>
+        [Theory]
+        [InlineData("1/((a + b*x^2)^3*(x^2 - 1))")]
+        [InlineData("1/((a + b*x^2)^3*(2 - x^2))")]
+        public void ACubedSymbolicQuadraticBesideARealQuadraticIsNotAnsweredWrongly(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            if (integral.Stringize().Contains("integral("))
+                return;
+            DifferentiatesBackWithParametersPinned(integrand, new[] { 0.31, 0.57, 1.29, 1.77, 2.41 });
+        }
+
+        /// <summary>
+        /// A root of <c>a + b sech(x)</c> beside an odd power of the tangent was integrated
+        /// through <c>i</c>: the substitution took a root of a negative radicand on the way
+        /// and the answer's derivative was off at every real point. Declined or right now,
+        /// as the tangent substitution checks its answer at sampled points where a symbol is
+        /// involved. https://github.com/asc-community/AngouriMath/issues/1370
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(a + b*sech(x))*tanh(x)^5")]
+        [InlineData("sqrt(a + b*sech(x))*tanh(x)^3")]
+        public void ARootOfTheSecantBesideAnOddTangentIsNotAnsweredWrongly(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            if (integral.Stringize().Contains("integral("))
+                return;
+            DifferentiatesBackWithParametersPinned(integrand, new[] { -0.7, 0.23, 0.61, 1.05, 1.7 });
+        }
+
+        /// <summary>
+        /// The power-of-a-quadratic reduction recursed on a remainder the division had not
+        /// reduced, one level a call, until the stack ran out and the process with it -- a
+        /// crash, which no caller can catch. The reduction declines a remainder that is not
+        /// linear now, and the integral is answered or declined, either way in a process
+        /// that is still there. https://github.com/asc-community/AngouriMath/issues/1373
+        /// </summary>
+        [Theory]
+        [InlineData("csch(29/10 + 13/10*x)^3*(17/10 + 23/10*sech(29/10 + 13/10*x)^2)^3")]
+        [InlineData("csch(x)^3*(a + b*sech(x)^2)^3")]
+        public void ACubedSecantQuadraticBesideACubedCosecantDoesNotOverflowTheStack(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            if (integral.Stringize().Contains("integral("))
+                return;
+            DifferentiatesBackWithParametersPinned(integrand, new[] { 0.31, 0.57, 1.29, 1.77 });
+        }
     }
 }
