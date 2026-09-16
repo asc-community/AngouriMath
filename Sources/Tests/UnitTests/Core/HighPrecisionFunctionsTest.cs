@@ -232,5 +232,49 @@ namespace AngouriMath.Tests.Core
             // that could not cover the width would refuse none.
             Assert.True(readable > 150, $"{readable} of 200 refused cheaply");
         }
+
+        private static readonly EContext threeHundredDigits = new(300, ERounding.HalfUp, -5000, 5000, false);
+
+        private static int DigitsOf(Entity number) => number.ToString().TrimStart('-').Replace(".", "").Length;
+
+        /// <summary>
+        /// A constant is worth the current precision's digits, whichever precision it was
+        /// first evaluated at -- pi at a hundred digits, then three hundred, then a hundred
+        /// again; and the same object of the same expression, held across a change of the
+        /// precision, is evaluated afresh at the new one rather than answered from its cache.
+        /// https://github.com/asc-community/AngouriMath/issues/1367
+        /// </summary>
+        [Fact]
+        public void ConstantsAndCachedEvaluationsFollowThePrecision()
+        {
+            var pi = MathS.pi;
+            var held = MathS.Sin(1) + MathS.pi;
+            Assert.Equal(100, DigitsOf(pi.EvalNumerical()));
+            Assert.Equal(100, DigitsOf(held.EvalNumerical()));
+            using (MathS.Settings.DecimalPrecisionContext.Set(threeHundredDigits))
+            {
+                Assert.Equal(300, DigitsOf(pi.EvalNumerical()));
+                Assert.Equal(300, DigitsOf(held.EvalNumerical()));
+                Assert.Equal(300, DigitsOf(MathS.FromString("pi").EvalNumerical()));
+                Assert.StartsWith("3.14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535940812848111745028410270193852110555964462294895493038196442881097566593344612847564823378678316527120190914564856692346034861045432664821339360726024914127", pi.EvalNumerical().ToString());
+            }
+            Assert.Equal(100, DigitsOf(pi.EvalNumerical()));
+            Assert.Equal(100, DigitsOf(held.EvalNumerical()));
+        }
+
+        /// <summary>
+        /// e to a power at three hundred digits, after the same expression's shape was
+        /// evaluated at a hundred: it used to come back correct to a hundred, since the base
+        /// was the hundred-digit e and no longer the exponential's own constant.
+        /// https://github.com/asc-community/AngouriMath/issues/1367
+        /// </summary>
+        [Fact]
+        public void EToAPowerAtAHigherPrecisionAfterALowerOne()
+        {
+            var x = Real.Create(EDecimal.FromString("0.37000000000001234"));
+            Assert.Equal(100, DigitsOf(MathS.Pow(MathS.e, x).EvalNumerical()));
+            using var _ = MathS.Settings.DecimalPrecisionContext.Set(threeHundredDigits);
+            Assert.StartsWith("1.4477346146633423266298972810533128989549659677348909712480333771187271973782808968904998312256362611570708175918866347464490548332052196352156710435710332682587883217473960307622422354384764392652386915303661697273096380952633917033052762392317525332683262721013424903315670646133049105751036966", MathS.Pow(MathS.e, x).EvalNumerical().ToString());
+        }
     }
 }

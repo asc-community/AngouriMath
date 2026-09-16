@@ -256,6 +256,30 @@ cent — its measured run-to-run spread on mean time is up to 51.8%. A move of 8
 outside that band by a wide margin and agrees in sign and rough size with the allocation column
 beside it. The small rows from the same run are still not worth reading, and are not quoted.
 
+## The 2075th: a cached evaluation follows the precision context
+
+A correctness fix ([#1367](https://github.com/asc-community/AngouriMath/issues/1367)) with a
+cost, recorded here because the cost is on every row: `pi` and `e` were worth the digits of
+whichever precision was set when their registry was built, and an entity's cached `Evaled`
+survived a change of `DecimalPrecisionContext`, so `pi` at three hundred digits after an
+evaluation at a hundred came back with a hundred, and `e^x` came back correct to a hundred of
+its three hundred. The constant's value is now looked up at the moment of evaluation, and the
+precision setting advances an evaluation epoch on every `Set` and every scope's end, which an
+entity records beside its `Evaled` and compares on each read -- one `int` on every entity and
+one static read per evaluation.
+
+| benchmark | 2074th | 2075th | allocation | time |
+|---|--:|--:|--:|--:|
+| `SolveMediumHard` | 1,367,804 | 1,381,260 | +1.0% | |
+| `SimplifyHard` | 179,367,888 | 180,917,280 | +0.9% | |
+| `Derivate` | 53,111 | 53,527 | +0.8% | |
+| `EvalPolynomialFresh` | 12,328 | 12,424 | +0.8% | |
+| every other entry | | | within 0.7% | within the noise |
+
+Bytes allocated per call, same machine, both columns by the gate in one session: the eight
+bytes an entity grew by, times the entities each row builds, all inside the gate's band, so
+the baseline stands.
+
 ## The 2074th: the logarithm and the arctangent reduced by a table, the cosine from the sine, the square root an integer one
 
 After the 2072nd the remaining factor to mpmath was the term count: eighty artanh terms for a
