@@ -93,6 +93,23 @@ namespace AngouriMath.Convenience
     }
 
     /// <summary>
+    /// A count of the changes to what a numerical evaluation depends on -- the precision
+    /// context, set or its scope ended, on any thread. An <see cref="Entity"/> records the
+    /// epoch its <see cref="Entity.Evaled"/> was computed at and recomputes when it has moved,
+    /// since a hundred digits of pi cached at one precision are the wrong answer at another.
+    /// One counter for every thread: a change on another thread costs a recomputation and
+    /// never a stale value. https://github.com/asc-community/AngouriMath/issues/1367
+    /// </summary>
+    internal static class EvaluationEpoch
+    {
+        [ConcurrentField] private static int current;
+
+        internal static int Current => Volatile.Read(ref current);
+
+        internal static void Advance() => Interlocked.Increment(ref current);
+    }
+
+    /// <summary>
     /// This class for configuring some internal mechanisms from outside
     /// </summary>
     /// <typeparam name="T">
@@ -147,6 +164,12 @@ namespace AngouriMath.Convenience
         }
 
         /// <summary>
+        /// Whether a change of this setting advances the <see cref="EvaluationEpoch"/>: the
+        /// precision context does, since every cached evaluation depends on it.
+        /// </summary>
+        internal bool AdvancesEvaluationEpoch { get; init; }
+
+        /// <summary>
         /// The frame this setting currently reads from, as the identity of its state. Released
         /// in order — which <c>using</c> guarantees — a scope restores the very frame that was
         /// on top before it, so this compares equal across a balanced open and close. Out of
@@ -174,6 +197,8 @@ namespace AngouriMath.Convenience
         {
             var id = Interlocked.Increment(ref lastId);
             frames.Value = new Frame(id, value, frames.Value);
+            if (AdvancesEvaluationEpoch)
+                EvaluationEpoch.Advance();
             return new AutoBackRollableTemporarySettingUnit(this, id);
         }
 
@@ -190,6 +215,8 @@ namespace AngouriMath.Convenience
             var top = frames.Value;
             if (top is null)
                 return;
+            if (AdvancesEvaluationEpoch)
+                EvaluationEpoch.Advance();
             if (top.Id == id)
             {
                 frames.Value = top.Next;

@@ -5912,7 +5912,8 @@ namespace AngouriMath
             /// <summary>
             /// Settings for <see cref="EDecimal"/> precisions of <a href="https://github.com/peteroupc/Numbers">PeterO.Numbers</a>
             /// </summary>
-            public static Setting<EContext> DecimalPrecisionContext { get; } = new EContext(100, ERounding.HalfUp, -100, 1000, false);
+            public static Setting<EContext> DecimalPrecisionContext { get; } =
+                new(new EContext(100, ERounding.HalfUp, -100, 1000, false)) { AdvancesEvaluationEpoch = true };
 
             /// <summary>
             /// Whether functions are being read as real-valued or complex-valued. It is a

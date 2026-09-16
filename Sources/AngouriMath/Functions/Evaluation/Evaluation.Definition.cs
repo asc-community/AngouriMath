@@ -180,8 +180,25 @@ namespace AngouriMath
         /// AngouriMath.Entity+Boolean
         /// </code>
         /// </example>
-        public Entity Evaled => evaled.GetValue(static @this => @this.InnerSimplifyWithCheck(false), this);
+        public Entity Evaled
+        {
+            get
+            {
+                // Cached for the precision it was computed under: a hundred digits of pi are
+                // the wrong answer at five hundred, and an expression held across a change of
+                // MathS.Settings.DecimalPrecisionContext used to answer from the first one.
+                // https://github.com/asc-community/AngouriMath/issues/1367
+                var epoch = Convenience.EvaluationEpoch.Current;
+                if (evaledEpoch != epoch)
+                {
+                    evaled = default;
+                    evaledEpoch = epoch;
+                }
+                return evaled.GetValue(static @this => @this.InnerSimplifyWithCheck(false), this);
+            }
+        }
         private LazyPropertyA<Entity> evaled;
+        private int evaledEpoch;
 
         /// <summary>
         /// This is the result of naive simplifications, but not creating imprecise <see cref="Real"/> values unlike <see cref="Evaled"/>. In other 
