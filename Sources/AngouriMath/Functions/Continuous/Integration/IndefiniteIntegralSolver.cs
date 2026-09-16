@@ -2768,14 +2768,38 @@ namespace AngouriMath.Functions.Algebra
         private static Entity? IntegrateAPolynomialTimesAnExponentialTimesOneTrigonometric(
             Entity polynomial, Entity rate, Entity frequency, Entity onTheCosine, Entity onTheSine, Entity.Variable x)
         {
-            // a^2 + b^2, which is zero only when both are, and then the integrand is a polynomial.
+            // a^2 + b^2, which is zero when both are, and then the integrand is a polynomial --
+            // and when the rate is the frequency times i: `e^(-i u) cos(u)` is
+            // `(1 + e^(-2 i u))/2`, a resonance the formula divides by zero on, and it answered
+            // NaN for `e^(-i arctan(a x))/(c + a^2 c x^2)^(3/2)` under `x = tan(u)/a`.
             var scale = (MathS.Sqr(rate) + MathS.Sqr(frequency)).InnerSimplified;
-            if (scale == 0)
+            var bothZero = rate.Evaled is Number.Complex { IsZero: true } && frequency.Evaled is Number.Complex { IsZero: true };
+            if (bothZero)
                 return null;
-
             var exponential = MathS.Pow(MathS.e, rate * x);
             var cosine = MathS.Cos(frequency * x);
             var sine = MathS.Sin(frequency * x);
+            if (scale == 0 || scale.Evaled is Number.Complex { IsZero: true })
+            {
+                // Resonant: by Euler, `c cos(bx) + d sin(bx)` is
+                // `(c - i d) e^(i b x)/2 + (c + i d) e^(-i b x)/2`, and each term beside
+                // `P(x) e^(a x)` is a polynomial times one exponential -- one of them, with
+                // `a = -i b` or `a = i b`, a polynomial alone -- which are closed on their own.
+                // `e^(i arctan(a x))/sqrt(c + a^2 c x^2)` under `x = tan(u)/a` is `e^(i u) cos(u)`.
+                var plus = ((onTheCosine - MathS.i * onTheSine) / 2).InnerSimplified;
+                var minus = ((onTheCosine + MathS.i * onTheSine) / 2).InnerSimplified;
+                Entity resonant = Number.Integer.Zero;
+                foreach (var (coefficient, exponent) in new[] { (plus, (rate + MathS.i * frequency).InnerSimplified), (minus, (rate - MathS.i * frequency).InnerSimplified) })
+                {
+                    if (coefficient.Evaled is Number.Complex { IsZero: true })
+                        continue;
+                    var term = exponent.Evaled is Number.Complex { IsZero: true } ? polynomial : polynomial * MathS.Pow(MathS.e, exponent * x);
+                    if (Integration.ComputeIndefiniteIntegral(term.InnerSimplified, x, integrateByParts: false) is not { } termIntegral || termIntegral.Nodes.Any(node => node == MathS.NaN))
+                        return null;
+                    resonant += coefficient * termIntegral;
+                }
+                return resonant.InnerSimplified;
+            }
 
             // Integrating `e^(ax)(c cos + d sin)` leaves the same shape, so one step of by parts
             // against `P(x)` lowers its degree and leaves this loop's own state: a polynomial and
@@ -3496,28 +3520,45 @@ namespace AngouriMath.Functions.Algebra
         /// is read through it.
         /// </para>
         /// <para>
-        /// Exactly one inverse function, of the bare variable, and nothing left in <c>x</c>
-        /// afterwards; otherwise declined. Handed to the integrator in <c>u</c>, where the
-        /// trigonometric rules are.
+        /// Exactly one inverse function, of the variable or of a linear <c>c x + d</c> in it,
+        /// and nothing left in <c>x</c> afterwards; otherwise declined. Handed to the
+        /// integrator in <c>u</c>, where the trigonometric rules are. With the linear,
+        /// <c>x = (sin(u) - d)/c</c> and <c>dx = cos(u) du/c</c>, and the radical that goes
+        /// is of a constant multiple of <c>1 - (c x + d)^2</c> -- Rubi's
+        /// <c>(d - c^2 d x^2)^p (a + b arcsin(c x))^n</c> -- taken as that multiple's root
+        /// times the cosine, the generic case. A power of <c>a + b arcsin(c x)</c> counts
+        /// as a power of the inverse: <c>x arcsin(a x)^2</c> under the sine is
+        /// <c>u^2 sin(u) cos(u)/a^2</c>, parts twice against <c>sin(2u)</c>, where parts in
+        /// <c>x</c> stalled on <c>x^2 arcsin(a x)/sqrt(1 - a^2 x^2)</c>.
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveByInverseTrigonometricSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
         {
-            // The one inverse function of the bare variable.
+            // The one inverse function, of the variable or of a linear in it.
             Entity? inverse = null;
             foreach (var node in expr.Nodes)
             {
                 if (node is not (Arcsinf or Arccosf or Arctanf or Arcsecantf or Arccosecantf or Arccotanf))
                     continue;
-                if (node.DirectChildren.First() != x)
-                    return null;
                 if (inverse is not null && inverse != node)
                     return null;
                 inverse = node;
             }
             if (inverse is null)
                 return null;
+            var argument = inverse.DirectChildren.First();
+            if (!argument.ContainsNode(x))
+                return null;
+            Entity slope = Number.Integer.One, offset = Number.Integer.Zero;
+            var linear = argument != x;
+            if (linear)
+            {
+                if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var readSlope, out var readOffset)
+                    || readSlope is null || readOffset is null || TreeAnalyzer.IsZero(readSlope) || readSlope.Evaled is Number.Complex { IsZero: true })
+                    return null;
+                (slope, offset) = (readSlope, readOffset);
+            }
 
             var u = Variable.CreateUnique(expr, "u_inv");
             // The sign of u, where the root's sign is that: a constant on each half of the
@@ -3527,31 +3568,38 @@ namespace AngouriMath.Functions.Algebra
             // x in terms of u, dx/du, the quadratic whose root goes by construction and what it
             // becomes, and the way back.
             Entity xInU, dxdu, radicandBase, root;
+            // Written for the argument; with a linear argument, x itself is `(L - d)/c` and
+            // dx is `dL/c`.
             switch (inverse)
             {
                 case Arcsinf:
-                    (xInU, dxdu, radicandBase, root) = (MathS.Sin(u), MathS.Cos(u), 1 - MathS.Sqr(x), MathS.Cos(u));
+                    (xInU, dxdu, radicandBase, root) = (MathS.Sin(u), MathS.Cos(u), 1 - MathS.Sqr(argument), MathS.Cos(u));
                     break;
                 case Arccosf:
-                    (xInU, dxdu, radicandBase, root) = (MathS.Cos(u), -MathS.Sin(u), 1 - MathS.Sqr(x), MathS.Sin(u));
+                    (xInU, dxdu, radicandBase, root) = (MathS.Cos(u), -MathS.Sin(u), 1 - MathS.Sqr(argument), MathS.Sin(u));
                     break;
                 case Arctanf:
-                    (xInU, dxdu, radicandBase, root) = (MathS.Tan(u), MathS.Sqr(MathS.Sec(u)), 1 + MathS.Sqr(x), MathS.Sec(u));
+                    (xInU, dxdu, radicandBase, root) = (MathS.Tan(u), MathS.Sqr(MathS.Sec(u)), 1 + MathS.Sqr(argument), MathS.Sec(u));
                     break;
                 case Arccotanf:
                     // The range here is (-pi/2, pi/2], where the cosecant is not negative on
                     // the positive half and negative on the other: the root is kept as `|csc|`,
                     // which is `csc(u) sgn(u)`, so the answer holds on both.
-                    (xInU, dxdu, radicandBase, root) = (MathS.Cotan(u), -MathS.Sqr(MathS.Cosec(u)), 1 + MathS.Sqr(x), MathS.Cosec(u) * signOfU);
+                    (xInU, dxdu, radicandBase, root) = (MathS.Cotan(u), -MathS.Sqr(MathS.Cosec(u)), 1 + MathS.Sqr(argument), MathS.Cosec(u) * signOfU);
                     break;
                 case Arccosecantf:
                     // arccsc has the range [-pi/2, 0) ∪ (0, pi/2], where the cotangent has the
                     // sign of u: `sqrt(x^2 - 1)` is `cot(u) sgn(u)`.
-                    (xInU, dxdu, radicandBase, root) = (MathS.Cosec(u), -MathS.Cosec(u) * MathS.Cotan(u), MathS.Sqr(x) - 1, MathS.Cotan(u) * signOfU);
+                    (xInU, dxdu, radicandBase, root) = (MathS.Cosec(u), -MathS.Cosec(u) * MathS.Cotan(u), MathS.Sqr(argument) - 1, MathS.Cotan(u) * signOfU);
                     break;
                 default:
-                    (xInU, dxdu, radicandBase, root) = (MathS.Sec(u), MathS.Sec(u) * MathS.Tan(u), MathS.Sqr(x) - 1, MathS.Tan(u));
+                    (xInU, dxdu, radicandBase, root) = (MathS.Sec(u), MathS.Sec(u) * MathS.Tan(u), MathS.Sqr(argument) - 1, MathS.Tan(u));
                     break;
+            }
+            if (linear)
+            {
+                xInU = ((xInU - offset) / slope).InnerSimplified;
+                dxdu = dxdu / slope;
             }
 
             // What the substitution is for: a radical of the quadratic it removes, or an
@@ -3564,19 +3612,47 @@ namespace AngouriMath.Functions.Algebra
                 .Substitute(inverse, u)
                 .Replace(node =>
                 {
-                    if (!TryReadAHalfPower(node, out var @base, out var numerator)
-                        || !IsTheSameQuadratic(@base, radicandBase, x))
+                    // A whole power of the quadratic from the second up counts as well: parts
+                    // in x on `x (d - c^2 d x^2)^3 (a + b arcsin(c x))` leaves a seventh-degree
+                    // polynomial over the root and went past its budget there, where under
+                    // the sine it is a polynomial in the sine and cosine beside `a + b u`.
+                    var wholePower = node is Powf(var wholeBase, Number.Integer whole) && whole.EInteger.CompareTo(EInteger.FromInt32(2)) >= 0
+                        && whole.EInteger.CompareTo(EInteger.FromInt32(64)) <= 0 && wholeBase.ContainsNode(x) ? whole.EInteger.ToInt32Unchecked() : 0;
+                    if (wholePower > 0 && node is Powf(var quadratic, _) && TreeAnalyzer.TryGetPolyQuadratic(quadratic, x, out _, out _, out _)
+                        && TryReadAConstantMultipleOf(quadratic, radicandBase, x) is { } wholeMultiple)
+                    {
+                        radicalsRemoved++;
+                        return MathS.Pow(wholeMultiple, wholePower) * MathS.Pow(root, 2 * wholePower);
+                    }
+                    if (!TryReadAHalfPower(node, out var @base, out var numerator))
                         return node;
-                    radicalsRemoved++;
-                    return MathS.Pow(root, numerator);
+                    if (IsTheSameQuadratic(@base, radicandBase, x))
+                    {
+                        radicalsRemoved++;
+                        return MathS.Pow(root, numerator);
+                    }
+                    // A constant multiple of the quadratic, `d - c^2 d x^2` for `1 - (c x)^2`:
+                    // the multiple's root times the root of the quadratic, the generic case.
+                    if (linear || TreeAnalyzer.TryGetPolyQuadratic(@base, x, out _, out _, out _))
+                    {
+                        if (TryReadAConstantMultipleOf(@base, radicandBase, x) is { } multiple)
+                        {
+                            radicalsRemoved++;
+                            return MathS.Pow(multiple, Number.Rational.Create(numerator, 2)) * MathS.Pow(root, numerator);
+                        }
+                    }
+                    return node;
                 });
             var exponentialOfTheInverse = expr.Nodes.Any(node =>
                 node is Powf(var @base, var power) && !@base.ContainsNode(x) && power.ContainsNode(inverse));
             // Or a power of the inverse function above the first: parts on `x^3 arccsc(x)^2`
             // leaves `x^2 arccsc(x)/sqrt(x^2 - 1)` and stalls, where under `x = csc(u)` it is
             // `-u^2 csc(u)^4 cot(u)`, two steps of parts against a power of the cosecant.
+            // Or of a function of it alone -- `(a + b arcsin(c x))^2` -- which is a power of
+            // u after the substitution.
             var powerOfTheInverse = expr.Nodes.Any(node =>
-                node is Powf(var @base, Number.Integer power) && @base == inverse && power.EInteger.CompareTo(EInteger.One) > 0);
+                node is Powf(var @base, Number.Integer power) && power.EInteger.CompareTo(EInteger.One) > 0
+                    && @base.ContainsNode(inverse) && !@base.Substitute(inverse, u).ContainsNode(x));
             if (radicalsRemoved == 0 && !exponentialOfTheInverse && !powerOfTheInverse)
                 return null;
             // The cosecant and the cotangent carry the sign of u into the root, and a first
@@ -3618,6 +3694,13 @@ namespace AngouriMath.Functions.Algebra
                     integrand = innerCombined;
             }
 
+            // The sign squared is one: an even power of it, from a whole power of the
+            // quadratic, is folded before the question is asked, since `e^u sin(u)^4/s^6` is
+            // not the exponential-times-trigonometric rule's and `e^u sin(u)^4` is.
+            if (integrand.ContainsNode(signOfU))
+                integrand = integrand
+                    .Replace(node => node is Powf(var b, Number.Integer k) && b == signOfU ? (k.EInteger.IsEven ? Number.Integer.One : signOfU) : node)
+                    .InnerSimplified;
             // The same question in another variable, not a step in the search for it: asked at
             // the top when this was, so the closed rules that answer only at the top --
             // `e^u sin(u)^3` is the exponential-times-trigonometric rule's -- are consulted.
@@ -3628,7 +3711,119 @@ namespace AngouriMath.Functions.Algebra
                 result = result
                     .Replace(node => node is Powf(var b, Number.Integer k) && b == signOfU ? (k.EInteger.IsEven ? Number.Integer.One : signOfU) : node)
                     .Substitute(signOfU, MathS.Signum(x));
-            return TrigonometryOfTheInverseInX(result.Substitute(u, inverse), inverse, x);
+            return TrigonometryOfTheInverseInX(result.Substitute(u, inverse), inverse, argument);
+        }
+
+        /// <summary>
+        /// The constant <c>k</c> with <paramref name="candidate"/> equal to
+        /// <c>k</c> times <paramref name="wanted"/> as functions of <paramref name="x"/>,
+        /// decided at sampled points and then read exactly from the quotient, else null.
+        /// </summary>
+        private static Entity? TryReadAConstantMultipleOf(Entity candidate, Entity wanted, Entity.Variable x)
+        {
+            if (!AreProportionalAtSampledPoints(candidate, wanted, x))
+                return null;
+            var ratio = Functions.PartialFractions.Bare((candidate / wanted).Simplify());
+            if (ratio.ContainsNode(x) || ratio.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            return ratio;
+        }
+
+        /// <summary>
+        /// An exponential of <c>i</c> times an inverse trigonometric function, written
+        /// algebraically: <c>e^(i arctan(L))</c> is <c>(1 + i L)/sqrt(1 + L^2)</c>,
+        /// <c>e^(i arcsin(L))</c> is <c>sqrt(1 - L^2) + i L</c> and <c>e^(i arccos(L))</c> is
+        /// <c>L + i sqrt(1 - L^2)</c>, each on the principal branch for a real <c>L</c>, and
+        /// <c>e^(n i f(L))</c> is that to the <c>n</c>th, for a rational <c>n</c>. Rubi's
+        /// <c>e^(i arctan(a x))/sqrt(c + a^2 c x^2)</c> is then <c>(1 + i a x)/(sqrt(c) (1 + a^2 x^2))</c>,
+        /// a rational function; under <c>x = tan(u)/a</c> it was <c>e^(i u) sec(u)</c>, which
+        /// nothing in <c>u</c> reads. The integrand as rewritten is asked as a question of
+        /// its own, and the answer checked at sampled points where a symbol is involved.
+        /// </summary>
+        internal static Entity? SolveByWritingAnExponentialOfAnInverseAlgebraically(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var rewrote = false;
+            var rewritten = expr.Replace(node =>
+            {
+                if (node is not Powf(var @base, var exponent) || @base != MathS.e || !exponent.ContainsNode(x))
+                    return node;
+                // The exponent as n i times one inverse function of a real argument.
+                Entity? inverse = null;
+                foreach (var inner in exponent.Nodes)
+                    if (inner is Arctanf or Arcsinf or Arccosf)
+                    {
+                        if (inverse is not null && inverse != inner)
+                            return node;
+                        inverse = inner;
+                    }
+                if (inverse is null || inverse.DirectChildren.First() is not { } argument || !argument.ContainsNode(x))
+                    return node;
+                var placeholder = Variable.CreateUnique(exponent, "u_exp");
+                var inThePlaceholder = exponent.Replace(inner => inner == inverse ? placeholder : inner);
+                if (inThePlaceholder.ContainsNode(x)
+                    || !TreeAnalyzer.TryGetPolyLinear(inThePlaceholder, placeholder, out var coefficient, out var constantPart)
+                    || coefficient is null || constantPart is null || constantPart.Evaled is not Number.Complex { IsZero: true })
+                    return node;
+                if ((coefficient / MathS.i).InnerSimplified.Evaled is not Number.Rational n)
+                    return node;
+                rewrote = true;
+                // The tangent's as two powers, `(1 + i L)^n (1 + L^2)^(-n/2)`, which the
+                // radical rules read where a power of the quotient is one node to them.
+                if (inverse is Arctanf)
+                {
+                    var halfPower = Number.Rational.Create(n.ERational.Negate().Divide(2));
+                    return (n == Number.Integer.One ? 1 + MathS.i * argument : MathS.Pow(1 + MathS.i * argument, n)) * MathS.Pow(1 + MathS.Sqr(argument), halfPower);
+                }
+                Entity unit = inverse is Arcsinf
+                    ? MathS.Sqrt(1 - MathS.Sqr(argument)) + MathS.i * argument
+                    : argument + MathS.i * MathS.Sqrt(1 - MathS.Sqr(argument));
+                return n == Number.Integer.One ? unit : MathS.Pow(unit, n);
+            });
+            if (!rewrote)
+                return null;
+            // A fractional power of a constant multiple of the quadratic the rewrite brought
+            // in, as the multiple's power times the quadratic's, the generic case, so that
+            // `(1 + a^2 x^2)^(-1/2)` and `(c + a^2 c x^2)^(-1/2)` meet as one power:
+            // `e^(i arctan(a x))/sqrt(c + a^2 c x^2)` is `(1 + i a x)/(sqrt(c) (1 + a^2 x^2))`.
+            var quadratics = new List<Entity>();
+            foreach (var node in rewritten.Nodes)
+                if (node is Powf(var q, Number.Rational r) && r is not Number.Integer && q.ContainsNode(x) && TreeAnalyzer.TryGetPolyQuadratic(q, x, out _, out _, out _)
+                    && !quadratics.Contains(q))
+                    quadratics.Add(q);
+            if (quadratics.Count > 1)
+            {
+                var first = quadratics[0];
+                rewritten = rewritten.Replace(node =>
+                    node is Powf(var q, Number.Rational r) && r is not Number.Integer && q != first && quadratics.Contains(q)
+                    && TryReadAConstantMultipleOf(q, first, x) is { } multiple
+                        ? MathS.Pow(multiple, r) * MathS.Pow(first, r)
+                        : node);
+            }
+            if (Integration.ComputeAsAQuestionOfItsOwn(rewritten.InnerSimplified, x, integrateByParts) is not { } answer)
+                return null;
+            if (answer.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            // Checked at sampled points where a symbol is involved -- a point where the
+            // derivative cannot be evaluated, a fractional power of a complex number at a
+            // symbol, is not a verdict -- and the simplified answer must not be NaN either:
+            // a piecewise with complex coefficients simplified to NaN for
+            // `x e^(-2 i arctan(a + b x))`, and an answer that simplifies to a claim of
+            // non-existence is not given.
+            if (expr.Vars.Any(symbol => symbol != x))
+            {
+                try
+                {
+                    if (!Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
+                        return null;
+                }
+                catch (Core.Exceptions.CannotEvalException)
+                {
+                    return null;
+                }
+            }
+            if (answer.Nodes.Any(node => node is Piecewise) && answer.Simplify().Nodes.Any(node => node == MathS.NaN))
+                return null;
+            return answer;
         }
 
         /// <summary>
@@ -3640,7 +3835,7 @@ namespace AngouriMath.Functions.Algebra
         /// here is <c>(-pi/2, pi/2]</c>, is <c>|x|/sqrt(1 + x^2)</c>. Whatever is not one of
         /// these compositions, a multiple angle among them, is left as it is.
         /// </summary>
-        private static Entity TrigonometryOfTheInverseInX(Entity result, Entity inverse, Entity.Variable x)
+        private static Entity TrigonometryOfTheInverseInX(Entity result, Entity inverse, Entity x)
         {
             Entity sine, cosine;
             switch (inverse)
