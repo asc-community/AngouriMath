@@ -263,6 +263,29 @@ namespace AngouriMath.Tests.Core
         }
 
         /// <summary>
+        /// <c>e</c> evaluated with the downcasting off used to be a complex number with a zero
+        /// imaginary part, and the cache on the constant kept it that way for the rest of the
+        /// process -- after which <c>sgn(e^x - 1)</c> was not real-valued and its derivative,
+        /// which is zero, stayed unevaluated. A constant is a real number whatever the
+        /// downcasting says, and a complex number with a zero imaginary part is real-valued
+        /// in any case. https://github.com/asc-community/AngouriMath/issues/1367
+        /// </summary>
+        [Fact]
+        public void AConstantIsRealWhateverTheDowncasting()
+        {
+            var sign = MathS.FromString("sgn((e^(2*x) - 1)/(e^(2*x) + 1))");
+            using (MathS.Settings.DowncastingEnabled.Set(false))
+            {
+                Assert.IsType<Real>(MathS.e.Evaled);
+                Assert.IsType<Real>(MathS.pi.Evaled);
+                Assert.DoesNotContain("derivative(", MathS.FromString("sgn(e^x - 1)").Differentiate("x").ToString());
+                Assert.DoesNotContain("derivative(", MathS.Signum(Complex.Create(EDecimal.FromString("1.5"), EDecimal.Zero) * MathS.Var("x")).Differentiate("x").ToString());
+            }
+            Assert.IsType<Real>(MathS.e.Evaled);
+            Assert.DoesNotContain("derivative(", sign.Differentiate("x").ToString());
+        }
+
+        /// <summary>
         /// e to a power at three hundred digits, after the same expression's shape was
         /// evaluated at a hundred: it used to come back correct to a hundred, since the base
         /// was the hundred-digit e and no longer the exponential's own constant.
