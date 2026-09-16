@@ -48,15 +48,19 @@ namespace AngouriMath
             /// Which names the language reads as mathematical constants, and what each is worth
             /// -- asked at the moment of evaluation, so that the digits are the current
             /// precision's and not those of whichever context was set when this class was
-            /// initialised (https://github.com/asc-community/AngouriMath/issues/1367). This
-            /// is the whole registry: a name is a constant exactly when it is a key here, and
-            /// nothing below asks about <c>pi</c> or <c>e</c> by name.
+            /// initialised (https://github.com/asc-community/AngouriMath/issues/1367), and a
+            /// <see cref="Real"/> whatever the downcasting says: through the conversion from a
+            /// decimal, with the downcasting off, <c>e</c> was a <see cref="Complex"/> with a
+            /// zero imaginary part, and cached on the constant that made <c>sgn(e^x - 1)</c>
+            /// not real-valued and <c>e^x</c> not the exponential of <c>x</c> for the rest of
+            /// the process. This is the whole registry: a name is a constant exactly when it
+            /// is a key here, and nothing below asks about <c>pi</c> or <c>e</c> by name.
             /// </summary>
             [ConstantField] internal static readonly IReadOnlyDictionary<string, Func<Complex>> ConstantList =
                 new Dictionary<string, Func<Complex>>
                 {
-                    { nameof(pi), static () => MathS.DecimalConst.pi },
-                    { nameof(e), static () => MathS.DecimalConst.e }
+                    { nameof(pi), static () => Real.Create(MathS.DecimalConst.pi) },
+                    { nameof(e), static () => Real.Create(MathS.DecimalConst.e) }
                 };
 
             /// <summary>Each constant as the name a writer types, which is the form a binder can take.</summary>

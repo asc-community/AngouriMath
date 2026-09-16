@@ -98,7 +98,12 @@ namespace AngouriMath.Convenience
     /// epoch its <see cref="Entity.Evaled"/> was computed at and recomputes when it has moved,
     /// since a hundred digits of pi cached at one precision are the wrong answer at another.
     /// One counter for every thread: a change on another thread costs a recomputation and
-    /// never a stale value. https://github.com/asc-community/AngouriMath/issues/1367
+    /// never a stale value. The downcasting setting does not advance it: the integrator's
+    /// sampled checks turn the downcasting off and on around every candidate, and an epoch
+    /// moved by those made every cached evaluation in the process stale each time -- the
+    /// unit suite took four times as long. What the downcasting changed in a cached value
+    /// that mattered, a constant's type, no longer depends on it.
+    /// https://github.com/asc-community/AngouriMath/issues/1367
     /// </summary>
     internal static class EvaluationEpoch
     {

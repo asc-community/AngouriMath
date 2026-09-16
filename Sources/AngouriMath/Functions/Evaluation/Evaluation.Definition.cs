@@ -184,20 +184,32 @@ namespace AngouriMath
         {
             get
             {
-                // Cached for the precision it was computed under: a hundred digits of pi are
-                // the wrong answer at five hundred, and an expression held across a change of
-                // MathS.Settings.DecimalPrecisionContext used to answer from the first one.
+                // Cached for the epoch it was computed under -- the precision context and
+                // the downcasting: a hundred digits of pi are the wrong answer at five
+                // hundred, and an expression held across a change of the settings used to
+                // answer from the first ones. The epoch is read before the computation and
+                // recorded with its result, so that a scope opened and closed inside the
+                // computation -- the integrator's sampled checks turn the downcasting off --
+                // leaves a value stamped as stale, to be recomputed on the next read, and
+                // never a slot cleared under a computation still running; the lazy slot it
+                // was, reset on a stale epoch, was cleared that way and read back as null.
                 // https://github.com/asc-community/AngouriMath/issues/1367
+                // And stamped with its owner: a record's `with` -- WithCodomain, and the
+                // derivative's rewrites -- copies every field, this one included, and a
+                // value computed for the original is not the copy's; the lazy slot carried
+                // the same stamp.
                 var epoch = Convenience.EvaluationEpoch.Current;
-                if (evaledEpoch != epoch)
-                {
-                    evaled = default;
-                    evaledEpoch = epoch;
-                }
-                return evaled.GetValue(static @this => @this.InnerSimplifyWithCheck(false), this);
+                if (evaled is { } cached && evaledEpoch == epoch && ReferenceEquals(evaledOwner, this))
+                    return cached;
+                var computed = InnerSimplifyWithCheck(false);
+                evaledEpoch = epoch;
+                evaledOwner = this;
+                evaled = computed;
+                return computed;
             }
         }
-        private LazyPropertyA<Entity> evaled;
+        private Entity? evaled;
+        private Entity? evaledOwner;
         private int evaledEpoch;
 
         /// <summary>

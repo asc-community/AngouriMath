@@ -31,7 +31,7 @@ namespace AngouriMath.Functions
         internal static bool IsRealValued(Entity expr, Variable x)
         {
             if (!expr.ContainsNode(x))
-                return expr.Evaled is Real { IsNaN: false };
+                return IsARealNumber(expr.Evaled);
             switch (expr)
             {
                 case Variable variable:
@@ -51,7 +51,7 @@ namespace AngouriMath.Functions
                 // `e^x - 1/e^x - 2`, whose sign the antiderivative of a hyperbolic integrand
                 // carries under `u = e^x`.
                 case Powf(var constantBase, var exponent) when !constantBase.ContainsNode(x)
-                        && constantBase.Evaled is Real { IsNaN: false, IsPositive: true }:
+                        && IsARealNumber(constantBase.Evaled) && ((Complex)constantBase.Evaled).RealPart.IsPositive:
                     return IsRealValued(exponent, x);
                 case Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf
                      or Arctanf or Arccotanf or Signumf:
@@ -63,6 +63,11 @@ namespace AngouriMath.Functions
                     return false;
             }
         }
+
+        // A real number, or a complex one whose imaginary part is zero: with the downcasting
+        // off, `e` evaluates to the latter, and it is no less real for it.
+        private static bool IsARealNumber(Entity evaled)
+            => evaled is Real { IsNaN: false } || evaled is Complex { IsNaN: false } complex && complex.ImaginaryPart.IsZero;
 
         /// <summary>
         /// Rewrites <c>abs(c * g)</c>, <c>abs(c / g)</c> and <c>abs(g / c)</c>, for a numeric
