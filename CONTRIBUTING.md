@@ -96,6 +96,11 @@ are set out at length in [AGENTS.md](AGENTS.md), which applies to humans too:
 An issue's *kind* is its GitHub issue type, not a label; the labels say what state it is in and
 where it belongs.
 
+- **Goal** -- the default, and the easiest to write: what you want to be true. A goal is a
+  meta-issue that spawns work items -- the tracker's `Goal: ...` issues, the dockets, and anything
+  a contributor states without knowing whether it is a bug or a feature. The bar is minimal on
+  purpose: it is mathematics, and we do all of it; the triage sorts a goal into the Bugs and
+  Features it needs.
 - **Bug** -- the behaviour is not what the mathematics says, or the library crashes, hangs or
   answers something it should have declined. A bug whose impact is low (a simplification that is
   merely not as good as it could be) is still a Bug; say so in the body.
@@ -103,11 +108,11 @@ where it belongs.
   is a good one and is going to be implemented, it is marked `Accepted`; if it cannot be implemented
   any time soon, `Not now`. A Feature without `Accepted` is not agreed: comment on it, do not
   implement it.
-- **Task** -- a piece of work that is neither: a docket, a goal, a chore, a migration.
 
-A question is not a work item and has no type; it carries the `Question` label. `Opinions wanted`
-means anybody is welcome to share their opinion on a subject; `up-for-grabs` marks an issue reserved
-for a newcomer.
+Questions and requests for opinions are **Discussions**, not issues -- the Q&A and Ideas
+categories -- and are answered there; an issue that turns out to be one is redirected and, once
+answered, closed unless a work item came of it. `up-for-grabs` marks an issue reserved for a
+newcomer.
 
 `Area: *` - a number of labels for issues, which are only specific to one of the wrappers: AngouriMath.FSharp, AngouriMath.Interactive, AngouriMath.CPP.
 

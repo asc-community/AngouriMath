@@ -1,6 +1,6 @@
 ---
 name: Report a bug
-about: If you encounter unexpected behaviour or a bug, feel free to create an issue for it.
+about: A wrong answer, a crash, a hang, or an answer where there should have been a decline.
 title: ''
 type: Bug
 assignees: ''

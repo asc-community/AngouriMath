@@ -394,6 +394,17 @@ Then:
    merged over does not go away — it comes back as an issue somebody else had to file. Both places
    count, and the API shows them separately: `gh pr view <n> --comments` for the thread, and
    `gh api repos/{owner}/{repo}/pulls/<n>/comments` for comments left on the diff.
+8. **Sweep what the maintainer wrote since you last looked, every round, in all three places.**
+   Issue comments and review comments are two endpoints (`issues/comments` and `pulls/comments`,
+   each with `?sort=updated&direction=desc`), and **Discussions** are a third -- questions and
+   ideas live there, not in issues, and an unanswered one is as much yours as an issue comment:
+   ```
+   gh api graphql -f query='{ repository(owner:"asc-community", name:"AngouriMath") {
+     discussions(first:10, orderBy:{field:UPDATED_AT, direction:DESC}) {
+       nodes { number title updatedAt isAnswered category { name } } } } }'
+   ```
+   Answer a question there; a question that arrives as an issue is redirected to Discussions and,
+   once answered, closed unless a work item came of it.
 
 `TreatWarningsAsErrors` is on and there are custom analyzers; a static field needs
 `[ConstantField]`, `[ThreadStatic]` or `[ConcurrentField]`.
