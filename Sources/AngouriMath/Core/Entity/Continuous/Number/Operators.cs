@@ -485,7 +485,26 @@ namespace AngouriMath
                     var quarterTurns = twice.ToEInteger().Remainder(4);
                     if (quarterTurns.Sign < 0)
                         quarterTurns = quarterTurns.Add(4);
-                    var modulus = Pow(Real.Create(negativeBase.Negate()), power);
+                    // The modulus to the power: an exact base whose numerator and denominator
+                    // are squares has an exact root, and any other takes the decimal square
+                    // root and the whole power of it -- not the search over all the roots of
+                    // unity that an exact base's power otherwise runs, which cost `sqrt(-3)`
+                    // four times a solve of `x^2 + x + 1` a sixth of its allocation.
+                    var halfContext = MathS.Settings.DecimalPrecisionContext;
+                    var numeratorOfPower = twice.ToEInteger();
+                    Complex modulus;
+                    if (@base is Rational { ERational: var exactBase } && exactBase.Numerator.Abs().Sqrt() is { } rootAbove && exactBase.Denominator.Sqrt() is { } rootBelow
+                        && rootAbove.Multiply(rootAbove).Equals(exactBase.Numerator.Abs()) && rootBelow.Multiply(rootBelow).Equals(exactBase.Denominator))
+                        modulus = Pow(Rational.Create(rootAbove, rootBelow), Integer.Create(numeratorOfPower));
+                    else if (numeratorOfPower.IsEven)
+                        modulus = Pow(Real.Create(negativeBase.Negate()), Integer.Create(numeratorOfPower.Divide(2)));
+                    else
+                    {
+                        var root = negativeBase.Negate().SqrtByIntegerRoot(halfContext);
+                        var n = numeratorOfPower.Abs().ToInt32Checked();
+                        var raised = n == 1 ? root : root.Pow(n, halfContext);
+                        modulus = Real.Create(numeratorOfPower.Sign < 0 ? EDecimal.One.Divide(raised, halfContext) : raised);
+                    }
                     return quarterTurns.ToInt32Checked() switch
                     {
                         0 => modulus,
