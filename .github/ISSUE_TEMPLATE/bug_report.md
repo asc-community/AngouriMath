@@ -2,7 +2,7 @@
 name: Report a bug
 about: If you encounter unexpected behaviour or a bug, feel free to create an issue for it.
 title: ''
-labels: ''
+type: Bug
 assignees: ''
 
 ---
