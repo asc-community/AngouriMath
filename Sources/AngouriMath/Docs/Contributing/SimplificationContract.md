@@ -79,15 +79,22 @@ use it rather than invent a test.
 
 ### `Providedf` — a condition carried on the value
 
-`expr provided condition` says: this equals `expr` where `condition` holds, and is undefined
+`expr provided condition` says: this equals `expr` where `condition` holds, and has no value
 otherwise. `Simplify` already produces it — `x/x` gives `1 provided not x = 0` — and `Entity.Provided`
 drops the condition when it is `True`, so nothing is attached where nothing is needed.
 
-Two costs to know before reaching for it. A condition **competes on complexity**, because `Simplify`
-ranks candidates by node count, so attaching one can make a better form lose. And a condition
-**travels**: it propagates outward and can escape a binder
-([#878](https://github.com/asc-community/AngouriMath/issues/878)), and a single `NaN` condition inside
-a `Piecewise` collapses the whole node.
+**A condition the expression's own domain condition already states is redundant, and `Simplify`
+drops it.** `x^x provided not x = 0` is `x^x` and `1/x provided not x = 0` is `1/x`: what an
+expression accepts under a codomain is what `DomainConditionIn` says — a nonzero divisor, a
+nonzero base or a positive exponent, a nonzero antilogarithm over the complex plane and a positive
+one over the reals — and a `provided` that only excludes points that condition already excludes
+says nothing. The decision is made against the domain condition read in the ambient codomain, not
+against the shape of the node, so it follows the codomain: when
+[#217](https://github.com/asc-community/AngouriMath/issues/217) gives `1/0` a value under the
+codomains that admit a complex infinity, the quotient's domain condition changes there and the
+`provided` beside `1/x` stops being redundant, with no change to the rule. A condition the
+expression does not state stays: `x/x` becomes `1 provided not x = 0`, and `1` says nothing about
+zero ([#1394](https://github.com/asc-community/AngouriMath/issues/1394)).
 
 ## 3. Four things that are not the same
 

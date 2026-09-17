@@ -110,6 +110,11 @@ library answers `x + 1 provided not x - 1 = 0`. Same for `x/x + 0*y`. Carrying a
 singularity costs the shorter output on those rows and is deliberate — see
 [SimplificationContract.md](../Contributing/SimplificationContract.md), which is where a rewrite's
 right to attach or drop such a condition is set out.
+The two differentiation rows are the other
+half of the same trade, and they no longer carry the condition: the quotient by `x^2` and the
+`0^0` each exclude zero by their own domain condition, so a `provided not x = 0` beside them said
+what the expression already says, and `Simplify` drops a condition its answer's domain condition
+already states.
 
 The two equal-length rows differ by collection and ordering: `1 + 3 * x ^ 2 + 4 * x` against
 `1 + 4*x + 3*x^2` is the same polynomial written in a different order.

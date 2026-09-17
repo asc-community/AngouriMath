@@ -357,11 +357,16 @@ rule that does the same for a polynomial under a square root, whose answers are 
 derivative of `ln(x)/x`, and `(1 + ln(x)) x^x provided not x = 0` for that of `x^x`. The quotient
 by `x^2`, the `ln(x)` and the `0^0` are each undefined at zero already, so the condition excluded
 a point the expression never reached and said twice what the expression says once. A `provided`
-whose condition the expression proves on its own — a quotient by `d`, a negative power of `d`, a
-logarithm of `d` or to the base `d`, `d^f` with `f` vanishing too, for `d` the condition's `e`,
-a positive power of it, a product holding it, a polynomial in the variable `e` is with no constant
-term, or a polynomial that is zero at the root of a linear `e` — comes back without that
-conjunct. Only the answer is read this way, and only its top: inside a piecewise a predicate
+whose condition the expression proves on its own — whose own domain condition, read in the
+ambient codomain (`DomainConditionIn`), already excludes the zeros of the condition's `e`: a
+conjunct `not d = 0` or `d > 0` with `d` being `e` itself, a positive power of it, a product
+holding it, a sine, tangent, arcsine or arctangent of such a thing, a polynomial in the variable
+`e` is with no constant term, or a polynomial that is zero at the root of a linear `e`, or a
+disjunction every side of which does, as `x^x`'s `not x = 0 or x > 0` — comes back without that
+conjunct. Decided by the domain condition rather than by the shape of the node, so it follows
+the codomain: when [#217](https://github.com/asc-community/AngouriMath/issues/217) gives `1/0`
+a value under the codomains that admit a complex infinity, the quotient's domain condition
+changes there and the condition beside `1/x` stops being redundant, with no change to the rule. Only the answer is read this way, and only its top: inside a piecewise a predicate
 decides which case is taken and stays; inside the simplifier's own search a `provided` is what
 rules read as "this candidate needs a condition" and stays too. A condition the expression does
 not state is kept — `x/x` simplifies to `1 provided not x = 0` as before, since `1` no longer
@@ -373,6 +378,7 @@ says it. [#1394](https://github.com/asc-community/AngouriMath/issues/1394)
 | `"x^x".Differentiate("x").Simplify()` | `(1 + ln(x)) x^x provided not x = 0` | `(1 + ln(x)) x^x` |
 | `"x^n".Differentiate("x").Simplify()` | `x^n n/x provided not x = 0` | `x^n n/x` |
 | `"1/(x^2 + x) provided not x = 0 and not x + 1 = 0".Simplify()` | unchanged | `1/(x^2 + x)` |
+| `"tan(x) provided not cos(x) = 0".Simplify()`, `"sin(x)/x provided not x = 0".Simplify()` | unchanged | `tan(x)`, `sin(x)/x` |
 | `"(x + sin(x))/x".Limit("x", "+oo")` | unevaluated | `1`, by the squeeze theorem on `sin(x)/x` once the division no longer carries the condition between the terms |
 
 ### The Pythagorean pair is found anywhere in a sum
