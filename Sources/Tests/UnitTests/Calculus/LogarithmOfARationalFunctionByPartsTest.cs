@@ -87,5 +87,37 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x*(A + B*arctan(c*x))")]
         [InlineData("(A + B*arctan(c*x))^2/(1 + c^2*x^2)")]
         public void AnArctangentTheSameWay(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// Powers of the logarithm's own two linears beside a power of it, by
+        /// <c>t = (a + b x)/(c + d x)</c>: a rational function of <c>t</c> beside a logarithm
+        /// of <c>t</c>, one closed step, where the step of parts above went on with its
+        /// coefficients growing to <c>b^205</c> and the substitution search went past its
+        /// budget. The exponents may be symbols.
+        /// </summary>
+        [Theory]
+        [InlineData("(A + B*ln(k*((a + b*x)/(c + d*x))^n))^2/(a*g + b*g*x)^4")]
+        [InlineData("(A + B*ln(k*(a + b*x)^n/(c + d*x)^n))^3/(a + b*x)^3")]
+        [InlineData("(A + B*ln(k*(c + d*x)^2/(a + b*x)^2))^2/(a*g + b*g*x)^4")]
+        [InlineData("(A + B*ln(k*(a + b*x)/(c + d*x)))/((a*g + b*g*x)^2*(c*j + d*j*x)^2)")]
+        [InlineData("(c*j + d*j*x)^3*(A + B*ln(k*(a + b*x)/(c + d*x)))^2/(a*g + b*g*x)^6")]
+        [InlineData("(A + B*ln(k*((a + b*x)/(c + d*x))^n))^2/((a*g + b*g*x)^4*(c*j + d*j*x)^3)")]
+        [InlineData("(a*g + b*g*x)^(-2 - m)*(c*j + d*j*x)^m*(A + B*ln(k*((a + b*x)/(c + d*x))^n))^2")]
+        public void ByTheQuotientOfTheLogarithmsLinears(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// A power of <c>x</c>, or of <c>d x</c>, times a whole power of <c>A + B ln(c x^n)</c>
+        /// by the closed reduction of <c>x^p ln(x)^n</c>, each step of parts bringing the
+        /// factor <c>B n</c>; a lone power of the affine logarithm is the case <c>p = 0</c>,
+        /// and a linear argument is the same under its shift.
+        /// </summary>
+        [Theory]
+        [InlineData("(d*x)^m*(a + b*ln(c*x^n))")]
+        [InlineData("(f*x)^q*(a + b*ln(c*(d*x^m)^n))^3")]
+        [InlineData("x^(-2 - m)*(A + B*ln(k*x^n))^2")]
+        [InlineData("(a + b*ln(c*x^n))^2/x")]
+        [InlineData("(a + b*ln(c*(d*x^m)^n))^4")]
+        [InlineData("(a + b*ln(c*(d*(f + g*x)^m)^n))^4")]
+        public void APowerTimesAPowerOfAnAffineLogarithm(string integrand) => DifferentiatesBack(integrand);
     }
 }

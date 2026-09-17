@@ -7334,7 +7334,12 @@ namespace AngouriMath.Functions.Algebra
         /// A power of x times a whole power of its logarithm, <c>x^p ln(x)^n</c>, by the
         /// closed reduction
         /// <c>x^(p + 1) sum_(k = 0..n) (-1)^k n!/(n - k)! ln(x)^(n - k)/(p + 1)^(k + 1)</c>, for
-        /// any <c>p</c> but <c>-1</c>, where it is <c>ln(x)^(n + 1)/(n + 1)</c>.
+        /// any <c>p</c> but <c>-1</c>, where it is <c>ln(x)^(n + 1)/(n + 1)</c>. And the same
+        /// for <c>F = A + B ln(c x^r)</c> in the logarithm's place, whose derivative is
+        /// <c>s/x</c> for <c>s = B r</c>: each step of parts brings a factor <c>s</c>, so the
+        /// sum is over <c>(-s)^k n!/(n - k)! F^(n - k)/(p + 1)^(k + 1)</c>, and at <c>p = -1</c>
+        /// it is <c>F^(n + 1)/((n + 1) s)</c>. Rubi's <c>(e x)^q (a + b ln(c x^n))^3</c>, and
+        /// <c>t^(-2 - m) (A + B ln(e t^n))^2</c> in the variable of the quotient substitution.
         /// </summary>
         /// <remarks>
         /// By parts <c>n</c> times, written out: each step takes one from the power of the
@@ -7351,6 +7356,7 @@ namespace AngouriMath.Functions.Algebra
             var n = 0;
             Entity constant = Number.Integer.One;
             var logarithm = MathS.Ln(x);
+            Entity? affine = null;   // F, where the factor is a power of A + B ln(c x^r) and not of ln x
             foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
             {
                 if (!factor.ContainsNode(x))
@@ -7362,20 +7368,41 @@ namespace AngouriMath.Functions.Algebra
                     p = underneath ? Number.Integer.MinusOne : Number.Integer.One;
                 else if (factor is Powf(var @base, var exponent) && @base == x && !exponent.ContainsNode(x) && p is null)
                     p = underneath ? -exponent : exponent;
+                else if (factor is Powf(Mulf(var scale, var scaled), var scaledExponent) && scaled == x && !scale.ContainsNode(x) && !scaledExponent.ContainsNode(x) && p is null)
+                {
+                    // `(d x)^m` as `d^m x^m`, the generic case, as the table's power rule takes it.
+                    p = underneath ? -scaledExponent : scaledExponent;
+                    var scalePower = MathS.Pow(scale, scaledExponent);
+                    constant = underneath ? constant / scalePower : constant * scalePower;
+                }
                 else if (factor == logarithm && n == 0 && !underneath)
                     n = 1;
                 else if (factor is Powf(var l, Number.Integer whole) && l == logarithm && whole.EInteger.Sign > 0 && whole.EInteger.CanFitInInt32() && n == 0 && !underneath)
                     n = whole.EInteger.ToInt32Unchecked();
+                else if (n == 0 && !underneath && factor is not Powf && IsAffineInALogarithmOfAPowerOfX(factor, x))
+                    (affine, n) = (factor, 1);
+                else if (n == 0 && !underneath && factor is Powf(var f, Number.Integer wholeOfF) && wholeOfF.EInteger.Sign > 0 && wholeOfF.EInteger.CanFitInInt32() && IsAffineInALogarithmOfAPowerOfX(f, x))
+                    (affine, n) = (f, wholeOfF.EInteger.ToInt32Unchecked());
                 else
                     return null;
             }
-            if (n == 0 || n > 12 || p is null)
+            if (n == 0 || n > 12 || p is null && affine is null)
                 return null;
-            p = p.InnerSimplified;
+            // A power of F alone is the case p = 0.
+            p = (p ?? Number.Integer.Zero).InnerSimplified;
             if (p.Evaled is Number.Complex and not Number.Real)
                 return null;
+            // The factor F and s with F' = s/x: ln x itself, or A + B ln(c x^r) with s = B r.
+            Entity slopeOfF = Number.Integer.One;
+            if (affine is { })
+            {
+                logarithm = affine;
+                slopeOfF = Functions.PartialFractions.Bare((affine.Differentiate(x) * x).Simplify());
+                if (slopeOfF.ContainsNode(x) || slopeOfF.Evaled is Number.Complex { IsZero: true })
+                    return null;
+            }
             if ((p + 1).InnerSimplified.Evaled is Number.Complex { IsZero: true })
-                return (constant * MathS.Pow(logarithm, n + 1) / (n + 1)).InnerSimplified;
+                return (constant * MathS.Pow(logarithm, n + 1) / ((n + 1) * slopeOfF)).InnerSimplified;
             // Written out term by term, each with its coefficient folded: the derivative of
             // `x^3 ln(x)/3 - x^3/9` cancels symbolically against `x^2 ln(x)`, where a nested
             // `x^3 (ln(x)/3 - 1/9)` left a residual the simplifier did not close.
@@ -7388,11 +7415,41 @@ namespace AngouriMath.Functions.Algebra
                 if (k > 0)
                     fallingFactorial = fallingFactorial.Multiply(EInteger.FromInt32(n - k + 1));
                 var sign = k % 2 == 0 ? Number.Integer.One : Number.Integer.MinusOne;
-                var coefficient = (constant * sign * Number.Integer.Create(fallingFactorial) / MathS.Pow(pPlusOne, k + 1)).InnerSimplified;
+                var slopePower = k == 0 || slopeOfF == Number.Integer.One ? Number.Integer.One : MathS.Pow(slopeOfF, k);
+                var coefficient = (constant * sign * Number.Integer.Create(fallingFactorial) * slopePower / MathS.Pow(pPlusOne, k + 1)).InnerSimplified;
                 Entity term = n - k == 0 ? coefficient * powerOfX : coefficient * powerOfX * (n - k == 1 ? logarithm : MathS.Pow(logarithm, n - k));
                 sum = sum == Number.Integer.Zero ? term : sum + term;
             }
             return sum.InnerSimplified;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> is <c>A + B ln(c x^r)</c> with <c>A</c>, <c>B</c>,
+        /// <c>c</c> and <c>r</c> free of <paramref name="x"/> and the logarithm present: one
+        /// logarithm of <paramref name="x"/> in it, the expression linear in that logarithm,
+        /// and the logarithm's argument a constant times a power of <paramref name="x"/>.
+        /// </summary>
+        private static bool IsAffineInALogarithmOfAPowerOfX(Entity expr, Entity.Variable x)
+        {
+            Entity? logarithm = null;
+            foreach (var node in expr.Nodes)
+                if (node is Logf(var @base, var argument) && @base == MathS.e && argument.ContainsNode(x))
+                {
+                    if (logarithm is not null && logarithm != node)
+                        return false;
+                    logarithm = node;
+                }
+            if (logarithm is not Logf(_, var antilogarithm))
+                return false;
+            // The argument c x^r: its logarithmic derivative is r/x.
+            var rate = Functions.PartialFractions.Bare((antilogarithm.Differentiate(x) * x / antilogarithm).Simplify());
+            if (rate.ContainsNode(x) || rate.Nodes.Any(node => node == MathS.NaN))
+                return false;
+            var placeholder = Variable.CreateUnique(expr, "u_log");
+            var inThePlaceholder = expr.Replace(node => node == logarithm ? placeholder : node);
+            if (inThePlaceholder.ContainsNode(x))
+                return false;
+            return TreeAnalyzer.TryGetPolyLinear(inThePlaceholder, placeholder, out var slope, out _) && slope is { } && !TreeAnalyzer.IsZero(slope);
         }
 
         /// <summary>
@@ -9106,6 +9163,229 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             var rewritten = WithPolynomialPowersBelowTheBar(expr, x);
             return rewritten == expr ? null : Integration.ComputeAsAQuestionOfItsOwn(rewritten, x, integrateByParts);
+        }
+
+        /// <summary>
+        /// Powers of two linears beside a power of <c>A + B ln(K (L1/L2)^n)</c> in the same
+        /// two linears, by the substitution <c>t = L1/L2</c>: with <c>L1 = a + b x</c> and
+        /// <c>L2 = c + d x</c>, <c>L1 = D t/(b - d t)</c>, <c>L2 = D/(b - d t)</c> and
+        /// <c>dx = D dt/(b - d t)^2</c> for <c>D = b c - a d</c>, so the integrand is a power
+        /// of <c>t</c> times a power of <c>b - d t</c> times a power of <c>A + B ln(K t^n)</c>,
+        /// which the rule above answers as a rational function beside a logarithm of
+        /// <c>t</c>. Rubi's <c>(f + g x)^m (h + i x)^q (A + B ln(e ((a + b x)/(c + d x))^n))^p</c>
+        /// with <c>f + g x</c> and <c>h + i x</c> proportional to the log's linears, which
+        /// the rule above takes step by step and the substitution search spent its budget on:
+        /// <c>(A + B ln(e (a + b x)/(c + d x)))/((a g + b g x)^2 (c j + d j x)^2)</c> is
+        /// <c>(A + B ln(e t))(b - d t)^2/(g^2 j^2 D^3 t^2)</c>, which answers at once. The
+        /// exponents may be symbols; <c>(g L1)^m</c> is taken as <c>g^m L1^m</c> and
+        /// <c>K L1^n/L2^n</c> as <c>K t^n</c>, the generic case, and the answer is checked
+        /// against the integrand at sampled points before it is given.
+        /// </summary>
+        internal static Entity? SolveByTheQuotientOfTheLogarithmsLinears(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            expr = WithNegativePowersOfProductsApart(expr);
+            // The logarithm's argument: a product of constants and powers of two linears with
+            // opposite exponents.
+            Entity? logarithm = null;
+            foreach (var node in expr.Nodes)
+                if (node is Logf(var @base, var antilogarithm) && @base == MathS.e && antilogarithm.ContainsNode(x))
+                {
+                    if (logarithm is not null && logarithm != antilogarithm)
+                        return null;
+                    logarithm = antilogarithm;
+                }
+            if (logarithm is null)
+                return null;
+            var leaves = new List<(Entity Base, Entity Power)>();
+            GatherPowers(logarithm, Number.Integer.One);
+            Entity constant = Number.Integer.One;
+            (Entity Slope, Entity Offset, Entity Linear)? first = null, second = null;
+            Entity firstPower = Number.Integer.Zero, secondPower = Number.Integer.Zero;
+            foreach (var (leaf, power) in leaves)
+            {
+                if (!leaf.ContainsNode(x))
+                {
+                    constant *= MathS.Pow(leaf, power);
+                    continue;
+                }
+                if (!TryReadLinear(leaf, out var slope, out var offset))
+                    return null;
+                if (first is null)
+                {
+                    first = (slope, offset, leaf);
+                    firstPower = power;
+                }
+                else if (ProportionalTo(slope, offset, first.Value) is { } ratio)
+                {
+                    constant *= MathS.Pow(ratio, power);
+                    firstPower += power;
+                }
+                else if (second is null)
+                {
+                    second = (slope, offset, leaf);
+                    secondPower = power;
+                }
+                else if (ProportionalTo(slope, offset, second.Value) is { } secondRatio)
+                {
+                    constant *= MathS.Pow(secondRatio, power);
+                    secondPower += power;
+                }
+                else
+                    return null;
+            }
+            if (first is not { } l1 || second is not { } l2)
+                return null;
+            var exponent = firstPower.InnerSimplified;
+            if (exponent.Evaled is Number.Complex { IsZero: true } || !AreEqualAsPolynomials(exponent, (-secondPower).InnerSimplified))
+                return null;
+            var (a, b, c, d) = (l1.Offset, l1.Slope, l2.Offset, l2.Slope);
+            var determinant = (b * c - a * d).InnerSimplified;
+            if (determinant.Evaled is Number.Complex { IsZero: true } || AreProportionalAtSampledPoints(l1.Linear, l2.Linear, x))
+                return null;
+
+            // Every other factor holding x is a power of a linear proportional to one of the
+            // two, or the logarithm's own factor. The powers of t and of b - d t are summed,
+            // so that the integrand in t is one power of each over or under the bar: with
+            // `(b - d t)^2` above and `(b - d t)^(-4)` below as they came, the rule for the
+            // logarithm expanded its rational part to a page.
+            var t = Variable.CreateUnique(expr, "u_quot");
+            var denominatorInT = (b - d * t).InnerSimplified;
+            Entity constantInFront = determinant;
+            Entity powerOfT = Number.Integer.Zero;
+            Entity powerOfDenominator = Number.Integer.Create(-2);   // dx = D dt/(b - d t)^2
+            Entity? logarithmsFactor = null;
+            // A polynomial beside the logarithm is by parts in x as it stands, one closed
+            // step; in t it is a power of b - d t below the bar, which is the slower way.
+            var aPolynomialBesideTheLogarithm = true;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constantInFront = underneath ? constantInFront / factor : constantInFront * factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var pb, var pp) && !pp.ContainsNode(x) ? (pb, pp) : (factor, (Entity)Number.Integer.One);
+                if (underneath)
+                    power = (-power).InnerSimplified;
+                if (!@base.ContainsNode(logarithm) && power.Evaled is not Number.Integer { EInteger.Sign: >= 0 })
+                    aPolynomialBesideTheLogarithm = false;
+                if (@base.ContainsNode(logarithm))
+                {
+                    if (logarithmsFactor is not null)
+                        return null;
+                    var inT = @base.Replace(node => node == logarithm ? constant * MathS.Pow(t, exponent) : node);
+                    if (inT.ContainsNode(x))
+                        return null;
+                    logarithmsFactor = MathS.Pow(inT, power);
+                    continue;
+                }
+                if (!TryReadLinear(@base, out var slope, out var offset))
+                    return null;
+                if (ProportionalTo(slope, offset, l1) is { } ratio1)
+                {
+                    constantInFront *= MathS.Pow(ratio1 * determinant, power);
+                    powerOfT += power;
+                    powerOfDenominator -= power;
+                }
+                else if (ProportionalTo(slope, offset, l2) is { } ratio2)
+                {
+                    constantInFront *= MathS.Pow(ratio2 * determinant, power);
+                    powerOfDenominator -= power;
+                }
+                else
+                    return null;
+            }
+            if (logarithmsFactor is null || aPolynomialBesideTheLogarithm)
+                return null;
+            Entity above = constantInFront * logarithmsFactor, below = Number.Integer.One;
+            foreach (var (@base, power) in new[] { (t, Functions.PartialFractions.Bare(powerOfT.Simplify())), (denominatorInT, Functions.PartialFractions.Bare(powerOfDenominator.Simplify())) })
+            {
+                if (power.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                if (power.Evaled is Number.Real { IsNegative: true })
+                    below *= MathS.Pow(@base, (-power).InnerSimplified);
+                else
+                    above *= MathS.Pow(@base, power);
+            }
+            var rewritten = (below == Number.Integer.One ? above : above / below).InnerSimplified;
+            if (rewritten.ContainsNode(x))
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(rewritten, t, integrateByParts) is not { } integrated)
+                return null;
+            var answer = integrated.Substitute(t, l1.Linear / l2.Linear);
+            if (answer.Nodes.Any(node => node == MathS.NaN) || !Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
+                return null;
+            return answer;
+
+            void GatherPowers(Entity node, Entity power)
+            {
+                switch (node)
+                {
+                    case Mulf(var left, var right):
+                        GatherPowers(left, power);
+                        GatherPowers(right, power);
+                        break;
+                    case Divf(var numerator, var denominator):
+                        GatherPowers(numerator, power);
+                        GatherPowers(denominator, (-power).InnerSimplified);
+                        break;
+                    case Powf(var @base, var exponentOfPower) when !exponentOfPower.ContainsNode(x):
+                        GatherPowers(@base, (power * exponentOfPower).InnerSimplified);
+                        break;
+                    default:
+                        leaves.Add((node, power));
+                        break;
+                }
+            }
+
+            // Linear in x in whatever spelling the chain gave it: `a g^0 b^(-1) + x`, for
+            // `(a g + b g x)` made monic, is not read as a polynomial, and is read by its
+            // derivative.
+            bool TryReadLinear(Entity linear, out Entity slope, out Entity offset)
+            {
+                if (TreeAnalyzer.TryGetPolyLinear(linear, x, out var readSlope, out var readOffset) && readSlope is { } && readOffset is { })
+                {
+                    (slope, offset) = (readSlope, readOffset);
+                    return !TreeAnalyzer.IsZero(slope);
+                }
+                slope = Functions.PartialFractions.Bare(linear.Differentiate(x).Simplify());
+                offset = Functions.PartialFractions.Bare((linear - slope * x).Simplify());
+                return !slope.ContainsNode(x) && !offset.ContainsNode(x) && !TreeAnalyzer.IsZero(slope)
+                    && slope.Evaled is not Number.Complex { IsZero: true };
+            }
+
+            // The constant `slope/other.Slope` where the linear is that multiple of the
+            // other, else null: cross-multiplied, so that no symbol is divided by.
+            Entity? ProportionalTo(Entity slope, Entity offset, (Entity Slope, Entity Offset, Entity Linear) other)
+            {
+                // Decided at sampled points, since the linear arrives in whatever spelling the
+                // chain gave it -- `a g^0 b^(-1) + x` for `(a g + b g x)` made monic -- and
+                // then the ratio read exactly.
+                if (!AreEqualAsPolynomials((offset * other.Slope).InnerSimplified, (other.Offset * slope).InnerSimplified)
+                    && !AreProportionalAtSampledPoints(slope * x + offset, other.Linear, x))
+                    return null;
+                var ratio = Functions.PartialFractions.Bare((slope / other.Slope).Simplify());
+                return ratio.Nodes.Any(node => node == MathS.NaN) || ratio.ContainsNode(x) ? null : ratio;
+            }
+
+            // Equal as polynomials in their symbols, exactly.
+            static bool AreEqualAsPolynomials(Entity left, Entity right)
+            {
+                if (left == right)
+                    return true;
+                var difference = Functions.PartialFractions.Bare((left - right).Simplify());
+                if (difference.Evaled is Number.Complex { IsZero: true })
+                    return true;
+                var symbols = difference.Vars.ToList();
+                if (symbols.Count == 0)
+                    return false;
+                var indices = new Dictionary<Variable, int>();
+                foreach (var symbol in symbols)
+                    indices[symbol] = indices.Count;
+                return Functions.MultivariatePolynomial.TryParse(difference, indices) is { IsZero: true };
+            }
         }
 
         /// <summary>
