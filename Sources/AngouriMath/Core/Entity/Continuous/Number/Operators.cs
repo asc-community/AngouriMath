@@ -137,6 +137,15 @@ namespace AngouriMath
                         */
                         var conj = b.Conjugate;
                         var bAbs = b.Abs().EDecimal;
+                        // The squared modulus of a divisor of 3 * 10^125 is 10^251 and its
+                        // reciprocal is under the context's exponent floor, so the quotient
+                        // came out zero where it was 6 * 10^-7 -- a right antiderivative's
+                        // derivative read as wrong at one point. Far from one, Smith's method,
+                        // which never forms the square; near one, the route as it was, whose
+                        // digits are pinned to the last place by the tests.
+                        // https://github.com/asc-community/AngouriMath/issues/1372
+                        if (bAbs.IsFinite && !bAbs.IsZero && bAbs.Exponent.Add(bAbs.Precision()).Abs().CompareTo(EInteger.FromInt32(40)) > 0)
+                            return DivideBySmith(a, b);
                         var abs2 = CtxMultiply(bAbs, bAbs);
                         var Re = CtxDivide(conj.RealPart.EDecimal, abs2);
                         var Im = CtxDivide(conj.ImaginaryPart.EDecimal, abs2);
@@ -144,6 +153,40 @@ namespace AngouriMath
                         return a * c;
                     }
                     );
+
+            /// <summary>
+            /// <c>(a + ib)/(c + id)</c> by Smith's method: the smaller of <c>c</c> and <c>d</c>
+            /// over the larger, and a denominator of the larger's size, so that nothing squared
+            /// is formed and a divisor of any size within the context's range divides.
+            /// </summary>
+            private static Complex DivideBySmith(Complex a, Complex b)
+            {
+                var (ar, ai) = (a.RealPart.EDecimal, a.ImaginaryPart.EDecimal);
+                var (c, d) = (b.RealPart.EDecimal, b.ImaginaryPart.EDecimal);
+                // Rounded to the context's digits at the end: CtxDivide divides to a number of
+                // decimal places.
+                var context = MathS.Settings.DecimalPrecisionContext.Value;
+                if (d.IsZero)
+                    return Complex.Create(CtxDivide(ar, c).RoundToPrecision(context), CtxDivide(ai, c).RoundToPrecision(context));
+                if (c.IsZero)
+                    return Complex.Create(CtxDivide(ai, d).RoundToPrecision(context), CtxDivide(ar.Negate(), d).RoundToPrecision(context));
+                if (c.Abs().CompareTo(d.Abs()) >= 0)
+                {
+                    var ratio = CtxDivide(d, c);
+                    var denominator = CtxAdd(c, CtxMultiply(d, ratio));
+                    return Complex.Create(
+                        CtxDivide(CtxAdd(ar, CtxMultiply(ai, ratio)), denominator).RoundToPrecision(context),
+                        CtxDivide(CtxSubtract(ai, CtxMultiply(ar, ratio)), denominator).RoundToPrecision(context));
+                }
+                else
+                {
+                    var ratio = CtxDivide(c, d);
+                    var denominator = CtxAdd(CtxMultiply(c, ratio), d);
+                    return Complex.Create(
+                        CtxDivide(CtxAdd(CtxMultiply(ar, ratio), ai), denominator).RoundToPrecision(context),
+                        CtxDivide(CtxSubtract(CtxMultiply(ai, ratio), ar), denominator).RoundToPrecision(context));
+                }
+            }
 
             /// <summary>
             /// Checks whether a number is zero

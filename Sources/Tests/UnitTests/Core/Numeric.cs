@@ -6,6 +6,7 @@
 //
 
 using AngouriMath;
+using PeterO.Numbers;
 using static AngouriMath.Entity.Number;
 using Xunit;
 using static AngouriMath.Entity.Set;
@@ -406,6 +407,27 @@ namespace AngouriMath.Tests.Core
             var value = (Complex)"ln(((-0.473)^(1/2))^2)".ToEntity().EvalNumerical();
             var pi = (Real)MathS.pi.EvalNumerical();
             Assert.True(value.ImaginaryPart.EDecimal.Subtract(pi.EDecimal).Abs().CompareTo(PeterO.Numbers.EDecimal.Create(1, -90)) < 0, $"imaginary part {value.ImaginaryPart}");
+        }
+
+        /// <summary>
+        /// A complex division formed the reciprocal of the divisor's squared modulus first,
+        /// which for a divisor of 3 * 10^125 is 10^-251, under the context's exponent floor,
+        /// and the quotient came out zero where it was 6 * 10^-7. Smith's method, far from
+        /// one, never forms the square. https://github.com/asc-community/AngouriMath/issues/1372
+        /// </summary>
+        [Theory]
+        [InlineData("1.98e119", "0", "3.39e125", "0", "5.8407079646017699115044247787610619469026548672566371681415929203539823008849557522123893805309734513e-7", "0")]
+        [InlineData("1", "0", "1e80", "1e80", "5e-81", "-5e-81")]
+        [InlineData("2", "3", "4", "-5", "-0.17073170731707317073170731707317073170731707317073170731707317073170731707317073170731707317073170732", "0.53658536585365853658536585365853658536585365853658536585365853658536585365853658536585365853658536585")]
+        [InlineData("1", "2", "0", "1e90", "2e-90", "-1e-90")]
+        public void AComplexDivisionWithALargeDivisor(string ar, string ai, string br, string bi, string qr, string qi)
+        {
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+            static EDecimal D(string s) => EDecimal.FromString(s);
+            var quotient = Complex.Create(D(ar), D(ai)) / Complex.Create(D(br), D(bi));
+            var tolerance = EDecimal.FromString("1e-95");
+            Assert.True(quotient.RealPart.EDecimal.Subtract(D(qr)).Abs().CompareTo(D(qr).Abs().Multiply(tolerance).Add(EDecimal.Create(1, -180))) <= 0, $"real part {quotient.RealPart} for {qr}");
+            Assert.True(quotient.ImaginaryPart.EDecimal.Subtract(D(qi)).Abs().CompareTo(D(qi).Abs().Multiply(tolerance).Add(EDecimal.Create(1, -180))) <= 0, $"imaginary part {quotient.ImaginaryPart} for {qi}");
         }
     }
 }

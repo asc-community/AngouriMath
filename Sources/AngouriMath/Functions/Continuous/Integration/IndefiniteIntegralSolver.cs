@@ -3339,6 +3339,13 @@ namespace AngouriMath.Functions.Algebra
                     // whether the exponent it carries along is whole — the power rule takes
                     // <c>u^(-3/2)</c> as readily as <c>u^(-3)</c>. Which of the three cases
                     // applies still turns on a whole exponent, and that is checked there.
+                    // Not a fractional power of an even power, though: `(sin^2)^(3/2)` is
+                    // `|sin|^3`, and read as `sin^3` it was integrated as one, wrong on every
+                    // other half-turn; `sqrt(a sin^2)^5`, `1/sqrt(a cot^2)`, `(csc^2)^(3/2)`,
+                    // `x sqrt(sin^2)` were four of Rubi's answered so.
+                    // https://github.com/asc-community/AngouriMath/issues/1387
+                    case Powf(var @base, Number.Rational power) when power is not Number.Integer && HasAnEvenPowerOfATrigonometricFunction(@base):
+                        return false;
                     case Powf(var @base, Number.Rational power):
                         return Read(@base, multiplicity * power.ERational);
                     // A rational factor rides along; anything else is declined rather than
@@ -3357,6 +3364,14 @@ namespace AngouriMath.Functions.Algebra
                 }
             }
         }
+
+        /// <summary>
+        /// Whether an even whole power of a sine, cosine, tangent, cotangent, secant or
+        /// cosecant stands anywhere in <paramref name="expr"/>: a fractional power of it is a
+        /// power of the function's modulus, not of the function.
+        /// </summary>
+        private static bool HasAnEvenPowerOfATrigonometricFunction(Entity expr)
+            => expr.Nodes.Any(node => node is Powf(TrigonometricFunction, Number.Integer even) && even.EInteger.IsEven && !even.EInteger.IsZero);
 
         /// <summary>
         /// Whether <paramref name="value"/> is a whole number small enough to count with, and
@@ -4474,6 +4489,15 @@ namespace AngouriMath.Functions.Algebra
             if (q < 2 || q > 12)
                 return null;
             if (!TreeAnalyzer.TryGetPolyLinear(first, x, out var a, out var b) || !TreeAnalyzer.TryGetPolyLinear(second, x, out var c, out var d))
+                return null;
+            // Two proportional linears are one radical with a constant in it, and not this
+            // rule's: their determinant a d - b c is zero, the second linear in t is 0/(a - c t^q)
+            // and everything it multiplies vanished -- Rubi's
+            // `sin(a + b (c + d x)^(1/3))/(c e + d e x)^(1/3)` came back as `0 provided ...`.
+            // https://github.com/asc-community/AngouriMath/issues/1386
+            var determinant = (a * d - b * c).InnerSimplified;
+            if (determinant.Evaled is Number.Complex { IsZero: true }
+                || determinant.Vars.Any() && Functions.PartialFractions.Bare(determinant.Simplify()).Evaled is Number.Complex { IsZero: true })
                 return null;
 
             var t = Variable.CreateUnique(expr, "t_rad");
