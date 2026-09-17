@@ -487,6 +487,11 @@ namespace AngouriMath.Functions.Algebra
             // split, since Hearn's `e^(x^2)/x + 2x e^(x^2) ln(x) + ...` is a sum whose terms are
             // not elementary apart; at the top only, and only for a tower no closed rule reads.
             if ((answer = IndefiniteIntegralSolver.SolveByRischNormanAnsatz(expr, x)) is { }) return answer;
+            // A polynomial over a power of a linear and something that is not a polynomial,
+            // the polynomial written in powers of the linear at its root: the part the power
+            // divides goes over the rest alone. Before the split, so that the whole polynomial
+            // is reduced once rather than each of its terms.
+            if ((answer = IndefiniteIntegralSolver.SolveByReducingThePolynomialOverALinearFactor(expr, x, integrateByParts)) is { }) return answer;
             if (expr is Entity.Sumf or Entity.Minusf
                 && (answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { })
                 return answer;
