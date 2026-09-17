@@ -499,7 +499,14 @@ namespace AngouriMath.Functions
             // in every term and twenty kilobytes of answer, right and unreadable, and its
             // fourth power did not evaluate. Numeric coefficients keep the system, which is
             // exact over the rationals and answers them as before.
-            if (factors.All(f => TreeAnalyzer.TryGetPolynomial(f.Factor is Powf(var b, _) ? b : f.Factor, x, out var linear) && linear.Count > 0 && linear.Keys.Max()!.Equals(EInteger.One))
+            // And beside a quadratic factor, the same way: the linear blocks by their Taylor
+            // coefficients at the root, and the quadratic's numerator in the ring modulo the
+            // quadratic. Rubi's `tan^4 (A + B tan)/(a + b tan)^4` is
+            // `u^4 (A + B u)/((a + b u)^4 (1 + u^2))` under the tangent, and the system
+            // answered it in `a^63 b^10` and did not evaluate within its budget; this way it
+            // is a line of arctangents and logarithms.
+            // https://github.com/asc-community/AngouriMath/issues/718
+            if (factors.Any(f => IsLinear(f.Factor, x))
                 && (numerator + denominator).Vars.Any(v => v != x)
                 && TrySplitOverSymbolicLinearFactors(numerator, denominator, constant, factors, x, out decomposition))
                 return true;
@@ -585,9 +592,62 @@ namespace AngouriMath.Functions
             if (expandedAbove == Integer.Zero || expandedAbove.Evaled is Complex { IsZero: true } || IsZeroAtPinnedSymbols(expandedAbove))
                 return Integer.Zero;
             var expandedBelow = Bare(below.Expand().InnerSimplified);
-            if (PolynomialGcd.TryCancel(expandedAbove, expandedBelow, out var cancelled))
+            // With room for the coefficient a fourth-order block leaves: the series of
+            // `x^4 (A + B x)/(1 + x^2)` at `-a/b` had `(a^2 + b^2)^3` in common at the third
+            // order and eleven hundred nodes, and left uncancelled it carried into every
+            // term of the answer.
+            if (PolynomialGcd.TryCancel(expandedAbove, expandedBelow, out var cancelled, maxComplexity: 4096))
                 return Bare(cancelled);
+            // The gcd declines past its degree and step bounds, and a denominator that comes
+            // out of a series is a product of written factors -- `b^9 (a^2 + b^2)^7` -- so the
+            // common factor is one of them to some power: each is divided out of the
+            // numerator exactly for as long as that goes.
+            if (CancelledByTheWrittenFactors(expandedAbove, below) is { } byFactors)
+                return byFactors;
             return expandedBelow == Integer.One ? expandedAbove : expandedAbove / expandedBelow;
+        }
+
+        /// <summary>
+        /// <paramref name="numerator"/> over <paramref name="denominator"/>, a product of
+        /// powers as written, with every written factor that divides the numerator exactly
+        /// divided out of both; null where none does, or where either side does not read as
+        /// a polynomial over the rationals.
+        /// </summary>
+        private static Entity? CancelledByTheWrittenFactors(Entity numerator, Entity denominator)
+        {
+            var variables = numerator.Vars.Concat(denominator.Vars).Distinct().OrderBy(v => v.Name, System.StringComparer.Ordinal).ToArray();
+            if (variables.Length == 0 || variables.Length > MultivariatePolynomial.MaxVariables)
+                return null;
+            var indices = new Dictionary<Variable, int>(variables.Length);
+            for (var i = 0; i < variables.Length; i++)
+                indices[variables[i]] = i;
+            if (MultivariatePolynomial.TryParse(numerator, indices) is not { } top)
+                return null;
+            var cancelledAny = false;
+            Entity left = Integer.One;
+            foreach (var written in Mulf.LinearChildren(denominator))
+            {
+                var (@base, power) = written is Powf(var repeated, Integer { EInteger.Sign: > 0 } times) && times.EInteger.CanFitInInt32()
+                    ? (repeated, times.EInteger.ToInt32Unchecked()) : (written, 1);
+                if (@base is Number || !@base.Vars.Any() || MultivariatePolynomial.TryParse(@base, indices) is not { } factor || factor.IsConstant)
+                {
+                    left *= written;
+                    continue;
+                }
+                while (power > 0 && top.DivideExact(factor) is { } quotient)
+                {
+                    top = quotient;
+                    power--;
+                    cancelledAny = true;
+                }
+                if (power > 0)
+                    left *= power == 1 ? @base : MathS.Pow(@base, power);
+            }
+            if (!cancelledAny)
+                return null;
+            var reduced = top.ToEntity(variables);
+            var leftExpanded = Bare(left.Expand().InnerSimplified);
+            return leftExpanded == Integer.One ? reduced : reduced / leftExpanded;
         }
 
         /// <summary>
@@ -634,12 +694,19 @@ namespace AngouriMath.Functions
             return true;
         }
 
+        /// <summary>Whether a written factor, or the base of a written power, is linear in <paramref name="x"/>.</summary>
+        private static bool IsLinear(Entity factor, Variable x)
+            => TreeAnalyzer.TryGetPolynomial(factor is Powf(var b, _) ? b : factor, x, out var linear) && linear.Count > 0 && linear.Keys.Max()!.Equals(EInteger.One);
+
         /// <summary>
-        /// <see cref="TrySplitOverWrittenFactors"/> for linear factors only, each with its
-        /// multiplicity: the coefficient of <c>1/F^j</c> for <c>F = alpha + beta x</c> of
-        /// multiplicity <c>k</c> is <c>beta^(j-k) h^(k-j)(r)/(k-j)!</c> with <c>r = -alpha/beta</c>
-        /// and <c>h</c> the numerator over the other factors. Checked at sampled points like
-        /// the system's answer.
+        /// <see cref="TrySplitOverWrittenFactors"/> for linear factors with their
+        /// multiplicities and quadratic factors to the first power, with a symbol somewhere.
+        /// The coefficient of <c>1/F^j</c> for <c>F = alpha + beta x</c> of multiplicity
+        /// <c>k</c> is <c>beta^(j-k) h_(k-j)</c> with <c>h_m</c> the <c>m</c>th Taylor
+        /// coefficient at <c>r = -alpha/beta</c> of the numerator over the other factors;
+        /// the numerator over a quadratic is the residue of the numerator times the inverses
+        /// of the other factors modulo the quadratic. Checked at sampled points like the
+        /// system's answer.
         /// </summary>
         private static bool TrySplitOverSymbolicLinearFactors(
             Entity numerator, Entity denominator, Entity constant, List<(Entity Factor, int Degree)> factors, Variable x,
@@ -650,40 +717,176 @@ namespace AngouriMath.Functions
             for (var i = 0; i < factors.Count; i++)
             {
                 var (written, multiplicity) = factors[i];
+                if (!IsLinear(written, x))
+                    continue;
                 var factor = written is Powf(var repeatedBase, _) ? repeatedBase : written;
                 if (!TreeAnalyzer.TryGetPolynomial(factor, x, out var read))
                     return false;
                 var beta = read[EInteger.One];
                 var alpha = read.TryGetValue(EInteger.Zero, out var constantTerm) ? constantTerm : Integer.Zero;
                 var root = Bare((-alpha / beta).InnerSimplified);
-                Entity rest = numerator;
+                Entity others = Integer.One;
                 for (var j = 0; j < factors.Count; j++)
                     if (j != i)
-                        rest /= factors[j].Factor;
-                var derivative = rest;
-                var factorial = EInteger.One;
+                        others *= factors[j].Factor;
+                // The Taylor coefficients of the numerator over the other factors at the
+                // root, by the series quotient of their own: each is a polynomial in x, so
+                // shifted to the root and expanded it is a polynomial in the offset with
+                // coefficients that are small quotients in the symbols, and the quotient of
+                // the two series is one division per order. Differentiating the quotient
+                // symbolically and evaluating at the root gives the same coefficients as
+                // quotients of derivatives of the other factors' product, which the gcd does
+                // not cancel: the third derivative of `x^4 (A + B x)/(1 + x^2)` at `-a/b` comes
+                // out in `b^249`.
+                if (TaylorCoefficientsAtTheRoot(numerator, root, multiplicity, x) is not { } above
+                    || TaylorCoefficientsAtTheRoot(others, root, multiplicity, x) is not { } below)
+                    return false;
+                // A root the other factors share is not this block's alone, and the generic
+                // case has nothing to say about it.
+                if (below[0] == Integer.Zero || below[0].Evaled is Complex { IsZero: true } || IsZeroAtPinnedSymbols(below[0]))
+                    return false;
+                var series = new Entity[multiplicity];
                 for (var order = 0; order < multiplicity; order++)
                 {
-                    if (order > 0)
-                    {
-                        derivative = derivative.Differentiate(x);
-                        factorial = factorial.Multiply(order);
-                    }
-                    var j = multiplicity - order;
-                    var value = Bare(derivative.Substitute(x, root).InnerSimplified);
-                    var coefficient = InLowestTermsOverTheSymbols(MathS.Pow(beta, j - multiplicity) * value / Integer.Create(factorial));
-                    if (coefficient.Nodes.Any(node => node == MathS.NaN) || coefficient.ContainsNode(x))
+                    Entity value = above[order];
+                    for (var k = 1; k <= order; k++)
+                        value -= below[k] * series[order - k];
+                    series[order] = InLowestTermsOverTheSymbols(value / below[0]);
+                    if (series[order].Nodes.Any(node => node == MathS.NaN) || series[order].ContainsNode(x))
                         return false;
+                }
+                for (var order = 0; order < multiplicity; order++)
+                {
+                    var j = multiplicity - order;
+                    var coefficient = InLowestTermsOverTheSymbols(MathS.Pow(beta, j - multiplicity) * series[order]);
                     if (coefficient == Integer.Zero || coefficient.Evaled is Complex { IsZero: true })
                         continue;
                     var term = j == 1 ? coefficient / factor : coefficient / MathS.Pow(factor, j);
                     sum += term;
                 }
             }
+            // A quadratic factor takes a numerator of degree one, and it is computed where
+            // it lives: in the ring of polynomials modulo the quadratic, where every other
+            // factor is a residue with an inverse, and the numerator is the numerator of the
+            // whole times those inverses. Two coefficients, each a small quotient in the
+            // symbols, and no expansion of anything but the quadratic's own reductions --
+            // taking the linear blocks off the numerator and dividing by their factors
+            // needs expansions of nested products of `b (a^2 + b^2)^3` past the term bound.
+            foreach (var (written, _) in factors)
+            {
+                if (IsLinear(written, x))
+                    continue;
+                if (!TreeAnalyzer.TryGetPolynomial(written, x, out var quadratic) || !quadratic.ContainsKey(EInteger.FromInt32(2)))
+                    return false;
+                var leading = quadratic[EInteger.FromInt32(2)];
+                var s = InLowestTermsOverTheSymbols((quadratic.TryGetValue(EInteger.One, out var q1) ? q1 : Integer.Zero) / leading);
+                var t = InLowestTermsOverTheSymbols((quadratic.TryGetValue(EInteger.Zero, out var q0) ? q0 : Integer.Zero) / leading);
+                if (ResidueModuloTheQuadratic(numerator, s, t, x) is not { } residue)
+                    return false;
+                foreach (var (other, _) in factors)
+                {
+                    if (other == written)
+                        continue;
+                    if (ResidueModuloTheQuadratic(other, s, t, x) is not { } factorResidue
+                        || InverseModuloTheQuadratic(factorResidue, s, t) is not { } inverse)
+                        return false;
+                    residue = ProductModuloTheQuadratic(residue, inverse, s, t);
+                }
+                var (p, q) = residue;
+                if (p.Nodes.Any(node => node == MathS.NaN) || q.Nodes.Any(node => node == MathS.NaN))
+                    return false;
+                Entity over = q == Integer.Zero ? p : p == Integer.Zero ? q * x : p + q * x;
+                // The residue is of `N/others` modulo the monic quadratic `Q/leading`; over
+                // `Q` itself the leading coefficient cancels: `(p + q x)/(Q/leading)` is the
+                // term for `N/(others Q/leading)`, so `(p + q x)/Q` is the term for `N/(others Q)`.
+                // Written with the coefficients' common denominator in front: left inside,
+                // `(P/D + Q x/D)/(1 + x^2)` was combined into one quotient over `D (1 + x^2)`,
+                // a quadratic with symbols in every coefficient, and integrated as a piecewise
+                // on the sign of its discriminant.
+                if (over != Integer.Zero)
+                {
+                    var (pAbove, pBelow) = SingleQuotient.Of(p);
+                    var (qAbove, qBelow) = SingleQuotient.Of(q);
+                    var (above, below) = pBelow == qBelow
+                        ? (pAbove + qAbove * x, pBelow)
+                        : (pAbove * qBelow + qAbove * pBelow * x, pBelow * qBelow);
+                    sum += below == Integer.One ? above / written : MathS.Pow(below, Integer.MinusOne) * (above / written);
+                }
+            }
             if (!HoldsAtSampledPoints(numerator / denominator, sum / constant, x))
                 return false;
             decomposition = sum / constant;
             return true;
+        }
+
+        /// <summary>
+        /// The first <paramref name="count"/> Taylor coefficients of the polynomial
+        /// <paramref name="polynomial"/> in <paramref name="x"/> at <paramref name="root"/>,
+        /// each in lowest terms over the symbols; null where it does not read as one.
+        /// </summary>
+        private static Entity[]? TaylorCoefficientsAtTheRoot(Entity polynomial, Entity root, int count, Variable x)
+        {
+            var offset = Variable.CreateUnique(polynomial + root, "t");
+            var shifted = Bare(polynomial.Substitute(x, root + offset).Expand().InnerSimplified);
+            if (!TreeAnalyzer.TryGetPolynomial(shifted, offset, out var read))
+                return null;
+            var coefficients = new Entity[count];
+            for (var order = 0; order < count; order++)
+            {
+                var coefficient = read.TryGetValue(EInteger.FromInt32(order), out var at) ? InLowestTermsOverTheSymbols(at) : Integer.Zero;
+                if (coefficient.ContainsNode(x) || coefficient.ContainsNode(offset))
+                    return null;
+                coefficients[order] = coefficient;
+            }
+            return coefficients;
+        }
+
+        /// <summary>
+        /// <paramref name="polynomial"/> reduced modulo the monic quadratic
+        /// <c>x^2 + s x + t</c>, as the pair <c>(p, q)</c> of <c>p + q x</c>, each in lowest
+        /// terms over the symbols; null where it does not read as a polynomial in
+        /// <paramref name="x"/>.
+        /// </summary>
+        private static (Entity, Entity)? ResidueModuloTheQuadratic(Entity polynomial, Entity s, Entity t, Variable x)
+        {
+            if (!TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read) || read.Count == 0)
+                return null;
+            var degree = read.Keys.Max()!;
+            if (!degree.CanFitInInt32() || read.Keys.Any(power => power.Sign < 0))
+                return null;
+            // Horner's scheme, with `x^2` written as `-s x - t` at each step.
+            (Entity, Entity) residue = (Integer.Zero, Integer.Zero);
+            for (var power = degree.ToInt32Unchecked(); power >= 0; power--)
+            {
+                residue = ProductModuloTheQuadratic(residue, (Integer.Zero, Integer.One), s, t);
+                if (read.TryGetValue(EInteger.FromInt32(power), out var coefficient))
+                    residue = (InLowestTermsOverTheSymbols(residue.Item1 + coefficient), residue.Item2);
+            }
+            return residue;
+        }
+
+        /// <summary>The product of two residues modulo <c>x^2 + s x + t</c>, in lowest terms.</summary>
+        private static (Entity, Entity) ProductModuloTheQuadratic((Entity, Entity) left, (Entity, Entity) right, Entity s, Entity t)
+        {
+            var (a, b) = left;
+            var (c, d) = right;
+            // (a + b x)(c + d x) = ac + (ad + bc) x + bd x^2, and x^2 is -s x - t.
+            return (InLowestTermsOverTheSymbols(a * c - b * d * t), InLowestTermsOverTheSymbols(a * d + b * c - b * d * s));
+        }
+
+        /// <summary>
+        /// The inverse of a residue modulo <c>x^2 + s x + t</c>, or null where it has none
+        /// generically: its norm <c>a^2 - s a b + t b^2</c> is zero, which is the residue
+        /// sharing a root with the quadratic.
+        /// </summary>
+        private static (Entity, Entity)? InverseModuloTheQuadratic((Entity, Entity) residue, Entity s, Entity t)
+        {
+            var (a, b) = residue;
+            // (a + b x)(c + d x) = 1 is ac - t b d = 1 and a d + b c - s b d = 0.
+            var norm = InLowestTermsOverTheSymbols(a * a - s * a * b + t * b * b);
+            if (norm == Integer.Zero || norm.Evaled is Complex { IsZero: true } || IsZeroAtPinnedSymbols(norm))
+                return null;
+            return (InLowestTermsOverTheSymbols((a - s * b) / norm), InLowestTermsOverTheSymbols(-b / norm));
         }
 
         /// <summary>

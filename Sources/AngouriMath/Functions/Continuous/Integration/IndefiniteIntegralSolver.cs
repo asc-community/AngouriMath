@@ -605,7 +605,7 @@ namespace AngouriMath.Functions.Algebra
             if (Mulf.LinearChildren(denominator).Any(f => f.ContainsNode(x) && f is Powf(_, Number.Integer { EInteger.Sign: > 0 } e) && e != Number.Integer.One)
                 && IsAProductOfSymbolicLinearFactors(denominator, x)
                 && Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, denominator, x, out var overSymbolicLinears)
-                && Integration.ComputeIndefiniteIntegral(overSymbolicLinears, x, integrateByParts) is { } overTheLinears)
+                && IntegratedTermByTerm(overSymbolicLinears, x, integrateByParts) is { } overTheLinears)
                 return overTheLinears;
 
             // Every rule below reads the denominator **as written**: the Hermite reduction wants
@@ -698,7 +698,7 @@ namespace AngouriMath.Functions.Algebra
             // factors -- `(x + a)(x^2 + b)` -- is decomposed by undetermined coefficients,
             // checked, and each piece is a shape the rules here read.
             if (Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, denominator, x, out var overWrittenFactors)
-                && Integration.ComputeIndefiniteIntegral(overWrittenFactors, x, integrateByParts) is { } termByTerm)
+                && IntegratedTermByTerm(overWrittenFactors, x, integrateByParts) is { } termByTerm)
                 return termByTerm;
 
             // Last, because everything above answers in exact arithmetic where it can: a
@@ -1136,6 +1136,81 @@ namespace AngouriMath.Functions.Algebra
 
             _ => null
         };
+
+        /// <summary>
+        /// A product of powers of the variable and of constant multiples of it,
+        /// <c>(c x)^m (d x)^k x^n</c> times a constant, with at least one written multiple:
+        /// <c>(c x)^m (d x)^k x^(n+1)/(m + k + n + 1)</c>, and the logarithm where the sum of
+        /// the exponents is minus one.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The written power is kept as it is, which is what makes this exact: for every
+        /// <c>x</c> but zero, <c>d/dx (c x)^m</c> is <c>m (c x)^m / x</c>, since
+        /// <c>(c x)^(m-1)</c> is <c>(c x)^m / (c x)</c> whatever the branch, and each factor
+        /// contributes its exponent over <c>x</c>. Opening <c>(c x)^m</c> into <c>c^m x^m</c>
+        /// would need <c>c</c> or <c>x</c> positive. Rubi's <c>(e x)^m (a + b x^n)^p (c + d x^n)^q</c>
+        /// with symbolic <c>m</c> and <c>n</c>, expanded, is a sum of these and was declined
+        /// term by term, the power rule reading <c>x^p</c> and nothing else.
+        /// </para>
+        /// <para>
+        /// A power of <c>x</c> alone is left to the power rule, which answers it as before.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAProductOfPowersOfTheVariable(Entity expr, Entity.Variable x)
+        {
+            Entity constant = Number.Integer.One;
+            Entity written = Number.Integer.One;
+            Entity plain = Number.Integer.Zero;
+            Entity exponents = Number.Integer.Zero;
+            var multiples = 0;
+            foreach (var factor in Mulf.LinearChildren(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant *= factor;
+                    continue;
+                }
+                if (factor == x)
+                {
+                    plain += Number.Integer.One;
+                    continue;
+                }
+                if (factor is not Powf(var @base, var power) || power.ContainsNode(x))
+                    return null;
+                // A whole power of a power is the power of the product of the exponents,
+                // exactly: `(x^n)^2` is `x^n x^n`. The expansion of `(a + b x^n)^2` writes it so.
+                while (power is Number.Integer && @base is Powf(var inner, var innerPower) && !innerPower.ContainsNode(x))
+                {
+                    power = (innerPower * power).InnerSimplified;
+                    @base = inner;
+                }
+                if (@base == x)
+                {
+                    plain += power;
+                    continue;
+                }
+                if (@base is not Mulf(var left, var right)
+                    || !(left == x && !right.ContainsNode(x) || right == x && !left.ContainsNode(x)))
+                    return null;
+                written *= MathS.Pow(@base, power);
+                exponents += power;
+                multiples++;
+            }
+            if (multiples == 0)
+                return null;
+            // Where the exponents sum to minus one the integrand is `K/x` for the constant
+            // `K = (c x)^m (d x)^k x^(n+1)`, whose derivative is `K (m + k + n + 1)/x`, zero.
+            // Simplified rather than normalised, since the sum is of symbols that cancel:
+            // `(c x)^m / x^(m+1)` has `m - (m + 1) + 1`, which the normalisation leaves as
+            // written and which would have gone on to divide by itself.
+            var raised = Functions.PartialFractions.Bare((plain + 1).Simplify());
+            var overAll = Functions.PartialFractions.Bare((exponents + raised).Simplify());
+            if (overAll == Number.Integer.Zero || overAll.Evaled is Number.Complex { IsZero: true })
+                return constant * written * MathS.Pow(x, raised) * IntegralPatterns.AntiderivativeLog(x);
+            return constant * written * MathS.Pow(x, raised) / overAll;
+        }
 
         /// <summary>
         /// <c>x^p</c> for a <paramref name="power"/> that does not hold the variable: the power
@@ -3363,6 +3438,13 @@ namespace AngouriMath.Functions.Algebra
                     // whether the exponent it carries along is whole — the power rule takes
                     // <c>u^(-3/2)</c> as readily as <c>u^(-3)</c>. Which of the three cases
                     // applies still turns on a whole exponent, and that is checked there.
+                    // Not a fractional power of an even power, though: `(sin^2)^(3/2)` is
+                    // `|sin|^3`, and read as `sin^3` it was integrated as one, wrong on every
+                    // other half-turn; `sqrt(a sin^2)^5`, `1/sqrt(a cot^2)`, `(csc^2)^(3/2)`,
+                    // `x sqrt(sin^2)` were four of Rubi's answered so.
+                    // https://github.com/asc-community/AngouriMath/issues/1387
+                    case Powf(var @base, Number.Rational power) when power is not Number.Integer && HasAnEvenPowerOfATrigonometricFunction(@base):
+                        return false;
                     case Powf(var @base, Number.Rational power):
                         return Read(@base, multiplicity * power.ERational);
                     // A rational factor rides along; anything else is declined rather than
@@ -3381,6 +3463,14 @@ namespace AngouriMath.Functions.Algebra
                 }
             }
         }
+
+        /// <summary>
+        /// Whether an even whole power of a sine, cosine, tangent, cotangent, secant or
+        /// cosecant stands anywhere in <paramref name="expr"/>: a fractional power of it is a
+        /// power of the function's modulus, not of the function.
+        /// </summary>
+        private static bool HasAnEvenPowerOfATrigonometricFunction(Entity expr)
+            => expr.Nodes.Any(node => node is Powf(TrigonometricFunction, Number.Integer even) && even.EInteger.IsEven && !even.EInteger.IsZero);
 
         /// <summary>
         /// Whether <paramref name="value"/> is a whole number small enough to count with, and
@@ -4904,6 +4994,15 @@ namespace AngouriMath.Functions.Algebra
             if (q < 2 || q > 12)
                 return null;
             if (!TreeAnalyzer.TryGetPolyLinear(first, x, out var a, out var b) || !TreeAnalyzer.TryGetPolyLinear(second, x, out var c, out var d))
+                return null;
+            // Two proportional linears are one radical with a constant in it, and not this
+            // rule's: their determinant a d - b c is zero, the second linear in t is 0/(a - c t^q)
+            // and everything it multiplies vanished -- Rubi's
+            // `sin(a + b (c + d x)^(1/3))/(c e + d e x)^(1/3)` came back as `0 provided ...`.
+            // https://github.com/asc-community/AngouriMath/issues/1386
+            var determinant = (a * d - b * c).InnerSimplified;
+            if (determinant.Evaled is Number.Complex { IsZero: true }
+                || determinant.Vars.Any() && Functions.PartialFractions.Bare(determinant.Simplify()).Evaled is Number.Complex { IsZero: true })
                 return null;
 
             var t = Variable.CreateUnique(expr, "t_rad");
@@ -9599,24 +9698,68 @@ namespace AngouriMath.Functions.Algebra
             });
 
         /// <summary>
-        /// Whether <paramref name="denominator"/> is written as a product of two or more
-        /// distinct linear factors in <paramref name="x"/>, to whole powers, with a symbol in
-        /// a coefficient somewhere.
+        /// A partial-fraction decomposition, a sum over a constant, integrated one term at a
+        /// time as each is written, with the constant on the result.
         /// </summary>
+        /// <remarks>
+        /// Handed to the chain whole, the sum is split as written only while every term is
+        /// small (<see cref="LargestTermTakenAsWritten"/>), and past that by the expanding
+        /// gather, which combines a term's constant with its quotient: `D^(-1) (P + Q x)/(1 + x^2)`
+        /// with `P`, `Q` polynomials in the symbols became `(P + Q x)/(D + D x^2)`, a quadratic
+        /// with symbols in every coefficient, and was integrated as a piecewise on the sign of
+        /// its discriminant. A decomposition's terms are already the shapes the rules read.
+        /// </remarks>
+        private static Entity? IntegratedTermByTerm(Entity decomposition, Entity.Variable x, bool integrateByParts)
+        {
+            var (terms, over) = decomposition is Divf(var sum, var constant) && !constant.ContainsNode(x)
+                ? (sum, constant) : (decomposition, Number.Integer.One as Entity);
+            Entity total = Number.Integer.Zero;
+            foreach (var term in Sumf.LinearChildren(terms))
+            {
+                if (term.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                if (Integration.ComputeIndefiniteIntegral(term, x, integrateByParts) is not { } integrated)
+                    return null;
+                total += integrated;
+            }
+            return over == Number.Integer.One ? total : total / over;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="denominator"/> is written as a product of two or more
+        /// distinct factors in <paramref name="x"/>, at least one of them linear and to a
+        /// whole power, the rest linear or quadratic to the first power, with a symbol in a
+        /// coefficient somewhere.
+        /// </summary>
+        /// <remarks>
+        /// A quadratic beside the linears is allowed since the decomposition takes the linear
+        /// blocks by their Taylor coefficients and the quadratic's numerator in the ring
+        /// modulo the quadratic; with the gate asking for linears only,
+        /// <c>u^4 (A + B u)/((a + b u)^4 (1 + u^2))</c> -- every rational function of the
+        /// tangent with a power of a linear in it -- went to the Hermite reduction below,
+        /// which answered in <c>a^63 b^10</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
         private static bool IsAProductOfSymbolicLinearFactors(Entity denominator, Entity.Variable x)
         {
             var linears = 0;
+            var quadratics = 0;
             foreach (var factor in Mulf.LinearChildren(denominator))
             {
                 if (!factor.ContainsNode(x))
                     continue;
                 var @base = factor is Powf(var b, Number.Integer { EInteger.Sign: > 0 }) ? b : factor;
-                if (!TreeAnalyzer.TryGetPolynomial(@base, x, out var read) || read.Count == 0 || !read.Keys.Max()!.Equals(EInteger.One)
+                if (!TreeAnalyzer.TryGetPolynomial(@base, x, out var read) || read.Count == 0
                     || read.Values.Any(coefficient => coefficient.ContainsNode(x)))
                     return false;
-                linears++;
+                if (read.Keys.Max()!.Equals(EInteger.One))
+                    linears++;
+                else if (read.Keys.Max()!.Equals(EInteger.FromInt32(2)) && @base == factor)
+                    quadratics++;
+                else
+                    return false;
             }
-            return linears >= 2 && denominator.Vars.Any(v => v != x);
+            return linears >= 1 && linears + quadratics >= 2 && denominator.Vars.Any(v => v != x);
         }
 
         /// <summary>

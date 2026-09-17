@@ -38,6 +38,23 @@ places in API, behaviour, and internal structure of code."* A rule that fires fo
 large numbers and drops it for small — each is a bug even when every individual case is defensible.
 When you fix something, ask what else is the same shape, and fix that too, or write down why not.
 
+**Ask what a thing *means* before asking how it is computed.** A number evaluated to a hundred
+digits is an approximation of a number; a boolean is not an approximation of anything, and
+its value cannot depend on how many digits were enumerated on the way to it. `2 + 2^(-100) = 2`
+was `True` ([#1376](https://github.com/asc-community/AngouriMath/issues/1376)) because the
+comparison subtracted the sides and asked whether the difference was under `1e-16` -- and the
+first analysis of it asked *which tolerance* the comparison should use, which is the same mistake
+in a smaller font. Both sides were exact rationals; the answer is `False` with no digits
+enumerated at all, and `1 < 1 + 1^(-1000) < 2` is decided the same way. An approximate
+comparison is a different statement, and it is written as one: a chained inequality with the
+accuracy in it, `3 < sqrt(2) + sqrt(3) < 4`, decided by evaluating only as far as the decision
+needs. Where the library's mechanism frames a question -- a setting named `PrecisionErrorCommon`,
+a `Setting<EContext>` on every evaluation -- the mechanism is not the mathematics, and a design
+answered inside its frame inherits its error. Evaluation to a requested accuracy, exactness kept
+wherever the input was exact, and interval arithmetic for what is genuinely approximate are the
+shape of the answer, and they are queued for v3 in
+[#1019](https://github.com/asc-community/AngouriMath/issues/1019).
+
 ## Not answering is a legitimate answer. Answering wrongly is not.
 
 The most important distinction in this codebase:
@@ -595,7 +612,22 @@ whatever else it delivered:
 
 So the release checklist is: the suite and the harnesses in `work/` green, a `BREAKING-CHANGES.md`
 entry for every changed answer measured on real builds, **a performance column measured against the
-previous one on the same machine**, and a version number that does not contradict #746.
+previous one on the same machine**, a version number that does not contradict #746 — and **the
+website brought to the release**, which is a separate repository and so is not carried by anything
+here. [am.angouri.org](https://am.angouri.org) is generated from
+[asc-community/AngouriMathSite](https://github.com/asc-community/AngouriMathSite): its *What's new*
+page gets a block cut from the release's notes with the `BREAKING-CHANGES.md` link pinned to the tag,
+and its quickstart names the release as current. Four releases went out without that between
+2026-08-12 and 2026-09-09, and the page said 2.1.0 while the package said 2.5.0 — the maintainer's
+words on [#1019](https://github.com/asc-community/AngouriMath/issues/1019) are *"each release also
+needs to update the website"*, and this line is where that is kept.
+
+**Every major version gets an architectural review**, and the docket for the next one is
+[#1019](https://github.com/asc-community/AngouriMath/issues/1019): the API refactored to the best
+abstraction the work since the last major has moved it to, and duplicated functionality — the same
+computation written twice, or two types standing for one concept — found and synthesised, since the
+major is where the surviving one may take the other's name. What the docket says about who does the
+v3 pass and how is a maintainer decision recorded there, not here.
 
 ## Where the work is
 

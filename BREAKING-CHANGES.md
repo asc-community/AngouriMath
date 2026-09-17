@@ -273,6 +273,40 @@ Each of these was checked by differentiating it back with the parameters pinned 
 four points. The Rubi sample is unchanged at 231 of 463 with no wrong answers, so nothing that
 already had an antiderivative moves.
 
+### A root of an even power is the modulus, and is no longer read as the power
+
+**Wrong answers, silent.** `(u^2)^(3/2)` is `|u|^3`, and two readers took it for `u^3`: the
+polynomial parser read `(x^q)^v` as `x^(q v)` for any `v`, and the integrator's `sin^p cos^q`
+reader read `(sin^2)^(3/2)` as `sin^3`. Through `Simplify`'s long division the first made
+`u^2` of `(u^2)^(3/2)/u` and `-1` of `sqrt(u^2)/(-u)`, wrong for every negative `u`; through
+the second, six of Rubi's family-4 integrands were integrated as if the sign of the function
+were positive on the whole line.
+[#1387](https://github.com/asc-community/AngouriMath/issues/1387)
+
+| | Was | Is |
+|---|---|---|
+| `"(u^2)^(3/2)/u".Simplify()` | `u^2 provided not u = 0` | `(u^2)^(3/2)/u`, unchanged |
+| `"sqrt(u^2)/(-u)".Simplify()` | `-1 provided not u = 0` | unchanged |
+| `"(u^3)^2/u".Simplify()`, a whole outer power | `u^5 provided not u = 0` | the same |
+| `"x*sqrt(sin(x)^2)".Integrate("x")` | `-x cos(x) + sin(x)`, the integral of `x sin(x)` | unevaluated |
+| `"(csc(x)^2)^(3/2)".Integrate("x")`, `"1/(csc(x)^2)^(7/2)".Integrate("x")` | the integral of `csc^3`, of `sin^7` | unevaluated |
+| `"(a*sin(x)^2)^(5/2)".Integrate("x")`, `"1/sqrt(a*cot(x)^2)".Integrate("x")` | the integral of `a^(5/2) sin^5`, of `tan/sqrt(a)` | the antiderivative, with `sgn(sin x)` and `sgn(tan x)` in it |
+| `"(b*tan(x)^3)^(3/2)".Integrate("x")`, an odd inner power | the integral of `b^(3/2) tan^(9/2)`: right where the tangent is positive, which is where the integrand is real, and off the principal branch where it is negative (`(u^3)^(3/2)` is `i` at `u = -1`, `u^(9/2)` is `-i`) | unevaluated |
+| `"sec(c+d*x)^(3/2)/(b*sec(c+d*x))^(5/2)".Integrate("x")` | `sin(c+d*x)/(b^(5/2) d)`, right for `b > 0` | unevaluated |
+| `"asin(sqrt(1 - x^2))/sqrt(1 - x^2)".Integrate("x")` | `-arcsin(sqrt(1 - x^2))^2/2`, right for `x > 0` and off by a sign for `x < 0` | unevaluated |
+| `"asin(x/a)^(3/2)/sqrt(a^2 - x^2)".Integrate("x")` | `arcsin(x/a)^(5/2)/(5/2)`, right for `a > 0` | unevaluated |
+
+A whole outer power still multiplies, since `(x^q)^3` is `x^q x^q x^q` however `x` is signed; a
+fractional one over a first power is still read, `(a x)^(3/2)` as `a^(3/2) x^(3/2)`, the generic
+reading every rule uses; over an odd power it is refused too, since `(u^3)^(3/2)` and `u^(9/2)`
+differ at every negative `u`, and the tangent row is that reading integrated. The tangent,
+`asin(x/a)` and `sec` rows are the cost — each right where the integrand is real, or for a
+positive symbol, and only there: `a sqrt(1 - x^2/a^2)` was being collected to `sqrt(a^2 - x^2)` through
+`(a^2)^(1/2) = a`, which is the same identity taken on a symbol, and it is not taken on a symbol
+either now; and the secant quotient was simplified to `cos/(b^(5/2) d)` through
+`(1/cos)^(3/2) = cos^(-3/2)`, which is wrong for every negative cosine and cancelled against the
+same wrong step on the denominator. On the 1774-problem independent suites this is 1707 to 1705, the two `asin` rows, with the sign error gone.
+
 ---
 
 ## 2.5.0 — since 2.4.0
