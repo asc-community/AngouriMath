@@ -11372,6 +11372,271 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A rational function of a sine, or of a cosine, over a quadratic in it with a symbol
+        /// among the coefficients: <c>sin(x)/(a + b sin(x) + c sin(x)^2)</c>, and the same with
+        /// the other function to even powers, a cosecant or a secant beside. Written in
+        /// <c>s = sin(x)</c> it is a rational function of <c>s</c>, divided down and split over
+        /// the written factors as any is, and the piece over the quadratic is taken by the two
+        /// roots: with <c>q = sqrt(b^2 - 4 a c)</c> and <c>r = (-b ± q)/(2c)</c>,
+        /// <c>(d + e s)/(a + b s + c s^2)</c> is <c>(d + e r_1)/(q (s - r_1)) - (d + e r_2)/(q (s - r_2))</c>,
+        /// and <c>1/(sin(x) - r)</c> is <c>-2 atan((r tan(x/2) - 1)/sqrt(r^2 - 1))/sqrt(r^2 - 1)</c>
+        /// for any complex <c>r</c> but <c>±1</c>; <c>1/(cos(x) - r)</c> is
+        /// <c>-2 atan(tan(x/2)/σ)/((1 + r) σ)</c> with <c>σ = sqrt((r - 1)/(r + 1))</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Under the half-angle the quadratic in the sine is a quartic in <c>t</c> with a symbol
+        /// in every coefficient, which nothing factors, and the substitution <c>u = sin(x)</c>
+        /// wants a cosine above the bar that an even power does not give; Rubi's
+        /// <c>trig^m (a + b sin^n + c sin^(2n))^p</c> files lost every even numerator to that.
+        /// The two closed forms are each checked by differentiation in the summary of the
+        /// biquadratic rule's kind: <c>d/dx atan(u/s)/s</c> is <c>u'/(s^2 + u^2)</c> whatever
+        /// <c>s</c> is, so neither asks the sign of a root, where a piecewise on it, as the
+        /// quadratic rule writes for a symbolic root, has no value for the conjugate pair the
+        /// ordinary case gives. On each interval between the poles of <c>tan(x/2)</c>, the
+        /// standing property of the half-angle.
+        /// </para>
+        /// <para>
+        /// Exact wherever the two roots differ and neither is <c>±1</c>, the generic case; a
+        /// discriminant that is zero as written declines.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveARationalFunctionOfASineOverASymbolicQuadratic(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Entity? argument = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (TrigonometricArgument(node) is not { } thisArgument || !thisArgument.ContainsNode(x))
+                    continue;
+                if (argument is null)
+                    argument = thisArgument;
+                else if (argument != thisArgument)
+                    return null;
+            }
+            if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _)
+                || rate.ContainsNode(x) || TreeAnalyzer.IsZero(rate))
+                return null;
+            if (!expr.Nodes.All(node => !node.ContainsNode(x)
+                    || node is Variable or Sumf or Minusf or Mulf or Divf or Sinf or Cosf or Secantf or Cosecantf or Tanf or Cotanf
+                    || node is Powf(_, Number.Integer)))
+                return null;
+            var sine = MathS.Sin(argument);
+            var cosine = MathS.Cos(argument);
+            var inTheTwo = expr.Replace(node => node switch
+            {
+                Secantf(var a) when a == argument => 1 / cosine,
+                Cosecantf(var a) when a == argument => 1 / sine,
+                Tanf(var a) when a == argument => sine / cosine,
+                Cotanf(var a) when a == argument => cosine / sine,
+                _ => node,
+            });
+            var s = Variable.CreateUnique(inTheTwo, "s_trig");
+            var w = Variable.CreateUnique(inTheTwo + s, "w_trig");
+            foreach (var (function, other) in new[] { (sine, cosine), (cosine, sine) })
+            {
+                var inS = inTheTwo.Substitute(function, s).Substitute(other, w);
+                if (inS.ContainsNode(x))
+                    return null;
+                if (OverASymbolicQuadraticInTheFunction(inS, s, w, function == sine, argument, rate, x, integrateByParts) is { } answer)
+                    return answer;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// The rule above in <paramref name="s"/>, for the function that <paramref name="s"/>
+        /// stands for and <paramref name="w"/> its complement: null where the integrand is
+        /// not a rational function of <paramref name="s"/> once the even powers of
+        /// <paramref name="w"/> are <c>1 - s^2</c>, or its denominator's written factors are
+        /// not powers of <paramref name="s"/>, of <paramref name="w"/> and of linears in
+        /// <paramref name="s"/> beside one quadratic in <paramref name="s"/> with a symbol in it.
+        /// </summary>
+        private static Entity? OverASymbolicQuadraticInTheFunction(Entity inS, Variable s, Variable w, bool ofTheSine, Entity argument, Entity rate, Entity.Variable x, bool integrateByParts)
+        {
+            var combined = Functions.SingleQuotient.Combine(inS).InnerSimplified;
+            if (combined is Providedf(var bare, _))
+                combined = bare;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(combined);
+            // The numerator as a polynomial in s, the complement's even powers written as
+            // powers of 1 - s^2; an odd power is the substitution's, not this rule's.
+            if (WithTheComplementSquared(numerator, s, w) is not { } above)
+                return null;
+            // The denominator's written factors: a constant, a power of s, a power of the
+            // complement, a linear in s, and exactly one quadratic in s with a symbol in it.
+            Entity constant = Number.Integer.One;
+            Entity written = Number.Integer.One;
+            Entity? quadratic = null;
+            var degree = 0;
+            var blocks = 0;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(s) && !factor.ContainsNode(w))
+                {
+                    constant = constant * factor;
+                    continue;
+                }
+                var (toRead, multiplicity) = factor is Powf(var repeatedBase, Number.Integer { EInteger.Sign: > 0 } repeated) && repeated.EInteger.CanFitInInt32()
+                    ? (repeatedBase, repeated.EInteger.ToInt32Unchecked()) : (factor, 1);
+                if (toRead == w)
+                {
+                    if (multiplicity % 2 != 0)
+                        return null;
+                    var half = multiplicity / 2;
+                    written = written * (half == 1 ? 1 - s : MathS.Pow(1 - s, half)) * (half == 1 ? 1 + s : MathS.Pow(1 + s, half));
+                    degree += multiplicity;
+                    blocks += 2;
+                    continue;
+                }
+                if (toRead.ContainsNode(w) || !TreeAnalyzer.TryGetPolynomial(toRead, s, out var read) || read.Count == 0
+                    || read.Keys.Any(power => power.Sign < 0) || read.Values.Any(coefficient => coefficient.ContainsNode(s) || coefficient.ContainsNode(w)))
+                    return null;
+                var thisDegree = read.Keys.Max()!.ToInt32Checked();
+                if (thisDegree == 2 && multiplicity == 1 && toRead.Vars.Any(v => v != s))
+                {
+                    if (quadratic is not null)
+                        return null;
+                    quadratic = toRead;
+                }
+                else if (thisDegree > 1)
+                    return null;
+                written = written * factor;
+                degree += thisDegree * multiplicity;
+                blocks++;
+            }
+            if (quadratic is null || !TreeAnalyzer.TryGetPolynomial(quadratic, s, out var coefficients))
+                return null;
+            var a = coefficients.TryGetValue(EInteger.Zero, out var a0) ? a0 : Number.Integer.Zero;
+            var b = coefficients.TryGetValue(EInteger.One, out var b0) ? b0 : Number.Integer.Zero;
+            var c = coefficients[EInteger.FromInt32(2)];
+            var discriminant = Functions.PartialFractions.Bare((b * b - 4 * a * c).Simplify());
+            if (discriminant == Number.Integer.Zero || discriminant.Evaled is Number.Complex { IsZero: true })
+                return null;
+
+            // Divided down where the numerator's degree reaches the denominator's; the whole
+            // part is a polynomial in the function, the rules' own.
+            Entity total = Number.Integer.Zero;
+            var function = ofTheSine ? MathS.Sin(argument) : MathS.Cos(argument);
+            if (TreeAnalyzer.TryGetPolynomial(above, s, out var aboveRead) && aboveRead.Count > 0 && aboveRead.Keys.Max()!.CompareTo(EInteger.FromInt32(degree)) >= 0)
+            {
+                var expandedBelow = (constant * written).Expand().InnerSimplified;
+                if (TreeAnalyzer.PolynomialLongDivision(above, expandedBelow, genericCase: true, inTermsOf: s) is not var (whole, rest))
+                    return null;
+                if (Integration.ComputeIndefiniteIntegral(whole.InnerSimplified.Substitute(s, function), x, integrateByParts) is not { } wholePart)
+                    return null;
+                total += wholePart;
+                above = (rest is Divf(var top, _) ? top : rest).InnerSimplified;
+                if (above is Providedf(var bareRest, _))
+                    above = bareRest;
+                if (above.Evaled is Number.Complex { IsZero: true })
+                    return total;
+            }
+            // Over the quadratic alone there is nothing to split; otherwise over the written
+            // factors, the quadratic among them.
+            var below = constant == Number.Integer.One ? quadratic : constant * quadratic;
+            Entity? decomposition;
+            if (blocks == 1)
+                decomposition = above / below;
+            else if (!Functions.PartialFractions.TrySplitOverWrittenFactors(above, constant == Number.Integer.One ? written : constant * written, s, out decomposition))
+                return null;
+            var (terms, over) = decomposition is Divf(var sum, var divisor) && !divisor.ContainsNode(s)
+                ? (sum, divisor) : (decomposition, Number.Integer.One as Entity);
+            var q = MathS.Sqrt(discriminant);
+            var firstRoot = (-b + q) / (2 * c);
+            var secondRoot = (-b - q) / (2 * c);
+            var quadraticWritten = quadratic.InnerSimplified;
+            Entity overTheFactors = Number.Integer.Zero;
+            foreach (var term in Sumf.LinearChildren(terms))
+            {
+                if (term.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                // The term over the quadratic, however the split wrote its constant: `P/Q`,
+                // or `D^(-1) (P/Q)` with the coefficients' common denominator in front.
+                var (termAbove, termBelow) = Functions.SingleQuotient.Of(term);
+                Entity termConstant = Number.Integer.One;
+                var overTheQuadratic = false;
+                foreach (var divisorFactor in Mulf.LinearChildren(termBelow))
+                {
+                    if (divisorFactor.InnerSimplified == quadraticWritten && !overTheQuadratic)
+                        overTheQuadratic = true;
+                    else if (!divisorFactor.ContainsNode(s))
+                        termConstant = termConstant * divisorFactor;
+                    else
+                    {
+                        overTheQuadratic = false;
+                        break;
+                    }
+                }
+                if (overTheQuadratic
+                    && TreeAnalyzer.TryGetPolynomial(termAbove, s, out var linear) && linear.Keys.All(power => power.Sign >= 0 && power.CompareTo(EInteger.One) <= 0)
+                    && linear.Values.All(coefficient => !coefficient.ContainsNode(s)))
+                {
+                    var d = linear.TryGetValue(EInteger.Zero, out var d0) ? d0 : Number.Integer.Zero;
+                    var e = linear.TryGetValue(EInteger.One, out var e0) ? e0 : Number.Integer.Zero;
+                    foreach (var (root, sign) in new[] { (firstRoot, 1), (secondRoot, -1) })
+                    {
+                        var coefficient = ((d + e * root) / (q * termConstant)).InnerSimplified;
+                        if (coefficient == Number.Integer.Zero)
+                            continue;
+                        var part = OverTheFunctionLessARoot(root, ofTheSine, argument, rate);
+                        overTheFactors += sign == 1 ? coefficient * part : -coefficient * part;
+                    }
+                    continue;
+                }
+                if (Integration.ComputeIndefiniteIntegral(term.Substitute(s, function), x, integrateByParts) is not { } integrated)
+                    return null;
+                overTheFactors += integrated;
+            }
+            return total + (over == Number.Integer.One ? overTheFactors : overTheFactors / over);
+        }
+
+        /// <summary>
+        /// <c>int dx/(sin(k x + m) - r)</c>, or the same of the cosine, for any complex
+        /// <paramref name="root"/> but <c>±1</c>: <c>-2 atan((r t - 1)/sqrt(r^2 - 1))/(k sqrt(r^2 - 1))</c>
+        /// with <c>t = tan((k x + m)/2)</c>, and <c>-2 atan(t/σ)/(k (1 + r) σ)</c> with
+        /// <c>σ = sqrt((r - 1)/(r + 1))</c>. Each differentiates back to the integrand for
+        /// every value of the root, the arctangent of an imaginary argument being the
+        /// hyperbolic one with a constant imaginary part a derivative does not see.
+        /// </summary>
+        private static Entity OverTheFunctionLessARoot(Entity root, bool ofTheSine, Entity argument, Entity rate)
+        {
+            var t = MathS.Tan(argument / 2);
+            if (ofTheSine)
+            {
+                var spread = MathS.Sqrt(root * root - 1);
+                return -2 * MathS.Arctan((root * t - 1) / spread) / (rate * spread);
+            }
+            var sigma = MathS.Sqrt((root - 1) / (root + 1));
+            return -2 * MathS.Arctan(t / sigma) / (rate * (1 + root) * sigma);
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/>, a polynomial in <paramref name="s"/> and <paramref name="w"/>,
+        /// with every even power of <paramref name="w"/> written as the power of
+        /// <c>1 - s^2</c>, expanded; null where an odd power of <paramref name="w"/> is in it
+        /// or it is not such a polynomial.
+        /// </summary>
+        private static Entity? WithTheComplementSquared(Entity expr, Variable s, Variable w)
+        {
+            if (!TreeAnalyzer.TryGetPolynomial(expr, w, out var inW))
+                return null;
+            Entity sum = Number.Integer.Zero;
+            var oneMinusSSquared = 1 - MathS.Sqr(s);
+            foreach (var pair in inW)
+            {
+                if (pair.Key.Sign < 0 || !pair.Key.IsEven || !pair.Key.CanFitInInt32())
+                    return null;
+                var half = pair.Key.ToInt32Unchecked() / 2;
+                sum += half == 0 ? pair.Value : half == 1 ? pair.Value * oneMinusSSquared : pair.Value * MathS.Pow(oneMinusSSquared, half);
+            }
+            var expanded = sum.Expand().InnerSimplified;
+            if (expanded is Providedf(var bare, _))
+                expanded = bare;
+            return TreeAnalyzer.TryGetPolynomial(expanded, s, out var read) && read.Keys.All(power => power.Sign >= 0) && read.Values.All(v => !v.ContainsNode(s) && !v.ContainsNode(w))
+                ? expanded : null;
+        }
+
+        /// <summary>
         /// A denominator factor that is a sum or difference of two square roots of
         /// polynomials, multiplied above and below by its conjugate:
         /// <c>(1 + x)/(sqrt(x^2 + 2x + 4) - sqrt(x^2 + x + 1))</c> is

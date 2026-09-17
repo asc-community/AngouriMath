@@ -307,6 +307,28 @@ either now; and the secant quotient was simplified to `cos/(b^(5/2) d)` through
 `(1/cos)^(3/2) = cos^(-3/2)`, which is wrong for every negative cosine and cancelled against the
 same wrong step on the denominator. On the 1774-problem independent suites this is 1707 to 1705, the two `asin` rows, with the sign error gone.
 
+### A rational function of a sine over a symbolic quadratic in it is integrated over the two roots
+
+**Improvement, not silent.** `sin(x)/(a + b sin(x) + c sin(x)^2)` and everything rational in
+`sin(x)` and `cos(x)^2` over that quadratic came back unevaluated, or ran past any budget:
+under the half-angle the quadratic in the sine is a quartic in `t` with a symbol in every
+coefficient, which nothing factors, and the substitution `u = sin(x)` wants a cosine above the
+bar that an even power does not give. Written in `s = sin(x)` the integrand is a rational function
+of `s`, divided down and split over the written factors as any is, and the piece over the
+quadratic is taken by the two roots `r = (-b ± sqrt(b^2 - 4ac))/(2c)`, each
+`1/(sin(x) - r)` being `-2 atan((r tan(x/2) - 1)/sqrt(r^2 - 1))/sqrt(r^2 - 1)` for any complex
+`r` — a form checked by differentiation, not a piecewise on the sign of a root, which has no
+value for the conjugate pair the ordinary coefficients give. The cosine the same way, with
+`-2 atan(tan(x/2)/σ)/((1 + r) σ)`, `σ = sqrt((r - 1)/(r + 1))`. On each interval between the
+poles of `tan(x/2)`, as every half-angle answer.
+
+| | Was | Is |
+|---|---|---|
+| `"1/(a+b*sin(x)+c*sin(x)^2)".Integrate("x")` | unevaluated | the two arctangents over `sqrt(b^2 - 4ac)` |
+| `"sin(x)^4/(a+b*sin(x)+c*sin(x)^2)".Integrate("x")` | unevaluated after more than three minutes | `(x - sin(2x)/2)/(2c) + b cos(x)/c^2 + (b^2 c - a c^2) x/c^4 + …` in 70 ms |
+| `"csc(x)^2/(a+b*sin(x)+c*sin(x)^2)".Integrate("x")`, `"sec(x)^2/…"` | unevaluated | `-cot(x)/a + …`, the blocks over `sin^2` and `1 - sin^2` beside the two roots |
+| `"1/(a+b*cos(x)+c*cos(x)^2)".Integrate("x")` | unevaluated | the cosine form |
+
 ### A condition the answer states on its own is no longer repeated beside it
 
 **Improvement, not silent.** `Simplify` returned `(1 - ln(x))/x^2 provided not x = 0` for the
