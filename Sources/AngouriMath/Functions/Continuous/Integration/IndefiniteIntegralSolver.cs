@@ -7955,6 +7955,20 @@ namespace AngouriMath.Functions.Algebra
         /// logarithm of <paramref name="x"/> in it, the expression linear in that logarithm,
         /// and the logarithm's argument a constant times a power of <paramref name="x"/>.
         /// </summary>
+        /// <summary>
+        /// Whether <paramref name="expr"/> is built from <paramref name="x"/> and constants by
+        /// products, quotients and powers with exponents free of <paramref name="x"/>, however
+        /// nested: <c>c (d x^m)^n</c>, and not <c>x + 1</c> or <c>e^x</c>.
+        /// </summary>
+        private static bool IsAProductOfPowersOfTheVariable(Entity expr, Entity.Variable x)
+            => !expr.ContainsNode(x) || expr == x || expr switch
+            {
+                Mulf(var left, var right) => IsAProductOfPowersOfTheVariable(left, x) && IsAProductOfPowersOfTheVariable(right, x),
+                Divf(var left, var right) => IsAProductOfPowersOfTheVariable(left, x) && IsAProductOfPowersOfTheVariable(right, x),
+                Powf(var @base, var exponent) => !exponent.ContainsNode(x) && IsAProductOfPowersOfTheVariable(@base, x),
+                _ => false,
+            };
+
         private static bool IsAffineInALogarithmOfAPowerOfX(Entity expr, Entity.Variable x)
         {
             Entity? logarithm = null;
@@ -7966,6 +7980,14 @@ namespace AngouriMath.Functions.Algebra
                     logarithm = node;
                 }
             if (logarithm is not Logf(_, var antilogarithm))
+                return false;
+            // The argument c x^r, read before it is differentiated: products, quotients and
+            // powers of x and of constants, however nested -- `c (d x^m)^n` -- and nothing
+            // else of x. Simplifying the logarithmic derivative of any argument was what took
+            // `atanh(tanh(a + b x))^4` -- a fourth power of a logarithm of a quotient of
+            // exponentials, a 300 ms answer before -- past three minutes on the way to
+            // declining.
+            if (!IsAProductOfPowersOfTheVariable(antilogarithm, x))
                 return false;
             // The argument c x^r: its logarithmic derivative is r/x.
             var rate = Functions.PartialFractions.Bare((antilogarithm.Differentiate(x) * x / antilogarithm).Simplify());
@@ -9893,6 +9915,13 @@ namespace AngouriMath.Functions.Algebra
                 {
                     (slope, offset) = (readSlope, readOffset);
                     return !TreeAnalyzer.IsZero(slope);
+                }
+                // Only a rational spelling is read by its derivative: a leaf with a function
+                // of x in it is not a linear however it simplifies, and simplifying it costs.
+                if (!IsARationalFunction(linear, x))
+                {
+                    (slope, offset) = (Number.Integer.Zero, Number.Integer.Zero);
+                    return false;
                 }
                 slope = Functions.PartialFractions.Bare(linear.Differentiate(x).Simplify());
                 offset = Functions.PartialFractions.Bare((linear - slope * x).Simplify());
