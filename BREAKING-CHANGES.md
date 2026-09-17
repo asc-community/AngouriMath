@@ -369,6 +369,26 @@ power of the variable every term holds comes out the same way.
 | `"x^2/((a*x + a)*(1 - x^2))".Integrate("x")` | unevaluated | the partial fractions over `(x + 1)^2 (1 - x)`, over `a` |
 | `"cot(x)^3/(a + b*csc(x))".Integrate("x")` | unevaluated | `-1/(b sin(x)) - a ln(sin(x))/b^2 + (b^2 - a^2) ln(a sin(x) + b)/(a b^2)`, once `a u^4 + b u^3` is read as `u^3 (a u + b)` |
 
+### Fractional powers of `a ± a sin` are integrated by the half angle at which they are squares
+
+**Improvement, not silent.** `(A + C sin(y)^2)/((c - c sin(y))^(3/2) sqrt(a + a sin(y)))` and
+its kin ran past any budget: the substitution search has no radical of a trigonometric function
+it can rationalise, and the closed rule for `(a + b sin)^n` with `a^2 = b^2` reads one such power
+alone. `1 + sin(y)` is `2 sin(u)^2` and `1 - sin(y)` is `2 cos(u)^2` for `u = y/2 + pi/4`
+(`1 ± cos(y)` the same with `u = y/2`), so each such power is a whole power of a sine or cosine
+of `u` times its sign — a constant between the zeros, written in front — and what is left is
+rational in `sin(u)` and `cos(u)`, which the rules answer. Exact for any `a`: `1 + sin(y)` is not
+negative, so `(a q)^p = a^p q^p` for the principal powers whatever `a` is; `a^2 = b^2` is decided,
+not assumed, and a lone positive power still goes to the closed rule first, which answers it in
+one form across the zeros.
+
+| | Was | Is |
+|---|---|---|
+| `"(A + C*sin(x)^2)/((c - c*sin(x))^(3/2)*sqrt(a + a*sin(x)))".Integrate("x")` | unevaluated after the budget | `sgn(cos(u)) sgn(sin(u)) (…)` in `u = x/2 + pi/4`, half a second |
+| `"(a + a*sin(x))^(1/2)/(c - c*sin(x))^(5/2)".Integrate("x")` | unevaluated | `sgn(sin(u)) sgn(cos(u)) sqrt(2a)/(4 c^(5/2)) (…)` |
+| `"sqrt(a + a*sin(x))".Integrate("x")` | unevaluated (`a^2 = a^2` is not decided by evaluation) | `-2 sqrt(2a) sgn(sin(u)) cos(u)` |
+| `"sqrt(1 + sin(x))".Integrate("x")` | `-2 cos(x)/sqrt(1 + sin(x))` | unchanged, the closed rule's |
+
 ### A condition the answer states on its own is no longer repeated beside it
 
 **Improvement, not silent.** `Simplify` returned `(1 - ln(x))/x^2 provided not x = 0` for the

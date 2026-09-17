@@ -2261,6 +2261,176 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Fractional powers of <c>a ± a sin(y)</c>, or of <c>a ± a cos(y)</c>, beside anything
+        /// rational in the sine and cosine of <c>y</c>, by the half angle at which they are
+        /// squares: <c>1 + sin(y)</c> is <c>2 sin(u)^2</c> and <c>1 - sin(y)</c> is
+        /// <c>2 cos(u)^2</c> for <c>u = y/2 + pi/4</c>, so <c>(a + a sin(y))^(3/2)</c> is
+        /// <c>a^(3/2) 2^(3/2) sgn(sin(u)) sin(u)^3</c>, the sign a constant between the zeros of
+        /// the sine that comes out in front of the integral, and what is left is rational in
+        /// <c>sin(u)</c> and <c>cos(u)</c> -- <c>sin(y)</c> being <c>2 sin(u)^2 - 1</c> and
+        /// <c>cos(y)</c> being <c>2 sin(u) cos(u)</c>. For the cosine, <c>u = y/2</c>, with
+        /// <c>1 + cos(y) = 2 cos(u)^2</c> and <c>1 - cos(y) = 2 sin(u)^2</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Rubi's <c>(a + b sin)^m (c + d sin)^n (A + B sin + C sin^2)</c> files with
+        /// <c>a^2 = b^2</c> and <c>c^2 = d^2</c> -- <c>(A + C sin^2)/((c - c sin)^(3/2) sqrt(a + a sin))</c>
+        /// and its kin -- were timeouts: the substitution search has no radical of a
+        /// trigonometric function it can rationalise, and <see cref="SolveAHalfPowerOfOnePlusASine"/>
+        /// reads one such power alone. This is that rule's identity applied to the whole
+        /// integrand at once.
+        /// </para>
+        /// <para>
+        /// Exact, for any <c>a</c>: <c>1 + sin(y)</c> is not negative, so <c>(a q)^p = a^p q^p</c>
+        /// for the principal powers whatever <c>a</c> is, and <c>(2 sin(u)^2)^p</c> is
+        /// <c>2^p |sin(u)|^(2p)</c>. <c>a^2 = b^2</c> is decided, not assumed. Whole products
+        /// <c>2p</c> only, so that the sign is a power of a sign and what is handed on is a whole
+        /// power of the sine; at the top only, as every rule that writes a sign for a function.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByTheHalfAngleWhereOnePlusASineIsASquare(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            Entity? argument = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (TrigonometricArgument(node) is not { } thisArgument || !thisArgument.ContainsNode(x))
+                    continue;
+                if (argument is null)
+                    argument = thisArgument;
+                else if (argument != thisArgument)
+                    return null;
+            }
+            if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _)
+                || rate.ContainsNode(x) || TreeAnalyzer.IsZero(rate))
+                return null;
+            if (!expr.Nodes.All(node => !node.ContainsNode(x)
+                    || node is Variable or Sumf or Minusf or Mulf or Divf or Sinf or Cosf or Secantf or Cosecantf or Tanf or Cotanf
+                    || node is Powf(_, Number.Rational)))
+                return null;
+            var sine = MathS.Sin(argument);
+            var cosine = MathS.Cos(argument);
+            // Which of the two functions the half powers are of: all of one kind, or none.
+            bool? ofTheSine = null;
+            var found = false;
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Powf(var radicand, Number.Rational exponent) || exponent is Number.Integer || !radicand.ContainsNode(x))
+                    continue;
+                if (ReadAsOnePlusMinusAFunction(radicand, sine, cosine) is not var (_, _, isSine))
+                    return null;
+                if (!exponent.ERational.Denominator.Equals(EInteger.FromInt32(2)))
+                    return null;
+                if (ofTheSine is { } kind && kind != isSine)
+                    return null;
+                ofTheSine = isSine;
+                found = true;
+            }
+            if (!found || ofTheSine is not { } sineKind)
+                return null;
+            // One such power alone, to a positive exponent, is the closed rule's first, which
+            // answers it in a single form across the zeros of `1 + sin(y)` where this one
+            // writes a sign; the closed rule wants `a^2 = b^2` decided by evaluation, so
+            // `sqrt(a + a sin(x))` with a symbol falls through to here.
+            if (expr is Powf(_, Number.Rational { ERational.Sign: > 0 }) && SolveAHalfPowerOfOnePlusASine(expr, x) is { } closed)
+                return closed;
+
+            var u = Variable.CreateUnique(expr, "u_half_square");
+            var sinU = MathS.Sin(u);
+            var cosU = MathS.Cos(u);
+            // sin(y) and cos(y) in u, and the two squares.
+            Entity sineInU = sineKind ? 2 * MathS.Sqr(sinU) - 1 : 2 * sinU * cosU;
+            Entity cosineInU = sineKind ? 2 * sinU * cosU : 2 * MathS.Sqr(cosU) - 1;
+            // 1 + f is twice the square of `plus`, 1 - f twice the square of `minus`.
+            Entity plus = sineKind ? sinU : cosU;
+            Entity minus = sineKind ? cosU : sinU;
+            Entity signs = Number.Integer.One;
+            var inTheTwo = expr.Replace(node => node switch
+            {
+                Secantf(var a) when a == argument => 1 / cosine,
+                Cosecantf(var a) when a == argument => 1 / sine,
+                Tanf(var a) when a == argument => sine / cosine,
+                Cotanf(var a) when a == argument => cosine / sine,
+                _ => node,
+            });
+            var rewritten = inTheTwo.Replace(node =>
+            {
+                if (node is not Powf(var radicand, Number.Rational exponent) || exponent is Number.Integer || !radicand.ContainsNode(x))
+                    return node;
+                if (ReadAsOnePlusMinusAFunction(radicand, sine, cosine) is not var (a, positive, _))
+                    return node;
+                var square = positive ? plus : minus;
+                var twoP = exponent.ERational.Numerator;
+                // (a (1 ± f))^p = a^p 2^p |s|^(2p) = a^p 2^p sgn(s)^(2p) s^(2p), and 2p is odd.
+                signs = signs * MathS.Signum(square);
+                Entity constant = MathS.Pow(2, exponent);
+                if (a != Number.Integer.One)
+                    constant = MathS.Pow(a, exponent) * constant;
+                return constant * MathS.Pow(square, Number.Integer.Create(twoP));
+            });
+            var inU = rewritten.Substitute(sine, sineInU).Substitute(cosine, cosineInU);
+            if (inU.ContainsNode(x))
+                return null;
+            // dx = 2 du / rate.
+            var integrand = (inU * 2 / rate).InnerSimplified;
+            if (Integration.ComputeAsAQuestionOfItsOwn(integrand, u, integrateByParts) is not { } result)
+                return null;
+            var back = sineKind ? argument / 2 + MathS.pi / 4 : argument / 2;
+            var answer = (signs == Number.Integer.One ? result : signs * result).Substitute(u, back);
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// <paramref name="radicand"/> read as <c>a (1 ± f)</c> for <c>f</c> the given sine or
+        /// cosine: the constant <c>a</c>, whether the sign is plus, and whether <c>f</c> is the
+        /// sine. Null for anything else, including <c>a + b f</c> with <c>a^2 ≠ b^2</c>.
+        /// </summary>
+        private static (Entity Constant, bool Plus, bool IsSine)? ReadAsOnePlusMinusAFunction(Entity radicand, Entity sine, Entity cosine)
+        {
+            Entity a = Number.Integer.Zero;
+            Entity? b = null;
+            Entity? function = null;
+            foreach (var term in Sumf.LinearChildren(radicand))
+            {
+                if (!term.ContainsNode(sine) && !term.ContainsNode(cosine))
+                {
+                    a += term;
+                    continue;
+                }
+                Entity coefficient = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(term))
+                {
+                    if (factor == sine || factor == cosine)
+                    {
+                        if (function is not null)
+                            return null;
+                        function = factor;
+                    }
+                    else if (!factor.ContainsNode(sine) && !factor.ContainsNode(cosine))
+                        coefficient *= factor;
+                    else
+                        return null;
+                }
+                if (function is null || b is not null)
+                    return null;
+                b = coefficient;
+            }
+            if (b is null || function is null)
+                return null;
+            a = a.InnerSimplified;
+            b = b.InnerSimplified;
+            if (a.Evaled is Number.Complex { IsZero: true })
+                return null;
+            var plus = (a - b).InnerSimplified.Evaled is Number.Complex { IsZero: true } || (a - b).Simplify().Evaled is Number.Complex { IsZero: true };
+            var minus = !plus && ((a + b).InnerSimplified.Evaled is Number.Complex { IsZero: true } || (a + b).Simplify().Evaled is Number.Complex { IsZero: true });
+            if (!plus && !minus)
+                return null;
+            return (a, plus, function == sine);
+        }
+
+        /// <summary>
         /// A whole power of the secant or cosecant, brought down two at a time by the standard
         /// reduction until the power rule for the first or the zeroth takes over.
         /// </summary>
