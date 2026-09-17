@@ -88,11 +88,12 @@ namespace AngouriMath.Tests.Calculus
         /// reason: it is now NaN, and that is not a guess. Nothing here established
         /// non-existence, so claiming it here would have been one; a sine takes every value in
         /// [-1, 1] infinitely often on the way out to infinity, which does establish it. The
-        /// distinction this summary draws is the point and it still holds -- the two forms left
-        /// are ones nothing has established anything about.
+        /// distinction this summary draws is the point and it still holds -- the form left is
+        /// one nothing has established anything about. <c>(x + sin(x))/x</c> was the other and
+        /// is 1 now, by the division and the squeeze theorem
+        /// (<see cref="BoundedTimesVanishingTest"/>).
         /// </remarks>
         [Theory]
-        [InlineData("(x + sin(x)) / x")]
         [InlineData("x * sin(x)")]
         public void AFormThatCannotBeSettledTerminatesWithoutClaimingAnAnswer(string expression)
         {

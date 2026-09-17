@@ -69,11 +69,12 @@ namespace AngouriMath.Tests.Calculus
         /// A bare sin(x) used to be the first of these and is now answered NaN -- not by this
         /// algorithm, which still declines it, but by the rule that reads a sine's range
         /// directly (<see cref="BoundedTimesVanishingTest"/>). What this test is about is
-        /// unchanged: the two forms left are ones no rule anywhere has a reading of, and the
-        /// series must not invent one for them.
+        /// unchanged: the form left is one no rule anywhere has a reading of, and the series
+        /// must not invent one for it. <c>(x + sin(x))/x</c> was the other, and is answered 1
+        /// now -- not by this algorithm but by the division and the squeeze theorem, see
+        /// <see cref="BoundedTimesVanishingTest"/>.
         /// </remarks>
         [Theory]
-        [InlineData("(x + sin(x)) / x")]
         [InlineData("x * cos(x)")]
         public void AnOscillationIsDeclinedRatherThanGuessedAt(string expression)
         {

@@ -145,5 +145,118 @@ namespace AngouriMath.Functions
             static Real? Number(Entity what)
                 => what.Evaled is Real { IsFinite: true } real ? real : null;
         }
+
+        /// <summary>
+        /// <paramref name="predicate"/> with every conjunct that <paramref name="expression"/>
+        /// implies on its own taken off: a condition <c>not e = 0</c> says nothing where the
+        /// expression has no value at the zeros of <c>e</c> anyway. <see cref="Entity.Boolean.True"/>
+        /// where nothing is left.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>(1 - ln(x))/x^2 provided not x = 0</c> is <c>(1 - ln(x))/x^2</c>: the quotient is
+        /// undefined at zero, so the condition excludes a point the expression does not reach,
+        /// and a reader is told twice what the expression says once. The same for
+        /// <c>(1 + ln(x)) x^x provided not x = 0</c>, where <c>ln(0)</c> and <c>0^0</c> are both
+        /// undefined. https://github.com/asc-community/AngouriMath/issues/1394
+        /// </para>
+        /// <para>
+        /// <b>Sound whichever way "undefined" is read.</b> A <c>provided</c> says the expression
+        /// has no value where its condition fails; dropping it changes nothing where the
+        /// expression already has no value there, whether that absence is written <c>NaN</c> or
+        /// a complex infinity (https://github.com/asc-community/AngouriMath/issues/217). What has
+        /// to be proven is that the expression <em>is</em> undefined at every zero of <c>e</c>,
+        /// and it is proven only structurally: a quotient by <c>d</c>, a negative power of
+        /// <c>d</c>, a logarithm of <c>d</c> or to the base <c>d</c>, or <c>d^f</c> with <c>f</c>
+        /// vanishing too, where <c>d</c> is <c>e</c> itself, a positive power of it, a product
+        /// holding it, or a polynomial in the variable <c>e</c> is with no constant term. Every
+        /// such node is undefined at the zeros of <c>e</c>, and an undefined operand makes the
+        /// whole expression undefined, since no operation here absorbs one. Anything not proven
+        /// keeps its condition: a false negative is a redundant clause, a false positive would
+        /// claim a value at a point.
+        /// </para>
+        /// <para>
+        /// Decided on the expression as it stands, which matters: <c>x/x provided not x = 0</c>
+        /// simplifies to <c>1</c>, and <c>1</c> says nothing about zero, so the condition on the
+        /// simplified body is not redundant and stays.
+        /// </para>
+        /// </remarks>
+        internal static Entity WithoutWhatTheExpressionImplies(Entity expression, Entity predicate)
+        {
+            // Asked from the simplification of a `provided`, and the reading below simplifies
+            // polynomials, which can make a `provided` of their own: one level, and no more.
+            if (deciding)
+                return predicate;
+            deciding = true;
+            try
+            {
+                return Without(expression, predicate);
+            }
+            finally
+            {
+                deciding = false;
+            }
+        }
+
+        [System.ThreadStatic] private static bool deciding;
+
+        private static Entity Without(Entity expression, Entity predicate)
+            => predicate switch
+            {
+                Andf(var left, var right) =>
+                    (Without(expression, left), Without(expression, right)) switch
+                    {
+                        (Entity.Boolean { Value: true }, var rest) => rest,
+                        (var rest, Entity.Boolean { Value: true }) => rest,
+                        (var l, var r) => l == left && r == right ? predicate : new Andf(l, r),
+                    },
+                Notf(Equalsf(var e, var zero)) when zero.Evaled is Complex { IsZero: true } && IsUndefinedAtTheZerosOf(expression, e) => Entity.Boolean.True,
+                Notf(Equalsf(var zero, var e)) when zero.Evaled is Complex { IsZero: true } && IsUndefinedAtTheZerosOf(expression, e) => Entity.Boolean.True,
+                _ => predicate,
+            };
+
+        /// <summary>
+        /// Whether <paramref name="expression"/> has a node that is undefined wherever
+        /// <paramref name="e"/> is zero.
+        /// </summary>
+        private static bool IsUndefinedAtTheZerosOf(Entity expression, Entity e)
+            => expression.Nodes.Any(node => node switch
+            {
+                Divf(_, var d) => VanishesWith(d, e),
+                Powf(var d, var power) => VanishesWith(d, e) && (power.Evaled is Real { IsNegative: true } || VanishesWith(power, e)),
+                Logf(var @base, var antilogarithm) => VanishesWith(antilogarithm, e) || VanishesWith(@base, e),
+                _ => false,
+            });
+
+        /// <summary>
+        /// Whether <paramref name="d"/> is zero wherever <paramref name="e"/> is: <c>d</c> is
+        /// <c>e</c>, a positive power of it, a product with such a factor, or -- for a variable
+        /// <c>e</c> -- a polynomial in it without a constant term.
+        /// </summary>
+        private static bool VanishesWith(Entity d, Entity e)
+        {
+            if (d == e)
+                return true;
+            if (d is Powf(var @base, var power) && power.Evaled is Real { IsPositive: true })
+                return VanishesWith(@base, e);
+            if (d is Mulf)
+                return Mulf.LinearChildren(d).Any(factor => VanishesWith(factor, e));
+            if (e is Variable variable && d.ContainsNode(variable)
+                && TreeAnalyzer.TryGetPolynomial(d, variable, out var polynomial) && polynomial.Count > 0)
+                return !polynomial.ContainsKey(PeterO.Numbers.EInteger.Zero)
+                    && polynomial.Keys.All(degree => degree.Sign > 0)
+                    && polynomial.Values.All(coefficient => !coefficient.ContainsNode(variable));
+            // A linear factor with a numeric root: `x + 1` vanishes with `x^2 + x`, since the
+            // latter is zero at -1. Read by substituting the root, which is cheap; a polynomial
+            // division here was asked on every quotient of every simplification inside the
+            // integrator and made a decline of `x/sin(x)` take a minute.
+            if (e is Sumf or Minusf && e.Vars.Count() == 1 && e.Vars.First() is var only && d.ContainsNode(only)
+                && TreeAnalyzer.TryGetPolynomial(e, only, out var line) && line.Count == 2
+                && line.TryGetValue(PeterO.Numbers.EInteger.One, out var slope) && line.TryGetValue(PeterO.Numbers.EInteger.Zero, out var intercept)
+                && slope.Evaled is Complex { IsFinite: true } b && !b.IsZero && intercept.Evaled is Complex { IsFinite: true } a
+                && TreeAnalyzer.TryGetPolynomial(d, only, out var polynomialInIt) && polynomialInIt.Values.All(coefficient => coefficient.Evaled is Complex))
+                return d.Substitute(only, (-a / b).Evaled).Evaled is Complex { IsZero: true };
+            return false;
+        }
     }
 }

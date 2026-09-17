@@ -307,6 +307,30 @@ either now; and the secant quotient was simplified to `cos/(b^(5/2) d)` through
 `(1/cos)^(3/2) = cos^(-3/2)`, which is wrong for every negative cosine and cancelled against the
 same wrong step on the denominator. On the 1774-problem independent suites this is 1707 to 1705, the two `asin` rows, with the sign error gone.
 
+### A condition the answer states on its own is no longer repeated beside it
+
+**Improvement, not silent.** `Simplify` returned `(1 - ln(x))/x^2 provided not x = 0` for the
+derivative of `ln(x)/x`, and `(1 + ln(x)) x^x provided not x = 0` for that of `x^x`. The quotient
+by `x^2`, the `ln(x)` and the `0^0` are each undefined at zero already, so the condition excluded
+a point the expression never reached and said twice what the expression says once. A `provided`
+whose condition the expression proves on its own — a quotient by `d`, a negative power of `d`, a
+logarithm of `d` or to the base `d`, `d^f` with `f` vanishing too, for `d` the condition's `e`,
+a positive power of it, a product holding it, a polynomial in the variable `e` is with no constant
+term, or a polynomial that is zero at the root of a linear `e` — comes back without that
+conjunct. Only the answer is read this way, and only its top: inside a piecewise a predicate
+decides which case is taken and stays; inside the simplifier's own search a `provided` is what
+rules read as "this candidate needs a condition" and stays too. A condition the expression does
+not state is kept — `x/x` simplifies to `1 provided not x = 0` as before, since `1` no longer
+says it. [#1394](https://github.com/asc-community/AngouriMath/issues/1394)
+
+| | Was | Is |
+|---|---|---|
+| `"ln(x)/x".Differentiate("x").Simplify()` | `(1 - ln(x))/x^2 provided not x = 0` | `(1 - ln(x))/x^2` |
+| `"x^x".Differentiate("x").Simplify()` | `(1 + ln(x)) x^x provided not x = 0` | `(1 + ln(x)) x^x` |
+| `"x^n".Differentiate("x").Simplify()` | `x^n n/x provided not x = 0` | `x^n n/x` |
+| `"1/(x^2 + x) provided not x = 0 and not x + 1 = 0".Simplify()` | unchanged | `1/(x^2 + x)` |
+| `"(x + sin(x))/x".Limit("x", "+oo")` | unevaluated | `1`, by the squeeze theorem on `sin(x)/x` once the division no longer carries the condition between the terms |
+
 ---
 
 ## 2.5.0 — since 2.4.0
