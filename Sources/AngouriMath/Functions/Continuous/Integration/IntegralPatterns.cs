@@ -833,6 +833,13 @@ namespace AngouriMath.Functions.Algebra
             // ask whether a numerator is constant.
             var quotient = division.Value.Divided.InnerSimplified;
             var remainder = (numerator - quotient * quadratic).InnerSimplified;
+            // The remainder of a division by a quadratic is linear or a constant; one that
+            // still has the variable to a higher power -- the division declined in its own
+            // way, on `csch(29/10 + 13/10 x)^3 (17/10 + 23/10 sech(...)^2)^3` through the
+            // exponential substitution -- went round this recursion at the same power until
+            // the stack ran out. https://github.com/asc-community/AngouriMath/issues/1373
+            if (remainder.ContainsNode(x) && !TreeAnalyzer.TryGetPolyLinear(remainder, x, out _, out _))
+                return null;
 
             return IntegrateRationalOverPowerOfQuadratic(remainder, a, b, c, quadratic, power, x, withoutTheFirstPower) is { } head
                    && IntegrateRationalOverPowerOfQuadratic(quotient, a, b, c, quadratic, power - 1, x, withoutTheFirstPower) is { } rest
@@ -892,6 +899,14 @@ namespace AngouriMath.Functions.Algebra
                     return false;
                 var quotient = division.Value.Divided.InnerSimplified;
                 var remainder = (above - quotient * quadratic).InnerSimplified;
+                // The remainder of a division by a quadratic is linear or a constant; one
+                // that still has the variable to a higher power -- the division declined in
+                // its own way, on `csch(29/10 + 13/10 x)^3 (17/10 + 23/10 sech(...)^2)^3`
+                // through the exponential substitution -- went round this recursion at the
+                // same n until the stack ran out.
+                // https://github.com/asc-community/AngouriMath/issues/1373
+                if (remainder.ContainsNode(x) && !TreeAnalyzer.TryGetPolyLinear(remainder, x, out _, out _))
+                    return false;
                 return Gather(remainder, n) && Gather(quotient, n - 1);
             }
 

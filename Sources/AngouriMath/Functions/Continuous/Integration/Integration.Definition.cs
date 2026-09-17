@@ -525,6 +525,12 @@ namespace AngouriMath.Functions.Algebra
             // b^205, and the search after it went past its budget.
             if ((answer = IndefiniteIntegralSolver.SolveByTheQuotientOfTheLogarithmsLinears(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesAPowerOfALogarithm(expr, x, integrateByParts)) is { }) return answer;
+            // A rational function of the hyperbolic tangent with a symbol among its
+            // coefficients, by u = tanh(y): Rubi's `1/(a + b coth(c + d x)^2)^2` is a symbolic
+            // quadratic squared here, and under `u = e^x` a palindromic quartic that took the
+            // budget. Before the substitution search, which with a symbolic slope spends the
+            // whole of it on `u = c + d x` and never comes back to the chain.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfTheHyperbolicTangent(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             // A logarithmic derivative the substitution above could not read for a symbol in
             // an exponent: `(x^(n-1) - 1)/(x^n - n x)`.
