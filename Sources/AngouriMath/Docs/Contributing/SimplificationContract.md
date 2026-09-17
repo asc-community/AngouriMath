@@ -83,24 +83,18 @@ use it rather than invent a test.
 otherwise. `Simplify` already produces it — `x/x` gives `1 provided not x = 0` — and `Entity.Provided`
 drops the condition when it is `True`, so nothing is attached where nothing is needed.
 
-**A pole is a value; an indeterminate form is not.** `1/x` at zero has a value — the point at
-infinity, written as a complex infinity once [#217](https://github.com/asc-community/AngouriMath/issues/217)
-lands, and read that way now — so `1/x provided not x = 0` is a *different* expression from `1/x`:
-it has no value at zero where `1/x` has an infinite one. The condition is not redundant and
-`Simplify` keeps it; the same for a negative power and a logarithm of the condition's expression.
-`0^0` and `0/0` have no value on any reading, so a condition that only excludes those points says
-what the expression already says, and `Simplify` drops it: `x^x provided not x = 0` is `x^x`.
-An expression that is `1/0` at a point therefore has a value there and no derivative there, and
-it is the `provided` on the derivative, not the expression, that records the difference
-([#1394](https://github.com/asc-community/AngouriMath/issues/1394)). Under a codomain that admits
-no infinities the first half changes — there `1/x` has no value at zero either — and the rule
-would follow the codomain; today's codomains all admit them.
-
-Two costs to know before reaching for it. A condition **competes on complexity**, because `Simplify`
-ranks candidates by node count, so attaching one can make a better form lose. And a condition
-**travels**: it propagates outward and can escape a binder
-([#878](https://github.com/asc-community/AngouriMath/issues/878)), and a single `NaN` condition inside
-a `Piecewise` collapses the whole node.
+**A condition the expression's own domain condition already states is redundant, and `Simplify`
+drops it.** `x^x provided not x = 0` is `x^x` and `1/x provided not x = 0` is `1/x`: what an
+expression accepts under a codomain is what `DomainConditionIn` says — a nonzero divisor, a
+nonzero base or a positive exponent, a nonzero antilogarithm over the complex plane and a positive
+one over the reals — and a `provided` that only excludes points that condition already excludes
+says nothing. The decision is made against the domain condition read in the ambient codomain, not
+against the shape of the node, so it follows the codomain: when
+[#217](https://github.com/asc-community/AngouriMath/issues/217) gives `1/0` a value under the
+codomains that admit a complex infinity, the quotient's domain condition changes there and the
+`provided` beside `1/x` stops being redundant, with no change to the rule. A condition the
+expression does not state stays: `x/x` becomes `1 provided not x = 0`, and `1` says nothing about
+zero ([#1394](https://github.com/asc-community/AngouriMath/issues/1394)).
 
 ## 3. Four things that are not the same
 
