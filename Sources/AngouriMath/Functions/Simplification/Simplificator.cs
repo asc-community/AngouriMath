@@ -41,7 +41,35 @@ namespace AngouriMath.Functions
 
         /// <summary>See more details in <see cref="Entity.Simplify(int)"/></summary>
         internal static Entity Simplify(Entity expr, int level)
-            => Simplified(RewriteRecording.Current, Alternate(expr, level).First());
+        {
+            var recording = RewriteRecording.Current;
+            var simplified = Simplified(recording, Alternate(expr, level).First());
+            // A condition the answer states on its own -- `not x = 0` on a quotient by x --
+            // is taken off the answer, and only the answer: inside the search a `provided`
+            // is what several rules read as "this candidate needs a condition", and taking it
+            // off there let the substitution search accept candidates it had declined and
+            // run `x/sin(x)` for a minute where it declined in half a second.
+            // https://github.com/asc-community/AngouriMath/issues/1394
+            var mark = recording?.Mark() ?? 0;
+            return Noted(recording, simplified, WithoutTheConditionsItStates(simplified), "ConditionsTheExpressionStates", mark);
+        }
+
+        /// <summary>
+        /// <paramref name="expression"/> with every conjunct of its condition that the
+        /// expression states on its own taken off. At the top only: a case of a piecewise is
+        /// taken where its predicate holds and falls through to the next where it does not,
+        /// so a predicate there is not redundant even where the case's expression is
+        /// undefined without it.
+        /// </summary>
+        private static Entity WithoutTheConditionsItStates(Entity expression)
+            => expression is Providedf(var inner, var predicate)
+                ? PredicateEntailment.WithoutWhatTheExpressionImplies(inner, predicate) switch
+                {
+                    Entity.Boolean { Value: true } => inner,
+                    var kept when kept == predicate => expression,
+                    var kept => new Providedf(inner, kept),
+                }
+                : expression;
 
         /// <summary>
         /// <see cref="Entity.InnerSimplified"/>, and the whole-expression step it takes written

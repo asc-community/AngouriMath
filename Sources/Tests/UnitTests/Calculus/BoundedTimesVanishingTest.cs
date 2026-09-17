@@ -48,6 +48,19 @@ namespace AngouriMath.Tests.Calculus
         public void BoundedOverDiverging(string expression, string destination) =>
             AssertLimit(expression, destination, "0");
 
+        /// <summary>
+        /// The theorem behind a term of a sum: <c>(x + sin(x))/x</c> is <c>1 + sin(x)/x</c>,
+        /// and the second term is the standard example. It used to be declined, since the
+        /// division left <c>1 + sin(x)/x provided not x = 0</c> and the condition stood between
+        /// the descent and the sum; the quotient states that condition on its own now, and the
+        /// simplified form carries none. https://github.com/asc-community/AngouriMath/issues/1394
+        /// </summary>
+        [Theory]
+        [InlineData("(x + sin(x)) / x", "+oo", "1")]
+        [InlineData("(2 x + cos(x)) / x", "+oo", "2")]
+        public void ABoundedTermBesideADivergingOne(string expression, string destination, string expected) =>
+            AssertLimit(expression, destination, expected);
+
         /// <summary>The same theorem written as a product rather than as a quotient.</summary>
         [Theory]
         [InlineData("sin(x) * e ^ (-x)", "+oo")]

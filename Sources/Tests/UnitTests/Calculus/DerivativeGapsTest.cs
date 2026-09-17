@@ -73,7 +73,10 @@ namespace AngouriMath.Tests.Calculus
         // negative x -- at n = 3, x = -2.5 the derivative is 75/4 and used to be NaN.
         // https://github.com/asc-community/AngouriMath/issues/721
         [Theory]
-        [InlineData("x ^ n", "x ^ n * n / x provided not x = 0")]
+        // The logarithmic rule's condition, `not x = 0`, is what the quotient by x says on its
+        // own, and the simplified derivative no longer repeats it.
+        // https://github.com/asc-community/AngouriMath/issues/1394
+        [InlineData("x ^ n", "x ^ n * n / x")]
         [InlineData("2 ^ x", "ln(2) * 2 ^ x")]
         // Compared as printed text: what is under test is that the logarithmic rule and
         // its condition are still used, and the tree differs from the parsed expectation
