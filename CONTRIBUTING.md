@@ -115,6 +115,12 @@ categories -- and are answered there; an issue that turns out to be one is redir
 answered, closed unless a work item came of it. `up-for-grabs` marks an issue reserved for a
 newcomer.
 
+Who is *working* an issue is its assignee, and only that: an issue is claimed by assigning it,
+the claim lasts a day unless renewed or superseded by an open pull request linked to the issue,
+and an issue that is several pull requests' worth of work is split into sub-issues that are
+claimed one at a time. The rules the agents follow for this are item 10 of the working practice
+in [AGENTS.md](AGENTS.md).
+
 `Area: *` - a number of labels for issues, which are only specific to one of the wrappers: AngouriMath.FSharp, AngouriMath.Interactive, AngouriMath.CPP.
 
 ### Contributing details

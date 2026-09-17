@@ -7,7 +7,9 @@
 #      and an issue with neither is a goal, which has no type: a goal is the meta-issue its
 #      sub-issues hang off, and a blank issue is one until the triage says otherwise
 #   2. the type labels `Bug`, `Minor bug`, `Proposal` come off (with --remove-labels)
-#   3. questions (`Question`, or `Opinions wanted` alone) are redirected to Discussions with a
+#   3. the organisation's `Task` type is removed (with --remove-task-type; org admin): a goal is
+#      untyped, so `Task` is the unassigned state written twice, and no issue carries it
+#   4. questions (`Question`, or `Opinions wanted` alone) are redirected to Discussions with a
 #      comment, and closed when already answered (with --close-questions; open ones without an
 #      answer are listed, not closed)
 #
@@ -15,7 +17,22 @@
 set -euo pipefail
 REPO=asc-community/AngouriMath
 APPLY=0; REMOVE=0; CLOSEQ=0
-for a in "$@"; do case $a in --apply) APPLY=1;; --remove-labels) REMOVE=1;; --close-questions) CLOSEQ=1;; esac; done
+REMOVETASK=0
+for a in "$@"; do case $a in --apply) APPLY=1;; --remove-labels) REMOVE=1;; --close-questions) CLOSEQ=1;; --remove-task-type) REMOVETASK=1;; esac; done
+
+# The Task type, once nothing uses it.
+if [ $REMOVETASK = 1 ]; then
+  task_id=$(gh api "orgs/asc-community/issue-types" --jq '.[] | select(.name == "Task") | .id')
+  if [ -n "$task_id" ]; then
+    using=$(gh api --paginate "repos/$REPO/issues?state=all&per_page=100" --jq '[.[] | select(.pull_request == null and .type.name == "Task")] | length' | paste -sd+ | bc)
+    if [ "$using" = 0 ]; then
+      echo "remove issue type $task_id Task (no issue carries it)"
+      [ $APPLY = 1 ] && gh api -X DELETE "orgs/asc-community/issue-types/$task_id" --silent
+    else
+      echo "issue type Task is still on $using issue(s); not removed"
+    fi
+  fi
+fi
 
 # The issues.
 gh api --paginate "repos/$REPO/issues?state=all&per_page=100" \
