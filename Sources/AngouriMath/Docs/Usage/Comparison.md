@@ -109,7 +109,11 @@ clause**, which is the trade the table is really showing. For `(x^2 - 1)/(x - 1)
 library answers `x + 1 provided not x - 1 = 0`. Same for `x/x + 0*y`. Carrying a removable
 singularity costs the shorter output on those rows and is deliberate — see
 [SimplificationContract.md](../Contributing/SimplificationContract.md), which is where a rewrite's
-right to attach or drop such a condition is set out.
+right to attach or drop such a condition is set out. The two differentiation rows are the other
+half of the same trade: the derivative of `ln(x)/x`, `(1 - ln(x))/x^2`, is `1/0` at zero — a
+value, the point at infinity — and the `provided` is what says the derivative does not exist
+at that point; `x^x`'s derivative carries
+`0^0`, which has no value on any reading, so its condition said nothing and is no longer written.
 
 The two equal-length rows differ by collection and ordering: `1 + 3 * x ^ 2 + 4 * x` against
 `1 + 4*x + 3*x^2` is the same polynomial written in a different order.

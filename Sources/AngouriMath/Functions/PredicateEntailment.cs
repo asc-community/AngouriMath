@@ -154,26 +154,26 @@ namespace AngouriMath.Functions
         /// </summary>
         /// <remarks>
         /// <para>
-        /// <c>(1 - ln(x))/x^2 provided not x = 0</c> is <c>(1 - ln(x))/x^2</c>: the quotient is
-        /// undefined at zero, so the condition excludes a point the expression does not reach,
-        /// and a reader is told twice what the expression says once. The same for
-        /// <c>(1 + ln(x)) x^x provided not x = 0</c>, where <c>ln(0)</c> and <c>0^0</c> are both
-        /// undefined. https://github.com/asc-community/AngouriMath/issues/1394
+        /// <c>(1 + ln(x)) x^x provided not x = 0</c> is <c>(1 + ln(x)) x^x</c>: <c>0^0</c> has no
+        /// value, so the condition excludes a point the expression does not reach, and a reader
+        /// is told twice what the expression says once.
+        /// https://github.com/asc-community/AngouriMath/issues/1394
         /// </para>
         /// <para>
-        /// <b>Sound whichever way "undefined" is read.</b> A <c>provided</c> says the expression
-        /// has no value where its condition fails; dropping it changes nothing where the
-        /// expression already has no value there, whether that absence is written <c>NaN</c> or
-        /// a complex infinity (https://github.com/asc-community/AngouriMath/issues/217). What has
-        /// to be proven is that the expression <em>is</em> undefined at every zero of <c>e</c>,
-        /// and it is proven only structurally: a quotient by <c>d</c>, a negative power of
-        /// <c>d</c>, a logarithm of <c>d</c> or to the base <c>d</c>, or <c>d^f</c> with <c>f</c>
-        /// vanishing too, where <c>d</c> is <c>e</c> itself, a positive power of it, a product
-        /// holding it, or a polynomial in the variable <c>e</c> is with no constant term. Every
-        /// such node is undefined at the zeros of <c>e</c>, and an undefined operand makes the
-        /// whole expression undefined, since no operation here absorbs one. Anything not proven
-        /// keeps its condition: a false negative is a redundant clause, a false positive would
-        /// claim a value at a point.
+        /// <b>A pole is a value; only an indeterminate form is none.</b> A <c>provided</c> says
+        /// where the expression has a value, and <c>1/x</c> at zero has one -- the point at
+        /// infinity, once the complex infinity of
+        /// https://github.com/asc-community/AngouriMath/issues/217 is written, and the same
+        /// reading today -- so <c>1/x provided not x = 0</c> is a different expression from
+        /// <c>1/x</c>, one with no value at zero rather than an infinite one, and keeps its
+        /// condition; so does <c>ln(x)</c>. What has no value on any reading is <c>0^0</c> and
+        /// <c>0/0</c>, and only those are read, structurally: <c>d^f</c> with <c>d</c> and
+        /// <c>f</c> both vanishing at the zeros of <c>e</c>, or <c>n/d</c> with both vanishing,
+        /// where vanishing means being <c>e</c> itself, a positive power of it, a product holding
+        /// it, or a polynomial in the variable <c>e</c> is with no constant term. An
+        /// indeterminate operand makes the whole expression indeterminate, since no operation
+        /// here absorbs one. Anything not proven keeps its condition: a false negative is a
+        /// redundant clause, a false positive would claim a value at a point.
         /// </para>
         /// <para>
         /// Decided on the expression as it stands, which matters: <c>x/x provided not x = 0</c>
@@ -216,27 +216,32 @@ namespace AngouriMath.Functions
             };
 
         /// <summary>
-        /// Whether <paramref name="expression"/> has a node that is undefined wherever
-        /// <paramref name="e"/> is zero.
+        /// Whether <paramref name="expression"/> has a node that is indeterminate wherever
+        /// <paramref name="e"/> is zero: <c>0^0</c> or <c>0/0</c>. A pole is a value, so a
+        /// quotient by <c>d</c> alone, a negative power of it or a logarithm of it is not read.
         /// </summary>
         private static bool IsUndefinedAtTheZerosOf(Entity expression, Entity e)
             => expression.Nodes.Any(node => node switch
             {
-                Divf(_, var d) => VanishesWith(d, e),
-                Powf(var d, var power) => VanishesWith(d, e) && (power.Evaled is Real { IsNegative: true } || VanishesWith(power, e)),
-                Logf(var @base, var antilogarithm) => VanishesWith(antilogarithm, e) || VanishesWith(@base, e),
+                Divf(var n, var d) => VanishesWith(d, e) && VanishesWith(n, e),
+                Powf(var d, var power) => VanishesWith(d, e) && VanishesWith(power, e),
                 _ => false,
             });
 
         /// <summary>
         /// Whether <paramref name="d"/> is zero wherever <paramref name="e"/> is: <c>d</c> is
-        /// <c>e</c>, a positive power of it, a product with such a factor, or -- for a variable
-        /// <c>e</c> -- a polynomial in it without a constant term.
+        /// <c>e</c>, a positive power of it, a product with such a factor, a sine, tangent,
+        /// arcsine or arctangent of such a thing, or -- for a variable <c>e</c> -- a polynomial
+        /// in it without a constant term.
         /// </summary>
         private static bool VanishesWith(Entity d, Entity e)
         {
             if (d == e)
                 return true;
+            // A function that is zero at zero, of something that vanishes: `sin(x)/x` is `0/0`
+            // at zero.
+            if (d is Sinf or Tanf or Arcsinf or Arctanf)
+                return VanishesWith(d.DirectChildren[0], e);
             if (d is Powf(var @base, var power) && power.Evaled is Real { IsPositive: true })
                 return VanishesWith(@base, e);
             if (d is Mulf)

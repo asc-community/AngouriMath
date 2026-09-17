@@ -309,13 +309,12 @@ same wrong step on the denominator. On the 1774-problem independent suites this 
 
 ### A condition the answer states on its own is no longer repeated beside it
 
-**Improvement, not silent.** `Simplify` returned `(1 - ln(x))/x^2 provided not x = 0` for the
-derivative of `ln(x)/x`, and `(1 + ln(x)) x^x provided not x = 0` for that of `x^x`. The quotient
-by `x^2`, the `ln(x)` and the `0^0` are each undefined at zero already, so the condition excluded
-a point the expression never reached and said twice what the expression says once. A `provided`
-whose condition the expression proves on its own — a quotient by `d`, a negative power of `d`, a
-logarithm of `d` or to the base `d`, `d^f` with `f` vanishing too, for `d` the condition's `e`,
-a positive power of it, a product holding it, a polynomial in the variable `e` is with no constant
+**Improvement, not silent.** `Simplify` returned `(1 + ln(x)) x^x provided not x = 0` for the
+derivative of `x^x`. `0^0` has no value, so the condition excluded a point the expression never
+reached and said twice what the expression says once. A `provided` whose condition the
+expression proves on its own — `d^f` with `d` and `f` both vanishing at the zeros of the
+condition's `e`, or `n/d` with both vanishing, where vanishing means being `e` itself, a
+positive power of it, a product holding it, a polynomial in the variable `e` is with no constant
 term, or a polynomial that is zero at the root of a linear `e` — comes back without that
 conjunct. Only the answer is read this way, and only its top: inside a piecewise a predicate
 decides which case is taken and stays; inside the simplifier's own search a `provided` is what
@@ -323,13 +322,24 @@ rules read as "this candidate needs a condition" and stays too. A condition the 
 not state is kept — `x/x` simplifies to `1 provided not x = 0` as before, since `1` no longer
 says it. [#1394](https://github.com/asc-community/AngouriMath/issues/1394)
 
+**A pole is a value.** For a day on `master` the rule also read a quotient by `d`, a negative
+power of `d` and a logarithm of `d`, so that `(1 - ln(x))/x^2 provided not x = 0` lost its
+condition too. It does not: a `provided` says where the expression *has a value*, and `1/x` at
+zero has one — the point at infinity, once
+[#217](https://github.com/asc-community/AngouriMath/issues/217)'s complex infinity is written,
+and the same reading now — so `1/x provided not x = 0`, which has no value there, is a different
+expression from `1/x` and keeps its condition. Only the indeterminate forms, `0^0` and `0/0`,
+have no value on any reading, and only those are read. An expression that produces `1/0` at a
+point is therefore one that has a value there and cannot be differentiated there, and it is the
+`provided`, not the expression, that says so.
+
 | | Was | Is |
 |---|---|---|
-| `"ln(x)/x".Differentiate("x").Simplify()` | `(1 - ln(x))/x^2 provided not x = 0` | `(1 - ln(x))/x^2` |
 | `"x^x".Differentiate("x").Simplify()` | `(1 + ln(x)) x^x provided not x = 0` | `(1 + ln(x)) x^x` |
-| `"x^n".Differentiate("x").Simplify()` | `x^n n/x provided not x = 0` | `x^n n/x` |
-| `"1/(x^2 + x) provided not x = 0 and not x + 1 = 0".Simplify()` | unchanged | `1/(x^2 + x)` |
-| `"(x + sin(x))/x".Limit("x", "+oo")` | unevaluated | `1`, by the squeeze theorem on `sin(x)/x` once the division no longer carries the condition between the terms |
+| `"ln(x)/x".Differentiate("x").Simplify()` | `(1 - ln(x))/x^2 provided not x = 0` | unchanged |
+| `"x^n".Differentiate("x").Simplify()` | `x^n n/x provided not x = 0` | unchanged |
+| `"sin(x)/x + x^x provided not x = 0 and not y = 0".Simplify()` | unchanged | `sin(x)/x + x^x provided not y = 0` |
+| `"(x + sin(x))/x".Limit("x", "+oo")` | unevaluated | `1`, as under the wider rule: `sin(x)/x` is `0/0` at zero, which the narrowed rule still reads, so the division no longer carries the condition between the terms and the squeeze theorem applies |
 
 ### The Pythagorean pair is found anywhere in a sum
 

@@ -79,9 +79,22 @@ use it rather than invent a test.
 
 ### `Providedf` — a condition carried on the value
 
-`expr provided condition` says: this equals `expr` where `condition` holds, and is undefined
+`expr provided condition` says: this equals `expr` where `condition` holds, and has no value
 otherwise. `Simplify` already produces it — `x/x` gives `1 provided not x = 0` — and `Entity.Provided`
 drops the condition when it is `True`, so nothing is attached where nothing is needed.
+
+**A pole is a value; an indeterminate form is not.** `1/x` at zero has a value — the point at
+infinity, written as a complex infinity once [#217](https://github.com/asc-community/AngouriMath/issues/217)
+lands, and read that way now — so `1/x provided not x = 0` is a *different* expression from `1/x`:
+it has no value at zero where `1/x` has an infinite one. The condition is not redundant and
+`Simplify` keeps it; the same for a negative power and a logarithm of the condition's expression.
+`0^0` and `0/0` have no value on any reading, so a condition that only excludes those points says
+what the expression already says, and `Simplify` drops it: `x^x provided not x = 0` is `x^x`.
+An expression that is `1/0` at a point therefore has a value there and no derivative there, and
+it is the `provided` on the derivative, not the expression, that records the difference
+([#1394](https://github.com/asc-community/AngouriMath/issues/1394)). Under a codomain that admits
+no infinities the first half changes — there `1/x` has no value at zero either — and the rule
+would follow the codomain; today's codomains all admit them.
 
 Two costs to know before reaching for it. A condition **competes on complexity**, because `Simplify`
 ranks candidates by node count, so attaching one can make a better form lose. And a condition
