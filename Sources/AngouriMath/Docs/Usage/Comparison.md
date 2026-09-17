@@ -20,12 +20,13 @@ sentence cannot go on being true after its table has stopped being.
 |---|---|---|---|---|
 | capability, output and speed | Math.NET Symbolics 0.25.0 and Symbolism 1.0.4, on .NET 10.0.10 | `6b93b401`, the 2.3.0 release commit | 2026-08-23 | `libcompare` |
 | 80 feature probes over 23 areas | SymPy 1.14.0 | `6b93b401` | 2026-08-23 | `sympyparity` |
-| 1,774 integration problems | Rubi's test-suite, twelve of its files | `e4eefde0` | 2026-08-23 | `intbench` |
+| 1,774 integration problems | Rubi's test-suite, twelve of its files | `374d6c1a` | 2026-09-17 | `intbench` |
 
-`e4eefde0` is later than the 2.3.0 tag the other two rows measure: it is `master` after nine pull
-requests landed, so the Rubi figures are the newer ones. That is deliberate — the suite has to be
-downloaded rather than vendored, so this harness is re-run on its own schedule, and the run behind
-this table is the first taken on merged `master`.
+`374d6c1a` is `master` on 2026-09-17, twenty-five days and 321 squash-merged pull requests after
+the 2.3.0 tag the other two rows measure, so the Rubi figures are much the newer ones. That is
+deliberate — the suite has to be downloaded rather than vendored, so this harness is re-run on its
+own schedule; the first run on merged `master`, at `e4eefde0` on the day of the tag, answered 604
+of the 1,774, and section 5 keeps that figure beside the current one.
 
 **What the reports do not carry.** Only `sympyparity` writes a commit into its own output, taken
 from the project reference it built against, so a moved checkout cannot make it lie. The other two
@@ -327,68 +328,79 @@ integral.
 - 116 excluded: Rubi's antiderivative is non-elementary, so the problem would be unfair
 - 1,774 fair, all of which ran, at a 5-second budget
 
-**Answered 604 of 1,774 (34.0%)**: 604 where `Integrate`'s own answer checks out and 0 more that
-only checked out after `Simplify()`. 1,118 unevaluated, **0 wrong**, 8 unverifiable on the reals,
-0 errors, 44 timeouts. Restricted to the 1,726 problems for which Rubi records a positive step
-count — the ones it answers optimally itself — the rate is 604/1,726 (35.0%).
+**Answered 1,706 of 1,774 (96.2%)** at `374d6c1a` on 2026-09-17: 1,706 where `Integrate`'s own
+answer checks out and 0 more that only checked out after `Simplify()`. 53 unevaluated, **0 wrong**,
+15 unverifiable on the reals, 0 errors, 0 timeouts. Restricted to the 1,726 problems for which Rubi
+records a positive step count — the ones it answers optimally itself — the rate is 1,669/1,726
+(96.7%).
 
-**The timeout column is not reproducible, and the solved column inherits that.** Two runs of *this
-same commit*, same slice and same 5-second budget, answered **604 with 44 timeouts** and **602 with
-46**. Every problem that differed between them moved into or out of the timeout bucket — none became
-unevaluated and none became wrong — and timed on their own against this build the three take
-1,744 ms, 1,579 ms and 835 ms, none close to the budget. `intbench` cannot abort a thread, so a case
-that does time out leaks one and the leaked threads slow every problem after it; how many leak
-depends on what else the machine is doing. So read this rate as **±3 problems**, and read the
-*wrong* answer count, which is 0 in both runs, as the number that means something.
+**Where it came from.** The first run on merged `master`, at `e4eefde0` on 2026-08-23, answered
+**604 of 1,774 (34.0%)** with 1,118 unevaluated, 0 wrong, 8 unverifiable and 44 timeouts; the 74
+pull requests between the two commits that say `Part of #718`, worked through Rubi's own families
+as a corpus, are the difference, and that issue is their record. Two runs of the older commit had
+answered 604 with 44 timeouts and 602 with 46 — every problem that differed moved into or out of
+the timeout bucket, because `intbench` cannot abort a thread and a leaked thread slows every
+problem after it — so a solved count with timeouts in it read as ±3. With no timeouts there is
+nothing left to leak. The *wrong* answer count, 0 in every run, was the number that meant
+something throughout; the wrong answers the family samples turned up on the way (#1369, #1370,
+#1386, #1387) were each fixed before the sample was counted.
 
 | Source | Run | Solved | +Simplify | Unevaluated | Wrong | Unverifiable | Error | Timeout | Rate |
 |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
-| Apostol Problems | 159 | 88 | 0 | 68 | 0 | 2 | 0 | 1 | 55% |
-| Bondarenko Problems | 22 | 0 | 0 | 22 | 0 | 0 | 0 | 0 | 0% |
-| Bronstein Problems | 10 | 1 | 0 | 9 | 0 | 0 | 0 | 0 | 10% |
-| Charlwood Problems | 50 | 1 | 0 | 49 | 0 | 0 | 0 | 0 | 2% |
-| Hearn Problems | 259 | 111 | 0 | 141 | 0 | 1 | 0 | 6 | 43% |
-| Hebisch Problems | 4 | 1 | 0 | 2 | 0 | 0 | 0 | 1 | 25% |
-| Jeffrey Problems | 9 | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0% |
-| Moses Problems | 107 | 54 | 0 | 47 | 0 | 4 | 0 | 2 | 50% |
-| Stewart Problems | 376 | 183 | 0 | 189 | 0 | 0 | 0 | 4 | 49% |
-| Timofeev Problems | 666 | 162 | 0 | 478 | 0 | 1 | 0 | 25 | 24% |
-| Welz Problems | 104 | 3 | 0 | 96 | 0 | 0 | 0 | 5 | 3% |
-| Wester Problems | 8 | 0 | 0 | 8 | 0 | 0 | 0 | 0 | 0% |
+| Apostol Problems | 159 | 159 | 0 | 0 | 0 | 0 | 0 | 0 | 100% |
+| Bondarenko Problems | 22 | 18 | 0 | 4 | 0 | 0 | 0 | 0 | 82% |
+| Bronstein Problems | 10 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 100% |
+| Charlwood Problems | 50 | 47 | 0 | 3 | 0 | 0 | 0 | 0 | 94% |
+| Hearn Problems | 259 | 254 | 0 | 2 | 0 | 3 | 0 | 0 | 98% |
+| Hebisch Problems | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 100% |
+| Jeffrey Problems | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 100% |
+| Moses Problems | 107 | 103 | 0 | 0 | 0 | 4 | 0 | 0 | 96% |
+| Stewart Problems | 376 | 376 | 0 | 0 | 0 | 0 | 0 | 0 | 100% |
+| Timofeev Problems | 666 | 655 | 0 | 5 | 0 | 6 | 0 | 0 | 98% |
+| Welz Problems | 104 | 63 | 0 | 39 | 0 | 2 | 0 | 0 | 61% |
+| Wester Problems | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 100% |
 
 Rubi records how many rule applications each problem took it. That is a difficulty measure produced
 by a system that is not ours, so it says where this library's ceiling is rather than where we chose
-to put it.
+to put it — and the ceiling is now above every band, the hardest included.
 
 | Rubi steps | Run | Solved | Rate |
 |---|--:|--:|--:|
-| 1 (table lookup) | 268 | 153 | 57% |
-| 13+ | 48 | 3 | 6% |
-| 2-3 | 851 | 346 | 41% |
-| 4-6 | 432 | 85 | 20% |
-| 7-12 | 127 | 17 | 13% |
-| negative (Rubi's own answer is not the optimal one) | 48 | 0 | 0% |
+| 1 (table lookup) | 268 | 254 | 95% |
+| 13+ | 48 | 40 | 83% |
+| 2-3 | 851 | 831 | 98% |
+| 4-6 | 432 | 426 | 99% |
+| 7-12 | 127 | 118 | 93% |
+| negative (Rubi's own answer is not the optimal one) | 48 | 37 | 77% |
 
 **How an answer is graded, and what `0 wrong` means.** Not against Rubi's answer: two
 antiderivatives of one integrand differ by a constant and by arbitrarily much rewriting. Our answer
 is differentiated back and compared to the integrand numerically at positive real sample points.
-`0 wrong` therefore means no answer failed *that* check. The 8 unverifiable are cases where neither
+`0 wrong` therefore means no answer failed *that* check, and "wrong" means wrong where the integrand
+is real: a real point where the integrand is complex-valued is skipped, so an answer that differs
+from the principal value there is not counted against, which is the same convention the integrator
+holds to. The derivative is taken symbolically and, where it disagrees at a point, again with the
+parameters pinned first, since an answer with coefficients like `b^205` is right and its symbolic
+derivative at a hundred digits is cancellation noise. The 15 unverifiable are cases where neither
 the raw nor the simplified answer could be evaluated on the reals at two or more points — the
 harness's symbolic parameters are bound to one fixed set of positive reals, so an integrand whose
-radicand is negative throughout has nowhere real to be compared. They are listed by name in the
-report rather than folded into either column, because a silent bucket reads as a clean one. The 44
-timeouts count against the rate, not out of the denominator.
+radicand is negative throughout has nowhere real to be compared, and a second point set on the
+negative axis and a scan over four orders of magnitude are tried before giving up. They are listed
+by name in the report rather than folded into either column, because a silent bucket reads as a
+clean one. A timeout, where there is one, counts against the rate, not out of the denominator.
 
-**The number to hold this against is the library's own corpus.** On the same 2.3.0 commit and the
-same day, `casbench` — another harness in the same workspace, over 121 problems written here —
-solves 116 of the 119 that have an elementary answer, 97.5%. The Rubi rate is 34.0%. Both are
-correct measurements of different things: the first says that the problems we chose are solved,
-the second says what happens to a list somebody else wrote down. Only the second is a measurement
-of the library rather than of the corpus.
+**The number to hold this against is the library's own corpus.** On the 2.3.0 commit, `casbench`
+— another harness in the same workspace, over 121 problems written here — solved 116 of the 119
+that have an elementary answer, 97.5%, on the same day the Rubi rate was 34.0%. Both were correct
+measurements of different things: the first says that the problems we chose are solved, the second
+says what happens to a list somebody else wrote down, and only the second is a measurement of the
+library rather than of the corpus. The Rubi rate is 96.2% now because Rubi's list was taken as the
+corpus to work through, which is the same point made the other way round: a rate is a statement
+about the list it was measured on.
 
 ## What none of this establishes
 
-- **A corpus is a list somebody wrote down.** 604 of 1,774 is a statement about Rubi's textbook
+- **A corpus is a list somebody wrote down.** 1,706 of 1,774 is a statement about Rubi's textbook
   problems at a 5-second budget. It is not a statement about integration in general, and a
   different suite would give a different number without the integrator changing.
 - **Nothing here adjudicates a disagreement.** Where this library and another give different
