@@ -168,5 +168,37 @@ namespace AngouriMath.Tests.Calculus
             Assert.DoesNotContain("sin(arcsin", integral);
             Assert.DoesNotContain("cos(arcsin", integral);
         }
+
+        /// <summary>
+        /// The argument may be a linear <c>c x + d</c>, the radical a constant multiple of
+        /// <c>1 - (c x + d)^2</c> (or a whole power of it from the second up), and the power
+        /// one of <c>a + b arcsin(c x)</c>: Rubi's <c>x arcsin(a x)^2</c>, which parts in x
+        /// stalled on, <c>x^4 (a + b arcsin(c x))/(d - c^2 d x^2)^(5/2)</c> and
+        /// <c>x (d - c^2 d x^2)^3 (a + b arcsin(c x))</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("x*arcsin(2*x)^2", new[] { -0.4, -0.2, 0.1, 0.3, 0.45 })]
+        [InlineData("x^2*(3 + 2*arcsin(2*x))^3", new[] { -0.4, -0.2, 0.1, 0.3, 0.45 })]
+        [InlineData("x^4*(1 + 2*arcsin(3*x))/(5 - 45*x^2)^(5/2)", new[] { -0.3, -0.15, 0.05, 0.2, 0.31 })]
+        [InlineData("x*(2 - 8*x^2)^3*(1 + arcsin(2*x))", new[] { -0.4, -0.2, 0.1, 0.3, 0.45 })]
+        [InlineData("arcsin(2*x + 1/2)^3/sqrt(3/4 - 2*x - 4*x^2)", new[] { -0.7, -0.5, -0.3, -0.1, 0.2 })]
+        [InlineData("x*arccos(2*x)^2", new[] { -0.4, -0.2, 0.1, 0.3, 0.45 })]
+        [InlineData("x^2*arctan(3*x)^2/(2 + 18*x^2)^(5/2)", new[] { -1.6, -0.4, 0.3, 1.1, 2.4 })]
+        [InlineData("e^(arccotan(x))/(3 + 3*x^2)^3", new[] { -1.6, -0.4, 0.3, 1.1, 2.4 })]
+        public void ALinearArgumentAndAMultipleOfTheQuadratic(string integrand, double[] points)
+            => DifferentiatesBack(integrand, points);
+
+        /// <summary>
+        /// An exponential of <c>i</c> times an inverse trigonometric function is algebraic:
+        /// <c>e^(i arctan(a x))</c> is <c>(1 + i a x)/sqrt(1 + a^2 x^2)</c>, so Rubi's
+        /// <c>e^(i arctan(a x))/sqrt(c + a^2 c x^2)</c> is a rational function, where under
+        /// <c>x = tan(u)/a</c> it was <c>e^(i u) sec(u)</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("e^(i*arctan(2*x))*x^4", new[] { -1.6, -0.4, 0.3, 1.1, 2.4 })]
+        [InlineData("e^(i*arctan(2*x))/sqrt(3 + 12*x^2)", new[] { -1.6, -0.4, 0.3, 1.1, 2.4 })]
+        [InlineData("x/e^(2*i*arctan(1 + 2*x))", new[] { -1.6, -0.4, 0.3, 1.1, 2.4 })]
+        public void AnExponentialOfTheInverseIsAlgebraic(string integrand, double[] points)
+            => DifferentiatesBack(integrand, points);
     }
 }

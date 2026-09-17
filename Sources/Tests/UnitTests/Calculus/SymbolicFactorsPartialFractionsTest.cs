@@ -174,6 +174,25 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// And beside a quadratic factor the linear blocks are still taken by the derivatives,
+        /// with what they leave of the numerator over the quadratic alone: Rubi's
+        /// <c>tan^4 (A + B tan)/(a + b tan)^4</c> is <c>u^4 (A + B u)/((a + b u)^4 (1 + u^2))</c>
+        /// under the tangent, and solved as a system it came out in <c>a^63 b^10</c> and did
+        /// not evaluate within the corpus's budget.
+        /// </summary>
+        [Theory]
+        [InlineData("x^4*(A + B*x)/((a + b*x)^4*(1 + x^2))")]
+        [InlineData("1/((a + b*x)^2*(1 + x^2))")]
+        [InlineData("x/((a + b*x)*(x^2 + 2))")]
+        [InlineData("x^3/((a + b*x)^2*(1 + x^2)*(4 + x^2))")]
+        [InlineData("tan(x)^4*(A + B*tan(x))/(a + b*tan(x))^4")]
+        public void SymbolicLinearBlocksBesideAQuadratic(string integrand)
+        {
+            DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("A", 0.4), ("B", 1.1));
+            Assert.True(integrand.ToEntity().Integrate("x").Stringize().Length < 4000, "the answer is a page");
+        }
+
+        /// <summary>
         /// Two linear factors with one root are one factor: <c>(a + b x)(a + x b)^2</c> is
         /// how the rules that make a factor monic and gather its powers write it, and as
         /// two distinct factors the decomposition had no answer, its coefficients being
