@@ -192,18 +192,24 @@ Use as a simple calculator:
 Entity expr = "1 + 2 * log(3, 9)";
 Console.WriteLine(expr.EvalNumerical());
 ```
-$$5$$
+```math
+5
+```
 
 ```cs
 Console.WriteLine("2 / 3 + sqrt(-16)".EvalNumerical());
 >>> 2/3 + 4i
 ```
-$$\frac{2}{3} + 4\mathrm{i}$$
+```math
+\frac{2}{3} + 4\mathrm{i}
+```
 
 ```cs
 Console.WriteLine("(-2) ^ 3".EvalNumerical());
 ```
-$$-8$$
+```math
+-8
+```
 
 Build expressions with variables and substitute them:
 ```cs
@@ -211,19 +217,25 @@ Entity expr = "2x + sin(x) / sin(2 ^ x)";
 var subs = expr.Substitute("x", 0.3m);
 Console.WriteLine(subs);
 ```
-$$2 \cdot \frac{3}{10}+\frac{\sin\left(\frac{3}{10}\right)}{\sin\left(\sqrt[10]{2}^{3}\right)}$$
+```math
+2 \cdot \frac{3}{10}+\frac{\sin\left(\frac{3}{10}\right)}{\sin\left(\sqrt[10]{2}^{3}\right)}
+```
 
 Simplify complicated expressions:
 ```cs
 Console.WriteLine("2x + x + 3 + (4 a * a^6) / a^3 / 5".Simplify());
 ```
-$$3+\frac{4}{5} \cdot {a}^{4}+3 x \quad \text{for} \quad a \neq 0$$
+```math
+3+\frac{4}{5} \cdot {a}^{4}+3 x \quad \text{for} \quad a \neq 0
+```
 
 ```cs
 var expr = "1/2 + sin(pi / 4) + (sin(3x)2 + cos(3x)2)";
 Console.WriteLine(expr.Simplify());
 ```
-$$\frac{3}{2}+\frac{\sqrt{2}}{2}$$
+```math
+\frac{3}{2}+\frac{\sqrt{2}}{2}
+```
 
 Compiled functions work 15x+ faster
 ```cs
@@ -267,20 +279,26 @@ Next, solve some equations:
 ```cs
 Console.WriteLine("x^2 + x + a".SolveEquation("x"));
 ```
-$$\left\{ \frac{-1-\sqrt{1-4 a}}{2}, \frac{-1+\sqrt{1-4 a}}{2} \right\}$$
+```math
+\left\{ \frac{-1-\sqrt{1-4 a}}{2}, \frac{-1+\sqrt{1-4 a}}{2} \right\}
+```
 
 Under developing now and forever (always available)
 ```cs
 Entity expr = "(sin(x)^2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
 Console.WriteLine(expr.SolveEquation("x").Latexize());
 ```
-$$\left\{ \arcsin\left(\frac{1-\sqrt{1-4 a}}{2}\right)+2 \mathrm{\pi} n_{1}, \mathrm{\pi}-\arcsin\left(\frac{1-\sqrt{1-4 a}}{2}\right)+2 \mathrm{\pi} n_{1}, \arcsin\left(\frac{1+\sqrt{1-4 a}}{2}\right)+2 \mathrm{\pi} n_{1}, \mathrm{\pi}-\arcsin\left(\frac{1+\sqrt{1-4 a}}{2}\right)+2 \mathrm{\pi} n_{1}, b, 1, 2, \mathrm{i}, -\mathrm{i} \right\}$$
+```math
+\left\{ \arcsin\left(\frac{1-\sqrt{1-4 a}}{2}\right)+2 \mathrm{\pi} n_{1}, \mathrm{\pi}-\arcsin\left(\frac{1-\sqrt{1-4 a}}{2}\right)+2 \mathrm{\pi} n_{1}, \arcsin\left(\frac{1+\sqrt{1-4 a}}{2}\right)+2 \mathrm{\pi} n_{1}, \mathrm{\pi}-\arcsin\left(\frac{1+\sqrt{1-4 a}}{2}\right)+2 \mathrm{\pi} n_{1}, b, 1, 2, \mathrm{i}, -\mathrm{i} \right\}
+```
 
 Try some inequalities:
 ```cs
 Console.WriteLine("(x - 6)(x + 9) >= 0".Solve("x"));
 ```
-$$\left\{ 6, -9 \right\} \cup \left(-\infty , -9\right) \cup \left(6, \infty \right)$$
+```math
+\left\{ 6, -9 \right\} \cup \left(-\infty , -9\right) \cup \left(6, \infty \right)
+```
 
 Systems of equations:
 ```cs
@@ -294,11 +312,15 @@ Console.WriteLine(solutions);
 ```
 System:
 
-$$\begin{cases}{x}^{2}+y+a = 0\\y-\frac{1}{10} \cdot x+b = 0\end{cases}$$
+```math
+\begin{cases}{x}^{2}+y+a = 0\\y-\frac{1}{10} \cdot x+b = 0\end{cases}
+```
 
 Result:
 
-$$\begin{bmatrix}\frac{\frac{1}{10}-\sqrt{\frac{1}{100}+4 \left(-a+b\right)}}{-2} & -\left({\left(\frac{\frac{1}{10}-\sqrt{\frac{1}{100}+4 \left(-a+b\right)}}{-2}\right)}^{2}+a\right) \\ \frac{\frac{1}{10}+\sqrt{\frac{1}{100}+4 \left(-a+b\right)}}{-2} & -\left({\left(\frac{\frac{1}{10}+\sqrt{\frac{1}{100}+4 \left(-a+b\right)}}{-2}\right)}^{2}+a\right)\end{bmatrix}$$
+```math
+\begin{bmatrix}\frac{\frac{1}{10}-\sqrt{\frac{1}{100}+4 \left(-a+b\right)}}{-2} & -\left({\left(\frac{\frac{1}{10}-\sqrt{\frac{1}{100}+4 \left(-a+b\right)}}{-2}\right)}^{2}+a\right) \\ \frac{\frac{1}{10}+\sqrt{\frac{1}{100}+4 \left(-a+b\right)}}{-2} & -\left({\left(\frac{\frac{1}{10}+\sqrt{\frac{1}{100}+4 \left(-a+b\right)}}{-2}\right)}^{2}+a\right)\end{bmatrix}
+```
 
 ```cs
 var system = MathS.Equations(
@@ -309,7 +331,9 @@ Console.WriteLine(system.Latexize());
 var solutions = system.Solve("x", "y");
 Console.WriteLine(solutions);
 ```
-$$\begin{cases}{\cos\left({x}^{2}+1\right)}^{2}+3 y = 0\\y \left(-1\right)+4 \cos\left({x}^{2}+1\right) = 0\end{cases}$$
+```math
+\begin{cases}{\cos\left({x}^{2}+1\right)}^{2}+3 y = 0\\y \left(-1\right)+4 \cos\left({x}^{2}+1\right) = 0\end{cases}
+```
 (solution matrix is too complicated to show)
 
 </details>
@@ -322,19 +346,25 @@ Entity func = "x^2 + ln(cos(x) + 3) + 4x";
 Entity derivative = func.Differentiate("x");
 Console.WriteLine(derivative.Simplify());
 ```
-$$2 x-\frac{\sin\left(x\right)}{\cos\left(x\right)+3}+4$$
+```math
+2 x-\frac{\sin\left(x\right)}{\cos\left(x\right)+3}+4
+```
 
 Find limits:
 ```cs
 WriteLine("(a x^2 + b x) / (e x - h x^2 - 3)".Limit("x", "+oo").InnerSimplified);
 ```
-$$\frac{a}{-h}$$
+```math
+\frac{a}{-h}
+```
 
 Find integrals:
 ```cs
 WriteLine("x^2 + a x".Integrate("x").InnerSimplified);
 ```
-$$\frac{{x}^{3}}{3}+a \frac{{x}^{2}}{2}+C$$
+```math
+\frac{{x}^{3}}{3}+a \frac{{x}^{2}}{2}+C
+```
 
 </details>
 
@@ -354,7 +384,9 @@ WriteLine("{ x : x^8 + a x < 0 }".Latexize());
 >>> \mathbb{R}
 >>> \left\{ x : {x}^{8}+a x < 0 \right\}
 ```
-$$\left\{ 1, 2 \right\} \qquad \left[3, \infty \right) \qquad \mathbb{R} \qquad \left\{ x : {x}^{8}+a x < 0 \right\}$$
+```math
+\left\{ 1, 2 \right\} \qquad \left[3, \infty \right) \qquad \mathbb{R} \qquad \left\{ x : {x}^{8}+a x < 0 \right\}
+```
 
 And there operators:
 ```cs
@@ -368,7 +400,9 @@ WriteLine(@"A \ B".Latexize());
 >>> A \cap B
 >>> A \setminus B
 ```
-$$A \cup B \qquad A \cap B \qquad A \setminus B$$
+```math
+A \cup B \qquad A \cap B \qquad A \setminus B
+```
 
 </details>
 
@@ -380,7 +414,9 @@ var expr = "x ^ y + sqrt(x) + integral(sqrt(x) / a, x) + derivative(sqrt(x) / a,
 Console.WriteLine(expr.Latexize());
 >>> {x}^{y}+\sqrt{x}+\int \frac{\sqrt{x}}{a}\,\mathrm{d}x+\frac{\mathrm{d}}{\mathrm{d}x}\frac{\sqrt{x}}{a}+\lim_{x\to \infty } \frac{\sqrt{x}}{a}
 ```
-$${x}^{y}+\sqrt{x}+\int \frac{\sqrt{x}}{a}\,\mathrm{d}x+\frac{\mathrm{d}}{\mathrm{d}x}\frac{\sqrt{x}}{a}+\lim_{x\to \infty } \frac{\sqrt{x}}{a}$$
+```math
+{x}^{y}+\sqrt{x}+\int \frac{\sqrt{x}}{a}\,\mathrm{d}x+\frac{\mathrm{d}}{\mathrm{d}x}\frac{\sqrt{x}}{a}+\lim_{x\to \infty } \frac{\sqrt{x}}{a}
+```
 
 You can parse `Entity` from string with
 ```cs
