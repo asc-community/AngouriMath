@@ -83,6 +83,17 @@ namespace AngouriMath.Tests.Calculus
         public void ABaseOtherThanE(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// The rate <c>i</c> times the frequency: the closed form divides by
+        /// <c>a^2 + b^2 = 0</c> and answered NaN, where by Euler <c>e^(i x) cos(x)</c> is
+        /// <c>(1 + e^(2 i x))/2</c>, a polynomial and a polynomial times one exponential.
+        /// </summary>
+        [Theory]
+        [InlineData("e^(i*x)*cos(x)")]
+        [InlineData("x*e^(-i*x)*sin(x)")]
+        [InlineData("x^2*e^(2*i*x)*cos(2*x)")]
+        public void TheResonantRate(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
         /// The degenerate corners of the same formula — no polynomial, no exponential, no
         /// trigonometric factor. Each already came out, and each now comes out through this rule
         /// as well, so the signs have to be right at <c>a = 0</c> and <c>b = 0</c> too. That is

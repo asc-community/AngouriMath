@@ -193,28 +193,31 @@ namespace AngouriMath.Functions.Algebra
             // ∫ B^(px + q) * sin(mx + n) dx and its cosine twin. Integrating by parts
             // twice returns the integral it started from, so the usual machinery cycles
             // rather than terminating; solving that equation for the integral once gives
-            // the closed form below, which is what goes in the table.
+            // the closed form below, which is what goes in the table. Not where the rate
+            // is the frequency times i: `e^(-i u) cos(u)` is `(1 + e^(-2 i u))/2`, and the
+            // form divides by zero on it -- it answered NaN for
+            // `e^(-i arctan(a x))/(c + a^2 c x^2)^(3/2)` under `x = tan(u)/a`.
             Entity.Mulf(var exponential, Entity.Sinf(var wave)) when
                 IsExponentialRate(exponential, x, out var rate)
-                && TreeAnalyzer.TryGetPolyLinear(wave, x, out var frequency, out _) =>
+                && TreeAnalyzer.TryGetPolyLinear(wave, x, out var frequency, out _) && NotResonant(rate, frequency) =>
                     exponential * (rate * MathS.Sin(wave) - frequency * MathS.Cos(wave))
                         / (rate * rate + frequency * frequency),
 
             Entity.Mulf(Entity.Sinf(var wave), var exponential) when
                 IsExponentialRate(exponential, x, out var rate)
-                && TreeAnalyzer.TryGetPolyLinear(wave, x, out var frequency, out _) =>
+                && TreeAnalyzer.TryGetPolyLinear(wave, x, out var frequency, out _) && NotResonant(rate, frequency) =>
                     exponential * (rate * MathS.Sin(wave) - frequency * MathS.Cos(wave))
                         / (rate * rate + frequency * frequency),
 
             Entity.Mulf(var exponential, Entity.Cosf(var wave)) when
                 IsExponentialRate(exponential, x, out var rate)
-                && TreeAnalyzer.TryGetPolyLinear(wave, x, out var frequency, out _) =>
+                && TreeAnalyzer.TryGetPolyLinear(wave, x, out var frequency, out _) && NotResonant(rate, frequency) =>
                     exponential * (rate * MathS.Cos(wave) + frequency * MathS.Sin(wave))
                         / (rate * rate + frequency * frequency),
 
             Entity.Mulf(Entity.Cosf(var wave), var exponential) when
                 IsExponentialRate(exponential, x, out var rate)
-                && TreeAnalyzer.TryGetPolyLinear(wave, x, out var frequency, out _) =>
+                && TreeAnalyzer.TryGetPolyLinear(wave, x, out var frequency, out _) && NotResonant(rate, frequency) =>
                     exponential * (rate * MathS.Cos(wave) + frequency * MathS.Sin(wave))
                         / (rate * rate + frequency * frequency),
 
@@ -402,6 +405,23 @@ namespace AngouriMath.Functions.Algebra
                 result = result * EInteger.FromInt32(n - i) / EInteger.FromInt32(i + 1);
             return Entity.Number.Integer.Create(result);
         }
+
+        /// <summary>
+        /// Whether <paramref name="expr"/>, with symbols in it, is zero once simplified:
+        /// the discriminant of a square of a symbolic linear is written in two spellings of
+        /// the same term, <c>b^(-2)</c> and <c>(1/b)^2</c>, which the inner simplification
+        /// does not bring together and the simplifier does.
+        /// </summary>
+        private static bool IsZeroOnceSimplified(Entity expr)
+            => expr.Vars.Any() && Functions.PartialFractions.Bare(expr.Simplify()).Evaled is Entity.Number.Complex { IsZero: true };
+
+        /// <summary>
+        /// Whether <c>rate^2 + frequency^2</c> is not zero, which the closed form for an
+        /// exponential times a sine or cosine divides by: zero for a rate of <c>i</c> times
+        /// the frequency, where the product is a sum of two exponentials instead.
+        /// </summary>
+        private static bool NotResonant(Entity rate, Entity frequency)
+            => (rate * rate + frequency * frequency).InnerSimplified.Evaled is not Entity.Number.Complex { IsZero: true };
 
         /// <summary>
         /// Whether <paramref name="expr"/> is an exponential in <paramref name="x"/>, and
@@ -612,7 +632,7 @@ namespace AngouriMath.Functions.Algebra
             // once it is written out, and unwritten it was a piecewise of three arms, two of
             // them dividing by that zero, that nothing downstream could read.
             var discriminant = (4 * a * c - b * b).Expand().InnerSimplified;
-            if (TreeAnalyzer.IsZero(discriminant))
+            if (TreeAnalyzer.IsZero(discriminant) || IsZeroOnceSimplified(discriminant))
                 // The perfect square, in the generic case as every rule answers: -2k/(2ax + b).
                 return (-2 * numerator / (2 * a * x + b)).InnerSimplified;
             
@@ -681,6 +701,14 @@ namespace AngouriMath.Functions.Algebra
             var quadratic = a * x * x + b * x + c;
             var derivative = 2 * a * x + b;
             var discriminant = 4 * a * c - b * b;
+            // A discriminant that is zero once its spellings meet -- `4a^2 b^(-2)` against
+            // `4 (1/b)^2 a^2` for `(x + (1 + i a)/(i b))^2` -- is the perfect square and not a
+            // piecewise of three arms, two of them dividing by that zero: the piecewise
+            // simplified to NaN, and an integral of `x e^(-2 i arctan(a + b x))` with it.
+            var expanded = discriminant.Expand().InnerSimplified;
+            if (!TreeAnalyzer.IsZero(a) && (TreeAnalyzer.IsZero(expanded) || IsZeroOnceSimplified(expanded)))
+                return (numerator * MathS.Pow(4 * a, power) * MathS.Pow(derivative, 1 - 2 * power)
+                    / (2 * a * (1 - 2 * power))).InnerSimplified;
 
             // a = 0: k/(bx + c)^n, an ordinary power -- and the constant k/c^n when b is zero
             // too, where writing the power would divide by it. Same reason as the rule above.
