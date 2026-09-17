@@ -11372,6 +11372,82 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A fractional power of a constant times an even power of a function of x, the
+        /// function taken out of the power with its sign: <c>(a sin(x)^2)^(5/2)</c> is
+        /// <c>a^(5/2) |sin(x)|^5</c>, which is <c>a^(5/2) sgn(sin(x)) sin(x)^5</c> -- the sign
+        /// a constant between the sine's zeros, carried through the integration as a symbol
+        /// and written back. Rubi's <c>x sqrt(sin(x)^2)</c> is <c>sgn(sin(x)) (sin(x) - x cos(x))</c>
+        /// that way, and <c>1/(csc(x)^2)^(7/2)</c> is <c>sgn(csc(x))</c> times the seventh power
+        /// of the sine, where the substitutions read the root of the square as a modulus and
+        /// answered in powers of it.
+        /// </summary>
+        /// <remarks>
+        /// An even power of a real function is not negative, so <c>(c q)^p = c^p q^p</c> holds
+        /// for the principal powers whatever <c>c</c> is, and <c>(f^(2k))^p</c> is <c>|f|^(2kp)</c>.
+        /// Whole products of the exponents only, so that what is handed on is a whole power of
+        /// the function; a polynomial radicand is the rule above's, which comes first. At the
+        /// top only, as there: a substitution's variable is one it knows the sign of, and a
+        /// sign written for it is one nothing differentiates.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByTakingAFunctionOutOfAPowerOfItsEvenPower(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            Entity signs = Number.Integer.One;
+            var rewritten = expr.Replace(node =>
+            {
+                if (node is not Powf(var radicand, Number.Rational exponent) || exponent is Number.Integer || !radicand.ContainsNode(x))
+                    return node;
+                // The radicand read as a constant times even whole powers of functions of x,
+                // each power whole once multiplied by the exponent; anything else is not this
+                // rule's.
+                Entity constant = Number.Integer.One;
+                var functions = new List<(Entity function, EInteger power)>();
+                var top = radicand;
+                if (radicand is Divf(var above, var below) && !below.ContainsNode(x))
+                {
+                    constant = Number.Integer.One / below;
+                    top = above;
+                }
+                foreach (var factor in Mulf.LinearChildren(top))
+                {
+                    if (!factor.ContainsNode(x))
+                    {
+                        constant = constant * factor;
+                        continue;
+                    }
+                    // A real function: a fractional power of one is not, where its base is
+                    // negative, and its even power is then not the square of a modulus.
+                    if (factor is not Powf(var function, Number.Integer degree) || !degree.EInteger.IsEven || degree.EInteger.Sign <= 0
+                        || TreeAnalyzer.TryGetPolynomial(function, x, out _) || function is Powf(_, not Number.Integer))
+                        return node;
+                    var product = exponent.ERational.Multiply(ERational.FromEInteger(degree.EInteger)).ToLowestTerms();
+                    if (!product.Denominator.Equals(EInteger.One))
+                        return node;
+                    functions.Add((function, product.Numerator));
+                }
+                if (functions.Count == 0)
+                    return node;
+                Entity outside = constant == Number.Integer.One ? Number.Integer.One : MathS.Pow(constant, exponent);
+                foreach (var (function, power) in functions)
+                {
+                    // |f|^n is f^n for an even n and sgn(f) f^n for an odd one.
+                    if (!power.IsEven)
+                        signs = signs * MathS.Signum(function);
+                    outside = outside * MathS.Pow(function, Number.Integer.Create(power));
+                }
+                return outside;
+            });
+            if (rewritten == expr)
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(rewritten, x, integrateByParts) is not { } result)
+                return null;
+            var answer = signs == Number.Integer.One ? result : signs * result;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
         /// A denominator factor that is a sum or difference of two square roots of
         /// polynomials, multiplied above and below by its conjugate:
         /// <c>(1 + x)/(sqrt(x^2 + 2x + 4) - sqrt(x^2 + x + 1))</c> is
