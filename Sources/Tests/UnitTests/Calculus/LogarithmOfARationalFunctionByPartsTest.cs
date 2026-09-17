@@ -119,5 +119,23 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("(a + b*ln(c*(d*x^m)^n))^4")]
         [InlineData("(a + b*ln(c*(d*(f + g*x)^m)^n))^4")]
         public void APowerTimesAPowerOfAnAffineLogarithm(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// A power of a logarithm whose argument is not <c>c x^r</c> is read as not one before
+        /// its logarithmic derivative is simplified: <c>atanh(tanh(a + b x))^4</c> is a fourth
+        /// power of a logarithm of a quotient of exponentials, answered in 300 ms, and the
+        /// simplification of that derivative on the way to declining took it past three
+        /// minutes. Bounded by <see cref="IntegrationDecline.Guard"/>, which is far past the
+        /// answer and far short of that.
+        /// </summary>
+        [Theory]
+        [InlineData("atanh(tanh(a + b*x))^4")]
+        [InlineData("acoth(coth(a + b*x))")]
+        public void AnAffineLogarithmIsReadBeforeItsDerivativeIsSimplified(string integrand)
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            DifferentiatesBack(integrand);
+            Assert.True(watch.Elapsed < IntegrationDecline.Guard, $"took {watch.Elapsed}");
+        }
     }
 }
