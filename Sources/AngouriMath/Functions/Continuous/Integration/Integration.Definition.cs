@@ -519,7 +519,18 @@ namespace AngouriMath.Functions.Algebra
             // A rational function times a whole power of `A + B ln(R)` or `A + B arctan(R)`,
             // R rational: one step of parts, closed, before the substitution search, which
             // spent its budget on Rubi's `(f + g x)(A + B ln(e (a + b x)^2/(c + d x)^2))`.
+            // Powers of the two linears of `ln(K (L1/L2)^n)` beside a power of it, by
+            // t = L1/L2: a rational function of t beside a logarithm of t, one closed step
+            // where the rule below went step by step with the coefficients growing to
+            // b^205, and the search after it went past its budget.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheQuotientOfTheLogarithmsLinears(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionTimesAPowerOfALogarithm(expr, x, integrateByParts)) is { }) return answer;
+            // A rational function of the hyperbolic tangent with a symbol among its
+            // coefficients, by u = tanh(y): Rubi's `1/(a + b coth(c + d x)^2)^2` is a symbolic
+            // quadratic squared here, and under `u = e^x` a palindromic quartic that took the
+            // budget. Before the substitution search, which with a symbolic slope spends the
+            // whole of it on `u = c + d x` and never comes back to the chain.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfTheHyperbolicTangent(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             // A logarithmic derivative the substitution above could not read for a symbol in
             // an exponent: `(x^(n-1) - 1)/(x^n - n x)`.
@@ -565,6 +576,10 @@ namespace AngouriMath.Functions.Algebra
             // integrand that is a function of the tangent *alone* and gives a shorter answer for
             // it; this one is for the rest.
             if ((answer = IndefiniteIntegralSolver.SolveByHomogeneousTrigonometricSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // An even polynomial over a biquadratic with symbols in it, over the two roots
+            // in x^2 written with the root of the discriminant: partial fractions read a
+            // written factor, and `a + b x^2 + c x^4` is written as one.
+            if ((answer = IndefiniteIntegralSolver.SolveAnEvenPolynomialOverASymbolicBiquadratic(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
             // A whole negative power of a polynomial of several terms among the factors,
             // written below the bar and asked again: the gathering on the way in writes

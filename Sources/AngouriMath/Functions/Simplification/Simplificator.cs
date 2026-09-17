@@ -266,6 +266,12 @@ namespace AngouriMath.Functions
 
                 if (res.Nodes.Any(child => child is TrigonometricFunction))
                 {
+                    // The Pythagorean pair found anywhere in a sum -- the binary rule above sees
+                    // it only where the sort has made it a node. Inside this block, since the
+                    // gathered matcher visits every sum and an expression without a
+                    // trigonometric function has nothing for it to find: on the unconditional
+                    // line above it cost SimplifyEasy 5% of its allocation for no answer.
+                    AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.PythagoreanIdentity)));
                     var res1 = Simplified(recording, res.Rewrite(RewriteRules.ExpandTrigonometric));
                     AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.Trigonometric).Rewrite(RewriteRules.Common)));
                     AddHistory(res1);

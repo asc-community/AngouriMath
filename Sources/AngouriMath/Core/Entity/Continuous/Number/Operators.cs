@@ -469,7 +469,22 @@ namespace AngouriMath
                     && maybeE.Equals(InternalAMExtensions.ConstantCache.Lookup(MathS.Settings.DecimalPrecisionContext).E))
                     return Real.Create(realExponent.Exponential(MathS.Settings.DecimalPrecisionContext));
                 // TODO: make it more detailed (e. g. +oo ^ +oo = +oo)
-                if (@base.IsFinite && power is Integer { EInteger: var pow })
+                // A whole power, whether written as an integer or, for a base off the
+                // positive axis, as a decimal with nothing after the point -- which is how `2`
+                // arrives with the downcasting off: the polar form below took a pure
+                // imaginary squared a hair off the negative axis, where the exact
+                // multiplication lands on it. A positive real keeps its exponential of the
+                // logarithm, whose hundred digits every power of it shares, so that the terms
+                // of a sum with 3.66^120 in each still cancel to what they cancel to.
+                // https://github.com/asc-community/AngouriMath/issues/1378
+                var pow = power switch
+                {
+                    Integer whole => whole.EInteger,
+                    Real { EDecimal: { IsFinite: true } decimalPower } when @base is not Real { EDecimal.IsNegative: false }
+                        && decimalPower.IsInteger() && decimalPower.Abs().CompareTo(EDecimal.FromInt32(1 << 20)) <= 0 => decimalPower.ToEInteger(),
+                    _ => null,
+                };
+                if (@base.IsFinite && pow is { })
                 {
                     // A real base that is not exact -- a decimal, which is what a numerical
                     // evaluation multiplies -- is raised in one call on the decimal, with one
@@ -498,6 +513,48 @@ namespace AngouriMath
                     var n = halfPower.Numerator.Abs().ToInt32Checked();
                     var raised = n == 1 ? root : root.Pow(n, halfContext);
                     return Real.Create(halfPower.Numerator.Sign < 0 ? EDecimal.One.Divide(raised, halfContext) : raised);
+                }
+                // A negative real to a real power that is a whole number of halves -- a half
+                // power above all -- is the modulus to that power times a power of i, exactly:
+                // through the polar form below, sqrt(-0.473) came back with a real part of
+                // 6e-102 from cos(pi/2), and the square of that root then lay a hair below the
+                // negative axis, where ln reads -i pi for the +i pi the number has. The power
+                // is a decimal as often as a rational, since a numerical evaluation with the
+                // downcasting off writes 1/2 as 0.5.
+                // https://github.com/asc-community/AngouriMath/issues/1378
+                if (@base is Real { EDecimal: { IsNegative: true, IsFinite: true } negativeBase } && power is Real { EDecimal: { IsFinite: true } halves }
+                    && halves.Multiply(2) is { } twice && twice.IsInteger() && twice.Abs().CompareTo(EDecimal.FromInt32(1 << 21)) <= 0)
+                {
+                    var quarterTurns = twice.ToEInteger().Remainder(4);
+                    if (quarterTurns.Sign < 0)
+                        quarterTurns = quarterTurns.Add(4);
+                    // The modulus to the power: an exact base whose numerator and denominator
+                    // are squares has an exact root, and any other takes the decimal square
+                    // root and the whole power of it -- not the search over all the roots of
+                    // unity that an exact base's power otherwise runs, which cost `sqrt(-3)`
+                    // four times a solve of `x^2 + x + 1` a sixth of its allocation.
+                    var halfContext = MathS.Settings.DecimalPrecisionContext;
+                    var numeratorOfPower = twice.ToEInteger();
+                    Complex modulus;
+                    if (@base is Rational { ERational: var exactBase } && exactBase.Numerator.Abs().Sqrt() is { } rootAbove && exactBase.Denominator.Sqrt() is { } rootBelow
+                        && rootAbove.Multiply(rootAbove).Equals(exactBase.Numerator.Abs()) && rootBelow.Multiply(rootBelow).Equals(exactBase.Denominator))
+                        modulus = Pow(Rational.Create(rootAbove, rootBelow), Integer.Create(numeratorOfPower));
+                    else if (numeratorOfPower.IsEven)
+                        modulus = Pow(Real.Create(negativeBase.Negate()), Integer.Create(numeratorOfPower.Divide(2)));
+                    else
+                    {
+                        var root = negativeBase.Negate().SqrtByIntegerRoot(halfContext);
+                        var n = numeratorOfPower.Abs().ToInt32Checked();
+                        var raised = n == 1 ? root : root.Pow(n, halfContext);
+                        modulus = Real.Create(numeratorOfPower.Sign < 0 ? EDecimal.One.Divide(raised, halfContext) : raised);
+                    }
+                    return quarterTurns.ToInt32Checked() switch
+                    {
+                        0 => modulus,
+                        1 => Complex.Create(Integer.Zero, modulus.RealPart),
+                        2 => Real.Create(modulus.RealPart.EDecimal.Negate()),
+                        _ => Complex.Create(Integer.Zero, Real.Create(modulus.RealPart.EDecimal.Negate())),
+                    };
                 }
                 if (@base.IsFinite && power is Rational r && r.ERational.Denominator.Abs() < 10 // there should be a minimal threshold to avoid long searches
                     && CanHaveARealRoot(@base, r.ERational.Denominator.Abs())

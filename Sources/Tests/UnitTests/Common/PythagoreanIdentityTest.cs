@@ -44,6 +44,21 @@ namespace AngouriMath.Tests.Common
         public void TheSumOfTheSquaresIsUnaffected(string input, string expected) =>
             AssertSimplifies(input, expected);
 
+        /// <summary>
+        /// The pair anywhere in a sum, not only where the sort happens to make it a node: the
+        /// simplifier sorts <c>sqrt(2) + sin(t)^2 + cos(t)^2</c> as <c>(sqrt(2) + cos(t)^2) +
+        /// sin(t)^2</c>, in which the two squares are not two operands of any one node, and the
+        /// binary rule never saw them. The gathered rule does. The README's own example,
+        /// <c>1/2 + sin(pi/4) + (sin(3x)^2 + cos(3x)^2)</c>, was among the ones left as written.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(2) + sin(t) ^ 2 + cos(t) ^ 2", "1 + sqrt(2)")]
+        [InlineData("(sqrt(2) + 1) / 2 + sin(t) ^ 2 + cos(t) ^ 2", "3/2 + sqrt(2) / 2")]
+        [InlineData("1/2 + sin(pi / 4) + (sin(3x) ^ 2 + cos(3x) ^ 2)", "3/2 + sqrt(2) / 2")]
+        [InlineData("sqrt(2) + sin(t) ^ 2 + b + cos(t) ^ 2 + c", "1 + sqrt(2) + b + c")]
+        public void ThePairAnywhereInASum(string input, string expected) =>
+            AssertSimplifies(input, expected);
+
         /// <summary>The same identity solved for one square rather than for 1.</summary>
         [Theory]
         [InlineData("1 - sin(t) ^ 2", "cos(t) ^ 2")]
