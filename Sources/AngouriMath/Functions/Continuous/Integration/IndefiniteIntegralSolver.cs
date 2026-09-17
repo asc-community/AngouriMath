@@ -621,6 +621,16 @@ namespace AngouriMath.Functions.Algebra
             // under a second this way, with the chain behind it for a spelling this rule does
             // not answer on its own -- one irreducible factor to the first power is the table's.
             // Once: the spelling this produces refactors to itself.
+            // A written sum with a symbol among its coefficients that they all share is that
+            // symbol times a polynomial over the rationals, and is written so first: `(a u + a)`
+            // beside `1 - u^2` shares a root with it, which the symbolic split declines, and a
+            // symbolic sextic is nothing the refactoring below reads, where `a` times a rational
+            // one is. Once: a primitive factor has no content to take out.
+            if (WithTheContentOutOfEachSumFactor(denominator, x) is { } primitive
+                && (SolveByPartialFractions(numerator / primitive, x, integrateByParts)
+                    ?? Integration.ComputeIndefiniteIntegral(numerator / primitive, x, integrateByParts)) is { } overPrimitives)
+                return overPrimitives;
+
             if (TryWriteInIrreducibleFactors(denominator, x) is { } refactored
                 && (SolveByPartialFractions(numerator / refactored, x, integrateByParts)
                     ?? Integration.ComputeIndefiniteIntegral(numerator / refactored, x, integrateByParts)) is { } overIrreducibles)
@@ -7533,6 +7543,63 @@ namespace AngouriMath.Functions.Algebra
                     return false;
             }
             return true;
+        }
+
+        /// <summary>
+        /// <paramref name="denominator"/> with the content of every written sum among its
+        /// factors taken out in front of it: <c>(a u + a)(1 - u^2)</c> is <c>a (u + 1)(1 - u^2)</c>,
+        /// and <c>-a t^6 - 2a t^5 - a t^4 + a t^2 + 2a t + a</c> is <c>a</c> times the
+        /// polynomial over the rationals. Null where no factor has one.
+        /// </summary>
+        /// <remarks>
+        /// The content is the gcd of the coefficients as polynomials in the symbols, and a
+        /// factor whose coefficients share one is a constant times a smaller polynomial: with
+        /// the constant written inside, <c>(a u + a)</c> was a symbolic linear whose root the
+        /// factor <c>1 - u^2</c> beside it shares, which the symbolic split declines, and the
+        /// sextic the half-angle makes of <c>tan(x)/(a + a csc(x))</c> was a polynomial with a
+        /// symbol in every coefficient, which nothing factors -- where over the rationals it is
+        /// <c>(t - 1)(t + 1)^3 (t^2 + 1)</c>. Rubi's <c>a + a csc(x)</c> and the like are what
+        /// this is for.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static Entity? WithTheContentOutOfEachSumFactor(Entity denominator, Entity.Variable x)
+        {
+            var changed = false;
+            Entity product = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                // Whole powers only: `(c a + d a x)^(1/3)` is `a^(1/3) (c + d x)^(1/3)` for a
+                // positive `a` and not for a negative one, and a symbol is neither.
+                var (@base, power) = factor is Powf(var b, Number.Integer p) ? (b, p) : (factor, Number.Integer.One);
+                if (@base is not (Sumf or Minusf) || !@base.ContainsNode(x) || !@base.Vars.Any(v => v != x)
+                    || !TreeAnalyzer.TryGetPolynomial(@base, x, out var read) || read.Count < 2
+                    || read.Keys.Any(degree => degree.Sign < 0) || read.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                {
+                    product *= factor;
+                    continue;
+                }
+                var variables = @base.Vars.OrderBy(v => v.Name, System.StringComparer.Ordinal).ToList();
+                if (variables.Count > MultivariatePolynomial.MaxVariables)
+                {
+                    product *= factor;
+                    continue;
+                }
+                var indices = new Dictionary<Variable, int>();
+                for (var i = 0; i < variables.Count; i++)
+                    indices[variables[i]] = i;
+                var rest = Enumerable.Range(0, variables.Count).Where(i => variables[i] != x).ToList();
+                if (MultivariatePolynomial.TryParse(@base, indices) is not { } polynomial
+                    || Functions.PolynomialGcd.ContentIn(polynomial, indices[x], rest, 0) is not { IsConstant: false } content
+                    || polynomial.DivideExact(content) is not { } primitive)
+                {
+                    product *= factor;
+                    continue;
+                }
+                var written = content.ToEntity(variables) * primitive.ToEntity(variables);
+                product *= power == Number.Integer.One ? written : MathS.Pow(content.ToEntity(variables), power) * MathS.Pow(primitive.ToEntity(variables), power);
+                changed = true;
+            }
+            return changed ? product : null;
         }
 
         private static Entity? TryWriteInIrreducibleFactors(Entity denominator, Entity.Variable x)

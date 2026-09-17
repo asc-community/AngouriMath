@@ -329,6 +329,22 @@ rule that does the same for a polynomial under a square root, whose answers are 
 | `"1/sqrt(a*cot(x)^2)".Integrate("x")` | `-sgn(tan(x)) ln(1/sqrt(1 + abs(tan(x))^2))/sqrt(a)` | `sgn(cot(x)) ln(1 + tan(x)^2)/(2 sqrt(a))` |
 | `"(b*tan(x)^2)^(5/2)".Integrate("x")` | `sgn(tan(x)) b^(5/2) ((abs(tan(x))^2)^2/2 - abs(tan(x))^2 + ln(abs(tan(x))^2 + 1))/2` | the same with `tan(x)` for `abs(tan(x))` |
 
+### A shared symbol among a denominator sum's coefficients comes out in front of it
+
+**Improvement, not silent.** `tan(x)/(a + a csc(x))` came back unevaluated while
+`tan(x)/(1 + csc(x))` was answered: under `u = sin(x)` the denominator is `(a u + a)(1 - u^2)`,
+a symbolic linear beside a rational quadratic that shares its root, which the symbolic split
+declines, and under the half-angle it is a sextic with `a` in every coefficient, which nothing
+factors. A written sum below the bar whose coefficients share a symbol is now that symbol times
+a polynomial over the rationals — `(a u + a)` is `a (u + 1)` — before the denominator is
+refactored, so the repeated factor is found and the rational machinery answers.
+
+| | Was | Is |
+|---|---|---|
+| `"tan(x)/(a + a*csc(x))".Integrate("x")` | unevaluated | `(-1/(2 (sin(x) + 1)) + 3/4 ln(sin(x) + 1) + 1/4 ln(sin(x) - 1))/(-a)` |
+| `"sec(x)^2/(a + a*csc(x))".Integrate("x")` | unevaluated | in `tan(x/2)`, over `a` |
+| `"x^2/((a*x + a)*(1 - x^2))".Integrate("x")` | unevaluated | the partial fractions over `(x + 1)^2 (1 - x)`, over `a` |
+
 ### A condition the answer states on its own is no longer repeated beside it
 
 **Improvement, not silent.** `Simplify` returned `(1 - ln(x))/x^2 provided not x = 0` for the
