@@ -7588,15 +7588,31 @@ namespace AngouriMath.Functions.Algebra
                 for (var i = 0; i < variables.Count; i++)
                     indices[variables[i]] = i;
                 var rest = Enumerable.Range(0, variables.Count).Where(i => variables[i] != x).ToList();
+                // The lowest power of x every term holds comes out too: `a u^4 + b u^3` is
+                // `u^3 (a u + b)`, which is what the sine substitution makes of `cot^3/(a + b csc)`,
+                // and neither the refactoring over the rationals nor the symbolic split reads
+                // a symbolic polynomial for the monomial it is a multiple of.
+                var lowest = read.Keys.Min()!;
                 if (MultivariatePolynomial.TryParse(@base, indices) is not { } polynomial
-                    || Functions.PolynomialGcd.ContentIn(polynomial, indices[x], rest, 0) is not { IsConstant: false } content
+                    || Functions.PolynomialGcd.ContentIn(polynomial, indices[x], rest, 0) is not { } content
+                    || content.IsConstant && lowest.IsZero
                     || polynomial.DivideExact(content) is not { } primitive)
                 {
                     product *= factor;
                     continue;
                 }
-                var written = content.ToEntity(variables) * primitive.ToEntity(variables);
-                product *= power == Number.Integer.One ? written : MathS.Pow(content.ToEntity(variables), power) * MathS.Pow(primitive.ToEntity(variables), power);
+                var monomial = lowest.IsZero ? Number.Integer.One : lowest.Equals(EInteger.One) ? x : MathS.Pow(x, Number.Integer.Create(lowest));
+                var primitivePart = primitive.ToEntity(variables);
+                if (!lowest.IsZero && TreeAnalyzer.PolynomialLongDivision(primitivePart, monomial, genericCase: true, inTermsOf: x) is var (divided, remainder)
+                    && (remainder is Divf(var top, _) ? top : remainder).Evaled is Number.Complex { IsZero: true })
+                    primitivePart = divided.InnerSimplified;
+                else if (!lowest.IsZero)
+                {
+                    product *= factor;
+                    continue;
+                }
+                Entity constantPart = content.IsConstant ? monomial : lowest.IsZero ? content.ToEntity(variables) : content.ToEntity(variables) * monomial;
+                product *= power == Number.Integer.One ? constantPart * primitivePart : MathS.Pow(constantPart, power) * MathS.Pow(primitivePart, power);
                 changed = true;
             }
             return changed ? product : null;

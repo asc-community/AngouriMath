@@ -337,13 +337,15 @@ a symbolic linear beside a rational quadratic that shares its root, which the sy
 declines, and under the half-angle it is a sextic with `a` in every coefficient, which nothing
 factors. A written sum below the bar whose coefficients share a symbol is now that symbol times
 a polynomial over the rationals — `(a u + a)` is `a (u + 1)` — before the denominator is
-refactored, so the repeated factor is found and the rational machinery answers.
+refactored, so the repeated factor is found and the rational machinery answers; and the lowest
+power of the variable every term holds comes out the same way.
 
 | | Was | Is |
 |---|---|---|
 | `"tan(x)/(a + a*csc(x))".Integrate("x")` | unevaluated | `(-1/(2 (sin(x) + 1)) + 3/4 ln(sin(x) + 1) + 1/4 ln(sin(x) - 1))/(-a)` |
 | `"sec(x)^2/(a + a*csc(x))".Integrate("x")` | unevaluated | in `tan(x/2)`, over `a` |
 | `"x^2/((a*x + a)*(1 - x^2))".Integrate("x")` | unevaluated | the partial fractions over `(x + 1)^2 (1 - x)`, over `a` |
+| `"cot(x)^3/(a + b*csc(x))".Integrate("x")` | unevaluated | `-1/(b sin(x)) - a ln(sin(x))/b^2 + (b^2 - a^2) ln(a sin(x) + b)/(a b^2)`, once `a u^4 + b u^3` is read as `u^3 (a u + b)` |
 
 ### A condition the answer states on its own is no longer repeated beside it
 

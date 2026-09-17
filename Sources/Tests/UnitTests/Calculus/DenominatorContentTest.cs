@@ -15,8 +15,11 @@ namespace AngouriMath.Tests.Calculus
     /// A written sum below the bar whose coefficients share a symbol is that symbol times a
     /// polynomial over the rationals, and is read so: <c>(a u + a)(1 - u^2)</c> is
     /// <c>a (u + 1)(1 - u^2)</c>, whose repeated factor the refactoring over the rationals then
-    /// finds. Rubi's <c>tan(x)/(a + a csc(x))</c> and its kin, declined for the shared root
-    /// under <c>u = sin(x)</c> and for a symbolic sextic under the half-angle.
+    /// finds; and the lowest power of the variable every term holds comes out the same way,
+    /// <c>a u^4 + 2 u^3</c> being <c>u^3 (a u + 2)</c>. Rubi's <c>tan(x)/(a + a csc(x))</c> and
+    /// <c>cot(x)^3/(a + b csc(x))</c>, declined for the shared root under <c>u = sin(x)</c>, for
+    /// a symbolic sextic under the half-angle, and for a symbolic quartic that is a multiple of
+    /// <c>u^3</c>.
     /// <a href="https://github.com/asc-community/AngouriMath/issues/718">#718</a>
     /// </summary>
     [Trait("Area", "Calculus")]
@@ -50,6 +53,8 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sec(x)^2/(a + a*csc(x))")]
         [InlineData("x^2/((a*x + a)*(1 - x^2))")]
         [InlineData("1/((2*a*x + 4*a)*(x + 2)^2)")]
+        [InlineData("cot(x)^3/(2 + a*csc(x))")]
+        [InlineData("(1 - x^2)/(a*x^4 + 2*x^3)")]
         public void TheContentComesOutOfTheSum(string integrand)
         {
             DifferentiatesBack(integrand, 2);
