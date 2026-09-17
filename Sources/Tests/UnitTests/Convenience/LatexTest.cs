@@ -43,6 +43,11 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void Subtract() => Test("x-x", x - x);
         [Fact] public void SubtractSubtract() => Test("x-x-x", x - x - x);
         [Fact] public void SubtractSimplify() => TestSimplify("0", x - x);
+        // Subtracting something written with a leading minus is adding the rest of it -- the
+        // system solver's `1/100 - (-4)(-a + b)` printed as `\frac{1}{100}--4 \left(-a+b\right)`.
+        [Fact] public void SubtractANegativeMultiple() => Test(@"x+4 \left(-a+b\right)", x - (-4) * (Entity)"-a + b");
+        [Fact] public void SubtractANegation() => Test("x+y", x - (-(Entity)"y"));
+        [Fact] public void SubtractASumWithALeadingMinusKeepsItsParentheses() => Test(@"x-\left(-a+b\right)", x - (Entity)"-a + b");
         [Fact] public void Multiply() => Test(@"x x", x * x);
         [Fact] public void MultiplyNum() => Test(@"2 \cdot 2", (Entity)2 * 2);
         [Fact] public void MultiplyMultiply() => Test(@"x x x", x * x * x);

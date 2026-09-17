@@ -166,6 +166,10 @@ namespace AngouriMath
                     (_, Integer(0)) => Real.NaN,
                     (Complex n1, Complex n2) when !isExact => n1 / n2,
                     (var n1, Integer(1)) => n1,
+                    // A quotient by minus one is the negation, and a negation of a negation is
+                    // the thing itself: the solver of `b - x = 0` answered `-b / (-1)` and the
+                    // README printed it so.
+                    (var n1, Integer(-1)) => (-n1).InnerSimplified(isExact),
                     // A radical in the denominator is the reciprocal power asked for outright,
                     // and answering it there is what makes 1/sqrt(2) and sqrt(1/2) the same
                     // thing on the page as well as in value.

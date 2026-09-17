@@ -25,7 +25,11 @@ namespace AngouriMath
             /// <inheritdoc/>
             private protected override string LatexizeNode() =>
                 Minuend.Latexize(Minuend.LatexPriority < LatexPriority)
-                + "-" + Subtrahend.Latexize(Subtrahend.LatexPriority <= LatexPriority);
+                // Subtracting something written with a leading minus is adding the rest of it:
+                // `1/100 - (-4)(b - a)` printed as `\frac{1}{100}--4 \left(b-a\right)`, two
+                // minus signs in a row, where the sum above already folds `a + (-b)` to `a-b`.
+                + (Subtrahend.Latexize(Subtrahend.LatexPriority <= LatexPriority) is var subtrahend && subtrahend.StartsWith("-")
+                    ? "+" + subtrahend.Substring(1) : "-" + subtrahend);
         }
 
         public partial record Mulf
