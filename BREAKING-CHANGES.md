@@ -307,6 +307,28 @@ either now; and the secant quotient was simplified to `cos/(b^(5/2) d)` through
 `(1/cos)^(3/2) = cos^(-3/2)`, which is wrong for every negative cosine and cancelled against the
 same wrong step on the denominator. On the 1774-problem independent suites this is 1707 to 1705, the two `asin` rows, with the sign error gone.
 
+### A rational function of a sine over a symbolic quadratic in it is integrated over the two roots
+
+**Improvement, not silent.** `sin(x)/(a + b sin(x) + c sin(x)^2)` and everything rational in
+`sin(x)` and `cos(x)^2` over that quadratic came back unevaluated, or ran past any budget:
+under the half-angle the quadratic in the sine is a quartic in `t` with a symbol in every
+coefficient, which nothing factors, and the substitution `u = sin(x)` wants a cosine above the
+bar that an even power does not give. Written in `s = sin(x)` the integrand is a rational function
+of `s`, divided down and split over the written factors as any is, and the piece over the
+quadratic is taken by the two roots `r = (-b ± sqrt(b^2 - 4ac))/(2c)`, each
+`1/(sin(x) - r)` being `-2 atan((r tan(x/2) - 1)/sqrt(r^2 - 1))/sqrt(r^2 - 1)` for any complex
+`r` — a form checked by differentiation, not a piecewise on the sign of a root, which has no
+value for the conjugate pair the ordinary coefficients give. The cosine the same way, with
+`-2 atan(tan(x/2)/σ)/((1 + r) σ)`, `σ = sqrt((r - 1)/(r + 1))`. On each interval between the
+poles of `tan(x/2)`, as every half-angle answer.
+
+| | Was | Is |
+|---|---|---|
+| `"1/(a+b*sin(x)+c*sin(x)^2)".Integrate("x")` | unevaluated | the two arctangents over `sqrt(b^2 - 4ac)` |
+| `"sin(x)^4/(a+b*sin(x)+c*sin(x)^2)".Integrate("x")` | unevaluated after more than three minutes | `(x - sin(2x)/2)/(2c) + b cos(x)/c^2 + (b^2 c - a c^2) x/c^4 + …` in 70 ms |
+| `"csc(x)^2/(a+b*sin(x)+c*sin(x)^2)".Integrate("x")`, `"sec(x)^2/…"` | unevaluated | `-cot(x)/a + …`, the blocks over `sin^2` and `1 - sin^2` beside the two roots |
+| `"1/(a+b*cos(x)+c*cos(x)^2)".Integrate("x")` | unevaluated | the cosine form |
+
 ### A function comes out of a fractional power of its even power with its sign
 
 **Improvement, not silent.** The entry two above made `(sin(x)^2)^(3/2)` the modulus `|sin(x)|^3`
@@ -353,11 +375,16 @@ power of the variable every term holds comes out the same way.
 derivative of `ln(x)/x`, and `(1 + ln(x)) x^x provided not x = 0` for that of `x^x`. The quotient
 by `x^2`, the `ln(x)` and the `0^0` are each undefined at zero already, so the condition excluded
 a point the expression never reached and said twice what the expression says once. A `provided`
-whose condition the expression proves on its own — a quotient by `d`, a negative power of `d`, a
-logarithm of `d` or to the base `d`, `d^f` with `f` vanishing too, for `d` the condition's `e`,
-a positive power of it, a product holding it, a polynomial in the variable `e` is with no constant
-term, or a polynomial that is zero at the root of a linear `e` — comes back without that
-conjunct. Only the answer is read this way, and only its top: inside a piecewise a predicate
+whose condition the expression proves on its own — whose own domain condition, read in the
+ambient codomain (`DomainConditionIn`), already excludes the zeros of the condition's `e`: a
+conjunct `not d = 0` or `d > 0` with `d` being `e` itself, a positive power of it, a product
+holding it, a sine, tangent, arcsine or arctangent of such a thing, a polynomial in the variable
+`e` is with no constant term, or a polynomial that is zero at the root of a linear `e`, or a
+disjunction every side of which does, as `x^x`'s `not x = 0 or x > 0` — comes back without that
+conjunct. Decided by the domain condition rather than by the shape of the node, so it follows
+the codomain: when [#217](https://github.com/asc-community/AngouriMath/issues/217) gives `1/0`
+a value under the codomains that admit a complex infinity, the quotient's domain condition
+changes there and the condition beside `1/x` stops being redundant, with no change to the rule. Only the answer is read this way, and only its top: inside a piecewise a predicate
 decides which case is taken and stays; inside the simplifier's own search a `provided` is what
 rules read as "this candidate needs a condition" and stays too. A condition the expression does
 not state is kept — `x/x` simplifies to `1 provided not x = 0` as before, since `1` no longer
@@ -369,6 +396,7 @@ says it. [#1394](https://github.com/asc-community/AngouriMath/issues/1394)
 | `"x^x".Differentiate("x").Simplify()` | `(1 + ln(x)) x^x provided not x = 0` | `(1 + ln(x)) x^x` |
 | `"x^n".Differentiate("x").Simplify()` | `x^n n/x provided not x = 0` | `x^n n/x` |
 | `"1/(x^2 + x) provided not x = 0 and not x + 1 = 0".Simplify()` | unchanged | `1/(x^2 + x)` |
+| `"tan(x) provided not cos(x) = 0".Simplify()`, `"sin(x)/x provided not x = 0".Simplify()` | unchanged | `tan(x)`, `sin(x)/x` |
 | `"(x + sin(x))/x".Limit("x", "+oo")` | unevaluated | `1`, by the squeeze theorem on `sin(x)/x` once the division no longer carries the condition between the terms |
 
 ### The Pythagorean pair is found anywhere in a sum

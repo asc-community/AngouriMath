@@ -13,10 +13,10 @@ namespace AngouriMath.Tests.Core
 {
     /// <summary>
     /// A <c>provided</c> condition the expression states on its own is dropped: <c>1/x provided
-    /// not x = 0</c> is <c>1/x</c>, since the quotient has no value at zero whether or not a
-    /// condition says so. Only where the expression proves it -- a quotient, a negative power, a
-    /// logarithm, <c>0^0</c> -- and on the expression as it stands after simplification, so that
-    /// <c>x/x</c>, which becomes <c>1</c>, keeps the condition it can no longer state.
+    /// not x = 0</c> is <c>1/x</c>, since the quotient's own domain condition, read in the
+    /// ambient codomain, already excludes zero. Only where that domain condition proves it, and
+    /// on the expression as it stands after simplification, so that <c>x/x</c>, which becomes
+    /// <c>1</c>, keeps the condition it can no longer state.
     /// https://github.com/asc-community/AngouriMath/issues/1394
     /// </summary>
     [Trait("Area", "Core")]
@@ -28,6 +28,8 @@ namespace AngouriMath.Tests.Core
         [InlineData("1/x provided not x = 0", "1/x")]
         [InlineData("x^(-2) provided not x = 0", "1/x^2")]
         [InlineData("ln(x) provided not x = 0", "ln(x)")]
+        [InlineData("sin(x)/x + x^x provided not x = 0 and not y = 0", "sin(x)/x + x^x provided not y = 0")]
+        [InlineData("tan(x) provided not cos(x) = 0", "tan(x)")]
         [InlineData("1/(x * y) provided not x = 0 and not y = 0", "1/(x * y)")]
         [InlineData("1/(x^2 + x) provided not x = 0 and not x + 1 = 0", "1/(x^2 + x)")]
         [InlineData("1/(x^2 + x) provided not x = 0 and not y = 0", "1/(x^2 + x) provided not y = 0")]
@@ -49,8 +51,8 @@ namespace AngouriMath.Tests.Core
 
         /// <summary>
         /// A condition the expression does not state stays: the one on a quotient that has
-        /// cancelled, and one about a symbol the expression no longer holds, and one about a
-        /// factor beside the one the quotient is by.
+        /// cancelled, one about a symbol the expression no longer holds, and one about a factor
+        /// beside the one the quotient is by.
         /// </summary>
         [Theory]
         [InlineData("x / x provided not x = 0")]
