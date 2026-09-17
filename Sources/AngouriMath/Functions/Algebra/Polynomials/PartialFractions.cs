@@ -1800,9 +1800,12 @@ namespace AngouriMath.Functions
         /// few points in <paramref name="x"/> with every other symbol pinned to a fixed value.
         /// A point where either is undefined, or cannot be evaluated -- a derivative left
         /// unevaluated, of a sign whose argument is not shown real -- is skipped, and at least
-        /// two must compare.
+        /// two must compare. The points may be the caller's, for an identity that holds on a
+        /// real domain only -- <c>sqrt(1 - L^2) = sech(artanh(L))</c> inside <c>(-1, 1)</c> and
+        /// off by a sign outside it -- where the default set would compare where it does not
+        /// hold.
         /// </summary>
-        internal static bool HoldsAtSampledPoints(Entity left, Entity right, Variable x)
+        internal static bool HoldsAtSampledPoints(Entity left, Entity right, Variable x, string[]? points = null)
         {
             // In decimals: a pinned value is a small rational, which the downcasting keeps
             // exact through every operation, and a symbolic answer with powers in it
@@ -1812,7 +1815,7 @@ namespace AngouriMath.Functions
             using var _ = MathS.Settings.DowncastingEnabled.Set(false);
             (left, right) = Pinned(left, right, x);
             var compared = 0;
-            foreach (var at in new[] { "0.29", "1.43", "3.17", "-0.61" })
+            foreach (var at in points ?? new[] { "0.29", "1.43", "3.17", "-0.61" })
             {
                 var point = Real.Create(EDecimal.FromString(at));
                 Number.Complex l;

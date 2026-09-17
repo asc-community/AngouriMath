@@ -567,6 +567,9 @@ namespace AngouriMath.Functions.Algebra
             // And the inverse trigonometric functions' own, beside the logarithm's and for the
             // same reason: `x = sin(u)` removes the `x` that substituting for `arcsin(x)` leaves.
             if ((answer = IndefiniteIntegralSolver.SolveByInverseTrigonometricSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // And the inverse hyperbolic functions', read off the logarithm each is written as:
+            // `x = sinh(u)` for `ln(x + sqrt(x^2 + 1))`.
+            if ((answer = IndefiniteIntegralSolver.SolveByInverseHyperbolicSubstitution(expr, x, integrateByParts)) is { }) return answer;
             // An exponential of i times an inverse trigonometric function is algebraic:
             // `e^(i arctan(a x))` is `(1 + i a x)/sqrt(1 + a^2 x^2)`.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAnExponentialOfAnInverseAlgebraically(expr, x, integrateByParts)) is { }) return answer;

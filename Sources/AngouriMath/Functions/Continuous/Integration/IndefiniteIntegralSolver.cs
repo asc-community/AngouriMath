@@ -3916,6 +3916,12 @@ namespace AngouriMath.Functions.Algebra
             var ratio = Functions.PartialFractions.Bare((candidate / wanted).Simplify());
             if (ratio.ContainsNode(x) || ratio.Nodes.Any(node => node == MathS.NaN))
                 return null;
+            // A multiple that is known negative is refused: `sqrt(k Q)` is `sqrt(k) sqrt(Q)`
+            // for a positive k and for a symbol taken as one, and for `k = -1` with a negative
+            // Q it is off by a sign -- `arcosh(a x)^2/sqrt(1 - a^2 x^2)` came back with `i a`
+            // below where the integrand is real.
+            if (ratio.Evaled is Number.Complex evaluated && (evaluated is not Number.Real || evaluated is Number.Real { IsNegative: true }))
+                return null;
             return ratio;
         }
 
@@ -4014,6 +4020,235 @@ namespace AngouriMath.Functions.Algebra
             if (answer.Nodes.Any(node => node is Piecewise) && answer.Simplify().Nodes.Any(node => node == MathS.NaN))
                 return null;
             return answer;
+        }
+
+        /// <summary>
+        /// An integrand holding an inverse hyperbolic function of a linear in the variable,
+        /// integrated by the substitution that undoes it. The inverse hyperbolic functions
+        /// are not nodes here -- <c>arsinh(L)</c> is written <c>ln(L + sqrt(L^2 + 1))</c>,
+        /// <c>arcosh(L)</c> is <c>ln(L + sqrt(L^2 - 1))</c> and <c>artanh(L)</c> is
+        /// <c>ln((1 + L)/(1 - L))/2</c> -- so the logarithm is read for the function it is,
+        /// and under <c>L = sinh(u)</c>, <c>cosh(u)</c> or <c>tanh(u)</c> it is <c>u</c>, the
+        /// radical of <c>L^2 + 1</c> is <c>cosh(u)</c>, of <c>L^2 - 1</c> is <c>sinh(u)</c>
+        /// (for <c>u</c> not negative, where the principal <c>arcosh</c> lies) and
+        /// <c>1 - L^2</c> is <c>sech(u)^2</c>; a constant multiple of the quadratic is the
+        /// multiple's power times that, the generic case. What is left is a function of
+        /// <c>u</c> and of exponentials of it, which the exponential rules read: Rubi's
+        /// <c>x arsinh(a x)</c> is <c>u sinh(2u)/(2 a^2)</c>, parts once, where parts in
+        /// <c>x</c> left the logarithm's derivative as a quotient of radicals.
+        /// The way back writes <c>e^u</c> as <c>L + sqrt(L^2 + 1)</c> and <c>e^(-u)</c> as
+        /// <c>sqrt(L^2 + 1) - L</c>, on the principal branch.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveByInverseHyperbolicSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // The one inverse hyperbolic function in the integrand, read off its logarithm.
+            Entity? inverse = null;
+            Entity? argument = null;
+            var kind = 0;   // 1 sinh, 2 cosh, 3 tanh
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Logf(var @base, var antilogarithm) || @base != MathS.e || !antilogarithm.ContainsNode(x))
+                    continue;
+                var read = ReadAnInverseHyperbolic(antilogarithm, x);
+                if (read is null)
+                    return null;   // a logarithm of something else: not this route's
+                if (inverse is not null && inverse != node)
+                    return null;
+                (inverse, argument, kind) = (node, read.Value.Argument, read.Value.Kind);
+            }
+            if (inverse is null || argument is null)
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out var offset) || slope is null || offset is null
+                || TreeAnalyzer.IsZero(slope) || slope.Evaled is Number.Complex { IsZero: true })
+                return null;
+            // The tangent's logarithm carries a half in front: `ln((1 + L)/(1 - L))/2` is u, and
+            // the logarithm alone is 2u.
+            var u = Variable.CreateUnique(expr, "u_inv");
+            var expU = MathS.Pow(MathS.e, u);
+            var expMinusU = MathS.Pow(MathS.e, -u);
+            var sinh = (expU - expMinusU) / 2;
+            var cosh = (expU + expMinusU) / 2;
+            Entity argumentInU, dArgument, radicandBase, root;
+            switch (kind)
+            {
+                case 1:
+                    (argumentInU, dArgument, radicandBase, root) = (sinh, cosh, MathS.Sqr(argument) + 1, cosh);
+                    break;
+                case 2:
+                    (argumentInU, dArgument, radicandBase, root) = (cosh, sinh, MathS.Sqr(argument) - 1, sinh);
+                    break;
+                default:
+                    (argumentInU, dArgument, radicandBase, root) = (sinh / cosh, 1 / MathS.Sqr(cosh), 1 - MathS.Sqr(argument), 1 / cosh);
+                    break;
+            }
+            var logarithmInU = kind == 3 ? 2 * u : u;
+
+            var radicalsRemoved = 0;
+            var rewritten = expr
+                .Substitute(inverse, logarithmInU)
+                .Replace(node =>
+                {
+                    if (node is Powf(var wholeBase, Number.Integer whole) && whole.EInteger.CompareTo(EInteger.FromInt32(2)) >= 0
+                        && whole.EInteger.CompareTo(EInteger.FromInt32(64)) <= 0 && wholeBase.ContainsNode(x)
+                        && TreeAnalyzer.TryGetPolyQuadratic(wholeBase, x, out _, out _, out _)
+                        && TryReadAConstantMultipleOf(wholeBase, radicandBase, x) is { } wholeMultiple)
+                    {
+                        radicalsRemoved++;
+                        return MathS.Pow(wholeMultiple, whole) * MathS.Pow(root, 2 * whole.EInteger.ToInt32Unchecked());
+                    }
+                    if (!TryReadAHalfPower(node, out var @base, out var numerator))
+                        return node;
+                    if (IsTheSameQuadratic(@base, radicandBase, x))
+                    {
+                        radicalsRemoved++;
+                        return MathS.Pow(root, numerator);
+                    }
+                    if (TreeAnalyzer.TryGetPolyQuadratic(@base, x, out _, out _, out _) && TryReadAConstantMultipleOf(@base, radicandBase, x) is { } multiple)
+                    {
+                        radicalsRemoved++;
+                        return MathS.Pow(multiple, Number.Rational.Create(numerator, 2)) * MathS.Pow(root, numerator);
+                    }
+                    return node;
+                });
+            var powerOfTheInverse = expr.Nodes.Any(node =>
+                node is Powf(var @base, Number.Integer power) && power.EInteger.CompareTo(EInteger.One) > 0
+                    && @base.ContainsNode(inverse) && !@base.Substitute(inverse, u).ContainsNode(x));
+            var exponentialOfTheInverse = expr.Nodes.Any(node =>
+                node is Powf(var @base, var power) && !@base.ContainsNode(x) && power.ContainsNode(inverse));
+            // Any other root of x is one the construction did not reach, and worse in u.
+            if (rewritten.Nodes.Any(node =>
+                    node is Powf(var @base, Number.Rational power) && power is not Number.Integer && @base.ContainsNode(x)))
+                return null;
+            // Taken whenever the inverse is there, unlike the trigonometric route: parts in x
+            // does not read the logarithm's derivative, a quotient of radicals, so there is no
+            // answer in x to prefer -- unless another function of x stands beside it, which
+            // the exponentials of u do not read: `x arctan(x) arsinh(x)/sqrt(1 + x^2)` is
+            // `u sinh(u) arctan(sinh(u))` under the sine, ten seconds of search that found
+            // nothing, where parts in x answers it in seventy milliseconds.
+            _ = (radicalsRemoved, powerOfTheInverse, exponentialOfTheInverse);
+            if (rewritten.Nodes.Any(node => node is Function && node is not Powf && node != inverse && node.ContainsNode(x)))
+                return null;
+            rewritten = rewritten.Substitute(x, ((argumentInU - offset) / slope).InnerSimplified);
+            if (rewritten.ContainsNode(x))
+                return null;
+            var (numerator, denominator) = Functions.SingleQuotient.Of((rewritten * dArgument / slope).InnerSimplified);
+            var integrand = CancelCommonFactors(numerator, denominator);
+            if (integrand is Providedf(var inner, _))
+                integrand = inner;
+            // A product of powers of the hyperbolic functions is a product of powers of sums
+            // of exponentials, which no rule reads whole; expanded, it is a sum of `u^n e^(k u)`
+            // terms, each closed. Only where the denominator is free of u, since expanding a
+            // quotient's numerator alone helps nothing.
+            if (integrand is not Divf(_, var below) || !below.ContainsNode(u))
+            {
+                var expanded = integrand.Expand();
+                if (expanded is Sumf)
+                    integrand = expanded;
+            }
+            if (Integration.ComputeAsAQuestionOfItsOwn(integrand, u, integrateByParts) is not { } result)
+                return null;
+            // The way back: u is the inverse function, e^u and e^(-u) its two exponentials in
+            // the argument, on the principal branch.
+            Entity plus, minus;
+            switch (kind)
+            {
+                case 1:
+                    (plus, minus) = (argument + MathS.Sqrt(MathS.Sqr(argument) + 1), MathS.Sqrt(MathS.Sqr(argument) + 1) - argument);
+                    break;
+                case 2:
+                    (plus, minus) = (argument + MathS.Sqrt(MathS.Sqr(argument) - 1), argument - MathS.Sqrt(MathS.Sqr(argument) - 1));
+                    break;
+                default:
+                    // e^(-u) as the reciprocal, not as the root of the reciprocal: off the real
+                    // domain the principal roots of a quotient and of its reciprocal are not
+                    // reciprocals, and the check at sampled points found the difference.
+                    (plus, minus) = (MathS.Sqrt((1 + argument) / (1 - argument)), 1 / MathS.Sqrt((1 + argument) / (1 - argument)));
+                    break;
+            }
+            var back = result
+                .Replace(node => node switch
+                {
+                    Powf(var b, var e) when b == MathS.e && e == u => plus,
+                    Powf(var b, var e) when b == MathS.e && e.ContainsNode(u) && TreeAnalyzer.TryGetPolyLinear(e, u, out var k, out var m) && k is { } && m is { } && !k.ContainsNode(u) && !m.ContainsNode(u)
+                        => k.Evaled is Number.Integer { EInteger.Sign: < 0 } ? MathS.Pow(MathS.e, m) * MathS.Pow(minus, -k) : MathS.Pow(MathS.e, m) * MathS.Pow(plus, k),
+                    _ => node,
+                })
+                .Substitute(u, kind == 3 ? inverse / 2 : inverse);
+            if (back.ContainsNode(u) || back.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            // Checked on the real domain of the inverse, where the identities the route rests
+            // on hold -- with the symbols pinned to values near one, the argument is inside
+            // (-1, 1) at small x for the tangent and past 1 at large x for the cosine -- and
+            // then at the default points as well, some of them off that domain: an integrand
+            // can be real there through two imaginary factors cancelling, `e^artanh(a x)` over
+            // `sqrt(1 - a^2 x^2)` past `a x = 1`, and an answer that holds only on the domain
+            // is a wrong answer at every such point. Declined rather than given there.
+            var points = kind switch
+            {
+                2 => new[] { "1.43", "3.17", "2.2", "5.1" },
+                3 => new[] { "0.29", "-0.61", "0.13", "-0.4" },
+                _ => null,
+            };
+            var derivative = back.Differentiate(x);
+            try
+            {
+                if (points is { } && !Functions.PartialFractions.HoldsAtSampledPoints(derivative, expr, x, points))
+                    return null;
+                if (!Functions.PartialFractions.HoldsAtSampledPoints(derivative, expr, x))
+                    return null;
+            }
+            catch (Core.Exceptions.CannotEvalException)
+            {
+                return null;
+            }
+            return back;
+        }
+
+        /// <summary>
+        /// The argument and the kind (1 <c>arsinh</c>, 2 <c>arcosh</c>, 3 <c>artanh</c>) of the
+        /// inverse hyperbolic function whose logarithm has <paramref name="antilogarithm"/>
+        /// as its argument -- <c>L + sqrt(L^2 + 1)</c>, <c>L + sqrt(L^2 - 1)</c> or
+        /// <c>(1 + L)/(1 - L)</c> for a linear <c>L</c> -- else null.
+        /// </summary>
+        private static (Entity Argument, int Kind)? ReadAnInverseHyperbolic(Entity antilogarithm, Entity.Variable x)
+        {
+            if (antilogarithm is Sumf(var left, var right))
+            {
+                foreach (var (linear, radical) in new[] { (left, right), (right, left) })
+                {
+                    if (!TryReadAHalfPower(radical, out var radicand, out var numeratorOfHalf) || numeratorOfHalf != 1 || !linear.ContainsNode(x))
+                        continue;
+                    if (!TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out _) || slope is null || TreeAnalyzer.IsZero(slope))
+                        continue;
+                    if (IsTheSameQuadraticOnceSimplified(radicand, MathS.Sqr(linear) + 1, x))
+                        return (linear, 1);
+                    if (IsTheSameQuadraticOnceSimplified(radicand, MathS.Sqr(linear) - 1, x))
+                        return (linear, 2);
+                }
+                return null;
+            }
+            if (antilogarithm is Divf(var above, var below)
+                && TreeAnalyzer.TryGetPolyLinear(above, x, out var slopeAbove, out var offsetAbove) && slopeAbove is { } && offsetAbove is { }
+                && TreeAnalyzer.TryGetPolyLinear(below, x, out var slopeBelow, out var offsetBelow) && slopeBelow is { } && offsetBelow is { }
+                && VanishesOnceSimplified(slopeAbove + slopeBelow)
+                && VanishesOnceSimplified(offsetAbove - 1)
+                && VanishesOnceSimplified(offsetBelow - 1))
+                return ((slopeAbove * x).InnerSimplified, 3);
+            return null;
+
+            // Zero as written, evaluated, or once simplified: `a + (-a)` for a symbol a.
+            static bool VanishesOnceSimplified(Entity expr)
+                => expr.InnerSimplified.Evaled is Number.Complex { IsZero: true }
+                    || expr.Vars.Any() && Functions.PartialFractions.Bare(expr.Simplify()).Evaled is Number.Complex { IsZero: true };
+
+            // The same quadratic coefficient by coefficient, with symbols: `(c x)^2 + 1`
+            // against `c^2 x^2 + 1`, which the evaluated difference does not settle.
+            static bool IsTheSameQuadraticOnceSimplified(Entity candidate, Entity wanted, Entity.Variable x)
+                => TreeAnalyzer.TryGetPolyQuadratic(candidate, x, out var a, out var b, out var c)
+                   && TreeAnalyzer.TryGetPolyQuadratic(wanted, x, out var a2, out var b2, out var c2)
+                   && a is { } && b is { } && c is { } && a2 is { } && b2 is { } && c2 is { }
+                   && VanishesOnceSimplified(a - a2) && VanishesOnceSimplified(b - b2) && VanishesOnceSimplified(c - c2);
         }
 
         /// <summary>
