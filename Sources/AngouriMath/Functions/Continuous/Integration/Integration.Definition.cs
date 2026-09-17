@@ -513,6 +513,9 @@ namespace AngouriMath.Functions.Algebra
             // A square root of a polynomial with a repeated factor, the factor taken out of
             // the root with its sign: `sqrt((x - 3)^2 (x + 1))` is `sgn(x - 3) (x - 3) sqrt(x + 1)`.
             if ((answer = IndefiniteIntegralSolver.SolveByTakingASquareFactorOutOfARoot(expr, x, integrateByParts)) is { }) return answer;
+            // A fractional power of a constant times an even power of a function, the function
+            // taken out with its sign: `(a sin(x)^2)^(5/2)` is `a^(5/2) sgn(sin(x)) sin(x)^5`.
+            if ((answer = IndefiniteIntegralSolver.SolveByTakingAFunctionOutOfAPowerOfItsEvenPower(expr, x, integrateByParts)) is { }) return answer;
             // A sum of two roots below the bar, multiplied above and below by its conjugate:
             // `1/(sqrt(A) - sqrt(B))` is `(sqrt(A) + sqrt(B))/(A - B)`.
             if ((answer = IndefiniteIntegralSolver.SolveByRationalisingASumOfRoots(expr, x, integrateByParts)) is { }) return answer;
