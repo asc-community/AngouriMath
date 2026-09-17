@@ -539,6 +539,10 @@ namespace AngouriMath.Functions.Algebra
             // budget. Before the substitution search, which with a symbolic slope spends the
             // whole of it on `u = c + d x` and never comes back to the chain.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfTheHyperbolicTangent(expr, x, integrateByParts)) is { }) return answer;
+            // A rational function of a sine or a cosine over a quadratic in it with a symbol
+            // among the coefficients, split over the quadratic's two roots: under the
+            // half-angle it is a quartic in t with a symbol in every coefficient.
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfASineOverASymbolicQuadratic(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             // A logarithmic derivative the substitution above could not read for a symbol in
             // an exponent: `(x^(n-1) - 1)/(x^n - n x)`.
