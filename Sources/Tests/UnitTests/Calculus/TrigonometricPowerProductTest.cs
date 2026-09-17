@@ -133,6 +133,57 @@ namespace AngouriMath.Tests.Calculus
         public void ALinearArgument(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// A fractional power of an even power is a power of the modulus, not of the
+        /// function: <c>(sin^2)^(3/2)</c> is <c>|sin|^3</c>, and read as <c>sin^3</c> it was
+        /// integrated as one, wrong on every other half-turn; and <c>(2 tan^3)^(3/2)</c>, an
+        /// odd inner power, was integrated as <c>2^(3/2) tan^(9/2)</c>, which agrees only where
+        /// the tangent is positive. Each of these is either declined or right at points on
+        /// both sides of a zero of the function.
+        /// https://github.com/asc-community/AngouriMath/issues/1387
+        /// </summary>
+        [Theory]
+        [InlineData("(sin(x)^2)^(3/2)")]
+        [InlineData("(2*tan(x)^3)^(3/2)")]
+        [InlineData("x*sqrt(sin(x)^2)")]
+        [InlineData("(csc(x)^2)^(3/2)")]
+        [InlineData("1/(csc(x)^2)^(7/2)")]
+        [InlineData("(2*sin(x)^2)^(5/2)")]
+        [InlineData("1/sqrt(3*cot(x)^2)")]
+        public void ARootOfAnEvenPowerIsNotThePower(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            if (integral.Stringize().Contains("integral("))
+                return;
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity();
+            foreach (var at in new[] { 0.7, 2.1, 3.9, 4.5, 5.6 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                if (got.IsNaN || want.IsNaN)
+                    continue;
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-9, $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        /// <summary>
+        /// Two proportional linears under roots are one radical with a constant in it: the
+        /// quotient-of-two-radicals rule took them, its determinant was zero, and
+        /// <c>sin(a + b (c + d x)^(1/3))/(c e + d e x)^(1/3)</c> came back as
+        /// <c>0 provided ...</c>. https://github.com/asc-community/AngouriMath/issues/1386
+        /// </summary>
+        [Fact]
+        public void TwoProportionalRadicalsAreNotAQuotientOfTwo()
+        {
+            var integral = "sin(a + b*(c + d*x)^(1/3))/(c*e2 + d*e2*x)^(1/3)".ToEntity().Integrate("x");
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            Assert.NotEqual("0", (integral.Substitute("C", 0) is Entity.Providedf(var inner, _) ? inner : integral.Substitute("C", 0)).Simplify().Stringize());
+        }
+
+        /// <summary>
         /// The exponent that is <b>not</b> the one deciding the case need only be rational. It
         /// rides through the substitution untouched, and the power rule takes <c>u^(-3/2)</c> as
         /// readily as <c>u^(-3)</c>.

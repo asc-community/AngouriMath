@@ -157,6 +157,26 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// A power of a constant multiple of the variable with a symbolic exponent is
+        /// integrated with the written power kept: <c>(c x)^m x^n</c> is
+        /// <c>(c x)^m x^(n+1)/(m + n + 1)</c>, exact for every branch since
+        /// <c>d/dx (c x)^m</c> is <c>m (c x)^m / x</c>, and the logarithm where the exponents
+        /// sum to minus one. Rubi's <c>(e x)^m (a + b x^n)^p (c + d x^n)^q</c> with symbolic
+        /// <c>m</c> and <c>n</c> is a sum of these once expanded and was declined term by term.
+        /// Checked at a negative point too, where <c>(c x)^m</c> is not <c>c^m x^m</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("(c * x) ^ m * x ^ n", "c = 1.7, m = 0.7, n = 1.3", new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("(c * x) ^ m", "c = -1.7, m = 0.7", new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("(c * x) ^ m * (a + b * x ^ n) * (A + B * x ^ n)", "c = 1.7, m = 0.7, n = 1.3, a = 2, b = 3, A = 0.5, B = 1.1", new[] { 0.3, 1.7 })]
+        [InlineData("(c * x) ^ m * (a + b * x ^ n) ^ 3", "c = 1.7, m = 0.7, n = 2, a = 2, b = 3", new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("(c * x) ^ m / x ^ (m + 1)", "c = 1.7, m = 0.7", new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("x ^ 2 / (c * x) ^ 3", "c = 1.7", new[] { 0.3, 1.7, -0.6 })]
+        [InlineData("(c * x) ^ m * (d * x) ^ k", "c = 1.7, d = 0.4, m = 0.7, k = -0.2", new[] { 0.3, 1.7 })]
+        public void APowerOfAConstantMultipleOfTheVariable(string integrand, string coefficients, double[] points)
+            => AssertIsAntiderivative(integrand, coefficients, points);
+
+        /// <summary>
         /// The degenerate arm is not merely non-NaN, it is the right answer: where the
         /// leading coefficient really is zero and there is no x term, the integrand is the
         /// constant k/c and its antiderivative is kx/c. The old code claimed (k/b) ln|bx + c|

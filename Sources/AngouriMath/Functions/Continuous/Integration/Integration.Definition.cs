@@ -446,6 +446,10 @@ namespace AngouriMath.Functions.Algebra
             // switched it off -- which is a cycle, since by parts calls back into here.
             // `x * ln(x)` went round it until the stack ran out.
             if ((answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x, integrateByParts)) is { }) return answer;
+            // A product of powers of the variable with a power of a constant multiple of it
+            // among them, `(c x)^m x^n`, by the power rule with the written power kept as
+            // it is. Beside the polynomial term, since that is what it is.
+            if ((answer = IndefiniteIntegralSolver.SolveAProductOfPowersOfTheVariable(expr, x)) is { }) return answer;
             // A power of an exponential with a positive base is the exponential of the product,
             // exactly, and only that spelling is one the exponential rules read.
             // A power of x times a power of its logarithm, by the closed reduction: exact,
@@ -552,6 +556,9 @@ namespace AngouriMath.Functions.Algebra
             // And the inverse trigonometric functions' own, beside the logarithm's and for the
             // same reason: `x = sin(u)` removes the `x` that substituting for `arcsin(x)` leaves.
             if ((answer = IndefiniteIntegralSolver.SolveByInverseTrigonometricSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // An exponential of i times an inverse trigonometric function is algebraic:
+            // `e^(i arctan(a x))` is `(1 + i a x)/sqrt(1 + a^2 x^2)`.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingAnExponentialOfAnInverseAlgebraically(expr, x, integrateByParts)) is { }) return answer;
             // And the third of Bioche's rules: a quotient of homogeneous polynomials in sine and
             // cosine, which the tangent turns into a rational function whenever the two degrees
             // differ by an even number. After the tangent substitution above, which answers an
