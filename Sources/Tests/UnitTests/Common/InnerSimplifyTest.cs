@@ -101,6 +101,10 @@ namespace AngouriMath.Tests.Common
         // answer it and cannot be called from inside InnerSimplify (#403).
 
         [InlineData("log(10, x) * log(10, x)", "log(10, x)^2")]
+        // A quotient by minus one is the negation, so the root of `b - x = 0`, which the
+        // linear solver writes as `-b / (-1)`, is `b`.
+        [InlineData("-b / (-1)", "b")]
+        [InlineData("(a + 1) / (-1)", "-(a + 1)")]
         public void ShouldChangeTo(string from, string to)
         {
             var expected = to.ToEntity().Replace(c => c == "NaN" ? MathS.NaN : c);
@@ -475,6 +479,18 @@ namespace AngouriMath.Tests.Common
         {
             var once = expr.ToEntity().InnerSimplified;
             Assert.Equal(once, once.InnerSimplified);
+        }
+
+        /// <summary>
+        /// The README's own solve example carried `-b / (-1)` among its roots, from the factor
+        /// `b - x`; the root is `b`.
+        /// </summary>
+        [Fact]
+        public void TheRootOfALinearWithANegativeSlopeIsNotAQuotientByMinusOne()
+        {
+            var roots = "(sin(x)^2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)".SolveEquation("x");
+            Assert.DoesNotContain("-1)", roots.Stringize());
+            Assert.Contains(MathS.Var("b"), ((Entity.Set.FiniteSet)roots).Elements);
         }
     }
 }
