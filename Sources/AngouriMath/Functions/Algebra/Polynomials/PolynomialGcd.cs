@@ -76,7 +76,7 @@ namespace AngouriMath.Functions
         /// <c>x + 1 provided not x - 1 = 0</c>.
         /// </remarks>
         internal static bool TryCancel(Entity numerator, Entity denominator,
-            [NotNullWhen(true)] out Entity? cancelled)
+            [NotNullWhen(true)] out Entity? cancelled, int maxComplexity = MaxComplexity)
         {
             cancelled = null;
 
@@ -84,7 +84,11 @@ namespace AngouriMath.Functions
             // whatever they are, and there is no point parsing them to find that out.
             if (!numerator.Vars.Any(denominator.Vars.Contains))
                 return false;
-            if (numerator.Complexity + denominator.Complexity > MaxComplexity)
+            // The bound is the simplifier's, for a quotient it meets on every rewrite; a
+            // caller that has built one quotient it needs in lowest terms -- the
+            // coefficients of a partial fraction, whose whole point is to be small -- may
+            // raise it.
+            if (numerator.Complexity + denominator.Complexity > maxComplexity)
                 return false;
 
             var variables = numerator.Vars

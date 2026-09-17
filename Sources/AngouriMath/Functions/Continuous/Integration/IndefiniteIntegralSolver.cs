@@ -605,7 +605,7 @@ namespace AngouriMath.Functions.Algebra
             if (Mulf.LinearChildren(denominator).Any(f => f.ContainsNode(x) && f is Powf(_, Number.Integer { EInteger.Sign: > 0 } e) && e != Number.Integer.One)
                 && IsAProductOfSymbolicLinearFactors(denominator, x)
                 && Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, denominator, x, out var overSymbolicLinears)
-                && Integration.ComputeIndefiniteIntegral(overSymbolicLinears, x, integrateByParts) is { } overTheLinears)
+                && IntegratedTermByTerm(overSymbolicLinears, x, integrateByParts) is { } overTheLinears)
                 return overTheLinears;
 
             // Every rule below reads the denominator **as written**: the Hermite reduction wants
@@ -698,7 +698,7 @@ namespace AngouriMath.Functions.Algebra
             // factors -- `(x + a)(x^2 + b)` -- is decomposed by undetermined coefficients,
             // checked, and each piece is a shape the rules here read.
             if (Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, denominator, x, out var overWrittenFactors)
-                && Integration.ComputeIndefiniteIntegral(overWrittenFactors, x, integrateByParts) is { } termByTerm)
+                && IntegratedTermByTerm(overWrittenFactors, x, integrateByParts) is { } termByTerm)
                 return termByTerm;
 
             // Last, because everything above answers in exact arithmetic where it can: a
@@ -9388,24 +9388,68 @@ namespace AngouriMath.Functions.Algebra
             });
 
         /// <summary>
-        /// Whether <paramref name="denominator"/> is written as a product of two or more
-        /// distinct linear factors in <paramref name="x"/>, to whole powers, with a symbol in
-        /// a coefficient somewhere.
+        /// A partial-fraction decomposition, a sum over a constant, integrated one term at a
+        /// time as each is written, with the constant on the result.
         /// </summary>
+        /// <remarks>
+        /// Handed to the chain whole, the sum is split as written only while every term is
+        /// small (<see cref="LargestTermTakenAsWritten"/>), and past that by the expanding
+        /// gather, which combines a term's constant with its quotient: `D^(-1) (P + Q x)/(1 + x^2)`
+        /// with `P`, `Q` polynomials in the symbols became `(P + Q x)/(D + D x^2)`, a quadratic
+        /// with symbols in every coefficient, and was integrated as a piecewise on the sign of
+        /// its discriminant. A decomposition's terms are already the shapes the rules read.
+        /// </remarks>
+        private static Entity? IntegratedTermByTerm(Entity decomposition, Entity.Variable x, bool integrateByParts)
+        {
+            var (terms, over) = decomposition is Divf(var sum, var constant) && !constant.ContainsNode(x)
+                ? (sum, constant) : (decomposition, Number.Integer.One as Entity);
+            Entity total = Number.Integer.Zero;
+            foreach (var term in Sumf.LinearChildren(terms))
+            {
+                if (term.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                if (Integration.ComputeIndefiniteIntegral(term, x, integrateByParts) is not { } integrated)
+                    return null;
+                total += integrated;
+            }
+            return over == Number.Integer.One ? total : total / over;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="denominator"/> is written as a product of two or more
+        /// distinct factors in <paramref name="x"/>, at least one of them linear and to a
+        /// whole power, the rest linear or quadratic to the first power, with a symbol in a
+        /// coefficient somewhere.
+        /// </summary>
+        /// <remarks>
+        /// A quadratic beside the linears is allowed since the decomposition takes the linear
+        /// blocks by their Taylor coefficients and the quadratic's numerator in the ring
+        /// modulo the quadratic; with the gate asking for linears only,
+        /// <c>u^4 (A + B u)/((a + b u)^4 (1 + u^2))</c> -- every rational function of the
+        /// tangent with a power of a linear in it -- went to the Hermite reduction below,
+        /// which answered in <c>a^63 b^10</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
         private static bool IsAProductOfSymbolicLinearFactors(Entity denominator, Entity.Variable x)
         {
             var linears = 0;
+            var quadratics = 0;
             foreach (var factor in Mulf.LinearChildren(denominator))
             {
                 if (!factor.ContainsNode(x))
                     continue;
                 var @base = factor is Powf(var b, Number.Integer { EInteger.Sign: > 0 }) ? b : factor;
-                if (!TreeAnalyzer.TryGetPolynomial(@base, x, out var read) || read.Count == 0 || !read.Keys.Max()!.Equals(EInteger.One)
+                if (!TreeAnalyzer.TryGetPolynomial(@base, x, out var read) || read.Count == 0
                     || read.Values.Any(coefficient => coefficient.ContainsNode(x)))
                     return false;
-                linears++;
+                if (read.Keys.Max()!.Equals(EInteger.One))
+                    linears++;
+                else if (read.Keys.Max()!.Equals(EInteger.FromInt32(2)) && @base == factor)
+                    quadratics++;
+                else
+                    return false;
             }
-            return linears >= 2 && denominator.Vars.Any(v => v != x);
+            return linears >= 1 && linears + quadratics >= 2 && denominator.Vars.Any(v => v != x);
         }
 
         /// <summary>
