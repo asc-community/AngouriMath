@@ -543,6 +543,10 @@ namespace AngouriMath.Functions.Algebra
             // among the coefficients, split over the quadratic's two roots: under the
             // half-angle it is a quartic in t with a symbol in every coefficient.
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfASineOverASymbolicQuadratic(expr, x, integrateByParts)) is { }) return answer;
+            // Fractional powers of `a ± a sin(y)` beside anything rational in the sine and
+            // cosine, by the half angle at which they are squares: `1 + sin(y)` is `2 sin(u)^2`. Before
+            // the substitution search, which spent twenty seconds on the radicals of the sine.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheHalfAngleWhereOnePlusASineIsASquare(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             // A logarithmic derivative the substitution above could not read for a symbol in
             // an exponent: `(x^(n-1) - 1)/(x^n - n x)`.
