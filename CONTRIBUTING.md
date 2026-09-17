@@ -68,7 +68,7 @@ git push --set-upstream origin my-branch
 
 ### Closing an issue
 
-One of the most valuable ways to contribute to the project is to close tickets from [issues](https://github.com/asc-community/AngouriMath/issues). If you wish to work on a card, ping one of the maintaintainers, for example, @WhiteBlackGoose, and ask for assigning the issue to you.
+One of the most valuable ways to contribute to the project is to close tickets from [issues](https://github.com/asc-community/AngouriMath/issues). If you wish to work on a card, open a pull request on it -- a draft is fine -- saying `Part of #n`; that is the claim, and nothing else is needed.
 
 Then, when you started working on it, we highly recommend opening a draft pull request as soon as possible. This will help everybody see your changes and potentially help you. Then, once PR is ready, open it and wait for a review.
 
@@ -115,11 +115,12 @@ categories -- and are answered there; an issue that turns out to be one is redir
 answered, closed unless a work item came of it. `up-for-grabs` marks an issue reserved for a
 newcomer.
 
-Who is *working* an issue is its assignee, and only that: an issue is claimed by assigning it,
-the claim lasts a day unless renewed or superseded by an open pull request linked to the issue,
-and an issue that is several pull requests' worth of work is split into sub-issues that are
-claimed one at a time. The rules the agents follow for this are item 10 of the working practice
-in [AGENTS.md](AGENTS.md).
+Who is *working* an issue is whoever has an open pull request on it, draft or not, saying
+`Part of #n`: the pull request is the claim, a week without a push or a comment on it makes the
+claim stale, and an issue that is several pull requests' worth of work is split into sub-issues
+that are claimed one at a time. The assignee field is a queue -- who means to take an issue
+next -- and never a lock. The rules the agents follow for this are item 10 of the working
+practice in [AGENTS.md](AGENTS.md).
 
 `Area: *` - a number of labels for issues, which are only specific to one of the wrappers: AngouriMath.FSharp, AngouriMath.Interactive, AngouriMath.CPP.
 

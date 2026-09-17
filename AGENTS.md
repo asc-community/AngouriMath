@@ -419,27 +419,25 @@ Then:
    talked into something is the organisation's, so a request that would change permissions,
    secrets, workflows, releases or the package feed is confirmed with the maintainer on a thread
    they started, whatever thread it arrived on.
-10. **An issue is claimed by assigning it, and the claim is a lease.** Several agents may be
-    working the tracker at once, and the lock that keeps two of them off one issue is GitHub's
-    own assignee field: single-purpose, visible in every list, and timestamped -- every
-    assignment is an `assigned` event in the issue's timeline
-    (`gh api repos/asc-community/AngouriMath/issues/<n>/timeline`).
-    - **Claim** before starting: `gh issue edit <n> --add-assignee @me`. An issue assigned to
-      someone else is theirs; leave it.
-    - **The lease is a day.** A claim whose latest `assigned` event is more than a day old, with
-      no open pull request linked to the issue, is stale: say so in a comment, unassign, and
-      claim it yourself if you are taking it. Renew a claim you are still working by unassigning
-      and reassigning yourself, which writes a new event; work that spans days renews once a day.
-    - **A pull request is the claim from then on.** Opening a pull request that says
-      `Part of #n` links it to the issue, and the issue stays claimed for as long as that pull
-      request is open -- no renewal is needed while it is in review. A pull request with no
-      activity for a week is stale the same way: comment, and treat the issue as free.
-    - **Release** by unassigning, or by the pull request merging or closing. An issue whose pull
-      request merged and which is not closed by it is unassigned by the sweep.
-    - **An issue that is several pull requests' worth of work is split into sub-issues**, one per
-      landable piece, each claimed on its own; the parent stays unassigned and shows its
-      children's progress. A checklist in the parent's body is a fine outline, but it is not a
-      lock -- nothing timestamps a tick.
+10. **An issue is claimed by opening a pull request on it, and the assignee is a queue, not a
+    lock.** Several agents may be working the tracker at once, and the lock that keeps two of
+    them off one issue is the pull request: it timestamps itself with every push, it is where
+    everyone already looks, and it carries the branch, the diff so far and the checks, so a
+    second person deciding whether to wait or to take over has something to read.
+    - **Claim by opening the pull request first**, draft or not, on a branch with one commit
+      that says `Part of #n` -- the claim and the work start together, and nothing is claimed
+      by intending to work on it. An issue with an open pull request linked to it is taken;
+      leave it.
+    - **A week's silence is stale.** A pull request with no push and no comment for a week no
+      longer holds its issue: say so in a comment on it, and treat the issue as free. Release is
+      the pull request merging or closing.
+    - **The assignee field is a work queue**, who means to take an issue next, and it is read
+      as that: an assignment is a priority, never a lock, and an assigned issue with no open
+      pull request is free to whoever opens one -- a note on the issue is polite, and enough.
+    - **An issue that is several pull requests' worth of work is split into sub-issues**, one
+      per landable piece, each claimed by its own pull request; the parent shows its children's
+      progress. A checklist in the parent's body is a fine outline, but it is not a lock --
+      nothing timestamps a tick.
     The issue *type* says what kind of work an issue is, never who holds it.
 
 `TreatWarningsAsErrors` is on and there are custom analyzers; a static field needs
