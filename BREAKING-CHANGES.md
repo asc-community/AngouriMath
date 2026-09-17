@@ -307,6 +307,19 @@ either now; and the secant quotient was simplified to `cos/(b^(5/2) d)` through
 `(1/cos)^(3/2) = cos^(-3/2)`, which is wrong for every negative cosine and cancelled against the
 same wrong step on the denominator. On the 1774-problem independent suites this is 1707 to 1705, the two `asin` rows, with the sign error gone.
 
+### The Pythagorean pair is found anywhere in a sum
+
+**Improvement, not silent.** `Simplify` knew `sin(t)^2 + cos(t)^2` as a node of two operands, and
+sorted a sum so that the pair landed adjacent — which made them one node only when nothing sorted
+*before* them. `a + sin(t)^2 + cos(t)^2` became `1 + a`; `sqrt(2) + sin(t)^2 + cos(t)^2` stayed as
+written, and so did the README's own example. The n-ary reading of the identity, which finds the
+two squares among any number of operands, now runs beside the trigonometric rules.
+
+| | Was | Is |
+|---|---|---|
+| `"sqrt(2) + sin(t)^2 + cos(t)^2".Simplify()` | unchanged | `1 + sqrt(2)` |
+| `"1/2 + sin(pi/4) + (sin(3x)^2 + cos(3x)^2)".Simplify()` | `(sqrt(2) + 1)/2 + cos(3x)^2 + sin(3x)^2` | `3/2 + sqrt(2)/2` |
+
 ---
 
 ## 2.5.0 — since 2.4.0
