@@ -210,7 +210,7 @@ namespace AngouriMath.Tests.Calculus
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             var integral = integrand.ToEntity().Integrate("x");
-            Assert.True(watch.Elapsed < TimeSpan.FromSeconds(20), $"took {watch.Elapsed}");
+            Assert.True(watch.Elapsed < IntegrationDecline.Guard, $"took {watch.Elapsed}");
             Assert.DoesNotContain("NaN", integral.Stringize());
         }
 

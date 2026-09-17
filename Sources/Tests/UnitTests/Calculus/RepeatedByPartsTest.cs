@@ -111,7 +111,7 @@ namespace AngouriMath.Tests.Calculus
             watch.Stop();
 
             Assert.Contains("integral(", answer.Stringize());
-            Assert.True(watch.Elapsed < TimeSpan.FromSeconds(30),
+            Assert.True(watch.Elapsed < IntegrationDecline.Guard,
                 $"took {watch.Elapsed.TotalSeconds:F1}s; without the decrease measure on the "
                 + "remaining integrand it was 83s");
         }
