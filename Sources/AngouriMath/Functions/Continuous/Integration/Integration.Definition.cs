@@ -552,6 +552,9 @@ namespace AngouriMath.Functions.Algebra
             // And the inverse trigonometric functions' own, beside the logarithm's and for the
             // same reason: `x = sin(u)` removes the `x` that substituting for `arcsin(x)` leaves.
             if ((answer = IndefiniteIntegralSolver.SolveByInverseTrigonometricSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // An exponential of i times an inverse trigonometric function is algebraic:
+            // `e^(i arctan(a x))` is `(1 + i a x)/sqrt(1 + a^2 x^2)`.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingAnExponentialOfAnInverseAlgebraically(expr, x, integrateByParts)) is { }) return answer;
             // And the third of Bioche's rules: a quotient of homogeneous polynomials in sine and
             // cosine, which the tangent turns into a rational function whenever the two degrees
             // differ by an even number. After the tangent substitution above, which answers an
