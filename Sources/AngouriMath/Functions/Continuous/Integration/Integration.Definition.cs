@@ -570,6 +570,10 @@ namespace AngouriMath.Functions.Algebra
             // integrand that is a function of the tangent *alone* and gives a shorter answer for
             // it; this one is for the rest.
             if ((answer = IndefiniteIntegralSolver.SolveByHomogeneousTrigonometricSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // An even polynomial over a biquadratic with symbols in it, over the two roots
+            // in x^2 written with the root of the discriminant: partial fractions read a
+            // written factor, and `a + b x^2 + c x^4` is written as one.
+            if ((answer = IndefiniteIntegralSolver.SolveAnEvenPolynomialOverASymbolicBiquadratic(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByPartialFractions(expr, x, integrateByParts)) is { }) return answer;
             // A whole negative power of a polynomial of several terms among the factors,
             // written below the bar and asked again: the gathering on the way in writes
