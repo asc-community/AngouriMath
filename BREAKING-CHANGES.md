@@ -329,6 +329,28 @@ poles of `tan(x/2)`, as every half-angle answer.
 | `"csc(x)^2/(a+b*sin(x)+c*sin(x)^2)".Integrate("x")`, `"sec(x)^2/…"` | unevaluated | `-cot(x)/a + …`, the blocks over `sin^2` and `1 - sin^2` beside the two roots |
 | `"1/(a+b*cos(x)+c*cos(x)^2)".Integrate("x")` | unevaluated | the cosine form |
 
+### A function comes out of a fractional power of its even power with its sign
+
+**Improvement, not silent.** The entry two above made `(sin(x)^2)^(3/2)` the modulus `|sin(x)|^3`
+and left three of Rubi's integrands unevaluated for it, and answered two more in powers of the
+modulus through the substitutions. The modulus is the function times its sign, and the sign is a
+constant between the function's zeros: `(a sin(x)^2)^(5/2)` is `a^(5/2) sgn(sin(x)) sin(x)^5`, the
+sign comes out in front of the integral, and what is left is a whole power any rule reads. An even
+power of a real function is not negative, so `(c q)^p = c^p q^p` holds for the principal powers
+whatever `c` is, and nothing is assumed about the constant — checked at `a = -3` as well as
+`a = 2`. Whole products of the exponents only, at the top of the integration only, and after the
+rule that does the same for a polynomial under a square root, whose answers are as they were.
+[#1387](https://github.com/asc-community/AngouriMath/issues/1387)
+
+| | Was | Is |
+|---|---|---|
+| `"x*sqrt(sin(x)^2)".Integrate("x")` | unevaluated | `sgn(sin(x)) (sin(x) - x cos(x))` |
+| `"(csc(x)^2)^(3/2)".Integrate("x")`, `"1/(csc(x)^2)^(7/2)".Integrate("x")` | unevaluated | `sgn(csc(x))` times the integral of `csc^3`, of `sin^7` |
+| `"(sin(x)^2)^(3/2)".Integrate("x")` | `(2/3 tan(x/2)^5 + 2 tan(x/2)^3) ((2 tan(x/2))^2)^(1/2)/((tan(x/2)^2 + 1)^3)` | `sgn(sin(x)) (cos(x)^3/3 - cos(x))` |
+| `"(a*sin(x)^2)^(5/2)".Integrate("x")` | `sgn(sin(x)) a^(5/2) (...)` in `(1 - abs(sin(x))^2)^(1/2)` over `sgn(cos(x))` | `sgn(sin(x)) a^(5/2) (2 cos(x)^3/3 - cos(x) - cos(x)^5/5)` |
+| `"1/sqrt(a*cot(x)^2)".Integrate("x")` | `-sgn(tan(x)) ln(1/sqrt(1 + abs(tan(x))^2))/sqrt(a)` | `sgn(cot(x)) ln(1 + tan(x)^2)/(2 sqrt(a))` |
+| `"(b*tan(x)^2)^(5/2)".Integrate("x")` | `sgn(tan(x)) b^(5/2) ((abs(tan(x))^2)^2/2 - abs(tan(x))^2 + ln(abs(tan(x))^2 + 1))/2` | the same with `tan(x)` for `abs(tan(x))` |
+
 ### A condition the answer states on its own is no longer repeated beside it
 
 **Improvement, not silent.** `Simplify` returned `(1 - ln(x))/x^2 provided not x = 0` for the
