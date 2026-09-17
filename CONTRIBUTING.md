@@ -96,11 +96,12 @@ are set out at length in [AGENTS.md](AGENTS.md), which applies to humans too:
 An issue's *kind* is its GitHub issue type, not a label; the labels say what state it is in and
 where it belongs.
 
-- **Goal** -- the default, and the easiest to write: what you want to be true. A goal is a
+- **No type** -- a goal: what you want to be true, and the easiest issue to write. A goal is a
   meta-issue that spawns work items -- the tracker's `Goal: ...` issues, the dockets, and anything
   a contributor states without knowing whether it is a bug or a feature. The bar is minimal on
   purpose: it is mathematics, and we do all of it; the triage sorts a goal into the Bugs and
-  Features it needs.
+  Features it needs, as sub-issues of it, so a blank issue and a goal are the same thing and
+  nothing has to be forced onto an issue whose kind is not known yet.
 - **Bug** -- the behaviour is not what the mathematics says, or the library crashes, hangs or
   answers something it should have declined. A bug whose impact is low (a simplification that is
   merely not as good as it could be) is still a Bug; say so in the body.

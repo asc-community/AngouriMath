@@ -2,7 +2,6 @@
 name: State a goal
 about: Say what you want to be true — an answer the library should give, a class of problems it should handle, a thing it should be able to do. Bugs and features are welcome here too; the triage sorts them.
 title: ''
-type: Goal
 assignees: ''
 
 ---
