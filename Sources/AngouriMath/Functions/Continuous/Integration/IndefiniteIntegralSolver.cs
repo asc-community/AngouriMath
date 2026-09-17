@@ -699,7 +699,15 @@ namespace AngouriMath.Functions.Algebra
             // checked, and each piece is a shape the rules here read.
             if (Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, denominator, x, out var overWrittenFactors)
                 && IntegratedTermByTerm(overWrittenFactors, x, integrateByParts) is { } termByTerm)
-                return termByTerm;
+            {
+                // Checked: the decomposition's terms integrate through the rules below and,
+                // with coefficients that are pages of symbols, one such sum came back wrong
+                // with every term right on its own.
+                // https://github.com/asc-community/AngouriMath/issues/1369
+                if (!overWrittenFactors.Vars.Any(symbol => symbol != x)
+                    || Functions.PartialFractions.DerivativeHoldsAtSampledPoints(termByTerm, overWrittenFactors, x))
+                    return termByTerm;
+            }
 
             // Last, because everything above answers in exact arithmetic where it can: a
             // binomial denominator the splits above could not take apart -- `x^3 + 2`, `x^5 + 1`,
@@ -1235,6 +1243,98 @@ namespace AngouriMath.Functions.Algebra
                 if (Integration.ComputeIndefiniteIntegral(expanded / rest, x, integrateByParts) is not { } integrated)
                     return null;
                 total += integrated;
+            }
+            return total;
+        }
+
+        /// <summary>
+        /// A polynomial in <c>x^2</c> over <c>a + b x^2 + c x^4</c> with a symbol in it, by the
+        /// two roots in <c>x^2</c>: with <c>q = sqrt(b^2 - 4 a c)</c> and
+        /// <c>r = (-b ± q)/(2c)</c>, <c>(d + e x^2)/(a + b x^2 + c x^4)</c> is
+        /// <c>(d + e r_1)/(q (x^2 - r_1)) - (d + e r_2)/(q (x^2 - r_2))</c>, and
+        /// <c>1/(x^2 - r)</c> is <c>atan(x/sqrt(-r))/sqrt(-r)</c> for any complex <c>r</c>. A
+        /// higher even degree is divided down first, and an odd numerator is left to the
+        /// substitution <c>u = x^2</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The partial fractions read written factors, and <c>a + b x^2 + c x^4</c> is written
+        /// as one; over the rationals it is factored, over symbols it was declined, and Rubi's
+        /// quartic files -- <c>(d x)^m (a + b x^2 + c x^4)^p</c> and the next four -- lost the
+        /// even numerators to it: <c>x^2/(a + b x^2 + c x^4)</c>, <c>(d + e x^2)/(...)</c>.
+        /// </para>
+        /// <para>
+        /// Exact wherever the two roots differ, which is the generic case; a discriminant
+        /// that is zero as written declines, the square of a quadratic being another shape.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAnEvenPolynomialOverASymbolicBiquadratic(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(denominator, x, out var below) || below.Count == 0
+                || !below.ContainsKey(EInteger.FromInt32(4)) || below.Keys.Any(power => !(power.IsZero || power.Equals(EInteger.FromInt32(2)) || power.Equals(EInteger.FromInt32(4))))
+                || below.Values.Any(coefficient => coefficient.ContainsNode(x))
+                || !denominator.Vars.Any(v => v != x))
+                return null;
+            var a = below.TryGetValue(EInteger.Zero, out var a0) ? a0 : Number.Integer.Zero;
+            var b = below.TryGetValue(EInteger.FromInt32(2), out var b0) ? b0 : Number.Integer.Zero;
+            var c = below[EInteger.FromInt32(4)];
+            if (a == Number.Integer.Zero || a.Evaled is Number.Complex { IsZero: true })
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(numerator, x, out var above) || above.Count == 0
+                || above.Keys.Any(power => power.Sign < 0 || !power.IsEven) || above.Values.Any(coefficient => coefficient.ContainsNode(x)))
+                return null;
+
+            var discriminant = Functions.PartialFractions.Bare((b * b - 4 * a * c).Simplify());
+            if (discriminant == Number.Integer.Zero || discriminant.Evaled is Number.Complex { IsZero: true })
+                return null;
+
+            // The numerator in w = x^2, divided down by c w^2 + b w + a to a remainder d + e w.
+            var degree = above.Keys.Max()!.ToInt32Checked() / 2;
+            var inW = new Entity[degree + 1];
+            for (var k = 0; k <= degree; k++)
+                inW[k] = above.TryGetValue(EInteger.FromInt32(2 * k), out var at) ? at : Number.Integer.Zero;
+            Entity polynomialPart = Number.Integer.Zero;
+            for (var k = degree; k >= 2; k--)
+            {
+                var lead = Functions.PartialFractions.InLowestTermsOverTheSymbols(inW[k] / c);
+                if (lead == Number.Integer.Zero)
+                    continue;
+                polynomialPart += lead * MathS.Pow(x, 2 * (k - 2));
+                inW[k - 1] = Functions.PartialFractions.InLowestTermsOverTheSymbols(inW[k - 1] - lead * b);
+                inW[k - 2] = Functions.PartialFractions.InLowestTermsOverTheSymbols(inW[k - 2] - lead * a);
+            }
+            var d = inW[0];
+            var e = degree >= 1 ? inW[1] : Number.Integer.Zero;
+
+            var q = MathS.Sqrt(discriminant);
+            var firstRoot = (-b + q) / (2 * c);
+            var secondRoot = (-b - q) / (2 * c);
+            Entity total = Number.Integer.Zero;
+            if (polynomialPart != Number.Integer.Zero)
+            {
+                if (Integration.ComputeIndefiniteIntegral(polynomialPart, x, integrateByParts) is not { } whole)
+                    return null;
+                total += whole;
+            }
+            // `1/(x^2 - r)` is `atan(x/s)/s` with `s = sqrt(-r)` for every complex `r` but zero:
+            // `d/dx atan(x/s)/s` is `1/(s^2 + x^2)` whatever `s` is, and for a positive `r` the
+            // arctangent of an imaginary argument is the hyperbolic one, `-atanh(x/sqrt(r))/sqrt(r)`,
+            // with a constant imaginary part on each side of the poles that a derivative does not
+            // see. The roots are conjugate where the discriminant is negative -- the ordinary
+            // case with real coefficients -- and the two terms then sum to a real function; a
+            // piecewise on the sign of a root, as the quadratic rule would write, has no
+            // value there at all.
+            foreach (var (root, sign) in new[] { (firstRoot, 1), (secondRoot, -1) })
+            {
+                var coefficient = ((d + e * root) / q).InnerSimplified;
+                if (coefficient == Number.Integer.Zero)
+                    continue;
+                var s = MathS.Sqrt(-root);
+                var part = MathS.Arctan(x / s) / s;
+                total += sign == 1 ? coefficient * part : -coefficient * part;
             }
             return total;
         }
@@ -7418,9 +7518,15 @@ namespace AngouriMath.Functions.Algebra
             // and the splits are what answer that; handing it to the whole integrator instead
             // sent one of them through every substitution and by-parts attempt there is, thirty
             // seconds to decline what the splits decline in a few milliseconds.
-            return SolveByPartialFractions(logarithmicPart.InnerSimplified, x, integrateByParts: false) is { } rest
-                ? (rationalPart + rest).InnerSimplified
-                : null;
+            // The rest is checked as the ansatz was: a logarithmic part whose coefficients
+            // came out of the elimination as quotients of forty-fifth-degree polynomials in
+            // the symbols was integrated wrongly further down, and the sum was a wrong answer
+            // that every part of the way had passed.
+            // https://github.com/asc-community/AngouriMath/issues/1369
+            if (SolveByPartialFractions(logarithmicPart.InnerSimplified, x, integrateByParts: false) is not { } rest
+                || !Functions.PartialFractions.DerivativeHoldsAtSampledPoints(rest, logarithmicPart, x))
+                return null;
+            return (rationalPart + rest).InnerSimplified;
         }
 
         /// <summary>
@@ -7436,7 +7542,12 @@ namespace AngouriMath.Functions.Algebra
         /// A power of x times a whole power of its logarithm, <c>x^p ln(x)^n</c>, by the
         /// closed reduction
         /// <c>x^(p + 1) sum_(k = 0..n) (-1)^k n!/(n - k)! ln(x)^(n - k)/(p + 1)^(k + 1)</c>, for
-        /// any <c>p</c> but <c>-1</c>, where it is <c>ln(x)^(n + 1)/(n + 1)</c>.
+        /// any <c>p</c> but <c>-1</c>, where it is <c>ln(x)^(n + 1)/(n + 1)</c>. And the same
+        /// for <c>F = A + B ln(c x^r)</c> in the logarithm's place, whose derivative is
+        /// <c>s/x</c> for <c>s = B r</c>: each step of parts brings a factor <c>s</c>, so the
+        /// sum is over <c>(-s)^k n!/(n - k)! F^(n - k)/(p + 1)^(k + 1)</c>, and at <c>p = -1</c>
+        /// it is <c>F^(n + 1)/((n + 1) s)</c>. Rubi's <c>(e x)^q (a + b ln(c x^n))^3</c>, and
+        /// <c>t^(-2 - m) (A + B ln(e t^n))^2</c> in the variable of the quotient substitution.
         /// </summary>
         /// <remarks>
         /// By parts <c>n</c> times, written out: each step takes one from the power of the
@@ -7453,6 +7564,7 @@ namespace AngouriMath.Functions.Algebra
             var n = 0;
             Entity constant = Number.Integer.One;
             var logarithm = MathS.Ln(x);
+            Entity? affine = null;   // F, where the factor is a power of A + B ln(c x^r) and not of ln x
             foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
             {
                 if (!factor.ContainsNode(x))
@@ -7464,20 +7576,41 @@ namespace AngouriMath.Functions.Algebra
                     p = underneath ? Number.Integer.MinusOne : Number.Integer.One;
                 else if (factor is Powf(var @base, var exponent) && @base == x && !exponent.ContainsNode(x) && p is null)
                     p = underneath ? -exponent : exponent;
+                else if (factor is Powf(Mulf(var scale, var scaled), var scaledExponent) && scaled == x && !scale.ContainsNode(x) && !scaledExponent.ContainsNode(x) && p is null)
+                {
+                    // `(d x)^m` as `d^m x^m`, the generic case, as the table's power rule takes it.
+                    p = underneath ? -scaledExponent : scaledExponent;
+                    var scalePower = MathS.Pow(scale, scaledExponent);
+                    constant = underneath ? constant / scalePower : constant * scalePower;
+                }
                 else if (factor == logarithm && n == 0 && !underneath)
                     n = 1;
                 else if (factor is Powf(var l, Number.Integer whole) && l == logarithm && whole.EInteger.Sign > 0 && whole.EInteger.CanFitInInt32() && n == 0 && !underneath)
                     n = whole.EInteger.ToInt32Unchecked();
+                else if (n == 0 && !underneath && factor is not Powf && IsAffineInALogarithmOfAPowerOfX(factor, x))
+                    (affine, n) = (factor, 1);
+                else if (n == 0 && !underneath && factor is Powf(var f, Number.Integer wholeOfF) && wholeOfF.EInteger.Sign > 0 && wholeOfF.EInteger.CanFitInInt32() && IsAffineInALogarithmOfAPowerOfX(f, x))
+                    (affine, n) = (f, wholeOfF.EInteger.ToInt32Unchecked());
                 else
                     return null;
             }
-            if (n == 0 || n > 12 || p is null)
+            if (n == 0 || n > 12 || p is null && affine is null)
                 return null;
-            p = p.InnerSimplified;
+            // A power of F alone is the case p = 0.
+            p = (p ?? Number.Integer.Zero).InnerSimplified;
             if (p.Evaled is Number.Complex and not Number.Real)
                 return null;
+            // The factor F and s with F' = s/x: ln x itself, or A + B ln(c x^r) with s = B r.
+            Entity slopeOfF = Number.Integer.One;
+            if (affine is { })
+            {
+                logarithm = affine;
+                slopeOfF = Functions.PartialFractions.Bare((affine.Differentiate(x) * x).Simplify());
+                if (slopeOfF.ContainsNode(x) || slopeOfF.Evaled is Number.Complex { IsZero: true })
+                    return null;
+            }
             if ((p + 1).InnerSimplified.Evaled is Number.Complex { IsZero: true })
-                return (constant * MathS.Pow(logarithm, n + 1) / (n + 1)).InnerSimplified;
+                return (constant * MathS.Pow(logarithm, n + 1) / ((n + 1) * slopeOfF)).InnerSimplified;
             // Written out term by term, each with its coefficient folded: the derivative of
             // `x^3 ln(x)/3 - x^3/9` cancels symbolically against `x^2 ln(x)`, where a nested
             // `x^3 (ln(x)/3 - 1/9)` left a residual the simplifier did not close.
@@ -7490,11 +7623,41 @@ namespace AngouriMath.Functions.Algebra
                 if (k > 0)
                     fallingFactorial = fallingFactorial.Multiply(EInteger.FromInt32(n - k + 1));
                 var sign = k % 2 == 0 ? Number.Integer.One : Number.Integer.MinusOne;
-                var coefficient = (constant * sign * Number.Integer.Create(fallingFactorial) / MathS.Pow(pPlusOne, k + 1)).InnerSimplified;
+                var slopePower = k == 0 || slopeOfF == Number.Integer.One ? Number.Integer.One : MathS.Pow(slopeOfF, k);
+                var coefficient = (constant * sign * Number.Integer.Create(fallingFactorial) * slopePower / MathS.Pow(pPlusOne, k + 1)).InnerSimplified;
                 Entity term = n - k == 0 ? coefficient * powerOfX : coefficient * powerOfX * (n - k == 1 ? logarithm : MathS.Pow(logarithm, n - k));
                 sum = sum == Number.Integer.Zero ? term : sum + term;
             }
             return sum.InnerSimplified;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> is <c>A + B ln(c x^r)</c> with <c>A</c>, <c>B</c>,
+        /// <c>c</c> and <c>r</c> free of <paramref name="x"/> and the logarithm present: one
+        /// logarithm of <paramref name="x"/> in it, the expression linear in that logarithm,
+        /// and the logarithm's argument a constant times a power of <paramref name="x"/>.
+        /// </summary>
+        private static bool IsAffineInALogarithmOfAPowerOfX(Entity expr, Entity.Variable x)
+        {
+            Entity? logarithm = null;
+            foreach (var node in expr.Nodes)
+                if (node is Logf(var @base, var argument) && @base == MathS.e && argument.ContainsNode(x))
+                {
+                    if (logarithm is not null && logarithm != node)
+                        return false;
+                    logarithm = node;
+                }
+            if (logarithm is not Logf(_, var antilogarithm))
+                return false;
+            // The argument c x^r: its logarithmic derivative is r/x.
+            var rate = Functions.PartialFractions.Bare((antilogarithm.Differentiate(x) * x / antilogarithm).Simplify());
+            if (rate.ContainsNode(x) || rate.Nodes.Any(node => node == MathS.NaN))
+                return false;
+            var placeholder = Variable.CreateUnique(expr, "u_log");
+            var inThePlaceholder = expr.Replace(node => node == logarithm ? placeholder : node);
+            if (inThePlaceholder.ContainsNode(x))
+                return false;
+            return TreeAnalyzer.TryGetPolyLinear(inThePlaceholder, placeholder, out var slope, out _) && slope is { } && !TreeAnalyzer.IsZero(slope);
         }
 
         /// <summary>
@@ -9046,6 +9209,16 @@ namespace AngouriMath.Functions.Algebra
             var underARadical = new HashSet<Entity>();
             Entity? commonBase = null;
             Entity? slopeUnit = null;
+            // The first exponential's slope and offset, and whether every other's offset is
+            // in the same ratio to its slope: then every exponent is a multiple of one
+            // `x + shift`, and u is a power of the base at that rather than at x. Rubi's
+            // `csch(29/10 + 13/10 x)^3 (17/10 + 23/10 sech(29/10 + 13/10 x)^2)^3` is a
+            // rational function of `u = e^(13/10 x + 29/10)` with numbers for its
+            // coefficients, where `u = e^(13/10 x)` left `e^(29/10)` in every one of them,
+            // a quadratic the rational rules do not factor over, and each term seconds.
+            // Compared cross-multiplied, so that a symbolic slope is never divided by.
+            (ERational Slope, Entity Offset)? first = null;
+            var oneShift = true;
             foreach (var node in expr.Nodes)
             {
                 if (node is Powf(_, Number.Rational fractional) && fractional is not Number.Integer)
@@ -9079,6 +9252,10 @@ namespace AngouriMath.Functions.Algebra
                 }
                 slopes.Add(multiple);
                 offsets[node] = (multiple, offset);
+                if (first is null)
+                    first = (multiple, offset);
+                else if (oneShift && !IsTheZeroPolynomial(offset * Number.Rational.Create(first.Value.Slope) - first.Value.Offset * Number.Rational.Create(multiple)))
+                    oneShift = false;
             }
             if (slopes.Count == 0 || commonBase is null)
                 return null;
@@ -9112,9 +9289,13 @@ namespace AngouriMath.Functions.Algebra
             // construction. Built directly rather than by substituting x and simplifying, for the
             // same reason as the radical substitutions: (u^(1/k))^(k_i) is not something the
             // simplifier will reduce, and is right not to.
+            // With one shift, e^(k_i x + m_i) is u^(k_i/k) exactly for
+            // u = e^(k x + k m_1/k_1), and no e^(m_i) is left in the coefficients.
+            var shifted = oneShift && first is { } firstOne && !TreeAnalyzer.IsZero(firstOne.Offset) && !firstOne.Offset.ContainsNode(x);
+            var shiftOfU = shifted ? (Number.Rational.Create(k.Divide(first!.Value.Slope)) * first.Value.Offset).InnerSimplified : Number.Integer.Zero;
             var rewritten = expr.Replace(node =>
                 offsets.TryGetValue(node, out var found)
-                    ? MathS.Pow(commonBase, found.Offset)
+                    ? (shifted ? Number.Integer.One : MathS.Pow(commonBase, found.Offset))
                       * MathS.Pow(u, Number.Integer.Create(found.Slope.Divide(k).ToLowestTerms().Numerator))
                     : node);
 
@@ -9178,7 +9359,7 @@ namespace AngouriMath.Functions.Algebra
             {
                 var rate = slopeUnit is null ? Number.Rational.Create(k)
                     : Functions.PartialFractions.Bare((Number.Rational.Create(k) * slopeUnit).Simplify());
-                var answer = result.Substitute(u, MathS.Pow(commonBase, (rate * x).InnerSimplified));
+                var answer = result.Substitute(u, MathS.Pow(commonBase, (shifted ? rate * x + shiftOfU : rate * x).InnerSimplified));
                 if (logarithmOfTheBase != Number.Integer.One)
                     answer /= logarithmOfTheBase;
                 return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
@@ -9208,6 +9389,229 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             var rewritten = WithPolynomialPowersBelowTheBar(expr, x);
             return rewritten == expr ? null : Integration.ComputeAsAQuestionOfItsOwn(rewritten, x, integrateByParts);
+        }
+
+        /// <summary>
+        /// Powers of two linears beside a power of <c>A + B ln(K (L1/L2)^n)</c> in the same
+        /// two linears, by the substitution <c>t = L1/L2</c>: with <c>L1 = a + b x</c> and
+        /// <c>L2 = c + d x</c>, <c>L1 = D t/(b - d t)</c>, <c>L2 = D/(b - d t)</c> and
+        /// <c>dx = D dt/(b - d t)^2</c> for <c>D = b c - a d</c>, so the integrand is a power
+        /// of <c>t</c> times a power of <c>b - d t</c> times a power of <c>A + B ln(K t^n)</c>,
+        /// which the rule above answers as a rational function beside a logarithm of
+        /// <c>t</c>. Rubi's <c>(f + g x)^m (h + i x)^q (A + B ln(e ((a + b x)/(c + d x))^n))^p</c>
+        /// with <c>f + g x</c> and <c>h + i x</c> proportional to the log's linears, which
+        /// the rule above takes step by step and the substitution search spent its budget on:
+        /// <c>(A + B ln(e (a + b x)/(c + d x)))/((a g + b g x)^2 (c j + d j x)^2)</c> is
+        /// <c>(A + B ln(e t))(b - d t)^2/(g^2 j^2 D^3 t^2)</c>, which answers at once. The
+        /// exponents may be symbols; <c>(g L1)^m</c> is taken as <c>g^m L1^m</c> and
+        /// <c>K L1^n/L2^n</c> as <c>K t^n</c>, the generic case, and the answer is checked
+        /// against the integrand at sampled points before it is given.
+        /// </summary>
+        internal static Entity? SolveByTheQuotientOfTheLogarithmsLinears(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            expr = WithNegativePowersOfProductsApart(expr);
+            // The logarithm's argument: a product of constants and powers of two linears with
+            // opposite exponents.
+            Entity? logarithm = null;
+            foreach (var node in expr.Nodes)
+                if (node is Logf(var @base, var antilogarithm) && @base == MathS.e && antilogarithm.ContainsNode(x))
+                {
+                    if (logarithm is not null && logarithm != antilogarithm)
+                        return null;
+                    logarithm = antilogarithm;
+                }
+            if (logarithm is null)
+                return null;
+            var leaves = new List<(Entity Base, Entity Power)>();
+            GatherPowers(logarithm, Number.Integer.One);
+            Entity constant = Number.Integer.One;
+            (Entity Slope, Entity Offset, Entity Linear)? first = null, second = null;
+            Entity firstPower = Number.Integer.Zero, secondPower = Number.Integer.Zero;
+            foreach (var (leaf, power) in leaves)
+            {
+                if (!leaf.ContainsNode(x))
+                {
+                    constant *= MathS.Pow(leaf, power);
+                    continue;
+                }
+                if (!TryReadLinear(leaf, out var slope, out var offset))
+                    return null;
+                if (first is null)
+                {
+                    first = (slope, offset, leaf);
+                    firstPower = power;
+                }
+                else if (ProportionalTo(slope, offset, first.Value) is { } ratio)
+                {
+                    constant *= MathS.Pow(ratio, power);
+                    firstPower += power;
+                }
+                else if (second is null)
+                {
+                    second = (slope, offset, leaf);
+                    secondPower = power;
+                }
+                else if (ProportionalTo(slope, offset, second.Value) is { } secondRatio)
+                {
+                    constant *= MathS.Pow(secondRatio, power);
+                    secondPower += power;
+                }
+                else
+                    return null;
+            }
+            if (first is not { } l1 || second is not { } l2)
+                return null;
+            var exponent = firstPower.InnerSimplified;
+            if (exponent.Evaled is Number.Complex { IsZero: true } || !AreEqualAsPolynomials(exponent, (-secondPower).InnerSimplified))
+                return null;
+            var (a, b, c, d) = (l1.Offset, l1.Slope, l2.Offset, l2.Slope);
+            var determinant = (b * c - a * d).InnerSimplified;
+            if (determinant.Evaled is Number.Complex { IsZero: true } || AreProportionalAtSampledPoints(l1.Linear, l2.Linear, x))
+                return null;
+
+            // Every other factor holding x is a power of a linear proportional to one of the
+            // two, or the logarithm's own factor. The powers of t and of b - d t are summed,
+            // so that the integrand in t is one power of each over or under the bar: with
+            // `(b - d t)^2` above and `(b - d t)^(-4)` below as they came, the rule for the
+            // logarithm expanded its rational part to a page.
+            var t = Variable.CreateUnique(expr, "u_quot");
+            var denominatorInT = (b - d * t).InnerSimplified;
+            Entity constantInFront = determinant;
+            Entity powerOfT = Number.Integer.Zero;
+            Entity powerOfDenominator = Number.Integer.Create(-2);   // dx = D dt/(b - d t)^2
+            Entity? logarithmsFactor = null;
+            // A polynomial beside the logarithm is by parts in x as it stands, one closed
+            // step; in t it is a power of b - d t below the bar, which is the slower way.
+            var aPolynomialBesideTheLogarithm = true;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constantInFront = underneath ? constantInFront / factor : constantInFront * factor;
+                    continue;
+                }
+                var (@base, power) = factor is Powf(var pb, var pp) && !pp.ContainsNode(x) ? (pb, pp) : (factor, (Entity)Number.Integer.One);
+                if (underneath)
+                    power = (-power).InnerSimplified;
+                if (!@base.ContainsNode(logarithm) && power.Evaled is not Number.Integer { EInteger.Sign: >= 0 })
+                    aPolynomialBesideTheLogarithm = false;
+                if (@base.ContainsNode(logarithm))
+                {
+                    if (logarithmsFactor is not null)
+                        return null;
+                    var inT = @base.Replace(node => node == logarithm ? constant * MathS.Pow(t, exponent) : node);
+                    if (inT.ContainsNode(x))
+                        return null;
+                    logarithmsFactor = MathS.Pow(inT, power);
+                    continue;
+                }
+                if (!TryReadLinear(@base, out var slope, out var offset))
+                    return null;
+                if (ProportionalTo(slope, offset, l1) is { } ratio1)
+                {
+                    constantInFront *= MathS.Pow(ratio1 * determinant, power);
+                    powerOfT += power;
+                    powerOfDenominator -= power;
+                }
+                else if (ProportionalTo(slope, offset, l2) is { } ratio2)
+                {
+                    constantInFront *= MathS.Pow(ratio2 * determinant, power);
+                    powerOfDenominator -= power;
+                }
+                else
+                    return null;
+            }
+            if (logarithmsFactor is null || aPolynomialBesideTheLogarithm)
+                return null;
+            Entity above = constantInFront * logarithmsFactor, below = Number.Integer.One;
+            foreach (var (@base, power) in new[] { (t, Functions.PartialFractions.Bare(powerOfT.Simplify())), (denominatorInT, Functions.PartialFractions.Bare(powerOfDenominator.Simplify())) })
+            {
+                if (power.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                if (power.Evaled is Number.Real { IsNegative: true })
+                    below *= MathS.Pow(@base, (-power).InnerSimplified);
+                else
+                    above *= MathS.Pow(@base, power);
+            }
+            var rewritten = (below == Number.Integer.One ? above : above / below).InnerSimplified;
+            if (rewritten.ContainsNode(x))
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(rewritten, t, integrateByParts) is not { } integrated)
+                return null;
+            var answer = integrated.Substitute(t, l1.Linear / l2.Linear);
+            if (answer.Nodes.Any(node => node == MathS.NaN) || !Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
+                return null;
+            return answer;
+
+            void GatherPowers(Entity node, Entity power)
+            {
+                switch (node)
+                {
+                    case Mulf(var left, var right):
+                        GatherPowers(left, power);
+                        GatherPowers(right, power);
+                        break;
+                    case Divf(var numerator, var denominator):
+                        GatherPowers(numerator, power);
+                        GatherPowers(denominator, (-power).InnerSimplified);
+                        break;
+                    case Powf(var @base, var exponentOfPower) when !exponentOfPower.ContainsNode(x):
+                        GatherPowers(@base, (power * exponentOfPower).InnerSimplified);
+                        break;
+                    default:
+                        leaves.Add((node, power));
+                        break;
+                }
+            }
+
+            // Linear in x in whatever spelling the chain gave it: `a g^0 b^(-1) + x`, for
+            // `(a g + b g x)` made monic, is not read as a polynomial, and is read by its
+            // derivative.
+            bool TryReadLinear(Entity linear, out Entity slope, out Entity offset)
+            {
+                if (TreeAnalyzer.TryGetPolyLinear(linear, x, out var readSlope, out var readOffset) && readSlope is { } && readOffset is { })
+                {
+                    (slope, offset) = (readSlope, readOffset);
+                    return !TreeAnalyzer.IsZero(slope);
+                }
+                slope = Functions.PartialFractions.Bare(linear.Differentiate(x).Simplify());
+                offset = Functions.PartialFractions.Bare((linear - slope * x).Simplify());
+                return !slope.ContainsNode(x) && !offset.ContainsNode(x) && !TreeAnalyzer.IsZero(slope)
+                    && slope.Evaled is not Number.Complex { IsZero: true };
+            }
+
+            // The constant `slope/other.Slope` where the linear is that multiple of the
+            // other, else null: cross-multiplied, so that no symbol is divided by.
+            Entity? ProportionalTo(Entity slope, Entity offset, (Entity Slope, Entity Offset, Entity Linear) other)
+            {
+                // Decided at sampled points, since the linear arrives in whatever spelling the
+                // chain gave it -- `a g^0 b^(-1) + x` for `(a g + b g x)` made monic -- and
+                // then the ratio read exactly.
+                if (!AreEqualAsPolynomials((offset * other.Slope).InnerSimplified, (other.Offset * slope).InnerSimplified)
+                    && !AreProportionalAtSampledPoints(slope * x + offset, other.Linear, x))
+                    return null;
+                var ratio = Functions.PartialFractions.Bare((slope / other.Slope).Simplify());
+                return ratio.Nodes.Any(node => node == MathS.NaN) || ratio.ContainsNode(x) ? null : ratio;
+            }
+
+            // Equal as polynomials in their symbols, exactly.
+            static bool AreEqualAsPolynomials(Entity left, Entity right)
+            {
+                if (left == right)
+                    return true;
+                var difference = Functions.PartialFractions.Bare((left - right).Simplify());
+                if (difference.Evaled is Number.Complex { IsZero: true })
+                    return true;
+                var symbols = difference.Vars.ToList();
+                if (symbols.Count == 0)
+                    return false;
+                var indices = new Dictionary<Variable, int>();
+                foreach (var symbol in symbols)
+                    indices[symbol] = indices.Count;
+                return Functions.MultivariatePolynomial.TryParse(difference, indices) is { IsZero: true };
+            }
         }
 
         /// <summary>
@@ -9594,9 +9998,8 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// Whether <paramref name="denominator"/> is written as a product of two or more
-        /// distinct factors in <paramref name="x"/>, at least one of them linear and to a
-        /// whole power, the rest linear or quadratic to the first power, with a symbol in a
-        /// coefficient somewhere.
+        /// distinct factors in <paramref name="x"/>, at least one of them linear, each linear
+        /// or quadratic and to a whole power, with a symbol in a coefficient somewhere.
         /// </summary>
         /// <remarks>
         /// A quadratic beside the linears is allowed since the decomposition takes the linear
@@ -9621,7 +10024,7 @@ namespace AngouriMath.Functions.Algebra
                     return false;
                 if (read.Keys.Max()!.Equals(EInteger.One))
                     linears++;
-                else if (read.Keys.Max()!.Equals(EInteger.FromInt32(2)) && @base == factor)
+                else if (read.Keys.Max()!.Equals(EInteger.FromInt32(2)))
                     quadratics++;
                 else
                     return false;
@@ -9730,6 +10133,453 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Whether <paramref name="exponent"/> is written as an even whole number times
+        /// something, a minus sign in front allowed: <c>2 (c + d x)</c>, <c>-(2 x)</c>.
+        /// </summary>
+        private static bool WrittenWithAnEvenFactor(Entity exponent)
+        {
+            while (exponent is Mulf(Number.Integer { EInteger.IsEven: false } sign, var rest) && sign.EInteger.Abs().Equals(EInteger.One))
+                exponent = rest;
+            return exponent is Mulf(Number.Integer { EInteger.IsEven: true } factor, _) && !factor.EInteger.IsZero;
+        }
+
+        /// <summary>
+        /// Every <c>x</c> of <paramref name="expr"/> in an exponential <c>e^(k y)</c> with
+        /// <c>k</c> a whole number and <c>y</c> one linear form <c>c + d x</c> shared by all of
+        /// them -- <c>coth(c + d x)</c> is written with <c>e^(2c + 2d x)</c> -- and in nothing
+        /// else: each exponential node with its <c>k</c>, the form <c>y</c> scaled so that the
+        /// <c>k</c> are whole and coprime -- or, with <paramref name="unitX"/> and a whole
+        /// number for the slope, <c>y</c> as <c>x</c> itself plus the offset over the slope
+        /// and each <c>k</c> the slope as written -- and <c>dx/dy</c>; <see langword="false"/>
+        /// where the exponentials are of two forms, or an exponent is not linear in <c>x</c>.
+        /// </summary>
+        private static bool TryGatherExponentialsOfOneLinearForm(Entity expr, Entity.Variable x, bool unitX,
+            out Dictionary<Entity, EInteger> exponentials, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? y, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? dxOverDy)
+        {
+            exponentials = new Dictionary<Entity, EInteger>();
+            y = null;
+            dxOverDy = null;
+            var multiples = new List<(Entity Node, Number.Rational Multiple)>();
+            Entity? slopeOfY = null;
+            Entity? offsetOfY = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Powf(var @base, var exponent) || !exponent.ContainsNode(x))
+                    continue;
+                if (@base != MathS.e || !TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slope, out var offset) || TreeAnalyzer.IsZero(slope))
+                    return false;
+                if (slopeOfY is null)
+                {
+                    (slopeOfY, offsetOfY) = (slope, offset);
+                    multiples.Add((node, Number.Integer.One));
+                    continue;
+                }
+                if (multiples.Any(known => known.Node == node))
+                    continue;
+                // The same linear form, to a rational multiple: the slopes' ratio is a number
+                // and the offsets stand in the same ratio.
+                // Bare: `-d/d` simplifies to `-1 provided not d = 0`, and the generic case is
+                // what every neighbouring rule answers.
+                var ratio = (slope / slopeOfY).InnerSimplified;
+                var multiple = ratio.Evaled as Number.Rational ?? Functions.PartialFractions.Bare(ratio.Simplify()).Evaled as Number.Rational;
+                if (multiple is null || multiple.IsZero)
+                    return false;
+                var offsetDifference = (offset - multiple * offsetOfY!).InnerSimplified;
+                if (!TreeAnalyzer.IsZero(offsetDifference) && !IsTheZeroPolynomial(offsetDifference))
+                    return false;
+                multiples.Add((node, multiple));
+            }
+            if (multiples.Count == 0 || slopeOfY is null || offsetOfY is null)
+                return false;
+            // y scaled so that every multiple is a whole number: the least common multiple of
+            // the denominators over the greatest common divisor of the numerators.
+            var denominators = EInteger.One;
+            var numerators = EInteger.Zero;
+            foreach (var (_, multiple) in multiples)
+            {
+                denominators = denominators.Lcm(multiple.ERational.Denominator);
+                numerators = numerators.Gcd(multiple.ERational.Numerator);
+            }
+            var yScaleRational = ERational.Create(numerators, denominators);
+            // With a whole number for the first slope, and asked to, y is x itself (plus the
+            // offset over the slope) and each k the slope as written -- the substitution with
+            // the root wants `coth(x)`, which is `e^(2x)`, as k = 2 and u = tanh(x), where the
+            // scaling by the gcd would make y = 2x, k = 1 and u = tanh(2x), in which coth(x) is
+            // a quotient with the root in it and not `1/u`; the rational route wants the
+            // opposite, y as coarse as it comes, `coth(2x)` as tanh(2x) and not a quartic in
+            // tanh(x). A symbolic slope has no unit to keep, and takes the gcd.
+            if (unitX && slopeOfY.Evaled is Number.Integer wholeSlope && !wholeSlope.EInteger.IsZero
+                && multiples.All(m => m.Multiple.ERational.Multiply(wholeSlope.EInteger).Denominator.Equals(EInteger.One)))
+                yScaleRational = ERational.Create(EInteger.One, wholeSlope.EInteger);
+            var yScale = Number.Rational.Create(yScaleRational);
+            foreach (var (node, multiple) in multiples)
+                exponentials[node] = multiple.ERational.Divide(yScaleRational).ToLowestTerms().Numerator;
+            y = (yScale * (slopeOfY * x + offsetOfY)).InnerSimplified;
+            dxOverDy = TreeAnalyzer.IsZero(offsetOfY) && slopeOfY == Number.Integer.One && yScale == Number.Integer.One
+                ? Number.Integer.One
+                : (1 / (yScale * slopeOfY)).InnerSimplified;
+            return true;
+        }
+
+        // A polynomial with its like terms collected, as a polynomial over every symbol in
+        // it: the synthetic division leaves each coefficient a sum of products that
+        // nothing below reads as one number.
+        private static Entity Collected(Entity polynomial)
+        {
+            var symbols = polynomial.Vars.ToList();
+            if (symbols.Count == 0)
+                return polynomial;
+            var indices = new Dictionary<Variable, int>();
+            foreach (var symbol in symbols)
+                indices[symbol] = indices.Count;
+            if (Functions.MultivariatePolynomial.TryParse(polynomial, indices) is not { } parsed || parsed.IsZero)
+                return polynomial;
+            // The numeric content in front of the primitive part -- `4a + 4b u^2` as
+            // `4 (a + b u^2)` -- which the symbolic partial fractions want out of the way: a
+            // symbolic quadratic to a power with a number in every coefficient made them a
+            // page of `a^48 b^15`.
+            var primitive = parsed.Normalized();
+            var leading = parsed;
+            var primitiveLeading = primitive;
+            for (var variable = 0; variable < symbols.Count; variable++)
+            {
+                leading = leading.LeadingCoefficientIn(variable);
+                primitiveLeading = primitiveLeading.LeadingCoefficientIn(variable);
+            }
+            if (leading.ToEntity(symbols).Evaled is not Number.Rational leadingValue || primitiveLeading.ToEntity(symbols).Evaled is not Number.Rational primitiveValue || primitiveValue.IsZero)
+                return parsed.ToEntity(symbols);
+            var content = leadingValue / primitiveValue;
+            return content == Number.Integer.One ? primitive.ToEntity(symbols) : content * primitive.ToEntity(symbols);
+        }
+        // Zero as a polynomial in its symbols, exactly: a remainder with symbols in it is
+        // a sum of products that the inner simplification does not collect.
+        private static bool IsTheZeroPolynomial(Entity expr)
+        {
+            if (expr == Number.Integer.Zero || expr.Evaled is Number.Complex { IsZero: true })
+                return true;
+            var symbols = expr.Vars.ToList();
+            if (symbols.Count == 0)
+                return false;
+            var indices = new Dictionary<Variable, int>();
+            foreach (var symbol in symbols)
+                indices[symbol] = indices.Count;
+            return Functions.MultivariatePolynomial.TryParse(expr, indices) is { IsZero: true };
+        }
+        /// <summary>
+        /// An integrand that is a rational function of <c>tanh(y)</c> -- of <c>e^(2y)</c>, that
+        /// is, even as a function of <c>v = e^y</c> -- with a symbol among its coefficients,
+        /// integrated by <c>u = tanh(y)</c>: <c>e^(2y)</c> is <c>(1 + u)/(1 - u)</c> exactly and
+        /// <c>dx</c> is <c>du/((1 - u^2) d)</c>, so the integrand is a rational function of
+        /// <c>u</c> with the written factors kept -- <c>a + b coth(y)^2</c> is
+        /// <c>(b + a u^2)/u^2</c> -- and roots of such functions are admitted as they are.
+        /// Failing evenness, the half of <c>y</c>: every <c>e^(k y)</c> is <c>v^(2k)</c> for
+        /// <c>v = e^(y/2)</c>, and the substitution is <c>u = tanh(y/2)</c>, the hyperbolic
+        /// half-angle.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Under <c>u = e^x</c>, Rubi's <c>1/(a + b coth(x)^2)^2</c> is a rational function of the
+        /// palindromic quartic <c>(a + b) u^4 + 2(b - a) u^2 + (a + b)</c> squared, whose roots
+        /// are what the budget went on -- fifty-seven of the four hundred and seventeen in the
+        /// hyperbolic sample were this; here it is <c>u^4/((b + a u^2)^2 (1 - u^2))</c>, which
+        /// the symbolic partial fractions answer. Rubi's route for the hyperbolic tangent,
+        /// cotangent, secant and cosecant families. With rational coefficients the exponential
+        /// substitution's quartics are factored over the rationals and answered, and are left
+        /// to it. Before the substitution search, which with a symbolic slope spends the whole
+        /// budget on <c>u = c + d x</c> and never returns here.
+        /// </para>
+        /// <para>
+        /// <b>How the written factors survive.</b> Each maximal rational function of <c>v</c>
+        /// among the factors, powers and radicands -- and not the whole quotient -- is read as
+        /// <c>v^m R(s)</c> with <c>s = v^2</c> and <c>m</c> either 0 or 1, which every rational
+        /// function even or odd in <c>v</c> is, and homogenised on its own: <c>P(s)/Q(s)</c> as
+        /// the polynomials <c>sum p_i (1 + u)^i (1 - u)^(d - i)</c> over the same for <c>Q</c>,
+        /// with the powers of <c>1 - u</c> and <c>1 + u</c> both share divided out; the
+        /// conjugate that <see cref="SolveByHyperbolicTangentSubstitution"/> clears its root
+        /// with squares every degree, and left this integrand a quotient of degree sixteen
+        /// whose common factor only a gcd over the symbols would find. The stray <c>v</c>'s
+        /// cancel in an even integrand -- <c>sech(x)^4</c> is <c>(2v/(s + 1))^4</c> -- and one
+        /// left over at the top is an odd integrand, which the half of <c>y</c> takes.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveARationalFunctionOfTheHyperbolicTangent(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // An integrand that is a function of e^(2x) -- even as a function of v = e^x, node
+            // by node -- is written in u with no root of 1 - u^2 to clear and nothing squared
+            // by a conjugate: e^(2x) is (1 + u)/(1 - u) exactly, and `dx` is `du/(1 - u^2)`.
+            // Each maximal rational function of v among the factors, powers and radicands --
+            // `a + b coth(x)^2`, and not the whole quotient -- is read as v^m R(s) with s = v^2
+            // and m either 0 or 1, which every rational function even or odd in v is, and
+            // homogenised on its own: P(s)/Q(s) as the polynomials sum p_i (1 + u)^i (1 - u)^(d - i)
+            // over the same for Q, with the powers of 1 - u and 1 + u that both share divided
+            // out, so that `coth(x)` comes out as `1/u` and `a + b coth(x)^2` as
+            // `(b + a u^2)/u^2`, and the written powers and products stand as they were. The
+            // stray v's cancel in an even integrand -- `sech(x)^4` is `(2v/(s + 1))^4` -- and
+            // one left over at the top is an odd integrand, not this route's. The rational
+            // integrator then sees `u^4/((b + a u^2)^2 (1 - u^2))` and not the quotient of
+            // degree sixteen the conjugates made of it.
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow || !expr.Vars.Any(symbol => symbol != x))
+                return null;
+            if (!TryGatherExponentialsOfOneLinearForm(expr, x, unitX: false, out var exponentials, out var y, out var dxOverDy))
+                return null;
+            {
+                var t = Variable.CreateUnique(expr, "u_tanh");
+                var vt = Variable.CreateUnique(expr, "v_tanh");
+                var square = Variable.CreateUnique(expr, "s_tanh");
+                // With v = e^y first, u = tanh(y), which asks the integrand to be even in v --
+                // `coth(2y)` is `(v^2 + 1)/(v^2 - 1)`; failing that with v = e^(y/2) and
+                // u = tanh(y/2), which asks nothing, since every e^(k y) is then v^(2k): the
+                // half-angle, `sinh(y)` as `2u/(1 - u^2)`. The finer y where the coarser answers,
+                // for the lower degrees and the answer in the argument as written. The half only
+                // where every exponent is written with an even factor in front -- `coth(c + d x)`
+                // is written with `e^(2 (c + d x))`, and `tanh(c + d x)` is its argument's
+                // tangent, not the half-angle of `2(c + d x)` -- and not with a root in the
+                // integrand, which the half turns into a root of a quotient: `sinh(x)` writes
+                // `e^x`, and its `u = tanh(x/2)` answers were what `u = e^x` answered in less,
+                // Timofeev's `e^x/sqrt(e^(2x) + a^2)` among them, a root of a polynomial there.
+                var halfIsTheArgument = !HasARadicalOf(expr, x) && exponentials.Keys.All(node => node is Powf(_, var exponent) && WrittenWithAnEvenFactor(exponent));
+                foreach (var halved in new[] { false, true })
+                {
+                    if (halved && !halfIsTheArgument)
+                        break;
+                    var inV = expr.Replace(node =>
+                        exponentials.TryGetValue(node, out var k)
+                            ? MathS.Pow(vt, Number.Integer.Create(halved ? k.Multiply(2) : k))
+                            : node);
+                    if (inV.ContainsNode(x))
+                        return null;
+                    if (InTanh(inV) is not var (inT, parity) || parity != 0)
+                        continue;
+                    var rationalInT = WithThePowersOfOnePlusMinusTCollected(inT / (1 - MathS.Sqr(t)));
+                    if (rationalInT.ContainsNode(square) || rationalInT.ContainsNode(vt) || rationalInT.Nodes.Any(node => node == MathS.NaN)
+                        || Integration.ComputeAsAQuestionOfItsOwn(rationalInT, t, integrateByParts) is not { } evenResult)
+                        return null;
+                    var evenAnswer = evenResult.Substitute(t, MathS.Hyperbolic.Tanh(halved ? (y / 2).InnerSimplified : y));
+                    if (evenAnswer.Nodes.Any(node => node == MathS.NaN))
+                        return null;
+                    // dx is dy/d, and twice that in the half of y.
+                    var scale = halved ? (2 * dxOverDy).InnerSimplified : dxOverDy;
+                    var scaledAnswer = scale == Number.Integer.One ? evenAnswer : evenAnswer * scale;
+                    // Checked, as every answer with symbols in it that is assembled from
+                    // pieces is: a root of a rational function of u goes on to rules that
+                    // have written one through the imaginary unit.
+                    if (!Functions.PartialFractions.DerivativeHoldsAtSampledPoints(scaledAnswer, expr, x))
+                        return null;
+                    return scaledAnswer;
+                }
+                return null;
+
+                // The quotient with every factor that is a multiple of 1 + t or 1 - t, on either
+                // side of the bar and to any whole power, gathered into one power of each: the
+                // powers of s and the homogenisations each bring their own, `sech(x)^4` arrives
+                // as `(1 - t)^4 (1 + t)^2/(1 - t)^2`, and the rational integrator would
+                // otherwise meet them as separate factors that only the gcd cancels.
+                Entity WithThePowersOfOnePlusMinusTCollected(Entity quotient)
+                {
+                    // A whole power of a product as the product of the powers, and of a
+                    // quotient as the quotient of them, so that the factors are read one by one.
+                    for (var round = 0; round < 8; round++)
+                    {
+                        var distributed = quotient.Replace(node => node switch
+                        {
+                            Powf(Mulf(var l, var r), Number.Integer power) => MathS.Pow(l, power) * MathS.Pow(r, power),
+                            Powf(Divf(var l, var r), Number.Integer power) => MathS.Pow(l, power) / MathS.Pow(r, power),
+                            _ => node
+                        });
+                        if (distributed == quotient)
+                            break;
+                        quotient = distributed;
+                    }
+                    var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(quotient));
+                    var plus = 0;
+                    var minus = 0;
+                    Entity constant = Number.Integer.One;
+                    Entity keptAbove = Number.Integer.One;
+                    Entity keptBelow = Number.Integer.One;
+                    foreach (var (side, isBelow) in new[] { (above, false), (below, true) })
+                        foreach (var factor in Mulf.LinearChildren(side))
+                        {
+                            var (factorBase, power) = factor is Powf(var inner, Number.Integer whole) ? (inner, whole.EInteger.ToInt32Checked()) : (factor, 1);
+                            if (AsAMultipleOfOnePlusMinusT(factorBase) is var (scale, ofPlus, ofMinus))
+                            {
+                                var signedPower = isBelow ? -power : power;
+                                plus += ofPlus * signedPower;
+                                minus += ofMinus * signedPower;
+                                constant *= MathS.Pow(scale, Number.Integer.Create(signedPower));
+                            }
+                            else if (isBelow)
+                                keptBelow *= factor;
+                            else
+                                keptAbove *= factor;
+                        }
+                    Entity result = keptAbove / keptBelow * constant;
+                    // What the two share as a power of 1 - t^2, which the rational integrator
+                    // reads as one factor; the rest as the linear ones.
+                    var shared = System.Math.Sign(plus) == System.Math.Sign(minus) ? System.Math.Sign(plus) * System.Math.Min(System.Math.Abs(plus), System.Math.Abs(minus)) : 0;
+                    if (shared != 0)
+                        result *= MathS.Pow(1 - MathS.Sqr(t), Number.Integer.Create(shared));
+                    if (plus - shared != 0)
+                        result *= MathS.Pow(1 + t, Number.Integer.Create(plus - shared));
+                    if (minus - shared != 0)
+                        result *= MathS.Pow(1 - t, Number.Integer.Create(minus - shared));
+                    return Functions.PartialFractions.Bare(result.InnerSimplified);
+                }
+                // c (1 + t) as (c, 1, 0), c (1 - t) as (c, 0, 1) and c (1 - t^2) as (c, 1, 1), for
+                // a number c; null otherwise.
+                (Entity, int, int)? AsAMultipleOfOnePlusMinusT(Entity factor)
+                {
+                    if (!factor.ContainsNode(t) || !TreeAnalyzer.TryGetPolynomial(factor, t, out var monomials) || monomials.Count != 2
+                        || !monomials.TryGetValue(EInteger.Zero, out var c0) || c0.Evaled is not Number.Rational scale || scale.IsZero)
+                        return null;
+                    if (monomials.TryGetValue(EInteger.One, out var c1) && c1.Evaled is Number.Rational slope)
+                        return slope == scale ? (scale, 1, 0) : slope == -scale ? (scale, 0, 1) : null;
+                    if (monomials.TryGetValue(EInteger.FromInt32(2), out var c2) && c2.Evaled is Number.Rational curvature && curvature == -scale)
+                        return (scale, 1, 1);
+                    return null;
+                }
+                // The node as v^m R with R written in t, m being 0 or 1, with each maximal
+                // rational function of v among its factors, powers and radicands read on its
+                // own; null where something is not one, or a sum mixes the two parities.
+                (Entity, int)? InTanh(Entity node)
+                {
+                    if (!node.ContainsNode(vt))
+                        return (node, 0);
+                    switch (node)
+                    {
+                        case Powf(var @base, var exponent) when !exponent.ContainsNode(vt) && exponent != Number.Integer.One:
+                        {
+                            if (InTanh(@base) is not var (baseInT, baseParity))
+                                return null;
+                            if (baseParity == 0)
+                                return (MathS.Pow(baseInT, exponent), 0);
+                            // (v R)^n is v^n R^n: for n whole, s^(n/2) R^n or v s^((n-1)/2) R^n.
+                            if (exponent is not Number.Integer { EInteger: var n })
+                                return null;
+                            var half = n.IsEven ? n.Divide(2) : n.Subtract(1).Divide(2);
+                            return (half.IsZero ? MathS.Pow(baseInT, exponent) : MathS.Pow(baseInT, exponent) * PowerOfS(half), n.IsEven ? 0 : 1);
+                        }
+                        case Mulf(var left, var right):
+                            return InTanh(left) is var (l, lp) && InTanh(right) is var (r, rp) ? WithParity(l * r, lp + rp) : null;
+                        case Divf(var above, var below):
+                            return InTanh(above) is var (a, ap) && InTanh(below) is var (b, bp) ? WithParity(a / b, ap - bp) : null;
+                    }
+                    if (!IsARationalFunction(node, vt))
+                        return null;
+                    var (numerator, denominator) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(node));
+                    if (AsPowerOfVTimesEvenPart(numerator) is not var (aboveInS, aboveParity) || AsPowerOfVTimesEvenPart(denominator) is not var (belowInS, belowParity))
+                        return null;
+                    // v^p P'/(v^q Q'): with p - q = -1, v P'/(s Q').
+                    if (aboveParity - belowParity == -1)
+                        belowInS *= square;
+                    if (DegreeInS(aboveInS) is not { } aboveDegree || DegreeInS(belowInS) is not { } belowDegree)
+                        return null;
+                    var d = System.Math.Max(aboveDegree, belowDegree);
+                    if (Homogenised(aboveInS, d) is not { } top || Homogenised(belowInS, d) is not { } bottom)
+                        return null;
+                    return (InLowestTerms(top, bottom), aboveParity == belowParity ? 0 : 1);
+                }
+                // v^(2k + m) as s^k v^m: a whole power of v folded into the even part.
+                (Entity, int)? WithParity(Entity ofT, int power)
+                {
+                    var m = ((power % 2) + 2) % 2;
+                    var k = (power - m) / 2;
+                    if (k == 0)
+                        return (ofT, m);
+                    return (ofT * PowerOfS(EInteger.FromInt32(k)), m);
+                }
+                // A polynomial in v that is even or odd in v, as (P'(s), m) with P(v) = v^m P'(v^2).
+                (Entity, int)? AsPowerOfVTimesEvenPart(Entity polynomial)
+                {
+                    if (!polynomial.ContainsNode(vt))
+                        return (polynomial, 0);
+                    if (!TreeAnalyzer.TryGetPolynomial(polynomial.Expand().InnerSimplified, vt, out var monomials))
+                        return null;
+                    var odd = monomials.Keys.Any(power => !power.IsEven);
+                    if (odd && monomials.Keys.Any(power => power.IsEven))
+                        return null;
+                    Entity sum = Number.Integer.Zero;
+                    foreach (var pair in monomials)
+                    {
+                        if (pair.Key.Sign < 0)
+                            return null;
+                        var half = (odd ? pair.Key.Subtract(1) : pair.Key).Divide(2);
+                        sum += pair.Value * (half.IsZero ? Number.Integer.One : MathS.Pow(square, Number.Integer.Create(half)));
+                    }
+                    return (sum, odd ? 1 : 0);
+                }
+                // s^k in t: (1 + t)^k over (1 - t)^k, or the other way up for k negative.
+                Entity PowerOfS(EInteger k)
+                {
+                    var whole = Number.Integer.Create(k.Abs());
+                    return k.Sign < 0 ? MathS.Pow(1 - t, whole) / MathS.Pow(1 + t, whole) : MathS.Pow(1 + t, whole) / MathS.Pow(1 - t, whole);
+                }
+                int? DegreeInS(Entity polynomial)
+                {
+                    if (!polynomial.ContainsNode(square))
+                        return 0;
+                    if (!TreeAnalyzer.TryGetPolynomial(polynomial.Expand().InnerSimplified, square, out var monomials) || monomials.Keys.Max() is not { } degree
+                        || !degree.CanFitInInt32() || monomials.Keys.Any(power => power.Sign < 0))
+                        return null;
+                    return degree.ToInt32Unchecked();
+                }
+                // P(s) with s = (1 + t)/(1 - t), times (1 - t)^d for the degree d of the
+                // quotient it stands in: a polynomial in t.
+                Entity? Homogenised(Entity polynomial, int d)
+                {
+                    if (!polynomial.ContainsNode(square))
+                        return d == 0 ? polynomial : polynomial * MathS.Pow(1 - t, d);
+                    if (!TreeAnalyzer.TryGetPolynomial(polynomial.Expand().InnerSimplified, square, out var monomials))
+                        return null;
+                    Entity sum = Number.Integer.Zero;
+                    foreach (var pair in monomials)
+                    {
+                        if (pair.Key.Sign < 0)
+                            return null;
+                        var i = pair.Key.ToInt32Unchecked();
+                        sum += pair.Value * MathS.Pow(1 + t, i) * MathS.Pow(1 - t, d - i);
+                    }
+                    return Functions.PartialFractions.Bare(sum.Expand().InnerSimplified);
+                }
+                // The quotient with the powers of 1 - t and 1 + t both sides share divided out,
+                // synthetically -- a polynomial is divisible by t - r exactly when it vanishes at
+                // r -- and the sides collected as polynomials over every symbol.
+                Entity InLowestTerms(Entity above, Entity below)
+                {
+                    foreach (var root in new[] { Number.Integer.One, Number.Integer.MinusOne })
+                        while (DividedByTMinus(above, root) is { } aboveQuotient && DividedByTMinus(below, root) is { } belowQuotient)
+                            (above, below) = (aboveQuotient, belowQuotient);
+                    var collectedAbove = Collected(above);
+                    var collectedBelow = Collected(below);
+                    return collectedBelow == Number.Integer.One ? collectedAbove : collectedAbove / collectedBelow;
+                }
+                Entity? DividedByTMinus(Entity polynomial, Number.Integer root)
+                {
+                    if (!TreeAnalyzer.TryGetPolynomial(polynomial, t, out var monomials) || monomials.Keys.Max() is not { } degree || degree.Sign <= 0)
+                        return null;
+                    var n = degree.ToInt32Checked();
+                    var quotient = new Entity[n];
+                    Entity carry = Number.Integer.Zero;
+                    for (var k = n; k >= 1; k--)
+                    {
+                        var coefficient = monomials.TryGetValue(EInteger.FromInt32(k), out var c) ? c : Number.Integer.Zero;
+                        carry = (coefficient + root * carry).InnerSimplified;
+                        quotient[k - 1] = carry;
+                    }
+                    var constant = monomials.TryGetValue(EInteger.Zero, out var c0) ? c0 : Number.Integer.Zero;
+                    if (!IsTheZeroPolynomial((constant + root * carry).InnerSimplified))
+                        return null;
+                    Entity sum = Number.Integer.Zero;
+                    for (var k = 0; k < n; k++)
+                        if (!TreeAnalyzer.IsZero(quotient[k]))
+                            sum += quotient[k] * MathS.Pow(t, k);
+                    return Functions.PartialFractions.Bare(sum.Expand().InnerSimplified);
+                }
+            }
+
+        }
+
+        /// <summary>
         /// An integrand that is a function of <c>e^x</c> with a root in it, integrated by the
         /// substitution <c>u = tanh(x)</c>, the hyperbolic counterpart of the tangent's.
         /// </summary>
@@ -9756,12 +10606,20 @@ namespace AngouriMath.Functions.Algebra
         /// <c>(1 - u^2)^(3/8)</c>.
         /// </para>
         /// <para>
-        /// Only with a root in the integrand whose radicand holds exponentials of both signs
+        /// With a root in the integrand whose radicand holds exponentials of both signs
         /// -- as a Laurent polynomial in <c>e^x</c>, a polynomial over a power with a power on
         /// either side of it, or a rational function over anything else -- which is where
         /// <c>u = e^x</c> leaves a root of a quartic or of a quotient; with one sign only,
         /// <c>sqrt(e^x - 1)</c> or <c>sqrt(1 + tanh(x))</c>, the exponential substitution answers
-        /// with a root of a linear, and is left to.
+        /// with a root of a linear, and is left to. And, with a symbol among the coefficients,
+        /// for an integrand that is a rational function of <c>tanh(x)</c> -- one in which
+        /// <c>w</c> cancels out -- with its roots, if any, of rational functions of it too:
+        /// <c>1/(a + b coth(x)^2)^2</c> is <c>u^4/((b + a u^2)^2 (1 - u^2))</c> here, where under
+        /// <c>u = e^x</c> it is a rational function of a symbolic palindromic quartic
+        /// <c>(a + b) u^4 + 2(b - a) u^2 + (a + b)</c> squared, whose roots are what the budget
+        /// went on; Rubi's route for the hyperbolic tangent, cotangent, secant and cosecant
+        /// families. With rational coefficients the exponential substitution's quartics are
+        /// factored over the rationals and answered, and are left to it.
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
@@ -9772,18 +10630,7 @@ namespace AngouriMath.Functions.Algebra
             // hyperbolic integrand on, it was a search at every depth.
             if (!Integration.AnsweringTheQuestionAskedOrOneBelow || !HasARadicalOf(expr, x))
                 return null;
-            // Every x in an exponential e^(k x) with k a whole number, and in nothing else.
-            var exponentials = new Dictionary<Entity, EInteger>();
-            foreach (var node in expr.Nodes)
-            {
-                if (node is not Powf(var @base, var exponent) || !exponent.ContainsNode(x))
-                    continue;
-                if (@base != MathS.e || !TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slope, out var offset)
-                    || !TreeAnalyzer.IsZero(offset) || slope.Evaled is not Number.Integer k || k.EInteger.IsZero)
-                    return null;
-                exponentials[node] = k.EInteger;
-            }
-            if (exponentials.Count == 0)
+            if (!TryGatherExponentialsOfOneLinearForm(expr, x, unitX: true, out var exponentials, out var y, out var dxOverDy))
                 return null;
             // And a radicand that holds exponentials of both signs -- as a Laurent polynomial
             // in v = e^x, a polynomial over a power of v of lower degree -- which is where
@@ -9811,7 +10658,6 @@ namespace AngouriMath.Functions.Algebra
             }
             if (!bothSigns)
                 return null;
-
             var u = Variable.CreateUnique(expr, "u_tanh");
             var w = Variable.CreateUnique(expr, "w_tanh");
             var oneMinusUSquared = 1 - MathS.Sqr(u);
@@ -10033,8 +10879,17 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             if (Integration.ComputeAsAQuestionOfItsOwn(integrand, u, integrateByParts) is not { } result)
                 return null;
-            var answer = result.Substitute(u, MathS.Hyperbolic.Tanh(x));
-            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+            var answer = result.Substitute(u, MathS.Hyperbolic.Tanh(y));
+            if (answer.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            var scaled = dxOverDy == Number.Integer.One ? answer : answer * dxOverDy;
+            // Checked where a symbol is involved: Rubi's `sqrt(a + b sech(x)) tanh(x)^5` came
+            // back with `sqrt(a + i b sqrt(u^2 - 1))` in it, the root of `1 - u^2` written
+            // through the imaginary unit by a rule below, and wrong on the reals.
+            // https://github.com/asc-community/AngouriMath/issues/1370
+            if (expr.Vars.Any(symbol => symbol != x) && !Functions.PartialFractions.DerivativeHoldsAtSampledPoints(scaled, expr, x))
+                return null;
+            return scaled;
         }
 
         /// <summary>

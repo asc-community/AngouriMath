@@ -256,6 +256,27 @@ cent — its measured run-to-run spread on mean time is up to 51.8%. A move of 8
 outside that band by a wide margin and agrees in sign and rough size with the allocation column
 beside it. The small rows from the same run are still not worth reading, and are not quoted.
 
+## The 2077th: the root of a negative real is exactly imaginary, and cheaper for it
+
+A correctness fix ([#1378](https://github.com/asc-community/AngouriMath/issues/1378)) that
+happens to be a large move on `SolveEasy`: a negative real to a
+power that is a whole number of halves went through the polar form -- a hundred-digit
+`Arctan2`, a `cos` and a `sin` of `pi/2`, and a real part of `6e-102` left over -- and is now
+the modulus to that power times a power of `i`: an exact root where the numerator and
+denominator are squares, the decimal square root and a whole power of it otherwise. The
+solve of `x^2 + x + 1` evaluates `sqrt(-3)` four times.
+
+| benchmark | 2075th | 2077th | allocation | time |
+|---|--:|--:|--:|--:|
+| `SolveEasy` | 783,622 | 453,364 | **−42.1%** | 390 → 222 µs |
+| `SolveMediumHard` | 1,367,804 | 1,382,724 | +1.1% | |
+| every other entry | | | within 1% | within the noise |
+
+Bytes allocated per call, same machine, both columns by the gate in one session. The first
+version of the fix took the modulus through the exact-base path, whose search over all the
+roots of unity of `3` cost the same row **+17.4%** -- caught by the gate on the pull request,
+which is what it is for. The baseline moves to this run.
+
 ## The 2075th: a cached evaluation follows the precision context
 
 A correctness fix ([#1367](https://github.com/asc-community/AngouriMath/issues/1367)) with a

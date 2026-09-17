@@ -213,6 +213,27 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// A repeated symbolic quadratic beside the linears: the numerators over its powers are
+        /// the digits of the numerator over the other factors written in powers of the
+        /// quadratic, computed in the ring modulo its power with the inverse by Newton's
+        /// iteration. <c>1/((a + b x)^2 (c + d x)^(3/2))</c> is, under <c>u = sqrt(c + d x)</c>,
+        /// <c>1/(u^2 (K + u^2)^2)</c> with a symbolic <c>K</c>, and went to the Hermite reduction
+        /// for a hundred kilobytes in thirty seconds; it is eight kilobytes in half a second now.
+        /// </summary>
+        [Theory]
+        [InlineData("1/((a + b*x)^2*(c + d*x)^(3/2))", 10000)]
+        [InlineData("1/(x^2*(a + b*x^2)^2)", 4000)]
+        [InlineData("1/(x^3*(a + b*x + c*x^2)^2)", 10000)]
+        [InlineData("x/((a + b*x)*(c + x^2)^2)", 4000)]
+        [InlineData("(A + B*x)/((a + b*x)*(1 + x^2)^3)", 4000)]
+        public void ARepeatedSymbolicQuadraticBesideALinear(string integrand, int atMost)
+        {
+            DifferentiatesBack(integrand, "x", ("a", 1.7), ("b", 2.3), ("c", 0.4), ("d", 1.1), ("A", 0.5), ("B", 1.3));
+            var length = integrand.ToEntity().Integrate("x").Stringize().Length;
+            Assert.True(length < atMost, $"{length} characters of answer for {integrand}");
+        }
+
+        /// <summary>
         /// Two linear factors with one root are one factor: <c>(a + b x)(a + x b)^2</c> is
         /// how the rules that make a factor monic and gather its powers write it, and as
         /// two distinct factors the decomposition had no answer, its coefficients being

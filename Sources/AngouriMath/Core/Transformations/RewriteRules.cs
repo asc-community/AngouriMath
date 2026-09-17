@@ -348,6 +348,29 @@ namespace AngouriMath.Core.Transformations
             Soundness.SoundUnderAssumptions,
             Matching.MatchedRules.PolynomialGcdCancellation);
 
+        /// <summary>
+        /// The Pythagorean identity found anywhere in a sum, by the gathered matcher.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="Trigonometric"/> knows <c>sin(a)^2 + cos(a)^2</c> as a node of two
+        /// operands, and the simplifier sorts a sum so that the pair lands adjacent -- which
+        /// puts them in one node only when nothing sorts <i>before</i> them: <c>sqrt(2) + sin(t)^2
+        /// + cos(t)^2</c> is <c>(sqrt(2) + cos(t)^2) + sin(t)^2</c>, and stayed so, while
+        /// <c>a + sin(t)^2 + cos(t)^2</c>, whose <c>a</c> sorts last, became <c>1 + a</c>. This
+        /// set is the n-ary reading of the same identity,
+        /// <see cref="Matching.MatchedRules.PythagoreanIdentity"/>, which finds the two squares
+        /// among any number of operands. Run beside <see cref="Trigonometric"/> by the simplifier
+        /// rather than listed in <see cref="All"/>: it is one identity the trigonometric set
+        /// already claims, in the shape the matcher can see.
+        /// https://github.com/asc-community/AngouriMath/issues/725
+        /// </remarks>
+        internal static RewriteRuleSet PythagoreanIdentity { get; } = new(
+            nameof(PythagoreanIdentity),
+            "Replaces a squared sine and a squared cosine of one argument, anywhere in a sum, by one.",
+            TransformationRelation.Equivalence,
+            Soundness.Sound,
+            Matching.MatchedRules.PythagoreanIdentity);
+
         #endregion
 
         #region Trigonometry
