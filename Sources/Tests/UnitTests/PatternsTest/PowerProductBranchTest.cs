@@ -86,5 +86,46 @@ namespace AngouriMath.Tests.PatternsTest
             var simplified = expr.ToEntity().Simplify();
             Assert.Equal(expected.ToEntity().Simplify(), simplified);
         }
+
+        /// <summary>
+        /// A third leak of the same identity: the polynomial parser read <c>(u^2)^(3/2)</c> as
+        /// <c>u^3</c>, and through the long-division rule <c>(u^2)^(3/2)/u</c> simplified to
+        /// <c>u^2</c> and <c>sqrt(u^2)/(-u)</c> to <c>-1</c>, wrong for every negative <c>u</c>.
+        /// An odd inner power is not read either: <c>(u^3)^(3/2)</c> is <c>i</c> at <c>u = -1</c>
+        /// and <c>u^(9/2)</c> is <c>-i</c> there. Checked at negative and positive values
+        /// against the expression it came from.
+        /// https://github.com/asc-community/AngouriMath/issues/1387
+        /// </summary>
+        [Theory]
+        [InlineData("(u^2)^(3/2)/u")]
+        [InlineData("sqrt(u^2)/(-u)")]
+        [InlineData("(u^2)^(5/2)/u^3")]
+        [InlineData("(u^4)^(1/2)*u")]
+        [InlineData("(u^3)^(3/2)/u")]
+        [InlineData("(u^3)^(1/2)/u")]
+        public void ARootOfAnEvenPowerKeepsItsValue(string expr)
+        {
+            var simplified = expr.ToEntity().Simplify();
+            foreach (var u in new[] { -2.0, -0.5, 0.7, 3.0 })
+            {
+                var before = expr.ToEntity().Substitute("u", u).EvalNumerical();
+                var after = simplified.Substitute("u", u).EvalNumerical();
+                var difference = Math.Abs(before.RealPart.EDecimal.ToDouble() - after.RealPart.EDecimal.ToDouble())
+                               + Math.Abs(before.ImaginaryPart.EDecimal.ToDouble() - after.ImaginaryPart.EDecimal.ToDouble());
+                Assert.True(difference < 1e-9,
+                    $"{expr} simplified to {simplified.Stringize()}, which at u = {u} is {after.Stringize()} rather than {before.Stringize()}");
+            }
+        }
+
+        /// <summary>A whole outer power still multiplies, whatever the sign of the base.</summary>
+        [Theory]
+        [InlineData("(u^3)^2/u", "u^5")]
+        [InlineData("(u^2)^3/u", "u^5")]
+        public void AWholeOuterPowerStillMultiplies(string expr, string expected)
+        {
+            var simplified = expr.ToEntity().Simplify();
+            var bare = simplified is Entity.Providedf(var inner, _) ? inner : simplified;
+            Assert.Equal(expected.ToEntity().Simplify(), bare.Simplify());
+        }
     }
 }
