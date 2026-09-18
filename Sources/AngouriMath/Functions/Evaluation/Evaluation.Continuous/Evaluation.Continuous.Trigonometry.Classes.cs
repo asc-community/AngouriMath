@@ -193,6 +193,8 @@ namespace AngouriMath
                 {
                     Complex n when !isExact => Number.Arcsin(n),
                     { Evaled: Complex n } when isExact && InverseTrigonometricTableValues.PullArcsin(n, out var res) => res,
+                    // Increasing on [-1; 1]. https://github.com/asc-community/AngouriMath/issues/322
+                    Set.Interval interval when IntervalArithmetic.MonotoneOn(interval, -1, 1, increasing: true, MathS.Arcsin, isExact) is { } image => image,
                     _ => null
                 },
                 (@this, a) => ((Arcsinf)@this).New(a), isExact);
@@ -211,6 +213,8 @@ namespace AngouriMath
                 {
                     Complex n when !isExact => Number.Arccos(n),
                     { Evaled: Complex n } when isExact && InverseTrigonometricTableValues.PullArccos(n, out var res) => res,
+                    // Decreasing on [-1; 1]. https://github.com/asc-community/AngouriMath/issues/322
+                    Set.Interval interval when IntervalArithmetic.MonotoneOn(interval, -1, 1, increasing: false, MathS.Arccos, isExact) is { } image => image,
                     _ => null
                 },
                 (@this, a) => ((Arccosf)@this).New(a), isExact);
@@ -235,6 +239,8 @@ namespace AngouriMath
                     Integer(1) => MathS.pi / 4,
                     Integer(-1) => -MathS.pi / 4,
                     { Evaled: Complex n } when isExact && InverseTrigonometricTableValues.PullArctan(n, out var res) => res,
+                    // Increasing everywhere. https://github.com/asc-community/AngouriMath/issues/322
+                    Set.Interval interval when IntervalArithmetic.Monotone(interval, increasing: true, MathS.Arctan, isExact) is { } image => image,
                     _ => null
                 },
                 (@this, a) => ((Arctanf)@this).New(a), isExact);
