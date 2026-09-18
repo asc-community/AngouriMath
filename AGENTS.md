@@ -578,10 +578,12 @@ change it is, not only when:
   it.
 - **Future** is an explicit deprioritisation, and the only one: it replaces the `Not now` label, and
   nothing sits there because it is hard. A "not now" that is ready to do is on a version.
-- **Epics** — the agentic goals, #718, #1409 and their kind — spawn sub-issues, and it is the
-  sub-issues that carry version milestones; the epic itself stays open across releases and lists
-  what each one delivered.
-- A proposal without `Accepted` has no milestone: scheduling it would decide it.
+- **Epics** — the agentic goals, #718, #1409 and their kind — sit on the `Epics` milestone. They
+  spawn sub-issues, and it is the sub-issues that carry version milestones; the epic itself stays
+  open across releases and lists what each one delivered.
+- A proposal without `Accepted` has no milestone: scheduling it would decide it. That absence is
+  what marks an issue **untriaged**, which is why an epic is on a milestone of its own rather
+  than on none.
 
 Assign the milestone when filing. When a PR merges, check its issue's milestone still describes
 where the change lands — a fix that turned out breaking moves to the major, with a
