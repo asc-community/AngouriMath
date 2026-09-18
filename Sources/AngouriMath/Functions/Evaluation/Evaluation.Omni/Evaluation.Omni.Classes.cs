@@ -138,6 +138,12 @@ namespace AngouriMath
                             (Interval intLeft, Interval intRight) => SetOperators.IntersectIntervalAndInterval(intLeft, intRight),
                             (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.IntersectCSetAndCSet(csetLeft, csetRight),
                             (SpecialSet specialLeft, SpecialSet specialRight) => SetOperators.IntersectSpecialSets(specialLeft, specialRight),
+                            (ConditionalSet cset, Interval interval) => SetOperators.IntersectCSetAndInterval(cset, interval),
+                            (Interval interval, ConditionalSet cset) => SetOperators.IntersectCSetAndInterval(cset, interval),
+                            // A /\ [a; +oo) /\ (-oo; b] groups to the left, so the two intervals never
+                            // meet each other: regrouped, they do, and A meets one bounded interval.
+                            (Intersectionf(var rest, Interval one), Interval another)
+                                => MathS.Intersection(rest, SetOperators.IntersectIntervalAndInterval(one, another)).InnerSimplified(isExact),
                             _ => null
                         },
                         (@this, a, b) => ((Intersectionf)@this).New(a, b), isExact, propagateSet: false);

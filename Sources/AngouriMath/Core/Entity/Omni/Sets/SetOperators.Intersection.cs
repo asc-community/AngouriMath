@@ -67,7 +67,17 @@ namespace AngouriMath.Core.Sets
         internal static Set IntersectCSetAndCSet(ConditionalSet intLeft, ConditionalSet intRight)
         {
             (intLeft, intRight) = MergeToOneVariable(intLeft, intRight);
+            // Two residue classes meet in one class or in nothing, by the Chinese remainder
+            // theorem. https://github.com/asc-community/AngouriMath/issues/1409
+            if (Functions.ResidueClasses.Read(intLeft) is var (x, a, m) && Functions.ResidueClasses.Read(intRight) is var (_, b, n))
+                return Functions.ResidueClasses.Meet(x, a, m, b, n);
             return new ConditionalSet(intLeft.Var, (intLeft.Predicate & intRight.Predicate).InnerSimplified);
         }
+
+        /// <summary>A residue class cut down to an interval is a finite set, where it is short enough to list.</summary>
+        internal static Set? IntersectCSetAndInterval(ConditionalSet cset, Interval interval)
+            => Functions.ResidueClasses.Read(cset) is var (x, residue, modulus)
+                ? Functions.ResidueClasses.Within(x, residue, modulus, interval)
+                : null;
     }
 }

@@ -274,6 +274,12 @@ namespace AngouriMath
                 => Choice(level, "gcd_", "gcd_", "gcd_");
         }
 
+        public partial record Lcmf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "lcm_", "lcm_", "lcm_");
+        }
+
         partial record Boolean
         {
             private protected override string SortHashName(SortLevel level)

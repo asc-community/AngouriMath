@@ -51,6 +51,7 @@ namespace AngouriMath
         [EntityJsonConverter] partial record Floorf;
         [EntityJsonConverter] partial record Function;
         [EntityJsonConverter] partial record Gcdf;
+        [EntityJsonConverter] partial record Lcmf;
         [EntityJsonConverter] partial record GreaterOrEqualf;
         [EntityJsonConverter] partial record Greaterf;
         [EntityJsonConverter] partial record Impliesf;

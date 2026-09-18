@@ -5,7 +5,10 @@
 // Website: https://am.angouri.org.
 //
 
+using System.Collections.Generic;
+using System.Linq;
 using AngouriMath.Extensions;
+using AngouriMath.Functions;
 using PeterO.Numbers;
 using AngouriMath.Functions.Continuous.Solvers.SetSolver;
 using static AngouriMath.Entity;
@@ -247,6 +250,42 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 ? new ConditionalSet(x, statement)
                 : (Set)MathS.Intersection(left, right);
 
+        /// <summary>
+        /// The solutions of <c>difference = 0 (mod modulus)</c> in <paramref name="x"/>, where
+        /// the difference is a polynomial in it with whole coefficients: solved outright when
+        /// linear, and by trying every residue when not and the modulus is small.
+        /// </summary>
+        private static Set? Congruence(Entity difference, Integer modulus, Variable x)
+        {
+            var simplified = difference.InnerSimplified;
+            if (simplified.Vars.Any(v => v != x))
+                return null;
+            var indices = new Dictionary<Variable, int> { [x] = 0 };
+            if (MultivariatePolynomial.TryParse(simplified, indices) is not { HasIntegerCoefficients: true } polynomial)
+                return null;
+            var n = modulus.EInteger.Abs();
+            if (polynomial.DegreeIn(0) <= 1)
+            {
+                var coefficients = polynomial.CoefficientsIn(0);
+                var a = coefficients.TryGetValue(1, out var slope) ? slope.Terms.Single().Value.Numerator : EInteger.Zero;
+                var b = coefficients.TryGetValue(0, out var constant) ? constant.Terms.SingleOrDefault().Value?.Numerator ?? EInteger.Zero : EInteger.Zero;
+                return ResidueClasses.SolveLinear(x, a, -b, n);
+            }
+            if (n.IsZero || n.CompareTo(EInteger.FromInt32(LargestModulusTried)) > 0)
+                return null;
+            Entity? classes = null;
+            for (var residue = EInteger.Zero; residue.CompareTo(n) < 0; residue += 1)
+                if (polynomial.ValueModulo(new[] { residue }, n) is { IsZero: true })
+                {
+                    Entity one = new Congruentf(x, Integer.Create(residue), Integer.Create(n));
+                    classes = classes is null ? one : classes | one;
+                }
+            return classes is null ? Set.Empty : new ConditionalSet(x, x.In(MathS.Sets.Z) & classes);
+        }
+
+        /// <summary>How large a modulus is tried residue by residue for a congruence that is not linear.</summary>
+        private const int LargestModulusTried = 4096;
+
         internal static Set Solve(Entity expr, Variable x)
             => expr switch
             {
@@ -280,6 +319,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 Variable when expr == x => new FiniteSet(true),
 
                 Inf(var var, Set set) when var == x => set,
+
+                // a x + b = c (mod n): one residue class, or none, by the gcd; a congruence of
+                // higher degree by the residues that satisfy it, where the modulus is small
+                // enough to list them. https://github.com/asc-community/AngouriMath/issues/1409
+                Congruentf(var left, var right, Integer modulus) when Congruence(left - right, modulus, x) is { } classes => classes,
                 
                 Providedf(var e, var predicate) => Solve(e, x).Filter(predicate, x),
                 Piecewise p => EquationSolver.SolvePiecewise(p, x, Solve),

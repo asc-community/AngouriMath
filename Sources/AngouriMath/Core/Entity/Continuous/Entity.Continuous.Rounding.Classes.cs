@@ -105,5 +105,28 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
+
+        /// <summary>
+        /// The least common multiple of two numbers: <c>lcm(a, b)</c>, non-negative by the same
+        /// convention as <see cref="Gcdf"/>, and <c>0</c> where either is <c>0</c>. Over
+        /// rationals <c>lcm(a/b, c/d)</c> is <c>lcm(a, c) / gcd(b, d)</c>, which is what SymPy
+        /// gives. Left as this node where it cannot be settled.
+        /// https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        public sealed partial record Lcmf(Entity Left, Entity Right) : Function, IBinaryNode
+        {
+            /// <inheritdoc/>
+            public Entity NodeFirstChild => Left;
+
+            /// <inheritdoc/>
+            public Entity NodeSecondChild => Right;
+
+            private Lcmf New(Entity left, Entity right) =>
+                ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right) { Codomain = Codomain };
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Left.Replace(func), Right.Replace(func)));
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Left, Right };
+        }
     }
 }
