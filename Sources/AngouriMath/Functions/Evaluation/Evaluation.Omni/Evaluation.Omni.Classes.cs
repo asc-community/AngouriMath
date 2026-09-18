@@ -119,6 +119,7 @@ namespace AngouriMath
                             (Set setLeft, FiniteSet setRight) => SetOperators.UniteFiniteSetAndSet(setRight, setLeft),
                             (Interval intLeft, Interval intRight) => SetOperators.UniteIntervalAndInterval(intLeft, intRight),
                             (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.UniteCSetAndCSet(csetLeft, csetRight),
+                            (SpecialSet specialLeft, SpecialSet specialRight) => SetOperators.UniteSpecialSets(specialLeft, specialRight),
                             _ => null
                         },
                         (@this, a, b) => ((Unionf)@this).New(a, b), isExact, propagateSet: false);
@@ -136,6 +137,7 @@ namespace AngouriMath
                             (Set setLeft, FiniteSet setRight) => SetOperators.IntersectFiniteSetAndSet(setRight, setLeft),
                             (Interval intLeft, Interval intRight) => SetOperators.IntersectIntervalAndInterval(intLeft, intRight),
                             (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.IntersectCSetAndCSet(csetLeft, csetRight),
+                            (SpecialSet specialLeft, SpecialSet specialRight) => SetOperators.IntersectSpecialSets(specialLeft, specialRight),
                             _ => null
                         },
                         (@this, a, b) => ((Intersectionf)@this).New(a, b), isExact, propagateSet: false);
@@ -152,6 +154,7 @@ namespace AngouriMath
                             (Set setLeft, FiniteSet setRight) => SetOperators.SetSubtractSetAndFiniteSet(setLeft, setRight),
                             (Interval intLeft, Interval intRight) => SetOperators.SetSubtractIntervalAndInterval(intLeft, intRight),
                             (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.SetSubtractCSetAndCSet(csetLeft, csetRight),
+                            (SpecialSet specialLeft, SpecialSet specialRight) => SetOperators.SetSubtractSpecialSets(specialLeft, specialRight),
                             _ => null
                         },
                         (@this, a, b) => ((SetMinusf)@this).New(a, b), isExact, propagateSet: false);

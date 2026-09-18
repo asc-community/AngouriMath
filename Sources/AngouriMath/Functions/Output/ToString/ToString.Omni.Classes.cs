@@ -37,7 +37,9 @@ namespace AngouriMath
             {
                 /// <inheritdoc/>
                 private protected override string StringizeNode()
-                    => $"{{ {Var.Stringize()} : {Predicate.Stringize()} }}";
+                    => DeclaredMembership is var (set, rest)
+                        ? $"{{ {Var.Stringize()} in {set.Stringize()} : {rest.Stringize()} }}"
+                        : $"{{ {Var.Stringize()} : {Predicate.Stringize()} }}";
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
             }
@@ -56,6 +58,22 @@ namespace AngouriMath
                 {
                     /// <inheritdoc/>
                     private protected override string StringizeNode() => "ZZ";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
+
+                partial record NonNegativeIntegers
+                {
+                    /// <inheritdoc/>
+                    private protected override string StringizeNode() => "ZZ*";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
+
+                partial record PositiveIntegers
+                {
+                    /// <inheritdoc/>
+                    private protected override string StringizeNode() => "ZZ+";
                     /// <inheritdoc/>
                     public override string ToString() => Stringize();
                 }

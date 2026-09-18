@@ -97,6 +97,8 @@ namespace AngouriMath
                 [EntityJsonConverter] partial record Booleans;
                 [EntityJsonConverter] partial record Complexes;
                 [EntityJsonConverter] partial record Integers;
+                [EntityJsonConverter] partial record NonNegativeIntegers;
+                [EntityJsonConverter] partial record PositiveIntegers;
                 [EntityJsonConverter] partial record Rationals;
                 [EntityJsonConverter] partial record Reals;
             }

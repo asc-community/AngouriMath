@@ -79,6 +79,8 @@ AngouriMath.Core.Domain.Any : AngouriMath.Core.Domain
 AngouriMath.Core.Domain.Boolean : AngouriMath.Core.Domain
 AngouriMath.Core.Domain.Complex : AngouriMath.Core.Domain
 AngouriMath.Core.Domain.Integer : AngouriMath.Core.Domain
+AngouriMath.Core.Domain.NonNegativeInteger : AngouriMath.Core.Domain
+AngouriMath.Core.Domain.PositiveInteger : AngouriMath.Core.Domain
 AngouriMath.Core.Domain.Rational : AngouriMath.Core.Domain
 AngouriMath.Core.Domain.Real : AngouriMath.Core.Domain
 AngouriMath.Core.Domain.value__ : System.Int32
@@ -1906,6 +1908,30 @@ AngouriMath.Entity+Set+SpecialSet+Integers.ToString() : System.String
 AngouriMath.Entity+Set+SpecialSet+Integers.ctor()
 AngouriMath.Entity+Set+SpecialSet+Integers.op_Equality(AngouriMath.Entity+Set+SpecialSet+Integers, AngouriMath.Entity+Set+SpecialSet+Integers) : System.Boolean
 AngouriMath.Entity+Set+SpecialSet+Integers.op_Inequality(AngouriMath.Entity+Set+SpecialSet+Integers, AngouriMath.Entity+Set+SpecialSet+Integers) : System.Boolean
+AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers.<Clone>$() : AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers
+AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers.EqualityContract { } : System.Type
+AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers.Equals(AngouriMath.Entity+Set+SpecialSet) : System.Boolean
+AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers.Equals(AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers) : System.Boolean
+AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers.Equals(System.Object) : System.Boolean
+AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers.GetHashCode() : System.Int32
+AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers.MayContain(AngouriMath.Entity) : System.Boolean
+AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers.PrintMembers(System.Text.StringBuilder) : System.Boolean
+AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers.ToString() : System.String
+AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers.ctor()
+AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers.op_Equality(AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers, AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers) : System.Boolean
+AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers.op_Inequality(AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers, AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers) : System.Boolean
+AngouriMath.Entity+Set+SpecialSet+PositiveIntegers.<Clone>$() : AngouriMath.Entity+Set+SpecialSet+PositiveIntegers
+AngouriMath.Entity+Set+SpecialSet+PositiveIntegers.EqualityContract { } : System.Type
+AngouriMath.Entity+Set+SpecialSet+PositiveIntegers.Equals(AngouriMath.Entity+Set+SpecialSet) : System.Boolean
+AngouriMath.Entity+Set+SpecialSet+PositiveIntegers.Equals(AngouriMath.Entity+Set+SpecialSet+PositiveIntegers) : System.Boolean
+AngouriMath.Entity+Set+SpecialSet+PositiveIntegers.Equals(System.Object) : System.Boolean
+AngouriMath.Entity+Set+SpecialSet+PositiveIntegers.GetHashCode() : System.Int32
+AngouriMath.Entity+Set+SpecialSet+PositiveIntegers.MayContain(AngouriMath.Entity) : System.Boolean
+AngouriMath.Entity+Set+SpecialSet+PositiveIntegers.PrintMembers(System.Text.StringBuilder) : System.Boolean
+AngouriMath.Entity+Set+SpecialSet+PositiveIntegers.ToString() : System.String
+AngouriMath.Entity+Set+SpecialSet+PositiveIntegers.ctor()
+AngouriMath.Entity+Set+SpecialSet+PositiveIntegers.op_Equality(AngouriMath.Entity+Set+SpecialSet+PositiveIntegers, AngouriMath.Entity+Set+SpecialSet+PositiveIntegers) : System.Boolean
+AngouriMath.Entity+Set+SpecialSet+PositiveIntegers.op_Inequality(AngouriMath.Entity+Set+SpecialSet+PositiveIntegers, AngouriMath.Entity+Set+SpecialSet+PositiveIntegers) : System.Boolean
 AngouriMath.Entity+Set+SpecialSet+Rationals.<Clone>$() : AngouriMath.Entity+Set+SpecialSet+Rationals
 AngouriMath.Entity+Set+SpecialSet+Rationals.EqualityContract { } : System.Type
 AngouriMath.Entity+Set+SpecialSet+Rationals.Equals(AngouriMath.Entity+Set+SpecialSet) : System.Boolean
@@ -2485,6 +2511,8 @@ AngouriMath.MathS+Sets.Finite(AngouriMath.Entity[]) : AngouriMath.Entity+Set+Fin
 AngouriMath.MathS+Sets.Finite(System.Collections.Generic.List<AngouriMath.Entity>) : AngouriMath.Entity+Set+FiniteSet
 AngouriMath.MathS+Sets.Interval(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity+Set+Interval
 AngouriMath.MathS+Sets.Interval(AngouriMath.Entity, System.Boolean, AngouriMath.Entity, System.Boolean) : AngouriMath.Entity+Set+Interval
+AngouriMath.MathS+Sets.NonNegativeIntegers { } : AngouriMath.Entity+Set
+AngouriMath.MathS+Sets.PositiveIntegers { } : AngouriMath.Entity+Set
 AngouriMath.MathS+Sets.Q { } : AngouriMath.Entity+Set
 AngouriMath.MathS+Sets.R { } : AngouriMath.Entity+Set
 AngouriMath.MathS+Sets.Z { } : AngouriMath.Entity+Set
@@ -2750,6 +2778,8 @@ class AngouriMath.Entity+Set+SpecialSet
 class AngouriMath.Entity+Set+SpecialSet+Booleans
 class AngouriMath.Entity+Set+SpecialSet+Complexes
 class AngouriMath.Entity+Set+SpecialSet+Integers
+class AngouriMath.Entity+Set+SpecialSet+NonNegativeIntegers
+class AngouriMath.Entity+Set+SpecialSet+PositiveIntegers
 class AngouriMath.Entity+Set+SpecialSet+Rationals
 class AngouriMath.Entity+Set+SpecialSet+Reals
 class AngouriMath.Entity+Set+Unionf

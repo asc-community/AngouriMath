@@ -1963,7 +1963,16 @@ internal partial class AngouriMathParser : Parser {
 				{
 				State = 338;
 				_localctx._VARIABLE = Match(VARIABLE);
-				 _localctx.value =  Entity.Variable.CreateVariableOrConstant((_localctx._VARIABLE!=null?_localctx._VARIABLE.Text:null)); 
+
+				            // There is no set of natural numbers here, because the name means {0, 1, 2, ...} to
+				            // some authors and {1, 2, 3, ...} to others; the two are spelled apart as ZZ* and
+				            // ZZ+. Read as a variable, NN would go on silently standing for nothing, so the
+				            // name is refused with the two spellings.
+				            // https://github.com/asc-community/AngouriMath/issues/1409
+				            if ((_localctx._VARIABLE!=null?_localctx._VARIABLE.Text:null) == "NN")
+				                throw new InvalidArgumentParseException("There is no set NN: write ZZ* for the non-negative integers {0, 1, 2, ...} or ZZ+ for the positive integers {1, 2, 3, ...}");
+				            _localctx.value =  Entity.Variable.CreateVariableOrConstant((_localctx._VARIABLE!=null?_localctx._VARIABLE.Text:null));
+				        
 				}
 				break;
 			case 8:
