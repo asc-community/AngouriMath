@@ -176,6 +176,11 @@ namespace AngouriMath
             private protected override string SortHashName(SortLevel level) => "factorialf_";
         }
 
+        public partial record Binomialf
+        {
+            private protected override string SortHashName(SortLevel level) => "binomialf_";
+        }
+
         public partial record Derivativef
         {
             private protected override string SortHashName(SortLevel level) => "derivativef_";

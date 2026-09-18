@@ -509,6 +509,27 @@ AngouriMath.Entity+Argminf.ToString() : System.String
 AngouriMath.Entity+Argminf.ctor(AngouriMath.Entity, AngouriMath.Entity, AngouriMath.Entity)
 AngouriMath.Entity+Argminf.op_Equality(AngouriMath.Entity+Argminf, AngouriMath.Entity+Argminf) : System.Boolean
 AngouriMath.Entity+Argminf.op_Inequality(AngouriMath.Entity+Argminf, AngouriMath.Entity+Argminf) : System.Boolean
+AngouriMath.Entity+Binomialf.<Clone>$() : AngouriMath.Entity+Binomialf
+AngouriMath.Entity+Binomialf.Codomain { } : AngouriMath.Core.Domain
+AngouriMath.Entity+Binomialf.Deconstruct(AngouriMath.Entity&, AngouriMath.Entity&) : System.Void
+AngouriMath.Entity+Binomialf.EqualityContract { } : System.Type
+AngouriMath.Entity+Binomialf.Equals(AngouriMath.Entity+Binomialf) : System.Boolean
+AngouriMath.Entity+Binomialf.Equals(AngouriMath.Entity+Function) : System.Boolean
+AngouriMath.Entity+Binomialf.Equals(System.Object) : System.Boolean
+AngouriMath.Entity+Binomialf.GetHashCode() : System.Int32
+AngouriMath.Entity+Binomialf.InitDirectChildren() : AngouriMath.Entity[]
+AngouriMath.Entity+Binomialf.InnerSimplify(System.Boolean) : AngouriMath.Entity
+AngouriMath.Entity+Binomialf.Lower { } : AngouriMath.Entity
+AngouriMath.Entity+Binomialf.NodeFirstChild { } : AngouriMath.Entity
+AngouriMath.Entity+Binomialf.NodeSecondChild { } : AngouriMath.Entity
+AngouriMath.Entity+Binomialf.PrintMembers(System.Text.StringBuilder) : System.Boolean
+AngouriMath.Entity+Binomialf.Replace(System.Func<AngouriMath.Entity,AngouriMath.Entity>) : AngouriMath.Entity
+AngouriMath.Entity+Binomialf.Substitute(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.Entity+Binomialf.ToString() : System.String
+AngouriMath.Entity+Binomialf.Upper { } : AngouriMath.Entity
+AngouriMath.Entity+Binomialf.ctor(AngouriMath.Entity, AngouriMath.Entity)
+AngouriMath.Entity+Binomialf.op_Equality(AngouriMath.Entity+Binomialf, AngouriMath.Entity+Binomialf) : System.Boolean
+AngouriMath.Entity+Binomialf.op_Inequality(AngouriMath.Entity+Binomialf, AngouriMath.Entity+Binomialf) : System.Boolean
 AngouriMath.Entity+Boolean.<Clone>$() : AngouriMath.Entity+Boolean
 AngouriMath.Entity+Boolean.Codomain { } : AngouriMath.Core.Domain
 AngouriMath.Entity+Boolean.Create(System.Boolean) : AngouriMath.Entity+Boolean
@@ -2513,6 +2534,7 @@ AngouriMath.MathS.Arctan(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Argmax(AngouriMath.Entity, AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Argmin(AngouriMath.Entity, AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Average(AngouriMath.Entity+Matrix) : AngouriMath.Entity
+AngouriMath.MathS.Binomial(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Cbrt(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Ceil(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Conjunction(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
@@ -2667,6 +2689,7 @@ class AngouriMath.Entity+Arcsinf
 class AngouriMath.Entity+Arctanf
 class AngouriMath.Entity+Argmaxf
 class AngouriMath.Entity+Argminf
+class AngouriMath.Entity+Binomialf
 class AngouriMath.Entity+Boolean
 class AngouriMath.Entity+CalculusOperator
 class AngouriMath.Entity+Cardf

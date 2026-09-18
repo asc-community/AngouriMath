@@ -143,6 +143,12 @@ namespace AngouriMath
                 => $@"sympy.gcd({Left.ToSymPy()}, {Right.ToSymPy()})";
         }
 
+        public partial record Binomialf
+        {
+            internal override string ToSymPy()
+                => $@"sympy.binomial({Upper.ToSymPy()}, {Lower.ToSymPy()})";
+        }
+
         public partial record Phif
         {
             internal override string ToSymPy() => $"sympy.totient({Argument.ToSymPy()})";

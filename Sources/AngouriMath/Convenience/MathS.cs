@@ -1260,6 +1260,20 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Gcd(Entity a, Entity b) => new Gcdf(a, b);
 
+        /// <summary>The binomial coefficient <c>binomial(n, k)</c>, "n choose k"</summary>
+        /// <param name="n">The upper argument, which need not be a whole number</param>
+        /// <param name="k">The lower argument</param>
+        /// <returns>The <see cref="Entity.Binomialf"/> node</returns>
+        /// <remarks>
+        /// Whole arguments are computed, by the falling factorial where <c>n</c> is negative --
+        /// <c>binomial(-1, 3)</c> is <c>-1</c> -- and a whole <c>k</c> below zero, or above a
+        /// non-negative whole <c>n</c>, is <c>0</c>. A symbolic argument is kept as the node,
+        /// which is the shape Pascal's identity and the binomial theorem read.
+        /// https://github.com/asc-community/AngouriMath/issues/1409
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Binomial(Entity n, Entity k) => new Binomialf(n, k);
+
         /// <summary>Boolean negation
         /// <a href="https://en.wikipedia.org/wiki/Negation">Wikipedia</a></summary>
         /// <param name="a">Argument node of which Negation function will be taken</param>

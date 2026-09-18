@@ -217,6 +217,15 @@ namespace AngouriMath
                 Enumerable.Empty<Entity>();
         }
 
+        partial record Binomialf
+        {
+            // The preimage of a binomial coefficient is not a function of either argument
+            // that can be undone: binomial(n, k) = binomial(n, n - k), and 1 is taken at
+            // every (n, 0) and (n, n).
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
+                Enumerable.Empty<Entity>();
+        }
+
         partial record Derivativef
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>

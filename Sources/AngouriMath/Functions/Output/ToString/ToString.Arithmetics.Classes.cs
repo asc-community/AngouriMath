@@ -172,6 +172,14 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        public partial record Binomialf
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"binomial({Upper.Stringize()}, {Lower.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Factorialf
         {
             /// <inheritdoc/>

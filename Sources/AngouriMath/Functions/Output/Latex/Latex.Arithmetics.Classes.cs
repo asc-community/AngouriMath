@@ -208,6 +208,13 @@ namespace AngouriMath
                 => $@"\gcd\left({Left.Latexize()}, {Right.Latexize()}\right)";
         }
 
+        partial record Binomialf
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\binom{{{Upper.Latexize()}}}{{{Lower.Latexize()}}}";
+        }
+
         partial record Phif
         {
             /// <inheritdoc/>

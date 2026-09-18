@@ -428,6 +428,27 @@ asked. Only under that substitution; `Simplify` still combines nothing.
 | `"1/sqrt(atanh(tanh(a + b*x)))".Integrate("x")` | unevaluated after 49 s | `2 (1/2 ln(e^(2 b x + 2 a)))^(1/2)/(1/2)/(2 b)`, 0.3 s |
 | `"atanh(tanh(a + b*x))^(1/2)".Integrate("x")` | unevaluated | `2 (1/2 ln(e^(2 b x + 2 a)))^(3/2)/(3/2)/(2 b)` |
 
+### `binomial(n, k)` is a function
+
+**Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
+`binomial(n, k)` and `MathS.Binomial(n, k)`. A whole `k` is computed by the falling factorial
+`n (n - 1) … (n - k + 1)/k!` for any `n` — negative and rational ones included — with `0` below
+`k = 0` and above a non-negative whole `n`; `binomial(n, 0)` is `1` for any `n`; a symbolic
+argument keeps the node, which is the spelling Pascal's identity and the binomial theorem read
+rather than a ratio of three factorials; a `k` that is not whole evaluates numerically through the
+gamma function, and has no value where `n` is a negative whole number, which its domain condition
+says. LaTeX is `\binom{n}{k}`, SymPy is `sympy.binomial`.
+
+| | Was | Is |
+|---|---|---|
+| `"binomial(5, 2)".ToEntity()` | `UnhandledParseException` | `10` on simplification |
+| `"binomial(-1, 3)".ToEntity().Simplify()` | — | `-1` |
+| `"binomial(1/2, 2)".ToEntity().Simplify()` | — | `-1/8` |
+| `"binomial(n, k)".ToEntity().Simplify()` | — | `binomial(n, k)` |
+
+First item of [#1409](https://github.com/asc-community/AngouriMath/issues/1409), specified in
+[#809](https://github.com/asc-community/AngouriMath/issues/809)'s survey.
+
 ### A condition the answer states on its own is no longer repeated beside it
 
 **Improvement, not silent.** `Simplify` returned `(1 - ln(x))/x^2 provided not x = 0` for the
