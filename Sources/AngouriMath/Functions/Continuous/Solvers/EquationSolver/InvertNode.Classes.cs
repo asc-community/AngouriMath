@@ -678,6 +678,13 @@ namespace AngouriMath
                     "Inverting this node would need a set-valued answer, which the inverter cannot give");
         }
 
+        partial record Quantifier
+        {
+            // The unknown sits under a binder; see Summationf.
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => Enumerable.Empty<Entity>();
+        }
+
         partial record Providedf
         {
             // (f(x) provided B) = value

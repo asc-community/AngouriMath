@@ -116,6 +116,27 @@ namespace AngouriMath
                 => $@"{Divisor.Latexize(Divisor.LatexPriority < LatexPriority)} \mid {Dividend.Latexize(Dividend.LatexPriority <= LatexPriority)}";
         }
 
+        partial record Forallf
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\forall {Var.Latexize()} \in {Over.Latexize(Over.LatexPriority < Priority.SetOperation)} : {Body.Latexize()}";
+        }
+
+        partial record Existsf
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\exists {Var.Latexize()} \in {Over.Latexize(Over.LatexPriority < Priority.SetOperation)} : {Body.Latexize()}";
+        }
+
+        partial record ExistsUniquef
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\exists! {Var.Latexize()} \in {Over.Latexize(Over.LatexPriority < Priority.SetOperation)} : {Body.Latexize()}";
+        }
+
         partial record Congruentf
         {
             /// <inheritdoc/>

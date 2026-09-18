@@ -222,6 +222,7 @@ Boolean nodes
 negate_expression returns[Entity value]
     : 'not' op = comparison_expression { $value = !$op.value; }
     | 'not' opn = negate_expression { $value = !$opn.value; }
+    | 'not' q = quantified_expression { $value = !$q.value; }
     | op = comparison_expression { $value = $op.value; }
     ;
 
@@ -310,6 +311,63 @@ expression returns[Entity value]
             $value = lambdaBody;
         }
       )?
+    | q = quantified_expression { $value = $q.value; }
+    ;
+
+/* A quantified statement: `forall x in S : P`, `exists x in S : P`, `exists! x in S : P`,
+   and `∀`, `∃`, `∃!` for the same three. The body runs to the end of the line, as a lambda's
+   does, so `forall x in S : P and Q` quantifies `P and Q`, and a quantifier under a
+   connective is bracketed -- except under `not`, which reads `not forall x in S : P` as the
+   negation of the whole statement, as it is written. Several names share a set --
+   `forall x, y in S : P` -- and several sets are listed in order -- `forall x in S, y in T : P`
+   -- either way nesting from the left, and a name without a set is an error rather than a
+   quantification over everything, since a statement is quantified over something.
+   https://github.com/asc-community/AngouriMath/issues/1409 */
+quantified_expression returns[Entity value]
+    : q = quantifier_keyword names = quantified_names ':' b = expression
+        {
+            Entity quantified = $b.value;
+            var groups = $names.list;
+            for (var g = groups.Count - 1; g >= 0; g--)
+                quantified = $q.kind switch
+                {
+                    "forall" => new Forallf(groups[g].name, groups[g].over, quantified),
+                    "exists" => new Existsf(groups[g].name, groups[g].over, quantified),
+                    _ => new ExistsUniquef(groups[g].name, groups[g].over, quantified)
+                };
+            $value = quantified;
+        }
+    ;
+
+quantifier_keyword returns[string kind]
+    : ('forall' | '∀') { $kind = "forall"; }
+    | ('exists!' | '∃!') { $kind = "exists!"; }
+    | ('exists' | '∃') { $kind = "exists"; }
+    ;
+
+/* `x in S`, `x, y in S`, `x in S, y in T`: each item is read as an expression so that `x in S`
+   arrives as the membership it is, and a bare name takes the set of the next item that has
+   one. Resolved from the right, so that the set is known when the name is reached. */
+quantified_names returns[List<(Entity name, Entity over)> list]
+    @init { var items = new List<Entity>(); }
+    : e = in_operator { items.Add($e.value); } (',' e = in_operator { items.Add($e.value); })*
+    {
+        $list = new List<(Entity name, Entity over)>();
+        Entity over = null;
+        for (var k = items.Count - 1; k >= 0; k--)
+        {
+            Entity name;
+            if (items[k] is Entity.Set.Inf(var element, var set))
+                (name, over) = (element, set);
+            else
+                name = items[k];
+            if (over is null)
+                throw new InvalidArgumentParseException($"A quantified name needs a set to range over: write forall {name} in S : ...");
+            if (AngouriMath.Core.Binding.Of(name).Name is not Variable)
+                throw new InvalidArgumentParseException($"A quantifier binds a name, and {name} is not one");
+            $list.Insert(0, (name, over));
+        }
+    }
     ;
 
 

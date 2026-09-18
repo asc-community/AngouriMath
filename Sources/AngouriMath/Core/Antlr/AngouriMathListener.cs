@@ -202,6 +202,36 @@ internal interface IAngouriMathListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpression([NotNull] AngouriMathParser.ExpressionContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.quantified_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterQuantified_expression([NotNull] AngouriMathParser.Quantified_expressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.quantified_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitQuantified_expression([NotNull] AngouriMathParser.Quantified_expressionContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.quantifier_keyword"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterQuantifier_keyword([NotNull] AngouriMathParser.Quantifier_keywordContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.quantifier_keyword"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitQuantifier_keyword([NotNull] AngouriMathParser.Quantifier_keywordContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.quantified_names"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterQuantified_names([NotNull] AngouriMathParser.Quantified_namesContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.quantified_names"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitQuantified_names([NotNull] AngouriMathParser.Quantified_namesContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.function_arguments"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

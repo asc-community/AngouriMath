@@ -36,6 +36,13 @@ namespace AngouriMath
                     a => a switch
                     {
                         Boolean(var b) => !b,
+                        // A negation passes through a quantifier by flipping it: not every
+                        // member satisfies P exactly when some member fails it, and the set
+                        // never changes. Inward, since the flipped statement is one the
+                        // quantifier may decide where the negation of an undecided one is not.
+                        // https://github.com/asc-community/AngouriMath/issues/1409
+                        Forallf(var v, var over, var body) => new Existsf(v, over, !body).InnerSimplified(isExact),
+                        Existsf(var v, var over, var body) => new Forallf(v, over, !body).InnerSimplified(isExact),
                         _ => null
                     },
                     (@this, a) => ((Notf)@this).New(a), isExact);
@@ -428,6 +435,28 @@ namespace AngouriMath
             // The polynomial route expands the difference, which is worth doing for the sizes a
             // congruence is written at and not for an expression that arrives as a byproduct.
             private const int LargestDifferenceRead = 2048;
+        }
+
+        partial record Quantifier
+        {
+            // A quantified statement has a truth value wherever its body does at every member;
+            // it is decided or left as written, never NaN on its own account.
+            private protected override Entity IntrinsicCondition => True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+            {
+                var over = Over.InnerSimplified(isExact);
+                var body = Body.InnerSimplified(isExact);
+                return Functions.Boolean.Quantifiers.Decide(Kind, Var, over, body, isExact) ?? New(Var, over, body);
+            }
+
+            private Functions.Boolean.Quantifiers.Kind Kind => this switch
+            {
+                Forallf => Functions.Boolean.Quantifiers.Kind.All,
+                Existsf => Functions.Boolean.Quantifiers.Kind.Some,
+                _ => Functions.Boolean.Quantifiers.Kind.Unique,
+            };
         }
 
         partial record Cardf

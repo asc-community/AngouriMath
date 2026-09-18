@@ -830,7 +830,32 @@ namespace AngouriMath.Core.Transformations
                     if (MathS.Polynomials.Factor(input, variable) is { } factored
                         && factored is Entity.Mulf or Entity.Powf)
                         return factored;
+                foreach (var variable in input.Vars)
+                    if (FactoredInASubtree(input, variable) is { } factored)
+                        return factored;
                 return null;
+            }
+
+            /// <summary>
+            /// <paramref name="input"/> factored as a polynomial in the smallest subtree that
+            /// holds every occurrence of <paramref name="variable"/>: <c>sin(x)^2 + 2 sin(x) + 1</c>
+            /// is <c>t^2 + 2 t + 1</c> at <c>t = sin(x)</c>, which is <c>(t + 1)^2</c>. The
+            /// replacement the solver uses for the same purpose, applied to factoring.
+            /// https://github.com/asc-community/AngouriMath/issues/203
+            /// </summary>
+            private static Entity? FactoredInASubtree(Entity input, Variable variable)
+            {
+                var subtree = TreeAnalyzer.GetMinimumSubtree(input, variable);
+                if (subtree == variable || subtree == input)
+                    return null;
+                var placeholder = Variable.CreateTemp(input.Vars);
+                var replaced = input.Substitute(subtree, placeholder);
+                if (replaced.ContainsNode(variable))
+                    return null;
+                return MathS.Polynomials.Factor(replaced, placeholder) is { } factored
+                    && factored is Entity.Mulf or Entity.Powf
+                        ? factored.Substitute(placeholder, subtree)
+                        : null;
             }
         }
 

@@ -241,6 +241,42 @@ internal partial class AngouriMathBaseListener : IAngouriMathListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpression([NotNull] AngouriMathParser.ExpressionContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.quantified_expression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterQuantified_expression([NotNull] AngouriMathParser.Quantified_expressionContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.quantified_expression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitQuantified_expression([NotNull] AngouriMathParser.Quantified_expressionContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.quantifier_keyword"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterQuantifier_keyword([NotNull] AngouriMathParser.Quantifier_keywordContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.quantifier_keyword"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitQuantifier_keyword([NotNull] AngouriMathParser.Quantifier_keywordContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.quantified_names"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterQuantified_names([NotNull] AngouriMathParser.Quantified_namesContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.quantified_names"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitQuantified_names([NotNull] AngouriMathParser.Quantified_namesContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.function_arguments"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

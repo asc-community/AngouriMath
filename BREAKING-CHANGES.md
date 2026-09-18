@@ -501,6 +501,25 @@ read as well. Neither spelling parsed before.
 | `x < y (mod 3)` | `UnhandledParseException` | `InvalidArgumentParseException` |
 | `5 mod 3` | `2` | `2` (unchanged: the operator is a number, the relation is a statement) |
 
+### `forall`, `exists` and `exists!` are quantifiers, and were names
+
+`forall x in S : P`, `exists x in S : P` and `exists! x in S : P` — also `∀`, `∃`, `∃!` — are the
+statements that every, some, or exactly one member of `S` satisfies `P`, decided over a finite set
+by evaluation, over an infinite one by a counterexample or by the solver, and left as written
+otherwise ([#1409](https://github.com/asc-community/AngouriMath/issues/1409),
+[#225](https://github.com/asc-community/AngouriMath/issues/225)). The three words are keywords
+now, which is the one silent change: a variable spelled `forall` or `exists` no longer parses.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall x in RR : x^2 >= 0` | `UnhandledParseException` | `True` |
+| `exists x in RR : x^2 + 1 = 0` | `UnhandledParseException` | `False`; over `CC`, `True` |
+| `forall x in {1, 2, 3, 4} : exists y in {3, 4, 5, 6, 7, 8} : x + y = 7` | `UnhandledParseException` | `True` |
+| `∀ x in RR : x^2 >= 0` | `UnhandledParseException` | `True` |
+| `forall x : x^2 >= 0` | `UnhandledParseException` | `InvalidArgumentParseException`: the set is mandatory |
+| `forall + 1` | `forall + 1`, a variable named `forall` | `UnhandledParseException` |
+| `exists(x)` | `exists * x` | `UnhandledParseException` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
@@ -618,6 +637,7 @@ they had.
 | | `"2 / (0; 1)".ToEntity().Simplify()`, and every constant over an interval that does not contain zero | `2 / (0; 1)` — left alone | `(2; +oo)` |
 | | `"2 * x + 4 * a".ToEntity().Factorize()`, and every sum whose whole coefficients share a divisor | `2 * x + 4 * a` — left alone | `2 * (x + 2 * a)` |
 | | `Transformation.Factorization.Name` | `… then polynomial-factorization` | `… then polynomial-factorization then numeric-content` |
+| | `"sin(x)^2 + 2 sin(x) + 1".ToEntity().Factorize()`, and every polynomial in one subexpression of its variable | `sin(x) ^ 2 + 2 * sin(x) + 1` — left alone | `(sin(x) + 1) ^ 2`; `sin(x) + sin(x)^3` is `sin(x) * (sin(x) ^ 2 + 1)` |
 | **Silent** | `"arccotan(-1)".ToEntity().Simplify()`, and every negative argument the inverse-trigonometric table knows | `3/4 * pi` — the textbook range, and **not equal to `arccotan(-1)`**, whose value is `-pi/4` | `-1/4 * pi` |
 | | `"e ^ ln(x)".ToEntity().Simplify()`, and every exponential of a natural logarithm | `e ^ ln(x)` — left as written | `x` |
 | | `"a => a + 3".ToEntity()`, and every lambda written with an arrow | `UnhandledParseException` | `lambda(a, a + 3)` |

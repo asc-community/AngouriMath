@@ -371,6 +371,29 @@ namespace AngouriMath
                 => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value), Modulus.Substitute(x, value));
         }
 
+        partial record Quantifier
+        {
+            /// <inheritdoc/>
+            // The name is bound throughout, so substituting for it -- or for anything that
+            // mentions it, since every occurrence inside is the bound one -- substitutes nothing.
+            // A value that mentions the name would be captured by it, so the name is changed
+            // first: forall x in RR : x < y at y = x is forall x_1 in RR : x_1 < x, the same
+            // statement under either name.
+            public override Entity Substitute(Entity x, Entity value)
+            {
+                if (this == x)
+                    return value;
+                if (x.ContainsNode(Var))
+                    return this;
+                if (value.ContainsNode(Var) && Var is Variable bound)
+                {
+                    var fresh = Variable.CreateUnique(this + value, bound.Name);
+                    return New(fresh, Over.Substitute(bound, fresh).Substitute(x, value), Body.Substitute(bound, fresh).Substitute(x, value));
+                }
+                return New(Var, Over.Substitute(x, value), Body.Substitute(x, value));
+            }
+        }
+
         partial record Cardf
         {
             /// <inheritdoc/>

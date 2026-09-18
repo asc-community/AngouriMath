@@ -433,6 +433,12 @@ namespace AngouriMath
                 => level == SortLevel.LOW_LEVEL ? "congruent_" : "";
         }
 
+        partial record Quantifier
+        {
+            private protected override string SortHashName(SortLevel level)
+                => level == SortLevel.LOW_LEVEL ? Keyword + "_" : "";
+        }
+
         partial record Cardf
         {
             private protected override string SortHashName(SortLevel level) => "card_";
