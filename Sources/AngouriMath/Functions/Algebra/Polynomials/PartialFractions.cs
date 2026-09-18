@@ -369,6 +369,13 @@ namespace AngouriMath.Functions
             => numerator.IsZero ? Integer.Create(0) : numerator.ToEntity(x) / denominator.ToEntity(x);
 
         /// <summary>
+        /// The largest value of the elimination, by <see cref="Entity.Complexity"/>, that is
+        /// put in lowest terms over the symbols; the ones that needed it were two thousand
+        /// nodes, and the ones that could not be were twenty thousand.
+        /// </summary>
+        private const int LargestValuePutInLowestTerms = 4096;
+
+        /// <summary>
         /// <c>N/D</c> written as one fraction per factor of <paramref name="denominator"/>,
         /// where the denominator is <b>written</b> as a product of distinct linear and quadratic
         /// factors whose coefficients may be symbols, or <see langword="false"/> where it is not
@@ -569,9 +576,14 @@ namespace AngouriMath.Functions
             // two thousand nodes each, and the integrand each makes with its factor went round
             // the chain and did not return.
             // https://github.com/asc-community/AngouriMath/issues/718
+            // Bounded: the lowest terms are an expansion and a gcd, and a value of twenty
+            // thousand nodes -- `cosh(c + d x)^6/(a + b sinh(c + d x)^2)^2` has four of them,
+            // and is answered in six seconds with them as they come -- did not return from
+            // either in three; past the bound a value is left as the elimination gave it.
             if (values.Any(value => value.Vars.Any()))
                 for (var column = 0; column < width; column++)
-                    values[column] = InLowestTermsOverTheSymbols(values[column]);
+                    if (values[column].Complexity <= LargestValuePutInLowestTerms)
+                        values[column] = InLowestTermsOverTheSymbols(values[column]);
             Entity sum = 0;
             for (var i = 0; i < factors.Count; i++)
             {
