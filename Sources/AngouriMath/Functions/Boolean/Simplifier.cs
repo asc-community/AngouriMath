@@ -1,67 +1,67 @@
-﻿//
+//
 // Copyright (c) 2019-2022 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
 // Website: https://am.angouri.org.
 //
 
+using System.Collections.Generic;
+using HonkSharp.Laziness;
+
 namespace AngouriMath
 {
     partial record Entity
     {
-        // ngl; it looks awful
-
-        private protected interface IBranchGetter<T>
-        { 
-            Entity Left(T node);
-            Entity Right(T node);
-        }
-
-        private protected static IEnumerable<Entity> LinearChildren<TNode, TGetter>(Entity expr)
-            where TNode : Entity where TGetter : struct, IBranchGetter<TNode>
-        {
-            if (expr is not TNode node)
-                return new[] { expr };
-            var (left, right) = (default(TGetter).Left(node), default(TGetter).Right(node));
-            return LinearChildren<TNode, TGetter>(left).Concat(LinearChildren<TNode, TGetter>(right));
-        }
+        // The flat list of a chain of one associative connective, cached on the node exactly as
+        // Sumf.LinearChildren and Mulf.LinearChildren are: a node is immutable, the list is a
+        // property of it, and a nested chain's list is built from the lists cached on its parts.
+        // https://github.com/asc-community/AngouriMath/issues/224
 
         partial record Orf
         {
-            private struct OrfBranchGetter : IBranchGetter<Orf> { public Entity Left(Orf node) => node.Left; public Entity Right(Orf node) => node.Right; }
-            internal static IEnumerable<Entity> LinearChildren(Entity expr)
-                => LinearChildren<Orf, OrfBranchGetter>(expr);
+            /// <summary>The disjuncts of a chain of <c>or</c>, flattened.</summary>
+            internal static IReadOnlyList<Entity> LinearChildren(Entity expr)
+                => expr is Orf chain ? chain.Linear : new[] { expr };
+            private IReadOnlyList<Entity> Linear => linear.GetValue(static @this => Sumf.Flatten(LinearChildren(@this.Left), LinearChildren(@this.Right)), this);
+            private LazyPropertyA<IReadOnlyList<Entity>> linear;
         }
 
         partial record Andf
         {
-            private struct AndfBranchGetter : IBranchGetter<Andf> { public Entity Left(Andf node) => node.Left; public Entity Right(Andf node) => node.Right; }
-            internal static IEnumerable<Entity> LinearChildren(Entity expr)
-                => LinearChildren<Andf, AndfBranchGetter>(expr);
+            /// <summary>The conjuncts of a chain of <c>and</c>, flattened.</summary>
+            internal static IReadOnlyList<Entity> LinearChildren(Entity expr)
+                => expr is Andf chain ? chain.Linear : new[] { expr };
+            private IReadOnlyList<Entity> Linear => linear.GetValue(static @this => Sumf.Flatten(LinearChildren(@this.Left), LinearChildren(@this.Right)), this);
+            private LazyPropertyA<IReadOnlyList<Entity>> linear;
         }
 
         partial record Xorf
         {
-            private struct XorfBranchGetter : IBranchGetter<Xorf> { public Entity Left(Xorf node) => node.Left; public Entity Right(Xorf node) => node.Right; }
-            internal static IEnumerable<Entity> LinearChildren(Entity expr)
-                => LinearChildren<Xorf, XorfBranchGetter>(expr);
-
+            /// <summary>The operands of a chain of <c>xor</c>, flattened.</summary>
+            internal static IReadOnlyList<Entity> LinearChildren(Entity expr)
+                => expr is Xorf chain ? chain.Linear : new[] { expr };
+            private IReadOnlyList<Entity> Linear => linear.GetValue(static @this => Sumf.Flatten(LinearChildren(@this.Left), LinearChildren(@this.Right)), this);
+            private LazyPropertyA<IReadOnlyList<Entity>> linear;
         }
 
         partial record Set
         {
             partial record Unionf
             {
-                private struct UnionfBranchGetter : IBranchGetter<Unionf> { public Entity Left(Unionf node) => node.Left; public Entity Right(Unionf node) => node.Right; }
-                internal static IEnumerable<Entity> LinearChildren(Entity expr)
-                    => LinearChildren<Unionf, UnionfBranchGetter>(expr);
+                /// <summary>The sets of a chain of unions, flattened.</summary>
+                internal static IReadOnlyList<Entity> LinearChildren(Entity expr)
+                    => expr is Unionf chain ? chain.Linear : new[] { expr };
+                private IReadOnlyList<Entity> Linear => linear.GetValue(static @this => Sumf.Flatten(LinearChildren(@this.Left), LinearChildren(@this.Right)), this);
+                private LazyPropertyA<IReadOnlyList<Entity>> linear;
             }
 
             partial record Intersectionf
             {
-                private struct IntersectionfBranchGetter : IBranchGetter<Intersectionf> { public Entity Left(Intersectionf node) => node.Left; public Entity Right(Intersectionf node) => node.Right; }
-                internal static IEnumerable<Entity> LinearChildren(Entity expr)
-                    => LinearChildren<Intersectionf, IntersectionfBranchGetter>(expr);
+                /// <summary>The sets of a chain of intersections, flattened.</summary>
+                internal static IReadOnlyList<Entity> LinearChildren(Entity expr)
+                    => expr is Intersectionf chain ? chain.Linear : new[] { expr };
+                private IReadOnlyList<Entity> Linear => linear.GetValue(static @this => Sumf.Flatten(LinearChildren(@this.Left), LinearChildren(@this.Right)), this);
+                private LazyPropertyA<IReadOnlyList<Entity>> linear;
             }
         }
     }
