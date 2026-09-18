@@ -412,6 +412,22 @@ shorter than the symbolic split's.
 | `"1/(u*(u^2 + 1)^6*(a*(u^2 + 1) + 2*a*u))".Integrate("u")` | unevaluated | `(17/24 - 829/1536 u + … - 273/512 u^10)/(a (u^2 + 1)^5 (u + 1)) + ln(u)/a - 7/64 ln(u + 1)/a - 57/128 ln(u^2 + 1)/a - 329/512 arctan(u)/a` |
 | `"u^5/((u^2 - 1)^5*(2*a*u + b*(u^2 + 1)))".Integrate("u")` | unevaluated | the same piecewise in `u`, its coefficients `1/256 (3a^3 - 7ab^2)/(a^4 - 2a^2 b^2 + b^4)` and the like rather than two thousand nodes each |
 
+### A logarithm of a nested quotient is written over one bar under the exponential substitution
+
+**Improvement, not silent.** `atanh(tanh(a + b x))` reaches the integrator as
+`1/2 ln((1 + (w - 1)/(w + 1))/(1 - (w - 1)/(w + 1)))` in `w = e^(2(a + b x))`, and under `u = w`
+that logarithm is `1/2 ln(u)`; but the combining on the way into the substitution reaches the
+quotient the integrand is and not one inside a function, the simplifier combines nothing (#1239),
+and the substitution search compared its candidates against the nested spelling and never saw
+the `u`. A logarithm whose argument is a rational function of `u` with a quotient nested in it is
+now written over one bar in lowest terms, where that is smaller, before the question in `u` is
+asked. Only under that substitution; `Simplify` still combines nothing.
+
+| | Was | Is |
+|---|---|---|
+| `"1/sqrt(atanh(tanh(a + b*x)))".Integrate("x")` | unevaluated after 49 s | `2 (1/2 ln(e^(2 b x + 2 a)))^(1/2)/(1/2)/(2 b)`, 0.3 s |
+| `"atanh(tanh(a + b*x))^(1/2)".Integrate("x")` | unevaluated | `2 (1/2 ln(e^(2 b x + 2 a)))^(3/2)/(3/2)/(2 b)` |
+
 ### A condition the answer states on its own is no longer repeated beside it
 
 **Improvement, not silent.** `Simplify` returned `(1 - ln(x))/x^2 provided not x = 0` for the

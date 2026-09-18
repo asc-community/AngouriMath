@@ -9828,6 +9828,7 @@ namespace AngouriMath.Functions.Algebra
                 rewritten / (Number.Rational.Create(k) * u)).Simplify();
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
+            integrand = WithLogarithmArgumentsOverOneBar(integrand, u);
             // A whole power of a product is written as the product of the powers: the
             // simplifier writes `4a^2 u^2` as `(a u)^2 4`, and no rational reader sees the `u^2`
             // inside -- Timofeev's `1/(a^2 + b^2 cosh(x)^2)` was declined in that spelling and
@@ -9878,6 +9879,40 @@ namespace AngouriMath.Functions.Algebra
                 return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
             }
         }
+
+        /// <summary>
+        /// <paramref name="expr"/> with every logarithm whose argument is a rational function
+        /// of <paramref name="x"/> with a quotient nested inside it written over one bar in
+        /// lowest terms, where that is smaller: <c>ln((1 + (u - 1)/(u + 1))/(1 - (u - 1)/(u + 1)))</c>
+        /// is <c>ln(u)</c>.
+        /// </summary>
+        /// <remarks>
+        /// The combining above reaches the quotient the integrand is and not one inside a
+        /// function, and the simplifier combines nothing
+        /// (https://github.com/asc-community/AngouriMath/issues/1239). <c>atanh(tanh(a + b x))</c>
+        /// arrives as half that logarithm of <c>tanh</c> written in <c>e^(2(a + b x))</c>, and
+        /// under <c>u</c> the substitution search compared its candidates against the nested
+        /// spelling and never saw the <c>u</c> it is: <c>1/sqrt(atanh(tanh(a + b x)))</c> was
+        /// answered before the substitution took a symbolic slope and not after.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static Entity WithLogarithmArgumentsOverOneBar(Entity expr, Entity.Variable x)
+            => expr.Replace(node =>
+            {
+                if (node is not Logf(var logBase, var argument) || logBase != MathS.e || !argument.ContainsNode(x) || !IsARationalFunction(argument, x)
+                    || !argument.Nodes.Any(inner => inner is Divf && inner != argument))
+                    return node;
+                var (above, below) = Functions.SingleQuotient.Of(argument);
+                var over = below == Number.Integer.One ? above.InnerSimplified
+                    : Functions.PolynomialGcd.TryCancel(above.InnerSimplified, below.InnerSimplified, out var cancelled)
+                        ? Functions.PartialFractions.Bare(cancelled).InnerSimplified
+                        : (above / below).InnerSimplified;
+                if (over.Complexity >= argument.Complexity)
+                    return node;
+                // Small by now, and `2u/2` is what the cancellation leaves of `(2u/(u + 1))/(2/(u + 1))`.
+                over = Functions.PartialFractions.Bare(over.Simplify());
+                return MathS.Ln(over);
+            });
 
         /// <summary>
         /// A product with a whole negative power of a polynomial in <paramref name="x"/> of

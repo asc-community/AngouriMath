@@ -408,6 +408,22 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBackWithParametersPinned(integrand, new[] { -0.5, 0.23, 0.61, 1.05, 1.7 });
 
         /// <summary>
+        /// A logarithm's argument that is a rational function of <c>u</c> with a quotient
+        /// nested in it is written over one bar in lowest terms: <c>atanh(tanh(a + b x))</c>
+        /// arrives as <c>1/2 ln((1 + (u - 1)/(u + 1))/(1 - (u - 1)/(u + 1)))</c> under
+        /// <c>u = e^(2(a + b x))</c>, which is <c>1/2 ln(u)</c>, and the substitution search
+        /// compared its candidates against the nested spelling and never saw it. The
+        /// combining on the way in reaches the quotient the integrand is and not one inside a
+        /// function, and the simplifier combines nothing.
+        /// </summary>
+        [Theory]
+        [InlineData("1/sqrt(atanh(tanh(a + b*x)))")]
+        [InlineData("atanh(tanh(a + b*x))^(1/2)")]
+        [InlineData("1/atanh(tanh(a + b*x))^2")]
+        public void ALogarithmOfANestedQuotientIsWrittenOverOneBar(string integrand)
+            => DifferentiatesBackWithParametersPinned(integrand, new[] { -0.5, 0.23, 0.61, 1.05, 1.7 });
+
+        /// <summary>
         /// A quotient the gathering on the chain's entry writes as a product with a negative
         /// power -- <c>u^3/((a u^2 + b)^3 u)</c> as <c>u^2 (a u^2 + b)^(-3)</c> -- is written
         /// back below the bar where the rational rules read it: Rubi's <c>1/(b/f^x + a f^x)^3</c>.
