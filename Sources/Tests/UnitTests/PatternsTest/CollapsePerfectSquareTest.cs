@@ -66,6 +66,25 @@ namespace AngouriMath.Tests.PatternsTest
         }
 
         /// <summary>
+        /// A polynomial in a subexpression factors as the polynomial does: the smallest
+        /// subtree that holds every occurrence of the variable stands in for it, exactly as
+        /// the equation solver replaces it, and the factors are read back through it.
+        /// https://github.com/asc-community/AngouriMath/issues/203
+        /// </summary>
+        [Theory]
+        [InlineData("sin(x)^2 + 2 sin(x) + 1", "(sin(x) + 1) ^ 2")]
+        [InlineData("ln(x)^2 - 4", "(ln(x) - 2) * (ln(x) + 2)")]
+        [InlineData("sin(2 x)^2 - 1", "(sin(2 * x) - 1) * (sin(2 * x) + 1)")]
+        [InlineData("sin(x) + sin(x)^3", "sin(x) * (sin(x) ^ 2 + 1)")]
+        [InlineData("cos(x)^2 - sin(x)^2", "(cos(x) - sin(x)) * (cos(x) + sin(x))")]
+        public void APolynomialInASubexpressionFactors(string expr, string expected)
+        {
+            var factored = expr.ToEntity().Factorize();
+            Assert.Equal(expected.ToEntity(), factored);
+            AssertSameValue(expr, factored);
+        }
+
+        /// <summary>
         /// A sum that is not a square must be left alone -- the cross term has to be
         /// exactly twice the product of the two roots, and a rule that rounded that off
         /// would be inventing an identity.
