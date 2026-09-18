@@ -58,6 +58,7 @@ prints as `x + y + z` and reads back as `(x + y) + z` — the same number, a dif
 
 | | operators | notes |
 |---|---|---|
+| 0 | `forall … :`, `exists … :`, `exists! … :`, `=>` | prefix binders whose body **runs to the end of the line**; see the quantifier paragraph and the lambda arrow below |
 | 1 | `provided` | **groups to the right**: `a provided b provided c` is `a provided (b provided c)` |
 | 2 | `implies` `->` | |
 | 3 | `or` | |
@@ -248,6 +249,24 @@ other: `a b => a + b` is `a => b => a + b`, which is `lambda(a, b, a + b)`. The 
 looser than everything else and its body runs to the end, so `a => a + 3` is `a => (a + 3)`.
 Every parameter must be a name — `a 3 => 3` is refused — and the body is read exactly as
 `lambda(...)` reads it, so an index called `i` means the name and not the imaginary unit.
+
+**Quantifiers.** `forall x in S : P`, `exists x in S : P` and `exists! x in S : P` — also `∀`,
+`∃` and `∃!`, which the parser reads — are the statements that every, some, or exactly one member
+of `S` satisfies `P`. The set is mandatory, because a statement is quantified over something:
+`forall x : P` is refused. Several names may share a set, `forall x, y in RR : 2 x y <= x^2 + y^2`,
+and several sets may be listed, `forall a in ZZ, b in ZZ+ : ...`; either way the quantifiers nest
+from the left and print nested. The body runs to the end of the line, as a lambda arrow's does, so
+a quantifier under a connective is bracketed: `(forall x in RR : x^2 >= 0) and Q`. The one
+exception is `not`, which reads `not forall x in S : P` as the negation of the whole statement.
+The name is bound throughout the body and the set, so `forall x in RR : x < y` is a statement
+about `y`. Decided over a finite set by evaluating the body at every member (`forall x in {1, 2,
+3, 4} : exists y in {3, 4, 5, 6, 7, 8} : x + y = 7` is `True`), over `BB` as over `{True,
+False}`, and over an infinite set by a counterexample (`forall n in ZZ : n^2 <= n^3` is `False` at
+`n = -1`) or by solving where the solver reads the body (`forall x in RR : x^2 >= 0` is `True`,
+`exists x in RR : x^2 + 1 = 0` is `False` and `exists x in CC : x^2 + 1 = 0` is `True`); left as
+written otherwise, never guessed. `not` passes through a quantifier by flipping it: `not forall
+x in S : P` is `exists x in S : not P`. In LaTeX, `\forall x \in S : P`. `forall`, `exists` and
+`exists!` are keywords, so they are not names.
 
 `domain` takes a special set — `CC` `RR` `QQ` `ZZ` `ZZ*` `ZZ+` `BB` — or the keyword `Any`, and
 sets the *codomain* of whatever node it wraps, which is what makes the expression evaluate to

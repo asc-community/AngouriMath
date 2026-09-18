@@ -501,6 +501,25 @@ read as well. Neither spelling parsed before.
 | `x < y (mod 3)` | `UnhandledParseException` | `InvalidArgumentParseException` |
 | `5 mod 3` | `2` | `2` (unchanged: the operator is a number, the relation is a statement) |
 
+### `forall`, `exists` and `exists!` are quantifiers, and were names
+
+`forall x in S : P`, `exists x in S : P` and `exists! x in S : P` — also `∀`, `∃`, `∃!` — are the
+statements that every, some, or exactly one member of `S` satisfies `P`, decided over a finite set
+by evaluation, over an infinite one by a counterexample or by the solver, and left as written
+otherwise ([#1409](https://github.com/asc-community/AngouriMath/issues/1409),
+[#225](https://github.com/asc-community/AngouriMath/issues/225)). The three words are keywords
+now, which is the one silent change: a variable spelled `forall` or `exists` no longer parses.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall x in RR : x^2 >= 0` | `UnhandledParseException` | `True` |
+| `exists x in RR : x^2 + 1 = 0` | `UnhandledParseException` | `False`; over `CC`, `True` |
+| `forall x in {1, 2, 3, 4} : exists y in {3, 4, 5, 6, 7, 8} : x + y = 7` | `UnhandledParseException` | `True` |
+| `∀ x in RR : x^2 >= 0` | `UnhandledParseException` | `True` |
+| `forall x : x^2 >= 0` | `UnhandledParseException` | `InvalidArgumentParseException`: the set is mandatory |
+| `forall + 1` | `forall + 1`, a variable named `forall` | `UnhandledParseException` |
+| `exists(x)` | `exists * x` | `UnhandledParseException` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

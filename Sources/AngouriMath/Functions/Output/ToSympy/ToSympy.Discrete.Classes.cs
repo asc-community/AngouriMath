@@ -5,6 +5,8 @@
 // Website: https://am.angouri.org.
 //
 
+using AngouriMath.Core.Exceptions;
+
 namespace AngouriMath
 {
     partial record Entity
@@ -57,6 +59,14 @@ namespace AngouriMath
             // and `Eq` keeps it a statement where `==` would force a bool.
             internal override string ToSymPy()
                 => $"sympy.Eq(sympy.Mod({Dividend.ToSymPy()}, {Divisor.ToSymPy()}), 0)";
+        }
+
+        partial record Quantifier
+        {
+            // SymPy has no quantifiers: its assumptions are per symbol, and there is nothing a
+            // statement about every member of a set translates to.
+            internal override string ToSymPy()
+                => throw new NotSufficientlySupportedException("SymPy has no quantifiers; decide the statement here and export the answer");
         }
 
         partial record Congruentf

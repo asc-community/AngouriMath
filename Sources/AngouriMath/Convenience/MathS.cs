@@ -1364,6 +1364,66 @@ namespace AngouriMath
             => expression.Provided(condition);
 
         /// <summary>
+        /// The statement that every member of <paramref name="over"/> satisfies
+        /// <paramref name="body"/>, written <c>forall var in over : body</c>. Decided over a
+        /// finite set by evaluation at every member, over an infinite one by a counterexample
+        /// or by solving where the solver reads the body, and left as written otherwise.
+        /// https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// Console.WriteLine(MathS.ForAll("x", "RR", "x^2 &gt;= 0").Simplify());
+        /// Console.WriteLine("forall n in ZZ : n^2 &lt;= n^3".ToEntity().Simplify());
+        /// Console.WriteLine("forall x in {1, 2, 3, 4} : exists y in {3, 4, 5, 6, 7, 8} : x + y = 7".ToEntity().Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// True
+        /// False
+        /// True
+        /// </code>
+        /// </example>
+        public static Entity ForAll(Entity var, Entity over, Entity body) => new Forallf(var, over, body);
+
+        /// <summary>
+        /// The statement that some member of <paramref name="over"/> satisfies
+        /// <paramref name="body"/>, written <c>exists var in over : body</c>.
+        /// See <see cref="ForAll(Entity, Entity, Entity)"/>.
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// Console.WriteLine(MathS.Exists("x", "RR", "x^2 - 4 x + 4 = 0").Simplify());
+        /// Console.WriteLine("exists x in RR : x^2 + 1 = 0".ToEntity().Simplify());
+        /// Console.WriteLine("exists x in CC : x^2 + 1 = 0".ToEntity().Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// True
+        /// False
+        /// True
+        /// </code>
+        /// </example>
+        public static Entity Exists(Entity var, Entity over, Entity body) => new Existsf(var, over, body);
+
+        /// <summary>
+        /// The statement that exactly one member of <paramref name="over"/> satisfies
+        /// <paramref name="body"/>, written <c>exists! var in over : body</c>.
+        /// See <see cref="ForAll(Entity, Entity, Entity)"/>.
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// Console.WriteLine(MathS.ExistsUnique("x", "ZZ+", "x^2 = 4").Simplify());
+        /// Console.WriteLine("exists! x in RR : x^2 = 4".ToEntity().Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// True
+        /// False
+        /// </code>
+        /// </example>
+        public static Entity ExistsUnique(Entity var, Entity over, Entity body) => new ExistsUniquef(var, over, body);
+
+        /// <summary>
         /// This is a piecewisely defined function, which turns into a particular definition
         /// once there exists a case number N such that case[N].Predicate is turned into true and
         /// for all i less than N : case[i].Predicate is turned into false.

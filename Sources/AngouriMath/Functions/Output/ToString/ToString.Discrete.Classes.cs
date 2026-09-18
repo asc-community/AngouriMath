@@ -77,6 +77,35 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        partial record Quantifier
+        {
+            /// <inheritdoc/>
+            // The body runs to the end of the line, so it is never bracketed; the set is, where
+            // it is not something `in` reads.
+            private protected override string StringizeNode()
+                => $"{Keyword} {Var.Stringize()} in {Over.Stringize(Over.Priority < Priority.SetOperation)} : {Body.Stringize()}";
+        }
+
+        // A record synthesizes ToString for itself unless it declares one, whatever its base
+        // declares, so each of the three says it prints as its Stringize.
+        partial record Forallf
+        {
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        partial record Existsf
+        {
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        partial record ExistsUniquef
+        {
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         partial record Congruentf
         {
             /// <inheritdoc/>
