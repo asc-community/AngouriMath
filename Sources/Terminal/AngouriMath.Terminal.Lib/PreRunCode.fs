@@ -19,6 +19,14 @@ let eval (x : obj) =
     | :? Entity.Number.Complex as cx -> cx.RealPart.EDecimal.ToString() + "" + "" + cx.ImaginaryPart.EDecimal.ToString() + ""i""
     | other -> (evaled other).ToString()
 
+/// Every value a cell has produced, oldest first: `run.[0]` is the first, `run.[run.Count - 1]`
+/// the last, and `back 1` the last, `back 2` the one before it. F# Interactive's own `it` is
+/// the last value only. Declared before the arithmetic operators are opened, since under them
+/// `run.Count - n` would build an expression rather than an index. https://github.com/asc-community/AngouriMath/issues/601
+let run = ResizeArray<obj> ()
+
+let back (n : int) = run.[run.Count - n]
+
 open AngouriMath.Interactive.ArithmeticOperators
 
 let x = symbol ""x""
