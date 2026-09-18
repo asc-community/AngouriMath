@@ -138,6 +138,13 @@ repository the moment the printed form stops parsing; the LaTeX contract fails a
 someone else, months later. When you change `Latexize` output, check it against CSharpMath and open
 a PR there as well ([#822](https://github.com/asc-community/AngouriMath/issues/822)).
 
+**The standard command wins, and CSharpMath follows it.** `Latexize` emits the LaTeX a
+mathematician would write — `\binom{n}{k}`, `\pmod{n}`, `\mathbb{Z}^{+}` — and never a
+substitute chosen because the reader does not know the real one yet. If CSharpMath does not read a
+command this library now prints, that is work in CSharpMath, done by you, as a pull request there,
+alongside the change here; the two land together. Choosing the command CSharpMath happens to know
+would fix the round trip by making the output wrong, which is the one trade this file never allows.
+
 The syntax the parser accepts is written down in
 [`Docs/Usage/Syntax.md`](Sources/AngouriMath/Docs/Usage/Syntax.md). Keep it true when you change the
 grammar — and change the grammar the way
@@ -555,6 +562,32 @@ stable at. Keep it next to the work — a PR body and a branch name carry most o
 
 Do not add a coordination mechanism where the repository already has an adequate one, and do not
 leave project-management scaffolding behind once the work it tracked has landed.
+
+### Milestones, and what clears a release
+
+Every open issue is on a milestone or is visibly untriaged, and the milestone says what kind of
+change it is, not only when:
+
+- **The next minor** (`2.6.0`, then `2.7.0`, …) carries defects and additive work that moves no
+  existing answer. Pace it: a minor that holds everything "minor" is a release that never ships, so
+  what will not be in the next one goes to the one after, and a release is cut when what is left
+  can be moved with a reason rather than when the list is empty.
+- **The next major** (`3.0`) carries what re-values existing input — the docket in
+  [#1019](https://github.com/asc-community/AngouriMath/issues/1019). An item that breaks something
+  is never on a minor, however agreed it is; if an issue is half additive and half breaking, split
+  it.
+- **Future** is an explicit deprioritisation, and the only one: it replaces the `Not now` label, and
+  nothing sits there because it is hard. A "not now" that is ready to do is on a version.
+- **Epics** — the agentic goals, #718, #1409 and their kind — spawn sub-issues, and it is the
+  sub-issues that carry version milestones; the epic itself stays open across releases and lists
+  what each one delivered.
+- A proposal without `Accepted` has no milestone: scheduling it would decide it.
+
+Assign the milestone when filing. When a PR merges, check its issue's milestone still describes
+where the change lands — a fix that turned out breaking moves to the major, with a
+`BREAKING-CHANGES.md` entry. Release clearance is the milestone read through: every open item on
+it either ships in this release or is moved with a sentence saying why, and the release notes are
+written from the closed ones.
 
 ### When two agents need the same code
 
