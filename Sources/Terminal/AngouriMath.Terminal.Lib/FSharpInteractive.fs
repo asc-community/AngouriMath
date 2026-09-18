@@ -39,6 +39,13 @@ let private objectDecode (s : string Option) =
         JsonSerializer.Deserialize<ExecutionResult> (latex.[EncodingLatexPrefix.Length..], options) |> nonNull
     | _ -> VoidSuccess
 
+/// The cell that appends the last value to `run`, the history PreRunCode declares. `it` is
+/// what F# Interactive binds the value of an expression cell to, so this is sent after every
+/// cell that displayed a value, and it fails harmlessly -- and silently -- before `run` exists,
+/// which is only during the warm-up cell.
+/// https://github.com/asc-community/AngouriMath/issues/601
+let private rememberCode = "run.Add (box it)"
+
 let execute (kernel : FSharpKernel) code =
     let submitCode = SubmitCode code
     let computed = (kernel.SendAsync submitCode).Result    // Yes. It's Result.
@@ -55,6 +62,11 @@ let execute (kernel : FSharpKernel) code =
         | :? DisplayEvent as display ->
             nonVoidResponse <- (Seq.head display.FormattedValues).Value |> Some
         | _ -> ()
+
+    match res, nonVoidResponse with
+    | Some (PlainTextSuccess _ | LatexSuccess _), Some _ when code <> rememberCode ->
+        (kernel.SendAsync (SubmitCode rememberCode)).Result |> ignore
+    | _ -> ()
 
     match res with
     | None -> EndOfFile

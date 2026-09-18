@@ -27,3 +27,25 @@ To uninstall it, run
 dotnet tool uninstall --global AngouriMath.Terminal
 ```
 
+
+## Earlier results
+
+Every value a cell produces is kept: `it` is the last one, as in F# Interactive, `run` is all of
+them oldest first, and `back n` counts from the end.
+
+```
+[...] 1 + 10
+11
+
+[...] 2 * 10
+20
+
+[...] back 1
+20
+
+[...] run.[0]
+11
+```
+
+A cell with no value — a `let` — adds nothing, and a question about the history is itself a cell
+with a value, so it is remembered too.

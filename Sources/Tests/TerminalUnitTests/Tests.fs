@@ -1,4 +1,4 @@
-module AngouriMath.Terminal.Tests
+﻿module AngouriMath.Terminal.Tests
 
 open System
 open Xunit
@@ -53,6 +53,22 @@ let executeNewWithAm code =
         |> Assert.True
     execute kernel code
 
+
+// Every value a cell produces is kept in `run`, oldest first, and `back n` counts from the end;
+// a cell without a value (a `let`) adds nothing. https://github.com/asc-community/AngouriMath/issues/601
+[<Fact>]
+let ``The values of earlier cells are kept in run`` () =
+    let kernel = ``Create kernel or fail`` ()
+    enableAngouriMath kernel |> ignore
+    execute kernel "1 + 10" |> ignore
+    execute kernel "let unused = 4" |> ignore
+    execute kernel "2 * 10" |> ignore
+    Assert.Equal(PlainTextSuccess "2", execute kernel "run.Count")
+    // Asking is itself a cell with a value, so each question is remembered too.
+    Assert.Equal(LatexSuccess ("11", "11"), execute kernel "run.[0]")
+    Assert.Equal(LatexSuccess ("20", "20"), execute kernel "run.[1]")
+    Assert.Equal(LatexSuccess ("11", "11"), execute kernel "back 5")
+    Assert.Equal(PlainTextSuccess "6", execute kernel "run.Count")
 
 [<Fact>]
 let ``Test 1`` () =
