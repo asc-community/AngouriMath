@@ -438,7 +438,34 @@ them, and there is deliberately no set named after the natural numbers
 |---|---|---|
 | `0 in ZZ*` | `UnhandledParseException` | `True` |
 | `ZZ*2` | `ZZ * 2` (a product of a set and a number) | `UnhandledParseException` — `ZZ*` is a token; `ZZ * 2` with the space still reads as before |
-| `domain(x, ZZ*)` | `UnhandledParseException` | `InvalidArgumentParseException`: a set, not a codomain |
+| `domain(x, ZZ*)` | `UnhandledParseException` | a node over the codomain `Domain.NonNegativeInteger`; `domain(x, ZZ+)` over `Domain.PositiveInteger`, both narrower than `Integer` |
+| `NN`, `3 in NN` | the variable `NN` | `InvalidArgumentParseException` naming `ZZ*` and `ZZ+` |
+
+`Domain` has the two new members `PositiveInteger` and `NonNegativeInteger` between `Boolean` and
+`Integer`, so the numeric values of `Integer` and everything above it have moved; nothing in the
+library reads the numbers, and JSON carries the name.
+
+A set builder written with its membership in the name position, `{ x in ZZ : x < 0 }`, used to
+keep `x in ZZ` *as* its bound name, so nothing substituted for `x` and membership was never
+decided; the name is now `x` and the membership is the first conjunct of the predicate, and the
+set prints as it was written:
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `-3 in { x in ZZ : x < 0 }` | as written | `True` |
+| `{ x in ZZ : x < 0 } = { x : x in ZZ and x < 0 }` (as entities) | unequal | equal |
+
+And the set operators now answer for two special sets, which nest as `ZZ+ ⊂ ZZ* ⊂ ZZ ⊂ QQ ⊂ RR ⊂ CC`
+with `BB` beside them, where 2.5.0 left every such expression as written:
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `ZZ unite QQ` | `ZZ \/ QQ` | `QQ` |
+| `ZZ intersect RR` | `ZZ /\ RR` | `ZZ` |
+| `BB intersect ZZ` | `BB /\ ZZ` | `{}` |
+| `RR \ RR` | `RR \ RR` | `{}` |
+| `QQ \ ZZ` | `QQ \ ZZ` | `{ x in QQ : not x in ZZ }` |
+| `ZZ \ ZZ*` | — | `{ x in ZZ : x < 0 }`; `ZZ* \ ZZ+` is `{ 0 }` |
 
 ### `binomial(n, k)` is a function
 

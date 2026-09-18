@@ -79,6 +79,8 @@ AngouriMath.Core.Domain.Any : AngouriMath.Core.Domain
 AngouriMath.Core.Domain.Boolean : AngouriMath.Core.Domain
 AngouriMath.Core.Domain.Complex : AngouriMath.Core.Domain
 AngouriMath.Core.Domain.Integer : AngouriMath.Core.Domain
+AngouriMath.Core.Domain.NonNegativeInteger : AngouriMath.Core.Domain
+AngouriMath.Core.Domain.PositiveInteger : AngouriMath.Core.Domain
 AngouriMath.Core.Domain.Rational : AngouriMath.Core.Domain
 AngouriMath.Core.Domain.Real : AngouriMath.Core.Domain
 AngouriMath.Core.Domain.value__ : System.Int32

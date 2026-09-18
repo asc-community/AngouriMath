@@ -37,7 +37,9 @@ namespace AngouriMath
             {
                 /// <inheritdoc/>
                 private protected override string LatexizeNode()
-                    => $@"\left\{{ {Var.Latexize()} : {Predicate.Latexize()} \right\}}";
+                    => DeclaredMembership is var (set, rest)
+                        ? $@"\left\{{ {Var.Latexize()} \in {set.Latexize()} : {rest.Latexize()} \right\}}"
+                        : $@"\left\{{ {Var.Latexize()} : {Predicate.Latexize()} \right\}}";
             }
 
             partial record SpecialSet

@@ -310,7 +310,17 @@ atom returns[Entity value]
     | NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
     | BOOLEAN { $value = Entity.Boolean.Parse($BOOLEAN.text); }
     | SPECIALSET { $value = Entity.Set.SpecialSet.Create($SPECIALSET.text); }
-    | VARIABLE { $value = Entity.Variable.CreateVariableOrConstant($VARIABLE.text); }
+    | VARIABLE
+        {
+            // There is no set of natural numbers here, because the name means {0, 1, 2, ...} to
+            // some authors and {1, 2, 3, ...} to others; the two are spelled apart as ZZ* and
+            // ZZ+. Read as a variable, NN would go on silently standing for nothing, so the
+            // name is refused with the two spellings.
+            // https://github.com/asc-community/AngouriMath/issues/1409
+            if ($VARIABLE.text == "NN")
+                throw new InvalidArgumentParseException("There is no set NN: write ZZ* for the non-negative integers {0, 1, 2, ...} or ZZ+ for the positive integers {1, 2, 3, ...}");
+            $value = Entity.Variable.CreateVariableOrConstant($VARIABLE.text);
+        }
     | '(|' expression '|)' { $value = $expression.value.Abs(); }
     | '#' p = atom { $value = MathS.Sets.Card($p.value); }
 
@@ -499,12 +509,6 @@ atom returns[Entity value]
                 $value = annotated.WithCodomain(AngouriMath.Core.Domain.Any);
             else if ($args.list[1] is not SpecialSet ss)
                 throw new InvalidArgumentParseException($"Unrecognized special set {$args.list[1].Stringize()}");
-            // ZZ* and ZZ+ are sets but not codomains: the Domain enum has no member for them,
-            // and reading domain(x, ZZ*) as domain(x, ZZ) would drop the sign the caller
-            // wrote, so it is refused rather than widened.
-            // https://github.com/asc-community/AngouriMath/issues/1409
-            else if (ss is SpecialSet.NonNegativeIntegers or SpecialSet.PositiveIntegers)
-                throw new InvalidArgumentParseException($"{ss.Stringize()} is a set but not a codomain; domain(...) takes CC, RR, QQ, ZZ, BB or Any");
             else
                 $value = annotated.WithCodomain(ss.ToDomain());
         }
