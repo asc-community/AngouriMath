@@ -364,6 +364,13 @@ namespace AngouriMath
                 => this == x ? value : New(Divisor.Substitute(x, value), Dividend.Substitute(x, value));
         }
 
+        partial record Congruentf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value), Modulus.Substitute(x, value));
+        }
+
         partial record Cardf
         {
             /// <inheritdoc/>

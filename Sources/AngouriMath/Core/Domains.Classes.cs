@@ -533,6 +533,14 @@ namespace AngouriMath
             internal override Domain DefaultCodomain => Domain.Boolean;
         }
 
+        partial record Congruentf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Boolean;
+            /// <inheritdoc/>
+            internal override Domain DefaultCodomain => Domain.Boolean;
+        }
+
         partial record Cardf
         {
             /// <inheritdoc/>

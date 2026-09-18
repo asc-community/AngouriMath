@@ -31,6 +31,8 @@ namespace AngouriMath.Core
         EqualitySignsOperation = 0x2000,
 
         Equal          = EqualitySignsOperation,
+        /// <summary><c>a = b (mod n)</c> parses at the level of <c>=</c>.</summary>
+        Congruent      = EqualitySignsOperation,
         LessThan       = EqualitySignsOperation,
         GreaterThan    = EqualitySignsOperation,
         LessOrEqual    = EqualitySignsOperation,

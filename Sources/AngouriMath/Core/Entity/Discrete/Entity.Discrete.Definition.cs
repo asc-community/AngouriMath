@@ -126,6 +126,13 @@ namespace AngouriMath
         /// <returns>A node</returns>
         public Entity Divides(Entity dividend) => new Dividesf(this, dividend);
 
+        /// <summary>
+        /// The statement that this and <paramref name="other"/> are congruent modulo
+        /// <paramref name="modulus"/>: <c>a = b (mod n)</c>, which is <c>n divides a - b</c>.
+        /// </summary>
+        /// <returns>A node</returns>
+        public Entity CongruentTo(Entity other, Entity modulus) => new Congruentf(this, other, modulus);
+
         internal static Entity HangOperator(Entity a, Entity b, Func<Entity, Entity, Entity> ctor)
            => a switch
            {

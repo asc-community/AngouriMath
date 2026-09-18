@@ -64,8 +64,21 @@ prints as `x + y + z` and reads back as `(x + y) + z` — the same number, a dif
 | 4 | `xor` | |
 | 5 | `and` `&` | |
 | 6 | `not` | prefix |
-| 7 | `=` `<>` `>` `>=` `<` `<=` | chained: `a < b < c` means `a < b and b < c` |
+| 7 | `=` `<>` `>` `>=` `<` `<=`, `≡` | chained: `a < b < c` means `a < b and b < c`; a trailing `(mod n)` makes the `=`/`≡` links congruences, see below |
 | 8 | `in`, `divides` `\|` | one level; `a divides b` and `a \| b` are the statement that `b` is a whole multiple of `a`, defined over the integers and `NaN` elsewhere |
+
+**Congruence.** `a = b (mod n)` — also `a ≡ b (mod n)`, which the parser reads and `Stringize`
+does not yet print — is the statement that `n` divides `a - b`: a relation between integers with
+the modulus written once at the end of the line, which is how mathematics writes it and not the
+remainder operator `a mod n`, which is a number. A chain `a ≡ b ≡ c (mod n)` is the conjunction of
+its links. Decided for numbers (`5^6 = 1 (mod 7)` is `True`, `-1 = 9 (mod 10)` is `True`,
+`37457 = 38201 (mod 10)` is `False`), `NaN` off the integers, and decided for symbols where the
+difference is a polynomial every term of which the modulus divides: `(n - a)^2 = a^2 (mod n)` and
+`(x + y)^5 = x^5 + y^5 (mod 5)` are `True`, while `(x + y)^4 = x^4 + y^4 (mod 4)` stays as written
+because `6 x^2 y^2` is not a multiple of `4` for every `x, y`. Modulo `0` it is equality, and the
+sign of the modulus is immaterial. `(mod n)` after an order comparison, or `≡` without a modulus,
+is a parse error. In LaTeX, `a \equiv b \pmod{n}`. The one place implicit multiplication does not
+apply: `b (mod n)` is not `b * (mod n)`, a bracket that opens on `mod` is a modulus.
 | 9 | `unite` `\/`, `setsubtract` `\` | one level, so `A \/ B \ C` is `(A \/ B) \ C` |
 | 10 | `intersect` `/\` | |
 | 11 | `+` `-` | |

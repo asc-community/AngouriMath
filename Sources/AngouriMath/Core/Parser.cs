@@ -97,6 +97,10 @@ namespace AngouriMath.Core
                 rightId = nextRightId;
                 if ((GetType(tokenList[leftId]), GetType(tokenList[rightId])) switch
                     {
+                        // A bracket that opens on `mod` is a congruence's modulus, `a = b (mod n)`,
+                        // not a factor: `b (mod n)` is not `b * (mod n)`, which is nothing.
+                        // https://github.com/asc-community/AngouriMath/issues/1409
+                        (_, PARENTHESIS_OPEN) when OpensOnMod(tokenList, rightId) => null,
                         // 2x -> 2 * x       2sqrt -> 2 * sqrt       2( -> 2 * (
                         // x y -> x * y      x sqrt -> x * sqrt      x( -> x * (
                         // )x -> ) * x       )sqrt -> ) * sqrt       )( -> ) * (
@@ -121,6 +125,11 @@ namespace AngouriMath.Core
             static string GetType(IToken token) =>
                 AngouriMathLexer.DefaultVocabulary.GetDisplayName(token.Type) is var type
                 && type is not PARENTHESIS_OPEN && type.EndsWith("('") ? FUNCTION_OPEN : type;
+
+            static bool OpensOnMod(IList<IToken> tokens, int parenthesis)
+                => parenthesis + 1 < tokens.Count
+                && GetNextToken(tokens, parenthesis + 1) is { } after
+                && AngouriMathLexer.DefaultVocabulary.GetDisplayName(tokens[after].Type) == "'mod'";
         }
         
         internal static Either<Entity, Failure<ReasonWhyParsingFailed>> ParseSilent(string source)

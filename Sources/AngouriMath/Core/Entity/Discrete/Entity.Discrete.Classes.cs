@@ -399,6 +399,32 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Divisor, Dividend };
         }
+
+        /// <summary>
+        /// The statement that <c>a</c> and <c>b</c> are congruent modulo <c>n</c>: written
+        /// <c>a = b (mod n)</c>, or <c>a ≡ b (mod n)</c>, and meaning <c>n divides a - b</c>. A
+        /// relation between integers with the modulus written once at the end, as mathematics
+        /// writes it — not the remainder operator <c>a mod n</c>, which is a number, and which the
+        /// reference this follows refuses to write in this sense at all. The modulus may be any
+        /// integer: modulo <c>0</c> it is equality, and its sign is immaterial, exactly as in
+        /// <c>n divides a - b</c>. A statement about integers: <c>NaN</c> elsewhere.
+        /// https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        public sealed partial record Congruentf(Entity Left, Entity Right, Entity Modulus) : Statement
+        {
+            internal override Priority Priority => Priority.Congruent;
+
+            internal Congruentf New(Entity left, Entity right, Entity modulus)
+                => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) && ReferenceEquals(Modulus, modulus)
+                    ? this : new(left, right, modulus) { Codomain = Codomain };
+
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func)
+                => func(New(Left.Replace(func), Right.Replace(func), Modulus.Replace(func)));
+
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Left, Right, Modulus };
+        }
         #endregion
 
         #region Sets

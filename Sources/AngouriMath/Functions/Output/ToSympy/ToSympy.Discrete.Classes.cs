@@ -59,6 +59,13 @@ namespace AngouriMath
                 => $"sympy.Eq(sympy.Mod({Dividend.ToSymPy()}, {Divisor.ToSymPy()}), 0)";
         }
 
+        partial record Congruentf
+        {
+            // SymPy has no congruence relation either; `Eq(Mod(a - b, n), 0)` is its definition.
+            internal override string ToSymPy()
+                => $"sympy.Eq(sympy.Mod({Left.ToSymPy()} - {Right.ToSymPy()}, {Modulus.ToSymPy()}), 0)";
+        }
+
         partial record Greaterf
         {
             internal override string ToSymPy()
