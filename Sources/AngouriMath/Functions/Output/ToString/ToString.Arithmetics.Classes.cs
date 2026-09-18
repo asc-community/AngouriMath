@@ -172,6 +172,14 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        public partial record Lcmf
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"lcm({Left.Stringize()}, {Right.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Binomialf
         {
             /// <inheritdoc/>

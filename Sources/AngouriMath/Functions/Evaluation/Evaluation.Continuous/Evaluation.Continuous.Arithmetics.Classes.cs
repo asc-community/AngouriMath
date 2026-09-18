@@ -581,6 +581,33 @@ namespace AngouriMath
                     (@this, a, b) => ((Gcdf)@this).New(a, b), isExact);
         }
 
+        public partial record Lcmf
+        {
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Left, Right,
+                    (a, b) => (a, b) switch
+                    {
+                        // lcm is non-negative by the gcd's convention, and lcm(0, n) is 0: zero is
+                        // the only common multiple there is.
+                        (Integer l, Integer r) => l.EInteger.IsZero || r.EInteger.IsZero
+                            ? Integer.Zero
+                            : Integer.Create((l.EInteger * r.EInteger).Abs() / l.EInteger.Gcd(r.EInteger)),
+                        // lcm(a/b, c/d) = lcm(a, c) / gcd(b, d), the mirror of the gcd's rule and
+                        // what SymPy gives: lcm(1/2, 1/3) is 1.
+                        (Rational l, Rational r) => l.Numerator.EInteger.IsZero || r.Numerator.EInteger.IsZero
+                            ? Integer.Zero
+                            : Rational.Create(
+                                (l.Numerator.EInteger * r.Numerator.EInteger).Abs() / l.Numerator.EInteger.Gcd(r.Numerator.EInteger),
+                                l.Denominator.EInteger.Gcd(r.Denominator.EInteger)),
+                        var (l, r) when l == r => l,
+                        _ => null
+                    },
+                    (@this, a, b) => ((Lcmf)@this).New(a, b), isExact);
+        }
+
         public partial record Absf
         {
             // Absolute value is defined everywhere in the complex plane

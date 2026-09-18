@@ -520,6 +520,29 @@ now, which is the one silent change: a variable spelled `forall` or `exists` no 
 | `forall + 1` | `forall + 1`, a variable named `forall` | `UnhandledParseException` |
 | `exists(x)` | `exists * x` | `UnhandledParseException` |
 
+### `lcm` is a function, and a congruence is solved to a residue class
+
+`lcm(a, b, ...)` is a node, `Entity.Lcmf`, by the conventions of `gcd`: non-negative, `0` where
+either argument is `0`, `lcm(a/b, c/d) = lcm(a, c) / gcd(b, d)`, and left as written for symbols.
+It was refused by name. A linear congruence in one unknown is solved by `Solve` to the residue
+class `{ x in ZZ : x = r (mod n) }`, two classes meet by the Chinese remainder theorem — the
+non-coprime case included — and a class cut down by a bounded interval is the finite set of its
+members; `MathS.NumberTheory.ModularInverse(a, n)` is the representative in `[1, n - 1]` or
+`null`. A quantified statement over the whole numbers whose body is a divisibility or a congruence
+of polynomials is decided by its residues, and a polynomial equation with no solution modulo a
+small `m` is decided to have none ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+Every spelling but `lcm` was a parse error in 2.5.0, the congruence node being new since.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `lcm(4, 6)` | `UnrecognizedFunctionParseException` | `12` |
+| `lcm(1/2, 1/3)`, `lcm(0, 5)`, `lcm(x, y)` | `UnrecognizedFunctionParseException` | `1`, `0`, `lcm(x, y)` |
+| `"3 x = 11 (mod 7)".ToEntity().Solve("x")` | `UnhandledParseException` | `{ x in ZZ : x = 6 (mod 7) }` |
+| `"x = 1 (mod 2) and x = 1 (mod 3) and x = 2 (mod 5) and 250 <= x and x <= 300".ToEntity().Solve("x")` | `UnhandledParseException` | `{ 277 }` |
+| `"x = 3 (mod 4) and x = 2 (mod 6)".ToEntity().Solve("x")` | `UnhandledParseException` | `{}` |
+| `forall n in ZZ : 6 divides n^3 + 5 n` | `UnhandledParseException` | `True` |
+| `exists x, y in ZZ : 3 x^2 - 5 y^2 = 1` | `UnhandledParseException` | `False` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

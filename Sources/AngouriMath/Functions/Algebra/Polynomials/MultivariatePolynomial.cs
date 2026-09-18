@@ -254,6 +254,42 @@ namespace AngouriMath.Functions
         /// <summary>The terms, each as its packed monomial and its coefficient.</summary>
         internal IEnumerable<KeyValuePair<ulong, ERational>> Terms => terms;
 
+        /// <summary>Whether every coefficient is a whole number.</summary>
+        internal bool HasIntegerCoefficients
+        {
+            get
+            {
+                foreach (var term in terms)
+                    if (!term.Value.IsInteger())
+                        return false;
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// The value at whole-number arguments, reduced modulo <paramref name="modulus"/> at
+        /// every step so that the numbers stay small; <see langword="null"/> where a coefficient
+        /// is not whole, since then the value modulo anything is not defined.
+        /// </summary>
+        internal EInteger? ValueModulo(IReadOnlyList<EInteger> values, EInteger modulus)
+        {
+            var total = EInteger.Zero;
+            foreach (var term in terms)
+            {
+                if (!term.Value.IsInteger())
+                    return null;
+                var product = term.Value.Numerator.Mod(modulus);
+                for (var variable = 0; variable < VariableCount && variable < values.Count; variable++)
+                {
+                    var power = PowerOf(term.Key, variable);
+                    if (power > 0)
+                        product = product * values[variable].Mod(modulus).ModPow(EInteger.FromInt32(power), modulus) % modulus;
+                }
+                total = (total + product) % modulus;
+            }
+            return total.Mod(modulus);
+        }
+
         /// <summary>
         /// Read as a polynomial in <paramref name="variable"/> alone: the power of that
         /// variable mapped to the coefficient, itself a polynomial in the others.

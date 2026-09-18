@@ -208,6 +208,14 @@ namespace AngouriMath
                 => $@"\gcd\left({Left.Latexize()}, {Right.Latexize()}\right)";
         }
 
+        partial record Lcmf
+        {
+            /// <inheritdoc/>
+            // LaTeX has \gcd and no \lcm, so the standard spelling is the operator name.
+            private protected override string LatexizeNode()
+                => $@"\operatorname{{lcm}}\left({Left.Latexize()}, {Right.Latexize()}\right)";
+        }
+
         partial record Binomialf
         {
             /// <inheritdoc/>
