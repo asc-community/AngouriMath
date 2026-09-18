@@ -74,6 +74,10 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             
             if (expr.Type == type)
                 return expr;
+            // A tensor converts to nothing but itself: a matrix over one element type is not
+            // a matrix over another, and it is not a number.
+            if (TensorCompilation.IsTensor(expr.Type) || TensorCompilation.IsTensor(type))
+                throw new UncompilableNodeException($"A value of type {expr.Type} cannot be compiled as {type}");
                 
             bool exprNullable = (Nullable.GetUnderlyingType(expr.Type) is not null) || (expr.Type == typeof(object));
             bool typeNullable = (Nullable.GetUnderlyingType(type) is not null) || (type == typeof(object));
@@ -107,7 +111,11 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// </summary>
         public virtual Expression ConvertUnaryNode(Expression e, Entity typeHolder)
         {
-            
+            // A function of a matrix has no compiled form here: the tensor operations are the
+            // arithmetic ones, and sin(A) is not an element-by-element sine of a matrix.
+            if (TensorCompilation.IsTensor(e.Type))
+                throw new UncompilableNodeException(
+                    $"There is no compiled form for {typeHolder.GetType().Name} of a matrix.");
             return typeHolder switch
             {
                 Sinf      when ShouldBeAtLeastDouble(e) is var newE  => Expression.Call(GetDef("Sin", 1, newE.Type), newE),
@@ -155,7 +163,13 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// </summary>
         public virtual Expression ConvertBinaryNode(Expression left, Expression right, Entity typeHolder)
         {
-            
+            // A matrix in either place: the tensor operation of the same name, the scalar side
+            // converted to the element type. https://github.com/asc-community/AngouriMath/issues/526
+            if (TensorCompilation.IsTensor(left.Type) || TensorCompilation.IsTensor(right.Type))
+                return TensorCompilation.Binary(typeHolder, left, right, ConvertType)
+                    ?? throw new UncompilableNodeException(
+                        $"The node of type {typeHolder.GetType()} has no compiled form over a matrix.");
+
             (left, right) = EqualizeTypesIfAble(left, right);
             return typeHolder switch
             {
@@ -214,6 +228,10 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             return typeHolder switch
             {
                 Piecewise => HandlePiecewise(en),
+                // A matrix is a tensor over its elements' common type, built from the compiled
+                // elements in row-major order, which is the order DirectChildren gives them.
+                // https://github.com/asc-community/AngouriMath/issues/526
+                Entity.Matrix matrix => HandleMatrix(matrix, en),
                 // TODO: finite set -> hash set
                 _ => throw new UncompilableNodeException(
                     $"The node of type {typeHolder.GetType()} does not support compilation.")
@@ -221,6 +239,19 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             };
         }
             
+        private Expression HandleMatrix(Entity.Matrix matrix, IEnumerable<Expression> en)
+        {
+            var elements = en.ToArray();
+            if (elements.Length == 0)
+                throw new UncompilableNodeException("An empty matrix has no compiled form");
+            var common = elements[0].Type;
+            foreach (var element in elements)
+                common = MaxType(Nullable.GetUnderlyingType(common) ?? common, Nullable.GetUnderlyingType(element.Type) ?? element.Type);
+            for (var i = 0; i < elements.Length; i++)
+                elements[i] = ConvertType(elements[i], common);
+            return TensorCompilation.Build(matrix, elements);
+        }
+
         private Expression HandlePiecewise(IEnumerable<Expression> en)
         {
             Expression[] children = en.ToArray();
