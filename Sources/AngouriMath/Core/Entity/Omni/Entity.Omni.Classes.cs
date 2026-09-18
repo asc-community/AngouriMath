@@ -433,10 +433,33 @@ namespace AngouriMath
             public sealed partial record ConditionalSet(Entity Var, Entity Predicate) : Set, IEquatable<ConditionalSet?>
             {
                 /// <summary>The name this set builder binds. See <see cref="Core.Binding"/>.</summary>
-                public Entity Var { get; init; } = Binding.Of(Var).Name;
+                public Entity Var { get; init; } = Binding.Of(BoundName(Var)).Name;
 
-                /// <summary>What holds of <see cref="Var"/> exactly for the members of this set.</summary>
-                public Entity Predicate { get; init; } = Binding.Of(Var).In(Predicate);
+                /// <summary>
+                /// What holds of <see cref="Var"/> exactly for the members of this set. A
+                /// membership written in the name position, <c>{ x in S : p }</c>, is the first
+                /// conjunct here: the set is <c>{ x : x in S and p }</c>, and prints as it was
+                /// written.
+                /// </summary>
+                public Entity Predicate { get; init; } = Binding.Of(BoundName(Var)).In(WithDeclaredMembership(Var, Predicate));
+
+                // `{ x in ZZ : x < 0 }` arrives with `x in ZZ` in the name position. Kept there,
+                // the bound name was the membership statement itself: substituting a value for
+                // `x` found nothing to substitute, so `-3 in { x in ZZ : x < 0 }` was never
+                // decided, and `x` was not seen as bound. The name is `x`; the membership is a
+                // conjunct of the predicate. https://github.com/asc-community/AngouriMath/issues/1409
+                private static Entity BoundName(Entity var)
+                    => var is Inf(var name, _) ? name : var;
+
+                private static Entity WithDeclaredMembership(Entity var, Entity predicate)
+                    => var is Inf(var name, var set) ? name.In(set) & predicate : predicate;
+
+                /// <summary>
+                /// The membership a set builder was written with, <c>{ x in S : p }</c>, and the
+                /// rest of its predicate; <see langword="null"/> where it was written <c>{ x : p }</c>.
+                /// </summary>
+                internal (Entity set, Entity rest)? DeclaredMembership
+                    => Predicate is Andf(Inf(var name, var set), var rest) && name == Var ? (set, rest) : null;
 
                 /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
@@ -562,6 +585,8 @@ namespace AngouriMath
                     SpecialSet result = domain switch
                     {
                         Domain.Boolean => new Booleans(),
+                        Domain.PositiveInteger => new PositiveIntegers(),
+                        Domain.NonNegativeInteger => new NonNegativeIntegers(),
                         Domain.Integer => new Integers(),
                         Domain.Rational => new Rationals(),
                         Domain.Real => new Reals(),
@@ -582,6 +607,8 @@ namespace AngouriMath
                     => domain switch
                     {
                         "BB" or "Booleans" => Domain.Boolean,
+                        "ZZ+" or "PositiveIntegers" => Domain.PositiveInteger,
+                        "ZZ*" or "NonNegativeIntegers" => Domain.NonNegativeInteger,
                         "ZZ" or "Integers" => Domain.Integer,
                         "QQ" or "Rationals" => Domain.Rational,
                         "RR" or "Reals" => Domain.Real,
@@ -659,6 +686,39 @@ namespace AngouriMath
                     public override bool MayContain(Entity entity)
                         => entity is Integer || !entity.IsConstantLeaf;
                     internal override Domain ToDomain() => Domain.Integer;
+                }
+
+                /// <summary>
+                /// The set of all non-negative integers, <c>{0, 1, 2, ...}</c>, written <c>ZZ*</c>.
+                /// There is no set called "the natural numbers" here, because the name means
+                /// this set to some authors and <see cref="PositiveIntegers"/> to others
+                /// (MathWorld recommends these two names over "natural number" for that reason,
+                /// https://mathworld.wolfram.com/N.html). A subset of <see cref="Integers"/>, and
+                /// like every special set a <see cref="Domain"/> a node can be declared over:
+                /// <c>domain(x, ZZ*)</c> is <c>NaN</c> at a negative integer.
+                /// https://github.com/asc-community/AngouriMath/issues/1409
+                /// </summary>
+                public sealed partial record NonNegativeIntegers : SpecialSet
+                {
+                    /// <inheritdoc/>
+                    public override bool MayContain(Entity entity)
+                        => entity is Integer { EInteger.Sign: >= 0 } || !entity.IsConstantLeaf;
+                    internal override Domain ToDomain() => Domain.NonNegativeInteger;
+                }
+
+                /// <summary>
+                /// The set of all positive integers, <c>{1, 2, 3, ...}</c>, written <c>ZZ+</c>.
+                /// See <see cref="NonNegativeIntegers"/> for why neither is called the natural
+                /// numbers. A subset of <see cref="Integers"/> and the <see cref="Domain"/>
+                /// <see cref="Domain.PositiveInteger"/>.
+                /// https://github.com/asc-community/AngouriMath/issues/1409
+                /// </summary>
+                public sealed partial record PositiveIntegers : SpecialSet
+                {
+                    /// <inheritdoc/>
+                    public override bool MayContain(Entity entity)
+                        => entity is Integer { EInteger.Sign: > 0 } || !entity.IsConstantLeaf;
+                    internal override Domain ToDomain() => Domain.PositiveInteger;
                 }
 
                 /// <summary>

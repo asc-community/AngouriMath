@@ -15,9 +15,9 @@ namespace AngouriMath.Core
     /// </summary>
     /// <remarks>
     /// <para>
-    /// A member of this enum is a <b>constraint on a node</b>, not a mathematical object. Five of
-    /// them also name a set — <see cref="Entity.Set.SpecialSet.Create(Domain)"/> maps those five
-    /// to <c>BB</c>, <c>ZZ</c>, <c>QQ</c>, <c>RR</c> and <c>CC</c> — and <see cref="Any"/> does not,
+    /// A member of this enum is a <b>constraint on a node</b>, not a mathematical object. Seven of
+    /// them also name a set — <see cref="Entity.Set.SpecialSet.Create(Domain)"/> maps those seven
+    /// to <c>BB</c>, <c>ZZ+</c>, <c>ZZ*</c>, <c>ZZ</c>, <c>QQ</c>, <c>RR</c> and <c>CC</c> — and <see cref="Any"/> does not,
     /// because "no constraint" is not a collection of values. Sets are
     /// <see cref="Entity.Set"/>s and are reasoned about with membership, union and difference;
     /// a domain is not, and the two are deliberately different types.
@@ -42,6 +42,20 @@ namespace AngouriMath.Core
         /// The domain of all boolean values (true, false)
         /// </summary>
         Boolean,
+
+        /// <summary>
+        /// The domain of the positive integers <c>{1, 2, 3, ...}</c>, the set <c>ZZ+</c>.
+        /// Every special set is a domain, so that a node can be declared over any of them;
+        /// this one and <see cref="NonNegativeInteger"/> sit below <see cref="Integer"/> in the
+        /// order, being narrower. https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        PositiveInteger,
+
+        /// <summary>
+        /// The domain of the non-negative integers <c>{0, 1, 2, ...}</c>, the set <c>ZZ*</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        NonNegativeInteger,
 
         /// <summary>
         /// The domain of all integer values

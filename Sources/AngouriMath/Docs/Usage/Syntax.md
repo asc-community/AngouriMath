@@ -145,7 +145,7 @@ with an operator parses.
 | finite | `{ 1, 2, 3 }`, `{}` |
 | interval | `[a; b]` closed, `(a; b)` open, `[a; b)` and `(a; b]` half-open |
 | conditional | `{ x : x > 0 }` — the name before the `:` is declared, as under `sum` below |
-| special | `RR` `CC` `ZZ` `QQ` `BB` |
+| special | `RR` `CC` `ZZ` `QQ` `BB`, and the two subsets of `ZZ`: `ZZ*` = `{0, 1, 2, ...}`, `ZZ+` = `{1, 2, 3, ...}` |
 | operations | `unite` `/\` … see the table above |
 
 There is **no universal set** and no literal for one. A set that constrains nothing is the
@@ -236,10 +236,21 @@ looser than everything else and its body runs to the end, so `a => a + 3` is `a 
 Every parameter must be a name — `a 3 => 3` is refused — and the body is read exactly as
 `lambda(...)` reads it, so an index called `i` means the name and not the imaginary unit.
 
-`domain` takes a special set — `CC` `RR` `QQ` `ZZ` `BB` — or the keyword `Any`, and sets the
-*codomain* of whatever node it wraps, which is what makes the expression evaluate to `NaN` outside
-it. It applies to any node, not only a variable, and it is what `Stringize` prints for one. `Any`
-is the one spelling here that is not a set: it removes the restriction rather than naming values.
+`domain` takes a special set — `CC` `RR` `QQ` `ZZ` `ZZ*` `ZZ+` `BB` — or the keyword `Any`, and
+sets the *codomain* of whatever node it wraps, which is what makes the expression evaluate to
+`NaN` outside it (`domain(x, ZZ+)` at `x = 0` is `NaN`). It applies to any node, not only a
+variable, and it is what `Stringize` prints for one. `Any` is the one spelling here that is not a
+set: it removes the restriction rather than naming values.
+
+There is **no set called the natural numbers**: the name means `{0, 1, 2, ...}` to some authors
+and `{1, 2, 3, ...}` to others, so following MathWorld's recommendation the two are spelled
+`ZZ*` and `ZZ+` (`\mathbb{Z}^{*}`, `\mathbb{Z}^{+}`) and neither claims the word; `NN` is refused
+with the two spellings rather than read as a variable. Membership is decided for numbers (`0 in
+ZZ*` is `True`, `0 in ZZ+` is `False`, `-3 in ZZ*` is `False`) and left as written for a symbol.
+The seven special sets nest, `ZZ+ ⊂ ZZ* ⊂ ZZ ⊂ QQ ⊂ RR ⊂ CC` with `BB` beside them, and the set
+operators answer for two of them: `ZZ unite QQ` is `QQ`, `BB intersect ZZ` is `{}`, `ZZ* \ ZZ+`
+is `{ 0 }`, `ZZ \ ZZ*` is `{ x in ZZ : x < 0 }` and `QQ \ ZZ` is `{ x in QQ : not x in ZZ }`.
+The tokens take the sign: `ZZ*2` no longer reads as `ZZ * 2`.
 
 **Refused by name** — `trunc` `lcm` `erf` `conjugate`. AngouriMath has none of these, and each is
 what some other CAS calls a function, so a caller reaches for it. Left alone they would be read as

@@ -310,7 +310,17 @@ atom returns[Entity value]
     | NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
     | BOOLEAN { $value = Entity.Boolean.Parse($BOOLEAN.text); }
     | SPECIALSET { $value = Entity.Set.SpecialSet.Create($SPECIALSET.text); }
-    | VARIABLE { $value = Entity.Variable.CreateVariableOrConstant($VARIABLE.text); }
+    | VARIABLE
+        {
+            // There is no set of natural numbers here, because the name means {0, 1, 2, ...} to
+            // some authors and {1, 2, 3, ...} to others; the two are spelled apart as ZZ* and
+            // ZZ+. Read as a variable, NN would go on silently standing for nothing, so the
+            // name is refused with the two spellings.
+            // https://github.com/asc-community/AngouriMath/issues/1409
+            if ($VARIABLE.text == "NN")
+                throw new InvalidArgumentParseException("There is no set NN: write ZZ* for the non-negative integers {0, 1, 2, ...} or ZZ+ for the positive integers {1, 2, 3, ...}");
+            $value = Entity.Variable.CreateVariableOrConstant($VARIABLE.text);
+        }
     | '(|' expression '|)' { $value = $expression.value.Abs(); }
     | '#' p = atom { $value = MathS.Sets.Card($p.value); }
 
@@ -546,7 +556,7 @@ fragment EXPONENT: ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
 
 NUMBER: ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i'? | '.'? ('0'..'9')+ EXPONENT? 'i'? | 'i' ;
 
-SPECIALSET: ('CC' | 'RR' | 'QQ' | 'ZZ' | 'BB') ;
+SPECIALSET: ('CC' | 'RR' | 'QQ' | 'ZZ' | 'BB' | 'ZZ*' | 'ZZ+') ;
 
 BOOLEAN: ('true' | 'True' | 'false' | 'False') ;
 

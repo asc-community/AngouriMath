@@ -54,6 +54,18 @@ namespace AngouriMath
                         => "sympy.S.Integers";
                 }
 
+                partial record NonNegativeIntegers
+                {
+                    internal override string ToSymPy()
+                        => "sympy.S.Naturals0";
+                }
+
+                partial record PositiveIntegers
+                {
+                    internal override string ToSymPy()
+                        => "sympy.S.Naturals";
+                }
+
                 partial record Rationals
                 {
                     internal override string ToSymPy()
