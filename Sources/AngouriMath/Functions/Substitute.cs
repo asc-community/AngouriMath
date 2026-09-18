@@ -98,15 +98,24 @@ namespace AngouriMath
         partial record Logf
         {
             /// <inheritdoc/>
+            // The base of ln is Euler's number standing in the operator's own definition, not a
+            // mention of the name e, so substituting for e leaves it alone: ln(x) at e = 3 is
+            // still ln(x), as sum(ln(x), e, 1, 2) already was 2 * ln(x). Compared by reference,
+            // which is what Constant.EulerIntrinsic exists for; log(e, x), where the writer did
+            // name e, still becomes log(3, x).
+            // https://github.com/asc-community/AngouriMath/issues/994
             public override Entity Substitute(Entity x, Entity value)
-                => this == x ? value : New(Base.Substitute(x, value), Antilogarithm.Substitute(x, value));
+                => this == x ? value
+                 : New(ReferenceEquals(Base, Constant.EulerIntrinsic) ? Base : Base.Substitute(x, value), Antilogarithm.Substitute(x, value));
         }
 
         partial record Powf
         {
             /// <inheritdoc/>
+            // As for ln: the base of exp is not a mention of e.
             public override Entity Substitute(Entity x, Entity value)
-                => this == x ? value : New(Base.Substitute(x, value), Exponent.Substitute(x, value));
+                => this == x ? value
+                 : New(ReferenceEquals(Base, Constant.EulerIntrinsic) ? Base : Base.Substitute(x, value), Exponent.Substitute(x, value));
         }
 
         partial record Arcsinf

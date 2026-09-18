@@ -663,6 +663,9 @@ they had.
 | | `"sin(x)^2 + 2 sin(x) + 1".ToEntity().Factorize()`, and every polynomial in one subexpression of its variable | `sin(x) ^ 2 + 2 * sin(x) + 1` — left alone | `(sin(x) + 1) ^ 2`; `sin(x) + sin(x)^3` is `sin(x) * (sin(x) ^ 2 + 1)` |
 | **Silent** | `"arccotan(-1)".ToEntity().Simplify()`, and every negative argument the inverse-trigonometric table knows | `3/4 * pi` — the textbook range, and **not equal to `arccotan(-1)`**, whose value is `-pi/4` | `-1/4 * pi` |
 | | `"e ^ ln(x)".ToEntity().Simplify()`, and every exponential of a natural logarithm | `e ^ ln(x)` — left as written | `x` |
+| | `"pi ^ log(pi, x)".ToEntity().Simplify()`, and every constant raised to a logarithm of itself | `pi ^ log(pi, x)` — left as written | `x` |
+| | `"a ^ log(a, x)".ToEntity().Simplify()`, and every symbolic base raised to a logarithm of itself | `a ^ log(a, x)` — left as written | `x provided not a = 0 and not a = 1` — the logarithm's own domain condition, which the rewrite would otherwise lose ([#994](https://github.com/asc-community/AngouriMath/issues/994)) |
+| **Silent** | `MathS.Ln("x").Substitute("e", 3)`, and `"exp(x)".ToEntity().Substitute("e", 3)` | `log(3, x)` and `3 ^ x` — the base of `ln` and `exp` was reached as a mention of `e` | `ln(x)` and `exp(x)` — it is Euler's number in the operator's definition, not a mention; `log(e, x)` and `e ^ x`, where the writer named `e`, still become `log(3, x)` and `3 ^ x` |
 | | `"a => a + 3".ToEntity()`, and every lambda written with an arrow | `UnhandledParseException` | `lambda(a, a + 3)` |
 | | `"sqrt(5 + 2 * sqrt(6))".ToEntity().Simplify()`, and every nested radical whose discriminant is a rational square | `sqrt(5 + 2 * sqrt(6))` — left as written | `sqrt(3) + sqrt(2)` |
 | | `"sum(k, k, 1, n)".ToEntity().Simplify()`, and every summation whose body is a polynomial in the index | `sum(k, k, 1, n)` — carried | `piecewise((n + n ^ 2) / 2 provided n >= 0, 0)` |

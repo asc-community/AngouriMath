@@ -2974,10 +2974,19 @@ namespace AngouriMath.Core.Transformations.Matching
                 // is one node more: the delta is 1 - |a|, nothing at a leaf and a shrink beyond it.
                 growth: RewriteRuleGrowth.Collects),
 
+            // b ^ log_b(a) = a, in three arms by what can be said of the base. A number other
+            // than 0 and 1, and a constant -- e, pi -- are decidably neither 0 nor 1, which is all
+            // the identity needs: log_b(a) is defined only where b is neither, and where it is
+            // defined the power undoes it. It holds off the positive reals too -- at a = -3,
+            // ln(-3) is ln(3) + i*pi and e^(ln(3) + i*pi) is -3 -- and at a = 0, where ln(0) is
+            // -oo here and e^(-oo) is 0, so both sides are 0 and no definedness moves. Labelled
+            // under assumptions rather than Sound because it is the principal branch of the
+            // logarithm that makes it true away from the reals, which is a branch convention.
+            // A base of 0 or 1 is refused rather than answered: 1 ^ log(1, a) is 1, not a.
             new MatchedRule(
                 "a-number-raised-to-a-logarithm-of-itself-is-the-antilogarithm",
                 MatchPattern.Node<Powf>(
-                    MatchPattern.Any<Number>("c"),
+                    MatchPattern.Any<Number>("c", static c => c != Integer.Zero && c != Integer.One),
                     MatchPattern.Node<Logf>(MatchPattern.Any<Number>("c"), MatchPattern.Any("a"))),
                 bound => bound["a"],
                 Soundness.SoundUnderAssumptions,
@@ -2986,30 +2995,39 @@ namespace AngouriMath.Core.Transformations.Matching
                 // four nodes around the remaining hole disappear: exactly -4, for every input.
                 growth: RewriteRuleGrowth.Collects),
 
-            // The same identity through `e`, which the rule above cannot reach: `ln(b)` is stored
-            // as log(e, b) and `e` is a Constant, not a Number, so `Any<Number>` never binds it
-            // however the logarithm is written.
-            // https://github.com/asc-community/AngouriMath/issues/994
-            //
-            // Nothing is left to discharge once the base is `e`: b^log_b(a) = a needs ln(b) to be
-            // non-zero, and e is decidably neither 0 nor 1, which is exactly what the numeric arm
-            // above cannot say about an arbitrary Number. It holds off the positive reals too --
-            // at a = -3, ln(-3) is ln(3) + i*pi and e^(ln(3) + i*pi) is -3 -- and at a = 0, where
-            // ln(0) is -oo here and e^(-oo) is 0, so both sides are 0 and no definedness moves.
-            // Labelled under assumptions rather than Sound because it is the principal branch of
-            // the logarithm that makes it true away from the reals, which is a branch convention.
-            // Written with a pattern on the right rather than the `bound => bound["a"]` its
-            // numeric sibling uses, so it is data in both directions: the constructor can then
-            // check the replacement only builds names the pattern binds, and the rule classifies
-            // as Reversible instead of ReplacementIsCode.
+            // The same identity through a constant: `ln(b)` is stored as log(e, b) and `e` is a
+            // Constant, not a Number, so `Any<Number>` never binds it however the logarithm is
+            // written, and pi ^ log(pi, b) was left standing for the same reason. Written with a
+            // pattern on the right rather than the `bound => bound["a"]` its numeric sibling uses,
+            // so it is data in both directions: the constructor can then check the replacement
+            // only builds names the pattern binds, and the rule classifies as Reversible instead
+            // of ReplacementIsCode. https://github.com/asc-community/AngouriMath/issues/994
             new MatchedRule(
-                "e-raised-to-a-natural-logarithm-is-the-antilogarithm",
+                "a-constant-raised-to-a-logarithm-of-itself-is-the-antilogarithm",
                 MatchPattern.Node<Powf>(
-                    MatchPattern.Exact(Variable.e),
-                    MatchPattern.Node<Logf>(MatchPattern.Exact(Variable.e), MatchPattern.Any("a"))),
+                    MatchPattern.Any<Constant>("c"),
+                    MatchPattern.Node<Logf>(MatchPattern.Any<Constant>("c"), MatchPattern.Any("a"))),
                 MatchPattern.Any("a"),
                 Soundness.SoundUnderAssumptions,
                 description: "e ^ ln(b) = b"),
+
+            // And through a symbolic base, where b != 0 and b != 1 cannot be decided and so
+            // travel with the answer as its condition -- the domain condition of the logarithm
+            // that the rewrite would otherwise lose, which SimplificationContract.md says a rule
+            // either attaches or does not fire on. a ^ log(a, b) at a = 1 is undefined and b is
+            // not, so the difference is exactly that condition.
+            new MatchedRule(
+                "a-symbol-raised-to-a-logarithm-of-itself-is-the-antilogarithm-where-defined",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Any("c"),
+                    MatchPattern.Node<Logf>(MatchPattern.Any("c"), MatchPattern.Any("a"))),
+                bound => bound["a"].Provided(!bound["c"].EqualTo(0) & !bound["c"].EqualTo(1)),
+                Soundness.SoundUnderAssumptions,
+                when: bound => bound["c"] is not Number and not Constant,
+                description: "a ^ log(a, b) = b provided not a = 0 and not a = 1",
+                // The base is written twice again inside the condition, beside six new nodes
+                // for it: more than the power and the logarithm that go.
+                growth: RewriteRuleGrowth.Expands),
 
             // Four `switch` arms: the power on either side of a product, and the shared base in
             // either position inside it. A commutative pattern says both halves at once.
