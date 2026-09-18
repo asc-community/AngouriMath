@@ -594,6 +594,19 @@ namespace AngouriMath.Functions.Algebra
                 && (leftover is Divf(var leftoverTop, _) ? leftoverTop : leftover).InnerSimplified.Evaled is Number.Complex { IsZero: true })
                 return (multiple * MathS.Ln(denominator)).InnerSimplified;
 
+            // A written sum with a symbol among its coefficients that they all share is that
+            // symbol times a polynomial over the rationals, and is written so first: `(a u + a)`
+            // beside `1 - u^2` shares a root with it, which the symbolic split declines, and a
+            // symbolic sextic is nothing the refactoring below reads, where `a` times a rational
+            // one is. Before the symbolic split: `a (1 + u^2) + 2 a u` is `a (1 + u)^2`, a
+            // repeated linear over the rationals, and read as a quadratic with `a` in it the
+            // split computed its digits modulo `(1 + u^2)^6` with `a` in every coefficient, for
+            // an answer twice the length. Once: a primitive factor has no content to take out.
+            if (WithTheContentOutOfEachSumFactor(denominator, x) is { } primitive
+                && (SolveByPartialFractions(numerator / primitive, x, integrateByParts)
+                    ?? Integration.ComputeIndefiniteIntegral(numerator / primitive, x, integrateByParts)) is { } overPrimitives)
+                return overPrimitives;
+
             // Written linear factors with symbols in their coefficients, two or more, one of
             // them to a power: decomposed over the written factors, the coefficients read
             // off derivatives at the roots and each a line. First, before the respellings
@@ -621,16 +634,6 @@ namespace AngouriMath.Functions.Algebra
             // under a second this way, with the chain behind it for a spelling this rule does
             // not answer on its own -- one irreducible factor to the first power is the table's.
             // Once: the spelling this produces refactors to itself.
-            // A written sum with a symbol among its coefficients that they all share is that
-            // symbol times a polynomial over the rationals, and is written so first: `(a u + a)`
-            // beside `1 - u^2` shares a root with it, which the symbolic split declines, and a
-            // symbolic sextic is nothing the refactoring below reads, where `a` times a rational
-            // one is. Once: a primitive factor has no content to take out.
-            if (WithTheContentOutOfEachSumFactor(denominator, x) is { } primitive
-                && (SolveByPartialFractions(numerator / primitive, x, integrateByParts)
-                    ?? Integration.ComputeIndefiniteIntegral(numerator / primitive, x, integrateByParts)) is { } overPrimitives)
-                return overPrimitives;
-
             if (TryWriteInIrreducibleFactors(denominator, x) is { } refactored
                 && (SolveByPartialFractions(numerator / refactored, x, integrateByParts)
                     ?? Integration.ComputeIndefiniteIntegral(numerator / refactored, x, integrateByParts)) is { } overIrreducibles)
@@ -10531,8 +10534,14 @@ namespace AngouriMath.Functions.Algebra
         {
             var linears = 0;
             var quadratics = 0;
+            var symbolic = false;
             foreach (var factor in Mulf.LinearChildren(denominator))
             {
+                // A constant factor is not a coefficient: `a u (1 + u^2)^6 (1 + 2 u + u^2)`,
+                // which taking the content out of `a (1 + u^2) + 2 a u` leaves, is a rational
+                // denominator with `a` in front, and the refactoring over the rationals and
+                // the Hermite reduction read it -- `(1 + u)^2` among them -- where the split
+                // took it as symbolic and answered in twice the length.
                 if (!factor.ContainsNode(x))
                     continue;
                 var @base = factor is Powf(var b, Number.Integer { EInteger.Sign: > 0 }) ? b : factor;
@@ -10545,8 +10554,9 @@ namespace AngouriMath.Functions.Algebra
                     quadratics++;
                 else
                     return false;
+                symbolic |= read.Values.Any(coefficient => coefficient.Vars.Any());
             }
-            return linears >= 1 && linears + quadratics >= 2 && denominator.Vars.Any(v => v != x);
+            return linears >= 1 && linears + quadratics >= 2 && symbolic;
         }
 
         /// <summary>

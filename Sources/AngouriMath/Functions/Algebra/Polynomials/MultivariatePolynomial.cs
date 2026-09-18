@@ -421,8 +421,16 @@ namespace AngouriMath.Functions
         /// that reads the way the answer is usually written: <c>x + y</c>, not
         /// <c>-x/2 - y/2</c>.
         /// </remarks>
-        internal MultivariatePolynomial Normalized()
+        internal MultivariatePolynomial Normalized() => Normalized(out _);
+
+        /// <summary>
+        /// <see cref="Normalized()"/>, with the factor it was scaled by: the normalized
+        /// polynomial is this one times <paramref name="scale"/>, and this one is the
+        /// normalized one over it.
+        /// </summary>
+        internal MultivariatePolynomial Normalized(out ERational scale)
         {
+            scale = ERational.One;
             if (IsZero)
                 return this;
             var denominators = EInteger.One;
@@ -434,7 +442,7 @@ namespace AngouriMath.Functions
                     term.Value.Numerator.Multiply(denominators.Divide(term.Value.Denominator)));
             if (numerators.IsZero)
                 return this;
-            var scale = ERational.Create(denominators, numerators);
+            scale = ERational.Create(denominators, numerators);
             if (terms[LeadingMonomial()].Sign < 0)
                 scale = scale.Negate();
             return ScaleBy(scale);

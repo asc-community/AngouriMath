@@ -389,6 +389,29 @@ one form across the zeros.
 | `"sqrt(a + a*sin(x))".Integrate("x")` | unevaluated (`a^2 = a^2` is not decided by evaluation) | `-2 sqrt(2a) sgn(sin(u)) cos(u)` |
 | `"sqrt(1 + sin(x))".Integrate("x")` | `-2 cos(x)/sqrt(1 + sin(x))` | unchanged, the closed rule's |
 
+### A partial-fraction coefficient with symbols in it is in lowest terms, its rational content included
+
+**Improvement, not silent.** The decomposition over written factors with symbols among their
+coefficients put each coefficient in lowest terms by the polynomial gcd, which normalizes its
+divisor to whole coprime coefficients and so never cancels a number: `-1024/(1024 a)` stayed as
+it was. Newton's iteration for the inverse modulo a power of a quadratic squares its iterate every
+round, so `tanh(x)^6/(a + a sech(x))` — `1/(u (1 + u^2)^6 (a (1 + u^2) + 2 a u))` under
+`u = e^x` — had integers of twelve hundred digits by the third round and spent its minute in
+their gcd. The rational content of the denominator now goes up into the numerator, and the values
+the elimination solves for are put in lowest terms before the terms are built, where
+`csch(x)^5/(a + b cosh(x))` after its Hermite reduction had two thousand nodes of `a` and `b` in
+every term and each went round the chain without returning. And a constant factor in front of a
+rational denominator is not a symbolic coefficient: `a (1 + u^2) + 2 a u` with its content out is
+`a` times `(1 + u)^2`, which the refactoring over the rationals reads, and the answer is a page
+shorter than the symbolic split's.
+
+| | Was | Is |
+|---|---|---|
+| `"tanh(x)^6/(a + a*sech(x))".Integrate("x")` | unevaluated after two minutes | `(-1/6 - 25/1536 e^x - … + 3/512 e^(10x))/(a (e^(2x) + 1)^5 (e^x + 1)) + ln(e^x)/a - …`, 2 s |
+| `"csch(x)^5/(a + b*cosh(x))".Integrate("x")` | unevaluated | a piecewise on the sign of `a^2 - b^2`, its rational part `(1/4 (3a^3 - 7ab^2) e^x + 2b^3 e^(2x) + …)/(a^4 - 2a^2 b^2 + b^4)` over the factors, 1.3 s |
+| `"1/(u*(u^2 + 1)^6*(a*(u^2 + 1) + 2*a*u))".Integrate("u")` | unevaluated | `(17/24 - 829/1536 u + … - 273/512 u^10)/(a (u^2 + 1)^5 (u + 1)) + ln(u)/a - 7/64 ln(u + 1)/a - 57/128 ln(u^2 + 1)/a - 329/512 arctan(u)/a` |
+| `"u^5/((u^2 - 1)^5*(2*a*u + b*(u^2 + 1)))".Integrate("u")` | unevaluated | the same piecewise in `u`, its coefficients `1/256 (3a^3 - 7ab^2)/(a^4 - 2a^2 b^2 + b^4)` and the like rather than two thousand nodes each |
+
 ### A condition the answer states on its own is no longer repeated beside it
 
 **Improvement, not silent.** `Simplify` returned `(1 - ln(x))/x^2 provided not x = 0` for the
