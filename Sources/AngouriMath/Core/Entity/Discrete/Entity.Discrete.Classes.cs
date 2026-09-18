@@ -452,5 +452,80 @@ namespace AngouriMath
         }
         #endregion
 
+        #region Quantifiers
+        /// <summary>
+        /// A quantified statement: <c>forall x in S : P</c>, <c>exists x in S : P</c> and
+        /// <c>exists! x in S : P</c>. A binder, like a set builder: the name is bound throughout
+        /// the body and the set, and the statement is a function of what else the body mentions.
+        /// The quantification set is mandatory, as the reference this follows insists — a
+        /// statement is quantified over something, and <c>forall x : x^2 &gt;= 0</c> is true of
+        /// the reals and false of the complex numbers.
+        /// https://github.com/asc-community/AngouriMath/issues/1409
+        /// https://github.com/asc-community/AngouriMath/issues/225
+        /// </summary>
+        public abstract partial record Quantifier(Entity Var, Entity Over, Entity Body) : Statement
+        {
+            /// <summary>The name this quantifier binds.</summary>
+            public Entity Var { get; init; } = Binding.Of(Var).Name;
+
+            /// <summary>The set the bound name ranges over.</summary>
+            public Entity Over { get; init; } = Binding.Of(Var).In(Over);
+
+            /// <summary>The statement made of every, or some, member of the set.</summary>
+            public Entity Body { get; init; } = Binding.Of(Var).In(Body);
+
+            internal override Priority Priority => Priority.Quantifier;
+
+            /// <summary>The same quantifier over another name, set and body.</summary>
+            internal abstract Quantifier New(Entity var, Entity over, Entity body);
+
+            /// <summary>The keyword this quantifier is written with: <c>forall</c>, <c>exists</c> or <c>exists!</c>.</summary>
+            internal abstract string Keyword { get; }
+
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func)
+                => func(New(Var, Over.Replace(func), Body.Replace(func)));
+
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Var, Over, Body };
+        }
+
+        /// <summary>
+        /// <c>forall x in S : P</c>: every member of <c>S</c> satisfies <c>P</c>. True of the empty
+        /// set. See <see cref="Quantifier"/>.
+        /// </summary>
+        public sealed partial record Forallf(Entity Var, Entity Over, Entity Body) : Quantifier(Var, Over, Body)
+        {
+            internal override Quantifier New(Entity var, Entity over, Entity body)
+                => ReferenceEquals(Var, var) && ReferenceEquals(Over, over) && ReferenceEquals(Body, body)
+                    ? this : new Forallf(var, over, body) { Codomain = Codomain };
+            internal override string Keyword => "forall";
+        }
+
+        /// <summary>
+        /// <c>exists x in S : P</c>: some member of <c>S</c> satisfies <c>P</c>. False of the empty
+        /// set. See <see cref="Quantifier"/>.
+        /// </summary>
+        public sealed partial record Existsf(Entity Var, Entity Over, Entity Body) : Quantifier(Var, Over, Body)
+        {
+            internal override Quantifier New(Entity var, Entity over, Entity body)
+                => ReferenceEquals(Var, var) && ReferenceEquals(Over, over) && ReferenceEquals(Body, body)
+                    ? this : new Existsf(var, over, body) { Codomain = Codomain };
+            internal override string Keyword => "exists";
+        }
+
+        /// <summary>
+        /// <c>exists! x in S : P</c>: exactly one member of <c>S</c> satisfies <c>P</c>, which is
+        /// <c>exists x in S : P and forall y in S : P(y) implies y = x</c>. See <see cref="Quantifier"/>.
+        /// </summary>
+        public sealed partial record ExistsUniquef(Entity Var, Entity Over, Entity Body) : Quantifier(Var, Over, Body)
+        {
+            internal override Quantifier New(Entity var, Entity over, Entity body)
+                => ReferenceEquals(Var, var) && ReferenceEquals(Over, over) && ReferenceEquals(Body, body)
+                    ? this : new ExistsUniquef(var, over, body) { Codomain = Codomain };
+            internal override string Keyword => "exists!";
+        }
+        #endregion
+
     }
 }

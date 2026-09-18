@@ -18,6 +18,11 @@ namespace AngouriMath.Core
         KeywordOperation = 0x0000,
 
         Lambda   = 10 | KeywordOperation,
+        /// <summary>
+        /// <c>forall x in S : P</c>: the body runs to the end of the line, as a lambda's does, so
+        /// a quantifier under any connective is written in brackets.
+        /// </summary>
+        Quantifier = 10 | KeywordOperation,
         Provided = 20 | KeywordOperation,
 
         BooleanOperation = 0x1000,
@@ -693,6 +698,11 @@ namespace AngouriMath
                         // https://github.com/asc-community/AngouriMath/issues/989
                         Limitf limit
                             => BoundBy(limit.Var, limit.Expression, limit.Destination),
+                        // A quantifier binds its name throughout its body and the set it ranges
+                        // over: forall x in S : x < y is a statement about y and S.
+                        // https://github.com/asc-community/AngouriMath/issues/1409
+                        Quantifier quantifier
+                            => BoundBy(quantifier.Var, quantifier.Body, quantifier.Over),
                         _ => new HashSet<Variable>(@this.DirectChildren.SelectMany(c => c.FreeVariables))
                     }
                 ,
