@@ -495,21 +495,19 @@ namespace AngouriMath.Tests.Common
         // not NaN -- and `False and u` is False whatever `u` is. So there is something to decide
         // here, and the value is False rather than NaN.
         //
-        // Which leaves the pair disagreeing the other way round from #876. Evaluation now settles
-        // the conjunction everywhere, while Simplify answers `False provided x in RR`, whose
-        // condition is unnecessary for this row: the reduction needs one conjunct to be false, not
-        // both operands to be real. The condition is over-strong rather than wrong, so it is
-        // recorded here rather than removed -- the rules #876 conditioned would want going through
-        // one at a time to see which of them still need it, and that is not this change.
+        // Which left the pair disagreeing the other way round from #876 for a while: evaluation
+        // settled the conjunction everywhere, while Simplify answered `False provided x in RR`,
+        // whose condition is unnecessary for this row -- the reduction needs one conjunct to be
+        // false, not both operands to be real. Evaluation now decides an equality against a
+        // strict sign of the same quantity itself (https://github.com/asc-community/AngouriMath/issues/1414),
+        // so the two agree: False, everywhere.
         [Fact]
         public void AConjunctionWithOneFalseConjunctIsFalseOffTheRealLineToo()
         {
             var original = "x < 0 and x = 0".ToEntity();
             Assert.Equal(Entity.Boolean.False, original.Substitute("x", "i").Evaled);
-
-            // And what Simplify gives is weaker, which is the follow-up rather than a regression:
-            // it declines off the real line where the evaluator decides.
-            Assert.Equal(MathS.NaN, original.Simplify().Substitute("x", "i").Evaled);
+            Assert.Equal(Entity.Boolean.False, original.Simplify());
+            Assert.Equal(Entity.Boolean.False, original.Simplify().Substitute("x", "i").Evaled);
         }
 
         // https://github.com/asc-community/AngouriMath/issues/876 §3
