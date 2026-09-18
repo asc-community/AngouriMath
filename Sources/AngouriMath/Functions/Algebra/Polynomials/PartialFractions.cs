@@ -369,6 +369,13 @@ namespace AngouriMath.Functions
             => numerator.IsZero ? Integer.Create(0) : numerator.ToEntity(x) / denominator.ToEntity(x);
 
         /// <summary>
+        /// The largest value of the elimination, by <see cref="Entity.Complexity"/>, that is
+        /// put in lowest terms over the symbols; the ones that needed it were two thousand
+        /// nodes, and the ones that could not be were twenty thousand.
+        /// </summary>
+        private const int LargestValuePutInLowestTerms = 4096;
+
+        /// <summary>
         /// <c>N/D</c> written as one fraction per factor of <paramref name="denominator"/>,
         /// where the denominator is <b>written</b> as a product of distinct linear and quadratic
         /// factors whose coefficients may be symbols, or <see langword="false"/> where it is not
@@ -562,6 +569,21 @@ namespace AngouriMath.Functions
             if (!TrySolveSquare(matrix, rhs, out var values))
                 return false;
 
+            // Each value in lowest terms over the symbols where there are any: the
+            // elimination hands back quotients of determinants, and `csch(x)^5/(a + b cosh(x))`
+            // under `u = e^x`, after the Hermite reduction, is a numerator with a page of
+            // `a` and `b` in it over `(u^2 - 1)(b + 2 a u + b u^2)`, whose values came out at
+            // two thousand nodes each, and the integrand each makes with its factor went round
+            // the chain and did not return.
+            // https://github.com/asc-community/AngouriMath/issues/718
+            // Bounded: the lowest terms are an expansion and a gcd, and a value of twenty
+            // thousand nodes -- `cosh(c + d x)^6/(a + b sinh(c + d x)^2)^2` has four of them,
+            // and is answered in six seconds with them as they come -- did not return from
+            // either in three; past the bound a value is left as the elimination gave it.
+            if (values.Any(value => value.Vars.Any()))
+                for (var column = 0; column < width; column++)
+                    if (values[column].Complexity <= LargestValuePutInLowestTerms)
+                        values[column] = InLowestTermsOverTheSymbols(values[column]);
             Entity sum = 0;
             for (var i = 0; i < factors.Count; i++)
             {
@@ -600,14 +622,51 @@ namespace AngouriMath.Functions
             // order and eleven hundred nodes, and left uncancelled it carried into every
             // term of the answer.
             if (PolynomialGcd.TryCancel(expandedAbove, expandedBelow, out var cancelled, maxComplexity: 4096))
-                return Bare(cancelled);
+                return WithThePrimitiveDenominator(Bare(cancelled));
             // The gcd declines past its degree and step bounds, and a denominator that comes
             // out of a series is a product of written factors -- `b^9 (a^2 + b^2)^7` -- so the
             // common factor is one of them to some power: each is divided out of the
             // numerator exactly for as long as that goes.
             if (CancelledByTheWrittenFactors(expandedAbove, below) is { } byFactors)
-                return byFactors;
-            return expandedBelow == Integer.One ? expandedAbove : expandedAbove / expandedBelow;
+                return WithThePrimitiveDenominator(byFactors);
+            return WithThePrimitiveDenominator(expandedBelow == Integer.One ? expandedAbove : expandedAbove / expandedBelow);
+        }
+
+        /// <summary>
+        /// <paramref name="quotient"/> with the rational content of its denominator moved
+        /// up: the denominator's coefficients whole and coprime with a positive leading one,
+        /// and the numerator scaled by what that took out. <c>-1024/(1024 a)</c> is
+        /// <c>-1/a</c>.
+        /// </summary>
+        /// <remarks>
+        /// The polynomial gcd normalizes its divisor to whole coprime coefficients, so it
+        /// never cancels a number, and two sides without a variable in common are coprime to
+        /// it before it looks. Newton's iteration for the inverse modulo a power of a
+        /// quadratic squares its iterate every round, and an uncancelled <c>1024/1024</c>
+        /// after the first round was integers of twelve hundred digits after the third and
+        /// a minute of gcd on them for <c>tanh(x)^6/(a + a sech(x))</c>, which is a sum of
+        /// small fractions.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        private static Entity WithThePrimitiveDenominator(Entity quotient)
+        {
+            var (above, below) = SingleQuotient.Of(quotient);
+            if (below == Integer.One || below.Evaled is Complex { IsZero: true })
+                return quotient;
+            var variables = above.Vars.Concat(below.Vars).Distinct().OrderBy(variable => variable.Name, System.StringComparer.Ordinal).ToArray();
+            if (variables.Length > MultivariatePolynomial.MaxVariables)
+                return quotient;
+            var indices = new Dictionary<Variable, int>(variables.Length);
+            for (var i = 0; i < variables.Length; i++)
+                indices[variables[i]] = i;
+            if (MultivariatePolynomial.TryParse(below, indices) is not { } bottom || bottom.IsZero
+                || MultivariatePolynomial.TryParse(above, indices) is not { } top)
+                return quotient;
+            var primitive = bottom.Normalized(out var scale);
+            if (scale.CompareTo(ERational.One) == 0)
+                return quotient;
+            var scaledTop = top.ScaleBy(scale).ToEntity(variables);
+            return primitive.IsConstant ? scaledTop : scaledTop / primitive.ToEntity(variables);
         }
 
         /// <summary>

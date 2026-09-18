@@ -234,6 +234,39 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// A coefficient of the decomposition is in lowest terms over the symbols, its
+        /// rational content included. The polynomial gcd normalizes its divisor to whole
+        /// coprime coefficients, so <c>-1024/(1024 a)</c> stayed as it was, and Newton's
+        /// iteration for the inverse modulo <c>(1 + u^2)^6</c>, which squares its iterate every
+        /// round, had integers of twelve hundred digits by the third round and spent its
+        /// minute in their gcd: <c>tanh(x)^6/(a + a sech(x))</c> went from 650 ms to a timeout.
+        /// And the values the elimination solves for, where symbols are among them, are put
+        /// in lowest terms before the terms are built: <c>csch(x)^5/(a + b cosh(x))</c>, after
+        /// the Hermite reduction under <c>u = e^x</c>, had two thousand nodes of <c>a</c> and
+        /// <c>b</c> in every term, and the terms went round the chain and did not return.
+        /// And a constant factor is not a symbolic coefficient: with the content of
+        /// <c>a (1 + u^2) + 2 a u</c> out, the denominator is a rational one with <c>a</c> in
+        /// front, whose <c>(1 + u)^2</c> the refactoring over the rationals reads, and the
+        /// answer is a page shorter than the split's.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(u*(u^2 + 1)^6*(a*(u^2 + 1) + 2*a*u))", 1000)]
+        [InlineData("u^5/((u^2 - 1)^5*(2*a*u + b*(u^2 + 1)))", 30000)]
+        [InlineData("tanh(u)^6/(a + a*sech(u))", 8000)]
+        [InlineData("csch(u)^5/(a + b*cosh(u))", 30000)]
+        public void TheCoefficientsAreInLowestTerms(string integrand, int atMost)
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            var integral = integrand.ToEntity().Integrate("u");
+            watch.Stop();
+            Assert.True(watch.Elapsed < IntegrationDecline.Guard, $"{integrand} took {watch.Elapsed.TotalSeconds:F1} s");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var length = integral.Stringize().Length;
+            Assert.True(length < atMost, $"{length} characters of answer for {integrand}");
+            DifferentiatesBack(integrand, "u", ("a", 1.7), ("b", 2.3));
+        }
+
+        /// <summary>
         /// Two linear factors with one root are one factor: <c>(a + b x)(a + x b)^2</c> is
         /// how the rules that make a factor monic and gather its powers write it, and as
         /// two distinct factors the decomposition had no answer, its coefficients being
