@@ -114,7 +114,7 @@ internal partial class AngouriMathParser : Parser {
 		"'limit('", "'limitleft('", "'limitright('", "'sum('", "'product('", "'signum('", 
 		"'sgn('", "'sign('", "'abs('", "'phi('", "'card('", "'floor('", "'ceil('", 
 		"'ceiling('", "'round('", "'min('", "'max('", "'argmax('", "'argmin('", 
-		"'gcd('", "'binomial('", "'trunc('", "'lcm('", "'erf('", "'conjugate('", 
+		"'gcd('", "'lcm('", "'binomial('", "'trunc('", "'erf('", "'conjugate('", 
 		"'domain('", "'piecewise('", "'apply('", "'lambda('", null, null, null, 
 		null, "'NaN'"
 	};
@@ -3756,7 +3756,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 933;
 				Match(T__24);
-				 Assert("binomial", 2, _localctx.args.list.Count); _localctx.value =  MathS.Binomial(_localctx.args.list[0], _localctx.args.list[1]); 
+				 AssertAtLeast("lcm", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Aggregate((a, b) => MathS.Lcm(a, b)); 
 				}
 				break;
 			case 117:
@@ -3768,7 +3768,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 938;
 				Match(T__24);
-				 _localctx.value =  NotImplementedFunction("trunc", "rounding functions"); 
+				 Assert("binomial", 2, _localctx.args.list.Count); _localctx.value =  MathS.Binomial(_localctx.args.list[0], _localctx.args.list[1]); 
 				}
 				break;
 			case 118:
@@ -3780,7 +3780,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 943;
 				Match(T__24);
-				 _localctx.value =  NotImplementedFunction("lcm", "least common multiple as a symbolic function"); 
+				 _localctx.value =  NotImplementedFunction("trunc", "rounding functions"); 
 				}
 				break;
 			case 119:

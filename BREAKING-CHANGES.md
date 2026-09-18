@@ -534,6 +534,28 @@ quotient or whole power with a matrix in it to GenericTensor's operation of that
 | `"[[x, 2 x], [x + 1, x^2]]".ToEntity().Compile<double, GenTensor<double, DoubleOperations>>("x")` | `UncompilableNodeException` | a delegate; at `3` the matrix `[[3, 6], [4, 9]]` |
 | `"A * B".ToEntity().Compile<GenTensor<…>, GenTensor<…>, GenTensor<…>>("A", "B")` | `UncompilableNodeException` | the matrix product |
 | `"[[1, 0]] * [[a, b], [c, d]] * [[0], [1]]".ToEntity().Compile<double, double, double, double, double>("a", "b", "c", "d")` | `2` at `(1, 2, 3, 4)` — simplified to the scalar first | unchanged |
+### `lcm` is a function, and a congruence is solved to a residue class
+
+`lcm(a, b, ...)` is a node, `Entity.Lcmf`, by the conventions of `gcd`: non-negative, `0` where
+either argument is `0`, `lcm(a/b, c/d) = lcm(a, c) / gcd(b, d)`, and left as written for symbols.
+It was refused by name. A linear congruence in one unknown is solved by `Solve` to the residue
+class `{ x in ZZ : x = r (mod n) }`, two classes meet by the Chinese remainder theorem — the
+non-coprime case included — and a class cut down by a bounded interval is the finite set of its
+members; `MathS.NumberTheory.ModularInverse(a, n)` is the representative in `[1, n - 1]` or
+`null`. A quantified statement over the whole numbers whose body is a divisibility or a congruence
+of polynomials is decided by its residues, and a polynomial equation with no solution modulo a
+small `m` is decided to have none ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+Every spelling but `lcm` was a parse error in 2.5.0, the congruence node being new since.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `lcm(4, 6)` | `UnrecognizedFunctionParseException` | `12` |
+| `lcm(1/2, 1/3)`, `lcm(0, 5)`, `lcm(x, y)` | `UnrecognizedFunctionParseException` | `1`, `0`, `lcm(x, y)` |
+| `"3 x = 11 (mod 7)".ToEntity().Solve("x")` | `UnhandledParseException` | `{ x in ZZ : x = 6 (mod 7) }` |
+| `"x = 1 (mod 2) and x = 1 (mod 3) and x = 2 (mod 5) and 250 <= x and x <= 300".ToEntity().Solve("x")` | `UnhandledParseException` | `{ 277 }` |
+| `"x = 3 (mod 4) and x = 2 (mod 6)".ToEntity().Solve("x")` | `UnhandledParseException` | `{}` |
+| `forall n in ZZ : 6 divides n^3 + 5 n` | `UnhandledParseException` | `True` |
+| `exists x, y in ZZ : 3 x^2 - 5 y^2 = 1` | `UnhandledParseException` | `False` |
 
 ### `binomial(n, k)` is a function
 
@@ -647,6 +669,9 @@ they had.
 | | `"[2; 3] / 2".ToEntity().Simplify()` | `[2; 3] / 2` | `[1; 3/2]` |
 | **Silent** | `"[2; 3) * (-1)".ToEntity().Simplify()` | `[2; 3) * (-1)` | `(-3; -2]` — reflected, ends and openness both |
 | | `"0 - [0; 1)".ToEntity().Simplify()` | `-[0; 1)` | `(-1; 0]` |
+| | `"ln((0; 1))".ToEntity().Simplify()`, and every interval under a function monotone on it — `ln`, `log`, `e^`, `b^`, whole and unit-fraction powers, `abs`, `arctan`, `arcsin`, `arccos` | `ln((0; 1))` — left alone | `(-oo; 0)`; `e^[0; 1]` is `[1; e]`, `(-2; 1]^2` is `[0; 4)`, `abs((-1; 2])` is `[0; 2]`, `arctan([0; 1])` is `[0; pi / 4]`, `sqrt([0; 4])` is `[0; 2]` |
+| | `"(1; 2) * (3; 4)".ToEntity().Simplify()`, and every product or quotient of two intervals with finite numeric ends | `(1; 2) * (3; 4)` — left alone | `(3; 8)`; `(1; 2) / (3; 4)` is `(1/4; 2/3)`; a divisor containing zero stays as written |
+| | `"2 / (0; 1)".ToEntity().Simplify()`, and every constant over an interval that does not contain zero | `2 / (0; 1)` — left alone | `(2; +oo)` |
 | | `"2 * x + 4 * a".ToEntity().Factorize()`, and every sum whose whole coefficients share a divisor | `2 * x + 4 * a` — left alone | `2 * (x + 2 * a)` |
 | | `Transformation.Factorization.Name` | `… then polynomial-factorization` | `… then polynomial-factorization then numeric-content` |
 | | `"sin(x)^2 + 2 sin(x) + 1".ToEntity().Factorize()`, and every polynomial in one subexpression of its variable | `sin(x) ^ 2 + 2 * sin(x) + 1` — left alone | `(sin(x) + 1) ^ 2`; `sin(x) + sin(x)^3` is `sin(x) * (sin(x) ^ 2 + 1)` |

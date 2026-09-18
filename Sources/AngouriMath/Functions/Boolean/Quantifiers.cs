@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using PeterO.Numbers;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
@@ -86,9 +87,164 @@ namespace AngouriMath.Functions.Boolean
                 return Closed(kind, set, Entity.Boolean.True);
             if (set is FiniteSet finite)
                 return OverFinite(kind, x, finite, body, isExact);
+            if (set is SpecialSet integers && IsIntegerSet(integers) && kind != Kind.Unique)
+            {
+                // A statement about divisibility, or a congruence, in a polynomial of x with
+                // whole coefficients repeats with the modulus, so the residues decide it:
+                // forall n in ZZ : 6 divides n^3 + 5 n is six cases. The reference's "case
+                // analysis over the classes" (Ex 6.5.14).
+                if (Period(body, x) is { } period && period.CompareTo(EInteger.FromInt32(LargestPeriod)) <= 0)
+                    return OverResidues(kind, x, integers, body, period, isExact);
+                // A polynomial equation with no solution modulo some m has none in the whole
+                // numbers: 3 x^2 - 5 y^2 = 1 is impossible modulo 5 (Ex 6.5.27). Only a refusal
+                // is read off the residues; a solution modulo every m tried proves nothing.
+                if (ImpossibleByResidues(kind, x, integers, body) is { } verdict)
+                    return verdict;
+            }
             if (Witness(kind, x, set, body, isExact) is { } byWitness)
                 return byWitness;
             return BySolving(kind, x, set, body);
+        }
+
+        private static bool IsIntegerSet(SpecialSet set)
+            => set.ToDomain() is Domain.Integer or Domain.NonNegativeInteger or Domain.PositiveInteger;
+
+        /// <summary>How many residues a periodic statement is checked over before it is left as written.</summary>
+        private const int LargestPeriod = 4096;
+
+        /// <summary>
+        /// The period of the body in <paramref name="x"/> over the whole numbers, where it has
+        /// one: a divisibility by a whole number, or a congruence modulo one, of polynomials
+        /// with whole coefficients, joined by the connectives; the least common multiple of the
+        /// parts' periods.
+        /// </summary>
+        private static EInteger? Period(Entity body, Variable x)
+        {
+            switch (body)
+            {
+                case Entity.Boolean:
+                    return EInteger.One;
+                case Dividesf(Integer divisor, var dividend):
+                    return divisor.EInteger.IsZero || !IsWholePolynomial(dividend) ? null : divisor.EInteger.Abs();
+                case Congruentf(var left, var right, Integer modulus):
+                    return modulus.EInteger.IsZero || !IsWholePolynomial(left) || !IsWholePolynomial(right) ? null : modulus.EInteger.Abs();
+                case Notf(var operand):
+                    return Period(operand, x);
+                // A quantifier over whole numbers inside: its body is periodic in x with the
+                // same period whatever the inner name takes, so the residues of x decide the
+                // outer statement and the inner one is decided at each of them.
+                case Quantifier { Over: SpecialSet inner } quantifier when IsIntegerSet(inner):
+                    return Period(quantifier.Body, x);
+                case Andf or Orf or Impliesf or Xorf:
+                    if (body is not IBinaryNode { NodeFirstChild: var first, NodeSecondChild: var second })
+                        return null;
+                    if (Period(first, x) is not { } one || Period(second, x) is not { } another)
+                        return null;
+                    return one * another / one.Gcd(another);
+                default:
+                    return body.ContainsNode(x) ? null : EInteger.One;
+            }
+        }
+
+        /// <summary>
+        /// A polynomial with whole coefficients in whatever names it mentions -- which is
+        /// periodic in each of them modulo anything, as long as the others stand for whole
+        /// numbers.
+        /// </summary>
+        private static bool IsWholePolynomial(Entity expression)
+        {
+            if (!expression.Vars.Any())
+                return expression.Evaled is Integer;
+            var variables = expression.Vars.OrderBy(v => v.Name, System.StringComparer.Ordinal).ToArray();
+            if (variables.Length > MultivariatePolynomial.MaxVariables)
+                return false;
+            var indices = new Dictionary<Variable, int>();
+            for (var i = 0; i < variables.Length; i++)
+                indices[variables[i]] = i;
+            return MultivariatePolynomial.TryParse(expression, indices) is { HasIntegerCoefficients: true };
+        }
+
+        /// <summary>The statement at each residue, which is at every member of the set.</summary>
+        private static Entity? OverResidues(Kind kind, Variable x, SpecialSet set, Entity body, EInteger period, bool isExact)
+        {
+            int holds = 0, fails = 0, undecided = 0;
+            // From 1 for the positive whole numbers, since 0 is not one; either way every class
+            // is represented once.
+            var first = set.ToDomain() == Domain.PositiveInteger ? EInteger.One : EInteger.Zero;
+            for (var residue = first; residue.CompareTo(first + period) < 0; residue += 1)
+                switch (body.Substitute(x, Integer.Create(residue)).InnerSimplified(isExact))
+                {
+                    case Entity.Boolean(true): holds++; break;
+                    case Entity.Boolean(false): fails++; break;
+                    default: undecided++; break;
+                }
+            return Tally(kind, holds, fails, undecided, distinct: true);
+        }
+
+        [ConstantField]
+        private static readonly int[] ModuliTried = { 2, 3, 4, 5, 7, 8, 9, 11, 13, 16 };
+
+        /// <summary>
+        /// <c>exists x, y, ... in ZZ : P = Q</c> is false where the equation has no solution
+        /// modulo some small <c>m</c>, and <c>forall ... : not (P = Q)</c> true. The variables
+        /// are the whole chain of quantifiers over whole numbers the body opens with.
+        /// </summary>
+        private static Entity? ImpossibleByResidues(Kind kind, Variable x, SpecialSet set, Entity body)
+        {
+            var variables = new List<Variable> { x };
+            var inner = body;
+            while (true)
+            {
+                Variable? next = null;
+                Entity? deeper = null;
+                if (kind == Kind.Some && inner is Existsf(Variable some, SpecialSet someOver, var someBody) && IsIntegerSet(someOver))
+                    (next, deeper) = (some, someBody);
+                else if (kind == Kind.All && inner is Forallf(Variable every, SpecialSet everyOver, var everyBody) && IsIntegerSet(everyOver))
+                    (next, deeper) = (every, everyBody);
+                if (next is null || deeper is null)
+                    break;
+                variables.Add(next);
+                inner = deeper;
+            }
+            var equation = kind == Kind.Some ? inner : inner is Notf(var negated) ? negated : null;
+            if (equation is not Equalsf(var left, var right))
+                return null;
+            var difference = (left - right).InnerSimplified;
+            if (difference.Vars.Any(v => !variables.Contains(v)) || variables.Count > 3)
+                return null;
+            var indices = new Dictionary<Variable, int>();
+            for (var i = 0; i < variables.Count; i++)
+                indices[variables[i]] = i;
+            if (MultivariatePolynomial.TryParse(difference, indices) is not { HasIntegerCoefficients: true } polynomial)
+                return null;
+            foreach (var m in ModuliTried)
+            {
+                var modulus = EInteger.FromInt32(m);
+                if (!HasRootModulo(polynomial, variables.Count, modulus))
+                    return kind == Kind.Some ? Entity.Boolean.False : Entity.Boolean.True;
+            }
+            return null;
+        }
+
+        private static bool HasRootModulo(MultivariatePolynomial polynomial, int variables, EInteger modulus)
+        {
+            var values = new EInteger[variables];
+            var m = modulus.ToInt32Checked();
+            var total = 1;
+            for (var i = 0; i < variables; i++)
+                total *= m;
+            for (var index = 0; index < total; index++)
+            {
+                var rest = index;
+                for (var i = 0; i < variables; i++)
+                {
+                    values[i] = EInteger.FromInt32(rest % m);
+                    rest /= m;
+                }
+                if (polynomial.ValueModulo(values, modulus) is { IsZero: true })
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>Whether two sides are the same polynomial, read by expansion.</summary>

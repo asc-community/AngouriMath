@@ -79,7 +79,13 @@ difference is a polynomial every term of which the modulus divides: `(n - a)^2 =
 because `6 x^2 y^2` is not a multiple of `4` for every `x, y`. Modulo `0` it is equality, and the
 sign of the modulus is immaterial. `(mod n)` after an order comparison, or `≡` without a modulus,
 is a parse error. In LaTeX, `a \equiv b \pmod{n}`. The one place implicit multiplication does not
-apply: `b (mod n)` is not `b * (mod n)`, a bracket that opens on `mod` is a modulus.
+apply: `b (mod n)` is not `b * (mod n)`, a bracket that opens on `mod` is a modulus. A linear
+congruence is solved to a residue class — `"3 x = 11 (mod 7)".ToEntity().Solve("x")` is
+`{ x in ZZ : x = 6 (mod 7) }`, `2 x = 3 (mod 6)` has none — a conjunction of congruences by the
+Chinese remainder theorem, `x = 3 (mod 4) and x = 5 (mod 6)` giving `{ x in ZZ : x = 11 (mod 12) }`
+and `x = 3 (mod 4) and x = 2 (mod 6)` nothing, and with a bounded interval the members are listed:
+`x = 2 (mod 7) and 0 <= x and x < 30` is `{ 2, 9, 16, 23 }`. `MathS.NumberTheory.ModularInverse(3, 10)`
+is `7`, the one representative in `[1, n - 1]`, and `null` where `a` and `n` share a factor.
 | 9 | `unite` `\/`, `setsubtract` `\` | one level, so `A \/ B \ C` is `(A \/ B) \ C` |
 | 10 | `intersect` `/\` | |
 | 11 | `+` `-` | |
@@ -219,10 +225,11 @@ rather than toward zero, so `floor(-3/2)` is `-2`; `round` goes to the **nearest
 so `round(1/2)` is `0` and `round(5/2)` is `2`, which is what Python, SymPy, Mathematica and
 IEEE 754 all mean by rounding — and is *not* `floor(x + 1/2)`.
 
-**Comparison and divisors** — `min(a, b, ...)` `max(a, b, ...)` `gcd(a, b, ...)`. All three take
-any number of arguments and fold. `min` and `max` compare only where the arguments are ordered and
-are otherwise left as written. `gcd` computes over integers and rationals — `gcd(1/2, 1/3)` is
-`1/6` — and leaves the polynomial case alone.
+**Comparison and divisors** — `min(a, b, ...)` `max(a, b, ...)` `gcd(a, b, ...)` `lcm(a, b, ...)`.
+All four take any number of arguments and fold. `min` and `max` compare only where the arguments
+are ordered and are otherwise left as written. `gcd` and `lcm` compute over integers and rationals
+— `gcd(1/2, 1/3)` is `1/6`, `lcm(1/2, 1/3)` is `1`, `lcm(4, 6)` is `12`, `lcm(0, n)` is `0` — and
+leave the polynomial case alone.
 
 **Combinatorics** — `binomial(n, k)`, "n choose k". A whole `k` is computed by the falling
 factorial `n (n - 1) ... (n - k + 1) / k!` for any `n` — `binomial(5, 2)` is `10`,
@@ -284,7 +291,7 @@ operators answer for two of them: `ZZ unite QQ` is `QQ`, `BB intersect ZZ` is `{
 is `{ 0 }`, `ZZ \ ZZ*` is `{ x in ZZ : x < 0 }` and `QQ \ ZZ` is `{ x in QQ : not x in ZZ }`.
 The tokens take the sign: `ZZ*2` no longer reads as `ZZ * 2`.
 
-**Refused by name** — `trunc` `lcm` `erf` `conjugate`. AngouriMath has none of these, and each is
+**Refused by name** — `trunc` `erf` `conjugate`. AngouriMath has none of these, and each is
 what some other CAS calls a function, so a caller reaches for it. Left alone they would be read as
 products under the rule above and answer silently and wrongly; they raise a parse error naming the
 function instead. `re` and `im` are the same case and are *not* refused, being short enough to be

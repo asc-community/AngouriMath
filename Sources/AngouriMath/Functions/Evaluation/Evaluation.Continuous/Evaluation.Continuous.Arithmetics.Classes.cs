@@ -143,6 +143,7 @@ namespace AngouriMath
                         (var n1, var n2) when n1 == n2 => new Powf(n1, 2).InnerSimplified(isExact),
                         // After the zero arms above, which answer a multiplication by zero for
                         // every Entity and not only for an interval.
+                        (Interval one, Interval another) => IntervalArithmetic.Product(one, another, isExact),
                         (Interval inter, var n2) when n2 is not Set => ScaledInterval(inter, n2, isExact),
                         (var n2, Interval inter) when n2 is not Set => ScaledInterval(inter, n2, isExact),
                         _ => null
@@ -183,6 +184,11 @@ namespace AngouriMath
                     // and is left alone rather than answered wrongly.
                     (Interval inter, var n2) when n2 is not Set
                         => ScaledInterval(inter, (1 / n2).InnerSimplified(isExact), isExact),
+                    // And the other direction where the divisor does not contain zero, which is
+                    // when its reciprocal is an interval. https://github.com/asc-community/AngouriMath/issues/322
+                    (Interval dividend, Interval divisor) => IntervalArithmetic.Quotient(dividend, divisor, isExact),
+                    (var n1, Interval divisor) when n1 is not Set && IntervalArithmetic.Reciprocal(divisor, isExact) is Interval reciprocal
+                        => ScaledInterval(reciprocal, n1, isExact),
                     _ => null
                 },
                 (@this, a, b) => ((Divf)@this).New(a, b), isExact);
@@ -271,6 +277,11 @@ namespace AngouriMath
                 (a, b) => (a, b) switch
                 {
                     (Matrix m, Integer(var exp)) when exp is { } expNotNull && TryPower(m, expNotNull, out var res) => res.InnerSimplified(isExact),
+                    // An interval raised to a number, and a number raised to an interval, are
+                    // the images of the interval under a monotone function where the function
+                    // is one. https://github.com/asc-community/AngouriMath/issues/322
+                    (Interval interval, var exponent) when exponent is not Set && IntervalArithmetic.Power(interval, exponent, isExact) is { } image => image,
+                    (var @base, Interval interval) when @base is not Set && IntervalArithmetic.Exponential(@base, interval, isExact) is { } image => image,
                     (Integer(0), var x) =>
                         (isExact ? x.Evaled : x) is Complex c
                         ? c.RealPart.IsPositive
@@ -327,6 +338,9 @@ namespace AngouriMath
                     (a, b) => (a, b) switch
                     {
                         (Complex n1, Complex n2) when !isExact => Number.Log(n1, n2),
+                        // The image of an interval of positive numbers, monotone for any base.
+                        // https://github.com/asc-community/AngouriMath/issues/322
+                        (var @base, Interval interval) when @base is not Set && IntervalArithmetic.Logarithm(@base, interval, isExact) is { } image => image,
 
                         // log_b(0) is ln(0)/ln(b), that is -oo/ln(b), so the sign of the answer
                         // is the sign of ln(b): -oo for a base above 1 and +oo for one between
@@ -581,6 +595,33 @@ namespace AngouriMath
                     (@this, a, b) => ((Gcdf)@this).New(a, b), isExact);
         }
 
+        public partial record Lcmf
+        {
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Left, Right,
+                    (a, b) => (a, b) switch
+                    {
+                        // lcm is non-negative by the gcd's convention, and lcm(0, n) is 0: zero is
+                        // the only common multiple there is.
+                        (Integer l, Integer r) => l.EInteger.IsZero || r.EInteger.IsZero
+                            ? Integer.Zero
+                            : Integer.Create((l.EInteger * r.EInteger).Abs() / l.EInteger.Gcd(r.EInteger)),
+                        // lcm(a/b, c/d) = lcm(a, c) / gcd(b, d), the mirror of the gcd's rule and
+                        // what SymPy gives: lcm(1/2, 1/3) is 1.
+                        (Rational l, Rational r) => l.Numerator.EInteger.IsZero || r.Numerator.EInteger.IsZero
+                            ? Integer.Zero
+                            : Rational.Create(
+                                (l.Numerator.EInteger * r.Numerator.EInteger).Abs() / l.Numerator.EInteger.Gcd(r.Numerator.EInteger),
+                                l.Denominator.EInteger.Gcd(r.Denominator.EInteger)),
+                        var (l, r) when l == r => l,
+                        _ => null
+                    },
+                    (@this, a, b) => ((Lcmf)@this).New(a, b), isExact);
+        }
+
         public partial record Absf
         {
             // Absolute value is defined everywhere in the complex plane
@@ -611,6 +652,9 @@ namespace AngouriMath
                         Matrix m when m.IsVector => VectorNorm(m, isExact),
                         Complex n when !isExact => Number.Abs(n),
                         Absf abs => abs,
+                        // The interval itself from zero on, its reflection up to zero, and
+                        // folded across zero otherwise. https://github.com/asc-community/AngouriMath/issues/322
+                        Interval interval when IntervalArithmetic.Absolute(interval, isExact) is { } image => image,
                         // |sgn(z)| has unit modulus wherever z is nonzero and is 0 at zero, the
                         // same question as sgn(|z|) above and with the same answer. See there for
                         // why this decides rather than attaching a condition.

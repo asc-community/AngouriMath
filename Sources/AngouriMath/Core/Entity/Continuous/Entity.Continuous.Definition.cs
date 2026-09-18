@@ -179,5 +179,8 @@ namespace AngouriMath
         public Entity Max(Entity another) => new Maxf(this, another);
         /// <summary><see cref="MathS.Gcd(Entity, Entity)"/></summary>
         public Entity Gcd(Entity another) => new Gcdf(this, another);
+
+        /// <summary>The least common multiple of this and <paramref name="another"/>: <c>lcm(a, b)</c>.</summary>
+        public Entity Lcm(Entity another) => new Lcmf(this, another);
     }
 }

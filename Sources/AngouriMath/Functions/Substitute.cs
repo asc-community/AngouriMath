@@ -221,6 +221,13 @@ namespace AngouriMath
                 => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
         }
 
+        partial record Lcmf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+        }
+
         partial record Boolean
         {
             /// <inheritdoc/>

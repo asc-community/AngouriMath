@@ -96,6 +96,28 @@ namespace AngouriMath.Tests.Convenience
         public void AGcdItCannotSettleIsLeftAsANode()
             => Assert.IsType<Entity.Gcdf>("gcd(x, y)".ToEntity().Simplify());
 
+        // The least common multiple, by the gcd's conventions: non-negative, 0 where either
+        // argument is 0, and lcm(a/b, c/d) = lcm(a, c) / gcd(b, d).
+        // https://github.com/asc-community/AngouriMath/issues/1409
+        [Theory]
+        [InlineData("lcm(4, 6)", "12")]
+        [InlineData("lcm(-4, 6)", "12")]
+        [InlineData("lcm(0, 5)", "0")]
+        [InlineData("lcm(2, 3, 4)", "12")]
+        [InlineData("lcm(1/2, 1/3)", "1")]
+        [InlineData("lcm(2/3, 4/9)", "4/3")]
+        [InlineData("lcm(7, 7)", "7")]
+        public void LcmIsWhatSymPyGives(string input, string expected)
+            => Assert.Equal(expected.ToEntity().Simplify(), input.ToEntity().Simplify());
+
+        [Fact]
+        public void AnLcmItCannotSettleIsLeftAsANode()
+        {
+            Assert.IsType<Entity.Lcmf>("lcm(x, y)".ToEntity().Simplify());
+            Assert.Equal("lcm(x, y)", "lcm(x, y)".ToEntity().ToString());
+            Assert.Equal(@"\operatorname{lcm}\left(x, y\right)", "lcm(x, y)".ToEntity().Latexize());
+        }
+
         [Theory]
         [InlineData("round(x)", "round(x)")]
         [InlineData("min(x, y)", "min(x, y)")]

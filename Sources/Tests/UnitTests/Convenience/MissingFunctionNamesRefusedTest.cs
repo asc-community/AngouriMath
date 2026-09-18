@@ -26,13 +26,12 @@ namespace AngouriMath.Tests.Convenience
     [Trait("Area", "Convenience")]
     public sealed class MissingFunctionNamesRefusedTest
     {
-        // floor, ceil, ceiling, round, min, max and gcd were all on this list until they
+        // floor, ceil, ceiling, round, min, max, gcd and lcm were all on this list until they
         // were implemented: https://github.com/asc-community/AngouriMath/issues/809
         [Theory]
         [InlineData("trunc(x)")]
         [InlineData("erf(x)")]
         [InlineData("conjugate(x)")]
-        [InlineData("lcm(x, y)")]
         public void ANameTheLibraryDoesNotHaveIsRefused(string written) =>
             Assert.Throws<UnrecognizedFunctionParseException>(() => written.ToEntity());
 
@@ -42,7 +41,7 @@ namespace AngouriMath.Tests.Convenience
         /// </summary>
         [Theory]
         [InlineData("trunc(x)", "trunc")]
-        [InlineData("lcm(x, y)", "lcm")]
+        [InlineData("erf(x)", "erf")]
         [InlineData("conjugate(x)", "conjugate")]
         public void TheRefusalNamesTheFunction(string written, string name) =>
             Assert.Contains(name,
@@ -55,9 +54,9 @@ namespace AngouriMath.Tests.Convenience
         /// absence was invisible or cryptic according to how the caller happened to write it.
         /// </summary>
         [Theory]
-        [InlineData("lcm(x)")]
-        [InlineData("lcm(x, y)")]
-        [InlineData("lcm(x, y, z)")]
+        [InlineData("erf(x)")]
+        [InlineData("erf(x, y)")]
+        [InlineData("erf(x, y, z)")]
         [InlineData("trunc(x)")]
         [InlineData("trunc(x, y)")]
         public void TheArgumentCountDoesNotDecideWhetherItIsReported(string written) =>

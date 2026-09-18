@@ -558,6 +558,7 @@ atom returns[Entity value]
     | 'argmax(' args = function_arguments ')' { Assert("argmax", 2, $args.list.Count); $value = $args.list[1] is Entity.Set.Inf { Element: Variable } argmaxRange ? MathS.Argmax($args.list[0], argmaxRange.Element, argmaxRange.SupSet) : throw new InvalidArgumentParseException("argmax expects its second argument to say which variable ranges over which set, as in argmax(f(t), t in S)"); }
     | 'argmin(' args = function_arguments ')' { Assert("argmin", 2, $args.list.Count); $value = $args.list[1] is Entity.Set.Inf { Element: Variable } argminRange ? MathS.Argmin($args.list[0], argminRange.Element, argminRange.SupSet) : throw new InvalidArgumentParseException("argmin expects its second argument to say which variable ranges over which set, as in argmin(f(t), t in S)"); }
     | 'gcd(' args = function_arguments ')' { AssertAtLeast("gcd", 1, $args.list.Count); $value = $args.list.Aggregate((a, b) => MathS.Gcd(a, b)); }
+    | 'lcm(' args = function_arguments ')' { AssertAtLeast("lcm", 1, $args.list.Count); $value = $args.list.Aggregate((a, b) => MathS.Lcm(a, b)); }
     | 'binomial(' args = function_arguments ')' { Assert("binomial", 2, $args.list.Count); $value = MathS.Binomial($args.list[0], $args.list[1]); }
 
     /* Names the library does not have. Each is a function every other CAS spells this way, so
@@ -566,7 +567,6 @@ atom returns[Entity value]
        between a missing function and a wrong answer. */
 
     | 'trunc(' args = function_arguments ')' { $value = NotImplementedFunction("trunc", "rounding functions"); }
-    | 'lcm(' args = function_arguments ')' { $value = NotImplementedFunction("lcm", "least common multiple as a symbolic function"); }
     | 'erf(' args = function_arguments ')' { $value = NotImplementedFunction("erf", "error function"); }
     | 'conjugate(' args = function_arguments ')' { $value = NotImplementedFunction("conjugate", "complex conjugate as a symbolic function"); }
     | 'domain(' args = function_arguments ')' 

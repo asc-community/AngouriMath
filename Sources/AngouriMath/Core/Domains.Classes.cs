@@ -370,6 +370,14 @@ namespace AngouriMath
             internal override Domain DefaultCodomain => Domain.Complex;
         }
 
+        partial record Lcmf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Complex;
+            /// <inheritdoc/>
+            internal override Domain DefaultCodomain => Domain.Complex;
+        }
+
         partial record Boolean
         {
             /// <inheritdoc/>

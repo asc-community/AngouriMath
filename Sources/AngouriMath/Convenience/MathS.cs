@@ -88,6 +88,27 @@ namespace AngouriMath
             public static Entity Congruent(Entity left, Entity right, Entity modulus) => new Congruentf(left, right, modulus);
 
             /// <summary>
+            /// The multiplicative inverse of <paramref name="a"/> modulo <paramref name="n"/>:
+            /// the one representative in <c>[1, n - 1]</c> of the class of <c>x</c> with
+            /// <c>a x = 1 (mod n)</c>, or <see langword="null"/> where there is none, which is
+            /// exactly when <c>a</c> and <c>n</c> share a factor. A class, never the number
+            /// <c>1/a</c>. https://github.com/asc-community/AngouriMath/issues/1409
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine(MathS.NumberTheory.ModularInverse(3, 10));
+            /// Console.WriteLine(MathS.NumberTheory.ModularInverse(6, 15) is null);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 7
+            /// True
+            /// </code>
+            /// </example>
+            public static Integer? ModularInverse(Integer a, Integer n)
+                => Functions.ResidueClasses.Inverse(a.EInteger, n.EInteger) is { } inverse ? Integer.Create(inverse) : null;
+
+            /// <summary>
             /// Count of all divisors of an integer, including 1 or itself.
             /// </summary>
             /// <example>
@@ -1279,6 +1300,24 @@ namespace AngouriMath
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Gcd(Entity a, Entity b) => new Gcdf(a, b);
+
+        /// <summary>
+        /// The least common multiple of two numbers, <c>lcm(a, b)</c>: computed over integers
+        /// and rationals, non-negative, <c>0</c> where either is <c>0</c>, and left as a node
+        /// otherwise. https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// Console.WriteLine(MathS.Lcm(4, 6).Evaled);
+        /// Console.WriteLine("lcm(2, 3, 4)".ToEntity().Evaled);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 12
+        /// 12
+        /// </code>
+        /// </example>
+        public static Entity Lcm(Entity a, Entity b) => new Lcmf(a, b);
 
         /// <summary>The binomial coefficient <c>binomial(n, k)</c>, "n choose k"</summary>
         /// <param name="n">The upper argument, which need not be a whole number</param>
