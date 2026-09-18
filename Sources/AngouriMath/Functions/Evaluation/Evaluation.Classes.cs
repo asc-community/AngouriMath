@@ -107,16 +107,7 @@ namespace AngouriMath
                 (Providedf a, Providedf b) => ops(a.Expression, b.Expression).Provided(a.Predicate & b.Predicate),
                 (Providedf a, var b) => ExpandOnTwoArguments(a.Expression, b, operation, defaultCtor, isExact).Provided(a.Predicate),
                 (var a, Providedf b) => ExpandOnTwoArguments(a, b.Expression, operation, defaultCtor, isExact).Provided(b.Predicate),
-                (Piecewise a, Piecewise b) =>
-                    MathS.Piecewise(
-
-                        (a.Cases, b.Cases).EachForEach((c1, c2) =>
-                        (
-                        ExpandOnTwoArguments(c1.Expression, c2.Expression, operation, defaultCtor, isExact)
-                        , (c1.Predicate & c2.Predicate).InnerSimplified).ToProvided()
-                        )
-
-                        ),
+                (Piecewise a, Piecewise b) => CombinedCaseByCase(a, b, operation, defaultCtor, isExact),
                 (Piecewise a, var b) => a.ApplyToValues(a => ops(a, b)),
                 (var a, Piecewise b) => b.ApplyToValues(b => ops(a, b)),
                 (Matrix a, Matrix b) => a.InnerMatrix.Shape == b.InnerMatrix.Shape ? a.Elementwise(b, ops) : defaultCtor(this, left, right),
@@ -130,6 +121,34 @@ namespace AngouriMath
                     _ => defaultCtor(this, left, right)
                 } : defaultCtor(this, left, right)
             };
+        }
+
+        /// <summary>
+        /// A piecewise combined with a piecewise, case by case: every case of one against every
+        /// case of the other, under the conjunction of their predicates.
+        /// </summary>
+        /// <remarks>
+        /// A pair whose conjunction is <c>False</c> is not a case: it is dropped here, before
+        /// its expression is even combined, rather than carried as <c>... provided False</c>
+        /// until the piecewise is next simplified. Two piecewises that split on the same three
+        /// signs of one quantity then combine to five cases and not nine -- the three that
+        /// agree, and the two opposite strict signs, which are NaN rather than False off the
+        /// real line and so stay -- and a sum of such piecewises stays at five instead of
+        /// having 3^n cases after n additions.
+        /// https://github.com/asc-community/AngouriMath/issues/1414
+        /// </remarks>
+        private Entity CombinedCaseByCase(Piecewise a, Piecewise b,
+            Func<Entity, Entity, Entity?> operation, Func<Entity, Entity, Entity, Entity> defaultCtor, bool isExact)
+        {
+            var cases = new List<Providedf>();
+            foreach (var (c1, c2) in (a.Cases, b.Cases).EachForEach())
+            {
+                var predicate = (c1.Predicate & c2.Predicate).InnerSimplified;
+                if (predicate == Boolean.False)
+                    continue;
+                cases.Add((ExpandOnTwoArguments(c1.Expression, c2.Expression, operation, defaultCtor, isExact), predicate).ToProvided());
+            }
+            return MathS.Piecewise(cases);
         }
 
         private Entity ExpandOnOneArgument(Entity expr, Func<Entity, Entity?> operation, Func<Entity, Entity, Entity> defaultCtor, bool isExact,

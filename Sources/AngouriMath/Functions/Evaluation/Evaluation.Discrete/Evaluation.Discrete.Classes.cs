@@ -74,9 +74,87 @@ namespace AngouriMath
                         (Boolean(false), _) or (_, Boolean(false)) => False,
                         (Boolean(true), _) => right,
                         (_, Boolean(true)) => left,
-                        _ => null
+                        _ => WithoutRepeatedOrContradictoryConjuncts(left, right)
                     },
                     (@this, a, b) => ((Andf)@this).New(a, b), isExact, settlesNaN: true);
+
+            // A predicate joined to a predicate repeats what the two share and pairs the three
+            // signs of one quantity -- `q = 0 and q > 0` -- that no value satisfies. A piecewise
+            // combined with a piecewise joins every case's predicate to every other's, so with
+            // the repeats and the contradictions left as written the cases multiply instead of
+            // staying three: 3, 9, 27, ... 3^12 of them and 8 GB inside integration by parts on
+            // (c - c/(a^2 x^2))^(9/2) / e^(3 acoth(a x)). A conjunct already on the left is not
+            // written again, and one that contradicts a conjunct on the left makes the whole
+            // conjunction False, which is what lets the piecewise drop the case.
+            // https://github.com/asc-community/AngouriMath/issues/1414
+            private static Entity? WithoutRepeatedOrContradictoryConjuncts(Entity left, Entity right)
+                => Survey(left, right) switch
+                {
+                    Verdict.Contradiction => False,
+                    Verdict.Repeats => Rebuilt(left, left, right),
+                    _ => null
+                };
+
+            private enum Verdict { Unchanged, Repeats, Contradiction }
+
+            // Walks the conjuncts of `right` against those of `left` without building a list:
+            // this runs on every conjunction the evaluator meets, most of which have nothing to
+            // drop, and a list per call was 8.7% of SimplifyHard's allocation. Both operands are
+            // already simplified, so a repeat or a contradiction inside `right` alone is gone
+            // before it arrives here; only pairs across the two sides are asked about.
+            private static Verdict Survey(Entity left, Entity right)
+            {
+                if (right is Andf(var first, var second))
+                {
+                    var one = Survey(left, first);
+                    if (one == Verdict.Contradiction)
+                        return one;
+                    var other = Survey(left, second);
+                    if (other == Verdict.Contradiction)
+                        return other;
+                    return one == Verdict.Repeats || other == Verdict.Repeats ? Verdict.Repeats : Verdict.Unchanged;
+                }
+                if (IsAmong(left, right))
+                    return Verdict.Repeats;
+                if (ContradictsAny(left, right))
+                    return Verdict.Contradiction;
+                return Verdict.Unchanged;
+            }
+
+            // `left` with the conjuncts of `right` that are not already in it, folded on the
+            // left as the parser folds a chain.
+            private static Entity Rebuilt(Entity conjunction, Entity left, Entity right)
+                => right is Andf(var first, var second)
+                    ? Rebuilt(Rebuilt(conjunction, left, first), left, second)
+                    : IsAmong(left, right) ? conjunction : new Andf(conjunction, right);
+
+            private static bool IsAmong(Entity conjunction, Entity atom)
+                => conjunction is Andf(var first, var second)
+                    ? IsAmong(first, atom) || IsAmong(second, atom)
+                    : conjunction == atom;
+
+            private static bool ContradictsAny(Entity conjunction, Entity atom)
+                => conjunction is Andf(var first, var second)
+                    ? ContradictsAny(first, atom) || ContradictsAny(second, atom)
+                    : Contradict(conjunction, atom);
+
+            // The two contradict when no value satisfies both. Only pairs with a truth value
+            // everywhere are decided here: an equality is True or False whatever its operands,
+            // while an order comparison is NaN off the real line, so `x < 0 and x >= 0` is NaN
+            // at x = i and reducing it to False is Simplify's business, under `x in RR`
+            // (https://github.com/asc-community/AngouriMath/issues/876). `q = 0 and q > 0` is
+            // False everywhere: where q is not real the equality is False, and False and
+            // anything is False (https://github.com/asc-community/AngouriMath/issues/880).
+            private static bool Contradict(Entity one, Entity other)
+                => (one is Notf(var negated) && negated == other && HasATruthValueEverywhere(other))
+                || (other is Notf(var negatedOther) && negatedOther == one && HasATruthValueEverywhere(one))
+                || (one is ComparisonSign and IBinaryNode { NodeFirstChild: var a, NodeSecondChild: var b } && other is ComparisonSign and IBinaryNode { NodeFirstChild: var c, NodeSecondChild: var d }
+                    && a == c && b == d
+                    && (one, other) is (Equalsf, Greaterf) or (Greaterf, Equalsf)
+                        or (Equalsf, Lessf) or (Lessf, Equalsf));
+
+            private static bool HasATruthValueEverywhere(Entity statement)
+                => statement is Equalsf;
         }
 
         partial record Orf

@@ -428,6 +428,26 @@ asked. Only under that substitution; `Simplify` still combines nothing.
 | `"1/sqrt(atanh(tanh(a + b*x)))".Integrate("x")` | unevaluated after 49 s | `2 (1/2 ln(e^(2 b x + 2 a)))^(1/2)/(1/2)/(2 b)`, 0.3 s |
 | `"atanh(tanh(a + b*x))^(1/2)".Integrate("x")` | unevaluated | `2 (1/2 ln(e^(2 b x + 2 a)))^(3/2)/(3/2)/(2 b)` |
 
+### A conjunction drops a repeated conjunct, and an equality against a strict sign of the same quantity is `False`
+
+Evaluation of `and` no longer writes a conjunct twice, and decides `q = 0 and q > 0` (and `q = 0
+and q < 0`, and `q = 0 and not q = 0`) to `False` — everywhere, not only over the reals, since the
+equality is `False` wherever `q` is not real and `False and anything` is `False`. Two order
+comparisons, `q > 0 and q < 0`, are left to `Simplify`, which decides them under `q in RR` as
+before ([#876](https://github.com/asc-community/AngouriMath/issues/876)). What this is for: a
+piecewise combined with a piecewise joins every case's predicate to every other's, and with the
+repeats and contradictions kept the cases multiplied — `(c - c/(a^2 x^2))^(9/2) / e^(3 acoth(a x))`
+reached 3^12 cases and 8 GB inside integration by parts
+([#1414](https://github.com/asc-community/AngouriMath/issues/1414)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `((x > 0 and y > 0) and x > 0).Evaled` | `x > 0 and y > 0 and x > 0` | `x > 0 and y > 0` |
+| `(q = 0 and q > 0).Evaled` | as written | `False` |
+| `(q = 0 and not q = 0).Evaled` | as written | `False` |
+| `(x < 0 and x = 0).Simplify()` | `False provided x in RR` | `False` — the condition was over-strong, one conjunct is false wherever `x` is |
+| `(x > 0 and x > 0).Evaled` | `x > 0` | `x > 0` (unchanged) |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
