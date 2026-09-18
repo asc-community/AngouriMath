@@ -128,7 +128,8 @@ namespace AngouriMath.Tests.Core.Sets
             Assert.Equal(@"\left\{ x \in \mathbb{Z} : x < 0 \right\}", written.Latexize());
             Assert.Equal(Boolean.True, "-3 in { x in ZZ : x < 0 }".ToEntity().Evaled);
             Assert.Equal(Boolean.False, "1/2 in { x in ZZ : x < 0 }".ToEntity().Evaled);
-            Assert.Equal("{ x : x in ZZ }", "{ x in ZZ : True }".ToEntity().Simplify().ToString());
+            // With nothing else asked of x, the set builder over ZZ is ZZ.
+            Assert.Equal("ZZ", "{ x in ZZ : True }".ToEntity().Simplify().ToString());
         }
 
         [Theory]
