@@ -371,6 +371,41 @@ Branch cuts deserve a specific warning: `arcsin`, `log`, and fractional powers d
 conventions, and C99, .NET, Python and Mathematica do not all agree. Decide deliberately, cite the
 convention, and test the disagreeing points.
 
+### A reference is read for everything it says, with patience
+
+A book, a paper or a corpus handed to you as a goal is not a list of features to add, and reading
+its table of contents and probing a few spellings is not reading it. Read it through, and take
+out everything it has:
+
+- **The objects and their notation** — what is defined, how it is written, and which spellings the
+  text explicitly refuses. A sentence like *"in mathematics, `mod` is a relation, not an operator or
+  function; you won't see us write `5 mod 3 = 2`"* is a finding about *this library's* design, not
+  a remark to skip: it says an existing node is the wrong shape, and that goes on the list as
+  **what is wrong**, beside what is missing.
+- **The operations** — what is computed, decided or characterised, and by which procedure.
+- **The methods** — how the text *proves* and *argues*: induction in its variants, contrapositive,
+  contradiction, cases, counter-examples. A proof method is as much a capability as an object
+  ([#746](https://github.com/asc-community/AngouriMath/issues/746)'s proof engine is built from
+  exactly these), and a reference that teaches them is specifying it.
+- **Every example and exercise as a test case.** *"Does there exist a natural number `k` such that
+  `5k` is one more than a multiple of `7`? If so, the smallest? Can you characterise all of them?"*
+  is three questions the library should be able to state as nodes and answer — a quantified
+  statement, a minimum over a set, a set characterised by a congruence — and until each of those
+  is expressible and decided, the reference is not encoded. Collect them by chapter, with the
+  answers the text gives; they are the corpus the work is measured against.
+
+Cross-check every convention against a second and third source before adopting the text's — the
+list above, Wolfram MathWorld, Wikipedia's notation tables — and say which was chosen and why.
+Terminology the sources themselves call non-standard (MathWorld on *natural number*, *whole
+number*, *counting number*) is a reason to pick the unambiguous spelling, not the familiar one.
+
+The output of the reading is a document with those lists — objects, notation, operations,
+methods, what is wrong, test cases — kept beside the goal it came from, and the docket of work is
+derived from it. A summary written before the reading is finished is the thing this section
+exists to stop, and it has happened: the first pass over
+[#1409](https://github.com/asc-community/AngouriMath/issues/1409)'s book was a table of contents
+turned into a feature list.
+
 ## Working practice
 
 **A plan belongs in an issue, not in a comment.** When work splits into separable pieces — or when
