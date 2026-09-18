@@ -309,36 +309,97 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             matrix[index / matrix.Shape[1], index % matrix.Shape[1]] = value;
             return matrix;
         }
+
+        // The arithmetic is written as plain loops over the elements rather than handed to
+        // GenericTensor's PiecewiseAdd, MatrixMultiply and the rest: those build and compile an
+        // expression tree for their loops, which is exactly what a NativeAOT build cannot do,
+        // and the AOT smoke test refuses the assembly the moment they are reachable. A loop over
+        // a wrapper's Add is what they compile to anyway.
+
+        private static void SameShape<T, TWrapper>(GenTensor<T, TWrapper> a, GenTensor<T, TWrapper> b) where TWrapper : struct, IOperations<T>
+        {
+            if (a.Shape[0] != b.Shape[0] || a.Shape[1] != b.Shape[1])
+                throw new InvalidMatrixOperationException($"Matrices of shapes {a.Shape} and {b.Shape} cannot be combined element by element");
+        }
+
+        private static GenTensor<T, TWrapper> Elementwise<T, TWrapper>(GenTensor<T, TWrapper> a, Func<T, T> map) where TWrapper : struct, IOperations<T>
+        {
+            var result = GenTensor<T, TWrapper>.CreateMatrix(a.Shape[0], a.Shape[1]);
+            for (var i = 0; i < a.Shape[0]; i++)
+                for (var j = 0; j < a.Shape[1]; j++)
+                    result[i, j] = map(a[i, j]);
+            return result;
+        }
+
+        private static GenTensor<T, TWrapper> Elementwise<T, TWrapper>(GenTensor<T, TWrapper> a, GenTensor<T, TWrapper> b, Func<T, T, T> combine) where TWrapper : struct, IOperations<T>
+        {
+            SameShape(a, b);
+            var result = GenTensor<T, TWrapper>.CreateMatrix(a.Shape[0], a.Shape[1]);
+            for (var i = 0; i < a.Shape[0]; i++)
+                for (var j = 0; j < a.Shape[1]; j++)
+                    result[i, j] = combine(a[i, j], b[i, j]);
+            return result;
+        }
+
         /// <summary>Element by element.</summary>
         public static GenTensor<T, TWrapper> Add<T, TWrapper>(GenTensor<T, TWrapper> a, GenTensor<T, TWrapper> b) where TWrapper : struct, IOperations<T>
-            => GenTensor<T, TWrapper>.PiecewiseAdd(a, b);
+            => Elementwise(a, b, static (x, y) => default(TWrapper).Add(x, y));
         /// <summary>Element by element.</summary>
         public static GenTensor<T, TWrapper> Subtract<T, TWrapper>(GenTensor<T, TWrapper> a, GenTensor<T, TWrapper> b) where TWrapper : struct, IOperations<T>
-            => GenTensor<T, TWrapper>.PiecewiseSubtract(a, b);
+            => Elementwise(a, b, static (x, y) => default(TWrapper).Subtract(x, y));
         /// <summary>The matrix product.</summary>
         public static GenTensor<T, TWrapper> Multiply<T, TWrapper>(GenTensor<T, TWrapper> a, GenTensor<T, TWrapper> b) where TWrapper : struct, IOperations<T>
-            => GenTensor<T, TWrapper>.MatrixMultiply(a, b);
+        {
+            if (a.Shape[1] != b.Shape[0])
+                throw new InvalidMatrixOperationException($"Matrices of shapes {a.Shape} and {b.Shape} cannot be multiplied");
+            var ops = default(TWrapper);
+            var result = GenTensor<T, TWrapper>.CreateMatrix(a.Shape[0], b.Shape[1]);
+            for (var i = 0; i < a.Shape[0]; i++)
+                for (var j = 0; j < b.Shape[1]; j++)
+                {
+                    var sum = ops.CreateZero();
+                    for (var k = 0; k < a.Shape[1]; k++)
+                        sum = ops.Add(sum, ops.Multiply(a[i, k], b[k, j]));
+                    result[i, j] = sum;
+                }
+            return result;
+        }
         /// <summary>The scalar added to every element.</summary>
         public static GenTensor<T, TWrapper> AddScalar<T, TWrapper>(GenTensor<T, TWrapper> a, T scalar) where TWrapper : struct, IOperations<T>
-            => GenTensor<T, TWrapper>.PiecewiseAdd(a, scalar);
+            => Elementwise(a, x => default(TWrapper).Add(x, scalar));
         /// <summary>The scalar subtracted from every element.</summary>
         public static GenTensor<T, TWrapper> SubtractScalar<T, TWrapper>(GenTensor<T, TWrapper> a, T scalar) where TWrapper : struct, IOperations<T>
-            => GenTensor<T, TWrapper>.PiecewiseSubtract(a, scalar);
+            => Elementwise(a, x => default(TWrapper).Subtract(x, scalar));
         /// <summary>Every element subtracted from the scalar.</summary>
         public static GenTensor<T, TWrapper> SubtractFromScalar<T, TWrapper>(T scalar, GenTensor<T, TWrapper> a) where TWrapper : struct, IOperations<T>
-            => GenTensor<T, TWrapper>.PiecewiseSubtract(scalar, a);
+            => Elementwise(a, x => default(TWrapper).Subtract(scalar, x));
         /// <summary>Every element times the scalar.</summary>
         public static GenTensor<T, TWrapper> MultiplyScalar<T, TWrapper>(GenTensor<T, TWrapper> a, T scalar) where TWrapper : struct, IOperations<T>
-            => GenTensor<T, TWrapper>.PiecewiseMultiply(a, scalar);
+            => Elementwise(a, x => default(TWrapper).Multiply(x, scalar));
         /// <summary>Every element over the scalar.</summary>
         public static GenTensor<T, TWrapper> DivideScalar<T, TWrapper>(GenTensor<T, TWrapper> a, T scalar) where TWrapper : struct, IOperations<T>
-            => GenTensor<T, TWrapper>.PiecewiseDivide(a, scalar);
+            => Elementwise(a, x => default(TWrapper).Divide(x, scalar));
         /// <summary>The scalar over every element.</summary>
         public static GenTensor<T, TWrapper> DivideFromScalar<T, TWrapper>(T scalar, GenTensor<T, TWrapper> a) where TWrapper : struct, IOperations<T>
-            => GenTensor<T, TWrapper>.PiecewiseDivide(scalar, a);
-        /// <summary>The matrix power, a whole exponent.</summary>
+            => Elementwise(a, x => default(TWrapper).Divide(scalar, x));
+        /// <summary>The matrix power, a non-negative whole exponent, by repeated squaring.</summary>
         public static GenTensor<T, TWrapper> Power<T, TWrapper>(GenTensor<T, TWrapper> a, int exponent) where TWrapper : struct, IOperations<T>
-            => a.MatrixPower(exponent);
+        {
+            if (a.Shape[0] != a.Shape[1])
+                throw new InvalidMatrixOperationException($"A matrix of shape {a.Shape} is not square and has no power");
+            if (exponent < 0)
+                throw new NotSupportedException("A negative matrix power is not compiled: invert the matrix first");
+            var result = GenTensor<T, TWrapper>.CreateIdentityMatrix(a.Shape[0]);
+            var square = a;
+            for (var remaining = exponent; remaining > 0; remaining >>= 1)
+            {
+                if ((remaining & 1) == 1)
+                    result = Multiply(result, square);
+                if (remaining > 1)
+                    square = Multiply(square, square);
+            }
+            return result;
+        }
 
         /// <summary>The compiled form of a matrix node over the given compiled elements, all of one type.</summary>
         internal static Expression Build(Entity.Matrix matrix, IReadOnlyList<Expression> elements)
