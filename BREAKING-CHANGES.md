@@ -613,6 +613,9 @@ they had.
 | | `"[2; 3] / 2".ToEntity().Simplify()` | `[2; 3] / 2` | `[1; 3/2]` |
 | **Silent** | `"[2; 3) * (-1)".ToEntity().Simplify()` | `[2; 3) * (-1)` | `(-3; -2]` — reflected, ends and openness both |
 | | `"0 - [0; 1)".ToEntity().Simplify()` | `-[0; 1)` | `(-1; 0]` |
+| | `"ln((0; 1))".ToEntity().Simplify()`, and every interval under a function monotone on it — `ln`, `log`, `e^`, `b^`, whole and unit-fraction powers, `abs`, `arctan`, `arcsin`, `arccos` | `ln((0; 1))` — left alone | `(-oo; 0)`; `e^[0; 1]` is `[1; e]`, `(-2; 1]^2` is `[0; 4)`, `abs((-1; 2])` is `[0; 2]`, `arctan([0; 1])` is `[0; pi / 4]`, `sqrt([0; 4])` is `[0; 2]` |
+| | `"(1; 2) * (3; 4)".ToEntity().Simplify()`, and every product or quotient of two intervals with finite numeric ends | `(1; 2) * (3; 4)` — left alone | `(3; 8)`; `(1; 2) / (3; 4)` is `(1/4; 2/3)`; a divisor containing zero stays as written |
+| | `"2 / (0; 1)".ToEntity().Simplify()`, and every constant over an interval that does not contain zero | `2 / (0; 1)` — left alone | `(2; +oo)` |
 | | `"2 * x + 4 * a".ToEntity().Factorize()`, and every sum whose whole coefficients share a divisor | `2 * x + 4 * a` — left alone | `2 * (x + 2 * a)` |
 | | `Transformation.Factorization.Name` | `… then polynomial-factorization` | `… then polynomial-factorization then numeric-content` |
 | **Silent** | `"arccotan(-1)".ToEntity().Simplify()`, and every negative argument the inverse-trigonometric table knows | `3/4 * pi` — the textbook range, and **not equal to `arccotan(-1)`**, whose value is `-pi/4` | `-1/4 * pi` |

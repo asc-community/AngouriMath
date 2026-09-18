@@ -114,17 +114,19 @@ namespace AngouriMath.Tests.Core.Sets
         /// only intervals, and moving it would change matrices and sets alike.
         /// </para>
         /// <para>
-        /// <c>2 / (0; 1)</c> is left alone. A constant over an interval that straddles zero is two
-        /// unbounded pieces rather than one interval, so there is no <c>Interval</c> to answer
-        /// with — and answering only the non-straddling case would make the shape of the result
-        /// depend on the endpoints in a way this does not attempt.
+        /// <c>2 / [-1; 1]</c> is left alone. A constant over an interval that straddles zero is
+        /// two unbounded pieces rather than one interval, so there is no <c>Interval</c> to
+        /// answer with. Where the interval does not straddle zero its reciprocal is an interval
+        /// and the quotient is that interval scaled: <c>2 / (0; 1)</c> is <c>(2; +oo)</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/322
         /// </para>
         /// </remarks>
         [Fact]
         public void TheTwoBoundariesOfThis()
         {
             Assert.Equal("0".ToEntity(), "(0; 1) * 0".ToEntity().Simplify());
-            Assert.Equal("2 / (0; 1)".ToEntity(), "2 / (0; 1)".ToEntity().Simplify());
+            Assert.Equal("2 / [-1; 1]".ToEntity(), "2 / [-1; 1]".ToEntity().Simplify());
+            Assert.Equal("(2; +oo)".ToEntity(), "2 / (0; 1)".ToEntity().Simplify());
         }
     }
 }
