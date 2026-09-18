@@ -499,6 +499,12 @@ atom returns[Entity value]
                 $value = annotated.WithCodomain(AngouriMath.Core.Domain.Any);
             else if ($args.list[1] is not SpecialSet ss)
                 throw new InvalidArgumentParseException($"Unrecognized special set {$args.list[1].Stringize()}");
+            // ZZ* and ZZ+ are sets but not codomains: the Domain enum has no member for them,
+            // and reading domain(x, ZZ*) as domain(x, ZZ) would drop the sign the caller
+            // wrote, so it is refused rather than widened.
+            // https://github.com/asc-community/AngouriMath/issues/1409
+            else if (ss is SpecialSet.NonNegativeIntegers or SpecialSet.PositiveIntegers)
+                throw new InvalidArgumentParseException($"{ss.Stringize()} is a set but not a codomain; domain(...) takes CC, RR, QQ, ZZ, BB or Any");
             else
                 $value = annotated.WithCodomain(ss.ToDomain());
         }
@@ -546,7 +552,7 @@ fragment EXPONENT: ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
 
 NUMBER: ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i'? | '.'? ('0'..'9')+ EXPONENT? 'i'? | 'i' ;
 
-SPECIALSET: ('CC' | 'RR' | 'QQ' | 'ZZ' | 'BB') ;
+SPECIALSET: ('CC' | 'RR' | 'QQ' | 'ZZ' | 'BB' | 'ZZ*' | 'ZZ+') ;
 
 BOOLEAN: ('true' | 'True' | 'false' | 'False') ;
 

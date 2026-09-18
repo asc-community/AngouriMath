@@ -60,6 +60,22 @@ namespace AngouriMath
                     public override string ToString() => Stringize();
                 }
 
+                partial record NonNegativeIntegers
+                {
+                    /// <inheritdoc/>
+                    private protected override string StringizeNode() => "ZZ*";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
+
+                partial record PositiveIntegers
+                {
+                    /// <inheritdoc/>
+                    private protected override string StringizeNode() => "ZZ+";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
+
                 partial record Rationals
                 {
                     /// <inheritdoc/>

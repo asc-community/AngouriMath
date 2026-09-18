@@ -594,10 +594,19 @@ namespace AngouriMath
                     };
 
                 /// <summary>
-                /// Creates an instance of special set from a string
+                /// Creates an instance of special set from a string: the five that name a
+                /// <see cref="Domain"/> (<c>BB</c>, <c>ZZ</c>, <c>QQ</c>, <c>RR</c>, <c>CC</c>)
+                /// and the two subsets of the integers that do not (<c>ZZ*</c>, <c>ZZ+</c>).
                 /// </summary>
                 public static SpecialSet Create(string domain)
-                    => Create(ToDomain(domain));
+                    => domain switch
+                    {
+                        "ZZ*" or "NonNegativeIntegers" => nonNegativeIntegers ??= new NonNegativeIntegers(),
+                        "ZZ+" or "PositiveIntegers" => positiveIntegers ??= new PositiveIntegers(),
+                        _ => Create(ToDomain(domain))
+                    };
+                [ThreadStatic] private static NonNegativeIntegers? nonNegativeIntegers;
+                [ThreadStatic] private static PositiveIntegers? positiveIntegers;
 
 
                 internal override Priority Priority => Priority.Leaf;
@@ -658,6 +667,38 @@ namespace AngouriMath
                     /// <inheritdoc/>
                     public override bool MayContain(Entity entity)
                         => entity is Integer || !entity.IsConstantLeaf;
+                    internal override Domain ToDomain() => Domain.Integer;
+                }
+
+                /// <summary>
+                /// The set of all non-negative integers, <c>{0, 1, 2, ...}</c>, written <c>ZZ*</c>.
+                /// There is no set called "the natural numbers" here, because the name means
+                /// this set to some authors and <see cref="PositiveIntegers"/> to others
+                /// (MathWorld recommends these two names over "natural number" for that reason,
+                /// https://mathworld.wolfram.com/N.html). It is a subset of <see cref="Integers"/>
+                /// and not a <see cref="Domain"/> of its own: a node cannot be declared over it,
+                /// and <c>domain(x, ZZ*)</c> is refused rather than silently widened to <c>ZZ</c>.
+                /// https://github.com/asc-community/AngouriMath/issues/1409
+                /// </summary>
+                public sealed partial record NonNegativeIntegers : SpecialSet
+                {
+                    /// <inheritdoc/>
+                    public override bool MayContain(Entity entity)
+                        => entity is Integer { EInteger.Sign: >= 0 } || !entity.IsConstantLeaf;
+                    internal override Domain ToDomain() => Domain.Integer;
+                }
+
+                /// <summary>
+                /// The set of all positive integers, <c>{1, 2, 3, ...}</c>, written <c>ZZ+</c>.
+                /// See <see cref="NonNegativeIntegers"/> for why neither is called the natural
+                /// numbers. A subset of <see cref="Integers"/>, not a <see cref="Domain"/>.
+                /// https://github.com/asc-community/AngouriMath/issues/1409
+                /// </summary>
+                public sealed partial record PositiveIntegers : SpecialSet
+                {
+                    /// <inheritdoc/>
+                    public override bool MayContain(Entity entity)
+                        => entity is Integer { EInteger.Sign: > 0 } || !entity.IsConstantLeaf;
                     internal override Domain ToDomain() => Domain.Integer;
                 }
 

@@ -428,6 +428,18 @@ asked. Only under that substitution; `Simplify` still combines nothing.
 | `"1/sqrt(atanh(tanh(a + b*x)))".Integrate("x")` | unevaluated after 49 s | `2 (1/2 ln(e^(2 b x + 2 a)))^(1/2)/(1/2)/(2 b)`, 0.3 s |
 | `"atanh(tanh(a + b*x))^(1/2)".Integrate("x")` | unevaluated | `2 (1/2 ln(e^(2 b x + 2 a)))^(3/2)/(3/2)/(2 b)` |
 
+### `ZZ*` and `ZZ+` are the non-negative and the positive integers
+
+`ZZ*` = `{0, 1, 2, ...}` and `ZZ+` = `{1, 2, 3, ...}` are special sets, spelled as MathWorld spells
+them, and there is deliberately no set named after the natural numbers
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). Two inputs change:
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `0 in ZZ*` | `UnhandledParseException` | `True` |
+| `ZZ*2` | `ZZ * 2` (a product of a set and a number) | `UnhandledParseException` — `ZZ*` is a token; `ZZ * 2` with the space still reads as before |
+| `domain(x, ZZ*)` | `UnhandledParseException` | `InvalidArgumentParseException`: a set, not a codomain |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

@@ -6120,6 +6120,16 @@ namespace AngouriMath
             /// <returns>A set of all Integers/></returns>
             public static Set Z => SpecialSet.Create(Domain.Integer);
 
+            /// <summary>The non-negative integers <c>{0, 1, 2, ...}</c>, written <c>ZZ*</c>.
+            /// Not called the natural numbers, because that name means this set to some and
+            /// <see cref="PositiveIntegers"/> to others.
+            /// https://github.com/asc-community/AngouriMath/issues/1409</summary>
+            public static Set NonNegativeIntegers => SpecialSet.Create("ZZ*");
+
+            /// <summary>The positive integers <c>{1, 2, 3, ...}</c>, written <c>ZZ+</c>.
+            /// https://github.com/asc-community/AngouriMath/issues/1409</summary>
+            public static Set PositiveIntegers => SpecialSet.Create("ZZ+");
+
             /// <summary>
             /// Creates a <see cref="FiniteSet"/> with given elements
             /// </summary>

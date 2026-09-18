@@ -45,6 +45,21 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 private protected override string LatexizeNode()
                     => $@"\mathbb{{{Stringize()[0]}}}";
+
+                // MathWorld's spellings, https://mathworld.wolfram.com/N.html: the star and the
+                // plus are superscripts on the blackboard Z, so the printed form is the input
+                // form with the letter doubled.
+                partial record NonNegativeIntegers
+                {
+                    /// <inheritdoc/>
+                    private protected override string LatexizeNode() => @"\mathbb{Z}^{*}";
+                }
+
+                partial record PositiveIntegers
+                {
+                    /// <inheritdoc/>
+                    private protected override string LatexizeNode() => @"\mathbb{Z}^{+}";
+                }
             }
 
             partial record Unionf

@@ -3369,6 +3369,12 @@ internal partial class AngouriMathParser : Parser {
 				                _localctx.value =  annotated.WithCodomain(AngouriMath.Core.Domain.Any);
 				            else if (_localctx.args.list[1] is not SpecialSet ss)
 				                throw new InvalidArgumentParseException($"Unrecognized special set {_localctx.args.list[1].Stringize()}");
+				            // ZZ* and ZZ+ are sets but not codomains: the Domain enum has no member for them,
+				            // and reading domain(x, ZZ*) as domain(x, ZZ) would drop the sign the caller
+				            // wrote, so it is refused rather than widened.
+				            // https://github.com/asc-community/AngouriMath/issues/1409
+				            else if (ss is SpecialSet.NonNegativeIntegers or SpecialSet.PositiveIntegers)
+				                throw new InvalidArgumentParseException($"{ss.Stringize()} is a set but not a codomain; domain(...) takes CC, RR, QQ, ZZ, BB or Any");
 				            else
 				                _localctx.value =  annotated.WithCodomain(ss.ToDomain());
 				        
