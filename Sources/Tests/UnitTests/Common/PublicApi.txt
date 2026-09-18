@@ -41,6 +41,19 @@ AngouriMath.Core.Budgets.WorkBudget.Unlimited { } : AngouriMath.Core.Budgets.Wor
 AngouriMath.Core.Budgets.WorkBudget.ctor()
 AngouriMath.Core.Budgets.WorkBudget.op_Equality(AngouriMath.Core.Budgets.WorkBudget, AngouriMath.Core.Budgets.WorkBudget) : System.Boolean
 AngouriMath.Core.Budgets.WorkBudget.op_Inequality(AngouriMath.Core.Budgets.WorkBudget, AngouriMath.Core.Budgets.WorkBudget) : System.Boolean
+AngouriMath.Core.Compilation.IntoLinq.BigIntegerOperations.Add(System.Numerics.BigInteger, System.Numerics.BigInteger) : System.Numerics.BigInteger
+AngouriMath.Core.Compilation.IntoLinq.BigIntegerOperations.AreEqual(System.Numerics.BigInteger, System.Numerics.BigInteger) : System.Boolean
+AngouriMath.Core.Compilation.IntoLinq.BigIntegerOperations.Copy(System.Numerics.BigInteger) : System.Numerics.BigInteger
+AngouriMath.Core.Compilation.IntoLinq.BigIntegerOperations.CreateOne() : System.Numerics.BigInteger
+AngouriMath.Core.Compilation.IntoLinq.BigIntegerOperations.CreateZero() : System.Numerics.BigInteger
+AngouriMath.Core.Compilation.IntoLinq.BigIntegerOperations.Deserialize(System.Byte[]) : System.Numerics.BigInteger
+AngouriMath.Core.Compilation.IntoLinq.BigIntegerOperations.Divide(System.Numerics.BigInteger, System.Numerics.BigInteger) : System.Numerics.BigInteger
+AngouriMath.Core.Compilation.IntoLinq.BigIntegerOperations.IsZero(System.Numerics.BigInteger) : System.Boolean
+AngouriMath.Core.Compilation.IntoLinq.BigIntegerOperations.Multiply(System.Numerics.BigInteger, System.Numerics.BigInteger) : System.Numerics.BigInteger
+AngouriMath.Core.Compilation.IntoLinq.BigIntegerOperations.Negate(System.Numerics.BigInteger) : System.Numerics.BigInteger
+AngouriMath.Core.Compilation.IntoLinq.BigIntegerOperations.Serialize(System.Numerics.BigInteger) : System.Byte[]
+AngouriMath.Core.Compilation.IntoLinq.BigIntegerOperations.Subtract(System.Numerics.BigInteger, System.Numerics.BigInteger) : System.Numerics.BigInteger
+AngouriMath.Core.Compilation.IntoLinq.BigIntegerOperations.ToString(System.Numerics.BigInteger) : System.String
 AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol.<Clone>$() : AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol
 AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol.ConvertBinaryNode(System.Linq.Expressions.Expression, System.Linq.Expressions.Expression, AngouriMath.Entity) : System.Linq.Expressions.Expression
 AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol.ConvertConstant(AngouriMath.Entity) : System.Linq.Expressions.Expression
@@ -58,6 +71,84 @@ AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol.ctor()
 AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol.ctor(AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol)
 AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol.op_Equality(AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol, AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol) : System.Boolean
 AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol.op_Inequality(AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol, AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol) : System.Boolean
+AngouriMath.Core.Compilation.IntoLinq.ComplexOperations.Add(System.Numerics.Complex, System.Numerics.Complex) : System.Numerics.Complex
+AngouriMath.Core.Compilation.IntoLinq.ComplexOperations.AreEqual(System.Numerics.Complex, System.Numerics.Complex) : System.Boolean
+AngouriMath.Core.Compilation.IntoLinq.ComplexOperations.Copy(System.Numerics.Complex) : System.Numerics.Complex
+AngouriMath.Core.Compilation.IntoLinq.ComplexOperations.CreateOne() : System.Numerics.Complex
+AngouriMath.Core.Compilation.IntoLinq.ComplexOperations.CreateZero() : System.Numerics.Complex
+AngouriMath.Core.Compilation.IntoLinq.ComplexOperations.Deserialize(System.Byte[]) : System.Numerics.Complex
+AngouriMath.Core.Compilation.IntoLinq.ComplexOperations.Divide(System.Numerics.Complex, System.Numerics.Complex) : System.Numerics.Complex
+AngouriMath.Core.Compilation.IntoLinq.ComplexOperations.IsZero(System.Numerics.Complex) : System.Boolean
+AngouriMath.Core.Compilation.IntoLinq.ComplexOperations.Multiply(System.Numerics.Complex, System.Numerics.Complex) : System.Numerics.Complex
+AngouriMath.Core.Compilation.IntoLinq.ComplexOperations.Negate(System.Numerics.Complex) : System.Numerics.Complex
+AngouriMath.Core.Compilation.IntoLinq.ComplexOperations.Serialize(System.Numerics.Complex) : System.Byte[]
+AngouriMath.Core.Compilation.IntoLinq.ComplexOperations.Subtract(System.Numerics.Complex, System.Numerics.Complex) : System.Numerics.Complex
+AngouriMath.Core.Compilation.IntoLinq.ComplexOperations.ToString(System.Numerics.Complex) : System.String
+AngouriMath.Core.Compilation.IntoLinq.DoubleOperations.Add(System.Double, System.Double) : System.Double
+AngouriMath.Core.Compilation.IntoLinq.DoubleOperations.AreEqual(System.Double, System.Double) : System.Boolean
+AngouriMath.Core.Compilation.IntoLinq.DoubleOperations.Copy(System.Double) : System.Double
+AngouriMath.Core.Compilation.IntoLinq.DoubleOperations.CreateOne() : System.Double
+AngouriMath.Core.Compilation.IntoLinq.DoubleOperations.CreateZero() : System.Double
+AngouriMath.Core.Compilation.IntoLinq.DoubleOperations.Deserialize(System.Byte[]) : System.Double
+AngouriMath.Core.Compilation.IntoLinq.DoubleOperations.Divide(System.Double, System.Double) : System.Double
+AngouriMath.Core.Compilation.IntoLinq.DoubleOperations.IsZero(System.Double) : System.Boolean
+AngouriMath.Core.Compilation.IntoLinq.DoubleOperations.Multiply(System.Double, System.Double) : System.Double
+AngouriMath.Core.Compilation.IntoLinq.DoubleOperations.Negate(System.Double) : System.Double
+AngouriMath.Core.Compilation.IntoLinq.DoubleOperations.Serialize(System.Double) : System.Byte[]
+AngouriMath.Core.Compilation.IntoLinq.DoubleOperations.Subtract(System.Double, System.Double) : System.Double
+AngouriMath.Core.Compilation.IntoLinq.DoubleOperations.ToString(System.Double) : System.String
+AngouriMath.Core.Compilation.IntoLinq.Int32Operations.Add(System.Int32, System.Int32) : System.Int32
+AngouriMath.Core.Compilation.IntoLinq.Int32Operations.AreEqual(System.Int32, System.Int32) : System.Boolean
+AngouriMath.Core.Compilation.IntoLinq.Int32Operations.Copy(System.Int32) : System.Int32
+AngouriMath.Core.Compilation.IntoLinq.Int32Operations.CreateOne() : System.Int32
+AngouriMath.Core.Compilation.IntoLinq.Int32Operations.CreateZero() : System.Int32
+AngouriMath.Core.Compilation.IntoLinq.Int32Operations.Deserialize(System.Byte[]) : System.Int32
+AngouriMath.Core.Compilation.IntoLinq.Int32Operations.Divide(System.Int32, System.Int32) : System.Int32
+AngouriMath.Core.Compilation.IntoLinq.Int32Operations.IsZero(System.Int32) : System.Boolean
+AngouriMath.Core.Compilation.IntoLinq.Int32Operations.Multiply(System.Int32, System.Int32) : System.Int32
+AngouriMath.Core.Compilation.IntoLinq.Int32Operations.Negate(System.Int32) : System.Int32
+AngouriMath.Core.Compilation.IntoLinq.Int32Operations.Serialize(System.Int32) : System.Byte[]
+AngouriMath.Core.Compilation.IntoLinq.Int32Operations.Subtract(System.Int32, System.Int32) : System.Int32
+AngouriMath.Core.Compilation.IntoLinq.Int32Operations.ToString(System.Int32) : System.String
+AngouriMath.Core.Compilation.IntoLinq.Int64Operations.Add(System.Int64, System.Int64) : System.Int64
+AngouriMath.Core.Compilation.IntoLinq.Int64Operations.AreEqual(System.Int64, System.Int64) : System.Boolean
+AngouriMath.Core.Compilation.IntoLinq.Int64Operations.Copy(System.Int64) : System.Int64
+AngouriMath.Core.Compilation.IntoLinq.Int64Operations.CreateOne() : System.Int64
+AngouriMath.Core.Compilation.IntoLinq.Int64Operations.CreateZero() : System.Int64
+AngouriMath.Core.Compilation.IntoLinq.Int64Operations.Deserialize(System.Byte[]) : System.Int64
+AngouriMath.Core.Compilation.IntoLinq.Int64Operations.Divide(System.Int64, System.Int64) : System.Int64
+AngouriMath.Core.Compilation.IntoLinq.Int64Operations.IsZero(System.Int64) : System.Boolean
+AngouriMath.Core.Compilation.IntoLinq.Int64Operations.Multiply(System.Int64, System.Int64) : System.Int64
+AngouriMath.Core.Compilation.IntoLinq.Int64Operations.Negate(System.Int64) : System.Int64
+AngouriMath.Core.Compilation.IntoLinq.Int64Operations.Serialize(System.Int64) : System.Byte[]
+AngouriMath.Core.Compilation.IntoLinq.Int64Operations.Subtract(System.Int64, System.Int64) : System.Int64
+AngouriMath.Core.Compilation.IntoLinq.Int64Operations.ToString(System.Int64) : System.String
+AngouriMath.Core.Compilation.IntoLinq.SingleOperations.Add(System.Single, System.Single) : System.Single
+AngouriMath.Core.Compilation.IntoLinq.SingleOperations.AreEqual(System.Single, System.Single) : System.Boolean
+AngouriMath.Core.Compilation.IntoLinq.SingleOperations.Copy(System.Single) : System.Single
+AngouriMath.Core.Compilation.IntoLinq.SingleOperations.CreateOne() : System.Single
+AngouriMath.Core.Compilation.IntoLinq.SingleOperations.CreateZero() : System.Single
+AngouriMath.Core.Compilation.IntoLinq.SingleOperations.Deserialize(System.Byte[]) : System.Single
+AngouriMath.Core.Compilation.IntoLinq.SingleOperations.Divide(System.Single, System.Single) : System.Single
+AngouriMath.Core.Compilation.IntoLinq.SingleOperations.IsZero(System.Single) : System.Boolean
+AngouriMath.Core.Compilation.IntoLinq.SingleOperations.Multiply(System.Single, System.Single) : System.Single
+AngouriMath.Core.Compilation.IntoLinq.SingleOperations.Negate(System.Single) : System.Single
+AngouriMath.Core.Compilation.IntoLinq.SingleOperations.Serialize(System.Single) : System.Byte[]
+AngouriMath.Core.Compilation.IntoLinq.SingleOperations.Subtract(System.Single, System.Single) : System.Single
+AngouriMath.Core.Compilation.IntoLinq.SingleOperations.ToString(System.Single) : System.String
+AngouriMath.Core.Compilation.IntoLinq.TensorCompilation.Add(GenTensor<T,TWrapper>, GenTensor<T,TWrapper>) : GenTensor<T,TWrapper>
+AngouriMath.Core.Compilation.IntoLinq.TensorCompilation.AddScalar(GenTensor<T,TWrapper>, T) : GenTensor<T,TWrapper>
+AngouriMath.Core.Compilation.IntoLinq.TensorCompilation.DivideFromScalar(T, GenTensor<T,TWrapper>) : GenTensor<T,TWrapper>
+AngouriMath.Core.Compilation.IntoLinq.TensorCompilation.DivideScalar(GenTensor<T,TWrapper>, T) : GenTensor<T,TWrapper>
+AngouriMath.Core.Compilation.IntoLinq.TensorCompilation.Empty(System.Int32, System.Int32) : GenTensor<T,TWrapper>
+AngouriMath.Core.Compilation.IntoLinq.TensorCompilation.Multiply(GenTensor<T,TWrapper>, GenTensor<T,TWrapper>) : GenTensor<T,TWrapper>
+AngouriMath.Core.Compilation.IntoLinq.TensorCompilation.MultiplyScalar(GenTensor<T,TWrapper>, T) : GenTensor<T,TWrapper>
+AngouriMath.Core.Compilation.IntoLinq.TensorCompilation.Power(GenTensor<T,TWrapper>, System.Int32) : GenTensor<T,TWrapper>
+AngouriMath.Core.Compilation.IntoLinq.TensorCompilation.Set(GenTensor<T,TWrapper>, System.Int32, T) : GenTensor<T,TWrapper>
+AngouriMath.Core.Compilation.IntoLinq.TensorCompilation.Subtract(GenTensor<T,TWrapper>, GenTensor<T,TWrapper>) : GenTensor<T,TWrapper>
+AngouriMath.Core.Compilation.IntoLinq.TensorCompilation.SubtractFromScalar(T, GenTensor<T,TWrapper>) : GenTensor<T,TWrapper>
+AngouriMath.Core.Compilation.IntoLinq.TensorCompilation.SubtractScalar(GenTensor<T,TWrapper>, T) : GenTensor<T,TWrapper>
+AngouriMath.Core.Compilation.IntoLinq.TensorCompilation.TensorTypeOf(System.Type) : System.Type
 AngouriMath.Core.CostModel.<Clone>$() : AngouriMath.Core.CostModel
 AngouriMath.Core.CostModel.All { } : System.Collections.Generic.IReadOnlyList<AngouriMath.Core.CostModel>
 AngouriMath.Core.CostModel.Cost { } : System.Func<AngouriMath.Entity,System.Double>
@@ -2770,6 +2861,7 @@ class AngouriMath.Core.Budgets.BudgetOutcome
 class AngouriMath.Core.Budgets.BudgetRecording
 class AngouriMath.Core.Budgets.WorkBudget
 class AngouriMath.Core.Compilation.IntoLinq.CompilationProtocol
+class AngouriMath.Core.Compilation.IntoLinq.TensorCompilation
 class AngouriMath.Core.CostModel
 class AngouriMath.Core.EquationSystem
 class AngouriMath.Core.Exceptions.AngouriBugException
@@ -2939,6 +3031,12 @@ interface AngouriMath.Core.ILatexizeable
 interface AngouriMath.Core.IScalarClosedArithmetics<T>
 interface AngouriMath.Core.IUnaryNode
 struct AngouriMath.Convenience.Setting<T>
+struct AngouriMath.Core.Compilation.IntoLinq.BigIntegerOperations
+struct AngouriMath.Core.Compilation.IntoLinq.ComplexOperations
+struct AngouriMath.Core.Compilation.IntoLinq.DoubleOperations
+struct AngouriMath.Core.Compilation.IntoLinq.Int32Operations
+struct AngouriMath.Core.Compilation.IntoLinq.Int64Operations
+struct AngouriMath.Core.Compilation.IntoLinq.SingleOperations
 struct AngouriMath.Core.Transformations.DerivationStep
 struct AngouriMath.Core.Transformations.RewriteStep
 struct AngouriMath.Core.Transformations.TransformationResult

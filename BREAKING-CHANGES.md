@@ -520,6 +520,20 @@ now, which is the one silent change: a variable spelled `forall` or `exists` no 
 | `forall + 1` | `forall + 1`, a variable named `forall` | `UnhandledParseException` |
 | `exists(x)` | `exists * x` | `UnhandledParseException` |
 
+### A matrix compiles
+
+**Addition, not silent.** Under the LINQ compiler a `Matrix` node compiles to a
+`GenTensor<T, TWrapper>` over its elements' type, with the wrappers `DoubleOperations`,
+`SingleOperations`, `ComplexOperations`, `Int32Operations`, `Int64Operations` and
+`BigIntegerOperations` in `AngouriMath.Core.Compilation.IntoLinq`, and a sum, difference, product,
+quotient or whole power with a matrix in it to GenericTensor's operation of that name
+([#526](https://github.com/asc-community/AngouriMath/issues/526)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"[[x, 2 x], [x + 1, x^2]]".ToEntity().Compile<double, GenTensor<double, DoubleOperations>>("x")` | `UncompilableNodeException` | a delegate; at `3` the matrix `[[3, 6], [4, 9]]` |
+| `"A * B".ToEntity().Compile<GenTensor<…>, GenTensor<…>, GenTensor<…>>("A", "B")` | `UncompilableNodeException` | the matrix product |
+| `"[[1, 0]] * [[a, b], [c, d]] * [[0], [1]]".ToEntity().Compile<double, double, double, double, double>("a", "b", "c", "d")` | `2` at `(1, 2, 3, 4)` — simplified to the scalar first | unchanged |
 ### `lcm` is a function, and a congruence is solved to a residue class
 
 `lcm(a, b, ...)` is a node, `Entity.Lcmf`, by the conventions of `gcd`: non-negative, `0` where

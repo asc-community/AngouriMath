@@ -11,7 +11,9 @@ using System.Globalization;
 using System.Linq;
 using System.Numerics;
 using AngouriMath;
+using AngouriMath.Core.Compilation.IntoLinq;
 using AngouriMath.Extensions;
+using GenericTensor.Core;
 
 namespace AngouriMath.AotSmokeTest
 {
@@ -238,6 +240,14 @@ namespace AngouriMath.AotSmokeTest
 
             var piecewise = "piecewise(x provided x > 0, 0 provided x <= 0)".Compile<double, double>(x);
             Check("compiled piecewise at -3 and 3", piecewise(-3) == 0 && piecewise(3) == 3, $"{piecewise(-3)}, {piecewise(3)}");
+
+            // A matrix, which compiles to a tensor: the arithmetic on it must stay ahead-of-time
+            // compilable, which GenericTensor's own expression-compiled loops are not.
+            // https://github.com/asc-community/AngouriMath/issues/526
+            var matrix = "[[x, 2 x], [x + 1, x^2]] * [[1, 0], [0, 1]] + 1".Compile<double, GenTensor<double, DoubleOperations>>(x);
+            var at3 = matrix(3);
+            Check("compiled matrix at 3", at3[0, 0] == 4 && at3[0, 1] == 7 && at3[1, 0] == 5 && at3[1, 1] == 10,
+                $"[[{at3[0, 0]}, {at3[0, 1]}], [{at3[1, 0]}, {at3[1, 1]}]]");
         }
     }
 }

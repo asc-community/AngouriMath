@@ -154,13 +154,23 @@ take.
 
 `Compile` was asked for a function it cannot build. Two distinct causes, and the message says which:
 
-- a node with no compiled form — a matrix, a derivative, an integral, a limit;
+- a node with no compiled form — a derivative, an integral, a limit, a function of a matrix;
 - a variable the expression mentions that the compilation was not given. The message names the
   variable and lists the ones it *was* given, since `Compile("x")` on `a * x` failing used to
   surface as a bare `KeyNotFoundException` about some dictionary.
 
 Both compilers raise it: the stack-machine one (`Compile`) and the LINQ one
 (`Compile<TIn, TOut>`).
+
+A matrix is not on the first list any more: under the LINQ compiler it compiles to a
+`GenTensor<T, TWrapper>` over its elements' type — `GenTensor<double, DoubleOperations>`,
+`GenTensor<Complex, ComplexOperations>`, and the same for `float`, `int`, `long`, `BigInteger`,
+the wrappers living in `AngouriMath.Core.Compilation.IntoLinq` — and that is the type to compile
+to and to pass a matrix in as: `"A * B".ToEntity().Compile<GenTensor<double, DoubleOperations>,
+GenTensor<double, DoubleOperations>, GenTensor<double, DoubleOperations>>("A", "B")` is the matrix
+product, `2 A + B - 1` scales, adds and shifts element by element, `A ^ 3` is the matrix power
+([#526](https://github.com/asc-community/AngouriMath/issues/526)). Compiling a matrix as a
+number, or a number as a matrix, or `sin(A)`, is still this exception.
 
 ### `CannotEvalException`
 
