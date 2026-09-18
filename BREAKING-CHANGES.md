@@ -487,6 +487,20 @@ with `BB` beside them, where 2.5.0 left every such expression as written:
 | `QQ \ ZZ` | `QQ \ ZZ` | `{ x in QQ : not x in ZZ }` |
 | `ZZ \ ZZ*` | — | `{ x in ZZ : x < 0 }`; `ZZ* \ ZZ+` is `{ 0 }` |
 
+### `a = b (mod n)` is a congruence
+
+The statement that `n` divides `a - b`, written with the modulus once at the end as mathematics
+writes it, is a node ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)); `≡` is
+read as well. Neither spelling parsed before.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `5^6 = 1 (mod 7)` | `UnhandledParseException` | `True` |
+| `(n - a)^2 = a^2 (mod n)` | `UnhandledParseException` | `True` under `Simplify` |
+| `x ≡ y (mod 3)` | `UnhandledParseException` | the congruence, printed `x = y (mod 3)` |
+| `x < y (mod 3)` | `UnhandledParseException` | `InvalidArgumentParseException` |
+| `5 mod 3` | `2` | `2` (unchanged: the operator is a number, the relation is a statement) |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

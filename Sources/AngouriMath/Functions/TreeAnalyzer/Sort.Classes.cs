@@ -427,6 +427,12 @@ namespace AngouriMath
                 => level == SortLevel.LOW_LEVEL ? "divides_" : "";
         }
 
+        partial record Congruentf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => level == SortLevel.LOW_LEVEL ? "congruent_" : "";
+        }
+
         partial record Cardf
         {
             private protected override string SortHashName(SortLevel level) => "card_";

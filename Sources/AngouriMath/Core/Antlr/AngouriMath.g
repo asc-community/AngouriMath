@@ -157,7 +157,7 @@ Equality/inequality nodes
 */
 
 comparison_expression returns[Entity value]
-   @init { List<Entity> terms = []; List<string> operators = []; }
+   @init { List<Entity> terms = []; List<string> operators = []; Entity modulus = null; }
    : m1 = in_operator { terms.Add($m1.value); }
    (
     ('>=' { operators.Add(">="); } | 
@@ -165,11 +165,34 @@ comparison_expression returns[Entity value]
      '>'  { operators.Add(">");  } |
      '<'  { operators.Add("<");  } |
      '='  { operators.Add("=");  } |
-     '<>' { operators.Add("<>"); })
+     '<>' { operators.Add("<>"); } |
+     '≡'  { operators.Add("≡");  })
     m2 = in_operator { terms.Add($m2.value); }
    )*
+   // A congruence: `a = b (mod n)` or `a ≡ b (mod n)`, the modulus written once at the end of
+   // the line and applying to every link of the chain, as mathematics writes it. `mod` here is
+   // not the remainder operator of mult_expression -- that one is a number, this one makes the
+   // comparison a relation between residue classes. Read here and nowhere else, so that `(mod n)`
+   // after an order comparison is an error rather than a product with nothing.
+   // https://github.com/asc-community/AngouriMath/issues/1409
+   ('(' 'mod' mod = in_operator ')' { modulus = $mod.value; })?
    {
-       if (terms.Count == 1)
+       if (modulus is not null)
+       {
+           if (terms.Count == 1)
+               throw new InvalidArgumentParseException("A modulus follows a congruence: write a = b (mod n)");
+           foreach (var op in operators)
+               if (op != "=" && op != "≡")
+                   throw new InvalidArgumentParseException($"(mod n) applies to a congruence a = b (mod n), not to {op}");
+           for (int i = 0; i < operators.Count; i++)
+           {
+               var link = new Congruentf(terms[i], terms[i + 1], modulus);
+               if (i == 0) $value = link; else $value &= link;
+           }
+       }
+       else if (operators.Contains("≡"))
+           throw new InvalidArgumentParseException("A congruence needs its modulus: write a ≡ b (mod n)");
+       else if (terms.Count == 1)
            $value = terms[0];
        else
            // Create chain: a < b = c < d becomes (a < b) and (b = c) and (c < d)

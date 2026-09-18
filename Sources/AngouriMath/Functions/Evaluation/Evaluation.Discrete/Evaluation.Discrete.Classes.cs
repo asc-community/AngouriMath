@@ -5,7 +5,10 @@
 // Website: https://am.angouri.org.
 //
 
+using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Linq;
+using AngouriMath.Functions;
 using static AngouriMath.Entity.Boolean;
 using static AngouriMath.Entity.Set;
 
@@ -360,6 +363,71 @@ namespace AngouriMath
                         _ => null
                     },
                     (@this, a, b) => ((Dividesf)@this).New(a, b), isExact);
+        }
+
+        partial record Congruentf
+        {
+            // A congruence is a statement about integers, like divisibility; over anything else
+            // it is NaN.
+            private protected override Entity IntrinsicCondition
+                => Left.In(MathS.Sets.Z) & Right.In(MathS.Sets.Z) & Modulus.In(MathS.Sets.Z);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+            {
+                var left = Left.InnerSimplified(isExact);
+                var right = Right.InnerSimplified(isExact);
+                var modulus = Modulus.InnerSimplified(isExact);
+                if (left.IsNaN || right.IsNaN || modulus.IsNaN)
+                    return MathS.NaN;
+                return Decide(left, right, modulus) ?? New(left, right, modulus);
+            }
+
+            // Decided where n | a - b is: for numbers outright, and for symbols where a - b is a
+            // polynomial every term of which the modulus divides -- (n - a)^2 = a^2 (mod n) has
+            // the difference n^2 - 2 a n, and (x + y)^5 = x^5 + y^5 (mod 5) a difference whose
+            // every coefficient is a multiple of 5. Where the coefficients are not all multiples
+            // the congruence may still hold for particular values, so nothing is said.
+            private static Entity? Decide(Entity left, Entity right, Entity modulus)
+            {
+                switch (left, right, modulus)
+                {
+                    case (Integer a, Integer b, Integer n):
+                        return n.EInteger.IsZero
+                            ? a.EInteger.Equals(b.EInteger) ? Boolean.True : Boolean.False
+                            : a.EInteger.Subtract(b.EInteger).Remainder(n.EInteger).IsZero ? Boolean.True : Boolean.False;
+                    case (Number, Number, Number):
+                        return MathS.NaN;
+                }
+                var difference = (left - right).InnerSimplified;
+                if (difference is Integer whole && modulus is Integer m)
+                    return m.EInteger.IsZero
+                        ? whole.EInteger.IsZero ? Boolean.True : Boolean.False
+                        : whole.EInteger.Remainder(m.EInteger).IsZero ? Boolean.True : Boolean.False;
+                if (difference.Complexity > LargestDifferenceRead)
+                    return null;
+                var variables = difference.Vars.Concat(modulus.Vars).Distinct()
+                    .OrderBy(v => v.Name, System.StringComparer.Ordinal).ToArray();
+                if (variables.Length == 0 || variables.Length > MultivariatePolynomial.MaxVariables)
+                    return null;
+                var indices = new Dictionary<Variable, int>();
+                for (var i = 0; i < variables.Length; i++)
+                    indices[variables[i]] = i;
+                if (MultivariatePolynomial.TryParse(difference, indices) is not { } polynomial)
+                    return null;
+                if (polynomial.IsZero)
+                    return Boolean.True;
+                if (modulus is Integer integerModulus && !integerModulus.EInteger.IsZero)
+                    return polynomial.Terms.All(term => term.Value.IsInteger() && term.Value.Numerator.Remainder(integerModulus.EInteger).IsZero)
+                        ? Boolean.True : null;
+                if (MultivariatePolynomial.TryParse(modulus, indices) is { IsZero: false, IsConstant: false } divisor)
+                    return polynomial.DivideExact(divisor, out _) is not null ? Boolean.True : null;
+                return null;
+            }
+
+            // The polynomial route expands the difference, which is worth doing for the sizes a
+            // congruence is written at and not for an expression that arrives as a byproduct.
+            private const int LargestDifferenceRead = 2048;
         }
 
         partial record Cardf

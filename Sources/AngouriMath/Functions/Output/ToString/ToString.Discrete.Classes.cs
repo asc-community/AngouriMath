@@ -77,6 +77,18 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        partial record Congruentf
+        {
+            /// <inheritdoc/>
+            // The ASCII spelling, with the modulus once at the end; `≡` is read by the parser
+            // and waits for a Unicode output flag (#1242). Not chained: two congruences print
+            // as the conjunction they are.
+            private protected override string StringizeNode()
+                => $"{Left.Stringize(Left.Priority <= Priority)} = {Right.Stringize(Right.Priority <= Priority)} (mod {Modulus.Stringize(Modulus.Priority < Priority.SetOperation)})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         partial record Equalsf
         {
             /// <inheritdoc/>

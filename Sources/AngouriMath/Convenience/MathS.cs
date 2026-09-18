@@ -68,6 +68,26 @@ namespace AngouriMath
             public static Entity Divides(Entity divisor, Entity dividend) => new Dividesf(divisor, dividend);
 
             /// <summary>
+            /// The statement that two integers are congruent modulo a third: <c>a = b (mod n)</c>,
+            /// which is <c>n divides a - b</c>. A relation, not the remainder operator <c>a mod n</c>.
+            /// https://github.com/asc-community/AngouriMath/issues/1409
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine(MathS.NumberTheory.Congruent(15625, 1, 7).Evaled);
+            /// Console.WriteLine("-1 = 9 (mod 10)".ToEntity().Evaled);
+            /// Console.WriteLine("(n - a)^2 = a^2 (mod n)".ToEntity().Simplify());
+            /// </code>
+            /// Prints
+            /// <code>
+            /// True
+            /// True
+            /// True
+            /// </code>
+            /// </example>
+            public static Entity Congruent(Entity left, Entity right, Entity modulus) => new Congruentf(left, right, modulus);
+
+            /// <summary>
             /// Count of all divisors of an integer, including 1 or itself.
             /// </summary>
             /// <example>

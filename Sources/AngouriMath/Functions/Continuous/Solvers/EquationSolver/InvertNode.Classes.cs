@@ -669,6 +669,15 @@ namespace AngouriMath
                     "Inverting this node would need a set-valued answer, which the inverter cannot give");
         }
 
+        partial record Congruentf
+        {
+            // (x = b (mod n)) = value has a residue class for its solutions -- a set, which the
+            // inverter cannot return, the same as divisibility and membership.
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotSufficientlySupportedException(
+                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
+        }
+
         partial record Providedf
         {
             // (f(x) provided B) = value

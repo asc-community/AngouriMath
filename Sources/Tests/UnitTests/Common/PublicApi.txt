@@ -622,6 +622,26 @@ AngouriMath.Entity+ComparisonSign.ctor()
 AngouriMath.Entity+ComparisonSign.ctor(AngouriMath.Entity+ComparisonSign)
 AngouriMath.Entity+ComparisonSign.op_Equality(AngouriMath.Entity+ComparisonSign, AngouriMath.Entity+ComparisonSign) : System.Boolean
 AngouriMath.Entity+ComparisonSign.op_Inequality(AngouriMath.Entity+ComparisonSign, AngouriMath.Entity+ComparisonSign) : System.Boolean
+AngouriMath.Entity+Congruentf.<Clone>$() : AngouriMath.Entity+Congruentf
+AngouriMath.Entity+Congruentf.Codomain { } : AngouriMath.Core.Domain
+AngouriMath.Entity+Congruentf.Deconstruct(AngouriMath.Entity&, AngouriMath.Entity&, AngouriMath.Entity&) : System.Void
+AngouriMath.Entity+Congruentf.EqualityContract { } : System.Type
+AngouriMath.Entity+Congruentf.Equals(AngouriMath.Entity+Congruentf) : System.Boolean
+AngouriMath.Entity+Congruentf.Equals(AngouriMath.Entity+Statement) : System.Boolean
+AngouriMath.Entity+Congruentf.Equals(System.Object) : System.Boolean
+AngouriMath.Entity+Congruentf.GetHashCode() : System.Int32
+AngouriMath.Entity+Congruentf.InitDirectChildren() : AngouriMath.Entity[]
+AngouriMath.Entity+Congruentf.InnerSimplify(System.Boolean) : AngouriMath.Entity
+AngouriMath.Entity+Congruentf.Left { } : AngouriMath.Entity
+AngouriMath.Entity+Congruentf.Modulus { } : AngouriMath.Entity
+AngouriMath.Entity+Congruentf.PrintMembers(System.Text.StringBuilder) : System.Boolean
+AngouriMath.Entity+Congruentf.Replace(System.Func<AngouriMath.Entity,AngouriMath.Entity>) : AngouriMath.Entity
+AngouriMath.Entity+Congruentf.Right { } : AngouriMath.Entity
+AngouriMath.Entity+Congruentf.Substitute(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.Entity+Congruentf.ToString() : System.String
+AngouriMath.Entity+Congruentf.ctor(AngouriMath.Entity, AngouriMath.Entity, AngouriMath.Entity)
+AngouriMath.Entity+Congruentf.op_Equality(AngouriMath.Entity+Congruentf, AngouriMath.Entity+Congruentf) : System.Boolean
+AngouriMath.Entity+Congruentf.op_Inequality(AngouriMath.Entity+Congruentf, AngouriMath.Entity+Congruentf) : System.Boolean
 AngouriMath.Entity+Constant.<Clone>$() : AngouriMath.Entity+Constant
 AngouriMath.Entity+Constant.EqualityContract { } : System.Type
 AngouriMath.Entity+Constant.Equals(AngouriMath.Entity+Constant) : System.Boolean
@@ -2217,6 +2237,7 @@ AngouriMath.Entity.Compile(AngouriMath.Entity+Variable, AngouriMath.Entity+Varia
 AngouriMath.Entity.Compile(AngouriMath.Entity+Variable[]) : AngouriMath.Core.FastExpression
 AngouriMath.Entity.Compile(System.String[]) : AngouriMath.Core.FastExpression
 AngouriMath.Entity.Complexity { } : System.Int32
+AngouriMath.Entity.CongruentTo(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.Entity.ContainsNode(AngouriMath.Entity) : System.Boolean
 AngouriMath.Entity.Cos() : AngouriMath.Entity
 AngouriMath.Entity.Cosec() : AngouriMath.Entity
@@ -2475,6 +2496,7 @@ AngouriMath.MathS+Matrices.Concat(AngouriMath.MathS+Matrices+Direction, AngouriM
 AngouriMath.MathS+Matrices.Matrix(System.Int32, System.Int32, AngouriMath.Entity[]) : AngouriMath.Entity+Matrix
 AngouriMath.MathS+Matrices.PointwiseMultiplication(AngouriMath.Entity+Matrix, AngouriMath.Entity+Matrix) : AngouriMath.Entity+Matrix
 AngouriMath.MathS+Multithreading.SetLocalCancellationToken(System.Threading.CancellationToken) : System.Void
+AngouriMath.MathS+NumberTheory.Congruent(AngouriMath.Entity, AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS+NumberTheory.CountDivisors(AngouriMath.Entity+Number+Integer) : AngouriMath.Entity+Number+Integer
 AngouriMath.MathS+NumberTheory.Divides(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS+NumberTheory.Factorize(AngouriMath.Entity+Number+Integer) : System.Collections.Generic.IEnumerable<System.ValueTuple<AngouriMath.Entity+Number+Integer,AngouriMath.Entity+Number+Integer>>
@@ -2723,6 +2745,7 @@ class AngouriMath.Entity+CalculusOperator
 class AngouriMath.Entity+Cardf
 class AngouriMath.Entity+Ceilf
 class AngouriMath.Entity+ComparisonSign
+class AngouriMath.Entity+Congruentf
 class AngouriMath.Entity+Constant
 class AngouriMath.Entity+ContinuousNode
 class AngouriMath.Entity+Cosecantf
