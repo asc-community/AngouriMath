@@ -29,5 +29,36 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+
+        /// <summary>
+        /// A node of the binomial coefficient <c>binomial(n, k)</c>, "n choose k".
+        /// </summary>
+        /// <remarks>
+        /// A node rather than <c>n!/(k! (n - k)!)</c>: that quotient is correct and useless as a
+        /// spelling -- it loses the integrality, it is undefined for a negative <c>n</c> where
+        /// the falling factorial <c>n (n - 1) ... (n - k + 1)/k!</c> is not, and no rule can
+        /// recognise Pascal's identity or Vandermonde's in a ratio of three factorials. The
+        /// falling factorial is the definition for a whole <c>k</c>, whatever <c>n</c> is; a
+        /// whole <c>k</c> below zero gives <c>0</c>; and for a <c>k</c> that is not whole the
+        /// value is <c>Γ(n + 1)/(Γ(k + 1) Γ(n - k + 1))</c>, which has no value where <c>n</c>
+        /// is a negative whole number. What cannot be settled is left as this node.
+        /// https://github.com/asc-community/AngouriMath/issues/1409
+        /// https://github.com/asc-community/AngouriMath/issues/809
+        /// </remarks>
+        public sealed partial record Binomialf(Entity Upper, Entity Lower) : Function, IBinaryNode
+        {
+            /// <inheritdoc/>
+            public Entity NodeFirstChild => Upper;
+
+            /// <inheritdoc/>
+            public Entity NodeSecondChild => Lower;
+
+            private Binomialf New(Entity upper, Entity lower) =>
+                ReferenceEquals(Upper, upper) && ReferenceEquals(Lower, lower) ? this : new(upper, lower) { Codomain = Codomain };
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Upper.Replace(func), Lower.Replace(func)));
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Upper, Lower };
+        }
     }
 }

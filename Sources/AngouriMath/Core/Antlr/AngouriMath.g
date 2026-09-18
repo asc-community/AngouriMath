@@ -467,6 +467,7 @@ atom returns[Entity value]
     | 'argmax(' args = function_arguments ')' { Assert("argmax", 2, $args.list.Count); $value = $args.list[1] is Entity.Set.Inf { Element: Variable } argmaxRange ? MathS.Argmax($args.list[0], argmaxRange.Element, argmaxRange.SupSet) : throw new InvalidArgumentParseException("argmax expects its second argument to say which variable ranges over which set, as in argmax(f(t), t in S)"); }
     | 'argmin(' args = function_arguments ')' { Assert("argmin", 2, $args.list.Count); $value = $args.list[1] is Entity.Set.Inf { Element: Variable } argminRange ? MathS.Argmin($args.list[0], argminRange.Element, argminRange.SupSet) : throw new InvalidArgumentParseException("argmin expects its second argument to say which variable ranges over which set, as in argmin(f(t), t in S)"); }
     | 'gcd(' args = function_arguments ')' { AssertAtLeast("gcd", 1, $args.list.Count); $value = $args.list.Aggregate((a, b) => MathS.Gcd(a, b)); }
+    | 'binomial(' args = function_arguments ')' { Assert("binomial", 2, $args.list.Count); $value = MathS.Binomial($args.list[0], $args.list[1]); }
 
     /* Names the library does not have. Each is a function every other CAS spells this way, so
        a caller reaches for it, and without these rules each is silently read as a product --

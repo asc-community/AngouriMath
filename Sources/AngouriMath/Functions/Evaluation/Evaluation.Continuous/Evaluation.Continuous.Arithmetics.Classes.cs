@@ -380,6 +380,43 @@ namespace AngouriMath
                     (@this, a) => ((Factorialf)@this).New(a), isExact);
         }
 
+        public partial record Binomialf
+        {
+            // Defined for every whole k, whatever n is, by the falling factorial; for any other
+            // k it is Γ(n + 1)/(Γ(k + 1) Γ(n - k + 1)), which has no value where n is a negative
+            // whole number and a value everywhere else, the reciprocal gamma being entire.
+            private protected override Entity IntrinsicCondition =>
+                Lower.In(MathS.Sets.Z) | !(Upper.In(MathS.Sets.Z) & Upper < 0);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact) =>
+                ExpandOnTwoArguments(Upper, Lower,
+                    (n, k) => (n, k) switch
+                    {
+                        (_, Integer { EInteger.Sign: < 0 }) => Integer.Create(0),
+                        (Integer top, Integer bottom) when top.EInteger.Sign >= 0 && bottom.EInteger.CompareTo(top.EInteger) > 0 => Integer.Create(0),
+                        // The falling factorial over k!, exact for any number n and any whole k,
+                        // negative n included: binomial(-1, 3) = (-1)(-2)(-3)/3! = -1.
+                        (Number top, Integer bottom) when bottom.EInteger.CanFitInInt32() => FallingFactorialOver(top, bottom.EInteger.ToInt32Unchecked()),
+                        (_, Integer { IsZero: true }) => Integer.Create(1),
+                        // Through the gamma function only numerically: there is no exact form.
+                        (Complex top, Complex bottom) when !isExact
+                            && top is not Integer && Number.Factorial(top) is var topF && Number.Factorial(bottom) is var bottomF
+                            && Number.Factorial(top - bottom) is var restF && !topF.IsNaN && !bottomF.IsNaN && !restF.IsNaN
+                            => topF / (bottomF * restF),
+                        _ => null
+                    },
+                    (@this, a, b) => ((Binomialf)@this).New(a, b), isExact);
+
+            private static Entity FallingFactorialOver(Number n, int k)
+            {
+                Entity product = Integer.Create(1);
+                for (var i = 0; i < k; i++)
+                    product = (product * (n - Integer.Create(i))).Evaled;
+                return (product / Integer.Create(PeterO.Numbers.EInteger.FromInt32(k).Factorial())).Evaled;
+            }
+        }
+
         public partial record Signumf
         {
             // Signum is defined everywhere in the complex plane

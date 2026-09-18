@@ -210,6 +210,12 @@ any number of arguments and fold. `min` and `max` compare only where the argumen
 are otherwise left as written. `gcd` computes over integers and rationals — `gcd(1/2, 1/3)` is
 `1/6` — and leaves the polynomial case alone.
 
+**Combinatorics** — `binomial(n, k)`, "n choose k". A whole `k` is computed by the falling
+factorial `n (n - 1) ... (n - k + 1) / k!` for any `n` — `binomial(5, 2)` is `10`,
+`binomial(-1, 3)` is `-1`, `binomial(1/2, 2)` is `-1/8` — with `0` below `k = 0` and above a
+non-negative whole `n`; a symbolic argument keeps the node, which prints as `\binom{n}{k}` in
+LaTeX, and a `k` that is not whole evaluates numerically through the gamma function.
+
 **Calculus** — `derivative(expr, var, order)`, `integral(expr, var)`,
 `integral(expr, var, from, to)`, `limit(expr, var, dest)`, `limitleft(...)`, `limitright(...)`;
 `max(expr, var in set)` and `min` for the extremum of an expression over a set, `argmax` and

@@ -47,6 +47,7 @@ namespace AngouriMath
         [EntityJsonConverter] partial record Divf;
         [EntityJsonConverter] partial record Equalsf;
         [EntityJsonConverter] partial record Factorialf;
+        [EntityJsonConverter] partial record Binomialf;
         [EntityJsonConverter] partial record Floorf;
         [EntityJsonConverter] partial record Function;
         [EntityJsonConverter] partial record Gcdf;

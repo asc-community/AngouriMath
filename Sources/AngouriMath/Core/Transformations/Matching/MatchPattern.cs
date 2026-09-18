@@ -487,6 +487,7 @@ namespace AngouriMath.Core.Transformations.Matching
             [typeof(Entity.Logf)] = (2, static c => new Entity.Logf(c[0], c[1])),
             [typeof(Entity.Modf)] = (2, static c => new Entity.Modf(c[0], c[1])),
             [typeof(Entity.Gcdf)] = (2, static c => new Entity.Gcdf(c[0], c[1])),
+            [typeof(Entity.Binomialf)] = (2, static c => new Entity.Binomialf(c[0], c[1])),
             [typeof(Entity.Minf)] = (2, static c => new Entity.Minf(c[0], c[1])),
             [typeof(Entity.Maxf)] = (2, static c => new Entity.Maxf(c[0], c[1])),
             // Comparisons and connectives.
