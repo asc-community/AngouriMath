@@ -68,7 +68,7 @@ git push --set-upstream origin my-branch
 
 ### Closing an issue
 
-One of the most valuable ways to contribute to the project is to close tickets from [issues](https://github.com/asc-community/AngouriMath/issues). If you wish to work on a card, ping one of the maintaintainers, for example, @WhiteBlackGoose, and ask for assigning the issue to you.
+One of the most valuable ways to contribute to the project is to close tickets from [issues](https://github.com/asc-community/AngouriMath/issues). If you wish to work on a card, open a pull request on it -- a draft is fine -- saying `Part of #n`; that is the claim, and nothing else is needed.
 
 Then, when you started working on it, we highly recommend opening a draft pull request as soon as possible. This will help everybody see your changes and potentially help you. Then, once PR is ready, open it and wait for a review.
 
@@ -93,11 +93,34 @@ are set out at length in [AGENTS.md](AGENTS.md), which applies to humans too:
 
 ### Types of issues
 
-Issues marked with `Proposal` are those suggesting ideas. If the idea is a good one and is going to be implemented, it is marked as `Accepted`. If an idea cannot be implemented any time soon, it is marked as `Not now`.
+An issue's *kind* is its GitHub issue type, not a label; the labels say what state it is in and
+where it belongs.
 
-`Minor bug` and `Bug` are applied to an issue after it's clear, that the behaviour is not desired. `Minor bug` is for cases, when despite that the behaviour is undesired, the impact is low (for example, in case if a simplificator doesn't simplify well enough). `Bug` reflects serious issues.
+- **No type** -- a goal: what you want to be true, and the easiest issue to write. A goal is a
+  meta-issue that spawns work items -- the tracker's `Goal: ...` issues, the dockets, and anything
+  a contributor states without knowing whether it is a bug or a feature. The bar is minimal on
+  purpose: it is mathematics, and we do all of it; the triage sorts a goal into the Bugs and
+  Features it needs, as sub-issues of it, so a blank issue and a goal are the same thing and
+  nothing has to be forced onto an issue whose kind is not known yet.
+- **Bug** -- the behaviour is not what the mathematics says, or the library crashes, hangs or
+  answers something it should have declined. A bug whose impact is low (a simplification that is
+  merely not as good as it could be) is still a Bug; say so in the body.
+- **Feature** -- an idea, a request, a design: what used to carry the `Proposal` label. If the idea
+  is a good one and is going to be implemented, it is marked `Accepted`; if it cannot be implemented
+  any time soon, `Not now`. A Feature without `Accepted` is not agreed: comment on it, do not
+  implement it.
 
-`Opinions wanted` - anybody is welcomed to share their opinion on a subject.
+Questions and requests for opinions are **Discussions**, not issues -- the Q&A and Ideas
+categories -- and are answered there; an issue that turns out to be one is redirected and, once
+answered, closed unless a work item came of it. `up-for-grabs` marks an issue reserved for a
+newcomer.
+
+Who is *working* an issue is whoever has an open pull request on it, draft or not, saying
+`Part of #n`: the pull request is the claim, a week without a push or a comment on it makes the
+claim stale, and an issue that is several pull requests' worth of work is split into sub-issues
+that are claimed one at a time. The assignee field is a queue -- who means to take an issue
+next -- and never a lock. The rules the agents follow for this are item 10 of the working
+practice in [AGENTS.md](AGENTS.md).
 
 `Area: *` - a number of labels for issues, which are only specific to one of the wrappers: AngouriMath.FSharp, AngouriMath.Interactive, AngouriMath.CPP.
 
