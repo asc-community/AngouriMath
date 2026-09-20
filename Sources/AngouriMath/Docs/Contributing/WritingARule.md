@@ -18,7 +18,7 @@ effect". This is how to supply those seven things.
 ## Where a rule goes
 
 `Core/Transformations/Matching/MatchedRules.cs`, as a value in a `MatchedRuleSet`. **33** sets and
-**329** rules live there today.
+**332** rules live there today.
 
 The `switch` statements in `Functions/Simplification/Patterns` are the older form. **All thirty
 registered sets now run as data and describe what they run**; none executes its `switch` any more.
@@ -64,7 +64,7 @@ in a name and putting the identity in brackets after it:
 2. Tangent is sine over cosine (tan(a) = sin(a) / cos(a)), so tan(x) becomes sin(x) / cos(x).
 ```
 
-So the name has to be a clause that survives being read that way. **All 300 distinct rule names are,
+So the name has to be a clause that survives being read that way. **All 303 distinct rule names are,
 and `StepAsASentenceTest` holds them to it** — a name with a capital, a bracket or an underscore
 fails that test rather than degrading the prose quietly.
 
@@ -77,7 +77,7 @@ Write what the rule *says*, not what it operates on:
 | ✘ | `divf-simplification-2` — not a clause, and the 2 will be wrong when somebody inserts one |
 | ✘ | `DivideByItself` — reads as an identifier in the middle of a sentence |
 
-The names run from four to sixteen words. Long is fine; a name is read once and a wrong rewrite is
+The names run from four to nineteen words. Long is fine; a name is read once and a wrong rewrite is
 debugged for an afternoon.
 
 ## The identity is not the name
@@ -91,7 +91,7 @@ debugged for an afternoon.
 | `Left.ToString()` | `Divf(var a, Divf(var b, var c))` — how the matcher spells it |
 
 Write the identity with `=`, not `->`: it is an equality, and the arrow belongs to the direction the
-rule happens to be applied in. **326** rules carry one today; a new rule should.
+rule happens to be applied in. **329** rules carry one today; a new rule should.
 
 ## The pattern language
 
@@ -128,10 +128,11 @@ are legitimate — but the choice costs two things, so make it deliberately.
 
 A pattern replacement gets:
 
-- **a direction.** `MatchedRule.Reversed` is the rule read the other way, and **32** of the 35
-  two-sided rules have one. The other three forget something: `sin²+cos² = 1` forgets the angle,
-  `{ x : x in S } = S` forgets the name the set builder bound, and `c ^ log(c, a) = a` for a
-  constant `c` forgets which constant, so none has anything to read back.
+- **a direction.** `MatchedRule.Reversed` is the rule read the other way, and **32** of the 36
+  two-sided rules have one. The other four forget something: `sin²+cos² = 1` forgets the angle,
+  `{ x : x in S } = S` forgets the name the set builder bound, and `c ^ log(c, a) = a` and
+  `c ^ (k * log(c, a)) = a ^ k` for a constant `c` forget which constant, so none has anything to
+  read back.
   See [ReversibleRules.md](ReversibleRules.md).
 - **an exact growth**, counted from the two patterns rather than declared.
 
@@ -225,7 +226,7 @@ limit, against nothing for handing the node over.
 | `SoundUnderAssumptions` | holds given something the rule does not check |
 | `Heuristic` | usually right |
 
-**186** of the 329 rules are `Sound` and **143** are conditional. Every one of the thirty registered
+**186** of the 332 rules are `Sound` and **146** are conditional. Every one of the thirty registered
 *sets* declares `SoundUnderAssumptions`, because a set's tier is the **minimum** over its rules — so
 the set grain says nothing and the rule grain says everything. A derivation reports the rule's tier
 (`RewriteStep.Soundness`), which is why getting it right matters beyond the label.
@@ -242,7 +243,7 @@ first decides the answer**. Two cases, and only one of them is a decision:
 everything `Mulf(Divf(a, b), Divf(c, d))` matches and more, so the general rule would swallow the
 special one and the special one would never fire. `MatchPattern.Subsumes` computes this and
 `MatchedRuleSet.RulesByPriority` applies it: the specific rule is tried first because of what the two
-patterns *are*, not because of where you typed them. **29** rule pairs are ordered that way.
+patterns *are*, not because of where you typed them. **30** rule pairs are ordered that way.
 
 **Where neither subsumes the other, the order is a bare choice and nothing but your placement makes
 it.** There are **39** such conflicts, and `RulePriorityTest` records every one by name. If your rule
