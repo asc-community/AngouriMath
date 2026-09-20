@@ -179,6 +179,10 @@ namespace AngouriMath
 
                 private FiniteSet PowerSetWorkout()
                 {
+                    // The empty set has one subset, itself; the stepper below indexes the last
+                    // element and has none to index. https://github.com/asc-community/AngouriMath/issues/1409
+                    if (Count == 0)
+                        return new FiniteSet(new Entity[] { Empty }, noCheck: true);
                     var sets = new List<Entity>();
                     var state = new bool[Count];
                     var elements = Elements.ToArray();
@@ -911,6 +915,67 @@ namespace AngouriMath
                         Left is Set setLeft ? setLeft.Filter(predicate, over) : Left,
                         Right is Set setRight ? setRight.Filter(predicate, over) : Right
                         );
+            }
+            #endregion
+
+            #region Power set
+            /// <summary>
+            /// The set of all subsets of a set: <c>powerset(A)</c>, the <c>P(A)</c> of set theory.
+            /// Its members are sets, and a set is one of them exactly when it is a subset of
+            /// <see cref="Argument"/>, which is how membership is answered whether or not the
+            /// argument is finite: <c>{1, 3, 7} in powerset(ZZ)</c> is <c>True</c>. For a finite
+            /// argument it evaluates to the list of its <c>2^n</c> subsets, the empty set and the
+            /// whole among them; <c>powerset({})</c> is <c>{ {} }</c>, one member, not none.
+            /// https://github.com/asc-community/AngouriMath/issues/1409
+            /// </summary>
+            public sealed partial record Powersetf(Entity Argument) : Set, IUnaryNode
+            {
+                /// <inheritdoc/>
+                public Entity NodeChild => Argument;
+
+                internal Powersetf New(Entity argument)
+                    => ReferenceEquals(Argument, argument) ? this : new Powersetf(argument);
+
+                /// <inheritdoc/>
+                public override Entity Replace(Func<Entity, Entity> func)
+                    => func(New(Argument.Replace(func)));
+
+                /// <inheritdoc/>
+                public override bool TryContains(Entity entity, out bool contains)
+                {
+                    contains = false;
+                    if (Argument is not Set argument)
+                        return false;
+                    if (entity is not Set candidate)
+                    {
+                        // A number, a truth value or anything else that is not a set is not
+                        // a subset of anything, so not a member; a symbol may stand for a set.
+                        contains = false;
+                        return entity.IsConstantLeaf || entity is Number or Boolean;
+                    }
+                    if (candidate.SubsetOf(argument).InnerSimplified is Boolean verdict)
+                    {
+                        contains = verdict == Boolean.True;
+                        return true;
+                    }
+                    return false;
+                }
+
+                internal override Priority Priority => Priority.Func;
+
+                /// <inheritdoc/>
+                protected override Entity[] InitDirectChildren() => new[] { Argument };
+
+                /// <inheritdoc/>
+                public override bool IsSetFinite => Argument is FiniteSet finite && finite.IsSetFinite;
+
+                /// <inheritdoc/>
+                // The empty set is a subset of every set, so a power set is never empty.
+                public override bool IsSetEmpty => false;
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over)
+                    => new ConditionalSet(over, over.In(this) & predicate);
             }
             #endregion
         }
