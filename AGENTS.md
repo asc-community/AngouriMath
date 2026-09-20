@@ -575,9 +575,18 @@ change it is, not only when:
 - **The next major** (`3.0`) carries what re-values existing input — the docket in
   [#1019](https://github.com/asc-community/AngouriMath/issues/1019). An item that breaks something
   is never on a minor, however agreed it is; if an issue is half additive and half breaking, split
-  it.
+  it. **The v3 redesign is seen as a whole**: across every issue on the milestone, and across the
+  file structure, the API structure with its implementations, the projects and the packages, at
+  once — not issue by issue. The one thing that does not shape it is the C++ surface: no C++
+  consideration limits the v3 design, and the C++ wrapper's own v3 shape comes after, in `3.1`.
+- **`2.8`** is the minor that holds the design work the maintainer wants tried *before* v3 so that
+  v3 can review it with the whole in view — the Unicode output and parsing of
+  [#1242](https://github.com/asc-community/AngouriMath/issues/1242) is the example. **`3.1`** holds
+  what follows the redesign rather than shaping it: the C++ surface, differentiation with respect
+  to a function ([#230](https://github.com/asc-community/AngouriMath/issues/230)).
 - **Future** is an explicit deprioritisation, and the only one: it replaces the `Not now` label, and
-  nothing sits there because it is hard. A "not now" that is ready to do is on a version.
+  nothing sits there because it is hard. A "not now" that is ready to do is on a version — which is
+  why the milestone holds one issue, not thirty.
 - **Epics** — the agentic goals, #718, #1409 and their kind — sit on the `Epics` milestone. They
   spawn sub-issues, and it is the sub-issues that carry version milestones; the epic itself stays
   open across releases and lists what each one delivered.
@@ -682,9 +691,26 @@ whatever else it delivered:
 
 So the release checklist is: the suite and the harnesses in `work/` green, a `BREAKING-CHANGES.md`
 entry for every changed answer measured on real builds, **a performance column measured against the
-previous one on the same machine**, a version number that does not contradict #746 — and **the
-website brought to the release**, which is a separate repository and so is not carried by anything
-here. [am.angouri.org](https://am.angouri.org) is generated from
+previous one on the same machine**, a version number that does not contradict #746, **the
+integration work of [#718](https://github.com/asc-community/AngouriMath/issues/718) properly done
+for the release that claims it** — `2.6.0` is not cut while a Rubi family it promised is half
+landed — and **three other repositories brought to the release**, none of which is carried by
+anything here:
+
+- [AngouriMathMCP](https://github.com/asc-community/AngouriMathMCP), the server that exposes the
+  library to an agent. It has to expose what the release added, and its documentation is where an
+  agent learns *how a problem is put to the library* — which nodes to build for a question, which
+  operation to invoke, and how to read the answer back out of the nodes. That documentation is as
+  much a deliverable as the operation (the maintainer's words on
+  [#1409](https://github.com/asc-community/AngouriMath/issues/1409)); write it there, or in this
+  repository's `Docs/Usage` and the website, and check at every release that the MCP still says
+  what the library does.
+- [CSharpMath](https://github.com/verybadcat/CSharpMath), for the round trip of `Latexize` — see
+  *The standard command wins* above. If a PR there from an earlier release is still unmerged, add
+  to it rather than opening a second.
+- the website, below.
+
+The website, [am.angouri.org](https://am.angouri.org), is generated from
 [asc-community/AngouriMathSite](https://github.com/asc-community/AngouriMathSite): its *What's new*
 page gets a block cut from the release's notes with the `BREAKING-CHANGES.md` link pinned to the tag,
 and its quickstart names the release as current. Four releases went out without that between
