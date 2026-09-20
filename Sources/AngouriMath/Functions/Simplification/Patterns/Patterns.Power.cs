@@ -159,6 +159,19 @@ namespace AngouriMath.Functions
                 when base1 == base1a && base1 is not Number and not Constant
                 => any1.Provided(!base1.EqualTo(0) & !base1.EqualTo(1)),
 
+            // c ^ (k log(c, a)) = a ^ k, the same three ways, with the multiplier on either side
+            // of the logarithm. https://github.com/asc-community/AngouriMath/issues/994
+            Powf(Number const1, Mulf(var k, Logf(Number const1a, var any1))) when const1 == const1a && const1 != Integer.Zero && const1 != Integer.One => new Powf(any1, k),
+            Powf(Number const1, Mulf(Logf(Number const1a, var any1), var k)) when const1 == const1a && const1 != Integer.Zero && const1 != Integer.One => new Powf(any1, k),
+            Powf(Constant base1, Mulf(var k, Logf(Constant base1a, var any1))) when base1 == base1a => new Powf(any1, k),
+            Powf(Constant base1, Mulf(Logf(Constant base1a, var any1), var k)) when base1 == base1a => new Powf(any1, k),
+            Powf(var base1, Mulf(var k, Logf(var base1a, var any1)))
+                when base1 == base1a && base1 is not Number and not Constant
+                => new Powf(any1, k).Provided(!base1.EqualTo(0) & !base1.EqualTo(1)),
+            Powf(var base1, Mulf(Logf(var base1a, var any1), var k))
+                when base1 == base1a && base1 is not Number and not Constant
+                => new Powf(any1, k).Provided(!base1.EqualTo(0) & !base1.EqualTo(1)),
+
             Mulf(Powf(var any1, var any3), Mulf(var any1a, var any2)) when any1 == any1a => new Powf(any1, any3 + 1) * any2,
             Mulf(Powf(var any1, var any3), Mulf(var any2, var any1a)) when any1 == any1a => new Powf(any1, any3 + 1) * any2,
             Mulf(Mulf(var any1, var any2), Powf(var any1a, var any3)) when any1 == any1a => new Powf(any1, any3 + 1) * any2,

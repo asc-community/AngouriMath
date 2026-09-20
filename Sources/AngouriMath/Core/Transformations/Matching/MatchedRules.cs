@@ -3029,6 +3029,59 @@ namespace AngouriMath.Core.Transformations.Matching
                 // for it: more than the power and the logarithm that go.
                 growth: RewriteRuleGrowth.Expands),
 
+            // The same identity with a multiplier on the logarithm: c ^ (k log_c(b)) is b ^ k,
+            // since c ^ z is exp(z ln c) and log_c(b) is ln(b) / ln(c) on the principal branch,
+            // so the two ln(c) cancel and what is left is exp(k ln b), which is the definition
+            // of b ^ k. Exact for every complex b other than 0, any k, and a base that is
+            // decidably neither 0 nor 1 -- a number or a constant; a symbolic base is left to
+            // the rule below, which attaches the condition. This is what e ^ (-3/2 ln(u)) was
+            // waiting for: the exponential substitution in the integrator writes its
+            // antiderivatives in that shape and nothing folded them.
+            // https://github.com/asc-community/AngouriMath/issues/994
+            // https://github.com/asc-community/AngouriMath/issues/718
+            new MatchedRule(
+                "a-number-raised-to-a-multiple-of-a-logarithm-of-itself-is-a-power-of-the-antilogarithm",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Any<Number>("c", static c => c != Integer.Zero && c != Integer.One),
+                    MatchPattern.Commutative<Mulf>(
+                        MatchPattern.Any("k"),
+                        MatchPattern.Node<Logf>(MatchPattern.Any<Number>("c"), MatchPattern.Any("a")))),
+                bound => new Powf(bound["a"], bound["k"]),
+                Soundness.SoundUnderAssumptions,
+                description: "a ^ (k * log(a, b)) = b ^ k",
+                // The base, matched twice, and the product and the logarithm go; the power is
+                // rebuilt over the two holes: -(2|c| + 2).
+                growth: RewriteRuleGrowth.Collects),
+
+            new MatchedRule(
+                "a-constant-raised-to-a-multiple-of-a-logarithm-of-itself-is-a-power-of-the-antilogarithm",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Any<Constant>("c"),
+                    MatchPattern.Commutative<Mulf>(
+                        MatchPattern.Any("k"),
+                        MatchPattern.Node<Logf>(MatchPattern.Any<Constant>("c"), MatchPattern.Any("a")))),
+                // A pattern on the right, as for its k = 1 sibling above, so the rule is data in
+                // both directions; like that sibling it is one-way all the same, because the
+                // answer forgets which constant the base was.
+                MatchPattern.Node<Powf>(MatchPattern.Any("a"), MatchPattern.Any("k")),
+                Soundness.SoundUnderAssumptions,
+                description: "e ^ (k * ln(b)) = b ^ k"),
+
+            new MatchedRule(
+                "a-symbol-raised-to-a-multiple-of-a-logarithm-of-itself-is-a-power-of-the-antilogarithm-where-defined",
+                MatchPattern.Node<Powf>(
+                    MatchPattern.Any("c"),
+                    MatchPattern.Commutative<Mulf>(
+                        MatchPattern.Any("k"),
+                        MatchPattern.Node<Logf>(MatchPattern.Any("c"), MatchPattern.Any("a")))),
+                bound => new Powf(bound["a"], bound["k"]).Provided(!bound["c"].EqualTo(0) & !bound["c"].EqualTo(1)),
+                Soundness.SoundUnderAssumptions,
+                when: bound => bound["c"] is not Number and not Constant,
+                description: "a ^ (k * log(a, b)) = b ^ k provided not a = 0 and not a = 1",
+                // The condition writes the base twice more, beside six new nodes: more than the
+                // product and the logarithm that go.
+                growth: RewriteRuleGrowth.Expands),
+
             // Four `switch` arms: the power on either side of a product, and the shared base in
             // either position inside it. A commutative pattern says both halves at once.
             new MatchedRule(
