@@ -63,6 +63,15 @@ namespace AngouriMath
                 => Name.GetHashCode();
         }
 
+        public partial record Constant
+        {
+            // A constant is its value. The named ones are substituted by value before
+            // compiling; the base of ln and exp is Euler's number standing in the operator's
+            // definition, which substitution leaves alone (#994), so it arrives here.
+            private protected override void CompileNode(Compiler compiler) =>
+                compiler.Instructions.Add(new(InstructionType.PUSH_CONST, Value: Value.ToNumerics()));
+        }
+
         partial record Matrix
         {
             private protected override void CompileNode(Compiler compiler) =>

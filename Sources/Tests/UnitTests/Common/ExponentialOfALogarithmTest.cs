@@ -39,16 +39,18 @@ namespace AngouriMath.Tests.Common
             => Assert.Equal(expected.ToEntity(), input.ToEntity().Simplify());
 
         /// <summary>
-        /// A symbolic base stays refused, and must: <c>b ^ log(b, a) = a</c> needs <c>ln(b)</c> to be
-        /// non-zero, which is not decidable for a symbol, and at <c>b = 1</c> the left side is
-        /// <c>1</c> rather than <c>a</c>. <c>e</c> is decidably neither <c>0</c> nor <c>1</c>, which
-        /// is the whole of what the new rule relies on.
+        /// A symbolic base folds under the condition it needs: <c>b ^ log(b, a) = a</c> needs
+        /// <c>ln(b)</c> to be non-zero, which is not decidable for a symbol -- at <c>b = 1</c> the
+        /// left side is undefined rather than <c>a</c> -- so the logarithm's own domain condition
+        /// travels with the answer. <c>e</c> and <c>pi</c> are decidably neither <c>0</c> nor
+        /// <c>1</c>, and fold outright.
+        /// https://github.com/asc-community/AngouriMath/issues/994
         /// </summary>
         [Fact]
-        public void ASymbolicBaseIsNotFolded()
+        public void ASymbolicBaseFoldsWhereTheLogarithmIsDefined()
         {
-            var expr = "a ^ log(a, x)".ToEntity();
-            Assert.Equal(expr, expr.Simplify());
+            Assert.Equal("x provided not a = 0 and not a = 1".ToEntity(), "a ^ log(a, x)".ToEntity().Simplify());
+            Assert.Equal("x".ToEntity(), "pi ^ log(pi, x)".ToEntity().Simplify());
         }
 
         /// <summary>And the base it would be wrong for is still answered the way it was.</summary>

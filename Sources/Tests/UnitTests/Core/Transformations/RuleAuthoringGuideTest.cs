@@ -43,7 +43,7 @@ namespace AngouriMath.Tests.Core.Transformations
         public void WhereARuleGoes()
         {
             Stated(33, MatchedRules.All.Count, "the number of rule sets written as data");
-            Stated(328, MatchedRules.All.Sum(set => set.Rules.Count), "the number of rules written as data");
+            Stated(329, MatchedRules.All.Sum(set => set.Rules.Count), "the number of rules written as data");
             Stated(30, RewriteRules.All.Count, "the number of registered sets");
             // Two families register under one name and run a data set under another --
             // CommonDenominator over MatchedRules.CommonDenominator(level), CanonicalOrder over
@@ -64,7 +64,7 @@ namespace AngouriMath.Tests.Core.Transformations
         {
             var names = MatchedRules.All.SelectMany(set => set.Rules)
                 .Select(rule => rule.Name).Distinct(StringComparer.Ordinal).ToList();
-            Stated(299, names.Count, "the number of distinct rule names");
+            Stated(300, names.Count, "the number of distinct rule names");
 
             var words = names.Select(name => name.Split('-').Length).ToList();
             Stated(4, words.Min(), "the shortest rule name in words");
@@ -73,7 +73,7 @@ namespace AngouriMath.Tests.Core.Transformations
 
         [Fact]
         public void TheIdentityIsNotTheName()
-            => Stated(325,
+            => Stated(326,
                 MatchedRules.All.SelectMany(set => set.Rules).Count(rule => rule.Description is not null),
                 "how many rules carry an identity");
 
@@ -87,7 +87,7 @@ namespace AngouriMath.Tests.Core.Transformations
             var rules = MatchedRules.All.SelectMany(set => set.Rules).ToList();
             Stated(35, rules.Count(rule => rule.Right is not null),
                 "how many rules have a pattern on both sides");
-            Stated(33, rules.Count(rule => rule.Reversed is not null),
+            Stated(32, rules.Count(rule => rule.Reversed is not null),
                 "how many two-sided rules have a direction");
             Stated(123, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Unknown),
                 "how many rules sit at Unknown growth");
@@ -101,14 +101,14 @@ namespace AngouriMath.Tests.Core.Transformations
                 "how many rules are declared Collects");
             Stated(49, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Rearranges),
                 "how many rules are declared Rearranges");
-            Stated(32, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Expands),
+            Stated(33, rules.Count(rule => rule.Growth is RewriteRuleGrowth.Expands),
                 "how many rules are declared Expands");
 
-            // And the two the document names. By their own names rather than by what the prose
+            // And the three the document names. By their own names rather than by what the prose
             // calls them: the first is `squared-sine-and-cosine-of-one-argument-sum-to-one` and
             // the prose calls it the Pythagorean identity, which is right and is not what to
-            // match on. Both forget something the backwards direction would have to invent -- the
-            // angle, and the name the set builder bound.
+            // match on. All three forget something the backwards direction would have to invent
+            // -- the angle, the name the set builder bound, and which constant was raised.
             var oneWay = rules
                 .Where(rule => rule.Right is not null && rule.Reversed is null)
                 .Select(rule => rule.Name)
@@ -118,6 +118,7 @@ namespace AngouriMath.Tests.Core.Transformations
                 new[]
                 {
                     "a-conditional-set-whose-condition-is-its-own-membership-is-that-set",
+                    "a-constant-raised-to-a-logarithm-of-itself-is-the-antilogarithm",
                     "squared-sine-and-cosine-of-one-argument-sum-to-one",
                 },
                 oneWay);
@@ -132,7 +133,7 @@ namespace AngouriMath.Tests.Core.Transformations
             var rules = MatchedRules.All.SelectMany(set => set.Rules).ToList();
             Stated(186, rules.Count(rule => rule.Soundness is Soundness.Sound),
                 "how many rules are Sound");
-            Stated(142, rules.Count(rule => rule.Soundness is Soundness.SoundUnderAssumptions),
+            Stated(143, rules.Count(rule => rule.Soundness is Soundness.SoundUnderAssumptions),
                 "how many rules are SoundUnderAssumptions");
             Assert.All(RewriteRules.All,
                 set => Assert.Equal(Soundness.SoundUnderAssumptions, set.Soundness));
@@ -159,7 +160,7 @@ namespace AngouriMath.Tests.Core.Transformations
                             subsuming++;
                     }
             }
-            Stated(28, subsuming, "how many rule pairs are ordered by subsumption");
+            Stated(29, subsuming, "how many rule pairs are ordered by subsumption");
         }
 
         /// <summary>

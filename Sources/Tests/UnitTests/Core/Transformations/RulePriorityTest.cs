@@ -144,8 +144,8 @@ namespace AngouriMath.Tests.Core.Transformations
         /// <remarks>
         /// <para>
         /// Over every rule rather than within a set, because the relation is about patterns and
-        /// nothing about it stops at a set boundary: <b>961</b> ordered pairs claim subsumption,
-        /// <b>501</b> of them are put to the test by the corpus containing something the narrower
+        /// nothing about it stops at a set boundary: <b>962</b> ordered pairs claim subsumption,
+        /// <b>502</b> of them (501 before the constant antilogarithm rule of #994 subsumed the symbolic one) are put to the test by the corpus containing something the narrower
         /// pattern matches, and none is contradicted across <b>85,153</b> nodes. All three counts
         /// are asserted — a corpus that stopped reaching these shapes would otherwise turn this
         /// into a test that passes by asking nothing, and a witnessed count means nothing without
@@ -205,8 +205,8 @@ namespace AngouriMath.Tests.Core.Transformations
                 if (put) witnessed++;
             }
 
-            Assert.Equal(961, claims.Count);
-            Assert.Equal(501, witnessed);
+            Assert.Equal(962, claims.Count);
+            Assert.Equal(502, witnessed);
             // Asserted so the two figures in the remark above cannot go stale in silence: the
             // whole point of `witnessed` is that it is a coverage number, and it means nothing
             // without knowing what it was measured over.
@@ -278,6 +278,11 @@ namespace AngouriMath.Tests.Core.Transformations
                 "InequalityEquality: an-equality-or-a-less-than-the-other-way-round-is-at-least before two-comparisons-of-one-pair-that-leave-no-case-are-true",
                 "Power: a-logarithm-of-a-reciprocal-in-a-reciprocal-base-turns-round-twice before a-logarithm-in-a-reciprocal-base-negates",
                 "Power: a-logarithm-of-a-reciprocal-in-a-reciprocal-base-turns-round-twice before a-logarithm-of-a-reciprocal-negates",
+                // A constant base is a symbolic base that says more, so the arm that discharges
+                // the condition goes before the one that attaches it. The numeric arm is guarded
+                // by a predicate, which subsumption does not read, so it is ordered by declaration.
+                // https://github.com/asc-community/AngouriMath/issues/994
+                "Power: a-constant-raised-to-a-logarithm-of-itself-is-the-antilogarithm before a-symbol-raised-to-a-logarithm-of-itself-is-the-antilogarithm-where-defined",
             };
             Assert.Equal(recorded.OrderBy(name => name, StringComparer.Ordinal), Subsumptions());
         }
