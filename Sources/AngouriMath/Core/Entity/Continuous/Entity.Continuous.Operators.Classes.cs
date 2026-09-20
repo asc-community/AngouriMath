@@ -6,6 +6,8 @@
 //
 
 using System;
+using System.Collections.Generic;
+using HonkSharp.Laziness;
 
 namespace AngouriMath
 {
@@ -58,13 +60,33 @@ namespace AngouriMath
             /// would return
             /// <code>{ 1, x, (-1) * a / 2, b, (-1) * 4 }</code>
             /// </summary>
-            internal static IEnumerable<Entity> LinearChildren(Entity tree) => tree switch
+            /// <remarks>
+            /// Cached on the node it is asked of, since a node is immutable and the flattening
+            /// is asked for many times over: every rule that reads a sum as a list reads it
+            /// again for each candidate. A nested sum's list is built from its parts' lists,
+            /// which are cached on those parts, so the memory is linear in the tree and no
+            /// enumeration is repeated. https://github.com/asc-community/AngouriMath/issues/224
+            /// </remarks>
+            internal static IReadOnlyList<Entity> LinearChildren(Entity tree) => tree switch
             {
-                Sumf(var augend, var addend) => LinearChildren(augend).Concat(LinearChildren(addend)),
-                Minusf(var minuend, var subtrahend) =>
-                    LinearChildren(minuend).Concat(LinearChildren(subtrahend).Select(entity => -1 * entity)),
+                Sumf sum => sum.Linear,
+                Minusf difference => difference.Linear,
                 _ => new[] { tree }
             };
+
+            private IReadOnlyList<Entity> Linear => linear.GetValue(static @this => Flatten(LinearChildren(@this.Augend), LinearChildren(@this.Addend)), this);
+            private LazyPropertyA<IReadOnlyList<Entity>> linear;
+
+            /// <summary>The two lists as one array.</summary>
+            internal static Entity[] Flatten(IReadOnlyList<Entity> left, IReadOnlyList<Entity> right)
+            {
+                var flat = new Entity[left.Count + right.Count];
+                for (var i = 0; i < left.Count; i++)
+                    flat[i] = left[i];
+                for (var i = 0; i < right.Count; i++)
+                    flat[left.Count + i] = right[i];
+                return flat;
+            }
         }
 
         /// <summary>
@@ -87,6 +109,17 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Minuend.Replace(func), Subtrahend.Replace(func)));
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Minuend, Subtrahend };
+
+            /// <summary>The terms as a sum reads them: the subtrahend's terms each times -1. See <see cref="Sumf.LinearChildren"/>.</summary>
+            internal IReadOnlyList<Entity> Linear => linear.GetValue(static @this =>
+                {
+                    var subtracted = Sumf.LinearChildren(@this.Subtrahend);
+                    var negated = new Entity[subtracted.Count];
+                    for (var i = 0; i < negated.Length; i++)
+                        negated[i] = -1 * subtracted[i];
+                    return Sumf.Flatten(Sumf.LinearChildren(@this.Minuend), negated);
+                }, this);
+            private LazyPropertyA<IReadOnlyList<Entity>> linear;
         }
 
         /// <summary>
@@ -133,13 +166,16 @@ namespace AngouriMath
             /// would return
             /// <code>{ 1, x, (a^2)^(-1), b, 4^(-1) }</code>
             /// </summary>
-            internal static IEnumerable<Entity> LinearChildren(Entity tree) => tree switch
+            /// <remarks>Cached on the node, as <see cref="Sumf.LinearChildren"/> is.</remarks>
+            internal static IReadOnlyList<Entity> LinearChildren(Entity tree) => tree switch
             {
-                Mulf(var multiplier, var multiplicand) => LinearChildren(multiplier).Concat(LinearChildren(multiplicand)),
-                Divf(var dividend, var divisor) =>
-                    LinearChildren(dividend).Concat(LinearChildren(divisor).Select(entity => new Powf(entity, -1))),
+                Mulf product => product.Linear,
+                Divf quotient => quotient.Linear,
                 _ => new[] { tree }
             };
+
+            private IReadOnlyList<Entity> Linear => linear.GetValue(static @this => Sumf.Flatten(LinearChildren(@this.Multiplier), LinearChildren(@this.Multiplicand)), this);
+            private LazyPropertyA<IReadOnlyList<Entity>> linear;
         }
 
         /// <summary>
@@ -162,13 +198,26 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Dividend.Replace(func), Divisor.Replace(func)));
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Dividend, Divisor };
+
+            /// <summary>The factors as a product reads them: the divisor's factors each to the power -1. See <see cref="Mulf.LinearChildren"/>.</summary>
+            internal IReadOnlyList<Entity> Linear => linear.GetValue(static @this =>
+                {
+                    var divided = Mulf.LinearChildren(@this.Divisor);
+                    var inverted = new Entity[divided.Count];
+                    for (var i = 0; i < inverted.Length; i++)
+                        inverted[i] = new Powf(divided[i], -1);
+                    return Sumf.Flatten(Mulf.LinearChildren(@this.Dividend), inverted);
+                }, this);
+            private LazyPropertyA<IReadOnlyList<Entity>> linear;
         }
 
         /// <summary>
-        /// A node of modulus, that is, the remainder after division. Follows the sign of
-        /// the dividend, as C#'s own <c>%</c> does and as
-        /// PeterO.Numbers does underneath: -7 % 3 is -1,
-        /// not 2.
+        /// A node of modulus, that is, the floored remainder after division,
+        /// <c>a - b * floor(a / b)</c>, which takes the sign of the <em>divisor</em>:
+        /// <c>(-7) mod 3</c> is <c>2</c> and <c>7 mod (-3)</c> is <c>-2</c>, the convention of
+        /// SymPy, Mathematica and Maxima and the one under which the residues modulo <c>n</c>
+        /// are <c>0</c> to <c>n - 1</c>. Not C#'s <c>%</c>, which truncates; this comment said
+        /// the opposite of what the evaluation and the documentation do.
         /// </summary>
         public sealed partial record Modf(Entity Dividend, Entity Divisor) : ContinuousNode, IBinaryNode
         {

@@ -13,8 +13,10 @@ using Xunit;
 namespace AngouriMath.Tests.Common
 {
     /// <summary>
-    /// Compiling expressions that mention matrices. A matrix has no compiled form, but an
-    /// expression built out of matrices often has a value that is an ordinary number.
+    /// Compiling expressions that mention matrices. An expression built out of matrices often
+    /// has a value that is an ordinary number, and is simplified to it before compiling; one
+    /// whose value is a matrix compiles to a tensor (<c>CompileMatrixTest</c>) and not to a
+    /// number, and says so.
     /// </summary>
     [Trait("Area", "Common")]
     public sealed class MatrixCompilationTest
@@ -38,15 +40,18 @@ namespace AngouriMath.Tests.Common
             Assert.Equal(1 * 3 + 2 * 4, compiled(3, 4), 9);
         }
 
+        // A matrix-valued expression asked for as a number: the value is a tensor, and the
+        // message names the type asked for. https://github.com/asc-community/AngouriMath/issues/526
         [Theory]
-        [InlineData("[[a, b], [c, d]]")]
-        [InlineData("[[a, b], [c, d]] * [1, 0]")]
-        [InlineData("[a, b]")]
-        public void MatrixValuedExpressionsSayTheyCannotBeCompiled(string expression)
+        [InlineData("[[a, 2 a], [3 a, 4 a]]")]
+        [InlineData("[[a, a], [a, a]] * [1, 0]")]
+        [InlineData("[a, 2 a]")]
+        public void MatrixValuedExpressionsSayTheyCannotBeCompiledAsANumber(string expression)
         {
             var thrown = Assert.Throws<UncompilableNodeException>(
                 () => expression.ToEntity().Compile<double, double>("a"));
-            Assert.Contains("Matrix", thrown.Message);
+            Assert.Contains("GenTensor", thrown.Message);
+            Assert.Contains("Double", thrown.Message);
         }
 
         // Expressions with no matrix in them must be unaffected -- they do not go anywhere
