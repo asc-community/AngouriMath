@@ -101,8 +101,56 @@ namespace AngouriMath.Functions
                     GatherFactorial(expr, any1, any1a, const1, 0),
                 Mulf(Factorialf(Sumf(Number const1, var any1)), var any1a) =>
                     GatherFactorial(expr, any1, any1a, const1, 0),
+
+                // The binomial coefficient's three identities, in the direction that collects.
+                // https://github.com/asc-community/AngouriMath/issues/1409
+                Sumf(Binomialf(var top1, var k), Binomialf(var top2, var j)) when top1 == top2 => PascalsRule(expr, top1, k, j),
+                Mulf(var n, Binomialf(var top, var j)) => ChairpersonsRule(expr, n, top, j),
+                Mulf(Binomialf(var top, var j), var n) => ChairpersonsRule(expr, n, top, j),
+                Binomialf(var top, var d) => SymmetricBinomial(expr, top, d),
                 _ => expr
             };
+
+        /// <summary>
+        /// <c>binomial(a, k) + binomial(a, k - 1)</c> is <c>binomial(a + 1, k)</c> -- Pascal's rule,
+        /// an identity of the falling factorial for every <c>a</c> and whole <c>k</c>, and of the
+        /// gamma function elsewhere -- read in either order of the two, with the lower index that
+        /// is one less found by simplifying the difference; <paramref name="whole"/> where neither is.
+        /// </summary>
+        internal static Entity PascalsRule(Entity whole, Entity top, Entity k, Entity j)
+        {
+            if (PartialFractions.Bare((k - j).Simplify()) == Integer.One)
+                return new Binomialf((top + 1).InnerSimplified, k);
+            if (PartialFractions.Bare((j - k).Simplify()) == Integer.One)
+                return new Binomialf((top + 1).InnerSimplified, j);
+            return whole;
+        }
+
+        /// <summary>
+        /// <c>n * binomial(n - 1, k - 1)</c> is <c>k * binomial(n, k)</c> -- the chairperson identity,
+        /// choosing the chair first or the committee first -- where the multiplier is one more
+        /// than the upper index; <paramref name="whole"/> otherwise.
+        /// </summary>
+        internal static Entity ChairpersonsRule(Entity whole, Entity n, Entity top, Entity j)
+        {
+            if (n.ContainsNode(top) || top.ContainsNode(n) ? PartialFractions.Bare((n - top).Simplify()) != Integer.One : (n - top).InnerSimplified != Integer.One)
+                return whole;
+            var k = (j + 1).InnerSimplified;
+            return k * new Binomialf(n, k);
+        }
+
+        /// <summary>
+        /// <c>binomial(n, n - k)</c> is <c>binomial(n, k)</c>, taken where the complement is the
+        /// smaller expression: the symmetry of the coefficient, an identity of the gamma
+        /// function; <paramref name="whole"/> where the lower index is already the smaller.
+        /// </summary>
+        internal static Entity SymmetricBinomial(Entity whole, Entity top, Entity d)
+        {
+            if (!d.ContainsNode(top) || top is Number)
+                return whole;
+            var complement = PartialFractions.Bare((top - d).Simplify());
+            return complement.Complexity < d.Complexity ? new Binomialf(top, complement) : whole;
+        }
 
         /// <summary>
         /// The factorial one term further on, where the term multiplying it is the next one — and

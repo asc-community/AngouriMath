@@ -123,6 +123,7 @@ namespace AngouriMath.Tests.Core.Transformations
             Assert.Equal(
                 new[]
                 {
+                    "a-binomial-coefficient-whose-lower-index-is-the-complement-is-the-symmetric-one: ReplacementIsCode",
                     "a-chain-of-greaters-implies-its-own-ends: ReplacementIsCode",
                     "a-chain-of-lesss-implies-its-own-ends: ReplacementIsCode",
                     "a-common-factor-is-collected-out-of-a-whole-sum: ReplacementIsCode",
@@ -224,6 +225,7 @@ namespace AngouriMath.Tests.Core.Transformations
                     "a-number-plus-a-variable-puts-the-variable-first: ReplacementIsCode",
                     "a-number-raised-to-a-logarithm-of-itself-is-the-antilogarithm: ReplacementIsCode",
                     "a-number-raised-to-a-multiple-of-a-logarithm-of-itself-is-a-power-of-the-antilogarithm: ReplacementIsCode",
+                    "a-number-times-a-binomial-coefficient-of-the-number-less-one-is-the-chairperson-identity: ReplacementIsCode",
                     "a-numeric-coefficient-is-gathered-over-a-surd: ReplacementIsCode",
                     "a-numeric-factor-comes-out-of-a-power-of-a-product: ReplacementIsCode",
                     "a-numeric-factor-floats-out-of-a-product-of-functions: ReplacementIsCode",
@@ -377,6 +379,7 @@ namespace AngouriMath.Tests.Core.Transformations
                     "the-two-truth-values-are-the-boolean-domain: ReplacementIsCode",
                     "two-added-fractions-take-a-common-denominator: ReplacementIsCode",
                     "two-arctangents-of-numbers-add-by-the-tangent-formula: ReplacementIsCode",
+                    "two-binomial-coefficients-of-one-upper-index-and-adjacent-lower-indices-add-by-pascals-rule: ReplacementIsCode",
                     "two-comparisons-of-one-pair-that-exclude-each-other-are-false: ReplacementIsCode",
                     "two-comparisons-of-one-pair-that-leave-no-case-are-true: ReplacementIsCode",
                     "two-functions-in-a-sum-come-together: ReplacementIsCode",
