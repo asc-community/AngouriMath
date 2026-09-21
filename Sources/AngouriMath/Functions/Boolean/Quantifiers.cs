@@ -156,7 +156,7 @@ namespace AngouriMath.Functions.Boolean
         /// The least member of a set of whole numbers bounded below -- <c>ZZ+</c>, <c>ZZ*</c>,
         /// either cut by an interval -- or <see langword="null"/> where the set is something else.
         /// </summary>
-        private static Integer? LeastMember(Set set)
+        internal static Integer? LeastMember(Set set)
         {
             switch (set)
             {
@@ -282,6 +282,9 @@ namespace AngouriMath.Functions.Boolean
                 return Entity.Boolean.False;
             if (atLeast != Entity.Boolean.True)
                 return null;
+            // Read off the shape first: 3^(-t - 1) + t^3 is positive on ZZ* term by term.
+            if (Sign(positive, x, set, isExact) is { } direct && (!strict || direct == Signum.Positive))
+                return Entity.Boolean.True;
             var next = positive.Substitute(x, x + Integer.One);
             foreach (var c in Multipliers(positive, x))
             {
@@ -448,7 +451,7 @@ namespace AngouriMath.Functions.Boolean
                 _ => null,
             };
 
-        private static bool IsIntegerSet(SpecialSet set)
+        internal static bool IsIntegerSet(SpecialSet set)
             => set.ToDomain() is Domain.Integer or Domain.NonNegativeInteger or Domain.PositiveInteger;
 
         /// <summary>How many residues a periodic statement is checked over before it is left as written.</summary>

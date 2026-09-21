@@ -85,7 +85,11 @@ congruence is solved to a residue class — `"3 x = 11 (mod 7)".ToEntity().Solve
 Chinese remainder theorem, `x = 3 (mod 4) and x = 5 (mod 6)` giving `{ x in ZZ : x = 11 (mod 12) }`
 and `x = 3 (mod 4) and x = 2 (mod 6)` nothing, and with a bounded interval the members are listed:
 `x = 2 (mod 7) and 0 <= x and x < 30` is `{ 2, 9, 16, 23 }`. `MathS.NumberTheory.ModularInverse(3, 10)`
-is `7`, the one representative in `[1, n - 1]`, and `null` where `a` and `n` share a factor.
+is `7`, the one representative in `[1, n - 1]`, and `null` where `a` and `n` share a factor. An
+inequality with an exponential or a factorial over the whole numbers, `n in ZZ and 2^n > n^2`, is
+solved to the members of a window from the least member and the tails the quantifier proves by
+induction — `{ 0, 1 } \/ ZZ /\ [5; +oo)`, `n in ZZ+ and n! > 3^n` is `ZZ+ /\ [7; +oo)` — and where
+a tail is not proved the window is not an answer, and the inequality solver refuses as before.
 | 9 | `unite` `\/`, `setsubtract` `\` | one level, so `A \/ B \ C` is `(A \/ B) \ C` |
 | 10 | `intersect` `/\` | |
 | 11 | `+` `-` | |

@@ -332,6 +332,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
                 Equalsf => Empty,
 
+                // x in ZZ and an inequality with an exponential or a factorial in x: a window
+                // searched and its tails proved by induction, so that { n in ZZ : 2^n > n^2 }
+                // is {0, 1} \/ ZZ /\ [5; +oo) rather than a refusal from the inequality solver.
+                // https://github.com/asc-community/AngouriMath/issues/1409
+                Andf(Inf(var name, Set integers), ComparisonSign inequality) when name == x && ThresholdSearch.Solve(x, integers, inequality) is { } thresholds => thresholds,
+                Andf(ComparisonSign inequality, Inf(var name, Set integers)) when name == x && ThresholdSearch.Solve(x, integers, inequality) is { } thresholds => thresholds,
                 Andf(var left, var right) =>
                     Conjunction(Solve(left, x), Solve(right, x), expr, x),
                 Orf(var left, var right) => 

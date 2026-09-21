@@ -788,6 +788,21 @@ written
 | `"forall n in ZZ+ : n! >= 2^(n - 1)".ToEntity().Evaled` | `UnhandledParseException` | `True` |
 | `"forall n in ZZ+ /\\ [4; +oo) : n^2 - 2 n - 1 > 0".ToEntity().Evaled` | `UnhandledParseException` | `True` — decided about `4 + t` over `ZZ*` |
 
+### `n in ZZ and 2^n > n^2` is solved to a set, and was a refusal
+
+An inequality with an exponential or a factorial over the whole numbers is solved to the members
+of a window from the least member and the rays the quantifier proves by induction, upwards and,
+over `ZZ`, downwards; a tail it does not prove leaves the refusal in place, since a window is
+evidence about the window ([#1409](https://github.com/asc-community/AngouriMath/issues/1409),
+Sullivan and Mackey's Ex 5.3.2 and Prob 5.7.2, 5.7.8–9).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"n in ZZ and 2^n > n^2".ToEntity().Solve("n")` | `NotSufficientlySupportedException` — "Only polynomial inequalities are supported" | `{ 0, 1 } \/ ZZ /\ [5; +oo)` |
+| `"n in ZZ+ and n! > 3^n".ToEntity().Solve("n")` | `NotSufficientlySupportedException` | `ZZ+ /\ [7; +oo)` |
+| `"n in ZZ and n^3 < 3^(n - 1)".ToEntity().Solve("n")` | `NotSufficientlySupportedException` | `ZZ /\ (-oo; 0] \/ ZZ /\ [6; +oo)` |
+| `"n in ZZ and 2^n >= n^2 - 3 n + 3".ToEntity().Solve("n")` | `NotSufficientlySupportedException` | the same — the tail from `1` is not proved, and the window is not guessed from |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
