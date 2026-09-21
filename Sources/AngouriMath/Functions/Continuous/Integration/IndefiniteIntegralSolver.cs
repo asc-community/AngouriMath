@@ -5169,10 +5169,16 @@ namespace AngouriMath.Functions.Algebra
         /// two substitutions at once and is declined rather than half-rewritten.
         /// </para>
         /// <para>
-        /// <b>No condition is owed by the rewrite.</b> <c>a</c> is non-zero, since a zero
+        /// <b>No condition is owed by the rewrite itself.</b> <c>a</c> is non-zero, since a zero
         /// coefficient is not a linear expression in <c>x</c> and the reader below rejects it,
         /// and <c>u^q = a*x + b</c> is invertible wherever the radical it came from is defined.
-        /// The answer inherits the radical's own domain and adds nothing.
+        /// The answer inherits the radical's own domain and adds nothing -- <b>except where the
+        /// even-root step below has read <c>u</c> as a non-negative real</b>, which it is only
+        /// where the radical is real. Beyond that, <c>u</c> is imaginary and the integrand can
+        /// still be real: <c>x sqrt(c - a c x) / e^(3 atanh(a x))</c> above <c>a x = 1</c> is the
+        /// product of two imaginary factors, and the answer built for a real <c>u</c> is not its
+        /// antiderivative there (Rubi 7.3.6). So the answer says what it used: it is given
+        /// <c>provided a x + b &gt;= 0</c> exactly when that step changed the integrand.
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
@@ -5304,13 +5310,24 @@ namespace AngouriMath.Functions.Algebra
                 integrand = inner;
             // For an even q the principal root is not negative wherever it is real, and a root
             // holding a power of u gives that power up: `1/sqrt(t + t^(3/2))` under `u = sqrt(t)`
-            // is `2u/sqrt(u^2 + u^3)`, a root of a cubic, and is `2/sqrt(1 + u)`.
+            // is `2u/sqrt(u^2 + u^3)`, a root of a cubic, and is `2/sqrt(1 + u)`. Where the
+            // radical is not real, u is not a non-negative real and the identities do not hold,
+            // so an answer that used them is conditioned on the radicand -- unless the caller
+            // knows its variable to be non-negative, as an exponential is.
+            // https://github.com/asc-community/AngouriMath/issues/718
+            Entity? condition = null;
             if (q % 2 == 0)
-                integrand = FactorANonnegativeVariableOutOfRadicals(integrand, u);
+            {
+                var factored = FactorANonnegativeVariableOutOfRadicals(integrand, u);
+                if (factored != integrand && !variableIsNonnegative)
+                    condition = radicalBase >= Number.Integer.Zero;
+                integrand = factored;
+            }
 
-            return Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is { } result
-                ? result.Substitute(u, MathS.Pow(radicalBase, Number.Rational.Create(1, q)))
-                : null;
+            if (Integration.ComputeIndefiniteIntegral(integrand, u, integrateByParts) is not { } result)
+                return null;
+            var back = result.Substitute(u, MathS.Pow(radicalBase, Number.Rational.Create(1, q)));
+            return condition is null ? back : back.Provided(condition);
         }
 
         /// <summary>
@@ -13787,11 +13804,16 @@ namespace AngouriMath.Functions.Algebra
                     && Integration.ComputeIndefiniteIntegral(factored, uSub, integrateByParts) is { } forPositiveU
                     && !forPositiveU.Nodes.Any(node => node == MathS.NaN))
                 {
-                    // An even root is not negative, and what holds for u > 0 is the answer as
-                    // it stands; `sqrt(x^(1/3))` under `1/(sqrt(x) - x^(-1/3))` was extended by
-                    // parity it did not need, to an answer with a sign function in it.
-                    if (u is Powf(_, Number.Rational root) && root.ERational.Denominator.IsEven)
-                        return Functions.PartialFractions.Bare(forPositiveU).Substitute(uSub, u);
+                    // An even root is not negative where it is real, and what holds for u > 0
+                    // is the answer as it stands there; `sqrt(x^(1/3))` under
+                    // `1/(sqrt(x) - x^(-1/3))` was extended by parity it did not need, to an
+                    // answer with a sign function in it. Where the radicand is negative the root
+                    // is imaginary and the identities the factoring used do not hold, so the
+                    // answer is conditioned on the radicand, as the linear-radical substitution
+                    // conditions its own. https://github.com/asc-community/AngouriMath/issues/718
+                    if (u is Powf(var radicand, Number.Rational root) && root.ERational.Denominator.IsEven)
+                        return Functions.PartialFractions.Bare(forPositiveU).Substitute(uSub, u)
+                            .Provided(radicand >= Number.Integer.Zero);
                     if (ExtendedByParity(integrandInU, forPositiveU, uSub) is { } onBothSides)
                         return onBothSides.Substitute(uSub, u);
                 }

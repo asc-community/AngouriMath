@@ -78,6 +78,46 @@ namespace AngouriMath.Tests.Calculus
         public void APowerOfTheRootLeavesTheRadical(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// That step reads <c>u</c> as a non-negative real, which it is only where the radical
+        /// is real, and the answer says so: <c>1/sqrt(x + x^(3/2))</c> comes back
+        /// <c>provided x &gt;= 0</c>. Beyond the radicand's zero <c>u</c> is imaginary, and the
+        /// integrand can still be real there -- Rubi's <c>x sqrt(c - a c x) / e^(3 atanh(a x))</c>
+        /// above <c>a x = 1</c> is the product of two imaginary factors -- while the answer built
+        /// for a real <c>u</c> is not its antiderivative: with <c>a = 3.1</c>, <c>c = 0.7</c> at
+        /// <c>x = 0.59</c> its derivative was 14% off, and it shipped as an answer. Now it is
+        /// <c>NaN</c> there, which is no claim, and right where the condition holds.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        [Fact]
+        public void TheEvenRootStepSaysWhereItHolds()
+        {
+            var conditioned = "1/sqrt(x + x^(3/2))".ToEntity().Integrate("x");
+            Assert.Contains("provided x >= 0", conditioned.Stringize());
+
+            var integrand = "x * sqrt(c - a*c*x) / e^(3 * atanh(a*x))".ToEntity();
+            var integral = integrand.Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.Contains("provided c - a * c * x >= 0", integral.Stringize());
+            var pinned = integral.Substitute("C", 0).Substitute("a", 3.1).Substitute("c", 0.7);
+            var derivative = pinned.Differentiate("x");
+            var original = integrand.Substitute("a", 3.1).Substitute("c", 0.7);
+            // Inside the condition, a x < 1: the derivative is the integrand.
+            foreach (var at in new[] { 0.05, 0.17, 0.31 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.False(got.IsNaN, $"no answer at x = {at}, inside the condition");
+                Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-9 * Math.Max(1, Math.Abs((double)want.RealPart)),
+                    $"d/dx of the antiderivative is {got} at x = {at}, where the integrand is {want}");
+            }
+            // Beyond it the integrand is real, 3.1 * 0.59 being above 1, and the answer claims
+            // nothing rather than something wrong.
+            var outside = original.Substitute("x", 0.59).EvalNumerical();
+            Assert.True(Math.Abs((double)outside.ImaginaryPart) < 1e-12, $"the integrand at x = 0.59 is {outside}, not real");
+            Assert.True(derivative.Substitute("x", 0.59).Evaled.IsNaN, "the answer claims a derivative outside its condition");
+        }
+
+        /// <summary>
         /// A polynomial over a square root of something linear. None of these had an
         /// antiderivative, and each is a first-year exercise.
         /// </summary>
