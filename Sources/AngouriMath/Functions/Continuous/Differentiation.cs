@@ -71,9 +71,22 @@ namespace AngouriMath
         /// Internal differentiation function
         /// </summary>
         /// <param name="variable">To derive over</param>
-        /// <returns>The differentiated expressoin or the Derivative node</returns>
+        /// <returns>
+        /// The differentiated expression, or the Derivative node -- and zero for a node with no
+        /// rule of its own that does not mention the variable: it is a constant in it, and the
+        /// derivative of a constant is not an open question.
+        /// </returns>
         protected virtual Entity InnerDifferentiate(Variable variable)
-            => new Derivativef(this, variable, 1);
+            => ContainsNode(variable) ? new Derivativef(this, variable, 1) : Integer.Zero;
+
+        /// <summary>
+        /// Whether the node is a constant in <paramref name="variable"/>, which the modulus, the
+        /// sign, the floor and their kin ask before their own rule: <c>|c|</c> is a constant in
+        /// <c>x</c> whether or not <c>c</c> is known to be real, and <c>floor(c)</c> one with no
+        /// condition on <c>c</c>. <c>|c| x</c> was differentiated to <c>derivative(|c|, x) x + |c|</c>,
+        /// which every rule downstream read as a function of <c>x</c>.
+        /// </summary>
+        private bool IsConstantIn(Variable variable) => !ContainsNode(variable);
 
         partial record Variable
         {
@@ -361,7 +374,7 @@ namespace AngouriMath
             /// </para>
             /// </remarks>
             protected override Entity InnerDifferentiate(Variable variable)
-                => MathS.Derivative(this, variable, 1);
+                => base.InnerDifferentiate(variable);
         }
 
 #pragma warning disable IDE0054 // Use compound assignment
@@ -371,7 +384,7 @@ namespace AngouriMath
             protected override Entity InnerDifferentiate(Variable variable) =>
                 Var == variable
                 ? this with { Iterations = Iterations + 1 }
-                : MathS.Derivative(this, variable, 1);
+                : base.InnerDifferentiate(variable);
         }
 
         partial record Integralf
@@ -384,7 +397,7 @@ namespace AngouriMath
                   ? to.InnerDifferentiate(variable) * Expression.Substitute(variable, to) -
                     from.InnerDifferentiate(variable) * Expression.Substitute(variable, from)
                   : Expression
-                : MathS.Derivative(this, variable, 1);
+                : base.InnerDifferentiate(variable);
         }
 #pragma warning restore IDE0054 // Use compound assignment
 
@@ -396,7 +409,7 @@ namespace AngouriMath
 
                 // See https://math.stackexchange.com/a/1048570/627798:
                 // The derivative itself is a limit, so we can exchange limits if possible. -- Happypig375
-                MathS.Derivative(this, variable);
+                base.InnerDifferentiate(variable);
         }
 
         partial record Signumf
@@ -412,7 +425,8 @@ namespace AngouriMath
             // https://github.com/asc-community/AngouriMath/issues/1186
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
-                => TreeAnalyzer.IsRealValued(Argument, variable)
+                => IsConstantIn(variable) ? Integer.Zero
+                    : TreeAnalyzer.IsRealValued(Argument, variable)
                     ? Integer.Zero.Provided(!Argument.EqualTo(Integer.Zero))
                     : MathS.Derivative(this, variable);
         }
@@ -431,7 +445,8 @@ namespace AngouriMath
             // https://github.com/asc-community/AngouriMath/issues/1186
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
-                => TreeAnalyzer.TryTakeNumericModulusOut(Argument, out var withoutThePhase)
+                => IsConstantIn(variable) ? Integer.Zero
+                    : TreeAnalyzer.TryTakeNumericModulusOut(Argument, out var withoutThePhase)
                     ? withoutThePhase.InnerDifferentiate(variable)
                     : TreeAnalyzer.IsRealValued(Argument, variable)
                     ? MathS.Signum(Argument).Provided(!Argument.EqualTo(Integer.Zero)) * Argument.InnerDifferentiate(variable)
@@ -447,14 +462,14 @@ namespace AngouriMath
             // has Providedf to say more with.
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
-                => Integer.Zero.Provided(!Argument.In(MathS.Sets.Z));
+                => IsConstantIn(variable) ? Integer.Zero : Integer.Zero.Provided(!Argument.In(MathS.Sets.Z));
         }
 
         partial record Ceilf
         {
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
-                => Integer.Zero.Provided(!Argument.In(MathS.Sets.Z));
+                => IsConstantIn(variable) ? Integer.Zero : Integer.Zero.Provided(!Argument.In(MathS.Sets.Z));
         }
 
         partial record Roundf
@@ -463,7 +478,7 @@ namespace AngouriMath
             // jumps where the argument is exactly a half, not where it is an integer.
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
-                => Integer.Zero.Provided(!(Argument - Rational.Create(1, 2)).In(MathS.Sets.Z));
+                => IsConstantIn(variable) ? Integer.Zero : Integer.Zero.Provided(!(Argument - Rational.Create(1, 2)).In(MathS.Sets.Z));
         }
 
         partial record Providedf
@@ -516,7 +531,7 @@ namespace AngouriMath
                             arg =>
                                 MathS.Derivative(this, arg) * arg.Differentiate(variable)
                             ).Aggregate((Entity)0, (a, b) => a + b),
-                    _ => MathS.Derivative(this, variable)
+                    _ => base.InnerDifferentiate(variable)
                 };
         }
     }
