@@ -55,6 +55,21 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("(3 - 3/(4*x^2))^3/e^(2*acoth(2*x))")]
         public void AnExponentialOfAnInverseHyperbolicCotangent(string integrand) => DifferentiatesBack(integrand);
 
+        /// <summary>
+        /// The quotient of linears under the root leaves <c>(a (1 - u^2))^5</c> below the bar in
+        /// <c>u</c>, which the rational reader does not read as <c>a^5 (1 - u^2)^5</c> until it
+        /// is written so: <c>x^3 sqrt((a x + 1)/(a x - 1))</c> took nine seconds through the
+        /// split terms and takes half of one as a single quotient; <c>e^acoth(a x) x^3</c>
+        /// eighteen seconds and a tenth. Pinned as solved, not as timed -- a wall clock in a
+        /// test measures the runner.
+        /// </summary>
+        [Theory]
+        [InlineData("x^3*sqrt((2*x+1)/(2*x-1))")]
+        [InlineData("e^acoth(2*x)*x^3")]
+        [InlineData("1/(e^(3*acoth(2*x))*x^4)")]
+        [InlineData("e^acoth(2*x)*sqrt(3-3/(2*x))/x^4")]
+        public void APowerOfAProductBelowTheBarIsReadDistributed(string integrand) => DifferentiatesBack(integrand);
+
         /// <summary>The fold is the identity it is: <c>e^(k ln q)</c> with any multiplier, nested or not.</summary>
         [Theory]
         [InlineData("e^(3*ln(x + 1))")]
