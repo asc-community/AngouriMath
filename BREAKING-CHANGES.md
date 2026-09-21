@@ -902,6 +902,24 @@ the crash harness found. Both now agree with the solver
 | `"{ x : 1/0 = x }".ToEntity().Evaled` | `NaN` | `{ }` |
 | `"x subset 2".ToEntity().Solve("x")` | `x * subset ^ 2` had no solution: `{ }` — `subset` is new since | `{ }`, where the unreleased keyword threw |
 
+### `asech(a + b x)` and `acsch(a + b x)` beside a power of `x` are integrated
+
+By parts they leave `1/(x (a + b x)^2 sqrt(1/(a + b x)^2 - 1))`, and the chain never read it:
+taking the remainder's constants out had carried it past the rules scoped to the question asked
+or one below it, the root beside the polynomial made Yun's factorisation expand
+`x (a + b x)^2`, the power was rewritten monic beside a root that kept `(a + b x)`, the
+radicand stood in two orders, and an even power of a linear below the bar was not written
+apart. Each fixed in its place; an even power of a polynomial `P` below the bar is now written
+apart as `sgn(P) P` with `provided P^2 > 0` — only where the root is a factor of the integrand
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"asech(a+b*x)/x^2".Integrate("x")` | left unevaluated | the antiderivative, in `sgn(a + b x)`, `provided (a + b x)^2 > 0` |
+| `"x*asech(a+b*x)".Integrate("x")` | left unevaluated | the antiderivative |
+| `"acsch(a+b*x)/x^2".Integrate("x")` | left unevaluated | the antiderivative |
+| `"1/(x*(a+b*x)^2*sqrt(1/(a+b*x)^2-1))".Integrate("x")` | left unevaluated | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

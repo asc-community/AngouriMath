@@ -369,9 +369,11 @@ namespace AngouriMath.Functions.Algebra
             var written = Functions.PartialFractions.Bare(top / bottom);
             if (written == expr)
                 return null;
-            return Integration.AnsweringTheQuestionAsked
-                ? Integration.ComputeAsAQuestionOfItsOwn(written, x, integrateByParts)
-                : Integration.ComputeIndefiniteIntegral(written, x, integrateByParts);
+            // The same question: the quotient cancelled is the quotient, and a rule scoped to
+            // the question asked or one below it -- the power of a quotient written apart --
+            // is owed the remainder by parts leaves once it is cancelled, which is where
+            // `asech(a + b x)/x^2` needed it.
+            return Integration.ComputeAsTheSameQuestion(written, x, integrateByParts);
         }
 
         /// <summary>Whether <paramref name="expr"/> holds a fractional power of something in <paramref name="x"/>.</summary>
@@ -397,6 +399,30 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!denominator.ContainsNode(x))
                 return (numerator, denominator);
+            // One radicand written in two orders is one radicand: `(1/L^2 - 1)^(-1/2)` above
+            // and `sqrt(-1 + 1/L^2)` below, which is how the derivative of `asech(a + b x)`
+            // arrives by parts beside the integrand's own root, were two atoms and cancelled
+            // against nothing. Written in one order where the radicand stands to a negative
+            // power and to a positive one, which is what the joining below needs, and only
+            // there: `(1 - x^2)^(1/4) sqrt(1 + -x^2)` gathered to `(1 - x^2)^(3/4)` sent
+            // Timofeev's 314 down a path whose answer could not be checked, where the two
+            // roots apart are split over `(1 - x)(1 + x)` and answered.
+            string Spelling(Entity radicand) => string.Join(" + ", Sumf.LinearChildren(radicand).Select(term => term.ToString()).OrderBy(term => term, System.StringComparer.Ordinal));
+            var signsOfSpelling = new Dictionary<string, (bool Negative, bool Positive, Entity First)>();
+            foreach (var node in numerator.Nodes.Concat(denominator.Nodes))
+                if (node is Powf(var radicand, Number.Rational r) && r is not Number.Integer && radicand.ContainsNode(x) && radicand is Sumf or Minusf)
+                {
+                    var key = Spelling(radicand);
+                    var (negative, positive, first) = signsOfSpelling.TryGetValue(key, out var so) ? so : (false, false, radicand);
+                    signsOfSpelling[key] = (negative || r.ERational.IsNegative, positive || !r.ERational.IsNegative, first);
+                }
+            Entity OneSpelling(Entity side) => side.Replace(node =>
+                node is Powf(var radicand, Number.Rational r) && r is not Number.Integer && radicand.ContainsNode(x) && radicand is Sumf or Minusf
+                && signsOfSpelling.TryGetValue(Spelling(radicand), out var seen) && seen.Negative && seen.Positive && seen.First != radicand
+                    ? MathS.Pow(seen.First, r)
+                    : node);
+            numerator = OneSpelling(numerator);
+            denominator = OneSpelling(denominator);
             // A negative fractional power is the reciprocal of the positive one, and goes
             // below the bar so that `q^(-1/2)` above and `sqrt(q)` below are one atom and not
             // two: the derivative of `ln(1/(c x) + sqrt(q))` by parts is such a quotient.
@@ -490,7 +516,12 @@ namespace AngouriMath.Functions.Algebra
                     c = nextC;
                     multiplicity++;
                 }
-                if (factors.Count > 0 && !c.IsConstant)
+                // What is left is a constant in x -- a number, or the atoms and parameters
+                // beside the polynomial, which the derivative in x leaves in every gcd: the
+                // root `S` in `S x (a + b x)^2` stood in the last `c` and the factorisation
+                // was thrown away for it, and the remainder by parts leaves from
+                // `asech(a + b x)/x^2` went on as `1/(a^2 S x + 2 a b S x^2 + b^2 S x^3)`.
+                if (factors.Count > 0 && c.DegreeIn(xIndex) > 0)
                     factors.Clear();
             }
             // Written back, and a sum that the integrand already writes in some order is
@@ -533,11 +564,11 @@ namespace AngouriMath.Functions.Algebra
                 foreach (var (factor, multiplicity) in factors)
                     for (var i = 0; i < multiplicity && product is not null; i++)
                         product = product.Multiply(factor);
-                if (product is null || below.DivideExact(product) is not { IsConstant: true } content)
+                if (product is null || below.DivideExact(product) is not { } content || content.DegreeIn(xIndex) > 0)
                     factoredBelow = Back(below.ToEntity(variables));
                 else
                 {
-                    factoredBelow = content.ToEntity(variables);
+                    factoredBelow = Back(content.ToEntity(variables));
                     foreach (var (factor, multiplicity) in factors)
                     {
                         var written = Back(factor.ToEntity(variables));
@@ -975,10 +1006,19 @@ namespace AngouriMath.Functions.Algebra
                 // quotient of two linear radicals hands on exactly this for Hearn's
                 // `sqrt(a + b x) sqrt(c + d x)`. The first power is left as written, its table
                 // rules reading the coefficient where it is. Built without a stray `1 *`, since
-                // the table rules read the shape as written.
+                // the table rules read the shape as written. And not where the polynomial
+                // stands under a root elsewhere in the integrand as well -- in
+                // `1/(x (a + b x)^2 sqrt(1/(a + b x)^2 - 1))`, which by parts leaves from
+                // `asech(a + b x)/x^2` -- since `(a/b + x)^2` beside `sqrt(1/(a + b x)^2 - 1)`
+                // is two spellings of one linear, and the power written apart from the root
+                // cancels against the one and not the other. Under a root only: Hearn's
+                // `sqrt(a + b x) sqrt(c + d x)` hands on the polynomial as a plain factor
+                // above the bar too, and the monic power is what answers it there.
                 else if (factor is Powf(var polynomial, Number.Integer power) && power.EInteger.CompareTo(EInteger.FromInt32(2)) >= 0
                          && TreeAnalyzer.TryGetPolynomial(polynomial, x, out var read) && read.Count > 1
-                         && read.Keys.Max() is { } top && read[top] is var leading && !leading.ContainsNode(x) && leading.Evaled is not Number)
+                         && read.Keys.Max() is { } top && read[top] is var leading && !leading.ContainsNode(x) && leading.Evaled is not Number
+                         && !numerator.Nodes.Concat(denominator.Nodes).Any(node =>
+                                node is Powf(var radicand, Number.Rational r) && r is not Number.Integer && radicand.Nodes.Contains(polynomial)))
                 {
                     var leadingPower = MathS.Pow(leading, power);
                     constantPart = constantPart is null ? leadingPower : constantPart * leadingPower;
@@ -1004,7 +1044,7 @@ namespace AngouriMath.Functions.Algebra
             if (constantPart is null || variablePart is null)
                 return null;
 
-            return Integration.ComputeIndefiniteIntegral(numerator / variablePart, x, integrateByParts)
+            return Integration.ComputeAsTheSameQuestion(numerator / variablePart, x, integrateByParts)
                 ?.Pipe(i => i / constantPart);
         }
 
@@ -1018,14 +1058,15 @@ namespace AngouriMath.Functions.Algebra
         private static Entity? TakeConstantFactorOutOfNumerator(
             Entity numerator, Entity denominator, Entity.Variable x, bool integrateByParts)
         {
-            Entity constantPart = Number.Integer.One;
-            Entity variablePart = Number.Integer.One;
+            // Neither started from a 1: `1 * f` is a shape, and it was handed on as one.
+            Entity? constantPart = null;
+            Entity? variablePart = null;
             foreach (var factor in Entity.Mulf.LinearChildren(numerator))
                 if (factor.ContainsNode(x))
-                    variablePart *= factor;
+                    variablePart = variablePart is null ? factor : variablePart * factor;
                 else
-                    constantPart *= factor;
-            if (constantPart == Number.Integer.One || variablePart == Number.Integer.One)
+                    constantPart = constantPart is null ? factor : constantPart * factor;
+            if (constantPart is null || variablePart is null)
                 return null;
             // A rational constant is read by every rule that reads the quotient, and is left
             // where it is: taken out, the `-1` in front of what the tangent substitution makes
@@ -1033,10 +1074,10 @@ namespace AngouriMath.Functions.Algebra
             // rule for combining radicals answers it with the sign in place in three seconds.
             if (constantPart.Evaled is Number.Rational)
                 return null;
-            // As a question of its own: the quotient without its constant is the question
-            // asked, strictly smaller and no continuation of any search, and one level down
-            // the rules scoped to the top would not see it.
-            return Integration.ComputeAsAQuestionOfItsOwn(variablePart / denominator, x, integrateByParts)
+            // As the same question: the quotient without its constant is the question asked,
+            // strictly smaller and no continuation of any search, and one level down the
+            // rules scoped to the top or to one below it would not see it.
+            return Integration.ComputeAsTheSameQuestion(variablePart / denominator, x, integrateByParts)
                 ?.Pipe(i => constantPart * i);
         }
 
@@ -1169,7 +1210,7 @@ namespace AngouriMath.Functions.Algebra
                     rest = rest is null ? factor : rest * factor;
             if (constant is null || rest is null)
                 return null;
-            return Integration.ComputeIndefiniteIntegral(rest, x, integrateByParts)?.Pipe(i => constant * i);
+            return Integration.ComputeAsTheSameQuestion(rest, x, integrateByParts)?.Pipe(i => constant * i);
         }
 
         internal static Entity? SolveAsPolynomialTerm(Entity expr, Entity.Variable x, bool integrateByParts = true) => expr switch
@@ -1178,9 +1219,9 @@ namespace AngouriMath.Functions.Algebra
             // its `b` inside the left product, and read as two operands neither is constant.
             Entity.Mulf(var m1, var m2) product =>
                 !m1.ContainsNode(x) ?
-                    Integration.ComputeIndefiniteIntegral(m2, x, integrateByParts)?.Pipe(i => m1 * i) :
+                    Integration.ComputeAsTheSameQuestion(m2, x, integrateByParts)?.Pipe(i => m1 * i) :
                 !m2.ContainsNode(x) ?
-                    Integration.ComputeIndefiniteIntegral(m1, x, integrateByParts)?.Pipe(i => m2 * i) :
+                    Integration.ComputeAsTheSameQuestion(m1, x, integrateByParts)?.Pipe(i => m2 * i) :
                 WithTheConstantFactorsOut(product, x, integrateByParts),
 
             Entity.Divf(var div, var over) =>
@@ -1202,7 +1243,7 @@ namespace AngouriMath.Functions.Algebra
                         Integration.ComputeIndefiniteIntegral(MathS.Pow(@base, (-power).InnerSimplified), x, integrateByParts)?.Pipe(i => div * i) :
                         Integration.ComputeIndefiniteIntegral(MathS.Pow(over, -1), x, integrateByParts)?.Pipe(i => div * i) :
                 !over.ContainsNode(x) ?
-                    Integration.ComputeIndefiniteIntegral(div, x, integrateByParts)?.Pipe(i => i / over) :
+                    Integration.ComputeAsTheSameQuestion(div, x, integrateByParts)?.Pipe(i => i / over) :
                 null,
 
             Entity.Powf(var @base, var power) =>
@@ -13028,6 +13069,17 @@ namespace AngouriMath.Functions.Algebra
             // how `acsch(c x)` and `asech(c x)` arrive, is positive for a real `c` -- and the
             // answer says so: `provided c^2 > 0`, which holds exactly for a real non-zero `c`.
             Entity assumed = Entity.Boolean.True;
+            // The signs of the polynomials taken out of an even power below the bar, see
+            // below: each is constant on every interval the answer is asked on, and goes in
+            // front of the answer rather than into the question.
+            var signs = new Dictionary<Entity, int>();
+            // The factors of the integrand, above and below the bar: a sign can be taken in
+            // front of the answer only from a power that is one of them, and not from one
+            // inside a logarithm or a sum, where it is not a factor of anything.
+            var factors = new HashSet<Entity>(
+                expr is Divf(var dividend, var divisor) ? Mulf.LinearChildren(dividend).Concat(Mulf.LinearChildren(divisor))
+                : expr is Mulf ? Mulf.LinearChildren(expr)
+                : new[] { expr });
             var written = expr.Replace(node =>
             {
                 if (node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer || !@base.ContainsNode(x))
@@ -13038,6 +13090,29 @@ namespace AngouriMath.Functions.Algebra
                 if (below != Number.Integer.One && below.ContainsNode(x) && OfModestDegree(above)
                     && (IsPositiveForReal(below, x) || IsPositiveForARealParameter(below, x, out assumed, assumed)))
                     return MathS.Pow(above, exponent) * PowerOfAPositive(below, -exponent);
+                // An even power of a polynomial below the bar is positive wherever the
+                // polynomial is real and not zero, which the answer states: `(A/P^2)^(1/2)` is
+                // `sqrt(A) |P|^(-1)`, and `|P|` is `sgn(P) P`, the sign taken out in front.
+                // `sqrt(1/(a + b x)^2 - 1)` is how the derivative of `asech(a + b x)` is
+                // written, and by parts leaves `1/(x (a + b x)^2 sqrt(1/(a + b x)^2 - 1))`,
+                // which is `sgn(a + b x)/(x (a + b x) sqrt(1 - (a + b x)^2))`, a rational
+                // function beside the root of a quadratic. The power of `x` alone is the case
+                // above, with its extension by parity; a linear in `x` has no parity to extend
+                // by, and the sign is what stands in for it. Only for a power that is a factor
+                // of the integrand: the same root inside the logarithm of `asech(a + b x)`
+                // itself carries its sign inside the logarithm, where it is no factor.
+                if (factors.Contains(node)
+                    && below is Powf(var squared, Number.Integer { EInteger.IsEven: true } twice) && twice.EInteger.Sign > 0
+                    && squared.ContainsNode(x) && OfModestDegree(above) && OfModestDegree(squared)
+                    && TreeAnalyzer.TryGetPolynomial(squared, x, out var read) && read.Count > 1
+                    && (twice * exponent).InnerSimplified is Number.Integer wholeTimes)
+                {
+                    var positive = new Greaterf(below, Number.Integer.Zero);
+                    assumed = assumed == Entity.Boolean.True ? positive : assumed & positive;
+                    if (!wholeTimes.EInteger.IsEven)
+                        signs[squared] = signs.TryGetValue(squared, out var times) ? times + 1 : 1;
+                    return MathS.Pow(above, exponent) * MathS.Pow(squared, -wholeTimes);
+                }
                 // A polynomial with rational roots is the product of its linear factors, and
                 // the product is what the splitting below reads: `(1 - x^2)^(1/4)` is
                 // `((1 - x)(1 + x))^(1/4)`, which comes apart on `(-1, 1)` where the root is
@@ -13142,6 +13217,9 @@ namespace AngouriMath.Functions.Algebra
             if (forPositive is null || forPositive.Nodes.Any(node => node == MathS.NaN))
                 return null;
             var extended = tookAPowerOfX ? ExtendedByParity(expr, forPositive, x) : forPositive;
+            foreach (var pair in signs)
+                if (pair.Value % 2 == 1 && extended is { })
+                    extended = MathS.Signum(pair.Key) * extended;
             return extended?.Provided(assumed);
 
             // What is set free under the root is a polynomial of degree four at most: the

@@ -291,6 +291,30 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <paramref name="expr"/> integrated as the same question as the one being answered:
+        /// the integrand with a constant factor taken off it. <c>b f(x)</c> and <c>f(x)</c> are
+        /// one question, and a rule scoped to the question asked or one below it -- a power of
+        /// a quotient written apart -- was never consulted about the remainder by parts left
+        /// from <c>asech(a + b x)/x^2</c>, because taking its <c>b</c> out, and then a <c>1</c>,
+        /// had carried it three levels down before any rule saw it. Past the entry check for
+        /// the reason <see cref="ComputeAsAQuestionOfItsOwn"/> gives.
+        /// </summary>
+        internal static Entity? ComputeAsTheSameQuestion(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (descentDepth == 0)
+                return ComputeIndefiniteIntegral(expr, x, integrateByParts);
+            descentDepth--;
+            try
+            {
+                return ComputeIndefiniteIntegralGuarded(expr, x, integrateByParts);
+            }
+            finally
+            {
+                descentDepth++;
+            }
+        }
+
+        /// <summary>
         /// Whether anything in the current top-level call gave up on <see cref="DeepestDescent"/>
         /// rather than on the mathematics. A <c>null</c> produced that way must not be cached as
         /// "this cannot be integrated", because the same key may well be answerable when it is
@@ -499,6 +523,15 @@ namespace AngouriMath.Functions.Algebra
             // split, since Hearn's `e^(x^2)/x + 2x e^(x^2) ln(x) + ...` is a sum whose terms are
             // not elementary apart; at the top only, and only for a tower no closed rule reads.
             if ((answer = IndefiniteIntegralSolver.SolveByRischNormanAnsatz(expr, x)) is { }) return answer;
+            // A quotient of polynomials in x and the functions of x in it, cancelled with those
+            // functions as indeterminates and its denominator factored the same way:
+            // `(x^2 + 2x sin(x) + sin(x)^2)/(x + sin(x))^2` is `1`, and nothing else reads it.
+            // Before the reduction over a linear factor and the split, which expand and take
+            // apart what this cancels whole: the remainder by parts leaves from
+            // `x asech(a + b x)` is `x^2 (L^3 q^(-1/2) + L^4)/(L^6 (1/L + sqrt(q)))`, which
+            // is `x^2/(L^2 sqrt(q))` cancelled, and was five terms over `L^5 (1 + L sqrt(q))`
+            // each searched for seconds when the reduction reached it first.
+            if ((answer = IndefiniteIntegralSolver.SolveByCancellingWithFunctionsAsIndeterminates(expr, x, integrateByParts)) is { }) return answer;
             // A polynomial over a power of a linear and something that is not a polynomial,
             // the polynomial written in powers of the linear at its root: the part the power
             // divides goes over the rest alone. Before the split, so that the whole polynomial
@@ -507,10 +540,6 @@ namespace AngouriMath.Functions.Algebra
             if (expr is Entity.Sumf or Entity.Minusf
                 && (answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { })
                 return answer;
-            // A quotient of polynomials in x and the functions of x in it, cancelled with those
-            // functions as indeterminates and its denominator factored the same way:
-            // `(x^2 + 2x sin(x) + sin(x)^2)/(x + sin(x))^2` is `1`, and nothing else reads it.
-            if ((answer = IndefiniteIntegralSolver.SolveByCancellingWithFunctionsAsIndeterminates(expr, x, integrateByParts)) is { }) return answer;
             // A constant multiple of D'/D for a sum D below the bar holding a root, decided at
             // sampled points: Hearn's quotient of two roots' derivatives over their sum was a
             // search past the budget for want of the radical algebra the substitution would
