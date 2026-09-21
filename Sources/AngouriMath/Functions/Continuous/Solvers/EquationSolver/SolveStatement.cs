@@ -247,9 +247,41 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <a href="https://github.com/asc-community/AngouriMath/issues/1036">#1036</a>
         /// </remarks>
         private static Set Conjunction(Set left, Set right, Entity statement, Variable x)
-            => (left, right) is (ConditionalSet, FiniteSet) or (FiniteSet, ConditionalSet)
-                ? new ConditionalSet(x, statement)
-                : (Set)MathS.Intersection(left, right);
+            => (left, right) switch
+            {
+                (ConditionalSet condition, FiniteSet listed) => Filtered(listed, condition, statement, x),
+                (FiniteSet listed, ConditionalSet condition) => Filtered(listed, condition, statement, x),
+                _ => (Set)MathS.Intersection(left, right),
+            };
+
+        /// <summary>
+        /// The members of a listed solution set at which the other side's condition is
+        /// decided: kept where it evaluates to <c>True</c>, dropped where <c>False</c> -- so
+        /// <c>x^2 = 4 and not x = 2</c> is <c>{ -2 }</c> -- and the conjunction as written the
+        /// moment one member is undecided, which is #1036's case, where a search left the
+        /// condition open and 1 was a root only when y was -2.
+        /// </summary>
+        private static Set Filtered(FiniteSet listed, ConditionalSet condition, Entity statement, Variable x)
+        {
+            if (condition.Var is not Variable bound)
+                return new ConditionalSet(x, statement);
+            var kept = new List<Entity>();
+            foreach (var member in listed)
+            {
+                // Evaluated, and simplified where evaluation leaves it open: the solution of
+                // 2 v + 1 = 2 u + 1 arrives as -(1 - 2u - 1)/2, and `not that = u` is decided
+                // by the simplifier and not by evaluation.
+                var at = condition.Predicate.Substitute(bound, member);
+                var decided = at.Evaled;
+                if (decided is not Entity.Boolean)
+                    decided = at.Simplify();
+                if (decided == Entity.Boolean.True)
+                    kept.Add(member);
+                else if (decided != Entity.Boolean.False)
+                    return new ConditionalSet(x, statement);
+            }
+            return new FiniteSet(kept);
+        }
 
         /// <summary>
         /// The solutions of <c>difference = 0 (mod modulus)</c> in <paramref name="x"/>, where
