@@ -673,6 +673,26 @@ emptiness as a proof: `forall x in RR : x^2 in ZZ` was `True`
 | `"x^2 in {1, 4}".Solve("x")` | `{}` — wrong | `{ 1, -1, 2, -2 }` |
 | `"x^2 in ZZ".Solve("x")` | `{}` — wrong | `{ x : x ^ 2 in ZZ }`, left as written |
 | `forall x in RR : x^2 in ZZ` | `UnhandledParseException` (quantifiers are new since) | `False` |
+### `...` is the pattern operator
+
+`{1, 2, ..., n}`, `{2, 4, ..., 2 n}`, `{5, 10, 15, ...}`, `{..., -1, 0}`, `1 + 2 + ... + n` and
+`1 * 2 * ... * n` parse — also with `…` — as the arithmetic progression of whole numbers the shown
+terms determine, up to the term after the dots: a set is `ZZ /\ [a; z]` for step one and a residue
+class cut by the interval otherwise, listed when the ends are numbers; a sum is `sum(k, k, 1, n)`
+and a product `product(k, k, 1, n)`, with `a + d k` as the term for another step. Shown terms with
+no common step, a progression that is not of whole numbers, and dots with nothing to determine
+them are refused with a message saying which. The smaller half of
+[#1437](https://github.com/asc-community/AngouriMath/issues/1437); the general term with an index
+shown and the argument list of symbolic length wait for v3. Every one of these was a parse error.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `{1, 2, ..., 10}` | `UnhandledParseException` | `{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }` |
+| `{1, 2, ..., n}` | `UnhandledParseException` | `ZZ /\ [1; n]` |
+| `7 in {1, 3, 5, ...}` | `UnhandledParseException` | `True` |
+| `1 + 2 + ... + 100` | `UnhandledParseException` | `5050` |
+| `1 * 2 * ... * n` | `UnhandledParseException` | `product(k, k, 1, n)`, which is `n!` for `n >= 1` |
+| `{1, 4, 9, ..., n}` | `UnhandledParseException` | `InvalidArgumentParseException`, naming the term off the progression |
 
 ### `binomial(n, k)` is a function
 
