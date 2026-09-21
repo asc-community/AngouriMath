@@ -203,9 +203,11 @@ namespace AngouriMath
                     // one occurrence and the operations it has images for (#1423): the
                     // reference's 9c/5 + 32 on (0, 100) is (32, 212). Where the arithmetic has
                     // no image the substitution leaves an expression, and the family stays.
-                    if (this is IndexedUnionf && over is Interval && body is FiniteSet { Count: 1 } image
+                    // The reals are the interval (-oo; +oo) for this purpose.
+                    var overAsInterval = over is SpecialSet.Reals ? new Interval(Real.NegativeInfinity, false, Real.PositiveInfinity, false) : over;
+                    if (this is IndexedUnionf && overAsInterval is Interval && body is FiniteSet { Count: 1 } image
                         && image.First() is var f && f.Nodes.Count(node => node == Var) == 1
-                        && f.Substitute(Var, over).InnerSimplified(isExact) is Set imaged)
+                        && f.Substitute(Var, overAsInterval).InnerSimplified(isExact) is Set imaged)
                         return imaged;
                     if (over is FiniteSet indices)
                     {
