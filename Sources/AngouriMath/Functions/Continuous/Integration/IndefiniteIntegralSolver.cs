@@ -9675,6 +9675,46 @@ namespace AngouriMath.Functions.Algebra
             return flattened == expr ? null : Integration.ComputeAsAQuestionOfItsOwn(flattened, x, integrateByParts);
         }
 
+        /// <summary>
+        /// An exponential of a multiple of a logarithm is a power of the argument:
+        /// <c>e^(k ln(q))</c> is <c>q^k</c>, since <c>e^(k ln q)</c> is the definition of the
+        /// principal power for every complex <c>q</c> other than zero. That is the spelling the
+        /// parser gives every inverse hyperbolic function -- <c>acoth(a x)</c> is
+        /// <c>1/2 ln((a x + 1)/(a x - 1))</c> -- so <c>e^acoth(a x) x^3</c> arrives as
+        /// <c>e^(1/2 ln((a x + 1)/(a x - 1))) x^3</c>, which no exponential rule reads, and is
+        /// <c>x^3 sqrt((a x + 1)/(a x - 1))</c>, a root of a quotient of linears, which the
+        /// radical substitution answers. Rubi's 7.4.2. The simplifier folds the same shape
+        /// since #1430; the integrand is not simplified before the rules see it, so the fold
+        /// is a rule here, asked as a question of its own so the closed rules meet it at the top.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveByFoldingAnExponentialOfALogarithm(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var folded = expr.Replace(node =>
+            {
+                if (node is not Powf(var @base, var exponent) || @base != MathS.e || !exponent.ContainsNode(x))
+                    return node;
+                // The exponent as a product with one natural logarithm of x among its factors
+                // and nothing else of x: `3 * (1/2 * ln(q))` is how `e^(3 acoth(a x))` arrives.
+                Entity? argument = null;
+                Entity k = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(exponent))
+                {
+                    if (factor is Logf(var logBase, var inner) && logBase == MathS.e && argument is null)
+                        argument = inner;
+                    else if (factor.ContainsNode(x))
+                        return node;
+                    else
+                        k = k * factor;
+                }
+                if (argument is null)
+                    return node;
+                var power = k.InnerSimplified;
+                return power == Number.Integer.One ? argument : MathS.Pow(argument, power);
+            });
+            return folded == expr ? null : Integration.ComputeAsAQuestionOfItsOwn(folded, x, integrateByParts);
+        }
+
         internal static Entity? SolveAPolynomialTimesARationalFunctionOfAnExponential(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             // The polynomial factors above the bar, and the rest, which holds x in exponents only.

@@ -640,6 +640,21 @@ a listed index set, and over any other an object whose membership is decided by 
 | `union({k, 2 k}, k in {1, 2, 3})` | `UnhandledParseException` — `union` was a name, and `union(` a juxtaposition that does not parse | `{ 1, 2, 4, 3, 6 }` |
 | `0.1 in intersection([0; 1/n), n in ZZ+)` | `UnhandledParseException` | `False` |
 | `complement({1, 2}, {1, 2, 3})` | `UnhandledParseException` | `{ 3 }` |
+### An exponential of a multiple of a logarithm is integrated as the power it is
+
+`e^(k ln(q))` is `q^k` — the definition of the principal power, for every complex `q` other than
+zero — and that is the spelling the parser gives every inverse hyperbolic function: `acoth(a x)`
+is `1/2 ln((a x + 1)/(a x - 1))`. So `e^acoth(a x) x^3` arrived at the integrator as an
+exponential of a logarithm, which no exponential rule reads, and is `x^3 sqrt((a x + 1)/(a x - 1))`,
+which the radical substitution answers. The integrand is not simplified before the rules see it
+(the simplifier has folded this shape since #1430), so the fold is a route of the integrator now,
+with the multiplier gathered from the whole product in the exponent
+([#718](https://github.com/asc-community/AngouriMath/issues/718), Rubi's 7.4.2).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(2*acoth(2*x))*(3 - 12*x^2)^2".Integrate("x")` | `integral(…)` — left unevaluated | `(144 * x ^ 5 / 5 + 144 * x ^ 4 / 4 + (-36) * x ^ 2 / 2 + (-9) * x provided not 2 * x + -1 = 0) + C` |
+| `"e^(1/3*acoth(x))*x^2".Integrate("x")` | `integral(…)` — left unevaluated | an antiderivative in `((x + 1)/(x - 1))^(1/6)` |
 
 ### `binomial(n, k)` is a function
 
