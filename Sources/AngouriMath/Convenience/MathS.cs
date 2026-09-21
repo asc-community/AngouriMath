@@ -6292,6 +6292,43 @@ namespace AngouriMath
             /// </summary>
             public static Set Complement(Entity set, Entity universe) => universe.SetSubtract(set);
 
+            /// <summary>
+            /// The image of <paramref name="over"/> under the expression <paramref name="body"/>
+            /// in <paramref name="var"/>: <c>image(f(x), x in A)</c>, the set of the values
+            /// <c>f(x)</c> takes on <c>A</c> -- <c>{ f(x) : x in A }</c>, which is
+            /// <c>union({f(x)}, x in A)</c>. Listed over a listed set, an interval by interval
+            /// arithmetic where the name occurs once, and a membership object otherwise.
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine("image(x^2, x in {1, 2, 3})".ToEntity().Evaled);
+            /// Console.WriteLine("image(9 c / 5 + 32, c in (0; 100))".ToEntity().Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// { 1, 4, 9 }
+            /// (32; 212)
+            /// </code>
+            /// </example>
+            public static Set Image(Entity body, Entity var, Entity over) => new IndexedUnionf(var, over, new FiniteSet(body));
+
+            /// <summary>
+            /// The pre-image of <paramref name="target"/> under the expression <paramref name="body"/>
+            /// in <paramref name="var"/> ranging over <paramref name="over"/>:
+            /// <c>preimage(f(x), x in A, Y)</c> is <c>{ x in A : f(x) in Y }</c>, solved on
+            /// evaluation where the membership is one the statement solver reads.
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine("preimage(x^2, x in RR, {1})".ToEntity().Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// { 1, -1 }
+            /// </code>
+            /// </example>
+            public static Set PreImage(Entity body, Entity var, Entity over, Entity target) => new ConditionalSet(var, var.In(over) & body.In(target));
+
             /// <returns>A set of all Complexes/>s</returns>
             public static Set C => SpecialSet.Create(Domain.Complex);
 
