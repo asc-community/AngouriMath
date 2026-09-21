@@ -108,8 +108,28 @@ namespace AngouriMath.Tests.Core
         [InlineData("exists x, y in ZZ : x^2 + y^2 = 5", "True")]
         // Example 6.5.12: the order of 5 modulo 7 is 6.
         [InlineData("exists n in ZZ+ : 5^n = 1 (mod 7)", "True")]
+        // A power of a base prime to the modulus repeats with the base's order, so the residues
+        // of the exponent decide it: §5.2.4 Try 3, Example 5.3.7 (2^n + 1 modulo 7 is 2, 3 or 5
+        // by n modulo 3), and the powers of 7 modulo 6 and 5.
+        [InlineData("forall n in ZZ+ : 3 divides 7^n - 4^n", "True")]
+        [InlineData("forall n in ZZ* : not (7 divides 2^n + 1)", "True")]
+        [InlineData("forall n in ZZ* : 2^n + 1 = 3 (mod 7) or 2^n + 1 = 5 (mod 7) or 2^n + 1 = 2 (mod 7)", "True")]
+        [InlineData("forall n in ZZ+ : 6 divides 7^n - 1", "True")]
+        [InlineData("forall n in ZZ+ : 5 divides 7^n - 1", "False")]
+        [InlineData("exists n in ZZ+ : 5 divides 7^n - 1", "True")]
+        [InlineData("forall n in ZZ* : 8 divides 3^(2 n) - 1", "True")]
+        [InlineData("forall n in ZZ+ : 9 divides 4^n + 15 n - 1", "True")]
+        [InlineData("forall n in ZZ+ : 3 divides 2^n", "False")]
         public void AQuantifiedStatementIsDecidedByResidues(string statement, string expected)
             => Assert.Equal(expected.ToEntity(), statement.ToEntity().Simplify());
+
+        [Theory]
+        // Over ZZ a power has a fractional value at a negative exponent, and a base sharing a
+        // factor with the modulus repeats only eventually: neither is decided by residues.
+        [InlineData("forall n in ZZ : 3 divides 7^n - 4^n")]
+        [InlineData("forall n in ZZ+ /\\ [2; +oo) : 4 divides 2^n")]
+        public void APowerIsLeftAsWrittenWhereItsResiduesDoNotRepeat(string statement)
+            => Assert.IsType<Forallf>(statement.ToEntity().Simplify());
 
         [Theory]
         // Examples 6.5.15-6.5.17: the quadratic residues modulo 3..8 and the cubic ones modulo 7, 9.

@@ -85,7 +85,11 @@ congruence is solved to a residue class — `"3 x = 11 (mod 7)".ToEntity().Solve
 Chinese remainder theorem, `x = 3 (mod 4) and x = 5 (mod 6)` giving `{ x in ZZ : x = 11 (mod 12) }`
 and `x = 3 (mod 4) and x = 2 (mod 6)` nothing, and with a bounded interval the members are listed:
 `x = 2 (mod 7) and 0 <= x and x < 30` is `{ 2, 9, 16, 23 }`. `MathS.NumberTheory.ModularInverse(3, 10)`
-is `7`, the one representative in `[1, n - 1]`, and `null` where `a` and `n` share a factor.
+is `7`, the one representative in `[1, n - 1]`, and `null` where `a` and `n` share a factor. An
+inequality with an exponential or a factorial over the whole numbers, `n in ZZ and 2^n > n^2`, is
+solved to the members of a window from the least member and the tails the quantifier proves by
+induction — `{ 0, 1 } \/ ZZ /\ [5; +oo)`, `n in ZZ+ and n! > 3^n` is `ZZ+ /\ [7; +oo)` — and where
+a tail is not proved the window is not an answer, and the inequality solver refuses as before.
 | 9 | `unite` `\/`, `setsubtract` `\` | one level, so `A \/ B \ C` is `(A \/ B) \ C` |
 | 10 | `intersect` `/\` | |
 | 11 | `+` `-` | |
@@ -317,7 +321,13 @@ factorial, a polynomial in `n` decided over the set, sums and products of these 
 ZZ+ /\ [5; +oo) : 2^n > n^2` is `True` (`2^(n + 1) - 2 · 2^n` leaves `n^2 - 2 n - 1`, positive
 from `5`), `forall n in ZZ+ /\ [4; +oo) : 2^n > n^2` is `False` at `4`, and `forall n in ZZ+ :
 n! >= 2^(n - 1)` is `True`. The whole numbers from `m` are `ZZ*` shifted by `m`, so a statement
-over `ZZ+ /\ [4; +oo)` is decided as one about `4 + t` over `ZZ*`, whichever route reads it. `not`
+over `ZZ+ /\ [4; +oo)` is decided as one about `4 + t` over `ZZ*`, whichever route reads it. A
+divisibility or a congruence in a polynomial of `n` with whole coefficients repeats with the
+modulus, so its residues decide it (`forall n in ZZ : 6 divides n^3 + 5 n` is `True` by six cases),
+and with a power `a^n` of a whole base prime to the modulus among the terms it repeats with the
+order of `a` as well: `forall n in ZZ+ : 3 divides 7^n - 4^n` is `True` by one residue, `forall n
+in ZZ* : not (7 divides 2^n + 1)` by three — over the non-negative whole numbers, where the powers
+are whole; a base sharing a factor with the modulus repeats only eventually and is left as written. `not`
 passes through a quantifier by flipping it: `not forall x in S : P` is `exists x in S : not P`. In LaTeX, `\forall x \in S : P`. `forall`, `exists` and
 `exists!` are keywords, so they are not names.
 
