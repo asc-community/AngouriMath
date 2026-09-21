@@ -456,6 +456,9 @@ namespace AngouriMath.Functions.Algebra
             // and by parts n times where the exponent is a symbol was not taken.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAPowerOfTheLogarithm(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;
+            // An exponential of a multiple of a logarithm is a power of the argument, which is
+            // how every inverse hyperbolic function under an exponential arrives.
+            if ((answer = IndefiniteIntegralSolver.SolveByFoldingAnExponentialOfALogarithm(expr, x, integrateByParts)) is { }) return answer;
             // A polynomial times a rational function of exponentials, by parts against the
             // whole rational function, before anything splits the sum: the general parts rule
             // takes each term on its own, and each term's antiderivative keeps a logarithm the
