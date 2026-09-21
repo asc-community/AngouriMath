@@ -537,6 +537,30 @@ namespace AngouriMath
                 => element is Number || element is FiniteSet listed && listed.All(Countable);
         }
 
+        partial record Primef
+        {
+            // The n-th prime is defined for a positive whole n; nothing else indexes the primes.
+            private protected override Entity IntrinsicCondition => Argument.In(MathS.Sets.PositiveIntegers);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
+                    a => a switch
+                    {
+                        // The table of primes is built as far as it is asked for, and a very
+                        // large index is left as written rather than built towards.
+                        Integer { EInteger.Sign: > 0 } index when index.EInteger.CompareTo(EInteger.FromInt32(LargestIndex)) <= 0
+                            => Functions.Primes.GetPrime(index.EInteger.ToInt32Checked() - 1),
+                        Integer { EInteger.Sign: > 0 } => null,
+                        Number => MathS.NaN,
+                        _ => null
+                    },
+                    (@this, a) => ((Primef)@this).New(a), isExact);
+
+            /// <summary>How far the table of primes is built for an index.</summary>
+            private const int LargestIndex = 1000000;
+        }
+
         partial record Phif
         {
             // Euler's totient function is defined for all integers in this library.

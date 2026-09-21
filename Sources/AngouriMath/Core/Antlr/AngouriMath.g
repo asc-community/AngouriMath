@@ -570,6 +570,7 @@ atom returns[Entity value]
     | 'sign(' args = function_arguments ')' { Assert("sign", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
     | 'abs(' args = function_arguments ')' { Assert("abs", 1, $args.list.Count); $value = MathS.Abs($args.list[0]); }
     | 'phi(' args = function_arguments ')' { Assert("phi", 1, $args.list.Count); $value = MathS.NumberTheory.Phi($args.list[0]); }
+    | 'prime(' args = function_arguments ')' { Assert("prime", 1, $args.list.Count); $value = MathS.NumberTheory.Prime($args.list[0]); }
     | 'card(' args = function_arguments ')' { Assert("card", 1, $args.list.Count); $value = MathS.Sets.Card($args.list[0]); }
     | 'powerset(' args = function_arguments ')' { Assert("powerset", 1, $args.list.Count); $value = MathS.Sets.PowerSet($args.list[0]); }
     | 'union(' args = function_arguments ')' { Assert("union", 2, $args.list.Count); $value = $args.list[1] is Entity.Set.Inf { Element: Variable } unionRange ? MathS.Sets.IndexedUnion($args.list[0], unionRange.Element, unionRange.SupSet) : throw new InvalidArgumentParseException("union expects its second argument to say which name ranges over which set, as in union(A_i, i in I)"); }

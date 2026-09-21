@@ -176,6 +176,7 @@ namespace AngouriMath.Core
             Powf(_, Real { IsNegative: true }) => HeavyWeight + ChildrenCost(expr), // Number of negative powers
             Logf => TinyWeight + ChildrenCost(expr), // Number of logarithms
             Phif => ExtraHeavyWeight + ChildrenCost(expr), // Number of phi functions
+            Primef => ExtraHeavyWeight + ChildrenCost(expr),
             Real { IsNegative: true } => MajorWeight + ChildrenCost(expr), // Number of negative reals
             ComparisonSign when expr.DirectChildren[0] == 0 => Weight + ChildrenCost(expr), // 0 < x is bad. x > 0 is good.
             Notf(Equalsf eq) => -Weight + eq.DefaultCostCached, // (not x = 0) is equally complex as (x = 0)

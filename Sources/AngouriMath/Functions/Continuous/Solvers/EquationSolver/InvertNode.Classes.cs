@@ -672,6 +672,14 @@ namespace AngouriMath
             }
         }
 
+        partial record Primef
+        {
+            // prime(n) = p has the one solution n = pi(p) where p is prime and none otherwise,
+            // and pi is not a node here; declined the way Phif is.
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => Enumerable.Empty<Entity>();
+        }
+
         partial record Phif
         {
             // We can't easily calculate (compute) all solutions there are for this function

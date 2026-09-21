@@ -97,6 +97,14 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        partial record Primef
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $@"prime({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         partial record Cardf
         {
             /// <inheritdoc/>

@@ -589,6 +589,14 @@ namespace AngouriMath
             internal override Domain DefaultCodomain => Domain.Integer;
         }
 
+        partial record Primef
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Prime;
+            /// <inheritdoc/>
+            internal override Domain DefaultCodomain => Domain.Prime;
+        }
+
         partial record Phif
         {
             /// <inheritdoc/>

@@ -386,6 +386,27 @@ namespace AngouriMath
 
         #region Number theory
         /// <summary>
+        /// The <c>n</c>-th prime, <c>prime(n)</c>: <c>prime(1)</c> is <c>2</c>, <c>prime(25)</c>
+        /// is <c>97</c>. An enumeration of <c>PP</c> in its order, which a set does not carry, so
+        /// a function of its own -- SymPy's <c>prime(n)</c>. Defined on the positive whole numbers.
+        /// https://github.com/asc-community/AngouriMath/issues/1450
+        /// </summary>
+        public sealed partial record Primef(Entity Argument) : Function, IUnaryNode
+        {
+            /// <inheritdoc/>
+            public Entity NodeChild => Argument;
+
+            internal Primef New(Entity argument)
+                   => ReferenceEquals(argument, Argument) ? this : new(argument) { Codomain = Codomain };
+
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Argument };
+        }
+
+        /// <summary>
         /// This node represents the Euler totient function (phi)
         /// </summary>
         public sealed partial record Phif(Entity Argument) : Function, IUnaryNode

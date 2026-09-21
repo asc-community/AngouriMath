@@ -223,6 +223,12 @@ namespace AngouriMath
                 => $@"\binom{{{Upper.Latexize()}}}{{{Lower.Latexize()}}}";
         }
 
+        partial record Primef
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode() => $@"\operatorname{{prime}}\left({Argument.Latexize()}\right)";
+        }
+
         partial record Phif
         {
             /// <inheritdoc/>

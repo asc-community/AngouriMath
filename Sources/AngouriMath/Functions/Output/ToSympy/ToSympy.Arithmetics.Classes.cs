@@ -160,6 +160,11 @@ namespace AngouriMath
             internal override string ToSymPy() => $"sympy.totient({Argument.ToSymPy()})";
         }
 
+        public partial record Primef
+        {
+            internal override string ToSymPy() => $"sympy.prime({Argument.ToSymPy()})";
+        }
+
         public partial record Cardf
         {
             // SymPy has no cardinality function; a finite set answers len, and an infinite one
