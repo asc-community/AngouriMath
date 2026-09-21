@@ -136,6 +136,17 @@ namespace AngouriMath.Tests.Calculus
         public void AConstantInTheVariableDifferentiatesToZeroWhateverItsNode(string expr, string expected)
             => Assert.Equal(expected.ToEntity().Simplify(), expr.ToEntity().Differentiate(x).Simplify());
 
+        // ...and a set is not a constant in the variable even when it does not mention it:
+        // { 1, 2 } + sin(x) is the set { 1 + sin(x), 2 + sin(x) }, whose derivative is the set
+        // { cos(x) }, which the zero of the rule above flattened to the number cos(x) -- the
+        // wiki's Differentiation page says { cos(x) }, and docsamples read the number.
+        [Theory]
+        [InlineData("{ 1, 2 } + sin(x)", "{ cos(x) }")]
+        [InlineData("{ 1, 2 }", "{ 0 }")]
+        [InlineData("[1, 2] * x", "[1, 2]")]
+        public void ASetDifferentiatesElementwiseNotToZero(string expr, string expected)
+            => Assert.Equal(expected.ToEntity(), expr.ToEntity().Differentiate(x).Simplify());
+
         [Theory]
         [InlineData("abs(i * x)", "abs(x)")]
         [InlineData("abs(x * i)", "abs(x)")]
