@@ -386,6 +386,54 @@ namespace AngouriMath
 
         #region Number theory
         /// <summary>
+        /// The <c>n</c>-th prime, <c>prime(n)</c>: <c>prime(1)</c> is <c>2</c>, <c>prime(25)</c>
+        /// is <c>97</c>. An enumeration of <c>PP</c> in its order, which a set does not carry, so
+        /// a function of its own -- SymPy's <c>prime(n)</c>. Defined on the positive whole numbers.
+        /// https://github.com/asc-community/AngouriMath/issues/1450
+        /// </summary>
+        public sealed partial record Primef(Entity Argument) : Function, IUnaryNode
+        {
+            /// <inheritdoc/>
+            public Entity NodeChild => Argument;
+
+            internal Primef New(Entity argument)
+                   => ReferenceEquals(argument, Argument) ? this : new(argument) { Codomain = Codomain };
+
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Argument };
+        }
+
+        /// <summary>
+        /// The <c>p</c>-adic valuation, <c>valuation(n, p)</c>: the exponent of the prime
+        /// <c>p</c> in <c>n</c>, so <c>valuation(12, 2)</c> is <c>2</c> and <c>valuation(12, 5)</c>
+        /// is <c>0</c>; <c>+oo</c> at <c>n = 0</c>, by the convention every text uses. Sullivan and
+        /// Mackey's Ex 5.5.1 writes <c>n = 2^m (2 l + 1)</c> with <c>m</c> the 2-adic valuation, and
+        /// <c>n = product(p^valuation(n, p), p in PP)</c> is what a factorisation says.
+        /// https://github.com/asc-community/AngouriMath/issues/1450
+        /// </summary>
+        public sealed partial record Valuationf(Entity Argument, Entity Prime) : Function, IBinaryNode
+        {
+            /// <inheritdoc/>
+            public Entity NodeFirstChild => Argument;
+
+            /// <inheritdoc/>
+            public Entity NodeSecondChild => Prime;
+
+            internal Valuationf New(Entity argument, Entity prime)
+                => ReferenceEquals(Argument, argument) && ReferenceEquals(Prime, prime) ? this : new(argument, prime) { Codomain = Codomain };
+
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func)
+                => func(New(Argument.Replace(func), Prime.Replace(func)));
+
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Argument, Prime };
+        }
+
+        /// <summary>
         /// This node represents the Euler totient function (phi)
         /// </summary>
         public sealed partial record Phif(Entity Argument) : Function, IUnaryNode

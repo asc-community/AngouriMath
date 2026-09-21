@@ -445,6 +445,16 @@ namespace AngouriMath
             private protected override string SortHashName(SortLevel level) => "phi_";
         }
 
+        partial record Primef
+        {
+            private protected override string SortHashName(SortLevel level) => "prime_";
+        }
+
+        partial record Valuationf
+        {
+            private protected override string SortHashName(SortLevel level) => "valuation_";
+        }
+
         partial record Dividesf
         {
             private protected override string SortHashName(SortLevel level)

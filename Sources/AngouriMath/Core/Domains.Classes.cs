@@ -589,6 +589,24 @@ namespace AngouriMath
             internal override Domain DefaultCodomain => Domain.Integer;
         }
 
+        partial record Valuationf
+        {
+            // A whole number wherever the argument is not zero, and +oo there, which no
+            // domain of whole numbers admits: the reals, so that the convention is kept.
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Real;
+            /// <inheritdoc/>
+            internal override Domain DefaultCodomain => Domain.Real;
+        }
+
+        partial record Primef
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Prime;
+            /// <inheritdoc/>
+            internal override Domain DefaultCodomain => Domain.Prime;
+        }
+
         partial record Phif
         {
             /// <inheritdoc/>

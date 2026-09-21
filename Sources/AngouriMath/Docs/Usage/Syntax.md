@@ -242,7 +242,11 @@ which is `e ^ x`.
 **Powers and logarithms** — `sqrt` `cbrt` `sqr` `pow(a, b)` `exp` `ln` `log(base, x)`. `log` with
 one argument is base 10, so `log(100)` is 2; `log10` and `log2` say it in the name.
 
-**Other** — `abs` `signum` `sgn` `sign` `phi` `gamma` `factorial` (or postfix `!`); `#S` (or `card(S)`) for the number of elements of a set, counted for a finite set of numbers and left as written for an infinite one; `#` binds like a function call, so a set expression needs parentheses (`#(A \/ B)`).
+**Other** — `abs` `signum` `sgn` `sign` `phi` `gamma` `factorial` (or postfix `!`); `prime(n)`
+for the `n`-th prime (`prime(25)` is `97`, `NaN` off the positive whole numbers, left as written
+for a symbol or an index past a million); `valuation(n, p)` for the `p`-adic valuation, the
+exponent of the prime `p` in `n` (`valuation(12, 2)` is `2`, `valuation(12, 5)` is `0`, `+oo` at
+`n = 0`, `NaN` where `p` is not prime; `v_p(n)` in LaTeX); `#S` (or `card(S)`) for the number of elements of a set, counted for a finite set of numbers and left as written for an infinite one; `#` binds like a function call, so a set expression needs parentheses (`#(A \/ B)`).
 
 **Rounding** — `floor` `ceil` (`ceiling` is accepted on the way in and prints as `ceil`) `round`.
 All three round a complex argument componentwise. `floor` and `ceil` go toward the infinities
