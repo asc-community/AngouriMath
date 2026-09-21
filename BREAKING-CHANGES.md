@@ -621,6 +621,22 @@ too ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). `subset
 | `{1, 3} in powerset(ZZ)` | `UnrecognizedFunctionParseException` | `True` |
 | `card({1, {}})` | `#{ 1, {  } }` — left as written | `2` |
 
+### An exponential of a multiple of a logarithm is integrated as the power it is
+
+`e^(k ln(q))` is `q^k` — the definition of the principal power, for every complex `q` other than
+zero — and that is the spelling the parser gives every inverse hyperbolic function: `acoth(a x)`
+is `1/2 ln((a x + 1)/(a x - 1))`. So `e^acoth(a x) x^3` arrived at the integrator as an
+exponential of a logarithm, which no exponential rule reads, and is `x^3 sqrt((a x + 1)/(a x - 1))`,
+which the radical substitution answers. The integrand is not simplified before the rules see it
+(the simplifier has folded this shape since #1430), so the fold is a route of the integrator now,
+with the multiplier gathered from the whole product in the exponent
+([#718](https://github.com/asc-community/AngouriMath/issues/718), Rubi's 7.4.2).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(2*acoth(2*x))*(3 - 12*x^2)^2".Integrate("x")` | `integral(…)` — left unevaluated | `(144 * x ^ 5 / 5 + 144 * x ^ 4 / 4 + (-36) * x ^ 2 / 2 + (-9) * x provided not 2 * x + -1 = 0) + C` |
+| `"e^(1/3*acoth(x))*x^2".Integrate("x")` | `integral(…)` — left unevaluated | an antiderivative in `((x + 1)/(x - 1))^(1/6)` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
