@@ -888,6 +888,19 @@ unwrapped to `a + b x`, which it equals only on a strip
 | `"1/(x*atanh(tanh(a+b*x)))".Integrate("x")` | left unevaluated | the antiderivative |
 | `"acoth(tanh(a+b*x))/x^2".Integrate("x")` | no answer in two minutes | `b/2 ln(x^2) - (ln(-e^(2(a + b x))) - 2 b x)/(2 x)`, up to the form |
 | `"1/(x*ln(e^(2*(a+b*x))))".Integrate("x")` | left unevaluated | the antiderivative |
+### A set-builder whose predicate is `NaN` is the empty set, and was `NaN`
+
+`{ x : 1/0 = x }` evaluated to `NaN`, and so did `{ x : x subset 2 }` once `subset` became a
+keyword — a subset of a number is not a statement about any `x`. A predicate that is `NaN` holds
+nowhere, so the set it describes is empty; the solver already answered `{ }` for `1/0 = x`, and
+`Solve` on `x subset 2` cast the `NaN` set to a set and threw an `InvalidCastException`, which
+the crash harness found. Both now agree with the solver
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"{ x : 1/0 = x }".ToEntity().Evaled` | `NaN` | `{ }` |
+| `"x subset 2".ToEntity().Solve("x")` | `x * subset ^ 2` had no solution: `{ }` — `subset` is new since | `{ }`, where the unreleased keyword threw |
 
 ### `binomial(n, k)` is a function
 

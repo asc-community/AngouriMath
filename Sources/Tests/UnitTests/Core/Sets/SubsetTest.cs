@@ -193,6 +193,21 @@ namespace AngouriMath.Tests.Core.Sets
         }
 
         /// <summary>The nodes print as they parse, and the API builds them.</summary>
+        /// <summary>
+        /// <c>x subset 2</c> is not a statement about any <c>x</c>, since <c>2</c> is not a set: the
+        /// predicate is NaN and holds nowhere, so the set it describes is empty -- and
+        /// <c>Solve</c> answers the empty set rather than throwing, which the crash harness
+        /// found it doing when the NaN predicate made the whole set-builder NaN.
+        /// </summary>
+        [Theory]
+        [InlineData("x subset 2")]
+        [InlineData("1/0 = x")]
+        public void APredicateThatIsNaNHoldsNowhere(string statement)
+        {
+            Assert.Equal(Empty, statement.ToEntity().Solve("x"));
+            Assert.Equal(Empty, $"{{ x : {statement} }}".ToEntity().Evaled);
+        }
+
         [Fact]
         public void PrintingAndTheApi()
         {

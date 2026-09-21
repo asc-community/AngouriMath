@@ -88,6 +88,10 @@ namespace AngouriMath
                     return core.Evaled switch
                     {
                         Boolean(false) => Empty,
+                        // A predicate that is not a statement at all -- `x subset 2`, a subset
+                        // of a number -- is NaN, and holds nowhere; left in the set it would
+                        // make the set NaN, and `Solve` then cast a number to a set and threw.
+                        Number { IsNaN: true } => Empty,
                         Boolean(true) when condition != Boolean.True => New(Var, condition),
                         // No set names every value a symbol could take, so a predicate that
                         // holds everywhere is left as written rather than asking for the set of
