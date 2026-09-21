@@ -292,8 +292,25 @@ about `y`. Decided over a finite set by evaluating the body at every member (`fo
 False}`, and over an infinite set by a counterexample (`forall n in ZZ : n^2 <= n^3` is `False` at
 `n = -1`) or by solving where the solver reads the body (`forall x in RR : x^2 >= 0` is `True`,
 `exists x in RR : x^2 + 1 = 0` is `False` and `exists x in CC : x^2 + 1 = 0` is `True`); left as
-written otherwise, never guessed. `not` passes through a quantifier by flipping it: `not forall
-x in S : P` is `exists x in S : not P`. In LaTeX, `\forall x \in S : P`. `forall`, `exists` and
+written otherwise, never guessed. A body that is a `piecewise` — what `sum` and `product` fold to,
+`sum(k, k, 1, n)` being `(n + n^2)/2 provided n >= 0` — is read as the case whose condition holds
+at every member, so `forall n in ZZ+ : sum(k, k, 1, n) = n (n + 1)/2` is `True`. An equation whose
+sides differ by a polynomial that expands to nothing is `True` over any set, where a polynomial is
+read over *atoms*: whatever is not a sum, product, quotient or whole power is one indeterminate,
+a whole shift in an exponent is a factor (`2^(n + 1)` is `2 · 2^n`) and a factorial of a shifted
+argument is the smaller one times the numbers between (`(n + 2)!` is `(n + 2)(n + 1) n!`), so
+`forall n in ZZ+ : (n + 1)! + (n + 1)(n + 1)! = (n + 2)!` is `True`. And **a statement about a sum
+or a product up to `n`, over the whole numbers from some least one, is decided by induction**:
+`forall n in ZZ+ : sum(1/(k (k + 1)), k, 1, n) = n/(n + 1)` is `True` because it holds at `n = 1`
+and, with the sum to `n + 1` unfolded to the sum to `n` plus one term and that sum replaced by
+`n/(n + 1)`, the statement at `n + 1` is an identity; `forall n in ZZ+ /\ [2; +oo) : ...` starts at
+`2`. A difference of quotients is put over one denominator, and the identity is claimed where the
+denominator is not zero: decided over the set for the quantified name (`n + 1` is never `0` on
+`ZZ+`), and stated as a condition for a free parameter (`forall n in ZZ+ : sum(1/(a k (k + 1)), k, 1, n) =
+n/(a (n + 1))` is `True provided not a = 0`). Only the shape with one sum or product
+alone on a side of an equation is read this way; an inequality, or a sum whose closed form has a
+case on a free parameter, is left as written. `not`
+passes through a quantifier by flipping it: `not forall x in S : P` is `exists x in S : not P`. In LaTeX, `\forall x \in S : P`. `forall`, `exists` and
 `exists!` are keywords, so they are not names.
 
 `domain` takes a special set — `CC` `RR` `QQ` `ZZ` `ZZ*` `ZZ+` `BB` — or the keyword `Any`, and

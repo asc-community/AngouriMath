@@ -744,6 +744,29 @@ carried a condition the piecewise read as no value, so the sum was `0` at `n = 0
 | `"sum(binomial(n, k), k, 0, n)".ToEntity().Evaled` | `UnhandledParseException` | `piecewise((2 ^ n) provided (n >= 0), 0 provided True)` |
 | `"sum(n! / (k! (n - k)!) (-1)^k, k, 0, n)".ToEntity().Evaled` | `piecewise(0 provided True)` — wrong at `n = 0` | `piecewise(1 provided (n = 0), 0 provided True)` |
 
+### A statement about a sum up to `n` is decided by induction
+
+`forall n in ZZ+ : sum(f, k, a, n) = g` is proved from the least member of the set: the statement
+there, and the statement at `n + 1` with the sum unfolded by one term and the sum to `n` replaced
+by `g`, decided as an identity. A sum the summation already folds is read through the piecewise
+its closed form comes as, and an identity is read over atoms — `2^n`, `n!`, `(-1)^n`, `sin(x)` —
+with a whole shift in an exponent or a factorial's argument unfolded, and a difference of
+quotients put over one denominator — claimed where that denominator is not zero, which is decided
+over the set for the quantified name and stated as a condition for a free parameter. A statement
+that fails at the least member is `False`; an inequality, or a closed form with a case on a free
+parameter, is left as written
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409), the reference's chapter 5).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"forall n in ZZ+ : sum(k, k, 1, n) = n (n + 1) / 2".ToEntity().Evaled` | `UnhandledParseException` — quantifiers are new since; left as written when they arrived, the body being a `piecewise` | `True` |
+| `"forall n in ZZ+ : sum(1 / (k (k + 1)), k, 1, n) = n / (n + 1)".ToEntity().Evaled` | `UnhandledParseException` | `True`, by induction |
+| `"forall n in ZZ+ : sum(k k!, k, 1, n) = (n + 1)!".ToEntity().Evaled` | `UnhandledParseException` | `False`, at `n = 1` |
+| `"forall n in ZZ+ : (n + 1)! + (n + 1) (n + 1)! = (n + 2)!".ToEntity().Evaled` | `UnhandledParseException` | `True` |
+| `"forall x in RR : (sin(x) + 1)^2 = sin(x)^2 + 2 sin(x) + 1".ToEntity().Evaled` | `UnhandledParseException` | `True` |
+| `"forall n in ZZ+ /\\ [2; +oo) : n = n".ToEntity().Evaled` | `UnhandledParseException` | `True` — the set is known not to be empty |
+| `"forall n in ZZ+ : sum(1 / (a k (k + 1)), k, 1, n) = n / (a (n + 1))".ToEntity().Evaled` | `UnhandledParseException` | `True provided not a = 0` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

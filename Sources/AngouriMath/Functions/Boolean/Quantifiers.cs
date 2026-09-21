@@ -81,10 +81,26 @@ namespace AngouriMath.Functions.Boolean
                 set = new FiniteSet(Entity.Boolean.True, Entity.Boolean.False);
             if (!body.ContainsNode(x))
                 return Closed(kind, set, body);
+            // A piecewise body -- what a closed form comes as, sum(k, k, 1, n) being
+            // (n + n^2)/2 provided n >= 0 -- is the case whose condition holds at every member of
+            // the set, or the next case where a condition holds at none: over ZZ+ the condition
+            // n >= 0 is the membership itself, and the statement is about the closed form.
+            // https://github.com/asc-community/AngouriMath/issues/1409
+            if (body is Piecewise piecewise)
+            {
+                foreach (var @case in piecewise.Cases)
+                {
+                    var holds = @case.Predicate == Entity.Boolean.True ? Entity.Boolean.True : Decide(Kind.All, x, set, @case.Predicate.InnerSimplified(isExact), isExact);
+                    if (holds == Entity.Boolean.True)
+                        return Decide(kind, x, set, @case.Expression.InnerSimplified(isExact), isExact);
+                    if (Decide(Kind.Some, x, set, @case.Predicate.InnerSimplified(isExact), isExact) != Entity.Boolean.False)
+                        break;
+                }
+            }
             // An equation whose two sides differ by a polynomial that expands to nothing holds
             // at every member, whatever the set: (x + 1)^2 = x^2 + 2 x + 1 is True of each.
-            if (body is Equalsf(var left, var right) && IsIdentity(left, right))
-                return Closed(kind, set, Entity.Boolean.True);
+            if (body is Equalsf(var left, var right) && IsIdentity(left, right, x, set, isExact) is { } identity)
+                return Closed(kind, set, Entity.Boolean.True) is Entity.Boolean(true) ? identity : Closed(kind, set, Entity.Boolean.True);
             if (set is FiniteSet finite)
                 return OverFinite(kind, x, finite, body, isExact);
             if (set is SpecialSet integers && IsIntegerSet(integers) && kind != Kind.Unique)
@@ -101,10 +117,111 @@ namespace AngouriMath.Functions.Boolean
                 if (ImpossibleByResidues(kind, x, integers, body) is { } verdict)
                     return verdict;
             }
+            // A statement about a sum or a product up to x, over the whole numbers from some
+            // least one, is proved by induction: it holds at the least member, and holding at
+            // x it holds at x + 1, where the sum to x + 1 is the sum to x and one more term.
+            // The reference's chapter 5. https://github.com/asc-community/AngouriMath/issues/1409
+            if (kind == Kind.All && LeastMember(set) is { } least && ByInduction(x, set, least, body, isExact) is { } byInduction)
+                return byInduction;
             if (Witness(kind, x, set, body, isExact) is { } byWitness)
                 return byWitness;
             return BySolving(kind, x, set, body);
         }
+
+        /// <summary>
+        /// The least member of a set of whole numbers bounded below -- <c>ZZ+</c>, <c>ZZ*</c>,
+        /// either cut by an interval -- or <see langword="null"/> where the set is something else.
+        /// </summary>
+        private static Integer? LeastMember(Set set)
+        {
+            switch (set)
+            {
+                case SpecialSet special:
+                    return special.ToDomain() switch
+                    {
+                        Domain.PositiveInteger => Integer.One,
+                        Domain.NonNegativeInteger => Integer.Zero,
+                        _ => null,
+                    };
+                case Intersectionf(Set left, Set right):
+                    {
+                        var (integers, cut) = (left, right) switch
+                        {
+                            (SpecialSet whole, Interval interval) when IsIntegerSet(whole) => (whole, interval),
+                            (Interval interval, SpecialSet whole) when IsIntegerSet(whole) => (whole, interval),
+                            _ => (null, null),
+                        };
+                        if (integers is null || cut is null || cut.Left.Evaled is not Real { IsFinite: true } low)
+                            return null;
+                        var floor = low.EDecimal.RoundToExponent(0, ERounding.Floor).ToEInteger();
+                        // The first whole number at or after the end: the end itself when it
+                        // is whole and included, the next one otherwise.
+                        var first = Integer.Create(low.EDecimal.IsInteger() && cut.LeftClosed ? floor : floor + 1);
+                        var own = LeastMember(integers);
+                        return own is not null && own > first ? own : first;
+                    }
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// <c>forall x in S : sum(f, k, a, x) = g</c> by induction from the least member of
+        /// <c>S</c>: the statement at that member evaluates to <see langword="true"/>, and the
+        /// statement at <c>x + 1</c>, with the sum to <c>x + 1</c> unfolded to the sum to <c>x</c>
+        /// plus <c>f(x + 1)</c> and that sum then replaced by <c>g</c> -- the hypothesis -- holds
+        /// at every member. A product unfolds with a factor. Only the shape with one sum or
+        /// product, standing alone on a side of the equation, is read; a statement that fails at
+        /// the least member is <see langword="false"/>.
+        /// </summary>
+        private static Entity? ByInduction(Variable x, Set set, Integer least, Entity body, bool isExact)
+        {
+            if (body is not Equalsf(var left, var right))
+                return null;
+            var (accumulated, closed) = (left, right) switch
+            {
+                (Summationf or Productf, _) when !right.ContainsNode(left) => (left, right),
+                (_, Summationf or Productf) when !left.ContainsNode(right) => (right, left),
+                _ => (null, null),
+            };
+            if (accumulated is null || closed is null)
+                return null;
+            var (term, index, from, to) = accumulated switch
+            {
+                Summationf sum => (sum.Expression, sum.Var, sum.From, sum.To),
+                Productf product => (product.Expression, product.Var, product.From, product.To),
+                _ => throw new AngouriBugException("A sum or a product was matched above"),
+            };
+            if (to != x || from.ContainsNode(x) || term.ContainsNode(x) || index is not Variable k)
+                return null;
+            var atLeast = body.Substitute(x, least).InnerSimplified(isExact);
+            if (atLeast is Equalsf(var l, var r) && IsIdentity(l, r, x, set, isExact) is { } identity)
+                atLeast = identity;
+            if (atLeast == Entity.Boolean.False)
+                return Entity.Boolean.False;
+            if (Truth(atLeast) is not { } baseCondition)
+                return null;
+            var next = x + Integer.One;
+            var oneMore = term.Substitute(k, next);
+            var unfolded = accumulated is Summationf ? closed + oneMore : closed * oneMore;
+            var step = new Equalsf(unfolded, closed.Substitute(x, next)).InnerSimplified(isExact);
+            if (Truth(Decide(Kind.All, x, set, step, isExact)) is not { } stepCondition)
+                return null;
+            return Entity.Boolean.True.Provided((baseCondition & stepCondition).InnerSimplified(isExact));
+        }
+
+        /// <summary>
+        /// The condition under which a decision is <see langword="true"/> -- <c>True</c> for
+        /// <c>True</c> itself, the predicate for <c>True provided P</c> -- or
+        /// <see langword="null"/> for anything else.
+        /// </summary>
+        private static Entity? Truth(Entity? decision)
+            => decision switch
+            {
+                Entity.Boolean(true) => Entity.Boolean.True,
+                Providedf(Entity.Boolean(true), var predicate) => predicate,
+                _ => null,
+            };
 
         private static bool IsIntegerSet(SpecialSet set)
             => set.ToDomain() is Domain.Integer or Domain.NonNegativeInteger or Domain.PositiveInteger;
@@ -248,20 +365,145 @@ namespace AngouriMath.Functions.Boolean
         }
 
         /// <summary>Whether two sides are the same polynomial, read by expansion.</summary>
-        private static bool IsIdentity(Entity left, Entity right)
+        /// <summary>
+        /// <c>True</c> where the two sides differ by a polynomial that expands to nothing,
+        /// <c>True provided P</c> where they do once quotients are put over one denominator
+        /// and <c>P</c> says the denominator's factors in the free names are not zero, and
+        /// <see langword="null"/> otherwise. A factor in the quantified name has to be decided
+        /// non-zero over the set, or the identity is not claimed.
+        /// </summary>
+        private static Entity? IsIdentity(Entity left, Entity right, Variable x, Set set, bool isExact)
         {
             var difference = (left - right).InnerSimplified;
             if (difference is Integer { IsZero: true })
-                return true;
+                return Entity.Boolean.True;
             if (difference.Complexity > LargestDifferenceRead)
-                return false;
-            var variables = difference.Vars.OrderBy(v => v.Name, System.StringComparer.Ordinal).ToArray();
+                return null;
+            // Whatever is not a polynomial connective -- 2^(n + 1), n!, sin(x) -- is an atom the
+            // polynomial is over: -(1 - 2^(n + 1)) = 2^(n + 1) - 1 is p - p in one atom, and a
+            // polynomial that is zero in its atoms is zero at every value of them.
+            var atoms = new Dictionary<Entity, Variable>();
+            difference = Atomized(difference, atoms, FactorialsUnfolded(difference));
+            Entity condition = Entity.Boolean.True;
+            if (difference.Nodes.Any(node => node is Divf))
+            {
+                // A difference of quotients is zero where its numerator over the common
+                // denominator is, and where that denominator is not: n/(n + 1) + 1/((n + 1)(n + 2))
+                // = (n + 1)/(n + 2) at every whole n >= 1, and sum(k x^k, k, 1, n)'s closed form
+                // over (1 - x)^2 holds provided x != 1.
+                var (numerator, denominator) = SingleQuotient.Of(difference);
+                foreach (var factor in Mulf.LinearChildren(denominator).Distinct())
+                {
+                    var written = factor;
+                    foreach (var pair in atoms)
+                        written = written.Substitute(pair.Value, pair.Key);
+                    if (written.Evaled is Number)
+                        continue;
+                    if (written.ContainsNode(x))
+                    {
+                        if (Decide(Kind.Some, x, set, new Equalsf(written, Integer.Zero).InnerSimplified(isExact), isExact) is not Entity.Boolean(false))
+                            return null;
+                        continue;
+                    }
+                    condition &= new Notf(new Equalsf(written, Integer.Zero));
+                }
+                difference = numerator;
+            }
+            if (!IsZeroPolynomial(difference))
+                return null;
+            var simplified = condition.InnerSimplified(isExact);
+            return simplified == Entity.Boolean.True ? Entity.Boolean.True : Entity.Boolean.True.Provided(simplified);
+        }
+
+        private static bool IsZeroPolynomial(Entity expr)
+        {
+            var variables = expr.Vars.OrderBy(v => v.Name, System.StringComparer.Ordinal).ToArray();
             if (variables.Length == 0 || variables.Length > MultivariatePolynomial.MaxVariables)
                 return false;
             var indices = new Dictionary<Variable, int>();
             for (var i = 0; i < variables.Length; i++)
                 indices[variables[i]] = i;
-            return MultivariatePolynomial.TryParse(difference, indices) is { IsZero: true };
+            return MultivariatePolynomial.TryParse(expr, indices) is { IsZero: true };
+        }
+
+        /// <summary>The whole number by which <paramref name="left"/> exceeds <paramref name="right"/> identically, or <see langword="null"/>.</summary>
+        private static Integer? WholeGap(Entity left, Entity right)
+        {
+            var difference = (left - right).InnerSimplified;
+            if (difference is Integer whole)
+                return whole;
+            var atOrigin = difference;
+            foreach (var v in difference.Vars)
+                atOrigin = atOrigin.Substitute(v, Integer.Zero);
+            return atOrigin.Evaled is Integer gap && IsZeroPolynomial(difference - gap) ? gap : null;
+        }
+
+        /// <summary>
+        /// Each factorial whose argument is a smaller factorial's argument plus a whole number,
+        /// as that factorial times the numbers in between: <c>(n + 2)!</c> beside <c>n!</c> is
+        /// <c>(n + 2) (n + 1) n!</c>, so that the two are one atom rather than two.
+        /// </summary>
+        private static Dictionary<Entity, Entity> FactorialsUnfolded(Entity expr)
+        {
+            var unfolded = new Dictionary<Entity, Entity>();
+            var factorials = expr.Nodes.OfType<Factorialf>().Distinct().ToList();
+            foreach (var factorial in factorials)
+            {
+                Factorialf @base = factorial;
+                foreach (var other in factorials)
+                    if (WholeGap(@base.Argument, other.Argument) is { IsNegative: false, IsZero: false } gap && gap.EInteger.CompareTo(EInteger.FromInt32(LargestFactorialGap)) <= 0)
+                        @base = other;
+                if (ReferenceEquals(@base, factorial) || WholeGap(factorial.Argument, @base.Argument) is not { } distance)
+                    continue;
+                Entity product = @base;
+                for (var j = 1; j <= distance.EInteger.ToInt32Checked(); j++)
+                    product *= @base.Argument + Integer.Create(j);
+                unfolded[factorial] = product;
+            }
+            return unfolded;
+        }
+
+        private const int LargestFactorialGap = 16;
+
+        /// <summary>
+        /// The expression with every maximal subterm that is not a sum, a difference, a product,
+        /// a whole power or a division replaced by one variable per distinct subterm.
+        /// </summary>
+        private static Entity Atomized(Entity expr, Dictionary<Entity, Variable> atoms, Dictionary<Entity, Entity> unfolded)
+        {
+            switch (expr)
+            {
+                case Number or Variable:
+                    return expr;
+                case Sumf(var a, var b):
+                    return Atomized(a, atoms, unfolded) + Atomized(b, atoms, unfolded);
+                case Minusf(var a, var b):
+                    return Atomized(a, atoms, unfolded) - Atomized(b, atoms, unfolded);
+                case Mulf(var a, var b):
+                    return Atomized(a, atoms, unfolded) * Atomized(b, atoms, unfolded);
+                case Divf(var a, var b):
+                    return Atomized(a, atoms, unfolded) / Atomized(b, atoms, unfolded);
+                case Powf(var a, Integer n):
+                    return n.IsNegative ? Integer.One / Atomized(a, atoms, unfolded).Pow(-n) : Atomized(a, atoms, unfolded).Pow(n);
+                case Factorialf when unfolded.TryGetValue(expr, out var product):
+                    return Atomized(product, atoms, unfolded);
+                // A power whose exponent carries a whole term, 2^(n + 1), is the power without
+                // it times a number, 2 * 2^n, so that it is the atom 2^n is.
+                case Powf(var a, var e) when Sumf.LinearChildren(e).Any(t => t.Evaled is Integer):
+                    {
+                        var shift = Sumf.LinearChildren(e).Select(t => t.Evaled).OfType<Integer>().Aggregate((Integer)Integer.Zero, (acc, t) => (Integer)(acc + t));
+                        var rest = Sumf.LinearChildren(e).Where(t => t.Evaled is not Integer).Aggregate((Entity)Integer.Zero, (acc, t) => acc + t).InnerSimplified;
+                        var scaled = shift.IsNegative ? Integer.One / Atomized(a, atoms, unfolded).Pow(-shift) : Atomized(a, atoms, unfolded).Pow(shift);
+                        return Atomized(a.Pow(rest), atoms, unfolded) * scaled;
+                    }
+                // And a whole multiple in the exponent is a whole power of the atom: x^(2 n) is (x^n)^2.
+                case Powf(var a, Mulf(Integer { IsNegative: false, IsZero: false } times, var r)):
+                    return Atomized(a.Pow(r), atoms, unfolded).Pow(times);
+                default:
+                    if (!atoms.TryGetValue(expr, out var atom))
+                        atoms[expr] = atom = Variable.CreateUnique(expr, "atom_" + atoms.Count);
+                    return atom;
+            }
         }
 
         private const int LargestDifferenceRead = 2048;
@@ -281,6 +523,12 @@ namespace AngouriMath.Functions.Boolean
                 Interval interval => interval.IsNumeric && interval.Left.Evaled is Real from && interval.Right.Evaled is Real to
                     && (Compare(from, to) > 0 || Compare(from, to) == 0 && !(interval.LeftClosed && interval.RightClosed)),
                 SpecialSet => false,
+                // The whole numbers from some least one, cut by an interval: empty exactly
+                // when the interval ends before the least one.
+                Intersectionf intersection when LeastMember(intersection) is { } least
+                    => (intersection.Left as Interval ?? intersection.Right as Interval) is { } cut
+                        ? cut.Right.Evaled is Real to && (Compare(least, to) > 0 || Compare(least, to) == 0 && !cut.RightClosed)
+                        : (bool?)null,
                 _ => (bool?)null,
             };
             return (kind, empty) switch
