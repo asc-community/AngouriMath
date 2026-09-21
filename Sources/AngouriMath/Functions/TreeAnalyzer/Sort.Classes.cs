@@ -432,6 +432,12 @@ namespace AngouriMath
                 private protected override string SortHashName(SortLevel level)
                     => level == SortLevel.LOW_LEVEL ? "powerset_" : "";
             }
+
+            partial record IndexedSetOperation
+            {
+                private protected override string SortHashName(SortLevel level)
+                    => level == SortLevel.LOW_LEVEL ? "indexed" + Keyword + "_" : "";
+            }
         }
 
         partial record Phif

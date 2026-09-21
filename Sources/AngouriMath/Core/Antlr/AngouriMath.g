@@ -550,6 +550,9 @@ atom returns[Entity value]
     | 'phi(' args = function_arguments ')' { Assert("phi", 1, $args.list.Count); $value = MathS.NumberTheory.Phi($args.list[0]); }
     | 'card(' args = function_arguments ')' { Assert("card", 1, $args.list.Count); $value = MathS.Sets.Card($args.list[0]); }
     | 'powerset(' args = function_arguments ')' { Assert("powerset", 1, $args.list.Count); $value = MathS.Sets.PowerSet($args.list[0]); }
+    | 'union(' args = function_arguments ')' { Assert("union", 2, $args.list.Count); $value = $args.list[1] is Entity.Set.Inf { Element: Variable } unionRange ? MathS.Sets.IndexedUnion($args.list[0], unionRange.Element, unionRange.SupSet) : throw new InvalidArgumentParseException("union expects its second argument to say which name ranges over which set, as in union(A_i, i in I)"); }
+    | 'intersection(' args = function_arguments ')' { Assert("intersection", 2, $args.list.Count); $value = $args.list[1] is Entity.Set.Inf { Element: Variable } intersectionRange ? MathS.Sets.IndexedIntersection($args.list[0], intersectionRange.Element, intersectionRange.SupSet) : throw new InvalidArgumentParseException("intersection expects its second argument to say which name ranges over which set, as in intersection(A_i, i in I)"); }
+    | 'complement(' args = function_arguments ')' { Assert("complement", 2, $args.list.Count); $value = MathS.Sets.Complement($args.list[0], $args.list[1]); }
     | 'floor(' args = function_arguments ')' { Assert("floor", 1, $args.list.Count); $value = MathS.Floor($args.list[0]); }
     | 'ceil(' args = function_arguments ')' { Assert("ceil", 1, $args.list.Count); $value = MathS.Ceil($args.list[0]); }
     /* SymPy's spelling, accepted so that an expression copied from there parses. Stringize

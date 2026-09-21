@@ -169,6 +169,28 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
             }
+
+            partial record IndexedSetOperation
+            {
+                /// <inheritdoc/>
+                private protected override string StringizeNode()
+                    => $"{Keyword}({Body.Stringize()}, {Var.Stringize()} in {Over.Stringize(Over.Priority < Priority.SetOperation)})";
+            }
+
+            // ToString on each sealed record rather than on the base: a record's generated
+            // PrintMembers calls ToString on its members, and an override on the base is what
+            // the generated one calls back into.
+            partial record IndexedUnionf
+            {
+                /// <inheritdoc/>
+                public override string ToString() => Stringize();
+            }
+
+            partial record IndexedIntersectionf
+            {
+                /// <inheritdoc/>
+                public override string ToString() => Stringize();
+            }
         }
 
         

@@ -140,6 +140,8 @@ namespace AngouriMath
                             (SpecialSet specialLeft, SpecialSet specialRight) => SetOperators.IntersectSpecialSets(specialLeft, specialRight),
                             (ConditionalSet cset, Interval interval) => SetOperators.IntersectCSetAndInterval(cset, interval),
                             (Interval interval, ConditionalSet cset) => SetOperators.IntersectCSetAndInterval(cset, interval),
+                            (SpecialSet special, Interval interval) => SetOperators.IntersectSpecialSetAndInterval(special, interval),
+                            (Interval interval, SpecialSet special) => SetOperators.IntersectSpecialSetAndInterval(special, interval),
                             // A /\ [a; +oo) /\ (-oo; b] groups to the left, so the two intervals never
                             // meet each other: regrouped, they do, and A meets one bounded interval.
                             (Intersectionf(var rest, Interval one), Interval another)
@@ -164,6 +166,32 @@ namespace AngouriMath
                             _ => null
                         },
                         (@this, a, b) => ((SetMinusf)@this).New(a, b), isExact, propagateSet: false);
+            }
+
+            partial record IndexedSetOperation
+            {
+                private protected override Entity IntrinsicCondition => Boolean.True;
+                /// <inheritdoc/>
+                // Folded over a listed index set, largest first so that a chain of unions
+                // combines as it goes; over anything else the family stays a family.
+                protected override Entity InnerSimplify(bool isExact)
+                {
+                    var over = Over.InnerSimplified(isExact);
+                    var body = Body.InnerSimplified(isExact);
+                    if (over is FiniteSet indices)
+                    {
+                        if (indices.Count == 0)
+                            return this is IndexedUnionf ? Set.Empty : New(Var, over, body);
+                        Entity? folded = null;
+                        foreach (var index in indices)
+                        {
+                            var member = body.Substitute(Var, index);
+                            folded = folded is null ? member : this is IndexedUnionf ? folded.Unite(member) : folded.Intersect(member);
+                        }
+                        return folded!.InnerSimplified(isExact);
+                    }
+                    return New(Var, over, body);
+                }
             }
 
             partial record Powersetf

@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using System.Linq;
 using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
@@ -121,6 +122,16 @@ namespace AngouriMath
             {
                 internal override string ToSymPy()
                     => $"({Sub.ToSymPy()}).is_subset({Super.ToSymPy()})";
+            }
+
+            partial record IndexedSetOperation
+            {
+                // SymPy's Union and Intersection take the sets listed; a family over a set
+                // it cannot list has no translation.
+                internal override string ToSymPy()
+                    => Over is FiniteSet listed
+                        ? $"sympy.{(this is IndexedUnionf ? "Union" : "Intersection")}({string.Join(", ", listed.Select(index => Body.Substitute(Var, index).ToSymPy()))})"
+                        : throw new NotSufficientlySupportedException("SymPy lists the sets a union or an intersection is over, and this family is over a set that is not listed");
             }
 
             partial record Powersetf

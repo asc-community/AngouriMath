@@ -6262,6 +6262,36 @@ namespace AngouriMath
             /// </example>
             public static Entity Subset(Entity sub, Entity super) => new Subsetf(sub, super);
 
+            /// <summary>
+            /// The union of a family of sets indexed by <paramref name="var"/> ranging over
+            /// <paramref name="over"/>: <c>union(A_i, i in I)</c>, the set of what is in some
+            /// <c>A_i</c>. Folded over a listed index set; a membership object otherwise.
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine("union({k, 2 k}, k in {1, 2, 3})".ToEntity().Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// { 1, 2, 4, 3, 6 }
+            /// </code>
+            /// </example>
+            public static Set IndexedUnion(Entity body, Entity var, Entity over) => new IndexedUnionf(var, over, body);
+
+            /// <summary>
+            /// The intersection of a family of sets indexed by <paramref name="var"/> ranging
+            /// over <paramref name="over"/>: <c>intersection(A_i, i in I)</c>, the set of what
+            /// is in every <c>A_i</c>.
+            /// </summary>
+            public static Set IndexedIntersection(Entity body, Entity var, Entity over) => new IndexedIntersectionf(var, over, body);
+
+            /// <summary>
+            /// The complement of <paramref name="set"/> relative to the universe
+            /// <paramref name="universe"/>, which is <c>universe \ set</c>: a complement is
+            /// always relative to a universe, there being no set of everything.
+            /// </summary>
+            public static Set Complement(Entity set, Entity universe) => universe.SetSubtract(set);
+
             /// <returns>A set of all Complexes/>s</returns>
             public static Set C => SpecialSet.Create(Domain.Complex);
 

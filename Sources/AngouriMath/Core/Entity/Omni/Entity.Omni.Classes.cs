@@ -978,6 +978,91 @@ namespace AngouriMath
                     => new ConditionalSet(over, over.In(this) & predicate);
             }
             #endregion
+
+            #region Indexed union and intersection
+            /// <summary>
+            /// A union or an intersection of a family of sets indexed by a name ranging over a
+            /// set: <c>union(A_i, i in I)</c> is <c>⋃_{i ∈ I} A_i</c>, the set of what is in some
+            /// <c>A_i</c>, and <c>intersection(A_i, i in I)</c> is <c>⋂_{i ∈ I} A_i</c>, what is in
+            /// every one. A binder, like a quantifier: the name is bound throughout the body and
+            /// the index set. Folded to the binary operators over a listed index set -- the
+            /// reference's <c>⋃_{i=1}^{10} {i, 2i}</c> is <c>union({i, 2 i}, i in ZZ+ /\ [1; 10])</c>
+            /// -- and an object that answers membership through the quantifiers otherwise:
+            /// <c>x in union(A_i, i in I)</c> is <c>exists i in I : x in A_i</c>.
+            /// https://github.com/asc-community/AngouriMath/issues/1409
+            /// </summary>
+            public abstract partial record IndexedSetOperation(Entity Var, Entity Over, Entity Body) : Set
+            {
+                /// <summary>The name this operation binds.</summary>
+                public Entity Var { get; init; } = Binding.Of(Var).Name;
+
+                /// <summary>The index set the bound name ranges over.</summary>
+                public Entity Over { get; init; } = Binding.Of(Var).In(Over);
+
+                /// <summary>The set indexed by the bound name.</summary>
+                public Entity Body { get; init; } = Binding.Of(Var).In(Body);
+
+                internal override Priority Priority => Priority.Func;
+
+                /// <summary>The same operation over another name, index set and body.</summary>
+                internal abstract IndexedSetOperation New(Entity var, Entity over, Entity body);
+
+                /// <summary>The function this operation is written as: <c>union</c> or <c>intersection</c>.</summary>
+                internal abstract string Keyword { get; }
+
+                /// <summary>Whether <paramref name="element"/> is in the family's set for <b>some</b> index (a union) or <b>every</b> index (an intersection).</summary>
+                private protected abstract Entity Membership(Entity element);
+
+                /// <inheritdoc/>
+                public override Entity Replace(Func<Entity, Entity> func)
+                    => func(New(Var, Over.Replace(func), Body.Replace(func)));
+
+                /// <inheritdoc/>
+                protected override Entity[] InitDirectChildren() => new[] { Var, Over, Body };
+
+                /// <inheritdoc/>
+                public override bool TryContains(Entity entity, out bool contains)
+                {
+                    contains = false;
+                    if (entity.ContainsNode(Var))
+                        return false;
+                    if (Membership(entity).InnerSimplified is Boolean verdict)
+                    {
+                        contains = verdict == Boolean.True;
+                        return true;
+                    }
+                    return false;
+                }
+
+                /// <inheritdoc/>
+                public override bool IsSetFinite => false;
+
+                /// <inheritdoc/>
+                public override bool IsSetEmpty => false;
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over)
+                    => new ConditionalSet(over, over.In(this) & predicate);
+            }
+
+            /// <summary><c>union(A_i, i in I)</c>: the members of some <c>A_i</c>. See <see cref="IndexedSetOperation"/>.</summary>
+            public sealed partial record IndexedUnionf(Entity Var, Entity Over, Entity Body) : IndexedSetOperation(Var, Over, Body)
+            {
+                internal override IndexedSetOperation New(Entity var, Entity over, Entity body)
+                    => ReferenceEquals(Var, var) && ReferenceEquals(Over, over) && ReferenceEquals(Body, body) ? this : new IndexedUnionf(var, over, body);
+                internal override string Keyword => "union";
+                private protected override Entity Membership(Entity element) => new Existsf(Var, Over, element.In(Body));
+            }
+
+            /// <summary><c>intersection(A_i, i in I)</c>: the members of every <c>A_i</c>. See <see cref="IndexedSetOperation"/>.</summary>
+            public sealed partial record IndexedIntersectionf(Entity Var, Entity Over, Entity Body) : IndexedSetOperation(Var, Over, Body)
+            {
+                internal override IndexedSetOperation New(Entity var, Entity over, Entity body)
+                    => ReferenceEquals(Var, var) && ReferenceEquals(Over, over) && ReferenceEquals(Body, body) ? this : new IndexedIntersectionf(var, over, body);
+                internal override string Keyword => "intersection";
+                private protected override Entity Membership(Entity element) => new Forallf(Var, Over, element.In(Body));
+            }
+            #endregion
         }
 
         /// <summary>
