@@ -767,9 +767,12 @@ by `g`, decided as an identity. A sum the summation already folds is read throug
 its closed form comes as, and an identity is read over atoms — `2^n`, `n!`, `(-1)^n`, `sin(x)` —
 with a whole shift in an exponent or a factorial's argument unfolded, and a difference of
 quotients put over one denominator — claimed where that denominator is not zero, which is decided
-over the set for the quantified name and stated as a condition for a free parameter. A statement
-that fails at the least member is `False`; an inequality, or a closed form with a case on a free
-parameter, is left as written
+over the set for the quantified name and stated as a condition for a free parameter. An
+inequality with an exponential or a factorial is decided by induction as well, the step read off
+a multiple of the hypothesis (`P(n + 1) = c P(n) + D` with `c >= 0` and `D >= 0` by a sign
+calculus), and the whole numbers from `m` are read as `ZZ*` shifted by `m`. A statement that
+fails at the least member is `False`; a closed form with a case on a free parameter is left as
+written
 ([#1409](https://github.com/asc-community/AngouriMath/issues/1409), the reference's chapter 5).
 
 | Input | Was (2.5.0) | Now |
@@ -781,6 +784,9 @@ parameter, is left as written
 | `"forall x in RR : (sin(x) + 1)^2 = sin(x)^2 + 2 sin(x) + 1".ToEntity().Evaled` | `UnhandledParseException` | `True` |
 | `"forall n in ZZ+ /\\ [2; +oo) : n = n".ToEntity().Evaled` | `UnhandledParseException` | `True` — the set is known not to be empty |
 | `"forall n in ZZ+ : sum(1 / (a k (k + 1)), k, 1, n) = n / (a (n + 1))".ToEntity().Evaled` | `UnhandledParseException` | `True provided not a = 0` |
+| `"forall n in ZZ+ /\\ [5; +oo) : 2^n > n^2".ToEntity().Evaled` | `UnhandledParseException` | `True` |
+| `"forall n in ZZ+ : n! >= 2^(n - 1)".ToEntity().Evaled` | `UnhandledParseException` | `True` |
+| `"forall n in ZZ+ /\\ [4; +oo) : n^2 - 2 n - 1 > 0".ToEntity().Evaled` | `UnhandledParseException` | `True` — decided about `4 + t` over `ZZ*` |
 
 ### `binomial(n, k)` is a function
 

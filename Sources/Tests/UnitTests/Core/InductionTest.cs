@@ -83,12 +83,47 @@ namespace AngouriMath.Tests.Core
             => Assert.Equal(Entity.Boolean.False, statement.ToEntity().Evaled);
 
         [Theory]
+        // An inequality with an exponential or a factorial, by induction with the step read off
+        // a multiple of the hypothesis: P(n + 1) = c P(n) + D with c >= 0 and D >= 0 keeps
+        // P >= 0. Ex 5.3.2, §5.3.4 Try 4, Prob 5.7.2, 5.7.8-9, 5.7.12 of the reference, each
+        // from the threshold the book names; the whole numbers from m are ZZ* shifted by m.
+        [InlineData("forall n in ZZ+ /\\ [5; +oo) : 2^n > n^2", "True")]
+        [InlineData("forall n in ZZ+ /\\ [4; +oo) : 2^n > n^2", "False")]
+        [InlineData("forall n in ZZ+ /\\ [6; +oo) : n^3 < 3^(n - 1)", "True")]
+        [InlineData("forall n in ZZ+ /\\ [8; +oo) : 3^n > n^4", "True")]
+        [InlineData("forall n in ZZ+ /\\ [5; +oo) : 4^n > n^4", "True")]
+        [InlineData("forall n in ZZ+ /\\ [4; +oo) : n! > 2^n", "True")]
+        [InlineData("forall n in ZZ+ /\\ [7; +oo) : n! > 3^n", "True")]
+        [InlineData("forall n in ZZ+ /\\ [12; +oo) : n! > 5^n", "True")]
+        [InlineData("forall n in ZZ+ : n! >= 2^(n - 1)", "True")]
+        [InlineData("forall n in ZZ+ : 7^n + 7 < 7^(n + 1)", "True")]
+        [InlineData("forall n in ZZ+ : 3^n + 3 < 3^(n + 1)", "True")]
+        [InlineData("forall n in ZZ+ : 2^n + 2 < 2^(n + 1)", "False")]
+        [InlineData("forall n in ZZ+ : 2^n >= n + 1", "True")]
+        [InlineData("forall n in ZZ* : 2^n >= n + 1", "True")]
+        [InlineData("forall n in ZZ+ : 2^n >= 2 n + 1", "False")]
+        [InlineData("forall n in ZZ+ /\\ [3; +oo) : 2^n >= 2 n + 1", "True")]
+        [InlineData("forall n in ZZ+ /\\ [2; +oo) : 3^n >= 2^(n + 1)", "True")]
+        [InlineData("forall n in ZZ+ : 3^n >= 2^(n + 1)", "False")]
+        // The sign calculus on its own, and the shift reaching the other routes.
+        [InlineData("forall n in ZZ+ : 2^(n + 1) > 0", "True")]
+        [InlineData("forall n in ZZ+ : n! > 0", "True")]
+        [InlineData("forall n in ZZ+ /\\ [4; +oo) : n^2 - 2 n - 1 > 0", "True")]
+        [InlineData("forall n in ZZ+ /\\ [2; +oo) : 8 divides (2 n + 1)^2 - 1", "True")]
+        [InlineData("exists n in ZZ+ /\\ [2; +oo) : n^2 = 9", "True")]
+        [InlineData("forall n in ZZ+ /\\ [4; +oo) : sum(1 / (k (k + 1)), k, 1, n) = n / (n + 1)", "True")]
+        public void AnInequalityByInduction(string statement, string expected)
+            => Assert.Equal(expected.ToEntity(), statement.ToEntity().Evaled);
+
+        [Theory]
         // Not decided: a closed form with a case on a free parameter (q = 1 has its own), a wrong
-        // closed form with a free parameter, an inequality, and a term the induction cannot unfold.
+        // closed form with a free parameter, an inequality whose step is not a multiple of the
+        // hypothesis plus something of known sign, and a term the induction cannot unfold.
         [InlineData("forall n in ZZ+ : sum(q^k, k, 0, n - 1) = (q^n - 1) / (q - 1)")]
         [InlineData("forall n in ZZ+ : sum(k x^k, k, 1, n) = x (1 - (n + 1) x^n + n x^(n + 1)) / (1 - x)")]
         [InlineData("forall n in ZZ+ : sum(1 / k^2, k, 1, n) <= 2 - 1 / n")]
         [InlineData("forall n in ZZ+ : sum(1 / sqrt(k), k, 1, n) >= sqrt(n)")]
+        [InlineData("forall n in ZZ+ : 2^n >= n^2 - 3 n + 3")]
         // A denominator that is zero at a member: the identity is not claimed there.
         [InlineData("forall x in RR : x / (x - 1) - 1 / (x - 1) = 1")]
         [InlineData("forall n in ZZ : n / (n + 1) + 1 / ((n + 1) (n + 2)) = (n + 1) / (n + 2)")]

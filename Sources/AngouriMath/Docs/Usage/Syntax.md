@@ -308,8 +308,16 @@ and, with the sum to `n + 1` unfolded to the sum to `n` plus one term and that s
 denominator is not zero: decided over the set for the quantified name (`n + 1` is never `0` on
 `ZZ+`), and stated as a condition for a free parameter (`forall n in ZZ+ : sum(1/(a k (k + 1)), k, 1, n) =
 n/(a (n + 1))` is `True provided not a = 0`). Only the shape with one sum or product
-alone on a side of an equation is read this way; an inequality, or a sum whose closed form has a
-case on a free parameter, is left as written. `not`
+alone on a side of an equation is read this way; a sum whose closed form has a case on a free
+parameter is left as written. **An inequality with an exponential or a factorial in `n`** is
+decided by induction too, with the step read off a multiple of the hypothesis: writing it as
+`P(n) >= 0`, `P(n + 1) = c P(n) + D` for a `c >= 0` (one, the base of an exponential, `n + 1`
+beside a factorial) and a `D` whose sign is read from its shape — a positive base to any power, a
+factorial, a polynomial in `n` decided over the set, sums and products of these — so `forall n in
+ZZ+ /\ [5; +oo) : 2^n > n^2` is `True` (`2^(n + 1) - 2 · 2^n` leaves `n^2 - 2 n - 1`, positive
+from `5`), `forall n in ZZ+ /\ [4; +oo) : 2^n > n^2` is `False` at `4`, and `forall n in ZZ+ :
+n! >= 2^(n - 1)` is `True`. The whole numbers from `m` are `ZZ*` shifted by `m`, so a statement
+over `ZZ+ /\ [4; +oo)` is decided as one about `4 + t` over `ZZ*`, whichever route reads it. `not`
 passes through a quantifier by flipping it: `not forall x in S : P` is `exists x in S : not P`. In LaTeX, `\forall x \in S : P`. `forall`, `exists` and
 `exists!` are keywords, so they are not names.
 

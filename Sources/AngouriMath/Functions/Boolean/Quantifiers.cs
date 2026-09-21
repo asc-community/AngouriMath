@@ -81,6 +81,13 @@ namespace AngouriMath.Functions.Boolean
                 set = new FiniteSet(Entity.Boolean.True, Entity.Boolean.False);
             if (!body.ContainsNode(x))
                 return Closed(kind, set, body);
+            // The whole numbers from m are ZZ* shifted by m, so a statement over ZZ+ /\ [4; +oo)
+            // is the statement about 4 + t over ZZ*, where every route below reads the set.
+            if (set is Intersectionf cut && LeastMember(cut) is { } start && IsUnboundedAbove(cut))
+            {
+                var t = Variable.CreateUnique(body + start, "t");
+                return Decide(kind, t, MathS.Sets.NonNegativeIntegers, body.Substitute(x, start + t).InnerSimplified(isExact), isExact);
+            }
             // A piecewise body -- what a closed form comes as, sum(k, k, 1, n) being
             // (n + n^2)/2 provided n >= 0 -- is the case whose condition holds at every member of
             // the set, or the next case where a condition holds at none: over ZZ+ the condition
@@ -135,6 +142,11 @@ namespace AngouriMath.Functions.Boolean
             // The reference's chapter 5. https://github.com/asc-community/AngouriMath/issues/1409
             if (kind == Kind.All && LeastMember(set) is { } least && ByInduction(x, set, least, body, isExact) is { } byInduction)
                 return byInduction;
+            // And an inequality with an exponential or a factorial in x, by induction with the
+            // step read off a multiple of the hypothesis: P(x + 1) = c P(x) + D with c >= 0 and
+            // D >= 0 keeps P >= 0 (Ex 5.3.2, Prob 5.7.2, 5.7.8 of the reference).
+            if (kind == Kind.All && LeastMember(set) is { } first && ByInductionOnAnInequality(x, set, first, body, isExact) is { } byGrowth)
+                return byGrowth;
             if (Witness(kind, x, set, body, isExact) is { } byWitness)
                 return byWitness;
             return BySolving(kind, x, set, body);
@@ -204,7 +216,8 @@ namespace AngouriMath.Functions.Boolean
                 Productf product => (product.Expression, product.Var, product.From, product.To),
                 _ => throw new AngouriBugException("A sum or a product was matched above"),
             };
-            if (to != x || from.ContainsNode(x) || term.ContainsNode(x) || index is not Variable k)
+            // The upper bound is x, or x plus a whole number after a shift of the set.
+            if (WholeGap(to, x) is null || from.ContainsNode(x) || term.ContainsNode(x) || index is not Variable k)
                 return null;
             var atLeast = body.Substitute(x, least).InnerSimplified(isExact);
             if (atLeast is Equalsf(var l, var r) && IsIdentity(l, r, x, set, isExact) is { } identity)
@@ -214,12 +227,212 @@ namespace AngouriMath.Functions.Boolean
             if (Truth(atLeast) is not { } baseCondition)
                 return null;
             var next = x + Integer.One;
-            var oneMore = term.Substitute(k, next);
+            var oneMore = term.Substitute(k, to.Substitute(x, next));
             var unfolded = accumulated is Summationf ? closed + oneMore : closed * oneMore;
             var step = new Equalsf(unfolded, closed.Substitute(x, next)).InnerSimplified(isExact);
             if (Truth(Decide(Kind.All, x, set, step, isExact)) is not { } stepCondition)
                 return null;
             return Entity.Boolean.True.Provided((baseCondition & stepCondition).InnerSimplified(isExact));
+        }
+
+        private static bool IsUnboundedAbove(Intersectionf cut)
+            => (cut.Left as Interval ?? cut.Right as Interval) is { } interval && interval.Right.Evaled is Real { EDecimal: var end } && end.IsInfinity() && !end.IsNegative;
+
+        /// <summary>
+        /// <c>forall x in S : L > R</c> (or <c>&gt;=</c>, <c>&lt;</c>, <c>&lt;=</c>) with an exponential
+        /// or a factorial in <c>x</c>, from the least member of <c>S</c>: it holds there, and
+        /// with <c>P = L - R</c>, <c>P(x + 1) = c P(x) + D</c> for a multiplier <c>c &gt;= 0</c> --
+        /// <c>1</c>, the base of an exponential, <c>x + 1</c> beside a factorial -- and a
+        /// remainder <c>D &gt;= 0</c> read by the sign calculus, so that <c>P(x) &gt;= 0</c> carries to
+        /// <c>x + 1</c>; strictly, where <c>c &gt; 0</c> or <c>D &gt; 0</c>.
+        /// </summary>
+        private static Entity? ByInductionOnAnInequality(Variable x, Set set, Integer least, Entity body, bool isExact)
+        {
+            var (positive, strict) = body switch
+            {
+                Greaterf(var l, var r) => (l - r, true),
+                GreaterOrEqualf(var l, var r) => (l - r, false),
+                Lessf(var l, var r) => (r - l, true),
+                LessOrEqualf(var l, var r) => (r - l, false),
+                _ => (null, false),
+            };
+            if (positive is null || !positive.Nodes.Any(node => node is Powf(_, var e) && e.ContainsNode(x) || node is Factorialf f && f.ContainsNode(x)))
+                return null;
+            // The sign calculus asks the decision about polynomials only, so the step never asks
+            // for an inequality of this shape again; the guard is against that ceasing to hold.
+            if (inductionDepth > 0)
+                return null;
+            inductionDepth++;
+            try
+            {
+                return ByInductionOnAnInequalityCore(x, set, least, body, positive, strict, isExact);
+            }
+            finally
+            {
+                inductionDepth--;
+            }
+        }
+
+        [System.ThreadStatic] private static int inductionDepth;
+
+        private static Entity? ByInductionOnAnInequalityCore(Variable x, Set set, Integer least, Entity body, Entity positive, bool strict, bool isExact)
+        {
+            var atLeast = body.Substitute(x, least).InnerSimplified(isExact);
+            if (atLeast == Entity.Boolean.False)
+                return Entity.Boolean.False;
+            if (atLeast != Entity.Boolean.True)
+                return null;
+            var next = positive.Substitute(x, x + Integer.One);
+            foreach (var c in Multipliers(positive, x))
+            {
+                if (Sign(c, x, set, isExact) is not { } multiplier)
+                    continue;
+                if (Sign(Collected(next - c * positive), x, set, isExact) is not { } remainder)
+                    continue;
+                if (!strict || multiplier == Signum.Positive || remainder == Signum.Positive)
+                    return Entity.Boolean.True;
+            }
+            return null;
+        }
+
+        /// <summary>The multipliers tried for the step: one, the whole base of each exponential in <paramref name="x"/>, and <c>x + 1</c> beside a factorial.</summary>
+        private static IEnumerable<Entity> Multipliers(Entity positive, Variable x)
+        {
+            yield return Integer.One;
+            foreach (var @base in positive.Nodes.OfType<Powf>().Where(p => p.Exponent.ContainsNode(x)).Select(p => p.Base).Where(b => b.Evaled is Integer).Distinct())
+                yield return @base;
+            if (positive.Nodes.Any(node => node is Factorialf f && f.ContainsNode(x)))
+                yield return x + Integer.One;
+        }
+
+        /// <summary>
+        /// The expression as a polynomial over its atoms, collected: <c>3^(x + 1) - 3 * 3^x</c> is
+        /// <c>0</c>, <c>(x + 1)! - (x + 1) x!</c> is <c>0</c>, <c>2^(x + 1) - 2^x</c> is <c>2^x</c>.
+        /// </summary>
+        private static Entity Collected(Entity expr)
+        {
+            var atoms = new Dictionary<Entity, Variable>();
+            var atomized = Atomized(expr.InnerSimplified, atoms, FactorialsUnfolded(expr.InnerSimplified));
+            var variables = atomized.Vars.OrderBy(v => v.Name, System.StringComparer.Ordinal).ToArray();
+            var indices = new Dictionary<Variable, int>();
+            for (var i = 0; i < variables.Length; i++)
+                indices[variables[i]] = i;
+            var collected = variables.Length <= MultivariatePolynomial.MaxVariables && MultivariatePolynomial.TryParse(atomized, indices) is { } polynomial
+                ? polynomial.ToEntity(variables)
+                : atomized;
+            foreach (var pair in atoms)
+                collected = collected.Substitute(pair.Value, pair.Key);
+            return collected.InnerSimplified;
+        }
+
+        private enum Signum { Positive, NonNegative }
+
+        /// <summary>
+        /// Whether the expression is positive, or non-negative, at every member of the set, read
+        /// off its shape: a positive base to any power, a factorial of a whole number, sums and
+        /// products of these, and a polynomial in <paramref name="x"/> decided over the set.
+        /// <see langword="null"/> where neither is known.
+        /// </summary>
+        private static Signum? Sign(Entity expr, Variable x, Set set, bool isExact)
+        {
+            switch (expr)
+            {
+                case Real real:
+                    return real.IsPositive ? Signum.Positive : real.IsNegative ? null : Signum.NonNegative;
+                case Number:
+                    return null;
+                case Variable v when v == x:
+                    return LeastMember(set) is { } least ? least.IsPositive ? Signum.Positive : least.IsNegative ? null : Signum.NonNegative : null;
+                case Sumf(var a, var b):
+                    return (Sign(a, x, set, isExact), Sign(b, x, set, isExact)) switch
+                    {
+                        (null, _) or (_, null) => SignByAtoms(expr, x, set, isExact),
+                        (Signum.Positive, _) or (_, Signum.Positive) => Signum.Positive,
+                        _ => Signum.NonNegative,
+                    };
+                case Minusf:
+                    return SignOfPolynomial(expr, x, set, isExact) ?? SignByAtoms(expr, x, set, isExact);
+                case Mulf(var a, var b):
+                    return (Sign(a, x, set, isExact), Sign(b, x, set, isExact)) switch
+                    {
+                        (null, _) or (_, null) => null,
+                        (Signum.Positive, Signum.Positive) => Signum.Positive,
+                        _ => Signum.NonNegative,
+                    };
+                case Divf(var a, var b):
+                    return (Sign(a, x, set, isExact), Sign(b, x, set, isExact)) switch
+                    {
+                        (null, _) or (_, null) or (_, Signum.NonNegative) => null,
+                        (Signum.Positive, Signum.Positive) => Signum.Positive,
+                        _ => Signum.NonNegative,
+                    };
+                // A positive base to any real power; the exponent is real where it mentions
+                // nothing but x, which ranges over whole numbers.
+                case Powf(var @base, var exponent) when exponent.Vars.All(v => v == x):
+                    return Sign(@base, x, set, isExact) switch
+                    {
+                        Signum.Positive => Signum.Positive,
+                        Signum.NonNegative when exponent.Evaled is Integer { IsNegative: false } => Signum.NonNegative,
+                        _ => exponent.Evaled is Integer { EInteger.IsEven: true } && @base.Vars.All(v => v == x) ? Signum.NonNegative : null,
+                    };
+                case Factorialf(var argument) when argument.Vars.All(v => v == x) && IsWholePolynomial(argument):
+                    return Sign(argument, x, set, isExact) is not null ? Signum.Positive : null;
+                default:
+                    return SignOfPolynomial(expr, x, set, isExact);
+            }
+        }
+
+        /// <summary>
+        /// A polynomial in <paramref name="x"/> and nothing else, decided over the set by the
+        /// routes that read one, which do not come back here; <see langword="null"/> for anything else.
+        /// </summary>
+        private static Signum? SignOfPolynomial(Entity expr, Variable x, Set set, bool isExact)
+        {
+            if (!expr.Vars.All(v => v == x) || !expr.Vars.Any() || MultivariatePolynomial.TryParse(expr, new Dictionary<Variable, int> { [x] = 0 }) is null)
+                return null;
+            if (Decide(Kind.All, x, set, new Greaterf(expr, Integer.Zero).InnerSimplified(isExact), isExact) is Entity.Boolean(true))
+                return Signum.Positive;
+            if (Decide(Kind.All, x, set, new GreaterOrEqualf(expr, Integer.Zero).InnerSimplified(isExact), isExact) is Entity.Boolean(true))
+                return Signum.NonNegative;
+            return null;
+        }
+
+        /// <summary>
+        /// The sign of a sum read term by term: each term is a product of atoms -- exponentials
+        /// and factorials in <paramref name="x"/> -- times a polynomial in <paramref name="x"/>,
+        /// the polynomials are collected per atom product, and the sum is non-negative where
+        /// every atom product and its collected coefficient are: <c>(n + 1) n! - 2 n!</c> is
+        /// <c>(n - 1) n!</c>, non-negative on <c>ZZ+</c>.
+        /// </summary>
+        private static Signum? SignByAtoms(Entity expr, Variable x, Set set, bool isExact)
+        {
+            var groups = new Dictionary<Entity, Entity>();
+            foreach (var term in Sumf.LinearChildren(expr))
+            {
+                Entity atomic = Integer.One;
+                Entity coefficient = Integer.One;
+                foreach (var factor in Mulf.LinearChildren(term))
+                    if (factor.Vars.All(v => v == x) && MultivariatePolynomial.TryParse(factor, new Dictionary<Variable, int> { [x] = 0 }) is not null)
+                        coefficient *= factor;
+                    else
+                        atomic *= factor;
+                atomic = atomic.InnerSimplified;
+                groups[atomic] = groups.TryGetValue(atomic, out var sum) ? sum + coefficient : coefficient;
+            }
+            if (groups.Count < 2 && expr is not Minusf)
+                return null;
+            var result = Signum.NonNegative;
+            foreach (var pair in groups)
+            {
+                var atomSign = pair.Key == Integer.One ? Signum.Positive : Sign(pair.Key, x, set, isExact);
+                var collected = pair.Value.InnerSimplified;
+                var coefficientSign = collected is Number ? Sign(collected, x, set, isExact) : SignOfPolynomial(collected, x, set, isExact);
+                if (atomSign is null || coefficientSign is null)
+                    return null;
+                if (atomSign == Signum.Positive && coefficientSign == Signum.Positive)
+                    result = Signum.Positive;
+            }
+            return result;
         }
 
         /// <summary>
