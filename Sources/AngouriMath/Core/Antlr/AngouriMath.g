@@ -107,17 +107,29 @@ unary_expression returns[Entity value]
     | p = power_expression { $value = $p.value; }
     ;
     
+/* `1 * 2 * ... * n` is the product of the progression the shown factors determine: the
+   factors are collected, and where dots stood among them the pattern operator builds the
+   product. Without dots the fold is the same as it was. https://github.com/asc-community/AngouriMath/issues/1437 */
 mult_expression returns[Entity value]
-   : u1 = unary_expression { $value = $u1.value; } 
-   ('*' u2 = unary_expression { $value = $value * $u2.value; } | 
-    '/' u2 = unary_expression { $value = $value / $u2.value; } |
-    'mod' u2 = unary_expression { $value = $value % $u2.value; })*
+   @init { Entity beforeDots = null; Entity afterDots = null; bool mixed = false; }
+   : u1 = unary_expression { $value = $u1.value; }
+   ('*' ( ('...' | '…') { if (beforeDots is not null) throw new InvalidArgumentParseException("A product written with dots has one ... in it"); beforeDots = $value; }
+        | u2 = unary_expression { if (beforeDots is null) $value = $value * $u2.value; else if (afterDots is null) afterDots = $u2.value; else throw new InvalidArgumentParseException("A product written with dots ends with the one factor after them, as 1 * 2 * ... * n"); } ) |
+    '/' u2 = unary_expression { $value = $value / $u2.value; mixed = true; } |
+    'mod' u2 = unary_expression { $value = $value % $u2.value; mixed = true; })*
+   { if (beforeDots is not null) $value = AngouriMath.Core.PatternOperator.SumOrProduct(mixed ? null : Mulf.LinearChildren(beforeDots), afterDots, product: true); }
    ;
-   
+
+/* `1 + 2 + ... + n` is the sum of the progression the shown terms determine, the same way. The
+   terms before the dots are read off the folded sum, so that a sum without dots allocates
+   nothing it did not. */
 sum_expression returns[Entity value]
+   @init { Entity beforeDots = null; Entity afterDots = null; }
    : m1 = mult_expression { $value = $m1.value; }
-   ('+' m2 = mult_expression { $value = $value + $m2.value; } | 
-    '-' m2 = mult_expression { $value = $value - $m2.value; })*
+   ('+' ( ('...' | '…') { if (beforeDots is not null) throw new InvalidArgumentParseException("A sum written with dots has one ... in it"); beforeDots = $value; }
+        | m2 = mult_expression { if (beforeDots is null) $value = $value + $m2.value; else if (afterDots is null) afterDots = $m2.value; else throw new InvalidArgumentParseException("A sum written with dots ends with the one term after them, as 1 + 2 + ... + n"); } ) |
+    '-' m2 = mult_expression { if (beforeDots is null) $value = $value - $m2.value; else throw new InvalidArgumentParseException("A sum written with dots ends with the one term after them, as 1 + 2 + ... + n"); })*
+   { if (beforeDots is not null) $value = AngouriMath.Core.PatternOperator.SumOrProduct(Sumf.LinearChildren(beforeDots), afterDots, product: false); }
    ;
 
 /*
@@ -380,6 +392,16 @@ function_arguments returns[List<Entity> list]
     : (e = expression { $list.Add($e.value); } (',' e = expression { $list.Add($e.value); })*)?
     ;
 
+/* The items of a set literal, with `...` (or `…`) allowed among them: a listed set as it
+   was, or a pattern -- {1, 2, ..., n}, {2, 4, 6, ...}, {..., -1, 0} -- which the pattern
+   operator reads as the progression the shown terms determine. A null stands for the dots.
+   https://github.com/asc-community/AngouriMath/issues/1437 */
+set_items returns[List<Entity> list]
+    @init { $list = new List<Entity>(); }
+    : ( ( e = expression { $list.Add($e.value); } | ('...' | '…') { $list.Add(null); } )
+        (',' ( e = expression { $list.Add($e.value); } | ('...' | '…') { $list.Add(null); } ))* )?
+    ;
+
 interval_arguments returns[(Entity from, Entity to) couple]
     : from = expression { $couple.from = $from.value; } ';' to = expression { $couple.to = $to.value; }
     ;
@@ -418,7 +440,7 @@ atom returns[Entity value]
     | '(' interval_arguments ']' { $value = new Entity.Set.Interval($interval_arguments.couple.from, false, $interval_arguments.couple.to, true); }
     | '(' expression ')' { $value = $expression.value; }
     | '{' cset_args = cset_arguments '}' { $value = new ConditionalSet($cset_args.couple.variable, $cset_args.couple.predicate); }
-    | '{' args = function_arguments '}' { $value = new FiniteSet((IEnumerable<Entity>)$args.list); }
+    | '{' items = set_items '}' { $value = $items.list.Contains(null) ? AngouriMath.Core.PatternOperator.Set($items.list) : new FiniteSet($items.list.Cast<Entity>()); }
     | 'log(' args = function_arguments ')' { $value = Assert("log", (1, 2), $args.list.Count) ? MathS.Log(10, $args.list[0]) : MathS.Log($args.list[0], $args.list[1]); }
     | 'log10(' args = function_arguments ')' { Assert("log10", 1, $args.list.Count); $value = MathS.Log(10, $args.list[0]); }
     | 'log2(' args = function_arguments ')' { Assert("log2", 1, $args.list.Count); $value = MathS.Log(2, $args.list[0]); }
