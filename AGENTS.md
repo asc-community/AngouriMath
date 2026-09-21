@@ -413,6 +413,11 @@ exists to stop, and it has happened: the first pass over
 [#1409](https://github.com/asc-community/AngouriMath/issues/1409)'s book was a table of contents
 turned into a feature list.
 
+**And name it where you cite it.** A comment, a test summary or a changelog entry that says
+"the reference's Ex 5.3.2" names nothing once a second reference exists, and there will be a
+second one. Write the authors — *Sullivan and Mackey's Ex 5.3.2* — or the title, the way a paper
+is cited, at every citation and not only the first.
+
 ## Working practice
 
 **A plan belongs in an issue, not in a comment.** When work splits into separable pieces — or when
