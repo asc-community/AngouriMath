@@ -459,6 +459,9 @@ namespace AngouriMath.Functions.Algebra
             // An exponential of a multiple of a logarithm is a power of the argument, which is
             // how every inverse hyperbolic function under an exponential arrives.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingAnExponentialOfALogarithm(expr, x, integrateByParts)) is { }) return answer;
+            // A whole power of a product of a constant and the variable, as the product of
+            // the powers, which is how the inverse hyperbolic secant and cosecant arrive.
+            if ((answer = IndefiniteIntegralSolver.SolveByDistributingWholePowersOfProducts(expr, x, integrateByParts)) is { }) return answer;
             // A polynomial times a rational function of exponentials, by parts against the
             // whole rational function, before anything splits the sum: the general parts rule
             // takes each term on its own, and each term's antiderivative keeps a logarithm the

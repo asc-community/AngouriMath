@@ -117,6 +117,25 @@ namespace AngouriMath.Tests.Calculus
         public void TheDerivativeOfAModulusNotShownRealIsLeftUnevaluated(string expr)
             => Assert.IsType<Derivativef>(expr.ToEntity().Differentiate(x));
 
+        // ...but a modulus, a sign, a floor or a limit that does not mention the variable is a
+        // constant in it, whatever its argument is, and the derivative of a constant is 0 with
+        // no condition: |c| x was differentiated to derivative(|c|, x) x + |c|, which every
+        // rule downstream read as a function of x. https://github.com/asc-community/AngouriMath/issues/718
+        [Theory]
+        [InlineData("abs(c)", "0")]
+        [InlineData("abs(c) * x", "abs(c)")]
+        [InlineData("sgn(c) * x^2", "2 sgn(c) x")]
+        [InlineData("floor(c) + x", "1")]
+        [InlineData("ceil(c) * x", "ceil(c)")]
+        [InlineData("round(c) * x", "round(c)")]
+        [InlineData("c!", "0")]
+        [InlineData("limit(y^2, y, c) * x", "c^2")]
+        [InlineData("derivative(g, y) * x", "derivative(g, y)")]
+        [InlineData("apply(f, y)", "0")]
+        [InlineData("sum(k, k, 1, n) * x", "sum(k, k, 1, n)")]
+        public void AConstantInTheVariableDifferentiatesToZeroWhateverItsNode(string expr, string expected)
+            => Assert.Equal(expected.ToEntity().Simplify(), expr.ToEntity().Differentiate(x).Simplify());
+
         [Theory]
         [InlineData("abs(i * x)", "abs(x)")]
         [InlineData("abs(x * i)", "abs(x)")]
