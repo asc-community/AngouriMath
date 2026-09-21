@@ -581,9 +581,10 @@ change it is, not only when:
   consideration limits the v3 design, and the C++ wrapper's own v3 shape comes after, in `3.1`.
 - **`2.8`** is the minor that holds the design work the maintainer wants tried *before* v3 so that
   v3 can review it with the whole in view — the Unicode output and parsing of
-  [#1242](https://github.com/asc-community/AngouriMath/issues/1242) is the example. **`3.1`** holds
-  what follows the redesign rather than shaping it: the C++ surface, differentiation with respect
-  to a function ([#230](https://github.com/asc-community/AngouriMath/issues/230)).
+  [#1242](https://github.com/asc-community/AngouriMath/issues/1242), and differentiation with
+  respect to a function ([#230](https://github.com/asc-community/AngouriMath/issues/230)), moved
+  there from `3.1` on 2026-09-21 for that reason. **`3.1`** holds what follows the redesign rather
+  than shaping it: the C++ surface.
 - **Future** is an explicit deprioritisation, and the only one: it replaces the `Not now` label, and
   nothing sits there because it is hard. A "not now" that is ready to do is on a version — which is
   why the milestone holds one issue, not thirty.
