@@ -694,6 +694,22 @@ shown and the argument list of symbolic length wait for v3. Every one of these w
 | `1 * 2 * ... * n` | `UnhandledParseException` | `product(k, k, 1, n)`, which is `n!` for `n >= 1` |
 | `{1, 4, 9, ..., n}` | `UnhandledParseException` | `InvalidArgumentParseException`, naming the term off the progression |
 
+### A listed solution set is filtered by a decided condition
+
+`"x^2 = 4 and not x = 2".Solve("x")` is `{ -2 }`; it was the conjunction left as written, because
+#1036 taught the solver not to intersect a listed set with a condition a search had left open
+(1 is a root of `x^6 + x y + 1 = 0` only when `y` is -2). The two are told apart now: a member
+at which the condition is decided is kept or dropped, and the conjunction stays written the
+moment one member is undecided, so #1036's case is as it was. Decided by evaluation, and by
+simplification where evaluation leaves it open, so that `forall u in RR : forall v in RR :
+2 u + 1 = 2 v + 1 implies u = v` — the injectivity of a linear map, Def 7.4.6 of the reference
+of [#1409](https://github.com/asc-community/AngouriMath/issues/1409) — is `True`.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2 = 4 and not x = 2".Solve("x")` | `{ x : x ^ 2 = 4 and not x = 2 }` | `{ -2 }` |
+| `"x^2 = 4 and x > 0".Solve("x")` | `{ 2 }` | `{ 2 }` — unchanged, both sides being settled |
+| `"x^6 + x*y + 1 = 0 and x - 1 = 0".Solve("x")` | `{ x : … }`, as written | unchanged |
 ### `image` and `preimage` of a set under an expression
 
 `image(f(x), x in A)` is `{ f(x) : x in A }` — `union({f(x)}, x in A)` — listed over a listed
