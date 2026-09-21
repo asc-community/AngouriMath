@@ -168,6 +168,9 @@ with an operator parses.
 | special | `RR` `CC` `ZZ` `QQ` `BB`, and the two subsets of `ZZ`: `ZZ*` = `{0, 1, 2, ...}`, `ZZ+` = `{1, 2, 3, ...}` |
 | operations | `unite` `/\` … see the table above |
 | power set | `powerset(A)` — the set of all subsets of `A`; listed for a finite `A` (`powerset({1, 2})` is `{ {}, {1}, {2}, {1, 2} }`, `powerset({})` is `{ {} }`), and for an infinite one an object that answers membership: `{1, 3} in powerset(ZZ)` is `True` |
+| integer range | `ZZ /\ [1; 10]`, `ZZ+ /\ [-2; 3]`, `[0; 2.5] /\ ZZ*` — an integer set cut by a numeric interval lists its members (up to 4096 of them): `{ 1, 2, …, 10 }`, `{ 1, 2, 3 }`, `{ 0, 1, 2 }`. The `[n] = {1, …, n}` of combinatorics is `ZZ+ /\ [1; n]` |
+| indexed union, intersection | `union(A_k, k in I)`, `intersection(A_k, k in I)` — `⋃_{k ∈ I} A_k` and `⋂_{k ∈ I} A_k`; the name is bound, as under `sum`. Folded over a listed index set (`union({k, 2 k}, k in ZZ+ /\ [1; 10])` is `{ 1, …, 10, 12, 14, 16, 18, 20 }`), and over any other an object whose membership goes through the quantifiers: `0 in intersection([0; 1/n), n in ZZ+)` is `True` and `0.1 in …` is `False`. Note that `i` is the imaginary unit, so an index is `k` or `n` |
+| complement | `complement(A, U)` — the complement of `A` relative to the universe `U`, which is `U \ A`; there is no universal set, so a complement is always relative to one |
 
 **Subset.** `A subset B` — also `A ⊆ B`, which the parser reads and `Stringize` does not yet
 print, and `B superset A` / `B ⊇ A`, which parse to the same node — is the statement that every

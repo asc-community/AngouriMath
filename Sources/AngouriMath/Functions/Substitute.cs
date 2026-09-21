@@ -378,6 +378,26 @@ namespace AngouriMath
                 public override Entity Substitute(Entity x, Entity value)
                     => x == this ? value : New(Argument.Substitute(x, value));
             }
+
+            partial record IndexedSetOperation
+            {
+                /// <inheritdoc/>
+                // Bound throughout, as under a quantifier: nothing is substituted for the name,
+                // and a value that mentions it is kept out of its reach by renaming.
+                public override Entity Substitute(Entity x, Entity value)
+                {
+                    if (this == x)
+                        return value;
+                    if (x.ContainsNode(Var))
+                        return this;
+                    if (value.ContainsNode(Var) && Var is Variable bound)
+                    {
+                        var fresh = Variable.CreateUnique(this + value, bound.Name);
+                        return New(fresh, Over.Substitute(bound, fresh).Substitute(x, value), Body.Substitute(bound, fresh).Substitute(x, value));
+                    }
+                    return New(Var, Over.Substitute(x, value), Body.Substitute(x, value));
+                }
+            }
         }
 
         partial record Phif

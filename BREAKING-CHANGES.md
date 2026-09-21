@@ -621,6 +621,26 @@ too ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). `subset
 | `{1, 3} in powerset(ZZ)` | `UnrecognizedFunctionParseException` | `True` |
 | `card({1, {}})` | `#{ 1, {  } }` — left as written | `2` |
 
+### An integer range is listed, and a family of sets has a union and an intersection
+
+`ZZ /\ [1; 10]` lists its members now — an integer set cut by a numeric interval with at most
+4096 members in it is the finite set of them, the `[n] = {1, …, n}` of combinatorics being
+`ZZ+ /\ [1; n]`; the reals and the complex numbers cut by an interval are the interval, and the
+rationals stay as written. `union(A_k, k in I)` and `intersection(A_k, k in I)` are
+`Entity.Set.IndexedUnionf` and `Entity.Set.IndexedIntersectionf`, binders like `sum`: folded over
+a listed index set, and over any other an object whose membership is decided by the quantifiers
+(`0 in intersection([0; 1/n), n in ZZ+)` is `True`). `complement(A, U)` is `U \ A`
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). `union`, `intersection` and
+`complement` are keywords now, and were names.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `ZZ /\ [1; 10]` | `ZZ /\ [1; 10]` — left as written | `{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }` |
+| `RR /\ [0; 1]` | `RR /\ [0; 1]` — left as written | `[0; 1]` |
+| `union({k, 2 k}, k in {1, 2, 3})` | `UnhandledParseException` — `union` was a name, and `union(` a juxtaposition that does not parse | `{ 1, 2, 4, 3, 6 }` |
+| `0.1 in intersection([0; 1/n), n in ZZ+)` | `UnhandledParseException` | `False` |
+| `complement({1, 2}, {1, 2, 3})` | `UnhandledParseException` | `{ 3 }` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

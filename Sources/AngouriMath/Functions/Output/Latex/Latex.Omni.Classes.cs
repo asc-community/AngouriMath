@@ -112,6 +112,13 @@ namespace AngouriMath
                 private protected override string LatexizeNode()
                     => $@"\mathcal{{P}}\left({Argument.Latexize()}\right)";
             }
+
+            partial record IndexedSetOperation
+            {
+                /// <inheritdoc/>
+                private protected override string LatexizeNode()
+                    => $@"\big{(this is IndexedUnionf ? "cup" : "cap")}_{{{Var.Latexize()} \in {Over.Latexize()}}} {Body.Latexize(Body.LatexPriority < Priority.SetOperation)}";
+            }
         }
 
         partial record Providedf

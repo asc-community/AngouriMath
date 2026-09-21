@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using PeterO.Numbers;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
 
@@ -28,6 +29,33 @@ namespace AngouriMath.Core.Sets
                 SpecialSet.Complexes => 5,
                 _ => null
             };
+
+        /// <summary>
+        /// A number set cut by a numeric interval: the interval itself for the reals and the
+        /// complex numbers, since a real interval lies in both; the integers in it, listed,
+        /// for the three integer sets, where there are at most 4096 of them -- the
+        /// reference's <c>[n] = {1, ..., n}</c> is <c>ZZ+ /\ [1; n]</c>, and its indexed
+        /// unions run over such ranges; and left as written for the rationals, which no
+        /// interval lists. https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        internal static Set? IntersectSpecialSetAndInterval(SpecialSet special, Interval interval)
+        {
+            if (!interval.IsNumeric)
+                return null;
+            switch (special)
+            {
+                case SpecialSet.Reals or SpecialSet.Complexes:
+                    return interval;
+                case SpecialSet.Integers or SpecialSet.NonNegativeIntegers or SpecialSet.PositiveIntegers:
+                    var lowest = special is SpecialSet.PositiveIntegers ? 1 : special is SpecialSet.NonNegativeIntegers ? 0 : (int?)null;
+                    var cut = interval;
+                    if (lowest is { } floor && ((Number.Real)interval.Left.Evaled).EDecimal.CompareTo(EDecimal.FromInt32(floor)) < 0)
+                        cut = new Interval(Number.Integer.Create(floor), true, interval.Right, interval.RightClosed);
+                    return Functions.ResidueClasses.Within(Variable.CreateTemp(System.Array.Empty<Variable>()), EInteger.Zero, EInteger.One, cut);
+                default:
+                    return null;
+            }
+        }
 
         /// <summary>Two nested sets unite to the larger; <c>BB</c> with a number set has no name.</summary>
         internal static Set? UniteSpecialSets(SpecialSet a, SpecialSet b)
