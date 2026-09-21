@@ -81,6 +81,18 @@ namespace AngouriMath.Functions.Boolean
                 set = new FiniteSet(Entity.Boolean.True, Entity.Boolean.False);
             if (!body.ContainsNode(x))
                 return Closed(kind, set, body);
+            // forall b in B : exists a in A : f(a) = b is the statement that B lies in the image
+            // of A under f -- surjectivity onto B (the reference's Def 7.4.1) -- and the image is
+            // a set the library computes: listed over a listed A, an interval by interval
+            // arithmetic, so the subset decision settles it where the image evaluates.
+            // https://github.com/asc-community/AngouriMath/issues/1409
+            if (kind == Kind.All && body is Existsf(Variable a, Set domain, Equalsf(var lhs, var rhs))
+                && (lhs == x && !rhs.ContainsNode(x) && rhs.ContainsNode(a) ? rhs : rhs == x && !lhs.ContainsNode(x) && lhs.ContainsNode(a) ? lhs : null) is { } map)
+            {
+                var image = new IndexedUnionf(a, domain, new FiniteSet(map)).InnerSimplified(isExact);
+                if (image is not IndexedUnionf && image is Set imageSet && Core.Sets.SetOperators.Subset(set, imageSet, isExact) is { } covered)
+                    return covered;
+            }
             // An equation whose two sides differ by a polynomial that expands to nothing holds
             // at every member, whatever the set: (x + 1)^2 = x^2 + 2 x + 1 is True of each.
             if (body is Equalsf(var left, var right) && IsIdentity(left, right))

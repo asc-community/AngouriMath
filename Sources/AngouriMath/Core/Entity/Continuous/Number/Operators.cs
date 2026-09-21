@@ -498,6 +498,17 @@ namespace AngouriMath
                         && decimalPower.IsInteger() && decimalPower.Abs().CompareTo(EDecimal.FromInt32(1 << 20)) <= 0 => decimalPower.ToEInteger(),
                     _ => null,
                 };
+                // An infinite real base to a whole power: (+oo)^n is +oo, (-oo)^n is +oo or -oo by
+                // the parity of n, and either to a negative power is 0 -- the extended reals'
+                // arithmetic, which the product of infinities already follows. It fell through
+                // to the polar form and came back NaN, so the image of (-oo; +oo) under a cube
+                // had no ends. https://github.com/asc-community/AngouriMath/issues/1409
+                if (@base is Real { EDecimal: var infinite } && infinite.IsInfinity() && pow is { } wholeOfInfinity && !wholeOfInfinity.IsZero)
+                {
+                    if (wholeOfInfinity.Sign < 0)
+                        return Integer.Zero;
+                    return infinite.IsNegative && !wholeOfInfinity.IsEven ? Real.NegativeInfinity : Real.PositiveInfinity;
+                }
                 if (@base.IsFinite && pow is { })
                 {
                     // A real base that is not exact -- a decimal, which is what a numerical

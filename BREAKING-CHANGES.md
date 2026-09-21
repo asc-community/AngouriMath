@@ -725,6 +725,22 @@ names are keywords now, and were names.
 | `preimage(x^2, x in RR, {1})` | `UnhandledParseException` | `{ 1, -1 }` |
 | `{ x in ZZ : x^2 in {1, 4} }` | `{ x in ZZ : x ^ 2 in { 1, 4 } }` — left as written | `{ 1, -1, 2, -2 }` |
 
+### An infinite base has its whole powers, and surjectivity is decided through the image
+
+`(-oo)^3` was `NaN` — a claim that the value does not exist — and so were `(-oo)^2` and
+`(-oo)^(-1)`, while `(+oo)^2` was `+oo`: the finite-base arms did not apply and the polar form
+had nothing to say. They are the extended reals' powers now, `-oo`, `+oo` and `0`, so the image of
+`(-oo; +oo)` under a cube is `(-oo; +oo)`; and `forall b in B : exists a in A : f(a) = b` — surjectivity
+onto `B`, Def 7.4.1 of the reference of [#1409](https://github.com/asc-community/AngouriMath/issues/1409)
+— is decided as `B` lying in the image of `A` under `f` where that image evaluates.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `(-oo)^3` | `NaN` — wrong | `-oo` |
+| `(-oo)^2` | `NaN` — wrong | `+oo` |
+| `forall b in RR : exists a in RR : a^3 = b` | `UnhandledParseException` (quantifiers are new since; left as written when they arrived) | `True` |
+| `forall b in RR : exists a in RR : e^a = b` | `UnhandledParseException` | `False` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
