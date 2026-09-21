@@ -105,6 +105,75 @@ namespace AngouriMath.Functions
             }
         }
 
+        /// <summary>
+        /// Whether the whole number is prime, or <see langword="null"/> where it is not decided:
+        /// trial division, exact for a number that fits a machine word, and nothing claimed past
+        /// that, so that a membership in <c>PP</c> is left open rather than answered slowly or
+        /// wrongly. https://github.com/asc-community/AngouriMath/issues/1450
+        /// </summary>
+        internal static bool? IsPrime(EInteger n)
+        {
+            if (n.CompareTo(EInteger.FromInt32(2)) < 0)
+                return false;
+            if (!n.CanFitInInt64())
+                return null;
+            var value = n.ToInt64Checked();
+            if (value < 4)
+                return true;
+            if (value % 2 == 0)
+                return false;
+            for (long divisor = 3; divisor * divisor <= value; divisor += 2)
+                if (value % divisor == 0)
+                    return false;
+            return true;
+        }
+
+        /// <summary>
+        /// The first prime at or after <paramref name="atLeast"/>, or <see langword="null"/>
+        /// where the search would leave the machine word or run past the steps allowed.
+        /// </summary>
+        internal static EInteger? NextPrime(EInteger atLeast)
+        {
+            var candidate = atLeast.CompareTo(EInteger.FromInt32(2)) < 0 ? EInteger.FromInt32(2) : atLeast;
+            for (var step = 0; step < LongestSearch; step++, candidate += 1)
+                switch (IsPrime(candidate))
+                {
+                    case true: return candidate;
+                    case null: return null;
+                }
+            return null;
+        }
+
+        /// <summary>The primes in a numeric interval, where there are few enough to list; <see langword="null"/> otherwise.</summary>
+        internal static Entity.Set? Within(Entity.Set.Interval interval)
+        {
+            if (interval.Left.Evaled is not Real from || interval.Right.Evaled is not Real to || !to.IsFinite)
+                return null;
+            var lower = from.IsFinite ? from.EDecimal.RoundToExponent(EInteger.Zero, ERounding.Ceiling).ToEInteger() : EInteger.FromInt32(2);
+            if (from.IsFinite && !interval.LeftClosed && from.EDecimal.CompareTo(EDecimal.FromEInteger(lower)) == 0)
+                lower += 1;
+            var upper = to.EDecimal.RoundToExponent(EInteger.Zero, ERounding.Floor).ToEInteger();
+            if (!interval.RightClosed && to.EDecimal.CompareTo(EDecimal.FromEInteger(upper)) == 0)
+                upper -= 1;
+            if (lower.CompareTo(EInteger.FromInt32(2)) < 0)
+                lower = EInteger.FromInt32(2);
+            if (upper.CompareTo(lower) < 0)
+                return Entity.Set.Empty;
+            if ((upper - lower).CompareTo(EInteger.FromInt32(LongestSearch)) > 0)
+                return null;
+            var members = new List<Entity>();
+            for (var candidate = lower; candidate.CompareTo(upper) <= 0; candidate += 1)
+                switch (IsPrime(candidate))
+                {
+                    case true: members.Add(Integer.Create(candidate)); break;
+                    case null: return null;
+                }
+            return new Entity.Set.FiniteSet(members);
+        }
+
+        /// <summary>How far a search for a prime, or a listing of them, is taken before the set is left as written.</summary>
+        private const int LongestSearch = 100000;
+
         internal static Integer GetPrime(int index)
         {
             // One volatile read, then an array that is never written again.

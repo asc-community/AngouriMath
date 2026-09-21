@@ -96,6 +96,7 @@ namespace AngouriMath.Tests.Common
             MathS.Sets.Z,                                       // Integers
             MathS.Sets.NonNegativeIntegers,                     // NonNegativeIntegers, ZZ*
             MathS.Sets.PositiveIntegers,                        // PositiveIntegers, ZZ+
+            MathS.Sets.Primes,                                  // Primes, PP
             Entity.Set.SpecialSet.Create(Domain.Boolean),       // Booleans
             X,                                                  // Variable
             MathS.pi,                                           // Constant

@@ -1106,6 +1106,20 @@ namespace AngouriMath.Functions.Boolean
                         return false;
                     if (domain >= Domain.Rational)
                         return true;
+                    // The primes: the interval has one exactly when the first prime at or after
+                    // its start is at or before its end, and there is always a next prime.
+                    if (domain == Domain.Prime)
+                    {
+                        if (!to.IsFinite)
+                            return Compare(to, 0) > 0;
+                        var start = !from.IsFinite ? EInteger.FromInt32(2) : from.EDecimal.RoundToExponent(EInteger.Zero, ERounding.Ceiling).ToEInteger();
+                        if (from.IsFinite && !interval.LeftClosed && from.EDecimal.CompareTo(EDecimal.FromEInteger(start)) == 0)
+                            start += 1;
+                        if (Functions.Primes.NextPrime(start) is not { } prime)
+                            return null;
+                        Real found = Integer.Create(prime);
+                        return Compare(found, to) < 0 || Compare(found, to) == 0 && interval.RightClosed;
+                    }
                     // The integers, or those from 0 or from 1 on: the interval has one exactly when
                     // the first whole number at or after its start is at or before its end.
                     var lower = from;

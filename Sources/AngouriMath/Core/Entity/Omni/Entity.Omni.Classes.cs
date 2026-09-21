@@ -589,6 +589,7 @@ namespace AngouriMath
                     SpecialSet result = domain switch
                     {
                         Domain.Boolean => new Booleans(),
+                        Domain.Prime => new Primes(),
                         Domain.PositiveInteger => new PositiveIntegers(),
                         Domain.NonNegativeInteger => new NonNegativeIntegers(),
                         Domain.Integer => new Integers(),
@@ -611,6 +612,7 @@ namespace AngouriMath
                     => domain switch
                     {
                         "BB" or "Booleans" => Domain.Boolean,
+                        "PP" or "Primes" => Domain.Prime,
                         "ZZ+" or "PositiveIntegers" => Domain.PositiveInteger,
                         "ZZ*" or "NonNegativeIntegers" => Domain.NonNegativeInteger,
                         "ZZ" or "Integers" => Domain.Integer,
@@ -723,6 +725,49 @@ namespace AngouriMath
                     public override bool MayContain(Entity entity)
                         => entity is Integer { EInteger.Sign: > 0 } || !entity.IsConstantLeaf;
                     internal override Domain ToDomain() => Domain.PositiveInteger;
+                }
+
+                /// <summary>
+                /// The set of all prime numbers, <c>{2, 3, 5, 7, ...}</c>, written <c>PP</c>
+                /// (<c>\mathbb{P}</c>, SymPy's <c>S.Primes</c>). A subset of
+                /// <see cref="PositiveIntegers"/> and the <see cref="Domain"/>
+                /// <see cref="Domain.Prime"/>. Membership is decided for a whole number that fits
+                /// a machine word, by trial division, and left open beyond that rather than
+                /// answered slowly or wrongly. https://github.com/asc-community/AngouriMath/issues/1450
+                /// </summary>
+                public sealed partial record Primes : SpecialSet
+                {
+                    /// <inheritdoc/>
+                    public override bool MayContain(Entity entity)
+                        => entity is Integer prime && IsDecidablyPrime(prime) is true || !entity.IsConstantLeaf;
+
+                    /// <inheritdoc/>
+                    public override bool TryContains(Entity entity, out bool contains)
+                    {
+                        contains = false;
+                        var evaled = entity.Evaled;
+                        if (evaled.IsSymbolic)
+                            return false;
+                        if (!evaled.IsConstantLeaf)
+                            return true;
+                        if (evaled is Integer whole)
+                        {
+                            if (IsDecidablyPrime(whole) is not { } decided)
+                                return false;
+                            contains = decided;
+                            return true;
+                        }
+                        return true;
+                    }
+
+                    /// <summary>
+                    /// Whether the whole number is prime, or <see langword="null"/> where it does
+                    /// not fit a machine word and trial division is not attempted.
+                    /// </summary>
+                    internal static bool? IsDecidablyPrime(Integer whole)
+                        => Functions.Primes.IsPrime(whole.EInteger);
+
+                    internal override Domain ToDomain() => Domain.Prime;
                 }
 
                 /// <summary>

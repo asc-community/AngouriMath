@@ -44,6 +44,14 @@ namespace AngouriMath.Core
         Boolean,
 
         /// <summary>
+        /// The domain of the prime numbers <c>{2, 3, 5, 7, ...}</c>, the set <c>PP</c>: a subset
+        /// of <see cref="PositiveInteger"/>, and the narrowest domain of numbers here, which is
+        /// why it comes first among them in this order.
+        /// https://github.com/asc-community/AngouriMath/issues/1450
+        /// </summary>
+        Prime,
+
+        /// <summary>
         /// The domain of the positive integers <c>{1, 2, 3, ...}</c>, the set <c>ZZ+</c>.
         /// Every special set is a domain, so that a node can be declared over any of them;
         /// this one and <see cref="NonNegativeInteger"/> sit below <see cref="Integer"/> in the

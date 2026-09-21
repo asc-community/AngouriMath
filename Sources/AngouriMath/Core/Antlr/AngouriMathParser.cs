@@ -4513,7 +4513,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 990;
 				Match(T__30);
-				 AssertAtLeast("min", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Count == 2 && _localctx.args.list[1] is Entity.Set.Inf { Element: Variable } minRange ? MathS.Minimum(_localctx.args.list[0], minRange.Element, minRange.SupSet) : _localctx.args.list.Aggregate((a, b) => MathS.Min(a, b)); 
+				 AssertAtLeast("min", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Count == 1 && _localctx.args.list[0] is Entity.Set minSet ? MathS.Minimum(Variable.CreateUnique(minSet, "x"), Variable.CreateUnique(minSet, "x"), minSet) : _localctx.args.list.Count == 2 && _localctx.args.list[1] is Entity.Set.Inf { Element: Variable } minRange ? MathS.Minimum(_localctx.args.list[0], minRange.Element, minRange.SupSet) : _localctx.args.list.Count == 2 && _localctx.args.list[1] is Entity.Andf(Entity.Set.Inf { Element: Variable } minDeclared, var minRest) ? MathS.Minimum(_localctx.args.list[0], minDeclared.Element, new Entity.Set.ConditionalSet(minDeclared, minRest)) : _localctx.args.list.Aggregate((a, b) => MathS.Min(a, b)); 
 				}
 				break;
 			case 118:
@@ -4525,7 +4525,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 995;
 				Match(T__30);
-				 AssertAtLeast("max", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Count == 2 && _localctx.args.list[1] is Entity.Set.Inf { Element: Variable } maxRange ? MathS.Maximum(_localctx.args.list[0], maxRange.Element, maxRange.SupSet) : _localctx.args.list.Aggregate((a, b) => MathS.Max(a, b)); 
+				 AssertAtLeast("max", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Count == 1 && _localctx.args.list[0] is Entity.Set maxSet ? MathS.Maximum(Variable.CreateUnique(maxSet, "x"), Variable.CreateUnique(maxSet, "x"), maxSet) : _localctx.args.list.Count == 2 && _localctx.args.list[1] is Entity.Set.Inf { Element: Variable } maxRange ? MathS.Maximum(_localctx.args.list[0], maxRange.Element, maxRange.SupSet) : _localctx.args.list.Count == 2 && _localctx.args.list[1] is Entity.Andf(Entity.Set.Inf { Element: Variable } maxDeclared, var maxRest) ? MathS.Maximum(_localctx.args.list[0], maxDeclared.Element, new Entity.Set.ConditionalSet(maxDeclared, maxRest)) : _localctx.args.list.Aggregate((a, b) => MathS.Max(a, b)); 
 				}
 				break;
 			case 119:

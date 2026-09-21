@@ -62,6 +62,12 @@ namespace AngouriMath
                     /// <inheritdoc/>
                     private protected override string LatexizeNode() => @"\mathbb{Z}^{+}";
                 }
+
+                partial record Primes
+                {
+                    /// <inheritdoc/>
+                    private protected override string LatexizeNode() => @"\mathbb{P}";
+                }
             }
 
             partial record Unionf

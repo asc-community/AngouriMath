@@ -61,6 +61,12 @@ namespace AngouriMath
                         => "sympy.S.Naturals0";
                 }
 
+                partial record Primes
+                {
+                    internal override string ToSymPy()
+                        => "sympy.S.Primes";
+                }
+
                 partial record PositiveIntegers
                 {
                     internal override string ToSymPy()

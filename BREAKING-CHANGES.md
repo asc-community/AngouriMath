@@ -816,6 +816,29 @@ as written.
 | `forall n in ZZ* : not (7 divides 2^n + 1)` | `UnhandledParseException` | `True` |
 | `forall n in ZZ+ : 5 divides 7^n - 1` | `UnhandledParseException` | `False` |
 
+### `PP` is the set of primes, and `min(S)` the least member of a set
+
+`PP` is a special set beside `ZZ+` — the primes `{2, 3, 5, 7, ...}`, `\mathbb{P}` in LaTeX,
+`S.Primes` in SymPy, `Domain.Prime` as a codomain — and was a variable named `PP`, so
+`7 in PP` stays as written no more. Membership is decided for a whole number by trial division
+and left open past the machine word; `PP /\ [a; b]` lists its members where there are few
+enough, which makes `card(PP /\ [1; n])` the prime-counting function; `PP ⊂ ZZ+` heads the
+chain. `min(S)` with one argument that is a set is the least member of the set, where
+`min(PP)` was `PP` itself — a one-argument `min` was the argument — and `min(x, x in S and P)`
+is the least member of `{ x in S : P }`, where it was left as written; both decided for `PP`,
+`ZZ+`, `ZZ*` and their cuts by an interval or a bound, so `min(x, x in PP and x > 14)` is the next
+prime, `17` ([#1450](https://github.com/asc-community/AngouriMath/issues/1450)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"7 in PP".ToEntity().Evaled` | `7 in PP` — `PP` a variable | `True` |
+| `"PP subset ZZ".ToEntity()` | `UnhandledParseException` — `subset` is new since | `True` on evaluation |
+| `"min(PP)".ToEntity().Evaled` | `PP` | `2` |
+| `"min(x, x in PP and x > 14)".ToEntity().Evaled` | as written | `17` |
+| `"card(PP intersect [1; 100])".ToEntity().Evaled` | `#(PP /\ [1; 100])` | `25` |
+| `"PP intersect [1; 30]".ToEntity().Evaled` | as written | `{ 2, 3, 5, 7, 11, 13, 17, 19, 23, 29 }` |
+| `"min(ZZ+)".ToEntity().Evaled` | `ZZ+` | `1` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

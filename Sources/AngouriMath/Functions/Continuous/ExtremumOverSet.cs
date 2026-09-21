@@ -69,6 +69,11 @@ namespace AngouriMath.Functions
             if (var is not Variable x)
                 return null;
             var domain = over.InnerSimplified;
+            // The least member of a set of whole numbers bounded below, where the expression is
+            // the variable itself: min(PP) is 2, min(x, x in PP and x > 14) the next prime, 17.
+            // https://github.com/asc-community/AngouriMath/issues/1450
+            if (!largest && expression == x && domain is Set bounded && LeastWholeMember(bounded) is { } least)
+                return (least, new List<Entity> { least });
             List<Entity>? candidates;
             (Real from, Real to)? interval = null;
             switch (domain)
@@ -104,6 +109,71 @@ namespace AngouriMath.Functions
             var points = valued.Where(p => p.value == best).Select(p => p.point.InnerSimplified).ToList();
             var at = expression.Substitute(x, points[0]).InnerSimplified;
             return (at, points);
+        }
+
+        /// <summary>
+        /// The least member of <c>PP</c>, <c>ZZ+</c>, <c>ZZ*</c>, of one of them cut by an
+        /// interval or a ray, or of <c>{ x in S : x &gt; a }</c> and its kin over one of them;
+        /// <see langword="null"/> for anything else, and where a search for the next prime is
+        /// not taken to its end.
+        /// </summary>
+        private static Integer? LeastWholeMember(Set set)
+        {
+            switch (set)
+            {
+                case SpecialSet special:
+                    return special.ToDomain() switch
+                    {
+                        Core.Domain.Prime => Integer.Create(2),
+                        Core.Domain.PositiveInteger => Integer.One,
+                        Core.Domain.NonNegativeInteger => Integer.Zero,
+                        _ => null,
+                    };
+                case Intersectionf(Set left, Set right):
+                    {
+                        var (whole, cut) = (left, right) switch
+                        {
+                            (SpecialSet s, Interval i) => (s, i),
+                            (Interval i, SpecialSet s) => (s, i),
+                            _ => (null, null),
+                        };
+                        if (whole is null || cut is null || LeastWholeMember(whole) is not { } floor)
+                            return null;
+                        if (cut.Left.Evaled is not Real from)
+                            return null;
+                        var start = from.IsFinite ? from.EDecimal.RoundToExponent(EInteger.Zero, ERounding.Ceiling).ToEInteger() : floor.EInteger;
+                        if (from.IsFinite && !cut.LeftClosed && from.EDecimal.CompareTo(EDecimal.FromEInteger(start)) == 0)
+                            start += 1;
+                        if (start.CompareTo(floor.EInteger) < 0)
+                            start = floor.EInteger;
+                        var first = whole.ToDomain() == Core.Domain.Prime ? Primes.NextPrime(start) : start;
+                        if (first is null)
+                            return null;
+                        // Within the cut on the right, or the set is empty and has no least member.
+                        if (cut.Right.Evaled is Real to && to.IsFinite)
+                        {
+                            var order = EDecimal.FromEInteger(first).CompareTo(to.EDecimal);
+                            if (order > 0 || order == 0 && !cut.RightClosed)
+                                return null;
+                        }
+                        return Integer.Create(first);
+                    }
+                case ConditionalSet { DeclaredMembership: var (declared, rest), Var: Variable y } when declared.InnerSimplified is Set over:
+                    {
+                        // A bound on the name, read as the ray it cuts: x > a, x >= a, a < x, a <= x.
+                        var ray = rest switch
+                        {
+                            Greaterf(var l, var r) when l == y && !r.ContainsNode(y) => new Interval(r, false, Real.PositiveInfinity, false),
+                            GreaterOrEqualf(var l, var r) when l == y && !r.ContainsNode(y) => new Interval(r, true, Real.PositiveInfinity, false),
+                            Lessf(var l, var r) when r == y && !l.ContainsNode(y) => new Interval(l, false, Real.PositiveInfinity, false),
+                            LessOrEqualf(var l, var r) when r == y && !l.ContainsNode(y) => new Interval(l, true, Real.PositiveInfinity, false),
+                            _ => null,
+                        };
+                        return ray is null ? null : LeastWholeMember(new Intersectionf(over, ray));
+                    }
+                default:
+                    return null;
+            }
         }
 
         /// <summary>
