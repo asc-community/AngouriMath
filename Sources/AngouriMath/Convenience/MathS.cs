@@ -51,6 +51,40 @@ namespace AngouriMath
             public static Entity Phi(Entity integer) => new Phif(integer);
 
             /// <summary>
+            /// The <c>n</c>-th prime, <c>prime(n)</c>: <c>prime(1)</c> is <c>2</c> and
+            /// <c>prime(25)</c> is <c>97</c>. Defined on the positive whole numbers, and a
+            /// function rather than an operation on the set <c>PP</c>, which carries no order.
+            /// https://github.com/asc-community/AngouriMath/issues/1450
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine(MathS.NumberTheory.Prime(25).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 97
+            /// </code>
+            /// </example>
+            public static Entity Prime(Entity index) => new Primef(index);
+
+            /// <summary>
+            /// The <c>p</c>-adic valuation of a whole number, <c>valuation(n, p)</c>: the exponent
+            /// of the prime <c>p</c> in <c>n</c>. <c>valuation(12, 2)</c> is <c>2</c>,
+            /// <c>valuation(12, 5)</c> is <c>0</c>, and at <c>n = 0</c> it is <c>+oo</c>.
+            /// https://github.com/asc-community/AngouriMath/issues/1450
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine(MathS.NumberTheory.Valuation(12, 2).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 2
+            /// </code>
+            /// </example>
+            public static Entity Valuation(Entity argument, Entity prime) => new Valuationf(argument, prime);
+
+            /// <summary>
             /// The statement that <paramref name="divisor"/> divides <paramref name="dividend"/>,
             /// written <c>a divides b</c>: for integers, that <c>b mod a = 0</c>.
             /// </summary>

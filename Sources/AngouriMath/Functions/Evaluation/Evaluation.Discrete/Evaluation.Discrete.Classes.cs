@@ -537,6 +537,61 @@ namespace AngouriMath
                 => element is Number || element is FiniteSet listed && listed.All(Countable);
         }
 
+        partial record Valuationf
+        {
+            // Defined for a whole n and a prime p; the sign of n does not enter.
+            private protected override Entity IntrinsicCondition => Argument.In(MathS.Sets.Z) & Prime.In(MathS.Sets.Primes);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Argument, Prime,
+                    (n, p) => (n, p) switch
+                    {
+                        (Integer whole, Integer prime) when Functions.Primes.IsPrime(prime.EInteger) is { } isPrime
+                            => !isPrime ? MathS.NaN
+                            : whole.EInteger.IsZero ? Real.PositiveInfinity
+                            : Integer.Create(Multiplicity(whole.EInteger.Abs(), prime.EInteger)),
+                        (Number, Number) => MathS.NaN,
+                        _ => null
+                    },
+                    (@this, n, p) => ((Valuationf)@this).New(n, p), isExact);
+
+            private static EInteger Multiplicity(EInteger n, EInteger p)
+            {
+                var count = EInteger.Zero;
+                while (n.Remainder(p).IsZero)
+                {
+                    n = n.Divide(p);
+                    count += 1;
+                }
+                return count;
+            }
+        }
+
+        partial record Primef
+        {
+            // The n-th prime is defined for a positive whole n; nothing else indexes the primes.
+            private protected override Entity IntrinsicCondition => Argument.In(MathS.Sets.PositiveIntegers);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
+                    a => a switch
+                    {
+                        // The table of primes is built as far as it is asked for, and a very
+                        // large index is left as written rather than built towards.
+                        Integer { EInteger.Sign: > 0 } index when index.EInteger.CompareTo(EInteger.FromInt32(LargestIndex)) <= 0
+                            => Functions.Primes.GetPrime(index.EInteger.ToInt32Checked() - 1),
+                        Integer { EInteger.Sign: > 0 } => null,
+                        Number => MathS.NaN,
+                        _ => null
+                    },
+                    (@this, a) => ((Primef)@this).New(a), isExact);
+
+            /// <summary>How far the table of primes is built for an index.</summary>
+            private const int LargestIndex = 1000000;
+        }
+
         partial record Phif
         {
             // Euler's totient function is defined for all integers in this library.
