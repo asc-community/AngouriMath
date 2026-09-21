@@ -70,6 +70,12 @@ namespace AngouriMath.Functions
                 }
                 switch (factor)
                 {
+                    // The coefficient written as the node it is, binomial(N, k) or binomial(N, N - k):
+                    // the three factorials at once. https://github.com/asc-community/AngouriMath/issues/1409
+                    case Binomialf(var top, var bottom) when top == upper && (bottom == index || IsUpperMinusIndex(bottom, upper, index))
+                        && !sawTop && !sawBottomK && !sawBottomRest:
+                        sawTop = sawBottomK = sawBottomRest = true;
+                        break;
                     case Powf(Factorialf(var argument), var power) when power == Integer.MinusOne && argument == index && !sawBottomK:
                         sawBottomK = true;
                         break;
@@ -98,7 +104,27 @@ namespace AngouriMath.Functions
 
             Entity closed;
             if (angle is null)
-                closed = MathS.Pow((powerOfK ?? Integer.One) + (powerOfRest ?? Integer.One), upper);
+            {
+                var @base = ((powerOfK ?? Integer.One) + (powerOfRest ?? Integer.One)).InnerSimplified;
+                // A base that is zero, sum((-1)^k binomial(N, k)): 0^N is 1 at N = 0 and 0 for
+                // every N above it, and 0^N written as a power carries a condition that the
+                // piecewise below would read as "no value", making the sum 0 at N = 0 where it
+                // is 1. Said outright instead.
+                if (@base.Evaled is Complex { IsZero: true } || @base.Simplify().Evaled is Complex { IsZero: true })
+                {
+                    if (!sawTop)
+                        return null;
+                    Entity zeroPower = upper.Evaled is Integer whole
+                        ? (whole.EInteger.IsZero ? Integer.One : Integer.Zero)
+                        : MathS.Piecewise(new[]
+                        {
+                            new Providedf(Integer.One, new Equalsf(upper, Integer.Zero)),
+                            new Providedf(Integer.Zero, Entity.Boolean.True),
+                        });
+                    return (constant * zeroPower).InnerSimplified;
+                }
+                closed = MathS.Pow(@base, upper);
+            }
             else
             {
                 var half = angle / 2;

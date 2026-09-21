@@ -18,7 +18,7 @@ effect". This is how to supply those seven things.
 ## Where a rule goes
 
 `Core/Transformations/Matching/MatchedRules.cs`, as a value in a `MatchedRuleSet`. **33** sets and
-**332** rules live there today.
+**335** rules live there today.
 
 The `switch` statements in `Functions/Simplification/Patterns` are the older form. **All thirty
 registered sets now run as data and describe what they run**; none executes its `switch` any more.
@@ -64,7 +64,7 @@ in a name and putting the identity in brackets after it:
 2. Tangent is sine over cosine (tan(a) = sin(a) / cos(a)), so tan(x) becomes sin(x) / cos(x).
 ```
 
-So the name has to be a clause that survives being read that way. **All 303 distinct rule names are,
+So the name has to be a clause that survives being read that way. **All 306 distinct rule names are,
 and `StepAsASentenceTest` holds them to it** — a name with a capital, a bracket or an underscore
 fails that test rather than degrading the prose quietly.
 
@@ -91,7 +91,7 @@ debugged for an afternoon.
 | `Left.ToString()` | `Divf(var a, Divf(var b, var c))` — how the matcher spells it |
 
 Write the identity with `=`, not `->`: it is an equality, and the arrow belongs to the direction the
-rule happens to be applied in. **329** rules carry one today; a new rule should.
+rule happens to be applied in. **332** rules carry one today; a new rule should.
 
 ## The pattern language
 
@@ -137,7 +137,7 @@ A pattern replacement gets:
 - **an exact growth**, counted from the two patterns rather than declared.
 
 A code replacement gets neither, and its growth is `Unknown` unless you declare one. That is the
-honest default — **123** rules sit at `Unknown` — but declare it where you can justify it:
+honest default — **126** rules sit at `Unknown` — but declare it where you can justify it:
 
 ```csharp
 // The Chebyshev expansion of sin(n * a) is a sum of n terms where the pattern is one node,
@@ -226,7 +226,7 @@ limit, against nothing for handing the node over.
 | `SoundUnderAssumptions` | holds given something the rule does not check |
 | `Heuristic` | usually right |
 
-**186** of the 332 rules are `Sound` and **146** are conditional. Every one of the thirty registered
+**186** of the 335 rules are `Sound` and **149** are conditional. Every one of the thirty registered
 *sets* declares `SoundUnderAssumptions`, because a set's tier is the **minimum** over its rules — so
 the set grain says nothing and the rule grain says everything. A derivation reports the rule's tier
 (`RewriteStep.Soundness`), which is why getting it right matters beyond the label.

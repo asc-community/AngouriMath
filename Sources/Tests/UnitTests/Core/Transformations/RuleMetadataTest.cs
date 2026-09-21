@@ -88,9 +88,9 @@ namespace AngouriMath.Tests.Core.Transformations
         public void SoundnessIsFinerPerRuleThanPerSet()
         {
             var rules = MatchedRules.All.SelectMany(set => set.Rules).ToList();
-            Assert.Equal(332, rules.Count);
+            Assert.Equal(335, rules.Count);
             Assert.Equal(186,rules.Count(rule => rule.Soundness is Soundness.Sound));
-            Assert.Equal(146, rules.Count(rule => rule.Soundness is Soundness.SoundUnderAssumptions));
+            Assert.Equal(149, rules.Count(rule => rule.Soundness is Soundness.SoundUnderAssumptions));
 
             // And every set still reports the weakest of them, which is what makes the set grain
             // uninformative rather than wrong.
@@ -174,7 +174,7 @@ namespace AngouriMath.Tests.Core.Transformations
             var repointed = RewriteRules.All
                 .Where(set => set.Rules.Count > 0 && set.Rules.All(rule => rule.Soundness is not null))
                 .ToList();
-            Assert.Equal(329, repointed.Sum(set => set.Rules.Count));
+            Assert.Equal(332, repointed.Sum(set => set.Rules.Count));
             Assert.All(repointed, set => Assert.All(set.Rules, rule => Assert.NotNull(rule.Description)));
         }
 

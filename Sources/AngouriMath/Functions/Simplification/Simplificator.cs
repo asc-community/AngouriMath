@@ -306,7 +306,9 @@ namespace AngouriMath.Functions
                     AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.InequalityEquality)));
                 }
 
-                if (res.Nodes.Any(child => child is Factorialf))
+                // A binomial coefficient is three factorials, and its identities live in the
+                // gathering set. https://github.com/asc-community/AngouriMath/issues/1409
+                if (res.Nodes.Any(child => child is Factorialf or Binomialf))
                 {
                     AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.ExpandFactorialDivisions)));
                     AddHistory(res = Simplified(recording, res.Rewrite(RewriteRules.FactorizeFactorialMultiplications)));
