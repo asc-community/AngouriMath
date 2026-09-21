@@ -12,6 +12,7 @@ using AngouriMath.Functions;
 using PeterO.Numbers;
 using AngouriMath.Functions.Continuous.Solvers.SetSolver;
 using static AngouriMath.Entity;
+using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
@@ -319,6 +320,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 Variable when expr == x => new FiniteSet(true),
 
                 Inf(var var, Set set) when var == x => set,
+                // f(x) in S: the members of a listed S each as an equation, an interval as its
+                // two bounds, and anything else left as the set of x with the property, since
+                // a solver that answered "no x" here was answering wrongly -- x^2 in (0; 1) was
+                // the empty set. https://github.com/asc-community/AngouriMath/issues/1409
+                Inf(var member, Set set) when member.ContainsNode(x) => Membership(member, set, x) ?? new ConditionalSet(x, expr),
 
                 // a x + b = c (mod n): one residue class, or none, by the gcd; a congruence of
                 // higher degree by the residues that satisfy it, where the modulus is small
@@ -328,8 +334,43 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 Providedf(var e, var predicate) => Solve(e, x).Filter(predicate, x),
                 Piecewise p => EquationSolver.SolvePiecewise(p, x, Solve),
 
-                // TODO: Although piecewise needed?
-                _ => Set.Empty
+                // A statement the solver has no arm for is the set of x with the property, left
+                // as written -- not the empty set, which claims there is no such x. A statement
+                // that does not mention x is one of everything or of nothing, and the set
+                // builder over it evaluates to that.
+                _ => new ConditionalSet(x, expr)
             };
+
+        /// <summary>
+        /// The <c>x</c> with <c>f(x)</c> in a set: for a listed set, the union of the equations
+        /// <c>f(x) = s</c>; for an interval, the conjunction of its bounds, each strict or not as
+        /// the end is; <see langword="null"/> for a set that is neither.
+        /// </summary>
+        private static Set? Membership(Entity member, Set set, Variable x)
+        {
+            switch (set)
+            {
+                case FiniteSet listed:
+                    Set? union = null;
+                    foreach (var element in listed)
+                    {
+                        var solutions = Solve(member.Equalizes(element), x);
+                        union = union is null ? solutions : MathS.Union(union, solutions);
+                    }
+                    return union ?? Set.Empty;
+                case Interval interval:
+                    Entity? condition = null;
+                    if (interval.Left.Evaled != Real.NegativeInfinity)
+                        condition = interval.LeftClosed ? member >= interval.Left : member > interval.Left;
+                    if (interval.Right.Evaled != Real.PositiveInfinity)
+                    {
+                        var upper = interval.RightClosed ? member <= interval.Right : member < interval.Right;
+                        condition = condition is null ? upper : condition & upper;
+                    }
+                    return condition is null ? MathS.Sets.R : Solve(condition, x);
+                default:
+                    return null;
+            }
+        }
     }
 }

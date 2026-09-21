@@ -223,6 +223,13 @@ namespace AngouriMath.Core.Sets
             var over = sub is ConditionalSet { DeclaredMembership: (var declared, _) } ? declared as Set : sub;
             switch (super)
             {
+                // The operators are the connectives: x in A \/ B is x in A or x in B.
+                case Unionf(Set a, Set b):
+                    return MembershipAsComparison(x, a, sub) is { } inA && MembershipAsComparison(x, b, sub) is { } inB ? inA | inB : null;
+                case Intersectionf(Set a, Set b):
+                    return MembershipAsComparison(x, a, sub) is { } inBoth && MembershipAsComparison(x, b, sub) is { } andIn ? inBoth & andIn : null;
+                case SetMinusf(Set a, Set b):
+                    return MembershipAsComparison(x, a, sub) is { } inLeft && MembershipAsComparison(x, b, sub) is { } notIn ? inLeft & !notIn : null;
                 case ConditionalSet { DeclaredMembership: (var declaredOfSuper, var rest), Var: Variable y } builder
                     when declaredOfSuper is Set declaredSet:
                     // x in { y in S : p } is x in S and p(x); the first conjunct is read the

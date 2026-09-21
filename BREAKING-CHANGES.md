@@ -656,6 +656,24 @@ with the multiplier gathered from the whole product in the exponent
 | `"e^(2*acoth(2*x))*(3 - 12*x^2)^2".Integrate("x")` | `integral(…)` — left unevaluated | `(144 * x ^ 5 / 5 + 144 * x ^ 4 / 4 + (-36) * x ^ 2 / 2 + (-9) * x provided not 2 * x + -1 = 0) + C` |
 | `"e^(1/3*acoth(x))*x^2".Integrate("x")` | `integral(…)` — left unevaluated | an antiderivative in `((x + 1)/(x - 1))^(1/6)` |
 
+### `Solve` no longer answers the empty set for a statement it cannot read
+
+**Wrong answer fixed.** `"x^2 in (0; 1)".Solve("x")` was `{}` — and so was every `f(x) in S` with
+anything but a bare `x` on the left, and every statement the solver had no arm for: the arm at the
+end of the dispatch answered the empty set, which claims there is no such `x`. A membership is
+solved now — the members of a listed set each as an equation, an interval as its bounds, each
+strict or not as the end is — and a statement that is not read is the set of `x` with the
+property, left as written. A quantifier that put the negated body to the solver read that
+emptiness as a proof: `forall x in RR : x^2 in ZZ` was `True`
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409), the reference's pre-images).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2 in (0; 1)".Solve("x")` | `{}` — wrong | `((-oo; 0) \/ (0; +oo)) /\ (-1; 1)` |
+| `"x^2 in {1, 4}".Solve("x")` | `{}` — wrong | `{ 1, -1, 2, -2 }` |
+| `"x^2 in ZZ".Solve("x")` | `{}` — wrong | `{ x : x ^ 2 in ZZ }`, left as written |
+| `forall x in RR : x^2 in ZZ` | `UnhandledParseException` (quantifiers are new since) | `False` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
