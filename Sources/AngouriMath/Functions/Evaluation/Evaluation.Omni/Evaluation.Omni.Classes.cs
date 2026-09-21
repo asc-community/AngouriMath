@@ -7,6 +7,7 @@
 
 using AngouriMath.Core.Sets;
 using System;
+using System.Linq;
 using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
@@ -94,8 +95,27 @@ namespace AngouriMath
                         Boolean(true) => Codomain is AngouriMath.Core.Domain.Any
                             ? New(Var, Boolean.True)
                             : SpecialSet.Create(Codomain),
-                        _ => New(Var, predicate)
+                        _ => PreImage(predicate, isExact) ?? New(Var, predicate)
                     };
+                }
+
+                /// <summary>
+                /// <c>{ x in A : f(x) in Y }</c>, a pre-image, is the solutions of the membership
+                /// cut by <c>A</c> where the statement solver reads it -- a listed <c>Y</c> or an
+                /// interval -- and stays written otherwise. This shape only: a set builder is not
+                /// solved on evaluation in general, that being a search on every evaluation.
+                /// https://github.com/asc-community/AngouriMath/issues/1409
+                /// </summary>
+                private Entity? PreImage(Entity predicate, bool isExact)
+                {
+                    if (Var is not Variable x
+                        || predicate is not Andf(Inf(var name, Set declared), Inf(var image, Set) membership)
+                        || name != x || !image.ContainsNode(x) || image == x)
+                        return null;
+                    var solved = Functions.Algebra.AnalyticalSolving.StatementSolver.Solve(membership, x);
+                    if (solved is ConditionalSet)
+                        return null;
+                    return declared.Intersect(solved).InnerSimplified(isExact);
                 }
             }
 
@@ -178,6 +198,15 @@ namespace AngouriMath
                 {
                     var over = Over.InnerSimplified(isExact);
                     var body = Body.InnerSimplified(isExact);
+                    // The image of an interval under an expression the name occurs in once,
+                    // union({f(x)}, x in I), is f(I) by interval arithmetic, which is exact for
+                    // one occurrence and the operations it has images for (#1423): the
+                    // reference's 9c/5 + 32 on (0, 100) is (32, 212). Where the arithmetic has
+                    // no image the substitution leaves an expression, and the family stays.
+                    if (this is IndexedUnionf && over is Interval && body is FiniteSet { Count: 1 } image
+                        && image.First() is var f && f.Nodes.Count(node => node == Var) == 1
+                        && f.Substitute(Var, over).InnerSimplified(isExact) is Set imaged)
+                        return imaged;
                     if (over is FiniteSet indices)
                     {
                         if (indices.Count == 0)
