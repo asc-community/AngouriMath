@@ -323,8 +323,12 @@ and, with the sum to `n + 1` unfolded to the sum to `n` plus one term and that s
 denominator is not zero: decided over the set for the quantified name (`n + 1` is never `0` on
 `ZZ+`), and stated as a condition for a free parameter (`forall n in ZZ+ : sum(1/(a k (k + 1)), k, 1, n) =
 n/(a (n + 1))` is `True provided not a = 0`). Only the shape with one sum or product
-alone on a side of an equation is read this way; a sum whose closed form has a case on a free
-parameter is left as written. **An inequality with an exponential or a factorial in `n`** is
+alone on a side of an equation is read this way. A sum whose closed form has a case on a free
+parameter — `q = 1` beside `n >= 0`, which is how `sum(q^i, i, 0, n - 1)` comes — is decided
+**by cases on the parameter**: the statement under the hypothesis and under its negation, and it
+holds provided the hypothesis where it holds there alone, so Sullivan and Mackey's Ex 5.2.6,
+`forall n in ZZ+ : sum(q^i, i, 0, n - 1) = (q^n - 1)/(q - 1)`, is `True provided not q = 1` —
+which is the book's own remark on why `q = 1` is excluded. **An inequality with an exponential or a factorial in `n`** is
 decided by induction too, with the step read off a multiple of the hypothesis: writing it as
 `P(n) >= 0`, `P(n + 1) = c P(n) + D` for a `c >= 0` (one, the base of an exponential, `n + 1`
 beside a factorial) and a `D` whose sign is read from its shape — a positive base to any power, a
@@ -394,6 +398,15 @@ rather than a hundred thousand terms. The answer carries the condition it needs 
 concrete that condition is decidable and the answer is a number. A bound that is a number and not
 a whole one still stays as written, since the index runs over the integers and
 `sum(k, k, 1, 5/2)` is `1 + 2` rather than the polynomial at `5/2`.
+
+A `sum` whose body is a **polynomial in the index times a power with the index in the exponent**
+is answered in closed form too: `sum(k * 2^k, k, 1, n)` is `(n - 1) 2^(n + 1) + 2`, and
+`sum((-1)^(k - 1) k^2, k, 1, n)` is `(-1)^(n - 1) n (n + 1)/2` — §5.3.4 Try 6 of Sullivan and
+Mackey's *An Introduction to Proofs*. The discrete antiderivative is `q(k) r^k` with `q` a
+polynomial of the same degree, found by one division by `r - 1` per coefficient, so a symbolic
+ratio carries the case `r = 1` separately, where the sum is the polynomial's. To `+oo` the series
+converges for `|r| < 1`: `sum(k / 2^k, k, 1, +oo)` is `2`, and `sum(k x^k, k, 0, +oo)` is
+`x/(1 - x)^2 provided |x| < 1`.
 
 A sum **to `+oo`** is answered where it converges — the geometric, exponential and binomial series
 have closed forms — and, failing that, by the **nth-term test**: terms that do not tend to zero

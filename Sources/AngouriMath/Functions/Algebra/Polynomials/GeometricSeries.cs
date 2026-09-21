@@ -132,7 +132,7 @@ namespace AngouriMath.Functions
         /// be symbolic. Read off the tree: <c>k - k</c> does not simplify to a bare 0 but to 0
         /// with what it assumes, so the exponent is not rewritten to find out.
         /// </summary>
-        private static bool TryReadLinear(Entity exponent, Variable index, out int slope, out Entity offset)
+        internal static bool TryReadLinear(Entity exponent, Variable index, out int slope, out Entity offset)
         {
             offset = Integer.Zero;
             switch (exponent)
