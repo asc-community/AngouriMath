@@ -788,6 +788,34 @@ written
 | `"forall n in ZZ+ : n! >= 2^(n - 1)".ToEntity().Evaled` | `UnhandledParseException` | `True` |
 | `"forall n in ZZ+ /\\ [4; +oo) : n^2 - 2 n - 1 > 0".ToEntity().Evaled` | `UnhandledParseException` | `True` — decided about `4 + t` over `ZZ*` |
 
+### `acsch(c x)` and `asech(c x)` are integrated with a symbolic `c`, and `|c|` differentiates to `0` in `x`
+
+Three defects behind one symptom: `x acsch(2 x)` was answered and `x acsch(c x)` declined. The
+parser spells the inverse hyperbolic cosecant `ln(1/(c x) + sqrt(1/(c x)^2 + 1))`, and (1) `(c x)^2`
+was read as a power of something that is not a polynomial where `(2 x)^2` had been folded to
+`4 x^2` — a whole power of a product with a symbolic constant beside the variable is now written
+as the product of the powers, as a rule of its own; (2) the root of `(1 + c^2 x^2)/(c^2 x^2)` was
+not written apart as `sqrt(1 + c^2 x^2)/(|c| |x|)` because `c^2` is not a number — a parameter's
+even power is taken for positive now, and the answer says so, `provided c^2 > 0`, which holds
+exactly for a real non-zero `c`; (3) the step by parts differentiated `|c|` to
+`derivative(|c|, x)`, since the modulus rule asks whether its argument is real before it asks
+whether the argument mentions the variable — **the modulus, the sign, the floor, the ceiling,
+the rounding, a limit, a sum, a product, an applied function and any node with no rule of its
+own differentiate to `0` where they do not mention the variable**, with no condition, which also
+removes the `provided not c in ZZ` that `floor(c) + x` carried. A node with a rule of its own
+keeps it: `d/dy piecewise(x provided a, 1/x)` still says where `1/x` exists. And a negative fractional power is put below the bar before two
+quotients are cancelled as polynomials in their radicals, so that `q^(-1/2)` above and `sqrt(q)`
+below are one indeterminate. Rubi's 7.5.1 and 7.6.1
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"abs(c) * x".ToEntity().Differentiate("x")` | `derivative(abs(c), x) * x + abs(c)` | `abs(c)` |
+| `"floor(c) + x".ToEntity().Differentiate("x")` | `1 provided not c in ZZ` | `1` |
+| `"c!".ToEntity().Differentiate("x")` | `derivative(c!, x)` | `0` |
+| `"x * acsch(c * x)".ToEntity().Integrate("x")` | `integral(x * ln(1 / (c * x) + sqrt(1 / (c * x) ^ 2 + 1)), x)` | an antiderivative, `provided c^2 > 0` |
+| `"x^2 * asech(c * x)".ToEntity().Integrate("x")` | `integral(...)`, the same | an antiderivative |
+| `"x / sqrt(1 + 1/(c*x)^2)".ToEntity().Integrate("x")` | `integral(x / sqrt(1 + 1 / (c * x) ^ 2), x)` | an antiderivative, `provided c^2 > 0` |
 ### `n in ZZ and 2^n > n^2` is solved to a set, and was a refusal
 
 An inequality with an exponential or a factorial over the whole numbers is solved to the members

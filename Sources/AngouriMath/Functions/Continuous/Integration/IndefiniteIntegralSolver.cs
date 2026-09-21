@@ -397,6 +397,37 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!denominator.ContainsNode(x))
                 return (numerator, denominator);
+            // A negative fractional power is the reciprocal of the positive one, and goes
+            // below the bar so that `q^(-1/2)` above and `sqrt(q)` below are one atom and not
+            // two: the derivative of `ln(1/(c x) + sqrt(q))` by parts is such a quotient.
+            // Only where it joins two spellings of one root: a reciprocal root on its own is
+            // left where it is, since moving every one of them multiplied the other quotients
+            // through and fed a search -- Rubi's `x^5 atanh(x sqrt(p)/sqrt(d + p x^2))` went
+            // from a decline in 4 s to none. Where the two spellings do occur the joining is
+            // what lets the remainder be read, and the same row still runs out its budget: the
+            // remainder, read, is `x^6/sqrt(d + p x^2)` up to a constant, and that search is
+            // the cost of the capability rather than of this step.
+            var both = numerator.Nodes.Concat(denominator.Nodes)
+                .Where(node => node is Powf(var radicand, Number.Rational r) && r is not Number.Integer && radicand.ContainsNode(x))
+                .Select(node => (Radicand: ((Powf)node).Base, Negative: ((Number.Rational)((Powf)node).Exponent).ERational.IsNegative))
+                .GroupBy(pair => pair.Radicand)
+                .Where(group => group.Any(pair => pair.Negative) && group.Any(pair => !pair.Negative))
+                .Select(group => group.Key)
+                .ToList();
+            Entity ReciprocalsBelow(Entity side) => side.Replace(node =>
+                node is Powf(var radicand, Number.Rational r) && r is not Number.Integer && r.ERational.IsNegative && both.Contains(radicand)
+                    ? 1 / MathS.Pow(radicand, -r)
+                    : node);
+            if (both.Count > 0)
+            {
+                var (aboveOfTop, belowOfTop) = Functions.SingleQuotient.Of(ReciprocalsBelow(numerator));
+                var (aboveOfBottom, belowOfBottom) = Functions.SingleQuotient.Of(ReciprocalsBelow(denominator));
+                if (belowOfTop != Number.Integer.One || belowOfBottom != Number.Integer.One)
+                {
+                    numerator = aboveOfTop * belowOfBottom;
+                    denominator = belowOfTop * aboveOfBottom;
+                }
+            }
             var atoms = new Dictionary<Entity, Entity.Variable>();
             // Each name unique against the expression and against the atoms named before it.
             var named = numerator + denominator;
@@ -1116,14 +1147,41 @@ namespace AngouriMath.Functions.Algebra
             }
         }
 
+        // The constant factors gathered from every position among the factors, where a product
+        // read as two operands sees neither of `x^2 * b` and `L` as constant: `x^2 (a + b L)`
+        // splits into `a x^2` and `x^2 * b * L`, and the `b` inside the left product was
+        // integrated around rather than taken out, by parts against `b L` with the remainder
+        // one level deeper than the row without `a + b` -- five minutes where that took one
+        // second. Only after the two-operand reading has declined: gathering first sent
+        // `1/((a + b x)^2 (c + d x)^(3/2))` down another path and its answer grew from 700
+        // characters to 24,000. Asked one level down, as before, and not as a question of its
+        // own: that reading made every sub-integrand's constant multiple a top-level question,
+        // and the rules scoped to the top then fired everywhere.
+        private static Entity? WithTheConstantFactorsOut(Entity.Mulf product, Entity.Variable x, bool integrateByParts)
+        {
+            // A constant that is the number 1 is a constant found, not none: `1 * x` is x.
+            Entity? constant = null;
+            Entity? rest = null;
+            foreach (var factor in Mulf.LinearChildren(product))
+                if (!factor.ContainsNode(x))
+                    constant = constant is null ? factor : constant * factor;
+                else
+                    rest = rest is null ? factor : rest * factor;
+            if (constant is null || rest is null)
+                return null;
+            return Integration.ComputeIndefiniteIntegral(rest, x, integrateByParts)?.Pipe(i => constant * i);
+        }
+
         internal static Entity? SolveAsPolynomialTerm(Entity expr, Entity.Variable x, bool integrateByParts = true) => expr switch
         {
-            Entity.Mulf(var m1, var m2) =>
+            // The constant factors wherever they stand among the factors: `x^2 * b * L` holds
+            // its `b` inside the left product, and read as two operands neither is constant.
+            Entity.Mulf(var m1, var m2) product =>
                 !m1.ContainsNode(x) ?
                     Integration.ComputeIndefiniteIntegral(m2, x, integrateByParts)?.Pipe(i => m1 * i) :
                 !m2.ContainsNode(x) ?
                     Integration.ComputeIndefiniteIntegral(m1, x, integrateByParts)?.Pipe(i => m2 * i) :
-                null,
+                WithTheConstantFactorsOut(product, x, integrateByParts),
 
             Entity.Divf(var div, var over) =>
                 // A denominator that is partly constant is split first, and the order matters.
@@ -9744,6 +9802,30 @@ namespace AngouriMath.Functions.Algebra
             return folded == expr ? null : Integration.ComputeAsAQuestionOfItsOwn(folded, x, integrateByParts);
         }
 
+        /// <summary>
+        /// A whole power of a product in which the variable stands beside a constant, written
+        /// as the product of the powers: <c>(c x)^2</c> is <c>c^2 x^2</c>, exact for a whole
+        /// power over the complex numbers. That is the spelling the parser gives the inverse
+        /// hyperbolic secant and cosecant -- <c>acsch(c x)</c> is
+        /// <c>ln(1/(c x) + sqrt(1/(c x)^2 + 1))</c> -- and every rule that reads a polynomial in
+        /// <c>x</c> read <c>(c x)^2</c> as a power of something that is not one: <c>x acsch(c x)</c>
+        /// was declined where <c>x acsch(2 x)</c> was answered, the numeric coefficient having
+        /// been folded on the way. A symbolic constant beside the variable only: a numeric one
+        /// is folded by the rules already, and rewriting for it re-asked every sub-integrand
+        /// with a <c>(2 u)^3</c> in it -- Welz's 67 went from 4 s to 34. Asked as a question of
+        /// its own. Rubi's 7.5.1 and 7.6.1.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveByDistributingWholePowersOfProducts(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var distributed = expr.Replace(node =>
+                node is Powf(Mulf(var l, var r) product, Number.Integer power) && product.ContainsNode(x)
+                    && (!l.ContainsNode(x) && l.Vars.Any() || !r.ContainsNode(x) && r.Vars.Any())
+                    ? MathS.Pow(l, power) * MathS.Pow(r, power)
+                    : node);
+            return distributed == expr ? null : Integration.ComputeAsAQuestionOfItsOwn(distributed, x, integrateByParts);
+        }
+
         internal static Entity? SolveAPolynomialTimesARationalFunctionOfAnExponential(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             // The polynomial factors above the bar, and the rest, which holds x in exponents only.
@@ -12842,6 +12924,10 @@ namespace AngouriMath.Functions.Algebra
             if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
                 return null;
             var tookAPowerOfX = false;
+            // A parameter's even power taken for positive -- `c^2 x^2` below the bar, which is
+            // how `acsch(c x)` and `asech(c x)` arrive, is positive for a real `c` -- and the
+            // answer says so: `provided c^2 > 0`, which holds exactly for a real non-zero `c`.
+            Entity assumed = Entity.Boolean.True;
             var written = expr.Replace(node =>
             {
                 if (node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer || !@base.ContainsNode(x))
@@ -12849,7 +12935,8 @@ namespace AngouriMath.Functions.Algebra
                 // As one quotient where it is a sum with a quotient in it: `1 - 1/x^2` is
                 // `(x^2 - 1)/x^2`, the derivative of the arcsecant as it is written.
                 var (above, below) = Functions.SingleQuotient.Of(AsOneQuotient(@base));
-                if (below != Number.Integer.One && below.ContainsNode(x) && IsPositiveForReal(below, x) && OfModestDegree(above))
+                if (below != Number.Integer.One && below.ContainsNode(x) && OfModestDegree(above)
+                    && (IsPositiveForReal(below, x) || IsPositiveForARealParameter(below, x, out assumed, assumed)))
                     return MathS.Pow(above, exponent) * PowerOfAPositive(below, -exponent);
                 // A polynomial with rational roots is the product of its linear factors, and
                 // the product is what the splitting below reads: `(1 - x^2)^(1/4)` is
@@ -12954,7 +13041,8 @@ namespace AngouriMath.Functions.Algebra
             var forPositive = Integration.ComputeIndefiniteIntegral(Functions.PartialFractions.Bare(written), x, integrateByParts: true);
             if (forPositive is null || forPositive.Nodes.Any(node => node == MathS.NaN))
                 return null;
-            return tookAPowerOfX ? ExtendedByParity(expr, forPositive, x) : forPositive;
+            var extended = tookAPowerOfX ? ExtendedByParity(expr, forPositive, x) : forPositive;
+            return extended?.Provided(assumed);
 
             // What is set free under the root is a polynomial of degree four at most: the
             // shapes the rules behind this read stop there, and a root of a sextic or a
@@ -13054,13 +13142,71 @@ namespace AngouriMath.Functions.Algebra
                     {
                         tookAPowerOfX = true;
                         var power = MathS.Pow(x, (Number.Integer.Create(degree) * exponent).InnerSimplified);
+                        // A parameter's even power to a fractional exponent is a power of its
+                        // modulus, `(c^2)^(-1/2)` being `1/|c|`, which is one atom wherever it
+                        // stands rather than two spellings of it.
+                        var ofTheCoefficient = MathS.Pow(coefficient, exponent);
+                        // The coefficient as the polynomial reader writes it, `1 * c^2 * 1^2`:
+                        // its numeric factors together, its parameters' even powers as moduli.
+                        Entity numeric = Number.Integer.One;
+                        Entity symbolic = Number.Integer.One;
+                        var readable = true;
+                        foreach (var factor in Mulf.LinearChildren(coefficient))
+                            if (factor.Evaled is Number.Real { IsPositive: true } value)
+                                numeric = numeric * value;
+                            else if (factor is Powf(Variable parameter, Number.Integer { EInteger.IsEven: true } even) && even.EInteger.Sign > 0)
+                                symbolic = symbolic * MathS.Pow(MathS.Abs(parameter), (even * exponent).InnerSimplified);
+                            else
+                                readable = false;
+                        if (readable && symbolic != Number.Integer.One)
+                            ofTheCoefficient = (numeric.InnerSimplified == Number.Integer.One ? symbolic : MathS.Pow(numeric.InnerSimplified, exponent) * symbolic);
                         return coefficient.Evaled is Number.Integer { IsZero: false } one && one.EInteger.Equals(EInteger.One)
                             ? power
-                            : MathS.Pow(coefficient, exponent) * power;
+                            : ofTheCoefficient * power;
                     }
                 }
                 return MathS.Pow(positive, exponent);
             }
+        }
+
+        /// <summary>
+        /// Whether the polynomial <paramref name="expr"/> in <paramref name="x"/> is positive at
+        /// every real <paramref name="x"/> but possibly zero once its parameters are real: every
+        /// monomial an even power, every coefficient a positive number or an even power of a
+        /// symbol, or a product of those. The coefficients taken for positive are returned as
+        /// the condition <c>c^2 &gt; 0 and ...</c>, conjoined with <paramref name="already"/>,
+        /// which is exactly the statement that each such parameter is real and not zero.
+        /// </summary>
+        private static bool IsPositiveForARealParameter(Entity expr, Entity.Variable x, out Entity assumed, Entity already)
+        {
+            assumed = already;
+            if (!TreeAnalyzer.TryGetPolynomial(expr, x, out var monomials) || monomials.Count == 0)
+                return false;
+            var conditions = new List<Entity>();
+            foreach (var pair in monomials)
+            {
+                if (!pair.Key.IsEven)
+                    return false;
+                var symbolic = false;
+                foreach (var factor in Mulf.LinearChildren(pair.Value))
+                {
+                    if (factor.Evaled is Number.Real { IsPositive: true })
+                        continue;
+                    if (factor is Powf(Variable, Number.Integer { EInteger.IsEven: true } n) && n.EInteger.Sign > 0)
+                    {
+                        symbolic = true;
+                        continue;
+                    }
+                    return false;
+                }
+                if (symbolic)
+                    conditions.Add(new Greaterf(pair.Value.InnerSimplified, Number.Integer.Zero));
+            }
+            if (conditions.Count == 0)
+                return false;
+            foreach (var condition in conditions.Distinct())
+                assumed = assumed == Entity.Boolean.True ? condition : assumed & condition;
+            return true;
         }
 
         /// <summary>
