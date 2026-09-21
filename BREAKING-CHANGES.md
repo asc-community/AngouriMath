@@ -575,6 +575,25 @@ was ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 | `"x * sqrt(c - a*c*x) / e^(3 * atanh(a*x))".Integrate("x")` | `integral(…)` — left unevaluated, with `e` evaluated to a hundred digits inside it | an antiderivative in `sqrt(c - a c x)`, `provided c - a * c * x >= 0` |
 | `"1/sqrt(x + x^(3/2))".Integrate("x")` | `integral(1 / sqrt(x + x ^ (3/2)), x)` — left unevaluated | `2 * sqrt(1 + sqrt(x)) / (1/2) + C provided x >= 0` |
 
+### A zero imaginary part is on the real axis, whatever its sign
+
+**Silent, with the downcasting off.** A decimal's negative zero — `0E-100 * -0.43` is `-0E-102`
+— is an artefact of the exponent arithmetic and not a limit from below, but the phase read
+`-pi` off its sign the way `Math.Atan2` does, and with `DowncastingEnabled` off, where
+`Complex.Create` keeps `-1.54 - 0i` a `Complex`, a power went through the polar form on the
+wrong side of the negative axis: `(-1.54)^(-1/2)` was `+0.80 i` with the setting off and
+`-0.80 i` with it on. The setting decided a branch, and a numerical check that turns it off
+called a right antiderivative wrong. Now a number on the negative axis has argument `pi` for
+either zero, a complex with an exactly zero imaginary part takes the real paths of `Pow`, and
+the square root's sign is read from a strictly negative imaginary part
+([#1378](https://github.com/asc-community/AngouriMath/issues/1378)). Nothing changes with
+the downcasting on.
+
+| Input, under `MathS.Settings.DowncastingEnabled.As(false, …)` | Was (2.5.0) | Now |
+|---|---|---|
+| `"(2*1.44*(1/sqrt(-5.286))^2-1)^(-1/2)".ToEntity().Evaled` | `5.5500952471953097…` | `-0.804560841963042…i`, as with the downcasting on |
+| `"((1/sqrt(-5.286))*(2*1.44*(1/sqrt(-5.286))^2-1)^(-1/2))^(-3)".ToEntity().Evaled` | `23.335336258472899…` | `-23.335336258472899…`, as with the downcasting on |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
