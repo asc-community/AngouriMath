@@ -418,7 +418,9 @@ namespace AngouriMath
                     else
                     {
                         y = Hypot(re, im, context).Subtract(re, context).Divide(2, context).SqrtByIntegerRoot(context);
-                        if (im.IsNegative) y = -y;
+                        // Strictly negative: a negative zero is on the axis, where the root is
+                        // +i times the root of the modulus, as for any negative real.
+                        if (im.Sign < 0) y = -y;
                         x = im.Divide(y.Multiply(2, context), context);
                     }
                     return Complex.Create(x, y);
@@ -461,6 +463,18 @@ namespace AngouriMath
                     var squared = half * half;
                     return divRem[1].IsZero ? squared : squared * BinaryIntPow(num, divRem[1]);
                 }
+                // A complex whose imaginary part is exactly zero is the real number it is, and
+                // takes the real paths below: with the downcasting off, Complex.Create keeps
+                // `-1.54 - 0i` a Complex, and through the polar form the sign of that zero
+                // put the number a hair below the negative axis -- `(-1.54)^(-1/2)` came back
+                // `+0.80 i` there and `-0.80 i` with the downcasting on. The phase reads a
+                // zero as a zero now, and a real base gets the exact half-power arithmetic
+                // rather than a cosine of pi/2 at a hundred digits.
+                // https://github.com/asc-community/AngouriMath/issues/1378
+                if (@base is not Real && @base.ImaginaryPart.EDecimal.IsZero)
+                    @base = Real.Create(@base.RealPart.EDecimal);
+                if (power is not Real && power.ImaginaryPart.EDecimal.IsZero)
+                    power = Real.Create(power.RealPart.EDecimal);
                 // e to a real power is the exponential of the power: raising the constant's
                 // hundred digits loses to the power what it multiplies their error by --
                 // e^700 came back to ninety-seven digits -- and the exponential is a series

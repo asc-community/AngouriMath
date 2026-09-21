@@ -686,6 +686,17 @@ namespace AngouriMath
         /// Analogy of <see cref="Math.Atan2(double, double)"/> for more see this
         /// <img src="http://i.imgur.com/TRLjs8R.png"/>
         /// </summary>
+        /// <remarks>
+        /// <b>A zero is a zero, whatever its sign.</b> <c>Math.Atan2</c> reads a negative zero
+        /// as a limit from below and answers <c>-pi</c> on the negative axis for it, and this
+        /// did the same. A decimal's negative zero is not a limit: it is what
+        /// <c>0E-100 * -0.43</c> multiplies to, an artefact of the exponent arithmetic, and
+        /// reading <c>-pi</c> off it put <c>-1.54 - 0i</c> a hair below the negative axis, so
+        /// that <c>(-1.54)^(-1/2)</c> came back <c>+0.80 i</c> with the downcasting off and
+        /// <c>-0.80 i</c> with it on -- the setting deciding a branch. A number on the negative
+        /// axis has argument <c>pi</c>. <c>EDecimal.Sign</c> is 0 for either zero, and is what
+        /// is read here. https://github.com/asc-community/AngouriMath/issues/1378
+        /// </remarks>
         public static EDecimal Arctan2(this EDecimal y, EDecimal x, EContext context)
         {
             if (y.IsNaN() || x.IsNaN()) return EDecimal.NaN;
@@ -702,22 +713,18 @@ namespace AngouriMath
                 (_, inf) => consts.HalfPi,
                 (_, -inf) => -consts.HalfPi,
                 (-inf, -1) => -consts.Pi,
-                (-inf, 0) => y.IsNegative ? -consts.Pi : consts.Pi,
+                (-inf, 0) => consts.Pi,
                 (-inf, 1) => consts.Pi,
                 (inf, _) => EDecimal.Zero,
                 (1, _) => Arctan(y.Divide(x, context), context),
                 (-1, -1) => Arctan(y.Divide(x, context), context).Subtract(consts.Pi, context),
-                (-1, 0) => y.IsNegative ? -consts.Pi : consts.Pi,
+                (-1, 0) => consts.Pi,
                 (-1, 1) => Arctan(y.Divide(x, context), context).Add(consts.Pi, context),
                 (0, 1) => consts.HalfPi,
                 (0, -1) => -consts.HalfPi,
-                (0, 0) => (x.IsNegative, y.IsNegative) switch
-                {
-                    (true, true) => -consts.Pi,
-                    (false, true) => EDecimal.NegativeZero,
-                    (true, false) => consts.Pi,
-                    (false, false) => EDecimal.Zero,
-                },
+                // The origin: pi for a negative zero on the x axis, as Math.Atan2 has it, and
+                // zero otherwise -- the sign of y decides nothing, see above.
+                (0, 0) => x.IsNegative ? consts.Pi : EDecimal.Zero,
                 _ => throw new AngouriBugException("Unexpected scenario"),
             };
         }
