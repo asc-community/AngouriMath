@@ -462,6 +462,12 @@ namespace AngouriMath.Functions.Algebra
             // A whole power of a product of a constant and the variable, as the product of
             // the powers, which is how the inverse hyperbolic secant and cosecant arrive.
             if ((answer = IndefiniteIntegralSolver.SolveByDistributingWholePowersOfProducts(expr, x, integrateByParts)) is { }) return answer;
+            // A logarithm of a quotient that cancels with the functions in it as
+            // indeterminates, which is how an inverse hyperbolic function of a hyperbolic
+            // one arrives: atanh(tanh(u)) is 1/2 ln(e^(2u)) once its quotient is cancelled.
+            if ((answer = IndefiniteIntegralSolver.SolveByCancellingInsideALogarithm(expr, x, integrateByParts)) is { }) return answer;
+            // A logarithm whose derivative is a constant k is k x + c, and is named so.
+            if ((answer = IndefiniteIntegralSolver.SolveByNamingALogarithmLinearInTheVariable(expr, x, integrateByParts)) is { }) return answer;
             // A polynomial times a rational function of exponentials, by parts against the
             // whole rational function, before anything splits the sum: the general parts rule
             // takes each term on its own, and each term's antiderivative keeps a logarithm the

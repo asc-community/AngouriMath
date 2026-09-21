@@ -870,6 +870,25 @@ prime, `17` ([#1450](https://github.com/asc-community/AngouriMath/issues/1450)).
 | `"prime(25)".ToEntity().Evaled` | `prime * 25` — juxtaposition of a variable `prime` | `97`; `prime(n)` is the `n`-th prime, `NaN` off the positive whole numbers |
 | `"valuation(12, 2)".ToEntity().Evaled` | `UnrecognizedFunctionParseException` | `2`; `valuation(n, p)` is the `p`-adic valuation, `+oo` at `0` and `NaN` off the primes |
 
+### `atanh(tanh(a + b x))` under an integral is linear in `x`, and was an atom no rule read
+
+An inverse hyperbolic function of a hyperbolic one is spelled by the parser as a logarithm of a
+nested quotient: `atanh(tanh(a + b x))` is `1/2 ln((1 + T)/(1 - T))` with `T = (E - 1)/(E + 1)`
+and `E = e^(2(a + b x))`, and `acoth(tanh(a + b x))` is `1/2 ln(1 + 2/(T - 1))`. No integration
+rule read the nested quotient. It is now cancelled with `E` for an indeterminate, to
+`1/2 ln(E)` and `1/2 ln(-E)`; and a logarithm whose derivative in `x` is a constant `k` is
+`k x + c` for a constant `c`, which the integrator names and writes back as `ln(E) - k x` in the
+answer — the same `b x - atanh(tanh(a + b x))` Rubi's answers carry. The logarithm is not
+unwrapped to `a + b x`, which it equals only on a strip
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^m*atanh(tanh(a+b*x))^3".Integrate("x")` | no answer in two minutes | the antiderivative in 0.1 s, in `ln(e^(2(a + b x))) - 2 b x` |
+| `"1/(x*atanh(tanh(a+b*x)))".Integrate("x")` | left unevaluated | the antiderivative |
+| `"acoth(tanh(a+b*x))/x^2".Integrate("x")` | no answer in two minutes | `b/2 ln(x^2) - (ln(-e^(2(a + b x))) - 2 b x)/(2 x)`, up to the form |
+| `"1/(x*ln(e^(2*(a+b*x))))".Integrate("x")` | left unevaluated | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
