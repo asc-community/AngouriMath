@@ -9803,6 +9803,106 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A logarithm whose argument is a quotient in <paramref name="x"/> that cancels with
+        /// the functions of <paramref name="x"/> in it taken for indeterminates, with the
+        /// argument cancelled. That is the spelling the parser gives an inverse hyperbolic
+        /// function of a hyperbolic one -- <c>atanh(tanh(u))</c> is
+        /// <c>1/2 ln((1 + T)/(1 - T))</c> with <c>T = (E - 1)/(E + 1)</c> and <c>E = e^(2u)</c>,
+        /// which as one quotient is <c>2E(E + 1)/(2(E + 1))</c>, and is <c>1/2 ln(E)</c>: an
+        /// atom whose derivative is <c>u'</c>, which every rule downstream reads, where the
+        /// nested quotient was read by none. <c>acoth(tanh(u))</c> is <c>1/2 ln(-E)</c> the
+        /// same way. Kept as the logarithm rather than unwrapped to <c>u</c>, since
+        /// <c>ln(e^(2u))</c> is <c>2u</c> only on a strip, and the logarithm is exact
+        /// everywhere -- the answer carries it as Rubi's carries <c>atanh(tanh(u))</c>.
+        /// Rubi's 7.3.7 and 7.4.1. Asked as a question of its own.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveByCancellingInsideALogarithm(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var cancelled = expr.Replace(node =>
+            {
+                if (node is not Logf(var @base, var argument) || !argument.ContainsNode(x) || !argument.Nodes.Any(inner => inner is Divf))
+                    return node;
+                var (above, below) = Functions.SingleQuotient.Of(argument);
+                if (below == Number.Integer.One)
+                    return node;
+                var (top, bottom) = CancelledWithFunctionsAsIndeterminates(above, below, x, argument);
+                if (top == above && bottom == below)
+                    return node;
+                // Simplified rather than normalised: the cancellation leaves the numeric
+                // content where it was, and `2E/2` is not the atom `E` until it is folded.
+                var written = (bottom == Number.Integer.One ? top : top / bottom).Simplify();
+                return written == argument ? node : new Logf(@base, written);
+            });
+            return cancelled == expr ? null : Integration.ComputeAsAQuestionOfItsOwn(cancelled, x, integrateByParts);
+        }
+
+        /// <summary>
+        /// A logarithm of <paramref name="x"/> whose derivative in <paramref name="x"/> is a
+        /// constant <c>k</c> is <c>k x + c</c> for a constant <c>c</c>, and is written so, with
+        /// <c>c</c> a name standing for <c>ln(...) - k x</c>, which the answer substitutes back.
+        /// <c>ln(e^(2(a + b x)))</c> -- which is what <c>atanh(tanh(a + b x))</c> is once its
+        /// quotient is cancelled -- has derivative <c>2b</c>, and is <c>2b x + c</c>: with that
+        /// name, <c>x^m atanh(tanh(a + b x))^3</c> is a polynomial times a power of a linear and
+        /// <c>1/(x atanh(tanh(a + b x)))</c> a rational function, which the rules answer at once
+        /// where the logarithm was an atom no rule read past the first power. The name is
+        /// exact: <c>c</c> is <c>ln(...) - k x</c> by definition, and a constant in <c>x</c>
+        /// because the derivative is. The logarithm is not unwrapped to its argument's
+        /// exponent, which it equals only on a strip; Rubi's answers carry
+        /// <c>b x - atanh(tanh(a + b x))</c> in the same way. Rubi's 7.3.7 and 7.4.1. Asked as
+        /// a question of its own. https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveByNamingALogarithmLinearInTheVariable(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Logf? linear = null;
+            Entity? slope = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Logf(var logBase, var argument) log || logBase.ContainsNode(x) || !argument.ContainsNode(x))
+                    continue;
+                // The derivative of ln(prod f_i^(n_i)) is the sum of n_i f_i'/f_i, which for a
+                // factor e^v is v': read off the factors rather than differentiated and
+                // simplified, since the differentiation leaves E 2b / E as it is.
+                var (above, below) = Functions.SingleQuotient.Of(argument);
+                Entity sum = Number.Integer.Zero;
+                var read = true;
+                foreach (var (factor, sign) in Mulf.LinearChildren(above).Select(f => (f, 1)).Concat(Mulf.LinearChildren(below).Select(f => (f, -1))))
+                {
+                    if (!factor.ContainsNode(x))
+                        continue;
+                    if (factor is not Powf(var @base, var exponent) || @base.ContainsNode(x))
+                    {
+                        read = false;
+                        break;
+                    }
+                    var rate = exponent.Differentiate(x);
+                    if (rate.ContainsNode(x) || rate is Derivativef)
+                    {
+                        read = false;
+                        break;
+                    }
+                    sum += sign * rate * (@base == MathS.e ? Number.Integer.One : MathS.Ln(@base));
+                }
+                if (!read)
+                    continue;
+                var derivative = sum.InnerSimplified;
+                if (derivative == Number.Integer.Zero || derivative.ContainsNode(x))
+                    continue;
+                linear = log;
+                slope = logBase == MathS.e ? derivative : derivative / MathS.Ln(logBase);
+                break;
+            }
+            if (linear is null || slope is null)
+                return null;
+            var constant = Variable.CreateUnique(expr, "c");
+            var named = expr.Substitute(linear, slope * x + constant);
+            if (named == expr)
+                return null;
+            var answer = Integration.ComputeAsAQuestionOfItsOwn(named, x, integrateByParts);
+            return answer?.Substitute(constant, linear - slope * x);
+        }
+
+        /// <summary>
         /// A whole power of a product in which the variable stands beside a constant, written
         /// as the product of the powers: <c>(c x)^2</c> is <c>c^2 x^2</c>, exact for a whole
         /// power over the complex numbers. That is the spelling the parser gives the inverse
