@@ -90,9 +90,10 @@ namespace AngouriMath.Tests.Calculus
         // exponent that is not linear in the index, a base with the index in it.
         // `sum(2^k, k, 0, +oo)` was here: this reader still declines it, a ratio at or beyond 1
         // having no sum, but the nth-term test now answers it `+oo`. See DivergentSeriesTest.
+        // And `sum(k * (1/2)^k, k, 0, +oo)`: a polynomial beside the power is still not this
+        // reader's, and is summed by PolynomialGeometricSeries to 2, see its test.
         [Theory]
         [InlineData("sum((-1)^k, k, 0, +oo)")]
-        [InlineData("sum(k * (1/2)^k, k, 0, +oo)")]
         [InlineData("sum(2^(k^2), k, 0, 200)")]
         [InlineData("sum(k^k, k, 1, 200)")]
         [InlineData("sum(2^k, k, 0, 5/2)")]

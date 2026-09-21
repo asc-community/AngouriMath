@@ -920,6 +920,25 @@ apart as `sgn(P) P` with `provided P^2 > 0` — only where the root is a factor 
 | `"acsch(a+b*x)/x^2".Integrate("x")` | left unevaluated | the antiderivative |
 | `"1/(x*(a+b*x)^2*sqrt(1/(a+b*x)^2-1))".Integrate("x")` | left unevaluated | the antiderivative |
 
+### A sum of a polynomial times a power of the index is answered in closed form
+
+`sum(k 2^k, k, 1, n)` was left as written; it is `(n - 1) 2^(n + 1) + 2`, by the discrete
+antiderivative `q(k) r^k` with `q` a polynomial of the summand's degree, found by one division
+by `r - 1` per coefficient. A symbolic ratio carries the case `r = 1` separately, where the
+summand is the polynomial, and to `+oo` the series converges for `|r| < 1`. §5.3.4 Try 6 of
+Sullivan and Mackey's *An Introduction to Proofs*, `sum((-1)^(k - 1) k^2, k, 1, n)`, is the
+row that asked for it. And a quantified statement whose body is a piecewise with a case on a
+parameter -- `q = 1 and n >= 0`, which is how the sum comes -- is decided by cases on the
+parameter, so their Ex 5.2.6 is answered with the condition the book asks about
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sum(k*2^k, k, 1, n)".ToEntity().Evaled` | as written | `((n - 1) 2^(n + 1) + 2) provided n >= 0`, `0` otherwise |
+| `"sum((-1)^(k-1)*k^2, k, 1, n)".ToEntity().Evaled` | as written | `(-1)^(n - 1) n (n + 1)/2`, up to the form |
+| `"sum(k/2^k, k, 1, +oo)".ToEntity().Evaled` | as written | `2` |
+| `"forall n in ZZ+ : sum(q^i, i, 0, n-1) = (q^n - 1)/(q - 1)".ToEntity().Evaled` | `UnhandledParseException` -- quantifiers are new since | `True provided not q = 1` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

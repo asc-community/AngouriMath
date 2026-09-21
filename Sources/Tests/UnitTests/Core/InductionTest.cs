@@ -63,8 +63,14 @@ namespace AngouriMath.Tests.Core
         [Theory]
         // A closed form over a denominator in a free parameter holds where the denominator is
         // not zero, and the answer says so; a denominator in the quantified name is decided
-        // non-zero over the set instead, so those rows above carry no condition.
-        [InlineData("forall n in ZZ+ : sum(k x^k, k, 1, n) = x (1 - (n + 1) x^n + n x^(n + 1)) / (1 - x)^2", "True provided not (1 - x)^2 = 0")]
+        // non-zero over the set instead, so those rows above carry no condition. The first
+        // row's sum is answered in closed form with the case `x = 1` set aside, and the
+        // statement is decided by cases on it: the sum's own case, not the denominator's
+        // spelling, is the condition it carries.
+        [InlineData("forall n in ZZ+ : sum(k x^k, k, 1, n) = x (1 - (n + 1) x^n + n x^(n + 1)) / (1 - x)^2", "True provided not x = 1")]
+        // Sullivan and Mackey's Ex 5.2.6, the geometric sum for q not 1 -- the book asks why
+        // q = 1 is excluded, and the answer names it.
+        [InlineData("forall n in ZZ+ : sum(q^i, i, 0, n - 1) = (q^n - 1) / (q - 1)", "True provided not q = 1")]
         [InlineData("forall n in ZZ+ : sum(1 / (a k (k + 1)), k, 1, n) = n / (a (n + 1))", "True provided not a = 0")]
         public void ProvedWhereTheClosedFormExists(string statement, string expected)
             => Assert.Equal(expected.ToEntity(), statement.ToEntity().Evaled);
@@ -116,10 +122,10 @@ namespace AngouriMath.Tests.Core
             => Assert.Equal(expected.ToEntity(), statement.ToEntity().Evaled);
 
         [Theory]
-        // Not decided: a closed form with a case on a free parameter (q = 1 has its own), a wrong
-        // closed form with a free parameter, an inequality whose step is not a multiple of the
-        // hypothesis plus something of known sign, and a term the induction cannot unfold.
-        [InlineData("forall n in ZZ+ : sum(q^k, k, 0, n - 1) = (q^n - 1) / (q - 1)")]
+        // Not decided: a wrong closed form with a free parameter, an inequality whose step is
+        // not a multiple of the hypothesis plus something of known sign, and a term the
+        // induction cannot unfold. The geometric sum with its case q = 1 was here, and is now
+        // decided by cases on q, see ProvedWhereTheClosedFormExists.
         [InlineData("forall n in ZZ+ : sum(k x^k, k, 1, n) = x (1 - (n + 1) x^n + n x^(n + 1)) / (1 - x)")]
         [InlineData("forall n in ZZ+ : sum(1 / k^2, k, 1, n) <= 2 - 1 / n")]
         [InlineData("forall n in ZZ+ : sum(1 / sqrt(k), k, 1, n) >= sqrt(n)")]

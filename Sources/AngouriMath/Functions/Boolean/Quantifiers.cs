@@ -138,13 +138,55 @@ namespace AngouriMath.Functions.Boolean
             // https://github.com/asc-community/AngouriMath/issues/1409
             if (body is Piecewise piecewise)
             {
-                foreach (var @case in piecewise.Cases)
+                var cases = piecewise.Cases.ToList();
+                for (var i = 0; i < cases.Count; i++)
                 {
+                    var @case = cases[i];
                     var holds = @case.Predicate == Entity.Boolean.True ? Entity.Boolean.True : Decide(Kind.All, x, set, @case.Predicate.InnerSimplified(isExact), isExact);
                     if (holds == Entity.Boolean.True)
                     {
                         by = ($"the case {@case.Predicate} of the piecewise body holds at every member, so the body is that case", "if_pos");
                         return Decide(kind, x, set, @case.Expression.InnerSimplified(isExact), isExact);
+                    }
+                    // A case whose condition is a statement about a parameter beside one that
+                    // holds at every member -- `q = 1 and n >= 0`, which is how a sum with a
+                    // symbolic ratio comes -- is the case under that hypothesis and the cases
+                    // after it under its negation: the statement is decided in each, and holds
+                    // provided the hypothesis where it holds there alone. Sullivan and Mackey's
+                    // Ex 5.2.6, the geometric sum with `q = 1` set aside.
+                    if (SplitOffParameterCondition(@case.Predicate, x, set, isExact) is (Entity hypothesis, var atOne))
+                    {
+                        var under = (atOne is var (parameter, value) ? @case.Expression.Substitute(parameter, value) : @case.Expression).InnerSimplified(isExact);
+                        var probedUnder = ProofRecording.Mark();
+                        var whenItHolds = Decide(kind, x, set, under, isExact);
+                        if (whenItHolds != Entity.Boolean.True)
+                            ProofRecording.Rollback(probedUnder);
+                        var rest = i + 1 >= cases.Count ? null
+                            : i + 2 == cases.Count && cases[i + 1].Predicate == Entity.Boolean.True ? cases[i + 1].Expression
+                            : MathS.Piecewise(cases.Skip(i + 1));
+                        var otherwise = rest is null ? null : Decide(kind, x, set, rest.InnerSimplified(isExact), isExact);
+                        // Each verdict is True, True under a condition of its own, False, or
+                        // nothing; the statement is True under the disjunction of the two cases
+                        // where each holds, and False where both fail.
+                        var (holdsUnder, conditionUnder) = TrueUnder(whenItHolds);
+                        var (holdsOtherwise, conditionOtherwise) = TrueUnder(otherwise);
+                        if (holdsUnder && holdsOtherwise)
+                        {
+                            by = ($"the statement holds both under {hypothesis} and under its negation", "by_cases");
+                            return conditionUnder == Entity.Boolean.True && conditionOtherwise == Entity.Boolean.True ? Entity.Boolean.True
+                                : Entity.Boolean.True.Provided((hypothesis & conditionUnder) | (!hypothesis & conditionOtherwise));
+                        }
+                        if (holdsOtherwise && whenItHolds is null or Entity.Boolean(false) or Number { IsNaN: true } or Providedf(Number { IsNaN: true }, _))
+                        {
+                            by = ($"the statement holds under the negation of {hypothesis}, and not as it stands under it", "by_cases");
+                            return Entity.Boolean.True.Provided(conditionOtherwise == Entity.Boolean.True ? !hypothesis : WithoutRepeatedExclusions(!hypothesis & conditionOtherwise));
+                        }
+                        if (holdsUnder && otherwise is Entity.Boolean(false))
+                        {
+                            by = ($"the statement holds under {hypothesis} and fails under its negation", "by_cases");
+                            return Entity.Boolean.True.Provided(conditionUnder == Entity.Boolean.True ? hypothesis : WithoutRepeatedExclusions(hypothesis & conditionUnder));
+                        }
+                        break;
                     }
                     var probed = ProofRecording.Mark();
                     var somewhere = Decide(Kind.Some, x, set, @case.Predicate.InnerSimplified(isExact), isExact);
@@ -1125,6 +1167,69 @@ namespace AngouriMath.Functions.Boolean
                 Notf(var operand) => SolverReads(operand, x),
                 _ => false,
             };
+
+        /// <summary>
+        /// A conjunction with each exclusion of one value written once: <c>not x = 1 and
+        /// not x - 1 = 0 and not (1 - x)^2 = 0</c> is <c>not x = 1</c>, since each excludes the
+        /// same root. An exclusion is <c>not (l = r)</c> in one variable whose equation the
+        /// solver answers with a listed set; two with the same set are one, and the first kept.
+        /// </summary>
+        private static Entity WithoutRepeatedExclusions(Entity condition)
+        {
+            var seen = new HashSet<(Variable, Entity)>();
+            Entity? kept = null;
+            foreach (var conjunct in Andf.LinearChildren(condition))
+            {
+                if (conjunct is Notf(Equalsf(var l, var r) equation) && equation.Vars.ToList() is { Count: 1 } one
+                    && equation.Solve(one[0]) is FiniteSet roots)
+                {
+                    if (!seen.Add((one[0], roots)))
+                        continue;
+                }
+                kept = kept is null ? conjunct : kept & conjunct;
+            }
+            return kept ?? condition;
+        }
+
+        /// <summary>Whether a verdict is True, outright or under a condition, and the condition.</summary>
+        private static (bool Holds, Entity Condition) TrueUnder(Entity? verdict) => verdict switch
+        {
+            Entity.Boolean(true) => (true, Entity.Boolean.True),
+            Providedf(Entity.Boolean(true), var condition) => (true, condition),
+            _ => (false, Entity.Boolean.False),
+        };
+
+        /// <summary>
+        /// A predicate that is a conjunction of a part free of <paramref name="x"/> -- the
+        /// hypothesis about a parameter -- and a part in <paramref name="x"/> that holds at
+        /// every member of <paramref name="set"/>: the hypothesis, and, where it is
+        /// <c>parameter = value</c>, the pair to substitute. <see langword="null"/> where the
+        /// predicate has no parameter part or its member part does not hold throughout.
+        /// </summary>
+        private static (Entity Hypothesis, (Variable, Entity)? Substitution)? SplitOffParameterCondition(Entity predicate, Variable x, Set set, bool isExact)
+        {
+            Entity? hypothesis = null;
+            Entity? aboutTheMember = null;
+            foreach (var conjunct in Andf.LinearChildren(predicate))
+                if (conjunct.ContainsNode(x))
+                    aboutTheMember = aboutTheMember is null ? conjunct : aboutTheMember & conjunct;
+                else
+                    hypothesis = hypothesis is null ? conjunct : hypothesis & conjunct;
+            if (hypothesis is null || hypothesis == Entity.Boolean.True)
+                return null;
+            if (aboutTheMember is { })
+            {
+                var probed = ProofRecording.Mark();
+                var holds = Decide(Kind.All, x, set, aboutTheMember.InnerSimplified(isExact), isExact);
+                ProofRecording.Rollback(probed);
+                if (holds != Entity.Boolean.True)
+                    return null;
+            }
+            (Variable, Entity)? substitution = hypothesis is Equalsf(Variable parameter, var value) && !value.ContainsNode(parameter) ? (parameter, value)
+                : hypothesis is Equalsf(var other, Variable named) && !other.ContainsNode(named) ? (named, other)
+                : null;
+            return (hypothesis, substitution);
+        }
 
         /// <summary>An expression the solver reads as a number: no sets, statements or binders inside.</summary>
         private static bool Plain(Entity expression)
