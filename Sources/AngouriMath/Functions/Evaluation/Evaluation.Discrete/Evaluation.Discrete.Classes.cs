@@ -512,7 +512,7 @@ namespace AngouriMath
                         // {x, 1} has two elements unless x is 1, so a set is counted once its
                         // elements are numbers, which are distinct exactly when unequal -- or
                         // listed sets of such, which are compared by their members: { 1, {} }
-                        // has two members and { {} } has one (the reference's §3.3.7).
+                        // has two members and { {} } has one (Sullivan and Mackey's §3.3.7).
                         FiniteSet finite when finite.All(Countable)
                             => Integer.Create(finite.Count),
                         // A power set of a counted set has 2^n members.

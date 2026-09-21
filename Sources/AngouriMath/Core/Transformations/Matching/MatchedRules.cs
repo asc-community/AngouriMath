@@ -859,8 +859,8 @@ namespace AngouriMath.Core.Transformations.Matching
                 description: "(x + a)! * y = (x + a + 1)!, where y is the next term"),
 
             // The binomial coefficient's three identities, each in the direction that collects:
-            // Pascal's rule, the chairperson identity and the symmetry. The reference's
-            // Props 8.4.1-8.4.3 (Sullivan and Mackey), which it proves by counting in two ways;
+            // Pascal's rule, the chairperson identity and the symmetry. Sullivan and Mackey's
+            // Props 8.4.1-8.4.3, which it proves by counting in two ways;
             // here they are identities of the falling factorial for a whole lower index and of
             // the gamma function elsewhere. https://github.com/asc-community/AngouriMath/issues/1409
             new MatchedRule(

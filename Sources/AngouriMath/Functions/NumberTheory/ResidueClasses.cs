@@ -15,7 +15,7 @@ using static AngouriMath.Entity.Set;
 namespace AngouriMath.Functions
 {
     /// <summary>
-    /// The residue classes modulo <c>n</c> as sets, and the arithmetic the reference does on them:
+    /// The residue classes modulo <c>n</c> as sets, and the arithmetic Sullivan and Mackey's proofs book does on them:
     /// a class is written <c>{ x in ZZ : x = r (mod n) }</c>, with <c>r</c> in <c>[0, n)</c>, and
     /// that is what solving a linear congruence answers, what two congruences intersect to by
     /// the Chinese remainder theorem, and what an interval cuts a finite set out of.

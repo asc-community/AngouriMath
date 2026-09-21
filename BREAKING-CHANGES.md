@@ -665,7 +665,7 @@ solved now — the members of a listed set each as an equation, an interval as i
 strict or not as the end is — and a statement that is not read is the set of `x` with the
 property, left as written. A quantifier that put the negated body to the solver read that
 emptiness as a proof: `forall x in RR : x^2 in ZZ` was `True`
-([#1409](https://github.com/asc-community/AngouriMath/issues/1409), the reference's pre-images).
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's pre-images).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -716,7 +716,7 @@ of [#1409](https://github.com/asc-community/AngouriMath/issues/1409) — is `Tru
 `A`, an interval by interval arithmetic where `x` occurs once in `f`, and a membership object
 otherwise; `preimage(f(x), x in A, Y)` is `{ x in A : f(x) in Y }`, and a set builder of that
 shape is solved on evaluation where the membership is read (a listed `Y`, an interval)
-([#1409](https://github.com/asc-community/AngouriMath/issues/1409), the reference's §7.3). Both
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's §7.3). Both
 names are keywords now, and were names.
 
 | Input | Was (2.5.0) | Now |
@@ -731,7 +731,7 @@ names are keywords now, and were names.
 `(-oo)^(-1)`, while `(+oo)^2` was `+oo`: the finite-base arms did not apply and the polar form
 had nothing to say. They are the extended reals' powers now, `-oo`, `+oo` and `0`, so the image of
 `(-oo; +oo)` under a cube is `(-oo; +oo)`; and `forall b in B : exists a in A : f(a) = b` — surjectivity
-onto `B`, Def 7.4.1 of the reference of [#1409](https://github.com/asc-community/AngouriMath/issues/1409)
+onto `B`, Sullivan and Mackey's Def 7.4.1, [#1409](https://github.com/asc-community/AngouriMath/issues/1409)
 — is decided as `B` lying in the image of `A` under `f` where that image evaluates.
 
 | Input | Was (2.5.0) | Now |
@@ -750,7 +750,7 @@ theorem read backwards, as the factorial spelling already was (`sum(binomial(n, 
 is `(x + y)^n` for `n >= 0`). **Wrong answer fixed** in the alternating sum, in both spellings:
 `sum(binomial(n, k) (-1)^k, k, 0, n)` is `1` at `n = 0` and `0` above, and the closed form `0^n`
 carried a condition the piecewise read as no value, so the sum was `0` at `n = 0`
-([#1409](https://github.com/asc-community/AngouriMath/issues/1409), the reference's §8.4).
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's §8.4).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -773,7 +773,7 @@ a multiple of the hypothesis (`P(n + 1) = c P(n) + D` with `c >= 0` and `D >= 0`
 calculus), and the whole numbers from `m` are read as `ZZ*` shifted by `m`. A statement that
 fails at the least member is `False`; a closed form with a case on a free parameter is left as
 written
-([#1409](https://github.com/asc-community/AngouriMath/issues/1409), the reference's chapter 5).
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's chapter 5).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|

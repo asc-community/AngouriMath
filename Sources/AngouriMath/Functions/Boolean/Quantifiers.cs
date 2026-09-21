@@ -22,7 +22,7 @@ namespace AngouriMath.Functions.Boolean
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Three routes, in the order the reference teaches them. Over a <b>finite set</b> the body
+    /// Three routes, in the order Sullivan and Mackey's proofs book (#1409) teaches them. Over a <b>finite set</b> the body
     /// is evaluated at every member, which is the definition; a member the body cannot decide
     /// leaves the statement as written unless the members it can decide settle it, as one
     /// counterexample settles <c>forall</c>. Over an infinite set the first thing tried is a
@@ -105,7 +105,7 @@ namespace AngouriMath.Functions.Boolean
                 }
             }
             // forall b in B : exists a in A : f(a) = b is the statement that B lies in the image
-            // of A under f -- surjectivity onto B (the reference's Def 7.4.1) -- and the image is
+            // of A under f -- surjectivity onto B (Sullivan and Mackey's Def 7.4.1) -- and the image is
             // a set the library computes: listed over a listed A, an interval by interval
             // arithmetic, so the subset decision settles it where the image evaluates.
             // https://github.com/asc-community/AngouriMath/issues/1409
@@ -126,7 +126,7 @@ namespace AngouriMath.Functions.Boolean
             {
                 // A statement about divisibility, or a congruence, in a polynomial of x with
                 // whole coefficients repeats with the modulus, so the residues decide it:
-                // forall n in ZZ : 6 divides n^3 + 5 n is six cases. The reference's "case
+                // forall n in ZZ : 6 divides n^3 + 5 n is six cases. Sullivan and Mackey's "case
                 // analysis over the classes" (Ex 6.5.14).
                 if (Period(body, x) is { } period && period.CompareTo(EInteger.FromInt32(LargestPeriod)) <= 0)
                     return OverResidues(kind, x, integers, body, period, isExact);
@@ -139,12 +139,12 @@ namespace AngouriMath.Functions.Boolean
             // A statement about a sum or a product up to x, over the whole numbers from some
             // least one, is proved by induction: it holds at the least member, and holding at
             // x it holds at x + 1, where the sum to x + 1 is the sum to x and one more term.
-            // The reference's chapter 5. https://github.com/asc-community/AngouriMath/issues/1409
+            // Sullivan and Mackey's chapter 5. https://github.com/asc-community/AngouriMath/issues/1409
             if (kind == Kind.All && LeastMember(set) is { } least && ByInduction(x, set, least, body, isExact) is { } byInduction)
                 return byInduction;
             // And an inequality with an exponential or a factorial in x, by induction with the
             // step read off a multiple of the hypothesis: P(x + 1) = c P(x) + D with c >= 0 and
-            // D >= 0 keeps P >= 0 (Ex 5.3.2, Prob 5.7.2, 5.7.8 of the reference).
+            // D >= 0 keeps P >= 0 (Sullivan and Mackey's Ex 5.3.2, Prob 5.7.2, 5.7.8).
             if (kind == Kind.All && LeastMember(set) is { } first && ByInductionOnAnInequality(x, set, first, body, isExact) is { } byGrowth)
                 return byGrowth;
             if (Witness(kind, x, set, body, isExact) is { } byWitness)

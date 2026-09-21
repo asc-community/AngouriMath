@@ -15,7 +15,7 @@ namespace AngouriMath.Tests.Core
     /// <summary>
     /// The binomial coefficient's identities: Pascal's rule, the chairperson identity and the
     /// symmetry as rewrite rules, and the binomial theorem read backwards for a sum written
-    /// with <c>binomial(n, k)</c>. Item 7 of the reference's docket (Sullivan and Mackey,
+    /// with <c>binomial(n, k)</c>. Item 7 of the #1409 docket (Sullivan and Mackey,
     /// §8.4: Props 8.4.1–8.4.4, Thm 8.4.8, Ex 8.4.9, §8.4.5 Try 3).
     /// <see href="https://github.com/asc-community/AngouriMath/issues/1409"/>
     /// </summary>

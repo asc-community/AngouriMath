@@ -14,8 +14,8 @@ namespace AngouriMath.Tests.Core.Sets
 {
     /// <summary>
     /// Indexed unions and intersections, the complement relative to a universe, and the
-    /// integer range <c>[n] = ZZ+ /\ [1; n]</c> the reference writes them over (Sullivan and
-    /// Mackey, §§3.5–3.6 and Problem 3.11.21), with its examples as the rows. An index name is
+    /// integer range <c>[n] = ZZ+ /\ [1; n]</c> Sullivan and Mackey write them over
+    /// (§§3.5–3.6 and Problem 3.11.21), with its examples as the rows. An index name is
     /// <c>k</c> or <c>n</c> below where the book writes <c>i</c>, which is the imaginary unit here.
     /// <see href="https://github.com/asc-community/AngouriMath/issues/1409"/>
     /// </summary>
