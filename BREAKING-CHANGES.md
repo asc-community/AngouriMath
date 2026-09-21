@@ -725,6 +725,25 @@ names are keywords now, and were names.
 | `preimage(x^2, x in RR, {1})` | `UnhandledParseException` | `{ 1, -1 }` |
 | `{ x in ZZ : x^2 in {1, 4} }` | `{ x in ZZ : x ^ 2 in { 1, 4 } }` — left as written | `{ 1, -1, 2, -2 }` |
 
+### The binomial coefficient's identities, and its sums in closed form
+
+Pascal's rule, the chairperson identity and the symmetry are rewrite rules, each in the direction
+that collects (`binomial(n - 1, k) + binomial(n - 1, k - 1)` → `binomial(n, k)`,
+`n binomial(n - 1, k - 1)` → `k binomial(n, k)`, `binomial(n, n - k)` → `binomial(n, k)`), so the
+identities are `True` as statements of symbols; a sum written with `binomial(n, k)` is the binomial
+theorem read backwards, as the factorial spelling already was (`sum(binomial(n, k) x^k y^(n - k), k, 0, n)`
+is `(x + y)^n` for `n >= 0`). **Wrong answer fixed** in the alternating sum, in both spellings:
+`sum(binomial(n, k) (-1)^k, k, 0, n)` is `1` at `n = 0` and `0` above, and the closed form `0^n`
+carried a condition the piecewise read as no value, so the sum was `0` at `n = 0`
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409), the reference's §8.4).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"binomial(n, k) = binomial(n, n - k)".ToEntity().Simplify()` | `UnhandledParseException` — `binomial` is new since, and was left as written when it arrived | `True` |
+| `"binomial(n - 1, k) + binomial(n - 1, k - 1)".ToEntity().Simplify()` | `UnhandledParseException` | `binomial(n, k)` |
+| `"sum(binomial(n, k), k, 0, n)".ToEntity().Evaled` | `UnhandledParseException` | `piecewise((2 ^ n) provided (n >= 0), 0 provided True)` |
+| `"sum(n! / (k! (n - k)!) (-1)^k, k, 0, n)".ToEntity().Evaled` | `piecewise(0 provided True)` — wrong at `n = 0` | `piecewise(1 provided (n = 0), 0 provided True)` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

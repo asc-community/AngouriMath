@@ -856,7 +856,43 @@ namespace AngouriMath.Core.Transformations.Matching
                     node, bound["x"], bound["y"], (Number)bound["a"], Integer.Create(0)),
                 Soundness.SoundUnderAssumptions,
                 // Left Unknown: as above, the answer's size is the offset's.
-                description: "(x + a)! * y = (x + a + 1)!, where y is the next term"));
+                description: "(x + a)! * y = (x + a + 1)!, where y is the next term"),
+
+            // The binomial coefficient's three identities, each in the direction that collects:
+            // Pascal's rule, the chairperson identity and the symmetry. The reference's
+            // Props 8.4.1-8.4.3 (Sullivan and Mackey), which it proves by counting in two ways;
+            // here they are identities of the falling factorial for a whole lower index and of
+            // the gamma function elsewhere. https://github.com/asc-community/AngouriMath/issues/1409
+            new MatchedRule(
+                "two-binomial-coefficients-of-one-upper-index-and-adjacent-lower-indices-add-by-pascals-rule",
+                MatchPattern.Node<Sumf>(
+                    MatchPattern.Node<Binomialf>(MatchPattern.Any("n"), MatchPattern.Any("k")),
+                    MatchPattern.Node<Binomialf>(MatchPattern.Any("n"), MatchPattern.Any("j"))),
+                (node, bound) => Functions.Patterns.PascalsRule(node, bound["n"], bound["k"], bound["j"]),
+                Soundness.SoundUnderAssumptions,
+                // Left Unknown: which of the two lower indices is the larger is decided by the
+                // helper, and the answer is one coefficient where there were two.
+                description: "binomial(n, k) + binomial(n, k - 1) = binomial(n + 1, k)"),
+
+            new MatchedRule(
+                "a-number-times-a-binomial-coefficient-of-the-number-less-one-is-the-chairperson-identity",
+                MatchPattern.Commutative<Mulf>(
+                    MatchPattern.Any("n"),
+                    MatchPattern.Node<Binomialf>(MatchPattern.Any("m"), MatchPattern.Any("j"))),
+                (node, bound) => Functions.Patterns.ChairpersonsRule(node, bound["n"], bound["m"], bound["j"]),
+                Soundness.SoundUnderAssumptions,
+                // Left Unknown: fires only where the multiplier is one more than the upper
+                // index, and the answer is written with the lower index one more.
+                description: "n * binomial(n - 1, k - 1) = k * binomial(n, k)"),
+
+            new MatchedRule(
+                "a-binomial-coefficient-whose-lower-index-is-the-complement-is-the-symmetric-one",
+                MatchPattern.Node<Binomialf>(MatchPattern.Any("n"), MatchPattern.Any("d")),
+                (node, bound) => Functions.Patterns.SymmetricBinomial(node, bound["n"], bound["d"]),
+                Soundness.SoundUnderAssumptions,
+                // Left Unknown: fires only where the complement of the lower index is the
+                // smaller expression, and the answer is the coefficient with that.
+                description: "binomial(n, n - k) = binomial(n, k)"));
 
         /// <summary>
         /// <see cref="Functions.Patterns.PerfectSquareRules"/>, as data.
