@@ -694,6 +694,21 @@ shown and the argument list of symbolic length wait for v3. Every one of these w
 | `1 * 2 * ... * n` | `UnhandledParseException` | `product(k, k, 1, n)`, which is `n!` for `n >= 1` |
 | `{1, 4, 9, ..., n}` | `UnhandledParseException` | `InvalidArgumentParseException`, naming the term off the progression |
 
+### `image` and `preimage` of a set under an expression
+
+`image(f(x), x in A)` is `{ f(x) : x in A }` — `union({f(x)}, x in A)` — listed over a listed
+`A`, an interval by interval arithmetic where `x` occurs once in `f`, and a membership object
+otherwise; `preimage(f(x), x in A, Y)` is `{ x in A : f(x) in Y }`, and a set builder of that
+shape is solved on evaluation where the membership is read (a listed `Y`, an interval)
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409), the reference's §7.3). Both
+names are keywords now, and were names.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `image(9 c / 5 + 32, c in (0; 100))` | `UnhandledParseException` | `(32; 212)` |
+| `preimage(x^2, x in RR, {1})` | `UnhandledParseException` | `{ 1, -1 }` |
+| `{ x in ZZ : x^2 in {1, 4} }` | `{ x in ZZ : x ^ 2 in { 1, 4 } }` — left as written | `{ 1, -1, 2, -2 }` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

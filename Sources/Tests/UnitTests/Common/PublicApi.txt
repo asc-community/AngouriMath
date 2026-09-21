@@ -2798,6 +2798,7 @@ AngouriMath.MathS+Sets.ElementInSet(AngouriMath.Entity, AngouriMath.Entity) : An
 AngouriMath.MathS+Sets.Empty { } : AngouriMath.Entity+Set
 AngouriMath.MathS+Sets.Finite(AngouriMath.Entity[]) : AngouriMath.Entity+Set+FiniteSet
 AngouriMath.MathS+Sets.Finite(System.Collections.Generic.List<AngouriMath.Entity>) : AngouriMath.Entity+Set+FiniteSet
+AngouriMath.MathS+Sets.Image(AngouriMath.Entity, AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity+Set
 AngouriMath.MathS+Sets.IndexedIntersection(AngouriMath.Entity, AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity+Set
 AngouriMath.MathS+Sets.IndexedUnion(AngouriMath.Entity, AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity+Set
 AngouriMath.MathS+Sets.Interval(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity+Set+Interval
@@ -2805,6 +2806,7 @@ AngouriMath.MathS+Sets.Interval(AngouriMath.Entity, System.Boolean, AngouriMath.
 AngouriMath.MathS+Sets.NonNegativeIntegers { } : AngouriMath.Entity+Set
 AngouriMath.MathS+Sets.PositiveIntegers { } : AngouriMath.Entity+Set
 AngouriMath.MathS+Sets.PowerSet(AngouriMath.Entity) : AngouriMath.Entity+Set
+AngouriMath.MathS+Sets.PreImage(AngouriMath.Entity, AngouriMath.Entity, AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity+Set
 AngouriMath.MathS+Sets.Q { } : AngouriMath.Entity+Set
 AngouriMath.MathS+Sets.R { } : AngouriMath.Entity+Set
 AngouriMath.MathS+Sets.Subset(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
