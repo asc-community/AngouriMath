@@ -378,6 +378,22 @@ Branch cuts deserve a specific warning: `arcsin`, `log`, and fractional powers d
 conventions, and C99, .NET, Python and Mathematica do not all agree. Decide deliberately, cite the
 convention, and test the disagreeing points.
 
+**An object is what its definition says, not what its notation looks like.** A pair `(a, b)`, a
+point `(a, b)` and a vector `[a, b]` are written alike and are not one thing: a pair is an ordered
+list, equal to another exactly when the components are (`(a, b) = (c, d) ⟺ a = c ∧ b = d`) and with
+no operations of its own; a point is a pair in the *role* of an element of a space, which is why
+the plane is defined as `ℝ × ℝ` and a point *is* its coordinate pair there; a vector is an element
+of a vector space, which adds and scales. On 2026-09-21 the pair was proposed as the existing row
+vector because that is the one node in the tree that carries an ordered list — the engineer's
+habit of representing every ordered thing as an array — and the maintainer refused it: a vector
+applies vector operations to something that has none. **Before representing a mathematical object
+with a node the tree already has, write down its defining properties — its equality, its
+operations, what it is an element of — and check them against a second source** (mathlib4's
+definition, a textbook, Wikipedia's *definition* section) rather than against how it is printed.
+Two objects with the same notation and different operations are different nodes, or one of them
+is designed later (the pair, with points, in v3: [#1237](https://github.com/asc-community/AngouriMath/issues/1237),
+[#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
 ### A reference is read for everything it says, with patience
 
 A book, a paper or a corpus handed to you as a goal is not a list of features to add, and reading
