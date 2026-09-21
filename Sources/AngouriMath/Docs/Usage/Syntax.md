@@ -321,7 +321,13 @@ factorial, a polynomial in `n` decided over the set, sums and products of these 
 ZZ+ /\ [5; +oo) : 2^n > n^2` is `True` (`2^(n + 1) - 2 · 2^n` leaves `n^2 - 2 n - 1`, positive
 from `5`), `forall n in ZZ+ /\ [4; +oo) : 2^n > n^2` is `False` at `4`, and `forall n in ZZ+ :
 n! >= 2^(n - 1)` is `True`. The whole numbers from `m` are `ZZ*` shifted by `m`, so a statement
-over `ZZ+ /\ [4; +oo)` is decided as one about `4 + t` over `ZZ*`, whichever route reads it. `not`
+over `ZZ+ /\ [4; +oo)` is decided as one about `4 + t` over `ZZ*`, whichever route reads it. A
+divisibility or a congruence in a polynomial of `n` with whole coefficients repeats with the
+modulus, so its residues decide it (`forall n in ZZ : 6 divides n^3 + 5 n` is `True` by six cases),
+and with a power `a^n` of a whole base prime to the modulus among the terms it repeats with the
+order of `a` as well: `forall n in ZZ+ : 3 divides 7^n - 4^n` is `True` by one residue, `forall n
+in ZZ* : not (7 divides 2^n + 1)` by three — over the non-negative whole numbers, where the powers
+are whole; a base sharing a factor with the modulus repeats only eventually and is left as written. `not`
 passes through a quantifier by flipping it: `not forall x in S : P` is `exists x in S : not P`. In LaTeX, `\forall x \in S : P`. `forall`, `exists` and
 `exists!` are keywords, so they are not names.
 

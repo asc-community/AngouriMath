@@ -803,6 +803,19 @@ Sullivan and Mackey's Ex 5.3.2 and Prob 5.7.2, 5.7.8–9).
 | `"n in ZZ and n^3 < 3^(n - 1)".ToEntity().Solve("n")` | `NotSufficientlySupportedException` | `ZZ /\ (-oo; 0] \/ ZZ /\ [6; +oo)` |
 | `"n in ZZ and 2^n >= n^2 - 3 n + 3".ToEntity().Solve("n")` | `NotSufficientlySupportedException` | the same — the tail from `1` is not proved, and the window is not guessed from |
 
+And a divisibility or a congruence with a power of a whole base in the quantified name is decided
+by its residues too, over the non-negative whole numbers: `a^n` modulo `m` repeats with the order
+of `a` where `a` is prime to `m`, so `forall n in ZZ+ : 3 divides 7^n - 4^n` is `True` by one
+residue and `forall n in ZZ* : not (7 divides 2^n + 1)` by three (Sullivan and Mackey's §5.2.4 Try 3
+and Ex 5.3.7). A base sharing a factor with the modulus, or a negative exponent over `ZZ`, is left
+as written.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall n in ZZ+ : 3 divides 7^n - 4^n` | `UnhandledParseException` | `True` |
+| `forall n in ZZ* : not (7 divides 2^n + 1)` | `UnhandledParseException` | `True` |
+| `forall n in ZZ+ : 5 divides 7^n - 1` | `UnhandledParseException` | `False` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
