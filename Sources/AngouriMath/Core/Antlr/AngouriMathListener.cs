@@ -242,6 +242,16 @@ internal interface IAngouriMathListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitFunction_arguments([NotNull] AngouriMathParser.Function_argumentsContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.set_items"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterSet_items([NotNull] AngouriMathParser.Set_itemsContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.set_items"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitSet_items([NotNull] AngouriMathParser.Set_itemsContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.interval_arguments"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
