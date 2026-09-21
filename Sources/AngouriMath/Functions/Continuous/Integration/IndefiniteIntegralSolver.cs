@@ -1241,7 +1241,14 @@ namespace AngouriMath.Functions.Algebra
                     // half-angle substitution for what is `-c cot(x)`.
                     over is Entity.Powf(var @base, var power) ?
                         Integration.ComputeIndefiniteIntegral(MathS.Pow(@base, (-power).InnerSimplified), x, integrateByParts)?.Pipe(i => div * i) :
-                        Integration.ComputeIndefiniteIntegral(MathS.Pow(over, -1), x, integrateByParts)?.Pipe(i => div * i) :
+                    // A constant over a product is the reciprocal of the product, asked as the
+                    // same question with the constant in front, and not the product to the
+                    // power -1: `pe/(x (d + e x) sqrt(1 - c^2 x^2))` handed on as
+                    // `(x (d + e x) sqrt(1 - c^2 x^2))^(-1)` was read by no radical rule, where
+                    // Euler's substitution reads the reciprocal as written.
+                    div != Number.Integer.One ?
+                        Integration.ComputeAsTheSameQuestion(Number.Integer.One / over, x, integrateByParts)?.Pipe(i => div * i) :
+                        Integration.ComputeIndefiniteIntegral(MathS.Pow(over, -1), x, integrateByParts) :
                 !over.ContainsNode(x) ?
                     Integration.ComputeAsTheSameQuestion(div, x, integrateByParts)?.Pipe(i => i / over) :
                 null,
@@ -9964,7 +9971,11 @@ namespace AngouriMath.Functions.Algebra
                     && (!l.ContainsNode(x) && l.Vars.Any() || !r.ContainsNode(x) && r.Vars.Any())
                     ? MathS.Pow(l, power) * MathS.Pow(r, power)
                     : node);
-            return distributed == expr ? null : Integration.ComputeAsAQuestionOfItsOwn(distributed, x, integrateByParts);
+            // The same question: `(c x)^2` and `c^2 x^2` are one integrand, and asked one
+            // level down the remainder by parts leaves from `asech(c x)/(d + e x)^2` sat past
+            // the rules scoped to the question asked or one below it, the power of a quotient
+            // written apart among them, which is what answers it.
+            return distributed == expr ? null : Integration.ComputeAsTheSameQuestion(distributed, x, integrateByParts);
         }
 
         internal static Entity? SolveAPolynomialTimesARationalFunctionOfAnExponential(Entity expr, Entity.Variable x, bool integrateByParts)
@@ -13065,6 +13076,13 @@ namespace AngouriMath.Functions.Algebra
             if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
                 return null;
             var tookAPowerOfX = false;
+            // Whether every power of x taken is a whole one, and whether their sum is odd:
+            // |x|^m for a whole m is sgn(x)^m x^m, which stands in for the extension by parity
+            // where the integrand has none -- `1/(x^2 (d + e x) sqrt(1/(c x)^2 - 1))`, the
+            // remainder by parts leaves from `asech(c x)/(d + e x)^2`, is neither even nor odd,
+            // and was declined for that after its antiderivative had been found.
+            var wholePowersOfX = true;
+            var oddPowersOfX = false;
             // A parameter's even power taken for positive -- `c^2 x^2` below the bar, which is
             // how `acsch(c x)` and `asech(c x)` arrive, is positive for a real `c` -- and the
             // answer says so: `provided c^2 > 0`, which holds exactly for a real non-zero `c`.
@@ -13080,9 +13098,14 @@ namespace AngouriMath.Functions.Algebra
                 expr is Divf(var dividend, var divisor) ? Mulf.LinearChildren(dividend).Concat(Mulf.LinearChildren(divisor))
                 : expr is Mulf ? Mulf.LinearChildren(expr)
                 : new[] { expr });
+            // A root inside the argument of a logarithm is left as it is: the logarithm is an
+            // atom to every rule, whatever its argument is written as, and writing the root of
+            // `asech(c x)` apart re-asked `(a + b asech(c x))/(d + e x)^2` whole for a second
+            // and a half of nothing.
+            var underALogarithm = new HashSet<Entity>(expr.Nodes.Where(node => node is Logf).SelectMany(log => ((Logf)log).Antilogarithm.Nodes));
             var written = expr.Replace(node =>
             {
-                if (node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer || !@base.ContainsNode(x))
+                if (node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer || !@base.ContainsNode(x) || underALogarithm.Contains(node))
                     return node;
                 // As one quotient where it is a sum with a quotient in it: `1 - 1/x^2` is
                 // `(x^2 - 1)/x^2`, the derivative of the arcsecant as it is written.
@@ -13216,7 +13239,9 @@ namespace AngouriMath.Functions.Algebra
             var forPositive = Integration.ComputeIndefiniteIntegral(Functions.PartialFractions.Bare(written), x, integrateByParts: true);
             if (forPositive is null || forPositive.Nodes.Any(node => node == MathS.NaN))
                 return null;
-            var extended = tookAPowerOfX ? ExtendedByParity(expr, forPositive, x) : forPositive;
+            var extended = tookAPowerOfX
+                ? ExtendedByParity(expr, forPositive, x) ?? (wholePowersOfX ? (oddPowersOfX ? MathS.Signum(x) * Functions.PartialFractions.Bare(forPositive) : Functions.PartialFractions.Bare(forPositive)) : null)
+                : forPositive;
             foreach (var pair in signs)
                 if (pair.Value % 2 == 1 && extended is { })
                     extended = MathS.Signum(pair.Key) * extended;
@@ -13319,7 +13344,12 @@ namespace AngouriMath.Functions.Algebra
                     if (degree.Sign > 0)
                     {
                         tookAPowerOfX = true;
-                        var power = MathS.Pow(x, (Number.Integer.Create(degree) * exponent).InnerSimplified);
+                        var powerOfX = (Number.Integer.Create(degree) * exponent).InnerSimplified;
+                        if (powerOfX is Number.Integer wholePowerOfX)
+                            oddPowersOfX ^= !wholePowerOfX.EInteger.IsEven;
+                        else
+                            wholePowersOfX = false;
+                        var power = MathS.Pow(x, powerOfX);
                         // A parameter's even power to a fractional exponent is a power of its
                         // modulus, `(c^2)^(-1/2)` being `1/|c|`, which is one atom wherever it
                         // stands rather than two spellings of it.

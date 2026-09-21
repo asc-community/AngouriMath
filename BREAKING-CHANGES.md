@@ -939,6 +939,24 @@ parameter, so their Ex 5.2.6 is answered with the condition the book asks about
 | `"sum(k/2^k, k, 1, +oo)".ToEntity().Evaled` | as written | `2` |
 | `"forall n in ZZ+ : sum(q^i, i, 0, n-1) = (q^n - 1)/(q - 1)".ToEntity().Evaled` | `UnhandledParseException` -- quantifiers are new since | `True provided not q = 1` |
 
+### `(a + b asech(c x))/(d + e x)^2` is integrated, and a root written apart with `|x|` no longer needs a parity
+
+Rubi's 7.5.1 with a symbolic linear below the bar ran for ten minutes without an answer. By
+parts leaves `1/(x^2 (d + e x) sqrt(1/(c x)^2 - 1))`, which was handed on as a product to the
+power `-1` that no radical rule reads (a constant over a product is now the reciprocal with the
+constant in front), had its `(c x)^2` distributed one level down past the rule that writes the
+root apart (the same question now), and, written apart with `|x|` for `x > 0`, was declined
+for having no parity to extend by — `sgn(x)^m` stands in for it now, exact for a whole `m`. A
+root inside a logarithm's argument is left as written, since the logarithm is an atom to
+every rule ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a+b*asech(c*x))/(d+pe*x)^2".Integrate("x")` | left unevaluated | the antiderivative, in `sgn(x)`, `provided c^2 > 0` |
+| `"(a+b*asech(c*x))/x^7".Integrate("x")` | left unevaluated | the antiderivative |
+| `"e^(2*asech(a*x))/x^2".Integrate("x")` | left unevaluated | the antiderivative, in `sgn(x)` |
+| `"x*(a+b*asech(c*x))/(d+pe*x^2)^2".Integrate("x")` | left unevaluated | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
