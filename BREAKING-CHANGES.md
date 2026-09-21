@@ -838,6 +838,7 @@ prime, `17` ([#1450](https://github.com/asc-community/AngouriMath/issues/1450)).
 | `"card(PP intersect [1; 100])".ToEntity().Evaled` | `#(PP /\ [1; 100])` | `25` |
 | `"PP intersect [1; 30]".ToEntity().Evaled` | as written | `{ 2, 3, 5, 7, 11, 13, 17, 19, 23, 29 }` |
 | `"min(ZZ+)".ToEntity().Evaled` | `ZZ+` | `1` |
+| `"max(x, x in PP and x < 14)".ToEntity().Evaled` | as written | `13` |
 
 ### `binomial(n, k)` is a function
 

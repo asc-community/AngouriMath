@@ -267,9 +267,12 @@ LaTeX, and a `k` that is not whole evaluates numerically through the gamma funct
 `max(expr, var in set)` and `min` for the extremum of an expression over a set, `argmax` and
 `argmin` for the set of points where it is taken — `max(a, b)` of two values is still the larger.
 `min(S)` with one argument that is a set is its least member, `min(x, x in S)`, and the range
-may carry a condition, `min(x, x in PP and x > 14)` being the least of `{ x in PP : x > 14 }`;
-decided for `PP`, `ZZ+`, `ZZ*` and their cuts by an interval or a bound (`min(ZZ+)` is `1`,
-`min(x, x in ZZ+ and x >= 7/2)` is `4`), and left as written where there is no least member.
+may carry conditions, `min(x, x in PP and x > 14)` being the least of `{ x in PP : x > 14 }`;
+decided for `PP`, `ZZ+`, `ZZ*` and their cuts by an interval or bounds (`min(ZZ+)` is `1`,
+`min(x, x in ZZ+ and x >= 7/2)` is `4`, `min(x, x in PP and x > 14 and x < 20)` is `17`), and
+left as written where there is no least member. `max` the same way from above:
+`max(x, x in PP and x < 14)` is `13`, the previous prime, `max(ZZ /\ (-oo; 5))` is `4`, and
+`max(PP)` stays as written.
 
 `derivative` takes an order and `integral` does not: `derivative(f, x, 2)` is the second
 derivative, while `integral`'s third and fourth arguments are the bounds of a definite integral,

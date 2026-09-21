@@ -65,6 +65,16 @@ namespace AngouriMath.Tests.Core.Sets
         [InlineData("min(ZZ+)", "1")]
         [InlineData("min(ZZ*)", "0")]
         [InlineData("min(x, x in ZZ+ and x >= 7/2)", "4")]
+        [InlineData("min(x, x in PP and x > 14 and x < 20)", "17")]
+        [InlineData("min(x, 3 < x and x in ZZ+ and x <= 5)", "4")]
+        // The greatest member, and the previous prime before a bound.
+        [InlineData("max(x, x in PP and x < 14)", "13")]
+        [InlineData("max(x, x in PP and x <= 2)", "2")]
+        [InlineData("max(PP intersect (-oo; 100])", "97")]
+        [InlineData("max(PP intersect [1; 30])", "29")]
+        [InlineData("max(x, x > 10^18 and x in PP and x < 10^18 + 100)", "1000000000000000079")]
+        [InlineData("max(ZZ intersect (-oo; 5))", "4")]
+        [InlineData("max(x, x in ZZ* and x < 1)", "0")]
         // Quantified over the primes: every one is at least 2 and not every one is even.
         [InlineData("forall p in PP : p >= 2", "True")]
         [InlineData("forall p in PP : p > 2", "False")]
@@ -81,6 +91,9 @@ namespace AngouriMath.Tests.Core.Sets
         [InlineData("10^30 + 57 in PP", typeof(Set.Inf))]
         [InlineData("min(ZZ)", typeof(Minimumf))]
         [InlineData("max(PP)", typeof(Maximumf))]
+        [InlineData("max(x, x in PP and x < 2)", typeof(Maximumf))]
+        [InlineData("max(x, x in ZZ+ and x < 1)", typeof(Maximumf))]
+        [InlineData("min(x, x in PP and x > 14 and x < 16)", typeof(Minimumf))]
         [InlineData("PP intersect [1; 10^7]", typeof(Set.Intersectionf))]
         public void LeftAsWritten(string input, System.Type node)
             => Assert.IsType(node, input.ToEntity().Evaled);
