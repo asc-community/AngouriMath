@@ -3015,6 +3015,24 @@ AngouriMath.MathS.e : AngouriMath.Entity+Variable
 AngouriMath.MathS.i : AngouriMath.Entity+Number+Complex
 AngouriMath.MathS.oo : AngouriMath.Entity+Number+Real
 AngouriMath.MathS.pi : AngouriMath.Entity+Variable
+AngouriMath.ProofRecording.Dispose() : System.Void
+AngouriMath.ProofRecording.Start() : AngouriMath.ProofRecording
+AngouriMath.ProofRecording.Steps { } : System.Collections.Generic.IReadOnlyList<AngouriMath.ProofStep>
+AngouriMath.ProofRecording.Written() : System.String
+AngouriMath.ProofStep.<Clone>$() : AngouriMath.ProofStep
+AngouriMath.ProofStep.Deconstruct(AngouriMath.Entity&, System.String&, System.String&, AngouriMath.Entity&, System.Int32&) : System.Void
+AngouriMath.ProofStep.Depth { } : System.Int32
+AngouriMath.ProofStep.Equals(AngouriMath.ProofStep) : System.Boolean
+AngouriMath.ProofStep.Equals(System.Object) : System.Boolean
+AngouriMath.ProofStep.GetHashCode() : System.Int32
+AngouriMath.ProofStep.Lemma { } : System.String
+AngouriMath.ProofStep.Rule { } : System.String
+AngouriMath.ProofStep.Statement { } : AngouriMath.Entity
+AngouriMath.ProofStep.ToString() : System.String
+AngouriMath.ProofStep.Verdict { } : AngouriMath.Entity
+AngouriMath.ProofStep.ctor(AngouriMath.Entity, System.String, System.String, AngouriMath.Entity, System.Int32)
+AngouriMath.ProofStep.op_Equality(AngouriMath.ProofStep, AngouriMath.ProofStep) : System.Boolean
+AngouriMath.ProofStep.op_Inequality(AngouriMath.ProofStep, AngouriMath.ProofStep) : System.Boolean
 class AngouriMath.Convenience.Setting<T>
 class AngouriMath.Core.Budgets.BudgetOutcome
 class AngouriMath.Core.Budgets.BudgetRecording
@@ -3184,6 +3202,8 @@ class AngouriMath.MathS+Settings
 class AngouriMath.MathS+Settings+NewtonSetting
 class AngouriMath.MathS+UnsafeAndInternal
 class AngouriMath.MathS+Utils
+class AngouriMath.ProofRecording
+class AngouriMath.ProofStep
 enum AngouriMath.Core.ApproachFrom
 enum AngouriMath.Core.Domain
 enum AngouriMath.Core.Transformations.RewriteRuleGrowth

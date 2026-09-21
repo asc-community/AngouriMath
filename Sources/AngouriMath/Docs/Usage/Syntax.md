@@ -340,7 +340,13 @@ order of `a` as well: `forall n in ZZ+ : 3 divides 7^n - 4^n` is `True` by one r
 in ZZ* : not (7 divides 2^n + 1)` by three — over the non-negative whole numbers, where the powers
 are whole; a base sharing a factor with the modulus repeats only eventually and is left as written. `not`
 passes through a quantifier by flipping it: `not forall x in S : P` is `exists x in S : not P`. In LaTeX, `\forall x \in S : P`. `forall`, `exists` and
-`exists!` are keywords, so they are not names.
+`exists!` are keywords, so they are not names. **How a statement was decided** is recorded by
+`ProofRecording`: inside `using var proof = ProofRecording.Start();` every decision made names its
+rule — as Sullivan and Mackey name it, and with the Lean 4 tactic a checker would use — with its
+sub-decisions one level below it, so the proof of `forall n in ZZ+ : sum(1/(k (k + 1)), k, 1, n) =
+n/(n + 1)` reads as its base case, the identity of its step and the induction that closes them
+(`proof.Written()`); what a route tried and abandoned is not among the steps. A decision already
+made is not made again, so a proof is asked of a fresh entity (`MathS.FromString(text, useCache: false)`).
 
 `domain` takes a special set — `CC` `RR` `QQ` `ZZ` `ZZ*` `ZZ+` `PP` `BB` — or the keyword `Any`, and
 sets the *codomain* of whatever node it wraps, which is what makes the expression evaluate to
