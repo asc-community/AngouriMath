@@ -376,6 +376,18 @@ namespace AngouriMath.Functions
         private const int LargestValuePutInLowestTerms = 4096;
 
         /// <summary>
+        /// The largest decomposition, by the <see cref="Entity.Complexity"/> of its values
+        /// together, that is checked and handed on. The elimination is fraction-free over the
+        /// symbols, and its values grow as determinants do: for
+        /// `(-8 c^11 x + ...)/((c x - 1)^2 (c x + 1))`, which by parts leaves from
+        /// `acoth(c x) ln(1 - c^2 x^2)`, the nine values came out at ten million nodes each
+        /// and the sum at thirty-three million, and pinning `c` in it to check it ran out of
+        /// memory. Nothing downstream reads a decomposition of that size; the largest that
+        /// was ever answered was eighty thousand, four values of twenty thousand.
+        /// </summary>
+        private const int LargestDecompositionHandedOn = 250_000;
+
+        /// <summary>
         /// <c>N/D</c> written as one fraction per factor of <paramref name="denominator"/>,
         /// where the denominator is <b>written</b> as a product of distinct linear and quadratic
         /// factors whose coefficients may be symbols, or <see langword="false"/> where it is not
@@ -584,6 +596,11 @@ namespace AngouriMath.Functions
                 for (var column = 0; column < width; column++)
                     if (values[column].Complexity <= LargestValuePutInLowestTerms)
                         values[column] = InLowestTermsOverTheSymbols(values[column]);
+            // ...and not handed on at all past the bound: a decomposition of millions of
+            // nodes is not one any rule reads, and pinning a symbol in it to check it is
+            // what ran out of memory.
+            if (values.Sum(value => (long)value.Complexity) > LargestDecompositionHandedOn)
+                return false;
             Entity sum = 0;
             for (var i = 0; i < factors.Count; i++)
             {
@@ -1214,7 +1231,25 @@ namespace AngouriMath.Functions
             => entry == Integer.Zero || entry.Evaled is Complex { IsZero: true }
             || (simplify && entry.Evaled is not Complex && entry.Simplify().Evaled is Complex { IsZero: true });
 
+        /// <summary>
+        /// <see cref="TrySolveLinearUnbounded"/> with its values bounded by
+        /// <see cref="LargestDecompositionHandedOn"/> together: the eliminations over the
+        /// symbols hand back quotients of determinants, which grow as determinants do, and
+        /// past the bound the values are declined here rather than substituted, checked and
+        /// simplified downstream -- writing an atom back into nine values of ten million
+        /// nodes each is where `acoth(c x) ln(1 - c^2 x^2)` ran out of memory.
+        /// </summary>
         private static bool TrySolveLinear(Entity[][] matrix, Entity[] rhs, bool symbolsMayCancel, [NotNullWhen(true)] out Entity[]? values)
+        {
+            if (!TrySolveLinearUnbounded(matrix, rhs, symbolsMayCancel, out values))
+                return false;
+            if (values.Sum(value => (long)value.Complexity) <= LargestDecompositionHandedOn)
+                return true;
+            values = null;
+            return false;
+        }
+
+        private static bool TrySolveLinearUnbounded(Entity[][] matrix, Entity[] rhs, bool symbolsMayCancel, [NotNullWhen(true)] out Entity[]? values)
         {
             values = null;
             var rows = rhs.Length;
