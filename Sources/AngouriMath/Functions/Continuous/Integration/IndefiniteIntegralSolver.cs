@@ -5143,6 +5143,26 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Every whole power of a product written as the product of the powers, <c>(a P)^5</c>
+        /// as <c>a^5 P^5</c>, which is exact for a whole power and is the spelling the rational
+        /// reader needs: <c>(4u^2 + 12u^4 + 12u^6 + 4u^8)/(a (1 - u^2))^5</c> was declined after
+        /// five seconds and is answered in 27 ms as <c>.../(a^4 (1 - u^2)^5)</c>. Four rounds,
+        /// since a distributed factor may itself be such a power.
+        /// </summary>
+        private static Entity WithWholePowersOfProductsDistributed(Entity integrand)
+        {
+            for (var round = 0; round < 4; round++)
+            {
+                var distributed = integrand.Replace(node =>
+                    node is Powf(Mulf(var l, var r), Number.Integer power) ? MathS.Pow(l, power) * MathS.Pow(r, power) : node);
+                if (distributed == integrand)
+                    break;
+                integrand = distributed;
+            }
+            return integrand;
+        }
+
+        /// <summary>
         /// An integrand holding a fractional power of something <b>linear</b> in the variable,
         /// turned into a rational function by <c>u^q = a*x + b</c>.
         /// </summary>
@@ -5308,6 +5328,15 @@ namespace AngouriMath.Functions.Algebra
             var integrand = Functions.SingleQuotient.Combine((rewritten * dx).Simplify());
             if (integrand is Providedf(var inner, _))
                 integrand = inner;
+            // The quotient of linears leaves `(a (1 - u^2))^5` below the bar, which the rational
+            // reader does not read and whose distributed spelling it answers at once: Rubi's
+            // `x^3 sqrt((a x + 1)/(a x - 1))` took nine seconds through the split terms, and
+            // takes half of one as a single quotient over `a^5 (1 - u^2)^5`. Only where the
+            // integrand in u is rational: with a root of u still in it -- a second base, as in
+            // Timofeev's 314 -- the distributed spelling sent the radical rules down a path
+            // that answered with a sign function, where the undistributed one is answered exactly.
+            if (!integrand.Nodes.Any(node => node is Powf(var radicand, Number.Rational fractional) && fractional is not Number.Integer && radicand.ContainsNode(u)))
+                integrand = WithWholePowersOfProductsDistributed(integrand);
             // For an even q the principal root is not negative wherever it is real, and a root
             // holding a power of u gives that power up: `1/sqrt(t + t^(3/2))` under `u = sqrt(t)`
             // is `2u/sqrt(u^2 + u^3)`, a root of a cubic, and is `2/sqrt(1 + u)`. Where the
@@ -9890,14 +9919,7 @@ namespace AngouriMath.Functions.Algebra
             // simplifier writes `4a^2 u^2` as `(a u)^2 4`, and no rational reader sees the `u^2`
             // inside -- Timofeev's `1/(a^2 + b^2 cosh(x)^2)` was declined in that spelling and
             // is answered in the other.
-            for (var round = 0; round < 4; round++)
-            {
-                var distributed = integrand.Replace(node =>
-                    node is Powf(Mulf(var l, var r), Number.Integer power) ? MathS.Pow(l, power) * MathS.Pow(r, power) : node);
-                if (distributed == integrand)
-                    break;
-                integrand = distributed;
-            }
+            integrand = WithWholePowersOfProductsDistributed(integrand);
             // u is an exponential, so it is positive, and a root holding a power of it gives
             // that power up: `sqrt(1 + tanh(4x))` is a root of `2u/(1 + u)` here and nothing
             // rationalises that; as `sqrt(2) sqrt(u)/sqrt(1 + u)` it is one substitution more.
