@@ -90,6 +90,16 @@ namespace AngouriMath.Tests.Core.Sets
         [InlineData("prime(0)", "NaN")]
         [InlineData("prime(-1)", "NaN")]
         [InlineData("prime(1/2)", "NaN")]
+        // The p-adic valuation (Sullivan and Mackey's Ex 5.5.1: n = 2^m (2 l + 1), m its 2-adic one).
+        [InlineData("valuation(12, 2)", "2")]
+        [InlineData("valuation(12, 3)", "1")]
+        [InlineData("valuation(12, 5)", "0")]
+        [InlineData("valuation(-40, 2)", "3")]
+        [InlineData("valuation(2^100 * 3, 2)", "100")]
+        [InlineData("valuation(0, 3)", "+oo")]
+        [InlineData("valuation(12, 4)", "NaN")]
+        [InlineData("valuation(1/2, 2)", "NaN")]
+        [InlineData("2^valuation(12, 2) * 3^valuation(12, 3)", "12")]
         public void Decided(string input, string expected)
             => Assert.Equal(expected.ToEntity(), input.ToEntity().Evaled);
 
@@ -106,6 +116,8 @@ namespace AngouriMath.Tests.Core.Sets
         [InlineData("PP intersect [1; 10^7]", typeof(Set.Intersectionf))]
         [InlineData("prime(n)", typeof(Primef))]
         [InlineData("prime(10^9)", typeof(Primef))]
+        [InlineData("valuation(n, 2)", typeof(Valuationf))]
+        [InlineData("valuation(12, p)", typeof(Valuationf))]
         public void LeftAsWritten(string input, System.Type node)
             => Assert.IsType(node, input.ToEntity().Evaled);
 
@@ -125,6 +137,10 @@ namespace AngouriMath.Tests.Core.Sets
             Assert.Equal(@"\operatorname{prime}\left(n\right)", "prime(n)".ToEntity().Latexize());
             Assert.Contains("sympy.prime(n)", MathS.ToSympyCode("prime(n)".ToEntity()));
             Assert.Equal("prime(n)".ToEntity(), "prime(n)".ToEntity().ToString().ToEntity());
+            Assert.Equal("valuation(n, p)", MathS.NumberTheory.Valuation("n", "p").ToString());
+            Assert.Equal(@"v_{p}\left(n\right)", "valuation(n, p)".ToEntity().Latexize());
+            Assert.Contains("sympy.multiplicity(p, n)", MathS.ToSympyCode("valuation(n, p)".ToEntity()));
+            Assert.Equal("valuation(n, p)".ToEntity(), "valuation(n, p)".ToEntity().ToString().ToEntity());
         }
 
         [Theory]

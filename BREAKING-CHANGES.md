@@ -868,6 +868,7 @@ prime, `17` ([#1450](https://github.com/asc-community/AngouriMath/issues/1450)).
 | `"min(ZZ+)".ToEntity().Evaled` | `ZZ+` | `1` |
 | `"max(x, x in PP and x < 14)".ToEntity().Evaled` | as written | `13` |
 | `"prime(25)".ToEntity().Evaled` | `prime * 25` — juxtaposition of a variable `prime` | `97`; `prime(n)` is the `n`-th prime, `NaN` off the positive whole numbers |
+| `"valuation(12, 2)".ToEntity().Evaled` | `UnrecognizedFunctionParseException` | `2`; `valuation(n, p)` is the `p`-adic valuation, `+oo` at `0` and `NaN` off the primes |
 
 ### `binomial(n, k)` is a function
 

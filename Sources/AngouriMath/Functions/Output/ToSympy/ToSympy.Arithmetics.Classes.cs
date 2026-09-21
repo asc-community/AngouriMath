@@ -165,6 +165,11 @@ namespace AngouriMath
             internal override string ToSymPy() => $"sympy.prime({Argument.ToSymPy()})";
         }
 
+        public partial record Valuationf
+        {
+            internal override string ToSymPy() => $"sympy.multiplicity({Prime.ToSymPy()}, {Argument.ToSymPy()})";
+        }
+
         public partial record Cardf
         {
             // SymPy has no cardinality function; a finite set answers len, and an infinite one

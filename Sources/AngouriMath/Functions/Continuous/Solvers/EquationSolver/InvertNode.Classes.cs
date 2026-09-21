@@ -672,6 +672,14 @@ namespace AngouriMath
             }
         }
 
+        partial record Valuationf
+        {
+            // valuation(n, p) = k has every multiple of p^k prime to p for a solution, a set the
+            // inverter cannot hand back.
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => Enumerable.Empty<Entity>();
+        }
+
         partial record Primef
         {
             // prime(n) = p has the one solution n = pi(p) where p is prime and none otherwise,

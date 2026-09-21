@@ -537,6 +537,37 @@ namespace AngouriMath
                 => element is Number || element is FiniteSet listed && listed.All(Countable);
         }
 
+        partial record Valuationf
+        {
+            // Defined for a whole n and a prime p; the sign of n does not enter.
+            private protected override Entity IntrinsicCondition => Argument.In(MathS.Sets.Z) & Prime.In(MathS.Sets.Primes);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnTwoArguments(Argument, Prime,
+                    (n, p) => (n, p) switch
+                    {
+                        (Integer whole, Integer prime) when Functions.Primes.IsPrime(prime.EInteger) is { } isPrime
+                            => !isPrime ? MathS.NaN
+                            : whole.EInteger.IsZero ? Real.PositiveInfinity
+                            : Integer.Create(Multiplicity(whole.EInteger.Abs(), prime.EInteger)),
+                        (Number, Number) => MathS.NaN,
+                        _ => null
+                    },
+                    (@this, n, p) => ((Valuationf)@this).New(n, p), isExact);
+
+            private static EInteger Multiplicity(EInteger n, EInteger p)
+            {
+                var count = EInteger.Zero;
+                while (n.Remainder(p).IsZero)
+                {
+                    n = n.Divide(p);
+                    count += 1;
+                }
+                return count;
+            }
+        }
+
         partial record Primef
         {
             // The n-th prime is defined for a positive whole n; nothing else indexes the primes.

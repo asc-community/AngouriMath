@@ -229,6 +229,13 @@ namespace AngouriMath
             private protected override string LatexizeNode() => $@"\operatorname{{prime}}\left({Argument.Latexize()}\right)";
         }
 
+        partial record Valuationf
+        {
+            /// <inheritdoc/>
+            // The textbook's v_p(n), the prime as a subscript.
+            private protected override string LatexizeNode() => $@"v_{{{Prime.Latexize()}}}\left({Argument.Latexize()}\right)";
+        }
+
         partial record Phif
         {
             /// <inheritdoc/>
