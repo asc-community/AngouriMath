@@ -128,7 +128,7 @@ namespace AngouriMath.Functions.Boolean
                 // whole coefficients repeats with the modulus, so the residues decide it:
                 // forall n in ZZ : 6 divides n^3 + 5 n is six cases. Sullivan and Mackey's "case
                 // analysis over the classes" (Ex 6.5.14).
-                if (Period(body, x) is { } period && period.CompareTo(EInteger.FromInt32(LargestPeriod)) <= 0)
+                if (Period(body, x, integers) is { } period && period.CompareTo(EInteger.FromInt32(LargestPeriod)) <= 0)
                     return OverResidues(kind, x, integers, body, period, isExact);
                 // A polynomial equation with no solution modulo some m has none in the whole
                 // numbers: 3 x^2 - 5 y^2 = 1 is impossible modulo 5 (Ex 6.5.27). Only a refusal
@@ -156,7 +156,7 @@ namespace AngouriMath.Functions.Boolean
         /// The least member of a set of whole numbers bounded below -- <c>ZZ+</c>, <c>ZZ*</c>,
         /// either cut by an interval -- or <see langword="null"/> where the set is something else.
         /// </summary>
-        private static Integer? LeastMember(Set set)
+        internal static Integer? LeastMember(Set set)
         {
             switch (set)
             {
@@ -282,6 +282,9 @@ namespace AngouriMath.Functions.Boolean
                 return Entity.Boolean.False;
             if (atLeast != Entity.Boolean.True)
                 return null;
+            // Read off the shape first: 3^(-t - 1) + t^3 is positive on ZZ* term by term.
+            if (Sign(positive, x, set, isExact) is { } direct && (!strict || direct == Signum.Positive))
+                return Entity.Boolean.True;
             var next = positive.Substitute(x, x + Integer.One);
             foreach (var c in Multipliers(positive, x))
             {
@@ -448,7 +451,7 @@ namespace AngouriMath.Functions.Boolean
                 _ => null,
             };
 
-        private static bool IsIntegerSet(SpecialSet set)
+        internal static bool IsIntegerSet(SpecialSet set)
             => set.ToDomain() is Domain.Integer or Domain.NonNegativeInteger or Domain.PositiveInteger;
 
         /// <summary>How many residues a periodic statement is checked over before it is left as written.</summary>
@@ -460,32 +463,72 @@ namespace AngouriMath.Functions.Boolean
         /// with whole coefficients, joined by the connectives; the least common multiple of the
         /// parts' periods.
         /// </summary>
-        private static EInteger? Period(Entity body, Variable x)
+        private static EInteger? Period(Entity body, Variable x, SpecialSet set)
         {
             switch (body)
             {
                 case Entity.Boolean:
                     return EInteger.One;
                 case Dividesf(Integer divisor, var dividend):
-                    return divisor.EInteger.IsZero || !IsWholePolynomial(dividend) ? null : divisor.EInteger.Abs();
+                    return divisor.EInteger.IsZero ? null : PeriodModulo(dividend, divisor.EInteger.Abs(), x, set);
                 case Congruentf(var left, var right, Integer modulus):
-                    return modulus.EInteger.IsZero || !IsWholePolynomial(left) || !IsWholePolynomial(right) ? null : modulus.EInteger.Abs();
+                    return modulus.EInteger.IsZero ? null : PeriodModulo(left - right, modulus.EInteger.Abs(), x, set);
                 case Notf(var operand):
-                    return Period(operand, x);
+                    return Period(operand, x, set);
                 // A quantifier over whole numbers inside: its body is periodic in x with the
                 // same period whatever the inner name takes, so the residues of x decide the
                 // outer statement and the inner one is decided at each of them.
                 case Quantifier { Over: SpecialSet inner } quantifier when IsIntegerSet(inner):
-                    return Period(quantifier.Body, x);
+                    return Period(quantifier.Body, x, set);
                 case Andf or Orf or Impliesf or Xorf:
                     if (body is not IBinaryNode { NodeFirstChild: var first, NodeSecondChild: var second })
                         return null;
-                    if (Period(first, x) is not { } one || Period(second, x) is not { } another)
+                    if (Period(first, x, set) is not { } one || Period(second, x, set) is not { } another)
                         return null;
                     return one * another / one.Gcd(another);
                 default:
                     return body.ContainsNode(x) ? null : EInteger.One;
             }
+        }
+
+        /// <summary>
+        /// The period, in <paramref name="x"/>, of an expression's residue modulo
+        /// <paramref name="modulus"/>: the modulus for a polynomial with whole coefficients,
+        /// and with a power <c>a^e</c> of a whole base coprime to the modulus among the terms --
+        /// <c>7^n - 4^n</c> modulo <c>3</c>, <c>2^n + 1</c> modulo <c>7</c> -- the least common
+        /// multiple with the order of each base, since <c>a^(e + k) = a^e</c> modulo <c>m</c>
+        /// where <c>a^k = 1</c>. Over the non-negative whole numbers only, where the powers are
+        /// whole; <see langword="null"/> for a base sharing a factor with the modulus, whose
+        /// powers repeat only eventually. Sullivan and Mackey's Ex 5.3.7 and §5.2.4 Try 3.
+        /// </summary>
+        private static EInteger? PeriodModulo(Entity expr, EInteger modulus, Variable x, SpecialSet set)
+        {
+            if (IsWholePolynomial(expr))
+                return modulus;
+            if (set.ToDomain() is not (Domain.NonNegativeInteger or Domain.PositiveInteger))
+                return null;
+            var period = modulus;
+            var replaced = expr;
+            var count = 0;
+            foreach (var power in expr.Nodes.OfType<Powf>().Where(p => p.Exponent.ContainsNode(x)).Distinct())
+            {
+                if (power.Base.Evaled is not Integer { EInteger: var @base } || !power.Exponent.Vars.All(v => v == x) || !IsWholePolynomial(power.Exponent))
+                    return null;
+                if (!@base.Gcd(modulus).Equals(EInteger.One))
+                    return null;
+                var order = EInteger.One;
+                var value = @base.Mod(modulus);
+                while (!value.Equals(EInteger.One) && order.CompareTo(modulus) < 0)
+                {
+                    value = value * @base % modulus;
+                    order += 1;
+                }
+                if (!value.Equals(EInteger.One))
+                    return null;
+                period = period * order / period.Gcd(order);
+                replaced = replaced.Substitute(power, Variable.CreateUnique(expr, "power_" + count++));
+            }
+            return IsWholePolynomial(replaced) ? period : null;
         }
 
         /// <summary>
