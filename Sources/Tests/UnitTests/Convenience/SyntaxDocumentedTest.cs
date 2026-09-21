@@ -247,21 +247,21 @@ namespace AngouriMath.Tests.Convenience
         }
 
         /// <summary>
-        /// The page says <c>domain(...)</c> takes the seven special sets or the keyword
+        /// The page says <c>domain(...)</c> takes the eight special sets or the keyword
         /// <c>Any</c>, that the annotation reads back, and that <c>Any</c> is a keyword in that
         /// one position rather than a set.
         /// <a href="https://github.com/asc-community/AngouriMath/issues/1048">#1048</a>,
         /// <a href="https://github.com/asc-community/AngouriMath/issues/996">#996</a>
         /// </summary>
         [Fact]
-        public void DomainTakesTheSevenSpecialSetsOrTheKeywordAny()
+        public void DomainTakesTheEightSpecialSetsOrTheKeywordAny()
         {
             foreach (var (name, domain) in new[]
                      {
                          ("CC", AngouriMath.Core.Domain.Complex), ("RR", AngouriMath.Core.Domain.Real),
                          ("QQ", AngouriMath.Core.Domain.Rational), ("ZZ", AngouriMath.Core.Domain.Integer),
                          ("ZZ*", AngouriMath.Core.Domain.NonNegativeInteger), ("ZZ+", AngouriMath.Core.Domain.PositiveInteger),
-                         ("BB", AngouriMath.Core.Domain.Boolean),
+                         ("BB", AngouriMath.Core.Domain.Boolean), ("PP", AngouriMath.Core.Domain.Prime),
                      })
                 Assert.Equal(domain, $"domain(x, {name})".ToEntity().Codomain);
 

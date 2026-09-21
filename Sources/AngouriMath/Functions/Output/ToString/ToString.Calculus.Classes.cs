@@ -40,7 +40,8 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             private protected override string StringizeNode() =>
-                $"max({Expression.Stringize()}, {Var.Stringize()} in {Over.Stringize()})";
+                Expression == Var && Over is Set ? $"max({Over.Stringize()})"
+                : $"max({Expression.Stringize()}, {Var.Stringize()} in {Over.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -48,8 +49,11 @@ namespace AngouriMath
         public partial record Minimumf
         {
             /// <inheritdoc/>
+            // The least member of a set, min(S), is the extremum of the name over it and prints
+            // as it was written. https://github.com/asc-community/AngouriMath/issues/1450
             private protected override string StringizeNode() =>
-                $"min({Expression.Stringize()}, {Var.Stringize()} in {Over.Stringize()})";
+                Expression == Var && Over is Set ? $"min({Over.Stringize()})"
+                : $"min({Expression.Stringize()}, {Var.Stringize()} in {Over.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }

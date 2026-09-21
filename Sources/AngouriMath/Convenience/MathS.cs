@@ -6351,6 +6351,10 @@ namespace AngouriMath
             /// https://github.com/asc-community/AngouriMath/issues/1409</summary>
             public static Set PositiveIntegers => SpecialSet.Create("ZZ+");
 
+            /// <summary>The prime numbers <c>{2, 3, 5, 7, ...}</c>, written <c>PP</c>.
+            /// https://github.com/asc-community/AngouriMath/issues/1450</summary>
+            public static Set Primes => SpecialSet.Create("PP");
+
             /// <summary>
             /// Creates a <see cref="FiniteSet"/> with given elements
             /// </summary>

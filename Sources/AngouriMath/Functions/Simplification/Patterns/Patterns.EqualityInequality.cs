@@ -65,7 +65,8 @@ namespace AngouriMath.Functions
         // is the only thing that can say so for a symbol: a Variable is Domain.Any until it is
         // told otherwise.
         private static bool IsKnownReal(Entity entity)
-            => entity.Codomain is AngouriMath.Core.Domain.PositiveInteger
+            => entity.Codomain is AngouriMath.Core.Domain.Prime
+                              or AngouriMath.Core.Domain.PositiveInteger
                               or AngouriMath.Core.Domain.NonNegativeInteger
                               or AngouriMath.Core.Domain.Integer
                               or AngouriMath.Core.Domain.Rational

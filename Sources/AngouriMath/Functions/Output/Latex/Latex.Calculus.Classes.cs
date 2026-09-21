@@ -70,15 +70,18 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             private protected override string LatexizeNode() =>
-                @"\max_{" + Var.Latexize() + @" \in " + Over.Latexize() + "} "
+                Expression == Var && Over is Set ? @"\max " + Over.Latexize()
+                : @"\max_{" + Var.Latexize() + @" \in " + Over.Latexize() + "} "
                 + Expression.Latexize(Expression.Priority < Priority.Sum);
         }
 
         public partial record Minimumf
         {
             /// <inheritdoc/>
+            // The least member of a set is \min S, with no name under it.
             private protected override string LatexizeNode() =>
-                @"\min_{" + Var.Latexize() + @" \in " + Over.Latexize() + "} "
+                Expression == Var && Over is Set ? @"\min " + Over.Latexize()
+                : @"\min_{" + Var.Latexize() + @" \in " + Over.Latexize() + "} "
                 + Expression.Latexize(Expression.Priority < Priority.Sum);
         }
 

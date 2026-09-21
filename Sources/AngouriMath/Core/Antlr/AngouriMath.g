@@ -585,8 +585,10 @@ atom returns[Entity value]
     | 'round(' args = function_arguments ')' { Assert("round", 1, $args.list.Count); $value = MathS.Round($args.list[0]); }
     /* min and max take any number of arguments, as they do everywhere else, and fold left
        into the binary node. One argument is that argument. */
-    | 'min(' args = function_arguments ')' { AssertAtLeast("min", 1, $args.list.Count); $value = $args.list.Count == 2 && $args.list[1] is Entity.Set.Inf { Element: Variable } minRange ? MathS.Minimum($args.list[0], minRange.Element, minRange.SupSet) : $args.list.Aggregate((a, b) => MathS.Min(a, b)); }
-    | 'max(' args = function_arguments ')' { AssertAtLeast("max", 1, $args.list.Count); $value = $args.list.Count == 2 && $args.list[1] is Entity.Set.Inf { Element: Variable } maxRange ? MathS.Maximum($args.list[0], maxRange.Element, maxRange.SupSet) : $args.list.Aggregate((a, b) => MathS.Max(a, b)); }
+    /* min(S) is the least member of a set; min(x, x in S and P) the least of { x in S : P }, the
+       conjunction read as the set builder reads it. https://github.com/asc-community/AngouriMath/issues/1450 */
+    | 'min(' args = function_arguments ')' { AssertAtLeast("min", 1, $args.list.Count); $value = $args.list.Count == 1 && $args.list[0] is Entity.Set minSet ? MathS.Minimum(Variable.CreateUnique(minSet, "x"), Variable.CreateUnique(minSet, "x"), minSet) : $args.list.Count == 2 && AngouriMath.Functions.ExtremumOverSet.AsRange($args.list[1]) is var (minVar, minOver) ? MathS.Minimum($args.list[0], minVar, minOver) : $args.list.Aggregate((a, b) => MathS.Min(a, b)); }
+    | 'max(' args = function_arguments ')' { AssertAtLeast("max", 1, $args.list.Count); $value = $args.list.Count == 1 && $args.list[0] is Entity.Set maxSet ? MathS.Maximum(Variable.CreateUnique(maxSet, "x"), Variable.CreateUnique(maxSet, "x"), maxSet) : $args.list.Count == 2 && AngouriMath.Functions.ExtremumOverSet.AsRange($args.list[1]) is var (maxVar, maxOver) ? MathS.Maximum($args.list[0], maxVar, maxOver) : $args.list.Aggregate((a, b) => MathS.Max(a, b)); }
     | 'argmax(' args = function_arguments ')' { Assert("argmax", 2, $args.list.Count); $value = $args.list[1] is Entity.Set.Inf { Element: Variable } argmaxRange ? MathS.Argmax($args.list[0], argmaxRange.Element, argmaxRange.SupSet) : throw new InvalidArgumentParseException("argmax expects its second argument to say which variable ranges over which set, as in argmax(f(t), t in S)"); }
     | 'argmin(' args = function_arguments ')' { Assert("argmin", 2, $args.list.Count); $value = $args.list[1] is Entity.Set.Inf { Element: Variable } argminRange ? MathS.Argmin($args.list[0], argminRange.Element, argminRange.SupSet) : throw new InvalidArgumentParseException("argmin expects its second argument to say which variable ranges over which set, as in argmin(f(t), t in S)"); }
     | 'gcd(' args = function_arguments ')' { AssertAtLeast("gcd", 1, $args.list.Count); $value = $args.list.Aggregate((a, b) => MathS.Gcd(a, b)); }
@@ -669,7 +671,7 @@ fragment EXPONENT: ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
 
 NUMBER: ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i'? | '.'? ('0'..'9')+ EXPONENT? 'i'? | 'i' ;
 
-SPECIALSET: ('CC' | 'RR' | 'QQ' | 'ZZ' | 'BB' | 'ZZ*' | 'ZZ+') ;
+SPECIALSET: ('CC' | 'RR' | 'QQ' | 'ZZ' | 'BB' | 'ZZ*' | 'ZZ+' | 'PP') ;
 
 BOOLEAN: ('true' | 'True' | 'false' | 'False') ;
 

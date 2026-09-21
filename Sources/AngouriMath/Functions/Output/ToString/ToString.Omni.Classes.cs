@@ -70,6 +70,14 @@ namespace AngouriMath
                     public override string ToString() => Stringize();
                 }
 
+                partial record Primes
+                {
+                    /// <inheritdoc/>
+                    private protected override string StringizeNode() => "PP";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
+
                 partial record PositiveIntegers
                 {
                     /// <inheritdoc/>

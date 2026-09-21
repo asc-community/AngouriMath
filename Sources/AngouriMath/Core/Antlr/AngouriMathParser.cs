@@ -4513,7 +4513,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 990;
 				Match(T__30);
-				 AssertAtLeast("min", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Count == 2 && _localctx.args.list[1] is Entity.Set.Inf { Element: Variable } minRange ? MathS.Minimum(_localctx.args.list[0], minRange.Element, minRange.SupSet) : _localctx.args.list.Aggregate((a, b) => MathS.Min(a, b)); 
+				 AssertAtLeast("min", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Count == 1 && _localctx.args.list[0] is Entity.Set minSet ? MathS.Minimum(Variable.CreateUnique(minSet, "x"), Variable.CreateUnique(minSet, "x"), minSet) : _localctx.args.list.Count == 2 && AngouriMath.Functions.ExtremumOverSet.AsRange(_localctx.args.list[1]) is var (minVar, minOver) ? MathS.Minimum(_localctx.args.list[0], minVar, minOver) : _localctx.args.list.Aggregate((a, b) => MathS.Min(a, b)); 
 				}
 				break;
 			case 118:
@@ -4525,7 +4525,7 @@ internal partial class AngouriMathParser : Parser {
 				_localctx.args = function_arguments();
 				State = 995;
 				Match(T__30);
-				 AssertAtLeast("max", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Count == 2 && _localctx.args.list[1] is Entity.Set.Inf { Element: Variable } maxRange ? MathS.Maximum(_localctx.args.list[0], maxRange.Element, maxRange.SupSet) : _localctx.args.list.Aggregate((a, b) => MathS.Max(a, b)); 
+				 AssertAtLeast("max", 1, _localctx.args.list.Count); _localctx.value =  _localctx.args.list.Count == 1 && _localctx.args.list[0] is Entity.Set maxSet ? MathS.Maximum(Variable.CreateUnique(maxSet, "x"), Variable.CreateUnique(maxSet, "x"), maxSet) : _localctx.args.list.Count == 2 && AngouriMath.Functions.ExtremumOverSet.AsRange(_localctx.args.list[1]) is var (maxVar, maxOver) ? MathS.Maximum(_localctx.args.list[0], maxVar, maxOver) : _localctx.args.list.Aggregate((a, b) => MathS.Max(a, b)); 
 				}
 				break;
 			case 119:

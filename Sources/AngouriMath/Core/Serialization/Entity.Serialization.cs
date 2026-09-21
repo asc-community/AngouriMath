@@ -110,6 +110,7 @@ namespace AngouriMath
                 [EntityJsonConverter] partial record Integers;
                 [EntityJsonConverter] partial record NonNegativeIntegers;
                 [EntityJsonConverter] partial record PositiveIntegers;
+                [EntityJsonConverter] partial record Primes;
                 [EntityJsonConverter] partial record Rationals;
                 [EntityJsonConverter] partial record Reals;
             }

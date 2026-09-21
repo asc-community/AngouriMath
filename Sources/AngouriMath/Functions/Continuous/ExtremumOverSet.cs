@@ -6,6 +6,8 @@
 //
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 using static AngouriMath.Entity;
@@ -69,6 +71,12 @@ namespace AngouriMath.Functions
             if (var is not Variable x)
                 return null;
             var domain = over.InnerSimplified;
+            // The least member of a set of whole numbers bounded below, or the greatest of one
+            // bounded above, where the expression is the variable itself: min(PP) is 2,
+            // min(x, x in PP and x > 14) the next prime, 17, and max(x, x in PP and x < 14) the
+            // previous, 13. https://github.com/asc-community/AngouriMath/issues/1450
+            if (expression == x && domain is Set bounded && (largest ? GreatestWholeMember(bounded) : LeastWholeMember(bounded)) is { } end)
+                return (end, new List<Entity> { end });
             List<Entity>? candidates;
             (Real from, Real to)? interval = null;
             switch (domain)
@@ -104,6 +112,200 @@ namespace AngouriMath.Functions
             var points = valued.Where(p => p.value == best).Select(p => p.point.InnerSimplified).ToList();
             var at = expression.Substitute(x, points[0]).InnerSimplified;
             return (at, points);
+        }
+
+        /// <summary>
+        /// The least member of <c>PP</c>, <c>ZZ+</c>, <c>ZZ*</c>, of one of them cut by an
+        /// interval or a ray, or of <c>{ x in S : x &gt; a }</c> and its kin over one of them;
+        /// <see langword="null"/> for anything else, and where a search for the next prime is
+        /// not taken to its end.
+        /// </summary>
+        private static Integer? LeastWholeMember(Set set)
+        {
+            switch (set)
+            {
+                case SpecialSet special:
+                    return special.ToDomain() switch
+                    {
+                        Core.Domain.Prime => Integer.Create(2),
+                        Core.Domain.PositiveInteger => Integer.One,
+                        Core.Domain.NonNegativeInteger => Integer.Zero,
+                        _ => null,
+                    };
+                case Intersectionf(Set left, Set right):
+                    {
+                        var (whole, cut) = (left, right) switch
+                        {
+                            (SpecialSet s, Interval i) => (s, i),
+                            (Interval i, SpecialSet s) => (s, i),
+                            _ => (null, null),
+                        };
+                        if (whole is null || cut is null || LeastWholeMember(whole) is not { } floor)
+                            return null;
+                        if (cut.Left.Evaled is not Real from)
+                            return null;
+                        var start = from.IsFinite ? from.EDecimal.RoundToExponent(EInteger.Zero, ERounding.Ceiling).ToEInteger() : floor.EInteger;
+                        if (from.IsFinite && !cut.LeftClosed && from.EDecimal.CompareTo(EDecimal.FromEInteger(start)) == 0)
+                            start += 1;
+                        if (start.CompareTo(floor.EInteger) < 0)
+                            start = floor.EInteger;
+                        var first = whole.ToDomain() == Core.Domain.Prime ? Primes.NextPrime(start) : start;
+                        if (first is null)
+                            return null;
+                        // Within the cut on the right, or the set is empty and has no least member.
+                        if (cut.Right.Evaled is Real to && to.IsFinite)
+                        {
+                            var order = EDecimal.FromEInteger(first).CompareTo(to.EDecimal);
+                            if (order > 0 || order == 0 && !cut.RightClosed)
+                                return null;
+                        }
+                        return Integer.Create(first);
+                    }
+                case ConditionalSet { DeclaredMembership: var (declared, rest), Var: Variable y } when declared.InnerSimplified is Set over:
+                    return BoundsAsInterval(rest, y) is { } bounded ? LeastWholeMember(new Intersectionf(over, bounded)) : null;
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// A conjunction of bounds on <paramref name="y"/> -- <c>y &gt; a</c>, <c>y &gt;= a</c>,
+        /// <c>a &lt; y</c>, <c>y &lt; b</c> and their kin -- as the interval they cut, or
+        /// <see langword="null"/> where a conjunct is anything else.
+        /// </summary>
+        private static Interval? BoundsAsInterval(Entity bounds, Variable y)
+        {
+            Entity left = Real.NegativeInfinity;
+            Entity right = Real.PositiveInfinity;
+            bool leftClosed = false, rightClosed = false;
+            foreach (var bound in Conjuncts(bounds))
+            {
+                var (lower, lowerClosed, upper, upperClosed) = bound switch
+                {
+                    Greaterf(var l, var r) when l == y && !r.ContainsNode(y) => (r, false, (Entity?)null, false),
+                    GreaterOrEqualf(var l, var r) when l == y && !r.ContainsNode(y) => (r, true, null, false),
+                    Lessf(var l, var r) when r == y && !l.ContainsNode(y) => (l, false, null, false),
+                    LessOrEqualf(var l, var r) when r == y && !l.ContainsNode(y) => (l, true, null, false),
+                    Lessf(var l, var r) when l == y && !r.ContainsNode(y) => (null, false, r, false),
+                    LessOrEqualf(var l, var r) when l == y && !r.ContainsNode(y) => (null, false, r, true),
+                    Greaterf(var l, var r) when r == y && !l.ContainsNode(y) => (null, false, l, false),
+                    GreaterOrEqualf(var l, var r) when r == y && !l.ContainsNode(y) => (null, false, l, true),
+                    _ => ((Entity?)null, false, (Entity?)null, false),
+                };
+                if (lower is null && upper is null)
+                    return null;
+                // Two bounds on one side: the tighter wins where both are numbers, and the set
+                // is left as written otherwise.
+                if (lower is not null)
+                {
+                    if (left is Real a && lower.Evaled is Real b)
+                    {
+                        var order = b.EDecimal.CompareTo(a.EDecimal);
+                        if (order > 0 || order == 0 && !lowerClosed) { left = lower; leftClosed = lowerClosed && (order > 0 || leftClosed); }
+                    }
+                    else if (left.Evaled is Real { IsFinite: false }) { left = lower; leftClosed = lowerClosed; }
+                    else return null;
+                }
+                if (upper is not null)
+                {
+                    if (right is Real a && upper.Evaled is Real b)
+                    {
+                        var order = b.EDecimal.CompareTo(a.EDecimal);
+                        if (order < 0 || order == 0 && !upperClosed) { right = upper; rightClosed = upperClosed && (order < 0 || rightClosed); }
+                    }
+                    else if (right.Evaled is Real { IsFinite: false }) { right = upper; rightClosed = upperClosed; }
+                    else return null;
+                }
+            }
+            return new Interval(left, leftClosed, right, rightClosed);
+        }
+
+        private static IEnumerable<Entity> Conjuncts(Entity statement)
+            => statement is Andf(var l, var r) ? Conjuncts(l).Concat(Conjuncts(r)) : new[] { statement };
+
+        /// <summary>
+        /// The range of <c>min(expr, range)</c> and <c>max</c>: <c>x in S</c>, or a conjunction with
+        /// one <c>x in S</c> among its conjuncts, the rest being the condition of
+        /// <c>{ x in S : rest }</c>. https://github.com/asc-community/AngouriMath/issues/1450
+        /// </summary>
+        internal static (Variable var, Entity over)? AsRange(Entity range)
+        {
+            if (range is Inf(Variable x, var set))
+                return (x, set);
+            if (range is not Andf)
+                return null;
+            var conjuncts = Conjuncts(range).ToList();
+            var declared = conjuncts.Where(c => c is Inf { Element: Variable }).ToList();
+            if (declared.Count != 1)
+                return null;
+            var membership = (Inf)declared[0];
+            var rest = conjuncts.Where(c => !ReferenceEquals(c, membership)).Aggregate((a, b) => a & b);
+            return ((Variable)membership.Element, new ConditionalSet(membership, rest));
+        }
+
+        /// <summary>
+        /// The greatest member of <c>PP</c>, <c>ZZ+</c>, <c>ZZ*</c> or <c>ZZ</c> cut by an interval
+        /// with a finite right end, or of <c>{ x in S : x &lt; a }</c> and its kin over one of
+        /// them: the last whole number at or before the end, or the last prime, searched down.
+        /// <see langword="null"/> where the set has no greatest member, or none at all.
+        /// </summary>
+        private static Integer? GreatestWholeMember(Set set)
+        {
+            switch (set)
+            {
+                case Intersectionf(Set left, Set right):
+                    {
+                        var (whole, cut) = (left, right) switch
+                        {
+                            (SpecialSet s, Interval i) => (s, i),
+                            (Interval i, SpecialSet s) => (s, i),
+                            _ => (null, null),
+                        };
+                        if (whole is null || cut is null || whole.ToDomain() is not (Core.Domain.Prime or Core.Domain.PositiveInteger or Core.Domain.NonNegativeInteger or Core.Domain.Integer))
+                            return null;
+                        if (cut.Right.Evaled is not Real to || !to.IsFinite)
+                            return null;
+                        var end = to.EDecimal.RoundToExponent(EInteger.Zero, ERounding.Floor).ToEInteger();
+                        if (!cut.RightClosed && to.EDecimal.CompareTo(EDecimal.FromEInteger(end)) == 0)
+                            end -= 1;
+                        // Not below the set's own floor, where there is one.
+                        var floor = whole.ToDomain() switch
+                        {
+                            Core.Domain.Prime => EInteger.FromInt32(2),
+                            Core.Domain.PositiveInteger => EInteger.One,
+                            Core.Domain.NonNegativeInteger => EInteger.Zero,
+                            _ => (EInteger?)null,
+                        };
+                        if (floor is { } lowest && end.CompareTo(lowest) < 0)
+                            return null;
+                        EInteger? last = end;
+                        if (whole.ToDomain() == Core.Domain.Prime)
+                        {
+                            last = null;
+                            for (var candidate = end; candidate.CompareTo(EInteger.FromInt32(2)) >= 0 && (end - candidate).CompareTo(EInteger.FromInt32(100000)) <= 0; candidate -= 1)
+                                if (Primes.IsPrime(candidate) is { } decided)
+                                {
+                                    if (decided) { last = candidate; break; }
+                                }
+                                else
+                                    return null;
+                        }
+                        if (last is null)
+                            return null;
+                        // And within the cut on the left, or the set is empty.
+                        if (cut.Left.Evaled is Real from && from.IsFinite)
+                        {
+                            var order = EDecimal.FromEInteger(last).CompareTo(from.EDecimal);
+                            if (order < 0 || order == 0 && !cut.LeftClosed)
+                                return null;
+                        }
+                        return Integer.Create(last);
+                    }
+                case ConditionalSet { DeclaredMembership: var (declared, rest), Var: Variable y } when declared.InnerSimplified is Set over:
+                    return BoundsAsInterval(rest, y) is { } bounded ? GreatestWholeMember(new Intersectionf(over, bounded)) : null;
+                default:
+                    return null;
+            }
         }
 
         /// <summary>

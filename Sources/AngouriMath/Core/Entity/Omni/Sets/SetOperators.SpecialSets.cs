@@ -14,13 +14,14 @@ namespace AngouriMath.Core.Sets
     internal static partial class SetOperators
     {
         /// <summary>
-        /// Where a special set sits in the chain <c>ZZ+ ⊂ ZZ* ⊂ ZZ ⊂ QQ ⊂ RR ⊂ CC</c>, or
+        /// Where a special set sits in the chain <c>PP ⊂ ZZ+ ⊂ ZZ* ⊂ ZZ ⊂ QQ ⊂ RR ⊂ CC</c>, or
         /// <see langword="null"/> for <c>BB</c>, which is beside the chain rather than on it.
         /// https://github.com/asc-community/AngouriMath/issues/1409
         /// </summary>
         private static int? RankInTheNumberChain(SpecialSet set)
             => set switch
             {
+                SpecialSet.Primes => -1,
                 SpecialSet.PositiveIntegers => 0,
                 SpecialSet.NonNegativeIntegers => 1,
                 SpecialSet.Integers => 2,
@@ -46,6 +47,8 @@ namespace AngouriMath.Core.Sets
             {
                 case SpecialSet.Reals or SpecialSet.Complexes:
                     return interval;
+                case SpecialSet.Primes:
+                    return Functions.Primes.Within(interval);
                 case SpecialSet.Integers or SpecialSet.NonNegativeIntegers or SpecialSet.PositiveIntegers:
                     var lowest = special is SpecialSet.PositiveIntegers ? 1 : special is SpecialSet.NonNegativeIntegers ? 0 : (int?)null;
                     var cut = interval;

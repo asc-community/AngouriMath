@@ -266,6 +266,13 @@ LaTeX, and a `k` that is not whole evaluates numerically through the gamma funct
 `integral(expr, var, from, to)`, `limit(expr, var, dest)`, `limitleft(...)`, `limitright(...)`;
 `max(expr, var in set)` and `min` for the extremum of an expression over a set, `argmax` and
 `argmin` for the set of points where it is taken — `max(a, b)` of two values is still the larger.
+`min(S)` with one argument that is a set is its least member, `min(x, x in S)`, and the range
+may carry conditions, `min(x, x in PP and x > 14)` being the least of `{ x in PP : x > 14 }`;
+decided for `PP`, `ZZ+`, `ZZ*` and their cuts by an interval or bounds (`min(ZZ+)` is `1`,
+`min(x, x in ZZ+ and x >= 7/2)` is `4`, `min(x, x in PP and x > 14 and x < 20)` is `17`), and
+left as written where there is no least member. `max` the same way from above:
+`max(x, x in PP and x < 14)` is `13`, the previous prime, `max(ZZ /\ (-oo; 5))` is `4`, and
+`max(PP)` stays as written.
 
 `derivative` takes an order and `integral` does not: `derivative(f, x, 2)` is the second
 derivative, while `integral`'s third and fourth arguments are the bounds of a definite integral,
@@ -331,7 +338,7 @@ are whole; a base sharing a factor with the modulus repeats only eventually and 
 passes through a quantifier by flipping it: `not forall x in S : P` is `exists x in S : not P`. In LaTeX, `\forall x \in S : P`. `forall`, `exists` and
 `exists!` are keywords, so they are not names.
 
-`domain` takes a special set — `CC` `RR` `QQ` `ZZ` `ZZ*` `ZZ+` `BB` — or the keyword `Any`, and
+`domain` takes a special set — `CC` `RR` `QQ` `ZZ` `ZZ*` `ZZ+` `PP` `BB` — or the keyword `Any`, and
 sets the *codomain* of whatever node it wraps, which is what makes the expression evaluate to
 `NaN` outside it (`domain(x, ZZ+)` at `x = 0` is `NaN`). It applies to any node, not only a
 variable, and it is what `Stringize` prints for one. `Any` is the one spelling here that is not a
@@ -342,10 +349,17 @@ and `{1, 2, 3, ...}` to others, so following MathWorld's recommendation the two 
 `ZZ*` and `ZZ+` (`\mathbb{Z}^{*}`, `\mathbb{Z}^{+}`) and neither claims the word; `NN` is refused
 with the two spellings rather than read as a variable. Membership is decided for numbers (`0 in
 ZZ*` is `True`, `0 in ZZ+` is `False`, `-3 in ZZ*` is `False`) and left as written for a symbol.
-The seven special sets nest, `ZZ+ ⊂ ZZ* ⊂ ZZ ⊂ QQ ⊂ RR ⊂ CC` with `BB` beside them, and the set
-operators answer for two of them: `ZZ unite QQ` is `QQ`, `BB intersect ZZ` is `{}`, `ZZ* \ ZZ+`
-is `{ 0 }`, `ZZ \ ZZ*` is `{ x in ZZ : x < 0 }` and `QQ \ ZZ` is `{ x in QQ : not x in ZZ }`.
-The tokens take the sign: `ZZ*2` no longer reads as `ZZ * 2`.
+**`PP` is the set of primes** `{2, 3, 5, 7, ...}` (`\mathbb{P}`, SymPy's `S.Primes`):
+`7 in PP` is `True`, `8 in PP` and `1 in PP` are `False`, `x in PP` stays as written, and a
+whole number past the machine word is left open rather than tested slowly. It is cut by an
+interval to its members where there are few enough to list — `PP /\ [1; 30]` is
+`{ 2, 3, 5, 7, 11, 13, 17, 19, 23, 29 }`, so `card(PP /\ [1; n])` is the prime-counting function,
+`25` at `100` — and `min(PP)` is `2`, `min(x, x in PP and x > 14)` the next prime, `17`
+([#1450](https://github.com/asc-community/AngouriMath/issues/1450)). The eight special sets nest,
+`PP ⊂ ZZ+ ⊂ ZZ* ⊂ ZZ ⊂ QQ ⊂ RR ⊂ CC` with `BB` beside them, and the set operators answer for two
+of them: `ZZ unite QQ` is `QQ`, `BB intersect ZZ` is `{}`, `ZZ* \ ZZ+` is `{ 0 }`, `ZZ \ ZZ*` is
+`{ x in ZZ : x < 0 }`, `ZZ+ \ PP` is `{ x in ZZ+ : not x in PP }` and `QQ \ ZZ` is
+`{ x in QQ : not x in ZZ }`. The tokens take the sign: `ZZ*2` no longer reads as `ZZ * 2`.
 
 **Refused by name** — `trunc` `erf` `conjugate`. AngouriMath has none of these, and each is
 what some other CAS calls a function, so a caller reaches for it. Left alone they would be read as
