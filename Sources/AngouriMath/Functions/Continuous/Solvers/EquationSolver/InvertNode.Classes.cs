@@ -647,6 +647,22 @@ namespace AngouriMath
                     => throw new NotSufficientlySupportedException(
                         "Inverting this node would need a set-valued answer, which the inverter cannot give");
             }
+
+            partial record Subsetf
+            {
+                // A subset B = value asks for a set of sets, which the inverter cannot return.
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                    => throw new NotSufficientlySupportedException(
+                        "Inverting this node would need a set-valued answer, which the inverter cannot give");
+            }
+
+            partial record Powersetf
+            {
+                // powerset(f(x)) = value has no inverse the inverter can write.
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                    => throw new NotSufficientlySupportedException(
+                        "Inverting this node would need a set-valued answer, which the inverter cannot give");
+            }
         }
 
         partial record Phif

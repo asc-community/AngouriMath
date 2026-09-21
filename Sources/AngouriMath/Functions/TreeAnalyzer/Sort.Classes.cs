@@ -420,6 +420,18 @@ namespace AngouriMath
                 private protected override string SortHashName(SortLevel level)
                     => level == SortLevel.LOW_LEVEL ? "in_" : "";
             }
+
+            partial record Subsetf
+            {
+                private protected override string SortHashName(SortLevel level)
+                    => level == SortLevel.LOW_LEVEL ? "subset_" : "";
+            }
+
+            partial record Powersetf
+            {
+                private protected override string SortHashName(SortLevel level)
+                    => level == SortLevel.LOW_LEVEL ? "powerset_" : "";
+            }
         }
 
         partial record Phif

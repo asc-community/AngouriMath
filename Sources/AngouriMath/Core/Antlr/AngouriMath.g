@@ -145,6 +145,10 @@ set_operator_union_setsubtraction returns[Entity value]
 in_operator returns[Entity value]
     : m1 = set_operator_union_setsubtraction { $value = $m1.value; }
     ( 'in' m2 = set_operator_union_setsubtraction { $value = $value.In($m2.value); }
+    | 'subset' m2 = set_operator_union_setsubtraction { $value = $value.SubsetOf($m2.value); }
+    | '⊆' m2 = set_operator_union_setsubtraction { $value = $value.SubsetOf($m2.value); }
+    | 'superset' m2 = set_operator_union_setsubtraction { $value = $m2.value.SubsetOf($value); }
+    | '⊇' m2 = set_operator_union_setsubtraction { $value = $m2.value.SubsetOf($value); }
     | 'divides' m2 = set_operator_union_setsubtraction { $value = $value.Divides($m2.value); }
     | '|' m2 = set_operator_union_setsubtraction { $value = $value.Divides($m2.value); })*
     ;
@@ -545,6 +549,7 @@ atom returns[Entity value]
     | 'abs(' args = function_arguments ')' { Assert("abs", 1, $args.list.Count); $value = MathS.Abs($args.list[0]); }
     | 'phi(' args = function_arguments ')' { Assert("phi", 1, $args.list.Count); $value = MathS.NumberTheory.Phi($args.list[0]); }
     | 'card(' args = function_arguments ')' { Assert("card", 1, $args.list.Count); $value = MathS.Sets.Card($args.list[0]); }
+    | 'powerset(' args = function_arguments ')' { Assert("powerset", 1, $args.list.Count); $value = MathS.Sets.PowerSet($args.list[0]); }
     | 'floor(' args = function_arguments ')' { Assert("floor", 1, $args.list.Count); $value = MathS.Floor($args.list[0]); }
     | 'ceil(' args = function_arguments ')' { Assert("ceil", 1, $args.list.Count); $value = MathS.Ceil($args.list[0]); }
     /* SymPy's spelling, accepted so that an expression copied from there parses. Stringize

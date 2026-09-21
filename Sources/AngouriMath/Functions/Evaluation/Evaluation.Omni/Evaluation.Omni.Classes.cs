@@ -165,6 +165,23 @@ namespace AngouriMath
                         },
                         (@this, a, b) => ((SetMinusf)@this).New(a, b), isExact, propagateSet: false);
             }
+
+            partial record Powersetf
+            {
+                private protected override Entity IntrinsicCondition => Boolean.True;
+                /// <inheritdoc/>
+                // Listed for a finite argument; a power set of anything else is an object with a
+                // membership test and no list.
+                protected override Entity InnerSimplify(bool isExact)
+                    => ExpandOnOneArgument(Argument,
+                        a => a switch
+                        {
+                            FiniteSet finite => finite.GetPowerSet(),
+                            Number or Boolean => MathS.NaN,
+                            _ => null
+                        },
+                        (@this, a) => ((Powersetf)@this).New(a), isExact, propagateSet: false);
+            }
         }
 
         partial record Providedf

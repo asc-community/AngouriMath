@@ -98,6 +98,20 @@ namespace AngouriMath
                 private protected override string LatexizeNode()
                     => $@"{Element.Latexize(Element.LatexPriority < LatexPriority)} \in {SupSet.Latexize(SupSet.LatexPriority <= LatexPriority)}";
             }
+
+            partial record Subsetf
+            {
+                /// <inheritdoc/>
+                private protected override string LatexizeNode()
+                    => $@"{Sub.Latexize(Sub.LatexPriority < LatexPriority)} \subseteq {Super.Latexize(Super.LatexPriority <= LatexPriority)}";
+            }
+
+            partial record Powersetf
+            {
+                /// <inheritdoc/>
+                private protected override string LatexizeNode()
+                    => $@"\mathcal{{P}}\left({Argument.Latexize()}\right)";
+            }
         }
 
         partial record Providedf
