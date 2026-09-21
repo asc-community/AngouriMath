@@ -531,6 +531,22 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 internal override Domain DefaultCodomain => Domain.Boolean;
             }
+
+            partial record Subsetf
+            {
+                /// <inheritdoc/>
+                public override Domain Codomain { get; protected init; } = Domain.Boolean;
+                /// <inheritdoc/>
+                internal override Domain DefaultCodomain => Domain.Boolean;
+            }
+
+            partial record Powersetf
+            {
+                /// <inheritdoc/>
+                public override Domain Codomain { get; protected init; } = Domain.Any;
+                /// <inheritdoc/>
+                internal override Domain DefaultCodomain => Domain.Any;
+            }
         }
 
         partial record Dividesf

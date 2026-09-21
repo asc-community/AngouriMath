@@ -8,6 +8,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
+using PeterO.Numbers;
+using AngouriMath.Core.Sets;
 using AngouriMath.Functions;
 using static AngouriMath.Entity.Boolean;
 using static AngouriMath.Entity.Set;
@@ -248,13 +250,35 @@ namespace AngouriMath
                     || (left - right).Evaled is Number.Complex difference
                         && Number.IsZero(difference);
 
+            /// <summary>
+            /// Two sets are equal exactly when each is a subset of the other -- the double
+            /// containment that defines set equality -- so a pair of sets that are not the same
+            /// node is put to <see cref="Set.Subsetf"/> both ways: <c>{ x in ZZ : x >= 1 } = ZZ+</c>
+            /// is <c>True</c>, <c>[0; 1] = [0; 2]</c> is <c>False</c>, and a pair the subset
+            /// decision leaves open stays written.
+            /// https://github.com/asc-community/AngouriMath/issues/1409
+            /// </summary>
+            private static Entity? SetsAreEqual(Set left, Set right, bool isExact)
+                => (SetOperators.Subset(left, right, isExact), SetOperators.Subset(right, left, isExact)) switch
+                {
+                    (Boolean a, Boolean b) when a == True && b == True => True,
+                    (Boolean a, _) when a == False => False,
+                    (_, Boolean b) when b == False => False,
+                    _ => null,
+                };
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact)
                 => ExpandOnTwoArguments(Left, Right,
                     (left, right) => left == right ? true
                     : left.IsConstant && right.IsConstant ? ConstantsAreEqual(left, right)
+                    : left is Set setLeft && right is Set setRight ? SetsAreEqual(setLeft, setRight, isExact)
                     : null,
-                    (@this, a, b) => ((Equalsf)@this).New(a, b), isExact);
+                    (@this, a, b) => ((Equalsf)@this).New(a, b), isExact,
+                    // An equality of two sets is one statement about the two, and stays one when
+                    // it is not decided: { 1, x } = { 1, 2 } was { True, False, x = 1, x = 2 },
+                    // the comparison distributed over the members of each side.
+                    propagateSet: !(Left.InnerSimplified(isExact) is Set && Right.InnerSimplified(isExact) is Set));
         }
 
         partial record Greaterf
@@ -346,6 +370,22 @@ namespace AngouriMath
                             _ => null
                         },
                         (@this, a, b) => ((Inf)@this).New(a, b), isExact, propagateSet: false);
+            }
+
+            partial record Subsetf
+            {
+                // A statement about two sets: a number or a truth value on either side is not
+                // one, the way an inequality is NaN off the real line.
+                private protected override Entity IntrinsicCondition => True;
+                /// <inheritdoc/>
+                protected override Entity InnerSimplify(bool isExact)
+                    => ExpandOnTwoArguments(Sub, Super,
+                        (a, b) => (a, b) switch
+                        {
+                            (Number or Boolean, _) or (_, Number or Boolean) => MathS.NaN,
+                            _ => SetOperators.Subset(a, b, isExact),
+                        },
+                        (@this, a, b) => ((Subsetf)@this).New(a, b), isExact, propagateSet: false);
             }
         }
 
@@ -470,9 +510,15 @@ namespace AngouriMath
                     a => a switch
                     {
                         // {x, 1} has two elements unless x is 1, so a set is counted once its
-                        // elements are numbers, which are distinct exactly when unequal.
-                        FiniteSet finite when finite.All(static element => element is Number)
+                        // elements are numbers, which are distinct exactly when unequal -- or
+                        // listed sets of such, which are compared by their members: { 1, {} }
+                        // has two members and { {} } has one (the reference's §3.3.7).
+                        FiniteSet finite when finite.All(Countable)
                             => Integer.Create(finite.Count),
+                        // A power set of a counted set has 2^n members.
+                        Powersetf(var of) when MathS.Sets.Card(of).InnerSimplified(isExact) is Integer { EInteger: var counted }
+                            && counted.Sign >= 0 && counted.CanFitInInt32()
+                            => Integer.Create(EInteger.One.ShiftLeft(counted.ToInt32Checked())),
                         // An interval with numeric ends: one point, or none, is countable; a
                         // proper interval is not, and there is no number for it here.
                         Interval { Left: Real left, Right: Real right } interval => left.EDecimal.CompareTo(right.EDecimal) switch
@@ -486,6 +532,9 @@ namespace AngouriMath
                     // Not propagated into the set: card({1, 2}) is a count of the set, not a
                     // set of counts.
                     (@this, a) => ((Cardf)@this).New(a), isExact, propagateSet: false);
+
+            private static bool Countable(Entity element)
+                => element is Number || element is FiniteSet listed && listed.All(Countable);
         }
 
         partial record Phif

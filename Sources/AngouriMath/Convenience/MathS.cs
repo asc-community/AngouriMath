@@ -6227,6 +6227,41 @@ namespace AngouriMath
             /// </example>
             public static Entity Card(Entity set) => new Cardf(set);
 
+            /// <summary>
+            /// The set of all subsets of a set, written <c>powerset(S)</c>. Listed for a finite
+            /// set, with the empty set and the set itself among the members; an object with a
+            /// membership test for an infinite one.
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine(MathS.Sets.PowerSet(MathS.Sets.Finite(1, 2)).Evaled);
+            /// Console.WriteLine(MathS.Sets.Finite(1, 3).In(MathS.Sets.PowerSet(MathS.Sets.Z)).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// { {  }, { 2 }, { 1 }, { 1, 2 } }
+            /// True
+            /// </code>
+            /// </example>
+            public static Set PowerSet(Entity set) => new Powersetf(set);
+
+            /// <summary>
+            /// The statement that <paramref name="sub"/> is a subset of <paramref name="super"/>,
+            /// written <c>A subset B</c>: every member of the first is a member of the second.
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine(MathS.Sets.Subset(MathS.Sets.Finite(1, 2), MathS.Sets.Z).Evaled);
+            /// Console.WriteLine(MathS.Sets.Subset(MathS.Sets.Q, MathS.Sets.Z).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// True
+            /// False
+            /// </code>
+            /// </example>
+            public static Entity Subset(Entity sub, Entity super) => new Subsetf(sub, super);
+
             /// <returns>A set of all Complexes/>s</returns>
             public static Set C => SpecialSet.Create(Domain.Complex);
 

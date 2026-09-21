@@ -493,7 +493,7 @@ namespace AngouriMath.Functions.Boolean
         /// Whether the statement solver has an arm for every part of the body, so that its answer
         /// is a solution set rather than its default.
         /// </summary>
-        private static bool SolverReads(Entity body, Variable x)
+        internal static bool SolverReads(Entity body, Variable x)
             => body switch
             {
                 ComparisonSign and IBinaryNode { NodeFirstChild: var left, NodeSecondChild: var right }
@@ -508,7 +508,7 @@ namespace AngouriMath.Functions.Boolean
             => expression.Nodes.All(static node => node is not (Set or Statement or Quantifier or Lambda or Providedf or Piecewise));
 
         /// <summary>Only equations and their connectives, which the solver answers over the complex numbers.</summary>
-        private static bool Equational(Entity body)
+        internal static bool Equational(Entity body)
             => body switch
             {
                 Equalsf => true,

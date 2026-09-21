@@ -95,6 +95,8 @@ namespace AngouriMath
             [EntityJsonConverter] partial record ConditionalSet;
             [EntityJsonConverter] partial record FiniteSet;
             [EntityJsonConverter] partial record Inf;
+            [EntityJsonConverter] partial record Subsetf;
+            [EntityJsonConverter] partial record Powersetf;
             [EntityJsonConverter] partial record Intersectionf;
             [EntityJsonConverter] partial record Interval;
             [EntityJsonConverter] partial record SetMinusf;

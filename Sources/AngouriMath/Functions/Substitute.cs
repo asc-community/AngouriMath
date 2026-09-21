@@ -364,6 +364,20 @@ namespace AngouriMath
                 public override Entity Substitute(Entity x, Entity value)
                     => x == this ? value : New(Element.Substitute(x, value), SupSet.Substitute(x, value));
             }
+
+            partial record Subsetf
+            {
+                /// <inheritdoc/>
+                public override Entity Substitute(Entity x, Entity value)
+                    => x == this ? value : New(Sub.Substitute(x, value), Super.Substitute(x, value));
+            }
+
+            partial record Powersetf
+            {
+                /// <inheritdoc/>
+                public override Entity Substitute(Entity x, Entity value)
+                    => x == this ? value : New(Argument.Substitute(x, value));
+            }
         }
 
         partial record Phif

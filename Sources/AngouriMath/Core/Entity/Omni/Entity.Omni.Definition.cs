@@ -22,6 +22,21 @@ namespace AngouriMath
             => new Inf(this, supSet);
 
         /// <summary>
+        /// Creates a node of whether this set is a subset of the given set: <c>A subset B</c>,
+        /// every member of this being a member of <paramref name="superSet"/>.
+        /// </summary>
+        /// <returns>A node</returns>
+        public Entity SubsetOf(Entity superSet)
+            => new Subsetf(this, superSet);
+
+        /// <summary>
+        /// Creates a node of the power set of this set: the set of all its subsets.
+        /// </summary>
+        /// <returns>A node</returns>
+        public Set PowerSet()
+            => new Powersetf(this);
+
+        /// <summary>
         /// Creates a node of a expression assuming some condition. If the condition is the true node, the node itself is returned.
         /// </summary>
         /// <param name="that">

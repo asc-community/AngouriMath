@@ -575,6 +575,34 @@ was ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 | `"x * sqrt(c - a*c*x) / e^(3 * atanh(a*x))".Integrate("x")` | `integral(…)` — left unevaluated, with `e` evaluated to a hundred digits inside it | an antiderivative in `sqrt(c - a c x)`, `provided c - a * c * x >= 0` |
 | `"1/sqrt(x + x^(3/2))".Integrate("x")` | `integral(1 / sqrt(x + x ^ (3/2)), x)` — left unevaluated | `2 * sqrt(1 + sqrt(x)) / (1/2) + C provided x >= 0` |
 
+### `subset` is a statement between sets, sets are equal by double containment, and `powerset` is a function
+
+`A subset B` — also `A ⊆ B`, and `B superset A` / `B ⊇ A` for the same node — is the statement,
+`Entity.Set.Subsetf`, that every member of `A` is a member of `B`: the relation between sets that
+`in` is between an element and a set. It is decided from the shapes of the two sets — member by
+member for a listed set, along `ZZ+ ⊂ ZZ* ⊂ ZZ ⊂ QQ ⊂ RR ⊂ CC` for the special sets, by the ends for
+two intervals, by the set algebra for symbolic sets, and through the solver for a set builder —
+and is `NaN` with a number or a truth value on a side. **`=` between two sets is decided by
+double containment**, so a pair of sets that are not the same node no longer stays written when
+one is inside the other or one is not. `powerset(A)`, `Entity.Set.Powersetf`, is the set of all
+subsets of `A`: listed for a finite `A`, and for an infinite one an object whose membership is the
+subset test; `card` counts it as `2^card(A)`, and counts a listed set whose members are listed sets
+too ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). `subset`, `superset` and
+`powerset` are keywords now, and were names.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `{1, 2} subset {1, 2, 3}` | `subset` was a variable, and the input a juxtaposition | `True` |
+| `{ x in RR : x^2 = 5 } subset ZZ` | — | `False` |
+| `A /\ B subset A` | — | `True` |
+| `{ x in ZZ : x >= 1 } = ZZ` | `{ x in ZZ : x >= 1 } = ZZ` — left as written (`ZZ+` did not parse in 2.5.0; `= ZZ+` is `True` now) | `False` |
+| `[0; 1] = [0; 2]` | `[0; 1] = [0; 2]` — left as written | `False` |
+| `{1, 2} = {1, 2, 3}` | `{ True, False }` — the comparison distributed over the members | `False` |
+| `{1, x} = {1, 2}` | `{ True, False, x = 1, x = 2 }` | `{ 1, x } = { 1, 2 }` — one statement, left as written |
+| `powerset({1, 2})` | `UnrecognizedFunctionParseException` | `{ {  }, { 2 }, { 1 }, { 1, 2 } }` |
+| `{1, 3} in powerset(ZZ)` | `UnrecognizedFunctionParseException` | `True` |
+| `card({1, {}})` | `#{ 1, {  } }` — left as written | `2` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

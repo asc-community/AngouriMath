@@ -116,6 +116,18 @@ namespace AngouriMath
                 internal override string ToSymPy()
                     => $"({SupSet.ToSymPy()}).contains({Element.ToSymPy()})";
             }
+
+            partial record Subsetf
+            {
+                internal override string ToSymPy()
+                    => $"({Sub.ToSymPy()}).is_subset({Super.ToSymPy()})";
+            }
+
+            partial record Powersetf
+            {
+                internal override string ToSymPy()
+                    => $"({Argument.ToSymPy()}).powerset()";
+            }
         }
 
 

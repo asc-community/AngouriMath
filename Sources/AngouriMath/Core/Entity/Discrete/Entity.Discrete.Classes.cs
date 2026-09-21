@@ -350,6 +350,37 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 protected override Entity[] InitDirectChildren() => new[] { Element, SupSet };
             }
+
+            /// <summary>
+            /// The statement that every member of <see cref="Sub"/> is a member of
+            /// <see cref="Super"/>: <c>A subset B</c>, or <c>A ⊆ B</c>. The relation between sets
+            /// that <c>in</c> is between an element and a set, and a different one: <c>{1, 2}</c>
+            /// is a subset of <c>{1, 2, 3}</c> and not an element of it. Decided from the shapes
+            /// of the two sets, by the set algebra, member by member for a finite set, and
+            /// through <c>forall x in A : x in B</c> where a bound reads as a comparison; two
+            /// sets are equal exactly when each is a subset of the other, which is how <c>=</c>
+            /// between sets is decided. A statement about sets: <c>NaN</c> where a side is a
+            /// number or a truth value.
+            /// https://github.com/asc-community/AngouriMath/issues/1409
+            /// </summary>
+            public sealed partial record Subsetf(Entity Sub, Entity Super) : Statement, IBinaryNode
+            {
+                internal override Priority Priority => Priority.Subset;
+
+                /// <inheritdoc/>
+                public Entity NodeFirstChild => Sub;
+
+                /// <inheritdoc/>
+                public Entity NodeSecondChild => Super;
+
+                internal Subsetf New(Entity sub, Entity super)
+                    => ReferenceEquals(Sub, sub) && ReferenceEquals(Super, super) ? this : new(sub, super) { Codomain = Codomain };
+                /// <inheritdoc/>
+                public override Entity Replace(Func<Entity, Entity> func)
+                    => func(New(Sub.Replace(func), Super.Replace(func)));
+                /// <inheritdoc/>
+                protected override Entity[] InitDirectChildren() => new[] { Sub, Super };
+            }
         }
         #endregion
 

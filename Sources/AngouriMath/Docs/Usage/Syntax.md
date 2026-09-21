@@ -66,7 +66,7 @@ prints as `x + y + z` and reads back as `(x + y) + z` — the same number, a dif
 | 5 | `and` `&` | |
 | 6 | `not` | prefix |
 | 7 | `=` `<>` `>` `>=` `<` `<=`, `≡` | chained: `a < b < c` means `a < b and b < c`; a trailing `(mod n)` makes the `=`/`≡` links congruences, see below |
-| 8 | `in`, `divides` `\|` | one level; `a divides b` and `a \| b` are the statement that `b` is a whole multiple of `a`, defined over the integers and `NaN` elsewhere |
+| 8 | `in`, `subset` `⊆`, `superset` `⊇`, `divides` `\|` | one level; `a divides b` and `a \| b` are the statement that `b` is a whole multiple of `a`, defined over the integers and `NaN` elsewhere; `A subset B` is the statement that every member of `A` is a member of `B`, and `B superset A` is the same statement (see the sets section) |
 
 **Congruence.** `a = b (mod n)` — also `a ≡ b (mod n)`, which the parser reads and `Stringize`
 does not yet print — is the statement that `n` divides `a - b`: a relation between integers with
@@ -167,6 +167,22 @@ with an operator parses.
 | conditional | `{ x : x > 0 }` — the name before the `:` is declared, as under `sum` below |
 | special | `RR` `CC` `ZZ` `QQ` `BB`, and the two subsets of `ZZ`: `ZZ*` = `{0, 1, 2, ...}`, `ZZ+` = `{1, 2, 3, ...}` |
 | operations | `unite` `/\` … see the table above |
+| power set | `powerset(A)` — the set of all subsets of `A`; listed for a finite `A` (`powerset({1, 2})` is `{ {}, {1}, {2}, {1, 2} }`, `powerset({})` is `{ {} }`), and for an infinite one an object that answers membership: `{1, 3} in powerset(ZZ)` is `True` |
+
+**Subset.** `A subset B` — also `A ⊆ B`, which the parser reads and `Stringize` does not yet
+print, and `B superset A` / `B ⊇ A`, which parse to the same node — is the statement that every
+member of `A` is a member of `B`. It is the relation between two sets that `in` is between an
+element and a set, and the two are different: `{1, 2} subset {1, 2, 3}` is `True` and
+`{1, 2} in {1, 2, 3}` is `False`. It is decided from the shapes of the sets — member by member for
+a finite set, along the chain `ZZ+ ⊂ ZZ* ⊂ ZZ ⊂ QQ ⊂ RR ⊂ CC` for the special sets, by the ends for
+two intervals, by the set algebra for symbolic sets (`A /\ B subset A`, `A subset A \/ B`,
+`A \ B subset A` are `True` of any `A` and `B`) — and, for a set builder, through the solver:
+`{ x in RR : x^2 = 5 } subset ZZ` is `False`. A statement about sets: with a number or a truth
+value on a side it is `NaN`. **Two sets are equal exactly when each is a subset of the other**,
+and that is how `=` between sets is decided: `{ x in ZZ : x >= 1 } = ZZ+` is `True` and
+`[0; 1] = [0; 2]` is `False`; a pair the subset decision leaves open stays written. `card(S)` counts
+a listed set whose members are numbers or listed sets of them (`card({1, {}})` is `2`), and
+`card(powerset(S))` is `2^card(S)`.
 
 There is **no universal set** and no literal for one. A set that constrains nothing is the
 conditional set `{ x : True }`, which prints, reads back, compares and answers membership like any
