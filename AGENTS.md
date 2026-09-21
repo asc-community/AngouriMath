@@ -429,6 +429,12 @@ exists to stop, and it has happened: the first pass over
 [#1409](https://github.com/asc-community/AngouriMath/issues/1409)'s book was a table of contents
 turned into a feature list.
 
+**And name it where you cite it.** A comment, a test summary or a changelog entry that says
+"the reference's Ex 5.3.2" names nothing once a second reference exists, and there will be a
+second one. Write the authors — *Sullivan and Mackey's Ex 5.3.2* — or the title, the way a paper
+is cited, at every citation and not only the first, and put the work with its link in
+[`Docs/References.md`](Sources/AngouriMath/Docs/References.md), which is the credits.
+
 ## Working practice
 
 **A plan belongs in an issue, not in a comment.** When work splits into separable pieces — or when
@@ -657,6 +663,7 @@ are short, and a stale one is worse than none — if you change what a file desc
 | [`Docs/Usage/Syntax.md`](Sources/AngouriMath/Docs/Usage/Syntax.md) | what the parser accepts. The grammar was the only statement of it until [#706](https://github.com/asc-community/AngouriMath/pull/706) |
 | [`Docs/Usage/Exceptions.md`](Sources/AngouriMath/Docs/Usage/Exceptions.md) | the exception hierarchy under `AngouriMathBaseException` |
 | [`Docs/Usage/Comparison.md`](Sources/AngouriMath/Docs/Usage/Comparison.md) | how we measure against Math.NET Symbolics, Symbolism and SymPy, with the versions and what each comparison does not establish |
+| [`Docs/References.md`](Sources/AngouriMath/Docs/References.md) | the books, papers, corpora and reference works the code and its tests draw on, with the link and what each is used for. Add a work there when it is first cited |
 | [`Docs/Contributing/`](Sources/AngouriMath/Docs/Contributing/README.md) | the index of the contributor docs |
 | [`Contributing/General.md`](Sources/AngouriMath/Docs/Contributing/General.md) | the `Entity` hierarchy, in a paragraph |
 | [`Contributing/AddingNode.cs`](Sources/AngouriMath/Docs/Contributing/AddingNode.cs) | every place a new node has to be taught about. Read it *before* adding one |

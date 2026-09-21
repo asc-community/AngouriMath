@@ -665,7 +665,7 @@ solved now — the members of a listed set each as an equation, an interval as i
 strict or not as the end is — and a statement that is not read is the set of `x` with the
 property, left as written. A quantifier that put the negated body to the solver read that
 emptiness as a proof: `forall x in RR : x^2 in ZZ` was `True`
-([#1409](https://github.com/asc-community/AngouriMath/issues/1409), the reference's pre-images).
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's pre-images).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -716,7 +716,7 @@ of [#1409](https://github.com/asc-community/AngouriMath/issues/1409) — is `Tru
 `A`, an interval by interval arithmetic where `x` occurs once in `f`, and a membership object
 otherwise; `preimage(f(x), x in A, Y)` is `{ x in A : f(x) in Y }`, and a set builder of that
 shape is solved on evaluation where the membership is read (a listed `Y`, an interval)
-([#1409](https://github.com/asc-community/AngouriMath/issues/1409), the reference's §7.3). Both
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's §7.3). Both
 names are keywords now, and were names.
 
 | Input | Was (2.5.0) | Now |
@@ -731,7 +731,7 @@ names are keywords now, and were names.
 `(-oo)^(-1)`, while `(+oo)^2` was `+oo`: the finite-base arms did not apply and the polar form
 had nothing to say. They are the extended reals' powers now, `-oo`, `+oo` and `0`, so the image of
 `(-oo; +oo)` under a cube is `(-oo; +oo)`; and `forall b in B : exists a in A : f(a) = b` — surjectivity
-onto `B`, Def 7.4.1 of the reference of [#1409](https://github.com/asc-community/AngouriMath/issues/1409)
+onto `B`, Sullivan and Mackey's Def 7.4.1, [#1409](https://github.com/asc-community/AngouriMath/issues/1409)
 — is decided as `B` lying in the image of `A` under `f` where that image evaluates.
 
 | Input | Was (2.5.0) | Now |
@@ -750,7 +750,7 @@ theorem read backwards, as the factorial spelling already was (`sum(binomial(n, 
 is `(x + y)^n` for `n >= 0`). **Wrong answer fixed** in the alternating sum, in both spellings:
 `sum(binomial(n, k) (-1)^k, k, 0, n)` is `1` at `n = 0` and `0` above, and the closed form `0^n`
 carried a condition the piecewise read as no value, so the sum was `0` at `n = 0`
-([#1409](https://github.com/asc-community/AngouriMath/issues/1409), the reference's §8.4).
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's §8.4).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -758,6 +758,35 @@ carried a condition the piecewise read as no value, so the sum was `0` at `n = 0
 | `"binomial(n - 1, k) + binomial(n - 1, k - 1)".ToEntity().Simplify()` | `UnhandledParseException` | `binomial(n, k)` |
 | `"sum(binomial(n, k), k, 0, n)".ToEntity().Evaled` | `UnhandledParseException` | `piecewise((2 ^ n) provided (n >= 0), 0 provided True)` |
 | `"sum(n! / (k! (n - k)!) (-1)^k, k, 0, n)".ToEntity().Evaled` | `piecewise(0 provided True)` — wrong at `n = 0` | `piecewise(1 provided (n = 0), 0 provided True)` |
+
+### A statement about a sum up to `n` is decided by induction
+
+`forall n in ZZ+ : sum(f, k, a, n) = g` is proved from the least member of the set: the statement
+there, and the statement at `n + 1` with the sum unfolded by one term and the sum to `n` replaced
+by `g`, decided as an identity. A sum the summation already folds is read through the piecewise
+its closed form comes as, and an identity is read over atoms — `2^n`, `n!`, `(-1)^n`, `sin(x)` —
+with a whole shift in an exponent or a factorial's argument unfolded, and a difference of
+quotients put over one denominator — claimed where that denominator is not zero, which is decided
+over the set for the quantified name and stated as a condition for a free parameter. An
+inequality with an exponential or a factorial is decided by induction as well, the step read off
+a multiple of the hypothesis (`P(n + 1) = c P(n) + D` with `c >= 0` and `D >= 0` by a sign
+calculus), and the whole numbers from `m` are read as `ZZ*` shifted by `m`. A statement that
+fails at the least member is `False`; a closed form with a case on a free parameter is left as
+written
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's chapter 5).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"forall n in ZZ+ : sum(k, k, 1, n) = n (n + 1) / 2".ToEntity().Evaled` | `UnhandledParseException` — quantifiers are new since; left as written when they arrived, the body being a `piecewise` | `True` |
+| `"forall n in ZZ+ : sum(1 / (k (k + 1)), k, 1, n) = n / (n + 1)".ToEntity().Evaled` | `UnhandledParseException` | `True`, by induction |
+| `"forall n in ZZ+ : sum(k k!, k, 1, n) = (n + 1)!".ToEntity().Evaled` | `UnhandledParseException` | `False`, at `n = 1` |
+| `"forall n in ZZ+ : (n + 1)! + (n + 1) (n + 1)! = (n + 2)!".ToEntity().Evaled` | `UnhandledParseException` | `True` |
+| `"forall x in RR : (sin(x) + 1)^2 = sin(x)^2 + 2 sin(x) + 1".ToEntity().Evaled` | `UnhandledParseException` | `True` |
+| `"forall n in ZZ+ /\\ [2; +oo) : n = n".ToEntity().Evaled` | `UnhandledParseException` | `True` — the set is known not to be empty |
+| `"forall n in ZZ+ : sum(1 / (a k (k + 1)), k, 1, n) = n / (a (n + 1))".ToEntity().Evaled` | `UnhandledParseException` | `True provided not a = 0` |
+| `"forall n in ZZ+ /\\ [5; +oo) : 2^n > n^2".ToEntity().Evaled` | `UnhandledParseException` | `True` |
+| `"forall n in ZZ+ : n! >= 2^(n - 1)".ToEntity().Evaled` | `UnhandledParseException` | `True` |
+| `"forall n in ZZ+ /\\ [4; +oo) : n^2 - 2 n - 1 > 0".ToEntity().Evaled` | `UnhandledParseException` | `True` — decided about `4 + t` over `ZZ*` |
 
 ### `binomial(n, k)` is a function
 

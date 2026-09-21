@@ -15,8 +15,8 @@ namespace AngouriMath.Tests.Core.Sets
 {
     /// <summary>
     /// <c>A subset B</c>, set equality by double containment, and <c>powerset(A)</c>: the set
-    /// statements and constructions of the reference's chapter 3 (Sullivan and Mackey, <i>An
-    /// Introduction to Proofs</i>, §§3.3–3.5), with its examples and exercises as the rows.
+    /// statements and constructions of chapter 3 of Sullivan and Mackey's <i>An
+    /// Introduction to Proofs</i> (§§3.3–3.5), with its examples and exercises as the rows.
     /// <see href="https://github.com/asc-community/AngouriMath/issues/1409"/>
     /// </summary>
     [Trait("Area", "Sets")]

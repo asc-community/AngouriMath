@@ -488,7 +488,7 @@ namespace AngouriMath
         /// A quantified statement: <c>forall x in S : P</c>, <c>exists x in S : P</c> and
         /// <c>exists! x in S : P</c>. A binder, like a set builder: the name is bound throughout
         /// the body and the set, and the statement is a function of what else the body mentions.
-        /// The quantification set is mandatory, as the reference this follows insists — a
+        /// The quantification set is mandatory, as Sullivan and Mackey's proofs book insists — a
         /// statement is quantified over something, and <c>forall x : x^2 &gt;= 0</c> is true of
         /// the reals and false of the complex numbers.
         /// https://github.com/asc-community/AngouriMath/issues/1409

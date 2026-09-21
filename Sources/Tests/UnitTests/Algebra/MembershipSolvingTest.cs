@@ -17,8 +17,8 @@ namespace AngouriMath.Tests.Algebra
     /// an interval as its bounds. It answered the <b>empty set</b> for every one of these, and
     /// for every statement it had no arm for -- a claim that no <c>x</c> exists, made about
     /// <c>x^2 in (0; 1)</c>. A statement the solver cannot read is the set of <c>x</c> with the
-    /// property now, left as written. The reference's pre-images (Sullivan and Mackey,
-    /// Ex 7.3.10, §7.3.5 Try 1) are this.
+    /// property now, left as written. Sullivan and Mackey's pre-images
+    /// (Ex 7.3.10, §7.3.5 Try 1) are this.
     /// <see href="https://github.com/asc-community/AngouriMath/issues/1409"/>
     /// </summary>
     [Trait("Area", "Algebra")]

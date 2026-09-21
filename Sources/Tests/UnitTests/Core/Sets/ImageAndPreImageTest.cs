@@ -13,7 +13,7 @@ using static AngouriMath.Entity;
 namespace AngouriMath.Tests.Core.Sets
 {
     /// <summary>
-    /// The image and the pre-image of a set under an expression: item 6 of the reference's docket
+    /// The image and the pre-image of a set under an expression: item 6 of the #1409 docket
     /// (Sullivan and Mackey, §7.3), the half that needs no pair. <c>image(f(x), x in A)</c> is
     /// <c>{ f(x) : x in A }</c>, an indexed union of singletons; <c>preimage(f(x), x in A, Y)</c>
     /// is <c>{ x in A : f(x) in Y }</c>, solved where the membership is read.
