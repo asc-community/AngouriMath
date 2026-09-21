@@ -74,10 +74,13 @@ namespace AngouriMath
         /// <returns>
         /// The differentiated expression, or the Derivative node -- and zero for a node with no
         /// rule of its own that does not mention the variable: it is a constant in it, and the
-        /// derivative of a constant is not an open question.
+        /// derivative of a constant is not an open question. A set is not a constant, whatever
+        /// it mentions: <c>{ 1, 2 } + sin(x)</c> is the set <c>{ 1 + sin(x), 2 + sin(x) }</c>, and
+        /// its derivative is <c>{ cos(x) }</c>, which the derivative node reaches elementwise and
+        /// a zero would flatten to the number <c>cos(x)</c>.
         /// </returns>
         protected virtual Entity InnerDifferentiate(Variable variable)
-            => ContainsNode(variable) ? new Derivativef(this, variable, 1) : Integer.Zero;
+            => ContainsNode(variable) || this is Set ? new Derivativef(this, variable, 1) : Integer.Zero;
 
         /// <summary>
         /// Whether the node is a constant in <paramref name="variable"/>, which the modulus, the
