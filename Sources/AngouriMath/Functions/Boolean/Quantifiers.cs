@@ -62,6 +62,44 @@ namespace AngouriMath.Functions.Boolean
         /// </summary>
         internal static Entity? Decide(Kind kind, Entity var, Entity over, Entity body, bool isExact)
         {
+            // One read per decision, and nothing recorded or allocated unless a scope is open.
+            if (!ProofRecording.Recording)
+                return DecideBy(kind, var, over, body, isExact, out _);
+            ProofRecording.Enter();
+            var mark = ProofRecording.Mark();
+            try
+            {
+                var verdict = DecideBy(kind, var, over, body, isExact, out var by);
+                // A decision that came to nothing leaves nothing behind: what was tried on
+                // the way is not part of any proof.
+                if (verdict is null)
+                    ProofRecording.Rollback(mark);
+                else if (by is var (rule, lemma))
+                    ProofRecording.Add(Quantified(kind, var, over, body), rule, lemma, verdict);
+                return verdict;
+            }
+            finally
+            {
+                ProofRecording.Leave();
+            }
+        }
+
+        private static Entity Quantified(Kind kind, Entity var, Entity over, Entity body)
+            => kind switch
+            {
+                Kind.All => new Forallf(var, over, body),
+                Kind.Some => new Existsf(var, over, body),
+                _ => new ExistsUniquef(var, over, body),
+            };
+
+        /// <summary>
+        /// <see cref="Decide"/> proper, naming the rule that decided in <paramref name="by"/> --
+        /// as the reference names it, and as the Lean 4 tactic or lemma a checker would use --
+        /// and <see langword="null"/> for a route that only asked another statement.
+        /// </summary>
+        private static Entity? DecideBy(Kind kind, Entity var, Entity over, Entity body, bool isExact, out (string Rule, string Lemma)? by)
+        {
+            by = null;
             if (var is not Variable x || over is not Set set)
                 return null;
             // A statement about the members of { y in S : Q } is a statement about the members of
@@ -71,6 +109,7 @@ namespace AngouriMath.Functions.Boolean
                 if (builder.DeclaredMembership is not (var declared, var rest) || builder.Var is not Variable y)
                     return null;
                 var condition = rest.Substitute(y, x);
+                by = ("the members of { y in S : Q } are the members of S with Q", "Set.mem_setOf_eq");
                 return Decide(kind, x, declared.InnerSimplified(isExact), kind switch
                 {
                     Kind.All => condition.Implies(body),
@@ -80,12 +119,16 @@ namespace AngouriMath.Functions.Boolean
             if (set is SpecialSet.Booleans)
                 set = new FiniteSet(Entity.Boolean.True, Entity.Boolean.False);
             if (!body.ContainsNode(x))
+            {
+                by = ("the body does not mention the name, so it says the same of every member", "forall_const");
                 return Closed(kind, set, body);
+            }
             // The whole numbers from m are ZZ* shifted by m, so a statement over ZZ+ /\ [4; +oo)
             // is the statement about 4 + t over ZZ*, where every route below reads the set.
             if (set is Intersectionf cut && LeastMember(cut) is { } start && IsUnboundedAbove(cut))
             {
                 var t = Variable.CreateUnique(body + start, "t");
+                by = ($"the whole numbers from {start} are ZZ* shifted by {start}", "Nat.le_induction");
                 return Decide(kind, t, MathS.Sets.NonNegativeIntegers, body.Substitute(x, start + t).InnerSimplified(isExact), isExact);
             }
             // A piecewise body -- what a closed form comes as, sum(k, k, 1, n) being
@@ -99,8 +142,14 @@ namespace AngouriMath.Functions.Boolean
                 {
                     var holds = @case.Predicate == Entity.Boolean.True ? Entity.Boolean.True : Decide(Kind.All, x, set, @case.Predicate.InnerSimplified(isExact), isExact);
                     if (holds == Entity.Boolean.True)
+                    {
+                        by = ($"the case {@case.Predicate} of the piecewise body holds at every member, so the body is that case", "if_pos");
                         return Decide(kind, x, set, @case.Expression.InnerSimplified(isExact), isExact);
-                    if (Decide(Kind.Some, x, set, @case.Predicate.InnerSimplified(isExact), isExact) != Entity.Boolean.False)
+                    }
+                    var probed = ProofRecording.Mark();
+                    var somewhere = Decide(Kind.Some, x, set, @case.Predicate.InnerSimplified(isExact), isExact);
+                    ProofRecording.Rollback(probed);
+                    if (somewhere != Entity.Boolean.False)
                         break;
                 }
             }
@@ -114,14 +163,28 @@ namespace AngouriMath.Functions.Boolean
             {
                 var image = new IndexedUnionf(a, domain, new FiniteSet(map)).InnerSimplified(isExact);
                 if (image is not IndexedUnionf && image is Set imageSet && Core.Sets.SetOperators.Subset(set, imageSet, isExact) is { } covered)
+                {
+                    by = ($"every b has an a with f(a) = b exactly when the set lies in the image of f, which is {image}", "Set.range_subset_iff");
                     return covered;
+                }
             }
             // An equation whose two sides differ by a polynomial that expands to nothing holds
             // at every member, whatever the set: (x + 1)^2 = x^2 + 2 x + 1 is True of each.
-            if (body is Equalsf(var left, var right) && IsIdentity(left, right, x, set, isExact) is { } identity)
-                return Closed(kind, set, Entity.Boolean.True) is Entity.Boolean(true) ? identity : Closed(kind, set, Entity.Boolean.True);
+            if (body is Equalsf(var left, var right))
+            {
+                var tried = ProofRecording.Mark();
+                if (IsIdentity(left, right, x, set, isExact) is { } identity)
+                {
+                    by = ("the two sides differ by a polynomial that expands to nothing", "ring");
+                    return Closed(kind, set, Entity.Boolean.True) is Entity.Boolean(true) ? identity : Closed(kind, set, Entity.Boolean.True);
+                }
+                ProofRecording.Rollback(tried);
+            }
             if (set is FiniteSet finite)
+            {
+                by = ($"evaluated at each of the {finite.Count} members", "decide");
                 return OverFinite(kind, x, finite, body, isExact);
+            }
             if (set is SpecialSet integers && IsIntegerSet(integers) && kind != Kind.Unique)
             {
                 // A statement about divisibility, or a congruence, in a polynomial of x with
@@ -129,27 +192,61 @@ namespace AngouriMath.Functions.Boolean
                 // forall n in ZZ : 6 divides n^3 + 5 n is six cases. Sullivan and Mackey's "case
                 // analysis over the classes" (Ex 6.5.14).
                 if (Period(body, x, integers) is { } period && period.CompareTo(EInteger.FromInt32(LargestPeriod)) <= 0)
+                {
+                    by = ($"the statement repeats modulo {period}, so its {period} residues decide it", "decide");
                     return OverResidues(kind, x, integers, body, period, isExact);
+                }
                 // A polynomial equation with no solution modulo some m has none in the whole
                 // numbers: 3 x^2 - 5 y^2 = 1 is impossible modulo 5 (Ex 6.5.27). Only a refusal
                 // is read off the residues; a solution modulo every m tried proves nothing.
                 if (ImpossibleByResidues(kind, x, integers, body) is { } verdict)
+                {
+                    by = ("the equation has no solution modulo a small m, so none in the whole numbers", "decide");
                     return verdict;
+                }
             }
             // A statement about a sum or a product up to x, over the whole numbers from some
             // least one, is proved by induction: it holds at the least member, and holding at
             // x it holds at x + 1, where the sum to x + 1 is the sum to x and one more term.
             // Sullivan and Mackey's chapter 5. https://github.com/asc-community/AngouriMath/issues/1409
             if (kind == Kind.All && LeastMember(set) is { } least && ByInduction(x, set, least, body, isExact) is { } byInduction)
+            {
+                by = byInduction == Entity.Boolean.False
+                    ? ($"false at the least member, {least}", "decide")
+                    : ($"by induction from {least}: the base case, and the sum to {x} + 1 unfolded by one term with the hypothesis for the sum to {x}", "Nat.le_induction");
                 return byInduction;
+            }
             // And an inequality with an exponential or a factorial in x, by induction with the
             // step read off a multiple of the hypothesis: P(x + 1) = c P(x) + D with c >= 0 and
             // D >= 0 keeps P >= 0 (Sullivan and Mackey's Ex 5.3.2, Prob 5.7.2, 5.7.8).
             if (kind == Kind.All && LeastMember(set) is { } first && ByInductionOnAnInequality(x, set, first, body, isExact) is { } byGrowth)
+            {
+                by = byGrowth == Entity.Boolean.False
+                    ? ($"false at the least member, {first}", "decide")
+                    : ($"by induction from {first}: the base case, and P({x} + 1) = c P({x}) + D with c >= 0 and D >= 0", "Nat.le_induction");
                 return byGrowth;
+            }
             if (Witness(kind, x, set, body, isExact) is { } byWitness)
+            {
+                by = (byWitness == Entity.Boolean.False && kind == Kind.All ? "a member at which the body is false"
+                    : byWitness == Entity.Boolean.True && kind == Kind.Some ? "a member at which the body is true"
+                    : "two members at which the body is true", "exact ⟨_, by decide⟩");
                 return byWitness;
-            return BySolving(kind, x, set, body);
+            }
+            if (BySolving(kind, x, set, body) is { } bySolving)
+            {
+                by = ((kind, bySolving == Entity.Boolean.True) switch
+                {
+                    (Kind.All, true) => "the negation of the body has no solution in the set",
+                    (Kind.All, false) => "the negation of the body has a solution in the set",
+                    (Kind.Some, true) => "the body's solutions meet the set",
+                    (Kind.Some, false) => "the body has no solution in the set",
+                    (_, true) => "the body has exactly one solution in the set",
+                    _ => "the body has no solution, or more than one, in the set",
+                }, "nlinarith");
+                return bySolving;
+            }
+            return null;
         }
 
         /// <summary>
@@ -220,8 +317,13 @@ namespace AngouriMath.Functions.Boolean
             if (WholeGap(to, x) is null || from.ContainsNode(x) || term.ContainsNode(x) || index is not Variable k)
                 return null;
             var atLeast = body.Substitute(x, least).InnerSimplified(isExact);
+            var tried = ProofRecording.Mark();
             if (atLeast is Equalsf(var l, var r) && IsIdentity(l, r, x, set, isExact) is { } identity)
                 atLeast = identity;
+            else
+                ProofRecording.Rollback(tried);
+            if (atLeast is Entity.Boolean or Providedf)
+                ProofRecording.AddBelow(body.Substitute(x, least), $"the base case, at {least}, by evaluation", "decide", atLeast);
             if (atLeast == Entity.Boolean.False)
                 return Entity.Boolean.False;
             if (Truth(atLeast) is not { } baseCondition)
@@ -278,6 +380,8 @@ namespace AngouriMath.Functions.Boolean
         private static Entity? ByInductionOnAnInequalityCore(Variable x, Set set, Integer least, Entity body, Entity positive, bool strict, bool isExact)
         {
             var atLeast = body.Substitute(x, least).InnerSimplified(isExact);
+            if (atLeast is Entity.Boolean)
+                ProofRecording.AddBelow(body.Substitute(x, least), $"the base case, at {least}, by evaluation", "decide", atLeast);
             if (atLeast == Entity.Boolean.False)
                 return Entity.Boolean.False;
             if (atLeast != Entity.Boolean.True)
@@ -288,12 +392,12 @@ namespace AngouriMath.Functions.Boolean
             var next = positive.Substitute(x, x + Integer.One);
             foreach (var c in Multipliers(positive, x))
             {
-                if (Sign(c, x, set, isExact) is not { } multiplier)
-                    continue;
-                if (Sign(Collected(next - c * positive), x, set, isExact) is not { } remainder)
-                    continue;
-                if (!strict || multiplier == Signum.Positive || remainder == Signum.Positive)
+                var tried = ProofRecording.Mark();
+                if (Sign(c, x, set, isExact) is { } multiplier
+                    && Sign(Collected(next - c * positive), x, set, isExact) is { } remainder
+                    && (!strict || multiplier == Signum.Positive || remainder == Signum.Positive))
                     return Entity.Boolean.True;
+                ProofRecording.Rollback(tried);
             }
             return null;
         }
@@ -393,10 +497,13 @@ namespace AngouriMath.Functions.Boolean
         {
             if (!expr.Vars.All(v => v == x) || !expr.Vars.Any() || MultivariatePolynomial.TryParse(expr, new Dictionary<Variable, int> { [x] = 0 }) is null)
                 return null;
+            var tried = ProofRecording.Mark();
             if (Decide(Kind.All, x, set, new Greaterf(expr, Integer.Zero).InnerSimplified(isExact), isExact) is Entity.Boolean(true))
                 return Signum.Positive;
+            ProofRecording.Rollback(tried);
             if (Decide(Kind.All, x, set, new GreaterOrEqualf(expr, Integer.Zero).InnerSimplified(isExact), isExact) is Entity.Boolean(true))
                 return Signum.NonNegative;
+            ProofRecording.Rollback(tried);
             return null;
         }
 
