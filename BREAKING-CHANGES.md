@@ -557,6 +557,24 @@ Every spelling but `lcm` was a parse error in 2.5.0, the congruence node being n
 | `forall n in ZZ : 6 divides n^3 + 5 n` | `UnhandledParseException` | `True` |
 | `exists x, y in ZZ : 3 x^2 - 5 y^2 = 1` | `UnhandledParseException` | `False` |
 
+### An antiderivative built through an even root says where the root is real
+
+The linear-radical substitution, `u = (a x + b)^(1/q)`, and the general substitution for an even
+root both take a power of `u` out of a radical on the strength of `u` being a non-negative real —
+`sqrt(u^2 (1 + u))` as `u sqrt(1 + u)` — which it is only where the radical is. Beyond the
+radicand's zero `u` is imaginary, and the integrand can still be real there: Rubi's
+`x sqrt(c - a c x) / e^(3 atanh(a x))` above `a x = 1` is the product of two imaginary factors,
+and the answer built for a real `u` is not its antiderivative — 14% off at `x = 0.59` with
+`a = 3.1`, `c = 0.7`, and it shipped as an answer. An answer that used the step now carries the
+condition, `provided a x + b >= 0`: `NaN` beyond it, which is no claim, and unchanged where it
+holds. An answer the step did not touch — `x/sqrt(1 + x)`, `1/(sqrt(x) - x^(-1/3))` — is as it
+was ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x * sqrt(c - a*c*x) / e^(3 * atanh(a*x))".Integrate("x")` | `integral(…)` — left unevaluated, with `e` evaluated to a hundred digits inside it | an antiderivative in `sqrt(c - a c x)`, `provided c - a * c * x >= 0` |
+| `"1/sqrt(x + x^(3/2))".Integrate("x")` | `integral(1 / sqrt(x + x ^ (3/2)), x)` — left unevaluated | `2 * sqrt(1 + sqrt(x)) / (1/2) + C provided x >= 0` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
