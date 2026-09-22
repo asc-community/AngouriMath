@@ -408,17 +408,22 @@ namespace AngouriMath.Functions.Algebra
             // Timofeev's 314 down a path whose answer could not be checked, where the two
             // roots apart are split over `(1 - x)(1 + x)` and answered.
             string Spelling(Entity radicand) => string.Join(" + ", Sumf.LinearChildren(radicand).Select(term => term.ToString()).OrderBy(term => term, System.StringComparer.Ordinal));
-            var signsOfSpelling = new Dictionary<string, (bool Negative, bool Positive, Entity First)>();
-            foreach (var node in numerator.Nodes.Concat(denominator.Nodes))
+            // Where the radicand stands in two places that differ in the sign of the power as
+            // written or in the side of the bar -- `q^(-1/2)` above beside `sqrt(q)` below,
+            // which the joining below reads as one atom, or `sqrt(A)` above beside `sqrt(A)`
+            // below, which cancel -- and only there.
+            var placesOfSpelling = new Dictionary<string, (HashSet<(bool Negative, bool Underneath)> Places, Entity First)>();
+            foreach (var (node, underneath) in numerator.Nodes.Select(n => (n, false)).Concat(denominator.Nodes.Select(n => (n, true))))
                 if (node is Powf(var radicand, Number.Rational r) && r is not Number.Integer && radicand.ContainsNode(x) && radicand is Sumf or Minusf)
                 {
                     var key = Spelling(radicand);
-                    var (negative, positive, first) = signsOfSpelling.TryGetValue(key, out var so) ? so : (false, false, radicand);
-                    signsOfSpelling[key] = (negative || r.ERational.IsNegative, positive || !r.ERational.IsNegative, first);
+                    if (!placesOfSpelling.TryGetValue(key, out var seen))
+                        placesOfSpelling[key] = seen = (new HashSet<(bool, bool)>(), radicand);
+                    seen.Places.Add((r.ERational.IsNegative, underneath));
                 }
             Entity OneSpelling(Entity side) => side.Replace(node =>
                 node is Powf(var radicand, Number.Rational r) && r is not Number.Integer && radicand.ContainsNode(x) && radicand is Sumf or Minusf
-                && signsOfSpelling.TryGetValue(Spelling(radicand), out var seen) && seen.Negative && seen.Positive && seen.First != radicand
+                && placesOfSpelling.TryGetValue(Spelling(radicand), out var seen) && seen.Places.Count > 1 && seen.First != radicand
                     ? MathS.Pow(seen.First, r)
                     : node);
             numerator = OneSpelling(numerator);
@@ -1864,7 +1869,16 @@ namespace AngouriMath.Functions.Algebra
             // although the rule never fires on it at the top at all.
             //
             // The second is in the regrouping: exactly one factor to differentiate, never two.
-            if (Integration.AnsweringTheQuestionAsked
+            // ...and up to two below the question asked where everything beside the
+            // differentiated factor is algebraic in x with a root in it: the second step of
+            // parts on `x^3 asech(a x)^2` is `x^2 asech(a x)/sqrt(1/(a x)^2 - 1)`, whose other
+            // factor integrates to an algebraic expression or declines at once, and whose
+            // remainder is algebraic -- none of the logarithms by the dozen the scope above
+            // is there to stop. With a root only: beside a rational function the rule for a
+            // rational function times a logarithm is the one that answers, and offering
+            // parts there sent `(a + b atanh(c x^2))^2/x^5` into a search that did not return.
+            if ((Integration.AnsweringTheQuestionAsked
+                    || Integration.AnsweringTheQuestionAskedOrTwoBelow && TryRegroupAroundTheDifferentiatedFactor(expr) is var (_, algebraicOthers) && algebraicOthers is not null && IsAlgebraicIn(algebraicOthers, x) && HasARadicalOf(algebraicOthers, x))
                 && TryRegroupAroundTheDifferentiatedFactor(expr) is var (differentiated, others)
                 && differentiated is not null && others is not null
                 && TrySplit(differentiated, others) is { } byLiate)
@@ -9436,6 +9450,33 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Whether every fractional power of a quotient in <paramref name="x"/> in
+        /// <paramref name="expr"/> has a monomial in <paramref name="x"/> below its bar, and
+        /// there is at least one: the shape <c>sqrt(1/(c x)^2 - 1)</c> has, and
+        /// <c>sqrt((1 + x)/(1 - x))</c> has not.
+        /// </summary>
+        private static bool EveryRootStandsOverAMonomial(Entity expr, Entity.Variable x)
+        {
+            var any = false;
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer || !@base.ContainsNode(x))
+                    continue;
+                var (above, below) = Functions.SingleQuotient.Of(AsOneQuotient(@base));
+                if (below == Number.Integer.One || !below.ContainsNode(x))
+                    continue;
+                // ...and a polynomial above it, so that what comes out is the root of a
+                // polynomial: `(1 + ln(u^2)/u^2)^(-3/2)` has a monomial below and is not this,
+                // and written apart at every depth it fed Bronstein's `sqrt(x + ln(x))` search.
+                if (!TreeAnalyzer.TryGetPolynomial(below, x, out var monomials) || monomials.Count != 1
+                    || !TreeAnalyzer.TryGetPolynomial(above, x, out _))
+                    return false;
+                any = true;
+            }
+            return any;
+        }
+
+        /// <summary>
         /// <paramref name="forPositive"/>, an antiderivative of <paramref name="integrand"/> for
         /// <paramref name="x"/> positive, extended to the other side by parity, which is exact:
         /// an odd integrand has an even antiderivative, so <c>F(|x|)</c> serves on both sides,
@@ -9948,6 +9989,56 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             var answer = Integration.ComputeAsAQuestionOfItsOwn(named, x, integrateByParts);
             return answer?.Substitute(constant, linear - slope * x);
+        }
+
+        /// <summary>
+        /// The sign of a real-valued function of <paramref name="x"/> among the factors of the
+        /// integrand is constant on every interval between its zeros, and goes in front of the
+        /// antiderivative of the rest: <c>sgn(x) f(x)</c> is <c>sgn(x) F(x)</c> on each half-line,
+        /// which is the generic case every rule answers in. The extension by parity writes the
+        /// antiderivative of <c>x^2/sqrt(1/(a x)^2 - 1)</c> with a <c>sgn(x)</c> in front, and a
+        /// step of parts against it -- <c>x^2 asech(a x)/sqrt(1/(a x)^2 - 1)</c>, the second step
+        /// on <c>x^3 asech(a x)^2</c> -- leaves that sign beside the remainder, where no rule
+        /// read past it. Only a sign whose argument is shown real: for a complex <c>g</c>,
+        /// <c>sgn(g)</c> is <c>g/|g|</c> and is not constant anywhere. Asked as the same question.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveByTakingASignOut(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!TryReadAsQuotient(expr, out var numerator, out var denominator) && expr is Mulf)
+                (numerator, denominator) = (expr, Number.Integer.One);
+            else if (numerator is null)
+                return null;
+            var signs = new Dictionary<Entity, int>();
+            Entity Without(Entity side)
+            {
+                Entity? rest = null;
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    var (@base, times) = factor is Powf(var inner, Number.Integer whole) ? (inner, whole.EInteger) : (factor, EInteger.One);
+                    if (@base is Signumf(var signed) && signed.ContainsNode(x) && TreeAnalyzer.IsRealValued(signed, x) && times.CanFitInInt32())
+                    {
+                        signs[signed] = (signs.TryGetValue(signed, out var seen) ? seen : 0) + times.ToInt32Unchecked();
+                        continue;
+                    }
+                    rest = rest is null ? factor : rest * factor;
+                }
+                return rest ?? Number.Integer.One;
+            }
+            var above = Without(numerator);
+            var below = Without(denominator);
+            if (signs.Count == 0)
+                return null;
+            var rest = below == Number.Integer.One ? above : above / below;
+            if (!rest.ContainsNode(x))
+                return null;
+            var answer = Integration.ComputeAsTheSameQuestion(rest, x, integrateByParts);
+            if (answer is null)
+                return null;
+            foreach (var pair in signs)
+                if (pair.Value % 2 != 0)
+                    answer = MathS.Signum(pair.Key) * answer;
+            return answer;
         }
 
         /// <summary>
@@ -13073,7 +13164,12 @@ namespace AngouriMath.Functions.Algebra
             // and no deeper: unscoped, it fed the search on `arcsin(sqrt(1 + x) - sqrt(x))`,
             // thirty levels of the same root written apart and combined again, five seconds
             // where declining takes one.
-            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+            // ...except where every root written apart stands over a monomial in x, which is
+            // the derivative of asech(c x) and acsch(c x) as they are written -- `1/(c x)^2 - 1`
+            // over `c^2 x^2` -- and is a rewriting that lands on the root of a quadratic beside
+            // `|c| |x|` and nothing else: the second step of parts on `x^3 asech(a x)^2` asks
+            // for `x^2/sqrt(1/(a x)^2 - 1)` three levels down, and declined it there.
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow && !EveryRootStandsOverAMonomial(expr, x))
                 return null;
             var tookAPowerOfX = false;
             // Whether every power of x taken is a whole one, and whether their sum is odd:
@@ -13083,6 +13179,10 @@ namespace AngouriMath.Functions.Algebra
             // and was declined for that after its antiderivative had been found.
             var wholePowersOfX = true;
             var oddPowersOfX = false;
+            // ...and only where every such power came from a root that is a factor of the
+            // integrand: a sign can go in front of the answer for `|x|` that multiplied the
+            // integrand, and not for one inside a sum or a logarithm's argument.
+            var everyPowerOfXFromAFactor = true;
             // A parameter's even power taken for positive -- `c^2 x^2` below the bar, which is
             // how `acsch(c x)` and `asech(c x)` arrive, is positive for a real `c` -- and the
             // answer says so: `provided c^2 > 0`, which holds exactly for a real non-zero `c`.
@@ -13095,7 +13195,7 @@ namespace AngouriMath.Functions.Algebra
             // front of the answer only from a power that is one of them, and not from one
             // inside a logarithm or a sum, where it is not a factor of anything.
             var factors = new HashSet<Entity>(
-                expr is Divf(var dividend, var divisor) ? Mulf.LinearChildren(dividend).Concat(Mulf.LinearChildren(divisor))
+                TryReadAsQuotient(expr, out var dividend, out var divisor) ? Mulf.LinearChildren(dividend).Concat(Mulf.LinearChildren(divisor))
                 : expr is Mulf ? Mulf.LinearChildren(expr)
                 : new[] { expr });
             // A root inside the argument of a logarithm is left as it is: the logarithm is an
@@ -13112,7 +13212,11 @@ namespace AngouriMath.Functions.Algebra
                 var (above, below) = Functions.SingleQuotient.Of(AsOneQuotient(@base));
                 if (below != Number.Integer.One && below.ContainsNode(x) && OfModestDegree(above)
                     && (IsPositiveForReal(below, x) || IsPositiveForARealParameter(below, x, out assumed, assumed)))
+                {
+                    if (!factors.Contains(node))
+                        everyPowerOfXFromAFactor = false;
                     return MathS.Pow(above, exponent) * PowerOfAPositive(below, -exponent);
+                }
                 // An even power of a polynomial below the bar is positive wherever the
                 // polynomial is real and not zero, which the answer states: `(A/P^2)^(1/2)` is
                 // `sqrt(A) |P|^(-1)`, and `|P|` is `sgn(P) P`, the sign taken out in front.
@@ -13196,6 +13300,8 @@ namespace AngouriMath.Functions.Algebra
                                 && (g == x || power is Number.Integer { EInteger.IsEven: true } || IsPositiveForReal(g, x)))
                             {
                                 var evenPower = MathS.Pow(g, Number.Integer.Create(even));
+                                if (g == x && !factors.Contains(node))
+                                    everyPowerOfXFromAFactor = false;
                                 taken = taken * (g == x ? PowerOfAPositive(evenPower, underneath ? -exponent : exponent)
                                     : power is Number.Integer ? MathS.Pow(g, power) : MathS.Pow(evenPower, underneath ? -exponent : exponent));
                                 if (!n.EInteger.IsEven)
@@ -13225,6 +13331,8 @@ namespace AngouriMath.Functions.Algebra
                         Entity term = degree == 0 ? pair.Value : degree == 1 ? pair.Value * x : pair.Value * MathS.Pow(x, degree);
                         rest = rest == Number.Integer.Zero ? term : rest + term;
                     }
+                    if (!factors.Contains(node))
+                        everyPowerOfXFromAFactor = false;
                     return PowerOfAPositive(MathS.Pow(x, 2 * k), exponent) * MathS.Pow(rest.InnerSimplified, exponent);
                 }
                 return node;
@@ -13239,8 +13347,16 @@ namespace AngouriMath.Functions.Algebra
             var forPositive = Integration.ComputeIndefiniteIntegral(Functions.PartialFractions.Bare(written), x, integrateByParts: true);
             if (forPositive is null || forPositive.Nodes.Any(node => node == MathS.NaN))
                 return null;
+            // With the sign in front where every power of |x| taken is whole -- |x|^m is
+            // sgn(x)^m x^m -- and by parity otherwise. The extension by parity writes the
+            // answer in |x|, and an answer in |x| handed on by a step of parts -- the second
+            // step on `asech(a x)^2/x^2` -- is a remainder in |x| and `(1 - (|x| a)^2)` that no
+            // rule reads, where the same answer with `sgn(x)` in front is the answer in x
+            // beside a factor the sign-out route takes.
             var extended = tookAPowerOfX
-                ? ExtendedByParity(expr, forPositive, x) ?? (wholePowersOfX ? (oddPowersOfX ? MathS.Signum(x) * Functions.PartialFractions.Bare(forPositive) : Functions.PartialFractions.Bare(forPositive)) : null)
+                ? (wholePowersOfX && everyPowerOfXFromAFactor
+                    ? (oddPowersOfX ? MathS.Signum(x) * Functions.PartialFractions.Bare(forPositive) : Functions.PartialFractions.Bare(forPositive))
+                    : ExtendedByParity(expr, forPositive, x))
                 : forPositive;
             foreach (var pair in signs)
                 if (pair.Value % 2 == 1 && extended is { })
