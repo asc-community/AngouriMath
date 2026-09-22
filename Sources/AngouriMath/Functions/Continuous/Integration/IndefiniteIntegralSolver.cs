@@ -13946,37 +13946,262 @@ namespace AngouriMath.Functions.Algebra
                 return sign == 1 ? answer : -answer;
             }
             return null;
+        }
 
-            // 1 for even in f, -1 for odd, 0 for neither; a zero polynomial is both.
-            static int ParityIn(Entity polynomial, Entity.Variable f)
-            {
-                if (!TreeAnalyzer.TryGetPolynomial(polynomial, f, out var read))
-                    return 0;
-                var evenPowers = read.Keys.Any(k => k.IsEven);
-                var oddPowers = read.Keys.Any(k => !k.IsEven);
-                return evenPowers && oddPowers ? 0 : oddPowers ? -1 : 1;
-            }
+        /// <summary>1 for even in <paramref name="f"/>, -1 for odd, 0 for neither; a zero polynomial is both.</summary>
+        private static int ParityIn(Entity polynomial, Entity.Variable f)
+        {
+            if (!TreeAnalyzer.TryGetPolynomial(polynomial, f, out var read))
+                return 0;
+            var evenPowers = read.Keys.Any(k => k.IsEven);
+            var oddPowers = read.Keys.Any(k => !k.IsEven);
+            return evenPowers && oddPowers ? 0 : oddPowers ? -1 : 1;
+        }
 
-            // The polynomial with every f^2 written as 1 - u^2 and the other function as u,
-            // one f divided out first where asked.
-            static Entity? InU(Entity polynomial, Entity.Variable f, Entity.Variable other, Entity.Variable u, Entity oneMinusUSquared, bool dividedByOdd)
+        /// <summary>
+        /// The polynomial with every <c>f^2</c> written as <paramref name="fSquared"/> -- <c>1 - u^2</c>
+        /// for a sine or cosine beside the other as <c>u</c>, <c>u^2 - 1</c> for a hyperbolic sine
+        /// beside the cosine, <c>u^2 + 1</c> the other way -- and the other function as <c>u</c>,
+        /// one <c>f</c> divided out first where asked.
+        /// </summary>
+        private static Entity? InU(Entity polynomial, Entity.Variable f, Entity.Variable other, Entity.Variable u, Entity fSquared, bool dividedByOdd)
+        {
+            if (!TreeAnalyzer.TryGetPolynomial(polynomial, f, out var read))
+                return null;
+            Entity sum = Number.Integer.Zero;
+            foreach (var pair in read)
             {
-                if (!TreeAnalyzer.TryGetPolynomial(polynomial, f, out var read))
+                if (pair.Key.Sign < 0 || !pair.Key.CanFitInInt32())
                     return null;
-                Entity sum = Number.Integer.Zero;
-                foreach (var pair in read)
-                {
-                    if (pair.Key.Sign < 0 || !pair.Key.CanFitInInt32())
-                        return null;
-                    var power = pair.Key.ToInt32Unchecked() - (dividedByOdd ? 1 : 0);
-                    if (power < 0 || power % 2 != 0)
-                        return null;
-                    var half = power / 2;
-                    var term = pair.Value.Substitute(other, u) * (half == 0 ? Number.Integer.One : half == 1 ? oneMinusUSquared : MathS.Pow(oneMinusUSquared, half));
-                    sum = sum == Number.Integer.Zero ? term : sum + term;
-                }
-                return sum;
+                var power = pair.Key.ToInt32Unchecked() - (dividedByOdd ? 1 : 0);
+                if (power < 0 || power % 2 != 0)
+                    return null;
+                var half = power / 2;
+                var term = pair.Value.Substitute(other, u) * (half == 0 ? Number.Integer.One : half == 1 ? fSquared : MathS.Pow(fSquared, half));
+                sum = sum == Number.Integer.Zero ? term : sum + term;
             }
+            return sum;
+        }
+
+        /// <summary>
+        /// Bioche's first two rules for the hyperbolic functions: a rational function of
+        /// <c>sinh(y)</c> and <c>cosh(y)</c> that is odd in the hyperbolic sine is a rational
+        /// function of <c>u = cosh(y)</c> times <c>sinh(y) dy = du</c>, with <c>sinh^2</c> as
+        /// <c>u^2 - 1</c>; one odd in the hyperbolic cosine is one of <c>u = sinh(y)</c> times
+        /// <c>cosh(y) dy = du</c>, with <c>cosh^2</c> as <c>u^2 + 1</c>. Radicals of polynomials
+        /// in the two even in the function are admitted as coefficients, as in
+        /// <see cref="SolveByBiochesOddSubstitution"/>.
+        /// </summary>
+        /// <remarks>
+        /// The hyperbolic functions are not nodes: the library writes <c>sinh(y)</c> as
+        /// <c>(e^y - e^-y)/2</c> and <c>tanh(y)</c> as <c>(e^(2y) - 1)/(e^(2y) + 1)</c>, so the
+        /// six are read back by their spellings, for the argument each exponential names, and
+        /// nothing else in <c>x</c> may remain. Rubi's <c>sinh(x)^3/(a + b cosh(x)^2)</c> is
+        /// <c>(u^2 - 1)/(a + b u^2)</c> here, where under <c>u = e^x</c> it is a rational
+        /// function of a symbolic palindromic quartic and under <c>u = tanh(x/2)</c> of one of
+        /// degree eight, and both were searches past the budget; <c>cosh(x)/(a + b tanh(x)^2)</c>,
+        /// <c>sech(x)/(a + b sinh(x)^2)^(3/2)</c> and <c>csch(x)^5/(a + b cosh(x)^2)</c> likewise.
+        /// In front of the substitution search, which with a symbolic coefficient spends the
+        /// budget on <c>u = e^x</c>. Exact: <c>cosh</c> is positive, so <c>u = sinh(y)</c> is a
+        /// bijection of the line, and <c>u = cosh(y)</c> one on each side of zero.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByBiochesOddHyperbolicSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            if (!TryGatherExponentialsOfOneLinearForm(expr, x, unitX: true, out var exponentials, out var y, out _))
+                return null;
+            var s = Variable.CreateUnique(expr, "s_hyp");
+            var c = Variable.CreateUnique(expr, "c_hyp");
+            // The six read by their spellings, each exponential by the multiple of y it is:
+            // sinh(y) is (e^y - e^-y)/2, cosh(y) (e^y + e^-y)/2, tanh(y) (e^(2y) - 1)/(e^(2y) + 1),
+            // coth(y) the reciprocal, sech(y) 1/cosh(y) and csch(y) 1/sinh(y). The argument is y,
+            // or its half where `tanh(c + d x)` alone is written with e^(2(c + d x)) and the
+            // gathering names that y: then the tangent's spelling carries e^y.
+            Entity? argument = null;
+            Entity overTheTwo = expr;
+            foreach (var halved in new[] { false, true })
+            {
+                var one = halved ? null : (EInteger?)EInteger.One;
+                var two = halved ? EInteger.One : EInteger.FromInt32(2);
+                // With y named from an exponential of the other sign, e^-y is the k = 1 one:
+                // sinh and tanh are odd, cosh even.
+                Entity? ReadTheTwo(Entity node)
+                {
+                    switch (node)
+                    {
+                        case Divf(Minusf(var a, var b), Number.Integer { EInteger: var d }) when d.Equals(EInteger.FromInt32(2)) && Is(a, one) && Is(b, one?.Negate()):
+                            return s;
+                        case Divf(Minusf(var a, var b), Number.Integer { EInteger: var d }) when d.Equals(EInteger.FromInt32(2)) && Is(a, one?.Negate()) && Is(b, one):
+                            return -s;
+                        case Divf(Sumf(var a, var b), Number.Integer { EInteger: var d }) when d.Equals(EInteger.FromInt32(2)) && (Is(a, one) && Is(b, one?.Negate()) || Is(a, one?.Negate()) && Is(b, one)):
+                            return c;
+                        case Divf(Minusf(var a, Number.Integer { EInteger: var m }), Sumf(var b, Number.Integer { EInteger: var n })) when m.Equals(EInteger.One) && n.Equals(EInteger.One) && Is(a, two) && Is(b, two):
+                            return s / c;
+                        case Divf(Minusf(var a, Number.Integer { EInteger: var m }), Sumf(var b, Number.Integer { EInteger: var n })) when m.Equals(EInteger.One) && n.Equals(EInteger.One) && Is(a, two.Negate()) && Is(b, two.Negate()):
+                            return -s / c;
+                        case Divf(Sumf(var a, Number.Integer { EInteger: var m }), Minusf(var b, Number.Integer { EInteger: var n })) when m.Equals(EInteger.One) && n.Equals(EInteger.One) && Is(a, two) && Is(b, two):
+                            return c / s;
+                        case Divf(Sumf(var a, Number.Integer { EInteger: var m }), Minusf(var b, Number.Integer { EInteger: var n })) when m.Equals(EInteger.One) && n.Equals(EInteger.One) && Is(a, two.Negate()) && Is(b, two.Negate()):
+                            return -c / s;
+                        case Divf(Number.Integer { EInteger: var m }, var inner) when m.Equals(EInteger.One) && ReadTheTwo(inner) is { } read:
+                            return 1 / read;
+                    }
+                    return null;
+                }
+                bool Is(Entity node, EInteger? k) => k is { } wanted && exponentials.TryGetValue(node, out var found) && found.Equals(wanted);
+                var read = expr.Replace(node => node.ContainsNode(x) && ReadTheTwo(node) is { } inTheTwo ? inTheTwo : node);
+                if (read.ContainsNode(s) || read.ContainsNode(c))
+                {
+                    argument = halved ? (y / 2).InnerSimplified : y;
+                    overTheTwo = read;
+                    break;
+                }
+            }
+            if (argument is null)
+                return null;
+            if (!overTheTwo.ContainsNode(s) && !overTheTwo.ContainsNode(c))
+                return null;
+            var radicals = new List<(Variable Symbol, Entity Base, Number.Rational Exponent)>();
+            overTheTwo = overTheTwo.Replace(node =>
+            {
+                if (node is not Powf(var radicand, Number.Rational exponent) || exponent is Number.Integer || !radicand.ContainsNode(s) && !radicand.ContainsNode(c))
+                    return node;
+                var symbol = Variable.CreateUnique(expr, "r_hyp" + radicals.Count);
+                var combined = Functions.SingleQuotient.Combine(radicand);
+                radicals.Add((symbol, combined, exponent));
+                return symbol;
+            });
+            if (overTheTwo.ContainsNode(x))
+                return null;
+            // A radicand that is a polynomial in the two, and not a Laurent one: `a + b sech(x)`
+            // is `a + b/c`, whose root under u = cosh(x) is a root of `a + b/u`, and the search
+            // that follows it is longer than the exponential substitution's.
+            if (radicals.Any(radical => radical.Base.ContainsNode(x) || !IsAPolynomialInBoth(radical.Base)))
+                return null;
+            // The quotient factor by factor, each factor a polynomial in the two, so that a
+            // written power -- `(a + b sech(x)^2)^2` -- is handed on as the power it is and not
+            // expanded into a symbolic quartic for the rational integrator to factor again.
+            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(overTheTwo));
+            var factors = new List<(Entity Base, int Power)>();
+            foreach (var (side, sign) in new[] { (above, 1), (below, -1) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    var (factorBase, power) = factor is Powf(var inner, Number.Integer whole) && whole.EInteger.CanFitInInt32() ? (inner, whole.EInteger.ToInt32Unchecked()) : (factor, 1);
+                    factorBase = factorBase.Expand();
+                    if (!IsAPolynomialInBoth(factorBase))
+                        return null;
+                    factors.Add((factorBase, sign * power));
+                }
+            bool IsAPolynomialInBoth(Entity polynomial)
+                => TreeAnalyzer.TryGetPolynomial(polynomial, s, out var inS) && inS.Keys.All(k => k.Sign >= 0)
+                    && TreeAnalyzer.TryGetPolynomial(polynomial, c, out var inC) && inC.Keys.All(k => k.Sign >= 0);
+
+            var u = Variable.CreateUnique(expr, "u_hyp");
+            foreach (var (odd, even, fSquared, back) in new[]
+            {
+                (s, c, MathS.Sqr(u) - 1, MathS.Hyperbolic.Cosh(argument)),
+                (c, s, MathS.Sqr(u) + 1, MathS.Hyperbolic.Sinh(argument)),
+            })
+            {
+                if (radicals.Any(radical => ParityIn(radical.Base, odd) != 1))
+                    continue;
+                // An odd factor is f times an even one, and the powers of f are counted, one
+                // of them being dx's. A factor neither even nor odd in f -- `1 + sinh(x)` --
+                // sends the two sides expanded and cleared against the mirror, as
+                // SolveByBiochesOddSubstitution does, since its mirror is in u only beside it.
+                Entity numerator = Number.Integer.One;
+                Entity denominator = Number.Integer.One;
+                var powerOfF = -1;
+                var readable = true;
+                if (factors.All(factor => ParityIn(factor.Base, odd) != 0))
+                {
+                    foreach (var (factorBase, power) in factors)
+                    {
+                        var parity = ParityIn(factorBase, odd);
+                        if (InU(factorBase, odd, even, u, fSquared, dividedByOdd: parity == -1) is not { } inU)
+                        {
+                            readable = false;
+                            break;
+                        }
+                        if (parity == -1)
+                            powerOfF += power;
+                        var powered = MathS.Pow(inU, Number.Integer.Create(System.Math.Abs(power)));
+                        if (power > 0) numerator *= powered; else denominator *= powered;
+                    }
+                    if (!readable || powerOfF % 2 != 0)
+                        continue;
+                    var half = powerOfF / 2;
+                    if (half > 0)
+                        numerator *= MathS.Pow(fSquared, Number.Integer.Create(half));
+                    else if (half < 0)
+                        denominator *= MathS.Pow(fSquared, Number.Integer.Create(-half));
+                }
+                else
+                {
+                    var aboveExpanded = above.Expand();
+                    var belowExpanded = below.Expand();
+                    var parityOfBelow = ParityIn(belowExpanded, odd);
+                    Entity top;
+                    Entity bottom;
+                    bool oneFOutOfTheNumerator;
+                    if (parityOfBelow == 1)
+                    {
+                        top = aboveExpanded;
+                        bottom = belowExpanded;
+                        oneFOutOfTheNumerator = true;
+                    }
+                    else if (parityOfBelow == -1)
+                    {
+                        top = aboveExpanded;
+                        bottom = (belowExpanded * odd).Expand();
+                        oneFOutOfTheNumerator = false;
+                    }
+                    else
+                    {
+                        var mirrored = belowExpanded.Substitute(odd, -odd).Expand();
+                        top = (aboveExpanded * mirrored).Expand();
+                        bottom = (belowExpanded * mirrored).Expand();
+                        oneFOutOfTheNumerator = true;
+                    }
+                    if (ParityIn(top, odd) != (oneFOutOfTheNumerator ? -1 : 1) || ParityIn(bottom, odd) != 1)
+                        continue;
+                    if (InU(top, odd, even, u, fSquared, oneFOutOfTheNumerator) is not { } topInU
+                        || InU(bottom, odd, even, u, fSquared, dividedByOdd: false) is not { } bottomInU)
+                        continue;
+                    numerator = topInU;
+                    denominator = bottomInU;
+                }
+                var radicalsInU = new List<(Variable Symbol, Entity InU)>();
+                foreach (var (symbol, radicand, exponent) in radicals)
+                {
+                    if (InU(radicand, odd, even, u, fSquared, dividedByOdd: false) is not { } radicandInU)
+                        break;
+                    radicalsInU.Add((symbol, MathS.Pow(radicandInU, exponent)));
+                }
+                if (radicalsInU.Count != radicals.Count)
+                    continue;
+                foreach (var (symbol, radical) in radicalsInU)
+                {
+                    numerator = numerator.Substitute(symbol, radical);
+                    denominator = denominator.Substitute(symbol, radical);
+                }
+                var integrand = Functions.PartialFractions.Bare((numerator / denominator).InnerSimplified);
+                if (Integration.ComputeAsAQuestionOfItsOwn(integrand, u, integrateByParts) is not { } result
+                    || result.Nodes.Any(node => node == MathS.NaN))
+                    continue;
+                var answer = result.Substitute(u, back);
+                // dx is dy/d for the argument y = c + d x.
+                if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || TreeAnalyzer.IsZero(slope))
+                    return null;
+                var scaled = slope == Number.Integer.One ? answer : answer / slope;
+                // Checked where a symbol is involved, as every answer assembled from pieces is.
+                if (expr.Vars.Any(symbol => symbol != x) && !Functions.PartialFractions.DerivativeHoldsAtSampledPoints(scaled, expr, x))
+                    return null;
+                return scaled;
+            }
+            return null;
         }
 
         /// <summary>
