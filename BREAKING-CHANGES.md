@@ -976,6 +976,23 @@ the remainder of `acsch(c x)^2/x^4` wrongly along the way
 | `"(a+b*acsch(c*x))^2/x^4".Integrate("x")` | left unevaluated | the antiderivative |
 | `"x^2/sqrt(1/(a^2*x^2)-1)".Integrate("x")` | left unevaluated | `sgn(x) |a| (2 (1 - a^2 x^2)^(3/2)/3 - 2 sqrt(1 - a^2 x^2))/(2 a^4)` up to the form -- with `sgn(x)` in front, where an answer written in `|x|` used to be given for such shapes |
 
+### The binomial sums of chapter 8 are answered in closed form
+
+`sum(k binomial(n, k), k, 0, n)` was left as written; it is `n 2^(n - 1)`, and with it a
+polynomial of any degree beside the coefficient (in the falling factorial basis, by the
+chairperson identity), Vandermonde's convolution, `sum(binomial(n, k)^2, k, 0, n) = binomial(2n, n)`,
+the summation identity `sum(binomial(i, k), i, 0, n) = binomial(n + 1, k + 1)`, and the sums over
+the even or the odd indices, each `2^(n - 1)` — Prop 8.4.4, Thm 8.4.6, Ex 8.3.11 and Probs
+8.9.16 and 8.9.34 of Sullivan and Mackey's *An Introduction to Proofs*
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sum(k*binomial(n,k), k, 0, n)".ToEntity().Evaled` | `UnhandledParseException` — `binomial` is new since | `n 2^(n - 1) provided n >= 0`, `0` otherwise |
+| `"sum(n!/(k!*(n-k)!)*k, k, 0, n)".ToEntity().Evaled` | as written | the same |
+| `"sum(binomial(n,k)^2, k, 0, n)".ToEntity().Evaled` | parse error | `binomial(2 n, n)` |
+| `"sum(binomial(i,k), i, 0, n)".ToEntity().Evaled` | parse error | `binomial(n + 1, k + 1)` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
