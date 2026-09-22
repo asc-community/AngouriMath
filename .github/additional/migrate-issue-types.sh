@@ -10,8 +10,10 @@
 #
 # Legacy mappings:
 #   Bug, Minor bug -> Bug
-#   Proposal, Design document -> Feature
 #   Agentic goal -> Goal
+#   Proposal, Design document -> Feature
+#
+# When labels conflict, Bug wins first, then Agentic goal, then Feature.
 #
 # This script deliberately does not assign Maintenance to every unmapped issue. Unmapped issues
 # remain untyped until triage. Organization type setup (including renaming Task to Maintenance and
@@ -87,10 +89,10 @@ gh api --paginate "repos/$REPO/issues?state=all&per_page=100" \
   want=""
   if has_label "Bug" || has_label "Minor bug"; then
     want=Bug
-  elif has_label "Proposal" || has_label "Design document"; then
-    want=Feature
   elif has_label "Agentic goal"; then
     want=Goal
+  elif has_label "Proposal" || has_label "Design document"; then
+    want=Feature
   fi
 
   if [ -n "$want" ] && [ "$type" != "$want" ]; then

@@ -109,6 +109,10 @@ owner. No type means **untriaged**.
 - **Maintenance** -- internal upkeep without a primary user-facing behaviour change: refactors,
   tests, documentation, CI, dependencies, or tooling.
 
+When old labels conflict, classify an issue as Bug before Goal before Feature. That precedence
+protects existing behaviour, but type is not a complete severity score: impact and urgency still
+decide priority, and a severe Feature can outrank a trivial Bug.
+
 A Goal may use a checklist for mutable planning notes, ideas, dependencies, and small steps. Make a
 sub-issue only when a piece needs its own lifecycle, acceptance criteria, owner, review, claim, or
 parent roll-up. Do not create a sub-issue merely to restate a self-contained pull request: that pull
