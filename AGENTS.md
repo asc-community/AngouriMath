@@ -454,10 +454,9 @@ issue with no type is **untriaged**; it is not implicitly a Goal.
 - **Maintenance** is internal upkeep without a primary user-facing behaviour change: refactors,
   tests, documentation, CI, dependencies, or tooling.
 
-When legacy evidence conflicts, classify Bug before Goal before Feature. This protects existing
-behaviour during migration and means Bugs should normally be triaged before comparable Feature
-work. This is not a severity score: use impact and urgency to decide whether a severe Feature
-outranks a trivial Bug.
+When an issue combines an existing defect with a proposed addition, classify it as Bug. This means
+Bugs should normally be triaged before comparable Feature work. This is not a severity score: use
+impact and urgency to decide whether a severe Feature outranks a trivial Bug.
 
 When reviewing a Goal, check whether its current children are complete and whether another
 decomposition pass is needed. A checklist is a mutable roadmap, not a lock or authoritative
