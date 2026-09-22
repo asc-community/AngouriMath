@@ -238,6 +238,7 @@ namespace AngouriMath
                 ?? Functions.PolynomialSummation.ClosedForm(Expression, Var, From, To)
                 ?? Functions.ExponentialSeries.ClosedForm(Expression, Var, From, To)
                 ?? Functions.BinomialSum.ClosedForm(Expression, Var, From, To)
+                ?? Functions.BinomialIdentities.ClosedForm(Expression, Var, From, To)
                 ?? Functions.GeometricSeries.ClosedForm(Expression, Var, From, To)
                 ?? Functions.PolynomialGeometricSeries.ClosedForm(Expression, Var, From, To)
                 // Last: a series that converges is summed above, and only what none of them

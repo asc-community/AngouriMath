@@ -264,7 +264,16 @@ leave the polynomial case alone.
 factorial `n (n - 1) ... (n - k + 1) / k!` for any `n` — `binomial(5, 2)` is `10`,
 `binomial(-1, 3)` is `-1`, `binomial(1/2, 2)` is `-1/8` — with `0` below `k = 0` and above a
 non-negative whole `n`; a symbolic argument keeps the node, which prints as `\binom{n}{k}` in
-LaTeX, and a `k` that is not whole evaluates numerically through the gamma function.
+LaTeX, and a `k` that is not whole evaluates numerically through the gamma function. A `sum`
+over the coefficient is answered in closed form: the binomial theorem
+(`sum(binomial(n, k) x^k y^(n - k), k, 0, n)` is `(x + y)^n`), a polynomial in the index beside
+it (`sum(k binomial(n, k), k, 0, n)` is `n 2^(n - 1)`, read in the falling factorial basis),
+Vandermonde's convolution (`sum(binomial(a, i) binomial(b, k - i), i, 0, k)` is
+`binomial(a + b, k)`, and `sum(binomial(n, k)^2, k, 0, n)` is `binomial(2 n, n)`), the summation
+identity (`sum(binomial(i, k), i, 0, n)` is `binomial(n + 1, k + 1)`), and the sums over the even
+or the odd indices (`sum(binomial(n, 2 l), l, 0, floor(n/2))` is `2^(n - 1)` for `n >= 1`) — the
+identities of chapter 8 of Sullivan and Mackey's *An Introduction to Proofs*, so that
+`forall n in ZZ+ : sum(k binomial(n, k), k, 0, n) = n 2^(n - 1)` is `True`.
 
 **Calculus** — `derivative(expr, var, order)`, `integral(expr, var)`,
 `integral(expr, var, from, to)`, `limit(expr, var, dest)`, `limitleft(...)`, `limitright(...)`;

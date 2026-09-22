@@ -74,10 +74,10 @@ namespace AngouriMath.Tests.Calculus
         public void AConcreteLongRangeIsClosed()
             => Assert.Equal("2^300".ToEntity().Evaled, "sum(300! / (k! * (300 - k)!), k, 0, 300)".ToEntity().Simplify().Evaled);
 
-        // Not of the shape: a polynomial weight, a trigonometric weight beside a power, a lower
-        // bound that is not zero, a coefficient whose N is not the upper bound.
+        // Not of the shape: a trigonometric weight beside a power, a lower bound that is not
+        // zero, a coefficient whose N is not the upper bound. A polynomial weight was here, and
+        // is BinomialIdentities' now, see its test.
         [Theory]
-        [InlineData("sum(N! / (k! * (N - k)!) * k, k, 0, N)")]
         [InlineData("sum(N! / (k! * (N - k)!) * x^k * cos(k * t), k, 0, N)")]
         [InlineData("sum(N! / (k! * (N - k)!), k, 1, N)")]
         [InlineData("sum(M! / (k! * (M - k)!), k, 0, N)")]
