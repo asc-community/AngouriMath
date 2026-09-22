@@ -601,11 +601,15 @@ namespace AngouriMath.Functions.Algebra
             // quadratic squared here, and under `u = e^x` a palindromic quartic that took the
             // budget. Before the substitution search, which with a symbolic slope spends the
             // whole of it on `u = c + d x` and never comes back to the chain.
-            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfTheHyperbolicTangent(expr, x, integrateByParts)) is { }) return answer;
             // Bioche's first two rules for the hyperbolic functions, read back by their
             // exponential spellings: `sinh(x)^3/(a + b cosh(x)^2)` is `(u^2 - 1)/(a + b u^2)`
             // under u = cosh(x), where the substitution search spends the budget on u = e^x.
+            // Before the tangent, which takes the half of a plain `e^y` for a symbolic
+            // denominator and makes a polynomial of twice the degree of what this answers:
+            // `cosh(x)^7/(a + b cosh(x)^2)` and `sech(x)^3/(a + b sinh(x))^2` are a second here
+            // and past the budget there.
             if ((answer = IndefiniteIntegralSolver.SolveByBiochesOddHyperbolicSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionOfTheHyperbolicTangent(expr, x, integrateByParts)) is { }) return answer;
             // A rational function of a sine or a cosine over a quadratic in it with a symbol
             // among the coefficients, split over the quadratic's two roots: under the
             // half-angle it is a quartic in t with a symbol in every coefficient.

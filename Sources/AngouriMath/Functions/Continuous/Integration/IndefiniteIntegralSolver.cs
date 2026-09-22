@@ -11460,6 +11460,12 @@ namespace AngouriMath.Functions.Algebra
                 // `e^x/sqrt(e^(2x) + a^2)` among them, a root of a polynomial there.
                 var hasARadical = HasARadicalOf(expr, x);
                 var halfIsTheArgument = exponentials.Keys.All(node => node is Powf(_, var exponent) && WrittenWithAnEvenFactor(exponent));
+                // And the half of a plain `e^y`, at the top only: the integrand asked about is
+                // the one whose shape was read, where one below it is what another rule made.
+                if (!halfIsTheArgument && !hasARadical && ASymbolStandsBelowTheBar())
+                {
+                    halfIsTheArgument = true;
+                }
                 foreach (var halved in new[] { false, true })
                 {
                     if (halved && !halfIsTheArgument)
@@ -11484,7 +11490,8 @@ namespace AngouriMath.Functions.Algebra
                     if (rationalInT.ContainsNode(square) || rationalInT.ContainsNode(vt) || rationalInT.Nodes.Any(node => node == MathS.NaN)
                         || Integration.ComputeAsAQuestionOfItsOwn(rationalInT, t, integrateByParts) is not { } evenResult)
                         return null;
-                    var evenAnswer = evenResult.Substitute(t, MathS.Hyperbolic.Tanh(halved ? Functions.PartialFractions.Bare((y / 2).Simplify()) : y));
+                    // tanh(y/2) spelled with e^y, which is what the integrand was written with.
+                    var evenAnswer = evenResult.Substitute(t, halved ? (MathS.Pow(MathS.e, y) - 1) / (MathS.Pow(MathS.e, y) + 1) : MathS.Hyperbolic.Tanh(y));
                     if (evenAnswer.Nodes.Any(node => node == MathS.NaN))
                         return null;
                     // dx is dy/d, and twice that in the half of y.
@@ -11498,6 +11505,48 @@ namespace AngouriMath.Functions.Algebra
                     return scaledAnswer;
                 }
                 return null;
+
+                // A symbol below the bar that the content does not account for: the half of a
+                // plain `e^y` is worth taking for `csch(y)^2/(a + b sinh(y))^2`, whose
+                // denominator under `u = e^y` is a symbolic quadratic nothing factors, and not
+                // for `tanh(y)^6/(a + a sech(y))`, whose denominator is `a` times one the
+                // rational integrator factors over the rationals -- there the exponential
+                // substitution answers in a page less. Read as a polynomial in `v`, with every
+                // coefficient divided by the first: a symbol surviving that is one the
+                // denominator's shape depends on.
+                bool ASymbolStandsBelowTheBar()
+                {
+                    var inVOfExpr = expr.Replace(node => exponentials.TryGetValue(node, out var k) ? MathS.Pow(vt, Number.Integer.Create(k)) : node);
+                    var denominator = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(inVOfExpr)).Item2;
+                    if (!denominator.Vars.Any(symbol => symbol != x && symbol != vt))
+                        return false;
+                    if (!TreeAnalyzer.TryGetPolynomial(denominator.Expand().InnerSimplified, vt, out var monomials) || monomials.Count == 0)
+                        return true;
+                    var first = monomials.OrderBy(pair => pair.Key).First().Value;
+                    var symbolic = false;
+                    foreach (var pair in monomials)
+                    {
+                        var ratio = (pair.Value / first).InnerSimplified;
+                        if (ratio.Vars.Any(symbol => symbol != x && symbol != vt) && Functions.PartialFractions.Bare(ratio.Simplify()).Vars.Any(symbol => symbol != x && symbol != vt))
+                            symbolic = true;
+                    }
+                    if (!symbolic)
+                        return false;
+                    // And two distinct factors of `v` below the bar, at least: one alone --
+                    // `(v^2 - 2 a v - 1)^4`, what the inverse hyperbolic substitution leaves of
+                    // `e^asinh(a + b x)/x^4` -- has roots the quadratic formula gives, and
+                    // `u = e^y` answers it in a second where the half takes thirty; the pockets
+                    // this is for have the written `sinh` beside the symbolic factor.
+                    var bases = new List<Entity>();
+                    foreach (var factor in Mulf.LinearChildren(denominator))
+                    {
+                        var factorBase = factor is Powf(var inner, Number.Integer) ? inner : factor;
+                        // `v` itself is no factor: it is where an odd power of it was gathered.
+                        if (factorBase.ContainsNode(vt) && factorBase != vt && !bases.Any(known => known == factorBase))
+                            bases.Add(factorBase);
+                    }
+                    return bases.Count >= 2;
+                }
 
                 // The quotient with every factor that is a multiple of 1 + t or 1 - t, on either
                 // side of the bar and to any whole power, gathered into one power of each: the
