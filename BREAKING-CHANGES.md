@@ -1089,6 +1089,26 @@ Rubi's 6.1.5 and 6.6.3 ([#718](https://github.com/asc-community/AngouriMath/issu
 | `"tanh(x)^4/(a+b*csch(x))".Integrate("x")` | left unevaluated | the antiderivative |
 | `"csch(x)^2/(a+b*csch(x))".Integrate("x")` | left unevaluated | the antiderivative |
 
+### Hyperbolic powers two apart whose coefficients kill the reduction's residual are integrated
+
+`cosh(x)^(5/2) - 3 sqrt(cosh(x))/5` was left as written, and neither of its terms has an
+elementary antiderivative -- both are elliptic. Their combination has one. From the reduction
+`int cosh^p = sinh cosh^(p - 1)/p + (p - 1)/p int cosh^(p - 2)`, a sum of powers two apart is
+elementary exactly when the walk from the highest exponent down carries nothing past the lowest,
+and the answer is what the walk accumulated; the hyperbolic sine's reduction subtracts where the
+cosine's adds. The chain may be several steps long -- Rubi's
+`x/sech(x)^(7/2) - 5 x sqrt(sech(x))/21` closes over two, its coefficient being `(5/7)(1/3)` --
+and one linear factor in front is taken by parts against the same antiderivative, `x F - int F`
+with `int F` the next power over `p^2`. Rubi's 6.1.1, 6.2.1, 6.5.1 and 6.6.1
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"cosh(x)^(5/2)-3/5*cosh(x)^(1/2)".Integrate("x")` | left unevaluated | `2 sinh(x) cosh(x)^(3/2)/5`, in exponentials |
+| `"x/sech(x)^(3/2)-1/3*x*sqrt(sech(x))".Integrate("x")` | left unevaluated | `2 x sinh(x) sqrt(cosh(x))/3 - 4 cosh(x)^(3/2)/9` up to the form |
+| `"x/sech(x)^(7/2)-5/21*x*sqrt(sech(x))".Integrate("x")` | left unevaluated | the antiderivative, over two reduction steps |
+| `"x/csch(x)^(3/2)+1/3*x*sqrt(csch(x))".Integrate("x")` | left unevaluated | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

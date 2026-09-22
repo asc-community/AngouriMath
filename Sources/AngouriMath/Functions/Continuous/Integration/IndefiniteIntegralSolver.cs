@@ -14051,10 +14051,14 @@ namespace AngouriMath.Functions.Algebra
             // gathering names that y: then the tangent's spelling carries e^y.
             Entity? argument = null;
             Entity overTheTwo = expr;
-            foreach (var halved in new[] { false, true })
+            foreach (var scale in new[] { 1, 2, -1 })
             {
-                var one = halved ? null : (EInteger?)EInteger.One;
-                var two = halved ? EInteger.One : EInteger.FromInt32(2);
+                // y itself, its half (`tanh(c + d x)` alone is written with e^(2(c + d x)), and
+                // the gathering names that y), and twice it (`cosh(2x + 1)` with the slope kept
+                // whole is `cosh(2y)` for `y = x + 1/2`).
+                var halved = scale == 2;
+                var one = scale == 1 ? (EInteger?)EInteger.One : scale == 2 ? null : EInteger.FromInt32(2);
+                var two = scale == 1 ? EInteger.FromInt32(2) : scale == 2 ? EInteger.One : EInteger.FromInt32(4);
                 // With y named from an exponential of the other sign, e^-y is the k = 1 one:
                 // sinh and tanh are odd, cosh even.
                 Entity? ReadTheTwo(Entity node)
@@ -14084,7 +14088,7 @@ namespace AngouriMath.Functions.Algebra
                 var read = expr.Replace(node => node.ContainsNode(x) && ReadTheTwo(node) is { } inTheTwo ? inTheTwo : node);
                 if (read.ContainsNode(s) || read.ContainsNode(c))
                 {
-                    argument = halved ? (y / 2).InnerSimplified : y;
+                    argument = scale == 1 ? y : scale == 2 ? (y / 2).InnerSimplified : (2 * y).InnerSimplified;
                     overTheTwo = read;
                     break;
                 }
@@ -14163,6 +14167,265 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             var answer = signs == Number.Integer.One ? result : signs * result;
             return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// A sum every term of which carries the same power of one linear form in
+        /// <paramref name="x"/>, written as that power times the sum of the rest:
+        /// <c>x cosh(x)^(3/2) - x sqrt(cosh(x))/3</c> is <c>x (cosh(x)^(3/2) - sqrt(cosh(x))/3)</c>,
+        /// which parts answers and the split does not -- neither term of that pair has an
+        /// elementary antiderivative, and only their combination has one.
+        /// </summary>
+        /// <remarks>
+        /// After <see cref="SolveBySplittingSum"/>, which answers every sum whose terms are
+        /// each integrable and gives the shorter answer for them; this is for the sums it
+        /// declines. The same question, not one of its own: what is handed on is the integrand
+        /// rewritten, and the rules below it -- parts among them -- see the product.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByGatheringACommonPolynomialFactorOfASum(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (TryTakeACommonLinearFactorOfASum(expr, x) is not var (factored, inside))
+                return null;
+            var written = (factored * inside).InnerSimplified;
+            return written == expr ? null : Integration.ComputeAsTheSameQuestion(written, x, integrateByParts);
+        }
+
+        /// <summary>
+        /// The sum with the highest power of one linear form in <paramref name="x"/> that every
+        /// term carries taken out of it, as that power and what is left; <see langword="null"/>
+        /// where the terms carry no such factor in common. Each term is rebuilt from the
+        /// factors that are left rather than divided, so that taking it out is exact.
+        /// </summary>
+        private static (Entity Factor, Entity Inside)? TryTakeACommonLinearFactorOfASum(Entity expr, Entity.Variable x)
+        {
+            Entity? common = null;
+            var power = int.MaxValue;
+            var terms = new List<(Entity Above, Entity Below, int Power)>();
+            foreach (var term in Sumf.LinearChildren(expr))
+            {
+                Entity? termCommon = null;
+                var termPower = 0;
+                // Above the bar: `x/sech(x)^(3/2)` is one quotient node, and the factor to
+                // gather is in its numerator. The rest is kept as it stands, so that taking the
+                // factor out is exact rather than a division nothing cancels.
+                var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(term));
+                Entity others = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(above))
+                {
+                    var (factorBase, factorPower) = factor is Powf(var inner, Number.Integer whole) && whole.EInteger.Sign > 0 && whole.EInteger.CanFitInInt32()
+                        ? (inner, whole.EInteger.ToInt32Unchecked()) : (factor, 1);
+                    if (factorBase.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(factorBase, x, out var slope, out _) && !TreeAnalyzer.IsZero(slope)
+                        && (termCommon is null || termCommon == factorBase))
+                    {
+                        termCommon = factorBase;
+                        termPower += factorPower;
+                        continue;
+                    }
+                    others *= factor;
+                }
+                if (termCommon is null || termPower == 0)
+                    return null;
+                if (common is null)
+                    common = termCommon;
+                else if (common != termCommon)
+                    return null;
+                power = System.Math.Min(power, termPower);
+                terms.Add((others, below, termPower));
+            }
+            if (common is null || terms.Count < 2 || power == int.MaxValue)
+                return null;
+            var factored = power == 1 ? common : MathS.Pow(common, Number.Integer.Create(power));
+            Entity inside = Number.Integer.Zero;
+            foreach (var (above, below, termPower) in terms)
+            {
+                var kept = termPower == power ? above
+                    : above * (termPower - power == 1 ? common : MathS.Pow(common, Number.Integer.Create(termPower - power)));
+                inside += below == Number.Integer.One ? kept : kept / below;
+            }
+            inside = inside.InnerSimplified;
+            return (factored, inside);
+        }
+
+        /// <summary>
+        /// A pair of hyperbolic powers two apart whose coefficients kill the reduction's
+        /// residual: <c>cosh(y)^p - (p - 1)/p cosh(y)^(p - 2)</c> is
+        /// <c>sinh(y) cosh(y)^(p - 1)/p</c>, and <c>sinh(y)^p + (p - 1)/p sinh(y)^(p - 2)</c> is
+        /// <c>cosh(y) sinh(y)^(p - 1)/p</c>. Neither power has an elementary antiderivative on
+        /// its own for a fractional <c>p</c>, and the combination does, which is why the terms
+        /// must not be split apart before this is asked.
+        /// </summary>
+        /// <remarks>
+        /// From the reduction <c>int cosh^p = sinh cosh^(p - 1)/p + (p - 1)/p int cosh^(p - 2)</c>,
+        /// with the coefficient of the lower power chosen so that what is left to integrate is
+        /// nothing; differentiating the answer through <c>sinh^2 = cosh^2 - 1</c> is the whole
+        /// proof. Rubi's 6.5.1 and 6.6.1 -- <c>x/sech(x)^(3/2) - x sqrt(sech(x))/3</c> is <c>x</c>
+        /// times such a pair -- meet it beside a polynomial, which the common factor of a sum
+        /// gathers and parts then separates.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPairOfHyperbolicPowersTwoApart(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var s = Variable.CreateUnique(expr, "s_hyp");
+            var c = Variable.CreateUnique(expr, "c_hyp");
+            if (ReadTheHyperbolicFunctions(expr, x, s, c) is not var (readBack, argument))
+            {
+                return null;
+            }
+            // One linear factor in front, at most: `(c + d x)(A f^p + B f^(p - 2))` is
+            // `(c + d x) F - d int F` with `F` the pair's antiderivative, and `int F` is
+            // `A f^p/(p^2 a^2)` -- both closed, where a second power of `x` would need
+            // `int f^p` itself, which is elliptic.
+            Entity? inFront = null;
+            var overTheTwo = readBack;
+            // A sum every term of which carries the factor -- `x A f^p + x B f^(p - 2)` -- is
+            // that factor times the pair, and the gathering has not happened yet: this rule
+            // runs before the split, which would hand each elliptic term to the whole chain.
+            if (readBack.ContainsNode(x) && readBack is Sumf or Minusf
+                && TryTakeACommonLinearFactorOfASum(readBack, x) is var (gathered, insideOfSum)
+                && !insideOfSum.ContainsNode(x))
+            {
+                inFront = gathered;
+                overTheTwo = insideOfSum;
+            }
+            else if (readBack.ContainsNode(x))
+            {
+                var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(readBack));
+                Entity others = Number.Integer.One;
+                foreach (var factor in Mulf.LinearChildren(above))
+                {
+                    if (factor.ContainsNode(x) && inFront is null
+                        && TreeAnalyzer.TryGetPolyLinear(factor, x, out var factorSlope, out _) && !TreeAnalyzer.IsZero(factorSlope))
+                        inFront = factor;
+                    else
+                        others *= factor;
+                }
+                if (inFront is null)
+                    return null;
+                overTheTwo = (below == Number.Integer.One ? others : others / below).InnerSimplified;
+                if (overTheTwo.ContainsNode(x))
+                    return null;
+            }
+            // Each term over its own bar, and each factor read with the exponent it stands at:
+            // `1/sech(y)^(5/2)` arrives as `(c^(-5/2))^(-1)` or as `1/(1/c)^(5/2)` depending on
+            // what rewrote it, and both are `c^(5/2)`. A power of a power multiplies.
+            var terms = new List<(Entity Coefficient, Variable Function, Number.Rational Exponent)>();
+            foreach (var term in Sumf.LinearChildren(overTheTwo))
+            {
+                Entity coefficient = Number.Integer.One;
+                Variable? termFunction = null;
+                ERational termExponent = ERational.Zero;
+                var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(term));
+                foreach (var (side, sign) in new[] { (above, 1), (below, -1) })
+                    foreach (var factor in Mulf.LinearChildren(side))
+                    {
+                        if (!factor.ContainsNode(s) && !factor.ContainsNode(c))
+                        {
+                            coefficient = sign == 1 ? coefficient * factor : coefficient / factor;
+                            continue;
+                        }
+                        // f, f^p, or (f^p)^q, to any depth of powers.
+                        var node = factor;
+                        var exponent = ERational.One;
+                        while (true)
+                        {
+                            if (node is Powf(var inner, Number.Rational power))
+                            {
+                                exponent = exponent.Multiply(power.ERational);
+                                node = inner;
+                                continue;
+                            }
+                            // A reciprocal inside the power: `sech(y)^(5/2)` is `(1/c)^(5/2)`,
+                            // which is `c^(-5/2)`.
+                            if (node is Divf(Number.Integer { EInteger.IsZero: false } one, var reciprocal) && one.EInteger.Equals(EInteger.One))
+                            {
+                                exponent = exponent.Negate();
+                                node = reciprocal;
+                                continue;
+                            }
+                            break;
+                        }
+                        if (node is not Variable read || read != s && read != c)
+                            return null;
+                        if (termFunction is not null && termFunction != read)
+                            return null;
+                        termFunction = read;
+                        termExponent = termExponent.Add(sign == 1 ? exponent : exponent.Negate());
+                    }
+                if (termFunction is null)
+                    return null;
+                terms.Add((coefficient.InnerSimplified, termFunction, Number.Rational.Create(termExponent)));
+            }
+            if (terms.Count < 2 || terms.Any(term => term.Function != terms[0].Function))
+                return null;
+            var function = terms[0].Function;
+            // The exponents are one class two apart, so the reduction walks from the highest
+            // down; a gap is a term with coefficient zero.
+            var highest = terms[0].Exponent.ERational;
+            var lowest = terms[0].Exponent.ERational;
+            foreach (var term in terms)
+            {
+                if (term.Exponent.ERational.CompareTo(highest) > 0)
+                    highest = term.Exponent.ERational;
+                if (term.Exponent.ERational.CompareTo(lowest) < 0)
+                    lowest = term.Exponent.ERational;
+            }
+            static bool IsAWholeNumberOfSteps(ERational difference)
+            {
+                // ToLowestTerms: a difference of two halves comes back as `8/2` unreduced.
+                var reduced = difference.ToLowestTerms();
+                return reduced.Denominator.Equals(EInteger.One) && reduced.Numerator.Remainder(EInteger.FromInt32(2)).IsZero;
+            }
+            if (terms.Any(term => !IsAWholeNumberOfSteps(highest.Subtract(term.Exponent.ERational))))
+                return null;
+            var steps = highest.Subtract(lowest).ToLowestTerms().Numerator.Divide(EInteger.FromInt32(2));
+            if (steps.CompareTo(EInteger.FromInt32(8)) > 0)
+                return null;
+            if (terms.All(term => term.Exponent is Number.Integer))
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out _) || TreeAnalyzer.IsZero(slope))
+                return null;
+
+            // int f^e = g f^(e - 1)/(e a) + s (e - 1)/e int f^(e - 2), with g the other function,
+            // s = +1 for the hyperbolic cosine (sinh^2 = cosh^2 - 1) and -1 for the sine
+            // (cosh^2 = sinh^2 + 1), and a the argument's slope. Walking down from the highest
+            // exponent, each term's coefficient is its own plus what the step above carried; the
+            // sum is elementary exactly when nothing is carried past the lowest.
+            var other = function == c ? MathS.Hyperbolic.Sinh(argument) : MathS.Hyperbolic.Cosh(argument);
+            var self = function == c ? MathS.Hyperbolic.Cosh(argument) : MathS.Hyperbolic.Sinh(argument);
+            var reductionSign = function == c ? Number.Integer.One : Number.Integer.Create(-1);
+            Entity antiderivative = Number.Integer.Zero;
+            Entity integralOfAntiderivative = Number.Integer.Zero;
+            Entity carried = Number.Integer.Zero;
+            for (var at = highest; at.CompareTo(lowest) >= 0; at = at.Subtract(ERational.FromInt32(2)))
+            {
+                Entity written = Number.Rational.Create(at);
+                Entity coefficient = carried;
+                foreach (var term in terms)
+                    if (term.Exponent.ERational.Equals(at))
+                        coefficient += term.Coefficient;
+                coefficient = Functions.PartialFractions.Bare(coefficient.InnerSimplified);
+                if (at.IsZero || coefficient == Number.Integer.Zero)
+                {
+                    carried = Number.Integer.Zero;
+                    if (!at.IsZero)
+                        continue;
+                    return null;
+                }
+                // g f^(e - 1)/(e a), and its own antiderivative f^e/(e^2 a^2), which is what a
+                // linear factor in front needs.
+                var below = (written - Number.Integer.One).InnerSimplified;
+                antiderivative += coefficient * other * MathS.Pow(self, below) / (written * slope);
+                integralOfAntiderivative += coefficient * MathS.Pow(self, written) / (written * written * slope * slope);
+                carried = Functions.PartialFractions.Bare((reductionSign * coefficient * (written - Number.Integer.One) / written).InnerSimplified);
+            }
+            if (carried != Number.Integer.Zero && Functions.PartialFractions.Bare(carried.Simplify()) != Number.Integer.Zero)
+                return null;
+            if (inFront is null)
+                return antiderivative.InnerSimplified;
+            if (!TreeAnalyzer.TryGetPolyLinear(inFront, x, out var frontSlope, out _))
+                return null;
+            return (inFront * antiderivative - frontSlope * integralOfAntiderivative).InnerSimplified;
         }
 
         /// <summary>

@@ -111,5 +111,49 @@ namespace AngouriMath.Tests.Calculus
                 }
             }
         }
+        /// <summary>
+        /// Hyperbolic powers two apart whose coefficients kill the reduction's residual:
+        /// <c>int cosh^p = sinh cosh^(p - 1)/p + (p - 1)/p int cosh^(p - 2)</c>, so
+        /// <c>cosh^p - (p - 1)/p cosh^(p - 2)</c> is <c>sinh cosh^(p - 1)/p</c> although neither
+        /// power alone is elementary; the chain may be several steps long, as Rubi's
+        /// <c>x/sech(x)^(7/2) - 5 x sqrt(sech(x))/21</c> is, whose coefficient is
+        /// <c>(5/7)(1/3)</c>. One linear factor in front is taken by parts against the same
+        /// antiderivative. Rubi's 6.1.1, 6.2.1, 6.5.1 and 6.6.1.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        [Theory]
+        [InlineData("x/sech(x)^(3/2) - x*sqrt(sech(x))/3")]
+        [InlineData("x/sech(x)^(5/2) - 3*x/sqrt(sech(x))/5")]
+        [InlineData("x/sech(x)^(7/2) - 5*x*sqrt(sech(x))/21")]
+        [InlineData("x/cosh(x)^(7/2) + 3*x*sqrt(cosh(x))/5")]
+        [InlineData("x/csch(x)^(3/2) + x*sqrt(csch(x))/3")]
+        [InlineData("cosh(x)^(5/2) - 3*cosh(x)^(1/2)/5")]
+        [InlineData("sinh(2*x + 1)^(3/2) + sinh(2*x + 1)^(-1/2)/3")]
+        public void ThePairOfPowersTwoApartIsElementary(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x").Substitute("C", 0);
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            var derivative = integral.Differentiate("x");
+            var original = integrand.ToEntity();
+            var compared = 0;
+            foreach (var at in new[] { 0.3, 0.7, 1.1, 1.9, 2.6 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                if (got.IsNaN || want.IsNaN)
+                    continue;
+                compared++;
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart) + Math.Abs((double)want.ImaginaryPart));
+                Assert.True(difference / scale < 1e-7, $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+            Assert.True(compared >= 4, $"only {compared} of five points were comparable for {integrand}");
+        }
+
+        /// <summary>A combination that does not kill the residual is not this rule's, and is left alone.</summary>
+        [Fact]
+        public void AnotherCoefficientIsLeftAsWritten()
+            => Assert.Contains("integral(", "cosh(x)^(5/2) - cosh(x)^(1/2)/2".ToEntity().Integrate("x").Stringize());
     }
 }
