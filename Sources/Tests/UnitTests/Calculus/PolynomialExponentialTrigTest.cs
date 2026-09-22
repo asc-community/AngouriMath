@@ -205,5 +205,62 @@ namespace AngouriMath.Tests.Calculus
                 return;
             DifferentiatesBack(integrand);
         }
+
+        /// <summary>
+        /// A phase in the trigonometric's argument, expanded by the angle-sum identity where an
+        /// exponential stands beside it: the closed rule reads one frequency and no phase, an
+        /// exponential's own offset being a constant factor where a trigonometric's is not.
+        /// </summary>
+        [Theory]
+        [InlineData("x*e^(2*x)*cos(3*x + 1)")]
+        [InlineData("x^2*e^x*sin(x + 2)")]
+        [InlineData("e^(3*x)*cos(2*x + 1/2)*sin(2*x + 1/2)")]
+        public void APhaseIsExpandedBesideAnExponential(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// The resonant case, where the rate is the frequency times <c>i</c> and the closed
+        /// form's <c>a^2 + b^2</c> is zero: the product is a sum of two exponentials instead.
+        /// With a symbolic frequency <c>-f^2 + f^2</c> is not collected by
+        /// <see cref="Entity.InnerSimplified"/>, so the guard read it as a nonzero number and the
+        /// answer divided by it -- <c>NaN</c> at every point, for every row of Rubi's 4.3.10 that
+        /// carries <c>a + i a tan(pe + f x)</c> below the bar.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/718">#718</a>
+        /// </summary>
+        [Theory]
+        [InlineData("x*e^(-i*f*x)*cos(f*x)", "f")]
+        [InlineData("e^(i*f*x)*sin(f*x)", "f")]
+        [InlineData("x^2*e^(-i*x)*cos(x)", null)]
+        public void TheResonanceIsSeenSymbolically(string integrand, string? symbol)
+        {
+            var integral = integrand.ToEntity().Integrate("x").Substitute("C", 0);
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Entity Pin(Entity e) => symbol is null ? e : e.Substitute(symbol, 1.3);
+            var derivative = Pin(integral).Differentiate("x");
+            var original = Pin(integrand.ToEntity());
+            foreach (var at in Points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.False(got.IsNaN, $"the antiderivative of {integrand} differentiates to NaN at x = {at}");
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart) + Math.Abs((double)want.ImaginaryPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        /// <summary>
+        /// <c>A + i A tan(z)</c> below the bar is <c>A e^(i z)/cos(z)</c>, and
+        /// <c>A + i A cot(z)</c> is <c>i A e^(-i z)/sin(z)</c>: beside a polynomial that is the
+        /// shape above, where the imaginary unit in the coefficient is read by nothing else.
+        /// Rubi's 4.3.10 and 4.4.10. Above the bar the tangent's own rules answer it, and the
+        /// rewrite leaves it alone.
+        /// </summary>
+        [Theory]
+        [InlineData("x/(2 + 2*i*tan(x))")]
+        [InlineData("x^2/(3 - 3*i*cot(x))")]
+        [InlineData("(1 + 2*x)/(3 + 3*i*tan(1/2 + x))^2")]
+        public void AnImaginaryTangentBelowTheBarIsAnExponential(string integrand) => DifferentiatesBack(integrand);
     }
 }

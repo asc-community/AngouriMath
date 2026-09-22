@@ -1131,6 +1131,33 @@ quotients that nothing below reads. Rubi's 6.3.2 and 6.5.3
 | `"sech(a+2*ln(c/x^(1/2)))^3".Integrate("x")` | left unevaluated | the antiderivative |
 | `"x*tanh(a+2*ln(x))^2".Integrate("x")` | left unevaluated | the antiderivative |
 
+### An exponential times a trigonometric at the same frequency no longer divides by zero, and a phase is expanded
+
+`x e^(-i x) cos(x)` was answered `NaN` at every point of its domain. The closed form
+`int e^(a x)(c cos(b x) + d sin(b x)) = e^(a x)(...)/(a^2 + b^2)` is guarded against the resonance
+`a = ±i b`, where the product is a sum of two exponentials and the formula divides by zero -- but
+the guard tested whether `a^2 + b^2` *evaluates* to a number, and with a symbolic frequency
+`(-i f)^2 + f^2` is `-f^2 + f^2`, which `InnerSimplified` does not collect. So the guard passed,
+the formula divided by a zero it could not see, and the answer was `NaN`: a wrong answer, not a
+decline. Both places that test it -- the table pattern and the polynomial route -- see the
+resonance symbolically now.
+
+With that fixed, two capabilities: a **phase** in the trigonometric's argument is expanded by the
+angle-sum identity where an exponential stands beside it (`cos(f x + p)` is
+`cos(p) cos(f x) - sin(p) sin(f x)`; the rule reads one frequency and no phase, an exponential's
+own offset being a constant factor where a trigonometric's is not), and **`A + i A tan(z)` below
+the bar** is written as `A e^(i z)/cos(z)`, with `A + i A cot(z)` as `i A e^(-i z)/sin(z)` --
+exactly, since `cos z + i sin z` is `e^(i z)`. Beside a polynomial that is the shape the closed
+rule answers, where the imaginary unit in the coefficient is read by nothing else. Rubi's 4.3.10,
+4.4.1 and 4.4.10 ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x*e^(-i*x)*cos(x)".Integrate("x")` | left unevaluated | `x^2/4 + e^(-2 i x)(1 + 2 i x)/8` up to the form -- where `master` between the releases answered `NaN` |
+| `"x*e^(2*x)*cos(3*x+1)".Integrate("x")` | left unevaluated | the antiderivative |
+| `"x/(2+2*i*tan(x))".Integrate("x")` | left unevaluated | the antiderivative |
+| `"(c+d*x)/(a+i*a*tan(pe+f*x))".Integrate("x")` | left unevaluated | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

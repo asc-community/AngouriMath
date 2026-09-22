@@ -420,8 +420,19 @@ namespace AngouriMath.Functions.Algebra
         /// exponential times a sine or cosine divides by: zero for a rate of <c>i</c> times
         /// the frequency, where the product is a sum of two exponentials instead.
         /// </summary>
+        /// <remarks>
+        /// Symbolically as well as numerically. With a symbolic frequency <c>f</c>, the rate
+        /// <c>-i f</c> -- which is what <c>A + i A tan(f x)</c> leaves once written as
+        /// <c>A e^(i f x)/cos(f x)</c> -- gives <c>-f^2 + f^2</c>, which
+        /// <see cref="Entity.InnerSimplified"/> does not collect, so the evaluation is not a
+        /// number and the guard passed: the answer then divided by a zero it could not see and
+        /// was <c>NaN</c> at every point.
+        /// </remarks>
         private static bool NotResonant(Entity rate, Entity frequency)
-            => (rate * rate + frequency * frequency).InnerSimplified.Evaled is not Entity.Number.Complex { IsZero: true };
+        {
+            var scale = (rate * rate + frequency * frequency).InnerSimplified;
+            return scale.Evaled is not Entity.Number.Complex { IsZero: true } && !IsZeroOnceSimplified(scale);
+        }
 
         /// <summary>
         /// Whether <paramref name="expr"/> is an exponential in <paramref name="x"/>, and

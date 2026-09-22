@@ -3359,7 +3359,10 @@ namespace AngouriMath.Functions.Algebra
             var exponential = MathS.Pow(MathS.e, rate * x);
             var cosine = MathS.Cos(frequency * x);
             var sine = MathS.Sin(frequency * x);
-            if (scale == 0 || scale.Evaled is Number.Complex { IsZero: true })
+            // Symbolically as well as numerically: with a symbolic frequency `f` the rate `-i f`
+            // leaves `-f^2 + f^2`, which `InnerSimplified` does not collect.
+            if (scale == 0 || scale.Evaled is Number.Complex { IsZero: true }
+                || scale.Vars.Any() && Functions.PartialFractions.Bare(scale.Simplify()).Evaled is Number.Complex { IsZero: true })
             {
                 // Resonant: by Euler, `c cos(bx) + d sin(bx)` is
                 // `(c - i d) e^(i b x)/2 + (c + i d) e^(-i b x)/2`, and each term beside
@@ -14477,6 +14480,134 @@ namespace AngouriMath.Functions.Algebra
             if (!TreeAnalyzer.TryGetPolyLinear(inFront, x, out var frontSlope, out _))
                 return null;
             return (inFront * antiderivative - frontSlope * integralOfAntiderivative).InnerSimplified;
+        }
+
+        /// <summary>
+        /// A sine or cosine of a linear form with a phase, beside an exponential, expanded by the
+        /// angle-sum identity so that both are of the same bare multiple of the variable:
+        /// <c>cos(f x + p)</c> is <c>cos(p) cos(f x) - sin(p) sin(f x)</c>. The closed rule for a
+        /// polynomial times an exponential times a trigonometric reads one frequency and no
+        /// phase -- an exponential's own offset is a constant factor, a trigonometric's is not --
+        /// and a phase is what every row of Rubi's 4.3.10 and 4.4.10 carries once
+        /// <c>A + i A tan(pe + f x)</c> is written as an exponential over a cosine.
+        /// </summary>
+        /// <remarks>
+        /// Only beside an exponential of the variable, which is the shape that rule answers: the
+        /// expansion doubles the terms of every sine and cosine it touches, and the sum split
+        /// would then answer `sin(a + b x)` as two integrals where one closed rule answers it as
+        /// one. Once: the expanded form has no phase left.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByExpandingATrigonometricPhaseBesideAnExponential(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // An exponential of the variable among the factors, and a phase to expand.
+            if (!expr.Nodes.Any(node => node is Powf(var @base, var exponent) && !@base.ContainsNode(x) && exponent.ContainsNode(x)))
+                return null;
+            var expanded = expr.Replace(node =>
+            {
+                Entity argument;
+                bool isSine;
+                switch (node)
+                {
+                    case Sinf(var inner): (argument, isSine) = (inner, true); break;
+                    case Cosf(var inner): (argument, isSine) = (inner, false); break;
+                    default: return node;
+                }
+                if (!argument.ContainsNode(x) || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out var offset)
+                    || TreeAnalyzer.IsZero(slope) || offset.ContainsNode(x) || TreeAnalyzer.IsZero(offset)
+                    || offset.Evaled is Number.Integer(0))
+                    return node;
+                var bare = (slope * x).InnerSimplified;
+                return isSine
+                    ? MathS.Sin(offset) * MathS.Cos(bare) + MathS.Cos(offset) * MathS.Sin(bare)
+                    : MathS.Cos(offset) * MathS.Cos(bare) - MathS.Sin(offset) * MathS.Sin(bare);
+            });
+            if (expanded == expr)
+                return null;
+            return Integration.ComputeAsAQuestionOfItsOwn(expanded.Expand().InnerSimplified, x, integrateByParts);
+        }
+
+        /// <summary>
+        /// <c>A + i A tan(z)</c> is <c>A e^(i z)/cos(z)</c>, and <c>A + i A cot(z)</c> is
+        /// <c>i A e^(-i z)/sin(z)</c> -- exactly, wherever the tangent is defined, since
+        /// <c>cos(z) + i sin(z)</c> is <c>e^(i z)</c>. A power of one of them below the bar is
+        /// then a power of the cosine times an exponential, and beside a polynomial that is a
+        /// shape the closed rules answer: <c>(c + d x)^2/(a + i a tan(pe + f x))^2</c> is a
+        /// search past the budget as written and a second once rewritten.
+        /// </summary>
+        /// <remarks>
+        /// The four signs are the four identities: <c>A - i A tan(z)</c> is
+        /// <c>A e^(-i z)/cos(z)</c> and <c>A - i A cot(z)</c> is <c>-i A e^(i z)/sin(z)</c>.
+        /// Rubi's 4.3.10 and 4.4.10, where every such row carries the imaginary unit in the
+        /// coefficient and nothing else reads it. The same question, not one of its own: what is
+        /// handed on is the integrand in another spelling.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByWritingAnImaginaryTangentAsAnExponential(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // Below the bar only: `(A + i A tan(z))^3` above it is a polynomial in the tangent,
+            // which the rules for those answer in the tangent and more shortly, where the
+            // reciprocal is what nothing reads.
+            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr));
+            if (!below.ContainsNode(x))
+                return null;
+            var rewritten = below.Replace(node =>
+            {
+                if (node is not Sumf and not Minusf || !node.ContainsNode(x))
+                    return node;
+                Entity constant = Number.Integer.Zero;
+                Entity? coefficient = null;
+                Entity? argument = null;
+                var isTangent = false;
+                foreach (var term in Sumf.LinearChildren(node))
+                {
+                    if (!term.ContainsNode(x))
+                    {
+                        constant += term;
+                        continue;
+                    }
+                    if (coefficient is not null)
+                        return node;
+                    Entity factors = Number.Integer.One;
+                    foreach (var factor in Mulf.LinearChildren(term))
+                        switch (factor)
+                        {
+                            case Tanf(var inner) when argument is null:
+                                (argument, isTangent) = (inner, true);
+                                break;
+                            case Cotanf(var inner) when argument is null:
+                                (argument, isTangent) = (inner, false);
+                                break;
+                            default:
+                                if (factor.ContainsNode(x))
+                                    return node;
+                                factors *= factor;
+                                break;
+                        }
+                    if (argument is null)
+                        return node;
+                    coefficient = factors;
+                }
+                if (coefficient is null || argument is null || constant == Number.Integer.Zero)
+                    return node;
+                // The ratio is the imaginary unit one way or the other, and nothing else.
+                // Bare: `i a/a` simplifies to `i provided not a = 0`, and a condition is not a
+                // number to compare against.
+                var ratio = Functions.PartialFractions.Bare((coefficient / constant).InnerSimplified);
+                if (ratio.Evaled is not Number.Complex)
+                    ratio = Functions.PartialFractions.Bare(ratio.Simplify());
+                var plus = ratio.Evaled == MathS.i.Evaled;
+                if (!plus && ratio.Evaled != (-MathS.i).Evaled)
+                    return node;
+                var exponential = MathS.Pow(MathS.e, ((plus == isTangent ? MathS.i : -MathS.i) * argument).InnerSimplified);
+                // A + i A tan(z) is A e^(iz)/cos(z); A + i A cot(z) is i A e^(-iz)/sin(z).
+                return isTangent
+                    ? constant * exponential / MathS.Cos(argument)
+                    : (plus ? MathS.i : -MathS.i) * constant * exponential / MathS.Sin(argument);
+            });
+            return rewritten == below ? null : Integration.ComputeAsTheSameQuestion((above / rewritten).InnerSimplified, x, integrateByParts);
         }
 
         /// <summary>
