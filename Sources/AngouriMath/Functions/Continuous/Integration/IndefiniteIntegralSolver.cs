@@ -9093,6 +9093,13 @@ namespace AngouriMath.Functions.Algebra
                 && TryReadAPowerTimesARadicalQuadratic(expr, x))
                 return null;
 
+            // A perfect square under the root is no radical: `sqrt(u^2)` is `|u|`, which
+            // `SolveByTakingARootOfAPerfectSquare` writes as `sgn(u) u`, and the substitution
+            // written for it -- `t = sqrt(u^2) - u`, which is zero on half the line -- is
+            // declined rather than made.
+            if ((b * b - Number.Integer.Create(4) * a * c).InnerSimplified.Evaled is Number.Complex { IsZero: true })
+                return null;
+
             var t = Variable.CreateUnique(expr, "t_euler");
             Entity xInT, rootInT;
             Entity backSubstitution;
@@ -10039,6 +10046,146 @@ namespace AngouriMath.Functions.Algebra
                 if (pair.Value % 2 != 0)
                     answer = MathS.Signum(pair.Key) * answer;
             return answer;
+        }
+
+        /// <summary>
+        /// <c>x^(n - 1) g(x^n)</c> with a symbolic <c>n</c>, which is <c>g(u)/n</c> under
+        /// <c>u = x^n</c>: the power in front is the derivative of the power inside up to the
+        /// constant <c>n</c>, and the rest mentions <c>x</c> only as <c>x^n</c>. Rubi's 6.5.2 and
+        /// 6.6.2 -- <c>(e x)^(n - 1) (a + b sech(c + d x^n))^p</c> -- write the power in front as
+        /// <c>(e x)^(n - 1)</c>, which is <c>e^(n - 1) x^(n - 1)</c> for a positive <c>e</c>, and
+        /// the answer says so. A concrete <c>n</c> is the general substitution's; a symbolic
+        /// one was nobody's, and <c>x^(n - 1) e^(x^n)</c> was declined.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        internal static Entity? SolveByAPowerOfTheVariableTimesAFunctionOfItsPower(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Entity? inFront = null;
+            Entity? scale = null;
+            Entity? rest = null;
+            Entity constant = Number.Integer.One;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                // The power in front: x^m, or (e x)^m with e free of x, to a symbolic m.
+                if (inFront is null && !underneath && factor is Powf(var @base, var exponent) && !exponent.ContainsNode(x)
+                    && exponent.Evaled is not Number && exponent.Vars.Any()
+                    && (@base == x || @base is Mulf(var l, var r) && (l == x && !r.ContainsNode(x) || r == x && !l.ContainsNode(x))))
+                {
+                    inFront = exponent;
+                    scale = @base == x ? null : @base is Mulf(var l2, var r2) ? (l2 == x ? r2 : l2) : null;
+                    continue;
+                }
+                var piece = underneath ? Number.Integer.One / factor : factor;
+                rest = rest is null ? piece : rest * piece;
+            }
+            if (inFront is null || rest is null)
+                return null;
+            // The rest mentions x only as x^n, one n throughout.
+            Entity? n = null;
+            foreach (var node in rest.Nodes)
+                if (node is Powf(var b, var e) && b == x && !e.ContainsNode(x))
+                {
+                    if (n is null)
+                        n = e;
+                    else if (n != e)
+                        return null;
+                }
+            if (n is null || n.Evaled is Number)
+                return null;
+            // m + 1 = k n for a whole k >= 1: x^(k n - 1) g(x^n) is u^(k - 1) g(u)/n.
+            // Bare: the simplification attaches `provided not n = 0` to the quotient it
+            // cancelled, and the generic case is what every rule answers in.
+            var timesN = Functions.PartialFractions.Bare(((inFront + Number.Integer.One) / n).InnerSimplified);
+            if (timesN is not Number.Integer k || k.EInteger.Sign <= 0)
+            {
+                timesN = Functions.PartialFractions.Bare(((inFront + Number.Integer.One) / n).Simplify());
+                if (timesN is not Number.Integer k2 || k2.EInteger.Sign <= 0)
+                    return null;
+                k = k2;
+            }
+            var u = Variable.CreateUnique(expr, "u_pow");
+            var inU = rest.Replace(node => node is Powf(var b, var e) && b == x && e == n ? u : node);
+            if (inU.ContainsNode(x))
+                return null;
+            if (k != Number.Integer.One)
+                inU = MathS.Pow(u, (k - Number.Integer.One).InnerSimplified) * inU;
+            if (Integration.ComputeAsAQuestionOfItsOwn(inU, u, integrateByParts) is not { } inner)
+                return null;
+            Entity answer = constant * inner.Substitute(u, MathS.Pow(x, n)) / n;
+            // (e x)^(n - 1) is e^(n - 1) x^(n - 1) for a positive e, which the answer states.
+            if (scale is { })
+            {
+                answer = MathS.Pow(scale, inFront) * answer;
+                if (scale.Evaled is not Number.Real { IsPositive: true })
+                    answer = answer.Provided(new Greaterf(scale, Number.Integer.Zero));
+            }
+            return answer;
+        }
+
+        /// <summary>
+        /// A square root of a perfect square in <paramref name="x"/> is the modulus:
+        /// <c>sqrt(x^2)</c> is <c>|x|</c>, which for a real <c>x</c> is <c>sgn(x) x</c>, and
+        /// <c>sqrt(a (x + h)^2)</c> is <c>sqrt(a) sgn(x + h) (x + h)</c> for a positive number
+        /// <c>a</c>. Every rule that reads a root of a quadratic assumes it is not one:
+        /// <c>1/sqrt(1 + csch(x)^2)</c> under <c>u = tanh(x)</c> is <c>sqrt(u^2)/(u^2 - 1)</c>,
+        /// and the table rule for <c>sqrt(a w^2 + b w + c)</c> beside a linear, reached after the
+        /// partial fractions and a reciprocal, answered it with a logarithm of zero.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        /// <remarks>
+        /// At every depth, unlike <see cref="SolveByTakingASquareFactorOutOfARoot"/>, since the
+        /// misreading is at depth; and the square root only, not <c>(x^2 + 2x + 1)^(5/2)</c>,
+        /// which that rule writes as <c>sgn(x + 1) (x + 1)^5</c> at the top. Below a
+        /// substitution the variable is one whose sign the substitution knows, and a sign
+        /// written for it is a factor the rest of the search has to carry:
+        /// <c>tanh(x)/(a + b tanh(x)^2)^(5/2)</c> under <c>u = e^(2x)</c> holds
+        /// <c>(1 + 2u + u^2)^(5/2)</c>, and with that rewritten the search ran past its budget
+        /// where it had answered in twenty seconds.
+        /// </remarks>
+        internal static Entity? SolveByTakingARootOfAPerfectSquare(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // Asked of every integrand at every depth, so the radicand is read as a polynomial
+            // only where it is small enough to be a written square: x^2, or a x^2 + b x + c.
+            static bool MayBeARootOfASquare(Entity node, Entity.Variable x)
+                => node is Powf(var radicand, Number.Rational r) && r.ERational.Equals(ERational.Create(1, 2))
+                    && radicand.ContainsNode(x) && radicand.Complexity <= 12
+                    && radicand.Nodes.Count(inner => inner == x) <= 2;
+            if (!expr.Nodes.Any(node => MayBeARootOfASquare(node, x)))
+                return null;
+            var changed = false;
+            var written = expr.Replace(node =>
+            {
+                if (!MayBeARootOfASquare(node, x))
+                    return node;
+                var (radicand, exponent) = (Powf)node;
+                var r = (Number.Rational)exponent;
+                if (!TreeAnalyzer.TryGetPolynomial(radicand, x, out var monomials) || monomials.Count == 0)
+                    return node;
+                var degree = monomials.Keys.Max()!;
+                if (!degree.Equals(EInteger.FromInt32(2)) || monomials.Keys.Any(k => k.Sign < 0))
+                    return node;
+                var a = monomials.TryGetValue(EInteger.FromInt32(2), out var a2) ? a2 : Number.Integer.Zero;
+                var b = monomials.TryGetValue(EInteger.One, out var b1) ? b1 : Number.Integer.Zero;
+                var c = monomials.TryGetValue(EInteger.Zero, out var c0) ? c0 : Number.Integer.Zero;
+                if (a.Evaled is not Number.Real { IsPositive: true } leading || b.Evaled is not Number.Real || c.Evaled is not Number.Real
+                    || (b * b - Number.Integer.Create(4) * a * c).InnerSimplified.Evaled is not Number.Complex { IsZero: true })
+                    return node;
+                // a (x + h)^2 with h = b/(2a): (a (x + h)^2)^r is a^r |x + h|^(2r), and with 2r odd
+                // (a rational is held in lowest terms) that is a^r sgn(x + h) (x + h)^(2r).
+                var h = (b / (Number.Integer.Create(2) * a)).InnerSimplified;
+                var linear = h == Number.Integer.Zero ? x : (x + h).InnerSimplified;
+                var twoR = Number.Integer.Create(r.ERational.Numerator);
+                Entity power = twoR == Number.Integer.One ? linear : MathS.Pow(linear, twoR);
+                Entity signed = MathS.Signum(linear) * power;
+                changed = true;
+                return leading == Number.Integer.One ? signed : MathS.Pow(leading, r) * signed;
+            });
+            return changed ? Integration.ComputeAsTheSameQuestion(written, x, integrateByParts) : null;
         }
 
         /// <summary>

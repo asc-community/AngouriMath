@@ -993,6 +993,26 @@ the even or the odd indices, each `2^(n - 1)` — Prop 8.4.4, Thm 8.4.6, Ex 8.3.
 | `"sum(binomial(n,k)^2, k, 0, n)".ToEntity().Evaled` | parse error | `binomial(2 n, n)` |
 | `"sum(binomial(i,k), i, 0, n)".ToEntity().Evaled` | parse error | `binomial(n + 1, k + 1)` |
 
+### A power of `x` beside a function of a symbolic power of `x` is integrated by substituting the power
+
+`x^(n - 1) e^(x^n)` with a symbolic `n` was left as written: it is `e^(x^n)/n`, under `u = x^n`,
+and with it `x^(k n - 1) g(x^n)` for a whole `k`, which is `u^(k - 1) g(u)/n` -- Rubi's 6.5.2 and
+6.6.2, where the power in front is written `(e x)^(n - 1)`, which is `e^(n - 1) x^(n - 1)` for a
+positive `e` and the answer says so. And a square root of a perfect square is the modulus at
+every depth: `1/sqrt(1 + csch(x)^2)` under `u = tanh(x)` is `sqrt(u^2)/(u^2 - 1)`, which the rule
+for a root of a quadratic beside a linear read as a root of a quadratic and answered with a
+logarithm of zero -- wrong on `master` since the hyperbolic entry above, unevaluated in 2.5.0,
+and in no release -- and is `sgn(u) u/(u^2 - 1)`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^(n-1)*e^(x^n)".Integrate("x")` | left unevaluated | `e^(x^n)/n` |
+| `"(pe*x)^(-1+n)*(a+b*csch(c+d*x^n))".Integrate("x")` | left unevaluated | the antiderivative, `provided pe > 0` |
+| `"(pe*x)^(-1+n)/(a+b*sech(c+d*x^n))^2".Integrate("x")` | left unevaluated | the antiderivative, by cases on `a` and `b` |
+| `"1/sqrt(1+csch(x)^2)".Integrate("x")` | left unevaluated | `-sgn(tanh(x)) ln(tanh(x)^2 - 1)/2`, in exponentials |
+| `"x^4/sech(2*ln(c*x))^(1/2)".Integrate("x")` | left unevaluated | `sgn(x) (1 + c^4 x^4)^(3/2)/(6 sqrt(2) c^5)` up to the form, `provided c^4 > 0` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
