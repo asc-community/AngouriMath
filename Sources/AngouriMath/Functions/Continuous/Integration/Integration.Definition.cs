@@ -614,6 +614,8 @@ namespace AngouriMath.Functions.Algebra
             // cosine, by the half angle at which they are squares: `1 + sin(y)` is `2 sin(u)^2`. Before
             // the substitution search, which spent twenty seconds on the radicals of the sine.
             if ((answer = IndefiniteIntegralSolver.SolveByTheHalfAngleWhereOnePlusASineIsASquare(expr, x, integrateByParts)) is { }) return answer;
+            // And `a ± a cosh(y)` under a fractional power: `2a cosh(y/2)^2`, `-2a sinh(y/2)^2`.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheHalfAngleWhereOnePlusAHyperbolicCosineIsASquare(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             // A logarithmic derivative the substitution above could not read for a symbol in
             // an exponent: `(x^(n-1) - 1)/(x^n - n x)`.

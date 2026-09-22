@@ -1050,6 +1050,24 @@ in the function is admitted. Rubi's 6.1.7, 6.2.7, 6.3.7, 6.5.7 and 6.6.3
 | `"csch(x)^5/(a+b*cosh(x)^2)".Integrate("x")` | left unevaluated | the antiderivative |
 | `"sinh(x)^3/(1+cosh(x)^2)".Integrate("x")` | left unevaluated | `cosh(x) - 2 arctan(cosh(x))`, in exponentials -- where `master` between the releases gave it through `u = e^x`, in `arctan(2 e^x/sqrt(12 - 8 sqrt(2)))` and its like |
 
+### A fractional power of `a ± a cosh(y)` is integrated by the half angle at which it is a square
+
+`x^2 sqrt(a + a cosh(c + d x))` was left as written: no substitution rationalises a root of a
+hyperbolic function beside a power of `x`. `1 + cosh(y)` is `2 cosh(y/2)^2`, so the root is
+`sqrt(2a) cosh(y/2)` with no sign to write, the hyperbolic cosine being positive; and
+`1 - cosh(y)` is `-2 sinh(y/2)^2`, so `(a - a cosh(y))^(3/2)` is
+`(-2a)^(3/2) sgn(sinh(y/2)) sinh(y/2)^3`, the sign a constant between the zeros that comes out
+in front -- the identity `sqrt(a + a sin(y))` already had. Exact for any `a`, the constants
+`2a` and `-2a` kept whole under the power. Rubi's 6.2.1 and 6.2.5
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2*sqrt(a+a*cosh(c+d*x))".Integrate("x")` | left unevaluated | `sqrt(2a) (2 x^2 sinh((c + d x)/2)/d - 8 x cosh((c + d x)/2)/d^2 + 16 sinh((c + d x)/2)/d^3)` up to the form, in exponentials |
+| `"x*(a+a*cosh(x))^(3/2)".Integrate("x")` | left unevaluated | the antiderivative |
+| `"cosh(x)/sqrt(a-a*cosh(x))".Integrate("x")` | left unevaluated | the antiderivative, with `sgn(sinh(x/2))` in front |
+| `"(A+B*cosh(x))/(a-a*cosh(x))^(5/2)".Integrate("x")` | left unevaluated | the antiderivative, with `sgn(sinh(x/2))` in front |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

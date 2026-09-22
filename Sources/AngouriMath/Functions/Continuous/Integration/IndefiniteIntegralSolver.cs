@@ -13984,36 +13984,17 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// Bioche's first two rules for the hyperbolic functions: a rational function of
-        /// <c>sinh(y)</c> and <c>cosh(y)</c> that is odd in the hyperbolic sine is a rational
-        /// function of <c>u = cosh(y)</c> times <c>sinh(y) dy = du</c>, with <c>sinh^2</c> as
-        /// <c>u^2 - 1</c>; one odd in the hyperbolic cosine is one of <c>u = sinh(y)</c> times
-        /// <c>cosh(y) dy = du</c>, with <c>cosh^2</c> as <c>u^2 + 1</c>. Radicals of polynomials
-        /// in the two even in the function are admitted as coefficients, as in
-        /// <see cref="SolveByBiochesOddSubstitution"/>.
+        /// <paramref name="expr"/> with its hyperbolic functions of one linear argument read
+        /// back from their exponential spellings as <paramref name="s"/> for the hyperbolic
+        /// sine and <paramref name="c"/> for the cosine -- <c>tanh</c> as <c>s/c</c>,
+        /// <c>sech</c> as <c>1/c</c> and so on -- and the argument they are of; null where
+        /// the exponentials are not of one linear form or none spells one of the six.
+        /// Anything else in <c>x</c> is left as it is, for the caller to decline.
         /// </summary>
-        /// <remarks>
-        /// The hyperbolic functions are not nodes: the library writes <c>sinh(y)</c> as
-        /// <c>(e^y - e^-y)/2</c> and <c>tanh(y)</c> as <c>(e^(2y) - 1)/(e^(2y) + 1)</c>, so the
-        /// six are read back by their spellings, for the argument each exponential names, and
-        /// nothing else in <c>x</c> may remain. Rubi's <c>sinh(x)^3/(a + b cosh(x)^2)</c> is
-        /// <c>(u^2 - 1)/(a + b u^2)</c> here, where under <c>u = e^x</c> it is a rational
-        /// function of a symbolic palindromic quartic and under <c>u = tanh(x/2)</c> of one of
-        /// degree eight, and both were searches past the budget; <c>cosh(x)/(a + b tanh(x)^2)</c>,
-        /// <c>sech(x)/(a + b sinh(x)^2)^(3/2)</c> and <c>csch(x)^5/(a + b cosh(x)^2)</c> likewise.
-        /// In front of the substitution search, which with a symbolic coefficient spends the
-        /// budget on <c>u = e^x</c>. Exact: <c>cosh</c> is positive, so <c>u = sinh(y)</c> is a
-        /// bijection of the line, and <c>u = cosh(y)</c> one on each side of zero.
-        /// https://github.com/asc-community/AngouriMath/issues/718
-        /// </remarks>
-        internal static Entity? SolveByBiochesOddHyperbolicSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        private static (Entity OverTheTwo, Entity Argument)? ReadTheHyperbolicFunctions(Entity expr, Entity.Variable x, Variable s, Variable c)
         {
-            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
-                return null;
             if (!TryGatherExponentialsOfOneLinearForm(expr, x, unitX: true, out var exponentials, out var y, out _))
                 return null;
-            var s = Variable.CreateUnique(expr, "s_hyp");
-            var c = Variable.CreateUnique(expr, "c_hyp");
             // The six read by their spellings, each exponential by the multiple of y it is:
             // sinh(y) is (e^y - e^-y)/2, cosh(y) (e^y + e^-y)/2, tanh(y) (e^(2y) - 1)/(e^(2y) + 1),
             // coth(y) the reciprocal, sech(y) 1/cosh(y) and csch(y) 1/sinh(y). The argument is y,
@@ -14061,7 +14042,110 @@ namespace AngouriMath.Functions.Algebra
             }
             if (argument is null)
                 return null;
-            if (!overTheTwo.ContainsNode(s) && !overTheTwo.ContainsNode(c))
+            return argument is null ? null : (overTheTwo, argument);
+        }
+
+        /// <summary>
+        /// Fractional powers of <c>a ± a cosh(y)</c> beside anything in the hyperbolic functions
+        /// of <c>y</c>, by the half angle at which they are squares: <c>1 + cosh(y)</c> is
+        /// <c>2 cosh(y/2)^2</c> and <c>1 - cosh(y)</c> is <c>-2 sinh(y/2)^2</c>, so
+        /// <c>sqrt(a + a cosh(y))</c> is <c>sqrt(2a) cosh(y/2)</c> -- no sign, the hyperbolic
+        /// cosine being positive -- and <c>(a - a cosh(y))^(3/2)</c> is
+        /// <c>(-2a)^(3/2) sgn(sinh(y/2)) sinh(y/2)^3</c>, the sign a constant between the zeros
+        /// of the sine that comes out in front; <c>cosh(y)</c> and <c>sinh(y)</c> beside them are
+        /// <c>2 cosh(y/2)^2 - 1</c> and <c>2 sinh(y/2) cosh(y/2)</c>, and the question is asked
+        /// again in <c>x</c>. <see cref="SolveByTheHalfAngleWhereOnePlusASineIsASquare"/>'s
+        /// identity for the hyperbolic cosine.
+        /// </summary>
+        /// <remarks>
+        /// Rubi's <c>x^2 sqrt(a + a cosh(c + d x))</c>, <c>x (a + a cosh(x))^(3/2)</c>,
+        /// <c>cosh(x)/sqrt(a - a cosh(x))</c> and <c>(A + B cosh(x))/(a - a cosh(x))^(5/2)</c>
+        /// were declined or searches past the budget: no substitution rationalises a root of a
+        /// hyperbolic function of <c>x</c> beside a power of <c>x</c>, and beside the sine and
+        /// cosine of <c>y</c> the root is of a quotient under every one. Exact, for any
+        /// <c>a</c>: <c>cosh(y/2)^2</c> and <c>sinh(y/2)^2</c> are not negative, so
+        /// <c>(a q)^p = a^p q^p</c> for the principal powers whatever <c>a</c> is, with
+        /// <c>2a</c> and <c>-2a</c> kept as the one constant they are; whole products <c>2p</c>
+        /// only. At the top only, as every rule that writes a sign for a function.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByTheHalfAngleWhereOnePlusAHyperbolicCosineIsASquare(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            var s = Variable.CreateUnique(expr, "s_hyp");
+            var c = Variable.CreateUnique(expr, "c_hyp");
+            if (ReadTheHyperbolicFunctions(expr, x, s, c) is not var (overTheTwo, argument))
+                return null;
+            var found = false;
+            foreach (var node in overTheTwo.Nodes)
+            {
+                if (node is not Powf(var radicand, Number.Rational exponent) || exponent is Number.Integer || !radicand.ContainsNode(s) && !radicand.ContainsNode(c))
+                    continue;
+                if (ReadAsOnePlusMinusAFunction(radicand, s, c) is not var (_, _, isSine) || isSine
+                    || !exponent.ERational.Denominator.Equals(EInteger.FromInt32(2)))
+                    return null;
+                found = true;
+            }
+            if (!found)
+                return null;
+            var half = (argument / 2).InnerSimplified;
+            var sinhHalf = MathS.Hyperbolic.Sinh(half);
+            var coshHalf = MathS.Hyperbolic.Cosh(half);
+            Entity signs = Number.Integer.One;
+            var rewritten = overTheTwo.Replace(node =>
+            {
+                if (node is not Powf(var radicand, Number.Rational exponent) || exponent is Number.Integer || !radicand.ContainsNode(s) && !radicand.ContainsNode(c))
+                    return node;
+                if (ReadAsOnePlusMinusAFunction(radicand, s, c) is not var (a, positive, _))
+                    return node;
+                var twoP = Number.Integer.Create(exponent.ERational.Numerator);
+                // (a (1 + cosh y))^p = (2a)^p cosh(y/2)^(2p); (a (1 - cosh y))^p = (-2a)^p |sinh(y/2)|^(2p),
+                // and 2p is odd.
+                if (positive)
+                    return MathS.Pow((2 * a).InnerSimplified, exponent) * MathS.Pow(coshHalf, twoP);
+                signs = signs * MathS.Signum(sinhHalf);
+                return MathS.Pow((-2 * a).InnerSimplified, exponent) * MathS.Pow(sinhHalf, twoP);
+            });
+            var inX = rewritten.Substitute(c, 2 * MathS.Sqr(coshHalf) - 1).Substitute(s, 2 * sinhHalf * coshHalf);
+            if (inX.ContainsNode(s) || inX.ContainsNode(c))
+                return null;
+            if (Integration.ComputeAsTheSameQuestion(inX, x, integrateByParts) is not { } result)
+                return null;
+            var answer = signs == Number.Integer.One ? result : signs * result;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// Bioche's first two rules for the hyperbolic functions: a rational function of
+        /// <c>sinh(y)</c> and <c>cosh(y)</c> that is odd in the hyperbolic sine is a rational
+        /// function of <c>u = cosh(y)</c> times <c>sinh(y) dy = du</c>, with <c>sinh^2</c> as
+        /// <c>u^2 - 1</c>; one odd in the hyperbolic cosine is one of <c>u = sinh(y)</c> times
+        /// <c>cosh(y) dy = du</c>, with <c>cosh^2</c> as <c>u^2 + 1</c>. Radicals of polynomials
+        /// in the two even in the function are admitted as coefficients, as in
+        /// <see cref="SolveByBiochesOddSubstitution"/>.
+        /// </summary>
+        /// <remarks>
+        /// The hyperbolic functions are not nodes: the library writes <c>sinh(y)</c> as
+        /// <c>(e^y - e^-y)/2</c> and <c>tanh(y)</c> as <c>(e^(2y) - 1)/(e^(2y) + 1)</c>, so the
+        /// six are read back by their spellings, for the argument each exponential names, and
+        /// nothing else in <c>x</c> may remain. Rubi's <c>sinh(x)^3/(a + b cosh(x)^2)</c> is
+        /// <c>(u^2 - 1)/(a + b u^2)</c> here, where under <c>u = e^x</c> it is a rational
+        /// function of a symbolic palindromic quartic and under <c>u = tanh(x/2)</c> of one of
+        /// degree eight, and both were searches past the budget; <c>cosh(x)/(a + b tanh(x)^2)</c>,
+        /// <c>sech(x)/(a + b sinh(x)^2)^(3/2)</c> and <c>csch(x)^5/(a + b cosh(x)^2)</c> likewise.
+        /// In front of the substitution search, which with a symbolic coefficient spends the
+        /// budget on <c>u = e^x</c>. Exact: <c>cosh</c> is positive, so <c>u = sinh(y)</c> is a
+        /// bijection of the line, and <c>u = cosh(y)</c> one on each side of zero.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByBiochesOddHyperbolicSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            var s = Variable.CreateUnique(expr, "s_hyp");
+            var c = Variable.CreateUnique(expr, "c_hyp");
+            if (ReadTheHyperbolicFunctions(expr, x, s, c) is not var (overTheTwo, argument))
                 return null;
             var radicals = new List<(Variable Symbol, Entity Base, Number.Rational Exponent)>();
             overTheTwo = overTheTwo.Replace(node =>
