@@ -10145,14 +10145,19 @@ namespace AngouriMath.Functions.Algebra
         /// written for it is a factor the rest of the search has to carry:
         /// <c>tanh(x)/(a + b tanh(x)^2)^(5/2)</c> under <c>u = e^(2x)</c> holds
         /// <c>(1 + 2u + u^2)^(5/2)</c>, and with that rewritten the search ran past its budget
-        /// where it had answered in twenty seconds.
+        /// where it had answered in twenty seconds. The one half-odd power taken beyond the
+        /// square root is of the bare square, <c>(x^2)^(3/2)</c>, which is <c>sgn(x) x^3</c>:
+        /// it is what a root of <c>(b + a u^2)/u^2</c> -- <c>a + b coth(x)^2</c> under
+        /// <c>u = tanh(x)</c> -- leaves once the quotient is written apart, and nothing else
+        /// reads it.
         /// </remarks>
         internal static Entity? SolveByTakingARootOfAPerfectSquare(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             // Asked of every integrand at every depth, so the radicand is read as a polynomial
             // only where it is small enough to be a written square: x^2, or a x^2 + b x + c.
             static bool MayBeARootOfASquare(Entity node, Entity.Variable x)
-                => node is Powf(var radicand, Number.Rational r) && r.ERational.Equals(ERational.Create(1, 2))
+                => node is Powf(var radicand, Number.Rational r) && r.ERational.Denominator.Equals(EInteger.FromInt32(2))
+                    && (r.ERational.Equals(ERational.Create(1, 2)) || radicand is Powf(var @base, var degree) && @base == x && degree == Number.Integer.Create(2))
                     && radicand.ContainsNode(x) && radicand.Complexity <= 12
                     && radicand.Nodes.Count(inner => inner == x) <= 2;
             if (!expr.Nodes.Any(node => MayBeARootOfASquare(node, x)))
@@ -11447,11 +11452,14 @@ namespace AngouriMath.Functions.Algebra
                 // for the lower degrees and the answer in the argument as written. The half only
                 // where every exponent is written with an even factor in front -- `coth(c + d x)`
                 // is written with `e^(2 (c + d x))`, and `tanh(c + d x)` is its argument's
-                // tangent, not the half-angle of `2(c + d x)` -- and not with a root in the
-                // integrand, which the half turns into a root of a quotient: `sinh(x)` writes
-                // `e^x`, and its `u = tanh(x/2)` answers were what `u = e^x` answered in less,
-                // Timofeev's `e^x/sqrt(e^(2x) + a^2)` among them, a root of a polynomial there.
-                var halfIsTheArgument = !HasARadicalOf(expr, x) && exponentials.Keys.All(node => node is Powf(_, var exponent) && WrittenWithAnEvenFactor(exponent));
+                // tangent, not the half-angle of `2(c + d x)` -- and with a root in the
+                // integrand only where the half leaves every radicand over a power of u
+                // (checked once the integrand is in u, below): `sinh(x)` writes `e^x`, the half
+                // makes a root of `2u/(1 - u^2)` of `sqrt(sinh(x))`, and its `u = tanh(x/2)`
+                // answers were what `u = e^x` answered in less, Timofeev's
+                // `e^x/sqrt(e^(2x) + a^2)` among them, a root of a polynomial there.
+                var hasARadical = HasARadicalOf(expr, x);
+                var halfIsTheArgument = exponentials.Keys.All(node => node is Powf(_, var exponent) && WrittenWithAnEvenFactor(exponent));
                 foreach (var halved in new[] { false, true })
                 {
                     if (halved && !halfIsTheArgument)
@@ -11464,11 +11472,19 @@ namespace AngouriMath.Functions.Algebra
                         return null;
                     if (InTanh(inV) is not var (inT, parity) || parity != 0)
                         continue;
+                    // With a root, the half only where every radicand comes out over a power
+                    // of t -- `a + b coth(x)^2` is `(b + a t^2)/t^2`, Rubi's cotangent and
+                    // cosecant families -- and not over `1 - t^2`, which is where the half
+                    // makes a root of a quotient out of `sinh(x)`, and `u = e^x` answers in less.
+                    if (halved && hasARadical && !inT.Nodes.All(node => node is not Powf(var radicand, Number.Rational root) || root is Number.Integer || !radicand.ContainsNode(t)
+                        || Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(radicand)).Item2 is var below
+                            && Mulf.LinearChildren(below).All(factor => !factor.ContainsNode(t) || factor == t || factor is Powf(var b, Number.Integer) && b == t)))
+                        continue;
                     var rationalInT = WithThePowersOfOnePlusMinusTCollected(inT / (1 - MathS.Sqr(t)));
                     if (rationalInT.ContainsNode(square) || rationalInT.ContainsNode(vt) || rationalInT.Nodes.Any(node => node == MathS.NaN)
                         || Integration.ComputeAsAQuestionOfItsOwn(rationalInT, t, integrateByParts) is not { } evenResult)
                         return null;
-                    var evenAnswer = evenResult.Substitute(t, MathS.Hyperbolic.Tanh(halved ? (y / 2).InnerSimplified : y));
+                    var evenAnswer = evenResult.Substitute(t, MathS.Hyperbolic.Tanh(halved ? Functions.PartialFractions.Bare((y / 2).Simplify()) : y));
                     if (evenAnswer.Nodes.Any(node => node == MathS.NaN))
                         return null;
                     // dx is dy/d, and twice that in the half of y.
