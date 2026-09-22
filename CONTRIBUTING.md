@@ -93,22 +93,30 @@ are set out at length in [AGENTS.md](AGENTS.md), which applies to humans too:
 
 ### Types of issues
 
-An issue's *kind* is its GitHub issue type, not a label; the labels say what state it is in and
-where it belongs.
+An issue's *kind* is its GitHub issue type, not a label; labels say what state it is in and where it
+belongs. A type describes what an issue is, not its workflow state, hierarchy, release target, or
+owner. No type means **untriaged**.
 
-- **No type** -- a goal: what you want to be true, and the easiest issue to write. A goal is a
-  meta-issue that spawns work items -- the tracker's `Goal: ...` issues, the dockets, and anything
-  a contributor states without knowing whether it is a bug or a feature. The bar is minimal on
-  purpose: it is mathematics, and we do all of it; the triage sorts a goal into the Bugs and
-  Features it needs, as sub-issues of it, so a blank issue and a goal are the same thing and
-  nothing has to be forced onto an issue whose kind is not known yet.
-- **Bug** -- the behaviour is not what the mathematics says, or the library crashes, hangs or
-  answers something it should have declined. A bug whose impact is low (a simplification that is
-  merely not as good as it could be) is still a Bug; say so in the body.
-- **Feature** -- an idea, a request, a design: what used to carry the `Proposal` label. If the idea
-  is a good one and is going to be implemented, it is marked `Accepted`; if it cannot be implemented
-  any time soon, `Not now`. A Feature without `Accepted` is not agreed: comment on it, do not
-  implement it.
+- **Goal** -- a triaged outcome or initiative. It may have no sub-issues yet and may generate more
+  over several decomposition passes. A Goal used as a parent for sub-issues is the repository's
+  Epic pattern; Epic is not a separate type.
+- **Bug** -- existing behaviour is incorrect, missing, crashes, hangs, or violates the established
+  mathematical or API contract. There is no separate minor-bug type in agentic development.
+- **Feature** -- a new or intentionally changed user-facing capability, API, or mathematical
+  behaviour. An idea that is going to be implemented is marked `Accepted`; if it cannot be
+  implemented any time soon, mark it `Not now`. A Feature without `Accepted` is not agreed:
+  comment on it, do not implement it.
+- **Maintenance** -- internal upkeep without a primary user-facing behaviour change: refactors,
+  tests, documentation, CI, dependencies, or tooling.
+
+A Goal may use a checklist for mutable planning notes, ideas, dependencies, and small steps. Make a
+sub-issue only when a piece needs its own lifecycle, acceptance criteria, owner, review, claim, or
+parent roll-up. Do not create a sub-issue merely to restate a self-contained pull request: that pull
+request may reference the Goal directly. A Goal stays open while it may generate more work; close it
+only when its outcome is achieved or abandoned.
+
+Milestones group work by release or target date. They do not replace Goals or sub-issues. A
+pull request saying `Part of #n` is the work claim.
 
 Questions and requests for opinions are **Discussions**, not issues -- the Q&A and Ideas
 categories -- and are answered there; an issue that turns out to be one is redirected and, once

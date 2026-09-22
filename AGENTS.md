@@ -440,6 +440,31 @@ Then:
       nothing timestamps a tick.
     The issue *type* says what kind of work an issue is, never who holds it.
 
+### Issue types and Goal decomposition
+
+An issue type describes the kind of work, not its state, hierarchy, release target, or owner. An
+issue with no type is **untriaged**; it is not implicitly a Goal.
+
+- **Goal** is a triaged outcome or initiative. It may have no sub-issues when first accepted, and it
+  may generate sub-issues in several passes. A Goal used as a parent is the repository's Epic
+  pattern; do not create a separate Epic type.
+- **Bug** is incorrect existing behaviour, including a wrong mathematical answer, crash, hang, or
+  answer where the library should have declined.
+- **Feature** is new or intentionally changed user-facing behaviour or API.
+- **Maintenance** is internal upkeep without a primary user-facing behaviour change: refactors,
+  tests, documentation, CI, dependencies, or tooling.
+
+When reviewing a Goal, check whether its current children are complete and whether another
+decomposition pass is needed. A checklist is a mutable roadmap, not a lock or authoritative
+progress record. Create a sub-issue only when a piece needs an independent lifecycle, acceptance
+criteria, owner, review, claim, or parent roll-up. Do not create a duplicate sub-issue merely to
+repeat a self-contained pull request; that PR may say `Part of #n` directly on the Goal. If a
+checklist item becomes independently coordinated work, replace or link it to a sub-issue.
+
+Milestones are release or target-date groupings, not Goals. Labels describe state or area, not type.
+Questions and requests for opinions belong in Discussions. If the kind of an issue is uncertain,
+leave it untyped and ask for triage rather than silently assigning Goal or Maintenance.
+
 `TreatWarningsAsErrors` is on and there are custom analyzers; a static field needs
 `[ConstantField]`, `[ThreadStatic]` or `[ConcurrentField]`.
 
