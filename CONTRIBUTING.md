@@ -103,9 +103,10 @@ owner. No type means **untriaged**.
 - **Bug** -- existing behaviour is incorrect, missing, crashes, hangs, or violates the established
   mathematical or API contract. There is no separate minor-bug type in agentic development.
 - **Feature** -- a new or intentionally changed user-facing capability, API, or mathematical
-  behaviour. An idea that is going to be implemented is marked `Accepted`; if it cannot be
-  implemented any time soon, mark it `Not now`. A Feature without `Accepted` is not agreed:
-  comment on it, do not implement it.
+  behaviour. An idea that is going to be implemented is marked `Accepted`; one that will not be
+  taken up for the foreseeable future is closed as not planned, which says the same thing where
+  everyone reads it and keeps the open list what is actually wanted. A Feature without
+  `Accepted` is not agreed: comment on it, do not implement it.
 - **Maintenance** -- internal upkeep without a primary user-facing behaviour change: refactors,
   tests, documentation, CI, dependencies, or tooling.
 
