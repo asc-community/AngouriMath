@@ -1030,6 +1030,26 @@ is `sqrt(b + a u^2)/|u|`, and `|u|^k` for the bare square is `sgn(u) u^k` at eve
 | `"coth(x)/(a+b*coth(x)^2)^(3/2)".Integrate("x")` | left unevaluated | the antiderivative |
 | `"(a+b*coth(x)^2)^(3/2)*tanh(x)^2".Integrate("x")` | left unevaluated | the antiderivative |
 
+### A rational function of the hyperbolic functions odd in the sine or the cosine is integrated by the other
+
+`sinh(x)^3/(a + b cosh(x)^2)` was a search past the budget: under `u = e^x` it is a rational
+function of a symbolic palindromic quartic, and under `u = tanh(x/2)` of a symbolic polynomial
+of degree eight. It is `(u^2 - 1)/(a + b u^2)` under `u = cosh(x)` -- Bioche's first two rules,
+which the trigonometric functions already had: odd in the hyperbolic sine, `u = cosh` with
+`sinh^2 = u^2 - 1`; odd in the hyperbolic cosine, `u = sinh` with `cosh^2 = u^2 + 1`. The six
+hyperbolic functions are read back from their exponential spellings for any linear argument,
+a written power is handed on as the power it is, and a root of a polynomial in the two even
+in the function is admitted. Rubi's 6.1.7, 6.2.7, 6.3.7, 6.5.7 and 6.6.3
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sinh(x)^3/(a+b*cosh(x)^2)".Integrate("x")` | left unevaluated | `cosh(x)/b - (a + b) arctan(sqrt(b) cosh(x)/sqrt(a))/(b sqrt(a b))` up to the form, by cases on `a` and `b` |
+| `"cosh(c+d*x)/(a+b*tanh(c+d*x)^2)".Integrate("x")` | left unevaluated | the antiderivative, in `sinh(c + d x)` |
+| `"sech(c+d*x)/(a+b*sinh(c+d*x)^2)^(3/2)".Integrate("x")` | left unevaluated | the antiderivative |
+| `"csch(x)^5/(a+b*cosh(x)^2)".Integrate("x")` | left unevaluated | the antiderivative |
+| `"sinh(x)^3/(1+cosh(x)^2)".Integrate("x")` | left unevaluated | `cosh(x) - 2 arctan(cosh(x))`, in exponentials -- where `master` between the releases gave it through `u = e^x`, in `arctan(2 e^x/sqrt(12 - 8 sqrt(2)))` and its like |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

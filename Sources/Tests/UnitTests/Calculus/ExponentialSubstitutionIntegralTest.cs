@@ -469,6 +469,29 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBackWithParametersPinned(integrand, new[] { -0.5, 0.23, 0.61, 1.05, 1.7 });
 
         /// <summary>
+        /// Bioche's first two rules for the hyperbolic functions: odd in the hyperbolic sine,
+        /// <c>u = cosh</c> with <c>sinh^2 = u^2 - 1</c>; odd in the hyperbolic cosine,
+        /// <c>u = sinh</c> with <c>cosh^2 = u^2 + 1</c>. The six are read back by their exponential
+        /// spellings, for any linear argument, a written power handed on as the power it is,
+        /// and a root of a polynomial in the two even in the function admitted. Rubi's 6.1.7,
+        /// 6.2.7, 6.3.7, 6.5.7 and 6.6.3, each a search past the budget under <c>u = e^x</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        [Theory]
+        [InlineData("sinh(x)^3/(a + b*cosh(x)^2)")]
+        [InlineData("sinh(-x)^3/(a + b*cosh(x)^2)")]
+        [InlineData("cosh(c + d*x)/(a + b*tanh(c + d*x)^2)")]
+        [InlineData("sinh(c + d*x)^3/(a + b*tanh(c + d*x)^2)")]
+        [InlineData("sech(c + d*x)^3*(a + b*tanh(c + d*x)^2)^2")]
+        [InlineData("sinh(c + d*x)^3/(a + b*sech(c + d*x)^2)^2")]
+        [InlineData("csch(x)^5/(a + b*cosh(x)^2)")]
+        [InlineData("csch(c + d*x)/(a + b*sech(c + d*x)^2)^3")]
+        [InlineData("sech(c + d*x)/(a + b*sinh(c + d*x)^2)^(3/2)")]
+        [InlineData("cosh(x)^3/(2 + sinh(x))")]
+        public void ARationalFunctionOddInTheHyperbolicSineOrCosine(string integrand)
+            => DifferentiatesBackWithParametersPinned(integrand, new[] { -0.5, 0.23, 0.61, 1.05, 1.7 });
+
+        /// <summary>
         /// A cubed symbolic quadratic beside a quadratic with real roots was integrated to a
         /// wrong answer -- the Hermite ansatz's logarithmic part, with coefficients that are
         /// quotients of forty-fifth-degree polynomials in the symbols, was integrated wrongly
