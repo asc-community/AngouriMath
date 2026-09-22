@@ -262,5 +262,38 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x^2/(3 - 3*i*cot(x))")]
         [InlineData("(1 + 2*x)/(3 + 3*i*tan(1/2 + x))^2")]
         public void AnImaginaryTangentBelowTheBarIsAnExponential(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// A base with symbols in it, and an exponent whose constant part has them too:
+        /// <c>F^(c (a + b x))</c> leaves <c>F^(a c)</c> as a constant factor, and that factor
+        /// differentiates to a <em>conditional</em> zero -- <c>0 provided not F = 0 or a c > 0</c> --
+        /// where the by-parts loop compared against the number and carried on until it ran out of
+        /// steps. Rubi's 4.7.6 and 6.1.5.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/718">#718</a>
+        /// </summary>
+        [Theory]
+        [InlineData("F^(c*(a + b*x))*sin(d + pe*x)^3")]
+        [InlineData("F^(c*(a + b*x))*cos(d + pe*x)^2")]
+        [InlineData("F^(c*(a + b*x))*sin(d + pe*x)*cos(d + pe*x)")]
+        public void ASymbolicConstantFactorDoesNotStopTheParts(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x").Substitute("C", 0);
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            Entity Pin(Entity e) => e.Substitute("F", 2.3).Substitute("a", 0.4).Substitute("b", 1.1)
+                .Substitute("c", 0.7).Substitute("d", 0.9).Substitute("pe", 1.3);
+            var derivative = Pin(integral).Differentiate("x");
+            var original = Pin(integrand.ToEntity());
+            foreach (var at in Points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.False(got.IsNaN, $"the antiderivative of {integrand} differentiates to NaN at x = {at}");
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart) + Math.Abs((double)want.ImaginaryPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
     }
 }
