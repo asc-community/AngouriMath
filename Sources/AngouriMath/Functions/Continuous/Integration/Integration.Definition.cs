@@ -501,6 +501,10 @@ namespace AngouriMath.Functions.Algebra
             // An exponential of a multiple of a logarithm is a power of the argument, which is
             // how every inverse hyperbolic function under an exponential arrives.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingAnExponentialOfALogarithm(expr, x, integrateByParts)) is { }) return answer;
+            // A fractional power of a perfect square is the power of the modulus, sgn(P) P^(2r).
+            if ((answer = IndefiniteIntegralSolver.SolveByTakingARootOfAPerfectSquare(expr, x, integrateByParts)) is { }) return answer;
+            // x^(n - 1) g(x^n) with a symbolic n is g(u)/n under u = x^n.
+            if ((answer = IndefiniteIntegralSolver.SolveByAPowerOfTheVariableTimesAFunctionOfItsPower(expr, x, integrateByParts)) is { }) return answer;
             // A whole power of a product of a constant and the variable, as the product of
             // the powers, which is how the inverse hyperbolic secant and cosecant arrive.
             if ((answer = IndefiniteIntegralSolver.SolveByDistributingWholePowersOfProducts(expr, x, integrateByParts)) is { }) return answer;
