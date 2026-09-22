@@ -440,7 +440,10 @@ namespace AngouriMath.Tests.Calculus
         /// <c>1/(a + b coth(c + d x)^2)^2</c> is <c>u^4/((b + a u^2)^2 (1 - u^2))</c> there,
         /// where under <c>u = e^x</c> it was a symbolic palindromic quartic squared and a
         /// timeout. The argument may be any linear form, and the secant's odd exponential
-        /// cancels in an even integrand.
+        /// cancels in an even integrand. An integrand of a plain <c>e^y</c> that is not even
+        /// takes the half, <c>u = tanh(y/2)</c>, where a symbol stands below the bar:
+        /// <c>csch(x)^2/(a + b csch(x))</c> was declined, and <c>csch(x)^2/(a + b sinh(x))^2</c>
+        /// a search past eighty seconds under <c>u = e^x</c>.
         /// </summary>
         [Theory]
         [InlineData("1/(a + b*coth(x)^2)^2")]
@@ -449,6 +452,9 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("1/(a + b*coth(c + d*x)^2)^2")]
         [InlineData("sech(x)^4/(a + b*sech(x)^2)^2")]
         [InlineData("sech(c + d*x)^4/(a + b*sech(c + d*x)^2)^2")]
+        [InlineData("csch(x)^2/(a + b*csch(x))")]
+        [InlineData("1/(a + b*sinh(x))")]
+        [InlineData("sinh(x)/(a + b*cosh(x) + c*sinh(x))")]
         public void ARationalFunctionOfTheHyperbolicTangent(string integrand)
             => DifferentiatesBackWithParametersPinned(integrand, new[] { -0.5, 0.23, 0.61, 1.05, 1.7 });
 

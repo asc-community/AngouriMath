@@ -1068,6 +1068,27 @@ in front -- the identity `sqrt(a + a sin(y))` already had. Exact for any `a`, th
 | `"cosh(x)/sqrt(a-a*cosh(x))".Integrate("x")` | left unevaluated | the antiderivative, with `sgn(sinh(x/2))` in front |
 | `"(A+B*cosh(x))/(a-a*cosh(x))^(5/2)".Integrate("x")` | left unevaluated | the antiderivative, with `sgn(sinh(x/2))` in front |
 
+### A rational function of `e^y` with a symbolic denominator is integrated by the hyperbolic half angle
+
+`csch(x)^2/(a + b sinh(x))^2` was a search past eighty seconds: under `u = e^x` its denominator
+is a symbolic quartic nothing factors. Under `u = tanh(x/2)` -- the hyperbolic half angle, which
+the route for rational functions of the hyperbolic tangent took only where every exponential was
+written with an even factor -- it is a rational function whose written factors the symbolic
+partial fractions answer. It is taken now for a root-free integrand of a plain `e^y` as well,
+where the denominator's shape depends on a symbol: read as a polynomial in `v = e^y`, a
+coefficient that is not a number times the first, and two distinct factors of `v` below the bar.
+Both conditions are measured: `tanh(x)^6/(a + a sech(x))`, whose denominator is `a` times one
+the rational integrator factors over the rationals, answers a page shorter under `u = e^x`, and
+`e^asinh(a + b x)/x^4` leaves `e^u(e^u + e^-u)/(e^u - e^-u - 2a)^4`, a single symbolic quadratic
+to the fourth whose roots the quadratic formula gives, in a second there against thirty here.
+Rubi's 6.1.5 and 6.6.3 ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"csch(x)^2/(a+b*sinh(x))^2".Integrate("x")` | left unevaluated | the antiderivative, by cases on `a` and `b` |
+| `"tanh(x)^4/(a+b*csch(x))".Integrate("x")` | left unevaluated | the antiderivative |
+| `"csch(x)^2/(a+b*csch(x))".Integrate("x")` | left unevaluated | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
