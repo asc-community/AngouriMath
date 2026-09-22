@@ -1109,6 +1109,28 @@ with `int F` the next power over `p^2`. Rubi's 6.1.1, 6.2.1, 6.5.1 and 6.6.1
 | `"x/sech(x)^(7/2)-5/21*x*sqrt(sech(x))".Integrate("x")` | left unevaluated | the antiderivative, over two reduction steps |
 | `"x/csch(x)^(3/2)+1/3*x*sqrt(csch(x))".Integrate("x")` | left unevaluated | the antiderivative |
 
+### A hyperbolic function of a logarithm is integrated, the exponent folded structurally
+
+`tanh(ln(x))` was left as written. The library spells `tanh(y)` with `e^(2y)`, so a hyperbolic
+function of a logarithm is an exponential whose exponent is a *sum* holding one logarithm --
+`e^(a + b ln(q))` -- and the rule that folds an exponential of a logarithm read only a product,
+`e^(k ln(q))`. It reads the exponent structurally now: `e^(u + v)` is `e^u e^v`, `e^(k u)` is
+`(e^u)^k` for an `x`-free `k`, `e^(u/d)` likewise, and `e^(ln q)` is `q`, so
+`a + b ln(c x^n)` folds to `e^a (c x^n)^b` and its negation -- which the same function writes
+below the bar -- to the reciprocal. Composed exponents are flattened as they fold: `n (ln(q)/2)`
+is `q^(n/2)` and not `(sqrt(q))^n`, whose nesting made
+`e^(n acoth(a x))/(c - a^2 c x^2)^4` a search of fifty seconds where the flat form is declined in
+three. One logarithm in the exponent, since a difference of two folds to a power of a quotient of
+quotients that nothing below reads. Rubi's 6.3.2 and 6.5.3
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"tanh(ln(x))".Integrate("x")` | left unevaluated | `x - 2 arctan(x)` up to the form |
+| `"sinh(2+3*ln(x))".Integrate("x")` | left unevaluated | `e^2 x^4/8 - x^(-2)/(4 e^2)` up to the form |
+| `"sech(a+2*ln(c/x^(1/2)))^3".Integrate("x")` | left unevaluated | the antiderivative |
+| `"x*tanh(a+2*ln(x))^2".Integrate("x")` | left unevaluated | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
