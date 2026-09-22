@@ -714,7 +714,19 @@ namespace AngouriMath.Functions.Algebra
             // answered Timofeev's hyperbolic 560 in a minute through Euler's substitution on
             // that quartic.
             if ((answer = IndefiniteIntegralSolver.SolveByHyperbolicTangentSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // Hyperbolic powers two apart whose coefficients kill the reduction's residual:
+            // `cosh(y)^p - (p - 1)/p cosh(y)^(p - 2)` is `sinh(y) cosh(y)^(p - 1)/p`, where
+            // neither power alone is elementary. Before the split, which would hand each
+            // elliptic term to the whole chain and spend a minute finding that out.
+            if ((answer = IndefiniteIntegralSolver.SolveAPairOfHyperbolicPowersTwoApart(expr, x, integrateByParts)) is { })
+                return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x, integrateByParts)) is { }) return answer;
+            // A sum whose terms all carry the same power of one linear form, as that power times
+            // the sum of the rest: `x cosh(x)^(3/2) - x sqrt(cosh(x))/3` is `x` times a pair
+            // neither half of which is elementary, which the split cannot answer and parts can.
+            if (expr is Entity.Sumf or Entity.Minusf
+                && (answer = IndefiniteIntegralSolver.SolveByGatheringACommonPolynomialFactorOfASum(expr, x, integrateByParts)) is { })
+                return answer;
             // The half-angle substitution goes *after* linearity, and that is not a preference.
             // It fires on anything built from sines and cosines, and it answers `cos(x) + 1` with
             // a correct expression in tan(x/2) some forty characters long where splitting the sum
