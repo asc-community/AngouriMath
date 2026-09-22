@@ -957,6 +957,25 @@ every rule ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 | `"e^(2*asech(a*x))/x^2".Integrate("x")` | left unevaluated | the antiderivative, in `sgn(x)` |
 | `"x*(a+b*asech(c*x))/(d+pe*x^2)^2".Integrate("x")` | left unevaluated | the antiderivative |
 
+### Powers of `asech(a x)` and `acsch(a x)` beside a power of `x` are integrated, by rounds of parts
+
+`x^3 asech(a x)^2` was left as written. One step of parts leaves `x^2 asech(a x)/sqrt(1/(a x)^2 - 1)`,
+and the step on that -- asked two levels below the question -- is now offered where everything
+beside the differentiated factor is algebraic with a root in it; the root over a monomial is
+written apart at any depth; a sign of a real-valued factor is constant between its zeros and
+goes in front of the antiderivative of the rest; and a root written apart with `|x|` answers
+with `sgn(x)` in front rather than in `|x|`, which a further step could not read. A square of
+a root is normalised to the power it is, which is what stopped Euler's substitution answering
+the remainder of `acsch(c x)^2/x^4` wrongly along the way
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^3*asech(a*x)^2".Integrate("x")` | left unevaluated | the antiderivative, `provided a^2 > 0` |
+| `"asech(a*x)^3/x^2".Integrate("x")` | left unevaluated | the antiderivative |
+| `"(a+b*acsch(c*x))^2/x^4".Integrate("x")` | left unevaluated | the antiderivative |
+| `"x^2/sqrt(1/(a^2*x^2)-1)".Integrate("x")` | left unevaluated | `sgn(x) |a| (2 (1 - a^2 x^2)^(3/2)/3 - 2 sqrt(1 - a^2 x^2))/(2 a^4)` up to the form -- with `sgn(x)` in front, where an answer written in `|x|` used to be given for such shapes |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

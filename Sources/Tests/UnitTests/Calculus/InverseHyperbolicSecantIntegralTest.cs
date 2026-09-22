@@ -73,6 +73,14 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("(a+b*asech(c*x))/x^7")]
         [InlineData("x*(a+b*asech(c*x))/(d+pe*x^2)^2")]
         [InlineData("e^(2*asech(a*x))/x^2")]
+        // Powers of the secant, by two and three rounds of parts: the second round asks for
+        // `x^2/sqrt(1/(a x)^2 - 1)` two levels down, and its answer with `sgn(x)` in front,
+        // where the extension by parity wrote it in |x| and the remainder was a search in |x|.
+        [InlineData("x^3*asech(a*x)^2")]
+        [InlineData("asech(a*x)^2/x^2")]
+        [InlineData("asech(a*x)^3/x^2")]
+        [InlineData("(a+b*asech(c*x))^2/x^4")]
+        [InlineData("x^3*(a+b*acsch(c*x))^2")]
         public void ARationalFunctionWithSymbolicCoefficientsBesideTheSecant(string integrand)
         {
             var integral = integrand.ToEntity().Integrate("x");

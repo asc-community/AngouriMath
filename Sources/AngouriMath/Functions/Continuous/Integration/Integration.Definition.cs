@@ -117,7 +117,19 @@ namespace AngouriMath.Functions.Algebra
         /// </para>
         /// </remarks>
         private static Entity Normalized(Entity expr, Entity.Variable x) =>
-            expr.Replace(Patterns.GatherPowersOfOneBase).Replace(node => IndefiniteIntegralSolver.GatherSignsAndModuli(node, x));
+            expr.Replace(Patterns.GatherPowersOfOneBase).Replace(node => IndefiniteIntegralSolver.GatherSignsAndModuli(node, x))
+                // A whole power of a fractional power is the power of the product of the
+                // exponents, exact for every base: `((c^2 x^2 + 1)^(-1/2))^2` is
+                // `(c^2 x^2 + 1)^(-1)`, and left as a square of a root it was handed to Euler's
+                // substitution as a radical beside `(c^2 x^2 + 1)^(-1)`, which answered it
+                // wrongly -- the second step of parts on `acsch(c x)^2/x^4` was that. The
+                // gathering above joins two powers of one base beside each other and not one
+                // inside the other. A fractional inner power only: `((1 + x^2)^(-1))^4` is
+                // spelled so by the rules that read it, and flattened it sent Timofeev's
+                // `x^3 arctan(x)^2/(1 + x^2)^3` from 0.1 s to 8.
+                .Replace(node => node is Entity.Powf(Entity.Powf(var @base, var inner), Entity.Number.Integer whole) && inner is Entity.Number.Rational && inner is not Entity.Number.Integer && @base.ContainsNode(x)
+                    ? MathS.Pow(@base, (inner * whole).InnerSimplified)
+                    : node);
 
         /// <summary>
         /// The integrals already answered under the settings in force, so that the same question
@@ -255,6 +267,12 @@ namespace AngouriMath.Functions.Algebra
         /// wanted there and no deeper, where the same rewriting fed a search that did not return.
         /// </summary>
         internal static bool AnsweringTheQuestionAskedOrOneBelow => descentDepth <= 2;
+
+        /// <summary>
+        /// The question asked or one of the two steps below it: the remainder of a step of
+        /// parts on a power of an inverse function, and the remainder of the step on that.
+        /// </summary>
+        internal static bool AnsweringTheQuestionAskedOrTwoBelow => descentDepth <= 3;
 
         /// <summary>
         /// <paramref name="expr"/> integrated as a question in its own right rather than as a
@@ -801,6 +819,11 @@ namespace AngouriMath.Functions.Algebra
             // throws away whatever structure it had: (1 + x^2)^2 is answered as a power and only
             // wants writing out if that fails.
             if ((answer = IndefiniteIntegralSolver.SolveByExpandingAPower(expr, x, integrateByParts)) is { }) return answer;
+            // The sign of a real-valued factor is constant between its zeros, and goes in
+            // front of the antiderivative of the rest. After every rule that reads the sign
+            // where it stands: `cos(x) sgn(sin(x))` is `|sin(x)|` by the substitution, and
+            // `sgn(sin(x)) sin(x)` with the sign taken out first.
+            if ((answer = IndefiniteIntegralSolver.SolveByTakingASignOut(expr, x, integrateByParts)) is { }) return answer;
             if (integrateByParts && (answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x)) is { }) return answer;
             return null;
         }
