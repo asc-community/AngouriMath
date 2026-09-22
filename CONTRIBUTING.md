@@ -103,10 +103,10 @@ owner. No type means **untriaged**.
 - **Bug** -- existing behaviour is incorrect, missing, crashes, hangs, or violates the established
   mathematical or API contract. There is no separate minor-bug type in agentic development.
 - **Feature** -- a new or intentionally changed user-facing capability, API, or mathematical
-  behaviour. An idea that is going to be implemented is marked `Accepted`; one that will not be
-  taken up for the foreseeable future is closed as not planned, which says the same thing where
-  everyone reads it and keeps the open list what is actually wanted. A Feature without
-  `Accepted` is not agreed: comment on it, do not implement it.
+  behaviour. An idea that is going to be implemented is marked `Accepted` and put in the
+  milestone that will carry it; one that is not relevant yet goes to the **Future** milestone,
+  which is where an idea waits rather than being closed. A Feature without `Accepted` is not
+  agreed: comment on it, do not implement it.
 - **Maintenance** -- internal upkeep without a primary user-facing behaviour change: refactors,
   tests, documentation, CI, dependencies, or tooling.
 
@@ -120,8 +120,10 @@ parent roll-up. Do not create a sub-issue merely to restate a self-contained pul
 request may reference the Goal directly. A Goal stays open while it may generate more work; close it
 only when its outcome is achieved or abandoned.
 
-Milestones group work by release or target date. They do not replace Goals or sub-issues. A
-pull request saying `Part of #n` is the work claim.
+Milestones group work by release or target date, and **Future** is the one for an idea whose
+time has not come -- deferral is a milestone, not a label and not a closure, so the issue stays
+open and searchable where the work is planned. They do not replace Goals or sub-issues. A pull
+request saying `Part of #n` is the work claim.
 
 Questions and requests for opinions are **Discussions**, not issues -- the Q&A and Ideas
 categories -- and are answered there; an issue that turns out to be one is redirected and, once
