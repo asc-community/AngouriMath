@@ -501,6 +501,9 @@ namespace AngouriMath.Functions.Algebra
             // An exponential of a multiple of a logarithm is a power of the argument, which is
             // how every inverse hyperbolic function under an exponential arrives.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingAnExponentialOfALogarithm(expr, x, integrateByParts)) is { }) return answer;
+            // `A + i A tan(z)` is `A e^(i z)/cos(z)`, which beside a polynomial is a shape the
+            // closed rules answer, where the imaginary unit in the coefficient is read by none.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingAnImaginaryTangentAsAnExponential(expr, x, integrateByParts)) is { }) return answer;
             // A fractional power of a perfect square is the power of the modulus, sgn(P) P^(2r).
             if ((answer = IndefiniteIntegralSolver.SolveByTakingARootOfAPerfectSquare(expr, x, integrateByParts)) is { }) return answer;
             // x^(n - 1) g(x^n) with a symbolic n is g(u)/n under u = x^n.
@@ -637,6 +640,9 @@ namespace AngouriMath.Functions.Algebra
             // rules, because none of them reads the exponential and all of them would have to
             // decline it.
             if ((answer = IndefiniteIntegralSolver.SolveAPolynomialTimesAnExponentialAndATrigonometric(expr, x)) is { }) return answer;
+            // And the same shape with a phase in the trigonometric's argument, expanded by the
+            // angle-sum identity so that the rule above reads one frequency and no phase.
+            if ((answer = IndefiniteIntegralSolver.SolveByExpandingATrigonometricPhaseBesideAnExponential(expr, x, integrateByParts)) is { }) return answer;
             // A half-integer power of `1 + sin` or `1 - cos` and their kin, closed by one
             // cancellation that `a^2 = b^2` allows. Before the reductions, which do not read a
             // fractional power at all.
