@@ -487,6 +487,13 @@ Then:
    Answer a question there; a question that arrives as an issue is redirected to Discussions and,
    once answered, closed unless a work item came of it.
 
+   **Triage is part of the first answer, not a pass of its own.** An issue with no type is
+   untriaged, and the reply that engages with it is where the type, the milestone and the labels
+   go on -- not a later sweep, which is one more thing to forget and leaves the tracker wrong in
+   the meantime. A pull request is not triaged: it carries the issue it says it is `Part of`, and
+   a type on it would be that issue's type written twice. A discussion is triaged by the category
+   it is in; what it needs is an answer, and an issue only if work came of it.
+
    **Closed is not finished.** A comment arrives on a merged pull request and on a closed issue
    as readily as on an open one, and a sweep that lists what is *open* misses it -- which is how
    a correction sat unanswered until the maintainer opened an issue asking whether closed threads
@@ -529,7 +536,7 @@ Then:
       as that: an assignment is a priority, never a lock, and an assigned issue with no open
       pull request is free to whoever opens one -- a note on the issue is polite, and enough.
     - **Deferral is the `Future` milestone.** An issue nobody is taking up yet stays open and
-      goes there; closing it as not planned loses it, and there is no `Not now` label any more.
+      goes there; closing it as not planned loses it.
     - **An issue that is several pull requests' worth of work is split into sub-issues**, one
       per landable piece, each claimed by its own pull request; the parent shows its children's
       progress. A checklist in the parent's body is a fine outline, but it is not a lock --
