@@ -59,6 +59,45 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x/sqrt(1 + 1/(c*x)^2)")]
         public void AnInverseHyperbolicSecantOrCosecantWithASymbolicCoefficient(string integrand) => DifferentiatesBack(integrand);
 
+        /// <summary>
+        /// Rubi's 7.5.1 with a symbolic linear or quadratic below the bar: <c>(a + b asech(c x))/(d + e x)^2</c>
+        /// ran for ten minutes without an answer. By parts leaves <c>1/(x^2 (d + e x) sqrt(1/(c x)^2 - 1))</c>,
+        /// which was handed on as a product to the power -1 that no radical rule reads, its
+        /// <c>(c x)^2</c> distributed one level down past the rule that writes the root apart,
+        /// and, once written apart with <c>|x|</c> for <c>x &gt; 0</c>, declined for having no
+        /// parity to extend by -- <c>sgn(x)</c> stands in for it now. Pinned with <c>a = 1/3</c>,
+        /// <c>b = 1/2</c>, <c>c = 3/2</c>, <c>d = 2/3</c>, <c>e = 5/4</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("(a+b*asech(c*x))/(d+pe*x)^2")]
+        [InlineData("(a+b*asech(c*x))/x^7")]
+        [InlineData("x*(a+b*asech(c*x))/(d+pe*x^2)^2")]
+        [InlineData("e^(2*asech(a*x))/x^2")]
+        public void ARationalFunctionWithSymbolicCoefficientsBesideTheSecant(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Entity Pinned(Entity e) => e.Substitute("C", 0).Substitute("a", "1/3".ToEntity()).Substitute("b", "1/2".ToEntity())
+                .Substitute("c", "3/2".ToEntity()).Substitute("d", "2/3".ToEntity()).Substitute("pe", "5/4".ToEntity());
+            var derivative = Pinned(integral).Differentiate("x");
+            var original = Pinned(integrand.ToEntity());
+            var compared = 0;
+            // Where asech(a x) with a = 1/3 is real too, 0 < x <= 3, and asech(3x/2) real, x <= 2/3.
+            foreach (var at in Points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                if (got.IsNaN || want.IsNaN)
+                    continue;
+                compared++;
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart) + Math.Abs((double)want.ImaginaryPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+            Assert.True(compared >= 4, $"only {compared} of {Points.Length} points were comparable for {integrand}");
+        }
+
         [Fact]
         public void TheAnswerSaysTheParameterIsReal()
         {
