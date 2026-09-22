@@ -3403,8 +3403,13 @@ namespace AngouriMath.Functions.Algebra
                 var antiderivative = exponential * (nextC * cosine + nextD * sine);
 
                 total += carried * antiderivative;
-                var derivative = carried.Differentiate(x).InnerSimplified;
-                if (derivative == 0)
+                // Bare: a constant factor with symbols in it differentiates to a *conditional*
+                // zero -- `F^(a c)` gives `0 provided not F = 0 or a c > 0` -- and the loop,
+                // comparing against the number, carried on until it ran out of steps and
+                // declined. The conditions are the constant's own and travel with it in the
+                // answer; what the loop asks is whether the degree has fallen to nothing.
+                var derivative = Functions.PartialFractions.Bare(carried.Differentiate(x).InnerSimplified);
+                if (derivative == 0 || derivative.Evaled is Number.Complex { IsZero: true })
                     return total.InnerSimplified;
                 // `- int P'(x) * (that) dx`, which is this loop again with the sign folded in.
                 carried = (-derivative).InnerSimplified;

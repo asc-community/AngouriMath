@@ -1158,6 +1158,21 @@ rule answers, where the imaginary unit in the coefficient is read by nothing els
 | `"x/(2+2*i*tan(x))".Integrate("x")` | left unevaluated | the antiderivative |
 | `"(c+d*x)/(a+i*a*tan(pe+f*x))".Integrate("x")` | left unevaluated | the antiderivative |
 
+### A symbolic constant factor no longer stops the rounds of parts
+
+`F^(c (a + b x)) sin(d + pe x)^3` was left as written. The exponent's constant part becomes a
+factor -- `F^(a c)` -- and the by-parts loop stops when the factor it carries differentiates to
+nothing; but `F^(a c)` differentiates to a *conditional* zero, `0 provided not F = 0 or a c > 0`,
+and the loop compared against the number, so it carried on until it ran out of steps and
+declined. The derivative is read bare now: the conditions are the constant's own and travel with
+it in the answer, and what the loop asks is whether the degree has fallen to nothing. Rubi's
+4.7.6 and 6.1.5 ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"F^(c*(a+b*x))*sin(d+pe*x)^3".Integrate("x")` | left unevaluated | the antiderivative |
+| `"F^(c*(a+b*x))*sin(d+pe*x)*cos(d+pe*x)".Integrate("x")` | left unevaluated | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
