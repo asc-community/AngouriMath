@@ -76,5 +76,19 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("e^(ln(x^2 + 1)/2) * x")]
         [InlineData("e^(2*(1/2*ln(x + 2)))")]
         public void AnExponentialOfAMultipleOfALogarithm(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// The exponent read structurally, since <c>e^(u + v)</c> is <c>e^u e^v</c> and
+        /// <c>e^(k u)</c> is <c>(e^u)^k</c>: a hyperbolic function of a logarithm is written
+        /// with <c>e^(a + b ln(q))</c> above the bar and <c>e^(-(a + b ln(q)))</c> below it,
+        /// and both are powers of <c>q</c> times a constant. Rubi's 6.5.3 and 6.6.3.
+        /// </summary>
+        [Theory]
+        [InlineData("sinh(2 + 3*ln(x))")]
+        [InlineData("cosh(1 + ln(x^2 + 1))")]
+        [InlineData("sech(3 + 2*ln(2/x^(1/2)))^3")]
+        [InlineData("e^(1 + ln(x + 2)/2)")]
+        [InlineData("tanh(ln(x))")]
+        public void AHyperbolicFunctionOfALogarithm(string integrand) => DifferentiatesBack(integrand);
     }
 }

@@ -9877,25 +9877,76 @@ namespace AngouriMath.Functions.Algebra
             {
                 if (node is not Powf(var @base, var exponent) || @base != MathS.e || !exponent.ContainsNode(x))
                     return node;
-                // The exponent as a product with one natural logarithm of x among its factors
-                // and nothing else of x: `3 * (1/2 * ln(q))` is how `e^(3 acoth(a x))` arrives.
-                Entity? argument = null;
-                Entity k = Number.Integer.One;
-                foreach (var factor in Mulf.LinearChildren(exponent))
-                {
-                    if (factor is Logf(var logBase, var inner) && logBase == MathS.e && argument is null)
-                        argument = inner;
-                    else if (factor.ContainsNode(x))
-                        return node;
-                    else
-                        k = k * factor;
-                }
-                if (argument is null)
+                // The exponent read structurally, since `e^(u + v)` is `e^u e^v`, `e^(k u)` is
+                // `(e^u)^k` and `e^(ln q)` is `q`: `a + b ln(c x^n)` -- a hyperbolic function of
+                // a logarithm -- folds to `e^a (c x^n)^b`, and its negation, which the same
+                // function writes below the bar, to the reciprocal of that.
+                // One logarithm in the exponent: `a + b ln(c x^n)` is a hyperbolic function of
+                // a logarithm, and `n acoth(a x)` written as a difference of two -- which folds
+                // to a power of a quotient of quotients -- was a search of fifty seconds where
+                // the unfolded form is declined in three.
+                if (exponent.Nodes.Count(inner => inner is Logf(var logBase, _) && logBase == MathS.e) != 1)
                     return node;
-                var power = k.InnerSimplified;
-                return power == Number.Integer.One ? argument : MathS.Pow(argument, power);
+                var folded = FoldTheExponent(exponent, x);
+                return folded ?? node;
             });
             return folded == expr ? null : Integration.ComputeAsAQuestionOfItsOwn(folded, x, integrateByParts);
+        }
+
+        /// <summary>
+        /// <c>e^(exponent)</c> written without the exponential wherever the exponent is built
+        /// from logarithms and constants: <c>e^(u + v)</c> is <c>e^u e^v</c>, <c>e^(k u)</c> is
+        /// <c>(e^u)^k</c> for an <paramref name="x"/>-free <c>k</c>, and <c>e^(ln q)</c> is
+        /// <c>q</c>. <see langword="null"/> where a part mentioning <paramref name="x"/> is
+        /// none of those, and where no logarithm was folded at all.
+        /// </summary>
+        private static Entity? FoldTheExponent(Entity exponent, Entity.Variable x)
+        {
+            var folded = Fold(exponent, out var found);
+            return found ? folded : null;
+
+            Entity? Fold(Entity exponent, out bool found)
+            {
+                found = false;
+                switch (exponent)
+                {
+                    case Logf(var logBase, var inner) when logBase == MathS.e:
+                        found = true;
+                        return inner;
+                    case Sumf(var left, var right):
+                    {
+                        var foldedLeft = Fold(left, out var leftFound);
+                        var foldedRight = Fold(right, out var rightFound);
+                        found = leftFound || rightFound;
+                        return foldedLeft is null || foldedRight is null ? null : foldedLeft * foldedRight;
+                    }
+                    case Minusf(var left, var right):
+                    {
+                        var foldedLeft = Fold(left, out var leftFound);
+                        var foldedRight = Fold(right, out var rightFound);
+                        found = leftFound || rightFound;
+                        return foldedLeft is null || foldedRight is null ? null : foldedLeft / foldedRight;
+                    }
+                    case Mulf(var left, var right) when !left.ContainsNode(x):
+                        return Raised(Fold(right, out found), left);
+                    case Mulf(var left, var right) when !right.ContainsNode(x):
+                        return Raised(Fold(left, out found), right);
+                    case Divf(var above, var below) when !below.ContainsNode(x):
+                        return Raised(Fold(above, out found), (Number.Integer.One / below).InnerSimplified);
+                    default:
+                        // A part free of the variable stays an exponential of itself.
+                        return exponent.ContainsNode(x) ? null : MathS.Pow(MathS.e, exponent);
+                }
+            }
+
+            // The power of a power as one power: `n (1/2 ln q)` is `q^(n/2)` and not
+            // `(sqrt(q))^n`, whose nesting the rules below read as a different question --
+            // `e^(n acoth(a x))/(c - a^2 c x^2)^4` was a search of fifty seconds written that
+            // way and is declined in three written flat.
+            static Entity? Raised(Entity? folded, Entity power)
+                => folded is null ? null
+                    : folded is Powf(var @base, var inner) ? MathS.Pow(@base, (inner * power).InnerSimplified)
+                    : MathS.Pow(folded, power);
         }
 
         /// <summary>
