@@ -453,6 +453,22 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBackWithParametersPinned(integrand, new[] { -0.5, 0.23, 0.61, 1.05, 1.7 });
 
         /// <summary>
+        /// And with a root: <c>coth(x)^3/sqrt(a + b coth(x)^2)</c> is <c>u = tanh(x)</c>'s
+        /// half-angle of <c>e^(2x)</c>, and every radicand comes out over a power of <c>u</c>
+        /// -- <c>a + b coth(x)^2</c> is <c>(b + a u^2)/u^2</c> -- which is the shape the half
+        /// is admitted with a root for; the roots of <c>1 - u^2</c> that the half makes of
+        /// <c>sinh(x)</c> stay with <c>u = e^x</c>. Rubi's 6.4.7, each a search past the budget
+        /// before. https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        [Theory]
+        [InlineData("coth(x)^3/sqrt(a + b*coth(x)^2)")]
+        [InlineData("coth(x)*(a + b*coth(x)^2)^(3/2)")]
+        [InlineData("coth(x)/(a + b*coth(x)^2)^(3/2)")]
+        [InlineData("coth(2*x + 1)^3/sqrt(a + b*coth(2*x + 1)^2)")]
+        public void ARootOfARationalFunctionOfTheHyperbolicCotangent(string integrand)
+            => DifferentiatesBackWithParametersPinned(integrand, new[] { -0.5, 0.23, 0.61, 1.05, 1.7 });
+
+        /// <summary>
         /// A cubed symbolic quadratic beside a quadratic with real roots was integrated to a
         /// wrong answer -- the Hermite ansatz's logarithmic part, with coefficients that are
         /// quotients of forty-fifth-degree polynomials in the symbols, was integrated wrongly

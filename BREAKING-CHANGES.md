@@ -1013,6 +1013,23 @@ and in no release -- and is `sgn(u) u/(u^2 - 1)`
 | `"1/sqrt(1+csch(x)^2)".Integrate("x")` | left unevaluated | `-sgn(tanh(x)) ln(tanh(x)^2 - 1)/2`, in exponentials |
 | `"x^4/sech(2*ln(c*x))^(1/2)".Integrate("x")` | left unevaluated | `sgn(x) (1 + c^4 x^4)^(3/2)/(6 sqrt(2) c^5)` up to the form, `provided c^4 > 0` |
 
+### A root of a rational function of `coth(x)` is integrated by the hyperbolic half-angle
+
+`coth(x)^3/sqrt(a + b coth(x)^2)` was a search past the budget. The rational-in-`tanh` route
+declined the half-angle -- `u = tanh(x)` for an integrand written in `e^(2x)` -- whenever a
+root was in the integrand, because for `sqrt(sinh(x))` the half makes a root of `2u/(1 - u^2)`
+where `u = e^x` answers with a root of a polynomial. With a root it now takes the half where
+every radicand comes out over a power of `u`: `a + b coth(x)^2` is `(b + a u^2)/u^2`, whose root
+is `sqrt(b + a u^2)/|u|`, and `|u|^k` for the bare square is `sgn(u) u^k` at every depth. Rubi's
+6.4.7, nine rows ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"coth(x)^3/sqrt(a+b*coth(x)^2)".Integrate("x")` | left unevaluated | the antiderivative, in `sgn(tanh(x))` and `sqrt(b + a tanh(x)^2)`, by cases on `a + b` |
+| `"coth(x)*(a+b*coth(x)^2)^(3/2)".Integrate("x")` | left unevaluated | the antiderivative |
+| `"coth(x)/(a+b*coth(x)^2)^(3/2)".Integrate("x")` | left unevaluated | the antiderivative |
+| `"(a+b*coth(x)^2)^(3/2)*tanh(x)^2".Integrate("x")` | left unevaluated | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
