@@ -488,8 +488,8 @@ Then:
    once answered, closed unless a work item came of it.
 
    **Triage is part of the first answer, not a pass of its own.** An issue with no type is
-   untriaged, and the reply that engages with it is where the type, the milestone and the labels
-   go on -- not a later sweep, which is one more thing to forget and leaves the tracker wrong in
+   untriaged -- which every issue is when it arrives, the one template asking for no kind -- and
+   the reply that engages with it is where the type, the milestone and the labels go on -- not a later sweep, which is one more thing to forget and leaves the tracker wrong in
    the meantime. A pull request is not triaged: it carries the issue it says it is `Part of`, and
    a type on it would be that issue's type written twice. A discussion is triaged by the category
    it is in; what it needs is an answer, and an issue only if work came of it.

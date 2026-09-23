@@ -127,8 +127,12 @@ request saying `Part of #n` is the work claim.
 
 Questions and requests for opinions are **Discussions**, not issues -- the Q&A and Ideas
 categories -- and are answered there; an issue that turns out to be one is redirected and, once
-answered, closed unless a work item came of it. `up-for-grabs` marks an issue reserved for a
-newcomer.
+answered, closed unless a work item came of it.
+
+There is **one issue template**, and it asks for no kind: what you ran, what it did, what it
+should have done. The kind is decided at triage, because the same report is a Bug or a Feature
+depending on what turns out to be true, and the person who hit the behaviour is not the person
+best placed to say which. Blank issues are enabled beside it.
 
 Who is *working* an issue is whoever has an open pull request on it, draft or not, saying
 `Part of #n`: the pull request is the claim, a week without a push or a comment on it makes the
