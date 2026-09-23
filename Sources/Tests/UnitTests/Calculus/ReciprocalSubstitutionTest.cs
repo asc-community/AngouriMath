@@ -142,5 +142,33 @@ namespace AngouriMath.Tests.Calculus
                 return;   // unanswered is a legitimate verdict; a wrong answer is not
             DifferentiatesBack(integrand);
         }
+
+        /// <summary>
+        /// A power of the variable below the bar beside a root of a quadratic, by the same
+        /// reciprocal: <c>1/(x^n sqrt(q0 + q1 x + q2 x^2))</c> is
+        /// <c>-sgn(t) t^(n - 1)/sqrt(q0 t^2 + q1 t + q2)</c>, a polynomial over the root of the
+        /// quadratic read the other way round. <c>1/(x sqrt(1 - (a + b x)^2))</c> was answered
+        /// and the repeated factor was not, which is what a round of parts against
+        /// <c>acos(a + b x)/x^4</c> leaves.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/718">#718</a>
+        /// </summary>
+        [Theory]
+        [InlineData("1/(x^2*sqrt(1 + x^2))")]
+        [InlineData("1/(x^3*sqrt(4 + 3*x + 2*x^2))")]
+        [InlineData("1/(x^2*sqrt(1 + x + x^2))")]
+        [InlineData("1/(x^4*sqrt(2 - x + x^2))")]
+        public void APowerOfTheVariableBesideARootOfAQuadratic(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// And with symbols among the coefficients, which is the shape Rubi's 5.2 rows leave:
+        /// <c>acos(a + b x)/x^4</c> by parts is <c>1/(x^3 sqrt(1 - (a + b x)^2))</c> up to the
+        /// constants.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(x^2*sqrt(1 - (a + b*x)^2))")]
+        [InlineData("1/(x^3*sqrt(1 - (a + b*x)^2))")]
+        [InlineData("acos(a + b*x)/x^4")]
+        public void TheSameWithSymbolicCoefficients(string integrand)
+            => DifferentiatesBack(integrand, ("a", 0.3), ("b", 0.4));
     }
 }
