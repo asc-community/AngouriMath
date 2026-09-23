@@ -10198,6 +10198,20 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Whether <c>b^2 - 4ac</c> is zero, which makes <c>a x^2 + b x + c</c> a perfect square.
+        /// Symbolically as well as numerically: for <c>a^2 + 2 a b x + b^2 x^2</c> it is
+        /// <c>4 a^2 b^2 - 4 a^2 b^2</c>, which <see cref="Entity.InnerSimplified"/> does not
+        /// collect, so a guard that asks only what it evaluates to reads the square as an
+        /// ordinary quadratic.
+        /// </summary>
+        private static bool IsAPerfectSquareDiscriminant(Entity a, Entity b, Entity c)
+        {
+            var discriminant = (b * b - Number.Integer.Create(4) * a * c).InnerSimplified;
+            return discriminant.Evaled is Number.Complex { IsZero: true }
+                || discriminant.Vars.Any() && Functions.PartialFractions.Bare(discriminant.Simplify()).Evaled is Number.Complex { IsZero: true };
+        }
+
+        /// <summary>
         /// A square root of a perfect square in <paramref name="x"/> is the modulus:
         /// <c>sqrt(x^2)</c> is <c>|x|</c>, which for a real <c>x</c> is <c>sgn(x) x</c>, and
         /// <c>sqrt(a (x + h)^2)</c> is <c>sqrt(a) sgn(x + h) (x + h)</c> for a positive number
@@ -10225,14 +10239,23 @@ namespace AngouriMath.Functions.Algebra
         {
             // Asked of every integrand at every depth, so the radicand is read as a polynomial
             // only where it is small enough to be a written square: x^2, or a x^2 + b x + c.
-            static bool MayBeARootOfASquare(Entity node, Entity.Variable x)
+            // At the top, any half-odd power of a perfect square is the power of the modulus;
+            // below it the square root only, since a sign written for a substitution's variable
+            // is a factor the rest of the search carries -- `(1 + 2u + u^2)^(5/2)` under
+            // `u = e^(2x)` cost twenty seconds that way. A bare `x^2` is the exception at any
+            // depth, nothing else reading `(x^2)^(3/2)`.
+            var atTheTop = Integration.AnsweringTheQuestionAsked;
+            bool MayBeARootOfASquare(Entity node, Entity.Variable x)
                 => node is Powf(var radicand, Number.Rational r) && r.ERational.Denominator.Equals(EInteger.FromInt32(2))
-                    && (r.ERational.Equals(ERational.Create(1, 2)) || radicand is Powf(var @base, var degree) && @base == x && degree == Number.Integer.Create(2))
-                    && radicand.ContainsNode(x) && radicand.Complexity <= 12
+                    && (atTheTop || r.ERational.Equals(ERational.Create(1, 2))
+                        || radicand is Powf(var @base, var degree) && @base == x && degree == Number.Integer.Create(2))
+                    && radicand.ContainsNode(x) && radicand.Complexity <= (atTheTop ? 40 : 12)
                     && radicand.Nodes.Count(inner => inner == x) <= 2;
             if (!expr.Nodes.Any(node => MayBeARootOfASquare(node, x)))
                 return null;
             var changed = false;
+            Entity assumed = Entity.Boolean.True;
+            Entity signs = Number.Integer.One;
             var written = expr.Replace(node =>
             {
                 if (!MayBeARootOfASquare(node, x))
@@ -10247,8 +10270,23 @@ namespace AngouriMath.Functions.Algebra
                 var a = monomials.TryGetValue(EInteger.FromInt32(2), out var a2) ? a2 : Number.Integer.Zero;
                 var b = monomials.TryGetValue(EInteger.One, out var b1) ? b1 : Number.Integer.Zero;
                 var c = monomials.TryGetValue(EInteger.Zero, out var c0) ? c0 : Number.Integer.Zero;
-                if (a.Evaled is not Number.Real { IsPositive: true } leading || b.Evaled is not Number.Real || c.Evaled is not Number.Real
-                    || (b * b - Number.Integer.Create(4) * a * c).InnerSimplified.Evaled is not Number.Complex { IsZero: true })
+                // A positive leading coefficient, since `sqrt(a (x + h)^2)` is `sqrt(a) |x + h|`:
+                // a positive number, or one positive for a real parameter -- `b^2` is, and
+                // `a^2 + 2 a b x + b^2 x^2` is the square Rubi writes -- whose condition travels
+                // with the answer. The other two coefficients are real or symbolic, not a
+                // number off the line, for the same reason.
+                Entity leading;
+                if (a.Evaled is Number.Real { IsPositive: true })
+                    leading = a;
+                else if (IsPositiveForARealParameter(a, x, out var leadingAssumed, assumed))
+                {
+                    leading = a;
+                    assumed = leadingAssumed;
+                }
+                else
+                    return node;
+                if (b.Evaled is Number.Complex and not Number.Real || c.Evaled is Number.Complex and not Number.Real
+                    || !IsAPerfectSquareDiscriminant(a, b, c))
                     return node;
                 // a (x + h)^2 with h = b/(2a): (a (x + h)^2)^r is a^r |x + h|^(2r), and with 2r odd
                 // (a rational is held in lowest terms) that is a^r sgn(x + h) (x + h)^(2r).
@@ -10256,11 +10294,19 @@ namespace AngouriMath.Functions.Algebra
                 var linear = h == Number.Integer.Zero ? x : (x + h).InnerSimplified;
                 var twoR = Number.Integer.Create(r.ERational.Numerator);
                 Entity power = twoR == Number.Integer.One ? linear : MathS.Pow(linear, twoR);
-                Entity signed = MathS.Signum(linear) * power;
+                // The sign in front of the integral rather than inside it: it is constant
+                // between the linear factor's zeros, and a rule below that differentiates the
+                // integrand cannot evaluate `derivative(sgn(...))` -- which is the exception
+                // `sqrt(a^2 + 2abx + b^2x^2) sqrt(c + ex + dx^2)` threw with it left in place.
+                signs = signs * MathS.Signum(linear);
                 changed = true;
-                return leading == Number.Integer.One ? signed : MathS.Pow(leading, r) * signed;
+                return leading == Number.Integer.One ? power : MathS.Pow(leading, r) * power;
             });
-            return changed ? Integration.ComputeAsTheSameQuestion(written, x, integrateByParts) : null;
+            if (!changed || Integration.ComputeAsTheSameQuestion(written, x, integrateByParts) is not { } answer)
+                return null;
+            if (signs != Number.Integer.One)
+                answer = signs * answer;
+            return assumed == Entity.Boolean.True ? answer : answer.Provided(assumed);
         }
 
         /// <summary>

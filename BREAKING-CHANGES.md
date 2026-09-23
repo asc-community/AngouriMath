@@ -1232,6 +1232,30 @@ and reads nothing here ([#718](https://github.com/asc-community/AngouriMath/issu
 | `"1/(x^2*sqrt(1-(a+b*x)^2))".Integrate("x")` | left unevaluated | the antiderivative |
 | `"acos(a+b*x)/x^4".Integrate("x")` | left unevaluated | the antiderivative |
 
+### A perfect square written with symbols is read as one
+
+`(A + B x)(d + e x)/(a^2 + 2 a b x + b^2 x^2)^(5/2)` was left as written: the radicand is
+`(a + b x)^2`, and the power is `|a + b x|^5`, but three conditions between the rule and the
+rewrite each said no. The discriminant `4 a^2 b^2 - 4 a^2 b^2` is a zero
+`InnerSimplified` does not collect, so the square read as an ordinary quadratic. The leading
+coefficient `b^2` is not a *number*, though it is positive for a real parameter, which the answer
+now says as `provided b^2 > 0`. And the rule's own bound on how large a radicand it will read --
+there so that it costs nothing at every level of the descent -- is lifted at the top, where any
+half-odd power of a square is the power of the modulus; below it the square root only, since a
+sign written for a substitution's variable is a factor the rest of the search has to carry.
+
+The sign goes in front of the integral rather than into the integrand, which is what every rule
+here that writes one does: left inside, a rule below differentiated it, and
+`sqrt(a^2 + 2 a b x + b^2 x^2) sqrt(c + e x + d x^2)` threw
+`CannotEvalException: derivative(sgn(...))` rather than answering
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(A+B*x)*(d+pe*x)/(a^2+2*a*b*x+b^2*x^2)^(5/2)".Integrate("x")` | left unevaluated | the antiderivative, `provided b^2 > 0` |
+| `"sqrt(a^2+2*a*b*x+b^2*x^2)*sqrt(c+pe*x+d*x^2)".Integrate("x")` | left unevaluated | the antiderivative |
+| `"(a^2+2*a*b*x+b^2*x^2)^(5/2)".Integrate("x")` | the antiderivative, through the substitution search | `sgn(a + b x) (a + b x)^6 |b|^5/(6 b)` up to the form |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
