@@ -1212,6 +1212,26 @@ keeps its decline ([#718](https://github.com/asc-community/AngouriMath/issues/71
 | `"tan(x)/sqrt(2+tan(x)+tan(x)^2)".Integrate("x")` | left unevaluated | the antiderivative |
 | `"tan(x)^2/(2+tan(x)+tan(x)^2)^(3/2)".Integrate("x")` | left unevaluated | the antiderivative |
 
+### A power of the variable below the bar beside a root of a quadratic
+
+`1/(x^2 sqrt(4 + 3x + 2x^2))` was left as written, while `1/(x sqrt(...))` came out: the single
+factor was read and the repeated one was not. Under `x = 1/t` the integrand is
+`-sgn(t) t^(n - 1)/sqrt(q0 t^2 + q1 t + q2)` -- a polynomial over the root of the quadratic read
+the other way round, which the rules for those answer. That is what one round of parts against
+`arccos(a + b x)/x^4` leaves, so the inverse trigonometric rows over a power of `x` come with it.
+
+The radicand is assembled rather than substituted into, as `Q(1/t)` is `R(t)/t^2` and writing the
+quotient inside the root leaves a nesting nothing reduces; the modulus that leaves is a `sgn(t)`
+in front, which at `t = 1/x` is `sgn(x)`. `SolveByReciprocalSubstitution` is the same substitution
+for a different shape -- a palindromic quartic, where the reciprocal maps the quartic to itself --
+and reads nothing here ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x^3*sqrt(4+3*x+2*x^2))".Integrate("x")` | left unevaluated | the antiderivative |
+| `"1/(x^2*sqrt(1-(a+b*x)^2))".Integrate("x")` | left unevaluated | the antiderivative |
+| `"acos(a+b*x)/x^4".Integrate("x")` | left unevaluated | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

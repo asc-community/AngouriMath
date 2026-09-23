@@ -14432,6 +14432,112 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of the variable below the bar beside a root of a quadratic, by
+        /// <c>x = 1/t</c>: <c>1/(x^n sqrt(q0 + q1 x + q2 x^2))</c> is
+        /// <c>-sgn(t) t^(n - 1)/sqrt(q0 t^2 + q1 t + q2)</c>, a polynomial over the root of the
+        /// quadratic with its coefficients reversed, which the rules for those answer.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>1/(x sqrt(1 - (a + b x)^2))</c> was answered and <c>1/(x^2 sqrt(...))</c> was not:
+        /// the repeated factor is what nothing reads, and it is what a round of parts against
+        /// <c>acos(a + b x)/x^4</c> leaves. <see cref="SolveByReciprocalSubstitution"/> is the
+        /// same substitution for a different shape -- a palindromic quartic under the root, where
+        /// the reciprocal maps the quartic to itself -- and reads nothing here.
+        /// </para>
+        /// <para>
+        /// The radicand is assembled rather than substituted into: <c>Q(1/t)</c> is
+        /// <c>R(t)/t^2</c> with <c>R</c> the reversed quadratic, so the root is
+        /// <c>R^(p/2) |t|^(-p)</c>, and writing the quotient inside the root instead leaves a
+        /// nesting nothing downstream reduces. The modulus is a <c>sgn(t)</c> in front for an odd
+        /// <c>p</c>, constant between its zeros; with <c>t = 1/x</c> it is <c>sgn(x)</c>, which is
+        /// what the answers of this family carry anyway.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveByTheReciprocalBesideARootOfAQuadratic(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            var (numerator, denominator) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr));
+            // A power of x, two or more, below the bar; one root of a quadratic; polynomials else.
+            var powerOfX = 0;
+            Entity? radicand = null;
+            Number.Rational? rootPower = null;
+            Entity rest = Number.Integer.One;
+            foreach (var (side, isBelow) in new[] { (numerator, false), (denominator, true) })
+                foreach (var factor in Mulf.LinearChildren(side))
+                {
+                    if (!factor.ContainsNode(x))
+                    {
+                        rest = isBelow ? rest / factor : rest * factor;
+                        continue;
+                    }
+                    switch (factor)
+                    {
+                        case Variable bare when bare == x && isBelow:
+                            powerOfX += 1;
+                            continue;
+                        case Powf(Variable bare, Number.Integer whole) when bare == x && isBelow && whole.EInteger.Sign > 0 && whole.EInteger.CanFitInInt32():
+                            powerOfX += whole.EInteger.ToInt32Unchecked();
+                            continue;
+                        case Powf(var inner, Number.Rational power) when power is not Number.Integer && radicand is null:
+                            if (!power.ERational.Denominator.Equals(EInteger.FromInt32(2)))
+                                return null;
+                            radicand = inner;
+                            rootPower = isBelow ? Number.Rational.Create(power.ERational.Negate()) : power;
+                            continue;
+                        default:
+                            if (!TreeAnalyzer.TryGetPolynomial(factor, x, out _))
+                                return null;
+                            rest = isBelow ? rest / factor : rest * factor;
+                            continue;
+                    }
+                }
+            if (powerOfX < 2 || radicand is null || rootPower is null)
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(radicand, x, out var monomials) || monomials.Count == 0
+                || monomials.Keys.Any(k => k.Sign < 0 || k.CompareTo(EInteger.FromInt32(2)) > 0)
+                || !monomials.ContainsKey(EInteger.FromInt32(2)))
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(rest, x, out var restMonomials) || restMonomials.Keys.Any(k => k.Sign < 0))
+                return null;
+
+            var t = Variable.CreateUnique(expr, "u_recip");
+            // Q(1/t) is R(t)/t^2 with R the quadratic read the other way round.
+            var q0 = monomials.TryGetValue(EInteger.Zero, out var m0) ? m0 : Number.Integer.Zero;
+            var q1 = monomials.TryGetValue(EInteger.One, out var m1) ? m1 : Number.Integer.Zero;
+            var q2 = monomials[EInteger.FromInt32(2)];
+            var reversed = (q0 * MathS.Sqr(t) + q1 * t + q2).InnerSimplified;
+            if (q0.Evaled is Number.Complex { IsZero: true })
+                return null;   // the reversed quadratic is linear, which is the substitution's own shape
+            // The rest at 1/t, term by term, so that no quotient is left nested.
+            Entity restInT = Number.Integer.Zero;
+            foreach (var pair in restMonomials)
+            {
+                if (!pair.Key.CanFitInInt32())
+                    return null;
+                var degree = pair.Key.ToInt32Unchecked();
+                restInT += degree == 0 ? pair.Value : pair.Value / MathS.Pow(t, Number.Integer.Create(degree));
+            }
+            // dx = -dt/t^2, x^(-n) = t^n, and the root is R^(p/2) |t|^(-p).
+            var numeratorPower = Number.Integer.Create(rootPower.ERational.Numerator);
+            Entity integrand = -restInT * MathS.Pow(t, Number.Integer.Create(powerOfX - 2))
+                * MathS.Pow(reversed, rootPower) * MathS.Pow(t, (-numeratorPower).InnerSimplified);
+            Entity signs = numeratorPower.EInteger.IsEven ? Number.Integer.One : MathS.Signum(t);
+            // Bare: the reciprocal's own `t != 0` rides along as a condition -- it is `1/x`, so
+            // it says what the integrand already says -- and a condition is not an integrand to
+            // the rules below, which decline it.
+            integrand = Functions.PartialFractions.Bare(integrand.InnerSimplified);
+            if (integrand.ContainsNode(x) || integrand.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(integrand, t, integrateByParts) is not { } answer)
+                return null;
+            var back = (signs == Number.Integer.One ? answer : signs * answer).Substitute(t, (Number.Integer.One / x).InnerSimplified);
+            return back.Nodes.Any(node => node == MathS.NaN) ? null : back;
+        }
+
+        /// <summary>
         /// A pair of hyperbolic powers two apart whose coefficients kill the reduction's
         /// residual: <c>cosh(y)^p - (p - 1)/p cosh(y)^(p - 2)</c> is
         /// <c>sinh(y) cosh(y)^(p - 1)/p</c>, and <c>sinh(y)^p + (p - 1)/p sinh(y)^(p - 2)</c> is

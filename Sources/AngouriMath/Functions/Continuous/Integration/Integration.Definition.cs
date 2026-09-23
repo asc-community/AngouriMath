@@ -799,6 +799,10 @@ namespace AngouriMath.Functions.Algebra
             // And a root of a palindromic quartic, which is a root of a quadratic in x -+ 1/x:
             // Charlwood's `(1 + x^2)/((1 - x^2) sqrt(1 + x^4))` is `-du/(u sqrt(u^2 + 2))`.
             if ((answer = IndefiniteIntegralSolver.SolveByReciprocalSubstitution(expr, x)) is { }) return answer;
+            // And a power of the variable below the bar beside a root of a quadratic, by the
+            // same reciprocal: `1/(x^2 sqrt(Q))` is a polynomial over the root of the reversed
+            // quadratic, which the rules for those answer.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheReciprocalBesideARootOfAQuadratic(expr, x, integrateByParts)) is { }) return answer;
             // A rational function of x and one cube root of a polynomial: no substitution
             // rationalises it, and the elementary ones are logarithms of `L - y` for linear L
             // whose cube agrees with the polynomial at the poles, found by an ansatz.
