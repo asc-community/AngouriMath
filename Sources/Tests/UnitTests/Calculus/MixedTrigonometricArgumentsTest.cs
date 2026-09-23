@@ -186,5 +186,40 @@ namespace AngouriMath.Tests.Calculus
             var integral = integrand.ToEntity().Integrate("x");
             Assert.DoesNotContain("NaN", integral.Stringize());
         }
+
+        /// <summary>
+        /// A root of a quadratic in the tangent with a linear term, rotated until it has none:
+        /// <c>x = y + arctan(m)</c> with <c>m</c> a root of <c>b m^2 + 2(a - c) m - b</c> makes
+        /// <c>a + b tan(x) + c tan(x)^2</c> into <c>A + C tan(y)^2</c>, and the tangent
+        /// substitution then leaves <c>1/((1 + t^2) sqrt(A + C t^2))</c>, which is answered.
+        /// The radicand is assembled in closed form: substituting the Möbius quotient into it
+        /// leaves a nesting that nothing downstream reduces.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/718">#718</a>
+        /// </summary>
+        [Theory]
+        [InlineData("1/sqrt(1 + 2*tan(x) + 3*tan(x)^2)")]
+        [InlineData("1/sqrt(2 + tan(x) + tan(x)^2)")]
+        [InlineData("1/sqrt(3 - 2*tan(x) + tan(x)^2)")]
+        [InlineData("tan(x)/sqrt(2 + tan(x) + tan(x)^2)")]
+        [InlineData("tan(x)^2/(2 + tan(x) + tan(x)^2)^(3/2)")]
+        public void AQuadraticInTheTangentIsRotatedUntilItHasNoLinearTerm(string integrand)
+            => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// With symbolic coefficients the rotation is a nested surd, the rotated quadratic is
+        /// written in it, and what the rational integrator is handed is a quotient over that
+        /// field: two minutes and no answer, where the integrand is declined in a moment
+        /// unrotated. The rule asks for a numeric rotation, and this pins that the verdict for
+        /// the symbolic shape is still a quick decline rather than a search.
+        /// </summary>
+        [Fact]
+        public void ASymbolicQuadraticInTheTangentIsDeclinedAndNotSearched()
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            var integral = "1/sqrt(a + b*tan(x) + c*tan(x)^2)".ToEntity().Integrate("x");
+            watch.Stop();
+            Assert.Contains("integral(", integral.Stringize());
+            Assert.True(watch.Elapsed < IntegrationDecline.Guard, $"the symbolic shape took {watch.Elapsed.TotalSeconds:F1} s");
+        }
     }
 }

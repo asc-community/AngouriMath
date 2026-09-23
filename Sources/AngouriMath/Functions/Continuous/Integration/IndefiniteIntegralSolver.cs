@@ -14318,6 +14318,120 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A root of a quadratic in <c>tan(x)</c> with a linear term, rotated until it has none:
+        /// <c>1/sqrt(a + b tan(x) + c tan(x)^2)</c> is <c>1/sqrt(A + C tan(y)^2)</c> under
+        /// <c>x = y + arctan(m)</c>, and the tangent substitution then leaves
+        /// <c>1/((1 + t^2) sqrt(A + C t^2))</c>, which is answered in closed form.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <c>tan(y + f)</c> is <c>(tan(y) + m)/(1 - m tan(y))</c> with <c>m = tan(f)</c>, which
+        /// is the Möbius map that preserves <c>1 + tan^2</c> -- the factor the tangent
+        /// substitution's <c>dx</c> brings. Under it the quadratic's linear coefficient becomes
+        /// <c>b(1 - m^2) + 2(c - a)m</c>, zero for a root of <c>b m^2 + 2(a - c)m - b</c>, whose
+        /// discriminant <c>4((a - c)^2 + b^2)</c> is never negative: the two roots are the
+        /// quadratic form's two perpendicular directions and either will do.
+        /// </para>
+        /// <para>
+        /// The radicand is <b>assembled</b> rather than substituted into. Writing
+        /// <c>tan(x)</c> as the quotient inside the root leaves a nested quotient that nothing
+        /// downstream reduces, so the substitution never sees the rotated quadratic; here the
+        /// root becomes <c>N(S)^p (1 - m S)^(-2p)</c> with <c>N(S) = A + C S^2</c> computed in
+        /// closed form, <c>A = a + b m + c m^2</c> and <c>C = a m^2 - b m + c</c>. For a half-odd
+        /// power the modulus is what the root leaves -- <c>sqrt(N/(1 - mS)^2)</c> is
+        /// <c>sqrt(N)/|1 - mS|</c> -- so a <c>sgn(1 - m tan(y))</c> comes out in front, constant
+        /// between its zeros as every such sign in these rules is.
+        /// </para>
+        /// <para>
+        /// The antiderivative is of the rotated integrand, so the answer is it at
+        /// <c>x - arctan(m)</c>: a constant shift of the argument, which an antiderivative is
+        /// free to have. Rubi's 4.3.9 and the cotangent shapes the tangent substitution rewrites
+        /// into tangents on the way in.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveByRotatingAwayTheLinearTermInTheTangent(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            var tangent = MathS.Tan(x);
+            var written = expr.Replace(node => node is Cotanf(var cotangent) && cotangent == x ? 1 / tangent : node);
+            if (!written.ContainsNode(tangent))
+                return null;
+            // A function of the tangent alone: anything else in x is another question.
+            if (written.Replace(node => node == tangent ? Number.Integer.One : node).ContainsNode(x))
+                return null;
+            // One radicand, a quadratic in the tangent with a linear term, to a half-odd power.
+            Entity? a = null, b = null, c = null;
+            var roots = new List<(Entity Node, Number.Rational Power)>();
+            foreach (var node in written.Nodes)
+            {
+                if (node is not Powf(var radicand, Number.Rational power) || power is Number.Integer || !radicand.ContainsNode(x))
+                    continue;
+                if (!power.ERational.Denominator.Equals(EInteger.FromInt32(2)))
+                    return null;
+                var inT = radicand.Substitute(tangent, Variable.CreateVariableOrConstant("t_rot"));
+                if (inT.ContainsNode(x)
+                    || !TreeAnalyzer.TryGetPolynomial(inT, Variable.CreateVariableOrConstant("t_rot"), out var monomials) || monomials.Count == 0
+                    || monomials.Keys.Any(k => k.Sign < 0 || k.CompareTo(EInteger.FromInt32(2)) > 0))
+                    return null;
+                var thisA = monomials.TryGetValue(EInteger.Zero, out var a0) ? a0 : Number.Integer.Zero;
+                var thisB = monomials.TryGetValue(EInteger.One, out var b1) ? b1 : Number.Integer.Zero;
+                var thisC = monomials.TryGetValue(EInteger.FromInt32(2), out var c2) ? c2 : Number.Integer.Zero;
+                if (a is not null && (a != thisA || b != thisB || c != thisC))
+                    return null;
+                (a, b, c) = (thisA, thisB, thisC);
+                roots.Add((node, power));
+            }
+            if (a is null || b is null || c is null || roots.Count == 0
+                || TreeAnalyzer.IsZero(b) || b.Evaled is Number.Complex { IsZero: true })
+                return null;
+
+            // m = ((c - a) + sqrt((a - c)^2 + b^2))/b, a root of b m^2 + 2(a - c) m - b.
+            var m = ((c - a + MathS.Sqrt((MathS.Sqr(a - c) + MathS.Sqr(b)).InnerSimplified)) / b).InnerSimplified;
+            // A number: with symbolic coefficients `m` is a nested surd, the rotated quadratic's
+            // are written in it, and what the substitution hands the rational integrator is a
+            // quotient over that field -- two minutes and no answer, where the integrand is
+            // declined in a tenth of a second unrotated. The rotation is exact for any real
+            // coefficients and this is a bound on the work, not on the mathematics.
+            if (m.Evaled is not Number.Real { IsFinite: true })
+                return null;
+            var rotatedTangent = ((tangent + m) / (1 - m * tangent)).InnerSimplified;
+            var scale = (1 - m * tangent).InnerSimplified;
+            var rotatedA = (a + b * m + c * MathS.Sqr(m)).InnerSimplified;
+            var rotatedC = (a * MathS.Sqr(m) - b * m + c).InnerSimplified;
+            var quadratic = (rotatedA + rotatedC * MathS.Sqr(tangent)).InnerSimplified;
+
+            // Each root out of the way first, so that the tangents inside it are not rewritten
+            // twice: the radicand's rotation is the closed form above, not the substitution.
+            var placeholders = new List<(Variable Symbol, Entity Value)>();
+            var skeleton = written;
+            Entity signs = Number.Integer.One;
+            foreach (var (node, power) in roots)
+            {
+                var symbol = Variable.CreateUnique(written, "r_rot" + placeholders.Count);
+                skeleton = skeleton.Substitute(node, symbol);
+                // (N/(1 - mS)^2)^(p/2) is N^(p/2) |1 - mS|^(-p), and |z|^(-p) is sgn(z)^p z^(-p).
+                var numerator = Number.Integer.Create(power.ERational.Numerator);
+                if (!numerator.EInteger.IsEven)
+                    signs = signs * MathS.Signum(scale);
+                placeholders.Add((symbol, MathS.Pow(quadratic, power) * MathS.Pow(scale, (-numerator).InnerSimplified)));
+            }
+            if (skeleton.ContainsNode(x) && !skeleton.ContainsNode(tangent))
+                return null;
+            var rotated = skeleton.Substitute(tangent, rotatedTangent);
+            foreach (var (symbol, value) in placeholders)
+                rotated = rotated.Substitute(symbol, value);
+            rotated = rotated.InnerSimplified;
+            if (rotated.ContainsNode(x) is false || rotated.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(rotated, x, integrateByParts) is not { } answer)
+                return null;
+            var shifted = (signs == Number.Integer.One ? answer : signs * answer).Substitute(x, (x - MathS.Arctan(m)).InnerSimplified);
+            return shifted.Nodes.Any(node => node == MathS.NaN) ? null : shifted;
+        }
+
+        /// <summary>
         /// A pair of hyperbolic powers two apart whose coefficients kill the reduction's
         /// residual: <c>cosh(y)^p - (p - 1)/p cosh(y)^(p - 2)</c> is
         /// <c>sinh(y) cosh(y)^(p - 1)/p</c>, and <c>sinh(y)^p + (p - 1)/p sinh(y)^(p - 2)</c> is
