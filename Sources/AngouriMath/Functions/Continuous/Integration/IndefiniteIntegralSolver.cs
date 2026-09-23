@@ -14584,6 +14584,154 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of the variable times a sine or cosine of a logarithm, in closed form:
+        /// <c>int x^m sin(L) dx</c> is <c>x^(m + 1)((m + 1) sin(L) - B cos(L))/((m + 1)^2 + B^2)</c>
+        /// whenever <c>L' = B/x</c> for a constant <c>B</c>, which <c>a + b ln(c x^n)</c> is with
+        /// <c>B = b n</c>; the cosine's is the same with <c>(m + 1) cos(L) + B sin(L)</c>.
+        /// </summary>
+        /// <remarks>
+        /// Two rounds of parts close on the integrand -- the sine's remainder is the cosine's
+        /// integral and the cosine's is the sine's -- and the pair is solved rather than
+        /// iterated. Differentiating the answer is the whole proof: the cross terms cancel and
+        /// what is left is <c>x^m sin(L)((m + 1)^2 + B^2)</c>. The hyperbolic twin needs no rule,
+        /// the library writing <c>sinh</c> as exponentials that fold against the logarithm;
+        /// the sine and cosine are nodes and fold against nothing. Rubi's 4.7.5.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveAPowerTimesATrigonometricOfALogarithm(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Entity coefficient = Number.Integer.One;
+            Entity? degree = null;
+            Entity? argument = null;
+            var isSine = false;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    coefficient = underneath ? coefficient / factor : coefficient * factor;
+                    continue;
+                }
+                switch (factor)
+                {
+                    case Sinf(var inner) when argument is null && !underneath:
+                        (argument, isSine) = (inner, true);
+                        continue;
+                    case Cosf(var inner) when argument is null && !underneath:
+                        (argument, isSine) = (inner, false);
+                        continue;
+                    case Variable bare when bare == x && degree is null:
+                        degree = underneath ? Number.Integer.Create(-1) : Number.Integer.One;
+                        continue;
+                    case Powf(Variable bare, var power) when bare == x && degree is null && !power.ContainsNode(x):
+                        degree = underneath ? (-power).InnerSimplified : power;
+                        continue;
+                    default:
+                        return null;
+                }
+            }
+            if (argument is null || !argument.ContainsNode(x))
+                return null;
+            // L' x is the constant B, which is what makes the pair close.
+            var b = (argument.Differentiate(x) * x).InnerSimplified;
+            b = Functions.PartialFractions.Bare(b.Simplify());
+            if (b.ContainsNode(x) || b.Evaled is Number.Complex { IsZero: true })
+                return null;
+            var m = degree ?? Number.Integer.Zero;
+            var mPlusOne = (m + Number.Integer.One).InnerSimplified;
+            // `(m + 1)^2 + B^2`, which the answer divides by. Symbolically as well as
+            // numerically: for `B = n sqrt(-9/n^2)` and `m = 2` it is `9 + (n sqrt(-9/n^2))^2`,
+            // which `InnerSimplified` leaves standing and `Simplify` folds to zero -- an
+            // imaginary `B` of the right size makes the pair of parts circular rather than
+            // closing, and the answer divided by nothing at all.
+            var scale = (MathS.Sqr(mPlusOne) + MathS.Sqr(b)).InnerSimplified;
+            if (scale.Evaled is Number.Complex { IsZero: true }
+                || scale.Vars.Any() && Functions.PartialFractions.Bare(scale.Simplify()).Evaled is Number.Complex { IsZero: true })
+                return null;
+            var sine = MathS.Sin(argument);
+            var cosine = MathS.Cos(argument);
+            var bracket = isSine ? mPlusOne * sine - b * cosine : mPlusOne * cosine + b * sine;
+            var answer = coefficient * MathS.Pow(x, mPlusOne) * bracket / scale;
+            return answer.InnerSimplified;
+        }
+
+        /// <summary>
+        /// A power of a monomial with the power distributed: <c>(c x^n)^b</c> is
+        /// <c>c^b x^(n b)</c>, which the power rule answers where the monomial as written is read
+        /// by nothing -- <c>x^2 sin(a + b ln(c x^n))</c> folds to a power of <c>c x^n</c> and
+        /// stops there.
+        /// </summary>
+        /// <remarks>
+        /// Exact on the domain the integrand has. With a symbolic <c>n</c>, <c>x^n</c> is real
+        /// only for a positive <c>x</c> -- at a negative one it is a complex number or nothing --
+        /// so the integrand is defined there and nowhere else, and on <c>x &gt; 0</c> the
+        /// identity holds for a positive <c>c</c>. That condition travels with the answer as
+        /// <c>provided c &gt; 0</c>, unless <c>c</c> is a positive number already; the
+        /// <c>(e x)^(n - 1)</c> of Rubi's 6.5.2 carries the same one. A whole exponent is
+        /// <see cref="SolveByDistributingWholePowersOfProducts"/>'s, and needs no condition.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByDistributingAPowerOfAMonomial(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            Entity assumed = Entity.Boolean.True;
+            var changed = false;
+            var written = expr.Replace(node =>
+            {
+                if (node is not Powf(var @base, var exponent) || exponent.ContainsNode(x) || exponent is Number.Integer
+                    || !@base.ContainsNode(x))
+                    return node;
+                // The base as `c x^n`, with `c` and `n` free of the variable and `n` not whole --
+                // a whole one is the distributing rule's, which owes no condition.
+                Entity constant = Number.Integer.One;
+                Entity? degree = null;
+                foreach (var factor in Mulf.LinearChildren(@base))
+                {
+                    if (!factor.ContainsNode(x))
+                    {
+                        constant *= factor;
+                        continue;
+                    }
+                    if (degree is not null)
+                        return node;
+                    switch (factor)
+                    {
+                        case Variable bare when bare == x:
+                            degree = Number.Integer.One;
+                            break;
+                        case Powf(Variable bare, var power) when bare == x && !power.ContainsNode(x):
+                            degree = power;
+                            break;
+                        default:
+                            return node;
+                    }
+                }
+                // A whole `n` only where the identity needs nothing: for a negative `x`,
+                // `x^n` is a real number when `n` is whole, and `(c x^n)^b` is then `|x|`'s
+                // power, not `x`'s -- `(2 u^3)^(3/2)` is `2^(3/2) sgn(u) u^(9/2)`, and
+                // distributing it without the sign is a wrong answer where `u < 0`, which the
+                // rules for a root of an even power answer correctly and this must leave to
+                // them. With a fractional or symbolic `n` the integrand is real only for a
+                // positive `x`, and there the distribution is exact.
+                if (degree is null || degree is Number.Integer || degree.Evaled is Number.Integer)
+                    return node;
+                if (constant != Number.Integer.One && constant.Evaled is not Number.Real { IsPositive: true })
+                {
+                    if (constant.Vars.Any() is false)
+                        return node;
+                    var positive = new Greaterf(constant, Number.Integer.Zero);
+                    assumed = assumed == Entity.Boolean.True ? positive : assumed & positive;
+                }
+                changed = true;
+                var distributed = MathS.Pow(x, (degree * exponent).InnerSimplified);
+                return constant == Number.Integer.One ? distributed : MathS.Pow(constant, exponent) * distributed;
+            });
+            if (!changed || written == expr)
+                return null;
+            if (Integration.ComputeAsTheSameQuestion(written.InnerSimplified, x, integrateByParts) is not { } answer)
+                return null;
+            return assumed == Entity.Boolean.True ? answer : answer.Provided(assumed);
+        }
+
+        /// <summary>
         /// A pair of hyperbolic powers two apart whose coefficients kill the reduction's
         /// residual: <c>cosh(y)^p - (p - 1)/p cosh(y)^(p - 2)</c> is
         /// <c>sinh(y) cosh(y)^(p - 1)/p</c>, and <c>sinh(y)^p + (p - 1)/p sinh(y)^(p - 2)</c> is

@@ -90,5 +90,70 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("e^(1 + ln(x + 2)/2)")]
         [InlineData("tanh(ln(x))")]
         public void AHyperbolicFunctionOfALogarithm(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// A power of the variable times a sine or cosine of a logarithm, in closed form: two
+        /// rounds of parts close on the integrand, since the sine's remainder is the cosine's
+        /// integral and the cosine's is the sine's, and the pair is solved rather than iterated.
+        /// <c>int x^m sin(L)</c> is <c>x^(m+1)((m+1) sin(L) - B cos(L))/((m+1)^2 + B^2)</c>
+        /// wherever <c>L' = B/x</c>. The hyperbolic twin needs no rule, `sinh` being written as
+        /// exponentials that fold against the logarithm; the sine and cosine are nodes.
+        /// Rubi's 4.7.5.
+        /// </summary>
+        [Theory]
+        [InlineData("x^2*sin(a + b*ln(c*x^n))", "a=0.4,b=1.3,c=1.7,n=2.1")]
+        [InlineData("cos(a + b*ln(c*x^n))", "a=0.4,b=1.3,c=1.7,n=2.1")]
+        [InlineData("x^m*cos(a + b*ln(c*x^n))", "a=0.4,b=1.3,c=1.7,n=2.1,m=1.4")]
+        [InlineData("sin(2 + 3*ln(x))", "")]
+        [InlineData("x^2*sin(a + b*ln(x))/x", "a=0.4,b=1.3")]
+        public void APowerTimesATrigonometricOfALogarithm(string integrand, string pins)
+        {
+            var integral = integrand.ToEntity().Integrate("x").Substitute("C", 0);
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            Entity Pin(Entity e)
+            {
+                foreach (var pin in pins.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var parts = pin.Split('=');
+                    e = e.Substitute(parts[0], double.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture));
+                }
+                return e;
+            }
+            var derivative = Pin(integral).Differentiate("x");
+            var original = Pin(integrand.ToEntity());
+            foreach (var at in new[] { 0.3, 0.7, 1.1, 1.9, 2.6 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.False(got.IsNaN, $"the antiderivative of {integrand} differentiates to NaN at x = {at}");
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart) + Math.Abs((double)want.ImaginaryPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        /// <summary>
+        /// A fractional or symbolic power of a monomial, distributed: <c>(c x^n)^b</c> is
+        /// <c>c^b x^(n b)</c> on the <c>x &gt; 0</c> where a symbolic <c>n</c> leaves the
+        /// integrand real, for a positive <c>c</c> -- which the answer says.
+        /// </summary>
+        [Fact]
+        public void APowerOfAMonomialIsDistributed()
+        {
+            var integral = "(c*x^n)^b".ToEntity().Integrate("x").Substitute("C", 0);
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.Contains(integral.Nodes, node => node is Entity.Providedf(_, var predicate) && predicate == "c > 0".ToEntity());
+            var pinned = integral.Substitute("c", 1.7).Substitute("n", 2.1).Substitute("b", 0.6);
+            var derivative = pinned.Differentiate("x");
+            var original = "(c*x^n)^b".ToEntity().Substitute("c", 1.7).Substitute("n", 2.1).Substitute("b", 0.6);
+            foreach (var at in new[] { 0.3, 0.7, 1.1, 1.9, 2.6 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-9, $"at x = {at}: {got} for {want}");
+            }
+        }
     }
 }
