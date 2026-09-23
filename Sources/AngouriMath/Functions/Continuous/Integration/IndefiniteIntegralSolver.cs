@@ -2426,7 +2426,7 @@ namespace AngouriMath.Functions.Algebra
                 else if (argument != thisArgument)
                     return null;
             }
-            if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _)
+            if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out var offsetOfArgument)
                 || rate.ContainsNode(x) || TreeAnalyzer.IsZero(rate))
                 return null;
             if (!expr.Nodes.All(node => !node.ContainsNode(x)
@@ -2494,8 +2494,19 @@ namespace AngouriMath.Functions.Algebra
                 return constant * MathS.Pow(square, Number.Integer.Create(twoP));
             });
             var inU = rewritten.Substitute(sine, sineInU).Substitute(cosine, cosineInU);
+            // What is left of the variable is the variable itself: the angle is `rate x + offset`
+            // and `u` is half of it (a quarter turn on for the sine), so `x` is
+            // `(2u - pi/2 - offset)/rate` there and `(2u - offset)/rate` here -- and
+            // `x^3 sqrt(a + a cos(c + d x))` is a polynomial in `u` times a cosine of it, which
+            // the closed rules answer, where the rule used to decline anything beside the root.
             if (inU.ContainsNode(x))
-                return null;
+            {
+                var argumentInU = sineKind ? (2 * u - MathS.pi / 2).InnerSimplified : (2 * u).InnerSimplified;
+                var xInU = ((argumentInU - offsetOfArgument) / rate).InnerSimplified;
+                inU = inU.Substitute(x, xInU);
+                if (inU.ContainsNode(x))
+                    return null;
+            }
             // dx = 2 du / rate.
             var integrand = (inU * 2 / rate).InnerSimplified;
             if (Integration.ComputeAsAQuestionOfItsOwn(integrand, u, integrateByParts) is not { } result)
@@ -12416,7 +12427,7 @@ namespace AngouriMath.Functions.Algebra
                 else if (argument != thisArgument)
                     return null;
             }
-            if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _)
+            if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out var offsetOfArgument)
                 || rate.ContainsNode(x) || TreeAnalyzer.IsZero(rate))
                 return null;
             if (!expr.Nodes.All(node => !node.ContainsNode(x)
@@ -14846,7 +14857,7 @@ namespace AngouriMath.Functions.Algebra
                 else if (argument != thisArgument)
                     return null;
             }
-            if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _)
+            if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out var offsetOfArgument)
                 || rate.ContainsNode(x) || TreeAnalyzer.IsZero(rate))
                 return null;
             var sine = MathS.Sin(argument);

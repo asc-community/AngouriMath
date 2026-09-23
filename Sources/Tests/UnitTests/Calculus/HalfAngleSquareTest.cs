@@ -151,6 +151,26 @@ namespace AngouriMath.Tests.Calculus
             Assert.True(compared >= 4, $"only {compared} of five points were comparable for {integrand}");
         }
 
+        /// <summary>
+        /// A polynomial beside the root: the rule substitutes the half angle, and what is left
+        /// of the variable is the variable itself -- <c>x</c> is <c>(2u - offset)/rate</c> for
+        /// the cosine and a quarter turn further for the sine -- so
+        /// <c>x^3 sqrt(a + a cos(c + d x))</c> is a polynomial in <c>u</c> times a cosine of it,
+        /// which the closed rules answer. It used to decline anything standing beside the root.
+        /// Rubi's 4.2.1. <a href="https://github.com/asc-community/AngouriMath/issues/718">#718</a>
+        /// </summary>
+        [Theory]
+        [InlineData("x^3*sqrt(a + a*cos(c + d*x))")]
+        [InlineData("x*sqrt(a + a*cos(x))")]
+        [InlineData("x^3*sqrt(a - a*cos(x))")]
+        [InlineData("x^2*sqrt(a + a*sin(x))")]
+        [InlineData("x*(a + a*cos(x))^(3/2)")]
+        public void APolynomialMayStandBesideTheRoot(string integrand)
+        {
+            DifferentiatesBack(integrand, 2);
+            DifferentiatesBack(integrand, -3);
+        }
+
         /// <summary>A combination that does not kill the residual is not this rule's, and is left alone.</summary>
         [Fact]
         public void AnotherCoefficientIsLeftAsWritten()
