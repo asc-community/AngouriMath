@@ -511,6 +511,12 @@ namespace AngouriMath.Functions.Algebra
             // A whole power of a product of a constant and the variable, as the product of
             // the powers, which is how the inverse hyperbolic secant and cosecant arrive.
             if ((answer = IndefiniteIntegralSolver.SolveByDistributingWholePowersOfProducts(expr, x, integrateByParts)) is { }) return answer;
+            // And a fractional or symbolic power of a monomial: `(c x^n)^b` is `c^b x^(n b)`
+            // for a positive `c`, on the `x > 0` where a symbolic `n` leaves the integrand real.
+            if ((answer = IndefiniteIntegralSolver.SolveByDistributingAPowerOfAMonomial(expr, x, integrateByParts)) is { }) return answer;
+            // A power of the variable times a sine or cosine of a logarithm, where two rounds of
+            // parts close on the integrand: `int x^m sin(a + b ln(c x^n))` in closed form.
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesATrigonometricOfALogarithm(expr, x, integrateByParts)) is { }) return answer;
             // A logarithm of a quotient that cancels with the functions in it as
             // indeterminates, which is how an inverse hyperbolic function of a hyperbolic
             // one arrives: atanh(tanh(u)) is 1/2 ln(e^(2u)) once its quotient is cancelled.

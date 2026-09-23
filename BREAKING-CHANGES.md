@@ -1256,6 +1256,31 @@ here that writes one does: left inside, a rule below differentiated it, and
 | `"sqrt(a^2+2*a*b*x+b^2*x^2)*sqrt(c+pe*x+d*x^2)".Integrate("x")` | left unevaluated | the antiderivative |
 | `"(a^2+2*a*b*x+b^2*x^2)^(5/2)".Integrate("x")` | the antiderivative, through the substitution search | `sgn(a + b x) (a + b x)^6 |b|^5/(6 b)` up to the form |
 
+### A power of the variable times a sine or cosine of a logarithm, and a power of a monomial
+
+`x^2 sin(a + b ln(c x^n))` and `(c x^n)^b` were both left as written. Two rules, each exact:
+
+**The trigonometric of a logarithm** is a closed form rather than a search. Two rounds of parts
+close on the integrand -- the sine's remainder is the cosine's integral and the cosine's is the
+sine's -- so the pair is *solved*: `int x^m sin(L) dx` is
+`x^(m + 1)((m + 1) sin(L) - B cos(L))/((m + 1)^2 + B^2)` wherever `L' = B/x` for a constant `B`,
+which `a + b ln(c x^n)` is with `B = b n`; the cosine's is the same with
+`(m + 1) cos(L) + B sin(L)`. The hyperbolic twin needs no rule -- the library writes `sinh` as
+exponentials, which fold against the logarithm -- and the sine and cosine are nodes that fold
+against nothing.
+
+**A power of a monomial** is distributed: `(c x^n)^b` is `c^b x^(n b)`, for a positive `c`, and
+only where `n` is not whole. With a whole `n` the integrand is real at a negative `x` too, and
+there `(c x^n)^b` is a power of `|x|`, not of `x`: `(2 u^3)^(3/2)` is `2^(3/2) sgn(u) u^(9/2)`,
+which the rules for a root of an even power already answer with its sign
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2*sin(a+b*ln(c*x^n))".Integrate("x")` | left unevaluated | `x^3(3 sin(L) - b n cos(L))/(9 + b^2 n^2)` |
+| `"cos(a+b*ln(c*x^n))".Integrate("x")` | left unevaluated | `x(cos(L) + b n sin(L))/(1 + b^2 n^2)` |
+| `"(c*x^n)^b".Integrate("x")` | left unevaluated | `c^b x^(n b + 1)/(n b + 1) provided c > 0` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
