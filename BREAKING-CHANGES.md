@@ -1173,6 +1173,22 @@ it in the answer, and what the loop asks is whether the degree has fallen to not
 | `"F^(c*(a+b*x))*sin(d+pe*x)^3".Integrate("x")` | left unevaluated | the antiderivative |
 | `"F^(c*(a+b*x))*sin(d+pe*x)*cos(d+pe*x)".Integrate("x")` | left unevaluated | the antiderivative |
 
+### A polynomial may stand beside a root of `a ± a cos(y)`
+
+`x^3 sqrt(a + a cos(c + d x))` was left as written. The half angle at which `a ± a cos(y)` is a
+square answers the root alone, and it substitutes the angle -- so anything else that mentioned
+the variable stopped it, a polynomial among them. What is left of the variable is the variable
+itself: with `u` half the angle (a quarter turn further for the sine's identity), `x` is
+`(2u - offset)/rate`, so the polynomial is a polynomial in `u`, and what is handed on is one
+times a cosine of `u`, which the closed rules answer. Rubi's 4.2.10
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^3*sqrt(a+a*cos(c+d*x))".Integrate("x")` | left unevaluated | the antiderivative, with `sgn(cos((c + d x)/2))` in front |
+| `"x^3*sqrt(a-a*cos(x))".Integrate("x")` | left unevaluated | the antiderivative |
+| `"x^2*sqrt(a+a*sin(x))".Integrate("x")` | left unevaluated | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
