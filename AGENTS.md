@@ -1,4 +1,4 @@
-# AGENTS.md
+﻿# AGENTS.md
 
 For AI agents working on AngouriMath. Humans: [CONTRIBUTING.md](CONTRIBUTING.md) is yours, and
 everything below applies to you too.
@@ -683,8 +683,8 @@ leave project-management scaffolding behind once the work it tracked has landed.
 
 ### Milestones, and what clears a release
 
-Every open issue is on a milestone or is visibly untriaged, and the milestone says what kind of
-change it is, not only when:
+Every open issue is on a milestone, is an epic, or is visibly untriaged, and the milestone says
+what kind of change it is, not only when:
 
 - **The next minor** (`2.6.0`, then `2.7.0`, …) carries defects and additive work that moves no
   existing answer. Pace it: a minor that holds everything "minor" is a release that never ships, so
@@ -705,13 +705,16 @@ change it is, not only when:
   than shaping it: the C++ surface.
 - **Future** is an explicit deprioritisation, and the only one: it replaces the `Not now` label, and
   nothing sits there because it is hard. A "not now" that is ready to do is on a version — which is
-  why the milestone holds one issue, not thirty.
-- **Epics** — the agentic goals, #718, #1409 and their kind — sit on the `Epics` milestone. They
-  spawn sub-issues, and it is the sub-issues that carry version milestones; the epic itself stays
-  open across releases and lists what each one delivered.
-- A proposal without `Accepted` has no milestone: scheduling it would decide it. That absence is
-  what marks an issue **untriaged**, which is why an epic is on a milestone of its own rather
-  than on none.
+  why the milestone holds one issue, not thirty. Once every other milestone is done, the next
+  milestones are planned by pulling issues from it
+  ([#1468](https://github.com/asc-community/AngouriMath/issues/1468)); its description says so.
+- **Epics** — the agentic goals, #718, #1409 and their kind — are Goals used as parents, which is
+  what an epic is here (the type, not a milestone; the `Epics` milestone was retired when the
+  types came in, [#1384](https://github.com/asc-community/AngouriMath/pull/1384)). They carry no
+  milestone: they spawn sub-issues, and it is the sub-issues that carry version milestones; the
+  epic itself stays open across releases and lists what each one delivered.
+- A proposal without `Accepted` has no milestone: scheduling it would decide it. What marks an
+  issue **untriaged** is the absence of a type, not of a milestone.
 
 Assign the milestone when filing. When a PR merges, check its issue's milestone still describes
 where the change lands — a fix that turned out breaking moves to the major, with a
