@@ -1281,6 +1281,45 @@ which the rules for a root of an even power already answer with its sign
 | `"cos(a+b*ln(c*x^n))".Integrate("x")` | left unevaluated | `x(cos(L) + b n sin(L))/(1 + b^2 n^2)` |
 | `"(c*x^n)^b".Integrate("x")` | left unevaluated | `c^b x^(n b + 1)/(n b + 1) provided c > 0` |
 
+### A constant comes out of a fractional power beside another power of the same function
+
+`sqrt(b sec(x))/sec(x)^(7/2)` was left as written. The two powers of the secant are the same
+function to a total power of `-3`, which the rules for a power of a secant answer -- but they
+cannot see it while one of them is written over `b sec(x)` rather than over `sec(x)`.
+
+`(c f)^b` is `c^b f^b` for a **positive** real `c` and any `f`: both sides pick up the same phase
+where `f` is negative, so the rewrite needs nothing assumed about `f`, and where `c` carries
+symbols the answer says `provided c > 0`. That condition is not decoration. 2.5.0 answered
+`sec(x)^(3/2)/(b sec(x))^(5/2)` without it, and that answer is **wrong wherever `b` and the
+secant are both negative** -- at `b = -3` its derivative is `+0.0267i` against the integrand's
+`-0.0267i` at `x = 2`, while the two agree at `x = 0.5`.
+[#1388](https://github.com/asc-community/AngouriMath/pull/1388) withdrew the unconditional
+reading for that reason, and this brings the shape back with the condition it owes.
+
+Two restrictions keep the rewrite from costing anything elsewhere:
+
+- **A single factor.** The constant comes out only where the rest of the base is one factor,
+  which is where it pays: the power it leaves can then meet another power of the same function
+  beside it. Over a product it would rewrite the question into one no easier and pay a whole
+  descent to find out -- `(cos(x)^11 sin(x)^13)^(-1/4)` measured at ten seconds against
+  forty-seven.
+- **Not an even power.** `(a sin(x)^2)^(5/2)` is `a^(5/2) sgn(sin x) sin(x)^5` for *any* real
+  `a`, since an even power is never negative, and the rule that takes a function out of its even
+  power with its sign says so unconditionally. Taking the constant out there would answer the
+  same shape `provided a > 0` and lose the negative half of the line by getting there first.
+
+The power of the variable is unchanged and still splits only where its exponent is not whole
+(the entry above), because `(2 u^3)^(3/2)` is `2^(3/2) sgn(u) u^(9/2)` and the sign belongs to
+the rules for a root of an even power.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(b*sec(c+d*x))/sec(c+d*x)^(7/2)".Integrate("x")` | left unevaluated | `sqrt(b)(sin(y) - sin(y)^3/3)/d provided b > 0` |
+| `"sec(c+d*x)^(3/2)/(b*sec(c+d*x))^(5/2)".Integrate("x")` | `sin(y)/(b^(5/2) d)`, wrong for a negative `b` where the secant is negative | `sin(y)/(b^(5/2) d) provided b > 0` |
+
+`y` is `c + d x`. Rubi's 4.1.0, 4.2.0, 4.3.0 and 4.5.0: family 4 goes from 290 to 309 of 422,
+with no row lost and two fewer timeouts.
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

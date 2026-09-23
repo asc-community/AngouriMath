@@ -14655,10 +14655,11 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// A power of a monomial with the power distributed: <c>(c x^n)^b</c> is
-        /// <c>c^b x^(n b)</c>, which the power rule answers where the monomial as written is read
-        /// by nothing -- <c>x^2 sin(a + b ln(c x^n))</c> folds to a power of <c>c x^n</c> and
-        /// stops there.
+        /// A constant taken out of a fractional power, and a power of the variable split off
+        /// with it: <c>(c g)^b</c> is <c>c^b g^b</c> for a positive <c>c</c>, and <c>(c x^n)^b</c>
+        /// is <c>c^b x^(n b)</c> where <c>n</c> is not whole. <c>sqrt(b sec(y))/sec(y)^(7/2)</c>
+        /// is <c>sqrt(b) cos(y)^3</c> and was read by nothing; <c>x^2 sin(a + b ln(c x^n))</c>
+        /// folds to a power of <c>c x^n</c> and stopped there.
         /// </summary>
         /// <remarks>
         /// Exact on the domain the integrand has. With a symbolic <c>n</c>, <c>x^n</c> is real
@@ -14679,10 +14680,16 @@ namespace AngouriMath.Functions.Algebra
                 if (node is not Powf(var @base, var exponent) || exponent.ContainsNode(x) || exponent is Number.Integer
                     || !@base.ContainsNode(x))
                     return node;
-                // The base as `c x^n`, with `c` and `n` free of the variable and `n` not whole --
-                // a whole one is the distributing rule's, which owes no condition.
+                // The base as a constant times the rest: `(c g)^b` is `c^b g^b` for a positive
+                // real `c` and any `g`, on the principal branch and with nothing assumed about
+                // `g` -- both sides pick up the same phase where `g` is negative. The rest is
+                // read as `x^n` where it is one, since `(x^n)^b` is `x^(n b)` under the
+                // condition below and that is what makes the power rule answer it.
                 Entity constant = Number.Integer.One;
+                Entity rest = Number.Integer.One;
                 Entity? degree = null;
+                Entity? single = null;
+                var restFactors = 0;
                 foreach (var factor in Mulf.LinearChildren(@base))
                 {
                     if (!factor.ContainsNode(x))
@@ -14690,8 +14697,14 @@ namespace AngouriMath.Functions.Algebra
                         constant *= factor;
                         continue;
                     }
+                    rest *= factor;
+                    restFactors++;
+                    single = factor;
                     if (degree is not null)
-                        return node;
+                    {
+                        degree = null;
+                        continue;
+                    }
                     switch (factor)
                     {
                         case Variable bare when bare == x:
@@ -14700,18 +14713,40 @@ namespace AngouriMath.Functions.Algebra
                         case Powf(Variable bare, var power) when bare == x && !power.ContainsNode(x):
                             degree = power;
                             break;
-                        default:
-                            return node;
                     }
                 }
-                // A whole `n` only where the identity needs nothing: for a negative `x`,
-                // `x^n` is a real number when `n` is whole, and `(c x^n)^b` is then `|x|`'s
-                // power, not `x`'s -- `(2 u^3)^(3/2)` is `2^(3/2) sgn(u) u^(9/2)`, and
-                // distributing it without the sign is a wrong answer where `u < 0`, which the
-                // rules for a root of an even power answer correctly and this must leave to
-                // them. With a fractional or symbolic `n` the integrand is real only for a
-                // positive `x`, and there the distribution is exact.
-                if (degree is null || degree is Number.Integer || degree.Evaled is Number.Integer)
+                if (rest == Number.Integer.One)
+                    return node;
+                // The power of `x` is split only where `n` is not whole: for a negative `x`,
+                // `x^n` is a real number when `n` is whole, and `(x^n)^b` is then `|x|`'s power,
+                // not `x`'s -- `(2 u^3)^(3/2)` is `2^(3/2) sgn(u) u^(9/2)`, and splitting it
+                // without the sign is a wrong answer where `u < 0`, which the rules for a root
+                // of an even power answer correctly and this must leave to them. With a
+                // fractional or symbolic `n` the integrand is real only for a positive `x`, and
+                // there the split is exact. The constant comes out either way.
+                // An even whole power of a function is not this rule's: `(a sin(x)^2)^(5/2)` is
+                // `a^(5/2) sgn(sin x) sin(x)^5` for *any* real `a`, because an even power is
+                // never negative, and the rule that takes the function out of it with its sign
+                // says so unconditionally. Taking the constant out here would answer the same
+                // shape `provided a > 0` and lose the negative half of the line, by getting
+                // there first. Read through the nesting and past the sign: `1/sqrt(a cot(x)^2)`
+                // arrives at this rule, below the tangent substitution, as `(a/u^2)^(-1/2)`,
+                // whose factor is `(u^2)^(-1)` -- an outer exponent of `-1` over an even one,
+                // and no less non-negative for either.
+                var evenness = EInteger.One;
+                for (var peeled = single; peeled is Powf(var peeledBase, Number.Integer step); peeled = peeledBase)
+                    evenness = evenness.Multiply(step.EInteger);
+                if (evenness.IsEven && !evenness.IsZero)
+                    return node;
+                var split = degree is not null && degree is not Number.Integer && degree.Evaled is not Number.Integer;
+                // Taking the constant out of a base of several factors rewrites the question
+                // without bringing its answer closer: `(c f g)^b` becomes `c^b (f g)^b` and the
+                // whole search runs again on a product that is no easier. It pays where the rest
+                // is a *single* factor, because `(c f)^b` then becomes a power of `f` that can
+                // meet another power of `f` beside it -- which is what answers
+                // `sqrt(b sec x)/sec(x)^(7/2)`. Over a product it only costs a descent:
+                // `(cos(x)^11 sin(x)^13)^(-1/4)` went from 10 to 47 seconds.
+                if (!split && (constant == Number.Integer.One || restFactors > 1))
                     return node;
                 if (constant != Number.Integer.One && constant.Evaled is not Number.Real { IsPositive: true })
                 {
@@ -14721,7 +14756,7 @@ namespace AngouriMath.Functions.Algebra
                     assumed = assumed == Entity.Boolean.True ? positive : assumed & positive;
                 }
                 changed = true;
-                var distributed = MathS.Pow(x, (degree * exponent).InnerSimplified);
+                var distributed = split ? MathS.Pow(x, (degree! * exponent).InnerSimplified) : MathS.Pow(rest, exponent);
                 return constant == Number.Integer.One ? distributed : MathS.Pow(constant, exponent) * distributed;
             });
             if (!changed || written == expr)

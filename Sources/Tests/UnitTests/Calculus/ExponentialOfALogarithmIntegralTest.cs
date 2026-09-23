@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -153,6 +153,50 @@ namespace AngouriMath.Tests.Calculus
                 var got = derivative.Substitute("x", at).EvalNumerical();
                 var want = original.Substitute("x", at).EvalNumerical();
                 Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-9, $"at x = {at}: {got} for {want}");
+            }
+        }
+
+        /// <summary>
+        /// <c>(c f)^b</c> is <c>c^b f^b</c> for a positive real <c>c</c> and any <c>f</c>: both
+        /// sides take the same branch where <c>f</c> is negative, so the rewrite is exact and
+        /// not conditional on the sign of <c>f</c>. It is worth doing where the rest of the base
+        /// is a single factor, because the power it leaves can then meet another power of the
+        /// same function beside it -- <c>sqrt(b sec x)/sec(x)^(7/2)</c> is the secant to the
+        /// power <c>-3</c>, which the rules for those answer and cannot see while one of the two
+        /// powers is written over <c>b sec(x)</c>. Over a product of several factors it would
+        /// only rewrite the question into one no easier, at the price of a whole descent.
+        /// Rubi's 4.1.0, 4.2.0, 4.3.0 and 4.5.0.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(b*sec(x))/sec(x)^(7/2)", "b=1.7")]
+        [InlineData("sec(x)^(3/2)/(b*sec(x))^(5/2)", "b=1.7")]
+        [InlineData("(b*sec(x))^(3/2)*sec(x)^(1/2)", "b=1.7")]
+        [InlineData("(3*sin(x))^(5/2)/sin(x)^(3/2)", "")]
+        public void AConstantComesOutOfAPowerOfASingleFactor(string integrand, string pins)
+        {
+            var integral = integrand.ToEntity().Integrate("x").Substitute("C", 0);
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            Entity Pin(Entity e)
+            {
+                foreach (var pin in pins.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var parts = pin.Split('=');
+                    e = e.Substitute(parts[0], double.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture));
+                }
+                return e;
+            }
+            var derivative = Pin(integral).Differentiate("x");
+            var original = Pin(integrand.ToEntity());
+            foreach (var at in new[] { 0.3, 0.7, 1.1, 1.9, 2.6 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.False(got.IsNaN, $"the antiderivative of {integrand} differentiates to NaN at x = {at}");
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart) + Math.Abs((double)want.ImaginaryPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
             }
         }
     }
