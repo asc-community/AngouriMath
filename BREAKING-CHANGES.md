@@ -1189,6 +1189,29 @@ times a cosine of `u`, which the closed rules answer. Rubi's 4.2.10
 | `"x^3*sqrt(a-a*cos(x))".Integrate("x")` | left unevaluated | the antiderivative |
 | `"x^2*sqrt(a+a*sin(x))".Integrate("x")` | left unevaluated | the antiderivative |
 
+### A root of a quadratic in the tangent is rotated until the quadratic has no linear term
+
+`1/sqrt(1 + 2 tan(x) + 3 tan(x)^2)` was left as written. Under `x = y + arctan(m)` the tangent
+becomes `(tan(y) + m)/(1 - m tan(y))` -- the Möbius map that preserves `1 + tan^2`, which is the
+factor the tangent substitution's `dx` brings -- and the quadratic's linear coefficient becomes
+`b(1 - m^2) + 2(c - a)m`, zero for a root of `b m^2 + 2(a - c)m - b`, whose discriminant
+`4((a - c)^2 + b^2)` is never negative. The rotated quadratic `A + C tan(y)^2` goes through the
+tangent substitution to `1/((1 + t^2) sqrt(A + C t^2))`, which was already answered. The radicand
+is *assembled* -- `A = a + bm + cm^2`, `C = am^2 - bm + c` -- rather than substituted into, since
+writing the quotient inside the root leaves a nesting nothing downstream reduces; and a
+`sgn(1 - m tan(y))` comes out in front, the modulus that `sqrt(N/(1 - mS)^2)` leaves.
+
+A numeric rotation only: with symbolic coefficients `m` is a nested surd, the rotated quadratic is
+written in it, and the rational integrator is handed a quotient over that field -- two minutes and
+no answer, where the integrand is declined in under a second unrotated, so the symbolic shape
+keeps its decline ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/sqrt(1+2*tan(x)+3*tan(x)^2)".Integrate("x")` | left unevaluated | the antiderivative, with `sgn(1 - m tan(x - arctan(m)))` in front |
+| `"tan(x)/sqrt(2+tan(x)+tan(x)^2)".Integrate("x")` | left unevaluated | the antiderivative |
+| `"tan(x)^2/(2+tan(x)+tan(x)^2)^(3/2)".Integrate("x")` | left unevaluated | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

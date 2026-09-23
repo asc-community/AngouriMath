@@ -654,6 +654,10 @@ namespace AngouriMath.Functions.Algebra
             // alone is both rules' and the reduction's answer for it is shorter.
             if ((answer = IndefiniteIntegralSolver.SolveByTrigonometricPowerSubstitution(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByTangentSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // A root of a quadratic in the tangent with a linear term, rotated until it has
+            // none: `1/sqrt(a + b tan(x) + c tan(x)^2)` is `1/sqrt(A + C tan(y)^2)` under
+            // `x = y + arctan(m)`, which the substitution above then answers.
+            if ((answer = IndefiniteIntegralSolver.SolveByRotatingAwayTheLinearTermInTheTangent(expr, x, integrateByParts)) is { }) return answer;
             // And the logarithm's own substitution, beside the tangent's. It goes the other way
             // -- `x = e^u`, so it *introduces* an exponential rather than cancelling one -- which
             // is why the general substitution does not find it and why it pays: the integrator
