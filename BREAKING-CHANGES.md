@@ -1281,6 +1281,54 @@ which the rules for a root of an even power already answer with its sign
 | `"cos(a+b*ln(c*x^n))".Integrate("x")` | left unevaluated | `x(cos(L) + b n sin(L))/(1 + b^2 n^2)` |
 | `"(c*x^n)^b".Integrate("x")` | left unevaluated | `c^b x^(n b + 1)/(n b + 1) provided c > 0` |
 
+### A constant comes out of a fractional power beside another power of the same function
+
+`sqrt(b sec(x))/sec(x)^(7/2)` was left as written. The two powers of the secant are the same
+function to a total power of `-3`, which the rules for a power of a secant answer -- but they
+cannot see it while one of them is written over `b sec(x)` rather than over `sec(x)`.
+
+`(c f)^b` is `c^b f^b` for a **positive** real `c` and any `f`: both sides pick up the same phase
+where `f` is negative, so the rewrite needs nothing assumed about `f`, and where `c` carries
+symbols the answer says `provided c > 0`. That condition is not decoration. 2.5.0 answered
+`sec(x)^(3/2)/(b sec(x))^(5/2)` without it, and that answer is **wrong wherever `b` and the
+secant are both negative** -- at `b = -3` its derivative is `+0.0267i` against the integrand's
+`-0.0267i` at `x = 2`, while the two agree at `x = 0.5`.
+[#1388](https://github.com/asc-community/AngouriMath/pull/1388) withdrew the unconditional
+reading for that reason, and this brings the shape back with the condition it owes.
+
+Where it is asked, and what it takes, is what keeps it from costing anything elsewhere:
+
+- **After the rules that answer the same shapes for any real constant.** A function comes out
+  of its even power with its sign -- `(a sin(x)^2)^(5/2)` is `a^(5/2) sgn(sin x) sin(x)^5` for
+  every real `a`, an even power being never negative -- and `sqrt(a + a sin(x))` is integrated
+  by the half angle at which `1 + sin(x)` is a square, again for every real `a`. Asked before
+  them, this answered both `provided a > 0` and lost the negative half of the line. It is asked
+  after them, and before the substitution search, which spends the budget on the roots.
+- **A single factor in which `x` enters only through trigonometric functions.** The constant
+  comes out only where the rest of the base is one factor like `sec(x)` or `1 - sin(x)^2`, with
+  the constant a sum writes in every term read as well: `a - a sin(x)^2` is `a (1 - sin(x)^2)`.
+  The rewritten integrand is asked again at the same depth, so a rewrite that does not bring the
+  answer closer multiplies the search at every level below it. Over a product it would rewrite
+  the question into one no easier -- `(cos(x)^11 sin(x)^13)^(-1/4)` measured at ten seconds
+  against forty-seven -- and over a hyperbolic function, which is written in exponentials, it
+  finds a `2` in `csch(x) = 1/((e^x - e^(-x))/2)` under every substitution below it:
+  `x/csch(x)^(3/2)`, declined in seven seconds, was not declined in ninety.
+
+The power of the variable is unchanged and still splits only where its exponent is not whole
+(the entry above), because `(2 u^3)^(3/2)` is `2^(3/2) sgn(u) u^(9/2)` and the sign belongs to
+the rules for a root of an even power.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(b*sec(c+d*x))/sec(c+d*x)^(7/2)".Integrate("x")` | left unevaluated | `sqrt(b)(sin(y) - sin(y)^3/3)/d provided b > 0` |
+| `"sec(c+d*x)^(3/2)/(b*sec(c+d*x))^(5/2)".Integrate("x")` | `sin(y)/(b^(5/2) d)`, wrong for a negative `b` where the secant is negative | `sin(y)/(b^(5/2) d) provided b > 0` |
+| `"sqrt(a-a*sin(x)^2)*tan(x)^6".Integrate("x")` | left unevaluated | `sqrt(a)` times the antiderivative of `sqrt(1 - sin(x)^2) tan(x)^6`, `provided a > 0` |
+| `"(a+a*sin(x))^(3/2)/(c+d*sin(x))^(5/2)".Integrate("x")` | left unevaluated | `a^(3/2)` times a closed form, `provided a > 0` |
+
+`y` is `c + d x`. Rubi's 4.1.0, 4.1.2, 4.1.7, 4.2.0, 4.3.0 and 4.5.0: family 4 goes from 290
+to 309 of 422 with five fewer timeouts, and family 6 from 377 to 378; no row is lost in families
+1, 4, 5, 6 or 7, and the 1774-problem suite stays at 1707 with no wrong answer.
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
