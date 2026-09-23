@@ -14655,6 +14655,93 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A sum as the constant written in every one of its terms times the sum without it:
+        /// <c>a - a sin(x)^2</c> is <c>a (1 - sin(x)^2)</c>, and <c>a + a sin(x)</c> is
+        /// <c>a (1 + sin(x))</c>. A factor counts only where every term writes it, compared as
+        /// written, so <c>2 + 4 sin(x)</c> keeps its <c>2</c>. Null where no factor is common.
+        /// </summary>
+        private static (Entity Content, Entity Remainder)? TakeTheConstantWrittenInEveryTermOut(Entity sum, Entity.Variable x)
+        {
+            var terms = Sumf.LinearChildren(sum);
+            if (terms.Count < 2)
+                return null;
+            List<Entity>? common = null;
+            foreach (var term in terms)
+            {
+                var constants = new List<Entity>();
+                foreach (var factor in Mulf.LinearChildren(term))
+                    if (!factor.ContainsNode(x) && factor != Number.Integer.One)
+                        constants.Add(factor);
+                if (common is null)
+                    common = constants;
+                else
+                {
+                    var kept = new List<Entity>();
+                    foreach (var candidate in common)
+                        if (constants.Remove(candidate))
+                            kept.Add(candidate);
+                    common = kept;
+                }
+                if (common.Count == 0)
+                    return null;
+            }
+            Entity content = Number.Integer.One;
+            foreach (var factor in common!)
+                content = content == Number.Integer.One ? factor : content * factor;
+            Entity rest = Number.Integer.Zero;
+            foreach (var term in terms)
+            {
+                var factors = new List<Entity>(Mulf.LinearChildren(term));
+                foreach (var factor in common)
+                    factors.Remove(factor);
+                Entity reduced = Number.Integer.One;
+                foreach (var factor in factors)
+                    reduced = reduced == Number.Integer.One ? factor : reduced * factor;
+                rest = rest == Number.Integer.Zero ? reduced : rest + reduced;
+            }
+            return (content, rest);
+        }
+
+        /// <summary>
+        /// Whether <paramref name="x"/> occurs in <paramref name="expr"/> at all, and then only
+        /// inside a sine, cosine, tangent, cotangent, secant or cosecant: <c>1 + sin(x)</c> and
+        /// <c>sec(2x)^3</c> are such, <c>e^x</c>, <c>x sin(x)</c> and a hyperbolic function --
+        /// written as exponentials -- are not.
+        /// </summary>
+        private static bool EntersOnlyThroughTrigonometricFunctions(Entity expr, Entity.Variable x)
+        {
+            return expr.ContainsNode(x) && Through(expr, x);
+
+            static bool Through(Entity node, Entity.Variable x)
+            {
+                if (node is Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf || !node.ContainsNode(x))
+                    return true;
+                if (node is Variable)
+                    return false;
+                foreach (var child in node.DirectChildren)
+                    if (!Through(child, x))
+                        return false;
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// A fractional or symbolic power of a monomial, distributed: <c>(c x^n)^b</c> is
+        /// <c>c^b x^(n b)</c> for a positive <c>c</c> and a <c>n</c> that is not whole.
+        /// </summary>
+        internal static Entity? SolveByDistributingAPowerOfAMonomial(Entity expr, Entity.Variable x, bool integrateByParts)
+            => DistributeAFractionalPower(expr, x, integrateByParts, constantAlone: false);
+
+        /// <summary>
+        /// A constant taken out of a fractional power of a factor in which <c>x</c> enters only
+        /// through trigonometric functions: <c>sqrt(b sec(x))</c> is <c>sqrt(b) sqrt(sec(x))</c>
+        /// and <c>sqrt(a - a sin(x)^2)</c> is <c>sqrt(a) sqrt(1 - sin(x)^2)</c>, for a positive
+        /// constant, which the answer says where the constant is a symbol.
+        /// </summary>
+        internal static Entity? SolveByTakingAConstantOutOfAFractionalPower(Entity expr, Entity.Variable x, bool integrateByParts)
+            => DistributeAFractionalPower(expr, x, integrateByParts, constantAlone: true);
+
+        /// <summary>
         /// A constant taken out of a fractional power, and a power of the variable split off
         /// with it: <c>(c g)^b</c> is <c>c^b g^b</c> for a positive <c>c</c>, and <c>(c x^n)^b</c>
         /// is <c>c^b x^(n b)</c> where <c>n</c> is not whole. <c>sqrt(b sec(y))/sec(y)^(7/2)</c>
@@ -14669,9 +14756,12 @@ namespace AngouriMath.Functions.Algebra
         /// <c>provided c &gt; 0</c>, unless <c>c</c> is a positive number already; the
         /// <c>(e x)^(n - 1)</c> of Rubi's 6.5.2 carries the same one. A whole exponent is
         /// <see cref="SolveByDistributingWholePowersOfProducts"/>'s, and needs no condition.
+        /// The two are asked from two places: the monomial where it always was, and the constant
+        /// alone after the rules that answer its shapes for any real constant, since this one
+        /// owes <c>provided c &gt; 0</c> and, asked first, answered them weaker.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
-        internal static Entity? SolveByDistributingAPowerOfAMonomial(Entity expr, Entity.Variable x, bool integrateByParts)
+        private static Entity? DistributeAFractionalPower(Entity expr, Entity.Variable x, bool integrateByParts, bool constantAlone)
         {
             Entity assumed = Entity.Boolean.True;
             var changed = false;
@@ -14690,14 +14780,19 @@ namespace AngouriMath.Functions.Algebra
                 Entity? degree = null;
                 Entity? single = null;
                 var restFactors = 0;
+                // Each product starts at its first factor rather than at `1 * factor`: a
+                // quotient `1/s` arrives as the factors `1` and `s^(-1)`, and a constant built as
+                // `1 * 1` is not `1` as a tree, so the rule would take out nothing, believe it had
+                // taken something, and ask the same question again.
                 foreach (var factor in Mulf.LinearChildren(@base))
                 {
                     if (!factor.ContainsNode(x))
                     {
-                        constant *= factor;
+                        if (factor != Number.Integer.One)
+                            constant = constant == Number.Integer.One ? factor : constant * factor;
                         continue;
                     }
-                    rest *= factor;
+                    rest = rest == Number.Integer.One ? factor : rest * factor;
                     restFactors++;
                     single = factor;
                     if (degree is not null)
@@ -14717,6 +14812,18 @@ namespace AngouriMath.Functions.Algebra
                 }
                 if (rest == Number.Integer.One)
                     return node;
+                // A sum is read for the constant written in every one of its terms: `a - a sin(x)^2`
+                // is `a (1 - sin(x)^2)`. The substitution for a linear argument happens to write it
+                // so, and without this `sqrt(a - a sin(c + d x)^2)` came out where
+                // `sqrt(a - a sin(x)^2)` did not.
+                if (constantAlone && restFactors == 1 && single is Sumf or Minusf
+                    && TakeTheConstantWrittenInEveryTermOut(single, x) is var (content, withoutIt))
+                {
+                    constant = constant == Number.Integer.One ? content : constant * content;
+                    single = withoutIt;
+                    rest = withoutIt;
+                    degree = null;
+                }
                 // The power of `x` is split only where `n` is not whole: for a negative `x`,
                 // `x^n` is a real number when `n` is whole, and `(x^n)^b` is then `|x|`'s power,
                 // not `x`'s -- `(2 u^3)^(3/2)` is `2^(3/2) sgn(u) u^(9/2)`, and splitting it
@@ -14727,10 +14834,11 @@ namespace AngouriMath.Functions.Algebra
                 // An even whole power of a function is not this rule's: `(a sin(x)^2)^(5/2)` is
                 // `a^(5/2) sgn(sin x) sin(x)^5` for *any* real `a`, because an even power is
                 // never negative, and the rule that takes the function out of it with its sign
-                // says so unconditionally. Taking the constant out here would answer the same
-                // shape `provided a > 0` and lose the negative half of the line, by getting
-                // there first. Read through the nesting and past the sign: `1/sqrt(a cot(x)^2)`
-                // arrives at this rule, below the tangent substitution, as `(a/u^2)^(-1/2)`,
+                // says so unconditionally -- at the top, where it is asked first; below the top
+                // it is not asked, and taking the constant out here would answer the same shape
+                // `provided a > 0` and carry that up. Read through the nesting and past the
+                // sign: `1/sqrt(a cot(x)^2)` arrives at this rule, below the tangent
+                // substitution, as `(a/u^2)^(-1/2)`,
                 // whose factor is `(u^2)^(-1)` -- an outer exponent of `-1` over an even one,
                 // and no less non-negative for either.
                 var evenness = EInteger.One;
@@ -14739,14 +14847,26 @@ namespace AngouriMath.Functions.Algebra
                 if (evenness.IsEven && !evenness.IsZero)
                     return node;
                 var split = degree is not null && degree is not Number.Integer && degree.Evaled is not Number.Integer;
-                // Taking the constant out of a base of several factors rewrites the question
-                // without bringing its answer closer: `(c f g)^b` becomes `c^b (f g)^b` and the
-                // whole search runs again on a product that is no easier. It pays where the rest
-                // is a *single* factor, because `(c f)^b` then becomes a power of `f` that can
-                // meet another power of `f` beside it -- which is what answers
-                // `sqrt(b sec x)/sec(x)^(7/2)`. Over a product it only costs a descent:
-                // `(cos(x)^11 sin(x)^13)^(-1/4)` went from 10 to 47 seconds.
-                if (!split && (constant == Number.Integer.One || restFactors > 1))
+                // Each entry point does one of the two: the power of `x` is split where the
+                // monomial rule is asked, and a constant alone taken out where this one is -- after
+                // the rules that answer its shapes for any real constant.
+                if (split == constantAlone)
+                    return node;
+                // Taking the constant out rewrites the question, and the rewritten question is
+                // asked at the same depth, so the rewrite has to be one that brings the answer
+                // closer or it multiplies the search at every level. It does where the rest is a
+                // single factor in which `x` enters only through trigonometric functions: `(c f)^b`
+                // then becomes a power of `f` that can meet another power of `f` beside it --
+                // `sqrt(b sec x)/sec(x)^(7/2)` -- or a root the half-angle rules read, as
+                // `sqrt(a + a sin x)` is `sqrt(a) sqrt(1 + sin x)`. Over a product it is no easier:
+                // `(cos(x)^11 sin(x)^13)^(-1/4)` went from 10 to 47 seconds. And the hyperbolic
+                // functions are written as exponentials, where the same rewrite finds a `2` in
+                // `csch(x) = 1/((e^x - e^(-x))/2)` under every substitution below it:
+                // `x/csch(x)^(3/2)`, declined in seven seconds, was not declined in ninety. Below a
+                // substitution the trigonometric functions are gone, so this also keeps the
+                // rewrite to the levels where it was measured.
+                if (constantAlone && (constant == Number.Integer.One || restFactors > 1
+                    || !EntersOnlyThroughTrigonometricFunctions(single!, x)))
                     return node;
                 if (constant != Number.Integer.One && constant.Evaled is not Number.Real { IsPositive: true })
                 {
@@ -14759,9 +14879,17 @@ namespace AngouriMath.Functions.Algebra
                 var distributed = split ? MathS.Pow(x, (degree! * exponent).InnerSimplified) : MathS.Pow(rest, exponent);
                 return constant == Number.Integer.One ? distributed : MathS.Pow(constant, exponent) * distributed;
             });
-            if (!changed || written == expr)
+            if (!changed)
                 return null;
-            if (Integration.ComputeAsTheSameQuestion(written.InnerSimplified, x, integrateByParts) is not { } answer)
+            // A rewrite of the same question has to change the question. The question is asked
+            // again without consuming depth, so an integrand rewritten into itself -- which is
+            // what `(1/s)^b` was, read as `1^b (1/s)^b` -- is asked again at every level of the
+            // search below it, without bound: `x/csch(x)^(3/2)` declined in seven seconds before
+            // this rule and did not come back at all with it.
+            var rewritten = written.InnerSimplified;
+            if (rewritten == expr || rewritten == expr.InnerSimplified)
+                return null;
+            if (Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts) is not { } answer)
                 return null;
             return assumed == Entity.Boolean.True ? answer : answer.Provided(assumed);
         }

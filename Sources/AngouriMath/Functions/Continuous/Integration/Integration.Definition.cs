@@ -629,6 +629,14 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveByTheHalfAngleWhereOnePlusASineIsASquare(expr, x, integrateByParts)) is { }) return answer;
             // And `a ± a cosh(y)` under a fractional power: `2a cosh(y/2)^2`, `-2a sinh(y/2)^2`.
             if ((answer = IndefiniteIntegralSolver.SolveByTheHalfAngleWhereOnePlusAHyperbolicCosineIsASquare(expr, x, integrateByParts)) is { }) return answer;
+            // A constant out of a fractional power of a trigonometric factor: `sqrt(b sec(x))` is
+            // `sqrt(b) sqrt(sec(x))` for a positive `b`, which meets the other powers of the
+            // secant beside it. After the rules that answer the same shapes for any real
+            // constant -- a function out of its even power with its sign, the half angle of
+            // `a +- a sin(y)` -- since this one owes `provided b > 0` and, asked first, answered
+            // `sqrt(a + a sin(x))` for a positive `a` only. Before the substitution search, which
+            // spends the budget on the roots.
+            if ((answer = IndefiniteIntegralSolver.SolveByTakingAConstantOutOfAFractionalPower(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             // A logarithmic derivative the substitution above could not read for a symbol in
             // an exponent: `(x^(n-1) - 1)/(x^n - n x)`.

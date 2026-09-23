@@ -163,15 +163,21 @@ namespace AngouriMath.Tests.Calculus
         /// is a single factor, because the power it leaves can then meet another power of the
         /// same function beside it -- <c>sqrt(b sec x)/sec(x)^(7/2)</c> is the secant to the
         /// power <c>-3</c>, which the rules for those answer and cannot see while one of the two
-        /// powers is written over <c>b sec(x)</c>. Over a product of several factors it would
-        /// only rewrite the question into one no easier, at the price of a whole descent.
-        /// Rubi's 4.1.0, 4.2.0, 4.3.0 and 4.5.0.
+        /// powers is written over <c>b sec(x)</c>; and <c>sqrt(a + a sin x)</c> is
+        /// <c>sqrt(a) sqrt(1 + sin x)</c>, a root the half-angle rules read. Over a product of
+        /// several factors it would only rewrite the question into one no easier, at the price
+        /// of a whole descent, and over anything in which <c>x</c> enters other than through a
+        /// trigonometric function -- a hyperbolic function, written in exponentials -- it
+        /// multiplied the search at every level below it.
+        /// Rubi's 4.1.0, 4.1.2, 4.1.7, 4.2.0, 4.3.0 and 4.5.0.
         /// </summary>
         [Theory]
         [InlineData("sqrt(b*sec(x))/sec(x)^(7/2)", "b=1.7")]
         [InlineData("sec(x)^(3/2)/(b*sec(x))^(5/2)", "b=1.7")]
         [InlineData("(b*sec(x))^(3/2)*sec(x)^(1/2)", "b=1.7")]
         [InlineData("(3*sin(x))^(5/2)/sin(x)^(3/2)", "")]
+        [InlineData("(a+a*sin(x))^(3/2)/(c+d*sin(x))^(5/2)", "a=1.7,c=2.3,d=0.4")]
+        [InlineData("sqrt(a-a*sin(x)^2)*tan(x)^6", "a=1.7")]
         public void AConstantComesOutOfAPowerOfASingleFactor(string integrand, string pins)
         {
             var integral = integrand.ToEntity().Integrate("x").Substitute("C", 0);
