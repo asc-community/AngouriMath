@@ -10444,7 +10444,10 @@ namespace AngouriMath.Functions.Algebra
         /// A square root of a perfect square in <paramref name="x"/> is the modulus:
         /// <c>sqrt(x^2)</c> is <c>|x|</c>, which for a real <c>x</c> is <c>sgn(x) x</c>, and
         /// <c>sqrt(a (x + h)^2)</c> is <c>sqrt(a) sgn(x + h) (x + h)</c> for a positive number
-        /// <c>a</c>. Every rule that reads a root of a quadratic assumes it is not one:
+        /// <c>a</c>, and a square in a power of <c>x</c> the same way:
+        /// <c>sqrt(a^2 + 2 a b x^2 + b^2 x^4)</c> is <c>sqrt(b^2) sgn(x^2 + a/b) (x^2 + a/b)</c>,
+        /// the square Rubi's 1.2.2 and 1.2.3 write. Every rule that reads a root of a quadratic
+        /// assumes it is not one:
         /// <c>1/sqrt(1 + csch(x)^2)</c> under <c>u = tanh(x)</c> is <c>sqrt(u^2)/(u^2 - 1)</c>,
         /// and the table rule for <c>sqrt(a w^2 + b w + c)</c> beside a linear, reached after the
         /// partial fractions and a reciprocal, answered it with a logarithm of zero.
@@ -10467,7 +10470,8 @@ namespace AngouriMath.Functions.Algebra
         internal static Entity? SolveByTakingARootOfAPerfectSquare(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             // Asked of every integrand at every depth, so the radicand is read as a polynomial
-            // only where it is small enough to be a written square: x^2, or a x^2 + b x + c.
+            // only where it is small enough to be a written square: x^2, a x^2 + b x + c, or
+            // the same quadratic in a power of x, a x^(2k) + b x^k + c.
             // At the top, any half-odd power of a perfect square is the power of the modulus;
             // below it the square root only, since a sign written for a substitution's variable
             // is a factor the rest of the search carries -- `(1 + 2u + u^2)^(5/2)` under
@@ -10493,12 +10497,20 @@ namespace AngouriMath.Functions.Algebra
                 var r = (Number.Rational)exponent;
                 if (!TreeAnalyzer.TryGetPolynomial(radicand, x, out var monomials) || monomials.Count == 0)
                     return node;
+                // A quadratic in w = x^k: a w^2 + b w + c, the square being of w + h. Beyond
+                // k = 1 only with the constant term written, since `a x^(2k)` alone is a power
+                // of a monomial, which another rule distributes.
                 var degree = monomials.Keys.Max()!;
-                if (!degree.Equals(EInteger.FromInt32(2)) || monomials.Keys.Any(k => k.Sign < 0))
+                if (degree.IsZero || !degree.IsEven || monomials.Keys.Any(k => k.Sign < 0))
                     return node;
-                var a = monomials.TryGetValue(EInteger.FromInt32(2), out var a2) ? a2 : Number.Integer.Zero;
-                var b = monomials.TryGetValue(EInteger.One, out var b1) ? b1 : Number.Integer.Zero;
+                var half = degree / EInteger.FromInt32(2);
+                if (monomials.Keys.Any(k => !k.IsZero && !k.Equals(half) && !k.Equals(degree))
+                    || !half.Equals(EInteger.One) && !monomials.ContainsKey(EInteger.Zero))
+                    return node;
+                var a = monomials[degree];
+                var b = monomials.TryGetValue(half, out var b1) ? b1 : Number.Integer.Zero;
                 var c = monomials.TryGetValue(EInteger.Zero, out var c0) ? c0 : Number.Integer.Zero;
+                Entity w = half.Equals(EInteger.One) ? x : MathS.Pow(x, Number.Integer.Create(half));
                 // A positive leading coefficient, since `sqrt(a (x + h)^2)` is `sqrt(a) |x + h|`:
                 // a positive number, or one positive for a real parameter -- `b^2` is, and
                 // `a^2 + 2 a b x + b^2 x^2` is the square Rubi writes -- whose condition travels
@@ -10517,17 +10529,22 @@ namespace AngouriMath.Functions.Algebra
                 if (b.Evaled is Number.Complex and not Number.Real || c.Evaled is Number.Complex and not Number.Real
                     || !IsAPerfectSquareDiscriminant(a, b, c))
                     return node;
-                // a (x + h)^2 with h = b/(2a): (a (x + h)^2)^r is a^r |x + h|^(2r), and with 2r odd
-                // (a rational is held in lowest terms) that is a^r sgn(x + h) (x + h)^(2r).
+                // a (w + h)^2 with h = b/(2a): (a (w + h)^2)^r is a^r |w + h|^(2r), and with 2r odd
+                // (a rational is held in lowest terms) that is a^r sgn(w + h) (w + h)^(2r).
                 var h = (b / (Number.Integer.Create(2) * a)).InnerSimplified;
-                var linear = h == Number.Integer.Zero ? x : (x + h).InnerSimplified;
+                // `2 a b/(2 b^2)` is `a/b`, which the normalisation does not cancel.
+                if (h.Vars.Any())
+                    h = Functions.PartialFractions.Bare(h.Simplify());
+                var linear = h == Number.Integer.Zero ? w : (w + h).InnerSimplified;
                 var twoR = Number.Integer.Create(r.ERational.Numerator);
                 Entity power = twoR == Number.Integer.One ? linear : MathS.Pow(linear, twoR);
                 // The sign in front of the integral rather than inside it: it is constant
                 // between the linear factor's zeros, and a rule below that differentiates the
                 // integrand cannot evaluate `derivative(sgn(...))` -- which is the exception
                 // `sqrt(a^2 + 2abx + b^2x^2) sqrt(c + ex + dx^2)` threw with it left in place.
-                signs = signs * MathS.Signum(linear);
+                // None where it is plainly one: an even power of x plus a positive number.
+                if (!(half.IsEven && h.Evaled is Number.Real { IsPositive: true }))
+                    signs = signs * MathS.Signum(linear);
                 changed = true;
                 return leading == Number.Integer.One ? power : MathS.Pow(leading, r) * power;
             });

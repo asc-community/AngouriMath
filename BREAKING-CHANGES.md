@@ -1444,6 +1444,25 @@ multiple of it, `(d - c^2 d x^2)^(3/2)`, is written over it the same way, with
 Rubi's 5.1.4, 5.1.5, 5.2.4 and 5.2.5, all 504 problems that count: 405 to 463, no row lost, 77
 timeouts to 19.
 
+### A perfect square in a power of the variable is read as one
+
+`sqrt(a^2 + 2 a b x^2 + b^2 x^4) sqrt(c + e x + d x^2)` was left unevaluated. The radicand is
+`(a + b x^2)^2`, so its root is the modulus `|a + b x^2|`, but the rule that reads a root of a
+perfect square read only a quadratic in `x`. It now reads the same quadratic in a power of `x`,
+`a x^(2k) + b x^k + c`, and puts `sgn(x^k + h)` in front of the integral, as it does for `k = 1`.
+There is no sign where `k` is even and `h` is a positive number, since `x^k + h` is then
+positive. The shift `h` is simplified where it holds a symbol: `2 a b/(2 b^2)` is `a/b`, for
+`k = 1` as well.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(c+pe*x+d*x^2)*sqrt(a^2+2*a*b*x^2+b^2*x^4)".Integrate("x")` | left unevaluated | the antiderivative, with `sgn(x^2 + a/b) sqrt(b^2)` in front |
+| `"x/sqrt(a^2+2*a*b*x^3+b^2*x^6)".Integrate("x")` | left unevaluated | logarithms and an arctangent in `(a/b)^(1/3)`, with `sgn(x^3 + a/b)` in front |
+| `"(1+2*x^2+x^4)^(3/2)".Integrate("x")` | left unevaluated | `x + 3 x^3/3 + 3 x^5/5 + x^7/7`, with no sign |
+
+Rubi's 1.2.2.2, 1.2.2.4, 1.2.2.7 and 1.2.3.2, the 574 problems that count with a perfect square
+written with symbols: 182 to 388, no row lost, 19 timeouts to 9.
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
