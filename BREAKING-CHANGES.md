@@ -1329,6 +1329,24 @@ the rules for a root of an even power.
 to 309 of 422 with five fewer timeouts, and family 6 from 377 to 378; no row is lost in families
 1, 4, 5, 6 or 7, and the 1774-problem suite stays at 1707 with no wrong answer.
 
+### A power of `a cos + b sin` with symbolic coefficients is integrated under the tangent
+
+`sec(x)^2/(a cos(x) + b sin(x))^4` was left as written after ten minutes, where
+`sec(x)^2/(2 cos(x) + 3 sin(x))^4` took a tenth of a second. Both are quotients of
+homogeneous polynomials in the sine and cosine, which `t = tan(x)` turns into a rational
+function, and the rule that does it read the denominator by expanding it first: with numbers
+the expanded quartic in `t` is `(2 + 3t)^4` again as soon as the rational integrator factors
+it, and with symbols it is `a^4 + 4a^3 b t + 6a^2 b^2 t^2 + 4a b^3 t^3 + b^4 t^4`, which nothing
+factors back. A whole power of a homogeneous factor is now read as that power of it, so the
+substitution hands on `(1 + t^2)^2/(a + b t)^4`.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sec(x)^2/(a*cos(x)+b*sin(x))^4".Integrate("x")` | left unevaluated | a rational function of `tan(x)` |
+| `"cos(x)/(a*cos(x)+b*sin(x))^3".Integrate("x")` | left unevaluated | a rational function of `tan(x)` |
+
+Rubi's 4.7.2, `trig^m (a trig + b trig)^n`: 199 to 215 of 290, no row lost, 27 timeouts to 20.
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -63,6 +63,40 @@ namespace AngouriMath.Tests.Calculus
             Assert.True(compared >= 3,
                 $"only {compared} of {points.Length} points were comparable for {integrand}, "
                 + "so this asserts almost nothing");
+        }
+
+        /// <summary>
+        /// The same with symbolic coefficients, where the power has to be read as a power. Read as
+        /// one expanded polynomial, <c>(a cos(x) + b sin(x))^4</c> became a quartic in the tangent
+        /// with a symbol in every coefficient, which the rational integrator cannot factor back
+        /// into <c>(a + b t)^4</c> -- with numbers it can, which is why the cases above never
+        /// showed it: <c>sec(x)^2/(a cos(x) + b sin(x))^4</c> ran past ten minutes and takes a
+        /// tenth of a second. Rubi's 4.7.2, sixteen rows. At <c>a = 1.7</c>, <c>b = 0.6</c> the
+        /// sum vanishes at <c>x = -1.23</c>, and the points stay clear of it.
+        /// </summary>
+        [Theory]
+        [InlineData("sec(x)^2/(a*cos(x) + b*sin(x))^4")]
+        [InlineData("1/(a*cos(x) + b*sin(x))^4")]
+        [InlineData("cos(x)/(a*cos(x) + b*sin(x))^3")]
+        [InlineData("sin(x)^3/(a*cos(x) + b*sin(x))^3")]
+        [InlineData("csc(x)/(a*cos(x) + b*sin(x))^3")]
+        public void APowerOfASumWithSymbolicCoefficients(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Substitute("a", 1.7).Substitute("b", 0.6).Differentiate("x");
+            var original = integrand.ToEntity().Substitute("a", 1.7).Substitute("b", 0.6);
+            foreach (var at in new[] { 0.3, 0.8, 1.2, -0.5 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.False(got.IsNaN, $"the antiderivative of {integrand} differentiates to NaN at x = {at}");
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
         }
 
         /// <summary>

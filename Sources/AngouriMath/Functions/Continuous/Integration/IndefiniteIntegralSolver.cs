@@ -4871,8 +4871,8 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!TryReadAsQuotient(expr, out var numerator, out var denominator))
                 return null;
-            if (!TryReadAHomogeneousTrigonometricPolynomial(numerator, x, out var above, out var aboveDegree, out var argument)
-                || !TryReadAHomogeneousTrigonometricPolynomial(denominator, x, out var below, out var belowDegree, out var otherArgument))
+            if (!TryReadAHomogeneousTrigonometricProduct(numerator, x, out var above, out var aboveDegree, out var argument)
+                || !TryReadAHomogeneousTrigonometricProduct(denominator, x, out var below, out var belowDegree, out var otherArgument))
                 return null;
             // A side free of the variable is degree zero and names no argument -- `1/(cos + sin)^2`
             // is the common case and was declined for it. Only one side may be silent; if both
@@ -4901,6 +4901,60 @@ namespace AngouriMath.Functions.Algebra
             return Integration.ComputeIndefiniteIntegral(inT, t, integrateByParts) is { } result
                 ? result.Substitute(t, MathS.Tan(argument))
                 : null;
+        }
+
+        /// <summary>
+        /// <see cref="TryReadAHomogeneousTrigonometricPolynomial"/> over a product, a factor at a
+        /// time, with a whole power of a factor read as that power of it: the degrees add, and
+        /// the rewritten factors are multiplied and raised as they were written.
+        /// </summary>
+        /// <remarks>
+        /// Reading the whole product at once expands it first, and an expanded power is a
+        /// polynomial the rational integrator has to factor again: <c>(a cos(x) + b sin(x))^4</c>
+        /// became <c>a^4 + 4 a^3 b t + 6 a^2 b^2 t^2 + 4 a b^3 t^3 + b^4 t^4</c> under
+        /// <c>t = tan(x)</c>, which with numbers is <c>(2 + 3t)^4</c> again in a moment and with
+        /// symbols is a quartic nothing factors -- <c>sec(x)^2/(a cos(x) + b sin(x))^4</c> ran past
+        /// ten minutes where <c>(1 + t^2)^2/(a + b t)^4</c> takes half a second. The whole product is
+        /// still read at once where a factor on its own is not homogeneous.
+        /// </remarks>
+        private static bool TryReadAHomogeneousTrigonometricProduct(
+            Entity expr, Entity.Variable x, out Entity rewritten, out int degree, out Entity? argument)
+        {
+            rewritten = Number.Integer.One;
+            degree = 0;
+            argument = null;
+            var factors = Mulf.LinearChildren(expr);
+            if (factors.Count > 1 || expr is Powf(_, Number.Integer))
+            {
+                var product = (Entity)Number.Integer.One;
+                var total = 0;
+                Entity? common = null;
+                var read = true;
+                foreach (var factor in factors)
+                {
+                    var (@base, power) = factor is Powf(var b, Number.Integer whole) && whole.EInteger.CanFitInInt32() && !whole.EInteger.IsZero
+                        ? (b, whole.EInteger.ToInt32Checked())
+                        : (factor, 1);
+                    if (!TryReadAHomogeneousTrigonometricPolynomial(@base, x, out var one, out var oneDegree, out var oneArgument)
+                        || oneArgument is not null && common is not null && oneArgument != common)
+                    {
+                        read = false;
+                        break;
+                    }
+                    common ??= oneArgument;
+                    total += power * oneDegree;
+                    var raised = power == 1 ? one : MathS.Pow(one, Number.Integer.Create(power));
+                    product = product == Number.Integer.One ? raised : product * raised;
+                }
+                if (read)
+                {
+                    rewritten = product;
+                    degree = total;
+                    argument = common;
+                    return true;
+                }
+            }
+            return TryReadAHomogeneousTrigonometricPolynomial(expr, x, out rewritten, out degree, out argument);
         }
 
         /// <summary>The two placeholders a homogeneous polynomial is rewritten over.</summary>
