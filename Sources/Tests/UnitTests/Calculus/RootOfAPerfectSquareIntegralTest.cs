@@ -92,6 +92,42 @@ namespace AngouriMath.Tests.Calculus
             Assert.True(compared >= 5, $"only {compared} points were comparable for {integrand}");
         }
 
+        /// <summary>
+        /// The same square in a power of the variable: <c>a^2 + 2 a b x^2 + b^2 x^4</c> is
+        /// <c>(a + b x^2)^2</c>, and its root is <c>sqrt(b^2) sgn(x^2 + a/b) (x^2 + a/b)</c>. Pinned
+        /// with <c>a</c> and <c>b</c> of opposite signs, so that the sign changes among the points.
+        /// Rubi's 1.2.2.7 and 1.2.3.2.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/718">#718</a>
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(c + pe*x + d*x^2)*sqrt(a^2 + 2*a*b*x^2 + b^2*x^4)")]
+        [InlineData("x*sqrt(c + pe*x + d*x^2)*sqrt(a^2 + 2*a*b*x^2 + b^2*x^4)")]
+        [InlineData("x/sqrt(a^2 + 2*a*b*x^3 + b^2*x^6)")]
+        public void ASquareInAPowerOfTheVariable(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x").Substitute("C", 0);
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            Entity Pin(Entity e) => e.Substitute("a", -0.9).Substitute("b", 1.7).Substitute("c", 2.1)
+                .Substitute("pe", 0.3).Substitute("d", 1.3);
+            var derivative = Pin(integral).Differentiate("x");
+            var original = Pin(integrand.ToEntity());
+            var compared = 0;
+            foreach (var at in Points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                if (got.IsNaN || want.IsNaN)
+                    continue;
+                compared++;
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart) + Math.Abs((double)want.ImaginaryPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+            Assert.True(compared >= 5, $"only {compared} points were comparable for {integrand}");
+        }
+
         [Fact]
         public void TheSignIsTheSignOfTheLinearFactor()
         {
