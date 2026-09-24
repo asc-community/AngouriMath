@@ -504,6 +504,8 @@ namespace AngouriMath.Functions.Algebra
             // `A + i A tan(z)` is `A e^(i z)/cos(z)`, which beside a polynomial is a shape the
             // closed rules answer, where the imaginary unit in the coefficient is read by none.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAnImaginaryTangentAsAnExponential(expr, x, integrateByParts)) is { }) return answer;
+            // And `A cos(z) + i A sin(z)`, which is `A e^(i z)`, where no rotation is real.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingAnImaginarySumOfACosineAndASineAsAnExponential(expr, x, integrateByParts)) is { }) return answer;
             // A fractional power of a perfect square is the power of the modulus, sgn(P) P^(2r).
             if ((answer = IndefiniteIntegralSolver.SolveByTakingARootOfAPerfectSquare(expr, x, integrateByParts)) is { }) return answer;
             // x^(n - 1) g(x^n) with a symbolic n is g(u)/n under u = x^n.

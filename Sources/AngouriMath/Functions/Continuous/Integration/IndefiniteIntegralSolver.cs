@@ -15433,6 +15433,54 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>A cos(y) + i A sin(y)</c> below the bar, written as the exponential it is:
+        /// <c>A e^(i y)</c>, and <c>A cos(y) - i A sin(y)</c> as <c>A e^(-i y)</c>. Beside a power
+        /// of the cosine above the bar that is an exponential times a power of a cosine, which
+        /// the closed rules answer at once; as written it is a sum of a cosine and a sine whose
+        /// coefficients have no real rotation -- <c>A^2 + (i A)^2</c> is zero -- and
+        /// <c>cos(x)^2/(a cos(x) + i a sin(x))^3</c> was declined after twelve seconds.
+        /// </summary>
+        /// <remarks>
+        /// The sibling of <see cref="SolveByWritingAnImaginaryTangentAsAnExponential"/>, which reads
+        /// <c>A + i A tan(y)</c>; below the bar only, for the same reason.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByWritingAnImaginarySumOfACosineAndASineAsAnExponential(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr));
+            if (!below.ContainsNode(x))
+                return null;
+            var rewritten = below.Replace(node =>
+            {
+                if (node is not (Sumf or Minusf) || !node.ContainsNode(x)
+                    || !TryReadACosineAndASine(node, x, out var cosineCoefficient, out var sineCoefficient, out var argument))
+                    return node;
+                // The ratio is the imaginary unit one way or the other, and nothing else. Bare:
+                // `i a/a` simplifies to `i provided not a = 0`, and a condition is not a number
+                // to compare against.
+                var ratio = Functions.PartialFractions.Bare((sineCoefficient / cosineCoefficient).InnerSimplified);
+                if (ratio.Evaled is not Number.Complex)
+                    ratio = Functions.PartialFractions.Bare(ratio.Simplify());
+                var plus = ratio.Evaled == MathS.i.Evaled;
+                if (!plus && ratio.Evaled != (-MathS.i).Evaled)
+                    return node;
+                return cosineCoefficient * MathS.Pow(MathS.e, ((plus ? MathS.i : -MathS.i) * argument).InnerSimplified);
+            });
+            if (rewritten == below)
+                return null;
+            // And a whole power of what was written split, `(A e^(i y))^n` as `A^n e^(i n y)`, so
+            // that the exponential stands on its own for the rules that read one: the rule that
+            // distributes such powers takes a constant with a symbol in it and leaves a number,
+            // and `cos(x)^2/(2 e^(i x))^3` was declined where `cos(x)^2/(a e^(i x))^3` was not.
+            rewritten = rewritten.Replace(node =>
+                node is Powf(Mulf(var left, var right), Number.Integer power)
+                && (left is Powf(var leftBase, _) && leftBase == MathS.e || right is Powf(var rightBase, _) && rightBase == MathS.e)
+                    ? MathS.Pow(left, power) * MathS.Pow(right, power)
+                    : node);
+            return Integration.ComputeAsTheSameQuestion((above / rewritten).InnerSimplified, x, integrateByParts);
+        }
+
+        /// <summary>
         /// Bioche's first two rules for the hyperbolic functions: a rational function of
         /// <c>sinh(y)</c> and <c>cosh(y)</c> that is odd in the hyperbolic sine is a rational
         /// function of <c>u = cosh(y)</c> times <c>sinh(y) dy = du</c>, with <c>sinh^2</c> as

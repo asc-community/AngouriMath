@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -262,6 +262,37 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x^2/(3 - 3*i*cot(x))")]
         [InlineData("(1 + 2*x)/(3 + 3*i*tan(1/2 + x))^2")]
         public void AnImaginaryTangentBelowTheBarIsAnExponential(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>
+        /// And its sibling, <c>A cos(y) + i A sin(y)</c>, which is <c>A e^(i y)</c>: a sum of a
+        /// cosine and a sine with no real rotation, since <c>A^2 + (i A)^2</c> is zero, and beside
+        /// a power of the cosine an exponential times that power once written so. Rubi's 4.7.2,
+        /// fourteen rows; <c>cos(x)^2/(a cos(x) + i a sin(x))^3</c> was declined after twelve
+        /// seconds.
+        /// </summary>
+        [Theory]
+        [InlineData("cos(x)^2/(2*cos(x) + 2*i*sin(x))^3")]
+        [InlineData("cos(x)^5/(2*cos(x) + 2*i*sin(x))^2")]
+        [InlineData("1/(3*cos(1/2 + x) + 3*i*sin(1/2 + x))^3")]
+        [InlineData("cos(x)/(2*cos(x) - 2*i*sin(x))")]
+        public void AnImaginarySumOfACosineAndASineBelowTheBarIsAnExponential(string integrand) => DifferentiatesBack(integrand);
+
+        /// <summary>The same with the coefficient a symbol, pinned only after integrating.</summary>
+        [Fact]
+        public void AnImaginarySumWithASymbolicCoefficient()
+        {
+            var integral = "cos(x)^2/(a*cos(x) + i*a*sin(x))^3".ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Substitute("a", 0.9).Differentiate("x");
+            var original = "cos(x)^2/(a*cos(x) + i*a*sin(x))^3".ToEntity().Substitute("a", 0.9);
+            foreach (var at in Points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                Assert.True(difference < 1e-9, $"at x = {at}: {got} for {want}");
+            }
+        }
 
         /// <summary>
         /// A base with symbols in it, and an exponent whose constant part has them too:
