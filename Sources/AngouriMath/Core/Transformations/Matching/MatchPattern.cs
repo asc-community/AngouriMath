@@ -188,6 +188,16 @@ namespace AngouriMath.Core.Transformations.Matching
         internal Type? RequiredRootType => RootType;
 
         /// <summary>
+        /// Whether a node of <paramref name="expr"/>'s kind could be matched at all -- a cheap,
+        /// necessary test, asked before an enumerator is started on it. A rule tried at every
+        /// node of an integrand pays for the enumerator at every node otherwise: the pilot of
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1486">#1486</a> measured
+        /// that as the whole of its cost over the rule written by hand, 1.1% of Rubi's 4.7.2,
+        /// and nothing measurable once the test came first.
+        /// </summary>
+        internal virtual bool CouldMatchRoot(Entity expr) => RootType is null || RootType.IsInstanceOfType(expr);
+
+        /// <summary>
         /// Whether this pattern can match an expression in <b>at most one way</b>, so that a
         /// caller wanting a solution needs no enumeration and no backtracking.
         /// </summary>
@@ -1291,6 +1301,9 @@ namespace AngouriMath.Core.Transformations.Matching
 
             private protected override Type? RootType => null;
 
+            internal override bool CouldMatchRoot(Entity expr)
+                => part.CouldMatchRoot(expr) || expr is Entity.Mulf or Entity.Divf;
+
             internal override bool IsDeterministic => false;
 
             internal override int ChoiceCount => Unbounded;
@@ -1363,6 +1376,9 @@ namespace AngouriMath.Core.Transformations.Matching
             internal override int NodeCount { get; }
 
             private bool OverSum => nodeType == typeof(Entity.Sumf);
+
+            internal override bool CouldMatchRoot(Entity expr)
+                => OverSum ? expr is Entity.Sumf or Entity.Minusf : expr is Entity.Mulf or Entity.Divf;
 
             internal override IEnumerable<string> BoundNames
                 => parts.SelectMany(part => part.BoundNames).Append(restName);
