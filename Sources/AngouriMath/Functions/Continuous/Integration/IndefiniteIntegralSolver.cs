@@ -4904,6 +4904,181 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A sum of a cosine and a sine of one argument turned into one cosine:
+        /// <c>a cos(y) + b sin(y)</c> is <c>R cos(u)</c> for <c>R = sqrt(a^2 + b^2)</c> and
+        /// <c>u = y - phi</c>, where <c>cos(y) = (a cos(u) - b sin(u))/R</c> and
+        /// <c>sin(y) = (b cos(u) + a sin(u))/R</c>. <c>1/(a cos(x) + b sin(x))^3</c> is
+        /// <c>sec(u)^3/R^3</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is the case <see cref="SolveByHomogeneousTrigonometricSubstitution"/> cannot take:
+        /// a quotient whose degrees in the sine and cosine differ by an odd number, which the
+        /// tangent leaves with a root of <c>1 + t^2</c>. After the rotation the denominator is one
+        /// power of one cosine, and what is above it a polynomial in <c>cos(u)</c> and
+        /// <c>sin(u)</c> with <c>a/R</c> and <c>b/R</c> for coefficients -- shapes the rules for
+        /// powers of the sine and cosine answer in a fraction of a second, where the original was
+        /// declined after the substitution search had spent its budget.
+        /// </para>
+        /// <para>
+        /// The way back needs no <c>phi</c>, whose quadrant would depend on the signs of
+        /// <c>a</c> and <c>b</c>: <c>cos(u)</c> and <c>sin(u)</c> are
+        /// <c>(a cos(y) + b sin(y))/R</c> and <c>(a sin(y) - b cos(y))/R</c>, and a bare
+        /// <c>u</c> is <c>y</c> less a constant, which belongs to the constant of integration.
+        /// An answer holding <c>u</c> in any other way -- <c>tan(u/2)</c>, <c>sin(2u)</c> -- is
+        /// declined rather than rewritten. <c>R</c> is the real root for real <c>a</c> and
+        /// <c>b</c>, not both zero; where <c>a^2 + b^2</c> is zero -- <c>a cos(y) + i a sin(y)</c>,
+        /// which is <c>a e^(i y)</c> -- there is nothing to rotate.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveByRotatingACosineAndASineIntoOneCosine(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // Below the bar only. A sum above it is a polynomial in the sine and cosine, and the
+            // rotation writes one there itself -- `cos(y)` becomes `(a cos(u) - b sin(u))/R` --
+            // so a rule that rotated any sum it found would rotate its own output again, and did:
+            // `cos(x)/(a cos(x) + b sin(x))^2` went round `u_1`, `u_2`, `u_3` until the budget
+            // ran out. After one rotation the denominator is a power of one cosine, and there is
+            // nothing left below the bar to rotate.
+            // Only sines and cosines: a tangent, cotangent, secant or cosecant is a quotient with
+            // a sine or cosine below it, which the rotation turns into one more sum of the two --
+            // `csc(x)^2/(a cos(x) + b sin(x))`, declined in a quarter of a second, spent two
+            // minutes going round that way when the node sat above the bar where the check
+            // below does not see it.
+            if (expr.Nodes.Any(node => node is Tanf or Cotanf or Secantf or Cosecantf && node.ContainsNode(x)))
+                return null;
+            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr));
+            Entity? sum = null, a = null, b = null, argument = null;
+            foreach (var node in below.Nodes)
+            {
+                if (node is not (Sumf or Minusf) || !node.ContainsNode(x)
+                    || !TryReadACosineAndASine(node, x, out var cosineCoefficient, out var sineCoefficient, out var nodeArgument))
+                    continue;
+                if (sum is not null && node != sum)
+                    return null;
+                (sum, a, b, argument) = (node, cosineCoefficient, sineCoefficient, nodeArgument);
+            }
+            if (sum is null || a is null || b is null || argument is null || above.Nodes.Contains(sum))
+                return null;
+            // And nothing else below the bar holds x. A secant or cosecant above puts a cosine or
+            // sine below it, which the rotation turns into another sum of the two -- so
+            // `sec(y)/(a cos(y) + b sin(y))^2` rotated into a quotient over one more such sum,
+            // and round again. Those want the partial fractions over the two linear factors,
+            // which is not this rule; here the denominator becomes one power of one cosine.
+            if (below.Replace(node => node == sum ? Number.Integer.One : node).ContainsNode(x))
+                return null;
+            if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _) || rate.ContainsNode(x)
+                || rate.Evaled is Number.Complex { IsZero: true })
+                return null;
+            // The homogeneous substitution's case is its own: a quotient of homogeneous
+            // polynomials whose degrees differ by an even number is rational under the tangent.
+            if (TryReadAsQuotient(expr, out var numerator, out var denominator)
+                && TryReadAHomogeneousTrigonometricProduct(numerator, x, out _, out var aboveDegree, out _)
+                && TryReadAHomogeneousTrigonometricProduct(denominator, x, out _, out var belowDegree, out _)
+                && (belowDegree - aboveDegree) % 2 == 0)
+                return null;
+            var squared = (MathS.Sqr(a) + MathS.Sqr(b)).InnerSimplified;
+            if (squared.Evaled is Number.Complex { IsZero: true }
+                || squared.Vars.Any() && Functions.PartialFractions.Bare(squared.Simplify()).Evaled is Number.Complex { IsZero: true })
+                return null;
+            // `R` is integrated as a symbol and written out only in the answer: a root of a
+            // symbolic sum in the integrand, constant as it is, sent `cos(x)/(a cos(x) +
+            // b sin(x))^2` down the rules for radicals past its budget, where with `R` as a
+            // symbol it is a tenth of a second.
+            var radius = Variable.CreateUnique(expr, "r_rot");
+            var u = Variable.CreateUnique(expr, "u_rot");
+            var whole = Variable.CreateUnique(expr, "w_rot");
+            var cosU = MathS.Cos(u);
+            var sinU = MathS.Sin(u);
+            var cosY = (a * cosU - b * sinU) / radius;
+            var sinY = (b * cosU + a * sinU) / radius;
+            // The sum itself first, as one cosine: rotated term by term it would be
+            // `a (a cos(u) - b sin(u))/R + b (b cos(u) + a sin(u))/R`, which the inner
+            // simplification does not collect back into `R cos(u)`.
+            var rotated = expr.Replace(node => node == sum ? whole : node).Replace(node => node switch
+            {
+                Cosf(var y) when y == argument => cosY,
+                Sinf(var y) when y == argument => sinY,
+                _ => node,
+            }).Substitute(whole, radius * cosU);
+            if (rotated.ContainsNode(x))
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn((rotated / rate).InnerSimplified, u, integrateByParts) is not { } inU)
+                return null;
+            var cosBack = sum / radius;
+            var sinBack = (a * MathS.Sin(argument) - b * MathS.Cos(argument)) / radius;
+            var back = inU.Replace(node => node switch
+            {
+                Cosf(var v) when v == u => cosBack,
+                Sinf(var v) when v == u => sinBack,
+                Tanf(var v) when v == u => sinBack / cosBack,
+                Cotanf(var v) when v == u => cosBack / sinBack,
+                Secantf(var v) when v == u => radius / sum,
+                Cosecantf(var v) when v == u => 1 / sinBack,
+                _ => node,
+            });
+            if (back.ContainsNode(u))
+            {
+                if (!TreeAnalyzer.TryGetPolyLinear(back, u, out var slope, out _) || slope.ContainsNode(u))
+                    return null;
+                back = back.Substitute(u, argument);
+            }
+            return back.Substitute(radius, MathS.Sqrt(squared));
+        }
+
+        /// <summary>
+        /// Reads <paramref name="sum"/> as <c>a cos(y) + b sin(y)</c>: two terms, a constant times
+        /// the cosine and a constant times the sine of one argument holding <paramref name="x"/>.
+        /// </summary>
+        private static bool TryReadACosineAndASine(Entity sum, Entity.Variable x, out Entity a, out Entity b, out Entity argument)
+        {
+            a = b = argument = Number.Integer.Zero;
+            var terms = Sumf.LinearChildren(sum);
+            if (terms.Count != 2)
+                return false;
+            Entity? cosine = null, sine = null, found = null;
+            foreach (var term in terms)
+            {
+                Entity coefficient = Number.Integer.One;
+                Entity? function = null;
+                foreach (var factor in Mulf.LinearChildren(term))
+                {
+                    if (!factor.ContainsNode(x))
+                    {
+                        coefficient = coefficient == Number.Integer.One ? factor : coefficient * factor;
+                        continue;
+                    }
+                    if (function is not null || factor is not (Cosf or Sinf))
+                        return false;
+                    function = factor;
+                }
+                var (isCosine, y) = function switch
+                {
+                    Cosf(var inner) => (true, inner),
+                    Sinf(var inner) => (false, inner),
+                    _ => (false, (Entity?)null),
+                };
+                if (y is null || found is not null && y != found)
+                    return false;
+                found = y;
+                if (isCosine)
+                {
+                    if (cosine is not null) return false;
+                    cosine = coefficient;
+                }
+                else
+                {
+                    if (sine is not null) return false;
+                    sine = coefficient;
+                }
+            }
+            if (cosine is null || sine is null || found is null)
+                return false;
+            (a, b, argument) = (cosine, sine, found);
+            return true;
+        }
+
+        /// <summary>
         /// <see cref="TryReadAHomogeneousTrigonometricPolynomial"/> over a product, a factor at a
         /// time, with a whole power of a factor read as that power of it: the degrees add, and
         /// the rewritten factors are multiplied and raised as they were written.
