@@ -15533,69 +15533,7 @@ namespace AngouriMath.Functions.Algebra
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveByWritingAnImaginaryTangentAsAnExponential(Entity expr, Entity.Variable x, bool integrateByParts)
-        {
-            // Below the bar only: `(A + i A tan(z))^3` above it is a polynomial in the tangent,
-            // which the rules for those answer in the tangent and more shortly, where the
-            // reciprocal is what nothing reads.
-            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr));
-            if (!below.ContainsNode(x))
-                return null;
-            var rewritten = below.Replace(node =>
-            {
-                if (node is not Sumf and not Minusf || !node.ContainsNode(x))
-                    return node;
-                Entity constant = Number.Integer.Zero;
-                Entity? coefficient = null;
-                Entity? argument = null;
-                var isTangent = false;
-                foreach (var term in Sumf.LinearChildren(node))
-                {
-                    if (!term.ContainsNode(x))
-                    {
-                        constant += term;
-                        continue;
-                    }
-                    if (coefficient is not null)
-                        return node;
-                    Entity factors = Number.Integer.One;
-                    foreach (var factor in Mulf.LinearChildren(term))
-                        switch (factor)
-                        {
-                            case Tanf(var inner) when argument is null:
-                                (argument, isTangent) = (inner, true);
-                                break;
-                            case Cotanf(var inner) when argument is null:
-                                (argument, isTangent) = (inner, false);
-                                break;
-                            default:
-                                if (factor.ContainsNode(x))
-                                    return node;
-                                factors *= factor;
-                                break;
-                        }
-                    if (argument is null)
-                        return node;
-                    coefficient = factors;
-                }
-                if (coefficient is null || argument is null || constant == Number.Integer.Zero)
-                    return node;
-                // The ratio is the imaginary unit one way or the other, and nothing else.
-                // Bare: `i a/a` simplifies to `i provided not a = 0`, and a condition is not a
-                // number to compare against.
-                var ratio = Functions.PartialFractions.Bare((coefficient / constant).InnerSimplified);
-                if (ratio.Evaled is not Number.Complex)
-                    ratio = Functions.PartialFractions.Bare(ratio.Simplify());
-                var plus = ratio.Evaled == MathS.i.Evaled;
-                if (!plus && ratio.Evaled != (-MathS.i).Evaled)
-                    return node;
-                var exponential = MathS.Pow(MathS.e, ((plus == isTangent ? MathS.i : -MathS.i) * argument).InnerSimplified);
-                // A + i A tan(z) is A e^(iz)/cos(z); A + i A cot(z) is i A e^(-iz)/sin(z).
-                return isTangent
-                    ? constant * exponential / MathS.Cos(argument)
-                    : (plus ? MathS.i : -MathS.i) * constant * exponential / MathS.Sin(argument);
-            });
-            return rewritten == below ? null : Integration.ComputeAsTheSameQuestion((above / rewritten).InnerSimplified, x, integrateByParts);
-        }
+            => IntegrandRules.ImaginaryTangent.Apply(expr, x, integrateByParts);
 
         /// <summary>
         /// <c>A cos(y) + i A sin(y)</c> below the bar, written as the exponential it is:

@@ -28,19 +28,17 @@ namespace AngouriMath.Functions.Algebra
     /// </remarks>
     internal sealed class IntegrandRule
     {
-        private readonly MatchPattern pattern;
-        private readonly Func<Bindings, Variable, bool> when;
-        private readonly Func<Bindings, Variable, Entity> becomes;
+        /// <summary>One shape the rule reads, what it needs of it, and what it becomes.</summary>
+        internal sealed record Case(MatchPattern Pattern, Func<Bindings, Variable, bool> When, Func<Bindings, Variable, Entity> Becomes);
+
+        private readonly Case[] cases;
         private readonly bool belowTheBarOnly;
         private readonly Func<Entity, Entity>? afterwards;
 
-        internal IntegrandRule(string name, MatchPattern pattern, Func<Bindings, Variable, bool> when,
-            Func<Bindings, Variable, Entity> becomes, bool belowTheBarOnly = false, Func<Entity, Entity>? afterwards = null)
+        internal IntegrandRule(string name, bool belowTheBarOnly, Func<Entity, Entity>? afterwards, params Case[] cases)
         {
             Name = name;
-            this.pattern = pattern;
-            this.when = when;
-            this.becomes = becomes;
+            this.cases = cases;
             this.belowTheBarOnly = belowTheBarOnly;
             this.afterwards = afterwards;
         }
@@ -49,8 +47,8 @@ namespace AngouriMath.Functions.Algebra
         internal string Name { get; }
 
         /// <summary>
-        /// The integrand with every piece the rule reads rewritten, asked again as the same
-        /// question; null where nothing was read.
+        /// The integrand with every piece the rule reads rewritten -- each node by the first case
+        /// that reads it -- asked again as the same question; null where nothing was read.
         /// </summary>
         internal Entity? Apply(Entity expr, Variable x, bool integrateByParts)
         {
@@ -63,14 +61,19 @@ namespace AngouriMath.Functions.Algebra
             }
             var rewritten = target.Replace(node =>
             {
-                // Asked of every node below the bar, so the cheap test goes first: which kinds of
-                // node the pattern could match at all, before an enumerator is started on it --
-                // derived from the pattern, so that no rule has to remember to say it.
-                if (!pattern.CouldMatchRoot(node) || !node.ContainsNode(x))
+                if (!node.ContainsNode(x))
                     return node;
-                foreach (var bound in pattern.Match(node, Bindings.Empty))
-                    if (when(bound, x))
-                        return becomes(bound, x);
+                foreach (var @case in cases)
+                {
+                    // Asked of every node below the bar, so the cheap test goes first: which kinds
+                    // of node the pattern could match at all, before an enumerator is started on
+                    // it -- derived from the pattern, so that no rule has to remember to say it.
+                    if (!@case.Pattern.CouldMatchRoot(node))
+                        continue;
+                    foreach (var bound in @case.Pattern.Match(node, Bindings.Empty))
+                        if (@case.When(bound, x))
+                            return @case.Becomes(bound, x);
+                }
                 return node;
             });
             if (rewritten == target)
@@ -92,19 +95,46 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         internal static IntegrandRule ImaginarySumOfACosineAndASine { get; } = new(
             "an imaginary sum of a cosine and a sine is an exponential",
-            MatchPattern.Gathered<Sumf>("rest",
-                MatchPattern.Scaled("A", MatchPattern.Node<Cosf>(MatchPattern.Any("y"))),
-                MatchPattern.Scaled("B", MatchPattern.Node<Sinf>(MatchPattern.Any("y")))),
-            when: (bound, x) => bound["rest"] == Number.Integer.Zero && bound["y"].ContainsNode(x)
-                && !bound["A"].ContainsNode(x) && !bound["B"].ContainsNode(x)
-                && ImaginaryUnitSign(bound["B"], bound["A"]) != 0,
-            becomes: (bound, _) => bound["A"] * MathS.Pow(MathS.e,
-                (ImaginaryUnitSign(bound["B"], bound["A"]) * MathS.i * bound["y"]).InnerSimplified),
             belowTheBarOnly: true,
             // A whole power of the product written, split, `(A e^(i y))^n` as `A^n e^(i n y)`: the
             // rule that distributes such powers takes a constant with a symbol in it and leaves a
             // number, and `cos(x)^2/(2 e^(i x))^3` was declined where `cos(x)^2/(a e^(i x))^3` was not.
-            afterwards: SplitPowersOfProductsHoldingAnExponential);
+            afterwards: SplitPowersOfProductsHoldingAnExponential,
+            new IntegrandRule.Case(
+                MatchPattern.Gathered<Sumf>("rest",
+                    MatchPattern.Scaled("A", MatchPattern.Node<Cosf>(MatchPattern.Any("y"))),
+                    MatchPattern.Scaled("B", MatchPattern.Node<Sinf>(MatchPattern.Any("y")))),
+                When: (bound, x) => bound["rest"] == Number.Integer.Zero && bound["y"].ContainsNode(x)
+                    && !bound["A"].ContainsNode(x) && !bound["B"].ContainsNode(x)
+                    && ImaginaryUnitSign(bound["B"], bound["A"]) != 0,
+                Becomes: (bound, _) => bound["A"] * MathS.Pow(MathS.e,
+                    (ImaginaryUnitSign(bound["B"], bound["A"]) * MathS.i * bound["y"]).InnerSimplified)));
+
+        /// <summary>
+        /// <c>A + i A tan(z)</c> below the bar is <c>A e^(i z)/cos(z)</c>, and <c>A + i A cot(z)</c>
+        /// is <c>i A e^(-i z)/sin(z)</c>, the imaginary unit either way round; see
+        /// <see cref="IndefiniteIntegralSolver.SolveByWritingAnImaginaryTangentAsAnExponential"/>.
+        /// <c>A</c> is every other term of the sum, which has to be free of the variable.
+        /// </summary>
+        internal static IntegrandRule ImaginaryTangent { get; } = new(
+            "an imaginary tangent or cotangent is an exponential",
+            belowTheBarOnly: true,
+            afterwards: null,
+            new IntegrandRule.Case(
+                MatchPattern.Gathered<Sumf>("A", MatchPattern.Scaled("B", MatchPattern.Node<Tanf>(MatchPattern.Any("z")))),
+                When: (bound, x) => ReadsAsAnImaginaryMultiple(bound, x),
+                Becomes: (bound, _) => bound["A"] * MathS.Pow(MathS.e,
+                    (ImaginaryUnitSign(bound["B"], bound["A"]) * MathS.i * bound["z"]).InnerSimplified) / MathS.Cos(bound["z"])),
+            new IntegrandRule.Case(
+                MatchPattern.Gathered<Sumf>("A", MatchPattern.Scaled("B", MatchPattern.Node<Cotanf>(MatchPattern.Any("z")))),
+                When: (bound, x) => ReadsAsAnImaginaryMultiple(bound, x),
+                Becomes: (bound, _) => ImaginaryUnitSign(bound["B"], bound["A"]) * MathS.i * bound["A"]
+                    * MathS.Pow(MathS.e, (-ImaginaryUnitSign(bound["B"], bound["A"]) * MathS.i * bound["z"]).InnerSimplified)
+                    / MathS.Sin(bound["z"])));
+
+        private static bool ReadsAsAnImaginaryMultiple(Bindings bound, Variable x)
+            => bound["z"].ContainsNode(x) && !bound["A"].ContainsNode(x) && !bound["B"].ContainsNode(x)
+               && bound["A"] != Number.Integer.Zero && ImaginaryUnitSign(bound["B"], bound["A"]) != 0;
 
         /// <summary>
         /// One where <paramref name="b"/>/<paramref name="a"/> is <c>i</c>, minus one where it is
