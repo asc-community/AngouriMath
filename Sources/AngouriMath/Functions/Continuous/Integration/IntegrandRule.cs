@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -33,9 +33,11 @@ namespace AngouriMath.Functions.Algebra
         private readonly Func<Bindings, Variable, Entity> becomes;
         private readonly bool belowTheBarOnly;
         private readonly Func<Entity, Entity>? afterwards;
+        private readonly Func<Entity, bool>? could;
 
         internal IntegrandRule(string name, MatchPattern pattern, Func<Bindings, Variable, bool> when,
-            Func<Bindings, Variable, Entity> becomes, bool belowTheBarOnly = false, Func<Entity, Entity>? afterwards = null)
+            Func<Bindings, Variable, Entity> becomes, bool belowTheBarOnly = false, Func<Entity, Entity>? afterwards = null,
+            Func<Entity, bool>? could = null)
         {
             Name = name;
             this.pattern = pattern;
@@ -43,6 +45,7 @@ namespace AngouriMath.Functions.Algebra
             this.becomes = becomes;
             this.belowTheBarOnly = belowTheBarOnly;
             this.afterwards = afterwards;
+            this.could = could;
         }
 
         /// <summary>What the rule says, for a trace or a report.</summary>
@@ -63,7 +66,9 @@ namespace AngouriMath.Functions.Algebra
             }
             var rewritten = target.Replace(node =>
             {
-                if (!node.ContainsNode(x))
+                // Asked of every node below the bar, so the cheap test goes first: which kinds of
+                // node the pattern could match at all, before an enumerator is started on it.
+                if (could is not null && !could(node) || !node.ContainsNode(x))
                     return node;
                 foreach (var bound in pattern.Match(node, Bindings.Empty))
                     if (when(bound, x))
@@ -101,7 +106,8 @@ namespace AngouriMath.Functions.Algebra
             // A whole power of the product written, split, `(A e^(i y))^n` as `A^n e^(i n y)`: the
             // rule that distributes such powers takes a constant with a symbol in it and leaves a
             // number, and `cos(x)^2/(2 e^(i x))^3` was declined where `cos(x)^2/(a e^(i x))^3` was not.
-            afterwards: SplitPowersOfProductsHoldingAnExponential);
+            afterwards: SplitPowersOfProductsHoldingAnExponential,
+            could: node => node is Sumf or Minusf);
 
         /// <summary>
         /// One where <paramref name="b"/>/<paramref name="a"/> is <c>i</c>, minus one where it is
