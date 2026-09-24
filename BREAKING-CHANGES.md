@@ -1371,6 +1371,26 @@ and those rows want partial fractions over the two linear factors instead.
 
 Rubi's 4.7.2: 215 to 237 of 290, no row lost, 20 timeouts to 16.
 
+### `A cos + i A sin` below the bar is written as the exponential it is
+
+`cos(x)^2/(a cos(x) + i a sin(x))^3` was declined after twelve seconds. `A cos(y) + i A sin(y)` is
+`A e^(i y)`, and `A cos(y) - i A sin(y)` is `A e^(-i y)`; written so, the integrand is an
+exponential times a power of a cosine, which the closed rules answer at once. As a sum of a
+cosine and a sine it has no real rotation -- `A^2 + (i A)^2` is zero -- so the rule for
+`a cos + b sin` has nothing to do with it. A whole power of the product written is split,
+`(A e^(i y))^n` as `A^n e^(i n y)`, since the rule that distributes such powers takes a symbolic
+constant and leaves a number: `cos(x)^2/(2 e^(i x))^3` was declined where
+`cos(x)^2/(a e^(i x))^3` was not.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"cos(x)^2/(a*cos(x)+i*a*sin(x))^3".Integrate("x")` | left unevaluated | exponentials of `-3 i x` times `cos(2x)`, `sin(2x)` |
+| `"1/(a*cos(x)+i*a*sin(x))^3".Integrate("x")` | left unevaluated | `a^(-3) e^(-3 i x)/(-3 i)` |
+
+A secant above the bar is still declined: `sec(x)^2 e^(-3 i x)` is rational in `e^(i x)` with an
+imaginary rate, which nothing answers yet. Rubi's 4.7.2: 237 to 249 of 290, no row lost, 16
+timeouts to 14.
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
