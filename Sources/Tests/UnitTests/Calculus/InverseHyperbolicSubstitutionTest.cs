@@ -98,6 +98,42 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, points);
 
         /// <summary>
+        /// The radicand written as two linear factors: <c>(5 + 10 i x)(7 - 14 i x)</c> is
+        /// <c>35 (1 + 4 x^2)</c>, the radicand of <c>arsinh(2x)</c>, so <c>L1^p L2^q</c> is
+        /// <c>L1^(p - q) K^k (1 + 4 x^2)^(k/2)</c> with <c>K = sqrt(L1) sqrt(L2)/sqrt(1 + 4 x^2)</c>
+        /// in front, constant wherever it is defined. Rubi's 7.1.4 and 7.1.5, 39 rows; the
+        /// integrands are complex everywhere, and compared so.
+        /// </summary>
+        [Theory]
+        [InlineData("(3 + 2*arsinh(2*x))*sqrt(5 + 10*i*x)*sqrt(7 - 14*i*x)", new[] { -0.4, 0.1, 0.3, 0.7, 1.2 })]
+        [InlineData("(5 + 10*i*x)^(5/2)*(3 + 2*arsinh(2*x))*sqrt(7 - 14*i*x)", new[] { -0.4, 0.1, 0.3, 0.7, 1.2 })]
+        [InlineData("(5 + 10*i*x)^(3/2)*(7 - 14*i*x)^(3/2)*(3 + 2*arsinh(2*x))", new[] { -0.4, 0.1, 0.3, 0.7, 1.2 })]
+        [InlineData("x*(3 + 2*arsinh(2*x))*sqrt(5 + 10*i*x)*sqrt(7 - 14*i*x)", new[] { -0.4, 0.1, 0.3, 0.7, 1.2 })]
+        public void ARadicandWrittenAsTwoLinearFactorsIsWrittenAsOne(string integrand, double[] points)
+            => DifferentiatesBack(integrand, points);
+
+        /// <summary>The same with every coefficient a symbol, pinned only after integrating.</summary>
+        [Theory]
+        [InlineData("(a+b*asinh(c*x))*sqrt(d+i*c*d*x)*sqrt(f-i*c*f*x)")]
+        [InlineData("(d+i*c*d*x)^(5/2)*(a+b*asinh(c*x))*sqrt(f-i*c*f*x)")]
+        public void TwoLinearFactorsWithSymbolicCoefficients(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Entity Pin(Entity e) => e.Substitute("a", 0.9).Substitute("b", 1.7).Substitute("c", 0.6).Substitute("d", -1.3).Substitute("f", 0.8);
+            var derivative = Pin(integral.Substitute("C", 0)).Differentiate("x");
+            var original = Pin(integrand.ToEntity());
+            foreach (var at in new[] { -0.4, 0.1, 0.3, 0.7, 1.2 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart) + Math.Abs((double)want.ImaginaryPart));
+                Assert.True(difference / scale < 1e-9, $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        /// <summary>
         /// A root of a *negative* multiple of the quadratic is not the multiple's root times
         /// the quadratic's: <c>arcosh(a x)^2/sqrt(1 - a^2 x^2)</c> came back with <c>i a</c>
         /// below where the integrand is real, and another function of <c>x</c> beside the

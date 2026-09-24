@@ -1410,6 +1410,21 @@ is real on `(-1/2, 1/2)`, where `arcosh(2x)` is `i arccos(2x)`.
 
 Rubi's 7.2.4 and 7.2.5, all 277 problems that count: 127 to 255, no row lost, 121 timeouts to 18.
 
+### Two linear factors whose product is a multiple of the radicand `arsinh` holds are written as that radicand
+
+`(a + b arsinh(c x)) sqrt(d + i c d x) sqrt(f - i c f x)` ran out of time. The two linear factors
+multiply to `d f (1 + c^2 x^2)`, a constant multiple of the radicand `arsinh(c x) =
+ln(c x + sqrt(c^2 x^2 + 1))` holds -- the entry above's case, spelled as two factors. `L1^p L2^q`
+with `p - q` whole is now `L1^(p - q) L1^q L2^q`, and `L1^q L2^q` is `K^k M^(k/2)` for `q = k/2`,
+with `K = sqrt(L1) sqrt(L2)/sqrt(M)` in front of the answer, constant wherever it is defined.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(a+b*asinh(c*x))*sqrt(d+i*c*d*x)*sqrt(f-i*c*f*x)".Integrate("x")` | left unevaluated | in `arsinh(c x)` and `1 + c^2 x^2`, with `K` in front |
+| `"(d+i*c*d*x)^(5/2)*(a+b*asinh(c*x))*sqrt(f-i*c*f*x)".Integrate("x")` | left unevaluated | the same, with `(d + i c d x)^2` beside it |
+
+Rubi's 7.1.4 and 7.1.5, all 376 problems that count: 308 to 345, no row lost, 56 timeouts to 27.
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
