@@ -1425,6 +1425,25 @@ with `K = sqrt(L1) sqrt(L2)/sqrt(M)` in front of the answer, constant wherever i
 
 Rubi's 7.1.4 and 7.1.5, all 376 problems that count: 308 to 345, no row lost, 56 timeouts to 27.
 
+### The radicand an inverse sine or cosine holds is read as one
+
+`(d + c d x)^(1/2) (f - c f x)^(3/2) (a + b arcsin(c x))` ran out of time. `arcsin(u)` holds a
+radicand without writing it -- its derivative is `u'/sqrt(1 - u^2)` -- so beside `arcsin(c x)`
+the factors `d + c d x` and `f - c f x`, whose product is `d f (1 - c^2 x^2)`, are the case of the
+two entries above with `1 - c^2 x^2` for the radicand. That radicand is now read from an inverse
+sine or cosine of a linear, and two factors whose product is the radicand itself -- `sqrt(1 + c x)
+sqrt(1 - c x)` beside `arccos(c x)` -- are written as its one root too. A single base that is a
+multiple of it, `(d - c^2 d x^2)^(3/2)`, is written over it the same way, with
+`K = sqrt(d - c^2 d x^2)/sqrt(1 - c^2 x^2)` in front, which is `sqrt(d)` for a positive `d`.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(d+c*d*x)^(1/2)*(f-c*f*x)^(3/2)*(a+b*asin(c*x))".Integrate("x")` | left unevaluated | in `arcsin(c x)` and `1 - c^2 x^2`, with `K` in front |
+| `"(d-c^2*d*x^2)^(3/2)*(a+b*asin(c*x))".Integrate("x")` | left unevaluated | the same |
+
+Rubi's 5.1.4, 5.1.5, 5.2.4 and 5.2.5, all 504 problems that count: 405 to 463, no row lost, 77
+timeouts to 19.
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

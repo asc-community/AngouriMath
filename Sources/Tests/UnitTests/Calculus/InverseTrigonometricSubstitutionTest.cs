@@ -81,6 +81,22 @@ namespace AngouriMath.Tests.Calculus
         public void TheSineAndTheCosine(string integrand) => DifferentiatesBack(integrand, InsideTheUnitInterval);
 
         /// <summary>
+        /// The radicand an inverse sine or cosine holds without writing it: <c>arcsin(u)'</c> is
+        /// <c>u'/sqrt(1 - u^2)</c>, so beside <c>arcsin(2x)</c> the factors <c>(3 + 6x)(5 - 10x)</c>,
+        /// whose product is <c>15 (1 - 4x^2)</c>, are that radicand written as two, and
+        /// <c>(5 - 20x^2)^(3/2)</c> a multiple of it written as one. Rubi's 5.1.4 and 5.2.4; the
+        /// points are inside <c>|2x| &lt; 1</c>, where every integrand here is real.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(3 + 6*x)*(5 - 10*x)^(3/2)*(1 + arcsin(2*x))")]
+        [InlineData("x*(1 + arcsin(2*x))^2/(sqrt(3 + 6*x)*sqrt(5 - 10*x))")]
+        [InlineData("(3 + 6*x)^(3/2)*(1 + arcsin(2*x))/(5 - 10*x)^(3/2)")]
+        [InlineData("(5 - 20*x^2)^(3/2)*(1 + arcsin(2*x))")]
+        [InlineData("sqrt(1 + 2*x)*sqrt(1 - 2*x)*(1 + arccos(2*x))")]
+        public void TheRadicandOfAnInverseSineOrCosine(string integrand)
+            => DifferentiatesBack(integrand, new[] { -0.4, -0.1, 0.2, 0.35, 0.45 });
+
+        /// <summary>
         /// The tangent, whose radical is <c>sqrt(1 + x^2)</c> and becomes the secant.
         /// </summary>
         [Theory]

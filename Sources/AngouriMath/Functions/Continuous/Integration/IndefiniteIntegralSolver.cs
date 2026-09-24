@@ -14992,6 +14992,17 @@ namespace AngouriMath.Functions.Algebra
                         && radicand.ContainsNode(x) && TreeAnalyzer.TryGetPolynomial(radicand, x, out var read) && read.Keys.Max() >= EInteger.One
                         && !references.Contains(radicand))
                         references.Add(radicand);
+            // And the radicand an inverse sine or cosine of a linear holds without writing it:
+            // `arcsin(u)'` is `u'/sqrt(1 - u^2)`, so `(d + c d x)^(1/2) (f - c f x)^(3/2)` beside
+            // `arcsin(c x)` is the same case as beside `arcosh`, with `1 - c^2 x^2` for the radicand.
+            foreach (var node in expr.Nodes)
+                if (node switch { Arcsinf(var inner) => inner, Arccosf(var inner) => inner, _ => null } is { } argument
+                    && argument.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(argument, x, out _, out _))
+                {
+                    var radicand = (1 - MathS.Sqr(argument)).Expand().InnerSimplified;
+                    if (!references.Contains(radicand))
+                        references.Add(radicand);
+                }
             if (references.Count == 0)
                 return null;
             var multiple = Variable.CreateUnique(expr, "k_rad");
@@ -15078,7 +15089,10 @@ namespace AngouriMath.Functions.Algebra
                     var product = (first * second).Expand();
                     foreach (var candidate in references)
                     {
-                        if (TryReadAsAConstantMultiple(product, candidate, x) is not { } lambda)
+                        // A multiple of one counts here, where it does not for a single base: two
+                        // factors whose product *is* the radicand -- `sqrt(1 + c x) sqrt(1 - c x)`
+                        // beside `arcsin(c x)` -- still want writing as its one root.
+                        if (TryReadAsAConstantMultiple(product, candidate, x, allowOne: true) is not { } lambda)
                             continue;
                         Entity together;
                         if (half is Number.Integer)
@@ -15149,7 +15163,7 @@ namespace AngouriMath.Functions.Algebra
         /// polynomials in <paramref name="x"/> of the same degree: the ratio of the leading
         /// coefficients, where every other coefficient agrees with it once simplified.
         /// </summary>
-        private static Entity? TryReadAsAConstantMultiple(Entity expr, Entity reference, Entity.Variable x)
+        private static Entity? TryReadAsAConstantMultiple(Entity expr, Entity reference, Entity.Variable x, bool allowOne = false)
         {
             // Read as written, or simplified first: the normalisation makes a power of a
             // polynomial with a symbolic leading coefficient monic and writes the constant term as
@@ -15178,7 +15192,7 @@ namespace AngouriMath.Functions.Algebra
             var lambda = (leading / theirs[top]).InnerSimplified;
             if (lambda.Vars.Any())
                 lambda = Functions.PartialFractions.Bare(lambda.Simplify());
-            if (lambda.Evaled is Number.Complex { IsZero: true } || lambda == Number.Integer.One)
+            if (lambda.Evaled is Number.Complex { IsZero: true } || lambda == Number.Integer.One && !allowOne)
                 return null;
             foreach (var pair in theirs)
             {
