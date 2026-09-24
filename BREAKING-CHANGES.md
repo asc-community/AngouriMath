@@ -1391,6 +1391,25 @@ A secant above the bar is still declined: `sec(x)^2 e^(-3 i x)` is rational in `
 imaginary rate, which nothing answers yet. Rubi's 4.7.2: 237 to 249 of 290, no row lost, 16
 timeouts to 14.
 
+### A power of a constant multiple of the radicand `arcosh` holds is written over that radicand
+
+`arcosh(a x)^2/sqrt(1 - a^2 x^2)` and `x (a + b arcosh(c x))/(d - c^2 d x^2)^3` ran out of time.
+`arcosh(c x)` is `ln(c x + sqrt(c^2 x^2 - 1))`, and the substitution `u = arcosh(c x)` wants the
+root its derivative carries, `sqrt(c^2 x^2 - 1)`; beside it the integrand holds a constant multiple
+of that radicand, `d - c^2 d x^2 = -d (c^2 x^2 - 1)`, which nothing read as one. A whole power of
+the multiple is now the product of the powers, and a root `(lambda M)^(k/2)` is `K^k M^(k/2)` with
+`K = sqrt(lambda M)/sqrt(M)` -- plus or minus `i`, or `sqrt(lambda)`, constant on every interval
+where it is defined -- which stands in front of the answer the way Rubi writes it. The answer
+is checked where the integrand is real as well as where it is not: `arcosh(2 x)^2/sqrt(1 - 4 x^2)`
+is real on `(-1/2, 1/2)`, where `arcosh(2x)` is `i arccos(2x)`.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"arcosh(a*x)^2/sqrt(1-a^2*x^2)".Integrate("x")` | left unevaluated | `arcosh(a x)^3/(3a)` over `sqrt(1 - a^2 x^2)/sqrt(a^2 x^2 - 1)` |
+| `"x*(a+b*arcosh(c*x))/(d-c^2*d*x^2)^3".Integrate("x")` | left unevaluated | in `arcosh(c x)` and powers of `c^2 x^2 - 1` |
+
+Rubi's 7.2.4 and 7.2.5, all 277 problems that count: 127 to 255, no row lost, 121 timeouts to 18.
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

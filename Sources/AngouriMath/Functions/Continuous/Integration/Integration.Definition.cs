@@ -516,6 +516,9 @@ namespace AngouriMath.Functions.Algebra
             // And a fractional or symbolic power of a monomial: `(c x^n)^b` is `c^b x^(n b)`
             // for a positive `c`, on the `x > 0` where a symbolic `n` leaves the integrand real.
             if ((answer = IndefiniteIntegralSolver.SolveByDistributingAPowerOfAMonomial(expr, x, integrateByParts)) is { }) return answer;
+            // A power of a constant multiple of the radicand a logarithm holds under a root,
+            // written over that radicand: `acosh(c x)` beside `(d - c^2 d x^2)^(5/2)`.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingAConstantMultipleOfARadicandOverIt(expr, x, integrateByParts)) is { }) return answer;
             // A power of the variable times a sine or cosine of a logarithm, where two rounds of
             // parts close on the integrand: `int x^m sin(a + b ln(c x^n))` in closed form.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesATrigonometricOfALogarithm(expr, x, integrateByParts)) is { }) return answer;

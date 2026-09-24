@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -78,6 +78,24 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x^2*artanh(2*x)")]
         [InlineData("artanh(2*x)/(1 - 4*x^2)^(3/2)")]
         public void TheTangent(string integrand) => DifferentiatesBack(integrand, InsideTheHalf);
+
+        /// <summary>
+        /// A power of a constant multiple of the radicand the inverse cosine holds, written over
+        /// that radicand: <c>arcosh(c x)</c> is <c>ln(c x + sqrt(c^2 x^2 - 1))</c>, and
+        /// <c>(d - c^2 d x^2)^(k/2)</c> beside it is <c>K^k (c^2 x^2 - 1)^(k/2)</c> for
+        /// <c>K = sqrt(d - c^2 d x^2)/sqrt(c^2 x^2 - 1)</c>, which is constant on each interval
+        /// where it is defined and stands in front of the answer; a whole power is the product
+        /// of the powers. These are answered now, not only right when answered: the first is
+        /// real on <c>(-1/2, 1/2)</c>, where <c>arcosh(2x)</c> is <c>i arccos(2x)</c> and its
+        /// square real, and is checked there. Rubi's 7.2.4 and 7.2.5, 130 rows.
+        /// </summary>
+        [Theory]
+        [InlineData("arcosh(2*x)^2/sqrt(1 - 4*x^2)", new[] { -0.45, -0.2, 0.1, 0.3, 0.45 })]
+        [InlineData("x*(5 - 20*x^2)^(3/2)*(3 + 2*arcosh(2*x))", new[] { -0.4, 0.1, 0.3, 0.7, 1.2 })]
+        [InlineData("(3 + 2*arcosh(2*x))/(5 - 20*x^2)^(5/2)", new[] { -0.4, 0.1, 0.3, 0.7, 1.2 })]
+        [InlineData("x*(3 + 2*arcosh(2*x))/(5 - 20*x^2)^3", new[] { -0.4, 0.1, 0.3, 0.7, 1.2 })]
+        public void AConstantMultipleOfTheRadicandIsWrittenOverIt(string integrand, double[] points)
+            => DifferentiatesBack(integrand, points);
 
         /// <summary>
         /// A root of a *negative* multiple of the quadratic is not the multiple's root times
