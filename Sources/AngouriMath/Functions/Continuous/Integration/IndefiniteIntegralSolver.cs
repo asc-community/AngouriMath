@@ -15611,39 +15611,7 @@ namespace AngouriMath.Functions.Algebra
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveByWritingAnImaginarySumOfACosineAndASineAsAnExponential(Entity expr, Entity.Variable x, bool integrateByParts)
-        {
-            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr));
-            if (!below.ContainsNode(x))
-                return null;
-            var rewritten = below.Replace(node =>
-            {
-                if (node is not (Sumf or Minusf) || !node.ContainsNode(x)
-                    || !TryReadACosineAndASine(node, x, out var cosineCoefficient, out var sineCoefficient, out var argument))
-                    return node;
-                // The ratio is the imaginary unit one way or the other, and nothing else. Bare:
-                // `i a/a` simplifies to `i provided not a = 0`, and a condition is not a number
-                // to compare against.
-                var ratio = Functions.PartialFractions.Bare((sineCoefficient / cosineCoefficient).InnerSimplified);
-                if (ratio.Evaled is not Number.Complex)
-                    ratio = Functions.PartialFractions.Bare(ratio.Simplify());
-                var plus = ratio.Evaled == MathS.i.Evaled;
-                if (!plus && ratio.Evaled != (-MathS.i).Evaled)
-                    return node;
-                return cosineCoefficient * MathS.Pow(MathS.e, ((plus ? MathS.i : -MathS.i) * argument).InnerSimplified);
-            });
-            if (rewritten == below)
-                return null;
-            // And a whole power of what was written split, `(A e^(i y))^n` as `A^n e^(i n y)`, so
-            // that the exponential stands on its own for the rules that read one: the rule that
-            // distributes such powers takes a constant with a symbol in it and leaves a number,
-            // and `cos(x)^2/(2 e^(i x))^3` was declined where `cos(x)^2/(a e^(i x))^3` was not.
-            rewritten = rewritten.Replace(node =>
-                node is Powf(Mulf(var left, var right), Number.Integer power)
-                && (left is Powf(var leftBase, _) && leftBase == MathS.e || right is Powf(var rightBase, _) && rightBase == MathS.e)
-                    ? MathS.Pow(left, power) * MathS.Pow(right, power)
-                    : node);
-            return Integration.ComputeAsTheSameQuestion((above / rewritten).InnerSimplified, x, integrateByParts);
-        }
+            => IntegrandRules.ImaginarySumOfACosineAndASine.Apply(expr, x, integrateByParts);
 
         /// <summary>
         /// Bioche's first two rules for the hyperbolic functions: a rational function of

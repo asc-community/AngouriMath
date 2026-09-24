@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -705,6 +705,16 @@ namespace AngouriMath.Core.Transformations.Matching
             => new GatheredPattern(typeof(T), restName, parts);
 
         /// <summary>
+        /// A part times a coefficient, the coefficient <c>1</c> where the part stands alone --
+        /// Rubi's <c>a_.*u_</c>. <c>2 a cos(z)</c> binds <paramref name="coefficientName"/> to
+        /// <c>2 a</c> and a bare <c>cos(z)</c> binds it to <c>1</c>, where a
+        /// <see cref="Gathered{T}"/> product on its own declines the bare one, which is not a
+        /// chain. Nothing about the coefficient is required here; a rule says what it needs of it.
+        /// </summary>
+        internal static MatchPattern Scaled(string coefficientName, MatchPattern part)
+            => new ScaledPattern(coefficientName, part);
+
+        /// <summary>
         /// The ceiling on how many part-to-operand assignments one <see cref="Gathered{T}"/> will
         /// try. Reached only by a rule with several holes over a long chain: two parts stay under
         /// it until 100 operands, three until 22, four until 11.
@@ -1257,6 +1267,72 @@ namespace AngouriMath.Core.Transformations.Matching
                 classId = graph.Add(nodeType.Name, parts);
                 return true;
             }
+        }
+
+        private sealed class ScaledPattern : MatchPattern
+        {
+            private readonly string coefficientName;
+            private readonly MatchPattern part;
+            private readonly MatchPattern product;
+
+            internal ScaledPattern(string coefficientName, MatchPattern part)
+            {
+                this.coefficientName = coefficientName ?? throw new ArgumentNullException(nameof(coefficientName));
+                this.part = part ?? throw new ArgumentNullException(nameof(part));
+                product = new GatheredPattern(typeof(Entity.Mulf), coefficientName, new[] { part });
+                NodeCount = part.NodeCount + 1;
+            }
+
+            internal override int NodeCount { get; }
+
+            internal override IEnumerable<string> BoundNames => part.BoundNames.Append(coefficientName);
+
+            public override string ToString() => coefficientName + " * " + part;
+
+            private protected override Type? RootType => null;
+
+            internal override bool IsDeterministic => false;
+
+            internal override int ChoiceCount => Unbounded;
+
+            private protected override IEnumerable<Bindings> MatchCore(Entity expr, Bindings bindings)
+            {
+                // The part alone, with the coefficient one -- unified, so that a coefficient bound
+                // elsewhere in the same pattern has to be one here too.
+                foreach (var alone in part.Match(expr, bindings))
+                {
+                    if (!alone.TryGet(coefficientName, out var bound))
+                        yield return alone.With(coefficientName, Entity.Number.Integer.One);
+                    else if (bound == Entity.Number.Integer.One)
+                        yield return alone;
+                }
+                foreach (var scaled in product.Match(expr, bindings))
+                    yield return scaled;
+            }
+
+            private protected override bool TryMatchOnceCore(Entity expr, Bindings bindings, out Bindings result)
+                => throw new InvalidOperationException(
+                    "a scaled pattern is a search and has to be asked through Match");
+
+            internal override bool IsBuildable => false;
+
+            internal override bool TryBuild(Bindings bindings, out Entity built)
+            {
+                built = null!;
+                return false;
+            }
+
+            internal override bool CanEMatch => false;
+
+            internal override IEnumerable<EBindings> EMatch(
+                EGraph graph, int classId, EBindings bindings, Func<Entity, double> cost)
+                => throw new NotSupportedException(
+                    $"{nameof(ScaledPattern)} does not e-match; check {nameof(CanEMatch)} first.");
+
+            internal override bool ETryBuild(
+                EGraph graph, EBindings bindings, Func<Entity, double> cost, out int classId)
+                => throw new NotSupportedException(
+                    $"{nameof(ScaledPattern)} does not e-match; check {nameof(CanEMatch)} first.");
         }
 
         private sealed class GatheredPattern : MatchPattern
