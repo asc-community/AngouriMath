@@ -14955,6 +14955,171 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of a constant multiple of a radicand that a logarithm holds under a root,
+        /// written over that radicand: <c>acosh(c x)</c> is <c>ln(c x + sqrt(c^2 x^2 - 1))</c>,
+        /// and beside it <c>d - c^2 d x^2</c> is <c>-d (c^2 x^2 - 1)</c>. A whole power is the
+        /// product of the powers; a root <c>(lambda M)^(k/2)</c> is <c>K^k M^(k/2)</c> with
+        /// <c>K = sqrt(lambda M)/sqrt(M)</c>, which is constant wherever it is defined -- plus or
+        /// minus <c>i</c>, or plus or minus <c>sqrt(lambda)</c> -- so it stands in front of the
+        /// answer the way Rubi writes it.
+        /// </summary>
+        /// <remarks>
+        /// The substitution <c>u = acosh(c x)</c> needs the root its derivative carries,
+        /// <c>sqrt(c^2 x^2 - 1)</c>; written over <c>1 - c^2 x^2</c> the integrand is the same
+        /// function times <c>i</c> and nothing reads it: <c>acosh(a x)^2/sqrt(1 - a^2 x^2)</c> ran
+        /// out of time where <c>acosh(a x)^2/sqrt(a^2 x^2 - 1)</c> takes a third of a second, and
+        /// <c>x (a + b acosh(c x))/(d - c^2 d x^2)^3</c> -- a whole power, no root at all -- the same.
+        /// <c>K</c> is carried through the integration as a symbol: it is constant, so an
+        /// antiderivative in it is one in <c>x</c> once it is written out, whatever the branches.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByWritingAConstantMultipleOfARadicandOverIt(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // At the question asked only. The inverse cosine is in the integrand as asked, and a
+            // round of parts differentiates it away, so what is asked below holds no logarithm
+            // this rule needs -- but the substitutions below write logarithms of their own, and
+            // there the rule found a genuine multiple, rewrote it and asked a whole search again
+            // that was going to decline anyway: `atan(c x/sqrt(a - c^2 x^2))^2/sqrt(d - c^2 d x^2/a)`,
+            // with no logarithm in it as asked, took thirty-one seconds to decline where it took
+            // seven, twelve of them in each of two such re-asks.
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            // The radicands a logarithm holds under a square root.
+            var references = new List<Entity>();
+            foreach (var logarithm in expr.Nodes.OfType<Logf>())
+                foreach (var node in logarithm.Nodes)
+                    if (node is Powf(var radicand, Number.Rational { ERational: var half }) && half.Denominator.Equals(EInteger.FromInt32(2))
+                        && radicand.ContainsNode(x) && TreeAnalyzer.TryGetPolynomial(radicand, x, out var read) && read.Keys.Max() >= EInteger.One
+                        && !references.Contains(radicand))
+                        references.Add(radicand);
+            if (references.Count == 0)
+                return null;
+            var multiple = Variable.CreateUnique(expr, "k_rad");
+            Entity? written = null, root = null, reference = null;
+            var rewritten = expr.Replace(node =>
+            {
+                if (node is not Powf(var @base, Number.Rational exponent) || !@base.ContainsNode(x) || references.Contains(@base))
+                    return node;
+                foreach (var candidate in references)
+                {
+                    if (TryReadAsAConstantMultiple(@base, candidate, x) is not { } lambda)
+                        continue;
+                    if (exponent is Number.Integer)
+                        return MathS.Pow(lambda, exponent) * MathS.Pow(candidate, exponent);
+                    if (!exponent.ERational.Denominator.Equals(EInteger.FromInt32(2)))
+                        return node;
+                    // Only one such root per integrand: K is `sqrt(base)/sqrt(candidate)`, and two
+                    // different bases would each want their own.
+                    if (written is not null && (written != @base || reference != candidate))
+                        return node;
+                    (written, reference) = (@base, candidate);
+                    var numeratorOfExponent = Number.Integer.Create(exponent.ERational.Numerator);
+                    return MathS.Pow(multiple, numeratorOfExponent) * MathS.Pow(candidate, exponent);
+                }
+                return node;
+            });
+            if (rewritten == expr)
+                return null;
+            var simplified = rewritten.InnerSimplified;
+            if (simplified == expr || simplified == expr.InnerSimplified)
+                return null;
+            if (Integration.ComputeAsTheSameQuestion(simplified, x, integrateByParts) is not { } answer)
+                return null;
+            if (written is not null && reference is not null)
+            {
+                root = MathS.Sqrt(written) / MathS.Sqrt(reference);
+                answer = answer.Substitute(multiple, root);
+            }
+            return answer.ContainsNode(multiple) ? null : answer;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="expr"/>/<paramref name="reference"/> takes the same value at two
+        /// points, every other symbol pinned to a fixed value -- a necessary condition for a
+        /// constant ratio, and a cheap one. Where either side cannot be evaluated the question is
+        /// left to the symbolic check.
+        /// </summary>
+        private static bool HasTheSameRatioAtTwoPoints(Entity expr, Entity reference, Entity.Variable x)
+        {
+            var pinned = new Dictionary<Variable, Entity>();
+            var values = new[] { 1.37, 0.61, 2.23, 1.91, 0.83, 1.13 };
+            var index = 0;
+            foreach (var symbol in expr.Vars.Concat(reference.Vars).Distinct())
+                if (symbol != x)
+                    pinned[symbol] = values[index++ % values.Length];
+            Number.Complex? RatioAt(double at)
+            {
+                var top = expr.Substitute(x, at);
+                var bottom = reference.Substitute(x, at);
+                foreach (var pair in pinned)
+                {
+                    top = top.Substitute(pair.Key, pair.Value);
+                    bottom = bottom.Substitute(pair.Key, pair.Value);
+                }
+                try
+                {
+                    return top.EvalNumerical() is Number.Complex a && bottom.EvalNumerical() is Number.Complex b && !b.IsZero
+                        ? (Number.Complex)(a / b) : null;
+                }
+                catch (AngouriMath.Core.Exceptions.CannotEvalException) { return null; }
+            }
+            if (RatioAt(0.37) is not { } first || RatioAt(1.71) is not { } second)
+                return true;
+            var difference = (first - second).Abs() as Number.Real;
+            var scale = System.Math.Max(1.0, (double)((Number.Real)first.Abs()).EDecimal.ToDouble());
+            return difference is null || (double)difference.EDecimal.ToDouble() <= 1e-9 * scale;
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> as a constant times <paramref name="reference"/>, both
+        /// polynomials in <paramref name="x"/> of the same degree: the ratio of the leading
+        /// coefficients, where every other coefficient agrees with it once simplified.
+        /// </summary>
+        private static Entity? TryReadAsAConstantMultiple(Entity expr, Entity reference, Entity.Variable x)
+        {
+            // Read as written, or simplified first: the normalisation makes a power of a
+            // polynomial with a symbolic leading coefficient monic and writes the constant term as
+            // `d^0 (-1)^(-1) c^(-2)`, which the polynomial reader does not take -- and that is the
+            // spelling `(d - c^2 d x^2)^3` below the bar arrives in. Bare, because `d^0` simplifies
+            // to `1 provided not d = 0`, and a condition is not a polynomial either.
+            if (!TreeAnalyzer.TryGetPolynomial(expr, x, out var mine)
+                && !TreeAnalyzer.TryGetPolynomial(Functions.PartialFractions.Bare(expr.InnerSimplified), x, out mine))
+                return null;
+            if (!TreeAnalyzer.TryGetPolynomial(reference, x, out var theirs)
+                || mine.Count != theirs.Count || mine.Values.Any(c => c.ContainsNode(x)) || theirs.Values.Any(c => c.ContainsNode(x)))
+                return null;
+            var top = theirs.Keys.Max()!;
+            if (!mine.TryGetValue(top, out var leading) || theirs[top].Evaled is Number.Complex { IsZero: true })
+                return null;
+            // A constant multiple has the same ratio everywhere, so two points settle most pairs
+            // before anything is simplified: the check below simplifies symbolic differences, and
+            // asked of every power in a by-parts remainder of `atan(c x/sqrt(a - c^2 x^2))^2/
+            // sqrt(d - c^2 d x^2/a)` -- two hundred of them -- it took twenty-five seconds.
+            if (!HasTheSameRatioAtTwoPoints(expr, reference, x))
+                return null;
+            // Simplified where it holds symbols: the ratio of the leading coefficients of
+            // `d - c^2 d x^2` and `c^2 x^2 - 1` is `-c^2 d/c^2` to the inner simplification, and
+            // written into a whole power that way it cost the integrand its time -- `-d` is
+            // what the rules below want to see.
+            var lambda = (leading / theirs[top]).InnerSimplified;
+            if (lambda.Vars.Any())
+                lambda = Functions.PartialFractions.Bare(lambda.Simplify());
+            if (lambda.Evaled is Number.Complex { IsZero: true } || lambda == Number.Integer.One)
+                return null;
+            foreach (var pair in theirs)
+            {
+                if (!mine.TryGetValue(pair.Key, out var own))
+                    return null;
+                var difference = (own - lambda * pair.Value).InnerSimplified;
+                if (difference.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                if (!difference.Vars.Any() || Functions.PartialFractions.Bare(difference.Simplify()).Evaled is not Number.Complex { IsZero: true })
+                    return null;
+            }
+            return lambda;
+        }
+
+        /// <summary>
         /// A fractional or symbolic power of a monomial, distributed: <c>(c x^n)^b</c> is
         /// <c>c^b x^(n b)</c> for a positive <c>c</c> and a <c>n</c> that is not whole.
         /// </summary>
