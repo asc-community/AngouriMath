@@ -692,6 +692,10 @@ namespace AngouriMath.Functions.Algebra
             // integrand that is a function of the tangent *alone* and gives a shorter answer for
             // it; this one is for the rest.
             if ((answer = IndefiniteIntegralSolver.SolveByHomogeneousTrigonometricSubstitution(expr, x, integrateByParts)) is { }) return answer;
+            // And the odd case it leaves: `a cos(y) + b sin(y)` is one cosine of a shifted
+            // argument, `R cos(u)`, and the quotient over a power of it a quotient over a power of
+            // that cosine, which the rules for powers of the sine and cosine answer.
+            if ((answer = IndefiniteIntegralSolver.SolveByRotatingACosineAndASineIntoOneCosine(expr, x, integrateByParts)) is { }) return answer;
             // An even polynomial over a biquadratic with symbols in it, over the two roots
             // in x^2 written with the root of the discriminant: partial fractions read a
             // written factor, and `a + b x^2 + c x^4` is written as one.

@@ -1347,6 +1347,30 @@ substitution hands on `(1 + t^2)^2/(a + b t)^4`.
 
 Rubi's 4.7.2, `trig^m (a trig + b trig)^n`: 199 to 215 of 290, no row lost, 27 timeouts to 20.
 
+### An odd power of `a cos + b sin` is rotated into one cosine
+
+`1/(a cos(x) + b sin(x))^3` was left as written. The tangent turns a quotient of homogeneous
+polynomials in the sine and cosine into a rational function only when the degrees differ by an
+even number; by an odd number it leaves a root of `1 + t^2`, and every row of that kind was
+declined. `a cos(y) + b sin(y)` is `R cos(u)` for `R = sqrt(a^2 + b^2)` and a shifted argument
+`u`, so the quotient becomes one over a power of one cosine, with `cos(y)` and `sin(y)` above it
+written as `(a cos(u) - b sin(u))/R` and `(b cos(u) + a sin(u))/R` -- shapes the rules for powers
+of the sine and cosine answer at once. The way back goes through `cos(u) = (a cos(y) + b sin(y))/R`
+and `sin(u) = (a sin(y) - b cos(y))/R`, not through the phase, whose quadrant would depend on the
+signs of `a` and `b`.
+
+Only where the sum is below the bar and nothing else there holds `x`, and only for sines and
+cosines: a secant above puts a cosine below, which the rotation turns into one more such sum,
+and those rows want partial fractions over the two linear factors instead.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a*cos(x)+b*sin(x))^3".Integrate("x")` | left unevaluated | in `a cos(x) + b sin(x)`, `a sin(x) - b cos(x)` and `sqrt(a^2 + b^2)` |
+| `"cos(x)/(a*cos(x)+b*sin(x))^2".Integrate("x")` | left unevaluated | the same, with a logarithm |
+| `"1/(2*cos(x)+3*sin(x))^3".Integrate("x")` | left unevaluated | the same with `sqrt(13)` |
+
+Rubi's 4.7.2: 215 to 237 of 290, no row lost, 20 timeouts to 16.
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

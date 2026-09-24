@@ -66,6 +66,51 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// The odd case the tangent cannot take -- degrees that differ by an odd number leave a
+        /// root of <c>1 + t^2</c> -- by rotating the sum into one cosine: <c>a cos(x) + b sin(x)</c>
+        /// is <c>R cos(u)</c> with <c>R = sqrt(a^2 + b^2)</c>, and the way back goes through
+        /// <c>cos(u)</c> and <c>sin(u)</c> written in <c>x</c> rather than through the phase, whose
+        /// quadrant would depend on the signs -- which is why a negative <c>a</c> is pinned too.
+        /// Rubi's 4.7.2, twenty-two rows. The points stay clear of the zeros of the sum, at
+        /// <c>x = -1.23</c> for <c>a = 1.7</c> and at <c>x = 1.23</c> for <c>a = -1.7</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(a*cos(x) + b*sin(x))^3", "a=1.7,b=0.6")]
+        [InlineData("1/(a*cos(x) + b*sin(x))^3", "a=-1.7,b=0.6")]
+        [InlineData("cos(x)/(a*cos(x) + b*sin(x))^2", "a=1.7,b=0.6")]
+        [InlineData("cos(x)/(a*cos(x) + b*sin(x))^2", "a=-1.7,b=0.6")]
+        [InlineData("sin(x)^2/(a*cos(x) + b*sin(x))", "a=1.7,b=0.6")]
+        [InlineData("cos(x)^3/(a*cos(x) + b*sin(x))^2", "a=-1.7,b=0.6")]
+        [InlineData("1/(2*cos(x) + 3*sin(x))^3", "")]
+        public void AnOddPowerOfASumRotatedIntoOneCosine(string integrand, string pins)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Entity Pin(Entity e)
+            {
+                foreach (var pin in pins.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var parts = pin.Split('=');
+                    e = e.Substitute(parts[0], double.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture));
+                }
+                return e;
+            }
+            var derivative = Pin(integral.Substitute("C", 0)).Differentiate("x");
+            var original = Pin(integrand.ToEntity());
+            foreach (var at in new[] { 0.3, 0.8, -0.5, 2.6 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                Assert.False(got.IsNaN, $"the antiderivative of {integrand} differentiates to NaN at x = {at}");
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
+        /// <summary>
         /// The same with symbolic coefficients, where the power has to be read as a power. Read as
         /// one expanded polynomial, <c>(a cos(x) + b sin(x))^4</c> became a quartic in the tangent
         /// with a symbol in every coefficient, which the rational integrator cannot factor back
