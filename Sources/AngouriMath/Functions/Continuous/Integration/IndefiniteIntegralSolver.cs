@@ -15018,6 +15018,11 @@ namespace AngouriMath.Functions.Algebra
                 }
                 return node;
             });
+            if (written is not null && reference is not null)
+                root = MathS.Sqrt(written) / MathS.Sqrt(reference);
+            // And the radicand written as two linear factors, when no single base was its multiple.
+            if (rewritten == expr && TryWriteAPairOfLinearsOverARadicand(expr, x, references, multiple, out var paired, out var pairRoot))
+                (rewritten, root) = (paired, pairRoot);
             if (rewritten == expr)
                 return null;
             var simplified = rewritten.InnerSimplified;
@@ -15025,12 +15030,81 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             if (Integration.ComputeAsTheSameQuestion(simplified, x, integrateByParts) is not { } answer)
                 return null;
-            if (written is not null && reference is not null)
-            {
-                root = MathS.Sqrt(written) / MathS.Sqrt(reference);
+            if (root is not null)
                 answer = answer.Substitute(multiple, root);
-            }
             return answer.ContainsNode(multiple) ? null : answer;
+        }
+
+        /// <summary>
+        /// Two linear factors whose product is a constant multiple of a radicand a logarithm holds,
+        /// written as that radicand: `d + i c d x` and `f - i c f x` beside `arsinh(c x)`, whose
+        /// product is `d f (1 + c^2 x^2)`. `L1^p L2^q` is `L1^(p - q) L1^q L2^q` where `p - q` is
+        /// whole, and `L1^q L2^q` is `lambda^q M^q` for a whole `q` and `K^k M^(k/2)` for
+        /// `q = k/2`, with `K = sqrt(L1) sqrt(L2)/sqrt(M)` constant wherever it is defined -- the
+        /// same factor the single base is written with. Rubi's 7.1.4 states seventy-two of its
+        /// rows this way; `(d + i c d x)^(5/2) sqrt(f - i c f x) (a + b arsinh(c x))` ran past
+        /// seventy seconds where the same thing over `1 + c^2 x^2` takes two thirds of one.
+        /// </summary>
+        private static bool TryWriteAPairOfLinearsOverARadicand(Entity expr, Entity.Variable x, List<Entity> references,
+            Entity.Variable multiple, out Entity rewritten, out Entity? root)
+        {
+            rewritten = expr;
+            root = null;
+            // The factors on both sides of the bar, as powers: a nested power read through, and a
+            // factor below the bar with its exponent negated.
+            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr));
+            var factors = new List<(Entity Base, Entity Exponent)>();
+            foreach (var factor in Mulf.LinearChildren(above))
+                factors.Add(AsAPower(factor));
+            foreach (var factor in Mulf.LinearChildren(below))
+            {
+                var (@base, exponent) = AsAPower(factor);
+                factors.Add((@base, (-exponent).InnerSimplified));
+            }
+            for (var i = 0; i < factors.Count; i++)
+                for (var j = 0; j < factors.Count; j++)
+                {
+                    if (i == j)
+                        continue;
+                    var (first, p) = factors[i];
+                    var (second, q) = factors[j];
+                    if (!first.ContainsNode(x) || !second.ContainsNode(x)
+                        || !TreeAnalyzer.TryGetPolyLinear(first, x, out _, out _) || !TreeAnalyzer.TryGetPolyLinear(second, x, out _, out _)
+                        || (p - q).Evaled is not Number.Integer || q.Evaled is not Number.Rational half)
+                        continue;
+                    var twice = (2 * half).Evaled;
+                    if (half is not Number.Integer && twice is not Number.Integer)
+                        continue;
+                    var product = (first * second).Expand();
+                    foreach (var candidate in references)
+                    {
+                        if (TryReadAsAConstantMultiple(product, candidate, x) is not { } lambda)
+                            continue;
+                        Entity together;
+                        if (half is Number.Integer)
+                            together = MathS.Pow(lambda, half) * MathS.Pow(candidate, half);
+                        else
+                        {
+                            together = MathS.Pow(multiple, twice) * MathS.Pow(candidate, half);
+                            root = MathS.Sqrt(first) * MathS.Sqrt(second) / MathS.Sqrt(candidate);
+                        }
+                        Entity result = MathS.Pow(first, (p - q).InnerSimplified) * together;
+                        for (var k = 0; k < factors.Count; k++)
+                            if (k != i && k != j)
+                                result = result * MathS.Pow(factors[k].Base, factors[k].Exponent);
+                        rewritten = result;
+                        return true;
+                    }
+                }
+            return false;
+
+            static (Entity Base, Entity Exponent) AsAPower(Entity factor)
+                => factor switch
+                {
+                    Powf(Powf(var inner, var innerExponent), var outerExponent) => (inner, (innerExponent * outerExponent).InnerSimplified),
+                    Powf(var @base, var exponent) => (@base, exponent),
+                    _ => (factor, Number.Integer.One),
+                };
         }
 
         /// <summary>
