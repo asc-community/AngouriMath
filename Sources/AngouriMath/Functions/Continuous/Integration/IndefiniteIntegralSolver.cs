@@ -9251,6 +9251,130 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A linear below the bar that divides the radicand of a half-odd power beside it, written
+        /// over that radicand: the quadratic is <c>P = L M</c>, so <c>1/L</c> is <c>M/P</c> and
+        /// <c>L^(-n) P^s</c> is <c>M^n P^(s - n)</c>, exactly, for a whole <c>n</c>.
+        /// <c>x/((d + e x) sqrt(d^2 - e^2 x^2))</c> is the polynomial <c>x (d - e x)</c> over
+        /// <c>(d^2 - e^2 x^2)^(3/2)</c>, which the rules for a polynomial beside a half-odd power
+        /// of a quadratic answer. Rubi's 1.2.1.4 writes most of its rows this way.
+        /// </summary>
+        /// <remarks>
+        /// The rules in front read a linear beside the root as a pole to take apart, and a linear
+        /// that divides the radicand leaves nothing to take apart: its residue is the radicand's
+        /// value at its root, zero. Only below the bar, so the rewrite never makes the shape it
+        /// reads -- <c>M^n</c> is written above -- and a whole power only, where the rewrite
+        /// needs no branch.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByWritingALinearBelowTheBarOverTheRadicand(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            // At the question asked only. Below it the rule rewrote what the substitution search
+            // asks of each of its candidates, and every rewrite was a search of its own:
+            // `1/(x^2 (d + e x) sqrt(a d e + (c d^2 + a e^2) x + c d e x^2))` declined in 80 ms
+            // before the rule, ran past ninety seconds with it at every depth, and is answered
+            // in half a second with it here.
+            if (!Integration.AnsweringTheQuestionAsked)
+                return null;
+            if (!expr.Nodes.Any(node => node is Powf(var radicand, Number.Rational { ERational: var power })
+                    && power.Denominator.Equals(EInteger.FromInt32(2)) && radicand.ContainsNode(x)))
+                return null;
+            var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr));
+            if (!below.ContainsNode(x))
+                return null;
+            // The factors on both sides of the bar as powers, those below with the exponent negated.
+            var factors = new List<(Entity Base, Entity Exponent)>();
+            foreach (var factor in Mulf.LinearChildren(above))
+                factors.Add(factor is Powf(var @base, var exponent) ? (@base, exponent) : (factor, Number.Integer.One));
+            foreach (var factor in Mulf.LinearChildren(below))
+                factors.Add(factor is Powf(var @base, var exponent) ? (@base, (-exponent).InnerSimplified) : (factor, Number.Integer.MinusOne));
+            // One half-odd power of a quadratic.
+            var rootAt = -1;
+            Entity? a = null, b = null, c = null;
+            for (var i = 0; i < factors.Count; i++)
+                if (factors[i].Exponent is Number.Rational { ERational: var power } and not Number.Integer
+                    && power.Denominator.Equals(EInteger.FromInt32(2)) && factors[i].Base.ContainsNode(x))
+                {
+                    if (rootAt >= 0 || !TreeAnalyzer.TryGetPolyQuadratic(factors[i].Base, x, out a, out b, out c)
+                        || a.Evaled is Number.Complex { IsZero: true })
+                        return null;
+                    rootAt = i;
+                }
+            if (rootAt < 0 || a is null || b is null || c is null)
+                return null;
+            // And nothing else in the integrand a root of x: this is a rational function beside
+            // one root. Where the radicand's own factors stand under roots elsewhere --
+            // `(1 - x^2)^(1/4)` beside `sqrt(1 - x)` and `sqrt(1 + x)`, Timofeev's 314 -- the
+            // integrand is the two-linear-radicals rules', and the rewrite took it down a route
+            // whose answer held `sgn(sqrt(1 - x))`, which nothing differentiates.
+            for (var k = 0; k < factors.Count; k++)
+                if (k != rootAt && factors[k].Base.ContainsNode(x)
+                    && (factors[k].Exponent is not Number.Integer
+                        || factors[k].Base.Nodes.Any(node => node is Powf(var inner, var power) && power is not Number.Integer && inner.ContainsNode(x))))
+                    return null;
+            for (var j = 0; j < factors.Count; j++)
+            {
+                if (factors[j].Exponent is not Number.Integer { IsNegative: true } negated
+                    || !TreeAnalyzer.TryGetPolyLinear(factors[j].Base, x, out var slope, out var intercept)
+                    || slope.Evaled is Number.Complex { IsZero: true })
+                    continue;
+                // L = l1 x + l0 divides P = a x^2 + b x + c where P vanishes at -l0/l1, which
+                // times l1^2 is a l0^2 - b l0 l1 + c l1^2; the other factor is then
+                // M = (a/l1) x + (b l1 - a l0)/l1^2.
+                if (!VanishesIdentically(a * intercept * intercept - b * intercept * slope + c * slope * slope))
+                    continue;
+                // Each coefficient simplified where it holds a symbol: the normalisation leaves
+                // `((c d^2 + a e^2) e - c d e d)/e^2` as written where it is `a e`, and the rules
+                // below searched forty seconds on the one spelling and answered the other at once.
+                var leading = (a / slope).InnerSimplified;
+                var constant = ((b * slope - a * intercept) / (slope * slope)).InnerSimplified;
+                if (leading.Vars.Any())
+                    leading = Functions.PartialFractions.Bare(leading.Simplify());
+                if (constant.Vars.Any())
+                    constant = Functions.PartialFractions.Bare(constant.Simplify());
+                var other = (leading * x + constant).InnerSimplified;
+                var times = -negated;
+                var (radicand, power) = factors[rootAt];
+                Entity written = MathS.Pow(other, times) * MathS.Pow(radicand, (power - times).InnerSimplified);
+                for (var k = 0; k < factors.Count; k++)
+                    if (k != rootAt && k != j)
+                        written = written * MathS.Pow(factors[k].Base, factors[k].Exponent);
+                var rewritten = written.InnerSimplified;
+                if (rewritten == expr || rewritten == expr.InnerSimplified)
+                    return null;
+                return Integration.ComputeAsTheSameQuestion(rewritten, x, integrateByParts);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Whether <paramref name="expr"/>, free of the variable, is zero for every value of its
+        /// symbols: at a point first, which settles most of them without simplifying, and then
+        /// simplified, since <see cref="Entity.InnerSimplified"/> leaves <c>a^2 b^2 - a^2 b^2</c>
+        /// written as two terms.
+        /// </summary>
+        private static bool VanishesIdentically(Entity expr)
+        {
+            var inner = expr.InnerSimplified;
+            if (inner.Evaled is Number.Complex { IsZero: true })
+                return true;
+            if (!inner.Vars.Any())
+                return false;
+            var pinned = inner;
+            var values = new[] { 1.37, 0.61, 2.23, 1.91, 0.83, 1.13 };
+            var index = 0;
+            foreach (var symbol in inner.Vars.ToList())
+                pinned = pinned.Substitute(symbol, values[index++ % values.Length]);
+            try
+            {
+                if (pinned.EvalNumerical() is Number.Complex { IsNaN: false } value
+                    && ((Number.Real)value.Abs()).EDecimal.ToDouble() > 1e-9)
+                    return false;
+            }
+            catch (Core.Exceptions.CannotEvalException) { }
+            return Functions.PartialFractions.Bare(inner.Simplify()).Evaled is Number.Complex { IsZero: true };
+        }
+
+        /// <summary>
         /// A rational function of <c>x</c> and one square root of a quadratic in <c>x</c>,
         /// rationalised by an Euler substitution and handed to the rational integrator.
         /// </summary>
