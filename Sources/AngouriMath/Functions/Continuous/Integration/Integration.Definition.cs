@@ -818,6 +818,10 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAnExponentialTimesAnOddHalfPowerOfAQuadratic(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveALinearBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
+            // A linear below the bar that divides the radicand, written over it: after the two
+            // rules above, which read a linear beside the root as a pole and find nothing to take
+            // apart where its residue, the radicand at its root, is zero.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingALinearBelowTheBarOverTheRadicand(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByEulerSubstitution(expr, x)) is { }) return answer;
             // And a root of a palindromic quartic, which is a root of a quadratic in x -+ 1/x:
             // Charlwood's `(1 + x^2)/((1 - x^2) sqrt(1 + x^4))` is `-du/(u sqrt(u^2 + 2))`.

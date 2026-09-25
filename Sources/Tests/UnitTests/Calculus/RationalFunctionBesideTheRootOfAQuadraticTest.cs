@@ -79,6 +79,34 @@ namespace AngouriMath.Tests.Calculus
         public void TakenApartOverTheRoot(string integrand, double[] points) => DifferentiatesBack(integrand, points);
 
         /// <summary>
+        /// A linear below the bar that divides the radicand leaves nothing to take apart -- its
+        /// residue is the radicand at its root, zero -- and is written over the radicand
+        /// instead: <c>1/(d + e x)</c> is <c>(d - e x)/(d^2 - e^2 x^2)</c>, a whole power of it
+        /// the same power of that. Rubi's 1.2.1.4.
+        /// </summary>
+        [Theory]
+        [InlineData("x*(d^2 - pe^2*x^2)^(5/2)/(d + pe*x)")]
+        [InlineData("x^2/((d + pe*x)*sqrt(d^2 - pe^2*x^2))")]
+        [InlineData("(1 - a^2*x^2)^(3/2)/((1 - a*x)^2*(c + d*x))")]
+        [InlineData("x^2*sqrt(1 - a^2*x^2)/(1 - a*x)^5")]
+        public void ALinearDividingTheRadicandIsWrittenOverIt(string integrand)
+            => DifferentiatesBack(integrand, new[] { -1.5, -0.9, -0.2, 0.4, 1.1, 1.6 },
+                ("d", 1.3), ("pe", 0.7), ("a", 0.6), ("c", 2.1));
+
+        /// <summary>
+        /// The same with the radicand a product of the linear and another, every coefficient a
+        /// symbol: <c>a d e + (c d^2 + a e^2) x + c d e x^2</c> is <c>(d + e x)(a e + c d x)</c>,
+        /// and the other factor is written as that, not as the quotient the division leaves.
+        /// Checked where the radicand is positive.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(a*d*pe + (c*d^2 + a*pe^2)*x + c*d*pe*x^2)/(x*(d + pe*x))")]
+        [InlineData("1/(x^2*(d + pe*x)*sqrt(a*d*pe + (c*d^2 + a*pe^2)*x + c*d*pe*x^2))")]
+        public void ALinearDividingARadicandOfSymbols(string integrand)
+            => DifferentiatesBack(integrand, new[] { 0.3, 0.6, 1.1, 1.6, 2.2 },
+                ("d", 1.3), ("pe", 0.7), ("a", 0.6), ("c", 2.1));
+
+        /// <summary>
         /// Moses', with symbols: <c>B^2</c> over the root and <c>A^2/2</c> over each linear. And
         /// a symbolic quadratic under the root beside a written linear, on both signs of its
         /// constant.

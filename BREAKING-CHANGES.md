@@ -1463,6 +1463,26 @@ positive. The shift `h` is simplified where it holds a symbol: `2 a b/(2 b^2)` i
 Rubi's 1.2.2.2, 1.2.2.4, 1.2.2.7 and 1.2.3.2, the 574 problems that count with a perfect square
 written with symbols: 182 to 388, no row lost, 19 timeouts to 9.
 
+### A linear below the bar that divides the radicand is written over it
+
+`x^2/((d + e x) sqrt(d^2 - e^2 x^2))` was left unevaluated. The linear divides the radicand,
+`d^2 - e^2 x^2 = (d + e x)(d - e x)`, so `1/(d + e x)` is `(d - e x)/(d^2 - e^2 x^2)`, and the
+integrand is the polynomial `x^2 (d - e x)` over `(d^2 - e^2 x^2)^(3/2)`, which the rules for a
+polynomial beside a half-odd power of a quadratic answer. The rules that read a linear beside a
+root take it as a pole to split off, and this one has nothing to split off: its residue is the
+radicand at its root, zero. A whole power `L^(-n)` below the bar, where `P = L M`, is now
+`M^n P^(-n)`, exactly, for the question as asked.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2/((d+pe*x)*sqrt(d^2-pe^2*x^2))".Integrate("x")` | left unevaluated | the antiderivative |
+| `"x^2*sqrt(1-a^2*x^2)/(1-a*x)^5".Integrate("x")` | left unevaluated | the antiderivative, in `x/sqrt(1 - a^2 x^2)` |
+| `"sqrt(a*d*pe+(c*d^2+a*pe^2)*x+c*d*pe*x^2)/(x*(d+pe*x))".Integrate("x")` | left unevaluated | the antiderivative |
+
+Rubi's 1.2.1.4, all 632 problems that count: 250 to 409, no row lost, 61 timeouts to 67. The six
+new timeouts have a radicand of four symbols beside a power of `x`, and went from a quick decline
+to one past the budget.
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
