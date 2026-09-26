@@ -110,8 +110,11 @@ namespace AngouriMath.Numerics
         {
             var middle = Middle;
             var value = function(middle);
-            var reach = Up(Math.Max(High - middle, middle - Low) * slope);
-            return new(Math.Max(-1, Wider(value - reach, -1)), Math.Min(1, Wider(value + reach, 1)));
+            var reach = Up(Math.Max(Up(High - middle), Up(middle - Low)) * slope);
+            // The function's error is relative to its value, so the value is widened before the
+            // reach is added: widened after, the slack is a few units of the sum, which is far
+            // smaller than a unit of the value where the reach nearly cancels it.
+            return new(Math.Max(-1, Down(Wider(value, -1) - reach)), Math.Min(1, Up(Wider(value, 1) + reach)));
         }
 
         /// <summary>
@@ -119,7 +122,7 @@ namespace AngouriMath.Numerics
         /// more near zero: the platform's functions are within one of the true value, and the
         /// slack keeps the claim true where they are not quite.
         /// </summary>
-        private static double Wider(double value, int direction)
+        internal static double Wider(double value, int direction)
         {
             for (var i = 0; i < 4; i++)
                 value = direction > 0 ? Up(value) : Down(value);
@@ -203,8 +206,8 @@ namespace AngouriMath.Numerics
             var a3 = Math.Atan2(Im.High, Re.Low);
             var a4 = Math.Atan2(Im.High, Re.High);
             var argument = new Interval(
-                Interval.Down(Interval.Down(Math.Min(Math.Min(a1, a2), Math.Min(a3, a4)))),
-                Interval.Up(Interval.Up(Math.Max(Math.Max(a1, a2), Math.Max(a3, a4)))));
+                Interval.Wider(Math.Min(Math.Min(a1, a2), Math.Min(a3, a4)), -1),
+                Interval.Wider(Math.Max(Math.Max(a1, a2), Math.Max(a3, a4)), 1));
             return new(new(logModulus.Low / 2, logModulus.High / 2), argument);
         }
 
@@ -331,8 +334,9 @@ namespace AngouriMath.Numerics
                     return Evaluate(left) * Evaluate(right);
                 case Divf(var left, var right):
                     return Evaluate(left) / Evaluate(right);
-                case Powf(var @base, Number.Integer power) when power.EInteger.CanFitInInt64():
-                    return Evaluate(@base).Pow(power.EInteger.ToInt64Unchecked());
+                // In the range of an int, so that the reciprocal's negation cannot overflow.
+                case Powf(var @base, Number.Integer power) when power.EInteger.CanFitInInt32():
+                    return Evaluate(@base).Pow(power.EInteger.ToInt32Checked());
                 case Powf(var @base, var exponent):
                     if (@base == MathS.e)
                         return Evaluate(exponent).Exp();
@@ -356,13 +360,21 @@ namespace AngouriMath.Numerics
                 case Cosecantf(var argument):
                     return ComplexInterval.Real(Interval.Exactly(1)) / Evaluate(argument).Sin();
                 case Logf(var @base, var antilogarithm):
-                    return Evaluate(antilogarithm).Log() / Evaluate(@base).Log();
+                    return @base == MathS.e ? Evaluate(antilogarithm).Log() : Evaluate(antilogarithm).Log() / Evaluate(@base).Log();
                 case Arctanf(var argument):
                     return RealOnly(Evaluate(argument), static x => x.Atan());
                 case Arcsinf(var argument):
                     return RealOnly(Evaluate(argument), static x => x.Asin());
                 case Arccosf(var argument):
                     return RealOnly(Evaluate(argument), static x => x.Acos());
+                // As the decimal evaluation defines them: arctan(1/x), with pi/2 at zero, where
+                // the function jumps; arccos(1/x); arcsin(1/x).
+                case Arccotanf(var argument):
+                    return RealOnly(Evaluate(argument), static x => x.IsZero ? Interval.Around(Math.PI / 2) : (Interval.Exactly(1) / x).Atan());
+                case Arcsecantf(var argument):
+                    return RealOnly(Evaluate(argument), static x => (Interval.Exactly(1) / x).Acos());
+                case Arccosecantf(var argument):
+                    return RealOnly(Evaluate(argument), static x => (Interval.Exactly(1) / x).Asin());
                 case Absf(var argument):
                 {
                     var inner = Evaluate(argument);

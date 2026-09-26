@@ -33,6 +33,11 @@ namespace AngouriMath.Tests.Core
         [InlineData("arctan(2)")]
         [InlineData("arcsin(1/3)")]
         [InlineData("arccos(-2/3)")]
+        [InlineData("arccot(2)")]
+        [InlineData("arccot(-3/2)")]
+        [InlineData("arccot(0)")]
+        [InlineData("arcsec(3)")]
+        [InlineData("arccsc(-2)")]
         [InlineData("(2/3)^(1/3)")]
         [InlineData("(1 + 2i)^3")]
         [InlineData("1/(3 + 4i)")]
@@ -74,6 +79,7 @@ namespace AngouriMath.Tests.Core
         [InlineData("1/0")]
         [InlineData("ln(0)")]
         [InlineData("tan(pi/2)")]
+        [InlineData("arcsec(1/2)")]
         [InlineData("3!")]
         [InlineData("1 provided 3 < 2")]
         public void UndecidedWhereItShouldBe(string expression)
@@ -101,6 +107,8 @@ namespace AngouriMath.Tests.Core
         [InlineData("sin(1 + i) * cos(2 - 3i)")]
         [InlineData("ln(-2 + i) + arctan(2) - arcsin(1/3)")]
         [InlineData("(2/3)^(1/3) + sec(1) + csc(2)")]
+        [InlineData("arccot(-2) + arcsec(3) + arccsc(-2) + arccot(0)")]
+        [InlineData("sin(10^6) + cos(10^6)")]
         [InlineData("sqrt(2) provided 1 < 2")]
         public void ThePreciseIntervalHoldsTheValue(string expression)
         {
@@ -114,6 +122,18 @@ namespace AngouriMath.Tests.Core
                 $"the imaginary part of {expression}, {value.ImaginaryPart}, is outside [{interval.Value.Im.Low}, {interval.Value.Im.High}]");
             Assert.True(interval.Value.Re.High.Subtract(interval.Value.Re.Low).Abs().CompareTo(EDecimal.FromString("1E-30")) <= 0,
                 $"the real part of {expression} is wider than forty digits should leave it");
+        }
+
+        /// <summary>
+        /// A whole power at the end of the range of a long is not negated into itself: the
+        /// reciprocal of <c>2^(2^63)</c> was <c>2^(-2^63)</c> again, and the recursion never ended.
+        /// </summary>
+        [Fact]
+        public void TheSmallestLongPowerFinishes()
+        {
+            var power = MathS.Pow(2, Entity.Number.Integer.Create(long.MinValue));
+            Assert.Equal(0, IntervalEvaluation.Of(power)!.Value.Re.Mignitude);
+            Assert.Equal(0, PreciseEvaluation.Of(power, 40)!.Value.Re.Mignitude.Sign);
         }
 
         [Fact]

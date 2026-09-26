@@ -66,6 +66,8 @@ namespace AngouriMath.Numerics
         private readonly EContext up;
         private readonly EContext near;
         private readonly EDecimal unit;
+        private readonly EDecimal fixedPointError;
+        private readonly EDecimal least;
         private readonly PreciseComplexInterval undefined =
             new(new(EDecimal.NaN, EDecimal.NaN), new(EDecimal.NaN, EDecimal.NaN));
 
@@ -76,6 +78,8 @@ namespace AngouriMath.Numerics
             up = EContext.ForPrecisionAndRounding(digits, ERounding.Ceiling);
             near = EContext.ForPrecisionAndRounding(digits + 10, ERounding.HalfEven);
             unit = EDecimal.FromString("1E-" + (digits - 2));
+            fixedPointError = EDecimal.FromString("1E-" + (digits + 5));
+            least = EDecimal.FromString("1E-" + (digits + 30));
         }
 
         /// <summary>The interval <paramref name="expr"/> evaluates to in <paramref name="digits"/> digits, or null.</summary>
@@ -142,40 +146,50 @@ namespace AngouriMath.Numerics
         /// <summary>
         /// A function's value over the interval, from its value at the middle, computed with ten
         /// digits to spare, and a bound on its slope there: the value moves no further than the
-        /// slope times the half-width, and the evaluation's own error is a unit or two in the last
-        /// place of the working precision.
+        /// slope times the half-width. The function's own error is a unit or two in the last place
+        /// of the working precision, relative to the value -- and, for the functions this library
+        /// computes in fixed point, <paramref name="absoluteError"/> besides, which is what is
+        /// left of it where the value is small.
         /// </summary>
-        private PreciseInterval AroundTheMiddle(PreciseInterval a, Func<EDecimal, EDecimal> function, EDecimal slope)
+        private PreciseInterval AroundTheMiddle(PreciseInterval a, Func<EDecimal, EDecimal> function, EDecimal slope, EDecimal absoluteError)
         {
             var middle = a.Low.Add(a.High, near).Divide(EDecimal.FromInt32(2), near);
-            var halfWidth = a.High.Subtract(middle, up).Abs();
+            var halfWidth = EDecimal.Max(a.High.Subtract(middle, up), middle.Subtract(a.Low, up));
             var value = function(middle);
             if (!value.IsFinite)
                 return new(EDecimal.NaN, EDecimal.NaN);
             var reach = slope.Multiply(halfWidth, up).Add(value.Abs().Multiply(unit, up), up)
-                .Add(EDecimal.FromString("1E-" + (digits + 30)), up);
+                .Add(EDecimal.Max(absoluteError, least), up);
             return new(value.Subtract(reach, down), value.Add(reach, up));
         }
 
+        // PeterO's exponential, logarithm and square root are within a unit of the value; the
+        // sine, the cosine and the inverse functions are this library's, in fixed point, and
+        // their error is absolute -- the sine's grows with the argument, whose reduction by
+        // 2 pi uses pi to the same fixed point.
+
         private PreciseInterval Exp(PreciseInterval a)
-            => AroundTheMiddle(a, x => x.Exp(near), a.High.Exp(up).Abs());
+            => AroundTheMiddle(a, x => x.Exp(near), a.High.Exp(up).Abs(), EDecimal.Zero);
 
         private PreciseInterval Log(PreciseInterval a)
-            => a.Low.Sign > 0 ? AroundTheMiddle(a, x => x.Log(near), EDecimal.One.Divide(a.Low, up)) : new(EDecimal.NaN, EDecimal.NaN);
+            => a.Low.Sign > 0 ? AroundTheMiddle(a, x => x.Log(near), EDecimal.One.Divide(a.Low, up), EDecimal.Zero) : new(EDecimal.NaN, EDecimal.NaN);
 
         private PreciseInterval Sqrt(PreciseInterval a)
-            => a.Low.Sign > 0 ? AroundTheMiddle(a, x => x.Sqrt(near), EDecimal.One.Divide(a.Low.Sqrt(down).Multiply(EDecimal.FromInt32(2), down), up))
+            => a.Low.Sign > 0 ? AroundTheMiddle(a, x => x.Sqrt(near), EDecimal.One.Divide(a.Low.Sqrt(down).Multiply(EDecimal.FromInt32(2), down), up), EDecimal.Zero)
              : a.IsZero ? a : new(EDecimal.NaN, EDecimal.NaN);
 
-        private PreciseInterval Sin(PreciseInterval a) => AroundTheMiddle(a, x => x.Sin(near), EDecimal.One);
-        private PreciseInterval Cos(PreciseInterval a) => AroundTheMiddle(a, x => x.Cos(near), EDecimal.One);
-        private PreciseInterval Atan(PreciseInterval a) => AroundTheMiddle(a, x => x.Arctan(near), EDecimal.One);
+        private PreciseInterval Sin(PreciseInterval a) => AroundTheMiddle(a, x => x.Sin(near), EDecimal.One, ReducedArgumentError(a));
+        private PreciseInterval Cos(PreciseInterval a) => AroundTheMiddle(a, x => x.Cos(near), EDecimal.One, ReducedArgumentError(a));
+        private PreciseInterval Atan(PreciseInterval a) => AroundTheMiddle(a, x => x.Arctan(near), EDecimal.One, fixedPointError);
+
+        private EDecimal ReducedArgumentError(PreciseInterval a)
+            => fixedPointError.Multiply(EDecimal.Max(EDecimal.One, a.Magnitude), up);
 
         private PreciseInterval Asin(PreciseInterval a)
-            => InsideTheUnitInterval(a) is { } slope ? AroundTheMiddle(a, x => x.Arcsin(near), slope) : new(EDecimal.NaN, EDecimal.NaN);
+            => InsideTheUnitInterval(a) is { } slope ? AroundTheMiddle(a, x => x.Arcsin(near), slope, fixedPointError) : new(EDecimal.NaN, EDecimal.NaN);
 
         private PreciseInterval Acos(PreciseInterval a)
-            => InsideTheUnitInterval(a) is { } slope ? AroundTheMiddle(a, x => x.Acos(near), slope) : new(EDecimal.NaN, EDecimal.NaN);
+            => InsideTheUnitInterval(a) is { } slope ? AroundTheMiddle(a, x => x.Acos(near), slope, fixedPointError) : new(EDecimal.NaN, EDecimal.NaN);
 
         /// <summary>The slope bound of the arcsine and arccosine, <c>1/sqrt(1 - x^2)</c>, strictly inside <c>(-1, 1)</c>.</summary>
         private EDecimal? InsideTheUnitInterval(PreciseInterval a)
@@ -247,7 +261,7 @@ namespace AngouriMath.Numerics
             };
             var low = Min(corners);
             var high = Max(corners);
-            var slack = EDecimal.Max(low.Abs(), high.Abs()).Multiply(unit, up).Add(EDecimal.FromString("1E-" + (digits + 30)), up);
+            var slack = EDecimal.Max(low.Abs(), high.Abs()).Multiply(unit, up).Add(fixedPointError, up);
             return new(re, new(low.Subtract(slack, down), high.Add(slack, up)));
         }
 
@@ -309,6 +323,13 @@ namespace AngouriMath.Numerics
             return new(pi.RoundToPrecision(down), pi.RoundToPrecision(up));
         }
 
+        private PreciseInterval HalfPi()
+        {
+            var pi = Pi();
+            var half = EDecimal.FromString("0.5");
+            return new(pi.Low.Multiply(half, down), pi.High.Multiply(half, up));
+        }
+
         private PreciseInterval E()
         {
             var e = EDecimal.FromString(
@@ -343,8 +364,8 @@ namespace AngouriMath.Numerics
                     return Multiply(Evaluate(left), Evaluate(right));
                 case Divf(var left, var right):
                     return Divide(Evaluate(left), Evaluate(right));
-                case Powf(var @base, Number.Integer power) when power.EInteger.CanFitInInt64():
-                    return Pow(Evaluate(@base), power.EInteger.ToInt64Unchecked());
+                case Powf(var @base, Number.Integer power) when power.EInteger.CanFitInInt32():
+                    return Pow(Evaluate(@base), power.EInteger.ToInt32Checked());
                 case Powf(var @base, var exponent):
                     return @base == MathS.e ? Exp(Evaluate(exponent)) : Pow(Evaluate(@base), Evaluate(exponent));
                 case Sinf(var argument):
@@ -366,13 +387,19 @@ namespace AngouriMath.Numerics
                 case Cosecantf(var argument):
                     return Divide(Real(PreciseInterval.Exactly(EDecimal.One)), Sin(Evaluate(argument)));
                 case Logf(var @base, var antilogarithm):
-                    return Divide(Log(Evaluate(antilogarithm)), Log(Evaluate(@base)));
+                    return @base == MathS.e ? Log(Evaluate(antilogarithm)) : Divide(Log(Evaluate(antilogarithm)), Log(Evaluate(@base)));
                 case Arctanf(var argument):
                     return RealOnly(Evaluate(argument), Atan);
                 case Arcsinf(var argument):
                     return RealOnly(Evaluate(argument), Asin);
                 case Arccosf(var argument):
                     return RealOnly(Evaluate(argument), Acos);
+                case Arccotanf(var argument):
+                    return RealOnly(Evaluate(argument), x => x.IsZero ? HalfPi() : Atan(Divide(PreciseInterval.Exactly(EDecimal.One), x)));
+                case Arcsecantf(var argument):
+                    return RealOnly(Evaluate(argument), x => Acos(Divide(PreciseInterval.Exactly(EDecimal.One), x)));
+                case Arccosecantf(var argument):
+                    return RealOnly(Evaluate(argument), x => Asin(Divide(PreciseInterval.Exactly(EDecimal.One), x)));
                 case Absf(var argument):
                 {
                     var inner = Evaluate(argument);
