@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using AngouriMath.Numerics;
 using PeterO.Numbers;
 using System.Diagnostics.CodeAnalysis;
 using static AngouriMath.Entity;
@@ -730,13 +731,12 @@ namespace AngouriMath.Functions
         }
 
         /// <summary>
-        /// Whether <paramref name="expr"/>, free of every variable but symbols, is zero at
-        /// two sets of values for them, off the integers and distinct; a value that is not
-        /// a number at either counts as not zero.
+        /// Whether <paramref name="expr"/>, free of every variable but symbols, is zero -- within
+        /// <c>1e-30</c> -- at two sets of values for them, off the integers and distinct; a value
+        /// that is not a number at either, or that the evaluation cannot place, counts as not zero.
         /// </summary>
         private static bool IsZeroAtPinnedSymbols(Entity expr)
         {
-            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
             var symbols = expr.Vars.ToList();
             foreach (var seed in new[] { 0, 1 })
             {
@@ -748,7 +748,7 @@ namespace AngouriMath.Functions
                     pinned = pinned.Substitute(symbol, value);
                     i++;
                 }
-                if (pinned.Evaled is not Complex value_ || value_.IsNaN || value_.Abs().EDecimal.CompareTo(EDecimal.FromString("1e-30")) > 0)
+                if (Agree(pinned, Integer.Zero, 1e-30) is not true)
                     return false;
             }
             return true;
@@ -1864,6 +1864,10 @@ namespace AngouriMath.Functions
         /// </summary>
         internal static bool DerivativeHoldsAtSampledPoints(Entity antiderivative, Entity integrand, Variable x)
         {
+            // Off the downcasting for the simplification of the pinned answer, which folds its
+            // numbers: downcast, a pinned 1.37 is 137/100 and every constant of the answer is
+            // folded exactly -- 28 s for the answer to u^5/((u^2 - 1)^5 (2 a u + b (u^2 + 1))),
+            // where in decimals it is 3 ms. The comparison itself reads no setting.
             using var _ = MathS.Settings.DowncastingEnabled.Set(false);
             var (pinnedAntiderivative, pinnedIntegrand) = Pinned(antiderivative, integrand, x);
             return HoldsAtSampledPoints(Bare(pinnedAntiderivative).Differentiate(x), pinnedIntegrand, x);
@@ -1892,46 +1896,52 @@ namespace AngouriMath.Functions
         /// <summary>
         /// Whether <paramref name="left"/> and <paramref name="right"/> agree, numerically, at a
         /// few points in <paramref name="x"/> with every other symbol pinned to a fixed value.
-        /// A point where either is undefined, or cannot be evaluated -- a derivative left
-        /// unevaluated, of a sign whose argument is not shown real -- is skipped, and at least
-        /// two must compare. The points may be the caller's, for an identity that holds on a
-        /// real domain only -- <c>sqrt(1 - L^2) = sech(artanh(L))</c> inside <c>(-1, 1)</c> and
-        /// off by a sign outside it -- where the default set would compare where it does not
-        /// hold.
+        /// A point where either has no value -- a pole, a cut, a condition that fails -- or where
+        /// the evaluation cannot tell is skipped, and at least two must compare. The points may
+        /// be the caller's, for an identity that holds on a real domain only --
+        /// <c>sqrt(1 - L^2) = sech(artanh(L))</c> inside <c>(-1, 1)</c> and off by a sign outside
+        /// it -- where the default set would compare where it does not hold.
         /// </summary>
+        /// <remarks>
+        /// In intervals, which read no setting (https://github.com/asc-community/AngouriMath/issues/1019,
+        /// item 10): doubles first, then forty and eighty digits where cancellation leaves the
+        /// doubles too wide to tell.
+        /// </remarks>
         internal static bool HoldsAtSampledPoints(Entity left, Entity right, Variable x, string[]? points = null)
         {
-            // In decimals: a pinned value is a small rational, which the downcasting keeps
-            // exact through every operation, and a symbolic answer with powers in it
-            // evaluated so was a minute of gcd on integers of thousands of digits -- Rubi's
-            // `(A + B ln(e ((a + b x)/(c + d x))^n))/(a + b x)^3` never returned from its
-            // check. Off the downcasting, a decimal stays a decimal of a hundred digits.
-            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
             (left, right) = Pinned(left, right, x);
             var compared = 0;
             foreach (var at in points ?? new[] { "0.29", "1.43", "3.17", "-0.61" })
             {
                 var point = Real.Create(EDecimal.FromString(at));
-                Number.Complex l;
-                Number.Complex r;
-                try
+                switch (Agree(left.Substitute(x, point), right.Substitute(x, point), 1e-9))
                 {
-                    l = left.Substitute(x, point).EvalNumerical();
-                    r = right.Substitute(x, point).EvalNumerical();
+                    case false:
+                        return false;
+                    case true:
+                        compared++;
+                        break;
                 }
-                catch (Core.Exceptions.CannotEvalException)
-                {
-                    continue;
-                }
-                if (l.IsNaN || r.IsNaN)
-                    continue;
-                var difference = (l - r).Abs().EDecimal;
-                var scale = EDecimal.Max(EDecimal.One, l.Abs().EDecimal);
-                if (difference.CompareTo(scale.Multiply(EDecimal.FromString("1e-9"))) > 0)
-                    return false;
-                compared++;
             }
             return compared >= 2;
+        }
+
+        /// <summary>
+        /// Whether the two numbers agree to <paramref name="relativeTolerance"/> of their size, or
+        /// of one where both are smaller: in double intervals, and where those cannot tell, in
+        /// decimal intervals of forty and then eighty digits; null where either has no value or
+        /// none can tell.
+        /// </summary>
+        private static bool? Agree(Entity left, Entity right, double relativeTolerance)
+        {
+            if (IntervalEvaluation.Of(left) is { } leftInterval && IntervalEvaluation.Of(right) is { } rightInterval
+                && IntervalEvaluation.Agree(leftInterval, rightInterval, relativeTolerance) is { } inDoubles)
+                return inDoubles;
+            foreach (var digits in new[] { 40, 80 })
+                if (PreciseEvaluation.Of(left, digits) is { } leftPrecise && PreciseEvaluation.Of(right, digits) is { } rightPrecise
+                    && PreciseEvaluation.Agree(leftPrecise, rightPrecise, relativeTolerance) is { } inDecimals)
+                    return inDecimals;
+            return null;
         }
     }
 }
