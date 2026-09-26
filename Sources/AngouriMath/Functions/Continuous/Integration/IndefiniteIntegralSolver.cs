@@ -15263,6 +15263,61 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Whether <paramref name="expr"/> over <paramref name="derivative"/> takes two values at
+        /// two points where <paramref name="candidate"/>, a sine, cosine, tangent, cotangent,
+        /// secant or cosecant of a linear, takes one -- every other symbol pinned -- which no
+        /// function of the candidate does. False for any other candidate, and wherever a value
+        /// cannot be had or the candidate itself does not repeat there.
+        /// </summary>
+        private static bool TheQuotientDisagreesWhereTheCandidateRepeats(Entity expr, Entity derivative, Entity candidate, Entity.Variable x)
+        {
+            Entity? argument = candidate switch
+            {
+                Sinf(var a) => a, Cosf(var a) => a, Tanf(var a) => a,
+                Cotanf(var a) => a, Secantf(var a) => a, Cosecantf(var a) => a,
+                _ => null,
+            };
+            if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out var intercept)
+                || slope.Evaled is Number.Complex { IsZero: true })
+                return false;
+            Entity first = Number.Real.Create(EDecimal.FromString("0.37"));
+            Entity second = candidate switch
+            {
+                Sinf or Cosecantf => (MathS.pi - 2 * intercept) / slope - first,
+                Cosf or Secantf => -2 * intercept / slope - first,
+                _ => first + MathS.pi / slope,
+            };
+            var pinned = new Dictionary<Variable, Entity>();
+            var values = new[] { "1.37", "0.61", "2.23", "1.91", "0.83", "1.13" };
+            var index = 0;
+            foreach (var symbol in expr.Vars.Concat(derivative.Vars).Concat(candidate.Vars).Distinct())
+                if (symbol != x)
+                    pinned[symbol] = Number.Real.Create(EDecimal.FromString(values[index++ % values.Length]));
+            Number.Complex? At(Entity function, Entity point)
+            {
+                var value = function.Substitute(x, point);
+                foreach (var pair in pinned)
+                    value = value.Substitute(pair.Key, pair.Value);
+                try
+                {
+                    return value.EvalNumerical() is Number.Complex { IsNaN: false } number && number.IsFinite ? number : null;
+                }
+                catch (Core.Exceptions.CannotEvalException) { return null; }
+            }
+            static bool Close(Number.Complex left, Number.Complex right, double tolerance)
+            {
+                var scale = System.Math.Max(1.0, ((Number.Real)left.Abs()).EDecimal.ToDouble());
+                return ((Number.Real)(left - right).Abs()).EDecimal.ToDouble() <= tolerance * scale;
+            }
+            if (At(candidate, first) is not { } candidateFirst || At(candidate, second) is not { } candidateSecond
+                || !Close(candidateFirst, candidateSecond, 1e-9))
+                return false;
+            var quotient = expr / derivative;
+            return At(quotient, first) is { } quotientFirst && At(quotient, second) is { } quotientSecond
+                && !Close(quotientFirst, quotientSecond, 1e-6);
+        }
+
+        /// <summary>
         /// Whether <paramref name="expr"/>/<paramref name="reference"/> takes the same value at two
         /// points, every other symbol pinned to a fixed value -- a necessary condition for a
         /// constant ratio, and a cheap one. Where either side cannot be evaluated the question is
@@ -16413,6 +16468,16 @@ namespace AngouriMath.Functions.Algebra
                 // `ln(e)`, picked up as a logarithm anywhere in the integrand, was enough --
                 // it is how the antiderivative of x * ln(x) came back holding a NaN.
                 if (!u.ContainsNode(x) || duDx.Evaled == 0)
+                    continue;
+
+                // A candidate that takes one value at two points, where the quotient by its
+                // derivative takes two, is no substitution, whatever the simplifier makes of it:
+                // a function of u agrees wherever u does. A sine repeats at pi - theta, a cosine at
+                // -theta, a tangent a period on; two pinned evaluations settle it where writing the
+                // quotient in u and simplifying it is milliseconds per candidate, and the
+                // complement pass below is the same function spelled otherwise. The problems of
+                // Rubi's 4.7.2, 4.3.10 and 4.4.10 the integrator answers took a fifth less time.
+                if (!complementEvenPowers && TheQuotientDisagreesWhereTheCandidateRepeats(expr, duDx, u, x))
                     continue;
 
                 // Try to express expr as h(u) * du/dx

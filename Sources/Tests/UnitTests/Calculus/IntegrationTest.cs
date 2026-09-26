@@ -180,6 +180,35 @@ namespace AngouriMath.Tests.Calculus
             Assert.Equal(MathS.Boolean.True, result.EqualTo(expectedResult).Simplify());
         }
 
+        /// <summary>
+        /// Substitutions under a sine, cosine, tangent or secant of a linear that the search's
+        /// repeat test keeps: each integrand over the candidate's derivative is a function of the
+        /// candidate, so it agrees where the candidate repeats -- at pi - theta for a sine, at
+        /// -theta for a cosine, a period on for a tangent -- and is written in it.
+        /// </summary>
+        [Theory]
+        [InlineData("sin(3*x + 1)^4 * cos(3*x + 1)")]
+        [InlineData("cos(2*x)^5 * sin(2*x)")]
+        [InlineData("tan(2*x)^3 * sec(2*x)^2")]
+        [InlineData("cos(x)/(1 + sin(x)^2)")]
+        [InlineData("sec(a*x + b)^2 * tan(a*x + b)^5")]
+        [InlineData("sin(x) * cos(x)^3/(1 + cos(x)^4)")]
+        public void ASubstitutionTheRepeatTestKeeps(string integrand)
+        {
+            var integral = integrand.Integrate("x").Substitute("C", 0);
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Entity Pin(Entity e) => e.Substitute("a", 0.7).Substitute("b", 0.3);
+            var derivative = Pin(integral).Differentiate("x");
+            var original = Pin(integrand.ToEntity());
+            foreach (var at in new[] { 0.2, 0.5, 0.9, 1.3 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                var difference = (double)((Entity.Number.Real)(got - want).Abs()).EDecimal.ToDouble();
+                Assert.True(difference < 1e-9, $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+        }
+
         [Theory]
         [InlineData("abs(x)", "signum(x) * x^2 / 2 + C")]
         [InlineData("abs(x + 0)", "signum(x) * x^2 / 2 + C")]
