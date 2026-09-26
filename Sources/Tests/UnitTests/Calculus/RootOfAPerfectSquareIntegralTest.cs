@@ -128,6 +128,40 @@ namespace AngouriMath.Tests.Calculus
             Assert.True(compared >= 5, $"only {compared} points were comparable for {integrand}");
         }
 
+        /// <summary>
+        /// A whole power of the same square: <c>(a^2 + 2 a b x^2 + b^2 x^4)^(-2)</c> is
+        /// <c>(b^2)^(-2) (x^2 + a/b)^(-4)</c>, exactly and with no sign, a power of a quadratic in
+        /// <c>x^2</c> the rational integrator reads. Pinned with <c>a/b</c> positive, so that the
+        /// square has no real zero among the points.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(a^2 + 2*a*b*x^2 + b^2*x^4)^2")]
+        [InlineData("x/(a^2 + 2*a*b*x^2 + b^2*x^4)^3")]
+        [InlineData("x^2*(a^2 + 2*a*b*x^3 + b^2*x^6)^(-2)")]
+        public void AWholePowerOfASquareInAPowerOfTheVariable(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x").Substitute("C", 0);
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            Entity Pin(Entity e) => e.Substitute("a", 0.9).Substitute("b", 1.7);
+            var derivative = Pin(integral).Differentiate("x");
+            var original = Pin(integrand.ToEntity());
+            var compared = 0;
+            foreach (var at in Points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                if (got.IsNaN || want.IsNaN)
+                    continue;
+                compared++;
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart) + Math.Abs((double)want.ImaginaryPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+            Assert.True(compared >= 5, $"only {compared} points were comparable for {integrand}");
+        }
+
         [Fact]
         public void TheSignIsTheSignOfTheLinearFactor()
         {

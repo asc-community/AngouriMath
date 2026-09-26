@@ -1483,6 +1483,24 @@ Rubi's 1.2.1.4, all 632 problems that count: 250 to 409, no row lost, 61 timeout
 new timeouts have a radicand of four symbols beside a power of `x`, and went from a quick decline
 to one past the budget.
 
+### A whole power of a perfect square in a power of the variable is written as a power of its root
+
+`1/(a^2 + 2 a b x^2 + b^2 x^4)^2` was left unevaluated. The quartic is `b^2 (x^2 + a/b)^2`, so a
+whole power of it is `(b^2)^n (x^2 + a/b)^(2n)`, exactly and with no sign, and the rational
+integrator reads a power of `x^2 + a/b` where it declined the quartic. It is written so at the
+question asked, for a square written out as a sum with a symbol in it and `x` below the bar. It
+is not written so in a polynomial, or where the square is already written as a power. Answers
+that came out in the expanded square before now come out in `x^2 + a/b`.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(a^2+2*a*b*x^2+b^2*x^4)^2".Integrate("x")` | left unevaluated | the antiderivative, in `x^2 + a/b` |
+| `"x/(a^2+2*a*b*x^2+b^2*x^4)^3".Integrate("x")` | a piecewise on `b^2 = 0`, in `2 b^2 x^2 + 2 a b` | `-(x^2 + a/b)^(-5)/(10 (b^2)^3)` |
+| `"x^2*(a^2+2*a*b*x^3+b^2*x^6)^(-2)".Integrate("x")` | a piecewise on `b^2 = 0`, in `2 b^2 x^3 + 2 a b` | `-(b^2)^(-2) b^3/(9 (a + b x^3)^3)` |
+
+Rubi's 1.2.2.2, 1.2.2.4, 1.2.2.7 and 1.2.3.2, the 574 problems that count with a perfect square
+written with symbols: 388 to 409, no row lost.
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

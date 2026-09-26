@@ -10602,12 +10602,28 @@ namespace AngouriMath.Functions.Algebra
             // `u = e^(2x)` cost twenty seconds that way. A bare `x^2` is the exception at any
             // depth, nothing else reading `(x^2)^(3/2)`.
             var atTheTop = Integration.AnsweringTheQuestionAsked;
+            // A whole power too, at the top, of a square with a symbol in it, and in an integrand
+            // with x below the bar: `(a^2 + 2 a b x^2 + b^2 x^4)^(-2)` is `(b^2)^(-2) (x^2 + a/b)^(-4)`,
+            // exact and with no sign, and the rational integrator reads a power of `x^2 + a/b`
+            // where it declined the quartic. Not in a polynomial, which is answered as one already;
+            // and read off the whole integrand, since `1/P^2` holds `P^2` with a positive exponent.
+            // And only of a square written out as a sum: `((a + b - b u^2)^2)^(-1)`, what the
+            // hyperbolic tangent makes of `coth(x)^2/(a + b sech(x)^2)^2`, is a square written as
+            // one, and taken apart into `(u^2 - a/b - 1)^(-2)` it went from under a second to past
+            // a minute.
+            bool? xBelowTheBar = null;
+            bool XIsBelowTheBar()
+                => xBelowTheBar ??= Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr)).Denominator.ContainsNode(x);
             bool MayBeARootOfASquare(Entity node, Entity.Variable x)
-                => node is Powf(var radicand, Number.Rational r) && r.ERational.Denominator.Equals(EInteger.FromInt32(2))
-                    && (atTheTop || r.ERational.Equals(ERational.Create(1, 2))
-                        || radicand is Powf(var @base, var degree) && @base == x && degree == Number.Integer.Create(2))
-                    && radicand.ContainsNode(x) && radicand.Complexity <= (atTheTop ? 40 : 12)
-                    && radicand.Nodes.Count(inner => inner == x) <= 2;
+                => node is Powf(var radicand, Number.Rational r)
+                    && (r.ERational.Denominator.Equals(EInteger.FromInt32(2))
+                            && (atTheTop || r.ERational.Equals(ERational.Create(1, 2))
+                                || radicand is Powf(var @base, var degree) && @base == x && degree == Number.Integer.Create(2))
+                            && radicand.Complexity <= (atTheTop ? 40 : 12)
+                        || atTheTop && r is Number.Integer && r != Number.Integer.Zero && r != Number.Integer.One
+                            && radicand is Sumf or Minusf
+                            && radicand.Complexity <= 40 && radicand.Vars.Any(symbol => symbol != x) && XIsBelowTheBar())
+                    && radicand.ContainsNode(x) && radicand.Nodes.Count(inner => inner == x) <= 2;
             if (!expr.Nodes.Any(node => MayBeARootOfASquare(node, x)))
                 return null;
             var changed = false;
@@ -10631,6 +10647,11 @@ namespace AngouriMath.Functions.Algebra
                 if (monomials.Keys.Any(k => !k.IsZero && !k.Equals(half) && !k.Equals(degree))
                     || !half.Equals(EInteger.One) && !monomials.ContainsKey(EInteger.Zero))
                     return node;
+                // A whole power of a square in x itself is a rational function the splits answer
+                // already, in the form they give; in a power of x, `x^2 + a/b`, they did not.
+                var whole = r is Number.Integer;
+                if (whole && half.Equals(EInteger.One))
+                    return node;
                 var a = monomials[degree];
                 var b = monomials.TryGetValue(half, out var b1) ? b1 : Number.Integer.Zero;
                 var c = monomials.TryGetValue(EInteger.Zero, out var c0) ? c0 : Number.Integer.Zero;
@@ -10640,16 +10661,14 @@ namespace AngouriMath.Functions.Algebra
                 // `a^2 + 2 a b x + b^2 x^2` is the square Rubi writes -- whose condition travels
                 // with the answer. The other two coefficients are real or symbolic, not a
                 // number off the line, for the same reason.
-                Entity leading;
-                if (a.Evaled is Number.Real { IsPositive: true })
-                    leading = a;
-                else if (IsPositiveForARealParameter(a, x, out var leadingAssumed, assumed))
+                // A whole power needs no sign of anything: (a (w + h)^2)^n is a^n (w + h)^(2n).
+                if (!whole && a.Evaled is not Number.Real { IsPositive: true })
                 {
-                    leading = a;
+                    if (!IsPositiveForARealParameter(a, x, out var leadingAssumed, assumed))
+                        return node;
                     assumed = leadingAssumed;
                 }
-                else
-                    return node;
+                var leading = a;
                 if (b.Evaled is Number.Complex and not Number.Real || c.Evaled is Number.Complex and not Number.Real
                     || !IsAPerfectSquareDiscriminant(a, b, c))
                     return node;
@@ -10660,14 +10679,14 @@ namespace AngouriMath.Functions.Algebra
                 if (h.Vars.Any())
                     h = Functions.PartialFractions.Bare(h.Simplify());
                 var linear = h == Number.Integer.Zero ? w : (w + h).InnerSimplified;
-                var twoR = Number.Integer.Create(r.ERational.Numerator);
+                var twoR = Number.Integer.Create(whole ? r.ERational.Numerator * EInteger.FromInt32(2) : r.ERational.Numerator);
                 Entity power = twoR == Number.Integer.One ? linear : MathS.Pow(linear, twoR);
                 // The sign in front of the integral rather than inside it: it is constant
                 // between the linear factor's zeros, and a rule below that differentiates the
                 // integrand cannot evaluate `derivative(sgn(...))` -- which is the exception
                 // `sqrt(a^2 + 2abx + b^2x^2) sqrt(c + ex + dx^2)` threw with it left in place.
                 // None where it is plainly one: an even power of x plus a positive number.
-                if (!(half.IsEven && h.Evaled is Number.Real { IsPositive: true }))
+                if (!whole && !(half.IsEven && h.Evaled is Number.Real { IsPositive: true }))
                     signs = signs * MathS.Signum(linear);
                 changed = true;
                 return leading == Number.Integer.One ? power : MathS.Pow(leading, r) * power;
