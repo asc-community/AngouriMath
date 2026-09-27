@@ -1725,6 +1725,26 @@ the exponential integral, as `x e^(-1/x^2)` does, is still left unintegrated
 | `"f^(a + b/(c + d*x)^2)/(c + d*x)^4".Integrate("x")` | `integral(f ^ (a + b / (c + d * x) ^ 2) / (c + d * x) ^ 4, x)` | the antiderivative |
 | `"sinh(a + b/x^2)".Integrate("x")` | `integral((e ^ (a + b / x ^ 2) - e ^ (-(a + b / x ^ 2))) / 2, x)` | the antiderivative |
 
+### Exponentials of quadratics beside sines, cosines and hyperbolic functions of quadratics are integrated
+
+`e^(x^2) sin(x)` was left unintegrated. A product of exponentials of polynomials of degree at most
+two, whole powers of sines, cosines and hyperbolic functions of such polynomials, and a polynomial
+is now integrated wherever some exponent is a quadratic. Each sine or cosine is written as
+exponentials of `i` times its argument, and every term of the product multiplied out is the
+Gaussian's. So the answer for a real integrand with a sine or cosine in it is written with the
+imaginary unit, as Rubi's is: `e^(x^2) sin(x)` integrates to
+`-i/2 e^(1/4) sqrt(pi)/2 erfi(x + i/2) + i/2 e^(1/4) sqrt(pi)/2 erfi(x - i/2)`. A sine or cosine of a
+quadratic alone, or beside a polynomial only, is left to the rules that answered it before
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(x^2)*sin(x)".Integrate("x")` | `integral(e ^ x ^ 2 * sin(x), x)` | the antiderivative, with `erfi` |
+| `"f^(a + b*x + c*x^2)*cos(d + p*x + q*x^2)".Integrate("x")` | `integral(f ^ (a + b * x + c * x ^ 2) * cos(d + p * x + q * x ^ 2), x)` | the antiderivative, with `erf` |
+| `"f^(a + c*x^2)*cosh(d + p*x)^2".Integrate("x")` | `integral(f ^ (a + c * x ^ 2) * ((e ^ (d + p * x) + e ^ (-(d + p * x))) / 2) ^ 2, x)` | the antiderivative |
+| `"x^2*sinh(a + b*x + c*x^2)^2".Integrate("x")` | `integral(x ^ 2 * ((e ^ (a + b * x + c * x ^ 2) - e ^ (-(a + b * x + c * x ^ 2))) / 2) ^ 2, x)` | the antiderivative |
+| `"2^(x^2)*3^(x + 1)".Integrate("x")` | `integral(2 ^ x ^ 2 * 3 ^ (x + 1), x)` | the antiderivative, with `erfi` |
+
 ### An exponential of a quadratic in a logarithm beside a power of `x` is integrated
 
 `e^(ln(x)^2)` was left unintegrated. `x^p G^(Q(L))`, where `L` is `ln(c x^r)` and `Q` a quadratic

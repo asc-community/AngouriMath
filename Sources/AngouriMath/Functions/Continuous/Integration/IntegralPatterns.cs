@@ -86,6 +86,15 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// <c>int P(x) F^(a x^2 + b x + c) dx</c> for a non-zero <c>a</c> and a polynomial <c>P</c>,
+        /// which may be absent: the Gaussian, or the sum of its moments at the square's centre.
+        /// </summary>
+        internal static Entity? APolynomialTimesTheGaussian(Entity? polynomial, Entity @base, Entity a, Entity b, Entity c, Entity.Variable x)
+            => polynomial is null
+                ? Gaussian(@base, a, b, c, x)
+                : ShiftedMoments(Entity.Number.Integer.One, 0, polynomial, @base, a, b, c, x);
+
+        /// <summary>
         /// <c>int e^(A u^2) du</c> for a non-zero <c>A</c>: <c>sqrt(pi)/(2 sqrt(-A)) erf(sqrt(-A) u)</c>,
         /// or with <c>erfi</c> and the real root where <c>A</c> is decidably positive.
         /// </summary>
