@@ -1760,6 +1760,19 @@ same question under `u = d + e x`
 | `"(d*g + k*g*x)^m*F^(f*(a + b*ln(c*(d + k*x)^n))^2)".Integrate("x")` | `integral((d * g + k * g * x) ^ m * F ^ (f * (a + b * ln(c * (d + k * x) ^ n)) ^ 2), x)` | the antiderivative |
 | `"(g + h*x)^3*F^(f*(a + b*ln(c*(d + k*x)^n)^2))".Integrate("x")` | `integral((g + h * x) ^ 3 * F ^ (f * (a + b * ln(c * (d + k * x) ^ n) ^ 2)), x)` | the antiderivative |
 
+### A power of `x` beside exponentials of quadratics without a linear part is integrated
+
+`x^2 sinh(a + b x^2)^3` was left unintegrated. A polynomial, or a power of `x` above or below the bar,
+beside exponentials of quadratics is now integrated where a term's exponent has no linear part: its
+moments are taken about 0, and a negative even power is one of them. A negative odd power, which
+ends at the exponential integral, is still left unintegrated
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2*sinh(a + b*x^2)^3".Integrate("x")` | `integral(x ^ 2 * ((e ^ (a + b * x ^ 2) - e ^ (-(a + b * x ^ 2))) / 2) ^ 3, x)` | the antiderivative |
+| `"sinh(a + b*x^2)^3/x^2".Integrate("x")` | `integral(((e ^ (a + b * x ^ 2) - e ^ (-(a + b * x ^ 2))) / 2) ^ 3 / x ^ 2, x)` | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

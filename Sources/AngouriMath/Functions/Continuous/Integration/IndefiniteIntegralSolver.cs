@@ -3248,8 +3248,8 @@ namespace AngouriMath.Functions.Algebra
         /// <para>
         /// A term's exponent is kept as whole multiples of the exponents the integrand writes, not
         /// as their sum: <c>e^(i q)</c> times <c>e^(-i q)</c> is then the multiple 0, decidably,
-        /// where the sum <c>i q + (-i) q</c> is not read as zero, and was taken for a Gaussian
-        /// whose square's coefficient is zero.
+        /// where the sum <c>i q + (-i) q</c> is not read as zero, and a Gaussian of it would
+        /// divide by a square's coefficient that is.
         /// </para>
         /// </remarks>
         internal static Entity? SolveAProductOfExponentialsOfQuadratics(Entity expr, Entity.Variable x)
@@ -3266,6 +3266,7 @@ namespace AngouriMath.Functions.Algebra
             (exponentials, trigonometrics, aPowerOfASum) = (0, 0, false);
             Entity constant = Number.Integer.One;
             Entity? polynomial = null;
+            var powerOfX = 0;
             var exponents = new List<WrittenExponent>();
             var terms = new List<(Entity Coefficient, int[] Multiples)> { (Number.Integer.One, new int[MostExponents]) };
             foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
@@ -3297,6 +3298,13 @@ namespace AngouriMath.Functions.Algebra
                     terms = product;
                     continue;
                 }
+                // A power of x, above or below the bar, read apart from the polynomial: below it, it
+                // is a moment about 0 of a term without a linear part.
+                if (APowerOfTheVariable(factor, x) is { } k)
+                {
+                    powerOfX += underneath ? -k : k;
+                    continue;
+                }
                 if (!underneath && TreeAnalyzer.TryGetPolynomial(factor, x, out var inX)
                     && inX.Keys.All(degree => degree.Sign >= 0 && degree.CompareTo(EInteger.FromInt32(MostPowerOfAPolynomialBesideExponentials)) <= 0))
                 {
@@ -3317,25 +3325,59 @@ namespace AngouriMath.Functions.Algebra
             // exponential's, and the rules for that answer it without an imaginary unit.
             if (!quadratics.Any(term => !TreeAnalyzer.IsZero(term.A)))
                 return null;
-            Dictionary<EInteger, Entity>? monomials = null;
-            if (polynomial is not null && !TreeAnalyzer.TryGetPolynomial(polynomial, x, out monomials))
+            // The polynomial and the power of x together: as the product written, for the moments
+            // at a square's centre, which substitute into it as the integrand writes it, and as
+            // each power of x with its coefficient, for the moments about 0 and the elementary terms.
+            Entity? written = powerOfX > 0 ? (polynomial is null ? MathS.Pow(x, powerOfX) : MathS.Pow(x, powerOfX) * polynomial) : polynomial;
+            Dictionary<EInteger, Entity>? powers = null;
+            if (polynomial is not null && !TreeAnalyzer.TryGetPolynomial(polynomial, x, out powers))
                 return null;
+            if (powerOfX != 0)
+            {
+                var shifted = new Dictionary<EInteger, Entity>();
+                if (powers is null)
+                    shifted[EInteger.FromInt32(powerOfX)] = Number.Integer.One;
+                else
+                    foreach (var monomial in powers)
+                        shifted[monomial.Key + powerOfX] = monomial.Value;
+                powers = shifted;
+            }
+            if (powers is not null && powers.Keys.Any(power => power.Abs().CompareTo(EInteger.FromInt32(MostPowerOfAPolynomialBesideExponentials)) > 0))
+                return null;
+            var aNegativePower = powers is not null && powers.Keys.Any(power => power.Sign < 0);
             Entity total = Number.Integer.Zero;
             foreach (var (coefficient, a, b, c) in quadratics)
             {
                 Entity? integral;
                 if (!TreeAnalyzer.IsZero(a))
-                    integral = IntegralPatterns.APolynomialTimesTheGaussian(polynomial, MathS.e, a, b, c, x);
+                {
+                    if (TreeAnalyzer.IsZero(b) && powers is not null)
+                        integral = IntegralPatterns.MomentsAboutZero(powers, MathS.e, a, c, x);
+                    // At a square's centre only a polynomial is a sum of moments.
+                    else if (aNegativePower)
+                        return null;
+                    else
+                        integral = IntegralPatterns.APolynomialTimesTheGaussian(written, MathS.e, a, b, c, x);
+                }
+                // A negative power beside an elementary exponential is the exponential integral.
+                else if (aNegativePower)
+                    return null;
                 else if (!TreeAnalyzer.IsZero(b))
-                    integral = MathS.Pow(MathS.e, b * x + c) * APolynomialAgainstAnExponential(monomials, b, x);
+                    integral = MathS.Pow(MathS.e, b * x + c) * APolynomialAgainstAnExponential(powers, b, x);
                 else
-                    integral = MathS.Pow(MathS.e, c) * APolynomialIntegrated(monomials, x);
+                    integral = MathS.Pow(MathS.e, c) * APolynomialIntegrated(powers, x);
                 if (integral is null)
                     return null;
                 total += coefficient * integral;
             }
             return (constant * total).InnerSimplified;
         }
+
+        /// <summary><c>k</c> where <paramref name="factor"/> is <c>x^k</c> for a whole <c>k</c>, or <see langword="null"/>.</summary>
+        private static int? APowerOfTheVariable(Entity factor, Entity.Variable x)
+            => factor == x ? 1
+                : factor is Powf(var @base, Number.Integer { EInteger: var power }) && @base == x && power.CanFitInInt32() ? power.ToInt32Checked()
+                : null;
 
         /// <summary>
         /// An exponent the integrand writes, <c>A x^2 + B x + C</c> once read, of the exponential
@@ -3470,7 +3512,7 @@ namespace AngouriMath.Functions.Algebra
                 || !TreeAnalyzer.TryGetPolyQuadratic(written, x, out var a, out var b, out var c))
                 return null;
             // A zero coefficient is left the integer zero: 0 ln(f), simplified, is 0 provided f is
-            // not 0, which is not read as zero, and a Gaussian was taken of 0 x^2.
+            // not 0, which is not read as zero, and 0 x^2 would be taken for a Gaussian's square.
             Entity scale = imaginary ? MathS.i : @base == MathS.e ? Number.Integer.One : MathS.Ln(@base);
             exponents.Add(new(@base, written, imaginary, Scaled(a, scale), Scaled(b, scale), Scaled(c, scale)));
             return exponents.Count - 1;

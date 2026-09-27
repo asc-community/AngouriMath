@@ -95,6 +95,31 @@ namespace AngouriMath.Functions.Algebra
                 : ShiftedMoments(Entity.Number.Integer.One, 0, polynomial, @base, a, b, c, x);
 
         /// <summary>
+        /// <c>int P(x) F^(a x^2 + c) dx</c> for a non-zero <c>a</c>, with <c>P</c> read into
+        /// <paramref name="powers"/>, each power of <c>x</c> with its coefficient: the moments
+        /// about 0, where a negative even power is a moment too, and a negative odd one, which
+        /// ends at the exponential integral, is declined. Asked with no linear term, whose shift
+        /// <c>b/(2a)</c> would be <c>0/(2a)</c>, which simplifies to <c>0</c> provided <c>a</c> is
+        /// not 0, and is not read as zero where it is substituted.
+        /// </summary>
+        internal static Entity? MomentsAboutZero(Dictionary<EInteger, Entity> powers, Entity @base, Entity a, Entity c, Entity.Variable x)
+        {
+            var A = a * MathS.Ln(@base);
+            var bell = MathS.Pow(@base, a * MathS.Sqr(x));
+            Entity sum = Entity.Number.Integer.Zero;
+            foreach (var power in powers)
+            {
+                if (!power.Key.CanFitInInt32())
+                    return null;
+                var k = power.Key.ToInt32Checked();
+                if (k < 0 && k % 2 != 0 || System.Math.Abs(k) > 32)
+                    return null;
+                sum += power.Value * Moment(k, A, bell, x);
+            }
+            return MathS.Pow(@base, c) * sum;
+        }
+
+        /// <summary>
         /// <c>int e^(A u^2) du</c> for a non-zero <c>A</c>: <c>sqrt(pi)/(2 sqrt(-A)) erf(sqrt(-A) u)</c>,
         /// or with <c>erfi</c> and the real root where <c>A</c> is decidably positive.
         /// </summary>
