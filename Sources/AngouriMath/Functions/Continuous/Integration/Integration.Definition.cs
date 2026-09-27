@@ -579,6 +579,9 @@ namespace AngouriMath.Functions.Algebra
             // An exponential of a multiple of a logarithm is a power of the argument, which is
             // how every inverse hyperbolic function under an exponential arrives.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingAnExponentialOfALogarithm(expr, x, integrateByParts)) is { }) return answer;
+            // An exponential of a polynomial beside the polynomial's derivative, under u = P,
+            // which the substitution search does not reach: it writes the exponential apart.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheExponentAsTheVariable(expr, x, integrateByParts)) is { }) return answer;
             // `A + i A tan(z)` is `A e^(i z)/cos(z)`, which beside a polynomial is a shape the
             // closed rules answer, where the imaginary unit in the coefficient is read by none.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAnImaginaryTangentAsAnExponential(expr, x, integrateByParts)) is { }) return answer;

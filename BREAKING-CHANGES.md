@@ -1760,6 +1760,18 @@ same question under `u = d + e x`
 | `"(d*g + k*g*x)^m*F^(f*(a + b*ln(c*(d + k*x)^n))^2)".Integrate("x")` | `integral((d * g + k * g * x) ^ m * F ^ (f * (a + b * ln(c * (d + k * x) ^ n)) ^ 2), x)` | the antiderivative |
 | `"(g + h*x)^3*F^(f*(a + b*ln(c*(d + k*x)^n)^2))".Integrate("x")` | `integral((g + h * x) ^ 3 * F ^ (f * (a + b * ln(c * (d + k * x) ^ n) ^ 2)), x)` | the antiderivative |
 
+### An exponential of a polynomial beside the polynomial's derivative is integrated
+
+`e^(a + b x + c x^2) (b + 2 c x) sqrt(a + b x + c x^2)` was left unintegrated. `G^P k P' f(P)`, with
+`P` a polynomial of degree two or more and `P'` a factor of its own up to a constant, is now
+integrated under `u = P`, as `k G^u f(u)`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(a + b*x + c*x^2)*(b + 2*c*x)*(a + b*x + c*x^2)^(1/2)".Integrate("x")` | `integral(e ^ (a + b * x + c * x ^ 2) * (b + 2 * c * x) * sqrt(a + b * x + c * x ^ 2), x)` | the antiderivative, with `erfi` |
+| `"e^(a + b*x + c*x^2)*(b + 2*c*x)/(a + b*x + c*x^2)^(3/2)".Integrate("x")` | `integral(e ^ (a + b * x + c * x ^ 2) * (b + 2 * c * x) / (a + b * x + c * x ^ 2) ^ (3/2), x)` | the antiderivative, with `erfi` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
