@@ -184,33 +184,47 @@ namespace AngouriMath
         {
             get
             {
-                // Cached for the epoch it was computed under -- the precision context and
-                // the downcasting: a hundred digits of pi are the wrong answer at five
-                // hundred, and an expression held across a change of the settings used to
-                // answer from the first ones. The epoch is read before the computation and
-                // recorded with its result, so that a scope opened and closed inside the
-                // computation -- the integrator's sampled checks turn the downcasting off --
-                // leaves a value stamped as stale, to be recomputed on the next read, and
-                // never a slot cleared under a computation still running; the lazy slot it
-                // was, reset on a stale epoch, was cleared that way and read back as null.
+                // Cached with the precision it was computed at, and read back only at that
+                // precision: a hundred digits of pi are the wrong answer at five hundred. The
+                // stamp is the precision setting's frame for this flow, compared by reference.
+                // Frames are immutable, a scope opened and closed in order restores the very
+                // frame that was under it, and a flow outside every scope has none. It was a
+                // count of precision changes for the whole process, which could not tell one
+                // flow's scope from another's, so a flow at a hundred digits read pi at three
+                // hundred while another flow's scope was open.
+                // https://github.com/asc-community/AngouriMath/issues/1505
+                // The frame is read before the computation, so a scope opened and closed inside
+                // it leaves the value stamped with the frame it was asked in.
                 // https://github.com/asc-community/AngouriMath/issues/1367
                 // And stamped with its owner: a record's `with` -- WithCodomain, and the
-                // derivative's rewrites -- copies every field, this one included, and a
-                // value computed for the original is not the copy's; the lazy slot carried
-                // the same stamp.
-                var epoch = Convenience.EvaluationEpoch.Current;
-                if (evaled is { } cached && evaledEpoch == epoch && ReferenceEquals(evaledOwner, this))
-                    return cached;
+                // derivative's rewrites -- copies every field, this one included, and a value
+                // computed for the original is not the copy's.
+                // The value and its stamps are one object, published in one store, so that no
+                // flow reads one flow's value under another's stamp.
+                // Until a precision scope has been opened somewhere, no flow has a frame, and a
+                // cached value is read without asking for one: the flow's frame is an async-local
+                // read, several times the cost of the rest of this path.
+                var precisionSetting = MathS.Settings.DecimalPrecisionContext;
+                var precision = precisionSetting.EverScoped ? ((Convenience.ISettingState)precisionSetting).CurrentState : null;
+                if (System.Threading.Volatile.Read(ref evaled) is { } cached
+                    && ReferenceEquals(cached.Owner, this) && ReferenceEquals(cached.Precision, precision))
+                    return cached.Value;
                 var computed = InnerSimplifyWithCheck(false);
-                evaledEpoch = epoch;
-                evaledOwner = this;
-                evaled = computed;
+                System.Threading.Volatile.Write(ref evaled, new EvaledValue(computed, this, precision));
                 return computed;
             }
         }
-        private Entity? evaled;
-        private Entity? evaledOwner;
-        private int evaledEpoch;
+
+        /// <summary>A value of <see cref="Evaled"/>, with the node and the precision it was computed for.</summary>
+        private sealed class EvaledValue
+        {
+            internal readonly Entity Value;
+            internal readonly Entity Owner;
+            internal readonly object? Precision;
+            internal EvaledValue(Entity value, Entity owner, object? precision)
+                => (Value, Owner, Precision) = (value, owner, precision);
+        }
+        private EvaledValue? evaled;
 
         /// <summary>
         /// This is the result of naive simplifications, but not creating imprecise <see cref="Real"/> values unlike <see cref="Evaled"/>. In other 

@@ -93,28 +93,6 @@ namespace AngouriMath.Convenience
     }
 
     /// <summary>
-    /// A count of the changes to what a numerical evaluation depends on -- the precision
-    /// context, set or its scope ended, on any thread. An <see cref="Entity"/> records the
-    /// epoch its <see cref="Entity.Evaled"/> was computed at and recomputes when it has moved,
-    /// since a hundred digits of pi cached at one precision are the wrong answer at another.
-    /// One counter for every thread: a change on another thread costs a recomputation and
-    /// never a stale value. The downcasting setting does not advance it: the integrator's
-    /// sampled checks turn the downcasting off and on around every candidate, and an epoch
-    /// moved by those made every cached evaluation in the process stale each time -- the
-    /// unit suite took four times as long. What the downcasting changed in a cached value
-    /// that mattered, a constant's type, no longer depends on it.
-    /// https://github.com/asc-community/AngouriMath/issues/1367
-    /// </summary>
-    internal static class EvaluationEpoch
-    {
-        [ConcurrentField] private static int current;
-
-        internal static int Current => Volatile.Read(ref current);
-
-        internal static void Advance() => Interlocked.Increment(ref current);
-    }
-
-    /// <summary>
     /// This class for configuring some internal mechanisms from outside
     /// </summary>
     /// <typeparam name="T">
@@ -161,18 +139,13 @@ namespace AngouriMath.Convenience
 
         private readonly AsyncLocal<Frame?> frames = new();
         private long lastId;
+        private bool everScoped;
 
         internal Setting(T defaultValue)
         {
             Default = defaultValue;
             SettingsState.Register(this);
         }
-
-        /// <summary>
-        /// Whether a change of this setting advances the <see cref="EvaluationEpoch"/>: the
-        /// precision context does, since every cached evaluation depends on it.
-        /// </summary>
-        internal bool AdvancesEvaluationEpoch { get; init; }
 
         /// <summary>
         /// The frame this setting currently reads from, as the identity of its state. Released
@@ -182,6 +155,14 @@ namespace AngouriMath.Convenience
         /// and not wrong.
         /// </summary>
         object? ISettingState.CurrentState => frames.Value;
+
+        /// <summary>
+        /// Whether a scope of this setting has been opened, in any flow, since the process
+        /// started, so that a reader can skip asking for the flow's frame while none can exist.
+        /// It never goes back: a child flow that captured a scope keeps it after its parent
+        /// disposes it, so a count of open scopes returning to zero would not mean there are none.
+        /// </summary>
+        internal bool EverScoped => Volatile.Read(ref everScoped);
 
         /// <summary>
         /// Sets the new value for the setting
@@ -201,9 +182,10 @@ namespace AngouriMath.Convenience
         public AutoBackRollableTemporarySettingUnit Set(T value)
         {
             var id = Interlocked.Increment(ref lastId);
+            // Before the frame, so that no flow can see the frame without the flag.
+            if (!everScoped)
+                Volatile.Write(ref everScoped, true);
             frames.Value = new Frame(id, value, frames.Value);
-            if (AdvancesEvaluationEpoch)
-                EvaluationEpoch.Advance();
             return new AutoBackRollableTemporarySettingUnit(this, id);
         }
 
@@ -220,8 +202,6 @@ namespace AngouriMath.Convenience
             var top = frames.Value;
             if (top is null)
                 return;
-            if (AdvancesEvaluationEpoch)
-                EvaluationEpoch.Advance();
             if (top.Id == id)
             {
                 frames.Value = top.Next;
