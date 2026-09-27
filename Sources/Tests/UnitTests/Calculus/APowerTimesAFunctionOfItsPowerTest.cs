@@ -56,6 +56,20 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("(pe*x)^(-1+n)/(a+b*sech(c+d*x^n))^2")]
         public void APowerTimesAFunctionOfItsPower(string integrand) => DifferentiatesBack(integrand);
 
+        /// <summary>
+        /// A power in front one less than a half-odd multiple of the power inside, by half the
+        /// power, <c>u = x^(n/2)</c>: beside an exponential of <c>x^n</c> it is a moment of the
+        /// Gaussian. Rubi's 2.3, <c>f^(a + b x^n) x^(-1 + 5n/2)</c>, and 6.1.3.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </summary>
+        [Theory]
+        [InlineData("2^(a+b*x^n)*x^(-1+5/2*n)")]
+        [InlineData("2^(a+b*x^n)*x^(-1+1/2*n)")]
+        [InlineData("2^(a+b*x^n)*x^(-1-3/2*n)")]
+        [InlineData("x^(-1+3/2*n)*e^(-x^n)")]
+        [InlineData("x^(-1+1/2*n)*sinh(a+b*x^n)")]
+        public void APowerTimesAFunctionOfItsPowerByHalfThePower(string integrand) => DifferentiatesBack(integrand);
+
         [Fact]
         public void TheScaleIsSaidToBePositive()
         {
