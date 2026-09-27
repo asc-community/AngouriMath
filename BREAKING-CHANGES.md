@@ -1636,6 +1636,30 @@ themselves by parts against 1. A symbolic exponent is answered for the generic c
 | `"erf(x)".Integrate("x")` | `UnrecognizedFunctionParseException` | `x * erf(x) + e ^ (-x ^ 2) / sqrt(pi) + C` |
 | `integral(e^(-x^2), x, -oo, +oo)` | `integral(e ^ (-x ^ 2), x, -oo, +oo)` | `sqrt(pi)` |
 
+### A definite integral across a pole diverges, and a jump in its antiderivative is left out
+
+`integral(1/x^2, x, -1, 1)` was `-2`, a negative number for a positive integrand: the
+antiderivative `-1/x` was taken at the two bounds, and the pole between them was never seen.
+Where the bounds have numeric values, the range is now split where the antiderivative can break,
+and each piece takes its limit at a break from its own side. The breaks are the zeros of a
+denominator, of a logarithm's argument, and of the cosine or sine under a tangent, secant,
+cotangent or cosecant, among others. A pole the integral diverges across gives `+oo` or `-oo`,
+and pieces diverging in opposite directions have no value. A jump where the integrand is
+continuous, like the half-angle antiderivative's at `pi`, is left out. That needs the limit of an
+arctangent, arccotangent or arccosecant whose argument diverges, which is now answered too
+([#1508](https://github.com/asc-community/AngouriMath/issues/1508)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `integral(1/x^2, x, -1, 1)` | `-2` | `+oo` |
+| `integral(1/(x - 2)^2, x, 0, 3)` | `-3/2` | `+oo` |
+| `integral(tan(x)^2, x, 0, 3)` | `tan(3) - arctan(tan(3))` | `+oo` |
+| `integral(1/x, x, -1, 1)` | `-ln(-1)` | `NaN` |
+| `integral(1/(x^2 - 4), x, -3, 3)` | `ln(1/25) / 4` | `NaN` |
+| `integral(1/(2 + cos(x)), x, 0, 2 * pi)` | `integral(1 / (2 + cos(x)), x, 0, 2 * pi)` | `2/3 * sqrt(3) * pi` |
+| `integral(1/(2 + cos(x)), x, 0, pi)` | `integral(1 / (2 + cos(x)), x, 0, pi)` | `sqrt(3) * pi / 3` |
+| `limitleft(arctan(tan(x / 2)), x, pi)` | `limitleft(arctan(tan(x / 2)), x, pi)` | `pi / 2` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

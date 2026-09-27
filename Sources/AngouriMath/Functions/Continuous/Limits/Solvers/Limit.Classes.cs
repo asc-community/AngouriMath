@@ -203,11 +203,17 @@ namespace AngouriMath
 
         partial record Arccosecantf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
-                    x, dist, side);
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                // A diverging argument first, as for the arcsecant: substituting it leaves the
+                // function of an infinity rather than the angle it tends to.
+                if (InverseTrigonometryAtInfinity(this, Argument.ComputeLimitDivideEtImpera(x, dist, side)) is { } atInfinity)
+                    return atInfinity;
+                return ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
+                    : ComputeLimitImpl(New(
+                        Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
+                        x, dist, side);
+            }
         }
 
         partial record Tanf
@@ -304,20 +310,32 @@ namespace AngouriMath
 
         partial record Arctanf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
-                    x, dist, side);
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                // A diverging argument first, as for the arcsecant: substituting it leaves the
+                // function of an infinity rather than the angle it tends to.
+                if (InverseTrigonometryAtInfinity(this, Argument.ComputeLimitDivideEtImpera(x, dist, side)) is { } atInfinity)
+                    return atInfinity;
+                return ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
+                    : ComputeLimitImpl(New(
+                        Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
+                        x, dist, side);
+            }
         }
 
         partial record Arccotanf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
-                    x, dist, side);
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                // A diverging argument first, as for the arcsecant: substituting it leaves the
+                // function of an infinity rather than the angle it tends to.
+                if (InverseTrigonometryAtInfinity(this, Argument.ComputeLimitDivideEtImpera(x, dist, side)) is { } atInfinity)
+                    return atInfinity;
+                return ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
+                    : ComputeLimitImpl(New(
+                        Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
+                        x, dist, side);
+            }
         }
 
         partial record Factorialf

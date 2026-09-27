@@ -57,8 +57,45 @@ namespace AngouriMath
             Functions.Algebra.BreakpointIntegration.HasABreak(this, x)
             ? Functions.Algebra.BreakpointIntegration.Split(this, x, from, to) ?? new Integralf(this, x, (from, to))
             : Transformation.Integration(x).Apply(this).Output is { } antiderivative
-                ? AtTheBound(antiderivative, x, to, from) - AtTheBound(antiderivative, x, from, to)
+                ? AcrossTheRange(antiderivative, x, from, to) ?? new Integralf(this, x, (from, to))
                 : new Integralf(this, x, (from, to));
+
+        /// <summary>
+        /// <c>F(b) - F(a)</c> through <paramref name="antiderivative"/>, taken piece by piece
+        /// where it breaks between the bounds, or <see langword="null"/> where a piece's limit at
+        /// a break is not decided.
+        /// </summary>
+        /// <remarks>
+        /// At each break the piece below takes its limit from the left and the piece above from
+        /// the right, so a jump in the antiderivative is not counted and a pole is: <c>1/x^2</c>
+        /// over <c>[-1, 1]</c> is <c>+oo</c>, and <c>1/x</c> over the same range, whose pieces are
+        /// <c>-oo</c> and <c>+oo</c>, has no value. Where the bounds are not numbers, or the breaks
+        /// cannot all be listed, the antiderivative is taken at the bounds alone, as it was.
+        /// https://github.com/asc-community/AngouriMath/issues/1508
+        /// </remarks>
+        private static Entity? AcrossTheRange(Entity antiderivative, Variable x, Entity from, Entity to)
+        {
+            if (from.Evaled is not Number.Real { IsNaN: false } lower || to.Evaled is not Number.Real { IsNaN: false } upper
+                || lower == upper
+                || (lower < upper
+                    ? AntiderivativeBreaks.Inside(antiderivative, x, lower, upper)
+                    : AntiderivativeBreaks.Inside(antiderivative, x, upper, lower)) is not { Count: > 0 } breaks)
+                return AtTheBound(antiderivative, x, to, from) - AtTheBound(antiderivative, x, from, to);
+            if (lower > upper)
+                breaks.Reverse();
+            var total = -AtTheBound(antiderivative, x, from, to);
+            foreach (var (at, _) in breaks)
+            {
+                // Approached from the side the range comes from, then left on the other.
+                var (arriving, leaving) = lower < upper ? (ApproachFrom.Left, ApproachFrom.Right) : (ApproachFrom.Right, ApproachFrom.Left);
+                var before = antiderivative.Limit(x, at, arriving);
+                var after = antiderivative.Limit(x, at, leaving);
+                if (before.Nodes.Any(node => node is Limitf) || after.Nodes.Any(node => node is Limitf))
+                    return null;
+                total += before - after;
+            }
+            return total + AtTheBound(antiderivative, x, to, from);
+        }
 
         /// <summary>
         /// The antiderivative's value at one bound of a definite integral: its value there, and
@@ -71,7 +108,7 @@ namespace AngouriMath
         /// at 0 is <c>0 * -oo</c>, so the integral of <c>ln(x)</c> from 0 to 1 was <c>NaN</c> where it
         /// is -1. The limit is taken only where the value is undefined, so a bound the substitution
         /// answered is answered as before. Its side is known at an infinity, and at a finite bound
-        /// from the other bound where both are numbers. Elsewhere, and where the limit is not
+        /// from the other bound where both have numeric values. Elsewhere, and where the limit is not
         /// decided, the value stays undefined, as it is for <c>sin(x)</c> from 0 to <c>+oo</c>,
         /// whose antiderivative has no limit there.
         /// </remarks>
@@ -80,7 +117,8 @@ namespace AngouriMath
             var value = antiderivative.Substitute(x, bound);
             if (!value.InnerSimplified.IsNaN)
                 return value;
-            ApproachFrom? side = (bound.InnerSimplified, otherBound.InnerSimplified) switch
+            // The bounds' values, so that a bound written as pi or 2 pi is placed as well as 3.
+            ApproachFrom? side = (bound.Evaled, otherBound.Evaled) switch
             {
                 (Number.Real { EDecimal: var at }, _) when at.IsPositiveInfinity() => ApproachFrom.Left,
                 (Number.Real { EDecimal: var at }, _) when at.IsNegativeInfinity() => ApproachFrom.Right,
