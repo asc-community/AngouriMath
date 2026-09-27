@@ -431,6 +431,69 @@ namespace AngouriMath
             }
         }
 
+        public partial record Erff
+        {
+            // Entire, so defined for every argument. https://github.com/asc-community/AngouriMath/issues/1501
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
+                    a => a switch
+                    {
+                        Complex n when !isExact => Number.Erf(n),
+                        Integer { IsZero: true } => Integer.Zero,
+                        Real r when r.EDecimal.IsPositiveInfinity() => Integer.One,
+                        Real r when r.EDecimal.IsNegativeInfinity() => Integer.MinusOne,
+                        // Increasing on the real line.
+                        Set.Interval interval when IntervalArithmetic.Monotone(interval, increasing: true, MathS.Erf, isExact) is { } image => image,
+                        _ => null
+                    },
+                    (@this, a) => ((Erff)@this).New(a), isExact);
+        }
+
+        public partial record Erfcf
+        {
+            // Entire, so defined for every argument.
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
+                    a => a switch
+                    {
+                        Complex n when !isExact => Number.Erfc(n),
+                        Integer { IsZero: true } => Integer.One,
+                        Real r when r.EDecimal.IsPositiveInfinity() => Integer.Zero,
+                        Real r when r.EDecimal.IsNegativeInfinity() => Integer.Create(2),
+                        // Decreasing on the real line.
+                        Set.Interval interval when IntervalArithmetic.Monotone(interval, increasing: false, MathS.Erfc, isExact) is { } image => image,
+                        _ => null
+                    },
+                    (@this, a) => ((Erfcf)@this).New(a), isExact);
+        }
+
+        public partial record Erfif
+        {
+            // Entire, so defined for every argument.
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
+                    a => a switch
+                    {
+                        Complex n when !isExact => Number.Erfi(n),
+                        Integer { IsZero: true } => Integer.Zero,
+                        Real r when r.EDecimal.IsPositiveInfinity() => Real.PositiveInfinity,
+                        Real r when r.EDecimal.IsNegativeInfinity() => Real.NegativeInfinity,
+                        // Increasing on the real line.
+                        Set.Interval interval when IntervalArithmetic.Monotone(interval, increasing: true, MathS.Erfi, isExact) is { } image => image,
+                        _ => null
+                    },
+                    (@this, a) => ((Erfif)@this).New(a), isExact);
+        }
+
         public partial record Signumf
         {
             // Signum is defined everywhere in the complex plane

@@ -219,6 +219,27 @@ namespace AngouriMath
                 value is Integer { IsZero: true } ? Enumerable.Empty<Entity>() : throw new CannotInvertException();
         }
 
+        // The error functions have no inverse among the library's nodes, so there is nothing to
+        // write the preimage in -- and it is not empty: erf(x) = 1/2 at about 0.4769, and at
+        // infinitely many complex points besides. https://github.com/asc-community/AngouriMath/issues/1501
+        partial record Erff
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
+                throw new CannotInvertException();
+        }
+
+        partial record Erfcf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
+                throw new CannotInvertException();
+        }
+
+        partial record Erfif
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
+                throw new CannotInvertException();
+        }
+
         partial record Binomialf
         {
             // The preimage of a binomial coefficient is not a function of either argument
