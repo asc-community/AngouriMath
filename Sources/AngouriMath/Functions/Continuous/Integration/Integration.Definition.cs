@@ -582,6 +582,9 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAnImaginaryTangentAsAnExponential(expr, x, integrateByParts)) is { }) return answer;
             // And `A cos(z) + i A sin(z)`, which is `A e^(i z)`, where no rotation is real.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAnImaginarySumOfACosineAndASineAsAnExponential(expr, x, integrateByParts)) is { }) return answer;
+            // Exponentials of quadratics, with sines, cosines and sums of them multiplied out:
+            // each term is the Gaussian's, where the search would take the product by parts.
+            if ((answer = IndefiniteIntegralSolver.SolveAProductOfExponentialsOfQuadratics(expr, x)) is { }) return answer;
             // A fractional power of a perfect square is the power of the modulus, sgn(P) P^(2r).
             if ((answer = IndefiniteIntegralSolver.SolveByTakingARootOfAPerfectSquare(expr, x, integrateByParts)) is { }) return answer;
             // x^(n - 1) g(x^n) with a symbolic n is g(u)/n under u = x^n.

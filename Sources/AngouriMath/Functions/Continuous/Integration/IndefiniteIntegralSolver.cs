@@ -3226,6 +3226,374 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A product of exponentials of polynomials of degree at most two, whole powers of sines
+        /// and cosines of such polynomials, whole powers of sums of those exponentials -- which is
+        /// how a hyperbolic function is written -- and a polynomial, where some exponent is left a
+        /// quadratic. A sine or cosine is written as exponentials, <c>sin(q) = (e^(i q) - e^(-i q))/(2i)</c>,
+        /// and the product multiplied out is a sum of terms <c>k P(x) e^(Q(x))</c>, with <c>Q</c> of
+        /// degree at most two: the Gaussian's moments where <c>Q</c> is a quadratic, and elementary
+        /// where it is not. Rubi's 4.7.6, 6.1.5 and 6.2.5, <c>f^(a + b x + c x^2) sin(d + e x + f x^2)^n</c>
+        /// and <c>f^(a + b x + c x^2) cosh(d + e x + f x^2)^n</c>, 6.1.4's <c>x^2 sinh(a + b x + c x^2)^2</c>,
+        /// and 2.3's <c>f^(a + b x + c x^2) g^(d + e x + f x^2)</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// A sine or cosine is taken only beside an exponential. Alone, or beside a polynomial,
+        /// the sine of a quadratic is a Fresnel integral, and <c>x sin(x^2)</c> is <c>-cos(x^2)/2</c>,
+        /// which the substitution answers with no imaginary unit in it. A sum of exponentials is
+        /// taken beside another exponential, or in a power: <c>x^2 sinh(q)</c> alone is a sum the
+        /// integrator splits, and each of its terms is the Gaussian's.
+        /// </para>
+        /// <para>
+        /// A term's exponent is kept as whole multiples of the exponents the integrand writes, not
+        /// as their sum: <c>e^(i q)</c> times <c>e^(-i q)</c> is then the multiple 0, decidably,
+        /// where the sum <c>i q + (-i) q</c> is not read as zero, and was taken for a Gaussian
+        /// whose square's coefficient is zero.
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveAProductOfExponentialsOfQuadratics(Entity expr, Entity.Variable x)
+        {
+            if (expr is not (Mulf or Divf or Powf))
+                return null;
+            // By the written shape first, which reads and allocates nothing: most products asked
+            // here have one exponential in them, or none, and no sine.
+            int exponentials = 0, trigonometrics = 0;
+            var aPowerOfASum = false;
+            CountFactorsByShape(expr, x, ref exponentials, ref trigonometrics, ref aPowerOfASum);
+            if (trigonometrics > 0 ? exponentials == 0 : exponentials < 2 && !aPowerOfASum)
+                return null;
+            (exponentials, trigonometrics, aPowerOfASum) = (0, 0, false);
+            Entity constant = Number.Integer.One;
+            Entity? polynomial = null;
+            var exponents = new List<WrittenExponent>();
+            var terms = new List<(Entity Coefficient, int[] Multiples)> { (Number.Integer.One, new int[MostExponents]) };
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (AsExponentialsOfQuadratics(factor, x, exponents) is { } read)
+                {
+                    // Below the bar, a single exponential only, whose reciprocal is one too.
+                    if (underneath)
+                    {
+                        if (read.Count != 1)
+                            return null;
+                        var (coefficient, multiples) = read[0];
+                        for (var i = 0; i < multiples.Length; i++)
+                            multiples[i] = -multiples[i];
+                        read[0] = (1 / coefficient, multiples);
+                    }
+                    if (factor.Nodes.Any(node => node is Sinf or Cosf))
+                        trigonometrics++;
+                    else
+                        exponentials++;
+                    aPowerOfASum |= read.Count > 1 && factor is Powf(_, Number.Integer { EInteger: var power }) && power.CompareTo(EInteger.One) > 0;
+                    if (Multiplied(terms, read) is not { } product)
+                        return null;
+                    terms = product;
+                    continue;
+                }
+                if (!underneath && TreeAnalyzer.TryGetPolynomial(factor, x, out var inX)
+                    && inX.Keys.All(degree => degree.Sign >= 0 && degree.CompareTo(EInteger.FromInt32(MostPowerOfAPolynomialBesideExponentials)) <= 0))
+                {
+                    polynomial = polynomial is null ? factor : polynomial * factor;
+                    continue;
+                }
+                return null;
+            }
+            if (trigonometrics > 0 ? exponentials == 0 : exponentials < 2 && !aPowerOfASum)
+                return null;
+            var quadratics = new List<(Entity Coefficient, Entity A, Entity B, Entity C)>(terms.Count);
+            foreach (var (coefficient, multiples) in terms)
+            {
+                var (a, b, c) = TheExponent(multiples, exponents);
+                quadratics.Add((coefficient, a, b, c));
+            }
+            // Some exponent left a quadratic: with none, the product is the elementary
+            // exponential's, and the rules for that answer it without an imaginary unit.
+            if (!quadratics.Any(term => !TreeAnalyzer.IsZero(term.A)))
+                return null;
+            Dictionary<EInteger, Entity>? monomials = null;
+            if (polynomial is not null && !TreeAnalyzer.TryGetPolynomial(polynomial, x, out monomials))
+                return null;
+            Entity total = Number.Integer.Zero;
+            foreach (var (coefficient, a, b, c) in quadratics)
+            {
+                Entity? integral;
+                if (!TreeAnalyzer.IsZero(a))
+                    integral = IntegralPatterns.APolynomialTimesTheGaussian(polynomial, MathS.e, a, b, c, x);
+                else if (!TreeAnalyzer.IsZero(b))
+                    integral = MathS.Pow(MathS.e, b * x + c) * APolynomialAgainstAnExponential(monomials, b, x);
+                else
+                    integral = MathS.Pow(MathS.e, c) * APolynomialIntegrated(monomials, x);
+                if (integral is null)
+                    return null;
+                total += coefficient * integral;
+            }
+            return (constant * total).InnerSimplified;
+        }
+
+        /// <summary>
+        /// An exponent the integrand writes, <c>A x^2 + B x + C</c> once read, of the exponential
+        /// <c>Base^Written</c>, or of <c>e^(i Written)</c> for a sine or cosine of it.
+        /// </summary>
+        private sealed record WrittenExponent(Entity Base, Entity Written, bool Imaginary, Entity A, Entity B, Entity C);
+
+        private const int MostExponents = 6;
+        private const int MostPowerOfAPolynomialBesideExponentials = 32;
+        private const int MostPowerOfASumOfExponentials = 8;
+        private const int MostExponentialTerms = 64;
+
+        /// <summary>
+        /// Counts the factors of <paramref name="expr"/> by their written shape alone: a sine or
+        /// cosine, or a power of one; an exponential of <paramref name="x"/>; and a sum, which may
+        /// be one of exponentials, or a whole power of a sum. An over-count, which the reading
+        /// that follows corrects: <c>(1 + x)</c> is counted as a sum.
+        /// </summary>
+        private static void CountFactorsByShape(Entity expr, Entity.Variable x, ref int exponentials, ref int trigonometrics, ref bool aPowerOfASum)
+        {
+            switch (expr)
+            {
+                case Mulf(var left, var right):
+                    CountFactorsByShape(left, x, ref exponentials, ref trigonometrics, ref aPowerOfASum);
+                    CountFactorsByShape(right, x, ref exponentials, ref trigonometrics, ref aPowerOfASum);
+                    break;
+                case Divf(var numerator, var denominator):
+                    CountFactorsByShape(numerator, x, ref exponentials, ref trigonometrics, ref aPowerOfASum);
+                    CountFactorsByShape(denominator, x, ref exponentials, ref trigonometrics, ref aPowerOfASum);
+                    break;
+                case Sinf or Cosf or Powf(Sinf or Cosf, Number.Integer):
+                    trigonometrics++;
+                    break;
+                case Powf(var @base, var exponent) when !@base.ContainsNode(x) && exponent.ContainsNode(x):
+                case Sumf or Minusf:
+                    exponentials++;
+                    break;
+                case Powf(Sumf or Minusf or Mulf or Divf, Number.Integer { EInteger: var power }) when power.CompareTo(EInteger.One) > 0:
+                    exponentials++;
+                    aPowerOfASum = true;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> as a sum of terms <c>k e^(m_1 Q_1 + m_2 Q_2 + ...)</c>, where the
+        /// <c>Q_j</c> are <paramref name="exponents"/> and the <c>m_j</c> whole, or
+        /// <see langword="null"/>: an exponential of a polynomial of degree at most two, a sine or
+        /// cosine of one, and sums, products, quotients by a constant and small whole powers of those.
+        /// </summary>
+        private static List<(Entity Coefficient, int[] Multiples)>? AsExponentialsOfQuadratics(Entity expr, Entity.Variable x, List<WrittenExponent> exponents)
+        {
+            switch (expr)
+            {
+                case var constant when !constant.ContainsNode(x):
+                    return new() { (constant, new int[MostExponents]) };
+                case Powf(var @base, var exponent) when !@base.ContainsNode(x):
+                {
+                    // e^(-q), as sinh(q) writes it, is -1 times the exponent of its e^q.
+                    var (written, multiple) = exponent switch
+                    {
+                        Mulf(Number.Integer k, var inner) when k.EInteger.Abs().CompareTo(EInteger.FromInt32(MostPowerOfASumOfExponentials)) <= 0 => (inner, k.EInteger.ToInt32Checked()),
+                        Mulf(var inner, Number.Integer k) when k.EInteger.Abs().CompareTo(EInteger.FromInt32(MostPowerOfASumOfExponentials)) <= 0 => (inner, k.EInteger.ToInt32Checked()),
+                        _ => (exponent, 1)
+                    };
+                    if (TheWrittenExponent(@base, written, imaginary: false, x, exponents) is not { } index)
+                        return null;
+                    var multiples = new int[MostExponents];
+                    multiples[index] = multiple;
+                    return new() { (Number.Integer.One, multiples) };
+                }
+                // sin(q) = (e^(i q) - e^(-i q))/(2i) and cos(q) = (e^(i q) + e^(-i q))/2.
+                case Sinf(var argument):
+                    return AnImaginaryPair(-MathS.i / 2, MathS.i / 2, argument, x, exponents);
+                case Cosf(var argument):
+                    return AnImaginaryPair(Number.Rational.Create(1, 2), Number.Rational.Create(1, 2), argument, x, exponents);
+                case Sumf(var left, var right):
+                {
+                    if (AsExponentialsOfQuadratics(left, x, exponents) is not { } l || AsExponentialsOfQuadratics(right, x, exponents) is not { } r)
+                        return null;
+                    l.AddRange(r);
+                    return l.Count > MostExponentialTerms ? null : l;
+                }
+                case Minusf(var left, var right):
+                {
+                    if (AsExponentialsOfQuadratics(left, x, exponents) is not { } l || AsExponentialsOfQuadratics(right, x, exponents) is not { } r)
+                        return null;
+                    foreach (var (coefficient, multiples) in r)
+                        l.Add((-coefficient, multiples));
+                    return l.Count > MostExponentialTerms ? null : l;
+                }
+                case Mulf(var left, var right):
+                {
+                    if (AsExponentialsOfQuadratics(left, x, exponents) is not { } l || AsExponentialsOfQuadratics(right, x, exponents) is not { } r)
+                        return null;
+                    return Multiplied(l, r);
+                }
+                case Divf(var numerator, var denominator) when !denominator.ContainsNode(x):
+                {
+                    if (AsExponentialsOfQuadratics(numerator, x, exponents) is not { } n)
+                        return null;
+                    for (var i = 0; i < n.Count; i++)
+                        n[i] = (n[i].Coefficient / denominator, n[i].Multiples);
+                    return n;
+                }
+                case Powf(var inner, Number.Integer power) when power.EInteger.Sign > 0
+                    && power.EInteger.CompareTo(EInteger.FromInt32(MostPowerOfASumOfExponentials)) <= 0:
+                {
+                    if (AsExponentialsOfQuadratics(inner, x, exponents) is not { } once)
+                        return null;
+                    var result = once;
+                    for (var k = power.EInteger.ToInt32Checked(); k > 1 && result is not null; k--)
+                        result = Multiplied(result, once);
+                    return result;
+                }
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// The index of <c>Base^Written</c>, or of <c>e^(i Written)</c>, among
+        /// <paramref name="exponents"/>, read and added where it is not there yet, or
+        /// <see langword="null"/> where it is not a polynomial of degree at most two.
+        /// </summary>
+        private static int? TheWrittenExponent(Entity @base, Entity written, bool imaginary, Entity.Variable x, List<WrittenExponent> exponents)
+        {
+            for (var i = 0; i < exponents.Count; i++)
+                if (exponents[i].Imaginary == imaginary && exponents[i].Base == @base && exponents[i].Written == written)
+                    return i;
+            if (exponents.Count == MostExponents || !written.ContainsNode(x)
+                || !TreeAnalyzer.TryGetPolyQuadratic(written, x, out var a, out var b, out var c))
+                return null;
+            // A zero coefficient is left the integer zero: 0 ln(f), simplified, is 0 provided f is
+            // not 0, which is not read as zero, and a Gaussian was taken of 0 x^2.
+            Entity scale = imaginary ? MathS.i : @base == MathS.e ? Number.Integer.One : MathS.Ln(@base);
+            exponents.Add(new(@base, written, imaginary, Scaled(a, scale), Scaled(b, scale), Scaled(c, scale)));
+            return exponents.Count - 1;
+
+            static Entity Scaled(Entity coefficient, Entity scale)
+                => TreeAnalyzer.IsZero(coefficient) ? Number.Integer.Zero
+                    : scale == Number.Integer.One ? coefficient : (scale * coefficient).InnerSimplified;
+        }
+
+        /// <summary>
+        /// <c>k_+ e^(i q) + k_- e^(-i q)</c> for the <paramref name="argument"/> <c>q</c>, or
+        /// <see langword="null"/> where it is not a polynomial of degree at most two.
+        /// </summary>
+        private static List<(Entity Coefficient, int[] Multiples)>? AnImaginaryPair(Entity plus, Entity minus, Entity argument, Entity.Variable x, List<WrittenExponent> exponents)
+        {
+            if (TheWrittenExponent(MathS.e, argument, imaginary: true, x, exponents) is not { } index)
+                return null;
+            var (up, down) = (new int[MostExponents], new int[MostExponents]);
+            (up[index], down[index]) = (1, -1);
+            return new() { (plus, up), (minus, down) };
+        }
+
+        /// <summary>
+        /// The product of two sums of exponentials, with the terms of one exponent gathered, and
+        /// <see langword="null"/> past <see cref="MostExponentialTerms"/>.
+        /// </summary>
+        private static List<(Entity Coefficient, int[] Multiples)>? Multiplied(List<(Entity Coefficient, int[] Multiples)> left, List<(Entity Coefficient, int[] Multiples)> right)
+        {
+            if (left.Count * right.Count > MostExponentialTerms)
+                return null;
+            var gathered = new List<(Entity Coefficient, int[] Multiples)>();
+            foreach (var l in left)
+                foreach (var r in right)
+                {
+                    var multiples = new int[MostExponents];
+                    for (var i = 0; i < multiples.Length; i++)
+                        multiples[i] = l.Multiples[i] + r.Multiples[i];
+                    var coefficient = l.Coefficient * r.Coefficient;
+                    var at = gathered.FindIndex(term => term.Multiples.SequenceEqual(multiples));
+                    if (at < 0)
+                        gathered.Add((coefficient, multiples));
+                    else
+                        gathered[at] = (gathered[at].Coefficient + coefficient, multiples);
+                }
+            var product = new List<(Entity Coefficient, int[] Multiples)>(gathered.Count);
+            foreach (var (coefficient, multiples) in gathered)
+            {
+                var simplified = coefficient.InnerSimplified;
+                if (!TreeAnalyzer.IsZero(simplified))
+                    product.Add((simplified, multiples));
+            }
+            return product;
+        }
+
+        /// <summary>
+        /// <c>(A, B, C)</c> of the exponent <c>sum_j m_j Q_j</c>, with the zero multiples left out,
+        /// so that a term with none is decidably <c>e^0</c>.
+        /// </summary>
+        private static (Entity A, Entity B, Entity C) TheExponent(int[] multiples, List<WrittenExponent> exponents)
+        {
+            Entity a = Number.Integer.Zero, b = Number.Integer.Zero, c = Number.Integer.Zero;
+            for (var i = 0; i < exponents.Count; i++)
+            {
+                if (multiples[i] == 0)
+                    continue;
+                var (m, exponent) = (multiples[i], exponents[i]);
+                a = Plus(a, m, exponent.A);
+                b = Plus(b, m, exponent.B);
+                c = Plus(c, m, exponent.C);
+            }
+            return (a.InnerSimplified, b.InnerSimplified, c.InnerSimplified);
+
+            static Entity Plus(Entity sum, int multiple, Entity coefficient)
+            {
+                if (coefficient == Number.Integer.Zero)
+                    return sum;
+                var term = multiple == 1 ? coefficient : multiple * coefficient;
+                return sum == Number.Integer.Zero ? term : sum + term;
+            }
+        }
+
+        /// <summary>
+        /// <c>int P(x) e^(b x) dx</c> over <c>e^(b x)</c>: <c>sum_j (-1)^j P^(j)(x)/b^(j + 1)</c>, by
+        /// parts, for <c>P</c> read into <paramref name="monomials"/>, or 1 where they are absent.
+        /// </summary>
+        private static Entity APolynomialAgainstAnExponential(Dictionary<EInteger, Entity>? monomials, Entity rate, Entity.Variable x)
+        {
+            if (monomials is null)
+                return 1 / rate;
+            Entity sum = Number.Integer.Zero;
+            foreach (var monomial in monomials)
+            {
+                var power = monomial.Key.ToInt32Checked();
+                // The j-th derivative of x^k is k!/(k - j)! x^(k - j).
+                Entity falling = Number.Integer.One;
+                for (var j = 0; j <= power; j++)
+                {
+                    var term = monomial.Value * falling * MathS.Pow(x, power - j) / MathS.Pow(rate, j + 1);
+                    sum = j % 2 == 0 ? sum + term : sum - term;
+                    falling *= power - j;
+                }
+            }
+            return sum;
+        }
+
+        /// <summary>
+        /// <c>int P(x) dx</c> for <c>P</c> read into <paramref name="monomials"/>, or <c>x</c> where
+        /// they are absent.
+        /// </summary>
+        private static Entity APolynomialIntegrated(Dictionary<EInteger, Entity>? monomials, Entity.Variable x)
+        {
+            if (monomials is null)
+                return x;
+            Entity sum = Number.Integer.Zero;
+            foreach (var monomial in monomials)
+            {
+                var power = monomial.Key.ToInt32Checked() + 1;
+                sum += monomial.Value * MathS.Pow(x, power) / power;
+            }
+            return sum;
+        }
+
+        /// <summary>
         /// A polynomial times an exponential times a sine or a cosine —
         /// <c>P(x) e^(a x) cos(b x)</c> and its kin — integrated by the repeated by-parts that
         /// this shape is the textbook case for, run out here rather than through the chain.
