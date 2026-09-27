@@ -103,6 +103,19 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall a in ZZ : a^6 mod 6 = a mod 6", "False")]
         [InlineData("forall a, b in ZZ : (a + b)^5 mod 5 = (a^5 + b^5) mod 5", "True")]
         [InlineData("forall a, b in ZZ : (a + b)^4 mod 4 = (a^4 + b^4) mod 4", "False")]
+        // And for every prime, from p divides binomial(p, k) for 0 < k < p: the freshman's dream
+        // by the binomial theorem, and Fermat's little theorem by induction up and down from 1,
+        // since a^p - a changes by (a + 1)^p - a^p - 1 from each a to the next. Each fails
+        // without the primality, or with another right side.
+        [InlineData("forall p in PP : forall a, b in ZZ : (a + b)^p = a^p + b^p (mod p)", "True")]
+        [InlineData("forall p in PP : forall a, b in ZZ : (a + b)^p mod p = (a^p + b^p) mod p", "True")]
+        [InlineData("forall p in PP : forall a, b in ZZ : (a - b)^p = a^p - b^p (mod p)", "True")]
+        [InlineData("forall p in PP : forall a in ZZ : a^p mod p = a mod p", "True")]
+        [InlineData("forall p in PP : forall a in ZZ : a^p = a (mod p)", "True")]
+        [InlineData("forall p in PP : forall a in ZZ* : a^p mod p = a mod p", "True")]
+        [InlineData("forall p in ZZ+ : forall a in ZZ : a^p mod p = a mod p", "False")]
+        [InlineData("forall p in PP : forall a in ZZ : a^p mod p = (a + 1) mod p", "False")]
+        [InlineData("forall p in PP : forall a, b in ZZ : (a + b)^p = a^p + b^p + 1 (mod p)", "False")]
         [InlineData("forall x in ZZ : x^2 mod 4 < 2", "True")]
         // Example 6.5.27: 3 x^2 - 5 y^2 = 1 has no solutions, since x^2 = 2 (mod 5) has none;
         // Problem 4.11.7: x^2 - y^2 = 14 has none, by parity.
@@ -130,6 +143,17 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall n in ZZ+ : 3 divides 2^n", "False")]
         public void AQuantifiedStatementIsDecidedByResidues(string statement, string expected)
             => Assert.Equal(expected.ToEntity(), statement.ToEntity().Simplify());
+
+        [Fact]
+        public void TheFreshmansDreamIsReadOnlyUnderAPrime()
+        {
+            // True inside the statement, where the quantifiers establish that p is prime, and
+            // not decided on its own, before or after.
+            var dream = MathS.FromString("(a + b)^p = a^p + b^p (mod p)", useCache: false);
+            Assert.Equal(Entity.Boolean.True, MathS.ForAll("p", "PP", MathS.ForAll("a", "ZZ", MathS.ForAll("b", "ZZ", dream))).Simplify());
+            Assert.IsType<Congruentf>(dream.Evaled);
+            Assert.IsType<Congruentf>(dream.Simplify());
+        }
 
         [Theory]
         // Over ZZ a power has a fractional value at a negative exponent, and a base sharing a

@@ -1540,6 +1540,24 @@ Quantifiers were a parse error in 2.5.0.
 | `forall k in ZZ : forall p in PP : (0 < k and k < p) implies p divides binomial(p, k)` | `UnhandledParseException` | `True` |
 | `forall p in PP : forall k in ZZ+ : k < p implies p divides binomial(p, k)` | `UnhandledParseException` | `True` |
 
+### Fermat's little theorem and the freshman's dream, for every prime
+
+`forall p in PP : forall a in ZZ : a^p = a (mod p)` was left as written. Under a quantifier that
+establishes `p` prime, `p divides d` now holds where writing each power `(u + v)^p` in `d` as
+`u^p + v^p` leaves nothing: the binomial theorem adds only multiples of `binomial(p, k)` with
+`0 < k < p`, each a multiple of `p`. A congruence modulo a symbol, or an equation of residues, over
+a row of whole numbers holds where it holds at one member and the difference of its sides changes
+by a multiple of the modulus from each member to the next. For Fermat's little theorem that change
+is `(a + 1)^p - a^p - 1`. These are Sullivan and Mackey's Prob 8.9.25 and 8.9.26
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). Quantifiers were a parse error
+in 2.5.0.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall p in PP : forall a in ZZ : a^p = a (mod p)` | `UnhandledParseException` | `True` |
+| `forall p in PP : forall a in ZZ : a^p mod p = a mod p` | `UnhandledParseException` | `True` |
+| `forall p in PP : forall a, b in ZZ : (a + b)^p = a^p + b^p (mod p)` | `UnhandledParseException` | `True` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
