@@ -748,7 +748,7 @@ namespace AngouriMath.Functions
                     pinned = pinned.Substitute(symbol, value);
                     i++;
                 }
-                if (Agree(pinned, Integer.Zero, 1e-30) is not true)
+                if (Agree(pinned, Integer.Zero, 1e-30, new System.Lazy<PreciseEvaluation>[] { new(() => PreciseEvaluation.In(40)), new(() => PreciseEvaluation.In(80)) }) is not true)
                     return false;
             }
             return true;
@@ -1896,8 +1896,9 @@ namespace AngouriMath.Functions
         /// <summary>
         /// Whether <paramref name="left"/> and <paramref name="right"/> agree, numerically, at a
         /// few points in <paramref name="x"/> with every other symbol pinned to a fixed value.
-        /// A point where either has no value -- a pole, a cut, a condition that fails -- or where
-        /// the evaluation cannot tell is skipped, and at least two must compare. The points may
+        /// A point where either has no value -- a pole, a cut, a condition that fails, a derivative
+        /// left unevaluated -- or where the evaluation cannot tell is skipped, and at least two must
+        /// compare. The points may
         /// be the caller's, for an identity that holds on a real domain only --
         /// <c>sqrt(1 - L^2) = sech(artanh(L))</c> inside <c>(-1, 1)</c> and off by a sign outside
         /// it -- where the default set would compare where it does not hold.
@@ -1911,10 +1912,13 @@ namespace AngouriMath.Functions
         {
             (left, right) = Pinned(left, right, x);
             var compared = 0;
+            // The decimal evaluations are made once for all the points, so that the subtrees free
+            // of the point, which the substitutions share, are worked out once.
+            var inDecimals = new System.Lazy<PreciseEvaluation>[] { new(() => PreciseEvaluation.In(40)), new(() => PreciseEvaluation.In(80)) };
             foreach (var at in points ?? new[] { "0.29", "1.43", "3.17", "-0.61" })
             {
                 var point = Real.Create(EDecimal.FromString(at));
-                switch (Agree(left.Substitute(x, point), right.Substitute(x, point), 1e-9))
+                switch (Agree(left.Substitute(x, point), right.Substitute(x, point), 1e-9, inDecimals))
                 {
                     case false:
                         return false;
@@ -1929,18 +1933,18 @@ namespace AngouriMath.Functions
         /// <summary>
         /// Whether the two numbers agree to <paramref name="relativeTolerance"/> of their size, or
         /// of one where both are smaller: in double intervals, and where those cannot tell, in
-        /// decimal intervals of forty and then eighty digits; null where either has no value or
-        /// none can tell.
+        /// the decimal evaluations of <paramref name="inDecimals"/> in turn -- forty and then
+        /// eighty digits; null where either has no value or none can tell.
         /// </summary>
-        private static bool? Agree(Entity left, Entity right, double relativeTolerance)
+        private static bool? Agree(Entity left, Entity right, double relativeTolerance, System.Lazy<PreciseEvaluation>[] inDecimals)
         {
             if (IntervalEvaluation.Of(left) is { } leftInterval && IntervalEvaluation.Of(right) is { } rightInterval
                 && IntervalEvaluation.Agree(leftInterval, rightInterval, relativeTolerance) is { } inDoubles)
                 return inDoubles;
-            foreach (var digits in new[] { 40, 80 })
-                if (PreciseEvaluation.Of(left, digits) is { } leftPrecise && PreciseEvaluation.Of(right, digits) is { } rightPrecise
-                    && PreciseEvaluation.Agree(leftPrecise, rightPrecise, relativeTolerance) is { } inDecimals)
-                    return inDecimals;
+            foreach (var precise in inDecimals)
+                if (precise.Value.ValueOf(left) is { } leftPrecise && precise.Value.ValueOf(right) is { } rightPrecise
+                    && PreciseEvaluation.Agree(leftPrecise, rightPrecise, relativeTolerance) is { } decided)
+                    return decided;
             return null;
         }
     }

@@ -6,6 +6,7 @@
 //
 
 using System;
+using System.Collections.Generic;
 using PeterO.Numbers;
 using static AngouriMath.Entity;
 
@@ -71,22 +72,49 @@ namespace AngouriMath.Numerics
         private readonly PreciseComplexInterval undefined =
             new(new(EDecimal.NaN, EDecimal.NaN), new(EDecimal.NaN, EDecimal.NaN));
 
+        // Values already worked out, by node: an expression substituted at several points shares
+        // every subtree free of the point, and each of those is worked out once.
+        private readonly Dictionary<Entity, PreciseComplexInterval> known = new(ByReference.Instance);
+
+        // One set of contexts per precision, for the life of the process: the library's constant
+        // cache and its guard-digit contexts are keyed by the context instance, so contexts
+        // built afresh for every evaluation had pi and the logarithm tables recomputed each time.
+        [AngouriMath.Core.ConstantField]
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, (EContext Down, EContext Up, EContext Near)> contexts = new();
+
         private PreciseEvaluation(int digits)
         {
             this.digits = digits;
-            down = EContext.ForPrecisionAndRounding(digits, ERounding.Floor);
-            up = EContext.ForPrecisionAndRounding(digits, ERounding.Ceiling);
-            near = EContext.ForPrecisionAndRounding(digits + 10, ERounding.HalfEven);
+            (down, up, near) = contexts.GetOrAdd(digits, static d => (
+                EContext.ForPrecisionAndRounding(d, ERounding.Floor),
+                EContext.ForPrecisionAndRounding(d, ERounding.Ceiling),
+                EContext.ForPrecisionAndRounding(d + 10, ERounding.HalfEven)));
             unit = EDecimal.FromString("1E-" + (digits - 2));
             fixedPointError = EDecimal.FromString("1E-" + (digits + 5));
             least = EDecimal.FromString("1E-" + (digits + 30));
         }
 
+        /// <summary>
+        /// An evaluation in <paramref name="digits"/> digits that remembers what it has worked
+        /// out, for evaluating several expressions that share subtrees.
+        /// </summary>
+        internal static PreciseEvaluation In(int digits) => new(digits);
+
         /// <summary>The interval <paramref name="expr"/> evaluates to in <paramref name="digits"/> digits, or null.</summary>
-        internal static PreciseComplexInterval? Of(Entity expr, int digits)
+        internal static PreciseComplexInterval? Of(Entity expr, int digits) => In(digits).ValueOf(expr);
+
+        /// <summary>The interval <paramref name="expr"/> evaluates to, or null.</summary>
+        internal PreciseComplexInterval? ValueOf(Entity expr)
         {
-            var value = new PreciseEvaluation(digits).Evaluate(expr);
+            var value = Evaluate(expr);
             return value.IsFinite ? value : null;
+        }
+
+        private sealed class ByReference : IEqualityComparer<Entity>
+        {
+            [AngouriMath.Core.ConstantField] internal static readonly ByReference Instance = new();
+            public bool Equals(Entity? x, Entity? y) => ReferenceEquals(x, y);
+            public int GetHashCode(Entity obj) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
         }
 
         /// <summary>The three-way agreement of <see cref="IntervalEvaluation.Agree"/>, in decimals.</summary>
@@ -116,8 +144,20 @@ namespace AngouriMath.Numerics
 
         private PreciseInterval Multiply(PreciseInterval a, PreciseInterval b)
         {
+            // Undefined before zero: nothing times no value has no value.
+            if (!a.IsFinite || !b.IsFinite)
+                return new(EDecimal.NaN, EDecimal.NaN);
             if (a.IsZero || b.IsZero)
                 return PreciseInterval.Exactly(EDecimal.Zero);
+            // Where neither straddles zero, the ends are products of ends: two multiplications.
+            if (a.Low.Sign >= 0 && b.Low.Sign >= 0)
+                return new(a.Low.Multiply(b.Low, down), a.High.Multiply(b.High, up));
+            if (a.High.Sign <= 0 && b.High.Sign <= 0)
+                return new(a.High.Multiply(b.High, down), a.Low.Multiply(b.Low, up));
+            if (a.Low.Sign >= 0 && b.High.Sign <= 0)
+                return new(a.High.Multiply(b.Low, down), a.Low.Multiply(b.High, up));
+            if (a.High.Sign <= 0 && b.Low.Sign >= 0)
+                return new(a.Low.Multiply(b.High, down), a.High.Multiply(b.Low, up));
             var lows = new[] { a.Low.Multiply(b.Low, down), a.Low.Multiply(b.High, down), a.High.Multiply(b.Low, down), a.High.Multiply(b.High, down) };
             var highs = new[] { a.Low.Multiply(b.Low, up), a.Low.Multiply(b.High, up), a.High.Multiply(b.Low, up), a.High.Multiply(b.High, up) };
             return new(Min(lows), Max(highs));
@@ -125,13 +165,18 @@ namespace AngouriMath.Numerics
 
         private PreciseInterval Divide(PreciseInterval a, PreciseInterval b)
         {
-            if (b.ContainsZero)
+            if (!a.IsFinite || !b.IsFinite || b.ContainsZero)
                 return new(EDecimal.NaN, EDecimal.NaN);
             if (a.IsZero)
                 return PreciseInterval.Exactly(EDecimal.Zero);
-            var lows = new[] { a.Low.Divide(b.Low, down), a.Low.Divide(b.High, down), a.High.Divide(b.Low, down), a.High.Divide(b.High, down) };
-            var highs = new[] { a.Low.Divide(b.Low, up), a.Low.Divide(b.High, up), a.High.Divide(b.Low, up), a.High.Divide(b.High, up) };
-            return new(Min(lows), Max(highs));
+            // The divisor is of one sign, so the ends are quotients of ends: two divisions.
+            if (b.Low.Sign > 0)
+                return a.Low.Sign >= 0 ? new(a.Low.Divide(b.High, down), a.High.Divide(b.Low, up))
+                     : a.High.Sign <= 0 ? new(a.Low.Divide(b.Low, down), a.High.Divide(b.High, up))
+                     : new(a.Low.Divide(b.Low, down), a.High.Divide(b.Low, up));
+            return a.Low.Sign >= 0 ? new(a.High.Divide(b.High, down), a.Low.Divide(b.Low, up))
+                 : a.High.Sign <= 0 ? new(a.High.Divide(b.Low, down), a.Low.Divide(b.High, up))
+                 : new(a.High.Divide(b.High, down), a.Low.Divide(b.High, up));
         }
 
         private PreciseInterval Square(PreciseInterval a)
@@ -163,42 +208,55 @@ namespace AngouriMath.Numerics
             return new(value.Subtract(reach, down), value.Add(reach, up));
         }
 
-        // PeterO's exponential, logarithm and square root are within a unit of the value; the
-        // sine, the cosine and the inverse functions are this library's, in fixed point, and
-        // their error is absolute -- the sine's grows with the argument, whose reduction by
-        // 2 pi uses pi to the same fixed point.
+        /// <summary>
+        /// A monotone function's value over the interval: its values at the two ends, computed
+        /// with ten digits to spare, each widened by the function's own error -- a unit or two in
+        /// the last place of the working precision, relative to the value, and, for a function
+        /// computed in fixed point, <paramref name="absoluteError"/> besides.
+        /// </summary>
+        private PreciseInterval AtTheEnds(PreciseInterval a, Func<EDecimal, EDecimal> function, bool increasing, EDecimal absoluteError)
+        {
+            var atLow = function(a.Low);
+            var atHigh = a.Low.CompareTo(a.High) == 0 ? atLow : function(a.High);
+            if (!atLow.IsFinite || !atHigh.IsFinite)
+                return new(EDecimal.NaN, EDecimal.NaN);
+            var (low, high) = increasing ? (atLow, atHigh) : (atHigh, atLow);
+            var floor = EDecimal.Max(absoluteError, least);
+            return new(low.Subtract(low.Abs().Multiply(unit, up).Add(floor, up), down),
+                       high.Add(high.Abs().Multiply(unit, up).Add(floor, up), up));
+        }
+
+        // The exponential and the logarithm are this library's fixed-point series -- a few
+        // microseconds, where PeterO's are hundreds -- within a unit of the value, the
+        // logarithm's error absolute near one. The square root is PeterO's. The sine, the cosine
+        // and the inverse functions are the library's too, in fixed point, and their error is
+        // absolute: the sine's grows with the argument, whose reduction by 2 pi uses pi to the
+        // same fixed point.
 
         private PreciseInterval Exp(PreciseInterval a)
-            => AroundTheMiddle(a, x => x.Exp(near), a.High.Exp(up).Abs(), EDecimal.Zero);
+            => AtTheEnds(a, x => x.Exponential(near), increasing: true, EDecimal.Zero);
 
         private PreciseInterval Log(PreciseInterval a)
-            => a.Low.Sign > 0 ? AroundTheMiddle(a, x => x.Log(near), EDecimal.One.Divide(a.Low, up), EDecimal.Zero) : new(EDecimal.NaN, EDecimal.NaN);
+            => a.Low.Sign > 0 ? AtTheEnds(a, x => x.NaturalLogarithm(near), increasing: true, fixedPointError) : new(EDecimal.NaN, EDecimal.NaN);
 
         private PreciseInterval Sqrt(PreciseInterval a)
-            => a.Low.Sign > 0 ? AroundTheMiddle(a, x => x.Sqrt(near), EDecimal.One.Divide(a.Low.Sqrt(down).Multiply(EDecimal.FromInt32(2), down), up), EDecimal.Zero)
-             : a.IsZero ? a : new(EDecimal.NaN, EDecimal.NaN);
+            => a.Low.Sign >= 0 ? AtTheEnds(a, x => x.Sqrt(near), increasing: true, EDecimal.Zero) : new(EDecimal.NaN, EDecimal.NaN);
 
         private PreciseInterval Sin(PreciseInterval a) => AroundTheMiddle(a, x => x.Sin(near), EDecimal.One, ReducedArgumentError(a));
         private PreciseInterval Cos(PreciseInterval a) => AroundTheMiddle(a, x => x.Cos(near), EDecimal.One, ReducedArgumentError(a));
-        private PreciseInterval Atan(PreciseInterval a) => AroundTheMiddle(a, x => x.Arctan(near), EDecimal.One, fixedPointError);
+        private PreciseInterval Atan(PreciseInterval a) => AtTheEnds(a, x => x.Arctan(near), increasing: true, fixedPointError);
 
         private EDecimal ReducedArgumentError(PreciseInterval a)
             => fixedPointError.Multiply(EDecimal.Max(EDecimal.One, a.Magnitude), up);
 
         private PreciseInterval Asin(PreciseInterval a)
-            => InsideTheUnitInterval(a) is { } slope ? AroundTheMiddle(a, x => x.Arcsin(near), slope, fixedPointError) : new(EDecimal.NaN, EDecimal.NaN);
+            => WithinTheUnitInterval(a) ? AtTheEnds(a, x => x.Arcsin(near), increasing: true, fixedPointError) : new(EDecimal.NaN, EDecimal.NaN);
 
         private PreciseInterval Acos(PreciseInterval a)
-            => InsideTheUnitInterval(a) is { } slope ? AroundTheMiddle(a, x => x.Acos(near), slope, fixedPointError) : new(EDecimal.NaN, EDecimal.NaN);
+            => WithinTheUnitInterval(a) ? AtTheEnds(a, x => x.Acos(near), increasing: false, fixedPointError) : new(EDecimal.NaN, EDecimal.NaN);
 
-        /// <summary>The slope bound of the arcsine and arccosine, <c>1/sqrt(1 - x^2)</c>, strictly inside <c>(-1, 1)</c>.</summary>
-        private EDecimal? InsideTheUnitInterval(PreciseInterval a)
-        {
-            var largest = a.Magnitude;
-            if (largest.CompareTo(EDecimal.One) >= 0)
-                return null;
-            return EDecimal.One.Divide(EDecimal.One.Subtract(largest.Multiply(largest, up), down).Sqrt(down), up);
-        }
+        private static bool WithinTheUnitInterval(PreciseInterval a)
+            => a.Low.CompareTo(EDecimal.FromInt32(-1)) >= 0 && a.High.CompareTo(EDecimal.One) <= 0;
 
         private static EDecimal Min(EDecimal[] values)
         {
@@ -339,6 +397,15 @@ namespace AngouriMath.Numerics
 
         private PreciseComplexInterval Evaluate(Entity expr)
         {
+            if (known.TryGetValue(expr, out var value))
+                return value;
+            value = EvaluateNode(expr);
+            known[expr] = value;
+            return value;
+        }
+
+        private PreciseComplexInterval EvaluateNode(Entity expr)
+        {
             switch (expr)
             {
                 case Number.Rational rational:
@@ -357,13 +424,13 @@ namespace AngouriMath.Numerics
                 case Variable variable when variable == MathS.e:
                     return Real(E());
                 case Sumf(var left, var right):
-                    return Add(Evaluate(left), Evaluate(right));
+                    return Evaluate(left) is { IsFinite: true } lSumf ? Add(lSumf, Evaluate(right)) : undefined;
                 case Minusf(var left, var right):
-                    return Subtract(Evaluate(left), Evaluate(right));
+                    return Evaluate(left) is { IsFinite: true } lMinusf ? Subtract(lMinusf, Evaluate(right)) : undefined;
                 case Mulf(var left, var right):
-                    return Multiply(Evaluate(left), Evaluate(right));
+                    return Evaluate(left) is { IsFinite: true } lMulf ? Multiply(lMulf, Evaluate(right)) : undefined;
                 case Divf(var left, var right):
-                    return Divide(Evaluate(left), Evaluate(right));
+                    return Evaluate(left) is { IsFinite: true } lDivf ? Divide(lDivf, Evaluate(right)) : undefined;
                 case Powf(var @base, Number.Integer power) when power.EInteger.CanFitInInt32():
                     return Pow(Evaluate(@base), power.EInteger.ToInt32Checked());
                 case Powf(var @base, var exponent):

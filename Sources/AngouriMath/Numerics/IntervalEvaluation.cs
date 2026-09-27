@@ -50,6 +50,10 @@ namespace AngouriMath.Numerics
 
         public static Interval operator *(Interval a, Interval b)
         {
+            // Unbounded before zero: nothing times no value has no value, and an interval that
+            // is not finite came from a divisor that may be zero.
+            if (!a.IsFinite || !b.IsFinite)
+                return new(double.NaN, double.NaN);
             if (a.IsZero || b.IsZero)
                 return Exactly(0);
             var p1 = a.Low * b.Low;
@@ -62,6 +66,8 @@ namespace AngouriMath.Numerics
         /// <summary>The quotient, or an interval that is not finite where the divisor may be zero.</summary>
         public static Interval operator /(Interval a, Interval b)
         {
+            if (double.IsNaN(a.Low) || double.IsNaN(a.High) || double.IsNaN(b.Low) || double.IsNaN(b.High))
+                return new(double.NaN, double.NaN);
             if (a.IsZero && !b.ContainsZero)
                 return Exactly(0);
             if (b.ContainsZero)
