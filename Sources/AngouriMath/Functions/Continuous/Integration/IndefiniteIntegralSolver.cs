@@ -8692,6 +8692,166 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of x times an exponential of a quadratic in a logarithm, <c>x^p G^(Q(L))</c> with
+        /// <c>L</c> = <c>ln(c x^r)</c> and <c>Q</c> a quadratic with a square term, onto the
+        /// Gaussian. With <c>t = L</c> and <c>L' = s/x</c>, <c>dx = x dt/s</c>, and
+        /// <c>x^(p + 1) e^(-(p + 1) L/s)</c> is a constant, so the integral is that constant over
+        /// <c>s</c> times the integral of <c>e^(Q(t) ln G + (p + 1) t/s)</c>: the Gaussian with a
+        /// linear term, which the table answers. A polynomial beside it is summed a power at a time,
+        /// and the logarithm of a power of a linear is the same question under <c>u = d + e x</c>.
+        /// Rubi's 2.3, <c>F^(f (a + b ln(c (d + e x)^n))^2) (g + h x)^m</c> and
+        /// <c>F^(f (a + b ln(c (d + e x)^n)^2)) (g + h x)^m</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </summary>
+        /// <remarks>
+        /// The constant is written <c>x^(p + 1) e^(-(p + 1) L/s)</c>, as
+        /// <see cref="SolveAPowerTimesAHalfOddPowerOfTheLogarithm"/> writes it and as Rubi does,
+        /// rather than with <c>ln(c x^r)</c> split into <c>ln c + r ln x</c>, which holds only
+        /// where <c>c</c> is positive. A quadratic without its square term is a power of
+        /// <c>c x^r</c>, which the rules for powers answer.
+        /// </remarks>
+        internal static Entity? SolveAPowerTimesAnExponentialOfAQuadraticInALogarithm(Entity expr, Entity.Variable x)
+        {
+            // The exponential and its logarithm first, which allocates nothing where there is
+            // none; and the logarithm of a linear before any factor is read, since beside it a
+            // constant multiple of that linear, (d g + e g x)^m, is a factor only in u.
+            if (expr is not (Mulf or Divf or Powf) || AnExponentialOfALogarithm(expr, x) is not { } theExponential)
+                return null;
+            if (TheLogarithmOfAPowerOfX(theExponential.Exponent, x) is not { } logarithm)
+                return LinearUnderALogarithm(theExponential.Exponent, x) is { } linear ? UnderTheLinearUnderTheLogarithm(expr, x, linear) : null;
+            Entity? p = null;
+            Entity constant = Number.Integer.One;
+            Entity? @base = null, exponent = null;
+            Dictionary<EInteger, Entity>? polynomial = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (factor == x && p is null)
+                    p = underneath ? Number.Integer.MinusOne : Number.Integer.One;
+                else if (factor is Powf(var b, var e) && b == x && !e.ContainsNode(x) && p is null)
+                    p = underneath ? -e : e;
+                else if (factor is Powf(Mulf(var left, var right), var scaledExponent) && (left == x) != (right == x)
+                         && !(left == x ? right : left).ContainsNode(x) && !scaledExponent.ContainsNode(x) && p is null)
+                {
+                    p = underneath ? -scaledExponent : scaledExponent;
+                    var scalePower = MathS.Pow(left == x ? right : left, scaledExponent);
+                    constant = underneath ? constant / scalePower : constant * scalePower;
+                }
+                else if (exponent is null && factor is Powf(var g, var power) && !g.ContainsNode(x) && power.ContainsNode(x))
+                    (@base, exponent) = (g, underneath ? -power : power);
+                else if (polynomial is null && !underneath && TreeAnalyzer.TryGetPolynomial(factor, x, out var monomials)
+                         && monomials.Count > 1 && monomials.Keys.All(degree => degree.Sign >= 0 && degree.CompareTo(EInteger.FromInt32(12)) <= 0))
+                    polynomial = monomials;
+                else
+                    return null;
+            }
+            if (@base is null || exponent is null || !exponent.ContainsNode(logarithm))
+                return null;
+            var t = Variable.CreateUnique(expr, "t");
+            var inT = exponent.Replace(node => node == logarithm ? t : node);
+            if (inT.ContainsNode(x) || !TreeAnalyzer.TryGetPolyQuadratic(inT, t, out var square, out _, out _) || TreeAnalyzer.IsZero(square))
+                return null;
+            var rate = Functions.PartialFractions.Bare((logarithm.Differentiate(x) * x).Simplify());
+            if (rate.ContainsNode(x) || rate.Evaled is Number.Complex { IsZero: true } || rate.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            var exponentInT = @base == MathS.e ? inT : inT * MathS.Ln(@base);
+            p = (p ?? Number.Integer.Zero).InnerSimplified;
+            if (polynomial is null)
+                return ExponentialOfAQuadraticInALogarithmTerm(p, exponentInT, t, logarithm, rate, x) is { } single ? (constant * single).InnerSimplified : null;
+            Entity sum = Number.Integer.Zero;
+            foreach (var monomial in polynomial)
+            {
+                if (ExponentialOfAQuadraticInALogarithmTerm((p + Number.Integer.Create(monomial.Key)).InnerSimplified, exponentInT, t, logarithm, rate, x) is not { } term)
+                    return null;
+                sum += monomial.Value * term;
+            }
+            return (constant * sum).InnerSimplified;
+        }
+
+        /// <summary>
+        /// The integral of <c>x^q e^(E(L))</c>, where <paramref name="exponentInT"/> is <c>E</c> in
+        /// <paramref name="t"/> standing for <paramref name="logarithm"/> and <c>L' = s/x</c>: see
+        /// <see cref="SolveAPowerTimesAnExponentialOfAQuadraticInALogarithm"/>.
+        /// </summary>
+        private static Entity? ExponentialOfAQuadraticInALogarithmTerm(Entity q, Entity exponentInT, Entity.Variable t, Entity logarithm, Entity rate, Entity.Variable x)
+        {
+            var qPlusOne = (q + 1).InnerSimplified;
+            var atMinusOne = qPlusOne.Evaled is Number.Complex { IsZero: true };
+            var inT = MathS.Pow(MathS.e, atMinusOne ? exponentInT : exponentInT + qPlusOne / rate * t);
+            if (IntegralPatterns.TryStandardIntegrals(inT, t) is not { } answerInT)
+                return null;
+            // x^(q + 1) e^(-(q + 1) ln(x)) is 1 wherever ln(x) is real, so for ln(x) itself it is left out.
+            Entity theConstant = atMinusOne || logarithm == MathS.Ln(x)
+                ? Number.Integer.One
+                : MathS.Pow(x, qPlusOne) * MathS.Pow(MathS.e, -qPlusOne * logarithm / rate);
+            return theConstant / rate * answerInT.Substitute(t, logarithm);
+        }
+
+        /// <summary>
+        /// A factor of <paramref name="expr"/> that is an exponential of <paramref name="x"/> with a
+        /// logarithm in its exponent, read through products and quotients, or <see langword="null"/>.
+        /// </summary>
+        private static Powf? AnExponentialOfALogarithm(Entity expr, Entity.Variable x) => expr switch
+        {
+            Mulf(var left, var right) => AnExponentialOfALogarithm(left, x) ?? AnExponentialOfALogarithm(right, x),
+            Divf(var numerator, var denominator) => AnExponentialOfALogarithm(numerator, x) ?? AnExponentialOfALogarithm(denominator, x),
+            Powf(var @base, var exponent) power when !@base.ContainsNode(x) && exponent.ContainsNode(x)
+                && exponent.Nodes.Any(node => node is Logf) => power,
+            _ => null
+        };
+
+        /// <summary>
+        /// The one natural logarithm of <paramref name="x"/> in <paramref name="expr"/>, where its
+        /// argument is a constant times a power of <paramref name="x"/>, or <see langword="null"/>.
+        /// </summary>
+        private static Entity? TheLogarithmOfAPowerOfX(Entity expr, Entity.Variable x)
+        {
+            Entity? logarithm = null;
+            foreach (var node in expr.Nodes)
+                if (node is Logf(var @base, var argument) && @base == MathS.e && argument.ContainsNode(x))
+                {
+                    if (logarithm is not null && logarithm != node)
+                        return null;
+                    logarithm = node;
+                }
+            return logarithm is Logf(_, var antilogarithm) && IsAProductOfPowersOfTheVariable(antilogarithm, x) ? logarithm : null;
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> under <c>u = d + e x</c>, with <paramref name="linear"/> the
+        /// <c>d + e x</c> under the logarithm, answered by
+        /// <see cref="SolveAPowerTimesAnExponentialOfAQuadraticInALogarithm"/> in <c>u</c> and
+        /// written back in <c>x</c>. A constant multiple of the linear, as <c>(d g + e g x)^m</c>
+        /// writes one, is read as <c>g u</c>, where substituting for <c>x</c> would leave a sum
+        /// that is a multiple of <c>u</c> only once simplified.
+        /// </summary>
+        private static Entity? UnderTheLinearUnderTheLogarithm(Entity expr, Entity.Variable x, Entity linear)
+        {
+            if (!TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out var intercept) || slope is null || intercept is null)
+                return null;
+            var u = Variable.CreateUnique(expr, "u");
+            var inU = (expr.Replace(node =>
+            {
+                if (node == linear)
+                    return u;
+                if (node is not (Sumf or Minusf) || !TreeAnalyzer.TryGetPolyLinear(node, x, out var nodeSlope, out var nodeIntercept)
+                    || TreeAnalyzer.IsZero(nodeSlope) || TreeAnalyzer.IsZero(nodeIntercept))
+                    return node;
+                // Bare: simplified, k g/k is g provided k is not 0, which k is, the linear being one.
+                return Functions.PartialFractions.Bare((nodeIntercept * slope - nodeSlope * intercept).Simplify()).Evaled is Number.Complex { IsZero: true }
+                    ? Functions.PartialFractions.Bare((nodeSlope / slope).Simplify()) * u
+                    : node;
+            }).Substitute(x, (u - intercept) / slope) / slope).InnerSimplified;
+            if (inU.ContainsNode(x) || LinearUnderALogarithm(inU, u) is not null)
+                return null;
+            return SolveAPowerTimesAnExponentialOfAQuadraticInALogarithm(inU, u)?.Substitute(u, linear).InnerSimplified;
+        }
+
+        /// <summary>
         /// Whether <paramref name="expr"/> is <c>A + B ln(c x^r)</c> with <c>A</c>, <c>B</c>,
         /// <c>c</c> and <c>r</c> free of <paramref name="x"/> and the logarithm present: one
         /// logarithm of <paramref name="x"/> in it, the expression linear in that logarithm,
