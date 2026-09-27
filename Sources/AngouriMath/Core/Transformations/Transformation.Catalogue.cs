@@ -958,7 +958,17 @@ namespace AngouriMath.Core.Transformations
             public override Soundness Soundness => Soundness.SoundUnderAssumptions;
 
             protected override Entity? ApplyCore(Entity input)
+                => MathS.Settings.DowncastingEnabled.Value ? Integrate(input) : IntegrateExactly(input);
+
+            private Entity? Integrate(Entity input)
                 => Functions.Algebra.Integration.ComputeIndefiniteIntegral(input.InnerSimplified, variable)?.InnerSimplified;
+
+            /// <summary>See <see cref="ReadExactly"/>.</summary>
+            private Entity? IntegrateExactly(Entity input)
+            {
+                using var _ = MathS.Settings.DowncastingEnabled.Set(true);
+                return Integrate(ReadExactly(input));
+            }
         }
 
         private sealed class LimitTransformation : Transformation
@@ -984,10 +994,48 @@ namespace AngouriMath.Core.Transformations
             // limit stays a question rather than a wrong answer to one.
             // https://github.com/asc-community/AngouriMath/issues/1186
             protected override Entity? ApplyCore(Entity input)
-                => LimitFunctional.ComputeLimit(input, variable, destination, side) is { } limit
+                => MathS.Settings.DowncastingEnabled.Value ? Limit(input, destination) : LimitExactly(input);
+
+            private Entity? Limit(Entity input, Entity at)
+                => LimitFunctional.ComputeLimit(input, variable, at, side) is { } limit
                    && (LimitFunctional.ReadingAnApproach || !LimitFunctional.IsAnIndeterminateForm(limit))
                     ? limit
                     : null;
+
+            /// <summary>See <see cref="ReadExactly"/>.</summary>
+            private Entity? LimitExactly(Entity input)
+            {
+                using var _ = MathS.Settings.DowncastingEnabled.Set(true);
+                return Limit(ReadExactly(input), ReadExactly(destination));
+            }
         }
+
+        /// <summary>
+        /// <paramref name="expr"/> with every decimal number read as the exact rational it is, for
+        /// a computation that runs with the downcasting on whatever the caller's setting.
+        /// </summary>
+        /// <remarks>
+        /// With the downcasting off, a whole number parses as a decimal, so <c>x^2</c> is not a
+        /// whole power to the integrator, and the zero test reads no literal zero as zero:
+        /// integration gave <c>NaN</c> for <c>(a + b arcsin(c x))/sqrt(d - c^2 d x^2)</c> and
+        /// limits gave it for <c>sin(c x)/x</c> at 0, where the default setting answers. Both are
+        /// computed as with the downcasting on, on the exact values the decimals hold, so that
+        /// the answer does not depend on the setting. The cost is that decimals come back as
+        /// rationals: the integral of <c>0.1 x</c> is <c>x^2/20</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1490
+        /// </remarks>
+        private static Entity ReadExactly(Entity expr)
+            => expr.Replace(static node => node switch
+            {
+                Number.Rational => node,
+                Number.Real real => Exactly(real),
+                Number.Complex { RealPart: var re, ImaginaryPart: var im } => Number.Complex.Create(Exactly(re), Exactly(im)),
+                _ => node
+            });
+
+        private static Number.Real Exactly(Number.Real value)
+            => value is Number.Rational || !value.EDecimal.IsFinite
+                ? value
+                : Number.Rational.Create(PeterO.Numbers.ERational.FromEDecimal(value.EDecimal));
     }
 }

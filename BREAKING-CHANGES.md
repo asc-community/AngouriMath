@@ -1660,6 +1660,25 @@ arctangent, arccotangent or arccosecant whose argument diverges, which is now an
 | `integral(1/(2 + cos(x)), x, 0, pi)` | `integral(1 / (2 + cos(x)), x, 0, pi)` | `sqrt(3) * pi / 3` |
 | `limitleft(arctan(tan(x / 2)), x, pi)` | `limitleft(arctan(tan(x / 2)), x, pi)` | `pi / 2` |
 
+### With the downcasting off, integration and limits compute on exact numbers
+
+With `DowncastingEnabled` off, `1/(1 + c^2*x^2)` integrated to `NaN + C` and `limit(sin(c*x)/x, x, 0)`
+was `NaN`, where the default setting answers `arctan(c x)/c` and `c`. The zero test compared
+against the literal `0`, and with the downcasting off no zero was equal to it. A whole number
+parsed with the setting off was a decimal, so `x^2` was not a whole power to the integrator.
+Integration and limits now compute as with the downcasting on, whatever the caller's setting, on
+the input's decimals read as the exact rationals they are. With it on, nothing changes. With it
+off, a decimal comes back as the rational it holds: `0.1 x` integrates to `1/10 * x ^ 2 / 2 + C`,
+where it was `0.1 * x ^ 2 / 2 + C`
+([#1490](https://github.com/asc-community/AngouriMath/issues/1490)).
+
+| Input, with the downcasting off | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(1 + c^2*x^2)".Integrate("x")` | `NaN + C` | the antiderivative |
+| `"(a + b*arcsin(c*x))/sqrt(d - c^2*d*x^2)".Integrate("x")` | `integral((a + b * arcsin(c * x)) / (d - c ^ 2 * d * x ^ 2) ^ (1/2), x)` | the antiderivative |
+| `limit(sin(c*x)/x, x, 0)` | `NaN` | `c` |
+| `limit((1 - cos(c*x))/x^2, x, 0)` | `NaN` | `c ^ 2 / 2` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
