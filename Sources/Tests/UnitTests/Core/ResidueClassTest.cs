@@ -96,6 +96,14 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall a, b in ZZ : (a = 1 (mod 3) and b = 2 (mod 3)) implies a + b = 0 (mod 3)", "True")]
         [InlineData("forall n in ZZ : n^2 = n (mod 2)", "True")]
         [InlineData("forall x in ZZ : 4 divides x^2 implies 2 divides x", "True")]
+        // An equation or a comparison between residues written with mod repeats with the moduli:
+        // Fermat's little theorem at 7 (Prob 8.9.26), and its failure at 6, where 2^6 mod 6 is 4;
+        // the freshman's dream modulo 5 (Prob 8.9.25), and its failure modulo 4.
+        [InlineData("forall a in ZZ : a^7 mod 7 = a mod 7", "True")]
+        [InlineData("forall a in ZZ : a^6 mod 6 = a mod 6", "False")]
+        [InlineData("forall a, b in ZZ : (a + b)^5 mod 5 = (a^5 + b^5) mod 5", "True")]
+        [InlineData("forall a, b in ZZ : (a + b)^4 mod 4 = (a^4 + b^4) mod 4", "False")]
+        [InlineData("forall x in ZZ : x^2 mod 4 < 2", "True")]
         // Example 6.5.27: 3 x^2 - 5 y^2 = 1 has no solutions, since x^2 = 2 (mod 5) has none;
         // Problem 4.11.7: x^2 - y^2 = 14 has none, by parity.
         [InlineData("exists x, y in ZZ : 3 x^2 - 5 y^2 = 1", "False")]

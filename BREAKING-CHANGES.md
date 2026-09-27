@@ -1501,6 +1501,28 @@ that came out in the expanded square before now come out in `x^2 + a/b`.
 Rubi's 1.2.2.2, 1.2.2.4, 1.2.2.7 and 1.2.3.2, the 574 problems that count with a perfect square
 written with symbols: 388 to 409, no row lost.
 
+### A quantifier over the whole numbers reads the bounds in its hypothesis, and residues written with `mod`
+
+`forall k in ZZ : (0 < k and k < 7) implies 7 divides binomial(7, k)` was left as written, because no
+route read a bound on the name out of an implication's hypothesis. The conjuncts of the hypothesis
+that mention only the name, and that the solver reads, now cut the set down. Where the cut is
+listed, or is the whole numbers from a least one, the statement is decided over it, with the other
+conjuncts kept. `exists` and `exists!` read their conjunction the same way. And
+`forall a in ZZ : a^7 mod 7 = a mod 7` was left as written while `a^7 = a (mod 7)` was decided. An
+equation or an order comparison between residues `p mod m` of polynomials with whole coefficients
+repeats with the moduli, since `mod` is the floored remainder, so the residues decide it too.
+These are Sullivan and Mackey's Prob 8.9.24–26 at a given prime
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). Quantifiers were a parse error
+in 2.5.0.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall k in ZZ : (0 < k and k < 7) implies 7 divides binomial(7, k)` | `UnhandledParseException` | `True` |
+| `exists! k in ZZ : (0 < k and k < 7) and 3 divides k and 2 divides k` | `UnhandledParseException` | `True` |
+| `forall n in ZZ : n >= 5 implies 2^n > n^2` | `UnhandledParseException` | `True` |
+| `forall a in ZZ : a^7 mod 7 = a mod 7` | `UnhandledParseException` | `True` |
+| `forall a, b in ZZ : (a + b)^5 mod 5 = (a^5 + b^5) mod 5` | `UnhandledParseException` | `True` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
