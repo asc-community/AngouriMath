@@ -1597,6 +1597,27 @@ undeclared variable.
 | `"erfc(1)".Simplify()` | `erfc` | `erfc(1)`, and `0.157299207050285…` evaluated |
 | `"erf(x)".Differentiate("x")` | `UnrecognizedFunctionParseException` | `2 / sqrt(pi) * e ^ (-x ^ 2)` |
 
+### A definite integral is the limit at a bound where its antiderivative is undefined
+
+`integral(x * e^(-x), x, 0, +oo)` was `NaN`, this library's way of saying a value does not
+exist. It exists, and it is `1`. A definite integral substituted each bound into the
+antiderivative, and `-(x + 1) e^(-x)` at `+oo` is `-oo * 0`; `x ln(x) - x` at `0` is `0 * -oo`.
+At a bound where the substitution is `NaN`, the value is now the antiderivative's limit there,
+taken from inside the range: from the left at `+oo`, from the right at `-oo`, and at a finite
+bound from the side the other bound is on. Nothing the substitution answered changes, and an
+antiderivative with no limit at the bound still gives `NaN`, as `-cos(x)` does at `+oo`
+([#1507](https://github.com/asc-community/AngouriMath/issues/1507)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `integral(x * e^(-x), x, 0, +oo)` | `NaN` | `1` |
+| `integral(e^(-x) * sin(x), x, 0, +oo)` | `NaN` | `1/2` |
+| `integral(x^3 * e^(-x^2), x, 0, +oo)` | `integral(e ^ (-x ^ 2) * x ^ 3, x, 0, +oo)` | `1/2` |
+| `integral(ln(x), x, 0, 1)` | `NaN` | `-1` |
+| `integral(x * ln(x), x, 0, 1)` | `NaN` | `-1/4` |
+| `integral(1/x^2, x, 0, 1)` | `NaN` | `+oo` |
+| `integral(sin(x), x, 0, +oo)` | `NaN` | `NaN` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
