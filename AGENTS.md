@@ -710,17 +710,26 @@ what kind of change it is, not only when:
   ([#1468](https://github.com/asc-community/AngouriMath/issues/1468)); its description says so.
 - **Epics** — the agentic goals, #718, #1409 and their kind — are Goals used as parents, which is
   what an epic is here (the type, not a milestone; the `Epics` milestone was retired when the
-  types came in, [#1384](https://github.com/asc-community/AngouriMath/pull/1384)). They carry no
-  milestone: they spawn sub-issues, and it is the sub-issues that carry version milestones; the
-  epic itself stays open across releases and lists what each one delivered.
+  types came in, [#1384](https://github.com/asc-community/AngouriMath/pull/1384)). A Goal is on
+  the milestone its last planned piece is aimed at, and each sub-issue or PR is on its own; the
+  Goal stays open across releases, lists what each one delivered, and moves when its last piece
+  does ([#1498](https://github.com/asc-community/AngouriMath/issues/1498#issuecomment-5857987112)).
+  #746, the roadmap itself, has no last piece to aim at and carries none.
 - A proposal without `Accepted` has no milestone: scheduling it would decide it. What marks an
   issue **untriaged** is the absence of a type, not of a milestone.
 
-Assign the milestone when filing. When a PR merges, check its issue's milestone still describes
-where the change lands — a fix that turned out breaking moves to the major, with a
-`BREAKING-CHANGES.md` entry. Release clearance is the milestone read through: every open item on
-it either ships in this release or is moved with a sentence saying why, and the release notes are
-written from the closed ones.
+An issue you open has its type and its milestone from the moment it is filed, which the reply
+that triages someone else's issue does for theirs. `gh issue create --milestone` sets the one;
+the type needs a second call, since `gh issue create` has no flag for it:
+
+```
+gh api -X PATCH repos/asc-community/AngouriMath/issues/<n> -f type=Bug   # Bug, Feature, Maintenance or Goal
+```
+
+When a PR merges, check its issue's milestone still describes where the change lands — a fix
+that turned out breaking moves to the major, with a `BREAKING-CHANGES.md` entry. Release
+clearance is the milestone read through: every open item on it either ships in this release or is
+moved with a sentence saying why, and the release notes are written from the closed ones.
 
 ### When two agents need the same code
 
