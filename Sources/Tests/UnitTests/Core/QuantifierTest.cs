@@ -82,6 +82,15 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall x in ZZ : (1 <= x and x <= 3) implies 2 divides x", "False")]
         [InlineData("exists x in ZZ : x^2 = 4 and 1 <= x and x <= 3", "True")]
         [InlineData("forall x in ZZ : x^2 = 4 implies 1 <= x and x <= 3", "False")]
+        // The members that satisfy the conditions on the name the solver reads, listed or from a
+        // least one, with the other conditions kept: Prob 8.9.24 at p = 7, where every C(7, k) is
+        // a multiple of 7, and at 6, where C(6, 2) = 15 is not; Ex 5.3.2 from its threshold.
+        [InlineData("forall k in ZZ : (0 < k and k < 7) implies 7 divides binomial(7, k)", "True")]
+        [InlineData("forall k in ZZ : (0 < k and k < 6) implies 6 divides binomial(6, k)", "False")]
+        [InlineData("exists k in ZZ : (0 < k and k < 6) and not 6 divides binomial(6, k)", "True")]
+        [InlineData("exists! k in ZZ : (0 < k and k < 7) and 3 divides k and 2 divides k", "True")]
+        [InlineData("forall k in ZZ : (0 < k and k < 7 and 2 divides k) implies 3 divides binomial(7, k) - 1", "False")]
+        [InlineData("forall n in ZZ : n >= 5 implies 2^n > n^2", "True")]
         // The set may be an interval, a set builder, or a special set with no member of its own.
         [InlineData("forall x in (0; 1) : x^2 < 1", "True")]
         [InlineData("forall x in [0; 1] : x^2 < 1", "False")]
