@@ -88,6 +88,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("derivative(apply(y, x), x) + 2*x*apply(y, x) - x")]
         [InlineData("derivative(apply(y, x), x) - apply(y, x) - e^x")]
         [InlineData("derivative(apply(y, x), x) + apply(y, x) - sin(x)")]
+        [InlineData("derivative(apply(y, x), x) + apply(y, x) - e^(x^2)")]
         public void WithARightHandSide(string equation) => Satisfies(equation);
 
         /// <summary>
@@ -125,8 +126,9 @@ namespace AngouriMath.Tests.Calculus
         /// <summary>
         /// What it declines. The first four are not linear in the unknown and its derivative, so
         /// the method does not apply at all; the last is linear and declined because
-        /// <c>int e^(x^2) dx</c> has no closed form, which is a fact about the integral rather
-        /// than about this solver.
+        /// <c>int e^(x^3 + x) dx</c> has no closed form, which is a fact about the integral rather
+        /// than about this solver. With <c>e^(x^2)</c> in its place it is answered, through
+        /// <c>erfi</c>.
         /// </summary>
         /// <remarks>
         /// Declining is the right answer to each. The alternative — reading a nonlinear equation
@@ -139,7 +141,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("derivative(apply(y, x), x) + apply(y, x)^2")]
         [InlineData("sin(derivative(apply(y, x), x)) - 1")]
         [InlineData("derivative(apply(y, x), x)^2 - apply(y, x)")]
-        [InlineData("derivative(apply(y, x), x) + apply(y, x) - e^(x^2)")]
+        [InlineData("derivative(apply(y, x), x) + apply(y, x) - e^(x^3)")]
         public void WhatItDeclines(string equation)
             => Assert.Null(MathS.SolveOde(equation.ToEntity(), "y", "x"));
 

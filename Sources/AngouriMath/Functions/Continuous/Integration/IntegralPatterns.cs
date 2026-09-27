@@ -58,6 +58,9 @@ namespace AngouriMath.Functions.Algebra
             Entity.Cotanf(var arg) => arg,
             Entity.Absf(var arg) => arg,
             Entity.Signumf(var arg) => arg,
+            Entity.Erff(var arg) => arg,
+            Entity.Erfcf(var arg) => arg,
+            Entity.Erfif(var arg) => arg,
             Entity.Arcsinf(var arg) => arg,
             Entity.Arccosf(var arg) => arg,
             Entity.Arctanf(var arg) => arg,
@@ -65,6 +68,111 @@ namespace AngouriMath.Functions.Algebra
             Entity.Logf(var @base, var arg) when !@base.ContainsNode(x) => arg,
             Entity.Powf(var @base, var power) when !@base.ContainsNode(x) => power,
             _ => null
+        };
+
+        /// <summary>
+        /// <c>int F^(a x^2 + b x + c) dx</c> for a non-zero <c>a</c>: the square completed is
+        /// <c>a (x + b/(2a))^2 + c - b^2/(4a)</c>, so the integral is <c>F^(c - b^2/(4a))</c> times
+        /// the Gaussian of <c>A = a ln F</c> in <c>u = x + b/(2a)</c>.
+        /// </summary>
+        private static Entity Gaussian(Entity @base, Entity a, Entity b, Entity c, Entity.Variable x)
+        {
+            // Built without the terms a zero linear part would contribute: b/(2a) is 0 only
+            // provided a is not zero, and that condition, stated twice over, was all a symbolic
+            // F^(a x^2) got for it. The answer is for the generic case, as F^(a x)/(a ln F) is.
+            if (TreeAnalyzer.IsZero(b))
+                return MathS.Pow(@base, c) * UnitGaussian(a * MathS.Ln(@base), x);
+            return MathS.Pow(@base, c - b * b / (4 * a)) * UnitGaussian(a * MathS.Ln(@base), x + b / (2 * a));
+        }
+
+        /// <summary>
+        /// <c>int e^(A u^2) du</c> for a non-zero <c>A</c>: <c>sqrt(pi)/(2 sqrt(-A)) erf(sqrt(-A) u)</c>,
+        /// or with <c>erfi</c> and the real root where <c>A</c> is decidably positive.
+        /// </summary>
+        /// <remarks>
+        /// The sign is read from <c>Evaled</c>, as the integrator's other sign tests are; they move
+        /// together to the interval evaluation of https://github.com/asc-community/AngouriMath/pull/1497.
+        /// Finiteness is asked as well, because <see cref="Entity.Number.Real.IsPositive"/> holds
+        /// for <c>NaN</c> and <c>+oo</c>.
+        /// </remarks>
+        private static Entity UnitGaussian(Entity A, Entity u)
+            => A.Evaled is Entity.Number.Real { EDecimal.IsFinite: true, IsPositive: true }
+                ? MathS.Sqrt(MathS.pi) / (2 * MathS.Sqrt(A)) * MathS.Erfi(MathS.Sqrt(A) * u)
+                : MathS.Sqrt(MathS.pi) / (2 * MathS.Sqrt(-A)) * MathS.Erf(MathS.Sqrt(-A) * u);
+
+        /// <summary>
+        /// <c>int k x^m F^(a x^2 + c) dx</c> for an even whole <c>m</c>, not zero, and a non-zero
+        /// <c>a</c>: the Gaussian moments. With <c>A = a ln F</c> and <c>I_m</c> the integral of
+        /// <c>x^m e^(A x^2)</c>, parts give <c>I_m = x^(m - 1) e^(A x^2)/(2A) - (m - 1)/(2A) I_(m - 2)</c>,
+        /// and read the other way <c>I_m = x^(m + 1) e^(A x^2)/(m + 1) - 2A/(m + 1) I_(m + 2)</c> for a
+        /// negative <c>m</c>, each two powers nearer the Gaussian <c>I_0</c>. An odd <c>m</c> ends at
+        /// <c>I_1 = e^(A x^2)/(2A)</c>, which is elementary and answered elsewhere, or at <c>I_(-1)</c>,
+        /// which is the exponential integral, so it is not taken here.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </summary>
+        private static Entity? GaussianMoment(Entity expr, Entity.Variable x)
+        {
+            // Asked of every integrand that reaches the table, so a type test comes first, and
+            // nothing here captures a local: a closure is allocated on entry, before any return.
+            if (expr is not (Entity.Mulf or Entity.Divf))
+                return null;
+            var (numerator, denominator) = expr is Entity.Divf(var n, var d) ? (n, d) : (expr, (Entity)Entity.Number.Integer.One);
+            Entity coefficient = Entity.Number.Integer.One;
+            int? power = null;
+            Entity.Powf? gaussian = null;
+            foreach (var factor in Entity.Mulf.LinearChildren(numerator))
+                if (!TakeMomentFactor(factor, inverted: false, x, ref coefficient, ref power, ref gaussian))
+                    return null;
+            foreach (var factor in Entity.Mulf.LinearChildren(denominator))
+                if (!TakeMomentFactor(factor, inverted: true, x, ref coefficient, ref power, ref gaussian))
+                    return null;
+            if (power is not { } m || m == 0 || m % 2 != 0 || System.Math.Abs(m) > 32 || gaussian is null
+                || !TreeAnalyzer.TryGetPolyQuadratic(gaussian.Exponent, x, out var a, out var b, out var c)
+                || TreeAnalyzer.IsZero(a) || !TreeAnalyzer.IsZero(b))
+                return null;
+            var bell = MathS.Pow(gaussian.Base, a * MathS.Sqr(x));
+            return coefficient * MathS.Pow(gaussian.Base, c) * Moment(m, a * MathS.Ln(gaussian.Base), bell, x);
+        }
+
+        /// <summary>
+        /// Reads one factor of a Gaussian moment into the constant coefficient, the power of
+        /// <paramref name="x"/> or the exponential, and says whether it was one of the three.
+        /// </summary>
+        private static bool TakeMomentFactor(Entity factor, bool inverted, Entity.Variable x,
+            ref Entity coefficient, ref int? power, ref Entity.Powf? gaussian)
+        {
+            if (!factor.ContainsNode(x))
+            {
+                coefficient = inverted ? coefficient / factor : coefficient * factor;
+                return true;
+            }
+            if (power is null && factor == x)
+            {
+                power = inverted ? -1 : 1;
+                return true;
+            }
+            if (power is null && factor is Entity.Powf(var b, Entity.Number.Integer n) && b == x && n.EInteger.CanFitInInt32())
+            {
+                power = inverted ? -n.EInteger.ToInt32Checked() : n.EInteger.ToInt32Checked();
+                return true;
+            }
+            if (!inverted && gaussian is null && factor is Entity.Powf(var @base, _) exponential && !@base.ContainsNode(x))
+            {
+                gaussian = exponential;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// <c>I_k</c>, the integral of <c>x^k e^(A x^2)</c> for an even <c>k</c>, where
+        /// <paramref name="bell"/> is that exponential as the integrand writes it.
+        /// </summary>
+        private static Entity Moment(int k, Entity A, Entity bell, Entity.Variable x) => k switch
+        {
+            0 => UnitGaussian(A, x),
+            > 0 => MathS.Pow(x, k - 1) * bell / (2 * A) + ((1 - k) / (2 * A)).InnerSimplified * Moment(k - 2, A, bell, x),
+            _ => MathS.Pow(x, k + 1) * bell / (k + 1) + (-2 * A / (k + 1)).InnerSimplified * Moment(k + 2, A, bell, x),
         };
 
         internal static Entity? TryStandardIntegrals(Entity expr, Entity.Variable x) => expr switch
@@ -125,6 +233,34 @@ namespace AngouriMath.Functions.Algebra
             Entity.Powf(var @base, var power) when
                 !@base.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(power, x, out var a, out _) =>
                     MathS.Pow(@base, power) / (a * MathS.Ln(@base)),
+
+            // The Gaussian: an exponential of a quadratic is an error function of the square it
+            // completes. With A u^2 the exponent's square part in u = x + b/(2a), the integral
+            // of e^(A u^2) is sqrt(pi)/(2 sqrt(-A)) erf(sqrt(-A) u), which differentiates back for
+            // every A that is not zero, whichever root is taken. Where A is decidably positive it
+            // is written with erfi and the real root instead, so that e^(x^2) is sqrt(pi)/2 erfi(x)
+            // rather than an error function of i x. https://github.com/asc-community/AngouriMath/issues/1501
+            Entity.Powf(var @base, var power) when
+                !@base.ContainsNode(x) && TreeAnalyzer.TryGetPolyQuadratic(power, x, out var a, out var b, out var c)
+                && !TreeAnalyzer.IsZero(a) =>
+                    Gaussian(@base, a, b, c, x),
+
+            // And the Gaussian beside an even power of x, to either side of it.
+            _ when GaussianMoment(expr, x) is { } moment => moment,
+
+            // By parts against 1, the way the inverse trigonometric functions are:
+            // int erf(u) = u erf(u) + e^(-u^2)/sqrt(pi), and the same for the other two.
+            Entity.Erff(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Erf(arg) + MathS.Pow(MathS.e, -MathS.Sqr(arg)) / MathS.Sqrt(MathS.pi)) / a,
+
+            Entity.Erfcf(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Erfc(arg) - MathS.Pow(MathS.e, -MathS.Sqr(arg)) / MathS.Sqrt(MathS.pi)) / a,
+
+            Entity.Erfif(var arg) when
+                TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
+                    (arg * MathS.Erfi(arg) - MathS.Pow(MathS.e, MathS.Sqr(arg)) / MathS.Sqrt(MathS.pi)) / a,
 
             Entity.Absf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) => // ∫ |ax + b| dx = sgn(ax + b) * (ax + b)^2 / (2a)

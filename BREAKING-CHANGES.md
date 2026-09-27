@@ -1618,6 +1618,24 @@ antiderivative with no limit at the bound still gives `NaN`, as `-cos(x)` does a
 | `integral(1/x^2, x, 0, 1)` | `NaN` | `+oo` |
 | `integral(sin(x), x, 0, +oo)` | `NaN` | `NaN` |
 
+### The Gaussian and the error functions are integrated
+
+`e^(-x^2)` was left unintegrated, and its antiderivative is `sqrt(pi)/2 erf(x)`. An exponential
+of a quadratic is now integrated to an error function of the square it completes, written with
+`erfi` and a real root where the square's coefficient is decidably positive. Beside an even power
+of `x`, on either side of 0, it is integrated by parts down to that, and `erf`, `erfc` and `erfi`
+themselves by parts against 1. A symbolic exponent is answered for the generic case, as
+`F^(a x)/(a ln F)` already was ([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(-x^2)".Integrate("x")` | `integral(e ^ (-x ^ 2), x)` | `sqrt(pi) / 2 * erf(x) + C` |
+| `"e^(x^2)".Integrate("x")` | `integral(e ^ x ^ 2, x)` | `sqrt(pi) / 2 * erfi(x) + C` |
+| `"x^2*e^(-x^2)".Integrate("x")` | `integral(x ^ 2 * e ^ (-x ^ 2), x)` | `x * e ^ (-x ^ 2) / (-2) + 1/2 * sqrt(pi) / 2 * erf(x) + C` |
+| `"f^(a+b*x^2)".Integrate("x")` | `integral(f ^ (a + b * x ^ 2), x)` | `f ^ a * sqrt(pi) / (2 * sqrt(-b * ln(f))) * erf(sqrt(-b * ln(f)) * x) + C` |
+| `"erf(x)".Integrate("x")` | `UnrecognizedFunctionParseException` | `x * erf(x) + e ^ (-x ^ 2) / sqrt(pi) + C` |
+| `integral(e^(-x^2), x, -oo, +oo)` | `integral(e ^ (-x ^ 2), x, -oo, +oo)` | `sqrt(pi)` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

@@ -784,17 +784,19 @@ namespace AngouriMath.Extensions
         /// An integrated expression. It might remain the same or be transformed into nodes with no integrals.
         /// </returns>
         /// <example>
-        /// The constant of integration is carried as the variable <c>C</c>; an integral that
-        /// has no elementary antiderivative comes back as the node itself, which is how this
-        /// says it could not settle the question:
+        /// The constant of integration is carried as the variable <c>C</c>; an integral with no
+        /// antiderivative written in the library's functions comes back as the node itself,
+        /// which is how this says it could not settle the question:
         /// <code>
         /// Console.WriteLine("1 / x".Integrate("x"));
         /// Console.WriteLine("e ^ (x ^ 2)".Integrate("x"));
+        /// Console.WriteLine("x ^ x".Integrate("x"));
         /// </code>
         /// Prints
         /// <code>
         /// ln(x) + C
-        /// integral(e ^ x ^ 2, x)
+        /// sqrt(pi) / 2 * erfi(x) + C
+        /// integral(x ^ x, x)
         /// </code>
         /// </example>
         public static Entity Integrate(this string str, Variable x)

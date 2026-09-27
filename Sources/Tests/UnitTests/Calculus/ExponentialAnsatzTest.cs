@@ -28,8 +28,10 @@ namespace AngouriMath.Tests.Calculus
     /// </para>
     /// <para>
     /// Every answer is differentiated back and compared to the integrand numerically; the
-    /// non-elementary neighbours — <c>e^x/x</c>, <c>e^(x^2)</c> — are pinned as declined, since
-    /// answering them would be a wrong answer and not a missing one.
+    /// non-elementary neighbours — <c>e^x/x</c>, <c>e^(x^3)</c> — are pinned as declined, since
+    /// an elementary answer to them would be a wrong answer and not a missing one.
+    /// (<c>e^(x^2)</c> is answered, with <c>erfi</c>, since
+    /// https://github.com/asc-community/AngouriMath/issues/1501.)
     /// </para>
     /// </remarks>
     [Trait("Area", "Calculus")]
@@ -181,7 +183,7 @@ namespace AngouriMath.Tests.Calculus
         /// </summary>
         [Theory]
         [InlineData("e^x/x")]
-        [InlineData("e^(x^2)")]
+        [InlineData("e^(x^3)")]
         [InlineData("e^x/(1 + x)")]
         [InlineData("e^(1/x)")]
         public void ANonElementaryOneIsDeclined(string integrand)
