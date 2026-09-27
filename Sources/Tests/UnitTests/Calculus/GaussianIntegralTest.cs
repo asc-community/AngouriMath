@@ -128,5 +128,17 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("e^(-(x - 1)^2)", "sqrt(pi)")]
         public void TheGaussianOverTheWholeLine(string integrand, string value)
             => Assert.Equal(value.ToEntity().Simplify(), MathS.Integral(integrand.ToEntity(), "x", "-oo".ToEntity(), "+oo".ToEntity()).Simplify());
+
+        /// <summary>
+        /// And over the half line, where the moments' elementary terms are <c>x^k e^(-x^2)</c> at
+        /// <c>+oo</c>, which is a limit rather than a value to substitute
+        /// (https://github.com/asc-community/AngouriMath/issues/1507).
+        /// </summary>
+        [Theory]
+        [InlineData("e^(-x^2)", "sqrt(pi) / 2")]
+        [InlineData("x^2*e^(-x^2)", "sqrt(pi) / 4")]
+        [InlineData("x^4*e^(-x^2)", "3 * sqrt(pi) / 8")]
+        public void TheGaussianOverTheHalfLine(string integrand, string value)
+            => Assert.Equal(value.ToEntity().Simplify(), MathS.Integral(integrand.ToEntity(), "x", "0".ToEntity(), "+oo".ToEntity()).Simplify());
     }
 }
