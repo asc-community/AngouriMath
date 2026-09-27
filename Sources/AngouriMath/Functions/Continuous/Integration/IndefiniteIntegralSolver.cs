@@ -8537,6 +8537,161 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of x times a half-odd power of a logarithm, <c>x^p F^n</c> with <c>F</c> =
+        /// <c>ln x</c> or <c>A + B ln(c x^r)</c> and <c>2n</c> odd, onto the Gaussian's moments.
+        /// With <c>t = sqrt(F)</c> and <c>F' = s/x</c>, <c>dx = 2 x t dt/s</c>, and
+        /// <c>x^(p + 1) e^(-(p + 1) F/s)</c> is a constant, so the integral is that constant times
+        /// <c>2/s</c> times the integral of <c>t^(2n + 1) e^((p + 1) t^2/s)</c>: an even moment of
+        /// the Gaussian, which the table answers. At <c>p = -1</c> it is
+        /// <c>F^(n + 1)/(s (n + 1))</c>. Rubi's 3.1.2, <c>(d x)^m (a + b ln(c x^n))^p</c> for a
+        /// half-odd <c>p</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </summary>
+        /// <remarks>
+        /// The constant is written <c>x^(p + 1) e^(-(p + 1) F/s)</c>, as Rubi writes it, rather
+        /// than with <c>ln(c x^r)</c> split into <c>ln c + r ln x</c>, which holds only where
+        /// <c>c</c> is positive. The logarithm to the right of a whole power of it is
+        /// <see cref="SolveAPowerTimesAPowerOfTheLogarithm"/>'s.
+        /// </remarks>
+        internal static Entity? SolveAPowerTimesAHalfOddPowerOfTheLogarithm(Entity expr, Entity.Variable x)
+        {
+            Entity? p = null;
+            Number.Rational? n = null;
+            Entity constant = Number.Integer.One;
+            Entity? logarithm = null;
+            Dictionary<EInteger, Entity>? polynomial = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (factor == x && p is null)
+                    p = underneath ? Number.Integer.MinusOne : Number.Integer.One;
+                else if (factor is Powf(var @base, var exponent) && @base == x && !exponent.ContainsNode(x) && p is null)
+                    p = underneath ? -exponent : exponent;
+                else if (factor is Powf(Mulf(var scale, var scaled), var scaledExponent) && scaled == x && !scale.ContainsNode(x) && !scaledExponent.ContainsNode(x) && p is null)
+                {
+                    p = underneath ? -scaledExponent : scaledExponent;
+                    var scalePower = MathS.Pow(scale, scaledExponent);
+                    constant = underneath ? constant / scalePower : constant * scalePower;
+                }
+                else if (n is null && factor is Powf(var f, Number.Rational half) && half.ERational.Denominator.Equals(EInteger.FromInt32(2)))
+                {
+                    if (f == MathS.Ln(x) || IsAffineInALogarithmOfAPowerOfX(f, x))
+                        (logarithm, n) = (f, underneath ? Number.Rational.Create(-half.ERational) : half);
+                    // The logarithm of a power of a linear, Rubi's 3.3: the same question under
+                    // u = d + e x. Declined, it was integrated by parts against the half-odd
+                    // power's own antiderivative, which took (f + g x) (a + b ln(c (d + e x)^n))^(3/2)
+                    // 37 s to give up.
+                    else if (LinearUnderALogarithm(f, x) is { } linear)
+                        return ByTheLinearUnderTheLogarithm(expr, x, linear);
+                    else
+                        return null;
+                }
+                // A polynomial beside it, which is how a linear outside the logarithm arrives once
+                // the linear inside it has been substituted: summed a power at a time.
+                else if (polynomial is null && !underneath && TreeAnalyzer.TryGetPolynomial(factor, x, out var monomials)
+                         && monomials.Count > 1 && monomials.Keys.All(power => power.Sign >= 0 && power.CompareTo(EInteger.FromInt32(12)) <= 0))
+                    polynomial = monomials;
+                else
+                    return null;
+            }
+            if (logarithm is null || n is null)
+                return null;
+            p = (p ?? Number.Integer.Zero).InnerSimplified;
+            if (p.Evaled is Number.Complex and not Number.Real)
+                return null;
+            Entity slopeOfF = Number.Integer.One;
+            if (logarithm != MathS.Ln(x))
+            {
+                slopeOfF = Functions.PartialFractions.Bare((logarithm.Differentiate(x) * x).Simplify());
+                if (slopeOfF.ContainsNode(x) || slopeOfF.Evaled is Number.Complex { IsZero: true })
+                    return null;
+            }
+            if (polynomial is null)
+                return HalfOddLogarithmicTerm(p, logarithm, n, slopeOfF, x) is { } single ? (constant * single).InnerSimplified : null;
+            Entity sum = Number.Integer.Zero;
+            foreach (var monomial in polynomial)
+            {
+                if (HalfOddLogarithmicTerm((p + Number.Integer.Create(monomial.Key)).InnerSimplified, logarithm, n, slopeOfF, x) is not { } term)
+                    return null;
+                sum += monomial.Value * term;
+            }
+            return (constant * sum).InnerSimplified;
+        }
+
+        /// <summary>
+        /// The linear <c>d + e x</c>, with <c>d</c> not zero, whose powers and constant multiples
+        /// make up the argument of the one logarithm in <paramref name="expr"/>, or
+        /// <see langword="null"/>.
+        /// </summary>
+        private static Entity? LinearUnderALogarithm(Entity expr, Entity.Variable x)
+        {
+            Entity? argument = null;
+            foreach (var node in expr.Nodes)
+                if (node is Logf(var @base, var antilogarithm) && @base == MathS.e && antilogarithm.ContainsNode(x))
+                {
+                    if (argument is not null && argument != antilogarithm)
+                        return null;
+                    argument = antilogarithm;
+                }
+            if (argument is null)
+                return null;
+            foreach (var node in argument.Nodes)
+                if (node is Sumf or Minusf && TreeAnalyzer.TryGetPolyLinear(node, x, out var slope, out var intercept)
+                    && !TreeAnalyzer.IsZero(slope) && !TreeAnalyzer.IsZero(intercept))
+                {
+                    var placeholder = Variable.CreateUnique(argument, "u_lin");
+                    var inThePlaceholder = argument.Replace(child => child == node ? placeholder : child);
+                    return !inThePlaceholder.ContainsNode(x) && IsAProductOfPowersOfTheVariable(inThePlaceholder, placeholder) ? node : null;
+                }
+            return null;
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> under <c>u = d + e x</c>, with <paramref name="linear"/> the
+        /// <c>d + e x</c> under its logarithm, answered as a power or a polynomial of <c>u</c>
+        /// beside a half-odd power of <c>A + B ln(c u^r)</c> and written back in <c>x</c>.
+        /// </summary>
+        private static Entity? ByTheLinearUnderTheLogarithm(Entity expr, Entity.Variable x, Entity linear)
+        {
+            if (!TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out var intercept) || slope is null || intercept is null)
+                return null;
+            var u = Variable.CreateUnique(expr, "u");
+            var inU = (expr.Replace(node => node == linear ? u : node).Substitute(x, (u - intercept) / slope) / slope).InnerSimplified;
+            if (inU.ContainsNode(x) || LinearUnderALogarithm(inU, u) is not null)
+                return null;
+            return SolveAPowerTimesAHalfOddPowerOfTheLogarithm(inU, u)?.Substitute(u, linear).InnerSimplified;
+        }
+
+        /// <summary>
+        /// The integral of <c>x^q F^n</c> for a half-odd <c>n</c> and <c>F' = s/x</c>: see
+        /// <see cref="SolveAPowerTimesAHalfOddPowerOfTheLogarithm"/>.
+        /// </summary>
+        private static Entity? HalfOddLogarithmicTerm(Entity q, Entity logarithm, Number.Rational n, Entity slopeOfF, Entity.Variable x)
+        {
+            var qPlusOne = (q + 1).InnerSimplified;
+            if (qPlusOne.Evaled is Number.Complex { IsZero: true })
+                return MathS.Pow(logarithm, n + 1) / ((n + 1) * slopeOfF);
+            // t^(2n + 1) e^((q + 1) t^2/s) in a variable of its own, for the table's moments.
+            var t = Variable.CreateUnique(logarithm, "t");
+            var power = (2 * n.ERational + ERational.One).ToEInteger();
+            if (!power.CanFitInInt32() || power.Abs().CompareTo(EInteger.FromInt32(32)) > 0)
+                return null;
+            var gaussian = MathS.Pow(MathS.e, (qPlusOne / slopeOfF).InnerSimplified * MathS.Sqr(t));
+            var inT = power.IsZero ? gaussian : MathS.Pow(t, Number.Integer.Create(power)) * gaussian;
+            if (IntegralPatterns.TryStandardIntegrals(inT, t) is not { } answerInT)
+                return null;
+            // x^(q + 1) e^(-(q + 1) ln(x)) is 1 wherever ln(x) is real, so for ln(x) itself it is left out.
+            Entity theConstant = logarithm == MathS.Ln(x)
+                ? Number.Integer.One
+                : MathS.Pow(x, qPlusOne) * MathS.Pow(MathS.e, -qPlusOne * logarithm / slopeOfF);
+            return 2 / slopeOfF * theConstant * answerInT.Substitute(t, MathS.Sqrt(logarithm));
+        }
+
+        /// <summary>
         /// Whether <paramref name="expr"/> is <c>A + B ln(c x^r)</c> with <c>A</c>, <c>B</c>,
         /// <c>c</c> and <c>r</c> free of <paramref name="x"/> and the logarithm present: one
         /// logarithm of <paramref name="x"/> in it, the expression linear in that logarithm,
