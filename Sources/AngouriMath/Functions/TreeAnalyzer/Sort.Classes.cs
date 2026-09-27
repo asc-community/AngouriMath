@@ -232,6 +232,24 @@ namespace AngouriMath
                 => Choice(level, "sgnabs_", "sgn_", "sgn_");
         }
 
+        public partial record Erff
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "erf_", "erf_", "erf_");
+        }
+
+        public partial record Erfcf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "erf_", "erfc_", "erfc_");
+        }
+
+        public partial record Erfif
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "erf_", "erfi_", "erfi_");
+        }
+
         public partial record Absf
         {
             private protected override string SortHashName(SortLevel level)

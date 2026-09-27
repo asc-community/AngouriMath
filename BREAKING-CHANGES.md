@@ -1578,6 +1578,25 @@ has no zeros, so `x! = 0` is still `{ }`, and so is `arcsin(x) = 5`.
 | `"phi(x) = 4".Solve("x")` | `{ }` | `{ x : phi(x) = 4 }` |
 | `"binomial(x, 2) = 3".Solve("x")` | `UnhandledParseException` | `{ x : binomial(x, 2) = 3 }` |
 
+### `erf`, `erfc` and `erfi` are functions
+
+**Addition, and two silent misreadings fixed.** The error function `erf(z) = 2/sqrt(pi) int_0^z
+e^(-t^2) dt`, its complement `erfc(z) = 1 - erf(z)` and the imaginary error function
+`erfi(z) = -i erf(i z)` are nodes (`MathS.Erf`, `MathS.Erfc`, `MathS.Erfi`), the first of #1501's
+special functions. Each is differentiated, printed in LaTeX as `\operatorname{erf}` and so on, and
+evaluated to the working precision anywhere in the complex plane (`Entity.Number.Erf`, `Erfc`,
+`Erfi`). An equation in one of them is left unsolved rather than answered with no roots. `erf`
+was refused by name, but `erfc` and `erfi` were not, so each was read as a product with an
+undeclared variable.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"erf(x)"` | `UnrecognizedFunctionParseException` | `erf(x)` |
+| `"erfc(x)"` | `erfc * x` | `erfc(x)` |
+| `"erfi(x)"` | `erfi * x` | `erfi(x)` |
+| `"erfc(1)".Simplify()` | `erfc` | `erfc(1)`, and `0.157299207050285…` evaluated |
+| `"erf(x)".Differentiate("x")` | `UnrecognizedFunctionParseException` | `2 / sqrt(pi) * e ^ (-x ^ 2)` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

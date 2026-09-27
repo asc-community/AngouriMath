@@ -27,10 +27,10 @@ namespace AngouriMath.Tests.Convenience
     public sealed class MissingFunctionNamesRefusedTest
     {
         // floor, ceil, ceiling, round, min, max, gcd and lcm were all on this list until they
-        // were implemented: https://github.com/asc-community/AngouriMath/issues/809
+        // were implemented: https://github.com/asc-community/AngouriMath/issues/809, and erf
+        // until https://github.com/asc-community/AngouriMath/issues/1501.
         [Theory]
         [InlineData("trunc(x)")]
-        [InlineData("erf(x)")]
         [InlineData("conjugate(x)")]
         public void ANameTheLibraryDoesNotHaveIsRefused(string written) =>
             Assert.Throws<UnrecognizedFunctionParseException>(() => written.ToEntity());
@@ -41,7 +41,6 @@ namespace AngouriMath.Tests.Convenience
         /// </summary>
         [Theory]
         [InlineData("trunc(x)", "trunc")]
-        [InlineData("erf(x)", "erf")]
         [InlineData("conjugate(x)", "conjugate")]
         public void TheRefusalNamesTheFunction(string written, string name) =>
             Assert.Contains(name,
@@ -54,9 +53,9 @@ namespace AngouriMath.Tests.Convenience
         /// absence was invisible or cryptic according to how the caller happened to write it.
         /// </summary>
         [Theory]
-        [InlineData("erf(x)")]
-        [InlineData("erf(x, y)")]
-        [InlineData("erf(x, y, z)")]
+        [InlineData("conjugate(x)")]
+        [InlineData("conjugate(x, y)")]
+        [InlineData("conjugate(x, y, z)")]
         [InlineData("trunc(x)")]
         [InlineData("trunc(x, y)")]
         public void TheArgumentCountDoesNotDecideWhetherItIsReported(string written) =>
@@ -69,6 +68,7 @@ namespace AngouriMath.Tests.Convenience
         [Theory]
         [InlineData("floor(x, y)", "floor")]
         [InlineData("ceil(x, y)", "ceil")]
+        [InlineData("erf(x, y)", "erf")]
         public void AnImplementedNameWithTheWrongArgumentCountSaysThat(string written, string name)
             => Assert.Contains(name,
                 Assert.Throws<FunctionArgumentCountException>(() => written.ToEntity()).Message);

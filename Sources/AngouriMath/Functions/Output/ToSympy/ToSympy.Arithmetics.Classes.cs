@@ -82,6 +82,24 @@ namespace AngouriMath
                 => $@"sympy.sign({Argument.ToSymPy()})";
         }
 
+        public partial record Erff
+        {
+            internal override string ToSymPy()
+                => $@"sympy.erf({Argument.ToSymPy()})";
+        }
+
+        public partial record Erfcf
+        {
+            internal override string ToSymPy()
+                => $@"sympy.erfc({Argument.ToSymPy()})";
+        }
+
+        public partial record Erfif
+        {
+            internal override string ToSymPy()
+                => $@"sympy.erfi({Argument.ToSymPy()})";
+        }
+
         public partial record Absf
         {
             internal override string ToSymPy()

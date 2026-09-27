@@ -1367,6 +1367,31 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Binomial(Entity n, Entity k) => new Binomialf(n, k);
 
+        /// <summary>The error function, <c>erf(z) = 2/sqrt(pi) int_0^z e^(-t^2) dt</c></summary>
+        /// <param name="a">The argument, any complex number</param>
+        /// <returns>The <see cref="Entity.Erff"/> node</returns>
+        /// <remarks>https://github.com/asc-community/AngouriMath/issues/1501</remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Erf(Entity a) => new Erff(a);
+
+        /// <summary>The complementary error function, <c>erfc(z) = 1 - erf(z)</c></summary>
+        /// <param name="a">The argument, any complex number</param>
+        /// <returns>The <see cref="Entity.Erfcf"/> node</returns>
+        /// <remarks>https://github.com/asc-community/AngouriMath/issues/1501</remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Erfc(Entity a) => new Erfcf(a);
+
+        /// <summary>The imaginary error function, <c>erfi(z) = -i erf(i z)</c></summary>
+        /// <param name="a">The argument, any complex number</param>
+        /// <returns>The <see cref="Entity.Erfif"/> node</returns>
+        /// <remarks>
+        /// On the real line <c>erfi(x) = 2/sqrt(pi) int_0^x e^(t^2) dt</c>, so it is what
+        /// <c>int e^(x^2) dx</c> is in closed form.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Erfi(Entity a) => new Erfif(a);
+
         /// <summary>Boolean negation
         /// <a href="https://en.wikipedia.org/wiki/Negation">Wikipedia</a></summary>
         /// <param name="a">Argument node of which Negation function will be taken</param>

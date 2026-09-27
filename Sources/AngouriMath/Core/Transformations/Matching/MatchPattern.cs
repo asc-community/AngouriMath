@@ -471,6 +471,9 @@ namespace AngouriMath.Core.Transformations.Matching
             // Other unary functions.
             [typeof(Entity.Absf)] = (1, static c => new Entity.Absf(c[0])),
             [typeof(Entity.Signumf)] = (1, static c => new Entity.Signumf(c[0])),
+            [typeof(Entity.Erff)] = (1, static c => new Entity.Erff(c[0])),
+            [typeof(Entity.Erfcf)] = (1, static c => new Entity.Erfcf(c[0])),
+            [typeof(Entity.Erfif)] = (1, static c => new Entity.Erfif(c[0])),
             [typeof(Entity.Floorf)] = (1, static c => new Entity.Floorf(c[0])),
             [typeof(Entity.Ceilf)] = (1, static c => new Entity.Ceilf(c[0])),
             [typeof(Entity.Roundf)] = (1, static c => new Entity.Roundf(c[0])),

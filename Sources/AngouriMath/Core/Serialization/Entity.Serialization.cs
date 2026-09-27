@@ -119,6 +119,9 @@ namespace AngouriMath
             [EntityJsonConverter] partial record Unionf;
         }
         [EntityJsonConverter] partial record Signumf;
+        [EntityJsonConverter] partial record Erff;
+        [EntityJsonConverter] partial record Erfcf;
+        [EntityJsonConverter] partial record Erfif;
         [EntityJsonConverter] partial record Sinf;
         [EntityJsonConverter] partial record Statement;
         [EntityJsonConverter] partial record Sumf;

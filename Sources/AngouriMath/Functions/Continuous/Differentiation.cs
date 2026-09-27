@@ -249,6 +249,31 @@ namespace AngouriMath
                 Argument.Cos() * Argument.InnerDifferentiate(variable);
         }
 
+        partial record Erff
+        {
+            // erf(a)' = 2/sqrt(pi) e^(-a^2) a', from its definition as an integral.
+            // https://github.com/asc-community/AngouriMath/issues/1501
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                2 / MathS.Sqrt(MathS.pi) * MathS.Pow(MathS.e, -MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
+        }
+
+        partial record Erfcf
+        {
+            // erfc(a)' = -2/sqrt(pi) e^(-a^2) a'
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                -2 / MathS.Sqrt(MathS.pi) * MathS.Pow(MathS.e, -MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
+        }
+
+        partial record Erfif
+        {
+            // erfi(a)' = 2/sqrt(pi) e^(a^2) a'
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                2 / MathS.Sqrt(MathS.pi) * MathS.Pow(MathS.e, MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
+        }
+
         partial record Cosf
         {
             // cos(a)' = -sin(a) * a'

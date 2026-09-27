@@ -275,6 +275,14 @@ or the odd indices (`sum(binomial(n, 2 l), l, 0, floor(n/2))` is `2^(n - 1)` for
 identities of chapter 8 of Sullivan and Mackey's *An Introduction to Proofs*, so that
 `forall n in ZZ+ : sum(k binomial(n, k), k, 0, n) = n 2^(n - 1)` is `True`.
 
+**Error functions** — `erf(z)` `erfc(z)` `erfi(z)`. The error function
+`2/sqrt(pi) int_0^z e^(-t^2) dt`, its complement `1 - erf(z)`, and the imaginary error function
+`-i erf(i z)`, which on the real line is `2/sqrt(pi) int_0^x e^(t^2) dt`. Each is entire, is
+evaluated to the working precision anywhere in the complex plane, and is differentiated from its
+definition: the derivative of `erf(x)` is `2 / sqrt(pi) * e ^ (-x ^ 2)`. `erf(0)` is `0`, `erfc(0)`
+is `1`, and `erf(+oo)` is `1`. An equation in one of them is left as the set of `x` for which it
+holds, since the library writes none of their inverses.
+
 **Calculus** — `derivative(expr, var, order)`, `integral(expr, var)`,
 `integral(expr, var, from, to)`, `limit(expr, var, dest)`, `limitleft(...)`, `limitright(...)`;
 `max(expr, var in set)` and `min` for the extremum of an expression over a set, `argmax` and
@@ -384,7 +392,7 @@ of them: `ZZ unite QQ` is `QQ`, `BB intersect ZZ` is `{}`, `ZZ* \ ZZ+` is `{ 0 }
 `{ x in ZZ : x < 0 }`, `ZZ+ \ PP` is `{ x in ZZ+ : not x in PP }` and `QQ \ ZZ` is
 `{ x in QQ : not x in ZZ }`. The tokens take the sign: `ZZ*2` no longer reads as `ZZ * 2`.
 
-**Refused by name** — `trunc` `erf` `conjugate`. AngouriMath has none of these, and each is
+**Refused by name** — `trunc` `conjugate`. AngouriMath has none of these, and each is
 what some other CAS calls a function, so a caller reaches for it. Left alone they would be read as
 products under the rule above and answer silently and wrongly; they raise a parse error naming the
 function instead. `re` and `im` are the same case and are *not* refused, being short enough to be

@@ -158,6 +158,27 @@ namespace AngouriMath
                 => $@"\operatorname{{sgn}}\left({Argument.Latexize()}\right)";
         }
 
+        partial record Erff
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\operatorname{{erf}}\left({Argument.Latexize()}\right)";
+        }
+
+        partial record Erfcf
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\operatorname{{erfc}}\left({Argument.Latexize()}\right)";
+        }
+
+        partial record Erfif
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\operatorname{{erfi}}\left({Argument.Latexize()}\right)";
+        }
+
         partial record Absf
         {
             /// <inheritdoc/>
