@@ -196,12 +196,13 @@ namespace AngouriMath.Tests.Convenience
 
         /// <summary>
         /// x mod a = value has one solution per period, so answering it means introducing an
-        /// integer parameter the way the trigonometric inversions do. Until that is written, no
-        /// solutions is the honest answer, and a wrong one would be worse. Pinned so that
-        /// whoever writes it sees this change.
+        /// integer parameter the way the trigonometric inversions do. Until that is written the
+        /// equation is left unsolved, as the set of x for which it holds. This asserted the
+        /// empty set, which claims there is no such x, and 4 is one. Pinned so that whoever
+        /// writes the inversion sees this change.
         /// </summary>
         [Fact]
         public void SolvingIsNotClaimed() =>
-            Assert.Empty(("x mod 3".ToEntity() - 1).SolveEquation("x").DirectChildren);
+            Assert.IsType<Entity.Set.ConditionalSet>(("x mod 3".ToEntity() - 1).SolveEquation("x"));
     }
 }

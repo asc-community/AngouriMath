@@ -88,6 +88,21 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <param name="x">Variable to solve over</param>
         internal static Set Solve(Entity expr, Variable x, bool compensateSolving = false)
         {
+            // An inversion that could not write its preimage leaves this equation unsolved, as
+            // the set of x for which it holds. At this level and no further out, so the roots
+            // found beside it stay: (x - 1) x! = 0 is { 1 } and the x with x! = 0.
+            try
+            {
+                return SolveInverting(expr, x, compensateSolving);
+            }
+            catch (CannotInvertException)
+            {
+                return new ConditionalSet(x, (compensateSolving ? expr : expr.InnerSimplified).Equalizes(0));
+            }
+        }
+
+        private static Set SolveInverting(Entity expr, Variable x, bool compensateSolving)
+        {
             if (!compensateSolving) expr = expr.InnerSimplified; // don't simplify away the 0 on the right hand side of the subtraction
             if (expr == x)
                 return new Entity[] { 0 }.ToSet();

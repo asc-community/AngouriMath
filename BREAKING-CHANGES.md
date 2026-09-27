@@ -1558,6 +1558,26 @@ in 2.5.0.
 | `forall p in PP : forall a in ZZ : a^p mod p = a mod p` | `UnhandledParseException` | `True` |
 | `forall p in PP : forall a, b in ZZ : (a + b)^p = a^p + b^p (mod p)` | `UnhandledParseException` | `True` |
 
+### An equation the solver cannot invert is left unsolved, not answered with no roots
+
+`x! = 6` was answered `{ }`, a claim that it has no roots, and it has 3. The solver isolates `x`
+by inverting the function around it, and for a factorial, a binomial coefficient, `mod`, `gcd`,
+`lcm`, `min`, `max`, `phi`, `prime`, the valuation, a sum, a product, a limit, a set with `x`
+inside it and a few more, the inversion had no way to write the preimage and returned none. Such
+an equation is now left unsolved, as the set of `x` for which it holds, the way a statement
+the solver has no arm for already was. Roots found beside it are kept. A value these functions
+provably never take still has no roots: the factorial is the gamma function one along, which
+has no zeros, so `x! = 0` is still `{ }`, and so is `arcsin(x) = 5`.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x! = 6".Solve("x")` | `{ }` | `{ x : x! = 6 }` |
+| `"x mod 3 = 1".Solve("x")` | `{ }` | `{ x : x mod 3 = 1 }` |
+| `"gcd(x, 4) = 2".Solve("x")` | `{ }` | `{ x : gcd(x, 4) = 2 }` |
+| `"max(x, 1) = 3".Solve("x")` | `{ }` | `{ x : max(x, 1) = 3 }` |
+| `"phi(x) = 4".Solve("x")` | `{ }` | `{ x : phi(x) = 4 }` |
+| `"binomial(x, 2) = 3".Solve("x")` | `UnhandledParseException` | `{ x : binomial(x, 2) = 3 }` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
