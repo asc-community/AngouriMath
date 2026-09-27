@@ -48,6 +48,33 @@ let help () =
     System.Diagnostics.Process.Start psi
     $""Sending you to {url}""
 
+/// The page `render` opens: the expression's LaTeX -- what `latex` gives -- typeset by MathJax,
+/// with the LaTeX itself beneath it, written to the temporary directory. Joined with
+/// String.concat, since `+` builds an expression here.
+/// https://github.com/asc-community/AngouriMath/issues/549
+let renderedPage (x : obj) =
+    let source = System.Net.WebUtility.HtmlEncode (latex x)
+    let page = System.IO.Path.Combine (System.IO.Path.GetTempPath (), $""angourimath-{System.Guid.NewGuid ()}.html"")
+    let html =
+        String.concat """" [
+            ""<!DOCTYPE html><html><head><meta charset='utf-8'><title>AngouriMath</title>""
+            ""<script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>""
+            ""</head><body><p>$$""; source; ""$$</p><pre>""; source; ""</pre></body></html>"" ]
+    System.IO.File.WriteAllText (page, html)
+    page
+
+/// The expression typeset in the browser, as Plot's charts are shown; `latex` gives its LaTeX
+/// as text. https://github.com/asc-community/AngouriMath/issues/549
+let render (x : obj) =
+    let page = renderedPage x
+    let psi = System.Diagnostics.ProcessStartInfo page
+    psi.UseShellExecute <- true
+    try
+        System.Diagnostics.Process.Start psi |> ignore
+        printfn $""Showing {page} in the browser""
+    with _ ->
+        printfn $""Wrote {page}, and no browser could be started to show it""
+
 /// Arithmetic here builds expressions, so `3 / 2` is a rational rather than 1 and `x + 1` is
 /// an expression rather than an error. The cost is that ordinary F# whose arithmetic must stay
 /// primitive does not typecheck: `let rec fib n = if n < 2 then n else fib (n-1) + fib (n-2)`
