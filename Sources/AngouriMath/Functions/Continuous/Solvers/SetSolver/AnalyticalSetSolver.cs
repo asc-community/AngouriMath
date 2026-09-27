@@ -31,17 +31,8 @@ namespace AngouriMath.Functions.Continuous.Solvers.SetSolver
                 right.DirectChildren.Count<Entity>(c => c == x) != 1)
                 return Empty;
             // As in the equation solver, an inversion with no written form leaves it unsolved.
-            try
-            {
-                if (left.ContainsNode(x))
-                    return left.Invert(right, x).ToSet();
-                else
-                    return right.Invert(left, x).ToSet();
-            }
-            catch (CannotInvertException)
-            {
-                return new ConditionalSet(x, left.EqualTo(right));
-            }
+            var roots = left.ContainsNode(x) ? left.Invert(right, x) : right.Invert(left, x);
+            return roots is null ? new ConditionalSet(x, left.EqualTo(right)) : roots.ToSet();
         }
     }
 }
