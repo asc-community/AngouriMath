@@ -683,8 +683,8 @@ leave project-management scaffolding behind once the work it tracked has landed.
 
 ### Milestones, and what clears a release
 
-Every open issue is on a milestone, is an epic, or is visibly untriaged, and the milestone says
-what kind of change it is, not only when:
+Every triaged issue is on a milestone, and an issue with no type is visibly untriaged. The
+milestone says what kind of change it is, not only when:
 
 - **The next minor** (`2.6.0`, then `2.7.0`, …) carries defects and additive work that moves no
   existing answer. Pace it: a minor that holds everything "minor" is a release that never ships, so
@@ -708,15 +708,19 @@ what kind of change it is, not only when:
   why the milestone holds one issue, not thirty. Once every other milestone is done, the next
   milestones are planned by pulling issues from it
   ([#1468](https://github.com/asc-community/AngouriMath/issues/1468)); its description says so.
+- **Guiding principles** is perpetual: the Goals with no expected completion, which the work
+  keeps following rather than finishing -- #746, the roadmap itself, and its kind. It is neither
+  a version nor the backlog, and nothing leaves it by being done.
 - **Epics** — the agentic goals, #718, #1409 and their kind — are Goals used as parents, which is
   what an epic is here (the type, not a milestone; the `Epics` milestone was retired when the
   types came in, [#1384](https://github.com/asc-community/AngouriMath/pull/1384)). A Goal is on
   the milestone its last planned piece is aimed at, and each sub-issue or PR is on its own; the
   Goal stays open across releases, lists what each one delivered, and moves when its last piece
   does ([#1498](https://github.com/asc-community/AngouriMath/issues/1498#issuecomment-5857987112)).
-  #746, the roadmap itself, has no last piece to aim at and carries none.
-- A proposal without `Accepted` has no milestone: scheduling it would decide it. What marks an
-  issue **untriaged** is the absence of a type, not of a milestone.
+  A Goal with no last piece to aim at is on Guiding principles
+  ([#1511](https://github.com/asc-community/AngouriMath/pull/1511#issuecomment-5858231058)).
+- A proposal without `Accepted` is on Future until it is decided: a version would decide it.
+  What marks an issue **untriaged** is the absence of a type, not of a milestone.
 
 An issue you open has its type and its milestone from the moment it is filed, which the reply
 that triages someone else's issue does for theirs. `gh issue create --milestone` sets the one;
