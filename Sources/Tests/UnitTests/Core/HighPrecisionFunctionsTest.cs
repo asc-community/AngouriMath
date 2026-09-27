@@ -263,6 +263,39 @@ namespace AngouriMath.Tests.Core
         }
 
         /// <summary>
+        /// The same across two flows at once: one flow in a raised precision evaluates a shared
+        /// node while another flow, at the default, reads it. The cache was stamped with the
+        /// process's epoch and not with the flow's precision, so the default flow read pi at
+        /// three hundred digits until the other scope closed.
+        /// https://github.com/asc-community/AngouriMath/issues/1505
+        /// </summary>
+        [Fact]
+        public void AnotherFlowsPrecisionIsNotServedHere()
+        {
+            using var evaluated = new System.Threading.ManualResetEventSlim();
+            using var release = new System.Threading.ManualResetEventSlim();
+            // A thread of its own, so that a busy pool cannot hold it back past the waits below.
+            var other = System.Threading.Tasks.Task.Factory.StartNew(() =>
+            {
+                using var _ = MathS.Settings.DecimalPrecisionContext.Set(threeHundredDigits);
+                var there = DigitsOf(MathS.pi.EvalNumerical());
+                evaluated.Set();
+                release.Wait(System.TimeSpan.FromSeconds(30));
+                return there;
+            }, System.Threading.Tasks.TaskCreationOptions.LongRunning);
+            try
+            {
+                Assert.True(evaluated.Wait(System.TimeSpan.FromSeconds(30)));
+                Assert.Equal(100, DigitsOf(MathS.pi.EvalNumerical()));
+            }
+            finally
+            {
+                release.Set();
+            }
+            Assert.Equal(300, other.Result);
+        }
+
+        /// <summary>
         /// <c>e</c> evaluated with the downcasting off used to be a complex number with a zero
         /// imaginary part, and the cache on the constant kept it that way for the rest of the
         /// process -- after which <c>sgn(e^x - 1)</c> was not real-valued and its derivative,
