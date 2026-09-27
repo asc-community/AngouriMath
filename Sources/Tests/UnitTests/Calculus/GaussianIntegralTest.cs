@@ -106,6 +106,26 @@ namespace AngouriMath.Tests.Calculus
         public void TheGaussianBesideAnEvenPower(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// With a linear term in the exponent, every whole power beside it, and a polynomial, at
+        /// the square's centre <c>u = x + b/(2a)</c>: each power of <c>u</c> is a moment, the odd
+        /// ones ending at the elementary <c>e^(A u^2)/(2A)</c>. Rubi's 2.3.
+        /// </summary>
+        [Theory]
+        [InlineData("x^2*e^(-x^2 + x)")]
+        [InlineData("x*e^(x^2 + 2*x)")]
+        [InlineData("x^3*e^(-2*x^2 + x - 1)")]
+        [InlineData("(1 + 2*x)^2*e^(-x^2 + 3*x)")]
+        [InlineData("(3 - x)^3/e^(x^2 - x)")]
+        public void TheGaussianWithALinearTermBesideAPolynomial(string integrand) => DifferentiatesBack(integrand);
+
+        [Theory]
+        [InlineData("x^3*f^(c*(a + b*x)^2)")]
+        [InlineData("(p + q*x)^2*f^(a + b*x + c*x^2)")]
+        [InlineData("e^((a + b*x)*(c + d*x))*x^2")]
+        public void ASymbolicGaussianWithALinearTermBesideAPolynomial(string integrand)
+            => DifferentiatesBack(integrand, ("f", "2"), ("a", "1/3"), ("b", "-2/3"), ("c", "-5/4"), ("d", "3/2"), ("p", "1/2"), ("q", "3"));
+
+        /// <summary>
         /// An odd negative power ends at <c>int e^(A x^2)/x</c>, which is the exponential
         /// integral, so it is not taken.
         /// </summary>
