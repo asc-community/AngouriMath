@@ -57,8 +57,42 @@ namespace AngouriMath
             Functions.Algebra.BreakpointIntegration.HasABreak(this, x)
             ? Functions.Algebra.BreakpointIntegration.Split(this, x, from, to) ?? new Integralf(this, x, (from, to))
             : Transformation.Integration(x).Apply(this).Output is { } antiderivative
-                ? antiderivative.Substitute(x, to) - antiderivative.Substitute(x, from)
+                ? AtTheBound(antiderivative, x, to, from) - AtTheBound(antiderivative, x, from, to)
                 : new Integralf(this, x, (from, to));
+
+        /// <summary>
+        /// The antiderivative's value at one bound of a definite integral: its value there, and
+        /// where that is undefined, its limit as the bound is approached from inside the range,
+        /// which is what an improper integral is.
+        /// </summary>
+        /// <remarks>
+        /// <c>-(x + 1) e^(-x)</c> at <c>+oo</c> is <c>-oo * 0</c>, which is <c>NaN</c>, so the integral
+        /// of <c>x e^(-x)</c> from 0 to <c>+oo</c> was <c>NaN</c> where it is 1; and <c>x ln(x) - x</c>
+        /// at 0 is <c>0 * -oo</c>, so the integral of <c>ln(x)</c> from 0 to 1 was <c>NaN</c> where it
+        /// is -1. The limit is taken only where the value is undefined, so a bound the substitution
+        /// answered is answered as before. Its side is known at an infinity, and at a finite bound
+        /// from the other bound where both are numbers. Elsewhere, and where the limit is not
+        /// decided, the value stays undefined, as it is for <c>sin(x)</c> from 0 to <c>+oo</c>,
+        /// whose antiderivative has no limit there.
+        /// </remarks>
+        private static Entity AtTheBound(Entity antiderivative, Variable x, Entity bound, Entity otherBound)
+        {
+            var value = antiderivative.Substitute(x, bound);
+            if (!value.InnerSimplified.IsNaN)
+                return value;
+            ApproachFrom? side = (bound.InnerSimplified, otherBound.InnerSimplified) switch
+            {
+                (Number.Real { EDecimal: var at }, _) when at.IsPositiveInfinity() => ApproachFrom.Left,
+                (Number.Real { EDecimal: var at }, _) when at.IsNegativeInfinity() => ApproachFrom.Right,
+                (Number.Real at, Number.Real other) when at > other => ApproachFrom.Left,
+                (Number.Real at, Number.Real other) when at < other => ApproachFrom.Right,
+                _ => null
+            };
+            if (side is not { } inside)
+                return value;
+            var limit = antiderivative.Limit(x, bound, inside);
+            return limit.IsNaN || limit.Nodes.Any(node => node is Limitf) ? value : limit;
+        }
 
         /// <summary>
         /// Integrates numerically over <paramref name="x"/> between two bounds, without
