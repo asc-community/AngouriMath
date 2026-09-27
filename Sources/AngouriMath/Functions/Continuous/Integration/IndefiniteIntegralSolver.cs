@@ -8613,11 +8613,11 @@ namespace AngouriMath.Functions.Algebra
             if (polynomial is null)
                 return HalfOddLogarithmicTerm(p, logarithm, n, slopeOfF, x) is { } single ? (constant * single).InnerSimplified : null;
             Entity sum = Number.Integer.Zero;
-            foreach (var (power, coefficient) in polynomial)
+            foreach (var monomial in polynomial)
             {
-                if (HalfOddLogarithmicTerm((p + Number.Integer.Create(power)).InnerSimplified, logarithm, n, slopeOfF, x) is not { } term)
+                if (HalfOddLogarithmicTerm((p + Number.Integer.Create(monomial.Key)).InnerSimplified, logarithm, n, slopeOfF, x) is not { } term)
                     return null;
-                sum += coefficient * term;
+                sum += monomial.Value * term;
             }
             return (constant * sum).InnerSimplified;
         }
