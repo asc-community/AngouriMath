@@ -569,6 +569,8 @@ namespace AngouriMath.Functions.Algebra
             // A power of x times a power of its logarithm, by the closed reduction: exact,
             // and by parts n times where the exponent is a symbol was not taken.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAPowerOfTheLogarithm(expr, x)) is { }) return answer;
+            // And a half-odd power of it, onto the Gaussian's moments by t = sqrt(F).
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAHalfOddPowerOfTheLogarithm(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;
             // An exponential of a multiple of a logarithm is a power of the argument, which is
             // how every inverse hyperbolic function under an exponential arrives.
