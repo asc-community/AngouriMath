@@ -43,8 +43,11 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x * ln(x)", "0", "1", "-1/4")]
         [InlineData("ln(x)", "1", "0", "1")]
         [InlineData("x * e^(-x)", "+oo", "0", "-1")]
+        // A bound written as a constant is placed by its value: the half-angle antiderivative's
+        // tan(x/2) is undefined at pi.
+        [InlineData("1/(2 + cos(x))", "0", "pi", "pi / sqrt(3)")]
         public void ABoundWhereTheAntiderivativeIsUndefinedIsALimit(string integrand, string from, string to, string value)
-            => Assert.Equal(value.ToEntity(), Definite(integrand, from, to));
+            => Assert.Equal(value.ToEntity().Simplify(), Definite(integrand, from, to));
 
         /// <summary>A divergent integral is <c>+oo</c> where the limit is.</summary>
         [Fact]
