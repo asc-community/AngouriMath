@@ -406,6 +406,11 @@ namespace AngouriMath
                             => dividend.EInteger.IsZero ? True : False,
                         (Integer divisor, Integer dividend)
                             => dividend.EInteger.Remainder(divisor.EInteger).IsZero ? True : False,
+                        // A prime p divides binomial(p, k) for a whole k with 0 < k < p, where the
+                        // quantifiers around establish those facts. Sullivan and Mackey's Prob 8.9.24.
+                        // https://github.com/asc-community/AngouriMath/issues/1409
+                        (_, Binomialf(var upper, var lower)) when a == upper
+                            && Functions.Boolean.QuantifierFacts.PrimeDividesItsBinomial(a, lower) => True,
                         (Number, Number) => MathS.NaN,
                         _ => null
                     },
@@ -487,6 +492,11 @@ namespace AngouriMath
             protected override Entity InnerSimplify(bool isExact)
             {
                 var over = Over.InnerSimplified(isExact);
+                // A body in which a rule reads what the quantifiers establish, that p is prime
+                // or that 0 < k < p, is decided with those facts in scope.
+                // https://github.com/asc-community/AngouriMath/issues/1409
+                if (Functions.Boolean.QuantifierFacts.Decide(Kind, Var, over, Body, isExact) is var (verdict, decided))
+                    return verdict ?? New(Var, over, decided);
                 var body = Body.InnerSimplified(isExact);
                 return Functions.Boolean.Quantifiers.Decide(Kind, Var, over, body, isExact) ?? New(Var, over, body);
             }
