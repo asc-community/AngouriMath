@@ -1679,6 +1679,21 @@ where it was `0.1 * x ^ 2 / 2 + C`
 | `limit(sin(c*x)/x, x, 0)` | `NaN` | `c` |
 | `limit((1 - cos(c*x))/x^2, x, 0)` | `NaN` | `c ^ 2 / 2` |
 
+### A half-odd power of a logarithm beside a power of `x` is integrated
+
+`x sqrt(ln(x))` was left unintegrated. `x^p F^n`, where `F` is `ln x` or `A + B ln(c x^r)` and
+`n` is half an odd number, is now integrated onto the Gaussian's moments under `t = sqrt(F)`.
+A polynomial beside it is summed a power at a time, and the logarithm of a power of a linear is
+the same question under `u = d + e x`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x*sqrt(ln(x))".Integrate("x")` | `integral(x * sqrt(ln(x)), x)` | the antiderivative, with `erfi` |
+| `"sqrt(ln(a*x^n))".Integrate("x")` | `integral(sqrt(ln(a * x ^ n)), x)` | the antiderivative, with `erfi` |
+| `"x^2/ln(x)^(3/2)".Integrate("x")` | `integral(x ^ 2 / ln(x) ^ (3/2), x)` | the antiderivative, with `erfi` |
+| `"(f + g*x)*(a + b*ln(c*(d + k*x)^n))^(3/2)".Integrate("x")` | `integral((f + g * x) * (a + b * ln(c * (d + k * x) ^ n)) ^ (3/2), x)` | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
