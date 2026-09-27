@@ -70,6 +70,23 @@ let ``The values of earlier cells are kept in run`` () =
     Assert.Equal(LatexSuccess ("11", "11"), execute kernel "back 5")
     Assert.Equal(PlainTextSuccess "6", execute kernel "run.Count")
 
+// `render` opens a page with the expression typeset; the page is the LaTeX `latex` gives, and
+// escaped for HTML where the LaTeX has a character HTML reads.
+// https://github.com/asc-community/AngouriMath/issues/549
+[<Fact>]
+let ``The rendered page holds the expression's LaTeX`` () =
+    let kernel = ``Create kernel or fail`` ()
+    enableAngouriMath kernel |> ignore
+    let page code =
+        match execute kernel $"System.IO.File.ReadAllText (renderedPage ({code}))" with
+        | PlainTextSuccess page -> page
+        | other -> failwith $"expected the page, and the prompt answered {other}"
+    Assert.Equal(PlainTextSuccess @"\frac{x}{2}", execute kernel "latex (x / 2)")
+    let fraction = page "x / 2"
+    Assert.Contains(@"$$\frac{x}{2}$$", fraction)
+    Assert.Contains("mathjax@3", fraction)
+    Assert.Contains("y &lt; 3", page "\"y < 3\"")
+
 [<Fact>]
 let ``Test 1`` () =
     executeNewWithAm "1 + 1"
