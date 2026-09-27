@@ -126,6 +126,27 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, ("f", "2"), ("a", "1/3"), ("b", "-2/3"), ("c", "-5/4"), ("d", "3/2"), ("p", "1/2"), ("q", "3"));
 
         /// <summary>
+        /// An exponential of a quadratic in the reciprocal of a linear, beside a whole power of
+        /// the linear, under <c>u = 1/L</c>: the Gaussian beside a power. Rubi's 2.3,
+        /// <c>f^(a + b/x^2) x^m</c> and <c>F^(a + b/(c + d x)^2) (c + d x)^m</c>. The points are off 0,
+        /// where the exponent is undefined.
+        /// </summary>
+        [Theory]
+        [InlineData("e^(-1/x^2)")]
+        [InlineData("e^(-1/x^2)/x^2")]
+        [InlineData("x^2*e^(-1/x^2)")]
+        [InlineData("e^(1/(2 + 3*x)^2)/(2 + 3*x)^4")]
+        public void TheGaussianInAReciprocal(string integrand) => DifferentiatesBack(integrand);
+
+        [Theory]
+        [InlineData("f^(a + b/x^2)")]
+        [InlineData("f^(a + b/x^2)*x^2")]
+        [InlineData("f^(a + b/x^2)/x^4")]
+        [InlineData("f^(a + b/(c + d*x)^2)*(c + d*x)^2")]
+        public void ASymbolicGaussianInAReciprocal(string integrand)
+            => DifferentiatesBack(integrand, ("f", "2"), ("a", "1/3"), ("b", "-2/3"), ("c", "5"), ("d", "3/2"));
+
+        /// <summary>
         /// An odd negative power ends at <c>int e^(A x^2)/x</c>, which is the exponential
         /// integral, so it is not taken.
         /// </summary>

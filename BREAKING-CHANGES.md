@@ -1710,6 +1710,21 @@ since they are these exponentials
 | `"(p + q*x)^2*f^(a + b*x + c*x^2)".Integrate("x")` | `integral((p + q * x) ^ 2 * f ^ (a + b * x + c * x ^ 2), x)` | the antiderivative |
 | `"x^2*sinh(a + b*x + c*x^2)".Integrate("x")` | `integral(x ^ 2 * (e ^ (a + b * x + c * x ^ 2) - e ^ (-(a + b * x + c * x ^ 2))) / 2, x)` | the antiderivative |
 
+### An exponential of a quadratic in `1/x` or `1/(c + d x)` is integrated
+
+`e^(-1/x^2)` was left unintegrated. `L^m F^(A/L^2 + B/L + C)`, with `L = c + d x` and a whole `m`,
+is now integrated under `u = 1/L`, where it is the Gaussian beside a power of `u`. The hyperbolic
+functions of `a + b/x^2` come out too, since they are these exponentials. An odd power that ends at
+the exponential integral, as `x e^(-1/x^2)` does, is still left unintegrated
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(-1/x^2)".Integrate("x")` | `integral(e ^ ((-1) / x ^ 2), x)` | the antiderivative, with `erf` |
+| `"f^(a + b/x^2)*x^2".Integrate("x")` | `integral(f ^ (a + b / x ^ 2) * x ^ 2, x)` | the antiderivative |
+| `"f^(a + b/(c + d*x)^2)/(c + d*x)^4".Integrate("x")` | `integral(f ^ (a + b / (c + d * x) ^ 2) / (c + d * x) ^ 4, x)` | the antiderivative |
+| `"sinh(a + b/x^2)".Integrate("x")` | `integral((e ^ (a + b / x ^ 2) - e ^ (-(a + b / x ^ 2))) / 2, x)` | the antiderivative |
+
 ### Exponentials of quadratics beside sines, cosines and hyperbolic functions of quadratics are integrated
 
 `e^(x^2) sin(x)` was left unintegrated. A product of exponentials of polynomials of degree at most

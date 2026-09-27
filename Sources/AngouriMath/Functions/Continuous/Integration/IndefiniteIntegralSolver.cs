@@ -10712,25 +10712,90 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// A polynomial in <c>x</c> times a rational function of exponentials of <c>x</c>,
-        /// by parts against the whole rational function: <c>x tanh(x)^2</c> is
-        /// <c>x ((e^(2x) - 1)/(e^(2x) + 1))^2</c>, whose antiderivative under <c>u = e^(2x)</c> is
-        /// <c>x - tanh(x)</c>, a polynomial and a rational function of the exponential again,
-        /// and what parts leaves is <c>x - tanh(x)</c> itself, a degree lower in <c>x</c>.
+        /// An exponential of a quadratic in the reciprocal of a linear, beside a whole power of
+        /// the linear: <c>L^m F^(A/L^2 + B/L + C)</c> with <c>L = c + d x</c>. Under <c>u = 1/L</c>,
+        /// <c>dx = -du/(d u^2)</c>, and it is <c>-(1/d) u^(-m - 2) F^(A u^2 + B u + C)</c>: the
+        /// Gaussian beside a power, which the table's moments answer, written back with
+        /// <c>u = 1/L</c>. Rubi's 2.3, <c>f^(a + b/x^2) x^m</c> and <c>F^(a + b/(c + d x)^2) (c + d x)^m</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
         /// </summary>
         /// <remarks>
-        /// <para>
-        /// The general parts rule splits the sum <c>(x + x e^(4x))/(e^(2x) + 1)^2</c> and takes
-        /// each term on its own, and each term's antiderivative in <c>u</c> holds a logarithm
-        /// of <c>e^(2x) + 1</c> -- the two cancel in the sum and neither on its own -- so each
-        /// leaves <c>x ln(e^(2x) + 1)</c> behind, a dilogarithm, and twenty-five seconds of
-        /// search that found nothing. Here the rational function goes to the exponential
-        /// substitution whole, and where its antiderivative keeps a logarithm of an
-        /// exponential's sum the integrand is declined at once: <c>x/(e^x + 1)</c> is not
-        /// elementary, and this says so in a millisecond.
-        /// </para>
-        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// The exponent is rewritten into <c>u</c> a node at a time -- <c>b/L^k</c> is <c>b u^k</c> --
+        /// rather than by substituting <c>x = (1/u - c)/d</c> and asking the simplifier to see
+        /// that <c>1/(1/u)^2</c> is <c>u^2</c>.
         /// </remarks>
+        internal static Entity? SolveAGaussianInAReciprocal(Entity expr, Entity.Variable x)
+        {
+            Powf? exponential = null;
+            Entity? linear = null;
+            var power = EInteger.Zero;
+            Entity constant = Number.Integer.One;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (!underneath && exponential is null && factor is Powf(var @base, var exponent) && !@base.ContainsNode(x) && exponent.ContainsNode(x))
+                {
+                    exponential = (Powf)factor;
+                    continue;
+                }
+                // The linear, or a whole power of it, above or below the bar.
+                var (candidate, k) = factor is Powf(var b, Number.Integer n) && n.EInteger.CanFitInInt32() ? (b, n.EInteger) : (factor, EInteger.One);
+                if (linear is not null && linear != candidate
+                    || !TreeAnalyzer.TryGetPolyLinear(candidate, x, out var slopeOfIt, out _) || slopeOfIt is null || TreeAnalyzer.IsZero(slopeOfIt))
+                    return null;
+                linear = candidate;
+                power = underneath ? power - k : power + k;
+            }
+            if (exponential is null)
+                return null;
+            linear ??= ALinearBelowABar(exponential.Exponent, x);
+            if (linear is null || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out _) || slope is null || TreeAnalyzer.IsZero(slope))
+                return null;
+            var u = Variable.CreateUnique(expr, "u");
+            var exponentInU = exponential.Exponent.Replace(node => node switch
+            {
+                Divf(var numerator, Powf(var below, Number.Integer k)) when below == linear => numerator * MathS.Pow(u, k),
+                Divf(var numerator, var below) when below == linear => numerator * u,
+                Powf(var below, Number.Integer { EInteger.Sign: < 0 } k) when below == linear => MathS.Pow(u, -k),
+                _ => node
+            });
+            if (exponentInU.ContainsNode(x) || !TreeAnalyzer.TryGetPolyQuadratic(exponentInU, u, out var square, out _, out _) || TreeAnalyzer.IsZero(square))
+                return null;
+            var powerInU = -power - EInteger.FromInt32(2);
+            if (!powerInU.CanFitInInt32() || powerInU.Abs().CompareTo(EInteger.FromInt32(32)) > 0)
+                return null;
+            var gaussian = MathS.Pow(exponential.Base, exponentInU);
+            var inU = powerInU.IsZero ? gaussian : MathS.Pow(u, Number.Integer.Create(powerInU)) * gaussian;
+            if (IntegralPatterns.TryStandardIntegrals(inU, u) is not { } answerInU)
+                return null;
+            return (-constant / slope * answerInU.Substitute(u, 1 / linear)).InnerSimplified;
+        }
+
+        /// <summary>
+        /// The linear a node of <paramref name="exponent"/> divides by, <c>b/L^k</c> or <c>L^(-k)</c>,
+        /// or <see langword="null"/>.
+        /// </summary>
+        private static Entity? ALinearBelowABar(Entity exponent, Entity.Variable x)
+        {
+            foreach (var node in exponent.Nodes)
+            {
+                var below = node switch
+                {
+                    Divf(_, Powf(var b, Number.Integer)) => b,
+                    Divf(_, var b) => b,
+                    Powf(var b, Number.Integer { EInteger.Sign: < 0 }) => b,
+                    _ => null
+                };
+                if (below is { } && below.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(below, x, out var slope, out _) && slope is { } && !TreeAnalyzer.IsZero(slope))
+                    return below;
+            }
+            return null;
+        }
+
         /// <summary>
         /// A power of an exponential of <c>x</c> with a positive constant base, written as the
         /// exponential of the product: <c>(e^x)^(1/3)</c> is <c>e^(x/3)</c> and <c>(3^(3x))^(1/4)</c>
@@ -11249,6 +11314,26 @@ namespace AngouriMath.Functions.Algebra
             return distributed == expr ? null : Integration.ComputeAsTheSameQuestion(distributed, x, integrateByParts);
         }
 
+        /// <summary>
+        /// A polynomial in <c>x</c> times a rational function of exponentials of <c>x</c>,
+        /// by parts against the whole rational function: <c>x tanh(x)^2</c> is
+        /// <c>x ((e^(2x) - 1)/(e^(2x) + 1))^2</c>, whose antiderivative under <c>u = e^(2x)</c> is
+        /// <c>x - tanh(x)</c>, a polynomial and a rational function of the exponential again,
+        /// and what parts leaves is <c>x - tanh(x)</c> itself, a degree lower in <c>x</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The general parts rule splits the sum <c>(x + x e^(4x))/(e^(2x) + 1)^2</c> and takes
+        /// each term on its own, and each term's antiderivative in <c>u</c> holds a logarithm
+        /// of <c>e^(2x) + 1</c> -- the two cancel in the sum and neither on its own -- so each
+        /// leaves <c>x ln(e^(2x) + 1)</c> behind, a dilogarithm, and twenty-five seconds of
+        /// search that found nothing. Here the rational function goes to the exponential
+        /// substitution whole, and where its antiderivative keeps a logarithm of an
+        /// exponential's sum the integrand is declined at once: <c>x/(e^x + 1)</c> is not
+        /// elementary, and this says so in a millisecond.
+        /// </para>
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
         internal static Entity? SolveAPolynomialTimesARationalFunctionOfAnExponential(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             // The polynomial factors above the bar, and the rest, which holds x in exponents only.

@@ -564,14 +564,16 @@ namespace AngouriMath.Functions.Algebra
             // among them, `(c x)^m x^n`, by the power rule with the written power kept as
             // it is. Beside the polynomial term, since that is what it is.
             if ((answer = IndefiniteIntegralSolver.SolveAProductOfPowersOfTheVariable(expr, x)) is { }) return answer;
-            // A power of an exponential with a positive base is the exponential of the product,
-            // exactly, and only that spelling is one the exponential rules read.
             // A power of x times a power of its logarithm, by the closed reduction: exact,
             // and by parts n times where the exponent is a symbol was not taken.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAPowerOfTheLogarithm(expr, x)) is { }) return answer;
             // And a half-odd power of it, onto the Gaussian's moments by t = sqrt(F).
             if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAHalfOddPowerOfTheLogarithm(expr, x)) is { }) return answer;
+            // A power of an exponential with a positive base is the exponential of the product,
+            // exactly, and only that spelling is one the exponential rules read.
             if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;
+            // An exponential of a quadratic in 1/L beside a power of L, onto the Gaussian under u = 1/L.
+            if ((answer = IndefiniteIntegralSolver.SolveAGaussianInAReciprocal(expr, x)) is { }) return answer;
             // An exponential of a multiple of a logarithm is a power of the argument, which is
             // how every inverse hyperbolic function under an exponential arrives.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingAnExponentialOfALogarithm(expr, x, integrateByParts)) is { }) return answer;
