@@ -53,7 +53,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             expr = expr.InnerSimplified;
             if (AnalyticalEquationSolver.Solve(expr, replacement) is FiniteSet els && els.Any())
-                return (Set)els.Select(sol => MathS.Pow(MathS.e, x).Invert(sol, x).ToSet()).Unite().InnerSimplified;
+                return MathS.Pow(MathS.e, x).InvertEach(els, x);
             else
                 return null;
         }
@@ -210,7 +210,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             expr = expr.InnerSimplified;
             if (AnalyticalEquationSolver.Solve(expr, replacement) is FiniteSet els && els.Any())
-                return (Set)els.Select(sol => substitution.Invert(sol, x).ToSet()).Unite().InnerSimplified;
+                return substitution.InvertEach(els, x);
             else
                 return null;
         }
