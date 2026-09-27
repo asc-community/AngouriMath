@@ -4179,15 +4179,23 @@ namespace AngouriMath
                                 "-1" => Integer.Create(-1),
                                 "+oo" => Real.PositiveInfinity,
                                 "-oo" => Real.NegativeInfinity,
-                                _ => Settings.ExplicitParsingOnly.Value switch
+                                // One cache per pair of the settings the parse reads: with the
+                                // downcasting off a whole number parses as a decimal, so a string
+                                // parsed under one setting is not the other's parse.
+                                // https://github.com/asc-community/AngouriMath/issues/1513
+                                _ => (Settings.ExplicitParsingOnly.Value, Settings.DowncastingEnabled.Value) switch
                                     {
-                                        false => stringToEntityCache.GetValue(expr, _ => parsed.Value),
-                                        true => stringToEntityCacheExplicitOnly.GetValue(expr, _ => parsed.Value)
-                                    } 
+                                        (false, true) => stringToEntityCache.GetValue(expr, _ => parsed.Value),
+                                        (true, true) => stringToEntityCacheExplicitOnly.GetValue(expr, _ => parsed.Value),
+                                        (false, false) => stringToEntityCacheNotDowncasting.GetValue(expr, _ => parsed.Value),
+                                        (true, false) => stringToEntityCacheExplicitOnlyNotDowncasting.GetValue(expr, _ => parsed.Value)
+                                    }
                             }
                     };
         private static ConditionalWeakTable<string, Entity> stringToEntityCacheExplicitOnly = new();
         private static ConditionalWeakTable<string, Entity> stringToEntityCache = new();
+        private static ConditionalWeakTable<string, Entity> stringToEntityCacheNotDowncasting = new();
+        private static ConditionalWeakTable<string, Entity> stringToEntityCacheExplicitOnlyNotDowncasting = new();
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
