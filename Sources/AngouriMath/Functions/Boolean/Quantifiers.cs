@@ -280,6 +280,15 @@ namespace AngouriMath.Functions.Boolean
                     : ($"by induction from {first}: the base case, and P({x} + 1) = c P({x}) + D with c >= 0 and D >= 0", "Nat.le_induction");
                 return byGrowth;
             }
+            // A congruence modulo a symbol, by the residue of the difference of its sides: the
+            // same at one member and at the next along a row of whole numbers, so the same at
+            // every member. Fermat's little theorem, Sullivan and Mackey's Prob 8.9.26.
+            // https://github.com/asc-community/AngouriMath/issues/1409
+            if (kind == Kind.All && set is SpecialSet row && IsIntegerSet(row) && ByTheResidueOfADifference(x, row, body, isExact, out var how) is { } byResidue)
+            {
+                by = how;
+                return byResidue;
+            }
             if (Witness(kind, x, set, body, isExact) is { } byWitness)
             {
                 by = (byWitness == Entity.Boolean.False && kind == Kind.All ? "a member at which the body is false"
@@ -389,6 +398,86 @@ namespace AngouriMath.Functions.Boolean
             if (Truth(Decide(Kind.All, x, set, step, isExact)) is not { } stepCondition)
                 return null;
             return Entity.Boolean.True.Provided((baseCondition & stepCondition).InnerSimplified(isExact));
+        }
+
+        /// <summary>
+        /// <c>forall x in S : f = g (mod m)</c>, or <c>f mod m = g mod m</c>, over a row of whole
+        /// numbers, where <c>m</c> is not a number and does not mention <c>x</c>. With
+        /// <c>D = f - g</c>: where <c>m</c> divides <c>D</c> at every member the statement holds.
+        /// Otherwise, where it holds at one member and <c>m</c> divides <c>D(x + 1) - D(x)</c> at
+        /// every member, <c>D</c> has one residue modulo <c>m</c> the whole way along the row, up
+        /// from that member and down from it, so it holds at every member. Fermat's little
+        /// theorem is the second, with the difference <c>(a + 1)^p - a^p - 1</c> read by the
+        /// binomial theorem.
+        /// </summary>
+        private static Entity? ByTheResidueOfADifference(Variable x, SpecialSet set, Entity body, bool isExact, out (string Rule, string Lemma)? how)
+        {
+            how = null;
+            var (difference, modulus) = body switch
+            {
+                Congruentf(var left, var right, var m) => (left - right, m),
+                Equalsf(Modf(var left, var m), Modf(var right, var n)) when m == n => (left - right, m),
+                _ => ((Entity?)null, (Entity?)null)
+            };
+            if (difference is null || modulus is null or Number || modulus.ContainsNode(x))
+                return null;
+            var tried = ProofRecording.Mark();
+            if (Divides(modulus, difference, isExact, deeper: false))
+            {
+                how = ($"{modulus} divides {difference} at every member", "Int.modEq_iff_dvd");
+                return Entity.Boolean.True;
+            }
+            ProofRecording.Rollback(tried);
+            // A member at which the statement is decided: the least one, then 1, 0 and -1.
+            Integer? start = null;
+            foreach (var member in new[] { LeastMember(set), Integer.One, Integer.Zero, Integer.MinusOne }.OfType<Integer>().Distinct())
+            {
+                if (LeastMember(set) is { } least && member < least)
+                    continue;
+                var at = body.Substitute(x, member).InnerSimplified(isExact);
+                if (at == Entity.Boolean.False)
+                {
+                    ProofRecording.AddBelow(body.Substitute(x, member), $"false at {member}, by evaluation", "decide", at);
+                    how = ($"false at {member}", "decide");
+                    return at;
+                }
+                if (at == Entity.Boolean.True)
+                {
+                    ProofRecording.AddBelow(body.Substitute(x, member), $"the base case, at {member}, by evaluation", "decide", at);
+                    start = member;
+                    break;
+                }
+            }
+            if (start is null)
+                return null;
+            var step = difference.Substitute(x, x + Integer.One) - difference;
+            if (!Divides(modulus, step, isExact, deeper: true))
+            {
+                ProofRecording.Rollback(tried);
+                return null;
+            }
+            ProofRecording.AddBelow(new Forallf(x, set, new Dividesf(modulus, step)), $"{modulus} divides the difference at {x} + 1 less the difference at {x}, at every member", "intro", Entity.Boolean.True);
+            how = ($"by induction up and down from {start}: {modulus} divides the difference of the two sides there, and the difference changes by a multiple of {modulus} from each member to the next", "Int.inductionOn'");
+            return Entity.Boolean.True;
+        }
+
+        /// <summary>
+        /// Whether <c>m divides d</c> simplifies to true, with what it rests on recorded under
+        /// the decision, or <paramref name="deeper"/> under a step the caller records itself.
+        /// </summary>
+        private static bool Divides(Entity modulus, Entity difference, bool isExact, bool deeper)
+        {
+            if (deeper)
+                ProofRecording.Enter();
+            try
+            {
+                return new Dividesf(modulus, difference).InnerSimplified(isExact) == Entity.Boolean.True;
+            }
+            finally
+            {
+                if (deeper)
+                    ProofRecording.Leave();
+            }
         }
 
         private static bool IsUnboundedAbove(Intersectionf cut)
@@ -975,7 +1064,7 @@ namespace AngouriMath.Functions.Boolean
         /// The expression with every maximal subterm that is not a sum, a difference, a product,
         /// a whole power or a division replaced by one variable per distinct subterm.
         /// </summary>
-        private static Entity Atomized(Entity expr, Dictionary<Entity, Variable> atoms, Dictionary<Entity, Entity> unfolded)
+        internal static Entity Atomized(Entity expr, Dictionary<Entity, Variable> atoms, Dictionary<Entity, Entity> unfolded)
         {
             switch (expr)
             {

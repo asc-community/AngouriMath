@@ -123,7 +123,7 @@ namespace AngouriMath.Functions
 
         private static int ShiftOf(int variable) => (MaxVariables - 1 - variable) * BitsPerVariable;
 
-        private static int PowerOf(ulong monomial, int variable)
+        internal static int PowerOf(ulong monomial, int variable)
             => (int)((monomial >> ShiftOf(variable)) & PowerMask);
 
         private static ulong Pack(int variable, int power) => (ulong)power << ShiftOf(variable);

@@ -193,10 +193,16 @@ namespace AngouriMath.Functions.Boolean
 
         /// <summary>
         /// Whether a rule reads the facts at <paramref name="node"/>, which is what a body is
-        /// renamed and decided with the facts in scope for.
+        /// renamed and decided with the facts in scope for: a divisibility, a congruence or an
+        /// equation of residues by a modulus that is not a number, which the rules modulo a
+        /// prime read.
         /// </summary>
-        private static bool Reads(Entity node)
-            => node is Dividesf(var divisor, Binomialf(var upper, _)) && divisor == upper;
+        private static bool Reads(Entity node) => node switch
+        {
+            Dividesf(not Number, _) or Congruentf(_, _, not Number) => true,
+            Equalsf(Modf(_, var modulus), Modf(_, var other)) => modulus is not Number && modulus == other,
+            _ => false
+        };
 
         private static bool MentionsARenamedName(Entity expression)
         {
@@ -231,6 +237,86 @@ namespace AngouriMath.Functions.Boolean
                     $"{p} is prime and 0 < {k} < {p}, so {p} divides {p}! = binomial({p}, {k}) {k}! ({p} - {k})! and none of the factors of {k}! ({p} - {k})!",
                     "Nat.Prime.dvd_choose_self", Entity.Boolean.True);
             return true;
+        }
+
+        /// <summary>
+        /// Whether <c>p divides d</c> by the binomial theorem, with the facts in scope: <c>p</c> is
+        /// prime, <c>d</c> is a polynomial with whole coefficients in whole quantities, and
+        /// writing each power <c>(u + v)^p</c> in it as <c>u^p + v^p</c> leaves nothing, or only
+        /// multiples of <c>p</c>. What the binomial theorem adds to <c>u^p + v^p</c> is
+        /// <c>binomial(p, k) u^k v^(p - k)</c> for <c>0 &lt; k &lt; p</c>, each a multiple of
+        /// <c>p</c> by <see cref="PrimeDividesItsBinomial"/>. That is asked of the quantifiers
+        /// first, and recorded as the step this one rests on. A difference is read the same way,
+        /// since <c>(-v)^p</c> is <c>-v^p</c> modulo every prime, 2 included. Sullivan and
+        /// Mackey's Prob 8.9.25, the freshman's dream.
+        /// </summary>
+        internal static bool PrimeDividesByTheBinomialTheorem(Entity p, Entity d)
+        {
+            if (top is null || !IsPrime(p) || !d.Nodes.Any(node => node is Powf(Sumf or Minusf, var exponent) && exponent == p))
+                return false;
+            var dreamt = d.Replace(node => node is Powf(Sumf or Minusf, var exponent) && exponent == p ? PowersOfTheTerms(((Powf)node).Base, p) : node);
+            // Read as polynomials over the same atoms, each of which must be the p-th power of a
+            // whole quantity for a congruence modulo p to carry through a product with it.
+            var atoms = new Dictionary<Entity, Variable>();
+            var unfolded = new Dictionary<Entity, Entity>();
+            var before = Quantifiers.Atomized(d, atoms, unfolded);
+            var after = Quantifiers.Atomized(dreamt, atoms, unfolded);
+            foreach (var atom in atoms.Keys)
+                if (atom is not Powf(var @base, var exponent) || exponent != p || !IsWholePolynomial(@base))
+                    return false;
+            var names = before.Vars.Concat(after.Vars).Distinct().ToArray();
+            if (names.Length > MultivariatePolynomial.MaxVariables || names.Any(name => !atoms.ContainsValue(name) && !IsWhole(name)))
+                return false;
+            var indices = new Dictionary<Variable, int>();
+            for (var i = 0; i < names.Length; i++)
+                indices[names[i]] = i;
+            if (MultivariatePolynomial.TryParse(before, indices) is not { HasIntegerCoefficients: true }
+                || MultivariatePolynomial.TryParse(after, indices) is not { } left
+                || !(left.IsZero || p is Variable modulus && indices.TryGetValue(modulus, out var at) && left.HasIntegerCoefficients && left.Terms.All(term => MultivariatePolynomial.PowerOf(term.Key, at) > 0)))
+                return false;
+            // The step this rests on, p divides binomial(p, k) for 0 < k < p, asked of the
+            // quantifiers with the facts that p is prime already in scope.
+            var k = (d + p).Vars.Any(name => name.Name == "k") ? Variable.CreateUnique(d + p, "k") : MathS.Var("k");
+            ProofRecording.Enter();
+            Entity binomials;
+            try
+            {
+                binomials = new Forallf(k, MathS.Sets.Z, (Integer.Zero < k & k < p).Implies(new Dividesf(p, new Binomialf(p, k)))).InnerSimplified;
+            }
+            finally
+            {
+                ProofRecording.Leave();
+            }
+            if (binomials != Entity.Boolean.True)
+                return false;
+            if (ProofRecording.Recording)
+                ProofRecording.AddBelow(new Dividesf(p, d),
+                    $"by the binomial theorem each ({string.Join("), (", d.Nodes.OfType<Powf>().Where(power => power.Base is Sumf or Minusf && power.Exponent == p).Select(power => power.Base).Distinct())})^{p} is the sum of the {p}-th powers of its terms and multiples of {p}, and what is left of {d} is a multiple of {p}",
+                    "add_pow_char", Entity.Boolean.True);
+            return true;
+        }
+
+        /// <summary>The p-th powers of the terms of a sum, added: <c>(u - v)^p</c> is read as <c>u^p - v^p</c>.</summary>
+        private static Entity PowersOfTheTerms(Entity sum, Entity p)
+            => Sumf.LinearChildren(sum)
+                .Select(term => term switch
+                {
+                    Mulf(Integer { EInteger: var minusOne }, var rest) when minusOne.Equals(EInteger.FromInt32(-1)) => -rest.Pow(p).InnerSimplified,
+                    Integer { IsNegative: true } negative => -((Entity)(-negative)).Pow(p).InnerSimplified,
+                    _ => term.Pow(p).InnerSimplified
+                })
+                .Aggregate((left, right) => left + right);
+
+        /// <summary>Whether the expression is a polynomial with whole coefficients in names that are whole by the facts in scope.</summary>
+        private static bool IsWholePolynomial(Entity expression)
+        {
+            var names = expression.Vars.Distinct().ToArray();
+            if (names.Length > MultivariatePolynomial.MaxVariables || names.Any(name => !IsWhole(name)))
+                return false;
+            var indices = new Dictionary<Variable, int>();
+            for (var i = 0; i < names.Length; i++)
+                indices[names[i]] = i;
+            return MultivariatePolynomial.TryParse(expression, indices) is { HasIntegerCoefficients: true };
         }
 
         private static bool IsPrime(Entity expression)

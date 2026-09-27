@@ -411,6 +411,9 @@ namespace AngouriMath
                         // https://github.com/asc-community/AngouriMath/issues/1409
                         (_, Binomialf(var upper, var lower)) when a == upper
                             && Functions.Boolean.QuantifierFacts.PrimeDividesItsBinomial(a, lower) => True,
+                        // And the binomial theorem modulo that prime: p divides (a + 1)^p - a^p - 1.
+                        // Sullivan and Mackey's Prob 8.9.25.
+                        (not Number, _) when Functions.Boolean.QuantifierFacts.PrimeDividesByTheBinomialTheorem(a, b) => True,
                         (Number, Number) => MathS.NaN,
                         _ => null
                     },
@@ -451,6 +454,11 @@ namespace AngouriMath
                     case (Number, Number, Number):
                         return MathS.NaN;
                 }
+                // (a + b)^p = a^p + b^p (mod p) for a prime p the quantifiers around establish,
+                // by the binomial theorem. Sullivan and Mackey's Prob 8.9.25.
+                // https://github.com/asc-community/AngouriMath/issues/1409
+                if (modulus is not Number && Functions.Boolean.QuantifierFacts.PrimeDividesByTheBinomialTheorem(modulus, left - right))
+                    return Boolean.True;
                 var difference = (left - right).InnerSimplified;
                 if (difference is Integer whole && modulus is Integer m)
                     return m.EInteger.IsZero
