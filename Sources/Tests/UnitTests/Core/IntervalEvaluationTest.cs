@@ -73,8 +73,9 @@ namespace AngouriMath.Tests.Core
         }
 
         /// <summary>
-        /// Declined: a variable, a pole, the logarithm of zero, a node the pilot does not read,
-        /// and a value whose condition fails.
+        /// Declined, in doubles and in decimals: a variable, a pole, the logarithm of zero, a node
+        /// the evaluation does not read, a value whose condition fails -- and a product with a
+        /// pole in it, beside an exact zero or not.
         /// </summary>
         [Theory]
         [InlineData("x + 1")]
@@ -85,8 +86,13 @@ namespace AngouriMath.Tests.Core
         [InlineData("3!")]
         [InlineData("1 provided 3 < 2")]
         [InlineData("1 provided sqrt(-2) in RR")]
+        [InlineData("0 * (1/0)")]
+        [InlineData("(1/0) * 0")]
         public void UndecidedWhereItShouldBe(string expression)
-            => Assert.Null(IntervalEvaluation.Of(expression.ToEntity()));
+        {
+            Assert.Null(IntervalEvaluation.Of(expression.ToEntity()));
+            Assert.Null(PreciseEvaluation.Of(expression.ToEntity(), 40));
+        }
 
         /// <summary>
         /// Where cancellation leaves double intervals too wide to tell, forty digits tell: the
