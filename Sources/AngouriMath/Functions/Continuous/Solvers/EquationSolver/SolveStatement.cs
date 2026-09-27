@@ -319,6 +319,16 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <summary>How large a modulus is tried residue by residue for a congruence that is not linear.</summary>
         private const int LargestModulusTried = 4096;
 
+        /// <summary>
+        /// The equation as it was written where the solver left the whole of it unsolved: the
+        /// solver works on <c>left - right = 0</c>, and <c>{ x : x! = 6 }</c> reads better than
+        /// <c>{ x : x! - 6 = 0 }</c>, which says the same.
+        /// </summary>
+        private static Set AsWritten(Set solved, Entity difference, Entity equation, Variable x)
+            => solved is ConditionalSet { Predicate: Equalsf(var rearranged, Integer { IsZero: true }) } && rearranged == difference.InnerSimplified
+                ? new ConditionalSet(x, equation)
+                : solved;
+
         internal static Set Solve(Entity expr, Variable x)
             => expr switch
             {
@@ -327,7 +337,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
                 Equalsf(var left, var right) when left is not Set && right is not Set
                     => UnsolvedWhereIndependenceIsDenied(
-                        WithoutSpuriousRoots(AnalyticalEquationSolver.Solve(left - right, x), left - right, x),
+                        WithoutSpuriousRoots(AsWritten(AnalyticalEquationSolver.Solve(left - right, x), left - right, expr, x), left - right, x),
                         expr, x),
 
                 Equalsf => Empty,

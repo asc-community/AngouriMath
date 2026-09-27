@@ -60,7 +60,8 @@ namespace AngouriMath.Tests.Algebra
         [InlineData("x ^ (a provided x > 0) = 8", "{ 8 ^ (1 / a) provided 8 ^ (1 / a) > 0 }")] // Power with possible domain restrictions
         [InlineData("(x ^ 2 provided x > 0) = 4", "{ 2 }")] // Quadratic with provided condition
         [InlineData("log(b, x) = 2", "{ b ^ 2 }")] // TODO: Logarithm should preserve domain conditions
-        [InlineData("(x! provided x > 7) = 6", "{  }")] // Factorial with domain restrictions
+        // `(x! provided x > 7) = 6` answered `{ }` here, which was true only because the solver
+        // claimed x! = 6 had no roots; it has 3. It is AnUnwrittenInverseIsNotTheEmptySetTest's now.
         public void SolveWithProvidedPreservesConditions(string equation, string result)
         {
             var solutions = equation.Solve("x");

@@ -259,7 +259,8 @@ namespace AngouriMath.Tests.Algebra
         [InlineData("(x - 3)^2 - 4", 2)]
         [InlineData("(3 - x)^2 - 4", 2)]
         [InlineData("arccos(x)2 - 1", 1)]
-        [InlineData("x! - 1", 0)]
+        // `x! - 1` was pinned at no roots, and 0 and 1 are both roots: no node inverts a
+        // factorial, so it is left unsolved now. See AnUnwrittenInverseIsNotTheEmptySetTest.
         // `limit(x, x, y)2 - 2` moved to EquationWithoutTheUnknownTest: the limit binds
         // x, so the equation reduces to y^2 - 2 and mentions no unknown at all. It now
         // answers `{ x : y^2 - 2 = 0 }` rather than `{ }` -- every x is a solution when y

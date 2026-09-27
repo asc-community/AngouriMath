@@ -71,9 +71,9 @@ namespace AngouriMath
         {
             // x % a = value has one solution per period, so inverting it means introducing
             // an integer parameter the way the trigonometric inversions do. Until that is
-            // written, no solutions is the honest answer -- a wrong one would be worse.
+            // written the equation is left unsolved: no solutions would claim it has none.
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => Enumerable.Empty<Entity>();
+                => throw new CannotInvertException();
         }
 
         partial record Powf
@@ -212,18 +212,21 @@ namespace AngouriMath
 
         partial record Factorialf
         {
-            // TODO: Inverse of factorial not implemented yet
+            // The factorial is the gamma function one along, and the gamma function has no
+            // zeros anywhere in the complex plane, so x! = 0 has no roots. Every other value
+            // has some -- x! = 6 at 3 -- and no node here writes them.
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Enumerable.Empty<Entity>();
+                value is Integer { IsZero: true } ? Enumerable.Empty<Entity>() : throw new CannotInvertException();
         }
 
         partial record Binomialf
         {
             // The preimage of a binomial coefficient is not a function of either argument
             // that can be undone: binomial(n, k) = binomial(n, n - k), and 1 is taken at
-            // every (n, 0) and (n, n).
+            // every (n, 0) and (n, n). It has one all the same -- binomial(x, 2) = 3 at 3 and
+            // at -2 -- so the equation is left unsolved rather than answered with none.
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Enumerable.Empty<Entity>();
+                throw new CannotInvertException();
         }
 
         partial record Derivativef
@@ -250,25 +253,25 @@ namespace AngouriMath
         {
             // The unknown sits under a binder; see Summationf below.
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Enumerable.Empty<Entity>();
+                throw new CannotInvertException();
         }
 
         partial record Minimumf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Enumerable.Empty<Entity>();
+                throw new CannotInvertException();
         }
 
         partial record Argmaxf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Enumerable.Empty<Entity>();
+                throw new CannotInvertException();
         }
 
         partial record Argminf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Enumerable.Empty<Entity>();
+                throw new CannotInvertException();
         }
 
         partial record Summationf
@@ -276,23 +279,24 @@ namespace AngouriMath
             // The unknown sits under a binder, and inverting would have to solve for it inside a
             // sum whose length may be symbolic. Declining is the honest answer -- and the wrong
             // one is on record: solving through an opaque Derivativef returns a non-solution,
-            // https://github.com/asc-community/AngouriMath/issues/964.
+            // https://github.com/asc-community/AngouriMath/issues/964. Declining is leaving the
+            // equation unsolved; no roots would claim it has none.
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Enumerable.Empty<Entity>();
+                throw new CannotInvertException();
         }
 
         partial record Productf
         {
             // Same reasoning as Summationf above.
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Enumerable.Empty<Entity>();
+                throw new CannotInvertException();
         }
 
         partial record Limitf
         {
-            // TODO: We can't just do a limit on the inverse function: https://math.stackexchange.com/q/3397326/627798
+            // We can't just do a limit on the inverse function: https://math.stackexchange.com/q/3397326/627798
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Enumerable.Empty<Entity>();
+                throw new CannotInvertException();
         }
 
         partial record Signumf
@@ -386,13 +390,13 @@ namespace AngouriMath
             // of x. Nothing here can express that, and inventing a branch would answer
             // confidently and wrongly, so this declines the way Factorialf and Phif do.
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => Enumerable.Empty<Entity>();
+                => throw new CannotInvertException();
         }
 
         partial record Maxf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => Enumerable.Empty<Entity>();
+                => throw new CannotInvertException();
         }
 
         partial record Gcdf
@@ -400,14 +404,14 @@ namespace AngouriMath
             // The preimage of a gcd is every pair whose greatest common divisor is the
             // value, which is not a function of x that can be undone.
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => Enumerable.Empty<Entity>();
+                => throw new CannotInvertException();
         }
 
         partial record Lcmf
         {
             // As for the gcd.
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => Enumerable.Empty<Entity>();
+                => throw new CannotInvertException();
         }
 
         partial record Boolean
@@ -564,7 +568,7 @@ namespace AngouriMath
             {
                 // set{,,,} = value
                 private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                    => this == x ? new[] { value } : Enumerable.Empty<Entity>();
+                    => this == x ? new[] { value } : throw new CannotInvertException();
             }
 
             partial record Interval
@@ -580,14 +584,14 @@ namespace AngouriMath
                             return Left.Invert(Right, x).Select(c => c.Provided(MathS.Equality(Right, value)));
                         else
                             return Right.Invert(Left, x).Select(c => c.Provided(MathS.Equality(Left, value)));
-                    return Enumerable.Empty<Entity>();
+                    throw new CannotInvertException();
                 }
             }
 
             partial record ConditionalSet
             {
                 private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                    => this == x ? new[] { value } : Enumerable.Empty<Entity>();
+                    => this == x ? new[] { value } : throw new CannotInvertException();
             }
 
             partial record SpecialSet
@@ -660,7 +664,7 @@ namespace AngouriMath
             {
                 // The unknown sits under a binder; see Summationf.
                 private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                    => Enumerable.Empty<Entity>();
+                    => throw new CannotInvertException();
             }
 
             partial record Powersetf
@@ -677,7 +681,7 @@ namespace AngouriMath
             // valuation(n, p) = k has every multiple of p^k prime to p for a solution, a set the
             // inverter cannot hand back.
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => Enumerable.Empty<Entity>();
+                => throw new CannotInvertException();
         }
 
         partial record Primef
@@ -685,7 +689,7 @@ namespace AngouriMath
             // prime(n) = p has the one solution n = pi(p) where p is prime and none otherwise,
             // and pi is not a node here; declined the way Phif is.
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => Enumerable.Empty<Entity>();
+                => throw new CannotInvertException();
         }
 
         partial record Phif
@@ -694,7 +698,7 @@ namespace AngouriMath
             // There is an algorithm to find exactly one solution but we can do no more.
             // TODO: Mess with that...
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => Enumerable.Empty<Entity>();
+                => throw new CannotInvertException();
         }
 
         partial record Cardf
@@ -728,7 +732,7 @@ namespace AngouriMath
         {
             // The unknown sits under a binder; see Summationf.
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => Enumerable.Empty<Entity>();
+                => throw new CannotInvertException();
         }
 
         partial record Providedf
@@ -758,14 +762,14 @@ namespace AngouriMath
         {
             // TODO
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => Enumerable.Empty<Entity>();
+                => throw new CannotInvertException();
         }
 
         partial record Lambda
         {
             // TODO
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => Enumerable.Empty<Entity>();
+                => throw new CannotInvertException();
         }
     }
 }

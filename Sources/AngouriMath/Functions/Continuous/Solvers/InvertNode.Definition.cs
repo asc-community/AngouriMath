@@ -7,6 +7,16 @@
 
 namespace AngouriMath
 {
+    /// <summary>
+    /// Thrown by an inversion that cannot write the preimage it is asked for, so that the
+    /// equation is answered as the set of <c>x</c> for which it holds rather than as the empty
+    /// set. Caught by the analytical solvers, never seen by a caller.
+    /// </summary>
+    internal sealed class CannotInvertException : Core.Exceptions.AngouriMathBaseException
+    {
+        internal CannotInvertException() : base("The preimage has no written form") { }
+    }
+
     partial record Entity : ILatexizeable
     {
         /// <summary><para>This <see cref="Entity"/> MUST contain exactly ONE occurance of <paramref name="x"/>,
@@ -27,6 +37,12 @@ namespace AngouriMath
                 return InvertNode(simplified, x).Where(el => el.IsFinite);
         }
         /// <summary>Use <see cref="Invert(Entity, Entity)"/> instead which auto-simplifies <paramref name="value"/></summary>
+        /// <remarks>
+        /// No roots means the equation has none. A node that cannot write the preimage it is
+        /// asked for throws <see cref="CannotInvertException"/> instead, and the solver answers
+        /// the equation as unsolved. <c>x! = 6</c> has the root 3, and no node here inverts a
+        /// factorial, so returning no roots answered <c>{ }</c>: a claim that it has none.
+        /// </remarks>
         private protected abstract IEnumerable<Entity> InvertNode(Entity value, Entity x);
         /// <summary>
         /// Returns true if <paramref name="a"/> is inside a rect with corners <paramref name="from"/>
