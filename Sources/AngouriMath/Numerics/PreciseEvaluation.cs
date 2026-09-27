@@ -142,11 +142,9 @@ namespace AngouriMath.Numerics
 
         private PreciseInterval Subtract(PreciseInterval a, PreciseInterval b) => Add(a, b.Negate());
 
+        /// <summary>The product, exactly zero where either factor is, as <see cref="Interval"/>'s is.</summary>
         private PreciseInterval Multiply(PreciseInterval a, PreciseInterval b)
         {
-            // Undefined before zero: nothing times no value has no value.
-            if (!a.IsFinite || !b.IsFinite)
-                return new(EDecimal.NaN, EDecimal.NaN);
             if (a.IsZero || b.IsZero)
                 return PreciseInterval.Exactly(EDecimal.Zero);
             // Where neither straddles zero, the ends are products of ends: two multiplications.
@@ -428,7 +426,7 @@ namespace AngouriMath.Numerics
                 case Minusf(var left, var right):
                     return Evaluate(left) is { IsFinite: true } lMinusf ? Subtract(lMinusf, Evaluate(right)) : undefined;
                 case Mulf(var left, var right):
-                    return Evaluate(left) is { IsFinite: true } lMulf ? Multiply(lMulf, Evaluate(right)) : undefined;
+                    return Multiply(Evaluate(left), Evaluate(right));
                 case Divf(var left, var right):
                     return Evaluate(left) is { IsFinite: true } lDivf ? Divide(lDivf, Evaluate(right)) : undefined;
                 case Powf(var @base, Number.Integer power) when power.EInteger.CanFitInInt32():

@@ -48,12 +48,15 @@ namespace AngouriMath.Numerics
             => b.IsZero ? a : a.IsZero ? -b : new(Down(a.Low - b.High), Up(a.High - b.Low));
         public static Interval operator -(Interval a) => new(-a.High, -a.Low);
 
+        /// <summary>
+        /// The product, exactly zero where either factor is exactly zero, whatever the other --
+        /// as the decimal evaluation has it, whose simplification takes <c>0 x</c> to <c>0</c>
+        /// first. An answer's derivative can carry a term whose coefficient is exactly zero at
+        /// the pinned values beside a factor with no value there, and reading the term as having
+        /// none turned correct answers away: Rubi 6.6.7's <c>1/(a + b csch(c + d x)^2)</c>.
+        /// </summary>
         public static Interval operator *(Interval a, Interval b)
         {
-            // Unbounded before zero: nothing times no value has no value, and an interval that
-            // is not finite came from a divisor that may be zero.
-            if (!a.IsFinite || !b.IsFinite)
-                return new(double.NaN, double.NaN);
             if (a.IsZero || b.IsZero)
                 return Exactly(0);
             var p1 = a.Low * b.Low;
@@ -66,8 +69,6 @@ namespace AngouriMath.Numerics
         /// <summary>The quotient, or an interval that is not finite where the divisor may be zero.</summary>
         public static Interval operator /(Interval a, Interval b)
         {
-            if (double.IsNaN(a.Low) || double.IsNaN(a.High) || double.IsNaN(b.Low) || double.IsNaN(b.High))
-                return new(double.NaN, double.NaN);
             if (a.IsZero && !b.ContainsZero)
                 return Exactly(0);
             if (b.ContainsZero)

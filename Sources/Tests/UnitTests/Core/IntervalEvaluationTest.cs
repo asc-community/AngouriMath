@@ -74,8 +74,7 @@ namespace AngouriMath.Tests.Core
 
         /// <summary>
         /// Declined, in doubles and in decimals: a variable, a pole, the logarithm of zero, a node
-        /// the evaluation does not read, a value whose condition fails -- and a product with a
-        /// pole in it, beside an exact zero or not.
+        /// the evaluation does not read, and a value whose condition fails.
         /// </summary>
         [Theory]
         [InlineData("x + 1")]
@@ -86,8 +85,6 @@ namespace AngouriMath.Tests.Core
         [InlineData("3!")]
         [InlineData("1 provided 3 < 2")]
         [InlineData("1 provided sqrt(-2) in RR")]
-        [InlineData("0 * (1/0)")]
-        [InlineData("(1/0) * 0")]
         public void UndecidedWhereItShouldBe(string expression)
         {
             Assert.Null(IntervalEvaluation.Of(expression.ToEntity()));
@@ -144,6 +141,22 @@ namespace AngouriMath.Tests.Core
             var power = MathS.Pow(2, Entity.Number.Integer.Create(long.MinValue));
             Assert.Equal(0, IntervalEvaluation.Of(power)!.Value.Re.Mignitude);
             Assert.Equal(0, PreciseEvaluation.Of(power, 40)!.Value.Re.Mignitude.Sign);
+        }
+
+        /// <summary>
+        /// An exact zero factor makes the product zero, whatever the other factor -- as the
+        /// decimal evaluation's simplification of <c>0 x</c> has it. A derivative can hold a term
+        /// whose coefficient is exactly zero at the pinned values beside a factor with no value
+        /// there, and reading the product as undefined lost Rubi's
+        /// <c>1/(a + b csch(c + d x)^2)</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("0 * (1/0)")]
+        [InlineData("(1/0) * 0")]
+        public void AnExactZeroFactorIsZero(string expression)
+        {
+            Assert.True(IntervalEvaluation.Of(expression.ToEntity()) is { Re.IsZero: true, Im.IsZero: true });
+            Assert.True(PreciseEvaluation.Of(expression.ToEntity(), 40) is { Re.IsZero: true, Im.IsZero: true });
         }
 
         [Fact]
