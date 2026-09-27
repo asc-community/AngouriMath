@@ -478,6 +478,15 @@ namespace AngouriMath.Numerics
                         return false;
                     return difference.Re.IsZero && difference.Im.IsZero ? true : null;
                 }
+                case Set.Inf(var element, Set.SpecialSet.Reals):
+                {
+                    var value = Evaluate(element);
+                    if (!value.IsFinite)
+                        return null;
+                    return value.IsReal ? true : value.Im.Mignitude.Sign > 0 ? false : null;
+                }
+                case Set.Inf(var element, Set.SpecialSet.Complexes):
+                    return Evaluate(element).IsFinite ? true : null;
                 case Greaterf(var left, var right):
                     return Compare(left, right) is { } greater ? greater > 0 : null;
                 case GreaterOrEqualf(var left, var right):

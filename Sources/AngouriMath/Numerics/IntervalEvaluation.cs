@@ -462,6 +462,18 @@ namespace AngouriMath.Numerics
                         return false;
                     return difference.Re.IsZero && difference.Im.IsZero ? true : null;
                 }
+                // Real where the imaginary part is exactly zero, which real arithmetic keeps it;
+                // not real where it is certainly not zero. An answer's conditions ask this of its
+                // constants -- `-4 - 4 a^2 in RR` -- and legacy answers it.
+                case Set.Inf(var element, Set.SpecialSet.Reals):
+                {
+                    var value = Evaluate(element);
+                    if (!value.IsFinite)
+                        return null;
+                    return value.IsReal ? true : value.Im.Mignitude > 0 ? false : null;
+                }
+                case Set.Inf(var element, Set.SpecialSet.Complexes):
+                    return Evaluate(element).IsFinite ? true : null;
                 case Greaterf(var left, var right):
                     return Compare(left, right) is { } greater ? greater > 0 : null;
                 case GreaterOrEqualf(var left, var right):

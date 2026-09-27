@@ -51,6 +51,8 @@ namespace AngouriMath.Tests.Core
         [InlineData("(sin(1)^2 + cos(1)^2) * 7/3")]
         [InlineData("sqrt(2) provided 1 < 2")]
         [InlineData("piecewise(1 provided 2 < 1, sin(1) provided 3 > 2)")]
+        [InlineData("sqrt(2) provided -4 - 4 * (137/100)^2 in RR")]
+        [InlineData("sqrt(2) provided sqrt(-2) in CC")]
         public void TheIntervalHoldsTheValue(string expression)
         {
             var expr = expression.ToEntity();
@@ -82,6 +84,7 @@ namespace AngouriMath.Tests.Core
         [InlineData("arcsec(1/2)")]
         [InlineData("3!")]
         [InlineData("1 provided 3 < 2")]
+        [InlineData("1 provided sqrt(-2) in RR")]
         public void UndecidedWhereItShouldBe(string expression)
             => Assert.Null(IntervalEvaluation.Of(expression.ToEntity()));
 
@@ -110,6 +113,7 @@ namespace AngouriMath.Tests.Core
         [InlineData("arccot(-2) + arcsec(3) + arccsc(-2) + arccot(0)")]
         [InlineData("sin(10^6) + cos(10^6)")]
         [InlineData("sqrt(2) provided 1 < 2")]
+        [InlineData("sqrt(2) provided -4 - 4 * (137/100)^2 in RR and sqrt(-2) in CC")]
         public void ThePreciseIntervalHoldsTheValue(string expression)
         {
             var expr = expression.ToEntity();
