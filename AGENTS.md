@@ -487,10 +487,11 @@ Then:
    Answer a question there; a question that arrives as an issue is redirected to Discussions and,
    once answered, closed unless a work item came of it.
 
-   **Triage is part of the first answer, not a pass of its own.** An issue with no type is
-   untriaged -- which every issue is when it arrives, the one template asking for no kind -- and
-   the reply that engages with it is where the type, the milestone and the labels go on -- not a later sweep, which is one more thing to forget and leaves the tracker wrong in
-   the meantime. A pull request is not triaged: it carries the issue it says it is `Part of`, and
+   **Triage is part of the first answer, not a pass of its own.** An issue's type and its milestone
+   are each untriaged while they are missing -- as both are when it arrives, the one template
+   asking for neither -- and the reply that engages with it is where they and the labels go on --
+   not a later sweep, which is one more thing to forget and leaves the tracker wrong in the
+   meantime. A pull request is not triaged: it carries the issue it says it is `Part of`, and
    a type on it would be that issue's type written twice. A discussion is triaged by the category
    it is in; what it needs is an answer, and an issue only if work came of it.
 
@@ -546,7 +547,7 @@ Then:
 ### Issue types and Goal decomposition
 
 An issue type describes the kind of work, not its state, hierarchy, release target, or owner. An
-issue with no type is **untriaged**; it is not implicitly a Goal.
+issue with no type has an **untriaged** type; it is not implicitly a Goal.
 
 - **Goal** is a triaged outcome or initiative. It may have no sub-issues when first accepted, and it
   may generate sub-issues in several passes. A Goal used as a parent is the repository's Epic
@@ -683,8 +684,10 @@ leave project-management scaffolding behind once the work it tracked has landed.
 
 ### Milestones, and what clears a release
 
-Every open issue is on a milestone, is an epic, or is visibly untriaged, and the milestone says
-what kind of change it is, not only when:
+A milestone is triaged on its own, as a type is: an issue with none has an untriaged milestone,
+and there is no untriaged issue as such
+([#1511](https://github.com/asc-community/AngouriMath/pull/1511#issuecomment-5858287510)). Once
+triaged, every issue is on one, and the milestone says what kind of change it is, not only when:
 
 - **The next minor** (`2.6.0`, then `2.7.0`, …) carries defects and additive work that moves no
   existing answer. Pace it: a minor that holds everything "minor" is a release that never ships, so
@@ -708,19 +711,31 @@ what kind of change it is, not only when:
   why the milestone holds one issue, not thirty. Once every other milestone is done, the next
   milestones are planned by pulling issues from it
   ([#1468](https://github.com/asc-community/AngouriMath/issues/1468)); its description says so.
+- **Guiding principles** is perpetual: the Goals with no expected completion, which the work
+  keeps following rather than finishing -- #746, the roadmap itself, and its kind. It is neither
+  a version nor the backlog, and nothing leaves it by being done.
 - **Epics** — the agentic goals, #718, #1409 and their kind — are Goals used as parents, which is
   what an epic is here (the type, not a milestone; the `Epics` milestone was retired when the
-  types came in, [#1384](https://github.com/asc-community/AngouriMath/pull/1384)). They carry no
-  milestone: they spawn sub-issues, and it is the sub-issues that carry version milestones; the
-  epic itself stays open across releases and lists what each one delivered.
-- A proposal without `Accepted` has no milestone: scheduling it would decide it. What marks an
-  issue **untriaged** is the absence of a type, not of a milestone.
+  types came in, [#1384](https://github.com/asc-community/AngouriMath/pull/1384)). A Goal is on
+  the milestone its last planned piece is aimed at, and each sub-issue or PR is on its own; the
+  Goal stays open across releases, lists what each one delivered, and moves when its last piece
+  does ([#1498](https://github.com/asc-community/AngouriMath/issues/1498#issuecomment-5857987112)).
+  A Goal with no last piece to aim at is on Guiding principles
+  ([#1511](https://github.com/asc-community/AngouriMath/pull/1511#issuecomment-5858231058)).
+- A proposal without `Accepted` is on Future until it is decided: a version would decide it.
 
-Assign the milestone when filing. When a PR merges, check its issue's milestone still describes
-where the change lands — a fix that turned out breaking moves to the major, with a
-`BREAKING-CHANGES.md` entry. Release clearance is the milestone read through: every open item on
-it either ships in this release or is moved with a sentence saying why, and the release notes are
-written from the closed ones.
+An issue you open has its type and its milestone from the moment it is filed, which the reply
+that triages someone else's issue does for theirs. `gh issue create --milestone` sets the one;
+the type needs a second call, since `gh issue create` has no flag for it:
+
+```
+gh api -X PATCH repos/asc-community/AngouriMath/issues/<n> -f type=Bug   # Bug, Feature, Maintenance or Goal
+```
+
+When a PR merges, check its issue's milestone still describes where the change lands — a fix
+that turned out breaking moves to the major, with a `BREAKING-CHANGES.md` entry. Release
+clearance is the milestone read through: every open item on it either ships in this release or is
+moved with a sentence saying why, and the release notes are written from the closed ones.
 
 ### When two agents need the same code
 
