@@ -1679,6 +1679,22 @@ where it was `0.1 * x ^ 2 / 2 + C`
 | `limit(sin(c*x)/x, x, 0)` | `NaN` | `c` |
 | `limit((1 - cos(c*x))/x^2, x, 0)` | `NaN` | `c ^ 2 / 2` |
 
+### The Gaussian with a linear term is integrated beside a power of `x` or a polynomial
+
+`x^2 e^(-x^2 + x)` was left unintegrated. `x^m P(x) F^(a x^2 + b x + c)` with `b` not zero is now
+integrated at the square's centre, `u = x + b/(2a)`, where `x^m P(x)` is a polynomial in `u`.
+Each of its powers is a moment of the Gaussian, and an odd one ends at the elementary
+`e^(A u^2)/(2A)`. The hyperbolic functions of a quadratic beside a power of `x` come out too,
+since they are these exponentials
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2*e^(-x^2 + x)".Integrate("x")` | `integral(x ^ 2 * e ^ (-x ^ 2 + x), x)` | the antiderivative, with `erf` |
+| `"x^3*f^(c*(a + b*x)^2)".Integrate("x")` | `integral(x ^ 3 * f ^ (c * (a + b * x) ^ 2), x)` | the antiderivative |
+| `"(p + q*x)^2*f^(a + b*x + c*x^2)".Integrate("x")` | `integral((p + q * x) ^ 2 * f ^ (a + b * x + c * x ^ 2), x)` | the antiderivative |
+| `"x^2*sinh(a + b*x + c*x^2)".Integrate("x")` | `integral(x ^ 2 * (e ^ (a + b * x + c * x ^ 2) - e ^ (-(a + b * x + c * x ^ 2))) / 2, x)` | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

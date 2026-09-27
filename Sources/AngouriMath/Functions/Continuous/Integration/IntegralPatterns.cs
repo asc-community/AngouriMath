@@ -120,18 +120,52 @@ namespace AngouriMath.Functions.Algebra
             Entity coefficient = Entity.Number.Integer.One;
             int? power = null;
             Entity.Powf? gaussian = null;
+            Entity? polynomial = null;
             foreach (var factor in Entity.Mulf.LinearChildren(numerator))
-                if (!TakeMomentFactor(factor, inverted: false, x, ref coefficient, ref power, ref gaussian))
+                if (!TakeMomentFactor(factor, inverted: false, x, ref coefficient, ref power, ref gaussian, ref polynomial))
                     return null;
             foreach (var factor in Entity.Mulf.LinearChildren(denominator))
-                if (!TakeMomentFactor(factor, inverted: true, x, ref coefficient, ref power, ref gaussian))
+                if (!TakeMomentFactor(factor, inverted: true, x, ref coefficient, ref power, ref gaussian, ref polynomial))
                     return null;
-            if (power is not { } m || m == 0 || m % 2 != 0 || System.Math.Abs(m) > 32 || gaussian is null
-                || !TreeAnalyzer.TryGetPolyQuadratic(gaussian.Exponent, x, out var a, out var b, out var c)
-                || TreeAnalyzer.IsZero(a) || !TreeAnalyzer.IsZero(b))
+            if (gaussian is null || !TreeAnalyzer.TryGetPolyQuadratic(gaussian.Exponent, x, out var a, out var b, out var c) || TreeAnalyzer.IsZero(a))
+                return null;
+            // A linear term: every whole power beside it, and a polynomial, at the square's centre.
+            // Without one, a polynomial beside the Gaussian is a sum the integrator splits first.
+            if (!TreeAnalyzer.IsZero(b))
+                return ShiftedMoments(coefficient, power ?? 0, polynomial, gaussian.Base, a, b, c, x);
+            if (polynomial is not null || power is not { } m || m == 0 || m % 2 != 0 || System.Math.Abs(m) > 32)
                 return null;
             var bell = MathS.Pow(gaussian.Base, a * MathS.Sqr(x));
             return coefficient * MathS.Pow(gaussian.Base, c) * Moment(m, a * MathS.Ln(gaussian.Base), bell, x);
+        }
+
+        /// <summary>
+        /// <c>int k x^m P(x) F^(a x^2 + b x + c) dx</c> with a linear term <c>b</c>, for a whole
+        /// <c>m</c> and a polynomial <c>P</c>, which may be absent. At the square's centre,
+        /// <c>u = x + b/(2a)</c>, the exponential is <c>F^(c - b^2/(4a))</c> times <c>F^(a u^2)</c>,
+        /// and <c>x^m P(x)</c> a polynomial in <c>u</c>, each power of which is a moment of the
+        /// Gaussian. An odd moment ends at <c>I_1 = e^(A u^2)/(2A)</c>, which is elementary.
+        /// Rubi's 2.3, <c>f^(a + b x + c x^2) (d + e x)^m</c> and <c>f^(c (a + b x)^2) x^m</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </summary>
+        private static Entity? ShiftedMoments(Entity coefficient, int power, Entity? polynomial, Entity @base, Entity a, Entity b, Entity c, Entity.Variable x)
+        {
+            if (power < 0 || power > 32)
+                return null;
+            var shift = (b / (2 * a)).InnerSimplified;
+            var u = Entity.Variable.CreateUnique(@base + a + b + c + x, "u");
+            Entity inX = power == 0 ? Entity.Number.Integer.One : MathS.Pow(x, power);
+            if (polynomial is not null)
+                inX *= polynomial;
+            if (!TreeAnalyzer.TryGetPolynomial(inX.Substitute(x, u - shift), u, out var monomials)
+                || monomials.Keys.Any(k => k.Sign < 0 || k.CompareTo(EInteger.FromInt32(32)) > 0))
+                return null;
+            var A = a * MathS.Ln(@base);
+            var bell = MathS.Pow(@base, a * MathS.Sqr(u));
+            Entity sum = Entity.Number.Integer.Zero;
+            foreach (var monomial in monomials)
+                sum += monomial.Value * Moment(monomial.Key.ToInt32Checked(), A, bell, u);
+            return coefficient * MathS.Pow(@base, c - b * b / (4 * a)) * sum.Substitute(u, x + shift);
         }
 
         /// <summary>
@@ -139,7 +173,7 @@ namespace AngouriMath.Functions.Algebra
         /// <paramref name="x"/> or the exponential, and says whether it was one of the three.
         /// </summary>
         private static bool TakeMomentFactor(Entity factor, bool inverted, Entity.Variable x,
-            ref Entity coefficient, ref int? power, ref Entity.Powf? gaussian)
+            ref Entity coefficient, ref int? power, ref Entity.Powf? gaussian, ref Entity? polynomial)
         {
             if (!factor.ContainsNode(x))
             {
@@ -161,16 +195,26 @@ namespace AngouriMath.Functions.Algebra
                 gaussian = exponential;
                 return true;
             }
+            // A sum, or a whole power of one, taken as it is: read as a polynomial only once a
+            // Gaussian with a linear term is known to be beside it.
+            if (!inverted && polynomial is null
+                && factor is Entity.Sumf or Entity.Minusf or Entity.Powf(Entity.Sumf or Entity.Minusf, Entity.Number.Integer { EInteger.Sign: > 0 }))
+            {
+                polynomial = factor;
+                return true;
+            }
             return false;
         }
 
         /// <summary>
-        /// <c>I_k</c>, the integral of <c>x^k e^(A x^2)</c> for an even <c>k</c>, where
-        /// <paramref name="bell"/> is that exponential as the integrand writes it.
+        /// <c>I_k</c>, the integral of <c>x^k e^(A x^2)</c>, where <paramref name="bell"/> is that
+        /// exponential as the integrand writes it: an even <c>k</c> down to the Gaussian, an odd
+        /// positive one down to the elementary <c>I_1</c>.
         /// </summary>
         private static Entity Moment(int k, Entity A, Entity bell, Entity.Variable x) => k switch
         {
             0 => UnitGaussian(A, x),
+            1 => bell / (2 * A),
             > 0 => MathS.Pow(x, k - 1) * bell / (2 * A) + ((1 - k) / (2 * A)).InnerSimplified * Moment(k - 2, A, bell, x),
             _ => MathS.Pow(x, k + 1) * bell / (k + 1) + (-2 * A / (k + 1)).InnerSimplified * Moment(k + 2, A, bell, x),
         };
