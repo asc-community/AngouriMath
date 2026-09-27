@@ -142,6 +142,49 @@ namespace AngouriMath
                 return recording.steps.Count;
         }
 
+        /// <summary>
+        /// Writes the steps recorded since <paramref name="mark"/> with <paramref name="from"/>
+        /// read as <paramref name="to"/>: a quantifier decides under a name of its own while
+        /// facts are in scope (<see cref="Functions.Boolean.QuantifierFacts"/>), and its steps
+        /// are written under the name it was given.
+        /// </summary>
+        internal static void Rename(int mark, Entity.Variable from, Entity.Variable to)
+        {
+            var recording = current.Value;
+            if (recording is null || recording.closed)
+                return;
+            lock (recording.gate)
+                for (var i = mark; i < recording.steps.Count; i++)
+                {
+                    var step = recording.steps[i];
+                    recording.steps[i] = step with
+                    {
+                        Statement = Functions.Boolean.QuantifierFacts.Renamed(step.Statement, from, to),
+                        Rule = step.Rule.Replace(from.Name, to.Name),
+                        Verdict = Functions.Boolean.QuantifierFacts.Renamed(step.Verdict, from, to),
+                    };
+                }
+        }
+
+        /// <summary>
+        /// Writes the step the decision in progress recorded last, since <paramref name="mark"/>,
+        /// as a step about <paramref name="statement"/> by <paramref name="rule"/>, keeping its
+        /// verdict and depth. A quantifier that decided its body with facts in scope records the
+        /// statement as it was written, rather than the body those facts made of it.
+        /// </summary>
+        internal static void Restate(int mark, Entity statement, string rule, string lemma)
+        {
+            var recording = current.Value;
+            if (recording is null || recording.closed)
+                return;
+            lock (recording.gate)
+            {
+                var last = recording.steps.Count - 1;
+                if (last >= mark && recording.steps[last].Depth == depth)
+                    recording.steps[last] = recording.steps[last] with { Statement = statement, Rule = rule, Lemma = lemma };
+            }
+        }
+
         internal static void Rollback(int mark)
         {
             var recording = current.Value;

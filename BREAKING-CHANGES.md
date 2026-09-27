@@ -1523,6 +1523,23 @@ in 2.5.0.
 | `forall a in ZZ : a^7 mod 7 = a mod 7` | `UnhandledParseException` | `True` |
 | `forall a, b in ZZ : (a + b)^5 mod 5 = (a^5 + b^5) mod 5` | `UnhandledParseException` | `True` |
 
+### A quantifier's facts are read inside its body
+
+`forall p in PP : forall k in ZZ : (0 < k and k < p) implies p divides binomial(p, k)` was left as
+written. The claim holds because `p` is prime and `0 < k < p`, and only the quantifiers around it
+say so. A quantifier now hands those facts down while it decides its body: the set its name ranges
+over, and, while the claim is simplified, the conjuncts of the hypothesis. The rule for
+`p divides binomial(p, k)` reads them. Nothing decided with them leaves the quantifier:
+`p divides binomial(p, k)` on its own is still left as written. This is Sullivan and Mackey's
+Prob 8.9.24 for every prime ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+Quantifiers were a parse error in 2.5.0.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall p in PP : forall k in ZZ : (0 < k and k < p) implies p divides binomial(p, k)` | `UnhandledParseException` | `True` |
+| `forall k in ZZ : forall p in PP : (0 < k and k < p) implies p divides binomial(p, k)` | `UnhandledParseException` | `True` |
+| `forall p in PP : forall k in ZZ+ : k < p implies p divides binomial(p, k)` | `UnhandledParseException` | `True` |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
