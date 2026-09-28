@@ -193,6 +193,34 @@ namespace AngouriMath
                 => $@"\operatorname{{li}}\left({Argument.Latexize()}\right)";
         }
 
+        partial record Sif
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\operatorname{{Si}}\left({Argument.Latexize()}\right)";
+        }
+
+        partial record Cif
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\operatorname{{Ci}}\left({Argument.Latexize()}\right)";
+        }
+
+        partial record Shif
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\operatorname{{Shi}}\left({Argument.Latexize()}\right)";
+        }
+
+        partial record Chif
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\operatorname{{Chi}}\left({Argument.Latexize()}\right)";
+        }
+
         partial record Absf
         {
             /// <inheritdoc/>

@@ -262,6 +262,30 @@ namespace AngouriMath
                 => Choice(level, "ei_", "li_", "li_");
         }
 
+        public partial record Sif
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "si_", "si_", "si_");
+        }
+
+        public partial record Cif
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "si_", "ci_", "ci_");
+        }
+
+        public partial record Shif
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "shi_", "shi_", "shi_");
+        }
+
+        public partial record Chif
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "shi_", "chi_", "chi_");
+        }
+
         public partial record Absf
         {
             private protected override string SortHashName(SortLevel level)

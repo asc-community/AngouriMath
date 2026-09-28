@@ -292,6 +292,18 @@ it. Each is evaluated to the working precision anywhere in the complex plane and
 from its definition: the derivative of `Ei(x)` is `e ^ x / x`, and of `li(x)` it is `1 / ln(x)`.
 `Ei` is undefined at `0` and `li` at `1`; `li(0)` is `0`.
 
+**Sine and cosine integrals** — `Si(z)` `Ci(z)` `Shi(z)` `Chi(z)`. The sine integral
+`Si(z) = sum (-1)^k z^(2k + 1)/((2k + 1) (2k + 1)!)`, which on the real line is `int_0^x sin t/t dt`,
+and the cosine integral `Ci(z) = gamma + ln z + sum_(k >= 1) (-1)^k z^(2k)/(2k (2k)!)`, which on
+`x > 0` is `-int_x^oo cos t/t dt`; the hyperbolic `Shi` and `Chi` are the same sums without
+the alternating sign, `int_0^x sinh t/t dt` and `gamma + ln x + int_0^x (cosh t - 1)/t dt`. `Si` and
+`Shi` are entire, odd, and real on the real line. `Ci` and `Chi` take the cut of `ln z`, the negative
+real axis, which keeps the value from above: for `x > 0`, `Ci(-x)` is `Ci(x) + i pi` and `Chi(-x)` is
+`Chi(x) + i pi`. Each is evaluated to the working precision anywhere in the complex plane and
+differentiated from its definition: the derivative of `Si(x)` is `sin(x) / x`, of `Ci(x)` it is
+`cos(x) / x`, and of `Shi(x)` and `Chi(x)` it is `sinh(x) / x` and `cosh(x) / x`. `Ci` and `Chi` are
+undefined at `0`; `Si(+oo)` is `pi / 2` and `Ci(+oo)` is `0`.
+
 **Calculus** — `derivative(expr, var, order)`, `integral(expr, var)`,
 `integral(expr, var, from, to)`, `limit(expr, var, dest)`, `limitleft(...)`, `limitright(...)`;
 `max(expr, var in set)` and `min` for the extremum of an expression over a set, `argmax` and

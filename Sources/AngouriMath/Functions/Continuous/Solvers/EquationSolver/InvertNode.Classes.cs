@@ -257,6 +257,33 @@ namespace AngouriMath
                 null;
         }
 
+        // None of the four has an inverse among the library's nodes, and none of their preimages
+        // is empty: Si(x) = 1 near 1.1654, Ci(x) = 0 near 0.6165.
+        // https://github.com/asc-community/AngouriMath/issues/1501
+        partial record Sif
+        {
+            private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x) =>
+                null;
+        }
+
+        partial record Cif
+        {
+            private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x) =>
+                null;
+        }
+
+        partial record Shif
+        {
+            private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x) =>
+                null;
+        }
+
+        partial record Chif
+        {
+            private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x) =>
+                null;
+        }
+
         partial record Binomialf
         {
             // The preimage of a binomial coefficient is not a function of either argument

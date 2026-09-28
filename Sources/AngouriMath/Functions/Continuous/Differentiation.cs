@@ -291,6 +291,36 @@ namespace AngouriMath
                 Argument.InnerDifferentiate(variable) / MathS.Ln(Argument);
         }
 
+        partial record Sif
+        {
+            // Si(a)' = sin(a)/a a', the integrand of its definition, and so for the other three.
+            // https://github.com/asc-community/AngouriMath/issues/1501
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                MathS.Sin(Argument) / Argument * Argument.InnerDifferentiate(variable);
+        }
+
+        partial record Cif
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                MathS.Cos(Argument) / Argument * Argument.InnerDifferentiate(variable);
+        }
+
+        partial record Shif
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                MathS.Hyperbolic.Sinh(Argument) / Argument * Argument.InnerDifferentiate(variable);
+        }
+
+        partial record Chif
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                MathS.Hyperbolic.Cosh(Argument) / Argument * Argument.InnerDifferentiate(variable);
+        }
+
         partial record Cosf
         {
             // cos(a)' = -sin(a) * a'

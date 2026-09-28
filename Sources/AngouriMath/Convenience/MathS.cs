@@ -1416,6 +1416,49 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Li(Entity a) => new Lif(a);
 
+        /// <summary>The sine integral, <c>Si(z) = int_0^z sin(t)/t dt</c></summary>
+        /// <param name="a">The argument, any complex number</param>
+        /// <returns>The <see cref="Entity.Sif"/> node</returns>
+        /// <remarks>
+        /// Entire and odd, so what <c>int sin(x)/x dx</c> is in closed form; <c>Si(+oo) = pi/2</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Si(Entity a) => new Sif(a);
+
+        /// <summary>The cosine integral, <c>Ci(z) = gamma + ln z + int_0^z (cos t - 1)/t dt</c></summary>
+        /// <param name="a">The argument, any complex number but 0</param>
+        /// <returns>The <see cref="Entity.Cif"/> node</returns>
+        /// <remarks>
+        /// On <c>x > 0</c> it is <c>-int_x^oo cos(t)/t dt</c>, real, so what <c>int cos(x)/x dx</c> is in
+        /// closed form. Its cut is the negative real axis, as for <c>ln</c>, on which it is the value
+        /// from above: <c>Ci(-x) = Ci(x) + i pi</c>, as SymPy's, mpmath's and Mathematica's is.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Ci(Entity a) => new Cif(a);
+
+        /// <summary>The hyperbolic sine integral, <c>Shi(z) = int_0^z sinh(t)/t dt</c></summary>
+        /// <param name="a">The argument, any complex number</param>
+        /// <returns>The <see cref="Entity.Shif"/> node</returns>
+        /// <remarks>
+        /// Entire and odd, so what <c>int sinh(x)/x dx</c> is in closed form.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Shi(Entity a) => new Shif(a);
+
+        /// <summary>The hyperbolic cosine integral, <c>Chi(z) = gamma + ln z + int_0^z (cosh t - 1)/t dt</c></summary>
+        /// <param name="a">The argument, any complex number but 0</param>
+        /// <returns>The <see cref="Entity.Chif"/> node</returns>
+        /// <remarks>
+        /// Real on <c>x > 0</c>, so what <c>int cosh(x)/x dx</c> is in closed form; its cut is the
+        /// negative real axis, <c>Chi(-x) = Chi(x) + i pi</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Chi(Entity a) => new Chif(a);
+
         /// <summary>Boolean negation
         /// <a href="https://en.wikipedia.org/wiki/Negation">Wikipedia</a></summary>
         /// <param name="a">Argument node of which Negation function will be taken</param>
