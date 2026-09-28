@@ -671,7 +671,9 @@ namespace AngouriMath
                         // Idempotent: the floor of an integer is that integer, and floor
                         // always produces one.
                         Floorf or Ceilf => a,
-                        _ => null
+                        // What the quantifiers around it establish about the argument:
+                        // https://github.com/asc-community/AngouriMath/issues/1409
+                        _ => Functions.Boolean.QuantifierFacts.Rounded(a, up: false, isExact)
                     },
                     (@this, a) => ((Floorf)@this).New(a), isExact);
         }
@@ -694,7 +696,8 @@ namespace AngouriMath
                         Complex n when !isExact => Complex.Create(
                             n.RealPart.EDecimal.Ceiling(), n.ImaginaryPart.EDecimal.Ceiling()),
                         Floorf or Ceilf => a,
-                        _ => null
+                        // As in Floorf: https://github.com/asc-community/AngouriMath/issues/1409
+                        _ => Functions.Boolean.QuantifierFacts.Rounded(a, up: true, isExact)
                     },
                     (@this, a) => ((Ceilf)@this).New(a), isExact);
         }

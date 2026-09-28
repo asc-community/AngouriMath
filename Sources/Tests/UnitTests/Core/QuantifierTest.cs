@@ -130,6 +130,10 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall x in RR : x + y = y + x", "True")]
         [InlineData("forall x in RR : (x + 1)^2 = x^2 + 2 x + 1", "True")]
         [InlineData("forall x in CC : (x + y)^2 = x^2 + 2 x y + y^2", "True")]
+        // A body that is True holds at every member and one that is False at none, whatever the
+        // members are, and whether or not there are any.
+        [InlineData("forall x in { x in RR : sin(x) > 0 } : True", "True")]
+        [InlineData("exists x in A \\/ B : False", "False")]
         public void DecidedOverAnInfiniteSet(string statement, string expected)
             => Assert.Equal(expected.ToEntity(), statement.ToEntity().Simplify());
 

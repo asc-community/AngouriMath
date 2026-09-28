@@ -109,6 +109,12 @@ namespace AngouriMath.Functions.Boolean
             // S that satisfy Q, and that shape is what the routes below read.
             if (set is ConditionalSet builder)
             {
+                // A body that is already a truth value may not need the members read at all.
+                if (body is Entity.Boolean && Closed(kind, set, body) is { } decided)
+                {
+                    by = ("the body does not mention the name, so it says the same of every member", "forall_const");
+                    return decided;
+                }
                 if (builder.DeclaredMembership is not (var declared, var rest) || builder.Var is not Variable y)
                     return null;
                 var condition = rest.Substitute(y, x);
@@ -1235,6 +1241,9 @@ namespace AngouriMath.Functions.Boolean
             };
             return (kind, empty) switch
             {
+                // True at every member, or at none, whether or not there is a member.
+                (Kind.All, _) when truth == Entity.Boolean.True => Entity.Boolean.True,
+                (Kind.Some or Kind.Unique, _) when truth == Entity.Boolean.False => Entity.Boolean.False,
                 (Kind.All, true) => Entity.Boolean.True,
                 (Kind.Some or Kind.Unique, true) => Entity.Boolean.False,
                 (Kind.All or Kind.Some, false) => truth,
