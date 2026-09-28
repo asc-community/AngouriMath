@@ -3351,6 +3351,209 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A sum of exponentials of the variable, times a polynomial, over a whole power of a
+        /// linear: <c>P(x) sum_j c_j e^(r_j x)/(e + f x)^n</c>, which is how a polynomial in
+        /// <c>sinh</c> and <c>cosh</c> of a linear arrives, onto the hyperbolic sine and cosine
+        /// integrals. Under <c>u = e + f x</c> each term is <c>u^m e^(k u)</c>, the exponential
+        /// integral's (<see cref="APowerTimesAnExponential"/>), and two of opposite rates pair:
+        /// <c>A Ei(k u) + B Ei(-k u) = (A + B) Chi(k u) + (A - B) Shi(k u)</c>, since
+        /// <c>Ei(y) + Ei(-y) = 2 Chi(y)</c> and <c>Ei(y) - Ei(-y) = 2 Shi(y)</c> for <c>y > 0</c>, and
+        /// for <c>y &lt; 0</c> up to a constant. A rate of 0, which an even power leaves, is a power
+        /// of <c>u</c> alone. Rubi's 6.1.1, <c>(c + d x)^m (a + b sinh(e + f x))^n</c>, with
+        /// <c>m</c> negative.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </summary>
+        /// <remarks>
+        /// After <see cref="SolveAnExponentialOfALinearOverAPowerOfALinear"/>, which answers one
+        /// exponential alone; and only where an integral is left.
+        /// </remarks>
+        internal static Entity? SolveAHyperbolicOfALinearOverAPowerOfALinear(Entity expr, Entity.Variable x)
+        {
+            if (expr is not (Divf or Mulf) || !HasASumOfExponentials(expr, x))
+                return null;
+            Entity constant = Number.Integer.One;
+            Entity? linear = null;
+            var power = 0;
+            Entity? polynomial = null;
+            Entity? exponentials = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                var (@base, exponent) = factor is Powf(var raised, Number.Integer whole) && whole.EInteger.CanFitInInt32() && !whole.EInteger.IsZero
+                    ? (raised, whole.EInteger.ToInt32Checked()) : (factor, 1);
+                if (underneath)
+                    exponent = -exponent;
+                if (exponent < 0 && TreeAnalyzer.TryGetPolyLinear(@base, x, out var slopeOfIt, out _) && !TreeAnalyzer.IsZero(slopeOfIt))
+                {
+                    if (linear is not null && linear != @base)
+                        return null;
+                    linear = @base;
+                    power -= exponent;
+                    continue;
+                }
+                if (underneath)
+                    return null;
+                if (factor.Nodes.Any(node => node is Powf(var b, var e) && !b.ContainsNode(x) && e.ContainsNode(x)))
+                {
+                    exponentials = exponentials is null ? factor : exponentials * factor;
+                    continue;
+                }
+                if (TreeAnalyzer.TryGetPolynomial(factor, x, out var monomials) && monomials.Keys.All(degree => degree.Sign >= 0 && degree.CompareTo(EInteger.FromInt32(12)) <= 0))
+                {
+                    polynomial = polynomial is null ? factor : polynomial * factor;
+                    continue;
+                }
+                return null;
+            }
+            if (exponentials is null || linear is null || power > 12 || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var f, out var e0))
+                return null;
+            // The exponentials as a sum of c e^(r x), gathered by the rate r.
+            var rates = new List<(Entity Rate, Entity Coefficient)>();
+            foreach (var term in Sumf.LinearChildren(exponentials.Expand()))
+            {
+                if (ReadAnExponentialTerm(term, x) is not { } read)
+                    return null;
+                // The same rate may be written two ways, `2 (-b)` and `-2 b`.
+                var at = rates.FindIndex(pair => pair.Rate == read.Rate
+                    || pair.Rate.Vars.Any() && TreeAnalyzer.IsZero(Functions.PartialFractions.Bare((pair.Rate - read.Rate).Simplify())));
+                if (at < 0)
+                    rates.Add(read);
+                else
+                    rates[at] = (read.Rate, rates[at].Coefficient + read.Coefficient);
+            }
+            var u = Variable.CreateUnique(expr, "u");
+            var inU = polynomial is null ? Number.Integer.One : polynomial.Substitute(x, (u - e0) / f);
+            if (!TreeAnalyzer.TryGetPolynomial(inU, u, out var powers) || powers.Keys.All(degree => degree.CompareTo(EInteger.FromInt32(power)) >= 0)
+                || powers.Keys.Any(degree => !degree.CanFitInInt32()))
+                return null;
+            Entity sum = Number.Integer.Zero;
+            // The constant in front goes into each coefficient, so that the numbers fold.
+            var overall = (constant / f).InnerSimplified;
+            // The coefficient of Ei(k u) for each rate k in u, to be paired.
+            var integrals = new List<(Entity Rate, Entity Coefficient)>();
+            foreach (var (rate, coefficientOfTheRate) in rates)
+            {
+                var coefficient = (overall * coefficientOfTheRate).InnerSimplified;
+                if (TreeAnalyzer.IsZero(rate))
+                {
+                    // The terms of rate 0 come from several products and may cancel, as in
+                    // `cosh(y) sinh(y)^3`, where `e^(2 a) e^(-2 a)` has to be seen to be 1.
+                    var constantPart = Functions.PartialFractions.Bare(coefficient.Simplify());
+                    if (TreeAnalyzer.IsZero(constantPart))
+                        continue;
+                    foreach (var monomial in powers)
+                    {
+                        var m = monomial.Key.ToInt32Checked() - power;
+                        sum += constantPart * monomial.Value * (m == -1 ? MathS.Ln(u) : MathS.Pow(u, m + 1) / (m + 1));
+                    }
+                    continue;
+                }
+                // e^(r x) = e^(-r e/f) e^(k u) with k = r/f.
+                var k = (rate / f).InnerSimplified;
+                var shifted = (coefficient * MathS.Pow(MathS.e, (-rate * e0 / f).InnerSimplified)).InnerSimplified;
+                var exponentialOfU = MathS.Pow(MathS.e, k * u);
+                Entity elementary = Number.Integer.Zero, ei = Number.Integer.Zero;
+                foreach (var monomial in powers)
+                {
+                    var (below, eiBelow) = APowerTimesAnExponential(monomial.Key.ToInt32Checked() - power, k, exponentialOfU, u);
+                    elementary += monomial.Value * below;
+                    ei += monomial.Value * eiBelow;
+                }
+                sum += shifted * elementary;
+                ei = (shifted * ei).InnerSimplified;
+                if (!TreeAnalyzer.IsZero(ei))
+                    integrals.Add((k, ei));
+            }
+            if (integrals.Count == 0)
+                return null;
+            // Pairs of opposite rates as Chi and Shi, the positive rate written.
+            while (integrals.Count > 0)
+            {
+                var (k, a) = integrals[0];
+                integrals.RemoveAt(0);
+                // Simplified, since `d/f` and `-d/f` do not cancel inner-simplified.
+                var opposite = integrals.FindIndex(pair => TreeAnalyzer.IsZero(Functions.PartialFractions.Bare((pair.Rate + k).Simplify())));
+                if (opposite < 0)
+                {
+                    sum += Functions.PartialFractions.Bare(a.Simplify()) * MathS.Ei(k * u);
+                    continue;
+                }
+                var b = integrals[opposite].Coefficient;
+                integrals.RemoveAt(opposite);
+                if (k.Evaled is Number.Real { IsNegative: true })
+                    (k, a, b) = ((-k).InnerSimplified, b, a);
+                // The two coefficients simplified, which is where `e e^(-4/3)` becomes `e^(-1/3)`.
+                sum += Functions.PartialFractions.Bare((a + b).Simplify()) * MathS.Chi(k * u)
+                    + Functions.PartialFractions.Bare((a - b).Simplify()) * MathS.Shi(k * u);
+            }
+            return Functions.PartialFractions.Bare(sum.Substitute(u, linear).InnerSimplified);
+        }
+
+        /// <summary>
+        /// A term <c>c e^(r x)</c> of an expanded sum of exponentials, as its rate and coefficient:
+        /// a product of constants and of constants to linears in <paramref name="x"/>, or
+        /// <see langword="null"/>.
+        /// </summary>
+        private static (Entity Rate, Entity Coefficient)? ReadAnExponentialTerm(Entity term, Entity.Variable x)
+        {
+            Entity rate = Number.Integer.Zero;
+            Entity coefficient = Number.Integer.One;
+            foreach (var (written, underneath) in FactorsOfTheIntegrand(term))
+                if (!Read(written, underneath ? -1 : 1))
+                    return null;
+            // The rate is a sum of the slopes, `b + b - b - b` for four exponentials of `a + b x`,
+            // and inner simplification leaves that as `2 b + 2 (-b)`, a zero nothing reads: a
+            // rate with a symbol in it is simplified.
+            var folded = rate.InnerSimplified;
+            if (folded.Vars.Any())
+                folded = Functions.PartialFractions.Bare(folded.Simplify());
+            return (folded, coefficient.InnerSimplified);
+
+            // A factor to a whole power: a constant, an exponential of a linear, or a product or
+            // a quotient of those -- `(e^(2 x)/4)^2`, as the expansion of `sinh(x)^2 cosh(x)^2`
+            // leaves one, is `e^(4 x)/16`.
+            bool Read(Entity factor, int times)
+            {
+                while (factor is Powf(var inner, Number.Integer whole) && whole.EInteger.CanFitInInt32())
+                    (factor, times) = (inner, times * whole.EInteger.ToInt32Checked());
+                if (!factor.ContainsNode(x))
+                {
+                    coefficient *= times == 1 ? factor : MathS.Pow(factor, times);
+                    return true;
+                }
+                switch (factor)
+                {
+                    case Mulf(var left, var right):
+                        return Read(left, times) && Read(right, times);
+                    case Divf(var numerator, var denominator):
+                        return Read(numerator, times) && Read(denominator, -times);
+                    case Powf(var @base, var exponent) when !@base.ContainsNode(x)
+                        && TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slope, out var intercept):
+                        var logarithm = @base == MathS.e ? (Entity)Number.Integer.One : MathS.Ln(@base);
+                        rate += times * slope * logarithm;
+                        coefficient *= MathS.Pow(@base, times * intercept);
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        }
+
+        /// <summary>Whether a factor of <paramref name="expr"/> is a sum with an exponential of the variable in it.</summary>
+        private static bool HasASumOfExponentials(Entity expr, Entity.Variable x) => expr switch
+        {
+            Sumf or Minusf => expr.Nodes.Any(node => node is Powf(var b, var e) && !b.ContainsNode(x) && e.ContainsNode(x)),
+            Powf(var @base, Number.Integer) => HasASumOfExponentials(@base, x),
+            Mulf(var left, var right) => HasASumOfExponentials(left, x) || HasASumOfExponentials(right, x),
+            Divf(var numerator, _) => HasASumOfExponentials(numerator, x),
+            _ => false,
+        };
+
+        /// <summary>
         /// A factor of <paramref name="expr"/>, read through products and quotients, that is a
         /// constant to a linear in <paramref name="x"/>, above the bar, or <see langword="null"/>.
         /// </summary>
