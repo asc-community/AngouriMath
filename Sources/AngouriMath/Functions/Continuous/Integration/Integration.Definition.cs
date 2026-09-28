@@ -594,9 +594,14 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAProductOfExponentialsOfQuadratics(expr, x)) is { }) return answer;
             // An exponential of a linear over a power of a linear, onto the exponential integral.
             if ((answer = IndefiniteIntegralSolver.SolveAnExponentialOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
+            // And a sum of exponentials, which is how sinh and cosh arrive, onto Shi and Chi.
+            if ((answer = IndefiniteIntegralSolver.SolveAHyperbolicOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
             // Sines and cosines of a linear over a power of a linear, onto Si and Ci under u = the
             // linear, where the search would take the quotient by parts without end.
             if ((answer = IndefiniteIntegralSolver.SolveATrigonometricOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
+            // And an inverse trigonometric function below the bar, which under the substitution that
+            // undoes it is the same question; before the search, which does not find it.
+            if ((answer = IndefiniteIntegralSolver.SolveAReciprocalOfAnInverseTrigonometricFunction(expr, x, integrateByParts)) is { }) return answer;
             // A fractional power of a perfect square is the power of the modulus, sgn(P) P^(2r).
             if ((answer = IndefiniteIntegralSolver.SolveByTakingARootOfAPerfectSquare(expr, x, integrateByParts)) is { }) return answer;
             // x^(n - 1) g(x^n) with a symbolic n is g(u)/n under u = x^n.

@@ -95,20 +95,22 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
-        /// An integrand with no elementary antiderivative, which runs every solver to exhaustion
-        /// and so pays the full cost of the search. It took <b>115 seconds</b> before the answers
-        /// were kept, and about one after.
+        /// An integrand no rule answers, which runs every solver to exhaustion and so pays the
+        /// full cost of the search: a sine over a cubic, whose roots the sine and cosine integrals
+        /// would have to be written over. The quadratic <c>sin(x)/(x^2 + 1)^2</c>, which this
+        /// asked before the sine and cosine integrals were split over a quadratic's two roots,
+        /// took <b>115 seconds</b> before the answers were kept, and about one after.
         /// </summary>
         /// <remarks>
-        /// The bound is two orders of magnitude above what it now takes and a quarter of what it
-        /// used to, so it is a guard against the regression rather than a measurement of the
-        /// machine. A timing assertion tight enough to be a benchmark would only flake.
+        /// The bound is two orders of magnitude above what it takes and a quarter of what the
+        /// quadratic used to, so it is a guard against the regression rather than a measurement of
+        /// the machine. A timing assertion tight enough to be a benchmark would only flake.
         /// </remarks>
         [Fact]
         public void AnIntegralWithNoAnswerStillFinishesQuickly()
         {
             var watch = Stopwatch.StartNew();
-            var answer = "sin(x) / (x ^ 2 + 1) ^ 2".ToEntity().Integrate("x").Simplify();
+            var answer = "sin(x) / (x ^ 3 + 1) ^ 2".ToEntity().Integrate("x").Simplify();
             watch.Stop();
 
             Assert.Contains("integral(", answer.Stringize());

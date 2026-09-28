@@ -757,6 +757,25 @@ names are keywords now, and were names.
 | `preimage(x^2, x in RR, {1})` | `UnhandledParseException` | `{ 1, -1 }` |
 | `{ x in ZZ : x^2 in {1, 4} }` | `{ x in ZZ : x ^ 2 in { 1, 4 } }` — left as written | `{ 1, -1, 2, -2 }` |
 
+### A quotient of polynomials is solved as an inequality
+
+`"x/(1 + x) > 1".Solve("x")` threw `NotSufficientlySupportedException`; it is `(-oo; -1)`. A
+quotient `N/D > 0` holds exactly where `N D > 0`, since `D^2` is positive wherever the quotient is
+defined and the product is zero at its poles, and the product is a polynomial the solver reads. So
+`preimage(x/(1 + x), x in RR \ {-1}, (1; +oo))` is `(-oo; -1)`, where Sullivan and Mackey's
+§7.3.5 Try 1 gives `(-1, oo)`. A pre-image whose inequality the solver cannot read, `sin(x) > 0`,
+stays the set builder it is, where its evaluation threw. A set difference meets another set through
+its minuend, `(A \ B) /\ C = (A /\ C) \ B`, and an interval meets a union of intervals piece by
+piece. With both, a quantifier over the reals decides an implication between two quotients: §4.9.5's
+`x > 0 implies ((x - 3)/(x + 2) > 1 - 1/x implies (x + 3)/(x + 2) < 1 + 1/x)` is `True`
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x/(1 + x) > 1".Solve("x")` | `NotSufficientlySupportedException` | `(-oo; -1)` |
+| `"(RR \ {-1}) /\ (-oo; -1)".ToEntity().Evaled` | `(RR \ { -1 }) /\ (-oo; -1)` | `(-oo; -1)` |
+| `"preimage(sin(x), x in RR, (0; 1))".ToEntity().Evaled` | `UnhandledParseException`, and `NotSufficientlySupportedException` since `preimage` was added | the set builder, unsolved |
+
 ### An infinite base has its whole powers, and surjectivity is decided through the image
 
 `(-oo)^3` was `NaN` — a claim that the value does not exist — and so were `(-oo)^2` and
@@ -1024,6 +1043,26 @@ the even or the odd indices, each `2^(n - 1)` — Prop 8.4.4, Thm 8.4.6, Ex 8.3.
 | `"sum(n!/(k!*(n-k)!)*k, k, 0, n)".ToEntity().Evaled` | as written | the same |
 | `"sum(binomial(n,k)^2, k, 0, n)".ToEntity().Evaled` | parse error | `binomial(2 n, n)` |
 | `"sum(binomial(i,k), i, 0, n)".ToEntity().Evaled` | parse error | `binomial(n + 1, k + 1)` |
+
+### More binomial sums are closed, and identities between coefficients are decided
+
+`sum(binomial(n, i) binomial(n - i, k - i), i, 0, k)` was left as written; it is `2^k binomial(n, k)`
+by the trinomial revision, and `sum(binomial(n, i) binomial(i, k), i, k, n)` is
+`2^(n - k) binomial(n, k)`. The parallel summation `sum(binomial(r + i, i), i, 0, n)` is
+`binomial(r + n + 1, n)`, and Vandermonde's convolution along the upper indices,
+`sum(binomial(j, a) binomial(m - j, b), j, 0, m)`, is `binomial(m + 1, a + b + 1)`. A quantified
+identity between coefficients whose upper indices differ by whole numbers is read over the lowest of
+them by Vandermonde's identity, and a product of coefficients is read in factorials, so Probs 8.9.20
+to 8.9.22 and the trinomial revision of §8.4.5 are `True`. Two nested quantifiers of one kind are
+taken in the other order where a closed form's range condition is about the name bound outside.
+Probs 8.9.15 and 8.9.18 to 8.9.22 and §8.4.5 of Sullivan and Mackey's *An Introduction to Proofs*
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sum(binomial(n,i)*binomial(n-i,k-i), i, 0, k)".ToEntity().Evaled` | `UnhandledParseException` — `binomial` is new since | `2^k binomial(n, k) provided k >= 0`, `0` otherwise |
+| `"sum(binomial(r+i,i), i, 0, n)".ToEntity().Evaled` | parse error | `binomial(1 + n + r, n) provided n >= 0`, `0` otherwise |
+| `"forall n in ZZ+ : forall k in ZZ+ : binomial(n,k) - binomial(n-2,k) = 2*binomial(n-2,k-1) + binomial(n-2,k-2)".ToEntity().Evaled` | parse error — quantifiers are new since as well | `True` |
 
 ### A power of `x` beside a function of a symbolic power of `x` is integrated by substituting the power
 
@@ -1476,6 +1515,24 @@ multiple of it, `(d - c^2 d x^2)^(3/2)`, is written over it the same way, with
 Rubi's 5.1.4, 5.1.5, 5.2.4 and 5.2.5, all 504 problems that count: 405 to 463, no row lost, 77
 timeouts to 19.
 
+### An inverse trigonometric function below the bar is integrated to the sine and cosine integrals
+
+`1/arcsin(x)` was left unintegrated. Under the substitution that undoes the inverse function,
+`x = sin(u)` for `arcsin(x)`, `x^m/(a + b arcsin(c x))^n` is a polynomial in the sine and the cosine
+over a power of `a + b u`, which the sine and cosine integrals answer. That substitution was taken
+only where it removed a radical, an exponential of the inverse function or a power of it, and is
+now taken where the inverse function, or a function of it alone, is below the bar, before the
+general substitution search, which does not find it. The tangent, cotangent, secant and cosecant it
+leaves are read as quotients of the sine and the cosine
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/asin(x)".Integrate("x")` | `integral(1 / arcsin(x), x)` | `Ci(arcsin(x)) + C` |
+| `"x/asin(x)".Integrate("x")` | `integral(x / arcsin(x), x)` | `1/2 * Si(2 * arcsin(x)) + C` |
+| `"1/(a+b*asin(c*x))".Integrate("x")` | `integral(1 / (a + b * arcsin(c * x)), x)` | `Si` and `Ci` of `(a + b arcsin(c x))/b` |
+| `"x/((c+a^2*c*x^2)^2*atan(a*x))".Integrate("x")` | `integral(x / ((c + a ^ 2 * c * x ^ 2) ^ 2 * arctan(a * x)), x)` | `1/2 * Si(2 * arctan(a * x)) / (a ^ 2 * c ^ 2) + C` |
+
 ### A perfect square in a power of the variable is read as one
 
 `sqrt(a^2 + 2 a b x^2 + b^2 x^4) sqrt(c + e x + d x^2)` was left unevaluated. The radicand is
@@ -1705,6 +1762,21 @@ was refused, so each was read as a product with an undeclared variable
 | `"Chi(1)".Simplify()` | `Chi` | `Chi(1)`, and `0.8378669409802082…` evaluated |
 | `"Si(x)".Differentiate("x")` | `Si` | `sin(x) / x` |
 
+### A quadratic below a sine or a cosine is split over its two roots
+
+`sin(x)/(1 + x^2)` was left unintegrated. A quadratic below the bar, beside sines and cosines of a
+linear, is its leading coefficient times the linears of its two roots, complex where its
+discriminant is negative, and each term of the partial fractions over them is the one-linear
+question: `Si` and `Ci` of `x - r`. Where the roots are a conjugate pair so are the two terms, and
+their sum is real on the real line
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"cos(x)/(x^2-1)".Integrate("x")` | `integral(cos(x) / (x ^ 2 - 1), x)` | `Si` and `Ci` of `x - 1` and of `x + 1` |
+| `"sin(x)/(1+x^2)".Integrate("x")` | `integral(sin(x) / (1 + x ^ 2), x)` | `Si` and `Ci` of `x - i` and of `x + i` |
+| `"sin(c+d*x)/(a+b*x^2)".Integrate("x")` | `integral(sin(c + d * x) / (a + b * x ^ 2), x)` | `Si` and `Ci` of `d (x ∓ sqrt(-4 a b)/(2 b))` |
+
 ### The sine and cosine integrals are integrated to
 
 `sin(x)/x` was left unintegrated. A polynomial in sines and cosines of a linear, beside a
@@ -1721,6 +1793,21 @@ argument `a + b x^r` beside a power of `x` is the same question under `u = x^r`
 | `"sin(x)^2/x".Integrate("x")` | `integral(sin(x) ^ 2 / x, x)` | `1/2 * ln(x) + -1/2 * Ci(2 * x) + C` |
 | `"sin(x)/(x*(1+x))".Integrate("x")` | `integral(sin(x) / (x * (1 + x)), x)` | `Si(x) + -cos(1) * Si(1 + x) + sin(1) * Ci(1 + x) + C` |
 | `"sin(a+b/x)/x".Integrate("x")` | `integral(sin(a + b / x) / x, x)` | `-(cos(a) * Si(b * 1 / x) + sin(a) * Ci(b * 1 / x)) + C` |
+
+### The hyperbolic sine and cosine integrals are integrated to
+
+`sinh(x)/x` was left unintegrated. `sinh` and `cosh` arrive as exponentials, and a polynomial in
+exponentials of a linear, beside a polynomial, over a whole power of a linear is now integrated to
+`Shi` and `Chi`. Under `u` = the linear each term is `u^m e^(k u)`, the exponential integral's, and
+two terms of opposite rates pair: `A Ei(k u) + B Ei(-k u) = (A + B) Chi(k u) + (A - B) Shi(k u)`, up
+to a constant ([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sinh(x)/x".Integrate("x")` | `integral((e ^ x - e ^ (-x)) / 2 / x, x)` | `Shi(x) + C` |
+| `"cosh(x)/x".Integrate("x")` | `integral((e ^ x + e ^ (-x)) / 2 / x, x)` | `Chi(x) + C` |
+| `"sinh(x)^2/x".Integrate("x")` | `integral(((e ^ x - e ^ (-x)) / 2) ^ 2 / x, x)` | `-1/2 * ln(x) + 1/2 * Chi(2 * x) + C` |
+| `"cosh(a+b*x)/(c+d*x)".Integrate("x")` | `integral((e ^ (a + b * x) + e ^ (-(a + b * x))) / 2 / (c + d * x), x)` | `Chi` and `Shi` of `b (c + d x)/d`, with `cosh(a - b c/d)/d` and `sinh(a - b c/d)/d` in front, written in exponentials |
 
 ### A definite integral is the limit at a bound where its antiderivative is undefined
 

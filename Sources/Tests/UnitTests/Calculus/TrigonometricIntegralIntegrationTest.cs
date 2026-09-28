@@ -92,6 +92,22 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, AroundZero, Pins);
 
         /// <summary>
+        /// A quadratic below the bar is its leading coefficient times the linears of its two
+        /// roots, complex where its discriminant is negative, and the sine and cosine integrals of
+        /// the two conjugate arguments add up to a real answer. Rubi's 4.1.11 and 4.7.7,
+        /// <c>sin(c + d x)/(a + b x^2)</c> and <c>sin(a + b x)/(c + d x + e x^2)</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("sin(x)/(1 + x^2)")]
+        [InlineData("cos(x)/(x^2 - 4)")]
+        [InlineData("x*sin(2*x)/(x^2 + x + 1)")]
+        [InlineData("sin(c + d*x)/(a + b*x^2)")]
+        [InlineData("cos(x)/(x*(1 + x^2))")]
+        [InlineData("sin(x)/(1 + x^2)^2")]
+        public void OverAQuadratic(string integrand)
+            => DifferentiatesBack(integrand, AroundZero, Pins);
+
+        /// <summary>
         /// An argument <c>a + b x^r</c> beside a power of <c>x</c> is the same question under
         /// <c>u = x^r</c>, for a whole, a fractional, a negative and a symbolic <c>r</c>. Rubi's
         /// 4.1.12, <c>(e x)^m (a + b sin(c + d x^n))^p</c>.
@@ -105,6 +121,22 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x^(-1 - k)*sin(a + b*x^k)")]
         public void UnderAPowerOfTheVariable(string integrand)
             => DifferentiatesBack(integrand, new[] { 0.35, 0.9, 1.45, 2.3 }, Pins);
+
+        /// <summary>
+        /// An inverse sine, cosine or tangent below the bar is undone by the substitution
+        /// <c>x = sin(u)</c> and its kin, after which the integrand is a polynomial in the sine and
+        /// cosine over a power of <c>a + b u</c>. Rubi's 5.1.2 and 5.3.4,
+        /// <c>x^m/(a + b arcsin(c x))^n</c> and <c>x^m/((c + a^2 c x^2)^2 arctan(a x))</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("1/asin(x)")]
+        [InlineData("x/asin(c*x)")]
+        [InlineData("x^2/(a + b*asin(c*x))")]
+        [InlineData("1/acos(x)")]
+        [InlineData("sqrt(1 - x^2)/asin(x)")]
+        [InlineData("x/((c + d^2*c*x^2)^2*atan(d*x))")]
+        public void ThroughAnInverseTrigonometricFunction(string integrand)
+            => DifferentiatesBack(integrand, new[] { 0.15, 0.3, 0.5, 0.7 }, Pins);
 
         [Theory]
         [InlineData("sin(x)/x", "Si(x)")]

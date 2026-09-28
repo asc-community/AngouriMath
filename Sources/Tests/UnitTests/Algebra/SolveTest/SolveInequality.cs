@@ -58,6 +58,61 @@ namespace AngouriMath.Tests.Algebra
                     + $"{symbolic}, which disagrees with the inequality itself at x = {point}");
         }
 
+        /// <summary>
+        /// A quotient of polynomials is solved as the product of its numerator and denominator,
+        /// which has the quotient's sign wherever the quotient is defined and is zero at its
+        /// poles. Sullivan and Mackey's §7.3.5 Try 1 asks for the pre-image of <c>(1, oo)</c> under
+        /// <c>x/(1 + x)</c>, which is <c>(-oo, -1)</c> where the book says <c>(-1, oo)</c>. Checked at
+        /// points, the poles among them, where the inequality holds nowhere.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1409">#1409</a>
+        /// </summary>
+        [Theory]
+        [InlineData("x / (1 + x) > 1")]
+        [InlineData("(x - 1) / (x + 2) > 0")]
+        [InlineData("(x - 1) / (x + 2) >= 0")]
+        [InlineData("(x - 1) / (x + 2) <= 0")]
+        [InlineData("1 / x < 2")]
+        [InlineData("(x^2 - 4) / (x - 1) < 0")]
+        [InlineData("x / (x^2 + 1) > 1/3")]
+        [InlineData("(x - 3) / (x + 2) > 1 - 1 / x")]
+        public void AQuotientOfPolynomialsIsSolved(string inequality)
+        {
+            Variable x = "x";
+            var solved = (Set)((Entity)inequality).Solve(x).Simplify();
+            foreach (var point in new Entity[] { -7, -3, -2, "-3/2".ToEntity(), -1, "-1/2".ToEntity(), 0,
+                                                 "1/2".ToEntity(), 1, "3/2".ToEntity(), 2, 3, 7 })
+            {
+                var holds = ((Entity)inequality).Substitute(x, point).Evaled is Boolean(true);
+                Assert.True(solved.TryContains(point, out var contains), $"{solved} does not decide {point}");
+                Assert.True(contains == holds, $"solving {inequality} gives {solved}, which disagrees with the inequality at x = {point}");
+            }
+        }
+
+        /// <summary>
+        /// §4.9.5: an implication between two rational inequalities under a hypothesis, decided by
+        /// solving where it fails, and its converse refuted at <c>x = 1</c> as the book does.
+        /// </summary>
+        [Theory]
+        [InlineData("forall x in RR : x > 0 implies ((x - 3)/(x + 2) > 1 - 1/x implies (x + 3)/(x + 2) < 1 + 1/x)", true)]
+        [InlineData("forall x in RR : x > 0 implies ((x + 3)/(x + 2) < 1 + 1/x implies (x - 3)/(x + 2) > 1 - 1/x)", false)]
+        public void AnImplicationBetweenQuotientsIsDecided(string statement, bool holds)
+            => Assert.Equal(holds ? Boolean.True : Boolean.False, statement.ToEntity().Evaled);
+
+        [Fact]
+        public void ThePreImageTheBookGetsWrong()
+            => Assert.Equal("(-oo; -1)".ToEntity().Evaled, "preimage(x / (1 + x), x in RR \\ { -1 }, (1; +oo))".ToEntity().Evaled);
+
+        /// <summary>
+        /// A pre-image whose inequality the solver cannot read stays the set builder it is, and
+        /// the evaluation does not throw: <c>sin(x) &gt; 0</c> is no polynomial.
+        /// </summary>
+        [Fact]
+        public void AnUnreadPreImageDoesNotThrow()
+        {
+            var preimage = "preimage(sin(x), x in RR, (0; 1))".ToEntity();
+            Assert.IsType<ConditionalSet>(preimage.Evaled);
+        }
+
         [Theory]
         [InlineData("(x - a)(x + a) <= 0", "3")]
         [InlineData("(x - a)(x + a) <= 0", "-3")]

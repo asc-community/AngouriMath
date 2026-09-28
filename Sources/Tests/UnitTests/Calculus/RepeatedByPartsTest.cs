@@ -93,8 +93,10 @@ namespace AngouriMath.Tests.Calculus
 
         /// <summary>
         /// The measure that bounds the recursion, asserted where it is load-bearing.
-        /// <c>sin(x)/(x^2 + 1)^2</c> has no elementary antiderivative, so every solver runs to
-        /// exhaustion on it and it pays the full cost of the search.
+        /// <c>sin(x)/(x^3 + 1)^2</c> has no antiderivative the rules write -- the sine and cosine
+        /// integrals would need the cubic's roots -- so every solver runs to exhaustion on it and
+        /// it pays the full cost of the search. The 83 seconds below were the quadratic
+        /// <c>sin(x)/(x^2 + 1)^2</c>'s, which is answered over its two roots now.
         /// </summary>
         /// <remarks>
         /// The bound is a wall that cannot fire on a slow runner — the work is about a second —
@@ -107,7 +109,7 @@ namespace AngouriMath.Tests.Calculus
         public void AnUnanswerableIntegralDoesNotPayForTheRecursion()
         {
             var watch = Stopwatch.StartNew();
-            var answer = "sin(x) / (x ^ 2 + 1) ^ 2".ToEntity().Integrate("x");
+            var answer = "sin(x) / (x ^ 3 + 1) ^ 2".ToEntity().Integrate("x");
             watch.Stop();
 
             Assert.Contains("integral(", answer.Stringize());
