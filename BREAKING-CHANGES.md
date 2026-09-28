@@ -645,6 +645,24 @@ Rubi's 4.5.3.1:640 was wrong on that region
 |---|---|---|
 | `"(1+sec(x))^(5/2)*sqrt(cos(x))".Integrate("x")` | `integral((1 + sec(x)) ^ (5/2) * sqrt(cos(x)), x)` — left unevaluated | an antiderivative with `sgn(sin(x))` in it, `provided cos(x) >= 0` |
 
+### The inverse hyperbolic tangent's answer is given on its domain, and says so
+
+`1/((1 - a^2 x^2)^(5/2) artanh(a x))` was left unevaluated, although the substitution `a x = tanh(u)`
+answers it: `(Chi(3 u) + 3 Chi(u))/(4 a)` for `u = artanh(a x)`. The answer was checked past
+`|a x| < 1` as well, where `sqrt(1 - a^2 x^2)` is not `sech(u)`, and declined for failing there.
+Past `a x = 1` the integrand is not real either, so the answer is now given on the domain and
+carries `provided 1 - (a x)^2 > 0`, as an answer through an even root says where the root is real.
+Where the integrand is real past `a x = 1` too, through two imaginary factors cancelling, the
+answer is still declined, and a route that answers everywhere can. Rubi's 7.3.4
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((1-a^2*x^2)^(5/2)*atanh(a*x))".ToEntity().Integrate("x")` | `integral(...)` | `(Chi(3 u) + 3 Chi(u))/(4 a) provided 1 - (a x)^2 > 0`, for `u = artanh(a x)` |
+| `"1/((1-a^2*x^2)^(3/2)*atanh(a*x))".ToEntity().Integrate("x")` | `integral(...)` | `Chi(u)/a provided 1 - (a x)^2 > 0` |
+| `"x/((1-a^2*x^2)^(3/2)*atanh(a*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `Chi`, `provided 1 - (a x)^2 > 0` |
+| `"x*atanh(a*x)^3/(1-a^2*x^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative, `provided 1 - (a x)^2 > 0` |
+
 ### A zero imaginary part is on the real axis, whatever its sign
 
 **Silent, with the downcasting off.** A decimal's negative zero — `0E-100 * -0.43` is `-0E-102`

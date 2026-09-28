@@ -5844,7 +5844,8 @@ namespace AngouriMath.Functions.Algebra
             // then at the default points as well, some of them off that domain: an integrand
             // can be real there through two imaginary factors cancelling, `e^artanh(a x)` over
             // `sqrt(1 - a^2 x^2)` past `a x = 1`, and an answer that holds only on the domain
-            // is a wrong answer at every such point. Declined rather than given there.
+            // is a wrong answer at every such point. Declined rather than given there, so that
+            // a route answering everywhere can.
             var points = kind switch
             {
                 2 => new[] { "1.43", "3.17", "2.2", "5.1" },
@@ -5855,7 +5856,17 @@ namespace AngouriMath.Functions.Algebra
             if (points is { } && !Functions.PartialFractions.HoldsAtSampledPoints(derivative, expr, x, points))
                 return null;
             if (!Functions.PartialFractions.HoldsAtSampledPoints(derivative, expr, x))
-                return null;
+            {
+                // Where the integrand is not real off the tangent's domain either, the answer
+                // has nothing there to be wrong about: it is given on the domain and says so,
+                // as an answer through an even root says where the root is real. Rubi's
+                // `1/((1 - a^2 x^2)^(5/2) artanh(a x))` is `(Chi(3 u) + 3 Chi(u))/(4 a)` for
+                // `u = artanh(a x)`, and past `a x = 1`, where `sqrt(1 - a^2 x^2)` is not
+                // `sech(u)`, the integrand is not real.
+                if (kind != 3 || Functions.PartialFractions.DiffersWhereReal(derivative, expr, x))
+                    return null;
+                return back.Provided(1 - MathS.Sqr(argument) > Number.Integer.Zero);
+            }
             return back;
         }
 
