@@ -807,17 +807,14 @@ namespace AngouriMath.Functions.Boolean
             var claim = kind == Kind.All
                 ? others.Count == 0 ? conclusion! : others.Aggregate(static (a, b) => a & b).Implies(conclusion!)
                 : others.Count == 0 ? Entity.Boolean.True : others.Aggregate(static (a, b) => a & b);
-            try
+            if (Algebra.AnalyticalSolving.StatementSolver.Solved(condition, x) is not { } solved)
+                return null;
+            return new Intersectionf(set, solved).InnerSimplified(isExact) switch
             {
-                return new Intersectionf(set, condition.Solve(x)).InnerSimplified(isExact) switch
-                {
-                    FiniteSet listed => (listed, condition, claim),
-                    Intersectionf fromLeast when LeastMember(fromLeast) is not null && IsUnboundedAbove(fromLeast) => (fromLeast, condition, claim),
-                    _ => null,
-                };
-            }
-            catch (AngouriBugException) { throw; }
-            catch (AngouriMathBaseException) { return null; }
+                FiniteSet listed => (listed, condition, claim),
+                Intersectionf fromLeast when LeastMember(fromLeast) is not null && IsUnboundedAbove(fromLeast) => (fromLeast, condition, claim),
+                _ => null,
+            };
         }
 
         private static bool OnlyAbout(Entity condition, Variable x)
@@ -1376,46 +1373,44 @@ namespace AngouriMath.Functions.Boolean
             // may be asked over any set.
             if (!SolverReads(body, x) || !(WithinReals(set) || Equational(body)))
                 return null;
-            try
+            // The solver declines an inequality it cannot read, and the statement is then not
+            // decided this way.
+            switch (kind)
             {
-                switch (kind)
-                {
-                    case Kind.Some:
-                        return Meets(body.Solve(x), set) switch
+                case Kind.Some:
+                    return Algebra.AnalyticalSolving.StatementSolver.Solved(body, x) is { } solved ? Meets(solved, set) switch
+                    {
+                        true => Entity.Boolean.True,
+                        false => Entity.Boolean.False,
+                        null => null,
+                    } : null;
+                case Kind.All:
+                    return Algebra.AnalyticalSolving.StatementSolver.Solved(Negated(body), x) is { } solvedNot ? Meets(solvedNot, set) switch
+                    {
+                        true => Entity.Boolean.False,
+                        false => Entity.Boolean.True,
+                        null => null,
+                    } : null;
+                case Kind.Unique:
+                    if (Algebra.AnalyticalSolving.StatementSolver.Solved(body, x) is not { } solutions)
+                        return null;
+                    // Counted only where the solutions are numbers as written: a root the
+                    // solver writes in radicals may be a whole number it cannot see, and a
+                    // count that misses it is a wrong answer rather than none.
+                    if (solutions is FiniteSet finite && finite.All(static s => s.InnerSimplified is Number))
+                    {
+                        int inside = 0;
+                        foreach (var solution in finite.Elements)
                         {
-                            true => Entity.Boolean.True,
-                            false => Entity.Boolean.False,
-                            null => null,
-                        };
-                    case Kind.All:
-                        return Meets(Negated(body).Solve(x), set) switch
-                        {
-                            true => Entity.Boolean.False,
-                            false => Entity.Boolean.True,
-                            null => null,
-                        };
-                    case Kind.Unique:
-                        var solutions = body.Solve(x);
-                        // Counted only where the solutions are numbers as written: a root the
-                        // solver writes in radicals may be a whole number it cannot see, and a
-                        // count that misses it is a wrong answer rather than none.
-                        if (solutions is FiniteSet finite && finite.All(static s => s.InnerSimplified is Number))
-                        {
-                            int inside = 0;
-                            foreach (var solution in finite.Elements)
-                            {
-                                if (!set.TryContains(solution, out var contains))
-                                    return null;
-                                if (contains)
-                                    inside++;
-                            }
-                            return inside == 1 ? Entity.Boolean.True : Entity.Boolean.False;
+                            if (!set.TryContains(solution, out var contains))
+                                return null;
+                            if (contains)
+                                inside++;
                         }
-                        return Meets(solutions, set) == false ? Entity.Boolean.False : null;
-                }
+                        return inside == 1 ? Entity.Boolean.True : Entity.Boolean.False;
+                    }
+                    return Meets(solutions, set) == false ? Entity.Boolean.False : null;
             }
-            catch (AngouriBugException) { throw; }
-            catch (AngouriMathBaseException) { }
             return null;
         }
 

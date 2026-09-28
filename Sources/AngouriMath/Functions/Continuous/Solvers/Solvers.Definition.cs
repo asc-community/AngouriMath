@@ -89,11 +89,10 @@ namespace AngouriMath
         /// </example>
         public Set Solve(Variable var)
         {
+            // A statement the solver declines -- an inequality it cannot read -- is reported as
+            // unsupported here, where the library's own callers read the decline as not solved.
             if (this is Statement or Providedf)
-            {
-                var res = StatementSolver.Solve(this, var);
-                return (Set)res.InnerSimplified;
-            }
+                return StatementSolver.Solved(this, var) ?? throw new NotSufficientlySupportedException(AnalyticalInequalitySolver.Unsupported);
             if (this == var)
                 return new FiniteSet(Boolean.True);
             throw new SolveRequiresStatementException();

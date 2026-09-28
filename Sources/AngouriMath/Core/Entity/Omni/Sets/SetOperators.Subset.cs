@@ -7,7 +7,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using AngouriMath.Core.Exceptions;
 using AngouriMath.Functions.Boolean;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
@@ -150,23 +149,18 @@ namespace AngouriMath.Core.Sets
                 return null;
             if (!Quantifiers.Equational(rest) || !Quantifiers.SolverReads(rest, x))
                 return null;
-            try
+            if (Functions.Algebra.AnalyticalSolving.StatementSolver.Solved(rest, x) is not FiniteSet solutions || !solutions.All(static s => s.Evaled is Number))
+                return null;
+            var members = new List<Entity>();
+            foreach (var solution in solutions)
             {
-                if (rest.Solve(x) is not FiniteSet solutions || !solutions.All(static s => s.Evaled is Number))
+                var value = solution.InnerSimplified;
+                if (!declared.TryContains(value, out var inside))
                     return null;
-                var members = new List<Entity>();
-                foreach (var solution in solutions)
-                {
-                    var value = solution.InnerSimplified;
-                    if (!declared.TryContains(value, out var inside))
-                        return null;
-                    if (inside)
-                        members.Add(value);
-                }
-                return new FiniteSet(members);
+                if (inside)
+                    members.Add(value);
             }
-            catch (AngouriBugException) { throw; }
-            catch (AngouriMathBaseException) { return null; }
+            return new FiniteSet(members);
         }
 
         /// <summary>Every listed member is in the set, or one is not, or one is undecided.</summary>

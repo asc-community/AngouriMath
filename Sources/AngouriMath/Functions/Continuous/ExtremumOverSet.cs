@@ -8,7 +8,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
@@ -331,16 +330,7 @@ namespace AngouriMath.Functions
                 candidates.Add(bounds.Right);
             var interior = new Interval(bounds.Left, false, bounds.Right, false);
 
-            Set stationary;
-            try
-            {
-                stationary = expression.Differentiate(x).Simplify().Equalizes(Integer.Zero).Solve(x);
-            }
-            catch (NotSufficientlySupportedException)
-            {
-                return null;
-            }
-            if (stationary is not FiniteSet zeros)
+            if (Algebra.AnalyticalSolving.StatementSolver.Solved(expression.Differentiate(x).Simplify().Equalizes(Integer.Zero), x) is not FiniteSet zeros)
                 return null;
             foreach (var zero in zeros.Elements)
             {
