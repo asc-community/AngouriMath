@@ -990,6 +990,21 @@ parameter, so their Ex 5.2.6 is answered with the condition the book asks about
 | `"sum(k/2^k, k, 1, +oo)".ToEntity().Evaled` | as written | `2` |
 | `"forall n in ZZ+ : sum(q^i, i, 0, n-1) = (q^n - 1)/(q - 1)".ToEntity().Evaled` | `UnhandledParseException` -- quantifiers are new since | `True provided not q = 1` |
 
+### A product of powers of one base, and a polynomial times `k!`, in closed form
+
+`product(2^k, k, 0, n - 1)` was left as written; it is `2^(n (n - 1)/2)`, the base to the sum of
+the exponents, `c^s c^t = c^(s + t)`, which holds on the principal branch as well, every power
+being `e^(s ln c)` with the one `ln c`. And `sum(k k!, k, 1, n)` is `(n + 1)! - 1`: a polynomial
+`P(k)` beside `k!` is summed where `P(k) k! = T(k + 1) - T(k)` for `T(k) = Q(k) k!` with a
+polynomial `Q`, which one triangular solve finds or rules out. `sum(k!, k, 0, n)`, the left
+factorial, has none and stays. Probs 1.3.12 and 2.7.17 of Sullivan and Mackey's
+*An Introduction to Proofs* ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"product(2^k, k, 0, n - 1)".ToEntity().Evaled` | as written | `2^((n - 1)/2 + (n - 1)^2/2) provided n - 1 >= 0`, `1` otherwise |
+| `"sum(k*factorial(k), k, 1, n)".ToEntity().Evaled` | as written | `((n + 1)! - 1) provided n >= 0`, `0` otherwise |
+
 ### `(a + b asech(c x))/(d + e x)^2` is integrated, and a root written apart with `|x|` no longer needs a parity
 
 Rubi's 7.5.1 with a symbolic linear below the bar ran for ten minutes without an answer. By
