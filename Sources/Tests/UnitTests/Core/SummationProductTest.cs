@@ -65,12 +65,13 @@ namespace AngouriMath.Tests.Core
             => Assert.IsType<Entity.Summationf>(expression.ToEntity().Simplify());
 
         /// <summary>
-        /// A product is carried unless its body is a single term. Where the sum takes any
-        /// polynomial apart by linearity, a product has none to take it apart with.
+        /// A product is carried unless its body is a single term, or a power of one base whose
+        /// exponents sum in closed form. Where the sum takes any polynomial apart by linearity, a
+        /// product has none to take it apart with.
         /// </summary>
         [Theory]
         [InlineData("product(k + 1, k, 1, n)")]
-        [InlineData("product(2 ^ k, k, 1, n)")]
+        [InlineData("product(2 ^ sin(k), k, 1, n)")]
         public void AProductWithASymbolicBoundIsCarried(string expression)
             => Assert.IsType<Entity.Productf>(expression.ToEntity().Simplify());
 

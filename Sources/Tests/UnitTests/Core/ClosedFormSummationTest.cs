@@ -164,7 +164,7 @@ namespace AngouriMath.Tests.Core
         /// </remarks>
         [Theory]
         [InlineData("product(k + 1, k, 1, n)")]
-        [InlineData("product(2 ^ k, k, 1, n)")]
+        [InlineData("product(2 ^ sin(k), k, 1, n)")]
         public void TheProductIsCarried(string expression)
             => Assert.IsType<Entity.Productf>(expression.ToEntity().Simplify());
 
