@@ -207,16 +207,7 @@ namespace AngouriMath.Functions.Algebra
                 var agreed = 0;
                 foreach (var at in new[] { "2.29", "3.43", "5.71", "0.37", "-2.61", "-4.13" })
                 {
-                    Entity value;
-                    try
-                    {
-                        value = quotient.Substitute(x, Number.Real.Create(EDecimal.FromString(at))).EvalNumerical();
-                    }
-                    catch (System.Exception)
-                    {
-                        continue;
-                    }
-                    if (value is not Number.Real real || !real.EDecimal.IsFinite)
+                    if (quotient.Substitute(x, Number.Real.Create(EDecimal.FromString(at))).Evaled is not Number.Real real || !real.EDecimal.IsFinite)
                         continue;
                     if (constant is null)
                     {
@@ -5677,18 +5668,8 @@ namespace AngouriMath.Functions.Algebra
             // a piecewise with complex coefficients simplified to NaN for
             // `x e^(-2 i arctan(a + b x))`, and an answer that simplifies to a claim of
             // non-existence is not given.
-            if (expr.Vars.Any(symbol => symbol != x))
-            {
-                try
-                {
-                    if (!Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
-                        return null;
-                }
-                catch (Core.Exceptions.CannotEvalException)
-                {
-                    return null;
-                }
-            }
+            if (expr.Vars.Any(symbol => symbol != x) && !Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
+                return null;
             if (answer.Nodes.Any(node => node is Piecewise) && answer.Simplify().Nodes.Any(node => node == MathS.NaN))
                 return null;
             return answer;
@@ -5863,17 +5844,10 @@ namespace AngouriMath.Functions.Algebra
                 _ => null,
             };
             var derivative = back.Differentiate(x);
-            try
-            {
-                if (points is { } && !Functions.PartialFractions.HoldsAtSampledPoints(derivative, expr, x, points))
-                    return null;
-                if (!Functions.PartialFractions.HoldsAtSampledPoints(derivative, expr, x))
-                    return null;
-            }
-            catch (Core.Exceptions.CannotEvalException)
-            {
+            if (points is { } && !Functions.PartialFractions.HoldsAtSampledPoints(derivative, expr, x, points))
                 return null;
-            }
+            if (!Functions.PartialFractions.HoldsAtSampledPoints(derivative, expr, x))
+                return null;
             return back;
         }
 
@@ -8381,9 +8355,9 @@ namespace AngouriMath.Functions.Algebra
             foreach (var at in new[] { "0.29", "1.43", "3.17", "0.61" })
             {
                 var point = Number.Real.Create(EDecimal.FromString(at));
-                var l = left.Substitute(x, point).EvalNumerical();
-                var r = right.Substitute(x, point).EvalNumerical();
-                if (l.IsNaN || r.IsNaN || r.Abs().EDecimal.CompareTo(EDecimal.FromString("1e-30")) < 0)
+                // A point where either side has no value is not a verdict.
+                if (left.Substitute(x, point).Evaled is not Number.Complex l || right.Substitute(x, point).Evaled is not Number.Complex r
+                    || l.IsNaN || r.IsNaN || r.Abs().EDecimal.CompareTo(EDecimal.FromString("1e-30")) < 0)
                     continue;
                 var here = l / r;
                 if (ratio is null)
@@ -11073,13 +11047,9 @@ namespace AngouriMath.Functions.Algebra
             var index = 0;
             foreach (var symbol in inner.Vars.ToList())
                 pinned = pinned.Substitute(symbol, values[index++ % values.Length]);
-            try
-            {
-                if (pinned.EvalNumerical() is Number.Complex { IsNaN: false } value
-                    && ((Number.Real)value.Abs()).EDecimal.ToDouble() > 1e-9)
-                    return false;
-            }
-            catch (Core.Exceptions.CannotEvalException) { }
+            if (pinned.Evaled is Number.Complex { IsNaN: false } value
+                && ((Number.Real)value.Abs()).EDecimal.ToDouble() > 1e-9)
+                return false;
             return Functions.PartialFractions.Bare(inner.Simplify()).Evaled is Number.Complex { IsZero: true };
         }
 
@@ -17132,11 +17102,7 @@ namespace AngouriMath.Functions.Algebra
                 var value = function.Substitute(x, point);
                 foreach (var pair in pinned)
                     value = value.Substitute(pair.Key, pair.Value);
-                try
-                {
-                    return value.EvalNumerical() is Number.Complex { IsNaN: false } number && number.IsFinite ? number : null;
-                }
-                catch (Core.Exceptions.CannotEvalException) { return null; }
+                return value.Evaled is Number.Complex { IsNaN: false } number && number.IsFinite ? number : null;
             }
             static bool Close(Number.Complex left, Number.Complex right, double tolerance)
             {
@@ -17174,12 +17140,8 @@ namespace AngouriMath.Functions.Algebra
                     top = top.Substitute(pair.Key, pair.Value);
                     bottom = bottom.Substitute(pair.Key, pair.Value);
                 }
-                try
-                {
-                    return top.EvalNumerical() is Number.Complex a && bottom.EvalNumerical() is Number.Complex b && !b.IsZero
-                        ? (Number.Complex)(a / b) : null;
-                }
-                catch (AngouriMath.Core.Exceptions.CannotEvalException) { return null; }
+                return top.Evaled is Number.Complex a && bottom.Evaled is Number.Complex b && !b.IsZero
+                    ? (Number.Complex)(a / b) : null;
             }
             if (RatioAt(0.37) is not { } first || RatioAt(1.71) is not { } second)
                 return true;

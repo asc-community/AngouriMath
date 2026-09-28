@@ -219,7 +219,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var candidates = new List<(Entity Value, double Real, double Imaginary)>(degree);
             foreach (var candidate in solved)
             {
-                if (candidate.EvalNumerical() is not Complex numeric)
+                if (candidate.Evaled is not Complex numeric)
                     return false;
                 candidates.Add((candidate,
                                 numeric.RealPart.EDecimal.ToDouble(),
