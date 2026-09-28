@@ -839,7 +839,7 @@ namespace AngouriMath.Core.Transformations.Matching
                     yield break;
                 }
                 var eligible = required is null
-                    || graph.NodesOf(classId).Any(node => required.IsAssignableFrom(EGraph.RuntimeType(node)));
+                    || graph.NodesOf(classId).Any(node => required.IsAssignableFrom(graph.RuntimeType(node)));
                 if (!eligible) yield break;
                 if (where is not null)
                 {

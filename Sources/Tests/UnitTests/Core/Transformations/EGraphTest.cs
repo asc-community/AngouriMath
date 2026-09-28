@@ -448,12 +448,12 @@ namespace AngouriMath.Tests.Core.Transformations
         }
 
         [Fact]
-        public void RuntimeTypeOfALeafIsItsParsedType()
+        public void RuntimeTypeOfALeafIsItsOwnType()
         {
             var graph = new EGraph();
             var id = graph.AddEntity("x".ToEntity());
             var node = graph.NodesOf(id).Single();
-            Assert.Equal(typeof(Entity.Variable), EGraph.RuntimeType(node));
+            Assert.Equal(typeof(Entity.Variable), graph.RuntimeType(node));
         }
 
         [Fact]
@@ -462,7 +462,7 @@ namespace AngouriMath.Tests.Core.Transformations
             var graph = new EGraph();
             var id = graph.AddEntity("x + y".ToEntity());
             var node = graph.NodesOf(id).Single();
-            Assert.Equal(typeof(Entity.Sumf), EGraph.RuntimeType(node));
+            Assert.Equal(typeof(Entity.Sumf), graph.RuntimeType(node));
         }
     }
 }

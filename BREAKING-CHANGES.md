@@ -1894,6 +1894,20 @@ was answered, and wrongly: the answer held `x`
 | `"(x \\ {1}) = {2}".ToEntity().Solve("x")` | throws `NotSufficientlySupportedException` | `{ x : x \ { 1 } = { 2 } }` |
 | `"powerset(x) = {{}, {1}}".ToEntity().Solve("x")` | `{ { {  }, { 1 / x } } }` | `{ x : powerset(x) = { {  }, { 1 } } }` |
 
+### A cost model that throws is not taken as declining a candidate
+
+Equality saturation called the cost model inside a catch-all and took an exception for the model
+declining the candidate it was pricing: a model that threw on everything returned the input as it
+was, and a defect in one looked like a decline. The exception now reaches the caller. A model
+declines a candidate by answering `NaN`, as it always could. A cancellation inside a rule's
+right-hand side reaches the caller the same way, where it was taken for the rule declining
+([#1546](https://github.com/asc-community/AngouriMath/issues/1546)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `Transformation.EqualitySaturation(WorkBudget.Unlimited, new CostModel("throws", "", e => throw new InvalidOperationException())).ApplyOrKeep("x + 0 + y*1")` | `x + 0 + y * 1` | throws `InvalidOperationException` |
+| The same with `e => double.NaN` for the cost | `x + 0 + y * 1` | `x + 0 + y * 1` |
+
 ### `erf`, `erfc` and `erfi` are functions
 
 **Addition, and two silent misreadings fixed.** The error function `erf(z) = 2/sqrt(pi) int_0^z
