@@ -135,13 +135,13 @@ namespace AngouriMath.Functions.Algebra
                 : MathS.Sqrt(MathS.pi) / (2 * MathS.Sqrt(-A)) * MathS.Erf(MathS.Sqrt(-A) * u);
 
         /// <summary>
-        /// <c>int k x^m F^(a x^2 + c) dx</c> for an even whole <c>m</c>, not zero, and a non-zero
-        /// <c>a</c>: the Gaussian moments. With <c>A = a ln F</c> and <c>I_m</c> the integral of
+        /// <c>int k x^m F^(a x^2 + c) dx</c> for a whole <c>m</c>, not zero, and a non-zero <c>a</c>: the
+        /// Gaussian moments. With <c>A = a ln F</c> and <c>I_m</c> the integral of
         /// <c>x^m e^(A x^2)</c>, parts give <c>I_m = x^(m - 1) e^(A x^2)/(2A) - (m - 1)/(2A) I_(m - 2)</c>,
         /// and read the other way <c>I_m = x^(m + 1) e^(A x^2)/(m + 1) - 2A/(m + 1) I_(m + 2)</c> for a
-        /// negative <c>m</c>, each two powers nearer the Gaussian <c>I_0</c>. An odd <c>m</c> ends at
-        /// <c>I_1 = e^(A x^2)/(2A)</c>, which is elementary and answered elsewhere, or at <c>I_(-1)</c>,
-        /// which is the exponential integral, so it is not taken here.
+        /// negative <c>m</c>, each two powers nearer the Gaussian <c>I_0</c>. An odd positive <c>m</c>
+        /// ends at <c>I_1 = e^(A x^2)/(2A)</c>, which is elementary and answered elsewhere, and an odd
+        /// negative one at <c>I_(-1) = Ei(A x^2)/2</c>.
         /// https://github.com/asc-community/AngouriMath/issues/1501
         /// </summary>
         private static Entity? GaussianMoment(Entity expr, Entity.Variable x)
@@ -167,7 +167,9 @@ namespace AngouriMath.Functions.Algebra
             // Without one, a polynomial beside the Gaussian is a sum the integrator splits first.
             if (!TreeAnalyzer.IsZero(b))
                 return ShiftedMoments(coefficient, power ?? 0, polynomial, gaussian.Base, a, b, c, x);
-            if (polynomial is not null || power is not { } m || m == 0 || m % 2 != 0 || System.Math.Abs(m) > 32)
+            // An odd positive power is elementary, and answered elsewhere; an odd negative one ends
+            // at the exponential integral.
+            if (polynomial is not null || power is not { } m || m == 0 || m > 0 && m % 2 != 0 || System.Math.Abs(m) > 32)
                 return null;
             var bell = MathS.Pow(gaussian.Base, a * MathS.Sqr(x));
             return coefficient * MathS.Pow(gaussian.Base, c) * Moment(m, a * MathS.Ln(gaussian.Base), bell, x);
@@ -243,12 +245,14 @@ namespace AngouriMath.Functions.Algebra
         /// <summary>
         /// <c>I_k</c>, the integral of <c>x^k e^(A x^2)</c>, where <paramref name="bell"/> is that
         /// exponential as the integrand writes it: an even <c>k</c> down to the Gaussian, an odd
-        /// positive one down to the elementary <c>I_1</c>.
+        /// positive one down to the elementary <c>I_1</c>, and an odd negative one up to
+        /// <c>I_(-1) = Ei(A x^2)/2</c>, the exponential integral under <c>t = x^2</c>.
         /// </summary>
         private static Entity Moment(int k, Entity A, Entity bell, Entity.Variable x) => k switch
         {
             0 => UnitGaussian(A, x),
             1 => bell / (2 * A),
+            -1 => MathS.Ei(A * MathS.Sqr(x)) / 2,
             > 0 => MathS.Pow(x, k - 1) * bell / (2 * A) + ((1 - k) / (2 * A)).InnerSimplified * Moment(k - 2, A, bell, x),
             _ => MathS.Pow(x, k + 1) * bell / (k + 1) + (-2 * A / (k + 1)).InnerSimplified * Moment(k + 2, A, bell, x),
         };

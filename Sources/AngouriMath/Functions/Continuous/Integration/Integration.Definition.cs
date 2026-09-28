@@ -571,6 +571,8 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAHalfOddPowerOfTheLogarithm(expr, x)) is { }) return answer;
             // And an exponential of a quadratic in it, onto the Gaussian by t = ln(c x^r).
             if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAnExponentialOfAQuadraticInALogarithm(expr, x)) is { }) return answer;
+            // And a negative whole power of one, onto the exponential integral by t = A + B ln(c x^r).
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOverAPowerOfALogarithm(expr, x)) is { }) return answer;
             // A power of an exponential with a positive base is the exponential of the product,
             // exactly, and only that spelling is one the exponential rules read.
             if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;
@@ -590,6 +592,8 @@ namespace AngouriMath.Functions.Algebra
             // Exponentials of quadratics, with sines, cosines and sums of them multiplied out:
             // each term is the Gaussian's, where the search would take the product by parts.
             if ((answer = IndefiniteIntegralSolver.SolveAProductOfExponentialsOfQuadratics(expr, x)) is { }) return answer;
+            // An exponential of a linear over a power of a linear, onto the exponential integral.
+            if ((answer = IndefiniteIntegralSolver.SolveAnExponentialOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
             // A fractional power of a perfect square is the power of the modulus, sgn(P) P^(2r).
             if ((answer = IndefiniteIntegralSolver.SolveByTakingARootOfAPerfectSquare(expr, x, integrateByParts)) is { }) return answer;
             // x^(n - 1) g(x^n) with a symbolic n is g(u)/n under u = x^n.

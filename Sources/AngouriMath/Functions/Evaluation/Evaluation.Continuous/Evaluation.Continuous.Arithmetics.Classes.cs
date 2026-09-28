@@ -506,6 +506,8 @@ namespace AngouriMath
                     a => a switch
                     {
                         Complex n when !isExact => Number.Ei(n),
+                        // li(y) is Ei(ln y), by its definition.
+                        Logf(var @base, var antilogarithm) when @base == MathS.e => MathS.Li(antilogarithm),
                         Real r when r.EDecimal.IsPositiveInfinity() => Real.PositiveInfinity,
                         Real r when r.EDecimal.IsNegativeInfinity() => Integer.Zero,
                         _ => null

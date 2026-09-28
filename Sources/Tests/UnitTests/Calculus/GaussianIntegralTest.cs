@@ -160,12 +160,16 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, ("a", "1/3"), ("b", "-2/3"), ("c", "5/4"));
 
         /// <summary>
-        /// An odd negative power ends at <c>int e^(A x^2)/x</c>, which is the exponential
-        /// integral, so it is not taken.
+        /// An odd negative power ends at <c>int e^(A x^2)/x</c>, which is not an error function but
+        /// the exponential integral, <c>Ei(A x^2)/2</c>.
         /// </summary>
         [Fact]
         public void TheGaussianOverAnOddPowerIsNotAnErrorFunction()
-            => Assert.Contains("integral(", "e^(-x^2)/x".ToEntity().Integrate("x").Stringize());
+        {
+            var integral = DifferentiatesBack("e^(-x^2)/x");
+            Assert.Contains(integral.Nodes, node => node is Entity.Eif);
+            Assert.DoesNotContain(integral.Nodes, node => node is Entity.Erff);
+        }
 
         [Theory]
         [InlineData("erf(x)")]
