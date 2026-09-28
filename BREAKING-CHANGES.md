@@ -757,6 +757,25 @@ names are keywords now, and were names.
 | `preimage(x^2, x in RR, {1})` | `UnhandledParseException` | `{ 1, -1 }` |
 | `{ x in ZZ : x^2 in {1, 4} }` | `{ x in ZZ : x ^ 2 in { 1, 4 } }` — left as written | `{ 1, -1, 2, -2 }` |
 
+### A quotient of polynomials is solved as an inequality
+
+`"x/(1 + x) > 1".Solve("x")` threw `NotSufficientlySupportedException`; it is `(-oo; -1)`. A
+quotient `N/D > 0` holds exactly where `N D > 0`, since `D^2` is positive wherever the quotient is
+defined and the product is zero at its poles, and the product is a polynomial the solver reads. So
+`preimage(x/(1 + x), x in RR \ {-1}, (1; +oo))` is `(-oo; -1)`, where Sullivan and Mackey's
+§7.3.5 Try 1 gives `(-1, oo)`. A pre-image whose inequality the solver cannot read, `sin(x) > 0`,
+stays the set builder it is, where its evaluation threw. A set difference meets another set through
+its minuend, `(A \ B) /\ C = (A /\ C) \ B`, and an interval meets a union of intervals piece by
+piece. With both, a quantifier over the reals decides an implication between two quotients: §4.9.5's
+`x > 0 implies ((x - 3)/(x + 2) > 1 - 1/x implies (x + 3)/(x + 2) < 1 + 1/x)` is `True`
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x/(1 + x) > 1".Solve("x")` | `NotSufficientlySupportedException` | `(-oo; -1)` |
+| `"(RR \ {-1}) /\ (-oo; -1)".ToEntity().Evaled` | `(RR \ { -1 }) /\ (-oo; -1)` | `(-oo; -1)` |
+| `"preimage(sin(x), x in RR, (0; 1))".ToEntity().Evaled` | `UnhandledParseException`, and `NotSufficientlySupportedException` since `preimage` was added | the set builder, unsolved |
+
 ### An infinite base has its whole powers, and surjectivity is decided through the image
 
 `(-oo)^3` was `NaN` — a claim that the value does not exist — and so were `(-oo)^2` and
