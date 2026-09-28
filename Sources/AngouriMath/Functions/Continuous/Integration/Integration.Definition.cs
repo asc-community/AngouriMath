@@ -599,6 +599,9 @@ namespace AngouriMath.Functions.Algebra
             // Sines and cosines of a linear over a power of a linear, onto Si and Ci under u = the
             // linear, where the search would take the quotient by parts without end.
             if ((answer = IndefiniteIntegralSolver.SolveATrigonometricOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
+            // And an inverse trigonometric function below the bar, which under the substitution that
+            // undoes it is the same question; before the search, which does not find it.
+            if ((answer = IndefiniteIntegralSolver.SolveAReciprocalOfAnInverseTrigonometricFunction(expr, x, integrateByParts)) is { }) return answer;
             // A fractional power of a perfect square is the power of the modulus, sgn(P) P^(2r).
             if ((answer = IndefiniteIntegralSolver.SolveByTakingARootOfAPerfectSquare(expr, x, integrateByParts)) is { }) return answer;
             // x^(n - 1) g(x^n) with a symbolic n is g(u)/n under u = x^n.

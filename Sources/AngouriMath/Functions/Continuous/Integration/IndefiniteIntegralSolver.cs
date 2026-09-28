@@ -4144,6 +4144,7 @@ namespace AngouriMath.Functions.Algebra
         private static Entity? OverAPowerOfALinear(Entity expr, Entity.Variable x, Entity argument)
         {
             var (sine, cosine) = (MathS.Sin(argument), MathS.Cos(argument));
+            var (tangent, cotangent, secant, cosecant) = (MathS.Tan(argument), MathS.Cotan(argument), MathS.Sec(argument), MathS.Cosec(argument));
             var s = Variable.CreateUnique(expr, "s");
             var c = Variable.CreateUnique(expr + s, "c");
             Entity constant = Number.Integer.One;
@@ -4157,12 +4158,18 @@ namespace AngouriMath.Functions.Algebra
                     constant = underneath ? constant / factor : constant * factor;
                     continue;
                 }
-                // A polynomial in the sine and the cosine, above the bar.
-                if (factor.ContainsNode(sine) || factor.ContainsNode(cosine))
+                // A polynomial in the sine and the cosine, above the bar, the other four written as
+                // quotients of the two: `tan(u) cos(u)^2`, which the substitution x = tan(u)
+                // leaves, is `s c`, and what is not a polynomial after that is declined below.
+                if (factor.ContainsNode(sine) || factor.ContainsNode(cosine) || factor.ContainsNode(tangent)
+                    || factor.ContainsNode(cotangent) || factor.ContainsNode(secant) || factor.ContainsNode(cosecant))
                 {
-                    var read = factor.Replace(node => node == sine ? s : node == cosine ? c : node);
-                    if (underneath || read.ContainsNode(x))
+                    var read = factor.Replace(node =>
+                        node == sine ? s : node == cosine ? c : node == tangent ? s / c : node == cotangent ? c / s
+                        : node == secant ? 1 / c : node == cosecant ? 1 / s : node);
+                    if (read.ContainsNode(x))
                         return null;
+                    read = underneath ? 1 / read : read;
                     trigonometric = trigonometric is null ? read : trigonometric * read;
                     continue;
                 }
@@ -4472,9 +4479,13 @@ namespace AngouriMath.Functions.Algebra
         {
             Sinf(var argument) when argument.ContainsNode(x) => argument,
             Cosf(var argument) when argument.ContainsNode(x) => argument,
+            Tanf(var argument) when argument.ContainsNode(x) => argument,
+            Cotanf(var argument) when argument.ContainsNode(x) => argument,
+            Secantf(var argument) when argument.ContainsNode(x) => argument,
+            Cosecantf(var argument) when argument.ContainsNode(x) => argument,
             Powf(var @base, Number.Integer) => ASineOrCosineArgument(@base, x),
             Mulf(var left, var right) => ASineOrCosineArgument(left, x) ?? ASineOrCosineArgument(right, x),
-            Divf(var numerator, _) => ASineOrCosineArgument(numerator, x),
+            Divf(var numerator, var denominator) => ASineOrCosineArgument(numerator, x) ?? ASineOrCosineArgument(denominator, x),
             Sumf(var left, var right) => ASineOrCosineArgument(left, x) ?? ASineOrCosineArgument(right, x),
             Minusf(var left, var right) => ASineOrCosineArgument(left, x) ?? ASineOrCosineArgument(right, x),
             _ => null,
@@ -5255,6 +5266,48 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Whether <paramref name="inverse"/>, or a function of it and of nothing else in
+        /// <paramref name="x"/>, is a factor below the bar of <paramref name="expr"/> or a
+        /// negative power of one.
+        /// </summary>
+        private static bool TheInverseIsBelowTheBar(Entity expr, Entity inverse, Entity.Variable x)
+        {
+            var u = Variable.CreateUnique(expr, "u_inv");
+            return FactorsOfTheIntegrand(expr).Any(pair =>
+                (pair.Underneath || pair.Factor is Powf(_, Number.Integer { EInteger.Sign: < 0 }))
+                && pair.Factor.ContainsNode(inverse) && !pair.Factor.Substitute(inverse, u).ContainsNode(x));
+        }
+
+        /// <summary>
+        /// <see cref="SolveByInverseTrigonometricSubstitution"/> where the inverse function is
+        /// below the bar, asked before the general substitution search: under the substitution the
+        /// integrand is the sine and cosine integrals' at once, and the search in front of it spent
+        /// five seconds on <c>x/((c + a^2 c x^2)^2 arctan(a x))</c> finding nothing. Only that
+        /// question is asked in <c>u</c>, of <see cref="SolveATrigonometricOfALinearOverAPowerOfALinear"/>.
+        /// Where the substitution leaves anything else -- a quadratic it does not read as a
+        /// multiple of the radicand, <c>(a^2 + a^2 tan(u)^2)^3</c> -- the whole search in
+        /// <c>u</c> runs past thirty seconds, on integrands the general substitution search
+        /// answers in under one.
+        /// </summary>
+        internal static Entity? SolveAReciprocalOfAnInverseTrigonometricFunction(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (expr is not (Divf or Mulf or Powf))
+                return null;
+            Entity? inverse = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (node is not (Arcsinf or Arccosf or Arctanf or Arcsecantf or Arccosecantf or Arccotanf))
+                    continue;
+                if (inverse is not null && inverse != node)
+                    return null;
+                inverse = node;
+            }
+            return inverse is not null && TheInverseIsBelowTheBar(expr, inverse, x)
+                ? UndoingTheInverseTrigonometricFunction(expr, x, integrateByParts, onlyTheSineAndCosineIntegrals: true)
+                : null;
+        }
+
+        /// <summary>
         /// An integrand holding an inverse trigonometric function of the variable itself,
         /// integrated by the substitution that undoes it: <c>x = sin(u)</c> for <c>arcsin(x)</c>,
         /// <c>x = tan(u)</c> for <c>arctan(x)</c>, <c>x = cos(u)</c> and <c>x = sec(u)</c> for the
@@ -5297,6 +5350,15 @@ namespace AngouriMath.Functions.Algebra
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
         internal static Entity? SolveByInverseTrigonometricSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
+            => UndoingTheInverseTrigonometricFunction(expr, x, integrateByParts, onlyTheSineAndCosineIntegrals: false);
+
+        /// <summary>
+        /// <see cref="SolveByInverseTrigonometricSubstitution"/>, or, with
+        /// <paramref name="onlyTheSineAndCosineIntegrals"/>, the substitution taken because the
+        /// inverse function is below the bar and the question in <c>u</c> asked of the sine and
+        /// cosine integrals' rule alone.
+        /// </summary>
+        private static Entity? UndoingTheInverseTrigonometricFunction(Entity expr, Entity.Variable x, bool integrateByParts, bool onlyTheSineAndCosineIntegrals)
         {
             // The one inverse function, of the variable or of a linear in it.
             Entity? inverse = null;
@@ -5416,13 +5478,25 @@ namespace AngouriMath.Functions.Algebra
             var powerOfTheInverse = expr.Nodes.Any(node =>
                 node is Powf(var @base, Number.Integer power) && power.EInteger.CompareTo(EInteger.One) > 0
                     && @base.ContainsNode(inverse) && !@base.Substitute(inverse, u).ContainsNode(x));
-            if (radicalsRemoved == 0 && !exponentialOfTheInverse && !powerOfTheInverse)
-                return null;
-            // The cosecant and the cotangent carry the sign of u into the root, and a first
-            // power of either beside a root is parts' -- `arccot(x)/(1 + x^2)^(3/2)` is
-            // `x arccot(x)/sqrt(1 + x^2) + 1/sqrt(1 + x^2)` there, with no sign in it.
-            if (inverse is Arccosecantf or Arccotanf && !exponentialOfTheInverse && !powerOfTheInverse)
-                return null;
+            // Or, asked for the sine and cosine integrals, the inverse function below the bar, or
+            // a function of it alone there: `x^m/(a + b arcsin(c x))^n` is a polynomial in the
+            // sine and cosine over a power of `a + b u`, where parts in x has no integral of the
+            // reciprocal to take.
+            if (onlyTheSineAndCosineIntegrals)
+            {
+                if (!TheInverseIsBelowTheBar(expr, inverse, x))
+                    return null;
+            }
+            else
+            {
+                if (radicalsRemoved == 0 && !exponentialOfTheInverse && !powerOfTheInverse)
+                    return null;
+                // The cosecant and the cotangent carry the sign of u into the root, and a first
+                // power of either beside a root is parts' -- `arccot(x)/(1 + x^2)^(3/2)` is
+                // `x arccot(x)/sqrt(1 + x^2) + 1/sqrt(1 + x^2)` there, with no sign in it.
+                if (inverse is Arccosecantf or Arccotanf && !exponentialOfTheInverse && !powerOfTheInverse)
+                    return null;
+            }
             // And nothing else of `x` under a root, which the construction did not reach:
             // `x^3 arcsin(x)/sqrt(1 - x^4)` under the sine is a root of `1 - sin(u)^4`, worse
             // than what it came from, and 1.4 s of declining it.
@@ -5467,7 +5541,10 @@ namespace AngouriMath.Functions.Algebra
             // The same question in another variable, not a step in the search for it: asked at
             // the top when this was, so the closed rules that answer only at the top --
             // `e^u sin(u)^3` is the exponential-times-trigonometric rule's -- are consulted.
-            if (Integration.ComputeAsAQuestionOfItsOwn(integrand, u, integrateByParts) is not { } result)
+            var result = onlyTheSineAndCosineIntegrals
+                ? SolveATrigonometricOfALinearOverAPowerOfALinear(integrand, u)
+                : Integration.ComputeAsAQuestionOfItsOwn(integrand, u, integrateByParts);
+            if (result is null)
                 return null;
             if (result.ContainsNode(signOfU))
                 // The sign squared is one, and the sign itself is the sign of x.
