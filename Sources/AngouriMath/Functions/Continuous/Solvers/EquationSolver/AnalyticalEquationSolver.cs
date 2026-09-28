@@ -357,6 +357,16 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // TODO: Solve factorials (Needs Lambert W function)
             // https://mathoverflow.net/a/28977
 
+            // An identity is satisfied by every x, and not by the points a numerical search
+            // starts from: `sqrt(x)^2 - x` is zero wherever it is evaluated, so every start of
+            // Newton's grid converged at once and each was kept, two hundred numbers for an
+            // equation every number satisfies. Asked of the simplifier here, where every
+            // analytical route has declined, since it is a whole simplification; and only an
+            // unconditional zero, since `(x^2 - 1)/(x - 1) - x - 1` is zero for every x but 1.
+            // https://github.com/asc-community/AngouriMath/issues/1420
+            if (expr.Vars.Count == 1 && expr.Simplify() is Integer { IsZero: true })
+                return MathS.Sets.C;
+
             // A numerical search that comes back with nothing has not shown there is
             // nothing to find: Newton's method is started from finitely many points inside
             // a bounded region, so an empty result is a fact about the search rather than
