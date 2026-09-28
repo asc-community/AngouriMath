@@ -67,6 +67,21 @@ namespace AngouriMath.Tests.Calculus
         public void ASumOfExponentialsOverAPowerOfALinear(string integrand)
             => DifferentiatesBack(integrand, AroundZero, Pins);
 
+        /// <summary>
+        /// An inverse hyperbolic tangent below the bar, beside a whole power of <c>1 - a^2 x^2</c>:
+        /// under <c>x = tanh(u)/a</c> it is a polynomial in <c>sinh(u)</c> and <c>cosh(u)</c> over
+        /// a power of <c>u</c>. The quadratic reaches the substitution divided through by its
+        /// leading coefficient, as <c>1/(-a^2) + x^2</c>, and is read as a multiple of
+        /// <c>1 - a^2 x^2</c> by the ratio of the two leading coefficients. Rubi's 7.3.4,
+        /// <c>x^m/((1 - a^2 x^2)^k artanh(a x)^p)</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("x/((1 - a^2*x^2)^2*atanh(a*x))")]
+        [InlineData("1/((1 - a^2*x^2)^2*atanh(a*x))")]
+        [InlineData("x^2/((1 - a^2*x^2)^3*atanh(a*x)^2)")]
+        public void AnInverseHyperbolicTangentBelowTheBar(string integrand)
+            => DifferentiatesBack(integrand, AroundZero, Pins);
+
         [Theory]
         [InlineData("sinh(x)/x", "Shi(x)")]
         [InlineData("cosh(x)/x", "Chi(x)")]

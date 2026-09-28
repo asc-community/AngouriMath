@@ -135,6 +135,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("1/acos(x)")]
         [InlineData("sqrt(1 - x^2)/asin(x)")]
         [InlineData("x/((c + d^2*c*x^2)^2*atan(d*x))")]
+        [InlineData("1/((c + d^2*c*x^2)^3*atan(d*x))")]
         public void ThroughAnInverseTrigonometricFunction(string integrand)
             => DifferentiatesBack(integrand, new[] { 0.15, 0.3, 0.5, 0.7 }, Pins);
 
