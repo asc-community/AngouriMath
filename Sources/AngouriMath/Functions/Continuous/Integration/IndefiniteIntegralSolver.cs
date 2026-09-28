@@ -2702,11 +2702,23 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!asked && !Integration.AnsweringTheQuestionAsked)
                 return null;
-            if (!TryReadSineCosinePowers(expr, out var argument, out var sinePower, out var cosinePower, out var factor))
+            if (!TryReadSineCosinePowers(expr, out var argument, out var sinePower, out var cosinePower, out var factor, out var throughAProduct))
                 return null;
             if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _) || rate.Evaled == 0)
                 return null;
-            return IntegrateAPowerOfSineTimesAPowerOfCosine(argument, sinePower, cosinePower, factor, rate);
+            if (IntegrateAPowerOfSineTimesAPowerOfCosine(argument, sinePower, cosinePower, factor, rate) is not { } integral)
+                return null;
+            if (!throughAProduct)
+                return integral;
+            // A fractional power of a product was read as the product of the powers, which is the
+            // integrand only up to a constant on each interval where the factors keep their signs:
+            // `(sin(x) tan(x))^(3/2)` is `|sin(x)|^3 cos(x)^(-3/2)` and was read as `sin(x)^3 cos(x)^(-3/2)`,
+            // wrong by its sign on every other half-turn. The integrand over what was read is that
+            // constant, so it multiplies the answer, and the answer is the integrand's wherever
+            // both are defined.
+            var read = factor * MathS.Pow(MathS.Sin(argument), Number.Rational.Create(sinePower))
+                * MathS.Pow(MathS.Cos(argument), Number.Rational.Create(cosinePower));
+            return expr / read * integral;
         }
 
         /// <summary>
@@ -4834,16 +4846,27 @@ namespace AngouriMath.Functions.Algebra
         /// </remarks>
         private static bool TryReadSineCosinePowers(
             Entity expr, out Entity argument, out ERational sinePower, out ERational cosinePower, out Entity factor)
+            => TryReadSineCosinePowers(expr, out argument, out sinePower, out cosinePower, out factor, out _);
+
+        /// <summary>
+        /// <see cref="TryReadSineCosinePowers(Entity, out Entity, out ERational, out ERational, out Entity)"/>,
+        /// and whether a fractional power of a product was read as the product of the powers:
+        /// true only up to a constant on each interval where the factors keep their signs.
+        /// </summary>
+        private static bool TryReadSineCosinePowers(
+            Entity expr, out Entity argument, out ERational sinePower, out ERational cosinePower, out Entity factor, out bool throughAProduct)
         {
             Entity? common = null;
             var sine = ERational.Zero;
             var cosine = ERational.Zero;
             Entity constant = 1;
+            var distributed = false;
             var read = Read(expr, ERational.One);
             argument = common ?? 0;
             sinePower = sine;
             cosinePower = cosine;
             factor = constant;
+            throughAProduct = distributed;
             return read && common is not null && !(sine.IsZero && cosine.IsZero);
 
             bool Agrees(Entity candidate)
@@ -4883,6 +4906,16 @@ namespace AngouriMath.Functions.Algebra
                     case Powf(var @base, Number.Rational power) when power is not Number.Integer && HasAnEvenPowerOfATrigonometricFunction(@base):
                         return false;
                     case Powf(var @base, Number.Rational power):
+                        // Through anything but one function, or a positive multiple of one, a
+                        // power with an even denominator splits across factors whose signs it
+                        // does not see: `(sin tan)^(3/2)` is real where the sine is negative and
+                        // `sin^3 cos^(-3/2)` is its negative there. An odd denominator is read as
+                        // it always was, the real root: `(c sin^3)^(1/3)` as `c^(1/3) sin`, which
+                        // is the integrand wherever that is real.
+                        if ((multiplicity * power.ERational).ToLowestTerms().Denominator.IsEven
+                            && @base is not TrigonometricFunction
+                            && !(@base is Mulf(Number.Rational { IsPositive: true }, TrigonometricFunction)))
+                            distributed = true;
                         return Read(@base, multiplicity * power.ERational);
                     // A rational factor rides along; anything else is declined rather than
                     // carried, since carrying it would claim the rest of the product is

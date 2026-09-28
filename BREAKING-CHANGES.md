@@ -351,6 +351,22 @@ rule that does the same for a polynomial under a square root, whose answers are 
 | `"1/sqrt(a*cot(x)^2)".Integrate("x")` | `-sgn(tan(x)) ln(1/sqrt(1 + abs(tan(x))^2))/sqrt(a)` | `sgn(cot(x)) ln(1 + tan(x)^2)/(2 sqrt(a))` |
 | `"(b*tan(x)^2)^(5/2)".Integrate("x")` | `sgn(tan(x)) b^(5/2) ((abs(tan(x))^2)^2/2 - abs(tan(x))^2 + ln(abs(tan(x))^2 + 1))/2` | the same with `tan(x)` for `abs(tan(x))` |
 
+### A fractional power of a product of trigonometric functions keeps its sign
+
+**Wrong answers, silent.** The `sin^p cos^q` reader took a power of a product with an even
+denominator as the product of the powers: `(sin(x) tan(x))^(3/2)` as `sin(x)^3 cos(x)^(-3/2)`,
+where it is `|sin(x)|^3 cos(x)^(-3/2)`. After 2.5.0 the integrator answered it so, with the wrong
+sign wherever the sine is negative and the cosine positive, where the integrand is real. What was
+read is the integrand only up to a constant on each interval where the factors keep their signs,
+so the answer is now multiplied by that constant, the integrand over what was read, and is the
+integrand's antiderivative wherever both are defined. An odd denominator is read as before, as the
+real root. Rubi's 4.7.7.
+
+| | Was (2.5.0) | Now |
+|---|---|---|
+| `"(sin(x)*tan(x))^(3/2)".Integrate("x")` | `integral((sin(x) * tan(x)) ^ (3/2), x)` | `(sin(x) tan(x))^(3/2)/(sin(x)^3 cos(x)^(-3/2))` times `2/sqrt(cos(x)) + 2/3 cos(x)^(3/2)` |
+| `"(sin(x)*tan(x))^(1/2)".Integrate("x")` | `integral(sqrt(sin(x) * tan(x)), x)` | `sqrt(sin(x) tan(x))/(sin(x)/sqrt(cos(x)))` times `-2 sqrt(cos(x))` |
+
 ### A shared symbol among a denominator sum's coefficients comes out in front of it
 
 **Improvement, not silent.** `tan(x)/(a + a csc(x))` came back unevaluated while
