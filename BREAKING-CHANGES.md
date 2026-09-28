@@ -1760,6 +1760,20 @@ same question under `u = d + e x`
 | `"(d*g + k*g*x)^m*F^(f*(a + b*ln(c*(d + k*x)^n))^2)".Integrate("x")` | `integral((d * g + k * g * x) ^ m * F ^ (f * (a + b * ln(c * (d + k * x) ^ n)) ^ 2), x)` | the antiderivative |
 | `"(g + h*x)^3*F^(f*(a + b*ln(c*(d + k*x)^n)^2))".Integrate("x")` | `integral((g + h * x) ^ 3 * F ^ (f * (a + b * ln(c * (d + k * x) ^ n) ^ 2)), x)` | the antiderivative |
 
+### A power of `x` one less than a half-odd multiple of the power inside is integrated
+
+`f^(a + b x^n) x^(-1 + 5n/2)` was left unintegrated. `x^(k n - 1) g(x^n)`, with a symbolic `n`, was
+integrated under `u = x^n` for a whole `k` of 1 or more. For `k` half an odd number, of either sign,
+it is now integrated under `u = x^(n/2)`, where `g(x^n)` is `g(u^2)`: beside an exponential of `x^n`
+that is a moment of the Gaussian
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"f^(a + b*x^n)*x^(-1 + 5/2*n)".Integrate("x")` | `integral(f ^ (a + b * x ^ n) * x ^ (-1 + 5/2 * n), x)` | the antiderivative |
+| `"f^(a + b*x^n)*x^(-1 - 1/2*n)".Integrate("x")` | `integral(f ^ (a + b * x ^ n) * x ^ (-1 - 1/2 * n), x)` | the antiderivative |
+| `"x^(-1 + 1/2*n)*sinh(a + b*x^n)".Integrate("x")` | `integral(x ^ (-1 + 1/2 * n) * (e ^ (a + b * x ^ n) - e ^ (-(a + b * x ^ n))) / 2, x)` | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled

@@ -11229,6 +11229,14 @@ namespace AngouriMath.Functions.Algebra
         /// one was nobody's, and <c>x^(n - 1) e^(x^n)</c> was declined.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </summary>
+        /// <remarks>
+        /// <c>x^(k n - 1)</c> with <c>k</c> half an odd number is the same substitution by half
+        /// the power: under <c>u = x^(n/2)</c>, <c>x^(k n - 1) dx</c> is <c>(2/n) u^(2k - 1) du</c>
+        /// and <c>g(x^n)</c> is <c>g(u^2)</c>. Beside an exponential of <c>x^n</c> that is a moment
+        /// of the Gaussian: Rubi's 2.3, <c>f^(a + b x^n) x^(-1 + 5n/2)</c>, and 6.1.3's
+        /// <c>x^(-1 + n/2) sinh(a + b x^n)</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
         internal static Entity? SolveByAPowerOfTheVariableTimesAFunctionOfItsPower(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             Entity? inFront = null;
@@ -11272,22 +11280,25 @@ namespace AngouriMath.Functions.Algebra
             // Bare: the simplification attaches `provided not n = 0` to the quotient it
             // cancelled, and the generic case is what every rule answers in.
             var timesN = Functions.PartialFractions.Bare(((inFront + Number.Integer.One) / n).InnerSimplified);
-            if (timesN is not Number.Integer k || k.EInteger.Sign <= 0)
-            {
+            if (!IsAWholeOrHalfOddMultiple(timesN))
                 timesN = Functions.PartialFractions.Bare(((inFront + Number.Integer.One) / n).Simplify());
-                if (timesN is not Number.Integer k2 || k2.EInteger.Sign <= 0)
-                    return null;
-                k = k2;
-            }
+            if (!IsAWholeOrHalfOddMultiple(timesN))
+                return null;
+            // A half-odd k: the same by half the power, u = x^(n/2), where g(x^n) is g(u^2) and
+            // x^(k n - 1) dx is (2/n) u^(2k - 1) du.
+            var halved = timesN is not Number.Integer;
             var u = Variable.CreateUnique(expr, "u_pow");
-            var inU = rest.Replace(node => node is Powf(var b, var e) && b == x && e == n ? u : node);
+            var inU = rest.Replace(node => node is Powf(var b, var e) && b == x && e == n ? (halved ? MathS.Sqr(u) : u) : node);
             if (inU.ContainsNode(x))
                 return null;
-            if (k != Number.Integer.One)
-                inU = MathS.Pow(u, (k - Number.Integer.One).InnerSimplified) * inU;
+            var powerOfU = halved ? (2 * timesN - 1).InnerSimplified : (timesN - Number.Integer.One).InnerSimplified;
+            if (powerOfU != Number.Integer.Zero)
+                inU = MathS.Pow(u, powerOfU) * inU;
             if (Integration.ComputeAsAQuestionOfItsOwn(inU, u, integrateByParts) is not { } inner)
                 return null;
-            Entity answer = constant * inner.Substitute(u, MathS.Pow(x, n)) / n;
+            Entity answer = halved
+                ? constant * 2 * inner.Substitute(u, MathS.Pow(x, n / 2)) / n
+                : constant * inner.Substitute(u, MathS.Pow(x, n)) / n;
             // (e x)^(n - 1) is e^(n - 1) x^(n - 1) for a positive e, which the answer states.
             if (scale is { })
             {
@@ -11297,6 +11308,16 @@ namespace AngouriMath.Functions.Algebra
             }
             return answer;
         }
+
+        /// <summary>
+        /// A whole <c>k >= 1</c>, or half an odd number of either sign: the multiples of the
+        /// power inside that <see cref="SolveByAPowerOfTheVariableTimesAFunctionOfItsPower"/> takes.
+        /// A whole one below 1 leaves <c>u^(k - 1) g(u)</c> with a negative power in front of an
+        /// exponential of <c>u</c>, the exponential integral where it is <c>1/u</c>.
+        /// </summary>
+        private static bool IsAWholeOrHalfOddMultiple(Entity timesN)
+            => timesN is Number.Integer { EInteger.Sign: > 0 }
+               || timesN is Number.Rational half and not Number.Integer && half.ERational.Denominator.Equals(EInteger.FromInt32(2));
 
         /// <summary>
         /// Whether <c>b^2 - 4ac</c> is zero, which makes <c>a x^2 + b x + c</c> a perfect square.
