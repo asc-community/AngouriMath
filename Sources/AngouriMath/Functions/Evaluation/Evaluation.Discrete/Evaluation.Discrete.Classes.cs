@@ -281,6 +281,19 @@ namespace AngouriMath
                     propagateSet: !(Left.InnerSimplified(isExact) is Set && Right.InnerSimplified(isExact) is Set));
         }
 
+        /// <summary>
+        /// <paramref name="number"/> as the real it is, or <see langword="null"/> where it has an
+        /// imaginary part. With downcasting off a value such as <c>cos(3)</c> evaluates to a
+        /// <see cref="Number.Complex"/> whose imaginary part is zero, and comparing it is as defined
+        /// as comparing the real it equals: <c>cos(3) &gt;= 0</c> is false, not <c>NaN</c>.
+        /// </summary>
+        private static Number.Real? AsAReal(Number number) => number switch
+        {
+            Number.Real real => real,
+            Number.Complex complex when complex.ImaginaryPart.EDecimal.IsZero => complex.RealPart,
+            _ => null,
+        };
+
         partial record Greaterf
         {
             // Inequality comparisons are only defined for real numbers.
@@ -292,7 +305,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left, Right,
                     (a, b) => (a, b) switch
                     {
-                        (Real reLeft, Real reRight) => reLeft > reRight,
+                        (Number numLeft, Number numRight) when AsAReal(numLeft) is { } reLeft && AsAReal(numRight) is { } reRight => reLeft > reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
@@ -311,7 +324,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left, Right,
                     (a, b) => (a, b) switch
                     {
-                        (Real reLeft, Real reRight) => reLeft >= reRight,
+                        (Number numLeft, Number numRight) when AsAReal(numLeft) is { } reLeft && AsAReal(numRight) is { } reRight => reLeft >= reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
@@ -330,7 +343,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left, Right,
                     (a, b) => (a, b) switch
                     {
-                        (Real reLeft, Real reRight) => reLeft < reRight,
+                        (Number numLeft, Number numRight) when AsAReal(numLeft) is { } reLeft && AsAReal(numRight) is { } reRight => reLeft < reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
@@ -348,7 +361,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left, Right,
                     (a, b) => (a, b) switch
                     {
-                        (Real reLeft, Real reRight) => reLeft <= reRight,
+                        (Number numLeft, Number numRight) when AsAReal(numLeft) is { } reLeft && AsAReal(numRight) is { } reRight => reLeft <= reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
