@@ -672,6 +672,17 @@ a listed index set, and over any other an object whose membership is decided by 
 | `union({k, 2 k}, k in {1, 2, 3})` | `UnhandledParseException` — `union` was a name, and `union(` a juxtaposition that does not parse | `{ 1, 2, 4, 3, 6 }` |
 | `0.1 in intersection([0; 1/n), n in ZZ+)` | `UnhandledParseException` | `False` |
 | `complement({1, 2}, {1, 2, 3})` | `UnhandledParseException` | `{ 3 }` |
+
+### An interval whose ends are reversed meets nothing
+
+`(3; 1)` holds no number, and membership in it was decided so, but its meeting with another interval
+was the other interval: the intersection returned it where the union rightly does. It is empty
+now, and a closed interval at one point meets the other in that point or in nothing.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(3; 1) /\ [0; 5]".ToEntity().InnerSimplified` | `[0; 5]` — wrong | `{ }` |
+
 ### An exponential of a multiple of a logarithm is integrated as the power it is
 
 `e^(k ln(q))` is `q^k` — the definition of the principal power, for every complex `q` other than

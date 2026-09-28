@@ -71,5 +71,16 @@ namespace AngouriMath.Tests.Core.Sets
         [Fact] public void Subtraction4() => TestInt(D.SetSubtract(E), (Interval)D);
         [Fact] public void Subtraction5() => TestInt(A.SetSubtract(F), Interval(2, true, 3, false));
         [Fact] public void Subtraction6() => TestInt(F.SetSubtract(A), Interval(5, false, 6, true));
+
+        /// <summary>
+        /// An interval whose ends are reversed holds nothing: it meets nothing, and adds nothing to
+        /// a union. The meeting used to be the other interval.
+        /// </summary>
+        [Theory]
+        [InlineData("(3; 1) /\\ [0; 5]", "{}")]
+        [InlineData("[0; 5] /\\ (3; 1)", "{}")]
+        [InlineData("(3; 1) \\/ [0; 5]", "[0; 5]")]
+        public void AReversedIntervalHoldsNothing(string expression, string expected)
+            => TestArb(MathS.FromString(expression), MathS.FromString(expected).InnerSimplified);
     }
 }
