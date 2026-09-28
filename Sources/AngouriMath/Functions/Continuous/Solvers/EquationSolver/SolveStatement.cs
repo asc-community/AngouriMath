@@ -330,6 +330,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 : solved;
 
         /// <summary>
+        /// <c>a = b</c> between two statements, as the statement it is: <c>a</c> where <c>b</c> is
+        /// <c>True</c>, <c>not a</c> where it is <c>False</c>, and the two agreeing otherwise.
+        /// </summary>
+        private static Entity Equivalent(Entity left, Entity right)
+            => (left, right) switch
+            {
+                (_, Entity.Boolean truth) => truth == Entity.Boolean.True ? left : !left,
+                (Entity.Boolean truth, _) => truth == Entity.Boolean.True ? right : !right,
+                _ => (left & right) | (!left & !right),
+            };
+
+        /// <summary>
         /// The solution set as <see cref="Entity.Solve(Variable)"/> gives it, simplified, or
         /// <see langword="null"/> where the solver declines the statement: an inequality it
         /// cannot read. The public method reports that by throwing, and the library's own
@@ -342,6 +354,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         internal static Set? Solve(Entity expr, Variable x)
             => expr switch
             {
+                // A statement equal to a truth value is the statement or its negation, and two
+                // statements equal are equivalent: (x > 2) = (3 > 1) holds where x > 2 does. The
+                // arm for an equation of numbers subtracted them, and answered { }.
+                // https://github.com/asc-community/AngouriMath/issues/1549
+                Equalsf(Statement left, Statement right) => Solve(Equivalent(left, right), x),
+
                 Equalsf(var left, var right) when left is Set || right is Set
                     => AnalyticalSetSolver.Solve(left, right, x),
 
