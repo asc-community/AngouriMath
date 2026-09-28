@@ -45,10 +45,13 @@ namespace AngouriMath.Core.Sets
                 return A.LeftClosed && B.RightClosed ? new FiniteSet(A.Left) : Empty;
             if (bLeft == aRight)
                 return A.RightClosed && B.LeftClosed ? new FiniteSet(B.Left) : Empty;
+            // An interval whose ends are reversed holds nothing, and one closed at a single
+            // point holds that point, so that is what it meets the other in. Returning the other
+            // interval is what the union does, and is right there: (3; 1) /\ [0; 5] was [0; 5].
             if (aLeft >= aRight)
-                return B;
+                return aLeft == aRight && A.LeftClosed && A.RightClosed ? IntersectFiniteSetAndSet(new FiniteSet(A.Left), B) : Empty;
             if (bLeft >= bRight)
-                return A;
+                return bLeft == bRight && B.LeftClosed && B.RightClosed ? IntersectFiniteSetAndSet(new FiniteSet(B.Left), A) : Empty;
             if (aLeft > bRight)
                 return Empty;
             if (bLeft > aRight)
