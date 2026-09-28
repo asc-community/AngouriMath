@@ -118,6 +118,8 @@ namespace AngouriMath.Tests.Core
         [InlineData("exists x in QQ : 2 x = 3", "True")]
         [InlineData("forall x in ZZ : 2 divides x", "False")]
         [InlineData("exists x in ZZ : 2 divides x", "True")]
+        // A condition the hypothesis states is no condition on the claim.
+        [InlineData("forall x in RR : not x = 0 implies x / x = 1", "True")]
         // Uniqueness: two real roots, one positive whole one.
         [InlineData("exists! x in RR : x^2 = 4", "False")]
         [InlineData("exists! x in ZZ+ : x^2 = 4", "True")]
