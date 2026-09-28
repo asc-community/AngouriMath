@@ -773,6 +773,10 @@ namespace AngouriMath.Functions.Boolean
                 case Equalsf or Greaterf or GreaterOrEqualf or Lessf or LessOrEqualf:
                     if (body is not IBinaryNode { NodeFirstChild: var lhs, NodeSecondChild: var rhs })
                         return null;
+                    // Floors and ceilings of linear functions beside a linear part, where the
+                    // drifts cancel: floor(n/2) + ceil(n/2) - n repeats with 2.
+                    if (DriftlessPeriod(lhs - rhs, x) is { } rounding)
+                        return rounding;
                     if (ResiduePeriod(lhs, x, set) is not { } l || ResiduePeriod(rhs, x, set) is not { } r)
                         return null;
                     return l * r / l.Gcd(r);
@@ -845,6 +849,50 @@ namespace AngouriMath.Functions.Boolean
                     return null;
             }
         }
+
+        /// <summary>
+        /// The period of a sum of floors and ceilings of linear functions of <paramref name="x"/>
+        /// and of a linear part, where the drifts cancel, or <see langword="null"/>. A floor of
+        /// <c>(p/q) x + b</c> rises by <c>p</c> when <c>x</c> rises by <c>q</c>, and a linear
+        /// term by its slope times <c>q</c>, so where these sum to nothing the difference repeats
+        /// with the least common multiple of the <c>q</c>: <c>floor(n/2) + ceil(n/2) - n</c> with
+        /// 2, and Hermite's <c>floor(n/3) + floor((n + 1)/3) + floor((n + 2)/3) - n</c> with 3.
+        /// https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        private static EInteger? DriftlessPeriod(Entity difference, Variable x)
+        {
+            var period = EInteger.One;
+            var drift = ERational.Zero;
+            var rounded = false;
+            foreach (var term in Sumf.LinearChildren(difference))
+            {
+                if (!term.ContainsNode(x))
+                    continue;
+                var (coefficient, core) = term is Mulf(Rational factor, var rest) ? (factor.ERational, rest) : (ERational.One, term);
+                var argument = core switch
+                {
+                    Floorf floor => floor.Argument,
+                    Ceilf ceiling => ceiling.Argument,
+                    _ => null,
+                };
+                if (Slope(argument ?? core, x) is not { } slope)
+                    return null;
+                if (argument is not null)
+                {
+                    rounded = true;
+                    var q = slope.Denominator.Abs();
+                    period = period * q / period.Gcd(q);
+                }
+                drift = drift.Add(coefficient.Multiply(slope));
+            }
+            return rounded && drift.IsZero ? period : null;
+        }
+
+        /// <summary>The slope of an expression linear in <paramref name="x"/> with a rational one, or <see langword="null"/>.</summary>
+        private static ERational? Slope(Entity expression, Variable x)
+            => TreeAnalyzer.TryGetPolyLinear(expression, x, out var a, out var b) && !b.ContainsNode(x) && a.Evaled is Rational rate
+                ? rate.ERational
+                : null;
 
         /// <summary>
         /// The period, in <paramref name="x"/>, of an expression's residue modulo

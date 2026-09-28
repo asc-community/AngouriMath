@@ -91,6 +91,14 @@ namespace AngouriMath.Tests.Core
         [InlineData("exists! k in ZZ : (0 < k and k < 7) and 3 divides k and 2 divides k", "True")]
         [InlineData("forall k in ZZ : (0 < k and k < 7 and 2 divides k) implies 3 divides binomial(7, k) - 1", "False")]
         [InlineData("forall n in ZZ : n >= 5 implies 2^n > n^2", "True")]
+        // Floors and ceilings of n over a whole number beside n itself repeat where the drifts
+        // cancel, and the residues decide them: floor(n/2) + ceil(n/2) = n, and Hermite's
+        // identity for thirds.
+        [InlineData("forall n in ZZ : floor(n/2) + ceil(n/2) = n", "True")]
+        [InlineData("forall n in ZZ : floor(n/3) + floor((n + 1)/3) + floor((n + 2)/3) = n", "True")]
+        [InlineData("forall n in ZZ : floor(n/2) = n/2", "False")]
+        [InlineData("forall n in ZZ+ : ceil(n/2) - floor(n/2) <= 1", "True")]
+        [InlineData("exists n in ZZ : floor(n/2) + ceil(n/2) = n + 1", "False")]
         // Prob 8.9.24 for every prime: that p is prime and 0 < k < p is established by the
         // quantifiers around the claim, in either order and with the hypothesis curried, and the
         // rule for p divides binomial(p, k) reads it. Without the primality, or without either

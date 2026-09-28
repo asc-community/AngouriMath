@@ -573,6 +573,20 @@ Every spelling but `lcm` was a parse error in 2.5.0, the congruence node being n
 | `forall n in ZZ : 6 divides n^3 + 5 n` | `UnhandledParseException` | `True` |
 | `exists x, y in ZZ : 3 x^2 - 5 y^2 = 1` | `UnhandledParseException` | `False` |
 
+### Floors and ceilings of `n` over a whole number are decided over its residues
+
+A comparison between floors and ceilings of linear functions of `n` and a linear part in `n`
+repeats with the least common multiple of their denominators where the drifts cancel: over a
+period, a floor of `(p/q) n + b` rises by as much as the linear terms do. The residues then decide
+it, as they decide a divisibility. `forall n in ZZ : floor(n/2) + ceil(n/2) = n` and Hermite's
+`floor(n/3) + floor((n + 1)/3) + floor((n + 2)/3) = n` are `True`, where they were left as written
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall n in ZZ : floor(n/2) + ceil(n/2) = n` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+| `exists n in ZZ : floor(n/2) + ceil(n/2) = n + 1` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
+
 ### An antiderivative built through an even root says where the root is real
 
 The linear-radical substitution, `u = (a x + b)^(1/q)`, and the general substitution for an even
