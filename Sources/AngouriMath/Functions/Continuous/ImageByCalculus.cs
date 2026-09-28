@@ -85,6 +85,56 @@ namespace AngouriMath.Functions
                 _ => null,
             };
 
+        /// <summary>
+        /// Whether a quotient of polynomials is one-to-one on an interval, or <see langword="null"/>
+        /// where that is not settled here. A continuous function on an interval is one-to-one
+        /// exactly where it is strictly monotone, and a differentiable one is exactly where its
+        /// derivative keeps one sign away from the points where it is zero: <c>x^3</c> on
+        /// <c>RR</c>, whose derivative is zero at 0 and positive on either side, is one-to-one,
+        /// and <c>x^2</c> on <c>RR</c>, whose derivative changes sign at 0, is not. A pole inside
+        /// the interval leaves it unsettled. Sullivan and Mackey's Def 7.4.1.
+        /// </summary>
+        internal static bool? OneToOne(Entity f, Variable x, Entity over)
+        {
+            if (!f.ContainsNode(x) || !IsRational(f, x) || Pieces(over) is not { Count: 1 } pieces)
+                return null;
+            var piece = pieces[0];
+            var (numerator, denominator) = SingleQuotient.Of(f);
+            var slope = numerator.Differentiate(x) * denominator - numerator * denominator.Differentiate(x);
+            if (Polynomial(denominator, x) is not { } bottom || Polynomial(slope, x) is not { } top
+                || RealRoots(bottom, x) is not { } poles || RealRoots(top, x) is not { } critical
+                || AsReal(piece.Left) is not { } left || AsReal(piece.Right) is not { } right || left.CompareTo(right) >= 0
+                || poles.Any(pole => pole.Value.CompareTo(left) > 0 && pole.Value.CompareTo(right) < 0))
+                return null;
+            // The derivative's sign between each two consecutive of the ends and the zeros
+            // inside, which is its numerator's, the denominator being a square.
+            var ends = new List<Real> { left };
+            ends.AddRange(critical.Select(point => point.Value).Where(at => at.CompareTo(left) > 0 && at.CompareTo(right) < 0).OrderBy(at => at));
+            ends.Add(right);
+            int? sign = null;
+            for (var i = 0; i + 1 < ends.Count; i++)
+            {
+                    if (AsReal(top.Substitute(x, Between(ends[i], ends[i + 1]))) is not { IsFinite: true } value)
+                    return null;
+                var here = value.EDecimal.Sign;
+                // Zero on a whole stretch is a constant there, and a change of sign a turn.
+                if (here == 0 || sign is { } before && before != here)
+                    return false;
+                sign = here;
+            }
+            return true;
+        }
+
+        /// <summary>A point strictly between two ends, either of which may be infinite.</summary>
+        private static Entity Between(Real low, Real high)
+            => (low.IsFinite, high.IsFinite) switch
+            {
+                (true, true) => ((Entity)low + high) / 2,
+                (true, false) => (Entity)low + 1,
+                (false, true) => (Entity)high - 1,
+                _ => Integer.Zero,
+            };
+
         /// <summary>The image of one interval with no pole inside.</summary>
         private static Set? Of(Entity f, Variable x, Interval piece, List<(Entity Root, Real Value)> critical)
         {

@@ -885,6 +885,22 @@ onto `B`, Sullivan and Mackey's Def 7.4.1, [#1409](https://github.com/asc-commun
 | `(-oo)^2` | `NaN` — wrong | `+oo` |
 | `forall b in RR : exists a in RR : a^3 = b` | `UnhandledParseException` (quantifiers are new since; left as written when they arrived) | `True` |
 | `forall b in RR : exists a in RR : e^a = b` | `UnhandledParseException` | `False` |
+
+### One-to-one is decided for a quotient of polynomials on an interval
+
+`forall a in S : forall b in S : f(a) = f(b) implies a = b` — `f` one-to-one on `S`, Sullivan and
+Mackey's Def 7.4.1 — is decided for a quotient of polynomials on an interval by the sign of its
+derivative between the zeros inside: strictly monotone is one-to-one, and a turn is not. The cube
+is one-to-one on the reals although its derivative is zero at 0; the square is on `[0; +oo)`. On the
+whole numbers only a yes carries over from the interval around them
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall a in RR : forall b in RR : a^3 = b^3 implies a = b` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+| `forall a in [0; +oo) : forall b in [0; +oo) : a^2 = b^2 implies a = b` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+| `forall a in RR : forall b in RR : a^3 - 3 a = b^3 - 3 b implies a = b` | `UnhandledParseException` | `False` |
+
 ### The binomial coefficient's identities, and its sums in closed form
 
 Pascal's rule, the chairperson identity and the symmetry are rewrite rules, each in the direction
