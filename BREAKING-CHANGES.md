@@ -1616,6 +1616,23 @@ with an undeclared variable
 | `"Ei(1)".Simplify()` | `Ei` | `Ei(1)`, and `1.895117816355936…` evaluated |
 | `"Ei(x)".Differentiate("x")` | `Ei` | `e ^ x / x` |
 
+### The exponential and logarithmic integrals are integrated to
+
+`e^x/x` was left unintegrated. An exponential of a linear over a whole power of a linear, beside a
+polynomial, is now integrated to `Ei` under `u = c + d x`, where each term is `u^m e^(k u)`: `Ei(k u)`
+for `m = -1`, and by parts toward it below. The Gaussian's odd negative moments end at
+`int e^(A x^2)/x = Ei(A x^2)/2`. A power of `x` over a whole power of `A + B ln(c x^r)` is integrated to
+`Ei` under `t = A + B ln(c x^r)`, and so is one over a logarithm of a power of a linear, or of
+`d + e x^m`. And `Ei(ln y)` is `li(y)`, by `li`'s definition, so `int 1/ln(x) dx` is `li(x)`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^x/x".Integrate("x")` | `integral(e ^ x / x, x)` | `Ei(x) + C` |
+| `"x*e^(-1/x^2)".Integrate("x")` | `integral(x * e ^ ((-1) / x ^ 2), x)` | the antiderivative, with `Ei` |
+| `"1/ln(x)".Integrate("x")` | `integral(1 / ln(x), x)` | `li(x) + C` |
+| `"x^m/(a + b*ln(c*x^n))".Integrate("x")` | `integral(x ^ m / (a + b * ln(c * x ^ n)), x)` | the antiderivative, with `Ei` |
+
 ### A definite integral is the limit at a bound where its antiderivative is undefined
 
 `integral(x * e^(-x), x, 0, +oo)` was `NaN`, this library's way of saying a value does not

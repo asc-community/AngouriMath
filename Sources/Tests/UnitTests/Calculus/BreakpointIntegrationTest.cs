@@ -118,7 +118,7 @@ namespace AngouriMath.Tests.Calculus
         // is not a break this reads, and an integrand the unit interval cannot integrate stays.
         [Theory]
         [InlineData("integral(floor(x^2), x, 0, 2)")]
-        [InlineData("integral(floor(x) * e^(e^x) , x, 0, 2)")]
+        [InlineData("integral(floor(x) * e^(x^3) , x, 0, 2)")]
         public void WhatCannotBeSplitIsLeftAsWritten(string integral)
             => Assert.IsType<Integralf>(integral.ToEntity().Simplify());
 

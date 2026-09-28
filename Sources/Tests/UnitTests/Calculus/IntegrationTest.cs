@@ -32,7 +32,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("C", "C_1 + C * x")]
         [InlineData("C C_1", "C_2 + C * C_1 * x")]
         [InlineData("integral(x, x)", "C_1 + C * x + x ^ 3 / 6")]
-        [InlineData("e^e^x", "integral(e ^ e ^ x, x)")] // don't recurse infinitely
+        [InlineData("e^e^e^x", "integral(e ^ e ^ e ^ x, x)")] // don't recurse infinitely: e^e^x is Ei(e^x)
         public void TestIndefinite(string initial, string expected)
         {
             using var _ = MathS.Settings.Codomain.Set(AngouriMath.Core.Domain.Real);
@@ -284,7 +284,7 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("sin(x)", "-1", "1", "0")]
         [InlineData("cos(x)", "0", "pi", "0")]
         [InlineData("1/(x^2+1)", "-oo", "+oo", "pi")]
-        [InlineData("e^e^x", "0", "1", "integral(e ^ e ^ x, x, 0, 1)")] // don't recurse infinitely
+        [InlineData("e^e^e^x", "0", "1", "integral(e ^ e ^ e ^ x, x, 0, 1)")] // don't recurse infinitely: e^e^x is Ei(e^x)
         public void TestDefinite(string initial, string from, string to, string expected)
         {
             Assert.Equal(expected, initial.Integrate("x", from, to).Simplify().Stringize());

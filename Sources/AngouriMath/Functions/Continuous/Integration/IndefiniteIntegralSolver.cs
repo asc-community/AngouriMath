@@ -3226,6 +3226,132 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A polynomial times an exponential of a linear over a whole power of a linear:
+        /// <c>P(x) F^(a + b x)/(c + d x)^n</c>, onto the exponential integral. Under
+        /// <c>u = c + d x</c>, <c>F^(a + b x)</c> is <c>F^(a - b c/d) e^(k u)</c> with <c>k = b ln F/d</c>,
+        /// and <c>P</c> a polynomial in <c>u</c>, so every term is <c>u^m e^(k u)</c>: elementary for
+        /// <c>m >= 0</c>, <c>Ei(k u)</c> for <c>m = -1</c>, and below that
+        /// <c>e^(k u) u^(m + 1)/(m + 1) - k/(m + 1)</c> times the one above, by parts. Rubi's 2.3,
+        /// <c>F^(c (a + b x))/(d + e x)^n</c> and <c>e^(-a - b x) (a + b x)^3/x^n</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </summary>
+        /// <remarks>
+        /// Only where some term's power is negative: without one the product is elementary, and the
+        /// rules for a polynomial times an exponential answer it.
+        /// </remarks>
+        internal static Entity? SolveAnExponentialOfALinearOverAPowerOfALinear(Entity expr, Entity.Variable x)
+        {
+            // An exponential of the variable and a quotient, before anything is read.
+            if (expr is not Divf || AnExponentialOfALinear(expr, x) is not { } exponential)
+                return null;
+            Entity constant = Number.Integer.One;
+            Entity? linear = null;
+            var power = 0;
+            Entity? polynomial = null;
+            var sawTheExponential = false;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (!underneath && !sawTheExponential && factor == exponential)
+                {
+                    sawTheExponential = true;
+                    continue;
+                }
+                // The linear, or a whole power of it, below the bar.
+                if (underneath)
+                {
+                    var (candidate, k) = factor is Powf(var below, Number.Integer n) && n.EInteger.Sign > 0 && n.EInteger.CanFitInInt32()
+                        ? (below, n.EInteger.ToInt32Checked()) : (factor, 1);
+                    if (linear is not null && linear != candidate
+                        || !TreeAnalyzer.TryGetPolyLinear(candidate, x, out var slopeOfIt, out _) || TreeAnalyzer.IsZero(slopeOfIt))
+                        return null;
+                    linear = candidate;
+                    power += k;
+                    continue;
+                }
+                if (TreeAnalyzer.TryGetPolynomial(factor, x, out var monomials) && monomials.Keys.All(degree => degree.Sign >= 0 && degree.CompareTo(EInteger.FromInt32(12)) <= 0))
+                {
+                    polynomial = polynomial is null ? factor : polynomial * factor;
+                    continue;
+                }
+                return null;
+            }
+            if (!sawTheExponential || linear is null || power > 12
+                || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var d, out var c)
+                || !TreeAnalyzer.TryGetPolyLinear(exponential.Exponent, x, out var b, out var a) || TreeAnalyzer.IsZero(b))
+                return null;
+            var u = Variable.CreateUnique(expr, "u");
+            var inU = polynomial is null ? Number.Integer.One : polynomial.Substitute(x, (u - c) / d);
+            if (!TreeAnalyzer.TryGetPolynomial(inU, u, out var powers) || powers.Keys.All(degree => degree.CompareTo(EInteger.FromInt32(power)) >= 0))
+                return null;
+            var logarithmOfTheBase = exponential.Base == MathS.e ? (Entity)Number.Integer.One : MathS.Ln(exponential.Base);
+            var rate = (b * logarithmOfTheBase / d).InnerSimplified;
+            var exponentialOfU = MathS.Pow(MathS.e, rate * u);
+            Entity sum = Number.Integer.Zero, ei = Number.Integer.Zero;
+            foreach (var monomial in powers)
+            {
+                if (!monomial.Key.CanFitInInt32())
+                    return null;
+                var (elementary, eiCoefficient) = APowerTimesAnExponential(monomial.Key.ToInt32Checked() - power, rate, exponentialOfU, u);
+                sum += monomial.Value * elementary;
+                ei += monomial.Value * eiCoefficient;
+            }
+            // Where the exponential integrals cancel, the antiderivative is elementary, and the
+            // exponential ansatz writes it shorter: e^x x/(1 + x)^2 is e^x/(1 + x).
+            ei = ei.InnerSimplified;
+            if (TreeAnalyzer.IsZero(ei))
+                return null;
+            var shifted = MathS.Pow(exponential.Base, (a - b * c / d).InnerSimplified);
+            return Functions.PartialFractions.Bare((constant * shifted / d * (sum + ei * MathS.Ei(rate * u)).Substitute(u, linear)).InnerSimplified);
+        }
+
+        /// <summary>
+        /// <c>int u^m e^(k u) du</c>, where <paramref name="exponential"/> is <c>e^(k u)</c>, as its
+        /// elementary part and the coefficient of <c>Ei(k u)</c> in it:
+        /// <c>e^(k u) sum_i (-1)^i m!/(m - i)! u^(m - i)/k^(i + 1)</c> for <c>m >= 0</c>, <c>Ei(k u)</c> for
+        /// <c>m = -1</c>, and by parts toward it below that. Kept apart, so that where the
+        /// coefficients of <c>Ei</c> cancel across the terms of a sum the answer is seen to be
+        /// elementary, and left to the rules that write it shortest.
+        /// </summary>
+        private static (Entity Elementary, Entity EiCoefficient) APowerTimesAnExponential(int m, Entity k, Entity exponential, Entity.Variable u)
+        {
+            if (m == -1)
+                return (Number.Integer.Zero, Number.Integer.One);
+            if (m < -1)
+            {
+                // int u^m e^(k u) = u^(m + 1) e^(k u)/(m + 1) - k/(m + 1) int u^(m + 1) e^(k u)
+                var (above, eiAbove) = APowerTimesAnExponential(m + 1, k, exponential, u);
+                return (MathS.Pow(u, m + 1) * exponential / (m + 1) - k / (m + 1) * above, -k / (m + 1) * eiAbove);
+            }
+            Entity sum = Number.Integer.Zero;
+            Entity falling = Number.Integer.One;
+            for (var i = 0; i <= m; i++)
+            {
+                var term = falling * MathS.Pow(u, m - i) / MathS.Pow(k, i + 1);
+                sum = i % 2 == 0 ? sum + term : sum - term;
+                falling *= m - i;
+            }
+            return (exponential * sum, Number.Integer.Zero);
+        }
+
+        /// <summary>
+        /// A factor of <paramref name="expr"/>, read through products and quotients, that is a
+        /// constant to a linear in <paramref name="x"/>, above the bar, or <see langword="null"/>.
+        /// </summary>
+        private static Powf? AnExponentialOfALinear(Entity expr, Entity.Variable x) => expr switch
+        {
+            Mulf(var left, var right) => AnExponentialOfALinear(left, x) ?? AnExponentialOfALinear(right, x),
+            Divf(var numerator, _) => AnExponentialOfALinear(numerator, x),
+            Powf(var @base, var exponent) power when !@base.ContainsNode(x) && exponent.ContainsNode(x)
+                && TreeAnalyzer.TryGetPolyLinear(exponent, x, out var slope, out _) && !TreeAnalyzer.IsZero(slope) => power,
+            _ => null
+        };
+
+        /// <summary>
         /// A product of exponentials of polynomials of degree at most two, whole powers of sines
         /// and cosines of such polynomials, whole powers of sums of those exponentials -- which is
         /// how a hyperbolic function is written -- and a polynomial, where some exponent is left a
@@ -9102,6 +9228,153 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A power of x over a whole power of an affine function of a logarithm,
+        /// <c>x^p (A + B L)^(-k)</c> with <c>L = ln(c x^r)</c>, onto the exponential integral. With
+        /// <c>t = A + B L</c> and <c>L' = s/x</c>, <c>dx = x dt/(B s)</c>, and
+        /// <c>x^(p + 1) e^(-(p + 1) t/(B s))</c> is a constant, so the integral is that constant over
+        /// <c>B s</c> times <c>int e^((p + 1) t/(B s)) t^(-k) dt</c>, which is <c>Ei</c> by parts. A
+        /// polynomial beside it is summed a power at a time, and the logarithm of a power of a linear
+        /// is the same question under <c>u = d + e x</c>. Rubi's 3.1.2 and 3.3,
+        /// <c>(d x)^m/(a + b ln(c x^n))^k</c>; <c>1/ln(x)</c> is <c>Ei(ln x)</c>, which is <c>li(x)</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </summary>
+        /// <remarks>
+        /// The constant is written as <see cref="SolveAPowerTimesAHalfOddPowerOfTheLogarithm"/>
+        /// writes it, and for <c>ln(x)</c> itself it is <c>e^(-(p + 1) A/B)</c>, wherever <c>ln(x)</c>
+        /// is real. Beside <c>1/x</c> the rate is 0 and the integral is a power of <c>t</c>, which the
+        /// rules for logarithms answer.
+        /// </remarks>
+        internal static Entity? SolveAPowerOverAPowerOfALogarithm(Entity expr, Entity.Variable x)
+        {
+            if (expr is not (Divf or Powf or Mulf) || !expr.Nodes.Any(node => node is Logf))
+                return null;
+            Entity? p = null;
+            Entity constant = Number.Integer.One;
+            Entity? affine = null;
+            var k = 0;
+            Dictionary<EInteger, Entity>? polynomial = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                if (factor == x && p is null)
+                    p = underneath ? Number.Integer.MinusOne : Number.Integer.One;
+                else if (factor is Powf(var @base, var exponent) && @base == x && !exponent.ContainsNode(x) && p is null)
+                    p = underneath ? -exponent : exponent;
+                // (g x)^m, as a substitution u = (a + b x)/(c + d x) leaves (a g + b g x)^m.
+                else if (factor is Powf(Mulf(var left, var right), var scaledExponent) && (left == x) != (right == x)
+                         && !(left == x ? right : left).ContainsNode(x) && !scaledExponent.ContainsNode(x) && p is null)
+                {
+                    p = underneath ? -scaledExponent : scaledExponent;
+                    var scalePower = MathS.Pow(left == x ? right : left, scaledExponent);
+                    constant = underneath ? constant / scalePower : constant * scalePower;
+                }
+                else if (affine is null && AReciprocalPowerOfALogarithm(factor, underneath, x) is { } read)
+                    (affine, k) = read;
+                else if (polynomial is null && !underneath && TreeAnalyzer.TryGetPolynomial(factor, x, out var monomials)
+                         && monomials.Count > 1 && monomials.Keys.All(degree => degree.Sign >= 0 && degree.CompareTo(EInteger.FromInt32(12)) <= 0))
+                    polynomial = monomials;
+                else
+                    return null;
+            }
+            if (affine is null || k < 1 || k > 12)
+                return null;
+            if (TheLogarithmOfAPowerOfX(affine, x) is not { } logarithm)
+            {
+                if (LinearUnderALogarithm(affine, x) is { } linear)
+                    return UnderTheLinearUnderTheLogarithm(expr, x, linear, SolveAPowerOverAPowerOfALogarithm);
+                // A power of x inside, d + e x^m, beside x^(j m - 1): the same question under u = x^m,
+                // as Rubi's 3.4 asks it. Left to the substitution search, the search took it by parts
+                // first, down every choice, past the budget.
+                if (polynomial is null && p?.InnerSimplified is Number.Integer { EInteger: var pw } && pw.CanFitInInt32()
+                    && APowerOfXUnderALogarithm(affine, x) is { } m && (pw.ToInt32Checked() + 1) % m == 0 && (pw.ToInt32Checked() + 1) / m >= 1)
+                {
+                    var u = Variable.CreateUnique(expr, "u");
+                    var affineInU = affine.Replace(node => node is Powf(var b, Number.Integer n) && b == x && n.EInteger.Equals(EInteger.FromInt32(m)) ? u : node);
+                    if (affineInU.ContainsNode(x))
+                        return null;
+                    var j = (pw.ToInt32Checked() + 1) / m;
+                    var inU = (j == 1 ? Number.Integer.One : MathS.Pow(u, j - 1)) * MathS.Pow(affineInU, -k) * constant / m;
+                    return SolveAPowerOverAPowerOfALogarithm(inU, u)?.Substitute(u, MathS.Pow(x, m)).InnerSimplified;
+                }
+                return null;
+            }
+            var t = Variable.CreateUnique(expr, "t");
+            if (!TreeAnalyzer.TryGetPolyLinear(affine.Replace(node => node == logarithm ? t : node), t, out var slope, out var intercept)
+                || slope.ContainsNode(x) || intercept.ContainsNode(x) || TreeAnalyzer.IsZero(slope))
+                return null;
+            var rate = Functions.PartialFractions.Bare((logarithm.Differentiate(x) * x).Simplify());
+            if (rate.ContainsNode(x) || rate.Evaled is Number.Complex { IsZero: true } || rate.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            p = (p ?? Number.Integer.Zero).InnerSimplified;
+            // Bare: the simplification attaches `provided not B r = 0` to the quotients it
+            // cancels, and the generic case is what every rule answers in. Carried, it is what a
+            // substitution above checks the answer's derivative against, and fails at every point.
+            if (polynomial is null)
+                return AReciprocalPowerOfALogarithmTerm(p, affine, k, logarithm, slope, intercept, rate, x) is { } single
+                    ? Functions.PartialFractions.Bare((constant * single).InnerSimplified) : null;
+            Entity sum = Number.Integer.Zero;
+            foreach (var monomial in polynomial)
+            {
+                if (AReciprocalPowerOfALogarithmTerm((p + Number.Integer.Create(monomial.Key)).InnerSimplified, affine, k, logarithm, slope, intercept, rate, x) is not { } term)
+                    return null;
+                sum += monomial.Value * term;
+            }
+            return Functions.PartialFractions.Bare((constant * sum).InnerSimplified);
+        }
+
+        /// <summary>
+        /// <c>m</c> where the one logarithm in <paramref name="expr"/> holds <c>d + e x^m</c> for a whole
+        /// <c>m >= 2</c>, <c>d</c> not zero, or <see langword="null"/>.
+        /// </summary>
+        private static int? APowerOfXUnderALogarithm(Entity expr, Entity.Variable x)
+        {
+            foreach (var node in expr.Nodes)
+                if (node is Logf(var @base, var argument) && @base == MathS.e && argument.ContainsNode(x))
+                    foreach (var inner in argument.Nodes)
+                        if (inner is Sumf or Minusf && TreeAnalyzer.TryGetPolynomial(inner, x, out var monomials)
+                            && monomials.Count == 2 && monomials.ContainsKey(EInteger.Zero) && !TreeAnalyzer.IsZero(monomials[EInteger.Zero])
+                            && monomials.Keys.Max() is { } degree && degree.CompareTo(EInteger.One) > 0 && degree.CompareTo(EInteger.FromInt32(12)) <= 0)
+                            return degree.ToInt32Checked();
+            return null;
+        }
+
+        /// <summary>
+        /// <c>(F, k)</c> where <paramref name="factor"/> is <c>F^(-k)</c> above the bar or <c>F^k</c>
+        /// below it, for a whole <c>k >= 1</c> and <c>F</c> holding a logarithm of <paramref name="x"/>.
+        /// </summary>
+        private static (Entity Affine, int Power)? AReciprocalPowerOfALogarithm(Entity factor, bool underneath, Entity.Variable x)
+        {
+            var (inner, power) = factor is Powf(var b, Number.Integer n) && n.EInteger.CanFitInInt32() ? (b, n.EInteger.ToInt32Checked()) : (factor, 1);
+            if (!underneath)
+                power = -power;
+            return power > 0 && inner.Nodes.Any(node => node is Logf(_, var argument) && argument.ContainsNode(x)) ? (inner, power) : null;
+        }
+
+        /// <summary>
+        /// The integral of <c>x^q F^(-k)</c> for <c>F = A + B L</c> and <c>L' = s/x</c>: see
+        /// <see cref="SolveAPowerOverAPowerOfALogarithm"/>.
+        /// </summary>
+        private static Entity? AReciprocalPowerOfALogarithmTerm(Entity q, Entity affine, int k, Entity logarithm, Entity slope, Entity intercept, Entity rate, Entity.Variable x)
+        {
+            var qPlusOne = (q + 1).InnerSimplified;
+            if (qPlusOne.Evaled is Number.Complex { IsZero: true })
+                return null;
+            var t = Variable.CreateUnique(affine, "t");
+            var growth = (qPlusOne / (slope * rate)).InnerSimplified;
+            var (elementaryInT, eiInT) = APowerTimesAnExponential(-k, growth, MathS.Pow(MathS.e, growth * t), t);
+            var inT = elementaryInT + eiInT * MathS.Ei(growth * t);
+            // x^(q + 1) e^(-(q + 1) t/(B s)), which for ln(x) itself is e^(-(q + 1) A/B).
+            Entity theConstant = logarithm == MathS.Ln(x)
+                ? MathS.Pow(MathS.e, (-qPlusOne * intercept / slope).InnerSimplified)
+                : MathS.Pow(x, qPlusOne) * MathS.Pow(MathS.e, -growth * affine);
+            return theConstant / (slope * rate) * inT.Substitute(t, affine);
+        }
+
+        /// <summary>
         /// A power of x times an exponential of a quadratic in a logarithm, <c>x^p G^(Q(L))</c> with
         /// <c>L</c> = <c>ln(c x^r)</c> and <c>Q</c> a quadratic with a square term, onto the
         /// Gaussian. With <c>t = L</c> and <c>L' = s/x</c>, <c>dx = x dt/s</c>, and
@@ -9128,7 +9401,7 @@ namespace AngouriMath.Functions.Algebra
             if (expr is not (Mulf or Divf or Powf) || AnExponentialOfALogarithm(expr, x) is not { } theExponential)
                 return null;
             if (TheLogarithmOfAPowerOfX(theExponential.Exponent, x) is not { } logarithm)
-                return LinearUnderALogarithm(theExponential.Exponent, x) is { } linear ? UnderTheLinearUnderTheLogarithm(expr, x, linear) : null;
+                return LinearUnderALogarithm(theExponential.Exponent, x) is { } linear ? UnderTheLinearUnderTheLogarithm(expr, x, linear, SolveAPowerTimesAnExponentialOfAQuadraticInALogarithm) : null;
             Entity? p = null;
             Entity constant = Number.Integer.One;
             Entity? @base = null, exponent = null;
@@ -9233,13 +9506,12 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// <paramref name="expr"/> under <c>u = d + e x</c>, with <paramref name="linear"/> the
-        /// <c>d + e x</c> under the logarithm, answered by
-        /// <see cref="SolveAPowerTimesAnExponentialOfAQuadraticInALogarithm"/> in <c>u</c> and
+        /// <c>d + e x</c> under the logarithm, answered by <paramref name="solve"/> in <c>u</c> and
         /// written back in <c>x</c>. A constant multiple of the linear, as <c>(d g + e g x)^m</c>
         /// writes one, is read as <c>g u</c>, where substituting for <c>x</c> would leave a sum
         /// that is a multiple of <c>u</c> only once simplified.
         /// </summary>
-        private static Entity? UnderTheLinearUnderTheLogarithm(Entity expr, Entity.Variable x, Entity linear)
+        private static Entity? UnderTheLinearUnderTheLogarithm(Entity expr, Entity.Variable x, Entity linear, System.Func<Entity, Entity.Variable, Entity?> solve)
         {
             if (!TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out var intercept) || slope is null || intercept is null)
                 return null;
@@ -9258,7 +9530,7 @@ namespace AngouriMath.Functions.Algebra
             }).Substitute(x, (u - intercept) / slope) / slope).InnerSimplified;
             if (inU.ContainsNode(x) || LinearUnderALogarithm(inU, u) is not null)
                 return null;
-            return SolveAPowerTimesAnExponentialOfAQuadraticInALogarithm(inU, u)?.Substitute(u, linear).InnerSimplified;
+            return solve(inU, u)?.Substitute(u, linear).InnerSimplified;
         }
 
         /// <summary>
