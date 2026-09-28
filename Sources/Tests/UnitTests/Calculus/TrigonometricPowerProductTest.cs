@@ -170,6 +170,41 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// A fractional power of a product is the product of the powers only up to a constant
+        /// on each interval where the factors keep their signs: <c>(sin(x) tan(x))^(3/2)</c> is
+        /// <c>|sin(x)|^3 cos(x)^(-3/2)</c>, and read as <c>sin(x)^3 cos(x)^(-3/2)</c> it was
+        /// integrated with the wrong sign wherever the sine is negative and the cosine positive,
+        /// where the integrand is real. The answer carries the constant, and is right at points
+        /// with either sign of either function. Rubi's 4.7.7.
+        /// </summary>
+        [Theory]
+        [InlineData("(sin(x)*tan(x))^(3/2)")]
+        [InlineData("(sin(x)*tan(x))^(1/2)")]
+        [InlineData("(sin(x)*tan(x))^(5/2)")]
+        [InlineData("cos(x)*(sin(x)*tan(x))^(3/2)")]
+        public void AFractionalPowerOfAProductKeepsItsSign(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("NaN", integral.Stringize());
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            var original = integrand.ToEntity();
+            var compared = 0;
+            foreach (var at in new[] { 0.7, -0.5, -1.2, 5.6, 2.1, 3.9 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                if (got.IsNaN || want.IsNaN)
+                    continue;
+                compared++;
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-9, $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+            Assert.True(compared >= 4, $"only {compared} points compared");
+        }
+
+        /// <summary>
         /// Two proportional linears under roots are one radical with a constant in it: the
         /// quotient-of-two-radicals rule took them, its determinant was zero, and
         /// <c>sin(a + b (c + d x)^(1/3))/(c e + d e x)^(1/3)</c> came back as
