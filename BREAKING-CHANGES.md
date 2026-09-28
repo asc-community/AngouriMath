@@ -1025,6 +1025,26 @@ the even or the odd indices, each `2^(n - 1)` — Prop 8.4.4, Thm 8.4.6, Ex 8.3.
 | `"sum(binomial(n,k)^2, k, 0, n)".ToEntity().Evaled` | parse error | `binomial(2 n, n)` |
 | `"sum(binomial(i,k), i, 0, n)".ToEntity().Evaled` | parse error | `binomial(n + 1, k + 1)` |
 
+### More binomial sums are closed, and identities between coefficients are decided
+
+`sum(binomial(n, i) binomial(n - i, k - i), i, 0, k)` was left as written; it is `2^k binomial(n, k)`
+by the trinomial revision, and `sum(binomial(n, i) binomial(i, k), i, k, n)` is
+`2^(n - k) binomial(n, k)`. The parallel summation `sum(binomial(r + i, i), i, 0, n)` is
+`binomial(r + n + 1, n)`, and Vandermonde's convolution along the upper indices,
+`sum(binomial(j, a) binomial(m - j, b), j, 0, m)`, is `binomial(m + 1, a + b + 1)`. A quantified
+identity between coefficients whose upper indices differ by whole numbers is read over the lowest of
+them by Vandermonde's identity, and a product of coefficients is read in factorials, so Probs 8.9.20
+to 8.9.22 and the trinomial revision of §8.4.5 are `True`. Two nested quantifiers of one kind are
+taken in the other order where a closed form's range condition is about the name bound outside.
+Probs 8.9.15 and 8.9.18 to 8.9.22 and §8.4.5 of Sullivan and Mackey's *An Introduction to Proofs*
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sum(binomial(n,i)*binomial(n-i,k-i), i, 0, k)".ToEntity().Evaled` | `UnhandledParseException` — `binomial` is new since | `2^k binomial(n, k) provided k >= 0`, `0` otherwise |
+| `"sum(binomial(r+i,i), i, 0, n)".ToEntity().Evaled` | parse error | `binomial(1 + n + r, n) provided n >= 0`, `0` otherwise |
+| `"forall n in ZZ+ : forall k in ZZ+ : binomial(n,k) - binomial(n-2,k) = 2*binomial(n-2,k-1) + binomial(n-2,k-2)".ToEntity().Evaled` | parse error — quantifiers are new since as well | `True` |
+
 ### A power of `x` beside a function of a symbolic power of `x` is integrated by substituting the power
 
 `x^(n - 1) e^(x^n)` with a symbolic `n` was left as written: it is `e^(x^n)/n`, under `u = x^n`,
