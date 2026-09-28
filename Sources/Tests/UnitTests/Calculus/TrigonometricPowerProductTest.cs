@@ -208,14 +208,31 @@ namespace AngouriMath.Tests.Calculus
         /// Two proportional linears under roots are one radical with a constant in it: the
         /// quotient-of-two-radicals rule took them, its determinant was zero, and
         /// <c>sin(a + b (c + d x)^(1/3))/(c e + d e x)^(1/3)</c> came back as
-        /// <c>0 provided ...</c>. https://github.com/asc-community/AngouriMath/issues/1386
+        /// <c>0 provided ...</c>. With the second root written as <c>e^(1/3)</c> times the
+        /// first, it is the one-linear question, and is answered. Rubi's 4.1.12, with <c>g</c> for
+        /// its <c>e</c>, which here is Euler's number.
+        /// https://github.com/asc-community/AngouriMath/issues/1386
         /// </summary>
-        [Fact]
-        public void TwoProportionalRadicalsAreNotAQuotientOfTwo()
+        [Theory]
+        [InlineData("sin(a + b*(c + d*x)^(1/3))/(c*g + d*g*x)^(1/3)")]
+        [InlineData("(c + d*x)^(1/2)/(c*g + d*g*x)^(3/2)")]
+        [InlineData("x*(2*c + 2*d*x)^(1/3)*(c + d*x)^(2/3)")]
+        public void TwoProportionalRadicalsAreOne(string integrand)
         {
-            var integral = "sin(a + b*(c + d*x)^(1/3))/(c*e2 + d*e2*x)^(1/3)".ToEntity().Integrate("x");
-            Assert.DoesNotContain("NaN", integral.Stringize());
-            Assert.NotEqual("0", (integral.Substitute("C", 0) is Entity.Providedf(var inner, _) ? inner : integral.Substitute("C", 0)).Simplify().Stringize());
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Entity Pinned(Entity e) => e.Substitute("a", "1/3".ToEntity()).Substitute("b", "2/3".ToEntity())
+                .Substitute("c", "5/4".ToEntity()).Substitute("d", "1/2".ToEntity()).Substitute("g", "3/2".ToEntity());
+            var derivative = Pinned(integral.Substitute("C", 0)).Differentiate("x");
+            var original = Pinned(integrand.ToEntity());
+            foreach (var at in new[] { 0.35, 0.9, 1.45, 2.3 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-9, $"d/dx of {integral} is {got} at x = {at}, where {integrand} is {want}");
+            }
         }
 
         /// <summary>

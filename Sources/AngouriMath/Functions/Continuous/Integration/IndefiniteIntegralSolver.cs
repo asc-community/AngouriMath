@@ -7042,15 +7042,19 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             if (!TreeAnalyzer.TryGetPolyLinear(first, x, out var a, out var b) || !TreeAnalyzer.TryGetPolyLinear(second, x, out var c, out var d))
                 return null;
-            // Two proportional linears are one radical with a constant in it, and not this
-            // rule's: their determinant a d - b c is zero, the second linear in t is 0/(a - c t^q)
-            // and everything it multiplies vanished -- Rubi's
-            // `sin(a + b (c + d x)^(1/3))/(c e + d e x)^(1/3)` came back as `0 provided ...`.
+            // Two proportional linears are one radical with a constant in it: their determinant
+            // a d - b c is zero, and the second linear in t would be 0/(a - c t^q), everything it
+            // multiplies vanishing -- Rubi's `sin(a + b (c + d x)^(1/3))/(c e + d e x)^(1/3)`
+            // came back as `0 provided ...`. With `c x + d = k (a x + b)`, a power of the second
+            // is `k^r` times the same power of the first, the generic reading of a root of a
+            // product; a known-negative k under an even root is not taken, since there the two
+            // differ by a sign wherever the first linear is negative. The integrand is then the
+            // one-linear question, asked again.
             // https://github.com/asc-community/AngouriMath/issues/1386
             var determinant = (a * d - b * c).InnerSimplified;
             if (determinant.Evaled is Number.Complex { IsZero: true }
                 || determinant.Vars.Any() && Functions.PartialFractions.Bare(determinant.Simplify()).Evaled is Number.Complex { IsZero: true })
-                return null;
+                return AsOneLinearRadical(expr, x, first, second, Functions.PartialFractions.Bare((c / a).Simplify()), integrateByParts);
 
             var t = Variable.CreateUnique(expr, "t_rad");
             var w = Variable.CreateUnique(expr, "w_rad");
@@ -7177,6 +7181,34 @@ namespace AngouriMath.Functions.Algebra
                 }
                 return sum ?? Number.Integer.Zero;
             }
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> with every fractional power of <paramref name="second"/>, which is
+        /// <paramref name="ratio"/> times <paramref name="first"/>, written as the ratio's power
+        /// times the same power of <paramref name="first"/>, and asked again; null where the ratio
+        /// is known negative under an even root, or the rewrite leaves the question as it was.
+        /// </summary>
+        private static Entity? AsOneLinearRadical(Entity expr, Entity.Variable x, Entity first, Entity second, Entity ratio, bool integrateByParts)
+        {
+            if (ratio.ContainsNode(x))
+                return null;
+            var negative = ratio.Evaled is Number.Real { IsNegative: true };
+            var refused = false;
+            var rewritten = expr.Replace(node =>
+            {
+                if (node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer || @base != second)
+                    return node;
+                if (negative && exponent.ERational.Denominator.IsEven)
+                    refused = true;
+                return MathS.Pow(ratio, exponent) * MathS.Pow(first, exponent);
+            });
+            if (refused || rewritten == expr)
+                return null;
+            // The same question, respelled: a rule scoped to the question asked is owed it, as in
+            // SolveByCancellingWithFunctionsAsIndeterminates, and with one linear left under a
+            // root this rule does not see it again.
+            return Integration.ComputeAsTheSameQuestion(rewritten.InnerSimplified, x, integrateByParts);
         }
 
         /// <summary>
