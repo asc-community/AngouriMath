@@ -18160,13 +18160,25 @@ namespace AngouriMath.Functions.Algebra
                     // -- is the root itself: `sqrt(x)/sqrt(x + x^2)` under `u = sqrt(x)` is
                     // `2u^2/sqrt(u^2 + u^4)`, answered as `2 sgn(u) sqrt(1 + |u|^2)`, and
                     // `sgn(sqrt(x))` is a sign nothing differentiates.
-                    if (u is Powf(_, Number.Rational evenRoot) && evenRoot.ERational.Denominator.IsEven)
-                        resultInU = resultInU.Replace(node => node switch
+                    if (u is Powf(var rootOf, Number.Rational evenRoot) && evenRoot.ERational.Denominator.IsEven)
+                    {
+                        var asTheRoot = resultInU.Replace(node => node switch
                         {
                             Signumf(var argument) when argument == uSub => Number.Integer.One,
                             Absf(var argument) when argument == uSub => uSub,
                             _ => node,
                         });
+                        // Only where the root is real, though: the answer below read the sign of
+                        // a real u, and where the radicand is negative u is imaginary while the
+                        // integrand can still be real, a product of two imaginary factors.
+                        // `(1 + sec(x))^(5/2) sqrt(cos(x))` under `t = cos(x)` and `u = sqrt(t)` is
+                        // `-2 u^2 (1 + 1/u^2)^(5/2)/sqrt(1 - u^4)`, whose power of a quotient was
+                        // taken apart as `(1 + u^2)^(5/2)/|u|^5`, and was answered wrongly
+                        // wherever the cosine is negative. So the answer is conditioned on the
+                        // radicand, as the factoring below conditions its own.
+                        if (asTheRoot != resultInU)
+                            return Functions.PartialFractions.Bare(asTheRoot).Substitute(uSub, u).Provided(rootOf >= Number.Integer.Zero);
+                    }
                     // Substitute back: replace u with g(x)
                     return resultInU.Substitute(uSub, u);
                 }

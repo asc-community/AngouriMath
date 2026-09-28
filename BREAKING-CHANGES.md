@@ -575,6 +575,22 @@ was ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 | `"x * sqrt(c - a*c*x) / e^(3 * atanh(a*x))".Integrate("x")` | `integral(…)` — left unevaluated, with `e` evaluated to a hundred digits inside it | an antiderivative in `sqrt(c - a c x)`, `provided c - a * c * x >= 0` |
 | `"1/sqrt(x + x^(3/2))".Integrate("x")` | `integral(1 / sqrt(x + x ^ (3/2)), x)` — left unevaluated | `2 * sqrt(1 + sqrt(x)) / (1/2) + C provided x >= 0` |
 
+### An answer that read the sign of an even root says where the root is real
+
+The general substitution for an even root, `u = t^(1/q)`, writes a sign or a modulus of `u` that a
+rule below it put in as the root itself, `sgn(u) = 1` and `|u| = u`, which is so only where the
+root is real. Beyond the radicand's zero `u` is imaginary, and the integrand can still be real
+there, a product of two imaginary factors: `(1 + sec(x))^(5/2) sqrt(cos(x))` under `t = cos(x)` and
+`u = sqrt(t)` has its power of a quotient taken apart as `(1 + u^2)^(5/2)/|u|^5`, and its answer
+was not the integrand's antiderivative wherever the cosine is negative. An answer that had a sign
+or a modulus of `u` now carries `provided t >= 0`, as the entry above conditions the factoring.
+Rubi's 4.5.3.1:640 was wrong on that region
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(1+sec(x))^(5/2)*sqrt(cos(x))".Integrate("x")` | `integral((1 + sec(x)) ^ (5/2) * sqrt(cos(x)), x)` — left unevaluated | an antiderivative with `sgn(sin(x))` in it, `provided cos(x) >= 0` |
+
 ### A zero imaginary part is on the real axis, whatever its sign
 
 **Silent, with the downcasting off.** A decimal's negative zero — `0E-100 * -0.43` is `-0E-102`

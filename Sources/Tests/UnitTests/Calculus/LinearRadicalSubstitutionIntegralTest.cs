@@ -118,6 +118,37 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// The substitution search's even root reads the sign of a real <c>u</c> as well, and
+        /// says where it does: <c>(1 + sec(x))^(5/2) sqrt(cos(x))</c> under <c>t = cos(x)</c> and
+        /// <c>u = sqrt(t)</c> is <c>-2 u^2 (1 + 1/u^2)^(5/2)/sqrt(1 - u^4)</c>, whose power of a
+        /// quotient is taken apart as <c>(1 + u^2)^(5/2)/|u|^5</c>. Where the cosine is negative the
+        /// integrand is still real, a product of two imaginary factors, and the answer built for a
+        /// real <c>u</c> was not its antiderivative there. Rubi's 4.5.3.1.
+        /// </summary>
+        [Fact]
+        public void TheSearchsEvenRootSaysWhereItHolds()
+        {
+            var integrand = "(1 + sec(x))^(5/2)*sqrt(cos(x))".ToEntity();
+            var integral = integrand.Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.Contains("provided cos(x) >= 0", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            // Inside the condition the derivative is the integrand.
+            foreach (var at in new[] { 0.3, 0.9, -0.7, 5.9 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = integrand.Substitute("x", at).EvalNumerical();
+                Assert.False(got.IsNaN, $"no answer at x = {at}, inside the condition");
+                Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-9 * Math.Max(1, Math.Abs((double)want.RealPart)),
+                    $"d/dx of the antiderivative is {got} at x = {at}, where the integrand is {want}");
+            }
+            // Beyond it the integrand is real and the answer claims nothing.
+            var outside = integrand.Substitute("x", 2.8).EvalNumerical();
+            Assert.True(Math.Abs((double)outside.ImaginaryPart) < 1e-12, $"the integrand at x = 2.8 is {outside}, not real");
+            Assert.True(derivative.Substitute("x", 2.8).Evaled.IsNaN, "the answer claims a derivative outside its condition");
+        }
+
+        /// <summary>
         /// A polynomial over a square root of something linear. None of these had an
         /// antiderivative, and each is a first-year exercise.
         /// </summary>
