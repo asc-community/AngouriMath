@@ -156,6 +156,22 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        public partial record Eif
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"Ei({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Lif
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"li({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Absf
         {
             /// <inheritdoc/>

@@ -1392,6 +1392,30 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Erfi(Entity a) => new Erfif(a);
 
+        /// <summary>The exponential integral, <c>Ei(z) = gamma + (ln z - ln(1/z))/2 + sum z^k/(k k!)</c></summary>
+        /// <param name="a">The argument, any complex number but 0</param>
+        /// <returns>The <see cref="Entity.Eif"/> node</returns>
+        /// <remarks>
+        /// On the real line <c>Ei(x)</c> is the principal value of <c>int_-oo^x e^t/t dt</c>, real on
+        /// either side of 0, so it is what <c>int e^x/x dx</c> is in closed form. Off it, the cut is
+        /// the negative real axis, as for <c>ln</c>, but <c>Ei</c> keeps its real value on the cut
+        /// itself: <c>Ei(-1)</c> is about <c>-0.2194</c>, and just above the axis it is <c>i pi</c> more.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Ei(Entity a) => new Eif(a);
+
+        /// <summary>The logarithmic integral, <c>li(z) = Ei(ln z)</c></summary>
+        /// <param name="a">The argument, any complex number but 1</param>
+        /// <returns>The <see cref="Entity.Lif"/> node</returns>
+        /// <remarks>
+        /// On <c>x > 0</c>, <c>li(x)</c> is the principal value of <c>int_0^x dt/ln t</c>, so it is what
+        /// <c>int 1/ln(x) dx</c> is in closed form: real, <c>0</c> at <c>0</c> and <c>-oo</c> at <c>1</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Li(Entity a) => new Lif(a);
+
         /// <summary>Boolean negation
         /// <a href="https://en.wikipedia.org/wiki/Negation">Wikipedia</a></summary>
         /// <param name="a">Argument node of which Negation function will be taken</param>

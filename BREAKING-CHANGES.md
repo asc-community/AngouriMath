@@ -1597,6 +1597,25 @@ undeclared variable.
 | `"erfc(1)".Simplify()` | `erfc` | `erfc(1)`, and `0.157299207050285…` evaluated |
 | `"erf(x)".Differentiate("x")` | `UnrecognizedFunctionParseException` | `2 / sqrt(pi) * e ^ (-x ^ 2)` |
 
+### `Ei` and `li` are functions
+
+**Addition, and two silent misreadings fixed.** The exponential integral
+`Ei(z) = gamma + (ln z - ln(1/z))/2 + sum z^k/(k k!)` and the logarithmic integral `li(z) = Ei(ln z)`
+are nodes (`MathS.Ei`, `MathS.Li`), the next of #1501's special functions. On the real line `Ei(x)`
+is the principal value of `int_-oo^x e^t/t dt` and `li(x)` that of `int_0^x dt/ln t`, both real, as
+SymPy's, mpmath's and Mathematica's are. Each is differentiated, printed in LaTeX as
+`\operatorname{Ei}` and `\operatorname{li}`, and evaluated to the working precision anywhere in the
+complex plane (`Entity.Number.Ei`, `Li`). Neither name was refused, so each was read as a product
+with an undeclared variable
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"Ei(x)"` | `Ei * x` | `Ei(x)` |
+| `"li(2)".Simplify()` | `2 * li` | `li(2)`, and `1.045163780117492…` evaluated |
+| `"Ei(1)".Simplify()` | `Ei` | `Ei(1)`, and `1.895117816355936…` evaluated |
+| `"Ei(x)".Differentiate("x")` | `Ei` | `e ^ x / x` |
+
 ### A definite integral is the limit at a bound where its antiderivative is undefined
 
 `integral(x * e^(-x), x, 0, +oo)` was `NaN`, this library's way of saying a value does not

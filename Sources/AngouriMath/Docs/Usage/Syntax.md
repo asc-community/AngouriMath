@@ -283,6 +283,15 @@ definition: the derivative of `erf(x)` is `2 / sqrt(pi) * e ^ (-x ^ 2)`. `erf(0)
 is `1`, and `erf(+oo)` is `1`. An equation in one of them is left as the set of `x` for which it
 holds, since the library writes none of their inverses.
 
+**Exponential and logarithmic integrals** — `Ei(z)` `li(z)`. The exponential integral
+`Ei(z) = gamma + (ln z - ln(1/z))/2 + sum z^k/(k k!)`, which on the real line is the principal
+value of `int_-oo^x e^t/t dt`, and the logarithmic integral `li(z) = Ei(ln z)`, which on `x > 0` is
+the principal value of `int_0^x dt/ln t`. Both are real on the real line, `li` for `x >= 0`; the cut
+of `Ei` is the negative real axis, on which it keeps its real value, and it is `i pi` more just above
+it. Each is evaluated to the working precision anywhere in the complex plane and differentiated
+from its definition: the derivative of `Ei(x)` is `e ^ x / x`, and of `li(x)` it is `1 / ln(x)`.
+`Ei` is undefined at `0` and `li` at `1`; `li(0)` is `0`.
+
 **Calculus** — `derivative(expr, var, order)`, `integral(expr, var)`,
 `integral(expr, var, from, to)`, `limit(expr, var, dest)`, `limitleft(...)`, `limitright(...)`;
 `max(expr, var in set)` and `min` for the extremum of an expression over a set, `argmax` and
