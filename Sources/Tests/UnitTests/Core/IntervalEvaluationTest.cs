@@ -85,6 +85,10 @@ namespace AngouriMath.Tests.Core
         [InlineData("3!")]
         [InlineData("1 provided 3 < 2")]
         [InlineData("1 provided sqrt(-2) in RR")]
+        [InlineData("Ci(0)")]
+        [InlineData("li(1)")]
+        [InlineData("Ci(-2 + sin(pi) * i)")]
+        [InlineData("Ei(sin(pi))")]
         public void UndecidedWhereItShouldBe(string expression)
         {
             Assert.Null(IntervalEvaluation.Of(expression.ToEntity()));
@@ -117,6 +121,19 @@ namespace AngouriMath.Tests.Core
         [InlineData("sin(10^6) + cos(10^6)")]
         [InlineData("sqrt(2) provided 1 < 2")]
         [InlineData("sqrt(2) provided -4 - 4 * (137/100)^2 in RR and sqrt(-2) in CC")]
+        [InlineData("erf(1/2) + erfc(3) + erfi(-2/3)")]
+        [InlineData("erf(1 + i)")]
+        [InlineData("Ei(3/2) + Ei(-2)")]
+        [InlineData("Ei(1 - 2i)")]
+        [InlineData("li(1/2) + li(3)")]
+        [InlineData("li(-2)")]
+        [InlineData("Si(2) + Si(-3 + i)")]
+        [InlineData("Ci(3/10)")]
+        [InlineData("Ci(-3)")]
+        [InlineData("Ci(2 + 5i)")]
+        [InlineData("Ci(2 + sin(pi) * i)")]
+        [InlineData("Shi(3/2) + Chi(-1) + Chi(1 + 2i)")]
+        [InlineData("e^(-2) * Ei(sqrt(3)) + Si(pi/4)^2")]
         public void ThePreciseIntervalHoldsTheValue(string expression)
         {
             var expr = expression.ToEntity();
@@ -157,6 +174,29 @@ namespace AngouriMath.Tests.Core
         {
             Assert.True(IntervalEvaluation.Of(expression.ToEntity()) is { Re.IsZero: true, Im.IsZero: true });
             Assert.True(PreciseEvaluation.Of(expression.ToEntity(), 40) is { Re.IsZero: true, Im.IsZero: true });
+        }
+
+        /// <summary>
+        /// The special functions are read, so an answer whose derivative keeps one -- by parts,
+        /// <c>x erf(x)</c> differentiates to <c>erf(x)</c> and more -- is checked, where reading
+        /// none of them left no point to compare at and the answer was turned away. On the real
+        /// line left of 0 the values are the ones on the cut: <c>Chi(-0.61)</c> is
+        /// <c>Chi(0.61) + i pi</c>, and <c>li(-0.61)</c> is complex.
+        /// </summary>
+        [Theory]
+        [InlineData("x * erf(x) + e^(-x^2)/sqrt(pi)", "erf(x)")]
+        [InlineData("x * erfi(x) - e^(x^2)/sqrt(pi)", "erfi(x)")]
+        [InlineData("x * Si(x) + cos(x)", "Si(x)")]
+        [InlineData("x * Ci(x) - sin(x)", "Ci(x)")]
+        [InlineData("x * Ei(x) - e^x", "Ei(x)")]
+        [InlineData("x * Chi(x) - sinh(x)", "Chi(x)")]
+        [InlineData("x * li(x) - Ei(2 * ln(x))", "li(x)")]
+        public void ADerivativeKeepingASpecialFunctionIsChecked(string antiderivative, string integrand)
+        {
+            var x = MathS.Var("x");
+            var derivative = antiderivative.ToEntity().Differentiate(x);
+            Assert.True(Functions.PartialFractions.HoldsAtSampledPoints(derivative, integrand.ToEntity(), x));
+            Assert.False(Functions.PartialFractions.HoldsAtSampledPoints(derivative, (integrand + " + 1/1000").ToEntity(), x));
         }
 
         [Fact]

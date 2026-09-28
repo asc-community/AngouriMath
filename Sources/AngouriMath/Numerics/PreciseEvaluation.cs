@@ -492,9 +492,102 @@ namespace AngouriMath.Numerics
                                 return undefined;
                         }
                     return undefined;
+                // The special functions, each through its derivative, which is elementary; Ei, Ci
+                // and Chi jump across the real line left of 0, and li left of 1.
+                case Erff(var argument):
+                    return BySlope(Evaluate(argument), Number.Erf, z => Gaussian(z, negative: true), cutEnd: null);
+                case Erfcf(var argument):
+                    return BySlope(Evaluate(argument), Number.Erfc, z => Gaussian(z, negative: true), cutEnd: null);
+                case Erfif(var argument):
+                    return BySlope(Evaluate(argument), Number.Erfi, z => Gaussian(z, negative: false), cutEnd: null);
+                case Eif(var argument):
+                    return BySlope(Evaluate(argument), Number.Ei, z => Divide(Exp(z), z), cutEnd: EDecimal.Zero);
+                case Lif(var argument):
+                    return BySlope(Evaluate(argument), Number.Li, z => Divide(Real(PreciseInterval.Exactly(EDecimal.One)), Log(z)), cutEnd: EDecimal.One);
+                case Sif(var argument):
+                    return BySlope(Evaluate(argument), Number.Si, z => Divide(Sin(z), z), cutEnd: null);
+                case Cif(var argument):
+                    return BySlope(Evaluate(argument), Number.Ci, z => Divide(Cos(z), z), cutEnd: EDecimal.Zero);
+                case Shif(var argument):
+                    return BySlope(Evaluate(argument), Number.Shi, z => Divide(Half(Subtract(Exp(z), Exp(Negate(z)))), z), cutEnd: null);
+                case Chif(var argument):
+                    return BySlope(Evaluate(argument), Number.Chi, z => Divide(Half(Add(Exp(z), Exp(Negate(z)))), z), cutEnd: EDecimal.Zero);
                 default:
                     return undefined;
             }
+        }
+
+        /// <summary>
+        /// A special function over the rectangle: its value at the middle, which the library
+        /// works out with ten digits to spare, widened by the most the function can move within
+        /// the rectangle, and by a unit in the last place of the working precision for its own
+        /// error. The most it can move is a bound on the slope times the farthest the rectangle
+        /// reaches from the middle, since along the segment from the middle to any point the
+        /// function changes by the integral of its derivative there. The bound is the
+        /// <paramref name="derivative"/>'s magnitude in intervals over the whole rectangle, and
+        /// where that has no value -- a singularity inside -- neither has the function. Off the
+        /// real line, a rectangle over the cut along the real line up to
+        /// <paramref name="cutEnd"/> is undefined as well: the function jumps there, and the
+        /// segment crosses the jump. On the real line itself there is no jump to cross, and the
+        /// value is the one the function takes on the cut.
+        /// </summary>
+        private PreciseComplexInterval BySlope(PreciseComplexInterval a, Func<Number.Complex, Number.Complex> function,
+            Func<PreciseComplexInterval, PreciseComplexInterval> derivative, EDecimal? cutEnd)
+        {
+            if (!a.IsFinite)
+                return undefined;
+            if (cutEnd is { } end && !a.IsReal && a.Im.ContainsZero && a.Re.Low.CompareTo(end) <= 0)
+                return undefined;
+            var two = EDecimal.FromInt32(2);
+            var middleRe = a.Re.Low.Add(a.Re.High, near).Divide(two, near);
+            var middleIm = a.Im.Low.Add(a.Im.High, near).Divide(two, near);
+            var halfRe = EDecimal.Max(a.Re.High.Subtract(middleRe, up), middleRe.Subtract(a.Re.Low, up));
+            var halfIm = EDecimal.Max(a.Im.High.Subtract(middleIm, up), middleIm.Subtract(a.Im.Low, up));
+            var reach = halfRe.Multiply(halfRe, up).Add(halfIm.Multiply(halfIm, up), up).Sqrt(up);
+            var moved = EDecimal.Zero;
+            // A point needs no slope, and Si's derivative at 0 has none written.
+            if (!reach.IsZero)
+            {
+                var slope = derivative(a);
+                if (!slope.IsFinite)
+                    return undefined;
+                var steepest = slope.Re.Magnitude.Multiply(slope.Re.Magnitude, up)
+                    .Add(slope.Im.Magnitude.Multiply(slope.Im.Magnitude, up), up).Sqrt(up);
+                moved = steepest.Multiply(reach, up);
+            }
+            // The library's functions read the working precision from the settings; they are
+            // given this evaluation's, and no downcasting, which would round the value.
+            Number.Complex value;
+            using (MathS.Settings.DecimalPrecisionContext.Set(near))
+            using (MathS.Settings.DowncastingEnabled.Set(false))
+                value = function(Number.Complex.Create(middleRe, middleIm));
+            var (re, im) = (value.RealPart.EDecimal, value.ImaginaryPart.EDecimal);
+            if (!re.IsFinite || !im.IsFinite)
+                return undefined;
+            var floor = moved.Add(EDecimal.Max(fixedPointError, least), up);
+            var reReach = floor.Add(re.Abs().Multiply(unit, up), up);
+            var imReach = floor.Add(im.Abs().Multiply(unit, up), up);
+            // On the real line an imaginary part that is exactly zero at the middle is zero over
+            // the interval, which has no singularity in it: the function is real along the line
+            // there, or it would have jumped.
+            var imaginary = a.IsReal && im.IsZero ? PreciseInterval.Exactly(EDecimal.Zero) : new(im.Subtract(imReach, down), im.Add(imReach, up));
+            return new(new(re.Subtract(reReach, down), re.Add(reReach, up)), imaginary);
+        }
+
+        /// <summary>The error functions' derivative, <c>2/sqrt(pi) e^(-z^2)</c>, or <c>e^(z^2)</c> for <c>erfi</c>.</summary>
+        private PreciseComplexInterval Gaussian(PreciseComplexInterval z, bool negative)
+        {
+            var square = Multiply(z, z);
+            var twoOverRootPi = Divide(PreciseInterval.Exactly(EDecimal.FromInt32(2)), Sqrt(Pi()));
+            return Multiply(Real(twoOverRootPi), Exp(negative ? Negate(square) : square));
+        }
+
+        private PreciseComplexInterval Negate(PreciseComplexInterval a) => new(a.Re.Negate(), a.Im.Negate());
+
+        private PreciseComplexInterval Half(PreciseComplexInterval a)
+        {
+            var half = PreciseInterval.Exactly(EDecimal.FromString("0.5"));
+            return new(Multiply(a.Re, half), Multiply(a.Im, half));
         }
 
         private PreciseComplexInterval RealOnly(PreciseComplexInterval argument, Func<PreciseInterval, PreciseInterval> function)
