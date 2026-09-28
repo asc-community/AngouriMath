@@ -33,10 +33,9 @@ jobs:
       run: dotnet build Sources/Wrappers/AngouriMath.Interactive/AngouriMath.Interactive.fsproj
 
     # AngouriMath.Terminal is a published package -- Nuget.yml packs and pushes it as a
-    # dotnet tool -- and no pre-merge job built it. TerminalNightly.yml is the only job
-    # that does, and it fires on push to master behind a path filter on
-    # Sources/Terminal/VERSION/**, so a change that breaks the terminal is not seen until
-    # somebody bumps that file or cuts a release.
+    # dotnet tool -- and no pre-merge job built it. TerminalNightly.yml is the only other job
+    # that does, and it fires on a release, so a change that breaks the terminal would not be
+    # seen until a release was cut.
     - name: Build Terminal
       run: dotnet build Sources/Terminal/AngouriMath.Terminal/AngouriMath.Terminal.fsproj
 

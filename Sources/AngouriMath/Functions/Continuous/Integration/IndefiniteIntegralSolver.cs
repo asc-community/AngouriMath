@@ -5586,6 +5586,14 @@ namespace AngouriMath.Functions.Algebra
             if (!AreProportionalAtSampledPoints(candidate, wanted, x))
                 return null;
             var ratio = Functions.PartialFractions.Bare((candidate / wanted).Simplify());
+            // Two proportional quadratics whose quotient does not simplify free of x: the
+            // integrand's `1 - a^2 x^2` arrives divided through by its leading coefficient, as
+            // `1/(-a^2) + x^2`, and the ratio is that of the leading coefficients.
+            if (ratio.ContainsNode(x)
+                && TreeAnalyzer.TryGetPolyQuadratic(candidate, x, out var candidateLeading, out _, out _)
+                && TreeAnalyzer.TryGetPolyQuadratic(wanted, x, out var wantedLeading, out _, out _)
+                && !TreeAnalyzer.IsZero(wantedLeading))
+                ratio = Functions.PartialFractions.Bare((candidateLeading / wantedLeading).Simplify());
             if (ratio.ContainsNode(x) || ratio.Nodes.Any(node => node == MathS.NaN))
                 return null;
             // A multiple that is known negative is refused: `sqrt(k Q)` is `sqrt(k) sqrt(Q)`

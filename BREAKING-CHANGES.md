@@ -1809,6 +1809,19 @@ to a constant ([#1501](https://github.com/asc-community/AngouriMath/issues/1501)
 | `"sinh(x)^2/x".Integrate("x")` | `integral(((e ^ x - e ^ (-x)) / 2) ^ 2 / x, x)` | `-1/2 * ln(x) + 1/2 * Chi(2 * x) + C` |
 | `"cosh(a+b*x)/(c+d*x)".Integrate("x")` | `integral((e ^ (a + b * x) + e ^ (-(a + b * x))) / 2 / (c + d * x), x)` | `Chi` and `Shi` of `b (c + d x)/d`, with `cosh(a - b c/d)/d` and `sinh(a - b c/d)/d` in front, written in exponentials |
 
+### An inverse hyperbolic tangent over a power of `1 - a^2 x^2` is integrated to the hyperbolic sine and cosine integrals
+
+`x/((1 - a^2 x^2)^2 artanh(a x))` ran out of time. Under `x = tanh(u)/a` it is
+`sinh(u) cosh(u)/(a^2 u)`, but the quadratic reached the substitution divided through by its
+leading coefficient, as `1/(-a^2) + x^2`, and was not recognised as a multiple of `1 - a^2 x^2`. It
+is now, and these integrate to `Shi` and `Chi` of `2 artanh(a x)`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x/((1-a^2*x^2)^2*atanh(a*x))".Integrate("x")` | `integral(x / ((1 - a ^ 2 * x ^ 2) ^ 2 * 1/2 * ln((1 + a * x) / (1 - a * x))), x)` | `Shi(2 artanh(a x))/(2 a^2)`, with `artanh` written as its logarithm |
+| `"1/((1-a^2*x^2)^2*atanh(a*x))".Integrate("x")` | `integral(1 / ((1 - a ^ 2 * x ^ 2) ^ 2 * 1/2 * ln((1 + a * x) / (1 - a * x))), x)` | `(ln(artanh(a x)) + Chi(2 artanh(a x)))/(2 a)`, likewise |
+
 ### A definite integral is the limit at a bound where its antiderivative is undefined
 
 `integral(x * e^(-x), x, 0, +oo)` was `NaN`, this library's way of saying a value does not

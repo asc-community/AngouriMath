@@ -1,16 +1,14 @@
-name: 'Terminal nightly builds'
+name: 'Terminal release'
 
 # Self-contained builds of the Terminal for seven runtimes, zipped, and .debs for Linux,
-# released to AngouriMathLab when Sources/Terminal/VERSION changes on master. Run by hand, it
-# builds and packs without releasing unless asked to, and a pull request that touches the
-# workflow or its scripts builds and packs the same way.
+# released to AngouriMathLab alongside each release of the packages and under the same
+# version, read from the release's tag as Nuget.yml reads it. Run by hand, it builds and packs
+# without releasing unless asked to, and a pull request that touches the workflow or its
+# scripts builds and packs the same way.
 # https://github.com/asc-community/AngouriMath/issues/539
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'Sources/Terminal/VERSION/**'
+  release:
+    types: [published]
   pull_request:
     paths:
       - '.github/workflows/TerminalNightly.yml'
@@ -18,6 +16,10 @@ on:
       - 'Sources/Terminal/AngouriMath.Terminal/pack-deb-linux.sh'
   workflow_dispatch:
     inputs:
+      version:
+        description: 'The version to pack, and to release under if releasing'
+        type: string
+        default: '0.0.0'
       release:
         description: 'Release the build to AngouriMathLab'
         type: boolean
@@ -38,7 +40,29 @@ jobs:
         dotnet-version: '10.x'
         dotnet-quality: 'preview'
 
+    # The release's tag without its 'v', as Nuget.yml reads it, so that the Terminal is released
+    # under the packages' version; by hand, the version asked for; for a pull request, 0.0.0.
+    - name: 'Determine version'
+      id: version
+      env:
+        TAG: ${{ github.event.release.tag_name }}
+        ASKED: ${{ inputs.version }}
+      run: |
+        if [ "${{ github.event_name }}" = 'release' ]; then
+            version="${TAG#v}"
+        else
+            version="${ASKED:-0.0.0}"
+        fi
+        if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
+            echo "Error: '$version' is not a version such as 2.6.0 or 2.6.0-beta.1"
+            exit 1
+        fi
+        echo "Version: $version"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
     - name: 'Build terminal'
+      env:
+        TERMINAL_VERSION: ${{ steps.version.outputs.version }}
       run: |
         cd Sources/Terminal/AngouriMath.Terminal
         ./publish.sh
@@ -65,13 +89,12 @@ jobs:
           angourimath-terminal-*.deb
 
     - name: 'Release'
-      if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.release)
+      if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.release)
       env:
         GH_TOKEN: ${{ secrets.LAB_ACCESS_TOKEN }}
+        VERSION: ${{ steps.version.outputs.version }}
       run: |
-        name=$(cat ./Sources/Terminal/VERSION/VERSION)
-        echo "Version: $name"
-        gh release create v$name \
+        gh release create "v$VERSION" \
         'angourimath-terminal-linux-x64.zip' \
         'angourimath-terminal-linux-arm.zip' \
         'angourimath-terminal-linux-arm64.zip' \

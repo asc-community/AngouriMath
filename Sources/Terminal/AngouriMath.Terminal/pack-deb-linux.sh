@@ -1,4 +1,7 @@
 #!/bin/bash
+# The .deb's version is the release's: TerminalNightly.yml passes the packages' version, read
+# from the release's tag.
+version="${TERMINAL_VERSION:?set TERMINAL_VERSION to the version to pack, such as 2.6.0}"
 cd publish-output
 
 for arch in amd64 arm arm64
@@ -14,7 +17,6 @@ do
         dotnet_arch='linux-arm64'
     fi
 
-    version=$(cat ../../VERSION/VERSION)
     filename="angourimath-terminal_${version}_${arch}"
     
     rm -r $filename
