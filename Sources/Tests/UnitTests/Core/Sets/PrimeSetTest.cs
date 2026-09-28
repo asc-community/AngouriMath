@@ -67,6 +67,11 @@ namespace AngouriMath.Tests.Core.Sets
         [InlineData("min(x, x in ZZ+ and x >= 7/2)", "4")]
         [InlineData("min(x, x in PP and x > 14 and x < 20)", "17")]
         [InlineData("min(x, 3 < x and x in ZZ+ and x <= 5)", "4")]
+        // A condition that is not a bound, decided member by member from the least up: Sullivan
+        // and Mackey's Prob 8.9.3, the least n with n binomial(n - 1, 2) >= 14.
+        [InlineData("min(n, n in { n in ZZ+ : n * binomial(n - 1, 2) >= 14 })", "5")]
+        [InlineData("min(x, x in ZZ+ and x^2 > 50)", "8")]
+        [InlineData("min(p, p in PP and p^2 > 200)", "17")]
         // The greatest member, and the previous prime before a bound.
         [InlineData("max(x, x in PP and x < 14)", "13")]
         [InlineData("max(x, x in PP and x <= 2)", "2")]
@@ -113,6 +118,7 @@ namespace AngouriMath.Tests.Core.Sets
         [InlineData("max(x, x in PP and x < 2)", typeof(Maximumf))]
         [InlineData("max(x, x in ZZ+ and x < 1)", typeof(Maximumf))]
         [InlineData("min(x, x in PP and x > 14 and x < 16)", typeof(Minimumf))]
+        [InlineData("min(x, x in ZZ+ and x^2 < 0)", typeof(Minimumf))]
         [InlineData("PP intersect [1; 10^7]", typeof(Set.Intersectionf))]
         [InlineData("prime(n)", typeof(Primef))]
         [InlineData("prime(10^9)", typeof(Primef))]
