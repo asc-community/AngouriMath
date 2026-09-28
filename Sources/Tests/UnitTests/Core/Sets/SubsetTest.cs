@@ -124,6 +124,10 @@ namespace AngouriMath.Tests.Core.Sets
         [InlineData("ZZ = QQ", "False")]
         [InlineData("{ x in RR : x^2 = 1 } = {-1, 1}", "True")]
         [InlineData("{1, x} = {1, 2}", "{1, x} = {1, 2}")]
+        // §3's Try 8: two set builders, each solved to (-oo; 1] and [2; +oo), and a third that is
+        // not the same set.
+        [InlineData("{ x in RR : x^2 - 3 x + 2 >= 0 } = { y in RR : y <= 1 or y >= 2 }", "True")]
+        [InlineData("{ x in RR : x^2 - 3 x + 2 >= 0 } = { y in RR : y < 1 or y > 2 }", "False")]
         public void SetsAreEqualByDoubleContainment(string statement, string expected)
             => Assert.Equal(expected.ToEntity(), Decided(statement));
 

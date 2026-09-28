@@ -174,10 +174,12 @@ namespace AngouriMath
                                 => MathS.Intersection(rest, SetOperators.IntersectIntervalAndInterval(one, another)).InnerSimplified(isExact),
                             // An interval meets a union of intervals piece by piece, which is what
                             // an inequality's solution set is: (0; +oo) /\ ((-oo; -2) \/ (0; 1/2))
-                            // is (0; 1/2), where as written it met nothing it could read.
-                            (Interval interval, Unionf(var left, var right)) when left is Interval or FiniteSet && right is Interval or FiniteSet
+                            // is (0; 1/2), where as written it met nothing it could read. The
+                            // union may have more than two pieces: x^2 - 3 x + 2 >= 0 is solved to
+                            // { 2 } \/ (-oo; 1] \/ (2; +oo), and that meets (1; 2) in nothing.
+                            (Interval interval, Unionf(var left, var right) union) when MadeOfPieces(union)
                                 => MathS.Union(MathS.Intersection(interval, left).InnerSimplified(isExact), MathS.Intersection(interval, right).InnerSimplified(isExact)).InnerSimplified(isExact),
-                            (Unionf(var left, var right), Interval interval) when left is Interval or FiniteSet && right is Interval or FiniteSet
+                            (Unionf(var left, var right) union, Interval interval) when MadeOfPieces(union)
                                 => MathS.Union(MathS.Intersection(left, interval).InnerSimplified(isExact), MathS.Intersection(right, interval).InnerSimplified(isExact)).InnerSimplified(isExact),
                             // (A \ B) /\ C is (A /\ C) \ B, where A meets C first: the pre-image
                             // (RR \ { -1 }) /\ (-oo; -1) is (-oo; -1) \ { -1 }, which is the interval.
@@ -188,6 +190,10 @@ namespace AngouriMath
                             _ => null
                         },
                         (@this, a, b) => ((Intersectionf)@this).New(a, b), isExact, propagateSet: false);
+
+                /// <summary>Whether the set is intervals and listed sets joined by unions, each of which meets an interval in something it can read.</summary>
+                private static bool MadeOfPieces(Entity set)
+                    => set is Interval or FiniteSet || set is Unionf(var left, var right) && MadeOfPieces(left) && MadeOfPieces(right);
             }
 
             partial record SetMinusf

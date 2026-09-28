@@ -653,6 +653,19 @@ too ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). `subset
 | `{1, 3} in powerset(ZZ)` | `UnrecognizedFunctionParseException` | `True` |
 | `card({1, {}})` | `#{ 1, {  } }` — left as written | `2` |
 
+### An interval meets a union of any number of pieces
+
+An interval met a union piece by piece only where the union had two pieces, each an interval or
+a listed set. The solution set of `x^2 - 3 x + 2 >= 0` comes out in three,
+`{ 2 } \/ (-oo; 1] \/ (2; +oo)`, so its meeting with `(1; 2)` was left as written, and the two set
+builders of Sullivan and Mackey's §3 Try 8 were not found equal. Any union built of such pieces is
+met piece by piece now ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `{ x in RR : x^2 - 3 x + 2 >= 0 } = { y in RR : y <= 1 or y >= 2 }` | left as written | `True` |
+| `"({ 2 } \/ (-oo; 1] \/ (2; +oo)) /\ (1; 2)".ToEntity().Evaled` | left as written | `{ }` |
+
 ### An integer range is listed, and a family of sets has a union and an intersection
 
 `ZZ /\ [1; 10]` lists its members now — an integer set cut by a numeric interval with at most
@@ -712,7 +725,7 @@ emptiness as a proof: `forall x in RR : x^2 in ZZ` was `True`
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
-| `"x^2 in (0; 1)".Solve("x")` | `{}` — wrong | `((-oo; 0) \/ (0; +oo)) /\ (-1; 1)` |
+| `"x^2 in (0; 1)".Solve("x")` | `{}` — wrong | `(-1; 0) \/ (0; 1)` |
 | `"x^2 in {1, 4}".Solve("x")` | `{}` — wrong | `{ 1, -1, 2, -2 }` |
 | `"x^2 in ZZ".Solve("x")` | `{}` — wrong | `{ x : x ^ 2 in ZZ }`, left as written |
 | `forall x in RR : x^2 in ZZ` | `UnhandledParseException` (quantifiers are new since) | `False` |
