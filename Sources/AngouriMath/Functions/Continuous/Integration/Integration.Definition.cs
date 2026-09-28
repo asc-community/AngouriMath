@@ -569,6 +569,8 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAPowerOfTheLogarithm(expr, x)) is { }) return answer;
             // And a half-odd power of it, onto the Gaussian's moments by t = sqrt(F).
             if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAHalfOddPowerOfTheLogarithm(expr, x)) is { }) return answer;
+            // And an exponential of a quadratic in it, onto the Gaussian by t = ln(c x^r).
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAnExponentialOfAQuadraticInALogarithm(expr, x)) is { }) return answer;
             // A power of an exponential with a positive base is the exponential of the product,
             // exactly, and only that spelling is one the exponential rules read.
             if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;

@@ -1745,6 +1745,21 @@ quadratic alone, or beside a polynomial only, is left to the rules that answered
 | `"x^2*sinh(a + b*x + c*x^2)^2".Integrate("x")` | `integral(x ^ 2 * ((e ^ (a + b * x + c * x ^ 2) - e ^ (-(a + b * x + c * x ^ 2))) / 2) ^ 2, x)` | the antiderivative |
 | `"2^(x^2)*3^(x + 1)".Integrate("x")` | `integral(2 ^ x ^ 2 * 3 ^ (x + 1), x)` | the antiderivative, with `erfi` |
 
+### An exponential of a quadratic in a logarithm beside a power of `x` is integrated
+
+`e^(ln(x)^2)` was left unintegrated. `x^p G^(Q(L))`, where `L` is `ln(c x^r)` and `Q` a quadratic
+with a square term, is now integrated under `t = L`, where it is the Gaussian with a linear term. A
+polynomial beside it is summed a power at a time, and the logarithm of a power of a linear is the
+same question under `u = d + e x`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(ln(x)^2)".Integrate("x")` | `integral(e ^ ln(x) ^ 2, x)` | the antiderivative, with `erfi` |
+| `"x^2*F^(f*(a + b*ln(c*x^n))^2)".Integrate("x")` | `integral(x ^ 2 * F ^ (f * (a + b * ln(c * x ^ n)) ^ 2), x)` | the antiderivative |
+| `"(d*g + k*g*x)^m*F^(f*(a + b*ln(c*(d + k*x)^n))^2)".Integrate("x")` | `integral((d * g + k * g * x) ^ m * F ^ (f * (a + b * ln(c * (d + k * x) ^ n)) ^ 2), x)` | the antiderivative |
+| `"(g + h*x)^3*F^(f*(a + b*ln(c*(d + k*x)^n)^2))".Integrate("x")` | `integral((g + h * x) ^ 3 * F ^ (f * (a + b * ln(c * (d + k * x) ^ n) ^ 2)), x)` | the antiderivative |
+
 ### `binomial(n, k)` is a function
 
 **Addition, not silent.** The binomial coefficient is a node, `Entity.Binomialf`, spelled
