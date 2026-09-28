@@ -93,7 +93,7 @@ namespace AngouriMath.Tests.Calculus
         /// no <c>P</c> for any <c>Q</c>, and nothing else reads the shape.
         /// </summary>
         [Theory]
-        [InlineData("sin(x)/x")]
+        [InlineData("tan(x)/x")]
         [InlineData("x/sin(x)")]
         [InlineData("x*tan(x)")]
         [InlineData("x*sin(x)/(1 + x^2)")]

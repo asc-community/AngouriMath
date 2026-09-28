@@ -3889,6 +3889,383 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A polynomial in sines and cosines of one linear, times a polynomial, over a whole power
+        /// of a linear: <c>P(x) T(sin(a + b x), cos(a + b x))/(e + f x)^n</c>, onto the sine and
+        /// cosine integrals. Each monomial <c>sin^s cos^c</c> of <c>T</c> is a sum of sines and
+        /// cosines of multiples of the argument, and under <c>u = e + f x</c>, with
+        /// <c>alpha = a - b e/f</c> and <c>k = b/f</c>, <c>sin(j (a + b x))</c> is
+        /// <c>sin(j alpha) cos(j k u) + cos(j alpha) sin(j k u)</c> and the cosine likewise, so every
+        /// term is <c>u^m sin(q u)</c> or <c>u^m cos(q u)</c>: elementary for <c>m >= 0</c>,
+        /// <c>Si(q u)</c> and <c>Ci(q u)</c> for <c>m = -1</c>, which is their definition, and below
+        /// that by parts toward them. The constant term an even power leaves is a power of <c>u</c>
+        /// alone. Several linears below the bar are split into partial fractions over them, each
+        /// term the question for one; and an argument <c>a + b x^r</c> beside a power of <c>x</c> is
+        /// the same question under <c>u = x^r</c>, where <c>x^p dx</c> is <c>u^((p + 1)/r - 1) du/r</c>.
+        /// Rubi's 4.1.10, <c>(c + d x)^m (a + b sin(e + f x))^n</c>, 4.1.11,
+        /// <c>sin(c + d x)/(x^m (a + b x)^n)</c>, and 4.1.12, <c>(e x)^m (a + b sin(c + d x^n))^p</c>,
+        /// with <c>m</c> negative.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </summary>
+        /// <remarks>
+        /// Only where a sine or cosine integral is left: otherwise the product is elementary, and
+        /// the rules that write it shortest answer it.
+        /// </remarks>
+        internal static Entity? SolveATrigonometricOfALinearOverAPowerOfALinear(Entity expr, Entity.Variable x)
+        {
+            // A sine or a cosine of the variable, before anything is read.
+            if (expr is not (Divf or Mulf or Powf or Sinf or Cosf) || ASineOrCosineArgument(expr, x) is not { } argument)
+                return null;
+            if (TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _) && !TreeAnalyzer.IsZero(rate))
+                return OverAPowerOfALinear(expr, x, argument);
+            return UnderAPowerOfTheVariable(expr, x, argument);
+        }
+
+        /// <summary>
+        /// <see cref="SolveATrigonometricOfALinearOverAPowerOfALinear"/> where the argument is
+        /// <paramref name="argument"/>, linear in <paramref name="x"/>. Two or more linears below
+        /// the bar are split into partial fractions over them first, each term the one-linear
+        /// question.
+        /// </summary>
+        private static Entity? OverAPowerOfALinear(Entity expr, Entity.Variable x, Entity argument)
+        {
+            var (sine, cosine) = (MathS.Sin(argument), MathS.Cos(argument));
+            var s = Variable.CreateUnique(expr, "s");
+            var c = Variable.CreateUnique(expr + s, "c");
+            Entity constant = Number.Integer.One;
+            var linears = new List<(Entity Linear, int Power)>();
+            Entity? polynomial = null;
+            Entity? trigonometric = null;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = underneath ? constant / factor : constant * factor;
+                    continue;
+                }
+                // A polynomial in the sine and the cosine, above the bar.
+                if (factor.ContainsNode(sine) || factor.ContainsNode(cosine))
+                {
+                    var read = factor.Replace(node => node == sine ? s : node == cosine ? c : node);
+                    if (underneath || read.ContainsNode(x))
+                        return null;
+                    trigonometric = trigonometric is null ? read : trigonometric * read;
+                    continue;
+                }
+                var (@base, exponent) = factor is Powf(var raised, Number.Integer whole) && whole.EInteger.CanFitInInt32() && !whole.EInteger.IsZero
+                    ? (raised, whole.EInteger.ToInt32Checked()) : (factor, 1);
+                if (underneath)
+                    exponent = -exponent;
+                // A linear, or a whole power of one, below the bar or as a negative power.
+                if (exponent < 0)
+                {
+                    if (!TreeAnalyzer.TryGetPolyLinear(@base, x, out var slopeOfIt, out _) || TreeAnalyzer.IsZero(slopeOfIt))
+                        return null;
+                    var at = linears.FindIndex(pair => pair.Linear == @base);
+                    if (at < 0)
+                        linears.Add((@base, -exponent));
+                    else
+                        linears[at] = (@base, linears[at].Power - exponent);
+                    continue;
+                }
+                if (TreeAnalyzer.TryGetPolynomial(factor, x, out var monomials) && monomials.Keys.All(degree => degree.Sign >= 0 && degree.CompareTo(EInteger.FromInt32(12)) <= 0))
+                {
+                    polynomial = polynomial is null ? factor : polynomial * factor;
+                    continue;
+                }
+                return null;
+            }
+            if (trigonometric is null || linears.Count == 0 || linears.Count > 4 || linears.Sum(pair => pair.Power) > 12
+                || MultipleAnglesOf(trigonometric, s, c) is not { } angles)
+                return null;
+            if (linears.Count == 1)
+                return AgainstAPowerOfALinear(polynomial, linears[0].Linear, linears[0].Power, angles, argument, x, needsAnIntegral: true) is var (one, _) && one is not null
+                    ? Functions.PartialFractions.Bare((constant * one).InnerSimplified)
+                    : null;
+            // Over each linear by partial fractions, and each term the one-linear question; the
+            // polynomial part first, since the split is of a proper fraction.
+            var denominator = linears.Aggregate((Entity)Number.Integer.One, (product, pair) => product * MathS.Pow(pair.Linear, pair.Power));
+            Entity numerator = polynomial ?? Number.Integer.One;
+            var terms = new List<Entity>();
+            if (numerator.ContainsNode(x) && TreeAnalyzer.PolynomialLongDivision(numerator, denominator, genericCase: true, inTermsOf: x) is var (quotient, remainder))
+            {
+                if (!TreeAnalyzer.IsZero(quotient))
+                    terms.Add(quotient);
+                // The remainder comes over the divisor already.
+                numerator = remainder is Divf(var left, _) ? left : (numerator - quotient * denominator).Expand().InnerSimplified;
+            }
+            if (!TreeAnalyzer.IsZero(numerator))
+            {
+                if (!Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, denominator, x, out var decomposition))
+                    return null;
+                // The sum of the fractions, over a constant it may come divided by.
+                var fractions = decomposition.InnerSimplified;
+                if (fractions is Divf(var over, var by) && !by.ContainsNode(x))
+                    fractions = Sumf.LinearChildren(over).Aggregate((Entity)Number.Integer.Zero, (all, one) => all + one / by);
+                terms.AddRange(Sumf.LinearChildren(fractions));
+            }
+            Entity sum = Number.Integer.Zero;
+            var special = false;
+            foreach (var term in terms)
+            {
+                var (above, linear, power) = OverOneLinear(term, x);
+                var (integral, integrals) = AgainstAPowerOfALinear(above, linear, power, angles, argument, x, needsAnIntegral: false);
+                if (integral is null)
+                    return null;
+                sum += integral;
+                special |= integrals;
+            }
+            return special ? Functions.PartialFractions.Bare((constant * sum).InnerSimplified) : null;
+        }
+
+        /// <summary>
+        /// A term of a partial-fraction decomposition as what is above the bar, the linear below
+        /// it and its power, or the term itself above and no linear.
+        /// </summary>
+        private static (Entity Above, Entity? Linear, int Power) OverOneLinear(Entity term, Entity.Variable x)
+        {
+            Entity above = Number.Integer.One;
+            Entity? linear = null;
+            var power = 0;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(term))
+            {
+                var (@base, exponent) = factor is Powf(var raised, Number.Integer whole) && whole.EInteger.CanFitInInt32() && !whole.EInteger.IsZero
+                    ? (raised, whole.EInteger.ToInt32Checked()) : (factor, 1);
+                if (underneath)
+                    exponent = -exponent;
+                if (exponent < 0 && @base.ContainsNode(x) && (linear is null || linear == @base))
+                {
+                    linear = @base;
+                    power -= exponent;
+                }
+                else
+                    above = underneath ? above / factor : above * factor;
+            }
+            return (above, linear, power);
+        }
+
+        /// <summary>
+        /// <c>T</c>, a polynomial in <paramref name="s"/> and <paramref name="c"/> standing for
+        /// the sine and the cosine of one argument, as sines and cosines of multiples of it: each
+        /// entry a multiple, whether a sine, and its coefficient, the multiple 0 standing for 1.
+        /// </summary>
+        private static Dictionary<(int Multiple, bool IsSine), Entity>? MultipleAnglesOf(Entity trigonometric, Entity.Variable s, Entity.Variable c)
+        {
+            if (!TreeAnalyzer.TryGetPolynomial(trigonometric, s, out var inTheSine))
+                return null;
+            var angles = new Dictionary<(int Multiple, bool IsSine), Entity>();
+            foreach (var ofOnePower in inTheSine)
+            {
+                var (sines, ofTheSines) = (ofOnePower.Key, ofOnePower.Value);
+                if (sines.Sign < 0 || !sines.CanFitInInt32() || !TreeAnalyzer.TryGetPolynomial(ofTheSines, c, out var inTheCosine))
+                    return null;
+                foreach (var term in inTheCosine)
+                {
+                    var (cosines, coefficient) = (term.Key, term.Value);
+                    if (cosines.Sign < 0 || !cosines.CanFitInInt32() || coefficient.ContainsNode(s) || coefficient.ContainsNode(c)
+                        || sines.ToInt32Checked() + cosines.ToInt32Checked() > MaximumTrigonometricPower)
+                        return null;
+                    var (sinePower, cosinePower) = (sines.ToInt32Checked(), cosines.ToInt32Checked());
+                    var terms = (sinePower + cosinePower) switch
+                    {
+                        0 => new List<(int Multiple, bool IsSine, Entity Coefficient)> { (0, false, Number.Integer.One) },
+                        1 => new List<(int Multiple, bool IsSine, Entity Coefficient)> { (1, sinePower == 1, Number.Integer.One) },
+                        _ => MultipleAngles(sinePower, cosinePower),
+                    };
+                    foreach (var (multiple, isSine, weight) in terms)
+                        angles[(multiple, isSine)] = angles.TryGetValue((multiple, isSine), out var already)
+                            ? already + coefficient * weight : coefficient * weight;
+                }
+            }
+            return angles;
+        }
+
+        /// <summary>
+        /// <c>int P(x) T(x)/L^n dx</c>, with <c>T</c> given by its multiple angles and <c>L</c> a
+        /// linear or, where <paramref name="linear"/> is <see langword="null"/>, <c>x</c> and
+        /// <c>n = 0</c>; and whether a sine or cosine integral is left in it. Where
+        /// <paramref name="needsAnIntegral"/> and none is, the answer is left to other rules.
+        /// </summary>
+        private static (Entity? Integral, bool Special) AgainstAPowerOfALinear(Entity? polynomial, Entity? linear, int power,
+            Dictionary<(int Multiple, bool IsSine), Entity> angles, Entity argument, Entity.Variable x, bool needsAnIntegral)
+        {
+            linear ??= x;
+            if (!TreeAnalyzer.TryGetPolyLinear(linear, x, out var f, out var e)
+                || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var b, out var a))
+                return (null, false);
+            var u = Variable.CreateUnique(linear + argument + (polynomial ?? Number.Integer.One), "u");
+            var inU = polynomial is null ? Number.Integer.One : polynomial.Substitute(x, (u - e) / f);
+            if (!TreeAnalyzer.TryGetPolynomial(inU, u, out var powers) || powers.Keys.Any(degree => !degree.CanFitInInt32())
+                || needsAnIntegral && powers.Keys.All(degree => degree.CompareTo(EInteger.FromInt32(power)) >= 0))
+                return (null, false);
+            var alpha = (a - b * e / f).InnerSimplified;
+            var rateInU = (b / f).InnerSimplified;
+            Entity sum = Number.Integer.Zero;
+            var special = false;
+            foreach (var angle in angles)
+            {
+                var ((multiple, isSine), coefficient) = (angle.Key, angle.Value);
+                if (multiple == 0)
+                {
+                    // What even powers leave: a Laurent polynomial in u.
+                    foreach (var monomial in powers)
+                    {
+                        var m = monomial.Key.ToInt32Checked() - power;
+                        sum += coefficient * monomial.Value * (m == -1 ? MathS.Ln(u) : MathS.Pow(u, m + 1) / (m + 1));
+                    }
+                    continue;
+                }
+                // sin(j alpha + q u) = sin(j alpha) cos(q u) + cos(j alpha) sin(q u), and the
+                // cosine's; a negative q turned positive, since sin(-y) = -sin(y) and
+                // cos(-y) = cos(y), so that Ci is asked a positive argument where u is.
+                var phase = (multiple * alpha).InnerSimplified;
+                var (sineOfThePhase, cosineOfThePhase) = phase.Evaled is Number.Real { IsNegative: true }
+                    ? (-MathS.Sin((-phase).InnerSimplified), MathS.Cos((-phase).InnerSimplified))
+                    : (MathS.Sin(phase), MathS.Cos(phase));
+                var (onTheSine, onTheCosine) = isSine
+                    ? (cosineOfThePhase, sineOfThePhase)
+                    : (-sineOfThePhase, cosineOfThePhase);
+                var frequency = (multiple * rateInU).InnerSimplified;
+                if (frequency.Evaled is Number.Real { IsNegative: true })
+                    (frequency, onTheSine) = ((-frequency).InnerSimplified, -onTheSine);
+                Entity elementary = Number.Integer.Zero, si = Number.Integer.Zero, ci = Number.Integer.Zero;
+                foreach (var monomial in powers)
+                {
+                    var m = monomial.Key.ToInt32Checked() - power;
+                    var ofTheSine = APowerTimesASineOrACosine(m, sine: true, frequency, u);
+                    var ofTheCosine = APowerTimesASineOrACosine(m, sine: false, frequency, u);
+                    elementary += monomial.Value * (onTheSine * ofTheSine.Elementary + onTheCosine * ofTheCosine.Elementary);
+                    si += monomial.Value * (onTheSine * ofTheSine.Si + onTheCosine * ofTheCosine.Si);
+                    ci += monomial.Value * (onTheSine * ofTheSine.Ci + onTheCosine * ofTheCosine.Ci);
+                }
+                (si, ci) = ((coefficient * si).InnerSimplified, (coefficient * ci).InnerSimplified);
+                special |= !TreeAnalyzer.IsZero(si) || !TreeAnalyzer.IsZero(ci);
+                sum += coefficient * elementary + si * MathS.Si(frequency * u) + ci * MathS.Ci(frequency * u);
+            }
+            if (needsAnIntegral && !special)
+                return (null, false);
+            return ((sum / f).Substitute(u, linear).InnerSimplified, special);
+        }
+
+        /// <summary>
+        /// <see cref="SolveATrigonometricOfALinearOverAPowerOfALinear"/> where the argument is
+        /// <c>a + b x^r</c>, beside a power of <paramref name="x"/>: under <c>u = x^r</c>,
+        /// <c>x^p T(sin(a + b x^r), cos(a + b x^r)) dx</c> is <c>u^((p + 1)/r - 1) T(sin(a + b u), cos(a + b u)) du/r</c>.
+        /// </summary>
+        private static Entity? UnderAPowerOfTheVariable(Entity expr, Entity.Variable x, Entity argument)
+        {
+            // r, from x^r, b/x or b/x^k in the argument.
+            Entity? r = null;
+            foreach (var node in argument.Nodes)
+            {
+                Entity? candidate = node switch
+                {
+                    Powf(var @base, var exponent) when @base == x && !exponent.ContainsNode(x) => exponent,
+                    Divf(var above, var below) when below == x && !above.ContainsNode(x) => Number.Integer.MinusOne,
+                    Divf(var above, Powf(var @base, var exponent)) when @base == x && !above.ContainsNode(x) && !exponent.ContainsNode(x) => -exponent,
+                    _ => null,
+                };
+                if (candidate is null)
+                    continue;
+                if (r is not null && r != candidate)
+                    return null;
+                r = candidate;
+            }
+            if (r is null || TreeAnalyzer.IsZero(r))
+                return null;
+            var u = Variable.CreateUnique(expr, "u");
+            // x^r written as u where it was read, rather than x as u^(1/r): (u^(1/n))^n is not
+            // folded for a symbolic n.
+            var argumentInU = argument.Replace(node => node switch
+            {
+                Powf(var @base, var exponent) when @base == x && exponent == r => u,
+                Divf(var above, var below) when below == x && r == Number.Integer.MinusOne => above * u,
+                Divf(var above, Powf(var @base, var exponent)) when @base == x && (-exponent) == r => above * u,
+                _ => node,
+            }).InnerSimplified;
+            if (argumentInU.ContainsNode(x) || !TreeAnalyzer.TryGetPolyLinear(argumentInU, u, out var slope, out _) || TreeAnalyzer.IsZero(slope))
+                return null;
+            var (sine, cosine) = (MathS.Sin(argument), MathS.Cos(argument));
+            Entity constant = Number.Integer.One;
+            Entity p = Number.Integer.Zero;
+            Entity trigonometric = Number.Integer.One;
+            var sawOne = false;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                if (!factor.ContainsNode(x))
+                    constant = underneath ? constant / factor : constant * factor;
+                else if (factor == x)
+                    p += underneath ? -1 : 1;
+                else if (factor is Powf(var @base, var exponent) && @base == x && !exponent.ContainsNode(x))
+                    p += underneath ? -exponent : exponent;
+                else if (!underneath && (factor.ContainsNode(sine) || factor.ContainsNode(cosine)))
+                {
+                    var inU = factor.Replace(node => node == sine ? MathS.Sin(argumentInU) : node == cosine ? MathS.Cos(argumentInU) : node);
+                    if (inU.ContainsNode(x))
+                        return null;
+                    trigonometric *= inU;
+                    sawOne = true;
+                }
+                else
+                    return null;
+            }
+            // Only a whole power of u leaves the shape the linear case reads.
+            // Simplified, since a symbolic r cancels only there: x^(-1 - r) leaves -r/r - 1, and
+            // bare, since the cancellation holds where r is not 0, which it is not here.
+            if (!sawOne || Functions.PartialFractions.Bare(((p + 1) / r - 1).Simplify()) is not Number.Integer { EInteger: var whole }
+                || !whole.CanFitInInt32() || whole.Sign >= 0)
+                return null;
+            var integrand = constant / r * MathS.Pow(u, whole.ToInt32Checked()) * trigonometric;
+            return OverAPowerOfALinear(integrand, u, argumentInU)?.Substitute(u, MathS.Pow(x, r)).InnerSimplified;
+        }
+
+        /// <summary>
+        /// <c>int u^m sin(q u) du</c>, or the cosine's, as its elementary part and the coefficients
+        /// of <c>Si(q u)</c> and <c>Ci(q u)</c> in it: <c>Si(q u)</c> and <c>Ci(q u)</c> themselves for
+        /// <c>m = -1</c>; below that
+        /// <c>int u^m sin(q u) = u^(m + 1) sin(q u)/(m + 1) - q/(m + 1) int u^(m + 1) cos(q u)</c> and
+        /// <c>int u^m cos(q u) = u^(m + 1) cos(q u)/(m + 1) + q/(m + 1) int u^(m + 1) sin(q u)</c>; and
+        /// above it <c>-u^m cos(q u)/q + m/q int u^(m - 1) cos(q u)</c> and
+        /// <c>u^m sin(q u)/q - m/q int u^(m - 1) sin(q u)</c>, all by parts.
+        /// </summary>
+        private static (Entity Elementary, Entity Si, Entity Ci) APowerTimesASineOrACosine(int m, bool sine, Entity q, Entity.Variable u)
+        {
+            if (m == -1)
+                return sine
+                    ? (Number.Integer.Zero, Number.Integer.One, Number.Integer.Zero)
+                    : (Number.Integer.Zero, Number.Integer.Zero, Number.Integer.One);
+            if (m < -1)
+            {
+                var (elementary, si, ci) = APowerTimesASineOrACosine(m + 1, !sine, q, u);
+                var by = (sine ? -q / (m + 1) : q / (m + 1)).InnerSimplified;
+                // u^(m + 1)/(m + 1), written as -1/(|m + 1| u^|m + 1|)
+                var written = -(sine ? MathS.Sin(q * u) : MathS.Cos(q * u)) / (-(m + 1) * MathS.Pow(u, -(m + 1)));
+                return ((written + by * elementary).InnerSimplified, (by * si).InnerSimplified, (by * ci).InnerSimplified);
+            }
+            var first = sine ? -MathS.Pow(u, m) * MathS.Cos(q * u) / q : MathS.Pow(u, m) * MathS.Sin(q * u) / q;
+            if (m == 0)
+                return (first.InnerSimplified, Number.Integer.Zero, Number.Integer.Zero);
+            var (below, _, _) = APowerTimesASineOrACosine(m - 1, !sine, q, u);
+            return ((first + (sine ? m / q : -m / q) * below).InnerSimplified, Number.Integer.Zero, Number.Integer.Zero);
+        }
+
+        /// <summary>
+        /// The argument of a sine or a cosine of <paramref name="x"/> among the factors of
+        /// <paramref name="expr"/>, above the bar and read through whole powers and sums, or
+        /// <see langword="null"/>.
+        /// </summary>
+        private static Entity? ASineOrCosineArgument(Entity expr, Entity.Variable x) => expr switch
+        {
+            Sinf(var argument) when argument.ContainsNode(x) => argument,
+            Cosf(var argument) when argument.ContainsNode(x) => argument,
+            Powf(var @base, Number.Integer) => ASineOrCosineArgument(@base, x),
+            Mulf(var left, var right) => ASineOrCosineArgument(left, x) ?? ASineOrCosineArgument(right, x),
+            Divf(var numerator, _) => ASineOrCosineArgument(numerator, x),
+            Sumf(var left, var right) => ASineOrCosineArgument(left, x) ?? ASineOrCosineArgument(right, x),
+            Minusf(var left, var right) => ASineOrCosineArgument(left, x) ?? ASineOrCosineArgument(right, x),
+            _ => null,
+        };
+
+        /// <summary>
         /// <c>int P(x) e^(a x) (c cos(b x) + d sin(b x)) dx</c>, closed by as many rounds of parts
         /// as <c>P</c> has degree.
         /// </summary>

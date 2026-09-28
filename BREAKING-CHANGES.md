@@ -1654,6 +1654,23 @@ was refused, so each was read as a product with an undeclared variable
 | `"Chi(1)".Simplify()` | `Chi` | `Chi(1)`, and `0.8378669409802082…` evaluated |
 | `"Si(x)".Differentiate("x")` | `Si` | `sin(x) / x` |
 
+### The sine and cosine integrals are integrated to
+
+`sin(x)/x` was left unintegrated. A polynomial in sines and cosines of a linear, beside a
+polynomial, over powers of linears is now integrated to `Si` and `Ci`: each monomial of the sines
+and cosines is a sum of sines and cosines of multiples of the argument, and under `u` = the linear
+each term is `u^m sin(q u)` or `u^m cos(q u)`, which is `Si(q u)` or `Ci(q u)` for `m = -1` and by
+parts toward them below. Several linears are split into partial fractions over them first, and an
+argument `a + b x^r` beside a power of `x` is the same question under `u = x^r`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(x)/x".Integrate("x")` | `integral(sin(x) / x, x)` | `Si(x) + C` |
+| `"sin(x)^2/x".Integrate("x")` | `integral(sin(x) ^ 2 / x, x)` | `1/2 * ln(x) + -1/2 * Ci(2 * x) + C` |
+| `"sin(x)/(x*(1+x))".Integrate("x")` | `integral(sin(x) / (x * (1 + x)), x)` | `Si(x) + -cos(1) * Si(1 + x) + sin(1) * Ci(1 + x) + C` |
+| `"sin(a+b/x)/x".Integrate("x")` | `integral(sin(a + b / x) / x, x)` | `-(cos(a) * Si(b * 1 / x) + sin(a) * Ci(b * 1 / x)) + C` |
+
 ### A definite integral is the limit at a bound where its antiderivative is undefined
 
 `integral(x * e^(-x), x, 0, +oo)` was `NaN`, this library's way of saying a value does not
