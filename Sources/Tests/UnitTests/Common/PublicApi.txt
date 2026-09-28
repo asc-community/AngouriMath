@@ -702,6 +702,46 @@ AngouriMath.Entity+Ceilf.ToString() : System.String
 AngouriMath.Entity+Ceilf.ctor(AngouriMath.Entity)
 AngouriMath.Entity+Ceilf.op_Equality(AngouriMath.Entity+Ceilf, AngouriMath.Entity+Ceilf) : System.Boolean
 AngouriMath.Entity+Ceilf.op_Inequality(AngouriMath.Entity+Ceilf, AngouriMath.Entity+Ceilf) : System.Boolean
+AngouriMath.Entity+Chif.<Clone>$() : AngouriMath.Entity+Chif
+AngouriMath.Entity+Chif.Argument { } : AngouriMath.Entity
+AngouriMath.Entity+Chif.Codomain { } : AngouriMath.Core.Domain
+AngouriMath.Entity+Chif.Deconstruct(AngouriMath.Entity&) : System.Void
+AngouriMath.Entity+Chif.EqualityContract { } : System.Type
+AngouriMath.Entity+Chif.Equals(AngouriMath.Entity+Chif) : System.Boolean
+AngouriMath.Entity+Chif.Equals(AngouriMath.Entity+Function) : System.Boolean
+AngouriMath.Entity+Chif.Equals(System.Object) : System.Boolean
+AngouriMath.Entity+Chif.GetHashCode() : System.Int32
+AngouriMath.Entity+Chif.InitDirectChildren() : AngouriMath.Entity[]
+AngouriMath.Entity+Chif.InnerDifferentiate(AngouriMath.Entity+Variable) : AngouriMath.Entity
+AngouriMath.Entity+Chif.InnerSimplify(System.Boolean) : AngouriMath.Entity
+AngouriMath.Entity+Chif.NodeChild { } : AngouriMath.Entity
+AngouriMath.Entity+Chif.PrintMembers(System.Text.StringBuilder) : System.Boolean
+AngouriMath.Entity+Chif.Replace(System.Func<AngouriMath.Entity,AngouriMath.Entity>) : AngouriMath.Entity
+AngouriMath.Entity+Chif.Substitute(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.Entity+Chif.ToString() : System.String
+AngouriMath.Entity+Chif.ctor(AngouriMath.Entity)
+AngouriMath.Entity+Chif.op_Equality(AngouriMath.Entity+Chif, AngouriMath.Entity+Chif) : System.Boolean
+AngouriMath.Entity+Chif.op_Inequality(AngouriMath.Entity+Chif, AngouriMath.Entity+Chif) : System.Boolean
+AngouriMath.Entity+Cif.<Clone>$() : AngouriMath.Entity+Cif
+AngouriMath.Entity+Cif.Argument { } : AngouriMath.Entity
+AngouriMath.Entity+Cif.Codomain { } : AngouriMath.Core.Domain
+AngouriMath.Entity+Cif.Deconstruct(AngouriMath.Entity&) : System.Void
+AngouriMath.Entity+Cif.EqualityContract { } : System.Type
+AngouriMath.Entity+Cif.Equals(AngouriMath.Entity+Cif) : System.Boolean
+AngouriMath.Entity+Cif.Equals(AngouriMath.Entity+Function) : System.Boolean
+AngouriMath.Entity+Cif.Equals(System.Object) : System.Boolean
+AngouriMath.Entity+Cif.GetHashCode() : System.Int32
+AngouriMath.Entity+Cif.InitDirectChildren() : AngouriMath.Entity[]
+AngouriMath.Entity+Cif.InnerDifferentiate(AngouriMath.Entity+Variable) : AngouriMath.Entity
+AngouriMath.Entity+Cif.InnerSimplify(System.Boolean) : AngouriMath.Entity
+AngouriMath.Entity+Cif.NodeChild { } : AngouriMath.Entity
+AngouriMath.Entity+Cif.PrintMembers(System.Text.StringBuilder) : System.Boolean
+AngouriMath.Entity+Cif.Replace(System.Func<AngouriMath.Entity,AngouriMath.Entity>) : AngouriMath.Entity
+AngouriMath.Entity+Cif.Substitute(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.Entity+Cif.ToString() : System.String
+AngouriMath.Entity+Cif.ctor(AngouriMath.Entity)
+AngouriMath.Entity+Cif.op_Equality(AngouriMath.Entity+Cif, AngouriMath.Entity+Cif) : System.Boolean
+AngouriMath.Entity+Cif.op_Inequality(AngouriMath.Entity+Cif, AngouriMath.Entity+Cif) : System.Boolean
 AngouriMath.Entity+ComparisonSign.<Clone>$() : AngouriMath.Entity+ComparisonSign
 AngouriMath.Entity+ComparisonSign.EqualityContract { } : System.Type
 AngouriMath.Entity+ComparisonSign.Equals(AngouriMath.Entity+ComparisonSign) : System.Boolean
@@ -1767,6 +1807,8 @@ AngouriMath.Entity+Number.Arccotan(AngouriMath.Entity+Number+Complex) : AngouriM
 AngouriMath.Entity+Number.Arcsecant(AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
 AngouriMath.Entity+Number.Arcsin(AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
 AngouriMath.Entity+Number.Arctan(AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
+AngouriMath.Entity+Number.Chi(AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
+AngouriMath.Entity+Number.Ci(AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
 AngouriMath.Entity+Number.Cos(AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
 AngouriMath.Entity+Number.Cosecant(AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
 AngouriMath.Entity+Number.Cotan(AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
@@ -1798,6 +1840,8 @@ AngouriMath.Entity+Number.Pow(AngouriMath.Entity+Number+Complex, AngouriMath.Ent
 AngouriMath.Entity+Number.PrintMembers(System.Text.StringBuilder) : System.Boolean
 AngouriMath.Entity+Number.Replace(System.Func<AngouriMath.Entity,AngouriMath.Entity>) : AngouriMath.Entity
 AngouriMath.Entity+Number.Secant(AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
+AngouriMath.Entity+Number.Shi(AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
+AngouriMath.Entity+Number.Si(AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
 AngouriMath.Entity+Number.Signum(AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
 AngouriMath.Entity+Number.Sin(AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
 AngouriMath.Entity+Number.Sqrt(AngouriMath.Entity+Number+Complex) : AngouriMath.Entity+Number+Complex
@@ -2442,6 +2486,46 @@ AngouriMath.Entity+Set.ctor(AngouriMath.Entity+Set)
 AngouriMath.Entity+Set.op_Equality(AngouriMath.Entity+Set, AngouriMath.Entity+Set) : System.Boolean
 AngouriMath.Entity+Set.op_Implicit(System.String) : AngouriMath.Entity+Set
 AngouriMath.Entity+Set.op_Inequality(AngouriMath.Entity+Set, AngouriMath.Entity+Set) : System.Boolean
+AngouriMath.Entity+Shif.<Clone>$() : AngouriMath.Entity+Shif
+AngouriMath.Entity+Shif.Argument { } : AngouriMath.Entity
+AngouriMath.Entity+Shif.Codomain { } : AngouriMath.Core.Domain
+AngouriMath.Entity+Shif.Deconstruct(AngouriMath.Entity&) : System.Void
+AngouriMath.Entity+Shif.EqualityContract { } : System.Type
+AngouriMath.Entity+Shif.Equals(AngouriMath.Entity+Function) : System.Boolean
+AngouriMath.Entity+Shif.Equals(AngouriMath.Entity+Shif) : System.Boolean
+AngouriMath.Entity+Shif.Equals(System.Object) : System.Boolean
+AngouriMath.Entity+Shif.GetHashCode() : System.Int32
+AngouriMath.Entity+Shif.InitDirectChildren() : AngouriMath.Entity[]
+AngouriMath.Entity+Shif.InnerDifferentiate(AngouriMath.Entity+Variable) : AngouriMath.Entity
+AngouriMath.Entity+Shif.InnerSimplify(System.Boolean) : AngouriMath.Entity
+AngouriMath.Entity+Shif.NodeChild { } : AngouriMath.Entity
+AngouriMath.Entity+Shif.PrintMembers(System.Text.StringBuilder) : System.Boolean
+AngouriMath.Entity+Shif.Replace(System.Func<AngouriMath.Entity,AngouriMath.Entity>) : AngouriMath.Entity
+AngouriMath.Entity+Shif.Substitute(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.Entity+Shif.ToString() : System.String
+AngouriMath.Entity+Shif.ctor(AngouriMath.Entity)
+AngouriMath.Entity+Shif.op_Equality(AngouriMath.Entity+Shif, AngouriMath.Entity+Shif) : System.Boolean
+AngouriMath.Entity+Shif.op_Inequality(AngouriMath.Entity+Shif, AngouriMath.Entity+Shif) : System.Boolean
+AngouriMath.Entity+Sif.<Clone>$() : AngouriMath.Entity+Sif
+AngouriMath.Entity+Sif.Argument { } : AngouriMath.Entity
+AngouriMath.Entity+Sif.Codomain { } : AngouriMath.Core.Domain
+AngouriMath.Entity+Sif.Deconstruct(AngouriMath.Entity&) : System.Void
+AngouriMath.Entity+Sif.EqualityContract { } : System.Type
+AngouriMath.Entity+Sif.Equals(AngouriMath.Entity+Function) : System.Boolean
+AngouriMath.Entity+Sif.Equals(AngouriMath.Entity+Sif) : System.Boolean
+AngouriMath.Entity+Sif.Equals(System.Object) : System.Boolean
+AngouriMath.Entity+Sif.GetHashCode() : System.Int32
+AngouriMath.Entity+Sif.InitDirectChildren() : AngouriMath.Entity[]
+AngouriMath.Entity+Sif.InnerDifferentiate(AngouriMath.Entity+Variable) : AngouriMath.Entity
+AngouriMath.Entity+Sif.InnerSimplify(System.Boolean) : AngouriMath.Entity
+AngouriMath.Entity+Sif.NodeChild { } : AngouriMath.Entity
+AngouriMath.Entity+Sif.PrintMembers(System.Text.StringBuilder) : System.Boolean
+AngouriMath.Entity+Sif.Replace(System.Func<AngouriMath.Entity,AngouriMath.Entity>) : AngouriMath.Entity
+AngouriMath.Entity+Sif.Substitute(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.Entity+Sif.ToString() : System.String
+AngouriMath.Entity+Sif.ctor(AngouriMath.Entity)
+AngouriMath.Entity+Sif.op_Equality(AngouriMath.Entity+Sif, AngouriMath.Entity+Sif) : System.Boolean
+AngouriMath.Entity+Sif.op_Inequality(AngouriMath.Entity+Sif, AngouriMath.Entity+Sif) : System.Boolean
 AngouriMath.Entity+Signumf.<Clone>$() : AngouriMath.Entity+Signumf
 AngouriMath.Entity+Signumf.Argument { } : AngouriMath.Entity
 AngouriMath.Entity+Signumf.Codomain { } : AngouriMath.Core.Domain
@@ -3022,6 +3106,8 @@ AngouriMath.MathS.Average(AngouriMath.Entity+Matrix) : AngouriMath.Entity
 AngouriMath.MathS.Binomial(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Cbrt(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Ceil(AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.MathS.Chi(AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.MathS.Ci(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Conjunction(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Cos(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Cosec(AngouriMath.Entity) : AngouriMath.Entity
@@ -3097,6 +3183,8 @@ AngouriMath.MathS.Round(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Scalar(AngouriMath.Entity) : AngouriMath.Entity+Matrix
 AngouriMath.MathS.Sec(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.SetSubtraction(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity+Set
+AngouriMath.MathS.Shi(AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.MathS.Si(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Sigmoid(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Signum(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Sin(AngouriMath.Entity) : AngouriMath.Entity
@@ -3207,6 +3295,8 @@ class AngouriMath.Entity+Boolean
 class AngouriMath.Entity+CalculusOperator
 class AngouriMath.Entity+Cardf
 class AngouriMath.Entity+Ceilf
+class AngouriMath.Entity+Chif
+class AngouriMath.Entity+Cif
 class AngouriMath.Entity+ComparisonSign
 class AngouriMath.Entity+Congruentf
 class AngouriMath.Entity+Constant
@@ -3286,6 +3376,8 @@ class AngouriMath.Entity+Set+SpecialSet+Rationals
 class AngouriMath.Entity+Set+SpecialSet+Reals
 class AngouriMath.Entity+Set+Subsetf
 class AngouriMath.Entity+Set+Unionf
+class AngouriMath.Entity+Shif
+class AngouriMath.Entity+Sif
 class AngouriMath.Entity+Signumf
 class AngouriMath.Entity+Sinf
 class AngouriMath.Entity+Statement

@@ -112,6 +112,30 @@ namespace AngouriMath
                 => $@"sympy.li({Argument.ToSymPy()})";
         }
 
+        public partial record Sif
+        {
+            internal override string ToSymPy()
+                => $@"sympy.Si({Argument.ToSymPy()})";
+        }
+
+        public partial record Cif
+        {
+            internal override string ToSymPy()
+                => $@"sympy.Ci({Argument.ToSymPy()})";
+        }
+
+        public partial record Shif
+        {
+            internal override string ToSymPy()
+                => $@"sympy.Shi({Argument.ToSymPy()})";
+        }
+
+        public partial record Chif
+        {
+            internal override string ToSymPy()
+                => $@"sympy.Chi({Argument.ToSymPy()})";
+        }
+
         public partial record Absf
         {
             internal override string ToSymPy()

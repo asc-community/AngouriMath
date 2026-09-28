@@ -603,6 +603,11 @@ atom returns[Entity value]
     /* The exponential and logarithmic integrals. https://github.com/asc-community/AngouriMath/issues/1501 */
     | 'Ei(' args = function_arguments ')' { Assert("Ei", 1, $args.list.Count); $value = MathS.Ei($args.list[0]); }
     | 'li(' args = function_arguments ')' { Assert("li", 1, $args.list.Count); $value = MathS.Li($args.list[0]); }
+    /* The trigonometric and hyperbolic integrals. https://github.com/asc-community/AngouriMath/issues/1501 */
+    | 'Si(' args = function_arguments ')' { Assert("Si", 1, $args.list.Count); $value = MathS.Si($args.list[0]); }
+    | 'Ci(' args = function_arguments ')' { Assert("Ci", 1, $args.list.Count); $value = MathS.Ci($args.list[0]); }
+    | 'Shi(' args = function_arguments ')' { Assert("Shi", 1, $args.list.Count); $value = MathS.Shi($args.list[0]); }
+    | 'Chi(' args = function_arguments ')' { Assert("Chi", 1, $args.list.Count); $value = MathS.Chi($args.list[0]); }
 
     /* Names the library does not have. Each is a function every other CAS spells this way, so
        a caller reaches for it, and without these rules each is silently read as a product --

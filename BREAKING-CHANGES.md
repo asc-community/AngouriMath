@@ -1633,6 +1633,27 @@ for `m = -1`, and by parts toward it below. The Gaussian's odd negative moments 
 | `"1/ln(x)".Integrate("x")` | `integral(1 / ln(x), x)` | `li(x) + C` |
 | `"x^m/(a + b*ln(c*x^n))".Integrate("x")` | `integral(x ^ m / (a + b * ln(c * x ^ n)), x)` | the antiderivative, with `Ei` |
 
+### `Si`, `Ci`, `Shi` and `Chi` are functions
+
+**Addition, and four silent misreadings fixed.** The sine and cosine integrals
+`Si(z) = sum (-1)^k z^(2k + 1)/((2k + 1) (2k + 1)!)` and
+`Ci(z) = gamma + ln z + sum_(k >= 1) (-1)^k z^(2k)/(2k (2k)!)`, and the hyperbolic `Shi` and `Chi`,
+the same sums without the alternating sign, are nodes (`MathS.Si`, `MathS.Ci`, `MathS.Shi`,
+`MathS.Chi`), the next of #1501's special functions. On the real line `Si(x)` is `int_0^x sin t/t dt`
+and `Shi(x)` is `int_0^x sinh t/t dt`, both real; `Ci` and `Chi` take the cut of `ln z`, so that
+`Ci(-x) = Ci(x) + i pi` for `x > 0`, as SymPy's, mpmath's and Mathematica's do. Each is
+differentiated, printed in LaTeX as `\operatorname{Si}` and so on, and evaluated to the working
+precision anywhere in the complex plane (`Entity.Number.Si`, `Ci`, `Shi`, `Chi`). None of the names
+was refused, so each was read as a product with an undeclared variable
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"Si(x)"` | `Si * x` | `Si(x)` |
+| `"Ci(2)".Simplify()` | `2 * Ci` | `Ci(2)`, and `0.4229808287748649…` evaluated |
+| `"Chi(1)".Simplify()` | `Chi` | `Chi(1)`, and `0.8378669409802082…` evaluated |
+| `"Si(x)".Differentiate("x")` | `Si` | `sin(x) / x` |
+
 ### A definite integral is the limit at a bound where its antiderivative is undefined
 
 `integral(x * e^(-x), x, 0, +oo)` was `NaN`, this library's way of saying a value does not
