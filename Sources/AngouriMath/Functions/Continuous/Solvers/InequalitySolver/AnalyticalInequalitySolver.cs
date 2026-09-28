@@ -7,6 +7,7 @@
 
 using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity;
+using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
@@ -104,6 +105,15 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // makes the root list complete, which is the whole difficulty.
             if (PolynomialSignTable.TrySolve(expr, x, out var bySign))
                 return bySign;
+            // A quotient of polynomials: N/D > 0 exactly where N D > 0, since D^2 is positive
+            // wherever the quotient is defined and N D is zero where D is, so the strict
+            // inequality leaves the poles out by itself. x/(1 + x) > 1 is -1/(1 + x) > 0, which
+            // is -(1 + x) > 0, x < -1 -- the pre-image Sullivan and Mackey's §7.3.5 Try 1 gives
+            // as (-1, oo), wrongly. The product is polynomial, so this recursion ends there.
+            // https://github.com/asc-community/AngouriMath/issues/1409
+            var (numerator, denominator) = SingleQuotient.Of(expr);
+            if (denominator.ContainsNode(x) && denominator != Integer.One)
+                return Solve(numerator * denominator, x);
             throw new NotSufficientlySupportedException(
                 "Only polynomial inequalities are supported, and of those only the ones "
                 + "whose real roots can be established completely: linear and quadratic "

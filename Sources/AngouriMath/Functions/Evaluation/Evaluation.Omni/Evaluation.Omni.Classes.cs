@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Sets;
 using System;
 using System.Linq;
@@ -116,7 +117,17 @@ namespace AngouriMath
                         || predicate is not Andf(Inf(var name, Set declared), Inf(var image, Set) membership)
                         || name != x || !image.ContainsNode(x) || image == x)
                         return null;
-                    var solved = Functions.Algebra.AnalyticalSolving.StatementSolver.Solve(membership, x);
+                    // An inequality the solver cannot read -- sin(x) > 0 -- leaves the set as
+                    // written: an evaluation does not throw for a set it cannot list.
+                    Set solved;
+                    try
+                    {
+                        solved = Functions.Algebra.AnalyticalSolving.StatementSolver.Solve(membership, x);
+                    }
+                    catch (NotSufficientlySupportedException)
+                    {
+                        return null;
+                    }
                     if (solved is ConditionalSet)
                         return null;
                     return declared.Intersect(solved).InnerSimplified(isExact);
@@ -170,6 +181,19 @@ namespace AngouriMath
                             // meet each other: regrouped, they do, and A meets one bounded interval.
                             (Intersectionf(var rest, Interval one), Interval another)
                                 => MathS.Intersection(rest, SetOperators.IntersectIntervalAndInterval(one, another)).InnerSimplified(isExact),
+                            // An interval meets a union of intervals piece by piece, which is what
+                            // an inequality's solution set is: (0; +oo) /\ ((-oo; -2) \/ (0; 1/2))
+                            // is (0; 1/2), where as written it met nothing it could read.
+                            (Interval interval, Unionf(var left, var right)) when left is Interval or FiniteSet && right is Interval or FiniteSet
+                                => MathS.Union(MathS.Intersection(interval, left).InnerSimplified(isExact), MathS.Intersection(interval, right).InnerSimplified(isExact)).InnerSimplified(isExact),
+                            (Unionf(var left, var right), Interval interval) when left is Interval or FiniteSet && right is Interval or FiniteSet
+                                => MathS.Union(MathS.Intersection(left, interval).InnerSimplified(isExact), MathS.Intersection(right, interval).InnerSimplified(isExact)).InnerSimplified(isExact),
+                            // (A \ B) /\ C is (A /\ C) \ B, where A meets C first: the pre-image
+                            // (RR \ { -1 }) /\ (-oo; -1) is (-oo; -1) \ { -1 }, which is the interval.
+                            (SetMinusf(var from, var removed), Set other) when other is not SetMinusf
+                                => MathS.SetSubtraction(MathS.Intersection(from, other).InnerSimplified(isExact), removed).InnerSimplified(isExact),
+                            (Set other, SetMinusf(var from, var removed)) when other is not SetMinusf
+                                => MathS.SetSubtraction(MathS.Intersection(other, from).InnerSimplified(isExact), removed).InnerSimplified(isExact),
                             _ => null
                         },
                         (@this, a, b) => ((Intersectionf)@this).New(a, b), isExact, propagateSet: false);
