@@ -5710,6 +5710,11 @@ namespace AngouriMath.Functions.Algebra
         /// <c>x</c> left the logarithm's derivative as a quotient of radicals.
         /// The way back writes <c>e^u</c> as <c>L + sqrt(L^2 + 1)</c> and <c>e^(-u)</c> as
         /// <c>sqrt(L^2 + 1) - L</c>, on the principal branch.
+        /// <c>arsech(L)</c> and <c>arcsch(L)</c> are the <c>arcosh</c> and <c>arsinh</c> of
+        /// <c>1/L</c>, and so <c>u</c> under <c>L = sech(u)</c> and <c>L = csch(u)</c>, with
+        /// <c>e^u</c> as <c>1/L + sqrt(1/L^2 - 1)</c> and <c>1/L + sqrt(1/L^2 + 1)</c>: Rubi's
+        /// <c>1/(x^2 (a + b arcsch(c x)))</c> is <c>-c cosh(u)/(a + b u)</c>, which the
+        /// hyperbolic sine and cosine integrals answer.
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </summary>
         internal static Entity? SolveByInverseHyperbolicSubstitution(Entity expr, Entity.Variable x, bool integrateByParts)
@@ -5717,7 +5722,7 @@ namespace AngouriMath.Functions.Algebra
             // The one inverse hyperbolic function in the integrand, read off its logarithm.
             Entity? inverse = null;
             Entity? argument = null;
-            var kind = 0;   // 1 sinh, 2 cosh, 3 tanh
+            var kind = 0;   // 1 sinh, 2 cosh, 3 tanh, 4 sech, 5 csch
             foreach (var node in expr.Nodes)
             {
                 if (node is not Logf(var @base, var antilogarithm) || @base != MathS.e || !antilogarithm.ContainsNode(x))
@@ -5734,6 +5739,16 @@ namespace AngouriMath.Functions.Algebra
             if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out var offset) || slope is null || offset is null
                 || TreeAnalyzer.IsZero(slope) || slope.Evaled is Number.Complex { IsZero: true })
                 return null;
+            // The secant's and the cosecant's are taken only where they land on what the rules for
+            // exponentials close: `x^m` beside a function of the inverse alone, `m <= -2`, and the
+            // argument `c x`. Under `x = sech(u)/c` that is `cosh(u)^(-m - 2) sinh(u)` times the
+            // function of u, a polynomial in `e^u` and `e^(-u)` -- `1/(x^2 (a + b arcsch(c x)))` is
+            // `-c cosh(u)/(a + b u)` -- where a power of x above the bar is a power of `cosh(u)` below
+            // it: `x^3 arsech(a x)^2` is `u^2 sinh(u)/cosh(u)^5` over `-a^4`. By parts in x answers
+            // such integrands in a fraction of a second, where the searches in u held their test
+            // past five minutes.
+            if (kind >= 4 && (!TreeAnalyzer.IsZero(offset) || APowerOfXBesideAFunctionOfTheInverse(expr, inverse, x) is not { } degree || degree > -2))
+                return null;
             // The tangent's logarithm carries a half in front: `ln((1 + L)/(1 - L))/2` is u, and
             // the logarithm alone is 2u.
             var u = Variable.CreateUnique(expr, "u_inv");
@@ -5741,7 +5756,8 @@ namespace AngouriMath.Functions.Algebra
             var expMinusU = MathS.Pow(MathS.e, -u);
             var sinh = (expU - expMinusU) / 2;
             var cosh = (expU + expMinusU) / 2;
-            Entity argumentInU, dArgument, radicandBase, root;
+            Entity argumentInU, dArgument;
+            Entity? radicandBase, root;
             switch (kind)
             {
                 case 1:
@@ -5750,8 +5766,17 @@ namespace AngouriMath.Functions.Algebra
                 case 2:
                     (argumentInU, dArgument, radicandBase, root) = (cosh, sinh, MathS.Sqr(argument) - 1, sinh);
                     break;
-                default:
+                case 3:
                     (argumentInU, dArgument, radicandBase, root) = (sinh / cosh, 1 / MathS.Sqr(cosh), 1 - MathS.Sqr(argument), 1 / cosh);
+                    break;
+                // The principal arsech is not negative, so the root of `1 - sech(u)^2` is
+                // `tanh(u)`; the arcsch takes either sign, and the root of `1 + csch(u)^2` is
+                // `|coth(u)|`, which is no radical this route removes.
+                case 4:
+                    (argumentInU, dArgument, radicandBase, root) = (1 / cosh, -sinh / MathS.Sqr(cosh), 1 - MathS.Sqr(argument), sinh / cosh);
+                    break;
+                default:
+                    (argumentInU, dArgument, radicandBase, root) = (1 / sinh, -cosh / MathS.Sqr(sinh), (Entity?)null, (Entity?)null);
                     break;
             }
             var logarithmInU = kind == 3 ? 2 * u : u;
@@ -5761,6 +5786,8 @@ namespace AngouriMath.Functions.Algebra
                 .Substitute(inverse, logarithmInU)
                 .Replace(node =>
                 {
+                    if (radicandBase is null || root is null)
+                        return node;
                     if (node is Powf(var wholeBase, Number.Integer whole) && whole.EInteger.CompareTo(EInteger.FromInt32(2)) >= 0
                         && whole.EInteger.CompareTo(EInteger.FromInt32(64)) <= 0 && wholeBase.ContainsNode(x)
                         && TreeAnalyzer.TryGetPolyQuadratic(wholeBase, x, out _, out _, out _)
@@ -5831,6 +5858,12 @@ namespace AngouriMath.Functions.Algebra
                 case 2:
                     (plus, minus) = (argument + MathS.Sqrt(MathS.Sqr(argument) - 1), argument - MathS.Sqrt(MathS.Sqr(argument) - 1));
                     break;
+                case 4:
+                    (plus, minus) = (1 / argument + MathS.Sqrt(1 / MathS.Sqr(argument) - 1), 1 / argument - MathS.Sqrt(1 / MathS.Sqr(argument) - 1));
+                    break;
+                case 5:
+                    (plus, minus) = (1 / argument + MathS.Sqrt(1 / MathS.Sqr(argument) + 1), MathS.Sqrt(1 / MathS.Sqr(argument) + 1) - 1 / argument);
+                    break;
                 default:
                     // e^(-u) as the reciprocal, not as the root of the reciprocal: off the real
                     // domain the principal roots of a quotient and of its reciprocal are not
@@ -5860,6 +5893,8 @@ namespace AngouriMath.Functions.Algebra
             {
                 2 => new[] { "1.43", "3.17", "2.2", "5.1" },
                 3 => new[] { "0.29", "-0.61", "0.13", "-0.4" },
+                // Inside (0, 1] for a slope up to about four, where the principal arsech is real.
+                4 => new[] { "0.07", "0.11", "0.19", "0.23" },
                 _ => null,
             };
             var derivative = back.Differentiate(x);
@@ -5878,10 +5913,51 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// The argument and the kind (1 <c>arsinh</c>, 2 <c>arcosh</c>, 3 <c>artanh</c>) of the
-        /// inverse hyperbolic function whose logarithm has <paramref name="antilogarithm"/>
-        /// as its argument -- <c>L + sqrt(L^2 + 1)</c>, <c>L + sqrt(L^2 - 1)</c> or
-        /// <c>(1 + L)/(1 - L)</c> for a linear <c>L</c> -- else null.
+        /// The <c>m</c> for which <paramref name="expr"/> is <c>x^m</c> times a function of
+        /// <paramref name="inverse"/> alone, else null: with the inverse written as a symbol, such an
+        /// integrand at <c>2x</c> is <c>2^m</c> times itself wherever it is evaluated, and two points
+        /// with every other symbol pinned say whether it is.
+        /// </summary>
+        private static int? APowerOfXBesideAFunctionOfTheInverse(Entity expr, Entity inverse, Entity.Variable x)
+        {
+            var w = Variable.CreateUnique(expr, "w_inv");
+            var inW = expr.Substitute(inverse, w);
+            if (!inW.ContainsNode(x))
+                return 0;
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+            var pins = new[] { "0.61", "1.37", "2.23", "0.83", "1.91" };
+            var index = 0;
+            foreach (var symbol in inW.Vars.Where(symbol => symbol != x).ToList())
+                inW = inW.Substitute(symbol, Number.Real.Create(EDecimal.FromString(pins[index++ % pins.Length])));
+            double? RatioAt(string at)
+            {
+                var point = EDecimal.FromString(at);
+                if (inW.Substitute(x, Number.Real.Create(point.Multiply(2))).Evaled is not Number.Complex doubled
+                    || inW.Substitute(x, Number.Real.Create(point)).Evaled is not Number.Complex single
+                    || single.IsZero || doubled.IsNaN || single.IsNaN)
+                    return null;
+                // Read by its parts, since with the downcasting off a quotient on the real line is
+                // still a Complex.
+                var ratio = doubled / single;
+                var real = ratio.RealPart.EDecimal;
+                return real.IsFinite && real.Sign > 0 && ratio.ImaginaryPart.EDecimal.Abs().CompareTo(real.Multiply(EDecimal.FromString("1e-30"))) <= 0
+                    ? real.ToDouble() : null;
+            }
+            if (RatioAt("0.37") is not { } first || RatioAt("0.53") is not { } second)
+                return null;
+            var degree = System.Math.Log(first, 2);
+            var rounded = System.Math.Round(degree);
+            if (System.Math.Abs(degree - rounded) > 1e-9 || System.Math.Abs(System.Math.Log(second, 2) - rounded) > 1e-9)
+                return null;
+            return (int)rounded;
+        }
+
+        /// <summary>
+        /// The argument and the kind (1 <c>arsinh</c>, 2 <c>arcosh</c>, 3 <c>artanh</c>,
+        /// 4 <c>arsech</c>, 5 <c>arcsch</c>) of the inverse hyperbolic function whose logarithm
+        /// has <paramref name="antilogarithm"/> as its argument -- <c>L + sqrt(L^2 + 1)</c>,
+        /// <c>L + sqrt(L^2 - 1)</c>, <c>(1 + L)/(1 - L)</c>, <c>1/L + sqrt(1/L^2 - 1)</c> or
+        /// <c>1/L + sqrt(1/L^2 + 1)</c> for a linear <c>L</c> -- else null.
         /// </summary>
         private static (Entity Argument, int Kind)? ReadAnInverseHyperbolic(Entity antilogarithm, Entity.Variable x)
         {
@@ -5897,6 +5973,28 @@ namespace AngouriMath.Functions.Algebra
                         return (linear, 1);
                     if (IsTheSameQuadraticOnceSimplified(radicand, MathS.Sqr(linear) - 1, x))
                         return (linear, 2);
+                }
+                // The secant's and the cosecant's are the cosine's and the sine's of the
+                // reciprocal: `arsech(L)` is `ln(1/L + sqrt(1/L^2 - 1))` and `arcsch(L)` is
+                // `ln(1/L + sqrt(1/L^2 + 1))`.
+                foreach (var (reciprocal, radical) in new[] { (left, right), (right, left) })
+                {
+                    if (!TryReadAHalfPower(radical, out var radicand, out var numeratorOfHalf) || numeratorOfHalf != 1 || !reciprocal.ContainsNode(x))
+                        continue;
+                    // Read off the bar where it is written as one, since the simplification leaves
+                    // `1/(1/(c x))` as it is, and the answer would carry it.
+                    var linear = reciprocal switch
+                    {
+                        Divf(var one, var denominator) when one == Number.Integer.One => denominator,
+                        Powf(var @base, Number.Integer minusOne) when minusOne == Number.Integer.MinusOne => @base,
+                        _ => (1 / reciprocal).InnerSimplified,
+                    };
+                    if (!TreeAnalyzer.TryGetPolyLinear(linear, x, out var slope, out _) || slope is null || TreeAnalyzer.IsZero(slope))
+                        continue;
+                    if (VanishesOnceSimplified(radicand - (1 / MathS.Sqr(linear) - 1)))
+                        return (linear, 4);
+                    if (VanishesOnceSimplified(radicand - (1 / MathS.Sqr(linear) + 1)))
+                        return (linear, 5);
                 }
                 return null;
             }

@@ -81,7 +81,29 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("asech(a*x)^3/x^2")]
         [InlineData("(a+b*asech(c*x))^2/x^4")]
         [InlineData("x^3*(a+b*acsch(c*x))^2")]
-        public void ARationalFunctionWithSymbolicCoefficientsBesideTheSecant(string integrand)
+        public void ARationalFunctionWithSymbolicCoefficientsBesideTheSecant(string integrand) => DifferentiatesBackPinned(integrand);
+
+        /// <summary>
+        /// Rubi's 7.5.1 and 7.6.1 with the inverse below the bar. Under <c>c x = csch(u)</c>,
+        /// <c>1/(x^2 (a + b acsch(c x)))</c> is <c>-c cosh(u)/(a + b u)</c>, which the hyperbolic
+        /// sine and cosine integrals answer, and under <c>c x = sech(u)</c> the secant's are
+        /// the same; the substitution that undoes an inverse hyperbolic function read the
+        /// logarithms of the other three and not of these two. An exponential of one below the
+        /// bar is a polynomial in <c>e^u</c> under the same substitution.
+        /// </summary>
+        [Theory]
+        [InlineData("1/(x^4*(a+b*asech(c*x)))")]
+        [InlineData("1/(x^2*(a+b*acsch(c*x)))")]
+        [InlineData("1/(x^2*asech(c*x))")]
+        [InlineData("1/(x^2*acsch(c*x))")]
+        [InlineData("1/(x^2*(a+b*asech(c*x))^2)")]
+        [InlineData("1/(x^3*(a+b*acsch(c*x))^2)")]
+        [InlineData("1/(x^4*(a+b*asech(c*x))^3)")]
+        [InlineData("1/(e^asech(a*x)*x^5)")]
+        public void AnInverseHyperbolicSecantOrCosecantBelowTheBar(string integrand) => DifferentiatesBackPinned(integrand);
+
+        /// <summary>Pinned with <c>a = 1/3</c>, <c>b = 1/2</c>, <c>c = 3/2</c>, <c>d = 2/3</c>, <c>e = 5/4</c>.</summary>
+        private static void DifferentiatesBackPinned(string integrand)
         {
             var integral = integrand.ToEntity().Integrate("x");
             Assert.DoesNotContain("integral(", integral.Stringize());

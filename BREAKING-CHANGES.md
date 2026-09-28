@@ -867,6 +867,23 @@ below are one indeterminate. Rubi's 7.5.1 and 7.6.1
 | `"x * acsch(c * x)".ToEntity().Integrate("x")` | `integral(x * ln(1 / (c * x) + sqrt(1 / (c * x) ^ 2 + 1)), x)` | an antiderivative, `provided c^2 > 0` |
 | `"x^2 * asech(c * x)".ToEntity().Integrate("x")` | `integral(...)`, the same | an antiderivative |
 | `"x / sqrt(1 + 1/(c*x)^2)".ToEntity().Integrate("x")` | `integral(x / sqrt(1 + 1 / (c * x) ^ 2), x)` | an antiderivative, `provided c^2 > 0` |
+
+### `arsech` and `arcsch` below the bar are integrated
+
+`1/(x^2 (a + b arcsch(c x)))` and `1/(x^4 (a + b arsech(c x)))` were left unevaluated. The
+substitution that undoes an inverse hyperbolic function read `arsinh`, `arcosh` and `artanh` off
+their logarithms and not these two, which are the `arsinh` and the `arcosh` of `1/L`. Under
+`L = csch(u)` or `L = sech(u)` a power of `x` below the bar is a polynomial in `cosh(u)` and
+`sinh(u)` over a power of `a + b u`, which the hyperbolic sine and cosine integrals and `Ei`
+answer. Rubi's 7.5.1, 7.5.2 and 7.6.1
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x^2*(a+b*acsch(c*x)))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `Ei` |
+| `"1/(x^4*(a+b*asech(c*x)))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `Chi` and `Shi` |
+| `"1/(e^asech(a*x)*x^5)".ToEntity().Integrate("x")` | `integral(...)` | a polynomial in `1/(a x) - sqrt(1/(a x)^2 - 1)` and its reciprocal |
+
 ### `n in ZZ and 2^n > n^2` is solved to a set, and was a refusal
 
 An inequality with an exponential or a factorial over the whole numbers is solved to the members
