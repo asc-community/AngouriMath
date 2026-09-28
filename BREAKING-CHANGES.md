@@ -1745,6 +1745,19 @@ quadratic alone, or beside a polynomial only, is left to the rules that answered
 | `"x^2*sinh(a + b*x + c*x^2)^2".Integrate("x")` | `integral(x ^ 2 * ((e ^ (a + b * x + c * x ^ 2) - e ^ (-(a + b * x + c * x ^ 2))) / 2) ^ 2, x)` | the antiderivative |
 | `"2^(x^2)*3^(x + 1)".Integrate("x")` | `integral(2 ^ x ^ 2 * 3 ^ (x + 1), x)` | the antiderivative, with `erfi` |
 
+### A power of `x` beside exponentials of quadratics without a linear part is integrated
+
+`x^2 sinh(a + b x^2)^3` was left unintegrated. A polynomial, or a power of `x` above or below the bar,
+beside exponentials of quadratics is now integrated where a term's exponent has no linear part: its
+moments are taken about 0, and a negative even power is one of them. A negative odd power, which
+ends at the exponential integral, is still left unintegrated
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2*sinh(a + b*x^2)^3".Integrate("x")` | `integral(x ^ 2 * ((e ^ (a + b * x ^ 2) - e ^ (-(a + b * x ^ 2))) / 2) ^ 3, x)` | the antiderivative |
+| `"sinh(a + b*x^2)^3/x^2".Integrate("x")` | `integral(((e ^ (a + b * x ^ 2) - e ^ (-(a + b * x ^ 2))) / 2) ^ 3 / x ^ 2, x)` | the antiderivative |
+
 ### An exponential of a quadratic in a logarithm beside a power of `x` is integrated
 
 `e^(ln(x)^2)` was left unintegrated. `x^p G^(Q(L))`, where `L` is `ln(c x^r)` and `Q` a quadratic

@@ -90,6 +90,20 @@ namespace AngouriMath.Tests.Calculus
         public void APowerOfAHyperbolicBesideAPolynomial(string integrand)
             => DifferentiatesBack(integrand, Pins);
 
+        /// <summary>
+        /// A polynomial, or a power of <c>x</c> below the bar, beside terms whose exponents have no
+        /// linear part: the moments are taken about 0, and a negative even power is one too.
+        /// Rubi's 6.1.3, <c>x^2 sinh(a + b x^2)^3</c> and <c>sinh(a + b x^2)^3/x^2</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("x^2*sinh(a + b*x^2)^3")]
+        [InlineData("sinh(a + b*x^2)^3/x^2")]
+        [InlineData("cosh(a + b*x^2)^3/x^4")]
+        [InlineData("(1 + x^2)*e^(c*x^2)*sin(q*x^2)")]
+        [InlineData("x^3*f^(a + c*x^2)*cos(d + q*x^2)")]
+        public void APowerBesideTermsWithoutALinearPart(string integrand)
+            => DifferentiatesBack(integrand, Pins);
+
         /// <summary>Rubi's 2.3: two exponentials of quadratics, of different bases.</summary>
         [Theory]
         [InlineData("2^(x^2)*3^(x + 1)")]
