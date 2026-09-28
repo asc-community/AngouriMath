@@ -1101,18 +1101,20 @@ is `sqrt(b + a u^2)/|u|`, and `|u|^k` for the bare square is `sgn(u) u^k` at eve
 | `"coth(x)/(a+b*coth(x)^2)^(3/2)".Integrate("x")` | left unevaluated | the antiderivative |
 | `"(a+b*coth(x)^2)^(3/2)*tanh(x)^2".Integrate("x")` | left unevaluated | the antiderivative |
 
-### A substitution that would write a root of a negated quantity through `i` is passed over
+### A substitution that would write a root of a negated quantity through `i` keeps the root
 
 `sqrt(a + b sech(x)) tanh(x)^5` ran past two minutes. Under `u = tanh(x)` a substitution the
 search tried wrote `sqrt(1 - u^2)`, simplified one level, as `i sqrt(u^2 - 1)`: that is the other
 root wherever `u^2 < 1`, which is everywhere `tanh` goes, and the answer's derivative was off at
-every real point. A candidate substitution whose integrand holds the imaginary unit where the
-integrand did not is not taken now, and the search goes on to one under which the root stays real
+every real point. The search now keeps a candidate's integrand as written where simplifying it
+would bring in the imaginary unit, and passes over a candidate whose integrand holds it all the
+same. With the root as it was, the cube is answered too
 ([#1370](https://github.com/asc-community/AngouriMath/issues/1370)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
 | `"sqrt(a+b*sech(x))*tanh(x)^5".Integrate("x")` | ran past two minutes | the antiderivative, in `sqrt(a + b sqrt(1 - tanh(x)^2))`, written in exponentials |
+| `"sqrt(a+b*sech(x))*tanh(x)^3".Integrate("x")` | ran past five minutes | the antiderivative, the same way |
 
 ### A rational function of the hyperbolic functions odd in the sine or the cosine is integrated by the other
 

@@ -18281,6 +18281,24 @@ namespace AngouriMath.Functions.Algebra
             => expr.Nodes.Any(node => node is Number.Complex number && !number.ImaginaryPart.EDecimal.IsZero);
 
         /// <summary>
+        /// A candidate's integrand in its variable simplified one level, or as it is written where
+        /// that would bring in the imaginary unit which neither it nor <paramref name="integrand"/>
+        /// holds. The one level writes <c>sqrt(-u)</c> as <c>i sqrt(u)</c>, the other root wherever
+        /// <c>u</c> is negative, and a candidate is negative on the whole line as often as not:
+        /// <c>tanh(x)^2 - 1</c> is, and <c>sqrt(a + b sech(x)) tanh(x)^3</c> under it was
+        /// <c>sqrt(a + i b sqrt(u))</c>, where the root written as it was is answered by the
+        /// search in <c>u</c>. https://github.com/asc-community/AngouriMath/issues/1370
+        /// </summary>
+        private static Entity SimplifiedWithoutTheImaginaryUnit(Entity written, Entity integrand)
+        {
+            var simplified = written.Simplify(1);
+            if (simplified is Providedf(var inner, _)) simplified = inner; // TODO: singularities ignored but not handled properly
+            return HoldsTheImaginaryUnit(simplified) && !HoldsTheImaginaryUnit(written) && !HoldsTheImaginaryUnit(integrand)
+                ? written
+                : simplified;
+        }
+
+        /// <summary>
         /// Attempts to solve an integral using u-substitution.
         /// Looks for patterns where f(g(x)) * g'(x) can be integrated as F(g(x)).
         /// </summary>
@@ -18396,8 +18414,7 @@ namespace AngouriMath.Functions.Algebra
                     var complemented = WithTheComplementInEvenPowers(firstPass[u], u, uSub);
                     if (complemented == firstPass[u])
                         continue;   // nothing the first pass did not see
-                    integrandInU = complemented.Simplify(1);
-                    if (integrandInU is Providedf(var innerComplemented, _)) integrandInU = innerComplemented;
+                    integrandInU = SimplifiedWithoutTheImaginaryUnit(complemented, expr);
                 }
                 else
                 {
@@ -18436,8 +18453,7 @@ namespace AngouriMath.Functions.Algebra
                         && expr.Complexity <= (expr.Vars.Any(v => v != x) ? LargestSymbolicIntegrandCollected : LargestIntegrandOfferedSums)
                         ? WithThePowersOfXCollected(Functions.SingleQuotient.Combine(expr / duDx), x)
                         : source / duDx;
-                    integrandInU = InTermsOf(quotient, u, uSub, x).Simplify(1);
-                    if (integrandInU is Providedf(var innerExpr, _)) integrandInU = innerExpr; // TODO: singularities ignored but not handled properly
+                    integrandInU = SimplifiedWithoutTheImaginaryUnit(InTermsOf(quotient, u, uSub, x), expr);
                     // A factor written on both sides of the bar cancelled, where x survived:
                     // the one-level simplification leaves `u/((a w + b)^2 p u)` as it is, and
                     // the candidate was refused for the u it did not cancel.
@@ -18447,8 +18463,7 @@ namespace AngouriMath.Functions.Algebra
                         var cancelled = CancelCommonFactors(top, bottom);
                         if (cancelled != integrandInU && !cancelled.ContainsNode(x))
                         {
-                            integrandInU = cancelled.Simplify(1);
-                            if (integrandInU is Providedf(var innerCancelled, _)) integrandInU = innerCancelled;
+                            integrandInU = SimplifiedWithoutTheImaginaryUnit(cancelled, expr);
                         }
                     }
                     // A polynomial in x left over under a candidate that is itself a polynomial
@@ -18469,8 +18484,7 @@ namespace AngouriMath.Functions.Algebra
                         var inTheCandidate = WithPolynomialsInTheCandidate(aboveTheBar, u, uSub, x) / WithPolynomialsInTheCandidate(belowTheBar, u, uSub, x);
                         if (inTheCandidate.ContainsNode(x) == false || inTheCandidate != aboveTheBar / belowTheBar)
                         {
-                            integrandInU = inTheCandidate.Simplify(1);
-                            if (integrandInU is Providedf(var innerInTheCandidate, _)) integrandInU = innerInTheCandidate;
+                            integrandInU = SimplifiedWithoutTheImaginaryUnit(inTheCandidate, expr);
                         }
                     }
                     if (u is Sinf or Cosf && integrandInU.ContainsNode(x))
@@ -18489,13 +18503,11 @@ namespace AngouriMath.Functions.Algebra
                 // NaN * (sin(x)^2 + cos(x)^2).
                 if (integrandInU.Nodes.Any(node => node == MathS.NaN))
                     continue;
-                // The one-level simplification writes `sqrt(-u)` as `i sqrt(u)`, which is the other
+                // And a candidate whose integrand holds the imaginary unit where the integrand did
+                // not is not taken, whichever step wrote it: `i sqrt(u)` for `sqrt(-u)` is the other
                 // root wherever u is negative -- as `tanh(x)^2 - 1` is everywhere, which is how
                 // `sqrt(a + b sech(x)) tanh(x)^5` was answered through `i` and was off at every
-                // real point. A candidate whose integrand holds the imaginary unit where the
-                // integrand did not is not taken, and the search goes on to one under which the
-                // root stays real.
-                // https://github.com/asc-community/AngouriMath/issues/1370
+                // real point. https://github.com/asc-community/AngouriMath/issues/1370
                 if (HoldsTheImaginaryUnit(integrandInU) && !HoldsTheImaginaryUnit(expr))
                     continue;
 
