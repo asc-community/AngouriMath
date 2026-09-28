@@ -1703,6 +1703,21 @@ argument `a + b x^r` beside a power of `x` is the same question under `u = x^r`
 | `"sin(x)/(x*(1+x))".Integrate("x")` | `integral(sin(x) / (x * (1 + x)), x)` | `Si(x) + -cos(1) * Si(1 + x) + sin(1) * Ci(1 + x) + C` |
 | `"sin(a+b/x)/x".Integrate("x")` | `integral(sin(a + b / x) / x, x)` | `-(cos(a) * Si(b * 1 / x) + sin(a) * Ci(b * 1 / x)) + C` |
 
+### The hyperbolic sine and cosine integrals are integrated to
+
+`sinh(x)/x` was left unintegrated. `sinh` and `cosh` arrive as exponentials, and a polynomial in
+exponentials of a linear, beside a polynomial, over a whole power of a linear is now integrated to
+`Shi` and `Chi`. Under `u` = the linear each term is `u^m e^(k u)`, the exponential integral's, and
+two terms of opposite rates pair: `A Ei(k u) + B Ei(-k u) = (A + B) Chi(k u) + (A - B) Shi(k u)`, up
+to a constant ([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sinh(x)/x".Integrate("x")` | `integral((e ^ x - e ^ (-x)) / 2 / x, x)` | `Shi(x) + C` |
+| `"cosh(x)/x".Integrate("x")` | `integral((e ^ x + e ^ (-x)) / 2 / x, x)` | `Chi(x) + C` |
+| `"sinh(x)^2/x".Integrate("x")` | `integral(((e ^ x - e ^ (-x)) / 2) ^ 2 / x, x)` | `-1/2 * ln(x) + 1/2 * Chi(2 * x) + C` |
+| `"cosh(a+b*x)/(c+d*x)".Integrate("x")` | `integral((e ^ (a + b * x) + e ^ (-(a + b * x))) / 2 / (c + d * x), x)` | `Chi` and `Shi` of `b (c + d x)/d`, with `cosh(a - b c/d)/d` and `sinh(a - b c/d)/d` in front, written in exponentials |
+
 ### A definite integral is the limit at a bound where its antiderivative is undefined
 
 `integral(x * e^(-x), x, 0, +oo)` was `NaN`, this library's way of saying a value does not
