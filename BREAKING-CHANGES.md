@@ -1476,6 +1476,24 @@ multiple of it, `(d - c^2 d x^2)^(3/2)`, is written over it the same way, with
 Rubi's 5.1.4, 5.1.5, 5.2.4 and 5.2.5, all 504 problems that count: 405 to 463, no row lost, 77
 timeouts to 19.
 
+### An inverse trigonometric function below the bar is integrated to the sine and cosine integrals
+
+`1/arcsin(x)` was left unintegrated. Under the substitution that undoes the inverse function,
+`x = sin(u)` for `arcsin(x)`, `x^m/(a + b arcsin(c x))^n` is a polynomial in the sine and the cosine
+over a power of `a + b u`, which the sine and cosine integrals answer. That substitution was taken
+only where it removed a radical, an exponential of the inverse function or a power of it, and is
+now taken where the inverse function, or a function of it alone, is below the bar, before the
+general substitution search, which does not find it. The tangent, cotangent, secant and cosecant it
+leaves are read as quotients of the sine and the cosine
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/asin(x)".Integrate("x")` | `integral(1 / arcsin(x), x)` | `Ci(arcsin(x)) + C` |
+| `"x/asin(x)".Integrate("x")` | `integral(x / arcsin(x), x)` | `1/2 * Si(2 * arcsin(x)) + C` |
+| `"1/(a+b*asin(c*x))".Integrate("x")` | `integral(1 / (a + b * arcsin(c * x)), x)` | `Si` and `Ci` of `(a + b arcsin(c x))/b` |
+| `"x/((c+a^2*c*x^2)^2*atan(a*x))".Integrate("x")` | `integral(x / ((c + a ^ 2 * c * x ^ 2) ^ 2 * arctan(a * x)), x)` | `1/2 * Si(2 * arctan(a * x)) / (a ^ 2 * c ^ 2) + C` |
+
 ### A perfect square in a power of the variable is read as one
 
 `sqrt(a^2 + 2 a b x^2 + b^2 x^4) sqrt(c + e x + d x^2)` was left unevaluated. The radicand is
