@@ -600,6 +600,9 @@ atom returns[Entity value]
     | 'erf(' args = function_arguments ')' { Assert("erf", 1, $args.list.Count); $value = MathS.Erf($args.list[0]); }
     | 'erfc(' args = function_arguments ')' { Assert("erfc", 1, $args.list.Count); $value = MathS.Erfc($args.list[0]); }
     | 'erfi(' args = function_arguments ')' { Assert("erfi", 1, $args.list.Count); $value = MathS.Erfi($args.list[0]); }
+    /* The exponential and logarithmic integrals. https://github.com/asc-community/AngouriMath/issues/1501 */
+    | 'Ei(' args = function_arguments ')' { Assert("Ei", 1, $args.list.Count); $value = MathS.Ei($args.list[0]); }
+    | 'li(' args = function_arguments ')' { Assert("li", 1, $args.list.Count); $value = MathS.Li($args.list[0]); }
 
     /* Names the library does not have. Each is a function every other CAS spells this way, so
        a caller reaches for it, and without these rules each is silently read as a product --

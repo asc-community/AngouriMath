@@ -179,6 +179,20 @@ namespace AngouriMath
                 => $@"\operatorname{{erfi}}\left({Argument.Latexize()}\right)";
         }
 
+        partial record Eif
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\operatorname{{Ei}}\left({Argument.Latexize()}\right)";
+        }
+
+        partial record Lif
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\operatorname{{li}}\left({Argument.Latexize()}\right)";
+        }
+
         partial record Absf
         {
             /// <inheritdoc/>

@@ -242,6 +242,21 @@ namespace AngouriMath
                 null;
         }
 
+        // Neither integral has an inverse among the library's nodes, and neither preimage is
+        // empty: Ei(x) = 0 at about 0.3725, and li(x) = 0 at about 1.4513, Soldner's constant.
+        // https://github.com/asc-community/AngouriMath/issues/1501
+        partial record Eif
+        {
+            private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x) =>
+                null;
+        }
+
+        partial record Lif
+        {
+            private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x) =>
+                null;
+        }
+
         partial record Binomialf
         {
             // The preimage of a binomial coefficient is not a function of either argument

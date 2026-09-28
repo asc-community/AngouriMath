@@ -494,6 +494,47 @@ namespace AngouriMath
                     (@this, a) => ((Erfif)@this).New(a), isExact);
         }
 
+        public partial record Eif
+        {
+            // Defined everywhere but at 0, where ln is not: real on either side of it.
+            // https://github.com/asc-community/AngouriMath/issues/1501
+            private protected override Entity IntrinsicCondition => !Argument.EqualTo(0);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
+                    a => a switch
+                    {
+                        Complex n when !isExact => Number.Ei(n),
+                        Real r when r.EDecimal.IsPositiveInfinity() => Real.PositiveInfinity,
+                        Real r when r.EDecimal.IsNegativeInfinity() => Integer.Zero,
+                        _ => null
+                    },
+                    (@this, a) => ((Eif)@this).New(a), isExact);
+        }
+
+        public partial record Lif
+        {
+            // Defined everywhere but at 1, where ln is 0; on the real line, where the logarithm
+            // is real, that is x >= 0, and li(0) = 0.
+            private protected override Entity IntrinsicCondition =>
+                Codomain < Domain.Complex
+                ? Argument >= 0 & !Argument.EqualTo(1)
+                : !Argument.EqualTo(1);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
+                    a => a switch
+                    {
+                        Complex n when !isExact => Number.Li(n),
+                        Integer { IsZero: true } => Integer.Zero,
+                        Real r when r.EDecimal.IsPositiveInfinity() => Real.PositiveInfinity,
+                        _ => null
+                    },
+                    (@this, a) => ((Lif)@this).New(a), isExact);
+        }
+
         public partial record Signumf
         {
             // Signum is defined everywhere in the complex plane

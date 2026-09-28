@@ -274,6 +274,23 @@ namespace AngouriMath
                 2 / MathS.Sqrt(MathS.pi) * MathS.Pow(MathS.e, MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
         }
 
+        partial record Eif
+        {
+            // Ei(a)' = e^a/a a', the integrand of its definition.
+            // https://github.com/asc-community/AngouriMath/issues/1501
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                MathS.Pow(MathS.e, Argument) / Argument * Argument.InnerDifferentiate(variable);
+        }
+
+        partial record Lif
+        {
+            // li(a)' = a'/ln(a)
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                Argument.InnerDifferentiate(variable) / MathS.Ln(Argument);
+        }
+
         partial record Cosf
         {
             // cos(a)' = -sin(a) * a'
