@@ -30,6 +30,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 {
                     a = a.InnerSimplified;
                     b = b.InnerSimplified;
+                    // Where x has cancelled, x + 1 > x is 1 > 0, true on the whole line or on
+                    // none of it. The root -b/0 below it was NaN, the interval from it a number,
+                    // and the answer a cast that threw.
+                    if (a == Integer.Zero)
+                        return Constantly(b, x);
                     var root = PolynomialSolver.SolveLinear(a, b).First();
                     if (root is Complex and not Real)
                         return Empty;
@@ -65,6 +70,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     var degenerate = (b * x + c).InnerSimplified;
                     if ((degenerate.ContainsNode(x) ? Solve(degenerate, x) : Everywhere(degenerate, x)) is not { } whenDegenerate)
                         return null;
+                    // A leading coefficient that is zero outright, as in x^2 + 1 > x^2, leaves
+                    // nothing of the parabola, and its roots would be divided by it.
+                    if (a == Integer.Zero)
+                        return degenerate.ContainsNode(x) ? whenDegenerate : Constantly(degenerate, x);
                     // No real root means the parabola never crosses zero, so it is above it
                     // everywhere or below it everywhere -- and which of those is the sign of the
                     // leading coefficient. Returning the empty set regardless answered
@@ -166,6 +175,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// </summary>
         private static Set Everywhere(Entity constant, Variable x)
             => SpecialSet.Create(Domain.Real).Filter(constant > 0, x);
+
+        /// <summary>
+        /// <c>c &gt; 0</c> for a <c>c</c> without <c>x</c>: every real where it evaluates to
+        /// <c>True</c>, none where to <c>False</c>, and the reals filtered by it otherwise.
+        /// </summary>
+        private static Set Constantly(Entity constant, Variable x)
+            => (constant > Integer.Zero).Evaled switch
+            {
+                Entity.Boolean(true) => SpecialSet.Create(Domain.Real),
+                Entity.Boolean(false) => Empty,
+                _ => Everywhere(constant, x),
+            };
 
         /// <summary>
         /// The answer under a condition it needed, or the answer itself where there was none.

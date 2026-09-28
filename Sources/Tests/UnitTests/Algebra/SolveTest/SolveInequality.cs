@@ -361,5 +361,24 @@ namespace AngouriMath.Tests.Algebra
         [InlineData("(x^4 - 2) * (x - 1) > 0")]
         public void AHigherDegreePolynomialInequalityIsAnswered(string inequality)
             => AssertHoldsExactlyWhereItShould(inequality);
+
+        /// <summary>
+        /// Where x cancels, the inequality holds on the whole line or on none of it. Each of these
+        /// threw an InvalidCastException: the root of 0 x + b was NaN, the interval from it a
+        /// number, and a quantifier that asked, forall x in RR : x + 1 &gt; x, threw with it.
+        /// </summary>
+        [Theory]
+        [InlineData("3 > 1")]
+        [InlineData("1 > 3")]
+        [InlineData("x + 1 > x")]
+        [InlineData("x < x - 1")]
+        [InlineData("x^2 + 1 > x^2")]
+        [InlineData("x^2 < x^2 - 2")]
+        public void AnInequalityWithoutXHoldsEverywhereOrNowhere(string inequality)
+            => AssertHoldsExactlyWhereItShould(inequality);
+
+        [Fact]
+        public void AQuantifierOverAConstantInequalityIsDecided()
+            => Assert.Equal(Entity.Boolean.True, "forall x in RR : x + 1 > x".ToEntity().Simplify());
     }
 }
