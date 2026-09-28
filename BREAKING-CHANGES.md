@@ -776,6 +776,19 @@ piece. With both, a quantifier over the reals decides an implication between two
 | `"(RR \ {-1}) /\ (-oo; -1)".ToEntity().Evaled` | `(RR \ { -1 }) /\ (-oo; -1)` | `(-oo; -1)` |
 | `"preimage(sin(x), x in RR, (0; 1))".ToEntity().Evaled` | `UnhandledParseException`, and `NotSufficientlySupportedException` since `preimage` was added | the set builder, unsolved |
 
+### An inequality in which `x` cancels holds everywhere or nowhere
+
+`"x + 1 > x".Solve("x")` threw `InvalidCastException`, and so did every inequality whose `x`
+cancels, `"3 > 1"` among them: the root of `0 x + 1` is not a number, and the interval from it
+simplified to one. A quantifier that asked the solver threw with it. A slope or a leading
+coefficient that is zero now answers the whole line or nothing.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x + 1 > x".Solve("x")` | `InvalidCastException` | `RR` |
+| `"x^2 < x^2 - 2".Solve("x")` | `InvalidCastException` | `{ }` |
+| `forall x in RR : x + 1 > x` | `UnhandledParseException` (`InvalidCastException` since quantifiers arrived) | `True` |
+
 ### An infinite base has its whole powers, and surjectivity is decided through the image
 
 `(-oo)^3` was `NaN` — a claim that the value does not exist — and so were `(-oo)^2` and

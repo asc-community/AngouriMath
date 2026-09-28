@@ -5,7 +5,6 @@
 // Website: https://am.angouri.org.
 //
 
-using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
@@ -15,20 +14,27 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     internal static class AnalyticalInequalitySolver
     {
         /// <summary>
-        /// Considers expr > 0
+        /// Considers expr > 0, and answers <see langword="null"/> for an inequality it cannot
+        /// read, which <see cref="Entity.Solve(Variable)"/> reports as unsupported and the
+        /// library's own callers read as not solved.
         /// </summary>
-        internal static Set Solve(Entity expr, Variable x)
+        internal static Set? Solve(Entity expr, Variable x)
         {
             switch (expr)
             {
-                case Providedf(var e, var predicate): return Solve(e, x).Filter(predicate, x);
-                case Piecewise p: return EquationSolver.SolvePiecewise(p, x, Solve);
+                case Providedf(var e, var predicate): return Solve(e, x)?.Filter(predicate, x);
+                case Piecewise p: return EquationSolver.SolvePiecewiseOrNull(p, x, Solve);
             }
             {
                 if (MathS.Utils.TryGetPolyLinear(expr, x, out var a, out var b))
                 {
                     a = a.InnerSimplified;
                     b = b.InnerSimplified;
+                    // Where x has cancelled, x + 1 > x is 1 > 0, true on the whole line or on
+                    // none of it. The root -b/0 below it was NaN, the interval from it a number,
+                    // and the answer a cast that threw.
+                    if (a == Integer.Zero)
+                        return Constantly(b, x);
                     var root = PolynomialSolver.SolveLinear(a, b).First();
                     if (root is Complex and not Real)
                         return Empty;
@@ -62,9 +68,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     // too, and then there is no x in it at all and the statement is a
                     // comparison of constants, true on the whole line or on none of it.
                     var degenerate = (b * x + c).InnerSimplified;
-                    Set whenDegenerate = degenerate.ContainsNode(x)
-                        ? Solve(degenerate, x)
-                        : Everywhere(degenerate, x);
+                    if ((degenerate.ContainsNode(x) ? Solve(degenerate, x) : Everywhere(degenerate, x)) is not { } whenDegenerate)
+                        return null;
+                    // A leading coefficient that is zero outright, as in x^2 + 1 > x^2, leaves
+                    // nothing of the parabola, and its roots would be divided by it.
+                    if (a == Integer.Zero)
+                        return degenerate.ContainsNode(x) ? whenDegenerate : Constantly(degenerate, x);
                     // No real root means the parabola never crosses zero, so it is above it
                     // everywhere or below it everywhere -- and which of those is the sign of the
                     // leading coefficient. Returning the empty set regardless answered
@@ -114,12 +123,17 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var (numerator, denominator) = SingleQuotient.Of(expr);
             if (denominator.ContainsNode(x) && denominator != Integer.One)
                 return Solve(numerator * denominator, x);
-            throw new NotSufficientlySupportedException(
-                "Only polynomial inequalities are supported, and of those only the ones "
-                + "whose real roots can be established completely: linear and quadratic "
-                + "with any coefficients, and higher degrees where the coefficients are "
-                + "rational and no irreducible factor is of degree five or more");
+            // Only polynomial inequalities are read, and of those only the ones whose real
+            // roots can be established completely; see Unsupported for what is said of the rest.
+            return null;
         }
+
+        /// <summary>What <see cref="Entity.Solve(Variable)"/> says of an inequality this solver declines.</summary>
+        internal const string Unsupported =
+            "Only polynomial inequalities are supported, and of those only the ones "
+            + "whose real roots can be established completely: linear and quadratic "
+            + "with any coefficients, and higher degrees where the coefficients are "
+            + "rational and no irreducible factor is of degree five or more";
 
         /// <summary>
         /// The three answers a coefficient of unknown sign may have, joined into one set that
@@ -161,6 +175,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// </summary>
         private static Set Everywhere(Entity constant, Variable x)
             => SpecialSet.Create(Domain.Real).Filter(constant > 0, x);
+
+        /// <summary>
+        /// <c>c &gt; 0</c> for a <c>c</c> without <c>x</c>: every real where it evaluates to
+        /// <c>True</c>, none where to <c>False</c>, and the reals filtered by it otherwise.
+        /// </summary>
+        private static Set Constantly(Entity constant, Variable x)
+            => (constant > Integer.Zero).Evaled switch
+            {
+                Entity.Boolean(true) => SpecialSet.Create(Domain.Real),
+                Entity.Boolean(false) => Empty,
+                _ => Everywhere(constant, x),
+            };
 
         /// <summary>
         /// The answer under a condition it needed, or the answer itself where there was none.

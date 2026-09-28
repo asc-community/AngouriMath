@@ -5,7 +5,6 @@
 // Website: https://am.angouri.org.
 //
 
-using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Sets;
 using System;
 using System.Linq;
@@ -118,17 +117,9 @@ namespace AngouriMath
                         || name != x || !image.ContainsNode(x) || image == x)
                         return null;
                     // An inequality the solver cannot read -- sin(x) > 0 -- leaves the set as
-                    // written: an evaluation does not throw for a set it cannot list.
-                    Set solved;
-                    try
-                    {
-                        solved = Functions.Algebra.AnalyticalSolving.StatementSolver.Solve(membership, x);
-                    }
-                    catch (NotSufficientlySupportedException)
-                    {
-                        return null;
-                    }
-                    if (solved is ConditionalSet)
+                    // written: the solver declines it, and an evaluation does not throw for a set
+                    // it cannot list.
+                    if (Functions.Algebra.AnalyticalSolving.StatementSolver.Solve(membership, x) is not { } solved || solved is ConditionalSet)
                         return null;
                     return declared.Intersect(solved).InnerSimplified(isExact);
                 }

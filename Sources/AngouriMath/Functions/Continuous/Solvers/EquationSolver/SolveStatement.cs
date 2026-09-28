@@ -180,7 +180,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// asserts of them only that they are what the statement says.
         /// </para>
         /// </remarks>
-        private static Set Negation(Entity statement, Entity operand, Variable x)
+        private static Set? Negation(Entity statement, Entity operand, Variable x)
         {
             switch (operand)
             {
@@ -189,9 +189,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     return Solve(inner, x);
                 // De Morgan, in the direction that reaches an arm.
                 case Andf(var left, var right):
-                    return (Set)MathS.Union(Solve(!left, x), Solve(!right, x));
+                    return Solve(!left, x) is { } notLeft && Solve(!right, x) is { } notRight ? (Set)MathS.Union(notLeft, notRight) : null;
                 case Orf(var left, var right):
-                    return Conjunction(Solve(!left, x), Solve(!right, x), statement, x);
+                    return Solve(!left, x) is { } neitherLeft && Solve(!right, x) is { } neitherRight ? Conjunction(neitherLeft, neitherRight, statement, x) : null;
             }
 
             var asAComparison = Core.Transformations.RewriteRules.InequalityEquality.ApplyOnce(statement);
@@ -231,8 +231,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// with a set the question was never asked over.
         /// </para>
         /// </remarks>
-        private static Set Implication(Entity left, Entity right, Variable x)
-            => (Set)MathS.Union(new ConditionalSet(x, !left), Solve(right, x));
+        private static Set? Implication(Entity left, Entity right, Variable x)
+            => Solve(right, x) is { } solved ? (Set)MathS.Union(new ConditionalSet(x, !left), solved) : null;
 
         /// <summary>
         /// Where both sides of a conjunction were settled, its solution set is the
@@ -329,7 +329,17 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 ? new ConditionalSet(x, equation)
                 : solved;
 
-        internal static Set Solve(Entity expr, Variable x)
+        /// <summary>
+        /// The solution set as <see cref="Entity.Solve(Variable)"/> gives it, simplified, or
+        /// <see langword="null"/> where the solver declines the statement: an inequality it
+        /// cannot read. The public method reports that by throwing, and the library's own
+        /// callers read it as not solved. https://github.com/asc-community/AngouriMath/issues/1540
+        /// </summary>
+        internal static Set? Solved(Entity statement, Variable x)
+            => Solve(statement, x)?.InnerSimplified as Set;
+
+        /// <summary>The solution set, or <see langword="null"/> where a part of the statement is declined.</summary>
+        internal static Set? Solve(Entity expr, Variable x)
             => expr switch
             {
                 Equalsf(var left, var right) when left is Set || right is Set
@@ -349,18 +359,20 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 Andf(Inf(var name, Set integers), ComparisonSign inequality) when name == x && ThresholdSearch.Solve(x, integers, inequality) is { } thresholds => thresholds,
                 Andf(ComparisonSign inequality, Inf(var name, Set integers)) when name == x && ThresholdSearch.Solve(x, integers, inequality) is { } thresholds => thresholds,
                 Andf(var left, var right) =>
-                    Conjunction(Solve(left, x), Solve(right, x), expr, x),
-                Orf(var left, var right) => 
-                    MathS.Union(Solve(left, x), Solve(right, x)),
+                    Solve(left, x) is { } leftSolved && Solve(right, x) is { } rightSolved ? Conjunction(leftSolved, rightSolved, expr, x) : null,
+                Orf(var left, var right) =>
+                    Solve(left, x) is { } leftSolved && Solve(right, x) is { } rightSolved ? (Set)MathS.Union(leftSolved, rightSolved) : null,
                 Impliesf(var left, var right) => Implication(left, right, x),
                 Notf(var operand) => Negation(expr, operand, x),
 
                 Greaterf(var left, var right) => 
                     AnalyticalInequalitySolver.Solve(Minus(left, right), x),
-                LessOrEqualf(var left, var right) => 
+                LessOrEqualf(var left, var right) =>
                     AnalyticalInequalitySolver.Solve(Minus(right, left), x)
-                    .Unite(AnalyticalEquationSolver.Solve(Minus(left, right), x)),
-                GreaterOrEqualf(var left, var right) => MathS.Union(AnalyticalInequalitySolver.Solve(Minus(left, right), x), AnalyticalEquationSolver.Solve(Minus(left, right), x)),
+                    ?.Unite(AnalyticalEquationSolver.Solve(Minus(left, right), x)),
+                GreaterOrEqualf(var left, var right) =>
+                    AnalyticalInequalitySolver.Solve(Minus(left, right), x) is { } above
+                    ? (Set)MathS.Union(above, AnalyticalEquationSolver.Solve(Minus(left, right), x)) : null,
 
                 Lessf(var left, var right) => 
                     AnalyticalInequalitySolver.Solve(Minus(right, left), x),
@@ -372,15 +384,20 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // two bounds, and anything else left as the set of x with the property, since
                 // a solver that answered "no x" here was answering wrongly -- x^2 in (0; 1) was
                 // the empty set. https://github.com/asc-community/AngouriMath/issues/1409
-                Inf(var member, Set set) when member.ContainsNode(x) => Membership(member, set, x) ?? new ConditionalSet(x, expr),
+                Inf(var member, Set set) when member.ContainsNode(x) => Membership(member, set, x) switch
+                {
+                    (Set solved, _) => solved,
+                    (null, Read: true) => null,
+                    _ => new ConditionalSet(x, expr),
+                },
 
                 // a x + b = c (mod n): one residue class, or none, by the gcd; a congruence of
                 // higher degree by the residues that satisfy it, where the modulus is small
                 // enough to list them. https://github.com/asc-community/AngouriMath/issues/1409
                 Congruentf(var left, var right, Integer modulus) when Congruence(left - right, modulus, x) is { } classes => classes,
                 
-                Providedf(var e, var predicate) => Solve(e, x).Filter(predicate, x),
-                Piecewise p => EquationSolver.SolvePiecewise(p, x, Solve),
+                Providedf(var e, var predicate) => Solve(e, x)?.Filter(predicate, x),
+                Piecewise p => EquationSolver.SolvePiecewiseOrNull(p, x, Solve),
 
                 // A statement the solver has no arm for is the set of x with the property, left
                 // as written -- not the empty set, which claims there is no such x. A statement
@@ -392,9 +409,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <summary>
         /// The <c>x</c> with <c>f(x)</c> in a set: for a listed set, the union of the equations
         /// <c>f(x) = s</c>; for an interval, the conjunction of its bounds, each strict or not as
-        /// the end is; <see langword="null"/> for a set that is neither.
+        /// the end is. <c>Read</c> is false for a set that is neither, and the solution set is
+        /// <see langword="null"/> there and where the solver declines what it was read as.
         /// </summary>
-        private static Set? Membership(Entity member, Set set, Variable x)
+        private static (Set? Solved, bool Read) Membership(Entity member, Set set, Variable x)
         {
             switch (set)
             {
@@ -402,10 +420,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     Set? union = null;
                     foreach (var element in listed)
                     {
-                        var solutions = Solve(member.Equalizes(element), x);
+                        if (Solve(member.Equalizes(element), x) is not { } solutions)
+                            return (null, true);
                         union = union is null ? solutions : MathS.Union(union, solutions);
                     }
-                    return union ?? Set.Empty;
+                    return (union ?? Set.Empty, true);
                 case Interval interval:
                     Entity? condition = null;
                     if (interval.Left.Evaled != Real.NegativeInfinity)
@@ -415,9 +434,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         var upper = interval.RightClosed ? member <= interval.Right : member < interval.Right;
                         condition = condition is null ? upper : condition & upper;
                     }
-                    return condition is null ? MathS.Sets.R : Solve(condition, x);
+                    return (condition is null ? MathS.Sets.R : Solve(condition, x), true);
                 default:
-                    return null;
+                    return (null, false);
             }
         }
     }

@@ -244,5 +244,23 @@ namespace AngouriMath.Functions.Algebra
             }
             return res.Unite();
         }
+
+        /// <summary>
+        /// <see cref="SolvePiecewise"/> for a solver that may decline a case, which declines the
+        /// whole: <see langword="null"/> where it declines any case.
+        /// </summary>
+        internal static Set? SolvePiecewiseOrNull(Piecewise piecewise, Variable x, Func<Entity, Variable, Set?> solve)
+        {
+            Entity cond = true;
+            var res = new List<Set>();
+            foreach (var c in piecewise.Cases)
+            {
+                if (solve(c.Expression, x) is not { } solved)
+                    return null;
+                res.Add(solved.Filter(c.Predicate & cond, x));
+                cond &= !c.Predicate;
+            }
+            return res.Unite();
+        }
     }
 }
