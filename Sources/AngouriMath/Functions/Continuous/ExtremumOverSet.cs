@@ -161,11 +161,45 @@ namespace AngouriMath.Functions
                         return Integer.Create(first);
                     }
                 case ConditionalSet { DeclaredMembership: var (declared, rest), Var: Variable y } when declared.InnerSimplified is Set over:
-                    return BoundsAsInterval(rest, y) is { } bounded ? LeastWholeMember(new Intersectionf(over, bounded)) : null;
+                    return BoundsAsInterval(rest, y) is { } bounded ? LeastWholeMember(new Intersectionf(over, bounded)) : FirstThatHolds(over, y, rest);
                 default:
                     return null;
             }
         }
+
+        /// <summary>
+        /// The least member of the whole numbers <paramref name="over"/> at which
+        /// <paramref name="condition"/> evaluates to <c>True</c>, found by trying them in order from
+        /// the least up: every member before it was tried and evaluated to <c>False</c>, so it is the
+        /// least. Sullivan and Mackey's Prob 8.9.3,
+        /// <c>min(n, n in { n in ZZ+ : n binomial(n - 1, 2) &gt;= 14 })</c>, is 5. <see langword="null"/>
+        /// where a member's condition does not evaluate to a truth value, or none of the first
+        /// <see cref="MaxMembersSearched"/> holds. https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        private static Integer? FirstThatHolds(Set over, Variable y, Entity condition)
+        {
+            if (LeastWholeMember(over) is not { } least || over is not SpecialSet special)
+                return null;
+            var prime = special.ToDomain() == Core.Domain.Prime;
+            EInteger? member = least.EInteger;
+            for (var tried = 0; tried < MaxMembersSearched && member is { } current; tried++)
+            {
+                switch (condition.Substitute(y, Integer.Create(current)).Evaled)
+                {
+                    case Entity.Boolean(true):
+                        return Integer.Create(current);
+                    case Entity.Boolean(false):
+                        member = prime ? Primes.NextPrime(current + 1) : current + 1;
+                        continue;
+                    default:
+                        return null;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>How many members <see cref="FirstThatHolds"/> tries before declining.</summary>
+        private const int MaxMembersSearched = 4096;
 
         /// <summary>
         /// A conjunction of bounds on <paramref name="y"/> -- <c>y &gt; a</c>, <c>y &gt;= a</c>,

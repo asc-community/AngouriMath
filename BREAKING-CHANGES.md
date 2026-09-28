@@ -919,7 +919,10 @@ chain. `min(S)` with one argument that is a set is the least member of the set, 
 `min(PP)` was `PP` itself — a one-argument `min` was the argument — and `min(x, x in S and P)`
 is the least member of `{ x in S : P }`, where it was left as written; both decided for `PP`,
 `ZZ+`, `ZZ*` and their cuts by an interval or a bound, so `min(x, x in PP and x > 14)` is the next
-prime, `17` ([#1450](https://github.com/asc-community/AngouriMath/issues/1450)).
+prime, `17` ([#1450](https://github.com/asc-community/AngouriMath/issues/1450)); and for a condition
+that is not a bound by trying the members in order from the least, so Sullivan and Mackey's Prob
+8.9.3, the least `n` with `n binomial(n - 1, 2) >= 14`, is `5`
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -931,6 +934,7 @@ prime, `17` ([#1450](https://github.com/asc-community/AngouriMath/issues/1450)).
 | `"PP intersect [1; 30]".ToEntity().Evaled` | as written | `{ 2, 3, 5, 7, 11, 13, 17, 19, 23, 29 }` |
 | `"min(ZZ+)".ToEntity().Evaled` | `ZZ+` | `1` |
 | `"max(x, x in PP and x < 14)".ToEntity().Evaled` | as written | `13` |
+| `"min(x, x in ZZ+ and x^2 > 50)".ToEntity().Evaled` | `UnhandledParseException` — `ZZ+` is new since | `8` |
 | `"prime(25)".ToEntity().Evaled` | `prime * 25` — juxtaposition of a variable `prime` | `97`; `prime(n)` is the `n`-th prime, `NaN` off the positive whole numbers |
 | `"valuation(12, 2)".ToEntity().Evaled` | `UnrecognizedFunctionParseException` | `2`; `valuation(n, p)` is the `p`-adic valuation, `+oo` at `0` and `NaN` off the primes |
 
