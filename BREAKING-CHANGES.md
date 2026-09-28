@@ -1704,6 +1704,21 @@ was refused, so each was read as a product with an undeclared variable
 | `"Chi(1)".Simplify()` | `Chi` | `Chi(1)`, and `0.8378669409802082…` evaluated |
 | `"Si(x)".Differentiate("x")` | `Si` | `sin(x) / x` |
 
+### A quadratic below a sine or a cosine is split over its two roots
+
+`sin(x)/(1 + x^2)` was left unintegrated. A quadratic below the bar, beside sines and cosines of a
+linear, is its leading coefficient times the linears of its two roots, complex where its
+discriminant is negative, and each term of the partial fractions over them is the one-linear
+question: `Si` and `Ci` of `x - r`. Where the roots are a conjugate pair so are the two terms, and
+their sum is real on the real line
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"cos(x)/(x^2-1)".Integrate("x")` | `integral(cos(x) / (x ^ 2 - 1), x)` | `Si` and `Ci` of `x - 1` and of `x + 1` |
+| `"sin(x)/(1+x^2)".Integrate("x")` | `integral(sin(x) / (1 + x ^ 2), x)` | `Si` and `Ci` of `x - i` and of `x + i` |
+| `"sin(c+d*x)/(a+b*x^2)".Integrate("x")` | `integral(sin(c + d * x) / (a + b * x ^ 2), x)` | `Si` and `Ci` of `d (x ∓ sqrt(-4 a b)/(2 b))` |
+
 ### The sine and cosine integrals are integrated to
 
 `sin(x)/x` was left unintegrated. A polynomial in sines and cosines of a linear, beside a

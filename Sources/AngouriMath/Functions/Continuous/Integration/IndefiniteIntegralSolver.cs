@@ -4151,6 +4151,18 @@ namespace AngouriMath.Functions.Algebra
             var linears = new List<(Entity Linear, int Power)>();
             Entity? polynomial = null;
             Entity? trigonometric = null;
+            void AddALinear(Entity linear, int power)
+            {
+                var at = linears.FindIndex(pair => pair.Linear == linear);
+                if (at < 0)
+                    linears.Add((linear, power));
+                else
+                    linears[at] = (linear, linears[at].Power + power);
+            }
+            // x - r, written x + |r| where the root is a negative number: x + 1 for the root -1.
+            Entity LessTheRoot(Entity root) =>
+                root is Number.Complex { RealPart.IsNegative: true } or Number.Complex { RealPart.EDecimal.IsZero: true, ImaginaryPart.IsNegative: true }
+                    ? x + (-root).InnerSimplified : (x - root).InnerSimplified;
             foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
             {
                 if (!factor.ContainsNode(x))
@@ -4180,13 +4192,23 @@ namespace AngouriMath.Functions.Algebra
                 // A linear, or a whole power of one, below the bar or as a negative power.
                 if (exponent < 0)
                 {
-                    if (!TreeAnalyzer.TryGetPolyLinear(@base, x, out var slopeOfIt, out _) || TreeAnalyzer.IsZero(slopeOfIt))
-                        return null;
-                    var at = linears.FindIndex(pair => pair.Linear == @base);
-                    if (at < 0)
-                        linears.Add((@base, -exponent));
+                    if (TreeAnalyzer.TryGetPolyLinear(@base, x, out var slopeOfIt, out _) && !TreeAnalyzer.IsZero(slopeOfIt))
+                        AddALinear(@base, -exponent);
+                    // A quadratic is its leading coefficient times the linears of its two roots,
+                    // complex where its discriminant is negative: `sin(c + d x)/(a + b x^2)` is a
+                    // sum over `x -/+ sqrt(-a/b)`, each the one-linear question, and the sine and
+                    // cosine integrals of the two conjugate arguments add up to a real answer.
+                    else if (TreeAnalyzer.TryGetPolyQuadratic(@base, x, out var leading, out var middle, out var last) && !TreeAnalyzer.IsZero(leading))
+                    {
+                        var discriminant = MathS.Sqrt(middle * middle - 4 * leading * last);
+                        var first = ((-middle + discriminant) / (2 * leading)).InnerSimplified;
+                        var second = ((-middle - discriminant) / (2 * leading)).InnerSimplified;
+                        constant /= MathS.Pow(leading, -exponent);
+                        AddALinear(LessTheRoot(first), -exponent);
+                        AddALinear(LessTheRoot(second), -exponent);
+                    }
                     else
-                        linears[at] = (@base, linears[at].Power - exponent);
+                        return null;
                     continue;
                 }
                 if (TreeAnalyzer.TryGetPolynomial(factor, x, out var monomials) && monomials.Keys.All(degree => degree.Sign >= 0 && degree.CompareTo(EInteger.FromInt32(12)) <= 0))

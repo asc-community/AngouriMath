@@ -92,6 +92,22 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, AroundZero, Pins);
 
         /// <summary>
+        /// A quadratic below the bar is its leading coefficient times the linears of its two
+        /// roots, complex where its discriminant is negative, and the sine and cosine integrals of
+        /// the two conjugate arguments add up to a real answer. Rubi's 4.1.11 and 4.7.7,
+        /// <c>sin(c + d x)/(a + b x^2)</c> and <c>sin(a + b x)/(c + d x + e x^2)</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("sin(x)/(1 + x^2)")]
+        [InlineData("cos(x)/(x^2 - 4)")]
+        [InlineData("x*sin(2*x)/(x^2 + x + 1)")]
+        [InlineData("sin(c + d*x)/(a + b*x^2)")]
+        [InlineData("cos(x)/(x*(1 + x^2))")]
+        [InlineData("sin(x)/(1 + x^2)^2")]
+        public void OverAQuadratic(string integrand)
+            => DifferentiatesBack(integrand, AroundZero, Pins);
+
+        /// <summary>
         /// An argument <c>a + b x^r</c> beside a power of <c>x</c> is the same question under
         /// <c>u = x^r</c>, for a whole, a fractional, a negative and a symbolic <c>r</c>. Rubi's
         /// 4.1.12, <c>(e x)^m (a + b sin(c + d x^n))^p</c>.
