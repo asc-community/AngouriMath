@@ -90,10 +90,9 @@ namespace AngouriMath.Functions.Boolean
             {
                 for (var bit = 0; bit < variables.Length; bit++)
                     assignment[variables[bit]] = Bit(row, bit, variables.Length);
-                bool holds;
-                try { holds = expr.Substitute(assignment).EvalBoolean(); }
-                catch (Core.Exceptions.AngouriBugException) { throw; }
-                catch (Exception) { return null; }
+                // A row the expression does not decide is not a truth table.
+                if (expr.Substitute(assignment).Evaled is not Entity.Boolean holds)
+                    return null;
                 if (holds)
                     minterms.Add(row);
             }
