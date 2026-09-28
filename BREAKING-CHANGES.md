@@ -1710,6 +1710,18 @@ since they are these exponentials
 | `"(p + q*x)^2*f^(a + b*x + c*x^2)".Integrate("x")` | `integral((p + q * x) ^ 2 * f ^ (a + b * x + c * x ^ 2), x)` | the antiderivative |
 | `"x^2*sinh(a + b*x + c*x^2)".Integrate("x")` | `integral(x ^ 2 * (e ^ (a + b * x + c * x ^ 2) - e ^ (-(a + b * x + c * x ^ 2))) / 2, x)` | the antiderivative |
 
+### An exponential of a polynomial beside the polynomial's derivative is integrated
+
+`e^(a + b x + c x^2) (b + 2 c x) sqrt(a + b x + c x^2)` was left unintegrated. `G^P k P' f(P)`, with
+`P` a polynomial of degree two or more and `P'` a factor of its own up to a constant, is now
+integrated under `u = P`, as `k G^u f(u)`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(a + b*x + c*x^2)*(b + 2*c*x)*(a + b*x + c*x^2)^(1/2)".Integrate("x")` | `integral(e ^ (a + b * x + c * x ^ 2) * (b + 2 * c * x) * sqrt(a + b * x + c * x ^ 2), x)` | the antiderivative, with `erfi` |
+| `"e^(a + b*x + c*x^2)*(b + 2*c*x)/(a + b*x + c*x^2)^(3/2)".Integrate("x")` | `integral(e ^ (a + b * x + c * x ^ 2) * (b + 2 * c * x) / (a + b * x + c * x ^ 2) ^ (3/2), x)` | the antiderivative, with `erfi` |
+
 ### An exponential of a quadratic in `1/x` or `1/(c + d x)` is integrated
 
 `e^(-1/x^2)` was left unintegrated. `L^m F^(A/L^2 + B/L + C)`, with `L = c + d x` and a whole `m`,
@@ -1760,17 +1772,19 @@ same question under `u = d + e x`
 | `"(d*g + k*g*x)^m*F^(f*(a + b*ln(c*(d + k*x)^n))^2)".Integrate("x")` | `integral((d * g + k * g * x) ^ m * F ^ (f * (a + b * ln(c * (d + k * x) ^ n)) ^ 2), x)` | the antiderivative |
 | `"(g + h*x)^3*F^(f*(a + b*ln(c*(d + k*x)^n)^2))".Integrate("x")` | `integral((g + h * x) ^ 3 * F ^ (f * (a + b * ln(c * (d + k * x) ^ n) ^ 2)), x)` | the antiderivative |
 
-### An exponential of a polynomial beside the polynomial's derivative is integrated
+### A power of `x` one less than a half-odd multiple of the power inside is integrated
 
-`e^(a + b x + c x^2) (b + 2 c x) sqrt(a + b x + c x^2)` was left unintegrated. `G^P k P' f(P)`, with
-`P` a polynomial of degree two or more and `P'` a factor of its own up to a constant, is now
-integrated under `u = P`, as `k G^u f(u)`
+`f^(a + b x^n) x^(-1 + 5n/2)` was left unintegrated. `x^(k n - 1) g(x^n)`, with a symbolic `n`, was
+integrated under `u = x^n` for a whole `k` of 1 or more. For `k` half an odd number, of either sign,
+it is now integrated under `u = x^(n/2)`, where `g(x^n)` is `g(u^2)`: beside an exponential of `x^n`
+that is a moment of the Gaussian
 ([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
-| `"e^(a + b*x + c*x^2)*(b + 2*c*x)*(a + b*x + c*x^2)^(1/2)".Integrate("x")` | `integral(e ^ (a + b * x + c * x ^ 2) * (b + 2 * c * x) * sqrt(a + b * x + c * x ^ 2), x)` | the antiderivative, with `erfi` |
-| `"e^(a + b*x + c*x^2)*(b + 2*c*x)/(a + b*x + c*x^2)^(3/2)".Integrate("x")` | `integral(e ^ (a + b * x + c * x ^ 2) * (b + 2 * c * x) / (a + b * x + c * x ^ 2) ^ (3/2), x)` | the antiderivative, with `erfi` |
+| `"f^(a + b*x^n)*x^(-1 + 5/2*n)".Integrate("x")` | `integral(f ^ (a + b * x ^ n) * x ^ (-1 + 5/2 * n), x)` | the antiderivative |
+| `"f^(a + b*x^n)*x^(-1 - 1/2*n)".Integrate("x")` | `integral(f ^ (a + b * x ^ n) * x ^ (-1 - 1/2 * n), x)` | the antiderivative |
+| `"x^(-1 + 1/2*n)*sinh(a + b*x^n)".Integrate("x")` | `integral(x ^ (-1 + 1/2 * n) * (e ^ (a + b * x ^ n) - e ^ (-(a + b * x ^ n))) / 2, x)` | the antiderivative |
 
 ### `binomial(n, k)` is a function
 
