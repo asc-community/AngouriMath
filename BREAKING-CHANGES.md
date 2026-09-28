@@ -1710,6 +1710,18 @@ since they are these exponentials
 | `"(p + q*x)^2*f^(a + b*x + c*x^2)".Integrate("x")` | `integral((p + q * x) ^ 2 * f ^ (a + b * x + c * x ^ 2), x)` | the antiderivative |
 | `"x^2*sinh(a + b*x + c*x^2)".Integrate("x")` | `integral(x ^ 2 * (e ^ (a + b * x + c * x ^ 2) - e ^ (-(a + b * x + c * x ^ 2))) / 2, x)` | the antiderivative |
 
+### An exponential of a polynomial beside the polynomial's derivative is integrated
+
+`e^(a + b x + c x^2) (b + 2 c x) sqrt(a + b x + c x^2)` was left unintegrated. `G^P k P' f(P)`, with
+`P` a polynomial of degree two or more and `P'` a factor of its own up to a constant, is now
+integrated under `u = P`, as `k G^u f(u)`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(a + b*x + c*x^2)*(b + 2*c*x)*(a + b*x + c*x^2)^(1/2)".Integrate("x")` | `integral(e ^ (a + b * x + c * x ^ 2) * (b + 2 * c * x) * sqrt(a + b * x + c * x ^ 2), x)` | the antiderivative, with `erfi` |
+| `"e^(a + b*x + c*x^2)*(b + 2*c*x)/(a + b*x + c*x^2)^(3/2)".Integrate("x")` | `integral(e ^ (a + b * x + c * x ^ 2) * (b + 2 * c * x) / (a + b * x + c * x ^ 2) ^ (3/2), x)` | the antiderivative, with `erfi` |
+
 ### An exponential of a quadratic in `1/x` or `1/(c + d x)` is integrated
 
 `e^(-1/x^2)` was left unintegrated. `L^m F^(A/L^2 + B/L + C)`, with `L = c + d x` and a whole `m`,

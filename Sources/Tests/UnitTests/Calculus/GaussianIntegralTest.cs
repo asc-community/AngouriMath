@@ -147,6 +147,19 @@ namespace AngouriMath.Tests.Calculus
             => DifferentiatesBack(integrand, ("f", "2"), ("a", "1/3"), ("b", "-2/3"), ("c", "5"), ("d", "3/2"));
 
         /// <summary>
+        /// An exponential of a quadratic beside the quadratic's derivative and a half-odd power of
+        /// the quadratic, under <c>u = a + b x + c x^2</c>: <c>e^u u^(n/2)</c>. Rubi's 2.3. The
+        /// quadratic is positive at every point for these pins.
+        /// </summary>
+        [Theory]
+        [InlineData("e^(a + b*x + c*x^2)*(b + 2*c*x)*(a + b*x + c*x^2)^(1/2)")]
+        [InlineData("e^(a + b*x + c*x^2)*(b + 2*c*x)*(a + b*x + c*x^2)^(5/2)")]
+        [InlineData("e^(a + b*x + c*x^2)*(b + 2*c*x)/(a + b*x + c*x^2)^(3/2)")]
+        [InlineData("3*e^(a + b*x + c*x^2)*(2*b + 4*c*x)/sqrt(a + b*x + c*x^2)")]
+        public void TheExponentAsTheVariable(string integrand)
+            => DifferentiatesBack(integrand, ("a", "1/3"), ("b", "-2/3"), ("c", "5/4"));
+
+        /// <summary>
         /// An odd negative power ends at <c>int e^(A x^2)/x</c>, which is the exponential
         /// integral, so it is not taken.
         /// </summary>

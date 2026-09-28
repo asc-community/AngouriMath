@@ -17236,6 +17236,63 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// An exponential of a polynomial beside the polynomial's derivative, with the rest a
+        /// function of the polynomial: <c>G^P k P' f(P)</c> is <c>k G^u f(u)</c> under <c>u = P</c>.
+        /// Rubi's 2.3, <c>e^(a + b x + c x^2) (b + 2 c x) (a + b x + c x^2)^(n/2)</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </summary>
+        /// <remarks>
+        /// <see cref="SolveBySubstitution"/> reads this <c>u</c> and does not reach it: for its
+        /// own search it writes an exponential of a sum as a product of exponentials, so that
+        /// <c>e^(e^x) e^x</c> is <c>e^u du</c>, and <c>e^(a + b x + c x^2)</c> is then
+        /// <c>e^a e^(b x) e^(c x^2)</c>, with no <c>P</c> left in it to replace. Declining took
+        /// it 24 s. Only a polynomial of degree two or more, whose derivative is a factor of its
+        /// own: an exponential of a linear is the table's.
+        /// </remarks>
+        internal static Entity? SolveByTheExponentAsTheVariable(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (expr is not (Mulf or Divf) || AnExponentialOfAPolynomial(expr, x) is not { } exponential)
+                return null;
+            var polynomial = exponential.Exponent;
+            var derivative = polynomial.Differentiate(x);
+            Entity? scale = null;
+            Entity rest = Number.Integer.One;
+            foreach (var (factor, underneath) in FactorsOfTheIntegrand(expr))
+            {
+                // The derivative, up to a constant, above the bar: a sum, as it is written.
+                if (scale is null && !underneath && factor is Sumf or Minusf && factor.ContainsNode(x)
+                    && Functions.PartialFractions.Bare((factor / derivative).Simplify()) is var ratio && !ratio.ContainsNode(x)
+                    && ratio.Evaled is not Number.Complex { IsZero: true })
+                {
+                    scale = ratio;
+                    continue;
+                }
+                rest = underneath ? rest / factor : rest * factor;
+            }
+            if (scale is null)
+                return null;
+            var u = Variable.CreateUnique(expr, "u");
+            var inU = (scale * rest.Replace(node => node == polynomial ? u : node)).InnerSimplified;
+            if (inU.ContainsNode(x))
+                return null;
+            return Integration.ComputeAsAQuestionOfItsOwn(inU, u, integrateByParts)?.Substitute(u, polynomial);
+        }
+
+        /// <summary>
+        /// A factor of <paramref name="expr"/>, read through products and quotients, that is a
+        /// constant to a polynomial in <paramref name="x"/> of degree two or more, or <see langword="null"/>.
+        /// </summary>
+        private static Powf? AnExponentialOfAPolynomial(Entity expr, Entity.Variable x) => expr switch
+        {
+            Mulf(var left, var right) => AnExponentialOfAPolynomial(left, x) ?? AnExponentialOfAPolynomial(right, x),
+            Divf(var numerator, var denominator) => AnExponentialOfAPolynomial(numerator, x) ?? AnExponentialOfAPolynomial(denominator, x),
+            Powf(var @base, Sumf or Minusf) power when !@base.ContainsNode(x) && power.Exponent.ContainsNode(x)
+                && TreeAnalyzer.TryGetPolynomial(power.Exponent, x, out var monomials)
+                && monomials.Keys.All(degree => degree.Sign >= 0) && monomials.Keys.Any(degree => degree.CompareTo(EInteger.One) > 0) => power,
+            _ => null
+        };
+
+        /// <summary>
         /// Attempts to solve an integral using u-substitution.
         /// Looks for patterns where f(g(x)) * g'(x) can be integrated as F(g(x)).
         /// </summary>
