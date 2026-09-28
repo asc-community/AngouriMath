@@ -14,6 +14,7 @@ Any modifications to other source files will be overwritten when the parser is r
 */
 
 using Antlr4.Runtime;
+using Antlr4.Runtime.Atn;
 using System;
 using System.IO;
 using System.Text;
@@ -159,6 +160,32 @@ namespace AngouriMath.Core
             
             var parser = new AngouriMathParser(tokenStream, null, writer);
 
+            // First in SLL prediction, which never looks past the current rule for context:
+            // it returns the tree LL would, or reports an error where the input needs LL's
+            // context or is invalid, and it bails there rather than recovering, so either is
+            // retried in LL below. LL's full-context prediction allocated 3.8 MB for one
+            // twenty-token expression, and grew with every alternative `atom` has, so every
+            // function added to the grammar cost every parse.
+            parser.Interpreter.PredictionMode = PredictionMode.SLL;
+            parser.ErrorHandler = new BailErrorStrategy();
+            parser.RemoveErrorListeners();
+            var read = false;
+            try
+            {
+                parser.Parse();
+                read = true;
+            }
+            // A syntax error, or an action that threw on an alternative SLL took and LL would
+            // not have: neither is an answer, and LL gives the one there is.
+            catch (Exception)
+            {
+                tokenStream.Seek(0);
+                parser.Reset();
+                parser.Interpreter.PredictionMode = PredictionMode.LL;
+                parser.ErrorHandler = new DefaultErrorStrategy();
+                parser.AddErrorListener(ConsoleErrorListener<IToken>.Instance);
+            }
+
             // ANTLR reports a syntax error to the listener and then *recovers*, carrying on
             // with a rule context whose value was never assigned. The grammar's actions run
             // anyway and dereference it, so an invalid input can bring the parse down before
@@ -171,14 +198,15 @@ namespace AngouriMath.Core
             // where the parser throws with nothing recorded against the input, the exception
             // is ours and it keeps propagating.
             // https://github.com/asc-community/AngouriMath/issues/813
-            try
-            {
-                parser.Parse();
-            }
-            catch (Exception) when (writer.errors.Count > 0)
-            {
-                return new Failure<ReasonWhyParsingFailed>(writer.errors[0]);
-            }
+            if (!read)
+                try
+                {
+                    parser.Parse();
+                }
+                catch (Exception) when (writer.errors.Count > 0)
+                {
+                    return new Failure<ReasonWhyParsingFailed>(writer.errors[0]);
+                }
 
             if (writer.errors.Count > 0)
                 return new Failure<ReasonWhyParsingFailed>(writer.errors[0]);
