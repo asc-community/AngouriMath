@@ -87,6 +87,17 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <param name="expr">Expression</param>
         /// <param name="x">Variable to solve over</param>
         internal static Set Solve(Entity expr, Variable x, bool compensateSolving = false)
+            // An inversion that could not write its preimage leaves this equation unsolved, as
+            // the set of x for which it holds. At this level and no further out, so the roots
+            // found beside it stay: (x - 1) x! = 0 is { 1 } and the x with x! = 0.
+            => SolveInverting(expr, x, compensateSolving)
+               ?? new ConditionalSet(x, (compensateSolving ? expr : expr.InnerSimplified).Equalizes(0));
+
+        /// <summary>
+        /// The roots, or <see langword="null"/> where an inversion on the way has no written
+        /// preimage.
+        /// </summary>
+        private static Set? SolveInverting(Entity expr, Variable x, bool compensateSolving)
         {
             if (!compensateSolving) expr = expr.InnerSimplified; // don't simplify away the 0 on the right hand side of the subtraction
             if (expr == x)
@@ -154,7 +165,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     if (lastChild is null)
                         goto default;
                     // TODO: optimize?
-                    return subtrahend.Invert(minuend, lastChild).Select(result => Solve(lastChild - result, x, compensateSolving: true)).Unite();
+                    return subtrahend.Invert(minuend, lastChild)?.Select(result => Solve(lastChild - result, x, compensateSolving: true)).Unite();
                 // A power is zero exactly where its base is, so f(x)^n = 0 has the roots of
                 // f(x) = 0 and no others. Routing it that way rather than leaving it to the
                 // replacement machinery below is what makes it answer *identically* to the
@@ -181,7 +192,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // all along -- a right-hand side of zero is the only reason this case was
                 // reached at all. https://github.com/asc-community/AngouriMath/issues/744
                 case Function when expr.Nodes.Count(node => node == x) == 1:
-                    return expr.Invert(0, x).Select(ent => TryDowncast(expr, x, ent)).ToSet();
+                    return expr.Invert(0, x)?.Select(ent => TryDowncast(expr, x, ent)).ToSet();
                 case Providedf(var expression, var predicate):
                     return Solve(expression, x, compensateSolving).Filter(predicate, x);
                 case Piecewise p:

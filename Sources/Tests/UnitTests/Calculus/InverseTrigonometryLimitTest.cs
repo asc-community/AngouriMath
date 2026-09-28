@@ -55,8 +55,27 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("arcsec(x)", "+oo", "pi / 2")]
         [InlineData("arcsec(x)", "-oo", "pi / 2")]
         [InlineData("arccsc(x)", "+oo", "0")]
+        [InlineData("arccsc(x)", "-oo", "0")]
+        [InlineData("arctan(x)", "+oo", "pi / 2")]
+        [InlineData("arctan(x)", "-oo", "-pi / 2")]
+        [InlineData("arccotan(x)", "+oo", "0")]
+        [InlineData("arccotan(x)", "-oo", "0")]
         public void ADivergingArgumentIsAnswered(string expression, string destination, string expected) =>
             AssertSameNumber(expected, Limit(expression, destination));
+
+        /// <summary>
+        /// Through an argument whose own limit is infinite from one side and the other infinity
+        /// from the other: <c>tan(x/2)</c> at <c>pi</c>, which the half-angle antiderivative of
+        /// <c>1/(2 + cos(x))</c> holds, and whose jump there a definite integral must leave out
+        /// (https://github.com/asc-community/AngouriMath/issues/1508).
+        /// </summary>
+        [Theory]
+        [InlineData("arctan(tan(x / 2))", ApproachFrom.Left, "pi / 2")]
+        [InlineData("arctan(tan(x / 2))", ApproachFrom.Right, "-pi / 2")]
+        [InlineData("arccotan(tan(x / 2))", ApproachFrom.Left, "0")]
+        [InlineData("arccsc(tan(x / 2))", ApproachFrom.Right, "0")]
+        public void AnArgumentDivergingFromOneSideIsAnswered(string expression, ApproachFrom side, string expected) =>
+            AssertSameNumber(expected, expression.ToEntity().Limit("x", MathS.pi, side));
 
         /// <summary>
         /// The limit has to be the limit of the function this library computes, whichever side of

@@ -575,6 +575,22 @@ was ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
 | `"x * sqrt(c - a*c*x) / e^(3 * atanh(a*x))".Integrate("x")` | `integral(…)` — left unevaluated, with `e` evaluated to a hundred digits inside it | an antiderivative in `sqrt(c - a c x)`, `provided c - a * c * x >= 0` |
 | `"1/sqrt(x + x^(3/2))".Integrate("x")` | `integral(1 / sqrt(x + x ^ (3/2)), x)` — left unevaluated | `2 * sqrt(1 + sqrt(x)) / (1/2) + C provided x >= 0` |
 
+### An answer that read the sign of an even root says where the root is real
+
+The general substitution for an even root, `u = t^(1/q)`, writes a sign or a modulus of `u` that a
+rule below it put in as the root itself, `sgn(u) = 1` and `|u| = u`, which is so only where the
+root is real. Beyond the radicand's zero `u` is imaginary, and the integrand can still be real
+there, a product of two imaginary factors: `(1 + sec(x))^(5/2) sqrt(cos(x))` under `t = cos(x)` and
+`u = sqrt(t)` has its power of a quotient taken apart as `(1 + u^2)^(5/2)/|u|^5`, and its answer
+was not the integrand's antiderivative wherever the cosine is negative. An answer that had a sign
+or a modulus of `u` now carries `provided t >= 0`, as the entry above conditions the factoring.
+Rubi's 4.5.3.1:640 was wrong on that region
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(1+sec(x))^(5/2)*sqrt(cos(x))".Integrate("x")` | `integral((1 + sec(x)) ^ (5/2) * sqrt(cos(x)), x)` — left unevaluated | an antiderivative with `sgn(sin(x))` in it, `provided cos(x) >= 0` |
+
 ### A zero imaginary part is on the real axis, whatever its sign
 
 **Silent, with the downcasting off.** A decimal's negative zero — `0E-100 * -0.43` is `-0E-102`
@@ -1519,6 +1535,392 @@ and samples of families 1, 4, 5, 6 and 7. That is 4056 problems, with one answer
 above). One problem is lost to the 5 s budget: `(c + d x^2)^(5/2)/(x^2 (a + b x^2)^2)`, which
 `master` solved in 5.3 s, is now answered correctly by a slower route that the old check turned
 away.
+
+### A quantifier over the whole numbers reads the bounds in its hypothesis, and residues written with `mod`
+
+`forall k in ZZ : (0 < k and k < 7) implies 7 divides binomial(7, k)` was left as written, because no
+route read a bound on the name out of an implication's hypothesis. The conjuncts of the hypothesis
+that mention only the name, and that the solver reads, now cut the set down. Where the cut is
+listed, or is the whole numbers from a least one, the statement is decided over it, with the other
+conjuncts kept. `exists` and `exists!` read their conjunction the same way. And
+`forall a in ZZ : a^7 mod 7 = a mod 7` was left as written while `a^7 = a (mod 7)` was decided. An
+equation or an order comparison between residues `p mod m` of polynomials with whole coefficients
+repeats with the moduli, since `mod` is the floored remainder, so the residues decide it too.
+These are Sullivan and Mackey's Prob 8.9.24–26 at a given prime
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). Quantifiers were a parse error
+in 2.5.0.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall k in ZZ : (0 < k and k < 7) implies 7 divides binomial(7, k)` | `UnhandledParseException` | `True` |
+| `exists! k in ZZ : (0 < k and k < 7) and 3 divides k and 2 divides k` | `UnhandledParseException` | `True` |
+| `forall n in ZZ : n >= 5 implies 2^n > n^2` | `UnhandledParseException` | `True` |
+| `forall a in ZZ : a^7 mod 7 = a mod 7` | `UnhandledParseException` | `True` |
+| `forall a, b in ZZ : (a + b)^5 mod 5 = (a^5 + b^5) mod 5` | `UnhandledParseException` | `True` |
+
+### A quantifier's facts are read inside its body
+
+`forall p in PP : forall k in ZZ : (0 < k and k < p) implies p divides binomial(p, k)` was left as
+written. The claim holds because `p` is prime and `0 < k < p`, and only the quantifiers around it
+say so. A quantifier now hands those facts down while it decides its body: the set its name ranges
+over, and, while the claim is simplified, the conjuncts of the hypothesis. The rule for
+`p divides binomial(p, k)` reads them. Nothing decided with them leaves the quantifier:
+`p divides binomial(p, k)` on its own is still left as written. This is Sullivan and Mackey's
+Prob 8.9.24 for every prime ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+Quantifiers were a parse error in 2.5.0.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall p in PP : forall k in ZZ : (0 < k and k < p) implies p divides binomial(p, k)` | `UnhandledParseException` | `True` |
+| `forall k in ZZ : forall p in PP : (0 < k and k < p) implies p divides binomial(p, k)` | `UnhandledParseException` | `True` |
+| `forall p in PP : forall k in ZZ+ : k < p implies p divides binomial(p, k)` | `UnhandledParseException` | `True` |
+
+### Fermat's little theorem and the freshman's dream, for every prime
+
+`forall p in PP : forall a in ZZ : a^p = a (mod p)` was left as written. Under a quantifier that
+establishes `p` prime, `p divides d` now holds where writing each power `(u + v)^p` in `d` as
+`u^p + v^p` leaves nothing: the binomial theorem adds only multiples of `binomial(p, k)` with
+`0 < k < p`, each a multiple of `p`. A congruence modulo a symbol, or an equation of residues, over
+a row of whole numbers holds where it holds at one member and the difference of its sides changes
+by a multiple of the modulus from each member to the next. For Fermat's little theorem that change
+is `(a + 1)^p - a^p - 1`. These are Sullivan and Mackey's Prob 8.9.25 and 8.9.26
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). Quantifiers were a parse error
+in 2.5.0.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall p in PP : forall a in ZZ : a^p = a (mod p)` | `UnhandledParseException` | `True` |
+| `forall p in PP : forall a in ZZ : a^p mod p = a mod p` | `UnhandledParseException` | `True` |
+| `forall p in PP : forall a, b in ZZ : (a + b)^p = a^p + b^p (mod p)` | `UnhandledParseException` | `True` |
+
+### An equation the solver cannot invert is left unsolved, not answered with no roots
+
+`x! = 6` was answered `{ }`, a claim that it has no roots, and it has 3. The solver isolates `x`
+by inverting the function around it, and for a factorial, a binomial coefficient, `mod`, `gcd`,
+`lcm`, `min`, `max`, `phi`, `prime`, the valuation, a sum, a product, a limit, a set with `x`
+inside it and a few more, the inversion had no way to write the preimage and returned none. Such
+an equation is now left unsolved, as the set of `x` for which it holds, the way a statement
+the solver has no arm for already was. Roots found beside it are kept. A value these functions
+provably never take still has no roots: the factorial is the gamma function one along, which
+has no zeros, so `x! = 0` is still `{ }`, and so is `arcsin(x) = 5`.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x! = 6".Solve("x")` | `{ }` | `{ x : x! = 6 }` |
+| `"x mod 3 = 1".Solve("x")` | `{ }` | `{ x : x mod 3 = 1 }` |
+| `"gcd(x, 4) = 2".Solve("x")` | `{ }` | `{ x : gcd(x, 4) = 2 }` |
+| `"max(x, 1) = 3".Solve("x")` | `{ }` | `{ x : max(x, 1) = 3 }` |
+| `"phi(x) = 4".Solve("x")` | `{ }` | `{ x : phi(x) = 4 }` |
+| `"binomial(x, 2) = 3".Solve("x")` | `UnhandledParseException` | `{ x : binomial(x, 2) = 3 }` |
+
+### `erf`, `erfc` and `erfi` are functions
+
+**Addition, and two silent misreadings fixed.** The error function `erf(z) = 2/sqrt(pi) int_0^z
+e^(-t^2) dt`, its complement `erfc(z) = 1 - erf(z)` and the imaginary error function
+`erfi(z) = -i erf(i z)` are nodes (`MathS.Erf`, `MathS.Erfc`, `MathS.Erfi`), the first of #1501's
+special functions. Each is differentiated, printed in LaTeX as `\operatorname{erf}` and so on, and
+evaluated to the working precision anywhere in the complex plane (`Entity.Number.Erf`, `Erfc`,
+`Erfi`). An equation in one of them is left unsolved rather than answered with no roots. `erf`
+was refused by name, but `erfc` and `erfi` were not, so each was read as a product with an
+undeclared variable.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"erf(x)"` | `UnrecognizedFunctionParseException` | `erf(x)` |
+| `"erfc(x)"` | `erfc * x` | `erfc(x)` |
+| `"erfi(x)"` | `erfi * x` | `erfi(x)` |
+| `"erfc(1)".Simplify()` | `erfc` | `erfc(1)`, and `0.157299207050285…` evaluated |
+| `"erf(x)".Differentiate("x")` | `UnrecognizedFunctionParseException` | `2 / sqrt(pi) * e ^ (-x ^ 2)` |
+
+### `Ei` and `li` are functions
+
+**Addition, and two silent misreadings fixed.** The exponential integral
+`Ei(z) = gamma + (ln z - ln(1/z))/2 + sum z^k/(k k!)` and the logarithmic integral `li(z) = Ei(ln z)`
+are nodes (`MathS.Ei`, `MathS.Li`), the next of #1501's special functions. On the real line `Ei(x)`
+is the principal value of `int_-oo^x e^t/t dt` and `li(x)` that of `int_0^x dt/ln t`, both real, as
+SymPy's, mpmath's and Mathematica's are. Each is differentiated, printed in LaTeX as
+`\operatorname{Ei}` and `\operatorname{li}`, and evaluated to the working precision anywhere in the
+complex plane (`Entity.Number.Ei`, `Li`). Neither name was refused, so each was read as a product
+with an undeclared variable
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"Ei(x)"` | `Ei * x` | `Ei(x)` |
+| `"li(2)".Simplify()` | `2 * li` | `li(2)`, and `1.045163780117492…` evaluated |
+| `"Ei(1)".Simplify()` | `Ei` | `Ei(1)`, and `1.895117816355936…` evaluated |
+| `"Ei(x)".Differentiate("x")` | `Ei` | `e ^ x / x` |
+
+### The exponential and logarithmic integrals are integrated to
+
+`e^x/x` was left unintegrated. An exponential of a linear over a whole power of a linear, beside a
+polynomial, is now integrated to `Ei` under `u = c + d x`, where each term is `u^m e^(k u)`: `Ei(k u)`
+for `m = -1`, and by parts toward it below. The Gaussian's odd negative moments end at
+`int e^(A x^2)/x = Ei(A x^2)/2`. A power of `x` over a whole power of `A + B ln(c x^r)` is integrated to
+`Ei` under `t = A + B ln(c x^r)`, and so is one over a logarithm of a power of a linear, or of
+`d + e x^m`. And `Ei(ln y)` is `li(y)`, by `li`'s definition, so `int 1/ln(x) dx` is `li(x)`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^x/x".Integrate("x")` | `integral(e ^ x / x, x)` | `Ei(x) + C` |
+| `"x*e^(-1/x^2)".Integrate("x")` | `integral(x * e ^ ((-1) / x ^ 2), x)` | the antiderivative, with `Ei` |
+| `"1/ln(x)".Integrate("x")` | `integral(1 / ln(x), x)` | `li(x) + C` |
+| `"x^m/(a + b*ln(c*x^n))".Integrate("x")` | `integral(x ^ m / (a + b * ln(c * x ^ n)), x)` | the antiderivative, with `Ei` |
+
+### `Si`, `Ci`, `Shi` and `Chi` are functions
+
+**Addition, and four silent misreadings fixed.** The sine and cosine integrals
+`Si(z) = sum (-1)^k z^(2k + 1)/((2k + 1) (2k + 1)!)` and
+`Ci(z) = gamma + ln z + sum_(k >= 1) (-1)^k z^(2k)/(2k (2k)!)`, and the hyperbolic `Shi` and `Chi`,
+the same sums without the alternating sign, are nodes (`MathS.Si`, `MathS.Ci`, `MathS.Shi`,
+`MathS.Chi`), the next of #1501's special functions. On the real line `Si(x)` is `int_0^x sin t/t dt`
+and `Shi(x)` is `int_0^x sinh t/t dt`, both real; `Ci` and `Chi` take the cut of `ln z`, so that
+`Ci(-x) = Ci(x) + i pi` for `x > 0`, as SymPy's, mpmath's and Mathematica's do. Each is
+differentiated, printed in LaTeX as `\operatorname{Si}` and so on, and evaluated to the working
+precision anywhere in the complex plane (`Entity.Number.Si`, `Ci`, `Shi`, `Chi`). None of the names
+was refused, so each was read as a product with an undeclared variable
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"Si(x)"` | `Si * x` | `Si(x)` |
+| `"Ci(2)".Simplify()` | `2 * Ci` | `Ci(2)`, and `0.4229808287748649…` evaluated |
+| `"Chi(1)".Simplify()` | `Chi` | `Chi(1)`, and `0.8378669409802082…` evaluated |
+| `"Si(x)".Differentiate("x")` | `Si` | `sin(x) / x` |
+
+### The sine and cosine integrals are integrated to
+
+`sin(x)/x` was left unintegrated. A polynomial in sines and cosines of a linear, beside a
+polynomial, over powers of linears is now integrated to `Si` and `Ci`: each monomial of the sines
+and cosines is a sum of sines and cosines of multiples of the argument, and under `u` = the linear
+each term is `u^m sin(q u)` or `u^m cos(q u)`, which is `Si(q u)` or `Ci(q u)` for `m = -1` and by
+parts toward them below. Several linears are split into partial fractions over them first, and an
+argument `a + b x^r` beside a power of `x` is the same question under `u = x^r`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(x)/x".Integrate("x")` | `integral(sin(x) / x, x)` | `Si(x) + C` |
+| `"sin(x)^2/x".Integrate("x")` | `integral(sin(x) ^ 2 / x, x)` | `1/2 * ln(x) + -1/2 * Ci(2 * x) + C` |
+| `"sin(x)/(x*(1+x))".Integrate("x")` | `integral(sin(x) / (x * (1 + x)), x)` | `Si(x) + -cos(1) * Si(1 + x) + sin(1) * Ci(1 + x) + C` |
+| `"sin(a+b/x)/x".Integrate("x")` | `integral(sin(a + b / x) / x, x)` | `-(cos(a) * Si(b * 1 / x) + sin(a) * Ci(b * 1 / x)) + C` |
+
+### A definite integral is the limit at a bound where its antiderivative is undefined
+
+`integral(x * e^(-x), x, 0, +oo)` was `NaN`, this library's way of saying a value does not
+exist. It exists, and it is `1`. A definite integral substituted each bound into the
+antiderivative, and `-(x + 1) e^(-x)` at `+oo` is `-oo * 0`; `x ln(x) - x` at `0` is `0 * -oo`.
+At a bound where the substitution is `NaN`, the value is now the antiderivative's limit there,
+taken from inside the range: from the left at `+oo`, from the right at `-oo`, and at a finite
+bound from the side the other bound is on. Nothing the substitution answered changes, and an
+antiderivative with no limit at the bound still gives `NaN`, as `-cos(x)` does at `+oo`
+([#1507](https://github.com/asc-community/AngouriMath/issues/1507)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `integral(x * e^(-x), x, 0, +oo)` | `NaN` | `1` |
+| `integral(e^(-x) * sin(x), x, 0, +oo)` | `NaN` | `1/2` |
+| `integral(x^3 * e^(-x^2), x, 0, +oo)` | `integral(e ^ (-x ^ 2) * x ^ 3, x, 0, +oo)` | `1/2` |
+| `integral(ln(x), x, 0, 1)` | `NaN` | `-1` |
+| `integral(x * ln(x), x, 0, 1)` | `NaN` | `-1/4` |
+| `integral(1/x^2, x, 0, 1)` | `NaN` | `+oo` |
+| `integral(sin(x), x, 0, +oo)` | `NaN` | `NaN` |
+
+### The Gaussian and the error functions are integrated
+
+`e^(-x^2)` was left unintegrated, and its antiderivative is `sqrt(pi)/2 erf(x)`. An exponential
+of a quadratic is now integrated to an error function of the square it completes, written with
+`erfi` and a real root where the square's coefficient is decidably positive. Beside an even power
+of `x`, on either side of 0, it is integrated by parts down to that, and `erf`, `erfc` and `erfi`
+themselves by parts against 1. A symbolic exponent is answered for the generic case, as
+`F^(a x)/(a ln F)` already was ([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(-x^2)".Integrate("x")` | `integral(e ^ (-x ^ 2), x)` | `sqrt(pi) / 2 * erf(x) + C` |
+| `"e^(x^2)".Integrate("x")` | `integral(e ^ x ^ 2, x)` | `sqrt(pi) / 2 * erfi(x) + C` |
+| `"x^2*e^(-x^2)".Integrate("x")` | `integral(x ^ 2 * e ^ (-x ^ 2), x)` | `x * e ^ (-x ^ 2) / (-2) + 1/2 * sqrt(pi) / 2 * erf(x) + C` |
+| `"f^(a+b*x^2)".Integrate("x")` | `integral(f ^ (a + b * x ^ 2), x)` | `f ^ a * sqrt(pi) / (2 * sqrt(-b * ln(f))) * erf(sqrt(-b * ln(f)) * x) + C` |
+| `"erf(x)".Integrate("x")` | `UnrecognizedFunctionParseException` | `x * erf(x) + e ^ (-x ^ 2) / sqrt(pi) + C` |
+| `integral(e^(-x^2), x, -oo, +oo)` | `integral(e ^ (-x ^ 2), x, -oo, +oo)` | `sqrt(pi)` |
+
+### A definite integral across a pole diverges, and a jump in its antiderivative is left out
+
+`integral(1/x^2, x, -1, 1)` was `-2`, a negative number for a positive integrand: the
+antiderivative `-1/x` was taken at the two bounds, and the pole between them was never seen.
+Where the bounds have numeric values, the range is now split where the antiderivative can break,
+and each piece takes its limit at a break from its own side. The breaks are the zeros of a
+denominator, of a logarithm's argument, and of the cosine or sine under a tangent, secant,
+cotangent or cosecant, among others. A pole the integral diverges across gives `+oo` or `-oo`,
+and pieces diverging in opposite directions have no value. A jump where the integrand is
+continuous, like the half-angle antiderivative's at `pi`, is left out. That needs the limit of an
+arctangent, arccotangent or arccosecant whose argument diverges, which is now answered too
+([#1508](https://github.com/asc-community/AngouriMath/issues/1508)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `integral(1/x^2, x, -1, 1)` | `-2` | `+oo` |
+| `integral(1/(x - 2)^2, x, 0, 3)` | `-3/2` | `+oo` |
+| `integral(tan(x)^2, x, 0, 3)` | `tan(3) - arctan(tan(3))` | `+oo` |
+| `integral(1/x, x, -1, 1)` | `-ln(-1)` | `NaN` |
+| `integral(1/(x^2 - 4), x, -3, 3)` | `ln(1/25) / 4` | `NaN` |
+| `integral(1/(2 + cos(x)), x, 0, 2 * pi)` | `integral(1 / (2 + cos(x)), x, 0, 2 * pi)` | `2/3 * sqrt(3) * pi` |
+| `integral(1/(2 + cos(x)), x, 0, pi)` | `integral(1 / (2 + cos(x)), x, 0, pi)` | `sqrt(3) * pi / 3` |
+| `limitleft(arctan(tan(x / 2)), x, pi)` | `limitleft(arctan(tan(x / 2)), x, pi)` | `pi / 2` |
+
+### With the downcasting off, integration and limits compute on exact numbers
+
+With `DowncastingEnabled` off, `1/(1 + c^2*x^2)` integrated to `NaN + C` and `limit(sin(c*x)/x, x, 0)`
+was `NaN`, where the default setting answers `arctan(c x)/c` and `c`. The zero test compared
+against the literal `0`, and with the downcasting off no zero was equal to it. A whole number
+parsed with the setting off was a decimal, so `x^2` was not a whole power to the integrator.
+Integration and limits now compute as with the downcasting on, whatever the caller's setting, on
+the input's decimals read as the exact rationals they are. With it on, nothing changes. With it
+off, a decimal comes back as the rational it holds: `0.1 x` integrates to `1/10 * x ^ 2 / 2 + C`,
+where it was `0.1 * x ^ 2 / 2 + C`
+([#1490](https://github.com/asc-community/AngouriMath/issues/1490)).
+
+| Input, with the downcasting off | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(1 + c^2*x^2)".Integrate("x")` | `NaN + C` | the antiderivative |
+| `"(a + b*arcsin(c*x))/sqrt(d - c^2*d*x^2)".Integrate("x")` | `integral((a + b * arcsin(c * x)) / (d - c ^ 2 * d * x ^ 2) ^ (1/2), x)` | the antiderivative |
+| `limit(sin(c*x)/x, x, 0)` | `NaN` | `c` |
+| `limit((1 - cos(c*x))/x^2, x, 0)` | `NaN` | `c ^ 2 / 2` |
+
+### With the downcasting off, a comparison of real values is decided
+
+With `DowncastingEnabled` off, `cos(3)` evaluates to a complex number whose imaginary part is zero,
+and a comparison of one was `NaN`: inequalities were decided only between numbers of the real
+type. A number with no imaginary part is now compared as the real it is, so `cos(3) >= 0` is
+`false` under either setting, and a condition an answer states on a sign, `provided cos(x) >= 0`,
+can be evaluated at a point. A comparison with a value off the real line is still `NaN`.
+
+| Evaluated, with the downcasting off | Was (2.5.0) | Now |
+|---|---|---|
+| `cos(3) >= 0` | `NaN` | `false` |
+| `sin(4) < 0` | `NaN` | `true` |
+| `cos(1) > cos(3)` | `NaN` | `true` |
+
+### A half-odd power of a logarithm beside a power of `x` is integrated
+
+`x sqrt(ln(x))` was left unintegrated. `x^p F^n`, where `F` is `ln x` or `A + B ln(c x^r)` and
+`n` is half an odd number, is now integrated onto the Gaussian's moments under `t = sqrt(F)`.
+A polynomial beside it is summed a power at a time, and the logarithm of a power of a linear is
+the same question under `u = d + e x`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x*sqrt(ln(x))".Integrate("x")` | `integral(x * sqrt(ln(x)), x)` | the antiderivative, with `erfi` |
+| `"sqrt(ln(a*x^n))".Integrate("x")` | `integral(sqrt(ln(a * x ^ n)), x)` | the antiderivative, with `erfi` |
+| `"x^2/ln(x)^(3/2)".Integrate("x")` | `integral(x ^ 2 / ln(x) ^ (3/2), x)` | the antiderivative, with `erfi` |
+| `"(f + g*x)*(a + b*ln(c*(d + k*x)^n))^(3/2)".Integrate("x")` | `integral((f + g * x) * (a + b * ln(c * (d + k * x) ^ n)) ^ (3/2), x)` | the antiderivative |
+
+### The Gaussian with a linear term is integrated beside a power of `x` or a polynomial
+
+`x^2 e^(-x^2 + x)` was left unintegrated. `x^m P(x) F^(a x^2 + b x + c)` with `b` not zero is now
+integrated at the square's centre, `u = x + b/(2a)`, where `x^m P(x)` is a polynomial in `u`.
+Each of its powers is a moment of the Gaussian, and an odd one ends at the elementary
+`e^(A u^2)/(2A)`. The hyperbolic functions of a quadratic beside a power of `x` come out too,
+since they are these exponentials
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2*e^(-x^2 + x)".Integrate("x")` | `integral(x ^ 2 * e ^ (-x ^ 2 + x), x)` | the antiderivative, with `erf` |
+| `"x^3*f^(c*(a + b*x)^2)".Integrate("x")` | `integral(x ^ 3 * f ^ (c * (a + b * x) ^ 2), x)` | the antiderivative |
+| `"(p + q*x)^2*f^(a + b*x + c*x^2)".Integrate("x")` | `integral((p + q * x) ^ 2 * f ^ (a + b * x + c * x ^ 2), x)` | the antiderivative |
+| `"x^2*sinh(a + b*x + c*x^2)".Integrate("x")` | `integral(x ^ 2 * (e ^ (a + b * x + c * x ^ 2) - e ^ (-(a + b * x + c * x ^ 2))) / 2, x)` | the antiderivative |
+
+### An exponential of a polynomial beside the polynomial's derivative is integrated
+
+`e^(a + b x + c x^2) (b + 2 c x) sqrt(a + b x + c x^2)` was left unintegrated. `G^P k P' f(P)`, with
+`P` a polynomial of degree two or more and `P'` a factor of its own up to a constant, is now
+integrated under `u = P`, as `k G^u f(u)`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(a + b*x + c*x^2)*(b + 2*c*x)*(a + b*x + c*x^2)^(1/2)".Integrate("x")` | `integral(e ^ (a + b * x + c * x ^ 2) * (b + 2 * c * x) * sqrt(a + b * x + c * x ^ 2), x)` | the antiderivative, with `erfi` |
+| `"e^(a + b*x + c*x^2)*(b + 2*c*x)/(a + b*x + c*x^2)^(3/2)".Integrate("x")` | `integral(e ^ (a + b * x + c * x ^ 2) * (b + 2 * c * x) / (a + b * x + c * x ^ 2) ^ (3/2), x)` | the antiderivative, with `erfi` |
+
+### An exponential of a quadratic in `1/x` or `1/(c + d x)` is integrated
+
+`e^(-1/x^2)` was left unintegrated. `L^m F^(A/L^2 + B/L + C)`, with `L = c + d x` and a whole `m`,
+is now integrated under `u = 1/L`, where it is the Gaussian beside a power of `u`. The hyperbolic
+functions of `a + b/x^2` come out too, since they are these exponentials. An odd power that ends at
+the exponential integral, as `x e^(-1/x^2)` does, is still left unintegrated
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(-1/x^2)".Integrate("x")` | `integral(e ^ ((-1) / x ^ 2), x)` | the antiderivative, with `erf` |
+| `"f^(a + b/x^2)*x^2".Integrate("x")` | `integral(f ^ (a + b / x ^ 2) * x ^ 2, x)` | the antiderivative |
+| `"f^(a + b/(c + d*x)^2)/(c + d*x)^4".Integrate("x")` | `integral(f ^ (a + b / (c + d * x) ^ 2) / (c + d * x) ^ 4, x)` | the antiderivative |
+| `"sinh(a + b/x^2)".Integrate("x")` | `integral((e ^ (a + b / x ^ 2) - e ^ (-(a + b / x ^ 2))) / 2, x)` | the antiderivative |
+
+### Exponentials of quadratics beside sines, cosines and hyperbolic functions of quadratics are integrated
+
+`e^(x^2) sin(x)` was left unintegrated. A product of exponentials of polynomials of degree at most
+two, whole powers of sines, cosines and hyperbolic functions of such polynomials, and a polynomial
+is now integrated wherever some exponent is a quadratic. Each sine or cosine is written as
+exponentials of `i` times its argument, and every term of the product multiplied out is the
+Gaussian's. So the answer for a real integrand with a sine or cosine in it is written with the
+imaginary unit, as Rubi's is: `e^(x^2) sin(x)` integrates to
+`-i/2 e^(1/4) sqrt(pi)/2 erfi(x + i/2) + i/2 e^(1/4) sqrt(pi)/2 erfi(x - i/2)`. A sine or cosine of a
+quadratic alone, or beside a polynomial only, is left to the rules that answered it before
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(x^2)*sin(x)".Integrate("x")` | `integral(e ^ x ^ 2 * sin(x), x)` | the antiderivative, with `erfi` |
+| `"f^(a + b*x + c*x^2)*cos(d + p*x + q*x^2)".Integrate("x")` | `integral(f ^ (a + b * x + c * x ^ 2) * cos(d + p * x + q * x ^ 2), x)` | the antiderivative, with `erf` |
+| `"f^(a + c*x^2)*cosh(d + p*x)^2".Integrate("x")` | `integral(f ^ (a + c * x ^ 2) * ((e ^ (d + p * x) + e ^ (-(d + p * x))) / 2) ^ 2, x)` | the antiderivative |
+| `"x^2*sinh(a + b*x + c*x^2)^2".Integrate("x")` | `integral(x ^ 2 * ((e ^ (a + b * x + c * x ^ 2) - e ^ (-(a + b * x + c * x ^ 2))) / 2) ^ 2, x)` | the antiderivative |
+| `"2^(x^2)*3^(x + 1)".Integrate("x")` | `integral(2 ^ x ^ 2 * 3 ^ (x + 1), x)` | the antiderivative, with `erfi` |
+
+### A power of `x` beside exponentials of quadratics without a linear part is integrated
+
+`x^2 sinh(a + b x^2)^3` was left unintegrated. A polynomial, or a power of `x` above or below the bar,
+beside exponentials of quadratics is now integrated where a term's exponent has no linear part: its
+moments are taken about 0, and a negative even power is one of them. A negative odd power, which
+ends at the exponential integral, is still left unintegrated
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2*sinh(a + b*x^2)^3".Integrate("x")` | `integral(x ^ 2 * ((e ^ (a + b * x ^ 2) - e ^ (-(a + b * x ^ 2))) / 2) ^ 3, x)` | the antiderivative |
+| `"sinh(a + b*x^2)^3/x^2".Integrate("x")` | `integral(((e ^ (a + b * x ^ 2) - e ^ (-(a + b * x ^ 2))) / 2) ^ 3 / x ^ 2, x)` | the antiderivative |
+
+### An exponential of a quadratic in a logarithm beside a power of `x` is integrated
+
+`e^(ln(x)^2)` was left unintegrated. `x^p G^(Q(L))`, where `L` is `ln(c x^r)` and `Q` a quadratic
+with a square term, is now integrated under `t = L`, where it is the Gaussian with a linear term. A
+polynomial beside it is summed a power at a time, and the logarithm of a power of a linear is the
+same question under `u = d + e x`
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(ln(x)^2)".Integrate("x")` | `integral(e ^ ln(x) ^ 2, x)` | the antiderivative, with `erfi` |
+| `"x^2*F^(f*(a + b*ln(c*x^n))^2)".Integrate("x")` | `integral(x ^ 2 * F ^ (f * (a + b * ln(c * x ^ n)) ^ 2), x)` | the antiderivative |
+| `"(d*g + k*g*x)^m*F^(f*(a + b*ln(c*(d + k*x)^n))^2)".Integrate("x")` | `integral((d * g + k * g * x) ^ m * F ^ (f * (a + b * ln(c * (d + k * x) ^ n)) ^ 2), x)` | the antiderivative |
+| `"(g + h*x)^3*F^(f*(a + b*ln(c*(d + k*x)^n)^2))".Integrate("x")` | `integral((g + h * x) ^ 3 * F ^ (f * (a + b * ln(c * (d + k * x) ^ n) ^ 2)), x)` | the antiderivative |
+
+### A power of `x` one less than a half-odd multiple of the power inside is integrated
+
+`f^(a + b x^n) x^(-1 + 5n/2)` was left unintegrated. `x^(k n - 1) g(x^n)`, with a symbolic `n`, was
+integrated under `u = x^n` for a whole `k` of 1 or more. For `k` half an odd number, of either sign,
+it is now integrated under `u = x^(n/2)`, where `g(x^n)` is `g(u^2)`: beside an exponential of `x^n`
+that is a moment of the Gaussian
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"f^(a + b*x^n)*x^(-1 + 5/2*n)".Integrate("x")` | `integral(f ^ (a + b * x ^ n) * x ^ (-1 + 5/2 * n), x)` | the antiderivative |
+| `"f^(a + b*x^n)*x^(-1 - 1/2*n)".Integrate("x")` | `integral(f ^ (a + b * x ^ n) * x ^ (-1 - 1/2 * n), x)` | the antiderivative |
+| `"x^(-1 + 1/2*n)*sinh(a + b*x^n)".Integrate("x")` | `integral(x ^ (-1 + 1/2 * n) * (e ^ (a + b * x ^ n) - e ^ (-(a + b * x ^ n))) / 2, x)` | the antiderivative |
 
 ### `binomial(n, k)` is a function
 

@@ -49,3 +49,16 @@ them oldest first, and `back n` counts from the end.
 
 A cell with no value — a `let` — adds nothing, and a question about the history is itself a cell
 with a value, so it is remembered too.
+
+## LaTeX
+
+`latex` gives an expression's LaTeX, and `render` shows it typeset in the browser, the way a plot
+is shown: a page in the temporary directory, rendered by MathJax, with the LaTeX beneath it.
+
+```
+[...] latex (x / 2)
+\frac{x}{2}
+
+[...] render (x / 2)
+Showing /tmp/angourimath-….html in the browser
+```

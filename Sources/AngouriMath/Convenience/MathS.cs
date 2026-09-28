@@ -1367,6 +1367,98 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Binomial(Entity n, Entity k) => new Binomialf(n, k);
 
+        /// <summary>The error function, <c>erf(z) = 2/sqrt(pi) int_0^z e^(-t^2) dt</c></summary>
+        /// <param name="a">The argument, any complex number</param>
+        /// <returns>The <see cref="Entity.Erff"/> node</returns>
+        /// <remarks>https://github.com/asc-community/AngouriMath/issues/1501</remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Erf(Entity a) => new Erff(a);
+
+        /// <summary>The complementary error function, <c>erfc(z) = 1 - erf(z)</c></summary>
+        /// <param name="a">The argument, any complex number</param>
+        /// <returns>The <see cref="Entity.Erfcf"/> node</returns>
+        /// <remarks>https://github.com/asc-community/AngouriMath/issues/1501</remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Erfc(Entity a) => new Erfcf(a);
+
+        /// <summary>The imaginary error function, <c>erfi(z) = -i erf(i z)</c></summary>
+        /// <param name="a">The argument, any complex number</param>
+        /// <returns>The <see cref="Entity.Erfif"/> node</returns>
+        /// <remarks>
+        /// On the real line <c>erfi(x) = 2/sqrt(pi) int_0^x e^(t^2) dt</c>, so it is what
+        /// <c>int e^(x^2) dx</c> is in closed form.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Erfi(Entity a) => new Erfif(a);
+
+        /// <summary>The exponential integral, <c>Ei(z) = gamma + (ln z - ln(1/z))/2 + sum z^k/(k k!)</c></summary>
+        /// <param name="a">The argument, any complex number but 0</param>
+        /// <returns>The <see cref="Entity.Eif"/> node</returns>
+        /// <remarks>
+        /// On the real line <c>Ei(x)</c> is the principal value of <c>int_-oo^x e^t/t dt</c>, real on
+        /// either side of 0, so it is what <c>int e^x/x dx</c> is in closed form. Off it, the cut is
+        /// the negative real axis, as for <c>ln</c>, but <c>Ei</c> keeps its real value on the cut
+        /// itself: <c>Ei(-1)</c> is about <c>-0.2194</c>, and just above the axis it is <c>i pi</c> more.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Ei(Entity a) => new Eif(a);
+
+        /// <summary>The logarithmic integral, <c>li(z) = Ei(ln z)</c></summary>
+        /// <param name="a">The argument, any complex number but 1</param>
+        /// <returns>The <see cref="Entity.Lif"/> node</returns>
+        /// <remarks>
+        /// On <c>x > 0</c>, <c>li(x)</c> is the principal value of <c>int_0^x dt/ln t</c>, so it is what
+        /// <c>int 1/ln(x) dx</c> is in closed form: real, <c>0</c> at <c>0</c> and <c>-oo</c> at <c>1</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Li(Entity a) => new Lif(a);
+
+        /// <summary>The sine integral, <c>Si(z) = int_0^z sin(t)/t dt</c></summary>
+        /// <param name="a">The argument, any complex number</param>
+        /// <returns>The <see cref="Entity.Sif"/> node</returns>
+        /// <remarks>
+        /// Entire and odd, so what <c>int sin(x)/x dx</c> is in closed form; <c>Si(+oo) = pi/2</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Si(Entity a) => new Sif(a);
+
+        /// <summary>The cosine integral, <c>Ci(z) = gamma + ln z + int_0^z (cos t - 1)/t dt</c></summary>
+        /// <param name="a">The argument, any complex number but 0</param>
+        /// <returns>The <see cref="Entity.Cif"/> node</returns>
+        /// <remarks>
+        /// On <c>x > 0</c> it is <c>-int_x^oo cos(t)/t dt</c>, real, so what <c>int cos(x)/x dx</c> is in
+        /// closed form. Its cut is the negative real axis, as for <c>ln</c>, on which it is the value
+        /// from above: <c>Ci(-x) = Ci(x) + i pi</c>, as SymPy's, mpmath's and Mathematica's is.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Ci(Entity a) => new Cif(a);
+
+        /// <summary>The hyperbolic sine integral, <c>Shi(z) = int_0^z sinh(t)/t dt</c></summary>
+        /// <param name="a">The argument, any complex number</param>
+        /// <returns>The <see cref="Entity.Shif"/> node</returns>
+        /// <remarks>
+        /// Entire and odd, so what <c>int sinh(x)/x dx</c> is in closed form.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Shi(Entity a) => new Shif(a);
+
+        /// <summary>The hyperbolic cosine integral, <c>Chi(z) = gamma + ln z + int_0^z (cosh t - 1)/t dt</c></summary>
+        /// <param name="a">The argument, any complex number but 0</param>
+        /// <returns>The <see cref="Entity.Chif"/> node</returns>
+        /// <remarks>
+        /// Real on <c>x > 0</c>, so what <c>int cosh(x)/x dx</c> is in closed form; its cut is the
+        /// negative real axis, <c>Chi(-x) = Chi(x) + i pi</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1501
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Chi(Entity a) => new Chif(a);
+
         /// <summary>Boolean negation
         /// <a href="https://en.wikipedia.org/wiki/Negation">Wikipedia</a></summary>
         /// <param name="a">Argument node of which Negation function will be taken</param>
@@ -4154,15 +4246,23 @@ namespace AngouriMath
                                 "-1" => Integer.Create(-1),
                                 "+oo" => Real.PositiveInfinity,
                                 "-oo" => Real.NegativeInfinity,
-                                _ => Settings.ExplicitParsingOnly.Value switch
+                                // One cache per pair of the settings the parse reads: with the
+                                // downcasting off a whole number parses as a decimal, so a string
+                                // parsed under one setting is not the other's parse.
+                                // https://github.com/asc-community/AngouriMath/issues/1513
+                                _ => (Settings.ExplicitParsingOnly.Value, Settings.DowncastingEnabled.Value) switch
                                     {
-                                        false => stringToEntityCache.GetValue(expr, _ => parsed.Value),
-                                        true => stringToEntityCacheExplicitOnly.GetValue(expr, _ => parsed.Value)
-                                    } 
+                                        (false, true) => stringToEntityCache.GetValue(expr, _ => parsed.Value),
+                                        (true, true) => stringToEntityCacheExplicitOnly.GetValue(expr, _ => parsed.Value),
+                                        (false, false) => stringToEntityCacheNotDowncasting.GetValue(expr, _ => parsed.Value),
+                                        (true, false) => stringToEntityCacheExplicitOnlyNotDowncasting.GetValue(expr, _ => parsed.Value)
+                                    }
                             }
                     };
         private static ConditionalWeakTable<string, Entity> stringToEntityCacheExplicitOnly = new();
         private static ConditionalWeakTable<string, Entity> stringToEntityCache = new();
+        private static ConditionalWeakTable<string, Entity> stringToEntityCacheNotDowncasting = new();
+        private static ConditionalWeakTable<string, Entity> stringToEntityCacheExplicitOnlyNotDowncasting = new();
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
@@ -6080,7 +6180,7 @@ namespace AngouriMath
             /// Settings for <see cref="EDecimal"/> precisions of <a href="https://github.com/peteroupc/Numbers">PeterO.Numbers</a>
             /// </summary>
             public static Setting<EContext> DecimalPrecisionContext { get; } =
-                new(new EContext(100, ERounding.HalfUp, -100, 1000, false)) { AdvancesEvaluationEpoch = true };
+                new(new EContext(100, ERounding.HalfUp, -100, 1000, false));
 
             /// <summary>
             /// Whether functions are being read as real-valued or complex-valued. It is a

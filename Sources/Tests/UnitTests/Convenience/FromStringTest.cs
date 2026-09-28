@@ -452,6 +452,29 @@ namespace AngouriMath.Tests.Convenience
                         )
                         .Should().Be(result)
                 );
+
+        /// <summary>
+        /// The cache keeps a parse for each value of the downcasting setting, which changes the
+        /// parse: with it off, a whole number is a decimal. A string parsed first with the setting
+        /// on came back with it off as the first parse.
+        /// https://github.com/asc-community/AngouriMath/issues/1513
+        /// </summary>
+        [Fact]
+        public void TheCacheKeepsAParseForEachDowncastingSetting()
+        {
+            // No other test parses this string, so no other test's cache entry answers it.
+            const string text = "x ^ 7 + 1513";
+            var on = FromString(text);
+            Entity off, parsedOff;
+            using (Settings.DowncastingEnabled.Set(false))
+            {
+                off = FromString(text);
+                parsedOff = FromString(text, useCache: false);
+            }
+            Assert.Equal(parsedOff, off);
+            Assert.Contains(off.Nodes, node => node is Real and not Rational);
+            Assert.DoesNotContain(on.Nodes, node => node is Real and not Rational);
+        }
     }
 }
 

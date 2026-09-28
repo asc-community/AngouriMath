@@ -95,7 +95,8 @@ are set out at length in [AGENTS.md](AGENTS.md), which applies to humans too:
 
 An issue's *kind* is its GitHub issue type, not a label; labels say what state it is in and where it
 belongs. A type describes what an issue is, not its workflow state, hierarchy, release target, or
-owner. No type means **untriaged**.
+owner. No type means the type is **untriaged**, and no milestone means the milestone is; there is
+no untriaged issue as such.
 
 - **Goal** -- a triaged outcome or initiative. It may have no sub-issues yet and may generate more
   over several decomposition passes. A Goal used as a parent for sub-issues is the repository's

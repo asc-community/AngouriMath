@@ -132,6 +132,78 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        public partial record Erff
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"erf({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Erfcf
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"erfc({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Erfif
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"erfi({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Eif
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"Ei({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Lif
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"li({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Sif
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"Si({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Cif
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"Ci({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Shif
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"Shi({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Chif
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"Chi({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Absf
         {
             /// <inheritdoc/>

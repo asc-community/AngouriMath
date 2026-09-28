@@ -259,7 +259,8 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void IntegrateIndefiniteString()
         {
             Printed("ln(x) + C", "1 / x".Integrate("x"));
-            Printed("integral(e ^ x ^ 2, x)", "e ^ (x ^ 2)".Integrate("x"));
+            Printed("sqrt(pi) / 2 * erfi(x) + C", "e ^ (x ^ 2)".Integrate("x"));
+            Printed("integral(x ^ x, x)", "x ^ x".Integrate("x"));
         }
 
         [Fact] public void IntegrateDefiniteString()

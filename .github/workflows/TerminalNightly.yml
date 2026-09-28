@@ -1,49 +1,76 @@
 name: 'Terminal nightly builds'
 
+# Self-contained builds of the Terminal for seven runtimes, zipped, and .debs for Linux,
+# released to AngouriMathLab when Sources/Terminal/VERSION changes on master. Run by hand, it
+# builds and packs without releasing unless asked to, and a pull request that touches the
+# workflow or its scripts builds and packs the same way.
+# https://github.com/asc-community/AngouriMath/issues/539
 on:
   push:
     branches:
       - master
     paths:
       - 'Sources/Terminal/VERSION/**'
+  pull_request:
+    paths:
+      - '.github/workflows/TerminalNightly.yml'
+      - 'Sources/Terminal/AngouriMath.Terminal/publish.sh'
+      - 'Sources/Terminal/AngouriMath.Terminal/pack-deb-linux.sh'
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Release the build to AngouriMathLab'
+        type: boolean
+        default: false
 
 jobs:
   TerminalBuild:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v6
       with:
         submodules: 'recursive'
-        
+
     - name: Setup .NET 10
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '10.x'
         dotnet-quality: 'preview'
-      
+
     - name: 'Build terminal'
       run: |
         cd Sources/Terminal/AngouriMath.Terminal
         ./publish.sh
         ./pack-deb-linux.sh
 
+    # Zipped from inside publish-output, so that an archive holds its runtime's folder and not
+    # the repository's path to it.
     - name: 'Pack'
       run: |
-        for arch in linux-x64 linux-arm linux-arm64 win-x64 win-x86 osx-x64 osx.12-arm64
+        cd Sources/Terminal/AngouriMath.Terminal/publish-output
+        for arch in linux-x64 linux-arm linux-arm64 win-x64 win-x86 osx-x64 osx-arm64
         do
-            zip -r "angourimath-terminal-${arch}.zip" ./Sources/Terminal/AngouriMath.Terminal/publish-output/$arch
+            zip -qr "$GITHUB_WORKSPACE/angourimath-terminal-${arch}.zip" "$arch"
         done
-        
+        cp angourimath-terminal-*.deb "$GITHUB_WORKSPACE"
+
+    - name: 'Keep the packages'
+      uses: actions/upload-artifact@v4
+      with:
+        name: angourimath-terminal
+        retention-days: 7
+        path: |
+          angourimath-terminal-*.zip
+          angourimath-terminal-*.deb
+
     - name: 'Release'
+      if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.release)
+      env:
+        GH_TOKEN: ${{ secrets.LAB_ACCESS_TOKEN }}
       run: |
         name=$(cat ./Sources/Terminal/VERSION/VERSION)
         echo "Version: $name"
-     
-        cp ./Sources/Terminal/AngouriMath.Terminal/publish-output/angourimath-terminal-*.deb .
-
-        echo ${{ secrets.LAB_ACCESS_TOKEN }} > token.txt
-        gh auth login --with-token < token.txt
         gh release create v$name \
         'angourimath-terminal-linux-x64.zip' \
         'angourimath-terminal-linux-arm.zip' \
@@ -51,11 +78,10 @@ jobs:
         'angourimath-terminal-win-x64.zip' \
         'angourimath-terminal-win-x86.zip' \
         'angourimath-terminal-osx-x64.zip' \
-        'angourimath-terminal-osx.12-arm64.zip' \
+        'angourimath-terminal-osx-arm64.zip' \
         'angourimath-terminal-amd64.deb' \
         'angourimath-terminal-arm.deb' \
         'angourimath-terminal-arm64.deb' \
         -R asc-community/AngouriMathLab \
         -t 'AngouriMath.Terminal' \
         -n "Expand 'assets' and choose the one for your OS"
-    

@@ -333,6 +333,9 @@ namespace AngouriMath.Tests.Calculus
         /// elementary antiderivative at all, and its exponent is not linear, which is the check
         /// that stops it — a rewrite would leave an <c>x</c> standing beside the new variable.
         /// Should it later be answered by something else, this moves rather than being deleted.
+        /// It now is, with <c>erfi</c>, by the Gaussian's own rule
+        /// (https://github.com/asc-community/AngouriMath/issues/1501), and what this row pins, that
+        /// the substitution did not write it, still holds.
         /// </summary>
         [Theory]
         [InlineData("e^(x^2)")]

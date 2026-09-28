@@ -98,7 +98,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (AnalyticalEquationSolver.Solve(expr, replacement) is FiniteSet els)
             {
                 MultithreadingFunctional.ExitIfCancelled();
-                res = (Set)els.Select(sol => MathS.Pow(MathS.e, MathS.i * variable).Invert(sol, variable).ToSet()).Unite().InnerSimplified;
+                if (MathS.Pow(MathS.e, MathS.i * variable).InvertEach(els, variable) is not { } inverted)
+                    return false;
+                res = inverted;
                 return true;
             }
             else

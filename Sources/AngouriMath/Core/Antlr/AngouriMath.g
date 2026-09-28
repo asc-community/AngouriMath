@@ -596,6 +596,18 @@ atom returns[Entity value]
     | 'gcd(' args = function_arguments ')' { AssertAtLeast("gcd", 1, $args.list.Count); $value = $args.list.Aggregate((a, b) => MathS.Gcd(a, b)); }
     | 'lcm(' args = function_arguments ')' { AssertAtLeast("lcm", 1, $args.list.Count); $value = $args.list.Aggregate((a, b) => MathS.Lcm(a, b)); }
     | 'binomial(' args = function_arguments ')' { Assert("binomial", 2, $args.list.Count); $value = MathS.Binomial($args.list[0], $args.list[1]); }
+    /* The error functions. https://github.com/asc-community/AngouriMath/issues/1501 */
+    | 'erf(' args = function_arguments ')' { Assert("erf", 1, $args.list.Count); $value = MathS.Erf($args.list[0]); }
+    | 'erfc(' args = function_arguments ')' { Assert("erfc", 1, $args.list.Count); $value = MathS.Erfc($args.list[0]); }
+    | 'erfi(' args = function_arguments ')' { Assert("erfi", 1, $args.list.Count); $value = MathS.Erfi($args.list[0]); }
+    /* The exponential and logarithmic integrals. https://github.com/asc-community/AngouriMath/issues/1501 */
+    | 'Ei(' args = function_arguments ')' { Assert("Ei", 1, $args.list.Count); $value = MathS.Ei($args.list[0]); }
+    | 'li(' args = function_arguments ')' { Assert("li", 1, $args.list.Count); $value = MathS.Li($args.list[0]); }
+    /* The trigonometric and hyperbolic integrals. https://github.com/asc-community/AngouriMath/issues/1501 */
+    | 'Si(' args = function_arguments ')' { Assert("Si", 1, $args.list.Count); $value = MathS.Si($args.list[0]); }
+    | 'Ci(' args = function_arguments ')' { Assert("Ci", 1, $args.list.Count); $value = MathS.Ci($args.list[0]); }
+    | 'Shi(' args = function_arguments ')' { Assert("Shi", 1, $args.list.Count); $value = MathS.Shi($args.list[0]); }
+    | 'Chi(' args = function_arguments ')' { Assert("Chi", 1, $args.list.Count); $value = MathS.Chi($args.list[0]); }
 
     /* Names the library does not have. Each is a function every other CAS spells this way, so
        a caller reaches for it, and without these rules each is silently read as a product --
@@ -603,7 +615,6 @@ atom returns[Entity value]
        between a missing function and a wrong answer. */
 
     | 'trunc(' args = function_arguments ')' { $value = NotImplementedFunction("trunc", "rounding functions"); }
-    | 'erf(' args = function_arguments ')' { $value = NotImplementedFunction("erf", "error function"); }
     | 'conjugate(' args = function_arguments ')' { $value = NotImplementedFunction("conjugate", "complex conjugate as a symbolic function"); }
     | 'domain(' args = function_arguments ')' 
         { 

@@ -85,9 +85,9 @@ namespace AngouriMath.Tests.Core.Transformations
         [Fact]
         public void ApplyOrKeepHandsBackTheInputWhereThereIsNoAnswer()
         {
-            var unanswerable = Transformation.Integration("x").Apply(Parse("e ^ (x ^ 2)"));
+            var unanswerable = Transformation.Integration("x").Apply(Parse("x ^ x"));
             Assert.False(unanswerable.Succeeded);
-            Assert.Equal(Parse("e ^ (x ^ 2)"), unanswerable.OutputOrInput);
+            Assert.Equal(Parse("x ^ x"), unanswerable.OutputOrInput);
         }
 
         [Fact]
@@ -140,7 +140,7 @@ namespace AngouriMath.Tests.Core.Transformations
             // The integral has no closed form, so nothing downstream of it can have run.
             var chain = Transformation.Integration("x").Then(Transformation.Simplification);
 
-            Assert.False(chain.Apply(Parse("e ^ (x ^ 2)")).Succeeded);
+            Assert.False(chain.Apply(Parse("x ^ x")).Succeeded);
         }
 
         [Fact]
@@ -342,14 +342,14 @@ namespace AngouriMath.Tests.Core.Transformations
         [Fact]
         public void AnIntegralWithNoClosedFormHasNoAnswerRatherThanAWrongOne()
         {
-            var result = Transformation.Integration("x").Apply(Parse("e ^ (x ^ 2)"));
+            var result = Transformation.Integration("x").Apply(Parse("x ^ x"));
 
             Assert.False(result.Succeeded);
             Assert.Null(result.Output);
 
             // The 1.x method makes the same claim in the shape its callers expect: an
             // unevaluated node, which is "I could not settle this" and not NaN.
-            var legacy = Parse("e ^ (x ^ 2)").Integrate("x");
+            var legacy = Parse("x ^ x").Integrate("x");
             Assert.IsType<Entity.Integralf>(legacy);
             Assert.False(legacy.IsNaN);
         }

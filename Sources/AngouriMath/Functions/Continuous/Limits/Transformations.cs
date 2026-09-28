@@ -916,6 +916,13 @@ namespace AngouriMath.Functions.Algebra
                 Arcsinf => (diverging.IsNegative ? -MathS.pi / 2 : MathS.pi / 2) - downwards,
                 Arccosf => (diverging.IsNegative ? MathS.pi : 0) + downwards,
                 Arcsecantf => MathS.pi / 2,
+                // The arctangent tends to a right angle with the argument's sign. The arccotangent
+                // here is arctan(1/t), with range (-pi/2, pi/2] -- arccot(1000) = 0.000999...,
+                // arccot(-1000) = -0.000999..., arccot(0) = pi/2 -- so it tends to 0 either way, and
+                // so does the arccosecant, arcsin(1/t): arccsc(1000) = 0.001000..., arccsc(-1000) =
+                // -0.001000.... https://github.com/asc-community/AngouriMath/issues/1508
+                Arctanf => diverging.IsNegative ? -MathS.pi / 2 : MathS.pi / 2,
+                Arccotanf or Arccosecantf => Integer.Zero,
                 _ => null
             };
         }

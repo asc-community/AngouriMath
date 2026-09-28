@@ -57,8 +57,80 @@ namespace AngouriMath
             Functions.Algebra.BreakpointIntegration.HasABreak(this, x)
             ? Functions.Algebra.BreakpointIntegration.Split(this, x, from, to) ?? new Integralf(this, x, (from, to))
             : Transformation.Integration(x).Apply(this).Output is { } antiderivative
-                ? antiderivative.Substitute(x, to) - antiderivative.Substitute(x, from)
+                ? AcrossTheRange(antiderivative, x, from, to) ?? new Integralf(this, x, (from, to))
                 : new Integralf(this, x, (from, to));
+
+        /// <summary>
+        /// <c>F(b) - F(a)</c> through <paramref name="antiderivative"/>, taken piece by piece
+        /// where it breaks between the bounds, or <see langword="null"/> where a piece's limit at
+        /// a break is not decided.
+        /// </summary>
+        /// <remarks>
+        /// At each break the piece below takes its limit from the left and the piece above from
+        /// the right, so a jump in the antiderivative is not counted and a pole is: <c>1/x^2</c>
+        /// over <c>[-1, 1]</c> is <c>+oo</c>, and <c>1/x</c> over the same range, whose pieces are
+        /// <c>-oo</c> and <c>+oo</c>, has no value. Where the bounds are not numbers, or the breaks
+        /// cannot all be listed, the antiderivative is taken at the bounds alone, as it was.
+        /// https://github.com/asc-community/AngouriMath/issues/1508
+        /// </remarks>
+        private static Entity? AcrossTheRange(Entity antiderivative, Variable x, Entity from, Entity to)
+        {
+            if (from.Evaled is not Number.Real { IsNaN: false } lower || to.Evaled is not Number.Real { IsNaN: false } upper
+                || lower == upper
+                || (lower < upper
+                    ? AntiderivativeBreaks.Inside(antiderivative, x, lower, upper)
+                    : AntiderivativeBreaks.Inside(antiderivative, x, upper, lower)) is not { Count: > 0 } breaks)
+                return AtTheBound(antiderivative, x, to, from) - AtTheBound(antiderivative, x, from, to);
+            if (lower > upper)
+                breaks.Reverse();
+            var total = -AtTheBound(antiderivative, x, from, to);
+            foreach (var (at, _) in breaks)
+            {
+                // Approached from the side the range comes from, then left on the other.
+                var (arriving, leaving) = lower < upper ? (ApproachFrom.Left, ApproachFrom.Right) : (ApproachFrom.Right, ApproachFrom.Left);
+                var before = antiderivative.Limit(x, at, arriving);
+                var after = antiderivative.Limit(x, at, leaving);
+                if (before.Nodes.Any(node => node is Limitf) || after.Nodes.Any(node => node is Limitf))
+                    return null;
+                total += before - after;
+            }
+            return total + AtTheBound(antiderivative, x, to, from);
+        }
+
+        /// <summary>
+        /// The antiderivative's value at one bound of a definite integral: its value there, and
+        /// where that is undefined, its limit as the bound is approached from inside the range,
+        /// which is what an improper integral is.
+        /// </summary>
+        /// <remarks>
+        /// <c>-(x + 1) e^(-x)</c> at <c>+oo</c> is <c>-oo * 0</c>, which is <c>NaN</c>, so the integral
+        /// of <c>x e^(-x)</c> from 0 to <c>+oo</c> was <c>NaN</c> where it is 1; and <c>x ln(x) - x</c>
+        /// at 0 is <c>0 * -oo</c>, so the integral of <c>ln(x)</c> from 0 to 1 was <c>NaN</c> where it
+        /// is -1. The limit is taken only where the value is undefined, so a bound the substitution
+        /// answered is answered as before. Its side is known at an infinity, and at a finite bound
+        /// from the other bound where both have numeric values. Elsewhere, and where the limit is not
+        /// decided, the value stays undefined, as it is for <c>sin(x)</c> from 0 to <c>+oo</c>,
+        /// whose antiderivative has no limit there.
+        /// </remarks>
+        private static Entity AtTheBound(Entity antiderivative, Variable x, Entity bound, Entity otherBound)
+        {
+            var value = antiderivative.Substitute(x, bound);
+            if (!value.InnerSimplified.IsNaN)
+                return value;
+            // The bounds' values, so that a bound written as pi or 2 pi is placed as well as 3.
+            ApproachFrom? side = (bound.Evaled, otherBound.Evaled) switch
+            {
+                (Number.Real { EDecimal: var at }, _) when at.IsPositiveInfinity() => ApproachFrom.Left,
+                (Number.Real { EDecimal: var at }, _) when at.IsNegativeInfinity() => ApproachFrom.Right,
+                (Number.Real at, Number.Real other) when at > other => ApproachFrom.Left,
+                (Number.Real at, Number.Real other) when at < other => ApproachFrom.Right,
+                _ => null
+            };
+            if (side is not { } inside)
+                return value;
+            var limit = antiderivative.Limit(x, bound, inside);
+            return limit.IsNaN || limit.Nodes.Any(node => node is Limitf) ? value : limit;
+        }
 
         /// <summary>
         /// Integrates numerically over <paramref name="x"/> between two bounds, without
@@ -492,20 +564,39 @@ namespace AngouriMath.Functions.Algebra
             // among them, `(c x)^m x^n`, by the power rule with the written power kept as
             // it is. Beside the polynomial term, since that is what it is.
             if ((answer = IndefiniteIntegralSolver.SolveAProductOfPowersOfTheVariable(expr, x)) is { }) return answer;
-            // A power of an exponential with a positive base is the exponential of the product,
-            // exactly, and only that spelling is one the exponential rules read.
             // A power of x times a power of its logarithm, by the closed reduction: exact,
             // and by parts n times where the exponent is a symbol was not taken.
             if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAPowerOfTheLogarithm(expr, x)) is { }) return answer;
+            // And a half-odd power of it, onto the Gaussian's moments by t = sqrt(F).
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAHalfOddPowerOfTheLogarithm(expr, x)) is { }) return answer;
+            // And an exponential of a quadratic in it, onto the Gaussian by t = ln(c x^r).
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerTimesAnExponentialOfAQuadraticInALogarithm(expr, x)) is { }) return answer;
+            // And a negative whole power of one, onto the exponential integral by t = A + B ln(c x^r).
+            if ((answer = IndefiniteIntegralSolver.SolveAPowerOverAPowerOfALogarithm(expr, x)) is { }) return answer;
+            // A power of an exponential with a positive base is the exponential of the product,
+            // exactly, and only that spelling is one the exponential rules read.
             if ((answer = IndefiniteIntegralSolver.SolveByFlatteningAPowerOfAnExponential(expr, x, integrateByParts)) is { }) return answer;
+            // An exponential of a quadratic in 1/L beside a power of L, onto the Gaussian under u = 1/L.
+            if ((answer = IndefiniteIntegralSolver.SolveAGaussianInAReciprocal(expr, x)) is { }) return answer;
             // An exponential of a multiple of a logarithm is a power of the argument, which is
             // how every inverse hyperbolic function under an exponential arrives.
             if ((answer = IndefiniteIntegralSolver.SolveByFoldingAnExponentialOfALogarithm(expr, x, integrateByParts)) is { }) return answer;
+            // An exponential of a polynomial beside the polynomial's derivative, under u = P,
+            // which the substitution search does not reach: it writes the exponential apart.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheExponentAsTheVariable(expr, x, integrateByParts)) is { }) return answer;
             // `A + i A tan(z)` is `A e^(i z)/cos(z)`, which beside a polynomial is a shape the
             // closed rules answer, where the imaginary unit in the coefficient is read by none.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAnImaginaryTangentAsAnExponential(expr, x, integrateByParts)) is { }) return answer;
             // And `A cos(z) + i A sin(z)`, which is `A e^(i z)`, where no rotation is real.
             if ((answer = IndefiniteIntegralSolver.SolveByWritingAnImaginarySumOfACosineAndASineAsAnExponential(expr, x, integrateByParts)) is { }) return answer;
+            // Exponentials of quadratics, with sines, cosines and sums of them multiplied out:
+            // each term is the Gaussian's, where the search would take the product by parts.
+            if ((answer = IndefiniteIntegralSolver.SolveAProductOfExponentialsOfQuadratics(expr, x)) is { }) return answer;
+            // An exponential of a linear over a power of a linear, onto the exponential integral.
+            if ((answer = IndefiniteIntegralSolver.SolveAnExponentialOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
+            // Sines and cosines of a linear over a power of a linear, onto Si and Ci under u = the
+            // linear, where the search would take the quotient by parts without end.
+            if ((answer = IndefiniteIntegralSolver.SolveATrigonometricOfALinearOverAPowerOfALinear(expr, x)) is { }) return answer;
             // A fractional power of a perfect square is the power of the modulus, sgn(P) P^(2r).
             if ((answer = IndefiniteIntegralSolver.SolveByTakingARootOfAPerfectSquare(expr, x, integrateByParts)) is { }) return answer;
             // x^(n - 1) g(x^n) with a symbolic n is g(u)/n under u = x^n.

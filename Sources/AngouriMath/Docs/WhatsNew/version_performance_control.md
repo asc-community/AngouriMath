@@ -256,6 +256,31 @@ cent — its measured run-to-run spread on mean time is up to 51.8%. A move of 8
 outside that band by a wide margin and agrees in sign and rough size with the allocation column
 beside it. The small rows from the same run are still not worth reading, and are not quoted.
 
+## The 2203rd: the parser predicts in SLL first
+
+`ParseHard` allocated 3.8 MB to read a twenty-token expression, and every function added to the
+grammar made it more: `Ei` and `li` cost it 24,272 B/op, and `Si`, `Ci`, `Shi` and `Chi` would
+have cost another 48,544 -- 12,136 B for each literal token, exactly, which put the branch adding
+the four trigonometric integrals over the gate's 3%. The bytes were ANTLR's full-context LL
+prediction, which the default prediction mode falls back to wherever its context-free SLL
+prediction sees a conflict, on every parse that reaches one. The parser now predicts in SLL, with
+the bail error strategy, and parses again in LL only where that reports an error or an action
+throws. ANTLR documents that SLL "will either return a correct parse tree (i.e. the same parse
+tree that would be returned with the LL prediction mode), or it will report a syntax error", so
+the tree is LL's either way, and only an input SLL cannot read pays for both. Of the 117,358
+distinct expressions in Rubi's suite that the library can express, the only ones SLL could not read
+were the 92 LL cannot either: it read every one LL read, to an equal entity.
+
+| benchmark | 2202nd | 2203rd | allocation | time |
+|---|--:|--:|--:|--:|
+| `ParseHard` | 3,799,418 | 59,871 | **−98.4%** | 1,525 → 25.6 µs |
+| `ParseEasy` | 18,301 | 18,373 | +0.4% | 6.27 → 5.58 µs |
+| every other gated entry | | | within 64 bytes | within the noise |
+
+Bytes allocated per call, same machine, both columns by the gate in one session. The 72 bytes on
+`ParseEasy` are what the two stages cost a parse that never falls back. The baseline moves to this
+run.
+
 ## The 2077th: the root of a negative real is exactly imaginary, and cheaper for it
 
 A correctness fix ([#1378](https://github.com/asc-community/AngouriMath/issues/1378)) that

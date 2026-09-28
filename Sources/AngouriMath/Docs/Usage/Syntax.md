@@ -275,6 +275,35 @@ or the odd indices (`sum(binomial(n, 2 l), l, 0, floor(n/2))` is `2^(n - 1)` for
 identities of chapter 8 of Sullivan and Mackey's *An Introduction to Proofs*, so that
 `forall n in ZZ+ : sum(k binomial(n, k), k, 0, n) = n 2^(n - 1)` is `True`.
 
+**Error functions** — `erf(z)` `erfc(z)` `erfi(z)`. The error function
+`2/sqrt(pi) int_0^z e^(-t^2) dt`, its complement `1 - erf(z)`, and the imaginary error function
+`-i erf(i z)`, which on the real line is `2/sqrt(pi) int_0^x e^(t^2) dt`. Each is entire, is
+evaluated to the working precision anywhere in the complex plane, and is differentiated from its
+definition: the derivative of `erf(x)` is `2 / sqrt(pi) * e ^ (-x ^ 2)`. `erf(0)` is `0`, `erfc(0)`
+is `1`, and `erf(+oo)` is `1`. An equation in one of them is left as the set of `x` for which it
+holds, since the library writes none of their inverses.
+
+**Exponential and logarithmic integrals** — `Ei(z)` `li(z)`. The exponential integral
+`Ei(z) = gamma + (ln z - ln(1/z))/2 + sum z^k/(k k!)`, which on the real line is the principal
+value of `int_-oo^x e^t/t dt`, and the logarithmic integral `li(z) = Ei(ln z)`, which on `x > 0` is
+the principal value of `int_0^x dt/ln t`. Both are real on the real line, `li` for `x >= 0`; the cut
+of `Ei` is the negative real axis, on which it keeps its real value, and it is `i pi` more just above
+it. Each is evaluated to the working precision anywhere in the complex plane and differentiated
+from its definition: the derivative of `Ei(x)` is `e ^ x / x`, and of `li(x)` it is `1 / ln(x)`.
+`Ei` is undefined at `0` and `li` at `1`; `li(0)` is `0`.
+
+**Sine and cosine integrals** — `Si(z)` `Ci(z)` `Shi(z)` `Chi(z)`. The sine integral
+`Si(z) = sum (-1)^k z^(2k + 1)/((2k + 1) (2k + 1)!)`, which on the real line is `int_0^x sin t/t dt`,
+and the cosine integral `Ci(z) = gamma + ln z + sum_(k >= 1) (-1)^k z^(2k)/(2k (2k)!)`, which on
+`x > 0` is `-int_x^oo cos t/t dt`; the hyperbolic `Shi` and `Chi` are the same sums without
+the alternating sign, `int_0^x sinh t/t dt` and `gamma + ln x + int_0^x (cosh t - 1)/t dt`. `Si` and
+`Shi` are entire, odd, and real on the real line. `Ci` and `Chi` take the cut of `ln z`, the negative
+real axis, which keeps the value from above: for `x > 0`, `Ci(-x)` is `Ci(x) + i pi` and `Chi(-x)` is
+`Chi(x) + i pi`. Each is evaluated to the working precision anywhere in the complex plane and
+differentiated from its definition: the derivative of `Si(x)` is `sin(x) / x`, of `Ci(x)` it is
+`cos(x) / x`, and of `Shi(x)` and `Chi(x)` it is `sinh(x) / x` and `cosh(x) / x`. `Ci` and `Chi` are
+undefined at `0`; `Si(+oo)` is `pi / 2` and `Ci(+oo)` is `0`.
+
 **Calculus** — `derivative(expr, var, order)`, `integral(expr, var)`,
 `integral(expr, var, from, to)`, `limit(expr, var, dest)`, `limitleft(...)`, `limitright(...)`;
 `max(expr, var in set)` and `min` for the extremum of an expression over a set, `argmax` and
@@ -384,7 +413,7 @@ of them: `ZZ unite QQ` is `QQ`, `BB intersect ZZ` is `{}`, `ZZ* \ ZZ+` is `{ 0 }
 `{ x in ZZ : x < 0 }`, `ZZ+ \ PP` is `{ x in ZZ+ : not x in PP }` and `QQ \ ZZ` is
 `{ x in QQ : not x in ZZ }`. The tokens take the sign: `ZZ*2` no longer reads as `ZZ * 2`.
 
-**Refused by name** — `trunc` `erf` `conjugate`. AngouriMath has none of these, and each is
+**Refused by name** — `trunc` `conjugate`. AngouriMath has none of these, and each is
 what some other CAS calls a function, so a caller reaches for it. Left alone they would be read as
 products under the rule above and answer silently and wrongly; they raise a parse error naming the
 function instead. `re` and `im` are the same case and are *not* refused, being short enough to be

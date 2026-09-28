@@ -84,6 +84,35 @@ namespace AngouriMath.Tests.Core
         }
 
         [Fact]
+        public void AFactTheQuantifiersEstablishIsReadUnderThem()
+        {
+            var (verdict, steps) = Prove("forall p in PP : forall k in ZZ : (0 < k and k < p) implies p divides binomial(p, k)");
+            Assert.Equal(Entity.Boolean.True, verdict);
+            Assert.Equal(new[] { 2, 1, 0 }, steps.Select(step => step.Depth));
+            Assert.Equal("Nat.Prime.dvd_choose_self", steps[0].Lemma);
+            Assert.Equal("p divides binomial(p, k)".ToEntity(), steps[0].Statement);
+            Assert.Equal("intro", steps[1].Lemma);
+            // Written as the statement was, under p and k, and not the names the decision
+            // renamed them to while the facts were in scope.
+            Assert.Equal("forall p in PP : forall k in ZZ : (0 < k and k < p) implies p divides binomial(p, k)".ToEntity(), steps[2].Statement);
+            Assert.All(steps, step => Assert.DoesNotContain("'", step.Rule));
+        }
+
+        [Fact]
+        public void FermatsLittleTheoremRestsOnTheBinomialTheorem()
+        {
+            var (verdict, steps) = Prove("forall p in PP : forall a in ZZ : a^p = a (mod p)");
+            Assert.Equal(Entity.Boolean.True, verdict);
+            // The induction, its base case at 1, and its step, which rests on the binomial
+            // theorem modulo p, which rests on p dividing binomial(p, k) for 0 < k < p.
+            Assert.Equal(new[] { "decide", "Nat.Prime.dvd_choose_self", "intro", "add_pow_char", "intro", "Int.inductionOn'", "intro" }, steps.Select(step => step.Lemma));
+            Assert.Equal(new[] { 2, 5, 4, 3, 2, 1, 0 }, steps.Select(step => step.Depth));
+            Assert.Equal("p divides binomial(p, k)".ToEntity(), steps[1].Statement);
+            Assert.Equal("forall a in ZZ : a^p = a (mod p)".ToEntity(), steps[5].Statement);
+            Assert.All(steps, step => Assert.DoesNotContain("'", step.Rule.Replace("Int.inductionOn'", "")));
+        }
+
+        [Fact]
         public void WhatWasTriedAndAbandonedIsNotAStep()
         {
             // The identity route is tried on the sum before the induction and declines; the

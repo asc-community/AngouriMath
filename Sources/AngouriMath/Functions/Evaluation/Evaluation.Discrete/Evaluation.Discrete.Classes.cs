@@ -281,6 +281,19 @@ namespace AngouriMath
                     propagateSet: !(Left.InnerSimplified(isExact) is Set && Right.InnerSimplified(isExact) is Set));
         }
 
+        /// <summary>
+        /// <paramref name="number"/> as the real it is, or <see langword="null"/> where it has an
+        /// imaginary part. With downcasting off a value such as <c>cos(3)</c> evaluates to a
+        /// <see cref="Number.Complex"/> whose imaginary part is zero, and comparing it is as defined
+        /// as comparing the real it equals: <c>cos(3) &gt;= 0</c> is false, not <c>NaN</c>.
+        /// </summary>
+        private static Number.Real? AsAReal(Number number) => number switch
+        {
+            Number.Real real => real,
+            Number.Complex complex when complex.ImaginaryPart.EDecimal.IsZero => complex.RealPart,
+            _ => null,
+        };
+
         partial record Greaterf
         {
             // Inequality comparisons are only defined for real numbers.
@@ -292,7 +305,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left, Right,
                     (a, b) => (a, b) switch
                     {
-                        (Real reLeft, Real reRight) => reLeft > reRight,
+                        (Number numLeft, Number numRight) when AsAReal(numLeft) is { } reLeft && AsAReal(numRight) is { } reRight => reLeft > reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
@@ -311,7 +324,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left, Right,
                     (a, b) => (a, b) switch
                     {
-                        (Real reLeft, Real reRight) => reLeft >= reRight,
+                        (Number numLeft, Number numRight) when AsAReal(numLeft) is { } reLeft && AsAReal(numRight) is { } reRight => reLeft >= reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
@@ -330,7 +343,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left, Right,
                     (a, b) => (a, b) switch
                     {
-                        (Real reLeft, Real reRight) => reLeft < reRight,
+                        (Number numLeft, Number numRight) when AsAReal(numLeft) is { } reLeft && AsAReal(numRight) is { } reRight => reLeft < reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
@@ -348,7 +361,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left, Right,
                     (a, b) => (a, b) switch
                     {
-                        (Real reLeft, Real reRight) => reLeft <= reRight,
+                        (Number numLeft, Number numRight) when AsAReal(numLeft) is { } reLeft && AsAReal(numRight) is { } reRight => reLeft <= reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
@@ -406,6 +419,14 @@ namespace AngouriMath
                             => dividend.EInteger.IsZero ? True : False,
                         (Integer divisor, Integer dividend)
                             => dividend.EInteger.Remainder(divisor.EInteger).IsZero ? True : False,
+                        // A prime p divides binomial(p, k) for a whole k with 0 < k < p, where the
+                        // quantifiers around establish those facts. Sullivan and Mackey's Prob 8.9.24.
+                        // https://github.com/asc-community/AngouriMath/issues/1409
+                        (_, Binomialf(var upper, var lower)) when a == upper
+                            && Functions.Boolean.QuantifierFacts.PrimeDividesItsBinomial(a, lower) => True,
+                        // And the binomial theorem modulo that prime: p divides (a + 1)^p - a^p - 1.
+                        // Sullivan and Mackey's Prob 8.9.25.
+                        (not Number, _) when Functions.Boolean.QuantifierFacts.PrimeDividesByTheBinomialTheorem(a, b) => True,
                         (Number, Number) => MathS.NaN,
                         _ => null
                     },
@@ -446,6 +467,11 @@ namespace AngouriMath
                     case (Number, Number, Number):
                         return MathS.NaN;
                 }
+                // (a + b)^p = a^p + b^p (mod p) for a prime p the quantifiers around establish,
+                // by the binomial theorem. Sullivan and Mackey's Prob 8.9.25.
+                // https://github.com/asc-community/AngouriMath/issues/1409
+                if (modulus is not Number && Functions.Boolean.QuantifierFacts.PrimeDividesByTheBinomialTheorem(modulus, left - right))
+                    return Boolean.True;
                 var difference = (left - right).InnerSimplified;
                 if (difference is Integer whole && modulus is Integer m)
                     return m.EInteger.IsZero
@@ -487,6 +513,11 @@ namespace AngouriMath
             protected override Entity InnerSimplify(bool isExact)
             {
                 var over = Over.InnerSimplified(isExact);
+                // A body in which a rule reads what the quantifiers establish, that p is prime
+                // or that 0 < k < p, is decided with those facts in scope.
+                // https://github.com/asc-community/AngouriMath/issues/1409
+                if (Functions.Boolean.QuantifierFacts.Decide(Kind, Var, over, Body, isExact) is var (verdict, decided))
+                    return verdict ?? New(Var, over, decided);
                 var body = Body.InnerSimplified(isExact);
                 return Functions.Boolean.Quantifiers.Decide(Kind, Var, over, body, isExact) ?? New(Var, over, body);
             }

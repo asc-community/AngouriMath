@@ -28,8 +28,10 @@ namespace AngouriMath.Tests.Calculus
     /// </para>
     /// <para>
     /// Every answer is differentiated back and compared to the integrand numerically; the
-    /// non-elementary neighbours — <c>e^x/x</c>, <c>e^(x^2)</c> — are pinned as declined, since
-    /// answering them would be a wrong answer and not a missing one.
+    /// non-elementary neighbours — <c>e^x/x</c>, <c>e^(x^3)</c> — are pinned as declined, since
+    /// an elementary answer to them would be a wrong answer and not a missing one.
+    /// (<c>e^(x^2)</c> is answered, with <c>erfi</c>, since
+    /// https://github.com/asc-community/AngouriMath/issues/1501.)
     /// </para>
     /// </remarks>
     [Trait("Area", "Calculus")]
@@ -120,11 +122,11 @@ namespace AngouriMath.Tests.Calculus
         public void OneLevelUpTheTower(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
-        /// The tower's non-elementary neighbours, pinned as declined: <c>e^x ln(x)</c> and
-        /// <c>e^x/ln(x)</c> have no such <c>P/(D L^k)</c>, and answering them would be wrong.
+        /// A non-elementary neighbour of the tower, pinned as declined: <c>e^x/ln(x)</c> has no such
+        /// <c>P/(D L^k)</c>, and no antiderivative in the library's functions either. <c>e^x ln(x)</c>,
+        /// the other neighbour, is <c>e^x ln(x) - Ei(x)</c> by parts, since <c>Ei</c> is a node.
         /// </summary>
         [Theory]
-        [InlineData("e^x*ln(x)")]
         [InlineData("e^x/ln(x)")]
         public void TheTowersNonElementaryNeighboursAreDeclined(string integrand)
             => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());
@@ -176,13 +178,12 @@ namespace AngouriMath.Tests.Calculus
             => Assert.Contains("integral(", "e^x*x/sqrt(1 + x^2)".ToEntity().Integrate("x").Stringize());
 
         /// <summary>
-        /// What has no elementary antiderivative is declined, not answered: the ansatz finds
-        /// no <c>N</c>, which by Liouville is the proof.
+        /// What has no antiderivative in the library's functions is declined, not answered: the
+        /// ansatz finds no <c>N</c>, which by Liouville is the proof that none is elementary.
+        /// <c>e^x/x</c> and <c>e^x/(1 + x)</c> are not elementary either, but they are <c>Ei</c>.
         /// </summary>
         [Theory]
-        [InlineData("e^x/x")]
-        [InlineData("e^(x^2)")]
-        [InlineData("e^x/(1 + x)")]
+        [InlineData("e^(x^3)")]
         [InlineData("e^(1/x)")]
         public void ANonElementaryOneIsDeclined(string integrand)
             => Assert.Contains("integral(", integrand.ToEntity().Integrate("x").Stringize());

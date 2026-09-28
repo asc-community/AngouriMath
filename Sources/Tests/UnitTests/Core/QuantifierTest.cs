@@ -82,6 +82,32 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall x in ZZ : (1 <= x and x <= 3) implies 2 divides x", "False")]
         [InlineData("exists x in ZZ : x^2 = 4 and 1 <= x and x <= 3", "True")]
         [InlineData("forall x in ZZ : x^2 = 4 implies 1 <= x and x <= 3", "False")]
+        // The members that satisfy the conditions on the name the solver reads, listed or from a
+        // least one, with the other conditions kept: Prob 8.9.24 at p = 7, where every C(7, k) is
+        // a multiple of 7, and at 6, where C(6, 2) = 15 is not; Ex 5.3.2 from its threshold.
+        [InlineData("forall k in ZZ : (0 < k and k < 7) implies 7 divides binomial(7, k)", "True")]
+        [InlineData("forall k in ZZ : (0 < k and k < 6) implies 6 divides binomial(6, k)", "False")]
+        [InlineData("exists k in ZZ : (0 < k and k < 6) and not 6 divides binomial(6, k)", "True")]
+        [InlineData("exists! k in ZZ : (0 < k and k < 7) and 3 divides k and 2 divides k", "True")]
+        [InlineData("forall k in ZZ : (0 < k and k < 7 and 2 divides k) implies 3 divides binomial(7, k) - 1", "False")]
+        [InlineData("forall n in ZZ : n >= 5 implies 2^n > n^2", "True")]
+        // Prob 8.9.24 for every prime: that p is prime and 0 < k < p is established by the
+        // quantifiers around the claim, in either order and with the hypothesis curried, and the
+        // rule for p divides binomial(p, k) reads it. Without the primality, or without either
+        // bound, it fails. An inner quantifier that binds p again hides what the outer one
+        // established about it.
+        [InlineData("forall p in PP : forall k in ZZ : (0 < k and k < p) implies p divides binomial(p, k)", "True")]
+        [InlineData("forall k in ZZ : forall p in PP : (0 < k and k < p) implies p divides binomial(p, k)", "True")]
+        [InlineData("forall p in PP : forall k in ZZ : 0 < k implies (k < p implies p divides binomial(p, k))", "True")]
+        [InlineData("forall p in PP : forall k in ZZ+ : k < p implies p divides binomial(p, k)", "True")]
+        [InlineData("forall p in PP : forall k in ZZ : (1 <= k and k <= p - 1) implies p divides binomial(p, k)", "True")]
+        [InlineData("forall p in PP : p divides binomial(p, 1)", "True")]
+        // Not for k = p: binomial(2, 2) = 1, which 2 does not divide.
+        [InlineData("forall p in PP : p divides binomial(p, 2)", "False")]
+        [InlineData("forall p in ZZ+ : forall k in ZZ : (0 < k and k < p) implies p divides binomial(p, k)", "False")]
+        [InlineData("forall p in PP : forall k in ZZ : k < p implies p divides binomial(p, k)", "False")]
+        [InlineData("forall p in PP : forall k in ZZ : (0 < k and k <= p) implies p divides binomial(p, k)", "False")]
+        [InlineData("forall p in PP : forall p in ZZ+ : forall k in ZZ : (0 < k and k < p) implies p divides binomial(p, k)", "False")]
         // The set may be an interval, a set builder, or a special set with no member of its own.
         [InlineData("forall x in (0; 1) : x^2 < 1", "True")]
         [InlineData("forall x in [0; 1] : x^2 < 1", "False")]
@@ -118,6 +144,27 @@ namespace AngouriMath.Tests.Core
         [InlineData("exists y in RR : forall x in RR : y = x^3")]
         public void LeftAsWrittenWhereNothingDecidesIt(string statement)
             => Assert.Equal(statement.ToEntity(), statement.ToEntity().Simplify());
+
+        [Fact]
+        public void AWholeNumberIsNotAssumedOfAReal()
+            // binomial(p, k) of a real k is not a whole number, so the rule for divisibility has
+            // nothing to read, and the statement is not decided.
+            => Assert.IsType<Forallf>("forall p in PP : forall k in RR : (0 < k and k < p) implies p divides binomial(p, k)".ToEntity().Simplify());
+
+        [Fact]
+        public void WhatTheQuantifiersEstablishDoesNotLeaveThem()
+        {
+            // One node, shared with the caller, that is True inside the statement only because the
+            // quantifiers around it establish that p is prime and 0 < k < p. Outside them it is
+            // not decided, after the statement has been decided as before.
+            var claim = MathS.FromString("p divides binomial(p, k)", useCache: false);
+            var statement = MathS.ForAll("p", "PP", MathS.ForAll("k", "ZZ", MathS.FromString("0 < k and k < p", useCache: false).Implies(claim)));
+            Assert.Equal(Entity.Boolean.True, statement.Evaled);
+            Assert.Equal(Entity.Boolean.True, statement.Simplify());
+            Assert.IsType<Dividesf>(claim.Evaled);
+            Assert.IsType<Dividesf>(claim.InnerSimplified);
+            Assert.IsType<Dividesf>(claim.Simplify());
+        }
 
         [Theory]
         [InlineData("forall x in RR : x^2 >= 0", "forall x in RR : x ^ 2 >= 0")]

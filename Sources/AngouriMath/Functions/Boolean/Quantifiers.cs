@@ -123,6 +123,18 @@ namespace AngouriMath.Functions.Boolean
                 by = ("the body does not mention the name, so it says the same of every member", "forall_const");
                 return Closed(kind, set, body);
             }
+            // A statement about the members that satisfy a condition on the name alone is the
+            // statement over the set cut down to them: forall k in ZZ : (0 < k and k < 7) implies
+            // 7 divides binomial(7, k) -- Sullivan and Mackey's Prob 8.9.24 at p = 7 -- is the
+            // statement over {1, ..., 6}. The converse of the set-builder route above, so the cut
+            // is taken only where it comes out listed, or as the whole numbers from a least one,
+            // which the routes below read -- never as a set-builder again.
+            // https://github.com/asc-community/AngouriMath/issues/1409
+            if (set is SpecialSet whole && IsIntegerSet(whole) && CutByHypothesis(kind, x, whole, body, isExact) is var (cutSet, cutCondition, cutRest))
+            {
+                by = ($"the members that satisfy {cutCondition} are {cutSet}", "Set.mem_setOf_eq");
+                return Decide(kind, x, cutSet, cutRest, isExact);
+            }
             // The whole numbers from m are ZZ* shifted by m, so a statement over ZZ+ /\ [4; +oo)
             // is the statement about 4 + t over ZZ*, where every route below reads the set.
             if (set is Intersectionf cut && LeastMember(cut) is { } start && IsUnboundedAbove(cut))
@@ -268,6 +280,15 @@ namespace AngouriMath.Functions.Boolean
                     : ($"by induction from {first}: the base case, and P({x} + 1) = c P({x}) + D with c >= 0 and D >= 0", "Nat.le_induction");
                 return byGrowth;
             }
+            // A congruence modulo a symbol, by the residue of the difference of its sides: the
+            // same at one member and at the next along a row of whole numbers, so the same at
+            // every member. Fermat's little theorem, Sullivan and Mackey's Prob 8.9.26.
+            // https://github.com/asc-community/AngouriMath/issues/1409
+            if (kind == Kind.All && set is SpecialSet row && IsIntegerSet(row) && ByTheResidueOfADifference(x, row, body, isExact, out var how) is { } byResidue)
+            {
+                by = how;
+                return byResidue;
+            }
             if (Witness(kind, x, set, body, isExact) is { } byWitness)
             {
                 by = (byWitness == Entity.Boolean.False && kind == Kind.All ? "a member at which the body is false"
@@ -377,6 +398,86 @@ namespace AngouriMath.Functions.Boolean
             if (Truth(Decide(Kind.All, x, set, step, isExact)) is not { } stepCondition)
                 return null;
             return Entity.Boolean.True.Provided((baseCondition & stepCondition).InnerSimplified(isExact));
+        }
+
+        /// <summary>
+        /// <c>forall x in S : f = g (mod m)</c>, or <c>f mod m = g mod m</c>, over a row of whole
+        /// numbers, where <c>m</c> is not a number and does not mention <c>x</c>. With
+        /// <c>D = f - g</c>: where <c>m</c> divides <c>D</c> at every member the statement holds.
+        /// Otherwise, where it holds at one member and <c>m</c> divides <c>D(x + 1) - D(x)</c> at
+        /// every member, <c>D</c> has one residue modulo <c>m</c> the whole way along the row, up
+        /// from that member and down from it, so it holds at every member. Fermat's little
+        /// theorem is the second, with the difference <c>(a + 1)^p - a^p - 1</c> read by the
+        /// binomial theorem.
+        /// </summary>
+        private static Entity? ByTheResidueOfADifference(Variable x, SpecialSet set, Entity body, bool isExact, out (string Rule, string Lemma)? how)
+        {
+            how = null;
+            var (difference, modulus) = body switch
+            {
+                Congruentf(var left, var right, var m) => (left - right, m),
+                Equalsf(Modf(var left, var m), Modf(var right, var n)) when m == n => (left - right, m),
+                _ => ((Entity?)null, (Entity?)null)
+            };
+            if (difference is null || modulus is null or Number || modulus.ContainsNode(x))
+                return null;
+            var tried = ProofRecording.Mark();
+            if (Divides(modulus, difference, isExact, deeper: false))
+            {
+                how = ($"{modulus} divides {difference} at every member", "Int.modEq_iff_dvd");
+                return Entity.Boolean.True;
+            }
+            ProofRecording.Rollback(tried);
+            // A member at which the statement is decided: the least one, then 1, 0 and -1.
+            Integer? start = null;
+            foreach (var member in new[] { LeastMember(set), Integer.One, Integer.Zero, Integer.MinusOne }.OfType<Integer>().Distinct())
+            {
+                if (LeastMember(set) is { } least && member < least)
+                    continue;
+                var at = body.Substitute(x, member).InnerSimplified(isExact);
+                if (at == Entity.Boolean.False)
+                {
+                    ProofRecording.AddBelow(body.Substitute(x, member), $"false at {member}, by evaluation", "decide", at);
+                    how = ($"false at {member}", "decide");
+                    return at;
+                }
+                if (at == Entity.Boolean.True)
+                {
+                    ProofRecording.AddBelow(body.Substitute(x, member), $"the base case, at {member}, by evaluation", "decide", at);
+                    start = member;
+                    break;
+                }
+            }
+            if (start is null)
+                return null;
+            var step = difference.Substitute(x, x + Integer.One) - difference;
+            if (!Divides(modulus, step, isExact, deeper: true))
+            {
+                ProofRecording.Rollback(tried);
+                return null;
+            }
+            ProofRecording.AddBelow(new Forallf(x, set, new Dividesf(modulus, step)), $"{modulus} divides the difference at {x} + 1 less the difference at {x}, at every member", "intro", Entity.Boolean.True);
+            how = ($"by induction up and down from {start}: {modulus} divides the difference of the two sides there, and the difference changes by a multiple of {modulus} from each member to the next", "Int.inductionOn'");
+            return Entity.Boolean.True;
+        }
+
+        /// <summary>
+        /// Whether <c>m divides d</c> simplifies to true, with what it rests on recorded under
+        /// the decision, or <paramref name="deeper"/> under a step the caller records itself.
+        /// </summary>
+        private static bool Divides(Entity modulus, Entity difference, bool isExact, bool deeper)
+        {
+            if (deeper)
+                ProofRecording.Enter();
+            try
+            {
+                return new Dividesf(modulus, difference).InnerSimplified(isExact) == Entity.Boolean.True;
+            }
+            finally
+            {
+                if (deeper)
+                    ProofRecording.Leave();
+            }
         }
 
         private static bool IsUnboundedAbove(Intersectionf cut)
@@ -635,8 +736,85 @@ namespace AngouriMath.Functions.Boolean
                     if (Period(first, x, set) is not { } one || Period(second, x, set) is not { } another)
                         return null;
                     return one * another / one.Gcd(another);
+                // An equation or an order comparison between residues -- a^7 mod 7 = a mod 7,
+                // Fermat's little theorem as Sullivan and Mackey write it (Prob 8.9.26) -- repeats
+                // with the least common multiple of the moduli it mentions.
+                case Equalsf or Greaterf or GreaterOrEqualf or Lessf or LessOrEqualf:
+                    if (body is not IBinaryNode { NodeFirstChild: var lhs, NodeSecondChild: var rhs })
+                        return null;
+                    if (ResiduePeriod(lhs, x, set) is not { } l || ResiduePeriod(rhs, x, set) is not { } r)
+                        return null;
+                    return l * r / l.Gcd(r);
                 default:
                     return body.ContainsNode(x) ? null : EInteger.One;
+            }
+        }
+
+        /// <summary>
+        /// For a body that asks about the members satisfying conditions on the name alone --
+        /// <c>Q implies P</c> of every member, <c>Q and P</c> of some -- the set cut down by the
+        /// conjuncts of <c>Q</c> the solver states as a set, where the cut comes out listed or as
+        /// the whole numbers from a least one; with those conjuncts, and the claim that is left:
+        /// <c>(0 &lt; k and k &lt; 7 and 2 divides k) implies P</c> is <c>2 divides k implies P</c> over
+        /// <c>{1, ..., 6}</c>.
+        /// </summary>
+        private static (Set Cut, Entity Condition, Entity Claim)? CutByHypothesis(Kind kind, Variable x, SpecialSet set, Entity body, bool isExact)
+        {
+            var (hypotheses, conclusion) = (kind, body) switch
+            {
+                (Kind.All, Impliesf(var assumption, var then)) => (Andf.LinearChildren(assumption).ToList(), then),
+                (_, Andf) when kind != Kind.All => (Andf.LinearChildren(body).ToList(), (Entity?)null),
+                _ => (null, null),
+            };
+            if (hypotheses is null)
+                return null;
+            var bounds = hypotheses.Where(h => OnlyAbout(h, x) && SolverReads(h, x)).ToList();
+            var others = hypotheses.Where(h => !bounds.Contains(h)).ToList();
+            if (bounds.Count == 0)
+                return null;
+            var condition = bounds.Aggregate(static (a, b) => a & b);
+            var claim = kind == Kind.All
+                ? others.Count == 0 ? conclusion! : others.Aggregate(static (a, b) => a & b).Implies(conclusion!)
+                : others.Count == 0 ? Entity.Boolean.True : others.Aggregate(static (a, b) => a & b);
+            try
+            {
+                return new Intersectionf(set, condition.Solve(x)).InnerSimplified(isExact) switch
+                {
+                    FiniteSet listed => (listed, condition, claim),
+                    Intersectionf fromLeast when LeastMember(fromLeast) is not null && IsUnboundedAbove(fromLeast) => (fromLeast, condition, claim),
+                    _ => null,
+                };
+            }
+            catch (AngouriBugException) { throw; }
+            catch (AngouriMathBaseException) { return null; }
+        }
+
+        private static bool OnlyAbout(Entity condition, Variable x)
+            => condition.ContainsNode(x) && condition.Vars.All(v => v == x);
+
+        /// <summary>
+        /// The period in <paramref name="x"/> of an expression made of residues <c>p mod m</c>
+        /// and numbers by sums, differences and products: <see cref="PeriodModulo"/>'s for each
+        /// residue, since <c>mod</c> is the floored remainder and <c>p(x) mod m</c> depends on
+        /// <c>x</c> only through <c>p(x)</c> modulo <c>m</c>; <see langword="null"/> where
+        /// <paramref name="x"/> appears outside a residue.
+        /// </summary>
+        private static EInteger? ResiduePeriod(Entity expr, Variable x, SpecialSet set)
+        {
+            if (!expr.ContainsNode(x))
+                return EInteger.One;
+            switch (expr)
+            {
+                case Modf(var dividend, Integer modulus) when !modulus.EInteger.IsZero:
+                    return PeriodModulo(dividend, modulus.EInteger.Abs(), x, set);
+                case Sumf or Minusf or Mulf:
+                    if (expr is not IBinaryNode { NodeFirstChild: var first, NodeSecondChild: var second })
+                        return null;
+                    if (ResiduePeriod(first, x, set) is not { } one || ResiduePeriod(second, x, set) is not { } another)
+                        return null;
+                    return one * another / one.Gcd(another);
+                default:
+                    return null;
             }
         }
 
@@ -886,7 +1064,7 @@ namespace AngouriMath.Functions.Boolean
         /// The expression with every maximal subterm that is not a sum, a difference, a product,
         /// a whole power or a division replaced by one variable per distinct subterm.
         /// </summary>
-        private static Entity Atomized(Entity expr, Dictionary<Entity, Variable> atoms, Dictionary<Entity, Entity> unfolded)
+        internal static Entity Atomized(Entity expr, Dictionary<Entity, Variable> atoms, Dictionary<Entity, Entity> unfolded)
         {
             switch (expr)
             {
