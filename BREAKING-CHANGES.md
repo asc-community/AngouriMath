@@ -1753,6 +1753,20 @@ where it was `0.1 * x ^ 2 / 2 + C`
 | `limit(sin(c*x)/x, x, 0)` | `NaN` | `c` |
 | `limit((1 - cos(c*x))/x^2, x, 0)` | `NaN` | `c ^ 2 / 2` |
 
+### With the downcasting off, a comparison of real values is decided
+
+With `DowncastingEnabled` off, `cos(3)` evaluates to a complex number whose imaginary part is zero,
+and a comparison of one was `NaN`: inequalities were decided only between numbers of the real
+type. A number with no imaginary part is now compared as the real it is, so `cos(3) >= 0` is
+`false` under either setting, and a condition an answer states on a sign, `provided cos(x) >= 0`,
+can be evaluated at a point. A comparison with a value off the real line is still `NaN`.
+
+| Evaluated, with the downcasting off | Was (2.5.0) | Now |
+|---|---|---|
+| `cos(3) >= 0` | `NaN` | `false` |
+| `sin(4) < 0` | `NaN` | `true` |
+| `cos(1) > cos(3)` | `NaN` | `true` |
+
 ### A half-odd power of a logarithm beside a power of `x` is integrated
 
 `x sqrt(ln(x))` was left unintegrated. `x^p F^n`, where `F` is `ln x` or `A + B ln(c x^r)` and
