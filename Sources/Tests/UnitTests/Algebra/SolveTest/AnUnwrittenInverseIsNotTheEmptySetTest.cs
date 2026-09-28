@@ -47,6 +47,20 @@ namespace AngouriMath.Tests.Algebra.SolveTest
         }
 
         /// <summary>
+        /// A set, a cardinality or a power set of the unknown has a set of sets for its preimage,
+        /// which the inverter cannot write, and it threw <c>NotSufficientlySupportedException</c>
+        /// out of <c>Solve</c> where its contract is to decline and leave the equation unsolved.
+        /// https://github.com/asc-community/AngouriMath/issues/1544
+        /// </summary>
+        [Theory]
+        [InlineData("card(x) = 3", "{1, 2, 3}", "{1}")]
+        [InlineData("(x /\\ {1, 2}) = {1}", "{1}", "{2}")]
+        [InlineData("(x \\ {1}) = {2}", "{2}", "{1, 2, 3}")]
+        [InlineData("powerset(x) = {{}, {1}}", "{1}", "{2}")]
+        public void ASetOfSetsIsLeftUnsolved(string equation, string root, string other)
+            => ARootIsInTheAnswerAndANonRootIsNot(equation, root, other);
+
+        /// <summary>
         /// The factorial is the gamma function one along, which has no zeros, so a factorial
         /// equal to zero does have none, and the roots found beside one are the whole answer.
         /// </summary>

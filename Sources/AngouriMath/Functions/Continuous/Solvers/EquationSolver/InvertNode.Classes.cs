@@ -598,37 +598,42 @@ namespace AngouriMath
 
         partial record Equalsf
         {
+            // A statement equal to a value has a set for its preimage, which the inverter cannot
+            // write, so it declines, and the solver leaves the equation unsolved.
             private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x)
-                => throw new NotSufficientlySupportedException(
-                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
+                => null;
         }
 
         partial record Greaterf
         {
+            // A statement equal to a value has a set for its preimage, which the inverter cannot
+            // write, so it declines, and the solver leaves the equation unsolved.
             private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x)
-                => throw new NotSufficientlySupportedException(
-                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
+                => null;
         }
 
         partial record GreaterOrEqualf
         {
+            // A statement equal to a value has a set for its preimage, which the inverter cannot
+            // write, so it declines, and the solver leaves the equation unsolved.
             private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x)
-                => throw new NotSufficientlySupportedException(
-                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
+                => null;
         }
 
         partial record Lessf
         {
+            // A statement equal to a value has a set for its preimage, which the inverter cannot
+            // write, so it declines, and the solver leaves the equation unsolved.
             private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x)
-                => throw new NotSufficientlySupportedException(
-                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
+                => null;
         }
 
         partial record LessOrEqualf
         {
+            // A statement equal to a value has a set for its preimage, which the inverter cannot
+            // write, so it declines, and the solver leaves the equation unsolved.
             private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x)
-                => throw new NotSufficientlySupportedException(
-                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
+                => null;
         }
 
         partial record Set
@@ -701,17 +706,19 @@ namespace AngouriMath
             partial record Intersectionf
             {
                 // f(x) /\ A = value
+                // Deciding the membership would need a piecewise condition, which is not written
+                // here; declined.
                 private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x)
-                    => throw new NotSufficientlySupportedException(
-                        "Deciding this membership would need a piecewise condition, which is not supported here");
+                    => null;
             }
 
             partial record SetMinusf
             {
                 // f(x) \ A = value
+                // Deciding the membership would need a piecewise condition, which is not written
+                // here; declined.
                 private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x)
-                    => throw new NotSufficientlySupportedException(
-                        "Deciding this membership would need a piecewise condition, which is not supported here");
+                    => null;
             }
 
             partial record Inf
@@ -719,16 +726,14 @@ namespace AngouriMath
                 // TODO: CSet is needed here => InvertNode to return a Set, not an IEnumerable
                 // f(x) in A = value
                 private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x)
-                    => throw new NotSufficientlySupportedException(
-                        "Inverting this node would need a set-valued answer, which the inverter cannot give");
+                    => null;
             }
 
             partial record Subsetf
             {
                 // A subset B = value asks for a set of sets, which the inverter cannot return.
                 private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x)
-                    => throw new NotSufficientlySupportedException(
-                        "Inverting this node would need a set-valued answer, which the inverter cannot give");
+                    => null;
             }
 
             partial record IndexedSetOperation
@@ -742,8 +747,7 @@ namespace AngouriMath
             {
                 // powerset(f(x)) = value has no inverse the inverter can write.
                 private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x)
-                    => throw new NotSufficientlySupportedException(
-                        "Inverting this node would need a set-valued answer, which the inverter cannot give");
+                    => null;
             }
         }
 
@@ -777,8 +781,7 @@ namespace AngouriMath
             // card(S) = n has every set of n elements for its solutions, which is not something
             // the inverter can hand back.
             private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x)
-                => throw new NotSufficientlySupportedException(
-                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
+                => null;
         }
 
         partial record Dividesf
@@ -786,8 +789,7 @@ namespace AngouriMath
             // (a divides x) = value has the multiples of a for its solutions -- a set, which the
             // inverter cannot return, the same as membership.
             private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x)
-                => throw new NotSufficientlySupportedException(
-                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
+                => null;
         }
 
         partial record Congruentf
@@ -795,8 +797,7 @@ namespace AngouriMath
             // (x = b (mod n)) = value has a residue class for its solutions -- a set, which the
             // inverter cannot return, the same as divisibility and membership.
             private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x)
-                => throw new NotSufficientlySupportedException(
-                    "Inverting this node would need a set-valued answer, which the inverter cannot give");
+                => null;
         }
 
         partial record Quantifier
