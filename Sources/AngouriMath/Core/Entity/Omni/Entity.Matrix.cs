@@ -368,17 +368,10 @@ namespace AngouriMath
             /// </summary>
             public static Matrix operator *(Matrix m1, Matrix m2)
             {
-                try
-                {
-                    var simplified = new Matrix(GenTensor.MatrixMultiply(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified;
-                    return ToMatrix(simplified);
-                }
-                catch (InvalidShapeException)
-                {
+                if (m1.ColumnCount != m2.RowCount)
                     throw new InvalidMatrixOperationException(
-                        $"Cannot multiply matrices of shapes {m1.InnerMatrix.Shape} and {m2.InnerMatrix.Shape}"
-                        );
-                }
+                        $"Cannot multiply matrices of shapes {m1.InnerMatrix.Shape} and {m2.InnerMatrix.Shape}");
+                return ToMatrix(new Matrix(GenTensor.MatrixMultiply(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified);
             }
 
             /// <summary>

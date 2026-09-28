@@ -256,16 +256,9 @@ namespace AngouriMath
             
             private static bool TryPower(Matrix m, int exp, out Entity res)
             {
-                res = 0;
-                try
-                {
-                    res = m.Pow(exp);
-                    return true;
-                }
-                catch (InvalidMatrixOperationException)
-                {
-                    return false;
-                }
+                // Only a square matrix has powers; Pow throws for any other.
+                res = m.IsSquare ? m.Pow(exp) : 0;
+                return m.IsSquare;
             }
 
             // Re(x) = x/2 * (1 + 1/sgn(x)^2)
