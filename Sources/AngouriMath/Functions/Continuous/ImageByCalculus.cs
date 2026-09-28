@@ -88,13 +88,27 @@ namespace AngouriMath.Functions
         /// <summary>
         /// Whether a quotient of polynomials is one-to-one on an interval, or <see langword="null"/>
         /// where that is not settled here. A continuous function on an interval is one-to-one
-        /// exactly where it is strictly monotone, and a differentiable one is exactly where its
-        /// derivative keeps one sign away from the points where it is zero: <c>x^3</c> on
-        /// <c>RR</c>, whose derivative is zero at 0 and positive on either side, is one-to-one,
-        /// and <c>x^2</c> on <c>RR</c>, whose derivative changes sign at 0, is not. A pole inside
-        /// the interval leaves it unsettled. Sullivan and Mackey's Def 7.4.1.
+        /// exactly where it is strictly monotone: <c>x^3</c> on <c>RR</c> is, and <c>x^2</c> on
+        /// <c>RR</c> is not. Sullivan and Mackey's Def 7.4.1.
         /// </summary>
         internal static bool? OneToOne(Entity f, Variable x, Entity over)
+            => Monotone(f, x, over) switch
+            {
+                null => null,
+                0 => false,
+                _ => true,
+            };
+
+        /// <summary>
+        /// The direction a quotient of polynomials runs in on an interval: <c>1</c> where it is
+        /// strictly increasing, <c>-1</c> where strictly decreasing, <c>0</c> where it is neither,
+        /// and <see langword="null"/> where that is not settled here. A differentiable function is
+        /// strictly monotone exactly where its derivative keeps one sign away from the points
+        /// where it is zero: the derivative of <c>x^3</c> is zero at 0 and positive on either
+        /// side, and that of <c>x^2</c> changes sign at 0. A pole inside the interval leaves it
+        /// unsettled.
+        /// </summary>
+        internal static int? Monotone(Entity f, Variable x, Entity over)
         {
             if (!f.ContainsNode(x) || !IsRational(f, x) || Pieces(over) is not { Count: 1 } pieces)
                 return null;
@@ -114,15 +128,122 @@ namespace AngouriMath.Functions
             int? sign = null;
             for (var i = 0; i + 1 < ends.Count; i++)
             {
-                    if (AsReal(top.Substitute(x, Between(ends[i], ends[i + 1]))) is not { IsFinite: true } value)
+                if (AsReal(top.Substitute(x, Between(ends[i], ends[i + 1]))) is not { IsFinite: true } value)
                     return null;
                 var here = value.EDecimal.Sign;
                 // Zero on a whole stretch is a constant there, and a change of sign a turn.
                 if (here == 0 || sign is { } before && before != here)
-                    return false;
+                    return 0;
                 sign = here;
             }
-            return true;
+            return sign;
+        }
+
+        /// <summary>
+        /// A union or an intersection of a family of intervals whose ends are quotients of
+        /// polynomials in the index, monotone over its range, as the interval between the extremes
+        /// of the ends; <see langword="null"/> where that is not settled here. Sullivan and
+        /// Mackey's §3.9.5: the intersection of <c>(-1/n, 1/n)</c> over the positive whole numbers
+        /// is <c>{0}</c>, the union of <c>(x, x + 1)</c> over <c>(0, 1)</c> is <c>(0, 2)</c>, and
+        /// the union of <c>[0, (n - 1)/n)</c> is <c>[0, 1)</c>, the intersection of <c>(-1/n, 1)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// An intersection of intervals is an interval, from the supremum of the left ends to the
+        /// infimum of the right ones. An end of it is closed where the family's ends are, and where
+        /// the extreme is only approached: every <c>(-1/n, 1/n)</c> holds 0, where both ends tend.
+        /// </para>
+        /// <para>
+        /// A union is an interval from the infimum of the left ends to the supremum of the right
+        /// ones where the family is a chain, each member inside the next -- ends moving apart, or
+        /// one still -- and where the index runs over an interval and every member is not empty,
+        /// so that the members overlap as it moves. Over the whole numbers a sliding family,
+        /// <c>(k, k + 1)</c>, leaves gaps, and is not read. An end of the union is closed where the
+        /// family's ends are and the extreme is reached.
+        /// </para>
+        /// <para>
+        /// A monotone end has its extremes at the ends of the index's range: at a least or a
+        /// greatest member, where it is reached, and in the limit, where it is not.
+        /// </para>
+        /// </remarks>
+        internal static Set? Family(bool union, Interval member, Variable k, Entity over)
+        {
+            if (Range(over) is not var (range, whole)
+                || Extremes(member.Left, k, range) is not var (leftLow, leftHigh, leftDirection)
+                || Extremes(member.Right, k, range) is not var (rightLow, rightHigh, rightDirection))
+                return null;
+            (Entity Value, bool Closed) lower, upper;
+            if (union)
+            {
+                var chain = leftDirection <= 0 && rightDirection >= 0 || leftDirection >= 0 && rightDirection <= 0;
+                if (!chain && (whole || !NeverEmpty(member, k, range)))
+                    return null;
+                lower = (leftLow.Value, member.LeftClosed && leftLow.Reached);
+                upper = (rightHigh.Value, member.RightClosed && rightHigh.Reached);
+            }
+            else
+            {
+                lower = (leftHigh.Value, member.LeftClosed || !leftHigh.Reached);
+                upper = (rightLow.Value, member.RightClosed || !rightLow.Reached);
+            }
+            if (AsReal(lower.Value) is not { IsNaN: false } from || AsReal(upper.Value) is not { IsNaN: false } to)
+                return null;
+            // Simplified, so that [0; 0] is the point it is and (0; 0) nothing.
+            return new Interval(lower.Value, lower.Closed && from.IsFinite, upper.Value, upper.Closed && to.IsFinite).InnerSimplified as Set;
+        }
+
+        /// <summary>The index's range as an interval, and whether the index is a whole number.</summary>
+        private static (Interval Range, bool Whole)? Range(Entity over)
+            => over switch
+            {
+                SpecialSet.PositiveIntegers => (new Interval(Integer.One, true, Real.PositiveInfinity, false), true),
+                SpecialSet.NonNegativeIntegers => (new Interval(Integer.Zero, true, Real.PositiveInfinity, false), true),
+                SpecialSet.Integers => (new Interval(Real.NegativeInfinity, false, Real.PositiveInfinity, false), true),
+                SpecialSet.Reals => (new Interval(Real.NegativeInfinity, false, Real.PositiveInfinity, false), false),
+                Interval interval when interval.IsNumeric => (interval, false),
+                _ => null,
+            };
+
+        /// <summary>
+        /// The least and the greatest of an end over the range, each with whether it is reached,
+        /// and the end's direction, <c>0</c> for one that does not move; <see langword="null"/>
+        /// where the end is not monotone there.
+        /// </summary>
+        private static ((Entity Value, bool Reached) Low, (Entity Value, bool Reached) High, int Direction)? Extremes(Entity end, Variable k, Interval range)
+        {
+            if (!end.ContainsNode(k))
+                return ((end, true), (end, true), 0);
+            if (Monotone(end, k, range) is not { } direction || direction == 0)
+                return null;
+            if (At(end, k, range.Left, range.LeftClosed, Core.ApproachFrom.Right) is not { } atStart
+                || At(end, k, range.Right, range.RightClosed, Core.ApproachFrom.Left) is not { } atEnd)
+                return null;
+            return direction > 0 ? (atStart, atEnd, 1) : (atEnd, atStart, -1);
+        }
+
+        /// <summary>The end's value at an end of the range, reached, or its limit there, not reached.</summary>
+        private static (Entity Value, bool Reached)? At(Entity end, Variable k, Entity at, bool included, Core.ApproachFrom side)
+        {
+            if (AsReal(at) is not { } point)
+                return null;
+            if (included && point.IsFinite)
+                return (end.Substitute(k, at).Simplify(), true);
+            var limit = point.IsFinite ? end.Limit(k, at, side) : end.Limit(k, at);
+            return AsReal(limit) is { IsNaN: false } ? (limit, false) : null;
+        }
+
+        /// <summary>Whether every member of a family is not empty: its right end above its left one over the whole range.</summary>
+        private static bool NeverEmpty(Interval member, Variable k, Interval range)
+        {
+            var width = (member.Right - member.Left).Simplify();
+            if (!width.ContainsNode(k))
+                return AsReal(width) is { } constant && constant.EDecimal.Sign > 0;
+            return Of(width, k, range) switch
+            {
+                Interval { Left: var least, LeftClosed: var reached } => AsReal(least) is { } bound && (bound.EDecimal.Sign > 0 || bound.EDecimal.Sign == 0 && !reached),
+                FiniteSet { Count: 1 } single => AsReal(single.First()) is { } only && only.EDecimal.Sign > 0,
+                _ => false,
+            };
         }
 
         /// <summary>A point strictly between two ends, either of which may be infinite.</summary>

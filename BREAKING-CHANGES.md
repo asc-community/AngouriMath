@@ -901,6 +901,23 @@ whole numbers only a yes carries over from the interval around them
 | `forall a in [0; +oo) : forall b in [0; +oo) : a^2 = b^2 implies a = b` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
 | `forall a in RR : forall b in RR : a^3 - 3 a = b^3 - 3 b implies a = b` | `UnhandledParseException` | `False` |
 
+### A family of intervals with monotone ends is the interval between their extremes
+
+`union(A_n, n in I)` and `intersection(A_n, n in I)` of intervals whose ends are quotients of
+polynomials in the index, monotone over its range, are the interval between the extremes of the
+ends: an intersection always, a union where the family is a chain or the index runs over an
+interval. An end is closed where the family's ends are and the extreme is reached, or, in an
+intersection, where it is only approached. Sullivan and Mackey's §3.9.5 Try 8–10: the intersection
+of `(-1/n; 1/n)` over `ZZ+` is `{ 0 }`, the union of `(x; x + 1)` over `(0; 1)` is `(0; 2)`, and
+the union of `[0; (n - 1)/n)` is `[0; 1)`, which is the intersection of `(-1/n; 1)`
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `intersection((-1/n; 1/n), n in ZZ+)` | `UnhandledParseException` (left as written when families arrived) | `{ 0 }` |
+| `union((x; x + 1), x in (0; 1))` | `UnhandledParseException` (left as written when families arrived) | `(0; 2)` |
+| `union([0; (n - 1)/n), n in ZZ+) = intersection((-1/n; 1), n in ZZ+)` | `UnhandledParseException` | `True` |
+
 ### The binomial coefficient's identities, and its sums in closed form
 
 Pascal's rule, the chairperson identity and the symmetry are rewrite rules, each in the direction

@@ -66,6 +66,31 @@ namespace AngouriMath.Tests.Core.Sets
         public void MembershipOfAnInfiniteFamilyIsDecidedByTheQuantifiers(string expression, string expected)
             => Assert.Equal(expected.ToEntity(), Evaluated(expression));
 
+        /// <summary>
+        /// A family of intervals whose ends are monotone in the index is the interval between the
+        /// extremes of its ends, closed where they are reached, or approached by the ends of an
+        /// intersection: Sullivan and Mackey's §3.9.5 Try 8–10, and growing and shrinking families.
+        /// A sliding family over the whole numbers leaves gaps and stays a family.
+        /// </summary>
+        [Theory]
+        [InlineData("intersection((-1/n; 1/n), n in ZZ+)", "{0}")]
+        [InlineData("union((x; x + 1), x in (0; 1))", "(0; 2)")]
+        [InlineData("union([0; (n - 1)/n), n in ZZ+)", "[0; 1)")]
+        [InlineData("intersection((-1/n; 1), n in ZZ+)", "[0; 1)")]
+        [InlineData("intersection([0; 1/n), n in ZZ+)", "{0}")]
+        [InlineData("union([1/n; 1], n in ZZ+)", "(0; 1]")]
+        [InlineData("union([1; (k + 1)/k], k in ZZ+)", "[1; 2]")]
+        public void AFamilyWithMonotoneEndsIsAnInterval(string expression, string expected)
+            => Assert.Equal(expected.ToEntity().Evaled, Evaluated(expression));
+
+        [Fact]
+        public void TwoFamiliesAreEqualWhereTheirIntervalsAre()
+        {
+            Assert.Equal(Entity.Boolean.True, Evaluated("union([0; (n - 1)/n), n in ZZ+) = intersection((-1/n; 1), n in ZZ+)"));
+            var sliding = "union((n; n + 1), n in ZZ+)".ToEntity();
+            Assert.Equal(sliding, sliding.Evaled);
+        }
+
         /// <summary>Ex 3.5.11: the complement of a set in a universe is the universe less the set.</summary>
         [Theory]
         [InlineData("complement({1, 2}, ZZ+ /\\ [1; 5])", "{3, 4, 5}")]
