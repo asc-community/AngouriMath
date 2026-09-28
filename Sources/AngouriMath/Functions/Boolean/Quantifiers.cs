@@ -56,6 +56,9 @@ namespace AngouriMath.Functions.Boolean
     {
         internal enum Kind { All, Some, Unique }
 
+        /// <summary>Set while two nested quantifiers are decided in the other order, so that they are not swapped back.</summary>
+        [System.ThreadStatic] private static bool swapping;
+
         /// <summary>
         /// The truth value of the quantified statement, or <see langword="null"/> where it is
         /// not settled. The set and the body arrive already simplified.
@@ -142,6 +145,34 @@ namespace AngouriMath.Functions.Boolean
                 var t = Variable.CreateUnique(body + start, "t");
                 by = ($"the whole numbers from {start} are ZZ* shifted by {start}", "Nat.le_induction");
                 return Decide(kind, t, MathS.Sets.NonNegativeIntegers, body.Substitute(x, start + t).InnerSimplified(isExact), isExact);
+            }
+            // forall x in S : forall y in T : B is forall y in T : forall x in S : B where neither
+            // set mentions the other name, and so for exists. A closed form's range condition is
+            // about the name it runs to, and when that name is bound outside, the condition
+            // reaches the quantifier inside as a piecewise it cannot decide:
+            // forall n in ZZ* : forall r in ZZ* : sum(binomial(r + i, i), i, 0, n) = ... leaves
+            // `n >= 0` to the quantifier over r. With the two swapped, the quantifier over n
+            // decides it. Tried only where the inner body is such a piecewise, and once.
+            // https://github.com/asc-community/AngouriMath/issues/1409
+            if (!swapping && kind is Kind.All or Kind.Some && body is Forallf or Existsf && body is Quantifier(Variable other, Set innerSet, Piecewise inner)
+                && (body is Forallf) == (kind == Kind.All) && other != x && !innerSet.ContainsNode(x) && !set.ContainsNode(other)
+                && inner.Cases.Any(@case => @case.Predicate.ContainsNode(x) && !@case.Predicate.ContainsNode(other)))
+            {
+                swapping = true;
+                Entity? swapped;
+                try
+                {
+                    swapped = Decide(kind, other, innerSet, Quantified(kind, x, set, inner).InnerSimplified(isExact), isExact);
+                }
+                finally
+                {
+                    swapping = false;
+                }
+                if (swapped is Entity.Boolean)
+                {
+                    by = ($"the two quantifiers of one kind are taken in the other order, so the condition on {x} is decided by the quantifier over it", kind == Kind.All ? "forall_swap" : "exists_swap");
+                    return swapped;
+                }
             }
             // A piecewise body -- what a closed form comes as, sum(k, k, 1, n) being
             // (n + n^2)/2 provided n >= 0 -- is the case whose condition holds at every member of
@@ -959,7 +990,6 @@ namespace AngouriMath.Functions.Boolean
             return false;
         }
 
-        /// <summary>Whether two sides are the same polynomial, read by expansion.</summary>
         /// <summary>
         /// <c>True</c> where the two sides differ by a polynomial that expands to nothing,
         /// <c>True provided P</c> where they do once quotients are put over one denominator
@@ -967,6 +997,18 @@ namespace AngouriMath.Functions.Boolean
         /// <see langword="null"/> otherwise. A factor in the quantified name has to be decided
         /// non-zero over the set, or the identity is not claimed.
         /// </summary>
+        /// <remarks>
+        /// Binomial coefficients are read twice more where they are atoms that do not cancel as
+        /// written. Those whose upper indices are one another plus whole numbers are each written
+        /// over the lowest by Vandermonde's identity,
+        /// <c>binomial(m + d, r) = sum_j binomial(d, j) binomial(m, r - j)</c>, which holds for
+        /// every <c>m</c> and whole <c>r</c> and so needs no condition: Sullivan and Mackey's
+        /// Prob 8.9.20, <c>binomial(n, k) - binomial(n - 2, k) = 2 binomial(n - 2, k - 1) +
+        /// binomial(n - 2, k - 2)</c>, is then the same atoms on both sides. And a product of them
+        /// is written in factorials, where the trinomial revision of §8.4.5,
+        /// <c>binomial(n, k) binomial(k, l) = binomial(n, l) binomial(n - l, k - l)</c>, cancels factor
+        /// by factor. https://github.com/asc-community/AngouriMath/issues/1409
+        /// </remarks>
         private static Entity? IsIdentity(Entity left, Entity right, Variable x, Set set, bool isExact)
         {
             var difference = (left - right).InnerSimplified;
@@ -974,9 +1016,20 @@ namespace AngouriMath.Functions.Boolean
                 return Entity.Boolean.True;
             if (difference.Complexity > LargestDifferenceRead)
                 return null;
-            // Whatever is not a polynomial connective -- 2^(n + 1), n!, sin(x) -- is an atom the
-            // polynomial is over: -(1 - 2^(n + 1)) = 2^(n + 1) - 1 is p - p in one atom, and a
-            // polynomial that is zero in its atoms is zero at every value of them.
+            if (IsZeroDifference(difference, x, set, isExact) is { } asWritten)
+                return asWritten;
+            if (!difference.Nodes.Any(node => node is Binomialf))
+                return null;
+            // The factorials are read only where every one of them comes from a coefficient: a
+            // binomial coefficient is zero where its factorials have poles, which a factorial
+            // written out is not, so binomial(n, k) (n - k)! k! = n! is not an identity at k > n.
+            return (BinomialsOverTheLowestUpperIndex(difference) is { } spread ? IsZeroDifference(spread, x, set, isExact) : null)
+                ?? (difference.Nodes.Any(node => node is Factorialf) ? null : IsZeroDifference(BinomialsAsFactorials(difference), x, set, isExact));
+        }
+
+        /// <summary>The body of <see cref="IsIdentity"/> once the difference is read.</summary>
+        private static Entity? IsZeroDifference(Entity difference, Variable x, Set set, bool isExact)
+        {
             var atoms = new Dictionary<Entity, Variable>();
             difference = Atomized(difference, atoms, FactorialsUnfolded(difference));
             Entity condition = Entity.Boolean.True;
@@ -992,7 +1045,8 @@ namespace AngouriMath.Functions.Boolean
                     var written = factor;
                     foreach (var pair in atoms)
                         written = written.Substitute(pair.Value, pair.Key);
-                    if (written.Evaled is Number)
+                    // A number, or a factorial, which is never zero: the gamma function has no zeros.
+                    if (written.Evaled is Number || written is Factorialf || written is Powf(Factorialf, Integer))
                         continue;
                     if (written.ContainsNode(x))
                     {
@@ -1009,6 +1063,40 @@ namespace AngouriMath.Functions.Boolean
             var simplified = condition.InnerSimplified(isExact);
             return simplified == Entity.Boolean.True ? Entity.Boolean.True : Entity.Boolean.True.Provided(simplified);
         }
+
+        /// <summary>
+        /// Each binomial coefficient whose upper index is another's plus a whole number, written
+        /// over the lowest of them by Vandermonde's identity; <see langword="null"/> where none is.
+        /// </summary>
+        private static Entity? BinomialsOverTheLowestUpperIndex(Entity difference)
+        {
+            var binomials = difference.Nodes.OfType<Binomialf>().Distinct().ToList();
+            var written = new Dictionary<Entity, Entity>();
+            foreach (var binomial in binomials)
+            {
+                Binomialf lowest = binomial;
+                foreach (var other in binomials)
+                    if (WholeGap(lowest.Upper, other.Upper) is { IsNegative: false, IsZero: false } gap && gap.EInteger.CompareTo(EInteger.FromInt32(LargestFactorialGap)) <= 0)
+                        lowest = other;
+                if (ReferenceEquals(lowest, binomial) || WholeGap(binomial.Upper, lowest.Upper) is not { } distance)
+                    continue;
+                // binomial(m + d, r) = sum_j binomial(d, j) binomial(m, r - j), row d of Pascal's triangle.
+                var d = distance.EInteger.ToInt32Checked();
+                Entity sum = Integer.Zero;
+                var coefficient = EInteger.One;
+                for (var j = 0; j <= d; j++)
+                {
+                    sum += Integer.Create(coefficient) * new Binomialf(lowest.Upper, binomial.Lower - Integer.Create(j));
+                    coefficient = coefficient.Multiply(EInteger.FromInt32(d - j)).Divide(EInteger.FromInt32(j + 1));
+                }
+                written[binomial] = sum;
+            }
+            return written.Count == 0 ? null : difference.Replace(node => node is Binomialf && written.TryGetValue(node, out var sum) ? sum : node);
+        }
+
+        /// <summary>Each binomial coefficient as the quotient of its three factorials.</summary>
+        private static Entity BinomialsAsFactorials(Entity difference)
+            => difference.Replace(node => node is Binomialf(var n, var k) ? new Factorialf(n) / (new Factorialf(k) * new Factorialf(n - k)) : node);
 
         private static bool IsZeroPolynomial(Entity expr)
         {
@@ -1096,12 +1184,31 @@ namespace AngouriMath.Functions.Boolean
                     return Atomized(a.Pow(r), atoms, unfolded).Pow(times);
                 default:
                     if (!atoms.TryGetValue(expr, out var atom))
-                        atoms[expr] = atom = Variable.CreateUnique(expr, "atom_" + atoms.Count);
+                    {
+                        // The same atom under another spelling of its arguments --
+                        // binomial(n + r + 1, n) beside binomial(r + n + 1, n), which a closed
+                        // form writes in its own order -- is that atom, or the two sides of an
+                        // identity read as two different things.
+                        var known = atoms.Keys.FirstOrDefault(other => SameAtom(other, expr));
+                        atom = known is not null ? atoms[known] : atoms[expr] = Variable.CreateUnique(expr, "atom_" + atoms.Count);
+                    }
                     return atom;
             }
         }
 
         private const int LargestDifferenceRead = 2048;
+
+        /// <summary>
+        /// Whether two binomial coefficients or factorials have arguments that differ by nothing,
+        /// read as polynomials.
+        /// </summary>
+        private static bool SameAtom(Entity left, Entity right)
+            => (left, right) switch
+            {
+                (Binomialf(var n1, var k1), Binomialf(var n2, var k2)) => WholeGap(n1, n2) is { IsZero: true } && WholeGap(k1, k2) is { IsZero: true },
+                (Factorialf(var a1), Factorialf(var a2)) => WholeGap(a1, a2) is { IsZero: true },
+                _ => false,
+            };
 
         /// <summary>
         /// A body that does not mention the variable says the same of every member, so the

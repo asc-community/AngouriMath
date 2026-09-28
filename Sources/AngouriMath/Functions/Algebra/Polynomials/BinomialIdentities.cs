@@ -21,8 +21,14 @@ namespace AngouriMath.Functions
     /// <c>sum(binomial(a, i) binomial(b, k - i), i, 0, k)</c> is <c>binomial(a + b, k)</c>) and
     /// its square case (Prob 8.9.34, <c>sum(binomial(n, k)^2, k, 0, n)</c> is
     /// <c>binomial(2n, n)</c>), the summation identity (Thm 8.4.6,
-    /// <c>sum(binomial(i, k), i, 0, n)</c> is <c>binomial(n + 1, k + 1)</c>), and the sums over
-    /// the even or the odd indices (Ex 8.3.11, each <c>2^(n - 1)</c> for <c>n &gt;= 1</c>).
+    /// <c>sum(binomial(i, k), i, 0, n)</c> is <c>binomial(n + 1, k + 1)</c>), the sums over
+    /// the even or the odd indices (Ex 8.3.11, each <c>2^(n - 1)</c> for <c>n &gt;= 1</c>), the
+    /// trinomial revision summed (Prob 8.9.15, <c>sum(binomial(n, i) binomial(n - i, k - i), i, 0, k)</c>
+    /// is <c>2^k binomial(n, k)</c>, and §8.4.5's <c>sum(binomial(n, i) binomial(i, k), i, k, n)</c>,
+    /// <c>2^(n - k) binomial(n, k)</c>), the parallel summation (Prob 8.9.19,
+    /// <c>sum(binomial(r + i, i), i, 0, n)</c> is <c>binomial(r + n + 1, n)</c>) and Vandermonde along
+    /// the upper indices (Prob 8.9.18, <c>sum(binomial(j, a) binomial(m - j, b), j, 0, m)</c> is
+    /// <c>binomial(m + 1, a + b + 1)</c>).
     /// </summary>
     /// <remarks>
     /// <para>
@@ -50,18 +56,189 @@ namespace AngouriMath.Functions
         {
             if (var is not Variable index)
                 return null;
-            if (from.Evaled is not Integer { IsZero: true })
-                return null;
-            if (to.ContainsNode(index) || !PolynomialSummation.IsWholeOrSymbolic(to))
+            if (to.ContainsNode(index) || !PolynomialSummation.IsWholeOrSymbolic(to)
+                || from.ContainsNode(index) || !PolynomialSummation.IsWholeOrSymbolic(from))
                 return null;
             var upper = to.InnerSimplified;
+            var lower = from.InnerSimplified;
             var summand = expression.InnerSimplified;
 
-            return PolynomialBesideTheCoefficient(summand, index, upper)
-                ?? Vandermonde(summand, index, upper)
-                ?? SummationIdentity(summand, index, upper)
-                ?? OverTheEvenOrTheOddIndices(expression, index, to);
+            if (lower.Evaled is Integer { IsZero: true }
+                && (PolynomialBesideTheCoefficient(summand, index, upper)
+                    ?? Vandermonde(summand, index, upper)
+                    ?? SummationIdentity(summand, index, upper)
+                    ?? OverTheEvenOrTheOddIndices(expression, index, to)
+                    ?? TrinomialRevision(summand, index, upper)
+                    ?? ParallelSummation(summand, index, upper)) is { } fromZero)
+                return fromZero;
+            return SubsetsOfASubset(summand, index, lower, upper)
+                ?? UpperVandermonde(summand, index, lower, upper);
         }
+
+        /// <summary>
+        /// <c>binomial(n, i) binomial(n - i, k - i)</c> summed from zero to <c>k</c> or to <c>n</c>:
+        /// <c>2^k binomial(n, k)</c> (Prob 8.9.15). Choosing <c>i</c> of the <c>n</c> and then
+        /// <c>k - i</c> of the rest is choosing <c>k</c> and then which <c>i</c> of them came first,
+        /// <c>binomial(n, i) binomial(n - i, k - i) = binomial(n, k) binomial(k, i)</c>, the
+        /// trinomial revision; what is left is the binomial theorem at <c>1 + 1</c>. The terms past
+        /// <c>k</c> have a negative lower index and are zero, so the range may end at either.
+        /// </summary>
+        private static Entity? TrinomialRevision(Entity summand, Variable index, Entity upper)
+        {
+            Entity constant = Integer.One;
+            Entity? n = null;
+            Entity? k = null;
+            Entity? rest = null;
+            Entity? restBottom = null;
+            foreach (var factor in Mulf.LinearChildren(summand))
+            {
+                if (!factor.ContainsNode(index))
+                    constant *= factor;
+                else if (factor is Binomialf(var top, var bottom) && !top.ContainsNode(index) && bottom == index && n is null)
+                    n = top;
+                else if (factor is Binomialf(var top2, var bottom2) && top2.ContainsNode(index) && rest is null)
+                    (rest, restBottom) = (top2, bottom2);
+                else
+                    return null;
+            }
+            if (n is null || rest is null || restBottom is null)
+                return null;
+            // The second coefficient's upper index is n - i, and its lower one k - i, or n - k
+            // where the symmetry has taken the smaller of the two.
+            if (!Linear(rest, index, out var restSlope, out var restIntercept) || restSlope != -1 || !Same(restIntercept, n))
+                return null;
+            if (Linear(restBottom, index, out var bottomSlope, out var bottomIntercept) && bottomSlope == -1)
+                k = bottomIntercept;
+            else if (!restBottom.ContainsNode(index))
+                k = Tidy(n - restBottom);
+            if (k is null || !Same(upper, k) && !Same(upper, n))
+                return null;
+            return Ranged((constant * MathS.Pow(Integer.Create(2), k) * MathS.Binomial(n, k)).InnerSimplified, upper);
+        }
+
+        /// <summary>
+        /// <c>binomial(i + r, i)</c> summed over <c>i</c> from zero to <c>m</c>:
+        /// <c>binomial(m + r + 1, m)</c>, the parallel summation (Prob 8.9.19), an identity of
+        /// polynomials in <c>r</c>; and <c>binomial(i + r, r)</c>, its spelling by the symmetry for
+        /// a whole <c>r &gt;= 0</c>: <c>binomial(m + r + 1, r + 1)</c>, the summation identity
+        /// shifted.
+        /// </summary>
+        private static Entity? ParallelSummation(Entity summand, Variable index, Entity upper)
+        {
+            Entity constant = Integer.One;
+            Entity? top = null;
+            Entity? bottom = null;
+            foreach (var factor in Mulf.LinearChildren(summand))
+            {
+                if (!factor.ContainsNode(index))
+                    constant *= factor;
+                else if (factor is Binomialf(var t, var b) && top is null)
+                    (top, bottom) = (t, b);
+                else
+                    return null;
+            }
+            if (top is null || bottom is null || !Linear(top, index, out var slope, out var r) || slope != 1 || r.Evaled is Integer { IsZero: true })
+                return null;
+            Entity closed;
+            if (bottom == index)
+                closed = MathS.Binomial(Tidy(upper + r + Integer.One), upper);
+            else if (Same(bottom, r))
+                closed = MathS.Binomial(Tidy(upper + r + Integer.One), Tidy(r + Integer.One));
+            else
+                return null;
+            return Ranged((constant * closed).InnerSimplified, upper);
+        }
+
+        /// <summary>
+        /// <c>binomial(n, i) binomial(i, k)</c> summed over <c>i</c> from <c>k</c> (or zero, the terms
+        /// below <c>k</c> being zero) to <c>n</c>: <c>2^(n - k) binomial(n, k)</c> (Thm 8.4.6's second
+        /// form, §8.4.5). A subset of <c>i</c> and a subset of <c>k</c> of that is a subset of
+        /// <c>k</c> and a subset of the rest to go with it,
+        /// <c>binomial(n, i) binomial(i, k) = binomial(n, k) binomial(n - k, i - k)</c>, and the
+        /// second sums to <c>2^(n - k)</c>.
+        /// </summary>
+        private static Entity? SubsetsOfASubset(Entity summand, Variable index, Entity lower, Entity upper)
+        {
+            Entity constant = Integer.One;
+            Entity? n = null;
+            Entity? k = null;
+            foreach (var factor in Mulf.LinearChildren(summand))
+            {
+                if (!factor.ContainsNode(index))
+                    constant *= factor;
+                else if (factor is Binomialf(var top, var bottom) && !top.ContainsNode(index) && bottom == index && n is null)
+                    n = top;
+                else if (factor is Binomialf(var top2, var bottom2) && top2 == index && !bottom2.ContainsNode(index) && k is null)
+                    k = bottom2;
+                else
+                    return null;
+            }
+            if (n is null || k is null || !Same(upper, n) || !Same(lower, k) && lower.Evaled is not Integer { IsZero: true })
+                return null;
+            // Over n >= 0 whether the range starts at k or at zero: for k > n both sides are zero,
+            // the sum empty or its terms, and so is binomial(n, k); below zero every term is.
+            var closed = (constant * MathS.Pow(Integer.Create(2), Tidy(n - k)) * MathS.Binomial(n, k)).InnerSimplified;
+            return Ranged(closed, upper);
+        }
+
+        /// <summary>
+        /// <c>binomial(j, a) binomial(m - j, b)</c> summed over <c>j</c> from zero to <c>m</c>:
+        /// <c>binomial(m + 1, a + b + 1)</c>, Vandermonde's convolution along the upper indices
+        /// (Prob 8.9.18, <c>sum(binomial(i - 1, 2) binomial(n - i, 2), i, 1, n) = binomial(n, 5)</c>):
+        /// choosing <c>a + b + 1</c> of <c>m + 1</c> in a row, by which of them is the
+        /// <c>(a + 1)</c>-th. The index may be shifted, <c>j = i + p</c>, as long as the range is the
+        /// whole of <c>0 &lt;= j &lt;= m</c>: below zero the first coefficient is not zero.
+        /// </summary>
+        private static Entity? UpperVandermonde(Entity summand, Variable index, Entity lower, Entity upper)
+        {
+            Entity constant = Integer.One;
+            Entity? p = null, a = null, q = null, b = null;
+            foreach (var factor in Mulf.LinearChildren(summand))
+            {
+                if (!factor.ContainsNode(index))
+                    constant *= factor;
+                else if (factor is Binomialf(var top, var bottom) && !bottom.ContainsNode(index) && Linear(top, index, out var slope, out var intercept))
+                {
+                    if (slope == 1 && p is null)
+                        (p, a) = (intercept, bottom);
+                    else if (slope == -1 && q is null)
+                        (q, b) = (intercept, bottom);
+                    else
+                        return null;
+                }
+                else
+                    return null;
+            }
+            // j = i + p runs from zero, and m - j = q - i, so m = q + p and the range ends at q.
+            if (p is null || a is null || q is null || b is null || !Same((lower + p).InnerSimplified, Integer.Zero) || !Same(upper, q))
+                return null;
+            var m = Tidy(q + p);
+            return Ranged((constant * MathS.Binomial(Tidy(m + Integer.One), Tidy(a + b + Integer.One))).InnerSimplified, m);
+        }
+
+        /// <summary><paramref name="expr"/> as <c>slope index + intercept</c> with a slope of -1, 0 or 1.</summary>
+        private static bool Linear(Entity expr, Variable index, out int slope, out Entity intercept)
+        {
+            slope = 0;
+            intercept = expr;
+            if (!expr.ContainsNode(index))
+                return true;
+            if (!TreeAnalyzer.TryGetPolyLinear(expr, index, out var a, out var b) || a.Evaled is not Integer { EInteger: var whole }
+                || whole.Abs().CompareTo(EInteger.One) != 0)
+                return false;
+            (slope, intercept) = (whole.Sign, b.InnerSimplified);
+            return true;
+        }
+
+        /// <summary>
+        /// An index written out of sums of its parts, <c>n - 1 + 1</c> as <c>n</c>, which the inner
+        /// simplification leaves nested: small, and only where an identity has matched.
+        /// </summary>
+        private static Entity Tidy(Entity index) => PartialFractions.Bare(index.Simplify());
+
+        /// <summary>Whether the two are one expression, read through their difference.</summary>
+        private static bool Same(Entity left, Entity right)
+            => left == right || (left - right).InnerSimplified is Integer { IsZero: true };
 
         /// <summary>
         /// <c>p(k) binomial(n, k) x^k y^(n - k)</c> summed to <c>n</c>, for a polynomial <c>p</c> of
