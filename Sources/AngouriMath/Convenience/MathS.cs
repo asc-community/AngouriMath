@@ -1367,6 +1367,33 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Binomial(Entity n, Entity k) => new Binomialf(n, k);
 
+        /// <summary>The Iverson bracket <c>iverson(P)</c>: <c>1</c> where the statement holds, <c>0</c> where it does not</summary>
+        /// <param name="statement">The statement</param>
+        /// <returns>The <see cref="Entity.Iversonf"/> node</returns>
+        /// <remarks>
+        /// A statement that is not decided is kept as the node. A count is a sum of these:
+        /// <c>sum(iverson(k divides 12), k, 1, 12)</c> is the number of divisors of <c>12</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1478
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        ///
+        /// Console.WriteLine(Iverson("3 divides 12").Simplify());
+        /// Console.WriteLine(Iverson("2 > 3").Simplify());
+        /// Console.WriteLine(Iverson("x > 0").Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 1
+        /// 0
+        /// iverson(x > 0)
+        /// </code>
+        /// </example>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Iverson(Entity statement) => new Iversonf(statement);
+
         /// <summary>The error function, <c>erf(z) = 2/sqrt(pi) int_0^z e^(-t^2) dt</c></summary>
         /// <param name="a">The argument, any complex number</param>
         /// <returns>The <see cref="Entity.Erff"/> node</returns>

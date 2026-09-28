@@ -238,6 +238,12 @@ namespace AngouriMath
                 => Choice(level, "erf_", "erf_", "erf_");
         }
 
+        public partial record Iversonf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "iverson_", "iverson_", "iverson_");
+        }
+
         public partial record Erfcf
         {
             private protected override string SortHashName(SortLevel level)

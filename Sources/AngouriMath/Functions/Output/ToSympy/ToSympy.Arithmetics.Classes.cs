@@ -88,6 +88,12 @@ namespace AngouriMath
                 => $@"sympy.erf({Argument.ToSymPy()})";
         }
 
+        public partial record Iversonf
+        {
+            internal override string ToSymPy()
+                => $@"sympy.Piecewise((1, {Argument.ToSymPy()}), (0, True))";
+        }
+
         public partial record Erfcf
         {
             internal override string ToSymPy()

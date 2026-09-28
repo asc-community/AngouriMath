@@ -294,6 +294,14 @@ namespace AngouriMath
                 null;
         }
 
+        partial record Iversonf
+        {
+            // Where an Iverson bracket is 1 is where its statement holds: a set, which the
+            // statement solver answers and a list of values of x cannot. Left unsolved.
+            private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x) =>
+                null;
+        }
+
         partial record Derivativef
         {
             private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x) =>
