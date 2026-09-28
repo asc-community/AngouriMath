@@ -18276,6 +18276,10 @@ namespace AngouriMath.Functions.Algebra
             _ => null
         };
 
+        /// <summary>Whether a number with an imaginary part is written in <paramref name="expr"/>.</summary>
+        private static bool HoldsTheImaginaryUnit(Entity expr)
+            => expr.Nodes.Any(node => node is Number.Complex number && !number.ImaginaryPart.EDecimal.IsZero);
+
         /// <summary>
         /// Attempts to solve an integral using u-substitution.
         /// Looks for patterns where f(g(x)) * g'(x) can be integrated as F(g(x)).
@@ -18484,6 +18488,15 @@ namespace AngouriMath.Functions.Algebra
                 // symbolic. That is how the integral of sin(x)^2 + cos(x)^2 came back as
                 // NaN * (sin(x)^2 + cos(x)^2).
                 if (integrandInU.Nodes.Any(node => node == MathS.NaN))
+                    continue;
+                // The one-level simplification writes `sqrt(-u)` as `i sqrt(u)`, which is the other
+                // root wherever u is negative -- as `tanh(x)^2 - 1` is everywhere, which is how
+                // `sqrt(a + b sech(x)) tanh(x)^5` was answered through `i` and was off at every
+                // real point. A candidate whose integrand holds the imaginary unit where the
+                // integrand did not is not taken, and the search goes on to one under which the
+                // root stays real.
+                // https://github.com/asc-community/AngouriMath/issues/1370
+                if (HoldsTheImaginaryUnit(integrandInU) && !HoldsTheImaginaryUnit(expr))
                     continue;
 
                 if (integrandInU.ContainsNode(x))

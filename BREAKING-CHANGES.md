@@ -1101,6 +1101,19 @@ is `sqrt(b + a u^2)/|u|`, and `|u|^k` for the bare square is `sgn(u) u^k` at eve
 | `"coth(x)/(a+b*coth(x)^2)^(3/2)".Integrate("x")` | left unevaluated | the antiderivative |
 | `"(a+b*coth(x)^2)^(3/2)*tanh(x)^2".Integrate("x")` | left unevaluated | the antiderivative |
 
+### A substitution that would write a root of a negated quantity through `i` is passed over
+
+`sqrt(a + b sech(x)) tanh(x)^5` ran past two minutes. Under `u = tanh(x)` a substitution the
+search tried wrote `sqrt(1 - u^2)`, simplified one level, as `i sqrt(u^2 - 1)`: that is the other
+root wherever `u^2 < 1`, which is everywhere `tanh` goes, and the answer's derivative was off at
+every real point. A candidate substitution whose integrand holds the imaginary unit where the
+integrand did not is not taken now, and the search goes on to one under which the root stays real
+([#1370](https://github.com/asc-community/AngouriMath/issues/1370)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(a+b*sech(x))*tanh(x)^5".Integrate("x")` | ran past two minutes | the antiderivative, in `sqrt(a + b sqrt(1 - tanh(x)^2))`, written in exponentials |
+
 ### A rational function of the hyperbolic functions odd in the sine or the cosine is integrated by the other
 
 `sinh(x)^3/(a + b cosh(x)^2)` was a search past the budget: under `u = e^x` it is a rational

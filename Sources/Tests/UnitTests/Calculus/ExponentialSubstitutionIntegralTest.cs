@@ -521,18 +521,27 @@ namespace AngouriMath.Tests.Calculus
 
         /// <summary>
         /// A root of <c>a + b sech(x)</c> beside an odd power of the tangent was integrated
-        /// through <c>i</c>: the substitution took a root of a negative radicand on the way
-        /// and the answer's derivative was off at every real point. Declined or right now,
-        /// as the tangent substitution checks its answer at sampled points where a symbol is
-        /// involved. https://github.com/asc-community/AngouriMath/issues/1370
+        /// through <c>i</c>: under <c>u = tanh(x)^2 - 1</c> the one-level simplification wrote
+        /// <c>sqrt(-u)</c> as <c>i sqrt(u)</c>, the other root for the negative u there, and the
+        /// answer's derivative was off at every real point. The substitution search passes over
+        /// a candidate that brings in <c>i</c> now, and one under which the root stays real
+        /// answers the fifth power. The cube is still declined, by the tangent substitution's
+        /// check: its <c>i</c> comes in on another path, through the root factored under the
+        /// candidate.
+        /// https://github.com/asc-community/AngouriMath/issues/1370
         /// </summary>
-        [Theory]
-        [InlineData("sqrt(a + b*sech(x))*tanh(x)^5")]
-        [InlineData("sqrt(a + b*sech(x))*tanh(x)^3")]
-        public void ARootOfTheSecantBesideAnOddTangentIsNotAnsweredWrongly(string integrand)
+        [Fact]
+        public void ARootOfTheSecantBesideTheFifthPowerOfTheTangentIsAnswered()
         {
-            var integral = integrand.ToEntity().Integrate("x");
-            if (integral.Stringize().Contains("integral("))
+            Assert.DoesNotContain("integral(", "sqrt(a + b*sech(x))*tanh(x)^5".ToEntity().Integrate("x").Stringize());
+            DifferentiatesBackWithParametersPinned("sqrt(a + b*sech(x))*tanh(x)^5", new[] { -0.7, 0.23, 0.61, 1.05, 1.7 });
+        }
+
+        [Fact]
+        public void ARootOfTheSecantBesideTheCubedTangentIsNotAnsweredWrongly()
+        {
+            var integrand = "sqrt(a + b*sech(x))*tanh(x)^3";
+            if (integrand.ToEntity().Integrate("x").Stringize().Contains("integral("))
                 return;
             DifferentiatesBackWithParametersPinned(integrand, new[] { -0.7, 0.23, 0.61, 1.05, 1.7 });
         }
