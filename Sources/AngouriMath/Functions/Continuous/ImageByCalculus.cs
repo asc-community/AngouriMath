@@ -151,7 +151,8 @@ namespace AngouriMath.Functions
                     continue;
                 if (power.Sign < 0 || power.CompareTo(EInteger.FromInt32(MaxDegree)) > 0)
                     return null;
-                sum += exact * MathS.Pow(x, Integer.Create(power));
+                // The constant term as itself: x^0 is 1 only where x is not 0.
+                sum += power.IsZero ? exact : exact * MathS.Pow(x, Integer.Create(power));
             }
             return sum.InnerSimplified;
         }
