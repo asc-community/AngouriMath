@@ -65,6 +65,20 @@ namespace AngouriMath.Tests.Core.Sets
         [Fact] public void Intersection13() => TestInt(A.Intersect(F1), Interval(3, false, 5, true));
         [Fact] public void Intersection14() => TestInt(F1.Intersect(A), Interval(3, false, 5, true));
 
+        /// <summary>
+        /// A ray up from <c>a</c> and a ray down to <c>b</c> meet in the interval from one to the
+        /// other whatever the two are, and where they are one name, in that name or in nothing:
+        /// what <c>x &lt; y and y &lt; x</c> is solved to.
+        /// </summary>
+        [Theory]
+        [InlineData("(a; +oo) /\\ (-oo; b)", "(a; b)")]
+        [InlineData("(-oo; b] /\\ [a; +oo)", "[a; b]")]
+        [InlineData("(x; +oo) /\\ (-oo; x)", "{}")]
+        [InlineData("[x; +oo) /\\ (-oo; x]", "{x}")]
+        [InlineData("[x; +oo) /\\ (-oo; x)", "{}")]
+        public void TwoRaysMeetWhateverTheirEnds(string intersection, string expected)
+            => TestArb(MathS.FromString(intersection), MathS.FromString(expected).InnerSimplified);
+
         [Fact] public void Subtraction1() => TestInt(A.SetSubtract(B), Interval(3, false, 5, true));
         [Fact] public void Subtraction2() => TestArb(B.SetSubtract(A), Set.Empty);
         [Fact] public void Subtraction3() => TestInt(E.SetSubtract(D), (Interval)E);

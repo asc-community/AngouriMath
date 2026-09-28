@@ -908,6 +908,30 @@ as written.
 | `forall n in ZZ* : not (7 divides 2^n + 1)` | `UnhandledParseException` | `True` |
 | `forall n in ZZ+ : 5 divides 7^n - 1` | `UnhandledParseException` | `False` |
 
+### Nested quantifiers are decided through listed witnesses and witness terms
+
+`exists z in S : P`, where the solver lists the `z` at which `P` holds and the quantifiers around
+it make each of them a whole number, is the statement that one of them is in `S`: in `ZZ*` a whole
+`s` is where `s >= 0`, in `ZZ+` where `s >= 1`. Sullivan and Mackey's Prob 4.11.6,
+`forall x in ZZ : forall y in ZZ : exists z in ZZ* : x - y = z or y - x = z`, is `True` so: the
+witnesses are `x - y` and `y - x`, and `x - y < 0 and y - x < 0` has no solution
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). That last step needed two rays
+with symbolic ends to meet: `(a; +oo) /\ (-oo; b)` is `(a; b)`, and `(x; +oo) /\ (-oo; x)` is
+empty, where both were left as written. And `exists x : forall y : P` is false where a term in
+`x`, in the inner set for every `x`, fails `P` at every `x`, and `forall x : exists y : P` true where
+one holds `P` at every `x`: Prob 4.11.5, `exists x in RR : forall y in RR : x^2 - y^2 >= 0`, fails at
+`y = x^2 + 1`. The terms are a fixed few polynomials, so a statement none of them decides is left
+as it was. A comparison of two polynomials that differ by a number says the same of every member:
+`x^2 + 1 > x^2` is `1 > 0` at each, which is what the term `x^2 + 1` asks.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall x in ZZ : forall y in ZZ : exists z in ZZ* : x - y = z or y - x = z` | `UnhandledParseException` (quantifiers are new since; left as written when they arrived) | `True` |
+| `exists x in RR : forall y in RR : x^2 - y^2 >= 0` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
+| `"(x; +oo) /\ (-oo; x)".ToEntity().InnerSimplified` | as written | `{ }` |
+| `exists y in RR : forall x in RR : y = x^3` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
+| `forall x in RR : x^2 + 1 > x^2` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+
 ### `PP` is the set of primes, and `min(S)` the least member of a set
 
 `PP` is a special set beside `ZZ+` — the primes `{2, 3, 5, 7, ...}`, `\mathbb{P}` in LaTeX,
