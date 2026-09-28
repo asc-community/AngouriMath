@@ -1745,6 +1745,19 @@ quadratic alone, or beside a polynomial only, is left to the rules that answered
 | `"x^2*sinh(a + b*x + c*x^2)^2".Integrate("x")` | `integral(x ^ 2 * ((e ^ (a + b * x + c * x ^ 2) - e ^ (-(a + b * x + c * x ^ 2))) / 2) ^ 2, x)` | the antiderivative |
 | `"2^(x^2)*3^(x + 1)".Integrate("x")` | `integral(2 ^ x ^ 2 * 3 ^ (x + 1), x)` | the antiderivative, with `erfi` |
 
+### A power of `x` beside exponentials of quadratics without a linear part is integrated
+
+`x^2 sinh(a + b x^2)^3` was left unintegrated. A polynomial, or a power of `x` above or below the bar,
+beside exponentials of quadratics is now integrated where a term's exponent has no linear part: its
+moments are taken about 0, and a negative even power is one of them. A negative odd power, which
+ends at the exponential integral, is still left unintegrated
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x^2*sinh(a + b*x^2)^3".Integrate("x")` | `integral(x ^ 2 * ((e ^ (a + b * x ^ 2) - e ^ (-(a + b * x ^ 2))) / 2) ^ 3, x)` | the antiderivative |
+| `"sinh(a + b*x^2)^3/x^2".Integrate("x")` | `integral(((e ^ (a + b * x ^ 2) - e ^ (-(a + b * x ^ 2))) / 2) ^ 3 / x ^ 2, x)` | the antiderivative |
+
 ### An exponential of a quadratic in a logarithm beside a power of `x` is integrated
 
 `e^(ln(x)^2)` was left unintegrated. `x^p G^(Q(L))`, where `L` is `ln(c x^r)` and `Q` a quadratic
@@ -1760,18 +1773,19 @@ same question under `u = d + e x`
 | `"(d*g + k*g*x)^m*F^(f*(a + b*ln(c*(d + k*x)^n))^2)".Integrate("x")` | `integral((d * g + k * g * x) ^ m * F ^ (f * (a + b * ln(c * (d + k * x) ^ n)) ^ 2), x)` | the antiderivative |
 | `"(g + h*x)^3*F^(f*(a + b*ln(c*(d + k*x)^n)^2))".Integrate("x")` | `integral((g + h * x) ^ 3 * F ^ (f * (a + b * ln(c * (d + k * x) ^ n) ^ 2)), x)` | the antiderivative |
 
-### A power of `x` beside exponentials of quadratics without a linear part is integrated
+### A power of `x` one less than a half-odd multiple of the power inside is integrated
 
-`x^2 sinh(a + b x^2)^3` was left unintegrated. A polynomial, or a power of `x` above or below the bar,
-beside exponentials of quadratics is now integrated where a term's exponent has no linear part: its
-moments are taken about 0, and a negative even power is one of them. A negative odd power, which
-ends at the exponential integral, is still left unintegrated
+`f^(a + b x^n) x^(-1 + 5n/2)` was left unintegrated. `x^(k n - 1) g(x^n)`, with a symbolic `n`, was
+integrated under `u = x^n` for a whole `k` of 1 or more. For `k` half an odd number, of either sign,
+it is now integrated under `u = x^(n/2)`, where `g(x^n)` is `g(u^2)`: beside an exponential of `x^n`
+that is a moment of the Gaussian
 ([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
-| `"x^2*sinh(a + b*x^2)^3".Integrate("x")` | `integral(x ^ 2 * ((e ^ (a + b * x ^ 2) - e ^ (-(a + b * x ^ 2))) / 2) ^ 3, x)` | the antiderivative |
-| `"sinh(a + b*x^2)^3/x^2".Integrate("x")` | `integral(((e ^ (a + b * x ^ 2) - e ^ (-(a + b * x ^ 2))) / 2) ^ 3 / x ^ 2, x)` | the antiderivative |
+| `"f^(a + b*x^n)*x^(-1 + 5/2*n)".Integrate("x")` | `integral(f ^ (a + b * x ^ n) * x ^ (-1 + 5/2 * n), x)` | the antiderivative |
+| `"f^(a + b*x^n)*x^(-1 - 1/2*n)".Integrate("x")` | `integral(f ^ (a + b * x ^ n) * x ^ (-1 - 1/2 * n), x)` | the antiderivative |
+| `"x^(-1 + 1/2*n)*sinh(a + b*x^n)".Integrate("x")` | `integral(x ^ (-1 + 1/2 * n) * (e ^ (a + b * x ^ n) - e ^ (-(a + b * x ^ n))) / 2, x)` | the antiderivative |
 
 ### `binomial(n, k)` is a function
 
