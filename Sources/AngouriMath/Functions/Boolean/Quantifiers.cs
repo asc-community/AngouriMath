@@ -259,6 +259,23 @@ namespace AngouriMath.Functions.Boolean
                     return covered;
                 }
             }
+            // forall a in S : forall b in S : f(a) = f(b) implies a = b is the statement that f is
+            // one-to-one on S (Sullivan and Mackey's Def 7.4.1), which a quotient of polynomials is
+            // on an interval exactly where it is strictly monotone there: x^3 on RR is, x^2 on RR is
+            // not. On the whole numbers only a yes carries over from the interval they lie in,
+            // since x^2 is one-to-one on ZZ+ and not monotone on RR.
+            // https://github.com/asc-community/AngouriMath/issues/1409
+            if (kind == Kind.All && body is Forallf(Variable twin, Set twinSet, Impliesf(Equalsf(var atThis, var atTwin), Equalsf(var sideA, var sideB)))
+                && twinSet == set && twin != x && (sideA == x && sideB == twin || sideA == twin && sideB == x)
+                && (atTwin == atThis.Substitute(x, twin) ? atThis : atThis == atTwin.Substitute(x, twin) ? atTwin : null) is { } mapping
+                && (set is SpecialSet wholeSet && IsIntegerSet(wholeSet) ? IntervalAround(wholeSet) : set) is { } around
+                && Functions.ImageByCalculus.OneToOne(mapping, x, around) is { } oneToOne && (oneToOne || around == set))
+            {
+                by = oneToOne
+                    ? ($"{mapping} is strictly monotone on {around}, so it is one-to-one", "StrictMono.injective")
+                    : ($"{mapping} turns inside {set}, so two members share a value", "intermediate_value_Icc");
+                return oneToOne ? Entity.Boolean.True : Entity.Boolean.False;
+            }
             // An equation whose two sides differ by a polynomial that expands to nothing holds
             // at every member, whatever the set: (x + 1)^2 = x^2 + 2 x + 1 is True of each.
             if (body is Equalsf(var left, var right))
@@ -1506,6 +1523,16 @@ namespace AngouriMath.Functions.Boolean
         {
             0, 1, -1, 2, -2, 10, -10, Rational.Create(1, 2), Rational.Create(-1, 2),
         };
+
+        /// <summary>The interval a set of whole numbers lies in, or <see langword="null"/>.</summary>
+        private static Set? IntervalAround(SpecialSet whole)
+            => whole switch
+            {
+                SpecialSet.Integers => new Interval(Real.NegativeInfinity, false, Real.PositiveInfinity, false),
+                SpecialSet.NonNegativeIntegers => new Interval(Integer.Zero, true, Real.PositiveInfinity, false),
+                SpecialSet.PositiveIntegers or SpecialSet.Primes => new Interval(Integer.One, true, Real.PositiveInfinity, false),
+                _ => null,
+            };
 
         private static Entity? BySolving(Kind kind, Variable x, Set set, Entity body)
         {

@@ -241,6 +241,12 @@ namespace AngouriMath
                     if (this is IndexedUnionf && Var is Variable name && body is FiniteSet { Count: 1 } single
                         && Functions.ImageByCalculus.Of(single.First(), name, over) is { } byCalculus)
                         return byCalculus;
+                    // A family of intervals whose ends are monotone in the index, as the interval
+                    // between the extremes of its ends: the intersection of (-1/n; 1/n) over ZZ+ is
+                    // { 0 }. https://github.com/asc-community/AngouriMath/issues/1409
+                    if (Var is Variable familyIndex && body is Interval familyMember
+                        && Functions.ImageByCalculus.Family(this is IndexedUnionf, familyMember, familyIndex, over) is { } family)
+                        return family;
                     if (over is FiniteSet indices)
                     {
                         if (indices.Count == 0)

@@ -45,6 +45,24 @@ namespace AngouriMath.Tests.Core
         public void SurjectivityIsTheImageCoveringTheCodomain(string statement, string expected)
             => Assert.Equal(expected.ToEntity(), statement.ToEntity().Evaled);
 
+        /// <summary>
+        /// <c>forall a in A : forall b in A : f(a) = f(b) implies a = b</c> -- one-to-one, Def 7.4.1
+        /// -- for a quotient of polynomials on an interval, by the sign of its derivative: the cube
+        /// is one-to-one on the reals though its derivative is zero at 0, the square is on
+        /// <c>[0, +oo)</c> and not on the reals, and a cubic with two turning points is not. On
+        /// the whole numbers only a yes carries over from the interval around them.
+        /// </summary>
+        [Theory]
+        [InlineData("forall a in RR : forall b in RR : a^3 = b^3 implies a = b", "True")]
+        [InlineData("forall a in [0; +oo) : forall b in [0; +oo) : a^2 = b^2 implies a = b", "True")]
+        [InlineData("forall a in RR : forall b in RR : a^2 = b^2 implies a = b", "False")]
+        [InlineData("forall a in RR : forall b in RR : a^3 - 3 a = b^3 - 3 b implies a = b", "False")]
+        [InlineData("forall a in (-1; 1) : forall b in (-1; 1) : a/(1 + a^2) = b/(1 + b^2) implies a = b", "True")]
+        [InlineData("forall a in ZZ+ : forall b in ZZ+ : a^2 = b^2 implies a = b", "True")]
+        [InlineData("forall a in (0; +oo) : forall b in (0; +oo) : 1/a = 1/b implies a = b", "True")]
+        public void OneToOneIsMonotonicity(string statement, string expected)
+            => Assert.Equal(expected.ToEntity(), statement.ToEntity().Evaled);
+
         /// <summary>The extended reals' whole powers: by parity for <c>-oo</c>, and <c>0</c> for a negative exponent. Each was <c>NaN</c>.</summary>
         [Theory]
         [InlineData("(-oo)^3", "-oo")]
