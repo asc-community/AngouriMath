@@ -94,12 +94,14 @@ namespace AngouriMath
                 internal static bool TryParse(string s,
                     [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Real? dst)
                 {
+                    // PeterO.Numbers has no TryParse; FromString throws FormatException for a string
+                    // that is not a number, and nothing else is caught.
                     try
                     {
                         dst = EDecimal.FromString(s);
                         return true;
                     }
-                    catch
+                    catch (System.FormatException)
                     {
                         dst = null;
                         return false;

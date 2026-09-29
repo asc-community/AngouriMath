@@ -256,16 +256,9 @@ namespace AngouriMath
             
             private static bool TryPower(Matrix m, int exp, out Entity res)
             {
-                res = 0;
-                try
-                {
-                    res = m.Pow(exp);
-                    return true;
-                }
-                catch (InvalidMatrixOperationException)
-                {
-                    return false;
-                }
+                // Only a square matrix has powers; Pow throws for any other.
+                res = m.IsSquare ? m.Pow(exp) : 0;
+                return m.IsSquare;
             }
 
             // Re(x) = x/2 * (1 + 1/sgn(x)^2)
@@ -429,6 +422,26 @@ namespace AngouriMath
                     product = (product * (n - Integer.Create(i))).Evaled;
                 return (product / Integer.Create(PeterO.Numbers.EInteger.FromInt32(k).Factorial())).Evaled;
             }
+        }
+
+        public partial record Iversonf
+        {
+            // 1 or 0 for every statement. A number is not one, and is left as written, as a
+            // connective leaves one: 1 is not true. NaN is how a statement with no truth value
+            // is spelled -- i > 0 is one -- and its bracket has no value either.
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
+                    a => a switch
+                    {
+                        Boolean(true) => Integer.One,
+                        Boolean(false) => Integer.Zero,
+                        Number { IsNaN: true } => a,
+                        _ => null
+                    },
+                    (@this, a) => ((Iversonf)@this).New(a), isExact);
         }
 
         public partial record Erff
@@ -671,7 +684,9 @@ namespace AngouriMath
                         // Idempotent: the floor of an integer is that integer, and floor
                         // always produces one.
                         Floorf or Ceilf => a,
-                        _ => null
+                        // What the quantifiers around it establish about the argument:
+                        // https://github.com/asc-community/AngouriMath/issues/1409
+                        _ => Functions.Boolean.QuantifierFacts.Rounded(a, up: false, isExact)
                     },
                     (@this, a) => ((Floorf)@this).New(a), isExact);
         }
@@ -694,7 +709,8 @@ namespace AngouriMath
                         Complex n when !isExact => Complex.Create(
                             n.RealPart.EDecimal.Ceiling(), n.ImaginaryPart.EDecimal.Ceiling()),
                         Floorf or Ceilf => a,
-                        _ => null
+                        // As in Floorf: https://github.com/asc-community/AngouriMath/issues/1409
+                        _ => Functions.Boolean.QuantifierFacts.Rounded(a, up: true, isExact)
                     },
                     (@this, a) => ((Ceilf)@this).New(a), isExact);
         }

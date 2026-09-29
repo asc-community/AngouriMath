@@ -98,16 +98,7 @@ namespace AngouriMath.Functions.Algebra
                     var far = (Entity)Integer.Create(ten);
                     point = towardsNegative ? -far : far;
                 }
-                Complex value;
-                try
-                {
-                    if (expr.Substitute(x, point).EvalNumerical() is not Complex evaluated)
-                        continue;
-                    value = evaluated;
-                }
-                catch (Core.Exceptions.AngouriBugException) { throw; }
-                catch (System.Exception) { continue; }
-                if (!value.IsFinite)
+                if (expr.Substitute(x, point).Evaled is not Complex value || !value.IsFinite)
                     continue;
                 var imaginary = value.ImaginaryPart.EDecimal.Abs();
                 var real = value.RealPart.EDecimal.Abs();

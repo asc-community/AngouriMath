@@ -536,6 +536,30 @@ now, which is the one silent change: a variable spelled `forall` or `exists` no 
 | `forall + 1` | `forall + 1`, a variable named `forall` | `UnhandledParseException` |
 | `exists(x)` | `exists * x` | `UnhandledParseException` |
 
+### A floor or a ceiling is read with what the quantifiers establish
+
+Under a quantifier, the floor and the ceiling of an expression in the bound name are rewritten
+by what the quantifier establishes about it. A whole argument is its own floor and ceiling. A
+whole term comes out of either. A negated argument turns one into the other. And the ceiling of
+a real argument that is not whole is one above its floor. Sullivan and Mackey's Prob 1.5.6 asks
+for `floor(x) + floor(1 - x)` and its kin "depending on x", and each comes out as one statement
+for every whole `x` and one for every other real `x`, such as
+`forall x in RR \ ZZ : floor(x) + floor(1 - x) = 0`
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). A member of a set builder
+`{ y in S : P }` is known to be in `S` and to satisfy `P` there, and a body that comes out `True`
+holds for every member of any set, and one that comes out `False` for none, where it was left as
+written when the set's members could not be read. The nodes are taken componentwise on the
+complex plane, so the last rule asks for a real argument: at `x = i/2` the ceiling is `i` and the
+floor `0`. Outside a quantifier nothing is assumed, and `floor(x + 1)` is left as it was.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall x in ZZ : floor(x) + floor(1 - x) = 1` | `UnhandledParseException` (quantifiers are new since; left as written when they arrived) | `True` |
+| `forall x in RR : not x in ZZ implies floor(x) + ceil(x) = 2 floor(x) + 1` | `UnhandledParseException` | `True` |
+| `forall x in RR \ ZZ : floor(x) + floor(1 - x) = 0` | `UnhandledParseException` | `True` |
+| `forall x in { x in RR : sin(x) > 0 } : True` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+| `exists x in A \/ B : False` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
+
 ### A matrix compiles
 
 **Addition, not silent.** Under the LINQ compiler a `Matrix` node compiles to a
@@ -572,6 +596,20 @@ Every spelling but `lcm` was a parse error in 2.5.0, the congruence node being n
 | `"x = 3 (mod 4) and x = 2 (mod 6)".ToEntity().Solve("x")` | `UnhandledParseException` | `{}` |
 | `forall n in ZZ : 6 divides n^3 + 5 n` | `UnhandledParseException` | `True` |
 | `exists x, y in ZZ : 3 x^2 - 5 y^2 = 1` | `UnhandledParseException` | `False` |
+
+### Floors and ceilings of `n` over a whole number are decided over its residues
+
+A comparison between floors and ceilings of linear functions of `n` and a linear part in `n`
+repeats with the least common multiple of their denominators where the drifts cancel: over a
+period, a floor of `(p/q) n + b` rises by as much as the linear terms do. The residues then decide
+it, as they decide a divisibility. `forall n in ZZ : floor(n/2) + ceil(n/2) = n` and Hermite's
+`floor(n/3) + floor((n + 1)/3) + floor((n + 2)/3) = n` are `True`, where they were left as written
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall n in ZZ : floor(n/2) + ceil(n/2) = n` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+| `exists n in ZZ : floor(n/2) + ceil(n/2) = n + 1` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
 
 ### An antiderivative built through an even root says where the root is real
 
@@ -653,6 +691,19 @@ too ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). `subset
 | `{1, 3} in powerset(ZZ)` | `UnrecognizedFunctionParseException` | `True` |
 | `card({1, {}})` | `#{ 1, {  } }` — left as written | `2` |
 
+### An interval meets a union of any number of pieces
+
+An interval met a union piece by piece only where the union had two pieces, each an interval or
+a listed set. The solution set of `x^2 - 3 x + 2 >= 0` comes out in three,
+`{ 2 } \/ (-oo; 1] \/ (2; +oo)`, so its meeting with `(1; 2)` was left as written, and the two set
+builders of Sullivan and Mackey's §3 Try 8 were not found equal. Any union built of such pieces is
+met piece by piece now ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `{ x in RR : x^2 - 3 x + 2 >= 0 } = { y in RR : y <= 1 or y >= 2 }` | left as written | `True` |
+| `"({ 2 } \/ (-oo; 1] \/ (2; +oo)) /\ (1; 2)".ToEntity().Evaled` | left as written | `{ }` |
+
 ### An integer range is listed, and a family of sets has a union and an intersection
 
 `ZZ /\ [1; 10]` lists its members now — an integer set cut by a numeric interval with at most
@@ -672,6 +723,17 @@ a listed index set, and over any other an object whose membership is decided by 
 | `union({k, 2 k}, k in {1, 2, 3})` | `UnhandledParseException` — `union` was a name, and `union(` a juxtaposition that does not parse | `{ 1, 2, 4, 3, 6 }` |
 | `0.1 in intersection([0; 1/n), n in ZZ+)` | `UnhandledParseException` | `False` |
 | `complement({1, 2}, {1, 2, 3})` | `UnhandledParseException` | `{ 3 }` |
+
+### An interval whose ends are reversed meets nothing
+
+`(3; 1)` holds no number, and membership in it was decided so, but its meeting with another interval
+was the other interval: the intersection returned it where the union rightly does. It is empty
+now, and a closed interval at one point meets the other in that point or in nothing.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(3; 1) /\ [0; 5]".ToEntity().InnerSimplified` | `[0; 5]` — wrong | `{ }` |
+
 ### An exponential of a multiple of a logarithm is integrated as the power it is
 
 `e^(k ln(q))` is `q^k` — the definition of the principal power, for every complex `q` other than
@@ -701,7 +763,7 @@ emptiness as a proof: `forall x in RR : x^2 in ZZ` was `True`
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
-| `"x^2 in (0; 1)".Solve("x")` | `{}` — wrong | `((-oo; 0) \/ (0; +oo)) /\ (-1; 1)` |
+| `"x^2 in (0; 1)".Solve("x")` | `{}` — wrong | `(-1; 0) \/ (0; 1)` |
 | `"x^2 in {1, 4}".Solve("x")` | `{}` — wrong | `{ 1, -1, 2, -2 }` |
 | `"x^2 in ZZ".Solve("x")` | `{}` — wrong | `{ x : x ^ 2 in ZZ }`, left as written |
 | `forall x in RR : x^2 in ZZ` | `UnhandledParseException` (quantifiers are new since) | `False` |
@@ -745,15 +807,20 @@ of [#1409](https://github.com/asc-community/AngouriMath/issues/1409) — is `Tru
 ### `image` and `preimage` of a set under an expression
 
 `image(f(x), x in A)` is `{ f(x) : x in A }` — `union({f(x)}, x in A)` — listed over a listed
-`A`, an interval by interval arithmetic where `x` occurs once in `f`, and a membership object
-otherwise; `preimage(f(x), x in A, Y)` is `{ x in A : f(x) in Y }`, and a set builder of that
-shape is solved on evaluation where the membership is read (a listed `Y`, an interval)
+`A`, an interval by interval arithmetic where `x` occurs once in `f`, intervals read off the
+critical points and the one-sided limits where `f` is a quotient of polynomials with rational
+coefficients and `A` is made of intervals (§7.3.5 Try 1's `x/(1 + x)` on `RR \ {-1}` is
+`RR \ {1}`), and a membership object otherwise; `preimage(f(x), x in A, Y)` is
+`{ x in A : f(x) in Y }`, and a set builder of that shape is solved on evaluation where the
+membership is read (a listed `Y`, an interval)
 ([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's §7.3). Both
 names are keywords now, and were names.
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
 | `image(9 c / 5 + 32, c in (0; 100))` | `UnhandledParseException` | `(32; 212)` |
+| `image(x^2/(1 + x^2), x in RR)` | `UnhandledParseException` | `[0; 1)` |
+| `image(x/(1 + x), x in RR \ {-1})` | `UnhandledParseException` | `(-oo; 1) \/ (1; +oo)` |
 | `preimage(x^2, x in RR, {1})` | `UnhandledParseException` | `{ 1, -1 }` |
 | `{ x in ZZ : x^2 in {1, 4} }` | `{ x in ZZ : x ^ 2 in { 1, 4 } }` — left as written | `{ 1, -1, 2, -2 }` |
 
@@ -775,6 +842,33 @@ piece. With both, a quantifier over the reals decides an implication between two
 | `"x/(1 + x) > 1".Solve("x")` | `NotSufficientlySupportedException` | `(-oo; -1)` |
 | `"(RR \ {-1}) /\ (-oo; -1)".ToEntity().Evaled` | `(RR \ { -1 }) /\ (-oo; -1)` | `(-oo; -1)` |
 | `"preimage(sin(x), x in RR, (0; 1))".ToEntity().Evaled` | `UnhandledParseException`, and `NotSufficientlySupportedException` since `preimage` was added | the set builder, unsolved |
+
+### An inequality in which `x` cancels holds everywhere or nowhere
+
+`"x + 1 > x".Solve("x")` threw `InvalidCastException`, and so did every inequality whose `x`
+cancels, `"3 > 1"` among them: the root of `0 x + 1` is not a number, and the interval from it
+simplified to one. A quantifier that asked the solver threw with it. A slope or a leading
+coefficient that is zero now answers the whole line or nothing.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x + 1 > x".Solve("x")` | `InvalidCastException` | `RR` |
+| `"x^2 < x^2 - 2".Solve("x")` | `InvalidCastException` | `{ }` |
+| `forall x in RR : x + 1 > x` | `UnhandledParseException` (`InvalidCastException` since quantifiers arrived) | `True` |
+
+### A statement equal to a truth value is solved as the statement or its negation
+
+**Wrong answer fixed.** `"(x > 2) = (3 > 1)".Solve("x")` was `{ }`, and so was every equation
+between a statement and a truth value: the arm for an equation of numbers subtracted the two
+sides, which claimed there was no root. A statement equal to `True` is the statement, equal to
+`False` its negation, and two statements equal are equivalent
+([#1549](https://github.com/asc-community/AngouriMath/issues/1549)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(x > 2) = (3 > 1)".Solve("x")` | `{ }` — wrong | `(2; +oo)` |
+| `"(x = 1) = true".Solve("x")` | `{ }` — wrong | `{ 1 }` |
+| `"(x > 0) = (x > 1)".Solve("x")` | `UncompilableNodeException` | `(1; +oo) \/ (-oo; 0]` |
 
 ### An infinite base has its whole powers, and surjectivity is decided through the image
 
@@ -810,6 +904,21 @@ carried a condition the piecewise read as no value, so the sum was `0` at `n = 0
 | `"sum(binomial(n, k), k, 0, n)".ToEntity().Evaled` | `UnhandledParseException` | `piecewise((2 ^ n) provided (n >= 0), 0 provided True)` |
 | `"sum(n! / (k! (n - k)!) (-1)^k, k, 0, n)".ToEntity().Evaled` | `piecewise(0 provided True)` — wrong at `n = 0` | `piecewise(1 provided (n = 0), 0 provided True)` |
 
+### `iverson(P)` is the Iverson bracket, and was a product
+
+`iverson(P)` is `1` where the statement `P` holds and `0` where it does not, and is kept as written
+where `P` is not decided, so a count is a sum of brackets: `sum(iverson(k divides 12), k, 1, 12)` is
+`6`. A number is not a statement and is left as written; a statement with no truth value, such as
+`i > 0`, gives `NaN`. It prints as `[\![P]\!]` in LaTeX and as a `Piecewise` for SymPy
+([#1478](https://github.com/asc-community/AngouriMath/issues/1478)). In 2.5.0 the name was read as a
+variable multiplying its argument, and a product with a truth value is `NaN`.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"iverson(2 > 1)".ToEntity().Simplify()` | `NaN` — `iverson * (2 > 1)` | `1` |
+| `"iverson(x > 0)".ToEntity().Simplify()` | `iverson * (x > 0)` | `iverson(x > 0)` |
+| `"sum(sum(sum(iverson(r + b + g = 4), g, 0, 3), b, 0, 3), r, 0, 3)".ToEntity().Simplify()` | `NaN` | `12` |
+
 ### A statement about a sum up to `n` is decided by induction
 
 `forall n in ZZ+ : sum(f, k, a, n) = g` is proved from the least member of the set: the statement
@@ -838,6 +947,21 @@ written
 | `"forall n in ZZ+ /\\ [5; +oo) : 2^n > n^2".ToEntity().Evaled` | `UnhandledParseException` | `True` |
 | `"forall n in ZZ+ : n! >= 2^(n - 1)".ToEntity().Evaled` | `UnhandledParseException` | `True` |
 | `"forall n in ZZ+ /\\ [4; +oo) : n^2 - 2 n - 1 > 0".ToEntity().Evaled` | `UnhandledParseException` | `True` — decided about `4 + t` over `ZZ*` |
+
+### An implication needs its conclusion's condition only where its assumption holds
+
+`a implies (b provided c)` was `(a implies b) provided c`, the condition lifted over the whole
+implication as it is over other nodes. But where `a` fails the implication holds whatever the
+conclusion is, so the condition is needed only where `a` holds: it is
+`(a implies b) provided (a implies c)`, and a condition among `a`'s conjuncts is no condition at
+all. `not x = 0 implies x/x = 1` was left undefined at `0`, where it holds
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's Prob 1.5.6).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"not x = 0 implies x / x = 1".ToEntity().Simplify()` | `True provided not x = 0` | `True` |
+| `"not x = 0 implies (y / y = 1)".ToEntity().Simplify()` | `True provided not y = 0` | `True provided not x = 0 implies not y = 0` |
+| `forall x in RR : not x = 0 implies x / x = 1` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
 
 ### `acsch(c x)` and `asech(c x)` are integrated with a symbolic `c`, and `|c|` differentiates to `0` in `x`
 
@@ -895,6 +1019,30 @@ as written.
 | `forall n in ZZ* : not (7 divides 2^n + 1)` | `UnhandledParseException` | `True` |
 | `forall n in ZZ+ : 5 divides 7^n - 1` | `UnhandledParseException` | `False` |
 
+### Nested quantifiers are decided through listed witnesses and witness terms
+
+`exists z in S : P`, where the solver lists the `z` at which `P` holds and the quantifiers around
+it make each of them a whole number, is the statement that one of them is in `S`: in `ZZ*` a whole
+`s` is where `s >= 0`, in `ZZ+` where `s >= 1`. Sullivan and Mackey's Prob 4.11.6,
+`forall x in ZZ : forall y in ZZ : exists z in ZZ* : x - y = z or y - x = z`, is `True` so: the
+witnesses are `x - y` and `y - x`, and `x - y < 0 and y - x < 0` has no solution
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). That last step needed two rays
+with symbolic ends to meet: `(a; +oo) /\ (-oo; b)` is `(a; b)`, and `(x; +oo) /\ (-oo; x)` is
+empty, where both were left as written. And `exists x : forall y : P` is false where a term in
+`x`, in the inner set for every `x`, fails `P` at every `x`, and `forall x : exists y : P` true where
+one holds `P` at every `x`: Prob 4.11.5, `exists x in RR : forall y in RR : x^2 - y^2 >= 0`, fails at
+`y = x^2 + 1`. The terms are a fixed few polynomials, so a statement none of them decides is left
+as it was. A comparison of two polynomials that differ by a number says the same of every member:
+`x^2 + 1 > x^2` is `1 > 0` at each, which is what the term `x^2 + 1` asks.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall x in ZZ : forall y in ZZ : exists z in ZZ* : x - y = z or y - x = z` | `UnhandledParseException` (quantifiers are new since; left as written when they arrived) | `True` |
+| `exists x in RR : forall y in RR : x^2 - y^2 >= 0` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
+| `"(x; +oo) /\ (-oo; x)".ToEntity().InnerSimplified` | as written | `{ }` |
+| `exists y in RR : forall x in RR : y = x^3` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
+| `forall x in RR : x^2 + 1 > x^2` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+
 ### `PP` is the set of primes, and `min(S)` the least member of a set
 
 `PP` is a special set beside `ZZ+` — the primes `{2, 3, 5, 7, ...}`, `\mathbb{P}` in LaTeX,
@@ -906,7 +1054,10 @@ chain. `min(S)` with one argument that is a set is the least member of the set, 
 `min(PP)` was `PP` itself — a one-argument `min` was the argument — and `min(x, x in S and P)`
 is the least member of `{ x in S : P }`, where it was left as written; both decided for `PP`,
 `ZZ+`, `ZZ*` and their cuts by an interval or a bound, so `min(x, x in PP and x > 14)` is the next
-prime, `17` ([#1450](https://github.com/asc-community/AngouriMath/issues/1450)).
+prime, `17` ([#1450](https://github.com/asc-community/AngouriMath/issues/1450)); and for a condition
+that is not a bound by trying the members in order from the least, so Sullivan and Mackey's Prob
+8.9.3, the least `n` with `n binomial(n - 1, 2) >= 14`, is `5`
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -918,6 +1069,7 @@ prime, `17` ([#1450](https://github.com/asc-community/AngouriMath/issues/1450)).
 | `"PP intersect [1; 30]".ToEntity().Evaled` | as written | `{ 2, 3, 5, 7, 11, 13, 17, 19, 23, 29 }` |
 | `"min(ZZ+)".ToEntity().Evaled` | `ZZ+` | `1` |
 | `"max(x, x in PP and x < 14)".ToEntity().Evaled` | as written | `13` |
+| `"min(x, x in ZZ+ and x^2 > 50)".ToEntity().Evaled` | `UnhandledParseException` — `ZZ+` is new since | `8` |
 | `"prime(25)".ToEntity().Evaled` | `prime * 25` — juxtaposition of a variable `prime` | `97`; `prime(n)` is the `n`-th prime, `NaN` off the positive whole numbers |
 | `"valuation(12, 2)".ToEntity().Evaled` | `UnrecognizedFunctionParseException` | `2`; `valuation(n, p)` is the `p`-adic valuation, `+oo` at `0` and `NaN` off the primes |
 
@@ -989,6 +1141,21 @@ parameter, so their Ex 5.2.6 is answered with the condition the book asks about
 | `"sum((-1)^(k-1)*k^2, k, 1, n)".ToEntity().Evaled` | as written | `(-1)^(n - 1) n (n + 1)/2`, up to the form |
 | `"sum(k/2^k, k, 1, +oo)".ToEntity().Evaled` | as written | `2` |
 | `"forall n in ZZ+ : sum(q^i, i, 0, n-1) = (q^n - 1)/(q - 1)".ToEntity().Evaled` | `UnhandledParseException` -- quantifiers are new since | `True provided not q = 1` |
+
+### A product of powers of one base, and a polynomial times `k!`, in closed form
+
+`product(2^k, k, 0, n - 1)` was left as written; it is `2^(n (n - 1)/2)`, the base to the sum of
+the exponents, `c^s c^t = c^(s + t)`, which holds on the principal branch as well, every power
+being `e^(s ln c)` with the one `ln c`. And `sum(k k!, k, 1, n)` is `(n + 1)! - 1`: a polynomial
+`P(k)` beside `k!` is summed where `P(k) k! = T(k + 1) - T(k)` for `T(k) = Q(k) k!` with a
+polynomial `Q`, which one triangular solve finds or rules out. `sum(k!, k, 0, n)`, the left
+factorial, has none and stays. Probs 1.3.12 and 2.7.17 of Sullivan and Mackey's
+*An Introduction to Proofs* ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"product(2^k, k, 0, n - 1)".ToEntity().Evaled` | as written | `2^((n - 1)/2 + (n - 1)^2/2) provided n - 1 >= 0`, `1` otherwise |
+| `"sum(k*factorial(k), k, 1, n)".ToEntity().Evaled` | as written | `((n + 1)! - 1) provided n >= 0`, `0` otherwise |
 
 ### `(a + b asech(c x))/(d + e x)^2` is integrated, and a root written apart with `|x|` no longer needs a parity
 
@@ -1100,6 +1267,21 @@ is `sqrt(b + a u^2)/|u|`, and `|u|^k` for the bare square is `sgn(u) u^k` at eve
 | `"coth(x)*(a+b*coth(x)^2)^(3/2)".Integrate("x")` | left unevaluated | the antiderivative |
 | `"coth(x)/(a+b*coth(x)^2)^(3/2)".Integrate("x")` | left unevaluated | the antiderivative |
 | `"(a+b*coth(x)^2)^(3/2)*tanh(x)^2".Integrate("x")` | left unevaluated | the antiderivative |
+
+### A substitution that would write a root of a negated quantity through `i` keeps the root
+
+`sqrt(a + b sech(x)) tanh(x)^5` ran past two minutes. Under `u = tanh(x)` a substitution the
+search tried wrote `sqrt(1 - u^2)`, simplified one level, as `i sqrt(u^2 - 1)`: that is the other
+root wherever `u^2 < 1`, which is everywhere `tanh` goes, and the answer's derivative was off at
+every real point. The search now keeps a candidate's integrand as written where simplifying it
+would bring in the imaginary unit, and passes over a candidate whose integrand holds it all the
+same. With the root as it was, the cube is answered too
+([#1370](https://github.com/asc-community/AngouriMath/issues/1370)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(a+b*sech(x))*tanh(x)^5".Integrate("x")` | ran past two minutes | the antiderivative, in `sqrt(a + b sqrt(1 - tanh(x)^2))`, written in exponentials |
+| `"sqrt(a+b*sech(x))*tanh(x)^3".Integrate("x")` | ran past five minutes | the antiderivative, the same way |
 
 ### A rational function of the hyperbolic functions odd in the sine or the cosine is integrated by the other
 
@@ -1572,6 +1754,21 @@ Rubi's 1.2.1.4, all 632 problems that count: 250 to 409, no row lost, 61 timeout
 new timeouts have a radicand of four symbols beside a power of `x`, and went from a quick decline
 to one past the budget.
 
+### Two proportional linears under roots are read as one radical
+
+`sin(a + b (c + d x)^(1/3))/(c e + d e x)^(1/3)` ran past two minutes. The two linears under the
+roots are proportional, `c e + d e x = e (c + d x)`, and the rule for roots of two different
+linears, which rationalises by `t = ((a x + b)/(c x + d))^(1/q)`, has nothing to rationalise when
+their determinant `a d - b c` is zero. A power of the second is now written as the ratio's power
+times the same power of the first, the generic reading of a root of a product, and the integrand
+is the one-linear question; a ratio known to be negative under an even root is not taken, since
+there the two differ by a sign
+([#1386](https://github.com/asc-community/AngouriMath/issues/1386)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(a+b*(c+d*x)^(1/3))/(c*g+d*g*x)^(1/3)".Integrate("x")` | ran past two minutes | `3 ((c + d x)^(1/3) (-cos(a + b (c + d x)^(1/3)))/b + sin(a + b (c + d x)^(1/3))/b^2)/(d g^(1/3))` |
+
 ### A whole power of a perfect square in a power of the variable is written as a power of its root
 
 `1/(a^2 + 2 a b x^2 + b^2 x^4)^2` was left unevaluated. The quartic is `b^2 (x^2 + a/b)^2`, so a
@@ -1666,6 +1863,21 @@ in 2.5.0.
 | `forall p in PP : forall a in ZZ : a^p mod p = a mod p` | `UnhandledParseException` | `True` |
 | `forall p in PP : forall a, b in ZZ : (a + b)^p = a^p + b^p (mod p)` | `UnhandledParseException` | `True` |
 
+### An identity only the simplifier shows is solved to every value
+
+`sqrt(x)^2 = x` was answered with the whole starting grid of Newton's method, 191 numbers. Nothing
+analytical read it, and its residual is zero wherever it is evaluated, so every start converged at
+once and each was kept. Where every analytical route has declined, the equation is now simplified
+once before Newton's method is tried, and an unconditional zero is answered with `CC`, as
+`x + 1 = x + 1` already was. A zero with a condition is not taken, and goes on to Newton's method as
+before: `(x^2 - 1)/(x - 1) - x - 1` is zero for every `x` but 1, where `CC` would be wrong
+([#1420](https://github.com/asc-community/AngouriMath/issues/1420)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(x)^2 = x".ToEntity().Solve("x")` | `{ -10, -49/5, -48/5, …, -8 - 8i, … }`, 191 numbers | `CC` |
+| `"sin(x)^2 + cos(x)^2 = 1".ToEntity().Solve("x")` | the same 191 numbers | `CC` |
+
 ### An equation the solver cannot invert is left unsolved, not answered with no roots
 
 `x! = 6` was answered `{ }`, a claim that it has no roots, and it has 3. The solver isolates `x`
@@ -1685,6 +1897,21 @@ has no zeros, so `x! = 0` is still `{ }`, and so is `arcsin(x) = 5`.
 | `"max(x, 1) = 3".Solve("x")` | `{ }` | `{ x : max(x, 1) = 3 }` |
 | `"phi(x) = 4".Solve("x")` | `{ }` | `{ x : phi(x) = 4 }` |
 | `"binomial(x, 2) = 3".Solve("x")` | `UnhandledParseException` | `{ x : binomial(x, 2) = 3 }` |
+
+### An equation in a set, a cardinality or a power set of the unknown is left unsolved, and threw
+
+`Solve` threw `NotSufficientlySupportedException` for an equation whose unknown sits under a set
+operation or a cardinality, where the inverter's contract is to decline and leave the equation
+unsolved, as the equations in the entry on inverses no node writes are. A power set of the unknown
+was answered, and wrongly: the answer held `x`
+([#1544](https://github.com/asc-community/AngouriMath/issues/1544)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"card(x) = 3".ToEntity().Solve("x")` | throws `NotSufficientlySupportedException` | `{ x : #x = 3 }` |
+| `"(x /\\ {1, 2}) = {1}".ToEntity().Solve("x")` | throws `NotSufficientlySupportedException` | `{ x : x /\ { 1, 2 } = { 1 } }` |
+| `"(x \\ {1}) = {2}".ToEntity().Solve("x")` | throws `NotSufficientlySupportedException` | `{ x : x \ { 1 } = { 2 } }` |
+| `"powerset(x) = {{}, {1}}".ToEntity().Solve("x")` | `{ { {  }, { 1 / x } } }` | `{ x : powerset(x) = { {  }, { 1 } } }` |
 
 ### `erf`, `erfc` and `erfi` are functions
 

@@ -213,7 +213,24 @@ namespace AngouriMath
             private protected override Entity IntrinsicCondition => True;
             /// <inheritdoc/>
             protected override Entity InnerSimplify(bool isExact)
-                => ExpandOnTwoArguments(Assumption, Conclusion,
+            {
+                // A conclusion defined only under a condition needs it only where the assumption
+                // holds, since where the assumption fails the implication holds whatever the
+                // conclusion is: a implies (b provided c) is (a implies b) provided (a implies c),
+                // and a condition among the assumption's conjuncts is no condition. Lifted over the
+                // whole implication, as other nodes lift one, `not x = 0 implies x/x = 1` was
+                // `True provided not x = 0`, undefined at 0 where the implication holds.
+                // https://github.com/asc-community/AngouriMath/issues/1409
+                if (Conclusion.InnerSimplified(isExact) is Providedf(var claim, var condition))
+                {
+                    var assumption = Assumption.InnerSimplified(isExact);
+                    var established = Andf.LinearChildren(assumption);
+                    var needed = Andf.LinearChildren(condition).Where(conjunct => !established.Contains(conjunct)).ToList();
+                    var implication = new Impliesf(assumption, claim).InnerSimplified(isExact);
+                    return needed.Count == 0 ? implication
+                        : implication.Provided(assumption.Implies(needed.Aggregate((left, right) => left & right))).InnerSimplified(isExact);
+                }
+                return ExpandOnTwoArguments(Assumption, Conclusion,
                     (left, right) => MixesANumberWithATruthValue(left, right) ? null
                         : (left.Evaled, right.Evaled) switch
                     {
@@ -225,6 +242,7 @@ namespace AngouriMath
                         _ => null
                     },
                     (@this, a, b) => ((Impliesf)@this).New(a, b), isExact, settlesNaN: true);
+            }
         }
 
         partial record Equalsf
@@ -380,6 +398,10 @@ namespace AngouriMath
                         (a, b) => (a, b) switch
                         {
                             (var el, Set set) when set.TryContains(el, out var contains) => contains,
+                            // A whole number, by what the quantifiers around it establish, is in
+                            // ZZ* where it is not negative. https://github.com/asc-community/AngouriMath/issues/1409
+                            (var el, Set set) when Functions.Boolean.QuantifierFacts.MembershipAsComparison(el, set) is { } comparison
+                                => comparison.InnerSimplified(isExact),
                             _ => null
                         },
                         (@this, a, b) => ((Inf)@this).New(a, b), isExact, propagateSet: false);

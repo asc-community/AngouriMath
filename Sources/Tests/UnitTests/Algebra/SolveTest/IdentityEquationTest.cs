@@ -31,6 +31,17 @@ namespace AngouriMath.Tests.Algebra
         public void EveryValueSatisfiesAnIdentity(string equation) =>
             Assert.Equal(MathS.Sets.C, equation.ToEntity().Solve("x"));
 
+        /// <summary>
+        /// And one that only the simplifier shows is an identity, which reached Newton's method
+        /// and came back as every point of its starting grid, two hundred numbers --
+        /// https://github.com/asc-community/AngouriMath/issues/1420.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(x)^2 = x")]
+        [InlineData("sin(x)^2 + cos(x)^2 = 1")]
+        public void EveryValueSatisfiesAnIdentityTheSimplifierShows(string equation) =>
+            Assert.Equal(MathS.Sets.C, equation.ToEntity().Solve("x"));
+
         [Theory]
         [InlineData("1 = 0")]
         [InlineData("x - x + 1 = 0")]

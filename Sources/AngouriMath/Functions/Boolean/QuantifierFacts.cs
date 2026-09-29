@@ -80,7 +80,7 @@ namespace AngouriMath.Functions.Boolean
             var renamed = Variable.CreateVariableUnchecked($"{x.Name}'{Interlocked.Increment(ref lastRenamed)}");
             var mark = ProofRecording.Mark();
             var enclosing = top;
-            top = new Frame(renamed, new[] { renamed.In(set) }, enclosing);
+            top = new Frame(renamed, MembershipFacts(renamed, set), enclosing);
             try
             {
                 // One level down, so that what a rule records while the body is simplified is
@@ -115,6 +115,18 @@ namespace AngouriMath.Functions.Boolean
                 top = enclosing;
             }
         }
+
+        /// <summary>
+        /// What membership in <paramref name="set"/> establishes about <paramref name="name"/>:
+        /// the membership, and for a set builder <c>{ y in S : P }</c> membership in <c>S</c> and
+        /// each conjunct of <c>P</c> as well, so that <c>x in RR \ ZZ</c>, which is
+        /// <c>{ x in RR : not x in ZZ }</c>, says that <c>x</c> is real and not whole.
+        /// </summary>
+        private static Entity[] MembershipFacts(Variable name, Set set)
+            => set is ConditionalSet { DeclaredMembership: (Set declared, var condition), Var: Variable y }
+                // A conjunct about the free names alone is left out, as a hypothesis's is.
+                ? new[] { name.In(set), name.In(declared) }.Concat(Andf.LinearChildren(condition.Substitute(y, name)).Where(fact => fact.ContainsNode(name))).ToArray()
+                : new[] { name.In(set) };
 
         /// <summary>
         /// The body simplified with the facts in scope: a claim made under a hypothesis with the
@@ -195,12 +207,18 @@ namespace AngouriMath.Functions.Boolean
         /// Whether a rule reads the facts at <paramref name="node"/>, which is what a body is
         /// renamed and decided with the facts in scope for: a divisibility, a congruence or an
         /// equation of residues by a modulus that is not a number, which the rules modulo a
-        /// prime read.
+        /// prime read; and a floor or a ceiling of anything but a number, which
+        /// <see cref="Rounded"/> reads.
         /// </summary>
         private static bool Reads(Entity node) => node switch
         {
+            // A membership in a set of whole numbers, which MembershipAsComparison reads, and a
+            // quantifier over one, whose listed witnesses are asked about such memberships.
+            Inf(not Number, SpecialSet whole) => Quantifiers.IsIntegerSet(whole),
+            Quantifier(_, SpecialSet over, _) => Quantifiers.IsIntegerSet(over),
             Dividesf(not Number, _) or Congruentf(_, _, not Number) => true,
             Equalsf(Modf(_, var modulus), Modf(_, var other)) => modulus is not Number && modulus == other,
+            Floorf(not Number) or Ceilf(not Number) => true,
             _ => false
         };
 
@@ -237,6 +255,27 @@ namespace AngouriMath.Functions.Boolean
                     $"{p} is prime and 0 < {k} < {p}, so {p} divides {p}! = binomial({p}, {k}) {k}! ({p} - {k})! and none of the factors of {k}! ({p} - {k})!",
                     "Nat.Prime.dvd_choose_self", Entity.Boolean.True);
             return true;
+        }
+
+        /// <summary>
+        /// <c>s in S</c> for a set of whole numbers, as the comparison it is where the facts in scope
+        /// make <c>s</c> a whole number: <c>s &gt;= 0</c> in <c>ZZ*</c>, <c>s &gt;= 1</c> in <c>ZZ+</c>, and
+        /// <c>True</c> in <c>ZZ</c>. <see langword="null"/> otherwise. Sullivan and Mackey's Prob
+        /// 4.11.6 asks for a <c>z</c> in <c>ZZ*</c> with <c>x - y = z</c> or <c>y - x = z</c>, for whole
+        /// <c>x</c> and <c>y</c>: the witnesses are <c>x - y</c> and <c>y - x</c>, one of which is
+        /// not negative.
+        /// </summary>
+        internal static Entity? MembershipAsComparison(Entity element, Set set)
+        {
+            if (top is null || element is Number || !MentionsARenamedName(element) || !IsWholePolynomial(element))
+                return null;
+            return set switch
+            {
+                SpecialSet.Integers => Entity.Boolean.True,
+                SpecialSet.NonNegativeIntegers => element >= Integer.Zero,
+                SpecialSet.PositiveIntegers => element >= Integer.One,
+                _ => null,
+            };
         }
 
         /// <summary>
@@ -295,6 +334,80 @@ namespace AngouriMath.Functions.Boolean
                     "add_pow_char", Entity.Boolean.True);
             return true;
         }
+
+        /// <summary>
+        /// The floor of <paramref name="argument"/>, or with <paramref name="up"/> its ceiling, as
+        /// the facts in scope write it, or <see langword="null"/> where they say nothing about it.
+        /// A whole argument is its own floor and ceiling. A whole term comes out of either,
+        /// <c>floor(y + n) = floor(y) + n</c>. A negated argument turns one into the other,
+        /// <c>floor(-y) = -ceil(y)</c>. And the ceiling of a real argument that is not whole is one
+        /// above its floor, which is the form the others end in. The nodes are taken
+        /// componentwise on the complex plane, where the first three hold as they do on the real
+        /// line and the last does not, so it asks that the argument be real: the ceiling of
+        /// <c>i/2</c> is <c>i</c> and its floor is <c>0</c>. Sullivan and Mackey's Prob 1.5.6,
+        /// <c>floor(x) + floor(1 - x)</c>, is <c>1</c> for a whole <c>x</c> and <c>0</c> for any
+        /// other real one.
+        /// </summary>
+        internal static Entity? Rounded(Entity argument, bool up, bool isExact)
+        {
+            if (top is null || argument is Number || !MentionsARenamedName(argument))
+                return null;
+            Entity Round(Entity of, bool ceiling) => ceiling ? new Ceilf(of) : new Floorf(of);
+            if (IsWholeNumber(argument))
+                return Recorded(Round(argument, up), argument, $"{argument} is a whole number", up ? "Int.ceil_intCast" : "Int.floor_intCast");
+            var terms = Sumf.LinearChildren(argument);
+            if (terms.Count > 1 && terms.Any(IsWholeNumber) && !terms.All(IsWholeNumber))
+            {
+                var whole = terms.Where(IsWholeNumber).Aggregate((left, right) => left + right);
+                var rest = terms.Where(term => !IsWholeNumber(term)).Aggregate((left, right) => left + right);
+                return Recorded(Round(argument, up), Round(rest, up) + whole, $"{whole} is a whole number",
+                    up ? "Int.ceil_add_intCast" : "Int.floor_add_intCast").InnerSimplified(isExact);
+            }
+            if (argument is Mulf(Integer { IsNegative: true } coefficient, var factor))
+            {
+                var negated = coefficient.EInteger.Equals(EInteger.FromInt32(-1)) ? factor : Integer.Create(coefficient.EInteger.Negate()) * factor;
+                return Recorded(Round(argument, up), -Round(negated, !up), $"{argument} is the negation of {negated}",
+                    up ? "Int.ceil_neg" : "Int.floor_neg").InnerSimplified(isExact);
+            }
+            if (up && IsRealNumber(argument) && IsNotWholeNumber(argument))
+                return Recorded(Round(argument, up), Round(argument, false) + Integer.One, $"{argument} is real and not a whole number",
+                    "Int.ceil_eq_floor_add_one_iff_notMem").InnerSimplified(isExact);
+            return null;
+        }
+
+        /// <summary><paramref name="to"/>, with the step from <paramref name="from"/> recorded where a proof is.</summary>
+        private static Entity Recorded(Entity from, Entity to, string rule, string lemma)
+        {
+            if (ProofRecording.Recording)
+                ProofRecording.AddBelow(new Equalsf(from, to), rule, lemma, Entity.Boolean.True);
+            return to;
+        }
+
+        /// <summary>Whether the facts in scope make <paramref name="expression"/> a whole number.</summary>
+        private static bool IsWholeNumber(Entity expression)
+            => expression is Integer || MentionsARenamedName(expression) && IsWholePolynomial(expression);
+
+        /// <summary>
+        /// Whether the facts in scope make <paramref name="expression"/> real: a polynomial with
+        /// rational coefficients in names each of which is in <c>RR</c> or a set inside it.
+        /// </summary>
+        private static bool IsRealNumber(Entity expression)
+        {
+            var names = expression.Vars.Distinct().ToArray();
+            if (names.Length == 0 || names.Length > MultivariatePolynomial.MaxVariables || names.Any(name => !IsReal(name)))
+                return false;
+            var indices = new Dictionary<Variable, int>();
+            for (var i = 0; i < names.Length; i++)
+                indices[names[i]] = i;
+            return MultivariatePolynomial.TryParse(expression, indices) is not null;
+        }
+
+        /// <summary>A name in <c>RR</c> or a set of numbers inside it, rank 5 by <see cref="Rank"/>.</summary>
+        private static bool IsReal(Entity name) => IsIn(name, 5);
+
+        /// <summary>Whether a fact in scope says that <paramref name="expression"/> is not a whole number: <c>not x in ZZ</c>.</summary>
+        private static bool IsNotWholeNumber(Entity expression)
+            => MentionsARenamedName(expression) && InScope().Any(fact => fact is Notf(Inf(var member, SpecialSet.Integers)) && member == expression);
 
         /// <summary>The p-th powers of the terms of a sum, added: <c>(u - v)^p</c> is read as <c>u^p - v^p</c>.</summary>
         private static Entity PowersOfTheTerms(Entity sum, Entity p)

@@ -46,6 +46,18 @@ namespace AngouriMath.Tests.Core
         public void ThePowerOfAFactorial(string expression)
             => AgreesWithTheExpansion(expression, -2, -1, 0, 1, 2, 3, 5, 8);
 
+        /// <summary>
+        /// A power of one base is the base to the sum of the exponents, where that sum closes:
+        /// Sullivan and Mackey's Prob 1.3.12, <c>product(2^k, k, 0, n - 1) = 2^(n (n - 1)/2)</c>.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1409">#1409</a>
+        /// </summary>
+        [Theory]
+        [InlineData("product(2^k, k, 0, n - 1)")]
+        [InlineData("product(3^(2 * k + 1), k, 1, n)")]
+        [InlineData("product(c^k, k, 1, n)")]
+        public void APowerOfOneBase(string expression)
+            => AgreesWithTheExpansion(expression, -2, -1, 0, 1, 2, 3, 5, 8);
+
         /// <summary>A constant factor comes out as a power of itself, one per term.</summary>
         [Theory]
         [InlineData("product(2, k, 1, n)")]
@@ -117,7 +129,7 @@ namespace AngouriMath.Tests.Core
         [Theory]
         [InlineData("product(k + 1, k, 1, n)")]
         [InlineData("product(k ^ 2 + k, k, 1, n)")]
-        [InlineData("product(2 ^ k, k, 1, n)")]
+        [InlineData("product(2 ^ sin(k), k, 1, n)")]
         [InlineData("product(sin(k), k, 1, n)")]
         [InlineData("product(1 / k, k, 1, n)")]
         public void WhatIsNotAMonomialIsCarried(string expression)

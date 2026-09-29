@@ -275,6 +275,11 @@ or the odd indices (`sum(binomial(n, 2 l), l, 0, floor(n/2))` is `2^(n - 1)` for
 identities of chapter 8 of Sullivan and Mackey's *An Introduction to Proofs*, so that
 `forall n in ZZ+ : sum(k binomial(n, k), k, 0, n) = n 2^(n - 1)` is `True`.
 
+**Iverson bracket** — `iverson(P)`. `1` where the statement `P` holds and `0` where it does not,
+which is how a count is written as a sum: `sum(iverson(k divides 12), k, 1, 12)` is `6`, the number
+of divisors of `12`. A statement that is not decided keeps the node, which prints as `[\![P]\!]` in
+LaTeX, and so does a number, which is not a statement.
+
 **Error functions** — `erf(z)` `erfc(z)` `erfi(z)`. The error function
 `2/sqrt(pi) int_0^z e^(-t^2) dt`, its complement `1 - erf(z)`, and the imaginary error function
 `-i erf(i z)`, which on the real line is `2/sqrt(pi) int_0^x e^(t^2) dt`. Each is entire, is

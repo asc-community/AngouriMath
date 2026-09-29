@@ -165,6 +165,17 @@ namespace AngouriMath
                 => $@"\operatorname{{erf}}\left({Argument.Latexize()}\right)";
         }
 
+        partial record Iversonf
+        {
+            // The double bracket of Iverson's notation, drawn as two brackets pulled together:
+            // a one-element vector prints as a bmatrix and an interval with a comma, so neither
+            // is read back as this. It needs no package.
+            // https://github.com/asc-community/AngouriMath/issues/1478
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"[\![{Argument.Latexize()}]\!]";
+        }
+
         partial record Erfcf
         {
             /// <inheritdoc/>

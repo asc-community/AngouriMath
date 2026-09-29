@@ -596,6 +596,9 @@ atom returns[Entity value]
     | 'gcd(' args = function_arguments ')' { AssertAtLeast("gcd", 1, $args.list.Count); $value = $args.list.Aggregate((a, b) => MathS.Gcd(a, b)); }
     | 'lcm(' args = function_arguments ')' { AssertAtLeast("lcm", 1, $args.list.Count); $value = $args.list.Aggregate((a, b) => MathS.Lcm(a, b)); }
     | 'binomial(' args = function_arguments ')' { Assert("binomial", 2, $args.list.Count); $value = MathS.Binomial($args.list[0], $args.list[1]); }
+    /* The Iverson bracket, 1 where a statement holds and 0 where it does not: a count written as
+       a sum. https://github.com/asc-community/AngouriMath/issues/1478 */
+    | 'iverson(' args = function_arguments ')' { Assert("iverson", 1, $args.list.Count); $value = MathS.Iverson($args.list[0]); }
     /* The error functions. https://github.com/asc-community/AngouriMath/issues/1501 */
     | 'erf(' args = function_arguments ')' { Assert("erf", 1, $args.list.Count); $value = MathS.Erf($args.list[0]); }
     | 'erfc(' args = function_arguments ')' { Assert("erfc", 1, $args.list.Count); $value = MathS.Erfc($args.list[0]); }

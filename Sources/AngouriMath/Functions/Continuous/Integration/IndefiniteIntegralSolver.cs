@@ -207,16 +207,7 @@ namespace AngouriMath.Functions.Algebra
                 var agreed = 0;
                 foreach (var at in new[] { "2.29", "3.43", "5.71", "0.37", "-2.61", "-4.13" })
                 {
-                    Entity value;
-                    try
-                    {
-                        value = quotient.Substitute(x, Number.Real.Create(EDecimal.FromString(at))).EvalNumerical();
-                    }
-                    catch (System.Exception)
-                    {
-                        continue;
-                    }
-                    if (value is not Number.Real real || !real.EDecimal.IsFinite)
+                    if (quotient.Substitute(x, Number.Real.Create(EDecimal.FromString(at))).Evaled is not Number.Real real || !real.EDecimal.IsFinite)
                         continue;
                     if (constant is null)
                     {
@@ -5685,18 +5676,8 @@ namespace AngouriMath.Functions.Algebra
             // a piecewise with complex coefficients simplified to NaN for
             // `x e^(-2 i arctan(a + b x))`, and an answer that simplifies to a claim of
             // non-existence is not given.
-            if (expr.Vars.Any(symbol => symbol != x))
-            {
-                try
-                {
-                    if (!Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
-                        return null;
-                }
-                catch (Core.Exceptions.CannotEvalException)
-                {
-                    return null;
-                }
-            }
+            if (expr.Vars.Any(symbol => symbol != x) && !Functions.PartialFractions.HoldsAtSampledPoints(answer.Differentiate(x), expr, x))
+                return null;
             if (answer.Nodes.Any(node => node is Piecewise) && answer.Simplify().Nodes.Any(node => node == MathS.NaN))
                 return null;
             return answer;
@@ -5871,17 +5852,10 @@ namespace AngouriMath.Functions.Algebra
                 _ => null,
             };
             var derivative = back.Differentiate(x);
-            try
-            {
-                if (points is { } && !Functions.PartialFractions.HoldsAtSampledPoints(derivative, expr, x, points))
-                    return null;
-                if (!Functions.PartialFractions.HoldsAtSampledPoints(derivative, expr, x))
-                    return null;
-            }
-            catch (Core.Exceptions.CannotEvalException)
-            {
+            if (points is { } && !Functions.PartialFractions.HoldsAtSampledPoints(derivative, expr, x, points))
                 return null;
-            }
+            if (!Functions.PartialFractions.HoldsAtSampledPoints(derivative, expr, x))
+                return null;
             return back;
         }
 
@@ -7050,15 +7024,19 @@ namespace AngouriMath.Functions.Algebra
                 return null;
             if (!TreeAnalyzer.TryGetPolyLinear(first, x, out var a, out var b) || !TreeAnalyzer.TryGetPolyLinear(second, x, out var c, out var d))
                 return null;
-            // Two proportional linears are one radical with a constant in it, and not this
-            // rule's: their determinant a d - b c is zero, the second linear in t is 0/(a - c t^q)
-            // and everything it multiplies vanished -- Rubi's
-            // `sin(a + b (c + d x)^(1/3))/(c e + d e x)^(1/3)` came back as `0 provided ...`.
+            // Two proportional linears are one radical with a constant in it: their determinant
+            // a d - b c is zero, and the second linear in t would be 0/(a - c t^q), everything it
+            // multiplies vanishing -- Rubi's `sin(a + b (c + d x)^(1/3))/(c e + d e x)^(1/3)`
+            // came back as `0 provided ...`. With `c x + d = k (a x + b)`, a power of the second
+            // is `k^r` times the same power of the first, the generic reading of a root of a
+            // product; a known-negative k under an even root is not taken, since there the two
+            // differ by a sign wherever the first linear is negative. The integrand is then the
+            // one-linear question, asked again.
             // https://github.com/asc-community/AngouriMath/issues/1386
             var determinant = (a * d - b * c).InnerSimplified;
             if (determinant.Evaled is Number.Complex { IsZero: true }
                 || determinant.Vars.Any() && Functions.PartialFractions.Bare(determinant.Simplify()).Evaled is Number.Complex { IsZero: true })
-                return null;
+                return AsOneLinearRadical(expr, x, first, second, Functions.PartialFractions.Bare((c / a).Simplify()), integrateByParts);
 
             var t = Variable.CreateUnique(expr, "t_rad");
             var w = Variable.CreateUnique(expr, "w_rad");
@@ -7185,6 +7163,34 @@ namespace AngouriMath.Functions.Algebra
                 }
                 return sum ?? Number.Integer.Zero;
             }
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> with every fractional power of <paramref name="second"/>, which is
+        /// <paramref name="ratio"/> times <paramref name="first"/>, written as the ratio's power
+        /// times the same power of <paramref name="first"/>, and asked again; null where the ratio
+        /// is known negative under an even root, or the rewrite leaves the question as it was.
+        /// </summary>
+        private static Entity? AsOneLinearRadical(Entity expr, Entity.Variable x, Entity first, Entity second, Entity ratio, bool integrateByParts)
+        {
+            if (ratio.ContainsNode(x))
+                return null;
+            var negative = ratio.Evaled is Number.Real { IsNegative: true };
+            var refused = false;
+            var rewritten = expr.Replace(node =>
+            {
+                if (node is not Powf(var @base, Number.Rational exponent) || exponent is Number.Integer || @base != second)
+                    return node;
+                if (negative && exponent.ERational.Denominator.IsEven)
+                    refused = true;
+                return MathS.Pow(ratio, exponent) * MathS.Pow(first, exponent);
+            });
+            if (refused || rewritten == expr)
+                return null;
+            // The same question, respelled: a rule scoped to the question asked is owed it, as in
+            // SolveByCancellingWithFunctionsAsIndeterminates, and with one linear left under a
+            // root this rule does not see it again.
+            return Integration.ComputeAsTheSameQuestion(rewritten.InnerSimplified, x, integrateByParts);
         }
 
         /// <summary>
@@ -8389,9 +8395,9 @@ namespace AngouriMath.Functions.Algebra
             foreach (var at in new[] { "0.29", "1.43", "3.17", "0.61" })
             {
                 var point = Number.Real.Create(EDecimal.FromString(at));
-                var l = left.Substitute(x, point).EvalNumerical();
-                var r = right.Substitute(x, point).EvalNumerical();
-                if (l.IsNaN || r.IsNaN || r.Abs().EDecimal.CompareTo(EDecimal.FromString("1e-30")) < 0)
+                // A point where either side has no value is not a verdict.
+                if (left.Substitute(x, point).Evaled is not Number.Complex l || right.Substitute(x, point).Evaled is not Number.Complex r
+                    || l.IsNaN || r.IsNaN || r.Abs().EDecimal.CompareTo(EDecimal.FromString("1e-30")) < 0)
                     continue;
                 var here = l / r;
                 if (ratio is null)
@@ -11081,13 +11087,9 @@ namespace AngouriMath.Functions.Algebra
             var index = 0;
             foreach (var symbol in inner.Vars.ToList())
                 pinned = pinned.Substitute(symbol, values[index++ % values.Length]);
-            try
-            {
-                if (pinned.EvalNumerical() is Number.Complex { IsNaN: false } value
-                    && ((Number.Real)value.Abs()).EDecimal.ToDouble() > 1e-9)
-                    return false;
-            }
-            catch (Core.Exceptions.CannotEvalException) { }
+            if (pinned.Evaled is Number.Complex { IsNaN: false } value
+                && ((Number.Real)value.Abs()).EDecimal.ToDouble() > 1e-9)
+                return false;
             return Functions.PartialFractions.Bare(inner.Simplify()).Evaled is Number.Complex { IsZero: true };
         }
 
@@ -17140,11 +17142,7 @@ namespace AngouriMath.Functions.Algebra
                 var value = function.Substitute(x, point);
                 foreach (var pair in pinned)
                     value = value.Substitute(pair.Key, pair.Value);
-                try
-                {
-                    return value.EvalNumerical() is Number.Complex { IsNaN: false } number && number.IsFinite ? number : null;
-                }
-                catch (Core.Exceptions.CannotEvalException) { return null; }
+                return value.Evaled is Number.Complex { IsNaN: false } number && number.IsFinite ? number : null;
             }
             static bool Close(Number.Complex left, Number.Complex right, double tolerance)
             {
@@ -17182,12 +17180,8 @@ namespace AngouriMath.Functions.Algebra
                     top = top.Substitute(pair.Key, pair.Value);
                     bottom = bottom.Substitute(pair.Key, pair.Value);
                 }
-                try
-                {
-                    return top.EvalNumerical() is Number.Complex a && bottom.EvalNumerical() is Number.Complex b && !b.IsZero
-                        ? (Number.Complex)(a / b) : null;
-                }
-                catch (AngouriMath.Core.Exceptions.CannotEvalException) { return null; }
+                return top.Evaled is Number.Complex a && bottom.Evaled is Number.Complex b && !b.IsZero
+                    ? (Number.Complex)(a / b) : null;
             }
             if (RatioAt(0.37) is not { } first || RatioAt(1.71) is not { } second)
                 return true;
@@ -18284,6 +18278,28 @@ namespace AngouriMath.Functions.Algebra
             _ => null
         };
 
+        /// <summary>Whether a number with an imaginary part is written in <paramref name="expr"/>.</summary>
+        private static bool HoldsTheImaginaryUnit(Entity expr)
+            => expr.Nodes.Any(node => node is Number.Complex number && !number.ImaginaryPart.EDecimal.IsZero);
+
+        /// <summary>
+        /// A candidate's integrand in its variable simplified one level, or as it is written where
+        /// that would bring in the imaginary unit which neither it nor <paramref name="integrand"/>
+        /// holds. The one level writes <c>sqrt(-u)</c> as <c>i sqrt(u)</c>, the other root wherever
+        /// <c>u</c> is negative, and a candidate is negative on the whole line as often as not:
+        /// <c>tanh(x)^2 - 1</c> is, and <c>sqrt(a + b sech(x)) tanh(x)^3</c> under it was
+        /// <c>sqrt(a + i b sqrt(u))</c>, where the root written as it was is answered by the
+        /// search in <c>u</c>. https://github.com/asc-community/AngouriMath/issues/1370
+        /// </summary>
+        private static Entity SimplifiedWithoutTheImaginaryUnit(Entity written, Entity integrand)
+        {
+            var simplified = written.Simplify(1);
+            if (simplified is Providedf(var inner, _)) simplified = inner; // TODO: singularities ignored but not handled properly
+            return HoldsTheImaginaryUnit(simplified) && !HoldsTheImaginaryUnit(written) && !HoldsTheImaginaryUnit(integrand)
+                ? written
+                : simplified;
+        }
+
         /// <summary>
         /// Attempts to solve an integral using u-substitution.
         /// Looks for patterns where f(g(x)) * g'(x) can be integrated as F(g(x)).
@@ -18400,8 +18416,7 @@ namespace AngouriMath.Functions.Algebra
                     var complemented = WithTheComplementInEvenPowers(firstPass[u], u, uSub);
                     if (complemented == firstPass[u])
                         continue;   // nothing the first pass did not see
-                    integrandInU = complemented.Simplify(1);
-                    if (integrandInU is Providedf(var innerComplemented, _)) integrandInU = innerComplemented;
+                    integrandInU = SimplifiedWithoutTheImaginaryUnit(complemented, expr);
                 }
                 else
                 {
@@ -18440,8 +18455,7 @@ namespace AngouriMath.Functions.Algebra
                         && expr.Complexity <= (expr.Vars.Any(v => v != x) ? LargestSymbolicIntegrandCollected : LargestIntegrandOfferedSums)
                         ? WithThePowersOfXCollected(Functions.SingleQuotient.Combine(expr / duDx), x)
                         : source / duDx;
-                    integrandInU = InTermsOf(quotient, u, uSub, x).Simplify(1);
-                    if (integrandInU is Providedf(var innerExpr, _)) integrandInU = innerExpr; // TODO: singularities ignored but not handled properly
+                    integrandInU = SimplifiedWithoutTheImaginaryUnit(InTermsOf(quotient, u, uSub, x), expr);
                     // A factor written on both sides of the bar cancelled, where x survived:
                     // the one-level simplification leaves `u/((a w + b)^2 p u)` as it is, and
                     // the candidate was refused for the u it did not cancel.
@@ -18451,8 +18465,7 @@ namespace AngouriMath.Functions.Algebra
                         var cancelled = CancelCommonFactors(top, bottom);
                         if (cancelled != integrandInU && !cancelled.ContainsNode(x))
                         {
-                            integrandInU = cancelled.Simplify(1);
-                            if (integrandInU is Providedf(var innerCancelled, _)) integrandInU = innerCancelled;
+                            integrandInU = SimplifiedWithoutTheImaginaryUnit(cancelled, expr);
                         }
                     }
                     // A polynomial in x left over under a candidate that is itself a polynomial
@@ -18473,8 +18486,7 @@ namespace AngouriMath.Functions.Algebra
                         var inTheCandidate = WithPolynomialsInTheCandidate(aboveTheBar, u, uSub, x) / WithPolynomialsInTheCandidate(belowTheBar, u, uSub, x);
                         if (inTheCandidate.ContainsNode(x) == false || inTheCandidate != aboveTheBar / belowTheBar)
                         {
-                            integrandInU = inTheCandidate.Simplify(1);
-                            if (integrandInU is Providedf(var innerInTheCandidate, _)) integrandInU = innerInTheCandidate;
+                            integrandInU = SimplifiedWithoutTheImaginaryUnit(inTheCandidate, expr);
                         }
                     }
                     if (u is Sinf or Cosf && integrandInU.ContainsNode(x))
@@ -18492,6 +18504,13 @@ namespace AngouriMath.Functions.Algebra
                 // symbolic. That is how the integral of sin(x)^2 + cos(x)^2 came back as
                 // NaN * (sin(x)^2 + cos(x)^2).
                 if (integrandInU.Nodes.Any(node => node == MathS.NaN))
+                    continue;
+                // And a candidate whose integrand holds the imaginary unit where the integrand did
+                // not is not taken, whichever step wrote it: `i sqrt(u)` for `sqrt(-u)` is the other
+                // root wherever u is negative -- as `tanh(x)^2 - 1` is everywhere, which is how
+                // `sqrt(a + b sech(x)) tanh(x)^5` was answered through `i` and was off at every
+                // real point. https://github.com/asc-community/AngouriMath/issues/1370
+                if (HoldsTheImaginaryUnit(integrandInU) && !HoldsTheImaginaryUnit(expr))
                     continue;
 
                 if (integrandInU.ContainsNode(x))

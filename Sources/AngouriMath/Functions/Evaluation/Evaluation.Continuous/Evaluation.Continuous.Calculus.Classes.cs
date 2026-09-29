@@ -239,6 +239,7 @@ namespace AngouriMath
                 ?? Functions.ExponentialSeries.ClosedForm(Expression, Var, From, To)
                 ?? Functions.BinomialSum.ClosedForm(Expression, Var, From, To)
                 ?? Functions.BinomialIdentities.ClosedForm(Expression, Var, From, To)
+                ?? Functions.FactorialSum.ClosedForm(Expression, Var, From, To)
                 ?? Functions.GeometricSeries.ClosedForm(Expression, Var, From, To)
                 ?? Functions.PolynomialGeometricSeries.ClosedForm(Expression, Var, From, To)
                 // Last: a series that converges is summed above, and only what none of them
@@ -290,6 +291,7 @@ namespace AngouriMath
             protected override Entity InnerSimplify(bool isExact) =>
                 Summationf.Expanded(this, Expression, Var, From, To, static (a, b) => a * b, 1, isExact)
                 ?? Functions.MonomialProduct.ClosedForm(Expression, Var, From, To)
+                ?? Functions.MonomialProduct.OfAPower(Expression, Var, From, To)
                 ?? this;
         }
 

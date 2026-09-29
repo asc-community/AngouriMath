@@ -42,18 +42,10 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
                 {
                     if (i == precision - 1)
                         prev = value;//.Copy();
-                    try // TODO: remove try catch in for
-                    {
-
-                        var dfv = df.Substitute(value);
-                        if (dfv == 0)
-                            return ChooseGood();
-                        value -= f.Substitute(value) / dfv;
-                    }
-                    catch (OverflowException)
-                    {
+                    var dfv = df.Substitute(value);
+                    if (dfv == 0)
                         return ChooseGood();
-                    }
+                    value -= f.Substitute(value) / dfv;
                     if (i > minCheckIters && prev == value)
                         return value;
                 }
@@ -146,9 +138,7 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
             // intermediate value theorem has nothing to say about a complex value.
             double? RealValueAt(double at)
             {
-                NumericsComplex value;
-                try { value = f.Call(new NumericsComplex(at, 0)); }
-                catch (System.Exception) { return null; }
+                var value = f.Call(new NumericsComplex(at, 0));
                 if (double.IsNaN(value.Real) || double.IsInfinity(value.Real)
                     || double.IsNaN(value.Imaginary) || double.IsInfinity(value.Imaginary))
                     return null;
@@ -215,10 +205,14 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
         /// </summary>
         private static HashSet<Complex> OnePerRoot(HashSet<Complex> roots, FastExpression f)
         {
+            // A residual that is not a finite number ranks last.
             EDecimal Residual(Complex root)
             {
-                try { return f.Call(root.ToNumerics()).ToNumber().Abs().EDecimal; }
-                catch (System.Exception) { return EDecimal.PositiveInfinity; }
+                var residual = f.Call(root.ToNumerics());
+                return double.IsNaN(residual.Real) || double.IsInfinity(residual.Real)
+                    || double.IsNaN(residual.Imaginary) || double.IsInfinity(residual.Imaginary)
+                    ? EDecimal.PositiveInfinity
+                    : residual.ToNumber().Abs().EDecimal;
             }
             var kept = new List<Complex>();
             foreach (var root in roots
@@ -277,14 +271,9 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
         /// </returns>
         private static bool Satisfies(Entity expr, Entity.Variable v, Complex root)
         {
-            try
-            {
-                return expr.Substitute(v, root).Evaled is not Complex residual
-                    || !residual.IsFinite
-                    || residual.Abs().EDecimal.LessThan(MathS.Settings.PrecisionErrorCommon);
-            }
-            catch (Core.Exceptions.AngouriBugException) { throw; }
-            catch (System.Exception) { return true; }
+            return expr.Substitute(v, root).Evaled is not Complex residual
+                || !residual.IsFinite
+                || residual.Abs().EDecimal.LessThan(MathS.Settings.PrecisionErrorCommon);
         }
     }
 }

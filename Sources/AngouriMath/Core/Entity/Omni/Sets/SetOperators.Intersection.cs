@@ -40,15 +40,18 @@ namespace AngouriMath.Core.Sets
                 A.Right.Evaled is not Real aRight ||
                 B.Left.Evaled is not Real bLeft ||
                 B.Right.Evaled is not Real bRight)
-                return A.Intersect(B);
+                return Rays(A, B) ?? Rays(B, A) ?? A.Intersect(B);
             if (aLeft == bRight)
                 return A.LeftClosed && B.RightClosed ? new FiniteSet(A.Left) : Empty;
             if (bLeft == aRight)
                 return A.RightClosed && B.LeftClosed ? new FiniteSet(B.Left) : Empty;
+            // An interval whose ends are reversed holds nothing, and one closed at a single
+            // point holds that point, so that is what it meets the other in. Returning the other
+            // interval is what the union does, and is right there: (3; 1) /\ [0; 5] was [0; 5].
             if (aLeft >= aRight)
-                return B;
+                return aLeft == aRight && A.LeftClosed && A.RightClosed ? IntersectFiniteSetAndSet(new FiniteSet(A.Left), B) : Empty;
             if (bLeft >= bRight)
-                return A;
+                return bLeft == bRight && B.LeftClosed && B.RightClosed ? IntersectFiniteSetAndSet(new FiniteSet(B.Left), A) : Empty;
             if (aLeft > bRight)
                 return Empty;
             if (bLeft > aRight)
@@ -62,6 +65,22 @@ namespace AngouriMath.Core.Sets
                 (A.Right, A.RightClosed && B.RightClosed) :
                 (bRight > aRight ? (A.Right, A.RightClosed) : (B.Right, B.RightClosed));
             return new Interval(left, leftClosed, right, rightClosed);
+        }
+
+        /// <summary>
+        /// A ray up from <c>a</c> and a ray down to <c>b</c> meet in the interval from <c>a</c> to
+        /// <c>b</c>, whatever the two are, which holds nothing where <c>a</c> is not below <c>b</c>:
+        /// <c>(x; +oo) /\ (-oo; x)</c> is nothing, and is what <c>x &lt; y and y &lt; x</c> is
+        /// solved to. <see langword="null"/> where the two are not such rays.
+        /// https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        private static Set? Rays(Interval up, Interval down)
+        {
+            if (up.Right != Real.PositiveInfinity || down.Left != Real.NegativeInfinity)
+                return null;
+            if (up.Left == down.Right)
+                return up.LeftClosed && down.RightClosed ? new FiniteSet(up.Left) : Empty;
+            return new Interval(up.Left, up.LeftClosed, down.Right, down.RightClosed);
         }
 
         internal static Set IntersectCSetAndCSet(ConditionalSet intLeft, ConditionalSet intRight)

@@ -16,7 +16,8 @@ namespace AngouriMath.Tests.Core
     /// <c>forall b in B : exists a in A : f(a) = b</c> -- surjectivity onto <c>B</c>, Def 7.4.1 of the
     /// reference (Sullivan and Mackey) -- is the statement that <c>B</c> lies in the image of
     /// <c>A</c> under <c>f</c>, and is decided where the image evaluates: listed over a listed
-    /// <c>A</c>, an interval by interval arithmetic. The cube is onto the reals because
+    /// <c>A</c>, an interval by interval arithmetic, and intervals read off the critical points
+    /// and the limits of a quotient of polynomials. The cube is onto the reals because
     /// <c>(-oo; +oo)^3</c> is <c>(-oo; +oo)</c>, which needed <c>(-oo)^3</c> to be <c>-oo</c>
     /// rather than <c>NaN</c>. <see href="https://github.com/asc-community/AngouriMath/issues/1409"/>
     /// </summary>
@@ -33,6 +34,14 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall b in ZZ : exists a in ZZ : 2 a = b", "False")]
         [InlineData("forall b in {1, 4, 9} : exists a in {1, 2, 3} : a^2 = b", "True")]
         [InlineData("forall b in {1, 4, 9, 16} : exists a in {1, 2, 3} : a^2 = b", "False")]
+        // Images read off the critical points and the limits: a cubic with two turning points is
+        // onto the reals, x^2/(1 + x^2) is onto [0, 1) and no more, and Sullivan and Mackey's
+        // §7.3.5 x/(1 + x) is onto every real but 1.
+        [InlineData("forall b in RR : exists a in RR : a^3 - 3 a = b", "True")]
+        [InlineData("forall b in RR : exists a in RR : a^2/(1 + a^2) = b", "False")]
+        [InlineData("forall b in [0; 1) : exists a in RR : a^2/(1 + a^2) = b", "True")]
+        [InlineData("forall b in RR \\ {1} : exists a in RR \\ {-1} : a/(1 + a) = b", "True")]
+        [InlineData("forall b in RR : exists a in RR \\ {-1} : a/(1 + a) = b", "False")]
         public void SurjectivityIsTheImageCoveringTheCodomain(string statement, string expected)
             => Assert.Equal(expected.ToEntity(), statement.ToEntity().Evaled);
 

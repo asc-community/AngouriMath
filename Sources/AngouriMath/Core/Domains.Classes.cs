@@ -230,6 +230,15 @@ namespace AngouriMath
             internal override Domain DefaultCodomain => Domain.Complex;
         }
 
+        partial record Iversonf
+        {
+            // 0 or 1, whatever the statement.
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Real;
+            /// <inheritdoc/>
+            internal override Domain DefaultCodomain => Domain.Real;
+        }
+
         partial record Derivativef
         {
             /// <inheritdoc/>

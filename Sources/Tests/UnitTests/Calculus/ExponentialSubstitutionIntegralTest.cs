@@ -521,19 +521,20 @@ namespace AngouriMath.Tests.Calculus
 
         /// <summary>
         /// A root of <c>a + b sech(x)</c> beside an odd power of the tangent was integrated
-        /// through <c>i</c>: the substitution took a root of a negative radicand on the way
-        /// and the answer's derivative was off at every real point. Declined or right now,
-        /// as the tangent substitution checks its answer at sampled points where a symbol is
-        /// involved. https://github.com/asc-community/AngouriMath/issues/1370
+        /// through <c>i</c>: under <c>u = tanh(x)^2 - 1</c> the one-level simplification wrote
+        /// <c>sqrt(-u)</c> as <c>i sqrt(u)</c>, the other root for the negative u there, and the
+        /// answer's derivative was off at every real point. The search keeps a candidate's
+        /// integrand as written where simplifying it would bring in <c>i</c>, and with the root
+        /// as it was both are answered: the cube had been declined, since its simplification
+        /// went one step further than the fifth power's.
+        /// https://github.com/asc-community/AngouriMath/issues/1370
         /// </summary>
         [Theory]
         [InlineData("sqrt(a + b*sech(x))*tanh(x)^5")]
         [InlineData("sqrt(a + b*sech(x))*tanh(x)^3")]
-        public void ARootOfTheSecantBesideAnOddTangentIsNotAnsweredWrongly(string integrand)
+        public void ARootOfTheSecantBesideAnOddPowerOfTheTangentIsAnswered(string integrand)
         {
-            var integral = integrand.ToEntity().Integrate("x");
-            if (integral.Stringize().Contains("integral("))
-                return;
+            Assert.DoesNotContain("integral(", integrand.ToEntity().Integrate("x").Stringize());
             DifferentiatesBackWithParametersPinned(integrand, new[] { -0.7, 0.23, 0.61, 1.05, 1.7 });
         }
 

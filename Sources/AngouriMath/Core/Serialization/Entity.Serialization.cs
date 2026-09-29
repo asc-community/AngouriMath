@@ -120,6 +120,7 @@ namespace AngouriMath
         }
         [EntityJsonConverter] partial record Signumf;
         [EntityJsonConverter] partial record Erff;
+        [EntityJsonConverter] partial record Iversonf;
         [EntityJsonConverter] partial record Erfcf;
         [EntityJsonConverter] partial record Erfif;
         [EntityJsonConverter] partial record Eif;

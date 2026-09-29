@@ -91,6 +91,14 @@ namespace AngouriMath.Tests.Core
         [InlineData("exists! k in ZZ : (0 < k and k < 7) and 3 divides k and 2 divides k", "True")]
         [InlineData("forall k in ZZ : (0 < k and k < 7 and 2 divides k) implies 3 divides binomial(7, k) - 1", "False")]
         [InlineData("forall n in ZZ : n >= 5 implies 2^n > n^2", "True")]
+        // Floors and ceilings of n over a whole number beside n itself repeat where the drifts
+        // cancel, and the residues decide them: floor(n/2) + ceil(n/2) = n, and Hermite's
+        // identity for thirds.
+        [InlineData("forall n in ZZ : floor(n/2) + ceil(n/2) = n", "True")]
+        [InlineData("forall n in ZZ : floor(n/3) + floor((n + 1)/3) + floor((n + 2)/3) = n", "True")]
+        [InlineData("forall n in ZZ : floor(n/2) = n/2", "False")]
+        [InlineData("forall n in ZZ+ : ceil(n/2) - floor(n/2) <= 1", "True")]
+        [InlineData("exists n in ZZ : floor(n/2) + ceil(n/2) = n + 1", "False")]
         // Prob 8.9.24 for every prime: that p is prime and 0 < k < p is established by the
         // quantifiers around the claim, in either order and with the hypothesis curried, and the
         // rule for p divides binomial(p, k) reads it. Without the primality, or without either
@@ -108,6 +116,24 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall p in PP : forall k in ZZ : k < p implies p divides binomial(p, k)", "False")]
         [InlineData("forall p in PP : forall k in ZZ : (0 < k and k <= p) implies p divides binomial(p, k)", "False")]
         [InlineData("forall p in PP : forall p in ZZ+ : forall k in ZZ : (0 < k and k < p) implies p divides binomial(p, k)", "False")]
+        // Sullivan and Mackey's Prob 4.11.6: for whole x and y the witnesses are x - y and y - x,
+        // and one of them is not negative. Not so in ZZ+, where x = y leaves 0, nor for reals,
+        // where 1/2 and 0 leave ±1/2.
+        [InlineData("forall x in ZZ : forall y in ZZ : exists z in ZZ* : x - y = z or y - x = z", "True")]
+        [InlineData("forall x in ZZ : forall y in ZZ : exists z in ZZ+ : x - y = z or y - x = z", "False")]
+        [InlineData("forall x in RR : forall y in RR : exists z in ZZ* : x - y = z or y - x = z", "False")]
+        // Prob 4.11.5: a square is not the greatest square, for y = x^2 + 1 is past every x, and
+        // a term in x is a witness for every x at once. Where none of the terms tried works, a
+        // single member may still decide it: x = 0 is below every square.
+        [InlineData("exists x in RR : forall y in RR : x^2 - y^2 >= 0", "False")]
+        [InlineData("forall x in RR : exists y in RR : y > x^2", "True")]
+        [InlineData("exists x in ZZ : forall y in ZZ : x <= y", "False")]
+        [InlineData("forall x in ZZ+ : exists y in ZZ+ : y > x", "True")]
+        [InlineData("exists x in RR : forall y in RR : x <= y^2", "True")]
+        // No number is every cube: whatever y is, the cube of x = y^2 + 1 is not y.
+        [InlineData("exists y in RR : forall x in RR : y = x^3", "False")]
+        [InlineData("forall x in RR : x^2 + 1 > x^2", "True")]
+        [InlineData("forall x in RR : (x + 1)^2 < x^2 + 2 x", "False")]
         // The set may be an interval, a set builder, or a special set with no member of its own.
         [InlineData("forall x in (0; 1) : x^2 < 1", "True")]
         [InlineData("forall x in [0; 1] : x^2 < 1", "False")]
@@ -118,6 +144,8 @@ namespace AngouriMath.Tests.Core
         [InlineData("exists x in QQ : 2 x = 3", "True")]
         [InlineData("forall x in ZZ : 2 divides x", "False")]
         [InlineData("exists x in ZZ : 2 divides x", "True")]
+        // A condition the hypothesis states is no condition on the claim.
+        [InlineData("forall x in RR : not x = 0 implies x / x = 1", "True")]
         // Uniqueness: two real roots, one positive whole one.
         [InlineData("exists! x in RR : x^2 = 4", "False")]
         [InlineData("exists! x in ZZ+ : x^2 = 4", "True")]
@@ -130,6 +158,10 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall x in RR : x + y = y + x", "True")]
         [InlineData("forall x in RR : (x + 1)^2 = x^2 + 2 x + 1", "True")]
         [InlineData("forall x in CC : (x + y)^2 = x^2 + 2 x y + y^2", "True")]
+        // A body that is True holds at every member and one that is False at none, whatever the
+        // members are, and whether or not there are any.
+        [InlineData("forall x in { x in RR : sin(x) > 0 } : True", "True")]
+        [InlineData("exists x in A \\/ B : False", "False")]
         public void DecidedOverAnInfiniteSet(string statement, string expected)
             => Assert.Equal(expected.ToEntity(), statement.ToEntity().Simplify());
 
@@ -141,7 +173,6 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall x in RR : sin(x) <= 1")]
         [InlineData("exists x in RR : sin(x) = 2")]
         [InlineData("forall x in RR : exists y in RR : y = x^3")]
-        [InlineData("exists y in RR : forall x in RR : y = x^3")]
         public void LeftAsWrittenWhereNothingDecidesIt(string statement)
             => Assert.Equal(statement.ToEntity(), statement.ToEntity().Simplify());
 

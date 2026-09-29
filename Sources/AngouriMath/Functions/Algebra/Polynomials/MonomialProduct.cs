@@ -5,6 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
+using System.Linq;
 using PeterO.Numbers;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
@@ -44,6 +45,36 @@ namespace AngouriMath.Functions
     /// </remarks>
     internal static class MonomialProduct
     {
+        /// <summary>
+        /// <c>product(c^(p(k)), k, a, b)</c> is <c>c^(sum(p(k), k, a, b))</c> for a base free of the
+        /// index, where that sum closes: the factors are powers of one base, whose exponents add,
+        /// <c>c^s c^t = c^(s + t)</c> -- on the principal branch as well, each power being
+        /// <c>e^(s ln c)</c> with the one <c>ln c</c>. Prob 1.3.12 of Sullivan and Mackey:
+        /// <c>product(2^k, k, 0, n - 1)</c> is <c>2^(n (n - 1)/2)</c>. An empty range sums to zero,
+        /// and <c>c^0</c> is the empty product's <c>1</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        internal static Entity? OfAPower(Entity expression, Entity var, Entity from, Entity to)
+        {
+            if (var is not Variable index || expression is not Powf(var @base, var exponent)
+                || @base.ContainsNode(index) || !exponent.ContainsNode(index) || @base.Evaled is Integer { IsZero: true })
+                return null;
+            var sum = MathS.Sum(exponent, index, from, to).InnerSimplified;
+            if (sum.Nodes.Any(node => node is Summationf))
+                return null;
+            if (to.Evaled is Integer && from.Evaled is Integer)
+                return MathS.Pow(@base, sum).InnerSimplified;
+            // Over a range with a symbolic end, the sum is its closed form where the range is not
+            // empty; and an empty product is 1 for every base, where c^0 is not at c = 0.
+            var nonEmpty = sum is Piecewise { Cases: var cases } && cases.Count() == 2 && cases.Last().Predicate == Entity.Boolean.True
+                ? cases.First().Expression : sum;
+            return MathS.Piecewise(new[]
+            {
+                new Providedf(MathS.Pow(@base, nonEmpty).InnerSimplified, new GreaterOrEqualf(to, from)),
+                new Providedf(Integer.One, Entity.Boolean.True),
+            }).InnerSimplified;
+        }
+
         /// <summary>
         /// The largest power of the index this will take. The answer carries the factorial to
         /// that power, so the ceiling is about how big an expression is worth returning.
