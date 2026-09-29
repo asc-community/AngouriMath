@@ -837,6 +837,20 @@ coefficient that is zero now answers the whole line or nothing.
 | `"x^2 < x^2 - 2".Solve("x")` | `InvalidCastException` | `{ }` |
 | `forall x in RR : x + 1 > x` | `UnhandledParseException` (`InvalidCastException` since quantifiers arrived) | `True` |
 
+### A statement equal to a truth value is solved as the statement or its negation
+
+**Wrong answer fixed.** `"(x > 2) = (3 > 1)".Solve("x")` was `{ }`, and so was every equation
+between a statement and a truth value: the arm for an equation of numbers subtracted the two
+sides, which claimed there was no root. A statement equal to `True` is the statement, equal to
+`False` its negation, and two statements equal are equivalent
+([#1549](https://github.com/asc-community/AngouriMath/issues/1549)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(x > 2) = (3 > 1)".Solve("x")` | `{ }` — wrong | `(2; +oo)` |
+| `"(x = 1) = true".Solve("x")` | `{ }` — wrong | `{ 1 }` |
+| `"(x > 0) = (x > 1)".Solve("x")` | `UncompilableNodeException` | `(1; +oo) \/ (-oo; 0]` |
+
 ### An infinite base has its whole powers, and surjectivity is decided through the image
 
 `(-oo)^3` was `NaN` — a claim that the value does not exist — and so were `(-oo)^2` and
