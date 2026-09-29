@@ -815,6 +815,20 @@ met piece by piece now ([#1409](https://github.com/asc-community/AngouriMath/iss
 | `{ x in RR : x^2 - 3 x + 2 >= 0 } = { y in RR : y <= 1 or y >= 2 }` | left as written | `True` |
 | `"({ 2 } \/ (-oo; 1] \/ (2; +oo)) /\ (1; 2)".ToEntity().Evaled` | left as written | `{ }` |
 
+### Two unions of intervals meet piece by piece
+
+A union of intervals and listed sets met an interval piece by piece, and another such union not
+at all: the meeting was left as written. That is what a conjunction of two inequalities is solved
+to, so a statement decided through one was left as written as well. Two such unions now meet
+piece by piece. So Sullivan and Mackey's Prob 4.11.22 is decided both ways: for positive `x`,
+`(x^2 - 4)/(x^2 + 1) > 1 - 1/x` implies `(x^2 + 4)/(x^2 + 1) < 1 + 1/x`, and the converse fails at
+`3` ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"((0; 1) \/ (3; 5)) /\ ((-1; 2) \/ (4; 6))".ToEntity().Evaled` | left as written | `(0; 1) \/ (4; 5)` |
+| `forall x in RR : x > 0 implies ((x^2 - 4)/(x^2 + 1) > 1 - 1/x implies (x^2 + 4)/(x^2 + 1) < 1 + 1/x)` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+
 ### The size of an infinite set is an aleph, and sizes compare
 
 `card` of an infinite set is an aleph, `aleph(k)`, or a power of 2 of one: `card(ZZ)`, `card(QQ)`

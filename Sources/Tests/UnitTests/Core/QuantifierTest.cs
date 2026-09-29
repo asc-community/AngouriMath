@@ -78,6 +78,11 @@ namespace AngouriMath.Tests.Core
         // §4.2.1: the AGM inequality, and §4.9.5.
         [InlineData("forall x, y in RR : 2 x y <= x^2 + y^2", "True")]
         [InlineData("forall y in RR : y > 1 implies y^2 - 1 > 0", "True")]
+        // Prob 4.11.22: for x > 0, (x^2 - 4)/(x^2 + 1) > 1 - 1/x is x^2 - 5 x + 1 > 0, which makes
+        // (x^2 + 4)/(x^2 + 1) < 1 + 1/x, x^2 - 3 x + 1 > 0, and not the other way round, at 3.
+        // The x where the first implication fails are where two unions of intervals meet.
+        [InlineData("forall x in RR : x > 0 implies ((x^2 - 4)/(x^2 + 1) > 1 - 1/x implies (x^2 + 4)/(x^2 + 1) < 1 + 1/x)", "True")]
+        [InlineData("forall x in RR : x > 0 implies ((x^2 + 4)/(x^2 + 1) < 1 + 1/x implies (x^2 - 4)/(x^2 + 1) > 1 - 1/x)", "False")]
         // Problem 4.11.1 over ZZ: P is 1 <= x <= 3, Q is 2 divides x, R is x^2 = 4.
         [InlineData("forall x in ZZ : (1 <= x and x <= 3) implies 2 divides x", "False")]
         [InlineData("exists x in ZZ : x^2 = 4 and 1 <= x and x <= 3", "True")]

@@ -181,6 +181,14 @@ namespace AngouriMath
                                 => MathS.Union(MathS.Intersection(interval, left).InnerSimplified(isExact), MathS.Intersection(interval, right).InnerSimplified(isExact)).InnerSimplified(isExact),
                             (Unionf(var left, var right) union, Interval interval) when MadeOfPieces(union)
                                 => MathS.Union(MathS.Intersection(left, interval).InnerSimplified(isExact), MathS.Intersection(right, interval).InnerSimplified(isExact)).InnerSimplified(isExact),
+                            // Two such unions meet piece by piece as well, each piece of the one
+                            // meeting the other by the arms above. A conjunction of two inequalities
+                            // is solved to that: the x > 0 where x^2 - 5 x + 1 > 0 and not
+                            // x^2 - 3 x + 1 > 0 are ((0; a) \/ (b; +oo)) /\ ({ c, d } \/ (-oo; 0) \/ (c; d)),
+                            // which meet in nothing -- Sullivan and Mackey's Prob 4.11.22.
+                            // https://github.com/asc-community/AngouriMath/issues/1409
+                            (Unionf(var left, var right) union, Unionf other) when MadeOfPieces(union) && MadeOfPieces(other)
+                                => MathS.Union(MathS.Intersection(left, other).InnerSimplified(isExact), MathS.Intersection(right, other).InnerSimplified(isExact)).InnerSimplified(isExact),
                             // (A \ B) /\ C is (A /\ C) \ B, where A meets C first: the pre-image
                             // (RR \ { -1 }) /\ (-oo; -1) is (-oo; -1) \ { -1 }, which is the interval.
                             (SetMinusf(var from, var removed), Set other) when other is not SetMinusf
