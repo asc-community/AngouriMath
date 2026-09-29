@@ -916,6 +916,9 @@ namespace AngouriMath.Functions.Algebra
             // remainder: `e^x (1 - x - x^2)/sqrt(1 - x^2)` is `(e^x sqrt(1 - x^2))'`.
             if ((answer = IndefiniteIntegralSolver.SolveAnExponentialTimesAnOddHalfPowerOfAQuadratic(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveALinearBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
+            // And over a quadratic, closed as well: beside the linear's, since each of the two is
+            // a piece the rational function below is taken apart into.
+            if ((answer = IndefiniteIntegralSolver.SolveALinearOverAQuadraticBesideTheRootOfAnother(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
             // A linear below the bar that divides the radicand, written over it: after the two
             // rules above, which read a linear beside the root as a pole and find nothing to take

@@ -329,6 +329,27 @@ poles of `tan(x/2)`, as every half-angle answer.
 | `"csc(x)^2/(a+b*sin(x)+c*sin(x)^2)".Integrate("x")`, `"sec(x)^2/…"` | unevaluated | `-cot(x)/a + …`, the blocks over `sin^2` and `1 - sin^2` beside the two roots |
 | `"1/(a+b*cos(x)+c*cos(x)^2)".Integrate("x")` | unevaluated | the cosine form |
 
+### A linear over a quadratic beside the root of another quadratic is integrated
+
+`(g + h x)/(A sqrt(B))`, `A` and `B` two different quadratics, was left unevaluated wherever a
+coefficient was a symbol, and so was what the tangent substitution makes of Rubi's
+`trig^m (a + b tan + c tan^2)^(p/2)`: `1/sqrt(a + b tan(x) + c tan(x)^2)` is
+`1/((1 + t^2) sqrt(a + b t + c t^2))`. It is closed now, as two arctangents of a linear over
+`sqrt(B)` whose coefficients hold `sqrt(P^2 - E F)`, `P = A2 B0 - A0 B2`, `E = A2 B1 - A1 B2` and
+`F = A1 B0 - A0 B1` -- the root Rubi's 1.2.1.6 calls `q`; where the ratio under a piece's root is a
+negative number the piece is written as the hyperbolic arctangent it is. A rational function
+beside the root with such a quadratic, a power of a linear or a power of `B` below the bar is
+taken apart into pieces each closed the same way
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/sqrt(a + b*tan(x) + c*tan(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | two arctangents of a linear in `tan(x)` over the root |
+| `"(g + h*x)/((d + k*x + f*x^2)*sqrt(a + b*x + c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | two arctangents of a linear over the root |
+| `"cot(x)^3/(a + b*tan(x) + c*tan(x)^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
+| `"(2 + x)/((2 + 4*x - 3*x^2)*(1 + 3*x + 2*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
+| `"1/((x^2 + 1)*sqrt(x^2 + x + 1))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm and an arctangent |
+
 ### A function comes out of a fractional power of its even power with its sign
 
 **Improvement, not silent.** The entry two above made `(sin(x)^2)^(3/2)` the modulus `|sin(x)|^3`

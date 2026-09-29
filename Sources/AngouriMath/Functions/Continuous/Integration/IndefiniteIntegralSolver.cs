@@ -11095,12 +11095,222 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// A linear over a quadratic beside the square root of another quadratic,
+        /// <c>(g + h x)/(A sqrt(B))</c>, in closed form, symbols in the coefficients included:
+        /// two arctangents of <c>L/sqrt(B)</c>, each for a linear <c>L</c> for which <c>A</c> is
+        /// a sum of multiples of <c>B</c> and <c>L^2</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// For <c>L = lambda + mu x</c>, <c>u = L/sqrt(B)</c> has <c>du = N dx/(2 B^(3/2))</c>
+        /// with <c>N = (2 mu B0 - lambda B1) + (mu B1 - 2 lambda B2) x</c>, and
+        /// <c>alpha + beta u^2</c> is <c>(alpha B + beta L^2)/B</c>. Where
+        /// <c>alpha B + beta L^2 = rho A</c>, then, <c>N dx/(A sqrt(B))</c> is
+        /// <c>2 rho du/(alpha + beta u^2)</c>. The three equations that says, one for each power
+        /// of x, have a solution where their determinant is zero, which is a quadratic in
+        /// <c>lambda : mu</c>, <c>E lambda^2 - 2 P lambda mu + F mu^2</c> with
+        /// <c>P = A2 B0 - A0 B2</c>, <c>E = A2 B1 - A1 B2</c> and <c>F = A1 B0 - A0 B1</c>. Its two
+        /// roots give two such numerators, independent unless <c>q = sqrt(P^2 - E F)</c> is zero
+        /// or <c>B</c> is a square, and <c>g + h x</c> is a sum of the two.
+        /// </para>
+        /// <para>
+        /// Each piece is <c>2 rho arctan(k u)/(alpha k)</c> with <c>k = sqrt(beta/alpha)</c>. Its
+        /// derivative is <c>2 rho/(alpha + alpha k^2 u^2)</c>, and <c>alpha k^2</c> is <c>beta</c>
+        /// on either branch of the root, so the piece holds where <c>beta/alpha</c> is negative
+        /// too, as the hyperbolic arctangent it is there.
+        /// </para>
+        /// <para>
+        /// Rubi's 1.2.1.6 closes these the same way, and its 4.3.9 and 4.4.9 come to them under
+        /// the tangent: <c>1/sqrt(a + b tan(x) + c tan(x)^2)</c> is
+        /// <c>1/((1 + t^2) sqrt(a + b t + c t^2))</c>, for which <c>q</c> is
+        /// <c>sqrt((a - c)^2 + b^2)</c>. That is the nested surd the rotation of the tangent
+        /// takes only as a number, since the rotation hands the rational integrator a quotient
+        /// over it; here it is one root in a closed form.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveALinearOverAQuadraticBesideTheRootOfAnother(Entity expr, Entity.Variable x)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Entity? radicand = null;
+            Entity? quadratic = null;
+            Entity constant = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = constant * factor;
+                    continue;
+                }
+                if (factor is Powf(var @base, Number.Rational half) && half == Number.Rational.Create(1, 2) && radicand is null)
+                    radicand = @base;
+                // A power of a linear is a repeated linear, the reciprocal substitution's.
+                else if (quadratic is null && factor is not Powf)
+                    quadratic = factor;
+                else
+                    return null;
+            }
+            if (radicand is null || quadratic is null
+                || !TreeAnalyzer.TryGetPolyQuadratic(quadratic, x, out var a2, out var a1, out var a0)
+                || !TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var b2, out var b1, out var b0)
+                || !TreeAnalyzer.TryGetPolyLinear(numerator, x, out var h, out var g)
+                || VanishesIdentically(a2) || VanishesIdentically(b2))
+                return null;
+            // A coefficient that is a number is a real one, as in every rule about a real root.
+            foreach (var coefficient in new[] { a0, a1, a2, b0, b1, b2, g, h, constant })
+                if (coefficient.Evaled is Number.Complex and not Number.Real)
+                    return null;
+            // Two distinct roots below the bar, and none repeated under the root.
+            if (VanishesIdentically(a1 * a1 - 4 * a0 * a2) || VanishesIdentically(b1 * b1 - 4 * b0 * b2))
+                return null;
+
+            var p = (a2 * b0 - a0 * b2).InnerSimplified;
+            var e = (a2 * b1 - a1 * b2).InnerSimplified;
+            var f = (a1 * b0 - a0 * b1).InnerSimplified;
+            // Zero where the two quadratics are proportional, which is one power of one base.
+            // Expanded, so that the root reads as Rubi's does, sqrt(a^2 - 2 a c + b^2 + c^2) for
+            // 1 + t^2 beside a + b t + c t^2, and not with `- b (-b)` in it.
+            var qSquared = (p * p - e * f).Expand().InnerSimplified;
+            if (VanishesIdentically(qSquared))
+                return null;
+            var q = MathS.Sqrt(qSquared).InnerSimplified;
+            var roots = !VanishesIdentically(e) ? new[] { (Lambda: p + q, Mu: e), (Lambda: p - q, Mu: e) }
+                : !VanishesIdentically(f) ? new[] { (Lambda: f, Mu: p + q), (Lambda: f, Mu: p - q) }
+                // Both even, and the substitutions are u = 1/sqrt(B) and u = x/sqrt(B).
+                : new[] { (Lambda: (Entity)Number.Integer.One, Mu: (Entity)Number.Integer.Zero), (Lambda: (Entity)Number.Integer.Zero, Mu: (Entity)Number.Integer.One) };
+
+            var root = MathS.Sqrt(radicand);
+            var numerators = new (Entity Constant, Entity Slope)[2];
+            var pieces = new Entity[2];
+            for (var i = 0; i < 2; i++)
+            {
+                var (lambda, mu) = roots[i];
+                numerators[i] = ((2 * mu * b0 - lambda * b1).InnerSimplified, (mu * b1 - 2 * lambda * b2).InnerSimplified);
+                // alpha B + beta L^2 = rho A, from the first two of its three equations that are
+                // independent.
+                (Entity Alpha, Entity Beta, Entity Rho)? found = null;
+                foreach (var (alpha, beta, rho) in new[]
+                {
+                    (a0 * mu * mu - a2 * lambda * lambda, p, b0 * mu * mu - b2 * lambda * lambda),
+                    (a1 * lambda * lambda - 2 * a0 * lambda * mu, a0 * b1 - a1 * b0, b1 * lambda * lambda - 2 * b0 * lambda * mu),
+                    (2 * a2 * lambda * mu - a1 * mu * mu, a1 * b2 - a2 * b1, 2 * b2 * lambda * mu - b1 * mu * mu),
+                })
+                    if (!VanishesIdentically(alpha) && !VanishesIdentically(beta) && !VanishesIdentically(rho))
+                    {
+                        found = (alpha.InnerSimplified, beta.InnerSimplified, rho.InnerSimplified);
+                        break;
+                    }
+                if (found is not { } triple)
+                    return null;
+                var u = (lambda + mu * x) / root;
+                // Where beta/alpha is a negative number, the hyperbolic arctangent it is, written
+                // so: arctan(i kappa u)/(i kappa) is artanh(kappa u)/kappa.
+                var ratio = (triple.Beta / triple.Alpha).InnerSimplified;
+                if (ratio.Evaled is Number.Real { IsNegative: true })
+                {
+                    var kappa = MathS.Sqrt((-ratio).InnerSimplified).InnerSimplified;
+                    pieces[i] = 2 * triple.Rho * MathS.Hyperbolic.Artanh(kappa * u) / (triple.Alpha * kappa);
+                }
+                else
+                {
+                    var k = MathS.Sqrt(ratio).InnerSimplified;
+                    pieces[i] = 2 * triple.Rho * MathS.Arctan(k * u) / (triple.Alpha * k);
+                }
+            }
+            // g + h x as a sum of the two numerators; the determinant is 2 q E disc(B) up to its
+            // sign, or disc(B) where both are even, none of them zero here.
+            var ((c0, s0), (c1, s1)) = (numerators[0], numerators[1]);
+            var determinant = c0 * s1 - c1 * s0;
+            Entity answer = Number.Integer.Zero;
+            foreach (var (share, piece) in new[] { ((g * s1 - c1 * h) / determinant, pieces[0]), ((c0 * h - g * s0) / determinant, pieces[1]) })
+            {
+                var simplified = share.InnerSimplified;
+                if (simplified.Evaled is not Number.Complex { IsZero: true })
+                    answer = answer + simplified * piece;
+            }
+            answer = (answer / constant).InnerSimplified;
+            if (answer.Nodes.Any(node => node is Number.Complex { IsNaN: true })
+                || !Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x))
+                return null;
+            return answer;
+        }
+
+        /// <summary>
+        /// A polynomial over a power of a linear beside the square root of a quadratic,
+        /// <c>P/((x - p)^k sqrt(Q))</c> with <c>P</c> of degree below <c>k</c>, by the reciprocal
+        /// of the linear as <see cref="SolveALinearBesideTheRootOfAQuadratic"/> takes it for a
+        /// constant over the first power: under <c>t = 1/(x - p)</c> it is
+        /// <c>-sgn(t) P(p + 1/t) t^(k - 1)/sqrt(R(t))</c> with
+        /// <c>R(t) = Q(p) t^2 + Q'(p) t + a</c>, a polynomial over the root of a quadratic, which
+        /// the reduction for those closes. The pieces the partial fractions leave over
+        /// <c>t^3</c> when <c>cot(x)^3 sqrt(a + b tan(x) + c tan(x)^2)</c> is taken under the
+        /// tangent.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </summary>
+        private static Entity? SolveAPolynomialOverAPowerOfALinearBesideTheRoot(Entity expr, Entity.Variable x)
+        {
+            var (numerator, denominator) = Functions.SingleQuotient.Of(expr);
+            Entity? radicand = null;
+            Entity? linear = null;
+            var power = 0;
+            Entity constant = Number.Integer.One;
+            foreach (var factor in Mulf.LinearChildren(denominator))
+            {
+                if (!factor.ContainsNode(x))
+                {
+                    constant = constant * factor;
+                    continue;
+                }
+                if (factor is Powf(var @base, Number.Rational half) && half == Number.Rational.Create(1, 2) && radicand is null)
+                    radicand = @base;
+                else if (linear is null && factor is Powf(var repeated, Number.Integer { EInteger.Sign: > 0 } whole) && whole.EInteger.CanFitInInt32())
+                    (linear, power) = (repeated, whole.EInteger.ToInt32Unchecked());
+                else
+                    return null;
+            }
+            if (radicand is null || linear is null
+                || !TreeAnalyzer.TryGetPolyLinear(linear, x, out var m, out var n) || VanishesIdentically(m)
+                || !TreeAnalyzer.TryGetPolyQuadratic(radicand, x, out var a, out var b, out var c) || VanishesIdentically(a)
+                || !TreeAnalyzer.TryGetPolynomial(numerator, x, out var read)
+                || read.Keys.Any(degree => degree.Sign < 0 || degree.CompareTo(EInteger.FromInt32(power)) >= 0))
+                return null;
+            foreach (var coefficient in new[] { a, b, c, m, n, constant }.Concat(read.Values))
+                if (coefficient.Evaled is Number.Complex and not Number.Real)
+                    return null;
+            var p = (-n / m).InnerSimplified;
+            var atP = (a * p * p + b * p + c).InnerSimplified;
+            // A root of the radicand leaves a linear under the root, which is not this.
+            if (VanishesIdentically(atP)
+                || Functions.PartialFractions.TaylorCoefficientsAtTheRoot(numerator, p, power, x) is not { } taylor)
+                return null;
+            var slopeAtP = (2 * a * p + b).InnerSimplified;
+            var t = Variable.CreateUnique(expr, "t_recip");
+            // P(p + 1/t) t^(k - 1) is the sum of the Taylor coefficients times t^(k - 1 - j), and
+            // (x - p)^k is L^k/m^k.
+            Entity polynomialInT = Number.Integer.Zero;
+            for (var j = 0; j < power; j++)
+                if (taylor[j].Evaled is not Number.Complex { IsZero: true })
+                    polynomialInT += j == power - 1 ? taylor[j] : taylor[j] * MathS.Pow(t, Number.Integer.Create(power - 1 - j));
+            var inT = (polynomialInT / (constant * MathS.Pow(m, Number.Integer.Create(power)))).InnerSimplified
+                * MathS.Pow(atP * MathS.Sqr(t) + slopeAtP * t + a, Number.Rational.Create(-1, 2));
+            if (SolveAPolynomialTimesAnOddHalfPowerOfAQuadratic(inT, t) is not { } g)
+                return null;
+            var answer = (-MathS.Signum(x - p) * g.Substitute(t, 1 / (x - p))).InnerSimplified;
+            if (answer.Nodes.Any(node => node is Number.Complex { IsNaN: true })
+                || !Functions.PartialFractions.DerivativeHoldsAtSampledPoints(answer, expr, x))
+                return null;
+            return answer;
+        }
+
+        /// <summary>
         /// A polynomial over a product of distinct linears, beside the square root of a
         /// quadratic above or below the bar, taken apart as the rational function it is over
         /// that root: <c>N sqrt(Q)/D</c> is <c>N Q/(D sqrt(Q))</c>, and <c>P/D</c> is a polynomial
         /// plus a constant over each linear, so the integrand is a polynomial over the root
         /// plus one <c>K/((x - p) sqrt(Q))</c> per linear -- the rule before this one's shape,
-        /// each.
+        /// each. And with a quadratic below the bar, a power of a linear or a power of the root's
+        /// own quadratic, a linear over the quadratic or a polynomial over the power for each,
+        /// every one of them closed beside the root.
         /// </summary>
         /// <remarks>
         /// <para>
@@ -11175,6 +11385,15 @@ namespace AngouriMath.Functions.Algebra
             // numeric, and as written otherwise.
             var factors = new List<Entity>();
             Entity constant = Number.Integer.One;
+            // Or with a quadratic among them, a power of a linear, or a power of the radicand:
+            // the partial fractions split over those as well, and each piece is closed beside
+            // the root -- over a quadratic by the rule before this one, over a power of a linear
+            // by its reciprocal, over a power of the radicand by the reduction for a polynomial
+            // beside a half-odd power. `tan(x)^5 sqrt(a + b tan(x) + c tan(x)^2)` is
+            // `t^5 sqrt(a + b t + c t^2)/(1 + t^2)` under the tangent, a polynomial over the root
+            // and a linear over `1 + t^2` beside it.
+            var beyondTheLinears = false;
+            var aQuadratic = false;
             var written = Functions.PolynomialFactoring.TryFactor(below, x, out var factored) && factored is not null ? factored : below;
             foreach (var factor in Mulf.LinearChildren(written))
             {
@@ -11183,16 +11402,36 @@ namespace AngouriMath.Functions.Algebra
                     constant = constant * factor;
                     continue;
                 }
-                if (!TreeAnalyzer.TryGetPolyLinear(factor, x, out var slope, out _) || slope.Evaled is Number.Complex { IsZero: true })
+                if (TreeAnalyzer.TryGetPolyLinear(factor, x, out var slope, out _) && slope.Evaled is not Number.Complex { IsZero: true })
+                {
+                    factors.Add(factor);
+                    continue;
+                }
+                var isAPowerOfALinear = factor is Powf(var repeated, Number.Integer { EInteger.Sign: > 0 })
+                    && TreeAnalyzer.TryGetPolyLinear(repeated, x, out var repeatedSlope, out _) && repeatedSlope.Evaled is not Number.Complex { IsZero: true };
+                var isAPowerOfTheRadicand = factor is Powf(var raised, Number.Integer { EInteger.Sign: > 0 }) && raised == radicand;
+                var isAQuadratic = factor is not Powf && TreeAnalyzer.TryGetPolyQuadratic(factor, x, out var leading, out _, out _) && !VanishesIdentically(leading);
+                if (!isAPowerOfALinear && !isAPowerOfTheRadicand && !isAQuadratic)
                     return null;
                 factors.Add(factor);
+                beyondTheLinears = true;
+                aQuadratic |= isAQuadratic || isAPowerOfTheRadicand;
             }
+            // Powers of linears only beside a quadratic, which is what the split is for: over
+            // the linears alone the reciprocal writes a sign of each, `sgn(sqrt(1 + x) - 1)` once
+            // `sqrt(x + sqrt(1 + x))/x^2` is taken back from `u = sqrt(1 + x)`, whose derivative
+            // is not read where the argument is not shown real -- and Euler's substitution, after
+            // this, answers those without one.
+            if (beyondTheLinears && !aQuadratic)
+                return null;
             // Distinct: two factors with the same root are one repeated, which is not this.
-            for (var i = 0; i < factors.Count; i++)
-                for (var j = i + 1; j < factors.Count; j++)
-                    if (!TryReadAsQuotient(factors[i] / factors[j], out var top, out var bottom)
-                        || Functions.PolynomialGcd.TryCancel(top, bottom, out _))
-                        return null;
+            // Beyond the linears the split decides that, and merges linears with one root.
+            if (!beyondTheLinears)
+                for (var i = 0; i < factors.Count; i++)
+                    for (var j = i + 1; j < factors.Count; j++)
+                        if (!TryReadAsQuotient(factors[i] / factors[j], out var top, out var bottom)
+                            || Functions.PolynomialGcd.TryCancel(top, bottom, out _))
+                            return null;
             var linears = factors.Aggregate(Number.Integer.One as Entity, (product, factor) => product * factor);
 
             // P/D as a polynomial plus a proper part, the proper part over each linear.
@@ -11233,11 +11472,25 @@ namespace AngouriMath.Functions.Algebra
 
             var root = MathS.Pow(radicand, Number.Rational.Create(1, 2));
             Entity answer = Number.Integer.Zero;
-            foreach (var piece in pieces)
+            // Beyond the linears the pieces with a denominator first, so that one no rule closes
+            // declines the whole before the chain is asked for the polynomial part.
+            var inOrder = beyondTheLinears
+                ? pieces.OrderBy(piece => piece.ContainsNode(x) && !TreeAnalyzer.TryGetPolynomial(piece, x, out _) ? 0 : 1).ToList()
+                : pieces;
+            foreach (var piece in inOrder)
             {
                 // Written as `coefficient / sqrt(Q)`, the shape the table reads for a constant.
                 var overTheRoot = (piece / constant).InnerSimplified / root;
+                // Beyond the linears each piece is closed where it can be, before the chain is
+                // asked for a polynomial part as it always was: the pieces are asked a level
+                // below a substitution already, where the scoped rules decline.
                 var integrated = SolveALinearBesideTheRootOfAQuadratic(overTheRoot, x)
+                    ?? (beyondTheLinears
+                        ? SolveALinearOverAQuadraticBesideTheRootOfAnother(overTheRoot, x)
+                            ?? SolveAPolynomialOverAPowerOfALinearBesideTheRoot(overTheRoot, x)
+                            ?? SolveAPolynomialTimesAnOddHalfPowerOfAQuadratic(
+                                OverAPowerOfTheRadicand((piece / constant).InnerSimplified, radicand, x) ?? overTheRoot, x)
+                        : null)
                     ?? (piece.ContainsNode(x) && !TreeAnalyzer.TryGetPolynomial(piece, x, out _) ? null : Integration.ComputeIndefiniteIntegral(overTheRoot, x, integrateByParts: false));
                 if (integrated is null)
                     return null;
@@ -11245,6 +11498,34 @@ namespace AngouriMath.Functions.Algebra
             }
             answer = answer.InnerSimplified;
             return answer.Nodes.Any(node => node is Number.Complex { IsNaN: true }) ? null : answer;
+        }
+
+        /// <summary>
+        /// A piece over a whole power of <paramref name="radicand"/>, beside its root, as the one
+        /// half-odd power the two are: <c>(g + h x)/(Q^j sqrt(Q))</c> is
+        /// <c>(g + h x) Q^(-j - 1/2)</c>, which the reduction for a polynomial beside a half-odd
+        /// power reads and the two factors written apart it does not; null where the piece is
+        /// over anything else.
+        /// </summary>
+        private static Entity? OverAPowerOfTheRadicand(Entity piece, Entity radicand, Entity.Variable x)
+        {
+            var (top, bottom) = Functions.SingleQuotient.Of(piece);
+            var power = 0;
+            Entity rest = Number.Integer.One;
+            var written = radicand.InnerSimplified;
+            foreach (var factor in Mulf.LinearChildren(bottom))
+            {
+                if (!factor.ContainsNode(x))
+                    rest = rest * factor;
+                else if (factor == radicand || factor == written)
+                    power += 1;
+                else if (factor is Powf(var @base, Number.Integer { EInteger.Sign: > 0 } whole) && (@base == radicand || @base == written)
+                    && whole.EInteger.CanFitInInt32())
+                    power += whole.EInteger.ToInt32Unchecked();
+                else
+                    return null;
+            }
+            return power == 0 ? null : top / rest * MathS.Pow(radicand, Number.Rational.Create(-(2 * power + 1), 2));
         }
 
         /// <summary>
