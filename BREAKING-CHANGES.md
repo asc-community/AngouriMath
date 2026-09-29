@@ -236,6 +236,23 @@ one leaves the other, and the sub-problem could then be scaled again without end
 substitution that does not exist rather than a wrong answer, and the integrand at `a = 0` is a
 different function (`1/x^3`), answered on its own if asked that way.
 
+### A power of `1 - t^2` beside a power of a symbolic quadratic is taken over its linear factors
+
+The half-angle tangent writes `sec(x)^4/(a + b sin(x))^2` as
+`2 (1 + t^2)^5/((1 - t^2)^4 (a t^2 + 2 b t + a)^2)`. The split over symbolic linear factors reads
+the linears it finds written, and `1 - t^2` is written as a quadratic, so these went to the Hermite
+reduction, whose one linear solve swelled past anything it could use. A rational factor that splits
+is now written in its linear factors where a symbolic one stands beside it. The constant taken out of
+`(a t^2 + 2 b t + a)^2` also left the monic quadratic as `a/a + 2 b/a t + t^2`, which the split
+could not read; it is `1 + 2 b/a t + t^2` now.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sec(x)^4/(a+b*sin(x))^2".Integrate("x")`, Rubi's 4.1.1.2 row 493 | `integral(...)` | the antiderivative |
+| `"1/((1-x^2)^3*(a*x^2+2*b*x+a)^2)".Integrate("x")` | `integral(...)` | the antiderivative |
+| `"(1+x^2)^2/((1-x^2)^2*(a*x^2+2*b*x+a)^2)".Integrate("x")` | `integral(...)`, after 5 s | the antiderivative |
+| `"2*(1+x^2)^5/((1-x^2)^4*(a*x^2+2*b*x+a)^2)".Integrate("x")` | past a 20 s budget | the antiderivative |
+
 ### A rational function of the sine and cosine with symbols in it is integrated by the half angle
 
 `sin(x)^2/(a + b cos(x))` was left unevaluated while `sin(x)^2/(2 + 3 cos(x))` was answered. Under
