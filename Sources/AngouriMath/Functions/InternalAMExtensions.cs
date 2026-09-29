@@ -1179,13 +1179,14 @@ namespace AngouriMath
                 return x;
             if (!x.IsFinite)
                 return EDecimal.NaN;
-            try
+            // An integer that fits in an int32 is answered exactly; ToInt32IfExact would throw
+            // for anything else, and the approximation below takes that.
+            if (x.IsInteger() && x.CompareTo(EDecimal.FromInt32(int.MinValue)) >= 0 && x.CompareTo(EDecimal.FromInt32(int.MaxValue)) <= 0)
             {
-                var @int = x.ToInt32IfExact();
+                var @int = x.ToInt32Unchecked();
                 if (@int < 0) return EDecimal.NaN; // Will become ±∞ if we don't insert this line
                 return EDecimal.FromEInteger(Factorial(@int)).RoundToPrecision(mathContext);
             }
-            catch { } // EDecimal does not fit in an int32
 
             if (!mathContext.Precision.CanFitInInt32())
                 throw new WrongNumberOfArgumentsException($"The precision of the {nameof(mathContext)} is outside the int32 range");

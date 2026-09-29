@@ -100,21 +100,6 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 public override Real Abs() => Create(EInteger.Abs());
 
-                internal static bool TryParse(string s,
-                    [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Integer? dst)
-                {
-                    try
-                    {
-                        dst = EInteger.FromString(s);
-                        return true;
-                    }
-                    catch
-                    {
-                        dst = null;
-                        return false;
-                    }
-                }
-
                 /// <summary>
                 /// Performs integer division of the
                 /// number by the given number

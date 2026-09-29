@@ -482,21 +482,6 @@ namespace AngouriMath
                     return !double.IsInfinity(high) && !double.IsNaN(high);
                 }
 
-                internal static bool TryParse(string s,
-                    [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Rational? dst)
-                {
-                    try
-                    {
-                        dst = ERational.FromString(s);
-                        return true;
-                    }
-                    catch
-                    {
-                        dst = null;
-                        return false;
-                    }
-                }
-
                 // Comparison here is on the value and answers a bool, where the same operators
                 // on Entity build an inequality node instead.
 

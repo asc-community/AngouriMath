@@ -91,17 +91,11 @@ namespace AngouriMath
                 if (num is not Real re)
                     throw new NumberCastException(typeof(int), num.GetType());
                 
-                int plannedPrecision;
-                try
-                {
-                    plannedPrecision = MathS.Settings.DecimalPrecisionContext.Value.Precision.ToInt32Checked();
-                }
-                catch (OverflowException)
-                {
+                var precision = MathS.Settings.DecimalPrecisionContext.Value.Precision;
+                if (!precision.CanFitInInt32())
                     throw new InvalidNumberException(
-                        $"The decimal precision setting is {MathS.Settings.DecimalPrecisionContext.Value.Precision}, "
-                        + "which is too high to fit in an int32");
-                }
+                        $"The decimal precision setting is {precision}, which is too high to fit in an int32");
+                var plannedPrecision = precision.ToInt32Unchecked();
 
                 return re.EDecimal.ToSizedEInteger(plannedPrecision * 3).ToBigInteger();
             }
