@@ -350,8 +350,10 @@ bar that an even power does not give. Written in `s = sin(x)` the integrand is a
 of `s`, divided down and split over the written factors as any is, and the piece over the
 quadratic is taken by the two roots `r = (-b ± sqrt(b^2 - 4ac))/(2c)`, each
 `1/(sin(x) - r)` being `-2 atan((r tan(x/2) - 1)/sqrt(r^2 - 1))/sqrt(r^2 - 1)` for any complex
-`r` — a form checked by differentiation, not a piecewise on the sign of a root, which has no
-value for the conjugate pair the ordinary coefficients give. The cosine the same way, with
+`r` but `±1` — a form checked by differentiation, not a piecewise on the sign of a root, which has
+no value for the conjugate pair the ordinary coefficients give. At `±1`, which `a - a sin(x)^2` has
+for every `a`, the quadratic under the half-angle is a square and the piece is `2/(r tan(x/2) - 1)`
+([#1588](https://github.com/asc-community/AngouriMath/issues/1588)). The cosine the same way, with
 `-2 atan(tan(x/2)/σ)/((1 + r) σ)`, `σ = sqrt((r - 1)/(r + 1))`. On each interval between the
 poles of `tan(x/2)`, as every half-angle answer.
 
@@ -361,6 +363,7 @@ poles of `tan(x/2)`, as every half-angle answer.
 | `"sin(x)^4/(a+b*sin(x)+c*sin(x)^2)".Integrate("x")` | unevaluated after more than three minutes | `(x - sin(2x)/2)/(2c) + b cos(x)/c^2 + (b^2 c - a c^2) x/c^4 + …` in 70 ms |
 | `"csc(x)^2/(a+b*sin(x)+c*sin(x)^2)".Integrate("x")`, `"sec(x)^2/…"` | unevaluated | `-cot(x)/a + …`, the blocks over `sin^2` and `1 - sin^2` beside the two roots |
 | `"1/(a+b*cos(x)+c*cos(x)^2)".Integrate("x")` | unevaluated | the cosine form |
+| `"csc(x)^2/(a-a*sin(x)^2)".Integrate("x")` | unevaluated | `-cot(x)/a` and two terms rational in `tan(x/2)` |
 
 ### A linear over a quadratic beside the root of another quadratic is integrated
 
