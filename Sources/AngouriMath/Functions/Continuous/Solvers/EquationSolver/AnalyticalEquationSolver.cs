@@ -124,6 +124,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return new ConditionalSet(x, residual.Equalizes(0));
             }
 
+            // Over the reals an equation in moduli of linear functions is solved by cases, between
+            // the kinks: |x - 2| = |x - 3| is x = 5/2, Sullivan and Mackey's Prob 1.5.16.
+            // https://github.com/asc-community/AngouriMath/issues/1573
+            if (MathS.Settings.Codomain.Value == Core.Domain.Real && ModulusSolver.SolveOverTheReals(expr, x) is { } overTheReals)
+                return overTheReals;
+
             // Whether a candidate root really is one. The loose tolerance that guesses the
             // rational must not also be what decides this: at 1e-7, x^41 + 6x + 1 accepted
             // -1/6, whose residual is -1.25e-32 -- small, but the difference between an
@@ -366,6 +372,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // https://github.com/asc-community/AngouriMath/issues/1420
             if (expr.Vars.Count == 1 && expr.Simplify() is Integer { IsZero: true })
                 return MathS.Sets.C;
+
+            // An expression real for every complex x -- x only ever inside a modulus -- is one
+            // real condition on the two real unknowns x is made of, so what solves it is a
+            // curve: |x - 2| = |x - 3| is the line Re x = 5/2. Newton's method would find points
+            // of it and answer them as the set. Left unsolved; over the reals it is solved by
+            // cases, above. https://github.com/asc-community/AngouriMath/issues/1573
+            if (ModulusSolver.IsRealForEveryComplex(expr, x))
+                return Unsolved(expr, x);
 
             // A numerical search that comes back with nothing has not shown there is
             // nothing to find: Newton's method is started from finitely many points inside

@@ -767,6 +767,23 @@ emptiness as a proof: `forall x in RR : x^2 in ZZ` was `True`
 | `"x^2 in {1, 4}".Solve("x")` | `{}` — wrong | `{ 1, -1, 2, -2 }` |
 | `"x^2 in ZZ".Solve("x")` | `{}` — wrong | `{ x : x ^ 2 in ZZ }`, left as written |
 | `forall x in RR : x^2 in ZZ` | `UnhandledParseException` (quantifiers are new since) | `False` |
+### An equation between moduli is left unsolved over the complex numbers, and solved by cases over the reals
+
+An expression real for every complex `x`, with `x` only ever inside a modulus, is one real condition
+on the two real unknowns `x` is made of, so what solves it is a curve: `abs(x - 2) = abs(x - 3)` holds
+on the whole line `Re x = 5/2`. **Wrong answer fixed**: Newton's method found points of such a curve
+and answered them as the solution set, and `abs(x - 1) + abs(x - 2) = 5` missed its real root `4`
+for points of an ellipse. It is now left as the set of the `x` satisfying it. With the codomain set
+to `RR`, an equation in moduli of linear functions is solved by cases between the kinks, where each
+modulus has one sign: `abs(x - 2) = abs(x - 3)` is `{ 5/2 }` (Sullivan and Mackey's Prob 1.5.16), and
+`abs(x - 1) + abs(x - 2) = 1` is `[1; 2]` ([#1573](https://github.com/asc-community/AngouriMath/issues/1573)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"abs(x - 2) = abs(x - 3)".ToEntity().Solve("x")` | `{ 2.4999… - 53.004…i, 2.4999… + 53.004…i, … }` | `{ x : abs(x - 2) = abs(x - 3) }` |
+| the same, with `MathS.Settings.Codomain` set to `RR` | `{ 2.4999… - 53.004…i, 2.4999… + 53.004…i, … }` | `{ 5/2 }` |
+| `"abs(x - 1) + abs(x - 2) = 5".ToEntity().Solve("x")`, codomain `RR` | `{ -1, 3.9997… - 0.0345…i, 3.9997… + 0.0345…i, … }` | `{ -1, 4 }` |
+
 ### `...` is the pattern operator
 
 `{1, 2, ..., n}`, `{2, 4, ..., 2 n}`, `{5, 10, 15, ...}`, `{..., -1, 0}`, `1 + 2 + ... + n` and
