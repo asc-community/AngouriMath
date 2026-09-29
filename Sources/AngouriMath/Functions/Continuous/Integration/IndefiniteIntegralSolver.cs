@@ -14378,18 +14378,6 @@ namespace AngouriMath.Functions.Algebra
         /// the shorter answer.
         /// </remarks>
         private static bool IsAProductOfSymbolicLinearFactors(Entity denominator, Entity.Variable x, bool aLinearAmongThem = true)
-            => IsAProductOfSymbolicLinearOrQuadraticFactors(denominator, x, aLinearAmongThem);
-
-        /// <summary>
-        /// Whether a written factor of <paramref name="denominator"/> with a symbol in it stands
-        /// to a whole power of two or more: where the Hermite reduction's one solve takes those
-        /// symbols through every row, and a split by residues does not.
-        /// </summary>
-        private static bool HoldsARepeatedSymbolicFactor(Entity denominator, Entity.Variable x)
-            => Mulf.LinearChildren(denominator).Any(factor => factor is Powf(var @base, Number.Integer { EInteger.Sign: > 0 } power)
-                && power != Number.Integer.One && @base.ContainsNode(x) && @base.Vars.Any(v => v != x));
-
-        private static bool IsAProductOfSymbolicLinearOrQuadraticFactors(Entity denominator, Entity.Variable x, bool aLinearAmongThem)
         {
             var linears = 0;
             var quadratics = 0;
@@ -14417,6 +14405,15 @@ namespace AngouriMath.Functions.Algebra
             }
             return (linears >= 1 || !aLinearAmongThem) && linears + quadratics >= 2 && symbolic;
         }
+
+        /// <summary>
+        /// Whether a written factor of <paramref name="denominator"/> with a symbol in it stands
+        /// to a whole power of two or more: where the Hermite reduction's one solve takes those
+        /// symbols through every row, and a split by residues does not.
+        /// </summary>
+        private static bool HoldsARepeatedSymbolicFactor(Entity denominator, Entity.Variable x)
+            => Mulf.LinearChildren(denominator).Any(factor => factor is Powf(var @base, Number.Integer { EInteger.Sign: > 0 } power)
+                && power != Number.Integer.One && @base.ContainsNode(x) && @base.Vars.Any(v => v != x));
 
         /// <summary>
         /// Whether both read as polynomials in <paramref name="x"/> with the numerator's

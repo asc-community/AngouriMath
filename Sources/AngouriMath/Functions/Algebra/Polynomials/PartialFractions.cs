@@ -1,4 +1,4 @@
-﻿//
+//
 // Copyright (c) 2019-2026 Angouri.
 // AngouriMath is licensed under MIT.
 // Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
@@ -960,9 +960,9 @@ namespace AngouriMath.Functions
         /// From the coefficients, which the caller has, rather than from the polynomial written out
         /// and read back: a coefficient with a symbol over its square, `(4 b^2 - 2 a^2)/a^2` in the
         /// square of `x^2 - 2 b/a x - 1`, expands to an `a^0` guarded by a condition, which the
-        /// reader does not read, and the split declined every quadratic block beside that square --
-        /// `2 (1 - t^2)^5/((1 + t^2)^4 (a - a t^2 + 2 b t)^2)`, the half-angle tangent's
-        /// `cos(x)^3/(a + b tan(x))^2`, went to the Hermite reduction and did not return.
+        /// reader does not read, and the split declined every quadratic block beside that square:
+        /// `2 (1 - t^2)^5/((1 + t^2)^4 (a - a t^2 + 2 b t)^2)` went to the Hermite reduction and did
+        /// not return in 20 s.
         /// </remarks>
         private static (Entity, Entity) ResidueModuloTheQuadratic(Entity[] coefficients, Entity s, Entity t)
         {
