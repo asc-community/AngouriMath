@@ -116,6 +116,15 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall p in PP : forall k in ZZ : k < p implies p divides binomial(p, k)", "False")]
         [InlineData("forall p in PP : forall k in ZZ : (0 < k and k <= p) implies p divides binomial(p, k)", "False")]
         [InlineData("forall p in PP : forall p in ZZ+ : forall k in ZZ : (0 < k and k < p) implies p divides binomial(p, k)", "False")]
+        // Over the primes, a statement repeating modulo M is its prime factors and its units: past
+        // 3 every prime is a unit modulo 24 and p^2 - 1 a multiple of it, while 3 itself is not,
+        // Sullivan and Mackey's Prob 6.7.5; and each unit is the residue of infinitely many primes.
+        [InlineData("forall p in PP : p > 3 implies 24 divides p^2 - 1", "True")]
+        [InlineData("forall p in PP : p > 2 implies 24 divides p^2 - 1", "False")]
+        [InlineData("forall p in PP : p > 5 implies 240 divides p^4 - 1", "True")]
+        [InlineData("forall p in PP : p > 2 implies 2 divides p + 1", "True")]
+        [InlineData("exists p in PP : p > 3 and 3 divides p", "False")]
+        [InlineData("exists p in PP : p > 10 and p = 3 (mod 4)", "True")]
         // Sullivan and Mackey's Prob 4.11.6: for whole x and y the witnesses are x - y and y - x,
         // and one of them is not negative. Not so in ZZ+, where x = y leaves 0, nor for reals,
         // where 1/2 and 0 leave ±1/2.

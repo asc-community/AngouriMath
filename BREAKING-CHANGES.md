@@ -1073,6 +1073,19 @@ that is not a bound by trying the members in order from the least, so Sullivan a
 | `"prime(25)".ToEntity().Evaled` | `prime * 25` — juxtaposition of a variable `prime` | `97`; `prime(n)` is the `n`-th prime, `NaN` off the positive whole numbers |
 | `"valuation(12, 2)".ToEntity().Evaled` | `UnrecognizedFunctionParseException` | `2`; `valuation(n, p)` is the `p`-adic valuation, `+oo` at `0` and `NaN` off the primes |
 
+### Over the primes, a repeating statement is decided by the modulus's prime factors and units
+
+A statement that repeats modulo `M`, asked of the primes past some bound, is its value at each prime
+factor of `M` past the bound and at each unit modulo `M`: every prime past those factors is a unit,
+and every unit is the residue of infinitely many primes, by Dirichlet's theorem. So
+`forall p in PP : p > 3 implies 24 divides p^2 - 1` is `True` while the same from `p > 2` is `False`
+at `3`, Sullivan and Mackey's Prob 6.7.5 and its erratum, and `exists p in PP : p > 10 and
+p = 3 (mod 4)` is `True` ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall p in PP : p > 3 implies 24 divides p^2 - 1` | `UnhandledParseException` (left as written when `PP` arrived) | `True` |
+
 ### `atanh(tanh(a + b x))` under an integral is linear in `x`, and was an atom no rule read
 
 An inverse hyperbolic function of a hyperbolic one is spelled by the parser as a logarithm of a
