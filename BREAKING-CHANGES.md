@@ -1777,6 +1777,21 @@ has no zeros, so `x! = 0` is still `{ }`, and so is `arcsin(x) = 5`.
 | `"phi(x) = 4".Solve("x")` | `{ }` | `{ x : phi(x) = 4 }` |
 | `"binomial(x, 2) = 3".Solve("x")` | `UnhandledParseException` | `{ x : binomial(x, 2) = 3 }` |
 
+### An equation in a set, a cardinality or a power set of the unknown is left unsolved, and threw
+
+`Solve` threw `NotSufficientlySupportedException` for an equation whose unknown sits under a set
+operation or a cardinality, where the inverter's contract is to decline and leave the equation
+unsolved, as the equations in the entry on inverses no node writes are. A power set of the unknown
+was answered, and wrongly: the answer held `x`
+([#1544](https://github.com/asc-community/AngouriMath/issues/1544)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"card(x) = 3".ToEntity().Solve("x")` | throws `NotSufficientlySupportedException` | `{ x : #x = 3 }` |
+| `"(x /\\ {1, 2}) = {1}".ToEntity().Solve("x")` | throws `NotSufficientlySupportedException` | `{ x : x /\ { 1, 2 } = { 1 } }` |
+| `"(x \\ {1}) = {2}".ToEntity().Solve("x")` | throws `NotSufficientlySupportedException` | `{ x : x \ { 1 } = { 2 } }` |
+| `"powerset(x) = {{}, {1}}".ToEntity().Solve("x")` | `{ { {  }, { 1 / x } } }` | `{ x : powerset(x) = { {  }, { 1 } } }` |
+
 ### `erf`, `erfc` and `erfi` are functions
 
 **Addition, and two silent misreadings fixed.** The error function `erf(z) = 2/sqrt(pi) int_0^z
