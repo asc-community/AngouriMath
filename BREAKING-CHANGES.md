@@ -405,6 +405,29 @@ one form across the zeros.
 | `"sqrt(a + a*sin(x))".Integrate("x")` | unevaluated (`a^2 = a^2` is not decided by evaluation) | `-2 sqrt(2a) sgn(sin(u)) cos(u)` |
 | `"sqrt(1 + sin(x))".Integrate("x")` | `-2 cos(x)/sqrt(1 + sin(x))` | unchanged, the closed rule's |
 
+### Half-odd powers of `a ± a sec` and `a ± a csc` are integrated by the half-angle tangent
+
+Rubi's `(a + b sec)^m (d sec)^n` files with `a^2 = b^2` hold about a thousand problems with a
+half-odd `m`, and none was answered, `sqrt(1 + sec(x))` included: the half angle at which
+`a + a cos(y)` is a square leaves a root of the cosine below the bar here. Under
+`t = tan(y/2)`, `1 + sec(y)` is `2/(1 - t^2)`, `1 - sec(y)` is `-2 t^2/(1 - t^2)` and `sec(y)` is
+`(1 + t^2)/(1 - t^2)`, so beside a power of the secant and anything rational in the sine and
+cosine the whole is a rational function of `t` beside one root, of `1 - t^2` or of `1 + t^2`.
+Two roots, which a half-odd power of the secant beside a whole one of `1 ± sec` makes, are
+elliptic and still declined. The cosecant's the same way through the complement, and a root of
+`1 - sec(y)` carries `sgn(tan(y/2))`, constant between its zeros. Each root written apart is exact
+where `cos(y)` is positive; beyond it two roots can make the integrand real while each has turned
+its sign on its own, so an answer through two says `provided cos(y) >= 0`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(1 + sec(x))".ToEntity().Integrate("x")` | `integral(...)` | an arctangent in `tan(x/2)` |
+| `"sec(x)/sqrt(a + a*sec(x))".ToEntity().Integrate("x")` | `integral(...)` | `2 arcsin(tan(x/2))/sqrt(2a)` |
+| `"1/(sec(x)^(3/2)*sqrt(1 + sec(x)))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative through a root of `1 + tan(x/2)^2` |
+| `"sqrt(a - a*sec(x))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm in `tan(x/2)`, times `sgn(tan(x/2))` |
+| `"sqrt(1 + csc(x))".ToEntity().Integrate("x")` | `integral(...)` | an arctangent in `tan(pi/4 - x/2)` |
+
 ### A partial-fraction coefficient with symbols in it is in lowest terms, its rational content included
 
 **Improvement, not silent.** The decomposition over written factors with symbols among their

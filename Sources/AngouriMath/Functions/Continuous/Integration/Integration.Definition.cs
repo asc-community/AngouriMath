@@ -728,6 +728,9 @@ namespace AngouriMath.Functions.Algebra
             // cosine, by the half angle at which they are squares: `1 + sin(y)` is `2 sin(u)^2`. Before
             // the substitution search, which spent twenty seconds on the radicals of the sine.
             if ((answer = IndefiniteIntegralSolver.SolveByTheHalfAngleWhereOnePlusASineIsASquare(expr, x, integrateByParts)) is { }) return answer;
+            // And a half-odd power of a +- a sec(y), which is that square over cos(y): by the half-angle
+            // tangent, in which the whole is rational beside one root.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheHalfAngleTangentBesideAHalfOddPowerOfOnePlusASecant(expr, x, integrateByParts)) is { }) return answer;
             // And `a ± a cosh(y)` under a fractional power: `2a cosh(y/2)^2`, `-2a sinh(y/2)^2`.
             if ((answer = IndefiniteIntegralSolver.SolveByTheHalfAngleWhereOnePlusAHyperbolicCosineIsASquare(expr, x, integrateByParts)) is { }) return answer;
             // A constant out of a fractional power of a trigonometric factor: `sqrt(b sec(x))` is
