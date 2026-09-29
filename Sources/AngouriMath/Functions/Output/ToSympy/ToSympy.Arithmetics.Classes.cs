@@ -94,6 +94,13 @@ namespace AngouriMath
                 => $@"sympy.Piecewise((1, {Argument.ToSymPy()}), (0, True))";
         }
 
+        // SymPy has no sizes of sets, so an aleph goes as a symbol of its own.
+        public partial record Alephf
+        {
+            internal override string ToSymPy()
+                => $"sympy.Symbol(\"aleph_{Index.Stringize()}\")";
+        }
+
         public partial record Erfcf
         {
             internal override string ToSymPy()

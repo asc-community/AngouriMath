@@ -239,6 +239,15 @@ namespace AngouriMath
             internal override Domain DefaultCodomain => Domain.Real;
         }
 
+        partial record Alephf
+        {
+            // A size of an infinite set, which is no number.
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Any;
+            /// <inheritdoc/>
+            internal override Domain DefaultCodomain => Domain.Any;
+        }
+
         partial record Derivativef
         {
             /// <inheritdoc/>
