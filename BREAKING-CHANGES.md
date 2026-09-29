@@ -900,6 +900,21 @@ written
 | `"forall n in ZZ+ : n! >= 2^(n - 1)".ToEntity().Evaled` | `UnhandledParseException` | `True` |
 | `"forall n in ZZ+ /\\ [4; +oo) : n^2 - 2 n - 1 > 0".ToEntity().Evaled` | `UnhandledParseException` | `True` — decided about `4 + t` over `ZZ*` |
 
+### An implication needs its conclusion's condition only where its assumption holds
+
+`a implies (b provided c)` was `(a implies b) provided c`, the condition lifted over the whole
+implication as it is over other nodes. But where `a` fails the implication holds whatever the
+conclusion is, so the condition is needed only where `a` holds: it is
+`(a implies b) provided (a implies c)`, and a condition among `a`'s conjuncts is no condition at
+all. `not x = 0 implies x/x = 1` was left undefined at `0`, where it holds
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's Prob 1.5.6).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"not x = 0 implies x / x = 1".ToEntity().Simplify()` | `True provided not x = 0` | `True` |
+| `"not x = 0 implies (y / y = 1)".ToEntity().Simplify()` | `True provided not y = 0` | `True provided not x = 0 implies not y = 0` |
+| `forall x in RR : not x = 0 implies x / x = 1` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+
 ### `acsch(c x)` and `asech(c x)` are integrated with a symbolic `c`, and `|c|` differentiates to `0` in `x`
 
 Three defects behind one symptom: `x acsch(2 x)` was answered and `x acsch(c x)` declined. The

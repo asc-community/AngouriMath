@@ -37,6 +37,19 @@ namespace AngouriMath.Tests.Core
             => Assert.Equal(expected.ToEntity().Simplify(), input.ToEntity().Simplify());
 
         /// <summary>
+        /// An implication needs its conclusion's condition only where its assumption holds, and
+        /// not at all where the assumption states it: <c>not x = 0 implies x/x = 1</c> holds at
+        /// every <c>x</c>, 0 among them, where it was <c>True provided not x = 0</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        [Theory]
+        [InlineData("not x = 0 implies x / x = 1", "True")]
+        [InlineData("x > 0 and not x = 0 implies x / x = 1", "True")]
+        [InlineData("not x = 0 implies (y / y = 1)", "(not x = 0 implies True) provided (not x = 0 implies not y = 0)")]
+        public void AnAssumptionDischargesTheConditionItStates(string input, string expected)
+            => Assert.Equal(expected.ToEntity().Simplify(), input.ToEntity().Simplify());
+
+        /// <summary>
         /// The derivatives the comparison page shows, which carried the condition twice.
         /// </summary>
         [Theory]
