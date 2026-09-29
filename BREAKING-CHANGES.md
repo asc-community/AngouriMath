@@ -1724,6 +1724,21 @@ Rubi's 1.2.1.4, all 632 problems that count: 250 to 409, no row lost, 61 timeout
 new timeouts have a radicand of four symbols beside a power of `x`, and went from a quick decline
 to one past the budget.
 
+### Two proportional linears under roots are read as one radical
+
+`sin(a + b (c + d x)^(1/3))/(c e + d e x)^(1/3)` ran past two minutes. The two linears under the
+roots are proportional, `c e + d e x = e (c + d x)`, and the rule for roots of two different
+linears, which rationalises by `t = ((a x + b)/(c x + d))^(1/q)`, has nothing to rationalise when
+their determinant `a d - b c` is zero. A power of the second is now written as the ratio's power
+times the same power of the first, the generic reading of a root of a product, and the integrand
+is the one-linear question; a ratio known to be negative under an even root is not taken, since
+there the two differ by a sign
+([#1386](https://github.com/asc-community/AngouriMath/issues/1386)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(a+b*(c+d*x)^(1/3))/(c*g+d*g*x)^(1/3)".Integrate("x")` | ran past two minutes | `3 ((c + d x)^(1/3) (-cos(a + b (c + d x)^(1/3)))/b + sin(a + b (c + d x)^(1/3))/b^2)/(d g^(1/3))` |
+
 ### A whole power of a perfect square in a power of the variable is written as a power of its root
 
 `1/(a^2 + 2 a b x^2 + b^2 x^4)^2` was left unevaluated. The quartic is `b^2 (x^2 + a/b)^2`, so a
