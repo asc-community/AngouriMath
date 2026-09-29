@@ -278,7 +278,11 @@ identities of chapter 8 of Sullivan and Mackey's *An Introduction to Proofs*, so
 **Iverson bracket** — `iverson(P)`. `1` where the statement `P` holds and `0` where it does not,
 which is how a count is written as a sum: `sum(iverson(k divides 12), k, 1, 12)` is `6`, the number
 of divisors of `12`. A statement that is not decided keeps the node, which prints as `[\![P]\!]` in
-LaTeX, and so does a number, which is not a statement.
+LaTeX, and so does a number, which is not a statement. A sum of a bracket whose statement bounds the
+index, fixes it, fixes its residue or makes it a perfect power is counted in closed form, however long the range, with `not`
+and `or` counted by inclusion and exclusion: `sum(iverson(2 divides k or 3 divides k), k, 1, 1000)`
+is `667`, and `sum(iverson(not 2 divides k and not 5 divides k), k, 1, n)` is
+`n - floor(n/2) - floor(n/5) + floor(n/10)` for a whole `n >= 0`.
 
 **Error functions** — `erf(z)` `erfc(z)` `erfi(z)`. The error function
 `2/sqrt(pi) int_0^z e^(-t^2) dt`, its complement `1 - erf(z)`, and the imaginary error function
