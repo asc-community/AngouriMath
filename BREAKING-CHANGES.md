@@ -273,6 +273,21 @@ Each of these was checked by differentiating it back with the parameters pinned 
 four points. The Rubi sample is unchanged at 231 of 463 with no wrong answers, so nothing that
 already had an antiderivative moves.
 
+### Trigonometric functions of multiples of one linear argument are written in it
+
+`csc(a + b x) csc(2a + 2b x)^2` was left unevaluated, and `csc(1 + x) csc(2 + 2x)^2` ran twenty
+seconds, where `csc(x) csc(2x)^2` was answered at once. The rule that brings several arguments to
+one reads a numeric slope, and writes an offset out by the addition formula, which put `sin(2)` and
+`cos(2)` into every coefficient. Where every argument is a rational multiple of one linear
+`p + q x`, the integrand is written in `u = p + q x` first, and its arguments are multiples of
+`u` alone ([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"csc(a+b*x)*csc(2*a+2*b*x)^2".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `cos(a + b x)` |
+| `"csc(1+x)*csc(2+2*x)^2".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `cos(1 + x)` |
+| `"sin(a+b*x)^3/sin(2*a+2*b*x)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(a + b x)` |
+
 ### A root of an even power is the modulus, and is no longer read as the power
 
 **Wrong answers, silent.** `(u^2)^(3/2)` is `|u|^3`, and two readers took it for `u^3`: the

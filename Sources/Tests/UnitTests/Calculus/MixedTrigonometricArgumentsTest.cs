@@ -74,6 +74,42 @@ namespace AngouriMath.Tests.Calculus
         public void DifferentMultiplesOfOneArgument(string integrand) => DifferentiatesBack(integrand);
 
         /// <summary>
+        /// Multiples of one linear with an offset or a symbolic slope, written in that linear:
+        /// <c>csc(1 + x) csc(2 + 2x)^2</c> ran twenty seconds with the offsets written out by the
+        /// addition formula, and <c>csc(a + b x) csc(2a + 2b x)^2</c> was declined for its slope.
+        /// Rubi's 4.7.1.
+        /// </summary>
+        [Theory]
+        [InlineData("csc(1 + x)*csc(2 + 2*x)^2")]
+        [InlineData("sin(3 + 3*x)/sin(1 + x)")]
+        public void MultiplesOfOneLinearArgument(string integrand) => DifferentiatesBack(integrand);
+
+        [Theory]
+        [InlineData("csc(a + b*x)*csc(2*a + 2*b*x)^2")]
+        [InlineData("cos(a + b*x)^2/sin(2*a + 2*b*x)^5")]
+        public void MultiplesOfOneLinearArgumentWithASymbolicSlope(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x").Substitute("a", 0.3).Substitute("b", 1.2);
+            var original = integrand.ToEntity().Substitute("a", 0.3).Substitute("b", 1.2);
+            var compared = 0;
+            foreach (var at in new[] { 0.3, 0.5, 0.9, 1.1 })
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                if (got.IsNaN || want.IsNaN)
+                    continue;
+                compared++;
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+            Assert.True(compared >= 3, $"only {compared} points were comparable for {integrand}");
+        }
+
+        /// <summary>
         /// Even in the smaller argument, so written up to the double: <c>tan(x)/tan(2x)</c> is
         /// <c>1 - 1/(2 cos(x)^2)</c> that way, and Moses's <c>sec(2t)/(1 + sec(t)^2 + 3 tan(t))</c>
         /// is a rational function of <c>sin(2t)</c> and <c>cos(2t)</c> that the half-angle

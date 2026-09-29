@@ -7241,6 +7241,77 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Trigonometric functions of several arguments that are whole or rational multiples of one
+        /// linear, <c>p + q x</c>, written in <c>u = p + q x</c>: <c>csc(a + b x) csc(2a + 2b x)^2</c>
+        /// is <c>csc(u) csc(2u)^2</c> over <c>b</c>, whose arguments are multiples of <c>u</c> alone,
+        /// which the rule that unifies the arguments reads.
+        /// </summary>
+        /// <remarks>
+        /// That rule takes a numeric slope and writes an offset out by the addition formula, so
+        /// <c>csc(1 + x) csc(2 + 2x)^2</c> became a rational function of the sine and cosine with
+        /// <c>sin(2)</c> and <c>cos(2)</c> in its coefficients, and ran twenty seconds; with the slope
+        /// a symbol it declined at once. Only where some argument has an offset or a symbolic
+        /// slope, the rest being that rule's already, and where x stands nowhere else. At the
+        /// question asked or one below it, since it lands on the chain in u. Rubi's 4.7.1.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </remarks>
+        internal static Entity? SolveByWritingMultiplesOfOneLinearArgument(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            Entity? first = null;
+            Entity? firstSlope = null;
+            Entity? firstOffset = null;
+            var arguments = new List<Entity>();
+            var needed = false;
+            foreach (var node in expr.Nodes)
+            {
+                if (TrigonometricArgument(node) is not { } argument || !argument.ContainsNode(x) || arguments.Contains(argument))
+                    continue;
+                if (!TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out var offset) || slope.ContainsNode(x) || offset.ContainsNode(x)
+                    || TreeAnalyzer.IsZero(slope))
+                    return null;
+                arguments.Add(argument);
+                (first, firstSlope, firstOffset) = first is null ? (argument, slope, offset) : (first, firstSlope, firstOffset);
+                if (slope.Evaled is not Number.Rational || offset.Evaled is not Number.Complex { IsZero: true })
+                    needed = true;
+            }
+            if (first is null || firstSlope is null || firstOffset is null || arguments.Count < 2 || !needed)
+                return null;
+            // Each argument r times the first, r a rational number.
+            var ratios = new Dictionary<Entity, Entity>();
+            foreach (var argument in arguments)
+            {
+                TreeAnalyzer.TryGetPolyLinear(argument, x, out var slope, out var offset);
+                var ratio = (slope! / firstSlope).InnerSimplified;
+                if (ratio.Evaled is not Number.Rational)
+                    ratio = Functions.PartialFractions.Bare(ratio.Simplify());
+                if (ratio.Evaled is not Number.Rational rational || !VanishesIdentically(offset! - rational * firstOffset))
+                    return null;
+                ratios[argument] = rational;
+            }
+            var u = Variable.CreateUnique(expr, "u_argument");
+            Entity? Of(Entity argument) => ratios.TryGetValue(argument, out var r) ? (r == Number.Integer.One ? u : r * u) : null;
+            var inU = expr.Replace(node => node switch
+            {
+                Sinf(var a) when Of(a) is { } v => MathS.Sin(v),
+                Cosf(var a) when Of(a) is { } v => MathS.Cos(v),
+                Tanf(var a) when Of(a) is { } v => MathS.Tan(v),
+                Cotanf(var a) when Of(a) is { } v => MathS.Cotan(v),
+                Secantf(var a) when Of(a) is { } v => MathS.Sec(v),
+                Cosecantf(var a) when Of(a) is { } v => new Cosecantf(v),
+                _ => node,
+            });
+            if (inU.ContainsNode(x))
+                return null;
+            // dx = du/q.
+            if (Integration.ComputeAsAQuestionOfItsOwn((inU / firstSlope).InnerSimplified, u, integrateByParts) is not { } answer)
+                return null;
+            var back = answer.Substitute(u, first);
+            return back.Nodes.Any(node => node == MathS.NaN) ? null : back;
+        }
+
+        /// <summary>
         /// An integrand whose trigonometric functions have <b>different multiples</b> of one
         /// argument — <c>sin(x)/cos(2x)</c>, <c>cos(x)/(sin(x) tan(x/2))</c> — rewritten so that
         /// every one of them is of the same argument, and handed on.

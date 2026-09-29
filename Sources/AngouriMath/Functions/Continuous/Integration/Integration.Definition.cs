@@ -730,6 +730,10 @@ namespace AngouriMath.Functions.Algebra
             if ((answer = IndefiniteIntegralSolver.SolveByTheHalfAngleWhereOnePlusASineIsASquare(expr, x, integrateByParts)) is { }) return answer;
             // And `a ± a cosh(y)` under a fractional power: `2a cosh(y/2)^2`, `-2a sinh(y/2)^2`.
             if ((answer = IndefiniteIntegralSolver.SolveByTheHalfAngleWhereOnePlusAHyperbolicCosineIsASquare(expr, x, integrateByParts)) is { }) return answer;
+            // Several trigonometric arguments that are multiples of one linear with an offset or a
+            // symbolic slope, written in that linear: before the substitution search, which reads
+            // each function on its own.
+            if ((answer = IndefiniteIntegralSolver.SolveByWritingMultiplesOfOneLinearArgument(expr, x, integrateByParts)) is { }) return answer;
             // A constant out of a fractional power of a trigonometric factor: `sqrt(b sec(x))` is
             // `sqrt(b) sqrt(sec(x))` for a positive `b`, which meets the other powers of the
             // secant beside it. After the rules that answer the same shapes for any real
