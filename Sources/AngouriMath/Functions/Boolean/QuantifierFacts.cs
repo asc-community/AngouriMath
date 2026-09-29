@@ -267,15 +267,56 @@ namespace AngouriMath.Functions.Boolean
         /// </summary>
         internal static Entity? MembershipAsComparison(Entity element, Set set)
         {
-            if (top is null || element is Number || !MentionsARenamedName(element) || !IsWholePolynomial(element))
+            if (top is null || element is Number || !MentionsARenamedName(element))
                 return null;
+            if (IsWholePolynomial(element))
+                return set switch
+                {
+                    SpecialSet.Integers => Entity.Boolean.True,
+                    SpecialSet.NonNegativeIntegers => element >= Integer.Zero,
+                    SpecialSet.PositiveIntegers => element >= Integer.One,
+                    _ => null,
+                };
+            // A whole quantity over a whole number m is whole where m divides it, and then has
+            // the sign of the quantity: (13 - 3 a)/8 in ZZ* is 8 divides 13 - 3 a and
+            // 13 - 3 a >= 0. That is what an equation 13 = 3 a + 8 b leaves of b, so the
+            // quantifier over a then ranges over the a with 3 a <= 13 -- Sullivan and Mackey's
+            // coins, Prob 2.7.8. https://github.com/asc-community/AngouriMath/issues/1409
+            if (WholeOverAWholeNumber(element) is not (var numerator, var denominator))
+                return null;
+            var divides = new Dividesf(denominator, numerator);
             return set switch
             {
-                SpecialSet.Integers => Entity.Boolean.True,
-                SpecialSet.NonNegativeIntegers => element >= Integer.Zero,
-                SpecialSet.PositiveIntegers => element >= Integer.One,
+                SpecialSet.Integers => divides,
+                SpecialSet.NonNegativeIntegers => divides & (numerator >= Integer.Zero),
+                SpecialSet.PositiveIntegers => divides & (numerator >= denominator),
                 _ => null,
             };
+        }
+
+        /// <summary>
+        /// <paramref name="element"/> as a whole quantity over a whole number above one, with the
+        /// facts in scope: <c>(13 - 3 a)/8</c> or <c>13/8 - 3/8 a</c> for a whole <c>a</c> is
+        /// <c>13 - 3 a</c> over <c>8</c>. <see langword="null"/> where it is not one.
+        /// </summary>
+        private static (Entity Numerator, Integer Denominator)? WholeOverAWholeNumber(Entity element)
+        {
+            var denominator = EInteger.One;
+            foreach (var node in element.Nodes)
+            {
+                var divisor = node switch
+                {
+                    Rational { ERational.Denominator: var below } and not Integer => below.Abs(),
+                    Divf(_, Integer { EInteger: var by }) when !by.IsZero => by.Abs(),
+                    _ => EInteger.One,
+                };
+                denominator = denominator.Divide(denominator.Gcd(divisor)).Multiply(divisor);
+            }
+            if (denominator.Equals(EInteger.One))
+                return null;
+            var over = Integer.Create(denominator);
+            var numerator = (element * over).Expand().InnerSimplified;
+            return IsWholePolynomial(numerator) ? (numerator, over) : null;
         }
 
         /// <summary>
