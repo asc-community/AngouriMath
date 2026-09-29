@@ -741,6 +741,9 @@ namespace AngouriMath.Functions.Algebra
             // `sqrt(a + a sin(x))` for a positive `a` only. Before the substitution search, which
             // spends the budget on the roots.
             if ((answer = IndefiniteIntegralSolver.SolveByTakingAConstantOutOfAFractionalPower(expr, x, integrateByParts)) is { }) return answer;
+            // Two roots of linears with one slope, rationalised together by their sum: before the
+            // substitution search, which reads each root on its own.
+            if ((answer = IndefiniteIntegralSolver.SolveBySubstitutingTheSumOfTwoRootsOfLinears(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             // A logarithmic derivative the substitution above could not read for a symbol in
             // an exponent: `(x^(n-1) - 1)/(x^n - n x)`.

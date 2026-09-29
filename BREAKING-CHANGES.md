@@ -153,6 +153,24 @@ answer on the far side of a root gets a real expression where it used to get a c
 | `1/(x*(-4+x^2)^4)` | 8,472 ms | 1,878 ms |
 | `1/((1+x)^3*(2+x)^3)` | 1,343 ms | 492 ms |
 
+### Two square roots of linears with one slope are rationalised together
+
+`sqrt(L1)` and `sqrt(L2)` with `L1 - L2` a constant are rational in their sum
+`v = sqrt(L1) + sqrt(L2)`: the difference is `(L1 - L2)/v`, and `x` is rational in `v`. An inverse
+function of the difference was declined where it is elementary: Charlwood's
+`arcsin(sqrt(1 + x) - sqrt(x))`, after five seconds, and Rubi's 5.3.7 has the arctangent's powers
+of x beside it. Under `v` each is an inverse function of `1/v` beside a rational function of `v`,
+which parts closes, and written back through `1/v = (sqrt(L1) - sqrt(L2))/(L1 - L2)` the answer
+holds the difference as the integrand does. Only where the sum or the difference stands inside an
+inverse trigonometric function or a logarithm: a rational function of the two roots is the radical
+rules' already
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"asin(sqrt(1 + x) - sqrt(x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `arcsin(sqrt(1 + x) - sqrt(x))` |
+| `"x^3*atan(-sqrt(x)+sqrt(1+x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in the arctangent |
+
 ### The hyperbolic functions have antiderivatives, and so does anything rational in `e^(k x)`
 
 An integrand rational in `e^(k x)` becomes a rational function of one variable under
