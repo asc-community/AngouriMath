@@ -148,6 +148,14 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        public partial record Alephf
+        {
+            /// <inheritdoc/>
+            private protected override string StringizeNode() => $"aleph({Index.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Erfcf
         {
             /// <inheritdoc/>

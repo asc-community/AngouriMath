@@ -302,6 +302,13 @@ namespace AngouriMath
                 null;
         }
 
+        partial record Alephf
+        {
+            // A size is no number an equation between numbers could be solved for.
+            private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x) =>
+                null;
+        }
+
         partial record Derivativef
         {
             private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x) =>

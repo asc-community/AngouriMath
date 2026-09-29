@@ -6,6 +6,7 @@
 //
 
 using System;
+using System.Linq;
 using AngouriMath.Extensions;
 using Xunit;
 
@@ -78,6 +79,27 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x^2*artanh(2*x)")]
         [InlineData("artanh(2*x)/(1 - 4*x^2)^(3/2)")]
         public void TheTangent(string integrand) => DifferentiatesBack(integrand, InsideTheHalf);
+
+        /// <summary>
+        /// The tangent's, where the integrand is real inside <c>(-1/2, 1/2)</c> only: the answer
+        /// holds there and not past it, where the integrand is not real either, and is given
+        /// with the condition that says where it holds. Rubi's 7.3.4.
+        /// </summary>
+        [Theory]
+        [InlineData("1/((1 - 4*x^2)^(5/2)*artanh(2*x))")]
+        [InlineData("1/((1 - 4*x^2)^(3/2)*artanh(2*x))")]
+        [InlineData("x/((1 - 4*x^2)^(3/2)*artanh(2*x)^2)")]
+        [InlineData("x*artanh(2*x)^3/(1 - 4*x^2)^(3/2)")]
+        public void TheTangentOnItsDomain(string integrand)
+        {
+            DifferentiatesBack(integrand, InsideTheHalf);
+            Assert.True(SaysItHoldsInsideTheHalfOnly(integrand.ToEntity().Integrate("x")));
+        }
+
+        private static bool SaysItHoldsInsideTheHalfOnly(Entity integral)
+            => integral.Nodes.OfType<Entity.Providedf>().Any(provided =>
+                provided.Predicate.Substitute("x", 0.3).Evaled == Entity.Boolean.True
+                && provided.Predicate.Substitute("x", 0.7).Evaled == Entity.Boolean.False);
 
         /// <summary>
         /// A power of a constant multiple of the radicand the inverse cosine holds, written over

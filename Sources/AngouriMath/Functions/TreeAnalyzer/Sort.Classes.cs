@@ -244,6 +244,12 @@ namespace AngouriMath
                 => Choice(level, "iverson_", "iverson_", "iverson_");
         }
 
+        public partial record Alephf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "aleph_", "aleph_", "aleph_");
+        }
+
         public partial record Erfcf
         {
             private protected override string SortHashName(SortLevel level)

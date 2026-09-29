@@ -176,6 +176,13 @@ namespace AngouriMath
                 => $@"[\![{Argument.Latexize()}]\!]";
         }
 
+        partial record Alephf
+        {
+            /// <inheritdoc/>
+            private protected override string LatexizeNode()
+                => $@"\aleph_{{{Index.Latexize()}}}";
+        }
+
         partial record Erfcf
         {
             /// <inheritdoc/>

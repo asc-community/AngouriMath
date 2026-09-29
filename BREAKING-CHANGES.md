@@ -611,6 +611,22 @@ it, as they decide a divisibility. `forall n in ZZ : floor(n/2) + ceil(n/2) = n`
 | `forall n in ZZ : floor(n/2) + ceil(n/2) = n` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
 | `exists n in ZZ : floor(n/2) + ceil(n/2) = n + 1` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
 
+### A sum of whole multiples is decided: `exists a, b in ZZ* : n = p a + q b`
+
+What an equation `n = p a + q b` leaves of `b` is a divisibility and a sign: `(n - p a)/q in ZZ*` is
+`q divides n - p a and n - p a >= 0`, for a whole `n - p a`. A statement that repeats in `a` and only
+gets harder as `a` grows has its least witness below the period, so `exists a in ZZ*` of it is one of
+the first period's members; and a statement whose comparisons settle past a threshold, with the rest
+repeating, is decided by the members up to one period past it. So Sullivan and Mackey's coins and
+special lands are decided (Prob 2.7.8, Prob 5.7.4, §5.5.3 Try 3): every `n` from `14` is `3 a + 8 b`
+and `13` is not, every `n` from `24` is `4 a + 9 b` and `23` is not
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `exists a in ZZ* : exists b in ZZ* : 13 = 3 a + 8 b` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
+| `forall n in ZZ : n >= 14 implies (exists a in ZZ* : exists b in ZZ* : n = 3 a + 8 b)` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+
 ### An antiderivative built through an even root says where the root is real
 
 The linear-radical substitution, `u = (a x + b)^(1/q)`, and the general substitution for an even
@@ -644,6 +660,24 @@ Rubi's 4.5.3.1:640 was wrong on that region
 | Input | Was (2.5.0) | Now |
 |---|---|---|
 | `"(1+sec(x))^(5/2)*sqrt(cos(x))".Integrate("x")` | `integral((1 + sec(x)) ^ (5/2) * sqrt(cos(x)), x)` — left unevaluated | an antiderivative with `sgn(sin(x))` in it, `provided cos(x) >= 0` |
+
+### The inverse hyperbolic tangent's answer is given on its domain, and says so
+
+`1/((1 - a^2 x^2)^(5/2) artanh(a x))` was left unevaluated, although the substitution `a x = tanh(u)`
+answers it: `(Chi(3 u) + 3 Chi(u))/(4 a)` for `u = artanh(a x)`. The answer was checked past
+`|a x| < 1` as well, where `sqrt(1 - a^2 x^2)` is not `sech(u)`, and declined for failing there.
+Past `a x = 1` the integrand is not real either, so the answer is now given on the domain and
+carries `provided 1 - (a x)^2 > 0`, as an answer through an even root says where the root is real.
+Where the integrand is real past `a x = 1` too, through two imaginary factors cancelling, the
+answer is still declined, and a route that answers everywhere can. Rubi's 7.3.4
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((1-a^2*x^2)^(5/2)*atanh(a*x))".ToEntity().Integrate("x")` | `integral(...)` | `(Chi(3 u) + 3 Chi(u))/(4 a) provided 1 - (a x)^2 > 0`, for `u = artanh(a x)` |
+| `"1/((1-a^2*x^2)^(3/2)*atanh(a*x))".ToEntity().Integrate("x")` | `integral(...)` | `Chi(u)/a provided 1 - (a x)^2 > 0` |
+| `"x/((1-a^2*x^2)^(3/2)*atanh(a*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `Chi`, `provided 1 - (a x)^2 > 0` |
+| `"x*atanh(a*x)^3/(1-a^2*x^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative, `provided 1 - (a x)^2 > 0` |
 
 ### A zero imaginary part is on the real axis, whatever its sign
 
@@ -703,6 +737,23 @@ met piece by piece now ([#1409](https://github.com/asc-community/AngouriMath/iss
 |---|---|---|
 | `{ x in RR : x^2 - 3 x + 2 >= 0 } = { y in RR : y <= 1 or y >= 2 }` | left as written | `True` |
 | `"({ 2 } \/ (-oo; 1] \/ (2; +oo)) /\ (1; 2)".ToEntity().Evaled` | left as written | `{ }` |
+
+### The size of an infinite set is an aleph, and sizes compare
+
+`card` of an infinite set is an aleph, `aleph(k)`, or a power of 2 of one: `card(ZZ)`, `card(QQ)`
+and `card(PP)` are `aleph(0)`, and `card(RR)` is `2^aleph(0)`, an aleph but not a named one, since
+which one it is is the continuum hypothesis, which ZFC does not decide: `2^aleph(0) = aleph(1)`
+stays as written. `card(powerset(S))` is `2^card(S)`. A sum or a product of sizes, one of them
+infinite, is the larger, and a difference or a quotient of sizes has no value and is `NaN`, as
+`log(0)` is. Sizes compare by what ZFC proves, and a set is smaller than its power set whatever it
+is ([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's §7.6).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"card(ZZ)".ToEntity().Simplify()` | `#ZZ` | `aleph(0)` |
+| `"card(ZZ) = card(QQ)".ToEntity().Simplify()` | `#ZZ = #QQ` | `True` |
+| `"card(ZZ) < card(RR)".ToEntity().Simplify()` | `#ZZ < #RR` | `True` |
+| `"aleph(0) + 1".ToEntity().Simplify()` | `1` — `aleph(0)` was read as `aleph * 0` | `aleph(0)` |
 
 ### An integer range is listed, and a family of sets has a union and an intersection
 
@@ -767,6 +818,23 @@ emptiness as a proof: `forall x in RR : x^2 in ZZ` was `True`
 | `"x^2 in {1, 4}".Solve("x")` | `{}` — wrong | `{ 1, -1, 2, -2 }` |
 | `"x^2 in ZZ".Solve("x")` | `{}` — wrong | `{ x : x ^ 2 in ZZ }`, left as written |
 | `forall x in RR : x^2 in ZZ` | `UnhandledParseException` (quantifiers are new since) | `False` |
+### An equation between moduli is left unsolved over the complex numbers, and solved by cases over the reals
+
+An expression real for every complex `x`, with `x` only ever inside a modulus, is one real condition
+on the two real unknowns `x` is made of, so what solves it is a curve: `abs(x - 2) = abs(x - 3)` holds
+on the whole line `Re x = 5/2`. **Wrong answer fixed**: Newton's method found points of such a curve
+and answered them as the solution set, and `abs(x - 1) + abs(x - 2) = 5` missed its real root `4`
+for points of an ellipse. It is now left as the set of the `x` satisfying it. With the codomain set
+to `RR`, an equation in moduli of linear functions is solved by cases between the kinks, where each
+modulus has one sign: `abs(x - 2) = abs(x - 3)` is `{ 5/2 }` (Sullivan and Mackey's Prob 1.5.16), and
+`abs(x - 1) + abs(x - 2) = 1` is `[1; 2]` ([#1573](https://github.com/asc-community/AngouriMath/issues/1573)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"abs(x - 2) = abs(x - 3)".ToEntity().Solve("x")` | `{ 2.4999… - 53.004…i, 2.4999… + 53.004…i, … }` | `{ x : abs(x - 2) = abs(x - 3) }` |
+| the same, with `MathS.Settings.Codomain` set to `RR` | `{ 2.4999… - 53.004…i, 2.4999… + 53.004…i, … }` | `{ 5/2 }` |
+| `"abs(x - 1) + abs(x - 2) = 5".ToEntity().Solve("x")`, codomain `RR` | `{ -1, 3.9997… - 0.0345…i, 3.9997… + 0.0345…i, … }` | `{ -1, 4 }` |
+
 ### `...` is the pattern operator
 
 `{1, 2, ..., n}`, `{2, 4, ..., 2 n}`, `{5, 10, 15, ...}`, `{..., -1, 0}`, `1 + 2 + ... + n` and
@@ -885,6 +953,39 @@ onto `B`, Sullivan and Mackey's Def 7.4.1, [#1409](https://github.com/asc-commun
 | `(-oo)^2` | `NaN` — wrong | `+oo` |
 | `forall b in RR : exists a in RR : a^3 = b` | `UnhandledParseException` (quantifiers are new since; left as written when they arrived) | `True` |
 | `forall b in RR : exists a in RR : e^a = b` | `UnhandledParseException` | `False` |
+
+### One-to-one is decided for a quotient of polynomials on an interval
+
+`forall a in S : forall b in S : f(a) = f(b) implies a = b` — `f` one-to-one on `S`, Sullivan and
+Mackey's Def 7.4.1 — is decided for a quotient of polynomials on an interval by the sign of its
+derivative between the zeros inside: strictly monotone is one-to-one, and a turn is not. The cube
+is one-to-one on the reals although its derivative is zero at 0; the square is on `[0; +oo)`. On the
+whole numbers only a yes carries over from the interval around them
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall a in RR : forall b in RR : a^3 = b^3 implies a = b` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+| `forall a in [0; +oo) : forall b in [0; +oo) : a^2 = b^2 implies a = b` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+| `forall a in RR : forall b in RR : a^3 - 3 a = b^3 - 3 b implies a = b` | `UnhandledParseException` | `False` |
+
+### A family of intervals with monotone ends is the interval between their extremes
+
+`union(A_n, n in I)` and `intersection(A_n, n in I)` of intervals whose ends are quotients of
+polynomials in the index, monotone over its range, are the interval between the extremes of the
+ends: an intersection always, a union where the family is a chain or the index runs over an
+interval. An end is closed where the family's ends are and the extreme is reached, or, in an
+intersection, where it is only approached. Sullivan and Mackey's §3.9.5 Try 8–10: the intersection
+of `(-1/n; 1/n)` over `ZZ+` is `{ 0 }`, the union of `(x; x + 1)` over `(0; 1)` is `(0; 2)`, and
+the union of `[0; (n - 1)/n)` is `[0; 1)`, which is the intersection of `(-1/n; 1)`
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `intersection((-1/n; 1/n), n in ZZ+)` | `UnhandledParseException` (left as written when families arrived) | `{ 0 }` |
+| `union((x; x + 1), x in (0; 1))` | `UnhandledParseException` (left as written when families arrived) | `(0; 2)` |
+| `union([0; (n - 1)/n), n in ZZ+) = intersection((-1/n; 1), n in ZZ+)` | `UnhandledParseException` | `True` |
+
 ### The binomial coefficient's identities, and its sums in closed form
 
 Pascal's rule, the chairperson identity and the symmetry are rewrite rules, each in the direction
@@ -913,11 +1014,18 @@ where `P` is not decided, so a count is a sum of brackets: `sum(iverson(k divide
 ([#1478](https://github.com/asc-community/AngouriMath/issues/1478)). In 2.5.0 the name was read as a
 variable multiplying its argument, and a product with a truth value is `NaN`.
 
+A sum of a bracket is counted in closed form, however long the range, where the statement bounds the
+index, fixes it at a point, fixes its residue or makes it a perfect power, with `not` and `or` counted by inclusion and
+exclusion: the number of whole numbers from `L` to `U` in the class `r` modulo `m` is
+`floor((U - r)/m) - floor((L - 1 - r)/m)`, and never below zero.
+
 | Input | Was (2.5.0) | Now |
 |---|---|---|
 | `"iverson(2 > 1)".ToEntity().Simplify()` | `NaN` — `iverson * (2 > 1)` | `1` |
 | `"iverson(x > 0)".ToEntity().Simplify()` | `iverson * (x > 0)` | `iverson(x > 0)` |
 | `"sum(sum(sum(iverson(r + b + g = 4), g, 0, 3), b, 0, 3), r, 0, 3)".ToEntity().Simplify()` | `NaN` | `12` |
+| `"sum(iverson(2 divides k or 3 divides k), k, 1, 1000)".ToEntity().Simplify()` | `sum(iverson * (2 divides k or 3 divides k), k, 1, 1000)` | `667` |
+| `"sum(sum(sum(iverson(a + b + c = 20), c, 0, 20), b, 0, 20), a, 0, 20)".ToEntity().Simplify()` | did not finish in two minutes | `231` |
 
 ### A statement about a sum up to `n` is decided by induction
 
@@ -991,6 +1099,23 @@ below are one indeterminate. Rubi's 7.5.1 and 7.6.1
 | `"x * acsch(c * x)".ToEntity().Integrate("x")` | `integral(x * ln(1 / (c * x) + sqrt(1 / (c * x) ^ 2 + 1)), x)` | an antiderivative, `provided c^2 > 0` |
 | `"x^2 * asech(c * x)".ToEntity().Integrate("x")` | `integral(...)`, the same | an antiderivative |
 | `"x / sqrt(1 + 1/(c*x)^2)".ToEntity().Integrate("x")` | `integral(x / sqrt(1 + 1 / (c * x) ^ 2), x)` | an antiderivative, `provided c^2 > 0` |
+
+### `arsech` and `arcsch` below the bar are integrated
+
+`1/(x^2 (a + b arcsch(c x)))` and `1/(x^4 (a + b arsech(c x)))` were left unevaluated. The
+substitution that undoes an inverse hyperbolic function read `arsinh`, `arcosh` and `artanh` off
+their logarithms and not these two, which are the `arsinh` and the `arcosh` of `1/L`. Under
+`L = csch(u)` or `L = sech(u)` a power of `x` below the bar is a polynomial in `cosh(u)` and
+`sinh(u)` over a power of `a + b u`, which the hyperbolic sine and cosine integrals and `Ei`
+answer. Rubi's 7.5.1, 7.5.2 and 7.6.1
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x^2*(a+b*acsch(c*x)))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `Ei` |
+| `"1/(x^4*(a+b*asech(c*x)))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `Chi` and `Shi` |
+| `"1/(e^asech(a*x)*x^5)".ToEntity().Integrate("x")` | `integral(...)` | a polynomial in `1/(a x) - sqrt(1/(a x)^2 - 1)` and its reciprocal |
+
 ### `n in ZZ and 2^n > n^2` is solved to a set, and was a refusal
 
 An inequality with an exponential or a factorial over the whole numbers is solved to the members
@@ -1072,6 +1197,19 @@ that is not a bound by trying the members in order from the least, so Sullivan a
 | `"min(x, x in ZZ+ and x^2 > 50)".ToEntity().Evaled` | `UnhandledParseException` — `ZZ+` is new since | `8` |
 | `"prime(25)".ToEntity().Evaled` | `prime * 25` — juxtaposition of a variable `prime` | `97`; `prime(n)` is the `n`-th prime, `NaN` off the positive whole numbers |
 | `"valuation(12, 2)".ToEntity().Evaled` | `UnrecognizedFunctionParseException` | `2`; `valuation(n, p)` is the `p`-adic valuation, `+oo` at `0` and `NaN` off the primes |
+
+### Over the primes, a repeating statement is decided by the modulus's prime factors and units
+
+A statement that repeats modulo `M`, asked of the primes past some bound, is its value at each prime
+factor of `M` past the bound and at each unit modulo `M`: every prime past those factors is a unit,
+and every unit is the residue of infinitely many primes, by Dirichlet's theorem. So
+`forall p in PP : p > 3 implies 24 divides p^2 - 1` is `True` while the same from `p > 2` is `False`
+at `3`, Sullivan and Mackey's Prob 6.7.5 and its erratum, and `exists p in PP : p > 10 and
+p = 3 (mod 4)` is `True` ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall p in PP : p > 3 implies 24 divides p^2 - 1` | `UnhandledParseException` (left as written when `PP` arrived) | `True` |
 
 ### `atanh(tanh(a + b x))` under an integral is linear in `x`, and was an atom no rule read
 
