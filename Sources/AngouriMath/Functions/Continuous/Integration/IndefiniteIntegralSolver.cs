@@ -18798,7 +18798,13 @@ namespace AngouriMath.Functions.Algebra
             static bool IsOneOfTheFour(Entity node, Entity argument)
                 => node is Secantf(var a) && a == argument || node is Cosecantf(var b) && b == argument
                    || node is Tanf(var c) && c == argument || node is Cotanf(var d) && d == argument;
-            if (expr.Nodes.Any(node => node is Sumf or Minusf && node.DirectChildren.Any(term => term.Nodes.Any(inner => IsOneOfTheFour(inner, argument))))
+            // And where a sum holds the sine or the cosine to the first power instead:
+            // `sec(x)^2/(a + b sin(x))` is no product of powers, and with the secant left standing
+            // it was declined at once. Not a power of them: `csc(x)/(a + b sin(x)^2)^2` is even in
+            // the sine, a quartic squared in the half-angle tangent, and written in it ran past a
+            // minute where with the cosecant standing it is declined in 44 ms.
+            if (expr.Nodes.Any(node => node is Sumf or Minusf && node.DirectChildren.Any(term => term.Nodes.Any(inner => IsOneOfTheFour(inner, argument))
+                        || Mulf.LinearChildren(term).Any(factor => factor is Sinf(var s) && s == argument || factor is Cosf(var c) && c == argument)))
                 && expr.Nodes.All(node => !node.ContainsNode(x)
                     || node is Variable or Sumf or Minusf or Mulf or Divf or Sinf or Cosf or Secantf or Cosecantf or Tanf or Cotanf
                     || node is Powf(_, Number.Integer)))
@@ -18864,13 +18870,22 @@ namespace AngouriMath.Functions.Algebra
             // The remainder comes back over the divisor, `0/(1 + t^2)` when there is none.
             static bool NoRemainder(Entity rest)
                 => rest is Divf(var top, _) ? NoRemainder(top) : rest.Evaled is Number.Complex { IsZero: true };
+            // Below the bar a power of 1 + t^2 that stands as a factor loses one power, rather
+            // than the whole product being divided and multiplied out: `sin(x)^2/(a + b cos(x))`
+            // is `8 t^2 (1 + t^2)/((1 + t^2)^3 (a (1 + t^2) + b (1 - t^2)))`, and divided as a whole
+            // its denominator was a sextic with a symbol in every coefficient, which nothing splits.
+            // Not with the imaginary unit below the bar: `sec(x)^3/(a + i a tan(x))^8` has
+            // `(1 + i t)^16` there, and kept whole the partial fractions ground on it past a
+            // minute, where multiplied out, as before, it is answered in 5 s.
+            var keepFactored = !HoldsTheImaginaryUnit(denominator);
             while (TreeAnalyzer.PolynomialLongDivision(numerator, 1 + tSquared, inTermsOf: t) is var (aboveQuotient, aboveRest)
                    && NoRemainder(aboveRest)
-                   && TreeAnalyzer.PolynomialLongDivision(denominator, 1 + tSquared, inTermsOf: t) is var (belowQuotient, belowRest)
-                   && NoRemainder(belowRest))
+                   && ((keepFactored ? WithOneFactorOfOnePlusTSquaredFewer(denominator, t) : null)
+                       ?? (TreeAnalyzer.PolynomialLongDivision(denominator, 1 + tSquared, inTermsOf: t) is var (belowQuotient, belowRest)
+                           && NoRemainder(belowRest) ? belowQuotient : null)) is { } reduced)
             {
                 numerator = aboveQuotient.InnerSimplified;
-                denominator = belowQuotient.InnerSimplified;
+                denominator = reduced.InnerSimplified;
                 divided = true;
             }
             if (divided)
@@ -18879,6 +18894,27 @@ namespace AngouriMath.Functions.Algebra
             return Integration.ComputeIndefiniteIntegral(integrand, t, integrateByParts) is { } result
                 ? result.Substitute(t, MathS.Tan(argument / 2))
                 : null;
+        }
+
+        /// <summary>
+        /// <paramref name="denominator"/> with one power fewer of a factor that is
+        /// <c>1 + t^2</c>, the rest of the product as written; null where no factor is.
+        /// </summary>
+        private static Entity? WithOneFactorOfOnePlusTSquaredFewer(Entity denominator, Entity.Variable t)
+        {
+            var factors = Mulf.LinearChildren(denominator).ToList();
+            for (var i = 0; i < factors.Count; i++)
+            {
+                var (@base, power) = factors[i] is Powf(var raised, Number.Integer { EInteger.Sign: > 0 } whole) && whole.EInteger.CanFitInInt32()
+                    ? (raised, whole.EInteger.ToInt32Unchecked()) : (factors[i], 1);
+                if (!@base.ContainsNode(t) || !TreeAnalyzer.TryGetPolyQuadratic(@base, t, out var a, out var b, out var c)
+                    || a.Evaled is not Number.Complex { IsZero: false } leading || leading != Number.Integer.One
+                    || b.Evaled is not Number.Complex { IsZero: true } || c.Evaled is not Number.Complex { IsZero: false } constant || constant != Number.Integer.One)
+                    continue;
+                factors[i] = power == 1 ? Number.Integer.One : power == 2 ? @base : MathS.Pow(@base, Number.Integer.Create(power - 1));
+                return factors.Aggregate((Entity)Number.Integer.One, (product, factor) => product * factor);
+            }
+            return null;
         }
 
         /// <summary>
