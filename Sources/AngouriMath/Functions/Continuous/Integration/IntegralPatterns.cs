@@ -779,10 +779,10 @@ namespace AngouriMath.Functions.Algebra
         /// NaN, the complex numbers not being ordered, and a piecewise with no arm that holds is
         /// NaN with them: <c>1/(x^2 + i)</c> and <c>1/sqrt(i x^2 + 1)</c> answered <c>NaN + C</c>,
         /// and <c>1/sqrt(i a x^2 + 1)</c> a piecewise that is NaN for every real <c>a</c> but zero.
-        /// Nor is a real sign any help where the rest of the quadratic is not real: the arcsine
-        /// differentiates back to <c>1/sqrt(Q)</c> only where <c>sqrt(D) sqrt(Q/D)</c> is
-        /// <c>sqrt(Q)</c>, and <c>1/sqrt(-x^2 + (1 + i) x + 1)</c> came back as minus its
-        /// integrand below -2. The arctangent and the logarithm use nothing about their root but
+        /// Nor is a real sign any help where the rest of the quadratic is not real: with
+        /// <c>E = b^2 - 4ac</c> the arcsine differentiates back to <c>1/sqrt(Q)</c> only where
+        /// <c>sqrt(E) sqrt(Q/E)</c> is <c>sqrt(Q)</c>, and <c>1/sqrt(-x^2 + (1 + i) x + 1)</c>
+        /// came back as minus its integrand below -2. The arctangent and the logarithm use nothing about their root but
         /// <c>sqrt(q)^2 = q</c>, and are antiderivatives off the real line as well.
         /// https://github.com/asc-community/AngouriMath/issues/1598
         /// </remarks>
