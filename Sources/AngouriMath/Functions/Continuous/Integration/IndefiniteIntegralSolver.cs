@@ -15531,8 +15531,9 @@ namespace AngouriMath.Functions.Algebra
         /// standing property of the half-angle.
         /// </para>
         /// <para>
-        /// Exact wherever the two roots differ and neither is <c>±1</c>, the generic case; a
-        /// discriminant that is zero as written declines.
+        /// Exact wherever the two roots differ, the generic case, with a root at <c>±1</c>
+        /// taken as the square it makes under the half-angle; a discriminant that is zero as
+        /// written declines.
         /// </para>
         /// https://github.com/asc-community/AngouriMath/issues/718
         /// </remarks>
@@ -15726,15 +15727,25 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// <c>int dx/(sin(k x + m) - r)</c>, or the same of the cosine, for any complex
-        /// <paramref name="root"/> but <c>±1</c>: <c>-2 atan((r t - 1)/sqrt(r^2 - 1))/(k sqrt(r^2 - 1))</c>
+        /// <paramref name="root"/>: <c>-2 atan((r t - 1)/sqrt(r^2 - 1))/(k sqrt(r^2 - 1))</c>
         /// with <c>t = tan((k x + m)/2)</c>, and <c>-2 atan(t/σ)/(k (1 + r) σ)</c> with
         /// <c>σ = sqrt((r - 1)/(r + 1))</c>. Each differentiates back to the integrand for
-        /// every value of the root, the arctangent of an imaginary argument being the
-        /// hyperbolic one with a constant imaginary part a derivative does not see.
+        /// every value of the root but <c>±1</c>, the arctangent of an imaginary argument being
+        /// the hyperbolic one with a constant imaginary part a derivative does not see; at
+        /// <c>±1</c> the integral is rational in <c>t</c>.
         /// </summary>
         private static Entity OverTheFunctionLessARoot(Entity root, bool ofTheSine, Entity argument, Entity rate)
         {
             var t = MathS.Tan(argument / 2);
+            // A root that is 1 or -1 -- `a - a sin(x)^2` has both, for every a -- leaves the
+            // arctangent's spread zero, and the answer NaN wherever it was evaluated. There the
+            // quadratic under the half-angle is a square, and the integral rational in t:
+            // 2/(r t - 1) for the sine, and 1/t or t for the cosine at 1 and at -1.
+            // https://github.com/asc-community/AngouriMath/issues/1588
+            if (VanishesIdentically(root * root - 1))
+                return ofTheSine
+                    ? 2 / (rate * (root * t - 1))
+                    : ((1 + root) / (2 * t) + (1 - root) * t / 2) / rate;
             if (ofTheSine)
             {
                 var spread = MathS.Sqrt(root * root - 1);
