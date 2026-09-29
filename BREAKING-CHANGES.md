@@ -704,6 +704,19 @@ and `13` is not, every `n` from `24` is `4 a + 9 b` and `23` is not
 | `exists a in ZZ* : exists b in ZZ* : 13 = 3 a + 8 b` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
 | `forall n in ZZ : n >= 14 implies (exists a in ZZ* : exists b in ZZ* : n = 3 a + 8 b)` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
 
+### The modulus of a whole number is a whole number
+
+With the facts in scope making `s` a whole number, `|s| in ZZ` and `|s| in ZZ*` are `True`, and
+`|s| in ZZ+` is `not s = 0`, which the quantifiers then decide. So Sullivan and Mackey's Ex 7.2.6,
+where `f(z) = |2 z + 1|` is a function from `ZZ` to their `N`, is `True`, since `2 z + 1 = 0` has no
+whole root, while `|z|` fails at `0` and `|z^2 - 4|` at `2`
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall z in ZZ : abs(2 z + 1) in ZZ+` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+| `forall z in ZZ : abs(z - 3) in ZZ*` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+
 ### An antiderivative built through an even root says where the root is real
 
 The linear-radical substitution, `u = (a x + b)^(1/q)`, and the general substitution for an even

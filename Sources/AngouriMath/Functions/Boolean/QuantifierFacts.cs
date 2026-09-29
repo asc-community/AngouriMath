@@ -260,7 +260,8 @@ namespace AngouriMath.Functions.Boolean
         /// <summary>
         /// <c>s in S</c> for a set of whole numbers, as the comparison it is where the facts in scope
         /// make <c>s</c> a whole number: <c>s &gt;= 0</c> in <c>ZZ*</c>, <c>s &gt;= 1</c> in <c>ZZ+</c>, and
-        /// <c>True</c> in <c>ZZ</c>. <see langword="null"/> otherwise. Sullivan and Mackey's Prob
+        /// <c>True</c> in <c>ZZ</c>; and <c>|s|</c> as <c>not s = 0</c> in <c>ZZ+</c> and <c>True</c> in the
+        /// other two. <see langword="null"/> otherwise. Sullivan and Mackey's Prob
         /// 4.11.6 asks for a <c>z</c> in <c>ZZ*</c> with <c>x - y = z</c> or <c>y - x = z</c>, for whole
         /// <c>x</c> and <c>y</c>: the witnesses are <c>x - y</c> and <c>y - x</c>, one of which is
         /// not negative.
@@ -275,6 +276,17 @@ namespace AngouriMath.Functions.Boolean
                     SpecialSet.Integers => Entity.Boolean.True,
                     SpecialSet.NonNegativeIntegers => element >= Integer.Zero,
                     SpecialSet.PositiveIntegers => element >= Integer.One,
+                    _ => null,
+                };
+            // The modulus of a whole quantity is whole and not negative, and positive where the
+            // quantity is not zero: |2 z + 1| is in ZZ+ for every whole z, since 2 z + 1 = 0 has
+            // no whole root. Sullivan and Mackey's Ex 7.2.6, where f(z) = |2 z + 1| is a function
+            // from ZZ to their N. https://github.com/asc-community/AngouriMath/issues/1409
+            if (element is Absf(var quantity) && IsWholePolynomial(quantity))
+                return set switch
+                {
+                    SpecialSet.Integers or SpecialSet.NonNegativeIntegers => Entity.Boolean.True,
+                    SpecialSet.PositiveIntegers => !quantity.Equalizes(Integer.Zero),
                     _ => null,
                 };
             // A whole quantity over a whole number m is whole where m divides it, and then has
