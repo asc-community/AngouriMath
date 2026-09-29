@@ -144,6 +144,14 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall x in ZZ : forall y in ZZ : exists z in ZZ* : x - y = z or y - x = z", "True")]
         [InlineData("forall x in ZZ : forall y in ZZ : exists z in ZZ+ : x - y = z or y - x = z", "False")]
         [InlineData("forall x in RR : forall y in RR : exists z in ZZ* : x - y = z or y - x = z", "False")]
+        // Ex 7.2.6: f(z) = |2 z + 1| is a function from ZZ to Sullivan and Mackey's N, which is
+        // ZZ+, since the modulus of a whole number is one, and 2 z + 1 = 0 has no whole root.
+        // |z| is not, at 0, nor |z^2 - 4|, at 2.
+        [InlineData("forall z in ZZ : abs(2 z + 1) in ZZ+", "True")]
+        [InlineData("forall z in ZZ : abs(z) in ZZ+", "False")]
+        [InlineData("forall z in ZZ : abs(z^2 - 4) in ZZ+", "False")]
+        [InlineData("forall z in ZZ : abs(z - 3) in ZZ*", "True")]
+        [InlineData("forall n in ZZ+ : abs(n) in ZZ+", "True")]
         // Prob 4.11.5: a square is not the greatest square, for y = x^2 + 1 is past every x, and
         // a term in x is a witness for every x at once. Where none of the terms tried works, a
         // single member may still decide it: x = 0 is below every square.
