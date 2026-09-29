@@ -96,14 +96,25 @@ namespace AngouriMath.Tests.Calculus
         public void OverAPowerOfOnePlusTheSquare() => AnswersAndDifferentiatesBack("2*(1-x^2)^5/((1+x^2)^4*(a-a*x^2+2*b*x)^2)");
 
         /// <summary>
+        /// A cubic over the cube of the quadratic, which the table divides a power at a time: with
+        /// a symbol leading, the remainder came back as the unexpanded difference
+        /// <c>4x(1 + x^2) - (4x - 8b/a)(x^2 + 2b/a x + 1)</c>, a cubic to the check that it is
+        /// linear, and under a condition on <c>a</c> once expanded, and the rule declined. It did
+        /// not return within 20 s.
+        /// </summary>
+        [Fact]
+        public void ACubicOverTheCubeOfTheQuadratic() => AnswersAndDifferentiatesBack("4*x*(1+x^2)/(a*x^2+2*b*x+a)^3");
+
+        /// <summary>
         /// The trigonometric integrands these come from, each of which ran out a 20 s budget:
-        /// Rubi's 4.1.1.2 rows 493 and 489, and 4.1.2.2 row 1447.
+        /// Rubi's 4.1.1.2 rows 493 and 489, 4.1.2.2 row 1447 and 4.1.2.1 row 242.
         /// </summary>
         [Theory]
         [InlineData("sec(x)^4/(a+b*sin(x))^2")]
         [InlineData("cos(x)^6/(a+b*sin(x))^2")]
         [InlineData("cos(x)^4*csc(x)/(a+b*sin(x))^2")]
-        public void OverASquaredSine(string integrand) => AnswersAndDifferentiatesBack(integrand);
+        [InlineData("sin(x)/(a+b*sin(x))^3")]
+        public void OverAPowerOfASumWithTheSine(string integrand) => AnswersAndDifferentiatesBack(integrand);
 
         /// <summary>
         /// Neighbours the half-angle tangent answered already, through the same constant taken

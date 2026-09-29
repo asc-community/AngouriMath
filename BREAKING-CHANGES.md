@@ -249,6 +249,9 @@ computed modulo that quadratic, came from the other factors written out as a pol
 back, where `(4 b^2 - 2 a^2)/a^2` expanded to an `a^0` the reader declined: it is reduced from their
 coefficients now, and quadratics alone -- `(1 + t^2)^5` beside a symbolic square, which
 `cos(x)^6/(a + b sin(x))^2` becomes -- are split the same way where a symbolic one is repeated.
+And the table's division of a numerator by a symbolic quadratic, a power at a time, read its
+remainder as the unexpanded difference `N - q Q`, which looks cubic, and under a condition on the
+leading coefficient once expanded, and declined: it is read expanded and bare now.
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -260,6 +263,8 @@ coefficients now, and quadratics alone -- `(1 + t^2)^5` beside a symbolic square
 | `"cos(x)^4*csc(x)/(a+b*sin(x))^2".Integrate("x")`, Rubi's 4.1.2.2 row 1447 | `integral(...)` | the antiderivative |
 | `"2*(1-x^2)^5/((1+x^2)^4*(a-a*x^2+2*b*x)^2)".Integrate("x")` | past a 20 s budget | the antiderivative |
 | `"tan(x)^4/(a+b*csc(x))".Integrate("x")` | `integral(...)` | the antiderivative, 2,719 characters, where the unreleased master answered in 520,864 |
+| `"sin(x)/(a+b*sin(x))^3".Integrate("x")`, Rubi's 4.1.2.1 row 242 | `integral(...)` | the antiderivative |
+| `"4*x*(1+x^2)/(a*x^2+2*b*x+a)^3".Integrate("x")` | `integral(...)` | the antiderivative |
 
 ### A rational function of the sine and cosine with symbols in it is integrated by the half angle
 

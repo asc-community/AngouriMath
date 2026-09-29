@@ -1060,8 +1060,10 @@ namespace AngouriMath.Functions.Algebra
             // Reduced before either is used: the division reports its quotient built up term by
             // term, so x^2 over x^2 + 2 comes back as `0 + 1` rather than `1`, and the arms below
             // ask whether a numerator is constant.
-            var quotient = division.Value.Divided.InnerSimplified;
-            var remainder = (numerator - quotient * quadratic).InnerSimplified;
+            var quotient = Functions.PartialFractions.Bare(division.Value.Divided.InnerSimplified);
+            var remainder = Functions.PartialFractions.Bare((numerator - quotient * quadratic).InnerSimplified);
+            if (remainder.ContainsNode(x) && !TreeAnalyzer.TryGetPolyLinear(remainder, x, out _, out _))
+                remainder = Functions.PartialFractions.Bare((numerator - quotient * quadratic).Expand().InnerSimplified);
             // The remainder of a division by a quadratic is linear or a constant; one that
             // still has the variable to a higher power -- the division declined in its own
             // way, on `csch(29/10 + 13/10 x)^3 (17/10 + 23/10 sech(...)^2)^3` through the
