@@ -1909,7 +1909,7 @@ namespace AngouriMath.Functions
             using var _ = MathS.Settings.DowncastingEnabled.Set(false);
             (left, right) = Pinned(left, right, x);
             var compared = 0;
-            foreach (var at in points ?? new[] { "0.29", "1.43", "3.17", "-0.61" })
+            foreach (var at in points ?? DefaultSamplePoints)
             {
                 var point = Real.Create(EDecimal.FromString(at));
                 Number.Complex l;
@@ -1932,6 +1932,38 @@ namespace AngouriMath.Functions
                 compared++;
             }
             return compared >= 2;
+        }
+
+        [ConstantField]
+        private static readonly string[] DefaultSamplePoints = { "0.29", "1.43", "3.17", "-0.61" };
+
+        /// <summary>
+        /// Whether <paramref name="left"/> differs from <paramref name="right"/> at one of the
+        /// points <see cref="HoldsAtSampledPoints"/> takes by default where
+        /// <paramref name="right"/> is real, with the symbols pinned as it pins them. A point
+        /// where <paramref name="right"/> has no value, or a value off the real line, says
+        /// nothing; one where it is real and <paramref name="left"/> has no value is a
+        /// difference.
+        /// </summary>
+        internal static bool DiffersWhereReal(Entity left, Entity right, Variable x)
+        {
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+            (left, right) = Pinned(left, right, x);
+            var tolerance = EDecimal.FromString("1e-9");
+            foreach (var at in DefaultSamplePoints)
+            {
+                var point = Real.Create(EDecimal.FromString(at));
+                if (right.Substitute(x, point).Evaled is not Complex r || r.IsNaN)
+                    continue;
+                var scale = EDecimal.Max(EDecimal.One, r.Abs().EDecimal);
+                if (r.ImaginaryPart.EDecimal.Abs().CompareTo(scale.Multiply(tolerance)) > 0)
+                    continue;
+                if (left.Substitute(x, point).Evaled is not Complex l || l.IsNaN)
+                    return true;
+                if ((l - r).Abs().EDecimal.CompareTo(scale.Multiply(tolerance)) > 0)
+                    return true;
+            }
+            return false;
         }
     }
 }
