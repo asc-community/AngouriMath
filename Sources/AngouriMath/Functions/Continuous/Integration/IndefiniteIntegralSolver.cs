@@ -15093,6 +15093,16 @@ namespace AngouriMath.Functions.Algebra
                 || !TreeAnalyzer.TryGetPolyLinear(radicands[1], x, out var m2, out var n2)
                 || VanishesIdentically(m1) || !VanishesIdentically(m1 - m2) || VanishesIdentically(n1 - n2))
                 return null;
+            // Only where the sum or the difference of the two roots stands inside an inverse
+            // trigonometric function or a logarithm, which nothing else reads. A rational function
+            // of the roots is the radical rules' already: asked here first,
+            // `x^2/(sqrt(a + b x) + sqrt(c + b x))` ran out its budget where the conjugate answers it
+            // in 37 ms, and so did `sqrt(x - 1) sqrt(x + 1)/(1 + x - x^2)`, which the quotient of the
+            // two roots answers in 244 ms, and Timofeev's `arccos(sqrt(x/(1 + x)))`, a quotient of
+            // the two roots under the function.
+            if (!expr.Nodes.Any(node => node is Arcsinf or Arccosf or Arctanf or Arccotanf or Arcsecantf or Arccosecantf or Logf
+                    && node.Nodes.Any(inner => SignOfTheTwoRoots(inner, radicands) != (0, 0))))
+                return null;
             var k = (n1 - n2).InnerSimplified;
             var v = Variable.CreateUnique(expr, "v_roots");
             var roots = new[] { (v + k / v) / 2, (v - k / v) / 2 };

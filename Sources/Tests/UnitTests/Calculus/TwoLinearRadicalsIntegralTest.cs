@@ -122,11 +122,24 @@ namespace AngouriMath.Tests.Calculus
         public void AnInverseFunctionOfTheDifferenceOfTwoRootsOfOneSlope(string integrand)
             => DifferentiatesBack(integrand, 0.3, 0.7, 1.1, 1.4);
 
-        /// <summary>A power of the sum below the bar, a rational function of v.</summary>
+        /// <summary>
+        /// Two such roots where they stand in no inverse function or logarithm are the radical
+        /// rules', and stay theirs: taken under v first, each of these ran out the
+        /// corpus's budget, where they are answered in under 40 ms. Rubi's 1.3.2, and Timofeev's
+        /// 127, a quotient of the two roots under the arccosine.
+        /// </summary>
         [Theory]
-        [InlineData("x/(sqrt(a + b*x) + sqrt(c + b*x))^3")]
-        [InlineData("1/(sqrt(a + b*x) + sqrt(c + b*x))^2")]
-        public void APowerOfTheSumOfTwoRootsOfOneSlope(string integrand)
+        [InlineData("x^2/(sqrt(a + b*x) + sqrt(c + b*x))")]
+        [InlineData("acos(sqrt(x/(1 + x)))")]
+        public void WhatTheOtherRulesAnswerStaysTheirs(string integrand)
             => DifferentiatesBackPinned(integrand, new[] { 0.3, 0.7, 1.1, 1.4 }, ("a", 2), ("b", 1.5), ("c", 0.7));
+
+        /// <summary>
+        /// And a product of the two roots, Rubi's 1.2.1.4: answered through their quotient in a
+        /// quarter of a second, and past the corpus's budget when taken under v first.
+        /// </summary>
+        [Fact]
+        public void AProductOfTwoRootsOfOneSlopeStaysTheirs()
+            => DifferentiatesBack("sqrt(-1 + x)*sqrt(1 + x)/(1 + x - x^2)", 1.3, 1.7, 2.4, 3.1);
     }
 }
