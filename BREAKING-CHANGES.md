@@ -913,11 +913,18 @@ where `P` is not decided, so a count is a sum of brackets: `sum(iverson(k divide
 ([#1478](https://github.com/asc-community/AngouriMath/issues/1478)). In 2.5.0 the name was read as a
 variable multiplying its argument, and a product with a truth value is `NaN`.
 
+A sum of a bracket is counted in closed form, however long the range, where the statement bounds the
+index, fixes it at a point, fixes its residue or makes it a perfect power, with `not` and `or` counted by inclusion and
+exclusion: the number of whole numbers from `L` to `U` in the class `r` modulo `m` is
+`floor((U - r)/m) - floor((L - 1 - r)/m)`, and never below zero.
+
 | Input | Was (2.5.0) | Now |
 |---|---|---|
 | `"iverson(2 > 1)".ToEntity().Simplify()` | `NaN` — `iverson * (2 > 1)` | `1` |
 | `"iverson(x > 0)".ToEntity().Simplify()` | `iverson * (x > 0)` | `iverson(x > 0)` |
 | `"sum(sum(sum(iverson(r + b + g = 4), g, 0, 3), b, 0, 3), r, 0, 3)".ToEntity().Simplify()` | `NaN` | `12` |
+| `"sum(iverson(2 divides k or 3 divides k), k, 1, 1000)".ToEntity().Simplify()` | `sum(iverson * (2 divides k or 3 divides k), k, 1, 1000)` | `667` |
+| `"sum(sum(sum(iverson(a + b + c = 20), c, 0, 20), b, 0, 20), a, 0, 20)".ToEntity().Simplify()` | did not finish in two minutes | `231` |
 
 ### A statement about a sum up to `n` is decided by induction
 
