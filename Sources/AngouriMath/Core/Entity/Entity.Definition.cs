@@ -518,9 +518,11 @@ namespace AngouriMath
         /// </remarks>
         public int Complexity => complexity.GetValue(static @this =>
         {
+            // By index: a foreach over the interface allocates an enumerator for every node counted.
+            var children = @this.DirectChildren;
             long total = 1;
-            foreach (var child in @this.DirectChildren)
-                if ((total += child.Complexity) >= int.MaxValue)
+            for (var i = 0; i < children.Count; i++)
+                if ((total += children[i].Complexity) >= int.MaxValue)
                     return int.MaxValue;
             return (int)total;
         }, this);
