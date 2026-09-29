@@ -627,7 +627,8 @@ for every whole `x` and one for every other real `x`, such as
 holds for every member of any set, and one that comes out `False` for none, where it was left as
 written when the set's members could not be read. The nodes are taken componentwise on the
 complex plane, so the last rule asks for a real argument: at `x = i/2` the ceiling is `i` and the
-floor `0`. Outside a quantifier nothing is assumed, and `floor(x + 1)` is left as it was.
+floor `0`. Outside a quantifier nothing is assumed, and `floor(x + 1)` is left as it was. The cases
+may be written as a disjunction, `P or not x in ZZ`, which is read as `x in ZZ implies P`.
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
@@ -636,6 +637,7 @@ floor `0`. Outside a quantifier nothing is assumed, and `floor(x + 1)` is left a
 | `forall x in RR \ ZZ : floor(x) + floor(1 - x) = 0` | `UnhandledParseException` | `True` |
 | `forall x in { x in RR : sin(x) > 0 } : True` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
 | `exists x in A \/ B : False` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
+| `forall x in RR : floor(x) + ceil(x) = 2 x or not x in ZZ` | `UnhandledParseException` | `True` |
 
 ### A matrix compiles
 

@@ -26,9 +26,10 @@ namespace AngouriMath.Functions.Boolean
     /// <para>
     /// A node has no parent, so a rule inside a body cannot walk up to the quantifier that binds
     /// its names. The quantifier hands the facts down instead, for as long as it takes to decide:
-    /// the set its name ranges over, and for <c>forall x in S : H implies C</c> the conjuncts of
-    /// <c>H</c> while <c>C</c> is simplified. They are never in scope while <c>H</c> itself is
-    /// simplified, or <c>H implies C</c> would lose its hypothesis. For <c>exists</c> and
+    /// the set its name ranges over, and for <c>forall x in S : H implies C</c> -- or
+    /// <c>C or not H</c>, which says the same -- the conjuncts of <c>H</c> while <c>C</c> is
+    /// simplified. They are never in scope while <c>H</c> itself is simplified, or
+    /// <c>H implies C</c> would lose its hypothesis. For <c>exists</c> and
     /// <c>exists!</c> each conjunct of the body is simplified with the ones before it in scope.
     /// Scopes nest, so the inner quantifier of <c>forall p in PP : forall k in ZZ : ...</c> knows
     /// that <c>p</c> is prime. Nothing leaves a scope: a verdict reached with the facts is the
@@ -152,6 +153,27 @@ namespace AngouriMath.Functions.Boolean
                         top = enclosing;
                     }
                     return new Impliesf(assumed, concluded).InnerSimplified(isExact);
+                }
+                // forall x in S : P or not Q is forall x in S : Q implies P, so P is simplified with
+                // the conjuncts of Q in scope as a claim is, and Q with only the facts from outside
+                // it: floor(x) + ceil(x) = 2 x or not x in ZZ reads floor(x) as x. Sullivan and
+                // Mackey's Prob 1.5.6 written as a disjunction.
+                // https://github.com/asc-community/AngouriMath/issues/1409
+                case (Quantifiers.Kind.All, Orf(var either, var other)) when other is Notf || either is Notf:
+                {
+                    var (claim, hypothesis) = other is Notf(var negatedLast) ? (either, negatedLast) : (other, ((Notf)either).Argument);
+                    var assumed = hypothesis.InnerSimplified(isExact);
+                    var enclosing = Establish(assumed);
+                    Entity concluded;
+                    try
+                    {
+                        concluded = Simplified(kind, claim, isExact);
+                    }
+                    finally
+                    {
+                        top = enclosing;
+                    }
+                    return (other is Notf ? new Orf(concluded, new Notf(assumed)) : new Orf(new Notf(assumed), concluded)).InnerSimplified(isExact);
                 }
                 // exists x in S : A and B and C, each conjunct with the ones before it in scope.
                 case (not Quantifiers.Kind.All, Andf):
