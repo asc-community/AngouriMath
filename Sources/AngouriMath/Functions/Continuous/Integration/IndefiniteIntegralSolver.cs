@@ -19089,6 +19089,20 @@ namespace AngouriMath.Functions.Algebra
         /// Attempts to solve an integral using u-substitution.
         /// Looks for patterns where f(g(x)) * g'(x) can be integrated as F(g(x)).
         /// </summary>
+        /// <summary>
+        /// Whether <paramref name="expr"/> holds an even root of something in <paramref name="x"/>
+        /// other than <paramref name="radicand"/>: the only way it can be real where the radicand is
+        /// negative and its own root imaginary.
+        /// </summary>
+        private static bool HoldsAnEvenRootBesides(Entity expr, Entity radicand, Entity.Variable x)
+        {
+            foreach (var node in expr.Nodes)
+                if (node is Powf(var @base, Number.Rational power) && power.ERational.Denominator.IsEven
+                    && @base != radicand && @base.ContainsNode(x))
+                    return true;
+            return false;
+        }
+
         internal static Entity? SolveBySubstitution(Entity expr, Entity.Variable x, bool integrateByParts = true)
         {
             // A rational function over written linear factors with symbols in their
@@ -19325,6 +19339,17 @@ namespace AngouriMath.Functions.Algebra
                         // radicand, as the factoring below conditions its own.
                         if (asTheRoot != resultInU)
                             return Functions.PartialFractions.Bare(asTheRoot).Substitute(uSub, u).Provided(rootOf >= Number.Integer.Zero);
+                        // And a rule below can take u real without reading its sign: `sqrt(u^4)`
+                        // written as `u^2` is the other root wherever u is imaginary. That matters
+                        // only where the integrand is real with the radicand negative, which takes
+                        // a second even root imaginary beside this one, so there the answer is
+                        // checked where the integrand is real: `sqrt(cos(x))/sqrt(1 + sec(x))` under
+                        // `t = cos(x)` and `u = sqrt(t)` came back negated wherever the cosine is
+                        // negative. https://github.com/asc-community/AngouriMath/issues/1581
+                        var answer = resultInU.Substitute(uSub, u);
+                        if (HoldsAnEvenRootBesides(expr, rootOf, x) && Functions.PartialFractions.DerivativeDiffersWhereReal(answer, expr, x))
+                            return Functions.PartialFractions.Bare(answer).Provided(rootOf >= Number.Integer.Zero);
+                        return answer;
                     }
                     // Substitute back: replace u with g(x)
                     return resultInU.Substitute(uSub, u);

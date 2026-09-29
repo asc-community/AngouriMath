@@ -765,6 +765,23 @@ Rubi's 4.5.3.1:640 was wrong on that region
 |---|---|---|
 | `"(1+sec(x))^(5/2)*sqrt(cos(x))".Integrate("x")` | `integral((1 + sec(x)) ^ (5/2) * sqrt(cos(x)), x)` — left unevaluated | an antiderivative with `sgn(sin(x))` in it, `provided cos(x) >= 0` |
 
+### An answer that took an even root real without reading its sign says where it holds
+
+The same step's answer is checked where the rules below read no sign of `u` and still took it real:
+`SolveByCombiningRadicals` writes `sqrt(1 + 1/u^2) sqrt(1 - u^4)` as
+`sqrt(u^4 - u^8 + u^2 - u^6)/u^2`, which reads `sqrt(u^4)` as `u^2`, the other root wherever `u` is
+imaginary. Where the integrand holds a second even root, as it must to be real where the radicand
+is negative, the answer is differentiated and compared with the integrand where the integrand is
+real. Where it is not the antiderivative there, it now carries `provided t >= 0` as well.
+`sqrt(cos(x))/sqrt(a + a sec(x))` and six of its kin in Rubi's 4.5.1.2 and 4.5.3.1 were answered
+negated wherever the cosine is negative; the half-angle rule above answers those seven first now,
+and this is the same answer reached through the even root
+([#1581](https://github.com/asc-community/AngouriMath/issues/1581)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(x)/(sqrt(1/x + 1)*sqrt(1 - x^2))".Integrate("x")` | `integral(...)` | an antiderivative in `sqrt(x)`, `provided x >= 0` |
+
 ### The inverse hyperbolic tangent's answer is given on its domain, and says so
 
 `1/((1 - a^2 x^2)^(5/2) artanh(a x))` was left unevaluated, although the substitution `a x = tanh(u)`

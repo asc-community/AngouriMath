@@ -1870,6 +1870,19 @@ namespace AngouriMath.Functions
         }
 
         /// <summary>
+        /// Whether the derivative of <paramref name="antiderivative"/> differs from
+        /// <paramref name="integrand"/> at one of the default points where the integrand is
+        /// real, as <see cref="DiffersWhereReal"/> tells, with the symbols pinned before the
+        /// differentiation, as <see cref="DerivativeHoldsAtSampledPoints"/> pins them.
+        /// </summary>
+        internal static bool DerivativeDiffersWhereReal(Entity antiderivative, Entity integrand, Variable x)
+        {
+            using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+            var (pinnedAntiderivative, pinnedIntegrand) = Pinned(antiderivative, integrand, x);
+            return DiffersWhereReal(Bare(pinnedAntiderivative).Differentiate(x), pinnedIntegrand, x);
+        }
+
+        /// <summary>
         /// The two with every symbol but <paramref name="x"/> pinned to a fixed value:
         /// distinct values, off the integers, so that no two factors coincide by accident and
         /// a sign or a root in a coefficient stays generic.

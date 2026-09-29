@@ -149,6 +149,38 @@ namespace AngouriMath.Tests.Calculus
         }
 
         /// <summary>
+        /// And where the rules below read no sign at all, the answer is checked where the radicand
+        /// is negative. <c>sqrt(cos(x))/sqrt(1 + sec(x))</c> is real where the cosine is negative,
+        /// two of its roots imaginary there; under <c>t = cos(x)</c> and <c>u = sqrt(t)</c> the
+        /// product of roots below the bar was written with <c>sqrt(u^4) = u^2</c>, and the answer
+        /// was negated wherever the cosine is negative. Rubi's 4.5.1.2, and the same in <c>t</c>.
+        /// https://github.com/asc-community/AngouriMath/issues/1581
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(cos(x))/sqrt(1 + sec(x))", "provided cos(x) >= 0", new[] { 0.3, 0.9, -0.7 }, 2.4)]
+        [InlineData("sqrt(x)/(sqrt(1/x + 1)*sqrt(1 - x^2))", "provided x >= 0", new[] { 0.2, 0.5, 0.8 }, -0.6)]
+        public void AnEvenRootTakenRealWithoutASignSaysWhereItHolds(string written, string condition, double[] inside, double outsideAt)
+        {
+            var integrand = written.ToEntity();
+            var integral = integrand.Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            Assert.Contains(condition, integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x");
+            foreach (var at in inside)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = integrand.Substitute("x", at).EvalNumerical();
+                Assert.False(got.IsNaN, $"no answer at x = {at}, inside the condition");
+                Assert.True(Math.Abs((double)(got - want).RealPart) < 1e-9 * Math.Max(1, Math.Abs((double)want.RealPart)),
+                    $"d/dx of the antiderivative is {got} at x = {at}, where the integrand is {want}");
+            }
+            // Beyond it the integrand is real and the answer claims nothing.
+            var outside = integrand.Substitute("x", outsideAt).EvalNumerical();
+            Assert.True(Math.Abs((double)outside.ImaginaryPart) < 1e-12, $"the integrand at x = {outsideAt} is {outside}, not real");
+            Assert.True(derivative.Substitute("x", outsideAt).Evaled.IsNaN, "the answer claims a derivative outside its condition");
+        }
+
+        /// <summary>
         /// A polynomial over a square root of something linear. None of these had an
         /// antiderivative, and each is a first-year exercise.
         /// </summary>
