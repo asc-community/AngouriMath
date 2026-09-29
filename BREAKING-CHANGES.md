@@ -2135,6 +2135,25 @@ that came out in the expanded square before now come out in `x^2 + a/b`.
 Rubi's 1.2.2.2, 1.2.2.4, 1.2.2.7 and 1.2.3.2, the 574 problems that count with a perfect square
 written with symbols: 388 to 409, no row lost.
 
+### The integrator's check evaluates in intervals
+
+The integrator accepts a candidate answer when its derivative agrees with the integrand at a few
+points, with the symbols pinned to numbers. It evaluated both sides in hundred-digit decimals with
+the downcasting off. There, a decimal below `1e-16` divides as zero and one below about `1e-199`
+is zero, so a correct answer whose derivative passed through such a value was turned away and a
+later route answered instead. The check now evaluates in intervals, which have neither limit and
+read no setting ([#1019](https://github.com/asc-community/AngouriMath/issues/1019), item 10).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(c*(a+b*x))*(cosh(a*c+b*c*x)^2)^(3/2)".Integrate("x")` | left unevaluated | the antiderivative, in `tanh(a c + b c x)` -- where `master` between the releases gave it in exponentials, the route the old check allowed |
+
+Rubi's suites against `master`: the 1774-problem suite, 4.7.2, 4.3.10 and 4.4.10, 7.1.4 to 7.2.5,
+and samples of families 1, 4, 5, 6 and 7. That is 4056 problems, with one answer changed (the row
+above). One problem is lost to the 5 s budget: `(c + d x^2)^(5/2)/(x^2 (a + b x^2)^2)`, which
+`master` solved in 5.3 s, is now answered correctly by a slower route that the old check turned
+away.
+
 ### A quantifier over the whole numbers reads the bounds in its hypothesis, and residues written with `mod`
 
 `forall k in ZZ : (0 < k and k < 7) implies 7 divides binomial(7, k)` was left as written, because no
