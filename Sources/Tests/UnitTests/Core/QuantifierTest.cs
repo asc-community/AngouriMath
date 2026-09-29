@@ -104,6 +104,9 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall n in ZZ : n >= 14 implies (exists a in ZZ* : exists b in ZZ* : n = 3 a + 8 b)", "True")]
         [InlineData("forall n in ZZ : n >= 24 implies (exists a in ZZ* : exists b in ZZ* : n = 4 a + 9 b)", "True")]
         [InlineData("forall n in ZZ : n >= 23 implies (exists a in ZZ* : exists b in ZZ* : n = 4 a + 9 b)", "False")]
+        // A root that is a whole number is found exactly: 2/3 n - 2 is 0 at 3 and positive from 4.
+        [InlineData("forall n in ZZ* : 2/3 n - 2 <= 0", "False")]
+        [InlineData("exists n in ZZ* : 2/3 n - 2 > 0 and 2 divides n + 1", "True")]
         // Floors and ceilings of n over a whole number beside n itself repeat where the drifts
         // cancel, and the residues decide them: floor(n/2) + ceil(n/2) = n, and Hermite's
         // identity for thirds.
@@ -138,6 +141,17 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall p in PP : p > 2 implies 2 divides p + 1", "True")]
         [InlineData("exists p in PP : p > 3 and 3 divides p", "False")]
         [InlineData("exists p in PP : p > 10 and p = 3 (mod 4)", "True")]
+        // A comparison keeps one truth value past its root, so the primes below the last root are
+        // asked one by one and the rest by their residues: every prime is 2, or 1 or 3 modulo 4,
+        // and every prime but 2 and 3 is 1 or 5 modulo 6.
+        [InlineData("forall p in PP : p = 1 (mod 4) or p = 3 (mod 4) or p = 2", "True")]
+        [InlineData("forall p in PP : p = 1 (mod 4) or p = 3 (mod 4)", "False")]
+        [InlineData("forall p in PP : p = 2 or 2 divides p + 1", "True")]
+        [InlineData("forall p in PP : p = 2 or p = 3 or 6 divides p^2 - 1", "True")]
+        [InlineData("forall p in PP : p >= 5 implies p = 1 (mod 6) or p = 5 (mod 6)", "True")]
+        [InlineData("forall p in PP : p < 10 implies p = 2 or 2 divides p + 1", "True")]
+        [InlineData("exists p in PP : p > 2 and 2 divides p", "False")]
+        [InlineData("exists p in PP : p < 3 and p = 2 (mod 3)", "True")]
         // Sullivan and Mackey's Prob 4.11.6: for whole x and y the witnesses are x - y and y - x,
         // and one of them is not negative. Not so in ZZ+, where x = y leaves 0, nor for reals,
         // where 1/2 and 0 leave ±1/2.
@@ -197,6 +211,22 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall x in RR : exists y in RR : y = x^3")]
         public void LeftAsWrittenWhereNothingDecidesIt(string statement)
             => Assert.Equal(statement.ToEntity(), statement.ToEntity().Simplify());
+
+        /// <summary>
+        /// Where a comparison with rational coefficients settles is found exactly, so the verdict
+        /// does not depend on the decimal precision: at 16 or 30 digits 2/3 rounds up, which put
+        /// the root of 2/3 n - 2 below 3, and the statement was decided as though 3 were past it.
+        /// </summary>
+        [Theory]
+        [InlineData(16)]
+        [InlineData(30)]
+        [InlineData(100)]
+        public void WhereAComparisonSettlesDoesNotDependOnThePrecision(int digits)
+        {
+            using var _ = MathS.Settings.DecimalPrecisionContext.Set(new PeterO.Numbers.EContext(digits, PeterO.Numbers.ERounding.HalfUp, -digits, 1000, false));
+            Assert.Equal(Entity.Boolean.False, MathS.FromString("forall n in ZZ* : 2/3 n - 2 <= 0", useCache: false).Simplify());
+            Assert.Equal(Entity.Boolean.False, MathS.FromString("forall n in ZZ* : 5/9 n - 5 <= 0", useCache: false).Simplify());
+        }
 
         [Fact]
         public void AWholeNumberIsNotAssumedOfAReal()

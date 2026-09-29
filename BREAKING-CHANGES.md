@@ -1283,10 +1283,14 @@ and every unit is the residue of infinitely many primes, by Dirichlet's theorem.
 `forall p in PP : p > 3 implies 24 divides p^2 - 1` is `True` while the same from `p > 2` is `False`
 at `3`, Sullivan and Mackey's Prob 6.7.5 and its erratum, and `exists p in PP : p > 10 and
 p = 3 (mod 4)` is `True` ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+A comparison keeps one truth value past its root, so the primes below the last root are asked
+one by one, and a comparison may stand anywhere in the statement: every prime is `2`, or `1` or `3`
+modulo `4`.
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
 | `forall p in PP : p > 3 implies 24 divides p^2 - 1` | `UnhandledParseException` (left as written when `PP` arrived) | `True` |
+| `forall p in PP : p = 1 (mod 4) or p = 3 (mod 4) or p = 2` | `UnhandledParseException` (left as written when `PP` arrived) | `True` |
 
 ### `atanh(tanh(a + b x))` under an integral is linear in `x`, and was an atom no rule read
 
