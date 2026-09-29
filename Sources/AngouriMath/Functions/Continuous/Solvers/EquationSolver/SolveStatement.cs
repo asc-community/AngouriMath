@@ -123,18 +123,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return true;
             if (root.Vars.Any())
                 return false;
-            try
-            {
-                var substituted = equation.Substitute(x, root);
-                if (substituted.Evaled is not Number.Complex residual || !residual.IsFinite)
-                    return false;
-                var size = residual.Abs().EDecimal;
-                if (size.LessThan(MathS.Settings.PrecisionErrorCommon))
-                    return false;
-                return size.GreaterThan(LargestTerm(substituted).Multiply(RelativeResidualTolerance));
-            }
-            catch (Core.Exceptions.AngouriBugException) { throw; }
-            catch (System.Exception) { return false; }
+            var substituted = equation.Substitute(x, root);
+            if (substituted.Evaled is not Number.Complex residual || !residual.IsFinite)
+                return false;
+            var size = residual.Abs().EDecimal;
+            if (size.LessThan(MathS.Settings.PrecisionErrorCommon))
+                return false;
+            return size.GreaterThan(LargestTerm(substituted).Multiply(RelativeResidualTolerance));
         }
 
         /// <summary>

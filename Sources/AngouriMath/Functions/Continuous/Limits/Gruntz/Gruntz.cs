@@ -79,10 +79,7 @@ namespace AngouriMath.Functions.Algebra
             if (depth > 0)
                 return null;                       // already inside; the caller is the entry
             expr = AsExponentials(expr, x);
-            try { return LimitInf(expr, x); }
-            catch (Core.Exceptions.AngouriBugException) { throw; }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception) { return null; }
+            return LimitInf(expr, x);
         }
 
         private static Entity? LimitInf(Entity e, Variable x)
