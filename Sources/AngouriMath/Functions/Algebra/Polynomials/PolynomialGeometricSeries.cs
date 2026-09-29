@@ -129,8 +129,8 @@ namespace AngouriMath.Functions
             }
 
             var after = (to + Integer.One).InnerSimplified;
-            Entity closed = constant * (Q(after) * PowerAt(ratio, after) - Q(from) * PowerAt(ratio, from));
-            var nonEmpty = new GreaterOrEqualf(to, from - Integer.One);
+            var closed = PolynomialSummation.Simplest((constant * (Q(after) * PowerAt(ratio, after) - Q(from) * PowerAt(ratio, from))).InnerSimplified);
+            var nonEmpty = PolynomialSummation.NonEmpty(from, to);
             if (ratioIsANumber)
                 return MathS.Piecewise(new[]
                 {

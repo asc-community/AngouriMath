@@ -7,6 +7,7 @@
 
 using AngouriMath;
 using AngouriMath.Extensions;
+using System.Linq;
 using Xunit;
 
 namespace AngouriMath.Tests.Core
@@ -47,6 +48,33 @@ namespace AngouriMath.Tests.Core
                 Assert.Equal(expanded, fromClosedForm);
             }
         }
+
+        /// <summary>
+        /// The range condition is a bound on the one name the range is about, which is the one
+        /// place the printed form is the point: the sum of the first n odd numbers holds from
+        /// n = 0 and says so, where it said n - 1 >= -1. With two names it is left as it was.
+        /// </summary>
+        [Theory]
+        [InlineData("sum(2 * k + 1, k, 0, n - 1)", "n >= 0")]
+        [InlineData("sum(2 * k + 1, k, n, 2 * n - 1)", "n >= 0")]
+        [InlineData("sum(k, k, 1, n)", "n >= 0")]
+        [InlineData("sum(2 ^ k, k, 0, n - 1)", "n >= 0")]
+        [InlineData("product(2 ^ k, k, 0, n - 1)", "n >= 1")]
+        [InlineData("sum(k, k, m, n)", "n >= m - 1")]
+        public void TheRangeConditionIsABoundOnItsName(string sum, string condition)
+            => Assert.Equal(condition.ToEntity().InnerSimplified, Assert.IsType<Entity.Piecewise>(sum.ToEntity().Simplify()).Cases.First().Predicate);
+
+        /// <summary>
+        /// A closed form is given its simplest shape where it is made: the sums of odd numbers are
+        /// powers of n, as Sullivan and Mackey write them (Prob 5.7.16 is 3 n^2), and the
+        /// triangular numbers keep their quotient.
+        /// </summary>
+        [Theory]
+        [InlineData("sum(2 * k + 1, k, 0, n - 1)", "n ^ 2")]
+        [InlineData("sum(2 * k + 1, k, n, 2 * n - 1)", "3 * n ^ 2")]
+        [InlineData("sum(k, k, 1, n)", "(n + n ^ 2) / 2")]
+        public void AClosedFormReadsAsTheBookWritesIt(string sum, string closedForm)
+            => Assert.Equal(closedForm, Assert.IsType<Entity.Piecewise>(sum.ToEntity().Simplify()).Cases.First().Expression.Stringize());
 
         /// <summary>The sums whose closed forms have names.</summary>
         [Theory]

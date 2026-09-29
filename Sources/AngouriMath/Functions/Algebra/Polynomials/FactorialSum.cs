@@ -99,7 +99,7 @@ namespace AngouriMath.Functions
                 return closed;
             return MathS.Piecewise(new[]
             {
-                new Providedf(closed, new GreaterOrEqualf(to, (from - Integer.One).InnerSimplified)),
+                new Providedf(closed, PolynomialSummation.NonEmpty(from, to)),
                 new Providedf(Integer.Zero, Entity.Boolean.True),
             }).InnerSimplified;
         }

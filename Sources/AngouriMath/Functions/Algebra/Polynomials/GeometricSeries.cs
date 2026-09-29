@@ -102,7 +102,7 @@ namespace AngouriMath.Functions
 
             // The terms from a to b, as the difference of two tails of the same series.
             Entity closed = constant * (PowerAt(ratio, from) - PowerAt(ratio, to + Integer.One)) / (Integer.One - ratio);
-            var nonEmpty = new GreaterOrEqualf(to, from - Integer.One);
+            var nonEmpty = PolynomialSummation.NonEmpty(from, to);
             if (ratioIsANumber)
                 return MathS.Piecewise(new[]
                 {
