@@ -236,6 +236,24 @@ one leaves the other, and the sub-problem could then be scaled again without end
 substitution that does not exist rather than a wrong answer, and the integrand at `a = 0` is a
 different function (`1/x^3`), answered on its own if asked that way.
 
+### A rational function of the sine and cosine with symbols in it is integrated by the half angle
+
+`sin(x)^2/(a + b cos(x))` was left unevaluated while `sin(x)^2/(2 + 3 cos(x))` was answered. Under
+`t = tan(x/2)` every sine and cosine brings a `1 + t^2` below the bar, and the one the numerator
+shares with the denominator was divided out of the denominator as a whole, which multiplied it out:
+a sextic with a symbol in every coefficient, which nothing splits. It is taken off the factor
+where it stands now, and the rest of the denominator stays factored. And the secant, tangent,
+cosecant and cotangent are written in the sine and cosine wherever a sum holds one of the two, so
+that `sec(x)^2/(a + b sin(x))` is rational in them rather than declined at once
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(x)^2/(a + b*cos(x))".ToEntity().Integrate("x")` | `integral(...)` | a piecewise antiderivative in `tan(x/2)` |
+| `"sec(x)^2/(a + b*sin(x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(x/2)` |
+| `"tan(x)^4/(a + a*cos(x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(x/2)` |
+| `"csc(x)^2/(a + a*cos(x))".ToEntity().Integrate("x")` | `integral(...)` | `(tan(x/2)^3/12 + tan(x/2)/2 - 1/(4 tan(x/2)))/a` |
+
 ### `NaN` was returned as the antiderivative of something that has one
 
 **A wrong answer, not a missing one.** `1/(a*x^2)` came back as `NaN + C`, and `NaN` is this

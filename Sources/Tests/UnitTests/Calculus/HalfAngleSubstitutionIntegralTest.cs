@@ -219,5 +219,42 @@ namespace AngouriMath.Tests.Calculus
             var integral = integrand.ToEntity().Integrate("x");
             Assert.DoesNotContain("tan(x / 2)", integral.Stringize());
         }
+
+        /// <summary>
+        /// Rational in the sine and cosine with symbols for coefficients. Every sine and cosine
+        /// brings a <c>1 + t^2</c> below the bar, and the one the numerator shares with the
+        /// denominator is taken off the factor where it stands: divided out of the whole, the
+        /// denominator of <c>sin(x)^2/(a + b cos(x))</c> was a sextic with a symbol in every
+        /// coefficient, which nothing splits. And the secant, tangent and their kin are written
+        /// in the two wherever a sum holds the sine or cosine, so that
+        /// <c>sec(x)^2/(a + b sin(x))</c> is rational in them rather than declined at once.
+        /// </summary>
+        [Theory]
+        [InlineData("sin(x)^2/(a + b*cos(x))")]
+        [InlineData("sec(x)^2/(a + b*sin(x))")]
+        [InlineData("sec(x)^2/(a + b*cos(x))")]
+        [InlineData("tan(x)^4/(a + a*cos(x))")]
+        [InlineData("csc(x)^2/(a + a*cos(x))")]
+        public void ARationalFunctionWithSymbolsForCoefficients(string integrand)
+        {
+            var integral = integrand.ToEntity().Integrate("x");
+            Assert.DoesNotContain("integral(", integral.Stringize());
+            var derivative = integral.Substitute("C", 0).Differentiate("x").Substitute("a", 1.7).Substitute("b", 0.6);
+            var original = integrand.ToEntity().Substitute("a", 1.7).Substitute("b", 0.6);
+            var compared = 0;
+            foreach (var at in Points)
+            {
+                var got = derivative.Substitute("x", at).EvalNumerical();
+                var want = original.Substitute("x", at).EvalNumerical();
+                if (got.IsNaN || want.IsNaN)
+                    continue;
+                compared++;
+                var difference = Math.Abs((double)(got - want).RealPart) + Math.Abs((double)(got - want).ImaginaryPart);
+                var scale = Math.Max(1.0, Math.Abs((double)want.RealPart));
+                Assert.True(difference / scale < 1e-9,
+                    $"d/dx of the antiderivative of {integrand} is {got} at x = {at}, where the integrand is {want}");
+            }
+            Assert.True(compared >= 4, $"only {compared} of {Points.Length} points were comparable for {integrand}");
+        }
     }
 }
