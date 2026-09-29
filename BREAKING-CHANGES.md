@@ -1727,6 +1727,21 @@ in 2.5.0.
 | `forall p in PP : forall a in ZZ : a^p mod p = a mod p` | `UnhandledParseException` | `True` |
 | `forall p in PP : forall a, b in ZZ : (a + b)^p = a^p + b^p (mod p)` | `UnhandledParseException` | `True` |
 
+### An identity only the simplifier shows is solved to every value
+
+`sqrt(x)^2 = x` was answered with the whole starting grid of Newton's method, 191 numbers. Nothing
+analytical read it, and its residual is zero wherever it is evaluated, so every start converged at
+once and each was kept. Where every analytical route has declined, the equation is now simplified
+once before Newton's method is tried, and an unconditional zero is answered with `CC`, as
+`x + 1 = x + 1` already was. A zero with a condition is not taken, and goes on to Newton's method as
+before: `(x^2 - 1)/(x - 1) - x - 1` is zero for every `x` but 1, where `CC` would be wrong
+([#1420](https://github.com/asc-community/AngouriMath/issues/1420)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(x)^2 = x".ToEntity().Solve("x")` | `{ -10, -49/5, -48/5, …, -8 - 8i, … }`, 191 numbers | `CC` |
+| `"sin(x)^2 + cos(x)^2 = 1".ToEntity().Solve("x")` | the same 191 numbers | `CC` |
+
 ### An equation the solver cannot invert is left unsolved, not answered with no roots
 
 `x! = 6` was answered `{ }`, a claim that it has no roots, and it has 3. The solver isolates `x`
