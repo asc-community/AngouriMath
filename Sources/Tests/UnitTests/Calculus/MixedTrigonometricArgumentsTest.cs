@@ -208,17 +208,18 @@ namespace AngouriMath.Tests.Calculus
         /// <summary>
         /// With symbolic coefficients the rotation is a nested surd, the rotated quadratic is
         /// written in it, and what the rational integrator is handed is a quotient over that
-        /// field: two minutes and no answer, where the integrand is declined in a moment
-        /// unrotated. The rule asks for a numeric rotation, and this pins that the verdict for
-        /// the symbolic shape is still a quick decline rather than a search.
+        /// field: two minutes and no answer. The rule asks for a numeric rotation, and the
+        /// symbolic shape is answered instead under the tangent, in closed form, by the rule for
+        /// a linear over a quadratic beside the root of another; this pins that it is answered,
+        /// and not by a search.
         /// </summary>
         [Fact]
-        public void ASymbolicQuadraticInTheTangentIsDeclinedAndNotSearched()
+        public void ASymbolicQuadraticInTheTangentIsAnsweredAndNotSearched()
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             var integral = "1/sqrt(a + b*tan(x) + c*tan(x)^2)".ToEntity().Integrate("x");
             watch.Stop();
-            Assert.Contains("integral(", integral.Stringize());
+            Assert.DoesNotContain("integral(", integral.Stringize());
             Assert.True(watch.Elapsed < IntegrationDecline.Guard, $"the symbolic shape took {watch.Elapsed.TotalSeconds:F1} s");
         }
     }
