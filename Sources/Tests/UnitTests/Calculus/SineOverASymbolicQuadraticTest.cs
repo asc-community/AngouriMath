@@ -67,5 +67,23 @@ namespace AngouriMath.Tests.Calculus
             DifferentiatesBack(integrand, 1, 5, 2);
             DifferentiatesBack(integrand, 3, 1, 2);
         }
+
+        /// <summary>
+        /// A quadratic whose roots are 1 and -1 for every value of its symbol,
+        /// <c>a - a sin(x)^2</c>: the arctangent's spread is zero there, and the integral over
+        /// each root is rational in the half-angle tangent. It was NaN wherever it was
+        /// evaluated. Rubi's 4.1.7:71 and 75.
+        /// https://github.com/asc-community/AngouriMath/issues/1588
+        /// </summary>
+        [Theory]
+        [InlineData("csc(x)^2/(a-a*sin(x)^2)")]
+        [InlineData("sin(x)^6/(a-a*sin(x)^2)")]
+        [InlineData("1/(a-a*cos(x)^2)")]
+        [InlineData("cos(x)^4/(a-a*cos(x)^2)")]
+        public void OverRootsAtOne(string integrand)
+        {
+            DifferentiatesBack(integrand, 1.3, 0, 0);
+            DifferentiatesBack(integrand, -0.7, 0, 0);
+        }
     }
 }

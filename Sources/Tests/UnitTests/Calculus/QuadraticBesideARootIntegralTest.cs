@@ -95,5 +95,30 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("x^2/((a + b*x + c*x^2)^(1/2)*(d + k*x + f*x^2))")]
         public void APolynomialPartBeside(string integrand)
             => DifferentiatesBackPinned(integrand, new[] { 0.3, 0.7, 1.2, -0.5 }, Pins);
+
+        /// <summary>
+        /// Over a power of the quadratic, a power at a time: the derivative of
+        /// <c>(p + q x) sqrt(B)/A^(k - 1)</c> takes one away, and what it leaves goes down to the
+        /// closed form over the first. The cube is numeric: with six symbols its coefficients
+        /// grow past the bound the reduction declines at.
+        /// </summary>
+        [Theory]
+        [InlineData("1/((1 + x^2)^2*sqrt(1 - x^2))")]
+        [InlineData("(g + h*x)/((d + k*x + f*x^2)^2*sqrt(a + b*x + c*x^2))")]
+        [InlineData("(7 + 13*x)/((5 + x + 2*x^2)^3*sqrt(2 + x + 3*x^2))")]
+        [InlineData("x^3/((d + f*x^2)^2*sqrt(a + b*x + c*x^2))")]
+        public void OverAPowerOfTheQuadratic(string integrand)
+            => DifferentiatesBackPinned(integrand, new[] { 0.3, 0.7, 0.9, -0.5 }, Pins);
+
+        /// <summary>
+        /// Beside a half-odd power of <c>a + a sec(x)</c>, the half-angle tangent leaves a power
+        /// of <c>(c + d) + (d - c) t^2</c> below the bar, which ran out Rubi's budget in 4.5.2.1.
+        /// </summary>
+        [Theory]
+        [InlineData("sqrt(a + a*sec(x))/(c + d*sec(x))^2")]
+        [InlineData("(a + a*sec(x))^(3/2)/(c + d*sec(x))^2")]
+        [InlineData("sqrt(a + a*sec(x))/(c + d*sec(x))^3")]
+        public void BesideAHalfOddPowerOfOnePlusASecant(string integrand)
+            => DifferentiatesBackPinned(integrand, new[] { 0.3, 0.7, 1.1, -0.4 }, ("a", 1.3), ("c", 2), ("d", 0.7));
     }
 }

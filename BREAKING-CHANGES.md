@@ -236,6 +236,24 @@ one leaves the other, and the sub-problem could then be scaled again without end
 substitution that does not exist rather than a wrong answer, and the integrand at `a = 0` is a
 different function (`1/x^3`), answered on its own if asked that way.
 
+### A rational function of the sine and cosine with symbols in it is integrated by the half angle
+
+`sin(x)^2/(a + b cos(x))` was left unevaluated while `sin(x)^2/(2 + 3 cos(x))` was answered. Under
+`t = tan(x/2)` every sine and cosine brings a `1 + t^2` below the bar, and the one the numerator
+shares with the denominator was divided out of the denominator as a whole, which multiplied it out:
+a sextic with a symbol in every coefficient, which nothing splits. It is taken off the factor
+where it stands now, and the rest of the denominator stays factored. And the secant, tangent,
+cosecant and cotangent are written in the sine and cosine wherever a sum holds one of the two, so
+that `sec(x)^2/(a + b sin(x))` is rational in them rather than declined at once
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sin(x)^2/(a + b*cos(x))".ToEntity().Integrate("x")` | `integral(...)` | a piecewise antiderivative in `tan(x/2)` |
+| `"sec(x)^2/(a + b*sin(x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(x/2)` |
+| `"tan(x)^4/(a + a*cos(x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(x/2)` |
+| `"csc(x)^2/(a + a*cos(x))".ToEntity().Integrate("x")` | `integral(...)` | `(tan(x/2)^3/12 + tan(x/2)/2 - 1/(4 tan(x/2)))/a` |
+
 ### `NaN` was returned as the antiderivative of something that has one
 
 **A wrong answer, not a missing one.** `1/(a*x^2)` came back as `NaN + C`, and `NaN` is this
@@ -350,8 +368,10 @@ bar that an even power does not give. Written in `s = sin(x)` the integrand is a
 of `s`, divided down and split over the written factors as any is, and the piece over the
 quadratic is taken by the two roots `r = (-b ± sqrt(b^2 - 4ac))/(2c)`, each
 `1/(sin(x) - r)` being `-2 atan((r tan(x/2) - 1)/sqrt(r^2 - 1))/sqrt(r^2 - 1)` for any complex
-`r` — a form checked by differentiation, not a piecewise on the sign of a root, which has no
-value for the conjugate pair the ordinary coefficients give. The cosine the same way, with
+`r` but `±1` — a form checked by differentiation, not a piecewise on the sign of a root, which has
+no value for the conjugate pair the ordinary coefficients give. At `±1`, which `a - a sin(x)^2` has
+for every `a`, the quadratic under the half-angle is a square and the piece is `2/(r tan(x/2) - 1)`
+([#1588](https://github.com/asc-community/AngouriMath/issues/1588)). The cosine the same way, with
 `-2 atan(tan(x/2)/σ)/((1 + r) σ)`, `σ = sqrt((r - 1)/(r + 1))`. On each interval between the
 poles of `tan(x/2)`, as every half-angle answer.
 
@@ -361,6 +381,7 @@ poles of `tan(x/2)`, as every half-angle answer.
 | `"sin(x)^4/(a+b*sin(x)+c*sin(x)^2)".Integrate("x")` | unevaluated after more than three minutes | `(x - sin(2x)/2)/(2c) + b cos(x)/c^2 + (b^2 c - a c^2) x/c^4 + …` in 70 ms |
 | `"csc(x)^2/(a+b*sin(x)+c*sin(x)^2)".Integrate("x")`, `"sec(x)^2/…"` | unevaluated | `-cot(x)/a + …`, the blocks over `sin^2` and `1 - sin^2` beside the two roots |
 | `"1/(a+b*cos(x)+c*cos(x)^2)".Integrate("x")` | unevaluated | the cosine form |
+| `"csc(x)^2/(a-a*sin(x)^2)".Integrate("x")` | unevaluated | `-cot(x)/a` and two terms rational in `tan(x/2)` |
 
 ### A linear over a quadratic beside the root of another quadratic is integrated
 
@@ -382,6 +403,23 @@ taken apart into pieces each closed the same way
 | `"cot(x)^3/(a + b*tan(x) + c*tan(x)^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
 | `"(2 + x)/((2 + 4*x - 3*x^2)*(1 + 3*x + 2*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
 | `"1/((x^2 + 1)*sqrt(x^2 + x + 1))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm and an arctangent |
+
+### A polynomial over a power of a quadratic beside the root of another is integrated
+
+`P/(A^k sqrt(B))`, `A` and `B` two different quadratics and `k` at least two, was left
+unevaluated. So were Rubi's `sqrt(a + a sec(x))/(c + d sec(x))^2` and its kin, which the
+half-angle tangent writes as `(1 - t^2)^(3/2)/((1 + t^2)((c + d) + (d - c) t^2)^2)`. They are
+reduced a power at a time: `L/(A^j sqrt(B))`, with `L` linear, is the derivative of
+`(p + q x) sqrt(B)/A^(j - 1)` plus a quadratic over `A^(j - 1) sqrt(B)`, from five linear
+equations. The reduction goes down to the closed form over `A` of the entry above. With symbols
+in both quadratics, the cube's coefficients grow past what the reduction takes, and it declines
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(g + h*x)/((d + k*x + f*x^2)^2*sqrt(a + b*x + c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | a linear times the root over the quadratic, and two arctangents |
+| `"(7 + 13*x)/((5 + x + 2*x^2)^3*sqrt(2 + x + 3*x^2))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
+| `"sqrt(a + a*sec(x))/(c + d*sec(x))^2".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(x/2)` |
 
 ### A function comes out of a fractional power of its even power with its sign
 
@@ -764,6 +802,23 @@ Rubi's 4.5.3.1:640 was wrong on that region
 | Input | Was (2.5.0) | Now |
 |---|---|---|
 | `"(1+sec(x))^(5/2)*sqrt(cos(x))".Integrate("x")` | `integral((1 + sec(x)) ^ (5/2) * sqrt(cos(x)), x)` — left unevaluated | an antiderivative with `sgn(sin(x))` in it, `provided cos(x) >= 0` |
+
+### An answer that took an even root real without reading its sign says where it holds
+
+The same step's answer is checked where the rules below read no sign of `u` and still took it real:
+`SolveByCombiningRadicals` writes `sqrt(1 + 1/u^2) sqrt(1 - u^4)` as
+`sqrt(u^4 - u^8 + u^2 - u^6)/u^2`, which reads `sqrt(u^4)` as `u^2`, the other root wherever `u` is
+imaginary. Where the integrand holds a second even root, as it must to be real where the radicand
+is negative, the answer is differentiated and compared with the integrand where the integrand is
+real. Where it is not the antiderivative there, it now carries `provided t >= 0` as well.
+`sqrt(cos(x))/sqrt(a + a sec(x))` and six of its kin in Rubi's 4.5.1.2 and 4.5.3.1 were answered
+negated wherever the cosine is negative; the half-angle rule above answers those seven first now,
+and this is the same answer reached through the even root
+([#1581](https://github.com/asc-community/AngouriMath/issues/1581)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(x)/(sqrt(1/x + 1)*sqrt(1 - x^2))".Integrate("x")` | `integral(...)` | an antiderivative in `sqrt(x)`, `provided x >= 0` |
 
 ### The inverse hyperbolic tangent's answer is given on its domain, and says so
 
