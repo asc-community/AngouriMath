@@ -232,9 +232,14 @@ namespace AngouriMath
             /// reaches is the two cases the expansion declines: a symbolic bound, and a concrete
             /// range too long to write out — where it is not a fallback but the better answer,
             /// since it computes rather than expands.
+            ///
+            /// A count comes before all of them: a sum of an Iverson bracket is the number of
+            /// indices its statement holds for, which is computed however long the range is, and in
+            /// a nested sum the count of the inner one is what the outer one sums.
             /// </remarks>
             protected override Entity InnerSimplify(bool isExact) =>
-                Expanded(this, Expression, Var, From, To, static (a, b) => a + b, 0, isExact)
+                Functions.IversonSum.ClosedForm(Expression, Var, From, To)
+                ?? Expanded(this, Expression, Var, From, To, static (a, b) => a + b, 0, isExact)
                 ?? Functions.PolynomialSummation.ClosedForm(Expression, Var, From, To)
                 ?? Functions.ExponentialSeries.ClosedForm(Expression, Var, From, To)
                 ?? Functions.BinomialSum.ClosedForm(Expression, Var, From, To)

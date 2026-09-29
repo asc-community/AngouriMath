@@ -599,6 +599,8 @@ atom returns[Entity value]
     /* The Iverson bracket, 1 where a statement holds and 0 where it does not: a count written as
        a sum. https://github.com/asc-community/AngouriMath/issues/1478 */
     | 'iverson(' args = function_arguments ')' { Assert("iverson", 1, $args.list.Count); $value = MathS.Iverson($args.list[0]); }
+    /* The aleph numbers, the sizes of infinite sets. https://github.com/asc-community/AngouriMath/issues/1409 */
+    | 'aleph(' args = function_arguments ')' { Assert("aleph", 1, $args.list.Count); $value = MathS.Aleph($args.list[0]); }
     /* The error functions. https://github.com/asc-community/AngouriMath/issues/1501 */
     | 'erf(' args = function_arguments ')' { Assert("erf", 1, $args.list.Count); $value = MathS.Erf($args.list[0]); }
     | 'erfc(' args = function_arguments ')' { Assert("erfc", 1, $args.list.Count); $value = MathS.Erfc($args.list[0]); }

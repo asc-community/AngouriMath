@@ -406,6 +406,25 @@ AngouriMath.Entity+Absf.ToString() : System.String
 AngouriMath.Entity+Absf.ctor(AngouriMath.Entity)
 AngouriMath.Entity+Absf.op_Equality(AngouriMath.Entity+Absf, AngouriMath.Entity+Absf) : System.Boolean
 AngouriMath.Entity+Absf.op_Inequality(AngouriMath.Entity+Absf, AngouriMath.Entity+Absf) : System.Boolean
+AngouriMath.Entity+Alephf.<Clone>$() : AngouriMath.Entity+Alephf
+AngouriMath.Entity+Alephf.Codomain { } : AngouriMath.Core.Domain
+AngouriMath.Entity+Alephf.Deconstruct(AngouriMath.Entity&) : System.Void
+AngouriMath.Entity+Alephf.EqualityContract { } : System.Type
+AngouriMath.Entity+Alephf.Equals(AngouriMath.Entity+Alephf) : System.Boolean
+AngouriMath.Entity+Alephf.Equals(AngouriMath.Entity+Function) : System.Boolean
+AngouriMath.Entity+Alephf.Equals(System.Object) : System.Boolean
+AngouriMath.Entity+Alephf.GetHashCode() : System.Int32
+AngouriMath.Entity+Alephf.Index { } : AngouriMath.Entity
+AngouriMath.Entity+Alephf.InitDirectChildren() : AngouriMath.Entity[]
+AngouriMath.Entity+Alephf.InnerSimplify(System.Boolean) : AngouriMath.Entity
+AngouriMath.Entity+Alephf.NodeChild { } : AngouriMath.Entity
+AngouriMath.Entity+Alephf.PrintMembers(System.Text.StringBuilder) : System.Boolean
+AngouriMath.Entity+Alephf.Replace(System.Func<AngouriMath.Entity,AngouriMath.Entity>) : AngouriMath.Entity
+AngouriMath.Entity+Alephf.Substitute(AngouriMath.Entity, AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.Entity+Alephf.ToString() : System.String
+AngouriMath.Entity+Alephf.ctor(AngouriMath.Entity)
+AngouriMath.Entity+Alephf.op_Equality(AngouriMath.Entity+Alephf, AngouriMath.Entity+Alephf) : System.Boolean
+AngouriMath.Entity+Alephf.op_Inequality(AngouriMath.Entity+Alephf, AngouriMath.Entity+Alephf) : System.Boolean
 AngouriMath.Entity+Andf.<Clone>$() : AngouriMath.Entity+Andf
 AngouriMath.Entity+Andf.Codomain { } : AngouriMath.Core.Domain
 AngouriMath.Entity+Andf.Deconstruct(AngouriMath.Entity&, AngouriMath.Entity&) : System.Void
@@ -3112,6 +3131,7 @@ AngouriMath.MathS+Utils.TryGetPolyLinear(AngouriMath.Entity, AngouriMath.Entity+
 AngouriMath.MathS+Utils.TryGetPolyQuadratic(AngouriMath.Entity, AngouriMath.Entity+Variable, AngouriMath.Entity&, AngouriMath.Entity&, AngouriMath.Entity&) : System.Boolean
 AngouriMath.MathS+Utils.TryGetPolynomial(AngouriMath.Entity, AngouriMath.Entity+Variable, System.Collections.Generic.Dictionary<PeterO.Numbers.EInteger,AngouriMath.Entity>&) : System.Boolean
 AngouriMath.MathS.Abs(AngouriMath.Entity) : AngouriMath.Entity
+AngouriMath.MathS.Aleph(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Apply(AngouriMath.Entity, AngouriMath.Entity[]) : AngouriMath.Entity
 AngouriMath.MathS.Arccos(AngouriMath.Entity) : AngouriMath.Entity
 AngouriMath.MathS.Arccosec(AngouriMath.Entity) : AngouriMath.Entity
@@ -3300,6 +3320,7 @@ class AngouriMath.Core.Transformations.RewriteRules
 class AngouriMath.Core.Transformations.Transformation
 class AngouriMath.Entity
 class AngouriMath.Entity+Absf
+class AngouriMath.Entity+Alephf
 class AngouriMath.Entity+Andf
 class AngouriMath.Entity+Application
 class AngouriMath.Entity+Arccosecantf

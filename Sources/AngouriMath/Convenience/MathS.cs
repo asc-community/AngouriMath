@@ -1394,6 +1394,18 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Iverson(Entity statement) => new Iversonf(statement);
 
+        /// <summary>The aleph number <c>aleph(k)</c>, the size of an infinite set</summary>
+        /// <param name="index">The index, a whole number from zero</param>
+        /// <returns>The <see cref="Entity.Alephf"/> node</returns>
+        /// <remarks>
+        /// <c>aleph(0)</c> is the size of the whole numbers and of the rationals, and
+        /// <c>card(ZZ)</c> is it. The size of the reals is <c>2^aleph(0)</c>, not a named aleph:
+        /// which one it is, is the continuum hypothesis.
+        /// https://github.com/asc-community/AngouriMath/issues/1409
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Aleph(Entity index) => new Alephf(index);
+
         /// <summary>The error function, <c>erf(z) = 2/sqrt(pi) int_0^z e^(-t^2) dt</c></summary>
         /// <param name="a">The argument, any complex number</param>
         /// <returns>The <see cref="Entity.Erff"/> node</returns>

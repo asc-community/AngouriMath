@@ -153,6 +153,24 @@ answer on the far side of a root gets a real expression where it used to get a c
 | `1/(x*(-4+x^2)^4)` | 8,472 ms | 1,878 ms |
 | `1/((1+x)^3*(2+x)^3)` | 1,343 ms | 492 ms |
 
+### Two square roots of linears with one slope are rationalised together
+
+`sqrt(L1)` and `sqrt(L2)` with `L1 - L2` a constant are rational in their sum
+`v = sqrt(L1) + sqrt(L2)`: the difference is `(L1 - L2)/v`, and `x` is rational in `v`. An inverse
+function of the difference was declined where it is elementary: Charlwood's
+`arcsin(sqrt(1 + x) - sqrt(x))`, after five seconds, and Rubi's 5.3.7 has the arctangent's powers
+of x beside it. Under `v` each is an inverse function of `1/v` beside a rational function of `v`,
+which parts closes, and written back through `1/v = (sqrt(L1) - sqrt(L2))/(L1 - L2)` the answer
+holds the difference as the integrand does. Only where the sum or the difference stands inside an
+inverse trigonometric function or a logarithm: a rational function of the two roots is the radical
+rules' already
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"asin(sqrt(1 + x) - sqrt(x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `arcsin(sqrt(1 + x) - sqrt(x))` |
+| `"x^3*atan(-sqrt(x)+sqrt(1+x))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in the arctangent |
+
 ### The hyperbolic functions have antiderivatives, and so does anything rational in `e^(k x)`
 
 An integrand rational in `e^(k x)` becomes a rational function of one variable under
@@ -344,6 +362,27 @@ poles of `tan(x/2)`, as every half-angle answer.
 | `"csc(x)^2/(a+b*sin(x)+c*sin(x)^2)".Integrate("x")`, `"sec(x)^2/…"` | unevaluated | `-cot(x)/a + …`, the blocks over `sin^2` and `1 - sin^2` beside the two roots |
 | `"1/(a+b*cos(x)+c*cos(x)^2)".Integrate("x")` | unevaluated | the cosine form |
 
+### A linear over a quadratic beside the root of another quadratic is integrated
+
+`(g + h x)/(A sqrt(B))`, `A` and `B` two different quadratics, was left unevaluated wherever a
+coefficient was a symbol, and so was what the tangent substitution makes of Rubi's
+`trig^m (a + b tan + c tan^2)^(p/2)`: `1/sqrt(a + b tan(x) + c tan(x)^2)` is
+`1/((1 + t^2) sqrt(a + b t + c t^2))`. It is closed now, as two arctangents of a linear over
+`sqrt(B)` whose coefficients hold `sqrt(P^2 - E F)`, `P = A2 B0 - A0 B2`, `E = A2 B1 - A1 B2` and
+`F = A1 B0 - A0 B1` -- the root Rubi's 1.2.1.6 calls `q`; where the ratio under a piece's root is a
+negative number the piece is written as the hyperbolic arctangent it is. A rational function
+beside the root with such a quadratic, a power of a linear or a power of `B` below the bar is
+taken apart into pieces each closed the same way
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/sqrt(a + b*tan(x) + c*tan(x)^2)".ToEntity().Integrate("x")` | `integral(...)` | two arctangents of a linear in `tan(x)` over the root |
+| `"(g + h*x)/((d + k*x + f*x^2)*sqrt(a + b*x + c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | two arctangents of a linear over the root |
+| `"cot(x)^3/(a + b*tan(x) + c*tan(x)^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
+| `"(2 + x)/((2 + 4*x - 3*x^2)*(1 + 3*x + 2*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
+| `"1/((x^2 + 1)*sqrt(x^2 + x + 1))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm and an arctangent |
+
 ### A function comes out of a fractional power of its even power with its sign
 
 **Improvement, not silent.** The entry two above made `(sin(x)^2)^(3/2)` the modulus `|sin(x)|^3`
@@ -419,6 +458,29 @@ one form across the zeros.
 | `"(a + a*sin(x))^(1/2)/(c - c*sin(x))^(5/2)".Integrate("x")` | unevaluated | `sgn(sin(u)) sgn(cos(u)) sqrt(2a)/(4 c^(5/2)) (…)` |
 | `"sqrt(a + a*sin(x))".Integrate("x")` | unevaluated (`a^2 = a^2` is not decided by evaluation) | `-2 sqrt(2a) sgn(sin(u)) cos(u)` |
 | `"sqrt(1 + sin(x))".Integrate("x")` | `-2 cos(x)/sqrt(1 + sin(x))` | unchanged, the closed rule's |
+
+### Half-odd powers of `a ± a sec` and `a ± a csc` are integrated by the half-angle tangent
+
+Rubi's `(a + b sec)^m (d sec)^n` files with `a^2 = b^2` hold about a thousand problems with a
+half-odd `m`, and none was answered, `sqrt(1 + sec(x))` included: the half angle at which
+`a + a cos(y)` is a square leaves a root of the cosine below the bar here. Under
+`t = tan(y/2)`, `1 + sec(y)` is `2/(1 - t^2)`, `1 - sec(y)` is `-2 t^2/(1 - t^2)` and `sec(y)` is
+`(1 + t^2)/(1 - t^2)`, so beside a power of the secant and anything rational in the sine and
+cosine the whole is a rational function of `t` beside one root, of `1 - t^2` or of `1 + t^2`.
+Two roots, which a half-odd power of the secant beside a whole one of `1 ± sec` makes, are
+elliptic and still declined. The cosecant's the same way through the complement, and a root of
+`1 - sec(y)` carries `sgn(tan(y/2))`, constant between its zeros. Each root written apart is exact
+where `cos(y)` is positive; beyond it two roots can make the integrand real while each has turned
+its sign on its own, so an answer through two says `provided cos(y) >= 0`
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sqrt(1 + sec(x))".ToEntity().Integrate("x")` | `integral(...)` | an arctangent in `tan(x/2)` |
+| `"sec(x)/sqrt(a + a*sec(x))".ToEntity().Integrate("x")` | `integral(...)` | `2 arcsin(tan(x/2))/sqrt(2a)` |
+| `"1/(sec(x)^(3/2)*sqrt(1 + sec(x)))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative through a root of `1 + tan(x/2)^2` |
+| `"sqrt(a - a*sec(x))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm in `tan(x/2)`, times `sgn(tan(x/2))` |
+| `"sqrt(1 + csc(x))".ToEntity().Integrate("x")` | `integral(...)` | an arctangent in `tan(pi/4 - x/2)` |
 
 ### A partial-fraction coefficient with symbols in it is in lowest terms, its rational content included
 
@@ -626,6 +688,22 @@ it, as they decide a divisibility. `forall n in ZZ : floor(n/2) + ceil(n/2) = n`
 | `forall n in ZZ : floor(n/2) + ceil(n/2) = n` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
 | `exists n in ZZ : floor(n/2) + ceil(n/2) = n + 1` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
 
+### A sum of whole multiples is decided: `exists a, b in ZZ* : n = p a + q b`
+
+What an equation `n = p a + q b` leaves of `b` is a divisibility and a sign: `(n - p a)/q in ZZ*` is
+`q divides n - p a and n - p a >= 0`, for a whole `n - p a`. A statement that repeats in `a` and only
+gets harder as `a` grows has its least witness below the period, so `exists a in ZZ*` of it is one of
+the first period's members; and a statement whose comparisons settle past a threshold, with the rest
+repeating, is decided by the members up to one period past it. So Sullivan and Mackey's coins and
+special lands are decided (Prob 2.7.8, Prob 5.7.4, §5.5.3 Try 3): every `n` from `14` is `3 a + 8 b`
+and `13` is not, every `n` from `24` is `4 a + 9 b` and `23` is not
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `exists a in ZZ* : exists b in ZZ* : 13 = 3 a + 8 b` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
+| `forall n in ZZ : n >= 14 implies (exists a in ZZ* : exists b in ZZ* : n = 3 a + 8 b)` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+
 ### An antiderivative built through an even root says where the root is real
 
 The linear-radical substitution, `u = (a x + b)^(1/q)`, and the general substitution for an even
@@ -659,6 +737,24 @@ Rubi's 4.5.3.1:640 was wrong on that region
 | Input | Was (2.5.0) | Now |
 |---|---|---|
 | `"(1+sec(x))^(5/2)*sqrt(cos(x))".Integrate("x")` | `integral((1 + sec(x)) ^ (5/2) * sqrt(cos(x)), x)` — left unevaluated | an antiderivative with `sgn(sin(x))` in it, `provided cos(x) >= 0` |
+
+### The inverse hyperbolic tangent's answer is given on its domain, and says so
+
+`1/((1 - a^2 x^2)^(5/2) artanh(a x))` was left unevaluated, although the substitution `a x = tanh(u)`
+answers it: `(Chi(3 u) + 3 Chi(u))/(4 a)` for `u = artanh(a x)`. The answer was checked past
+`|a x| < 1` as well, where `sqrt(1 - a^2 x^2)` is not `sech(u)`, and declined for failing there.
+Past `a x = 1` the integrand is not real either, so the answer is now given on the domain and
+carries `provided 1 - (a x)^2 > 0`, as an answer through an even root says where the root is real.
+Where the integrand is real past `a x = 1` too, through two imaginary factors cancelling, the
+answer is still declined, and a route that answers everywhere can. Rubi's 7.3.4
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/((1-a^2*x^2)^(5/2)*atanh(a*x))".ToEntity().Integrate("x")` | `integral(...)` | `(Chi(3 u) + 3 Chi(u))/(4 a) provided 1 - (a x)^2 > 0`, for `u = artanh(a x)` |
+| `"1/((1-a^2*x^2)^(3/2)*atanh(a*x))".ToEntity().Integrate("x")` | `integral(...)` | `Chi(u)/a provided 1 - (a x)^2 > 0` |
+| `"x/((1-a^2*x^2)^(3/2)*atanh(a*x)^2)".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `Chi`, `provided 1 - (a x)^2 > 0` |
+| `"x*atanh(a*x)^3/(1-a^2*x^2)^(3/2)".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative, `provided 1 - (a x)^2 > 0` |
 
 ### A zero imaginary part is on the real axis, whatever its sign
 
@@ -718,6 +814,23 @@ met piece by piece now ([#1409](https://github.com/asc-community/AngouriMath/iss
 |---|---|---|
 | `{ x in RR : x^2 - 3 x + 2 >= 0 } = { y in RR : y <= 1 or y >= 2 }` | left as written | `True` |
 | `"({ 2 } \/ (-oo; 1] \/ (2; +oo)) /\ (1; 2)".ToEntity().Evaled` | left as written | `{ }` |
+
+### The size of an infinite set is an aleph, and sizes compare
+
+`card` of an infinite set is an aleph, `aleph(k)`, or a power of 2 of one: `card(ZZ)`, `card(QQ)`
+and `card(PP)` are `aleph(0)`, and `card(RR)` is `2^aleph(0)`, an aleph but not a named one, since
+which one it is is the continuum hypothesis, which ZFC does not decide: `2^aleph(0) = aleph(1)`
+stays as written. `card(powerset(S))` is `2^card(S)`. A sum or a product of sizes, one of them
+infinite, is the larger, and a difference or a quotient of sizes has no value and is `NaN`, as
+`log(0)` is. Sizes compare by what ZFC proves, and a set is smaller than its power set whatever it
+is ([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's §7.6).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"card(ZZ)".ToEntity().Simplify()` | `#ZZ` | `aleph(0)` |
+| `"card(ZZ) = card(QQ)".ToEntity().Simplify()` | `#ZZ = #QQ` | `True` |
+| `"card(ZZ) < card(RR)".ToEntity().Simplify()` | `#ZZ < #RR` | `True` |
+| `"aleph(0) + 1".ToEntity().Simplify()` | `1` — `aleph(0)` was read as `aleph * 0` | `aleph(0)` |
 
 ### An integer range is listed, and a family of sets has a union and an intersection
 
@@ -782,6 +895,23 @@ emptiness as a proof: `forall x in RR : x^2 in ZZ` was `True`
 | `"x^2 in {1, 4}".Solve("x")` | `{}` — wrong | `{ 1, -1, 2, -2 }` |
 | `"x^2 in ZZ".Solve("x")` | `{}` — wrong | `{ x : x ^ 2 in ZZ }`, left as written |
 | `forall x in RR : x^2 in ZZ` | `UnhandledParseException` (quantifiers are new since) | `False` |
+### An equation between moduli is left unsolved over the complex numbers, and solved by cases over the reals
+
+An expression real for every complex `x`, with `x` only ever inside a modulus, is one real condition
+on the two real unknowns `x` is made of, so what solves it is a curve: `abs(x - 2) = abs(x - 3)` holds
+on the whole line `Re x = 5/2`. **Wrong answer fixed**: Newton's method found points of such a curve
+and answered them as the solution set, and `abs(x - 1) + abs(x - 2) = 5` missed its real root `4`
+for points of an ellipse. It is now left as the set of the `x` satisfying it. With the codomain set
+to `RR`, an equation in moduli of linear functions is solved by cases between the kinks, where each
+modulus has one sign: `abs(x - 2) = abs(x - 3)` is `{ 5/2 }` (Sullivan and Mackey's Prob 1.5.16), and
+`abs(x - 1) + abs(x - 2) = 1` is `[1; 2]` ([#1573](https://github.com/asc-community/AngouriMath/issues/1573)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"abs(x - 2) = abs(x - 3)".ToEntity().Solve("x")` | `{ 2.4999… - 53.004…i, 2.4999… + 53.004…i, … }` | `{ x : abs(x - 2) = abs(x - 3) }` |
+| the same, with `MathS.Settings.Codomain` set to `RR` | `{ 2.4999… - 53.004…i, 2.4999… + 53.004…i, … }` | `{ 5/2 }` |
+| `"abs(x - 1) + abs(x - 2) = 5".ToEntity().Solve("x")`, codomain `RR` | `{ -1, 3.9997… - 0.0345…i, 3.9997… + 0.0345…i, … }` | `{ -1, 4 }` |
+
 ### `...` is the pattern operator
 
 `{1, 2, ..., n}`, `{2, 4, ..., 2 n}`, `{5, 10, 15, ...}`, `{..., -1, 0}`, `1 + 2 + ... + n` and
@@ -900,6 +1030,39 @@ onto `B`, Sullivan and Mackey's Def 7.4.1, [#1409](https://github.com/asc-commun
 | `(-oo)^2` | `NaN` — wrong | `+oo` |
 | `forall b in RR : exists a in RR : a^3 = b` | `UnhandledParseException` (quantifiers are new since; left as written when they arrived) | `True` |
 | `forall b in RR : exists a in RR : e^a = b` | `UnhandledParseException` | `False` |
+
+### One-to-one is decided for a quotient of polynomials on an interval
+
+`forall a in S : forall b in S : f(a) = f(b) implies a = b` — `f` one-to-one on `S`, Sullivan and
+Mackey's Def 7.4.1 — is decided for a quotient of polynomials on an interval by the sign of its
+derivative between the zeros inside: strictly monotone is one-to-one, and a turn is not. The cube
+is one-to-one on the reals although its derivative is zero at 0; the square is on `[0; +oo)`. On the
+whole numbers only a yes carries over from the interval around them
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall a in RR : forall b in RR : a^3 = b^3 implies a = b` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+| `forall a in [0; +oo) : forall b in [0; +oo) : a^2 = b^2 implies a = b` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+| `forall a in RR : forall b in RR : a^3 - 3 a = b^3 - 3 b implies a = b` | `UnhandledParseException` | `False` |
+
+### A family of intervals with monotone ends is the interval between their extremes
+
+`union(A_n, n in I)` and `intersection(A_n, n in I)` of intervals whose ends are quotients of
+polynomials in the index, monotone over its range, are the interval between the extremes of the
+ends: an intersection always, a union where the family is a chain or the index runs over an
+interval. An end is closed where the family's ends are and the extreme is reached, or, in an
+intersection, where it is only approached. Sullivan and Mackey's §3.9.5 Try 8–10: the intersection
+of `(-1/n; 1/n)` over `ZZ+` is `{ 0 }`, the union of `(x; x + 1)` over `(0; 1)` is `(0; 2)`, and
+the union of `[0; (n - 1)/n)` is `[0; 1)`, which is the intersection of `(-1/n; 1)`
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `intersection((-1/n; 1/n), n in ZZ+)` | `UnhandledParseException` (left as written when families arrived) | `{ 0 }` |
+| `union((x; x + 1), x in (0; 1))` | `UnhandledParseException` (left as written when families arrived) | `(0; 2)` |
+| `union([0; (n - 1)/n), n in ZZ+) = intersection((-1/n; 1), n in ZZ+)` | `UnhandledParseException` | `True` |
+
 ### The binomial coefficient's identities, and its sums in closed form
 
 Pascal's rule, the chairperson identity and the symmetry are rewrite rules, each in the direction
@@ -928,11 +1091,18 @@ where `P` is not decided, so a count is a sum of brackets: `sum(iverson(k divide
 ([#1478](https://github.com/asc-community/AngouriMath/issues/1478)). In 2.5.0 the name was read as a
 variable multiplying its argument, and a product with a truth value is `NaN`.
 
+A sum of a bracket is counted in closed form, however long the range, where the statement bounds the
+index, fixes it at a point, fixes its residue or makes it a perfect power, with `not` and `or` counted by inclusion and
+exclusion: the number of whole numbers from `L` to `U` in the class `r` modulo `m` is
+`floor((U - r)/m) - floor((L - 1 - r)/m)`, and never below zero.
+
 | Input | Was (2.5.0) | Now |
 |---|---|---|
 | `"iverson(2 > 1)".ToEntity().Simplify()` | `NaN` — `iverson * (2 > 1)` | `1` |
 | `"iverson(x > 0)".ToEntity().Simplify()` | `iverson * (x > 0)` | `iverson(x > 0)` |
 | `"sum(sum(sum(iverson(r + b + g = 4), g, 0, 3), b, 0, 3), r, 0, 3)".ToEntity().Simplify()` | `NaN` | `12` |
+| `"sum(iverson(2 divides k or 3 divides k), k, 1, 1000)".ToEntity().Simplify()` | `sum(iverson * (2 divides k or 3 divides k), k, 1, 1000)` | `667` |
+| `"sum(sum(sum(iverson(a + b + c = 20), c, 0, 20), b, 0, 20), a, 0, 20)".ToEntity().Simplify()` | did not finish in two minutes | `231` |
 
 ### A statement about a sum up to `n` is decided by induction
 
@@ -1006,6 +1176,23 @@ below are one indeterminate. Rubi's 7.5.1 and 7.6.1
 | `"x * acsch(c * x)".ToEntity().Integrate("x")` | `integral(x * ln(1 / (c * x) + sqrt(1 / (c * x) ^ 2 + 1)), x)` | an antiderivative, `provided c^2 > 0` |
 | `"x^2 * asech(c * x)".ToEntity().Integrate("x")` | `integral(...)`, the same | an antiderivative |
 | `"x / sqrt(1 + 1/(c*x)^2)".ToEntity().Integrate("x")` | `integral(x / sqrt(1 + 1 / (c * x) ^ 2), x)` | an antiderivative, `provided c^2 > 0` |
+
+### `arsech` and `arcsch` below the bar are integrated
+
+`1/(x^2 (a + b arcsch(c x)))` and `1/(x^4 (a + b arsech(c x)))` were left unevaluated. The
+substitution that undoes an inverse hyperbolic function read `arsinh`, `arcosh` and `artanh` off
+their logarithms and not these two, which are the `arsinh` and the `arcosh` of `1/L`. Under
+`L = csch(u)` or `L = sech(u)` a power of `x` below the bar is a polynomial in `cosh(u)` and
+`sinh(u)` over a power of `a + b u`, which the hyperbolic sine and cosine integrals and `Ei`
+answer. Rubi's 7.5.1, 7.5.2 and 7.6.1
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x^2*(a+b*acsch(c*x)))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `Ei` |
+| `"1/(x^4*(a+b*asech(c*x)))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `Chi` and `Shi` |
+| `"1/(e^asech(a*x)*x^5)".ToEntity().Integrate("x")` | `integral(...)` | a polynomial in `1/(a x) - sqrt(1/(a x)^2 - 1)` and its reciprocal |
+
 ### `n in ZZ and 2^n > n^2` is solved to a set, and was a refusal
 
 An inequality with an exponential or a factorial over the whole numbers is solved to the members
@@ -1087,6 +1274,19 @@ that is not a bound by trying the members in order from the least, so Sullivan a
 | `"min(x, x in ZZ+ and x^2 > 50)".ToEntity().Evaled` | `UnhandledParseException` — `ZZ+` is new since | `8` |
 | `"prime(25)".ToEntity().Evaled` | `prime * 25` — juxtaposition of a variable `prime` | `97`; `prime(n)` is the `n`-th prime, `NaN` off the positive whole numbers |
 | `"valuation(12, 2)".ToEntity().Evaled` | `UnrecognizedFunctionParseException` | `2`; `valuation(n, p)` is the `p`-adic valuation, `+oo` at `0` and `NaN` off the primes |
+
+### Over the primes, a repeating statement is decided by the modulus's prime factors and units
+
+A statement that repeats modulo `M`, asked of the primes past some bound, is its value at each prime
+factor of `M` past the bound and at each unit modulo `M`: every prime past those factors is a unit,
+and every unit is the residue of infinitely many primes, by Dirichlet's theorem. So
+`forall p in PP : p > 3 implies 24 divides p^2 - 1` is `True` while the same from `p > 2` is `False`
+at `3`, Sullivan and Mackey's Prob 6.7.5 and its erratum, and `exists p in PP : p > 10 and
+p = 3 (mod 4)` is `True` ([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall p in PP : p > 3 implies 24 divides p^2 - 1` | `UnhandledParseException` (left as written when `PP` arrived) | `True` |
 
 ### `atanh(tanh(a + b x))` under an integral is linear in `x`, and was an atom no rule read
 
@@ -1908,6 +2108,20 @@ was answered, and wrongly: the answer held `x`
 | `"(x /\\ {1, 2}) = {1}".ToEntity().Solve("x")` | throws `NotSufficientlySupportedException` | `{ x : x /\ { 1, 2 } = { 1 } }` |
 | `"(x \\ {1}) = {2}".ToEntity().Solve("x")` | throws `NotSufficientlySupportedException` | `{ x : x \ { 1 } = { 2 } }` |
 | `"powerset(x) = {{}, {1}}".ToEntity().Solve("x")` | `{ { {  }, { 1 / x } } }` | `{ x : powerset(x) = { {  }, { 1 } } }` |
+
+### A cost model that throws is not taken as declining a candidate
+
+Equality saturation called the cost model inside a catch-all and took an exception for the model
+declining the candidate it was pricing: a model that threw on everything returned the input as it
+was, and a defect in one looked like a decline. The exception now reaches the caller. A model
+declines a candidate by answering `NaN`, as it always could. A cancellation inside a rule's
+right-hand side reaches the caller the same way, where it was taken for the rule declining
+([#1546](https://github.com/asc-community/AngouriMath/issues/1546)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `Transformation.EqualitySaturation(WorkBudget.Unlimited, new CostModel("throws", "", e => throw new InvalidOperationException())).ApplyOrKeep("x + 0 + y*1")` | `x + 0 + y * 1` | throws `InvalidOperationException` |
+| The same with `e => double.NaN` for the cost | `x + 0 + y * 1` | `x + 0 + y * 1` |
 
 ### `erf`, `erfc` and `erfi` are functions
 

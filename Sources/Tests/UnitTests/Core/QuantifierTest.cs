@@ -91,6 +91,19 @@ namespace AngouriMath.Tests.Core
         [InlineData("exists! k in ZZ : (0 < k and k < 7) and 3 divides k and 2 divides k", "True")]
         [InlineData("forall k in ZZ : (0 < k and k < 7 and 2 divides k) implies 3 divides binomial(7, k) - 1", "False")]
         [InlineData("forall n in ZZ : n >= 5 implies 2^n > n^2", "True")]
+        // Sullivan and Mackey's coins and special lands (Probs 2.7.8 and 5.7.4, §5.5.3 Try 3).
+        // What n = p a + q b leaves of b is a divisibility and a sign, the least a is below a
+        // period, and past a threshold the rest repeats: 13 is the largest sum 3- and 8-coins
+        // do not make, 23 the largest of 4 and 9.
+        [InlineData("exists a in ZZ* : exists b in ZZ* : 13 = 3 a + 8 b", "False")]
+        [InlineData("exists a in ZZ* : exists b in ZZ* : 12 = 3 a + 8 b", "True")]
+        [InlineData("exists a in ZZ* : exists b in ZZ* : 29 = 7 a + 6 b", "False")]
+        [InlineData("exists a in ZZ+ : exists b in ZZ+ : 6 = 2 a + 3 b", "False")]
+        [InlineData("exists a in ZZ+ : exists b in ZZ+ : 7 = 2 a + 3 b", "True")]
+        [InlineData("forall n in ZZ : n >= 2 implies (exists a in ZZ* : exists b in ZZ* : n = 2 a + 3 b)", "True")]
+        [InlineData("forall n in ZZ : n >= 14 implies (exists a in ZZ* : exists b in ZZ* : n = 3 a + 8 b)", "True")]
+        [InlineData("forall n in ZZ : n >= 24 implies (exists a in ZZ* : exists b in ZZ* : n = 4 a + 9 b)", "True")]
+        [InlineData("forall n in ZZ : n >= 23 implies (exists a in ZZ* : exists b in ZZ* : n = 4 a + 9 b)", "False")]
         // Floors and ceilings of n over a whole number beside n itself repeat where the drifts
         // cancel, and the residues decide them: floor(n/2) + ceil(n/2) = n, and Hermite's
         // identity for thirds.
@@ -116,6 +129,15 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall p in PP : forall k in ZZ : k < p implies p divides binomial(p, k)", "False")]
         [InlineData("forall p in PP : forall k in ZZ : (0 < k and k <= p) implies p divides binomial(p, k)", "False")]
         [InlineData("forall p in PP : forall p in ZZ+ : forall k in ZZ : (0 < k and k < p) implies p divides binomial(p, k)", "False")]
+        // Over the primes, a statement repeating modulo M is its prime factors and its units: past
+        // 3 every prime is a unit modulo 24 and p^2 - 1 a multiple of it, while 3 itself is not,
+        // Sullivan and Mackey's Prob 6.7.5; and each unit is the residue of infinitely many primes.
+        [InlineData("forall p in PP : p > 3 implies 24 divides p^2 - 1", "True")]
+        [InlineData("forall p in PP : p > 2 implies 24 divides p^2 - 1", "False")]
+        [InlineData("forall p in PP : p > 5 implies 240 divides p^4 - 1", "True")]
+        [InlineData("forall p in PP : p > 2 implies 2 divides p + 1", "True")]
+        [InlineData("exists p in PP : p > 3 and 3 divides p", "False")]
+        [InlineData("exists p in PP : p > 10 and p = 3 (mod 4)", "True")]
         // Sullivan and Mackey's Prob 4.11.6: for whole x and y the witnesses are x - y and y - x,
         // and one of them is not negative. Not so in ZZ+, where x = y leaves 0, nor for reals,
         // where 1/2 and 0 leave ±1/2.

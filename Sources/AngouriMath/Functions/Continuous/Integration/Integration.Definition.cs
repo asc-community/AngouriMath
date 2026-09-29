@@ -728,6 +728,9 @@ namespace AngouriMath.Functions.Algebra
             // cosine, by the half angle at which they are squares: `1 + sin(y)` is `2 sin(u)^2`. Before
             // the substitution search, which spent twenty seconds on the radicals of the sine.
             if ((answer = IndefiniteIntegralSolver.SolveByTheHalfAngleWhereOnePlusASineIsASquare(expr, x, integrateByParts)) is { }) return answer;
+            // And a half-odd power of a +- a sec(y), which is that square over cos(y): by the half-angle
+            // tangent, in which the whole is rational beside one root.
+            if ((answer = IndefiniteIntegralSolver.SolveByTheHalfAngleTangentBesideAHalfOddPowerOfOnePlusASecant(expr, x, integrateByParts)) is { }) return answer;
             // And `a ± a cosh(y)` under a fractional power: `2a cosh(y/2)^2`, `-2a sinh(y/2)^2`.
             if ((answer = IndefiniteIntegralSolver.SolveByTheHalfAngleWhereOnePlusAHyperbolicCosineIsASquare(expr, x, integrateByParts)) is { }) return answer;
             // Several trigonometric arguments that are multiples of one linear with an offset or a
@@ -742,6 +745,9 @@ namespace AngouriMath.Functions.Algebra
             // `sqrt(a + a sin(x))` for a positive `a` only. Before the substitution search, which
             // spends the budget on the roots.
             if ((answer = IndefiniteIntegralSolver.SolveByTakingAConstantOutOfAFractionalPower(expr, x, integrateByParts)) is { }) return answer;
+            // Two roots of linears with one slope, rationalised together by their sum: before the
+            // substitution search, which reads each root on its own.
+            if ((answer = IndefiniteIntegralSolver.SolveBySubstitutingTheSumOfTwoRootsOfLinears(expr, x, integrateByParts)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveBySubstitution(expr, x, integrateByParts)) is { }) return answer;
             // A logarithmic derivative the substitution above could not read for a symbol in
             // an exponent: `(x^(n-1) - 1)/(x^n - n x)`.
@@ -917,6 +923,9 @@ namespace AngouriMath.Functions.Algebra
             // remainder: `e^x (1 - x - x^2)/sqrt(1 - x^2)` is `(e^x sqrt(1 - x^2))'`.
             if ((answer = IndefiniteIntegralSolver.SolveAnExponentialTimesAnOddHalfPowerOfAQuadratic(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveALinearBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
+            // And over a quadratic, closed as well: beside the linear's, since each of the two is
+            // a piece the rational function below is taken apart into.
+            if ((answer = IndefiniteIntegralSolver.SolveALinearOverAQuadraticBesideTheRootOfAnother(expr, x)) is { }) return answer;
             if ((answer = IndefiniteIntegralSolver.SolveARationalFunctionBesideTheRootOfAQuadratic(expr, x)) is { }) return answer;
             // A linear below the bar that divides the radicand, written over it: after the two
             // rules above, which read a linear beside the root as a pole and find nothing to take
