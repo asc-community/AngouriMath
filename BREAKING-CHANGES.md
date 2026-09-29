@@ -401,6 +401,23 @@ taken apart into pieces each closed the same way
 | `"(2 + x)/((2 + 4*x - 3*x^2)*(1 + 3*x + 2*x^2)^(3/2))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
 | `"1/((x^2 + 1)*sqrt(x^2 + x + 1))".ToEntity().Integrate("x")` | `integral(...)` | a logarithm and an arctangent |
 
+### A polynomial over a power of a quadratic beside the root of another is integrated
+
+`P/(A^k sqrt(B))`, `A` and `B` two different quadratics and `k` at least two, was left
+unevaluated. So were Rubi's `sqrt(a + a sec(x))/(c + d sec(x))^2` and its kin, which the
+half-angle tangent writes as `(1 - t^2)^(3/2)/((1 + t^2)((c + d) + (d - c) t^2)^2)`. They are
+reduced a power at a time: `L/(A^j sqrt(B))`, with `L` linear, is the derivative of
+`(p + q x) sqrt(B)/A^(j - 1)` plus a quadratic over `A^(j - 1) sqrt(B)`, from five linear
+equations. The reduction goes down to the closed form over `A` of the entry above. With symbols
+in both quadratics, the cube's coefficients grow past what the reduction takes, and it declines
+([#718](https://github.com/asc-community/AngouriMath/issues/718)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"(g + h*x)/((d + k*x + f*x^2)^2*sqrt(a + b*x + c*x^2))".ToEntity().Integrate("x")` | `integral(...)` | a linear times the root over the quadratic, and two arctangents |
+| `"(7 + 13*x)/((5 + x + 2*x^2)^3*sqrt(2 + x + 3*x^2))".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative |
+| `"sqrt(a + a*sec(x))/(c + d*sec(x))^2".ToEntity().Integrate("x")` | `integral(...)` | an antiderivative in `tan(x/2)` |
+
 ### A function comes out of a fractional power of its even power with its sign
 
 **Improvement, not silent.** The entry two above made `(sin(x)^2)^(3/2)` the modulus `|sin(x)|^3`
