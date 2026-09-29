@@ -88,7 +88,7 @@ namespace AngouriMath.Functions
             // caller that has built one quotient it needs in lowest terms -- the
             // coefficients of a partial fraction, whose whole point is to be small -- may
             // raise it.
-            if (numerator.Complexity + denominator.Complexity > maxComplexity)
+            if ((long)numerator.Complexity + denominator.Complexity > maxComplexity)
                 return false;
 
             var variables = numerator.Vars
