@@ -793,15 +793,20 @@ of [#1409](https://github.com/asc-community/AngouriMath/issues/1409) — is `Tru
 ### `image` and `preimage` of a set under an expression
 
 `image(f(x), x in A)` is `{ f(x) : x in A }` — `union({f(x)}, x in A)` — listed over a listed
-`A`, an interval by interval arithmetic where `x` occurs once in `f`, and a membership object
-otherwise; `preimage(f(x), x in A, Y)` is `{ x in A : f(x) in Y }`, and a set builder of that
-shape is solved on evaluation where the membership is read (a listed `Y`, an interval)
+`A`, an interval by interval arithmetic where `x` occurs once in `f`, intervals read off the
+critical points and the one-sided limits where `f` is a quotient of polynomials with rational
+coefficients and `A` is made of intervals (§7.3.5 Try 1's `x/(1 + x)` on `RR \ {-1}` is
+`RR \ {1}`), and a membership object otherwise; `preimage(f(x), x in A, Y)` is
+`{ x in A : f(x) in Y }`, and a set builder of that shape is solved on evaluation where the
+membership is read (a listed `Y`, an interval)
 ([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's §7.3). Both
 names are keywords now, and were names.
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
 | `image(9 c / 5 + 32, c in (0; 100))` | `UnhandledParseException` | `(32; 212)` |
+| `image(x^2/(1 + x^2), x in RR)` | `UnhandledParseException` | `[0; 1)` |
+| `image(x/(1 + x), x in RR \ {-1})` | `UnhandledParseException` | `(-oo; 1) \/ (1; +oo)` |
 | `preimage(x^2, x in RR, {1})` | `UnhandledParseException` | `{ 1, -1 }` |
 | `{ x in ZZ : x^2 in {1, 4} }` | `{ x in ZZ : x ^ 2 in { 1, 4 } }` — left as written | `{ 1, -1, 2, -2 }` |
 

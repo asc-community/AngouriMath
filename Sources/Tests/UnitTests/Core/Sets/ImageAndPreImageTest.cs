@@ -36,18 +36,69 @@ namespace AngouriMath.Tests.Core.Sets
             => Assert.Equal(expected.ToEntity().Evaled, Evaluated(expression));
 
         /// <summary>
-        /// Ex 7.3.4: <c>x^2/(1 + x^2)</c> on <c>RR</c> has image <c>[0, 1)</c>. The name occurs
-        /// twice, so interval arithmetic would overestimate and is not used; the family stays an
-        /// object and answers membership through the quantifiers where it can.
+        /// A quotient of polynomials the name occurs in more than once, by its critical points and
+        /// its limits. Ex 7.3.4, <c>x^2/(1 + x^2)</c> on <c>RR</c>, is <c>[0, 1)</c>: <c>0</c> is
+        /// taken at the turning point and <c>1</c> only approached. Prob 7.8.8,
+        /// <c>(2x - 1)/(2x (1 - x))</c> on <c>(0, 1)</c>, is every real. A turning point takes the
+        /// value an open end only approaches, so <c>x^3 - 3x</c> on <c>(-2, 2)</c> is closed.
+        /// </summary>
+        [Theory]
+        [InlineData("image(x^2/(1 + x^2), x in RR)", "[0; 1)")]
+        [InlineData("image((2 x - 1)/(2 x (1 - x)), x in (0; 1))", "(-oo; +oo)")]
+        [InlineData("image(x^2 - 2 x, x in [0; 3])", "[-1; 3]")]
+        [InlineData("image(x^3 - 3 x, x in (-2; 2))", "[-2; 2]")]
+        [InlineData("image(x^3 - 3 x, x in RR)", "(-oo; +oo)")]
+        [InlineData("image(x^4 - 2 x^2, x in RR)", "[-1; +oo)")]
+        [InlineData("image((x^2 + 1)/x, x in (0; +oo))", "[2; +oo)")]
+        [InlineData("image(x/(1 + x^2), x in RR)", "[-1/2; 1/2]")]
+        public void AQuotientOfPolynomialsHasItsImageByCalculus(string expression, string expected)
+            => Assert.Equal(expected.ToEntity().Evaled, Evaluated(expression));
+
+        /// <summary>
+        /// Across a pole or a removed point the image is a union, compared at points: §7.3.5
+        /// Try 1, <c>x/(1 + x)</c> on <c>RR \ {-1}</c>, is <c>RR \ {1}</c>.
+        /// </summary>
+        [Theory]
+        [InlineData("image(x/(1 + x), x in RR \\ {-1})", "-1 0 1/2 999/1000 1001/1000 2", "1")]
+        [InlineData("image(1/x - x, x in RR \\ {0})", "-2 0 1 5", "")]
+        [InlineData("image(1/(x^2 - 1), x in RR \\ {-1, 1})", "-2 -1 1/2 3", "-1/2 0")]
+        public void AnImageAcrossAPoleIsAUnion(string expression, string inside, string outside)
+        {
+            var image = (Set)Evaluated(expression);
+            foreach (var (points, expected) in new[] { (inside, true), (outside, false) })
+                foreach (var point in points.Split(' ', System.StringSplitOptions.RemoveEmptyEntries))
+                {
+                    Assert.True(image.TryContains(point.ToEntity(), out var contains), $"{image} does not decide {point}");
+                    Assert.Equal(expected, contains);
+                }
+        }
+
+        /// <summary>
+        /// Membership in an image is membership in what it evaluates to: <c>1</c> is approached by
+        /// <c>x^2/(1 + x^2)</c> and never taken.
         /// </summary>
         [Fact]
-        public void AnImageWithTheNameTwiceStaysAnObject()
+        public void MembershipInAnImageIsDecided()
         {
-            var image = "image(x^2/(1 + x^2), x in RR)".ToEntity();
-            Assert.Equal(image, image.Evaled);
             Assert.Equal(Boolean.True, Evaluated("1/2 in image(x^2/(1 + x^2), x in RR)"));
+            Assert.Equal(Boolean.False, Evaluated("1 in image(x^2/(1 + x^2), x in RR)"));
             Assert.Equal(Boolean.False, Evaluated("1/2 in image(9 c / 5 + 32, c in (0; 100))"));
             Assert.Equal(Boolean.True, Evaluated("100 in image(9 c / 5 + 32, c in (0; 100))"));
+        }
+
+        /// <summary>
+        /// An image the calculus cannot read stays the family it is: a function that is not a
+        /// quotient of polynomials, a derivative of degree five whose zeros the solver does not
+        /// list, and a symbolic coefficient.
+        /// </summary>
+        [Theory]
+        [InlineData("image(x sin(x), x in RR)")]
+        [InlineData("image(x^6 + x, x in RR)")]
+        [InlineData("image(a x^2 + x, x in RR)")]
+        public void AnImageTheCalculusCannotReadStaysAnObject(string expression)
+        {
+            var image = expression.ToEntity();
+            Assert.Equal(image, image.Evaled);
         }
 
         /// <summary>Ex 7.3.10: the pre-images of <c>x^2</c>; §7.3.5 rows over the integers.</summary>

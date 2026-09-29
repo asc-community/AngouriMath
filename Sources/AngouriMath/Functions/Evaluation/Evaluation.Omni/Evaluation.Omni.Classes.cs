@@ -234,6 +234,13 @@ namespace AngouriMath
                         && image.First() is var f && f.Nodes.Count(node => node == Var) == 1
                         && f.Substitute(Var, overAsInterval).InnerSimplified(isExact) is Set imaged)
                         return imaged;
+                    // A quotient of polynomials the name occurs in more than once, over the
+                    // reals, an interval, or intervals with points taken out, by its critical
+                    // points and its limits: x/(1 + x) over RR \ {-1} is RR \ {1}.
+                    // https://github.com/asc-community/AngouriMath/issues/1409
+                    if (this is IndexedUnionf && Var is Variable name && body is FiniteSet { Count: 1 } single
+                        && Functions.ImageByCalculus.Of(single.First(), name, over) is { } byCalculus)
+                        return byCalculus;
                     if (over is FiniteSet indices)
                     {
                         if (indices.Count == 0)
