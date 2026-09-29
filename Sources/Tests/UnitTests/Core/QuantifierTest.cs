@@ -236,6 +236,28 @@ namespace AngouriMath.Tests.Core
             Assert.Equal(entity, printed.ToEntity());
         }
 
+        /// <summary>
+        /// A quantifier after a connective takes the rest of the line, as it does at the start of
+        /// one, so the brackets it needed there are optional: Sullivan and Mackey's §5.5.3 Try 3 as
+        /// they write it. https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        [Theory]
+        [InlineData("p implies forall x in S : x > 0", "p implies (forall x in S : x > 0)")]
+        [InlineData("p -> exists x in S : x > 0 and x < 1", "p -> (exists x in S : x > 0 and x < 1)")]
+        [InlineData("p and exists x in S : x > 0 or x < 1", "p and (exists x in S : x > 0 or x < 1)")]
+        [InlineData("p & forall x in S : x > 0", "p & (forall x in S : x > 0)")]
+        [InlineData("p or exists! x in S : x = 0", "p or (exists! x in S : x = 0)")]
+        [InlineData("p xor forall x in S : x > 0", "p xor (forall x in S : x > 0)")]
+        [InlineData("forall n in ZZ : n >= 2 implies exists a in ZZ* : exists b in ZZ* : n = 2 a + 3 b",
+            "forall n in ZZ : n >= 2 implies (exists a in ZZ* : exists b in ZZ* : n = 2 a + 3 b)")]
+        public void AQuantifierAfterAConnectiveTakesTheRestOfTheLine(string written, string bracketed)
+            => Assert.Equal(bracketed.ToEntity(), written.ToEntity());
+
+        [Fact]
+        public void TheCoinsReadAsTheBookWritesThem()
+            => Assert.Equal(Entity.Boolean.True,
+                "forall n in ZZ : n >= 2 implies exists a in ZZ* : exists b in ZZ* : n = 2 a + 3 b".ToEntity().Simplify());
+
         [Fact]
         public void Latex()
             => Assert.Equal(@"\forall x \in \mathbb{R} : {x}^{2} \geq 0", "forall x in RR : x^2 >= 0".ToEntity().Latexize());

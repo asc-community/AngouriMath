@@ -242,27 +242,35 @@ negate_expression returns[Entity value]
     | op = comparison_expression { $value = $op.value; }
     ;
 
+/* A quantifier may follow a connective, and its body runs to the end of the line there as it
+   does at the start: `n >= 2 implies exists a in ZZ* : n = 2 a + 1` quantifies `n = 2 a + 1`,
+   as Sullivan and Mackey write it. Being last, it ends the chain it closes.
+   https://github.com/asc-community/AngouriMath/issues/1409 */
 and_expression returns[Entity value]
     : m1 = negate_expression { $value = $m1.value; }
     ('and' m2 = negate_expression { $value = $value & $m2.value; } |
-     '&' m2 = negate_expression { $value = $value & $m2.value; }
+     '&' m2 = negate_expression { $value = $value & $m2.value; } |
+     ('and' | '&') q = quantified_expression { $value = $value & $q.value; }
     )*
     ;
 
 xor_expression returns[Entity value]
     : m1 = and_expression { $value = $m1.value; }
-    ('xor' m2 = and_expression { $value = $value ^ $m2.value; })*
+    ('xor' m2 = and_expression { $value = $value ^ $m2.value; } |
+     'xor' q = quantified_expression { $value = $value ^ $q.value; })*
     ;
 
 or_expression returns[Entity value]
     : m1 = xor_expression { $value = $m1.value; }
-    ( 'or' m2 = xor_expression { $value = $value | $m2.value; })*
+    ( 'or' m2 = xor_expression { $value = $value | $m2.value; } |
+      'or' q = quantified_expression { $value = $value | $q.value; })*
     ;
 
 implies_expression returns[Entity value]
     : m1 = or_expression { $value = $m1.value; }
     ('implies' m2 = or_expression { $value = $value.Implies($m2.value); } |
-     '->' m2 = or_expression { $value = $value.Implies($m2.value); })*
+     '->' m2 = or_expression { $value = $value.Implies($m2.value); } |
+     ('implies' | '->') q = quantified_expression { $value = $value.Implies($q.value); })*
     ;
 
 /*
@@ -332,9 +340,9 @@ expression returns[Entity value]
 
 /* A quantified statement: `forall x in S : P`, `exists x in S : P`, `exists! x in S : P`,
    and `∀`, `∃`, `∃!` for the same three. The body runs to the end of the line, as a lambda's
-   does, so `forall x in S : P and Q` quantifies `P and Q`, and a quantifier under a
-   connective is bracketed -- except under `not`, which reads `not forall x in S : P` as the
-   negation of the whole statement, as it is written. Several names share a set --
+   does, so `forall x in S : P and Q` quantifies `P and Q`; after a connective it runs to the
+   end of the line too, so `P implies forall x in S : Q` is `P implies (forall x in S : Q)`, and
+   `not forall x in S : P` is the negation of the whole statement, as it is written. Several names share a set --
    `forall x, y in S : P` -- and several sets are listed in order -- `forall x in S, y in T : P`
    -- either way nesting from the left, and a name without a set is an error rather than a
    quantification over everything, since a statement is quantified over something.

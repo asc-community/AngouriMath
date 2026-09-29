@@ -353,8 +353,10 @@ of `S` satisfies `P`. The set is mandatory, because a statement is quantified ov
 `forall x : P` is refused. Several names may share a set, `forall x, y in RR : 2 x y <= x^2 + y^2`,
 and several sets may be listed, `forall a in ZZ, b in ZZ+ : ...`; either way the quantifiers nest
 from the left and print nested. The body runs to the end of the line, as a lambda arrow's does, so
-a quantifier under a connective is bracketed: `(forall x in RR : x^2 >= 0) and Q`. The one
-exception is `not`, which reads `not forall x in S : P` as the negation of the whole statement.
+a quantifier before a connective is bracketed: `(forall x in RR : x^2 >= 0) and Q`. After one —
+`and`, `or`, `xor`, `implies`, `not` — it needs no brackets and takes the rest of the line there
+too: `n >= 2 implies exists a in ZZ* : n = 2 a + 1` is `n >= 2 implies (exists a in ZZ* : n = 2 a + 1)`,
+and `not forall x in S : P` is the negation of the whole statement.
 The name is bound throughout the body and the set, so `forall x in RR : x < y` is a statement
 about `y`. Decided over a finite set by evaluating the body at every member (`forall x in {1, 2,
 3, 4} : exists y in {3, 4, 5, 6, 7, 8} : x + y = 7` is `True`), over `BB` as over `{True,

@@ -613,6 +613,18 @@ now, which is the one silent change: a variable spelled `forall` or `exists` no 
 | `forall + 1` | `forall + 1`, a variable named `forall` | `UnhandledParseException` |
 | `exists(x)` | `exists * x` | `UnhandledParseException` |
 
+### A quantifier after a connective takes the rest of the line
+
+`P implies forall x in S : Q`, and the same after `and`, `&`, `or`, `xor` and `->`, parses as
+`P implies (forall x in S : Q)`: the quantifier's body runs to the end of the line, as it does at
+the start of one, and as `not forall x in S : P` already did. It was a parse error, and the brackets
+were needed, so Sullivan and Mackey's §5.5.3 Try 3 now reads as they write it
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"forall n in ZZ : n >= 2 implies exists a in ZZ* : exists b in ZZ* : n = 2 a + 3 b".ToEntity().Simplify()` | `UnhandledParseException` (a parse error on master too) | `True` |
+
 ### A floor or a ceiling is read with what the quantifiers establish
 
 Under a quantifier, the floor and the ceiling of an expression in the bound name are rewritten
