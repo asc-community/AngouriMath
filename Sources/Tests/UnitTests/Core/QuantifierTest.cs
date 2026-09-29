@@ -78,6 +78,11 @@ namespace AngouriMath.Tests.Core
         // §4.2.1: the AGM inequality, and §4.9.5.
         [InlineData("forall x, y in RR : 2 x y <= x^2 + y^2", "True")]
         [InlineData("forall y in RR : y > 1 implies y^2 - 1 > 0", "True")]
+        // Prob 4.11.22: for x > 0, (x^2 - 4)/(x^2 + 1) > 1 - 1/x is x^2 - 5 x + 1 > 0, which makes
+        // (x^2 + 4)/(x^2 + 1) < 1 + 1/x, x^2 - 3 x + 1 > 0, and not the other way round, at 3.
+        // The x where the first implication fails are where two unions of intervals meet.
+        [InlineData("forall x in RR : x > 0 implies ((x^2 - 4)/(x^2 + 1) > 1 - 1/x implies (x^2 + 4)/(x^2 + 1) < 1 + 1/x)", "True")]
+        [InlineData("forall x in RR : x > 0 implies ((x^2 + 4)/(x^2 + 1) < 1 + 1/x implies (x^2 - 4)/(x^2 + 1) > 1 - 1/x)", "False")]
         // Problem 4.11.1 over ZZ: P is 1 <= x <= 3, Q is 2 divides x, R is x^2 = 4.
         [InlineData("forall x in ZZ : (1 <= x and x <= 3) implies 2 divides x", "False")]
         [InlineData("exists x in ZZ : x^2 = 4 and 1 <= x and x <= 3", "True")]
@@ -104,6 +109,9 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall n in ZZ : n >= 14 implies (exists a in ZZ* : exists b in ZZ* : n = 3 a + 8 b)", "True")]
         [InlineData("forall n in ZZ : n >= 24 implies (exists a in ZZ* : exists b in ZZ* : n = 4 a + 9 b)", "True")]
         [InlineData("forall n in ZZ : n >= 23 implies (exists a in ZZ* : exists b in ZZ* : n = 4 a + 9 b)", "False")]
+        // A root that is a whole number is found exactly: 2/3 n - 2 is 0 at 3 and positive from 4.
+        [InlineData("forall n in ZZ* : 2/3 n - 2 <= 0", "False")]
+        [InlineData("exists n in ZZ* : 2/3 n - 2 > 0 and 2 divides n + 1", "True")]
         // Floors and ceilings of n over a whole number beside n itself repeat where the drifts
         // cancel, and the residues decide them: floor(n/2) + ceil(n/2) = n, and Hermite's
         // identity for thirds.
@@ -138,12 +146,31 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall p in PP : p > 2 implies 2 divides p + 1", "True")]
         [InlineData("exists p in PP : p > 3 and 3 divides p", "False")]
         [InlineData("exists p in PP : p > 10 and p = 3 (mod 4)", "True")]
+        // A comparison keeps one truth value past its root, so the primes below the last root are
+        // asked one by one and the rest by their residues: every prime is 2, or 1 or 3 modulo 4,
+        // and every prime but 2 and 3 is 1 or 5 modulo 6.
+        [InlineData("forall p in PP : p = 1 (mod 4) or p = 3 (mod 4) or p = 2", "True")]
+        [InlineData("forall p in PP : p = 1 (mod 4) or p = 3 (mod 4)", "False")]
+        [InlineData("forall p in PP : p = 2 or 2 divides p + 1", "True")]
+        [InlineData("forall p in PP : p = 2 or p = 3 or 6 divides p^2 - 1", "True")]
+        [InlineData("forall p in PP : p >= 5 implies p = 1 (mod 6) or p = 5 (mod 6)", "True")]
+        [InlineData("forall p in PP : p < 10 implies p = 2 or 2 divides p + 1", "True")]
+        [InlineData("exists p in PP : p > 2 and 2 divides p", "False")]
+        [InlineData("exists p in PP : p < 3 and p = 2 (mod 3)", "True")]
         // Sullivan and Mackey's Prob 4.11.6: for whole x and y the witnesses are x - y and y - x,
         // and one of them is not negative. Not so in ZZ+, where x = y leaves 0, nor for reals,
         // where 1/2 and 0 leave ±1/2.
         [InlineData("forall x in ZZ : forall y in ZZ : exists z in ZZ* : x - y = z or y - x = z", "True")]
         [InlineData("forall x in ZZ : forall y in ZZ : exists z in ZZ+ : x - y = z or y - x = z", "False")]
         [InlineData("forall x in RR : forall y in RR : exists z in ZZ* : x - y = z or y - x = z", "False")]
+        // Ex 7.2.6: f(z) = |2 z + 1| is a function from ZZ to Sullivan and Mackey's N, which is
+        // ZZ+, since the modulus of a whole number is one, and 2 z + 1 = 0 has no whole root.
+        // |z| is not, at 0, nor |z^2 - 4|, at 2.
+        [InlineData("forall z in ZZ : abs(2 z + 1) in ZZ+", "True")]
+        [InlineData("forall z in ZZ : abs(z) in ZZ+", "False")]
+        [InlineData("forall z in ZZ : abs(z^2 - 4) in ZZ+", "False")]
+        [InlineData("forall z in ZZ : abs(z - 3) in ZZ*", "True")]
+        [InlineData("forall n in ZZ+ : abs(n) in ZZ+", "True")]
         // Prob 4.11.5: a square is not the greatest square, for y = x^2 + 1 is past every x, and
         // a term in x is a witness for every x at once. Where none of the terms tried works, a
         // single member may still decide it: x = 0 is below every square.
@@ -198,6 +225,22 @@ namespace AngouriMath.Tests.Core
         public void LeftAsWrittenWhereNothingDecidesIt(string statement)
             => Assert.Equal(statement.ToEntity(), statement.ToEntity().Simplify());
 
+        /// <summary>
+        /// Where a comparison with rational coefficients settles is found exactly, so the verdict
+        /// does not depend on the decimal precision: at 16 or 30 digits 2/3 rounds up, which put
+        /// the root of 2/3 n - 2 below 3, and the statement was decided as though 3 were past it.
+        /// </summary>
+        [Theory]
+        [InlineData(16)]
+        [InlineData(30)]
+        [InlineData(100)]
+        public void WhereAComparisonSettlesDoesNotDependOnThePrecision(int digits)
+        {
+            using var _ = MathS.Settings.DecimalPrecisionContext.Set(new PeterO.Numbers.EContext(digits, PeterO.Numbers.ERounding.HalfUp, -digits, 1000, false));
+            Assert.Equal(Entity.Boolean.False, MathS.FromString("forall n in ZZ* : 2/3 n - 2 <= 0", useCache: false).Simplify());
+            Assert.Equal(Entity.Boolean.False, MathS.FromString("forall n in ZZ* : 5/9 n - 5 <= 0", useCache: false).Simplify());
+        }
+
         [Fact]
         public void AWholeNumberIsNotAssumedOfAReal()
             // binomial(p, k) of a real k is not a whole number, so the rule for divisibility has
@@ -235,6 +278,28 @@ namespace AngouriMath.Tests.Core
             Assert.Equal(printed, entity.ToString());
             Assert.Equal(entity, printed.ToEntity());
         }
+
+        /// <summary>
+        /// A quantifier after a connective takes the rest of the line, as it does at the start of
+        /// one, so the brackets it needed there are optional: Sullivan and Mackey's §5.5.3 Try 3 as
+        /// they write it. https://github.com/asc-community/AngouriMath/issues/1409
+        /// </summary>
+        [Theory]
+        [InlineData("p implies forall x in S : x > 0", "p implies (forall x in S : x > 0)")]
+        [InlineData("p -> exists x in S : x > 0 and x < 1", "p -> (exists x in S : x > 0 and x < 1)")]
+        [InlineData("p and exists x in S : x > 0 or x < 1", "p and (exists x in S : x > 0 or x < 1)")]
+        [InlineData("p & forall x in S : x > 0", "p & (forall x in S : x > 0)")]
+        [InlineData("p or exists! x in S : x = 0", "p or (exists! x in S : x = 0)")]
+        [InlineData("p xor forall x in S : x > 0", "p xor (forall x in S : x > 0)")]
+        [InlineData("forall n in ZZ : n >= 2 implies exists a in ZZ* : exists b in ZZ* : n = 2 a + 3 b",
+            "forall n in ZZ : n >= 2 implies (exists a in ZZ* : exists b in ZZ* : n = 2 a + 3 b)")]
+        public void AQuantifierAfterAConnectiveTakesTheRestOfTheLine(string written, string bracketed)
+            => Assert.Equal(bracketed.ToEntity(), written.ToEntity());
+
+        [Fact]
+        public void TheCoinsReadAsTheBookWritesThem()
+            => Assert.Equal(Entity.Boolean.True,
+                "forall n in ZZ : n >= 2 implies exists a in ZZ* : exists b in ZZ* : n = 2 a + 3 b".ToEntity().Simplify());
 
         [Fact]
         public void Latex()

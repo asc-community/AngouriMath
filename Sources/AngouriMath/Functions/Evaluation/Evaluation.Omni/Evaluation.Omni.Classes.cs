@@ -8,6 +8,7 @@
 using AngouriMath.Core.Sets;
 using System;
 using System.Linq;
+using PeterO.Numbers;
 using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
@@ -99,8 +100,198 @@ namespace AngouriMath
                         Boolean(true) => Codomain is AngouriMath.Core.Domain.Any
                             ? New(Var, Boolean.True)
                             : SpecialSet.Create(Codomain),
-                        _ => PreImage(predicate, isExact) ?? New(Var, predicate)
+                        _ => PreImage(predicate, isExact) ?? Listed(predicate, isExact) ?? New(Var, predicate)
                     };
+                }
+
+                /// <summary>
+                /// <c>{ x in S : p }</c> for a set of numbers <c>S</c>, listed or written as intervals
+                /// where that takes no search: over a listed <c>S</c>, the members at which <c>p</c> is
+                /// decided true; over the reals, an interval or a set of whole numbers, <c>S</c> met with
+                /// the solutions of <c>p</c>, where <c>p</c> compares rational functions of <c>x</c> of
+                /// low degree with numbers for coefficients, or is an equation in moduli of linear
+                /// functions, which the solvers answer exactly. A set of whole numbers is met only where
+                /// that comes out listed. Sullivan and Mackey's §3.3.3-4, Prop 3.9.6 and Prob 3.11.4:
+                /// <c>{ x in ZZ+ : x + 8/x &lt;= 6 }</c> is <c>{ 2, 3, 4 }</c>, and
+                /// <c>{ x in RR : x^2 - 2 = 0 }</c> is <c>{ -sqrt(2), sqrt(2) }</c>.
+                /// https://github.com/asc-community/AngouriMath/issues/1409
+                /// </summary>
+                private Entity? Listed(Entity predicate, bool isExact)
+                {
+                    if (Var is not Variable x || Declared(predicate, x) is not (var declared, var rest) || !rest.ContainsNode(x))
+                        return null;
+                    if (declared is FiniteSet listed)
+                        return Increasing(Filtered(listed, x, rest, isExact));
+                    if (!WithinTheReals(declared) || !ComparesRationalFunctions(rest, x))
+                        return null;
+                    var solved = rest is Equalsf(var left, var right) && (left - right).Nodes.Any(node => node is Absf(var argument) && argument.ContainsNode(x))
+                        ? Functions.Algebra.AnalyticalSolving.ModulusSolver.SolveOverTheReals(left - right, x)
+                        : Functions.Algebra.AnalyticalSolving.StatementSolver.Solved(rest, x);
+                    return solved is null or ConditionalSet ? null : Increasing(Met(declared, solved, isExact));
+                }
+
+                /// <summary>
+                /// A union of intervals and listed real numbers written as its disjoint pieces in
+                /// increasing order, which is how it reads, with a point at an open end closing it:
+                /// <c>{ 1, 2 } \/ (-oo; 1) \/ (2; +oo)</c> is <c>(-oo; 1] \/ [2; +oo)</c>. So two set
+                /// builders for one set of numbers come out the same. As it was where an end is not a
+                /// real number.
+                /// </summary>
+                private static Entity? Increasing(Entity? set)
+                {
+                    var pieces = new System.Collections.Generic.List<(Entity Left, bool LeftClosed, Entity Right, bool RightClosed)>();
+                    bool Collect(Entity piece)
+                    {
+                        switch (piece)
+                        {
+                            case Unionf(var left, var right):
+                                return Collect(left) && Collect(right);
+                            case Interval(var left, var leftClosed, var right, var rightClosed) when left.Evaled is Number.Real && right.Evaled is Number.Real:
+                                pieces.Add((left, leftClosed, right, rightClosed));
+                                return true;
+                            case FiniteSet listed when listed.All(static member => member.Evaled is Number.Real):
+                                foreach (var member in listed)
+                                    pieces.Add((member, true, member, true));
+                                return true;
+                            default:
+                                return false;
+                        }
+                    }
+                    if (set is null || !Collect(set) || pieces.Count < 2)
+                        return set;
+                    static EDecimal At(Entity end) => ((Number.Real)end.Evaled).EDecimal;
+                    // By the left end, a closed end before an open one at the same point.
+                    pieces.Sort(static (a, b) => At(a.Left).CompareTo(At(b.Left)) is var byLeft and not 0 ? byLeft : b.LeftClosed.CompareTo(a.LeftClosed));
+                    var merged = new System.Collections.Generic.List<(Entity Left, bool LeftClosed, Entity Right, bool RightClosed)> { pieces[0] };
+                    foreach (var piece in pieces.Skip(1))
+                    {
+                        var last = merged[^1];
+                        var gap = At(piece.Left).CompareTo(At(last.Right));
+                        if (gap > 0 || gap == 0 && !last.RightClosed && !piece.LeftClosed)
+                        {
+                            merged.Add(piece);
+                            continue;
+                        }
+                        var further = At(piece.Right).CompareTo(At(last.Right));
+                        merged[^1] = further > 0 ? (last.Left, last.LeftClosed, piece.Right, piece.RightClosed)
+                            : further == 0 ? (last.Left, last.LeftClosed, last.Right, last.RightClosed || piece.RightClosed)
+                            : last;
+                    }
+                    // Points on their own are one listed set; each interval stands where it lies.
+                    var points = merged.Where(static piece => At(piece.Left).CompareTo(At(piece.Right)) == 0).Select(static piece => piece.Left).ToList();
+                    var intervals = merged.Where(static piece => At(piece.Left).CompareTo(At(piece.Right)) != 0)
+                        .Select(static piece => (Entity)new Interval(piece.Left, piece.LeftClosed, piece.Right, piece.RightClosed)).ToList();
+                    if (intervals.Count == 0)
+                        return new FiniteSet(points);
+                    var union = intervals.Aggregate(static (left, right) => new Unionf(left, right));
+                    return points.Count == 0 ? union : new Unionf(new FiniteSet(points), union);
+                }
+
+                /// <summary>The membership a set builder's predicate declares, wherever it sits among the conjuncts, and the rest.</summary>
+                private static (Set Declared, Entity Condition)? Declared(Entity predicate, Variable x)
+                {
+                    var conjuncts = Andf.LinearChildren(predicate).ToList();
+                    var at = conjuncts.FindIndex(conjunct => conjunct is Inf(var name, Set) && name == x);
+                    if (at < 0)
+                        return null;
+                    var declared = (Set)((Inf)conjuncts[at]).SupSet;
+                    conjuncts.RemoveAt(at);
+                    return (declared, conjuncts.Count == 0 ? Boolean.True : conjuncts.Aggregate(static (left, right) => left & right));
+                }
+
+                /// <summary>The members of a listed set at which <paramref name="rest"/> is decided true; <see langword="null"/> where one is not decided.</summary>
+                private static Entity? Filtered(FiniteSet listed, Variable x, Entity rest, bool isExact)
+                {
+                    if (listed.Count > LargestFiltered)
+                        return null;
+                    var kept = new System.Collections.Generic.List<Entity>();
+                    foreach (var member in listed)
+                        switch (rest.Substitute(x, member).InnerSimplified(isExact).Evaled)
+                        {
+                            case Boolean(true): kept.Add(member); break;
+                            case Boolean(false): break;
+                            default: return null;
+                        }
+                    return new FiniteSet(kept);
+                }
+
+                /// <summary>How many members of a listed set are asked about before the set builder is left as written.</summary>
+                private const int LargestFiltered = 4096;
+
+                private static bool WithinTheReals(Set set)
+                    => set is Interval { IsNumeric: true } || set is SpecialSet special
+                        && special.ToDomain() is AngouriMath.Core.Domain.Real or AngouriMath.Core.Domain.Rational or AngouriMath.Core.Domain.Integer
+                            or AngouriMath.Core.Domain.NonNegativeInteger or AngouriMath.Core.Domain.PositiveInteger or AngouriMath.Core.Domain.Prime;
+
+                /// <summary>
+                /// Whether every comparison in the statement, under <c>and</c>, <c>or</c> and <c>not</c>,
+                /// compares rational functions of <paramref name="x"/> of degree at most four together,
+                /// with numbers for coefficients -- a modulus of a linear function counting as degree one.
+                /// </summary>
+                private static bool ComparesRationalFunctions(Entity statement, Variable x)
+                    => statement switch
+                    {
+                        Andf(var left, var right) => ComparesRationalFunctions(left, x) && ComparesRationalFunctions(right, x),
+                        Orf(var either, var other) => ComparesRationalFunctions(either, x) && ComparesRationalFunctions(other, x),
+                        Notf(var negated) => ComparesRationalFunctions(negated, x),
+                        Equalsf or Greaterf or GreaterOrEqualf or Lessf or LessOrEqualf
+                            when statement is IBinaryNode { NodeFirstChild: var left, NodeSecondChild: var right }
+                            => Degree(left, x) is { } leftDegree && Degree(right, x) is { } rightDegree && leftDegree + rightDegree <= 4,
+                        _ => false,
+                    };
+
+                /// <summary>
+                /// A bound on the degree of <paramref name="expr"/> as a rational function of
+                /// <paramref name="x"/> once its denominators are cleared, or <see langword="null"/>
+                /// where it is not one: a quotient counts both of its sides.
+                /// </summary>
+                private static int? Degree(Entity expr, Variable x)
+                    => expr switch
+                    {
+                        _ when !expr.ContainsNode(x) => expr.Vars.Any() ? null : 0,
+                        Variable => 1,
+                        Sumf(var augend, var addend) => Larger(Degree(augend, x), Degree(addend, x)),
+                        Minusf(var minuend, var subtrahend) => Larger(Degree(minuend, x), Degree(subtrahend, x)),
+                        Mulf(var multiplier, var multiplicand) => Added(Degree(multiplier, x), Degree(multiplicand, x)),
+                        Divf(var dividend, var divisor) => Added(Degree(dividend, x), Degree(divisor, x)),
+                        Powf(var @base, Number.Integer { EInteger: var power }) when power.Abs().CompareTo(4) <= 0
+                            => Degree(@base, x) is { } d ? d * power.Abs().ToInt32Checked() : null,
+                        Absf(var argument) => Degree(argument, x) is 1 ? 1 : null,
+                        _ => null,
+                    };
+
+                private static int? Larger(int? one, int? other) => one is { } a && other is { } b ? System.Math.Max(a, b) : null;
+
+                private static int? Added(int? one, int? other) => one is { } a && other is { } b ? a + b : null;
+
+                /// <summary>
+                /// <paramref name="declared"/> met with the solutions, piece by piece: a listed piece by
+                /// membership, an interval as the declared interval or the reals meet it, and a set of
+                /// whole numbers only where it comes out listed. <see langword="null"/> where a piece
+                /// does not.
+                /// </summary>
+                private static Entity? Met(Set declared, Set solved, bool isExact)
+                {
+                    switch (solved)
+                    {
+                        case FiniteSet roots:
+                            return MathS.Intersection(declared, roots).InnerSimplified(isExact) as FiniteSet;
+                        case Unionf(Set left, Set right):
+                            return Met(declared, left, isExact) is { } metLeft && Met(declared, right, isExact) is { } metRight
+                                ? MathS.Union(metLeft, metRight).InnerSimplified(isExact) : null;
+                        case Interval interval:
+                            return declared switch
+                            {
+                                SpecialSet.Reals => interval,
+                                Interval within => MathS.Intersection(within, interval).InnerSimplified(isExact) is (Interval or FiniteSet) and var met ? met : null,
+                                SpecialSet special => SetOperators.IntersectSpecialSetAndInterval(special, interval) as FiniteSet,
+                                _ => null,
+                            };
+                        case SpecialSet.Reals:
+                            return declared;
+                        default:
+                            return null;
+                    }
                 }
 
                 /// <summary>
@@ -181,6 +372,14 @@ namespace AngouriMath
                                 => MathS.Union(MathS.Intersection(interval, left).InnerSimplified(isExact), MathS.Intersection(interval, right).InnerSimplified(isExact)).InnerSimplified(isExact),
                             (Unionf(var left, var right) union, Interval interval) when MadeOfPieces(union)
                                 => MathS.Union(MathS.Intersection(left, interval).InnerSimplified(isExact), MathS.Intersection(right, interval).InnerSimplified(isExact)).InnerSimplified(isExact),
+                            // Two such unions meet piece by piece as well, each piece of the one
+                            // meeting the other by the arms above. A conjunction of two inequalities
+                            // is solved to that: the x > 0 where x^2 - 5 x + 1 > 0 and not
+                            // x^2 - 3 x + 1 > 0 are ((0; a) \/ (b; +oo)) /\ ({ c, d } \/ (-oo; 0) \/ (c; d)),
+                            // which meet in nothing -- Sullivan and Mackey's Prob 4.11.22.
+                            // https://github.com/asc-community/AngouriMath/issues/1409
+                            (Unionf(var left, var right) union, Unionf other) when MadeOfPieces(union) && MadeOfPieces(other)
+                                => MathS.Union(MathS.Intersection(left, other).InnerSimplified(isExact), MathS.Intersection(right, other).InnerSimplified(isExact)).InnerSimplified(isExact),
                             // (A \ B) /\ C is (A /\ C) \ B, where A meets C first: the pre-image
                             // (RR \ { -1 }) /\ (-oo; -1) is (-oo; -1) \ { -1 }, which is the interval.
                             (SetMinusf(var from, var removed), Set other) when other is not SetMinusf

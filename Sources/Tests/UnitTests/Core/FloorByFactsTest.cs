@@ -31,6 +31,9 @@ namespace AngouriMath.Tests.Core
         [InlineData("forall x in RR : not x in ZZ implies ceil(x) + ceil(1 - x) = 2")]
         [InlineData("forall x in ZZ : floor(x) + ceil(x) = 2 x")]
         [InlineData("forall x in RR : not x in ZZ implies floor(x) + ceil(x) = 2 floor(x) + 1")]
+        // The cases as a disjunction: P or not Q, with Q about x alone, is Q implies P.
+        [InlineData("forall x in RR : floor(x) + ceil(x) = 2 x or not x in ZZ")]
+        [InlineData("forall x in RR : not x in ZZ or floor(x) + floor(1 - x) = 1")]
         [InlineData("forall x in ZZ : floor(x^2) - floor(x)^2 = 0")]
         [InlineData("forall x in ZZ : ceil(x^2) - ceil(x)^2 = 0")]
         // A whole term comes out of either, and a negation turns one into the other.

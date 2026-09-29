@@ -310,10 +310,14 @@ namespace AngouriMath.Functions.Boolean
             // the residue of infinitely many primes (Dirichlet), so a statement that repeats modulo
             // M is decided over the primes by M's own prime factors, one by one, and by the units
             // modulo M: p^2 - 1 is a multiple of 24 for every prime past 3, though not for 3 --
-            // Sullivan and Mackey's Prob 6.7.5. https://github.com/asc-community/AngouriMath/issues/1409
-            if (set is SpecialSet.Primes && kind != Kind.Unique && OverThePrimes(kind, x, body, isExact) is { } overThePrimes)
+            // Sullivan and Mackey's Prob 6.7.5. A comparison keeps one truth value past its root,
+            // so the primes below the last root are asked one by one: every prime is 2, or 1 or 3
+            // modulo 4. https://github.com/asc-community/AngouriMath/issues/1409
+            if (set is SpecialSet.Primes && kind != Kind.Unique && OverThePrimes(kind, x, body, isExact) is var (overThePrimes, threshold))
             {
-                by = ("the primes past the modulus's prime factors are its units, and each unit is the residue of infinitely many primes", "Nat.setOf_prime_and_eq_mod_infinite");
+                by = (threshold.CompareTo(EInteger.FromInt32(2)) > 0
+                    ? $"the primes below {threshold} one by one; from {threshold} the comparisons have settled, the primes past the modulus's prime factors are its units, and each unit is the residue of infinitely many primes"
+                    : "the primes past the modulus's prime factors are its units, and each unit is the residue of infinitely many primes", "Nat.setOf_prime_and_eq_mod_infinite");
                 return overThePrimes;
             }
             if (set is FiniteSet finite)
@@ -969,20 +973,42 @@ namespace AngouriMath.Functions.Boolean
                     any = true;
                     continue;
                 }
-                if (LinearComparison(atom, x) is not (var slope, var rest) || rest.Evaled is not Real { IsNaN: false } intercept
-                    || !slope.IsFinite)
+                if (SettlesAt(atom, x) is not { } settlesAt)
                     return null;
                 any = true;
-                // Flat, or against an infinity -- x < +oo -- it has one truth value throughout.
-                if (slope.IsZero || !intercept.IsFinite)
-                    continue;
-                // Past floor(-b / a) + 1 the sign of a x + b no longer changes.
-                var root = intercept.EDecimal.Negate().Divide(slope.EDecimal, PeterO.Numbers.EContext.ForPrecision(64));
-                var settlesAt = root.RoundToExponent(0, PeterO.Numbers.ERounding.Floor).ToEInteger().Add(EInteger.One);
                 if (settlesAt.CompareTo(threshold) > 0)
                     threshold = settlesAt;
             }
             return any ? (period, threshold) : null;
+        }
+
+        /// <summary>
+        /// The whole number from which a comparison linear in <paramref name="x"/>, with numbers
+        /// for coefficients, keeps one truth value, or <see langword="null"/> for an atom that is
+        /// not one: past its root the sign of <c>a x + b</c> no longer changes, so from
+        /// <c>floor(-b / a) + 1</c> on. Zero for a comparison that never changes.
+        /// </summary>
+        private static EInteger? SettlesAt(Entity atom, Variable x)
+        {
+            if (LinearComparison(atom, x) is not (var slope, var rest) || rest.Evaled is not Real { IsNaN: false } intercept
+                || !slope.IsFinite)
+                return null;
+            // Flat, or against an infinity -- x < +oo -- it has one truth value throughout.
+            if (slope.IsZero || !intercept.IsFinite)
+                return EInteger.Zero;
+            // Exactly where both are rational, so that where it settles does not depend on the
+            // decimal precision: at 16 or 30 digits 2/3 rounds up, which put the root of 2/3 n - 2
+            // below 3, and 3 was taken for a member past it.
+            if (slope is Rational { ERational: var a } && intercept is Rational { ERational: var b })
+            {
+                var root = b.Negate().Divide(a);
+                var floor = root.ToEInteger();
+                if (root.CompareTo(ERational.FromEInteger(floor)) < 0)
+                    floor -= EInteger.One;
+                return floor.Add(EInteger.One);
+            }
+            var approximated = intercept.EDecimal.Negate().Divide(slope.EDecimal, EContext.ForPrecision(64));
+            return approximated.RoundToExponent(0, ERounding.Floor).ToEInteger().Add(EInteger.One);
         }
 
         /// <summary>
@@ -1069,36 +1095,49 @@ namespace AngouriMath.Functions.Boolean
             return any ?? Entity.Boolean.False;
         }
 
-
         /// <summary>
-        /// The period of the body in <paramref name="x"/> over the whole numbers, where it has
-        /// one: a divisibility by a whole number, or a congruence modulo one, of polynomials
-        /// with whole coefficients, joined by the connectives; the least common multiple of the
-        /// parts' periods.
+        /// The statement over the primes, where past a threshold it repeats modulo some <c>M</c>,
+        /// and the threshold, or <see langword="null"/> where what is left does not repeat or a
+        /// member does not decide it. A comparison linear in <paramref name="x"/> keeps one truth
+        /// value past its root, so the primes below the last root are asked one by one. Past it
+        /// the statement is its value at each prime factor of <c>M</c> there, and at each unit
+        /// modulo <c>M</c>, which stands for the infinitely many primes of its class there.
         /// </summary>
-        /// <summary>
-        /// The statement over the primes, where past a lower bound on them it repeats modulo some
-        /// <c>M</c>: at each prime factor of <c>M</c> past the bound, and at each unit modulo
-        /// <c>M</c>, which stands for the infinitely many primes of its class. <see langword="null"/>
-        /// where the statement does not repeat, or a residue does not decide it.
-        /// </summary>
-        private static Entity? OverThePrimes(Kind kind, Variable x, Entity body, bool isExact)
+        private static (Entity Verdict, EInteger Threshold)? OverThePrimes(Kind kind, Variable x, Entity body, bool isExact)
         {
-            // The primes asked about: those past a bound the hypothesis sets, or all of them.
-            var above = EInteger.One;
-            var claim = body;
-            if (kind == Kind.All && body is Impliesf(var assumption, var conclusion) && LowerBound(assumption, x) is { } bound)
-                (above, claim) = (bound, conclusion);
-            else if (kind == Kind.Some && body is Andf(var first, var second))
-            {
-                if (LowerBound(first, x) is { } firstBound)
-                    (above, claim) = (firstBound, second);
-                else if (LowerBound(second, x) is { } secondBound)
-                    (above, claim) = (secondBound, first);
-            }
-            if (!claim.ContainsNode(x) || Period(claim, x, (SpecialSet)MathS.Sets.Z) is not { } modulus
-                || modulus.CompareTo(EInteger.FromInt32(LargestPeriod)) > 0)
+            // The comparisons, and the least number from which every one of them has settled.
+            var atoms = new List<Entity>();
+            CollectAtoms(body, atoms);
+            var two = EInteger.FromInt32(2);
+            var threshold = two;
+            var comparisons = new List<Entity>();
+            foreach (var atom in atoms)
+                if (atom.ContainsNode(x) && SettlesAt(atom, x) is { } settlesAt)
+                {
+                    comparisons.Add(atom);
+                    if (settlesAt.CompareTo(threshold) > 0)
+                        threshold = settlesAt;
+                }
+            if (threshold.CompareTo(EInteger.FromInt32(LargestPrefix)) > 0)
                 return null;
+            // From the threshold on, each comparison is the truth value it has there.
+            var settled = new Dictionary<Entity, Entity>();
+            foreach (var comparison in comparisons)
+            {
+                if (comparison.Substitute(x, Integer.Create(threshold)).Evaled is not Entity.Boolean value)
+                    return null;
+                settled[comparison] = value;
+            }
+            var past = settled.Count == 0 ? body
+                : body.Replace(node => settled.TryGetValue(node, out var value) ? value : node).InnerSimplified(isExact);
+            // What is left repeats, or is one truth value, which repeats modulo 1.
+            var modulus = EInteger.One;
+            if (past.ContainsNode(x))
+            {
+                if (Period(past, x, (SpecialSet)MathS.Sets.Z) is not { } period || period.CompareTo(EInteger.FromInt32(LargestPeriod)) > 0)
+                    return null;
+                modulus = period;
+            }
             int holds = 0, fails = 0, undecided = 0;
             void Tell(Entity verdict)
             {
@@ -1109,9 +1148,13 @@ namespace AngouriMath.Functions.Boolean
                     default: undecided++; break;
                 }
             }
-            // The prime factors of M past the bound, which are not units modulo it.
+            // The primes below the threshold, one by one.
+            for (var prime = two; prime.CompareTo(threshold) < 0; prime += 1)
+                if (Functions.Primes.IsPrime(prime) == true)
+                    Tell(body.Substitute(x, Integer.Create(prime)).InnerSimplified(isExact));
+            // The prime factors of M from the threshold on, which are not units modulo it.
             var rest = modulus;
-            for (var factor = EInteger.FromInt32(2); rest.CompareTo(EInteger.One) > 0; factor += 1)
+            for (var factor = two; rest.CompareTo(EInteger.One) > 0; factor += 1)
             {
                 // Past the square root of what is left, what is left is prime.
                 if (factor.Multiply(factor).CompareTo(rest) > 0)
@@ -1120,31 +1163,24 @@ namespace AngouriMath.Functions.Boolean
                     continue;
                 while (rest.Remainder(factor).IsZero)
                     rest = rest.Divide(factor);
-                if (factor.CompareTo(above) > 0)
-                    Tell(claim.Substitute(x, Integer.Create(factor)).InnerSimplified(isExact));
+                if (factor.CompareTo(threshold) >= 0)
+                    Tell(past.Substitute(x, Integer.Create(factor)).InnerSimplified(isExact));
             }
-            // The units modulo M, each the residue of primes past any bound.
+            // The units modulo M, each the residue of infinitely many primes past the threshold.
             for (var residue = EInteger.One; residue.CompareTo(modulus) <= 0; residue += 1)
                 if (residue.Gcd(modulus).Equals(EInteger.One))
-                    Tell(claim.Substitute(x, Integer.Create(residue)).InnerSimplified(isExact));
-            return Tally(kind, holds, fails, undecided, distinct: true);
+                    Tell(past.Substitute(x, Integer.Create(residue)).InnerSimplified(isExact));
+            if (Tally(kind, holds, fails, undecided, distinct: true) is not { } verdict)
+                return null;
+            return (verdict, threshold);
         }
 
         /// <summary>
-        /// The whole number every <paramref name="x"/> satisfying <paramref name="condition"/> is
-        /// past, where the condition is a lower bound on it: <c>x &gt; 3</c> is <c>3</c>,
-        /// <c>x &gt;= 5</c> is <c>4</c>. <see langword="null"/> otherwise.
+        /// The period of the body in <paramref name="x"/> over the whole numbers, where it has
+        /// one: a divisibility by a whole number, or a congruence modulo one, of polynomials
+        /// with whole coefficients, joined by the connectives; the least common multiple of the
+        /// parts' periods.
         /// </summary>
-        private static EInteger? LowerBound(Entity condition, Variable x)
-            => condition switch
-            {
-                Greaterf(var name, Integer { EInteger: var past }) when name == x => past,
-                GreaterOrEqualf(var name, Integer { EInteger: var from }) when name == x => from.Subtract(EInteger.One),
-                Lessf(Integer { EInteger: var past }, var name) when name == x => past,
-                LessOrEqualf(Integer { EInteger: var from }, var name) when name == x => from.Subtract(EInteger.One),
-                _ => null,
-            };
-
         private static EInteger? Period(Entity body, Variable x, SpecialSet set)
         {
             switch (body)

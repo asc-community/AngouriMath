@@ -107,5 +107,39 @@ namespace AngouriMath.Tests.Calculus
         [Fact]
         public void AFactoredRootBesideItsFactorsRoots()
             => DifferentiatesBack("x^2*(1-x^2)^(1/4)*sqrt(1+x)/(sqrt(1-x)*(sqrt(1-x)-sqrt(1+x)))", 0.31, 0.57, 0.83, -0.2, -0.6);
+
+        /// <summary>
+        /// Two square roots of linears with one slope, rationalised together by their sum
+        /// <c>v = sqrt(L1) + sqrt(L2)</c>, whose difference is <c>(L1 - L2)/v</c>: an inverse
+        /// function of the difference is one of <c>1/v</c> beside a rational function of v, which
+        /// parts closes. Charlwood's arcsine was declined after five seconds, and Rubi's 5.3.7
+        /// has the arctangent's powers of x.
+        /// </summary>
+        [Theory]
+        [InlineData("asin(sqrt(1 + x) - sqrt(x))")]
+        [InlineData("acos(sqrt(1 + x) - sqrt(x))")]
+        [InlineData("x^3*atan(-sqrt(x)+sqrt(1+x))")]
+        public void AnInverseFunctionOfTheDifferenceOfTwoRootsOfOneSlope(string integrand)
+            => DifferentiatesBack(integrand, 0.3, 0.7, 1.1, 1.4);
+
+        /// <summary>
+        /// Two such roots where they stand in no inverse function or logarithm are the radical
+        /// rules', and stay theirs: taken under v first, each of these ran out the
+        /// corpus's budget, where they are answered in under 40 ms. Rubi's 1.3.2, and Timofeev's
+        /// 127, a quotient of the two roots under the arccosine.
+        /// </summary>
+        [Theory]
+        [InlineData("x^2/(sqrt(a + b*x) + sqrt(c + b*x))")]
+        [InlineData("acos(sqrt(x/(1 + x)))")]
+        public void WhatTheOtherRulesAnswerStaysTheirs(string integrand)
+            => DifferentiatesBackPinned(integrand, new[] { 0.3, 0.7, 1.1, 1.4 }, ("a", 2), ("b", 1.5), ("c", 0.7));
+
+        /// <summary>
+        /// And a product of the two roots, Rubi's 1.2.1.4: answered through their quotient in a
+        /// quarter of a second, and past the corpus's budget when taken under v first.
+        /// </summary>
+        [Fact]
+        public void AProductOfTwoRootsOfOneSlopeStaysTheirs()
+            => DifferentiatesBack("sqrt(-1 + x)*sqrt(1 + x)/(1 + x - x^2)", 1.3, 1.7, 2.4, 3.1);
     }
 }
