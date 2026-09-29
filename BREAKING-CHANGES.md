@@ -893,6 +893,25 @@ a listed index set, and over any other an object whose membership is decided by 
 | `0.1 in intersection([0; 1/n), n in ZZ+)` | `UnhandledParseException` | `False` |
 | `complement({1, 2}, {1, 2, 3})` | `UnhandledParseException` | `{ 3 }` |
 
+### A set builder over a set of numbers is listed where that takes no search
+
+`{ x in S : p }` was left as written unless `p` came out a truth value, or was a membership
+`f(x) in Y`. Now it is listed, or written as intervals, where that takes no search: a listed `S` is
+filtered member by member, and over the reals, an interval or a set of whole numbers, `S` is met with
+the solutions of `p` where `p` compares rational functions of `x` of degree at most four, with numbers
+for coefficients, or is an equation in moduli of linear functions. A set of whole numbers is met only
+where that comes out listed, so `{ x in ZZ : x > 5 }` stays as written, as does anything with a
+parameter or a function the solvers would have to search. Sullivan and Mackey's §3.3.3-4, §3.3.7 Q6,
+Prop 3.9.6 and Prob 3.11.4 list as the book lists them
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"{ x in RR : x^2 - 2 = 0 }".Simplify()` | as written | `{ -sqrt(2), sqrt(2) }` |
+| `"{ x : x in ZZ and x^2 < 10 }".Simplify()` | as written | `{ -3, -2, -1, 0, 1, 2, 3 }` |
+| `"{ x in { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 } : x >= 7 }".Simplify()` | as written | `{ 7, 8, 9, 10 }` |
+| `"{ x in ZZ+ : x + 8/x <= 6 }".Simplify()` | `UnhandledParseException` (`ZZ+` is new since) | `{ 2, 3, 4 }` |
+
 ### An interval whose ends are reversed meets nothing
 
 `(3; 1)` holds no number, and membership in it was decided so, but its meeting with another interval
