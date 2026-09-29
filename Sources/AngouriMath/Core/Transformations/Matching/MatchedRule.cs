@@ -206,9 +206,9 @@ namespace AngouriMath.Core.Transformations.Matching
         internal Soundness Soundness { get; }
 
         /// <summary>
-        /// The rewritten expression, or <see langword="null"/> where the rule does not apply.
-        /// Never throws: a builder that fails on the bindings it was handed is a rule that did
-        /// not apply, which is a refusal rather than an error.
+        /// The rewritten expression, or <see langword="null"/> where the rule does not apply: a
+        /// builder that cannot use the bindings it was handed returns <see langword="null"/>, a
+        /// refusal rather than an error.
         /// </summary>
         internal Entity? TryApply(Entity expr)
         {
@@ -328,8 +328,7 @@ namespace AngouriMath.Core.Transformations.Matching
                 if (matched is null) continue;
                 if (Build(matched, forBuild) is { } rewritten)
                 {
-                    try { resultClassId = graph.AddEntity(rewritten); }
-                    catch { continue; }
+                    resultClassId = graph.AddEntity(rewritten);
                     return true;
                 }
             }
@@ -345,8 +344,7 @@ namespace AngouriMath.Core.Transformations.Matching
         {
             if (Right is not null)
                 return Right.TryBuild(bindings, out var built) ? built : null;
-            try { return right!(matched, bindings); }
-            catch { return null; }
+            return right!(matched, bindings);
         }
 
         /// <summary>

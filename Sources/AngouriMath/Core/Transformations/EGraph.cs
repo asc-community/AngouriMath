@@ -102,6 +102,14 @@ namespace AngouriMath.Core.Transformations
         private readonly Dictionary<ENode, int> hashcons = new();
         private readonly Dictionary<int, HashSet<ENode>> classes = new();
 
+        /// <summary>
+        /// Each leaf this graph was given, under its key, so that it is built back as the entity it
+        /// was: a printed form need not parse back, and the integrator's <c>u_sub_1</c>,
+        /// <c>u_exp_1</c> and <c>u_rad_1</c> do not -- re-parsed, every class holding one could
+        /// not be built at all.
+        /// </summary>
+        private readonly Dictionary<string, Entity> leafEntities = new();
+
         /// <summary>How many e-classes this graph currently has.</summary>
         internal int ClassCount => classes.Count;
 
@@ -213,15 +221,11 @@ namespace AngouriMath.Core.Transformations
                         var children = side == 0
                             ? new[] { leaf, operand }
                             : new[] { operand, leaf };
-                        // A node this cannot build, or an arm that throws on a shape it did not
-                        // expect, simply contributes no fold -- the table is what was observed.
-                        try
-                        {
-                            if (MatchPattern.ConstructNode(type, children) is not { } built) continue;
-                            if (built.InnerSimplified.Equals(operand))
-                                folds.Add((type.Name, leafText, side));
-                        }
-                        catch { /* not a fold, and not this table's business why */ }
+                        // A node this cannot build contributes no fold -- the table is what was
+                        // observed.
+                        if (MatchPattern.ConstructNode(type, children) is not { } built) continue;
+                        if (built.InnerSimplified.Equals(operand))
+                            folds.Add((type.Name, leafText, side));
                     }
             return folds;
         }
@@ -279,7 +283,7 @@ namespace AngouriMath.Core.Transformations
         private static readonly ConcurrentDictionary<string, Rational?> rationalLeaves = new();
 
         private static Rational? RationalLeaf(string op)
-            => rationalLeaves.GetOrAdd(op, printed => TryParseLeaf(printed) as Rational);
+            => rationalLeaves.GetOrAdd(op, printed => ParseLeaf(printed) as Rational);
 
         /// <summary>The rational the class <paramref name="id"/> holds as a plain leaf, if any.</summary>
         private Rational? RationalOf(int id)
@@ -306,9 +310,7 @@ namespace AngouriMath.Core.Transformations
             if (node.Op == nameof(Entity.Powf)
                 && (right is not Integer exponent || exponent.EInteger.Abs() > LargestFoldedExponent))
                 return null;
-            Entity? value;
-            try { value = MatchPattern.ConstructNode(OperatorType(node.Op), new Entity[] { left, right })?.Evaled; }
-            catch { return null; }
+            var value = MatchPattern.ConstructNode(OperatorType(node.Op), new Entity[] { left, right })?.Evaled;
             return value is Rational folded ? Add(Key(folded), Array.Empty<int>(), null) : null;
         }
 
@@ -391,7 +393,10 @@ namespace AngouriMath.Core.Transformations
         {
             var children = expr.DirectChildren.Select(AddEntity).ToArray();
             var codomain = expr.Codomain == expr.DefaultCodomain ? (Domain?)null : expr.Codomain;
-            return Add(Key(expr), children, codomain);
+            var key = Key(expr);
+            if (children.Length == 0 && codomain is null && !leafEntities.ContainsKey(key))
+                leafEntities[key] = expr;
+            return Add(key, children, codomain);
         }
 
         /// <summary>
@@ -465,13 +470,12 @@ namespace AngouriMath.Core.Transformations
 
             public void Offer(Entity candidate)
             {
-                double here;
-                try { here = cost(candidate); } catch { return; }
-                // A model that answers NaN has not ranked this candidate, which is what a model
-                // that throws is already saying, so both decline it the same way. Without this,
-                // the comparison below is false for NaN on either side (IEEE-754), so NaN becomes
-                // the incumbent cheapest and every later candidate then beats it unconditionally
-                // -- the answer stops being the cheapest and becomes whichever member came last.
+                var here = cost(candidate);
+                // A model that answers NaN has not ranked this candidate, and declines it. Without
+                // this, the comparison below is false for NaN on either side (IEEE-754), so NaN
+                // becomes the incumbent cheapest and every later candidate then beats it
+                // unconditionally -- the answer stops being the cheapest and becomes whichever
+                // member came last.
                 if (double.IsNaN(here)) return;
                 if (here >= bestCost) return;
                 (best, bestCost) = (candidate, here);
@@ -537,7 +541,7 @@ namespace AngouriMath.Core.Transformations
                         if (parts.Length == 0)
                         {
                             if (!leaves.TryGetValue(node.Op, out built))
-                                leaves[node.Op] = built = TryParseLeaf(node.Op);
+                                leaves[node.Op] = built = Leaf(node.Op);
                         }
                         else built = MatchPattern.ConstructNode(OperatorType(node.Op), parts);
                         if (built is null) continue;
@@ -557,10 +561,18 @@ namespace AngouriMath.Core.Transformations
             return best;
         }
 
-        private static Entity? TryParseLeaf(string printed)
+        /// <summary>The leaf under <paramref name="key"/>: the one this graph was given, else its parse.</summary>
+        private Entity? Leaf(string key)
+            => leafEntities.TryGetValue(key, out var kept) ? kept : ParseLeaf(key);
+
+        /// <summary>
+        /// A leaf read back from its printed form, or <see langword="null"/> where it does not
+        /// parse -- a number a fold wrote, which was never given to the graph as an entity.
+        /// </summary>
+        private static Entity? ParseLeaf(string printed)
         {
             if (printed == EulerIntrinsicKey) return Entity.Constant.EulerIntrinsic;
-            try { return printed.ToEntity(); } catch { return null; }
+            return Parser.ParseSilent(printed).Is<Entity>(out var parsed) ? parsed : null;
         }
 
         /// <summary>
@@ -583,13 +595,13 @@ namespace AngouriMath.Core.Transformations
         internal bool ContainsLeaf(int id, Entity leaf) => Holds(id, Key(leaf));
 
         /// <summary>
-        /// The runtime <see cref="Type"/> an e-node builds as: a leaf's, by re-parsing its
-        /// printed form, or a non-leaf's operator type, by the same lookup <c>Extract</c>
-        /// uses to reconstruct one. <c>typeof(void)</c> where neither succeeds.
+        /// The runtime <see cref="Type"/> an e-node builds as: a leaf's, the leaf's own, or a
+        /// non-leaf's operator type, by the same lookup <c>Extract</c> uses to reconstruct one.
+        /// <c>typeof(void)</c> where neither succeeds.
         /// </summary>
-        internal static Type RuntimeType(ENode node)
+        internal Type RuntimeType(ENode node)
             => node.Children.Length == 0
-                ? TryParseLeaf(node.Op)?.GetType() ?? typeof(void)
+                ? Leaf(node.Op)?.GetType() ?? typeof(void)
                 : OperatorType(node.Op);
     }
 }

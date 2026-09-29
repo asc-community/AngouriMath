@@ -153,7 +153,7 @@ namespace AngouriMath.Core.Transformations
                     // costs nothing: a union is exactly what sets `merged`, so there is another
                     // pass, and the set is gathered again there.
                     var held = new HashSet<Type>();
-                    foreach (var node in graph.NodesOf(id)) held.Add(EGraph.RuntimeType(node));
+                    foreach (var node in graph.NodesOf(id)) held.Add(graph.RuntimeType(node));
 
                     Entity? term = null;
                     var extracted = false;
@@ -198,24 +198,14 @@ namespace AngouriMath.Core.Transformations
                         int other;
                         if (rule.Left.CanEMatch)
                         {
-                            // Mirrors the fallback branch below: a rule's `when` is arbitrary code
-                            // asked about a witness this extracted rather than one the caller
-                            // wrote, and a predicate that throws on a shape it did not expect must
-                            // decline the candidate, not escape Apply.
-                            bool matched;
-                            try { matched = rule.TryEMatchApply(graph, id, witnessCost, spend, out other); }
-                            catch { continue; }
-                            if (!matched) continue;
+                            if (!rule.TryEMatchApply(graph, id, witnessCost, spend, out other)) continue;
                         }
                         else
                         {
                             if (!TryTerm(out var t)) continue;
-                            Entity? rewritten;
-                            try { rewritten = rule.TryApply(t); }
-                            catch { continue; }
+                            var rewritten = rule.TryApply(t);
                             if (rewritten is null || rewritten.Equals(t)) continue;
-                            try { other = graph.AddEntity(rewritten); }
-                            catch { continue; }
+                            other = graph.AddEntity(rewritten);
                         }
                         if (graph.Union(id, other)) merged = true;
                     }
@@ -266,14 +256,8 @@ namespace AngouriMath.Core.Transformations
             if (left.Equals(right)) return true;
 
             var graph = new EGraph();
-            int a, b;
-            try
-            {
-                a = graph.AddEntity(left);
-                b = graph.AddEntity(right);
-            }
-            // A node the graph cannot hold is not a proof of anything, and not an error either.
-            catch (Exception) { return false; }
+            var a = graph.AddEntity(left);
+            var b = graph.AddEntity(right);
             graph.Rebuild();
 
             var ledger = BudgetLedger.For(nameof(ProvesEqual), budget);
