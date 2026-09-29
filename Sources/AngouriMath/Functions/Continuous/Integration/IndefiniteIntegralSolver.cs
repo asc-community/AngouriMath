@@ -11458,7 +11458,7 @@ namespace AngouriMath.Functions.Algebra
                     return null;
                 var pValue = WithoutConditions((2 * g * qOfFirst - 2 * h * qOfConstant) / determinant);
                 var qValue = WithoutConditions((2 * h * pOfConstant - 2 * g * pOfFirst) / determinant);
-                if (pValue.Complexity + qValue.Complexity > LargestReducedCoefficients)
+                if ((long)pValue.Complexity + qValue.Complexity > LargestReducedCoefficients)
                     return null;
                 var values = new[]
                 {

@@ -2493,6 +2493,19 @@ where it was `0.1 * x ^ 2 / 2 + C`
 | `limit(sin(c*x)/x, x, 0)` | `NaN` | `c` |
 | `limit((1 - cos(c*x))/x^2, x, 0)` | `NaN` | `c ^ 2 / 2` |
 
+### `Complexity` counts to `int.MaxValue` and stops there
+
+`Entity.Complexity` threw `OverflowException` for an expression larger than `int.MaxValue` as a
+tree, which an expression built by sharing reaches while it is small in memory: thirty-one squarings
+of `x` are 32 nodes, and `2^32 - 1` as a tree. It now saturates at `int.MaxValue`, and the bounds
+that ask it whether a value is too large to go on with decline such a value, where they threw out of
+the operation that asked ([#1600](https://github.com/asc-community/AngouriMath/issues/1600)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `Complexity` of `x` squared thirty-one or sixty times | `OverflowException` | `int.MaxValue` |
+| `Complexity` of `x` squared thirty times | `2147483647` | `2147483647`, the number of nodes, as below the bound |
+
 ### With the downcasting off, a comparison of real values is decided
 
 With `DowncastingEnabled` off, `cos(3)` evaluates to a complex number whose imaginary part is zero,
