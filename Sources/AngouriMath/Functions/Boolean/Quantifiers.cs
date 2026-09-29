@@ -306,6 +306,16 @@ namespace AngouriMath.Functions.Boolean
                 by = ($"the two sides differ by {gap}, so the comparison says the same of every member", "linarith");
                 return Closed(kind, set, holds ? Entity.Boolean.True : Entity.Boolean.False);
             }
+            // Every prime past the prime factors of a modulus is a unit modulo it, and every unit is
+            // the residue of infinitely many primes (Dirichlet), so a statement that repeats modulo
+            // M is decided over the primes by M's own prime factors, one by one, and by the units
+            // modulo M: p^2 - 1 is a multiple of 24 for every prime past 3, though not for 3 --
+            // Sullivan and Mackey's Prob 6.7.5. https://github.com/asc-community/AngouriMath/issues/1409
+            if (set is SpecialSet.Primes && kind != Kind.Unique && OverThePrimes(kind, x, body, isExact) is { } overThePrimes)
+            {
+                by = ("the primes past the modulus's prime factors are its units, and each unit is the residue of infinitely many primes", "Nat.setOf_prime_and_eq_mod_infinite");
+                return overThePrimes;
+            }
             if (set is FiniteSet finite)
             {
                 by = ($"evaluated at each of the {finite.Count} members", "decide");
@@ -851,6 +861,75 @@ namespace AngouriMath.Functions.Boolean
         /// with whole coefficients, joined by the connectives; the least common multiple of the
         /// parts' periods.
         /// </summary>
+        /// <summary>
+        /// The statement over the primes, where past a lower bound on them it repeats modulo some
+        /// <c>M</c>: at each prime factor of <c>M</c> past the bound, and at each unit modulo
+        /// <c>M</c>, which stands for the infinitely many primes of its class. <see langword="null"/>
+        /// where the statement does not repeat, or a residue does not decide it.
+        /// </summary>
+        private static Entity? OverThePrimes(Kind kind, Variable x, Entity body, bool isExact)
+        {
+            // The primes asked about: those past a bound the hypothesis sets, or all of them.
+            var above = EInteger.One;
+            var claim = body;
+            if (kind == Kind.All && body is Impliesf(var assumption, var conclusion) && LowerBound(assumption, x) is { } bound)
+                (above, claim) = (bound, conclusion);
+            else if (kind == Kind.Some && body is Andf(var first, var second))
+            {
+                if (LowerBound(first, x) is { } firstBound)
+                    (above, claim) = (firstBound, second);
+                else if (LowerBound(second, x) is { } secondBound)
+                    (above, claim) = (secondBound, first);
+            }
+            if (!claim.ContainsNode(x) || Period(claim, x, (SpecialSet)MathS.Sets.Z) is not { } modulus
+                || modulus.CompareTo(EInteger.FromInt32(LargestPeriod)) > 0)
+                return null;
+            int holds = 0, fails = 0, undecided = 0;
+            void Tell(Entity verdict)
+            {
+                switch (verdict)
+                {
+                    case Entity.Boolean(true): holds++; break;
+                    case Entity.Boolean(false): fails++; break;
+                    default: undecided++; break;
+                }
+            }
+            // The prime factors of M past the bound, which are not units modulo it.
+            var rest = modulus;
+            for (var factor = EInteger.FromInt32(2); rest.CompareTo(EInteger.One) > 0; factor += 1)
+            {
+                // Past the square root of what is left, what is left is prime.
+                if (factor.Multiply(factor).CompareTo(rest) > 0)
+                    factor = rest;
+                if (!rest.Remainder(factor).IsZero)
+                    continue;
+                while (rest.Remainder(factor).IsZero)
+                    rest = rest.Divide(factor);
+                if (factor.CompareTo(above) > 0)
+                    Tell(claim.Substitute(x, Integer.Create(factor)).InnerSimplified(isExact));
+            }
+            // The units modulo M, each the residue of primes past any bound.
+            for (var residue = EInteger.One; residue.CompareTo(modulus) <= 0; residue += 1)
+                if (residue.Gcd(modulus).Equals(EInteger.One))
+                    Tell(claim.Substitute(x, Integer.Create(residue)).InnerSimplified(isExact));
+            return Tally(kind, holds, fails, undecided, distinct: true);
+        }
+
+        /// <summary>
+        /// The whole number every <paramref name="x"/> satisfying <paramref name="condition"/> is
+        /// past, where the condition is a lower bound on it: <c>x &gt; 3</c> is <c>3</c>,
+        /// <c>x &gt;= 5</c> is <c>4</c>. <see langword="null"/> otherwise.
+        /// </summary>
+        private static EInteger? LowerBound(Entity condition, Variable x)
+            => condition switch
+            {
+                Greaterf(var name, Integer { EInteger: var past }) when name == x => past,
+                GreaterOrEqualf(var name, Integer { EInteger: var from }) when name == x => from.Subtract(EInteger.One),
+                Lessf(Integer { EInteger: var past }, var name) when name == x => past,
+                LessOrEqualf(Integer { EInteger: var from }, var name) when name == x => from.Subtract(EInteger.One),
+                _ => null,
+            };
+
         private static EInteger? Period(Entity body, Variable x, SpecialSet set)
         {
             switch (body)
