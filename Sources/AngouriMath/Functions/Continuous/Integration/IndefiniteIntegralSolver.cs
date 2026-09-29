@@ -15053,6 +15053,111 @@ namespace AngouriMath.Functions.Algebra
             }
         }
 
+        /// <summary>
+        /// Two square roots of linears with one slope, <c>sqrt(L1)</c> and <c>sqrt(L2)</c> with
+        /// <c>L1 - L2 = k</c> a constant, rationalised together by their sum
+        /// <c>v = sqrt(L1) + sqrt(L2)</c>: their difference is <c>k/v</c>, so
+        /// <c>sqrt(L1) = (v + k/v)/2</c>, <c>sqrt(L2) = (v - k/v)/2</c>, and
+        /// <c>dx = (v^4 - k^2)/(2 m v^3) dv</c> for the slope <c>m</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Charlwood's <c>arcsin(sqrt(1 + x) - sqrt(x))</c> is <c>arcsin(1/v) (v^4 - 1)/(2 v^3)</c>,
+        /// which parts closes. Asked as written, the remainder parts leaves in x is a nested root
+        /// no rule reads, and it was declined after five seconds, and after sixty on a slow
+        /// runner. Rubi's 5.3.7 has the arctangent's powers of x beside it.
+        /// </para>
+        /// <para>
+        /// The identities hold for the principal roots wherever v is not zero: the sum times the
+        /// difference is <c>L1 - L2</c> for any values of the two, so nothing is assumed about
+        /// signs. At the question asked or one below it, since it lands on the chain in v.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveBySubstitutingTheSumOfTwoRootsOfLinears(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            // Exactly two radicands under half-odd powers, each linear, with one slope.
+            var radicands = new List<Entity>();
+            foreach (var node in expr.Nodes)
+                if (node is Powf(var @base, Number.Rational power) && power is not Number.Integer && @base.ContainsNode(x))
+                {
+                    if (!power.ERational.Denominator.Equals(EInteger.FromInt32(2)) || !power.ERational.Numerator.CanFitInInt32())
+                        return null;
+                    if (!radicands.Contains(@base))
+                        radicands.Add(@base);
+                }
+            if (radicands.Count != 2
+                || !TreeAnalyzer.TryGetPolyLinear(radicands[0], x, out var m1, out var n1)
+                || !TreeAnalyzer.TryGetPolyLinear(radicands[1], x, out var m2, out var n2)
+                || VanishesIdentically(m1) || !VanishesIdentically(m1 - m2) || VanishesIdentically(n1 - n2))
+                return null;
+            var k = (n1 - n2).InnerSimplified;
+            var v = Variable.CreateUnique(expr, "v_roots");
+            var roots = new[] { (v + k / v) / 2, (v - k / v) / 2 };
+            // The sum is v and the difference k/v, taken whole first so that the rules in v see
+            // `arcsin(1/v)` rather than the difference of the two roots written in v.
+            var inV = expr.Replace(node => SignOfTheTwoRoots(node, radicands) switch
+            {
+                (1, 1) => v,
+                (1, -1) => k / v,
+                (-1, 1) => -k / v,
+                _ => node,
+            });
+            inV = inV.Replace(node => node is Powf(var @base, Number.Rational power) && power is not Number.Integer
+                    && radicands.IndexOf(@base) is var index and >= 0
+                ? MathS.Pow(roots[index], Number.Integer.Create(power.ERational.Numerator))
+                : node);
+            // Everything else in x through the second root: x = ((v - k/v)^2/4 - n2)/m.
+            inV = (inV.Substitute(x, (MathS.Sqr(roots[1]) - n2) / m1) * (MathS.Pow(v, 4) - MathS.Sqr(k)) / (2 * m1 * MathS.Pow(v, 3))).InnerSimplified;
+            if (inV.ContainsNode(x) || inV.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(inV, v, integrateByParts) is not { } inTermsOfV)
+                return null;
+            // v is positive wherever the integrand is real: a sum of two principal roots of
+            // reals, not both zero since their squares differ. Its sign is one, and a reciprocal
+            // of it is the difference over k, written back so.
+            var sum = MathS.Sqrt(radicands[0]) + MathS.Sqrt(radicands[1]);
+            var difference = (MathS.Sqrt(radicands[0]) - MathS.Sqrt(radicands[1])) / k;
+            var answer = inTermsOfV.Replace(node => node switch
+            {
+                Signumf(var signed) when signed == v => Number.Integer.One,
+                Absf(var measured) when measured == v => v,
+                Divf(var above, var below) when below == v => above * difference,
+                Powf(var @base, Number.Integer { EInteger.Sign: < 0 } power) when @base == v => MathS.Pow(difference, (-power).InnerSimplified),
+                _ => node,
+            }).Substitute(v, sum).InnerSimplified;
+            return answer.Nodes.Any(node => node == MathS.NaN) ? null : answer;
+        }
+
+        /// <summary>
+        /// (1, 1) where <paramref name="node"/> is the sum of the two roots, (1, -1) the first less
+        /// the second, (-1, 1) the second less the first, and (0, 0) otherwise.
+        /// </summary>
+        private static (int, int) SignOfTheTwoRoots(Entity node, List<Entity> radicands)
+        {
+            if (node is not (Sumf or Minusf))
+                return (0, 0);
+            var terms = Sumf.LinearChildren(node).ToList();
+            if (terms.Count != 2)
+                return (0, 0);
+            var signs = new int[2];
+            foreach (var term in terms)
+            {
+                var (sign, root) = term switch
+                {
+                    Mulf(Number.Integer { EInteger: var minusOne }, var rest) when minusOne.Equals(EInteger.FromInt32(-1)) => (-1, rest),
+                    _ => (1, term),
+                };
+                if (root is not Powf(var @base, Number.Rational half) || half != Number.Rational.Create(1, 2)
+                    || radicands.IndexOf(@base) is not (var index and >= 0) || signs[index] != 0)
+                    return (0, 0);
+                signs[index] = sign;
+            }
+            return (signs[0], signs[1]);
+        }
+
         internal static Entity? SolveByCombiningRadicals(Entity expr, Entity.Variable x, bool integrateByParts)
         {
             // A secant or cosecant under a root is the reciprocal of a cosine or sine there:
