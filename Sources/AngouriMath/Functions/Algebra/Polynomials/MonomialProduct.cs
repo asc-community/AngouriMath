@@ -70,7 +70,7 @@ namespace AngouriMath.Functions
                 ? cases.First().Expression : sum;
             return MathS.Piecewise(new[]
             {
-                new Providedf(MathS.Pow(@base, nonEmpty).InnerSimplified, new GreaterOrEqualf(to, from)),
+                new Providedf(MathS.Pow(@base, nonEmpty).InnerSimplified, PolynomialSummation.AtLeast(to, from)),
                 new Providedf(Integer.One, Entity.Boolean.True),
             }).InnerSimplified;
         }
@@ -131,7 +131,7 @@ namespace AngouriMath.Functions
             // both branches say 1 there.
             return MathS.Piecewise(new[]
             {
-                new Providedf(closed.InnerSimplified, new GreaterOrEqualf(to, from)),
+                new Providedf(closed.InnerSimplified, PolynomialSummation.AtLeast(to, from)),
                 new Providedf(Integer.Create(1), Entity.Boolean.True),
             }).InnerSimplified;
         }

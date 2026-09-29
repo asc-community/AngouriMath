@@ -144,7 +144,7 @@ namespace AngouriMath.Functions
                 return closed;
             return MathS.Piecewise(new[]
             {
-                new Providedf(closed, new GreaterOrEqualf(upper, Integer.Zero)),
+                new Providedf(closed, PolynomialSummation.AtLeast(upper, Integer.Zero)),
                 new Providedf(Integer.Zero, Entity.Boolean.True),
             }).InnerSimplified;
         }

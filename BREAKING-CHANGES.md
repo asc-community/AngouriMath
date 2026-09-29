@@ -1488,8 +1488,22 @@ factorial, has none and stays. Probs 1.3.12 and 2.7.17 of Sullivan and Mackey's
 
 | Input | Was (2.5.0) | Now |
 |---|---|---|
-| `"product(2^k, k, 0, n - 1)".ToEntity().Evaled` | as written | `2^((n - 1)/2 + (n - 1)^2/2) provided n - 1 >= 0`, `1` otherwise |
+| `"product(2^k, k, 0, n - 1)".ToEntity().Evaled` | as written | `2^((n - 1)/2 + (n - 1)^2/2) provided n >= 1`, `1` otherwise |
 | `"sum(k*factorial(k), k, 1, n)".ToEntity().Evaled` | as written | `((n + 1)! - 1) provided n >= 0`, `0` otherwise |
+
+### A closed form reads as the book writes it: multiplied out where simpler, over a bound on its name
+
+The sum of the first `n` odd numbers, `sum(2 k + 1, k, 0, n - 1)`, came out as
+`2 n + (n - 1)^2 - 1 provided n - 1 >= -1`, and Sullivan and Mackey write it `n^2`. A polynomial
+sum's closed form is now multiplied out where that rates simpler, so it is `n^2`, and Prob 5.7.16's
+`sum(2 k + 1, k, n, 2 n - 1)` is `3 n^2`, while `sum(k, k, 1, n)` keeps `(n + n^2)/2`. And the
+condition that the range is not empty, written as the ends left it, is now a bound on the one name
+the ends are about, `n >= 0`. With two names it is left as it was, `n >= m - 1`
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"sum(2 k + 1, k, 0, n - 1)".Simplify()` | `piecewise((2 * n + (n - 1) ^ 2 - 1) provided (n - 1 >= -1), 0 provided True)` | `piecewise((n ^ 2) provided (n >= 0), 0 provided True)` |
 
 ### `(a + b asech(c x))/(d + e x)^2` is integrated, and a root written apart with `|x|` no longer needs a parity
 

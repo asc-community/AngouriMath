@@ -101,13 +101,50 @@ namespace AngouriMath.Functions
             // sum from a to b is S(b) - S(a - 1), which holds for every pair of integers with
             // b >= a - 1 -- at b = a - 1 both sides are zero, and below it the range is empty
             // while the polynomial is not.
-            var closed = (AtBound(to) - AtBound(from - 1)).InnerSimplified;
-            var nonEmpty = new GreaterOrEqualf(to, from - 1);
+            var closed = Simplest((AtBound(to) - AtBound(from - 1)).InnerSimplified);
+            var nonEmpty = NonEmpty(from, to);
             return MathS.Piecewise(new[]
             {
                 new Providedf(closed, nonEmpty),
                 new Providedf(Integer.Create(0), Entity.Boolean.True),
             }).InnerSimplified;
+        }
+
+        /// <summary>
+        /// A closed form as it reads most simply: multiplied out where that rates simpler, as the
+        /// sums of odd numbers do -- <c>2 n + (n - 1)^2 - 1</c> is <c>n^2</c>, and Sullivan and
+        /// Mackey's Prob 5.7.16 is <c>3 n^2</c> -- and as it came otherwise, so <c>(n + n^2)/2</c>
+        /// stays. Here, where the closed form is made, rather than under <c>Simplify</c>, which
+        /// would multiply out every conditional answer it meets.
+        /// </summary>
+        internal static Entity Simplest(Entity closed)
+            => closed.Expand().InnerSimplified is var expanded && expanded.SimplifiedRate < closed.SimplifiedRate ? expanded : closed;
+
+        /// <summary>
+        /// That the range from <paramref name="from"/> to <paramref name="to"/> is not empty,
+        /// <c>to &gt;= from - 1</c>, as <see cref="AtLeast"/> writes it: <c>n - 1 &gt;= -1</c> is
+        /// <c>n &gt;= 0</c>.
+        /// </summary>
+        internal static Entity NonEmpty(Entity from, Entity to) => AtLeast(to, from - Integer.One);
+
+        /// <summary>
+        /// <c>value &gt;= bound</c>, written as a bound on the one name the two are about where their
+        /// difference is linear in it with a rational slope: <c>2 n - 1 &gt;= n - 1</c> is
+        /// <c>n &gt;= 0</c>, which is how a closed form's range reads. As written otherwise, so
+        /// <c>n &gt;= a - 1</c> keeps both of its names.
+        /// </summary>
+        internal static Entity AtLeast(Entity value, Entity bound)
+        {
+            var gap = (value - bound).InnerSimplified;
+            var names = gap.Vars.Distinct().Take(2).ToList();
+            if (names.Count == 1 && names[0] is Variable name
+                && TreeAnalyzer.TryGetPolyLinear(gap, name, out var slope, out var rest) && !rest.ContainsNode(name)
+                && slope.InnerSimplified is Rational { IsZero: false } a && rest.InnerSimplified is Rational b)
+            {
+                var root = (-b / a).InnerSimplified;
+                return a.IsPositive ? new GreaterOrEqualf(name, root) : new LessOrEqualf(name, root);
+            }
+            return new GreaterOrEqualf(value, bound.InnerSimplified);
         }
 
         /// <summary>
