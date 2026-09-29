@@ -2508,6 +2508,215 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
+        /// Half-odd powers of <c>a ± a sec(y)</c>, beside powers of <c>d sec(y)</c> or
+        /// <c>d cos(y)</c> and anything rational in the sine and cosine of <c>y</c>, by the
+        /// half-angle tangent <c>t = tan(y/2)</c>: <c>1 + sec(y)</c> is <c>2/(1 - t^2)</c>,
+        /// <c>1 - sec(y)</c> is <c>-2 t^2/(1 - t^2)</c> and <c>sec(y)</c> is
+        /// <c>(1 + t^2)/(1 - t^2)</c>, so the whole is a rational function of t beside a root of
+        /// <c>1 - t^2</c> or of <c>1 + t^2</c> -- or of both, which is elliptic and declined. The
+        /// cosecant's the same way through the complement, <c>csc(y) = sec(pi/2 - y)</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Rubi's <c>(a + b sec)^m (d sec)^n</c> files with <c>a^2 = b^2</c> hold about a thousand
+        /// problems with a half-odd <c>m</c>, and none was answered, <c>sqrt(1 + sec(x))</c>
+        /// included: the half angle at which <c>a + a cos(y)</c> is a square, the rule before this
+        /// one, leaves a root of the cosine below the bar here, since <c>1 + sec(y)</c> is that
+        /// square over <c>cos(y)</c>.
+        /// </para>
+        /// <para>
+        /// Exact where the integrand is real. <c>a (1 + sec(y))</c> is not negative with
+        /// <c>t</c> inside <c>(-1, 1)</c> for a positive <c>a</c> and outside it for a negative
+        /// one, and either way <c>(2a/(1 - t^2))^p</c> is <c>(2a)^p (1 - t^2)^(-p)</c> for the
+        /// principal powers; so for the secant's power beside it. For <c>1 - sec(y)</c> the square
+        /// <c>t^2</c> comes out of the root as <c>|t|</c>, a sign constant between the zeros of
+        /// <c>tan(y/2)</c> in front. At the question asked or one below it, since it lands on the
+        /// chain in t.
+        /// https://github.com/asc-community/AngouriMath/issues/718
+        /// </para>
+        /// </remarks>
+        internal static Entity? SolveByTheHalfAngleTangentBesideAHalfOddPowerOfOnePlusASecant(Entity expr, Entity.Variable x, bool integrateByParts)
+        {
+            if (!Integration.AnsweringTheQuestionAskedOrOneBelow)
+                return null;
+            Entity? argument = null;
+            foreach (var node in expr.Nodes)
+            {
+                if (TrigonometricArgument(node) is not { } thisArgument || !thisArgument.ContainsNode(x))
+                    continue;
+                if (argument is null)
+                    argument = thisArgument;
+                else if (argument != thisArgument)
+                    return null;
+            }
+            if (argument is null || !TreeAnalyzer.TryGetPolyLinear(argument, x, out var rate, out _)
+                || rate.ContainsNode(x) || TreeAnalyzer.IsZero(rate))
+                return null;
+            if (!expr.Nodes.All(node => !node.ContainsNode(x)
+                    || node is Variable or Sumf or Minusf or Mulf or Divf or Sinf or Cosf or Secantf or Cosecantf or Tanf or Cotanf
+                    || node is Powf(_, Number.Rational)))
+                return null;
+            var secant = MathS.Sec(argument);
+            var cosecant = new Cosecantf(argument);
+            // The secant's, or the cosecant's by the complement: csc(y) is sec(y') for
+            // y' = pi/2 - y, so each function of y is the complementary one of y', and the
+            // half-angle tangent is t = tan(y'/2).
+            bool? ofTheSecant = null;
+            foreach (var node in expr.Nodes)
+                if (node is Powf(var radicand, Number.Rational exponent) && exponent is not Number.Integer
+                    && ReadAsOnePlusMinusAFunction(radicand, secant, cosecant) is (_, _, var isSecant))
+                {
+                    if (ofTheSecant is { } kind && kind != isSecant)
+                        return null;
+                    ofTheSecant = isSecant;
+                }
+            if (ofTheSecant is not { } secantKind)
+                return null;
+            var primary = secantKind ? secant : cosecant;
+            var companion = secantKind ? MathS.Cos(argument) : MathS.Sin(argument);
+            var t = Variable.CreateUnique(expr, "t_half_secant");
+            var oneMinus = 1 - MathS.Sqr(t);
+            var onePlus = 1 + MathS.Sqr(t);
+            Entity signs = Number.Integer.One;
+            var found = false;
+            var declined = false;
+            var roots = 0;
+            // Each half-odd power, assembled in t: of a (1 ± sec(y)), or of d sec(y) or d cos(y);
+            // for the cosecant, of a (1 ± csc(y)), d csc(y) or d sin(y).
+            var rewritten = expr.Replace(node =>
+            {
+                if (declined || node is not Powf(var radicand, Number.Rational exponent) || exponent is Number.Integer || !radicand.ContainsNode(x))
+                    return node;
+                if (!exponent.ERational.Denominator.Equals(EInteger.FromInt32(2)) || !exponent.ERational.Numerator.CanFitInInt32())
+                {
+                    declined = true;
+                    return node;
+                }
+                roots++;
+                if (ReadAsOnePlusMinusAFunction(radicand, secant, cosecant) is (var a, var plus, var isSecant) && isSecant == secantKind)
+                {
+                    found = true;
+                    if (plus)
+                        return MathS.Pow(2 * a, exponent) * MathS.Pow(oneMinus, (-exponent).InnerSimplified);
+                    // (-2a t^2/(1 - t^2))^p is (-2a)^p |t|^(2p) (1 - t^2)^(-p), and 2p is odd.
+                    signs = signs * MathS.Signum(t);
+                    return MathS.Pow(-2 * a, exponent) * MathS.Pow(t, Number.Integer.Create(exponent.ERational.Numerator)) * MathS.Pow(oneMinus, (-exponent).InnerSimplified);
+                }
+                // d sec(y) or d cos(y): a constant times the one function.
+                Entity coefficient = Number.Integer.One;
+                Entity? function = null;
+                foreach (var factor in Mulf.LinearChildren(radicand))
+                {
+                    if (!factor.ContainsNode(x))
+                        coefficient = coefficient * factor;
+                    else if (function is null && (factor == primary || factor == companion))
+                        function = factor;
+                    else
+                    {
+                        declined = true;
+                        return node;
+                    }
+                }
+                if (function is null)
+                {
+                    declined = true;
+                    return node;
+                }
+                var (above, below) = function == primary ? (onePlus, oneMinus) : (oneMinus, onePlus);
+                return MathS.Pow(coefficient, exponent) * MathS.Pow(above, exponent) * MathS.Pow(below, (-exponent).InnerSimplified);
+            });
+            if (declined || !found)
+                return null;
+            // What is left is rational in the functions of y.
+            var inT = rewritten.Replace(node => node switch
+            {
+                Sinf(var a) when a == argument => secantKind ? 2 * t / onePlus : oneMinus / onePlus,
+                Cosf(var a) when a == argument => secantKind ? oneMinus / onePlus : 2 * t / onePlus,
+                Tanf(var a) when a == argument => secantKind ? 2 * t / oneMinus : oneMinus / (2 * t),
+                Cotanf(var a) when a == argument => secantKind ? oneMinus / (2 * t) : 2 * t / oneMinus,
+                Secantf(var a) when a == argument => secantKind ? onePlus / oneMinus : onePlus / (2 * t),
+                Cosecantf(var a) when a == argument => secantKind ? onePlus / (2 * t) : onePlus / oneMinus,
+                _ => node,
+            });
+            // dy = 2 dt/(1 + t^2), and dx = dy/rate. Each power of the two quadratics and of t
+            // gathered to one, so that they cancel and combine: left as written, `sec(y)` beside
+            // `dy` reached the rules in t as `(1 + t^2)^0`, which none reads.
+            var bases = new[] { oneMinus, onePlus, (Entity)t };
+            // dy' = -dy for the cosecant.
+            var (rest, exponents) = GatheredOverTheBases(inT * (secantKind ? 2 : -2) / (rate * onePlus), bases);
+            Entity integrand = rest.InnerSimplified;
+            var halfOdd = 0;
+            for (var i = 0; i < bases.Length; i++)
+            {
+                if (exponents[i].IsZero)
+                    continue;
+                // Not normalised as it is gathered: 8/4 is a whole power.
+                if (!exponents[i].Numerator.Remainder(exponents[i].Denominator).IsZero)
+                    halfOdd++;
+                integrand = integrand * MathS.Pow(bases[i], Number.Rational.Create(exponents[i]));
+            }
+            // A root of 1 - t^2 beside one of 1 + t^2 is elliptic: declined before it is asked.
+            if (halfOdd > 1)
+                return null;
+            integrand = integrand.InnerSimplified;
+            if (integrand.ContainsNode(x) || integrand.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            if (Integration.ComputeAsAQuestionOfItsOwn(integrand, t, integrateByParts) is not { } result)
+                return null;
+            var back = secantKind ? MathS.Tan(argument / 2) : MathS.Tan(MathS.pi / 4 - argument / 2);
+            var answer = (signs == Number.Integer.One ? result : signs * result).Substitute(t, back);
+            if (answer.Nodes.Any(node => node == MathS.NaN))
+                return null;
+            // Each root written apart is exact inside t^2 < 1, where 1 - t^2 is positive, for any
+            // sign of the constants. Outside it a root whose radicand is negative there is
+            // imaginary, and one alone leaves the integrand complex, where the answer is nothing
+            // to be wrong about; but two can make it real again -- `(1 + sec(x))^(5/2) sqrt(cos(x))`
+            // is real where the cosine is negative -- and there each written apart may have
+            // turned its sign where the other did not. The answer says where it holds.
+            return roots < 2 ? answer : answer.Provided((secantKind ? MathS.Cos(argument) : MathS.Sin(argument)) >= Number.Integer.Zero);
+        }
+
+        /// <summary>
+        /// <paramref name="expr"/> as what it is a product of beside <paramref name="bases"/>, and
+        /// the sum of the exponents of each base in it, read through products, quotients and
+        /// whole powers of them.
+        /// </summary>
+        private static (Entity Others, ERational[] Exponents) GatheredOverTheBases(Entity expr, Entity[] bases)
+        {
+            var exponents = bases.Select(_ => ERational.Zero).ToArray();
+            Entity rest = Number.Integer.One;
+            Gather(expr, ERational.One);
+            return (rest, exponents);
+
+            void Gather(Entity node, ERational power)
+            {
+                if (System.Array.IndexOf(bases, node) is var at and >= 0)
+                {
+                    exponents[at] = exponents[at].Add(power);
+                    return;
+                }
+                switch (node)
+                {
+                    case Mulf(var left, var right):
+                        Gather(left, power);
+                        Gather(right, power);
+                        return;
+                    case Divf(var above, var below):
+                        Gather(above, power);
+                        Gather(below, power.Negate());
+                        return;
+                    case Powf(var @base, Number.Rational exponent) when System.Array.IndexOf(bases, @base) >= 0
+                        || exponent is Number.Integer && @base is Mulf or Divf or Powf:
+                        Gather(@base, power.Multiply(exponent.ERational));
+                        return;
+                    default:
+                        rest = power.Equals(ERational.One) ? rest * node : rest * MathS.Pow(node, Number.Rational.Create(power));
+                        return;
+                }
+            }
+        }
+
+        /// <summary>
         /// <paramref name="radicand"/> read as <c>a (1 ± f)</c> for <c>f</c> the given sine or
         /// cosine: the constant <c>a</c>, whether the sign is plus, and whether <c>f</c> is the
         /// sine. Null for anything else, including <c>a + b f</c> with <c>a^2 ≠ b^2</c>.
