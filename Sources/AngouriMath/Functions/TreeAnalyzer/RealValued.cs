@@ -56,8 +56,8 @@ namespace AngouriMath.Functions
                 case Sinf or Cosf or Tanf or Cotanf or Secantf or Cosecantf
                      or Arctanf or Arccotanf or Signumf or Erff or Erfcf or Erfif or Eif or Sif or Shif:
                     return IsRealValued(expr.DirectChildren[0], x);
-                // A modulus is real whatever it is taken of.
-                case Absf:
+                // A modulus is real whatever it is taken of, and an Iverson bracket is 0 or 1.
+                case Absf or Iversonf:
                     return true;
                 default:
                     return false;

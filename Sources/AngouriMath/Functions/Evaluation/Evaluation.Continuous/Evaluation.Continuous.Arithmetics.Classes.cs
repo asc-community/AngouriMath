@@ -424,6 +424,26 @@ namespace AngouriMath
             }
         }
 
+        public partial record Iversonf
+        {
+            // 1 or 0 for every statement. A number is not one, and is left as written, as a
+            // connective leaves one: 1 is not true. NaN is how a statement with no truth value
+            // is spelled -- i > 0 is one -- and its bracket has no value either.
+            private protected override Entity IntrinsicCondition => Boolean.True;
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Argument,
+                    a => a switch
+                    {
+                        Boolean(true) => Integer.One,
+                        Boolean(false) => Integer.Zero,
+                        Number { IsNaN: true } => a,
+                        _ => null
+                    },
+                    (@this, a) => ((Iversonf)@this).New(a), isExact);
+        }
+
         public partial record Erff
         {
             // Entire, so defined for every argument. https://github.com/asc-community/AngouriMath/issues/1501

@@ -904,6 +904,21 @@ carried a condition the piecewise read as no value, so the sum was `0` at `n = 0
 | `"sum(binomial(n, k), k, 0, n)".ToEntity().Evaled` | `UnhandledParseException` | `piecewise((2 ^ n) provided (n >= 0), 0 provided True)` |
 | `"sum(n! / (k! (n - k)!) (-1)^k, k, 0, n)".ToEntity().Evaled` | `piecewise(0 provided True)` — wrong at `n = 0` | `piecewise(1 provided (n = 0), 0 provided True)` |
 
+### `iverson(P)` is the Iverson bracket, and was a product
+
+`iverson(P)` is `1` where the statement `P` holds and `0` where it does not, and is kept as written
+where `P` is not decided, so a count is a sum of brackets: `sum(iverson(k divides 12), k, 1, 12)` is
+`6`. A number is not a statement and is left as written; a statement with no truth value, such as
+`i > 0`, gives `NaN`. It prints as `[\![P]\!]` in LaTeX and as a `Piecewise` for SymPy
+([#1478](https://github.com/asc-community/AngouriMath/issues/1478)). In 2.5.0 the name was read as a
+variable multiplying its argument, and a product with a truth value is `NaN`.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"iverson(2 > 1)".ToEntity().Simplify()` | `NaN` — `iverson * (2 > 1)` | `1` |
+| `"iverson(x > 0)".ToEntity().Simplify()` | `iverson * (x > 0)` | `iverson(x > 0)` |
+| `"sum(sum(sum(iverson(r + b + g = 4), g, 0, 3), b, 0, 3), r, 0, 3)".ToEntity().Simplify()` | `NaN` | `12` |
+
 ### A statement about a sum up to `n` is decided by induction
 
 `forall n in ZZ+ : sum(f, k, a, n) = g` is proved from the least member of the set: the statement
