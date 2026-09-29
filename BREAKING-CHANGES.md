@@ -536,6 +536,30 @@ now, which is the one silent change: a variable spelled `forall` or `exists` no 
 | `forall + 1` | `forall + 1`, a variable named `forall` | `UnhandledParseException` |
 | `exists(x)` | `exists * x` | `UnhandledParseException` |
 
+### A floor or a ceiling is read with what the quantifiers establish
+
+Under a quantifier, the floor and the ceiling of an expression in the bound name are rewritten
+by what the quantifier establishes about it. A whole argument is its own floor and ceiling. A
+whole term comes out of either. A negated argument turns one into the other. And the ceiling of
+a real argument that is not whole is one above its floor. Sullivan and Mackey's Prob 1.5.6 asks
+for `floor(x) + floor(1 - x)` and its kin "depending on x", and each comes out as one statement
+for every whole `x` and one for every other real `x`, such as
+`forall x in RR \ ZZ : floor(x) + floor(1 - x) = 0`
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)). A member of a set builder
+`{ y in S : P }` is known to be in `S` and to satisfy `P` there, and a body that comes out `True`
+holds for every member of any set, and one that comes out `False` for none, where it was left as
+written when the set's members could not be read. The nodes are taken componentwise on the
+complex plane, so the last rule asks for a real argument: at `x = i/2` the ceiling is `i` and the
+floor `0`. Outside a quantifier nothing is assumed, and `floor(x + 1)` is left as it was.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `forall x in ZZ : floor(x) + floor(1 - x) = 1` | `UnhandledParseException` (quantifiers are new since; left as written when they arrived) | `True` |
+| `forall x in RR : not x in ZZ implies floor(x) + ceil(x) = 2 floor(x) + 1` | `UnhandledParseException` | `True` |
+| `forall x in RR \ ZZ : floor(x) + floor(1 - x) = 0` | `UnhandledParseException` | `True` |
+| `forall x in { x in RR : sin(x) > 0 } : True` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+| `exists x in A \/ B : False` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
+
 ### A matrix compiles
 
 **Addition, not silent.** Under the LINQ compiler a `Matrix` node compiles to a
