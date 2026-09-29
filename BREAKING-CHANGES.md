@@ -611,6 +611,22 @@ it, as they decide a divisibility. `forall n in ZZ : floor(n/2) + ceil(n/2) = n`
 | `forall n in ZZ : floor(n/2) + ceil(n/2) = n` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
 | `exists n in ZZ : floor(n/2) + ceil(n/2) = n + 1` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
 
+### A sum of whole multiples is decided: `exists a, b in ZZ* : n = p a + q b`
+
+What an equation `n = p a + q b` leaves of `b` is a divisibility and a sign: `(n - p a)/q in ZZ*` is
+`q divides n - p a and n - p a >= 0`, for a whole `n - p a`. A statement that repeats in `a` and only
+gets harder as `a` grows has its least witness below the period, so `exists a in ZZ*` of it is one of
+the first period's members; and a statement whose comparisons settle past a threshold, with the rest
+repeating, is decided by the members up to one period past it. So Sullivan and Mackey's coins and
+special lands are decided (Prob 2.7.8, Prob 5.7.4, §5.5.3 Try 3): every `n` from `14` is `3 a + 8 b`
+and `13` is not, every `n` from `24` is `4 a + 9 b` and `23` is not
+([#1409](https://github.com/asc-community/AngouriMath/issues/1409)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `exists a in ZZ* : exists b in ZZ* : 13 = 3 a + 8 b` | `UnhandledParseException` (left as written when quantifiers arrived) | `False` |
+| `forall n in ZZ : n >= 14 implies (exists a in ZZ* : exists b in ZZ* : n = 3 a + 8 b)` | `UnhandledParseException` (left as written when quantifiers arrived) | `True` |
+
 ### An antiderivative built through an even root says where the root is real
 
 The linear-radical substitution, `u = (a x + b)^(1/q)`, and the general substitution for an even

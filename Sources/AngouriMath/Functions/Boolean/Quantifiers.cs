@@ -340,6 +340,28 @@ namespace AngouriMath.Functions.Boolean
                     by = ("the equation has no solution modulo a small m, so none in the whole numbers", "decide");
                     return verdict;
                 }
+                // Past a threshold every comparison with x in it has settled, and what is left
+                // repeats with the divisibilities, so the members up to the threshold and one
+                // period after it decide the statement: every n from 14 is 3 a + 8 b, Sullivan
+                // and Mackey's coins, Prob 2.7.8. https://github.com/asc-community/AngouriMath/issues/1409
+                if (LeastMember(integers) is { } firstMember && Settled(body, x) is { } settled
+                    && settled.Threshold.CompareTo(firstMember.EInteger) is var ahead
+                    && (ahead > 0 ? settled.Threshold : firstMember.EInteger).Add(settled.Period) is var past
+                    && past.Subtract(firstMember.EInteger).CompareTo(EInteger.FromInt32(LargestPrefix)) <= 0)
+                {
+                    by = ($"the comparisons settle by {settled.Threshold} and the rest repeats modulo {settled.Period}, so the members before {past} decide it", "decide");
+                    return OverAPrefix(kind, x, firstMember.EInteger, past, body, isExact);
+                }
+                // Some member satisfies a statement that repeats with a period and only gets
+                // harder as x grows exactly when one of the first period does: its least witness
+                // is below the period. So the statement is those members, one of them: what an
+                // equation n = 3 a + 8 b leaves of a, 8 divides n - 3 a and n - 3 a >= 0, is a
+                // at 0 to 7.
+                if (kind == Kind.Some && LeastMember(integers) is { } from && LeastWitnessPeriod(body, x) is { } witnessPeriod)
+                {
+                    by = ($"the least witness is below the period {witnessPeriod}, so the statement is one of the members from {from} to {from.EInteger + witnessPeriod - 1}", "decide");
+                    return OneOfTheFirst(x, from.EInteger, witnessPeriod, body, isExact);
+                }
             }
             // A statement about a sum or a product up to x, over the whole numbers from some
             // least one, is proved by induction: it holds at the least member, and holding at
@@ -854,6 +876,199 @@ namespace AngouriMath.Functions.Boolean
 
         /// <summary>How many residues a periodic statement is checked over before it is left as written.</summary>
         private const int LargestPeriod = 4096;
+
+        // The most members a statement is evaluated at to decide it past a threshold, and the
+        // longest period whose members are written out as a disjunction.
+        private const int LargestPrefix = 4096;
+        private const int LargestWitnessPeriod = 64;
+
+        /// <summary>
+        /// The leaves of a statement's connectives, what <c>and</c>, <c>or</c>, <c>not</c>,
+        /// <c>implies</c> and <c>xor</c> are made of, added to <paramref name="into"/>.
+        /// </summary>
+        private static void CollectAtoms(Entity statement, List<Entity> into)
+        {
+            switch (statement)
+            {
+                case Andf(var left, var right):
+                    CollectAtoms(left, into);
+                    CollectAtoms(right, into);
+                    break;
+                case Orf(var either, var other):
+                    CollectAtoms(either, into);
+                    CollectAtoms(other, into);
+                    break;
+                case Impliesf(var assumption, var conclusion):
+                    CollectAtoms(assumption, into);
+                    CollectAtoms(conclusion, into);
+                    break;
+                case Xorf(var one, var another):
+                    CollectAtoms(one, into);
+                    CollectAtoms(another, into);
+                    break;
+                case Notf(var negated):
+                    CollectAtoms(negated, into);
+                    break;
+                default:
+                    into.Add(statement);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// The period of a divisibility of a linear function of <paramref name="x"/> with a whole
+        /// slope by a whole number, or <see langword="null"/>: <c>8 divides n - 3 a</c> repeats
+        /// in <c>a</c> with <c>8</c>.
+        /// </summary>
+        private static EInteger? DivisibilityPeriod(Entity atom, Variable x)
+        {
+            if (atom is not Dividesf(Integer { EInteger: var modulus }, var dividend) || modulus.IsZero
+                || !TreeAnalyzer.TryGetPolyLinear(dividend.InnerSimplified, x, out var slope, out var rest)
+                || rest.ContainsNode(x) || slope.Evaled is not Integer { EInteger: var step })
+                return null;
+            var m = modulus.Abs();
+            return step.IsZero ? EInteger.One : m.Divide(m.Gcd(step.Abs()));
+        }
+
+        /// <summary>
+        /// A comparison with <paramref name="x"/> in it as <c>a x + b</c> against zero, with
+        /// <c>a</c> a real number: the slope and the rest, or <see langword="null"/>.
+        /// </summary>
+        private static (Real Slope, Entity Intercept)? LinearComparison(Entity atom, Variable x)
+        {
+            if (atom is not (Equalsf or Greaterf or GreaterOrEqualf or Lessf or LessOrEqualf)
+                || atom is not IBinaryNode { NodeFirstChild: var lhs, NodeSecondChild: var rhs }
+                || !TreeAnalyzer.TryGetPolyLinear((lhs - rhs).InnerSimplified, x, out var slope, out var rest)
+                || rest.ContainsNode(x) || slope.Evaled is not Real value)
+                return null;
+            return (value, rest);
+        }
+
+        /// <summary>
+        /// Where a statement over the whole numbers settles into repeating, or
+        /// <see langword="null"/>: every comparison with <paramref name="x"/> in it is linear
+        /// with numbers for coefficients, so past its root it keeps one truth value, and every
+        /// other atom is a divisibility repeating in <paramref name="x"/> or does not mention it.
+        /// </summary>
+        private static (EInteger Period, EInteger Threshold)? Settled(Entity body, Variable x)
+        {
+            var atoms = new List<Entity>();
+            CollectAtoms(body, atoms);
+            var period = EInteger.One;
+            var threshold = EInteger.Zero;
+            var any = false;
+            foreach (var atom in atoms)
+            {
+                if (!atom.ContainsNode(x))
+                    continue;
+                if (DivisibilityPeriod(atom, x) is { } repeats)
+                {
+                    period = period.Divide(period.Gcd(repeats)).Multiply(repeats);
+                    if (period.CompareTo(EInteger.FromInt32(LargestPrefix)) > 0)
+                        return null;
+                    any = true;
+                    continue;
+                }
+                if (LinearComparison(atom, x) is not (var slope, var rest) || rest.Evaled is not Real { IsNaN: false } intercept
+                    || !slope.IsFinite)
+                    return null;
+                any = true;
+                // Flat, or against an infinity -- x < +oo -- it has one truth value throughout.
+                if (slope.IsZero || !intercept.IsFinite)
+                    continue;
+                // Past floor(-b / a) + 1 the sign of a x + b no longer changes.
+                var root = intercept.EDecimal.Negate().Divide(slope.EDecimal, PeterO.Numbers.EContext.ForPrecision(64));
+                var settlesAt = root.RoundToExponent(0, PeterO.Numbers.ERounding.Floor).ToEInteger().Add(EInteger.One);
+                if (settlesAt.CompareTo(threshold) > 0)
+                    threshold = settlesAt;
+            }
+            return any ? (period, threshold) : null;
+        }
+
+        /// <summary>
+        /// The statement decided at every member from <paramref name="first"/> up to, and not
+        /// including, <paramref name="past"/>.
+        /// </summary>
+        private static Entity? OverAPrefix(Kind kind, Variable x, EInteger first, EInteger past, Entity body, bool isExact)
+        {
+            int holds = 0, fails = 0, undecided = 0;
+            for (var member = first; member.CompareTo(past) < 0; member += 1)
+                switch (body.Substitute(x, Integer.Create(member)).InnerSimplified(isExact))
+                {
+                    case Entity.Boolean(true): holds++; break;
+                    case Entity.Boolean(false): fails++; break;
+                    default: undecided++; break;
+                }
+            return Tally(kind, holds, fails, undecided, distinct: true);
+        }
+
+        /// <summary>
+        /// The period below which a witness of <paramref name="body"/> is found if there is one,
+        /// or <see langword="null"/>: the body is a conjunction of divisibilities repeating in
+        /// <paramref name="x"/>, of comparisons linear in it that stay true as it falls, and of
+        /// atoms without it. A witness less a period is one again, until it is below the period.
+        /// </summary>
+        private static int? LeastWitnessPeriod(Entity body, Variable x)
+        {
+            var conjuncts = new List<Entity>();
+            void Conjuncts(Entity statement)
+            {
+                if (statement is Andf(var left, var right))
+                {
+                    Conjuncts(left);
+                    Conjuncts(right);
+                }
+                else
+                    conjuncts.Add(statement);
+            }
+            Conjuncts(body);
+            var period = EInteger.One;
+            var repeating = false;
+            foreach (var conjunct in conjuncts)
+            {
+                if (!conjunct.ContainsNode(x))
+                    continue;
+                if (DivisibilityPeriod(conjunct, x) is { } repeats)
+                {
+                    period = period.Divide(period.Gcd(repeats)).Multiply(repeats);
+                    repeating = true;
+                    continue;
+                }
+                if (LinearComparison(conjunct, x) is not (var slope, _))
+                    return null;
+                // a x + b >= 0 stays true as x falls where a <= 0, and a x + b <= 0 where a >= 0.
+                var stays = conjunct switch
+                {
+                    Greaterf or GreaterOrEqualf => !slope.IsPositive,
+                    Lessf or LessOrEqualf => !slope.IsNegative,
+                    _ => slope.IsZero,
+                };
+                if (!stays)
+                    return null;
+            }
+            if (!repeating || period.CompareTo(EInteger.FromInt32(LargestWitnessPeriod)) > 0)
+                return null;
+            return period.ToInt32Checked();
+        }
+
+        /// <summary>
+        /// The statement at the first <paramref name="count"/> members from <paramref name="from"/>,
+        /// one of them: a disjunction, decided where each member is.
+        /// </summary>
+        private static Entity OneOfTheFirst(Variable x, EInteger from, int count, Entity body, bool isExact)
+        {
+            Entity? any = null;
+            for (var k = 0; k < count; k++)
+            {
+                var at = body.Substitute(x, Integer.Create(from.Add(EInteger.FromInt32(k)))).InnerSimplified(isExact);
+                if (at == Entity.Boolean.True)
+                    return Entity.Boolean.True;
+                if (at != Entity.Boolean.False)
+                    any = any is null ? at : any | at;
+            }
+            return any ?? Entity.Boolean.False;
+        }
+
 
         /// <summary>
         /// The period of the body in <paramref name="x"/> over the whole numbers, where it has

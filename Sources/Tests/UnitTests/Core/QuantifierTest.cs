@@ -91,6 +91,19 @@ namespace AngouriMath.Tests.Core
         [InlineData("exists! k in ZZ : (0 < k and k < 7) and 3 divides k and 2 divides k", "True")]
         [InlineData("forall k in ZZ : (0 < k and k < 7 and 2 divides k) implies 3 divides binomial(7, k) - 1", "False")]
         [InlineData("forall n in ZZ : n >= 5 implies 2^n > n^2", "True")]
+        // Sullivan and Mackey's coins and special lands (Probs 2.7.8 and 5.7.4, §5.5.3 Try 3).
+        // What n = p a + q b leaves of b is a divisibility and a sign, the least a is below a
+        // period, and past a threshold the rest repeats: 13 is the largest sum 3- and 8-coins
+        // do not make, 23 the largest of 4 and 9.
+        [InlineData("exists a in ZZ* : exists b in ZZ* : 13 = 3 a + 8 b", "False")]
+        [InlineData("exists a in ZZ* : exists b in ZZ* : 12 = 3 a + 8 b", "True")]
+        [InlineData("exists a in ZZ* : exists b in ZZ* : 29 = 7 a + 6 b", "False")]
+        [InlineData("exists a in ZZ+ : exists b in ZZ+ : 6 = 2 a + 3 b", "False")]
+        [InlineData("exists a in ZZ+ : exists b in ZZ+ : 7 = 2 a + 3 b", "True")]
+        [InlineData("forall n in ZZ : n >= 2 implies (exists a in ZZ* : exists b in ZZ* : n = 2 a + 3 b)", "True")]
+        [InlineData("forall n in ZZ : n >= 14 implies (exists a in ZZ* : exists b in ZZ* : n = 3 a + 8 b)", "True")]
+        [InlineData("forall n in ZZ : n >= 24 implies (exists a in ZZ* : exists b in ZZ* : n = 4 a + 9 b)", "True")]
+        [InlineData("forall n in ZZ : n >= 23 implies (exists a in ZZ* : exists b in ZZ* : n = 4 a + 9 b)", "False")]
         // Floors and ceilings of n over a whole number beside n itself repeat where the drifts
         // cancel, and the residues decide them: floor(n/2) + ceil(n/2) = n, and Hermite's
         // identity for thirds.
