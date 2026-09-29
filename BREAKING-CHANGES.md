@@ -722,6 +722,23 @@ met piece by piece now ([#1409](https://github.com/asc-community/AngouriMath/iss
 | `{ x in RR : x^2 - 3 x + 2 >= 0 } = { y in RR : y <= 1 or y >= 2 }` | left as written | `True` |
 | `"({ 2 } \/ (-oo; 1] \/ (2; +oo)) /\ (1; 2)".ToEntity().Evaled` | left as written | `{ }` |
 
+### The size of an infinite set is an aleph, and sizes compare
+
+`card` of an infinite set is an aleph, `aleph(k)`, or a power of 2 of one: `card(ZZ)`, `card(QQ)`
+and `card(PP)` are `aleph(0)`, and `card(RR)` is `2^aleph(0)`, an aleph but not a named one, since
+which one it is is the continuum hypothesis, which ZFC does not decide: `2^aleph(0) = aleph(1)`
+stays as written. `card(powerset(S))` is `2^card(S)`. A sum or a product of sizes, one of them
+infinite, is the larger, and a difference or a quotient of sizes has no value and is `NaN`, as
+`log(0)` is. Sizes compare by what ZFC proves, and a set is smaller than its power set whatever it
+is ([#1409](https://github.com/asc-community/AngouriMath/issues/1409), Sullivan and Mackey's §7.6).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"card(ZZ)".ToEntity().Simplify()` | `#ZZ` | `aleph(0)` |
+| `"card(ZZ) = card(QQ)".ToEntity().Simplify()` | `#ZZ = #QQ` | `True` |
+| `"card(ZZ) < card(RR)".ToEntity().Simplify()` | `#ZZ < #RR` | `True` |
+| `"aleph(0) + 1".ToEntity().Simplify()` | `1` — `aleph(0)` was read as `aleph * 0` | `aleph(0)` |
+
 ### An integer range is listed, and a family of sets has a union and an intersection
 
 `ZZ /\ [1; 10]` lists its members now — an integer set cut by a numeric interval with at most

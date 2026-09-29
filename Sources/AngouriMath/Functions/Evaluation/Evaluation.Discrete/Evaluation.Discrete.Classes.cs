@@ -269,6 +269,19 @@ namespace AngouriMath
                         && Number.IsZero(difference);
 
             /// <summary>
+            /// Whether a size that is not a number is inside a constant, which is then not compared
+            /// as a number: the difference of the two sides of <c>sin(aleph(0)) = 0</c> is no
+            /// number to test for zero, and reading it as a nonzero one would answer False.
+            /// </summary>
+            private static bool HasAnUnreadSize(Entity side)
+            {
+                foreach (var node in side.Nodes)
+                    if (node is Cardf or Alephf)
+                        return true;
+                return false;
+            }
+
+            /// <summary>
             /// Two sets are equal exactly when each is a subset of the other -- the double
             /// containment that defines set equality -- so a pair of sets that are not the same
             /// node is put to <see cref="Set.Subsetf"/> both ways: <c>{ x in ZZ : x >= 1 } = ZZ+</c>
@@ -289,7 +302,10 @@ namespace AngouriMath
             protected override Entity InnerSimplify(bool isExact)
                 => ExpandOnTwoArguments(Left, Right,
                     (left, right) => left == right ? true
-                    : left.IsConstant && right.IsConstant ? ConstantsAreEqual(left, right)
+                    // A size that is not a number is compared as a size, never by the difference
+                    // of two expressions: card(ZZ) - card(QQ) is not zero, and the two are equal.
+                    : AngouriMath.Core.Sets.Cardinality.IsSize(left) || AngouriMath.Core.Sets.Cardinality.IsSize(right) ? AngouriMath.Core.Sets.Cardinality.Compare(left, right, static sign => sign == 0, isExact)
+                    : left.IsConstant && right.IsConstant ? (HasAnUnreadSize(left) || HasAnUnreadSize(right) ? null : ConstantsAreEqual(left, right))
                     : left is Set setLeft && right is Set setRight ? SetsAreEqual(setLeft, setRight, isExact)
                     : null,
                     (@this, a, b) => ((Equalsf)@this).New(a, b), isExact,
@@ -325,6 +341,7 @@ namespace AngouriMath
                     {
                         (Number numLeft, Number numRight) when AsAReal(numLeft) is { } reLeft && AsAReal(numRight) is { } reRight => reLeft > reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
+                        _ when AngouriMath.Core.Sets.Cardinality.IsSize(a) || AngouriMath.Core.Sets.Cardinality.IsSize(b) => AngouriMath.Core.Sets.Cardinality.Compare(a, b, static sign => sign > 0, isExact),
                         _ => null
                     },
                     (@this, a, b) => ((Greaterf)@this).New(a, b), isExact);
@@ -344,6 +361,7 @@ namespace AngouriMath
                     {
                         (Number numLeft, Number numRight) when AsAReal(numLeft) is { } reLeft && AsAReal(numRight) is { } reRight => reLeft >= reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
+                        _ when AngouriMath.Core.Sets.Cardinality.IsSize(a) || AngouriMath.Core.Sets.Cardinality.IsSize(b) => AngouriMath.Core.Sets.Cardinality.Compare(a, b, static sign => sign >= 0, isExact),
                         _ => null
                     },
                     (@this, a, b) => ((GreaterOrEqualf)@this).New(a, b), isExact);
@@ -363,6 +381,7 @@ namespace AngouriMath
                     {
                         (Number numLeft, Number numRight) when AsAReal(numLeft) is { } reLeft && AsAReal(numRight) is { } reRight => reLeft < reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
+                        _ when AngouriMath.Core.Sets.Cardinality.IsSize(a) || AngouriMath.Core.Sets.Cardinality.IsSize(b) => AngouriMath.Core.Sets.Cardinality.Compare(a, b, static sign => sign < 0, isExact),
                         _ => null
                     },
                     (@this, a, b) => ((Lessf)@this).New(a, b), isExact);
@@ -381,6 +400,7 @@ namespace AngouriMath
                     {
                         (Number numLeft, Number numRight) when AsAReal(numLeft) is { } reLeft && AsAReal(numRight) is { } reRight => reLeft <= reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
+                        _ when AngouriMath.Core.Sets.Cardinality.IsSize(a) || AngouriMath.Core.Sets.Cardinality.IsSize(b) => AngouriMath.Core.Sets.Cardinality.Compare(a, b, static sign => sign <= 0, isExact),
                         _ => null
                     },
                     (@this, a, b) => ((LessOrEqualf)@this).New(a, b), isExact);
@@ -572,8 +592,12 @@ namespace AngouriMath
                         Powersetf(var of) when MathS.Sets.Card(of).InnerSimplified(isExact) is Integer { EInteger: var counted }
                             && counted.Sign >= 0 && counted.CanFitInInt32()
                             => Integer.Create(EInteger.One.ShiftLeft(counted.ToInt32Checked())),
-                        // An interval with numeric ends: one point, or none, is countable; a
-                        // proper interval is not, and there is no number for it here.
+                        // An infinite set's size is an aleph, or a power of 2 of one: card(ZZ) is
+                        // aleph(0) and card(RR) is 2^aleph(0), Sullivan and Mackey's §7.6.
+                        // https://github.com/asc-community/AngouriMath/issues/1409
+                        _ when AngouriMath.Core.Sets.Cardinality.Of(a, isExact) is { } size => size,
+                        // An interval with numeric ends: one point, or none; a proper interval is
+                        // the size of the reals, above.
                         Interval { Left: Real left, Right: Real right } interval => left.EDecimal.CompareTo(right.EDecimal) switch
                         {
                             > 0 => Integer.Zero,

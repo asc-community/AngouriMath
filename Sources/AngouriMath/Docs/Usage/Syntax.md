@@ -191,7 +191,14 @@ value on a side it is `NaN`. **Two sets are equal exactly when each is a subset 
 and that is how `=` between sets is decided: `{ x in ZZ : x >= 1 } = ZZ+` is `True` and
 `[0; 1] = [0; 2]` is `False`; a pair the subset decision leaves open stays written. `card(S)` counts
 a listed set whose members are numbers or listed sets of them (`card({1, {}})` is `2`), and
-`card(powerset(S))` is `2^card(S)`.
+`card(powerset(S))` is `2^card(S)`. The size of an infinite set is an aleph, `aleph(k)` (LaTeX
+`\aleph_k`), or a power of 2 of one: `card(ZZ)`, `card(QQ)` and `card(PP)` are `aleph(0)`, and
+`card(RR)` is `2^aleph(0)` — an aleph too, but which one is the continuum hypothesis, which ZFC does
+not decide, so `2^aleph(0) = aleph(1)` stays as written. A sum or a product of sizes, one of them
+infinite, is the larger (`aleph(0) + 1` is `aleph(0)`), and sizes compare by what ZFC proves:
+`card(ZZ) < card(RR)` and `2^aleph(0) >= aleph(1)` are `True`, and a set is smaller than its power
+set whatever it is, so `card(S) < card(powerset(S))` is `True`. A subset is no larger than its
+superset. `card(ZZ) = +oo` stays as written: an infinity is not a size.
 
 There is **no universal set** and no literal for one. A set that constrains nothing is the
 conditional set `{ x : True }`, which prints, reads back, compares and answers membership like any

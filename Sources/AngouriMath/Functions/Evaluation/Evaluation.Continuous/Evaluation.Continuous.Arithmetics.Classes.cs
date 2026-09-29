@@ -90,6 +90,9 @@ namespace AngouriMath
                         (Complex a, Complex b) when !isExact => a + b,
                         (var n1, Integer(0)) => n1,
                         (Integer(0), var n2) => n2,
+                        // A sum of sizes, one of them infinite, is the larger: aleph(0) + 1 is
+                        // aleph(0), the Hilbert hotel. https://github.com/asc-community/AngouriMath/issues/1409
+                        _ when Core.Sets.Cardinality.Absorbed(augend, addend) is { } larger => larger,
                         (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).InnerSimplified(isExact), (inter.Right + n2).InnerSimplified(isExact)),
                         (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).InnerSimplified(isExact), (n2 + inter.Right).InnerSimplified(isExact)),
                         _ => null
@@ -108,6 +111,9 @@ namespace AngouriMath
                         (Complex a, Complex b) when !isExact => a - b,
                         (var n1, Integer(0)) => n1,
                         (Integer(0), var n2) => -n2,
+                        // Sizes are not subtracted: aleph(0) - aleph(0) has no value.
+                        // https://github.com/asc-community/AngouriMath/issues/1409
+                        _ when Core.Sets.Cardinality.HasNoValue(augend, addend) => MathS.NaN,
                         (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).InnerSimplified(isExact), (inter.Right - n2).InnerSimplified(isExact)),
                         // Subtracting an interval turns it round, so the ends swap and their
                         // openness swaps with them. `5 - (0; 1]` is `[4; 5)`: the excluded 1
@@ -140,6 +146,9 @@ namespace AngouriMath
                         (Integer(0), { DomainCondition: var condition }) => Integer.Zero.Provided(condition),
                         (var n1, Integer(1)) => n1,
                         (Integer(1), var n2) => n2,
+                        // A product of sizes, one of them infinite and neither zero, is the
+                        // larger. https://github.com/asc-community/AngouriMath/issues/1409
+                        _ when Core.Sets.Cardinality.Absorbed(a, b) is { } larger => larger,
                         (var n1, var n2) when n1 == n2 => new Powf(n1, 2).InnerSimplified(isExact),
                         // After the zero arms above, which answer a multiplication by zero for
                         // every Entity and not only for an interval.
@@ -167,6 +176,9 @@ namespace AngouriMath
                     (_, Integer(0)) => Real.NaN,
                     (Complex n1, Complex n2) when !isExact => n1 / n2,
                     (var n1, Integer(1)) => n1,
+                    // Sizes are not divided: aleph(0) / 2 has no value.
+                    // https://github.com/asc-community/AngouriMath/issues/1409
+                    _ when Core.Sets.Cardinality.HasNoValue(a, b) => MathS.NaN,
                     // A quotient by minus one is the negation, and a negation of a negation is
                     // the thing itself: the solver of `b - x = 0` answered `-b / (-1)` and the
                     // README printed it so.
@@ -442,6 +454,23 @@ namespace AngouriMath
                         _ => null
                     },
                     (@this, a) => ((Iversonf)@this).New(a), isExact);
+        }
+
+        public partial record Alephf
+        {
+            // Indexed by the whole numbers from zero: there is no aleph(-1) and no aleph(1/2).
+            private protected override Entity IntrinsicCondition => Index.In(MathS.Sets.NonNegativeIntegers);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify(bool isExact)
+                => ExpandOnOneArgument(Index,
+                    a => a switch
+                    {
+                        Integer { EInteger.Sign: >= 0 } => null,
+                        Number => MathS.NaN,
+                        _ => null
+                    },
+                    (@this, a) => ((Alephf)@this).New(a), isExact);
         }
 
         public partial record Erff
