@@ -677,7 +677,7 @@ namespace AngouriMath.Functions.Algebra
             // stands beside it, so that the split below finds them.
             var withItsLinearsWritten = WithRationalFactorsSplitBesideASymbolicOne(denominator, x) ?? denominator;
             if (Mulf.LinearChildren(withItsLinearsWritten).Any(f => f.ContainsNode(x) && f is Powf(_, Number.Integer { EInteger.Sign: > 0 } e) && e != Number.Integer.One)
-                && IsAProductOfSymbolicLinearFactors(withItsLinearsWritten, x)
+                && IsAProductOfSymbolicLinearFactors(withItsLinearsWritten, x, aLinearAmongThem: !HoldsARepeatedSymbolicFactor(withItsLinearsWritten, x))
                 && Functions.PartialFractions.TrySplitOverWrittenFactors(numerator, withItsLinearsWritten, x, out var overSymbolicLinears)
                 && IntegratedTermByTerm(overSymbolicLinears, x, integrateByParts) is { } overTheLinears)
                 return overTheLinears;
@@ -14356,8 +14356,9 @@ namespace AngouriMath.Functions.Algebra
 
         /// <summary>
         /// Whether <paramref name="denominator"/> is written as a product of two or more
-        /// distinct factors in <paramref name="x"/>, at least one of them linear, each linear
-        /// or quadratic and to a whole power, with a symbol in a coefficient somewhere.
+        /// distinct factors in <paramref name="x"/>, each linear or quadratic and to a whole
+        /// power, with a symbol in a coefficient somewhere -- and at least one of them linear,
+        /// unless <paramref name="aLinearAmongThem"/> is false.
         /// </summary>
         /// <remarks>
         /// A quadratic beside the linears is allowed since the decomposition takes the linear
@@ -14367,8 +14368,28 @@ namespace AngouriMath.Functions.Algebra
         /// tangent with a power of a linear in it -- went to the Hermite reduction below,
         /// which answered in <c>a^63 b^10</c>.
         /// https://github.com/asc-community/AngouriMath/issues/718
+        /// The partial fractions ask it without a linear where a symbolic factor is repeated:
+        /// quadratics alone are split by their residues just the same, and the half-angle
+        /// tangent's <c>2 (1 - t^2)^6/((1 + t^2)^5 (a t^2 + 2 b t + a)^2)</c>, which is Rubi's
+        /// <c>cos(x)^6/(a + b sin(x))^2</c>, has none. Where only a rational factor is repeated
+        /// the Hermite reduction answers shorter: <c>sin(x)^2/(a + b cos(x))</c> by residues was
+        /// 1864 characters for its 1109. The substitution search asks it with one, declining
+        /// only what the split surely takes: over two symbolic quadratics <c>u = x^2</c> is often
+        /// the shorter answer.
         /// </remarks>
-        private static bool IsAProductOfSymbolicLinearFactors(Entity denominator, Entity.Variable x)
+        private static bool IsAProductOfSymbolicLinearFactors(Entity denominator, Entity.Variable x, bool aLinearAmongThem = true)
+            => IsAProductOfSymbolicLinearOrQuadraticFactors(denominator, x, aLinearAmongThem);
+
+        /// <summary>
+        /// Whether a written factor of <paramref name="denominator"/> with a symbol in it stands
+        /// to a whole power of two or more: where the Hermite reduction's one solve takes those
+        /// symbols through every row, and a split by residues does not.
+        /// </summary>
+        private static bool HoldsARepeatedSymbolicFactor(Entity denominator, Entity.Variable x)
+            => Mulf.LinearChildren(denominator).Any(factor => factor is Powf(var @base, Number.Integer { EInteger.Sign: > 0 } power)
+                && power != Number.Integer.One && @base.ContainsNode(x) && @base.Vars.Any(v => v != x));
+
+        private static bool IsAProductOfSymbolicLinearOrQuadraticFactors(Entity denominator, Entity.Variable x, bool aLinearAmongThem)
         {
             var linears = 0;
             var quadratics = 0;
@@ -14394,7 +14415,7 @@ namespace AngouriMath.Functions.Algebra
                     return false;
                 symbolic |= read.Values.Any(coefficient => coefficient.Vars.Any());
             }
-            return linears >= 1 && linears + quadratics >= 2 && symbolic;
+            return (linears >= 1 || !aLinearAmongThem) && linears + quadratics >= 2 && symbolic;
         }
 
         /// <summary>

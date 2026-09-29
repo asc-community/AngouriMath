@@ -13,9 +13,9 @@ using Xunit;
 namespace AngouriMath.Tests.Calculus
 {
     /// <summary>
-    /// A power of <c>1 - t^2</c> beside a power of a quadratic with symbols in it, which is what
-    /// the half-angle tangent makes of a power of the secant, the cosine or the tangent over
-    /// <c>(a + b sin(x))^n</c>. Part of
+    /// A power of <c>1 - t^2</c> or <c>1 + t^2</c> beside a power of a quadratic with symbols in
+    /// it, which is what the half-angle tangent makes of a power of the secant, the cosine or the
+    /// cosecant over <c>(a + b sin(x))^n</c>. Part of
     /// <a href="https://github.com/asc-community/AngouriMath/issues/718">#718</a>.
     /// </summary>
     /// <remarks>
@@ -31,6 +31,14 @@ namespace AngouriMath.Tests.Calculus
     /// <c>a/a + 2 b/a t + t^2</c>, whose first coefficient the chain read as <c>a^0</c>, and the
     /// split declined it: <c>(1 + t^2)^2/((1 - t^2)^2 (a t^2 + 2 b t + a)^2)</c> took 14 s through
     /// the substitution search.
+    /// </para>
+    /// <para>
+    /// And the split's numerator over a quadratic block is computed modulo that quadratic from
+    /// the other factors' product, which was written out as a polynomial and read back; a
+    /// coefficient like <c>(4 b^2 - 2 a^2)/a^2</c> expanded to an <c>a^0</c> the reader did not
+    /// read, and every quadratic block beside a symbolic square was declined. It is reduced from
+    /// the coefficients now, and quadratics alone are split so too where a symbolic one is
+    /// repeated.
     /// </para>
     /// <para>
     /// Every answer is waited for with a bound, since the failure was not answering, and then
@@ -80,11 +88,22 @@ namespace AngouriMath.Tests.Calculus
         public void OverAPowerOfOneLessTheSquare(string integrand) => AnswersAndDifferentiatesBack(integrand);
 
         /// <summary>
-        /// The trigonometric integrand the third comes from, Rubi's 4.1.1.2 row 493, which ran
-        /// out a 20 s budget.
+        /// A power of <c>1 + t^2</c> beside the square of a symbolic quadratic, with no linear
+        /// factor at all, which the split now takes by residues alone. It did not return within
+        /// 20 s.
         /// </summary>
         [Fact]
-        public void APowerOfTheSecantOverASquaredSine() => AnswersAndDifferentiatesBack("sec(x)^4/(a+b*sin(x))^2");
+        public void OverAPowerOfOnePlusTheSquare() => AnswersAndDifferentiatesBack("2*(1-x^2)^5/((1+x^2)^4*(a-a*x^2+2*b*x)^2)");
+
+        /// <summary>
+        /// The trigonometric integrands these come from, each of which ran out a 20 s budget:
+        /// Rubi's 4.1.1.2 rows 493 and 489, and 4.1.2.2 row 1447.
+        /// </summary>
+        [Theory]
+        [InlineData("sec(x)^4/(a+b*sin(x))^2")]
+        [InlineData("cos(x)^6/(a+b*sin(x))^2")]
+        [InlineData("cos(x)^4*csc(x)/(a+b*sin(x))^2")]
+        public void OverASquaredSine(string integrand) => AnswersAndDifferentiatesBack(integrand);
 
         /// <summary>
         /// Neighbours the half-angle tangent answered already, through the same constant taken
