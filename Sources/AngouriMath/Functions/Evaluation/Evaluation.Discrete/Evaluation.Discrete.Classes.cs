@@ -398,6 +398,10 @@ namespace AngouriMath
                         (a, b) => (a, b) switch
                         {
                             (var el, Set set) when set.TryContains(el, out var contains) => contains,
+                            // A whole number, by what the quantifiers around it establish, is in
+                            // ZZ* where it is not negative. https://github.com/asc-community/AngouriMath/issues/1409
+                            (var el, Set set) when Functions.Boolean.QuantifierFacts.MembershipAsComparison(el, set) is { } comparison
+                                => comparison.InnerSimplified(isExact),
                             _ => null
                         },
                         (@this, a, b) => ((Inf)@this).New(a, b), isExact, propagateSet: false);

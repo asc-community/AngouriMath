@@ -271,6 +271,24 @@ namespace AngouriMath.Functions.Boolean
                 }
                 ProofRecording.Rollback(tried);
             }
+            // A comparison of two polynomials that differ by a number says the same of every
+            // member: x^2 + 1 > x^2 is 1 > 0 at each, which is what the witness term x^2 + 1 asks.
+            // Polynomials only, which are defined at every member: 1/x + 1 > 1/x is not 1 > 0 at 0.
+            if (body is Greaterf or Lessf or GreaterOrEqualf or LessOrEqualf
+                && body is IBinaryNode { NodeFirstChild: var greater, NodeSecondChild: var lesser }
+                && DefinedEverywhere(greater) && DefinedEverywhere(lesser)
+                && (greater - lesser).Expand().InnerSimplified(isExact) is Real { IsFinite: true } gap)
+            {
+                var holds = body switch
+                {
+                    Greaterf => gap > Integer.Zero,
+                    Lessf => gap < Integer.Zero,
+                    GreaterOrEqualf => gap >= Integer.Zero,
+                    _ => gap <= Integer.Zero,
+                };
+                by = ($"the two sides differ by {gap}, so the comparison says the same of every member", "linarith");
+                return Closed(kind, set, holds ? Entity.Boolean.True : Entity.Boolean.False);
+            }
             if (set is FiniteSet finite)
             {
                 by = ($"evaluated at each of the {finite.Count} members", "decide");
@@ -335,18 +353,84 @@ namespace AngouriMath.Functions.Boolean
             }
             if (BySolving(kind, x, set, body) is { } bySolving)
             {
-                by = ((kind, bySolving == Entity.Boolean.True) switch
-                {
-                    (Kind.All, true) => "the negation of the body has no solution in the set",
-                    (Kind.All, false) => "the negation of the body has a solution in the set",
-                    (Kind.Some, true) => "the body's solutions meet the set",
-                    (Kind.Some, false) => "the body has no solution in the set",
-                    (_, true) => "the body has exactly one solution in the set",
-                    _ => "the body has no solution, or more than one, in the set",
-                }, "nlinarith");
+                by = bySolving is not Entity.Boolean
+                    ? ("the body holds exactly at its listed solutions, so there is a member where it holds exactly when one of them is a member", "exists_eq_left")
+                    : ((kind, bySolving == Entity.Boolean.True) switch
+                    {
+                        (Kind.All, true) => "the negation of the body has no solution in the set",
+                        (Kind.All, false) => "the negation of the body has a solution in the set",
+                        (Kind.Some, true) => "the body's solutions meet the set",
+                        (Kind.Some, false) => "the body has no solution in the set",
+                        (_, true) => "the body has exactly one solution in the set",
+                        _ => "the body has no solution, or more than one, in the set",
+                    }, "nlinarith");
                 return bySolving;
             }
+            // exists x in X : forall y in Y : P is false where one term in x, in Y for every x,
+            // fails P at every x, and forall x in X : exists y in Y : P is true where one holds P at
+            // every x: Sullivan and Mackey's Prob 4.11.5, exists x in RR : forall y in RR :
+            // x^2 - y^2 >= 0, fails at y = x^2 + 1 whatever x is.
+            // https://github.com/asc-community/AngouriMath/issues/1409
+            if (body is Quantifier(Variable nested, Set nestedOver, var nestedBody) && nested != x && !nestedOver.ContainsNode(x)
+                && (kind, body) is (Kind.Some, Forallf) or (Kind.All, Existsf)
+                && ByATerm(kind, x, set, nested, nestedOver, nestedBody, isExact) is var (byTerm, witnessTerm))
+            {
+                by = ($"{nested} = {witnessTerm} is in {nestedOver} for every {x} and {(kind == Kind.Some ? "fails" : "holds")} there", "use");
+                return byTerm;
+            }
             return null;
+        }
+
+        /// <summary>Whether the expression is a polynomial in its names, and so has a value wherever they do.</summary>
+        private static bool DefinedEverywhere(Entity expression)
+            => expression switch
+            {
+                Number or Variable => true,
+                Sumf(var a, var b) => DefinedEverywhere(a) && DefinedEverywhere(b),
+                Minusf(var a, var b) => DefinedEverywhere(a) && DefinedEverywhere(b),
+                Mulf(var a, var b) => DefinedEverywhere(a) && DefinedEverywhere(b),
+                Powf(var @base, Integer { IsNegative: false }) => DefinedEverywhere(@base),
+                _ => false,
+            };
+
+        /// <summary>
+        /// The verdict of <see cref="DecideBy"/>'s route through a term, and the term: for
+        /// <c>exists x : forall y : P</c>, a term at which <c>P</c> fails for every <c>x</c>, which
+        /// makes it false; for <c>forall x : exists y : P</c>, one at which <c>P</c> holds for every
+        /// <c>x</c>, which makes it true. The terms are few and fixed, each certainly in the inner
+        /// set for every member of the outer one, so a term that works is a proof, and none
+        /// working says nothing.
+        /// </summary>
+        private static (Entity Verdict, Entity Term)? ByATerm(Kind kind, Variable x, Set set, Variable y, Set inner, Entity claim, bool isExact)
+        {
+            foreach (var term in TermsIn(x, set, inner))
+            {
+                var at = claim.Substitute(y, term);
+                var everywhere = Decide(Kind.All, x, set, (kind == Kind.Some ? !at : at).InnerSimplified(isExact), isExact);
+                if (everywhere == Entity.Boolean.True)
+                    return (kind == Kind.Some ? Entity.Boolean.False : Entity.Boolean.True, term);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Terms in <paramref name="x"/> that lie in <paramref name="inner"/> whenever it lies in
+        /// <paramref name="set"/>: polynomials with whole coefficients, which map the reals to the
+        /// reals and the whole numbers to the whole numbers, and of them the ones that are not
+        /// negative, or positive, for the whole numbers from 0 or from 1.
+        /// </summary>
+        private static IEnumerable<Entity> TermsIn(Variable x, Set set, Set inner)
+        {
+            var whole = set is SpecialSet outer && IsIntegerSet(outer);
+            var any = new Entity[] { x + 1, x - 1, -x, 2 * x, MathS.Pow(x, 2) + 1, -MathS.Pow(x, 2) - 1, Integer.Zero, Integer.One };
+            return inner switch
+            {
+                SpecialSet.Reals when WithinReals(set) => any,
+                SpecialSet.Integers when whole => any,
+                SpecialSet.NonNegativeIntegers when whole => new Entity[] { MathS.Pow(x, 2) + 1, MathS.Pow(x, 2), Integer.Zero, Integer.One },
+                SpecialSet.PositiveIntegers when whole => new Entity[] { MathS.Pow(x, 2) + 1, Integer.One },
+                _ => System.Array.Empty<Entity>(),
+            };
         }
 
         /// <summary>
@@ -1391,7 +1475,7 @@ namespace AngouriMath.Functions.Boolean
                     {
                         true => Entity.Boolean.True,
                         false => Entity.Boolean.False,
-                        null => null,
+                        null => OneOfTheListedIsIn(solved, set),
                     } : null;
                 case Kind.All:
                     return Algebra.AnalyticalSolving.StatementSolver.Solved(Negated(body), x) is { } solvedNot ? Meets(solvedNot, set) switch
@@ -1421,6 +1505,28 @@ namespace AngouriMath.Functions.Boolean
                     return Meets(solutions, set) == false ? Entity.Boolean.False : null;
             }
             return null;
+        }
+
+        /// <summary>
+        /// That one of the listed solutions is in the set, where the facts in scope read each
+        /// membership as a comparison, or <see langword="null"/>. The body holds exactly at its
+        /// solutions, so there is a member where it holds exactly when one of them is a member:
+        /// Sullivan and Mackey's Prob 4.11.6, <c>exists z in ZZ* : x - y = z or y - x = z</c> for
+        /// whole <c>x</c> and <c>y</c>, is <c>x - y &gt;= 0 or y - x &gt;= 0</c>, which the quantifiers
+        /// over <c>x</c> and <c>y</c> then decide.
+        /// </summary>
+        private static Entity? OneOfTheListedIsIn(Set solutions, Set set)
+        {
+            if (solutions is not FiniteSet { Count: > 0 } listed)
+                return null;
+            Entity? any = null;
+            foreach (var solution in listed)
+            {
+                if (QuantifierFacts.MembershipAsComparison(solution, set) is not { } comparison)
+                    return null;
+                any = any is null ? comparison : any | comparison;
+            }
+            return any;
         }
 
         /// <summary>

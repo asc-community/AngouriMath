@@ -212,6 +212,10 @@ namespace AngouriMath.Functions.Boolean
         /// </summary>
         private static bool Reads(Entity node) => node switch
         {
+            // A membership in a set of whole numbers, which MembershipAsComparison reads, and a
+            // quantifier over one, whose listed witnesses are asked about such memberships.
+            Inf(not Number, SpecialSet whole) => Quantifiers.IsIntegerSet(whole),
+            Quantifier(_, SpecialSet over, _) => Quantifiers.IsIntegerSet(over),
             Dividesf(not Number, _) or Congruentf(_, _, not Number) => true,
             Equalsf(Modf(_, var modulus), Modf(_, var other)) => modulus is not Number && modulus == other,
             Floorf(not Number) or Ceilf(not Number) => true,
@@ -251,6 +255,27 @@ namespace AngouriMath.Functions.Boolean
                     $"{p} is prime and 0 < {k} < {p}, so {p} divides {p}! = binomial({p}, {k}) {k}! ({p} - {k})! and none of the factors of {k}! ({p} - {k})!",
                     "Nat.Prime.dvd_choose_self", Entity.Boolean.True);
             return true;
+        }
+
+        /// <summary>
+        /// <c>s in S</c> for a set of whole numbers, as the comparison it is where the facts in scope
+        /// make <c>s</c> a whole number: <c>s &gt;= 0</c> in <c>ZZ*</c>, <c>s &gt;= 1</c> in <c>ZZ+</c>, and
+        /// <c>True</c> in <c>ZZ</c>. <see langword="null"/> otherwise. Sullivan and Mackey's Prob
+        /// 4.11.6 asks for a <c>z</c> in <c>ZZ*</c> with <c>x - y = z</c> or <c>y - x = z</c>, for whole
+        /// <c>x</c> and <c>y</c>: the witnesses are <c>x - y</c> and <c>y - x</c>, one of which is
+        /// not negative.
+        /// </summary>
+        internal static Entity? MembershipAsComparison(Entity element, Set set)
+        {
+            if (top is null || element is Number || !MentionsARenamedName(element) || !IsWholePolynomial(element))
+                return null;
+            return set switch
+            {
+                SpecialSet.Integers => Entity.Boolean.True,
+                SpecialSet.NonNegativeIntegers => element >= Integer.Zero,
+                SpecialSet.PositiveIntegers => element >= Integer.One,
+                _ => null,
+            };
         }
 
         /// <summary>
