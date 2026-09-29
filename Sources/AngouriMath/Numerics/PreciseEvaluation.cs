@@ -492,6 +492,15 @@ namespace AngouriMath.Numerics
                                 return undefined;
                         }
                     return undefined;
+                // The Iverson bracket, 1 where its statement holds and 0 where it does not, and
+                // undefined where the statement is not decided over the rectangle, as a piecewise is.
+                case Iversonf(var statement):
+                    return Decide(statement) switch
+                    {
+                        true => Real(PreciseInterval.Exactly(EDecimal.One)),
+                        false => Real(PreciseInterval.Exactly(EDecimal.Zero)),
+                        null => undefined,
+                    };
                 // The special functions, each through its derivative, which is elementary; Ei, Ci
                 // and Chi jump across the real line left of 0, and li left of 1.
                 case Erff(var argument):

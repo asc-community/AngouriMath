@@ -53,6 +53,7 @@ namespace AngouriMath.Tests.Core
         [InlineData("piecewise(1 provided 2 < 1, sin(1) provided 3 > 2)")]
         [InlineData("sqrt(2) provided -4 - 4 * (137/100)^2 in RR")]
         [InlineData("sqrt(2) provided sqrt(-2) in CC")]
+        [InlineData("iverson(2 > 1) * sqrt(2) + iverson(sin(1) < 0)")]
         public void TheIntervalHoldsTheValue(string expression)
         {
             var expr = expression.ToEntity();
@@ -89,6 +90,7 @@ namespace AngouriMath.Tests.Core
         [InlineData("li(1)")]
         [InlineData("Ci(-2 + sin(pi) * i)")]
         [InlineData("Ei(sin(pi))")]
+        [InlineData("iverson(sin(pi) > 0)")]
         public void UndecidedWhereItShouldBe(string expression)
         {
             Assert.Null(IntervalEvaluation.Of(expression.ToEntity()));
@@ -134,6 +136,7 @@ namespace AngouriMath.Tests.Core
         [InlineData("Ci(2 + sin(pi) * i)")]
         [InlineData("Shi(3/2) + Chi(-1) + Chi(1 + 2i)")]
         [InlineData("e^(-2) * Ei(sqrt(3)) + Si(pi/4)^2")]
+        [InlineData("iverson(pi > 3) * sqrt(2) + iverson(e < 2)")]
         public void ThePreciseIntervalHoldsTheValue(string expression)
         {
             var expr = expression.ToEntity();

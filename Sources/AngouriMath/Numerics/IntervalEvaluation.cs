@@ -416,6 +416,15 @@ namespace AngouriMath.Numerics
                                 return Undefined;
                         }
                     return Undefined;
+                case Iversonf(var statement):
+                    // 1 where the statement holds and 0 where it does not; one the intervals
+                    // cannot settle leaves the value unsettled, as a piecewise does.
+                    return Decide(statement) switch
+                    {
+                        true => ComplexInterval.Real(Interval.Exactly(1)),
+                        false => ComplexInterval.Real(Interval.Exactly(0)),
+                        null => Undefined,
+                    };
                 default:
                     return Undefined;
             }
