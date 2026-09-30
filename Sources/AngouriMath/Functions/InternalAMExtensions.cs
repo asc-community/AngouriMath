@@ -1191,26 +1191,48 @@ namespace AngouriMath
             if (!mathContext.Precision.CanFitInInt32())
                 throw new WrongNumberOfArgumentsException($"The precision of the {nameof(mathContext)} is outside the int32 range");
 
-            // https://en.wikipedia.org/wiki/Spouge%27s_approximation
-            var mc = mathContext.WithBigPrecision(mathContext.Precision << 1);
+            var precision = mathContext.Precision.ToInt32Checked();
+            var mc = FactorialWorkingContext(precision);
+            // Spouge's approximation holds right of zero. Left of it, the reflection formula
+            // x! = pi x/(sin(pi x) (-x)!) asks it at -x. Used left of zero it lost its digits as x
+            // neared -a, and past -a had none: at 30 digits (-38.0785)! was -3.1e-35, where it is
+            // 7.03e-43. https://github.com/asc-community/AngouriMath/issues/1614
+            if (x.IsNegative)
+            {
+                var piX = ConstantCache.Lookup(mc).Pi.Multiply(x, mc);
+                return piX.Divide(piX.Sin(mc).Multiply(SpougeFactorial(x.Negate(), precision, mc), mc), mc).RoundToPrecision(mathContext);
+            }
+            return SpougeFactorial(x, precision, mc).RoundToPrecision(mathContext);
+        }
 
-            var a = mathContext.Precision.ToInt32Checked() * 13 / 10;
+        /// <summary>
+        /// <c>x!</c> by Spouge's approximation with <c>a</c> a tenth over <paramref name="precision"/>,
+        /// for <c>Re x &gt;= 0</c>, before any rounding back.
+        /// https://en.wikipedia.org/wiki/Spouge%27s_approximation
+        /// </summary>
+        private static EDecimal SpougeFactorial(EDecimal x, int precision, EContext mc)
+        {
+            var a = precision * 13 / 10;
             var constants = GetSpougeFactorialConstants(a);
-
-            var negative = false;
             var factor = constants[0];
             for (int k = 1; k < a; k++)
-            {
                 factor = factor.Add(constants[k].Divide(x.Add(k), mc));
-                negative = !negative;
-            }
-
             var result = x.Add(a).Pow(x.Add(0.5m), mc);
             result = result.Multiply(x.Negate().Subtract(a).Exp(mc));
-            result = result.Multiply(factor);
-
-            return result.RoundToPrecision(mathContext);
+            return result.Multiply(factor);
         }
+
+        /// <summary>
+        /// The factorial's working context: twice <paramref name="precision"/>'s digits, and no bound on
+        /// the exponent. The caller's context bounded it, so an intermediate past its ceiling or below
+        /// its floor lost its digits though the value fit: at the default precision <c>(400.5)!</c> was
+        /// <c>+oo</c>, where it is <c>1.28e870</c>. One per precision, so that the constants the library
+        /// caches per context stay few. https://github.com/asc-community/AngouriMath/issues/1614
+        /// </summary>
+        internal static EContext FactorialWorkingContext(int precision)
+            => factorialWorkingContexts.GetOrAdd(precision, static precision
+                => EContext.ForPrecision(precision << 1).WithRounding(ERounding.HalfEven).WithUnlimitedExponents());
+        [ConcurrentField] private static readonly ConcurrentDictionary<int, EContext> factorialWorkingContexts = new();
 
         // GetOrAdd may run the factory more than once for one key under contention, and that is
         // harmless here: the constants are a pure function of `a`, so the losers are wasted work
