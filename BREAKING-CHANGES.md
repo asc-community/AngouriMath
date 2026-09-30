@@ -309,6 +309,25 @@ Each of these was checked by differentiating it back with the parameters pinned 
 four points. The Rubi sample is unchanged at 231 of 463 with no wrong answers, so nothing that
 already had an antiderivative moves.
 
+### `NaN` a third time, from a quadratic with a coefficient off the real line
+
+The integrals of `1/sqrt(Q)`, `1/Q` and `1/Q^n` over a quadratic `Q` choose their form by the sign
+of the leading coefficient or of the discriminant, and had no arm for one that is not real: `i < 0`
+and `i > 0` are each `NaN`, the complex numbers not being ordered, and a piecewise with no arm that
+holds is `NaN` with them. With a symbol beside the imaginary unit the arms stayed standing, and none
+of them holds for a real value of it but zero. Where the sign was real and the rest of the quadratic
+was not, the arcsine was taken, and it differentiates back to minus the integrand on part of the
+line. Such a quadratic now takes the arctangent or the logarithm, which use nothing about their root
+but `sqrt(q)^2 = q` ([#1598](https://github.com/asc-community/AngouriMath/issues/1598)).
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"1/(x^2 + i)".Integrate("x")`, and `1/(x^2 + i)^2`, `1/sqrt(i*x^2 + 1)`, `sqrt(i*x^2 + 1)` | `NaN + C` | `2 arctan(2x/sqrt(4i))/sqrt(4i) + C`, and the antiderivatives |
+| `"1/sqrt(i*a*x^2 + 1)".Integrate("x")` | a piecewise over `i a = 0`, `i a < 0` and `i a > 0`, `NaN` for every real `a` but zero | the same with an arm `provided not i a in RR`, the logarithm |
+| `"1/sqrt(-x^2 + (1 + i)*x + 1)".Integrate("x")` | `-arcsin((-2x + 1 + i)/sqrt(4 + 2i)) + C`, whose derivative is minus the integrand below `x = -2` | `ln(-2x + 1 + i + 2i sqrt(-x^2 + (1 + i) x + 1))/i + C` |
+| `"1/sqrt(-x^2 + i)".Integrate("x")` | `-arcsin(-2x/sqrt(4i)) + C` | `ln(-2x + 2i sqrt(-x^2 + i))/i + C`, an antiderivative as before, in the logarithm |
+| `"1/(sqrt(x)*sqrt(1 + i*x))".Integrate("x")`, and Rubi 4.3.2.1's `sqrt(tan(c + d x))/(a + i a tan(c + d x))^(5/2)` | `integral(...)` | the antiderivative |
+
 ### Trigonometric functions of multiples of one linear argument are written in it
 
 `csc(a + b x) csc(2a + 2b x)^2` was left unevaluated, and `csc(1 + x) csc(2 + 2x)^2` ran twenty
