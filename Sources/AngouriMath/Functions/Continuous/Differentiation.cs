@@ -528,6 +528,38 @@ namespace AngouriMath
                     : MathS.Derivative(this, variable);
         }
 
+        partial record Maxf
+        {
+            // Where both are real, max(u, v) is (u + v + |u - v|)/2, so its derivative is
+            // (u' + v' + sgn(u - v)(u' - v'))/2 wherever the two differ, and there is none where
+            // they cross: the corner |t| has at 0. A comparison says nothing off the real line, so
+            // arguments not shown to be real are left unevaluated, as |f|' is. Without this the
+            // derivative was always left as written, and Newton's method, which compiles it, could
+            // not run on `max(x, 1) = 2 x`. https://github.com/asc-community/AngouriMath/issues/1603
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable)
+                => IsConstantIn(variable) ? Integer.Zero
+                    : TreeAnalyzer.IsRealValued(Left - Right, variable)
+                    ? ((Left.InnerDifferentiate(variable) + Right.InnerDifferentiate(variable)
+                        + MathS.Signum(Left - Right) * (Left.InnerDifferentiate(variable) - Right.InnerDifferentiate(variable))) / 2)
+                        .Provided(!(Left - Right).EqualTo(Integer.Zero))
+                    : MathS.Derivative(this, variable);
+        }
+
+        partial record Minf
+        {
+            // As max, with the sign of the difference the other way: min(u, v) is
+            // (u + v - |u - v|)/2 where both are real.
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable)
+                => IsConstantIn(variable) ? Integer.Zero
+                    : TreeAnalyzer.IsRealValued(Left - Right, variable)
+                    ? ((Left.InnerDifferentiate(variable) + Right.InnerDifferentiate(variable)
+                        - MathS.Signum(Left - Right) * (Left.InnerDifferentiate(variable) - Right.InnerDifferentiate(variable))) / 2)
+                        .Provided(!(Left - Right).EqualTo(Integer.Zero))
+                    : MathS.Derivative(this, variable);
+        }
+
         partial record Floorf
         {
             // Flat between consecutive integers and discontinuous at each of them, so the

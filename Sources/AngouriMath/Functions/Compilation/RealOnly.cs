@@ -45,5 +45,23 @@ namespace AngouriMath.Core.Compilation
                     : truncated + b.Real) + 0.0,
                 0);
         }
+
+        /// <summary>
+        /// The larger of two numbers, or NaN where they differ and are not both real: the complex
+        /// numbers are not ordered, and the interpreter leaves <c>max(2, 1 + i)</c> unevaluated.
+        /// Two equal arguments are their own maximum, which the interpreter says as well.
+        /// </summary>
+        public static NumericsComplex Max(NumericsComplex a, NumericsComplex b)
+            => Ordered(a, b, larger: true);
+
+        /// <summary>The smaller of two numbers, on the terms of <see cref="Max"/>.</summary>
+        public static NumericsComplex Min(NumericsComplex a, NumericsComplex b)
+            => Ordered(a, b, larger: false);
+
+        private static NumericsComplex Ordered(NumericsComplex a, NumericsComplex b, bool larger)
+            => a == b ? a
+             : a.Imaginary is not 0 || b.Imaginary is not 0 || double.IsNaN(a.Real) || double.IsNaN(b.Real)
+                ? new NumericsComplex(double.NaN, double.NaN)
+             : new NumericsComplex(larger == a.Real >= b.Real ? a.Real : b.Real, 0);
     }
 }
