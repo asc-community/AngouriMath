@@ -737,11 +737,13 @@ triaged, every issue is on one, and the milestone says what kind of change it is
 - **A parent is never due before its children.** Milestones run through the versions in order,
   then Future, then Guiding principles, and a parent issue's is never earlier than any child's:
   when a child moves later than its parent, the parent moves with it
-  ([#718](https://github.com/asc-community/AngouriMath/issues/718#issuecomment-5910345918)). So
-  #233 went from `2.6.0` to `2.8` when its children #1469 and #1486 were on `2.8`, and #718, a
-  parent with no milestone, went to Future. And "under" is GitHub's sub-issue relationship, not
-  prose: an issue that belongs under another is linked in the turn it is filed, and a comment says
-  "under" only once the link is there
+  ([#718](https://github.com/asc-community/AngouriMath/issues/718#issuecomment-5910345918)). The
+  other way round, children being worked on now are on the next minor, and they pull their parent
+  forward with them rather than leaving it where the plan once was
+  ([#718](https://github.com/asc-community/AngouriMath/issues/718#issuecomment-5910745181)); a
+  parent with no last piece to aim at, #718 itself, is on Guiding principles. And "under" is
+  GitHub's sub-issue relationship, not prose: an issue that belongs under another is linked in the
+  turn it is filed, and a comment says "under" only once the link is there
   ([#718](https://github.com/asc-community/AngouriMath/issues/718#issuecomment-5910315961)) --
   the tree is what the backlog is read by, and a word in a comment is invisible to it.
 
