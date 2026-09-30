@@ -133,8 +133,14 @@ as `NaNx` or `NaN_1`, is still a variable, because the lexer takes the longest m
 
 A name is **one or more letters**, optionally followed by `_` and one or more letters or digits:
 `x`, `xy`, `x_1`, `x_a`, `α`, `ω_1`, `Θ_1`, `альфа`, `x_ω`. Letters are `a`–`z`, `A`–`Z`, Greek
-(U+0370–U+03FF and U+1F00–U+1FFF) and Cyrillic (U+0400–U+04FF); no other script is one, so `ﬁ` is
-a lexer error.
+(U+0370–U+03FF and U+1F00–U+1FFF), Cyrillic (U+0400–U+04FF) and the script `ℯ` (U+212F); no other
+script is one, so `ﬁ` is a lexer error.
+
+`pi` and `e` are the constants, and so are the spellings mathematics writes them in: `π` (U+03C0)
+is `pi` and the script `ℯ` is `e`, so `sin(π)` is `0` and `ln(ℯ)` is `1`. The Cyrillic `е`
+(U+0435) is a letter, not the constant, and so is the Cyrillic `х` (U+0445) beside the Latin `x`:
+they are variables that print like `e` and `x`, and `х + x` has two
+([#1260](https://github.com/asc-community/AngouriMath/issues/1260)).
 
 Four things that look like names and are not:
 
