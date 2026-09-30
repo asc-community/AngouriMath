@@ -329,6 +329,13 @@ namespace AngouriMath
                 : Enumerable.Empty<Entity>();
         }
 
+        partial record SumOverSetf
+        {
+            // The unknown sits under a binder; see Summationf below.
+            private protected override IEnumerable<Entity>? InvertNode(Entity value, Entity x) =>
+                null;
+        }
+
         partial record Maximumf
         {
             // The unknown sits under a binder; see Summationf below.

@@ -1608,6 +1608,34 @@ the ends are about, `n >= 0`. With two names it is left as it was, `n >= m - 1`
 |---|---|---|
 | `"sum(2 k + 1, k, 0, n - 1)".Simplify()` | `piecewise((2 * n + (n - 1) ^ 2 - 1) provided (n - 1 >= -1), 0 provided True)` | `piecewise((n ^ 2) provided (n >= 0), 0 provided True)` |
 
+### A sum over a set: `sum(f, x in S)`
+
+`sum` took a range and nothing else, so a sum over a set had no spelling: `sum(f, x in S)` was a
+parse error asking for the four arguments of the range form. `SumOverSetf` reads the second
+argument as `variable in set` and binds the variable over the term and the set, as `max(f, t in S)`
+does: spelt `sum(f, x in S)`, printed `\sum_{x \in S} f` in LaTeX, and built by
+`MathS.Sum(f, x, S)`. The range form `sum(f, k, from, to)` is untouched. A sum over the roots of a
+polynomial is a sum over its set of roots, `sum(f(w), w in { w : p(w) = 0 })`, with no index and no
+order.
+
+The terms are added up where the set is finite and its members are known: a listed set of numbers,
+distinct by value, and the roots of a polynomial where the solver writes all of them. That is
+checked by counting them against the degree of the square-free part, so a root the solver missed
+leaves the sum as written rather than one term short. Evaluated to a number, the roots it cannot
+write are found to the working precision by the Durand–Kerner iteration, all of them or none. A set
+with a symbol among its members, whose members may coincide, and a set that is not finite are left
+as written. [#1285](https://github.com/asc-community/AngouriMath/issues/1285). Both columns
+measured on a build, `v2.5.0` against this change.
+
+| | Was (2.5.0) | Is |
+|---|---|---|
+| `"sum(x^2, x in {1, 2, 3})".ToEntity()` | `FunctionArgumentCountException`: *sum should have exactly 4 arguments but 2 arguments are provided* | `14` once simplified |
+| `"sum(w^2, w in { w : w^3 - 2w + 1 = 0 })".ToEntity().Simplify()` | the same exception | `4` |
+| `"sum(w^5, w in { w : w^5 + w + 3 = 0 })".ToEntity().Evaled` | the same exception | `-15`, from the five roots found numerically |
+| `"sum(k, k in ZZ intersect [1; 10])".ToEntity().Simplify()` | the same exception | `55`, as `sum(k, k, 1, 10)` is |
+| `"sum(x, x in {a, b})".ToEntity().Simplify()` | the same exception | `sum(x, x in { a, b })`, since `a` and `b` may be equal |
+| `"sum(k, k, 1, 10)".ToEntity().Simplify()` | `55` | the same |
+
 ### `(a + b asech(c x))/(d + e x)^2` is integrated, and a root written apart with `|x|` no longer needs a parity
 
 Rubi's 7.5.1 with a symbolic linear below the bar ran for ten minutes without an answer. By
