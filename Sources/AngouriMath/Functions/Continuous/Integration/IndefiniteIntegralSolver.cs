@@ -1610,8 +1610,7 @@ namespace AngouriMath.Functions.Algebra
                 Logf or Entity.Arcsinf or Entity.Arccosf
                     or Entity.Arctanf or Entity.Arccotanf
                     or Entity.Arcsecantf or Entity.Arccosecantf => true,
-                Entity.Erff or Entity.Erfcf or Entity.Erfif or Entity.Eif or Entity.Lif
-                    or Entity.Sif or Entity.Cif or Entity.Shif or Entity.Chif => true,
+                _ when IsASpecialFunction(factor) => true,
                 // And a whole power of one, which is the same function for this purpose:
                 // differentiating ln(x)^2 gives 2ln(x)/x, whose x cancels against the integrated
                 // polynomial exactly as ln(x)'s does, leaving x*ln(x) -- one step simpler, and
@@ -19624,6 +19623,33 @@ namespace AngouriMath.Functions.Algebra
                             integrandInU = SimplifiedWithoutTheImaginaryUnit(cancelled, expr);
                         }
                     }
+                    // Powers of one base on the two sides of the bar: `e^(c - b^2 x^2)` over the
+                    // `e^(-b^2 x^2)` of du/dx is `e^c`, which the one-level simplification leaves as
+                    // written, and `e^(c - b^2 x^2) erf(b x)` was refused under `u = erf(b x)` for
+                    // the x in it, where `e^(-b^2 x^2) erf(b x)` was answered.
+                    // https://github.com/asc-community/AngouriMath/issues/1501
+                    // The divisor's factors are spread first, each to the power -1: gathered as it
+                    // stands, the whole divisor `2 e^(-(b x)^2) b` is one factor below the bar, with
+                    // a base of its own.
+                    // For a special function only, which is where the constant in the exponent comes
+                    // from: done for every candidate that left an x, it gathered the exponentials of
+                    // `1/((c + d x)^3 (a + a tanh(e + f x)))` and simplified them for every one, and
+                    // a decline in a third of a second became a timeout.
+                    if (integrandInU.ContainsNode(x) && IsASpecialFunction(u))
+                    {
+                        var (above, below) = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(integrandInU));
+                        var spread = above;
+                        foreach (var factor in Mulf.LinearChildren(below))
+                            spread *= MathS.Pow(factor, -1);
+                        // Simplified a level, not only inner-simplified, since the gathered exponent
+                        // `c - (b x)^2 + (b x)^2` is left standing by the inner simplification -- and
+                        // only where a base was gathered at all. Simplified for every candidate that
+                        // left an x, it took `x cosh(a + b x) Shi(a + b x)` from a second to a timeout.
+                        var gatheredRaw = Patterns.GatherPowersOfOneBase(spread);
+                        if (!ReferenceEquals(gatheredRaw, spread)
+                            && SimplifiedWithoutTheImaginaryUnit(gatheredRaw, expr) is var gathered && !gathered.ContainsNode(x))
+                            integrandInU = gathered;
+                    }
                     // A polynomial in x left over under a candidate that is itself a polynomial
                     // is written in the candidate where it is one in it: `(1 - x)^2` is
                     // `1 - 2x + x^2`, and that is `u` for Apostol's `(1 - 2x + x^2)^(1/5)/(1 - x)`,
@@ -20124,6 +20150,34 @@ namespace AngouriMath.Functions.Algebra
         /// 2. f(x^n) * x^(n-1)  ->  u = x^n
         /// 3. f(g(x)) * g'(x)  ->  u = g(x)
         /// </summary>
+        /// <summary>
+        /// The special functions of
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1501">#1501</a>: the error
+        /// functions and the exponential, logarithmic, sine, cosine and hyperbolic integrals.
+        /// </summary>
+        private static bool IsASpecialFunction(Entity node)
+            => node is Entity.Erff or Entity.Erfcf or Entity.Erfif or Entity.Eif or Entity.Lif
+                or Entity.Sif or Entity.Cif or Entity.Shif or Entity.Chif;
+
+        /// <summary>
+        /// Whether <paramref name="expr"/> has what the derivative of the special function
+        /// <paramref name="special"/> is made of: an exponential of a quadratic in
+        /// <paramref name="x"/> for the error functions, something in <paramref name="x"/> below the
+        /// bar for the exponential, trigonometric and hyperbolic integrals, whose derivatives
+        /// divide by their argument, and a logarithm below the bar for the logarithmic integral.
+        /// </summary>
+        private static bool TheDifferentialCanBeThere(Entity special, Entity expr, Entity.Variable x)
+        {
+            var below = Functions.SingleQuotient.Of(Functions.SingleQuotient.Combine(expr)).Denominator;
+            return special switch
+            {
+                Entity.Erff or Entity.Erfcf or Entity.Erfif => expr.Nodes.Any(node => node is Powf(var @base, var exponent)
+                    && !@base.ContainsNode(x) && TreeAnalyzer.TryGetPolyQuadratic(exponent, x, out var square, out _, out _) && !TreeAnalyzer.IsZero(square)),
+                Entity.Lif => below.Nodes.Any(node => node is Logf(_, var antilogarithm) && antilogarithm.ContainsNode(x)),
+                _ => below.ContainsNode(x),
+            };
+        }
+
         private static IEnumerable<Entity> FindSubstitutionCandidates(Entity expr, Entity.Variable x)
         {
             var candidates = new List<Entity>();
@@ -20233,6 +20287,18 @@ namespace AngouriMath.Functions.Algebra
                     case Logf(_, var antilog):
                         candidates.Add(node); // Logarithm itself (for cases like 1/(x*ln(x)))
                         if (antilog != x && antilog.ContainsNode(x)) candidates.Add(antilog); // Also add the argument if it's not just x
+                        break;
+                    // A special function itself, as the logarithm is: each has an elementary
+                    // derivative, so beside a power of it that derivative is the differential.
+                    // `e^(c - b^2 x^2) erf(b x)^n` is `sqrt(pi) e^c/(2b) u^n` under `u = erf(b x)`.
+                    // https://github.com/asc-community/AngouriMath/issues/1501
+                    // Only where that derivative can be there: an exponential of a quadratic for
+                    // the error functions, a divisor in x for the u below the bar of e^u/u, sin(u)/u
+                    // and the others, a logarithm below the bar for li. Offered beside anything,
+                    // `x cosh(a + b x) Shi(a + b x)` went from a second to ten, simplifying quotients
+                    // of exponentials that were never going to lose their x.
+                    case var special when IsASpecialFunction(special) && TheDifferentialCanBeThere(special, expr, x):
+                        candidates.Add(node);
                         break;
                     case Sumf(var aug, var add) when !rational && !large && node.Complexity <= LargestSumOffered:
                         if (aug.ContainsNode(x) || add.ContainsNode(x)) candidates.Add(node); // Linear expressions ax + b

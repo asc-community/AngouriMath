@@ -2278,6 +2278,23 @@ elementary integrand whose antiderivative is reached through one is answered whe
 |---|---|---|
 | `"(a+b*ln(c*x^n))/(x^2*(d+e*ln(f*x^m)))".Integrate("x")`, Rubi's 3.1.5 row 213 | `integral(...)` | an antiderivative in `Ei`, provided `f > 0` and `e^d f^e > 0` |
 
+### A special function beside its derivative is a substitution
+
+`e^(c - b^2 x^2) erf(b x)^n`, `Ei(b x) e^(b x)/x` and `Si(b x) sin(b x)/x` are each a power of a
+special function beside its derivative, and `u = erf(b x)`, `u = Ei(b x)` or `u = Si(b x)` writes
+them as a power of `u`. None of the nine special functions was a candidate for that substitution.
+Each is one now, as the logarithm is, wherever its derivative can be the differential
+([#1501](https://github.com/asc-community/AngouriMath/issues/1501)). An integrand holding one of
+these functions had no reading in 2.5.0, which the entries for the functions themselves record, and
+no integrand without one changes: Rubi's independent suites and a sample of its families 1 to 7,
+2726 problems, are answered alone as they were.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"e^(c - b^2*x^2)*erf(b*x)".Integrate("x")` | `UnrecognizedFunctionParseException`: there is no function `erf` | `e ^ c * pi ^ (1/2) * erf(b * x) ^ 2 / 2 / (2 * b) + C` |
+| `"e^(b*x)*Ei(b*x)/x".Integrate("x")` | `Ei * e ^ (b * x) + C`, with `Ei` a variable | `Ei(b * x) ^ 2 / 2 + C` |
+| `"Si(b*x)*sin(b*x)/x".Integrate("x")` | `Si * -cos(b * x) + C`, with `Si` a variable | `Si(b * x) ^ 2 / 2 + C` |
+
 ### An inverse trigonometric function below the bar is integrated to the sine and cosine integrals
 
 `1/arcsin(x)` was left unintegrated. Under the substitution that undoes the inverse function,
