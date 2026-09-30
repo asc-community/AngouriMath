@@ -42,8 +42,22 @@ namespace AngouriMath
                         return RealPart.Stringize();
                     else if (RealPart is Integer(0))
                         return RenderNum(ImaginaryPart) + times + "i";
-                    var (im, sign) = ImaginaryPart > 0 ? (ImaginaryPart, "+") : (-ImaginaryPart, "-");
+                    var (im, sign) = ImaginaryPart > 0 ? (ImaginaryPart, "+") : (NegatedAsItIs(ImaginaryPart), "-");
                     return RealPart.Stringize() + " " + sign + " " + RenderNum(im) + times + "i";
+                }
+
+                /// <summary>
+                /// <paramref name="number"/> negated, and nothing else. Negating makes a new number,
+                /// which is downcast under the setting in force when it is made, and a number made
+                /// with downcasting off could come back different: <c>0.333...</c> to forty digits
+                /// as the rational 1/3, printed without the product sign a fraction needs, so that
+                /// <c>1 - 0.333...i</c> read back as <c>1 + i/3</c>; and <c>9.5e-114</c> as 0.
+                /// https://github.com/asc-community/AngouriMath/issues/1610
+                /// </summary>
+                internal static Real NegatedAsItIs(Real number)
+                {
+                    using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+                    return -number;
                 }
                 /// <inheritdoc/>
                 public override string ToString() => Stringize();
