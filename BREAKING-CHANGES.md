@@ -2357,6 +2357,27 @@ two of them, the points are samples of a continuum and not the set
 | `"floor(x)".Compile("x")`, and `ceil`, `round`, `max`, `min` | `UncompilableNodeException` | compiled |
 | `"max(x, 1)".ToEntity().Differentiate("x")` | `derivative(max(x, 1), x)` | `(1 + sgn(x - 1)) / 2 provided not x - 1 = 0` |
 
+### The compiled factorial is exact at whole numbers and finite to `170!`, and the compiled totient has no value at a fraction
+
+Both compilers now evaluate the factorial, the gamma function and Euler's totient the same way,
+and `Compile<TIn, TOut>` has a form for them where it had none
+([#1607](https://github.com/asc-community/AngouriMath/issues/1607)). The compiled factorial was
+Lanczos's approximation everywhere, and its power overflowed before the value did: from just past
+`141!`, about `2e243`, it compiled to NaN, up to `170!`. At a whole number it was off from the
+integer by a rounding, which a compilation over integers would truncate. It is now the exact
+factorial rounded once, up to `170!`; infinite past it; NaN at the negative whole numbers, the
+poles; and the same approximation elsewhere, taken in logarithms so that it overflows only where
+the value does. The compiled totient truncated a fraction to the whole number below it. There it
+now has no value, as the interpreter's has none.
+
+| Input | Was (2.5.0) | Now |
+|---|---|---|
+| `"x!".Compile("x").Call(4)` | `23.999999999999996` | `24` |
+| `"x!".Compile("x").Call(0)` | `0.9999999999999998` | `1` |
+| `"x!".Compile("x").Call(142)`, and on to `170` | NaN | `2.695364137888163E+245` |
+| `"phi(x)".Compile("x").Call(2.5)` | `1` | NaN |
+| `"x!".ToEntity().Compile<double, double>("x")`, and `gamma`, `phi` | `UncompilableNodeException` | compiled |
+
 ### An equation the solver cannot invert is left unsolved, not answered with no roots
 
 `x! = 6` was answered `{ }`, a claim that it has no roots, and it has 3. The solver isolates `x`
