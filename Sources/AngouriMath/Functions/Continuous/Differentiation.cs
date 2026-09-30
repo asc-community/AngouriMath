@@ -476,6 +476,22 @@ namespace AngouriMath
         }
 #pragma warning restore IDE0054 // Use compound assignment
 
+        partial record SumOverSetf
+        {
+            /// <inheritdoc/>
+            /// <remarks>
+            /// Term by term, where the set does not depend on the variable: the derivative of a
+            /// sum of finitely many terms is the sum of their derivatives, and a sum over a set
+            /// that is not finite is not evaluated in the first place. The name the sum binds is
+            /// not a free variable of it, so nothing varies with it.
+            /// https://github.com/asc-community/AngouriMath/issues/1285
+            /// </remarks>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                Var == variable ? Integer.Zero
+                : Over.ContainsNode(variable) ? base.InnerDifferentiate(variable)
+                : New(Expression.InnerDifferentiate(variable), Var, Over);
+        }
+
         partial record Limitf
         {
             /// <inheritdoc/>
