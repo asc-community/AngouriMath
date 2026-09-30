@@ -46,6 +46,9 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("erfc(10)", "2.08848758376254475700078629495778861156081812e-45", "0")]
         [InlineData("erfc(-1)", "1.842700792949714869341220635082609259296067", "0")]
         [InlineData("erfc(15 + 5 * i)", "4.3823936244741368125841545115653530204851946e-89", "2.25866204017490621858266035895561905217636073e-89")]
+        [InlineData("erfc(16)", "2.32848575157153069336487285457344259753439695e-113", "0")]
+        [InlineData("erfc(16 + 3 * i)", "-6.63976210744169686093175089357492626279041806e-110", "-1.73191535469740949550705185233821524194290283e-109")]
+        [InlineData("erfc(14 - 9 * i)", "1.24364721743380983428549812322004008428400814e-52", "3.64858214804222874123198985548113095364186296e-52")]
         [InlineData("erfc(2 + i)", "-0.00360634272565175091291182820541914235532928537", "0.0112590060288150250764009156316482248536651599")]
         [InlineData("erfi(1)", "1.65042575879754287602533772956136244389567987", "0")]
         [InlineData("erfi(10)", "1524307422708669699360546614726544062463812.07", "0")]
@@ -79,6 +82,23 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("erfi(-oo)", "-oo")]
         public void ExactValues(string expression, string expected)
             => Assert.Equal(expected.ToEntity(), expression.ToEntity().InnerSimplified);
+
+        /// <summary>
+        /// Far out on the right erfc is below what the default precision represents, and it is
+        /// its asymptotic series, which cancels nothing. It was carried with the <c>Re(z^2)/ln 10</c>
+        /// digits that <c>1 - erf(z)</c> would lose: 4343 at 100, where it took about 25 s, and
+        /// 43430 at 1000, where it did not return in 30.
+        /// <a href="https://github.com/asc-community/AngouriMath/issues/1606">#1606</a>
+        /// </summary>
+        [Theory]
+        [InlineData("erfc(1000)")]
+        [InlineData("erfc(1000 + i)")]
+        public void FarOutOnTheRightItIsZeroAtOnce(string expression)
+        {
+            var evaluation = System.Threading.Tasks.Task.Run(() => MathS.FromString(expression, useCache: false).EvalNumerical());
+            Assert.True(evaluation.Wait(System.TimeSpan.FromSeconds(30)), $"{expression} did not return");
+            Assert.True(evaluation.Result.RealPart.EDecimal.IsZero && evaluation.Result.ImaginaryPart.EDecimal.IsZero, $"{expression} = {evaluation.Result}");
+        }
 
         [Theory]
         [InlineData("erf(x)", "2 / sqrt(pi) * e ^ (-x ^ 2)")]

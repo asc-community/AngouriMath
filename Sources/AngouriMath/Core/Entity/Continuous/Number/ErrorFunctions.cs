@@ -79,12 +79,15 @@ namespace AngouriMath
                 if (re.IsZero && im.IsZero)
                     return Integer.One;
                 var precision = context.Precision.ToInt32Checked();
-                var work = Working(context, GuardDigits(re, im, precision) + (re.IsNegative ? 0 : Cancelled(re, im)));
                 (EDecimal Re, EDecimal Im) erfc;
+                // The asymptotic series is erfc itself and cancels nothing, so it does without the
+                // digits 1 - erf(z) would lose. Those grow as Re(z^2): 4343 of them at z = 100,
+                // where erfc(100) took over 20 s. https://github.com/asc-community/AngouriMath/issues/1606
                 if (!re.IsNegative && SquaredModulus(re, im).CompareTo(Reach(precision)) > 0)
-                    erfc = ErfcByTheAsymptoticSeries(re, im, work);
+                    erfc = ErfcByTheAsymptoticSeries(re, im, Working(context, GuardDigits(re, im, precision)));
                 else
                 {
+                    var work = Working(context, GuardDigits(re, im, precision) + (re.IsNegative ? 0 : Cancelled(re, im)));
                     var (erfRe, erfIm) = Erf(re, im, work, extraDigits: 0);
                     erfc = (EDecimal.One.Subtract(erfRe, work), erfIm.Negate());
                 }
