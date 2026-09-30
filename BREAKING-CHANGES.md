@@ -654,6 +654,25 @@ reached 3^12 cases and 8 GB inside integration by parts
 | `(x < 0 and x = 0).Simplify()` | `False provided x in RR` | `False` — the condition was over-strong, one conjunct is false wherever `x` is |
 | `(x > 0 and x > 0).Evaled` | `x > 0` | `x > 0` (unchanged) |
 
+### A union with an empty interval is the other set
+
+**Wrong answer fixed.** Two intervals were joined wherever one ended where the other began, before
+either was asked whether it was empty. `[1; 0]` is empty, and it ends at 0 where `[0; 1]` begins,
+so `[0; 1] \/ [1; 0]` was joined into `{ 1 }`, and `[3; 1] \/ [1; 2]` into `[3; 2]`, which is
+empty. An empty interval now adds nothing. With ends that are not numbers either interval may be
+empty -- `[a; b]` is, when `a` is above `b` -- so two such intervals are no longer joined unless an
+end is infinite, and `[a; b] \/ [b; c]`, which was `[a; c]`, is left as written.
+[#1634](https://github.com/asc-community/AngouriMath/issues/1634). Both columns measured on a
+build, `v2.5.0` against this change.
+
+| `"….".ToEntity().Simplify()` of | Was (2.5.0) | Is |
+|---|---|---|
+| `[0; 1] \/ [1; 0]` | `{ 1 }` — wrong | `[0; 1]` |
+| `[3; 1] \/ [1; 2]` | `[3; 2]`, which is empty — wrong | `[1; 2]` |
+| `[a; b] \/ [b; a]` | `{ b }` — wrong | `[a; b] \/ [b; a]` |
+| `[a; b] \/ [b; c]` | `[a; c]` — wrong where `a > b` or `b > c` | `[a; b] \/ [b; c]` |
+| `(-oo; x] \/ [x; +oo)` | `RR` | `RR` (unchanged: neither can be empty) |
+
 ### `ZZ*` and `ZZ+` are the non-negative and the positive integers
 
 `ZZ*` = `{0, 1, 2, ...}` and `ZZ+` = `{1, 2, 3, ...}` are special sets, spelled as MathWorld spells
